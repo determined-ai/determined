@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/pkg/errors"
+
 	"gotest.tools/assert"
 
 	"github.com/determined-ai/determined/master/pkg/actor"

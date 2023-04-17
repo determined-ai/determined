@@ -29,7 +29,7 @@ func ParseAnyExperimentConfigJSON(byts []byte) (ExperimentConfig, error) {
 	// Detect version
 	err := json.Unmarshal(byts, &versioned)
 	if err != nil {
-		return out, errors.Wrap(err, "unable to unmarshal json-formatted experiment config")
+		return out, fmt.Errorf("unable to unmarshal json-formatted experiment config: %w", err)
 	}
 	version := versioned.Version
 
@@ -39,11 +39,11 @@ func ParseAnyExperimentConfigJSON(byts []byte) (ExperimentConfig, error) {
 		err = schemas.SaneBytes(&out, byts)
 		// err = schemas.SaneBytes(&v0, byts)
 		if err != nil {
-			return out, errors.Wrap(err, "version 0 experiment config is invalid")
+			return out, fmt.Errorf("version 0 experiment config is invalid: %w", err)
 		}
 		err = json.Unmarshal(byts, &out)
 		if err != nil {
-			return out, errors.Wrap(err, "unable to unmarshal experiment config as version 0")
+			return out, fmt.Errorf("unable to unmarshal experiment config as version 0: %w", err)
 		}
 
 	// case 1:
@@ -75,7 +75,7 @@ func ParseAnyExperimentConfigJSON(byts []byte) (ExperimentConfig, error) {
 func ParseAnyExperimentConfigYAML(byts []byte) (ExperimentConfig, error) {
 	byts, err := schemas.JSONFromYaml(byts)
 	if err != nil {
-		return ExperimentConfig{}, errors.Wrap(err, "unable to convert yaml to json")
+		return ExperimentConfig{}, fmt.Errorf("unable to convert yaml to json: %w", err)
 	}
 	return ParseAnyExperimentConfigJSON(byts)
 }

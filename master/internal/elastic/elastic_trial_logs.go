@@ -3,13 +3,12 @@ package elastic
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 
 	"github.com/determined-ai/determined/master/internal/api"
-
-	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/model"
 )
@@ -29,7 +28,7 @@ func (e *Elastic) TrialLogsCount(trialID int, fs []api.Filter) (int, error) {
 		},
 	})
 	if err != nil {
-		return 0, errors.Wrap(err, "failed to get trial log count")
+		return 0, fmt.Errorf("failed to get trial log count: %w", err)
 	}
 	return count, nil
 }
@@ -100,7 +99,7 @@ func (e *Elastic) TrialLogs(
 	}{}
 
 	if err := e.search(query, &resp); err != nil {
-		return nil, nil, errors.Wrap(err, "failed to query trial logs")
+		return nil, nil, fmt.Errorf("failed to query trial logs: %w", err)
 	}
 
 	var logs []*model.TrialLog
@@ -150,18 +149,18 @@ func (e *Elastic) DeleteTrialLogs(ids []int) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(query); err != nil {
-		return errors.Wrap(err, "failed to encoding query")
+		return fmt.Errorf("failed to encoding query: %w", err)
 	}
 
 	// TODO(brad): Here and elsewhere, we really should just hit indices that could possibly have
 	// logs for a given trial.
 	res, err := e.client.DeleteByQuery([]string{"*"}, &buf)
 	if err != nil {
-		return errors.Wrap(err, "failed to perform delete")
+		return fmt.Errorf("failed to perform delete: %w", err)
 	}
 	defer closeWithErrCheck(res.Body)
 	if err = checkResponse(res); err != nil {
-		return errors.Wrap(err, "failed to perform delete")
+		return fmt.Errorf("failed to perform delete: %w", err)
 	}
 
 	return nil
@@ -222,7 +221,7 @@ func (e *Elastic) TrialLogsFields(trialID int) (*apiv1.TrialLogsFieldsResponse, 
 		} `json:"aggregations"`
 	}{}
 	if err := e.search(query, &resp); err != nil {
-		return nil, errors.Wrap(err, "failed to aggregate trial log fields")
+		return nil, fmt.Errorf("failed to aggregate trial log fields: %w", err)
 	}
 
 	return &apiv1.TrialLogsFieldsResponse{

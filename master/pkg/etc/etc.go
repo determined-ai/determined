@@ -3,10 +3,9 @@
 package etc
 
 import (
+	"fmt"
 	"io/ioutil"
 	"path/filepath"
-
-	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/check"
 )
@@ -69,7 +68,7 @@ func MustStaticFile(name string) []byte {
 
 	// Check that the final path is inside the root directory.
 	insideDir, err := filepath.Match(filepath.Join(staticRoot, "*"), path)
-	check.Panic(errors.Wrapf(err, "unable to find static file: %s", name))
+	check.Panic(fmt.Errorf("unable to find static file: %s: %w", name, err))
 	check.Panic(
 		check.TrueSilent(
 			insideDir,
@@ -79,6 +78,6 @@ func MustStaticFile(name string) []byte {
 	)
 
 	bytes, err := ioutil.ReadFile(path) // #nosec G304
-	check.Panic(errors.Wrapf(err, "unable to find static file: %s", name))
+	check.Panic(fmt.Errorf("unable to find static file: %s: %w", name, err))
 	return bytes
 }

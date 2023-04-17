@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"cloud.google.com/go/compute/metadata"
-	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/check"
@@ -83,7 +82,7 @@ func (c Config) Validate() []error {
 	var masterURLErr error
 	switch {
 	case err != nil:
-		errs = append(errs, errors.Wrap(err, "cannot parse master url"))
+		errs = append(errs, fmt.Errorf("cannot parse master url: %w", err))
 	case len(c.MasterURL) != 0:
 		errs = append(errs, check.True(len(masterURL.Path) == 0,
 			"invalid master url (expecting scheme://host:port)"))
@@ -142,7 +141,7 @@ func (c *Config) InitMasterAddress() error {
 		host, err = getEC2Metadata("public-hostname")
 	}
 	if err != nil {
-		return errors.Wrap(err, "cannot get metadata")
+		return fmt.Errorf("cannot get metadata: %w", err)
 	}
 
 	if len(port) == 0 {

@@ -6,10 +6,12 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/pkg/errors"
+
 	"github.com/jackc/pgconn"
 	"github.com/jmoiron/sqlx"
 	"github.com/o1egl/paseto"
-	"github.com/pkg/errors"
+
 	log "github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -35,7 +37,7 @@ func (db *PgDB) StartUserSession(user *model.User) (string, error) {
 	privateKey := db.tokenKeys.PrivateKey
 	token, err := v2.Sign(privateKey, userSession, nil)
 	if err != nil {
-		return "", errors.Wrap(err, "failed to generate user authentication token")
+		return "", fmt.Errorf("failed to generate user authentication token: %w", err)
 	}
 	return token, nil
 }
@@ -75,11 +77,11 @@ RETURNING id`)
 				return 0, ErrDuplicateRecord
 			}
 		}
-		return 0, errors.Wrapf(err, "error creating user %v", err)
+		return 0, fmt.Errorf("error creating user %v: %w", err, err)
 	}
 
 	if err := addUserPersonalGroup(tx, user.ID); err != nil {
-		return 0, errors.Wrap(err, "error adding users personal group")
+		return 0, fmt.Errorf("error adding users personal group: %w", err)
 	}
 
 	return user.ID, nil
@@ -176,7 +178,7 @@ func (db *PgDB) AddUser(user *model.User, ug *model.AgentUserGroup) (model.UserI
 func (db *PgDB) UpdateUser(updated *model.User, toUpdate []string, ug *model.AgentUserGroup) error {
 	tx, err := db.sql.Beginx()
 	if err != nil {
-		return errors.Wrap(err, "error starting transaction")
+		return fmt.Errorf("error starting transaction: %w", err)
 	}
 	defer func() {
 		if tx == nil {
@@ -194,7 +196,7 @@ func (db *PgDB) UpdateUser(updated *model.User, toUpdate []string, ug *model.Age
 			setClause(toUpdate))
 
 		if _, err = tx.NamedExec(query, updated); err != nil {
-			return errors.Wrapf(err, "updating %q", updated.Username)
+			return fmt.Errorf("updating %q: %w", updated.Username, err)
 		}
 	}
 
@@ -209,7 +211,7 @@ func (db *PgDB) UpdateUser(updated *model.User, toUpdate []string, ug *model.Age
 	if updatePassword {
 		query := "DELETE FROM user_sessions WHERE user_id = $1"
 		if _, err = tx.Exec(query, updated.ID); err != nil {
-			return errors.Wrap(err, "error deleting user sessions")
+			return fmt.Errorf("error deleting user sessions: %w", err)
 		}
 	}
 
@@ -225,7 +227,7 @@ func (db *PgDB) UpdateUser(updated *model.User, toUpdate []string, ug *model.Age
 	}
 
 	if err = tx.Commit(); err != nil {
-		return errors.Wrap(err, "error committing change to user")
+		return fmt.Errorf("error committing change to user: %w", err)
 	}
 
 	tx = nil
@@ -276,16 +278,16 @@ WHERE u.id = $1 AND u.id = h.user_id`, &ug, userID); errors.Cause(err) == ErrNot
 func (db *PgDB) initAuthKeys() error {
 	switch storedKeys, err := db.AuthTokenKeypair(); {
 	case err != nil:
-		return errors.Wrap(err, "error retrieving auth token keypair")
+		return fmt.Errorf("error retrieving auth token keypair: %w", err)
 	case storedKeys == nil:
 		publicKey, privateKey, err := ed25519.GenerateKey(nil)
 		if err != nil {
-			return errors.Wrap(err, "error creating auth token keypair")
+			return fmt.Errorf("error creating auth token keypair: %w", err)
 		}
 		tokenKeypair := model.AuthTokenKeypair{PublicKey: publicKey, PrivateKey: privateKey}
 		err = db.AddAuthTokenKeypair(&tokenKeypair)
 		if err != nil {
-			return errors.Wrap(err, "error saving auth token keypair")
+			return fmt.Errorf("error saving auth token keypair: %w", err)
 		}
 		db.tokenKeys = &tokenKeypair
 	default:

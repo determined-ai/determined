@@ -3,10 +3,10 @@ package searcher
 
 import (
 	"encoding/json"
+	"fmt"
 	"strconv"
 	"testing"
 
-	"github.com/pkg/errors"
 	"gotest.tools/assert"
 
 	"github.com/determined-ai/determined/master/pkg/ptrs"
@@ -192,17 +192,17 @@ func TestNestedGridFurther(t *testing.T) {
 		result := string(byts)
 		val, ok := expect[result]
 		if !ok {
-			assert.NilError(t, errors.Errorf("got unexpected value: %v", result))
+			assert.NilError(t, fmt.Errorf("got unexpected value: %v", result))
 		}
 		if !val {
-			assert.NilError(t, errors.Errorf("got value twice: %v", result))
+			assert.NilError(t, fmt.Errorf("got value twice: %v", result))
 		}
 		expect[result] = false
 	}
 
 	for exp, val := range expect {
 		if val {
-			assert.NilError(t, errors.Errorf("did not see %v", exp))
+			assert.NilError(t, fmt.Errorf("did not see %v", exp))
 		}
 	}
 }

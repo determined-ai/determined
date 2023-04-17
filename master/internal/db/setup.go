@@ -3,7 +3,6 @@ package db
 import (
 	"fmt"
 
-	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/internal/config"
@@ -23,7 +22,7 @@ func Connect(opts *config.DBConfig) (*PgDB, error) {
 	log.Infof("connecting to database %s:%s", opts.Host, opts.Port)
 	db, err := ConnectPostgres(dbURL)
 	if err != nil {
-		return nil, errors.Wrapf(err, "error connecting to database: %s:%s", opts.Host, opts.Port)
+		return nil, fmt.Errorf("error connecting to database: %s:%s: %w", opts.Host, opts.Port, err)
 	}
 
 	db.sql.SetMaxOpenConns(maxOpenConns)
@@ -39,7 +38,7 @@ func Setup(opts *config.DBConfig) (*PgDB, error) {
 	}
 
 	if err = db.Migrate(opts.Migrations, []string{"up"}); err != nil {
-		return nil, errors.Wrap(err, "running migrations")
+		return nil, fmt.Errorf("running migrations: %w", err)
 	}
 	if err = db.initAuthKeys(); err != nil {
 		return nil, err

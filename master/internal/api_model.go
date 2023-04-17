@@ -36,13 +36,14 @@ func (a *apiServer) ModelFromIdentifier(identifier string) (*modelv1.Model, erro
 	} else {
 		err = a.m.db.QueryProto("get_model", m, identifier)
 	}
-	switch err {
-	case db.ErrNotFound:
+	switch err; {
+	case errors.Is(err, db.ErrNotFound):
 		return nil, status.Errorf(
 			codes.NotFound, "model %q not found", identifier)
+	case err != nil:
+		return nil, fmt.Errorf("error fetching model %q from database: %w", identifier, err)
 	default:
-		return m, errors.Wrapf(err,
-			"error fetching model %q from database", identifier)
+		return m, nil
 	}
 }
 
@@ -60,9 +61,11 @@ func (a *apiServer) ModelVersionFromID(modelIdentifier string,
 	case err == db.ErrNotFound:
 		return nil, status.Errorf(
 			codes.NotFound, "version %v for model %q not found", versionID, modelIdentifier)
+	case err != nil:
+		return nil, fmt.Errorf("error fetching version %v for model %q from database: %w",
+			versionID, modelIdentifier, err)
 	default:
-		return mv, errors.Wrapf(err,
-			"error fetching version %v for model %q from database", versionID, modelIdentifier)
+		return mv, nil
 	}
 }
 
@@ -81,7 +84,7 @@ func (a *apiServer) GetModel(
 		m.WorkspaceId); err != nil {
 		return nil, err
 	} else if !ok {
-		return nil, errors.Errorf("current user %q doesn't have permissions to get model %q.",
+		return nil, fmt.Errorf("current user %q doesn't have permissions to get model %q.",
 			curUser.Username, m.Name)
 	}
 	return &apiv1.GetModelResponse{Model: m}, err
@@ -157,8 +160,7 @@ func (a *apiServer) GetModels(
 	if err != nil {
 		return nil, err
 	} else if !ok {
-		return nil, errors.Errorf(
-			"current user doesn't have view permissions in related workspaces.")
+		return nil, fmt.Errorf("current user doesn't have view permissions in related workspaces.")
 	}
 	var workspaceIds []string
 	var workspaceIdsWithPermsAndFilter string
@@ -225,7 +227,7 @@ func (a *apiServer) GetModelLabels(
 		ColumnExpr("sorted_labels.label")
 	err = opQuery.Scan(ctx)
 
-	return &resp, errors.Wrapf(err, "error getting model labels")
+	return &resp, fmt.Errorf("error getting model labels: %w", err)
 }
 
 func (a *apiServer) clearModelName(ctx context.Context, modelName string) error {
@@ -254,7 +256,7 @@ func (a *apiServer) PostModel(
 
 	b, err := protojson.Marshal(req.Metadata)
 	if err != nil {
-		return nil, errors.Wrap(err, "error marshaling model.Metadata")
+		return nil, fmt.Errorf("error marshaling model.Metadata: %w", err)
 	}
 
 	user, err := a.CurrentUser(ctx, &apiv1.CurrentUserRequest{})
@@ -268,7 +270,7 @@ func (a *apiServer) PostModel(
 		w := workspacev1.Workspace{}
 		err := a.m.db.Query("get_workspace_from_name", &w, *req.WorkspaceName)
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed to get workspace %v", *req.WorkspaceName)
+			return nil, fmt.Errorf("failed to get workspace %v: %w", *req.WorkspaceName, err)
 		}
 		workspaceID = int(w.Id)
 	}
@@ -292,8 +294,11 @@ func (a *apiServer) PostModel(
 		return nil,
 			status.Errorf(codes.AlreadyExists, "avoid names equal to other models (case-insensitive)")
 	}
-	return &apiv1.PostModelResponse{Model: m},
-		errors.Wrapf(err, "error creating model %q in database", req.Name)
+	if err != nil {
+		return nil, fmt.Errorf("error creating model %q in database: %w", req.Name, err)
+	}
+
+	return &apiv1.PostModelResponse{Model: m}, nil
 }
 
 func (a *apiServer) PatchModel(
@@ -305,7 +310,7 @@ func (a *apiServer) PatchModel(
 	}
 
 	if currModel.Archived {
-		return nil, errors.Errorf("model %q is archived and cannot have attributes updated.",
+		return nil, fmt.Errorf("model %q is archived and cannot have attributes updated.",
 			currModel.Name)
 	}
 
@@ -345,12 +350,12 @@ func (a *apiServer) PatchModel(
 
 	currMeta, err := protojson.Marshal(currModel.Metadata)
 	if err != nil {
-		return nil, errors.Wrap(err, "error marshaling database model metadata")
+		return nil, fmt.Errorf("error marshaling database model metadata: %w", err)
 	}
 	if req.Model.Metadata != nil {
 		newMeta, err2 := protojson.Marshal(req.Model.Metadata)
 		if err2 != nil {
-			return nil, errors.Wrap(err2, "error marshaling request model metadata")
+			return nil, fmt.Errorf("error marshaling request model metadata: %w", err2)
 		}
 
 		if !bytes.Equal(currMeta, newMeta) {
@@ -394,12 +399,12 @@ func (a *apiServer) PatchModel(
 		if req.Model.WorkspaceId != nil { // default
 			err := a.m.db.Query("get_workspace", &w, *req.Model.WorkspaceId)
 			if err != nil {
-				return nil, errors.Wrapf(err, "failed to get workspace with id %v", *req.Model.WorkspaceId)
+				return nil, fmt.Errorf("failed to get workspace with id %v: %w", *req.Model.WorkspaceId, err)
 			}
 		} else {
 			err := a.m.db.Query("get_workspace_from_name", &w, *req.Model.WorkspaceName)
 			if err != nil {
-				return nil, errors.Wrapf(err, "failed to get workspace %v", *req.Model.WorkspaceName)
+				return nil, fmt.Errorf("failed to get workspace %v: %w", *req.Model.WorkspaceName, err)
 			}
 		}
 
@@ -428,8 +433,11 @@ func (a *apiServer) PatchModel(
 		return nil,
 			status.Errorf(codes.AlreadyExists, "avoid names equal to other models (case-insensitive)")
 	}
-	return &apiv1.PatchModelResponse{Model: finalModel},
-		errors.Wrapf(err, "error updating model %q in database", currModel.Name)
+	if err != nil {
+		return nil, fmt.Errorf("error updating model %q in database: %w", currModel.Name, err)
+	}
+
+	return &apiv1.PatchModelResponse{Model: finalModel}, nil
 }
 
 func (a *apiServer) ArchiveModel(
@@ -451,14 +459,12 @@ func (a *apiServer) ArchiveModel(
 
 	holder := &modelv1.Model{}
 	err = a.m.db.QueryProto("archive_model", holder, currModel.Name)
-
-	if holder.Id == 0 {
-		return nil, errors.Wrapf(err, "model %q was not found and cannot be archived",
-			req.ModelName)
+	if err != nil || holder.Id == 0 {
+		return nil, fmt.Errorf("model %q was not found and cannot be archived: %w",
+			req.ModelName, err)
 	}
 
-	return &apiv1.ArchiveModelResponse{},
-		errors.Wrapf(err, "error archiving model %q", req.ModelName)
+	return &apiv1.ArchiveModelResponse{}, nil
 }
 
 func (a *apiServer) UnarchiveModel(
@@ -480,14 +486,14 @@ func (a *apiServer) UnarchiveModel(
 
 	holder := &modelv1.Model{}
 	err = a.m.db.QueryProto("unarchive_model", holder, currModel.Name)
-
+	if err != nil {
+		return nil, fmt.Errorf("error unarchiving model %q: %w", req.ModelName, err)
+	}
 	if holder.Id == 0 {
-		return nil, errors.Wrapf(err, "model %q was not found and cannot be un-archived",
-			req.ModelName)
+		return nil, fmt.Errorf("model %q was not found and cannot be un-archived", req.ModelName)
 	}
 
-	return &apiv1.UnarchiveModelResponse{},
-		errors.Wrapf(err, "error unarchiving model %q", req.ModelName)
+	return &apiv1.UnarchiveModelResponse{}, nil
 }
 
 func (a *apiServer) MoveModel(
@@ -512,11 +518,11 @@ func (a *apiServer) MoveModel(
 	holder := &modelv1.Model{}
 	err = a.m.db.QueryProto("move_model", holder, currModel.Id, req.DestinationWorkspaceId)
 	if err != nil {
-		return nil, errors.Wrapf(err, "error moving a model (%s)", req.ModelName)
+		return nil, fmt.Errorf("error moving a model (%s): %w", req.ModelName, err)
 	}
 	if holder.Id == 0 {
-		return nil, errors.Wrapf(err, "Model (%s) does not exist or not moveable by this user",
-			req.ModelName)
+		return nil, fmt.Errorf("Model (%s) does not exist or not moveable by this user: %w",
+			req.ModelName, err)
 	}
 
 	return &apiv1.MoveModelResponse{}, nil
@@ -549,12 +555,11 @@ func (a *apiServer) DeleteModel(
 		user.User.Admin)
 
 	if holder.Id == 0 {
-		return nil, errors.Wrapf(err, "model %q does not exist or not deletable by this user",
-			req.ModelName)
+		return nil, fmt.Errorf("model %q does not exist or not deletable by this user: %w",
+			req.ModelName, err)
 	}
 
-	return &apiv1.DeleteModelResponse{},
-		errors.Wrapf(err, "error deleting model %q", req.ModelName)
+	return &apiv1.DeleteModelResponse{}, fmt.Errorf("error deleting model %q: %w", req.ModelName, err)
 }
 
 func (a *apiServer) GetModelVersion(
@@ -574,7 +579,7 @@ func (a *apiServer) GetModelVersion(
 		currModel.WorkspaceId); err != nil {
 		return nil, err
 	} else if !ok {
-		return nil, errors.Errorf("current user %q doesn't have permissions to get model %q.",
+		return nil, fmt.Errorf("current user %q doesn't have permissions to get model %q.",
 			curUser.Username, currModel.Name)
 	}
 
@@ -600,7 +605,7 @@ func (a *apiServer) GetModelVersions(
 		parentModel.WorkspaceId); err != nil {
 		return nil, err
 	} else if !ok {
-		return nil, errors.Errorf("current user %q doesn't have permissions to get model %q.",
+		return nil, fmt.Errorf("current user %q doesn't have permissions to get model %q.",
 			curUser.Username, parentModel.Name)
 	}
 
@@ -633,7 +638,7 @@ func (a *apiServer) PostModelVersion(
 	}
 
 	if modelResp.Archived {
-		return nil, errors.Errorf("model %q is archived and cannot register new versions.",
+		return nil, fmt.Errorf("model %q is archived and cannot register new versions.",
 			modelResp.Name)
 	}
 
@@ -649,10 +654,8 @@ func (a *apiServer) PostModelVersion(
 	}
 
 	if c.State != checkpointv1.State_STATE_COMPLETED {
-		return nil, errors.Errorf(
-			"checkpoint %s is in %s state. checkpoints for model versions must be in a COMPLETED state",
-			c.Uuid, c.State,
-		)
+		return nil, fmt.Errorf("checkpoint %s is in %s state. "+
+			"checkpoints for model versions must be in a COMPLETED state", c.Uuid, c.State)
 	}
 
 	user, err := a.CurrentUser(ctx, &apiv1.CurrentUserRequest{})
@@ -665,7 +668,7 @@ func (a *apiServer) PostModelVersion(
 
 	mdata, err := protojson.Marshal(req.Metadata)
 	if err != nil {
-		return nil, errors.Wrap(err, "error marshaling ModelVersion.Metadata")
+		return nil, fmt.Errorf("error marshaling ModelVersion.Metadata: %w", err)
 	}
 
 	reqLabels := strings.Join(req.Labels, ",")
@@ -683,8 +686,8 @@ func (a *apiServer) PostModelVersion(
 		user.User.Id,
 	)
 
-	return respModelVersion, errors.Wrapf(err, "error adding model version to model %q",
-		req.ModelName)
+	return respModelVersion, fmt.Errorf("error adding model version to model %q: %w",
+		req.ModelName, err)
 }
 
 func (a *apiServer) PatchModelVersion(
@@ -736,12 +739,12 @@ func (a *apiServer) PatchModelVersion(
 
 	currMeta, err := protojson.Marshal(currModelVersion.Metadata)
 	if err != nil {
-		return nil, errors.Wrap(err, "error marshaling database model version metadata")
+		return nil, fmt.Errorf("error marshaling database model version metadata: %w", err)
 	}
 	if req.ModelVersion.Metadata != nil {
 		newMeta, err2 := protojson.Marshal(req.ModelVersion.Metadata)
 		if err2 != nil {
-			return nil, errors.Wrap(err2, "error marshaling request model version metadata")
+			return nil, fmt.Errorf("error marshaling request model version metadata: %w", err2)
 		}
 
 		if !bytes.Equal(currMeta, newMeta) {
@@ -784,9 +787,12 @@ func (a *apiServer) PatchModelVersion(
 	err = a.m.db.QueryProto("update_model_version", finalModelVersion, currModelVersion.Id,
 		parentModel.Id, currModelVersion.Name, currModelVersion.Comment, currModelVersion.Notes,
 		currMeta, currLabels)
+	if err != nil {
+		return nil, fmt.Errorf("error updating model version (%v) in database: %w",
+			modelVersionName, err)
+	}
 
-	return &apiv1.PatchModelVersionResponse{ModelVersion: finalModelVersion},
-		errors.Wrapf(err, "error updating model version (%v) in database", modelVersionName)
+	return &apiv1.PatchModelVersionResponse{ModelVersion: finalModelVersion}, nil
 }
 
 func (a *apiServer) DeleteModelVersion(
@@ -821,11 +827,10 @@ func (a *apiServer) DeleteModelVersion(
 		user.User.Id, user.User.Admin)
 
 	modelVersionName := fmt.Sprintf("%v:%v", req.ModelName, req.ModelVersionNum)
-	if holder.Id == 0 {
-		return nil, errors.Wrapf(err, "model version %v does not exist or not deletable by this user",
-			modelVersionName)
+	if holder.Id == 0 || err != nil {
+		return nil, fmt.Errorf("model version %v does not exist or not deletable by this user: %w",
+			modelVersionName, err)
 	}
 
-	return &apiv1.DeleteModelVersionResponse{},
-		errors.Wrapf(err, "error deleting model version %v", modelVersionName)
+	return &apiv1.DeleteModelVersionResponse{}, nil
 }

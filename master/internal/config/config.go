@@ -9,9 +9,9 @@ import (
 	"path/filepath"
 	"sync"
 
-	log "github.com/sirupsen/logrus"
-
 	"github.com/pkg/errors"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/pkg/config"
 	"github.com/determined-ai/determined/master/pkg/logger"
@@ -203,7 +203,7 @@ func (c Config) Printable() ([]byte, error) {
 
 	optJSON, err := json.Marshal(c)
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to convert config to JSON")
+		return nil, fmt.Errorf("unable to convert config to JSON: %w", err)
 	}
 	return optJSON, nil
 }

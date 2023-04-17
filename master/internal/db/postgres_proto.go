@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/jmoiron/sqlx"
-	"github.com/pkg/errors"
+
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 
@@ -19,7 +19,7 @@ func (db *PgDB) QueryProto(queryName string, v interface{}, args ...interface{})
 	if err == ErrNotFound {
 		return err
 	}
-	return errors.Wrapf(err, "error running query: %v", queryName)
+	return fmt.Errorf("error running query: %v: %w", queryName, err)
 }
 
 // QueryProtof returns the result of the formated query. Any placeholder parameters are replaced
@@ -31,20 +31,21 @@ func (db *PgDB) QueryProtof(
 	if len(args) > 0 {
 		query = fmt.Sprintf(query, args...)
 	}
-	return errors.Wrapf(
-		db.queryRowsWithParser(query, protoParser, v, params...),
-		"error running query: %v", queryName,
-	)
+	if err := db.queryRowsWithParser(query, protoParser, v, params...); err != nil {
+		return fmt.Errorf("error running query: %v: %w", queryName, err)
+	}
+
+	return nil
 }
 
 func protoParser(rows *sqlx.Rows, val interface{}) error {
 	message, ok := val.(proto.Message)
 	if !ok {
-		return errors.Errorf("invalid type conversion: %T is not a Protobuf message", val)
+		return fmt.Errorf("invalid type conversion: %T is not a Protobuf message", val)
 	}
 	dest := make(map[string]interface{})
 	if err := rows.MapScan(dest); err != nil {
-		return errors.Wrap(err, "error reading row from database")
+		return fmt.Errorf("error reading row from database: %w", err)
 	}
 	for key, value := range dest {
 		switch parsed := value.(type) {
@@ -53,15 +54,19 @@ func protoParser(rows *sqlx.Rows, val interface{}) error {
 		case []byte:
 			var marshaled interface{}
 			if err := json.Unmarshal(parsed, &marshaled); err != nil {
-				return errors.Wrapf(err, "error parsing field: %s", key)
+				return fmt.Errorf("error parsing field: %s: %w", key, err)
 			}
 			dest[key] = marshaled
 		}
 	}
 	bytes, err := json.Marshal(dest)
 	if err != nil {
-		return errors.Wrapf(err, "error converting row to json bytes: %s", dest)
+		return fmt.Errorf("error converting row to json bytes: %s: %w", dest, err)
 	}
-	return errors.Wrapf(protojson.Unmarshal(bytes, message),
-		"error converting row to Protobuf struct")
+
+	if err := protojson.Unmarshal(bytes, message); err != nil {
+		return fmt.Errorf("error converting row to Protobuf struct: %w", err)
+	}
+
+	return nil
 }

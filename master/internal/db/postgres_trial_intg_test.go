@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/pkg/errors"
+
 	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/determined-ai/determined/master/pkg/etc"
@@ -236,7 +236,7 @@ func TestBatchesProcessed(t *testing.T) {
 			}))
 
 		default:
-			return errors.Errorf("unknown type %s", typ)
+			return fmt.Errorf("unknown type %s", typ)
 		}
 
 		dbTr, err = db.TrialByID(tr.ID)

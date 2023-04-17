@@ -2,6 +2,7 @@ package union
 
 import (
 	"encoding/json"
+	"fmt"
 	"reflect"
 	"strings"
 
@@ -30,8 +31,7 @@ func MarshalEx(v interface{}, allowEmptyUnion bool) ([]byte, error) {
 
 			// Only one union type can be marshaled into the JSON struct.
 			if unionDefined {
-				return nil, errors.Errorf(
-					"%s defines a union field when one is already defined", key)
+				return nil, fmt.Errorf("%s defines a union field when one is already defined", key)
 			}
 
 			// Marshal the union type to a map and add each field to the parent map.
@@ -51,7 +51,7 @@ func MarshalEx(v interface{}, allowEmptyUnion bool) ([]byte, error) {
 
 		// At least one union type must be defined.
 		if !unionDefined && !allowEmptyUnion {
-			return nil, errors.Errorf("no union field defined: %s", key)
+			return nil, fmt.Errorf("no union field defined: %s", key)
 		}
 	}
 

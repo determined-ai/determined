@@ -2,6 +2,7 @@ package internal
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -19,7 +20,7 @@ func (a *apiServer) GetTemplates(
 ) (*apiv1.GetTemplatesResponse, error) {
 	resp := &apiv1.GetTemplatesResponse{}
 	if err := a.m.db.QueryProto("get_templates", &resp.Templates); err != nil {
-		return nil, errors.Wrap(err, "error fetching templates from database")
+		return nil, fmt.Errorf("error fetching templates from database: %w", err)
 	}
 	a.filter(&resp.Templates, func(i int) bool {
 		return strings.Contains(strings.ToLower(resp.Templates[i].Name), strings.ToLower(req.Name))
@@ -32,13 +33,14 @@ func (a *apiServer) GetTemplate(
 	_ context.Context, req *apiv1.GetTemplateRequest,
 ) (*apiv1.GetTemplateResponse, error) {
 	t := &templatev1.Template{}
-	switch err := a.m.db.QueryProto("get_template", t, req.TemplateName); err {
-	case db.ErrNotFound:
+	switch err := a.m.db.QueryProto("get_template", t, req.TemplateName); {
+	case errors.Is(err, db.ErrNotFound):
 		return nil, status.Errorf(
 			codes.NotFound, "error fetching template from database: %s", req.TemplateName)
+	case err != nil:
+		return nil, fmt.Errorf("error fetching template from database: %s: %w", req.TemplateName, err)
 	default:
-		return &apiv1.GetTemplateResponse{Template: t},
-			errors.Wrapf(err, "error fetching template from database: %s", req.TemplateName)
+		return &apiv1.GetTemplateResponse{Template: t}, nil
 	}
 }
 
@@ -49,9 +51,11 @@ func (a *apiServer) PutTemplate(
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid config provided: %s", err.Error())
 	}
-	err = a.m.db.QueryProto("put_template", req.Template, req.Template.Name, config)
-	return &apiv1.PutTemplateResponse{Template: req.Template},
-		errors.Wrapf(err, "error putting template")
+
+	if err = a.m.db.QueryProto("put_template", req.Template, req.Template.Name, config); err != nil {
+		return nil, fmt.Errorf("error putting template: %w", err)
+	}
+	return &apiv1.PutTemplateResponse{Template: req.Template}, nil
 }
 
 func (a *apiServer) DeleteTemplate(

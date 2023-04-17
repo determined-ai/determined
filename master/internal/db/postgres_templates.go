@@ -1,6 +1,8 @@
 package db
 
 import (
+	"fmt"
+
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -30,7 +32,7 @@ ON CONFLICT (name)
 DO
 UPDATE SET config=:config`, tpl)
 	if err != nil {
-		return errors.Wrapf(err, "error setting a template '%v'", tpl.Name)
+		return fmt.Errorf("error setting a template '%v': %w", tpl.Name, err)
 	}
 	return nil
 }
@@ -44,11 +46,11 @@ func (db *PgDB) DeleteTemplate(name string) error {
 DELETE FROM templates
 WHERE name=$1`, name)
 	if err1 != nil {
-		return errors.Wrapf(err1, "error deleting template '%v'", name)
+		return fmt.Errorf("error deleting template '%v': %w", name, err1)
 	}
 	num, err2 := result.RowsAffected()
 	if err2 != nil {
-		return errors.Wrapf(err2, "error deleting template '%v'", name)
+		return fmt.Errorf("error deleting template '%v': %w", name, err2)
 	}
 	if num != 1 {
 		return ErrNotFound

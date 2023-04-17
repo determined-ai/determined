@@ -4,6 +4,7 @@
 package olddata
 
 import (
+
 	// embed is only used in comments.
 	_ "embed"
 	"testing"

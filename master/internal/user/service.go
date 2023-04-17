@@ -11,8 +11,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
+
+	"github.com/labstack/echo/v4"
 
 	"github.com/determined-ai/determined/master/internal/api"
 	detContext "github.com/determined-ai/determined/master/internal/context"
@@ -382,7 +383,7 @@ func (s *Service) patchUser(c echo.Context) (interface{}, error) {
 	if params.Password != nil {
 		if err = AuthZProvider.Get().CanSetUsersPassword(ctx, currUser, *user); err != nil {
 			return nil, canViewUserErrorHandle(currUser, *user,
-				errors.Wrap(forbiddenError, err.Error()), userNotFoundErr)
+				fmt.Errorf(err.Error()+": %w", forbiddenError), userNotFoundErr)
 		}
 
 		if err = user.UpdatePasswordHash(*params.Password); err != nil {
@@ -394,7 +395,7 @@ func (s *Service) patchUser(c echo.Context) (interface{}, error) {
 	if params.Active != nil {
 		if err = AuthZProvider.Get().CanSetUsersActive(ctx, currUser, *user, *params.Active); err != nil {
 			return nil, canViewUserErrorHandle(currUser, *user,
-				errors.Wrap(forbiddenError, err.Error()), userNotFoundErr)
+				fmt.Errorf(err.Error()+": %w", forbiddenError), userNotFoundErr)
 		}
 
 		user.Active = *params.Active
@@ -404,7 +405,7 @@ func (s *Service) patchUser(c echo.Context) (interface{}, error) {
 	if params.Admin != nil {
 		if err = AuthZProvider.Get().CanSetUsersAdmin(ctx, currUser, *user, *params.Admin); err != nil {
 			return nil, canViewUserErrorHandle(currUser, *user,
-				errors.Wrap(forbiddenError, err.Error()), userNotFoundErr)
+				fmt.Errorf(err.Error()+": %w", forbiddenError), userNotFoundErr)
 		}
 
 		user.Admin = *params.Admin
@@ -421,7 +422,7 @@ func (s *Service) patchUser(c echo.Context) (interface{}, error) {
 
 		if err := AuthZProvider.Get().CanSetUsersAgentUserGroup(ctx, currUser, *user, *ug); err != nil {
 			return nil, canViewUserErrorHandle(currUser, *user,
-				errors.Wrap(forbiddenError, err.Error()), userNotFoundErr)
+				fmt.Errorf(err.Error()+": %w", forbiddenError), userNotFoundErr)
 		}
 	}
 
@@ -482,7 +483,7 @@ func (s *Service) patchUsername(c echo.Context) (interface{}, error) {
 	if err = AuthZProvider.Get().CanSetUsersUsername(ctx, currUser,
 		*user); err != nil {
 		return nil, canViewUserErrorHandle(currUser, *user,
-			errors.Wrap(forbiddenError, err.Error()), db.ErrNotFound)
+			fmt.Errorf(err.Error()+": %w", forbiddenError), db.ErrNotFound)
 	}
 
 	if params.NewUsername == nil {
@@ -560,7 +561,7 @@ func (s *Service) postUser(c echo.Context) (interface{}, error) {
 	}
 	if err = AuthZProvider.Get().CanCreateUser(ctx, currUser, userToAdd,
 		ug); err != nil {
-		return nil, errors.Wrap(forbiddenError, err.Error())
+		return nil, fmt.Errorf(err.Error()+": %w", forbiddenError)
 	}
 
 	_, err = s.db.AddUser(&userToAdd, ug)
@@ -602,7 +603,7 @@ func (s *Service) getUserImage(c echo.Context) (interface{}, error) {
 	if err := AuthZProvider.Get().CanGetUsersImage(ctx, currUser,
 		*user); err != nil {
 		return nil, canViewUserErrorHandle(currUser, *user,
-			errors.Wrap(forbiddenError, err.Error()), db.ErrNotFound)
+			fmt.Errorf(err.Error()+": %w", forbiddenError), db.ErrNotFound)
 	}
 
 	c.Response().Header().Set("cache-control", "public, max-age=3600")

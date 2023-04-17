@@ -2,6 +2,7 @@ package apiutils
 
 import (
 	"github.com/pkg/errors"
+
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

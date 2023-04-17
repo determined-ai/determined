@@ -11,6 +11,7 @@ import (
 	_ "github.com/jackc/pgx/v4/stdlib" // Import Postgres driver.
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
+
 	log "github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
@@ -186,7 +187,7 @@ func ConnectPostgres(url string) (*PgDB, error) {
 		}
 		numTries++
 		if numTries >= 15 {
-			return nil, errors.Wrapf(err, "could not connect to database after %v tries", numTries)
+			return nil, fmt.Errorf("could not connect to database after %v tries: %w", numTries, err)
 		}
 		toWait := 4 * time.Second
 		time.Sleep(toWait)
@@ -214,16 +215,16 @@ func (db *PgDB) Close() error {
 func (db *PgDB) namedGet(dest interface{}, query string, arg interface{}) error {
 	nstmt, err := db.sql.PrepareNamed(query)
 	if err != nil {
-		return errors.Wrapf(err, "error preparing query %s", query)
+		return fmt.Errorf("error preparing query %s: %w", query, err)
 	}
 
 	defer nstmt.Close()
 
 	if sErr := nstmt.QueryRowx(arg).Scan(dest); sErr != nil {
-		err = errors.Wrapf(sErr, "error scanning query %s", query)
+		err = fmt.Errorf("error scanning query %s: %w", query, sErr)
 	}
 	if cErr := nstmt.Close(); cErr != nil && err != nil {
-		err = errors.Wrap(cErr, "error closing named DB statement")
+		err = fmt.Errorf("error closing named DB statement: %w", cErr)
 	}
 
 	return err
@@ -233,17 +234,15 @@ func (db *PgDB) namedGet(dest interface{}, query string, arg interface{}) error 
 func (db *PgDB) namedExecOne(query string, arg interface{}) error {
 	res, err := db.sql.NamedExec(query, arg)
 	if err != nil {
-		return errors.Wrapf(err, "error in query %v \narg %v", query, arg)
+		return fmt.Errorf("error in query %v \narg %v: %w", query, arg, err)
 	}
 	num, err := res.RowsAffected()
 	if err != nil {
-		return errors.Wrapf(
-			err,
-			"error checking rows affected for query %v\n arg %v",
-			query, arg)
+		return fmt.Errorf("error checking rows affected for query %v\n arg %v: %w",
+			query, arg, err)
 	}
 	if num != 1 {
-		return errors.Errorf("error: %v rows affected on query %v \narg %v", num, query, arg)
+		return fmt.Errorf("error: %v rows affected on query %v \narg %v", num, query, arg)
 	}
 	return nil
 }
@@ -252,17 +251,15 @@ func (db *PgDB) namedExecOne(query string, arg interface{}) error {
 func namedExecOne(tx *sqlx.Tx, query string, arg interface{}) error {
 	res, err := tx.NamedExec(query, arg)
 	if err != nil {
-		return errors.Wrapf(err, "error in query %v \narg %v", query, arg)
+		return fmt.Errorf("error in query %v \narg %v: %w", query, arg, err)
 	}
 	num, err := res.RowsAffected()
 	if err != nil {
-		return errors.Wrapf(
-			err,
-			"error checking rows affected for query %v\n arg %v",
-			query, arg)
+		return fmt.Errorf("error checking rows affected for query %v\n arg %v: %w",
+			query, arg, err)
 	}
 	if num != 1 {
-		return errors.Errorf("error: %v rows affected on query %v \narg %v", num, query, arg)
+		return fmt.Errorf("error: %v rows affected on query %v \narg %v", num, query, arg)
 	}
 	return nil
 }
@@ -332,17 +329,17 @@ func (db *PgDB) queryRowsWithParser(
 			case reflect.Ptr:
 				sValue := reflect.New(vValue.Type().Elem().Elem())
 				if err = p(rows, sValue.Interface()); err != nil {
-					return errors.Wrap(err, "queryRowsWithParser[ptr]")
+					return fmt.Errorf("queryRowsWithParser[ptr]: %w", err)
 				}
 				vValue = reflect.Append(vValue, sValue)
 			case reflect.Struct:
 				sValue := reflect.New(vValue.Type().Elem())
 				if err = p(rows, sValue.Interface()); err != nil {
-					return errors.Wrap(err, "queryRowsWithParser[struct]")
+					return fmt.Errorf("queryRowsWithParser[struct]: %w", err)
 				}
 				vValue = reflect.Append(vValue, sValue.Elem())
 			default:
-				return errors.Errorf("unexpected type: %s", k)
+				return fmt.Errorf("unexpected type: %s", k)
 			}
 		}
 		reflect.ValueOf(v).Elem().Set(vValue)
@@ -358,7 +355,7 @@ func (db *PgDB) queryRowsWithParser(
 	}
 
 	if err := rows.Close(); err != nil { //nolint: sqlclosecheck
-		return errors.Wrapf(err, "rows.Close()")
+		return fmt.Errorf("rows.Close(): %w", err)
 	}
 
 	return nil
@@ -394,7 +391,7 @@ func (db *PgDB) RawQuery(queryName string, params ...interface{}) ([]byte, error
 func (db *PgDB) withTransaction(name string, exec func(tx *sqlx.Tx) error) error {
 	tx, err := db.sql.Beginx()
 	if err != nil {
-		return errors.Wrapf(err, "failed to start transaction (%s)", name)
+		return fmt.Errorf("failed to start transaction (%s): %w", name, err)
 	}
 	defer func() {
 		if tx == nil {
@@ -407,11 +404,11 @@ func (db *PgDB) withTransaction(name string, exec func(tx *sqlx.Tx) error) error
 	}()
 
 	if err = exec(tx); err != nil {
-		return errors.Wrapf(err, "failed to exec transaction (%s)", name)
+		return fmt.Errorf("failed to exec transaction (%s): %w", name, err)
 	}
 
 	if err = tx.Commit(); err != nil {
-		return errors.Wrapf(err, "failed to commit transaction: (%s)", name)
+		return fmt.Errorf("failed to commit transaction: (%s): %w", name, err)
 	}
 
 	tx = nil

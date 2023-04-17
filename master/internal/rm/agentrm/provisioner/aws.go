@@ -11,7 +11,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
-	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/config/provconfig"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -39,7 +38,7 @@ func newAWSCluster(
 	resourcePool string, config *provconfig.Config, cert *tls.Certificate,
 ) (*awsCluster, error) {
 	if err := config.AWS.InitDefaultValues(); err != nil {
-		return nil, errors.Wrap(err, "failed to initialize auto configuration")
+		return nil, fmt.Errorf("failed to initialize auto configuration: %w", err)
 	}
 
 	// This following AWS session is created using AWS Credentials without explicitly configuration
@@ -67,12 +66,12 @@ func newAWSCluster(
 		Region: aws.String(config.AWS.Region),
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to create AWS session")
+		return nil, fmt.Errorf("failed to create AWS session: %w", err)
 	}
 
 	masterURL, err := url.Parse(config.MasterURL)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to parse master url")
+		return nil, fmt.Errorf("failed to parse master url: %w", err)
 	}
 
 	startupScriptBase64 := base64.StdEncoding.EncodeToString([]byte(config.StartupScript))
@@ -200,7 +199,7 @@ func (c *awsCluster) terminate(ctx *actor.Context, instanceIDs []string) {
 func (c *awsCluster) listOnDemand(ctx *actor.Context) ([]*model.Instance, error) {
 	instances, err := c.describeInstances(false)
 	if err != nil {
-		return nil, errors.Wrap(err, "cannot describe EC2 instances")
+		return nil, fmt.Errorf("cannot describe EC2 instances: %w", err)
 	}
 	res := c.newInstances(instances)
 	for _, inst := range res {

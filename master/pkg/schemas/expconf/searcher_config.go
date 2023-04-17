@@ -2,6 +2,7 @@ package expconf
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/pkg/errors"
 
@@ -49,7 +50,7 @@ func (s *SearcherConfigV0) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	type DefaultParser *SearcherConfigV0
-	return errors.Wrap(json.Unmarshal(data, DefaultParser(s)), "failed to parse searcher config")
+	return fmt.Errorf("failed to parse searcher config: %w", json.Unmarshal(data, DefaultParser(s)))
 }
 
 // Unit implements the model.InUnits interface.

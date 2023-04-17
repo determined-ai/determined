@@ -2,10 +2,9 @@ package union
 
 import (
 	"encoding/json"
+	"fmt"
 	"reflect"
 	"strings"
-
-	"github.com/pkg/errors"
 )
 
 // Unmarshal unmarshals the provided union type from a JSON byte array.
@@ -27,7 +26,7 @@ func Unmarshal(data []byte, v interface{}) error {
 		}
 		field, ok := fields[expectedValue]
 		if !ok {
-			return errors.Errorf("unexpected %s: %s", key, expectedValue)
+			return fmt.Errorf("unexpected %s: %s", key, expectedValue)
 		}
 
 		if fieldVal := value.Elem().Field(field.index); !fieldVal.IsNil() {
@@ -87,7 +86,7 @@ func checkFields(fields map[string]bool, bytes []byte) error {
 	}
 	for key := range data {
 		if _, ok := fields[key]; !ok {
-			return errors.Errorf("json: unknown field \"%s\"", key)
+			return fmt.Errorf("json: unknown field \"%s\"", key)
 		}
 	}
 	return nil

@@ -6,9 +6,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/pkg/errors"
+
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
-	"github.com/pkg/errors"
+
 	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/internal/api"
@@ -21,7 +23,7 @@ import (
 // AddTrial adds the trial to the database and sets its ID.
 func (db *PgDB) AddTrial(trial *model.Trial) error {
 	if trial.ID != 0 {
-		return errors.Errorf("error adding a trial with non-zero id %v", trial.ID)
+		return fmt.Errorf("error adding a trial with non-zero id %v", trial.ID)
 	}
 
 	if err := db.namedGet(&trial.ID, `
@@ -32,7 +34,7 @@ VALUES (:task_id, :request_id, :experiment_id, :state, :start_time,
 	:end_time, :hparams, :warm_start_checkpoint_id, :seed)
 RETURNING id`, trial); err != nil {
 		// Assume the foreign key constraint is handled by the database.
-		return errors.Wrapf(err, "error inserting trial %v", *trial)
+		return fmt.Errorf("error inserting trial %v: %w", *trial, err)
 	}
 
 	return nil
@@ -46,7 +48,7 @@ SELECT id, COALESCE(task_id, '') AS task_id, request_id, experiment_id, state, s
 	end_time, hparams, warm_start_checkpoint_id, seed, total_batches
 FROM trials
 WHERE id = $1`, &trial, id)
-	return &trial, errors.Wrapf(err, "error querying for trial %v", id)
+	return &trial, fmt.Errorf("error querying for trial %v: %w", id, err)
 }
 
 // TrialByExperimentAndRequestID looks up a trial, returning an error if none exists.
@@ -59,7 +61,7 @@ SELECT id, task_id, request_id, experiment_id, state, start_time,
   end_time, hparams, warm_start_checkpoint_id, seed, total_batches
 FROM trials
 WHERE experiment_id = $1 AND request_id = $2`, &trial, experimentID, requestID)
-	return &trial, errors.Wrapf(err, "error querying for trial %v", requestID)
+	return &trial, fmt.Errorf("error querying for trial %v: %w", requestID, err)
 }
 
 // UpdateTrial updates an existing trial. Fields that are nil or zero are not
@@ -67,7 +69,7 @@ WHERE experiment_id = $1 AND request_id = $2`, &trial, experimentID, requestID)
 func (db *PgDB) UpdateTrial(id int, newState model.State) error {
 	trial, err := db.TrialByID(id)
 	if err != nil {
-		return errors.Wrapf(err, "error finding trial %v to update", id)
+		return fmt.Errorf("error finding trial %v to update: %w", id, err)
 	}
 
 	if trial.State == newState {
@@ -75,7 +77,7 @@ func (db *PgDB) UpdateTrial(id int, newState model.State) error {
 	}
 
 	if !model.TrialTransitions[trial.State][newState] {
-		return errors.Errorf("illegal transition %v -> %v for trial %v",
+		return fmt.Errorf("illegal transition %v -> %v for trial %v",
 			trial.State, newState, trial.ID)
 	}
 	toUpdate := []string{"state"}
@@ -93,8 +95,8 @@ func (db *PgDB) UpdateTrial(id int, newState model.State) error {
 UPDATE trials
 %v
 WHERE id = :id`, setClause(toUpdate)), trial); err != nil {
-			return errors.Wrapf(err, "error updating (%v) in trial %v",
-				strings.Join(toUpdate, ", "), id)
+			return fmt.Errorf("error updating (%v) in trial %v: %w",
+				strings.Join(toUpdate, ", "), id, err)
 		}
 
 		if model.TerminalStates[newState] && trial.EndTime != nil {
@@ -116,7 +118,7 @@ func (db *PgDB) UpdateTrialRunnerMetadata(id int, md *trialv1.TrialRunnerMetadat
 UPDATE trials
 SET runner_state = $2
 WHERE id = $1`, id, md.State); err != nil {
-		return errors.Wrap(err, "saving trial runner state")
+		return fmt.Errorf("saving trial runner state: %w", err)
 	}
 	return nil
 }
@@ -128,7 +130,7 @@ func (db *PgDB) TrialRunIDAndRestarts(trialID int) (int, int, error) {
 SELECT run_id, restarts
 FROM trials
 WHERE id = $1`, trialID).Scan(&runID, &restart); err != nil {
-		return 0, 0, errors.Wrap(err, "failed to scan trial restart count")
+		return 0, 0, fmt.Errorf("failed to scan trial restart count: %w", err)
 	}
 	return runID, restart, nil
 }
@@ -139,7 +141,7 @@ func (db *PgDB) UpdateTrialRunID(id, runID int) error {
 UPDATE trials
 SET run_id = $2
 WHERE id = $1`, id, runID); err != nil {
-		return errors.Wrap(err, "updating trial run id")
+		return fmt.Errorf("updating trial run id: %w", err)
 	}
 	return nil
 }
@@ -150,7 +152,7 @@ func (db *PgDB) UpdateTrialRestarts(id, restartCount int) error {
 UPDATE trials
 SET restarts = $2
 WHERE id = $1`, id, restartCount); err != nil {
-		return errors.Wrap(err, "updating trial restarts")
+		return fmt.Errorf("updating trial restarts: %w", err)
 	}
 	return nil
 }
@@ -172,7 +174,7 @@ func (db *PgDB) updateTotalBatches(ctx context.Context, tx *sqlx.Tx, trialID int
 		) q
 		) AS sub;
 		`, trialID); err != nil {
-		return errors.Wrap(err, "error computing total_batches")
+		return fmt.Errorf("error computing total_batches: %w", err)
 	}
 	return nil
 }
@@ -213,11 +215,11 @@ WHERE trial_id = $1
   AND total_batches %s $3;
 	`, table, comparator), m.TrialId, m.TrialRunId, m.StepsCompleted)
 			if err != nil {
-				return errors.Wrap(err, "archiving metrics")
+				return fmt.Errorf("archiving metrics: %w", err)
 			}
 			affectedRows, err := res.RowsAffected()
 			if err != nil {
-				return errors.Wrap(err, "checking for metric rollbacks")
+				return fmt.Errorf("checking for metric rollbacks: %w", err)
 			}
 			if affectedRows > 0 {
 				rollbackHappened = true
@@ -235,19 +237,19 @@ VALUES
 			Metrics:      metricsBody,
 			TotalBatches: int(m.StepsCompleted),
 		}); err != nil {
-			return errors.Wrap(err, fmt.Sprintf("inserting metrics into %s", targetTable))
+			return fmt.Errorf("inserting metrics into %s: %w", targetTable, err)
 		}
 
 		if rollbackHappened {
 			if err := db.updateTotalBatches(ctx, tx, int(m.TrialId)); err != nil {
-				return errors.Wrap(err, "rollback")
+				return fmt.Errorf("rollback: %w", err)
 			}
 		} else {
 			if _, err := tx.ExecContext(ctx, `
 UPDATE trials SET total_batches = GREATEST(total_batches, $2)
 WHERE id = $1;
 `, m.TrialId, m.StepsCompleted); err != nil {
-				return errors.Wrap(err, "updating trial total batches")
+				return fmt.Errorf("updating trial total batches: %w", err)
 			}
 		}
 
@@ -256,7 +258,7 @@ WHERE id = $1;
 				tx, int(m.TrialId),
 				int(m.TrialRunId),
 				int(m.StepsCompleted)); err != nil {
-				return errors.Wrap(err, "updating trial best validation")
+				return fmt.Errorf("updating trial best validation: %w", err)
 			}
 		}
 		return nil
@@ -289,11 +291,11 @@ func AddCheckpointMetadata(ctx context.Context, m *model.CheckpointV2) error {
 
 	err := Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		if _, err := tx.NewInsert().Model(m).Exec(context.TODO()); err != nil {
-			return errors.Wrap(err, "inserting checkpoint")
+			return fmt.Errorf("inserting checkpoint: %w", err)
 		}
 
 		if err := UpdateCheckpointSizeTx(ctx, tx, []uuid.UUID{m.UUID}); err != nil {
-			return errors.Wrap(err, "updating checkpoint size")
+			return fmt.Errorf("updating checkpoint size: %w", err)
 		}
 
 		return nil
@@ -313,7 +315,7 @@ FROM trials
 WHERE id = $1
 `, trialID).Scan(&cRunID); {
 	case err != nil:
-		return errors.Wrap(err, "querying current run")
+		return fmt.Errorf("querying current run: %w", err)
 	case int(runID) != cRunID:
 		return api.AsValidationError("invalid run id, %d (reported) != %d (expected)", runID, cRunID)
 	default:
@@ -332,8 +334,8 @@ WHERE trial_id = $1
 AND total_batches = $2`, &validation, trialID, totalBatches); errors.Cause(err) == ErrNotFound {
 		return nil, nil
 	} else if err != nil {
-		return nil, errors.Wrapf(err, "error querying for validation (%v, %v)",
-			trialID, totalBatches)
+		return nil, fmt.Errorf("error querying for validation (%v, %v): %w",
+			trialID, totalBatches, err)
 	}
 	return &validation, nil
 }
@@ -349,8 +351,8 @@ WHERE c.trial_id = $1 AND c.steps_completed = $2`, &checkpoint, trialID, totalBa
 	); errors.Cause(err) == ErrNotFound {
 		return nil, nil
 	} else if err != nil {
-		return nil, errors.Wrapf(err, "error querying for checkpoint (%v, %v)",
-			trialID, totalBatches)
+		return nil, fmt.Errorf("error querying for checkpoint (%v, %v): %w",
+			trialID, totalBatches, err)
 	}
 	return &checkpoint, nil
 }
@@ -367,7 +369,7 @@ ORDER BY c.steps_completed DESC
 LIMIT 1`, &checkpoint, trialID); errors.Cause(err) == ErrNotFound {
 		return nil, nil
 	} else if err != nil {
-		return nil, errors.Wrapf(err, "error querying for latest trial checkpoint (%v)", trialID)
+		return nil, fmt.Errorf("error querying for latest trial checkpoint (%v): %w", trialID, err)
 	}
 	return &checkpoint, nil
 }
@@ -436,5 +438,5 @@ searcher_metric_value = (SELECT bv.searcher_metric_value FROM best_validation bv
 searcher_metric_value_signed = 
 (SELECT bv.searcher_metric_value * const.sign FROM best_validation bv, const);
 `, trialID, trialRunID, stepsCompleted)
-	return errors.Wrapf(err, "error updating best validation for trial %d", trialID)
+	return fmt.Errorf("error updating best validation for trial %d: %w", trialID, err)
 }

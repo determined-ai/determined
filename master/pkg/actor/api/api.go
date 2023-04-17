@@ -1,11 +1,11 @@
 package api
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/gorilla/websocket"
 	"github.com/labstack/echo/v4"
-	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/actor"
 )
@@ -49,7 +49,7 @@ func handleWSRequest(system *actor.System, recipient actor.Address, ctx echo.Con
 		case *actor.Ref:
 			return msg.AwaitTermination()
 		default:
-			return errors.Errorf("%s: unexpected message (%T): %v",
+			return fmt.Errorf("%s: unexpected message (%T): %v",
 				ctx.Request().URL.Path, resp.Get(), resp.Get())
 		}
 	}
@@ -66,7 +66,7 @@ func handleRequest(system *actor.System, recipient actor.Address, ctx echo.Conte
 		// The actor responded with either a response or error.
 		return resp.Error()
 	default:
-		return errors.Errorf("%s: unexpected message (%T): %v",
+		return fmt.Errorf("%s: unexpected message (%T): %v",
 			ctx.Request().URL.Path, resp.Get(), resp.Get())
 	}
 }

@@ -2,9 +2,8 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"time"
-
-	"github.com/pkg/errors"
 )
 
 // BatchRequest describes the parameters needed to target a subset of logs.
@@ -117,7 +116,7 @@ func (p *BatchStreamProcessor) Run(ctx context.Context, res chan BatchResult) {
 		var miss bool
 		switch batch, err := p.fetcher(p.req); {
 		case err != nil:
-			res <- ErrBatchResult(errors.Wrapf(err, "failed to fetch batch"))
+			res <- ErrBatchResult(fmt.Errorf("failed to fetch batch: %w", err))
 			return
 		case batch == nil, batch.Size() == 0:
 			if !p.req.Follow {
@@ -141,7 +140,7 @@ func (p *BatchStreamProcessor) Run(ctx context.Context, res chan BatchResult) {
 		if (miss || p.alwaysCheckTermination) && p.terminateCheck != nil {
 			switch terminate, err := p.terminateCheck(); {
 			case err != nil:
-				res <- ErrBatchResult(errors.Wrap(err, "failed to check the termination status"))
+				res <- ErrBatchResult(fmt.Errorf("failed to check the termination status: %w", err))
 				return
 			case terminate:
 				return

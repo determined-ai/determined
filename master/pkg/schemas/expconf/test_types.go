@@ -4,8 +4,7 @@ package expconf
 
 import (
 	"encoding/json"
-
-	"github.com/pkg/errors"
+	"fmt"
 
 	"github.com/determined-ai/determined/master/pkg/union"
 )
@@ -44,7 +43,7 @@ func (t *TestUnionV0) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	type DefaultParser *TestUnionV0
-	return errors.Wrap(json.Unmarshal(data, DefaultParser(t)), "failed to parse TestUnion")
+	return fmt.Errorf("failed to parse TestUnion: %w", json.Unmarshal(data, DefaultParser(t)))
 }
 
 // MarshalJSON is exported.

@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/labstack/echo/v4"
-	"github.com/pkg/errors"
+
 	"golang.org/x/exp/maps"
 	"gopkg.in/inf.v0"
 	k8sV1 "k8s.io/api/core/v1"
@@ -255,23 +255,23 @@ func (p *pods) Receive(ctx *actor.Context) error {
 	case actor.ChildFailed:
 		switch msg.Child {
 		case p.nodeInformer:
-			return errors.Errorf("node informer failed")
+			return fmt.Errorf("node informer failed")
 		case p.resourceRequestQueue:
-			return errors.Errorf("resource request actor failed")
+			return fmt.Errorf("resource request actor failed")
 		}
 		for _, informer := range p.informers {
 			if msg.Child == informer {
-				return errors.Errorf("pod informer failed")
+				return fmt.Errorf("pod informer failed")
 			}
 		}
 		for _, preemptionListener := range p.preemptionListeners {
 			if msg.Child == preemptionListener {
-				return errors.Errorf("preemption listener failed")
+				return fmt.Errorf("preemption listener failed")
 			}
 		}
 		for _, eventListener := range p.eventListeners {
 			if msg.Child == eventListener {
-				return errors.Errorf("event listener failed")
+				return fmt.Errorf("event listener failed")
 			}
 		}
 
@@ -336,12 +336,12 @@ func readClientConfig(credsDir string) (*rest.Config, error) {
 func (p *pods) startClientSet(ctx *actor.Context) error {
 	config, err := readClientConfig(p.credsDir)
 	if err != nil {
-		return errors.Wrap(err, "error building kubernetes config")
+		return fmt.Errorf("error building kubernetes config: %w", err)
 	}
 
 	p.clientSet, err = k8sClient.NewForConfig(config)
 	if err != nil {
-		return errors.Wrap(err, "failed to initialize kubernetes clientSet")
+		return fmt.Errorf("failed to initialize kubernetes clientSet: %w", err)
 	}
 
 	for _, ns := range append(maps.Keys(p.namespaceToPoolName), p.namespace) {
@@ -362,7 +362,7 @@ func (p *pods) getMasterIPAndPort(ctx *actor.Context) error {
 	masterService, err := p.clientSet.CoreV1().Services(p.namespace).Get(
 		context.TODO(), p.masterServiceName, metaV1.GetOptions{})
 	if err != nil {
-		return errors.Wrap(err, "failed to get master service")
+		return fmt.Errorf("failed to get master service: %w", err)
 	}
 
 	p.masterIP = masterService.Spec.ClusterIP
@@ -375,7 +375,7 @@ func (p *pods) getSystemResourceRequests(ctx *actor.Context) error {
 	systemPods, err := p.podInterfaces[p.namespace].List(
 		context.TODO(), metaV1.ListOptions{LabelSelector: determinedSystemLabel})
 	if err != nil {
-		return errors.Wrap(err, "failed to get system pods")
+		return fmt.Errorf("failed to get system pods: %w", err)
 	}
 
 	for _, systemPod := range systemPods.Items {
@@ -394,12 +394,12 @@ func (p *pods) reattachAllocationPods(ctx *actor.Context, msg reattachAllocation
 
 	pods, err := p.listPodsInAllNamespaces(context.TODO(), listOptions)
 	if err != nil {
-		return errors.Wrap(err, "error listing pods checking if they can be restored")
+		return fmt.Errorf("error listing pods checking if they can be restored: %w", err)
 	}
 
 	configMaps, err := p.listConfigMapsInAllNamespaces(context.TODO(), listOptions)
 	if err != nil {
-		return errors.Wrap(err, "error listing config maps checking if they can be restored")
+		return fmt.Errorf("error listing config maps checking if they can be restored: %w", err)
 	}
 	existingConfigMaps := make(set.Set[string])
 	for _, cm := range configMaps.Items {
@@ -465,8 +465,7 @@ func (p *pods) reattachAllocationPods(ctx *actor.Context, msg reattachAllocation
 			k8sPods[i], ports[i], msg.slots, msg.logContext)
 		if err != nil {
 			p.deleteKubernetesResources(ctx, pods, configMaps)
-			ctx.Respond(errors.Wrapf(err,
-				"error restoring pod with containerID %s", containerID))
+			ctx.Respond(fmt.Errorf("error restoring pod with containerID %s: %w", containerID, err))
 			return nil
 		}
 		restoreResponses = append(restoreResponses, resp)
@@ -525,7 +524,7 @@ func (p *pods) reattachPod(
 
 	state, err := getPodState(ctx, pod, newPodHandler.containerNames)
 	if err != nil {
-		return reattachPodResponse{}, errors.Wrap(err, "error finding pod state to restore")
+		return reattachPodResponse{}, fmt.Errorf("error finding pod state to restore: %w", err)
 	}
 	// Don't set container state if the state is terminated.
 	// This is so that when we send the update message we will go
@@ -543,8 +542,7 @@ func (p *pods) reattachPod(
 
 	ref, ok := ctx.ActorOf(fmt.Sprintf("pod-%s", containerID), newPodHandler)
 	if !ok {
-		return reattachPodResponse{}, errors.Errorf(
-			"pod actor %s already exists", ref.Address().String())
+		return reattachPodResponse{}, fmt.Errorf("pod actor %s already exists", ref.Address().String())
 	}
 
 	p.podNameToPodHandler[pod.Name] = ref
@@ -561,7 +559,7 @@ func (p *pods) reattachPod(
 	// and the pod being reattached.
 	updated, err := p.podInterfaces[pod.Namespace].Get(context.TODO(), pod.Name, metaV1.GetOptions{})
 	if err != nil {
-		return reattachPodResponse{}, errors.Wrap(err, "error getting pod status update in restore")
+		return reattachPodResponse{}, fmt.Errorf("error getting pod status update in restore: %w", err)
 	}
 	ctx.Tell(ctx.Self(), podStatusUpdate{updatedPod: updated})
 
@@ -589,7 +587,7 @@ func (p *pods) deleteDoomedKubernetesResources(ctx *actor.Context) error {
 	if err := db.Bun().NewSelect().Model(&openAllocations).
 		Where("end_time IS NULL").
 		Scan(context.TODO()); err != nil {
-		return errors.Wrap(err, "error querying the database for open allocations")
+		return fmt.Errorf("error querying the database for open allocations: %w", err)
 	}
 	openAllocationIDs := make(set.Set[model.AllocationID])
 	for _, alloc := range openAllocations {
@@ -599,7 +597,7 @@ func (p *pods) deleteDoomedKubernetesResources(ctx *actor.Context) error {
 	listOptions := metaV1.ListOptions{LabelSelector: determinedLabel}
 	pods, err := p.listPodsInAllNamespaces(context.TODO(), listOptions)
 	if err != nil {
-		return errors.Wrap(err, "error listing existing pods")
+		return fmt.Errorf("error listing existing pods: %w", err)
 	}
 	toKillPods := &k8sV1.PodList{}
 	savedPodNames := make(set.Set[string])
@@ -643,7 +641,7 @@ func (p *pods) deleteDoomedKubernetesResources(ctx *actor.Context) error {
 
 	configMaps, err := p.listConfigMapsInAllNamespaces(context.TODO(), listOptions)
 	if err != nil {
-		return errors.Wrap(err, "error listing existing config maps")
+		return fmt.Errorf("error listing existing config maps: %w", err)
 	}
 	toKillConfigMaps := &k8sV1.ConfigMapList{}
 	for _, cm := range configMaps.Items {
@@ -723,14 +721,14 @@ func (p *pods) receiveStartTaskPod(ctx *actor.Context, msg StartTaskPod) error {
 	)
 	ref, ok := ctx.ActorOf(fmt.Sprintf("pod-%s", msg.Spec.ContainerID), newPodHandler)
 	if !ok {
-		return errors.Errorf("pod actor %s already exists", ref.Address().String())
+		return fmt.Errorf("pod actor %s already exists", ref.Address().String())
 	}
 
 	ctx.Log().WithField("pod", newPodHandler.podName).WithField(
 		"handler", ref.Address()).Infof("registering pod handler")
 
 	if _, alreadyExists := p.podNameToPodHandler[newPodHandler.podName]; alreadyExists {
-		return errors.Errorf(
+		return fmt.Errorf(
 			"attempting to register same pod name: %s multiple times", newPodHandler.podName)
 	}
 
@@ -880,7 +878,7 @@ func (p *pods) receiveKillPod(ctx *actor.Context, msg KillTaskPod) {
 func (p *pods) cleanUpPodHandler(ctx *actor.Context, podHandler *actor.Ref) error {
 	podInfo, ok := p.podHandlerToMetadata[podHandler]
 	if !ok {
-		return errors.Errorf("unknown pod handler being deleted %s", podHandler.Address())
+		return fmt.Errorf("unknown pod handler being deleted %s", podHandler.Address())
 	}
 
 	name := fmt.Sprintf("%s-priorityclass", podInfo.containerID)
@@ -1251,7 +1249,7 @@ func (p *pods) listPodsInAllNamespaces(
 	for n, i := range p.podInterfaces {
 		pods, err := i.List(ctx, opts)
 		if err != nil {
-			return nil, errors.Wrapf(err, "error listing pods for namespace %s", n)
+			return nil, fmt.Errorf("error listing pods for namespace %s: %w", n, err)
 		}
 
 		res.Items = append(res.Items, pods.Items...)
@@ -1267,7 +1265,7 @@ func (p *pods) listConfigMapsInAllNamespaces(
 	for n, i := range p.configMapInterfaces {
 		cms, err := i.List(ctx, opts)
 		if err != nil {
-			return nil, errors.Wrapf(err, "error listing config maps for namespace %s", n)
+			return nil, fmt.Errorf("error listing config maps for namespace %s: %w", n, err)
 		}
 
 		res.Items = append(res.Items, cms.Items...)

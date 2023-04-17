@@ -1,11 +1,11 @@
 package template
 
 import (
+	"fmt"
 	"io/ioutil"
 
 	"github.com/ghodss/yaml"
 	"github.com/labstack/echo/v4"
-	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/db"
@@ -45,11 +45,14 @@ func (m *manager) put(c echo.Context) (interface{}, error) {
 		return nil, err
 	}
 	if err := yaml.Unmarshal(body, make(map[interface{}]interface{})); err != nil {
-		return nil, errors.Wrap(err, "invalid YAML for template")
+		return nil, fmt.Errorf("invalid YAML for template: %w", err)
 	}
-	return nil, errors.Wrapf(
-		m.db.UpsertTemplate(&model.Template{Name: name, Config: body}),
-		"error putting template %q", name)
+
+	if err := m.db.UpsertTemplate(&model.Template{Name: name, Config: body}); err != nil {
+		return nil, fmt.Errorf("error putting template %q: %w", name, err)
+	}
+
+	return nil, nil
 }
 
 func (m *manager) delete(c echo.Context) (interface{}, error) {
@@ -61,7 +64,7 @@ func (m *manager) delete(c echo.Context) (interface{}, error) {
 	}
 	name := args.Name
 	if err := m.db.DeleteTemplate(name); err != nil {
-		return nil, errors.Wrapf(err, "deleting template %q", name)
+		return nil, fmt.Errorf("deleting template %q: %w", name, err)
 	}
 	return nil, nil
 }

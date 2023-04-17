@@ -75,7 +75,7 @@ linters-settings:
     forbid:
       - 'fmt\.Print.*'
       - 'metaV1.NamespaceAll' # Will error if someone has namespace restricted permissions.
-
+      - 'errors.Wrap*' # Use fmt.Errorf("error because ... %w", err)
 linters:
   enable-all: true
   disable:

@@ -1,6 +1,6 @@
 package config
 
-import "github.com/pkg/errors"
+import "fmt"
 
 // DefaultResourceConfig returns the default resource configuration.
 func DefaultResourceConfig() *ResourceConfig {
@@ -40,7 +40,7 @@ func (r ResourceConfig) Validate() []error {
 	poolNames := make(map[string]bool)
 	for ix, rp := range r.ResourcePools {
 		if _, ok := poolNames[rp.PoolName]; ok {
-			errs = append(errs, errors.Errorf("%d resource pool has a duplicate name: %s", ix, rp.PoolName))
+			errs = append(errs, fmt.Errorf("%d resource pool has a duplicate name: %s", ix, rp.PoolName))
 		} else {
 			poolNames[rp.PoolName] = true
 		}

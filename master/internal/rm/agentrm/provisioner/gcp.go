@@ -11,7 +11,7 @@ import (
 
 	petname "github.com/dustinkirkland/golang-petname"
 	"github.com/google/uuid"
-	"github.com/pkg/errors"
+
 	"golang.org/x/net/context"
 	"google.golang.org/api/compute/v1"
 
@@ -36,7 +36,7 @@ func newGCPCluster(
 	resourcePool string, config *provconfig.Config, cert *tls.Certificate,
 ) (*gcpCluster, error) {
 	if err := config.GCP.InitDefaultValues(); err != nil {
-		return nil, errors.Wrap(err, "failed to initialize auto configuration")
+		return nil, fmt.Errorf("failed to initialize auto configuration: %w", err)
 	}
 	// This following GCP service is created using GCP Credentials without explicitly configuration
 	// in the code. However you need to do the following settings.
@@ -51,12 +51,12 @@ func newGCPCluster(
 	ctx := context.Background()
 	computeService, err := compute.NewService(ctx)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to create GCP compute engine client")
+		return nil, fmt.Errorf("failed to create GCP compute engine client: %w", err)
 	}
 
 	masterURL, err := url.Parse(config.MasterURL)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to parse master url")
+		return nil, fmt.Errorf("failed to parse master url: %w", err)
 	}
 
 	startupScriptBase64 := base64.StdEncoding.EncodeToString([]byte(config.StartupScript))
@@ -179,7 +179,7 @@ func (c *gcpCluster) list(ctx *actor.Context) ([]*model.Instance, error) {
 			return nil
 		},
 	); err != nil {
-		return nil, errors.Wrap(err, "cannot list GCE instances")
+		return nil, fmt.Errorf("cannot list GCE instances: %w", err)
 	}
 	res := c.newInstances(instances)
 	for i, inst := range res {
@@ -297,7 +297,7 @@ func (c *gcpCluster) newInstances(input []*compute.Instance) []*model.Instance {
 		}
 		t, err := time.Parse(time.RFC3339, inst.CreationTimestamp)
 		if err != nil {
-			panic(errors.Wrap(err, "cannot parse GCE instance launching time"))
+			panic(fmt.Errorf("cannot parse GCE instance launching time: %w", err))
 		}
 		output = append(output, &model.Instance{
 			ID:         c.idFromInstance(inst),

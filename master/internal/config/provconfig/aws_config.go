@@ -6,10 +6,11 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/pkg/errors"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/ec2metadata"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg"
 	"github.com/determined-ai/determined/master/pkg/check"
@@ -106,7 +107,7 @@ func (c *AWSClusterConfig) InitDefaultValues() error {
 		if v, ok := defaultAWSImageID[c.Region]; ok {
 			c.ImageID = v
 		} else {
-			return errors.Errorf("cannot find default image ID in the region %s", c.Region)
+			return fmt.Errorf("cannot find default image ID in the region %s", c.Region)
 		}
 	}
 
@@ -141,7 +142,7 @@ func validateInstanceTypeSlots(c AWSClusterConfig) error {
 	instanceSlots := c.InstanceSlots
 	if instanceSlots != nil {
 		if *instanceSlots < 0 {
-			return errors.Errorf("ec2 'instance_slots' must be greater than or equal to 0")
+			return fmt.Errorf("ec2 'instance_slots' must be greater than or equal to 0")
 		}
 		ec2InstanceSlots[instanceType] = *instanceSlots
 		return nil
@@ -151,7 +152,7 @@ func validateInstanceTypeSlots(c AWSClusterConfig) error {
 	for t := range ec2InstanceSlots {
 		strs = append(strs, t.Name())
 	}
-	return errors.Errorf("Either ec2 'instance_type' and 'instance_slots' must be specified or "+
+	return fmt.Errorf("either ec2 'instance_type' and 'instance_slots' must be specified or "+
 		"the ec2 'instance_type' must be one of types: %s", strings.Join(strs, ", "))
 }
 
@@ -395,7 +396,7 @@ var ec2InstanceSlots = map[Ec2InstanceType]int{
 func getEC2MetadataSess() (*ec2metadata.EC2Metadata, error) {
 	sess, err := session.NewSession(&aws.Config{})
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to create AWS session")
+		return nil, fmt.Errorf("failed to create AWS session: %w", err)
 	}
 	return ec2metadata.New(sess), nil
 }

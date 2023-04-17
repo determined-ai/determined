@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/pkg/errors"
+
 	"gotest.tools/assert"
 
 	"github.com/determined-ai/determined/master/pkg/check"
@@ -139,11 +140,11 @@ func newConstantPredefinedTrial(ops []ValidateAfter, valMetric float64) predefin
 
 func (t *predefinedTrial) Train(length uint64, opIndex int) error {
 	if opIndex >= len(t.Ops) {
-		return errors.Errorf("ran out of expected ops trying to train")
+		return fmt.Errorf("ran out of expected ops trying to train")
 	}
 	op := t.Ops[opIndex]
 	if op.Length != length {
-		return errors.Errorf("wanted %v got %v", op.Length, length)
+		return fmt.Errorf("wanted %v got %v", op.Length, length)
 	}
 	return nil
 }
@@ -174,7 +175,7 @@ func checkValueSimulation(
 
 	ops, err := method.initialOperations(ctx)
 	if err != nil {
-		return errors.Wrap(err, "initialOperations")
+		return fmt.Errorf("initialOperations: %w", err)
 	}
 
 	pending = append(pending, ops...)
@@ -188,14 +189,14 @@ func checkValueSimulation(
 		case Create:
 			requestID = operation.RequestID
 			if nextTrialID >= len(expectedTrials) {
-				return errors.Errorf("search method created too many trials")
+				return fmt.Errorf("search method created too many trials")
 			}
 			trialIDs[requestID] = nextTrialID
 			trialOpIdx[requestID] = 0
 
 			ops, err = method.trialCreated(ctx, requestID)
 			if err != nil {
-				return errors.Wrap(err, "trialCreated")
+				return fmt.Errorf("trialCreated: %w", err)
 			}
 			nextTrialID++
 
@@ -212,11 +213,11 @@ func checkValueSimulation(
 			}
 			ops, err = simulateOperationComplete(ctx, method, trial, operation, trialOpIdx[requestID])
 			if err != nil {
-				return errors.Wrapf(err, "simulateOperationComplete for trial %v", trialID+1)
+				return fmt.Errorf("simulateOperationComplete for trial %v: %w", trialID+1, err)
 			}
 			trialOpIdx[requestID]++
 			if err = saveAndReload(method); err != nil {
-				return errors.Wrap(err, "snapshot failed")
+				return fmt.Errorf("snapshot failed: %w", err)
 			}
 
 		case Close:
@@ -225,16 +226,16 @@ func checkValueSimulation(
 			trial := expectedTrials[trialID]
 			err = trial.CheckComplete(trialOpIdx[requestID])
 			if err != nil {
-				return errors.Wrapf(err, "trial %v closed before completion", trialID+1)
+				return fmt.Errorf("trial %v closed before completion: %w", trialID+1, err)
 			}
 
 			ops, err = method.trialClosed(ctx, requestID)
 			if err != nil {
-				return errors.Wrap(err, "trialClosed")
+				return fmt.Errorf("trialClosed: %w", err)
 			}
 
 		default:
-			return errors.Errorf("unexpected searcher operation: %T", operation)
+			return fmt.Errorf("unexpected searcher operation: %T", operation)
 		}
 
 		pending = append(pending, ops...)
@@ -242,7 +243,7 @@ func checkValueSimulation(
 
 	for requestID, trialID := range trialIDs {
 		if err = expectedTrials[trialID].CheckComplete(trialOpIdx[requestID]); err != nil {
-			return errors.Wrapf(err, "incomplete trial %v", trialID+1)
+			return fmt.Errorf("incomplete trial %v: %w", trialID+1, err)
 		}
 	}
 
@@ -278,13 +279,13 @@ func simulateOperationComplete(
 	opIndex int,
 ) ([]Operation, error) {
 	if err := trial.Train(operation.Length, opIndex); err != nil {
-		return nil, errors.Wrap(err, "error checking ValidateAfter with predefinedTrial")
+		return nil, fmt.Errorf("error checking ValidateAfter with predefinedTrial: %w", err)
 	}
 
 	if trial.EarlyExit != nil && opIndex == *trial.EarlyExit {
 		ops, err := method.trialExitedEarly(ctx, operation.RequestID, model.UserRequestedStop)
 		if err != nil {
-			return nil, errors.Wrap(err, "trainCompleted")
+			return nil, fmt.Errorf("trainCompleted: %w", err)
 		}
 		return ops, nil
 	}
@@ -293,7 +294,7 @@ func simulateOperationComplete(
 		ctx, operation.RequestID, trial.ValMetrics[opIndex], operation,
 	)
 	if err != nil {
-		return nil, errors.Wrap(err, "validationCompleted")
+		return nil, fmt.Errorf("validationCompleted: %w", err)
 	}
 
 	return ops, nil

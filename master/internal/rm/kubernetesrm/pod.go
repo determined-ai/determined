@@ -6,9 +6,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/determined-ai/determined/master/internal/config"
-
 	"github.com/pkg/errors"
+
+	"github.com/determined-ai/determined/master/internal/config"
 
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -166,12 +166,12 @@ func (p *pod) Receive(ctx *actor.Context) error {
 					return err
 				}
 				if _, ok := ctx.ActorOf(fmt.Sprintf("%s-logs", p.podName), logStreamer); !ok {
-					return errors.Errorf("log streamer already exists")
+					return fmt.Errorf("log streamer already exists")
 				}
 			}
 		} else {
 			if err := p.createPodSpecAndSubmit(ctx); err != nil {
-				return errors.Wrap(err, "error creating pod spec")
+				return fmt.Errorf("error creating pod spec: %w", err)
 			}
 		}
 
@@ -295,7 +295,7 @@ func (p *pod) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) er
 				return err
 			}
 			if _, ok := ctx.ActorOf(fmt.Sprintf("%s-logs", p.podName), logStreamer); !ok {
-				return errors.Errorf("log streamer already exists")
+				return fmt.Errorf("log streamer already exists")
 			}
 		}
 
@@ -543,14 +543,13 @@ func getPodState(
 		return cproto.Terminated, nil
 
 	default:
-		return "", errors.Errorf(
-			"unexpected pod status %s for pod %s", pod.Status.Phase, pod.Name)
+		return "", fmt.Errorf("unexpected pod status %s for pod %s", pod.Status.Phase, pod.Name)
 	}
 }
 
 func getExitCodeAndMessage(pod *k8sV1.Pod, containerNames set.Set[string]) (int, string, error) {
 	if len(pod.Status.InitContainerStatuses) == 0 {
-		return 0, "", errors.Errorf(
+		return 0, "", fmt.Errorf(
 			"unexpected number of init containers when processing exit code for pod %s", pod.Name)
 	}
 
@@ -569,7 +568,7 @@ func getExitCodeAndMessage(pod *k8sV1.Pod, containerNames set.Set[string]) (int,
 	}
 
 	if len(pod.Status.ContainerStatuses) < len(containerNames) {
-		return 0, "", errors.Errorf(
+		return 0, "", fmt.Errorf(
 			"unexpected number of containers when processing exit code for pod %s", pod.Name)
 	}
 
@@ -586,7 +585,7 @@ func getExitCodeAndMessage(pod *k8sV1.Pod, containerNames set.Set[string]) (int,
 		}
 	}
 
-	return 0, "", errors.Errorf("unable to get exit code from pod %s", pod.Name)
+	return 0, "", fmt.Errorf("unable to get exit code from pod %s", pod.Name)
 }
 
 func getResourcesStartedForPod(pod *k8sV1.Pod, ports []int) sproto.ResourcesStarted {
@@ -631,7 +630,7 @@ func getDeterminedContainersStatus(
 		for _, containerStatus := range containerStatuses {
 			containerNamesFound = append(containerNamesFound, containerStatus.Name)
 		}
-		return nil, errors.Errorf("found container statuses only for: %v", containerNamesFound)
+		return nil, fmt.Errorf("found container statuses only for: %v", containerNamesFound)
 	}
 
 	return containerStatuses, nil

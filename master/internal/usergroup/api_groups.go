@@ -2,9 +2,9 @@ package usergroup
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
-	"github.com/pkg/errors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -129,7 +129,7 @@ func (a *UserGroupAPIServer) GetGroup(ctx context.Context, req *apiv1.GetGroupRe
 	if err != nil {
 		return nil, err
 	} else if !canGet {
-		return nil, errors.Wrapf(db.ErrNotFound, "Error getting group %d", gid)
+		return nil, fmt.Errorf("error getting group %d: %w", gid, db.ErrNotFound)
 	}
 
 	g, err := GroupByIDTx(ctx, nil, gid)

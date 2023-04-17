@@ -12,8 +12,6 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 	wrapperspb "google.golang.org/protobuf/types/known/wrapperspb"
 
-	"github.com/pkg/errors"
-
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/rbac"
 	"github.com/determined-ai/determined/master/internal/trials"
@@ -36,7 +34,7 @@ type apiServer struct {
 func (a *apiServer) paginate(p **apiv1.Pagination, values interface{}, offset, limit int32) error {
 	rv := reflect.ValueOf(values)
 	if rv.Elem().Kind() != reflect.Slice {
-		return errors.Errorf("error paginating non-slice type: %T", rv.Kind())
+		return fmt.Errorf("error paginating non-slice type: %T", rv.Kind())
 	}
 	total := int32(rv.Elem().Len())
 	pagination, err := api.Paginate(int(total), int(offset), int(limit))

@@ -11,6 +11,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/pkg/errors"
+
 	"golang.org/x/exp/slices"
 
 	"github.com/uptrace/bun"
@@ -27,8 +29,6 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/timestamppb"
-
-	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/db"
 	exputil "github.com/determined-ai/determined/master/internal/experiment"
@@ -129,7 +129,7 @@ func (a *apiServer) getExperiment(
 	if err := a.m.db.QueryProto("get_experiment", exp, experimentID); errors.Is(err, db.ErrNotFound) {
 		return nil, expNotFound
 	} else if err != nil {
-		return nil, errors.Wrapf(err, "error fetching experiment from database: %d", experimentID)
+		return nil, fmt.Errorf("error fetching experiment from database: %d: %w", experimentID, err)
 	}
 
 	modelExp, err := model.ExperimentFromProto(exp)
@@ -246,7 +246,7 @@ func (a *apiServer) PostSearcherOperations(
 		ctx, int(req.ExperimentId), exputil.AuthZProvider.Get().CanRunCustomSearch,
 	)
 	if err != nil {
-		return nil, errors.Wrap(err, "fetching experiment from database")
+		return nil, fmt.Errorf("fetching experiment from database: %w", err)
 	}
 
 	addr := exputil.ExperimentsAddr.Child(req.ExperimentId)
@@ -331,7 +331,7 @@ func (a *apiServer) DeleteExperiment(
 
 	e.State = model.DeletingState
 	if err := a.m.db.TrySaveExperimentState(e); err != nil {
-		return nil, errors.Wrapf(err, "transitioning to %s", e.State)
+		return nil, fmt.Errorf("transitioning to %s: %w", e.State, err)
 	}
 	go func() {
 		if err := a.deleteExperiment(e, &curUser); err != nil {
@@ -384,7 +384,7 @@ func (a *apiServer) deleteExperiment(exp *model.Experiment, userModel *model.Use
 			exp.Config, checkpoints, true, agentUserGroup, userModel, nil,
 		)
 		if gcErr := a.m.system.MustActorOf(addr, ckptGCTask).AwaitTermination(); gcErr != nil {
-			return errors.Wrapf(gcErr, "failed to gc checkpoints for experiment")
+			return fmt.Errorf("failed to gc checkpoints for experiment: %w", gcErr)
 		}
 	}
 
@@ -400,19 +400,19 @@ func (a *apiServer) deleteExperiment(exp *model.Experiment, userModel *model.Use
 
 	trialIDs, taskIDs, err := a.m.db.ExperimentTrialAndTaskIDs(exp.ID)
 	if err != nil {
-		return errors.Wrapf(err, "failed to gather trial IDs for experiment")
+		return fmt.Errorf("failed to gather trial IDs for experiment: %w", err)
 	}
 
 	if err = a.m.trialLogBackend.DeleteTrialLogs(trialIDs); err != nil {
-		return errors.Wrapf(err, "failed to delete trial logs from backend")
+		return fmt.Errorf("failed to delete trial logs from backend: %w", err)
 	}
 
 	if err = a.m.taskLogBackend.DeleteTaskLogs(taskIDs); err != nil {
-		return errors.Wrapf(err, "failed to delete trial logs from backend (task logs)")
+		return fmt.Errorf("failed to delete trial logs from backend (task logs): %w", err)
 	}
 
 	if err = a.m.db.DeleteExperiment(exp.ID); err != nil {
-		return errors.Wrapf(err, "deleting experiment from database")
+		return fmt.Errorf("deleting experiment from database: %w", err)
 	}
 	return nil
 }
@@ -724,8 +724,9 @@ func (a *apiServer) GetExperimentValidationHistory(
 	case err == db.ErrNotFound:
 		return nil, status.Errorf(codes.NotFound, "experiment not found: %d", req.ExperimentId)
 	case err != nil:
-		return nil, errors.Wrapf(err,
-			"error fetching validation history for experiment from database: %d", req.ExperimentId)
+		return nil, fmt.Errorf(
+			"error fetching validation history for experiment from database: %d: %w",
+			req.ExperimentId, err)
 	}
 	return &resp, nil
 }
@@ -779,7 +780,7 @@ func (a *apiServer) PreviewHPSearch(
 
 	// Disallow EOL searchers.
 	if err = sc.AssertCurrent(); err != nil {
-		return nil, errors.Wrap(err, "invalid experiment configuration")
+		return nil, fmt.Errorf("invalid experiment configuration: %w", err)
 	}
 
 	sm := searcher.NewSearchMethod(sc)
@@ -806,7 +807,7 @@ func (a *apiServer) PreviewHPSearch(
 		for _, msg := range result {
 			ops, err := toProto(msg)
 			if err != nil {
-				return nil, errors.Wrapf(err, "error converting msg in simultion result %s", msg)
+				return nil, fmt.Errorf("error converting msg in simultion result %s: %w", msg, err)
 			}
 			operations = append(operations, ops...)
 		}
@@ -855,7 +856,7 @@ func (a *apiServer) PauseExperiment(
 
 	if err == nil {
 		if len(results) == 0 {
-			return nil, errors.Errorf("unknown error during pause query.")
+			return nil, fmt.Errorf("unknown error during pause query.")
 		} else if results[0].Error != nil {
 			return nil, results[0].Error
 		}
@@ -878,7 +879,7 @@ func (a *apiServer) CancelExperiment(
 
 	if err == nil {
 		if len(results) == 0 {
-			return nil, errors.Errorf("unknown error during cancel query.")
+			return nil, fmt.Errorf("unknown error during cancel query.")
 		} else if results[0].Error != nil {
 			return nil, results[0].Error
 		}
@@ -901,7 +902,7 @@ func (a *apiServer) KillExperiment(
 
 	if err == nil {
 		if len(results) == 0 {
-			return nil, errors.Errorf("unknown error during kill query.")
+			return nil, fmt.Errorf("unknown error during kill query.")
 		} else if results[0].Error != nil {
 			return nil, results[0].Error
 		}
@@ -924,7 +925,7 @@ func (a *apiServer) ArchiveExperiment(
 
 	if err == nil {
 		if len(results) == 0 {
-			return nil, errors.Errorf("unknown error during archive query.")
+			return nil, fmt.Errorf("unknown error during archive query.")
 		} else if results[0].Error != nil {
 			return nil, results[0].Error
 		}
@@ -947,7 +948,7 @@ func (a *apiServer) UnarchiveExperiment(
 
 	if err == nil {
 		if len(results) == 0 {
-			return nil, errors.Errorf("unknown error during unarchive query.")
+			return nil, fmt.Errorf("unknown error during unarchive query.")
 		} else if results[0].Error != nil {
 			return nil, results[0].Error
 		}
@@ -1046,7 +1047,7 @@ func (a *apiServer) PatchExperiment(
 		_, err = a.m.db.RawQuery(
 			"patch_experiment", exp.Id, marshalledPatches, exp.Notes)
 		if err != nil {
-			return nil, errors.Wrapf(err, "error updating experiment in database: %d", req.Experiment.Id)
+			return nil, fmt.Errorf("error updating experiment in database: %d: %w", req.Experiment.Id, err)
 		}
 	}
 
@@ -1086,8 +1087,8 @@ func (a *apiServer) GetExperimentCheckpoints(
 		return nil, status.Errorf(
 			codes.NotFound, "no checkpoints found for experiment %d", req.Id)
 	case err != nil:
-		return nil,
-			errors.Wrapf(err, "error fetching checkpoints for experiment %d from database", req.Id)
+		return nil, fmt.Errorf(
+			"error fetching checkpoints for experiment %d from database: %w", req.Id, err)
 	}
 
 	a.filter(&resp.Checkpoints, func(i int) bool {
@@ -1285,8 +1286,7 @@ func (a *apiServer) MetricNames(req *apiv1.MetricNamesRequest,
 		newTrain, newValid, tEndTime, vEndTime, err := a.m.db.MetricNames(experimentID,
 			tStartTime, vStartTime)
 		if err != nil {
-			return errors.Wrapf(err,
-				"error fetching metric names for experiment: %d", experimentID)
+			return fmt.Errorf("error fetching metric names for experiment: %d: %w", experimentID, err)
 		}
 		tStartTime = tEndTime
 		vStartTime = vEndTime
@@ -1313,7 +1313,7 @@ func (a *apiServer) MetricNames(req *apiv1.MetricNamesRequest,
 
 		state, _, err := a.m.db.GetExperimentStatus(experimentID)
 		if err != nil {
-			return errors.Wrap(err, "error looking up experiment state")
+			return fmt.Errorf("error looking up experiment state: %w", err)
 		}
 		if model.TerminalStates[state] {
 			return nil
@@ -1371,7 +1371,7 @@ func (a *apiServer) MetricBatches(req *apiv1.MetricBatchesRequest,
 			panic("Invalid metric type")
 		}
 		if err != nil {
-			return errors.Wrapf(err, "error fetching batches recorded for metric")
+			return fmt.Errorf("error fetching batches recorded for metric: %w", err)
 		}
 		startTime = endTime
 
@@ -1386,12 +1386,12 @@ func (a *apiServer) MetricBatches(req *apiv1.MetricBatchesRequest,
 			return nil
 		}
 		if err = resp.Send(&response); err != nil {
-			return errors.Wrapf(err, "error sending batches recorded for metric")
+			return fmt.Errorf("error sending batches recorded for metric: %w", err)
 		}
 
 		state, _, err := a.m.db.GetExperimentStatus(experimentID)
 		if err != nil {
-			return errors.Wrap(err, "error looking up experiment state")
+			return fmt.Errorf("error looking up experiment state: %w", err)
 		}
 		if model.TerminalStates[state] {
 			return nil
@@ -1461,9 +1461,9 @@ func (a *apiServer) TrialsSnapshot(req *apiv1.TrialsSnapshotRequest,
 			panic("Invalid metric type")
 		}
 		if err != nil {
-			return errors.Wrapf(err,
-				"error fetching snapshots of metrics for %s metric %s in experiment %d at %d batches",
-				metricType, metricName, experimentID, batchesProcessed)
+			return fmt.Errorf("error fetching snapshots of metrics for %s metric %s "+
+				"in experiment %d at %d batches: %w",
+				metricType, metricName, experimentID, batchesProcessed, err)
 		}
 		startTime = endTime
 
@@ -1473,12 +1473,12 @@ func (a *apiServer) TrialsSnapshot(req *apiv1.TrialsSnapshotRequest,
 			return nil
 		}
 		if err = resp.Send(&response); err != nil {
-			return errors.Wrapf(err, "error sending batches recorded for metrics")
+			return fmt.Errorf("error sending batches recorded for metrics: %w", err)
 		}
 
 		state, _, err := a.m.db.GetExperimentStatus(experimentID)
 		if err != nil {
-			return errors.Wrap(err, "error looking up experiment state")
+			return fmt.Errorf("error looking up experiment state: %w", err)
 		}
 		if model.TerminalStates[state] {
 			return nil
@@ -1522,7 +1522,7 @@ func (a *apiServer) topTrials(experimentID int, maxTrials int, s expconf.LegacyS
 	case "sync_halving":
 		ranking = ByTrainingLength
 	default:
-		return nil, errors.Errorf("unable to detect a searcher algorithm for trial sampling")
+		return nil, fmt.Errorf("unable to detect a searcher algorithm for trial sampling")
 	}
 	switch ranking {
 	case ByMetricOfInterest:
@@ -1552,7 +1552,7 @@ func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricTyp
 		var trialConfig *model.Trial
 		trialConfig, err = a.m.db.TrialByID(int(trialID))
 		if err != nil {
-			return nil, errors.Wrapf(err, "error fetching trial metadata")
+			return nil, fmt.Errorf("error fetching trial metadata: %w", err)
 		}
 		trial.Hparams = protoutils.ToStruct(trialConfig.HParams)
 	}
@@ -1573,7 +1573,7 @@ func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricTyp
 		metricName, startBatches, endBatches, xAxisLabelMetrics, maxDatapoints,
 		"batches", nil, metricID)
 	if err != nil {
-		return nil, errors.Wrapf(err, "error fetching time series of metrics")
+		return nil, fmt.Errorf("error fetching time series of metrics: %w", err)
 	}
 	if len(metricMeasurements) > 0 {
 		// if we get empty results, the endTime is incorrectly zero
@@ -1653,7 +1653,7 @@ func (a *apiServer) TrialsSample(req *apiv1.TrialsSampleRequest,
 
 		trialIDs, err := a.topTrials(experimentID, maxTrials, searcherConfig)
 		if err != nil {
-			return errors.Wrapf(err, "error determining top trials")
+			return fmt.Errorf("error determining top trials: %w", err)
 		}
 		for _, trialID := range trialIDs {
 			var trial *apiv1.TrialsSampleResponse_Trial
@@ -1690,12 +1690,12 @@ func (a *apiServer) TrialsSample(req *apiv1.TrialsSampleRequest,
 			return nil
 		}
 		if err = resp.Send(&response); err != nil {
-			return errors.Wrap(err, "error sending sample of trial metric streams")
+			return fmt.Errorf("error sending sample of trial metric streams: %w", err)
 		}
 
 		state, _, err := a.m.db.GetExperimentStatus(experimentID)
 		if err != nil {
-			return errors.Wrap(err, "error looking up experiment state")
+			return fmt.Errorf("error looking up experiment state: %w", err)
 		}
 		if model.TerminalStates[state] {
 			return nil
@@ -1739,8 +1739,8 @@ func (a *apiServer) GetModelDef(
 
 	tgz, err := a.m.db.ExperimentModelDefinitionRaw(int(req.ExperimentId))
 	if err != nil {
-		return nil, errors.Wrapf(err,
-			"error fetching model definition from database: %d", req.ExperimentId)
+		return nil, fmt.Errorf("error fetching model definition from database: %d: %w",
+			req.ExperimentId, err)
 	}
 
 	b64Tgz := base64.StdEncoding.EncodeToString(tgz)
@@ -1757,7 +1757,7 @@ func (a *apiServer) MoveExperiment(
 		return nil, err
 	}
 	if exp.Archived {
-		return nil, errors.Errorf("experiment (%v) is archived and cannot be moved.", exp.ID)
+		return nil, fmt.Errorf("experiment (%v) is archived and cannot be moved.", exp.ID)
 	}
 
 	// check that user can view source project
@@ -1766,7 +1766,7 @@ func (a *apiServer) MoveExperiment(
 		return nil, err
 	}
 	if srcProject.Archived {
-		return nil, errors.Errorf("project (%v) is archived and cannot have experiments moved from it.",
+		return nil, fmt.Errorf("project (%v) is archived and cannot have experiments moved from it.",
 			srcProject.Id)
 	}
 
@@ -1776,7 +1776,7 @@ func (a *apiServer) MoveExperiment(
 		return nil, err
 	}
 	if destProject.Archived {
-		return nil, errors.Errorf("project (%v) is archived and cannot add new experiments.",
+		return nil, fmt.Errorf("project (%v) is archived and cannot add new experiments.",
 			req.DestinationProjectId)
 	}
 	// need to update CanCreateExperiment to check project when experiment is nil
@@ -1790,7 +1790,7 @@ func (a *apiServer) MoveExperiment(
 
 	if err == nil {
 		if len(results) == 0 {
-			return nil, errors.Errorf("unknown error during move query.")
+			return nil, fmt.Errorf("unknown error during move query.")
 		} else if results[0].Error != nil {
 			return nil, results[0].Error
 		}
@@ -1813,7 +1813,7 @@ func (a *apiServer) MoveExperiments(
 		return nil, err
 	}
 	if destProject.Archived {
-		return nil, errors.Errorf("project (%v) is archived and cannot add new experiments.",
+		return nil, fmt.Errorf("project (%v) is archived and cannot add new experiments.",
 			req.DestinationProjectId)
 	}
 	// need to update CanCreateExperiment to check project when experiment is nil

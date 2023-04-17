@@ -3,13 +3,13 @@ package task
 import (
 	"time"
 
+	"github.com/pkg/errors"
+
 	"github.com/google/uuid"
 	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
-
-	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/actor"
 )

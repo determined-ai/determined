@@ -1,12 +1,12 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 	"reflect"
 	"strconv"
 
 	"github.com/labstack/echo/v4"
-	"github.com/pkg/errors"
 )
 
 var parsers = map[reflect.Kind]func(v string) (interface{}, error){
@@ -40,7 +40,7 @@ func bindValue(name string, t reflect.Type, f reflect.Value, value string) error
 		if t.Kind() == reflect.Ptr {
 			return nil
 		}
-		return errors.Errorf("missing parameter: %s", name)
+		return fmt.Errorf("missing parameter: %s", name)
 	}
 
 	parser, ok := parsers[t.Kind()]
@@ -49,11 +49,11 @@ func bindValue(name string, t reflect.Type, f reflect.Value, value string) error
 		parser, ok = parsers[t.Elem().Kind()]
 	}
 	if !ok {
-		return errors.Errorf("no parser found for kind: %v", t.Kind())
+		return fmt.Errorf("no parser found for kind: %v", t.Kind())
 	}
 	parsed, err := parser(value)
 	if err != nil {
-		return errors.Wrapf(err, "unable to parse to %v: %s", t.Kind(), value)
+		return fmt.Errorf("unable to parse to %v: %s: %w", t.Kind(), value, err)
 	}
 
 	if t.Kind() == reflect.Ptr {

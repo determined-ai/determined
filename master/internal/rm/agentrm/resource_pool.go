@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/pkg/errors"
+
 	"golang.org/x/exp/maps"
 
 	"github.com/determined-ai/determined/master/internal/rm/agentrm/provisioner"
@@ -14,7 +16,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 
 	"github.com/google/uuid"
-	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
@@ -100,7 +101,7 @@ func (rp *resourcePool) setupProvisioner(ctx *actor.Context) error {
 	}
 	p, pRef, err := provisioner.Setup(ctx, rp.config.Provider, rp.config.PoolName, rp.cert, rp.db)
 	if err != nil {
-		return errors.Wrapf(err, "cannot create resource pool: %s", rp.config.PoolName)
+		return fmt.Errorf("cannot create resource pool: %s: %w", rp.config.PoolName, err)
 	}
 	rp.slotsPerInstance = p.SlotsPerInstance()
 	rp.provisioner = pRef

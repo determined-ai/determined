@@ -2,11 +2,12 @@ package internal
 
 import (
 	"context"
+	"fmt"
+
+	"github.com/pkg/errors"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-
-	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/db"
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
@@ -28,8 +29,9 @@ func (a *apiServer) GetTask(
 	case errors.Is(err, db.ErrNotFound):
 		return nil, status.Errorf(
 			codes.NotFound, "task %s not found", req.TaskId)
+	case err != nil:
+		return nil, fmt.Errorf("error fetching task %s from database: %w", req.TaskId, err)
 	default:
-		return &apiv1.GetTaskResponse{Task: t},
-			errors.Wrapf(err, "error fetching task %s from database", req.TaskId)
+		return &apiv1.GetTaskResponse{Task: t}, nil
 	}
 }

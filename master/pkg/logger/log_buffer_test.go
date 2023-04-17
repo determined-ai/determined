@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/pkg/errors"
+
 	"github.com/sirupsen/logrus"
 	"gotest.tools/assert"
 )

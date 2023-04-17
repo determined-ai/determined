@@ -12,8 +12,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 
-	"github.com/pkg/errors"
-
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -92,7 +90,7 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 			JobID:      &t.jobID,
 			LogVersion: model.CurrentTaskLogVersion,
 		}); err != nil {
-			return errors.Wrapf(err, "persisting GC task %s", t.taskID)
+			return fmt.Errorf("persisting GC task %s: %w", t.taskID, err)
 		}
 
 		t.allocationID = model.AllocationID(fmt.Sprintf("%s.%d", t.taskID, 1))
@@ -124,7 +122,7 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 		if msg.Err != nil {
 			ctx.Log().WithError(msg.Err).Error("wasn't able to delete checkpoints from checkpoint storage")
 			t.completeTask(ctx)
-			return errors.Wrapf(msg.Err, "checkpoint GC task failed because allocation failed")
+			return fmt.Errorf("checkpoint GC task failed because allocation failed: %w", msg.Err)
 		}
 		conv := &protoconverter.ProtoConverter{}
 		var deleteCheckpointsStrList []string
@@ -146,7 +144,7 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 	case actor.ChildFailed:
 		if msg.Child.Address().Local() == t.allocationID.String() {
 			t.completeTask(ctx)
-			return errors.Wrapf(msg.Error, "checkpoint GC task failed (actor.ChildFailed)")
+			return fmt.Errorf("checkpoint GC task failed (actor.ChildFailed): %w", msg.Error)
 		}
 	case actor.PostStop:
 	default:

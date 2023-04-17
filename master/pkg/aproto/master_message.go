@@ -6,8 +6,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/pkg/errors"
-
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/pkg/stdcopy"
 
@@ -142,7 +140,7 @@ func (c ContainerStarted) Addresses() []cproto.Address {
 
 					hostPort, err := strconv.Atoi(binding.HostPort)
 					if err != nil {
-						panic(errors.Wrapf(err, "unexpected host port: %s", binding.HostPort))
+						panic(fmt.Errorf("unexpected host port: %s: %w", binding.HostPort, err))
 					}
 
 					addresses = append(addresses, cproto.Address{

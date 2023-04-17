@@ -9,6 +9,7 @@ import (
 	"unicode"
 
 	"github.com/pkg/errors"
+
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -74,7 +75,7 @@ func (a *apiServer) GetWorkspaceByID(
 	if err := a.m.db.QueryProto("get_workspace", w, id, curUser.ID); errors.Is(err, db.ErrNotFound) {
 		return nil, notFoundErr
 	} else if err != nil {
-		return nil, errors.Wrapf(err, "error fetching workspace (%d) from database", id)
+		return nil, fmt.Errorf("error fetching workspace (%d) from database: %w", id, err)
 	}
 
 	if ok, err := workspace.AuthZProvider.Get().CanGetWorkspace(ctx, curUser, w); err != nil {
@@ -88,10 +89,10 @@ func (a *apiServer) GetWorkspaceByID(
 	}
 
 	if rejectImmutable && w.Immutable {
-		return nil, errors.Errorf("workspace (%v) is immutable and cannot add new projects.", w.Id)
+		return nil, fmt.Errorf("workspace (%v) is immutable and cannot add new projects.", w.Id)
 	}
 	if rejectImmutable && w.Archived {
-		return nil, errors.Errorf("workspace (%v) is archived and cannot add new projects.", w.Id)
+		return nil, fmt.Errorf("workspace (%v) is archived and cannot add new projects.", w.Id)
 	}
 	return w, nil
 }
@@ -347,21 +348,21 @@ func (a *apiServer) PostWorkspace(
 			return nil,
 				status.Errorf(codes.AlreadyExists, "avoid names equal to other workspaces (case-insensitive)")
 		}
-		return nil, errors.Wrapf(err, "error creating workspace %s in database", req.Name)
+		return nil, fmt.Errorf("error creating workspace %s in database: %w", req.Name, err)
 	}
 
 	pin := &model.WorkspacePin{WorkspaceID: w.ID, UserID: w.UserID}
 	_, err = tx.NewInsert().Model(pin).Exec(ctx)
 	if err != nil {
-		return nil, errors.Wrapf(err, "error creating workspace %s in database", req.Name)
+		return nil, fmt.Errorf("error creating workspace %s in database: %w", req.Name, err)
 	}
 
 	if err = a.AssignWorkspaceAdminToUserTx(ctx, tx, w.ID, w.UserID); err != nil {
-		return nil, errors.Wrap(err, "error assigning workspace admin")
+		return nil, fmt.Errorf("error assigning workspace admin: %w", err)
 	}
 
 	if err = tx.Commit(); err != nil {
-		return nil, errors.Wrap(err, "could not commit create workspace transcation")
+		return nil, fmt.Errorf("could not commit create workspace transcation: %w", err)
 	}
 
 	protoWorkspace, err := w.ToProto()
@@ -453,16 +454,20 @@ func (a *apiServer) PatchWorkspace(
 		Exec(ctx)
 	if err != nil {
 		if strings.Contains(err.Error(), db.CodeUniqueViolation) {
-			return nil,
-				status.Errorf(codes.AlreadyExists, "avoid names equal to other workspaces (case-insensitive)")
+			return nil, status.Errorf(codes.AlreadyExists,
+				"avoid names equal to other workspaces (case-insensitive)")
 		}
 		return nil, err
 	}
 
 	// TODO(ilia): Avoid second refetch.
 	finalWorkspace, err := a.GetWorkspaceByID(ctx, currWorkspace.Id, currUser, false)
-	return &apiv1.PatchWorkspaceResponse{Workspace: finalWorkspace},
-		errors.Wrapf(err, "error refetching updated workspace (%d) from db", currWorkspace.Id)
+	if err != nil {
+		return nil, fmt.Errorf("error refetching updated workspace (%d) from db: %w",
+			currWorkspace.Id, err)
+	}
+
+	return &apiv1.PatchWorkspaceResponse{Workspace: finalWorkspace}, nil
 }
 
 func (a *apiServer) deleteWorkspace(
@@ -508,8 +513,8 @@ func (a *apiServer) DeleteWorkspace(
 	holder := &workspacev1.Workspace{}
 	err = a.m.db.QueryProto("deletable_workspace", holder, req.Id)
 	if holder.Id == 0 {
-		return nil, errors.Wrapf(err, "workspace (%d) does not exist or not deletable by this user",
-			req.Id)
+		return nil, fmt.Errorf("workspace (%d) does not exist or not deletable by this user: %w",
+			req.Id, err)
 	}
 
 	projects := []*projectv1.Project{}
@@ -524,22 +529,22 @@ func (a *apiServer) DeleteWorkspace(
 		"",
 	)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error deleting workspace (%d): %w", req.Id, err)
 	}
 
 	log.Debugf("deleting workspace %d NTSC", req.Id)
 	command.TellNTSC(a.m.system, req)
 
 	if len(projects) == 0 {
-		err = a.m.db.QueryProto("delete_workspace", holder, req.Id)
-		return &apiv1.DeleteWorkspaceResponse{Completed: (err == nil)},
-			errors.Wrapf(err, "error deleting workspace (%d)", req.Id)
+		if err = a.m.db.QueryProto("delete_workspace", holder, req.Id); err != nil {
+			return nil, fmt.Errorf("error deleting workspace (%d): %w", req.Id, err)
+		}
+		return &apiv1.DeleteWorkspaceResponse{Completed: (err == nil)}, nil
 	}
 	go func() {
 		a.deleteWorkspace(ctx, req.Id, projects)
 	}()
-	return &apiv1.DeleteWorkspaceResponse{Completed: false},
-		errors.Wrapf(err, "error deleting workspace (%d)", req.Id)
+	return &apiv1.DeleteWorkspaceResponse{Completed: false}, nil
 }
 
 func (a *apiServer) ArchiveWorkspace(
@@ -554,11 +559,11 @@ func (a *apiServer) ArchiveWorkspace(
 
 	holder := &workspacev1.Workspace{}
 	if err = a.m.db.QueryProto("archive_workspace", holder, req.Id, true); err != nil {
-		return nil, errors.Wrapf(err, "error archiving workspace (%d)", req.Id)
+		return nil, fmt.Errorf("error archiving workspace (%d): %w", req.Id, err)
 	}
 	if holder.Id == 0 {
-		return nil, errors.Wrapf(err, "workspace (%d) does not exist or not archive-able by this user",
-			req.Id)
+		return nil, fmt.Errorf("workspace (%d) does not exist or not archive-able by this user: %w",
+			req.Id, err)
 	}
 	return &apiv1.ArchiveWorkspaceResponse{}, nil
 }
@@ -575,11 +580,10 @@ func (a *apiServer) UnarchiveWorkspace(
 
 	holder := &workspacev1.Workspace{}
 	if err = a.m.db.QueryProto("archive_workspace", holder, req.Id, false); err != nil {
-		return nil, errors.Wrapf(err, "error unarchiving workspace (%d)", req.Id)
+		return nil, fmt.Errorf("error unarchiving workspace (%d): %w", req.Id, err)
 	}
 	if holder.Id == 0 {
-		return nil, errors.Wrapf(err,
-			"workspace (%d) does not exist or not unarchive-able by this user", req.Id)
+		return nil, fmt.Errorf("workspace (%d) does not exist or not unarchive-able by this user: %w", req.Id, err)
 	}
 	return &apiv1.UnarchiveWorkspaceResponse{}, nil
 }
@@ -594,9 +598,11 @@ func (a *apiServer) PinWorkspace(
 	}
 
 	err = a.m.db.QueryProto("pin_workspace", &workspacev1.Workspace{}, req.Id, currUser.ID)
+	if err != nil {
+		return nil, fmt.Errorf("error pinning workspace (%d): %w", req.Id, err)
+	}
 
-	return &apiv1.PinWorkspaceResponse{},
-		errors.Wrapf(err, "error pinning workspace (%d)", req.Id)
+	return &apiv1.PinWorkspaceResponse{}, nil
 }
 
 func (a *apiServer) UnpinWorkspace(
@@ -609,7 +615,9 @@ func (a *apiServer) UnpinWorkspace(
 	}
 
 	err = a.m.db.QueryProto("unpin_workspace", &workspacev1.Workspace{}, req.Id, currUser.ID)
+	if err != nil {
+		return nil, fmt.Errorf("error un-pinning workspace (%d): %w", req.Id, err)
+	}
 
-	return &apiv1.UnpinWorkspaceResponse{},
-		errors.Wrapf(err, "error un-pinning workspace (%d)", req.Id)
+	return &apiv1.UnpinWorkspaceResponse{}, nil
 }

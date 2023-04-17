@@ -5,10 +5,12 @@ import (
 	"regexp"
 	"strconv"
 
+	"github.com/pkg/errors"
+
 	"github.com/go-pg/migrations/v8"
 	"github.com/go-pg/pg/v10"
 	"github.com/jackc/pgconn"
-	"github.com/pkg/errors"
+
 	log "github.com/sirupsen/logrus"
 )
 
@@ -152,7 +154,7 @@ func (db *PgDB) Migrate(migrationURL string, actions []string) error {
 	}
 
 	if err = ensureMigrationUpgrade(tx); err != nil {
-		return errors.Wrap(err, "error upgrading migration metadata")
+		return fmt.Errorf("error upgrading migration metadata: %w", err)
 	}
 
 	if err = tx.Commit(); err != nil {
@@ -178,7 +180,7 @@ func (db *PgDB) Migrate(migrationURL string, actions []string) error {
 
 	oldVersion, newVersion, err := collection.Run(pgConn, actions...)
 	if err != nil {
-		return errors.Wrap(err, "error applying migrations")
+		return fmt.Errorf("error applying migrations: %w", err)
 	}
 
 	if oldVersion == newVersion {

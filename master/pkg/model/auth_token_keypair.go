@@ -1,6 +1,8 @@
 package model
 
-import "golang.org/x/crypto/ed25519"
+import (
+	"golang.org/x/crypto/ed25519"
+)
 
 // AuthTokenKeypair stores the public/private keypair used for asymmetric encryption
 // of authentication tokens.

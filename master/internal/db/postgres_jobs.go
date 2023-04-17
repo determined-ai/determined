@@ -1,7 +1,8 @@
 package db
 
 import (
-	"github.com/pkg/errors"
+	"fmt"
+
 	"github.com/shopspring/decimal"
 
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -20,7 +21,7 @@ SELECT *
 FROM jobs
 WHERE job_id = $1
 `, &j, jID); err != nil {
-		return nil, errors.Wrap(err, "querying job")
+		return nil, fmt.Errorf("querying job: %w", err)
 	}
 	return &j, nil
 }
@@ -31,7 +32,7 @@ func addJob(tx queryHandler, j *model.Job) error {
 INSERT INTO jobs (job_id, job_type, owner_id, q_position)
 VALUES (:job_id, :job_type, :owner_id, :q_position)
 `, j); err != nil {
-		return errors.Wrap(err, "adding job")
+		return fmt.Errorf("adding job: %w", err)
 	}
 	return nil
 }
@@ -39,7 +40,7 @@ VALUES (:job_id, :job_type, :owner_id, :q_position)
 // UpdateJobPosition propagates the new queue position to the job.
 func (db *PgDB) UpdateJobPosition(jobID model.JobID, position decimal.Decimal) error {
 	if jobID.String() == "" {
-		return errors.Errorf("error modifying job with empty id")
+		return fmt.Errorf("error modifying job with empty id")
 	}
 	_, err := db.sql.Exec(`
 UPDATE jobs

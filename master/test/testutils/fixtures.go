@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/jackc/pgconn"
-	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/elastic"
@@ -136,7 +135,7 @@ func DefaultMasterConfig() (*config.Config, error) {
 
 	pgCfg, err := pgconn.ParseConfig(os.Getenv("DET_INTEGRATION_POSTGRES_URL"))
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to parse database string")
+		return nil, fmt.Errorf("failed to parse database string: %w", err)
 	}
 
 	c.DB.Host = pgCfg.Host

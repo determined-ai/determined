@@ -2,10 +2,9 @@ package kubernetesrm
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"time"
-
-	"github.com/pkg/errors"
 
 	k8sV1 "k8s.io/api/core/v1"
 	"k8s.io/api/policy/v1beta1"
@@ -27,7 +26,7 @@ func (m *mockConfigMapInterface) Create(
 	defer m.mux.Unlock()
 
 	if _, present := m.configMaps[cm.Name]; present {
-		return nil, errors.Errorf("configMap with name %s already exists", cm.Name)
+		return nil, fmt.Errorf("configMap with name %s already exists", cm.Name)
 	}
 
 	m.configMaps[cm.Name] = cm.DeepCopy()
@@ -47,7 +46,7 @@ func (m *mockConfigMapInterface) Delete(
 	defer m.mux.Unlock()
 
 	if _, present := m.configMaps[name]; !present {
-		return errors.Errorf("configMap with name %s doesn't exists", name)
+		return fmt.Errorf("configMap with name %s doesn't exists", name)
 	}
 
 	delete(m.configMaps, name)
@@ -100,7 +99,7 @@ func (m *mockPodInterface) Create(
 	defer m.mux.Unlock()
 
 	if _, present := m.pods[pod.Name]; present {
-		return nil, errors.Errorf("pod with name %s already exists", pod.Name)
+		return nil, fmt.Errorf("pod with name %s already exists", pod.Name)
 	}
 
 	m.pods[pod.Name] = pod.DeepCopy()
@@ -127,7 +126,7 @@ func (m *mockPodInterface) Delete(
 	defer m.mux.Unlock()
 
 	if _, present := m.pods[name]; !present {
-		return errors.Errorf("pod with name %s doesn't exists", name)
+		return fmt.Errorf("pod with name %s doesn't exists", name)
 	}
 
 	delete(m.pods, name)

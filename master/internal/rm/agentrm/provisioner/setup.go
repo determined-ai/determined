@@ -2,8 +2,7 @@ package provisioner
 
 import (
 	"crypto/tls"
-
-	"github.com/pkg/errors"
+	"fmt"
 
 	"github.com/determined-ai/determined/master/internal/config/provconfig"
 	"github.com/determined-ai/determined/master/internal/db"
@@ -27,7 +26,7 @@ func Setup(
 	}
 	provisioner, err := New(resourcePool, config, cert, db)
 	if err != nil {
-		return nil, nil, errors.Wrap(err, "error creating provisioner")
+		return nil, nil, fmt.Errorf("error creating provisioner: %w", err)
 	}
 	provisionerActor, _ := ctx.ActorOf("provisioner", provisioner)
 	return provisioner, provisionerActor, nil

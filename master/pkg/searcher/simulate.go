@@ -78,7 +78,7 @@ func Simulate(
 
 	lastProgress := s.Progress()
 	if lastProgress != 0.0 {
-		return simulation, errors.Errorf("Initial searcher progress started at %f", lastProgress)
+		return simulation, fmt.Errorf("initial searcher progress started at %f", lastProgress)
 	}
 
 	shutdown, err := handleOperations(pending, &requestIDs, ops)
@@ -137,7 +137,7 @@ func Simulate(
 				return simulation, err
 			}
 		default:
-			return simulation, errors.Errorf("unexpected searcher operation: %T", operation)
+			return simulation, fmt.Errorf("unexpected searcher operation: %T", operation)
 		}
 		if shutdown {
 			if len(pending) != 0 {
@@ -148,16 +148,15 @@ func Simulate(
 
 		progress := s.Progress()
 		if progress < lastProgress {
-			return simulation, errors.Errorf(
-				"searcher progress dropped from %f%% to %f%%", lastProgress*100, progress*100)
+			return simulation, fmt.Errorf("searcher progress dropped from %f%% to %f%%",
+				lastProgress*100, progress*100)
 		}
 		lastProgress = progress
 	}
 
 	lastProgress = s.Progress()
 	if lastProgress != 1.0 {
-		return simulation, errors.Errorf(
-			"searcher progress was not equal to 100%%: %f%%", lastProgress*100)
+		return simulation, fmt.Errorf("searcher progress was not equal to 100%%: %f%%", lastProgress*100)
 	}
 	if len(simulation.Results) != len(requestIDs) {
 		return simulation, errors.New("more trials created than completed")
@@ -178,7 +177,7 @@ func handleOperations(
 		case Shutdown:
 			return true, nil
 		default:
-			return false, errors.Errorf("unexpected operation: %T", operation)
+			return false, fmt.Errorf("unexpected operation: %T", operation)
 		}
 	}
 	return false, nil

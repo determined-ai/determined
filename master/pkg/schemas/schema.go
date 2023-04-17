@@ -5,9 +5,11 @@ package schemas
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"sync"
 
 	"github.com/pkg/errors"
+
 	"github.com/santhosh-tekuri/jsonschema/v2"
 	"github.com/sirupsen/logrus"
 
@@ -32,7 +34,7 @@ func SaneBytes(schema Schema, byts []byte) error {
 	err := validator.Validate(bytes.NewReader(byts))
 	if err != nil {
 		err = errors.New(JoinErrors(GetRenderedErrors(err, byts), "\n"))
-		return errors.Wrap(err, "config is invalid")
+		return fmt.Errorf("config is invalid: %w", err)
 	}
 	return nil
 }
@@ -42,14 +44,14 @@ func SaneBytes(schema Schema, byts []byte) error {
 func IsComplete(schema Schema) error {
 	byts, err := json.Marshal(schema)
 	if err != nil {
-		return errors.Wrap(err, "json marshal failed")
+		return fmt.Errorf("json marshal failed: %w", err)
 	}
 
 	validator := schema.CompletenessValidator()
 	err = validator.Validate(bytes.NewReader(byts))
 	if err != nil {
 		err = errors.New(JoinErrors(GetRenderedErrors(err, byts), "\n"))
-		return errors.Wrap(err, "config is invalid or incomplete")
+		return fmt.Errorf("config is invalid or incomplete: %w", err)
 	}
 
 	return nil

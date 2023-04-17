@@ -2,6 +2,7 @@ package expconf
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/pkg/errors"
 
@@ -40,15 +41,15 @@ func getCheckpointStorage(raw map[string]interface{}) (CheckpointStorageConfig, 
 
 	csByts, err := json.Marshal(csOnly)
 	if err != nil {
-		return cs, errors.Wrap(err, "unable to remarshal config bytes as json")
+		return cs, fmt.Errorf("unable to remarshal config bytes as json: %w", err)
 	}
 
 	// Read the checkpoint storage.
 	if err = schemas.SaneBytes(&cs, csByts); err != nil {
-		return cs, errors.Wrap(err, "legacy checkpoint storage does not pass sanity checks")
+		return cs, fmt.Errorf("legacy checkpoint storage does not pass sanity checks: %w", err)
 	}
 	if err = json.Unmarshal(csByts, &cs); err != nil {
-		return cs, errors.Wrap(err, "unable to unmarshal checkpoint storage bytes")
+		return cs, fmt.Errorf("unable to unmarshal checkpoint storage bytes: %w", err)
 	}
 
 	// Fill defaults (should be a no-op).
@@ -56,7 +57,7 @@ func getCheckpointStorage(raw map[string]interface{}) (CheckpointStorageConfig, 
 
 	// Validate fully before passing anything out.
 	if err = schemas.IsComplete(cs); err != nil {
-		return cs, errors.Wrap(err, "legacy checkpoint storage is incomplete")
+		return cs, fmt.Errorf("legacy checkpoint storage is incomplete: %w", err)
 	}
 
 	return cs, nil
@@ -73,17 +74,17 @@ func getBindMounts(raw map[string]interface{}) (BindMountsConfig, error) {
 
 	bmByts, err := json.Marshal(bmOnly)
 	if err != nil {
-		return bm, errors.Wrap(err, "unable to remarshal bind mounts as json")
+		return bm, fmt.Errorf("unable to remarshal bind mounts as json: %w", err)
 	}
 	if err = schemas.SaneBytes(&bm, bmByts); err != nil {
-		return bm, errors.Wrap(err, "legacy bind mounts does not pass sanity checks")
+		return bm, fmt.Errorf("legacy bind mounts does not pass sanity checks: %w", err)
 	}
 	if err = json.Unmarshal(bmByts, &bm); err != nil {
-		return bm, errors.Wrap(err, "unable to unmarshal bind mounts bytes")
+		return bm, fmt.Errorf("unable to unmarshal bind mounts bytes: %w", err)
 	}
 	bm = schemas.WithDefaults(bm)
 	if err = schemas.IsComplete(bm); err != nil {
-		return bm, errors.Wrap(err, "legacy bind mounts is incomplete")
+		return bm, fmt.Errorf("legacy bind mounts is incomplete: %w", err)
 	}
 	return bm, nil
 }
@@ -95,20 +96,20 @@ func getEnvironment(raw map[string]interface{}) (EnvironmentConfig, error) {
 	if envOnly != nil {
 		envByts, err := json.Marshal(envOnly)
 		if err != nil {
-			return env, errors.Wrap(err, "unable to remarshal environment as json")
+			return env, fmt.Errorf("unable to remarshal environment as json: %w", err)
 		}
 		if err = schemas.SaneBytes(&env, envByts); err != nil {
-			return env, errors.Wrap(err, "legacy environment does not pass sanity checks")
+			return env, fmt.Errorf("legacy environment does not pass sanity checks: %w", err)
 		}
 		if err = json.Unmarshal(envByts, &env); err != nil {
-			return env, errors.Wrap(err, "unable to unmarshal environment bytes")
+			return env, fmt.Errorf("unable to unmarshal environment bytes: %w", err)
 		}
 	}
 
 	env = schemas.WithDefaults(env)
 
 	if err := schemas.IsComplete(env); err != nil {
-		return env, errors.Wrap(err, "legacy environment is incomplete")
+		return env, fmt.Errorf("legacy environment is incomplete: %w", err)
 	}
 
 	return env, nil
@@ -125,17 +126,17 @@ func getHyperparameters(raw map[string]interface{}) (Hyperparameters, error) {
 
 	hpBytes, err := json.Marshal(hpOnly)
 	if err != nil {
-		return h, errors.Wrap(err, "unable to remarshal hyperparameters as json")
+		return h, fmt.Errorf("unable to remarshal hyperparameters as json: %w", err)
 	}
 	if err = schemas.SaneBytes(&h, hpBytes); err != nil {
-		return h, errors.Wrap(err, "legacy hyperparameters do not pass sanity checks")
+		return h, fmt.Errorf("legacy hyperparameters do not pass sanity checks: %w", err)
 	}
 	if err = json.Unmarshal(hpBytes, &h); err != nil {
-		return h, errors.Wrap(err, "unable to unmarshal hyperparameter bytes")
+		return h, fmt.Errorf("unable to unmarshal hyperparameter bytes: %w", err)
 	}
 	h = schemas.WithDefaults(h)
 	if err = schemas.IsComplete(h); err != nil {
-		return h, errors.Wrap(err, "legacy hyperparameters are incomplete")
+		return h, fmt.Errorf("legacy hyperparameters are incomplete: %w", err)
 	}
 	return h, nil
 }
@@ -201,7 +202,7 @@ func ParseLegacyConfigJSON(byts []byte) (LegacyConfig, error) {
 
 	raw := map[string]interface{}{}
 	if err := json.Unmarshal(byts, &raw); err != nil {
-		return out, errors.Wrap(err, "unable to unmarshal bytes as json at all")
+		return out, fmt.Errorf("unable to unmarshal bytes as json at all: %w", err)
 	}
 
 	cs, err := getCheckpointStorage(raw)
@@ -241,7 +242,7 @@ func ParseLegacyConfigJSON(byts []byte) (LegacyConfig, error) {
 func (l *LegacyConfig) Scan(src interface{}) error {
 	byts, ok := src.([]byte)
 	if !ok {
-		return errors.Errorf("unable to convert to []byte: %v", src)
+		return fmt.Errorf("unable to convert to []byte: %v", src)
 	}
 	config, err := ParseLegacyConfigJSON(byts)
 	if err != nil {

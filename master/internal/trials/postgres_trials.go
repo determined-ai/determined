@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
 
@@ -368,13 +367,13 @@ func MetricsTimeSeries(trialID int32, startTime time.Time,
 		orderColumn = timeSeriesColumn
 		subq, err = db.ApplyPolymorphicFilter(subq, queryColumn, timeSeriesFilter)
 		if err != nil {
-			return metricMeasurements, errors.Wrapf(err, "failed to get metrics to sample for experiment")
+			return metricMeasurements, fmt.Errorf("failed to get metrics to sample for experiment: %w", err)
 		}
 	}
 	err = db.Bun().NewSelect().TableExpr("(?) as downsample", subq).
 		OrderExpr(orderColumn).Scan(context.TODO(), &measurements)
 	if err != nil {
-		return metricMeasurements, errors.Wrapf(err, "failed to get metrics to sample for experiment")
+		return metricMeasurements, fmt.Errorf("failed to get metrics to sample for experiment: %w", err)
 	}
 	return measurements, nil
 }

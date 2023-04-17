@@ -17,8 +17,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/uptrace/bun"
 
-	"github.com/pkg/errors"
-
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/context"
 	"github.com/determined-ai/determined/master/internal/db"
@@ -144,7 +142,7 @@ func TestAuthzPatchUser(t *testing.T) {
 		ctx.SetParamValues("admin")
 		ctx.SetRequest(httptest.NewRequest(http.MethodPatch, "/",
 			strings.NewReader(testCase.body)))
-		expectedErr := errors.Wrap(forbiddenError, testCase.expectedCall+"Error")
+		expectedErr := fmt.Errorf(testCase.expectedCall+"Error"+": %w", forbiddenError)
 		authzUser.On(testCase.expectedCall, testCase.args...).
 			Return(fmt.Errorf(testCase.expectedCall + "Error")).Once()
 		authzUser.On("CanGetUser", mock.Anything, model.User{}, mock.Anything).
@@ -196,7 +194,7 @@ func TestAuthzPatchUsername(t *testing.T) {
 	// If we can view the user we get canSetUsersUsername error.
 	ctx.SetParamNames("username")
 	ctx.SetParamValues("admin")
-	expectedErr := errors.Wrap(forbiddenError, "canSetUsersUsernameError")
+	expectedErr := fmt.Errorf("canSetUsersUsernameError: %w", forbiddenError)
 	ctx.SetRequest(httptest.NewRequest("", "/", strings.NewReader(`{"username":"x"}`)))
 	authzUser.On("CanSetUsersUsername", mock.Anything, model.User{}, mock.Anything).
 		Return(fmt.Errorf("canSetUsersUsernameError")).Once()
@@ -246,7 +244,7 @@ func TestAuthzPostUser(t *testing.T) {
 		User:  "u",
 		Group: "g",
 	}
-	expectedErr := errors.Wrap(forbiddenError, "canCreateUserError")
+	expectedErr := fmt.Errorf("canCreateUserError: %w", forbiddenError)
 	authzUser.On("CanCreateUser", mock.Anything, model.User{}, model.User{Username: "x"}, agentGroup).
 		Return(fmt.Errorf("canCreateUserError")).Once()
 
@@ -260,7 +258,7 @@ func TestAuthzGetUserImage(t *testing.T) {
 	// If we can get the user return the error from canGetUsersImageError.
 	ctx.SetParamNames("username")
 	ctx.SetParamValues("admin")
-	expectedErr := errors.Wrap(forbiddenError, "canGetUsersImageError")
+	expectedErr := fmt.Errorf("canGetUsersImageError: %w", forbiddenError)
 	authzUser.On("CanGetUsersImage", mock.Anything, model.User{}, mock.Anything).
 		Return(fmt.Errorf("canGetUsersImageError")).Once()
 	authzUser.On("CanGetUser", mock.Anything, model.User{}, mock.Anything).Return(true, nil).Once()

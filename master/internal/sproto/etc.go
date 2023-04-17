@@ -1,6 +1,8 @@
 package sproto
 
-import "github.com/determined-ai/determined/proto/pkg/resourcepoolv1"
+import (
+	"github.com/determined-ai/determined/proto/pkg/resourcepoolv1"
+)
 
 // StringFromResourcePoolTypeProto returns a string from the protobuf resource pool type.
 func StringFromResourcePoolTypeProto(t resourcepoolv1.ResourcePoolType) string {

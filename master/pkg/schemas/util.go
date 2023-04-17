@@ -7,8 +7,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
+
+	"github.com/ghodss/yaml"
+
 	"github.com/santhosh-tekuri/jsonschema/v2"
 )
 
@@ -27,12 +29,12 @@ func JSONFromYaml(byts []byte) ([]byte, error) {
 	var blob JSON
 	err := yaml.Unmarshal(byts, &blob)
 	if err != nil {
-		return nil, errors.Wrap(err, "not valid yaml")
+		return nil, fmt.Errorf("not valid yaml: %w", err)
 	}
 
 	byts, err = json.Marshal(blob)
 	if err != nil {
-		return nil, errors.Wrap(err, "yaml is not convertible to json")
+		return nil, fmt.Errorf("yaml is not convertible to json: %w", err)
 	}
 
 	return byts, nil

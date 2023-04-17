@@ -9,7 +9,6 @@ import (
 	"time"
 
 	petname "github.com/dustinkirkland/golang-petname"
-	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/schemas"
 )
@@ -58,7 +57,7 @@ func (e ExperimentConfigV0) Value() (driver.Value, error) {
 	// Validate the object before passing it to the database.
 	err := schemas.IsComplete(&e)
 	if err != nil {
-		return nil, errors.Wrap(err, "refusing to save invalid experiment config")
+		return nil, fmt.Errorf("refusing to save invalid experiment config: %w", err)
 	}
 
 	byts, err := json.Marshal(e)
@@ -73,7 +72,7 @@ func (e ExperimentConfigV0) Value() (driver.Value, error) {
 func (e *ExperimentConfigV0) Scan(src interface{}) error {
 	byts, ok := src.([]byte)
 	if !ok {
-		return errors.Errorf("unable to convert to []byte: %v", src)
+		return fmt.Errorf("unable to convert to []byte: %v", src)
 	}
 	config, err := ParseAnyExperimentConfigJSON(byts)
 	if err != nil {
@@ -329,7 +328,7 @@ func (d *DeviceV0) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &plain); err == nil {
 		fields := strings.Split(plain, ":")
 		if len(fields) < 2 || len(fields) > 3 {
-			return errors.Errorf("invalid device string: %q", plain)
+			return fmt.Errorf("invalid device string: %q", plain)
 		}
 		d.RawHostPath = fields[0]
 		d.RawContainerPath = fields[1]

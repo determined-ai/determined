@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/pkg/errors"
+
 	"github.com/shopspring/decimal"
 
 	"github.com/determined-ai/determined/master/internal/config"
@@ -507,7 +507,7 @@ func (k *kubernetesResourcePool) assignResources(
 			unknownExit := sproto.ExitCode(-1)
 			ctx.Tell(req.AllocationRef, sproto.ResourcesFailure{
 				FailureType: sproto.ResourcesMissing,
-				ErrMsg:      errors.Wrap(err, "unable to restore allocation").Error(),
+				ErrMsg:      fmt.Errorf("unable to restore allocation: %w", err).Error(),
 				ExitCode:    &unknownExit,
 			})
 			return

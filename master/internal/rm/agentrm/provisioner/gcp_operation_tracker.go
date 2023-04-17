@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+
 	"google.golang.org/api/compute/v1"
 
 	"github.com/determined-ai/determined/master/internal/config/provconfig"
@@ -77,24 +78,20 @@ func (t *gcpOperationTracker) pollOperation() (*trackOperationDone, error) {
 	case respErr != nil:
 		return &trackOperationDone{
 			op: t.op,
-			err: errors.Wrapf(
-				respErr,
-				"GCE cannot track %q operation %q targeting %q",
+			err: fmt.Errorf("GCE cannot track %q operation %q targeting %q: %w",
 				t.op.OperationType,
 				strconv.FormatUint(t.op.Id, 10),
-				t.op.TargetLink,
-			),
+				t.op.TargetLink, respErr),
 		}, nil
 	case resp.Error != nil:
 		// Stop tracking a operation even if it is still running as long as it has error.
 		return &trackOperationDone{
 			op: t.op,
-			err: errors.Errorf(
-				"GCE cannot finish %q operation %q targeting %q",
+			err: fmt.Errorf("GCE cannot finish %q operation %q targeting %q",
 				resp.OperationType,
 				strconv.FormatUint(t.op.Id, 10),
-				t.op.TargetLink,
-			),
+				t.op.TargetLink),
+
 			doneOp: resp,
 		}, nil
 	case resp.Status == "DONE":
@@ -107,7 +104,7 @@ func (t *gcpOperationTracker) pollOperation() (*trackOperationDone, error) {
 		return nil, nil
 	default:
 		errOp, _ := json.Marshal(resp)
-		return nil, errors.Errorf("unexpected message: %s", errOp)
+		return nil, fmt.Errorf("unexpected message: %s", errOp)
 	}
 }
 

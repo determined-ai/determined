@@ -2,6 +2,7 @@ package expconf
 
 import (
 	"encoding/json"
+	"fmt"
 	"path/filepath"
 	"strings"
 
@@ -49,7 +50,7 @@ func (c *CheckpointStorageConfigV0) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	type DefaultParser *CheckpointStorageConfigV0
-	return errors.Wrap(json.Unmarshal(data, DefaultParser(c)), "failed to parse checkpoint storage")
+	return fmt.Errorf("failed to parse checkpoint storage: %w", json.Unmarshal(data, DefaultParser(c)))
 }
 
 // Printable returns a copy the object with secrets hidden.

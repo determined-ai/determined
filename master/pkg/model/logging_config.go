@@ -6,6 +6,7 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"encoding/pem"
+	"fmt"
 	"io/ioutil"
 
 	"github.com/pkg/errors"
@@ -43,7 +44,7 @@ func (c *LoggingConfig) UnmarshalJSON(data []byte) error {
 	}
 
 	type DefaultParser *LoggingConfig
-	return errors.Wrap(json.Unmarshal(data, DefaultParser(c)), "failed to parse logging options")
+	return fmt.Errorf("failed to parse logging options: %w", json.Unmarshal(data, DefaultParser(c)))
 }
 
 // DefaultLoggingConfig configures logging for tasks using Fluent+HTTP to the master.
@@ -105,13 +106,13 @@ func MakeTLSConfig(cert *tls.Certificate) (TLSClientConfig, error) {
 			Type:  "CERTIFICATE",
 			Bytes: c,
 		}); err != nil {
-			return TLSClientConfig{}, errors.Wrap(err, "failed to encode PEM")
+			return TLSClientConfig{}, fmt.Errorf("failed to encode PEM: %w", err)
 		}
 	}
 
 	leaf, err := x509.ParseCertificate(cert.Certificate[0])
 	if err != nil {
-		return TLSClientConfig{}, errors.Wrap(err, "failed to parse certificate")
+		return TLSClientConfig{}, fmt.Errorf("failed to parse certificate: %w", err)
 	}
 	certName := ""
 	if len(leaf.DNSNames) > 0 {

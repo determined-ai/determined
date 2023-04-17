@@ -13,7 +13,6 @@ import (
 	"github.com/jmoiron/sqlx"
 
 	"github.com/o1egl/paseto"
-	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/model"
 )
@@ -58,7 +57,7 @@ ON CONFLICT (task_id) DO UPDATE SET
 task_type=EXCLUDED.task_type, start_time=EXCLUDED.start_time,
 job_id=EXCLUDED.job_id, log_version=EXCLUDED.log_version
 `, t); err != nil {
-		return errors.Wrap(err, "adding task")
+		return fmt.Errorf("adding task: %w", err)
 	}
 	return nil
 }
@@ -71,7 +70,7 @@ SELECT *
 FROM tasks
 WHERE task_id = $1
 `, &t, tID); err != nil {
-		return nil, errors.Wrap(err, "querying task")
+		return nil, fmt.Errorf("querying task: %w", err)
 	}
 	return &t, nil
 }
@@ -87,7 +86,7 @@ UPDATE tasks
 SET end_time = $2
 WHERE task_id = $1
 	`, tID, endTime); err != nil {
-		return errors.Wrap(err, "completing task")
+		return fmt.Errorf("completing task: %w", err)
 	}
 	return nil
 }
@@ -169,7 +168,7 @@ INSERT INTO allocation_sessions (allocation_id, owner_id) VALUES
 	v2 := paseto.NewV2()
 	token, err := v2.Sign(db.tokenKeys.PrivateKey, taskSession, nil)
 	if err != nil {
-		return "", errors.Wrap(err, "failed to generate task authentication token")
+		return "", fmt.Errorf("failed to generate task authentication token: %w", err)
 	}
 	return token, nil
 }
@@ -217,8 +216,8 @@ func (db *PgDB) CloseOpenAllocations(exclude []model.AllocationID) error {
 	UPDATE allocations
 	SET start_time = cluster_heartbeat FROM cluster_id
 	WHERE start_time is NULL`); err != nil {
-		return errors.Wrap(err,
-			"setting start time to cluster heartbeat when it's assigned to zero value")
+		return fmt.Errorf(
+			"setting start time to cluster heartbeat when it's assigned to zero value: %w", err)
 	}
 
 	excludedFilter := ""
@@ -238,7 +237,7 @@ func (db *PgDB) CloseOpenAllocations(exclude []model.AllocationID) error {
 	WHERE end_time IS NULL AND
 	($1 = '' OR allocation_id NOT IN (
 		SELECT unnest(string_to_array($1, ','))))`, excludedFilter); err != nil {
-		return errors.Wrap(err, "closing old allocations")
+		return fmt.Errorf("closing old allocations: %w", err)
 	}
 	return nil
 }
@@ -330,7 +329,7 @@ VALUES
 	}
 
 	if _, err := db.sql.Exec(text.String(), args...); err != nil {
-		return errors.Wrapf(err, "error inserting %d task logs", len(logs))
+		return fmt.Errorf("error inserting %d task logs: %w", len(logs), err)
 	}
 
 	return nil
@@ -342,7 +341,7 @@ func (db *PgDB) DeleteTaskLogs(ids []model.TaskID) error {
 DELETE FROM task_logs
 WHERE task_id IN (SELECT unnest($1::text [])::text);
 `, ids); err != nil {
-		return errors.Wrapf(err, "error deleting task logs for task %v", ids)
+		return fmt.Errorf("error deleting task logs for task %v: %w", ids, err)
 	}
 	return nil
 }

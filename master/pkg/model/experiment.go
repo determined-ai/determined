@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/pkg/errors"
+
 	"github.com/google/uuid"
 	"github.com/uptrace/bun"
 
@@ -18,7 +20,6 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
 
-	"github.com/pkg/errors"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/determined-ai/determined/master/pkg/command"
@@ -403,7 +404,7 @@ func (e *Experiment) Transition(state State) (bool, error) {
 		return false, nil
 	}
 	if !ExperimentTransitions[e.State][state] {
-		return false, errors.Errorf("illegal transition %v -> %v for experiment %v",
+		return false, fmt.Errorf("illegal transition %v -> %v for experiment %v",
 			e.State, state, e.ID)
 	}
 	e.State = state
@@ -719,28 +720,28 @@ func (t *TrialProfilerMetricsBatch) ToProto() (*trialv1.TrialProfilerMetricsBatc
 
 	var pLabels trialv1.TrialProfilerMetricLabels
 	if err = protojson.Unmarshal(t.Labels, &pLabels); err != nil {
-		return nil, errors.Wrap(err, "unmarshaling labels")
+		return nil, fmt.Errorf("unmarshaling labels: %w", err)
 	}
 	pBatch.Labels = &pLabels
 
 	var protoValues []float32
 	if err = t.Values.AssignTo(&protoValues); err != nil {
-		return nil, errors.Wrap(err, "setting values")
+		return nil, fmt.Errorf("setting values: %w", err)
 	}
 	pBatch.Values = protoValues
 
 	var protoBatches []int32
 	if err = t.Batches.AssignTo(&protoBatches); err != nil {
-		return nil, errors.Wrap(err, "setting batches")
+		return nil, fmt.Errorf("setting batches: %w", err)
 	}
 	pBatch.Batches = protoBatches
 
 	var protoTimes []time.Time
 	if err = t.Timestamps.AssignTo(&protoTimes); err != nil {
-		return nil, errors.Wrap(err, "setting timestamps")
+		return nil, fmt.Errorf("setting timestamps: %w", err)
 	}
 	if pBatch.Timestamps, err = protoutils.TimeProtoSliceFromTimes(protoTimes); err != nil {
-		return nil, errors.Wrap(err, "parsing times to proto")
+		return nil, fmt.Errorf("parsing times to proto: %w", err)
 	}
 
 	return &pBatch, nil

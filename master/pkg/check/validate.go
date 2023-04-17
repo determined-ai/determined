@@ -5,8 +5,6 @@ import (
 	"reflect"
 	"sort"
 	"strings"
-
-	"github.com/pkg/errors"
 )
 
 // Validator returns an error if the validation fails and nil otherwise.
@@ -76,7 +74,7 @@ func validate(v reflect.Value, path interface{}) []error {
 		if validatable, ok := vp.Interface().(Validatable); ok {
 			for _, err := range validatable.Validate() {
 				if err != nil {
-					errs = append(errs, errors.Wrapf(err, "error found at %s", path))
+					errs = append(errs, fmt.Errorf("error found at %s: %w", path, err))
 				}
 			}
 		}

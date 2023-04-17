@@ -2,14 +2,13 @@ package tasks
 
 import (
 	"encoding/json"
-
-	"github.com/pkg/errors"
+	"fmt"
 )
 
 func jsonify(v interface{}) string {
 	data, err := json.Marshal(v)
 	if err != nil {
-		panic(errors.Wrapf(err, "unable to marshal to JSON: %T", v))
+		panic(fmt.Errorf("unable to marshal to JSON: %T: %w", v, err))
 	}
 	return string(data)
 }

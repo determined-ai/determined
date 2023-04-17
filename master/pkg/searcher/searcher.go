@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/pkg/errors"
-
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/nprand"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
@@ -72,7 +70,7 @@ func (s *Searcher) context() context {
 func (s *Searcher) InitialOperations() ([]Operation, error) {
 	operations, err := s.method.initialOperations(s.context())
 	if err != nil {
-		return nil, errors.Wrap(err, "error while fetching initial operations of search method")
+		return nil, fmt.Errorf("error while fetching initial operations of search method: %w", err)
 	}
 	s.Record(operations)
 	return operations, nil
@@ -85,8 +83,7 @@ func (s *Searcher) TrialCreated(requestID model.RequestID) ([]Operation, error) 
 	s.TrialProgress[requestID] = 0
 	operations, err := s.method.trialCreated(s.context(), requestID)
 	if err != nil {
-		return nil, errors.Wrapf(err,
-			"error while handling a trial created event: %s", requestID)
+		return nil, fmt.Errorf("error while handling a trial created event: %s: %w", requestID, err)
 	}
 	s.Record(operations)
 	return operations, nil
@@ -114,7 +111,7 @@ func (s *Searcher) TrialExitedEarly(
 	}
 	operations, err := s.method.trialExitedEarly(s.context(), requestID, exitedReason)
 	if err != nil {
-		return nil, errors.Wrapf(err, "error relaying trial exited early to trial %d", requestID)
+		return nil, fmt.Errorf("error relaying trial exited early to trial %d: %w", requestID, err)
 	}
 	s.Exits[requestID] = true
 	s.Record(operations)
@@ -148,7 +145,7 @@ func (s *Searcher) ValidationCompleted(
 
 	operations, err := s.method.validationCompleted(s.context(), requestID, metric, op)
 	if err != nil {
-		return nil, errors.Wrapf(err, "error while handling a workload completed event: %s", requestID)
+		return nil, fmt.Errorf("error while handling a workload completed event: %s: %w", requestID, err)
 	}
 	s.CompletedOperations[op.String()] = op
 	s.Record(operations)
@@ -160,7 +157,7 @@ func (s *Searcher) TrialClosed(requestID model.RequestID) ([]Operation, error) {
 	s.TrialsClosed[requestID] = true
 	operations, err := s.method.trialClosed(s.context(), requestID)
 	if err != nil {
-		return nil, errors.Wrapf(err, "error while handling a trial closed event: %s", requestID)
+		return nil, fmt.Errorf("error while handling a trial closed event: %s: %w", requestID, err)
 	}
 	s.Record(operations)
 
@@ -221,7 +218,7 @@ func (s *Searcher) Record(ops []Operation) {
 func (s *Searcher) Snapshot() (json.RawMessage, error) {
 	b, err := s.method.Snapshot()
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to save search method")
+		return nil, fmt.Errorf("failed to save search method: %w", err)
 	}
 	s.SearcherState.SearchMethodState = b
 	return json.Marshal(s.SearcherState)
@@ -230,7 +227,7 @@ func (s *Searcher) Snapshot() (json.RawMessage, error) {
 // Restore loads a searcher from prior state.
 func (s *Searcher) Restore(state json.RawMessage) error {
 	if err := json.Unmarshal(state, &s.SearcherState); err != nil {
-		return errors.Wrap(err, "failed to unmarshal searcher snapshot")
+		return fmt.Errorf("failed to unmarshal searcher snapshot: %w", err)
 	}
 	return s.method.Restore(s.SearchMethodState)
 }

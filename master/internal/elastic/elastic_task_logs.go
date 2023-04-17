@@ -9,8 +9,10 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/elastic/go-elasticsearch/v7/esapi"
 	"github.com/pkg/errors"
+
+	"github.com/elastic/go-elasticsearch/v7/esapi"
+
 	log "github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/internal/api"
@@ -47,16 +49,16 @@ func (e *Elastic) AddTaskLogs(logs []*model.TaskLog) error {
 	for index, logs := range indexToLogs {
 		for _, l := range logs {
 			if err := enc.Encode(l); err != nil {
-				return errors.Wrap(err, "failed to make index request body")
+				return fmt.Errorf("failed to make index request body: %w", err)
 			}
 			res, err := e.client.Index(index, &buf)
 			if err != nil {
-				return errors.Wrapf(err, "failed to index document")
+				return fmt.Errorf("failed to index document: %w", err)
 			}
 			err = checkResponse(res)
 			closeWithErrCheck(res.Body)
 			if err != nil {
-				return errors.Wrap(err, "failed to index document")
+				return fmt.Errorf("failed to index document: %w", err)
 			}
 		}
 	}
@@ -78,7 +80,7 @@ func (e *Elastic) TaskLogsCount(taskID model.TaskID, fs []api.Filter) (int, erro
 		},
 	})
 	if err != nil {
-		return 0, errors.Wrap(err, "failed to get task log count")
+		return 0, fmt.Errorf("failed to get task log count: %w", err)
 	}
 	return count, nil
 }
@@ -151,7 +153,7 @@ func (e *Elastic) TaskLogs(
 	}{}
 
 	if err := e.search(query, &resp); err != nil {
-		return nil, nil, errors.Wrap(err, "failed to query task logs")
+		return nil, nil, fmt.Errorf("failed to query task logs: %w", err)
 	}
 
 	var logs []*model.TaskLog
@@ -200,18 +202,18 @@ func (e *Elastic) DeleteTaskLogs(ids []model.TaskID) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(query); err != nil {
-		return errors.Wrap(err, "failed to encoding query")
+		return fmt.Errorf("failed to encoding query: %w", err)
 	}
 
 	// TODO(brad): Here and elsewhere, we really should just hit indices that could possibly have
 	// logs for a given trial.
 	res, err := e.client.DeleteByQuery([]string{"*"}, &buf)
 	if err != nil {
-		return errors.Wrap(err, "failed to perform delete")
+		return fmt.Errorf("failed to perform delete: %w", err)
 	}
 	defer closeWithErrCheck(res.Body)
 	if err = checkResponse(res); err != nil {
-		return errors.Wrap(err, "failed to perform delete")
+		return fmt.Errorf("failed to perform delete: %w", err)
 	}
 
 	return nil
@@ -278,7 +280,7 @@ func (e *Elastic) TaskLogsFields(taskID model.TaskID) (*apiv1.TaskLogsFieldsResp
 		} `json:"aggregations"`
 	}{}
 	if err := e.search(query, &resp); err != nil {
-		return nil, errors.Wrap(err, "failed to aggregate trial log fields")
+		return nil, fmt.Errorf("failed to aggregate trial log fields: %w", err)
 	}
 
 	return &apiv1.TaskLogsFieldsResponse{
@@ -302,16 +304,16 @@ func (e *Elastic) MaxTerminationDelay() time.Duration {
 func (e *Elastic) search(query jsonObj, resp interface{}) error {
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(query); err != nil {
-		return errors.Wrap(err, "failed to encoding query")
+		return fmt.Errorf("failed to encoding query: %w", err)
 	}
 
 	res, err := e.client.Search(e.client.Search.WithBody(&buf))
 	if err != nil {
-		return errors.Wrap(err, "failed to perform search")
+		return fmt.Errorf("failed to perform search: %w", err)
 	}
 	defer closeWithErrCheck(res.Body)
 	if err = checkResponse(res); err != nil {
-		return errors.Wrap(err, "failed to perform search")
+		return fmt.Errorf("failed to perform search: %w", err)
 	}
 
 	err = json.NewDecoder(res.Body).Decode(resp)
@@ -326,16 +328,16 @@ func (e *Elastic) search(query jsonObj, resp interface{}) error {
 func (e *Elastic) count(query jsonObj) (int, error) {
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(query); err != nil {
-		return 0, errors.Wrap(err, "failed to encode query")
+		return 0, fmt.Errorf("failed to encode query: %w", err)
 	}
 
 	res, err := e.client.Count(e.client.Count.WithBody(&buf))
 	if err != nil {
-		return 0, errors.Wrap(err, "failed to retrieve log count")
+		return 0, fmt.Errorf("failed to retrieve log count: %w", err)
 	}
 	defer closeWithErrCheck(res.Body)
 	if err = checkResponse(res); err != nil {
-		return 0, errors.Wrap(err, "failed to retrieve log count")
+		return 0, fmt.Errorf("failed to retrieve log count: %w", err)
 	}
 
 	resp := struct {

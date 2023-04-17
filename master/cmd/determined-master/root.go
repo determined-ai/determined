@@ -7,8 +7,10 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
+
+	"github.com/ghodss/yaml"
+
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
@@ -116,11 +118,11 @@ func readConfigFile(configPath string) ([]byte, error) {
 			log.Warnf("no configuration file at %s, skipping", configPath)
 			return nil, nil
 		}
-		return nil, errors.Wrap(err, "error finding configuration file")
+		return nil, fmt.Errorf("error finding configuration file: %w", err)
 	}
 	bs, err := ioutil.ReadFile(configPath) // #nosec G304
 	if err != nil {
-		return nil, errors.Wrap(err, "error reading configuration file")
+		return nil, fmt.Errorf("error reading configuration file: %w", err)
 	}
 	return bs, nil
 }
@@ -128,10 +130,10 @@ func readConfigFile(configPath string) ([]byte, error) {
 func mergeConfigBytesIntoViper(bs []byte) error {
 	var configMap map[string]interface{}
 	if err := yaml.Unmarshal(bs, &configMap); err != nil {
-		return errors.Wrap(err, "error unmarshal yaml configuration file")
+		return fmt.Errorf("error unmarshal yaml configuration file: %w", err)
 	}
 	if err := v.MergeConfigMap(configMap); err != nil {
-		return errors.Wrap(err, "error merge configuration to viper")
+		return fmt.Errorf("error merge configuration to viper: %w", err)
 	}
 	return nil
 }
@@ -139,16 +141,16 @@ func mergeConfigBytesIntoViper(bs []byte) error {
 func getConfig(configMap map[string]interface{}) (*config.Config, error) {
 	configMap, err := applyBackwardsCompatibility(configMap)
 	if err != nil {
-		return nil, errors.Wrap(err, "cannot apply backwards compatibility")
+		return nil, fmt.Errorf("cannot apply backwards compatibility: %w", err)
 	}
 
 	config := config.DefaultConfig()
 	bs, err := json.Marshal(configMap)
 	if err != nil {
-		return nil, errors.Wrap(err, "cannot marshal configuration map into json bytes")
+		return nil, fmt.Errorf("cannot marshal configuration map into json bytes: %w", err)
 	}
 	if err = yaml.Unmarshal(bs, &config, yaml.DisallowUnknownFields); err != nil {
-		return nil, errors.Wrap(err, "cannot unmarshal configuration")
+		return nil, fmt.Errorf("cannot unmarshal configuration: %w", err)
 	}
 
 	if err := config.Resolve(); err != nil {

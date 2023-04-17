@@ -1,9 +1,11 @@
 package db
 
 import (
-	"github.com/jmoiron/sqlx"
+	"fmt"
 
 	"github.com/pkg/errors"
+
+	"github.com/jmoiron/sqlx"
 )
 
 // ExperimentSnapshot returns the snapshot for the specified experiment.
@@ -20,7 +22,7 @@ ORDER BY id DESC
 LIMIT 1`, &ret, experimentID); errors.Cause(err) == ErrNotFound {
 		return nil, 0, nil
 	} else if err != nil {
-		return nil, 0, errors.Wrapf(err, "error querying for experiment snapshot (%d)", experimentID)
+		return nil, 0, fmt.Errorf("error querying for experiment snapshot (%d): %w", experimentID, err)
 	}
 	return ret.Content, ret.Version, nil
 }
@@ -37,7 +39,7 @@ DO UPDATE SET
   updated_at = now(),
   content = EXCLUDED.content,
   version = EXCLUDED.version`, experimentID, experimentSnapshot, version); err != nil {
-		return errors.Wrap(err, "failed to upsert experiment snapshot")
+		return fmt.Errorf("failed to upsert experiment snapshot: %w", err)
 	}
 	return nil
 }
@@ -52,7 +54,7 @@ func (db *PgDB) deleteSnapshotsForExperiment(experimentID int) func(tx *sqlx.Tx)
 		if _, err := tx.Exec(`
 DELETE FROM experiment_snapshots
 WHERE experiment_id = $1`, experimentID); err != nil {
-			return errors.Wrap(err, "failed to delete experiment snapshots")
+			return fmt.Errorf("failed to delete experiment snapshots: %w", err)
 		}
 		return nil
 	}
@@ -67,7 +69,7 @@ WHERE experiment_id IN (
 	SELECT id
 	FROM experiments
 	WHERE state IN ('COMPLETED', 'CANCELED', 'ERROR'))`); err != nil {
-		return errors.Wrap(err, "failed to delete experiment snapshots")
+		return fmt.Errorf("failed to delete experiment snapshots: %w", err)
 	}
 	return nil
 }

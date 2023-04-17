@@ -1,10 +1,11 @@
 package db
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/pkg/errors"
+
 	log "github.com/sirupsen/logrus"
 )
 
@@ -16,18 +17,17 @@ func (db *PgDB) GetOrCreateClusterID() (string, error) {
 INSERT INTO cluster_id (cluster_id) SELECT ($1)
 WHERE NOT EXISTS ( SELECT * FROM cluster_id );
 `, newUUID); err != nil {
-		return "", errors.Wrapf(err, "error initializing cluster_id in cluster_id table")
+		return "", fmt.Errorf("error initializing cluster_id in cluster_id table: %w", err)
 	}
 
 	var uuidVal []string
 
 	if err := db.sql.Select(&uuidVal, `SELECT cluster_id FROM cluster_id`); err != nil {
-		return "", errors.Wrapf(err, "error reading cluster_id from cluster_id table")
+		return "", fmt.Errorf("error reading cluster_id from cluster_id table: %w", err)
 	}
 	if len(uuidVal) != 1 {
-		return "", errors.Errorf(
-			"expecting exactly one cluster_id from cluster_id table, %d values found", len(uuidVal),
-		)
+		return "", fmt.Errorf(
+			"expecting exactly one cluster_id from cluster_id table, %d values found", len(uuidVal))
 	}
 	return uuidVal[0], nil
 }
@@ -35,7 +35,7 @@ WHERE NOT EXISTS ( SELECT * FROM cluster_id );
 // UpdateClusterHeartBeat updates the clusterheartbeat column in the cluster_id table.
 func (db *PgDB) UpdateClusterHeartBeat(currentClusterHeartbeat time.Time) error {
 	_, err := db.sql.Exec(`UPDATE cluster_id SET cluster_heartbeat = $1`, currentClusterHeartbeat)
-	return errors.Wrap(err, "updating cluster heartbeat")
+	return fmt.Errorf("updating cluster heartbeat: %w", err)
 }
 
 // PeriodicTelemetryInfo returns anonymous information about the usage of the current
@@ -81,7 +81,7 @@ func (db *PgDB) UpdateResourceAllocationAggregation() error {
 		`SELECT date_trunc('day', max(date)) FROM resource_aggregates`,
 	).Scan(&lastDatePtr)
 	if err != nil {
-		return errors.Wrap(err, "failed to find last aggregate")
+		return fmt.Errorf("failed to find last aggregate: %w", err)
 	}
 
 	// The values periodStart takes on are all midnight UTC (because of date_trunc) for each day that
@@ -93,7 +93,7 @@ func (db *PgDB) UpdateResourceAllocationAggregation() error {
 			`SELECT date_trunc('day', min(start_time)) FROM allocations`,
 		).Scan(&firstDatePtr)
 		if err != nil {
-			return errors.Wrap(err, "failed to find first step")
+			return fmt.Errorf("failed to find first step: %w", err)
 		}
 		if firstDatePtr == nil {
 			// No steps found; nothing to do.
@@ -115,13 +115,13 @@ func (db *PgDB) UpdateResourceAllocationAggregation() error {
 		if _, err := db.sql.Exec(
 			db.queries.getOrLoad("update_aggregated_allocation"), periodStart,
 		); err != nil {
-			return errors.Wrap(err, "failed to add aggregate allocation")
+			return fmt.Errorf("failed to add aggregate allocation: %w", err)
 		}
 
 		if _, err := db.sql.Exec(
 			db.queries.getOrLoad("update_aggregated_queued_time"), periodStart,
 		); err != nil {
-			return errors.Wrap(err, "failed to add aggregate queued time")
+			return fmt.Errorf("failed to add aggregate queued time: %w", err)
 		}
 
 		log.Infof(

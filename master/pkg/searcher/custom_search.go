@@ -2,8 +2,8 @@ package searcher
 
 import (
 	"encoding/json"
+	"fmt"
 
-	"github.com/pkg/errors"
 	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -92,7 +92,7 @@ func (s *customSearch) validationCompleted(
 ) ([]Operation, error) {
 	protoMetric, err := structpb.NewValue(metric)
 	if err != nil {
-		return nil, errors.Wrapf(err, "illegal type for metric=%v", metric)
+		return nil, fmt.Errorf("illegal type for metric=%v: %w", metric, err)
 	}
 	s.SearcherEventQueue.Enqueue(&experimentv1.SearcherEvent{
 		Event: &experimentv1.SearcherEvent_ValidationCompleted{

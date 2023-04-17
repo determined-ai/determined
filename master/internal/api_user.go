@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+
 	"gopkg.in/guregu/null.v3"
 
 	bun "github.com/uptrace/bun"
@@ -450,7 +451,7 @@ func (a *apiServer) PatchUser(
 						WhereOr("LOWER(display_name) = ?", lowerDisplayName)
 				}).Where("id != ?", targetUser.ID).
 				Exists(ctx); err != nil {
-				return nil, errors.Wrap(err, "error finding similar display names")
+				return nil, fmt.Errorf("error finding similar display names: %w", err)
 			} else if ok {
 				return nil, status.Errorf(codes.InvalidArgument, "can not change display name "+
 					"to %s found a similar username or display name", *displayName)
@@ -475,7 +476,7 @@ func (a *apiServer) PatchUser(
 			hashedPassword = replicateClientSideSaltAndHash(hashedPassword)
 		}
 		if err := updatedUser.UpdatePasswordHash(hashedPassword); err != nil {
-			return nil, errors.Wrap(err, "error hashing password")
+			return nil, fmt.Errorf("error hashing password: %w", err)
 		}
 		insertColumns = append(insertColumns, "password_hash")
 	}

@@ -2,6 +2,7 @@ package cache
 
 import (
 	"context"
+	"fmt"
 	"io/fs"
 	"net/http"
 	"os"
@@ -10,8 +11,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-
-	"github.com/pkg/errors"
 
 	log "github.com/sirupsen/logrus"
 
@@ -132,7 +131,7 @@ func (f *FileCache) genPathWithValidation(expID int, path string) (string, error
 		return "", err
 	}
 	if strings.HasPrefix(rp, "..") {
-		return "", errors.Errorf("%s is not a valid path.", path)
+		return "", fmt.Errorf("%s is not a valid path", path)
 	}
 	return p, nil
 }

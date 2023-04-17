@@ -7,10 +7,11 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/pkg/errors"
+
 	log "github.com/sirupsen/logrus"
 
 	"github.com/elastic/go-elasticsearch/v7"
-	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/model"
 )
@@ -25,7 +26,7 @@ type Elastic struct {
 func Setup(conf model.ElasticLoggingConfig) (*Elastic, error) {
 	tlsCfg, err := elasticTLSConfig(conf.Security.TLS)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to make elastic tls config")
+		return nil, fmt.Errorf("failed to make elastic tls config: %w", err)
 	}
 
 	var scheme string
@@ -51,7 +52,7 @@ func Setup(conf model.ElasticLoggingConfig) (*Elastic, error) {
 
 	es, err := elasticsearch.NewClient(cfg)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to create elastic client from config")
+		return nil, fmt.Errorf("failed to create elastic client from config: %w", err)
 	}
 
 	// Try to connect to elastic - we'd rather fail hard here than on first log write.
@@ -65,7 +66,7 @@ func Setup(conf model.ElasticLoggingConfig) (*Elastic, error) {
 		numTries++
 		// Elastic can take a really long time to come up and we'd rather not fail integrations on this.
 		if numTries >= 45 {
-			return nil, errors.Wrapf(err, "could not connect to elastic after %v tries", numTries)
+			return nil, fmt.Errorf("could not connect to elastic after %v tries: %w", numTries, err)
 		}
 		toWait := 4 * time.Second
 		time.Sleep(toWait)

@@ -11,6 +11,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
+
 	log "github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
 
@@ -68,7 +69,7 @@ WHERE e.project_id = $1`, id)
 	for rows.Next() {
 		var exp model.Experiment
 		if err = rows.StructScan(&exp); err != nil {
-			return nil, errors.Wrap(err, "unable to read experiment from db")
+			return nil, fmt.Errorf("unable to read experiment from db: %w", err)
 		}
 		experiments = append(experiments, &exp)
 	}
@@ -138,8 +139,8 @@ WHERE t.experiment_id=$1
   AND s.end_time > $2
 GROUP BY name`, &rows, experimentID, sStartTime)
 	if err != nil {
-		return nil, nil, sEndTime, vEndTime, errors.Wrapf(err,
-			"error querying training metric names for experiment %d", experimentID)
+		return nil, nil, sEndTime, vEndTime, fmt.Errorf(
+			"error querying training metric names for experiment %d: %w", experimentID, err)
 	}
 	for _, row := range rows {
 		training = append(training, row.Name)
@@ -158,8 +159,8 @@ WHERE t.experiment_id=$1
   AND v.end_time > $2
 GROUP BY name`, &rows, experimentID, vStartTime)
 	if err != nil {
-		return nil, nil, sEndTime, vEndTime, errors.Wrapf(err,
-			"error querying validation metric names for experiment %d", experimentID)
+		return nil, nil, sEndTime, vEndTime, fmt.Errorf(
+			"error querying validation metric names for experiment %d: %w", experimentID, err)
 	}
 	for _, row := range rows {
 		validation = append(validation, row.Name)
@@ -191,7 +192,7 @@ WHERE t.experiment_id=$1
   AND s.end_time > $3
 GROUP BY batches_processed;`, &rows, experimentID, metricName, startTime)
 	if err != nil {
-		return nil, endTime, errors.Wrapf(err, "error querying DB for training metric batches")
+		return nil, endTime, fmt.Errorf("error querying DB for training metric batches: %w", err)
 	}
 	for _, row := range rows {
 		batches = append(batches, row.Batches)
@@ -220,7 +221,7 @@ WHERE t.experiment_id=$1
   AND v.end_time > $3
 GROUP BY batches_processed`, &rows, experimentID, metricName, startTime)
 	if err != nil {
-		return nil, endTime, errors.Wrapf(err, "error querying DB for validation metric batches")
+		return nil, endTime, fmt.Errorf("error querying DB for validation metric batches: %w", err)
 	}
 	for _, row := range rows {
 		batches = append(batches, row.Batches)
@@ -278,14 +279,14 @@ WHERE t.experiment_id=$2
   AND s.end_time > $5
 ORDER BY s.end_time;`, &rows, metricName, experimentID, minBatches, maxBatches, startTime)
 	if err != nil {
-		return nil, endTime, errors.Wrapf(err,
-			"failed to get snapshot for experiment %d and training metric %s",
-			experimentID, metricName)
+		return nil, endTime, fmt.Errorf(
+			"failed to get snapshot for experiment %d and training metric %s: %w",
+			experimentID, metricName, err)
 	}
 	for _, row := range rows {
 		trial, err := snapshotWrapperToTrial(row)
 		if err != nil {
-			return nil, endTime, errors.Wrap(err, "Failed to process trial metadata")
+			return nil, endTime, fmt.Errorf("failed to process trial metadata: %w", err)
 		}
 		trials = append(trials, trial)
 		if row.EndTime.After(endTime) {
@@ -319,15 +320,15 @@ WHERE t.experiment_id=$2
   AND v.end_time > $5
 ORDER BY v.end_time;`, &rows, metricName, experimentID, minBatches, maxBatches, startTime)
 	if err != nil {
-		return nil, endTime, errors.Wrapf(err,
-			"failed to get snapshot for experiment %d and validation metric %s",
-			experimentID, metricName)
+		return nil, endTime, fmt.Errorf(
+			"failed to get snapshot for experiment %d and validation metric %s: %w",
+			experimentID, metricName, err)
 	}
 
 	for _, row := range rows {
 		trial, err := snapshotWrapperToTrial(row)
 		if err != nil {
-			return nil, endTime, errors.Wrap(err, "Failed to process trial metadata")
+			return nil, endTime, fmt.Errorf("failed to process trial metadata: %w", err)
 		}
 		trials = append(trials, trial)
 		if row.EndTime.After(endTime) {
@@ -404,7 +405,7 @@ type MetricMeasurements struct {
 func (db *PgDB) ExperimentBestSearcherValidation(id int) (float32, error) {
 	exp, err := db.ExperimentByID(id)
 	if err != nil {
-		return 0, errors.Wrap(err, "failed to get experiment config")
+		return 0, fmt.Errorf("failed to get experiment config: %w", err)
 	}
 
 	metricOrdering := desc
@@ -423,7 +424,7 @@ LIMIT 1`, metricOrdering), id, exp.Config.Searcher.Metric).Scan(&metric); {
 	case errors.Is(err, sql.ErrNoRows):
 		return 0, ErrNotFound
 	case err != nil:
-		return 0, errors.Wrap(err, "querying best experiment validation")
+		return 0, fmt.Errorf("querying best experiment validation: %w", err)
 	}
 	return metric, nil
 }
@@ -467,7 +468,7 @@ WHERE t.experiment_id = e.id
 	case err == sql.ErrNoRows:
 		return eID, rID, errors.WithStack(ErrNotFound)
 	case err != nil:
-		return eID, rID, errors.Wrap(err, "failed to get trial exp and req id")
+		return eID, rID, fmt.Errorf("failed to get trial exp and req id: %w", err)
 	default:
 		return eID, rID, nil
 	}
@@ -486,7 +487,7 @@ func (db *PgDB) AddExperiment(
 	experiment *model.Experiment, activeConfig expconf.ExperimentConfig,
 ) (err error) {
 	if experiment.ID != 0 {
-		return errors.Errorf("error adding an experiment with non-zero id %v", experiment.ID)
+		return fmt.Errorf("error adding an experiment with non-zero id %v", experiment.ID)
 	}
 	ctx := context.TODO()
 	tx, err := Bun().BeginTx(ctx, nil)
@@ -503,7 +504,7 @@ func (db *PgDB) AddExperiment(
 	}
 	_, err = tx.NewInsert().Model(&job).Exec(ctx)
 	if err != nil {
-		return errors.Wrapf(err, "error inserting job %v", job)
+		return fmt.Errorf("error inserting job %v: %w", job, err)
 	}
 	err = tx.NewRaw(`INSERT INTO experiments
 	(state, config, model_definition, start_time, end_time, archived, parent_id, progress,
@@ -529,21 +530,21 @@ func (db *PgDB) AddExperiment(
 		experiment.JobID,
 		experiment.ProjectID).Scan(ctx, &experiment.ID)
 	if err != nil {
-		return errors.Wrapf(err, "error inserting experiment %v", experiment)
+		return fmt.Errorf("error inserting experiment %v: %w", experiment, err)
 	}
 	activeConfigStr, err := json.Marshal(activeConfig)
 	if err != nil {
-		return errors.Wrapf(err, "error handling experiment config %v", activeConfig)
+		return fmt.Errorf("error handling experiment config %v: %w", activeConfig, err)
 	}
 	_, err = tx.Exec(
 		`UPDATE experiments SET config = ? WHERE id = ?`, string(activeConfigStr), experiment.ID,
 	)
 	if err != nil {
-		return errors.Wrapf(err, "error inserting experiment config")
+		return fmt.Errorf("error inserting experiment config: %w", err)
 	}
 	if err = AddProjectHyperparameters(
 		ctx, tx, int32(experiment.ProjectID), []int32{int32(experiment.ID)}); err != nil {
-		return errors.Wrapf(err, "error updating hyperparameters")
+		return fmt.Errorf("error updating hyperparameters: %w", err)
 	}
 	return tx.Commit()
 }
@@ -686,12 +687,12 @@ func (db *PgDB) LegacyExperimentConfigByID(
 	var byts []byte
 	if err := db.sql.QueryRow(
 		"SELECT config FROM experiments WHERE id = $1", id).Scan(&byts); err != nil {
-		return expconf.LegacyConfig{}, errors.Wrap(err, "querying legacy config bytes")
+		return expconf.LegacyConfig{}, fmt.Errorf("querying legacy config bytes: %w", err)
 	}
 
 	config, err := expconf.ParseLegacyConfigJSON(byts)
 	if err != nil {
-		return expconf.LegacyConfig{}, errors.Wrap(err, "parsing legacy conf from database")
+		return expconf.LegacyConfig{}, fmt.Errorf("parsing legacy conf from database: %w", err)
 	}
 
 	return config, nil
@@ -703,7 +704,7 @@ func (db *PgDB) ExperimentIDByTrialID(trialID int) (int, error) {
 	if err := db.sql.Get(&experimentID, `
 SELECT experiment_id FROM trials where id = $1
 `, trialID); err != nil {
-		return 0, errors.Wrapf(err, "querying for experiment id for trial %v", trialID)
+		return 0, fmt.Errorf("querying for experiment id for trial %v: %w", trialID, err)
 	}
 	return experimentID, nil
 }
@@ -723,7 +724,7 @@ WHERE state IN (
 	if err == sql.ErrNoRows {
 		return nil, errors.WithStack(ErrNotFound)
 	} else if err != nil {
-		return nil, errors.Wrap(err, "querying for active experiments")
+		return nil, fmt.Errorf("querying for active experiments: %w", err)
 	}
 
 	defer rows.Close()
@@ -738,14 +739,14 @@ WHERE state IN (
 			items, err := rows.SliceScan()
 			if err != nil {
 				log.WithError(configErr).Errorf("failed to read non-terminal experiment config")
-				return nil, errors.Wrap(err, "unable to read experiment from db")
+				return nil, fmt.Errorf("unable to read experiment from db: %w", err)
 			}
 
 			expID, ok := items[0].(int64)
 			if !ok {
 				log.WithError(configErr).Errorf("failed to read non-terminal experiment config")
-				return nil, errors.Errorf(
-					"Expected an integer experiment ID, but got: %s", reflect.TypeOf(items[0]))
+				return nil, fmt.Errorf("expected an integer experiment ID, but got: %s",
+					reflect.TypeOf(items[0]))
 			}
 
 			log.WithError(configErr).Errorf(
@@ -778,7 +779,7 @@ UPDATE experiments
 SET state = 'DELETE_FAILED'
 WHERE state = 'DELETING'
 `); err != nil {
-		return errors.Wrap(err, "failing deleting experiments")
+		return fmt.Errorf("failing deleting experiments: %w", err)
 	}
 	return nil
 }
@@ -788,14 +789,14 @@ WHERE state = 'DELETING'
 // an invalid experiment config after a version upgrade.
 func (db *PgDB) TerminateExperimentInRestart(id int, state model.State) error {
 	if _, ok := model.TerminalStates[state]; !ok {
-		return errors.Errorf("state %v is not a terminal state", state)
+		return fmt.Errorf("state %v is not a terminal state", state)
 	}
 
 	now := time.Now().UTC()
 
 	tx, err := db.sql.Begin()
 	if err != nil {
-		return errors.Wrap(err, "starting transaction")
+		return fmt.Errorf("starting transaction: %w", err)
 	}
 	defer func() {
 		if tx == nil {
@@ -814,18 +815,18 @@ func (db *PgDB) TerminateExperimentInRestart(id int, state model.State) error {
 		now,
 		id,
 	); err != nil {
-		return errors.Wrap(err, "terminating trials of a stopping experiment")
+		return fmt.Errorf("terminating trials of a stopping experiment: %w", err)
 	}
 
 	// Terminate experiment.
 	if _, err = tx.Exec(
 		`UPDATE experiments SET state=$1, end_time=$2, progress=NULL WHERE id=$3`, state, now, id,
 	); err != nil {
-		return errors.Wrap(err, "terminating a stopping experiment")
+		return fmt.Errorf("terminating a stopping experiment: %w", err)
 	}
 
 	if err = tx.Commit(); err != nil {
-		return errors.Wrapf(err, "committing termination of stopping experiment %v", id)
+		return fmt.Errorf("committing termination of stopping experiment %v: %w", id, err)
 	}
 
 	tx = nil
@@ -863,7 +864,7 @@ FROM (SELECT state FROM experiments WHERE id = $1 FOR UPDATE) old
 WHERE e.id = $1
 RETURNING e.state, old.state
 `, experiment.ID, experiment.State).Scan(&newState, &oldState); err != nil {
-		return errors.Wrap(err, "updating experiment state")
+		return fmt.Errorf("updating experiment state: %w", err)
 	}
 	if newState == oldState {
 		return errors.New("could not transition experiment")
@@ -874,7 +875,7 @@ RETURNING e.state, old.state
 // SaveExperimentArchiveStatus saves the current experiment archive status to the database.
 func (db *PgDB) SaveExperimentArchiveStatus(experiment *model.Experiment) error {
 	if !model.TerminalStates[experiment.State] {
-		return errors.Errorf("cannot set archived for experiment in state %v", experiment.State)
+		return fmt.Errorf("cannot set archived for experiment in state %v", experiment.State)
 	}
 
 	query := `
@@ -891,21 +892,21 @@ func (db *PgDB) DeleteExperiment(id int) error {
 DELETE FROM raw_steps
 WHERE trial_id IN (SELECT id FROM trials WHERE experiment_id = $1)
 `, id); err != nil {
-			return errors.Wrapf(err, "error deleting steps for experiment %v", id)
+			return fmt.Errorf("error deleting steps for experiment %v: %w", id, err)
 		}
 
 		if _, err := tx.Exec(`
 DELETE FROM raw_validations
 WHERE trial_id IN (SELECT id FROM trials WHERE experiment_id = $1)
 `, id); err != nil {
-			return errors.Wrapf(err, "error deleting validations for experiment %v", id)
+			return fmt.Errorf("error deleting validations for experiment %v: %w", id, err)
 		}
 
 		if _, err := tx.Exec(`
 DELETE FROM raw_checkpoints
 WHERE trial_id IN (SELECT id FROM trials WHERE experiment_id = $1)
 `, id); err != nil {
-			return errors.Wrapf(err, "error deleting checkpoints for experiment %v", id)
+			return fmt.Errorf("error deleting checkpoints for experiment %v: %w", id, err)
 		}
 
 		if _, err := tx.Exec(`
@@ -917,18 +918,18 @@ WHERE task_id IN (
 	JOIN experiments e ON t.experiment_id = e.id
 	WHERE experiment_id = $1
 )`, id); err != nil {
-			return errors.Wrapf(err, "error deleting checkpoints (v2) for experiment %v", id)
+			return fmt.Errorf("error deleting checkpoints (v2) for experiment %v: %w", id, err)
 		}
 
 		if err := db.deleteSnapshotsForExperiment(id)(tx); err != nil {
-			return errors.Wrapf(err, "error deleting snapshots for experiment %v", id)
+			return fmt.Errorf("error deleting snapshots for experiment %v: %w", id, err)
 		}
 
 		if _, err := tx.Exec(`
 DELETE FROM trials
 WHERE experiment_id = $1;
 `, id); err != nil {
-			return errors.Wrapf(err, "error deleting trials for experiment %v", id)
+			return fmt.Errorf("error deleting trials for experiment %v: %w", id, err)
 		}
 
 		result, err := tx.Exec(`
@@ -936,13 +937,13 @@ DELETE FROM experiments
 WHERE id = $1
 `, id)
 		if err != nil {
-			return errors.Wrapf(err, "error deleting experiment %v", id)
+			return fmt.Errorf("error deleting experiment %v: %w", id, err)
 		}
 		switch num, err := result.RowsAffected(); {
 		case err != nil:
-			return errors.Wrapf(err, "error in RowsAffected when deleting experiment %v", id)
+			return fmt.Errorf("error in RowsAffected when deleting experiment %v: %w", id, err)
 		case num != 1:
-			return errors.Errorf("error deleting non-existing experiment %v", id)
+			return fmt.Errorf("error deleting non-existing experiment %v", id)
 		}
 		return nil
 	})
@@ -967,12 +968,12 @@ EXISTS(
 func (db *PgDB) SaveExperimentProgress(id int, progress *float64) error {
 	res, err := db.sql.Exec(`UPDATE experiments SET progress = $1 WHERE id = $2`, progress, id)
 	if err != nil {
-		return errors.Wrap(err, "saving experiment progress")
+		return fmt.Errorf("saving experiment progress: %w", err)
 	}
 	if numRows, err := res.RowsAffected(); err != nil {
-		return errors.Wrap(err, "checking affected rows for saving experiment progress")
+		return fmt.Errorf("checking affected rows for saving experiment progress: %w", err)
 	} else if numRows != 1 {
-		return errors.Errorf("saving experiment %d's progress affected %d rows instead of 1", id, numRows)
+		return fmt.Errorf("saving experiment %d's progress affected %d rows instead of 1", id, numRows)
 	}
 	return nil
 }
@@ -1003,7 +1004,7 @@ SELECT COALESCE(extract(epoch from sum(a.end_time - a.start_time)), 0)
 FROM allocations a, trials t
 WHERE t.experiment_id = $1 AND a.task_id = t.task_id
 `, id); err != nil {
-		return 0, errors.Wrapf(err, "querying for total step time of experiment %v", id)
+		return 0, fmt.Errorf("querying for total step time of experiment %v: %w", id, err)
 	}
 	return seconds, nil
 }
@@ -1016,7 +1017,7 @@ SELECT count(*)
 FROM trials
 WHERE trials.experiment_id = $1
 `, id); err != nil {
-		return 0, errors.Wrapf(err, "querying for number of trials of experiment %v", id)
+		return 0, fmt.Errorf("querying for number of trials of experiment %v: %w", id, err)
 	}
 	return numTrials, nil
 }
@@ -1031,7 +1032,7 @@ SELECT id
 FROM trials
 WHERE trials.experiment_id = $1
 `, &trialIDRows, expID); err != nil {
-		return nil, errors.Wrapf(err, "querying for trial IDs of experiment %v", expID)
+		return nil, fmt.Errorf("querying for trial IDs of experiment %v: %w", expID, err)
 	}
 	var trialIDs []int
 	for _, r := range trialIDRows {
@@ -1051,7 +1052,7 @@ SELECT id, task_id
 FROM trials
 WHERE trials.experiment_id = $1
 `, &trialIDRows, expID); err != nil {
-		return nil, nil, errors.Wrapf(err, "querying for trial IDs of experiment %v", expID)
+		return nil, nil, fmt.Errorf("querying for trial IDs of experiment %v: %w", expID, err)
 	}
 	var trialIDs []int
 	var taskIDs []model.TaskID
@@ -1070,7 +1071,7 @@ SELECT count(*)
 FROM raw_steps s, trials t
 WHERE t.experiment_id = $1 AND s.trial_id = t.id
 `, id); err != nil {
-		return 0, errors.Wrapf(err, "querying for number of steps of experiment %v", id)
+		return 0, fmt.Errorf("querying for number of steps of experiment %v: %w", id, err)
 	}
 	return numSteps, nil
 }

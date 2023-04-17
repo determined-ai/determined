@@ -8,8 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
-
 	"github.com/determined-ai/determined/master/internal/cluster"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/portregistry"
@@ -375,7 +373,7 @@ func (a *Allocation) RequestResources(ctx *actor.Context) error {
 			Where("allocation_id = ?", a.model.AllocationID).
 			Scan(context.TODO())
 		if err != nil {
-			return errors.Wrap(err, "loading trial allocation")
+			return fmt.Errorf("loading trial allocation: %w", err)
 		}
 	} else {
 		// Insert new allocation.
@@ -383,13 +381,13 @@ func (a *Allocation) RequestResources(ctx *actor.Context) error {
 
 		a.setModelState(model.AllocationStatePending)
 		if err := a.db.AddAllocation(&a.model); err != nil {
-			return errors.Wrap(err, "saving trial allocation")
+			return fmt.Errorf("saving trial allocation: %w", err)
 		}
 	}
 
 	a.req.AllocationRef = ctx.Self()
 	if err := a.rm.Allocate(ctx, a.req); err != nil {
-		return errors.Wrap(err, "failed to request allocation")
+		return fmt.Errorf("failed to request allocation: %w", err)
 	}
 	a.sendEvent(ctx, sproto.Event{ScheduledEvent: &a.model.AllocationID})
 	return nil
@@ -439,21 +437,21 @@ func (a *Allocation) ResourcesAllocated(ctx *actor.Context, msg sproto.Resources
 
 	a.setMostProgressedModelState(model.AllocationStateAssigned)
 	if err := a.resources.append(msg.Resources); err != nil {
-		return errors.Wrapf(err, "appending resources")
+		return fmt.Errorf("appending resources: %w", err)
 	}
 
 	// Get the task spec first, so the trial/task table is populated before allocations.
 	resp := ctx.Ask(ctx.Self().Parent(), BuildTaskSpec{})
 	switch ok, err := resp.ErrorOrTimeout(time.Hour); {
 	case err != nil:
-		return errors.Wrapf(err, "could not get task spec")
+		return fmt.Errorf("could not get task spec: %w", err)
 	case !ok:
-		return errors.Wrapf(err, "timeout getting task spec, likely a deadlock")
+		return fmt.Errorf("timeout getting task spec, likely a deadlock: %w", err)
 	}
 	spec := resp.Get().(tasks.TaskSpec)
 
 	if err := a.db.UpdateAllocationState(a.model); err != nil {
-		return errors.Wrap(err, "updating allocation state")
+		return fmt.Errorf("updating allocation state: %w", err)
 	}
 
 	now := time.Now().UTC()
@@ -464,7 +462,7 @@ func (a *Allocation) ResourcesAllocated(ctx *actor.Context, msg sproto.Resources
 		EndTime:      &now,
 	})
 	if err != nil {
-		return errors.Wrap(err, "recording task queued stats")
+		return fmt.Errorf("recording task queued stats: %w", err)
 	}
 
 	if a.req.Preemptible {
@@ -494,12 +492,12 @@ func (a *Allocation) ResourcesAllocated(ctx *actor.Context, msg sproto.Resources
 	} else {
 		token, err := a.db.StartAllocationSession(a.model.AllocationID, spec.Owner)
 		if err != nil {
-			return errors.Wrap(err, "starting a new allocation session")
+			return fmt.Errorf("starting a new allocation session: %w", err)
 		}
 
 		a.model.Ports, err = a.getPorts(spec.UniqueExposedPortRequests, ctx)
 		if err != nil {
-			return errors.Wrap(err, "getting ports")
+			return fmt.Errorf("getting ports: %w", err)
 		}
 		a.portsRegistered = true
 		err = db.UpdateAllocationPorts(a.model)

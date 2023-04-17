@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
+
 	log "github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/internal/db"
@@ -57,11 +58,11 @@ func (m *Master) restoreExperiment(expModel *model.Experiment) error {
 	// Experiments which were trying to stop need to be marked as terminal in the database.
 	activeConfig, err := m.db.ActiveExperimentConfig(expModel.ID)
 	if err != nil {
-		return errors.Errorf("cannot restore experiment %d with unparsable config", expModel.ID)
+		return fmt.Errorf("cannot restore experiment %d with unparsable config", expModel.ID)
 	}
 	if terminal, ok := model.StoppingToTerminalStates[expModel.State]; ok {
 		if err = m.db.TerminateExperimentInRestart(expModel.ID, terminal); err != nil {
-			return errors.Wrapf(err, "terminating experiment %d", expModel.ID)
+			return fmt.Errorf("terminating experiment %d: %w", expModel.ID, err)
 		}
 		expModel.State = terminal
 		telemetry.ReportExperimentStateChanged(m.system, m.db, *expModel)
@@ -72,13 +73,9 @@ func (m *Master) restoreExperiment(expModel *model.Experiment) error {
 		}
 		return nil
 	} else if _, ok := model.RunningStates[expModel.State]; !ok {
-		return errors.Errorf(
-			"cannot restore experiment %d from state %v", expModel.ID, expModel.State,
-		)
+		return fmt.Errorf("cannot restore experiment %d from state %v", expModel.ID, expModel.State)
 	} else if err = activeConfig.Searcher().AssertCurrent(); err != nil {
-		return errors.Errorf(
-			"cannot restore experiment %d with legacy searcher", expModel.ID,
-		)
+		return fmt.Errorf("cannot restore experiment %d with legacy searcher", expModel.ID)
 	}
 
 	poolName, err := m.rm.ResolveResourcePool(
@@ -108,22 +105,22 @@ func (m *Master) restoreExperiment(expModel *model.Experiment) error {
 	taskSpec.TaskContainerDefaults = taskContainerDefaults
 	owner, err := user.UserByUsername(expModel.Username)
 	if err != nil {
-		return errors.Wrapf(err, "retrieving full user on restart")
+		return fmt.Errorf("retrieving full user on restart: %w", err)
 	}
 	taskSpec.Owner = owner
 
 	log.WithField("experiment", expModel.ID).Debug("restoring experiment")
 	snapshot, err := m.retrieveExperimentSnapshot(expModel)
 	if err != nil {
-		return errors.Wrapf(err, "failed to restore experiment %d", expModel.ID)
+		return fmt.Errorf("failed to restore experiment %d: %w", expModel.ID, err)
 	}
 	e, _, err := newExperiment(m, expModel, activeConfig, &taskSpec)
 	if err != nil {
-		return errors.Wrapf(err, "failed to create experiment %d from model", expModel.ID)
+		return fmt.Errorf("failed to create experiment %d from model: %w", expModel.ID, err)
 	}
 	if snapshot != nil {
 		if err := e.Restore(snapshot); err != nil {
-			return errors.Wrap(err, "failed to restore experiment")
+			return fmt.Errorf("failed to restore experiment: %w", err)
 		}
 		e.restored = true
 	}
@@ -201,10 +198,10 @@ func (m *Master) retrieveExperimentSnapshot(expModel *model.Experiment) ([]byte,
 		log.WithField("experiment-id", expModel.ID).Debug("no snapshot found")
 		return nil, nil
 	case err != nil:
-		return nil, errors.Wrap(err, "failed to retrieve experiment snapshot")
+		return nil, fmt.Errorf("failed to retrieve experiment snapshot: %w", err)
 	default:
 		if snapshot, err = shimExperimentSnapshot(snapshot, version); err != nil {
-			return nil, errors.Wrap(err, "failed to shim experiment snapshot")
+			return nil, fmt.Errorf("failed to shim experiment snapshot: %w", err)
 		}
 		return snapshot, nil
 	}
@@ -251,7 +248,7 @@ func shimSnapshot(shims map[int]snapshotShimFunc, snapshot []byte, version int) 
 			return nil, fmt.Errorf("missing shim from %d to %d", version, experimentSnapshotVersion)
 		}
 		if snapshot, err = shim(snapshot); err != nil {
-			return nil, errors.Wrapf(err, "failed to shim snapshot")
+			return nil, fmt.Errorf("failed to shim snapshot: %w", err)
 		}
 		version++
 	}

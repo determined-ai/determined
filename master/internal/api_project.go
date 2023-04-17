@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
+
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -27,7 +28,7 @@ func (a *apiServer) GetProjectByID(
 	if err := a.m.db.QueryProto("get_project", p, id); errors.Is(err, db.ErrNotFound) {
 		return nil, notFoundErr
 	} else if err != nil {
-		return nil, errors.Wrapf(err, "error fetching project (%d) from database", id)
+		return nil, fmt.Errorf("error fetching project (%d) from database: %w", id, err)
 	}
 
 	if ok, err := project.AuthZProvider.Get().CanGetProject(ctx, curUser, p); err != nil {
@@ -46,7 +47,7 @@ func (a *apiServer) getProjectColumnsByID(
 	if err := a.m.db.QueryProto("get_project", p, id); errors.Is(err, db.ErrNotFound) {
 		return nil, notFoundErr
 	} else if err != nil {
-		return nil, errors.Wrapf(err, "error fetching project (%d) from database", id)
+		return nil, fmt.Errorf("error fetching project (%d) from database: %w", id, err)
 	}
 	if ok, err := project.AuthZProvider.Get().CanGetProject(ctx, curUser, p); err != nil {
 		return nil, err
@@ -120,12 +121,12 @@ func (a *apiServer) CheckParentWorkspaceUnarchived(project *projectv1.Project) e
 	w := &workspacev1.Workspace{}
 	err := a.m.db.QueryProto("get_workspace_from_project", w, project.Id)
 	if err != nil {
-		return errors.Wrapf(err,
-			"error fetching project (%v)'s workspace from database", project.Id)
+		return fmt.Errorf("error fetching project (%v)'s workspace from database: %w", project.Id, err)
 	}
 
 	if w.Archived {
-		return errors.Errorf("This project belongs to an archived workspace. " +
+		//nolint: stylecheck.
+		return fmt.Errorf("This project belongs to an archived workspace. " +
 			"To make changes, first unarchive the workspace.")
 	}
 	return nil
@@ -172,9 +173,11 @@ func (a *apiServer) PostProject(
 	p := &projectv1.Project{}
 	err = a.m.db.QueryProto("insert_project", p, req.Name, req.Description,
 		req.WorkspaceId, curUser.ID)
+	if err != nil {
+		return nil, fmt.Errorf("error creating project %s in database: %w", req.Name, err)
+	}
 
-	return &apiv1.PostProjectResponse{Project: p},
-		errors.Wrapf(err, "error creating project %s in database", req.Name)
+	return &apiv1.PostProjectResponse{Project: p}, nil
 }
 
 func (a *apiServer) AddProjectNote(
@@ -194,8 +197,11 @@ func (a *apiServer) AddProjectNote(
 
 	newp := &projectv1.Project{}
 	err = a.m.db.QueryProto("insert_project_note", newp, req.ProjectId, notes)
-	return &apiv1.AddProjectNoteResponse{Notes: newp.Notes},
-		errors.Wrapf(err, "error adding project note")
+	if err != nil {
+		return nil, fmt.Errorf("error adding project note: %w", err)
+	}
+
+	return &apiv1.AddProjectNoteResponse{Notes: newp.Notes}, nil
 }
 
 func (a *apiServer) PutProjectNotes(
@@ -209,8 +215,11 @@ func (a *apiServer) PutProjectNotes(
 
 	newp := &projectv1.Project{}
 	err = a.m.db.QueryProto("insert_project_note", newp, req.ProjectId, req.Notes)
-	return &apiv1.PutProjectNotesResponse{Notes: newp.Notes},
-		errors.Wrapf(err, "error putting project notes")
+	if err != nil {
+		return nil, fmt.Errorf("error putting project notes: %w", err)
+	}
+
+	return &apiv1.PutProjectNotesResponse{Notes: newp.Notes}, nil
 }
 
 func (a *apiServer) PatchProject(
@@ -221,11 +230,11 @@ func (a *apiServer) PatchProject(
 		return nil, err
 	}
 	if currProject.Archived {
-		return nil, errors.Errorf("project (%d) is archived and cannot have attributes updated.",
+		return nil, fmt.Errorf("project (%d) is archived and cannot have attributes updated.",
 			currProject.Id)
 	}
 	if currProject.Immutable {
-		return nil, errors.Errorf("project (%v) is immutable and cannot have attributes updated.",
+		return nil, fmt.Errorf("project (%v) is immutable and cannot have attributes updated.",
 			currProject.Id)
 	}
 
@@ -260,9 +269,11 @@ func (a *apiServer) PatchProject(
 	finalProject := &projectv1.Project{}
 	err = a.m.db.QueryProto("update_project",
 		finalProject, currProject.Id, currProject.Name, currProject.Description)
+	if err != nil {
+		return nil, fmt.Errorf("error updating project (%d) in database: %w", currProject.Id, err)
+	}
 
-	return &apiv1.PatchProjectResponse{Project: finalProject},
-		errors.Wrapf(err, "error updating project (%d) in database", currProject.Id)
+	return &apiv1.PatchProjectResponse{Project: finalProject}, nil
 }
 
 func (a *apiServer) deleteProject(ctx context.Context, projectID int32,
@@ -307,9 +318,9 @@ func (a *apiServer) DeleteProject(
 
 	holder := &projectv1.Project{}
 	err = a.m.db.QueryProto("deletable_project", holder, req.Id)
-	if holder.Id == 0 {
-		return nil, errors.Wrapf(err, "project (%d) does not exist or not deletable by this user",
-			req.Id)
+	if err != nil || holder.Id == 0 {
+		return nil, fmt.Errorf("project (%d) does not exist or not deletable by this user: %w",
+			req.Id, err)
 	}
 
 	expList, err := a.m.db.ProjectExperiments(int(req.Id))
@@ -318,15 +329,16 @@ func (a *apiServer) DeleteProject(
 	}
 
 	if len(expList) == 0 {
-		err = a.m.db.QueryProto("delete_project", holder, req.Id)
-		return &apiv1.DeleteProjectResponse{Completed: (err == nil)},
-			errors.Wrapf(err, "error deleting project (%d)", req.Id)
+		if err = a.m.db.QueryProto("delete_project", holder, req.Id); err != nil {
+			return nil, fmt.Errorf("error deleting project (%d): %w", req.Id, err)
+		}
+		return &apiv1.DeleteProjectResponse{Completed: (err == nil)}, nil
 	}
 	go func() {
 		_ = a.deleteProject(ctx, req.Id, expList)
 	}()
-	return &apiv1.DeleteProjectResponse{Completed: false},
-		errors.Wrapf(err, "error deleting project (%d)", req.Id)
+
+	return &apiv1.DeleteProjectResponse{Completed: false}, nil
 }
 
 func (a *apiServer) MoveProject(
@@ -357,11 +369,11 @@ func (a *apiServer) MoveProject(
 	holder := &projectv1.Project{}
 	err = a.m.db.QueryProto("move_project", holder, req.ProjectId, req.DestinationWorkspaceId)
 	if err != nil {
-		return nil, errors.Wrapf(err, "error moving project (%d)", req.ProjectId)
+		return nil, fmt.Errorf("error moving project (%d): %w", req.ProjectId, err)
 	}
 	if holder.Id == 0 {
-		return nil, errors.Wrapf(err, "project (%d) does not exist or not moveable by this user",
-			req.ProjectId)
+		return nil, fmt.Errorf("project (%d) does not exist or not moveable by this user: %w",
+			req.ProjectId, err)
 	}
 
 	return &apiv1.MoveProjectResponse{}, nil
@@ -382,11 +394,11 @@ func (a *apiServer) ArchiveProject(
 
 	holder := &projectv1.Project{}
 	if err = a.m.db.QueryProto("archive_project", holder, req.Id, true); err != nil {
-		return nil, errors.Wrapf(err, "error archiving project (%d)", req.Id)
+		return nil, fmt.Errorf("error archiving project (%d): %w", req.Id, err)
 	}
 	if holder.Id == 0 {
-		return nil, errors.Wrapf(err, "project (%d) is not archive-able by this user",
-			req.Id)
+		return nil, fmt.Errorf("project (%d) is not archive-able by this user: %w",
+			req.Id, err)
 	}
 
 	return &apiv1.ArchiveProjectResponse{}, nil
@@ -407,11 +419,11 @@ func (a *apiServer) UnarchiveProject(
 
 	holder := &projectv1.Project{}
 	if err = a.m.db.QueryProto("archive_project", holder, req.Id, false); err != nil {
-		return nil, errors.Wrapf(err, "error unarchiving project (%d)", req.Id)
+		return nil, fmt.Errorf("error unarchiving project (%d): %w", req.Id, err)
 	}
 	if holder.Id == 0 {
-		return nil, errors.Wrapf(err, "project (%d) is not unarchive-able by this user",
-			req.Id)
+		return nil, fmt.Errorf("project (%d) is not unarchive-able by this user: %w",
+			req.Id, err)
 	}
 	return &apiv1.UnarchiveProjectResponse{}, nil
 }

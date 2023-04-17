@@ -2,6 +2,7 @@ package model
 
 import (
 	"encoding/json"
+	"fmt"
 	"path/filepath"
 	"strings"
 
@@ -30,7 +31,7 @@ type DevicesConfig []DeviceConfig
 func (d *DevicesConfig) UnmarshalJSON(data []byte) error {
 	unmarshaled := make([]DeviceConfig, 0)
 	if err := json.Unmarshal(data, &unmarshaled); err != nil {
-		return errors.Wrap(err, "failed to parse devices")
+		return fmt.Errorf("failed to parse devices: %w", err)
 	}
 
 	// Prevent duplicate container paths as a result of the merge.  Prefer the unmarshaled devices
@@ -63,7 +64,7 @@ func (d *DeviceConfig) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &plain); err == nil {
 		fields := strings.Split(plain, ":")
 		if len(fields) < 2 || len(fields) > 3 {
-			return errors.Errorf("invalid device string: %q", plain)
+			return fmt.Errorf("invalid device string: %q", plain)
 		}
 		d.HostPath = fields[0]
 		d.ContainerPath = fields[1]
@@ -77,7 +78,7 @@ func (d *DeviceConfig) UnmarshalJSON(data []byte) error {
 
 	d.Mode = defaultDeviceMode
 	type DefaultParser *DeviceConfig
-	return errors.Wrap(json.Unmarshal(data, DefaultParser(d)), "failed to parse device")
+	return fmt.Errorf("failed to parse device: %w", json.Unmarshal(data, DefaultParser(d)))
 }
 
 // ResourcesConfig configures resource usage for an experiment, command, notebook, or tensorboard.
@@ -113,7 +114,7 @@ func (d *StorageSize) UnmarshalJSON(data []byte) error {
 	case string:
 		b, err := units.RAMInBytes(s)
 		if err != nil {
-			return errors.Wrap(err, "failed to parse shm_size")
+			return fmt.Errorf("failed to parse shm_size: %w", err)
 		}
 		*d = StorageSize(b)
 	default:
@@ -176,7 +177,7 @@ type BindMountsConfig []BindMount
 func (b *BindMountsConfig) UnmarshalJSON(data []byte) error {
 	unmarshaled := make([]BindMount, 0)
 	if err := json.Unmarshal(data, &unmarshaled); err != nil {
-		return errors.Wrap(err, "failed to parse bind mounts")
+		return fmt.Errorf("failed to parse bind mounts: %w", err)
 	}
 
 	// Prevent duplicate container paths as a result of the merge.  Prefer the unmarshaled bind
@@ -216,7 +217,7 @@ func (b BindMount) Validate() []error {
 func (b *BindMount) UnmarshalJSON(data []byte) error {
 	b.Propagation = "rprivate"
 	type DefaultParser *BindMount
-	return errors.Wrap(json.Unmarshal(data, DefaultParser(b)), "failed to parse bind mounts")
+	return fmt.Errorf("failed to parse bind mounts: %w", json.Unmarshal(data, DefaultParser(b)))
 }
 
 // ProxyPort is a legacy-style clone of expconf.ProxyPort.

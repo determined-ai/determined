@@ -9,13 +9,14 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/pkg/errors"
+
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
 
 	"github.com/ghodss/yaml"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
-	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/api"
 	detContext "github.com/determined-ai/determined/master/internal/context"
@@ -266,15 +267,14 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 
 	ownerFullUser, err := user.UserByID(*dbExp.OwnerID)
 	if err != nil {
-		return nil, errors.Errorf("cannot find user %v who owns experiment", dbExp.OwnerID)
+		return nil, fmt.Errorf("cannot find user %v who owns experiment", dbExp.OwnerID)
 	}
 
 	// TODO(DET-8577): Remove unnecessary active config usage.
 	activeConfig, err := m.db.ActiveExperimentConfig(args.ExperimentID)
 	if err != nil {
-		return nil, errors.Wrapf(
-			err, "unable to load no-longer-valid config for experiment %v", args.ExperimentID,
-		)
+		return nil, fmt.Errorf("unable to load no-longer-valid config for experiment %v: %w",
+			args.ExperimentID, err)
 	}
 
 	if patch.Resources != nil {
@@ -320,7 +320,7 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 
 	// `patch` represents the allowed mutations that can be performed on an experiment, in JSON
 	if err := m.db.SaveExperimentConfig(dbExp.ID, activeConfig); err != nil {
-		return nil, errors.Wrapf(err, "patching experiment %d", dbExp.ID)
+		return nil, fmt.Errorf("patching experiment %d: %w", dbExp.ID, err)
 	}
 
 	if patch.Resources != nil {
@@ -332,14 +332,14 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 			resp := m.system.AskAt(actor.Addr("experiments", args.ExperimentID),
 				sproto.SetGroupWeight{Weight: *patch.Resources.Weight})
 			if resp.Error() != nil {
-				return nil, errors.Errorf("cannot change experiment weight to %v", *patch.Resources.Weight)
+				return nil, fmt.Errorf("cannot change experiment weight to %v", *patch.Resources.Weight)
 			}
 		}
 		if patch.Resources.Priority != nil {
 			resp := m.system.AskAt(actor.Addr("experiments", args.ExperimentID),
 				sproto.SetGroupPriority{Priority: *patch.Resources.Priority})
 			if resp.Error() != nil {
-				return nil, errors.Errorf("cannot change experiment priority to %v", *patch.Resources.Priority)
+				return nil, fmt.Errorf("cannot change experiment priority to %v", *patch.Resources.Priority)
 			}
 		}
 	}
@@ -451,22 +451,19 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams, user *mod
 	// Read the config as the user provided it.
 	config, err := expconf.ParseAnyExperimentConfigYAML([]byte(params.ConfigBytes))
 	if err != nil {
-		return nil, config, nil, false, nil, errors.Wrap(err, "invalid experiment configuration")
+		return nil, config, nil, false, nil, fmt.Errorf("invalid experiment configuration: %w", err)
 	}
 
 	// Apply the template that the user specified.
 	if params.Template != nil {
 		template, terr := m.db.TemplateByName(*params.Template)
 		if terr != nil {
-			return nil, config, nil, false, nil, errors.Wrapf(
-				terr, "TemplateByName(%q)", *params.Template,
-			)
+			return nil, config, nil, false, nil, fmt.Errorf("TemplateByName(%q): %w", *params.Template, terr)
 		}
 		var tc expconf.ExperimentConfig
 		if yerr := yaml.Unmarshal(template.Config, &tc, yaml.DisallowUnknownFields); yerr != nil {
-			return nil, config, nil, false, nil, errors.Wrapf(
-				terr, "yaml.Unmarshal(template=%q)", *params.Template,
-			)
+			return nil, config, nil, false, nil, fmt.Errorf("yaml.Unmarshal(template=%q): %w",
+				*params.Template, terr)
 		}
 		// Merge the template into the config.
 		config = schemas.Merge(config, tc)
@@ -477,10 +474,10 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams, user *mod
 	poolName, err := m.rm.ResolveResourcePool(
 		m.system, resources.ResourcePool(), resources.SlotsPerTrial())
 	if err != nil {
-		return nil, config, nil, false, nil, errors.Wrapf(err, "invalid resource configuration")
+		return nil, config, nil, false, nil, fmt.Errorf("invalid resource configuration: %w", err)
 	}
 	if err = m.rm.ValidateResources(m.system, poolName, resources.SlotsPerTrial(), false); err != nil {
-		return nil, config, nil, false, nil, errors.Wrapf(err, "error validating resources")
+		return nil, config, nil, false, nil, fmt.Errorf("error validating resources: %w", err)
 	}
 	taskContainerDefaults, err := m.rm.TaskContainerDefaults(
 		m.system,
@@ -488,7 +485,7 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams, user *mod
 		m.config.TaskContainerDefaults,
 	)
 	if err != nil {
-		return nil, config, nil, false, nil, errors.Wrapf(err, "error getting TaskContainerDefaults")
+		return nil, config, nil, false, nil, fmt.Errorf("error getting TaskContainerDefaults: %w", err)
 	}
 	taskSpec := *m.taskSpec
 	taskSpec.TaskContainerDefaults = taskContainerDefaults
@@ -520,12 +517,12 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams, user *mod
 
 	// Make sure the experiment config has all eventuallyRequired fields.
 	if err = schemas.IsComplete(config); err != nil {
-		return nil, config, nil, false, nil, errors.Wrap(err, "invalid experiment configuration")
+		return nil, config, nil, false, nil, fmt.Errorf("invalid experiment configuration: %w", err)
 	}
 
 	// Disallow EOL searchers.
 	if err = config.Searcher().AssertCurrent(); err != nil {
-		return nil, config, nil, false, nil, errors.Wrap(err, "invalid experiment configuration")
+		return nil, config, nil, false, nil, fmt.Errorf("invalid experiment configuration: %w", err)
 	}
 
 	var modelBytes []byte
@@ -533,22 +530,22 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams, user *mod
 		var dbErr error
 		modelBytes, dbErr = m.db.ExperimentModelDefinitionRaw(*params.ParentID)
 		if dbErr != nil {
-			return nil, config, nil, false, nil, errors.Wrapf(
-				dbErr, "unable to find parent experiment %v", *params.ParentID)
+			return nil, config, nil, false, nil, fmt.Errorf(
+				"unable to find parent experiment %v: %w", *params.ParentID, dbErr)
 		}
 	} else {
 		var compressErr error
 		modelBytes, compressErr = archive.ToTarGz(params.ModelDef)
 		if compressErr != nil {
-			return nil, config, nil, false, nil, errors.Wrapf(
-				compressErr, "unable to find compress model definition")
+			return nil, config, nil, false, nil, fmt.Errorf(
+				"unable to find compress model definition: %w", compressErr)
 		}
 	}
 
 	token, createSessionErr := m.db.StartUserSession(user)
 	if createSessionErr != nil {
-		return nil, config, nil, false, nil, errors.Wrapf(
-			createSessionErr, "unable to create user session inside task")
+		return nil, config, nil, false, nil, fmt.Errorf(
+			"unable to create user session inside task: %w", createSessionErr)
 	}
 	taskSpec.UserSessionToken = token
 	taskSpec.Owner = user
@@ -582,7 +579,7 @@ func (m *Master) postExperiment(c echo.Context) (interface{}, error) {
 
 	var params CreateExperimentParams
 	if err = json.Unmarshal(body, &params); err != nil {
-		return nil, errors.Wrap(err, "invalid experiment params")
+		return nil, fmt.Errorf("invalid experiment params: %w", err)
 	}
 	ctx := c.Request().Context()
 	if params.ParentID != nil {
@@ -617,7 +614,7 @@ func (m *Master) postExperiment(c echo.Context) (interface{}, error) {
 
 	e, launchWarnings, err := newExperiment(m, dbExp, activeConf, taskSpec)
 	if err != nil {
-		return nil, errors.Wrap(err, "starting experiment")
+		return nil, fmt.Errorf("starting experiment: %w", err)
 	}
 	config := schemas.Copy(activeConf)
 	m.system.ActorOf(actor.Addr("experiments", e.ID), e)
@@ -630,7 +627,7 @@ func (m *Master) postExperiment(c echo.Context) (interface{}, error) {
 				fmt.Sprintf("experiment not found: %d", e.ID))
 		}
 		if _, notTimedOut := resp.GetOrTimeout(defaultAskTimeout); !notTimedOut {
-			return nil, errors.Errorf("attempt to activate experiment timed out")
+			return nil, fmt.Errorf("attempt to activate experiment timed out")
 		}
 	}
 

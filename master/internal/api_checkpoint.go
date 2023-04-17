@@ -7,8 +7,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/pkg/errors"
+
+	"github.com/google/uuid"
+
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -128,8 +130,7 @@ func (a *apiServer) GetCheckpoint(
 
 	if err = a.m.db.QueryProto(
 		"get_checkpoint", resp.Checkpoint, req.CheckpointUuid); err != nil {
-		return resp,
-			errors.Wrapf(err, "error fetching checkpoint %s from database", req.CheckpointUuid)
+		return resp, fmt.Errorf("error fetching checkpoint %s from database: %w", req.CheckpointUuid, err)
 	}
 
 	return resp, nil
@@ -257,18 +258,17 @@ func (a *apiServer) PostCheckpointMetadata(
 
 	currCheckpoint := &checkpointv1.Checkpoint{}
 	if err = a.m.db.QueryProto("get_checkpoint", currCheckpoint, req.Checkpoint.Uuid); err != nil {
-		return nil,
-			errors.Wrapf(err, "error fetching checkpoint %s from database", req.Checkpoint.Uuid)
+		return nil, fmt.Errorf("error fetching checkpoint %s from database: %w", req.Checkpoint.Uuid, err)
 	}
 
 	currMeta, err := protojson.Marshal(currCheckpoint.Metadata)
 	if err != nil {
-		return nil, errors.Wrap(err, "error marshaling database checkpoint metadata")
+		return nil, fmt.Errorf("error marshaling database checkpoint metadata: %w", err)
 	}
 
 	newMeta, err := protojson.Marshal(req.Checkpoint.Metadata)
 	if err != nil {
-		return nil, errors.Wrap(err, "error marshaling request checkpoint metadata")
+		return nil, fmt.Errorf("error marshaling request checkpoint metadata: %w", err)
 	}
 
 	currCheckpoint.Metadata = req.Checkpoint.Metadata
@@ -276,7 +276,9 @@ func (a *apiServer) PostCheckpointMetadata(
 		req.Checkpoint.Uuid, currMeta, newMeta)
 	err = a.m.db.QueryProto("update_checkpoint_metadata",
 		&checkpointv1.Checkpoint{}, req.Checkpoint.Uuid, newMeta)
+	if err != nil {
+		return nil, fmt.Errorf("error updating checkpoint %s in database: %w", req.Checkpoint.Uuid, err)
+	}
 
-	return &apiv1.PostCheckpointMetadataResponse{Checkpoint: currCheckpoint},
-		errors.Wrapf(err, "error updating checkpoint %s in database", req.Checkpoint.Uuid)
+	return &apiv1.PostCheckpointMetadataResponse{Checkpoint: currCheckpoint}, nil
 }

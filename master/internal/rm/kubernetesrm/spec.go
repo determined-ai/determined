@@ -12,7 +12,7 @@ import (
 
 	"github.com/docker/docker/api/types/mount"
 	petName "github.com/dustinkirkland/golang-petname"
-	"github.com/pkg/errors"
+
 	log "github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -127,7 +127,7 @@ func (p *pod) configureConfigMapSpec(
 	for idx, runArchive := range runArchives {
 		zippedArchive, err := archive.ToTarGz(runArchive.Archive)
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to zip archive")
+			return nil, fmt.Errorf("failed to zip archive: %w", err)
 		}
 		configMapData[fmt.Sprintf("%d.tar.gz", idx)] = zippedArchive
 	}

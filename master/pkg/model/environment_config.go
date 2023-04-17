@@ -10,7 +10,6 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 
 	"github.com/docker/docker/api/types"
-	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/device"
 
@@ -61,7 +60,7 @@ func (r *RuntimeItem) UnmarshalJSON(data []byte) error {
 	type DefaultParser RuntimeItem
 	var jsonItem DefaultParser
 	if err := json.Unmarshal(data, &jsonItem); err != nil {
-		return errors.Wrapf(err, "failed to parse runtime item")
+		return fmt.Errorf("failed to parse runtime item: %w", err)
 	}
 	r.CPU = jsonItem.CPU
 	r.ROCM = jsonItem.ROCM
@@ -73,7 +72,7 @@ func (r *RuntimeItem) UnmarshalJSON(data []byte) error {
 		}
 		var compatItem RuntimeItemCompat
 		if err := json.Unmarshal(data, &compatItem); err != nil {
-			return errors.Wrapf(err, "failed to parse runtime item")
+			return fmt.Errorf("failed to parse runtime item: %w", err)
 		}
 		r.CUDA = compatItem.GPU
 	}
@@ -115,7 +114,7 @@ func (r *RuntimeItems) UnmarshalJSON(data []byte) error {
 	type DefaultParser RuntimeItems
 	var jsonItems DefaultParser
 	if err := json.Unmarshal(data, &jsonItems); err != nil {
-		return errors.Wrapf(err, "failed to parse runtime items")
+		return fmt.Errorf("failed to parse runtime items: %w", err)
 	}
 	r.CPU = append(r.CPU, jsonItems.CPU...)
 	r.ROCM = append(r.ROCM, jsonItems.ROCM...)
@@ -128,7 +127,7 @@ func (r *RuntimeItems) UnmarshalJSON(data []byte) error {
 		}
 		var compatItems RuntimeItemsCompat
 		if err := json.Unmarshal(data, &compatItems); err != nil {
-			return errors.Wrapf(err, "failed to parse runtime items")
+			return fmt.Errorf("failed to parse runtime items: %w", err)
 		}
 		r.CUDA = append(r.CUDA, compatItems.GPU...)
 	}

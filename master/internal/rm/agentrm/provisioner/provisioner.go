@@ -2,11 +2,10 @@ package provisioner
 
 import (
 	"crypto/tls"
+	"fmt"
 	"time"
 
 	"golang.org/x/time/rate"
-
-	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/config/provconfig"
 	"github.com/determined-ai/determined/master/internal/db"
@@ -65,12 +64,12 @@ func New(
 	case config.AWS != nil:
 		var err error
 		if cluster, err = newAWSCluster(resourcePool, config, cert); err != nil {
-			return nil, errors.Wrap(err, "cannot create an EC2 cluster")
+			return nil, fmt.Errorf("cannot create an EC2 cluster: %w", err)
 		}
 	case config.GCP != nil:
 		var err error
 		if cluster, err = newGCPCluster(resourcePool, config, cert); err != nil {
-			return nil, errors.Wrap(err, "cannot create a GCP cluster")
+			return nil, fmt.Errorf("cannot create a GCP cluster: %w", err)
 		}
 	}
 

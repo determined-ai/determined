@@ -3,9 +3,8 @@ package model
 import (
 	"database/sql/driver"
 	"encoding/json"
+	"fmt"
 	"math"
-
-	"github.com/pkg/errors"
 )
 
 // JSONObj is a JSON object that converts to a []byte in SQL queries.
@@ -24,7 +23,7 @@ func JSONObjFromMapStringInt64(m map[string]int64) JSONObj {
 func (j JSONObj) Value() (driver.Value, error) {
 	bytes, err := json.Marshal(j)
 	if err != nil {
-		return nil, errors.Wrap(err, "error marshaling JSONObj")
+		return nil, fmt.Errorf("error marshaling JSONObj: %w", err)
 	}
 	return bytes, nil
 }
@@ -37,11 +36,11 @@ func (j *JSONObj) Scan(src interface{}) error {
 	}
 	bytes, ok := src.([]byte)
 	if !ok {
-		return errors.Errorf("unable to convert to []byte: %v", src)
+		return fmt.Errorf("unable to convert to []byte: %v", src)
 	}
 	obj := make(map[string]interface{})
 	if err := json.Unmarshal(bytes, &obj); err != nil {
-		return errors.Wrapf(err, "unable to unmarshal JSONObj: %v", src)
+		return fmt.Errorf("unable to unmarshal JSONObj: %v: %w", src, err)
 	}
 	*j = JSONObj(obj)
 	return nil
@@ -68,7 +67,7 @@ func (s *RawString) Scan(src interface{}) error {
 	case []byte:
 		*s = RawString(src)
 	default:
-		return errors.Errorf("unexpected type: %T", src)
+		return fmt.Errorf("unexpected type: %T", src)
 	}
 	return nil
 }

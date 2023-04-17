@@ -10,8 +10,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/pkg/errors"
-
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -40,22 +38,23 @@ func harnessArchive(harnessPath string, aug *model.AgentUserGroup) cproto.RunArc
 	validWhlNames := fmt.Sprintf("*%s*.whl", normalizePythonVersion(version.Version))
 	wheelPaths, err := filepath.Glob(filepath.Join(harnessPath, validWhlNames))
 	if err != nil {
-		panic(errors.Wrapf(err, "error finding Python wheel files for version %s in path: %s",
-			version.Version, harnessPath))
+		panic(fmt.Errorf("error finding Python wheel files for version %s in path: %s: %w",
+			version.Version, harnessPath, err),
+		)
 	}
 	for _, path := range wheelPaths {
 		info, err := os.Stat(path)
 		if err != nil {
-			panic(errors.Wrapf(err, "error retrieving stats for harness file: %s", path))
+			panic(fmt.Errorf("error retrieving stats for harness file: %s: %w", path, err))
 		}
 		var content []byte
 		content, err = ioutil.ReadFile(path) // #nosec: G304
 		if err != nil {
-			panic(errors.Wrapf(err, "error reading harness file: %s", path))
+			panic(fmt.Errorf("error reading harness file: %s: %w", path, err))
 		}
 		rel, err := filepath.Rel(harnessPath, path)
 		if err != nil {
-			panic(errors.Wrapf(err, "error constructing relative path: %s", path))
+			panic(fmt.Errorf("error constructing relative path: %s: %w", path, err))
 		}
 
 		var uid int

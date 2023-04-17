@@ -12,7 +12,6 @@ import (
 	k8sV1 "k8s.io/api/core/v1"
 
 	"github.com/docker/docker/api/types/container"
-	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
@@ -66,7 +65,7 @@ func (c *TaskContainerDefaultsConfig) UnmarshalJSON(data []byte) error {
 	c.NetworkMode = "bridge"
 	type DefaultParser *TaskContainerDefaultsConfig
 	if err := json.Unmarshal(data, DefaultParser(c)); err != nil {
-		return errors.Wrap(err, "failed to parse task container defaults")
+		return fmt.Errorf("failed to parse task container defaults: %w", err)
 	}
 	return nil
 }

@@ -6,8 +6,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
+
+	"github.com/labstack/echo/v4"
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
@@ -51,7 +52,7 @@ func New(
 ) ResourceManager {
 	tlsConfig, err := model.MakeTLSConfig(cert)
 	if err != nil {
-		panic(errors.Wrap(err, "failed to set up TLS config"))
+		panic(fmt.Errorf("failed to set up TLS config: %w", err))
 	}
 	ref, _ := system.ActorOf(
 		sproto.K8sRMAddr,
@@ -349,7 +350,7 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 
 		rpRef := ctx.Child(msg.ResourcePool)
 		if rpRef == nil {
-			ctx.Respond(errors.Errorf("resource pool %s not found", msg.ResourcePool))
+			ctx.Respond(fmt.Errorf("resource pool %s not found", msg.ResourcePool))
 			return nil
 		}
 		resp := ctx.Ask(rpRef, msg).Get()
@@ -436,7 +437,7 @@ func (k *kubernetesResourceManager) forwardToPool(
 		if ctx.Sender() != nil {
 			sender = ctx.Sender().Address().String()
 		}
-		err := errors.Errorf("cannot find resource pool %s for message %T from actor %s",
+		err := fmt.Errorf("cannot find resource pool %s for message %T from actor %s",
 			resourcePool, ctx.Message(), sender)
 		ctx.Log().WithError(err).Error("")
 		if ctx.ExpectingResponse() {
@@ -620,7 +621,7 @@ func (k *kubernetesResourceManager) getResourcePoolConfig(poolName string) (
 			return k.poolsConfig[i], nil
 		}
 	}
-	return config.ResourcePoolConfig{}, errors.Errorf("cannot find resource pool %s", poolName)
+	return config.ResourcePoolConfig{}, fmt.Errorf("cannot find resource pool %s", poolName)
 }
 
 func (k *kubernetesResourceManager) getTaskContainerDefaults(

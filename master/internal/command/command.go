@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/pkg/errors"
+
 	"golang.org/x/exp/slices"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
@@ -12,7 +14,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/logger"
 
 	structpb "github.com/golang/protobuf/ptypes/struct"
-	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
 
@@ -90,7 +91,7 @@ func createGenericCommandActor(
 	a, _ := ctx.ActorOf(cmd.taskID, cmd)
 	summaryFut := ctx.Ask(a, getSummary{})
 	if err := summaryFut.Error(); err != nil {
-		return errors.Wrap(err, "failed to create generic command")
+		return fmt.Errorf("failed to create generic command: %w", err)
 	}
 	// Sync with the actor, but we don't really need the summary. actor.Ping works too,
 	// but this makes sure it can form some sort of useful response (ping doesn't actually
@@ -244,7 +245,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 				JobType: c.jobType,
 				OwnerID: &c.Base.Owner.ID,
 			}); err != nil {
-				return errors.Wrapf(err, "persisting job %v", c.taskID)
+				return fmt.Errorf("persisting job %v: %w", c.taskID, err)
 			}
 
 			if err := c.db.AddTask(&model.Task{
@@ -254,14 +255,14 @@ func (c *command) Receive(ctx *actor.Context) error {
 				JobID:      &c.jobID,
 				LogVersion: model.CurrentTaskLogVersion,
 			}); err != nil {
-				return errors.Wrapf(err, "persisting task %v", c.taskID)
+				return fmt.Errorf("persisting task %v: %w", c.taskID, err)
 			}
 		}
 
 		priority := c.Config.Resources.Priority
 		if priority != nil {
 			if err := c.setPriority(ctx, *priority, true); err != nil {
-				return errors.Wrapf(err, "setting priority of task %v", c.taskID)
+				return fmt.Errorf("setting priority of task %v: %w", c.taskID, err)
 			}
 		}
 

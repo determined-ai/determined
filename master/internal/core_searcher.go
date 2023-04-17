@@ -1,10 +1,13 @@
 package internal
 
 import (
+	"fmt"
 	"io/ioutil"
 
-	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
+
+	"github.com/labstack/echo/v4"
+
 	log "github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/pkg/schemas"
@@ -21,7 +24,7 @@ func (m *Master) getSearcherPreview(c echo.Context) (interface{}, error) {
 	// Parse the provided experiment config.
 	config, err := expconf.ParseAnyExperimentConfigYAML(bytes)
 	if err != nil {
-		return nil, errors.Wrapf(err, "invalid experiment configuration")
+		return nil, fmt.Errorf("invalid experiment configuration: %w", err)
 	}
 
 	// Get the useful subconfigs for preview search.
@@ -37,15 +40,15 @@ func (m *Master) getSearcherPreview(c echo.Context) (interface{}, error) {
 
 	// Make sure the searcher config has all eventuallyRequired fields.
 	if err = schemas.IsComplete(sc); err != nil {
-		return nil, errors.Wrapf(err, "invalid searcher configuration")
+		return nil, fmt.Errorf("invalid searcher configuration: %w", err)
 	}
 	if err = schemas.IsComplete(hc); err != nil {
-		return nil, errors.Wrapf(err, "invalid hyperparameters configuration")
+		return nil, fmt.Errorf("invalid hyperparameters configuration: %w", err)
 	}
 
 	// Disallow EOL searchers.
 	if err = sc.AssertCurrent(); err != nil {
-		return nil, errors.Wrap(err, "invalid experiment configuration")
+		return nil, fmt.Errorf("invalid experiment configuration: %w", err)
 	}
 
 	sm := searcher.NewSearchMethod(sc)

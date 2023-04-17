@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/google/uuid"
 	"github.com/pkg/errors"
+
+	"github.com/google/uuid"
+
 	log "github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
 	"golang.org/x/exp/maps"
@@ -337,7 +339,7 @@ func (a *agentState) startContainer(ctx *actor.Context, msg sproto.StartTaskCont
 
 	for _, d := range msg.StartContainer.Container.Devices {
 		if err := inner(d.ID); err != nil {
-			return errors.Wrapf(err, "bad startContainer on device: %d (%s)", d.ID, a.string())
+			return fmt.Errorf("bad startContainer on device: %d (%s): %w", d.ID, a.string(), err)
 		}
 	}
 

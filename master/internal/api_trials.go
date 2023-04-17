@@ -9,9 +9,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/pkg/errors"
+
 	"github.com/google/uuid"
 	"github.com/hashicorp/go-multierror"
-	"github.com/pkg/errors"
+
 	"golang.org/x/exp/slices"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -248,7 +250,7 @@ func (a *apiServer) legacyTrialLogs(
 
 	filters, err := constructTrialLogsFilters(req)
 	if err != nil {
-		res <- api.ErrBatchResult(errors.Wrap(err, "unsupported filter"))
+		res <- api.ErrBatchResult(fmt.Errorf("unsupported filter: %w", err))
 		return
 	}
 
@@ -357,7 +359,7 @@ func (a *apiServer) TrialLogsFields(
 
 	trial, err := a.m.db.TrialByID(int(req.TrialId))
 	if err != nil {
-		return errors.Wrap(err, "retreiving trial")
+		return fmt.Errorf("retreiving trial: %w", err)
 	}
 
 	ctx, cancel := context.WithCancel(resp.Context())
@@ -447,8 +449,7 @@ func (a *apiServer) GetTrialCheckpoints(
 		return nil, status.Errorf(
 			codes.NotFound, "no checkpoints found for trial %d", req.Id)
 	case err != nil:
-		return nil,
-			errors.Wrapf(err, "error fetching checkpoints for trial %d from database", req.Id)
+		return nil, fmt.Errorf("error fetching checkpoints for trial %d from database: %w", req.Id, err)
 	}
 
 	a.filter(&resp.Checkpoints, func(i int) bool {
@@ -574,7 +575,7 @@ func (a *apiServer) GetExperimentTrials(
 		req.Offset,
 		req.Limit,
 	); err != nil {
-		return nil, errors.Wrapf(err, "failed to get trial ids for experiment %d", req.ExperimentId)
+		return nil, fmt.Errorf("failed to get trial ids for experiment %d: %w", req.ExperimentId, err)
 	} else if len(resp.Trials) == 0 {
 		return resp, nil
 	}
@@ -598,7 +599,7 @@ func (a *apiServer) GetExperimentTrials(
 	case err == db.ErrNotFound:
 		return nil, status.Errorf(codes.NotFound, "trials %v not found:", trialIDs)
 	case err != nil:
-		return nil, errors.Wrapf(err, "failed to get trials detail for experiment %d", req.ExperimentId)
+		return nil, fmt.Errorf("failed to get trials detail for experiment %d: %w", req.ExperimentId, err)
 	}
 
 	if err = a.enrichTrialState(resp.Trials...); err != nil {
@@ -624,7 +625,7 @@ func (a *apiServer) GetTrial(ctx context.Context, req *apiv1.GetTrialRequest) (
 		req.TrialId,
 		1,
 	); err != nil {
-		return nil, errors.Wrapf(err, "failed to get trial %d", req.TrialId)
+		return nil, fmt.Errorf("failed to get trial %d: %w", req.TrialId, err)
 	}
 
 	if resp.Trial.State == experimentv1.State_STATE_ACTIVE {
@@ -688,7 +689,7 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 				xAxisLabelMetrics,
 				maxDatapoints, batches, timeSeriesFilter, "training")
 			if err != nil {
-				return nil, errors.Wrapf(err, "error fetching time series of training metrics")
+				return nil, fmt.Errorf("error fetching time series of training metrics: %w", err)
 			}
 			metric.Type = apiv1.MetricType_METRIC_TYPE_TRAINING
 			a.formatMetrics(&metric, metricMeasurements)
@@ -704,7 +705,7 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 				trialID, startTime, name, startBatches, endBatches,
 				xAxisLabelMetrics, maxDatapoints, batches, timeSeriesFilter, "validation")
 			if err != nil {
-				return nil, errors.Wrapf(err, "error fetching time series of validation metrics")
+				return nil, fmt.Errorf("error fetching time series of validation metrics: %w", err)
 			}
 			metric.Type = apiv1.MetricType_METRIC_TYPE_VALIDATION
 			a.formatMetrics(&metric, metricMeasurements)
@@ -746,7 +747,7 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 				timeSeriesFilter, metricIDType,
 			)
 			if err != nil {
-				return nil, errors.Wrapf(err, "error fetching time series of %v metrics", metricIDType)
+				return nil, fmt.Errorf("error fetching time series of %v metrics: %w", metricIDType, err)
 			}
 			if len(metricMeasurements) > 0 {
 				a.formatMetrics(&metric, metricMeasurements)
@@ -769,7 +770,7 @@ func (a *apiServer) SummarizeTrial(ctx context.Context,
 
 	resp := &apiv1.SummarizeTrialResponse{Trial: &trialv1.Trial{}}
 	if err := a.m.db.QueryProto("get_trial_basic", resp.Trial, req.TrialId); err != nil {
-		return nil, errors.Wrapf(err, "failed to get trial %d", req.TrialId)
+		return nil, fmt.Errorf("failed to get trial %d: %w", req.TrialId, err)
 	}
 
 	tsample, err := a.MultiTrialSample(req.TrialId, req.MetricNames, req.MetricType,
@@ -777,7 +778,7 @@ func (a *apiServer) SummarizeTrial(ctx context.Context,
 		(req.Scale == apiv1.Scale_SCALE_LOG), apiv1.XAxis_X_AXIS_UNSPECIFIED,
 		nil, metricIds)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed sampling")
+		return nil, fmt.Errorf("failed sampling: %w", err)
 	}
 	resp.Metrics = tsample
 
@@ -799,7 +800,7 @@ func (a *apiServer) CompareTrials(ctx context.Context,
 		case err == db.ErrNotFound:
 			return nil, status.Errorf(codes.NotFound, "trial %d not found:", trialID)
 		case err != nil:
-			return nil, errors.Wrapf(err, "failed to get trial %d", trialID)
+			return nil, fmt.Errorf("failed to get trial %d: %w", trialID, err)
 		}
 
 		tsample, err := a.MultiTrialSample(trialID, req.MetricNames, req.MetricType,
@@ -807,7 +808,7 @@ func (a *apiServer) CompareTrials(ctx context.Context,
 			(req.Scale == apiv1.Scale_SCALE_LOG),
 			req.XAxis, req.TimeSeriesFilter, req.MetricIds)
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed sampling")
+			return nil, fmt.Errorf("failed sampling: %w", err)
 		}
 		container.Metrics = tsample
 		trials = append(trials, container)
@@ -946,7 +947,7 @@ func (a *apiServer) GetTrialWorkloads(ctx context.Context, req *apiv1.GetTrialWo
 	case err == db.ErrNotFound:
 		return nil, status.Errorf(codes.NotFound, "trial %d workloads not found:", req.TrialId)
 	case err != nil:
-		return nil, errors.Wrapf(err, "failed to get trial %d workloads", req.TrialId)
+		return nil, fmt.Errorf("failed to get trial %d workloads: %w", req.TrialId, err)
 	}
 
 	return resp, nil
@@ -1093,7 +1094,7 @@ func (a *apiServer) waitForAllocationToBeRestored(ctx context.Context, handler *
 	for i := 0; i < 60; i++ {
 		var restoring bool
 		if err := a.ask(handler.Address(), task.IsAllocationRestoring{}, &restoring); err != nil {
-			return errors.Wrap(err, "failed to ask allocation actor about restoring status")
+			return fmt.Errorf("failed to ask allocation actor about restoring status: %w", err)
 		}
 		if !restoring {
 			return nil

@@ -15,8 +15,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
+
+	"github.com/jmoiron/sqlx"
+
 	log "github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/pkg/archive"
@@ -72,28 +74,27 @@ func ResolveNewPostgresDatabase() (*PgDB, func(), error) {
 
 	url, err := url.Parse(baseURL)
 	if err != nil {
-		return nil, nil, errors.Wrapf(
-			err, "failed to parse DET_INTEGRATION_POSTGRES_URL (%q):", baseURL,
-		)
+		return nil, nil, fmt.Errorf(
+			"failed to parse DET_INTEGRATION_POSTGRES_URL (%q):: %w", baseURL, err)
 	}
 
 	// Connect to the db server without selecting a database.
 	url.Path = ""
 	sql, err := sqlx.Connect("pgx", url.String())
 	if err != nil {
-		return nil, nil, errors.Wrapf(err, "failed to connect to postgres at %q", url)
+		return nil, nil, fmt.Errorf("failed to connect to postgres at %q: %w", url, err)
 	}
 
 	randomSuffix := make([]byte, 16)
 	_, err = rand.Read(randomSuffix)
 	if err != nil {
-		return nil, nil, errors.Wrap(err, "failed pick a random name")
+		return nil, nil, fmt.Errorf("failed pick a random name: %w", err)
 	}
 
 	dbname := fmt.Sprintf("intg-%x", randomSuffix)
 	_, err = sql.Exec(fmt.Sprintf("CREATE DATABASE %q", dbname))
 	if err != nil {
-		return nil, nil, errors.Wrapf(err, "failed to create new database %q", dbname)
+		return nil, nil, fmt.Errorf("failed to create new database %q: %w", dbname, err)
 	}
 
 	// Remember the connection we return to the newly-created database, because if we don't close it
@@ -124,7 +125,7 @@ func ResolveNewPostgresDatabase() (*PgDB, func(), error) {
 	url.Path = fmt.Sprintf("/%v", dbname)
 	pgDB, err := ConnectPostgres(url.String())
 	if err != nil {
-		return nil, nil, errors.Wrapf(err, "failed to connect to new database %q", dbname)
+		return nil, nil, fmt.Errorf("failed to connect to new database %q: %w", dbname, err)
 	}
 
 	dbConn = pgDB.sql

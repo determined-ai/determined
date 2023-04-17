@@ -7,8 +7,9 @@ import (
 	"fmt"
 	"strconv"
 
-	petname "github.com/dustinkirkland/golang-petname"
 	"github.com/pkg/errors"
+
+	petname "github.com/dustinkirkland/golang-petname"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -181,7 +182,7 @@ func (a *apiServer) LaunchShell(
 		Files:        req.Files,
 	})
 	if err != nil {
-		return nil, api.APIErrToGRPC(errors.Wrapf(err, "failed to prepare launch params"))
+		return nil, api.APIErrToGRPC(fmt.Errorf("failed to prepare launch params: %w", err))
 	}
 
 	spec.Metadata.WorkspaceID = model.DefaultWorkspaceID

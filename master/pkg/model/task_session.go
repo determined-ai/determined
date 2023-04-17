@@ -1,6 +1,8 @@
 package model
 
-import "github.com/uptrace/bun"
+import (
+	"github.com/uptrace/bun"
+)
 
 // AllocationSession corresponds to a row in the "allocation_sessions" DB table.
 type AllocationSession struct {

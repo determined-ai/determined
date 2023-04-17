@@ -10,7 +10,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/google/uuid"
-	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/config/provconfig"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -120,7 +119,7 @@ type spotState struct {
 func (c *awsCluster) listSpot(ctx *actor.Context) ([]*model.Instance, error) {
 	activeReqsInAPI, err := c.listActiveSpotInstanceRequests(ctx, false)
 	if err != nil {
-		return nil, errors.Wrap(err, "cannot describe EC2 spot requests")
+		return nil, fmt.Errorf("cannot describe EC2 spot requests: %w", err)
 	}
 
 	// Make sure we're tracking all active reqs (to handle master restart)
@@ -154,7 +153,7 @@ func (c *awsCluster) listSpot(ctx *actor.Context) ([]*model.Instance, error) {
 
 	newOrInactiveReqs, err := c.listSpotRequestsByID(ctx, missingReqs.idsAsListOfPointers(), false)
 	if err != nil {
-		return nil, errors.Wrap(err, "cannot describe EC2 spot requests")
+		return nil, fmt.Errorf("cannot describe EC2 spot requests: %w", err)
 	}
 
 	// If any of the tracked requests failed and requires users intervention, notify the user via error
@@ -200,7 +199,7 @@ func (c *awsCluster) listSpot(ctx *actor.Context) ([]*model.Instance, error) {
 	// created between listing and terminating spot requests.
 	canceledButInstanceRunningReqs, err := c.listCanceledButInstanceRunningSpotRequests(ctx, false)
 	if err != nil {
-		return nil, errors.Wrap(err, "cannot describe EC2 spot requests")
+		return nil, fmt.Errorf("cannot describe EC2 spot requests: %w", err)
 	}
 
 	if canceledButInstanceRunningReqs.numReqs() > 0 {
@@ -423,7 +422,7 @@ func (c *awsCluster) buildInstanceListFromTrackedReqs(
 		false,
 	)
 	if err != nil {
-		return []*model.Instance{}, errors.Wrap(err, "cannot describe EC2 instances")
+		return []*model.Instance{}, fmt.Errorf("cannot describe EC2 instances: %w", err)
 	}
 
 	// Ignore any instances in the terminated state. The can happen due to eventual consistency (the

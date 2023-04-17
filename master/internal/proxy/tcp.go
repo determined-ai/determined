@@ -2,6 +2,7 @@ package proxy
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"net"
 	"net/http"
@@ -9,7 +10,6 @@ import (
 
 	"github.com/gorilla/websocket"
 	"github.com/labstack/echo/v4"
-	"github.com/pkg/errors"
 )
 
 // websocketReadWriter exposes an io.ReadWriter interface to a WebSocket connection that is only
@@ -50,8 +50,7 @@ func newSingleHostReverseTCPOverWebSocketProxy(c echo.Context, t *url.URL) http.
 		// Make sure we can open the connection to the remote host.
 		out, err := net.Dial("tcp", t.Host)
 		if err != nil {
-			c.Error(echo.NewHTTPError(http.StatusBadGateway,
-				errors.Errorf("error dialing to %v: %v", t, err)))
+			c.Error(echo.NewHTTPError(http.StatusBadGateway, fmt.Errorf("error dialing to %v: %v", t, err)))
 			return
 		}
 		defer func() {
@@ -62,7 +61,7 @@ func newSingleHostReverseTCPOverWebSocketProxy(c echo.Context, t *url.URL) http.
 
 		ws, err := (&websocket.Upgrader{}).Upgrade(w, r, nil)
 		if err != nil {
-			c.Error(echo.NewHTTPError(http.StatusBadGateway, errors.Wrap(err, "error upgrading")))
+			c.Error(echo.NewHTTPError(http.StatusBadGateway, fmt.Errorf("error upgrading: %w", err)))
 			return
 		}
 

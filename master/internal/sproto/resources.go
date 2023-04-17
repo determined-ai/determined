@@ -145,7 +145,7 @@ func ResourcesError(failureType FailureType, err error) ResourcesStopped {
 		return ResourcesStopped{
 			Failure: &ResourcesFailure{
 				FailureType: failureType,
-				ErrMsg:      errors.WithStack(errors.Errorf("unknown error occurred")).Error(),
+				ErrMsg:      errors.WithStack(fmt.Errorf("unknown error occurred")).Error(),
 			},
 		}
 	}

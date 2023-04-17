@@ -3,8 +3,10 @@ package usergroup
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
 	"github.com/pkg/errors"
+
 	"github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
 	"golang.org/x/exp/slices"
@@ -23,7 +25,7 @@ func addGroup(ctx context.Context, idb bun.IDB, group Group) (Group, error) {
 	}
 
 	_, err := idb.NewInsert().Model(&group).Exec(ctx)
-	return group, errors.Wrapf(db.MatchSentinelError(err), "Error creating group %s", group.Name)
+	return group, fmt.Errorf("error creating group %s: %w", group.Name, db.MatchSentinelError(err))
 }
 
 // AddGroupWithMembers creates a group and adds members to it all in one transaction.
@@ -37,10 +39,8 @@ func AddGroupWithMembers(ctx context.Context, group Group, uids ...model.UserID)
 	}
 	tx, err := db.Bun().BeginTx(ctx, nil)
 	if err != nil {
-		return Group{}, nil, errors.Wrapf(
-			db.MatchSentinelError(err),
-			"Error starting transaction for group %d creation",
-			group.ID)
+		return Group{}, nil, fmt.Errorf("error starting transaction for group %d creation: %w",
+			group.ID, db.MatchSentinelError(err))
 	}
 	defer func() {
 		txErr := tx.Rollback()
@@ -73,10 +73,8 @@ func AddGroupWithMembers(ctx context.Context, group Group, uids ...model.UserID)
 
 	err = tx.Commit()
 	if err != nil {
-		return Group{}, nil, errors.Wrapf(
-			db.MatchSentinelError(err),
-			"Error committing changes to group %d",
-			group.ID)
+		return Group{}, nil, fmt.Errorf("error committing changes to group %d: %w",
+			group.ID, db.MatchSentinelError(err))
 	}
 
 	return group, users, nil
@@ -90,10 +88,10 @@ func GroupByIDTx(ctx context.Context, idb bun.IDB, gid int) (Group, error) {
 	var g Group
 	err := idb.NewSelect().Model(&g).Where("id = ?", gid).Scan(ctx)
 	if g.OwnerID != 0 {
-		return Group{}, errors.Wrap(db.ErrNotFound, "cannot get a personal group")
+		return Group{}, fmt.Errorf("cannot get a personal group: %w", db.ErrNotFound)
 	}
 
-	return g, errors.Wrapf(db.MatchSentinelError(err), "Error getting group %d", gid)
+	return g, fmt.Errorf("error getting group %d: %w", gid, db.MatchSentinelError(err))
 }
 
 // SearchGroups searches the database for groups. userBelongsTo is "optional"
@@ -192,7 +190,7 @@ func DeleteGroup(ctx context.Context, gid int) error {
 		Where("user_id IS NULL"). // Cannot delete personal group.
 		Exec(ctx)
 	if foundErr := db.MustHaveAffectedRows(res, err); foundErr != nil {
-		return errors.Wrapf(db.MatchSentinelError(foundErr), "Error deleting group %d", gid)
+		return fmt.Errorf("error deleting group %d: %w", gid, db.MatchSentinelError(foundErr))
 	}
 
 	return nil
@@ -210,10 +208,8 @@ func UpdateGroupTx(ctx context.Context, idb bun.IDB, group Group) error {
 		Where("user_id IS NULL"). // Cannot update personal group.
 		Exec(ctx)
 
-	return errors.Wrapf(
-		db.MatchSentinelError(db.MustHaveAffectedRows(res, err)),
-		"Error updating group %d name",
-		group.ID)
+	return fmt.Errorf("error updating group %d name: %w",
+		group.ID, db.MatchSentinelError(db.MustHaveAffectedRows(res, err)))
 }
 
 // AddUsersToGroupTx adds users to a group by creating GroupMembership rows.
@@ -244,12 +240,13 @@ func AddUsersToGroupTx(ctx context.Context, idb bun.IDB, gid int, uids ...model.
 	if foundErr := db.MustHaveAffectedRows(res, err); foundErr != nil {
 		sError := db.MatchSentinelError(foundErr)
 		if errors.Is(sError, db.ErrNotFound) {
-			return errors.Wrapf(sError,
-				"Error adding %d user(s) to group %d because"+
-					" one or more of them were not found", len(uids), gid)
+			return fmt.Errorf("error adding %d user(s) to group %d because"+
+				" one or more of them were not found"+": %w", len(uids), gid, sError)
 		}
-		return errors.Wrapf(sError, "Error when adding %d user(s) to group %d",
-			len(uids), gid)
+		if sError != nil {
+			return fmt.Errorf("error when adding %d user(s) to group %d: %w",
+				len(uids), gid, sError)
+		}
 	}
 
 	return nil
@@ -278,12 +275,13 @@ func RemoveUsersFromGroupTx(ctx context.Context, idb bun.IDB, gid int, uids ...m
 	if foundErr := db.MustHaveAffectedRows(res, err); foundErr != nil {
 		sError := db.MatchSentinelError(foundErr)
 		if errors.Is(sError, db.ErrNotFound) {
-			return errors.Wrapf(sError,
-				"Error removing %d user(s) from group %d because"+
-					" one or more of them were not found", len(uids), gid)
+			return fmt.Errorf("error removing %d user(s) from group %d because"+
+				" one or more of them were not found"+": %w", len(uids), gid, sError)
 		}
-		return errors.Wrapf(sError, "Error when removing %d user(s) from group %d",
-			len(uids), gid)
+		if sError != nil {
+			return fmt.Errorf("error when removing %d user(s) from group %d: %w",
+				len(uids), gid, sError)
+		}
 	}
 
 	return nil
@@ -298,10 +296,8 @@ func UpdateGroupAndMembers(
 ) ([]model.User, string, error) {
 	tx, err := db.Bun().BeginTx(ctx, nil)
 	if err != nil {
-		return nil, "", errors.Wrapf(
-			db.MatchSentinelError(err),
-			"Error starting transaction for group %d update",
-			gid)
+		return nil, "", fmt.Errorf("error starting transaction for group %d update: %w",
+			gid, db.MatchSentinelError(err))
 	}
 	defer func() {
 		txErr := tx.Rollback()
@@ -349,8 +345,7 @@ func UpdateGroupAndMembers(
 
 	err = tx.Commit()
 	if err != nil {
-		return nil, "", errors.Wrapf(db.MatchSentinelError(err),
-			"Error committing changes to group %d", gid)
+		return nil, "", fmt.Errorf("error committing changes to group %d: %w", gid, db.MatchSentinelError(err))
 	}
 
 	return users, newName, nil
@@ -370,5 +365,5 @@ func UsersInGroupTx(ctx context.Context, idb bun.IDB, gid int) ([]model.User, er
 		Where("ugm.group_id = ?", gid).
 		Scan(ctx)
 
-	return users, errors.Wrapf(db.MatchSentinelError(err), "Error getting group %d info", gid)
+	return users, fmt.Errorf("error getting group %d info: %w", gid, db.MatchSentinelError(err))
 }

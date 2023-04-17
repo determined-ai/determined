@@ -2,10 +2,9 @@ package config
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/determined-ai/determined/master/pkg/aproto"
-
-	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/device"
@@ -151,9 +150,9 @@ func (k KubernetesResourceManagerConfig) Validate() []error {
 	case device.CPU, device.CUDA:
 		break
 	case device.ROCM:
-		checkSlotType = errors.Errorf("rocm slot_type is not supported yet on k8s")
+		checkSlotType = fmt.Errorf("rocm slot_type is not supported yet on k8s")
 	default:
-		checkSlotType = errors.Errorf("slot_type must be either cuda or cpu")
+		checkSlotType = fmt.Errorf("slot_type must be either cuda or cpu")
 	}
 
 	var checkCPUResource error

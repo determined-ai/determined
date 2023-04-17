@@ -2,9 +2,8 @@ package union
 
 import (
 	"encoding/json"
+	"fmt"
 	"strings"
-
-	"github.com/pkg/errors"
 )
 
 const unionTag = "union"
@@ -17,7 +16,7 @@ func parseUnionStructTag(tagValue string) (string, string, error) {
 	case len(parsed) == 2:
 		return parsed[0], parsed[1], nil
 	default:
-		return "", "", errors.Errorf("unexpected union tag format: %s", unionTag)
+		return "", "", fmt.Errorf("unexpected union tag format: %s", unionTag)
 	}
 }
 
@@ -40,7 +39,7 @@ func getTagValue(data []byte, tag string) (string, bool, error) {
 	// Ensure that the tag value is a string.
 	typed, ok := tagValue.(string)
 	if !ok {
-		return "", false, errors.Errorf("%s must be a string: got %T", tag, typed)
+		return "", false, fmt.Errorf("%s must be a string: got %T", tag, typed)
 	}
 	return typed, true, nil
 }

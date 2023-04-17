@@ -3,16 +3,18 @@ package api
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net"
 	"reflect"
 	"strconv"
 	"sync"
 	"time"
 
+	"github.com/pkg/errors"
+
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"github.com/labstack/echo/v4"
-	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/actor"
 )
@@ -45,7 +47,7 @@ func (w WebSocketConnected) Accept(
 ) (*actor.Ref, bool) {
 	conn, err := upgrader.Upgrade(w.Ctx.Response(), w.Ctx.Request(), nil)
 	if err != nil {
-		ctx.Respond(errors.Wrap(err, "websocket connection error"))
+		ctx.Respond(fmt.Errorf("websocket connection error: %w", err))
 		return nil, false
 	}
 	a, _ := ctx.ActorOf("websocket-"+uuid.New().String(), WrapSocket(conn, msgType, usePing))
@@ -85,7 +87,7 @@ func WriteSocketJSON(ctx *actor.Context, socket *actor.Ref, msg interface{}) err
 	case WriteResponse:
 		return nil
 	default:
-		return errors.Errorf("unknown response %T: %s", resp, resp)
+		return fmt.Errorf("unknown response %T: %s", resp, resp)
 	}
 }
 
@@ -101,7 +103,7 @@ func WriteSocketRaw(ctx *actor.Context, socket *actor.Ref, msg interface{}) erro
 	case WriteResponse:
 		return nil
 	default:
-		return errors.Errorf("unknown response %T: %s", resp, resp)
+		return fmt.Errorf("unknown response %T: %s", resp, resp)
 	}
 }
 
@@ -167,7 +169,7 @@ func (s *websocketActor) processWriteMessage(
 	buf bytes.Buffer,
 ) error {
 	if cur, max := buf.Len(), MaxWebsocketMessageSize; cur > max {
-		ctx.Respond(errors.Errorf("message size %d exceeds maximum size %d", cur, max))
+		ctx.Respond(fmt.Errorf("message size %d exceeds maximum size %d", cur, max))
 		return nil
 	}
 
@@ -213,7 +215,7 @@ func (s *websocketActor) checkPendingPings() error {
 	var errs []error
 	for id, deadline := range s.pendingPings {
 		if deadline.Before(now) {
-			errs = append(errs, errors.Errorf("ping %s did not receive pong response by %s", id, deadline))
+			errs = append(errs, fmt.Errorf("ping %s did not receive pong response by %s", id, deadline))
 			delete(s.pendingPings, id)
 		}
 	}
@@ -289,7 +291,7 @@ func (s *websocketActor) runReadLoop(ctx *actor.Context) {
 			return nil, err
 		}
 		if msgType != websocket.TextMessage && msgType != websocket.BinaryMessage {
-			return nil, errors.Errorf("unexpected message type: %d", msgType)
+			return nil, fmt.Errorf("unexpected message type: %d", msgType)
 		}
 		return msg, nil
 	}

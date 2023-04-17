@@ -11,8 +11,6 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/model"
 
-	"github.com/pkg/errors"
-
 	intApi "github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/connsave"
@@ -95,7 +93,7 @@ func (a *agents) Receive(ctx *actor.Context) error {
 		existingRef := ctx.Child(id)
 		reconnect, err := msg.IsReconnect()
 		if err != nil {
-			ctx.Respond(errors.Wrapf(err, "parsing reconnect query param"))
+			ctx.Respond(fmt.Errorf("parsing reconnect query param: %w", err))
 			return nil
 		}
 
@@ -148,7 +146,7 @@ func (a *agents) createAgentActor(
 	restoredAgentState *agentState,
 ) (*actor.Ref, error) {
 	if id == "" {
-		return nil, errors.Errorf("invalid agent id specified: %s", id)
+		return nil, fmt.Errorf("invalid agent id specified: %s", id)
 	}
 	if resourcePool == "" {
 		ctx.Log().Info("resource pool is empty; using default resource pool: default")
@@ -174,7 +172,7 @@ func (a *agents) createAgentActor(
 		agentState:            restoredAgentState,
 	})
 	if !ok {
-		return nil, errors.Errorf("agent already connected: %s", id)
+		return nil, fmt.Errorf("agent already connected: %s", id)
 	}
 	return ref, nil
 }

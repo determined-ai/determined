@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"cloud.google.com/go/compute/metadata"
-	"github.com/pkg/errors"
+
 	"google.golang.org/api/compute/v1"
 
 	"github.com/determined-ai/determined/master/pkg"
@@ -314,7 +314,7 @@ func (t gceInstanceType) Slots() int {
 }
 
 func (t gceInstanceType) Validate() []error {
-	checkMachineType := errors.Errorf("gce VM machine type must be within: %v",
+	checkMachineType := fmt.Errorf("gce VM machine type must be within: %v",
 		strings.Join(gceMachineTypes, ", "))
 	if items := strings.Split(t.MachineType, "-"); len(items) == 3 {
 		for _, mType := range gceMachineTypes {
@@ -331,9 +331,9 @@ func (t gceInstanceType) Validate() []error {
 		for item := range gceGPUTypes {
 			strs = append(strs, item)
 		}
-		checkGPU = errors.Errorf("gce VM gpu type must be within: %s", strings.Join(strs, ", "))
+		checkGPU = fmt.Errorf("gce VM gpu type must be within: %s", strings.Join(strs, ", "))
 	} else {
-		checkGPU = errors.Errorf("gce VM gpu type %s num must be within: %v", t.GPUType, numsAllowed)
+		checkGPU = fmt.Errorf("gce VM gpu type %s num must be within: %v", t.GPUType, numsAllowed)
 		for _, n := range numsAllowed {
 			if t.GPUNum == n {
 				checkGPU = nil

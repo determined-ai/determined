@@ -1,9 +1,8 @@
 package union
 
 import (
+	"fmt"
 	"reflect"
-
-	"github.com/pkg/errors"
 )
 
 type (
@@ -36,8 +35,7 @@ func parseUnionTypes(v reflect.Type) (unionTypes, error) {
 			}
 
 			if field.Type.Kind() != reflect.Ptr {
-				return nil, errors.Errorf(
-					"%s expected to a pointer type: found %s", field.Name, field.Type.Kind())
+				return nil, fmt.Errorf("%s expected to a pointer type: found %s", field.Name, field.Type.Kind())
 			}
 			types[key][value] = unionField{index: i, field: field}
 		}

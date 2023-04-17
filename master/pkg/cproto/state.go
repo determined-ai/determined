@@ -3,8 +3,10 @@ package cproto
 import (
 	"fmt"
 
-	"github.com/docker/docker/api/types"
 	"github.com/pkg/errors"
+
+	"github.com/docker/docker/api/types"
+
 	"golang.org/x/exp/slices"
 
 	"github.com/determined-ai/determined/master/pkg/check"
@@ -76,7 +78,7 @@ func (s State) MarshalText() (text []byte, err error) {
 func (s *State) UnmarshalText(text []byte) error {
 	parsed := State(text)
 	if _, ok := validTransitions[parsed]; !ok {
-		return errors.Errorf("invalid container state: %s", text)
+		return fmt.Errorf("invalid container state: %s", text)
 	}
 	*s = parsed
 	return nil

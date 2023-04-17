@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/pkg/errors"
+
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
@@ -34,7 +34,7 @@ func (c *ProtoConverter) ToStruct(x map[string]interface{}, what string) *struct
 	}
 	out, err := structpb.NewStruct(x)
 	if err != nil {
-		c.err = errors.Wrapf(err, "error converting %v to protobuf", what)
+		c.err = fmt.Errorf("error converting %v to protobuf: %w", what, err)
 	}
 	return out
 }
@@ -61,7 +61,7 @@ func (c *ProtoConverter) ToCheckpointv1State(state string) checkpointv1.State {
 
 	out, ok := checkpointv1.State_value["STATE_"+state]
 	if !ok {
-		c.err = errors.Errorf("invalid checkpointv1.State: %q", state)
+		c.err = fmt.Errorf("invalid checkpointv1.State: %q", state)
 		return 0
 	}
 
@@ -74,7 +74,7 @@ func (c *ProtoConverter) ToInt32(i int) int32 {
 		return 0
 	}
 	if i > math.MaxInt32 {
-		c.err = errors.Errorf("int %v too big for int32", i)
+		c.err = fmt.Errorf("int %v too big for int32", i)
 		return 0
 	}
 	return int32(i)

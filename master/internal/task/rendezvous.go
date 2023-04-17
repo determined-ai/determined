@@ -5,10 +5,11 @@ import (
 	"sort"
 	"time"
 
+	"github.com/pkg/errors"
+
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
 
 	"github.com/hashicorp/go-multierror"
-	"github.com/pkg/errors"
 
 	apiutils "github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/sproto"

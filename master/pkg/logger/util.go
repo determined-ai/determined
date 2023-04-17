@@ -1,6 +1,8 @@
 package logger
 
-import "github.com/sirupsen/logrus"
+import (
+	"github.com/sirupsen/logrus"
+)
 
 // Context maintains context on logging fields to aid stitching together a history.
 type Context logrus.Fields

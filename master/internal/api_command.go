@@ -8,10 +8,11 @@ import (
 	"fmt"
 	"math/rand"
 
+	"github.com/pkg/errors"
+
 	petname "github.com/dustinkirkland/golang-petname"
 	"github.com/ghodss/yaml"
 	pstruct "github.com/golang/protobuf/ptypes/struct"
-	"github.com/pkg/errors"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -131,11 +132,11 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 		template, err := a.m.db.TemplateByName(req.TemplateName)
 		if err != nil {
 			return nil, launchWarnings, status.Errorf(codes.InvalidArgument,
-				errors.Wrapf(err, "failed to find template: %s", req.TemplateName).Error())
+				fmt.Errorf("failed to find template: %s: %w", req.TemplateName, err).Error())
 		}
 		if err := yaml.Unmarshal(template.Config, &config); err != nil {
 			return nil, launchWarnings, status.Errorf(codes.InvalidArgument,
-				errors.Wrapf(err, "failed to unmarshal template: %s", req.TemplateName).Error())
+				fmt.Errorf("failed to unmarshal template: %s: %w", req.TemplateName, err).Error())
 		}
 	}
 	if len(configBytes) != 0 {
@@ -144,8 +145,8 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 
 		if err := dec.Decode(&config); err != nil {
 			return nil, launchWarnings, status.Errorf(codes.InvalidArgument,
-				errors.Wrapf(err,
-					"unable to decode the merged config: %s", string(configBytes)).Error())
+				fmt.Errorf("unable to decode the merged config: %s: %w", string(configBytes), err).
+					Error())
 		}
 	}
 	// Copy discovered (default) resource pool name and slot count.
@@ -182,16 +183,14 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 		token, err = grpcutil.GetUserExternalToken(ctx)
 		if err != nil {
 			return nil, launchWarnings, status.Errorf(codes.Internal,
-				errors.Wrapf(err,
-					"unable to get external user token").Error())
+				fmt.Errorf("unable to get external user token: %w", err).Error())
 		}
 		err = nil
 	} else {
 		token, err = a.m.db.StartUserSession(userModel)
 		if err != nil {
 			return nil, launchWarnings, status.Errorf(codes.Internal,
-				errors.Wrapf(err,
-					"unable to create user session inside task").Error())
+				fmt.Errorf("unable to create user session inside task: %w", err).Error())
 		}
 	}
 	taskSpec.UserSessionToken = token

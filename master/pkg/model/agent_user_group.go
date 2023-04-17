@@ -2,6 +2,7 @@ package model
 
 import (
 	"github.com/pkg/errors"
+
 	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/pkg/archive"

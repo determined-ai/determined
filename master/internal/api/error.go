@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/pkg/errors"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -55,20 +56,14 @@ please ensure the client consuming the API is up to date and report a bug if the
 
 // AsValidationError returns an error that wraps ErrInvalid, so that errors.Is can identify it.
 func AsValidationError(msg string, args ...interface{}) error {
-	return errors.Wrapf(
-		ErrInvalid,
-		msg,
-		args...,
-	)
+	return fmt.Errorf(msg+": %w",
+		args, ErrInvalid)
 }
 
 // AsErrNotFound returns an error that wraps ErrNotFound, so that errors.Is can identify it.
 func AsErrNotFound(msg string, args ...interface{}) error {
-	return errors.Wrapf(
-		ErrNotFound,
-		msg,
-		args...,
-	)
+	return fmt.Errorf(msg+": %w",
+		args, ErrNotFound)
 }
 
 // APIErrToGRPC converts internal api error categories into grpc status.Errors.

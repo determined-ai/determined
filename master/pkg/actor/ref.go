@@ -13,7 +13,6 @@ import (
 
 	"github.com/opentracing/opentracing-go"
 
-	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -314,7 +313,7 @@ func (r *Ref) close() {
 	// Recover from an actor panic and set the error flag.
 	if rec := recover(); rec != nil {
 		r.log.Error(rec, "\n", string(debug.Stack()))
-		r.err = errors.Errorf("unexpected panic: %v", rec)
+		r.err = fmt.Errorf("unexpected panic: %v", rec)
 	}
 
 	// Drain the remaining messages in the inbox. All senders expecting results are sent an
@@ -328,7 +327,7 @@ func (r *Ref) close() {
 	// Stop and wait for all children to exit.
 	for id, child := range r.children {
 		if tErr := child.AwaitTermination(); tErr != nil {
-			r.err = errors.Wrapf(tErr, "error closing child: %s", id)
+			r.err = fmt.Errorf("error closing child: %s: %w", id, tErr)
 		}
 		r.deleteChild(r.address)
 	}
@@ -339,7 +338,7 @@ func (r *Ref) close() {
 		if r.err == nil {
 			r.err = err
 		} else {
-			r.err = errors.Wrap(r.err, err.Error())
+			r.err = fmt.Errorf(err.Error()+": %w", r.err)
 		}
 	}
 

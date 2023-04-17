@@ -22,12 +22,14 @@ import (
 	"sync"
 	"time"
 
+	"github.com/pkg/errors"
+
 	"github.com/coreos/go-systemd/activation"
 	"github.com/google/uuid"
 	"github.com/labstack/echo-contrib/prometheus"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"github.com/pkg/errors"
+
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
 	"github.com/soheilhy/cmux"
@@ -175,11 +177,11 @@ func (m *Master) getRawResourceAllocation(c echo.Context) error {
 
 	start, err := time.Parse("2006-01-02T15:04:05Z", args.Start)
 	if err != nil {
-		return errors.Wrap(err, "invalid start time")
+		return fmt.Errorf("invalid start time: %w", err)
 	}
 	end, err := time.Parse("2006-01-02T15:04:05Z", args.End)
 	if err != nil {
-		return errors.Wrap(err, "invalid end time")
+		return fmt.Errorf("invalid end time: %w", err)
 	}
 	if start.After(end) {
 		return errors.New("start time cannot be after end time")
@@ -189,7 +191,7 @@ func (m *Master) getRawResourceAllocation(c echo.Context) error {
 	if err := m.db.QueryProto(
 		"get_raw_allocation", &resp.ResourceEntries, start.UTC(), end.UTC(),
 	); err != nil {
-		return errors.Wrap(err, "error fetching allocation data")
+		return fmt.Errorf("error fetching allocation data: %w", err)
 	}
 
 	c.Response().Header().Set("Content-Type", "text/csv")
@@ -250,7 +252,7 @@ func (m *Master) fetchAggregatedResourceAllocation(
 		if err := m.db.QueryProto(
 			"get_aggregated_allocation", &resp.ResourceEntries, start.UTC(), end.UTC(),
 		); err != nil {
-			return nil, errors.Wrap(err, "error fetching aggregated allocation data")
+			return nil, fmt.Errorf("error fetching aggregated allocation data: %w", err)
 		}
 
 		return resp, nil
@@ -272,7 +274,7 @@ func (m *Master) fetchAggregatedResourceAllocation(
 		if err := m.db.QueryProto(
 			"get_monthly_aggregated_allocation", &resp.ResourceEntries, start.UTC(), end.UTC(),
 		); err != nil {
-			return nil, errors.Wrap(err, "error fetching aggregated allocation data")
+			return nil, fmt.Errorf("error fetching aggregated allocation data: %w", err)
 		}
 
 		return resp, nil
@@ -338,11 +340,11 @@ func (m *Master) getResourceAllocations(c echo.Context) error {
 	// Parse start & end timestamps
 	start, err := time.Parse("2006-01-02T15:04:05Z", args.Start)
 	if err != nil {
-		return errors.Wrap(err, "invalid start time")
+		return fmt.Errorf("invalid start time: %w", err)
 	}
 	end, err := time.Parse("2006-01-02T15:04:05Z", args.End)
 	if err != nil {
-		return errors.Wrap(err, "invalid end time")
+		return fmt.Errorf("invalid end time: %w", err)
 	}
 	if start.After(end) {
 		return errors.New("start time cannot be after end time")
@@ -559,13 +561,13 @@ func (m *Master) getAggregatedResourceAllocation(c echo.Context) error {
 func (m *Master) getSystemdListener() (net.Listener, error) {
 	switch systemdListeners, err := activation.Listeners(); {
 	case err != nil:
-		return nil, errors.Wrap(err, "failed to find systemd listeners")
+		return nil, fmt.Errorf("failed to find systemd listeners: %w", err)
 	case len(systemdListeners) == 0:
 		return nil, nil
 	case len(systemdListeners) == 1:
 		return systemdListeners[0], nil
 	default:
-		return nil, errors.Errorf("expected at most 1 systemd listener, got %d", len(systemdListeners))
+		return nil, fmt.Errorf("expected at most 1 systemd listener, got %d", len(systemdListeners))
 	}
 }
 
@@ -616,7 +618,7 @@ func (m *Master) startServers(ctx context.Context, cert *tls.Certificate) error 
 	systemdListener, err := m.getSystemdListener()
 	switch {
 	case err != nil:
-		return errors.Wrap(err, "failed to find systemd listeners")
+		return fmt.Errorf("failed to find systemd listeners: %w", err)
 	case systemdListener != nil:
 		baseListener = systemdListener
 		port, pErr := m.findListeningPort(systemdListener)
@@ -648,7 +650,7 @@ func (m *Master) startServers(ctx context.Context, cert *tls.Certificate) error 
 				clientCAs = x509.NewCertPool()
 				clientRootCA, iErr := ioutil.ReadFile(agentRM.ClientCA)
 				if iErr != nil {
-					return errors.Wrap(err, "failed to read agent CA file")
+					return fmt.Errorf("failed to read agent CA file: %w", err)
 				}
 				clientCAs.AppendCertsFromPEM(clientRootCA)
 			}
@@ -671,7 +673,7 @@ func (m *Master) startServers(ctx context.Context, cert *tls.Certificate) error 
 
 	err = grpcutil.RegisterHTTPProxy(ctx, m.echo, m.config.Port, cert)
 	if err != nil {
-		return errors.Wrap(err, "failed to register gRPC gateway")
+		return fmt.Errorf("failed to register gRPC gateway: %w", err)
 	}
 
 	// Initialize listeners and multiplexing.
@@ -691,7 +693,7 @@ func (m *Master) startServers(ctx context.Context, cert *tls.Certificate) error 
 	errs := make(chan error)
 	start := func(name string, run func() error) {
 		go func() {
-			errs <- errors.Wrap(run(), name+" failed")
+			errs <- fmt.Errorf(name+" failed"+": %w", run())
 		}()
 	}
 	start("gRPC server", func() error {
@@ -770,7 +772,7 @@ func (m *Master) restoreNonTerminalExperiments() error {
 	sema := make(chan struct{}, maxConcurrentRestores)
 	toRestore, err := m.db.NonTerminalExperiments()
 	if err != nil {
-		return errors.Wrap(err, "couldn't retrieve experiments to restore")
+		return fmt.Errorf("couldn't retrieve experiments to restore: %w", err)
 	}
 
 	wg := sync.WaitGroup{}
@@ -827,7 +829,7 @@ func (m *Master) postTaskLogs(c echo.Context) (interface{}, error) {
 		return "", err
 	}
 	if err := m.taskLogBackend.AddTaskLogs(logs); err != nil {
-		return "", errors.Wrap(err, "receiving task logs")
+		return "", fmt.Errorf("receiving task logs: %w", err)
 	}
 	return "", nil
 }
@@ -839,7 +841,7 @@ func (m *Master) Run(ctx context.Context) error {
 	var err error
 
 	if err = etc.SetRootPath(filepath.Join(m.config.Root, "static/srv")); err != nil {
-		return errors.Wrap(err, "could not set static root")
+		return fmt.Errorf("could not set static root: %w", err)
 	}
 
 	m.db, err = db.Setup(&m.config.DB)
@@ -850,7 +852,7 @@ func (m *Master) Run(ctx context.Context) error {
 
 	m.ClusterID, err = m.db.GetOrCreateClusterID()
 	if err != nil {
-		return errors.Wrap(err, "could not fetch cluster id from database")
+		return fmt.Errorf("could not fetch cluster id from database: %w", err)
 	}
 
 	// Must happen before recovery. If tasks can't recover their allocations, they need an end time.
@@ -858,7 +860,7 @@ func (m *Master) Run(ctx context.Context) error {
 
 	cert, err := m.config.Security.TLS.ReadCertificate()
 	if err != nil {
-		return errors.Wrap(err, "failed to read TLS certificate")
+		return fmt.Errorf("failed to read TLS certificate: %w", err)
 	}
 	m.taskSpec = &tasks.TaskSpec{
 		ClusterID:             m.ClusterID,
@@ -993,10 +995,10 @@ func (m *Master) Run(ctx context.Context) error {
 
 	// Before RM start, end stats for dangling agents/instances in case of master crash.
 	if err = m.db.EndAllAgentStats(); err != nil {
-		return errors.Wrap(err, "could not update end stats for agents")
+		return fmt.Errorf("could not update end stats for agents: %w", err)
 	}
 	if err = m.db.EndAllInstanceStats(); err != nil {
-		return errors.Wrap(err, "could not update end stats for instances")
+		return fmt.Errorf("could not update end stats for instances: %w", err)
 	}
 
 	// Resource Manager.
@@ -1055,7 +1057,7 @@ func (m *Master) Run(ctx context.Context) error {
 	reactRoot := filepath.Join(webuiRoot, "react")
 	reactRootAbs, err := filepath.Abs(reactRoot)
 	if err != nil {
-		return errors.Wrap(err, "failed to get absolute path to react root")
+		return fmt.Errorf("failed to get absolute path to react root: %w", err)
 	}
 	reactIndex := filepath.Join(reactRoot, "index.html")
 

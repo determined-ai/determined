@@ -2,12 +2,11 @@ package kubernetesrm
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"time"
 
 	"github.com/docker/docker/pkg/stdcopy"
-
-	"github.com/pkg/errors"
 
 	k8sV1 "k8s.io/api/core/v1"
 	typedV1 "k8s.io/client-go/kubernetes/typed/core/v1"
@@ -42,7 +41,7 @@ func newPodLogStreamer(
 
 	logReader, err := logs.Stream(context.TODO())
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to initialize log stream for pod: %s", podName)
+		return nil, fmt.Errorf("failed to initialize log stream for pod: %s: %w", podName, err)
 	}
 
 	return &podLogStreamer{logReader: logReader, podHandler: podHandler}, nil

@@ -7,11 +7,13 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/pkg/errors"
+
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/google/uuid"
-	"github.com/pkg/errors"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -255,7 +257,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 
 		ops, err := e.searcher.InitialOperations()
 		if err != nil {
-			err = errors.Wrap(err, "failed to generate initial operations")
+			err = fmt.Errorf("failed to generate initial operations: %w", err)
 			e.updateState(ctx, model.StateWithReason{
 				State:               model.StoppingErrorState,
 				InformationalReason: err.Error(),
@@ -699,12 +701,12 @@ var errIsNotTrialTaskID = fmt.Errorf("taskID is not a trial task ID")
 func experimentIDFromTrialTaskID(taskID model.TaskID) (int, error) {
 	expID, _, found := strings.Cut(string(taskID), ".")
 	if !found {
-		return 0, errors.Wrapf(errIsNotTrialTaskID, "error on task ID %s", taskID)
+		return 0, fmt.Errorf("error on task ID %s: %w", taskID, errIsNotTrialTaskID)
 	}
 
 	id, err := strconv.Atoi(expID)
 	if err != nil {
-		return 0, errors.Wrapf(err, "error parsing experiment ID for task ID %s", taskID)
+		return 0, fmt.Errorf("error parsing experiment ID for task ID %s: %w", taskID, err)
 	}
 	return id, nil
 }
@@ -715,12 +717,12 @@ func (e *experiment) checkpointForCreate(op searcher.Create) (*model.Checkpoint,
 	if op.Checkpoint != nil {
 		trial, err := e.db.TrialByExperimentAndRequestID(e.ID, op.Checkpoint.RequestID)
 		if err != nil {
-			return nil, errors.Wrapf(err,
-				"invalid request ID in Create operation: %d", op.Checkpoint.RequestID)
+			return nil, fmt.Errorf(
+				"invalid request ID in Create operation: %d: %w", op.Checkpoint.RequestID, err)
 		}
 		checkpointModel, err := checkpointFromTrialIDOrUUID(e.db, &trial.ID, nil)
 		if err != nil {
-			return nil, errors.Wrap(err, "checkpoint not found")
+			return nil, fmt.Errorf("checkpoint not found: %w", err)
 		}
 		checkpoint = checkpointModel
 	}
@@ -760,19 +762,19 @@ func (e *experiment) canTerminate(ctx *actor.Context) bool {
 func (e *experiment) Snapshot() (json.RawMessage, error) {
 	searcherSnapshot, err := e.searcher.Snapshot()
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to snapshot searcher")
+		return nil, fmt.Errorf("failed to snapshot searcher: %w", err)
 	}
 	e.SearcherState = searcherSnapshot
 	experimentSnapshot, err := json.Marshal(e.experimentState)
-	return experimentSnapshot, errors.Wrap(err, "failed to marshal experiment")
+	return experimentSnapshot, fmt.Errorf("failed to marshal experiment: %w", err)
 }
 
 func (e *experiment) Restore(experimentSnapshot json.RawMessage) error {
 	if err := json.Unmarshal(experimentSnapshot, &e.experimentState); err != nil {
-		return errors.Wrap(err, "failed to unmarshal experiment snapshot")
+		return fmt.Errorf("failed to unmarshal experiment snapshot: %w", err)
 	}
 	if err := e.searcher.Restore(e.SearcherState); err != nil {
-		return errors.Wrap(err, "failed to restore searcher snapshot")
+		return fmt.Errorf("failed to restore searcher snapshot: %w", err)
 	}
 	return nil
 }
@@ -787,22 +789,22 @@ func checkpointFromTrialIDOrUUID(
 	if trialID != nil {
 		checkpoint, err = db.LatestCheckpointForTrial(*trialID)
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed to get checkpoint for source trial %d", *trialID)
+			return nil, fmt.Errorf("failed to get checkpoint for source trial %d: %w", *trialID, err)
 		}
 		if checkpoint == nil {
-			return nil, errors.Errorf("no checkpoint found for source trial %d", *trialID)
+			return nil, fmt.Errorf("no checkpoint found for source trial %d", *trialID)
 		}
 	} else if checkpointUUIDStr != nil {
 		checkpointUUID, err := uuid.Parse(*checkpointUUIDStr)
 		if err != nil {
-			return nil, errors.Wrap(err, "invalid source checkpoint UUID")
+			return nil, fmt.Errorf("invalid source checkpoint UUID: %w", err)
 		}
 		checkpoint, err = db.CheckpointByUUID(checkpointUUID)
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed to get source checkpoint %v", checkpointUUID)
+			return nil, fmt.Errorf("failed to get source checkpoint %v: %w", checkpointUUID, err)
 		}
 		if checkpoint == nil {
-			return nil, errors.Errorf("no checkpoint found with UUID %v", checkpointUUID)
+			return nil, fmt.Errorf("no checkpoint found with UUID %v", checkpointUUID)
 		}
 	}
 	return checkpoint, nil
@@ -834,7 +836,7 @@ func (e *experiment) setPriority(ctx *actor.Context, priority *int, forward bool
 	}()
 
 	if err := e.db.SaveExperimentConfig(e.ID, e.activeConfig); err != nil {
-		return errors.Wrapf(err, "setting experiment %d priority", e.ID)
+		return fmt.Errorf("setting experiment %d priority: %w", e.ID, err)
 	}
 
 	if forward {
@@ -846,7 +848,7 @@ func (e *experiment) setPriority(ctx *actor.Context, priority *int, forward bool
 		case rmerrors.ErrUnsupported:
 			ctx.Log().WithError(err).Debug("ignoring unsupported call to set group priority")
 		default:
-			return errors.Wrapf(err, "setting experiment %d priority", e.ID)
+			return fmt.Errorf("setting experiment %d priority: %w", e.ID, err)
 		}
 	}
 
@@ -898,7 +900,7 @@ func (e *experiment) setRP(ctx *actor.Context, msg sproto.SetResourcePool) error
 	if err := e.db.SaveExperimentConfig(e.ID, e.activeConfig); err != nil {
 		resources.SetResourcePool(oldRP)
 		e.activeConfig.SetResources(resources)
-		return errors.Wrapf(err, "setting experiment %d RP to %s", e.ID, rp)
+		return fmt.Errorf("setting experiment %d RP to %s: %w", e.ID, rp, err)
 	}
 
 	// TODO revert the change like the other setters

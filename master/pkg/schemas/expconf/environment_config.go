@@ -7,7 +7,6 @@ import (
 	k8sV1 "k8s.io/api/core/v1"
 
 	"github.com/docker/docker/api/types"
-	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/device"
 )
@@ -96,7 +95,7 @@ func (e *EnvironmentImageMapV0) UnmarshalJSON(data []byte) error {
 	type DefaultParser EnvironmentImageMapV0
 	var jsonItem DefaultParser
 	if err := json.Unmarshal(data, &jsonItem); err != nil {
-		return errors.Wrapf(err, "failed to parse runtime item")
+		return fmt.Errorf("failed to parse runtime item: %w", err)
 	}
 
 	e.RawCPU = jsonItem.RawCPU
@@ -110,7 +109,7 @@ func (e *EnvironmentImageMapV0) UnmarshalJSON(data []byte) error {
 		}
 		var compatItem EnvironmentImageMapV0Compat
 		if err := json.Unmarshal(data, &compatItem); err != nil {
-			return errors.Wrapf(err, "failed to parse runtime item")
+			return fmt.Errorf("failed to parse runtime item: %w", err)
 		}
 		e.RawCUDA = compatItem.RawGPU
 	}
@@ -177,7 +176,7 @@ func (e *EnvironmentVariablesMapV0) UnmarshalJSON(data []byte) error {
 	type DefaultParser EnvironmentVariablesMapV0
 	var jsonItems DefaultParser
 	if err := json.Unmarshal(data, &jsonItems); err != nil {
-		return errors.Wrapf(err, "failed to parse runtime items")
+		return fmt.Errorf("failed to parse runtime items: %w", err)
 	}
 	e.RawCPU = []string{}
 	e.RawCUDA = []string{}
@@ -199,7 +198,7 @@ func (e *EnvironmentVariablesMapV0) UnmarshalJSON(data []byte) error {
 
 		var compatItems EnvironmentVariablesMapV0Compat
 		if err := json.Unmarshal(data, &compatItems); err != nil {
-			return errors.Wrapf(err, "failed to parse runtime items")
+			return fmt.Errorf("failed to parse runtime items: %w", err)
 		}
 
 		e.RawCUDA = append(e.RawCUDA, compatItems.RawGPU...)

@@ -5,8 +5,8 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
+	"fmt"
 
-	"github.com/pkg/errors"
 	sshlib "golang.org/x/crypto/ssh"
 )
 
@@ -25,7 +25,7 @@ func GenerateKey(rsaKeySize int, passphrase *string) (PrivateAndPublicKeys, erro
 	var generatedKeys PrivateAndPublicKeys
 	privateKey, err := rsa.GenerateKey(rand.Reader, rsaKeySize)
 	if err != nil {
-		return generatedKeys, errors.Wrap(err, "unable to generate private key")
+		return generatedKeys, fmt.Errorf("unable to generate private key: %w", err)
 	}
 
 	if err = privateKey.Validate(); err != nil {
@@ -42,13 +42,13 @@ func GenerateKey(rsaKeySize int, passphrase *string) (PrivateAndPublicKeys, erro
 		block, err = x509.EncryptPEMBlock( //nolint: staticcheck
 			rand.Reader, block.Type, block.Bytes, []byte(*passphrase), x509.PEMCipherAES256)
 		if err != nil {
-			return generatedKeys, errors.Wrap(err, "unable to encrypt private key")
+			return generatedKeys, fmt.Errorf("unable to encrypt private key: %w", err)
 		}
 	}
 
 	publicKey, err := sshlib.NewPublicKey(&privateKey.PublicKey)
 	if err != nil {
-		return generatedKeys, errors.Wrap(err, "unable to generate public key")
+		return generatedKeys, fmt.Errorf("unable to generate public key: %w", err)
 	}
 
 	generatedKeys = PrivateAndPublicKeys{

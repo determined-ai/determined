@@ -2,9 +2,8 @@ package model
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
-
-	"github.com/pkg/errors"
 )
 
 // Duration is a JSON (un)marshallable version of time.Duration.
@@ -25,11 +24,11 @@ func (d *Duration) UnmarshalJSON(b []byte) error {
 	case string:
 		tmp, err := time.ParseDuration(value)
 		if err != nil {
-			return errors.Wrap(err, "error parsing duration")
+			return fmt.Errorf("error parsing duration: %w", err)
 		}
 		*d = Duration(tmp)
 		return nil
 	default:
-		return errors.Errorf("invalid duration: %s", b)
+		return fmt.Errorf("invalid duration: %s", b)
 	}
 }

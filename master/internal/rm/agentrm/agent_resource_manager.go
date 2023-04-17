@@ -6,14 +6,14 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/pkg/errors"
+
 	"github.com/determined-ai/determined/master/internal/rm/actorrm"
 
 	"github.com/labstack/echo/v4"
 
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/model"
-
-	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
@@ -305,7 +305,7 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 
 		rpRef := ctx.Child(msg.ResourcePool)
 		if rpRef == nil {
-			ctx.Respond(errors.Errorf("resource pool %s not found", msg.ResourcePool))
+			ctx.Respond(fmt.Errorf("resource pool %s not found", msg.ResourcePool))
 			return nil
 		}
 		resp := ctx.Ask(rpRef, msg).Get()
@@ -415,7 +415,7 @@ func (a *agentResourceManager) forwardToPool(
 		if ctx.Sender() != nil {
 			sender = ctx.Sender().Address().String()
 		}
-		err := errors.Errorf("cannot find resource pool %s for message %T from actor %s",
+		err := fmt.Errorf("cannot find resource pool %s for message %T from actor %s",
 			resourcePool, ctx.Message(), sender)
 		ctx.Log().WithError(err).Error("")
 		if ctx.ExpectingResponse() {
@@ -501,7 +501,7 @@ func (a *agentResourceManager) getResourcePoolConfig(poolName string) (
 			return a.poolsConfig[i], nil
 		}
 	}
-	return config.ResourcePoolConfig{}, errors.Errorf("cannot find resource pool %s", poolName)
+	return config.ResourcePoolConfig{}, fmt.Errorf("cannot find resource pool %s", poolName)
 }
 
 func (a *agentResourceManager) createResourcePoolSummary(

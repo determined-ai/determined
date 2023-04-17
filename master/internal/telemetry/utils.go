@@ -1,6 +1,8 @@
 package telemetry
 
-import "github.com/sirupsen/logrus"
+import (
+	"github.com/sirupsen/logrus"
+)
 
 // debugLogger is an implementation of Segment's logger type that prints all messages at the debug
 // level in order to reduce noise from failed messages.

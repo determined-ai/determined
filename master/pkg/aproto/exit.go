@@ -35,7 +35,7 @@ func ContainerError(failureType FailureType, err error) ContainerStopped {
 		return ContainerStopped{
 			Failure: &ContainerFailure{
 				FailureType: failureType,
-				ErrMsg:      errors.WithStack(errors.Errorf("unknown error occurred")).Error(),
+				ErrMsg:      errors.WithStack(fmt.Errorf("unknown error occurred")).Error(),
 			},
 		}
 	}
@@ -53,7 +53,7 @@ func NewContainerFailure(failureType FailureType, err error) *ContainerFailure {
 	if err == nil {
 		return &ContainerFailure{
 			FailureType: failureType,
-			ErrMsg:      errors.WithStack(errors.Errorf("unknown error occurred")).Error(),
+			ErrMsg:      errors.WithStack(fmt.Errorf("unknown error occurred")).Error(),
 		}
 	}
 	return &ContainerFailure{
@@ -70,7 +70,7 @@ func NewContainerExit(code ExitCode) *ContainerFailure {
 	}
 	return &ContainerFailure{
 		FailureType: ContainerFailed,
-		ErrMsg:      errors.Errorf("%s: %d", ContainerFailed, code).Error(),
+		ErrMsg:      fmt.Errorf("%s: %d", ContainerFailed, code).Error(),
 		ExitCode:    &code,
 	}
 }
@@ -84,7 +84,7 @@ func ContainerExited(code ExitCode) ContainerStopped {
 	return ContainerStopped{
 		&ContainerFailure{
 			FailureType: ContainerFailed,
-			ErrMsg:      errors.Errorf("%s: %d", ContainerFailed, code).Error(),
+			ErrMsg:      fmt.Errorf("%s: %d", ContainerFailed, code).Error(),
 			ExitCode:    &code,
 		},
 	}

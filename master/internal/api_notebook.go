@@ -8,11 +8,12 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/pkg/errors"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	petname "github.com/dustinkirkland/golang-petname"
-	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/api/apiutils"
@@ -188,7 +189,7 @@ func (a *apiServer) isNTSCPermittedToLaunch(
 	); errors.Is(err, db.ErrNotFound) {
 		return notFoundErr
 	} else if err != nil {
-		return errors.Wrapf(err, "error fetching workspace (%d) from database", workspaceID)
+		return fmt.Errorf("error fetching workspace (%d) from database: %w", workspaceID, err)
 	}
 	if w.Archived {
 		return notFoundErr
@@ -220,7 +221,7 @@ func (a *apiServer) LaunchNotebook(
 		Files:        req.Files,
 	})
 	if err != nil {
-		return nil, api.APIErrToGRPC(errors.Wrapf(err, "failed to prepare launch params"))
+		return nil, api.APIErrToGRPC(fmt.Errorf("failed to prepare launch params: %w", err))
 	}
 
 	spec.Metadata.WorkspaceID = model.DefaultWorkspaceID

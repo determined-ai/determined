@@ -7,11 +7,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/pkg/errors"
+
 	"github.com/determined-ai/determined/master/internal/rm/actorrm"
 
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
-
-	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/rm"

@@ -3,8 +3,6 @@ package db
 import (
 	"fmt"
 
-	"github.com/pkg/errors"
-
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 
 	"github.com/determined-ai/determined/master/internal/api"
@@ -99,7 +97,7 @@ func (db *PgDB) DeleteTrialLogs(ids []int) error {
 DELETE FROM trial_logs
 WHERE trial_id IN (SELECT unnest($1::int [])::int);
 `, ids); err != nil {
-		return errors.Wrapf(err, "error deleting trial logs for trials %v", ids)
+		return fmt.Errorf("error deleting trial logs for trials %v: %w", ids, err)
 	}
 	return nil
 }

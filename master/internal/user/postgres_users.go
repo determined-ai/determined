@@ -3,10 +3,13 @@ package user
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"time"
 
-	"github.com/o1egl/paseto"
 	"github.com/pkg/errors"
+
+	"github.com/o1egl/paseto"
+
 	log "github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
 
@@ -73,7 +76,7 @@ func AddUserExec(user *model.User) error {
 
 	_, err = tx.NewInsert().Model(user).ExcludeColumn("id").Returning("*").Exec(ctx)
 	if err != nil {
-		return errors.Wrap(err, "error inserting user")
+		return fmt.Errorf("error inserting user: %w", err)
 	}
 
 	personalGroup := struct { // Duped definition to avoid import cycle. TODO redesign this.
@@ -87,7 +90,7 @@ func AddUserExec(user *model.User) error {
 		OwnerID: user.ID,
 	}
 	if _, err = tx.NewInsert().Model(&personalGroup).Exec(ctx); err != nil {
-		return errors.Wrap(err, "error inserting personal group")
+		return fmt.Errorf("error inserting personal group: %w", err)
 	}
 
 	groupMembership := struct {
@@ -100,11 +103,11 @@ func AddUserExec(user *model.User) error {
 		GroupID: personalGroup.ID,
 	}
 	if _, err = tx.NewInsert().Model(&groupMembership).Exec(ctx); err != nil {
-		return errors.Wrap(err, "error adding user to personal group")
+		return fmt.Errorf("error adding user to personal group: %w", err)
 	}
 
 	if err = tx.Commit(); err != nil {
-		return errors.Wrap(err, "error committing changes in AddUserExec")
+		return fmt.Errorf("error committing changes in AddUserExec: %w", err)
 	}
 
 	return nil

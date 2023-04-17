@@ -7,8 +7,6 @@ import (
 	"github.com/google/uuid"
 	"google.golang.org/protobuf/encoding/protojson"
 
-	"github.com/pkg/errors"
-
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 )
 
@@ -138,7 +136,7 @@ func marshalEvents(pbEvents []*experimentv1.SearcherEvent) ([]json.RawMessage, e
 	for _, pbEvent := range pbEvents {
 		event, err := protojson.Marshal(pbEvent)
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to marshal searcher event")
+			return nil, fmt.Errorf("failed to marshal searcher event: %w", err)
 		}
 		events = append(events, event)
 	}
@@ -150,7 +148,7 @@ func unmarshalEvents(events []json.RawMessage) ([]*experimentv1.SearcherEvent, e
 	for _, event := range events {
 		var pbEvent experimentv1.SearcherEvent
 		if err := protojson.Unmarshal(event, &pbEvent); err != nil {
-			return nil, errors.Wrap(err, "failed to unmarshal searcher event")
+			return nil, fmt.Errorf("failed to unmarshal searcher event: %w", err)
 		}
 		pbEvents = append(pbEvents, &pbEvent)
 	}

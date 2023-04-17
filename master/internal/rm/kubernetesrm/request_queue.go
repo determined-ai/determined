@@ -3,8 +3,6 @@ package kubernetesrm
 import (
 	"fmt"
 
-	"github.com/pkg/errors"
-
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/set"
 
@@ -136,7 +134,7 @@ func (r *requestQueue) Receive(ctx *actor.Context) error {
 				},
 			)
 			if !ok {
-				return errors.Errorf("%s actor already exists", newWorker.Address())
+				return fmt.Errorf("%s actor already exists", newWorker.Address())
 			}
 		}
 	case actor.PostStop:

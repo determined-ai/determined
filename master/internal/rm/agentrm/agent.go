@@ -1,6 +1,7 @@
 package agentrm
 
 import (
+	"fmt"
 	"net/http"
 	"reflect"
 	"sort"
@@ -8,8 +9,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
+
+	"github.com/labstack/echo/v4"
+
 	"golang.org/x/exp/maps"
 
 	"github.com/determined-ai/determined/master/internal/db"
@@ -189,7 +192,7 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 			for _, msg := range a.reconnectBacklog {
 				if err := a.receive(ctx, msg); err != nil {
 					ctx.Log().WithError(err).WithField("msg", msg).Errorf("replaying backlog")
-					return errors.Wrapf(err, "replaying backlog")
+					return fmt.Errorf("replaying backlog: %w", err)
 				}
 			}
 			a.reconnectBacklog = nil
@@ -310,7 +313,7 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 			// If we happen to fail before the agent has started and been registered with
 			// the resource manager, then nothing can be running on it. In this case we
 			// just fail outright and make it restart.
-			return errors.Wrapf(msg.Error, "child failed: %s", msg.Child.Address())
+			return fmt.Errorf("child failed: %s: %w", msg.Child.Address(), msg.Error)
 		}
 
 		ctx.Log().WithError(msg.Error).Errorf("child failed, awaiting reconnect: %s", msg.Child.Address())
@@ -518,7 +521,7 @@ func (a *agent) handleIncomingWSMessage(ctx *actor.Context, msg aproto.MasterMes
 		}
 
 	default:
-		check.Panic(errors.Errorf("error parsing incoming message"))
+		check.Panic(fmt.Errorf("error parsing incoming message"))
 	}
 }
 

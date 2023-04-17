@@ -13,6 +13,7 @@ import (
 	"testing"
 
 	"github.com/pkg/errors"
+
 	"github.com/santhosh-tekuri/jsonschema/v2"
 	"gotest.tools/assert"
 

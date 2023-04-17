@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
+
 	"github.com/uptrace/bun"
 	"golang.org/x/exp/maps"
 
@@ -21,7 +22,7 @@ func (db *PgDB) CheckpointByUUID(id uuid.UUID) (*model.Checkpoint, error) {
 	WHERE c.uuid = $1`, &checkpoint, id.String()); errors.Cause(err) == ErrNotFound {
 		return nil, nil
 	} else if err != nil {
-		return nil, errors.Wrapf(err, "error querying for checkpoint (%v)", id.String())
+		return nil, fmt.Errorf("error querying for checkpoint (%v): %w", id.String(), err)
 	}
 	return &checkpoint, nil
 }
@@ -183,7 +184,7 @@ UPDATE trials SET checkpoint_size=sub.size, checkpoint_count=sub.count FROM (
 WHERE trials.id = sub.trial_id
 RETURNING experiment_id`, bun.In(checkpoints), bun.In(checkpoints)).Scan(ctx, &experimentIDs)
 	if err != nil {
-		return errors.Wrap(err, "errors updating trial checkpoint sizes and counts")
+		return fmt.Errorf("errors updating trial checkpoint sizes and counts: %w", err)
 	}
 	if len(experimentIDs) == 0 { // Checkpoint potentially to non experiment.
 		return nil
@@ -200,7 +201,7 @@ UPDATE experiments SET checkpoint_size=sub.size, checkpoint_count=sub.count FROM
 WHERE experiments.id = sub.experiment_id
 RETURNING true`, bun.In(uniqueExpIDs)).Scan(ctx, &res)
 	if err != nil {
-		return errors.Wrap(err, "errors updating experiment checkpoint sizes and counts")
+		return fmt.Errorf("errors updating experiment checkpoint sizes and counts: %w", err)
 	}
 
 	return nil

@@ -13,14 +13,14 @@ import (
 	"strings"
 	"time"
 
+	"github.com/pkg/errors"
+
 	"github.com/determined-ai/determined/master/internal/api/apiutils"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	petname "github.com/dustinkirkland/golang-petname"
-
-	"github.com/pkg/errors"
 
 	k8sV1 "k8s.io/api/core/v1"
 
@@ -216,7 +216,7 @@ func (a *apiServer) LaunchTensorboard(
 		MustZeroSlot: true,
 	})
 	if err != nil {
-		return nil, api.APIErrToGRPC(errors.Wrapf(err, "failed to prepare launch params"))
+		return nil, api.APIErrToGRPC(fmt.Errorf("failed to prepare launch params: %w", err))
 	}
 
 	spec.Metadata.WorkspaceID = model.DefaultWorkspaceID
@@ -365,7 +365,7 @@ func (a *apiServer) LaunchTensorboard(
 	mostRecentExpID := exps[len(exps)-1].ExperimentID
 	exp, err := a.m.db.ExperimentByID(int(mostRecentExpID))
 	if err != nil {
-		return nil, errors.Wrapf(err, "error loading experiment: %d", mostRecentExpID)
+		return nil, fmt.Errorf("error loading experiment: %d: %w", mostRecentExpID, err)
 	}
 
 	spec.Config.Entrypoint = append(
@@ -413,7 +413,7 @@ func (a *apiServer) LaunchTensorboard(
 
 	confBytes, err := json.Marshal(exp.Config.CheckpointStorage)
 	if err != nil {
-		return nil, errors.Wrapf(err, "error marshaling checkpoint_storage")
+		return nil, fmt.Errorf("error marshaling checkpoint_storage: %w", err)
 	}
 
 	spec.AdditionalFiles = archive.Archive{

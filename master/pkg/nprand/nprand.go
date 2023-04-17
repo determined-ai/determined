@@ -4,7 +4,9 @@
 
 package nprand
 
-import "fmt"
+import (
+	"fmt"
+)
 
 const (
 	stateLen  int    = 624

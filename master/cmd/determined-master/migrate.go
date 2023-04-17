@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
@@ -47,7 +46,7 @@ func runMigrate(cmd *cobra.Command, args []string) error {
 	}()
 
 	if err = database.Migrate(config.DB.Migrations, args); err != nil {
-		return errors.Wrap(err, "running migrations")
+		return fmt.Errorf("running migrations: %w", err)
 	}
 
 	return nil

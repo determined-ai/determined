@@ -2,8 +2,7 @@ package searcher
 
 import (
 	"encoding/json"
-
-	"github.com/pkg/errors"
+	"fmt"
 
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
@@ -40,7 +39,7 @@ func (s *tournamentSearch) Snapshot() (json.RawMessage, error) {
 	for i := range s.subSearches {
 		b, err := s.subSearches[i].Snapshot()
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to save subsearch")
+			return nil, fmt.Errorf("failed to save subsearch: %w", err)
 		}
 		s.SubSearchStates[i] = b
 	}
@@ -50,11 +49,11 @@ func (s *tournamentSearch) Snapshot() (json.RawMessage, error) {
 func (s *tournamentSearch) Restore(state json.RawMessage) error {
 	err := json.Unmarshal(state, &s.tournamentSearchState)
 	if err != nil {
-		return errors.Wrap(err, "failed to unmarshal tournament state")
+		return fmt.Errorf("failed to unmarshal tournament state: %w", err)
 	}
 	for i := range s.subSearches {
 		if err := s.subSearches[i].Restore(s.SubSearchStates[i]); err != nil {
-			return errors.Wrap(err, "failed to load subsearch")
+			return fmt.Errorf("failed to load subsearch: %w", err)
 		}
 	}
 	return nil

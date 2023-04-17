@@ -10,7 +10,7 @@ import (
 
 	"github.com/opentracing/opentracing-go"
 	otlog "github.com/opentracing/opentracing-go/log"
-	"github.com/pkg/errors"
+
 	"github.com/uber/jaeger-client-go/config"
 )
 
@@ -100,7 +100,7 @@ func initJaeger(service string) (opentracing.Tracer, io.Closer, error) {
 		},
 	}.NewTracer()
 	if err != nil {
-		return nil, nil, errors.Wrap(err, "failed to init Jaeger")
+		return nil, nil, fmt.Errorf("failed to init Jaeger: %w", err)
 	}
 	return tracer, closer, nil
 }

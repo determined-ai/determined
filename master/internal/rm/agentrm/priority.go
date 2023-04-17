@@ -6,7 +6,6 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/rm/tasklist"
 
-	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/internal/config"
@@ -315,7 +314,7 @@ func deepCopyAgents(agents map[*actor.Ref]*agentState) map[*actor.Ref]*agentStat
 func addTaskToAgents(fits []*fittingState) {
 	for _, fit := range fits {
 		if _, err := fit.Agent.allocateFreeDevices(fit.Slots, cproto.NewID()); err != nil {
-			panic(errors.Wrap(err, "can't add task to agents"))
+			panic(fmt.Errorf("can't add task to agents: %w", err))
 		}
 	}
 }

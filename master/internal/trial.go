@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/pkg/errors"
+
 	"github.com/determined-ai/determined/master/internal/prom"
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/task"
@@ -16,8 +18,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/mathx"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
-
-	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -173,7 +173,7 @@ func (t *trial) Receive(ctx *actor.Context) error {
 	case actor.ChildFailed:
 		if t.allocation != nil && t.runID == mustParseTrialRunID(msg.Child) {
 			return t.allocationExited(ctx, &task.AllocationExited{
-				Err: errors.Wrapf(msg.Error, "trial allocation failed"),
+				Err: fmt.Errorf("trial allocation failed: %w", msg.Error),
 			})
 		}
 
@@ -242,7 +242,7 @@ func (t *trial) Receive(ctx *actor.Context) error {
 func (t *trial) recover() error {
 	runID, restarts, err := t.db.TrialRunIDAndRestarts(t.id)
 	if err != nil {
-		return errors.Wrap(err, "restoring old trial state")
+		return fmt.Errorf("restoring old trial state: %w", err)
 	}
 	t.runID = runID
 	t.restarts = restarts
@@ -386,7 +386,7 @@ func (t *trial) buildTaskSpec(ctx *actor.Context) (tasks.TaskSpec, error) {
 	if t.generatedKeys == nil {
 		generatedKeys, err := ssh.GenerateKey(t.taskSpec.SSHRsaSize, nil)
 		if err != nil {
-			return tasks.TaskSpec{}, errors.Wrap(err, "failed to generate keys for trial")
+			return tasks.TaskSpec{}, fmt.Errorf("failed to generate keys for trial: %w", err)
 		}
 		t.generatedKeys = &generatedKeys
 	}
@@ -402,7 +402,7 @@ func (t *trial) buildTaskSpec(ctx *actor.Context) (tasks.TaskSpec, error) {
 			int64(t.searcher.Create.TrialSeed))
 
 		if err := t.db.AddTrial(modelTrial); err != nil {
-			return tasks.TaskSpec{}, errors.Wrap(err, "failed to save trial to database")
+			return tasks.TaskSpec{}, fmt.Errorf("failed to save trial to database: %w", err)
 		}
 
 		t.id = modelTrial.ID
@@ -417,14 +417,14 @@ func (t *trial) buildTaskSpec(ctx *actor.Context) (tasks.TaskSpec, error) {
 	}
 
 	if err := t.db.UpdateTrialRunID(t.id, t.runID); err != nil {
-		return tasks.TaskSpec{}, errors.Wrap(err, "failed to save trial run ID")
+		return tasks.TaskSpec{}, fmt.Errorf("failed to save trial run ID: %w", err)
 	}
 
 	var stepsCompleted int
 	latestCheckpoint, err := t.db.LatestCheckpointForTrial(t.id)
 	switch {
 	case err != nil:
-		return tasks.TaskSpec{}, errors.Wrapf(err, "failed to query latest checkpoint for trial")
+		return tasks.TaskSpec{}, fmt.Errorf("failed to query latest checkpoint for trial: %w", err)
 	case latestCheckpoint == nil:
 		latestCheckpoint = t.warmStartCheckpoint
 	default:
@@ -538,7 +538,7 @@ func (t *trial) allocationExited(ctx *actor.Context, exit *task.AllocationExited
 	}
 
 	// Maybe reschedule.
-	return errors.Wrap(t.maybeAllocateTask(ctx), "failed to reschedule trial")
+	return fmt.Errorf("failed to reschedule trial: %w", t.maybeAllocateTask(ctx))
 }
 
 // patchState decide if the state patch is valid. If so, we'll transition the trial.
@@ -569,7 +569,7 @@ func (t *trial) transition(ctx *actor.Context, s model.StateWithReason) error {
 		ctx.Log().Infof("trial changed from state %s to %s", t.state, s.State)
 		if t.idSet {
 			if err := t.db.UpdateTrial(t.id, s.State); err != nil {
-				return errors.Wrap(err, "updating trial with end state")
+				return fmt.Errorf("updating trial with end state: %w", err)
 			}
 		}
 		t.state = s.State
@@ -657,7 +657,7 @@ func mustParseTrialRunID(child *actor.Ref) int {
 	idStr := child.Address().Local()
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		panic(errors.Wrapf(err, "could not parse run id %s", idStr))
+		panic(fmt.Errorf("could not parse run id %s: %w", idStr, err))
 	}
 	return id
 }

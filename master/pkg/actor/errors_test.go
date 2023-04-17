@@ -1,6 +1,8 @@
 package actor
 
-import "testing"
+import (
+	"testing"
+)
 
 func Test_errUnexpectedMessage_Error(t *testing.T) {
 	type fields struct {

@@ -1,9 +1,8 @@
 package db
 
 import (
+	"fmt"
 	"time"
-
-	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
@@ -43,12 +42,12 @@ OFFSET $2 LIMIT $3`, labelsJSON, offset, limit)
 	for rows.Next() {
 		var batch model.TrialProfilerMetricsBatch
 		if err := rows.StructScan(&batch); err != nil {
-			return nil, errors.Wrap(err, "querying profiler metric batch")
+			return nil, fmt.Errorf("querying profiler metric batch: %w", err)
 		}
 
 		pBatch, err := batch.ToProto()
 		if err != nil {
-			return nil, errors.Wrap(err, "converting batch to protobuf")
+			return nil, fmt.Errorf("converting batch to protobuf: %w", err)
 		}
 
 		pBatches = append(pBatches, pBatch)

@@ -7,8 +7,6 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/pkg/errors"
-
 	"github.com/google/uuid"
 )
 
@@ -95,11 +93,11 @@ func (r *RequestID) Scan(value interface{}) error {
 	case []byte:
 		x, err = uuid.Parse(string(v))
 	default:
-		return errors.Errorf("unknown type %T", v)
+		return fmt.Errorf("unknown type %T", v)
 	}
 
 	if err != nil {
-		return errors.Wrap(err, "failed to scan RequestID")
+		return fmt.Errorf("failed to scan RequestID: %w", err)
 	}
 
 	*r = RequestID(x)
