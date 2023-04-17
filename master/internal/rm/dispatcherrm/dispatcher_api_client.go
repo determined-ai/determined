@@ -213,25 +213,30 @@ func (c *launcherAPIClient) loadEnvironmentLog(owner, id, logFileName string) (
 	return log, resp, nil
 }
 
-// handleServiceQueryError provides common error handling for REST API calls
+// handleLauncherError provides common error handling for REST API calls
 // to the launcher in support of RM operations.
-func (c *launcherAPIClient) handleServiceQueryError(r *http.Response, err error) {
+func (c *launcherAPIClient) handleLauncherError(r *http.Response,
+	errPrefix string, err error,
+) string {
+	var msg string
 	if r != nil {
 		if r.StatusCode == http.StatusUnauthorized ||
 			r.StatusCode == http.StatusForbidden {
-			c.log.Errorf("Failed to communicate with launcher due to error: "+
+			msg = fmt.Sprintf("Failed to communicate with launcher due to error: "+
 				"{%v}. Reloaded the auth token file {%s}. If this error persists, restart "+
 				"the launcher service followed by a restart of the determined-master service.",
 				err, c.authFile)
 			c.reloadAuthToken()
 		} else {
-			c.log.Errorf("Failed to retrieve HPC resources or queue data from launcher due to error: "+
-				"{%v}, response: {%v}. ", err, r.Body)
+			msg = fmt.Sprintf("%s due to error: {%v}, response: {%v}. ",
+				errPrefix, err, r.Body)
 		}
 	} else {
-		c.log.Errorf("Failed to communicate with launcher due to error: "+
+		msg = fmt.Sprintf("Failed to communicate with launcher due to error: "+
 			"{%v}. Verify that the launcher service is up and reachable.", err)
 	}
+	c.log.Errorf(msg)
+	return msg
 }
 
 // CreateSlurmResourcesManifest creates a Manifest for SlurmResources Carrier.
