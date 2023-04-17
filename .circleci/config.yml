@@ -1579,7 +1579,7 @@ jobs:
 
   test-unit-harness-gpu:
     machine:
-      resource_class: gpu.nvidia.small
+      resource_class: determinedai/container-runner-gpu
       image: <<pipeline.parameters.gpu-machine-image>>
     steps:
       - checkout
