@@ -104,7 +104,7 @@ build-race: gen
 		./cmd/determined-master
 
 .PHONY: check
-check: check-gen
+check: check-gen check-sql
 	go mod tidy
 	git diff --quiet go.mod go.sum
 	golangci-lint --build-tags integration run -v --timeout 10m
@@ -115,6 +115,13 @@ fmt-sql:
 	# and we ignore them for now.
 	sqlfluff format -p 0 --dialect postgres . || exit 0
 	# sqlfluff fix -p 0 --dialect postgres . || exit 0
+
+.PHONY: check-sql
+check-sql:
+	make fmt-sql
+	# Checking that automatically fixable formatting is applied to all sql files
+	# by running `make fmt-sql`.
+	test -z "$(shell git status --porcelain './static/*')"
 
 .PHONY: fmt
 fmt:
