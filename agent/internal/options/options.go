@@ -164,6 +164,7 @@ type SingularityOptions struct {
 	AllowNetworkCreation bool `json:"allow_network_creation"`
 }
 
+// PodmanOptions configures how we interact with podman.
 type PodmanOptions struct {
-	AllowNetworkCreation bool `json:"allow_network_creation"`  // review
+	AllowNetworkCreation bool `json:"allow_network_creation"` // review
 }
