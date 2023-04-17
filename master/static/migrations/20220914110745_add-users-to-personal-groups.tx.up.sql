@@ -2,7 +2,8 @@ INSERT INTO groups(group_name, user_id)
 SELECT
     username || 'DeterminedPersonalGroup' AS group_name,
     id AS user_id
-FROM users;
+FROM users
+;
 
 INSERT INTO user_group_membership(user_id, group_id)
 SELECT

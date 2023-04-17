@@ -12,7 +12,7 @@ tasks (
         t.start_time AS start_time,
         t.end_time AS end_time
     FROM
-        trials AS t
+        trials t
 );
 
 WITH today AS (
@@ -74,8 +74,8 @@ allocations (
             FROM
                 checkpoints
         ) AS all_workloads,
-        trials AS t,
-        experiments AS e,
+        trials t,
+        experiments e,
         const
     WHERE
         const.period && all_workloads.range
