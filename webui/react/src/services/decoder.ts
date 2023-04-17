@@ -627,15 +627,16 @@ export const decodeV1TrialToTrialItem = (data: Sdk.Trialv1Trial): types.TrialIte
   };
 };
 
-const decodeSummaryMetrics = (data: Sdk.V1SummarizedMetric[]): types.MetricContainer[] => {
+const decodeSummaryMetrics = (data: Sdk.V1DownsampledMetrics[]): types.MetricContainer[] => {
   return data.map((m) => {
+    data: m.data.map((pt) => ({
     const metrics: types.MetricContainer = {
-      data: m.data.map((pt) => ({
+        values: m.data.map(data.values) => ({
         batches: pt.batches,
         epoch: pt.epoch,
         time: pt.time,
-        value: pt.value,
-      })),
+        value: pt.values,
+      }}))),
       name: m.name,
       type:
         m.type === Sdk.V1MetricType.TRAINING
