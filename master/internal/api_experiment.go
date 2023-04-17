@@ -2123,6 +2123,14 @@ func parseFilter(filter string) (*string, error) {
 	// Iterate through the filter string and build
 	// the matching sql query
 
+	trimmedQuery := strings.ReplaceAll(filter, " ", "")
+
+	if len(trimmedQuery) == 0 {
+		return nil, fmt.Errorf("string is empty")
+	}
+	if strings.Contains(trimmedQuery, "()") {
+		return nil, fmt.Errorf("contains empty conditional group")
+	}
 	currentIndex := 0
 	currentQuery := ""
 

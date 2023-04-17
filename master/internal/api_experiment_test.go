@@ -14,16 +14,20 @@ func TestExperimentSearchApiFilterParsing(t *testing.T) {
 		")morejunk()",
 		"(((junk(((()",
 		")((((otherjunk)((()))))))",
+		"",
+		"        ",
+		"   ()     ",
+		"  (    )  ",
+		"()",
+		"()()",
+		"()       ()",
+		"(()())",
 	}
 	for _, c := range invalidTestCases {
 		_, err := parseFilter(c)
 		require.Error(t, err)
 	}
 	validTestCases := [][2]string{
-		{"", ""},
-		{"()", "()"},
-		{"()()", "()()"},
-		{"(()())", "(()())"},
 		{`string:"value"`, `string = 'value'`},
 		{"-number:123456789", "number != 123456789"},
 		{"anumber<=12.34", "anumber<=12.34"},
