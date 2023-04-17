@@ -182,7 +182,8 @@ master would break on startup if it does not have access to create this default 
 ******************
 
 Optional. Specifies whether to refuse an experiment or task if the slots requested exceeds the
-cluster capacity. If ``false``, only a warning is returned. The default value is ``true``.
+cluster capacity. This option has no effect for kubernetes or slurm clusters. If ``false``, only a
+warning is returned. The default value is ``true``.
 
 ******************
  ``cluster_name``
