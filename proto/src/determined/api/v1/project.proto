@@ -42,7 +42,13 @@ message GetProjectColumnsResponse {
     json_schema: { required: [ "columns" ] }
   };
   // List of general columns.
-  repeated determined.project.v1.ProjectColumn columns = 1;
+  repeated determined.project.v1.GeneralColumn general = 1 [deprecated=true];
+  // List of hyperparameters.
+  repeated string hyperparameters = 2 [deprecated=true];
+  // List of metrics.
+  repeated string metrics = 3 [deprecated=true];
+  // List of columns.
+  repeated determined.project.v1.ProjectColumn columns = 4;
 }
 
 // Request for creating a project.
