@@ -876,6 +876,9 @@ WHERE id = :id`
 // DeleteExperiments deletes one or more experiments.
 func (db *PgDB) DeleteExperiments(ctx context.Context, ids []int) error {
 	tx, err := Bun().BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
 	defer func() {
 		txErr := tx.Rollback()
 		if txErr != nil && txErr != sql.ErrTxDone {
@@ -1034,7 +1037,9 @@ WHERE trials.experiment_id = $1
 }
 
 // ExperimentsTrialAndTaskIDs returns the trial and task IDs for one or more experiments.
-func (db *PgDB) ExperimentsTrialAndTaskIDs(ctx context.Context, idb bun.IDB, expIDs []int) ([]int, []model.TaskID, error) {
+func (db *PgDB) ExperimentsTrialAndTaskIDs(ctx context.Context, idb bun.IDB, expIDs []int) ([]int,
+	[]model.TaskID, error,
+) {
 	var trialIDRows []struct {
 		ID     int          `db:"id"`
 		TaskID model.TaskID `db:"task_id"`

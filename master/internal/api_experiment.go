@@ -353,7 +353,8 @@ func (a *apiServer) DeleteExperiments(
 		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
 	}
 
-	results, experiments, err := exputil.DeleteExperiments(ctx, a.m.system, req.ExperimentIds, req.Filters)
+	results, experiments, err := exputil.DeleteExperiments(ctx, a.m.system, req.ExperimentIds,
+		req.Filters)
 
 	go func() {
 		for i := 0; i < len(experiments); i += 10 {
@@ -387,10 +388,8 @@ func (a *apiServer) deleteExperiments(ctx context.Context, exps []*model.Experim
 	userModel *model.User,
 ) ([]int, error) {
 	var expIDs []int
-	var jobIDs []model.JobID
 	for _, exp := range exps {
 		expIDs = append(expIDs, exp.ID)
-		jobIDs = append(jobIDs, exp.JobID)
 	}
 
 	taskSpec := *a.m.taskSpec
