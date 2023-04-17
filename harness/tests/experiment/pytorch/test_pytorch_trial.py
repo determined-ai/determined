@@ -1002,7 +1002,7 @@ class TestPyTorchTrial:
         assert state.batches_trained == 1, "batches_trained does not match"
         assert state.epochs_trained == 0, "epochs_trained does not match"
 
-    @pytest.mark.GPU
+    @pytest.mark.gpu
     @pytest.mark.parametrize("aggregation_frequency", [1, 4])
     def test_pytorch_11_const(self, aggregation_frequency: int, tmp_path: pathlib.Path):
 
@@ -1026,7 +1026,7 @@ class TestPyTorchTrial:
             trial_class=trial_class, hparams=hparams, tmp_path=tmp_path, exp_config=exp_config, steps=(1, 1)
         )
 
-    @pytest.mark.GPU
+    @pytest.mark.gpu
     @pytest.mark.PyTorch
     @pytest.mark.parametrize("api_style", ["apex", "auto", "manual"]) # TODO: test apex
     def test_pytorch_const_with_amp(self, api_style: str, tmp_path: pathlib.Path):

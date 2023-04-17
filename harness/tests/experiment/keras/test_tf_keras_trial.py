@@ -367,7 +367,7 @@ class TestKerasTrial:
 
 #TODO: maybe add TF2 and TF1 images with pytest.mark (We're dropping TF1 images anyway)
 @pytest.mark.TensorFlow
-@pytest.mark.GPU
+@pytest.mark.gpu
 def test_cifar10_single_gpu(tmp_path: Path):
     """
     Make sure each example:
@@ -448,7 +448,7 @@ def test_cifar10_single_gpu(tmp_path: Path):
     controller.run()
 
 @pytest.mark.TensorFlow
-@pytest.mark.GPU
+@pytest.mark.gpu
 def test_tf2_no_op(tmp_path: Path):
     """
         Make sure each example:

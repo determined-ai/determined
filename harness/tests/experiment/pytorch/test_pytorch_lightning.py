@@ -227,7 +227,7 @@ class TestLightningAdapter:
 
         assert len(os.listdir(checkpoint_dir)) == 2, "trial did not create a checkpoint"
 
-    @pytest.mark.GPU
+    @pytest.mark.gpu
     @pytest.mark.PyTorchLightning
     @pytest.mark.parametrize("api_style", ["apex", "auto"])
     def test_pl_const_with_amp(self, api_style: str, tmp_path: pathlib.Path) -> None:
@@ -259,7 +259,7 @@ class TestLightningAdapter:
             trial_class=trial_class, hparams=hparams, tmp_path=tmp_path, exp_config=exp_config, steps=(1, 1)
         )
 
-    @pytest.mark.CPU
+    @pytest.mark.cpu
     @pytest.mark.PyTorchLightning
     def test_pl_mnist_gan(self, tmp_path: pathlib.Path) -> None:
 
@@ -284,7 +284,7 @@ class TestLightningAdapter:
             trial_class=trial_class, hparams=hparams, tmp_path=tmp_path, exp_config=exp_config, steps=(1, 1)
         )
 
-    @pytest.mark.CPU
+    @pytest.mark.cpu
     @pytest.mark.PyTorchLightning
     def test_pl_mnist(self, tmp_path: pathlib.Path) -> None:
 
