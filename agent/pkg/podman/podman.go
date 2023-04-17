@@ -23,6 +23,7 @@ import (
 	"github.com/docker/docker/api/types"
 	dcontainer "github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
+	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/exp/slices"
@@ -246,7 +247,7 @@ func (s *PodmanClient) RunContainer(
 	args = append(args, "--workdir", req.ContainerConfig.WorkingDir)
 
 	// Env. variables. c.f. launcher PodmanOverSlurm.java
-    args = append(args, "--env", "SLURM_*")
+	args = append(args, "--env", "SLURM_*")
 	args = append(args, "--env", "CUDA_VISIBLE_DEVICES")
 	args = append(args, "--env", "NVIDIA_VISIBLE_DEVICES")
 	args = append(args, "--env", "ROCR_VISIBLE_DEVICES")
@@ -347,26 +348,7 @@ func (s *PodmanClient) RunContainer(
 	}
 
 	for _, m := range req.HostConfig.Mounts {
-		// TODO(DET-9079): Investigate handling these options.
-		if m.ReadOnly {
-			if err = p.Publish(ctx, docker.NewLogEvent(model.LogLevelWarning, fmt.Sprintf(
-				"mount %s:%s was requested as readonly but podman does not support this; "+
-					"will bind mount anyway, without it being readonly",
-				m.Source, m.Target,
-			))); err != nil {
-				return nil, err
-			}
-		}
-		if m.BindOptions != nil && m.BindOptions.Propagation != "rprivate" { // rprivate is default.
-			if err = p.Publish(ctx, docker.NewLogEvent(model.LogLevelWarning, fmt.Sprintf(
-				"mount %s:%s had propagation settings but podman does not support this; "+
-					"will bind mount anyway, without them",
-				m.Source, m.Target,
-			))); err != nil {
-				return nil, err
-			}
-		}
-		args = append(args, "--volume", fmt.Sprintf("%s:%s", m.Source, m.Target))
+		args = addHostMounts(m, args)
 	}
 
 	if shmsize := req.HostConfig.ShmSize; shmsize != 4294967296 { // 4294967296 is the default.
@@ -391,28 +373,19 @@ func (s *PodmanClient) RunContainer(
 	// }
 
 	// Visible devices are set later by modifying the exec.Command's env.
-	var cudaVisibleDevices []string
-	for _, d := range cont.Req.HostConfig.DeviceRequests {
-		if d.Driver == "nvidia" {
-			cudaVisibleDevices = append(cudaVisibleDevices, d.DeviceIDs...)
-		}
-	}
+	// var cudaVisibleDevices []string
+	// for _, d := range cont.Req.HostConfig.DeviceRequests {
+	// 	if d.Driver == "nvidia" {
+	// 		cudaVisibleDevices = append(cudaVisibleDevices, d.DeviceIDs...)
+	// 	}
+	// }
 	// if len(cudaVisibleDevices) > 0 {
 	// 	// TODO(DET-9081): We need to move to --nvccli --nv, because --nv does not provide
 	// 	// sufficient isolation (e.g., nvidia-smi see all GPUs on the machine, not just ours).
 	// 	args = append(args, "--nv")
 	// }
 
-	// TODO(DET-9079): It is unlikely we can handle this, but we should do better at documenting.
-	if len(req.HostConfig.CapAdd) != 0 || len(req.HostConfig.CapDrop) != 0 {
-		if err = p.Publish(ctx, docker.NewLogEvent(model.LogLevelWarning, fmt.Sprintf(
-			"cap add or drop was requested but podman does not support this; "+
-				"will be ignored (cap_add: %+v, cap_drop: %+v)", req.HostConfig.CapAdd,
-			req.HostConfig.CapDrop,
-		))); err != nil {
-			return nil, err
-		}
-	}
+	args = processCapabilities(req, args)
 
 	image := s.canonicalizeImage(req.ContainerConfig.Image)
 	args = append(args, image)
@@ -436,17 +409,17 @@ func (s *PodmanClient) RunContainer(
 	s.wg.Go(func(ctx context.Context) { s.shipPodmanCmdLogs(ctx, stdout, stdcopy.Stdout, p) })
 	s.wg.Go(func(ctx context.Context) { s.shipPodmanCmdLogs(ctx, stderr, stdcopy.Stderr, p) })
 
-	cudaVisibleDevicesVar := strings.Join(cudaVisibleDevices, ",")
-	cmd.Env = append(cmd.Env,
-		fmt.Sprintf("PODMANENV_CUDA_VISIBLE_DEVICES=%s", cudaVisibleDevicesVar),
-		fmt.Sprintf("APPTAINERENV_CUDA_VISIBLE_DEVICES=%s", cudaVisibleDevicesVar),
-	)
+	// cudaVisibleDevicesVar := strings.Join(cudaVisibleDevices, ",")
+	// cmd.Env = append(cmd.Env,
+	// 	fmt.Sprintf("PODMANENV_CUDA_VISIBLE_DEVICES=%s", cudaVisibleDevicesVar),
+	// 	fmt.Sprintf("APPTAINERENV_CUDA_VISIBLE_DEVICES=%s", cudaVisibleDevicesVar),
+	// )
 
 	// HACK(podman): without this, --nv doesn't work right. If the podman run command
 	// cannot find nvidia-smi, the --nv fails to make it available inside the container, e.g.,
 	// env -i /usr/bin/podman run --nv \\
 	//   docker://determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-24586f0 nvidia-smi
-	cmd.Env = append(cmd.Env, fmt.Sprintf("PATH=%s", os.Getenv("PATH")))
+	// cmd.Env = append(cmd.Env, fmt.Sprintf("PATH=%s", os.Getenv("PATH")))
 
 	if err := cmd.Start(); err != nil {
 		return nil, fmt.Errorf("starting podman container: %w", err)
@@ -483,6 +456,31 @@ func (s *PodmanClient) RunContainer(
 		},
 		ContainerWaiter: s.waitOnContainer(cproto.ID(id), cont, p),
 	}, nil
+}
+
+func processCapabilities(req cproto.RunSpec, args []string) []string {
+	for _, cap := range req.HostConfig.CapAdd {
+		args = append(args, "--cap-add", cap)
+	}
+	for _, cap := range req.HostConfig.CapDrop {
+		args = append(args, "--cap-drop", cap)
+	}
+	return args
+}
+
+func addHostMounts(m mount.Mount, args []string) []string {
+	var mountOptions []string
+	if m.ReadOnly {
+		mountOptions = append(mountOptions, "ro")
+	}
+	if m.BindOptions != nil && string(m.BindOptions.Propagation) != "" {
+		mountOptions = append(mountOptions, string(m.BindOptions.Propagation))
+	}
+	var options string
+	if len(mountOptions) > 0 {
+		options = fmt.Sprintf(":%s", strings.Join(mountOptions, ","))
+	}
+	return append(args, "--volume", fmt.Sprintf("%s:%s%s", m.Source, m.Target, options))
 }
 
 // ReattachContainer implements container.ContainerRuntime.
