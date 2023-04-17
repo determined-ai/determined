@@ -1859,6 +1859,69 @@ func (a *apiServer) GetModelDefFile(
 	return &apiv1.GetModelDefFileResponse{File: file}, nil
 }
 
+func sortExperiments(sortString *string, experimentQuery *bun.SelectQuery) error {
+	if sortString == nil {
+		return nil
+	}
+	orderColMap := map[string]string{
+		"id":              "id",
+		"description":     "description",
+		"name":            "name",
+		"startTime":       "e.start_time",
+		"endTime":         "e.end_time",
+		"state":           "e.state",
+		"numTrials":       "num_trials",
+		"progress":        "COALESCE(progress, 0)",
+		"user":            "display_name",
+		"forkedFrom":      "e.parent_id",
+		"resourcePool":    "resource_pool",
+		"projectId":       "project_id",
+		"checkpointSize":  "checkpoint_size",
+		"checkpointCount": "checkpoint_count",
+		"searcherMetricsVal": `(
+			SELECT
+				searcher_metric_value
+			FROM trials t
+			WHERE t.experiment_id = e.id
+			ORDER BY searcher_metric_value_signed ASC
+			LIMIT 1
+		 ) `,
+	}
+	sortByMap := map[string]string{
+		"asc":  "ASC",
+		"desc": "DESC NULLS LAST",
+	}
+	sortParams := strings.Split(*sortString, ",")
+	for _, sortParam := range sortParams {
+		paramDetail := strings.Split(sortParam, "=")
+		if len(paramDetail) != 2 {
+			return status.Errorf(codes.InvalidArgument, "invalid sort parameter: %s", sortParam)
+		}
+		if _, ok := sortByMap[paramDetail[1]]; !ok {
+			return status.Errorf(codes.InvalidArgument, "invalid sort direction: %s", paramDetail[1])
+		}
+		sortDirection := sortByMap[paramDetail[1]]
+		switch {
+		case strings.HasPrefix(paramDetail[0], "hp."):
+			hps := strings.ReplaceAll(strings.TrimPrefix(paramDetail[0], "hp."), ".", "'->'")
+			experimentQuery.OrderExpr(
+				fmt.Sprintf("e.config->'hyperparameters'->'%s' %s", hps, sortDirection))
+		case strings.HasPrefix(paramDetail[0], "validation."):
+			metricName := strings.TrimPrefix(paramDetail[0], "validation.")
+			experimentQuery.OrderExpr(
+				fmt.Sprintf("e.validation_metrics->'%s' %s",
+					metricName, sortDirection))
+		default:
+			if _, ok := orderColMap[paramDetail[0]]; !ok {
+				return status.Errorf(codes.InvalidArgument, "invalid sort col: %s", paramDetail[0])
+			}
+			experimentQuery.OrderExpr(
+				fmt.Sprintf("%s %s", orderColMap[paramDetail[0]], sortDirection))
+		}
+	}
+	return nil
+}
+
 func (a *apiServer) SearchExperiments(
 	ctx context.Context,
 	req *apiv1.SearchExperimentsRequest,
@@ -1869,6 +1932,7 @@ func (a *apiServer) SearchExperiments(
 	experimentQuery := db.Bun().NewSelect().
 		Model(&experiments).
 		ModelTableExpr("experiments as e").
+		Column("e.best_trial_id").
 		Apply(getExperimentColumns)
 
 	curUser, _, err := grpcutil.GetUser(ctx)
@@ -1891,6 +1955,13 @@ func (a *apiServer) SearchExperiments(
 		return nil, err
 	}
 
+	if req.Sort != nil {
+		err = sortExperiments(req.Sort, experimentQuery)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	resp.Pagination, err = runPagedBunExperimentsQuery(
 		ctx,
 		experimentQuery,
@@ -1901,27 +1972,18 @@ func (a *apiServer) SearchExperiments(
 		return nil, err
 	}
 
-	if err = a.enrichExperimentState(experiments...); err != nil {
-		return nil, err
-	}
-
 	if len(experiments) == 0 {
 		return resp, nil
+	}
+
+	if err = a.enrichExperimentState(experiments...); err != nil {
+		return nil, err
 	}
 
 	// get the best trial associated with the experiment.
 
 	// don't query for experiments twice
 	experimentValues := db.Bun().NewValues(&experiments)
-
-	// extract config info from experiments and associate with trials
-	searcherInfoQuery := db.Bun().NewSelect().
-		Table("ex").
-		ColumnExpr("ex.config->'searcher'->>'metric' AS metric_name").
-		//nolint:lll
-		ColumnExpr("(SELECT CASE WHEN coalesce((ex.config->'searcher'->>'smaller_is_better')::boolean, true) THEN 1 ELSE -1 END) as sign").
-		ColumnExpr("trials.id AS trial_id").
-		Join("JOIN trials ON trials.experiment_id = ex.id")
 
 	// get info for best/latest validation for best trial
 	validationsQuery := db.Bun().NewSelect().
@@ -1933,57 +1995,7 @@ func (a *apiServer) SearchExperiments(
 		ColumnExpr("json_build_object('avg_metrics', metrics->'validation_metrics') AS metrics").
 		ColumnExpr("metrics->'num_inputs' AS num_inputs").
 		//nolint:lll
-		ColumnExpr("((metrics->'validation_metrics'->>(si.metric_name))::float8 * si.sign) AS signed_searcher_metric").
-		//nolint:lll
-		ColumnExpr("row_number() OVER(PARTITION BY validations.trial_id ORDER BY total_batches DESC NULLS LAST) AS latest_rank").
-		Join("JOIN si ON validations.trial_id = si.trial_id")
-
-	// get best checkpoint info for best trial
-	addCheckpointColumnsAndJoin := func(q *bun.SelectQuery) *bun.SelectQuery {
-		return q.
-			Column("v.signed_searcher_metric").
-			ColumnExpr("c.*").
-			//nolint:lll
-			ColumnExpr("row_number() OVER(PARTITION BY v.trial_id ORDER BY v.signed_searcher_metric ASC) AS rank").
-			Join("JOIN v ON c.steps_completed = v.total_batches AND c.trial_id = v.trial_id").
-			Where("c.state = 'COMPLETED'")
-	}
-
-	oldCheckpointInnerQuery := db.Bun().NewSelect().
-		TableExpr("checkpoints_old_view c").
-		Apply(addCheckpointColumnsAndJoin)
-
-	oldCheckpointOuterQuery := db.Bun().NewSelect().
-		TableExpr("(?) as old_c", oldCheckpointInnerQuery).
-		ColumnExpr("old_c.*").
-		Where("old_c.rank = 1")
-
-	newCheckpointInnerQuery := db.Bun().NewSelect().
-		TableExpr("checkpoints_new_view c").
-		Apply(addCheckpointColumnsAndJoin)
-
-	newCheckpointOuterQuery := db.Bun().NewSelect().
-		TableExpr("(?) as new_c", newCheckpointInnerQuery).
-		ColumnExpr("new_c.*").
-		Where("new_c.rank = 1")
-
-	checkpointInnerQueryUnion := oldCheckpointOuterQuery.UnionAll(newCheckpointOuterQuery)
-
-	checkpointInnerQuery := db.Bun().NewSelect().
-		TableExpr("(?) as bc", checkpointInnerQueryUnion).
-		ColumnExpr("bc.*").
-		//nolint:lll
-		ColumnExpr("row_number() OVER(PARTITION BY bc.trial_id ORDER BY bc.signed_searcher_metric) AS order_rank")
-
-	checkpointsQuery := db.Bun().NewSelect().
-		TableExpr("(?) as c", checkpointInnerQuery).
-		Column("c.trial_id").
-		Column("c.resources").
-		ColumnExpr("c.order_rank AS rank").
-		ColumnExpr("c.uuid::text AS uuid").
-		ColumnExpr("c.steps_completed AS total_batches").
-		ColumnExpr("proto_time(c.report_time) AS end_time").
-		ColumnExpr(exputil.ProtoStateDBCaseString(checkpointv1.State_value, "c.state", "state", "STATE_"))
+		ColumnExpr("row_number() OVER(PARTITION BY validations.trial_id ORDER BY total_batches DESC NULLS LAST) AS latest_rank")
 
 	stepsQuery := db.Bun().NewSelect().
 		TableExpr("steps AS s").
@@ -2017,25 +2029,19 @@ func (a *apiServer) SearchExperiments(
 		ColumnExpr("(?) AS wall_clock_time", allocationsQuery).
 		ColumnExpr("row_to_json(lv)::jsonb AS latest_validation").
 		ColumnExpr("row_to_json(bv)::jsonb AS best_validation").
-		ColumnExpr("row_to_json(ch)::jsonb AS best_checkpoint").
+		ColumnExpr("null::jsonb AS best_checkpoint").
 		//nolint:lll
-		ColumnExpr("row_number() OVER(PARTITION BY trials.experiment_id ORDER BY (bv.signed_searcher_metric)) as _metric_rank").
-		Join("JOIN ex ON ex.id = trials.experiment_id").
+		Join("JOIN ex ON ex.best_trial_id = trials.id").
 		Join("LEFT JOIN v bv ON trials.best_validation_id = bv.id").
 		Join("LEFT JOIN v lv ON trials.id = lv.trial_id AND lv.latest_rank = 1").
 		Join("LEFT JOIN raw_checkpoints old_ckpt ON old_ckpt.id = trials.warm_start_checkpoint_id").
-		Join("LEFT JOIN checkpoints_v2 new_ckpt ON new_ckpt.id = trials.warm_start_checkpoint_id").
-		Join("LEFT JOIN ch ON ch.trial_id = trials.id AND ch.rank = 1")
+		Join("LEFT JOIN checkpoints_v2 new_ckpt ON new_ckpt.id = trials.warm_start_checkpoint_id")
 
 	err = db.Bun().NewSelect().
 		With("ex", experimentValues).
-		With("si", searcherInfoQuery).
 		With("v", validationsQuery).
-		With("ch", checkpointsQuery).
 		Model(&trials).
-		ModelTableExpr("(?) AS trial", trialsInnerQuery).
-		Where("trial._metric_rank = 1").
-		Scan(ctx)
+		ModelTableExpr("(?) AS trial", trialsInnerQuery).Scan(ctx)
 
 	if err != nil {
 		return nil, err
