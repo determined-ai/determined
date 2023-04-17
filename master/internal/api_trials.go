@@ -784,9 +784,9 @@ func (a *apiServer) SummarizeTrial(ctx context.Context,
 	return resp, nil
 }
 
-func (a *apiServer) TimeSeries(ctx context.Context,
-	req *apiv1.TimeSeriesRequest,
-) (*apiv1.TimeSeriesResponse, error) {
+func (a *apiServer) CompareTrials(ctx context.Context,
+	req *apiv1.CompareTrialsRequest,
+) (*apiv1.CompareTrialsResponse, error) {
 	trials := make([]*apiv1.ComparableTrial, 0, len(req.TrialIds))
 	for _, trialID := range req.TrialIds {
 		if err := a.canGetTrialsExperimentAndCheckCanDoAction(ctx, int(trialID),
@@ -811,7 +811,7 @@ func (a *apiServer) TimeSeries(ctx context.Context,
 		container.Metrics = tsample
 		trials = append(trials, container)
 	}
-	return &apiv1.TimeSeriesResponse{Trials: trials}, nil
+	return &apiv1.CompareTrialsResponse{Trials: trials}, nil
 }
 
 func (a *apiServer) GetTrainingMetrics(

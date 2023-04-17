@@ -717,8 +717,8 @@ message ComparableTrial {
   repeated SummarizedMetric metrics = 2;
 }
 
-// Get downsampled metrics from multiple trials.
-message TimeSeriesRequest {
+// Get time-series downsampled metrics from multiple trials.
+message CompareTrialsRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "max_datapoints", "trial_ids" ] }
   };
@@ -742,8 +742,8 @@ message TimeSeriesRequest {
   determined.common.v1.PolymorphicFilter time_series_filter = 10;
 }
 
-// Response to TimeSeriesRequest.
-message TimeSeriesResponse {
+// Response to CompareTrialsRequest.
+message CompareTrialsResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "trials" ] }
   };

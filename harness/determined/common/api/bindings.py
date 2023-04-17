@@ -1899,6 +1899,28 @@ class v1ComparableTrial:
         }
         return out
 
+class v1CompareTrialsResponse:
+
+    def __init__(
+        self,
+        *,
+        trials: "typing.Sequence[v1ComparableTrial]",
+    ):
+        self.trials = trials
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1CompareTrialsResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "trials": [v1ComparableTrial.from_json(x) for x in obj["trials"]],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "trials": [x.to_json(omit_unset) for x in self.trials],
+        }
+        return out
+
 class v1CompleteValidateAfterOperation:
     op: "typing.Optional[v1ValidateAfterOperation]" = None
     searcherMetric: "typing.Optional[typing.Any]" = None
@@ -11301,28 +11323,6 @@ class v1TestWebhookResponse:
         }
         return out
 
-class v1TimeSeriesResponse:
-
-    def __init__(
-        self,
-        *,
-        trials: "typing.Sequence[v1ComparableTrial]",
-    ):
-        self.trials = trials
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1TimeSeriesResponse":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-            "trials": [v1ComparableTrial.from_json(x) for x in obj["trials"]],
-        }
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-            "trials": [x.to_json(omit_unset) for x in self.trials],
-        }
-        return out
-
 class v1TimestampFieldFilter:
     gt: "typing.Optional[str]" = None
     gte: "typing.Optional[str]" = None
@@ -12910,12 +12910,6 @@ class v1WorkspaceState(enum.Enum):
     DELETE_FAILED = "WORKSPACE_STATE_DELETE_FAILED"
     DELETED = "WORKSPACE_STATE_DELETED"
 
-class v1XAxis(enum.Enum):
-    UNSPECIFIED = "X_AXIS_UNSPECIFIED"
-    BATCH = "X_AXIS_BATCH"
-    TIME = "X_AXIS_TIME"
-    EPOCH = "X_AXIS_EPOCH"
-
 def post_AckAllocationPreemptionSignal(
     session: "api.Session",
     *,
@@ -13285,6 +13279,72 @@ def post_CancelExperiments(
     if _resp.status_code == 200:
         return v1CancelExperimentsResponse.from_json(_resp.json())
     raise APIHttpError("post_CancelExperiments", _resp)
+
+def get_CompareTrials(
+    session: "api.Session",
+    *,
+    endBatches: "typing.Optional[int]" = None,
+    maxDatapoints: "typing.Optional[int]" = None,
+    metricIds: "typing.Optional[typing.Sequence[str]]" = None,
+    metricNames: "typing.Optional[typing.Sequence[str]]" = None,
+    metricType: "typing.Optional[v1MetricType]" = None,
+    scale: "typing.Optional[v1Scale]" = None,
+    startBatches: "typing.Optional[int]" = None,
+    timeSeriesFilter_doubleRange_gt: "typing.Optional[float]" = None,
+    timeSeriesFilter_doubleRange_gte: "typing.Optional[float]" = None,
+    timeSeriesFilter_doubleRange_lt: "typing.Optional[float]" = None,
+    timeSeriesFilter_doubleRange_lte: "typing.Optional[float]" = None,
+    timeSeriesFilter_integerRange_gt: "typing.Optional[int]" = None,
+    timeSeriesFilter_integerRange_gte: "typing.Optional[int]" = None,
+    timeSeriesFilter_integerRange_incl: "typing.Optional[typing.Sequence[int]]" = None,
+    timeSeriesFilter_integerRange_lt: "typing.Optional[int]" = None,
+    timeSeriesFilter_integerRange_lte: "typing.Optional[int]" = None,
+    timeSeriesFilter_integerRange_notIn: "typing.Optional[typing.Sequence[int]]" = None,
+    timeSeriesFilter_name: "typing.Optional[str]" = None,
+    timeSeriesFilter_timeRange_gt: "typing.Optional[str]" = None,
+    timeSeriesFilter_timeRange_gte: "typing.Optional[str]" = None,
+    timeSeriesFilter_timeRange_lt: "typing.Optional[str]" = None,
+    timeSeriesFilter_timeRange_lte: "typing.Optional[str]" = None,
+    trialIds: "typing.Optional[typing.Sequence[int]]" = None,
+) -> "v1CompareTrialsResponse":
+    _params = {
+        "endBatches": endBatches,
+        "maxDatapoints": maxDatapoints,
+        "metricIds": metricIds,
+        "metricNames": metricNames,
+        "metricType": metricType.value if metricType is not None else None,
+        "scale": scale.value if scale is not None else None,
+        "startBatches": startBatches,
+        "timeSeriesFilter.doubleRange.gt": dump_float(timeSeriesFilter_doubleRange_gt) if timeSeriesFilter_doubleRange_gt is not None else None,
+        "timeSeriesFilter.doubleRange.gte": dump_float(timeSeriesFilter_doubleRange_gte) if timeSeriesFilter_doubleRange_gte is not None else None,
+        "timeSeriesFilter.doubleRange.lt": dump_float(timeSeriesFilter_doubleRange_lt) if timeSeriesFilter_doubleRange_lt is not None else None,
+        "timeSeriesFilter.doubleRange.lte": dump_float(timeSeriesFilter_doubleRange_lte) if timeSeriesFilter_doubleRange_lte is not None else None,
+        "timeSeriesFilter.integerRange.gt": timeSeriesFilter_integerRange_gt,
+        "timeSeriesFilter.integerRange.gte": timeSeriesFilter_integerRange_gte,
+        "timeSeriesFilter.integerRange.incl": timeSeriesFilter_integerRange_incl,
+        "timeSeriesFilter.integerRange.lt": timeSeriesFilter_integerRange_lt,
+        "timeSeriesFilter.integerRange.lte": timeSeriesFilter_integerRange_lte,
+        "timeSeriesFilter.integerRange.notIn": timeSeriesFilter_integerRange_notIn,
+        "timeSeriesFilter.name": timeSeriesFilter_name,
+        "timeSeriesFilter.timeRange.gt": timeSeriesFilter_timeRange_gt,
+        "timeSeriesFilter.timeRange.gte": timeSeriesFilter_timeRange_gte,
+        "timeSeriesFilter.timeRange.lt": timeSeriesFilter_timeRange_lt,
+        "timeSeriesFilter.timeRange.lte": timeSeriesFilter_timeRange_lte,
+        "trialIds": trialIds,
+    }
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/trials/time-series",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1CompareTrialsResponse.from_json(_resp.json())
+    raise APIHttpError("get_CompareTrials", _resp)
 
 def post_CompleteTrialSearcherValidation(
     session: "api.Session",
@@ -16944,74 +17004,6 @@ def post_TestWebhook(
     if _resp.status_code == 200:
         return v1TestWebhookResponse.from_json(_resp.json())
     raise APIHttpError("post_TestWebhook", _resp)
-
-def get_TimeSeries(
-    session: "api.Session",
-    *,
-    endBatches: "typing.Optional[int]" = None,
-    maxDatapoints: "typing.Optional[int]" = None,
-    metricIds: "typing.Optional[typing.Sequence[str]]" = None,
-    metricNames: "typing.Optional[typing.Sequence[str]]" = None,
-    metricType: "typing.Optional[v1MetricType]" = None,
-    scale: "typing.Optional[v1Scale]" = None,
-    startBatches: "typing.Optional[int]" = None,
-    timeSeriesFilter_doubleRange_gt: "typing.Optional[float]" = None,
-    timeSeriesFilter_doubleRange_gte: "typing.Optional[float]" = None,
-    timeSeriesFilter_doubleRange_lt: "typing.Optional[float]" = None,
-    timeSeriesFilter_doubleRange_lte: "typing.Optional[float]" = None,
-    timeSeriesFilter_integerRange_gt: "typing.Optional[int]" = None,
-    timeSeriesFilter_integerRange_gte: "typing.Optional[int]" = None,
-    timeSeriesFilter_integerRange_incl: "typing.Optional[typing.Sequence[int]]" = None,
-    timeSeriesFilter_integerRange_lt: "typing.Optional[int]" = None,
-    timeSeriesFilter_integerRange_lte: "typing.Optional[int]" = None,
-    timeSeriesFilter_integerRange_notIn: "typing.Optional[typing.Sequence[int]]" = None,
-    timeSeriesFilter_name: "typing.Optional[str]" = None,
-    timeSeriesFilter_timeRange_gt: "typing.Optional[str]" = None,
-    timeSeriesFilter_timeRange_gte: "typing.Optional[str]" = None,
-    timeSeriesFilter_timeRange_lt: "typing.Optional[str]" = None,
-    timeSeriesFilter_timeRange_lte: "typing.Optional[str]" = None,
-    trialIds: "typing.Optional[typing.Sequence[int]]" = None,
-    xAxis: "typing.Optional[v1XAxis]" = None,
-) -> "v1TimeSeriesResponse":
-    _params = {
-        "endBatches": endBatches,
-        "maxDatapoints": maxDatapoints,
-        "metricIds": metricIds,
-        "metricNames": metricNames,
-        "metricType": metricType.value if metricType is not None else None,
-        "scale": scale.value if scale is not None else None,
-        "startBatches": startBatches,
-        "timeSeriesFilter.doubleRange.gt": dump_float(timeSeriesFilter_doubleRange_gt) if timeSeriesFilter_doubleRange_gt is not None else None,
-        "timeSeriesFilter.doubleRange.gte": dump_float(timeSeriesFilter_doubleRange_gte) if timeSeriesFilter_doubleRange_gte is not None else None,
-        "timeSeriesFilter.doubleRange.lt": dump_float(timeSeriesFilter_doubleRange_lt) if timeSeriesFilter_doubleRange_lt is not None else None,
-        "timeSeriesFilter.doubleRange.lte": dump_float(timeSeriesFilter_doubleRange_lte) if timeSeriesFilter_doubleRange_lte is not None else None,
-        "timeSeriesFilter.integerRange.gt": timeSeriesFilter_integerRange_gt,
-        "timeSeriesFilter.integerRange.gte": timeSeriesFilter_integerRange_gte,
-        "timeSeriesFilter.integerRange.incl": timeSeriesFilter_integerRange_incl,
-        "timeSeriesFilter.integerRange.lt": timeSeriesFilter_integerRange_lt,
-        "timeSeriesFilter.integerRange.lte": timeSeriesFilter_integerRange_lte,
-        "timeSeriesFilter.integerRange.notIn": timeSeriesFilter_integerRange_notIn,
-        "timeSeriesFilter.name": timeSeriesFilter_name,
-        "timeSeriesFilter.timeRange.gt": timeSeriesFilter_timeRange_gt,
-        "timeSeriesFilter.timeRange.gte": timeSeriesFilter_timeRange_gte,
-        "timeSeriesFilter.timeRange.lt": timeSeriesFilter_timeRange_lt,
-        "timeSeriesFilter.timeRange.lte": timeSeriesFilter_timeRange_lte,
-        "trialIds": trialIds,
-        "xAxis": xAxis.value if xAxis is not None else None,
-    }
-    _resp = session._do_request(
-        method="GET",
-        path="/api/v1/trials/time-series",
-        params=_params,
-        json=None,
-        data=None,
-        headers=None,
-        timeout=None,
-        stream=False,
-    )
-    if _resp.status_code == 200:
-        return v1TimeSeriesResponse.from_json(_resp.json())
-    raise APIHttpError("get_TimeSeries", _resp)
 
 def get_TrialLogs(
     session: "api.Session",
