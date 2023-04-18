@@ -112,7 +112,7 @@ def get_proxy_addr() -> str:
 
 def _wait_for_master(master_host: str, master_port: int, cluster_name: str) -> None:
     try:
-        wait_for_master(master_host, master_port, timeout=100)
+        wait_for_master(master_host, master_port, timeout=10000)
         return
     except MasterTimeoutExpired:
         print("Timed out connecting to master, but attempting to dump logs from cluster...")
@@ -239,7 +239,8 @@ def master_up(
 
         # Wait for db to reach a healthy state.
         _wait_for_container(db_name, timeout=5)
-
+        print(f"sleeping for 5 sec")
+        time.sleep(5)
         # Remove cleanup methods from ExitStack after DB successfully starts.
         exit_stack.pop_all()
 
