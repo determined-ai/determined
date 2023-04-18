@@ -91,7 +91,10 @@ func Test_processCapabilities(t *testing.T) {
 				},
 				args: []string{},
 			},
-			want: []string{"--cap-add", "add-one", "--cap-add", "add-two", "--cap-drop", "drop-two", "--cap-drop", "drop-one"},
+			want: []string{
+				"--cap-add", "add-one", "--cap-add", "add-two",
+				"--cap-drop", "drop-two", "--cap-drop", "drop-one",
+			},
 		},
 	}
 	for _, tt := range tests {
