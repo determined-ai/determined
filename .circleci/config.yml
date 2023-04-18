@@ -1579,7 +1579,7 @@ jobs:
 
   test-unit-harness-gpu:
     machine:
-      - image: <<pipeline.parameters.gpu-machine-image>>
+      image: <<pipeline.parameters.gpu-machine-image>>
     resource_class: gpu.nvidia.small
     steps:
       - checkout
