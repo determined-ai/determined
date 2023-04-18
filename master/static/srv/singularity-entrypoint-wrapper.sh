@@ -5,7 +5,7 @@ set -eE
 trap 'echo >&2 "FATAL: Unexpected error terminated dispatcher-wrapper container initialization.  See error messages above."' ERR
 
 # Controls debug logging for this method
-DEBUG=1
+DEBUG=0
 
 # TODO(DET-9074): Turn this only iff DET_DEBUG == true.
 set -x
