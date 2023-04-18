@@ -14,6 +14,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/project"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
 	"github.com/determined-ai/determined/proto/pkg/workspacev1"
@@ -148,25 +149,50 @@ func (a *apiServer) getProjectColumnsByID(
 	}
 
 	hyperparameters := []struct {
-		Hyperparameter string
+		Hyperparameters expconf.HyperparametersV0;
 	}{}
 
-	// Get hyperpatameters columns
+	// get all experiments in project
 	err := db.Bun().NewSelect().
-		ColumnExpr("jsonb_array_elements_text(hyperparameters) as hyperparameter").
-		Table("projects").
-		Where("id = ?", id).
+		ColumnExpr("e.config->'hyperparameters' as hyperparameters").
+		TableExpr("experiments e").
+		Where("e.config->>'hyperparameters' IS NOT NULL").
 		Scan(ctx, &hyperparameters)
 
 	if err != nil {
 		return nil, err
 	}
-	for _, h := range hyperparameters {
-		columns = append(columns, &projectv1.ProjectColumn{
-			Column:   h.Hyperparameter,
-			Location: projectv1.LocationType_LOCATION_TYPE_HYPERPARAMETERS,
-			Type:     projectv1.ColumnType_COLUMN_TYPE_UNSPECIFIED,
-		})
+	hparamSet := make(map[string]bool)
+	for _, hparam := range hyperparameters {
+		flatHparam := expconf.FlattenHPs(hparam.Hyperparameters)
+		for key, value := range flatHparam {
+			_, seen := hparamSet[key]
+			if !seen {
+				hparamSet[key] = true
+				var columnType projectv1.ColumnType
+				if value.RawIntHyperparameter != nil ||
+					value.RawDoubleHyperparameter != nil ||
+					value.RawLogHyperparameter != nil {
+					columnType = projectv1.ColumnType_COLUMN_TYPE_NUMBER
+				} else if value.RawConstHyperparameter != nil {
+					switch value.RawConstHyperparameter.RawVal.(type) {
+					case float64:
+						columnType = projectv1.ColumnType_COLUMN_TYPE_NUMBER
+					case string:
+						columnType = projectv1.ColumnType_COLUMN_TYPE_TEXT
+					default:
+						columnType = projectv1.ColumnType_COLUMN_TYPE_UNSPECIFIED
+					}
+				} else {
+					columnType = projectv1.ColumnType_COLUMN_TYPE_UNSPECIFIED
+				}
+				columns = append(columns, &projectv1.ProjectColumn{
+					Column:   key,
+					Location: projectv1.LocationType_LOCATION_TYPE_HYPERPARAMETERS,
+					Type:     columnType,
+				})
+			}
+		}
 	}
 
 	// Get metrics columns

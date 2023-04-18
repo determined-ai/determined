@@ -3635,7 +3635,7 @@ export interface V1GetPermissionsSummaryResponse {
  */
 export interface V1GetProjectColumnsResponse {
     /**
-     * List of general columns.
+     * List of columns.
      * @type {Array<V1ProjectColumn>}
      * @memberof V1GetProjectColumnsResponse
      */
@@ -6800,7 +6800,7 @@ export interface V1Project {
     errorMessage: string;
 }
 /**
- * 
+ * Project Column is a description of a column used on experiments in the project.
  * @export
  * @interface V1ProjectColumn
  */
