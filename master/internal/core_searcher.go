@@ -4,9 +4,8 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"github.com/pkg/errors"
-
 	"github.com/labstack/echo/v4"
+	"github.com/pkg/errors"
 
 	log "github.com/sirupsen/logrus"
 

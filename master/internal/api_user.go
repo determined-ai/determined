@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-
 	"gopkg.in/guregu/null.v3"
 
 	bun "github.com/uptrace/bun"

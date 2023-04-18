@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/pkg/errors"
-
 	"golang.org/x/exp/slices"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
@@ -14,6 +12,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/logger"
 
 	structpb "github.com/golang/protobuf/ptypes/struct"
+	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
 

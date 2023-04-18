@@ -5,12 +5,10 @@ import (
 	"regexp"
 	"strconv"
 
-	"github.com/pkg/errors"
-
 	"github.com/go-pg/migrations/v8"
 	"github.com/go-pg/pg/v10"
 	"github.com/jackc/pgconn"
-
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
 

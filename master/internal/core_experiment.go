@@ -9,14 +9,13 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/pkg/errors"
-
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
 
 	"github.com/ghodss/yaml"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/api"
 	detContext "github.com/determined-ai/determined/master/internal/context"

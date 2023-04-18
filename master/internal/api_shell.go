@@ -7,9 +7,8 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/pkg/errors"
-
 	petname "github.com/dustinkirkland/golang-petname"
+	"github.com/pkg/errors"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

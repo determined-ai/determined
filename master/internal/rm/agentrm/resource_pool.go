@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/pkg/errors"
-
 	"golang.org/x/exp/maps"
 
 	"github.com/determined-ai/determined/master/internal/rm/agentrm/provisioner"
@@ -16,6 +14,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 
 	"github.com/google/uuid"
+	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"

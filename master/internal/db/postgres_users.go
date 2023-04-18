@@ -6,11 +6,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/pkg/errors"
-
 	"github.com/jackc/pgconn"
 	"github.com/jmoiron/sqlx"
 	"github.com/o1egl/paseto"
+	"github.com/pkg/errors"
 
 	log "github.com/sirupsen/logrus"
 

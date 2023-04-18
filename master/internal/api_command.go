@@ -8,11 +8,10 @@ import (
 	"fmt"
 	"math/rand"
 
-	"github.com/pkg/errors"
-
 	petname "github.com/dustinkirkland/golang-petname"
 	"github.com/ghodss/yaml"
 	pstruct "github.com/golang/protobuf/ptypes/struct"
+	"github.com/pkg/errors"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

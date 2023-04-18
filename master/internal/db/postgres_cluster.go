@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-
 	log "github.com/sirupsen/logrus"
 )
 
@@ -35,7 +34,11 @@ WHERE NOT EXISTS ( SELECT * FROM cluster_id );
 // UpdateClusterHeartBeat updates the clusterheartbeat column in the cluster_id table.
 func (db *PgDB) UpdateClusterHeartBeat(currentClusterHeartbeat time.Time) error {
 	_, err := db.sql.Exec(`UPDATE cluster_id SET cluster_heartbeat = $1`, currentClusterHeartbeat)
-	return fmt.Errorf("updating cluster heartbeat: %w", err)
+	if err != nil {
+		return fmt.Errorf("updating cluster heartbeat: %w", err)
+	}
+
+	return nil
 }
 
 // PeriodicTelemetryInfo returns anonymous information about the usage of the current

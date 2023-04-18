@@ -11,7 +11,6 @@ import (
 	_ "github.com/jackc/pgx/v4/stdlib" // Import Postgres driver.
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
-
 	log "github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"

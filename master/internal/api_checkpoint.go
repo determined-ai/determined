@@ -7,9 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
-
 	"github.com/google/uuid"
+	"github.com/pkg/errors"
 
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"

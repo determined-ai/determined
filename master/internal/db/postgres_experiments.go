@@ -11,7 +11,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
-
 	log "github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
 

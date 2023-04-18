@@ -6,10 +6,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
-
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
+	"github.com/pkg/errors"
 
 	"github.com/uptrace/bun"
 
@@ -438,5 +437,9 @@ searcher_metric_value = (SELECT bv.searcher_metric_value FROM best_validation bv
 searcher_metric_value_signed = 
 (SELECT bv.searcher_metric_value * const.sign FROM best_validation bv, const);
 `, trialID, trialRunID, stepsCompleted)
-	return fmt.Errorf("error updating best validation for trial %d: %w", trialID, err)
+	if err != nil {
+		return fmt.Errorf("error updating best validation for trial %d: %w", trialID, err)
+	}
+
+	return nil
 }

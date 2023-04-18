@@ -7,13 +7,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
-
 	// TODO switch to google.golang.org/protobuf/proto/.
 	"github.com/golang/protobuf/proto" //nolint: staticcheck
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	"github.com/o1egl/paseto"
-
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"

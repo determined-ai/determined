@@ -8,12 +8,11 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/pkg/errors"
-
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	petname "github.com/dustinkirkland/golang-petname"
+	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/api/apiutils"

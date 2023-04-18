@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
-
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -397,8 +396,7 @@ func (a *apiServer) ArchiveProject(
 		return nil, fmt.Errorf("error archiving project (%d): %w", req.Id, err)
 	}
 	if holder.Id == 0 {
-		return nil, fmt.Errorf("project (%d) is not archive-able by this user: %w",
-			req.Id, err)
+		return nil, fmt.Errorf("project (%d) is not archive-able by this user", req.Id)
 	}
 
 	return &apiv1.ArchiveProjectResponse{}, nil
@@ -422,8 +420,7 @@ func (a *apiServer) UnarchiveProject(
 		return nil, fmt.Errorf("error unarchiving project (%d): %w", req.Id, err)
 	}
 	if holder.Id == 0 {
-		return nil, fmt.Errorf("project (%d) is not unarchive-able by this user: %w",
-			req.Id, err)
+		return nil, fmt.Errorf("project (%d) is not unarchive-able by this user", req.Id)
 	}
 	return &apiv1.UnarchiveProjectResponse{}, nil
 }

@@ -9,9 +9,8 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/pkg/errors"
-
 	"github.com/elastic/go-elasticsearch/v7/esapi"
+	"github.com/pkg/errors"
 
 	log "github.com/sirupsen/logrus"
 

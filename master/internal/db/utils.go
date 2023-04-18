@@ -3,9 +3,8 @@ package db
 import (
 	"database/sql"
 
-	"github.com/pkg/errors"
-
 	"github.com/jackc/pgconn"
+	"github.com/pkg/errors"
 )
 
 // MatchSentinelError checks if the error belongs to specific families of errors

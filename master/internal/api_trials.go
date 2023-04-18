@@ -9,10 +9,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
-
 	"github.com/google/uuid"
 	"github.com/hashicorp/go-multierror"
+	"github.com/pkg/errors"
 
 	"golang.org/x/exp/slices"
 	"google.golang.org/grpc/codes"

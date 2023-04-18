@@ -11,8 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
-
 	"golang.org/x/exp/slices"
 
 	"github.com/uptrace/bun"
@@ -29,6 +27,8 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/timestamppb"
+
+	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/db"
 	exputil "github.com/determined-ai/determined/master/internal/experiment"

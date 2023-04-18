@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/pkg/errors"
-
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 

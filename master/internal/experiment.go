@@ -7,12 +7,11 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/pkg/errors"
-
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/google/uuid"
+	"github.com/pkg/errors"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -766,7 +765,11 @@ func (e *experiment) Snapshot() (json.RawMessage, error) {
 	}
 	e.SearcherState = searcherSnapshot
 	experimentSnapshot, err := json.Marshal(e.experimentState)
-	return experimentSnapshot, fmt.Errorf("failed to marshal experiment: %w", err)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal experiment: %w", err)
+	}
+
+	return experimentSnapshot, nil
 }
 
 func (e *experiment) Restore(experimentSnapshot json.RawMessage) error {
