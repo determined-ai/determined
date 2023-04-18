@@ -17,6 +17,7 @@ vi.mock('stores/cluster', async (importOriginal) => {
   const observable = await import('utils/observable');
 
   const store = {
+    fetchResourcePools: vi.fn(),
     resourcePools: observable.observable(
       loadable.Loaded([
         {
@@ -54,7 +55,6 @@ vi.mock('stores/cluster', async (importOriginal) => {
         },
       ]),
     ),
-    fetchResourcePools: vi.fn()
   };
 
   return {
