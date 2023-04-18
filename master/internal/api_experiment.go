@@ -1985,7 +1985,7 @@ func validateComparisonString(filter string, prefix string) (string, error) {
 	numericRegex := regexp.MustCompile(`\d|\.|-`)
 	singleOperatorRegex := regexp.MustCompile(`>|<|:|~`)
 	sliceStart := 0
-
+	var initialValueType string
 	i := strings.Index(filter[sliceStart:], prefix)
 	for i > -1 {
 		comparisonIndex := i + len(prefix)
@@ -2032,6 +2032,28 @@ func validateComparisonString(filter string, prefix string) (string, error) {
 		} else {
 			return valueType, fmt.Errorf("invalid column value at string index %d", comparisonIndex)
 		}
+		if initialValueType == "" {
+			initialValueType = valueType
+		} else { // nolint: gocritic
+			if initialValueType != valueType {
+				if initialValueType != metricTypeNull && valueType != metricTypeNull { // nolint: gocritic
+					// the same metric has been sent as two different types
+					// we cannot correctly determine the metric type
+					// so we throw an error
+					return valueType, fmt.Errorf("received both a %v and %v value type for column %v",
+						initialValueType, valueType, prefix)
+				} else if initialValueType == metricTypeNull {
+					// We previously found a null value but now
+					// we know the correct type of metric
+					initialValueType = valueType
+				} else {
+					// Record the fact that we were able to determine the metric type
+					// before reaching a null value
+					valueType = initialValueType
+				}
+			}
+		}
+
 		sliceStart = comparisonIndex
 		filter = filter[sliceStart:]
 		i = strings.Index(filter, prefix)
@@ -2042,21 +2064,18 @@ func validateComparisonString(filter string, prefix string) (string, error) {
 	return valueType, nil
 }
 
-func scanMetricName(filter string, index int) string {
+func scanMetricName(filter string, startIndex int) string {
 	// Determine the name of the metric from the filter string
-
-	metricName := ""
+	index := startIndex
 	for index < len(filter) {
 		c := string(filter[index])
-
 		// If we have reached an operator or space then we have parsed through the entire metric name
 		if c == "<" || c == ":" || c == " " || c == "~" || c == "=" || c == ">" {
 			break
 		}
-		metricName += c
 		index++
 	}
-	return metricName
+	return filter[startIndex:index]
 }
 
 func buildQuery(filter string, metricTypes map[string]string) (string, error) {

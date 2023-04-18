@@ -44,6 +44,8 @@ func TestExperimentSearchApiFilterParsing(t *testing.T) {
 		"hp.global_batch_size<=-64 OR validation.validation_test   >   -10.98",
 		"hp.global_batch_size:-64 OR validation.validation_test< 20",
 		"hp.global_batch_size: 64 OR validation.validation_test<20",
+		`hp.global_batch_size:"string value" OR hp.global_batch_size<20`,
+		`hp.global_batch_size:"20" OR hp.global_batch_size<20`,
 	}
 	for _, c := range invalidTestCases {
 		_, err := parseFilter(c)
@@ -103,6 +105,14 @@ func TestExperimentSearchApiFilterParsing(t *testing.T) {
 		{
 			`validation.validation_test_value>="2023-01-06T19:06:25.053893089Z"`,
 			`e.validation_metrics->>'validation_test_value'>='2023-01-06T19:06:25.053893089Z'`,
+		},
+		{
+			`(-validation.error:null OR (-validation.error:1 AND hp.hyperparameter<=10))`,
+			`((e.validation_metrics->>'error')::float8 IS NOT NULL OR ((e.validation_metrics->>'error')::float8 != 1 AND (e.config->'hyperparameters'->'hyperparameter'->>'val')::float8<=10))`, //nolint: lll
+		},
+		{
+			`(validation.error:null OR (-validation.error:"1" AND hp.hyperparameter<=10))`,
+			`(e.validation_metrics->>'error' IS NULL OR (e.validation_metrics->>'error' != '1' AND (e.config->'hyperparameters'->'hyperparameter'->>'val')::float8<=10))`, //nolint: lll
 		},
 	}
 	for _, c := range validTestCases {
