@@ -95,7 +95,7 @@ func TestExperimentSearchApiFilterParsing(t *testing.T) {
 		{
 			`(experiment.forkedFrom:5 OR (-validation.error:1 AND hp.hyperparameter<=10))`,
 			`(e.parent_id = 5 OR ((e.validation_metrics->>'error')::float8 != 1 AND (e.config->'hyperparameters'->'hyperparameter'->>'val')::float8<=10))`, //nolint: lll
-		}, //nolint: lll
+		},
 	}
 	for _, c := range validTestCases {
 		result, err := parseFilter(c[0])
