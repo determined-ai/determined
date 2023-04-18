@@ -53,8 +53,10 @@ func TestExperimentSearchApiFilterParsing(t *testing.T) {
 		{`experiment.user:"username"`, `COALESCE(u.display_name, u.username) = 'username'`},
 		{"-experiment.projectId:123456789", "project_id != 123456789"},
 		{"experiment.checkpointSize<=12", "checkpoint_size<=12"},
-		{"experiment.numTrials>=9.22",
-			"(SELECT COUNT(*) FROM trials t WHERE e.id = t.experiment_id)>=9.22"},
+		{
+			"experiment.numTrials>=9.22",
+			"(SELECT COUNT(*) FROM trials t WHERE e.id = t.experiment_id)>=9.22",
+		},
 		{
 			"validation.validation_accuracy>1",
 			"(e.validation_metrics->>'validation_accuracy')::float8>1",
@@ -86,8 +88,10 @@ func TestExperimentSearchApiFilterParsing(t *testing.T) {
 		{`experiment.checkpointCount:null`, `checkpoint_count IS NULL`},
 		{`-experiment.endTime:null`, `e.end_time IS NOT NULL`},
 		{`experiment.description~"like"`, `e.config->>'description' LIKE '%like%'`},
-		{`(experiment.description~"like" AND -experiment.description~"notlike")`,
-			`(e.config->>'description' LIKE '%like%' AND e.config->>'description' NOT LIKE '%notlike%')`}, //nolint: lll
+		{
+			`(experiment.description~"like" AND -experiment.description~"notlike")`,
+			`(e.config->>'description' LIKE '%like%' AND e.config->>'description' NOT LIKE '%notlike%')`,
+		}, //nolint: lll
 		{`experiment.startTime>="2023-01-06T19:06:25.053893089Z" OR experiment.endTime<="2023-01-06T19:08:33.219618082Z"`, //nolint: lll
 			`e.start_time>='2023-01-06T19:06:25.053893089Z' OR e.end_time<='2023-01-06T19:08:33.219618082Z'`}, //nolint: lll
 		{`(experiment.description~"experiment description" AND (-experiment.id:456 OR -experiment.resourcePool~"test\"s comma value\"s"))`, //nolint: lll
