@@ -603,11 +603,11 @@ service Determined {
     };
   }
 
-  // Return downsampled metrics from multiple trials to compare them
-  // side-by-side.
+  // Return a downsampled time series of metrics from multiple trials to compare
+  // them side-by-side.
   rpc CompareTrials(CompareTrialsRequest) returns (CompareTrialsResponse) {
     option (google.api.http) = {
-      get: "/api/v1/trials/compare"
+      get: "/api/v1/trials/time-series"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Experiments"
