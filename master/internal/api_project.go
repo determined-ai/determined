@@ -80,13 +80,13 @@ func (a *apiServer) getProjectColumnsByID(
 			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT, // is this right?
 		},
 		{
-			Column:      "forked",
+			Column:      "forkedFrom",
 			DisplayName: "Forked",
 			Location:    projectv1.LocationType_LOCATION_TYPE_EXPERIMENT,
 			Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER,
 		},
 		{
-			Column:      "start_time",
+			Column:      "startTime",
 			DisplayName: "Start time",
 			Location:    projectv1.LocationType_LOCATION_TYPE_EXPERIMENT,
 			Type:        projectv1.ColumnType_COLUMN_TYPE_DATE,
@@ -98,7 +98,7 @@ func (a *apiServer) getProjectColumnsByID(
 			Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER, // ?
 		},
 		{
-			Column:      "num_trials",
+			Column:      "numTrials",
 			DisplayName: "Trial count",
 			Location:    projectv1.LocationType_LOCATION_TYPE_EXPERIMENT,
 			Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER,
@@ -110,13 +110,13 @@ func (a *apiServer) getProjectColumnsByID(
 			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
 		},
 		{
-			Column:      "searcher_type",
+			Column:      "searcherType",
 			DisplayName: "Searcher type",
 			Location:    projectv1.LocationType_LOCATION_TYPE_EXPERIMENT,
 			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
 		},
 		{
-			Column:      "resource_pool",
+			Column:      "resourcePool",
 			DisplayName: "Resource pool",
 			Location:    projectv1.LocationType_LOCATION_TYPE_EXPERIMENT,
 			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
@@ -128,19 +128,19 @@ func (a *apiServer) getProjectColumnsByID(
 			Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER,
 		},
 		{
-			Column:      "checkpoint_size",
+			Column:      "checkpointSize",
 			DisplayName: "Checkpoint size",
 			Location:    projectv1.LocationType_LOCATION_TYPE_EXPERIMENT,
 			Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER,
 		},
 		{
-			Column:      "checkpoint_count",
+			Column:      "checkpointCount",
 			DisplayName: "Checkpoint count",
 			Location:    projectv1.LocationType_LOCATION_TYPE_EXPERIMENT,
 			Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER,
 		},
 		{
-			Column:      "username",
+			Column:      "user",
 			DisplayName: "User",
 			Location:    projectv1.LocationType_LOCATION_TYPE_EXPERIMENT,
 			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
