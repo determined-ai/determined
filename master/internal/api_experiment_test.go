@@ -75,6 +75,14 @@ func TestExperimentSearchApiFilterParsing(t *testing.T) {
 			"hp.global_batch_size<=-64",
 			"(e.config->'hyperparameters'->'global_batch_size'->>'val')::float8<=-64",
 		},
+		{
+			`hp.some_string:"string"`,
+			"e.config->'hyperparameters'->'some_string'->>'val' = 'string'",
+		},
+		{
+			"validation.validation_test_value:null",
+			"e.validation_metrics->>'validation_test_value' IS NULL",
+		},
 		{`experiment.checkpointCount:null`, `checkpoint_count IS NULL`},
 		{`-experiment.endTime:null`, `e.end_time IS NOT NULL`},
 		{`experiment.description~"like"`, `e.config->>'description' LIKE '%like%'`},

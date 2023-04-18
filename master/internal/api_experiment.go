@@ -58,6 +58,10 @@ const (
 	// The prefix for column names mapping to
 	// experiment table values
 	experimentColumnPrefix = "experiment."
+	METRIC_TYPE_STRING     = "string"
+	METRIC_TYPE_NUMBER     = "number"
+	METRIC_TYPE_DATE       = "date"
+	METRIC_TYPE_NULL       = "null"
 )
 
 // Catches information on active running experiments.
@@ -1932,8 +1936,8 @@ func sortExperiments(sortString *string, experimentQuery *bun.SelectQuery) error
 func getFilterMetricPrefixes() map[string]string {
 	// Prefixes for column names matching to metric related tables
 	metricPrefixes := map[string]string{
-		"validation.": "(e.validation_metrics->>'%s')::float8",
-		"hp.":         "(e.config->'hyperparameters'->'%s'->>'val')::float8",
+		"validation.": "e.validation_metrics->>'%s'",
+		"hp.":         "e.config->'hyperparameters'->'%s'->>'val'",
 	}
 	return metricPrefixes
 }
@@ -1970,11 +1974,13 @@ func getFilterExperimentColMap() map[string]string {
 	}
 	return filterExperimentColMap
 }
-func validateComparisonString(filter string, prefix string) error {
+func validateComparisonString(filter string, prefix string) (string, error) {
 	// Ensures that there are no whitespaces around operators
-	// White spaces within value strings and between
+	// white spaces within value strings and between
 	// AND and OR groupings are valid and should not
 	// throw an error
+	var valueType string
+	numericRegex := regexp.MustCompile(`\d|\.|-`)
 	singleOperatorRegex := regexp.MustCompile(`>|<|:|~`)
 	sliceStart := 0
 
@@ -1986,12 +1992,12 @@ func validateComparisonString(filter string, prefix string) error {
 		// where we should find a comparison operator
 		if comparisonIndex > len(filter)-1 {
 			// There are no more characters after the comparison index
-			return fmt.Errorf("found operator at the end of the filter")
+			return valueType, fmt.Errorf("found operator at the end of the filter")
 		}
 
 		c := string(filter[comparisonIndex])
 		if !singleOperatorRegex.MatchString(c) {
-			return fmt.Errorf("no operator found at the end of column value")
+			return valueType, fmt.Errorf("no operator found at the end of column value")
 		}
 
 		comparisonIndex++
@@ -2005,7 +2011,22 @@ func validateComparisonString(filter string, prefix string) error {
 		// we have reached the character after an operator if it is a whitespace then
 		// the string is invalid
 		if string(filter[comparisonIndex]) == " " {
-			return fmt.Errorf("whitespace found after operator at string index %d", comparisonIndex)
+			return valueType, fmt.Errorf("whitespace found after operator at string index %d", comparisonIndex)
+		}
+
+		// Now that we have determined that we are at the start of a value
+		// we can determine the values type
+		valueStart := string(filter[comparisonIndex])
+		if valueStart == `"` || valueStart == `'` {
+			valueType = METRIC_TYPE_STRING
+		} else if numericRegex.MatchString(valueStart) {
+			valueType = METRIC_TYPE_NUMBER
+		} else if valueStart == "n" && comparisonIndex+4 <= len(filter) && filter[comparisonIndex:comparisonIndex+4] == "null" {
+			// the comparison value could be "null"
+			// which does not help us determine the type
+			valueType = METRIC_TYPE_NULL
+		} else {
+			return valueType, fmt.Errorf("invalid column value at string index %d", comparisonIndex)
 		}
 		sliceStart = comparisonIndex
 		filter = filter[sliceStart:]
@@ -2014,7 +2035,7 @@ func validateComparisonString(filter string, prefix string) error {
 			break
 		}
 	}
-	return nil
+	return valueType, nil
 
 }
 func scanMetricName(filter string, index int) string {
@@ -2034,7 +2055,7 @@ func scanMetricName(filter string, index int) string {
 	return metricName
 }
 
-func buildQuery(filter string) (string, error) {
+func buildQuery(filter string, metricTypes map[string]string) (string, error) {
 	// Builds the sql query for a filter string
 
 	// If the entire query does not contain at least one valid
@@ -2056,9 +2077,22 @@ func buildQuery(filter string) (string, error) {
 	for prefix, replacement := range getFilterMetricPrefixes() {
 		i := strings.Index(filter, prefix)
 		for i != -1 {
+			var outerMetricSql string
 			hasValidColumns = true
 			metricName := scanMetricName(filter, i+len(prefix))
-			filter = strings.ReplaceAll(filter, prefix+metricName, fmt.Sprintf(replacement, metricName))
+			metricType := metricTypes[prefix+metricName]
+			innerMetricSql := fmt.Sprintf(replacement, metricName)
+			switch metricType {
+			case METRIC_TYPE_DATE:
+				outerMetricSql = "(" + innerMetricSql + ")::date"
+			case METRIC_TYPE_NUMBER:
+				outerMetricSql = "(" + innerMetricSql + ")::float8"
+			case METRIC_TYPE_STRING:
+				outerMetricSql = innerMetricSql
+			default:
+				outerMetricSql = innerMetricSql
+			}
+			filter = strings.ReplaceAll(filter, prefix+metricName, outerMetricSql)
 			i = strings.Index(filter, prefix)
 		}
 	}
@@ -2071,7 +2105,6 @@ func buildQuery(filter string) (string, error) {
 
 func scanString(filter string, startIndex int, operator *string, valueStart bool) (string, int32) {
 	// Determines the correct column and value for a sequence in the filter string
-
 	numericeRegex := regexp.MustCompile(`\d|\.|-`)
 	var query, value, col, comparator string
 	var valueIsString bool
@@ -2185,9 +2218,14 @@ func scanString(filter string, startIndex int, operator *string, valueStart bool
 	return query, filterIndex
 }
 
-func parseMetricComparisons(filter string) error {
-	// Validate that all metric comparisons are valid.
+func parseMetricComparisons(filter string) (map[string]string, error) {
+	// Validate that all metric comparisons are valid strings.
 	// No metric comparison should have a whitespace between operators
+	// Also determine metric types. There is not a straightforward
+	// way to determine the metric or hyperparameter type
+	// so it must be inferred from the value
+
+	metricTypeMap := make(map[string]string)
 
 	for prefix, _ := range getFilterMetricPrefixes() {
 		i := strings.Index(filter, prefix)
@@ -2195,8 +2233,27 @@ func parseMetricComparisons(filter string) error {
 		for i != -1 {
 			metricName := scanMetricName(filterString, i+len(prefix))
 			metricColString := prefix + metricName
-			if err := validateComparisonString(filterString, metricColString); err != nil {
-				return err
+			metricType, err := validateComparisonString(filterString, metricColString)
+			if err != nil {
+				return metricTypeMap, err
+			}
+			entry, exists := metricTypeMap[metricColString]
+			if exists {
+				if entry != metricType {
+					// we already have any entry in the
+					// type map but we have received a different type
+					if entry == METRIC_TYPE_NULL {
+						// it is safe to overwrite the null type with the updated type
+						metricTypeMap[metricColString] = metricType
+					} else if metricType != METRIC_TYPE_NULL {
+						// Two non null metric types have been found for the same metric
+						// so we cannot determine the correct type of the metric
+						return metricTypeMap, fmt.Errorf("found different value types for column %v",
+							metricColString)
+					}
+				}
+			} else {
+				metricTypeMap[metricColString] = metricType
 			}
 			if i+len(metricColString) >= len(filterString)-1 {
 				break
@@ -2205,7 +2262,7 @@ func parseMetricComparisons(filter string) error {
 			i = strings.Index(filterString, prefix)
 		}
 	}
-	return nil
+	return metricTypeMap, nil
 }
 
 func parseFilter(filter string) (*string, error) {
@@ -2225,18 +2282,20 @@ func parseFilter(filter string) (*string, error) {
 	}
 
 	for key, _ := range getFilterExperimentColMap() {
-		if err := validateComparisonString(filter, experimentColumnPrefix+key); err != nil {
+		_, err := validateComparisonString(filter, experimentColumnPrefix+key)
+		if err != nil {
 			return &currentQuery, err
 		}
 	}
 
 	for key, _ := range getFilterExperimentColMap() {
-		if err := validateComparisonString(filter, experimentColumnPrefix+key); err != nil {
+		_, err := validateComparisonString(filter, experimentColumnPrefix+key)
+		if err != nil {
 			return &currentQuery, err
 		}
 	}
 
-	err := parseMetricComparisons(filter)
+	metricTypes, err := parseMetricComparisons(filter)
 	if err != nil {
 		return &currentQuery, err
 	}
@@ -2316,7 +2375,7 @@ func parseFilter(filter string) (*string, error) {
 			currentIndex++
 		}
 	}
-	currentQuery, err = buildQuery(currentQuery)
+	currentQuery, err = buildQuery(currentQuery, metricTypes)
 	if err != nil {
 		return &currentQuery, err
 	}
