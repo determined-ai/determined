@@ -18,3 +18,6 @@ pydata-sphinx-theme==0.13.1
 
 # live.py
 watchdog
+
+# Uploading to algolia search index
+algoliasearch>=2.0,<3.0
