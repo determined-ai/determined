@@ -10,7 +10,7 @@ import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
 import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin';
 import { trackAxis } from 'components/UPlot/UPlotChart/trackAxis';
 import css from 'pages/TrialDetails/TrialChart.module.scss';
-import { compareTrials } from 'services/api';
+import { timeSeries } from 'services/api';
 import Spinner from 'shared/components/Spinner';
 import usePolling from 'shared/hooks/usePolling';
 import { glasbeyColor } from 'shared/utils/color';
@@ -45,7 +45,7 @@ const TrialChart: React.FC<Props> = ({
 
   const fetchTrialSummary = useCallback(async () => {
     if (trialId) {
-      const summ = await compareTrials({
+      const summ = await timeSeries({
         maxDatapoints: screen.width > 1600 ? 1500 : 1000,
         metricNames: metricNames,
         scale: scale,

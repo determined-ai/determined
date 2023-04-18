@@ -4,7 +4,7 @@ import { Serie, TRAINING_SERIES_COLOR, VALIDATION_SERIES_COLOR } from 'component
 import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
 import { terminalRunStates } from 'constants/states';
 import useMetricNames from 'hooks/useMetricNames';
-import { compareTrials } from 'services/api';
+import { timeSeries } from 'services/api';
 import usePolling from 'shared/hooks/usePolling';
 import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
@@ -71,7 +71,7 @@ export const useTrialMetrics = (
 
   const fetchTrialSummary = useCallback(async () => {
     if (trial?.id) {
-      const response = await compareTrials({
+      const response = await timeSeries({
         maxDatapoints: screen.width > 1600 ? 1500 : 1000,
         metricNames: metrics,
         scale: scale,

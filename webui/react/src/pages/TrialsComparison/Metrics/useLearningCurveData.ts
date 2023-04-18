@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 
 // eslint-disable-next-line import/order
-import { compareTrials } from 'services/api';
+import { timeSeries } from 'services/api';
 type ChartData = (number | null)[][];
 type MetricKey = string;
 
@@ -50,7 +50,7 @@ const useLearningCurve = (
     };
 
     // calling the API
-    const trials = await compareTrials({
+    const trials = await timeSeries({
       maxDatapoints: 1000,
       metricNames: metrics,
       trialIds: trialIds,
