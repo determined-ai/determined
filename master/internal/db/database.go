@@ -87,7 +87,6 @@ type DB interface {
 	RawQuery(queryName string, params ...interface{}) ([]byte, error)
 	UpdateResourceAllocationAggregation() error
 	TemplateByName(name string) (value model.Template, err error)
-	UpsertTemplate(tpl *model.Template) error
 	DeleteTemplate(name string) error
 	InsertTrialProfilerMetricsBatch(
 		values []float32, batches []int32, timestamps []time.Time, labels []byte,

@@ -12,23 +12,6 @@ func (db *PgDB) TemplateByName(name string) (value model.Template, err error) {
 	return value, err
 }
 
-// UpsertTemplate creates or updates a config template.
-func (db *PgDB) UpsertTemplate(tpl *model.Template) error {
-	if len(tpl.Name) == 0 {
-		return errors.New("error setting a template: empty name")
-	}
-	err := db.namedExecOne(`
-INSERT INTO templates (name, config)
-VALUES (:name, :config)
-ON CONFLICT (name)
-DO
-UPDATE SET config=:config`, tpl)
-	if err != nil {
-		return errors.Wrapf(err, "error setting a template '%v'", tpl.Name)
-	}
-	return nil
-}
-
 // DeleteTemplate deletes an existing experiment config template.
 func (db *PgDB) DeleteTemplate(name string) error {
 	if len(name) == 0 {

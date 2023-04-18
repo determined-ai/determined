@@ -1964,20 +1964,6 @@ func (_m *DB) UpdateUsername(userID *model.UserID, newUsername string) error {
 	return r0
 }
 
-// UpsertTemplate provides a mock function with given fields: tpl
-func (_m *DB) UpsertTemplate(tpl *model.Template) error {
-	ret := _m.Called(tpl)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(*model.Template) error); ok {
-		r0 = rf(tpl)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
 // UserList provides a mock function with given fields:
 func (_m *DB) UserList() ([]model.FullUser, error) {
 	ret := _m.Called()
