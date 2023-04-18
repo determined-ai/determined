@@ -7,7 +7,6 @@ import (
 	"context"
 	"crypto/rand"
 	"fmt"
-	"reflect"
 	"testing"
 	"time"
 
@@ -461,6 +460,5 @@ func TestCompareTrialsSampling(t *testing.T) {
 
 	sampleBatches2 := compareTrialsResponseToBatches(resp)
 
-	require.True(t, reflect.DeepEqual(sampleBatches1, sampleBatches2),
-		"%s != %s", sampleBatches1, sampleBatches2)
+	require.Equal(t, sampleBatches1, sampleBatches2)
 }
