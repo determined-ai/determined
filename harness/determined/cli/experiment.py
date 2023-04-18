@@ -618,7 +618,8 @@ def experiment_logs(args: Namespace) -> None:
             timestamp_after=args.timestamp_after,
         )
         if args.json:
-            api.print_json_logs(logs)
+            for log in logs:
+                render.print_json(log.to_json(), skip_coloring=True)
         else:
             api.pprint_logs(logs)
     finally:
