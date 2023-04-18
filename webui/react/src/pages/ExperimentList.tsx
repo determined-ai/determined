@@ -1,4 +1,3 @@
-import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Dropdown, MenuProps, Space, Typography } from 'antd';
 import type { DropDownProps } from 'antd';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
@@ -77,7 +76,6 @@ import {
   ProjectExperiment,
   RunState,
 } from 'types';
-import { modal } from 'utils/dialogApi';
 import handleError from 'utils/error';
 import {
   canActionExperiment,
@@ -88,6 +86,8 @@ import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 import { getDisplayName } from 'utils/user';
 import { openCommandResponse } from 'utils/wait';
+
+import BatchActionConfirmModalComponent from '../components/BatchActionConfirmModal';
 
 import {
   DEFAULT_COLUMN_WIDTHS,
@@ -122,6 +122,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
   const [batchMovingExperimentIds, setBatchMovingExperimentIds] = useState<number[]>();
   const [isLoading, setIsLoading] = useState(true);
   const [total, setTotal] = useState(0);
+  const [batchAction, setBatchAction] = useState<Action>();
   const canceler = useRef(new AbortController());
   const pageRef = useRef<HTMLElement>(null);
 
@@ -672,6 +673,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
     [settings.columns, transferColumns],
   );
 
+  const BatchActionConfirmModal = useModal(BatchActionConfirmModalComponent);
   const ExperimentMoveModal = useModal(ExperimentMoveModalComponent);
 
   const sendBatchActions = useCallback(
@@ -754,31 +756,16 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
     [fetchExperiments, sendBatchActions, updateSettings],
   );
 
-  const showConfirmation = useCallback(
-    (action: Action) => {
-      modal.confirm({
-        content: `
-        Are you sure you want to ${action.toLocaleLowerCase()}
-        all the eligible selected experiments?
-      `,
-        icon: <ExclamationCircleOutlined />,
-        okText: /cancel/i.test(action) ? 'Confirm' : action,
-        onOk: () => submitBatchAction(action),
-        title: 'Confirm Batch Action',
-      });
-    },
-    [submitBatchAction],
-  );
-
   const handleBatchAction = useCallback(
     (action?: string) => {
       if (action === Action.OpenTensorBoard || action === Action.Move) {
         submitBatchAction(action);
       } else {
-        showConfirmation(action as Action);
+        setBatchAction(action as Action);
+        BatchActionConfirmModal.open();
       }
     },
-    [submitBatchAction, showConfirmation],
+    [BatchActionConfirmModal, submitBatchAction],
   );
 
   const handleTableRowSelect = useCallback(
@@ -970,6 +957,12 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
           updateSettings={updateSettings as UpdateSettings}
         />
       </>
+      {batchAction && (
+        <BatchActionConfirmModal.Component
+          batchAction={batchAction}
+          onConfirm={() => submitBatchAction(batchAction)}
+        />
+      )}
       <ColumnsCustomizeModal.Component
         columns={transferColumns}
         defaultVisibleColumns={DEFAULT_COLUMNS}

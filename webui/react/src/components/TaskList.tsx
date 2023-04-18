@@ -1,4 +1,3 @@
-import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Modal, Space } from 'antd';
 import {
   FilterDropdownProps,
@@ -63,13 +62,14 @@ import {
   CommandType,
   Workspace,
 } from 'types';
-import { modal } from 'utils/dialogApi';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 import { commandStateSorter, filterTasks, isTaskKillable, taskFromCommandTask } from 'utils/task';
 import { getDisplayName } from 'utils/user';
 
+import BatchActionConfirmModalComponent from './BatchActionConfirmModal';
+import { useModal } from './kit/Modal';
 import css from './TaskList.module.scss';
 import WorkspaceFilter from './WorkspaceFilter';
 
@@ -104,6 +104,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
   const workspaces = Loadable.getOrElse([], useObservable(workspaceStore.workspaces));
   const [tasks, setTasks] = useState<CommandTask[] | undefined>(undefined);
   const [sourcesModal, setSourcesModal] = useState<SourceInfo>();
+  const [batchAction, setBatchAction] = useState<Action>();
   const pageRef = useRef<HTMLElement>(null);
   const workspaceId = useMemo(() => workspace?.id.toString() ?? 'global', [workspace?.id]);
   const stgsConfig = useMemo(() => settingsConfig(workspaceId), [workspaceId]);
@@ -112,6 +113,8 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
   const { canCreateNSC, canCreateWorkspaceNSC } = usePermissions();
   const { canModifyWorkspaceNSC } = usePermissions();
   const canceler = useRef(new AbortController());
+
+  const BatchActionConfirmModal = useModal(BatchActionConfirmModalComponent);
 
   const loadedTasks = useMemo(() => tasks?.map(taskFromCommandTask) || [], [tasks]);
 
@@ -530,24 +533,14 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
     }
   }, [fetchTasks, selectedTasks, updateSettings, canModifyWorkspaceNSC]);
 
-  const showConfirmation = useCallback(() => {
-    modal.confirm({
-      content: `
-        Are you sure you want to kill
-        all the eligible selected tasks?
-      `,
-      icon: <ExclamationCircleOutlined />,
-      okText: 'Kill',
-      onOk: handleBatchKill,
-      title: 'Confirm Batch Kill',
-    });
-  }, [handleBatchKill]);
-
   const handleBatchAction = useCallback(
     (action?: string) => {
-      if (action === Action.Kill) showConfirmation();
+      if (action === Action.Kill) {
+        setBatchAction(action);
+        BatchActionConfirmModal.open();
+      }
     },
-    [showConfirmation],
+    [BatchActionConfirmModal],
   );
 
   const handleTableChange = useCallback(
@@ -661,6 +654,13 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
           onChange={handleTableChange}
         />
       </div>
+      {batchAction && (
+        <BatchActionConfirmModal.Component
+          batchAction={batchAction}
+          itemName="task"
+          onConfirm={handleBatchKill}
+        />
+      )}
       <Modal
         footer={null}
         open={!!sourcesModal}
