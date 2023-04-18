@@ -4,9 +4,10 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/mount"
+
+	"github.com/determined-ai/determined/master/pkg/cproto"
 )
 
 func Test_addHostMounts(t *testing.T) {
@@ -23,8 +24,8 @@ func Test_addHostMounts(t *testing.T) {
 			name: "Simple case",
 			args: args{
 				m: mount.Mount{
-					Source: "/host",
-					Target: "/container",
+					Source:      "/host",
+					Target:      "/container",
 					BindOptions: &mount.BindOptions{},
 				},
 				args: []string{},
@@ -82,10 +83,10 @@ func Test_processCapabilities(t *testing.T) {
 		{
 			name: "Add/drop caps test",
 			args: args{
-				req:  cproto.RunSpec{
-					HostConfig:       container.HostConfig{
-						CapAdd:          []string{"add-one","add-two"},
-						CapDrop:         []string{"drop-two","drop-one"},
+				req: cproto.RunSpec{
+					HostConfig: container.HostConfig{
+						CapAdd:  []string{"add-one", "add-two"},
+						CapDrop: []string{"drop-two", "drop-one"},
 					},
 				},
 				args: []string{},
