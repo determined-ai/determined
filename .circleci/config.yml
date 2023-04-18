@@ -1578,9 +1578,9 @@ jobs:
             - test-unit-harness-cpu-pycov
 
   test-unit-harness-gpu:
-    docker:
+    machine:
       - image: <<pipeline.parameters.gpu-machine-image>>
-    resource_class: determined-ai/container-runner-gpu
+    resource_class: gpu.nvidia.small
     steps:
       - checkout
       - skip-if-docs-only
