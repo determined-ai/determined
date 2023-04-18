@@ -1,4 +1,4 @@
-import { Menu, Space } from 'antd';
+import { Menu, Popover, Row, Space } from 'antd';
 import { ItemType } from 'rc-menu/lib/interface';
 import React, { useCallback, useMemo, useState } from 'react';
 
@@ -6,7 +6,11 @@ import BatchActionConfirmModalComponent from 'components/BatchActionConfirmModal
 import Dropdown from 'components/Dropdown';
 import ExperimentMoveModalComponent from 'components/ExperimentMoveModal';
 import Button from 'components/kit/Button';
+import Checkbox from 'components/kit/Checkbox';
+import Form from 'components/kit/Form';
+import Input from 'components/kit/Input';
 import { useModal } from 'components/kit/Modal';
+import Pivot from 'components/kit/Pivot';
 import usePermissions from 'hooks/usePermissions';
 import {
   activateExperiments,
@@ -20,6 +24,7 @@ import {
 } from 'services/api';
 import { V1BulkExperimentFilters } from 'services/api-ts-sdk';
 import Icon from 'shared/components/Icon';
+import Spinner from 'shared/components/Spinner';
 import { RecordKey } from 'shared/types';
 import { ErrorLevel } from 'shared/utils/error';
 import {
@@ -27,6 +32,7 @@ import {
   ExperimentAction,
   ExperimentItem,
   Project,
+  ProjectColumns,
   ProjectExperiment,
 } from 'types';
 import { notification } from 'utils/dialogApi';
@@ -75,6 +81,7 @@ interface Props {
   selectedExperimentIds: number[];
   handleUpdateExperimentList: (action: BatchAction, successfulIds: number[]) => void;
   project: Project;
+  projectColumns: Loadable<ProjectColumns>;
   total: Loadable<number>;
 }
 
@@ -86,12 +93,14 @@ const TableActionBar: React.FC<Props> = ({
   selectedExperimentIds,
   handleUpdateExperimentList,
   project,
+  projectColumns,
   total,
 }) => {
   const permissions = usePermissions();
   const [batchAction, setBatchAction] = useState<BatchAction>();
   const BatchActionConfirmModal = useModal(BatchActionConfirmModalComponent);
   const ExperimentMoveModal = useModal(ExperimentMoveModalComponent);
+  const [form] = Form.useForm();
 
   const experimentMap = useMemo(() => {
     return experiments.filter(Loadable.isLoaded).reduce((acc, experiment) => {
@@ -274,9 +283,84 @@ const TableActionBar: React.FC<Props> = ({
     [handleBatchAction],
   );
 
+  const columnPickerContent = useMemo(() => {
+    return (
+      <div style={{ width: '300px' }}>
+        <Form form={form}>
+          {Loadable.match(projectColumns, {
+            Loaded: (columns) => (
+              <Pivot
+                items={[
+                  {
+                    children: (
+                      <div style={{ maxHeight: 500, overflow: 'hidden auto' }}>
+                        <Form.Item name="general-group">
+                          <Input.Group>
+                            {columns.general.map((column) => (
+                              <Row key={column}>
+                                <Checkbox>{column}</Checkbox>
+                              </Row>
+                            ))}
+                          </Input.Group>
+                        </Form.Item>
+                      </div>
+                    ),
+                    forceRender: true,
+                    key: 'general',
+                    label: 'General',
+                  },
+                  {
+                    children: (
+                      <div style={{ maxHeight: 500, overflow: 'hidden auto' }}>
+                        <Form.Item name="metrics-group">
+                          <Input.Group>
+                            {columns.metrics.map((column) => (
+                              <Row key={column}>
+                                <Checkbox>{column}</Checkbox>
+                              </Row>
+                            ))}
+                          </Input.Group>
+                        </Form.Item>
+                      </div>
+                    ),
+                    forceRender: true,
+                    key: 'metrics',
+                    label: 'Metrics',
+                  },
+                  {
+                    children: (
+                      <div style={{ maxHeight: 500, overflow: 'hidden auto' }}>
+                        <Form.Item name="hyperparameters-group">
+                          <Input.Group>
+                            {columns.hyperparameters.map((column) => (
+                              <Row key={column}>
+                                <Checkbox>{column}</Checkbox>
+                              </Row>
+                            ))}
+                          </Input.Group>
+                        </Form.Item>
+                      </div>
+                    ),
+                    forceRender: true,
+                    key: 'hyperparameters',
+                    label: 'Hyperparameters',
+                  },
+                ]}
+              />
+            ),
+            NotLoaded: () => <Spinner />,
+          })}
+        </Form>
+      </div>
+    );
+  }, [form, projectColumns]);
+
   return (
     <>
       <Space className={css.base}>
+        <Popover content={columnPickerContent} placement="bottom" trigger="click">
+          <Button>Columns</Button>
+        </Popover>
         {(selectAll || selectedExperimentIds.length > 0) && (
           <Dropdown content={<Menu items={editMenuItems} onClick={handleAction} />}>
             <Button icon={<Icon name="pencil" />}>

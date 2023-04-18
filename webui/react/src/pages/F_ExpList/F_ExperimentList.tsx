@@ -5,11 +5,11 @@ import { useSearchParams } from 'react-router-dom';
 
 import Page from 'components/Page';
 import useResize from 'hooks/useResize';
-import { searchExperiments } from 'services/api';
+import { getProjectColumns, searchExperiments } from 'services/api';
 import { V1BulkExperimentFilters } from 'services/api-ts-sdk';
 import usePolling from 'shared/hooks/usePolling';
 import userStore from 'stores/users';
-import { ExperimentAction, ExperimentItem, Project, RunState } from 'types';
+import { ExperimentAction, ExperimentItem, Project, RunState, ProjectColumns } from 'types';
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 
@@ -34,6 +34,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     Array(page * PAGE_SIZE).fill(NotLoaded),
   );
   const [total, setTotal] = useState<Loadable<number>>(NotLoaded);
+  const [projectColumns, setProjectColumns] = useState<Loadable<ProjectColumns>>(NotLoaded);
 
   useEffect(() => {
     setSearchParams({ page: String(page) });
@@ -185,6 +186,20 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     [setExperiments],
   );
 
+  const fetchColumns = useCallback(async () => {
+    try {
+      const response = await getProjectColumns({ id: project.id });
+
+      setProjectColumns(Loaded(response));
+    } catch (e) {
+      handleError(e, { publicSubject: 'Unable to fetch project columns.' });
+    }
+  }, [project.id]);
+
+  useEffect(() => {
+    fetchColumns();
+  }, [fetchColumns]);
+
   return (
     <Page
       bodyNoPadding
@@ -209,6 +224,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
               filters={experimentFilters}
               handleUpdateExperimentList={handleUpdateExperimentList}
               project={project}
+              projectColumns={projectColumns}
               selectAll={selectAll}
               selectedExperimentIds={selectedExperimentIds}
               total={total}
