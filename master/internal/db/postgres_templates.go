@@ -6,12 +6,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
-// TemplateList returns all of the config templates in the database.
-func (db *PgDB) TemplateList() (values []model.Template, err error) {
-	err = db.Query("list_templates", &values)
-	return values, err
-}
-
 // TemplateByName looks up a config template by name in a database.
 func (db *PgDB) TemplateByName(name string) (value model.Template, err error) {
 	err = db.Query("get_template", &value, name)

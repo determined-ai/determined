@@ -86,7 +86,6 @@ type DB interface {
 		queryName string, args []interface{}, v interface{}, params ...interface{}) error
 	RawQuery(queryName string, params ...interface{}) ([]byte, error)
 	UpdateResourceAllocationAggregation() error
-	TemplateList() (values []model.Template, err error)
 	TemplateByName(name string) (value model.Template, err error)
 	UpsertTemplate(tpl *model.Template) error
 	DeleteTemplate(name string) error

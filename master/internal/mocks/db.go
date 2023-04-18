@@ -1446,32 +1446,6 @@ func (_m *DB) TemplateByName(name string) (model.Template, error) {
 	return r0, r1
 }
 
-// TemplateList provides a mock function with given fields:
-func (_m *DB) TemplateList() ([]model.Template, error) {
-	ret := _m.Called()
-
-	var r0 []model.Template
-	var r1 error
-	if rf, ok := ret.Get(0).(func() ([]model.Template, error)); ok {
-		return rf()
-	}
-	if rf, ok := ret.Get(0).(func() []model.Template); ok {
-		r0 = rf()
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]model.Template)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func() error); ok {
-		r1 = rf()
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // TerminateExperimentInRestart provides a mock function with given fields: id, state
 func (_m *DB) TerminateExperimentInRestart(id int, state model.State) error {
 	ret := _m.Called(id, state)
