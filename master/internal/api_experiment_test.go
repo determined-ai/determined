@@ -96,6 +96,10 @@ func TestExperimentSearchApiFilterParsing(t *testing.T) {
 			`(experiment.forkedFrom:5 OR (-validation.error:1 AND hp.hyperparameter<=10))`,
 			`(e.parent_id = 5 OR ((e.validation_metrics->>'error')::float8 != 1 AND (e.config->'hyperparameters'->'hyperparameter'->>'val')::float8<=10))`, //nolint: lll
 		},
+		{
+			`validation.validation_test_value>="2023-01-06T19:06:25.053893089Z"`,
+			`e.validation_metrics->>'validation_test_value'>='2023-01-06T19:06:25.053893089Z'`,
+		},
 	}
 	for _, c := range validTestCases {
 		result, err := parseFilter(c[0])

@@ -60,7 +60,6 @@ const (
 	experimentColumnPrefix = "experiment."
 	METRIC_TYPE_STRING     = "string"
 	METRIC_TYPE_NUMBER     = "number"
-	METRIC_TYPE_DATE       = "date"
 	METRIC_TYPE_NULL       = "null"
 )
 
@@ -2083,8 +2082,6 @@ func buildQuery(filter string, metricTypes map[string]string) (string, error) {
 			metricType := metricTypes[prefix+metricName]
 			innerMetricSql := fmt.Sprintf(replacement, metricName)
 			switch metricType {
-			case METRIC_TYPE_DATE:
-				outerMetricSql = "(" + innerMetricSql + ")::date"
 			case METRIC_TYPE_NUMBER:
 				outerMetricSql = "(" + innerMetricSql + ")::float8"
 			case METRIC_TYPE_STRING:
