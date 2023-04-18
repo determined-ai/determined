@@ -43,6 +43,8 @@ const (
 	slurmResourcesCarrier         = "com.cray.analytics.capsules.carriers.hpc.slurm.SlurmResources"
 	pbsResourcesCarrier           = "com.cray.analytics.capsules.carriers.hpc.pbs.PbsResources"
 	root                          = "root"
+	// How frequently to cleanup terminated dispatches when in debug mode.
+	terminatedDispatchCleanupInterval = 18 * time.Hour
 )
 
 var errNotSupportedOnHpcCluster = fmt.Errorf("%w on HPC clusters", rmerrors.ErrNotSupported)
@@ -1671,33 +1673,48 @@ func (m *dispatcherResourceManager) resourcesReleased(ctx *actor.Context, handle
 
 // Perform a terminate and delete all dispatches in the DB
 // that are no-longer associated with an active experiment/task.
-// All active tasks, will get reconnected via AllocationRequest{Restore:true}
+// All active tasks will get reconnected via AllocationRequest{Restore:true}
 // events.  This case is to handle those that will not be restored.
+// When in debug mode it continues to periodically executed to prune
+// terminated dispatches for which we are deferring deletion.
 func (m *dispatcherResourceManager) killAllInactiveDispatches(
 	ctx *actor.Context, handler *actor.Ref,
 ) {
-	ctx.Log().Infof("Releasing all dispatches for terminated allocations.")
+	// Ticker with an initial pass through without delay
+	ticker := time.NewTicker(terminatedDispatchCleanupInterval)
+	for ; true; <-ticker.C {
+		ctx.Log().Infof("Releasing all dispatches for terminated allocations.")
 
-	// Find the Dispatch IDs
-	dispatches, err := db.ListAllDispatches(context.TODO())
-	if err != nil {
-		ctx.Log().WithError(err).Errorf("Failed to retrieve all Dispatches")
-		return
-	}
-	ctx.Log().Debugf("Found %d Dispatches to check", len(dispatches))
-	for _, dispatch := range dispatches {
-		dispatchID := dispatch.DispatchID
-		impersonatedUser := dispatch.ImpersonatedUser
-		allocation, err := m.db.AllocationByID(dispatch.AllocationID)
-		if err != nil || (allocation != nil &&
-			allocation.EndTime == nil) {
-			ctx.Log().Debugf(
-				"Not removing dispatch environment for dispatchID %s because allocationID %s is still active.",
-				dispatchID, dispatch.AllocationID)
-			continue
+		// Find the Dispatch IDs
+		dispatches, err := db.ListAllDispatches(context.TODO())
+		if err != nil {
+			ctx.Log().WithError(err).Error("Failed to retrieve all Dispatches")
+			return
+		}
+		ctx.Log().Debugf("Found %d Dispatches to check", len(dispatches))
+		for _, dispatch := range dispatches {
+			dispatchID := dispatch.DispatchID
+			impersonatedUser := dispatch.ImpersonatedUser
+			allocation, err := m.db.AllocationByID(dispatch.AllocationID)
+			if err != nil {
+				ctx.Log().WithError(err).Errorf(
+					"Unexpected DB lookup error, dispatchID %s, allocationID %s.",
+					dispatchID, dispatch.AllocationID)
+				continue
+			} else if allocation != nil && allocation.EndTime == nil {
+				ctx.Log().Debugf(
+					"Not removing dispatch environment for dispatchID %s because allocationID %s is still active.",
+					dispatchID, dispatch.AllocationID)
+				continue
+			}
+
+			m.terminateAndDeleteDispatch(ctx, dispatchID, impersonatedUser)
 		}
 
-		m.terminateAndDeleteDispatch(ctx, dispatchID, impersonatedUser)
+		if ctx.Log().Logger.Level < logrus.DebugLevel {
+			// Do only one cleanup unless in debug mode
+			return
+		}
 	}
 }
 
