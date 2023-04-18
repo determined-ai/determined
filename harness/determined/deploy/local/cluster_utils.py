@@ -112,7 +112,7 @@ def get_proxy_addr() -> str:
 
 def _wait_for_master(master_host: str, master_port: int, cluster_name: str) -> None:
     try:
-        wait_for_master(master_host, master_port, timeout=10000)
+        wait_for_master(master_host, master_port)
         return
     except MasterTimeoutExpired:
         print("Timed out connecting to master, but attempting to dump logs from cluster...")
