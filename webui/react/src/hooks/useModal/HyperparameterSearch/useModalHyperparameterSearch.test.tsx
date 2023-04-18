@@ -54,6 +54,7 @@ vi.mock('stores/cluster', async (importOriginal) => {
         },
       ]),
     ),
+    fetchResourcePools: vi.fn()
   };
 
   return {
