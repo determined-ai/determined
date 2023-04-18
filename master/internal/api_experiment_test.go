@@ -36,6 +36,14 @@ func TestExperimentSearchApiFilterParsing(t *testing.T) {
 		"experiment.checkpointSize <12",
 		"experiment.checkpointSize <=  12",
 		`experiment.user:   "username"`,
+		"hp.global_batch_size <=-64",
+		"validation.validation_test>   -10.98",
+		"validation.validation_test   >   -10.98",
+		"hp.global_batch_size<=-90 AND hp.global_batch_size>= -64",
+		"hp.global_batch_size<=-64 AND hp.global_batch_size <=-64",
+		"hp.global_batch_size<=-64 OR validation.validation_test   >   -10.98",
+		"hp.global_batch_size:-64 OR validation.validation_test< 20",
+		"hp.global_batch_size: 64 OR validation.validation_test<20",
 	}
 	for _, c := range invalidTestCases {
 		_, err := parseFilter(c)

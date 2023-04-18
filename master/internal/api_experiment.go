@@ -1990,20 +1990,20 @@ func validateComparisonString(filter string, prefix string) error {
 		}
 
 		c := string(filter[comparisonIndex])
-
 		if !singleOperatorRegex.MatchString(c) {
 			return fmt.Errorf("no operator found at the end of column value")
 		}
 
 		comparisonIndex++
 
-		if c == ">" || c == "<" && comparisonIndex+1 < len(filter)-1 && string(filter[comparisonIndex+1]) == "=" {
+		if (c == ">" || c == "<") &&
+			(comparisonIndex < len(filter)-1) &&
+			(string(filter[comparisonIndex]) == "=") {
 			comparisonIndex++
 		}
 
 		// we have reached the character after an operator if it is a whitespace then
 		// the string is invalid
-
 		if string(filter[comparisonIndex]) == " " {
 			return fmt.Errorf("whitespace found after operator at string index %d", comparisonIndex)
 		}
@@ -2185,6 +2185,29 @@ func scanString(filter string, startIndex int, operator *string, valueStart bool
 	return query, filterIndex
 }
 
+func parseMetricComparisons(filter string) error {
+	// Validate that all metric comparisons are valid.
+	// No metric comparison should have a whitespace between operators
+
+	for prefix, _ := range getFilterMetricPrefixes() {
+		i := strings.Index(filter, prefix)
+		filterString := filter
+		for i != -1 {
+			metricName := scanMetricName(filterString, i+len(prefix))
+			metricColString := prefix + metricName
+			if err := validateComparisonString(filterString, metricColString); err != nil {
+				return err
+			}
+			if i+len(metricColString) >= len(filterString)-1 {
+				break
+			}
+			filterString = filterString[i+len(metricColString):]
+			i = strings.Index(filterString, prefix)
+		}
+	}
+	return nil
+}
+
 func parseFilter(filter string) (*string, error) {
 	// Iterate through the filter string and build
 	// the matching sql query
@@ -2205,6 +2228,17 @@ func parseFilter(filter string) (*string, error) {
 		if err := validateComparisonString(filter, experimentColumnPrefix+key); err != nil {
 			return &currentQuery, err
 		}
+	}
+
+	for key, _ := range getFilterExperimentColMap() {
+		if err := validateComparisonString(filter, experimentColumnPrefix+key); err != nil {
+			return &currentQuery, err
+		}
+	}
+
+	err := parseMetricComparisons(filter)
+	if err != nil {
+		return &currentQuery, err
 	}
 
 	// Keep track of the number of parentheses to ensure that the
@@ -2282,7 +2316,7 @@ func parseFilter(filter string) (*string, error) {
 			currentIndex++
 		}
 	}
-	currentQuery, err := buildQuery(currentQuery)
+	currentQuery, err = buildQuery(currentQuery)
 	if err != nil {
 		return &currentQuery, err
 	}
