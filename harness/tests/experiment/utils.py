@@ -202,6 +202,10 @@ def import_module(module_name: str, module_path: str, model_context: Optional[st
     spec = importlib.util.spec_from_file_location(module_name, module_path)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
+
+    if model_context is not None:
+        sys.path.remove(model_context)
+
     return module
 
 def load_config(config_path: str) -> Any:
