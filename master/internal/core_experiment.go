@@ -458,7 +458,8 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams, user *mod
 	if params.Template != nil {
 		template, terr := m.db.TemplateByName(*params.Template)
 		if terr != nil {
-			return nil, config, nil, false, nil, fmt.Errorf("TemplateByName(%q): %w", *params.Template, terr)
+			return nil, config, nil, false, nil, fmt.Errorf(
+				"error TemplateByName(%q): %w", *params.Template, terr)
 		}
 		var tc expconf.ExperimentConfig
 		if yerr := yaml.Unmarshal(template.Config, &tc, yaml.DisallowUnknownFields); yerr != nil {

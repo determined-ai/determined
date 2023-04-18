@@ -36,7 +36,7 @@ func (a *apiServer) ModelFromIdentifier(identifier string) (*modelv1.Model, erro
 	} else {
 		err = a.m.db.QueryProto("get_model", m, identifier)
 	}
-	switch err; {
+	switch {
 	case errors.Is(err, db.ErrNotFound):
 		return nil, status.Errorf(
 			codes.NotFound, "model %q not found", identifier)
@@ -84,7 +84,7 @@ func (a *apiServer) GetModel(
 		m.WorkspaceId); err != nil {
 		return nil, err
 	} else if !ok {
-		return nil, fmt.Errorf("current user %q doesn't have permissions to get model %q.",
+		return nil, fmt.Errorf("current user %q doesn't have permissions to get model %q",
 			curUser.Username, m.Name)
 	}
 	return &apiv1.GetModelResponse{Model: m}, err
@@ -160,7 +160,7 @@ func (a *apiServer) GetModels(
 	if err != nil {
 		return nil, err
 	} else if !ok {
-		return nil, fmt.Errorf("current user doesn't have view permissions in related workspaces.")
+		return nil, fmt.Errorf("current user doesn't have view permissions in related workspaces")
 	}
 	var workspaceIds []string
 	var workspaceIdsWithPermsAndFilter string
@@ -310,7 +310,7 @@ func (a *apiServer) PatchModel(
 	}
 
 	if currModel.Archived {
-		return nil, fmt.Errorf("model %q is archived and cannot have attributes updated.",
+		return nil, fmt.Errorf("model %q is archived and cannot have attributes updated",
 			currModel.Name)
 	}
 
@@ -521,7 +521,7 @@ func (a *apiServer) MoveModel(
 		return nil, fmt.Errorf("error moving a model (%s): %w", req.ModelName, err)
 	}
 	if holder.Id == 0 {
-		return nil, fmt.Errorf("Model (%s) does not exist or not moveable by this user: %w",
+		return nil, fmt.Errorf("model (%s) does not exist or not moveable by this user: %w",
 			req.ModelName, err)
 	}
 
@@ -579,7 +579,7 @@ func (a *apiServer) GetModelVersion(
 		currModel.WorkspaceId); err != nil {
 		return nil, err
 	} else if !ok {
-		return nil, fmt.Errorf("current user %q doesn't have permissions to get model %q.",
+		return nil, fmt.Errorf("current user %q doesn't have permissions to get model %q",
 			curUser.Username, currModel.Name)
 	}
 
@@ -605,7 +605,7 @@ func (a *apiServer) GetModelVersions(
 		parentModel.WorkspaceId); err != nil {
 		return nil, err
 	} else if !ok {
-		return nil, fmt.Errorf("current user %q doesn't have permissions to get model %q.",
+		return nil, fmt.Errorf("current user %q doesn't have permissions to get model %q",
 			curUser.Username, parentModel.Name)
 	}
 
@@ -638,7 +638,7 @@ func (a *apiServer) PostModelVersion(
 	}
 
 	if modelResp.Archived {
-		return nil, fmt.Errorf("model %q is archived and cannot register new versions.",
+		return nil, fmt.Errorf("model %q is archived and cannot register new versions",
 			modelResp.Name)
 	}
 

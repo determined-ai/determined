@@ -89,10 +89,10 @@ func (a *apiServer) GetWorkspaceByID(
 	}
 
 	if rejectImmutable && w.Immutable {
-		return nil, fmt.Errorf("workspace (%v) is immutable and cannot add new projects.", w.Id)
+		return nil, fmt.Errorf("workspace (%v) is immutable and cannot add new projects", w.Id)
 	}
 	if rejectImmutable && w.Archived {
-		return nil, fmt.Errorf("workspace (%v) is archived and cannot add new projects.", w.Id)
+		return nil, fmt.Errorf("workspace (%v) is archived and cannot add new projects", w.Id)
 	}
 	return w, nil
 }
@@ -583,7 +583,8 @@ func (a *apiServer) UnarchiveWorkspace(
 		return nil, fmt.Errorf("error unarchiving workspace (%d): %w", req.Id, err)
 	}
 	if holder.Id == 0 {
-		return nil, fmt.Errorf("workspace (%d) does not exist or not unarchive-able by this user: %w", req.Id, err)
+		return nil, fmt.Errorf(
+			"workspace (%d) does not exist or not unarchive-able by this user: %w", req.Id, err)
 	}
 	return &apiv1.UnarchiveWorkspaceResponse{}, nil
 }

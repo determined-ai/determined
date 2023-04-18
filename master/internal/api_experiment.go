@@ -856,7 +856,7 @@ func (a *apiServer) PauseExperiment(
 
 	if err == nil {
 		if len(results) == 0 {
-			return nil, fmt.Errorf("unknown error during pause query.")
+			return nil, fmt.Errorf("unknown error during pause query")
 		} else if results[0].Error != nil {
 			return nil, results[0].Error
 		}
@@ -879,7 +879,7 @@ func (a *apiServer) CancelExperiment(
 
 	if err == nil {
 		if len(results) == 0 {
-			return nil, fmt.Errorf("unknown error during cancel query.")
+			return nil, fmt.Errorf("unknown error during cancel query")
 		} else if results[0].Error != nil {
 			return nil, results[0].Error
 		}
@@ -902,7 +902,7 @@ func (a *apiServer) KillExperiment(
 
 	if err == nil {
 		if len(results) == 0 {
-			return nil, fmt.Errorf("unknown error during kill query.")
+			return nil, fmt.Errorf("unknown error during kill query")
 		} else if results[0].Error != nil {
 			return nil, results[0].Error
 		}
@@ -925,7 +925,7 @@ func (a *apiServer) ArchiveExperiment(
 
 	if err == nil {
 		if len(results) == 0 {
-			return nil, fmt.Errorf("unknown error during archive query.")
+			return nil, fmt.Errorf("unknown error during archive query")
 		} else if results[0].Error != nil {
 			return nil, results[0].Error
 		}
@@ -948,7 +948,7 @@ func (a *apiServer) UnarchiveExperiment(
 
 	if err == nil {
 		if len(results) == 0 {
-			return nil, fmt.Errorf("unknown error during unarchive query.")
+			return nil, fmt.Errorf("unknown error during unarchive query")
 		} else if results[0].Error != nil {
 			return nil, results[0].Error
 		}
@@ -990,7 +990,7 @@ func (a *apiServer) PatchExperiment(
 		madeChanges = true
 		if len(strings.TrimSpace(req.Experiment.Name.Value)) == 0 {
 			return nil, status.Errorf(codes.InvalidArgument,
-				"`name` must not be an empty or whitespace string.")
+				"`name` must not be an empty or whitespace string")
 		}
 		exp.Name = req.Experiment.Name.Value
 	}
@@ -1757,7 +1757,7 @@ func (a *apiServer) MoveExperiment(
 		return nil, err
 	}
 	if exp.Archived {
-		return nil, fmt.Errorf("experiment (%v) is archived and cannot be moved.", exp.ID)
+		return nil, fmt.Errorf("experiment (%v) is archived and cannot be moved", exp.ID)
 	}
 
 	// check that user can view source project
@@ -1766,7 +1766,7 @@ func (a *apiServer) MoveExperiment(
 		return nil, err
 	}
 	if srcProject.Archived {
-		return nil, fmt.Errorf("project (%v) is archived and cannot have experiments moved from it.",
+		return nil, fmt.Errorf("project (%v) is archived and cannot have experiments moved from it",
 			srcProject.Id)
 	}
 
@@ -1776,7 +1776,7 @@ func (a *apiServer) MoveExperiment(
 		return nil, err
 	}
 	if destProject.Archived {
-		return nil, fmt.Errorf("project (%v) is archived and cannot add new experiments.",
+		return nil, fmt.Errorf("project (%v) is archived and cannot add new experiments",
 			req.DestinationProjectId)
 	}
 	// need to update CanCreateExperiment to check project when experiment is nil
@@ -1790,7 +1790,7 @@ func (a *apiServer) MoveExperiment(
 
 	if err == nil {
 		if len(results) == 0 {
-			return nil, fmt.Errorf("unknown error during move query.")
+			return nil, fmt.Errorf("unknown error during move query")
 		} else if results[0].Error != nil {
 			return nil, results[0].Error
 		}
@@ -1813,7 +1813,7 @@ func (a *apiServer) MoveExperiments(
 		return nil, err
 	}
 	if destProject.Archived {
-		return nil, fmt.Errorf("project (%v) is archived and cannot add new experiments.",
+		return nil, fmt.Errorf("project (%v) is archived and cannot add new experiments",
 			req.DestinationProjectId)
 	}
 	// need to update CanCreateExperiment to check project when experiment is nil

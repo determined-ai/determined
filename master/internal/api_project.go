@@ -125,7 +125,7 @@ func (a *apiServer) CheckParentWorkspaceUnarchived(project *projectv1.Project) e
 	}
 
 	if w.Archived {
-		//nolint: stylecheck.
+		//nolint:stylecheck
 		return fmt.Errorf("This project belongs to an archived workspace. " +
 			"To make changes, first unarchive the workspace.")
 	}
@@ -230,11 +230,11 @@ func (a *apiServer) PatchProject(
 		return nil, err
 	}
 	if currProject.Archived {
-		return nil, fmt.Errorf("project (%d) is archived and cannot have attributes updated.",
+		return nil, fmt.Errorf("project (%d) is archived and cannot have attributes updated",
 			currProject.Id)
 	}
 	if currProject.Immutable {
-		return nil, fmt.Errorf("project (%v) is immutable and cannot have attributes updated.",
+		return nil, fmt.Errorf("project (%v) is immutable and cannot have attributes updated",
 			currProject.Id)
 	}
 

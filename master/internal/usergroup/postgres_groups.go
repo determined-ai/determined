@@ -345,7 +345,8 @@ func UpdateGroupAndMembers(
 
 	err = tx.Commit()
 	if err != nil {
-		return nil, "", fmt.Errorf("error committing changes to group %d: %w", gid, db.MatchSentinelError(err))
+		return nil, "", fmt.Errorf(
+			"error committing changes to group %d: %w", gid, db.MatchSentinelError(err))
 	}
 
 	return users, newName, nil
