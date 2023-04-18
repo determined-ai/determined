@@ -651,7 +651,7 @@ func runPagedBunExperimentsQuery(
 
 	// Bun bug treating limit=0 as no limit when it
 	// should be the exact opposite of no records returned.
-	if endIndex-startIndex != 0 || (startIndex == 0 && endIndex == 0) {
+	if endIndex-startIndex != 0 || (startIndex == 0 && endIndex == 0 && limit != -2) {
 		if err = query.Scan(ctx); err != nil {
 			return nil, err
 		}
