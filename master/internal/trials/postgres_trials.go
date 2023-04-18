@@ -351,11 +351,11 @@ func MetricsTimeSeries(trialID int32, startTime time.Time,
 	}
 	measurements := []db.MetricMeasurements{}
 	subq := db.Bun().NewSelect().TableExpr(tableName).
-		ColumnExpr("setseed(1) as _seed").
+		ColumnExpr("(select setseed(1)) as _seed").
 		ColumnExpr("total_batches as batches").
 		ColumnExpr("trial_id").ColumnExpr("end_time as time").
 		ColumnExpr("(metrics ->'?' ->> ?)::float8 as value", bun.Safe(metricsObjectName), metricName).
-		ColumnExpr("(metrics ->'?' ->> 'epoch')::float8 as epoch", bun.Safe(metricsObjectName)).
+		ColumnExpr("(metrics ->'?' ->> 'epoch')::integer as epoch", bun.Safe(metricsObjectName)).
 		Where("metrics ->'?' ->> ? IS NOT NULL", bun.Safe(metricsObjectName), metricName).
 		Where("trial_id = ?", trialID).OrderExpr("random()").Limit(maxDatapoints)
 	switch timeSeriesFilter {
