@@ -54,6 +54,12 @@ import (
 	structpb "github.com/golang/protobuf/ptypes/struct"
 )
 
+const (
+	// The prefix for column names mapping to
+	// experiment table values
+	experimentColumnPrefix = "experiment."
+)
+
 // Catches information on active running experiments.
 type experimentAllocation struct {
 	Job      model.JobID
@@ -1923,36 +1929,16 @@ func sortExperiments(sortString *string, experimentQuery *bun.SelectQuery) error
 	return nil
 }
 
-func scanMetricName(filter string, index int) string {
-	// Determine the name of the metric from the filter string
-
-	metricName := ""
-	for index < len(filter) {
-		c := string(filter[index])
-
-		// If we have reached an operator or space then we have parsed through the entire metric name
-		if c == "<" || c == ":" || c == " " || c == "~" || c == "=" || c == ">" {
-			break
-		}
-		metricName += c
-		index++
-	}
-	return metricName
-}
-
-func buildQuery(filter string) (string, error) {
-	// Builds the sql query for a filter string
-
-	// The prefix for column names mapping to
-	// experiment table values
-	experimentColumnPrefix := "experiment."
-
+func getFilterMetricPrefixes() map[string]string {
 	// Prefixes for column names matching to metric related tables
 	metricPrefixes := map[string]string{
 		"validation.": "(e.validation_metrics->>'%s')::float8",
 		"hp.":         "(e.config->'hyperparameters'->'%s'->>'val')::float8",
 	}
+	return metricPrefixes
+}
 
+func getFilterExperimentColMap() map[string]string {
 	// Mapping of experiment related filter string values to table columns
 	filterExperimentColMap := map[string]string{
 		"id":              "e.id",
@@ -1982,6 +1968,74 @@ func buildQuery(filter string) (string, error) {
 			LIMIT 1
 		 ) `,
 	}
+	return filterExperimentColMap
+}
+func validateComparisonString(filter string, prefix string) error {
+	// Ensures that there are no whitespaces around operators
+	// White spaces within value strings and between
+	// AND and OR groupings are valid and should not
+	// throw an error
+	singleOperatorRegex := regexp.MustCompile(`>|<|:|~`)
+	sliceStart := 0
+
+	i := strings.Index(filter[sliceStart:], prefix)
+	for i > -1 {
+
+		comparisonIndex := i + len(prefix)
+		// the comparison index should be the index
+		// where we should find a comparison operator
+		if comparisonIndex > len(filter)-1 {
+			// There are no more characters after the comparison index
+			return fmt.Errorf("found operator at the end of the filter")
+		}
+
+		c := string(filter[comparisonIndex])
+
+		if !singleOperatorRegex.MatchString(c) {
+			return fmt.Errorf("no operator found at the end of column value")
+		}
+
+		comparisonIndex++
+
+		if c == ">" || c == "<" && comparisonIndex+1 < len(filter)-1 && string(filter[comparisonIndex+1]) == "=" {
+			comparisonIndex++
+		}
+
+		// we have reached the character after an operator if it is a whitespace then
+		// the string is invalid
+
+		if string(filter[comparisonIndex]) == " " {
+			return fmt.Errorf("whitespace found after operator at string index %d", comparisonIndex)
+		}
+		sliceStart = comparisonIndex
+		filter = filter[sliceStart:]
+		i = strings.Index(filter, prefix)
+		if i < 0 {
+			break
+		}
+	}
+	return nil
+
+}
+func scanMetricName(filter string, index int) string {
+	// Determine the name of the metric from the filter string
+
+	metricName := ""
+	for index < len(filter) {
+		c := string(filter[index])
+
+		// If we have reached an operator or space then we have parsed through the entire metric name
+		if c == "<" || c == ":" || c == " " || c == "~" || c == "=" || c == ">" {
+			break
+		}
+		metricName += c
+		index++
+	}
+	return metricName
+}
+
+func buildQuery(filter string) (string, error) {
+	// Builds the sql query for a filter string
 
 	// If the entire query does not contain at least one valid
 	// column name for an experiment, metric, or hyperparameter,
@@ -1990,7 +2044,7 @@ func buildQuery(filter string) (string, error) {
 
 	// Replace any needed experiment related column names
 	// with the correct sql query
-	for key, value := range filterExperimentColMap {
+	for key, value := range getFilterExperimentColMap() {
 		if strings.Contains(filter, experimentColumnPrefix+key) {
 			hasValidColumns = true
 		}
@@ -1999,7 +2053,7 @@ func buildQuery(filter string) (string, error) {
 
 	// Replace all metric related column names
 	// with the correct sql query
-	for prefix, replacement := range metricPrefixes {
+	for prefix, replacement := range getFilterMetricPrefixes() {
 		i := strings.Index(filter, prefix)
 		for i != -1 {
 			hasValidColumns = true
@@ -2135,6 +2189,9 @@ func parseFilter(filter string) (*string, error) {
 	// Iterate through the filter string and build
 	// the matching sql query
 
+	currentIndex := 0
+	currentQuery := ""
+
 	trimmedQuery := strings.ReplaceAll(filter, " ", "")
 
 	if len(trimmedQuery) == 0 {
@@ -2143,8 +2200,12 @@ func parseFilter(filter string) (*string, error) {
 	if strings.Contains(trimmedQuery, "()") {
 		return nil, fmt.Errorf("contains empty conditional group")
 	}
-	currentIndex := 0
-	currentQuery := ""
+
+	for key, _ := range getFilterExperimentColMap() {
+		if err := validateComparisonString(filter, experimentColumnPrefix+key); err != nil {
+			return &currentQuery, err
+		}
+	}
 
 	// Keep track of the number of parentheses to ensure that the
 	// string is valid

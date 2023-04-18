@@ -30,6 +30,12 @@ func TestExperimentSearchApiFilterParsing(t *testing.T) {
 		"-value:null",
 		`str~"like"`,
 		`str~"like" AND -otherstr~"notlike")`,
+		`experiment.user  :   "username"`,
+		"-experiment.projectId: 123456789",
+		"experiment.checkpointSize <=12",
+		"experiment.checkpointSize <12",
+		"experiment.checkpointSize <=  12",
+		`experiment.user:   "username"`,
 	}
 	for _, c := range invalidTestCases {
 		_, err := parseFilter(c)
