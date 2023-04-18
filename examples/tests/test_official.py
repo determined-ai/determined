@@ -57,8 +57,17 @@ official_examples = [
 
 @pytest.mark.parametrize("model_def,config_file", official_examples)
 def test_official(model_def: str, config_file: str) -> None:
-    if "gbt_titanic_estimator" in model_def:
-        pytest.skip("# TODO [MLG-442], see comment in {model_def}")
+    import tensorflow as tf
+    from packaging import version
+
+    if (
+        version.parse(tf.__version__) >= version.parse("2.11.0")
+        and "gbt_titanic_estimator" in model_def
+    ):
+        pytest.skip(
+            "gbt_titanic_estimator does not work with TensorFlow>=2.11.0. "
+            "TODO [MLG-442], see comment in {model_def}"
+        )
     examples_dir = pathlib.Path(__file__).parent.parent
     model_def_absolute = examples_dir.joinpath(model_def)
     config_file_absolute = examples_dir.joinpath(config_file)
