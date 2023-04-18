@@ -239,8 +239,7 @@ def master_up(
 
         # Wait for db to reach a healthy state.
         _wait_for_container(db_name, timeout=5)
-        print(f"sleeping for 5 sec")
-        time.sleep(5)
+
         # Remove cleanup methods from ExitStack after DB successfully starts.
         exit_stack.pop_all()
 
