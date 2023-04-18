@@ -70,7 +70,7 @@ vi.mock('services/api', () => ({
       maxSlotsExceeded: false,
     }),
   ),
-  getResourcePools: () => Promise.resolve([]),
+  getResourcePools: vi.fn().mockReturnValue(Promise.resolve([])),
 }));
 
 const { experiment } = generateTestExperimentData();
