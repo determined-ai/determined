@@ -3,7 +3,8 @@ cuda_available=$(shell python -c "import torch; print(torch.cuda.is_available())
 
 .PHONY: build
 build:
-	python -W ignore:Normalizing:UserWarning:setuptools.dist setup.py -q bdist_wheel
+	PYTHONWARNINGS=ignore:Normalizing:UserWarning:setuptools.dist \
+		python -m build -nxw >/dev/null
 
 .PHONY: publish
 publish:

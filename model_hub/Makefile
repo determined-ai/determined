@@ -43,7 +43,8 @@ clean:
 
 .PHONY: build
 build:
-	python setup.py -q bdist_wheel
+	PYTHONWARNINGS=ignore:Normalizing:UserWarning:setuptools.dist \
+		python -m build -nxw >/dev/null
 
 build-examples/stamp: $(HF_EXAMPLES_DIRS) $(MMDET_EXAMPLE_DIR)
 	touch $@
