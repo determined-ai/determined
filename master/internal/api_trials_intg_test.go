@@ -446,7 +446,6 @@ func TestCompareTrialsSampling(t *testing.T) {
 		EndBatches:    1000,
 		MetricType:    apiv1.MetricType_METRIC_TYPE_TRAINING,
 		Scale:         apiv1.Scale_SCALE_LINEAR,
-		XAxis:         apiv1.XAxis_X_AXIS_BATCH,
 	}
 
 	resp, err := api.CompareTrials(ctx, req)
