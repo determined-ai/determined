@@ -137,7 +137,7 @@ def test_custom_etc() -> None:
     cluster_down(["--cluster-name", name])
 
 
-@pytest.mark.det_deploy_local
+@pytest.mark.det_deploy_local_quarantine
 def test_agent_config_path() -> None:
     master_host = "localhost"
     master_port = "8080"
@@ -182,7 +182,7 @@ def test_agent_config_path() -> None:
     master_down(["--master-name", master_name])
 
 
-@pytest.mark.det_deploy_local
+@pytest.mark.det_deploy_local_quarantine
 def test_custom_port() -> None:
     name = "port_test"
     master_host = "localhost"
