@@ -6,10 +6,10 @@ import time
 from typing import Iterator, List, Optional
 
 import pytest
-import yaml
 from urllib3 import connectionpool
 
 from determined import searcher
+from determined.common import yaml
 from determined.common.api import bindings
 from determined.experimental import client
 from tests import api_utils
@@ -143,7 +143,7 @@ def test_run_random_searcher_exp_core_api(
 
     # searcher experiment
     searcher_exp = bindings.get_GetExperiment(session, experimentId=experiment_id).experiment
-    assert searcher_exp.state == bindings.experimentv1State.STATE_COMPLETED
+    assert searcher_exp.state == bindings.experimentv1State.COMPLETED
 
     # actual experiment
     response = bindings.get_GetExperiments(session, name=exp_name)
@@ -155,7 +155,7 @@ def test_run_random_searcher_exp_core_api(
 
     trials = bindings.get_GetExperimentTrials(session, experimentId=experiment.id).trials
     for trial in trials:
-        assert trial.state == bindings.experimentv1State.STATE_COMPLETED
+        assert trial.state == bindings.experimentv1State.COMPLETED
         assert trial.totalBatchesProcessed == 500
 
     # check logs to ensure failures actually happened
@@ -188,7 +188,7 @@ def test_pause_multi_trial_random_searcher_core_api() -> None:
         searcher_exp_id = exp.create_experiment(tf.name, model_def_path, None)
         exp.wait_for_experiment_state(
             searcher_exp_id,
-            bindings.experimentv1State.STATE_RUNNING,
+            bindings.experimentv1State.RUNNING,
         )
     # make sure both experiments have started by checking
     # that multi-trial experiment has at least 1 running trials
@@ -196,19 +196,19 @@ def test_pause_multi_trial_random_searcher_core_api() -> None:
 
     # pause multi-trial experiment
     exp.pause_experiment(multi_trial_exp_id)
-    exp.wait_for_experiment_state(multi_trial_exp_id, bindings.experimentv1State.STATE_PAUSED)
+    exp.wait_for_experiment_state(multi_trial_exp_id, bindings.experimentv1State.PAUSED)
 
     # activate multi-trial experiment
     exp.activate_experiment(multi_trial_exp_id)
 
     # wait for searcher to complete
-    exp.wait_for_experiment_state(searcher_exp_id, bindings.experimentv1State.STATE_COMPLETED)
+    exp.wait_for_experiment_state(searcher_exp_id, bindings.experimentv1State.COMPLETED)
 
     # searcher experiment
     searcher_exp = bindings.get_GetExperiment(
         api_utils.determined_test_session(), experimentId=searcher_exp_id
     ).experiment
-    assert searcher_exp.state == bindings.experimentv1State.STATE_COMPLETED
+    assert searcher_exp.state == bindings.experimentv1State.COMPLETED
 
     # actual experiment
     experiment = bindings.get_GetExperiment(
@@ -220,7 +220,7 @@ def test_pause_multi_trial_random_searcher_core_api() -> None:
         api_utils.determined_test_session(), experimentId=experiment.id
     ).trials
     for trial in trials:
-        assert trial.state == bindings.experimentv1State.STATE_COMPLETED
+        assert trial.state == bindings.experimentv1State.COMPLETED
         assert trial.totalBatchesProcessed == 500
 
 
@@ -349,7 +349,7 @@ def test_run_asha_batches_exp(tmp_path: pathlib.Path, client_login: None) -> Non
     assert sum(t.totalBatchesProcessed == 2000 for t in response_trials) >= 1
 
     for trial in response_trials:
-        assert trial.state == bindings.experimentv1State.STATE_COMPLETED
+        assert trial.state == bindings.experimentv1State.COMPLETED
 
 
 @pytest.mark.e2e_cpu_2a
@@ -399,7 +399,7 @@ def test_run_asha_searcher_exp_core_api(
 
     # searcher experiment
     searcher_exp = bindings.get_GetExperiment(session, experimentId=experiment_id).experiment
-    assert searcher_exp.state == bindings.experimentv1State.STATE_COMPLETED
+    assert searcher_exp.state == bindings.experimentv1State.COMPLETED
 
     # actual experiment
     response = bindings.get_GetExperiments(session, name=exp_name)
@@ -419,7 +419,7 @@ def test_run_asha_searcher_exp_core_api(
     assert sum(t.totalBatchesProcessed == 2400 for t in response_trials) >= 1
 
     for trial in response_trials:
-        assert trial.state == bindings.experimentv1State.STATE_COMPLETED
+        assert trial.state == bindings.experimentv1State.COMPLETED
 
     # check logs to ensure failures actually happened
     logs = str(
@@ -535,7 +535,7 @@ def test_resume_asha_batches_exp(exceptions: List[str], client_login: None) -> N
     assert sum(t.totalBatchesProcessed == 2000 for t in response_trials) >= 1
 
     for trial in response_trials:
-        assert trial.state == bindings.experimentv1State.STATE_COMPLETED
+        assert trial.state == bindings.experimentv1State.COMPLETED
 
     assert search_method.progress(search_runner.state) == pytest.approx(1.0)
 

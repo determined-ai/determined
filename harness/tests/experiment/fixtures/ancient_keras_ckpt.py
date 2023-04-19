@@ -6,11 +6,16 @@ be loaded in new Determined.
 from typing import Any, Dict, cast
 
 import tensorflow as tf
+from packaging import version
 from tensorflow.keras.layers import Dense
 from tensorflow.keras.losses import mean_squared_error
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.optimizers import SGD
-from tensorflow.python.data.ops.dataset_ops import ZipDataset
+from tensorflow.raw_ops import ZipDataset
+
+if version.parse(tf.__version__) >= version.parse("2.11.0"):
+    from tensorflow.keras.optimizers.legacy import SGD
+else:
+    from tensorflow.keras.optimizers import SGD
 
 from determined import keras
 

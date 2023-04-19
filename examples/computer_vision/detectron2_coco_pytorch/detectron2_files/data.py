@@ -272,7 +272,6 @@ def build_detection_train_loader(
     images_per_worker = per_gpu_bs
 
     if context.get_hparam("fake_data") is False:
-
         dataset_dicts = get_detection_dataset_dicts(
             cfg.DATASETS.TRAIN,
             filter_empty=cfg.DATALOADER.FILTER_EMPTY_ANNOTATIONS,
@@ -347,7 +346,6 @@ def build_detection_test_loader(cfg, dataset_name, mapper=None, context=None):
         dataset, with test-time transformation and batching.
     """
     if context.get_hparam("fake_data") is False:
-
         dataset_dicts = get_detection_dataset_dicts(
             [dataset_name],
             filter_empty=False,
@@ -392,4 +390,4 @@ def trivial_batch_collator(batch):
 
 
 def worker_init_reset_seed(worker_id):
-    seed_all_rng(np.random.randint(2 ** 31) + worker_id)
+    seed_all_rng(np.random.randint(2**31) + worker_id)

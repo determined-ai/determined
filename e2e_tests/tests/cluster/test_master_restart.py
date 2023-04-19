@@ -101,9 +101,7 @@ def _test_master_restart_reattach_recover_experiment(
             time.sleep(downtime)
             restartable_managed_cluster.restart_master()
 
-        exp.wait_for_experiment_state(
-            exp_id, EXP_STATE.STATE_COMPLETED, max_wait_secs=downtime + 60
-        )
+        exp.wait_for_experiment_state(exp_id, EXP_STATE.COMPLETED, max_wait_secs=downtime + 60)
         trials = exp.experiment_trials(exp_id)
 
         assert len(trials) == 1
@@ -126,39 +124,48 @@ def test_master_restart_error_missing_docker_container(
         conf.fixtures_path("core_api"),
         None,
     )
-    exp.wait_for_experiment_state(exp_id, EXP_STATE.STATE_RUNNING)
 
-    client = docker.from_env()
-    containers = client.containers.list()
+    try:
+        exp.wait_for_experiment_state(exp_id, EXP_STATE.RUNNING)
 
-    label = "ai.determined.container.description"
-    containers = [c for c in containers if f"/experiments/{exp_id}" in c.labels.get(label, "")]
-    assert len(containers) == 1
+        client = docker.from_env()
+        containers = client.containers.list()
 
-    managed_cluster_restarts.kill_agent()
-    managed_cluster_restarts.kill_master()
-    containers[0].kill()
-    managed_cluster_restarts.restart_master()
-    managed_cluster_restarts.restart_agent(wait_for_amnesia=wait_for_amnesia)
+        label = "ai.determined.container.description"
+        containers = [c for c in containers if f"/experiments/{exp_id}" in c.labels.get(label, "")]
+        assert len(containers) == 1
 
-    exp.wait_for_experiment_state(exp_id, EXP_STATE.STATE_RUNNING)
-    trials = exp.experiment_trials(exp_id)
-    trial_id = trials[0].trial.id
-    trial_logs = "\n".join(exp.trial_logs(trial_id))
+        managed_cluster_restarts.kill_agent()
+        managed_cluster_restarts.kill_master()
+        containers[0].kill()
+        managed_cluster_restarts.restart_master()
+        managed_cluster_restarts.restart_agent(wait_for_amnesia=wait_for_amnesia)
 
-    if wait_for_amnesia:
-        assert (
-            "allocation failed due to agent failure: "
-            + "agent failed while the container was running: agent closed with allocated containers"
-        ) in trial_logs
-    else:
-        assert (
-            "allocation failed due to restore error: RM failed to restore the allocation: "
-            + "container is gone on reattachment"
-        ) in trial_logs
+        exp.wait_for_experiment_state(exp_id, EXP_STATE.RUNNING)
+        trials = exp.experiment_trials(exp_id)
+        trial_id = trials[0].trial.id
 
-    subprocess.check_call(["det", "-m", conf.make_master_url(), "e", "kill", str(exp_id)])
-    exp.wait_for_experiment_state(exp_id, EXP_STATE.STATE_CANCELED, max_wait_secs=20)
+        expected_message = (
+            (
+                "allocation failed due to agent failure: agent failed while the "
+                + "container was running: agent closed with allocated containers"
+            )
+            if wait_for_amnesia
+            else (
+                "allocation failed due to restore error: RM failed "
+                + "to restore the allocation: container is gone on reattachment"
+            )
+        )
+
+        for _ in range(30):
+            trial_logs = "\n".join(exp.trial_logs(trial_id))
+            if expected_message in trial_logs:
+                break
+            time.sleep(1)
+        assert expected_message in trial_logs
+    finally:
+        subprocess.check_call(["det", "-m", conf.make_master_url(), "e", "kill", str(exp_id)])
+        exp.wait_for_experiment_state(exp_id, EXP_STATE.CANCELED, max_wait_secs=20)
 
 
 @pytest.mark.managed_devcluster
@@ -192,7 +199,7 @@ def _test_master_restart_kill_works(managed_cluster_restarts: Cluster) -> None:
         command = ["det", "-m", conf.make_master_url(), "e", "kill", str(exp_id)]
         subprocess.check_call(command)
 
-        exp.wait_for_experiment_state(exp_id, EXP_STATE.STATE_CANCELED, max_wait_secs=30)
+        exp.wait_for_experiment_state(exp_id, EXP_STATE.CANCELED, max_wait_secs=30)
 
         managed_cluster_restarts.ensure_agent_ok()
     except Exception:
@@ -363,7 +370,7 @@ def _test_master_restart_tensorboard(managed_cluster: Cluster, downtime: int) ->
         None,
     )
 
-    exp.wait_for_experiment_state(exp_id, EXP_STATE.STATE_COMPLETED, max_wait_secs=60)
+    exp.wait_for_experiment_state(exp_id, EXP_STATE.COMPLETED, max_wait_secs=60)
 
     with cmd.interactive_command("tensorboard", "start", "--detach", str(exp_id)) as tb:
         task_id = tb.task_id

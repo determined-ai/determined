@@ -184,7 +184,7 @@ class GPT2Trial(DeepSpeedTrial):
             and additional_metrics["num_nans"] == 0
             and additional_metrics["num_skipped"] == 0
         ):
-            self.tflops = additional_metrics["flops_per_sec_per_gpu"] / 10 ** 12
+            self.tflops = additional_metrics["flops_per_sec_per_gpu"] / 10**12
 
         if (
             self.neox_args.exit_interval

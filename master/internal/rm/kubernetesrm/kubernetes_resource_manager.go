@@ -46,6 +46,7 @@ func New(
 	db *db.PgDB,
 	echo *echo.Echo,
 	config *config.ResourceConfig,
+	taskContainerDefaults *model.TaskContainerDefaultsConfig,
 	opts *aproto.MasterSetAgentOptions,
 	cert *tls.Certificate,
 ) ResourceManager {
@@ -58,6 +59,7 @@ func New(
 		newKubernetesResourceManager(
 			config.ResourceManager.KubernetesRM,
 			config.ResourcePools,
+			taskContainerDefaults,
 			echo,
 			tlsConfig,
 			opts.LoggingOptions,
@@ -189,8 +191,9 @@ func isReattachEnabledForRP(rp string) bool {
 
 // kubernetesResourceProvider manages the lifecycle of k8s resources.
 type kubernetesResourceManager struct {
-	config      *config.KubernetesResourceManagerConfig
-	poolsConfig []config.ResourcePoolConfig
+	config                *config.KubernetesResourceManagerConfig
+	poolsConfig           []config.ResourcePoolConfig
+	taskContainerDefaults *model.TaskContainerDefaultsConfig
 
 	podsActor *actor.Ref
 	pools     map[string]*actor.Ref
@@ -203,13 +206,15 @@ type kubernetesResourceManager struct {
 func newKubernetesResourceManager(
 	config *config.KubernetesResourceManagerConfig,
 	poolsConfig []config.ResourcePoolConfig,
+	taskContainerDefaults *model.TaskContainerDefaultsConfig,
 	echoRef *echo.Echo,
 	masterTLSConfig model.TLSClientConfig,
 	loggingConfig model.LoggingConfig,
 ) actor.Actor {
 	return &kubernetesResourceManager{
-		config:      config,
-		poolsConfig: poolsConfig,
+		config:                config,
+		poolsConfig:           poolsConfig,
+		taskContainerDefaults: taskContainerDefaults,
 
 		pools: make(map[string]*actor.Ref),
 
@@ -245,6 +250,8 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 			k.config.SlotType,
 			config.PodSlotResourceRequests{CPU: k.config.SlotResourceRequests.CPU},
 			k.config.Fluent,
+			k.poolsConfig,
+			k.taskContainerDefaults,
 			k.config.CredsDir,
 			k.config.MasterIP,
 			k.config.MasterPort,

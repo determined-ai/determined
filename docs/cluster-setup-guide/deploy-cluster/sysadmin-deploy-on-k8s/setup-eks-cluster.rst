@@ -209,7 +209,7 @@ command to install the plugin:
 Lastly, EKS requires manual deployment of an autoscaler. Save the following configuration in a new
 file such as ``determined-autoscaler.yaml``:
 
-You will need to update the `<cluster-autoscaler-image>` to match the major and minor numbers of
+You will need to update the ``<cluster-autoscaler-image>`` to match the major and minor numbers of
 your Kubernetes version. For example, if you are using Kubernetes 1.20, use the cluster-autoscaler
 version 1.20 image found here: k8s.gcr.io/autoscaling/cluster-autoscaler:v1.20.0
 

@@ -55,14 +55,14 @@ def _dataset_repro_warning(fn: str, data_obj: Any, is_deepspeed_trial: bool = Fa
 
 class DataLoader:
     """
-    DataLoader is meant to contain a user's `Dataset`, configuration for
+    DataLoader is meant to contain a user's ``Dataset``, configuration for
     sampling data in batches, and performance configuration like
     multiprocessing.
 
     The __init__ function determines the defaults in the same way as a
-    `torch.utils.data.DataLoader` would, so the behavior should be familiar.
-    However, the `torch.utils.data.Dataloader` that is used for training and
-    validation is not created until `get_data_loader(...)` is called. This is
+    ``torch.utils.data.DataLoader`` would, so the behavior should be familiar.
+    However, the ``torch.utils.data.Dataloader`` that is used for training and
+    validation is not created until ``get_data_loader(...)`` is called. This is
     done so that Determined can ensure that sampling restarts from the right location
     and distributed sampling is handled correctly.
 
@@ -99,13 +99,13 @@ class DataLoader:
             input, after seeding and before data loading. (default: ``None``)
         generator (torch.Generator, optional): If not ``None``, this RNG will be used
             by RandomSampler to generate random indexes and multiprocessing to generate
-            `base_seed` for workers. (default: ``None``)
+            ``base_seed`` for workers. (default: ``None``)
         prefetch_factor (int, optional, keyword-only arg): Number of samples loaded
             in advance by each worker. ``2`` means there will be a total of
             2 * num_workers samples prefetched across all workers. (default: ``2``)
         persistent_workers (bool, optional): If ``True``, the data loader will not shut down
             the worker processes after a dataset has been consumed once. This allows to
-            maintain the workers `Dataset` instances alive. (default: ``False``)
+            maintain the workers ``Dataset`` instances alive. (default: ``False``)
     """
 
     def __init__(

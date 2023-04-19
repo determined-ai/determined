@@ -429,6 +429,7 @@ type Trial struct {
 	HParams               JSONObj    `db:"hparams"`
 	WarmStartCheckpointID *int       `db:"warm_start_checkpoint_id"`
 	Seed                  int64      `db:"seed"`
+	TotalBatches          int        `db:"total_batches"`
 
 	JobID JobID
 }
@@ -790,64 +791,6 @@ const (
 	// ValidationMetric designates metrics from validation steps.
 	ValidationMetric MetricType = iota
 )
-
-// HPImportanceTrialData is the input to the hyperparameter importance algorithm.
-type HPImportanceTrialData struct {
-	TrialID int                    `db:"trial_id"`
-	Hparams map[string]interface{} `db:"hparams"`
-	Metric  float64                `db:"metric"`
-}
-
-// ExperimentHPImportance is hyperparameter importance for an experiment, and consists of
-// independent measurements of importance for any of the metrics recorded by the experiment.
-type ExperimentHPImportance struct {
-	Partial           bool                          `json:"partial"`
-	TrainingMetrics   map[string]MetricHPImportance `json:"training_metrics"`
-	ValidationMetrics map[string]MetricHPImportance `json:"validation_metrics"`
-}
-
-// MetricHPImportance is hyperparameter importance with respect to a specific metric.
-type MetricHPImportance struct {
-	Error              string             `json:"error"`
-	Pending            bool               `json:"pending"`
-	InProgress         bool               `json:"in_progress"`
-	ExperimentProgress float64            `json:"experiment_progress"`
-	HpImportance       map[string]float64 `json:"hp_importance"`
-}
-
-// SetMetricHPImportance is a convenience function when modifying results for a specific metric.
-func (hpi *ExperimentHPImportance) SetMetricHPImportance(metricHpi MetricHPImportance,
-	metricName string, metricType MetricType,
-) *ExperimentHPImportance {
-	switch metricType {
-	case TrainingMetric:
-		hpi.TrainingMetrics[metricName] = metricHpi
-	case ValidationMetric:
-		hpi.ValidationMetrics[metricName] = metricHpi
-	default:
-		panic("Invalid metric type!")
-	}
-	return hpi
-}
-
-// GetMetricHPImportance is a convenience function when working with results for a specific metric.
-func (hpi *ExperimentHPImportance) GetMetricHPImportance(metricName string, metricType MetricType,
-) MetricHPImportance {
-	switch metricType {
-	case TrainingMetric:
-		if metricHpi, ok := hpi.TrainingMetrics[metricName]; ok {
-			return metricHpi
-		}
-		return MetricHPImportance{}
-	case ValidationMetric:
-		if metricHpi, ok := hpi.ValidationMetrics[metricName]; ok {
-			return metricHpi
-		}
-		return MetricHPImportance{}
-	default:
-		panic("Invalid metric type!")
-	}
-}
 
 // ExitedReason defines why a workload exited early.
 type ExitedReason string

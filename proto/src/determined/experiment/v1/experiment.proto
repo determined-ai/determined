@@ -142,6 +142,9 @@ message Experiment {
   // The metrics and hyperparameters associated with the best trial by searcher
   // metric.
   optional double best_trial_searcher_metric = 31;
+  // Id of experiment's best trial, calculated by the best searcher metrics
+  // value of trial's best validation.
+  optional int32 best_trial_id = 32;
 }
 
 // PatchExperiment is a partial update to an experiment with only id required.

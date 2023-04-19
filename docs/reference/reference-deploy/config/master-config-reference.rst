@@ -55,9 +55,9 @@ The master supports the following configuration settings:
       ``cuda`` key (``gpu`` prior to 0.17.6), CPU tasks using ``cpu`` key, and ROCm (AMD GPU) tasks
       using the ``rocm`` key. Default values:
 
-      -  ``determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-0.21.1`` for NVIDIA GPUs.
-      -  ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.21.1`` for ROCm.
-      -  ``determinedai/environments:py-3.8-pytorch-1.12-tf-2.8-cpu-0.21.1`` for CPUs.
+      -  ``determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-0.21.2`` for NVIDIA GPUs.
+      -  ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.21.2`` for ROCm.
+      -  ``determinedai/environments:py-3.8-pytorch-1.12-tf-2.8-cpu-0.21.2`` for CPUs.
 
    -  ``environment_variables``: A list of environment variables that will be set in every task
       container. Each element of the list should be a string of the form ``NAME=VALUE``. See
@@ -86,7 +86,7 @@ The master supports the following configuration settings:
 
    -  ``add_capabilities``: The default list of Linux capabilities to grant to task containers.
       Ignored by resource managers of type ``kubernetes``. See :ref:`environment.add_capabilities
-      <exp-environment-add-capapbilities>` for more details.
+      <exp-environment-add-capabilities>` for more details.
 
    -  ``drop_capabilities``: Just like ``add_capabilities`` but for dropping capabilities.
 
@@ -112,6 +112,10 @@ The master supports the following configuration settings:
    -  ``cache_dir``: Specifies the root directory for file cache. Defaults to
       ``/var/cache/determined``. Note that the master would break on startup if it does not have
       access to create this default directory.
+
+-  ``launch_error`` (optional): Specifies whether to refuse an experiment or task if the slots
+   requested exceeds the cluster capacity. This option has no effect for kubernetes or slurm
+   clusters. If ``false``, only a warning is returned. The default value is ``true``.
 
 -  ``cluster_name`` (optional): Specify a human readable name for this cluster.
 
@@ -300,6 +304,9 @@ The master supports the following configuration settings:
          have access to the Slurm/PBS queue and node status commands (``squeue``, ``sinfo``,
          ``pbsnodes``, ``qstat`` ) to discover partitions and to display cluster usage.
 
+         When changing this value, ownership of the ``job_storage_root`` directory tree must be
+         updated accordingly, and the ``determined-master`` service must be restarted.
+
       -  ``group_name``: The group that the Launcher will belong to. It should be a group that is not
             shared with other non-privileged users.
 
@@ -307,10 +314,22 @@ The master supports the following configuration settings:
          located. This directory must be visible to the launcher and from the compute nodes. See
          :ref:`slurm-image-config` for more details.
 
-      -  ``job_storage_root``: The shared directory where job-related files will be stored. It is
-         where the needed Determined executables are copied to when the experiment is run, as well
-         as where the Slurm/PBS scripts and log files are created. This directory must be writable
-         by the launcher and the compute nodes.
+      -  ``job_storage_root``: The shared directory where temporary job-related files will be stored
+         for each active HPC job. It hosts the necessary Determined executables for the job, any
+         model and configuration files, space for per-rank ``/tmp`` and working directories,
+         generated Slurm/PBS scripts and any log files. This directory must be writable by the
+         launcher and the compute nodes. It must be owned by the configured ``user_name`` and
+         readable by all users that may launch jobs. If ``user_name`` is configured as ``root``, a
+         directory must be specified, otherwise, the default is ``$HOME/.launcher``.
+
+         The content for an HPC job under this directory is normally removed automatically when the
+         job terminates. Content may be manually purged when there are no active HPC jobs. If
+         ``user_name`` is changed, you can adjust the ownership of this directory using the command
+         of the form:
+
+         .. code::
+
+            chown -R --from={prior_user_name} {user_name}:{group_name} {job_storage_root}
 
       -  ``path``: The ``PATH`` for the launcher service so that it is able to find the Slurm, PBS,
          Singularity, Nvidia binaries, etc., in case they are not in a standard location on the

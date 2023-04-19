@@ -8,6 +8,7 @@ import Badge, { BadgeType } from 'components/Badge';
 import ColumnsCustomizeModalComponent from 'components/ColumnsCustomizeModal';
 import { useSetDynamicTabBar } from 'components/DynamicTabs';
 import ExperimentActionDropdown from 'components/ExperimentActionDropdown';
+import ExperimentMoveModalComponent from 'components/ExperimentMoveModal';
 import FilterCounter from 'components/FilterCounter';
 import HumanReadableNumber from 'components/HumanReadableNumber';
 import Button from 'components/kit/Button';
@@ -38,7 +39,6 @@ import TableBatch from 'components/Table/TableBatch';
 import TableFilterDropdown from 'components/Table/TableFilterDropdown';
 import TableFilterSearch from 'components/Table/TableFilterSearch';
 import useExperimentTags from 'hooks/useExperimentTags';
-import useModalExperimentMove from 'hooks/useModal/Experiment/useModalExperimentMove';
 import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
@@ -66,7 +66,7 @@ import { ErrorLevel } from 'shared/utils/error';
 import { validateDetApiEnum, validateDetApiEnumList } from 'shared/utils/service';
 import { alphaNumericSorter } from 'shared/utils/sort';
 import { humanReadableBytes } from 'shared/utils/string';
-import usersStore from 'stores/users';
+import userStore from 'stores/users';
 import {
   ExperimentAction as Action,
   CommandResponse,
@@ -117,16 +117,15 @@ interface Props {
 }
 
 const ExperimentList: React.FC<Props> = ({ project }) => {
-  const users = Loadable.map(useObservable(usersStore.getUsers()), ({ users }) => users);
-
   const [experiments, setExperiments] = useState<ExperimentItem[]>([]);
   const [labels, setLabels] = useState<string[]>([]);
-
+  const [batchMovingExperimentIds, setBatchMovingExperimentIds] = useState<number[]>();
   const [isLoading, setIsLoading] = useState(true);
   const [total, setTotal] = useState(0);
-  const [canceler] = useState(new AbortController());
+  const canceler = useRef(new AbortController());
   const pageRef = useRef<HTMLElement>(null);
 
+  const users = Loadable.getOrElse([], useObservable(userStore.getUsers()));
   const permissions = usePermissions();
 
   const id = project?.id;
@@ -182,7 +181,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
             limit: settings.tableLimit,
             offset: 0,
           },
-          { signal: canceler.signal },
+          { signal: canceler.current.signal },
         );
       }
 
@@ -195,7 +194,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
           limit: settings.tableLimit - pinnedIds.length,
           offset: settings.tableOffset - rowsTakenUpByPins,
         },
-        { signal: canceler.signal },
+        { signal: canceler.current.signal },
       );
 
       // Due to showing pinned items in all pages, we need to adjust the number of total items
@@ -211,25 +210,24 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
       setIsLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [canceler.signal, id, settings, labelsString, pinnedString, statesString, usersString]);
+  }, [id, settings, labelsString, pinnedString, statesString, usersString]);
 
   const fetchLabels = useCallback(async () => {
     try {
-      const labels = await getExperimentLabels({ project_id: id }, { signal: canceler.signal });
+      const labels = await getExperimentLabels(
+        { project_id: id },
+        { signal: canceler.current.signal },
+      );
       labels.sort((a, b) => alphaNumericSorter(a, b));
       setLabels(labels);
     } catch (e) {
       handleError(e);
     }
-  }, [canceler.signal, id]);
+  }, [id]);
 
   const fetchAll = useCallback(async () => {
-    await Promise.allSettled([
-      fetchExperiments(),
-      usersStore.ensureUsersFetched(canceler),
-      fetchLabels(),
-    ]);
-  }, [fetchExperiments, canceler, fetchLabels]);
+    await Promise.allSettled([fetchExperiments(), fetchLabels()]);
+  }, [fetchExperiments, fetchLabels]);
 
   const { stopPolling } = usePolling(fetchAll, { rerunOnNewFn: true });
 
@@ -393,10 +391,6 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
   );
 
   const columns = useMemo(() => {
-    const matchUsers = Loadable.match(users, {
-      Loaded: (users) => users,
-      NotLoaded: () => [],
-    });
     const tagsRenderer = (value: string, record: ExperimentItem) => (
       <div className={css.tagsRenderer}>
         <Typography.Text
@@ -595,10 +589,10 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         dataIndex: 'user',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['user'],
         filterDropdown: userFilterDropdown,
-        filters: matchUsers.map((user) => ({ text: getDisplayName(user), value: user.id })),
+        filters: users.map((user) => ({ text: getDisplayName(user), value: user.id })),
         isFiltered: (settings: ExperimentListSettings) => !!settings.user,
         key: V1GetExperimentsRequestSortBy.USER,
-        render: (_, r) => userRenderer(matchUsers.find((u) => u.id === r.userId)),
+        render: (_, r) => userRenderer(users.find((u) => u.id === r.userId)),
         sorter: true,
         title: 'User',
       },
@@ -678,8 +672,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
     [settings.columns, transferColumns],
   );
 
-  const { contextHolder: modalExperimentMoveContextHolder, modalOpen: openMoveModal } =
-    useModalExperimentMove({ onClose: handleActionComplete });
+  const ExperimentMoveModal = useModal(ExperimentMoveModalComponent);
 
   const sendBatchActions = useCallback(
     (action: Action): Promise<void[] | CommandTask | CommandResponse> | void => {
@@ -692,15 +685,14 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
       }
       if (action === Action.Move) {
         if (!settings?.row?.length) return;
-        return openMoveModal({
-          experimentIds: settings.row.filter(
+        setBatchMovingExperimentIds(
+          settings.row.filter(
             (id) =>
               canActionExperiment(Action.Move, experimentMap[id]) &&
               permissions.canMoveExperiment({ experiment: experimentMap[id] }),
           ),
-          sourceProjectId: project?.id,
-          sourceWorkspaceId: project?.workspaceId,
-        });
+        );
+        ExperimentMoveModal.open();
       }
 
       return Promise.all(
@@ -726,7 +718,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         }),
       );
     },
-    [settings.row, openMoveModal, project?.workspaceId, project?.id, experimentMap, permissions],
+    [settings.row, experimentMap, permissions, ExperimentMoveModal, project?.workspaceId],
   );
 
   const submitBatchAction = useCallback(
@@ -866,11 +858,15 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
   }, []);
 
   useEffect(() => {
-    return () => {
-      canceler.abort();
-      stopPolling();
-    };
-  }, [canceler, stopPolling]);
+    return () => stopPolling();
+  }, [stopPolling]);
+
+  useEffect(() => userStore.startPolling(), []);
+
+  useEffect(() => {
+    const currentCanceler = canceler.current;
+    return () => currentCanceler.abort();
+  }, []);
 
   const tabBarContent = useMemo(() => {
     const getMenuProps = (): DropDownProps['menu'] => {
@@ -980,7 +976,12 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         initialVisibleColumns={initialVisibleColumns}
         onSave={handleUpdateColumns as (columns: string[]) => void}
       />
-      {modalExperimentMoveContextHolder}
+      <ExperimentMoveModal.Component
+        experimentIds={batchMovingExperimentIds ?? []}
+        sourceProjectId={project?.id}
+        sourceWorkspaceId={project?.workspaceId}
+        onSubmit={handleActionComplete}
+      />
     </Page>
   );
 };

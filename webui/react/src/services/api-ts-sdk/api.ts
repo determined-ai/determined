@@ -141,43 +141,6 @@ export const Experimentv1State = {
 } as const
 export type Experimentv1State = ValueOf<typeof Experimentv1State>
 /**
- * Hyperparameter importance as computed with respect for one specific metric.
- * @export
- * @interface GetHPImportanceResponseMetricHPImportance
- */
-export interface GetHPImportanceResponseMetricHPImportance {
-    /**
-     * A map between hyperparameter names and their relative importance.
-     * @type {{ [key: string]: number; }}
-     * @memberof GetHPImportanceResponseMetricHPImportance
-     */
-    hpImportance?: { [key: string]: number; };
-    /**
-     * The approximate portion of the experiment that was complete when the data was read.
-     * @type {number}
-     * @memberof GetHPImportanceResponseMetricHPImportance
-     */
-    experimentProgress?: number;
-    /**
-     * A description of why computation failed. Empty unless the state is (or was) 'failed'.
-     * @type {string}
-     * @memberof GetHPImportanceResponseMetricHPImportance
-     */
-    error?: string;
-    /**
-     * Whether or not a request to compute results for this metric is queued.
-     * @type {boolean}
-     * @memberof GetHPImportanceResponseMetricHPImportance
-     */
-    pending?: boolean;
-    /**
-     * Whether or not results for this metric are currently being computed.
-     * @type {boolean}
-     * @memberof GetHPImportanceResponseMetricHPImportance
-     */
-    inProgress?: boolean;
-}
-/**
  * - PRODUCT_UNSPECIFIED: Not a Cloud Community offering  - PRODUCT_COMMUNITY: Determined Cloud, Community Edition
  * @export
  * @enum {string}
@@ -334,25 +297,6 @@ export interface RuntimeStreamError {
      * @memberof RuntimeStreamError
      */
     details?: Array<ProtobufAny>;
-}
-/**
- * 
- * @export
- * @interface StreamResultOfV1GetHPImportanceResponse
- */
-export interface StreamResultOfV1GetHPImportanceResponse {
-    /**
-     * 
-     * @type {V1GetHPImportanceResponse}
-     * @memberof StreamResultOfV1GetHPImportanceResponse
-     */
-    result?: V1GetHPImportanceResponse;
-    /**
-     * 
-     * @type {RuntimeStreamError}
-     * @memberof StreamResultOfV1GetHPImportanceResponse
-     */
-    error?: RuntimeStreamError;
 }
 /**
  * 
@@ -1913,13 +1857,6 @@ export interface V1CompleteValidateAfterOperation {
     searcherMetric?: any;
 }
 /**
- * 
- * @export
- * @interface V1ComputeHPImportanceResponse
- */
-export interface V1ComputeHPImportanceResponse {
-}
-/**
  * Container is a Docker container that is either scheduled to run or is currently running on a set of slots.
  * @export
  * @interface V1Container
@@ -2668,6 +2605,12 @@ export interface V1Experiment {
      * @memberof V1Experiment
      */
     bestTrialSearcherMetric?: number;
+    /**
+     * Id of experiment's best trial, calculated by the best searcher metrics value of trial's best validation.
+     * @type {number}
+     * @memberof V1Experiment
+     */
+    bestTrialId?: number;
 }
 /**
  * Message for results of individual experiments in a multi-experiment action.
@@ -3297,25 +3240,6 @@ export interface V1GetGroupsResponse {
      * @memberof V1GetGroupsResponse
      */
     pagination?: V1Pagination;
-}
-/**
- * 
- * @export
- * @interface V1GetHPImportanceResponse
- */
-export interface V1GetHPImportanceResponse {
-    /**
-     * A map of training metric names to their respective entries.
-     * @type {{ [key: string]: GetHPImportanceResponseMetricHPImportance; }}
-     * @memberof V1GetHPImportanceResponse
-     */
-    trainingMetrics: { [key: string]: GetHPImportanceResponseMetricHPImportance; };
-    /**
-     * A map of validation metric names to their respective entries.
-     * @type {{ [key: string]: GetHPImportanceResponseMetricHPImportance; }}
-     * @memberof V1GetHPImportanceResponse
-     */
-    validationMetrics: { [key: string]: GetHPImportanceResponseMetricHPImportance; };
 }
 /**
  * Response to GetJobQueueStatsRequest.
@@ -10152,18 +10076,6 @@ export const V1WorkspaceState = {
 } as const
 export type V1WorkspaceState = ValueOf<typeof V1WorkspaceState>
 /**
- * XAxis options available in metrics charts.   - X_AXIS_UNSPECIFIED: Unknown x-axis.  - X_AXIS_BATCH: x-axis in batch. This is the default x-axis.  - X_AXIS_TIME: x-axis in time.  - X_AXIS_EPOCH: x-axis in epoch.
- * @export
- * @enum {string}
- */
-export const V1XAxis = {
-    UNSPECIFIED: 'X_AXIS_UNSPECIFIED',
-    BATCH: 'X_AXIS_BATCH',
-    TIME: 'X_AXIS_TIME',
-    EPOCH: 'X_AXIS_EPOCH',
-} as const
-export type V1XAxis = ValueOf<typeof V1XAxis>
-/**
  * AuthenticationApi - fetch parameter creator
  * @export
  */
@@ -12575,7 +12487,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
         },
         /**
          * 
-         * @summary Return downsampled metrics from multiple trials to compare them side-by-side.
+         * @summary Return a downsampled time series of metrics from multiple trials to compare them side-by-side.
          * @param {Array<number>} [trialIds] The requested trial ids.
          * @param {number} [maxDatapoints] The maximum number of data points to return after downsampling.
          * @param {Array<string>} [metricNames] The names of selected metrics.
@@ -12583,7 +12495,6 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {number} [endBatches] Sample from metrics before this batch number.
          * @param {V1MetricType} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
          * @param {V1Scale} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
-         * @param {V1XAxis} [xAxis] x-axis selection. Default is in batch.   - X_AXIS_UNSPECIFIED: Unknown x-axis.  - X_AXIS_BATCH: x-axis in batch. This is the default x-axis.  - X_AXIS_TIME: x-axis in time.  - X_AXIS_EPOCH: x-axis in epoch.
          * @param {Array<string>} [metricIds] metric ids for the query.
          * @param {string} [timeSeriesFilterName] metric or column name for the filter.
          * @param {number} [timeSeriesFilterDoubleRangeLt] Less than.
@@ -12603,8 +12514,8 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: V1MetricType, scale?: V1Scale, xAxis?: V1XAxis, metricIds?: Array<string>, timeSeriesFilterName?: string, timeSeriesFilterDoubleRangeLt?: number, timeSeriesFilterDoubleRangeLte?: number, timeSeriesFilterDoubleRangeGt?: number, timeSeriesFilterDoubleRangeGte?: number, timeSeriesFilterIntegerRangeLt?: number, timeSeriesFilterIntegerRangeLte?: number, timeSeriesFilterIntegerRangeGt?: number, timeSeriesFilterIntegerRangeGte?: number, timeSeriesFilterIntegerRangeIncl?: Array<number>, timeSeriesFilterIntegerRangeNotIn?: Array<number>, timeSeriesFilterTimeRangeLt?: Date, timeSeriesFilterTimeRangeLte?: Date, timeSeriesFilterTimeRangeGt?: Date, timeSeriesFilterTimeRangeGte?: Date, options: any = {}): FetchArgs {
-            const localVarPath = `/api/v1/trials/compare`;
+        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: V1MetricType, scale?: V1Scale, metricIds?: Array<string>, timeSeriesFilterName?: string, timeSeriesFilterDoubleRangeLt?: number, timeSeriesFilterDoubleRangeLte?: number, timeSeriesFilterDoubleRangeGt?: number, timeSeriesFilterDoubleRangeGte?: number, timeSeriesFilterIntegerRangeLt?: number, timeSeriesFilterIntegerRangeLte?: number, timeSeriesFilterIntegerRangeGt?: number, timeSeriesFilterIntegerRangeGte?: number, timeSeriesFilterIntegerRangeIncl?: Array<number>, timeSeriesFilterIntegerRangeNotIn?: Array<number>, timeSeriesFilterTimeRangeLt?: Date, timeSeriesFilterTimeRangeLte?: Date, timeSeriesFilterTimeRangeGt?: Date, timeSeriesFilterTimeRangeGte?: Date, options: any = {}): FetchArgs {
+            const localVarPath = `/api/v1/trials/time-series`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
@@ -12644,10 +12555,6 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             
             if (scale !== undefined) {
                 localVarQueryParameter['scale'] = scale
-            }
-            
-            if (xAxis !== undefined) {
-                localVarQueryParameter['xAxis'] = xAxis
             }
             
             if (metricIds) {
@@ -13823,10 +13730,11 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {number} [projectId] ID of the project to look at.
          * @param {number} [offset] How many experiments to skip before including in the results.
          * @param {number} [limit] How many results to show.
+         * @param {string} [sort] Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc).
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        searchExperiments(projectId?: number, offset?: number, limit?: number, options: any = {}): FetchArgs {
+        searchExperiments(projectId?: number, offset?: number, limit?: number, sort?: string, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/experiments-search`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = { method: 'GET', ...options };
@@ -13851,6 +13759,10 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             
             if (limit !== undefined) {
                 localVarQueryParameter['limit'] = limit
+            }
+            
+            if (sort !== undefined) {
+                localVarQueryParameter['sort'] = sort
             }
             
             localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
@@ -14270,7 +14182,7 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Return downsampled metrics from multiple trials to compare them side-by-side.
+         * @summary Return a downsampled time series of metrics from multiple trials to compare them side-by-side.
          * @param {Array<number>} [trialIds] The requested trial ids.
          * @param {number} [maxDatapoints] The maximum number of data points to return after downsampling.
          * @param {Array<string>} [metricNames] The names of selected metrics.
@@ -14278,7 +14190,6 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
          * @param {number} [endBatches] Sample from metrics before this batch number.
          * @param {V1MetricType} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
          * @param {V1Scale} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
-         * @param {V1XAxis} [xAxis] x-axis selection. Default is in batch.   - X_AXIS_UNSPECIFIED: Unknown x-axis.  - X_AXIS_BATCH: x-axis in batch. This is the default x-axis.  - X_AXIS_TIME: x-axis in time.  - X_AXIS_EPOCH: x-axis in epoch.
          * @param {Array<string>} [metricIds] metric ids for the query.
          * @param {string} [timeSeriesFilterName] metric or column name for the filter.
          * @param {number} [timeSeriesFilterDoubleRangeLt] Less than.
@@ -14298,8 +14209,8 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: V1MetricType, scale?: V1Scale, xAxis?: V1XAxis, metricIds?: Array<string>, timeSeriesFilterName?: string, timeSeriesFilterDoubleRangeLt?: number, timeSeriesFilterDoubleRangeLte?: number, timeSeriesFilterDoubleRangeGt?: number, timeSeriesFilterDoubleRangeGte?: number, timeSeriesFilterIntegerRangeLt?: number, timeSeriesFilterIntegerRangeLte?: number, timeSeriesFilterIntegerRangeGt?: number, timeSeriesFilterIntegerRangeGte?: number, timeSeriesFilterIntegerRangeIncl?: Array<number>, timeSeriesFilterIntegerRangeNotIn?: Array<number>, timeSeriesFilterTimeRangeLt?: Date, timeSeriesFilterTimeRangeLte?: Date, timeSeriesFilterTimeRangeGt?: Date, timeSeriesFilterTimeRangeGte?: Date, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CompareTrialsResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).compareTrials(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, xAxis, metricIds, timeSeriesFilterName, timeSeriesFilterDoubleRangeLt, timeSeriesFilterDoubleRangeLte, timeSeriesFilterDoubleRangeGt, timeSeriesFilterDoubleRangeGte, timeSeriesFilterIntegerRangeLt, timeSeriesFilterIntegerRangeLte, timeSeriesFilterIntegerRangeGt, timeSeriesFilterIntegerRangeGte, timeSeriesFilterIntegerRangeIncl, timeSeriesFilterIntegerRangeNotIn, timeSeriesFilterTimeRangeLt, timeSeriesFilterTimeRangeLte, timeSeriesFilterTimeRangeGt, timeSeriesFilterTimeRangeGte, options);
+        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: V1MetricType, scale?: V1Scale, metricIds?: Array<string>, timeSeriesFilterName?: string, timeSeriesFilterDoubleRangeLt?: number, timeSeriesFilterDoubleRangeLte?: number, timeSeriesFilterDoubleRangeGt?: number, timeSeriesFilterDoubleRangeGte?: number, timeSeriesFilterIntegerRangeLt?: number, timeSeriesFilterIntegerRangeLte?: number, timeSeriesFilterIntegerRangeGt?: number, timeSeriesFilterIntegerRangeGte?: number, timeSeriesFilterIntegerRangeIncl?: Array<number>, timeSeriesFilterIntegerRangeNotIn?: Array<number>, timeSeriesFilterTimeRangeLt?: Date, timeSeriesFilterTimeRangeLte?: Date, timeSeriesFilterTimeRangeGt?: Date, timeSeriesFilterTimeRangeGte?: Date, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CompareTrialsResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).compareTrials(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, metricIds, timeSeriesFilterName, timeSeriesFilterDoubleRangeLt, timeSeriesFilterDoubleRangeLte, timeSeriesFilterDoubleRangeGt, timeSeriesFilterDoubleRangeGte, timeSeriesFilterIntegerRangeLt, timeSeriesFilterIntegerRangeLte, timeSeriesFilterIntegerRangeGt, timeSeriesFilterIntegerRangeGte, timeSeriesFilterIntegerRangeIncl, timeSeriesFilterIntegerRangeNotIn, timeSeriesFilterTimeRangeLt, timeSeriesFilterTimeRangeLte, timeSeriesFilterTimeRangeGt, timeSeriesFilterTimeRangeGte, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -14809,11 +14720,12 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
          * @param {number} [projectId] ID of the project to look at.
          * @param {number} [offset] How many experiments to skip before including in the results.
          * @param {number} [limit] How many results to show.
+         * @param {string} [sort] Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc).
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        searchExperiments(projectId?: number, offset?: number, limit?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SearchExperimentsResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).searchExperiments(projectId, offset, limit, options);
+        searchExperiments(projectId?: number, offset?: number, limit?: number, sort?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SearchExperimentsResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).searchExperiments(projectId, offset, limit, sort, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -15009,7 +14921,7 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
         },
         /**
          * 
-         * @summary Return downsampled metrics from multiple trials to compare them side-by-side.
+         * @summary Return a downsampled time series of metrics from multiple trials to compare them side-by-side.
          * @param {Array<number>} [trialIds] The requested trial ids.
          * @param {number} [maxDatapoints] The maximum number of data points to return after downsampling.
          * @param {Array<string>} [metricNames] The names of selected metrics.
@@ -15017,7 +14929,6 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {number} [endBatches] Sample from metrics before this batch number.
          * @param {V1MetricType} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
          * @param {V1Scale} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
-         * @param {V1XAxis} [xAxis] x-axis selection. Default is in batch.   - X_AXIS_UNSPECIFIED: Unknown x-axis.  - X_AXIS_BATCH: x-axis in batch. This is the default x-axis.  - X_AXIS_TIME: x-axis in time.  - X_AXIS_EPOCH: x-axis in epoch.
          * @param {Array<string>} [metricIds] metric ids for the query.
          * @param {string} [timeSeriesFilterName] metric or column name for the filter.
          * @param {number} [timeSeriesFilterDoubleRangeLt] Less than.
@@ -15037,8 +14948,8 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: V1MetricType, scale?: V1Scale, xAxis?: V1XAxis, metricIds?: Array<string>, timeSeriesFilterName?: string, timeSeriesFilterDoubleRangeLt?: number, timeSeriesFilterDoubleRangeLte?: number, timeSeriesFilterDoubleRangeGt?: number, timeSeriesFilterDoubleRangeGte?: number, timeSeriesFilterIntegerRangeLt?: number, timeSeriesFilterIntegerRangeLte?: number, timeSeriesFilterIntegerRangeGt?: number, timeSeriesFilterIntegerRangeGte?: number, timeSeriesFilterIntegerRangeIncl?: Array<number>, timeSeriesFilterIntegerRangeNotIn?: Array<number>, timeSeriesFilterTimeRangeLt?: Date, timeSeriesFilterTimeRangeLte?: Date, timeSeriesFilterTimeRangeGt?: Date, timeSeriesFilterTimeRangeGte?: Date, options?: any) {
-            return ExperimentsApiFp(configuration).compareTrials(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, xAxis, metricIds, timeSeriesFilterName, timeSeriesFilterDoubleRangeLt, timeSeriesFilterDoubleRangeLte, timeSeriesFilterDoubleRangeGt, timeSeriesFilterDoubleRangeGte, timeSeriesFilterIntegerRangeLt, timeSeriesFilterIntegerRangeLte, timeSeriesFilterIntegerRangeGt, timeSeriesFilterIntegerRangeGte, timeSeriesFilterIntegerRangeIncl, timeSeriesFilterIntegerRangeNotIn, timeSeriesFilterTimeRangeLt, timeSeriesFilterTimeRangeLte, timeSeriesFilterTimeRangeGt, timeSeriesFilterTimeRangeGte, options)(fetch, basePath);
+        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: V1MetricType, scale?: V1Scale, metricIds?: Array<string>, timeSeriesFilterName?: string, timeSeriesFilterDoubleRangeLt?: number, timeSeriesFilterDoubleRangeLte?: number, timeSeriesFilterDoubleRangeGt?: number, timeSeriesFilterDoubleRangeGte?: number, timeSeriesFilterIntegerRangeLt?: number, timeSeriesFilterIntegerRangeLte?: number, timeSeriesFilterIntegerRangeGt?: number, timeSeriesFilterIntegerRangeGte?: number, timeSeriesFilterIntegerRangeIncl?: Array<number>, timeSeriesFilterIntegerRangeNotIn?: Array<number>, timeSeriesFilterTimeRangeLt?: Date, timeSeriesFilterTimeRangeLte?: Date, timeSeriesFilterTimeRangeGt?: Date, timeSeriesFilterTimeRangeGte?: Date, options?: any) {
+            return ExperimentsApiFp(configuration).compareTrials(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, metricIds, timeSeriesFilterName, timeSeriesFilterDoubleRangeLt, timeSeriesFilterDoubleRangeLte, timeSeriesFilterDoubleRangeGt, timeSeriesFilterDoubleRangeGte, timeSeriesFilterIntegerRangeLt, timeSeriesFilterIntegerRangeLte, timeSeriesFilterIntegerRangeGt, timeSeriesFilterIntegerRangeGte, timeSeriesFilterIntegerRangeIncl, timeSeriesFilterIntegerRangeNotIn, timeSeriesFilterTimeRangeLt, timeSeriesFilterTimeRangeLte, timeSeriesFilterTimeRangeGt, timeSeriesFilterTimeRangeGte, options)(fetch, basePath);
         },
         /**
          * 
@@ -15323,11 +15234,12 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {number} [projectId] ID of the project to look at.
          * @param {number} [offset] How many experiments to skip before including in the results.
          * @param {number} [limit] How many results to show.
+         * @param {string} [sort] Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc).
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        searchExperiments(projectId?: number, offset?: number, limit?: number, options?: any) {
-            return ExperimentsApiFp(configuration).searchExperiments(projectId, offset, limit, options)(fetch, basePath);
+        searchExperiments(projectId?: number, offset?: number, limit?: number, sort?: string, options?: any) {
+            return ExperimentsApiFp(configuration).searchExperiments(projectId, offset, limit, sort, options)(fetch, basePath);
         },
         /**
          * 
@@ -15482,7 +15394,7 @@ export class ExperimentsApi extends BaseAPI {
     
     /**
      * 
-     * @summary Return downsampled metrics from multiple trials to compare them side-by-side.
+     * @summary Return a downsampled time series of metrics from multiple trials to compare them side-by-side.
      * @param {Array<number>} [trialIds] The requested trial ids.
      * @param {number} [maxDatapoints] The maximum number of data points to return after downsampling.
      * @param {Array<string>} [metricNames] The names of selected metrics.
@@ -15490,7 +15402,6 @@ export class ExperimentsApi extends BaseAPI {
      * @param {number} [endBatches] Sample from metrics before this batch number.
      * @param {V1MetricType} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
      * @param {V1Scale} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
-     * @param {V1XAxis} [xAxis] x-axis selection. Default is in batch.   - X_AXIS_UNSPECIFIED: Unknown x-axis.  - X_AXIS_BATCH: x-axis in batch. This is the default x-axis.  - X_AXIS_TIME: x-axis in time.  - X_AXIS_EPOCH: x-axis in epoch.
      * @param {Array<string>} [metricIds] metric ids for the query.
      * @param {string} [timeSeriesFilterName] metric or column name for the filter.
      * @param {number} [timeSeriesFilterDoubleRangeLt] Less than.
@@ -15511,8 +15422,8 @@ export class ExperimentsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: V1MetricType, scale?: V1Scale, xAxis?: V1XAxis, metricIds?: Array<string>, timeSeriesFilterName?: string, timeSeriesFilterDoubleRangeLt?: number, timeSeriesFilterDoubleRangeLte?: number, timeSeriesFilterDoubleRangeGt?: number, timeSeriesFilterDoubleRangeGte?: number, timeSeriesFilterIntegerRangeLt?: number, timeSeriesFilterIntegerRangeLte?: number, timeSeriesFilterIntegerRangeGt?: number, timeSeriesFilterIntegerRangeGte?: number, timeSeriesFilterIntegerRangeIncl?: Array<number>, timeSeriesFilterIntegerRangeNotIn?: Array<number>, timeSeriesFilterTimeRangeLt?: Date, timeSeriesFilterTimeRangeLte?: Date, timeSeriesFilterTimeRangeGt?: Date, timeSeriesFilterTimeRangeGte?: Date, options?: any) {
-        return ExperimentsApiFp(this.configuration).compareTrials(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, xAxis, metricIds, timeSeriesFilterName, timeSeriesFilterDoubleRangeLt, timeSeriesFilterDoubleRangeLte, timeSeriesFilterDoubleRangeGt, timeSeriesFilterDoubleRangeGte, timeSeriesFilterIntegerRangeLt, timeSeriesFilterIntegerRangeLte, timeSeriesFilterIntegerRangeGt, timeSeriesFilterIntegerRangeGte, timeSeriesFilterIntegerRangeIncl, timeSeriesFilterIntegerRangeNotIn, timeSeriesFilterTimeRangeLt, timeSeriesFilterTimeRangeLte, timeSeriesFilterTimeRangeGt, timeSeriesFilterTimeRangeGte, options)(this.fetch, this.basePath)
+    public compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: V1MetricType, scale?: V1Scale, metricIds?: Array<string>, timeSeriesFilterName?: string, timeSeriesFilterDoubleRangeLt?: number, timeSeriesFilterDoubleRangeLte?: number, timeSeriesFilterDoubleRangeGt?: number, timeSeriesFilterDoubleRangeGte?: number, timeSeriesFilterIntegerRangeLt?: number, timeSeriesFilterIntegerRangeLte?: number, timeSeriesFilterIntegerRangeGt?: number, timeSeriesFilterIntegerRangeGte?: number, timeSeriesFilterIntegerRangeIncl?: Array<number>, timeSeriesFilterIntegerRangeNotIn?: Array<number>, timeSeriesFilterTimeRangeLt?: Date, timeSeriesFilterTimeRangeLte?: Date, timeSeriesFilterTimeRangeGt?: Date, timeSeriesFilterTimeRangeGte?: Date, options?: any) {
+        return ExperimentsApiFp(this.configuration).compareTrials(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, metricIds, timeSeriesFilterName, timeSeriesFilterDoubleRangeLt, timeSeriesFilterDoubleRangeLte, timeSeriesFilterDoubleRangeGt, timeSeriesFilterDoubleRangeGte, timeSeriesFilterIntegerRangeLt, timeSeriesFilterIntegerRangeLte, timeSeriesFilterIntegerRangeGt, timeSeriesFilterIntegerRangeGte, timeSeriesFilterIntegerRangeIncl, timeSeriesFilterIntegerRangeNotIn, timeSeriesFilterTimeRangeLt, timeSeriesFilterTimeRangeLte, timeSeriesFilterTimeRangeGt, timeSeriesFilterTimeRangeGte, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -15846,12 +15757,13 @@ export class ExperimentsApi extends BaseAPI {
      * @param {number} [projectId] ID of the project to look at.
      * @param {number} [offset] How many experiments to skip before including in the results.
      * @param {number} [limit] How many results to show.
+     * @param {string} [sort] Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc).
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public searchExperiments(projectId?: number, offset?: number, limit?: number, options?: any) {
-        return ExperimentsApiFp(this.configuration).searchExperiments(projectId, offset, limit, options)(this.fetch, this.basePath)
+    public searchExperiments(projectId?: number, offset?: number, limit?: number, sort?: string, options?: any) {
+        return ExperimentsApiFp(this.configuration).searchExperiments(projectId, offset, limit, sort, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -16298,43 +16210,6 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
-         * @summary Trigger the computation of hyperparameter importance on-demand for a specific metric on a specific experiment. The status and results can be retrieved with GetHPImportance.
-         * @param {number} experimentId The id of the experiment.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        computeHPImportance(experimentId: number, options: any = {}): FetchArgs {
-            // verify required parameter 'experimentId' is not null or undefined
-            if (experimentId === null || experimentId === undefined) {
-                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling computeHPImportance.');
-            }
-            const localVarPath = `/api/v1/experiments/{experimentId}/hyperparameter-importance`
-                .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
-            const localVarRequestOptions = { method: 'POST', ...options };
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-            
-            // authentication BearerToken required
-            if (configuration && configuration.apiKey) {
-                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
-                    ? configuration.apiKey("Authorization")
-                    : configuration.apiKey;
-                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-            }
-            
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
-            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
-            
-            return {
-                url: url.format(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
          * @summary Create an experiment.
          * @param {V1CreateExperimentRequest} body
          * @param {*} [options] Override http request option.
@@ -16592,48 +16467,6 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             localVarUrlObj.search = null;
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
-            
-            return {
-                url: url.format(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
-         * @summary Retrieve the latest computation of hyperparameter importance. Currently this is triggered for training loss (if emitted) and the searcher metric after 10% increments in an experiment's progress, but no more than every 10 minutes.
-         * @param {number} experimentId The id of the experiment.
-         * @param {number} [periodSeconds] Seconds to wait when polling for updates.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getHPImportance(experimentId: number, periodSeconds?: number, options: any = {}): FetchArgs {
-            // verify required parameter 'experimentId' is not null or undefined
-            if (experimentId === null || experimentId === undefined) {
-                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling getHPImportance.');
-            }
-            const localVarPath = `/api/v1/experiments/{experimentId}/hyperparameter-importance`
-                .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
-            const localVarRequestOptions = { method: 'GET', ...options };
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-            
-            // authentication BearerToken required
-            if (configuration && configuration.apiKey) {
-                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
-                    ? configuration.apiKey("Authorization")
-                    : configuration.apiKey;
-                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-            }
-            
-            if (periodSeconds !== undefined) {
-                localVarQueryParameter['periodSeconds'] = periodSeconds
-            }
-            
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
-            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
                 url: url.format(localVarUrlObj),
@@ -17502,10 +17335,11 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {number} [projectId] ID of the project to look at.
          * @param {number} [offset] How many experiments to skip before including in the results.
          * @param {number} [limit] How many results to show.
+         * @param {string} [sort] Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc).
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        searchExperiments(projectId?: number, offset?: number, limit?: number, options: any = {}): FetchArgs {
+        searchExperiments(projectId?: number, offset?: number, limit?: number, sort?: string, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/experiments-search`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = { method: 'GET', ...options };
@@ -17530,6 +17364,10 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             
             if (limit !== undefined) {
                 localVarQueryParameter['limit'] = limit
+            }
+            
+            if (sort !== undefined) {
+                localVarQueryParameter['sort'] = sort
             }
             
             localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
@@ -17951,25 +17789,6 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Trigger the computation of hyperparameter importance on-demand for a specific metric on a specific experiment. The status and results can be retrieved with GetHPImportance.
-         * @param {number} experimentId The id of the experiment.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        computeHPImportance(experimentId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ComputeHPImportanceResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).computeHPImportance(experimentId, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
-                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
-                    if (response.status >= 200 && response.status < 300) {
-                        return response.json();
-                    } else {
-                        throw response;
-                    }
-                });
-            };
-        },
-        /**
-         * 
          * @summary Create an experiment.
          * @param {V1CreateExperimentRequest} body
          * @param {*} [options] Override http request option.
@@ -18091,26 +17910,6 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         getGroups(body: V1GetGroupsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetGroupsResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getGroups(body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
-                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
-                    if (response.status >= 200 && response.status < 300) {
-                        return response.json();
-                    } else {
-                        throw response;
-                    }
-                });
-            };
-        },
-        /**
-         * 
-         * @summary Retrieve the latest computation of hyperparameter importance. Currently this is triggered for training loss (if emitted) and the searcher metric after 10% increments in an experiment's progress, but no more than every 10 minutes.
-         * @param {number} experimentId The id of the experiment.
-         * @param {number} [periodSeconds] Seconds to wait when polling for updates.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getHPImportance(experimentId: number, periodSeconds?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1GetHPImportanceResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getHPImportance(experimentId, periodSeconds, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -18513,11 +18312,12 @@ export const InternalApiFp = function (configuration?: Configuration) {
          * @param {number} [projectId] ID of the project to look at.
          * @param {number} [offset] How many experiments to skip before including in the results.
          * @param {number} [limit] How many results to show.
+         * @param {string} [sort] Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc).
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        searchExperiments(projectId?: number, offset?: number, limit?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SearchExperimentsResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).searchExperiments(projectId, offset, limit, options);
+        searchExperiments(projectId?: number, offset?: number, limit?: number, sort?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SearchExperimentsResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).searchExperiments(projectId, offset, limit, sort, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -18716,16 +18516,6 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
-         * @summary Trigger the computation of hyperparameter importance on-demand for a specific metric on a specific experiment. The status and results can be retrieved with GetHPImportance.
-         * @param {number} experimentId The id of the experiment.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        computeHPImportance(experimentId: number, options?: any) {
-            return InternalApiFp(configuration).computeHPImportance(experimentId, options)(fetch, basePath);
-        },
-        /**
-         * 
          * @summary Create an experiment.
          * @param {V1CreateExperimentRequest} body
          * @param {*} [options] Override http request option.
@@ -18793,17 +18583,6 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          */
         getGroups(body: V1GetGroupsRequest, options?: any) {
             return InternalApiFp(configuration).getGroups(body, options)(fetch, basePath);
-        },
-        /**
-         * 
-         * @summary Retrieve the latest computation of hyperparameter importance. Currently this is triggered for training loss (if emitted) and the searcher metric after 10% increments in an experiment's progress, but no more than every 10 minutes.
-         * @param {number} experimentId The id of the experiment.
-         * @param {number} [periodSeconds] Seconds to wait when polling for updates.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getHPImportance(experimentId: number, periodSeconds?: number, options?: any) {
-            return InternalApiFp(configuration).getHPImportance(experimentId, periodSeconds, options)(fetch, basePath);
         },
         /**
          * 
@@ -19026,11 +18805,12 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {number} [projectId] ID of the project to look at.
          * @param {number} [offset] How many experiments to skip before including in the results.
          * @param {number} [limit] How many results to show.
+         * @param {string} [sort] Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc).
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        searchExperiments(projectId?: number, offset?: number, limit?: number, options?: any) {
-            return InternalApiFp(configuration).searchExperiments(projectId, offset, limit, options)(fetch, basePath);
+        searchExperiments(projectId?: number, offset?: number, limit?: number, sort?: string, options?: any) {
+            return InternalApiFp(configuration).searchExperiments(projectId, offset, limit, sort, options)(fetch, basePath);
         },
         /**
          * 
@@ -19201,18 +18981,6 @@ export class InternalApi extends BaseAPI {
     
     /**
      * 
-     * @summary Trigger the computation of hyperparameter importance on-demand for a specific metric on a specific experiment. The status and results can be retrieved with GetHPImportance.
-     * @param {number} experimentId The id of the experiment.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof InternalApi
-     */
-    public computeHPImportance(experimentId: number, options?: any) {
-        return InternalApiFp(this.configuration).computeHPImportance(experimentId, options)(this.fetch, this.basePath)
-    }
-    
-    /**
-     * 
      * @summary Create an experiment.
      * @param {V1CreateExperimentRequest} body
      * @param {*} [options] Override http request option.
@@ -19293,19 +19061,6 @@ export class InternalApi extends BaseAPI {
      */
     public getGroups(body: V1GetGroupsRequest, options?: any) {
         return InternalApiFp(this.configuration).getGroups(body, options)(this.fetch, this.basePath)
-    }
-    
-    /**
-     * 
-     * @summary Retrieve the latest computation of hyperparameter importance. Currently this is triggered for training loss (if emitted) and the searcher metric after 10% increments in an experiment's progress, but no more than every 10 minutes.
-     * @param {number} experimentId The id of the experiment.
-     * @param {number} [periodSeconds] Seconds to wait when polling for updates.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof InternalApi
-     */
-    public getHPImportance(experimentId: number, periodSeconds?: number, options?: any) {
-        return InternalApiFp(this.configuration).getHPImportance(experimentId, periodSeconds, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -19567,12 +19322,13 @@ export class InternalApi extends BaseAPI {
      * @param {number} [projectId] ID of the project to look at.
      * @param {number} [offset] How many experiments to skip before including in the results.
      * @param {number} [limit] How many results to show.
+     * @param {string} [sort] Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc).
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public searchExperiments(projectId?: number, offset?: number, limit?: number, options?: any) {
-        return InternalApiFp(this.configuration).searchExperiments(projectId, offset, limit, options)(this.fetch, this.basePath)
+    public searchExperiments(projectId?: number, offset?: number, limit?: number, sort?: string, options?: any) {
+        return InternalApiFp(this.configuration).searchExperiments(projectId, offset, limit, sort, options)(this.fetch, this.basePath)
     }
     
     /**

@@ -27,12 +27,16 @@
 }
 .chartTitle {
   background-color: var(--theme-stage);
-  font-family: 'Objektiv Mk3', Arial, Helvetica, sans-serif;
+  font-family: var(--theme-font-family);
   font-size: 14px;
   margin-bottom: -18px !important;
   padding-bottom: 15px;
   padding-top: 5px;
   text-align: center;
+
+  @supports (font-variation-settings: normal) {
+    font-family: var(--theme-font-family-var);
+  }
 }
 .filterContainer {
   column-gap: 16px;
@@ -46,13 +50,17 @@
 
   .legendItem {
     display: inline-block;
-    font-family: 'Objektiv Mk3', Arial, Helvetica, sans-serif;
+    font-family: var(--theme-font-family);
     font-size: 12px;
     margin-right: 16px;
 
     .colorButton {
       font-weight: bold;
       margin-right: 8px;
+    }
+
+    @supports (font-variation-settings: normal) {
+      font-family: var(--theme-font-family-var);
     }
   }
 }

@@ -31,7 +31,7 @@ import Spinner from 'shared/components/Spinner';
 import usePolling from 'shared/hooks/usePolling';
 import { ErrorType } from 'shared/utils/error';
 import { dateTimeStringSorter } from 'shared/utils/sort';
-import usersStore from 'stores/users';
+import userStore from 'stores/users';
 import { CommandTask, DetailedUser, ExperimentItem, Project } from 'types';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
@@ -51,11 +51,7 @@ const Dashboard: React.FC = () => {
   const [canceler] = useState(new AbortController());
   const [submissionsLoading, setSubmissionsLoading] = useState<boolean>(true);
   const [projectsLoading, setProjectsLoading] = useState<boolean>(true);
-  const loadableCurrentUser = useObservable(usersStore.getCurrentUser());
-  const currentUser = Loadable.match(loadableCurrentUser, {
-    Loaded: (cUser) => cUser,
-    NotLoaded: () => undefined,
-  });
+  const currentUser = Loadable.getOrElse(undefined, useObservable(userStore.currentUser));
   const { canCreateNSC } = usePermissions();
   type Submission = ExperimentItem & CommandTask;
 
@@ -278,6 +274,7 @@ const Dashboard: React.FC = () => {
             pagination={false}
             rowKey="id"
             showHeader={false}
+            size="middle"
           />
         ) : (
           <Empty

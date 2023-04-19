@@ -48,7 +48,7 @@ def test_trial_order_by() -> None:
         client.TrialOrderBy,
         bindings.v1OrderBy,
         # We don't give the user the UNSPECIFIED option.
-        ignore=[bindings.v1OrderBy.ORDER_BY_UNSPECIFIED],
+        ignore=[bindings.v1OrderBy.UNSPECIFIED],
     )
 
 
@@ -65,5 +65,5 @@ def test_model_order_by() -> None:
         client.ModelOrderBy,
         bindings.v1OrderBy,
         # We don't give the user the UNSPECIFIED option.
-        ignore=[bindings.v1OrderBy.ORDER_BY_UNSPECIFIED],
+        ignore=[bindings.v1OrderBy.UNSPECIFIED],
     )

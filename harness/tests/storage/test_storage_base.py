@@ -4,6 +4,7 @@ from unittest import mock
 
 import pytest
 
+from determined import core
 from determined.common import storage
 
 
@@ -108,3 +109,41 @@ def test_shared_fs_shortcut_string() -> None:
 def test_bad_shortcut_string(shortcut: str) -> None:
     with pytest.raises(ValueError):
         _ = storage.from_string(shortcut)
+
+
+def test_azure_shortcut_dict() -> None:
+    shortcut = {"type": "azure", "container": "test_container", "account_url": "localhost"}
+    with mock.patch("determined.common.storage.AzureStorageManager.from_config") as mocked:
+        _ = core._context._get_storage_manager(checkpoint_storage=shortcut)
+    shortcut.pop("type")
+    mocked.assert_called_once_with(shortcut, None)
+
+
+def test_gcs_shortcut_dict() -> None:
+    shortcut = {"type": "gcs", "bucket": "test_bucket"}
+    with mock.patch("determined.common.storage.GCSStorageManager.from_config") as mocked:
+        _ = core._context._get_storage_manager(checkpoint_storage=shortcut)
+    shortcut.pop("type")
+    mocked.assert_called_once_with(shortcut, None)
+
+
+def test_s3_shortcut_dict() -> None:
+    shortcut = {"type": "s3", "bucket": "test_bucket"}
+    with mock.patch("determined.common.storage.S3StorageManager.from_config") as mocked:
+        _ = core._context._get_storage_manager(checkpoint_storage=shortcut)
+    shortcut.pop("type")
+    mocked.assert_called_once_with(shortcut, None)
+
+
+def test_shared_fs_shortcut_dict() -> None:
+    shortcut = {"type": "shared_fs", "base_path": "test_base_path"}
+    with pytest.raises(ValueError):
+        _ = core._context._get_storage_manager(checkpoint_storage=shortcut)
+
+
+def test_hdfs_shortcut_dict() -> None:
+    shortcut = {"type": "hdfs", "hdfs_url": "test_hdfs_url", "hdfs_path": "test_hdfs_path"}
+    with mock.patch("determined.common.storage.HDFSStorageManager.from_config") as mocked:
+        _ = core._context._get_storage_manager(checkpoint_storage=shortcut)
+    shortcut.pop("type")
+    mocked.assert_called_once_with(shortcut, None)

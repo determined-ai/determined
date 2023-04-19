@@ -79,8 +79,8 @@ def run_api_server(
 
             This function models an experiment that may take a long time to complete. The first
             two times get_experiment is called, the experiment state is still in a
-            bindings.experimentv1State.STATE_RUNNING. On the third call, its state is
-            bindings.experimentv1State.STATE_COMPLETED.
+            bindings.experimentv1State.RUNNING. On the third call, its state is
+            bindings.experimentv1State.COMPLETED.
 
             Returns:
                 If successful, a JSON-encoded sample experiment. Else None.
@@ -92,9 +92,9 @@ def run_api_server(
             with lock:
                 state[key] = state.get(key, 0) + 1
                 if state[key] <= n_calls:
-                    sample_experiment.experiment.state = bindings.experimentv1State.STATE_RUNNING
+                    sample_experiment.experiment.state = bindings.experimentv1State.RUNNING
                 else:
-                    sample_experiment.experiment.state = bindings.experimentv1State.STATE_COMPLETED
+                    sample_experiment.experiment.state = bindings.experimentv1State.COMPLETED
             return sample_experiment.to_json()
 
         def get_experiment_flaky(self) -> Dict[str, Any]:

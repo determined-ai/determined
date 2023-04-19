@@ -55,73 +55,15 @@ class APIHttpStreamError(APIHttpError):
         return self.message
 
 
-class GetHPImportanceResponseMetricHPImportance:
-    error: "typing.Optional[str]" = None
-    experimentProgress: "typing.Optional[float]" = None
-    hpImportance: "typing.Optional[typing.Dict[str, float]]" = None
-    inProgress: "typing.Optional[bool]" = None
-    pending: "typing.Optional[bool]" = None
-
-    def __init__(
-        self,
-        *,
-        error: "typing.Union[str, None, Unset]" = _unset,
-        experimentProgress: "typing.Union[float, None, Unset]" = _unset,
-        hpImportance: "typing.Union[typing.Dict[str, float], None, Unset]" = _unset,
-        inProgress: "typing.Union[bool, None, Unset]" = _unset,
-        pending: "typing.Union[bool, None, Unset]" = _unset,
-    ):
-        if not isinstance(error, Unset):
-            self.error = error
-        if not isinstance(experimentProgress, Unset):
-            self.experimentProgress = experimentProgress
-        if not isinstance(hpImportance, Unset):
-            self.hpImportance = hpImportance
-        if not isinstance(inProgress, Unset):
-            self.inProgress = inProgress
-        if not isinstance(pending, Unset):
-            self.pending = pending
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "GetHPImportanceResponseMetricHPImportance":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-        }
-        if "error" in obj:
-            kwargs["error"] = obj["error"]
-        if "experimentProgress" in obj:
-            kwargs["experimentProgress"] = float(obj["experimentProgress"]) if obj["experimentProgress"] is not None else None
-        if "hpImportance" in obj:
-            kwargs["hpImportance"] = {k: float(v) for k, v in obj["hpImportance"].items()} if obj["hpImportance"] is not None else None
-        if "inProgress" in obj:
-            kwargs["inProgress"] = obj["inProgress"]
-        if "pending" in obj:
-            kwargs["pending"] = obj["pending"]
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-        }
-        if not omit_unset or "error" in vars(self):
-            out["error"] = self.error
-        if not omit_unset or "experimentProgress" in vars(self):
-            out["experimentProgress"] = None if self.experimentProgress is None else dump_float(self.experimentProgress)
-        if not omit_unset or "hpImportance" in vars(self):
-            out["hpImportance"] = None if self.hpImportance is None else {k: dump_float(v) for k, v in self.hpImportance.items()}
-        if not omit_unset or "inProgress" in vars(self):
-            out["inProgress"] = self.inProgress
-        if not omit_unset or "pending" in vars(self):
-            out["pending"] = self.pending
-        return out
-
 class GetMasterResponseProduct(enum.Enum):
-    PRODUCT_UNSPECIFIED = "PRODUCT_UNSPECIFIED"
-    PRODUCT_COMMUNITY = "PRODUCT_COMMUNITY"
+    UNSPECIFIED = "PRODUCT_UNSPECIFIED"
+    COMMUNITY = "PRODUCT_COMMUNITY"
 
 class GetTrialWorkloadsRequestFilterOption(enum.Enum):
-    FILTER_OPTION_UNSPECIFIED = "FILTER_OPTION_UNSPECIFIED"
-    FILTER_OPTION_CHECKPOINT = "FILTER_OPTION_CHECKPOINT"
-    FILTER_OPTION_VALIDATION = "FILTER_OPTION_VALIDATION"
-    FILTER_OPTION_CHECKPOINT_OR_VALIDATION = "FILTER_OPTION_CHECKPOINT_OR_VALIDATION"
+    UNSPECIFIED = "FILTER_OPTION_UNSPECIFIED"
+    CHECKPOINT = "FILTER_OPTION_CHECKPOINT"
+    VALIDATION = "FILTER_OPTION_VALIDATION"
+    CHECKPOINT_OR_VALIDATION = "FILTER_OPTION_CHECKPOINT_OR_VALIDATION"
 
 class ResourcesSummaryDevices:
     devices: "typing.Optional[typing.Sequence[v1Device]]" = None
@@ -184,16 +126,16 @@ class TrialFiltersRankWithinExp:
         return out
 
 class TrialProfilerMetricLabelsProfilerMetricType(enum.Enum):
-    PROFILER_METRIC_TYPE_UNSPECIFIED = "PROFILER_METRIC_TYPE_UNSPECIFIED"
-    PROFILER_METRIC_TYPE_SYSTEM = "PROFILER_METRIC_TYPE_SYSTEM"
-    PROFILER_METRIC_TYPE_TIMING = "PROFILER_METRIC_TYPE_TIMING"
-    PROFILER_METRIC_TYPE_MISC = "PROFILER_METRIC_TYPE_MISC"
+    UNSPECIFIED = "PROFILER_METRIC_TYPE_UNSPECIFIED"
+    SYSTEM = "PROFILER_METRIC_TYPE_SYSTEM"
+    TIMING = "PROFILER_METRIC_TYPE_TIMING"
+    MISC = "PROFILER_METRIC_TYPE_MISC"
 
 class TrialSorterNamespace(enum.Enum):
-    NAMESPACE_UNSPECIFIED = "NAMESPACE_UNSPECIFIED"
-    NAMESPACE_HPARAMS = "NAMESPACE_HPARAMS"
-    NAMESPACE_TRAINING_METRICS = "NAMESPACE_TRAINING_METRICS"
-    NAMESPACE_VALIDATION_METRICS = "NAMESPACE_VALIDATION_METRICS"
+    UNSPECIFIED = "NAMESPACE_UNSPECIFIED"
+    HPARAMS = "NAMESPACE_HPARAMS"
+    TRAINING_METRICS = "NAMESPACE_TRAINING_METRICS"
+    VALIDATION_METRICS = "NAMESPACE_VALIDATION_METRICS"
 
 class UpdateTrialTagsRequestIds:
     ids: "typing.Optional[typing.Sequence[int]]" = None
@@ -222,59 +164,59 @@ class UpdateTrialTagsRequestIds:
         return out
 
 class checkpointv1State(enum.Enum):
-    STATE_UNSPECIFIED = "STATE_UNSPECIFIED"
-    STATE_ACTIVE = "STATE_ACTIVE"
-    STATE_COMPLETED = "STATE_COMPLETED"
-    STATE_ERROR = "STATE_ERROR"
-    STATE_DELETED = "STATE_DELETED"
+    UNSPECIFIED = "STATE_UNSPECIFIED"
+    ACTIVE = "STATE_ACTIVE"
+    COMPLETED = "STATE_COMPLETED"
+    ERROR = "STATE_ERROR"
+    DELETED = "STATE_DELETED"
 
 class containerv1State(enum.Enum):
-    STATE_UNSPECIFIED = "STATE_UNSPECIFIED"
-    STATE_ASSIGNED = "STATE_ASSIGNED"
-    STATE_PULLING = "STATE_PULLING"
-    STATE_STARTING = "STATE_STARTING"
-    STATE_RUNNING = "STATE_RUNNING"
-    STATE_TERMINATED = "STATE_TERMINATED"
+    UNSPECIFIED = "STATE_UNSPECIFIED"
+    ASSIGNED = "STATE_ASSIGNED"
+    PULLING = "STATE_PULLING"
+    STARTING = "STATE_STARTING"
+    RUNNING = "STATE_RUNNING"
+    TERMINATED = "STATE_TERMINATED"
 
 class devicev1Type(enum.Enum):
-    TYPE_UNSPECIFIED = "TYPE_UNSPECIFIED"
-    TYPE_CPU = "TYPE_CPU"
-    TYPE_CUDA = "TYPE_CUDA"
-    TYPE_ROCM = "TYPE_ROCM"
+    UNSPECIFIED = "TYPE_UNSPECIFIED"
+    CPU = "TYPE_CPU"
+    CUDA = "TYPE_CUDA"
+    ROCM = "TYPE_ROCM"
 
 class experimentv1State(enum.Enum):
-    STATE_UNSPECIFIED = "STATE_UNSPECIFIED"
-    STATE_ACTIVE = "STATE_ACTIVE"
-    STATE_PAUSED = "STATE_PAUSED"
-    STATE_STOPPING_COMPLETED = "STATE_STOPPING_COMPLETED"
-    STATE_STOPPING_CANCELED = "STATE_STOPPING_CANCELED"
-    STATE_STOPPING_ERROR = "STATE_STOPPING_ERROR"
-    STATE_COMPLETED = "STATE_COMPLETED"
-    STATE_CANCELED = "STATE_CANCELED"
-    STATE_ERROR = "STATE_ERROR"
-    STATE_DELETED = "STATE_DELETED"
-    STATE_DELETING = "STATE_DELETING"
-    STATE_DELETE_FAILED = "STATE_DELETE_FAILED"
-    STATE_STOPPING_KILLED = "STATE_STOPPING_KILLED"
-    STATE_QUEUED = "STATE_QUEUED"
-    STATE_PULLING = "STATE_PULLING"
-    STATE_STARTING = "STATE_STARTING"
-    STATE_RUNNING = "STATE_RUNNING"
+    UNSPECIFIED = "STATE_UNSPECIFIED"
+    ACTIVE = "STATE_ACTIVE"
+    PAUSED = "STATE_PAUSED"
+    STOPPING_COMPLETED = "STATE_STOPPING_COMPLETED"
+    STOPPING_CANCELED = "STATE_STOPPING_CANCELED"
+    STOPPING_ERROR = "STATE_STOPPING_ERROR"
+    COMPLETED = "STATE_COMPLETED"
+    CANCELED = "STATE_CANCELED"
+    ERROR = "STATE_ERROR"
+    DELETED = "STATE_DELETED"
+    DELETING = "STATE_DELETING"
+    DELETE_FAILED = "STATE_DELETE_FAILED"
+    STOPPING_KILLED = "STATE_STOPPING_KILLED"
+    QUEUED = "STATE_QUEUED"
+    PULLING = "STATE_PULLING"
+    STARTING = "STATE_STARTING"
+    RUNNING = "STATE_RUNNING"
 
 class jobv1State(enum.Enum):
-    STATE_UNSPECIFIED = "STATE_UNSPECIFIED"
-    STATE_QUEUED = "STATE_QUEUED"
-    STATE_SCHEDULED = "STATE_SCHEDULED"
-    STATE_SCHEDULED_BACKFILLED = "STATE_SCHEDULED_BACKFILLED"
+    UNSPECIFIED = "STATE_UNSPECIFIED"
+    QUEUED = "STATE_QUEUED"
+    SCHEDULED = "STATE_SCHEDULED"
+    SCHEDULED_BACKFILLED = "STATE_SCHEDULED_BACKFILLED"
 
 class jobv1Type(enum.Enum):
-    TYPE_UNSPECIFIED = "TYPE_UNSPECIFIED"
-    TYPE_EXPERIMENT = "TYPE_EXPERIMENT"
-    TYPE_NOTEBOOK = "TYPE_NOTEBOOK"
-    TYPE_TENSORBOARD = "TYPE_TENSORBOARD"
-    TYPE_SHELL = "TYPE_SHELL"
-    TYPE_COMMAND = "TYPE_COMMAND"
-    TYPE_CHECKPOINT_GC = "TYPE_CHECKPOINT_GC"
+    UNSPECIFIED = "TYPE_UNSPECIFIED"
+    EXPERIMENT = "TYPE_EXPERIMENT"
+    NOTEBOOK = "TYPE_NOTEBOOK"
+    TENSORBOARD = "TYPE_TENSORBOARD"
+    SHELL = "TYPE_SHELL"
+    COMMAND = "TYPE_COMMAND"
+    CHECKPOINT_GC = "TYPE_CHECKPOINT_GC"
 
 class protobufAny:
     typeUrl: "typing.Optional[str]" = None
@@ -422,26 +364,26 @@ class runtimeStreamError:
         return out
 
 class taskv1State(enum.Enum):
-    STATE_UNSPECIFIED = "STATE_UNSPECIFIED"
-    STATE_PULLING = "STATE_PULLING"
-    STATE_STARTING = "STATE_STARTING"
-    STATE_RUNNING = "STATE_RUNNING"
-    STATE_TERMINATED = "STATE_TERMINATED"
-    STATE_TERMINATING = "STATE_TERMINATING"
-    STATE_WAITING = "STATE_WAITING"
-    STATE_QUEUED = "STATE_QUEUED"
+    UNSPECIFIED = "STATE_UNSPECIFIED"
+    PULLING = "STATE_PULLING"
+    STARTING = "STATE_STARTING"
+    RUNNING = "STATE_RUNNING"
+    TERMINATED = "STATE_TERMINATED"
+    TERMINATING = "STATE_TERMINATING"
+    WAITING = "STATE_WAITING"
+    QUEUED = "STATE_QUEUED"
 
 class trialv1State(enum.Enum):
-    STATE_UNSPECIFIED = "STATE_UNSPECIFIED"
-    STATE_ACTIVE = "STATE_ACTIVE"
-    STATE_PAUSED = "STATE_PAUSED"
-    STATE_STOPPING_CANCELED = "STATE_STOPPING_CANCELED"
-    STATE_STOPPING_KILLED = "STATE_STOPPING_KILLED"
-    STATE_STOPPING_COMPLETED = "STATE_STOPPING_COMPLETED"
-    STATE_STOPPING_ERROR = "STATE_STOPPING_ERROR"
-    STATE_CANCELED = "STATE_CANCELED"
-    STATE_COMPLETED = "STATE_COMPLETED"
-    STATE_ERROR = "STATE_ERROR"
+    UNSPECIFIED = "STATE_UNSPECIFIED"
+    ACTIVE = "STATE_ACTIVE"
+    PAUSED = "STATE_PAUSED"
+    STOPPING_CANCELED = "STATE_STOPPING_CANCELED"
+    STOPPING_KILLED = "STATE_STOPPING_KILLED"
+    STOPPING_COMPLETED = "STATE_STOPPING_COMPLETED"
+    STOPPING_ERROR = "STATE_STOPPING_ERROR"
+    CANCELED = "STATE_CANCELED"
+    COMPLETED = "STATE_COMPLETED"
+    ERROR = "STATE_ERROR"
 
 class trialv1Trial:
     bestCheckpoint: "typing.Optional[v1CheckpointWorkload]" = None
@@ -644,8 +586,8 @@ class v1ActivateExperimentsResponse:
         return out
 
 class v1ActivityType(enum.Enum):
-    ACTIVITY_TYPE_UNSPECIFIED = "ACTIVITY_TYPE_UNSPECIFIED"
-    ACTIVITY_TYPE_GET = "ACTIVITY_TYPE_GET"
+    UNSPECIFIED = "ACTIVITY_TYPE_UNSPECIFIED"
+    GET = "ACTIVITY_TYPE_GET"
 
 class v1AddProjectNoteResponse:
 
@@ -2800,10 +2742,11 @@ class v1EnableSlotResponse:
         return out
 
 class v1EntityType(enum.Enum):
-    ENTITY_TYPE_UNSPECIFIED = "ENTITY_TYPE_UNSPECIFIED"
-    ENTITY_TYPE_PROJECT = "ENTITY_TYPE_PROJECT"
+    UNSPECIFIED = "ENTITY_TYPE_UNSPECIFIED"
+    PROJECT = "ENTITY_TYPE_PROJECT"
 
 class v1Experiment:
+    bestTrialId: "typing.Optional[int]" = None
     bestTrialSearcherMetric: "typing.Optional[float]" = None
     checkpointCount: "typing.Optional[int]" = None
     checkpointSize: "typing.Optional[str]" = None
@@ -2838,6 +2781,7 @@ class v1Experiment:
         startTime: str,
         state: "experimentv1State",
         username: str,
+        bestTrialId: "typing.Union[int, None, Unset]" = _unset,
         bestTrialSearcherMetric: "typing.Union[float, None, Unset]" = _unset,
         checkpointCount: "typing.Union[int, None, Unset]" = _unset,
         checkpointSize: "typing.Union[str, None, Unset]" = _unset,
@@ -2869,6 +2813,8 @@ class v1Experiment:
         self.startTime = startTime
         self.state = state
         self.username = username
+        if not isinstance(bestTrialId, Unset):
+            self.bestTrialId = bestTrialId
         if not isinstance(bestTrialSearcherMetric, Unset):
             self.bestTrialSearcherMetric = bestTrialSearcherMetric
         if not isinstance(checkpointCount, Unset):
@@ -2921,6 +2867,8 @@ class v1Experiment:
             "state": experimentv1State(obj["state"]),
             "username": obj["username"],
         }
+        if "bestTrialId" in obj:
+            kwargs["bestTrialId"] = obj["bestTrialId"]
         if "bestTrialSearcherMetric" in obj:
             kwargs["bestTrialSearcherMetric"] = float(obj["bestTrialSearcherMetric"]) if obj["bestTrialSearcherMetric"] is not None else None
         if "checkpointCount" in obj:
@@ -2973,6 +2921,8 @@ class v1Experiment:
             "state": self.state.value,
             "username": self.username,
         }
+        if not omit_unset or "bestTrialId" in vars(self):
+            out["bestTrialId"] = self.bestTrialId
         if not omit_unset or "bestTrialSearcherMetric" in vars(self):
             out["bestTrialSearcherMetric"] = None if self.bestTrialSearcherMetric is None else dump_float(self.bestTrialSearcherMetric)
         if not omit_unset or "checkpointCount" in vars(self):
@@ -3100,16 +3050,16 @@ class v1ExperimentSimulation:
         return out
 
 class v1FailureType(enum.Enum):
-    FAILURE_TYPE_UNSPECIFIED = "FAILURE_TYPE_UNSPECIFIED"
-    FAILURE_TYPE_RESOURCES_FAILED = "FAILURE_TYPE_RESOURCES_FAILED"
-    FAILURE_TYPE_RESOURCES_ABORTED = "FAILURE_TYPE_RESOURCES_ABORTED"
-    FAILURE_TYPE_RESOURCES_MISSING = "FAILURE_TYPE_RESOURCES_MISSING"
-    FAILURE_TYPE_TASK_ABORTED = "FAILURE_TYPE_TASK_ABORTED"
-    FAILURE_TYPE_TASK_ERROR = "FAILURE_TYPE_TASK_ERROR"
-    FAILURE_TYPE_AGENT_FAILED = "FAILURE_TYPE_AGENT_FAILED"
-    FAILURE_TYPE_AGENT_ERROR = "FAILURE_TYPE_AGENT_ERROR"
-    FAILURE_TYPE_RESTORE_ERROR = "FAILURE_TYPE_RESTORE_ERROR"
-    FAILURE_TYPE_UNKNOWN_ERROR = "FAILURE_TYPE_UNKNOWN_ERROR"
+    UNSPECIFIED = "FAILURE_TYPE_UNSPECIFIED"
+    RESOURCES_FAILED = "FAILURE_TYPE_RESOURCES_FAILED"
+    RESOURCES_ABORTED = "FAILURE_TYPE_RESOURCES_ABORTED"
+    RESOURCES_MISSING = "FAILURE_TYPE_RESOURCES_MISSING"
+    TASK_ABORTED = "FAILURE_TYPE_TASK_ABORTED"
+    TASK_ERROR = "FAILURE_TYPE_TASK_ERROR"
+    AGENT_FAILED = "FAILURE_TYPE_AGENT_FAILED"
+    AGENT_ERROR = "FAILURE_TYPE_AGENT_ERROR"
+    RESTORE_ERROR = "FAILURE_TYPE_RESTORE_ERROR"
+    UNKNOWN_ERROR = "FAILURE_TYPE_UNKNOWN_ERROR"
 
 class v1File:
 
@@ -3232,30 +3182,30 @@ class v1FileNode:
         return out
 
 class v1FittingPolicy(enum.Enum):
-    FITTING_POLICY_UNSPECIFIED = "FITTING_POLICY_UNSPECIFIED"
-    FITTING_POLICY_BEST = "FITTING_POLICY_BEST"
-    FITTING_POLICY_WORST = "FITTING_POLICY_WORST"
-    FITTING_POLICY_KUBERNETES = "FITTING_POLICY_KUBERNETES"
-    FITTING_POLICY_SLURM = "FITTING_POLICY_SLURM"
-    FITTING_POLICY_PBS = "FITTING_POLICY_PBS"
+    UNSPECIFIED = "FITTING_POLICY_UNSPECIFIED"
+    BEST = "FITTING_POLICY_BEST"
+    WORST = "FITTING_POLICY_WORST"
+    KUBERNETES = "FITTING_POLICY_KUBERNETES"
+    SLURM = "FITTING_POLICY_SLURM"
+    PBS = "FITTING_POLICY_PBS"
 
 class v1GeneralColumn(enum.Enum):
-    GENERAL_COLUMN_UNSPECIFIED = "GENERAL_COLUMN_UNSPECIFIED"
-    GENERAL_COLUMN_ID = "GENERAL_COLUMN_ID"
-    GENERAL_COLUMN_NAME = "GENERAL_COLUMN_NAME"
-    GENERAL_COLUMN_DESCRIPTION = "GENERAL_COLUMN_DESCRIPTION"
-    GENERAL_COLUMN_TAGS = "GENERAL_COLUMN_TAGS"
-    GENERAL_COLUMN_FORKED = "GENERAL_COLUMN_FORKED"
-    GENERAL_COLUMN_STARTTIME = "GENERAL_COLUMN_STARTTIME"
-    GENERAL_COLUMN_DURATION = "GENERAL_COLUMN_DURATION"
-    GENERAL_COLUMN_COUNT = "GENERAL_COLUMN_COUNT"
-    GENERAL_COLUMN_STATE = "GENERAL_COLUMN_STATE"
-    GENERAL_COLUMN_SEARCHER_TYPE = "GENERAL_COLUMN_SEARCHER_TYPE"
-    GENERAL_COLUMN_RESOURSE_POOL = "GENERAL_COLUMN_RESOURSE_POOL"
-    GENERAL_COLUMN_PROGRESS = "GENERAL_COLUMN_PROGRESS"
-    GENERAL_COLUMN_CHECKPOINT_SIZE = "GENERAL_COLUMN_CHECKPOINT_SIZE"
-    GENERAL_COLUMN_CHECKPOINT_COUNT = "GENERAL_COLUMN_CHECKPOINT_COUNT"
-    GENERAL_COLUMN_USER = "GENERAL_COLUMN_USER"
+    UNSPECIFIED = "GENERAL_COLUMN_UNSPECIFIED"
+    ID = "GENERAL_COLUMN_ID"
+    NAME = "GENERAL_COLUMN_NAME"
+    DESCRIPTION = "GENERAL_COLUMN_DESCRIPTION"
+    TAGS = "GENERAL_COLUMN_TAGS"
+    FORKED = "GENERAL_COLUMN_FORKED"
+    STARTTIME = "GENERAL_COLUMN_STARTTIME"
+    DURATION = "GENERAL_COLUMN_DURATION"
+    COUNT = "GENERAL_COLUMN_COUNT"
+    STATE = "GENERAL_COLUMN_STATE"
+    SEARCHER_TYPE = "GENERAL_COLUMN_SEARCHER_TYPE"
+    RESOURSE_POOL = "GENERAL_COLUMN_RESOURSE_POOL"
+    PROGRESS = "GENERAL_COLUMN_PROGRESS"
+    CHECKPOINT_SIZE = "GENERAL_COLUMN_CHECKPOINT_SIZE"
+    CHECKPOINT_COUNT = "GENERAL_COLUMN_CHECKPOINT_COUNT"
+    USER = "GENERAL_COLUMN_USER"
 
 class v1GetActiveTasksCountResponse:
 
@@ -3314,9 +3264,9 @@ class v1GetAgentResponse:
         return out
 
 class v1GetAgentsRequestSortBy(enum.Enum):
-    SORT_BY_UNSPECIFIED = "SORT_BY_UNSPECIFIED"
-    SORT_BY_ID = "SORT_BY_ID"
-    SORT_BY_TIME = "SORT_BY_TIME"
+    UNSPECIFIED = "SORT_BY_UNSPECIFIED"
+    ID = "SORT_BY_ID"
+    TIME = "SORT_BY_TIME"
 
 class v1GetAgentsResponse:
     pagination: "typing.Optional[v1Pagination]" = None
@@ -3423,11 +3373,11 @@ class v1GetCommandResponse:
         return out
 
 class v1GetCommandsRequestSortBy(enum.Enum):
-    SORT_BY_UNSPECIFIED = "SORT_BY_UNSPECIFIED"
-    SORT_BY_ID = "SORT_BY_ID"
-    SORT_BY_DESCRIPTION = "SORT_BY_DESCRIPTION"
-    SORT_BY_START_TIME = "SORT_BY_START_TIME"
-    SORT_BY_WORKSPACE_ID = "SORT_BY_WORKSPACE_ID"
+    UNSPECIFIED = "SORT_BY_UNSPECIFIED"
+    ID = "SORT_BY_ID"
+    DESCRIPTION = "SORT_BY_DESCRIPTION"
+    START_TIME = "SORT_BY_START_TIME"
+    WORKSPACE_ID = "SORT_BY_WORKSPACE_ID"
 
 class v1GetCommandsResponse:
     pagination: "typing.Optional[v1Pagination]" = None
@@ -3494,13 +3444,13 @@ class v1GetCurrentTrialSearcherOperationResponse:
         return out
 
 class v1GetExperimentCheckpointsRequestSortBy(enum.Enum):
-    SORT_BY_UNSPECIFIED = "SORT_BY_UNSPECIFIED"
-    SORT_BY_UUID = "SORT_BY_UUID"
-    SORT_BY_TRIAL_ID = "SORT_BY_TRIAL_ID"
-    SORT_BY_BATCH_NUMBER = "SORT_BY_BATCH_NUMBER"
-    SORT_BY_END_TIME = "SORT_BY_END_TIME"
-    SORT_BY_STATE = "SORT_BY_STATE"
-    SORT_BY_SEARCHER_METRIC = "SORT_BY_SEARCHER_METRIC"
+    UNSPECIFIED = "SORT_BY_UNSPECIFIED"
+    UUID = "SORT_BY_UUID"
+    TRIAL_ID = "SORT_BY_TRIAL_ID"
+    BATCH_NUMBER = "SORT_BY_BATCH_NUMBER"
+    END_TIME = "SORT_BY_END_TIME"
+    STATE = "SORT_BY_STATE"
+    SEARCHER_METRIC = "SORT_BY_SEARCHER_METRIC"
 
 class v1GetExperimentCheckpointsResponse:
 
@@ -3585,17 +3535,17 @@ class v1GetExperimentResponse:
         return out
 
 class v1GetExperimentTrialsRequestSortBy(enum.Enum):
-    SORT_BY_UNSPECIFIED = "SORT_BY_UNSPECIFIED"
-    SORT_BY_ID = "SORT_BY_ID"
-    SORT_BY_START_TIME = "SORT_BY_START_TIME"
-    SORT_BY_END_TIME = "SORT_BY_END_TIME"
-    SORT_BY_STATE = "SORT_BY_STATE"
-    SORT_BY_BEST_VALIDATION_METRIC = "SORT_BY_BEST_VALIDATION_METRIC"
-    SORT_BY_LATEST_VALIDATION_METRIC = "SORT_BY_LATEST_VALIDATION_METRIC"
-    SORT_BY_BATCHES_PROCESSED = "SORT_BY_BATCHES_PROCESSED"
-    SORT_BY_DURATION = "SORT_BY_DURATION"
-    SORT_BY_RESTARTS = "SORT_BY_RESTARTS"
-    SORT_BY_CHECKPOINT_SIZE = "SORT_BY_CHECKPOINT_SIZE"
+    UNSPECIFIED = "SORT_BY_UNSPECIFIED"
+    ID = "SORT_BY_ID"
+    START_TIME = "SORT_BY_START_TIME"
+    END_TIME = "SORT_BY_END_TIME"
+    STATE = "SORT_BY_STATE"
+    BEST_VALIDATION_METRIC = "SORT_BY_BEST_VALIDATION_METRIC"
+    LATEST_VALIDATION_METRIC = "SORT_BY_LATEST_VALIDATION_METRIC"
+    BATCHES_PROCESSED = "SORT_BY_BATCHES_PROCESSED"
+    DURATION = "SORT_BY_DURATION"
+    RESTARTS = "SORT_BY_RESTARTS"
+    CHECKPOINT_SIZE = "SORT_BY_CHECKPOINT_SIZE"
 
 class v1GetExperimentTrialsResponse:
 
@@ -3650,22 +3600,22 @@ class v1GetExperimentValidationHistoryResponse:
         return out
 
 class v1GetExperimentsRequestSortBy(enum.Enum):
-    SORT_BY_UNSPECIFIED = "SORT_BY_UNSPECIFIED"
-    SORT_BY_ID = "SORT_BY_ID"
-    SORT_BY_DESCRIPTION = "SORT_BY_DESCRIPTION"
-    SORT_BY_START_TIME = "SORT_BY_START_TIME"
-    SORT_BY_END_TIME = "SORT_BY_END_TIME"
-    SORT_BY_STATE = "SORT_BY_STATE"
-    SORT_BY_NUM_TRIALS = "SORT_BY_NUM_TRIALS"
-    SORT_BY_PROGRESS = "SORT_BY_PROGRESS"
-    SORT_BY_USER = "SORT_BY_USER"
-    SORT_BY_NAME = "SORT_BY_NAME"
-    SORT_BY_FORKED_FROM = "SORT_BY_FORKED_FROM"
-    SORT_BY_RESOURCE_POOL = "SORT_BY_RESOURCE_POOL"
-    SORT_BY_PROJECT_ID = "SORT_BY_PROJECT_ID"
-    SORT_BY_CHECKPOINT_SIZE = "SORT_BY_CHECKPOINT_SIZE"
-    SORT_BY_CHECKPOINT_COUNT = "SORT_BY_CHECKPOINT_COUNT"
-    SORT_BY_SEARCHER_METRIC_VAL = "SORT_BY_SEARCHER_METRIC_VAL"
+    UNSPECIFIED = "SORT_BY_UNSPECIFIED"
+    ID = "SORT_BY_ID"
+    DESCRIPTION = "SORT_BY_DESCRIPTION"
+    START_TIME = "SORT_BY_START_TIME"
+    END_TIME = "SORT_BY_END_TIME"
+    STATE = "SORT_BY_STATE"
+    NUM_TRIALS = "SORT_BY_NUM_TRIALS"
+    PROGRESS = "SORT_BY_PROGRESS"
+    USER = "SORT_BY_USER"
+    NAME = "SORT_BY_NAME"
+    FORKED_FROM = "SORT_BY_FORKED_FROM"
+    RESOURCE_POOL = "SORT_BY_RESOURCE_POOL"
+    PROJECT_ID = "SORT_BY_PROJECT_ID"
+    CHECKPOINT_SIZE = "SORT_BY_CHECKPOINT_SIZE"
+    CHECKPOINT_COUNT = "SORT_BY_CHECKPOINT_COUNT"
+    SEARCHER_METRIC_VAL = "SORT_BY_SEARCHER_METRIC_VAL"
 
 class v1GetExperimentsResponse:
 
@@ -3823,32 +3773,6 @@ class v1GetGroupsResponse:
             out["groups"] = None if self.groups is None else [x.to_json(omit_unset) for x in self.groups]
         if not omit_unset or "pagination" in vars(self):
             out["pagination"] = None if self.pagination is None else self.pagination.to_json(omit_unset)
-        return out
-
-class v1GetHPImportanceResponse:
-
-    def __init__(
-        self,
-        *,
-        trainingMetrics: "typing.Dict[str, GetHPImportanceResponseMetricHPImportance]",
-        validationMetrics: "typing.Dict[str, GetHPImportanceResponseMetricHPImportance]",
-    ):
-        self.trainingMetrics = trainingMetrics
-        self.validationMetrics = validationMetrics
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1GetHPImportanceResponse":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-            "trainingMetrics": {k: GetHPImportanceResponseMetricHPImportance.from_json(v) for k, v in obj["trainingMetrics"].items()},
-            "validationMetrics": {k: GetHPImportanceResponseMetricHPImportance.from_json(v) for k, v in obj["validationMetrics"].items()},
-        }
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-            "trainingMetrics": {k: v.to_json(omit_unset) for k, v in self.trainingMetrics.items()},
-            "validationMetrics": {k: v.to_json(omit_unset) for k, v in self.validationMetrics.items()},
-        }
         return out
 
 class v1GetJobQueueStatsResponse:
@@ -4224,9 +4148,9 @@ class v1GetModelVersionResponse:
         return out
 
 class v1GetModelVersionsRequestSortBy(enum.Enum):
-    SORT_BY_UNSPECIFIED = "SORT_BY_UNSPECIFIED"
-    SORT_BY_VERSION = "SORT_BY_VERSION"
-    SORT_BY_CREATION_TIME = "SORT_BY_CREATION_TIME"
+    UNSPECIFIED = "SORT_BY_UNSPECIFIED"
+    VERSION = "SORT_BY_VERSION"
+    CREATION_TIME = "SORT_BY_CREATION_TIME"
 
 class v1GetModelVersionsResponse:
 
@@ -4259,13 +4183,13 @@ class v1GetModelVersionsResponse:
         return out
 
 class v1GetModelsRequestSortBy(enum.Enum):
-    SORT_BY_UNSPECIFIED = "SORT_BY_UNSPECIFIED"
-    SORT_BY_NAME = "SORT_BY_NAME"
-    SORT_BY_DESCRIPTION = "SORT_BY_DESCRIPTION"
-    SORT_BY_CREATION_TIME = "SORT_BY_CREATION_TIME"
-    SORT_BY_LAST_UPDATED_TIME = "SORT_BY_LAST_UPDATED_TIME"
-    SORT_BY_NUM_VERSIONS = "SORT_BY_NUM_VERSIONS"
-    SORT_BY_WORKSPACE = "SORT_BY_WORKSPACE"
+    UNSPECIFIED = "SORT_BY_UNSPECIFIED"
+    NAME = "SORT_BY_NAME"
+    DESCRIPTION = "SORT_BY_DESCRIPTION"
+    CREATION_TIME = "SORT_BY_CREATION_TIME"
+    LAST_UPDATED_TIME = "SORT_BY_LAST_UPDATED_TIME"
+    NUM_VERSIONS = "SORT_BY_NUM_VERSIONS"
+    WORKSPACE = "SORT_BY_WORKSPACE"
 
 class v1GetModelsResponse:
 
@@ -4320,11 +4244,11 @@ class v1GetNotebookResponse:
         return out
 
 class v1GetNotebooksRequestSortBy(enum.Enum):
-    SORT_BY_UNSPECIFIED = "SORT_BY_UNSPECIFIED"
-    SORT_BY_ID = "SORT_BY_ID"
-    SORT_BY_DESCRIPTION = "SORT_BY_DESCRIPTION"
-    SORT_BY_START_TIME = "SORT_BY_START_TIME"
-    SORT_BY_WORKSPACE_ID = "SORT_BY_WORKSPACE_ID"
+    UNSPECIFIED = "SORT_BY_UNSPECIFIED"
+    ID = "SORT_BY_ID"
+    DESCRIPTION = "SORT_BY_DESCRIPTION"
+    START_TIME = "SORT_BY_START_TIME"
+    WORKSPACE_ID = "SORT_BY_WORKSPACE_ID"
 
 class v1GetNotebooksResponse:
     pagination: "typing.Optional[v1Pagination]" = None
@@ -4647,11 +4571,11 @@ class v1GetShellResponse:
         return out
 
 class v1GetShellsRequestSortBy(enum.Enum):
-    SORT_BY_UNSPECIFIED = "SORT_BY_UNSPECIFIED"
-    SORT_BY_ID = "SORT_BY_ID"
-    SORT_BY_DESCRIPTION = "SORT_BY_DESCRIPTION"
-    SORT_BY_START_TIME = "SORT_BY_START_TIME"
-    SORT_BY_WORKSPACE_ID = "SORT_BY_WORKSPACE_ID"
+    UNSPECIFIED = "SORT_BY_UNSPECIFIED"
+    ID = "SORT_BY_ID"
+    DESCRIPTION = "SORT_BY_DESCRIPTION"
+    START_TIME = "SORT_BY_START_TIME"
+    WORKSPACE_ID = "SORT_BY_WORKSPACE_ID"
 
 class v1GetShellsResponse:
     pagination: "typing.Optional[v1Pagination]" = None
@@ -4844,8 +4768,8 @@ class v1GetTemplateResponse:
         return out
 
 class v1GetTemplatesRequestSortBy(enum.Enum):
-    SORT_BY_UNSPECIFIED = "SORT_BY_UNSPECIFIED"
-    SORT_BY_NAME = "SORT_BY_NAME"
+    UNSPECIFIED = "SORT_BY_UNSPECIFIED"
+    NAME = "SORT_BY_NAME"
 
 class v1GetTemplatesResponse:
     pagination: "typing.Optional[v1Pagination]" = None
@@ -4908,11 +4832,11 @@ class v1GetTensorboardResponse:
         return out
 
 class v1GetTensorboardsRequestSortBy(enum.Enum):
-    SORT_BY_UNSPECIFIED = "SORT_BY_UNSPECIFIED"
-    SORT_BY_ID = "SORT_BY_ID"
-    SORT_BY_DESCRIPTION = "SORT_BY_DESCRIPTION"
-    SORT_BY_START_TIME = "SORT_BY_START_TIME"
-    SORT_BY_WORKSPACE_ID = "SORT_BY_WORKSPACE_ID"
+    UNSPECIFIED = "SORT_BY_UNSPECIFIED"
+    ID = "SORT_BY_ID"
+    DESCRIPTION = "SORT_BY_DESCRIPTION"
+    START_TIME = "SORT_BY_START_TIME"
+    WORKSPACE_ID = "SORT_BY_WORKSPACE_ID"
 
 class v1GetTensorboardsResponse:
     pagination: "typing.Optional[v1Pagination]" = None
@@ -4967,11 +4891,11 @@ class v1GetTrainingMetricsResponse:
         return out
 
 class v1GetTrialCheckpointsRequestSortBy(enum.Enum):
-    SORT_BY_UNSPECIFIED = "SORT_BY_UNSPECIFIED"
-    SORT_BY_UUID = "SORT_BY_UUID"
-    SORT_BY_BATCH_NUMBER = "SORT_BY_BATCH_NUMBER"
-    SORT_BY_END_TIME = "SORT_BY_END_TIME"
-    SORT_BY_STATE = "SORT_BY_STATE"
+    UNSPECIFIED = "SORT_BY_UNSPECIFIED"
+    UUID = "SORT_BY_UUID"
+    BATCH_NUMBER = "SORT_BY_BATCH_NUMBER"
+    END_TIME = "SORT_BY_END_TIME"
+    STATE = "SORT_BY_STATE"
 
 class v1GetTrialCheckpointsResponse:
 
@@ -5184,13 +5108,13 @@ class v1GetUserSettingResponse:
         return out
 
 class v1GetUsersRequestSortBy(enum.Enum):
-    SORT_BY_UNSPECIFIED = "SORT_BY_UNSPECIFIED"
-    SORT_BY_DISPLAY_NAME = "SORT_BY_DISPLAY_NAME"
-    SORT_BY_USER_NAME = "SORT_BY_USER_NAME"
-    SORT_BY_ADMIN = "SORT_BY_ADMIN"
-    SORT_BY_ACTIVE = "SORT_BY_ACTIVE"
-    SORT_BY_MODIFIED_TIME = "SORT_BY_MODIFIED_TIME"
-    SORT_BY_NAME = "SORT_BY_NAME"
+    UNSPECIFIED = "SORT_BY_UNSPECIFIED"
+    DISPLAY_NAME = "SORT_BY_DISPLAY_NAME"
+    USER_NAME = "SORT_BY_USER_NAME"
+    ADMIN = "SORT_BY_ADMIN"
+    ACTIVE = "SORT_BY_ACTIVE"
+    MODIFIED_TIME = "SORT_BY_MODIFIED_TIME"
+    NAME = "SORT_BY_NAME"
 
 class v1GetUsersResponse:
     pagination: "typing.Optional[v1Pagination]" = None
@@ -5271,12 +5195,12 @@ class v1GetWebhooksResponse:
         return out
 
 class v1GetWorkspaceProjectsRequestSortBy(enum.Enum):
-    SORT_BY_UNSPECIFIED = "SORT_BY_UNSPECIFIED"
-    SORT_BY_CREATION_TIME = "SORT_BY_CREATION_TIME"
-    SORT_BY_LAST_EXPERIMENT_START_TIME = "SORT_BY_LAST_EXPERIMENT_START_TIME"
-    SORT_BY_NAME = "SORT_BY_NAME"
-    SORT_BY_DESCRIPTION = "SORT_BY_DESCRIPTION"
-    SORT_BY_ID = "SORT_BY_ID"
+    UNSPECIFIED = "SORT_BY_UNSPECIFIED"
+    CREATION_TIME = "SORT_BY_CREATION_TIME"
+    LAST_EXPERIMENT_START_TIME = "SORT_BY_LAST_EXPERIMENT_START_TIME"
+    NAME = "SORT_BY_NAME"
+    DESCRIPTION = "SORT_BY_DESCRIPTION"
+    ID = "SORT_BY_ID"
 
 class v1GetWorkspaceProjectsResponse:
 
@@ -5327,9 +5251,9 @@ class v1GetWorkspaceResponse:
         return out
 
 class v1GetWorkspacesRequestSortBy(enum.Enum):
-    SORT_BY_UNSPECIFIED = "SORT_BY_UNSPECIFIED"
-    SORT_BY_ID = "SORT_BY_ID"
-    SORT_BY_NAME = "SORT_BY_NAME"
+    UNSPECIFIED = "SORT_BY_UNSPECIFIED"
+    ID = "SORT_BY_ID"
+    NAME = "SORT_BY_NAME"
 
 class v1GetWorkspacesResponse:
 
@@ -6310,8 +6234,8 @@ class v1LaunchTensorboardResponse:
         return out
 
 class v1LaunchWarning(enum.Enum):
-    LAUNCH_WARNING_UNSPECIFIED = "LAUNCH_WARNING_UNSPECIFIED"
-    LAUNCH_WARNING_CURRENT_SLOTS_EXCEEDED = "LAUNCH_WARNING_CURRENT_SLOTS_EXCEEDED"
+    UNSPECIFIED = "LAUNCH_WARNING_UNSPECIFIED"
+    CURRENT_SLOTS_EXCEEDED = "LAUNCH_WARNING_CURRENT_SLOTS_EXCEEDED"
 
 class v1ListRolesRequest:
     offset: "typing.Optional[int]" = None
@@ -6404,13 +6328,13 @@ class v1LogEntry:
         return out
 
 class v1LogLevel(enum.Enum):
-    LOG_LEVEL_UNSPECIFIED = "LOG_LEVEL_UNSPECIFIED"
-    LOG_LEVEL_TRACE = "LOG_LEVEL_TRACE"
-    LOG_LEVEL_DEBUG = "LOG_LEVEL_DEBUG"
-    LOG_LEVEL_INFO = "LOG_LEVEL_INFO"
-    LOG_LEVEL_WARNING = "LOG_LEVEL_WARNING"
-    LOG_LEVEL_ERROR = "LOG_LEVEL_ERROR"
-    LOG_LEVEL_CRITICAL = "LOG_LEVEL_CRITICAL"
+    UNSPECIFIED = "LOG_LEVEL_UNSPECIFIED"
+    TRACE = "LOG_LEVEL_TRACE"
+    DEBUG = "LOG_LEVEL_DEBUG"
+    INFO = "LOG_LEVEL_INFO"
+    WARNING = "LOG_LEVEL_WARNING"
+    ERROR = "LOG_LEVEL_ERROR"
+    CRITICAL = "LOG_LEVEL_CRITICAL"
 
 class v1LoginRequest:
     isHashed: "typing.Optional[bool]" = None
@@ -6593,9 +6517,9 @@ class v1MetricNamesResponse:
         return out
 
 class v1MetricType(enum.Enum):
-    METRIC_TYPE_UNSPECIFIED = "METRIC_TYPE_UNSPECIFIED"
-    METRIC_TYPE_TRAINING = "METRIC_TYPE_TRAINING"
-    METRIC_TYPE_VALIDATION = "METRIC_TYPE_VALIDATION"
+    UNSPECIFIED = "METRIC_TYPE_UNSPECIFIED"
+    TRAINING = "METRIC_TYPE_TRAINING"
+    VALIDATION = "METRIC_TYPE_VALIDATION"
 
 class v1Metrics:
     batchMetrics: "typing.Optional[typing.Sequence[typing.Dict[str, typing.Any]]]" = None
@@ -7222,9 +7146,9 @@ class v1NotifyContainerRunningResponse:
         return out
 
 class v1OrderBy(enum.Enum):
-    ORDER_BY_UNSPECIFIED = "ORDER_BY_UNSPECIFIED"
-    ORDER_BY_ASC = "ORDER_BY_ASC"
-    ORDER_BY_DESC = "ORDER_BY_DESC"
+    UNSPECIFIED = "ORDER_BY_UNSPECIFIED"
+    ASC = "ORDER_BY_ASC"
+    DESC = "ORDER_BY_DESC"
 
 class v1Pagination:
     endIndex: "typing.Optional[int]" = None
@@ -7935,38 +7859,38 @@ class v1Permission:
         return out
 
 class v1PermissionType(enum.Enum):
-    PERMISSION_TYPE_UNSPECIFIED = "PERMISSION_TYPE_UNSPECIFIED"
-    PERMISSION_TYPE_ADMINISTRATE_USER = "PERMISSION_TYPE_ADMINISTRATE_USER"
-    PERMISSION_TYPE_CREATE_EXPERIMENT = "PERMISSION_TYPE_CREATE_EXPERIMENT"
-    PERMISSION_TYPE_VIEW_EXPERIMENT_ARTIFACTS = "PERMISSION_TYPE_VIEW_EXPERIMENT_ARTIFACTS"
-    PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA = "PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA"
-    PERMISSION_TYPE_UPDATE_EXPERIMENT = "PERMISSION_TYPE_UPDATE_EXPERIMENT"
-    PERMISSION_TYPE_UPDATE_EXPERIMENT_METADATA = "PERMISSION_TYPE_UPDATE_EXPERIMENT_METADATA"
-    PERMISSION_TYPE_DELETE_EXPERIMENT = "PERMISSION_TYPE_DELETE_EXPERIMENT"
-    PERMISSION_TYPE_CREATE_NSC = "PERMISSION_TYPE_CREATE_NSC"
-    PERMISSION_TYPE_VIEW_NSC = "PERMISSION_TYPE_VIEW_NSC"
-    PERMISSION_TYPE_UPDATE_NSC = "PERMISSION_TYPE_UPDATE_NSC"
-    PERMISSION_TYPE_UPDATE_GROUP = "PERMISSION_TYPE_UPDATE_GROUP"
-    PERMISSION_TYPE_CREATE_WORKSPACE = "PERMISSION_TYPE_CREATE_WORKSPACE"
-    PERMISSION_TYPE_VIEW_WORKSPACE = "PERMISSION_TYPE_VIEW_WORKSPACE"
-    PERMISSION_TYPE_UPDATE_WORKSPACE = "PERMISSION_TYPE_UPDATE_WORKSPACE"
-    PERMISSION_TYPE_DELETE_WORKSPACE = "PERMISSION_TYPE_DELETE_WORKSPACE"
-    PERMISSION_TYPE_SET_WORKSPACE_AGENT_USER_GROUP = "PERMISSION_TYPE_SET_WORKSPACE_AGENT_USER_GROUP"
-    PERMISSION_TYPE_SET_WORKSPACE_CHECKPOINT_STORAGE_CONFIG = "PERMISSION_TYPE_SET_WORKSPACE_CHECKPOINT_STORAGE_CONFIG"
-    PERMISSION_TYPE_CREATE_PROJECT = "PERMISSION_TYPE_CREATE_PROJECT"
-    PERMISSION_TYPE_VIEW_PROJECT = "PERMISSION_TYPE_VIEW_PROJECT"
-    PERMISSION_TYPE_UPDATE_PROJECT = "PERMISSION_TYPE_UPDATE_PROJECT"
-    PERMISSION_TYPE_DELETE_PROJECT = "PERMISSION_TYPE_DELETE_PROJECT"
-    PERMISSION_TYPE_ASSIGN_ROLES = "PERMISSION_TYPE_ASSIGN_ROLES"
-    PERMISSION_TYPE_VIEW_MODEL_REGISTRY = "PERMISSION_TYPE_VIEW_MODEL_REGISTRY"
-    PERMISSION_TYPE_EDIT_MODEL_REGISTRY = "PERMISSION_TYPE_EDIT_MODEL_REGISTRY"
-    PERMISSION_TYPE_CREATE_MODEL_REGISTRY = "PERMISSION_TYPE_CREATE_MODEL_REGISTRY"
-    PERMISSION_TYPE_DELETE_MODEL_REGISTRY = "PERMISSION_TYPE_DELETE_MODEL_REGISTRY"
-    PERMISSION_TYPE_VIEW_MASTER_LOGS = "PERMISSION_TYPE_VIEW_MASTER_LOGS"
-    PERMISSION_TYPE_VIEW_CLUSTER_USAGE = "PERMISSION_TYPE_VIEW_CLUSTER_USAGE"
-    PERMISSION_TYPE_UPDATE_AGENTS = "PERMISSION_TYPE_UPDATE_AGENTS"
-    PERMISSION_TYPE_UPDATE_ROLES = "PERMISSION_TYPE_UPDATE_ROLES"
-    PERMISSION_TYPE_EDIT_WEBHOOKS = "PERMISSION_TYPE_EDIT_WEBHOOKS"
+    UNSPECIFIED = "PERMISSION_TYPE_UNSPECIFIED"
+    ADMINISTRATE_USER = "PERMISSION_TYPE_ADMINISTRATE_USER"
+    CREATE_EXPERIMENT = "PERMISSION_TYPE_CREATE_EXPERIMENT"
+    VIEW_EXPERIMENT_ARTIFACTS = "PERMISSION_TYPE_VIEW_EXPERIMENT_ARTIFACTS"
+    VIEW_EXPERIMENT_METADATA = "PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA"
+    UPDATE_EXPERIMENT = "PERMISSION_TYPE_UPDATE_EXPERIMENT"
+    UPDATE_EXPERIMENT_METADATA = "PERMISSION_TYPE_UPDATE_EXPERIMENT_METADATA"
+    DELETE_EXPERIMENT = "PERMISSION_TYPE_DELETE_EXPERIMENT"
+    CREATE_NSC = "PERMISSION_TYPE_CREATE_NSC"
+    VIEW_NSC = "PERMISSION_TYPE_VIEW_NSC"
+    UPDATE_NSC = "PERMISSION_TYPE_UPDATE_NSC"
+    UPDATE_GROUP = "PERMISSION_TYPE_UPDATE_GROUP"
+    CREATE_WORKSPACE = "PERMISSION_TYPE_CREATE_WORKSPACE"
+    VIEW_WORKSPACE = "PERMISSION_TYPE_VIEW_WORKSPACE"
+    UPDATE_WORKSPACE = "PERMISSION_TYPE_UPDATE_WORKSPACE"
+    DELETE_WORKSPACE = "PERMISSION_TYPE_DELETE_WORKSPACE"
+    SET_WORKSPACE_AGENT_USER_GROUP = "PERMISSION_TYPE_SET_WORKSPACE_AGENT_USER_GROUP"
+    SET_WORKSPACE_CHECKPOINT_STORAGE_CONFIG = "PERMISSION_TYPE_SET_WORKSPACE_CHECKPOINT_STORAGE_CONFIG"
+    CREATE_PROJECT = "PERMISSION_TYPE_CREATE_PROJECT"
+    VIEW_PROJECT = "PERMISSION_TYPE_VIEW_PROJECT"
+    UPDATE_PROJECT = "PERMISSION_TYPE_UPDATE_PROJECT"
+    DELETE_PROJECT = "PERMISSION_TYPE_DELETE_PROJECT"
+    ASSIGN_ROLES = "PERMISSION_TYPE_ASSIGN_ROLES"
+    VIEW_MODEL_REGISTRY = "PERMISSION_TYPE_VIEW_MODEL_REGISTRY"
+    EDIT_MODEL_REGISTRY = "PERMISSION_TYPE_EDIT_MODEL_REGISTRY"
+    CREATE_MODEL_REGISTRY = "PERMISSION_TYPE_CREATE_MODEL_REGISTRY"
+    DELETE_MODEL_REGISTRY = "PERMISSION_TYPE_DELETE_MODEL_REGISTRY"
+    VIEW_MASTER_LOGS = "PERMISSION_TYPE_VIEW_MASTER_LOGS"
+    VIEW_CLUSTER_USAGE = "PERMISSION_TYPE_VIEW_CLUSTER_USAGE"
+    UPDATE_AGENTS = "PERMISSION_TYPE_UPDATE_AGENTS"
+    UPDATE_ROLES = "PERMISSION_TYPE_UPDATE_ROLES"
+    EDIT_WEBHOOKS = "PERMISSION_TYPE_EDIT_WEBHOOKS"
 
 class v1PolymorphicFilter:
     doubleRange: "typing.Optional[v1DoubleFieldFilter]" = None
@@ -9211,9 +9135,9 @@ class v1ResourceAllocationAggregatedResponse:
         return out
 
 class v1ResourceAllocationAggregationPeriod(enum.Enum):
-    RESOURCE_ALLOCATION_AGGREGATION_PERIOD_UNSPECIFIED = "RESOURCE_ALLOCATION_AGGREGATION_PERIOD_UNSPECIFIED"
-    RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY = "RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY"
-    RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY = "RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY"
+    UNSPECIFIED = "RESOURCE_ALLOCATION_AGGREGATION_PERIOD_UNSPECIFIED"
+    DAILY = "RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY"
+    MONTHLY = "RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY"
 
 class v1ResourceAllocationRawEntry:
     endTime: "typing.Optional[str]" = None
@@ -9782,11 +9706,11 @@ class v1ResourcePoolPrioritySchedulerDetail:
         return out
 
 class v1ResourcePoolType(enum.Enum):
-    RESOURCE_POOL_TYPE_UNSPECIFIED = "RESOURCE_POOL_TYPE_UNSPECIFIED"
-    RESOURCE_POOL_TYPE_AWS = "RESOURCE_POOL_TYPE_AWS"
-    RESOURCE_POOL_TYPE_GCP = "RESOURCE_POOL_TYPE_GCP"
-    RESOURCE_POOL_TYPE_STATIC = "RESOURCE_POOL_TYPE_STATIC"
-    RESOURCE_POOL_TYPE_K8S = "RESOURCE_POOL_TYPE_K8S"
+    UNSPECIFIED = "RESOURCE_POOL_TYPE_UNSPECIFIED"
+    AWS = "RESOURCE_POOL_TYPE_AWS"
+    GCP = "RESOURCE_POOL_TYPE_GCP"
+    STATIC = "RESOURCE_POOL_TYPE_STATIC"
+    K8S = "RESOURCE_POOL_TYPE_K8S"
 
 class v1ResourcesFailure:
     errMsg: "typing.Optional[str]" = None
@@ -10163,9 +10087,9 @@ class v1RunnableOperation:
         return out
 
 class v1RunnableType(enum.Enum):
-    RUNNABLE_TYPE_UNSPECIFIED = "RUNNABLE_TYPE_UNSPECIFIED"
-    RUNNABLE_TYPE_TRAIN = "RUNNABLE_TYPE_TRAIN"
-    RUNNABLE_TYPE_VALIDATE = "RUNNABLE_TYPE_VALIDATE"
+    UNSPECIFIED = "RUNNABLE_TYPE_UNSPECIFIED"
+    TRAIN = "RUNNABLE_TYPE_TRAIN"
+    VALIDATE = "RUNNABLE_TYPE_VALIDATE"
 
 class v1SSOProvider:
 
@@ -10194,18 +10118,18 @@ class v1SSOProvider:
         return out
 
 class v1Scale(enum.Enum):
-    SCALE_UNSPECIFIED = "SCALE_UNSPECIFIED"
-    SCALE_LINEAR = "SCALE_LINEAR"
-    SCALE_LOG = "SCALE_LOG"
+    UNSPECIFIED = "SCALE_UNSPECIFIED"
+    LINEAR = "SCALE_LINEAR"
+    LOG = "SCALE_LOG"
 
 class v1SchedulerType(enum.Enum):
-    SCHEDULER_TYPE_UNSPECIFIED = "SCHEDULER_TYPE_UNSPECIFIED"
-    SCHEDULER_TYPE_PRIORITY = "SCHEDULER_TYPE_PRIORITY"
-    SCHEDULER_TYPE_FAIR_SHARE = "SCHEDULER_TYPE_FAIR_SHARE"
-    SCHEDULER_TYPE_ROUND_ROBIN = "SCHEDULER_TYPE_ROUND_ROBIN"
-    SCHEDULER_TYPE_KUBERNETES = "SCHEDULER_TYPE_KUBERNETES"
-    SCHEDULER_TYPE_SLURM = "SCHEDULER_TYPE_SLURM"
-    SCHEDULER_TYPE_PBS = "SCHEDULER_TYPE_PBS"
+    UNSPECIFIED = "SCHEDULER_TYPE_UNSPECIFIED"
+    PRIORITY = "SCHEDULER_TYPE_PRIORITY"
+    FAIR_SHARE = "SCHEDULER_TYPE_FAIR_SHARE"
+    ROUND_ROBIN = "SCHEDULER_TYPE_ROUND_ROBIN"
+    KUBERNETES = "SCHEDULER_TYPE_KUBERNETES"
+    SLURM = "SCHEDULER_TYPE_SLURM"
+    PBS = "SCHEDULER_TYPE_PBS"
 
 class v1ScopeTypeMask:
     cluster: "typing.Optional[bool]" = None
@@ -11524,9 +11448,9 @@ class v1TrialEarlyExit:
         return out
 
 class v1TrialEarlyExitExitedReason(enum.Enum):
-    EXITED_REASON_UNSPECIFIED = "EXITED_REASON_UNSPECIFIED"
-    EXITED_REASON_INVALID_HP = "EXITED_REASON_INVALID_HP"
-    EXITED_REASON_INIT_INVALID_HP = "EXITED_REASON_INIT_INVALID_HP"
+    UNSPECIFIED = "EXITED_REASON_UNSPECIFIED"
+    INVALID_HP = "EXITED_REASON_INVALID_HP"
+    INIT_INVALID_HP = "EXITED_REASON_INIT_INVALID_HP"
 
 class v1TrialExitedEarly:
 
@@ -11555,10 +11479,10 @@ class v1TrialExitedEarly:
         return out
 
 class v1TrialExitedEarlyExitedReason(enum.Enum):
-    EXITED_REASON_UNSPECIFIED = "EXITED_REASON_UNSPECIFIED"
-    EXITED_REASON_INVALID_HP = "EXITED_REASON_INVALID_HP"
-    EXITED_REASON_USER_REQUESTED_STOP = "EXITED_REASON_USER_REQUESTED_STOP"
-    EXITED_REASON_USER_CANCELED = "EXITED_REASON_USER_CANCELED"
+    UNSPECIFIED = "EXITED_REASON_UNSPECIFIED"
+    INVALID_HP = "EXITED_REASON_INVALID_HP"
+    USER_REQUESTED_STOP = "EXITED_REASON_USER_REQUESTED_STOP"
+    USER_CANCELED = "EXITED_REASON_USER_CANCELED"
 
 class v1TrialFilters:
     endTime: "typing.Optional[v1TimestampFieldFilter]" = None
@@ -12375,9 +12299,9 @@ class v1Trigger:
         return out
 
 class v1TriggerType(enum.Enum):
-    TRIGGER_TYPE_UNSPECIFIED = "TRIGGER_TYPE_UNSPECIFIED"
-    TRIGGER_TYPE_EXPERIMENT_STATE_CHANGE = "TRIGGER_TYPE_EXPERIMENT_STATE_CHANGE"
-    TRIGGER_TYPE_METRIC_THRESHOLD_EXCEEDED = "TRIGGER_TYPE_METRIC_THRESHOLD_EXCEEDED"
+    UNSPECIFIED = "TRIGGER_TYPE_UNSPECIFIED"
+    EXPERIMENT_STATE_CHANGE = "TRIGGER_TYPE_EXPERIMENT_STATE_CHANGE"
+    METRIC_THRESHOLD_EXCEEDED = "TRIGGER_TYPE_METRIC_THRESHOLD_EXCEEDED"
 
 class v1UnarchiveExperimentsRequest:
     filters: "typing.Optional[v1BulkExperimentFilters]" = None
@@ -12856,9 +12780,9 @@ class v1Webhook:
         return out
 
 class v1WebhookType(enum.Enum):
-    WEBHOOK_TYPE_UNSPECIFIED = "WEBHOOK_TYPE_UNSPECIFIED"
-    WEBHOOK_TYPE_DEFAULT = "WEBHOOK_TYPE_DEFAULT"
-    WEBHOOK_TYPE_SLACK = "WEBHOOK_TYPE_SLACK"
+    UNSPECIFIED = "WEBHOOK_TYPE_UNSPECIFIED"
+    DEFAULT = "WEBHOOK_TYPE_DEFAULT"
+    SLACK = "WEBHOOK_TYPE_SLACK"
 
 class v1WorkloadContainer:
     checkpoint: "typing.Optional[v1CheckpointWorkload]" = None
@@ -12989,16 +12913,10 @@ class v1Workspace:
         return out
 
 class v1WorkspaceState(enum.Enum):
-    WORKSPACE_STATE_UNSPECIFIED = "WORKSPACE_STATE_UNSPECIFIED"
-    WORKSPACE_STATE_DELETING = "WORKSPACE_STATE_DELETING"
-    WORKSPACE_STATE_DELETE_FAILED = "WORKSPACE_STATE_DELETE_FAILED"
-    WORKSPACE_STATE_DELETED = "WORKSPACE_STATE_DELETED"
-
-class v1XAxis(enum.Enum):
-    X_AXIS_UNSPECIFIED = "X_AXIS_UNSPECIFIED"
-    X_AXIS_BATCH = "X_AXIS_BATCH"
-    X_AXIS_TIME = "X_AXIS_TIME"
-    X_AXIS_EPOCH = "X_AXIS_EPOCH"
+    UNSPECIFIED = "WORKSPACE_STATE_UNSPECIFIED"
+    DELETING = "WORKSPACE_STATE_DELETING"
+    DELETE_FAILED = "WORKSPACE_STATE_DELETE_FAILED"
+    DELETED = "WORKSPACE_STATE_DELETED"
 
 def post_AckAllocationPreemptionSignal(
     session: "api.Session",
@@ -13396,7 +13314,6 @@ def get_CompareTrials(
     timeSeriesFilter_timeRange_lt: "typing.Optional[str]" = None,
     timeSeriesFilter_timeRange_lte: "typing.Optional[str]" = None,
     trialIds: "typing.Optional[typing.Sequence[int]]" = None,
-    xAxis: "typing.Optional[v1XAxis]" = None,
 ) -> "v1CompareTrialsResponse":
     _params = {
         "endBatches": endBatches,
@@ -13422,11 +13339,10 @@ def get_CompareTrials(
         "timeSeriesFilter.timeRange.lt": timeSeriesFilter_timeRange_lt,
         "timeSeriesFilter.timeRange.lte": timeSeriesFilter_timeRange_lte,
         "trialIds": trialIds,
-        "xAxis": xAxis.value if xAxis is not None else None,
     }
     _resp = session._do_request(
         method="GET",
-        path="/api/v1/trials/compare",
+        path="/api/v1/trials/time-series",
         params=_params,
         json=None,
         data=None,
@@ -13458,26 +13374,6 @@ def post_CompleteTrialSearcherValidation(
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_CompleteTrialSearcherValidation", _resp)
-
-def post_ComputeHPImportance(
-    session: "api.Session",
-    *,
-    experimentId: int,
-) -> None:
-    _params = None
-    _resp = session._do_request(
-        method="POST",
-        path=f"/api/v1/experiments/{experimentId}/hyperparameter-importance",
-        params=_params,
-        json=None,
-        data=None,
-        headers=None,
-        timeout=None,
-        stream=False,
-    )
-    if _resp.status_code == 200:
-        return
-    raise APIHttpError("post_ComputeHPImportance", _resp)
 
 def post_CreateExperiment(
     session: "api.Session",
@@ -14290,40 +14186,6 @@ def get_GetGroupsAndUsersAssignedToWorkspace(
     if _resp.status_code == 200:
         return v1GetGroupsAndUsersAssignedToWorkspaceResponse.from_json(_resp.json())
     raise APIHttpError("get_GetGroupsAndUsersAssignedToWorkspace", _resp)
-
-def get_GetHPImportance(
-    session: "api.Session",
-    *,
-    experimentId: int,
-    periodSeconds: "typing.Optional[int]" = None,
-) -> "typing.Iterable[v1GetHPImportanceResponse]":
-    _params = {
-        "periodSeconds": periodSeconds,
-    }
-    _resp = session._do_request(
-        method="GET",
-        path=f"/api/v1/experiments/{experimentId}/hyperparameter-importance",
-        params=_params,
-        json=None,
-        data=None,
-        headers=None,
-        timeout=None,
-        stream=True,
-    )
-    if _resp.status_code == 200:
-        try:
-            for _line in _resp.iter_lines(chunk_size=1024 * 1024):
-                _j = json.loads(_line)
-                if "error" in _j:
-                    raise APIHttpStreamError(
-                        "get_GetHPImportance",
-                        runtimeStreamError.from_json(_j["error"])
-                )
-                yield v1GetHPImportanceResponse.from_json(_j["result"])
-        except requests.exceptions.ChunkedEncodingError:
-            raise APIHttpStreamError("get_GetHPImportance", runtimeStreamError(message="ChunkedEncodingError"))
-        return
-    raise APIHttpError("get_GetHPImportance", _resp)
 
 def get_GetJobQueueStats(
     session: "api.Session",
@@ -16861,11 +16723,13 @@ def get_SearchExperiments(
     limit: "typing.Optional[int]" = None,
     offset: "typing.Optional[int]" = None,
     projectId: "typing.Optional[int]" = None,
+    sort: "typing.Optional[str]" = None,
 ) -> "v1SearchExperimentsResponse":
     _params = {
         "limit": limit,
         "offset": offset,
         "projectId": projectId,
+        "sort": sort,
     }
     _resp = session._do_request(
         method="GET",

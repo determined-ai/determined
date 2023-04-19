@@ -7,10 +7,13 @@ import { BrowserRouter } from 'react-router-dom';
 import { SettingsProvider } from 'hooks/useSettingsProvider';
 import { paths } from 'routes/utils';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
-import { setAuth, setAuthChecked } from 'stores/auth';
-import usersStore from 'stores/users';
+import authStore from 'stores/auth';
+import userStore from 'stores/users';
+import { DetailedUser } from 'types';
 
 import CodeViewer, { Props } from './CodeViewer';
+
+const CURRENT_USER: DetailedUser = { id: 1, isActive: true, isAdmin: false, username: 'bunny' };
 
 const hashedFileMock =
   'ZGVzY3JpcHRpb246IG5vb3Bfc2luZ2xlCmNoZWNrcG9pbnRfc3RvcmFnZToKICB0eXBlOiBzaGFyZWRfZnMKICBob3N0X3BhdGg6IC90bXAKICBzdG9yYWdlX3BhdGg6IGRldGVybWluZWQtaW50ZWdyYXRpb24tY2hlY2twb2ludHMKICBzYXZlX3RyaWFsX2Jlc3Q6IDMwCmh5cGVycGFyYW1ldGVyczoKICBnbG9iYWxfYmF0Y2hfc2l6ZTogMzIKICBtZXRyaWNzX3Byb2dyZXNzaW9uOiBkZWNyZWFzaW5nCiAgbWV0cmljc19iYXNlOiAwLjkKICBtZXRyaWNzX3NpZ21hOiAwCnNlYXJjaGVyOgogIG1ldHJpYzogdmFsaWRhdGlvbl9lcnJvcgogIHNtYWxsZXJfaXNfYmV0dGVyOiB0cnVlCiAgbmFtZTogc2luZ2xlCiAgbWF4X2xlbmd0aDoKICAgIHJlY29yZHM6IDgwMDAKcmVwcm9kdWNpYmlsaXR5OgogIGV4cGVyaW1lbnRfc2VlZDogOTk5Cm1pbl92YWxpZGF0aW9uX3BlcmlvZDoKICByZWNvcmRzOiA0MDAwCm1heF9yZXN0YXJ0czogMAplbnRyeXBvaW50OiBtb2RlbF9kZWY6Tm9PcFRyaWFsCg==';
@@ -93,10 +96,9 @@ const user = userEvent.setup();
 
 const Container: React.FC<Props> = (props) => {
   useEffect(() => {
-    setAuth({ isAuthenticated: true });
-    setAuthChecked();
-    usersStore.updateCurrentUser(1);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    authStore.setAuth({ isAuthenticated: true });
+    authStore.setAuthChecked();
+    userStore.updateCurrentUser(CURRENT_USER);
   }, []);
 
   return (

@@ -10,6 +10,7 @@ import {
   isPrimitive,
 } from 'shared/utils/data';
 import { capitalize } from 'shared/utils/string';
+import { BrandingType, DeterminedInfo } from 'stores/determinedInfo';
 import * as types from 'types';
 
 import * as Sdk from './api-ts-sdk'; // API Bindings
@@ -86,12 +87,12 @@ export const mapV1Pagination = (data?: Sdk.V1Pagination): Pagination => {
   };
 };
 
-export const mapV1MasterInfo = (data: Sdk.V1GetMasterResponse): types.DeterminedInfo => {
+export const mapV1MasterInfo = (data: Sdk.V1GetMasterResponse): DeterminedInfo => {
   // Validate branding against `BrandingType` enum.
-  const branding = Object.values(types.BrandingType).reduce((acc, value) => {
+  const branding = Object.values(BrandingType).reduce((acc, value) => {
     if (value === data.branding) acc = data.branding;
     return acc;
-  }, types.BrandingType.Determined);
+  }, BrandingType.Determined);
 
   return {
     branding,
@@ -811,4 +812,20 @@ export const decodeJobStates = (
   return states as unknown as Array<
     'STATE_UNSPECIFIED' | 'STATE_QUEUED' | 'STATE_SCHEDULED' | 'STATE_SCHEDULED_BACKFILLED'
   >;
+};
+
+export const mapV1ExperimentActionResults = (
+  results: Sdk.V1ExperimentActionResult[],
+): types.BulkActionResult => {
+  return results.reduce(
+    (acc, cur) => {
+      if (cur.error.length > 0) {
+        acc.failed.push(cur);
+      } else {
+        acc.successful.push(cur.id);
+      }
+      return acc;
+    },
+    { failed: [], successful: [] } as types.BulkActionResult,
+  );
 };

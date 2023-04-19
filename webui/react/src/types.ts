@@ -30,39 +30,6 @@ export interface Auth {
   token?: string;
 }
 
-export interface SsoProvider {
-  name: string;
-  ssoUrl: string;
-}
-
-export const BrandingType = {
-  Determined: 'determined',
-  HPE: 'hpe',
-} as const;
-
-export type BrandingType = ValueOf<typeof BrandingType>;
-
-export interface DeterminedInfo {
-  branding?: BrandingType;
-  checked: boolean;
-  clusterId: string;
-  clusterName: string;
-  externalLoginUri?: string;
-  externalLogoutUri?: string;
-  featureSwitches: string[];
-  isTelemetryEnabled: boolean;
-  masterId: string;
-  rbacEnabled: boolean;
-  ssoProviders?: SsoProvider[];
-  userManagementEnabled: boolean;
-  version: string;
-}
-
-export interface Telemetry {
-  enabled: boolean;
-  segmentKey?: string;
-}
-
 export const ResourceType = {
   ALL: 'ALL',
   CPU: 'CPU',
@@ -228,10 +195,6 @@ interface CheckpointStorage {
   type?: CheckpointStorageType;
 }
 
-export type HpImportance = Record<string, number>;
-export type HpImportanceMetricMap = Record<string, HpImportance>;
-export type HpImportanceMap = { [key in MetricType]: HpImportanceMetricMap };
-
 export const HyperparameterType = {
   Categorical: 'categorical',
   Constant: 'const',
@@ -333,6 +296,11 @@ export const ExperimentAction = {
 } as const;
 
 export type ExperimentAction = ValueOf<typeof ExperimentAction>;
+
+export interface BulkActionResult {
+  successful: number[];
+  failed: Api.V1ExperimentActionResult[];
+}
 
 export interface ExperimentPagination extends WithPagination {
   experiments: ExperimentItem[];

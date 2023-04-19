@@ -5,6 +5,7 @@ import * as Config from 'services/apiConfig';
 import * as Service from 'services/types';
 import { EmptyParams, RawJson, SingleEntityParams } from 'shared/types';
 import { generateDetApi } from 'shared/utils/service';
+import { DeterminedInfo, Telemetry } from 'stores/determinedInfo';
 import * as Type from 'types';
 import { tensorBoardMatchesSource } from 'utils/task';
 
@@ -182,11 +183,11 @@ export const searchRolesAssignableToScope = generateDetApi<
 >(Config.searchRolesAssignableToScope);
 /* Info */
 
-export const getInfo = generateDetApi<EmptyParams, Api.V1GetMasterResponse, Type.DeterminedInfo>(
+export const getInfo = generateDetApi<EmptyParams, Api.V1GetMasterResponse, DeterminedInfo>(
   Config.getInfo,
 );
 
-export const getTelemetry = generateDetApi<EmptyParams, Api.V1GetTelemetryResponse, Type.Telemetry>(
+export const getTelemetry = generateDetApi<EmptyParams, Api.V1GetTelemetryResponse, Telemetry>(
   Config.getTelemetry,
 );
 
@@ -291,11 +292,11 @@ export const getTrialDetails = generateDetApi<
   Type.TrialDetails
 >(Config.getTrialDetails);
 
-export const compareTrials = generateDetApi<
-  Service.CompareTrialsParams,
+export const timeSeries = generateDetApi<
+  Service.TimeSeriesParams,
   Api.V1CompareTrialsResponse,
   Type.TrialSummary[]
->(Config.compareTrials);
+>(Config.timeSeries);
 
 export const getTrialWorkloads = generateDetApi<
   Service.TrialWorkloadsParams,
@@ -315,11 +316,23 @@ export const archiveExperiment = generateDetApi<
   void
 >(Config.archiveExperiment);
 
+export const archiveExperiments = generateDetApi<
+  Service.BulkActionParams,
+  Api.V1ArchiveExperimentsResponse,
+  Type.BulkActionResult
+>(Config.archiveExperiments);
+
 export const unarchiveExperiment = generateDetApi<
   Service.ExperimentIdParams,
   Api.V1UnarchiveExperimentResponse,
   void
 >(Config.unarchiveExperiment);
+
+export const unarchiveExperiments = generateDetApi<
+  Service.BulkActionParams,
+  Api.V1UnarchiveExperimentsResponse,
+  Type.BulkActionResult
+>(Config.unarchiveExperiments);
 
 export const deleteExperiment = generateDetApi<
   Service.ExperimentIdParams,
@@ -327,11 +340,23 @@ export const deleteExperiment = generateDetApi<
   void
 >(Config.deleteExperiment);
 
+export const deleteExperiments = generateDetApi<
+  Service.BulkActionParams,
+  Api.V1DeleteExperimentsResponse,
+  Type.BulkActionResult
+>(Config.deleteExperiments);
+
 export const activateExperiment = generateDetApi<
   Service.ExperimentIdParams,
   Api.V1ActivateExperimentResponse,
   void
 >(Config.activateExperiment);
+
+export const activateExperiments = generateDetApi<
+  Service.BulkActionParams,
+  Api.V1ActivateExperimentsResponse,
+  Type.BulkActionResult
+>(Config.activateExperiments);
 
 export const pauseExperiment = generateDetApi<
   Service.ExperimentIdParams,
@@ -339,17 +364,35 @@ export const pauseExperiment = generateDetApi<
   void
 >(Config.pauseExperiment);
 
+export const pauseExperiments = generateDetApi<
+  Service.BulkActionParams,
+  Api.V1PauseExperimentsResponse,
+  Type.BulkActionResult
+>(Config.pauseExperiments);
+
 export const cancelExperiment = generateDetApi<
   Service.ExperimentIdParams,
   Api.V1CancelExperimentResponse,
   void
 >(Config.cancelExperiment);
 
+export const cancelExperiments = generateDetApi<
+  Service.BulkActionParams,
+  Api.V1CancelExperimentsResponse,
+  Type.BulkActionResult
+>(Config.cancelExperiments);
+
 export const killExperiment = generateDetApi<
   Service.ExperimentIdParams,
   Api.V1KillExperimentResponse,
   void
 >(Config.killExperiment);
+
+export const killExperiments = generateDetApi<
+  Service.BulkActionParams,
+  Api.V1KillExperimentsResponse,
+  Type.BulkActionResult
+>(Config.killExperiments);
 
 export const patchExperiment = generateDetApi<
   Service.PatchExperimentParams,
@@ -368,6 +411,12 @@ export const moveExperiment = generateDetApi<
   Api.V1MoveExperimentResponse,
   void
 >(Config.moveExperiment);
+
+export const moveExperiments = generateDetApi<
+  Api.V1MoveExperimentsRequest,
+  Api.V1MoveExperimentsResponse,
+  Type.BulkActionResult
+>(Config.moveExperiments);
 
 export const getExperimentFileTree = generateDetApi<
   Service.ExperimentIdParams,

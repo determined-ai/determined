@@ -14,8 +14,20 @@ import (
 )
 
 func TestEnvironmentVarsDefaultMerging(t *testing.T) {
-	gpuType := "tesla"
-	pbsSlotsPerNode := 99
+	defaultGpuType := "tesla"
+	defaultSlotsPerNode := 99
+
+	expGpuType := "a100"
+	expSlurmSlotsPerNode := 8
+	expSlurmConfig := expconf.SlurmConfigV0{
+		RawGpuType:      &expGpuType,
+		RawSlotsPerNode: &expSlurmSlotsPerNode,
+		RawSbatchArgs:   []string{"-SlrumExpConf"},
+	}
+	expPbsConfig := expconf.PbsConfigV0{
+		RawSbatchArgs: []string{"-PbsExpConf"},
+	}
+
 	defaults := &TaskContainerDefaultsConfig{
 		EnvironmentVariables: &RuntimeItems{
 			CPU:  []string{"cpu=default"},
@@ -23,10 +35,12 @@ func TestEnvironmentVarsDefaultMerging(t *testing.T) {
 			ROCM: []string{"rocm=default"},
 		},
 		Slurm: expconf.SlurmConfigV0{
-			RawGpuType: &gpuType,
+			RawGpuType:    &defaultGpuType,
+			RawSbatchArgs: []string{"-SlrumTaskDefault"},
 		},
 		Pbs: expconf.PbsConfigV0{
-			RawSlotsPerNode: &pbsSlotsPerNode,
+			RawSlotsPerNode: &defaultSlotsPerNode,
+			RawSbatchArgs:   []string{"-WpbsTaskDefault"},
 		},
 	}
 	conf := expconf.ExperimentConfig{
@@ -36,7 +50,10 @@ func TestEnvironmentVarsDefaultMerging(t *testing.T) {
 				RawCUDA: []string{"extra=expconf"},
 			},
 		},
+		RawSlurmConfig: &expSlurmConfig,
+		RawPbsConfig:   &expPbsConfig,
 	}
+
 	defaults.MergeIntoExpConfig(&conf)
 
 	require.Equal(t, conf.RawEnvironment.RawEnvironmentVariables,
@@ -46,8 +63,11 @@ func TestEnvironmentVarsDefaultMerging(t *testing.T) {
 			RawROCM: []string{"rocm=default"},
 		})
 
-	require.Equal(t, *conf.RawSlurmConfig.RawGpuType, gpuType)
-	require.Equal(t, *conf.RawPbsConfig.RawSlotsPerNode, pbsSlotsPerNode)
+	require.Equal(t, *conf.RawSlurmConfig.RawGpuType, expGpuType)
+	require.Equal(t, *conf.RawSlurmConfig.RawSlotsPerNode, expSlurmSlotsPerNode)
+	require.Equal(t, conf.RawSlurmConfig.SbatchArgs(), []string{"-SlrumTaskDefault", "-SlrumExpConf"})
+	require.Equal(t, *conf.RawPbsConfig.RawSlotsPerNode, defaultSlotsPerNode)
+	require.Equal(t, conf.RawPbsConfig.SbatchArgs(), []string{"-WpbsTaskDefault", "-PbsExpConf"})
 }
 
 func TestTaskContainerDefaultsConfigMerging(t *testing.T) {

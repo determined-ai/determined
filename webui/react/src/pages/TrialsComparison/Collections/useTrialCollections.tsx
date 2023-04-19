@@ -11,7 +11,7 @@ import { deleteTrialsCollection, getTrialsCollections, patchTrialsCollection } f
 import Icon from 'shared/components/Icon';
 import { clone, finiteElseUndefined, isFiniteNumber } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
-import usersStore from 'stores/users';
+import userStore from 'stores/users';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
@@ -85,13 +85,9 @@ export const useTrialCollections = (
     getDefaultFilters(projectId),
   );
 
-  const loadableCurrentUser = useObservable(usersStore.getCurrentUser());
-  const user = Loadable.match(loadableCurrentUser, {
-    Loaded: (cUser) => cUser,
-    NotLoaded: () => undefined,
-  });
+  const currentUser = Loadable.getOrElse(undefined, useObservable(userStore.currentUser));
 
-  const userId = useMemo(() => (user?.id ? String(user?.id) : ''), [user?.id]);
+  const userId = useMemo(() => (currentUser?.id ? String(currentUser?.id) : ''), [currentUser?.id]);
 
   const [
     // eslint-disable-next-line array-element-newline
@@ -244,10 +240,10 @@ export const useTrialCollections = (
   ]);
 
   const userOwnsCollection = useMemo(() => {
-    if (user?.isAdmin) return true;
+    if (currentUser?.isAdmin) return true;
 
     return activeCollection?.userId === userId;
-  }, [userId, user?.isAdmin, activeCollection?.userId]);
+  }, [activeCollection?.userId, currentUser?.isAdmin, userId]);
 
   const handleAfterCreate = useCallback(
     async (collectionName: string) => {

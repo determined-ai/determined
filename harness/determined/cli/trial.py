@@ -7,6 +7,8 @@ from argparse import Namespace
 from datetime import datetime
 from typing import Any, List, Optional, Sequence, Tuple, Union
 
+from termcolor import colored
+
 from determined import cli
 from determined.cli import render
 from determined.cli.master import format_log_entry
@@ -76,10 +78,8 @@ def _workloads_tabulate(
         w_unpacked = _workload_container_unpack(w)
 
         row_metrics = []
-        if metrics:
-            metrics_workload = w.training or w.validation
-            if metrics_workload:
-                row_metrics = [json.dumps(metrics_workload.metrics.to_json(), indent=4)]
+        if metrics and w.training:
+            row_metrics = [json.dumps(w.training.metrics.to_json(), indent=4)]
 
         values.append(
             [
@@ -174,22 +174,34 @@ def kill_trial(args: Namespace) -> None:
 
 @authentication.required
 def trial_logs(args: Namespace) -> None:
-    logs = api.trial_logs(
-        cli.setup_session(args),
-        args.trial_id,
-        head=args.head,
-        tail=args.tail,
-        follow=args.follow,
-        agent_ids=args.agent_ids,
-        container_ids=args.container_ids,
-        rank_ids=args.rank_ids,
-        sources=args.sources,
-        stdtypes=args.stdtypes,
-        min_level=args.level,
-        timestamp_before=args.timestamp_before,
-        timestamp_after=args.timestamp_after,
-    )
-    api.pprint_trial_logs(args.trial_id, logs)
+    try:
+        logs = api.trial_logs(
+            cli.setup_session(args),
+            args.trial_id,
+            head=args.head,
+            tail=args.tail,
+            follow=args.follow,
+            agent_ids=args.agent_ids,
+            container_ids=args.container_ids,
+            rank_ids=args.rank_ids,
+            sources=args.sources,
+            stdtypes=args.stdtypes,
+            min_level=args.level,
+            timestamp_before=args.timestamp_before,
+            timestamp_after=args.timestamp_after,
+        )
+        if args.json:
+            api.print_json_logs(logs)
+        else:
+            api.pprint_logs(logs)
+    finally:
+        print(
+            colored(
+                "Trial log stream ended. To reopen log stream, run: "
+                "det trial logs -f {}".format(args.trial_id),
+                "green",
+            )
+        )
 
 
 @authentication.required
@@ -355,8 +367,8 @@ args_description = [
                         help="display full metrics, such as batch metrics",
                     ),
                     Group(
-                        Arg("--csv", action="store_true", help="print as CSV"),
-                        Arg("--json", action="store_true", help="print JSON"),
+                        cli.output_format_args["csv"],
+                        cli.output_format_args["json"],
                     ),
                     *cli.make_pagination_args(limit=1000),
                 ],
@@ -438,6 +450,7 @@ args_description = [
                 "fetch trial logs",
                 [
                     Arg("trial_id", type=int, help="trial ID"),
+                    cli.output_format_args["json"],
                 ]
                 + logs_args_description,
             ),

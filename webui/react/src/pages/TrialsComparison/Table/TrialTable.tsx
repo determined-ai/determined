@@ -25,7 +25,7 @@ import { paths } from 'routes/utils';
 import { Trialv1State, V1AugmentedTrial } from 'services/api-ts-sdk';
 import { ColorScale, glasbeyColor } from 'shared/utils/color';
 import { isFiniteNumber } from 'shared/utils/data';
-import usersStore from 'stores/users';
+import userStore from 'stores/users';
 import { StateOfUnion } from 'themes';
 import { MetricType } from 'types';
 import { Loadable } from 'utils/loadable';
@@ -75,8 +75,7 @@ const TrialTable: React.FC<Props> = ({
 }: Props) => {
   const { settings, updateSettings } = tableSettingsHook;
 
-  const loadableUsers = useObservable(usersStore.getUsers());
-  const users = Loadable.map(loadableUsers, ({ users }) => users);
+  const users = Loadable.getOrElse([], useObservable(userStore.getUsers()));
 
   const { filters, setFilters } = collectionsInterface;
 
@@ -407,11 +406,6 @@ const TrialTable: React.FC<Props> = ({
   );
 
   const userColumn = useMemo(() => {
-    const matchUsers = Loadable.match(users, {
-      Loaded: (users) => users,
-      NotLoaded: () => [],
-    });
-
     return {
       defaultWidth: 100,
       filterDropdown: (filterProps: FilterDropdownProps) => (
@@ -424,11 +418,11 @@ const TrialTable: React.FC<Props> = ({
           onReset={() => setFilters?.((filters) => ({ ...filters, userIds: undefined }))}
         />
       ),
-      filters: matchUsers.map((user) => ({ text: getDisplayName(user), value: user.id })),
+      filters: users.map((user) => ({ text: getDisplayName(user), value: user.id })),
       isFiltered: () => !!filters.userIds?.length,
       key: 'userId',
       render: (_: number, r: V1AugmentedTrial) =>
-        userRenderer(matchUsers.find((u) => u.id === r.userId)),
+        userRenderer(users.find((u) => u.id === r.userId)),
       sorter: true,
       title: 'User',
     };

@@ -11,6 +11,7 @@ import { closestPointPlugin } from 'components/UPlot/UPlotChart/closestPointPlug
 import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin2';
 import useResize from 'hooks/useResize';
 import Spinner from 'shared/components/Spinner/Spinner';
+import { getCssVar } from 'shared/themes';
 import { glasbeyColor } from 'shared/utils/color';
 import { MetricType, Scale } from 'types';
 import { getTimeTickValues } from 'utils/chart';
@@ -162,7 +163,7 @@ export const LineChart: React.FC<LineChartProps> = ({
     return {
       axes: [
         {
-          font: '12px "Objektiv Mk3", Arial, Helvetica, sans-serif',
+          font: `12px ${getCssVar('--theme-font-family')}`,
           grid: { show: false },
           label: xLabel,
           scale: 'x',
@@ -172,7 +173,7 @@ export const LineChart: React.FC<LineChartProps> = ({
           values: xTickValues,
         },
         {
-          font: '12px "Objektiv Mk3", Arial, Helvetica, sans-serif',
+          font: `12px ${getCssVar('--theme-font-family')}`,
           grid: { stroke: '#E3E3E3', width: 1 },
           label: yLabel,
           labelGap: 8,

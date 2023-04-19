@@ -9,6 +9,7 @@ import * as decoder from 'services/decoder';
 import * as Service from 'services/types';
 import { DetApi, EmptyParams, RawJson, SingleEntityParams } from 'shared/types';
 import { identity, noOp } from 'shared/utils/service';
+import { DeterminedInfo, Telemetry } from 'stores/determinedInfo';
 import * as Type from 'types';
 
 const updatedApiConfigParams = (
@@ -427,13 +428,13 @@ export const searchRolesAssignableToScope: DetApi<
 
 /* Info */
 
-export const getInfo: DetApi<EmptyParams, Api.V1GetMasterResponse, Type.DeterminedInfo> = {
+export const getInfo: DetApi<EmptyParams, Api.V1GetMasterResponse, DeterminedInfo> = {
   name: 'getInfo',
   postProcess: (response) => decoder.mapV1MasterInfo(response),
   request: () => detApi.Cluster.getMaster(),
 };
 
-export const getTelemetry: DetApi<EmptyParams, Api.V1GetTelemetryResponse, Type.Telemetry> = {
+export const getTelemetry: DetApi<EmptyParams, Api.V1GetTelemetryResponse, Telemetry> = {
   name: 'getTelemetry',
   postProcess: (response) => response,
   request: () => detApi.Internal.getTelemetry(),
@@ -619,6 +620,7 @@ export const searchExperiments: DetApi<
       params.projectId,
       params.offset,
       params.limit,
+      undefined,
       options,
     );
   },
@@ -677,6 +679,18 @@ export const archiveExperiment: DetApi<
   },
 };
 
+export const archiveExperiments: DetApi<
+  Service.BulkActionParams,
+  Api.V1ArchiveExperimentsResponse,
+  Type.BulkActionResult
+> = {
+  name: 'archiveExperiments',
+  postProcess: (response) => decoder.mapV1ExperimentActionResults(response.results),
+  request: (params: Service.BulkActionParams, options) => {
+    return detApi.Experiments.archiveExperiments(params, options);
+  },
+};
+
 export const deleteExperiment: DetApi<
   Service.ExperimentIdParams,
   Api.V1DeleteExperimentResponse,
@@ -686,6 +700,18 @@ export const deleteExperiment: DetApi<
   postProcess: noOp,
   request: (params: Service.ExperimentIdParams, options) => {
     return detApi.Experiments.deleteExperiment(params.experimentId, options);
+  },
+};
+
+export const deleteExperiments: DetApi<
+  Service.BulkActionParams,
+  Api.V1DeleteExperimentsResponse,
+  Type.BulkActionResult
+> = {
+  name: 'deleteExperiments',
+  postProcess: (response) => decoder.mapV1ExperimentActionResults(response.results),
+  request: (params: Service.BulkActionParams, options) => {
+    return detApi.Experiments.deleteExperiments(params, options);
   },
 };
 
@@ -701,6 +727,18 @@ export const unarchiveExperiment: DetApi<
   },
 };
 
+export const unarchiveExperiments: DetApi<
+  Service.BulkActionParams,
+  Api.V1UnarchiveExperimentsResponse,
+  Type.BulkActionResult
+> = {
+  name: 'unarchiveExperiments',
+  postProcess: (response) => decoder.mapV1ExperimentActionResults(response.results),
+  request: (params: Service.BulkActionParams, options) => {
+    return detApi.Experiments.unarchiveExperiments(params, options);
+  },
+};
+
 export const activateExperiment: DetApi<
   Service.ExperimentIdParams,
   Api.V1ActivateExperimentResponse,
@@ -710,6 +748,18 @@ export const activateExperiment: DetApi<
   postProcess: noOp,
   request: (params: Service.ExperimentIdParams, options) => {
     return detApi.Experiments.activateExperiment(params.experimentId, options);
+  },
+};
+
+export const activateExperiments: DetApi<
+  Service.BulkActionParams,
+  Api.V1ActivateExperimentsResponse,
+  Type.BulkActionResult
+> = {
+  name: 'activateExperiments',
+  postProcess: (response) => decoder.mapV1ExperimentActionResults(response.results),
+  request: (params: Service.BulkActionParams, options) => {
+    return detApi.Experiments.activateExperiments(params, options);
   },
 };
 
@@ -725,6 +775,18 @@ export const pauseExperiment: DetApi<
   },
 };
 
+export const pauseExperiments: DetApi<
+  Service.BulkActionParams,
+  Api.V1PauseExperimentsResponse,
+  Type.BulkActionResult
+> = {
+  name: 'pauseExperiments',
+  postProcess: (response) => decoder.mapV1ExperimentActionResults(response.results),
+  request: (params: Service.BulkActionParams, options) => {
+    return detApi.Experiments.pauseExperiments(params, options);
+  },
+};
+
 export const cancelExperiment: DetApi<
   Service.ExperimentIdParams,
   Api.V1CancelExperimentResponse,
@@ -737,6 +799,18 @@ export const cancelExperiment: DetApi<
   },
 };
 
+export const cancelExperiments: DetApi<
+  Service.BulkActionParams,
+  Api.V1CancelExperimentsResponse,
+  Type.BulkActionResult
+> = {
+  name: 'cancelExperiments',
+  postProcess: (response) => decoder.mapV1ExperimentActionResults(response.results),
+  request: (params: Service.BulkActionParams, options) => {
+    return detApi.Experiments.cancelExperiments(params, options);
+  },
+};
+
 export const killExperiment: DetApi<
   Service.ExperimentIdParams,
   Api.V1KillExperimentResponse,
@@ -746,6 +820,18 @@ export const killExperiment: DetApi<
   postProcess: noOp,
   request: (params: Service.ExperimentIdParams, options) => {
     return detApi.Experiments.killExperiment(params.experimentId, options);
+  },
+};
+
+export const killExperiments: DetApi<
+  Service.BulkActionParams,
+  Api.V1KillExperimentsResponse,
+  Type.BulkActionResult
+> = {
+  name: 'killExperiments',
+  postProcess: (response) => decoder.mapV1ExperimentActionResults(response.results),
+  request: (params: Service.BulkActionParams, options) => {
+    return detApi.Experiments.killExperiments(params, options);
   },
 };
 
@@ -874,16 +960,26 @@ export const moveExperiment: DetApi<
     }),
 };
 
-export const compareTrials: DetApi<
-  Service.CompareTrialsParams,
+export const moveExperiments: DetApi<
+  Api.V1MoveExperimentsRequest,
+  Api.V1MoveExperimentsResponse,
+  Type.BulkActionResult
+> = {
+  name: 'moveExperiments',
+  postProcess: (response) => decoder.mapV1ExperimentActionResults(response.results),
+  request: (params, options) => detApi.Experiments.moveExperiments(params, options),
+};
+
+export const timeSeries: DetApi<
+  Service.TimeSeriesParams,
   Api.V1CompareTrialsResponse,
   Type.TrialSummary[]
 > = {
-  name: 'compareTrials',
+  name: 'timeSeries',
   postProcess: (response: Api.V1CompareTrialsResponse) => {
     return response.trials.map(decoder.decodeTrialSummary);
   },
-  request: (params: Service.CompareTrialsParams) =>
+  request: (params: Service.TimeSeriesParams) =>
     detApi.Experiments.compareTrials(
       params.trialIds,
       params.maxDatapoints,

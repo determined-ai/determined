@@ -13,9 +13,10 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
 )
+
+// TODO: rename raw_steps.
 
 // AddTrial adds the trial to the database and sets its ID.
 func (db *PgDB) AddTrial(trial *model.Trial) error {
@@ -42,7 +43,7 @@ func (db *PgDB) TrialByID(id int) (*model.Trial, error) {
 	var trial model.Trial
 	err := db.query(`
 SELECT id, COALESCE(task_id, '') AS task_id, request_id, experiment_id, state, start_time,
-	end_time, hparams, warm_start_checkpoint_id, seed
+	end_time, hparams, warm_start_checkpoint_id, seed, total_batches
 FROM trials
 WHERE id = $1`, &trial, id)
 	return &trial, errors.Wrapf(err, "error querying for trial %v", id)
@@ -55,7 +56,7 @@ func (db *PgDB) TrialByExperimentAndRequestID(
 	var trial model.Trial
 	err := db.query(`
 SELECT id, task_id, request_id, experiment_id, state, start_time,
-  end_time, hparams, warm_start_checkpoint_id, seed
+  end_time, hparams, warm_start_checkpoint_id, seed, total_batches
 FROM trials
 WHERE experiment_id = $1 AND request_id = $2`, &trial, experimentID, requestID)
 	return &trial, errors.Wrapf(err, "error querying for trial %v", requestID)
@@ -154,51 +155,119 @@ WHERE id = $1`, id, restartCount); err != nil {
 	return nil
 }
 
-// AddTrainingMetrics adds a completed step to the database with the given training metrics.
-// If these training metrics occur before any others, a rollback is assumed and later
-// training and validation metrics are cleaned up.
-func (db *PgDB) AddTrainingMetrics(ctx context.Context, m *trialv1.TrialMetrics) error {
+// updateTotalBatches update precomputed total_batches based on existing steps and validations.
+func (db *PgDB) updateTotalBatches(ctx context.Context, tx *sqlx.Tx, trialID int) error {
+	if _, err := tx.ExecContext(ctx, `
+		UPDATE trials SET total_batches = sub.new_max_total_batches_processed
+		FROM (
+			SELECT max(q.total_batches) AS new_max_total_batches_processed
+			FROM (
+			SELECT coalesce(max(s.total_batches), 0) AS total_batches
+			FROM steps s
+			WHERE s.trial_id = $1
+			UNION ALL
+			SELECT coalesce(max(v.total_batches), 0) AS total_batches
+			FROM validations v
+			WHERE v.trial_id = $1
+		) q
+		) AS sub;
+		`, trialID); err != nil {
+		return errors.Wrap(err, "error computing total_batches")
+	}
+	return nil
+}
+
+// AddTrialMetrics inserts a set of trial metrics to the database.
+func (db *PgDB) addTrialMetrics(
+	ctx context.Context, m *trialv1.TrialMetrics, isValidation bool,
+) (err error) {
+	trialMetricTables := []string{"raw_steps", "raw_validations"}
+	targetTable := "raw_steps"
+	metricsBody := map[string]interface{}{
+		"avg_metrics":   m.Metrics.AvgMetrics,
+		"batch_metrics": m.Metrics.BatchMetrics,
+	}
+	if isValidation {
+		targetTable = "raw_validations"
+		metricsBody = map[string]interface{}{
+			"validation_metrics": m.Metrics.AvgMetrics,
+		}
+	}
 	return db.withTransaction("add training metrics", func(tx *sqlx.Tx) error {
 		if err := checkTrialRunID(ctx, tx, m.TrialId, m.TrialRunId); err != nil {
 			return err
 		}
 
-		if _, err := tx.ExecContext(ctx, `
-UPDATE raw_steps SET archived = true
+		rollbackHappened := false
+		for _, table := range trialMetricTables {
+			comparator := ">"
+			if table == targetTable {
+				// we mark metrics reported in the same table with the same batch number
+				// as the metric being added as `archived`.
+				comparator = ">="
+			}
+			res, err := tx.ExecContext(ctx, fmt.Sprintf(`
+UPDATE %s SET archived = true
 WHERE trial_id = $1
   AND trial_run_id < $2
-  AND total_batches >= $3;
-`, m.TrialId, m.TrialRunId, m.StepsCompleted); err != nil {
-			return errors.Wrap(err, "archiving training metrics")
+  AND total_batches %s $3;
+	`, table, comparator), m.TrialId, m.TrialRunId, m.StepsCompleted)
+			if err != nil {
+				return errors.Wrap(err, "archiving metrics")
+			}
+			affectedRows, err := res.RowsAffected()
+			if err != nil {
+				return errors.Wrap(err, "checking for metric rollbacks")
+			}
+			if affectedRows > 0 {
+				rollbackHappened = true
+			}
 		}
 
-		if _, err := tx.ExecContext(ctx, `
-UPDATE raw_validations SET archived = true
-WHERE trial_id = $1
-  AND trial_run_id < $2
-  AND total_batches > $3;
-`, m.TrialId, m.TrialRunId, m.StepsCompleted); err != nil {
-			return errors.Wrap(err, "archiving validations")
-		}
-
-		if _, err := tx.NamedExecContext(ctx, `
-INSERT INTO raw_steps
+		if _, err := tx.NamedExecContext(ctx, fmt.Sprintf(`
+INSERT INTO %s
 	(trial_id, trial_run_id, end_time, metrics, total_batches)
 VALUES
 	(:trial_id, :trial_run_id, now(), :metrics, :total_batches)
-`, model.TrialMetrics{
-			TrialID:    int(m.TrialId),
-			TrialRunID: int(m.TrialRunId),
-			Metrics: map[string]interface{}{
-				"avg_metrics":   m.Metrics.AvgMetrics,
-				"batch_metrics": m.Metrics.BatchMetrics,
-			},
+`, targetTable), model.TrialMetrics{
+			TrialID:      int(m.TrialId),
+			TrialRunID:   int(m.TrialRunId),
+			Metrics:      metricsBody,
 			TotalBatches: int(m.StepsCompleted),
 		}); err != nil {
-			return errors.Wrap(err, "inserting training metrics")
+			return errors.Wrap(err, fmt.Sprintf("inserting metrics into %s", targetTable))
+		}
+
+		if rollbackHappened {
+			if err := db.updateTotalBatches(ctx, tx, int(m.TrialId)); err != nil {
+				return errors.Wrap(err, "rollback")
+			}
+		} else {
+			if _, err := tx.ExecContext(ctx, `
+UPDATE trials SET total_batches = GREATEST(total_batches, $2)
+WHERE id = $1;
+`, m.TrialId, m.StepsCompleted); err != nil {
+				return errors.Wrap(err, "updating trial total batches")
+			}
+		}
+
+		if isValidation {
+			if err := setTrialBestValidation(
+				tx, int(m.TrialId),
+				int(m.TrialRunId),
+				int(m.StepsCompleted)); err != nil {
+				return errors.Wrap(err, "updating trial best validation")
+			}
 		}
 		return nil
 	})
+}
+
+// AddTrainingMetrics adds a completed step to the database with the given training metrics.
+// If these training metrics occur before any others, a rollback is assumed and later
+// training and validation metrics are cleaned up.
+func (db *PgDB) AddTrainingMetrics(ctx context.Context, m *trialv1.TrialMetrics) error {
+	return db.addTrialMetrics(ctx, m, false)
 }
 
 // AddValidationMetrics adds a completed validation to the database with the given
@@ -207,91 +276,7 @@ VALUES
 func (db *PgDB) AddValidationMetrics(
 	ctx context.Context, m *trialv1.TrialMetrics,
 ) error {
-	return db.withTransaction("add validation metrics", func(tx *sqlx.Tx) error {
-		if err := checkTrialRunID(ctx, tx, m.TrialId, m.TrialRunId); err != nil {
-			return err
-		}
-
-		if _, err := tx.ExecContext(ctx, `
-UPDATE raw_validations SET archived = true
-WHERE trial_id = $1
-  AND trial_run_id < $2
-  AND total_batches >= $2;
-`, m.TrialId, m.StepsCompleted); err != nil {
-			return errors.Wrap(err, "archiving validations")
-		}
-
-		if err := db.ensureStep(
-			ctx, tx, int(m.TrialId), int(m.TrialRunId), int(m.StepsCompleted),
-		); err != nil {
-			return err
-		}
-
-		if _, err := tx.NamedExecContext(ctx, `
-INSERT INTO raw_validations
-	(trial_id, trial_run_id, end_time, metrics, total_batches)
-VALUES
-	(:trial_id, :trial_run_id, now(), :metrics, :total_batches)
-`, model.TrialMetrics{
-			TrialID:    int(m.TrialId),
-			TrialRunID: int(m.TrialRunId),
-			Metrics: map[string]interface{}{
-				"validation_metrics": m.Metrics.AvgMetrics,
-			},
-			TotalBatches: int(m.StepsCompleted),
-		}); err != nil {
-			return errors.Wrap(err, "inserting validation metrics")
-		}
-
-		if err := setTrialBestValidation(
-			tx, int(m.TrialId),
-			int(m.TrialRunId),
-			int(m.StepsCompleted)); err != nil {
-			return errors.Wrap(err, "updating trial best validation")
-		}
-
-		return nil
-	})
-}
-
-// ensureStep inserts a noop step if no step exists at the batch index of the validation.
-// This is used to make sure there is at least a dummy step for each validation or checkpoint,
-// in the event one comes without (e.g. perform_initial_validation).
-func (db *PgDB) ensureStep(
-	ctx context.Context, tx *sqlx.Tx, trialID, trialRunID, stepsCompleted int,
-) error {
-	var exists bool
-	switch err := tx.QueryRowxContext(ctx, `
-SELECT EXISTS(SELECT 1 FROM steps WHERE trial_id = $1 AND total_batches = $2);`,
-		trialID, stepsCompleted).Scan(&exists); {
-	case err != nil:
-		return err
-	case exists:
-		return nil
-	}
-
-	if _, err := tx.NamedExecContext(ctx, `
-INSERT INTO raw_steps
-	(trial_id, trial_run_id,
-	 end_time, metrics, total_batches)
-VALUES
-	(:trial_id, :trial_run_id,
-	 :end_time, :metrics, :total_batches)
-ON CONFLICT (trial_id, trial_run_id, total_batches)
-DO NOTHING
-`, model.TrialMetrics{
-		TrialID:    trialID,
-		TrialRunID: trialRunID,
-		EndTime:    ptrs.Ptr(time.Now().UTC()),
-		Metrics: map[string]interface{}{
-			"avg_metrics":   struct{}{},
-			"batch_metrics": []struct{}{},
-		},
-		TotalBatches: stepsCompleted,
-	}); err != nil {
-		return errors.Wrap(err, "inserting training metrics")
-	}
-	return nil
+	return db.addTrialMetrics(ctx, m, true)
 }
 
 // AddCheckpointMetadata persists metadata for a completed checkpoint to the database.
@@ -336,7 +321,7 @@ WHERE id = $1
 	}
 }
 
-// ValidationByTotalBatches looks up a validation by trial and step ID,
+// ValidationByTotalBatches looks up a validation by trial and total batches,
 // returning nil if none exists.
 func (db *PgDB) ValidationByTotalBatches(trialID, totalBatches int) (*model.TrialMetrics, error) {
 	var validation model.TrialMetrics
@@ -447,8 +432,9 @@ WITH const AS (
 )
 UPDATE trials t
 SET best_validation_id = (SELECT bv.id FROM best_validation bv),
-searcher_metric_value = (SELECT bv.searcher_metric_value FROM best_validation bv)
-WHERE t.id = $1;
+searcher_metric_value = (SELECT bv.searcher_metric_value FROM best_validation bv),
+searcher_metric_value_signed = 
+(SELECT bv.searcher_metric_value * const.sign FROM best_validation bv, const);
 `, trialID, trialRunID, stepsCompleted)
 	return errors.Wrapf(err, "error updating best validation for trial %d", trialID)
 }

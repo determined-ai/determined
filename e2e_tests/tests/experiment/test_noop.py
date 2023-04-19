@@ -24,7 +24,7 @@ def test_noop_pause() -> None:
         conf.fixtures_path("no_op"),
         None,
     )
-    exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.STATE_RUNNING)
+    exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.RUNNING)
 
     # Wait for the only trial to get scheduled.
     exp.wait_for_experiment_active_workload(experiment_id)
@@ -36,7 +36,7 @@ def test_noop_pause() -> None:
     # between a "stopping paused" and a "paused" state, so we follow this check
     # up by ensuring the experiment cleared all scheduled workloads.
     exp.pause_experiment(experiment_id)
-    exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.STATE_PAUSED)
+    exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.PAUSED)
 
     # Wait at most 20 seconds for the experiment to clear all workloads (each
     # train step should take 5 seconds).
@@ -53,7 +53,7 @@ def test_noop_pause() -> None:
 
     # Resume the experiment and wait for completion.
     exp.activate_experiment(experiment_id)
-    exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.STATE_COMPLETED)
+    exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.COMPLETED)
 
 
 @pytest.mark.e2e_cpu
@@ -66,7 +66,7 @@ def test_noop_nan_validations() -> None:
         conf.fixtures_path("no_op"),
         None,
     )
-    exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.STATE_COMPLETED)
+    exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.COMPLETED)
 
 
 @pytest.mark.e2e_cpu
@@ -97,13 +97,13 @@ def test_noop_pause_of_experiment_without_trials() -> None:
             yaml.dump(config_obj, f)
         experiment_id = exp.create_experiment(tf.name, conf.fixtures_path("no_op"), None)
     exp.pause_experiment(experiment_id)
-    exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.STATE_PAUSED)
+    exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.PAUSED)
 
     exp.activate_experiment(experiment_id)
-    exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.STATE_QUEUED)
+    exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.QUEUED)
 
     for _ in range(5):
-        assert exp.experiment_state(experiment_id) == bindings.experimentv1State.STATE_QUEUED
+        assert exp.experiment_state(experiment_id) == bindings.experimentv1State.QUEUED
         time.sleep(1)
 
     exp.kill_single(experiment_id)
@@ -124,10 +124,10 @@ def test_noop_pause_with_multiexperiment() -> None:
             yaml.dump(config_obj, f)
         experiment_id = exp.create_experiment(tf.name, conf.fixtures_path("no_op"), None)
     exp.pause_experiments([experiment_id])
-    exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.STATE_PAUSED)
+    exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.PAUSED)
 
     exp.activate_experiments([experiment_id])
-    exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.STATE_QUEUED)
+    exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.QUEUED)
     exp.kill_experiments([experiment_id])
 
 
@@ -147,7 +147,7 @@ def test_noop_pause_with_multiexperiment_filter() -> None:
             yaml.dump(config_obj, f)
         experiment_id = exp.create_experiment(tf.name, conf.fixtures_path("no_op"), None)
     exp.pause_experiments([], name=tf.name)
-    exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.STATE_PAUSED)
+    exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.PAUSED)
     exp.kill_experiments([experiment_id])
 
 
@@ -170,7 +170,7 @@ def test_noop_single_warm_start() -> None:
     first_checkpoint_uuid = checkpoints[0].uuid
     last_checkpoint_uuid = checkpoints[-1].uuid
     last_validation = exp.workloads_with_validation(first_workloads)[-1]
-    assert last_validation.metrics.avgMetrics["validation_error"] == pytest.approx(0.9 ** 30)
+    assert last_validation.metrics.avgMetrics["validation_error"] == pytest.approx(0.9**30)
 
     config_base = conf.load_config(conf.fixtures_path("no_op/single.yaml"))
 
@@ -191,7 +191,7 @@ def test_noop_single_warm_start() -> None:
     assert second_trial.trial.warmStartCheckpointUuid == last_checkpoint_uuid
 
     val_workloads = exp.workloads_with_validation(second_trial.workloads)
-    assert val_workloads[-1].metrics.avgMetrics["validation_error"] == pytest.approx(0.9 ** 60)
+    assert val_workloads[-1].metrics.avgMetrics["validation_error"] == pytest.approx(0.9**60)
 
     # Now test source_checkpoint_uuid.
     config_obj = copy.deepcopy(config_base)
@@ -212,7 +212,7 @@ def test_noop_single_warm_start() -> None:
 
     assert third_trial.trial.warmStartCheckpointUuid == first_checkpoint_uuid
     validations = exp.workloads_with_validation(third_trial.workloads)
-    assert validations[1].metrics.avgMetrics["validation_error"] == pytest.approx(0.9 ** 3)
+    assert validations[1].metrics.avgMetrics["validation_error"] == pytest.approx(0.9**3)
 
 
 @pytest.mark.e2e_cpu

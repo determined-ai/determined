@@ -26,10 +26,18 @@ from determined.tensorboard.metric_writers import tensorflow
 # In TF 2.6, we have to import some keras internals directly from `keras`.
 if version.parse(tf.__version__) >= version.parse("2.6.0"):
     from keras.callbacks import CallbackList, make_logs, set_callback_parameters
-    from keras.saving.hdf5_format import (
-        load_optimizer_weights_from_hdf5_group,
-        save_optimizer_weights_to_hdf5_group,
-    )
+
+    # TODO MLG-444 Migrate from legacy Keras hdf5 saving methods
+    if version.parse(tf.__version__) >= version.parse("2.11.0"):
+        from keras.saving.legacy.hdf5_format import (
+            load_optimizer_weights_from_hdf5_group,
+            save_optimizer_weights_to_hdf5_group,
+        )
+    else:
+        from keras.saving.hdf5_format import (
+            load_optimizer_weights_from_hdf5_group,
+            save_optimizer_weights_to_hdf5_group,
+        )
     from keras.utils.mode_keys import ModeKeys
 else:
     from tensorflow.python.keras.callbacks import CallbackList, make_logs, set_callback_parameters
@@ -973,7 +981,7 @@ class TFKerasTrial(det.Trial):
     legacy TensorFlow 1.x, specify a TensorFlow 1.x image in the
     :ref:`environment.image <exp-environment-image>` field of the experiment
     configuration (e.g.,
-    ``determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-0.21.1``).
+    ``determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-0.21.2``).
 
     Trials default to using eager execution with TensorFlow 2.x but not with
     TensorFlow 1.x. To override the default behavior, call the appropriate

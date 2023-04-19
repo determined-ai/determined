@@ -78,7 +78,6 @@ def test_validate_read_only_dir(manager: storage.SharedFSStorageManager) -> None
 
 @pytest.mark.cloud
 def test_tensorboard_fetcher_shared(require_secrets: bool, tmp_path: Path) -> None:
-
     local_sync_dir = os.path.join(tmp_path, "sync_dir")
     storage_dir = os.path.join(tmp_path, "storage_dir")
     storage_relpath = local_sync_dir
@@ -113,7 +112,6 @@ def clean_up(storage_id: str, storage_manager: storage.S3StorageManager) -> None
 def test_checkpoint_sharded_upload_download(
     tmp_path: Path, manager: storage.SharedFSStorageManager
 ) -> None:
-
     with parallel.Execution(4, local_size=2) as pex:
 
         @pex.run
@@ -122,7 +120,6 @@ def test_checkpoint_sharded_upload_download(
 
 
 def test_checkpoint_sharded_store_restore(manager: storage.SharedFSStorageManager) -> None:
-
     with parallel.Execution(4, local_size=2) as pex:
 
         @pex.run

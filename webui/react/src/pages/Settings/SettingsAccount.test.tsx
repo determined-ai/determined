@@ -1,14 +1,14 @@
 import { waitFor } from '@testing-library/dom';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect } from 'react';
 
 import { NEW_PASSWORD_LABEL } from 'components/PasswordChangeModal';
 import { patchUser as mockPatchUser } from 'services/api';
 import { PatchUserParams } from 'services/types';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
-import { setAuth } from 'stores/auth';
-import usersStore from 'stores/users';
+import authStore from 'stores/auth';
+import userStore from 'stores/users';
 import { DetailedUser } from 'types';
 
 import SettingsAccount, { CHANGE_PASSWORD_TEXT } from './SettingsAccount';
@@ -40,7 +40,7 @@ const user = userEvent.setup();
 const DISPLAY_NAME = 'Test Name';
 const USERNAME = 'test_username1';
 
-const currentUser: DetailedUser = {
+const CURRENT_USER: DetailedUser = {
   displayName: DISPLAY_NAME,
   id: 1,
   isActive: true,
@@ -49,16 +49,14 @@ const currentUser: DetailedUser = {
 };
 
 const Container: React.FC = () => {
-  const [canceler] = useState(new AbortController());
-
   const loadUsers = useCallback(() => {
-    usersStore.updateCurrentUser(currentUser.id);
+    userStore.updateCurrentUser(CURRENT_USER);
   }, []);
 
   useEffect(() => {
-    usersStore.ensureUsersFetched(canceler);
-    setAuth({ isAuthenticated: true });
-  }, [canceler]);
+    authStore.setAuth({ isAuthenticated: true });
+    return userStore.fetchUsers();
+  }, []);
 
   useEffect(() => {
     loadUsers();

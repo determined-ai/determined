@@ -1,41 +1,22 @@
-from typing import Iterable, List, Optional
-
-from termcolor import colored
+import json
+from typing import Iterable, List, Optional, Union
 
 from determined.common import api
 from determined.common.api import bindings
 
 
-def pprint_task_logs(task_id: str, logs: Iterable[bindings.v1TaskLogsResponse]) -> None:
-    try:
-        for log in logs:
-            print(log.message, end="")
-    except KeyboardInterrupt:
-        pass
-    finally:
-        print(
-            colored(
-                "Task log stream ended. To reopen log stream, run: "
-                "det task logs -f {}".format(task_id),
-                "green",
-            )
-        )
+def pprint_logs(
+    logs: Iterable[Union[bindings.v1TaskLogsResponse, bindings.v1TrialLogsResponse]]
+) -> None:
+    for log in logs:
+        print(log.message, end="")
 
 
-def pprint_trial_logs(trial_id: int, logs: Iterable[bindings.v1TrialLogsResponse]) -> None:
-    try:
-        for log in logs:
-            print(log.message, end="")
-    except KeyboardInterrupt:
-        pass
-    finally:
-        print(
-            colored(
-                "Trial log stream ended. To reopen log stream, run: "
-                "det trial logs -f {}".format(trial_id),
-                "green",
-            )
-        )
+def print_json_logs(
+    logs: Iterable[Union[bindings.v1TaskLogsResponse, bindings.v1TrialLogsResponse]]
+) -> None:
+    for log in logs:
+        print(json.dumps(log.to_json(), indent=4))
 
 
 def trial_logs(
@@ -63,7 +44,7 @@ def trial_logs(
         follow=follow,
         levels=levels_at_or_above(min_level),
         limit=head or tail,
-        orderBy=tail is not None and bindings.v1OrderBy.ORDER_BY_DESC or None,
+        orderBy=tail is not None and bindings.v1OrderBy.DESC or None,
         rankIds=rank_ids,
         searchText=None,
         sources=sources,
@@ -101,7 +82,7 @@ def task_logs(
         follow=follow,
         levels=levels_at_or_above(min_level),
         limit=head or tail,
-        orderBy=tail is not None and bindings.v1OrderBy.ORDER_BY_DESC or None,
+        orderBy=tail is not None and bindings.v1OrderBy.DESC or None,
         rankIds=rank_ids,
         searchText=None,
         sources=sources,

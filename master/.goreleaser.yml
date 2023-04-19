@@ -51,9 +51,6 @@ archives:
         dst: "share/static"
       - src: "build/**/*"
         dst: "share"
-      - src: "build/growforest"
-        dst: "share"
-        strip_parent: true
 
 brews:
   - name: determined-master
@@ -114,8 +111,6 @@ nfpms:
         type: config|noreplace
         file_info:
             mode: 0600
-      - src: "build/growforest"
-        dst: "/usr/share/determined/master/growforest"
       - src: "build/**/*"
         dst: "/usr/share/determined/master"
       - src: "static/**/*"
