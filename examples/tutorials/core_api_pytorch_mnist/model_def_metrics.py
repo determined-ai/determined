@@ -55,7 +55,6 @@ def train(args, model, device, train_loader, optimizer, epoch_idx, core_context)
 
         # NEW: Increment batch_idx by 1 in if statement to avoid reporting metrics at batch_idx 0.
         if (batch_idx + 1) % args.log_interval == 0:
-
             print(
                 "Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}".format(
                     epoch_idx,
@@ -194,7 +193,6 @@ def main(core_context):
 
     scheduler = StepLR(optimizer, step_size=1, gamma=args.gamma)
     for epoch_idx in range(0, args.epochs):
-
         # NEW: Calculate steps_completed for plotting test metrics.
         steps_completed = epoch_idx * len(train_loader)
 
@@ -217,7 +215,6 @@ def main(core_context):
 
 
 if __name__ == "__main__":
-
     # NEW: Establish new determined.core.Context and pass to main function.
     with det.core.init() as core_context:
         main(core_context=core_context)

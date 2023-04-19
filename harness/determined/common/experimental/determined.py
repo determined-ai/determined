@@ -309,6 +309,7 @@ class Determined:
             model_id: If this paramter is set, models will be filtered to
                 only include the model with this unique numeric id.
         """
+
         # TODO: more parameters?
         #   - archived
         #   - labels

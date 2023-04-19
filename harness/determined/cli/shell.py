@@ -95,7 +95,6 @@ def _prepare_key(retention_dir: Union[Path, None]) -> Tuple[ContextManager[IO], 
         return keyfile, str(key_path)
 
     else:
-
         # Avoid using tempfile.NamedTemporaryFile, which does not produce a file that can be opened
         # by name on Windows, which prevents the ssh process from reading it.
         fd, path = tempfile.mkstemp(text=True)
