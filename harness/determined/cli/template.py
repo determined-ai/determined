@@ -1,5 +1,5 @@
 import base64
-from argparse import FileType, Namespace
+from argparse import ArgumentError, FileType, Namespace
 from collections import namedtuple
 from typing import Any, Dict, List
 
@@ -43,13 +43,17 @@ def describe_template(args: Namespace) -> None:
 
 @authentication.required
 def set_template(args: Namespace) -> None:
-    with args.template_file:
-        body = util.safe_load_yaml_with_exceptions(args.template_file)
-        v1_template = bindings.v1Template(name=args.template_name, config=body)
-        bindings.put_PutTemplate(
-            cli.setup_session(args), template_name=args.template_name, body=v1_template
-        )
-        print(colored("Set template {}".format(args.template_name), "green"))
+    if not args.template_file:
+        raise ArgumentError(None, "template_file is required for set command")
+    body = util.safe_load_yaml_with_exceptions(args.template_file)
+    workspace_id = get_workspace_id_from_args(args) or 0
+    v1_template = bindings.v1Template(
+        name=args.template_name, config=body, workspaceId=workspace_id
+    )
+    bindings.put_PutTemplate(
+        cli.setup_session(args), template_name=args.template_name, body=v1_template
+    )
+    print(colored("Set template {}".format(args.template_name), "green"))
 
 
 @authentication.required
