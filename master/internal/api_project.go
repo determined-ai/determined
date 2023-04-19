@@ -3,6 +3,7 @@ package internal
 import (
 	"context"
 	"fmt"
+	"sort"
 
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -166,7 +167,16 @@ func (a *apiServer) getProjectColumnsByID(
 	hparamSet := make(map[string]bool)
 	for _, hparam := range hyperparameters {
 		flatHparam := expconf.FlattenHPs(hparam.Hyperparameters)
-		for key, value := range flatHparam {
+
+		// ensure we're iterating in order
+		paramKeys := make([]string, len(flatHparam))
+		for key, _ := range flatHparam {
+			paramKeys = append(paramKeys, key)
+		}
+		sort.Strings(paramKeys)
+
+		for _, key := range paramKeys {
+			value := flatHparam[key]
 			_, seen := hparamSet[key]
 			if !seen {
 				hparamSet[key] = true
