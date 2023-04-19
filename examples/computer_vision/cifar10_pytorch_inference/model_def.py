@@ -49,7 +49,6 @@ class PredictionsReducer(MetricReducer):
         return self.predictions
 
     def cross_slot_reduce(self, per_slot_metrics):
-
         # TODO: Log or save outputs to persistent store
         predictions = [p for slot_predictions in per_slot_metrics for p in slot_predictions]
         np.save(self.output_file, predictions)

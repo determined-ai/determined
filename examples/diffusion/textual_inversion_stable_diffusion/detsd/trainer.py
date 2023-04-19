@@ -555,7 +555,6 @@ class DetSDTextualInversionTrainer:
                         dummy_ids,
                         learned_embeddings,
                     ):
-
                         new_embedding_layer.weight.data[dummy_id - id_offset] = tensor
 
     def _save(self, core_context: det.core.Context, trial_id: int) -> None:

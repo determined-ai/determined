@@ -290,7 +290,6 @@ class TFKerasTrialContext(det.TrialContext):
             or not isinstance(dataset, tf.data.Dataset)
             or not shard_dataset
         ):
-
             if self.distributed.size > 1 and not shard_dataset:
                 logging.info("Dataset sharding skipped.")
             return dataset

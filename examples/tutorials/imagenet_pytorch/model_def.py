@@ -61,7 +61,6 @@ class ImagenetTrial(PyTorchTrial):
         )
 
     def build_training_data_loader(self):
-
         if self.context.get_hparam("dataset") == "imagenet":
             traindir = os.path.join(self.data_directory, "train")
             self.normalize = transforms.Normalize(
@@ -88,7 +87,6 @@ class ImagenetTrial(PyTorchTrial):
             )
 
         elif self.context.get_hparam("dataset") == "cifar":
-
             transform = transforms.Compose(
                 [transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
             )
@@ -126,7 +124,6 @@ class ImagenetTrial(PyTorchTrial):
                 num_workers=self.context.get_hparam("workers", pin_memory=True),
             )
         else:
-
             transform = transforms.Compose(
                 [transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
             )

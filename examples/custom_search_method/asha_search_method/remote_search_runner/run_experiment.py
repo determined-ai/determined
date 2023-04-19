@@ -82,7 +82,6 @@ if __name__ == "__main__":
     # make sure to set `max_restarts` in the `searcher.yaml` file to a number greater than 0.
 
     with det.core.init() as core_context:
-
         info = det.get_cluster_info()
         assert info is not None
 

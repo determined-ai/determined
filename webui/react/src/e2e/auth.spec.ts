@@ -32,7 +32,7 @@ test.describe('Authentication', () => {
   });
 
   test('Redirect to the target URL after login', async ({ page }) => {
-    await page.goto('/models');
+    await page.goto('./models');
 
     await test.step('Login steps', async () => {
       await page.getByPlaceholder('username').fill(USERNAME);

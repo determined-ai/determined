@@ -129,7 +129,6 @@ def get_tensorboard_fetcher_s3(
 
 @pytest.mark.cloud
 def test_tensorboard_fetcher_s3(require_secrets: bool, tmp_path: Path) -> None:
-
     local_sync_dir = os.path.join(tmp_path, "sync_dir")
     storage_relpath = os.path.join(local_sync_dir, BUCKET_NAME)
 
@@ -165,7 +164,6 @@ def test_live_s3_sharded_upload_download(
     require_secrets: bool,
     tmp_path: Path,
 ) -> None:
-
     with parallel.Execution(4, local_size=2) as pex:
 
         @pex.run
@@ -177,7 +175,6 @@ def test_live_s3_sharded_upload_download(
 
 @pytest.mark.cloud
 def test_live_s3_sharded_store_restore(require_secrets: bool, tmp_path: Path) -> None:
-
     with parallel.Execution(4, local_size=2) as pex:
 
         @pex.run
