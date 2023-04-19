@@ -80,7 +80,7 @@ func New(opts options.PodmanOptions) (*PodmanClient, error) {
 	}
 
 	return &PodmanClient{
-		log:        logrus.WithField("compontent", "podman"),
+		log:        logrus.WithField("component", "podman"),
 		opts:       opts,
 		wg:         waitgroupx.WithContext(context.Background()),
 		containers: make(map[cproto.ID]*PodmanContainer),
@@ -268,8 +268,6 @@ func (s *PodmanClient) RunContainer(
 	req.ContainerConfig.Env = append(req.ContainerConfig.Env, "DET_SHIPPER_EMIT_STDOUT_LOGS=False")
 
 	for _, env := range req.ContainerConfig.Env {
-		// s.log.Tracef("env var %s", env)
-
 		_, err = envFile.WriteString(env + "\n")
 		if err != nil {
 			return nil, fmt.Errorf("writing to envfile: %w", err)
@@ -348,17 +346,12 @@ func (s *PodmanClient) RunContainer(
 	}
 
 	for _, m := range req.HostConfig.Mounts {
-		args = addHostMounts(m, args)
+		args = hostMountsToPodmanArgs(m, args)
 	}
 
+	// from master task_container_defaults.shm_size_bytes
 	if shmsize := req.HostConfig.ShmSize; shmsize != 4294967296 { // 4294967296 is the default.
-		if err = p.Publish(ctx, docker.NewLogEvent(model.LogLevelWarning, fmt.Sprintf(
-			"shmsize was requested as %d but podman does not support this; "+
-				"we do not launch with `--contain`, so we inherit the configuration of the host",
-			shmsize,
-		))); err != nil {
-			return nil, err
-		}
+		args = append(args, "--shm-size", fmt.Sprintf("%d", shmsize))
 	}
 
 	// TODO(DET-9075): Un-dockerize the RunContainer API so we can know to pass `--rocm` without
@@ -385,7 +378,7 @@ func (s *PodmanClient) RunContainer(
 	// 	args = append(args, "--nv")
 	// }
 
-	args = processCapabilities(req, args)
+	args = capabilitiesToPodmanArgs(req, args)
 
 	image := s.canonicalizeImage(req.ContainerConfig.Image)
 	args = append(args, image)
@@ -411,13 +404,13 @@ func (s *PodmanClient) RunContainer(
 
 	// cudaVisibleDevicesVar := strings.Join(cudaVisibleDevices, ",")
 	// cmd.Env = append(cmd.Env,
-	// 	fmt.Sprintf("PODMANENV_CUDA_VISIBLE_DEVICES=%s", cudaVisibleDevicesVar),
+	// 	fmt.Sprintf("SINGULARITYENV_CUDA_VISIBLE_DEVICES=%s", cudaVisibleDevicesVar),
 	// 	fmt.Sprintf("APPTAINERENV_CUDA_VISIBLE_DEVICES=%s", cudaVisibleDevicesVar),
 	// )
 
-	// HACK(podman): without this, --nv doesn't work right. If the podman run command
+	// HACK(singularity): without this, --nv doesn't work right. If the singularity run command
 	// cannot find nvidia-smi, the --nv fails to make it available inside the container, e.g.,
-	// env -i /usr/bin/podman run --nv \\
+	// env -i /usr/bin/singularity run --nv \\
 	//   docker://determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-24586f0 nvidia-smi
 	// cmd.Env = append(cmd.Env, fmt.Sprintf("PATH=%s", os.Getenv("PATH")))
 
@@ -458,7 +451,7 @@ func (s *PodmanClient) RunContainer(
 	}, nil
 }
 
-func processCapabilities(req cproto.RunSpec, args []string) []string {
+func capabilitiesToPodmanArgs(req cproto.RunSpec, args []string) []string {
 	for _, cap := range req.HostConfig.CapAdd {
 		args = append(args, "--cap-add", cap)
 	}
@@ -468,7 +461,7 @@ func processCapabilities(req cproto.RunSpec, args []string) []string {
 	return args
 }
 
-func addHostMounts(m mount.Mount, args []string) []string {
+func hostMountsToPodmanArgs(m mount.Mount, args []string) []string {
 	var mountOptions []string
 	if m.ReadOnly {
 		mountOptions = append(mountOptions, "ro")

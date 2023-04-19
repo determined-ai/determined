@@ -63,7 +63,7 @@ func Test_addHostMounts(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := addHostMounts(tt.args.m, tt.args.args); !reflect.DeepEqual(got, tt.want) {
+			if got := hostMountsToPodmanArgs(tt.args.m, tt.args.args); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("addHostMounts() = %v, want %v", got, tt.want)
 			}
 		})
@@ -99,7 +99,7 @@ func Test_processCapabilities(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := processCapabilities(tt.args.req, tt.args.args); !reflect.DeepEqual(got, tt.want) {
+			if got := capabilitiesToPodmanArgs(tt.args.req, tt.args.args); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("processCapabilities() = %v, want %v", got, tt.want)
 			}
 		})
