@@ -24,7 +24,6 @@ setup(
         "pyzmq>=18.1.0",
         "yogadl==0.1.4",
         # Common:
-        "backoff",
         "certifi",
         "filelock",
         "google-cloud-storage",
