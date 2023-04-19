@@ -371,6 +371,47 @@ func (a *apiServer) TaskLogs(
 	})
 }
 
+func CreateTaskLogFromProto(protoTaskLog *taskv1.TaskLog) (*model.TaskLog, error) {
+	logID := int(*protoTaskLog.Id)
+	rankID := int(*protoTaskLog.RankId)
+	timestamp := time.Unix(protoTaskLog.Timestamp.GetSeconds(), int64(protoTaskLog.Timestamp.GetNanos()))
+
+	return &model.TaskLog{
+		ID:           &logID,
+		StringID:     protoTaskLog.StringId,
+		TaskID:       protoTaskLog.TaskId,
+		AllocationID: &protoTaskLog.AllocationId,
+		AgentID:      protoTaskLog.AgentId,
+		ContainerID:  protoTaskLog.ContainerId,
+		RankID:       &rankID,
+		Timestamp:    &timestamp,
+		Level:        &protoTaskLog.Level,
+		Log:          protoTaskLog.Log,
+		Source:       protoTaskLog.Source,
+		StdType:      protoTaskLog.Stdtype,
+	}, nil
+}
+
+func (a *apiServer) PostTaskLogs(ctx context.Context, req *apiv1.PostTaskLogsRequest,
+) (*apiv1.PostTaskLogsResponse, error) {
+	// var logs []*model.TaskLog
+	// logs = req.logs
+	// if err := json.NewDecoder(ctx.Request().Body).Decode(&logs); err != nil {
+	// 	return "", err
+	// }
+	var err error
+	logs := make([]*model.TaskLog, len(req.Logs))
+	for i := range req.Logs {
+		if logs[i], err = CreateTaskLogFromProto(req.Logs[i]); err != nil {
+			return nil, err
+		}
+	}
+	if err := a.m.taskLogBackend.AddTaskLogs(logs); err != nil {
+		return &apiv1.PostTaskLogsResponse{}, errors.Wrap(err, "receiving task logs")
+	}
+	return &apiv1.PostTaskLogsResponse{}, nil
+}
+
 func (a *apiServer) GetActiveTasksCount(
 	ctx context.Context, req *apiv1.GetActiveTasksCountRequest,
 ) (resp *apiv1.GetActiveTasksCountResponse, err error) {
