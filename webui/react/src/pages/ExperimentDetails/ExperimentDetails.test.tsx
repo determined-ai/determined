@@ -34,6 +34,7 @@ vi.mock('services/api', () => ({
   getExpTrials: vi.fn(),
   getExpValidationHistory: vi.fn(),
   getProject: vi.fn(),
+  getResourcePools: vi.fn().mockReturnValue(Promise.resolve([])),
   getTrialDetails: vi.fn(),
   getWorkspace: vi.fn(),
   getWorkspaceProjects: vi.fn().mockReturnValue({ projects: [] }),
