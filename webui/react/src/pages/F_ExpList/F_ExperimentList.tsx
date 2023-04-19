@@ -35,6 +35,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   );
   const [total, setTotal] = useState<Loadable<number>>(NotLoaded);
   const [projectColumns, setProjectColumns] = useState<Loadable<ProjectColumns>>(NotLoaded);
+  const [visibleColumns, setVisibleColumns] = useState<string[]>([]);
 
   useEffect(() => {
     setSearchParams({ page: String(page) });
@@ -223,10 +224,12 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
               experiments={experiments}
               filters={experimentFilters}
               handleUpdateExperimentList={handleUpdateExperimentList}
+              initialVisibleColumns={visibleColumns}
               project={project}
               projectColumns={projectColumns}
               selectAll={selectAll}
               selectedExperimentIds={selectedExperimentIds}
+              setVisibleColumns={setVisibleColumns}
               total={total}
               onAction={handleOnAction}
             />

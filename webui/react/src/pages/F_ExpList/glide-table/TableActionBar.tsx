@@ -1,4 +1,4 @@
-import { Menu, Popover, Row, Space } from 'antd';
+import { Menu, Popover, Space } from 'antd';
 import { ItemType } from 'rc-menu/lib/interface';
 import React, { useCallback, useMemo, useState } from 'react';
 
@@ -76,10 +76,12 @@ const actionIcons: Record<BatchAction, string> = {
 interface Props {
   experiments: Loadable<ExperimentItem>[];
   filters: V1BulkExperimentFilters;
+  initialVisibleColumns: string[];
   onAction: () => Promise<void>;
   selectAll: boolean;
   selectedExperimentIds: number[];
   handleUpdateExperimentList: (action: BatchAction, successfulIds: number[]) => void;
+  setVisibleColumns: Dispatch<SetStateAction<string[]>>;
   project: Project;
   projectColumns: Loadable<ProjectColumns>;
   total: Loadable<number>;
@@ -95,6 +97,7 @@ const TableActionBar: React.FC<Props> = ({
   project,
   projectColumns,
   total,
+  initialVisibleColumns,
 }) => {
   const permissions = usePermissions();
   const [batchAction, setBatchAction] = useState<BatchAction>();
@@ -283,82 +286,83 @@ const TableActionBar: React.FC<Props> = ({
     [handleBatchAction],
   );
 
-  const columnPickerContent = useMemo(() => {
-    return (
-      <div style={{ width: '300px' }}>
-        <Form form={form}>
-          {Loadable.match(projectColumns, {
-            Loaded: (columns) => (
-              <Pivot
-                items={[
-                  {
-                    children: (
-                      <div style={{ maxHeight: 500, overflow: 'hidden auto' }}>
-                        <Form.Item name="general-group">
-                          <Input.Group>
-                            {columns.general.map((column) => (
-                              <Row key={column}>
-                                <Checkbox>{column}</Checkbox>
-                              </Row>
-                            ))}
-                          </Input.Group>
-                        </Form.Item>
-                      </div>
-                    ),
-                    forceRender: true,
-                    key: 'general',
-                    label: 'General',
-                  },
-                  {
-                    children: (
-                      <div style={{ maxHeight: 500, overflow: 'hidden auto' }}>
-                        <Form.Item name="metrics-group">
-                          <Input.Group>
-                            {columns.metrics.map((column) => (
-                              <Row key={column}>
-                                <Checkbox>{column}</Checkbox>
-                              </Row>
-                            ))}
-                          </Input.Group>
-                        </Form.Item>
-                      </div>
-                    ),
-                    forceRender: true,
-                    key: 'metrics',
-                    label: 'Metrics',
-                  },
-                  {
-                    children: (
-                      <div style={{ maxHeight: 500, overflow: 'hidden auto' }}>
-                        <Form.Item name="hyperparameters-group">
-                          <Input.Group>
-                            {columns.hyperparameters.map((column) => (
-                              <Row key={column}>
-                                <Checkbox>{column}</Checkbox>
-                              </Row>
-                            ))}
-                          </Input.Group>
-                        </Form.Item>
-                      </div>
-                    ),
-                    forceRender: true,
-                    key: 'hyperparameters',
-                    label: 'Hyperparameters',
-                  },
-                ]}
-              />
-            ),
-            NotLoaded: () => <Spinner />,
-          })}
-        </Form>
-      </div>
-    );
-  }, [form, projectColumns]);
+  const columnSearch: string | undefined = Form.useWatch('column-search', form);
+
+  //_changedValues: Record<string, string | Record<string, boolean>>,
+  //_allValues: Record<string, string | Record<string, boolean>>,
+  const handleColumnUpdate = useCallback(() => {
+    undefined;
+  }, []);
+
+  const tabContent = useCallback(
+    (columns: string[], tab: 'general' | 'hyperparameters' | 'metrics') => {
+      return (
+        <div>
+          <Form.Item name="column-search">
+            <Input allowClear placeholder="Search" />
+          </Form.Item>
+          <div style={{ maxHeight: 360, overflow: 'hidden auto' }}>
+            {columns
+              .filter((column) => column.toLowerCase().includes(columnSearch?.toLowerCase() ?? ''))
+              .map((column) => (
+                <Form.Item
+                  initialValue={initialVisibleColumns.includes(column)}
+                  key={column}
+                  name={[tab, column]}
+                  valuePropName="checked">
+                  <Checkbox>{column}</Checkbox>
+                </Form.Item>
+              ))}
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <Button type="text">Show all</Button>
+            <Button type="text">Show suggested</Button>
+          </div>
+        </div>
+      );
+    },
+    [columnSearch, initialVisibleColumns],
+  );
 
   return (
     <>
       <Space className={css.base}>
-        <Popover content={columnPickerContent} placement="bottom" trigger="click">
+        <Popover
+          content={
+            <div style={{ width: '300px' }}>
+              <Form form={form} onValuesChange={handleColumnUpdate}>
+                {Loadable.match(projectColumns, {
+                  Loaded: (columns) => (
+                    <Pivot
+                      items={[
+                        {
+                          children: tabContent(columns.general, 'general'),
+                          forceRender: true,
+                          key: 'general',
+                          label: 'General',
+                        },
+                        {
+                          children: tabContent(columns.metrics, 'metrics'),
+                          forceRender: true,
+                          key: 'metrics',
+                          label: 'Metrics',
+                        },
+                        {
+                          children: tabContent(columns.hyperparameters, 'hyperparameters'),
+                          forceRender: true,
+                          key: 'hyperparameters',
+                          label: 'Hyperparameters',
+                        },
+                      ]}
+                    />
+                  ),
+                  NotLoaded: () => <Spinner />,
+                })}
+              </Form>
+            </div>
+          }
+          placement="bottom"
+          trigger="click">
           <Button>Columns</Button>
         </Popover>
         {(selectAll || selectedExperimentIds.length > 0) && (
