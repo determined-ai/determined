@@ -8,6 +8,7 @@ defines a custom `train_step()` and `test_step()`.
 import tensorflow as tf
 from data import get_train_dataset, get_validation_dataset
 from dc_gan import DCGan
+from packaing import version
 
 from determined.keras import InputData, TFKerasTrial, TFKerasTrialContext
 
@@ -25,15 +26,16 @@ class DCGanTrial(TFKerasTrial):
         # Wrap the model.
         model = self.context.wrap_model(model)
 
+        # TODO MLG-443 Migrate from legacy Keras optimizers
+        if version.parse(tf.__version__) >= version.parse("2.11.0"):
+            optimizer_type = tf.keras.optimizers.legacy.Adam
+        else:
+            optimizer_type = tf.keras.optimizers.Adam
         # Create and wrap the optimizers.
-        g_optimizer = tf.keras.optimizers.Adam(
-            learning_rate=self.context.get_hparam("generator_lr")
-        )
+        g_optimizer = optimizer_type(learning_rate=self.context.get_hparam("generator_lr"))
         g_optimizer = self.context.wrap_optimizer(g_optimizer)
 
-        d_optimizer = tf.keras.optimizers.Adam(
-            learning_rate=self.context.get_hparam("discriminator_lr")
-        )
+        d_optimizer = optimizer_type(learning_rate=self.context.get_hparam("discriminator_lr"))
         d_optimizer = self.context.wrap_optimizer(d_optimizer)
 
         model.compile(
