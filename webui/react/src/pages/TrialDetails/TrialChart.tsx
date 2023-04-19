@@ -81,14 +81,12 @@ const TrialChart: React.FC<Props> = ({
       }
 
       mWrapper.data.forEach((avgMetrics) => {
-        avgMetrics.values.forEach((value, metricName) => {
-          if (metricName === metric.name) {
+          if (avgMetrics.values[metric.name]) {
             if (!xValues.includes(avgMetrics.batches)) {
               xValues.push(avgMetrics.batches);
             }
-            yValues[index][avgMetrics.batches] = Number.isFinite(value) ? value : null;
-          }
-        });
+            yValues[index][avgMetrics.batches] = Number.isFinite(avgMetrics.values[metric.name]) ? avgMetrics.values[metric.name] : null;
+          };
       });
     });
 

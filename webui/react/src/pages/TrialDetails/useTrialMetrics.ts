@@ -55,30 +55,30 @@ export const useTrialMetrics = (
 
       setData((prev) => {
         if (isEqual(prev, response)) return prev;
-        const rawBatchValuesMap: Map<string, [number, number][]> = new Map();
-        const rawBatchTimesMap: Map<string, [number, number][]> = new Map();
-        const rawBatchEpochMap: Map<string, [number, number][]> = new Map();
+        const rawBatchValuesMap: Record<string, [number, number][]> = {};
+        const rawBatchTimesMap: Record<string, [number, number][]> = {};
+        const rawBatchEpochMap: Record<string, [number, number][]> = {};
         response[0]?.metrics.forEach((summMetric) => {
           summMetric.data.forEach((avgMetrics) => {
             metrics.forEach((metric) => {
-              const value = avgMetrics.values.get(metric.name);
-              if (!rawBatchValuesMap.has(metric.name)) {
-                rawBatchValuesMap.set(metric.name, []);
-              }
-              if (!rawBatchTimesMap.has(metric.name)) {
-                rawBatchTimesMap.set(metric.name, []);
-              }
-              if (!rawBatchEpochMap.has(metric.name)) {
-                rawBatchEpochMap.set(metric.name, []);
-              }
+              const value = avgMetrics.values[metric.name];
+              if (!rawBatchValuesMap[metric.name]) 
+                rawBatchValuesMap[metric.name] =  [];
+              
+              if (!rawBatchTimesMap[metric.name]) 
+                rawBatchTimesMap[metric.name] = [];
+        
+              if (!rawBatchEpochMap[metric.name]) 
+                rawBatchEpochMap[metric.name] = [];
+              
               if (value) {
-                rawBatchValuesMap.get(metric.name)?.push([avgMetrics.batches, value]);
+                rawBatchValuesMap[metric.name]?.push([avgMetrics.batches, value]);
                 if (avgMetrics.time)
                   rawBatchTimesMap
-                    .get(metric.name)
+                    [metric.name]
                     ?.push([new Date(avgMetrics.time).getTime() / 1000, value]);
                 if (avgMetrics.epoch)
-                  rawBatchEpochMap.get(metric.name)?.push([avgMetrics.epoch, value]);
+                  rawBatchEpochMap[metric.name]?.push([avgMetrics.epoch, value]);
               }
             });
           });
@@ -86,9 +86,9 @@ export const useTrialMetrics = (
         const trialData: Record<string, Serie> = {};
         metrics.forEach((metric) => {
           const data: Partial<Record<XAxisDomain, [number, number][]>> = {
-            [XAxisDomain.Batches]: rawBatchValuesMap.get(metric.name),
-            [XAxisDomain.Time]: rawBatchTimesMap.get(metric.name),
-            [XAxisDomain.Epochs]: rawBatchEpochMap.get(metric.name),
+            [XAxisDomain.Batches]: rawBatchValuesMap[metric.name],
+            [XAxisDomain.Time]: rawBatchTimesMap[metric.name],
+            [XAxisDomain.Epochs]: rawBatchEpochMap[metric.name],
           };
           const series: Serie = {
             color:
