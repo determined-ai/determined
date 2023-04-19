@@ -157,6 +157,7 @@ func (a *apiServer) getProjectColumnsByID(
 		ColumnExpr("e.config->'hyperparameters' as hyperparameters").
 		TableExpr("experiments e").
 		Where("e.config->>'hyperparameters' IS NOT NULL").
+		Order("e.id").
 		Scan(ctx, &hyperparameters)
 
 	if err != nil {
