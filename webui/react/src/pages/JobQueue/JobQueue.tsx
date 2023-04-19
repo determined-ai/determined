@@ -236,7 +236,7 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
                     ]}
                     confirmations={{
                       [JobAction.Cancel]: { cancelText: 'Abort' },
-                      [JobAction.Kill]: {},
+                      [JobAction.Kill]: { danger: true },
                       [JobAction.MoveToTop]: {},
                     }}
                     id={record.name}
