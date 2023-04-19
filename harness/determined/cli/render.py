@@ -159,7 +159,7 @@ def print_json(data: Union[str, Any], skip_coloring: bool = False) -> None:
     skip_coloring: if True, do not colorize the output.
     """
     try:
-        if not skip_coloring and shutil.which("jq") is not None:
+        if sys.stdout.isatty() and not skip_coloring and shutil.which("jq") is not None:
             if not isinstance(data, str):
                 data = json.dumps(data)
             subprocess.run(["jq", "."], input=data, text=True)
