@@ -150,7 +150,7 @@ func (a *apiServer) getProjectColumnsByID(
 	}
 
 	hyperparameters := []struct {
-		Hyperparameters expconf.HyperparametersV0;
+		Hyperparameters expconf.HyperparametersV0
 	}{}
 
 	// get all experiments in project
@@ -160,7 +160,6 @@ func (a *apiServer) getProjectColumnsByID(
 		Where("e.config->>'hyperparameters' IS NOT NULL").
 		Order("e.id").
 		Scan(ctx, &hyperparameters)
-
 	if err != nil {
 		return nil, err
 	}
@@ -170,7 +169,7 @@ func (a *apiServer) getProjectColumnsByID(
 
 		// ensure we're iterating in order
 		paramKeys := make([]string, len(flatHparam))
-		for key, _ := range flatHparam {
+		for key := range flatHparam {
 			paramKeys = append(paramKeys, key)
 		}
 		sort.Strings(paramKeys)
