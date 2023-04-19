@@ -187,7 +187,7 @@ func (a *apiServer) getProjectColumnsByID(
 					columnType = projectv1.ColumnType_COLUMN_TYPE_UNSPECIFIED
 				}
 				columns = append(columns, &projectv1.ProjectColumn{
-					Column:   key,
+					Column:   fmt.Sprintf("hp.%s", key),
 					Location: projectv1.LocationType_LOCATION_TYPE_HYPERPARAMETERS,
 					Type:     columnType,
 				})
