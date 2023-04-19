@@ -192,7 +192,7 @@ def trial_logs(args: Namespace) -> None:
         )
         if args.json:
             for log in logs:
-                render.print_json(log.to_json(), skip_coloring=True)
+                render.print_json(log.to_json())
         else:
             api.pprint_logs(logs)
     finally:
