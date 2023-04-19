@@ -12,6 +12,7 @@ import filelock
 import numpy as np
 import tensorflow as tf
 import tensorflow_datasets as tfds
+from packaging import version
 from tensorflow import keras
 from tensorflow_examples.models.pix2pix import pix2pix
 
@@ -104,7 +105,11 @@ class UNetsTrial(TFKerasTrial):
         model = self.context.wrap_model(model)
 
         # Create and wrap optimizer.
-        optimizer = tf.keras.optimizers.Adam()
+        # TODO MLG-443 Migrate from legacy Keras optimizers
+        if version.parse(tf.__version__) >= version.parse("2.11.0"):
+            optimizer = tf.keras.optimizers.legacy.Adam()
+        else:
+            optimizer = tf.keras.optimizers.Adam()
         optimizer = self.context.wrap_optimizer(optimizer)
 
         model.compile(
