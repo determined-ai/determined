@@ -491,7 +491,7 @@ export interface MetricDatapoint {
   batches: number;
   epoch?: number;
   time: Date;
-  value: number;
+  values: Map<string, number>;
 }
 
 export interface MetricDatapointTime {
@@ -507,7 +507,6 @@ export interface MetricDatapointEpoch {
 export interface MetricContainer {
   data: MetricDatapoint[];
   epochs?: MetricDatapointEpoch[];
-  name: string;
   time?: MetricDatapointTime[];
   type: MetricType;
 }

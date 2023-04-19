@@ -62,17 +62,19 @@ const useLearningCurve = (
       const trialRowIndex = trialIds.indexOf(trial.id);
       if (trialRowIndex === -1) return;
       trial.metrics.forEach((metric) => {
-        const metricKey = metricToKey(metric);
-        const metricInfo = newLearningCurveData.infoForMetrics[metricKey];
-        if (!metricInfo) return;
-        metric.data.forEach(({ batches, value }) => {
-          const batchColumnIndex = batches - 1;
-          if (batchColumnIndex >= 0 && batches <= maxBatch) {
-            metricInfo.nonEmptyTrials.add(trial.id);
-            const chartData = metricInfo.chartData;
-            chartData[trialRowIndex][batchColumnIndex] = value;
+        metric.data.forEach(({ batches, values }) => {
+          values.forEach((value, metricName) => {
+            const metricKey =  metricToKey({ name: metricName, type: metric.type });
+            const metricInfo = newLearningCurveData.infoForMetrics[metricKey];
+            if (!metricInfo) return;
+
+            const batchColumnIndex = batches - 1;
+            if (batchColumnIndex >= 0 && batches <= maxBatch) {
+              metricInfo.nonEmptyTrials.add(trial.id);
+              const chartData = metricInfo.chartData;
+              chartData[trialRowIndex][batchColumnIndex] = value;
           }
-        });
+        })});
       });
     });
 

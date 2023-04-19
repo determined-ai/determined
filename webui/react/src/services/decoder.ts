@@ -629,15 +629,13 @@ export const decodeV1TrialToTrialItem = (data: Sdk.Trialv1Trial): types.TrialIte
 
 const decodeSummaryMetrics = (data: Sdk.V1DownsampledMetrics[]): types.MetricContainer[] => {
   return data.map((m) => {
-    data: m.data.map((pt) => ({
     const metrics: types.MetricContainer = {
-        values: m.data.map(data.values) => ({
+      data: m.data.map((pt) => ({   
         batches: pt.batches,
         epoch: pt.epoch,
         time: pt.time,
-        value: pt.values,
-      }}))),
-      name: m.name,
+        values: pt.values, // pt.values needs to be exapnded to get single value and name here. for loop over 
+      })),
       type:
         m.type === Sdk.V1MetricType.TRAINING
           ? types.MetricType.Training
