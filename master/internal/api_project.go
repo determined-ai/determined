@@ -171,11 +171,12 @@ func (a *apiServer) getProjectColumnsByID(
 			if !seen {
 				hparamSet[key] = true
 				var columnType projectv1.ColumnType
-				if value.RawIntHyperparameter != nil ||
+				switch {
+				case value.RawIntHyperparameter != nil ||
 					value.RawDoubleHyperparameter != nil ||
-					value.RawLogHyperparameter != nil {
+					value.RawLogHyperparameter != nil:
 					columnType = projectv1.ColumnType_COLUMN_TYPE_NUMBER
-				} else if value.RawConstHyperparameter != nil {
+				case value.RawConstHyperparameter != nil:
 					switch value.RawConstHyperparameter.RawVal.(type) {
 					case float64:
 						columnType = projectv1.ColumnType_COLUMN_TYPE_NUMBER
@@ -184,7 +185,7 @@ func (a *apiServer) getProjectColumnsByID(
 					default:
 						columnType = projectv1.ColumnType_COLUMN_TYPE_UNSPECIFIED
 					}
-				} else {
+				default:
 					columnType = projectv1.ColumnType_COLUMN_TYPE_UNSPECIFIED
 				}
 				columns = append(columns, &projectv1.ProjectColumn{

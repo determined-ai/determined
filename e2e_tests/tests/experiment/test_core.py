@@ -513,7 +513,7 @@ def test_experiment_list_columns() -> None:
     columns = bindings.get_GetProjectColumns(api_utils.determined_test_session(), id=1)
 
     for hp in exp_hyperparameters:
-        assert next((c for c in columns.columns if c.column == hp), None) is not None
+        assert next((c for c in columns.columns if c.column == "hp." + hp), None) is not None
     for mc in exp_metrics:
         assert next((c for c in columns.columns if c.column == mc), None) is not None
 
