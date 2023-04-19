@@ -4,8 +4,9 @@ import contextlib
 import time
 from typing import Iterator
 
-from determined.cli.tunnel import ListenerConfig, http_tunnel_listener
 from determined.common.api import Session, authentication, bindings
+
+from ._tunnel_util import ListenerConfig, http_tunnel_listener
 
 
 @contextlib.contextmanager
