@@ -81,7 +81,7 @@ const useModalModelMove = ({ onClose }: Props = {}): ModalHooks => {
                 filterOption={(input, option) =>
                   (option?.label?.toString() ?? '').toLowerCase().includes(input.toLowerCase())
                 }
-                filterSort={(a, b) => ((a?.label ?? '') < (b?.label ?? '') ? 1 : -1)}
+                filterSort={(a, b) => ((a?.label ?? '') < (b?.label ?? '') ? -1 : 1)}
                 options={workspaces
                   .filter(
                     (ws) =>
