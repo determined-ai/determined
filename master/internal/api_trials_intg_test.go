@@ -251,7 +251,7 @@ func TestMultiTrialSampleMetrics(t *testing.T) {
 	}
 
 	maxDataPoints := 10
-	actualTrainingMetrics, err := api.MultiTrialSample(int32(trial.ID), trainMetricNames, apiv1.MetricType_METRIC_TYPE_TRAINING, maxDataPoints, 0, 10, false, apiv1.XAxis_X_AXIS_UNSPECIFIED, nil, []string{})
+	actualTrainingMetrics, err := api.MultiTrialSample(int32(trial.ID), trainMetricNames, apiv1.MetricType_METRIC_TYPE_TRAINING, maxDataPoints, 0, 10, false, nil, []string{})
 	require.NoError(t, err)
 	require.Equal(t, 1, len(actualTrainingMetrics))
 	var validationMetricNames []string
@@ -260,14 +260,14 @@ func TestMultiTrialSampleMetrics(t *testing.T) {
 		metricIds = append(metricIds, "validation."+metricName)
 	}
 
-	actualValidationTrainingMetrics, err := api.MultiTrialSample(int32(trial.ID), validationMetricNames, apiv1.MetricType_METRIC_TYPE_VALIDATION, maxDataPoints, 0, 10, false, apiv1.XAxis_X_AXIS_UNSPECIFIED, nil, []string{})
+	actualValidationTrainingMetrics, err := api.MultiTrialSample(int32(trial.ID), validationMetricNames, apiv1.MetricType_METRIC_TYPE_VALIDATION, maxDataPoints, 0, 10, false, nil, []string{})
 	require.Equal(t, 1, len(actualValidationTrainingMetrics))
 	require.NoError(t, err)
 
 	require.True(t, isMultiTrialSampleCorrect(expectedTrainMetrics, actualTrainingMetrics[0]))
 	require.True(t, isMultiTrialSampleCorrect(expectedValMetrics, actualValidationTrainingMetrics[0]))
 
-	actualAllMetrics, err := api.MultiTrialSample(int32(trial.ID), []string{}, apiv1.MetricType_METRIC_TYPE_UNSPECIFIED, maxDataPoints, 0, 10, false, apiv1.XAxis_X_AXIS_UNSPECIFIED, nil, metricIds)
+	actualAllMetrics, err := api.MultiTrialSample(int32(trial.ID), []string{}, apiv1.MetricType_METRIC_TYPE_UNSPECIFIED, maxDataPoints, 0, 10, false, nil, metricIds)
 	require.Equal(t, 2, len(actualAllMetrics))
 	require.NoError(t, err)
 	require.True(t, isMultiTrialSampleCorrect(expectedTrainMetrics, actualAllMetrics[0]))
