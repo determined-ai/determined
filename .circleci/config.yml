@@ -107,7 +107,7 @@ commands:
       - run:
           name: check for docs-only changes
           command: |
-            MERGE_BASE="$(git merge-base upstream/master HEAD)"
+            MERGE_BASE="$(git merge-base upstream/main HEAD)"
             DIFF_DIRS="$(git diff-tree --no-commit-id --name-only "$MERGE_BASE" HEAD)"
             if [ "$DIFF_DIRS" = "docs" ] ; then
               echo "docs-only change detected, halting job now"
@@ -122,7 +122,7 @@ commands:
       - run:
           name: check for webui-only changes # must be run after skip-if-docs-only
           command: |
-            MERGE_BASE="$(git merge-base upstream/master HEAD)"
+            MERGE_BASE="$(git merge-base upstream/main HEAD)"
             DIFF_DIRS="$(git diff-tree --no-commit-id --name-only "$MERGE_BASE" HEAD)"
             if [ "$DIFF_DIRS" = "webui" ] ; then
               echo "webui-only change detected, halting job now"
@@ -138,7 +138,7 @@ commands:
       - run:
           name: check for shared changes
           command: |
-            MERGE_BASE="$(git merge-base upstream/master HEAD)"
+            MERGE_BASE="$(git merge-base upstream/main HEAD)"
             DIFF_DIRS="$(git diff-tree --no-commit-id --name-only "$MERGE_BASE":webui/react/src HEAD:webui/react/src)"
             # check "shared" is in the list of changed directories
             if [[ "$DIFF_DIRS" == *"shared"* ]]; then
@@ -488,7 +488,7 @@ commands:
             <<parameters.extra-pytest-flags>> \
             $(< /tmp/tests-to-run)
       - upload-test-job:
-          only_on_branch: master
+          only_on_branch: main
           test_results_path: <<parameters.junit-path>>
 
   run-det-deploy-tests:
@@ -1716,7 +1716,7 @@ jobs:
           executor: <<pipeline.parameters.docker-image>>
       - run: pytest -vv -s --junit-xml="/tmp/test-results/examples.xml" --durations=0 examples/tests
       - upload-test-job:
-          only_on_branch: master
+          only_on_branch: main
           test_results_path: /tmp/test-results/examples.xml
 
   test-cli:
@@ -1858,7 +1858,7 @@ jobs:
       - image: <<pipeline.parameters.docker-image>>
     steps:
       - queue/until_front_of_line:
-          only-on-branch: master
+          only-on-branch: main
           # Basically wait forever -- we would prefer not to fail deploys, and
           # we'll likely never be this backed up.
           time: "10000"
@@ -1956,7 +1956,7 @@ jobs:
           path: /tmp/test-results/
       - slack/status:
           fail_only: True
-          only_for_branches: master
+          only_for_branches: main
           failure_message: ':thisisfine: A \`<<parameters.mark>>\` E2E GPU job on branch \`${CIRCLE_BRANCH}\` has failed! Author Email: \`${AUTHOR_EMAIL}\`'
           mentions: <<parameters.slack-mentions>>
           channel: <<parameters.slack-channel>>
@@ -2028,7 +2028,7 @@ jobs:
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
           executor: <<pipeline.parameters.docker-image>>
       - queue/until_front_of_line:
-          only-on-branch: master
+          only-on-branch: main
           # Basically wait forever -- we would prefer not to fail tests, and
           # we'll likely never be this backed up.
           time: "10000"
@@ -2064,7 +2064,7 @@ jobs:
           region: <<parameters.region>>
       - slack/status:
           fail_only: True
-          only_for_branches: master
+          only_for_branches: main
           failure_message: ':thisisfine: A \`<<parameters.mark>>\` E2E GKE GPU job on branch \`${CIRCLE_BRANCH}\` has failed! Author Email: \`${AUTHOR_EMAIL}\`'
           mentions: <<parameters.slack-mentions>>
           channel: <<parameters.slack-channel>>
@@ -2207,7 +2207,7 @@ jobs:
           cluster-id: ${CLUSTER_ID}
       - slack/status:
           fail_only: True
-          only_for_branches: master
+          only_for_branches: main
           failure_message: ':thisisfine: AWS FS \`<<parameters.deployment-type>>\` job on branch \`${CIRCLE_BRANCH}\` has failed! Author Email: \`${AUTHOR_EMAIL}\`'
           mentions: <<parameters.slack-mentions>>
           channel: <<parameters.slack-channel>>
@@ -2435,7 +2435,7 @@ workflows:
           context: aws
           filters:
             branches:
-              only: master
+              only: main
           requires:
             - package-and-push-system-dev
           matrix:
@@ -2452,7 +2452,7 @@ workflows:
           context: aws
           filters:
             branches:
-              only: master
+              only: main
           requires:
             - package-and-push-system-dev
           matrix:
@@ -2468,7 +2468,7 @@ workflows:
           context: gcp-ci
           filters:
             branches:
-              only: master
+              only: main
           requires:
             - package-and-push-system-dev
           matrix:
@@ -2483,7 +2483,7 @@ workflows:
           context: gcp-ci
           filters:
             branches:
-              only: master
+              only: main
           requires:
             - package-and-push-system-dev
           matrix:
@@ -2502,7 +2502,7 @@ workflows:
           context: gcp-ci
           filters:
             branches:
-              only: master
+              only: main
           requires:
             - package-and-push-system-dev
           matrix:
@@ -2519,7 +2519,7 @@ workflows:
           context: gcp-ci
           filters:
             branches:
-              only: master
+              only: main
           requires:
             - package-and-push-system-dev
           matrix:
@@ -2539,7 +2539,7 @@ workflows:
           context: gcp-ci
           filters:
             branches:
-              only: master
+              only: main
           requires:
             - package-and-push-system-dev
           matrix:
@@ -2559,7 +2559,7 @@ workflows:
           context: gcp-ci
           filters:
             branches:
-              only: master
+              only: main
           requires:
             - package-and-push-system-dev
           matrix:
