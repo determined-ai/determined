@@ -164,7 +164,7 @@ func (a *apiServer) getProjectColumnsByID(
 	if err != nil {
 		return nil, err
 	}
-	hparamSet := make(map[string]bool)
+	hparamSet := make(map[string]struct{})
 	for _, hparam := range hyperparameters {
 		flatHparam := expconf.FlattenHPs(hparam.Hyperparameters)
 
@@ -179,7 +179,7 @@ func (a *apiServer) getProjectColumnsByID(
 			value := flatHparam[key]
 			_, seen := hparamSet[key]
 			if !seen {
-				hparamSet[key] = true
+				hparamSet[key] = struct{}{}
 				var columnType projectv1.ColumnType
 				switch {
 				case value.RawIntHyperparameter != nil ||
