@@ -1005,6 +1005,7 @@ func (m *Master) Run(ctx context.Context) error {
 		m.db,
 		m.echo,
 		&m.config.ResourceConfig,
+		&m.config.TaskContainerDefaults,
 		&aproto.MasterSetAgentOptions{
 			MasterInfo:     m.Info(),
 			LoggingOptions: m.config.Logging,
