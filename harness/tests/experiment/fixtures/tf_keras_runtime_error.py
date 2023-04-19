@@ -3,6 +3,7 @@ from typing import Any
 import numpy as np
 import tensorflow as tf
 from tensorflow import keras
+from packaging import version
 
 import determined as det
 import determined.keras
@@ -22,8 +23,13 @@ class RuntimeErrorTrial(det.keras.TFKerasTrial):
     def build_model(self) -> Any:
         model = keras.Sequential([keras.layers.Dense(10)])
         model = self.context.wrap_model(model)
+        # TODO MLG-443 Migrate from legacy Keras optimizers
+        if version.parse(tf.__version__) >= version.parse("2.11.0"):
+            optimizer = tf.keras.optimizers.legacy.Adam(name="Adam")
+        else:
+            optimizer = tf.keras.optimizers.Adam(name="Adam")
         model.compile(
-            optimizer=tf.keras.optimizers.Adam(name="Adam"),
+            optimizer=optimizer,
             loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
             metrics=[
                 tf.keras.metrics.Accuracy()
