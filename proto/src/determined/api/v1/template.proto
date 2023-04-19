@@ -62,7 +62,10 @@ message PostTemplateRequest {
 }
 // Response to PostTemplateRequest.
 message PostTemplateResponse {
-  // The updated or created template.
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "template" ] }
+  };
+  // The created template.
   determined.template.v1.Template template = 1;
 }
 
@@ -77,7 +80,13 @@ message PatchTemplateConfigRequest {
   google.protobuf.Struct config = 2;
 }
 // Response to PatchTemplateConfigRequest.
-message PatchTemplateConfigResponse {}
+message PatchTemplateConfigResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "template" ] }
+  };
+  // The updated template.
+  determined.template.v1.Template template = 1;
+}
 
 // Delete the template with the given id.
 message DeleteTemplateRequest {

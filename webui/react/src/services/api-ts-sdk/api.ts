@@ -5964,6 +5964,12 @@ export interface V1PatchProjectResponse {
  * @interface V1PatchTemplateConfigResponse
  */
 export interface V1PatchTemplateConfigResponse {
+    /**
+     * The updated template.
+     * @type {V1Template}
+     * @memberof V1PatchTemplateConfigResponse
+     */
+    template: V1Template;
 }
 /**
  * Request message to PatchTrialsCollection.
@@ -6510,11 +6516,11 @@ export interface V1PostSearcherOperationsResponse {
  */
 export interface V1PostTemplateResponse {
     /**
-     * The updated or created template.
+     * The created template.
      * @type {V1Template}
      * @memberof V1PostTemplateResponse
      */
-    template?: V1Template;
+    template: V1Template;
 }
 /**
  * Create a batch of trial profiler metrics.

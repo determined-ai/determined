@@ -7532,6 +7532,28 @@ class v1PatchProjectResponse:
         }
         return out
 
+class v1PatchTemplateConfigResponse:
+
+    def __init__(
+        self,
+        *,
+        template: "v1Template",
+    ):
+        self.template = template
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PatchTemplateConfigResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "template": v1Template.from_json(obj["template"]),
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "template": self.template.to_json(omit_unset),
+        }
+        return out
+
 class v1PatchTrialsCollectionRequest:
     filters: "typing.Optional[v1TrialFilters]" = None
     name: "typing.Optional[str]" = None
@@ -8311,29 +8333,25 @@ class v1PostSearcherOperationsRequest:
         return out
 
 class v1PostTemplateResponse:
-    template: "typing.Optional[v1Template]" = None
 
     def __init__(
         self,
         *,
-        template: "typing.Union[v1Template, None, Unset]" = _unset,
+        template: "v1Template",
     ):
-        if not isinstance(template, Unset):
-            self.template = template
+        self.template = template
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1PostTemplateResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
+            "template": v1Template.from_json(obj["template"]),
         }
-        if "template" in obj:
-            kwargs["template"] = v1Template.from_json(obj["template"]) if obj["template"] is not None else None
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
+            "template": self.template.to_json(omit_unset),
         }
-        if not omit_unset or "template" in vars(self):
-            out["template"] = None if self.template is None else self.template.to_json(omit_unset)
         return out
 
 class v1PostTrialProfilerMetricsBatchRequest:
@@ -16084,7 +16102,7 @@ def patch_PatchTemplateConfig(
     *,
     body: "typing.Dict[str, typing.Any]",
     templateName: str,
-) -> None:
+) -> "v1PatchTemplateConfigResponse":
     _params = None
     _resp = session._do_request(
         method="PATCH",
@@ -16097,7 +16115,7 @@ def patch_PatchTemplateConfig(
         stream=False,
     )
     if _resp.status_code == 200:
-        return
+        return v1PatchTemplateConfigResponse.from_json(_resp.json())
     raise APIHttpError("patch_PatchTemplateConfig", _resp)
 
 def patch_PatchTrialsCollection(

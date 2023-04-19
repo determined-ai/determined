@@ -2,6 +2,7 @@ package internal
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -66,12 +67,14 @@ func (a *apiServer) PatchTemplateConfig(
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid config provided: %s", err.Error())
 	}
+	fmt.Println("config", string(config))
+	fmt.Println("template", req.TemplateName)
 
-	if _, err := db.Bun().NewUpdate().Model(&model.Template{Config: config}).
-		Where("name = ?", req.TemplateName).Column("config").Exec(ctx); err != nil {
+	template := templatev1.Template{}
+	if err := a.m.db.QueryProto("update_template", &template, req.TemplateName, config); err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to update template: %s", err.Error())
 	}
-	return nil, nil
+	return &apiv1.PatchTemplateConfigResponse{Template: &template}, nil
 }
 
 func (a *apiServer) DeleteTemplate(
