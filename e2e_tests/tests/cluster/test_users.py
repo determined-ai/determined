@@ -1037,3 +1037,26 @@ def test_patch_agentusergroup(clean_auth: None, login_admin: None) -> None:
     assert test_user.id
     with pytest.raises(errors.APIException):
         bindings.patch_PatchUser(sess, body=patch_user, userId=test_user.id)
+
+
+@pytest.mark.e2e_cpu
+def test_incorrect_password(clean_auth: None, login_admin: None) -> None:
+    """Verify the password if it is provided. Do not use the stored token in the
+    token store. If a password is not provided and a token is available in the
+    token store, it's okay to use.
+    """
+    creds = api_utils.create_test_user(add_password=True)
+
+    Determined(master=conf.make_master_url(), user=creds.username, password=creds.password)
+    with pytest.raises(errors.UnauthenticatedException):
+        Determined(
+            master=conf.make_master_url(), user=creds.username, password="incorrect_password"
+        )
+    # Without password
+    det = Determined(master=conf.make_master_url(), user=creds.username)
+    det.logout()
+
+    # Test cli
+    log_in_user_cli(creds, 0)
+    incorrect_creds = authentication.Credentials(creds.username, "incorrect_password")
+    log_in_user_cli(incorrect_creds, 1)

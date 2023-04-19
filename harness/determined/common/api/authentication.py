@@ -104,7 +104,9 @@ class Authentication:
             assert session_user
             token = util.get_det_user_token_from_env()
 
-        if token is not None:
+        # Do not return the stored token if a password is provided.
+        # Authenticate in do_login().
+        if token is not None and password is None:
             return UsernameTokenPair(session_user, token)
 
         fallback_to_default = password is None and session_user == constants.DEFAULT_DETERMINED_USER
