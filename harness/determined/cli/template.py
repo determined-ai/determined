@@ -42,7 +42,7 @@ def describe_template(args: Namespace) -> None:
 
 
 @authentication.required
-def set_template(args: Namespace) -> None:
+def create_template(args: Namespace) -> None:
     if not args.template_file:
         raise ArgumentError(None, "template_file is required for set command")
     body = util.safe_load_yaml_with_exceptions(args.template_file)
@@ -50,10 +50,10 @@ def set_template(args: Namespace) -> None:
     v1_template = bindings.v1Template(
         name=args.template_name, config=body, workspaceId=workspace_id
     )
-    bindings.put_PutTemplate(
+    bindings.post_PostTemplate(
         cli.setup_session(args), template_name=args.template_name, body=v1_template
     )
-    print(colored("Set template {}".format(args.template_name), "green"))
+    print(colored("Created template {}".format(args.template_name), "green"))
 
 
 @authentication.required
@@ -74,7 +74,7 @@ args_description = [
             "describe config template", [
                 Arg("template_name", type=str, help="template name"),
             ]),
-        Cmd("set", set_template, "set config template", [
+        Cmd("create", create_template, "set config template", [
             Arg("template_name", help="template name"),
             Arg("template_file", type=FileType("r"),
                 help="config template file (.yaml)"),
