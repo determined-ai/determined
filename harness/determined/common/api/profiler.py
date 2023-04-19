@@ -46,12 +46,16 @@ def post_trial_profiler_metrics_batches(
                 "/api/v1/trials/profiler/metrics",
                 json={"batches": [b.__dict__ for b in batches]},
             )
+            return
         except exceptions.RequestException as e:
             if e.response is not None and e.response.status_code < 500:
                 raise e
 
-            time.sleep(backoff_interval)
             tries += 1
+            if tries == max_tries:
+                raise e
+            time.sleep(backoff_interval)
+    return
 
 
 class TrialProfilerSeriesLabels:
@@ -83,12 +87,15 @@ def get_trial_profiler_available_series(
                 path=f"/api/v1/trials/{trial_id}/profiler/available_series",
                 params={"follow": follow},
             )
+            break
         except exceptions.RequestException as e:
             if e.response is not None and e.response.status_code < 500:
                 raise e
 
-            time.sleep(backoff_interval)
             tries += 1
+            if tries == max_tries:
+                raise e
+            time.sleep(backoff_interval)
 
     assert response
     j = response.json()

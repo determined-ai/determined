@@ -10,7 +10,6 @@ import threading
 import time
 from typing import Any, Dict, Iterator
 
-import backoff
 from determined.common import api
 from determined.common.api import errors
 
