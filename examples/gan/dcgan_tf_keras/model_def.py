@@ -8,7 +8,7 @@ defines a custom `train_step()` and `test_step()`.
 import tensorflow as tf
 from data import get_train_dataset, get_validation_dataset
 from dc_gan import DCGan
-from packaing import version
+from packaging import version
 
 from determined.keras import InputData, TFKerasTrial, TFKerasTrialContext
 
