@@ -1,5 +1,6 @@
 import numpy as np
 import tensorflow as tf
+from packaging import version
 
 from determined.keras import TFKerasTrial, TFKerasTrialContext
 
@@ -24,7 +25,12 @@ class NoopKerasTrial(TFKerasTrial):
             ]
         )
         model = self.context.wrap_model(model)
-        optimizer = self.context.wrap_optimizer(tf.keras.optimizers.SGD())
+        # TODO MLG-443 Migrate from legacy Keras optimizers
+        if version.parse(tf.__version__) >= version.parse("2.11.0"):
+            sgd = tf.keras.optimizers.legacy.SGD()
+        else:
+            sgd = tf.keras.optimizers.SGD()
+        optimizer = self.context.wrap_optimizer(sgd)
         model.compile(
             loss=tf.keras.losses.MeanSquaredError(),
             optimizer=optimizer,
