@@ -4752,29 +4752,25 @@ class v1GetTelemetryResponse:
         return out
 
 class v1GetTemplateResponse:
-    template: "typing.Optional[v1Template]" = None
 
     def __init__(
         self,
         *,
-        template: "typing.Union[v1Template, None, Unset]" = _unset,
+        template: "v1Template",
     ):
-        if not isinstance(template, Unset):
-            self.template = template
+        self.template = template
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetTemplateResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
+            "template": v1Template.from_json(obj["template"]),
         }
-        if "template" in obj:
-            kwargs["template"] = v1Template.from_json(obj["template"]) if obj["template"] is not None else None
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
+            "template": self.template.to_json(omit_unset),
         }
-        if not omit_unset or "template" in vars(self):
-            out["template"] = None if self.template is None else self.template.to_json(omit_unset)
         return out
 
 class v1GetTemplatesRequestSortBy(enum.Enum):
@@ -4782,37 +4778,29 @@ class v1GetTemplatesRequestSortBy(enum.Enum):
     NAME = "SORT_BY_NAME"
 
 class v1GetTemplatesResponse:
-    pagination: "typing.Optional[v1Pagination]" = None
-    templates: "typing.Optional[typing.Sequence[v1Template]]" = None
 
     def __init__(
         self,
         *,
-        pagination: "typing.Union[v1Pagination, None, Unset]" = _unset,
-        templates: "typing.Union[typing.Sequence[v1Template], None, Unset]" = _unset,
+        pagination: "v1Pagination",
+        templates: "typing.Sequence[v1Template]",
     ):
-        if not isinstance(pagination, Unset):
-            self.pagination = pagination
-        if not isinstance(templates, Unset):
-            self.templates = templates
+        self.pagination = pagination
+        self.templates = templates
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetTemplatesResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
+            "pagination": v1Pagination.from_json(obj["pagination"]),
+            "templates": [v1Template.from_json(x) for x in obj["templates"]],
         }
-        if "pagination" in obj:
-            kwargs["pagination"] = v1Pagination.from_json(obj["pagination"]) if obj["pagination"] is not None else None
-        if "templates" in obj:
-            kwargs["templates"] = [v1Template.from_json(x) for x in obj["templates"]] if obj["templates"] is not None else None
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
+            "pagination": self.pagination.to_json(omit_unset),
+            "templates": [x.to_json(omit_unset) for x in self.templates],
         }
-        if not omit_unset or "pagination" in vars(self):
-            out["pagination"] = None if self.pagination is None else self.pagination.to_json(omit_unset)
-        if not omit_unset or "templates" in vars(self):
-            out["templates"] = None if self.templates is None else [x.to_json(omit_unset) for x in self.templates]
         return out
 
 class v1GetTensorboardResponse:
