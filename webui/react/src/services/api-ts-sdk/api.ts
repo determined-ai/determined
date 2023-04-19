@@ -5959,36 +5959,11 @@ export interface V1PatchProjectResponse {
     project: V1Project;
 }
 /**
- * Patch the template with the given id.
- * @export
- * @interface V1PatchTemplateConfigRequest
- */
-export interface V1PatchTemplateConfigRequest {
-    /**
-     * The name of the template.
-     * @type {string}
-     * @memberof V1PatchTemplateConfigRequest
-     */
-    templateName: string;
-    /**
-     * The template value.
-     * @type {any}
-     * @memberof V1PatchTemplateConfigRequest
-     */
-    config: any;
-}
-/**
  * Response to PatchTemplateConfigRequest.
  * @export
  * @interface V1PatchTemplateConfigResponse
  */
 export interface V1PatchTemplateConfigResponse {
-    /**
-     * The updated template.
-     * @type {V1Template}
-     * @memberof V1PatchTemplateConfigResponse
-     */
-    template: V1Template;
 }
 /**
  * Request message to PatchTrialsCollection.
@@ -24571,11 +24546,11 @@ export const TemplatesApiFetchParamCreator = function (configuration?: Configura
          * 
          * @summary Patch template config.
          * @param {string} templateName The name of the template.
-         * @param {V1PatchTemplateConfigRequest} body
+         * @param {any} body The template value.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        patchTemplateConfig(templateName: string, body: V1PatchTemplateConfigRequest, options: any = {}): FetchArgs {
+        patchTemplateConfig(templateName: string, body: any, options: any = {}): FetchArgs {
             // verify required parameter 'templateName' is not null or undefined
             if (templateName === null || templateName === undefined) {
                 throw new RequiredError('templateName','Required parameter templateName was null or undefined when calling patchTemplateConfig.');
@@ -24587,7 +24562,7 @@ export const TemplatesApiFetchParamCreator = function (configuration?: Configura
             const localVarPath = `/api/v1/templates/{templateName}`
                 .replace(`{${"templateName"}}`, encodeURIComponent(String(templateName)));
             const localVarUrlObj = url.parse(localVarPath, true);
-            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarRequestOptions = { method: 'PATCH', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
             
@@ -24731,11 +24706,11 @@ export const TemplatesApiFp = function (configuration?: Configuration) {
          * 
          * @summary Patch template config.
          * @param {string} templateName The name of the template.
-         * @param {V1PatchTemplateConfigRequest} body
+         * @param {any} body The template value.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        patchTemplateConfig(templateName: string, body: V1PatchTemplateConfigRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchTemplateConfigResponse> {
+        patchTemplateConfig(templateName: string, body: any, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchTemplateConfigResponse> {
             const localVarFetchArgs = TemplatesApiFetchParamCreator(configuration).patchTemplateConfig(templateName, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
@@ -24814,11 +24789,11 @@ export const TemplatesApiFactory = function (configuration?: Configuration, fetc
          * 
          * @summary Patch template config.
          * @param {string} templateName The name of the template.
-         * @param {V1PatchTemplateConfigRequest} body
+         * @param {any} body The template value.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        patchTemplateConfig(templateName: string, body: V1PatchTemplateConfigRequest, options?: any) {
+        patchTemplateConfig(templateName: string, body: any, options?: any) {
             return TemplatesApiFp(configuration).patchTemplateConfig(templateName, body, options)(fetch, basePath);
         },
         /**
@@ -24886,12 +24861,12 @@ export class TemplatesApi extends BaseAPI {
      * 
      * @summary Patch template config.
      * @param {string} templateName The name of the template.
-     * @param {V1PatchTemplateConfigRequest} body
+     * @param {any} body The template value.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof TemplatesApi
      */
-    public patchTemplateConfig(templateName: string, body: V1PatchTemplateConfigRequest, options?: any) {
+    public patchTemplateConfig(templateName: string, body: any, options?: any) {
         return TemplatesApiFp(this.configuration).patchTemplateConfig(templateName, body, options)(this.fetch, this.basePath)
     }
     

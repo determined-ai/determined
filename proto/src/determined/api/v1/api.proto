@@ -1117,8 +1117,8 @@ service Determined {
   rpc PatchTemplateConfig(PatchTemplateConfigRequest)
       returns (PatchTemplateConfigResponse) {
     option (google.api.http) = {
-      post: "/api/v1/templates/{template_name}"
-      body: "*"
+      patch: "/api/v1/templates/{template_name}"
+      body: "config"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Templates"

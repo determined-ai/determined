@@ -7532,54 +7532,6 @@ class v1PatchProjectResponse:
         }
         return out
 
-class v1PatchTemplateConfigRequest:
-
-    def __init__(
-        self,
-        *,
-        config: "typing.Dict[str, typing.Any]",
-        templateName: str,
-    ):
-        self.config = config
-        self.templateName = templateName
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1PatchTemplateConfigRequest":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-            "config": obj["config"],
-            "templateName": obj["templateName"],
-        }
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-            "config": self.config,
-            "templateName": self.templateName,
-        }
-        return out
-
-class v1PatchTemplateConfigResponse:
-
-    def __init__(
-        self,
-        *,
-        template: "v1Template",
-    ):
-        self.template = template
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1PatchTemplateConfigResponse":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-            "template": v1Template.from_json(obj["template"]),
-        }
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-            "template": self.template.to_json(omit_unset),
-        }
-        return out
-
 class v1PatchTrialsCollectionRequest:
     filters: "typing.Optional[v1TrialFilters]" = None
     name: "typing.Optional[str]" = None
@@ -16127,26 +16079,26 @@ def patch_PatchProject(
         return v1PatchProjectResponse.from_json(_resp.json())
     raise APIHttpError("patch_PatchProject", _resp)
 
-def post_PatchTemplateConfig(
+def patch_PatchTemplateConfig(
     session: "api.Session",
     *,
-    body: "v1PatchTemplateConfigRequest",
+    body: "typing.Dict[str, typing.Any]",
     templateName: str,
-) -> "v1PatchTemplateConfigResponse":
+) -> None:
     _params = None
     _resp = session._do_request(
-        method="POST",
+        method="PATCH",
         path=f"/api/v1/templates/{templateName}",
         params=_params,
-        json=body.to_json(True),
+        json=body,
         data=None,
         headers=None,
         timeout=None,
         stream=False,
     )
     if _resp.status_code == 200:
-        return v1PatchTemplateConfigResponse.from_json(_resp.json())
-    raise APIHttpError("post_PatchTemplateConfig", _resp)
+        return
+    raise APIHttpError("patch_PatchTemplateConfig", _resp)
 
 def patch_PatchTrialsCollection(
     session: "api.Session",

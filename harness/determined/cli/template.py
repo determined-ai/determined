@@ -57,6 +57,17 @@ def create_template(args: Namespace) -> None:
 
 
 @authentication.required
+def patch_tempalte_config(args: Namespace) -> None:
+    if not args.template_file:
+        raise ArgumentError(None, "template_file is required for set command")
+    body = util.safe_load_yaml_with_exceptions(args.template_file)
+    bindings.patch_PatchTemplateConfig(
+        cli.setup_session(args), templateName=args.template_name, body=body
+    )
+    print(colored("Updated template {}".format(args.template_name), "green"))
+
+
+@authentication.required
 def remove_templates(args: Namespace) -> None:
     bindings.delete_DeleteTemplate(cli.setup_session(args), templateName=args.template_name)
     print(colored("Removed template {}".format(args.template_name), "green"))
@@ -74,11 +85,16 @@ args_description = [
             "describe config template", [
                 Arg("template_name", type=str, help="template name"),
             ]),
-        Cmd("create", create_template, "set config template", [
+        Cmd("create", create_template, "create config template", [
             Arg("template_name", help="template name"),
             Arg("template_file", type=FileType("r"),
                 help="config template file (.yaml)"),
             workspace_arg,
+        ]),
+        Cmd("update-config", patch_tempalte_config, "update config template", [
+            Arg("template_name", help="template name"),
+            Arg("template_file", type=FileType("r"),
+                help="config template file (.yaml)"),
         ]),
         Cmd("remove rm", remove_templates,
             "remove config template", [

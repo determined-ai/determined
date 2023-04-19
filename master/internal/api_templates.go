@@ -59,6 +59,21 @@ func (a *apiServer) PostTemplate(
 		errors.Wrapf(err, "error putting template")
 }
 
+func (a *apiServer) PatchTemplateConfig(
+	ctx context.Context, req *apiv1.PatchTemplateConfigRequest,
+) (*apiv1.PatchTemplateConfigResponse, error) {
+	config, err := protojson.Marshal(req.Config)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid config provided: %s", err.Error())
+	}
+
+	if _, err := db.Bun().NewUpdate().Model(&model.Template{Config: config}).
+		Where("name = ?", req.TemplateName).Column("config").Exec(ctx); err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to update template: %s", err.Error())
+	}
+	return nil, nil
+}
+
 func (a *apiServer) DeleteTemplate(
 	_ context.Context, req *apiv1.DeleteTemplateRequest,
 ) (*apiv1.DeleteTemplateResponse, error) {
