@@ -32,8 +32,18 @@ try {
     apiKey: "18b6f7b0b2e20a6bdb00b660ff45d3b8",
     transformItems(items) {
       return items.map((item) => {
-        // The url we scrape for the algolia index is relative to the docroot.
-        item.url = docroot + "/" + item.url;
+        /* The url we scrape for the algolia index is relative to the docroot,
+           but if docroot is the empty string then the item.url is already the
+           correct relative path. */
+        if (docroot !== "") {
+          item.url = docroot + "/" + item.url;
+        }
+        /* Convert from a relative URL to an absolute URL.  It is important we
+           emit absolute URLs rather than relative ones because the history
+           entries in the search bar modal caches the URLs we emit here.  If we
+           cache relative paths, then those history entries are wrong when
+           clicked on from other pages. */
+        item.url = new URL(item.url, window.location).href;
         return item;
       });
     },
