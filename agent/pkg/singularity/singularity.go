@@ -62,11 +62,11 @@ type SingularityContainer struct {
 
 // SingularityClient implements ContainerRuntime.
 type SingularityClient struct {
-	log        *logrus.Entry
-	opts       options.SingularityOptions
-	mu         sync.Mutex
-	wg         waitgroupx.Group
-	containers map[cproto.ID]*SingularityContainer
+	Log        *logrus.Entry
+	Opts       options.SingularityOptions
+	Mu         sync.Mutex
+	Wg         waitgroupx.Group
+	Containers map[cproto.ID]*SingularityContainer
 }
 
 // New returns a new singularity client, which launches and tracks containers.
@@ -80,20 +80,20 @@ func New(opts options.SingularityOptions) (*SingularityClient, error) {
 	}
 
 	return &SingularityClient{
-		log:        logrus.WithField("compotent", "singularity"),
-		opts:       opts,
-		wg:         waitgroupx.WithContext(context.Background()),
-		containers: make(map[cproto.ID]*SingularityContainer),
+		Log:        logrus.WithField("compotent", "singularity"),
+		Opts:       opts,
+		Wg:         waitgroupx.WithContext(context.Background()),
+		Containers: make(map[cproto.ID]*SingularityContainer),
 	}, nil
 }
 
 // Close the client, killing all running containers and removing our scratch space.
 func (s *SingularityClient) Close() error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	s.Mu.Lock()
+	defer s.Mu.Unlock()
 
 	// Since we launch procs with exec.CommandContext under s.wg's context, this cleans them up.
-	s.wg.Close()
+	s.Wg.Close()
 
 	if err := os.RemoveAll(agentTmp); err != nil {
 		return fmt.Errorf("cleaning up agent tmp: %w", err)
@@ -112,11 +112,11 @@ func (s *SingularityClient) PullImage(
 	}
 	defer func() {
 		if err = p.Publish(ctx, docker.NewEndStatsEvent(docker.ImagePullStatsKind)); err != nil {
-			s.log.WithError(err).Warn("did not send image pull done stats")
+			s.Log.WithError(err).Warn("did not send image pull done stats")
 		}
 	}()
 
-	image := s.canonicalizeImage(req.Name)
+	image := s.CanonicalizeImage(req.Name)
 
 	uri, err := url.Parse(image)
 	if err != nil || uri.Scheme == "" {
@@ -161,10 +161,10 @@ func (s *SingularityClient) PullImage(
 			return p.Publish(ctx, t)
 		},
 	)
-	s.wg.Go(func(ctx context.Context) { s.shipSingularityCmdLogs(ctx, stdout, stdcopy.Stdout, p) })
-	s.wg.Go(func(ctx context.Context) {
+	s.Wg.Go(func(ctx context.Context) { s.ShipContainerCmdLogs(ctx, stdout, stdcopy.Stdout, p) })
+	s.Wg.Go(func(ctx context.Context) {
 		defer close(ignoreErrorsSig)
-		s.shipSingularityCmdLogs(ctx, stderr, stdcopy.Stderr, checkIgnoreErrors)
+		s.ShipContainerCmdLogs(ctx, stderr, stdcopy.Stderr, checkIgnoreErrors)
 	})
 
 	if err = cmd.Start(); err != nil {
@@ -191,10 +191,10 @@ func (s *SingularityClient) CreateContainer(
 	req cproto.RunSpec,
 	p events.Publisher[docker.Event],
 ) (string, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	s.Mu.Lock()
+	defer s.Mu.Unlock()
 
-	s.containers[id] = &SingularityContainer{Req: req}
+	s.Containers[id] = &SingularityContainer{Req: req}
 	return id.String(), nil
 }
 
@@ -206,16 +206,16 @@ func (s *SingularityClient) RunContainer(
 	id string,
 	p events.Publisher[docker.Event],
 ) (*docker.Container, error) {
-	s.mu.Lock()
+	s.Mu.Lock()
 	var cont *SingularityContainer
-	for cID, rcont := range s.containers {
+	for cID, rcont := range s.Containers {
 		if cproto.ID(id) != cID {
 			continue
 		}
 		cont = rcont
 		break
 	}
-	s.mu.Unlock()
+	s.Mu.Unlock()
 
 	if cont == nil {
 		return nil, container.ErrMissing
@@ -298,7 +298,7 @@ func (s *SingularityClient) RunContainer(
 	}
 
 	switch {
-	case req.HostConfig.NetworkMode == bridgeNetworking && s.opts.AllowNetworkCreation:
+	case req.HostConfig.NetworkMode == bridgeNetworking && s.Opts.AllowNetworkCreation:
 		// --net sets up a bridge network by default
 		// (see https://apptainer.org/user-docs/3.0/networking.html#net)
 		args = append(args, "--net")
@@ -353,14 +353,14 @@ func (s *SingularityClient) RunContainer(
 		for i := 0; i < len(dirPaths); i++ {
 			prefix = filepath.Join(prefix, dirPaths[i])
 
-			s.log.Trace("Checking mountPoint prefix {}", prefix)
+			s.Log.Trace("Checking mountPoint prefix {}", prefix)
 			if !slices.Contains(ignoredPathPrefixes, prefix) {
-				s.log.Trace("Add mountPoint {}", prefix)
+				s.Log.Trace("Add mountPoint {}", prefix)
 				mountPoints = append(mountPoints, prefix)
 				return nil
 			}
 		}
-		s.log.Warnf("could not determine where to mount %s", src)
+		s.Log.Warnf("could not determine where to mount %s", src)
 		return nil
 	}); wErr != nil {
 		return nil, fmt.Errorf("determining mount points: %w", err)
@@ -437,7 +437,7 @@ func (s *SingularityClient) RunContainer(
 		}
 	}
 
-	image := s.canonicalizeImage(req.ContainerConfig.Image)
+	image := s.CanonicalizeImage(req.ContainerConfig.Image)
 	args = append(args, image)
 	args = append(args, singularityWrapperEntrypoint)
 	args = append(args, req.ContainerConfig.Cmd...)
@@ -456,8 +456,8 @@ func (s *SingularityClient) RunContainer(
 	if err != nil {
 		return nil, fmt.Errorf("creating stderr pipe: %w", err)
 	}
-	s.wg.Go(func(ctx context.Context) { s.shipSingularityCmdLogs(ctx, stdout, stdcopy.Stdout, p) })
-	s.wg.Go(func(ctx context.Context) { s.shipSingularityCmdLogs(ctx, stderr, stdcopy.Stderr, p) })
+	s.Wg.Go(func(ctx context.Context) { s.ShipContainerCmdLogs(ctx, stdout, stdcopy.Stdout, p) })
+	s.Wg.Go(func(ctx context.Context) { s.ShipContainerCmdLogs(ctx, stderr, stdcopy.Stderr, p) })
 
 	cudaVisibleDevicesVar := strings.Join(cudaVisibleDevices, ",")
 	cmd.Env = append(cmd.Env,
@@ -480,7 +480,7 @@ func (s *SingularityClient) RunContainer(
 	cont.TmpDir = tmpdir
 	cont.Started.Store(true)
 	at := time.Now().String()
-	s.log.Infof("started container %s with pid %d", id, cont.PID)
+	s.Log.Infof("started container %s with pid %d", id, cont.PID)
 
 	return &docker.Container{
 		ContainerInfo: types.ContainerJSON{
@@ -504,7 +504,7 @@ func (s *SingularityClient) RunContainer(
 				ExposedPorts: req.ContainerConfig.ExposedPorts,
 			},
 		},
-		ContainerWaiter: s.waitOnContainer(cproto.ID(id), cont, p),
+		ContainerWaiter: s.WaitOnContainer(cproto.ID(id), cont, p),
 	}, nil
 }
 
@@ -519,10 +519,10 @@ func (s *SingularityClient) ReattachContainer(
 
 // RemoveContainer implements container.ContainerRuntime.
 func (s *SingularityClient) RemoveContainer(ctx context.Context, id string, force bool) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	s.Mu.Lock()
+	defer s.Mu.Unlock()
 
-	cont, ok := s.containers[cproto.ID(id)]
+	cont, ok := s.Containers[cproto.ID(id)]
 	if !ok {
 		return container.ErrMissing
 	}
@@ -539,10 +539,10 @@ func (s *SingularityClient) SignalContainer(
 	id string,
 	sig syscall.Signal,
 ) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	s.Mu.Lock()
+	defer s.Mu.Unlock()
 
-	cont, ok := s.containers[cproto.ID(id)]
+	cont, ok := s.Containers[cproto.ID(id)]
 	if !ok {
 		return container.ErrMissing
 	}
@@ -560,9 +560,9 @@ func (s *SingularityClient) ListRunningContainers(
 ) (map[cproto.ID]types.Container, error) {
 	resp := make(map[cproto.ID]types.Container)
 
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	for id, cont := range s.containers {
+	s.Mu.Lock()
+	defer s.Mu.Unlock()
+	for id, cont := range s.Containers {
 		resp[id] = types.Container{
 			ID:     string(id),
 			Labels: cont.Req.ContainerConfig.Labels,
@@ -571,27 +571,27 @@ func (s *SingularityClient) ListRunningContainers(
 	return resp, nil
 }
 
-func (s *SingularityClient) waitOnContainer(
+func (s *SingularityClient) WaitOnContainer(
 	id cproto.ID,
 	cont *SingularityContainer,
 	p events.Publisher[docker.Event],
 ) docker.ContainerWaiter {
 	wchan := make(chan dcontainer.ContainerWaitOKBody, 1)
 	errchan := make(chan error)
-	s.wg.Go(func(ctx context.Context) {
+	s.Wg.Go(func(ctx context.Context) {
 		defer close(wchan)
 		defer close(errchan)
 
 		var body dcontainer.ContainerWaitOKBody
 		switch state, err := cont.Proc.Wait(); {
 		case ctx.Err() != nil && err == nil && state.ExitCode() == -1:
-			s.log.Trace("detached from container process")
+			s.Log.Trace("detached from container process")
 			return
 		case err != nil:
-			s.log.Tracef("proc %d for container %s exited: %s", cont.PID, id, err)
+			s.Log.Tracef("proc %d for container %s exited: %s", cont.PID, id, err)
 			body.Error = &dcontainer.ContainerWaitOKBodyError{Message: err.Error()}
 		default:
-			s.log.Tracef("proc %d for container %s exited with %d", cont.PID, id, state.ExitCode())
+			s.Log.Tracef("proc %d for container %s exited with %d", cont.PID, id, state.ExitCode())
 			body.StatusCode = int64(state.ExitCode())
 		}
 
@@ -601,13 +601,13 @@ func (s *SingularityClient) waitOnContainer(
 			return
 		}
 
-		s.mu.Lock()
-		defer s.mu.Unlock()
-		s.log.Tracef("forgetting completed container: %s", id)
-		delete(s.containers, id)
+		s.Mu.Lock()
+		defer s.Mu.Unlock()
+		s.Log.Tracef("forgetting completed container: %s", id)
+		delete(s.Containers, id)
 
 		// Defer file cleanup until restart if debug logging is enabled.
-		if s.log.Logger.Level <= logrus.DebugLevel {
+		if s.Log.Logger.Level <= logrus.DebugLevel {
 			if err := p.Publish(ctx, docker.NewLogEvent(
 				model.LogLevelDebug,
 				fmt.Sprintf("leaving tmpdir %s for inspection", cont.TmpDir),
@@ -631,7 +631,7 @@ func (s *SingularityClient) waitOnContainer(
 
 var singularityLogLevel = regexp.MustCompile("(?P<level>INFO|WARN|ERROR|FATAL):    (?P<log>.*)")
 
-func (s *SingularityClient) shipSingularityCmdLogs(
+func (s *SingularityClient) ShipContainerCmdLogs(
 	ctx context.Context,
 	r io.ReadCloser,
 	stdtype stdcopy.StdType,
@@ -663,7 +663,16 @@ func (s *SingularityClient) pprintSingularityCommand(
 	args []string,
 	p events.Publisher[docker.Event],
 ) error {
-	toPrint := "singularity"
+	return s.PprintCommand(ctx, "singularity", args, p)
+}
+
+func (s *SingularityClient) PprintCommand(
+	ctx context.Context,
+	cmd string,
+	args []string,
+	p events.Publisher[docker.Event],
+) error {
+	toPrint := cmd
 	for _, arg := range args {
 		if strings.HasPrefix(arg, "--") { // print each arg on a new line
 			toPrint += " \\\n"
@@ -675,7 +684,7 @@ func (s *SingularityClient) pprintSingularityCommand(
 		}
 	}
 
-	s.log.Trace(toPrint)
+	s.Log.Trace(toPrint)
 	if err := p.Publish(ctx, docker.NewLogEvent(
 		model.LogLevelDebug,
 		toPrint,
@@ -685,7 +694,7 @@ func (s *SingularityClient) pprintSingularityCommand(
 	return nil
 }
 
-func (s *SingularityClient) canonicalizeImage(image string) string {
+func (s *SingularityClient) CanonicalizeImage(image string) string {
 	url, err := url.Parse(image)
 	isURIForm := err == nil
 	isFSForm := path.IsAbs(image)

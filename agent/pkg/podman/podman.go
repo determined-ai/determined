@@ -1,10 +1,8 @@
 package podman
 
 import (
-	"bufio"
 	"context"
 	"fmt"
-	"io"
 	"io/fs"
 	"net/url"
 	"os"
@@ -12,31 +10,24 @@ import (
 	"os/user"
 	"path"
 	"path/filepath"
-	"regexp"
 	"strconv"
 	"strings"
-	"sync"
-	"sync/atomic"
-	"syscall"
 	"time"
 
 	"github.com/docker/docker/api/types"
 	dcontainer "github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/pkg/stdcopy"
-	"github.com/sirupsen/logrus"
 	"golang.org/x/exp/slices"
 
 	"github.com/determined-ai/determined/agent/internal/container"
 	"github.com/determined-ai/determined/agent/internal/options"
 	"github.com/determined-ai/determined/agent/pkg/docker"
 	"github.com/determined-ai/determined/agent/pkg/events"
-	"github.com/determined-ai/determined/master/pkg/aproto"
+	"github.com/determined-ai/determined/agent/pkg/singularity"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/master/pkg/syncx/waitgroupx"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 )
 
@@ -53,52 +44,23 @@ const (
 
 // PodmanContainer captures the state of a container.
 type PodmanContainer struct {
-	PID     int            `json:"pid"`
-	Req     cproto.RunSpec `json:"req"`
-	TmpDir  string         `json:"tmp_dir"`
-	Proc    *os.Process    `json:"-"`
-	Started atomic.Bool    `json:"started"`
+	*singularity.SingularityContainer
 }
 
 // PodmanClient implements ContainerRuntime.
 type PodmanClient struct {
-	log        *logrus.Entry
-	opts       options.PodmanOptions
-	mu         sync.Mutex
-	wg         waitgroupx.Group
-	containers map[cproto.ID]*PodmanContainer
+	*singularity.SingularityClient
 }
 
 // New returns a new podman client, which launches and tracks containers.
 func New(opts options.PodmanOptions) (*PodmanClient, error) {
-	if err := os.RemoveAll(agentTmp); err != nil {
-		return nil, fmt.Errorf("removing agent tmp from previous runs: %w", err)
+	client, err := singularity.New(options.SingularityOptions{})
+	if err != nil {
+		return nil, err
 	}
-
-	if err := os.MkdirAll(agentTmp, 0o700); err != nil {
-		return nil, fmt.Errorf("preparing agent tmp: %w", err)
-	}
-
 	return &PodmanClient{
-		log:        logrus.WithField("component", "podman"),
-		opts:       opts,
-		wg:         waitgroupx.WithContext(context.Background()),
-		containers: make(map[cproto.ID]*PodmanContainer),
+		SingularityClient: client,
 	}, nil
-}
-
-// Close the client, killing all running containers and removing our scratch space.
-func (s *PodmanClient) Close() error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	// Since we launch procs with exec.CommandContext under s.wg's context, this cleans them up.
-	s.wg.Close()
-
-	if err := os.RemoveAll(agentTmp); err != nil {
-		return fmt.Errorf("cleaning up agent tmp: %w", err)
-	}
-	return nil
 }
 
 // PullImage implements container.ContainerRuntime.
@@ -112,11 +74,11 @@ func (s *PodmanClient) PullImage(
 	}
 	defer func() {
 		if err = p.Publish(ctx, docker.NewEndStatsEvent(docker.ImagePullStatsKind)); err != nil {
-			s.log.WithError(err).Warn("did not send image pull done stats")
+			s.Log.WithError(err).Warn("did not send image pull done stats")
 		}
 	}()
 
-	image := s.canonicalizeImage(req.Name)
+	image := s.CanonicalizeImage(req.Name)
 
 	uri, err := url.Parse(image)
 	if err != nil || uri.Scheme == "" {
@@ -161,10 +123,10 @@ func (s *PodmanClient) PullImage(
 			return p.Publish(ctx, t)
 		},
 	)
-	s.wg.Go(func(ctx context.Context) { s.shipPodmanCmdLogs(ctx, stdout, stdcopy.Stdout, p) })
-	s.wg.Go(func(ctx context.Context) {
+	s.Wg.Go(func(ctx context.Context) { s.ShipContainerCmdLogs(ctx, stdout, stdcopy.Stdout, p) })
+	s.Wg.Go(func(ctx context.Context) {
 		defer close(ignoreErrorsSig)
-		s.shipPodmanCmdLogs(ctx, stderr, stdcopy.Stderr, checkIgnoreErrors)
+		s.ShipContainerCmdLogs(ctx, stderr, stdcopy.Stderr, checkIgnoreErrors)
 	})
 
 	if err = cmd.Start(); err != nil {
@@ -184,20 +146,6 @@ func (s *PodmanClient) PullImage(
 	return nil
 }
 
-// CreateContainer implements container.ContainerRuntime.
-func (s *PodmanClient) CreateContainer(
-	ctx context.Context,
-	id cproto.ID,
-	req cproto.RunSpec,
-	p events.Publisher[docker.Event],
-) (string, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	s.containers[id] = &PodmanContainer{Req: req}
-	return id.String(), nil
-}
-
 // RunContainer implements container.ContainerRuntime.
 // nolint: golint,maintidx // Both contexts can't both be first / TODO refactor.
 func (s *PodmanClient) RunContainer(
@@ -206,16 +154,16 @@ func (s *PodmanClient) RunContainer(
 	id string,
 	p events.Publisher[docker.Event],
 ) (*docker.Container, error) {
-	s.mu.Lock()
-	var cont *PodmanContainer
-	for cID, rcont := range s.containers {
+	s.Mu.Lock()
+	var cont *singularity.SingularityContainer
+	for cID, rcont := range s.Containers {
 		if cproto.ID(id) != cID {
 			continue
 		}
 		cont = rcont
 		break
 	}
-	s.mu.Unlock()
+	s.Mu.Unlock()
 
 	if cont == nil {
 		return nil, container.ErrMissing
@@ -275,7 +223,7 @@ func (s *PodmanClient) RunContainer(
 	}
 
 	switch {
-	case req.HostConfig.NetworkMode == bridgeNetworking && s.opts.AllowNetworkCreation:
+	case req.HostConfig.NetworkMode == bridgeNetworking && s.Opts.AllowNetworkCreation:
 		// ?? publish ports only for bridgeNetworking
 		for port := range req.ContainerConfig.ExposedPorts {
 			p := port.Int()
@@ -329,14 +277,14 @@ func (s *PodmanClient) RunContainer(
 		for i := 0; i < len(dirPaths); i++ {
 			prefix = filepath.Join(prefix, dirPaths[i])
 
-			s.log.Trace("Checking mountPoint prefix {}", prefix)
+			s.Log.Trace("Checking mountPoint prefix {}", prefix)
 			if !slices.Contains(ignoredPathPrefixes, prefix) {
-				s.log.Trace("Add mountPoint {}", prefix)
+				s.Log.Trace("Add mountPoint {}", prefix)
 				mountPoints = append(mountPoints, prefix)
 				return nil
 			}
 		}
-		s.log.Warnf("could not determine where to mount %s", src)
+		s.Log.Warnf("could not determine where to mount %s", src)
 		return nil
 	}); wErr != nil {
 		return nil, fmt.Errorf("determining mount points: %w", err)
@@ -380,7 +328,7 @@ func (s *PodmanClient) RunContainer(
 
 	args = capabilitiesToPodmanArgs(req, args)
 
-	image := s.canonicalizeImage(req.ContainerConfig.Image)
+	image := s.CanonicalizeImage(req.ContainerConfig.Image)
 	args = append(args, image)
 	args = append(args, podmanWrapperEntrypoint)
 	args = append(args, req.ContainerConfig.Cmd...)
@@ -399,8 +347,8 @@ func (s *PodmanClient) RunContainer(
 	if err != nil {
 		return nil, fmt.Errorf("creating stderr pipe: %w", err)
 	}
-	s.wg.Go(func(ctx context.Context) { s.shipPodmanCmdLogs(ctx, stdout, stdcopy.Stdout, p) })
-	s.wg.Go(func(ctx context.Context) { s.shipPodmanCmdLogs(ctx, stderr, stdcopy.Stderr, p) })
+	s.Wg.Go(func(ctx context.Context) { s.ShipContainerCmdLogs(ctx, stdout, stdcopy.Stdout, p) })
+	s.Wg.Go(func(ctx context.Context) { s.ShipContainerCmdLogs(ctx, stderr, stdcopy.Stderr, p) })
 
 	// cudaVisibleDevicesVar := strings.Join(cudaVisibleDevices, ",")
 	// cmd.Env = append(cmd.Env,
@@ -423,7 +371,7 @@ func (s *PodmanClient) RunContainer(
 	cont.TmpDir = tmpdir
 	cont.Started.Store(true)
 	at := time.Now().String()
-	s.log.Infof("started container %s with pid %d", id, cont.PID)
+	s.Log.Infof("started container %s with pid %d", id, cont.PID)
 
 	return &docker.Container{
 		ContainerInfo: types.ContainerJSON{
@@ -447,7 +395,7 @@ func (s *PodmanClient) RunContainer(
 				ExposedPorts: req.ContainerConfig.ExposedPorts,
 			},
 		},
-		ContainerWaiter: s.waitOnContainer(cproto.ID(id), cont, p),
+		ContainerWaiter: s.WaitOnContainer(cproto.ID(id), cont, p),
 	}, nil
 }
 
@@ -476,189 +424,11 @@ func hostMountsToPodmanArgs(m mount.Mount, args []string) []string {
 	return append(args, "--volume", fmt.Sprintf("%s:%s%s", m.Source, m.Target, options))
 }
 
-// ReattachContainer implements container.ContainerRuntime.
-// TODO(DET-9082): Ensure orphaned processes are cleaned up on reattach.
-func (s *PodmanClient) ReattachContainer(
-	ctx context.Context,
-	reattachID cproto.ID,
-) (*docker.Container, *aproto.ExitCode, error) {
-	return nil, nil, container.ErrMissing
-}
-
-// RemoveContainer implements container.ContainerRuntime.
-func (s *PodmanClient) RemoveContainer(ctx context.Context, id string, force bool) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	cont, ok := s.containers[cproto.ID(id)]
-	if !ok {
-		return container.ErrMissing
-	}
-
-	if cont.Started.Load() {
-		return cont.Proc.Kill()
-	}
-	return fmt.Errorf("cannot kill container %s that is not started", id)
-}
-
-// SignalContainer implements container.ContainerRuntime.
-func (s *PodmanClient) SignalContainer(
-	ctx context.Context,
-	id string,
-	sig syscall.Signal,
-) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	cont, ok := s.containers[cproto.ID(id)]
-	if !ok {
-		return container.ErrMissing
-	}
-
-	if cont.Started.Load() {
-		return cont.Proc.Signal(sig)
-	}
-	return fmt.Errorf("cannot signal container %s with %s that is not started", id, sig)
-}
-
-// ListRunningContainers implements container.ContainerRuntime.
-func (s *PodmanClient) ListRunningContainers(
-	ctx context.Context,
-	fs filters.Args,
-) (map[cproto.ID]types.Container, error) {
-	resp := make(map[cproto.ID]types.Container)
-
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	for id, cont := range s.containers {
-		resp[id] = types.Container{
-			ID:     string(id),
-			Labels: cont.Req.ContainerConfig.Labels,
-		}
-	}
-	return resp, nil
-}
-
-func (s *PodmanClient) waitOnContainer(
-	id cproto.ID,
-	cont *PodmanContainer,
-	p events.Publisher[docker.Event],
-) docker.ContainerWaiter {
-	wchan := make(chan dcontainer.ContainerWaitOKBody, 1)
-	errchan := make(chan error)
-	s.wg.Go(func(ctx context.Context) {
-		defer close(wchan)
-		defer close(errchan)
-
-		var body dcontainer.ContainerWaitOKBody
-		switch state, err := cont.Proc.Wait(); {
-		case ctx.Err() != nil && err == nil && state.ExitCode() == -1:
-			s.log.Trace("detached from container process")
-			return
-		case err != nil:
-			s.log.Tracef("proc %d for container %s exited: %s", cont.PID, id, err)
-			body.Error = &dcontainer.ContainerWaitOKBodyError{Message: err.Error()}
-		default:
-			s.log.Tracef("proc %d for container %s exited with %d", cont.PID, id, state.ExitCode())
-			body.StatusCode = int64(state.ExitCode())
-		}
-
-		select {
-		case wchan <- body:
-		case <-ctx.Done():
-			return
-		}
-
-		s.mu.Lock()
-		defer s.mu.Unlock()
-		s.log.Tracef("forgetting completed container: %s", id)
-		delete(s.containers, id)
-
-		// Defer file cleanup until restart if debug logging is enabled.
-		if s.log.Logger.Level <= logrus.DebugLevel {
-			if err := p.Publish(ctx, docker.NewLogEvent(
-				model.LogLevelDebug,
-				fmt.Sprintf("leaving tmpdir %s for inspection", cont.TmpDir),
-			)); err != nil {
-				return
-			}
-		} else {
-			if err := os.RemoveAll(cont.TmpDir); err != nil {
-				if err = p.Publish(ctx, docker.NewLogEvent(
-					model.LogLevelWarning,
-					fmt.Sprintf("failed to cleanup tmpdir (ephemeral mounts, etc): %s", err),
-				)); err != nil {
-					logrus.WithError(err).Error("publishing cleanup failure warning")
-					return
-				}
-			}
-		}
-	})
-	return docker.ContainerWaiter{Waiter: wchan, Errs: errchan}
-}
-
-var podmanLogLevel = regexp.MustCompile("(?P<level>INFO|WARN|ERROR|FATAL):    (?P<log>.*)")
-
-func (s *PodmanClient) shipPodmanCmdLogs(
-	ctx context.Context,
-	r io.ReadCloser,
-	stdtype stdcopy.StdType,
-	p events.Publisher[docker.Event],
-) {
-	for scan := bufio.NewScanner(r); scan.Scan(); {
-		line := scan.Text()
-		if len(strings.TrimSpace(line)) == 0 {
-			continue
-		}
-
-		var level, log string
-		if matches := podmanLogLevel.FindStringSubmatch(line); len(matches) == 3 {
-			level, log = matches[1], matches[2]
-		} else {
-			level, log = model.LogLevelInfo, line
-		}
-
-		if err := p.Publish(ctx, docker.NewTypedLogEvent(level, log, stdtype)); err != nil {
-			logrus.WithError(err).Trace("log stream terminated")
-			return
-		}
-	}
-	return
-}
 
 func (s *PodmanClient) pprintPodmanCommand(
 	ctx context.Context,
 	args []string,
 	p events.Publisher[docker.Event],
 ) error {
-	toPrint := "podman"
-	for _, arg := range args {
-		if strings.HasPrefix(arg, "--") { // print each arg on a new line
-			toPrint += " \\\n"
-			toPrint += "\t"
-			toPrint += arg
-		} else {
-			toPrint += " "
-			toPrint += arg
-		}
-	}
-
-	s.log.Trace(toPrint)
-	if err := p.Publish(ctx, docker.NewLogEvent(
-		model.LogLevelDebug,
-		toPrint,
-	)); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (s *PodmanClient) canonicalizeImage(image string) string {
-	url, err := url.Parse(image)
-	isURIForm := err == nil
-	isFSForm := path.IsAbs(image)
-	if isFSForm || (isURIForm && url.Scheme != "") {
-		return image
-	}
-	return fmt.Sprintf("docker://%s", image)
+	return s.PprintCommand(ctx, "podman", args, p)
 }
