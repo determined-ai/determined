@@ -114,7 +114,7 @@ class GANTrial(PyTorchTrial):
             torch.optim.Adam(self.discriminator.parameters(), lr=lr, betas=(b1, b2))
         )
         self.lr_g = self.context.wrap_lr_scheduler(
-            lr_scheduler=LambdaLR(self.opt_g, lr_lambda=lambda epoch: 0.95 ** epoch),
+            lr_scheduler=LambdaLR(self.opt_g, lr_lambda=lambda epoch: 0.95**epoch),
             step_mode=LRScheduler.StepMode.STEP_EVERY_EPOCH,
         )
 

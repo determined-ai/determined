@@ -196,7 +196,6 @@ class GAEAEvalTrial(PyTorchTrial):
         return valid_queue
 
     def train_batch(self, batch: Any, epoch_idx: int, batch_idx: int) -> Dict[str, torch.Tensor]:
-
         # Update EMA vars
         self.model.update_ema()
 

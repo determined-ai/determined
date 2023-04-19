@@ -1,5 +1,4 @@
 class defaults:
-
     AUX_AGENT_INSTANCE_TYPE = "n1-standard-4"
     COMPUTE_AGENT_INSTANCE_TYPE = "n1-standard-32"
     DB_PASSWORD = "postgres"

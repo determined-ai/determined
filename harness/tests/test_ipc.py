@@ -99,7 +99,6 @@ def test_broadcast_server_client() -> None:
     num_subprocs = 3
 
     with ipc.ZMQBroadcastServer(num_connections=num_subprocs) as broadcast_server:
-
         pub_url = f"tcp://localhost:{broadcast_server.get_pub_port()}"
         pull_url = f"tcp://localhost:{broadcast_server.get_pull_port()}"
         msgs = list(range(10))
