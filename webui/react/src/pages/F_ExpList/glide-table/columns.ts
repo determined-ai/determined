@@ -402,7 +402,7 @@ export const defaultColumnWidths: Record<ExperimentColumn, number> = {
   numTrials: 74,
   progress: 111,
   resourcePool: 140,
-  searcherMetricValue: 74,
+  searcherMetricValue: 160,
   searcherType: 140,
   selected: 40,
   startTime: 118,
