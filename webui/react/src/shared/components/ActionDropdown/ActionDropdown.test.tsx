@@ -4,6 +4,8 @@ import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event'
 import ActionDropdown from 'shared/components/ActionDropdown/ActionDropdown';
 import { ValueOf } from 'shared/types';
 
+import { ConfirmationProvider } from '../../../components/kit/Confirmation';
+
 const user = userEvent.setup({ pointerEventsCheck: PointerEventsCheckLevel.Never });
 
 const ACTION_ONE_TEXT = 'Action One';
@@ -28,15 +30,17 @@ const DropDownContainer = () => {
   };
 
   return (
-    <ActionDropdown<TestAction>
-      actionOrder={[TestAction.ActionOne, TestAction.ActionTwo]}
-      id={'test-id'}
-      kind="test"
-      onError={() => {
-        return;
-      }}
-      onTrigger={dropDownOnTrigger()}
-    />
+    <ConfirmationProvider>
+      <ActionDropdown<TestAction>
+        actionOrder={[TestAction.ActionOne, TestAction.ActionTwo]}
+        id={'test-id'}
+        kind="test"
+        onError={() => {
+          return;
+        }}
+        onTrigger={dropDownOnTrigger()}
+      />
+    </ConfirmationProvider>
   );
 };
 
