@@ -122,6 +122,7 @@ const useModalHyperparameterSearch = ({
 
   useEffect(() => {
     const cancelerTemp = canceler.current;
+    clusterStore.fetchResourcePools(cancelerTemp.signal);
     return () => {
       cancelerTemp.abort();
     };
