@@ -65,7 +65,7 @@ def get_live_gcs_manager(
             temp_dir=str(tmp_path),
         )
         blob = manager.bucket.blob(CHECK_ACCESS_KEY)
-        assert blob.download_as_string() == CHECK_KEY_CONTENT
+        assert blob.download_as_bytes() == CHECK_KEY_CONTENT
     except errors.NoDirectStorageAccess as e:
         # No access detected.
         if (not require_secrets) and isinstance(
@@ -107,7 +107,7 @@ def get_tensorboard_fetcher_gcs(
         fetcher = GCSFetcher(storage_config, paths_to_sync, local_sync_dir)
 
         blob = fetcher.client.bucket(BUCKET_NAME).blob("check-access")
-        assert blob.download_as_string() == CHECK_KEY_CONTENT
+        assert blob.download_as_bytes() == CHECK_KEY_CONTENT
 
         return fetcher
 
