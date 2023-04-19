@@ -359,7 +359,7 @@ func MetricsTimeSeries(trialID int32, startTime time.Time,
 		subq = subq.ColumnExpr("(metrics ->'?' ->> ?)::float8 as "+metricName, bun.Safe(metricsObjectName), metricName)
 	}
 
-	subq = subq.Where("trial_id = ?", trialID).OrderExpr("random()").Limit(maxDatapoints * 10)
+	subq = subq.Where("trial_id = ?", trialID).OrderExpr("random()").Limit(maxDatapoints * len(metricNames))
 	switch timeSeriesFilter {
 	case nil:
 		orderColumn = batches
