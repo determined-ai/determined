@@ -3,14 +3,13 @@ import csv
 import inspect
 import json
 import pathlib
-import shutil
-import subprocess
 import sys
 from datetime import timezone
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Union
 
 import dateutil.parser
 import tabulate
+from pygments import formatters, highlight, lexers
 
 from determined.common import util, yaml
 
@@ -159,13 +158,16 @@ def print_json(data: Union[str, Any], skip_coloring: bool = False) -> None:
     skip_coloring: if True, do not colorize the output.
     """
     try:
-        if sys.stdout.isatty() and not skip_coloring and shutil.which("jq") is not None:
-            if not isinstance(data, str):
-                data = json.dumps(data)
-            subprocess.run(["jq", "."], input=data, text=True)
+        if isinstance(data, str):
+            data = json.loads(data)
+        formatted_json = json.dumps(data, sort_keys=True, indent=2)
+
+        if not skip_coloring and sys.stdout.isatty():
+            colorful_json = highlight(
+                str(formatted_json), lexers.JsonLexer(), formatters.TerminalFormatter()
+            )
+            print(colorful_json)
         else:
-            if isinstance(data, str):
-                data = json.loads(data)
-            print(json.dumps(data, indent=2))  # same as jq's default.
+            print(formatted_json)
     except json.decoder.JSONDecodeError:
         print(data)
