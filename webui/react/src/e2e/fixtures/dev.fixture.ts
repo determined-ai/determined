@@ -9,6 +9,6 @@ export class DevFixture {
   async setServerAddress(): Promise<void> {
     await this.#page.goto('/');
     await this.#page.evaluate(`dev.setServerAddress("${process.env.PW_SERVER_ADDRESS}")`);
-    await this.#page.goto('/');
+    await this.#page.reload();
   }
 }

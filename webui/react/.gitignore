@@ -26,3 +26,4 @@ done.stamp
 /playwright/.cache/
 src/e2e/test-results/
 src/e2e/playwright-report/
+src/e2e/junit-results.xml

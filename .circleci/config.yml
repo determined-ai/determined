@@ -1353,42 +1353,22 @@ jobs:
 
   test-e2e-react:
     docker:
-      - image: mcr.microsoft.com/playwright:v1.32.0-focal
+      - image: mcr.microsoft.com/playwright:v1.32.3-focal
     resource_class: large
     steps:
       - checkout-with-sm
       - skip-if-docs-only
-      - attach_workspace:
-          at: .
-      # - setup_remote_docker:
-      #     version: 20.10.18
-      - run: apt-get update && apt-get -y install make sudo iproute2 ca-certificates curl gnupg software-properties-common
-      # - run: sudo install -m 0755 -d /etc/apt/keyrings
-      # - run: curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-      # - run: sudo chmod a+r /etc/apt/keyrings/docker.gpg
-      # - run: echo "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-      # - run: sudo apt-get update
-      # - run: sudo apt-get -y install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-      # - run: sudo apt-get -y install gcc # for pycocotools
-      # ## Golang https://github.com/golang/go/wiki/Ubuntu
-      # - run: sudo add-apt-repository ppa:longsleep/golang-backports
-      # - run: sudo apt update
-      # - run: sudo apt -y install golang-go unzip
-      # ##
-      # - setup-python-venv:
-      #     executor: <<pipeline.parameters.machine-image>>
-      # - checkout
-      # - reinstall-go
-      # - go-get-deps
-      # - install-devcluster
-      # - start-devcluster
+      - run: apt-get update && apt-get -y install make
       - react-get-deps
       - run: npx playwright install --with-deps && npx playwright install chrome
-      - run: SERVER_ADDRESS=${PW_SERVER_ADDRESS} make -C webui/react e2e
+      - run: SERVER_ADDRESS=${PW_SERVER_ADDRESS} npm run build --prefix webui/react
+      - run: PW_USER_NAME=${PW_USER_NAME} PW_PASSWORD=${PW_PASSWORD} npm run e2e --prefix webui/react
       - store_artifacts:
           path: webui/react/src/e2e/playwright-report
       - store_artifacts:
           path: webui/react/src/e2e/test-results
+      - store_test_results:
+          path: webui/react/src/e2e/junit-results.xml
 
   test-unit-react:
     docker:
@@ -2315,8 +2295,6 @@ workflows:
           dev-mode: true
       - test-e2e-react:
           context: playwright
-          requires:
-            - build-react
       - build-docs:
           requires:
             - build-helm

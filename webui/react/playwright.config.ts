@@ -61,7 +61,11 @@ export default defineConfig({
   ],
 
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: [['html', { outputFolder: './src/e2e/playwright-report' }]],
+  reporter: [
+    ['html', { outputFolder: './src/e2e/playwright-report' }],
+    ['junit', { outputFile: './src/e2e/junit-results.xml' }],
+    ['list', { printSteps: true }],
+  ],
 
   /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
