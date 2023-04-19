@@ -12,6 +12,15 @@ import { identity, noOp } from 'shared/utils/service';
 import { DeterminedInfo, Telemetry } from 'stores/determinedInfo';
 import * as Type from 'types';
 
+const originalFetch = window.fetch;
+window.fetch = function(resource, options) {
+  if (!options) {
+    options = {};
+  }
+  options.credentials = "include";
+  return originalFetch(resource, options);
+};
+
 const updatedApiConfigParams = (
   apiConfig?: Api.ConfigurationParameters,
 ): Api.ConfigurationParameters => {

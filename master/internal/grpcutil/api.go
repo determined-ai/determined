@@ -115,7 +115,9 @@ func RegisterHTTPProxy(ctx context.Context, e *echo.Echo, port int, cert *tls.Ce
 	handler := func(c echo.Context) error {
 		request := c.Request()
 		if c.Request().Header.Get("Authorization") == "" {
-			if cookie, err := c.Cookie(cookieName); err == nil {
+			if cookie, err := c.Cookie("jwt"); err == nil {
+				request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", cookie.Value))
+			} else if _, err = c.Cookie("auth"); err == nil {
 				request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", cookie.Value))
 			}
 		}

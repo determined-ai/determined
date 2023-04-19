@@ -25,35 +25,7 @@ const useAuthCheck = (): (() => void) => {
   }, [info.externalLoginUri]);
 
   const checkAuth = useCallback((): void => {
-    /*
-     * Check for the auth token from the following sources:
-     *   1 - query param jwt from external authentication.
-     *   2 - server cookie
-     *   3 - local storage
-     */
-    const jwt = searchParams.getAll('jwt');
-    const jwtToken = jwt.length === 1 ? jwt[0] : null;
-    const cookieToken = getCookie(AUTH_COOKIE_KEY);
-    const authToken = jwtToken ?? cookieToken ?? globalStorage.authToken;
-
-    /*
-     * If auth token found, update the API bearer token and validate it with the current user API.
-     * If an external login URL is provided, redirect there.
-     * Otherwise mark that we checked the auth and skip auth token validation.
-     */
-
-    if (authToken) {
-      updateBearerToken(authToken);
-
-      Observable.batch(() => {
-        authStore.setAuth({ isAuthenticated: true, token: authToken });
-        authStore.setAuthChecked();
-      });
-    } else if (info.externalLoginUri) {
-      redirectToExternalSignin();
-    } else {
-      authStore.setAuthChecked();
-    }
+    authStore.setAuthChecked(); // TODO if info.externalLoginUri, just do this - and redirectToExternalSignin() any time we get a 403
   }, [info.externalLoginUri, searchParams, redirectToExternalSignin, updateBearerToken]);
 
   return checkAuth;
