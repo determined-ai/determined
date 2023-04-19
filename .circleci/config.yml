@@ -79,7 +79,7 @@ upstream-feature-branch: &upstream-feature-branch
     ignore:
       - /pull\/.*/
       - /release-.*/
-      - master
+      - main
 
 any-upstream: &any-upstream
   branches:
@@ -2411,7 +2411,7 @@ workflows:
           filters:
             branches:
               only:
-                - master
+                - main
           requires:
             - package-and-push-system-dev
           max-dynamic-agents: 2
@@ -2423,7 +2423,7 @@ workflows:
           filters:
             branches:
               only:
-                - master
+                - main
           requires:
             - package-and-push-system-dev
           max-dynamic-agents: 1
@@ -2942,7 +2942,7 @@ workflows:
           filters:
             branches:
               only:
-                - master
+                - main
     jobs:
       - test-e2e-aws:
           name: test-e2e-gpu-nightly
