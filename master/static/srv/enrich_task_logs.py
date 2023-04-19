@@ -118,17 +118,22 @@ class LogShipper(threading.Thread):
             # Timeout met.
             self.ship()
 
-    @backoff.on_exception(  # type: ignore
-        lambda: backoff.full_jitter(SHIPPER_FAILURE_BACKOFF_SECONDS),
-        errors.APIException,
-        max_tries=3,
-    )
     def ship(self) -> None:
         if len(self.logs) <= 0:
             return
 
-        api.post(self.master_url, "task-logs", self.logs)
-        self.logs = []
+        max_tries = 3
+        tries = 0
+        while tries < max_tries:
+            try:
+                api.post(self.master_url, "task-logs", self.logs)
+                self.logs = []
+                return
+            except errors.APIException as e:
+                tries += 1
+                if tries == max_tries:
+                    raise e
+                time.sleep(SHIPPER_FAILURE_BACKOFF_SECONDS)
 
 
 def pop_until_deadline(q: queue.Queue, deadline: float) -> Iterator[Any]:
