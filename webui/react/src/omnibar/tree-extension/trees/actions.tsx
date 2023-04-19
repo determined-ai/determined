@@ -1,8 +1,10 @@
+import { Modal as AntdModal } from 'antd';
+
 import root from 'omnibar/tree-extension/trees';
 import { FinalAction } from 'omnibar/tree-extension/types';
 import { dfsStaticRoutes } from 'omnibar/tree-extension/utils';
 import { routeToReactUrl } from 'shared/utils/routes';
-import { message, modal } from 'utils/dialogApi';
+import { message } from 'utils/dialogApi';
 /** generates a handler that alerts when called */
 export const alertAction =
   (msg: string): FinalAction =>
@@ -24,7 +26,7 @@ export const displayHelp = (): void => {
     '"Tab", "Up", or "Down" arrow keys to cycle through suggestions.',
     '"Escape" to close the bar.',
   ];
-  modal.info({
+  AntdModal.info({
     content: (
       <>
         <p>Keyboard shortcuts:</p>
