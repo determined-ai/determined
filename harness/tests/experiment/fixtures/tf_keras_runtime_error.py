@@ -2,8 +2,8 @@ from typing import Any
 
 import numpy as np
 import tensorflow as tf
-from tensorflow import keras
 from packaging import version
+from tensorflow import keras
 
 import determined as det
 import determined.keras
