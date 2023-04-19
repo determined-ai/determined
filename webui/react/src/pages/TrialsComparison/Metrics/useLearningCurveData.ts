@@ -64,7 +64,7 @@ const useLearningCurve = (
       trial.metrics.forEach((metric) => {
         metric.data.forEach(({ batches, values }) => {
           values.forEach((value, metricName) => {
-            const metricKey =  metricToKey({ name: metricName, type: metric.type });
+            const metricKey = metricToKey({ name: metricName, type: metric.type });
             const metricInfo = newLearningCurveData.infoForMetrics[metricKey];
             if (!metricInfo) return;
 
@@ -73,8 +73,9 @@ const useLearningCurve = (
               metricInfo.nonEmptyTrials.add(trial.id);
               const chartData = metricInfo.chartData;
               chartData[trialRowIndex][batchColumnIndex] = value;
-          }
-        })});
+            }
+          });
+        });
       });
     });
 

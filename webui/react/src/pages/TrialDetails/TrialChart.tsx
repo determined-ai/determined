@@ -75,22 +75,20 @@ const TrialChart: React.FC<Props> = ({
     metrics.forEach((metric, index) => {
       yValues[index] = {};
 
-      const mWrapper = trialSumm.find(
-        (mContainer) => mContainer.type === metric.type,
-      );
+      const mWrapper = trialSumm.find((mContainer) => mContainer.type === metric.type);
       if (!mWrapper?.data) {
         return;
       }
 
       mWrapper.data.forEach((avgMetrics) => {
         avgMetrics.values.forEach((value, metricName) => {
-          if (metricName == metric.name){
+          if (metricName === metric.name) {
             if (!xValues.includes(avgMetrics.batches)) {
               xValues.push(avgMetrics.batches);
             }
             yValues[index][avgMetrics.batches] = Number.isFinite(value) ? value : null;
           }
-        })
+        });
       });
     });
 
