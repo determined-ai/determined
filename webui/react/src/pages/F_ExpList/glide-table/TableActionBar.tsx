@@ -1,4 +1,4 @@
-import { Menu, Space } from 'antd';
+import { Menu, Popover, Space } from 'antd';
 import { ItemType } from 'rc-menu/lib/interface';
 import React, { useCallback, useMemo, useState } from 'react';
 
@@ -18,7 +18,7 @@ import {
   pauseExperiments,
   unarchiveExperiments,
 } from 'services/api';
-import { V1BulkExperimentFilters } from 'services/api-ts-sdk';
+import { V1BulkExperimentFilters, V1ProjectColumn } from 'services/api-ts-sdk';
 import Icon from 'shared/components/Icon';
 import { RecordKey } from 'shared/types';
 import { ErrorLevel } from 'shared/utils/error';
@@ -39,6 +39,7 @@ import {
 import { Loadable } from 'utils/loadable';
 import { openCommandResponse } from 'utils/wait';
 
+import MultiSortMenu, { Sort } from './MultiSortMenu';
 import css from './TableActionBar.module.scss';
 
 const batchActions = [
@@ -68,23 +69,29 @@ const actionIcons: Record<BatchAction, string> = {
 } as const;
 
 interface Props {
+  columns: Loadable<V1ProjectColumn[]>;
   experiments: Loadable<ExperimentItem>[];
   filters: V1BulkExperimentFilters;
   onAction: () => Promise<void>;
+  onSortChange: (sorts: Sort[]) => void;
   selectAll: boolean;
   selectedExperimentIds: number[];
   handleUpdateExperimentList: (action: BatchAction, successfulIds: number[]) => void;
+  sorts: Sort[];
   project: Project;
   total: Loadable<number>;
 }
 
 const TableActionBar: React.FC<Props> = ({
+  columns,
   experiments,
   filters,
   onAction,
+  onSortChange,
   selectAll,
   selectedExperimentIds,
   handleUpdateExperimentList,
+  sorts,
   project,
   total,
 }) => {
@@ -290,6 +297,13 @@ const TableActionBar: React.FC<Props> = ({
             </Button>
           </Dropdown>
         )}
+        <Popover
+          content={<MultiSortMenu columns={columns} sorts={sorts} onChange={onSortChange} />}
+          placement="bottomRight"
+          showArrow={false}
+          trigger="click">
+          <Button>Sort {sorts.length ? `(${sorts.length})` : ''}</Button>
+        </Popover>
       </Space>
       {batchAction && (
         <BatchActionConfirmModal.Component

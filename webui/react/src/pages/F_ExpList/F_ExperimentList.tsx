@@ -5,8 +5,8 @@ import { useSearchParams } from 'react-router-dom';
 
 import Page from 'components/Page';
 import useResize from 'hooks/useResize';
-import { searchExperiments } from 'services/api';
-import { V1BulkExperimentFilters } from 'services/api-ts-sdk';
+import { getProjectColumns, searchExperiments } from 'services/api';
+import { V1BulkExperimentFilters, V1ProjectColumn } from 'services/api-ts-sdk';
 import usePolling from 'shared/hooks/usePolling';
 import userStore from 'stores/users';
 import { ExperimentAction, ExperimentItem, Project, RunState } from 'types';
@@ -16,6 +16,7 @@ import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { defaultExperimentColumns } from './glide-table/columns';
 import { Error, Loading, NoExperiments, NoMatches } from './glide-table/exceptions';
 import GlideTable, { SCROLL_SET_COUNT_NEEDED } from './glide-table/GlideTable';
+import { Sort } from './glide-table/MultiSortMenu';
 import TableActionBar, { BatchAction } from './glide-table/TableActionBar';
 import { useGlasbey } from './useGlasbey';
 
@@ -23,23 +24,48 @@ interface Props {
   project: Project;
 }
 
+const makeSortString = (sorts: Sort[]): string =>
+  sorts
+    .filter((s) => s.column && s.direction)
+    .map((s) => `${s.column}=${s.direction}`)
+    .join(',');
+
 export const PAGE_SIZE = 100;
 const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const [page, setPage] = useState(
+  const [page, setPage] = useState(() =>
     isFinite(Number(searchParams.get('page'))) ? Number(searchParams.get('page')) : 0,
   );
-  const [experiments, setExperiments] = useState<Loadable<ExperimentItem>[]>(
+  const [sorts, setSorts] = useState<Sort[]>(() => {
+    const sortString = searchParams.get('sort') || '';
+    if (!sortString) {
+      return [{ column: undefined, direction: undefined }];
+    }
+    const components = sortString.split(',');
+    return components.map((c) => {
+      const [column, direction] = c.split('=', 2);
+      return {
+        column,
+        direction: direction === 'asc' || direction === 'desc' ? direction : undefined,
+      };
+    });
+  });
+  const [experiments, setExperiments] = useState<Loadable<ExperimentItem>[]>(() =>
     Array(page * PAGE_SIZE).fill(NotLoaded),
   );
   const [total, setTotal] = useState<Loadable<number>>(NotLoaded);
 
   useEffect(() => {
-    setSearchParams({ page: String(page) });
+    setSearchParams((params) => {
+      params.set('page', page.toString());
+      params.set('sort', makeSortString(sorts));
+      return params;
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page]);
+  }, [page, sorts]);
 
+  const [columns, setColumns] = useState<Loadable<V1ProjectColumn[]>>(NotLoaded);
   const [sortableColumnIds, setSortableColumnIds] = useState(defaultExperimentColumns);
   const [selectedExperimentIds, setSelectedExperimentIds] = useState<number[]>([]);
   const [selectAll, setSelectAll] = useState(false);
@@ -75,6 +101,8 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     [experimentFilters],
   );
 
+  const sortString = useMemo(() => makeSortString(sorts), [sorts]);
+
   const fetchExperiments = useCallback(async (): Promise<void> => {
     try {
       const tableOffset = Math.max((page - 0.5) * PAGE_SIZE, 0);
@@ -84,6 +112,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
           ...experimentFilters,
           limit: 2 * PAGE_SIZE,
           offset: tableOffset,
+          sort: sortString || undefined,
         },
         { signal: canceler.signal },
       );
@@ -111,9 +140,22 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [page, experimentFilters, canceler.signal]);
+  }, [page, experimentFilters, canceler.signal, sortString]);
 
   const { stopPolling } = usePolling(fetchExperiments, { rerunOnNewFn: true });
+
+  // TODO: poll?
+  useEffect(() => {
+    let mounted = true;
+    getProjectColumns({ projectId: project.id }).then((c) => {
+      if (mounted) {
+        setColumns(Loaded(c));
+      }
+    });
+    return () => {
+      mounted = false;
+    };
+  }, [project.id]);
 
   useEffect(() => userStore.startPolling(), []);
 
@@ -205,14 +247,17 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         ) : (
           <>
             <TableActionBar
+              columns={columns}
               experiments={experiments}
               filters={experimentFilters}
               handleUpdateExperimentList={handleUpdateExperimentList}
               project={project}
               selectAll={selectAll}
               selectedExperimentIds={selectedExperimentIds}
+              sorts={sorts}
               total={total}
               onAction={handleOnAction}
+              onSortChange={setSorts}
             />
             <GlideTable
               clearSelectionTrigger={clearSelectionTrigger}

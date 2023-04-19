@@ -680,6 +680,8 @@ export const getProjectsByUserActivity = generateDetApi<
   Type.Project[]
 >(Config.getProjectsByUserActivity);
 
+export const getProjectColumns = generateDetApi(Config.getProjectColumns);
+
 /* Tasks */
 
 export const getCommands = generateDetApi<
