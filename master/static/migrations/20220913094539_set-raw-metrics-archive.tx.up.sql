@@ -16,7 +16,8 @@ FROM ( -- Get max trial_run_id for each (trial_id, total_batches) pair
                 steps_completed,
                 trial_id,
                 row_number() 
-                OVER(PARTITION BY uuid ORDER BY id ASC) AS row
+                    OVER(PARTITION BY uuid ORDER BY id ASC)
+                AS row
             FROM checkpoints_view
         ) dups WHERE dups.row > 1
     )

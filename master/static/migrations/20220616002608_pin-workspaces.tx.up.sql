@@ -6,6 +6,6 @@ CREATE TABLE workspace_pins (
     UNIQUE (user_id, workspace_id)
 );
 
-CREATE INDEX ix_workspace_pins ON public.workspace_pins USING BTREE(
+CREATE INDEX ix_workspace_pins ON public.workspace_pins USING btree(
     workspace_id
 );
