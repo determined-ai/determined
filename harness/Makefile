@@ -31,8 +31,7 @@ test-gpu:
 	coverage run -m pytest -v --runslow --durations=0 -m "gpu" tests
 
 .PHONY: test-gpu-lightning
-test-gpu-lightning
-    # Lightning tests require specific environment images so they're run separately.
+test-gpu-lightning:
     coverage run -m pytest -v --runslow --durations=0 -m "PyTorchLightning" tests
 
 .PHONY: test
