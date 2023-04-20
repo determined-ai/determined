@@ -1597,10 +1597,11 @@ jobs:
       - checkout
       - skip-if-docs-only
       - skip-if-webui-only
+      - run: mkdir $HOME/.local/bin/codecov
       - install-codecov
       - setup-python-venv:
           determined: true
-          extras-requires: "tensorflow==2.8.4 torch==1.9.0 torchvision==0.10.0 codecov mypy mypy_extensions pytest"
+          extras-requires: "tensorflow==2.8.4 torch==1.9.0 torchvision==0.10.0 codecov mypy mypy_extensions pytest scipy"
           extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
           executor: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.12-gpu-0.21.2
       - run: COVERAGE_FILE=$PWD/test-unit-harness-gpu-pycov make -C harness test-gpu

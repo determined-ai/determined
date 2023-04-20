@@ -1,6 +1,5 @@
 # type: ignore
 import os
-import sys
 from pathlib import Path
 from typing import Any, Callable, Dict, Optional
 

@@ -195,7 +195,18 @@ def import_module(module_name: str, module_path: str, model_context: Optional[st
 
     model_context is necessary when there are extra .py files within
     the model directory that are imported in model_def.py
+
+    problematic modules are submodule names that are recycled between modules.
+    they may be pre-loaded as the result of a previous module import.
     """
+
+    problematic_modules = ['model_def', 'data']
+    for module in problematic_modules:
+        try:
+            sys.modules.pop(module)
+        except KeyError as e:
+            pass
+
     if model_context is not None:
         sys.path.append(model_context)
 
