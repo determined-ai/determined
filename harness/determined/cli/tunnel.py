@@ -8,7 +8,7 @@ import time
 
 from determined.common.api import authentication
 
-from ._tunnel_util import ListenerConfig, http_connect_tunnel, http_tunnel_listener
+from .proxy import ListenerConfig, http_connect_tunnel, http_tunnel_listener
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Tunnel through a Determined master")
