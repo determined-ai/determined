@@ -5,8 +5,7 @@ import { BrowserRouter } from 'react-router-dom';
 
 import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
-import { setAuth } from 'stores/auth';
-import { WorkspacesProvider } from 'stores/workspaces';
+import authStore from 'stores/auth';
 import { generateTestExperimentData } from 'utils/tests/generateTestData';
 
 const TEST_MODAL_TITLE = 'Checkpoint Modal Test';
@@ -24,7 +23,7 @@ const ModalTrigger: React.FC = () => {
   const { experiment, checkpoint } = generateTestExperimentData();
 
   useEffect(() => {
-    setAuth({ isAuthenticated: true });
+    authStore.setAuth({ isAuthenticated: true });
   }, []);
 
   return (
@@ -40,9 +39,7 @@ const setup = async () => {
   render(
     <BrowserRouter>
       <UIProvider>
-        <WorkspacesProvider>
-          <ModalTrigger />
-        </WorkspacesProvider>
+        <ModalTrigger />
       </UIProvider>
     </BrowserRouter>,
   );

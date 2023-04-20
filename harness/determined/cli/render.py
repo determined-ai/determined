@@ -1,6 +1,7 @@
 import base64
 import csv
 import inspect
+import json
 import pathlib
 import sys
 from datetime import timezone
@@ -148,3 +149,16 @@ def yes_or_no(prompt: str) -> bool:
         # Add a newline to mimic a return when sending normal inputs.
         print()
         return False
+
+
+def print_json(data: Union[str, Any]) -> None:
+    """
+    Print JSON data in a human-readable format.
+    """
+    try:
+        if isinstance(data, str):
+            data = json.loads(data)
+        formatted_json = json.dumps(data, sort_keys=True, indent=2)
+        print(formatted_json)
+    except json.decoder.JSONDecodeError:
+        print(data)

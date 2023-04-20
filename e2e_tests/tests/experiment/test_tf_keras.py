@@ -161,6 +161,11 @@ def test_tf_keras_mnist_parallel(collect_trial_profiles: Callable[[int], None]) 
 @pytest.mark.tensorflow2
 def test_tf_keras_tf2_disabled(collect_trial_profiles: Callable[[int], None]) -> None:
     """Keras on tf2 with tf2 and eager execution disabled."""
+    import tensorflow as tf
+    from packaging import version
+
+    if version.parse(tf.__version__) >= version.parse("2.11.0"):
+        pytest.skip("Graph execution fails with tf>=2.11.0")
     config = conf.load_config(conf.fixtures_path("keras_tf2_disabled_no_op/const.yaml"))
     config = conf.set_max_length(config, {"batches": 1})
     config = conf.set_tf2_image(config)

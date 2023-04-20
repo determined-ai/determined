@@ -61,7 +61,7 @@ def classifier_loss(
         clipped_logits = input_logits
     return (
         F.cross_entropy(clipped_logits, target)
-        + hparams.classifier.logit_regularization_beta * (clipped_logits ** 2).mean()
+        + hparams.classifier.logit_regularization_beta * (clipped_logits**2).mean()
     )
 
 

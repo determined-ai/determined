@@ -969,6 +969,94 @@ func (*ReportCheckpointResponse) Descriptor() ([]byte, []int) {
 	return file_determined_api_v1_task_proto_rawDescGZIP(), []int{13}
 }
 
+// Request the information of all tasks.
+type GetTasksRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *GetTasksRequest) Reset() {
+	*x = GetTasksRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_determined_api_v1_task_proto_msgTypes[14]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetTasksRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetTasksRequest) ProtoMessage() {}
+
+func (x *GetTasksRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_determined_api_v1_task_proto_msgTypes[14]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetTasksRequest.ProtoReflect.Descriptor instead.
+func (*GetTasksRequest) Descriptor() ([]byte, []int) {
+	return file_determined_api_v1_task_proto_rawDescGZIP(), []int{14}
+}
+
+// Response to GetTasksRequest.
+type GetTasksResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// Information about a task for external display.
+	AllocationIdToSummary map[string]*taskv1.AllocationSummary `protobuf:"bytes,1,rep,name=allocation_id_to_summary,json=allocationIdToSummary,proto3" json:"allocation_id_to_summary,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+}
+
+func (x *GetTasksResponse) Reset() {
+	*x = GetTasksResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_determined_api_v1_task_proto_msgTypes[15]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetTasksResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetTasksResponse) ProtoMessage() {}
+
+func (x *GetTasksResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_determined_api_v1_task_proto_msgTypes[15]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetTasksResponse.ProtoReflect.Descriptor instead.
+func (*GetTasksResponse) Descriptor() ([]byte, []int) {
+	return file_determined_api_v1_task_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *GetTasksResponse) GetAllocationIdToSummary() map[string]*taskv1.AllocationSummary {
+	if x != nil {
+		return x.AllocationIdToSummary
+	}
+	return nil
+}
+
 var File_determined_api_v1_task_proto protoreflect.FileDescriptor
 
 var file_determined_api_v1_task_proto_rawDesc = []byte{
@@ -1121,11 +1209,28 @@ var file_determined_api_v1_task_proto_rawDesc = []byte{
 	0x6f, 0x69, 0x6e, 0x74, 0x3a, 0x12, 0x92, 0x41, 0x0f, 0x0a, 0x0d, 0xd2, 0x01, 0x0a, 0x63, 0x68,
 	0x65, 0x63, 0x6b, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x22, 0x1a, 0x0a, 0x18, 0x52, 0x65, 0x70, 0x6f,
 	0x72, 0x74, 0x43, 0x68, 0x65, 0x63, 0x6b, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x52, 0x65, 0x73, 0x70,
-	0x6f, 0x6e, 0x73, 0x65, 0x42, 0x35, 0x5a, 0x33, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63,
-	0x6f, 0x6d, 0x2f, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2d, 0x61, 0x69,
-	0x2f, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2f, 0x70, 0x72, 0x6f, 0x74,
-	0x6f, 0x2f, 0x70, 0x6b, 0x67, 0x2f, 0x61, 0x70, 0x69, 0x76, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f,
-	0x74, 0x6f, 0x33,
+	0x6f, 0x6e, 0x73, 0x65, 0x22, 0x11, 0x0a, 0x0f, 0x47, 0x65, 0x74, 0x54, 0x61, 0x73, 0x6b, 0x73,
+	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x22, 0xfc, 0x01, 0x0a, 0x10, 0x47, 0x65, 0x74, 0x54,
+	0x61, 0x73, 0x6b, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x77, 0x0a, 0x18,
+	0x61, 0x6c, 0x6c, 0x6f, 0x63, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x5f, 0x69, 0x64, 0x5f, 0x74, 0x6f,
+	0x5f, 0x73, 0x75, 0x6d, 0x6d, 0x61, 0x72, 0x79, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x3e,
+	0x2e, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x61, 0x70, 0x69, 0x2e,
+	0x76, 0x31, 0x2e, 0x47, 0x65, 0x74, 0x54, 0x61, 0x73, 0x6b, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f,
+	0x6e, 0x73, 0x65, 0x2e, 0x41, 0x6c, 0x6c, 0x6f, 0x63, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x49, 0x64,
+	0x54, 0x6f, 0x53, 0x75, 0x6d, 0x6d, 0x61, 0x72, 0x79, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x52, 0x15,
+	0x61, 0x6c, 0x6c, 0x6f, 0x63, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x49, 0x64, 0x54, 0x6f, 0x53, 0x75,
+	0x6d, 0x6d, 0x61, 0x72, 0x79, 0x1a, 0x6f, 0x0a, 0x1a, 0x41, 0x6c, 0x6c, 0x6f, 0x63, 0x61, 0x74,
+	0x69, 0x6f, 0x6e, 0x49, 0x64, 0x54, 0x6f, 0x53, 0x75, 0x6d, 0x6d, 0x61, 0x72, 0x79, 0x45, 0x6e,
+	0x74, 0x72, 0x79, 0x12, 0x10, 0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09,
+	0x52, 0x03, 0x6b, 0x65, 0x79, 0x12, 0x3b, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x02,
+	0x20, 0x01, 0x28, 0x0b, 0x32, 0x25, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65,
+	0x64, 0x2e, 0x74, 0x61, 0x73, 0x6b, 0x2e, 0x76, 0x31, 0x2e, 0x41, 0x6c, 0x6c, 0x6f, 0x63, 0x61,
+	0x74, 0x69, 0x6f, 0x6e, 0x53, 0x75, 0x6d, 0x6d, 0x61, 0x72, 0x79, 0x52, 0x05, 0x76, 0x61, 0x6c,
+	0x75, 0x65, 0x3a, 0x02, 0x38, 0x01, 0x42, 0x35, 0x5a, 0x33, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62,
+	0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2d,
+	0x61, 0x69, 0x2f, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2f, 0x70, 0x72,
+	0x6f, 0x74, 0x6f, 0x2f, 0x70, 0x6b, 0x67, 0x2f, 0x61, 0x70, 0x69, 0x76, 0x31, 0x62, 0x06, 0x70,
+	0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -1140,7 +1245,7 @@ func file_determined_api_v1_task_proto_rawDescGZIP() []byte {
 	return file_determined_api_v1_task_proto_rawDescData
 }
 
-var file_determined_api_v1_task_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
+var file_determined_api_v1_task_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
 var file_determined_api_v1_task_proto_goTypes = []interface{}{
 	(*GetTaskRequest)(nil),              // 0: determined.api.v1.GetTaskRequest
 	(*GetTaskResponse)(nil),             // 1: determined.api.v1.GetTaskResponse
@@ -1156,26 +1261,32 @@ var file_determined_api_v1_task_proto_goTypes = []interface{}{
 	(*TaskLogsFieldsResponse)(nil),      // 11: determined.api.v1.TaskLogsFieldsResponse
 	(*ReportCheckpointRequest)(nil),     // 12: determined.api.v1.ReportCheckpointRequest
 	(*ReportCheckpointResponse)(nil),    // 13: determined.api.v1.ReportCheckpointResponse
-	(*taskv1.Task)(nil),                 // 14: determined.task.v1.Task
-	(logv1.LogLevel)(0),                 // 15: determined.log.v1.LogLevel
-	(*timestamp.Timestamp)(nil),         // 16: google.protobuf.Timestamp
-	(OrderBy)(0),                        // 17: determined.api.v1.OrderBy
-	(*checkpointv1.Checkpoint)(nil),     // 18: determined.checkpoint.v1.Checkpoint
+	(*GetTasksRequest)(nil),             // 14: determined.api.v1.GetTasksRequest
+	(*GetTasksResponse)(nil),            // 15: determined.api.v1.GetTasksResponse
+	nil,                                 // 16: determined.api.v1.GetTasksResponse.AllocationIdToSummaryEntry
+	(*taskv1.Task)(nil),                 // 17: determined.task.v1.Task
+	(logv1.LogLevel)(0),                 // 18: determined.log.v1.LogLevel
+	(*timestamp.Timestamp)(nil),         // 19: google.protobuf.Timestamp
+	(OrderBy)(0),                        // 20: determined.api.v1.OrderBy
+	(*checkpointv1.Checkpoint)(nil),     // 21: determined.checkpoint.v1.Checkpoint
+	(*taskv1.AllocationSummary)(nil),    // 22: determined.task.v1.AllocationSummary
 }
 var file_determined_api_v1_task_proto_depIdxs = []int32{
-	14, // 0: determined.api.v1.GetTaskResponse.task:type_name -> determined.task.v1.Task
-	15, // 1: determined.api.v1.TaskLogsRequest.levels:type_name -> determined.log.v1.LogLevel
-	16, // 2: determined.api.v1.TaskLogsRequest.timestamp_before:type_name -> google.protobuf.Timestamp
-	16, // 3: determined.api.v1.TaskLogsRequest.timestamp_after:type_name -> google.protobuf.Timestamp
-	17, // 4: determined.api.v1.TaskLogsRequest.order_by:type_name -> determined.api.v1.OrderBy
-	16, // 5: determined.api.v1.TaskLogsResponse.timestamp:type_name -> google.protobuf.Timestamp
-	15, // 6: determined.api.v1.TaskLogsResponse.level:type_name -> determined.log.v1.LogLevel
-	18, // 7: determined.api.v1.ReportCheckpointRequest.checkpoint:type_name -> determined.checkpoint.v1.Checkpoint
-	8,  // [8:8] is the sub-list for method output_type
-	8,  // [8:8] is the sub-list for method input_type
-	8,  // [8:8] is the sub-list for extension type_name
-	8,  // [8:8] is the sub-list for extension extendee
-	0,  // [0:8] is the sub-list for field type_name
+	17, // 0: determined.api.v1.GetTaskResponse.task:type_name -> determined.task.v1.Task
+	18, // 1: determined.api.v1.TaskLogsRequest.levels:type_name -> determined.log.v1.LogLevel
+	19, // 2: determined.api.v1.TaskLogsRequest.timestamp_before:type_name -> google.protobuf.Timestamp
+	19, // 3: determined.api.v1.TaskLogsRequest.timestamp_after:type_name -> google.protobuf.Timestamp
+	20, // 4: determined.api.v1.TaskLogsRequest.order_by:type_name -> determined.api.v1.OrderBy
+	19, // 5: determined.api.v1.TaskLogsResponse.timestamp:type_name -> google.protobuf.Timestamp
+	18, // 6: determined.api.v1.TaskLogsResponse.level:type_name -> determined.log.v1.LogLevel
+	21, // 7: determined.api.v1.ReportCheckpointRequest.checkpoint:type_name -> determined.checkpoint.v1.Checkpoint
+	16, // 8: determined.api.v1.GetTasksResponse.allocation_id_to_summary:type_name -> determined.api.v1.GetTasksResponse.AllocationIdToSummaryEntry
+	22, // 9: determined.api.v1.GetTasksResponse.AllocationIdToSummaryEntry.value:type_name -> determined.task.v1.AllocationSummary
+	10, // [10:10] is the sub-list for method output_type
+	10, // [10:10] is the sub-list for method input_type
+	10, // [10:10] is the sub-list for extension type_name
+	10, // [10:10] is the sub-list for extension extendee
+	0,  // [0:10] is the sub-list for field type_name
 }
 
 func init() { file_determined_api_v1_task_proto_init() }
@@ -1353,6 +1464,30 @@ func file_determined_api_v1_task_proto_init() {
 				return nil
 			}
 		}
+		file_determined_api_v1_task_proto_msgTypes[14].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetTasksRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_determined_api_v1_task_proto_msgTypes[15].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetTasksResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	file_determined_api_v1_task_proto_msgTypes[9].OneofWrappers = []interface{}{}
 	type x struct{}
@@ -1361,7 +1496,7 @@ func file_determined_api_v1_task_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_determined_api_v1_task_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   14,
+			NumMessages:   17,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

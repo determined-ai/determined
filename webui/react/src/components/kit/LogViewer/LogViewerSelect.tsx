@@ -72,12 +72,15 @@ const LogViewerSelect: React.FC<Props> = ({
   }, [selectOptions]);
 
   const isResetShown = useMemo(() => {
+    if (values.searchText) return true;
+
     const keys = Object.keys(selectOptions);
     for (let i = 0; i < keys.length; i++) {
       const key = keys[i] as keyof Filters;
       const value = values[key];
       if (value && value.length !== 0) return true;
     }
+
     return false;
   }, [selectOptions, values]);
 

@@ -7,11 +7,10 @@ import { useModal } from 'components/kit/Modal';
 import WorkspaceCreateModalComponent from 'components/WorkspaceCreateModal';
 import WorkspaceDeleteModalComponent from 'components/WorkspaceDeleteModal';
 import usePermissions from 'hooks/usePermissions';
-import { archiveWorkspace, pinWorkspace, unarchiveWorkspace, unpinWorkspace } from 'services/api';
 import css from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
 import Icon from 'shared/components/Icon/Icon';
 import { ValueOf } from 'shared/types';
-import { useUpdateWorkspace } from 'stores/workspaces';
+import workspaceStore from 'stores/workspaces';
 import { Workspace } from 'types';
 import handleError from 'utils/error';
 
@@ -62,45 +61,33 @@ export const useWorkspaceActionMenu: (props: WorkspaceMenuPropsIn) => WorkspaceM
 
   const { canDeleteWorkspace, canModifyWorkspace } = usePermissions();
 
-  const updateWorkspace = useUpdateWorkspace();
-
-  const handleArchiveClick = useCallback(async () => {
+  const handleArchiveClick = useCallback(() => {
     if (workspace.archived) {
-      try {
-        await unarchiveWorkspace({ id: workspace.id });
-        onComplete?.();
-      } catch (e) {
-        handleError(e, { publicSubject: 'Unable to unarchive workspace.' });
-      }
+      workspaceStore
+        .unarchiveWorkspace(workspace.id)
+        .then(() => onComplete?.())
+        .catch((e) => handleError(e, { publicSubject: 'Unable to unarchive workspace.' }));
     } else {
-      try {
-        await archiveWorkspace({ id: workspace.id });
-        onComplete?.();
-      } catch (e) {
-        handleError(e, { publicSubject: 'Unable to archive workspace.' });
-      }
+      workspaceStore
+        .archiveWorkspace(workspace.id)
+        .then(() => onComplete?.())
+        .catch((e) => handleError(e, { publicSubject: 'Unable to archive workspace.' }));
     }
   }, [onComplete, workspace.archived, workspace.id]);
 
-  const handlePinClick = useCallback(async () => {
+  const handlePinClick = useCallback(() => {
     if (workspace.pinned) {
-      try {
-        await unpinWorkspace({ id: workspace.id });
-        updateWorkspace(workspace.id, (w) => ({ ...w, pinned: false }));
-        onComplete?.();
-      } catch (e) {
-        handleError(e, { publicSubject: 'Unable to unpin workspace.' });
-      }
+      workspaceStore
+        .unpinWorkspace(workspace.id)
+        .then(() => onComplete?.())
+        .catch((e) => handleError(e, { publicSubject: 'Unable to unpin workspace.' }));
     } else {
-      try {
-        await pinWorkspace({ id: workspace.id });
-        updateWorkspace(workspace.id, (w) => ({ ...w, pinned: true, pinnedAt: new Date() }));
-        onComplete?.();
-      } catch (e) {
-        handleError(e, { publicSubject: 'Unable to pin workspace.' });
-      }
+      workspaceStore
+        .pinWorkspace(workspace.id)
+        .then(() => onComplete?.())
+        .catch((e) => handleError(e, { publicSubject: 'Unable to pin workspace.' }));
     }
-  }, [onComplete, workspace.id, workspace.pinned, updateWorkspace]);
+  }, [onComplete, workspace.id, workspace.pinned]);
 
   const MenuKey = {
     Delete: 'delete',

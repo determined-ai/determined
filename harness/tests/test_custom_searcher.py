@@ -110,7 +110,7 @@ class SimulateMaster:
             self.events_queue.append(event)
 
         if type(op) == searcher.Shutdown:
-            exp_state = bindings.experimentv1State.STATE_COMPLETED
+            exp_state = bindings.experimentv1State.COMPLETED
             exp_inactive = bindings.v1ExperimentInactive(experimentState=exp_state)
             self.events_count += 1
             event = bindings.v1SearcherEvent(id=self.events_count, experimentInactive=exp_inactive)

@@ -58,14 +58,6 @@ type CacheConfig struct {
 	CacheDir string `json:"cache_dir"`
 }
 
-// HPImportanceConfig is the configuration in the master for hyperparameter importance.
-type HPImportanceConfig struct {
-	WorkersLimit   uint `json:"workers_limit"`
-	QueueLimit     uint `json:"queue_limit"`
-	CoresPerWorker uint `json:"cores_per_worker"`
-	MaxTrees       uint `json:"max_trees"`
-}
-
 // DBConfig hosts configuration fields of the database.
 type DBConfig struct {
 	User        string `json:"user"`
@@ -115,6 +107,7 @@ func DefaultConfig() *Config {
 			SegmentWebUIKey:          DefaultSegmentWebUIKey,
 		},
 		EnableCors:  false,
+		LaunchError: true,
 		ClusterName: "",
 		Logging: model.LoggingConfig{
 			DefaultLoggingConfig: &model.DefaultLoggingConfig{},
@@ -124,13 +117,7 @@ func DefaultConfig() *Config {
 			CacheDir: "/var/cache/determined",
 		},
 		FeatureSwitches: []string{},
-		HPImportance: HPImportanceConfig{
-			WorkersLimit:   2,
-			QueueLimit:     16,
-			CoresPerWorker: 1,
-			MaxTrees:       100,
-		},
-		ResourceConfig: DefaultResourceConfig(),
+		ResourceConfig:  *DefaultResourceConfig(),
 	}
 }
 
@@ -151,14 +138,14 @@ type Config struct {
 	Root                  string                            `json:"root"`
 	Telemetry             config.TelemetryConfig            `json:"telemetry"`
 	EnableCors            bool                              `json:"enable_cors"`
+	LaunchError           bool                              `json:"launch_error"`
 	ClusterName           string                            `json:"cluster_name"`
 	Logging               model.LoggingConfig               `json:"logging"`
-	HPImportance          HPImportanceConfig                `json:"hyperparameter_importance"`
 	Observability         ObservabilityConfig               `json:"observability"`
 	Cache                 CacheConfig                       `json:"cache"`
 	Webhooks              WebhooksConfig                    `json:"webhooks"`
 	FeatureSwitches       []string                          `json:"feature_switches"`
-	*ResourceConfig
+	ResourceConfig
 
 	// Internal contains "hidden" useful debugging configurations.
 	InternalConfig InternalConfig `json:"__internal"`
@@ -207,6 +194,12 @@ func (c Config) Printable() ([]byte, error) {
 	}
 
 	c.CheckpointStorage = c.CheckpointStorage.Printable()
+
+	pools := make([]ResourcePoolConfig, 0, len(c.ResourcePools))
+	for _, poolConfig := range c.ResourcePools {
+		pools = append(pools, poolConfig.Printable())
+	}
+	c.ResourcePools = pools
 
 	optJSON, err := json.Marshal(c)
 	if err != nil {

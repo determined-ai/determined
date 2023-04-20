@@ -19,7 +19,7 @@ def set_docker_image(config: Dict) -> Dict:
     return config
 
 
-@pytest.mark.model_hub_mmdetection
+@pytest.mark.model_hub_mmdetection_quarantine
 def test_maskrcnn_distributed_fake() -> None:
     example_path = conf.fixtures_path("mmdetection")
     config = conf.load_config(os.path.join(example_path, "distributed_fake_data.yaml"))

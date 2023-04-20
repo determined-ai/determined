@@ -140,7 +140,6 @@ class DetCallback(TrainerCallback):
 
         latest_checkpoint = info.latest_checkpoint
         if latest_checkpoint is not None:
-
             if args.overwrite_output_dir is True:
                 logging.info(
                     f"Skip downloading last checkpoint from Determined due "

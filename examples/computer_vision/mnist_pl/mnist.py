@@ -26,7 +26,6 @@ from torchvision import transforms
 
 class LitMNIST(pl.LightningModule):
     def __init__(self, hidden_size=64, learning_rate=2e-4):
-
         super().__init__()
 
         # Set our init args as class attributes

@@ -61,6 +61,14 @@ the `Kubernetes Cluster Autoscaler
 `GKE <https://cloud.google.com/kubernetes-engine/docs/concepts/cluster-autoscaler>`_ and `EKS
 <https://docs.aws.amazon.com/eks/latest/userguide/cluster-autoscaler.html>`_.
 
+Pod Security
+============
+
+By default, Determined runs task containers as root. However, it is possible to associate a
+Determined user with a Unix user and group, provided that the Unix user and group already exist.
+Tasks initiated by the associated Determined user will run under the linked Unix user rather than
+root. For more information, see: :ref:`run-as-user`.
+
 .. _useful-kubectl-commands:
 
 **********************************

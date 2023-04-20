@@ -1,5 +1,6 @@
 import { Select, Typography } from 'antd';
 import { filter } from 'fp-ts/lib/Set';
+import { useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import Form from 'components/kit/Form';
@@ -21,7 +22,7 @@ import { V1GroupDetails, V1GroupSearchResult } from 'services/api-ts-sdk';
 import Spinner from 'shared/components/Spinner';
 import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
-import { RolesStore } from 'stores/roles';
+import roleStore from 'stores/roles';
 import { DetailedUser, UserRole } from 'types';
 import { message } from 'utils/dialogApi';
 import handleError from 'utils/error';
@@ -55,7 +56,7 @@ const CreateGroupModalComponent: React.FC<Props> = ({ onClose, users, group }: P
   const [groupDetail, setGroupDetail] = useState<V1GroupDetails>();
   const [isLoading, setIsLoading] = useState(true);
 
-  const roles = RolesStore.useRoles();
+  const roles = useObservable(roleStore.roles);
   const groupName = Form.useWatch(GROUP_NAME_NAME, form);
 
   const fetchGroupDetail = useCallback(async () => {
@@ -115,7 +116,7 @@ const CreateGroupModalComponent: React.FC<Props> = ({ onClose, users, group }: P
           groupRoles.map((r) => r.id),
         );
         if (!nameUpdated && !usersUpdated && !rolesUpdated) {
-          message.info('No changes to make.');
+          message.info('No changes to save.');
           return;
         }
 

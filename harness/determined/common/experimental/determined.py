@@ -61,6 +61,7 @@ class Determined:
                 user_id=raw.id,
                 username=raw.username,
                 admin=raw.admin,
+                remote=raw.remote,
                 session=self._session,
                 active=raw.active,
                 display_name=raw.displayName,
@@ -74,6 +75,7 @@ class Determined:
                 user_id=raw.id,
                 username=raw.username,
                 admin=raw.admin,
+                remote=raw.remote,
                 session=self._session,
                 active=raw.active,
                 display_name=raw.displayName,
@@ -307,6 +309,7 @@ class Determined:
             model_id: If this paramter is set, models will be filtered to
                 only include the model with this unique numeric id.
         """
+
         # TODO: more parameters?
         #   - archived
         #   - labels

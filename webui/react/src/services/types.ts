@@ -40,7 +40,7 @@ export interface TrialSummaryParams extends TrialSummaryBaseParams {
   trialId: number;
 }
 
-export interface CompareTrialsParams extends TrialSummaryBaseParams {
+export interface TimeSeriesParams extends TrialSummaryBaseParams {
   trialIds: number[];
 }
 
@@ -100,6 +100,11 @@ export interface SearchExperimentsParams extends PaginationParams {
   projectId?: number;
   /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
   options?: any;
+}
+
+export interface BulkActionParams {
+  experimentIds: number[];
+  filters?: Api.V1BulkExperimentFilters;
 }
 
 export interface GetExperimentParams {
@@ -261,6 +266,7 @@ export interface LaunchTensorBoardParams {
   experimentIds?: Array<number>;
   trialIds?: Array<number>;
   workspaceId?: number;
+  filters?: Api.V1BulkExperimentFilters;
 }
 
 export interface LaunchJupyterLabParams {
@@ -489,7 +495,7 @@ export interface PinWorkspaceParams {
   id: number;
 }
 
-export type UnpinWorkspaceParams = ArchiveWorkspaceParams;
+export type UnpinWorkspaceParams = PinWorkspaceParams;
 
 export interface GetWebhookParams {
   id: number;

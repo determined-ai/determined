@@ -16,7 +16,7 @@ T = TypeVar("T", bound=bindings.Paginated)
 
 # Map of launch warnings to the warning message shown to users.
 WARNING_MESSAGE_MAP = {
-    bindings.v1LaunchWarning.LAUNCH_WARNING_CURRENT_SLOTS_EXCEEDED: (
+    bindings.v1LaunchWarning.CURRENT_SLOTS_EXCEEDED: (
         "Warning: The requested job requires more slots than currently available. "
         "You may need to increase cluster resources in order for the job to run."
     )

@@ -1,22 +1,23 @@
 import { Rectangle } from '@glideapps/glide-data-grid';
-import { Row } from 'antd';
-import SkeletonButton from 'antd/es/skeleton/Button';
 import { observable } from 'micro-observables';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import Page from 'components/Page';
 import useResize from 'hooks/useResize';
 import { searchExperiments } from 'services/api';
+import { V1BulkExperimentFilters } from 'services/api-ts-sdk';
 import usePolling from 'shared/hooks/usePolling';
-import usersStore from 'stores/users';
+import userStore from 'stores/users';
 import { ExperimentItem, Project } from 'types';
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 
 import { defaultExperimentColumns } from './glide-table/columns';
-import GlideTable from './glide-table/GlideTable';
-import { useGlasbey } from './glide-table/useGlasbey';
+import { Error, Loading, NoExperiments, NoMatches } from './glide-table/exceptions';
+import GlideTable, { SCROLL_SET_COUNT_NEEDED } from './glide-table/GlideTable';
+import TableActionBar from './glide-table/TableActionBar';
+import { useGlasbey } from './useGlasbey';
 
 interface Props {
   project: Project;
@@ -32,6 +33,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const [experiments, setExperiments] = useState<Loadable<ExperimentItem>[]>(
     Array(page * PAGE_SIZE).fill(NotLoaded),
   );
+  const [total, setTotal] = useState<Loadable<number>>(NotLoaded);
 
   useEffect(() => {
     setSearchParams({ page: String(page) });
@@ -39,24 +41,38 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   }, [page]);
 
   const [sortableColumnIds, setSortableColumnIds] = useState(defaultExperimentColumns);
-  const [selectedExperimentIds, setSelectedExperimentIds] = useState<string[]>([]);
+  const [selectedExperimentIds, setSelectedExperimentIds] = useState<number[]>([]);
   const [selectAll, setSelectAll] = useState(false);
+  const [clearSelectionTrigger, setClearSelectionTrigger] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [error] = useState(false);
   const [canceler] = useState(new AbortController());
 
   const colorMap = useGlasbey(selectedExperimentIds);
   const pageRef = useRef<HTMLElement>(null);
-  const { width } = useResize(pageRef);
+  const { width, height } = useResize(pageRef);
 
-  const [initialScrollPositionSet] = useState(observable(false));
+  const [scrollPositionSetCount] = useState(observable(0));
 
   const handleScroll = useCallback(
     ({ y, height }: Rectangle) => {
-      if (!initialScrollPositionSet.get()) return;
+      if (scrollPositionSetCount.get() < SCROLL_SET_COUNT_NEEDED) return;
       const page = Math.floor((y + height) / PAGE_SIZE);
       setPage(page);
     },
-    [initialScrollPositionSet],
+    [scrollPositionSetCount],
+  );
+
+  const experimentFilters = useMemo(() => {
+    const filters: V1BulkExperimentFilters = {
+      projectId: project.id,
+    };
+    return filters;
+  }, [project.id]);
+
+  const numFilters = useMemo(
+    () => Object.values(experimentFilters).filter((x) => x !== undefined).length - 1,
+    [experimentFilters],
   );
 
   const fetchExperiments = useCallback(async (): Promise<void> => {
@@ -65,10 +81,9 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
 
       const response = await searchExperiments(
         {
+          ...experimentFilters,
           limit: 2 * PAGE_SIZE,
           offset: tableOffset,
-          orderBy: 'ORDER_BY_DESC',
-          projectId: project.id,
         },
         { signal: canceler.signal },
       );
@@ -86,20 +101,21 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
           ...experimentBeforeCurrentPage,
           ...response.experiments.map((e) => Loaded(e.experiment)),
           ...experimentsAfterCurrentPage,
-        ];
+        ].slice(0, response.pagination.total);
       });
+      setTotal(
+        response.pagination.total !== undefined ? Loaded(response.pagination.total) : NotLoaded,
+      );
     } catch (e) {
       handleError(e, { publicSubject: 'Unable to fetch experiments.' });
     } finally {
       setIsLoading(false);
     }
-  }, [project.id, canceler.signal, page]);
+  }, [page, experimentFilters, canceler.signal]);
 
-  const fetchAll = useCallback(async () => {
-    await Promise.allSettled([fetchExperiments(), usersStore.ensureUsersFetched(canceler)]);
-  }, [fetchExperiments, canceler]);
+  const { stopPolling } = usePolling(fetchExperiments, { rerunOnNewFn: true });
 
-  const { stopPolling } = usePolling(fetchAll, { rerunOnNewFn: true });
+  useEffect(() => userStore.startPolling(), []);
 
   useEffect(() => {
     return () => {
@@ -107,6 +123,18 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
       stopPolling();
     };
   }, [canceler, stopPolling]);
+
+  const handleOnAction = useCallback(async () => {
+    /*
+     * Deselect selected rows since their states may have changed where they
+     * are no longer part of the filter criteria.
+     */
+    setClearSelectionTrigger((prev) => prev + 1);
+    setSelectAll(false);
+
+    // Refetch experiment list to get updates based on batch action.
+    await fetchExperiments();
+  }, [fetchExperiments]);
 
   return (
     <Page
@@ -116,25 +144,45 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
       id="projectDetails">
       <>
         {isLoading ? (
-          [...Array(22)].map((x, i) => (
-            <Row key={i} style={{ paddingBottom: '4px' }}>
-              <SkeletonButton style={{ width: width - 20 }} />
-            </Row>
-          ))
+          <Loading width={width} />
+        ) : experiments.length === 0 ? (
+          numFilters === 0 ? (
+            <NoExperiments />
+          ) : (
+            <NoMatches />
+          )
+        ) : error ? (
+          <Error />
         ) : (
-          <GlideTable
-            colorMap={colorMap}
-            data={experiments}
-            handleScroll={handleScroll}
-            initialScrollPositionSet={initialScrollPositionSet}
-            page={page}
-            selectAll={selectAll}
-            selectedExperimentIds={selectedExperimentIds}
-            setSelectAll={setSelectAll}
-            setSelectedExperimentIds={setSelectedExperimentIds}
-            setSortableColumnIds={setSortableColumnIds}
-            sortableColumnIds={sortableColumnIds}
-          />
+          <>
+            <TableActionBar
+              experiments={experiments}
+              filters={experimentFilters}
+              project={project}
+              selectAll={selectAll}
+              selectedExperimentIds={selectedExperimentIds}
+              setExperiments={setExperiments}
+              total={total}
+              onAction={handleOnAction}
+            />
+            <GlideTable
+              clearSelectionTrigger={clearSelectionTrigger}
+              colorMap={colorMap}
+              data={experiments}
+              fetchExperiments={fetchExperiments}
+              handleScroll={handleScroll}
+              height={height}
+              page={page}
+              project={project}
+              scrollPositionSetCount={scrollPositionSetCount}
+              selectAll={selectAll}
+              selectedExperimentIds={selectedExperimentIds}
+              setSelectAll={setSelectAll}
+              setSelectedExperimentIds={setSelectedExperimentIds}
+              setSortableColumnIds={setSortableColumnIds}
+              sortableColumnIds={sortableColumnIds}
+            />
+          </>
         )}
       </>
     </Page>

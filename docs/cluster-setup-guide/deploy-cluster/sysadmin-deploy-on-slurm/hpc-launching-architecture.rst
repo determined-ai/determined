@@ -74,7 +74,7 @@ failure or completion is detected by Determined.
    Scheduling) from the workload manager and context (environment variables, and container launch
    commands).
 
-#. The ownership of the files is transferred to the launching user (``sudo chmod``).
+#. The ownership of the files is transferred to the launching user (``sudo chown``).
 
 #. A setuid image is executed to impersonate the launching user, which in turn executes the
    sbatch/qsub command to submit the job.
@@ -95,7 +95,7 @@ failure or completion is detected by Determined.
 #. Determined polls the launcher for job status waiting for completion.
 
 #. Determined sends a request to the launcher to clean up the job. File ownership is transferred
-   back to the launcher (``sudo chmod``) which then deletes all temporary files and logs associated
+   back to the launcher (``sudo chown``) which then deletes all temporary files and logs associated
    with the job.
 
 *************************
@@ -104,7 +104,8 @@ failure or completion is detected by Determined.
 
 As noted earlier, when using the HPC launcher, Determined delegates all job scheduling and
 prioritization to the HPC workload manager (Slurm/PBS). Resource requests are generated into the
-submitted batch file derived from the following Determined configuration attributes.
+submitted batch file derived from the following configuration attributes described in the following
+sections.
 
 Cluster Configuration
 =====================

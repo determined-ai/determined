@@ -1,5 +1,7 @@
 import DataEditor, {
+  CellClickedEventArgs,
   CompactSelection,
+  CustomCell,
   DataEditorProps,
   DataEditorRef,
   GridCell,
@@ -25,73 +27,93 @@ import { useNavigate } from 'react-router';
 
 import useUI from 'shared/contexts/stores/UI';
 import usersStore from 'stores/users';
-import { ExperimentItem } from 'types';
+import { ExperimentItem, Project } from 'types';
+import { getProjectExperimentForExperimentItem } from 'utils/experiment';
 import { Loadable } from 'utils/loadable';
-import { useObservable, WritableObservable } from 'utils/observable';
+import { observable, useObservable, WritableObservable } from 'utils/observable';
 
 import { PAGE_SIZE } from '../F_ExperimentList';
+import { MapOfIdsToColors } from '../useGlasbey';
 
-import { ColumnDef, defaultColumnWidths, ExperimentColumn, getColumnDefs } from './columns';
-import UserProfileCell from './custom-cells/avatar';
-import LinksCell from './custom-cells/links';
-import RangeCell from './custom-cells/progress';
-import SparklineCell from './custom-cells/sparkline';
-import SpinnerCell from './custom-cells/spinner';
-import TagsCell from './custom-cells/tags';
+import {
+  ColumnDef,
+  defaultColumnWidths,
+  ExperimentColumn,
+  getColumnDefs,
+  getHeaderIcons,
+} from './columns';
+import { TableContextMenu, TableContextMenuProps } from './contextMenu';
+import { customRenderers } from './custom-renderers';
+import { LinkCell } from './custom-renderers/cells/linkCell';
 import { placeholderMenuItems, TableActionMenu, TableActionMenuProps } from './menu';
-import { MapOfIdsToColors } from './useGlasbey';
-import { getTheme, headerIcons } from './utils';
+import { useTableTooltip } from './tooltip';
+import { getTheme } from './utils';
 
-const GRID_HEIGHT = 700;
-const cells: DataEditorProps['customRenderers'] = [
-  SparklineCell,
-  TagsCell,
-  UserProfileCell,
-  SpinnerCell,
-  RangeCell,
-  LinksCell,
-];
-
-interface Props {
+export interface GlideTableProps {
+  clearSelectionTrigger?: number;
   colorMap: MapOfIdsToColors;
   data: Loadable<ExperimentItem>[];
+  fetchExperiments: () => Promise<void>;
   handleScroll?: (r: Rectangle) => void;
-  initialScrollPositionSet: WritableObservable<boolean>;
+  height: number;
+  scrollPositionSetCount: WritableObservable<number>;
   sortableColumnIds: ExperimentColumn[];
   setSortableColumnIds: Dispatch<SetStateAction<ExperimentColumn[]>>;
   page: number;
-  selectedExperimentIds: string[];
-  setSelectedExperimentIds: Dispatch<SetStateAction<string[]>>;
+  project?: Project;
+  selectedExperimentIds: number[];
+  setSelectedExperimentIds: Dispatch<SetStateAction<number[]>>;
   selectAll: boolean;
   setSelectAll: Dispatch<SetStateAction<boolean>>;
 }
 
+type ClickableCell = CustomCell<LinkCell> & {
+  data: {
+    link: {
+      onClick: () => void;
+    };
+  };
+};
+
+/**
+ * Number of renders with gridRef.current !== null
+ * needed for the table to be properly initialized.
+ * We set the scroll position to the persisted page
+ * this many times, and then consider the scroll position to be
+ * 'set' for purposes of the `handleScroll` in the parent component.
+ * Otherwise handleScroll would erroneously set the page to 0
+ * when the table is first initialized.
+ */
+export const SCROLL_SET_COUNT_NEEDED = 2;
+
 const STATIC_COLUMNS: ExperimentColumn[] = ['selected', 'name'];
 
-export const GlideTable: React.FC<Props> = ({
+export const GlideTable: React.FC<GlideTableProps> = ({
   data,
+  fetchExperiments,
+  clearSelectionTrigger,
   setSelectedExperimentIds,
   sortableColumnIds,
   setSortableColumnIds,
   colorMap,
+  height,
   selectAll,
   setSelectAll,
   handleScroll,
-  initialScrollPositionSet,
+  scrollPositionSetCount,
   page,
+  project,
 }) => {
   const gridRef = useRef<DataEditorRef>(null);
 
   useEffect(() => {
-    if (initialScrollPositionSet.get()) return;
-    setTimeout(() => {
-      if (gridRef.current !== null) {
-        const rowOffset = Math.max(page * PAGE_SIZE, 0);
-        gridRef.current.scrollTo(0, rowOffset);
-        setTimeout(() => initialScrollPositionSet.set(true), 200);
-      }
-    }, 200);
-  }, [initialScrollPositionSet, page]);
+    if (scrollPositionSetCount.get() >= SCROLL_SET_COUNT_NEEDED) return;
+    if (gridRef.current !== null) {
+      const rowOffset = Math.max(page * PAGE_SIZE, 0);
+      gridRef.current.scrollTo(0, rowOffset);
+      scrollPositionSetCount.update((x) => x + 1);
+    }
+  });
 
   const [menuIsOpen, setMenuIsOpen] = useState(false);
   const handleMenuClose = useCallback(() => {
@@ -103,49 +125,49 @@ export const GlideTable: React.FC<Props> = ({
     y: 0,
   });
 
-  const {
-    ui: { darkLight },
-  } = useUI();
+  const [contextMenuOpen] = useState(observable(false));
+  const contextMenuIsOpen = useObservable(contextMenuOpen);
 
-  const users = Loadable.map(useObservable(usersStore.getUsers()), ({ users }) => users);
+  const [contextMenuProps, setContextMenuProps] = useState<null | Omit<
+    TableContextMenuProps,
+    'open' | 'fetchExperiments'
+  >>(null);
+
+  const {
+    ui: { theme: appTheme, darkLight },
+  } = useUI();
+  const theme = getTheme(appTheme);
+
+  const users = useObservable(usersStore.getUsers());
 
   const columnIds = useMemo<ExperimentColumn[]>(
     () => [...STATIC_COLUMNS, ...sortableColumnIds],
     [sortableColumnIds],
   );
   const navigate = useNavigate();
-  const bodyStyles = getComputedStyle(document.body);
 
   const [selection, setSelection] = React.useState<GridSelection>({
     columns: CompactSelection.empty(),
     rows: CompactSelection.empty(),
   });
 
-  const getRowThemeOverride = React.useCallback(
-    (row: number): Partial<Theme> | undefined => {
-      if (!data[row]) return;
-      const accentColor = Loadable.match(data[row], {
-        Loaded: (record) => (colorMap[record.id] ? { accentColor: colorMap[record.id] } : {}),
-        NotLoaded: () => ({}),
-      });
-      return { borderColor: '#F0F0F0', ...accentColor };
-    },
-    [colorMap, data],
-  );
+  useEffect(() => {
+    if (clearSelectionTrigger === 0) return;
+    setSelection({ columns: CompactSelection.empty(), rows: CompactSelection.empty() });
+  }, [clearSelectionTrigger]);
 
   useEffect(() => {
     const selectedRowIndices = selection.rows.toArray();
     setSelectedExperimentIds((prevIds) => {
       const selectedIds = selectedRowIndices
         .map((idx) => data?.[idx])
+        .filter((row) => row !== undefined)
         .filter(Loadable.isLoaded)
-        .map((record) => String(record.data.id));
+        .map((record) => record.data.id);
       if (prevIds === selectedIds) return prevIds;
       return selectedIds;
     });
   }, [selection.rows, setSelectedExperimentIds, data]);
-
-  const theme = getTheme(bodyStyles);
 
   const [columnWidths, setColumnWidths] =
     useState<Record<ExperimentColumn, number>>(defaultColumnWidths);
@@ -153,7 +175,7 @@ export const GlideTable: React.FC<Props> = ({
   const columnDefs = useMemo<Record<ExperimentColumn, ColumnDef>>(
     () =>
       getColumnDefs({
-        bodyStyles,
+        appTheme,
         columnWidths,
         darkLight,
         navigate,
@@ -161,31 +183,52 @@ export const GlideTable: React.FC<Props> = ({
         selectAll,
         users,
       }),
-    /**
-     * dont have a stable reference to bodyStyles
-     * presumably we capture whatever changes we need when darkLight
-     * changes though (since that changes the theme vars)
-     */
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [navigate, selectAll, selection.rows, columnWidths, users, darkLight],
+    [navigate, selectAll, selection.rows, columnWidths, users, darkLight, appTheme],
   );
 
-  const onColumnResize = useCallback((column: GridColumn, width: number) => {
-    const columnId = column.id;
-    if (columnId === undefined || columnId === 'selected') return;
-    setColumnWidths((prevWidths) => {
-      const prevWidth = prevWidths[columnId as ExperimentColumn];
-      if (width === prevWidth) return prevWidths;
-      return { ...prevWidths, [columnId]: width };
-    });
-  }, []);
+  const headerIcons = useMemo(() => getHeaderIcons(appTheme), [appTheme]);
 
-  const onColumnResizeEnd = useCallback(() => {
+  const { tooltip, onItemHovered, closeTooltip } = useTableTooltip({
+    columnDefs,
+    columnIds,
+    data,
+  });
+
+  const getRowThemeOverride: DataEditorProps['getRowThemeOverride'] = React.useCallback(
+    (row: number): Partial<Theme> | undefined => {
+      const baseRowTheme = { borderColor: appTheme.stageStrong };
+      // to put a border on the bottom row (actually the top of the row below it)
+      if (row === data.length) return baseRowTheme;
+      // avoid showing 'empty rows' below data
+      if (!data[row]) return;
+      const rowColorTheme = Loadable.match(data[row], {
+        Loaded: (record) => (colorMap[record.id] ? { accentColor: colorMap[record.id] } : {}),
+        NotLoaded: () => ({}),
+      });
+      return { ...baseRowTheme, ...rowColorTheme };
+    },
+    [colorMap, data, appTheme],
+  );
+
+  const onColumnResize: DataEditorProps['onColumnResize'] = useCallback(
+    (column: GridColumn, width: number) => {
+      const columnId = column.id;
+      if (columnId === undefined || columnId === 'selected') return;
+      setColumnWidths((prevWidths) => {
+        const prevWidth = prevWidths[columnId as ExperimentColumn];
+        if (width === prevWidth) return prevWidths;
+        return { ...prevWidths, [columnId]: width };
+      });
+    },
+    [],
+  );
+
+  const onColumnResizeEnd: DataEditorProps['onColumnResizeEnd'] = useCallback(() => {
     // presumably update the settings, but maybe have a different API
     // like Record<ColumnName, width>
   }, []);
 
-  const onHeaderClicked = React.useCallback(
+  const onHeaderClicked: DataEditorProps['onHeaderClicked'] = React.useCallback(
     (col: number, args: HeaderClickedEventArgs) => {
       const columnId = columnIds[col];
 
@@ -204,12 +247,12 @@ export const GlideTable: React.FC<Props> = ({
     [columnIds, setSelectAll],
   );
 
-  const getCellContent = React.useCallback(
+  const getCellContent: DataEditorProps['getCellContent'] = React.useCallback(
     (cell: Item): GridCell => {
       const [colIdx, rowIdx] = cell;
       const columnId = columnIds[colIdx];
       const row = data[rowIdx];
-      if (Loadable.isLoaded(row)) {
+      if (row && Loadable.isLoaded(row)) {
         return columnDefs[columnId].renderer(row.data, rowIdx);
       }
       return {
@@ -224,16 +267,57 @@ export const GlideTable: React.FC<Props> = ({
     [data, columnIds, columnDefs],
   );
 
-  const handleGridSelectionChange = useCallback((newSelection: GridSelection) => {
-    const [, row] = newSelection.current?.cell ?? [undefined, undefined];
-    if (row === undefined) return;
-    setSelection(({ rows }: GridSelection) => ({
-      columns: CompactSelection.empty(),
-      rows: rows.hasIndex(row) ? rows.remove(row) : rows.add(row),
-    }));
-  }, []);
+  const onCellClicked: DataEditorProps['onCellClicked'] = useCallback(
+    (cell: Item) => {
+      const [col, row] = cell;
+      if (row === undefined) return;
 
-  const onColumnMoved = useCallback(
+      const columnId = columnIds[col];
+      const rowData = data[row];
+      if (Loadable.isLoaded(rowData)) {
+        const cell = columnDefs[columnId].renderer(rowData.data, row) as ClickableCell;
+        if (String(cell?.data?.kind) === 'link-cell') {
+          cell.data.link?.onClick?.();
+          return;
+        }
+      }
+
+      setSelection(({ rows }: GridSelection) => ({
+        columns: CompactSelection.empty(),
+        rows: rows.hasIndex(row) ? rows.remove(row) : rows.add(row),
+      }));
+    },
+    [data, columnIds, columnDefs],
+  );
+
+  const onCellContextMenu: DataEditorProps['onCellContextMenu'] = useCallback(
+    (cell: Item, event: CellClickedEventArgs) => {
+      contextMenuOpen.set(false);
+      const [, row] = cell;
+      const experiment = Loadable.match(data?.[row], {
+        Loaded: (record) => record,
+        NotLoaded: () => null,
+      });
+      if (!experiment) return;
+
+      event.preventDefault();
+      setContextMenuProps({
+        experiment: getProjectExperimentForExperimentItem(experiment, project),
+        handleClose: (e?: Event) => {
+          if (contextMenuOpen.get()) {
+            e?.stopPropagation();
+          }
+          contextMenuOpen.set(false);
+        },
+        x: Math.max(0, event.bounds.x + event.localEventX - 4),
+        y: Math.max(0, event.bounds.y + event.localEventY - 4),
+      });
+      setTimeout(() => contextMenuOpen.set(true), 25);
+    },
+    [data, project, setContextMenuProps, contextMenuOpen],
+  );
+
+  const onColumnMoved: DataEditorProps['onColumnMoved'] = useCallback(
     (columnIdsStartIdx: number, columnIdsEndIdx: number): void => {
       const sortableColumnIdsStartIdx = columnIdsStartIdx - STATIC_COLUMNS.length;
       const sortableColumnIdsEndIdx = Math.max(columnIdsEndIdx - STATIC_COLUMNS.length, 0);
@@ -249,45 +333,58 @@ export const GlideTable: React.FC<Props> = ({
     [setSortableColumnIds],
   );
 
-  const dataGridColumns = useMemo(
+  const columns: DataEditorProps['columns'] = useMemo(
     () => columnIds.map((columnName) => columnDefs[columnName as ExperimentColumn]) as GridColumn[],
     [columnIds, columnDefs],
   );
 
-  const verticalBorder = useCallback((col: number) => columnIds[col] === 'name', [columnIds]);
+  const verticalBorder: DataEditorProps['verticalBorder'] = useCallback(
+    (col: number) => columnIds[col] === 'name',
+    [columnIds],
+  );
 
   return (
-    <div>
+    <div
+      onWheel={() => {
+        contextMenuOpen.set(false);
+        closeTooltip();
+      }}>
+      {tooltip}
       <DataEditor
-        columns={dataGridColumns}
-        customRenderers={cells}
+        columns={columns}
+        customRenderers={customRenderers}
         freezeColumns={2}
         getCellContent={getCellContent}
         getRowThemeOverride={getRowThemeOverride}
         gridSelection={selection}
+        headerHeight={36}
         headerIcons={headerIcons}
-        height={GRID_HEIGHT}
+        height={height}
         ref={gridRef}
+        rowHeight={40}
         rows={data.length}
         smoothScrollX
         smoothScrollY
         theme={theme}
         verticalBorder={verticalBorder}
         width="100%"
+        onCellClicked={onCellClicked}
+        onCellContextMenu={onCellContextMenu}
         onColumnMoved={onColumnMoved}
         onColumnResize={onColumnResize}
         onColumnResizeEnd={onColumnResizeEnd}
-        onGridSelectionChange={handleGridSelectionChange}
         onHeaderClicked={onHeaderClicked}
+        onItemHovered={onItemHovered}
         onVisibleRegionChanged={handleScroll}
-        //
-        // these might come in handy
-        // onCellClicked={onCellClicked}
-        // onItemHovered={onItemHovered}
-        // onHeaderContextMenu={onHeaderContextMenu}
-        // onCellContextMenu={onCellContextMenu}
       />
       <TableActionMenu {...menuProps} open={menuIsOpen} />
+      {contextMenuProps && (
+        <TableContextMenu
+          {...contextMenuProps}
+          fetchExperiments={fetchExperiments}
+          open={contextMenuIsOpen}
+        />
+      )}
     </div>
   );
 };

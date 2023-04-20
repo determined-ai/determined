@@ -21,6 +21,21 @@ type MiscAuthZ interface {
 	CanUpdateAgents(
 		ctx context.Context, curUser *model.User,
 	) (permErr error, err error)
+
+	// CanGetMasterLogs returns an error if the user is not authorized to get master logs.
+	CanGetMasterLogs(
+		ctx context.Context, curUser *model.User,
+	) (permErr error, err error)
+
+	// CanGetMasterLog( // how we transition to a granular authz model
+	// 	ctx context.Context, logLine interface{}, associatedWorkspaceID model.AccessScopeID,
+	// )
+
+	// CanGetHistoricalUsage returns an error if the user is not authorized to get usage
+	// related information.
+	CanGetUsageDetails(
+		ctx context.Context, curUser *model.User,
+	) (permErr error, err error)
 }
 
 // AuthZProvider is the authz registry for Notebooks, Shells, and Commands.

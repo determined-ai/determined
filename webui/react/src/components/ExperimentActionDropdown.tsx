@@ -4,8 +4,9 @@ import type { DropdownProps } from 'antd';
 import { MenuInfo } from 'rc-menu/lib/interface';
 import React, { useCallback, useMemo } from 'react';
 
+import ExperimentMoveModalComponent from 'components/ExperimentMoveModal';
 import Button from 'components/kit/Button';
-import useModalExperimentMove from 'hooks/useModal/Experiment/useModalExperimentMove';
+import { useModal } from 'components/kit/Modal';
 import useModalHyperparameterSearch from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
 import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings } from 'hooks/useSettings';
@@ -33,10 +34,11 @@ import { openCommandResponse } from 'utils/wait';
 interface Props {
   children?: React.ReactNode;
   experiment: ProjectExperiment;
-  onComplete?: (action?: Action) => void;
+  makeOpen?: boolean;
+  onComplete?: (action?: Action) => Promise<void>;
   onVisibleChange?: (visible: boolean) => void;
-  settings: ExperimentListSettings;
-  updateSettings: UpdateSettings;
+  settings?: ExperimentListSettings;
+  updateSettings?: UpdateSettings;
   workspaceId?: number;
 }
 
@@ -58,6 +60,7 @@ const stopPropagation = (e: React.MouseEvent): void => e.stopPropagation();
 
 const ExperimentActionDropdown: React.FC<Props> = ({
   experiment,
+  makeOpen,
   onComplete,
   onVisibleChange,
   settings,
@@ -65,20 +68,11 @@ const ExperimentActionDropdown: React.FC<Props> = ({
   children,
 }: Props) => {
   const id = experiment.id;
-  const { contextHolder: modalExperimentMoveContextHolder, modalOpen: openExperimentMove } =
-    useModalExperimentMove({ onClose: onComplete });
+  const ExperimentMoveModal = useModal(ExperimentMoveModalComponent);
   const {
     contextHolder: modalHyperparameterSearchContextHolder,
     modalOpen: openModalHyperparameterSearch,
   } = useModalHyperparameterSearch({ experiment, onClose: onComplete });
-
-  const handleExperimentMove = useCallback(() => {
-    openExperimentMove({
-      experimentIds: [id],
-      sourceProjectId: experiment.projectId,
-      sourceWorkspaceId: experiment.workspaceId,
-    });
-  }, [openExperimentMove, id, experiment.projectId, experiment.workspaceId]);
 
   const handleHyperparameterSearch = useCallback(() => {
     openModalHyperparameterSearch();
@@ -94,15 +88,15 @@ const ExperimentActionDropdown: React.FC<Props> = ({
         ) {
           case Action.Activate:
             await activateExperiment({ experimentId: id });
-            if (onComplete) onComplete(action);
+            await onComplete?.(action);
             break;
           case Action.Archive:
             await archiveExperiment({ experimentId: id });
-            if (onComplete) onComplete(action);
+            await onComplete?.(action);
             break;
           case Action.Cancel:
             await cancelExperiment({ experimentId: id });
-            if (onComplete) onComplete(action);
+            await onComplete?.(action);
             break;
           case Action.OpenTensorBoard: {
             const commandResponse = await openOrCreateTensorBoard({
@@ -113,7 +107,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
             break;
           }
           case Action.SwitchPin: {
-            const newPinned = { ...(settings.pinned ?? {}) };
+            const newPinned = { ...(settings?.pinned ?? {}) };
             const pinSet = new Set(newPinned[experiment.projectId]);
             if (pinSet.has(id)) {
               pinSet.delete(id);
@@ -128,7 +122,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
               pinSet.add(id);
             }
             newPinned[experiment.projectId] = Array.from(pinSet);
-            updateSettings({ pinned: newPinned });
+            updateSettings?.({ pinned: newPinned });
             break;
           }
           case Action.Kill:
@@ -141,18 +135,18 @@ const ExperimentActionDropdown: React.FC<Props> = ({
               okText: 'Kill',
               onOk: async () => {
                 await killExperiment({ experimentId: id });
-                onComplete?.(action);
+                await onComplete?.(action);
               },
               title: 'Confirm Experiment Kill',
             });
             break;
           case Action.Pause:
             await pauseExperiment({ experimentId: id });
-            if (onComplete) onComplete(action);
+            await onComplete?.(action);
             break;
           case Action.Unarchive:
             await unarchiveExperiment({ experimentId: id });
-            if (onComplete) onComplete(action);
+            await onComplete?.(action);
             break;
           case Action.Delete:
             modal.confirm({
@@ -164,13 +158,13 @@ const ExperimentActionDropdown: React.FC<Props> = ({
               okText: 'Delete',
               onOk: async () => {
                 await deleteExperiment({ experimentId: id });
-                if (onComplete) onComplete(action);
+                await onComplete?.(action);
               },
               title: 'Confirm Experiment Deletion',
             });
             break;
           case Action.Move:
-            handleExperimentMove();
+            ExperimentMoveModal.open();
             break;
           case Action.HyperparameterSearch:
             handleHyperparameterSearch();
@@ -191,29 +185,33 @@ const ExperimentActionDropdown: React.FC<Props> = ({
     },
     [
       experiment.projectId,
+      ExperimentMoveModal,
       experiment.workspaceId,
-      handleExperimentMove,
       handleHyperparameterSearch,
       id,
       onComplete,
       onVisibleChange,
-      settings.pinned,
+      settings?.pinned,
       updateSettings,
     ],
   );
 
-  const menuItems = getActionsForExperiment(experiment, dropdownActions, usePermissions()).map(
-    (action) => {
+  const handleMoveComplete = useCallback(() => {
+    onComplete?.(Action.Move);
+  }, [onComplete]);
+
+  const menuItems = getActionsForExperiment(experiment, dropdownActions, usePermissions())
+    .filter((action) => action !== Action.SwitchPin || settings)
+    .map((action) => {
       if (action === Action.SwitchPin) {
-        const label = (settings.pinned?.[experiment.projectId] ?? []).includes(id)
+        const label = (settings?.pinned?.[experiment.projectId] ?? []).includes(id)
           ? 'Unpin'
           : 'Pin';
         return { key: action, label };
       } else {
         return { danger: action === Action.Delete, key: action, label: action };
       }
-    },
-  );
+    });
 
   const menu: DropdownProps['menu'] = useMemo(() => {
     return { items: [...menuItems], onClick: handleMenuClick };
@@ -235,12 +233,18 @@ const ExperimentActionDropdown: React.FC<Props> = ({
     <>
       <Dropdown
         menu={menu}
+        open={makeOpen}
         placement="bottomLeft"
         trigger={['contextMenu']}
         onOpenChange={onVisibleChange}>
         {children}
       </Dropdown>
-      {modalExperimentMoveContextHolder}
+      <ExperimentMoveModal.Component
+        experimentIds={[id]}
+        sourceProjectId={experiment.projectId}
+        sourceWorkspaceId={experiment.workspaceId}
+        onSubmit={handleMoveComplete}
+      />
       {modalHyperparameterSearchContextHolder}
     </>
   ) : (
@@ -248,7 +252,12 @@ const ExperimentActionDropdown: React.FC<Props> = ({
       <Dropdown menu={menu} placement="bottomRight" trigger={['click']}>
         <Button ghost icon={<Icon name="overflow-vertical" />} onClick={stopPropagation} />
       </Dropdown>
-      {modalExperimentMoveContextHolder}
+      <ExperimentMoveModal.Component
+        experimentIds={[id]}
+        sourceProjectId={experiment.projectId}
+        sourceWorkspaceId={experiment.workspaceId}
+        onSubmit={handleMoveComplete}
+      />
       {modalHyperparameterSearchContextHolder}
     </div>
   );

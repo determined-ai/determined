@@ -4,7 +4,7 @@ import Section from 'components/Section';
 import SlotAllocationBar from 'components/SlotAllocationBar';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner';
-import { useClusterStore } from 'stores/cluster';
+import clusterStore from 'stores/cluster';
 import { ShirtSize } from 'themes';
 import { ResourceType } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
@@ -12,8 +12,8 @@ import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 
 export const ClusterOverallBar: React.FC = () => {
-  const overview = useObservable(useClusterStore().clusterOverview);
-  const agents = useObservable(useClusterStore().agents);
+  const overview = useObservable(clusterStore.clusterOverview);
+  const agents = useObservable(clusterStore.agents);
 
   const cudaSlotStates = useMemo(() => {
     return getSlotContainerStates(

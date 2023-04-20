@@ -5,7 +5,7 @@ import pathlib
 import shutil
 from typing import Any, Callable, Dict, Iterator, List, Optional, Union
 
-from determined import errors
+from determined import errors, util
 from determined.common import check, storage
 
 # Based on shutil.copytree and shutil._copytree (for Python 3.8). Compared to the original
@@ -180,7 +180,7 @@ class SharedFSStorageManager(storage.StorageManager):
             return
         if not os.path.isdir(storage_dir):
             raise errors.CheckpointNotFound(f"Storage path is not a directory: {storage_dir}")
-        shutil.rmtree(storage_dir, ignore_errors=False)
+        util.rmtree_nfs_safe(storage_dir, ignore_errors=False)
 
     def upload(
         self, src: Union[str, os.PathLike], dst: str, paths: Optional[storage.Paths] = None

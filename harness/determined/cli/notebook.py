@@ -43,7 +43,7 @@ def start_notebook(args: Namespace) -> None:
     if resp.warnings:
         cli.print_warnings(resp.warnings)
     currentSlotsExceeded = (resp.warnings is not None) and (
-        bindings.v1LaunchWarning.LAUNCH_WARNING_CURRENT_SLOTS_EXCEEDED in resp.warnings
+        bindings.v1LaunchWarning.CURRENT_SLOTS_EXCEEDED in resp.warnings
     )
 
     with api.ws(args.master, "notebooks/{}/events".format(nb.id)) as ws:

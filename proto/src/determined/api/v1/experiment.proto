@@ -153,6 +153,28 @@ message DeleteExperimentRequest {
 // Response to DeleteExperimentRequest.
 message DeleteExperimentResponse {}
 
+// Delete multiple experiments.
+message DeleteExperimentsRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "experiment_ids" ] }
+  };
+
+  // Selecting experiments by id.
+  repeated int32 experiment_ids = 1;
+  // Targets all experiments matching filters.
+  BulkExperimentFilters filters = 2;
+}
+
+// Response to DeleteExperimentsRequest.
+message DeleteExperimentsResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "results" ] }
+  };
+
+  // Details on success or error for each experiment.
+  repeated ExperimentActionResult results = 1;
+}
+
 // Get the best searcher validation.
 message GetBestSearcherValidationMetricRequest {
   // The ID of the experiment.
@@ -680,62 +702,6 @@ message TrialsSampleResponse {
   repeated int32 demoted_trials = 3;
 }
 
-// Trigger the computation of hyperparameter importance on-demand for a specific
-// metric on a specific experiment.
-message ComputeHPImportanceRequest {
-  // The id of the experiment.
-  int32 experiment_id = 1;
-  // A metric name.
-  string metric_name = 2
-      [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
-        required:
-          ["metric_name"];
-      }];
-  // The type of metric.
-  MetricType metric_type = 3
-      [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
-        required:
-          ["metric_type"];
-      }];
-}
-
-// Response to ComputeHPImportanceRequest
-message ComputeHPImportanceResponse {}
-
-// Retrieve the status and results of hyperparameter importance computation.
-message GetHPImportanceRequest {
-  // The id of the experiment.
-  int32 experiment_id = 1;
-  // Seconds to wait when polling for updates.
-  int32 period_seconds = 2;
-}
-
-// Response to GetHPImportanceRequest
-message GetHPImportanceResponse {
-  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "training_metrics", "validation_metrics" ] }
-  };
-  // Hyperparameter importance as computed with respect for one specific metric.
-  message MetricHPImportance {
-    // A map between hyperparameter names and their relative importance.
-    map<string, double> hp_importance = 1;
-    // The approximate portion of the experiment that was complete when the data
-    // was read.
-    double experiment_progress = 2;
-    // A description of why computation failed. Empty unless the state is (or
-    // was) 'failed'.
-    string error = 3;
-    // Whether or not a request to compute results for this metric is queued.
-    bool pending = 4;
-    // Whether or not results for this metric are currently being computed.
-    bool in_progress = 5;
-  }
-  // A map of training metric names to their respective entries.
-  map<string, MetricHPImportance> training_metrics = 1;
-  // A map of validation metric names to their respective entries.
-  map<string, MetricHPImportance> validation_metrics = 2;
-}
-
 // Request for an experiment model definition.
 message GetModelDefRequest {
   // The id of the experiment.
@@ -849,6 +815,8 @@ message SearchExperimentsRequest {
   int32 offset = 2;
   // How many results to show
   int32 limit = 3;
+  // Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc)
+  optional string sort = 4;
 }
 
 // combination of experiment and best trial with metrics

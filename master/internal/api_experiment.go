@@ -33,7 +33,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	exputil "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
-	"github.com/determined-ai/determined/master/internal/hpimportance"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	command "github.com/determined-ai/determined/master/pkg/command"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -349,6 +348,17 @@ func (a *apiServer) DeleteExperiment(
 	return &apiv1.DeleteExperimentResponse{}, nil
 }
 
+func (a *apiServer) DeleteExperiments(
+	ctx context.Context, req *apiv1.DeleteExperimentsRequest,
+) (*apiv1.DeleteExperimentsResponse, error) {
+	_, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return &apiv1.DeleteExperimentsResponse{}, err
+}
+
 func (a *apiServer) deleteExperiment(exp *model.Experiment, userModel *model.User) error {
 	agentUserGroup, err := user.GetAgentUserGroup(*exp.OwnerID, exp)
 	if err != nil {
@@ -407,16 +417,6 @@ func (a *apiServer) deleteExperiment(exp *model.Experiment, userModel *model.Use
 	return nil
 }
 
-func protoStateDBCaseString(
-	enumToValue map[string]int32, colName, serializedName, trimFromPrefix string,
-) string {
-	query := fmt.Sprintf("CASE %s::text ", colName)
-	for enum, v := range enumToValue {
-		query += fmt.Sprintf("WHEN '%s' THEN %d ", strings.TrimPrefix(enum, trimFromPrefix), v)
-	}
-	return query + fmt.Sprintf("END AS %s", serializedName)
-}
-
 func getExperimentColumns(q *bun.SelectQuery) *bun.SelectQuery {
 	return q.
 		Column("e.id").
@@ -424,7 +424,8 @@ func getExperimentColumns(q *bun.SelectQuery) *bun.SelectQuery {
 		ColumnExpr("e.config->>'labels' AS labels").
 		ColumnExpr("proto_time(e.start_time) AS start_time").
 		ColumnExpr("proto_time(e.end_time) AS end_time").
-		ColumnExpr(protoStateDBCaseString(experimentv1.State_value, "e.state", "state", "STATE_")).
+		ColumnExpr(exputil.ProtoStateDBCaseString(experimentv1.State_value, "e.state", "state",
+			"STATE_")).
 		Column("e.archived").
 		ColumnExpr(
 			"(SELECT COUNT(*) FROM trials t WHERE e.id = t.experiment_id) AS num_trials").
@@ -1004,11 +1005,18 @@ func (a *apiServer) PatchExperiment(
 	}
 
 	if req.Experiment.Labels != nil {
-		var reqLabelList []string
+		// avoid duplicate keys
+		reqLabelSet := make(map[string]struct{}, len(req.Experiment.Labels.Values))
 		for _, el := range req.Experiment.Labels.Values {
 			if _, ok := el.GetKind().(*structpb.Value_StringValue); ok {
-				reqLabelList = append(reqLabelList, el.GetStringValue())
+				reqLabelSet[el.GetStringValue()] = struct{}{}
 			}
+		}
+		reqLabelList := make([]string, len(reqLabelSet))
+		i := 0
+		for key := range reqLabelSet {
+			reqLabelList[i] = key
+			i++
 		}
 		reqLabels := strings.Join(reqLabelList, ",")
 		if strings.Join(exp.Labels, ",") != reqLabels {
@@ -1700,125 +1708,6 @@ func (a *apiServer) TrialsSample(req *apiv1.TrialsSampleRequest,
 	}
 }
 
-func (a *apiServer) ComputeHPImportance(ctx context.Context,
-	req *apiv1.ComputeHPImportanceRequest,
-) (*apiv1.ComputeHPImportanceResponse, error) {
-	experimentID := int(req.ExperimentId)
-	if _, _, err := a.getExperimentAndCheckCanDoActions(ctx, experimentID,
-		exputil.AuthZProvider.Get().CanEditExperiment); err != nil {
-		return nil, err
-	}
-
-	metricName := req.MetricName
-	if metricName == "" {
-		return nil, status.Error(codes.InvalidArgument, "must specify a metric name")
-	}
-	var metricType model.MetricType
-	switch req.MetricType {
-	case apiv1.MetricType_METRIC_TYPE_UNSPECIFIED:
-		return nil, status.Error(codes.InvalidArgument, "must specify a metric type")
-	case apiv1.MetricType_METRIC_TYPE_TRAINING:
-		metricType = model.TrainingMetric
-	case apiv1.MetricType_METRIC_TYPE_VALIDATION:
-		metricType = model.ValidationMetric
-	default:
-		panic("Invalid metric type")
-	}
-
-	a.m.system.Ask(a.m.hpImportance, hpimportance.WorkRequest{
-		ExperimentID: experimentID,
-		MetricName:   metricName,
-		MetricType:   metricType,
-	})
-
-	var resp apiv1.ComputeHPImportanceResponse
-	return &resp, nil
-}
-
-// Translates MetricHPImportance to the protobuf form.
-func protoMetricHPI(metricHpi model.MetricHPImportance,
-) *apiv1.GetHPImportanceResponse_MetricHPImportance {
-	return &apiv1.GetHPImportanceResponse_MetricHPImportance{
-		Error:              metricHpi.Error,
-		Pending:            metricHpi.Pending,
-		InProgress:         metricHpi.InProgress,
-		ExperimentProgress: metricHpi.ExperimentProgress,
-		HpImportance:       metricHpi.HpImportance,
-	}
-}
-
-func (a *apiServer) GetHPImportance(req *apiv1.GetHPImportanceRequest,
-	resp apiv1.Determined_GetHPImportanceServer,
-) error {
-	experimentID := int(req.ExperimentId)
-	period := time.Duration(req.PeriodSeconds) * time.Second
-	if period == 0 {
-		period = defaultMetricsStreamPeriod
-	}
-
-	var timeSinceLastAuth time.Time
-	for {
-		if time.Now().Sub(timeSinceLastAuth) >= recheckAuthPeriod {
-			if _, _, err := a.getExperimentAndCheckCanDoActions(resp.Context(), experimentID,
-				exputil.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
-				return err
-			}
-			timeSinceLastAuth = time.Now()
-		}
-
-		var response apiv1.GetHPImportanceResponse
-
-		result, err := a.m.db.GetHPImportance(experimentID)
-		if err != nil {
-			return errors.Wrap(err, "error looking up hyperparameter importance")
-		}
-		response.TrainingMetrics = make(map[string]*apiv1.GetHPImportanceResponse_MetricHPImportance)
-		response.ValidationMetrics = make(map[string]*apiv1.GetHPImportanceResponse_MetricHPImportance)
-		for metric, metricHpi := range result.TrainingMetrics {
-			response.TrainingMetrics[metric] = protoMetricHPI(metricHpi)
-		}
-		for metric, metricHpi := range result.ValidationMetrics {
-			response.ValidationMetrics[metric] = protoMetricHPI(metricHpi)
-		}
-
-		if grpcutil.ConnectionIsClosed(resp) {
-			return nil
-		}
-		if err := resp.Send(&response); err != nil {
-			return errors.Wrap(err, "error sending hyperparameter importance response")
-		}
-
-		allComplete := true
-		if len(result.TrainingMetrics)+len(result.ValidationMetrics) == 0 {
-			allComplete = false
-		}
-		for _, metricHpi := range result.TrainingMetrics {
-			if metricHpi.Pending || metricHpi.InProgress {
-				allComplete = false
-			}
-		}
-		for _, metricHpi := range result.ValidationMetrics {
-			if metricHpi.Pending || metricHpi.InProgress {
-				allComplete = false
-			}
-		}
-		if allComplete {
-			state, _, err := a.m.db.GetExperimentStatus(experimentID)
-			if err != nil {
-				return errors.Wrap(err, "error looking up experiment state")
-			}
-			if model.TerminalStates[state] {
-				return nil
-			}
-		}
-
-		time.Sleep(period)
-		if grpcutil.ConnectionIsClosed(resp) {
-			return nil
-		}
-	}
-}
-
 func (a *apiServer) GetBestSearcherValidationMetric(
 	ctx context.Context, req *apiv1.GetBestSearcherValidationMetricRequest,
 ) (*apiv1.GetBestSearcherValidationMetricResponse, error) {
@@ -1970,6 +1859,69 @@ func (a *apiServer) GetModelDefFile(
 	return &apiv1.GetModelDefFileResponse{File: file}, nil
 }
 
+func sortExperiments(sortString *string, experimentQuery *bun.SelectQuery) error {
+	if sortString == nil {
+		return nil
+	}
+	orderColMap := map[string]string{
+		"id":              "id",
+		"description":     "description",
+		"name":            "name",
+		"startTime":       "e.start_time",
+		"endTime":         "e.end_time",
+		"state":           "e.state",
+		"numTrials":       "num_trials",
+		"progress":        "COALESCE(progress, 0)",
+		"user":            "display_name",
+		"forkedFrom":      "e.parent_id",
+		"resourcePool":    "resource_pool",
+		"projectId":       "project_id",
+		"checkpointSize":  "checkpoint_size",
+		"checkpointCount": "checkpoint_count",
+		"searcherMetricsVal": `(
+			SELECT
+				searcher_metric_value
+			FROM trials t
+			WHERE t.experiment_id = e.id
+			ORDER BY searcher_metric_value_signed ASC
+			LIMIT 1
+		 ) `,
+	}
+	sortByMap := map[string]string{
+		"asc":  "ASC",
+		"desc": "DESC NULLS LAST",
+	}
+	sortParams := strings.Split(*sortString, ",")
+	for _, sortParam := range sortParams {
+		paramDetail := strings.Split(sortParam, "=")
+		if len(paramDetail) != 2 {
+			return status.Errorf(codes.InvalidArgument, "invalid sort parameter: %s", sortParam)
+		}
+		if _, ok := sortByMap[paramDetail[1]]; !ok {
+			return status.Errorf(codes.InvalidArgument, "invalid sort direction: %s", paramDetail[1])
+		}
+		sortDirection := sortByMap[paramDetail[1]]
+		switch {
+		case strings.HasPrefix(paramDetail[0], "hp."):
+			hps := strings.ReplaceAll(strings.TrimPrefix(paramDetail[0], "hp."), ".", "'->'")
+			experimentQuery.OrderExpr(
+				fmt.Sprintf("e.config->'hyperparameters'->'%s' %s", hps, sortDirection))
+		case strings.HasPrefix(paramDetail[0], "validation."):
+			metricName := strings.TrimPrefix(paramDetail[0], "validation.")
+			experimentQuery.OrderExpr(
+				fmt.Sprintf("e.validation_metrics->'%s' %s",
+					metricName, sortDirection))
+		default:
+			if _, ok := orderColMap[paramDetail[0]]; !ok {
+				return status.Errorf(codes.InvalidArgument, "invalid sort col: %s", paramDetail[0])
+			}
+			experimentQuery.OrderExpr(
+				fmt.Sprintf("%s %s", orderColMap[paramDetail[0]], sortDirection))
+		}
+	}
+	return nil
+}
+
 func (a *apiServer) SearchExperiments(
 	ctx context.Context,
 	req *apiv1.SearchExperimentsRequest,
@@ -1980,6 +1932,7 @@ func (a *apiServer) SearchExperiments(
 	experimentQuery := db.Bun().NewSelect().
 		Model(&experiments).
 		ModelTableExpr("experiments as e").
+		Column("e.best_trial_id").
 		Apply(getExperimentColumns)
 
 	curUser, _, err := grpcutil.GetUser(ctx)
@@ -2002,6 +1955,13 @@ func (a *apiServer) SearchExperiments(
 		return nil, err
 	}
 
+	if req.Sort != nil {
+		err = sortExperiments(req.Sort, experimentQuery)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	resp.Pagination, err = runPagedBunExperimentsQuery(
 		ctx,
 		experimentQuery,
@@ -2012,27 +1972,18 @@ func (a *apiServer) SearchExperiments(
 		return nil, err
 	}
 
-	if err = a.enrichExperimentState(experiments...); err != nil {
-		return nil, err
-	}
-
 	if len(experiments) == 0 {
 		return resp, nil
+	}
+
+	if err = a.enrichExperimentState(experiments...); err != nil {
+		return nil, err
 	}
 
 	// get the best trial associated with the experiment.
 
 	// don't query for experiments twice
 	experimentValues := db.Bun().NewValues(&experiments)
-
-	// extract config info from experiments and associate with trials
-	searcherInfoQuery := db.Bun().NewSelect().
-		Table("ex").
-		ColumnExpr("ex.config->'searcher'->>'metric' AS metric_name").
-		//nolint:lll
-		ColumnExpr("(SELECT CASE WHEN coalesce((ex.config->'searcher'->>'smaller_is_better')::boolean, true) THEN 1 ELSE -1 END) as sign").
-		ColumnExpr("trials.id AS trial_id").
-		Join("JOIN trials ON trials.experiment_id = ex.id")
 
 	// get info for best/latest validation for best trial
 	validationsQuery := db.Bun().NewSelect().
@@ -2044,57 +1995,7 @@ func (a *apiServer) SearchExperiments(
 		ColumnExpr("json_build_object('avg_metrics', metrics->'validation_metrics') AS metrics").
 		ColumnExpr("metrics->'num_inputs' AS num_inputs").
 		//nolint:lll
-		ColumnExpr("((metrics->'validation_metrics'->>(si.metric_name))::float8 * si.sign) AS signed_searcher_metric").
-		//nolint:lll
-		ColumnExpr("row_number() OVER(PARTITION BY validations.trial_id ORDER BY total_batches DESC NULLS LAST) AS latest_rank").
-		Join("JOIN si ON validations.trial_id = si.trial_id")
-
-	// get best checkpoint info for best trial
-	addCheckpointColumnsAndJoin := func(q *bun.SelectQuery) *bun.SelectQuery {
-		return q.
-			Column("v.signed_searcher_metric").
-			ColumnExpr("c.*").
-			//nolint:lll
-			ColumnExpr("row_number() OVER(PARTITION BY v.trial_id ORDER BY v.signed_searcher_metric ASC) AS rank").
-			Join("JOIN v ON c.steps_completed = v.total_batches AND c.trial_id = v.trial_id").
-			Where("c.state = 'COMPLETED'")
-	}
-
-	oldCheckpointInnerQuery := db.Bun().NewSelect().
-		TableExpr("checkpoints_old_view c").
-		Apply(addCheckpointColumnsAndJoin)
-
-	oldCheckpointOuterQuery := db.Bun().NewSelect().
-		TableExpr("(?) as old_c", oldCheckpointInnerQuery).
-		ColumnExpr("old_c.*").
-		Where("old_c.rank = 1")
-
-	newCheckpointInnerQuery := db.Bun().NewSelect().
-		TableExpr("checkpoints_new_view c").
-		Apply(addCheckpointColumnsAndJoin)
-
-	newCheckpointOuterQuery := db.Bun().NewSelect().
-		TableExpr("(?) as new_c", newCheckpointInnerQuery).
-		ColumnExpr("new_c.*").
-		Where("new_c.rank = 1")
-
-	checkpointInnerQueryUnion := oldCheckpointOuterQuery.UnionAll(newCheckpointOuterQuery)
-
-	checkpointInnerQuery := db.Bun().NewSelect().
-		TableExpr("(?) as bc", checkpointInnerQueryUnion).
-		ColumnExpr("bc.*").
-		//nolint:lll
-		ColumnExpr("row_number() OVER(PARTITION BY bc.trial_id ORDER BY bc.signed_searcher_metric) AS order_rank")
-
-	checkpointsQuery := db.Bun().NewSelect().
-		TableExpr("(?) as c", checkpointInnerQuery).
-		Column("c.trial_id").
-		Column("c.resources").
-		ColumnExpr("c.order_rank AS rank").
-		ColumnExpr("c.uuid::text AS uuid").
-		ColumnExpr("c.steps_completed AS total_batches").
-		ColumnExpr("proto_time(c.report_time) AS end_time").
-		ColumnExpr(protoStateDBCaseString(checkpointv1.State_value, "c.state", "state", "STATE_"))
+		ColumnExpr("row_number() OVER(PARTITION BY validations.trial_id ORDER BY total_batches DESC NULLS LAST) AS latest_rank")
 
 	stepsQuery := db.Bun().NewSelect().
 		TableExpr("steps AS s").
@@ -2120,32 +2021,27 @@ func (a *apiServer) SearchExperiments(
 		ColumnExpr("least(trials.restarts, (ex.config->>'max_restarts')::int) AS restarts").
 		ColumnExpr("coalesce(new_ckpt.uuid, old_ckpt.uuid) AS warm_start_checkpoint_uuid").
 		ColumnExpr("trials.checkpoint_size AS total_checkpoint_size").
-		ColumnExpr(protoStateDBCaseString(trialv1.State_value, "trials.state", "state", "STATE_")).
+		ColumnExpr(exputil.ProtoStateDBCaseString(trialv1.State_value, "trials.state", "state",
+			"STATE_")).
 		//nolint:lll
 		ColumnExpr("(CASE WHEN trials.hparams = 'null'::jsonb THEN null ELSE trials.hparams END) AS hparams").
 		ColumnExpr("(?) AS total_batches_processed", stepsQuery).
 		ColumnExpr("(?) AS wall_clock_time", allocationsQuery).
 		ColumnExpr("row_to_json(lv)::jsonb AS latest_validation").
 		ColumnExpr("row_to_json(bv)::jsonb AS best_validation").
-		ColumnExpr("row_to_json(ch)::jsonb AS best_checkpoint").
+		ColumnExpr("null::jsonb AS best_checkpoint").
 		//nolint:lll
-		ColumnExpr("row_number() OVER(PARTITION BY trials.experiment_id ORDER BY (bv.signed_searcher_metric)) as _metric_rank").
-		Join("JOIN ex ON ex.id = trials.experiment_id").
+		Join("JOIN ex ON ex.best_trial_id = trials.id").
 		Join("LEFT JOIN v bv ON trials.best_validation_id = bv.id").
 		Join("LEFT JOIN v lv ON trials.id = lv.trial_id AND lv.latest_rank = 1").
 		Join("LEFT JOIN raw_checkpoints old_ckpt ON old_ckpt.id = trials.warm_start_checkpoint_id").
-		Join("LEFT JOIN checkpoints_v2 new_ckpt ON new_ckpt.id = trials.warm_start_checkpoint_id").
-		Join("LEFT JOIN ch ON ch.trial_id = trials.id AND ch.rank = 1")
+		Join("LEFT JOIN checkpoints_v2 new_ckpt ON new_ckpt.id = trials.warm_start_checkpoint_id")
 
 	err = db.Bun().NewSelect().
 		With("ex", experimentValues).
-		With("si", searcherInfoQuery).
 		With("v", validationsQuery).
-		With("ch", checkpointsQuery).
 		Model(&trials).
-		ModelTableExpr("(?) AS trial", trialsInnerQuery).
-		Where("trial._metric_rank = 1").
-		Scan(ctx)
+		ModelTableExpr("(?) AS trial", trialsInnerQuery).Scan(ctx)
 
 	if err != nil {
 		return nil, err

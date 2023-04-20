@@ -21,7 +21,6 @@ import {
   ExperimentItem,
   ExperimentPermissionsArgs,
   ExperimentSearcherName,
-  HpImportance,
   Hyperparameters,
   HyperparameterType,
   Project,
@@ -277,14 +276,6 @@ const runStateSortOrder: RunState[] = [
 export const runStateSortValues: Map<RunState, number> = new Map(
   runStateSortOrder.map((state, idx) => [state, idx]),
 );
-
-export const hpImportanceSorter = (a: string, b: string, hpImportance: HpImportance): number => {
-  const aValue = hpImportance[a];
-  const bValue = hpImportance[b];
-  if (aValue < bValue) return 1;
-  if (aValue > bValue) return -1;
-  return 0;
-};
 
 export const runStateSorter = (a: RunState, b: RunState): number => {
   return (runStateSortValues.get(a) || 0) - (runStateSortValues.get(b) || 0);

@@ -101,10 +101,11 @@ environment for Determined.
  Prepare to run Determined Master
 **********************************
 
-After the dependencies have been installed, some changes need to be made within the Determined
-repository. First, copy the Master configuration found at ``/etc/determined/master.yaml`` and place
-it under a new name inside the Determined repo, for example at `determined/tools/k8s-master.yaml`
-(there already exists a master.yaml in the tools dir).
+Once the dependencies are installed, you need to make some modifications within the Determined
+repository. First, create a copy of the Master configuration located at
+``/etc/determined/master.yaml``. Then, place this copy inside the Determined repo under a new name,
+such as ``determined/tools/k8s-master.yaml``. Note that there is already a ``master.yaml`` file in
+the tools directory.
 
 .. code:: bash
 

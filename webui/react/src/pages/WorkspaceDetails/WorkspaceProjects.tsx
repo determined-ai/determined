@@ -35,7 +35,7 @@ import usePrevious from 'shared/hooks/usePrevious';
 import { isEqual } from 'shared/utils/data';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { validateDetApiEnum } from 'shared/utils/service';
-import usersStore from 'stores/users';
+import userStore from 'stores/users';
 import { Project, Workspace } from 'types';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
@@ -57,12 +57,9 @@ interface Props {
 }
 
 const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
-  const users = Loadable.map(useObservable(usersStore.getUsers()), ({ users }) => users);
-  const loadableCurrentUser = useObservable(usersStore.getCurrentUser());
-  const user = Loadable.match(loadableCurrentUser, {
-    Loaded: (cUser) => cUser,
-    NotLoaded: () => undefined,
-  });
+  const loadableUsers = useObservable(userStore.getUsers());
+  const users = Loadable.getOrElse([], useObservable(userStore.getUsers()));
+  const currentUser = Loadable.getOrElse(undefined, useObservable(userStore.currentUser));
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [total, setTotal] = useState(0);
@@ -142,22 +139,23 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
 
   const prevWhose = usePrevious(settings.whose, undefined);
   useEffect(() => {
-    if (settings.whose === prevWhose || !settings.whose || Loadable.isLoading(users)) return;
+    if (settings.whose === prevWhose || !settings.whose || Loadable.isLoading(loadableUsers))
+      return;
 
     switch (settings.whose) {
       case WhoseProjects.All:
         updateSettings({ user: undefined });
         break;
       case WhoseProjects.Mine:
-        updateSettings({ user: user ? [user.id] : undefined });
+        updateSettings({ user: currentUser ? [currentUser.id] : undefined });
         break;
       case WhoseProjects.Others:
         updateSettings({
-          user: users.data.filter((u) => u.id !== user?.id).map((u) => u.id),
+          user: users.filter((u) => u.id !== currentUser?.id).map((u) => u.id),
         });
         break;
     }
-  }, [prevWhose, settings.whose, updateSettings, user, users]);
+  }, [currentUser, loadableUsers, prevWhose, settings.whose, updateSettings, users]);
 
   const saveProjectDescription = useCallback(async (newDescription: string, projectId: number) => {
     try {
@@ -174,11 +172,6 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
   }, []);
 
   const columns = useMemo(() => {
-    const matchUsers = Loadable.match(users, {
-      Loaded: (users) => users,
-      NotLoaded: () => [],
-    });
-
     const projectNameRenderer = (value: string, record: Project) => (
       <Link path={paths.projectDetails(record.id)}>{value}</Link>
     );
@@ -244,7 +237,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
       {
         dataIndex: 'userId',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['userId'],
-        render: (_, r) => userRenderer(matchUsers.find((u) => u.id === r.userId)),
+        render: (_, r) => userRenderer(users.find((u) => u.id === r.userId)),
         title: 'User',
       },
       {
@@ -358,7 +351,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
             containerRef={pageRef}
             ContextMenu={actionDropdown}
             dataSource={projects}
-            loading={isLoading || Loadable.isLoading(users)}
+            loading={isLoading || Loadable.isLoading(loadableUsers)}
             pagination={getFullPaginationConfig(
               {
                 limit: settings.tableLimit,
@@ -378,10 +371,10 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
     columns,
     fetchProjects,
     isLoading,
+    loadableUsers,
     pageRef,
     projects,
     settings,
-    users,
     total,
     updateSettings,
     workspace?.archived,

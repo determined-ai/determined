@@ -18,12 +18,11 @@ import { paths } from 'routes/utils';
 import Icon, { IconSize } from 'shared/components/Icon/Icon';
 import Spinner from 'shared/components/Spinner/Spinner';
 import useUI from 'shared/contexts/stores/UI';
-import { selectIsAuthenticated } from 'stores/auth';
-import { useClusterStore } from 'stores/cluster';
-import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
-import usersStore from 'stores/users';
-import { useWorkspaces } from 'stores/workspaces';
-import { BrandingType } from 'types';
+import authStore from 'stores/auth';
+import clusterStore from 'stores/cluster';
+import determinedStore, { BrandingType } from 'stores/determinedInfo';
+import userStore from 'stores/users';
+import workspaceStore from 'stores/workspaces';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 
@@ -116,15 +115,12 @@ const NavigationSideBar: React.FC = () => {
   // `nodeRef` padding is required for CSSTransition to work with React.StrictMode.
   const nodeRef = useRef(null);
 
-  const clusterStatus = useObservable(useClusterStore().clusterStatus);
+  const clusterStatus = useObservable(clusterStore.clusterStatus);
 
-  const isAuthenticated = useObservable(selectIsAuthenticated);
-  const loadableCurrentUser = useObservable(usersStore.getCurrentUser());
-  const currentUser = Loadable.match(loadableCurrentUser, {
-    Loaded: (cUser) => cUser,
-    NotLoaded: () => undefined,
-  });
-  const info = Loadable.getOrElse(initInfo, useDeterminedInfo());
+  const isAuthenticated = useObservable(authStore.isAuthenticated);
+  const currentUser = Loadable.getOrElse(undefined, useObservable(userStore.currentUser));
+
+  const info = useObservable(determinedStore.info);
   const { ui } = useUI();
 
   const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
@@ -139,6 +135,8 @@ const NavigationSideBar: React.FC = () => {
   const { canCreateWorkspace, canViewWorkspace, canEditWebhooks } = usePermissions();
 
   const canAccessUncategorized = canViewWorkspace({ workspace: { id: 1 } });
+
+  const pinnedWorkspaces = useObservable(workspaceStore.pinned);
 
   const menuConfig = useMemo(() => {
     const topNav = canAccessUncategorized
@@ -184,7 +182,6 @@ const NavigationSideBar: React.FC = () => {
     updateSettings({ navbarCollapsed: !settings.navbarCollapsed });
   }, [settings.navbarCollapsed, updateSettings]);
 
-  const pinnedWorkspaces = useWorkspaces({ pinned: true });
   const { canAdministrateUsers } = usePermissions();
 
   const menuItems: MenuProps['items'] = useMemo(() => {

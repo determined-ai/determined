@@ -23,8 +23,8 @@ import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { routeToReactUrl } from 'shared/utils/routes';
 import { numericSorter } from 'shared/utils/sort';
 import { capitalize } from 'shared/utils/string';
-import { useClusterStore, useRefetchClusterData } from 'stores/cluster';
-import usersStore from 'stores/users';
+import clusterStore from 'stores/cluster';
+import userStore from 'stores/users';
 import { Job, JobAction, JobState, JobType, ResourcePool, RPStats } from 'types';
 import handleError from 'utils/error';
 import {
@@ -48,9 +48,8 @@ interface Props {
 }
 
 const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
-  const users = Loadable.map(useObservable(usersStore.getUsers()), ({ users }) => users);
-  useRefetchClusterData();
-  const resourcePools = useObservable(useClusterStore().resourcePools);
+  const users = Loadable.getOrElse([], useObservable(userStore.getUsers()));
+  const resourcePools = useObservable(clusterStore.resourcePools);
   const [managingJob, setManagingJob] = useState<Job>();
   const [rpStats, setRpStats] = useState<RPStats[]>(() => {
     if (Loadable.isLoading(resourcePools)) return [];
@@ -122,6 +121,8 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
       setPageState((cur) => ({ ...cur, isLoading: false }));
     }
   }, [canceler.signal, selectedRp.name, settings, jobState, topJob]);
+
+  useEffect(() => clusterStore.startPolling(), []);
 
   useEffect(() => {
     fetchAll();
@@ -218,11 +219,6 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
   }, [settings.columns, settingsColumns]);
 
   const columns = useMemo(() => {
-    const matchUsers = Loadable.match(users, {
-      Loaded: (users) => users,
-      NotLoaded: () => [],
-    });
-
     return defaultColumns
       .map((col) => {
         switch (col.key) {
@@ -303,7 +299,7 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
             }
             break;
           case 'user':
-            col.render = (_, r) => userRenderer(matchUsers.find((u) => u.id === r.userId));
+            col.render = (_, r) => userRenderer(users.find((u) => u.id === r.userId));
             break;
         }
         return col;

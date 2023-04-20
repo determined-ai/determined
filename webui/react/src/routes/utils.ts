@@ -15,20 +15,21 @@ import {
   routeToExternalUrl,
   routeToReactUrl,
 } from 'shared/utils/routes';
-import { BrandingType, CommandTask } from 'types';
+import { BrandingType } from 'stores/determinedInfo';
+import { CommandTask } from 'types';
 import { waitPageUrl } from 'utils/wait';
 
 import routes from './routes';
 
 // serverAddress returns determined cluster (master) address.
-export const serverAddress = (path = ''): string => {
+export function serverAddress(path = ''): string {
   if (!!path && isFullPath(path)) return path;
 
   // Prioritize dynamically set address.
   const customServer = globalStorage.serverAddress || (process.env.SERVER_ADDRESS as string);
 
   return (customServer || reactHostAddress()) + path;
-};
+}
 
 // checks to see if the provided address resolves to a live Determined server or not.
 export const checkServerAlive = async (address?: string): Promise<boolean> => {

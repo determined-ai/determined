@@ -111,8 +111,8 @@ It is important to note that if you use the Azure CLI to create nodes with taint
 tolerations using ``kubectl``; otherwise, Kubernetes will be unable to schedule pods on the tainted
 node.
 
-To create a nodepool with a taint in AKS, use the `--node-taints` flag to specify the type, tag, and
-effect:
+To create a nodepool with a taint in AKS, use the ``--node-taints`` flag to specify the type, tag,
+and effect:
 
 .. code:: bash
 

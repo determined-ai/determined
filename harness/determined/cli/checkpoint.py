@@ -43,9 +43,9 @@ def render_checkpoint(checkpoint: experimental.Checkpoint, path: Optional[str] =
 @authentication.required
 def list_checkpoints(args: Namespace) -> None:
     if args.best:
-        sorter = bindings.v1GetExperimentCheckpointsRequestSortBy.SORT_BY_SEARCHER_METRIC
+        sorter = bindings.v1GetExperimentCheckpointsRequestSortBy.SEARCHER_METRIC
     else:
-        sorter = bindings.v1GetExperimentCheckpointsRequestSortBy.SORT_BY_END_TIME
+        sorter = bindings.v1GetExperimentCheckpointsRequestSortBy.END_TIME
     r = bindings.get_GetExperimentCheckpoints(
         cli.setup_session(args),
         id=args.experiment_id,

@@ -193,7 +193,6 @@ class _PyTorchTrialController:
         det_profiler: Optional[profiler.ProfilerAgent],
         global_batch_size: Optional[int],
     ) -> None:
-
         if not isinstance(trial_inst, PyTorchTrial):
             raise TypeError("PyTorchTrialController requires a PyTorchTrial.")
         self.trial = trial_inst
@@ -1581,8 +1580,8 @@ class PyTorchTrial(det.Trial):
         """Count the number of records in a given batch.
 
         Override this method when you are using custom batch types, as produced
-        when iterating over the `DataLoader`.
-        For example, when using `pytorch_geometric`:
+        when iterating over the :py:class:`determined.pytorch.DataLoader`.
+        For example, when using ``pytorch_geometric``:
 
         .. code-block:: python
 

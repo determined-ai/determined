@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"golang.org/x/exp/maps"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/aproto"
@@ -16,6 +17,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/tasks"
+	"github.com/determined-ai/determined/proto/pkg/taskv1"
 )
 
 // Task-related cluster level messages.
@@ -129,6 +131,60 @@ type (
 	}
 )
 
+// Proto returns the proto representation of ProxyPortConfig.
+func (p *ProxyPortConfig) Proto() *taskv1.ProxyPortConfig {
+	if p == nil {
+		return nil
+	}
+
+	return &taskv1.ProxyPortConfig{
+		ServiceId:       p.ServiceID,
+		Port:            int32(p.Port),
+		ProxyTcp:        p.ProxyTCP,
+		Unauthenticated: p.Unauthenticated,
+	}
+}
+
+// Proto returns the proto representation of AllocationSummary.
+func (a *AllocationSummary) Proto() *taskv1.AllocationSummary {
+	if a == nil {
+		return nil
+	}
+
+	pbResources := []*taskv1.ResourcesSummary{}
+	for _, resource := range a.Resources {
+		pbResourcesSummary := resource.Proto()
+		pbResources = append(pbResources, pbResourcesSummary)
+	}
+
+	pbAllocationSummary := taskv1.AllocationSummary{
+		TaskId:         string(a.TaskID),
+		AllocationId:   string(a.AllocationID),
+		Name:           a.Name,
+		RegisteredTime: timestamppb.New(a.RegisteredTime),
+		ResourcePool:   a.ResourcePool,
+		SlotsNeeded:    int32((a.SlotsNeeded)),
+		Resources:      pbResources,
+		SchedulerType:  a.SchedulerType,
+	}
+
+	if a.Priority != nil {
+		pbPriority := int32(*a.Priority)
+		pbAllocationSummary.Priority = &pbPriority
+	}
+
+	if a.ProxyPorts != nil {
+		pbProxyPorts := []*taskv1.ProxyPortConfig{}
+		for _, proxyPortConfig := range a.ProxyPorts {
+			pbProxyPorts = append(pbProxyPorts, proxyPortConfig.Proto())
+		}
+
+		pbAllocationSummary.ProxyPorts = pbProxyPorts
+	}
+
+	return &pbAllocationSummary
+}
+
 const (
 	// KillAllocation is the signal to kill an allocation; analogous to in SIGKILL.
 	KillAllocation AllocationSignal = "kill"
@@ -223,6 +279,41 @@ type ResourcesSummary struct {
 	// Available if the RM knows the resource is already started / exited.
 	Started *ResourcesStarted
 	Exited  *ResourcesStopped
+}
+
+// Proto returns the proto representation of ResourcesSummary.
+func (s *ResourcesSummary) Proto() *taskv1.ResourcesSummary {
+	if s == nil {
+		return nil
+	}
+
+	pbAgentDevices := make(map[string]*taskv1.ResourcesSummary_Devices)
+
+	for agentID, devices := range s.AgentDevices {
+		pbDevices := taskv1.ResourcesSummary_Devices{}
+
+		for _, device := range devices {
+			pbDevice := device.Proto()
+			pbDevices.Devices = append(pbDevices.Devices, pbDevice)
+		}
+		pbAgentDevices[string(agentID)] = &pbDevices
+	}
+
+	pbResourcesSummary := taskv1.ResourcesSummary{
+		ResourcesId:   string(s.ResourcesID),
+		ResourcesType: string(s.ResourcesType),
+		AllocationId:  string(s.AllocationID),
+		AgentDevices:  pbAgentDevices,
+		Started:       s.Started.Proto(),
+		Exited:        s.Exited.Proto(),
+	}
+
+	if s.ContainerID != nil {
+		pbContainerID := string(*s.ContainerID)
+		pbResourcesSummary.ContainerId = &pbContainerID
+	}
+
+	return &pbResourcesSummary
 }
 
 // Slots returns slot count for the resources.
