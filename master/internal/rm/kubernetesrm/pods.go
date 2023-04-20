@@ -965,7 +965,13 @@ func (p *pods) summarize(ctx *actor.Context) (map[string]model.AgentSummary, err
 			// If they're using the default RP config, use the default tolerations.
 			if len(p.resourcePoolConfigs) <= 1 &&
 				(tcd == nil || (tcd.CPUPodSpec == nil && tcd.GPUPodSpec == nil)) {
-				poolTolerations = defaultTolerations
+				if slotType == device.CUDA {
+					//nolint:gocritic,appendAssign
+					poolTolerations = append(defaultTolerations, gpuTolerations...)
+				} else if slotType == device.CPU {
+					//nolint:gocritic,appendAssign
+					poolTolerations = append(defaultTolerations, cpuTolerations...)
+				}
 			} else if tcd != nil {
 				// Decide which poolTolerations to use based on slot device type
 				if slotType == device.CUDA && tcd.GPUPodSpec != nil {
