@@ -30,6 +30,11 @@ test-gpu:
 	# We will use this target in circleci once we have access to gpu instances.
 	coverage run -m pytest -v --runslow --durations=0 -m "gpu" tests
 
+.PHONY: test-gpu-lightning
+test-gpu-lightning
+    # Lightning tests require specific environment images so they're run separately.
+    coverage run -m pytest -v --runslow --durations=0 -m "PyTorchLightning" tests
+
 .PHONY: test
 test:
 	coverage run -m pytest -v --runslow --durations=0 tests
