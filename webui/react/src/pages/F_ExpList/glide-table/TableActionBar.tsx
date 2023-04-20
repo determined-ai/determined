@@ -1,6 +1,6 @@
 import { Menu, Popover, Space } from 'antd';
 import { ItemType } from 'rc-menu/lib/interface';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import BatchActionConfirmModalComponent from 'components/BatchActionConfirmModal';
 import Dropdown from 'components/Dropdown';
@@ -45,6 +45,7 @@ import {
 import { Loadable } from 'utils/loadable';
 import { openCommandResponse } from 'utils/wait';
 
+import { defaultExperimentColumns } from './columns';
 import css from './TableActionBar.module.scss';
 
 const batchActions = [
@@ -98,12 +99,14 @@ const TableActionBar: React.FC<Props> = ({
   projectColumns,
   total,
   initialVisibleColumns,
+  setVisibleColumns,
 }) => {
   const permissions = usePermissions();
   const [batchAction, setBatchAction] = useState<BatchAction>();
   const BatchActionConfirmModal = useModal(BatchActionConfirmModalComponent);
   const ExperimentMoveModal = useModal(ExperimentMoveModalComponent);
   const [form] = Form.useForm();
+  const [filteredColumns, setFilteredColumns] = useState(projectColumns);
 
   const experimentMap = useMemo(() => {
     return experiments.filter(Loadable.isLoaded).reduce((acc, experiment) => {
@@ -286,12 +289,41 @@ const TableActionBar: React.FC<Props> = ({
     [handleBatchAction],
   );
 
-  const columnSearch: string | undefined = Form.useWatch('column-search', form);
+  const columnSearch: string = Form.useWatch('column-search', form) ?? '';
 
-  //_changedValues: Record<string, string | Record<string, boolean>>,
-  //_allValues: Record<string, string | Record<string, boolean>>,
-  const handleColumnUpdate = useCallback(() => {
-    undefined;
+  useEffect(() => {
+    const regex = new RegExp(columnSearch, 'i');
+    setFilteredColumns(
+      Loadable.map(projectColumns, (columns) => ({
+        general: columns.general.filter((col) => regex.test(col)),
+        hyperparameters: columns.hyperparameters.filter((col) => regex.test(col)),
+        metrics: columns.metrics.filter((col) => regex.test(col)),
+      })),
+    );
+  }, [columnSearch, projectColumns]);
+
+  const generalColumns: Record<string, boolean> = Form.useWatch('general', form);
+  const hyperparametersColumns: Record<string, boolean> = Form.useWatch('hyperparameters', form);
+  const metricsColumns: Record<string, boolean> = Form.useWatch('metrics', form);
+
+  useEffect(() => {
+    const allColumns = { ...generalColumns, ...hyperparametersColumns, ...metricsColumns };
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    setVisibleColumns((_prevColumns) => {
+      const newCols = [];
+      for (const [key, value] of Object.entries(allColumns)) {
+        if (value === true) newCols.push(key);
+      }
+      return newCols;
+    });
+  }, [generalColumns, hyperparametersColumns, metricsColumns, setVisibleColumns]);
+
+  const handleShowSuggested = useCallback(() => {
+    setVisibleColumns(defaultExperimentColumns);
+  }, [setVisibleColumns]);
+
+  const handleShowHideAll = useCallback(() => {
+    //form.setFieldsValue({}) TODO
   }, []);
 
   const tabContent = useCallback(
@@ -302,26 +334,28 @@ const TableActionBar: React.FC<Props> = ({
             <Input allowClear placeholder="Search" />
           </Form.Item>
           <div style={{ maxHeight: 360, overflow: 'hidden auto' }}>
-            {columns
-              .filter((column) => column.toLowerCase().includes(columnSearch?.toLowerCase() ?? ''))
-              .map((column) => (
-                <Form.Item
-                  initialValue={initialVisibleColumns.includes(column)}
-                  key={column}
-                  name={[tab, column]}
-                  valuePropName="checked">
-                  <Checkbox>{column}</Checkbox>
-                </Form.Item>
-              ))}
+            {columns.map((column) => (
+              <Form.Item
+                initialValue={initialVisibleColumns.includes(column)}
+                key={column}
+                name={[tab, column]}
+                valuePropName="checked">
+                <Checkbox>{column}</Checkbox>
+              </Form.Item>
+            ))}
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <Button type="text">Show all</Button>
-            <Button type="text">Show suggested</Button>
+            <Button type="text" onClick={handleShowHideAll}>
+              Show all
+            </Button>
+            <Button type="text" onClick={handleShowSuggested}>
+              Show suggested
+            </Button>
           </div>
         </div>
       );
     },
-    [columnSearch, initialVisibleColumns],
+    [handleShowHideAll, handleShowSuggested, initialVisibleColumns],
   );
 
   return (
@@ -330,8 +364,8 @@ const TableActionBar: React.FC<Props> = ({
         <Popover
           content={
             <div style={{ width: '300px' }}>
-              <Form form={form} onValuesChange={handleColumnUpdate}>
-                {Loadable.match(projectColumns, {
+              <Form form={form}>
+                {Loadable.match(filteredColumns, {
                   Loaded: (columns) => (
                     <Pivot
                       items={[
