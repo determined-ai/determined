@@ -82,18 +82,22 @@ const MultiSortRow: React.FC<MultiSortRowProps> = ({ sort, columns, onChange, on
   return (
     <Row align="middle" gutter={8}>
       <Col flex="auto">
-        <ColumnOptions
-          columns={columns}
-          value={sort.column}
-          onChange={(column) => onChange({ ...sort, column })}
-        />
-      </Col>
-      <Col flex="auto">
-        <DirectionOptions
-          type={valueType}
-          value={sort.direction}
-          onChange={(direction) => onChange({ ...sort, direction })}
-        />
+        <Row gutter={8}>
+          <Col span={12}>
+            <ColumnOptions
+              columns={columns}
+              value={sort.column}
+              onChange={(column) => onChange({ ...sort, column })}
+            />
+          </Col>
+          <Col span={12}>
+            <DirectionOptions
+              type={valueType}
+              value={sort.direction}
+              onChange={(direction) => onChange({ ...sort, direction })}
+            />
+          </Col>
+        </Row>
       </Col>
       <Col flex="none">
         <Button
@@ -122,7 +126,7 @@ const MultiSort: React.FC<MultiSortProps> = ({ sorts, columns, onChange }) => {
   return (
     <div className={css.base}>
       <div>Sort by</div>
-      <div>
+      <div className={css.rows}>
         {sorts.map((sort, idx) => {
           const seenColumns = sorts.slice(0, idx).map((s) => s.column);
           const columnOptions = Loadable.map(columns, (cols) =>

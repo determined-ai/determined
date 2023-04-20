@@ -2,5 +2,13 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+  max-height: 500px;
   width: 500px;
+}
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0 4px;
+  overflow: clip scroll;
 }
