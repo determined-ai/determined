@@ -10,6 +10,7 @@ the number of epochs to increase accuracy.
 """
 import data
 import tensorflow as tf
+from packaging import version
 from tensorflow import keras
 
 from determined.keras import InputData, TFKerasTrial, TFKerasTrialContext
@@ -33,7 +34,11 @@ class FashionMNISTTrial(TFKerasTrial):
 
         # Create and wrap the optimizer.
         # TODO MLG-443 Migrate from legacy Keras optimizers
-        optimizer = tf.keras.optimizers.legacy.Adam()
+        # TODO Why is GKE hardcoding TF-2.4?
+        if version.parse(tf.__version__) >= version.parse("2.11.0"):
+            optimizer = tf.keras.optimizers.legacy.Adam()
+        else:
+            optimizer = tf.keras.optimizers.Adam()
         optimizer = self.context.wrap_optimizer(optimizer)
 
         model.compile(
