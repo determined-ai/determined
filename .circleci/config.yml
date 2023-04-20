@@ -2265,8 +2265,8 @@ workflows:
       - test-unit-go
       - test-unit-react
       - test-unit-harness-cpu
-      # Exclude gpu tests for now since we do not have access to those instance types on circleci.
       - test-unit-harness-gpu
+      - test-unit-harness-gpu-lightning
       - test-unit-harness-tf2
       - test-unit-model-hub
       - test-unit-storage:

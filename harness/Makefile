@@ -32,7 +32,8 @@ test-gpu:
 
 .PHONY: test-gpu-lightning
 test-gpu-lightning:
-    coverage run -m pytest -v --runslow --durations=0 -m "PyTorchLightning" tests
+	# Lightning tests require their own docker image in circleci
+	coverage run -m pytest -v --runslow --durations=0 -m "PyTorchLightning" tests
 
 .PHONY: test
 test:
