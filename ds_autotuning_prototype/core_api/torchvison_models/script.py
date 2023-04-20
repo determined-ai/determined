@@ -95,9 +95,7 @@ def main(
     for op in core_context.searcher.operations():
         while steps_completed < op.length:
             for data in trainloader:
-                # A potential gotcha: steps_completed must not be altered within the below context.
-                # Should be noted in docs.
-                with dsat.dsat_reporting_context(core_context, op, steps_completed):
+                with dsat.dsat_reporting_context(core_context, op):
                     # get the inputs; data is a list of [inputs, labels]
                     inputs, labels = data[0].to(model_engine.local_rank), data[1].to(
                         model_engine.local_rank
@@ -109,8 +107,13 @@ def main(
                     loss = criterion(outputs, labels)
                     model_engine.backward(loss)
                     model_engine.step()
-                if model_engine.is_gradient_accumulation_boundary():
                     steps_completed += 1
+                    if is_chief:
+                        metrics_dict = {"loss": loss.item()}
+                        core_context.train.report_validation_metrics(
+                            steps_completed=steps_completed, metrics=metrics_dict
+                        )
+                if model_engine.is_gradient_accumulation_boundary():
                     logging.info("COMPLETED STEP")
                     if steps_completed == op.length:
                         break

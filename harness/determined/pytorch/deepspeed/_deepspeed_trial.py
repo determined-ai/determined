@@ -302,14 +302,11 @@ class DeepSpeedTrialController(det.TrialController):
         if self._dsat_mode:
             ops = self.context._core.searcher.operations()
             op = next(ops)
-            # TODO: read out the actual number of expected batches to run for from the config.
+            # TODO: remove `while True` in favor of exact number of steps which should run.
+            # TODO: also assuming here that op.length is always the number of *steps* to train for
+            # and never epochs or other units. Double check.
             while True:
-                # The `steps_completed` value which is passed in to `dsat_reporting_context` will be
-                # the value used in a `report_validation_metrics` call, hence we don't use the
-                # current value, but the value that `steps_completed` should have when reporting.
-                with dsat.dsat_reporting_context(
-                    core_context=self.context._core, op=op, steps_completed=self.steps_completed + 1
-                ):
+                with dsat.dsat_reporting_context(core_context=self.context._core, op=op):
                     # TODO: verify we're using `step_id` as intended.
                     _ = self._train_for_step(
                         step_id=self.steps_completed + 1,

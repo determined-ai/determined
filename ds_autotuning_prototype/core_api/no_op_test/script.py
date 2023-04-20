@@ -44,16 +44,22 @@ def main(
         with open(path, "w") as f:
             json.dump(metrics, f)
 
-    steps_completed = 0
+    is_chief = core_context.distributed.rank == 0
     for op in core_context.searcher.operations():
-        steps_completed = op.length
-        with dsat.dsat_reporting_context(core_context, op, steps_completed):
-            if not is_model_profile_info_run and should_oom:
-                raise RuntimeError("CUDA out of memory.")
-            else:
-                exit()
-        if core_context.preempt.should_preempt():
-            return
+        for steps_completed in range(1, op.length + 1):
+            with dsat.dsat_reporting_context(core_context, op):
+                if not is_model_profile_info_run and should_oom:
+                    raise RuntimeError("CUDA out of memory.")
+                else:
+                    if steps_completed >= op.length:
+                        exit()
+                    elif is_chief:
+                        core_context.train.report_validation_metrics(
+                            steps_completed=steps_completed,
+                            metrics={"steps_completed": steps_completed},
+                        )
+            if core_context.preempt.should_preempt():
+                return
 
 
 if __name__ == "__main__":

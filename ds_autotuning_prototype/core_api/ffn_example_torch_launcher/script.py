@@ -68,9 +68,7 @@ def main(
     for op in core_context.searcher.operations():
         while steps_completed < op.length:
             for batch in train_loader:
-                # A potential gotcha: steps_completed must not be altered within the below context.
-                # Should be noted in docs.
-                with dsat.dsat_reporting_context(core_context, op, steps_completed):
+                with dsat.dsat_reporting_context(core_context, op):
                     if fp16:
                         batch = batch.half()
                     batch = batch.to(device)
@@ -82,15 +80,16 @@ def main(
                     model_engine.backward(loss)
                     print("backward complete")
                     model_engine.step()
+                    steps_completed += 1
                     print("stepped optimizer")
-                # Another gotcha is with the possibility of doubled report_validation_metrics.
+                # Potential gotcha is with the possibility of doubled report_validation_metrics due
+                # to off-by-one-errors.
                 if is_chief:
                     metrics_dict = {"loss": loss.item()}
                     core_context.train.report_validation_metrics(
                         steps_completed=steps_completed, metrics=metrics_dict
                     )
                 if model_engine.is_gradient_accumulation_boundary():
-                    steps_completed += 1
                     if steps_completed == op.length:
                         break
                 if core_context.preempt.should_preempt():
