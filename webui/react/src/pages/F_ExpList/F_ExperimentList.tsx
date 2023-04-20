@@ -63,7 +63,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
       } else {
         params.delete('page');
       }
-      if (sorts.length) {
+      if (sorts.filter((s) => s.column && s.direction).length) {
         params.set('sort', makeSortString(sorts));
       } else {
         params.delete('sort');
