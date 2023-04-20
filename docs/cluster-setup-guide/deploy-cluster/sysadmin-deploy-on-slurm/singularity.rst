@@ -21,15 +21,15 @@ container runtime in use.
 Each version of Determined utilizes specifically-tagged Docker containers. The image tags referenced
 by default in this version of Determined are described below.
 
-+-------------+--------------------------------------------------------------------------+
-| Environment | File Name                                                                |
-+=============+==========================================================================+
++-------------+------------------------------------------------------------------------------+
+| Environment | File Name                                                                    |
++=============+==============================================================================+
 | CPUs        | ``determinedai/environments-dev:py-3.8-pytorch-1.12-tf-2.11-cpu-151f724``    |
-+-------------+--------------------------------------------------------------------------+
++-------------+------------------------------------------------------------------------------+
 | Nvidia GPUs | ``determinedai/environments-dev:cuda-11.3-pytorch-1.12-tf-2.11-gpu-151f724`` |
-+-------------+--------------------------------------------------------------------------+
++-------------+------------------------------------------------------------------------------+
 | AMD GPUs    | ``determinedai/environments-dev:rocm-5.0-pytorch-1.10-tf-2.7-rocm-151f724``  |
-+-------------+--------------------------------------------------------------------------+
++-------------+------------------------------------------------------------------------------+
 
 See :doc:`/training/setup-guide/set-environment-images` for the images Docker Hub location, and add
 each tagged image needed by your experiments to the image cache.
