@@ -64,7 +64,7 @@ const ColumnOptions: React.FC<ColumnOptionsProps> = ({ onChange, columns, value 
     <Select
       loading={Loadable.isLoading(columns)}
       options={Loadable.getOrElse([], columns).map((c) => ({
-        label: c.displayName,
+        label: c.displayName || c.column,
         value: c.column,
       }))}
       placeholder="Column"

@@ -58,8 +58,16 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
 
   useEffect(() => {
     setSearchParams((params) => {
-      params.set('page', page.toString());
-      params.set('sort', makeSortString(sorts));
+      if (page) {
+        params.set('page', page.toString());
+      } else {
+        params.delete('page');
+      }
+      if (sorts.length) {
+        params.set('sort', makeSortString(sorts));
+      } else {
+        params.delete('sort');
+      }
       return params;
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
