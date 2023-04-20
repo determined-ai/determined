@@ -265,10 +265,6 @@ def master_up(
             hostname="determined-master",
         )
 
-        # Connect to the network separately to set alias.
-        # network = client.networks.get(NETWORK_NAME)
-        # network.connect(container=master_name, aliases=["determined-master"])
-
         _wait_for_master("localhost", port, cluster_name)
 
         # Remove all cleanup methods from ExitStack.
@@ -297,9 +293,6 @@ def db_up(name: str, password: str, network_name: str, cluster_name: str, volume
         network=network_name,
         hostname="determined-db",
     )
-    # Connect to the network separately to set alias.
-    # network = client.networks.get(network_name)
-    # network.connect(container=name, aliases=["determined-db"])
 
 
 def master_down(master_name: str, delete_db: bool, cluster_name: str) -> None:
