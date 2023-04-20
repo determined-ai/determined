@@ -75,4 +75,5 @@ def loss(fake_output, gen_output, target, lambda_=100):
 
 
 def make_optimizer(lr=2e-4, beta_1=0.5):
-    return tf.keras.optimizers.Adam(lr, beta_1)
+    # TODO MLG-443 Migrate from legacy Keras optimizers
+    return tf.keras.optimizers.legacy.Adam(lr, beta_1)
