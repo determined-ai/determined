@@ -73,13 +73,13 @@ respectively:
 
 -  ``determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.21.2`` (default)
 -  ``determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-0.21.2``
--  ``determinedai/environments:cuda-11.2-tf-2.7-gpu-0.21.2``
+-  ``determinedai/environments:cuda-11.2-tf-2.8-gpu-0.21.2``
 
 We also provide lightweight CPU-only counterparts:
 
 -  ``determinedai/environments:py-3.8-pytorch-1.12-tf-2.11-cpu-0.21.2``
 -  ``determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-0.21.2``
--  ``determinedai/environments:py-3.8-tf-2.7-cpu-0.21.2``
+-  ``determinedai/environments:py-3.8-tf-2.8-cpu-0.21.2``
 
 To change the container image used for an experiment, specify :ref:`environment.image
 <exp-environment-image>` in the experiment configuration file. Please see :ref:`container-images`
