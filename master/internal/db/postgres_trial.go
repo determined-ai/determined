@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"regexp"
 	"strings"
 	"time"
 
@@ -168,14 +169,29 @@ WITH training_trial_metrics as (
 SELECT
 	name,
 	trial_id,
-	sum(entries) FILTER (WHERE metric_type != 'number') as nonumbers
+	CASE sum(entries)
+		WHEN sum(entries) FILTER (WHERE metric_type = 'number') THEN 'number'
+		WHEN sum(entries) FILTER (WHERE metric_type = 'string') THEN 'string'
+		WHEN sum(entries) FILTER (WHERE metric_type = 'date') THEN 'date'
+		WHEN sum(entries) FILTER (WHERE metric_type = 'object') THEN 'object'
+		WHEN sum(entries) FILTER (WHERE metric_type = 'boolean') THEN 'boolean'
+		WHEN sum(entries) FILTER (WHERE metric_type = 'array') THEN 'array'
+		WHEN sum(entries) FILTER (WHERE metric_type = 'null') THEN 'null'
+		ELSE 'string'
+	END as metric_type
 FROM (
 	SELECT
 	name,
 	CASE
-		WHEN (metrics->'avg_metrics'->name)::text = '"Infinity"'::text THEN 'number'
-		WHEN (metrics->'avg_metrics'->name)::text = '"-Infinity"'::text THEN 'number'
-		WHEN (metrics->'avg_metrics'->name)::text = '"NaN"'::text THEN 'number'
+		WHEN jsonb_typeof(metrics->'avg_metrics'->name) = 'string' THEN
+			CASE
+				WHEN (metrics->'avg_metrics'->name)::text = '"Infinity"'::text THEN 'number'
+				WHEN (metrics->'avg_metrics'->name)::text = '"-Infinity"'::text THEN 'number'
+				WHEN (metrics->'avg_metrics'->name)::text = '"NaN"'::text THEN 'number'
+				WHEN metrics->'avg_metrics'->>name ~
+					'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})?$' THEN 'date'
+				ELSE 'string'
+			END
 		ELSE jsonb_typeof(metrics->'avg_metrics'->name)
 	END as metric_type,
 	trial_id,
@@ -198,7 +214,7 @@ ORDER BY trial_id, name
 training_numeric_trial_metrics as (
 SELECT name, trial_id
 FROM training_trial_metrics
-WHERE nonumbers IS NULL
+WHERE metric_type = 'number'
 ),
 -- Calculates count, sum, min, max on each numeric metric name and trial ID pair.
 -- Also adds just the name for non numeric metrics to ensure we record every metric.
@@ -209,7 +225,8 @@ SELECT
 	count(1) as count_agg,
 	sum((steps.metrics->'avg_metrics'->>name)::double precision) as sum_agg,
 	min((steps.metrics->'avg_metrics'->>name)::double precision) as min_agg,
-	max((steps.metrics->'avg_metrics'->>name)::double precision) as max_agg
+	max((steps.metrics->'avg_metrics'->>name)::double precision) as max_agg,
+	'number' as metric_type
 FROM training_numeric_trial_metrics ntm INNER JOIN steps
 ON steps.trial_id=ntm.trial_id
 WHERE steps.metrics->'avg_metrics'->name IS NOT NULL
@@ -221,9 +238,10 @@ SELECT
 	NULL as count_agg,
 	NULL as sum,
 	NULL as min,
-	NULL as max
+	NULL as max,
+	metric_type as metric_type
 FROM training_trial_metrics
-WHERE nonumbers IS NOT NULL
+WHERE metric_type != 'number'
 ),
 -- Gets the last reported metric for each trial. Note if we report
 -- {"a": 1} and {"b": 1} we consider {"b": 1} to be the last reported
@@ -252,7 +270,8 @@ training_combined_latest_agg as (SELECT
 	tma.sum_agg,
 	tma.min_agg,
 	tma.max_agg,
-	lt.latest_value
+	lt.latest_value,
+	tma.metric_type
 FROM latest_training lt FULL OUTER JOIN training_trial_metric_aggs tma ON
 	lt.trial_id = tma.trial_id AND lt.name = tma.name
 ),
@@ -266,7 +285,8 @@ training_trial_metrics_final as (
 				'min', CASE WHEN max_agg = 'NaN'::double precision THEN 'NaN'::double precision
 					ELSE min_agg END,
 				'max', max_agg,
-				'last', latest_value
+				'last', latest_value,
+				'type', metric_type
 			)
 		)) as training_metrics
 	FROM training_combined_latest_agg
@@ -277,14 +297,29 @@ validation_trial_metrics as (
 SELECT
 	name,
 	trial_id,
-	sum(entries) FILTER (WHERE metric_type != 'number') as nonumbers
+	CASE sum(entries)
+		WHEN sum(entries) FILTER (WHERE metric_type = 'number') THEN 'number'
+		WHEN sum(entries) FILTER (WHERE metric_type = 'string') THEN 'string'
+		WHEN sum(entries) FILTER (WHERE metric_type = 'date') THEN 'date'
+		WHEN sum(entries) FILTER (WHERE metric_type = 'object') THEN 'object'
+		WHEN sum(entries) FILTER (WHERE metric_type = 'boolean') THEN 'boolean'
+		WHEN sum(entries) FILTER (WHERE metric_type = 'array') THEN 'array'
+		WHEN sum(entries) FILTER (WHERE metric_type = 'null') THEN 'null'
+		ELSE 'string'
+	END as metric_type
 FROM (
 	SELECT
 	name,
 	CASE
-		WHEN (metrics->'validation_metrics'->name)::text = '"Infinity"'::text THEN 'number'
-		WHEN (metrics->'validation_metrics'->name)::text = '"-Infinity"'::text THEN 'number'
-		WHEN (metrics->'validation_metrics'->name)::text = '"NaN"'::text THEN 'number'
+		WHEN jsonb_typeof(metrics->'validation_metrics'->name) = 'string' THEN
+			CASE
+				WHEN (metrics->'validation_metrics'->name)::text = '"Infinity"'::text THEN 'number'
+				WHEN (metrics->'validation_metrics'->name)::text = '"-Infinity"'::text THEN 'number'
+				WHEN (metrics->'validation_metrics'->name)::text = '"NaN"'::text THEN 'number'
+				WHEN metrics->'validation_metrics'->>name ~
+					'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})?$' THEN 'date'
+				ELSE 'string'
+			END
 		ELSE jsonb_typeof(metrics->'validation_metrics'->name)
 	END as metric_type,
 	trial_id,
@@ -307,7 +342,7 @@ ORDER BY trial_id, name
 validation_numeric_trial_metrics as (
 SELECT name, trial_id
 FROM validation_trial_metrics
-WHERE nonumbers IS NULL
+WHERE metric_type = 'number'
 ),
 validation_trial_metric_aggs as (
 SELECT
@@ -316,7 +351,8 @@ SELECT
 	count(1) as count_agg,
 	sum((validations.metrics->'validation_metrics'->>name)::double precision) as sum_agg,
 	min((validations.metrics->'validation_metrics'->>name)::double precision) as min_agg,
-	max((validations.metrics->'validation_metrics'->>name)::double precision) as max_agg
+	max((validations.metrics->'validation_metrics'->>name)::double precision) as max_agg,
+	'number' as metric_type
 FROM validation_numeric_trial_metrics ntm INNER JOIN validations
 ON validations.trial_id=ntm.trial_id
 WHERE validations.metrics->'validation_metrics'->name IS NOT NULL
@@ -328,9 +364,10 @@ SELECT
 	NULL as count_agg,
 	NULL as sum,
 	NULL as min,
-	NULL as max
+	NULL as max,
+	metric_type as metric_type
 FROM validation_trial_metrics
-WHERE nonumbers IS NOT NULL
+WHERE metric_type != 'number'
 ),
 latest_validation as (
 	SELECT s.trial_id,
@@ -355,7 +392,8 @@ validation_combined_latest_agg as (SELECT
 	tma.sum_agg,
 	tma.min_agg,
 	tma.max_agg,
-	lt.latest_value
+	lt.latest_value,
+	tma.metric_type
 FROM latest_validation lt FULL OUTER JOIN validation_trial_metric_aggs tma ON
 	lt.trial_id = tma.trial_id AND lt.name = tma.name
 ),
@@ -368,7 +406,8 @@ validation_trial_metrics_final as (
 				'min', CASE WHEN max_agg = 'NaN'::double precision THEN 'NaN'::double precision
 					ELSE min_agg END,
 				'max', max_agg,
-				'last', latest_value
+				'last', latest_value,
+				'type', metric_type
 			)
 		)) as validation_metrics
 	FROM validation_combined_latest_agg
@@ -566,7 +605,37 @@ const (
 	NegInfPostgresString = "-Infinity"
 	// NaNPostgresString how we store NaN in JSONB in postgres.
 	NaNPostgresString = "NaN"
+
+	// MetricTypeString is the summary metric type for string or mixed types.
+	MetricTypeString = "string"
+	// MetricTypeNumber is the summary metric type for floats or ints.
+	MetricTypeNumber = "number"
+	// MetricTypeBool is the summary metric type for boolean.
+	MetricTypeBool = "boolean"
+	// MetricTypeDate is the summary metric type for date metrics.
+	MetricTypeDate = "date"
+	// MetricTypeObject is the summary metric type for object types.
+	MetricTypeObject = "object"
+	// MetricTypeArray is the summary metric type for array types.
+	MetricTypeArray = "array"
+	// MetricTypeNull is the summary metric type for array types.
+	MetricTypeNull = "null"
 )
+
+func jsonAnyToFloat(v any) float64 {
+	if s, ok := v.(string); ok {
+		if f, isSpecial := stringToSpecialFloats(s); isSpecial {
+			return f
+		}
+	}
+
+	if f, ok := v.(float64); ok {
+		return f
+	}
+
+	log.Errorf("summary metric value expected as float instead got %T %v", v, v)
+	return 0.0
+}
 
 func stringToSpecialFloats(s string) (float64, bool) {
 	switch s {
@@ -595,66 +664,74 @@ func replaceSpecialFloatsWithString(v any) any {
 	return v
 }
 
+var pythonISOFormatRegex = regexp.MustCompile(
+	`^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})?$`)
+
 func calculateNewSummaryMetrics(
 	summaryMetrics model.JSONObj, metrics *structpb.Struct,
 ) model.JSONObj {
 	// Calculate numeric metrics.
 	for metricName, metric := range metrics.Fields {
-		// Add an empty map for any non numeric metrics.
-		metricValue, providedNumeric := metric.AsInterface().(float64)
-		if !providedNumeric {
-			if s, isString := metric.AsInterface().(string); isString {
-				if f, ok := stringToSpecialFloats(s); ok {
-					metricValue = f
-					providedNumeric = true
-				}
+		// Get type of provided metric.
+		metricFloatValue := 0.0
+		metricType := ""
+		switch metricValue := metric.AsInterface().(type) {
+		case float64:
+			metricFloatValue = metricValue
+			metricType = MetricTypeNumber
+		case string:
+			switch f, ok := stringToSpecialFloats(metricValue); {
+			case ok:
+				metricFloatValue = f
+				metricType = MetricTypeNumber
+			case pythonISOFormatRegex.MatchString(metricValue):
+				metricType = MetricTypeDate
+			default:
+				metricType = MetricTypeString
 			}
-
-			if !providedNumeric {
-				summaryMetrics[metricName] = map[string]any{}
-				continue
-			}
+		case bool:
+			metricType = MetricTypeBool
+		case map[string]any:
+			metricType = MetricTypeObject
+		case []any:
+			metricType = MetricTypeArray
+		case nil:
+			metricType = MetricTypeNull
+		default:
+			metricType = MetricTypeString
 		}
 
-		// If we haven't seen the metric before just add it.
-		if summaryMetric, ok := summaryMetrics[metricName].(map[string]any); !ok {
-			summaryMetrics[metricName] = map[string]any{
-				"max":   replaceSpecialFloatsWithString(metricValue),
-				"min":   replaceSpecialFloatsWithString(metricValue),
-				"sum":   replaceSpecialFloatsWithString(metricValue),
-				"count": 1,
-			}
-		} else {
-			// Check if the metric had a non numeric value in the past.
-			notNumeric := false
-			for _, agg := range []string{"min", "max", "sum", "count"} {
-				switch v := summaryMetric[agg].(type) {
-				case float64:
-				case string:
-					f, ok := stringToSpecialFloats(v)
-					if !ok {
-						notNumeric = true
-						continue
-					}
-					summaryMetric[agg] = f
-				default:
-					notNumeric = true
-					break
-				}
-			}
-			if notNumeric {
-				summaryMetrics[metricName] = map[string]any{}
-				continue
-			}
+		// If we haven't seen this metric before just add the type we have.
+		var ok bool
+		var summaryMetric map[string]any
+		if summaryMetric, ok = summaryMetrics[metricName].(map[string]any); !ok {
+			summaryMetric = map[string]any{"type": metricType}
+		} else if summaryMetric["type"] != metricType {
+			// If we have seen this before check if we disagree on types and set to string if we do.
+			metricType = "string"
+			summaryMetric = map[string]any{"type": metricType}
+		}
+		summaryMetrics[metricName] = summaryMetric
 
+		if metricType != MetricTypeNumber {
+			continue
+		}
+
+		// Is this the first time seeing a number metric?
+		if _, ok = summaryMetric["count"]; !ok {
+			summaryMetric["max"] = replaceSpecialFloatsWithString(metricFloatValue)
+			summaryMetric["min"] = replaceSpecialFloatsWithString(metricFloatValue)
+			summaryMetric["sum"] = replaceSpecialFloatsWithString(metricFloatValue)
+			summaryMetric["count"] = 1
+		} else {
 			summaryMetric["min"] = replaceSpecialFloatsWithString(
-				math.Min(summaryMetric["min"].(float64), metricValue))
+				math.Min(jsonAnyToFloat(summaryMetric["min"]), metricFloatValue))
 			summaryMetric["max"] = replaceSpecialFloatsWithString(
-				math.Max(summaryMetric["max"].(float64), metricValue))
+				math.Max(jsonAnyToFloat(summaryMetric["max"]), metricFloatValue))
 			summaryMetric["sum"] = replaceSpecialFloatsWithString(
-				summaryMetric["sum"].(float64) + metricValue)
+				jsonAnyToFloat(summaryMetric["sum"]) + metricFloatValue)
 			// Go parsing odditity treats JSON whole numbers as floats.
-			summaryMetric["count"] = int(summaryMetric["count"].(float64)) + 1
+			summaryMetric["count"] = int(jsonAnyToFloat(summaryMetric["count"])) + 1
 		}
 	}
 

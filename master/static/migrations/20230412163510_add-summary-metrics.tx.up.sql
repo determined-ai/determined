@@ -29,19 +29,34 @@ UPDATE trials SET summary_metrics_timestamp = NULL FROM max_validation WHERE
      summary_metrics_timestamp IS NOT NULL AND
      last_reported_metric > summary_metrics_timestamp;
 
--- Returns pairs of metric names and trial_ids and if they are numeric or not.
+-- Returns pairs of metric names and trial_ids and their datatypes.
 WITH training_trial_metrics as (
 SELECT
     name,
     trial_id,
-    sum(entries) FILTER (WHERE metric_type != 'number') as nonumbers
+    CASE sum(entries)
+        WHEN sum(entries) FILTER (WHERE metric_type = 'number') THEN 'number'
+        WHEN sum(entries) FILTER (WHERE metric_type = 'string') THEN 'string'
+        WHEN sum(entries) FILTER (WHERE metric_type = 'date') THEN 'date'
+        WHEN sum(entries) FILTER (WHERE metric_type = 'object') THEN 'object'
+        WHEN sum(entries) FILTER (WHERE metric_type = 'boolean') THEN 'boolean'
+        WHEN sum(entries) FILTER (WHERE metric_type = 'array') THEN 'array'
+        WHEN sum(entries) FILTER (WHERE metric_type = 'null') THEN 'null'
+        ELSE 'string'
+    END as metric_type
 FROM (
     SELECT
     name,
     CASE
-        WHEN (metrics->'avg_metrics'->name)::text = '"Infinity"'::text THEN 'number'
-        WHEN (metrics->'avg_metrics'->name)::text = '"-Infinity"'::text THEN 'number'
-        WHEN (metrics->'avg_metrics'->name)::text = '"NaN"'::text THEN 'number'
+        WHEN jsonb_typeof(metrics->'avg_metrics'->name) = 'string' THEN
+            CASE
+                WHEN (metrics->'avg_metrics'->name)::text = '"Infinity"'::text THEN 'number'
+                WHEN (metrics->'avg_metrics'->name)::text = '"-Infinity"'::text THEN 'number'
+                WHEN (metrics->'avg_metrics'->name)::text = '"NaN"'::text THEN 'number'
+                WHEN metrics->'avg_metrics'->>name ~
+                    '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})?$' THEN 'date'
+                ELSE 'string'
+            END
         ELSE jsonb_typeof(metrics->'avg_metrics'->name)
     END as metric_type,
     trial_id,
@@ -65,7 +80,7 @@ ORDER BY trial_id, name
 training_numeric_trial_metrics as (
 SELECT name, trial_id
 FROM training_trial_metrics
-WHERE nonumbers IS NULL
+WHERE metric_type = 'number'
 ),
 -- Calculates count, sum, min, max on each numeric metric name and trial ID pair.
 -- Also adds just the name for non numeric metrics to ensure we record every metric.
@@ -76,7 +91,8 @@ SELECT
     count(1) as count_agg,
     sum((steps.metrics->'avg_metrics'->>name)::double precision) as sum_agg,
     min((steps.metrics->'avg_metrics'->>name)::double precision) as min_agg,
-    max((steps.metrics->'avg_metrics'->>name)::double precision) as max_agg
+    max((steps.metrics->'avg_metrics'->>name)::double precision) as max_agg,
+    'number' as metric_type
 FROM training_numeric_trial_metrics ntm INNER JOIN steps
 ON steps.trial_id=ntm.trial_id
 WHERE steps.metrics->'avg_metrics'->name IS NOT NULL
@@ -88,9 +104,10 @@ SELECT
     NULL as count_agg,
     NULL as sum,
     NULL as min,
-    NULL as max
+    NULL as max,
+    metric_type as metric_type
 FROM training_trial_metrics
-WHERE nonumbers IS NOT NULL
+WHERE metric_type != 'number'
 ),
 -- Gets the last reported metric for each trial. Note if we report
 -- {"a": 1} and {"b": 1} we consider {"b": 1} to be the last reported
@@ -119,7 +136,8 @@ training_combined_latest_agg as (SELECT
     tma.sum_agg,
     tma.min_agg,
     tma.max_agg,
-    lt.latest_value
+    lt.latest_value,
+    tma.metric_type
 FROM latest_training lt FULL OUTER JOIN training_trial_metric_aggs tma ON
     lt.trial_id = tma.trial_id AND lt.name = tma.name
 ),
@@ -132,7 +150,8 @@ training_trial_metrics_final as (
                 'sum', sum_agg,
                 'min', CASE WHEN max_agg = 'NaN'::double precision THEN 'NaN'::double precision ELSE min_agg END,
                 'max', max_agg,
-                'last', latest_value
+                'last', latest_value,
+                'type', metric_type
             )
         )) as training_metrics
     FROM training_combined_latest_agg
@@ -143,14 +162,29 @@ validation_trial_metrics as (
 SELECT
     name,
     trial_id,
-    sum(entries) FILTER (WHERE metric_type != 'number') as nonumbers
+    CASE sum(entries)
+        WHEN sum(entries) FILTER (WHERE metric_type = 'number') THEN 'number'
+        WHEN sum(entries) FILTER (WHERE metric_type = 'string') THEN 'string'
+        WHEN sum(entries) FILTER (WHERE metric_type = 'date') THEN 'date'
+        WHEN sum(entries) FILTER (WHERE metric_type = 'object') THEN 'object'
+        WHEN sum(entries) FILTER (WHERE metric_type = 'boolean') THEN 'boolean'
+        WHEN sum(entries) FILTER (WHERE metric_type = 'array') THEN 'array'
+        WHEN sum(entries) FILTER (WHERE metric_type = 'null') THEN 'null'
+        ELSE 'string'
+    END as metric_type
 FROM (
     SELECT
     name,
     CASE
-        WHEN (metrics->'validation_metrics'->name)::text = '"Infinity"'::text THEN 'number'
-        WHEN (metrics->'validation_metrics'->name)::text = '"-Infinity"'::text THEN 'number'
-        WHEN (metrics->'validation_metrics'->name)::text = '"NaN"'::text THEN 'number'
+        WHEN jsonb_typeof(metrics->'validation_metrics'->name) = 'string' THEN
+            CASE
+                WHEN (metrics->'validation_metrics'->name)::text = '"Infinity"'::text THEN 'number'
+                WHEN (metrics->'validation_metrics'->name)::text = '"-Infinity"'::text THEN 'number'
+                WHEN (metrics->'validation_metrics'->name)::text = '"NaN"'::text THEN 'number'
+                WHEN metrics->'validation_metrics'->>name ~
+                    '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})?$' THEN 'date'
+                ELSE 'string'
+            END
         ELSE jsonb_typeof(metrics->'validation_metrics'->name)
     END as metric_type,
     trial_id,
@@ -173,7 +207,7 @@ ORDER BY trial_id, name
 validation_numeric_trial_metrics as (
 SELECT name, trial_id
 FROM validation_trial_metrics
-WHERE nonumbers IS NULL
+WHERE metric_type = 'number'
 ),
 validation_trial_metric_aggs as (
 SELECT
@@ -182,7 +216,8 @@ SELECT
     count(1) as count_agg,
     sum((validations.metrics->'validation_metrics'->>name)::double precision) as sum_agg,
     min((validations.metrics->'validation_metrics'->>name)::double precision) as min_agg,
-    max((validations.metrics->'validation_metrics'->>name)::double precision) as max_agg
+    max((validations.metrics->'validation_metrics'->>name)::double precision) as max_agg,
+    'number' as metric_type
 FROM validation_numeric_trial_metrics ntm INNER JOIN validations
 ON validations.trial_id=ntm.trial_id
 WHERE validations.metrics->'validation_metrics'->name IS NOT NULL
@@ -194,9 +229,10 @@ SELECT
     NULL as count_agg,
     NULL as sum,
     NULL as min,
-    NULL as max
+    NULL as max,
+    metric_type as metric_type
 FROM validation_trial_metrics
-WHERE nonumbers IS NOT NULL
+WHERE metric_type != 'number'
 ),
 latest_validation as (
     SELECT s.trial_id,
@@ -221,6 +257,7 @@ validation_combined_latest_agg as (SELECT
     tma.sum_agg,
     tma.min_agg,
     tma.max_agg,
+    tma.metric_type,
     lt.latest_value
 FROM latest_validation lt FULL OUTER JOIN validation_trial_metric_aggs tma ON
     lt.trial_id = tma.trial_id AND lt.name = tma.name
@@ -233,7 +270,8 @@ validation_trial_metrics_final as (
                 'sum', sum_agg,
                 'min', CASE WHEN max_agg = 'NaN'::double precision THEN 'NaN'::double precision ELSE min_agg END,
                 'max', max_agg,
-                'last', latest_value
+                'last', latest_value,
+                'type', metric_type
             )
         )) as validation_metrics
     FROM validation_combined_latest_agg
