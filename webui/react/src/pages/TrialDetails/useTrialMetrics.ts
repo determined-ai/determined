@@ -8,17 +8,65 @@ import { timeSeries } from 'services/api';
 import usePolling from 'shared/hooks/usePolling';
 import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
-import { Metric, MetricType, RunState, Scale, TrialDetails } from 'types';
+import { Metric, MetricContainer, MetricType, RunState, Scale, TrialDetails } from 'types';
 import handleError from 'utils/error';
 import { metricToKey } from 'utils/metric';
 
 type MetricName = string;
-
 export interface TrialMetrics {
   data: Record<MetricName, Serie>;
   metrics: Metric[];
 }
 
+const summarizedMetricToSeries = (allDownsampledMetrics: MetricContainer[], selectedMetrics: Metric[]): 
+Record<string, Serie> => {
+  const rawBatchValuesMap: Record<string, [number, number][]> = {};
+  const rawBatchTimesMap: Record<string, [number, number][]> = {};
+  const rawBatchEpochMap: Record<string, [number, number][]> = {};
+  allDownsampledMetrics.forEach((summMetric) => {
+    summMetric.data.forEach((avgMetrics) => {
+      selectedMetrics.forEach((metric) => {
+        const value = avgMetrics.values[metric.name];
+        if (!rawBatchValuesMap[metric.name]) rawBatchValuesMap[metric.name] = [];
+
+        if (!rawBatchTimesMap[metric.name]) rawBatchTimesMap[metric.name] = [];
+
+        if (!rawBatchEpochMap[metric.name]) rawBatchEpochMap[metric.name] = [];
+
+        if (value) {
+          rawBatchValuesMap[metric.name]?.push([avgMetrics.batches, value]);
+          if (avgMetrics.time)
+            rawBatchTimesMap[metric.name]?.push([
+              new Date(avgMetrics.time).getTime() / 1000,
+              value,
+            ]);
+          if (avgMetrics.epoch)
+            rawBatchEpochMap[metric.name]?.push([avgMetrics.epoch, value]);
+        }
+      });
+    });
+  });
+  const trialData: Record<string, Serie> = {};
+  selectedMetrics.forEach((metric) => {
+    const data: Partial<Record<XAxisDomain, [number, number][]>> = {
+      [XAxisDomain.Batches]: rawBatchValuesMap[metric.name],
+      [XAxisDomain.Time]: rawBatchTimesMap[metric.name],
+      [XAxisDomain.Epochs]: rawBatchEpochMap[metric.name],
+    };
+    const series: Serie = {
+      color:
+        metric.type === MetricType.Validation
+          ? VALIDATION_SERIES_COLOR
+          : TRAINING_SERIES_COLOR,
+      data,
+      metricType: metric.type,
+      name: metric.name,
+    };
+    trialData[metricToKey(metric)] = series;
+  });
+
+  return trialData
+}
 export const useTrialMetrics = (
   trial: TrialDetails | undefined,
 ): {
@@ -56,50 +104,7 @@ export const useTrialMetrics = (
 
       setData((prev) => {
         if (isEqual(prev, response)) return prev;
-        const rawBatchValuesMap: Record<string, [number, number][]> = {};
-        const rawBatchTimesMap: Record<string, [number, number][]> = {};
-        const rawBatchEpochMap: Record<string, [number, number][]> = {};
-        response[0]?.metrics.forEach((summMetric) => {
-          summMetric.data.forEach((avgMetrics) => {
-            metrics.forEach((metric) => {
-              const value = avgMetrics.values[metric.name];
-              if (!rawBatchValuesMap[metric.name]) rawBatchValuesMap[metric.name] = [];
-
-              if (!rawBatchTimesMap[metric.name]) rawBatchTimesMap[metric.name] = [];
-
-              if (!rawBatchEpochMap[metric.name]) rawBatchEpochMap[metric.name] = [];
-
-              if (value) {
-                rawBatchValuesMap[metric.name]?.push([avgMetrics.batches, value]);
-                if (avgMetrics.time)
-                  rawBatchTimesMap[metric.name]?.push([
-                    new Date(avgMetrics.time).getTime() / 1000,
-                    value,
-                  ]);
-                if (avgMetrics.epoch)
-                  rawBatchEpochMap[metric.name]?.push([avgMetrics.epoch, value]);
-              }
-            });
-          });
-        });
-        const trialData: Record<string, Serie> = {};
-        metrics.forEach((metric) => {
-          const data: Partial<Record<XAxisDomain, [number, number][]>> = {
-            [XAxisDomain.Batches]: rawBatchValuesMap[metric.name],
-            [XAxisDomain.Time]: rawBatchTimesMap[metric.name],
-            [XAxisDomain.Epochs]: rawBatchEpochMap[metric.name],
-          };
-          const series: Serie = {
-            color:
-              metric.type === MetricType.Validation
-                ? VALIDATION_SERIES_COLOR
-                : TRAINING_SERIES_COLOR,
-            data,
-            metricType: metric.type,
-            name: metric.name,
-          };
-          trialData[metricToKey(metric)] = series;
-        });
+        const trialData = summarizedMetricToSeries(response[0]?.metrics, metrics)
         return trialData;
       });
     }
