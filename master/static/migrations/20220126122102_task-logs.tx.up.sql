@@ -16,4 +16,4 @@ CREATE TABLE public.task_logs (
     log bytea NOT NULL
 );
 
-CREATE INDEX ix_task_logs_task_id ON public.task_logs USING btree (task_id);
+CREATE INDEX ix_task_logs_task_id ON public.task_logs USING btree(task_id);

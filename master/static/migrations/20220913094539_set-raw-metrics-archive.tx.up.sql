@@ -15,15 +15,14 @@ FROM ( -- Get max trial_run_id for each (trial_id, total_batches) pair
             SELECT
                 steps_completed,
                 trial_id,
-                row_number()
-                    OVER (PARTITION BY uuid ORDER BY id ASC)
-                AS row
+                row_number() 
+                OVER(PARTITION BY uuid ORDER BY id ASC) AS row
             FROM checkpoints_view
         ) dups WHERE dups.row > 1
     )
     GROUP BY (trial_id, total_batches)
 ) AS subquery_res
 WHERE
-    subquery_res.trial_id = update_steps.trial_id
-    AND subquery_res.total_batches = update_steps.total_batches
-    AND subquery_res.trial_run_id = update_steps.trial_run_id;
+    subquery_res.trial_id=update_steps.trial_id
+    AND subquery_res.total_batches=update_steps.total_batches
+    AND subquery_res.trial_run_id=update_steps.trial_run_id;

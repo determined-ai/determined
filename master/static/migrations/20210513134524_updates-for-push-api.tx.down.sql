@@ -1,4 +1,4 @@
-DROP TYPE public . RUN_TYPE;
+DROP TYPE public.run_type;
 
 DROP TABLE public.runs;
 

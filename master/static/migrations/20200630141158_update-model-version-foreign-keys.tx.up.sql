@@ -24,6 +24,6 @@ CREATE TABLE public.model_versions (
 
     CONSTRAINT model_and_version_unique UNIQUE (model_name, version),
     CONSTRAINT model_versions_pkey PRIMARY KEY (model_name, version),
-    FOREIGN KEY (model_name) REFERENCES public.models (name),
-    FOREIGN KEY (checkpoint_uuid) REFERENCES public.checkpoints (uuid)
+    FOREIGN KEY(model_name) REFERENCES public.models(name),
+    FOREIGN KEY(checkpoint_uuid) REFERENCES public.checkpoints(uuid)
 );

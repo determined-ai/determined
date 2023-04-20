@@ -1,5 +1,5 @@
 ALTER TABLE public.allocation_sessions
-ADD COLUMN owner_id int REFERENCES users (id);
+ADD COLUMN owner_id int REFERENCES users(id);
 
 -- Add owner_id for in progress trials.
 UPDATE public.allocation_sessions allocation_sessions

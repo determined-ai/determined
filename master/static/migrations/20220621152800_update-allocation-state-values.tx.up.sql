@@ -10,7 +10,7 @@ CREATE TYPE public.allocation_state AS ENUM (
 
 ALTER TABLE public.allocations
 ALTER COLUMN state
-SET DATA TYPE public . ALLOCATION_STATE
+SET DATA TYPE public.allocation_state
 USING (CASE state
     WHEN 0 THEN 'PENDING'
     WHEN 1 THEN 'ASSIGNED'
@@ -19,4 +19,4 @@ USING (CASE state
     WHEN 4 THEN 'RUNNING'
     WHEN 5 THEN 'TERMINATING'
     WHEN 6 THEN 'TERMINATED'
-END)::public . ALLOCATION_STATE;
+END)::public.allocation_state;    

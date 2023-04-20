@@ -6,9 +6,9 @@ CREATE TABLE public.experiment_snapshots (
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
 
-    CONSTRAINT fk_experiment_snapshots_experiments_experiment_id FOREIGN KEY (
+    CONSTRAINT fk_experiment_snapshots_experiments_experiment_id FOREIGN KEY(
         experiment_id
-    ) REFERENCES public.experiments (id)
+    ) REFERENCES public.experiments(id)
 );
 
 CREATE TABLE public.trial_snapshots (
@@ -21,13 +21,13 @@ CREATE TABLE public.trial_snapshots (
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
 
-    CONSTRAINT fk_trial_snapshots_trials_trial_id FOREIGN KEY (
+    CONSTRAINT fk_trial_snapshots_trials_trial_id FOREIGN KEY(
         trial_id
-    ) REFERENCES public.trials (id),
-    CONSTRAINT fk_trial_snapshots_experiments_experiment_id FOREIGN KEY (
+    ) REFERENCES public.trials(id),
+    CONSTRAINT fk_trial_snapshots_experiments_experiment_id FOREIGN KEY(
         experiment_id
-    ) REFERENCES public.experiments (id),
-    CONSTRAINT uq_trial_snapshots_experiment_id_request_id UNIQUE (
+    ) REFERENCES public.experiments(id),
+    CONSTRAINT uq_trial_snapshots_experiment_id_request_id UNIQUE(
         experiment_id, request_id
     )
 );

@@ -17,4 +17,4 @@ ALTER TABLE public.model_versions ADD COLUMN user_id INTEGER;
 /* What should the default value of user id be here? Should we do the same thing we did with models and make it correspond to the determined user? */
 ALTER TABLE public.model_versions ADD CONSTRAINT users_fk FOREIGN KEY (
     user_id
-) REFERENCES public.users (id);
+) REFERENCES public.users(id);

@@ -1,6 +1,6 @@
 ALTER TABLE public.models DROP CONSTRAINT models_pkey CASCADE;
 ALTER TABLE public.models ADD PRIMARY KEY (name);
-ALTER TABLE public.model_versions ADD COLUMN model_name character varying REFERENCES public.models (
+ALTER TABLE public.model_versions ADD COLUMN model_name character varying REFERENCES public.models(
     name
 );
 WITH id_name_map AS (

@@ -20,7 +20,7 @@ INSERT INTO jobs (
 );
 
 ALTER TABLE public.experiments
-ADD COLUMN job_id text REFERENCES public.jobs (job_id);
+ADD COLUMN job_id text REFERENCES public.jobs(job_id);
 
 UPDATE experiments
 SET job_id = 'backfilled-' || id
