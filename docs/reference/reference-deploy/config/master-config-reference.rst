@@ -9,7 +9,7 @@ configuration file <topic-guides_yaml>`, environment variables, or command-line 
 configuration file is typically located at ``/etc/determined/master.yaml`` on the master and it is
 read when the master starts up.
 
-To inspect the configuration of an active master, use the Determined CLI by executing the command
+To inspect the configuration of an active master, use the Determined CLI and execute the command
 ``det master config``.
 
 The master supports the following configuration settings:
@@ -960,11 +960,11 @@ Whether to use spot instances. Defaults to ``false``. See :ref:`aws-spot` for mo
 ``spot_max_price``
 ^^^^^^^^^^^^^^^^^^
 
-Optional field indicating the maximum price per hour that you are willing to pay for a spot
-instance. The market price for a spot instance varies based on supply and demand. If the market
-price exceeds the ``spot_max_price``, Determined will not launch instances. This field must be a
-string and must not include a currency sign. For example, $2.50 should be represented as ``"2.50"``.
-Defaults to the on-demand price for the given instance type.
+Optional. Indicates the maximum price per hour that you are willing to pay for a spot instance. The
+market price for a spot instance varies based on supply and demand. If the market price exceeds the
+``spot_max_price``, Determined will not launch instances. This field must be a string and must not
+include a currency sign. For example, $2.50 should be represented as ``"2.50"``. Defaults to the
+on-demand price for the given instance type.
 
 ``type: gcp``
 -------------
