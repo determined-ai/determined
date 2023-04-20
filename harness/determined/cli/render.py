@@ -9,7 +9,6 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence, Union
 
 import dateutil.parser
 import tabulate
-from pygments import formatters, highlight, lexers
 
 from determined.common import util, yaml
 
@@ -152,22 +151,14 @@ def yes_or_no(prompt: str) -> bool:
         return False
 
 
-def print_json(data: Union[str, Any], skip_coloring: bool = False) -> None:
+def print_json(data: Union[str, Any]) -> None:
     """
     Print JSON data in a human-readable format.
-    skip_coloring: if True, do not colorize the output.
     """
     try:
         if isinstance(data, str):
             data = json.loads(data)
         formatted_json = json.dumps(data, sort_keys=True, indent=2)
-
-        if not skip_coloring and sys.stdout.isatty():
-            colorful_json = highlight(
-                str(formatted_json), lexers.JsonLexer(), formatters.TerminalFormatter()
-            )
-            print(colorful_json)
-        else:
-            print(formatted_json)
+        print(formatted_json)
     except json.decoder.JSONDecodeError:
         print(data)
