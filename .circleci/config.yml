@@ -2342,12 +2342,12 @@ workflows:
           # Managed devcluster restarts the master over the course of the tests,
           # so `compare_stats` cannot get the full logs from `det master logs`.
           extra-pytest-flags: "--no-compare-stats"
-      
+
       - test-e2e:
           name: test-e2e-port-registry
-          requires: 
+          requires:
             - build-go
-          parallelism: 1 
+          parallelism: 1
           devcluster-config: port-registry.devcluster.yaml
           mark: port_registry
           target-stage: agent
@@ -2595,6 +2595,21 @@ workflows:
               parallelism: [2]
               mark: ["det_deploy_local"]
               det-version: [$CIRCLE_SHA1]
+
+  test-e2e-quarantined:
+    jobs:
+      - build-proto
+      - build-helm
+      - build-react:
+          dev-mode: true
+      - build-docs:
+          requires:
+            - build-helm
+            - build-proto
+      - package-and-push-system-local:
+          requires:
+            - build-react
+            - build-docs
 
       - test-det-deploy:
           name: test-det-deploy-local-quarantine
