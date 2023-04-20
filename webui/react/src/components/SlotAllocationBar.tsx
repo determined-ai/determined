@@ -1,9 +1,9 @@
-import { Popover } from 'antd';
 import React, { useMemo } from 'react';
 
 import Badge from 'components/Badge';
 import Bar from 'components/Bar';
 import { ConditionalWrapper } from 'components/ConditionalWrapper';
+import Popover from 'components/kit/Popover';
 import { resourceStateToLabel } from 'constants/states';
 import { paths } from 'routes/utils';
 import { V1ResourcePoolType } from 'services/api-ts-sdk';

@@ -24,6 +24,7 @@ import { Modal, useModal } from 'components/kit/Modal';
 import Nameplate from 'components/kit/Nameplate';
 import Pagination from 'components/kit/Pagination';
 import Pivot from 'components/kit/Pivot';
+import Popover from 'components/kit/Popover';
 import Select, { Option } from 'components/kit/Select';
 import Toggle from 'components/kit/Toggle';
 import Tooltip from 'components/kit/Tooltip';
@@ -76,6 +77,7 @@ const ComponentTitles = {
   Nameplate: 'Nameplate',
   Pagination: 'Pagination',
   Pivot: 'Pivot',
+  Popover: 'Popover',
   Select: 'Select',
   Tags: 'Tags',
   Toggle: 'Toggle',
@@ -103,6 +105,88 @@ const ComponentSection: React.FC<Props> = ({ children, id, title }: Props): JSX.
       <h3 id={id}>{title}</h3>
       {children}
     </article>
+  );
+};
+
+const PopoverSection: React.FC = () => {
+  const text = 'Popover text';
+  const buttonWidth = 70;
+  return (
+    <ComponentSection id="Popover" title="Popover">
+      <AntDCard>
+        <p>
+          <code>{'<Popover>'}</code> is a simple popup menu to provide extra information or
+          operations.
+        </p>
+      </AntDCard>
+      <AntDCard title="Best practices">
+        <p>
+          Comparing with <code>{'<Tooltip>'}</code>, besides information <code>{'<Popover>'}</code>{' '}
+          card can also provide action elements like links and buttons.
+        </p>
+      </AntDCard>
+      <AntDCard title="Usage">
+        <strong>Popover default</strong>
+        <p>
+          <Popover content={text}>
+            <code>{'<Popover>'}</code>
+          </Popover>
+        </p>
+        <strong>Popover placement</strong>
+        <div>
+          <div style={{ marginLeft: buttonWidth, whiteSpace: 'nowrap' }}>
+            <Tooltip placement="topLeft" title={text}>
+              <Button>TL</Button>
+            </Tooltip>
+            <Tooltip placement="top" title={text}>
+              <Button>Top</Button>
+            </Tooltip>
+            <Tooltip placement="topRight" title={text}>
+              <Button>TR</Button>
+            </Tooltip>
+          </div>
+          <div style={{ float: 'left', width: buttonWidth }}>
+            <Tooltip placement="leftTop" title={text}>
+              <Button>LT</Button>
+            </Tooltip>
+            <Tooltip placement="left" title={text}>
+              <Button>Left</Button>
+            </Tooltip>
+            <Tooltip placement="leftBottom" title={text}>
+              <Button>LB</Button>
+            </Tooltip>
+          </div>
+          <div style={{ marginLeft: buttonWidth * 4 + 24, width: buttonWidth }}>
+            <Tooltip placement="rightTop" title={text}>
+              <Button>RT</Button>
+            </Tooltip>
+            <Tooltip placement="right" title={text}>
+              <Button>Right</Button>
+            </Tooltip>
+            <Tooltip placement="rightBottom" title={text}>
+              <Button>RB</Button>
+            </Tooltip>
+          </div>
+          <div style={{ clear: 'both', marginLeft: buttonWidth, whiteSpace: 'nowrap' }}>
+            <Tooltip placement="bottomLeft" title={text}>
+              <Button>BL</Button>
+            </Tooltip>
+            <Tooltip placement="bottom" title={text}>
+              <Button>Bottom</Button>
+            </Tooltip>
+            <Tooltip placement="bottomRight" title={text}>
+              <Button>BR</Button>
+            </Tooltip>
+          </div>
+        </div>
+        <strong>Popover with tags</strong>
+        <p>
+          <Popover content={useTags(['tag1', 'tag2'])()}>
+            <code>{'Hover to see tags'}</code>
+          </Popover>
+        </p>
+      </AntDCard>
+    </ComponentSection>
   );
 };
 
@@ -2219,6 +2303,7 @@ const Components = {
   Nameplate: <NameplateSection />,
   Pagination: <PaginationSection />,
   Pivot: <PivotSection />,
+  Popover: <PopoverSection />,
   Select: <SelectSection />,
   Tags: <TagsSection />,
   Toggle: <ToggleSection />,
