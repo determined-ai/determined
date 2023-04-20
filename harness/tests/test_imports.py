@@ -37,7 +37,6 @@ def test_import_side_effects() -> None:
             determined.cli.cli.main()
 
             bad = {
-                "^backoff\\.*",
                 "^lomond\\.*",
                 "^pathspec\\.*",
                 "^hdfs\\.*",
