@@ -1,5 +1,3 @@
-import { Col, Row } from 'antd';
-
 import Button from 'components/kit/Button';
 import Select, { Option } from 'components/kit/Select';
 import { V1ColumnType, V1ProjectColumn } from 'services/api-ts-sdk';
@@ -84,26 +82,22 @@ const MultiSortRow: React.FC<MultiSortRowProps> = ({ sort, columns, onChange, on
     Loadable.getOrElse([], columns).find((c) => c.column === sort.column)?.type ||
     V1ColumnType.UNSPECIFIED;
   return (
-    <Row align="middle" gutter={8}>
-      <Col flex="auto">
-        <Row gutter={8}>
-          <Col span={12}>
-            <ColumnOptions
-              columns={columns}
-              value={sort.column}
-              onChange={(column) => onChange({ ...sort, column })}
-            />
-          </Col>
-          <Col span={12}>
-            <DirectionOptions
-              type={valueType}
-              value={sort.direction}
-              onChange={(direction) => onChange({ ...sort, direction })}
-            />
-          </Col>
-        </Row>
-      </Col>
-      <Col flex="none">
+    <div className={css.sortRow}>
+      <div className={css.select}>
+        <ColumnOptions
+          columns={columns}
+          value={sort.column}
+          onChange={(column) => onChange({ ...sort, column })}
+        />
+      </div>
+      <div className={css.select}>
+        <DirectionOptions
+          type={valueType}
+          value={sort.direction}
+          onChange={(direction) => onChange({ ...sort, direction })}
+        />
+      </div>
+      <div>
         <Button
           danger
           icon={<Icon name="close" />}
@@ -111,8 +105,8 @@ const MultiSortRow: React.FC<MultiSortRowProps> = ({ sort, columns, onChange, on
           size="small"
           onClick={onRemove}
         />
-      </Col>
-    </Row>
+      </div>
+    </div>
   );
 };
 

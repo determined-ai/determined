@@ -9,6 +9,16 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  margin: 0 4px;
-  overflow: clip scroll;
+}
+.sortRow {
+  align-items: center;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 1fr 1fr min-content;
+  justify-content: space-between;
+  overflow-y: scroll;
+
+  .select {
+    min-width: 0;
+  }
 }
