@@ -13,8 +13,8 @@ type UserAuthZBasic struct{}
 // CanGetUser always returns true.
 func (a *UserAuthZBasic) CanGetUser(
 	ctx context.Context, curUser, targetUser model.User,
-) (canGetUser bool, serverError error) {
-	return true, nil
+) error {
+	return nil
 }
 
 // FilterUserList always returns the input user list and does not filtering.

@@ -11,6 +11,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/determined-ai/determined/master/internal/api/apiutils"
+	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/db"
 	exputil "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
@@ -34,10 +35,8 @@ func (a *apiServer) GetProjectByID(
 		return nil, errors.Wrapf(err, "error fetching project (%d) from database", id)
 	}
 
-	if ok, err := project.AuthZProvider.Get().CanGetProject(ctx, curUser, p); err != nil {
-		return nil, err
-	} else if !ok {
-		return nil, notFoundErr
+	if err := project.AuthZProvider.Get().CanGetProject(ctx, curUser, p); err != nil {
+		return nil, authz.SubIfUnauthorized(err, notFoundErr)
 	}
 	return p, nil
 }
@@ -636,12 +635,11 @@ func (a *apiServer) GetProjectsByUserActivity(
 	viewableProjects := []*projectv1.Project{}
 
 	for _, pr := range projects {
-		canView, err := project.AuthZProvider.Get().CanGetProject(ctx, *curUser, pr)
-		if err != nil {
-			return nil, err
-		}
-		if canView {
+		err := project.AuthZProvider.Get().CanGetProject(ctx, *curUser, pr)
+		if !authz.IsPermissionDenied(err) {
 			viewableProjects = append(viewableProjects, pr)
+		} else if err != nil {
+			return nil, err
 		}
 	}
 

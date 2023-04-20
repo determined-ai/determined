@@ -72,51 +72,31 @@ func (_m *NSCAuthZ) CanGetActiveTasksCount(ctx context.Context, curUser model.Us
 }
 
 // CanGetNSC provides a mock function with given fields: ctx, curUser, workspaceID
-func (_m *NSCAuthZ) CanGetNSC(ctx context.Context, curUser model.User, workspaceID model.AccessScopeID) (bool, error) {
+func (_m *NSCAuthZ) CanGetNSC(ctx context.Context, curUser model.User, workspaceID model.AccessScopeID) error {
 	ret := _m.Called(ctx, curUser, workspaceID)
 
-	var r0 bool
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, model.User, model.AccessScopeID) (bool, error)); ok {
-		return rf(ctx, curUser, workspaceID)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, model.User, model.AccessScopeID) bool); ok {
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, model.User, model.AccessScopeID) error); ok {
 		r0 = rf(ctx, curUser, workspaceID)
 	} else {
-		r0 = ret.Get(0).(bool)
+		r0 = ret.Error(0)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, model.User, model.AccessScopeID) error); ok {
-		r1 = rf(ctx, curUser, workspaceID)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
+	return r0
 }
 
 // CanGetTensorboard provides a mock function with given fields: ctx, curUser, workspaceID, experimentIDs, trialIDs
-func (_m *NSCAuthZ) CanGetTensorboard(ctx context.Context, curUser model.User, workspaceID model.AccessScopeID, experimentIDs []int32, trialIDs []int32) (bool, error) {
+func (_m *NSCAuthZ) CanGetTensorboard(ctx context.Context, curUser model.User, workspaceID model.AccessScopeID, experimentIDs []int32, trialIDs []int32) error {
 	ret := _m.Called(ctx, curUser, workspaceID, experimentIDs, trialIDs)
 
-	var r0 bool
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, model.User, model.AccessScopeID, []int32, []int32) (bool, error)); ok {
-		return rf(ctx, curUser, workspaceID, experimentIDs, trialIDs)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, model.User, model.AccessScopeID, []int32, []int32) bool); ok {
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, model.User, model.AccessScopeID, []int32, []int32) error); ok {
 		r0 = rf(ctx, curUser, workspaceID, experimentIDs, trialIDs)
 	} else {
-		r0 = ret.Get(0).(bool)
+		r0 = ret.Error(0)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, model.User, model.AccessScopeID, []int32, []int32) error); ok {
-		r1 = rf(ctx, curUser, workspaceID, experimentIDs, trialIDs)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
+	return r0
 }
 
 // CanSetNSCsPriority provides a mock function with given fields: ctx, curUser, workspaceID, priority

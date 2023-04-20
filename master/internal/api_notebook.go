@@ -16,6 +16,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/api/apiutils"
+	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/command"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
@@ -96,13 +97,9 @@ func (a *apiServer) GetNotebook(
 		return nil, err
 	}
 
-	if ok, err := command.AuthZProvider.Get().CanGetNSC(
-		ctx, *curUser, model.AccessScopeID(resp.Notebook.WorkspaceId),
-	); err != nil {
-		return nil, err
-	} else if !ok { // permission denied.
-		// report the error as if the notebook does not exist.
-		return nil, errActorNotFound(addr)
+	if err = command.AuthZProvider.Get().CanGetNSC(
+		ctx, *curUser, model.AccessScopeID(resp.Notebook.WorkspaceId)); err != nil {
+		return nil, authz.SubIfUnauthorized(err, errActorNotFound((addr)))
 	}
 	return resp, nil
 }
@@ -195,9 +192,9 @@ func (a *apiServer) isNTSCPermittedToLaunch(
 	}
 
 	if spec.TaskType == model.TaskTypeTensorboard {
-		if ok, err := command.AuthZProvider.Get().CanGetTensorboard(
+		if err := command.AuthZProvider.Get().CanGetTensorboard(
 			ctx, *user, workspaceID, spec.Metadata.ExperimentIDs, spec.Metadata.TrialIDs,
-		); err != nil || !ok {
+		); err != nil {
 			return err
 		}
 	} else {

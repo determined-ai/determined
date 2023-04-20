@@ -15,6 +15,7 @@ import (
 	"github.com/hashicorp/go-multierror"
 
 	"github.com/determined-ai/determined/master/internal/api"
+	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/command"
 	"github.com/determined-ai/determined/master/internal/db"
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
@@ -64,9 +65,9 @@ func canAccessNTSCTask(ctx context.Context, curUser model.User, taskID model.Tas
 	} else if err != nil {
 		return false, err
 	}
-	return command.AuthZProvider.Get().CanGetNSC(
-		ctx, curUser, spec.WorkspaceID,
-	)
+	err = command.AuthZProvider.Get().CanGetNSC(
+		ctx, curUser, spec.WorkspaceID)
+	return err != nil, err
 }
 
 func (a *apiServer) canDoActionsOnTask(
@@ -97,13 +98,9 @@ func (a *apiServer) canDoActionsOnTask(
 			return err
 		}
 
-		var ok bool
-		if ok, err = expauth.AuthZProvider.Get().CanGetExperiment(ctx, *curUser, exp); err != nil {
-			return err
-		} else if !ok {
-			return errTaskNotFound
+		if err = expauth.AuthZProvider.Get().CanGetExperiment(ctx, *curUser, exp); err != nil {
+			return authz.SubIfUnauthorized(err, errTaskNotFound)
 		}
-
 		for _, action := range actions {
 			if err = action(ctx, *curUser, exp); err != nil {
 				return status.Error(codes.PermissionDenied, err.Error())
@@ -146,11 +143,8 @@ func (a *apiServer) canEditAllocation(ctx context.Context, allocationID string) 
 		return nil
 	}
 
-	var ok bool
-	if ok, err = expauth.AuthZProvider.Get().CanGetExperiment(ctx, *curUser, exp); err != nil {
-		return err
-	} else if !ok {
-		return errAllocationNotFound
+	if err = expauth.AuthZProvider.Get().CanGetExperiment(ctx, *curUser, exp); err != nil {
+		return authz.SubIfUnauthorized(err, errAllocationNotFound)
 	}
 	if err = expauth.AuthZProvider.Get().CanEditExperiment(ctx, *curUser, exp); err != nil {
 		return status.Error(codes.PermissionDenied, err.Error())
@@ -389,18 +383,15 @@ func (a *apiServer) GetTasks(
 			return nil, err
 		}
 
-		var ok bool
 		if !isExp {
-			ok, err = canAccessNTSCTask(ctx, *curUser, summary[allocationID].TaskID)
+			_, err = canAccessNTSCTask(ctx, *curUser, summary[allocationID].TaskID)
 		} else {
-			ok, err = expauth.AuthZProvider.Get().CanGetExperiment(ctx, *curUser, exp)
+			err = expauth.AuthZProvider.Get().CanGetExperiment(ctx, *curUser, exp)
 		}
-		if err != nil {
-			return nil, err
-		}
-
-		if ok {
+		if !authz.IsPermissionDenied(err) {
 			pbAllocationIDToSummary[string(allocationID)] = allocationSummary.Proto()
+		} else if err != nil {
+			return nil, err
 		}
 	}
 

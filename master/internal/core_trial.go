@@ -7,6 +7,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
 
+	"github.com/determined-ai/determined/master/internal/authz"
 	detContext "github.com/determined-ai/determined/master/internal/context"
 	"github.com/determined-ai/determined/master/internal/db"
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
@@ -26,14 +27,10 @@ func echoCanGetTrial(c echo.Context, m *Master, trialID string) error {
 	} else if err != nil {
 		return err
 	}
-	var ok bool
 	ctx := c.Request().Context()
-	if ok, err = expauth.AuthZProvider.Get().CanGetExperiment(ctx, curUser, exp); err != nil {
-		return err
-	} else if !ok {
-		return trialNotFound
+	if err = expauth.AuthZProvider.Get().CanGetExperiment(ctx, curUser, exp); err != nil {
+		return authz.SubIfUnauthorized(err, trialNotFound)
 	}
-
 	if err = expauth.AuthZProvider.Get().CanGetExperimentArtifacts(ctx, curUser, exp); err != nil {
 		return echo.NewHTTPError(http.StatusForbidden, err.Error())
 	}
