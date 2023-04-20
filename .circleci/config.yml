@@ -508,7 +508,7 @@ commands:
               pytest -vv -s \
               -m <<parameters.mark>> \
               --det-version="<<parameters.det-version>>" \
-            && s=0 && break || s=$?; done; (exit $s)
+            && s=0 || (s=$? && break); done; (exit $s)
 
   deploy-aws-cluster:
     parameters:
