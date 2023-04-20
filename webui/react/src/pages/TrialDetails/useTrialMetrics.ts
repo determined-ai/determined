@@ -17,9 +17,10 @@ export interface TrialMetrics {
   data: Record<MetricName, Serie>;
   metrics: Metric[];
 }
-
-const summarizedMetricToSeries = (allDownsampledMetrics: MetricContainer[], selectedMetrics: Metric[]): 
-Record<string, Serie> => {
+const summarizedMetricToSeries = (
+  allDownsampledMetrics: MetricContainer[],
+  selectedMetrics: Metric[],
+): Record<string, Serie> => {
   const rawBatchValuesMap: Record<string, [number, number][]> = {};
   const rawBatchTimesMap: Record<string, [number, number][]> = {};
   const rawBatchEpochMap: Record<string, [number, number][]> = {};
@@ -40,8 +41,7 @@ Record<string, Serie> => {
               new Date(avgMetrics.time).getTime() / 1000,
               value,
             ]);
-          if (avgMetrics.epoch)
-            rawBatchEpochMap[metric.name]?.push([avgMetrics.epoch, value]);
+          if (avgMetrics.epoch) rawBatchEpochMap[metric.name]?.push([avgMetrics.epoch, value]);
         }
       });
     });
@@ -55,9 +55,7 @@ Record<string, Serie> => {
     };
     const series: Serie = {
       color:
-        metric.type === MetricType.Validation
-          ? VALIDATION_SERIES_COLOR
-          : TRAINING_SERIES_COLOR,
+        metric.type === MetricType.Validation ? VALIDATION_SERIES_COLOR : TRAINING_SERIES_COLOR,
       data,
       metricType: metric.type,
       name: metric.name,
@@ -65,8 +63,8 @@ Record<string, Serie> => {
     trialData[metricToKey(metric)] = series;
   });
 
-  return trialData
-}
+  return trialData;
+};
 export const useTrialMetrics = (
   trial: TrialDetails | undefined,
 ): {
@@ -104,7 +102,7 @@ export const useTrialMetrics = (
 
       setData((prev) => {
         if (isEqual(prev, response)) return prev;
-        const trialData = summarizedMetricToSeries(response[0]?.metrics, metrics)
+        const trialData = summarizedMetricToSeries(response[0]?.metrics, metrics);
         return trialData;
       });
     }

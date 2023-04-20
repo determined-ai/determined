@@ -634,7 +634,7 @@ const decodeSummaryMetrics = (data: Sdk.V1DownsampledMetrics[]): types.MetricCon
         batches: pt.batches,
         epoch: pt.epoch,
         time: pt.time,
-        values: pt.values, 
+        values: pt.values,
       })),
       type:
         m.type === Sdk.V1MetricType.TRAINING
