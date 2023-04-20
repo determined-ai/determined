@@ -5,7 +5,6 @@ from determined.common.api._util import PageOpts, read_paginated, WARNING_MESSAG
 from determined.common.api.authentication import Authentication, salt_and_hash
 from determined.common.api.logs import (
     pprint_logs,
-    print_json_logs,
     trial_logs,
     task_logs,
 )

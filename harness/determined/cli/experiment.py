@@ -14,6 +14,7 @@ import tabulate
 import termcolor
 
 import determined as det
+import determined.cli.render
 import determined.experimental
 import determined.load
 from determined import cli
@@ -360,7 +361,7 @@ def describe(args: Namespace) -> None:
         responses.append(r)
 
     if args.json:
-        print(json.dumps([resp.to_json() for resp in responses], indent=4))
+        determined.cli.render.print_json([resp.to_json() for resp in responses])
         return
     exps = [resp.experiment for resp in responses]
 
@@ -617,7 +618,8 @@ def experiment_logs(args: Namespace) -> None:
             timestamp_after=args.timestamp_after,
         )
         if args.json:
-            api.print_json_logs(logs)
+            for log in logs:
+                render.print_json(log.to_json())
         else:
             api.pprint_logs(logs)
     finally:
