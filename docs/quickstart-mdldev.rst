@@ -2,24 +2,28 @@
  Quickstart for Model Developers
 #################################
 
-This quickstart uses the MNIST dataset to demonstrate basic Determined functionality and walks you
-through the steps needed to install Determined, run training jobs, and visualize experiment results
-in your browser. Three examples show the scalability and enhanced functionality gained from simple
-configuration setting changes:
+This quickstart demonstrates the basic functionality of Determined using the MNIST dataset. It 
+guides you through the process of installing Determined, running training jobs, and visualizing
+experiment results in your web browser.
 
--  Train on a local, single CPU or GPU.
--  Run a distributed training job on multiple GPUs.
--  Use hyperparameter tuning.
+There are three examples included in this quickstart that showcase the scalability and enhanced 
+functionality that can be achieved by making simple configuration changes:
 
-An *experiment* is a training job that consists of one or more variations, or trials, on the same
-model. By calling Determined API functions from your training loops, you automatically get metric
-frequency output, plots, and checkpointing for every experiment without writing extra code. You can
-use the WebUI to view model information, configuration settings, output logs, and training metrics
-for all of your experiments.
+-  Training on a local machine using a single CPU or GPU.
+-  Running a distributed training job on multiple GPUs.
+-  Utilizing hyperparameter tuning to optimize model performance.
 
-Each of these quickstart examples uses the same model code and example dataset, differing only in
-their configuration settings. For a list of all experiment configuration settings and more detailed
-information about each, see :doc:`/reference/reference-training/experiment-config-reference`.
+In Determined, an *experiment* refers to a training job that can consist of one or more 
+variations, or trials, on the same model. By using Determined API functions in your training 
+loops, you will automatically receive metric frequency output, plots, and checkpointing for 
+every experiment without the need to write extra code. 
+
+You can utilize the WebUI to view various information about your model including configuration 
+settings, output logs, and training metrics for all of your experiments.
+
+In these quickstart example, the same model code and example datasets are used, differing only in
+their configuration settings. For a complete list of all experiment configuration settings 
+and more detailed information about setting, refer to :doc:`/reference/reference-training/experiment-config-reference`.
 
 ***************
  Prerequisites
@@ -28,10 +32,10 @@ information about each, see :doc:`/reference/reference-training/experiment-confi
 Software
 ========
 
--  Determined *agent* and *master* nodes must be configured with Ubuntu 16.04 or higher, CentOS 7,
+-  Determined *agent* and *master* nodes configured with Ubuntu 16.04 or higher, CentOS 7,
    or macOS 10.13 or higher.
 
--  Agent nodes must have Docker installed.
+-  Agent nodes with Docker installed.
 
 -  To run jobs with GPUs, install Nvidia drivers, version 384.81 or higher, on each agent. The
    drivers can be installed as part of a CUDA installation but the rest of the CUDA toolkit is not
@@ -66,7 +70,7 @@ and run Docker on Linux or macOS.
  Quickstart Training Examples
 ******************************
 
-Download and extract the files used in this quickstart to a local directory:
+Download and extract the quickstart files to a local directory:
 
 #. Download link: :download:`mnist_pytorch.tgz </examples/mnist_pytorch.tgz>`.
 
@@ -76,7 +80,7 @@ Download and extract the files used in this quickstart to a local directory:
 
       tar xzvf mnist_pytorch.tgz
 
-You should see the following files in the ``mnist_pytorch`` directory:
+You'll see the following files in the ``mnist_pytorch`` directory:
 
 .. code::
 
@@ -91,8 +95,8 @@ You should see the following files in the ``mnist_pytorch`` directory:
 Configuration
 =============
 
-Each of the YAML-formatted configuration files corresponds to one of the following example
-experiments:
+Each YAML-formatted configuration file corresponds to an example
+experiment:
 
 +------------------------+------------------------------------------------------+
 | Configuration Filename | Example Experiment                                   |
@@ -123,19 +127,22 @@ you might want to review them to see how to call the Determined API from your co
 | ``model_def.py`` | Model definition and training/validation loops.                        |
 +------------------+------------------------------------------------------------------------+
 
-After gaining basic familiarity with Determined tools and operations, you can replacing these files
-with your model data and code, and setting configuration parameters for the kind of experiments you
+Once you have gained a basic familiarity with Determined's tools and operations, 
+you can start replacing the example files with your own model data and code. You can
+then set the configuration parameters that are specific to the experiments you
 want to run.
 
 *****************************************
  Run a Local Single CPU/GPU Training Job
 *****************************************
 
-This exercise trains a single model for a fixed number of batches, using constant values for all
-hyperparameters on a single *slot*. A slot is a CPU or GPU computing device, which the master
-schedules to run.
+This exercise involves training a single model on a single *slot*, either a CPU or GPU, 
+for a fixed number of batches using constant values for all hyperparameters. A slot is a 
+CPU or GPU computing device, which the master schedules to run.
 
-#. To install the Determined library, run the command below. We recommend installing the package into a specific Python Environment rather than the Global Environment. Therefore, before running this command, you may need to activate the desired Environment.
+#. To begin, install the Determined library by running the command below. 
+We recommend installing the package into a specific Python Environment rather than the Global Environment. Therefore, before running this command, you may need to activate the 
+desired Environment.
 
    .. code:: bash
 
@@ -225,16 +232,16 @@ the next example.
  Run a Remote Distributed Training Job
 ***************************************
 
-In the distributed training example, a Determined cluster comprises a master and one or more agents.
-The master provides centralized management of the agent resources.
+In the distributed training example, a Determined cluster consists of a master and one or more 
+agents, with the master providing centralized management of the agent resources.
 
-This example requires a Determined cluster with multiple GPUs and, while it does not fully
-demonstrate the benefits of distributed training, it does show how to work with added hardware
-resources.
+To run this example, you will need a Determined cluster with multiple GPUs. While this example
+does not fully demonstrate the benefits of distributed training, it will show you how to 
+work with added hardware resources.
 
-The ``distributed.yaml`` configuration file for this example is the same as the ``const.yaml`` file
-in the previous example, except that a ``resources.slots_per_trial`` field is defined and set to a
-value of ``8``:
+The configuration file for this example, ``distributed.yaml``, is similar to the ``const.yaml`` file
+used in the previous example, except for the addition of a ``resources.slots_per_trial`` field, 
+which is defined and set to a value of ``8``:
 
 .. code:: yaml
 
@@ -274,9 +281,10 @@ the number of GPUs per machine. You can change the value to match your hardware 
  Run a Hyperparameter Tuning Job
 *********************************
 
-This example demonstrates hyperparameter search. The example uses the ``adaptive.yaml``
-configuration file, which is similar to the ``const.yaml`` file in the first example but includes
-additional hyperparameter settings:
+This example showcases hyperparameter search in Determined.
+
+It uses the ``adaptive.yaml`` configuration file, which is similar to the ``const.yaml`` 
+file used in the first example, but includes additional hyperparameter settings:
 
 .. code:: yaml
 
