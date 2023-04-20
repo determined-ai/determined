@@ -797,7 +797,6 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 				metrics = append(metrics, &metric)
 			}
 		}
-
 	}
 
 	return metrics, nil

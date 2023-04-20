@@ -1564,9 +1564,9 @@ func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricTyp
 	}
 	switch metricType {
 	case apiv1.MetricType_METRIC_TYPE_TRAINING:
-		metricID = "training"
+		metricID = "training" //nolint:goconst
 	case apiv1.MetricType_METRIC_TYPE_VALIDATION:
-		metricID = "validation"
+		metricID = "validation" //nolint:goconst
 	default:
 		panic("Invalid metric type")
 	}

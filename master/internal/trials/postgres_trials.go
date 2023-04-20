@@ -356,10 +356,12 @@ func MetricsTimeSeries(trialID int32, startTime time.Time,
 		ColumnExpr("(metrics ->'?' ->> 'epoch')::float8 as epoch", bun.Safe(metricsObjectName))
 
 	for _, metricName := range metricNames {
-		subq = subq.ColumnExpr("(metrics ->'?' ->> ?)::float8 as "+metricName, bun.Safe(metricsObjectName), metricName)
+		subq = subq.ColumnExpr("(metrics ->'?' ->> ?)::float8 as "+metricName,
+			bun.Safe(metricsObjectName), metricName)
 	}
 
-	subq = subq.Where("trial_id = ?", trialID).OrderExpr("random()").Limit(maxDatapoints * len(metricNames))
+	subq = subq.Where("trial_id = ?", trialID).OrderExpr("random()").
+		Limit(maxDatapoints * len(metricNames))
 	switch timeSeriesFilter {
 	case nil:
 		orderColumn = batches
