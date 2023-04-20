@@ -9,6 +9,6 @@ CREATE TABLE command_state (
     generic_command_spec jsonb
 );
 
-CREATE INDEX ix_command_state_allocation_id ON command_state USING btree(
+CREATE INDEX ix_command_state_allocation_id ON command_state USING btree (
     allocation_id
 );

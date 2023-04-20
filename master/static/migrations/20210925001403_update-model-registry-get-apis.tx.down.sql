@@ -12,8 +12,7 @@ WITH id_name_map AS (
 
 UPDATE public.model_versions mv SET model_name = id_name_map.name
 FROM id_name_map
-WHERE mv.model_id = id_name_map.id
-;
+WHERE mv.model_id = id_name_map.id;
 ALTER TABLE public.model_versions ALTER COLUMN model_name SET NOT NULL;
 ALTER TABLE public.model_versions DROP CONSTRAINT model_versions_pkey CASCADE;
 ALTER TABLE public.model_versions ADD PRIMARY KEY (model_name, version);

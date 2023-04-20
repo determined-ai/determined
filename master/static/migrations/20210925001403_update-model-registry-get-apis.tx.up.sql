@@ -16,13 +16,11 @@ ALTER TABLE public.models ADD PRIMARY KEY (id);
 ALTER TABLE public.models ADD COLUMN labels text[];
 ALTER TABLE public.models ADD COLUMN readme text;
 ALTER TABLE public.models ADD COLUMN user_id integer;
-WITH det_id AS (SELECT id FROM public.users WHERE username LIKE 'determined'
-)
+WITH det_id AS (SELECT id FROM public.users WHERE username LIKE 'determined')
 
 UPDATE public.models SET user_id = det_id.id
 FROM det_id
-WHERE user_id IS NULL
-;
+WHERE user_id IS NULL;
 /* ALTER TABLE public.models ALTER COLUMN user_id SET NOT NULL; */
 ALTER TABLE public.models ADD CONSTRAINT users_fk FOREIGN KEY (
     user_id
@@ -41,8 +39,7 @@ WITH id_name_map AS (
 
 UPDATE public.model_versions mv SET model_id = id_name_map.id
 FROM id_name_map
-WHERE mv.model_name = id_name_map.name
-;
+WHERE mv.model_name = id_name_map.name;
 ALTER TABLE public.model_versions ALTER COLUMN model_id SET NOT NULL;
 ALTER TABLE public.model_versions DROP CONSTRAINT model_versions_pkey CASCADE;
 ALTER TABLE public.model_versions ADD PRIMARY KEY (model_id, version);
