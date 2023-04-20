@@ -16,7 +16,7 @@ import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { defaultExperimentColumns } from './glide-table/columns';
 import { Error, Loading, NoExperiments, NoMatches } from './glide-table/exceptions';
 import GlideTable, { SCROLL_SET_COUNT_NEEDED } from './glide-table/GlideTable';
-import { Sort } from './glide-table/MultiSortMenu';
+import { isValidSort, Sort, ValidSort } from './glide-table/MultiSortMenu';
 import TableActionBar, { BatchAction } from './glide-table/TableActionBar';
 import { useGlasbey } from './useGlasbey';
 
@@ -24,11 +24,8 @@ interface Props {
   project: Project;
 }
 
-const makeSortString = (sorts: Sort[]): string =>
-  sorts
-    .filter((s) => s.column && s.direction)
-    .map((s) => `${s.column}=${s.direction}`)
-    .join(',');
+const makeSortString = (sorts: ValidSort[]): string =>
+  sorts.map((s) => `${s.column}=${s.direction}`).join(',');
 
 export const PAGE_SIZE = 100;
 const F_ExperimentList: React.FC<Props> = ({ project }) => {
@@ -63,8 +60,9 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
       } else {
         params.delete('page');
       }
-      if (sorts.filter((s) => s.column && s.direction).length) {
-        params.set('sort', makeSortString(sorts));
+      const sortString = makeSortString(sorts.filter(isValidSort));
+      if (sortString) {
+        params.set('sort', sortString);
       } else {
         params.delete('sort');
       }
@@ -109,7 +107,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     [experimentFilters],
   );
 
-  const sortString = useMemo(() => makeSortString(sorts), [sorts]);
+  const sortString = useMemo(() => makeSortString(sorts.filter(isValidSort)), [sorts]);
 
   const fetchExperiments = useCallback(async (): Promise<void> => {
     try {

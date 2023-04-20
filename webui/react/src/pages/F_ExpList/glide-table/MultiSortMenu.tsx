@@ -13,6 +13,10 @@ export interface Sort {
   column?: string;
   direction?: DirectionType;
 }
+export type ValidSort = Required<Sort>;
+
+export const isValidSort = (s: Sort): s is ValidSort => !!(s.column && s.direction);
+
 interface MultiSortProps {
   sorts: Sort[];
   columns: Loadable<V1ProjectColumn[]>;
