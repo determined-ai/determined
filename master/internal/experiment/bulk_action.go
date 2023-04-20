@@ -43,6 +43,11 @@ type deleteExperimentOKResult struct {
 
 var completedExperimentStates = []string{"CANCELED", "COMPLETED", "ERROR"}
 
+var runningOrPaused = []experimentv1.State{
+	experimentv1.State_STATE_ACTIVE,
+	experimentv1.State_STATE_PAUSED,
+}
+
 // ExperimentsAddr is the address to direct experiment actions.
 var ExperimentsAddr = actor.Addr("experiments")
 
@@ -256,7 +261,7 @@ func CancelExperiments(ctx context.Context, system *actor.System,
 ) ([]ExperimentActionResult, error) {
 	if filters != nil {
 		if filters.States == nil {
-			filters.States = []experimentv1.State{experimentv1.State_STATE_ACTIVE}
+			filters.States = runningOrPaused
 		}
 	}
 	expIDs, err := editableExperimentIds(ctx, experimentIds, filters)
@@ -300,7 +305,7 @@ func KillExperiments(ctx context.Context, system *actor.System,
 ) ([]ExperimentActionResult, error) {
 	if filters != nil {
 		if filters.States == nil {
-			filters.States = []experimentv1.State{experimentv1.State_STATE_ACTIVE}
+			filters.States = runningOrPaused
 		}
 	}
 	expIDs, err := editableExperimentIds(ctx, experimentIds, filters)
