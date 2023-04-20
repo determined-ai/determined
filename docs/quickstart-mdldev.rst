@@ -135,16 +135,15 @@ This exercise trains a single model for a fixed number of batches, using constan
 hyperparameters on a single *slot*. A slot is a CPU or GPU computing device, which the master
 schedules to run.
 
-#. To install the Determined library, run the command below. It is suggested you install the package into a specific Python Environment rather than the Global Environment, so you might need to activate that Environment prior to this step:
+#. To install the Determined library, run the command below. We recommend installing the package into a specific Python Environment rather than the Global Environment. Therefore, before running this command, you may need to activate the desired Environment.
 
    .. code:: bash
 
       pip install determined
       
-#. Before you can start Determined, you need to make sure that you have :doc:`Docker installed
-</cluster-setup-guide/deploy-cluster/sysadmin-deploy-on-prem/requirements>` and open.
+#. Before starting Determined, ensure you have :doc:`Docker installed on your system and that it is open and accessible. You can refer to the :ref:`Determined Installation Requirements <system-requirements>` for instructions on how to install Docker on your system.
 
-#. To run Determined and start a cluster locally,  run the command below. If your local machine does not have a supported Nvidia GPU, include the ``no-gpu`` option:
+#. To run Determined and start a cluster locally, run the following command. If your local machine does not have a supported Nvidia GPU, include the ``no-gpu`` option in the command:
 
    .. code:: bash
 
