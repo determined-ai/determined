@@ -1,4 +1,3 @@
-import json
 from typing import Iterable, List, Optional, Union
 
 from determined.common import api
@@ -10,13 +9,6 @@ def pprint_logs(
 ) -> None:
     for log in logs:
         print(log.message, end="")
-
-
-def print_json_logs(
-    logs: Iterable[Union[bindings.v1TaskLogsResponse, bindings.v1TrialLogsResponse]]
-) -> None:
-    for log in logs:
-        print(json.dumps(log.to_json(), indent=4))
 
 
 def trial_logs(
