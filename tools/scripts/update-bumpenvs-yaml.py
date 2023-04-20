@@ -124,11 +124,11 @@ def get_all_builds(commit: str, dev: bool, cloud_images: bool) -> Dict[str, Buil
     expected_found = expected.difference(found)
     found_expected = found.difference(expected)
     if expected_found:
-        print(f"Expected {expected_found} jobs not found")
+        print(f"Expected {len(expected_found)} jobs not found")
     if found_expected:
-        print(f"Found {found_expected} jobs not expected")
+        print(f"Found {len(found_expected)} jobs not expected")
 
-    assert expected == found, "expected jobs\n  {expected_list}\nbut found\n  {found_list}".format(
+    assert expected == found, "\nExpected jobs\n  {expected_list}\nbut found\n  {found_list}".format(
         expected_list="\n  ".join(sorted(expected)), found_list="\n  ".join(sorted(found))
     )
 
@@ -148,7 +148,7 @@ def get_all_artifacts(builds: Dict[str, Build], cloud_images: bool) -> Dict[str,
     found = set(artifacts.keys())
     assert (
         expected == found
-    ), "expected artifacts\n  {expected_list}\nbut found\n  {found_list}".format(
+    ), "\nExpected artifacts\n  {expected_list}\nbut found\n  {found_list}".format(
         expected_list="\n  ".join(sorted(expected)), found_list="\n  ".join(sorted(found))
     )
 
