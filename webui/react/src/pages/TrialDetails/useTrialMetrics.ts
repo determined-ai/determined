@@ -10,6 +10,7 @@ import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
 import { Metric, MetricType, RunState, Scale, TrialDetails } from 'types';
 import handleError from 'utils/error';
+import { metricToKey } from 'utils/metric';
 
 type MetricName = string;
 
@@ -62,21 +63,19 @@ export const useTrialMetrics = (
           summMetric.data.forEach((avgMetrics) => {
             metrics.forEach((metric) => {
               const value = avgMetrics.values[metric.name];
-              if (!rawBatchValuesMap[metric.name]) 
-                rawBatchValuesMap[metric.name] =  [];
-              
-              if (!rawBatchTimesMap[metric.name]) 
-                rawBatchTimesMap[metric.name] = [];
-        
-              if (!rawBatchEpochMap[metric.name]) 
-                rawBatchEpochMap[metric.name] = [];
-              
+              if (!rawBatchValuesMap[metric.name]) rawBatchValuesMap[metric.name] = [];
+
+              if (!rawBatchTimesMap[metric.name]) rawBatchTimesMap[metric.name] = [];
+
+              if (!rawBatchEpochMap[metric.name]) rawBatchEpochMap[metric.name] = [];
+
               if (value) {
                 rawBatchValuesMap[metric.name]?.push([avgMetrics.batches, value]);
                 if (avgMetrics.time)
-                  rawBatchTimesMap
-                    [metric.name]
-                    ?.push([new Date(avgMetrics.time).getTime() / 1000, value]);
+                  rawBatchTimesMap[metric.name]?.push([
+                    new Date(avgMetrics.time).getTime() / 1000,
+                    value,
+                  ]);
                 if (avgMetrics.epoch)
                   rawBatchEpochMap[metric.name]?.push([avgMetrics.epoch, value]);
               }
@@ -99,7 +98,7 @@ export const useTrialMetrics = (
             metricType: metric.type,
             name: metric.name,
           };
-          trialData[metric.name] = series;
+          trialData[metricToKey(metric)] = series;
         });
         return trialData;
       });

@@ -63,20 +63,21 @@ const useLearningCurve = (
       if (trialRowIndex === -1) return;
       trial.metrics.forEach((metricContainer) => {
         metricContainer.data.forEach(({ batches, values }) => {
-        metrics.forEach(metric => { 
-          if (metric)  {
-            const metricKey = metricToKey({ name: metric.name, type: metric.type });
-            const metricInfo = newLearningCurveData.infoForMetrics[metricKey];
-            if (!metricInfo) return;
+          metrics.forEach((metric) => {
+            if (metric) {
+              const metricKey = metricToKey({ name: metric.name, type: metric.type });
+              const metricInfo = newLearningCurveData.infoForMetrics[metricKey];
+              if (!metricInfo) return;
 
-            const batchColumnIndex = batches - 1;
-            if (batchColumnIndex >= 0 && batches <= maxBatch) {
-              metricInfo.nonEmptyTrials.add(trial.id);
-              const chartData = metricInfo.chartData;
-              chartData[trialRowIndex][batchColumnIndex] = values[metric.name];
+              const batchColumnIndex = batches - 1;
+              if (batchColumnIndex >= 0 && batches <= maxBatch) {
+                metricInfo.nonEmptyTrials.add(trial.id);
+                const chartData = metricInfo.chartData;
+                chartData[trialRowIndex][batchColumnIndex] = values[metric.name];
+              }
             }
-          };
-      });});
+          });
+        });
       });
     });
 
