@@ -12,12 +12,14 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/api/apiutils"
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/project"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
+	"github.com/determined-ai/determined/proto/pkg/rbacv1"
 	"github.com/determined-ai/determined/proto/pkg/workspacev1"
 )
 
@@ -43,17 +45,9 @@ func (a *apiServer) GetProjectByID(
 func (a *apiServer) getProjectColumnsByID(
 	ctx context.Context, id int32, curUser model.User,
 ) (*apiv1.GetProjectColumnsResponse, error) {
-	notFoundErr := status.Errorf(codes.NotFound, "project (%d) not found", id)
-	p := &projectv1.Project{}
-	if err := a.m.db.QueryProto("get_project", p, id); errors.Is(err, db.ErrNotFound) {
-		return nil, notFoundErr
-	} else if err != nil {
-		return nil, errors.Wrapf(err, "error fetching project (%d) from database", id)
-	}
-	if ok, err := project.AuthZProvider.Get().CanGetProject(ctx, curUser, p); err != nil {
+	p, err := a.GetProjectByID(ctx, id, curUser)
+	if err != nil {
 		return nil, err
-	} else if !ok {
-		return nil, notFoundErr
 	}
 
 	columns := []*projectv1.ProjectColumn{
@@ -150,16 +144,28 @@ func (a *apiServer) getProjectColumnsByID(
 	}
 
 	hyperparameters := []struct {
+		WorkspaceId     int
 		Hyperparameters expconf.HyperparametersV0
 	}{}
 
 	// get all experiments in project
-	err := db.Bun().NewSelect().
-		ColumnExpr("e.config->'hyperparameters' as hyperparameters").
-		TableExpr("experiments e").
-		Where("e.config->>'hyperparameters' IS NOT NULL").
-		Order("e.id").
-		Scan(ctx, &hyperparameters)
+	experimentQuery := db.Bun().NewSelect().
+		ColumnExpr("?::int as workspace_id", p.WorkspaceId).
+		ColumnExpr("config->'hyperparameters' as hyperparameters").
+		TableExpr("experiments").
+		Where("config->>'hyperparameters' IS NOT NULL").
+		Where("project_id = ?", id).
+		Order("id")
+
+	experiment.AuthZProvider.Get().FilterExperimentsQuery(
+		ctx,
+		curUser,
+		p,
+		experimentQuery,
+		[]rbacv1.PermissionType{rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA},
+	)
+
+	err = experimentQuery.Scan(ctx, &hyperparameters)
 	if err != nil {
 		return nil, err
 	}
