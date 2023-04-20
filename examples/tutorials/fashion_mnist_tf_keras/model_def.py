@@ -32,7 +32,8 @@ class FashionMNISTTrial(TFKerasTrial):
         model = self.context.wrap_model(model)
 
         # Create and wrap the optimizer.
-        optimizer = tf.keras.optimizers.Adam()
+        # TODO MLG-443 Migrate from legacy Keras optimizers
+        optimizer = tf.keras.optimizers.legacy.Adam()
         optimizer = self.context.wrap_optimizer(optimizer)
 
         model.compile(
