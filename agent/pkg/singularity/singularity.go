@@ -64,9 +64,9 @@ type SingularityContainer struct {
 type SingularityClient struct {
 	Log        *logrus.Entry
 	Opts       options.SingularityOptions
-	Mu         sync.Mutex
+	mu         sync.Mutex
 	Wg         waitgroupx.Group
-	Containers map[cproto.ID]*SingularityContainer
+	containers map[cproto.ID]*SingularityContainer
 }
 
 // New returns a new singularity client, which launches and tracks containers.
@@ -83,14 +83,14 @@ func New(opts options.SingularityOptions) (*SingularityClient, error) {
 		Log:        logrus.WithField("compotent", "singularity"),
 		Opts:       opts,
 		Wg:         waitgroupx.WithContext(context.Background()),
-		Containers: make(map[cproto.ID]*SingularityContainer),
+		containers: make(map[cproto.ID]*SingularityContainer),
 	}, nil
 }
 
 // Close the client, killing all running containers and removing our scratch space.
 func (s *SingularityClient) Close() error {
-	s.Mu.Lock()
-	defer s.Mu.Unlock()
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
 	// Since we launch procs with exec.CommandContext under s.wg's context, this cleans them up.
 	s.Wg.Close()
@@ -191,10 +191,10 @@ func (s *SingularityClient) CreateContainer(
 	req cproto.RunSpec,
 	p events.Publisher[docker.Event],
 ) (string, error) {
-	s.Mu.Lock()
-	defer s.Mu.Unlock()
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
-	s.Containers[id] = &SingularityContainer{Req: req}
+	s.containers[id] = &SingularityContainer{Req: req}
 	return id.String(), nil
 }
 
@@ -206,16 +206,7 @@ func (s *SingularityClient) RunContainer(
 	id string,
 	p events.Publisher[docker.Event],
 ) (*docker.Container, error) {
-	s.Mu.Lock()
-	var cont *SingularityContainer
-	for cID, rcont := range s.Containers {
-		if cproto.ID(id) != cID {
-			continue
-		}
-		cont = rcont
-		break
-	}
-	s.Mu.Unlock()
+	cont := s.FindContainer(id)
 
 	if cont == nil {
 		return nil, container.ErrMissing
@@ -508,6 +499,21 @@ func (s *SingularityClient) RunContainer(
 	}, nil
 }
 
+// FindContainer returns the container with the specified ID or nil.
+func (s *SingularityClient) FindContainer(id string) *SingularityContainer {
+	s.mu.Lock()
+	var cont *SingularityContainer
+	for cID, rcont := range s.containers {
+		if cproto.ID(id) != cID {
+			continue
+		}
+		cont = rcont
+		break
+	}
+	s.mu.Unlock()
+	return cont
+}
+
 // ReattachContainer implements container.ContainerRuntime.
 // TODO(DET-9082): Ensure orphaned processes are cleaned up on reattach.
 func (s *SingularityClient) ReattachContainer(
@@ -519,10 +525,10 @@ func (s *SingularityClient) ReattachContainer(
 
 // RemoveContainer implements container.ContainerRuntime.
 func (s *SingularityClient) RemoveContainer(ctx context.Context, id string, force bool) error {
-	s.Mu.Lock()
-	defer s.Mu.Unlock()
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
-	cont, ok := s.Containers[cproto.ID(id)]
+	cont, ok := s.containers[cproto.ID(id)]
 	if !ok {
 		return container.ErrMissing
 	}
@@ -539,10 +545,10 @@ func (s *SingularityClient) SignalContainer(
 	id string,
 	sig syscall.Signal,
 ) error {
-	s.Mu.Lock()
-	defer s.Mu.Unlock()
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
-	cont, ok := s.Containers[cproto.ID(id)]
+	cont, ok := s.containers[cproto.ID(id)]
 	if !ok {
 		return container.ErrMissing
 	}
@@ -560,9 +566,9 @@ func (s *SingularityClient) ListRunningContainers(
 ) (map[cproto.ID]types.Container, error) {
 	resp := make(map[cproto.ID]types.Container)
 
-	s.Mu.Lock()
-	defer s.Mu.Unlock()
-	for id, cont := range s.Containers {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for id, cont := range s.containers {
 		resp[id] = types.Container{
 			ID:     string(id),
 			Labels: cont.Req.ContainerConfig.Labels,
@@ -571,6 +577,7 @@ func (s *SingularityClient) ListRunningContainers(
 	return resp, nil
 }
 
+// WaitOnContainer waits for completion of the specified container.
 func (s *SingularityClient) WaitOnContainer(
 	id cproto.ID,
 	cont *SingularityContainer,
@@ -601,10 +608,10 @@ func (s *SingularityClient) WaitOnContainer(
 			return
 		}
 
-		s.Mu.Lock()
-		defer s.Mu.Unlock()
+		s.mu.Lock()
+		defer s.mu.Unlock()
 		s.Log.Tracef("forgetting completed container: %s", id)
-		delete(s.Containers, id)
+		delete(s.containers, id)
 
 		// Defer file cleanup until restart if debug logging is enabled.
 		if s.Log.Logger.Level <= logrus.DebugLevel {
@@ -631,6 +638,7 @@ func (s *SingularityClient) WaitOnContainer(
 
 var singularityLogLevel = regexp.MustCompile("(?P<level>INFO|WARN|ERROR|FATAL):    (?P<log>.*)")
 
+// ShipContainerCmdLogs publishes output to the experiment log.
 func (s *SingularityClient) ShipContainerCmdLogs(
 	ctx context.Context,
 	r io.ReadCloser,
@@ -666,6 +674,7 @@ func (s *SingularityClient) pprintSingularityCommand(
 	return s.PprintCommand(ctx, "singularity", args, p)
 }
 
+// PprintCommand provides trace-level pretty printing of a command line to the debug log.
 func (s *SingularityClient) PprintCommand(
 	ctx context.Context,
 	cmd string,
@@ -694,6 +703,7 @@ func (s *SingularityClient) PprintCommand(
 	return nil
 }
 
+// CanonicalizeImage returns the name of te specified image in canonicalized form.
 func (s *SingularityClient) CanonicalizeImage(image string) string {
 	url, err := url.Parse(image)
 	isURIForm := err == nil
