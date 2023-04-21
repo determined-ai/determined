@@ -941,6 +941,8 @@ func (p *pods) handleGetAgentsRequest(ctx *actor.Context) {
 // the whole cluster's info. Otherwise, it matches nodes to resource pools using taints and
 // tolerations to derive that info.
 func (p *pods) summarize(ctx *actor.Context) (map[string]model.AgentSummary, error) {
+	defer recordK8sTiming(promGoFuncLabel, "summarize", "pods")()
+
 	nodeSummaries := p.summarizeClusterByNodes(ctx)
 
 	poolTaskContainerDefaults := extractTCDs(p.resourcePoolConfigs)
@@ -1038,6 +1040,8 @@ func (p *pods) summarize(ctx *actor.Context) (map[string]model.AgentSummary, err
 }
 
 func (p *pods) summarizeClusterByNodes(ctx *actor.Context) map[string]model.AgentSummary {
+	defer recordK8sTiming(promGoFuncLabel, "summarize", "pods.cluster_by_nodes")()
+
 	podHandlers := make([]*actor.Ref, 0, len(p.podNameToPodHandler))
 	for _, podHandler := range p.podNameToPodHandler {
 		podHandlers = append(podHandlers, podHandler)
@@ -1150,6 +1154,8 @@ func (p *pods) summarizeClusterByNodes(ctx *actor.Context) map[string]model.Agen
 }
 
 func (p *pods) getNonDetPods() []k8sV1.Pod {
+	defer recordK8sTiming(promGoFuncLabel, "list", "non_det_pods")()
+
 	var nonDetPods []k8sV1.Pod
 	pList, err := p.clientSet.CoreV1().Pods("default").List(context.TODO(), metaV1.ListOptions{})
 	if err != nil {
@@ -1166,6 +1172,8 @@ func (p *pods) getNonDetPods() []k8sV1.Pod {
 }
 
 func (p *pods) getNonDetSlots(deviceType device.Type) (map[string][]string, map[string]int64) {
+	defer recordK8sTiming(promGoFuncLabel, "summarize", "pods.cluster_by_nodes.non_det_slots")()
+
 	nodeToTasks := make(map[string][]string, len(p.currentNodes))
 	taskSlots := make(map[string]int64)
 
@@ -1306,7 +1314,8 @@ func extractSlotInfo(node model.AgentSummary) (numSlots int, devType device.Type
 }
 
 func extractTolerations(tcd *model.TaskContainerDefaultsConfig) (
-	cpuTolerations, gpuTolerations []k8sV1.Toleration) {
+	cpuTolerations, gpuTolerations []k8sV1.Toleration,
+) {
 	if tcd != nil {
 		if tcd.GPUPodSpec != nil {
 			gpuTolerations = tcd.GPUPodSpec.Spec.Tolerations

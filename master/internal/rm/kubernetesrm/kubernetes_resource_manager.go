@@ -494,6 +494,8 @@ func (k *kubernetesResourceManager) createResourcePoolSummary(
 	ctx *actor.Context,
 	poolName string,
 ) (*resourcepoolv1.ResourcePool, error) {
+	defer recordK8sTiming(promGoFuncLabel, "summarize", fmt.Sprintf("resource_pool.%s", poolName))()
+
 	pool, err := k.getResourcePoolConfig(poolName)
 	if err != nil {
 		return &resourcepoolv1.ResourcePool{}, err
@@ -608,6 +610,8 @@ func (k *kubernetesResourceManager) aggregateTaskSummary(
 func (k *kubernetesResourceManager) getPoolJobStats(
 	ctx *actor.Context, pool config.ResourcePoolConfig,
 ) (*jobv1.QueueStats, error) {
+	defer recordK8sTiming(promGoFuncLabel, "summarize", fmt.Sprintf("pool_jobq.%s", pool.PoolName))()
+
 	jobStatsResp := ctx.Ask(k.pools[pool.PoolName], sproto.GetJobQStats{})
 	if err := jobStatsResp.Error(); err != nil {
 		return nil, fmt.Errorf("unexpected response type from jobStats: %s", err)
