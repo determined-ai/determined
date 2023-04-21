@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io/fs"
-	"net/url"
 	"os"
 	"os/exec"
 	"os/user"
@@ -63,87 +62,23 @@ func New(opts options.PodmanOptions) (*PodmanClient, error) {
 	}, nil
 }
 
-// PullImage implements container.ContainerRuntime.
-func (s *PodmanClient) PullImage(
-	ctx context.Context,
-	req docker.PullImage,
-	p events.Publisher[docker.Event],
-) (err error) {
-	if err = p.Publish(ctx, docker.NewBeginStatsEvent(docker.ImagePullStatsKind)); err != nil {
-		return err
-	}
-	defer func() {
-		if err = p.Publish(ctx, docker.NewEndStatsEvent(docker.ImagePullStatsKind)); err != nil {
-			s.Log.WithError(err).Warn("did not send image pull done stats")
-		}
-	}()
-
-	image := s.CanonicalizeImage(req.Name)
-
-	uri, err := url.Parse(image)
-	if err != nil || uri.Scheme == "" {
-		if err = p.Publish(ctx, docker.NewLogEvent(
-			model.LogLevelInfo,
-			fmt.Sprintf("image %s isn't a pullable URI; skipping pull", image),
-		)); err != nil {
-			return err
-		}
-		return nil
-	}
-
-	// TODO(DET-9078): Support registry auth. Investigate other auth mechanisms with podman.
+// getPullCommand returns the command and arguments to perform the container image pull.
+func (s *PodmanClient) getPullCommand(req docker.PullImage, image string) (string, []string) {
 	args := []string{"pull"}
 	// if req.ForcePull {
 	// 	args = append(args, "--force") // Use 'podman image rm'?
 	// }
 	args = append(args, image)
+	return "podman", args
+}
 
-	if err = s.pprintPodmanCommand(ctx, args, p); err != nil {
-		return err
-	}
-
-	cmd := exec.CommandContext(ctx, "podman", args...)
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		return fmt.Errorf("creating stdout pipe: %w", err)
-	}
-	stderr, err := cmd.StderrPipe()
-	if err != nil {
-		return fmt.Errorf("creating stderr pipe: %w", err)
-	}
-
-	// The return codes from `podman pull` aren't super helpful in determining the error, so we
-	// wrap the publisher and skim logs to see what happened as we ship them.
-	ignoreErrorsSig := make(chan bool)
-	checkIgnoreErrors := events.FuncPublisher[docker.Event](
-		func(ctx context.Context, t docker.Event) error {
-			if t.Log != nil && strings.Contains(t.Log.Message, "Image file already exists") {
-				ignoreErrorsSig <- true
-			}
-			return p.Publish(ctx, t)
-		},
-	)
-	s.Wg.Go(func(ctx context.Context) { s.ShipContainerCmdLogs(ctx, stdout, stdcopy.Stdout, p) })
-	s.Wg.Go(func(ctx context.Context) {
-		defer close(ignoreErrorsSig)
-		s.ShipContainerCmdLogs(ctx, stderr, stdcopy.Stderr, checkIgnoreErrors)
-	})
-
-	if err = cmd.Start(); err != nil {
-		return fmt.Errorf("starting pull command: %w", err)
-	}
-
-	var ignoreErrors bool
-	select {
-	case ignoreErrors = <-ignoreErrorsSig:
-	case <-ctx.Done():
-		return ctx.Err()
-	}
-
-	if err = cmd.Wait(); err != nil && !ignoreErrors {
-		return fmt.Errorf("pulling %s: %w", image, err)
-	}
-	return nil
+// PullImage implements container.ContainerRuntime.
+func (s *PodmanClient) PullImage(
+	ctx context.Context,
+	req docker.PullImage,
+	p events.Publisher[docker.Event],
+) error {
+	return s.PullImageCommon(ctx, req, p, s.getPullCommand)
 }
 
 // RunContainer implements container.ContainerRuntime.
