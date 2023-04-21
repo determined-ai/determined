@@ -106,6 +106,17 @@ func (s *SingularityClient) PullImage(
 	ctx context.Context,
 	req docker.PullImage,
 	p events.Publisher[docker.Event],
+) error {
+	return s.PullImageCommon(ctx, req, p, s.getPullCommand)
+}
+
+// PullImageCommon contains a container image pull implementation framework common to
+// singularity & podman.
+func (s *SingularityClient) PullImageCommon(
+	ctx context.Context,
+	req docker.PullImage,
+	p events.Publisher[docker.Event],
+	getPullCommand func(docker.PullImage, string) (string, []string),
 ) (err error) {
 	if err = p.Publish(ctx, docker.NewBeginStatsEvent(docker.ImagePullStatsKind)); err != nil {
 		return err
@@ -129,18 +140,15 @@ func (s *SingularityClient) PullImage(
 		return nil
 	}
 
-	// TODO(DET-9078): Support registry auth. Investigate other auth mechanisms with singularity.
-	args := []string{"pull"}
-	if req.ForcePull {
-		args = append(args, "--force")
-	}
-	args = append(args, image)
+	// TODO(DET-9078): Support registry auth. Investigate other auth mechanisms with
+	// singularity, podman,...
+	command, args := getPullCommand(req, image)
 
-	if err = s.pprintSingularityCommand(ctx, args, p); err != nil {
+	if err = s.PprintCommand(ctx, command, args, p); err != nil {
 		return err
 	}
 
-	cmd := exec.CommandContext(ctx, "singularity", args...)
+	cmd := exec.CommandContext(ctx, command, args...) // #nosec G204 'command' is under our control
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		return fmt.Errorf("creating stdout pipe: %w", err)
@@ -182,6 +190,15 @@ func (s *SingularityClient) PullImage(
 		return fmt.Errorf("pulling %s: %w", image, err)
 	}
 	return nil
+}
+
+func (*SingularityClient) getPullCommand(req docker.PullImage, image string) (string, []string) {
+	args := []string{"pull"}
+	if req.ForcePull {
+		args = append(args, "--force")
+	}
+	args = append(args, image)
+	return "singularity", args
 }
 
 // CreateContainer implements container.ContainerRuntime.
