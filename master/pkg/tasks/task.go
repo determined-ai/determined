@@ -236,6 +236,7 @@ func (t *TaskSpec) ToDockerSpec() cproto.Spec {
 	if t.UseHostMode {
 		network = hostMode
 	}
+	publishPorts := !(network == hostMode || t.TaskContainerDefaults.DirectConnectivity)
 
 	shmSize := t.ShmSize
 	if shmSize == 0 {
@@ -271,7 +272,7 @@ func (t *TaskSpec) ToDockerSpec() cproto.Spec {
 			HostConfig: docker.HostConfig{
 				NetworkMode:     network,
 				Mounts:          t.Mounts,
-				PublishAllPorts: true,
+				PublishAllPorts: publishPorts,
 				ShmSize:         shmSize,
 				CapAdd:          env.AddCapabilities(),
 				CapDrop:         env.DropCapabilities(),

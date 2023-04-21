@@ -131,13 +131,15 @@ func TestAllocation(t *testing.T) {
 				containerStateChanged.ResourcesState = sproto.Starting
 				require.NoError(t, system.Ask(self, containerStateChanged).Error())
 				containerStateChanged.ResourcesState = sproto.Running
+				containerHostIP := "0.0.0.0"
+				containerHostPort := 1734
 				containerStateChanged.ResourcesStarted = &sproto.ResourcesStarted{
 					Addresses: []cproto.Address{
 						{
 							ContainerIP:   "172.0.0.3",
 							ContainerPort: 1734,
-							HostIP:        "0.0.0.0",
-							HostPort:      1734,
+							HostIP:        &containerHostIP,
+							HostPort:      &containerHostPort,
 						},
 					},
 				}

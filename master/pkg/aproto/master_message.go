@@ -105,8 +105,6 @@ func (c ContainerStarted) Addresses() []cproto.Address {
 			addresses = append(addresses, cproto.Address{
 				ContainerIP:   proxy,
 				ContainerPort: port.Int(),
-				HostIP:        proxy,
-				HostPort:      port.Int(),
 			})
 		}
 	default:
@@ -120,6 +118,17 @@ func (c ContainerStarted) Addresses() []cproto.Address {
 		}
 
 		for port, bindings := range info.NetworkSettings.Ports {
+			// Unpublished port (possibly under direct connectivity mode)
+			if len(bindings) == 0 {
+				for _, ip := range ipAddresses {
+					addresses = append(addresses, cproto.Address{
+						ContainerIP:   ip,
+						ContainerPort: port.Int(),
+					})
+				}
+				continue
+			}
+
 			for _, binding := range bindings {
 				for _, ip := range ipAddresses {
 					hostIP := binding.HostIP
@@ -148,8 +157,8 @@ func (c ContainerStarted) Addresses() []cproto.Address {
 					addresses = append(addresses, cproto.Address{
 						ContainerIP:   ip,
 						ContainerPort: port.Int(),
-						HostIP:        hostIP,
-						HostPort:      hostPort,
+						HostIP:        &hostIP,
+						HostPort:      &hostPort,
 					})
 				}
 			}

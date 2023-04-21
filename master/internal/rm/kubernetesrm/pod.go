@@ -595,8 +595,6 @@ func getResourcesStartedForPod(pod *k8sV1.Pod, ports []int) sproto.ResourcesStar
 		addresses = append(addresses, cproto.Address{
 			ContainerIP:   pod.Status.PodIP,
 			ContainerPort: port,
-			HostIP:        pod.Status.PodIP,
-			HostPort:      port,
 		})
 	}
 
