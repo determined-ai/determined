@@ -154,17 +154,7 @@ func (s *PodmanClient) RunContainer(
 	id string,
 	p events.Publisher[docker.Event],
 ) (*docker.Container, error) {
-	s.Mu.Lock()
-	var cont *singularity.SingularityContainer
-	for cID, rcont := range s.Containers {
-		if cproto.ID(id) != cID {
-			continue
-		}
-		cont = rcont
-		break
-	}
-	s.Mu.Unlock()
-
+	cont := s.FindContainer(id)
 	if cont == nil {
 		return nil, container.ErrMissing
 	}
@@ -423,7 +413,6 @@ func hostMountsToPodmanArgs(m mount.Mount, args []string) []string {
 	}
 	return append(args, "--volume", fmt.Sprintf("%s:%s%s", m.Source, m.Target, options))
 }
-
 
 func (s *PodmanClient) pprintPodmanCommand(
 	ctx context.Context,
