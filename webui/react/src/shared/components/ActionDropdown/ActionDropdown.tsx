@@ -1,13 +1,13 @@
-import { Dropdown, ModalFuncProps } from 'antd';
+import { Dropdown } from 'antd';
 import type { MenuProps } from 'antd';
 import { MenuInfo } from 'rc-menu/lib/interface';
 import React, { JSXElementConstructor, useCallback } from 'react';
 
 import Button from 'components/kit/Button';
+import useConfirm, { ConfirmModalProps } from 'components/kit/useConfirm';
 import Icon from 'shared/components/Icon/Icon';
 import { DetError, ErrorLevel, ErrorType, wrapPublicMessage } from 'shared/utils/error';
 import { capitalize } from 'shared/utils/string';
-import { modal } from 'utils/dialogApi';
 
 import { Eventually } from '../../types';
 
@@ -15,7 +15,9 @@ import css from './ActionDropdown.module.scss';
 
 // TODO parameterize Action using Enums? https://github.com/microsoft/TypeScript/issues/30611
 export type Triggers<T extends string> = Partial<{ [key in T]: () => Eventually<void> }>;
-export type Confirmations<T extends string> = Partial<{ [key in T]: Omit<ModalFuncProps, 'onOk'> }>;
+export type Confirmations<T extends string> = Partial<{
+  [key in T]: Omit<ConfirmModalProps, 'onConfirm'>;
+}>;
 type DisabledActions<T extends string> = Partial<{ [key in T]: boolean }>;
 type DangerousActions<T extends string> = DisabledActions<T>;
 
@@ -82,6 +84,8 @@ const ActionDropdown = <T extends string>({
   onVisibleChange,
   children,
 }: Props<T>): React.ReactElement<unknown, JSXElementConstructor<unknown>> | null => {
+  const confirm = useConfirm();
+
   const menuClickErrorHandler = useCallback(
     (e: unknown, actionKey: string, kind: string, id: string): void => {
       onError(
@@ -113,11 +117,11 @@ const ActionDropdown = <T extends string>({
       };
 
       if (confirmations?.[action]) {
-        modal.confirm({
+        confirm({
           content: `Are you sure you want to ${action.toLocaleLowerCase()} ${kind} "${id}"?`,
+          onConfirm: onOk,
           title: `${capitalize(action)} ${kind}`,
           ...confirmations[action],
-          onOk,
         });
       } else {
         await onOk();

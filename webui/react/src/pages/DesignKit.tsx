@@ -53,6 +53,8 @@ import { MetricType, Project, ResourcePool, User } from 'types';
 import { NotLoaded } from 'utils/loadable';
 import { generateTestProjectData, generateTestWorkspaceData } from 'utils/tests/generateTestData';
 
+import useConfirm, { voidPromiseFn } from '../components/kit/useConfirm';
+
 import css from './DesignKit.module.scss';
 import { CheckpointsDict } from './TrialDetails/F_TrialDetailsOverview';
 import WorkspaceCard from './WorkspaceList/WorkspaceCard';
@@ -1881,20 +1883,6 @@ const LargeModalComponent: React.FC<{ value: string }> = ({ value }) => {
   );
 };
 
-const DangerousModalComponent: React.FC<{ value: string }> = ({ value }) => {
-  return (
-    <Modal
-      danger
-      submit={{
-        handler: handleSubmit,
-        text: 'Submit',
-      }}
-      title={value}>
-      <div>{value}</div>
-    </Modal>
-  );
-};
-
 const IconModalComponent: React.FC<{ value: string }> = ({ value }) => {
   return (
     <Modal icon="experiment" title={value}>
@@ -1996,16 +1984,20 @@ const ModalSection: React.FC = () => {
   const SmallModal = useModal(SmallModalComponent);
   const MediumModal = useModal(MediumModalComponent);
   const LargeModal = useModal(LargeModalComponent);
-  const DangerousModal = useModal(DangerousModalComponent);
   const FormModal = useModal(FormModalComponent);
   const FormFailModal = useModal(FormModalComponent);
   const LinksModal = useModal(LinksModalComponent);
   const IconModal = useModal(IconModalComponent);
   const ValidationModal = useModal(ValidationModalComponent);
 
+  const confirm = useConfirm();
+  const config = { content: text, title: text };
+  const confirmDefault = () => confirm({ ...config, onConfirm: voidPromiseFn });
+  const confirmDangerous = () => confirm({ ...config, danger: true, onConfirm: voidPromiseFn });
+
   return (
     <ComponentSection id="Modals" title="Modals">
-      <AntDCard>
+      <AntDCard title="Usage">
         <Label>State value that gets passed to modal via props</Label>
         <Input value={text} onChange={(s) => setText(String(s.target.value))} />
         <hr />
@@ -2035,13 +2027,13 @@ const ModalSection: React.FC = () => {
         <hr />
         <strong>Variations</strong>
         <Space>
-          <Button onClick={DangerousModal.open}>Open Dangerous Modal</Button>
+          <Button onClick={confirmDefault}>Open Confirmation</Button>
+          <Button onClick={confirmDangerous}>Open Dangerous Confirmation</Button>
         </Space>
       </AntDCard>
       <SmallModal.Component value={text} />
       <MediumModal.Component value={text} />
       <LargeModal.Component value={text} />
-      <DangerousModal.Component value={text} />
       <FormModal.Component value={text} />
       <FormFailModal.Component fail value={text} />
       <LinksModal.Component value={text} />

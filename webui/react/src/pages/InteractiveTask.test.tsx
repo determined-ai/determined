@@ -6,6 +6,8 @@ import { HelmetProvider } from 'react-helmet-async';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import authStore from 'stores/auth';
 
+import { ConfirmationProvider } from '../components/kit/useConfirm';
+
 import InteractiveTask from './InteractiveTask';
 
 const TASK_NAME = 'JupyterLab (test-task-name)';
@@ -35,7 +37,9 @@ const InteractiveTaskContainer: React.FC = () => {
   return (
     <UIProvider>
       <HelmetProvider>
-        <InteractiveTaskPageContainer />
+        <ConfirmationProvider>
+          <InteractiveTaskPageContainer />
+        </ConfirmationProvider>
       </HelmetProvider>
     </UIProvider>
   );

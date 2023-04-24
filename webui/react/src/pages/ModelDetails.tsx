@@ -69,7 +69,7 @@ const ModelDetails: React.FC = () => {
   const [total, setTotal] = useState(0);
   const pageRef = useRef<HTMLElement>(null);
   const users = Loadable.getOrElse([], useObservable(userStore.getUsers()));
-  const workspasces = useObservable(workspaceStore.workspaces);
+  const workspaces = useObservable(workspaceStore.workspaces);
   const workspace = Loadable.getOrElse(
     undefined,
     useObservable(workspaceStore.getWorkspace(model?.model.workspaceId)),
@@ -409,7 +409,7 @@ const ModelDetails: React.FC = () => {
     return <Message title={message} type={MessageType.Warning} />;
   } else if (pageError && isNotFound(pageError)) {
     return <PageNotFound />;
-  } else if (!model || Loadable.isLoading(workspasces) || rbacLoading) {
+  } else if (!model || Loadable.isLoading(workspaces) || rbacLoading) {
     return <Spinner spinning tip={`Loading model ${modelId} details...`} />;
   }
 
