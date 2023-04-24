@@ -61,6 +61,10 @@ build: build/stamp
 .PHONY: xml
 xml: build/sp-xml.stamp
 
+.PHONY: upload-search-index
+upload-search-index: xml
+	python3 deploy/scrape.py --upload
+
 .PHONY: clean
 clean:
 	rm -rf site build attributions.rst

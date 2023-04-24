@@ -17,7 +17,7 @@ project = "Determined"
 html_title = "Determined AI Documentation"
 copyright = "2023, Determined AI"
 author = "hello@determined.ai"
-version = pathlib.Path(__file__).parents[1].joinpath("VERSION").read_text()
+version = pathlib.Path(__file__).parents[1].joinpath("VERSION").read_text().strip()
 release = version
 language = "en"
 

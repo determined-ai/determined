@@ -263,12 +263,15 @@ if __name__ == "__main__":
 
     if args.json:
         json.dump(records, sys.stdout, indent="  ")
+        print()
+        print(f"{len(records)} records for version={version} dumped to stdout")
 
     if args.upload:
         if not args.api_key:
             print("--api-key or ALGOLIA_API_KEY required for upload", file=sys.stderr)
             exit(1)
         upload(args.app_id, args.api_key, records, version)
+        print(f"{len(records)} records uploaded for version={version}")
 
     if not args.upload and not args.json:
-        print("scrape was successful, try --json or --upload", file=sys.stderr)
+        print(f"scrape of version={version} succeeded, try --json or --upload", file=sys.stderr)
