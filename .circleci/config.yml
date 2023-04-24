@@ -2315,6 +2315,12 @@ workflows:
             - build-docs
           filters: *any-upstream
 
+      - scrape-docs:
+          requires:
+            - build-docs
+          context: determined-production
+          filters: *main-and-release-and-rc-filters
+
       - test-debian-packaging:
           requires:
             - package-and-push-system-local
@@ -3133,12 +3139,6 @@ workflows:
             - build-docs
           context: determined-production
           filters: *release-filters
-
-      - scrape-docs:
-          requires:
-            - build-docs
-          context: determined-production
-          filters: *main-and-release-and-rc-filters
 
       - publish-helm:
           requires:
