@@ -1,6 +1,6 @@
 import argparse
-import glob
 import hashlib
+import mimetypes
 import os
 import pathlib
 
@@ -24,7 +24,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--preview",
-        type=bool,
+        action="store_true",
         default=True,
         help="whether the upload should go under the short-lived /previews path",
     )
@@ -47,7 +47,10 @@ if __name__ == "__main__":
         help="S3 bucket region where doc pages are served from",
     )
     parser.add_argument(
-        "--local-path", type=dir_path, default="../site/html", help="path to local site html"
+        "--local-path",
+        type=dir_path,
+        default=HERE / ".." / "site" / "html",
+        help="path to local site html",
     )
     parser.add_argument(
         "--aws-access-key-id",
@@ -73,17 +76,17 @@ if __name__ == "__main__":
         print("upload a version first, then use the promote.py script")
         os.exit(1)
 
-    upload_root = "/" + version
+    upload_root = version
     if args.preview:
         # we need some ID for the preview build
         if os.getenv("CIRCLECI"):
             # try branch name hash
-            branch_hash = hashlib.md5(os.environ.get("CIRCLE_BRANCH", "MEH"))
+            branch_hash = hashlib.md5(os.environ.get("CIRCLE_BRANCH", "MEH").encode("utf-8"))
             # breadcrumbs: md5 of "MEH" is "aea387423450ebf8c23aad69cbe364ed"
-            upload_root = "/previews/" + branch_hash
+            upload_root = "previews/" + branch_hash.hexdigest()
         else:
             # local dev build? try username
-            upload_root = "/previews/" + os.environ.get("USER", "USERLESS")
+            upload_root = "previews/" + os.environ.get("USER", "USERLESS")
 
     print(
         "uploading docs version {} to bucket {} under {}".format(
@@ -94,25 +97,38 @@ if __name__ == "__main__":
     s3 = boto3.resource("s3")
     bucket = s3.Bucket(args.bucket_id)
     # track current files for deletion, if any
-    current_objects = [o.key for o in bucket.objects.all()]
+    # WARN: be very careful when modifying this line, make sure you're listing
+    # only the files at the exact upload root and not just the whole bucket
+    current_objects = [o.key for o in bucket.objects.filter(Prefix=upload_root)]
     if len(current_objects) > 0:
         print("{} already at destination".format(len(current_objects)))
 
     # try uploading site files to upload path
-    to_upload = glob.glob("{}/**".format(args.local_path))
+    to_upload = Path(args.local_path).rglob("*")
     uploaded_objects = []
-    for file_path in to_upload:
-        upload_path = upload_root + "/" + file_path
-        with open(file_path, "rb") as data:
-            # bucket.upload_fileobj(data, upload_path)
-            print("uploaded {}".format(upload_path))
+    for f in to_upload:
+        upload_path = str(upload_root / f.relative_to(args.local_path))
+        if not f.is_file():
+            continue
+        # boto3 won't just automatically infer the mime-type
+        mimetype, _ = mimetypes.guess_type(f)
+        if mimetype is None:
+            mimetype = "binary/octet-stream"
+        with file_path.open("rb") as data:
+            bucket.upload_fileobj(
+                Fileobj=data, Key=upload_path, ExtraArgs={"ContentType": mimetype}
+            )
+            print("uploaded {}".format(pathlib.pupload_path))
             uploaded_objects.append(upload_path)
+
+        with f.open("rb") as data:
+            print("uploaded {}".format(upload_path))
 
     to_delete = set(current_objects).difference(uploaded_objects)
     if len(to_delete) > 0:
         print("deleting {} excess objects".format(len(to_delete)))
-    for key in to_delete:
         delete_request = {"Objects": [{"Key": key} for key in to_delete], "Quiet": True}
+        # TODO(danh): just uncomment this whenever the thought's not scary :D
         # bucket.delete_objects(Delete=delete_request)
 
     objects_url = "https://{}.s3.{}.amazonaws.com/{}/index.html".format(
