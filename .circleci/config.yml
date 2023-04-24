@@ -223,6 +223,10 @@ commands:
       - run: chmod +x $HOME/.local/bin/codecov
       - run: echo 'export PATH=$PATH:$HOME/.local/bin/codecov' >> $BASH_ENV
 
+  install-apex:
+    steps:
+      - run: pip install git+https://github.com/determined-ai/apex.git@3caf0f40c92e92b40051d3afff8568a24b8be28d
+
   setup-go-intg-deps:
     steps:
       - install-protoc # Install newer version of protoc into $HOME/.local/bin, since default is proto2.
@@ -1599,11 +1603,12 @@ jobs:
       - skip-if-webui-only
       - run: mkdir $HOME/.local/bin
       - install-codecov
+      - install-apex
       - setup-python-venv:
           determined: true
-          extras-requires: "tensorflow==2.8.4 torch==1.9.0 torchvision==0.10.0 codecov mypy mypy_extensions pytest scipy"
+          extras-requires: "tensorflow==2.8.4 torch==1.9.0 torchvision==0.10.0 codecov scipy"
           extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
-          executor: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.12-gpu-0.21.2
+          executor: <<pipeline.parameters.docker-image>>
       - run: COVERAGE_FILE=$PWD/test-unit-harness-gpu-pycov make -C harness test-gpu
       - run: coverage xml -i --data-file=./test-unit-harness-gpu-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
@@ -1622,11 +1627,12 @@ jobs:
       - skip-if-webui-only
       - run: mkdir $HOME/.local/bin
       - install-codecov
+      - install-apex
       - setup-python-venv:
           determined: true
-          extras-requires: "tensorflow==2.8.4 torch==1.9.0 torchvision==0.10.0 codecov mypy mypy_extensions pytest scipy"
+          extras-requires: "torch==1.9.0 torchvision==0.10.0 codecov apex"
           extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
-          executor: determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.5-tf-2.4-gpu-0.18.5
+          executor: <<pipeline.parameters.docker-image>>
       - run: COVERAGE_FILE=$PWD/test-unit-harness-gpu-pycov make -C harness test-gpu-lightning
       - run: coverage xml -i --data-file=./test-unit-harness-gpu-lightning-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
