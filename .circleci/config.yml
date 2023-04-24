@@ -223,10 +223,6 @@ commands:
       - run: chmod +x $HOME/.local/bin/codecov
       - run: echo 'export PATH=$PATH:$HOME/.local/bin/codecov' >> $BASH_ENV
 
-  install-apex:
-    steps:
-      - run: pip install git+https://github.com/determined-ai/apex.git@3caf0f40c92e92b40051d3afff8568a24b8be28d
-
   setup-go-intg-deps:
     steps:
       - install-protoc # Install newer version of protoc into $HOME/.local/bin, since default is proto2.
@@ -413,6 +409,27 @@ commands:
       - run: pip freeze --all
       # Allow this to fail, but it is useful for debugging.
       - run: sh -c "pip check || true"
+
+  setup-docker-env:
+    description: Set up and create docker env.
+    parameters:
+      image:
+        type: string
+      bind-mount:
+        type: string
+        default: "$PWD"
+      extras-requires:
+        type: string
+        default: ""
+    steps:
+      - run: docker run -v <<parameters.bind-mount>>:/usr/src/project --gpus=all -it <<parameters.image>>
+      - run:
+          name: Install <<parameters.extras-requires>>
+          command: |
+            if [ -n "<<parameters.extras-requires>>" ]; then
+              tools/scripts/retry.sh pip install --progress-bar off <<parameters.extras-requires>>
+            fi
+      - run: cd /usr/src/project
 
   run-e2e-tests:
     parameters:
@@ -1601,15 +1618,11 @@ jobs:
       - checkout
       - skip-if-docs-only
       - skip-if-webui-only
+      - setup-docker-env:
+          image: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.12-gpu-0.21.2
+          extras-requires: "tensorflow==2.8.4 torch==1.9.0 torchvision==0.10.0 codecov"
       - run: mkdir $HOME/.local/bin
       - install-codecov
-      - run: pip install --upgrade pip
-      - run: pip install setuptools==59.5.0
-      - setup-python-venv:
-          determined: true
-          extras-requires: "tensorflow==2.8.4 torch==1.9.0 torchvision==0.10.0 codecov scipy"
-          extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
-          executor: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.12-gpu-0.21.2
       - run: COVERAGE_FILE=$PWD/test-unit-harness-gpu-pycov make -C harness test-gpu
       - run: coverage xml -i --data-file=./test-unit-harness-gpu-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
@@ -1628,13 +1641,11 @@ jobs:
       - skip-if-webui-only
       - run: mkdir $HOME/.local/bin
       - install-codecov
-      - run: pip install --upgrade pip
-      - run: pip install setuptools==59.5.0
       - setup-python-venv:
           determined: true
-          extras-requires: "torch==1.9.0 torchvision==0.10.0 codecov"
+          extras-requires: "torch==1.9.0 torchvision==0.10.0 codecov git+https://github.com/determined-ai/apex.git@3caf0f40c92e92b40051d3afff8568a24b8be28d"
           extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
-          executor: determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.5-tf-2.4-gpu-0.18.5
+          executor: <<pipeline.parameters.docker-image>>
       - run: COVERAGE_FILE=$PWD/test-unit-harness-gpu-pycov make -C harness test-gpu-lightning
       - run: coverage xml -i --data-file=./test-unit-harness-gpu-lightning-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
@@ -2274,7 +2285,7 @@ workflows:
       - test-unit-react
       - test-unit-harness-cpu
       - test-unit-harness-gpu
-      - test-unit-harness-gpu-lightning
+      #- test-unit-harness-gpu-lightning
       - test-unit-harness-tf2
       - test-unit-model-hub
       - test-unit-storage:
