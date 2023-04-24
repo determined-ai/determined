@@ -1603,7 +1603,8 @@ jobs:
       - skip-if-webui-only
       - run: mkdir $HOME/.local/bin
       - install-codecov
-      - run: setuptools==59.5.0
+      - run: pip install --upgrade pip
+      - run: pip install setuptools==59.5.0
       - setup-python-venv:
           determined: true
           extras-requires: "tensorflow==2.8.4 torch==1.9.0 torchvision==0.10.0 codecov scipy"
@@ -1627,6 +1628,7 @@ jobs:
       - skip-if-webui-only
       - run: mkdir $HOME/.local/bin
       - install-codecov
+      - run: pip install --upgrade pip
       - run: pip install setuptools==59.5.0
       - setup-python-venv:
           determined: true
