@@ -49,6 +49,15 @@ parameters:
     type: string
     default: xlarge
 
+main-and-release-and-rc-filters: &main-and-release-and-rc-filters
+  branches:
+    only:
+      - main
+  tags:
+    only:
+      - /(\d)+(\.(\d)+)+/
+      - /((\d)+(\.(\d)+)+)(-rc)(\d)+/
+
 release-and-rc-filters: &release-and-rc-filters
   branches:
     ignore:
@@ -79,7 +88,7 @@ upstream-feature-branch: &upstream-feature-branch
     ignore:
       - /pull\/.*/
       - /release-.*/
-      - master
+      - main
 
 any-upstream: &any-upstream
   branches:
@@ -107,7 +116,7 @@ commands:
       - run:
           name: check for docs-only changes
           command: |
-            MERGE_BASE="$(git merge-base upstream/master HEAD)"
+            MERGE_BASE="$(git merge-base upstream/main HEAD)"
             DIFF_DIRS="$(git diff-tree --no-commit-id --name-only "$MERGE_BASE" HEAD)"
             if [ "$DIFF_DIRS" = "docs" ] ; then
               echo "docs-only change detected, halting job now"
@@ -122,7 +131,7 @@ commands:
       - run:
           name: check for webui-only changes # must be run after skip-if-docs-only
           command: |
-            MERGE_BASE="$(git merge-base upstream/master HEAD)"
+            MERGE_BASE="$(git merge-base upstream/main HEAD)"
             DIFF_DIRS="$(git diff-tree --no-commit-id --name-only "$MERGE_BASE" HEAD)"
             if [ "$DIFF_DIRS" = "webui" ] ; then
               echo "webui-only change detected, halting job now"
@@ -138,7 +147,7 @@ commands:
       - run:
           name: check for shared changes
           command: |
-            MERGE_BASE="$(git merge-base upstream/master HEAD)"
+            MERGE_BASE="$(git merge-base upstream/main HEAD)"
             DIFF_DIRS="$(git diff-tree --no-commit-id --name-only "$MERGE_BASE":webui/react/src HEAD:webui/react/src)"
             # check "shared" is in the list of changed directories
             if [[ "$DIFF_DIRS" == *"shared"* ]]; then
@@ -182,11 +191,11 @@ commands:
       - when:
           condition: <<parameters.tf1>>
           steps:
-            - run: docker pull determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-9b5db1b
+            - run: docker pull determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-a8b9c02
       - when:
           condition: <<parameters.tf2>>
           steps:
-            - run: docker pull determinedai/environments:py-3.8-pytorch-1.12-tf-2.8-cpu-9b5db1b
+            - run: docker pull determinedai/environments:py-3.8-pytorch-1.12-tf-2.11-cpu-a8b9c02
 
   login-docker:
     parameters:
@@ -214,7 +223,7 @@ commands:
 
   install-protoc:
     steps:
-      - run: curl --retry-connrefused --retry 10 -o /tmp/protoc.zip -L https://github.com/protocolbuffers/protobuf/releases/download/v3.17.1/protoc-3.17.1-linux-x86_64.zip
+      - run: curl --retry-connrefused --retry 10 -o /tmp/protoc.zip -L https://github.com/protocolbuffers/protobuf/releases/download/v3.20.3/protoc-3.20.3-linux-x86_64.zip
       - run: unzip -o /tmp/protoc.zip -d $HOME/.local
 
   install-codecov:
@@ -488,7 +497,7 @@ commands:
             <<parameters.extra-pytest-flags>> \
             $(< /tmp/tests-to-run)
       - upload-test-job:
-          only_on_branch: master
+          only_on_branch: main
           test_results_path: <<parameters.junit-path>>
 
   run-det-deploy-tests:
@@ -818,7 +827,9 @@ commands:
           condition: <<parameters.gpus-per-machine>>
           steps:
             - run:
+                no_output_timeout: 30m
                 command: |
+                  (sleep 29.5m && pkill python3) &
                   gcloud container node-pools create accel \
                     --cluster ${CLUSTER_ID} \
                     --region '<<parameters.region>>' \
@@ -830,7 +841,10 @@ commands:
                     || (
                       curl "$SLACK_WEBHOOK" \
                         -H 'Content-Type: application/json' \
-                        -d "{\"text\":\"GKE node pool creation failed! $CIRCLE_BUILD_URL\"}"
+                        -d "{\"text\":\"GKE node pool creation failed on branch \`$CIRCLE_BRANCH\`! $CIRCLE_BUILD_URL\"}"
+                      echo "================"
+                      echo "GKE node pool creation failed, but we are marking the job as successful because this is not directly our problem. Ask the infrastructure engineering team about increasing the quota if you want."
+                      echo "================"
                       circleci-agent step halt
                     )
                 name: Create GPU node pool
@@ -1039,7 +1053,7 @@ jobs:
       - setup-python-venv:
           install-python: false
           determined: true
-          extras-requires: "tensorflow==2.8.4 torch==1.9.0 torchvision==0.10.0"
+          extras-requires: "tensorflow==2.12.0 torch==1.9.0 torchvision==0.10.0"
           model-hub: true
           extra-requirements-file: "docs/requirements.txt"
           executor: <<pipeline.parameters.docker-image>>
@@ -1061,6 +1075,22 @@ jobs:
       - run: tar czf docs.tgz docs/site/html
       - store_artifacts:
           path: docs.tgz
+
+  scrape-docs:
+    docker:
+      - image: <<pipeline.parameters.docker-image>>
+    steps:
+      - checkout
+      - setup-python-venv:
+          install-python: false
+          determined: true
+          extras-requires: "tensorflow==2.12.0 torch==1.9.0 torchvision==0.10.0"
+          model-hub: true
+          extra-requirements-file: "docs/requirements.txt"
+          executor: <<pipeline.parameters.docker-image>>
+      - attach_workspace:
+          at: .
+      - run: make -C docs upload-search-index
 
   publish-docs:
     docker:
@@ -1573,7 +1603,7 @@ jobs:
       - setup-python-venv:
           install-python: false
           determined: true
-          extras-requires: "tensorflow==2.8.4 torch==1.9.0 torchvision==0.10.0"
+          extras-requires: "tensorflow==2.12.0 torch==1.9.0 torchvision==0.10.0"
           extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
           executor: <<pipeline.parameters.docker-image>>
       - run: COVERAGE_FILE=$PWD/test-unit-harness-cpu-pycov make -C harness test-cpu
@@ -1595,7 +1625,7 @@ jobs:
       - install-codecov
       - setup-python-venv:
           determined: true
-          extras-requires: "tensorflow==2.8.4 torch==1.9.0 torchvision==0.10.0"
+          extras-requires: "tensorflow==2.12.0 torch==1.9.0 torchvision==0.10.0"
           extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
           executor: <<pipeline.parameters.docker-image>>
       - run: COVERAGE_FILE=$PWD/test-unit-harness-gpu-pycov make -C harness test-gpu
@@ -1617,7 +1647,7 @@ jobs:
       - setup-python-venv:
           install-python: false
           determined: true
-          extras-requires: "tensorflow==2.8.4 torch==1.9.0"
+          extras-requires: "tensorflow==2.12.0 torch==1.9.0"
           extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
           executor: <<pipeline.parameters.docker-image>>
       - run: COVERAGE_FILE=$PWD/test-unit-harness-tf2-pycov make -C harness test-tf2
@@ -1639,7 +1669,7 @@ jobs:
       - setup-python-venv:
           install-python: false
           determined: true
-          extras-requires: "tensorflow==2.8.4 torch==1.9.0"
+          extras-requires: "tensorflow==2.12.0 torch==1.9.0"
           extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
           executor: <<pipeline.parameters.docker-image>>
       - run: COVERAGE_FILE=$PWD/test-unit-storage-pycov coverage run -m pytest -v --durations=0 --require-secrets -m cloud harness/tests
@@ -1711,7 +1741,7 @@ jobs:
           executor: <<pipeline.parameters.docker-image>>
       - run: pytest -vv -s --junit-xml="/tmp/test-results/examples.xml" --durations=0 examples/tests
       - upload-test-job:
-          only_on_branch: master
+          only_on_branch: main
           test_results_path: /tmp/test-results/examples.xml
 
   test-cli:
@@ -1853,7 +1883,7 @@ jobs:
       - image: <<pipeline.parameters.docker-image>>
     steps:
       - queue/until_front_of_line:
-          only-on-branch: master
+          only-on-branch: main
           # Basically wait forever -- we would prefer not to fail deploys, and
           # we'll likely never be this backed up.
           time: "10000"
@@ -1951,7 +1981,7 @@ jobs:
           path: /tmp/test-results/
       - slack/status:
           fail_only: True
-          only_for_branches: master
+          only_for_branches: main
           failure_message: ':thisisfine: A \`<<parameters.mark>>\` E2E GPU job on branch \`${CIRCLE_BRANCH}\` has failed! Author Email: \`${AUTHOR_EMAIL}\`'
           mentions: <<parameters.slack-mentions>>
           channel: <<parameters.slack-channel>>
@@ -2002,7 +2032,7 @@ jobs:
         type: string
         default: "1"
       environment-image:
-        default: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-0.21.2
+        default: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.21.2
         type: string
       accel-node-taints:
         type: string
@@ -2023,7 +2053,7 @@ jobs:
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
           executor: <<pipeline.parameters.docker-image>>
       - queue/until_front_of_line:
-          only-on-branch: master
+          only-on-branch: main
           # Basically wait forever -- we would prefer not to fail tests, and
           # we'll likely never be this backed up.
           time: "10000"
@@ -2059,7 +2089,7 @@ jobs:
           region: <<parameters.region>>
       - slack/status:
           fail_only: True
-          only_for_branches: master
+          only_for_branches: main
           failure_message: ':thisisfine: A \`<<parameters.mark>>\` E2E GKE GPU job on branch \`${CIRCLE_BRANCH}\` has failed! Author Email: \`${AUTHOR_EMAIL}\`'
           mentions: <<parameters.slack-mentions>>
           channel: <<parameters.slack-channel>>
@@ -2202,7 +2232,7 @@ jobs:
           cluster-id: ${CLUSTER_ID}
       - slack/status:
           fail_only: True
-          only_for_branches: master
+          only_for_branches: main
           failure_message: ':thisisfine: AWS FS \`<<parameters.deployment-type>>\` job on branch \`${CIRCLE_BRANCH}\` has failed! Author Email: \`${AUTHOR_EMAIL}\`'
           mentions: <<parameters.slack-mentions>>
           channel: <<parameters.slack-channel>>
@@ -2337,12 +2367,12 @@ workflows:
           # Managed devcluster restarts the master over the course of the tests,
           # so `compare_stats` cannot get the full logs from `det master logs`.
           extra-pytest-flags: "--no-compare-stats"
-      
+
       - test-e2e:
           name: test-e2e-port-registry
-          requires: 
+          requires:
             - build-go
-          parallelism: 1 
+          parallelism: 1
           devcluster-config: port-registry.devcluster.yaml
           mark: port_registry
           target-stage: agent
@@ -2406,7 +2436,7 @@ workflows:
           filters:
             branches:
               only:
-                - master
+                - main
           requires:
             - package-and-push-system-dev
           max-dynamic-agents: 2
@@ -2418,7 +2448,7 @@ workflows:
           filters:
             branches:
               only:
-                - master
+                - main
           requires:
             - package-and-push-system-dev
           max-dynamic-agents: 1
@@ -2430,7 +2460,7 @@ workflows:
           context: aws
           filters:
             branches:
-              only: master
+              only: main
           requires:
             - package-and-push-system-dev
           matrix:
@@ -2447,7 +2477,7 @@ workflows:
           context: aws
           filters:
             branches:
-              only: master
+              only: main
           requires:
             - package-and-push-system-dev
           matrix:
@@ -2463,7 +2493,7 @@ workflows:
           context: gcp-ci
           filters:
             branches:
-              only: master
+              only: main
           requires:
             - package-and-push-system-dev
           matrix:
@@ -2478,7 +2508,7 @@ workflows:
           context: gcp-ci
           filters:
             branches:
-              only: master
+              only: main
           requires:
             - package-and-push-system-dev
           matrix:
@@ -2497,7 +2527,7 @@ workflows:
           context: gcp-ci
           filters:
             branches:
-              only: master
+              only: main
           requires:
             - package-and-push-system-dev
           matrix:
@@ -2514,7 +2544,7 @@ workflows:
           context: gcp-ci
           filters:
             branches:
-              only: master
+              only: main
           requires:
             - package-and-push-system-dev
           matrix:
@@ -2534,7 +2564,7 @@ workflows:
           context: gcp-ci
           filters:
             branches:
-              only: master
+              only: main
           requires:
             - package-and-push-system-dev
           matrix:
@@ -2554,7 +2584,7 @@ workflows:
           context: gcp-ci
           filters:
             branches:
-              only: master
+              only: main
           requires:
             - package-and-push-system-dev
           matrix:
@@ -2569,6 +2599,21 @@ workflows:
               slot-type: ["cpu"]
               slot-resource-requests-cpu: [7]
               accel-node-taints: ["accel=truth:NoSchedule"]
+
+  test-e2e-quarantined:
+    jobs:
+      - build-proto
+      - build-helm
+      - build-react:
+          dev-mode: true
+      - build-docs:
+          requires:
+            - build-helm
+            - build-proto
+      - package-and-push-system-local:
+          requires:
+            - build-react
+            - build-docs
 
       - test-stress:
           name: test-stress
@@ -2937,7 +2982,7 @@ workflows:
           filters:
             branches:
               only:
-                - master
+                - main
     jobs:
       - test-e2e-aws:
           name: test-e2e-gpu-nightly
@@ -2984,6 +3029,16 @@ workflows:
             parameters:
               cluster-id-prefix: ["mmdetection"]
               mark: ["model_hub_mmdetection"]
+              compute-agent-instance-type: ["g4dn.metal"]
+              aux-agent-instance-type: ["m5.large"]
+              max-dynamic-agents: [2]
+      - test-e2e-aws:
+          name: test-e2e-gpu-mmdetection-quarantine
+          context: aws
+          matrix:
+            parameters:
+              cluster-id-prefix: ["mmdetection-quarantine"]
+              mark: ["model_hub_mmdetection_quarantine"]
               compute-agent-instance-type: ["g4dn.metal"]
               aux-agent-instance-type: ["m5.large"]
               max-dynamic-agents: [2]
@@ -3078,6 +3133,12 @@ workflows:
             - build-docs
           context: determined-production
           filters: *release-filters
+
+      - scrape-docs:
+          requires:
+            - build-docs
+          context: determined-production
+          filters: *main-and-release-and-rc-filters
 
       - publish-helm:
           requires:

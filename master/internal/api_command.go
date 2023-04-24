@@ -106,7 +106,9 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 	if err != nil {
 		return nil, launchWarnings, fmt.Errorf("checking resource availability: %v", err.Error())
 	}
-	if a.m.config.LaunchError && len(launchWarnings) > 0 {
+	if a.m.config.ResourceManager.AgentRM != nil &&
+		a.m.config.LaunchError &&
+		len(launchWarnings) > 0 {
 		return nil, nil, errors.New("slots requested exceeds cluster capacity")
 	}
 	// Get the base TaskSpec.

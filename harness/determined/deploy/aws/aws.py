@@ -510,7 +510,6 @@ def delete_spot_requests_and_agents(
 def clean_up_spot(
     stack_name: str, boto3_session: boto3.session.Session, disable_tqdm: bool = False
 ) -> None:
-
     # The spot API is eventually consistent and the only way to guarantee
     # that we don't leave any spot requests alive (that may eventually be
     # fulfilled and lead to running EC2 instances) is to wait a long enough

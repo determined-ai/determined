@@ -443,7 +443,6 @@ def main(det_callback, tb_callback, model_args, data_args, training_args):
 
 
 if __name__ == "__main__":
-
     info = det.get_cluster_info()
     assert info
     hparams = info.trial.hparams
@@ -455,7 +454,6 @@ if __name__ == "__main__":
         distributed = det.core.DistributedContext.from_torch_distributed()
 
     with det.core.init(distributed=distributed) as core_context:
-
         # Optional user-defined data that is saved in the Determined checkpoint.
         user_data = {
             "finetuned_from": model_args.model_name_or_path,

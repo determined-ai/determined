@@ -43,7 +43,7 @@ ungen:
 	rm -f `find ./internal/mocks -name '*.go'` build/mock_gen.stamp
 
 .PHONY: gen
-gen: $(GENERATED) build/schema_gen.stamp build/mock_gen.stamp
+gen: $(GENERATED) build/schema_gen.stamp
 
 .PHONY: force-gen
 force-gen:
@@ -70,7 +70,7 @@ build/mock_gen.stamp: $(MOCK_GENERATION_INPUTS)
 	touch $@
 
 .PHONY: check-gen
-check-gen: force-gen gen
+check-gen: force-gen gen build/mock_gen.stamp
 	# Checking that committed, generated code is up-to-date by ensuring that
 	# git reports the files as unchanged after forcibly regenerating the files:
 	test -z "$(shell git status --porcelain '**/zgen*')"
@@ -116,14 +116,14 @@ fmt:
 	swag fmt
 
 .PHONY: test
-test:
+test: build/mock_gen.stamp
 	gotestsum --junitfile test.junit.xml -- -short -coverprofile=coverage.out -covermode count -cover ./...
 
 .PHONY: test-intg
 test-intg: export DET_INTEGRATION_POSTGRES_URL ?= postgres://postgres:postgres@localhost:5432/determined?sslmode=disable
 test-intg: export DET_INTEGRATION_ES_HOST ?= localhost
 test-intg: export DET_INTEGRATION_ES_PORT ?= 9200
-test-intg:
+test-intg: build/mock_gen.stamp
 	gotestsum --junitfile test-intg.junit.xml -- -tags=integration -coverprofile=coverage.out -covermode count -cover ./...
 
 .PHONY: pre-package

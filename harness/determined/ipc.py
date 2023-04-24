@@ -7,8 +7,6 @@ import subprocess
 import time
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
-import psutil
-
 import determined as det
 
 
@@ -402,6 +400,8 @@ class PIDServer:
         """
         Any PIDs which exited without a graceful exit message indicates a crashed worker.
         """
+        import psutil
+
         for pid in self.pids:
             if pid not in self.graceful_shutdowns:
                 pid_ok = False

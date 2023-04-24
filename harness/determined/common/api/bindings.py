@@ -2746,6 +2746,7 @@ class v1EntityType(enum.Enum):
     PROJECT = "ENTITY_TYPE_PROJECT"
 
 class v1Experiment:
+    bestTrialId: "typing.Optional[int]" = None
     bestTrialSearcherMetric: "typing.Optional[float]" = None
     checkpointCount: "typing.Optional[int]" = None
     checkpointSize: "typing.Optional[str]" = None
@@ -2780,6 +2781,7 @@ class v1Experiment:
         startTime: str,
         state: "experimentv1State",
         username: str,
+        bestTrialId: "typing.Union[int, None, Unset]" = _unset,
         bestTrialSearcherMetric: "typing.Union[float, None, Unset]" = _unset,
         checkpointCount: "typing.Union[int, None, Unset]" = _unset,
         checkpointSize: "typing.Union[str, None, Unset]" = _unset,
@@ -2811,6 +2813,8 @@ class v1Experiment:
         self.startTime = startTime
         self.state = state
         self.username = username
+        if not isinstance(bestTrialId, Unset):
+            self.bestTrialId = bestTrialId
         if not isinstance(bestTrialSearcherMetric, Unset):
             self.bestTrialSearcherMetric = bestTrialSearcherMetric
         if not isinstance(checkpointCount, Unset):
@@ -2863,6 +2867,8 @@ class v1Experiment:
             "state": experimentv1State(obj["state"]),
             "username": obj["username"],
         }
+        if "bestTrialId" in obj:
+            kwargs["bestTrialId"] = obj["bestTrialId"]
         if "bestTrialSearcherMetric" in obj:
             kwargs["bestTrialSearcherMetric"] = float(obj["bestTrialSearcherMetric"]) if obj["bestTrialSearcherMetric"] is not None else None
         if "checkpointCount" in obj:
@@ -2915,6 +2921,8 @@ class v1Experiment:
             "state": self.state.value,
             "username": self.username,
         }
+        if not omit_unset or "bestTrialId" in vars(self):
+            out["bestTrialId"] = self.bestTrialId
         if not omit_unset or "bestTrialSearcherMetric" in vars(self):
             out["bestTrialSearcherMetric"] = None if self.bestTrialSearcherMetric is None else dump_float(self.bestTrialSearcherMetric)
         if not omit_unset or "checkpointCount" in vars(self):
@@ -12910,12 +12918,6 @@ class v1WorkspaceState(enum.Enum):
     DELETE_FAILED = "WORKSPACE_STATE_DELETE_FAILED"
     DELETED = "WORKSPACE_STATE_DELETED"
 
-class v1XAxis(enum.Enum):
-    UNSPECIFIED = "X_AXIS_UNSPECIFIED"
-    BATCH = "X_AXIS_BATCH"
-    TIME = "X_AXIS_TIME"
-    EPOCH = "X_AXIS_EPOCH"
-
 def post_AckAllocationPreemptionSignal(
     session: "api.Session",
     *,
@@ -13312,7 +13314,6 @@ def get_CompareTrials(
     timeSeriesFilter_timeRange_lt: "typing.Optional[str]" = None,
     timeSeriesFilter_timeRange_lte: "typing.Optional[str]" = None,
     trialIds: "typing.Optional[typing.Sequence[int]]" = None,
-    xAxis: "typing.Optional[v1XAxis]" = None,
 ) -> "v1CompareTrialsResponse":
     _params = {
         "endBatches": endBatches,
@@ -13338,11 +13339,10 @@ def get_CompareTrials(
         "timeSeriesFilter.timeRange.lt": timeSeriesFilter_timeRange_lt,
         "timeSeriesFilter.timeRange.lte": timeSeriesFilter_timeRange_lte,
         "trialIds": trialIds,
-        "xAxis": xAxis.value if xAxis is not None else None,
     }
     _resp = session._do_request(
         method="GET",
-        path="/api/v1/trials/compare",
+        path="/api/v1/trials/time-series",
         params=_params,
         json=None,
         data=None,
@@ -16723,11 +16723,13 @@ def get_SearchExperiments(
     limit: "typing.Optional[int]" = None,
     offset: "typing.Optional[int]" = None,
     projectId: "typing.Optional[int]" = None,
+    sort: "typing.Optional[str]" = None,
 ) -> "v1SearchExperimentsResponse":
     _params = {
         "limit": limit,
         "offset": offset,
         "projectId": projectId,
+        "sort": sort,
     }
     _resp = session._do_request(
         method="GET",

@@ -620,6 +620,7 @@ export const searchExperiments: DetApi<
       params.projectId,
       params.offset,
       params.limit,
+      undefined,
       options,
     );
   },
@@ -969,16 +970,16 @@ export const moveExperiments: DetApi<
   request: (params, options) => detApi.Experiments.moveExperiments(params, options),
 };
 
-export const compareTrials: DetApi<
-  Service.CompareTrialsParams,
+export const timeSeries: DetApi<
+  Service.TimeSeriesParams,
   Api.V1CompareTrialsResponse,
   Type.TrialSummary[]
 > = {
-  name: 'compareTrials',
+  name: 'timeSeries',
   postProcess: (response: Api.V1CompareTrialsResponse) => {
     return response.trials.map(decoder.decodeTrialSummary);
   },
-  request: (params: Service.CompareTrialsParams) =>
+  request: (params: Service.TimeSeriesParams) =>
     detApi.Experiments.compareTrials(
       params.trialIds,
       params.maxDatapoints,

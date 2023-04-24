@@ -56,7 +56,6 @@ def train(args, model, device, train_loader, optimizer, core_context, epoch_idx,
         loss.backward()
         optimizer.step()
         if (batch_idx + 1) % args.log_interval == 0:
-
             print(
                 "Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}".format(
                     epoch_idx,
@@ -84,7 +83,6 @@ def train(args, model, device, train_loader, optimizer, core_context, epoch_idx,
 
 
 def test(args, model, device, test_loader, core_context, steps_completed, op) -> int:
-
     model.eval()
     test_loss = 0
     correct = 0
@@ -251,7 +249,6 @@ def main(core_context):
     last_checkpoint_batch = None
 
     for op in core_context.searcher.operations():
-
         while epoch_idx < op.length:
             train(args, model, device, train_loader, optimizer, core_context, epoch_idx, op)
             epochs_completed = epoch_idx + 1

@@ -1,5 +1,4 @@
 import argparse
-import json
 import os
 import sys
 import typing
@@ -7,6 +6,7 @@ from collections import OrderedDict
 from operator import attrgetter
 from typing import Any, Callable, Dict, List
 
+import determined.cli.render
 from determined import cli
 from determined.cli import render
 from determined.cli import task as cli_task
@@ -47,7 +47,7 @@ def list_agents(args: argparse.Namespace) -> None:
     ]
 
     if args.json:
-        print(json.dumps(agents, indent=4))
+        determined.cli.render.print_json(agents)
         return
 
     headers = [
@@ -148,7 +148,7 @@ def list_slots(args: argparse.Namespace) -> None:
     ]
 
     if args.json:
-        print(json.dumps(slots, indent=4))
+        determined.cli.render.print_json(slots)
         return
 
     values = [s.values() for s in slots]

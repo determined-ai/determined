@@ -67,6 +67,11 @@ func createTestTrialWithMetrics(
 							NumberValue: float64(i),
 						},
 					},
+					"epoch": {
+						Kind: &structpb.Value_NumberValue{
+							NumberValue: float64(i),
+						},
+					},
 				},
 			},
 		}
@@ -100,6 +105,11 @@ func createTestTrialWithMetrics(
 			AvgMetrics: &structpb.Struct{
 				Fields: map[string]*structpb.Value{
 					"val_loss": {
+						Kind: &structpb.Value_NumberValue{
+							NumberValue: float64(i),
+						},
+					},
+					"epoch": {
 						Kind: &structpb.Value_NumberValue{
 							NumberValue: float64(i),
 						},
@@ -405,4 +415,49 @@ func TestTrialAuthZ(t *testing.T) {
 			Return(fmt.Errorf(curCase.DenyFuncName + "Error")).Once()
 		require.ErrorIs(t, curCase.IDToReqCall(trial.ID), expectedErr)
 	}
+}
+
+func compareTrialsResponseToBatches(resp *apiv1.CompareTrialsResponse) []int32 {
+	compTrial := resp.Trials[0]
+	compMetrics := compTrial.Metrics[0]
+
+	sampleBatches := []int32{}
+
+	for _, m := range compMetrics.Data {
+		sampleBatches = append(sampleBatches, m.Batches)
+	}
+
+	return sampleBatches
+}
+
+func TestCompareTrialsSampling(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+
+	trial, _, _ := createTestTrialWithMetrics(
+		ctx, t, api, curUser, false)
+
+	const DATAPOINTS = 3
+
+	req := &apiv1.CompareTrialsRequest{
+		TrialIds:      []int32{int32(trial.ID)},
+		MaxDatapoints: DATAPOINTS,
+		MetricNames:   []string{"loss"},
+		StartBatches:  0,
+		EndBatches:    1000,
+		MetricType:    apiv1.MetricType_METRIC_TYPE_TRAINING,
+		Scale:         apiv1.Scale_SCALE_LINEAR,
+	}
+
+	resp, err := api.CompareTrials(ctx, req)
+	require.NoError(t, err)
+
+	sampleBatches1 := compareTrialsResponseToBatches(resp)
+	require.Equal(t, DATAPOINTS, len(sampleBatches1))
+
+	resp, err = api.CompareTrials(ctx, req)
+	require.NoError(t, err)
+
+	sampleBatches2 := compareTrialsResponseToBatches(resp)
+
+	require.Equal(t, sampleBatches1, sampleBatches2)
 }

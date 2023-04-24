@@ -6,7 +6,7 @@ import tensorflow as tf
 from tensorflow.keras.layers import Dense
 from tensorflow.keras.losses import mean_squared_error
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.optimizers import SGD
+from tensorflow.keras.optimizers.legacy import SGD  # TODO MLG-443
 
 from determined import keras
 from tests.experiment.fixtures import keras_cb_checker

@@ -37,6 +37,9 @@ def test_import_side_effects() -> None:
             determined.cli.cli.main()
 
             bad = {
+                "^lomond\\.*",
+                "^pathspec\\.*",
+                "^hdfs\\.*",
                 "^google\\.*",
                 "^boto3\\.*",
                 "^botocore\\.*",
