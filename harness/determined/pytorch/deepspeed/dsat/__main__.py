@@ -1,5 +1,7 @@
 import argparse
 import os
+import pathlib
+import pickle
 import tempfile
 
 from determined.experimental import client
@@ -20,6 +22,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("model_dir")
     args = parser.parse_args()
 
+    # Convert the paths to absolute paths
+    args.config_path = os.path.abspath(args.config_path)
+    args.model_dir = os.path.abspath(args.model_dir)
+
     assert (
         args.tuner_type in _defaults.ALL_SEARCH_METHOD_CLASSES
     ), f"tuner-type must be one of {list(_defaults.ALL_SEARCH_METHOD_CLASSES)}, not {args.tuner_type}"
@@ -28,21 +34,16 @@ def parse_args() -> argparse.Namespace:
 
 
 def run_autotuning(args: argparse.Namespace) -> None:
-    experiment_config_dict = _utils.get_dict_from_yaml_or_json_path(args.config_path)
-    config_path_absolute = os.path.abspath(args.config_path)
-    model_dir_absolute = os.path.abspath(args.model_dir)
-
     # Build the default SearchRunner's config from the submitted config. The original config yaml file
     # is added as an include and is reimported by the SearchRunner later.
     # TODO: Revisit this choice. Might be worth giving the user the ability to specify some parts of
     # the SearchRunner config separately, despite the annoying double-config workflow.
-    default_entrypoint = f"python3 -m determined.pytorch.deepspeed.dsat._run_dsat"
-    default_entrypoint += (
-        f" -c {config_path_absolute} -md {model_dir_absolute} -t {args.tuner_type}"
-    )
+
+    default_entrypoint = "python3 -m determined.pytorch.deepspeed.dsat._run_dsat -p args.pkl"
 
     default_search_runner_overrides = _defaults.DEFAULT_SEARCH_RUNNER_OVERRIDES
     default_search_runner_overrides["entrypoint"] = default_entrypoint
+    experiment_config_dict = _utils.get_dict_from_yaml_or_json_path(args.config_path)
     default_search_runner_config_dict = merge_dicts(
         experiment_config_dict, default_search_runner_overrides
     )
@@ -65,7 +66,11 @@ def run_autotuning(args: argparse.Namespace) -> None:
     # Create empty tempdir as the model_dir and upload everything else as an includes in order to
     # preserve the top-level model_dir structure inside the SearchRunner's container.
     with tempfile.TemporaryDirectory() as temp_dir:
-        includes = [model_dir_absolute, config_path_absolute]
+        # Upload the args, which will be used by the search runner on-cluster.
+        args_path = pathlib.Path(temp_dir).joinpath("args.pkl")
+        with args_path.open("wb") as f:
+            pickle.dump(args, f)
+        includes = [args.model_dir, args.config_path]
         client.create_experiment(
             config=search_runner_config_dict, model_dir=temp_dir, includes=includes
         )

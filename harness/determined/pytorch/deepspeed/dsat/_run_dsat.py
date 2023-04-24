@@ -1,27 +1,20 @@
 import argparse
 import logging
 import os
+import pathlib
+import pickle
 
 import determined as det
 from determined import searcher
-from determined.pytorch.deepspeed import get_ds_config_from_hparams, overwrite_deepspeed_config
 from determined.pytorch.deepspeed.dsat import _defaults, _utils
 
 
-def get_parsed_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-c", "--config_path", type=str)
-    parser.add_argument("-md", "--model_dir", type=str)
-    parser.add_argument("-t", "--tuner-type", type=str, default="random")
-    args = parser.parse_args()
-    # Strip and only use the base names.
+def main(core_context: det.core.Context) -> None:
+    with pathlib.Path("args.pkl").open("rb") as f:
+        args = pickle.load(f)
+    # On-cluster, the relative paths to the below files just come from the base names.
     args.config_path = os.path.basename(args.config_path)
     args.model_dir = os.path.basename(args.model_dir)
-    return args
-
-
-def main(core_context: det.core.Context) -> None:
-    args = get_parsed_args()
 
     submitted_config_dict = _utils.get_dict_from_yaml_or_json_path(args.config_path)
 
