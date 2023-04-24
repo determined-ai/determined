@@ -1,8 +1,8 @@
-import json
 from argparse import Namespace
 from collections import namedtuple
 from typing import Any, Dict, List, Optional
 
+import determined.cli.render
 from determined.cli import default_pagination_args, render, require_feature_flag, setup_session
 from determined.common import api
 from determined.common.api import authentication, bindings
@@ -50,7 +50,7 @@ def list_groups(args: Namespace) -> None:
     body = bindings.v1GetGroupsRequest(offset=args.offset, limit=args.limit, userId=user_id)
     resp = bindings.post_GetGroups(sess, body=body)
     if args.json:
-        print(json.dumps(resp.to_json(), indent=2))
+        determined.cli.render.print_json(resp.to_json())
     else:
         if resp.groups is None:
             resp.groups = []
@@ -74,7 +74,7 @@ def describe_group(args: Namespace) -> None:
     group_details = resp.group
 
     if args.json:
-        print(json.dumps(group_details.to_json(), indent=2))
+        determined.cli.render.print_json(group_details.to_json())
     else:
         print(f"group ID {group_details.groupId} group name {group_details.name} with users added")
         if group_details.users is None:

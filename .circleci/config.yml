@@ -49,6 +49,15 @@ parameters:
     type: string
     default: xlarge
 
+main-and-release-and-rc-filters: &main-and-release-and-rc-filters
+  branches:
+    only:
+      - main
+  tags:
+    only:
+      - /(\d)+(\.(\d)+)+/
+      - /((\d)+(\.(\d)+)+)(-rc)(\d)+/
+
 release-and-rc-filters: &release-and-rc-filters
   branches:
     ignore:
@@ -182,11 +191,11 @@ commands:
       - when:
           condition: <<parameters.tf1>>
           steps:
-            - run: docker pull determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-9b5db1b
+            - run: docker pull determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-a8b9c02
       - when:
           condition: <<parameters.tf2>>
           steps:
-            - run: docker pull determinedai/environments:py-3.8-pytorch-1.12-tf-2.8-cpu-9b5db1b
+            - run: docker pull determinedai/environments:py-3.8-pytorch-1.12-tf-2.11-cpu-a8b9c02
 
   login-docker:
     parameters:
@@ -1066,6 +1075,22 @@ jobs:
       - run: tar czf docs.tgz docs/site/html
       - store_artifacts:
           path: docs.tgz
+
+  scrape-docs:
+    docker:
+      - image: <<pipeline.parameters.docker-image>>
+    steps:
+      - checkout
+      - setup-python-venv:
+          install-python: false
+          determined: true
+          extras-requires: "tensorflow==2.12.0 torch==1.9.0 torchvision==0.10.0"
+          model-hub: true
+          extra-requirements-file: "docs/requirements.txt"
+          executor: <<pipeline.parameters.docker-image>>
+      - attach_workspace:
+          at: .
+      - run: make -C docs upload-search-index
 
   publish-docs:
     docker:
@@ -2026,7 +2051,7 @@ jobs:
         type: string
         default: "1"
       environment-image:
-        default: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-0.21.2
+        default: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.21.2
         type: string
       accel-node-taints:
         type: string
@@ -2596,6 +2621,21 @@ workflows:
               slot-resource-requests-cpu: [7]
               accel-node-taints: ["accel=truth:NoSchedule"]
 
+  test-e2e-quarantined:
+    jobs:
+      - build-proto
+      - build-helm
+      - build-react:
+          dev-mode: true
+      - build-docs:
+          requires:
+            - build-helm
+            - build-proto
+      - package-and-push-system-local:
+          requires:
+            - build-react
+            - build-docs
+
       - test-stress:
           name: test-stress
           filters: *any-upstream
@@ -3013,6 +3053,16 @@ workflows:
               compute-agent-instance-type: ["g4dn.metal"]
               aux-agent-instance-type: ["m5.large"]
               max-dynamic-agents: [2]
+      - test-e2e-aws:
+          name: test-e2e-gpu-mmdetection-quarantine
+          context: aws
+          matrix:
+            parameters:
+              cluster-id-prefix: ["mmdetection-quarantine"]
+              mark: ["model_hub_mmdetection_quarantine"]
+              compute-agent-instance-type: ["g4dn.metal"]
+              aux-agent-instance-type: ["m5.large"]
+              max-dynamic-agents: [2]
         # DeepSpeed tests do not work on K80s, so we need V100 instances.
       - test-e2e-aws:
           name: test-e2e-gpu-deepspeed
@@ -3104,6 +3154,12 @@ workflows:
             - build-docs
           context: determined-production
           filters: *release-filters
+
+      - scrape-docs:
+          requires:
+            - build-docs
+          context: determined-production
+          filters: *main-and-release-and-rc-filters
 
       - publish-helm:
           requires:

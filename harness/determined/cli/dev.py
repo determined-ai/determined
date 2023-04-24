@@ -1,5 +1,4 @@
 import argparse
-import json
 import shlex
 import shutil
 import subprocess
@@ -9,6 +8,7 @@ from typing import Any, List
 
 from termcolor import colored
 
+import determined.cli.render
 from determined.common.api import authentication
 from determined.common.api.request import make_url
 from determined.common.declarative_argparse import Arg, Cmd
@@ -48,14 +48,7 @@ def curl(args: Namespace) -> None:
         print(output.stderr.decode("utf8"), file=sys.stderr)
 
     out = output.stdout.decode("utf8")
-    try:
-        json_resp = json.loads(out)
-        if shutil.which("jq") is not None:
-            subprocess.run(["jq", "."], input=out, text=True)
-        else:
-            print(json.dumps(json_resp, indent=4))
-    except json.decoder.JSONDecodeError:
-        print(out)
+    determined.cli.render.print_json(out)
 
     sys.exit(output.returncode)
 

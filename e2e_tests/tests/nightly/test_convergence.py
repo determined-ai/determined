@@ -210,6 +210,11 @@ def test_unets_tf_keras_accuracy() -> None:
 
 @pytest.mark.nightly
 def test_gbt_titanic_estimator_accuracy() -> None:
+    import tensorflow as tf
+    from packaging import version
+
+    if version.parse(tf.__version__) >= version.parse("2.11.0"):
+        pytest.skip("# TODO [MLG-442], see comment in gbt_titanic_estimator model_def")
     config = conf.load_config(conf.decision_trees_examples_path("gbt_titanic_estimator/const.yaml"))
     experiment_id = exp.run_basic_test_with_temp_config(
         config, conf.decision_trees_examples_path("gbt_titanic_estimator"), 1
