@@ -208,7 +208,8 @@ func (c *launcherAPIClient) loadEnvironmentLog(owner, id, logFileName string) (
 		LoadEnvironmentLog(c.withAuth(context.TODO()), owner, id, logFileName).
 		Execute() //nolint:bodyclose
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to retrieve HPC Resource details: %w", err)
+		return nil, nil, fmt.Errorf(c.handleLauncherError(
+			resp, "Failed to retrieve HPC Resource details", err))
 	}
 	return log, resp, nil
 }
@@ -228,14 +229,12 @@ func (c *launcherAPIClient) handleLauncherError(r *http.Response,
 				err, c.authFile)
 			c.reloadAuthToken()
 		} else {
-			msg = fmt.Sprintf("%s due to error: {%v}, response: {%v}. ",
-				errPrefix, err, r.Body)
+			msg = fmt.Sprintf("%s. Response: %v. ", errPrefix, r.Body)
 		}
 	} else {
 		msg = fmt.Sprintf("Failed to communicate with launcher due to error: "+
 			"{%v}. Verify that the launcher service is up and reachable.", err)
 	}
-	c.log.Errorf(msg)
 	return msg
 }
 
