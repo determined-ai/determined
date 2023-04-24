@@ -77,8 +77,8 @@ def list_project_experiments(args: Namespace) -> None:
     (w, p) = project_by_name(sess, args.workspace_name, args.project_name)
     kwargs: Dict[str, Any] = {
         "projectId": p.id,
-        "orderBy": bindings.v1OrderBy[f"ORDER_BY_{args.order_by.upper()}"],
-        "sortBy": bindings.v1GetExperimentsRequestSortBy[f"SORT_BY_{args.sort_by.upper()}"],
+        "orderBy": bindings.v1OrderBy[args.order_by.upper()],
+        "sortBy": bindings.v1GetExperimentsRequestSortBy[args.sort_by.upper()],
     }
     if not args.all:
         kwargs["users"] = [authentication.must_cli_auth().get_session_user()]

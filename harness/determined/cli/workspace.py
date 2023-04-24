@@ -96,8 +96,8 @@ def workspace_by_name(sess: api.Session, name: str) -> bindings.v1Workspace:
 @authentication.required
 def list_workspaces(args: Namespace) -> None:
     sess = cli.setup_session(args)
-    orderArg = bindings.v1OrderBy[f"ORDER_BY_{args.order_by.upper()}"]
-    sortArg = bindings.v1GetWorkspacesRequestSortBy[f"SORT_BY_{args.sort_by.upper()}"]
+    orderArg = bindings.v1OrderBy[args.order_by.upper()]
+    sortArg = bindings.v1GetWorkspacesRequestSortBy[args.sort_by.upper()]
     internal_offset = args.offset or 0
     all_workspaces: List[bindings.v1Workspace] = []
     while True:
@@ -123,8 +123,8 @@ def list_workspaces(args: Namespace) -> None:
 def list_workspace_projects(args: Namespace) -> None:
     sess = cli.setup_session(args)
     w = workspace_by_name(sess, args.workspace_name)
-    orderArg = bindings.v1OrderBy[f"ORDER_BY_{args.order_by.upper()}"]
-    sortArg = bindings.v1GetWorkspaceProjectsRequestSortBy[f"SORT_BY_{args.sort_by.upper()}"]
+    orderArg = bindings.v1OrderBy[args.order_by.upper()]
+    sortArg = bindings.v1GetWorkspaceProjectsRequestSortBy[args.sort_by.upper()]
     internal_offset = args.offset if ("offset" in args and args.offset) else 0
     limit = args.limit if "limit" in args else 200
     all_projects: List[bindings.v1Project] = []
