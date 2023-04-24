@@ -73,6 +73,10 @@ pre-publish:
 publish: pre-publish
 	$(MAKE) -C deploy publish
 
+.PHONY: preview
+preview: build/stamp
+	python upload.py --preview --local-path site/html
+
 live: build/stamp
 	python3 live.py
 

@@ -2261,7 +2261,7 @@ workflows:
             - build-proto
       - publish-docs-new:
           requires:
-            - package-and-push-system-local
+            - build-docs
           context: aws
 
   test-cli:
