@@ -100,12 +100,12 @@ commands:
       - run: git submodule sync
       - run: git submodule update --init
 
-  skip-if-not-docs:
+  skip-if-docs-only:
     steps:
       - run: git remote add upstream https://github.com/determined-ai/determined
       - run: git fetch upstream
       - run:
-          name: check for any docs changes
+          name: check for docs-only changes
           command: |
             MERGE_BASE="$(git merge-base upstream/main HEAD)"
             DIFF_DIRS="$(git diff-tree --no-commit-id --name-only "$MERGE_BASE" HEAD)"
@@ -121,7 +121,7 @@ commands:
       - run: git remote add upstream https://github.com/determined-ai/determined
       - run: git fetch upstream
       - run:
-          name: check for docs-only changes
+          name: check for any docs changes
           command: |
             MERGE_BASE="$(git merge-base upstream/main HEAD)"
             DIFF_DIRS="$(git diff-tree --no-commit-id --name-only "$MERGE_BASE" HEAD)"
