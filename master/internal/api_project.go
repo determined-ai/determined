@@ -12,7 +12,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/api/apiutils"
 	"github.com/determined-ai/determined/master/internal/db"
-	"github.com/determined-ai/determined/master/internal/experiment"
+	exputil "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/project"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -157,7 +157,7 @@ func (a *apiServer) getProjectColumnsByID(
 		Where("project_id = ?", id).
 		Order("id")
 
-	experiment.AuthZProvider.Get().FilterExperimentsQuery(
+	exputil.AuthZProvider.Get().FilterExperimentsQuery(
 		ctx,
 		curUser,
 		p,
