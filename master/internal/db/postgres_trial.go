@@ -180,7 +180,8 @@ func (db *PgDB) updateTotalBatches(ctx context.Context, tx *sqlx.Tx, trialID int
 // AddTrialMetrics inserts a set of trial metrics to the database.
 func (db *PgDB) addTrialMetrics(
 	ctx context.Context, m *trialv1.TrialMetrics, isValidation bool,
-) (err error) {
+) (rollbacks map[string]int, err error) {
+	rollbacks = make(map[string]int)
 	trialMetricTables := []string{"raw_steps", "raw_validations"}
 	targetTable := "raw_steps"
 	metricsBody := map[string]interface{}{
@@ -193,7 +194,7 @@ func (db *PgDB) addTrialMetrics(
 			"validation_metrics": m.Metrics.AvgMetrics,
 		}
 	}
-	return db.withTransaction("add training metrics", func(tx *sqlx.Tx) error {
+	return rollbacks, db.withTransaction("add training metrics", func(tx *sqlx.Tx) error {
 		if err := checkTrialRunID(ctx, tx, m.TrialId, m.TrialRunId); err != nil {
 			return err
 		}
@@ -219,6 +220,7 @@ WHERE trial_id = $1
 			if err != nil {
 				return errors.Wrap(err, "checking for metric rollbacks")
 			}
+			rollbacks[table] = int(affectedRows)
 			if affectedRows > 0 {
 				rollbackHappened = true
 			}
@@ -267,7 +269,8 @@ WHERE id = $1;
 // If these training metrics occur before any others, a rollback is assumed and later
 // training and validation metrics are cleaned up.
 func (db *PgDB) AddTrainingMetrics(ctx context.Context, m *trialv1.TrialMetrics) error {
-	return db.addTrialMetrics(ctx, m, false)
+	_, err := db.addTrialMetrics(ctx, m, false)
+	return err
 }
 
 // AddValidationMetrics adds a completed validation to the database with the given
@@ -276,7 +279,8 @@ func (db *PgDB) AddTrainingMetrics(ctx context.Context, m *trialv1.TrialMetrics)
 func (db *PgDB) AddValidationMetrics(
 	ctx context.Context, m *trialv1.TrialMetrics,
 ) error {
-	return db.addTrialMetrics(ctx, m, true)
+	_, err := db.addTrialMetrics(ctx, m, true)
+	return err
 }
 
 // AddCheckpointMetadata persists metadata for a completed checkpoint to the database.
