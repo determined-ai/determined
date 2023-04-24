@@ -5,6 +5,7 @@ import pathlib
 import random
 import sys
 import typing
+from unittest import mock
 
 import numpy as np
 import pytest
@@ -14,7 +15,6 @@ import determined as det
 from determined import gpu, pytorch
 from tests.experiment import utils  # noqa: I100
 from tests.experiment.fixtures import pytorch_onevar_model
-from unittest import mock
 
 # Apex is included only for GPU trials.
 try:
