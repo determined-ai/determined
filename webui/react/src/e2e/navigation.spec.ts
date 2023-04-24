@@ -19,7 +19,7 @@ test.describe('Navigation', () => {
     });
 
     await test.step('Navigate to Uncategorized', async () => {
-      await page.getByRole('link', { name: 'Uncategorized' }).first().click();
+      await page.getByRole('link', { exact: true, name: 'Uncategorized' }).click();
       const expectedURL = /projects\/1\/experiments/;
       await page.waitForURL(expectedURL);
       await expect.soft(page).toHaveTitle('Uncategorized Experiments - Determined');
