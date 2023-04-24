@@ -104,7 +104,7 @@ if __name__ == "__main__":
         print("{} already at destination".format(len(current_objects)))
 
     # try uploading site files to upload path
-    to_upload = Path(args.local_path).rglob("*")
+    to_upload = pathlib.Path(args.local_path).rglob("*")
     uploaded_objects = []
     for f in to_upload:
         upload_path = str(upload_root / f.relative_to(args.local_path))
