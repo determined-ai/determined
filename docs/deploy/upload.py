@@ -118,7 +118,7 @@ if __name__ == "__main__":
             bucket.upload_fileobj(
                 Fileobj=data, Key=upload_path, ExtraArgs={"ContentType": mimetype}
             )
-            print("uploaded {}".format(pathlib.pupload_path))
+            print("uploaded {}".format(upload_path))
             uploaded_objects.append(upload_path)
 
         with f.open("rb") as data:
