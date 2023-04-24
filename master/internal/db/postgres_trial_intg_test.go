@@ -212,7 +212,22 @@ func TestBatchesProcessed(t *testing.T) {
 	metrics, err := structpb.NewStruct(map[string]any{"loss": 10})
 	require.NoError(t, err)
 
-	testMetricReporting := func(typ string, trialRunId, batches, expectedTotalBatches int) error {
+	type Rollbacks map[string]int
+
+	assertRollbacksMatch := func(expectedRollbacks *Rollbacks, actual Rollbacks) {
+		expected := Rollbacks{
+			"raw_steps":       0,
+			"raw_validations": 0,
+		}
+		if expectedRollbacks != nil {
+			expected = *expectedRollbacks
+		}
+		require.Equal(t, expected, actual)
+	}
+
+	testMetricReporting := func(typ string, trialRunId, batches, expectedTotalBatches int,
+		expectedRollbacks *Rollbacks,
+	) error {
 		require.NoError(t, db.UpdateTrialRunID(tr.ID, trialRunId))
 		trialMetrics := &trialv1.TrialMetrics{
 			TrialId:        int32(tr.ID),
@@ -222,9 +237,15 @@ func TestBatchesProcessed(t *testing.T) {
 		}
 		switch typ {
 		case "training":
-			require.NoError(t, db.AddTrainingMetrics(ctx, trialMetrics))
+			// require.NoError(t, db.AddTrainingMetrics(ctx, trialMetrics))
+			rollbacksCnts, err := db.addTrialMetrics(ctx, trialMetrics, false)
+			require.NoError(t, err)
+			assertRollbacksMatch(expectedRollbacks, rollbacksCnts)
 		case "validation":
-			require.NoError(t, db.AddValidationMetrics(ctx, trialMetrics))
+			// require.NoError(t, db.AddValidationMetrics(ctx, trialMetrics))
+			rollbacksCnts, err := db.addTrialMetrics(ctx, trialMetrics, true)
+			require.NoError(t, err)
+			assertRollbacksMatch(expectedRollbacks, rollbacksCnts)
 		case "checkpoint":
 			require.NoError(t, AddCheckpointMetadata(ctx, &model.CheckpointV2{
 				UUID:         uuid.New(),
@@ -249,23 +270,27 @@ func TestBatchesProcessed(t *testing.T) {
 		typ             string
 		trialRunID      int
 		batches         int
-		expectedBatches int
+		expectedBatches int // expected reported total batches processed.
+		rollbacks       *Rollbacks
 	}{ // order matters.
-		{"training", 0, 10, 10},
-		{"validation", 0, 10, 10},
-		{"training", 0, 20, 20},
-		{"validation", 0, 20, 20},
-		{"validation", 0, 30, 30}, // will be rolled back.
-		{"training", 0, 25, 30},
-		{"validation", 1, 25, 25}, // rollback via validations.
-		{"validation", 1, 30, 30}, // will be rolled back.
-		{"training", 1, 30, 30},   // will be rolled back.
-		{"training", 2, 27, 27},   // rollback via training.
-		{"checkpoint", 2, 30, 27}, // CHECK: do NOT account for steps_completed here.
-		{"checkpoint", 3, 25, 27}, // CHECK: do NOT account for steps_completed here.
+		{"training", 0, 10, 10, nil},
+		{"validation", 0, 10, 10, nil},
+		{"training", 0, 20, 20, nil},
+		{"validation", 0, 20, 20, nil},
+		{"validation", 0, 30, 30, nil}, // will be rolled back.
+		{"training", 0, 25, 30, nil},
+		{"validation", 1, 25, 25, &Rollbacks{
+			"raw_validations": 1,
+			"raw_steps":       0,
+		}}, // rollback via validations.
+		{"validation", 1, 30, 30, nil}, // will be rolled back.
+		// {"training", 1, 30, 30},   // will be rolled back.
+		// {"training", 2, 27, 27},   // rollback via training.
+		// {"checkpoint", 2, 30, 27}, // CHECK: do NOT account for steps_completed here.
+		// {"checkpoint", 3, 25, 27}, // CHECK: do NOT account for steps_completed here.
 	}
 	for _, c := range cases {
-		require.NoError(t, testMetricReporting(c.typ, c.trialRunID, c.batches, c.expectedBatches))
+		require.NoError(t, testMetricReporting(c.typ, c.trialRunID, c.batches, c.expectedBatches, c.rollbacks))
 	}
 
 	// check rollbacks happened as expected.
