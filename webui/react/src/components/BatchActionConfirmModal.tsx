@@ -8,12 +8,17 @@ interface Props {
   batchAction: ExperimentAction;
   itemName?: string;
   selectAll?: boolean;
-  danger?: boolean;
   onConfirm: () => Promise<void>;
   onClose?: () => void;
 }
 
 export const CONFIRM_BUTTON_LABEL = 'Confirm';
+
+const DANGEROUS_BATCH_ACTIONS: ExperimentAction[] = [
+  ExperimentAction.Cancel,
+  ExperimentAction.Delete,
+  ExperimentAction.Kill,
+];
 
 const BatchActionConfirmModalComponent: React.FC<Props> = ({
   batchAction,
@@ -22,10 +27,10 @@ const BatchActionConfirmModalComponent: React.FC<Props> = ({
   onConfirm,
   onClose,
 }: Props) => {
-  const danger = /(cancel|kill)/i.test(batchAction);
+  const danger = DANGEROUS_BATCH_ACTIONS.includes(batchAction);
   const submit = {
     handler: onConfirm,
-    text: /cancel/i.test(batchAction) ? CONFIRM_BUTTON_LABEL : batchAction,
+    text: batchAction === ExperimentAction.Cancel ? CONFIRM_BUTTON_LABEL : batchAction,
   };
 
   return (

@@ -4,7 +4,7 @@ import { MenuInfo } from 'rc-menu/lib/interface';
 import React, { JSXElementConstructor, useCallback } from 'react';
 
 import Button from 'components/kit/Button';
-import { ConfirmModalProps, useConfirm } from 'components/kit/Confirmation';
+import useConfirm, { ConfirmModalProps } from 'components/kit/useConfirm';
 import Icon from 'shared/components/Icon/Icon';
 import { DetError, ErrorLevel, ErrorType, wrapPublicMessage } from 'shared/utils/error';
 import { capitalize } from 'shared/utils/string';

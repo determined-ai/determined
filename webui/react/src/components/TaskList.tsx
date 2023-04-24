@@ -104,7 +104,6 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
   const workspaces = Loadable.getOrElse([], useObservable(workspaceStore.workspaces));
   const [tasks, setTasks] = useState<CommandTask[] | undefined>(undefined);
   const [sourcesModal, setSourcesModal] = useState<SourceInfo>();
-  const [batchAction, setBatchAction] = useState<Action>();
   const pageRef = useRef<HTMLElement>(null);
   const workspaceId = useMemo(() => workspace?.id.toString() ?? 'global', [workspace?.id]);
   const stgsConfig = useMemo(() => settingsConfig(workspaceId), [workspaceId]);
@@ -534,12 +533,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
   }, [fetchTasks, selectedTasks, updateSettings, canModifyWorkspaceNSC]);
 
   const handleBatchAction = useCallback(
-    (action?: string) => {
-      if (action === Action.Kill) {
-        setBatchAction(action);
-        BatchActionConfirmModal.open();
-      }
-    },
+    () => BatchActionConfirmModal.open(),
     [BatchActionConfirmModal],
   );
 
@@ -654,13 +648,11 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
           onChange={handleTableChange}
         />
       </div>
-      {batchAction && (
-        <BatchActionConfirmModal.Component
-          batchAction={batchAction}
-          itemName="task"
-          onConfirm={handleBatchKill}
-        />
-      )}
+      <BatchActionConfirmModal.Component
+        batchAction={Action.Kill}
+        itemName="task"
+        onConfirm={handleBatchKill}
+      />
       <Modal
         footer={null}
         open={!!sourcesModal}

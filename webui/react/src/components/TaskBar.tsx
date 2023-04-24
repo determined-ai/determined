@@ -11,7 +11,7 @@ import { routeToReactUrl } from 'shared/utils/routes';
 import { CommandTask, CommandType } from 'types';
 import handleError from 'utils/error';
 
-import { useConfirm } from './kit/Confirmation';
+import useConfirm from './kit/useConfirm';
 import css from './TaskBar.module.scss';
 interface Props {
   handleViewLogsClick: () => void;

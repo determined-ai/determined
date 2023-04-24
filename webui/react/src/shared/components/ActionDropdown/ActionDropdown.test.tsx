@@ -1,10 +1,9 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
 
+import { ConfirmationProvider } from 'components/kit/useConfirm';
 import ActionDropdown from 'shared/components/ActionDropdown/ActionDropdown';
 import { ValueOf } from 'shared/types';
-
-import { ConfirmationProvider } from '../../../components/kit/Confirmation';
 
 const user = userEvent.setup({ pointerEventsCheck: PointerEventsCheckLevel.Never });
 
@@ -30,22 +29,24 @@ const DropDownContainer = () => {
   };
 
   return (
-    <ConfirmationProvider>
-      <ActionDropdown<TestAction>
-        actionOrder={[TestAction.ActionOne, TestAction.ActionTwo]}
-        id={'test-id'}
-        kind="test"
-        onError={() => {
-          return;
-        }}
-        onTrigger={dropDownOnTrigger()}
-      />
-    </ConfirmationProvider>
+    <ActionDropdown<TestAction>
+      actionOrder={[TestAction.ActionOne, TestAction.ActionTwo]}
+      id={'test-id'}
+      kind="test"
+      onError={() => {
+        return;
+      }}
+      onTrigger={dropDownOnTrigger()}
+    />
   );
 };
 
 const setup = () => {
-  const view = render(<DropDownContainer />);
+  const view = render(
+    <ConfirmationProvider>
+      <DropDownContainer />
+    </ConfirmationProvider>,
+  );
   return { view };
 };
 

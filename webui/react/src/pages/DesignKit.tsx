@@ -20,7 +20,7 @@ import { LineChart, Serie } from 'components/kit/LineChart';
 import { useChartGrid } from 'components/kit/LineChart/useChartGrid';
 import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
 import LogViewer from 'components/kit/LogViewer/LogViewer';
-import { DEFAULT_CANCEL_LABEL, Modal, useModal } from 'components/kit/Modal';
+import { Modal, useModal } from 'components/kit/Modal';
 import Nameplate from 'components/kit/Nameplate';
 import Pagination from 'components/kit/Pagination';
 import Pivot from 'components/kit/Pivot';
@@ -53,7 +53,7 @@ import { MetricType, Project, ResourcePool, User } from 'types';
 import { NotLoaded } from 'utils/loadable';
 import { generateTestProjectData, generateTestWorkspaceData } from 'utils/tests/generateTestData';
 
-import { DEFAULT_CONFIRM_LABEL, useConfirm } from '../components/kit/Confirmation';
+import useConfirm, { voidPromiseFn } from '../components/kit/useConfirm';
 
 import css from './DesignKit.module.scss';
 import { CheckpointsDict } from './TrialDetails/F_TrialDetailsOverview';
@@ -66,7 +66,6 @@ const ComponentTitles = {
   Cards: 'Cards',
   Charts: 'Charts',
   Checkboxes: 'Checkboxes',
-  Confirmations: 'Confirmations',
   Empty: 'Empty',
   Facepile: 'Facepile',
   Form: 'Form',
@@ -717,60 +716,6 @@ const CheckboxesSection: React.FC = () => {
         <p>Mandatory checkbox - not implemented.</p>
         <p>Mandatory checkbox with info sign - not implemented.</p>
         <Checkbox indeterminate>Indeterminate checkbox</Checkbox>
-      </AntDCard>
-    </ComponentSection>
-  );
-};
-
-const ConfirmationSection: React.FC = () => {
-  const [title, setTitle] = useState(DEFAULT_CONFIRM_LABEL);
-  const [content, setContent] = useState('Are you sure you want to do this?');
-  const [cancelText, setCancelText] = useState(DEFAULT_CANCEL_LABEL);
-  const [okText, setOkText] = useState(DEFAULT_CONFIRM_LABEL);
-  const confirm = useConfirm();
-  const confirmConfig = { cancelText, content, okText, title };
-
-  const confirmDefault = () => confirm({ ...confirmConfig });
-  const confirmDangerous = () => confirm({ ...confirmConfig, danger: true });
-
-  return (
-    <ComponentSection id="Confirmations" title="Confirmations">
-      <AntDCard>
-        <p>
-          Confirmation modals are specialized modals that prompt the user to confirm that they want
-          to go through a potentially dangerous, time-consuming or expensive operation.
-        </p>
-      </AntDCard>
-      <AntDCard title="Best practices">
-        <strong>Content considerations</strong>
-        <ul>
-          <li>
-            Keep confirmation <code>title</code> and <code>description</code> short and easy to
-            read.
-          </li>
-          <li>
-            Use <code>okText</code> text that matches the action that confirming will trigger.
-          </li>
-        </ul>
-      </AntDCard>
-      <AntDCard title="Usage">
-        <Label>Title</Label>
-        <Input value={title} onChange={(s) => setTitle(String(s.target.value))} />
-        <Label>Content</Label>
-        <Input value={content} onChange={(s) => setContent(String(s.target.value))} />
-        <Label>Cancel Button Label</Label>
-        <Input value={cancelText} onChange={(s) => setCancelText(String(s.target.value))} />
-        <Label>Ok Button Label</Label>
-        <Input value={okText} onChange={(s) => setOkText(String(s.target.value))} />
-        <hr />
-        <strong>Default</strong>
-        <Space>
-          <Button onClick={confirmDefault}>Default Confirmation</Button>
-        </Space>
-        <strong>Variations</strong>
-        <Space>
-          <Button onClick={confirmDangerous}>Dangerous Confirmation</Button>
-        </Space>
       </AntDCard>
     </ComponentSection>
   );
@@ -1938,20 +1883,6 @@ const LargeModalComponent: React.FC<{ value: string }> = ({ value }) => {
   );
 };
 
-const DangerousModalComponent: React.FC<{ value: string }> = ({ value }) => {
-  return (
-    <Modal
-      danger
-      submit={{
-        handler: handleSubmit,
-        text: 'Submit',
-      }}
-      title={value}>
-      <div>{value}</div>
-    </Modal>
-  );
-};
-
 const IconModalComponent: React.FC<{ value: string }> = ({ value }) => {
   return (
     <Modal icon="experiment" title={value}>
@@ -2053,12 +1984,16 @@ const ModalSection: React.FC = () => {
   const SmallModal = useModal(SmallModalComponent);
   const MediumModal = useModal(MediumModalComponent);
   const LargeModal = useModal(LargeModalComponent);
-  const DangerousModal = useModal(DangerousModalComponent);
   const FormModal = useModal(FormModalComponent);
   const FormFailModal = useModal(FormModalComponent);
   const LinksModal = useModal(LinksModalComponent);
   const IconModal = useModal(IconModalComponent);
   const ValidationModal = useModal(ValidationModalComponent);
+
+  const confirm = useConfirm();
+  const config = { content: text, title: text };
+  const confirmDefault = () => confirm({ ...config, onConfirm: voidPromiseFn });
+  const confirmDangerous = () => confirm({ ...config, danger: true, onConfirm: voidPromiseFn });
 
   return (
     <ComponentSection id="Modals" title="Modals">
@@ -2092,13 +2027,13 @@ const ModalSection: React.FC = () => {
         <hr />
         <strong>Variations</strong>
         <Space>
-          <Button onClick={DangerousModal.open}>Open Dangerous Modal</Button>
+          <Button onClick={confirmDefault}>Open Confirmation</Button>
+          <Button onClick={confirmDangerous}>Open Dangerous Confirmation</Button>
         </Space>
       </AntDCard>
       <SmallModal.Component value={text} />
       <MediumModal.Component value={text} />
       <LargeModal.Component value={text} />
-      <DangerousModal.Component value={text} />
       <FormModal.Component value={text} />
       <FormFailModal.Component fail value={text} />
       <LinksModal.Component value={text} />
@@ -2264,7 +2199,6 @@ const Components = {
   Cards: <CardsSection />,
   Charts: <ChartsSection />,
   Checkboxes: <CheckboxesSection />,
-  Confirmations: <ConfirmationSection />,
   Empty: <EmptySection />,
   Facepile: <FacepileSection />,
   Form: <FormSection />,

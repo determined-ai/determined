@@ -30,7 +30,7 @@ import handleError from 'utils/error';
 import { getActionsForExperiment } from 'utils/experiment';
 import { openCommandResponse } from 'utils/wait';
 
-import { useConfirm } from './kit/Confirmation';
+import useConfirm from './kit/useConfirm';
 
 interface Props {
   children?: React.ReactNode;

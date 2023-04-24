@@ -26,6 +26,11 @@ export const displayHelp = (): void => {
     '"Tab", "Up", or "Down" arrow keys to cycle through suggestions.',
     '"Escape" to close the bar.',
   ];
+  /**
+   * TODO: look into converting into UI Kit Modal.
+   * Currently `displayHelp` doesn't seem to run inside React,
+   * hence will not have access to ModalContext.
+   */
   AntdModal.info({
     content: (
       <>

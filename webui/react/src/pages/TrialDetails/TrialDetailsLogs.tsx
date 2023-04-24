@@ -10,6 +10,7 @@ import {
   Settings,
   settingsConfigForTrial,
 } from 'components/kit/LogViewer/LogViewerSelect.settings';
+import useConfirm from 'components/kit/useConfirm';
 import { useSettings } from 'hooks/useSettings';
 import { serverAddress } from 'routes/utils';
 import { detApi } from 'services/apiConfig';
@@ -21,8 +22,6 @@ import { ErrorType } from 'shared/utils/error';
 import { ExperimentBase, TrialDetails } from 'types';
 import { downloadTrialLogs } from 'utils/browser';
 import handleError from 'utils/error';
-
-import { useConfirm } from '../../components/kit/Confirmation';
 
 import css from './TrialDetailsLogs.module.scss';
 

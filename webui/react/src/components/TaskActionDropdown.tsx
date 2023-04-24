@@ -15,7 +15,7 @@ import { ExperimentAction as Action, AnyTask, CommandTask, DetailedUser } from '
 import handleError from 'utils/error';
 import { isTaskKillable } from 'utils/task';
 
-import { useConfirm } from './kit/Confirmation';
+import useConfirm from './kit/useConfirm';
 import Link from './Link';
 
 interface Props {

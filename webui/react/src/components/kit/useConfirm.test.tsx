@@ -4,7 +4,7 @@ import React from 'react';
 
 import Button from 'components/kit/Button';
 
-import { ConfirmationProvider, useConfirm } from './Confirmation';
+import useConfirm, { ConfirmationProvider } from './useConfirm';
 
 const CONFIRM_TITLE = 'Really?!';
 const CONFIRM_CONTENT = 'Do you really want to do this?!';
