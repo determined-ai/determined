@@ -100,12 +100,12 @@ commands:
       - run: git submodule sync
       - run: git submodule update --init
 
-  skip-if-docs-only:
+  skip-if-not-docs:
     steps:
       - run: git remote add upstream https://github.com/determined-ai/determined
       - run: git fetch upstream
       - run:
-          name: check for docs-only changes
+          name: check for any docs changes
           command: |
             MERGE_BASE="$(git merge-base upstream/main HEAD)"
             DIFF_DIRS="$(git diff-tree --no-commit-id --name-only "$MERGE_BASE" HEAD)"
@@ -114,6 +114,23 @@ commands:
               circleci-agent step halt
             else
               echo "detected non-docs-only changes: $DIFF_DIRS"
+            fi
+
+  skip-if-not-docs:
+    steps:
+      - run: git remote add upstream https://github.com/determined-ai/determined
+      - run: git fetch upstream
+      - run:
+          name: check for docs-only changes
+          command: |
+            MERGE_BASE="$(git merge-base upstream/main HEAD)"
+            DIFF_DIRS="$(git diff-tree --no-commit-id --name-only "$MERGE_BASE" HEAD)"
+            # check "shared" is in the list of changed directories
+            if [[ "$DIFF_DIRS" == *"docs"* ]]; then
+              echo "docs change detected, running downstream steps"
+            else
+              echo "detected non-docs changes, halting job now"
+              circleci-agent step halt
             fi
 
   skip-if-webui-only:
@@ -1087,6 +1104,7 @@ jobs:
       - image: <<pipeline.parameters.docker-image>>
     steps:
       - checkout
+      - skip-if-not-docs
       - attach_workspace:
           at: .
       - setup-python-venv:
