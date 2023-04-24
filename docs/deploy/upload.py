@@ -114,7 +114,7 @@ if __name__ == "__main__":
         mimetype, _ = mimetypes.guess_type(f)
         if mimetype is None:
             mimetype = "binary/octet-stream"
-        with file_path.open("rb") as data:
+        with f.open("rb") as data:
             bucket.upload_fileobj(
                 Fileobj=data, Key=upload_path, ExtraArgs={"ContentType": mimetype}
             )
