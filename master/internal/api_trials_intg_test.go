@@ -80,7 +80,7 @@ func createTestTrialWithMetrics(
 					},
 					"textMetric": {
 						Kind: &structpb.Value_StringValue{
-							StringValue: "NaN",
+							StringValue: "random_text",
 						},
 					},
 				},
@@ -133,7 +133,7 @@ func createTestTrialWithMetrics(
 					},
 					"textMetric": {
 						Kind: &structpb.Value_StringValue{
-							StringValue: "NaN",
+							StringValue: "random_text",
 						},
 					},
 				},
@@ -206,12 +206,14 @@ func compareMetrics(
 func isMultiTrialSampleCorrect(expectedMetrics []*commonv1.Metrics,
 	actualMetrics *apiv1.DownsampledMetrics) bool {
 	// Checking if metric names and their values are equal.
-	for i := 0; i < len(expectedMetrics); i++ {
-		expectedAvgMetrics := expectedMetrics[i].AvgMetrics.AsMap()
+	for i := 0; i < len(actualMetrics.Data); i++ {
+		allActualAvgMetrics := actualMetrics.Data
+		epoch := int(*allActualAvgMetrics[i].Epoch)
+		// use epoch to match because in downsampling returned values are randomized.
+		expectedAvgMetrics := expectedMetrics[epoch].AvgMetrics.AsMap()
 		for metricName := range expectedAvgMetrics {
 			switch expectedAvgMetrics[metricName].(type) { //nolint:gocritic
 			case float64:
-				allActualAvgMetrics := actualMetrics.Data
 				actualAvgMetrics := allActualAvgMetrics[i].Values.AsMap()
 				expectedVal := expectedAvgMetrics[metricName].(float64)
 				if metricName == "epoch" {
@@ -244,17 +246,23 @@ func TestMultiTrialSampleMetrics(t *testing.T) {
 	var trainMetricNames []string
 	var metricIds []string
 	for metricName := range expectedTrainMetrics[0].AvgMetrics.AsMap() {
+		if metricName == "textMetric" { //nolint:goconst
+			continue
+		}
 		trainMetricNames = append(trainMetricNames, metricName)
 		metricIds = append(metricIds, "training."+metricName)
 	}
 
-	maxDataPoints := 10
+	maxDataPoints := 7
 	actualTrainingMetrics, err := api.MultiTrialSample(int32(trial.ID), trainMetricNames,
 		apiv1.MetricType_METRIC_TYPE_TRAINING, maxDataPoints, 0, 10, false, nil, []string{})
 	require.NoError(t, err)
 	require.Equal(t, 1, len(actualTrainingMetrics))
 	var validationMetricNames []string
 	for metricName := range expectedValMetrics[0].AvgMetrics.AsMap() {
+		if metricName == "textMetric" {
+			continue
+		}
 		validationMetricNames = append(validationMetricNames, metricName)
 		metricIds = append(metricIds, "validation."+metricName)
 	}
@@ -264,7 +272,6 @@ func TestMultiTrialSampleMetrics(t *testing.T) {
 		0, 10, false, nil, []string{})
 	require.Equal(t, 1, len(actualValidationTrainingMetrics))
 	require.NoError(t, err)
-
 	require.True(t, isMultiTrialSampleCorrect(expectedTrainMetrics, actualTrainingMetrics[0]))
 	require.True(t, isMultiTrialSampleCorrect(expectedValMetrics, actualValidationTrainingMetrics[0]))
 
@@ -272,6 +279,8 @@ func TestMultiTrialSampleMetrics(t *testing.T) {
 		apiv1.MetricType_METRIC_TYPE_UNSPECIFIED, maxDataPoints, 0, 10, false, nil, metricIds)
 	require.Equal(t, 2, len(actualAllMetrics))
 	require.NoError(t, err)
+	require.Equal(t, maxDataPoints, len(actualAllMetrics[0].Data)) // max datapoints check
+	require.Equal(t, maxDataPoints, len(actualAllMetrics[1].Data)) // max datapoints check
 	require.True(t, isMultiTrialSampleCorrect(expectedTrainMetrics, actualAllMetrics[0]))
 	require.True(t, isMultiTrialSampleCorrect(expectedValMetrics, actualAllMetrics[1]))
 }

@@ -361,7 +361,7 @@ func MetricsTimeSeries(trialID int32, startTime time.Time,
 	}
 
 	subq = subq.Where("trial_id = ?", trialID).OrderExpr("random()").
-		Limit(maxDatapoints * len(metricNames))
+		Limit(maxDatapoints)
 	switch timeSeriesFilter {
 	case nil:
 		orderColumn = batches
@@ -383,16 +383,17 @@ func MetricsTimeSeries(trialID int32, startTime time.Time,
 	if err != nil {
 		return metricMeasurements, errors.Wrapf(err, "failed to get metrics to sample for experiment")
 	}
-	nonMetrics := map[string]bool{
-		"epoch":    true,
-		"time":     true,
-		"batches":  true,
-		"trial_id": true,
+
+	selectMetrics := map[string]bool{}
+
+	for i := range metricNames {
+		selectMetrics[metricNames[i]] = true
 	}
+
 	for i := range results {
 		valuesMap := make(map[string]interface{})
 		for mName, mVal := range results[i] {
-			if !nonMetrics[mName] {
+			if selectMetrics[mName] {
 				valuesMap[mName] = mVal
 			}
 		}

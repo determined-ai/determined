@@ -1586,7 +1586,7 @@ func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricTyp
 		for _, in := range metricMeasurements {
 			valueMap, err := structpbmap.NewStruct(in.Values)
 			if err != nil {
-				return nil, errors.Wrapf(err, "failed to get metric values")
+				return nil, errors.Wrapf(err, "failed to parse metric values")
 			}
 			out := apiv1.DataPoint{
 				Batches: int32(in.Batches),

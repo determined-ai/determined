@@ -643,7 +643,7 @@ func (a *apiServer) formatMetrics(
 	for _, in := range metricMeasurements {
 		valueMap, err := structpb.NewStruct(in.Values) // in.Value is a map.
 		if err != nil {
-			return errors.Wrapf(err, "error formating metrics")
+			return errors.Wrapf(err, "error formatting metrics")
 		}
 		out := apiv1.DataPoint{
 			Time:    timestamppb.New(in.Time),
@@ -664,7 +664,7 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 ) ([]*apiv1.DownsampledMetrics, error) {
 	var startTime time.Time
 	var err error
-	var metrics []*apiv1.DownsampledMetrics // change this name. minimal impact.
+	var metrics []*apiv1.DownsampledMetrics
 	var metricMeasurements []db.MetricMeasurements
 	// For now "epoch" is the only custom xAxis metric label supported so we
 	// build the `MetricSeriesEpoch` array. In the future this logic should
