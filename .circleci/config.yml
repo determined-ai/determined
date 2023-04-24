@@ -1078,6 +1078,29 @@ jobs:
       - run: pip3 install awscli
       - run: make -C docs publish
 
+  publish-docs-new:
+    parameters:
+      preview:
+        type: boolean
+        default: true
+    docker:
+      - image: <<pipeline.parameters.docker-image>>
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - setup-python-venv:
+          install-python: false
+          determined: true
+          extras-requires: "tensorflow==2.12.0 torch==1.9.0 torchvision==0.10.0"
+          model-hub: true
+          extra-requirements-file: "docs/requirements.txt"
+          executor: <<pipeline.parameters.docker-image>>
+      - when:
+          condition: <<parameters.preview>>
+          steps:
+            - run: make -C docs preview
+
   package-and-push-system-local:
     docker:
       - image: <<pipeline.parameters.docker-image>>
@@ -2227,6 +2250,19 @@ workflows:
       - lint-go
       - lint-react
       - lint-secrets
+
+  previews:
+    jobs:
+      - build-proto
+      - build-helm
+      - build-docs:
+          requires:
+            - build-helm
+            - build-proto
+      - publish-docs-new:
+          requires:
+            - package-and-push-system-local
+          context: aws
 
   test-cli:
     jobs:
