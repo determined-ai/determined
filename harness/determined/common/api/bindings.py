@@ -10894,29 +10894,37 @@ class v1Shell:
         return out
 
 class v1ShutDownOperation:
-    placeholder: "typing.Optional[int]" = None
+    cancel: "typing.Optional[bool]" = None
+    failure: "typing.Optional[bool]" = None
 
     def __init__(
         self,
         *,
-        placeholder: "typing.Union[int, None, Unset]" = _unset,
+        cancel: "typing.Union[bool, None, Unset]" = _unset,
+        failure: "typing.Union[bool, None, Unset]" = _unset,
     ):
-        if not isinstance(placeholder, Unset):
-            self.placeholder = placeholder
+        if not isinstance(cancel, Unset):
+            self.cancel = cancel
+        if not isinstance(failure, Unset):
+            self.failure = failure
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1ShutDownOperation":
         kwargs: "typing.Dict[str, typing.Any]" = {
         }
-        if "placeholder" in obj:
-            kwargs["placeholder"] = obj["placeholder"]
+        if "cancel" in obj:
+            kwargs["cancel"] = obj["cancel"]
+        if "failure" in obj:
+            kwargs["failure"] = obj["failure"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
         }
-        if not omit_unset or "placeholder" in vars(self):
-            out["placeholder"] = self.placeholder
+        if not omit_unset or "cancel" in vars(self):
+            out["cancel"] = self.cancel
+        if not omit_unset or "failure" in vars(self):
+            out["failure"] = self.failure
         return out
 
 class v1Slot:
