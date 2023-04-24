@@ -303,7 +303,7 @@ class DSATTrialTracker:
         length: int = 1,
     ) -> DSATModelProfileInfoTrial:
         # Create the special hp dictionary used for the model profile info run.
-        model_profile_info_hps = copy.deepcopy(self.submitted_hps)
+        model_profile_info_hps = copy.deepcopy(self.submitted_hps_with_autotuning)
         model_profile_info_hps[_defaults.OVERWRITE_KEY] = merge_dicts(
             model_profile_info_hps.get(_defaults.OVERWRITE_KEY, {}),
             _defaults.MODEL_INFO_PROFILE_DS_CONFIG,
@@ -555,7 +555,7 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
         if exited_reason != searcher.ExitedReason.ERRORED:
             # In case of INVALID_HP or USER_CANCELED, shut down the searcher.
             logging.info(f"Shutting down: unexpected early exit due to {exited_reason}")
-            new_ops_list.append(searcher.Shutdown)
+            new_ops_list.append(searcher.Shutdown())
         elif not self.trial_tracker.all_trials_created and not self.trial_tracker.should_shutdown:
             # ERRORED Trials generally corresponds to OOMs, after which we may want to submit
             # follow-on Trials.
@@ -657,7 +657,6 @@ class RandomDSATSearchMethod(BaseDSATSearchMethod):
         self,
         last_trial: DSATTrial,
     ) -> Optional[DSATTrial]:
-
         # TODO: remove below print tests.
         logging.info("**************** BSZ History ****************")
         bsz_history = []
@@ -801,7 +800,6 @@ class SimpleDSATSearchMethod(BaseDSATSearchMethod):
         last_trial: DSATTrial,
         metric: Optional[Union[float, Dict[str, Any]]] = None,
     ) -> List[DSATTrial]:
-
         new_trials = []
         if isinstance(last_trial, DSATModelProfileInfoTrial):
             # Delete special DS keys which force a model profiling info run.
