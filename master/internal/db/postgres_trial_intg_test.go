@@ -289,8 +289,8 @@ func TestBatchesProcessed(t *testing.T) {
 			"raw_validations": 1,
 			"raw_steps":       1,
 		}}, // triggers rollback via training.
-		{"checkpoint", 2, 30, 27, nil}, // CHECK: do NOT account for steps_completed here.
-		{"checkpoint", 3, 25, 27, nil}, // CHECK: do NOT account for steps_completed here.
+		{"checkpoint", 2, 30, 27, nil}, // we do NOT account for steps_completed here.
+		{"checkpoint", 3, 25, 27, nil}, // do NOT account for steps_completed here.
 	}
 	for _, c := range cases {
 		require.NoError(t, testMetricReporting(
