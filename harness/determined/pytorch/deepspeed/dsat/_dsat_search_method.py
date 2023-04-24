@@ -278,11 +278,11 @@ class DSATTrialTracker:
         # Create a consistent batch size configuration which obeys the DS constraints.
         self.enforce_consistent_batch_config(hparams)
         if length is None:
-            # Get the default length from the autotuning config.
-            # DS has a fixed notion of what a step is while Determined does not. Make sure
-            # there are no issues in reconciling this fact.
-            # The +1 is required to align DS step/DET max_length conventions.
-            # TODO: Clean all of this up.
+            # For some reason, DS (0.8.3) exits in the DeepSpeedEngine.step call when
+            # DeepSpeedEngine.global_step (initiated at zero) equals end_profile_step + 1,
+            # with global_step updated *before* this check happens. So, we need to run for
+            # a length of end_profile_step + 1 to trigger the exit. Presumably an off-by-one error
+            # on their end.
             length = self.autotuning_config["end_profile_step"] + 1
 
         trial = DSATTrial(

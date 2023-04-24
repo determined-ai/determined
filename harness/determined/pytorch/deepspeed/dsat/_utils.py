@@ -49,7 +49,7 @@ def get_dict_from_yaml_or_json_path(
 def dsat_reporting_context(
     core_context: det.core._context.Context,
     op: det.core._searcher.SearcherOperation,
-    steps_completed: int,
+    steps_completed: Optional[int] = None,
 ) -> Generator[None, None, None]:
     """
     Call the DeepSpeed model engine's `forward` method within this context to intercept the `exit`
@@ -61,6 +61,8 @@ def dsat_reporting_context(
     generate `duplicate key value` errors due to calling this method twice on the same
     `steps_completed`. Not sure if the solution should lie in code or documentation.
     """
+    if steps_completed is None:
+        steps_completed = op.length
     try:
         yield
     except SystemExit as se:
