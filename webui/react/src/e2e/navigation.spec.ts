@@ -4,26 +4,22 @@ import { test } from './global-fixtures';
 
 test.describe('Navigation', () => {
   const USERNAME = process.env.PW_USER_NAME ?? '';
-  const PASSWORD = process.env.PW_PASSWORD ?? '';
 
   test.beforeEach(async ({ dev }) => {
     await dev.setServerAddress();
   });
 
-  test('Top Level', async ({ page }) => {
+  test('Top Level', async ({ page, auth }) => {
     await page.goto('/');
 
     await test.step('Login steps', async () => {
-      await page.getByPlaceholder('username').fill(USERNAME);
-      await page.getByPlaceholder('password').fill(PASSWORD);
-      await page.getByRole('button', { name: 'Sign In' }).click();
-      await page.waitForURL(/dashboard/);
+      await auth.login(/dashboard/);
       await expect(page).toHaveTitle('Home - Determined');
       await expect(page).toHaveURL(/dashboard/);
     });
 
     await test.step('Navigate to Uncategorized', async () => {
-      await page.getByRole('link', { name: 'Uncategorized' }).click();
+      await page.getByRole('link', { name: 'Uncategorized' }).first().click();
       const expectedURL = /projects\/1\/experiments/;
       await page.waitForURL(expectedURL);
       await expect.soft(page).toHaveTitle('Uncategorized Experiments - Determined');
@@ -89,12 +85,9 @@ test.describe('Navigation', () => {
     });
 
     await test.step('Navigate to Logout', async () => {
-      await page.getByRole('navigation').getByText(USERNAME).click();
-      await page.getByRole('link', { name: 'Sign Out' }).click();
-      const expectedURL = /login/;
-      await page.waitForURL(expectedURL);
+      await auth.logout();
       await expect.soft(page).toHaveTitle('Sign In - Determined');
-      await expect.soft(page).toHaveURL(expectedURL);
+      await expect.soft(page).toHaveURL(/login/);
     });
   });
 });
