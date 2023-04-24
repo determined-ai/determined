@@ -474,6 +474,7 @@ class CheckpointContext:
         uploaded (at least, for cloud-backed checkpoint storage backends).
 
         .. note::
+        
             metadata must include a 'steps_completed' key in the current implementation.
             Raises ValueError if the 'steps_completed' key is not present in the metadata dictionary.
 
