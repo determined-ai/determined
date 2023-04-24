@@ -282,15 +282,20 @@ func TestBatchesProcessed(t *testing.T) {
 		{"validation", 1, 25, 25, &Rollbacks{
 			"raw_validations": 1,
 			"raw_steps":       0,
-		}}, // rollback via validations.
+		}}, // triggers rollback via validations.
 		{"validation", 1, 30, 30, nil}, // will be rolled back.
-		// {"training", 1, 30, 30},   // will be rolled back.
-		// {"training", 2, 27, 27},   // rollback via training.
-		// {"checkpoint", 2, 30, 27}, // CHECK: do NOT account for steps_completed here.
-		// {"checkpoint", 3, 25, 27}, // CHECK: do NOT account for steps_completed here.
+		{"training", 1, 30, 30, nil},   // will be rolled back.
+		{"training", 2, 27, 27, &Rollbacks{
+			"raw_validations": 1,
+			"raw_steps":       1,
+		}}, // triggers rollback via training.
+		{"checkpoint", 2, 30, 27, nil}, // CHECK: do NOT account for steps_completed here.
+		{"checkpoint", 3, 25, 27, nil}, // CHECK: do NOT account for steps_completed here.
 	}
 	for _, c := range cases {
-		require.NoError(t, testMetricReporting(c.typ, c.trialRunID, c.batches, c.expectedBatches, c.rollbacks))
+		require.NoError(t, testMetricReporting(
+			c.typ, c.trialRunID, c.batches, c.expectedBatches, c.rollbacks,
+		))
 	}
 
 	// check rollbacks happened as expected.
