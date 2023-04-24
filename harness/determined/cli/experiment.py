@@ -18,7 +18,7 @@ import determined.cli.render
 import determined.experimental
 import determined.load
 from determined import cli
-from determined.cli import checkpoint, proxy, render
+from determined.cli import checkpoint, render
 from determined.cli.command import CONFIG_DESC, parse_config_overrides
 from determined.cli.errors import CliError
 from determined.common import api, context, set_logger, util, yaml
@@ -294,6 +294,8 @@ def submit_experiment(args: Namespace) -> None:
 
         if not args.paused and args.follow_first_trial:
             if args.publish:
+                from determined.cli import proxy
+
                 port_map = proxy.parse_port_map_flag(args.publish)
                 with proxy.tunnel_experiment(sess, resp.experiment.id, port_map):
                     _follow_experiment_logs(sess, resp.experiment.id)

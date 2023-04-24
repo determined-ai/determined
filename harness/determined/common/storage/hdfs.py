@@ -4,8 +4,6 @@ import tempfile
 import warnings
 from typing import Optional, Union
 
-from hdfs.client import InsecureClient
-
 from determined.common import storage, util
 
 
@@ -34,7 +32,9 @@ class HDFSStorageManager(storage.CloudStorageManager):
         self.hdfs_path = hdfs_path
         self.user = user
 
-        self.client = InsecureClient(self.hdfs_url, root=self.hdfs_path, user=self.user)
+        from hdfs import client
+
+        self.client = client.InsecureClient(self.hdfs_url, root=self.hdfs_path, user=self.user)
 
     @util.preserve_random_state
     def upload(
