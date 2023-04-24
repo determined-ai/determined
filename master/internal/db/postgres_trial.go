@@ -210,6 +210,7 @@ func (db *PgDB) addTrialMetrics(
 			res, err := tx.ExecContext(ctx, fmt.Sprintf(`
 UPDATE %s SET archived = true
 WHERE trial_id = $1
+  AND archived = false
   AND trial_run_id < $2
   AND total_batches %s $3;
 	`, table, comparator), m.TrialId, m.TrialRunId, m.StepsCompleted)
