@@ -38,7 +38,7 @@ type Config struct {
 	MaxAgentStartingPeriod  model.Duration    `json:"max_agent_starting_period"`
 	MinInstances            int               `json:"min_instances"`
 	MaxInstances            int               `json:"max_instances"`
-	NumRetries              int               `json:"num_retries"`
+	MaxProvisionRetries     int               `json:"max_provision_retries"`
 	ErrorTimeout            *model.Duration   `json:"error_timeout"`
 }
 

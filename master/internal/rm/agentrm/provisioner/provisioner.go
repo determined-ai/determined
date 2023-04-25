@@ -2,6 +2,7 @@ package provisioner
 
 import (
 	"crypto/tls"
+	"fmt"
 	"time"
 
 	"golang.org/x/time/rate"
@@ -43,6 +44,7 @@ type Provisioner struct {
 	scaleDecider     *scaleDecider
 	telemetryLimiter *rate.Limiter
 	errorTimeout     time.Duration
+	maxRetries       int
 	poolName         string
 
 	errorInfo *errorInfo
@@ -101,6 +103,7 @@ func New(
 		),
 		telemetryLimiter: rate.NewLimiter(rate.Every(telemetryCooldown), 1),
 		errorTimeout:     errorTimeout,
+		maxRetries:       config.MaxProvisionRetries,
 		poolName:         resourcePool,
 	}, nil
 }
@@ -179,11 +182,7 @@ func (p *Provisioner) provision(ctx *actor.Context) {
 	}
 
 	if numToLaunch := p.scaleDecider.calculateNumInstancesToLaunch(); numToLaunch > 0 {
-		ctx.Log().Infof("decided to launch %d instances (type %s)",
-			numToLaunch, p.provider.instanceType().Name())
-		launched, err := p.provider.launch(ctx, numToLaunch) // to return something like instances launched? or have some sort of failure mode like gang scheduling/deployment
-		// todo: retry on failure w/ new numToLaunch
-		if err != nil {
+		if launched, err := p.retryLaunch(ctx, numToLaunch); err != nil {
 			ctx.Log().WithError(err).WithField("launched", launched).Error("cannot launch instances")
 			p.errorInfo = &errorInfo{
 				err:  err,
@@ -198,6 +197,36 @@ func (p *Provisioner) provision(ctx *actor.Context) {
 			instances,
 			p.InstanceType())
 	}
+}
+
+func (p *Provisioner) launch(ctx *actor.Context, numToLaunch int) (int, error) {
+	ctx.Log().Infof("launching %d instances (type %s)", numToLaunch, p.provider.instanceType().Name())
+	launched, err := p.provider.launch(ctx, numToLaunch)
+	if launched != numToLaunch {
+		err = fmt.Errorf("launched %d instances, expected %d, err %w", launched, numToLaunch, err)
+	}
+	return launched, err
+}
+
+func (p *Provisioner) retryLaunch(ctx *actor.Context, numToLaunch int) (int, error) {
+	launched := 0
+	delay := time.Second
+	var lastErr error
+	for i := 0; i <= p.maxRetries; i++ {
+		thisLaunch, err := p.launch(ctx, numToLaunch)
+		launched += thisLaunch
+		if err == nil {
+			return launched, nil
+		}
+		ctx.Log().WithError(err).Errorf("failed to launch %d instances", numToLaunch)
+		if i < p.maxRetries {
+			time.Sleep(delay)
+			delay *= 2
+		}
+		numToLaunch -= launched
+		lastErr = err
+	}
+	return launched, fmt.Errorf("failed to launch %d instances after %d retries, last error: %w", numToLaunch, p.maxRetries, lastErr)
 }
 
 func (p *Provisioner) GetError() error {
