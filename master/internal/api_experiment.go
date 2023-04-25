@@ -333,7 +333,7 @@ func (a *apiServer) DeleteExperiment(
 	go func() {
 		wg := sync.WaitGroup{}
 		wg.Add(1)
-		if _, err := a.deleteExperiments(wg, []*model.Experiment{e},
+		if _, err := a.deleteExperiments(&wg, []*model.Experiment{e},
 			&curUser); err != nil {
 			logrus.WithError(err).Errorf("deleting experiment %d", e.ID)
 			e.State = model.DeleteFailedState
@@ -365,7 +365,7 @@ func (a *apiServer) DeleteExperiments(
 			exps := experiments[i : i+10]
 			wg.Add(1)
 			go func() {
-				if expIDs, err := a.deleteExperiments(wg, exps, curUser); err != nil {
+				if expIDs, err := a.deleteExperiments(&wg, exps, curUser); err != nil {
 					for _, id := range expIDs {
 						logrus.WithError(err).Errorf("deleting experiment %d", id)
 					}
@@ -393,7 +393,7 @@ func (a *apiServer) DeleteExperiments(
 	return &apiv1.DeleteExperimentsResponse{Results: exputil.ToAPIResults(results)}, err
 }
 
-func (a *apiServer) deleteExperiments(wg sync.WaitGroup, exps []*model.Experiment,
+func (a *apiServer) deleteExperiments(wg *sync.WaitGroup, exps []*model.Experiment,
 	userModel *model.User,
 ) ([]int, error) {
 	var expIDs []int
