@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sort"
+	"sync"
 
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -440,7 +441,9 @@ func (a *apiServer) deleteProject(ctx context.Context, projectID int32,
 	}
 
 	log.Debugf("deleting project %d experiments", projectID)
-	if _, err = a.deleteExperiments(context.Background(), expList, user); err != nil {
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	if _, err = a.deleteExperiments(wg, expList, user); err != nil {
 		log.WithError(err).Errorf("failed to delete experiments")
 		_ = a.m.db.QueryProto("delete_fail_project", holder, projectID, err.Error())
 		return err

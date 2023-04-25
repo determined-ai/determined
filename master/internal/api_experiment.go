@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"golang.org/x/exp/slices"
@@ -330,7 +331,9 @@ func (a *apiServer) DeleteExperiment(
 	}
 
 	go func() {
-		if _, err := a.deleteExperiments(context.Background(), []*model.Experiment{e},
+		wg := sync.WaitGroup{}
+		wg.Add(1)
+		if _, err := a.deleteExperiments(wg, []*model.Experiment{e},
 			&curUser); err != nil {
 			logrus.WithError(err).Errorf("deleting experiment %d", e.ID)
 			e.State = model.DeleteFailedState
@@ -357,40 +360,48 @@ func (a *apiServer) DeleteExperiments(
 		req.Filters)
 
 	go func() {
+		wg := sync.WaitGroup{}
 		for i := 0; i < len(experiments); i += 10 {
 			exps := experiments[i : i+10]
-			if expIDs, err := a.deleteExperiments(context.Background(), exps, curUser); err != nil {
-				for _, id := range expIDs {
-					logrus.WithError(err).Errorf("deleting experiment %d", id)
-				}
-				_, err = db.Bun().NewUpdate().
-					ModelTableExpr("experiments as e").
-					Set("state = ?", model.DeleteFailedState).
-					Where("id IN (?)", bun.In(expIDs)).
-					Exec(ctx)
-				if err != nil {
+			wg.Add(1)
+			go func() {
+				if expIDs, err := a.deleteExperiments(wg, exps, curUser); err != nil {
 					for _, id := range expIDs {
-						logrus.WithError(err).Errorf("transitioning experiment %d to %s", id, model.DeleteFailedState)
+						logrus.WithError(err).Errorf("deleting experiment %d", id)
+					}
+					_, err = db.Bun().NewUpdate().
+						ModelTableExpr("experiments as e").
+						Set("state = ?", model.DeleteFailedState).
+						Where("id IN (?)", bun.In(expIDs)).
+						Exec(ctx)
+					if err != nil {
+						for _, id := range expIDs {
+							logrus.WithError(err).Errorf("transitioning experiment %d to %s", id,
+								model.DeleteFailedState)
+						}
+					}
+				} else {
+					for _, id := range expIDs {
+						logrus.WithError(err).Errorf("deleting experiment %d", id)
 					}
 				}
-			} else {
-				for _, id := range expIDs {
-					logrus.WithError(err).Errorf("deleting experiment %d", id)
-				}
-			}
+			}()
 		}
+		wg.Wait()
 	}()
 
 	return &apiv1.DeleteExperimentsResponse{Results: exputil.ToAPIResults(results)}, err
 }
 
-func (a *apiServer) deleteExperiments(ctx context.Context, exps []*model.Experiment,
+func (a *apiServer) deleteExperiments(wg sync.WaitGroup, exps []*model.Experiment,
 	userModel *model.User,
 ) ([]int, error) {
 	var expIDs []int
 	for _, exp := range exps {
 		expIDs = append(expIDs, exp.ID)
 	}
+
+	defer wg.Done()
 
 	taskSpec := *a.m.taskSpec
 
@@ -435,6 +446,7 @@ func (a *apiServer) deleteExperiments(ctx context.Context, exps []*model.Experim
 		}
 	}
 
+	ctx := context.Background()
 	trialIDs, taskIDs, err := a.m.db.ExperimentsTrialAndTaskIDs(ctx, db.Bun(), expIDs)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to gather trial IDs for experiment")
