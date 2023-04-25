@@ -30,8 +30,6 @@ type awsCluster struct {
 
 	// State that is only used if spot instances are enabled
 	spot *spotState
-
-	errorInfo *errorInfo
 }
 
 //nolint:lll  // See https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instancedata-data-retrieval.html
@@ -119,10 +117,6 @@ func newAWSCluster(
 			ResourcePool:                 resourcePool,
 			LogOptions:                   config.AWS.BuildDockerLogString(),
 		}),
-		errorInfo: &errorInfo{
-			err:  errors.New("not implemented"),
-			time: time.Now(),
-		},
 	}
 
 	if cluster.SpotEnabled {
@@ -181,11 +175,11 @@ func (c *awsCluster) list(ctx *actor.Context) ([]*model.Instance, error) {
 func (c *awsCluster) launch(
 	ctx *actor.Context,
 	instanceNum int,
-) {
+) (int, error) {
 	if c.SpotEnabled {
-		c.launchSpot(ctx, instanceNum)
+		return c.launchSpot(ctx, instanceNum)
 	} else {
-		c.launchOnDemand(ctx, instanceNum)
+		return c.launchOnDemand(ctx, instanceNum)
 	}
 }
 
@@ -217,14 +211,14 @@ func (c *awsCluster) listOnDemand(ctx *actor.Context) ([]*model.Instance, error)
 	return res, nil
 }
 
-func (c *awsCluster) launchOnDemand(ctx *actor.Context, instanceNum int) {
+func (c *awsCluster) launchOnDemand(ctx *actor.Context, instanceNum int) (int, error) {
 	if instanceNum <= 0 {
-		return
+		return 0, nil
 	}
 	instances, err := c.launchInstances(instanceNum, false)
 	if err != nil {
 		ctx.Log().WithError(err).Error("cannot launch EC2 instances")
-		return
+		return len(instances.Instances), err
 	}
 	launched := c.newInstances(instances.Instances)
 	ctx.Log().Infof(
@@ -233,6 +227,7 @@ func (c *awsCluster) launchOnDemand(ctx *actor.Context, instanceNum int) {
 		instanceNum,
 		model.FmtInstances(launched),
 	)
+	return instanceNum, nil
 }
 
 func (c *awsCluster) terminateOnDemand(ctx *actor.Context, instanceIDs []*string) {
@@ -437,12 +432,4 @@ func (c *awsCluster) terminateInstances(
 		InstanceIds: ids,
 	}
 	return c.client.TerminateInstances(input)
-}
-
-func (c *awsCluster) getErrorInfo() *errorInfo {
-	return c.errorInfo
-}
-
-func (c *awsCluster) clearError() {
-	c.errorInfo = nil
 }

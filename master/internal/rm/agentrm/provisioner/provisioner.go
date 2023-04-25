@@ -44,6 +44,8 @@ type Provisioner struct {
 	telemetryLimiter *rate.Limiter
 	errorTimeout     time.Duration
 	poolName         string
+
+	errorInfo *errorInfo
 }
 
 type errorInfo struct {
@@ -56,10 +58,8 @@ type provider interface {
 	slotsPerInstance() int
 	prestart(ctx *actor.Context)
 	list(ctx *actor.Context) ([]*model.Instance, error)
-	launch(ctx *actor.Context, instanceNum int)
+	launch(ctx *actor.Context, instanceNum int) (int, error)
 	terminate(ctx *actor.Context, instanceIDs []string)
-	getErrorInfo() *errorInfo
-	clearError()
 }
 
 // New creates a new Provisioner.
@@ -181,7 +181,16 @@ func (p *Provisioner) provision(ctx *actor.Context) {
 	if numToLaunch := p.scaleDecider.calculateNumInstancesToLaunch(); numToLaunch > 0 {
 		ctx.Log().Infof("decided to launch %d instances (type %s)",
 			numToLaunch, p.provider.instanceType().Name())
-		p.provider.launch(ctx, numToLaunch) // to return something like instances launched? or have some sort of failure mode like gang scheduling/deployment
+		launched, err := p.provider.launch(ctx, numToLaunch) // to return something like instances launched? or have some sort of failure mode like gang scheduling/deployment
+		// todo: retry on failure w/ new numToLaunch
+		if err != nil {
+			ctx.Log().WithError(err).WithField("launched", launched).Error("cannot launch instances")
+			p.errorInfo = &errorInfo{
+				err:  err,
+				time: time.Now(),
+			}
+			return
+		}
 	}
 
 	if p.telemetryLimiter.Allow() {
@@ -192,13 +201,12 @@ func (p *Provisioner) provision(ctx *actor.Context) {
 }
 
 func (p *Provisioner) GetError() error {
-	errorInfo := p.provider.getErrorInfo()
-	if errorInfo == nil {
+	if p.errorInfo == nil {
 		return nil
 	}
-	if p.errorTimeout <= 0 || time.Now().After(errorInfo.time.Add(p.errorTimeout)) {
-		p.provider.clearError()
+	if p.errorTimeout <= 0 || time.Now().After(p.errorInfo.time.Add(p.errorTimeout)) {
+		p.errorInfo = nil
 		return nil
 	}
-	return errorInfo.err
+	return p.errorInfo.err
 }

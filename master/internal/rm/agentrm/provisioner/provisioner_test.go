@@ -96,7 +96,6 @@ type mockProvider struct {
 	maxInstances     int
 	instances        map[string]*model.Instance
 	history          []mockFuncCall
-	errorInfo        *errorInfo
 }
 
 func newMockProvider(config *mockConfig) (*mockProvider, error) {
@@ -132,7 +131,7 @@ func (c *mockProvider) list(ctx *actor.Context) ([]*model.Instance, error) {
 
 func (c *mockProvider) prestart(ctx *actor.Context) {}
 
-func (c *mockProvider) launch(ctx *actor.Context, instanceNum int) {
+func (c *mockProvider) launch(ctx *actor.Context, instanceNum int) (int, error) {
 	c.history = append(c.history, newMockFuncCall("launch", c.mockInstanceType, instanceNum))
 	for i := 0; i < instanceNum; i++ {
 		name := uuid.New().String()
@@ -144,6 +143,7 @@ func (c *mockProvider) launch(ctx *actor.Context, instanceNum int) {
 		}
 		c.instances[inst.ID] = &inst
 	}
+	return instanceNum, nil
 }
 
 func (c *mockProvider) terminate(ctx *actor.Context, instanceIDs []string) {
@@ -151,18 +151,6 @@ func (c *mockProvider) terminate(ctx *actor.Context, instanceIDs []string) {
 	for _, id := range instanceIDs {
 		delete(c.instances, id)
 	}
-}
-
-func (c *mockProvider) hasError() bool {
-	return false
-}
-
-func (c *mockProvider) getErrorInfo() *errorInfo {
-	return c.errorInfo
-}
-
-func (c *mockProvider) clearError() {
-	c.errorInfo = nil
 }
 
 func TestProvisionerScaleUp(t *testing.T) {

@@ -30,8 +30,6 @@ type gcpCluster struct {
 	metadata     []*compute.MetadataItems
 
 	client *compute.Service
-
-	errorInfo *errorInfo
 }
 
 func newGCPCluster(
@@ -193,9 +191,9 @@ func (c *gcpCluster) list(ctx *actor.Context) ([]*model.Instance, error) {
 	return res, nil
 }
 
-func (c *gcpCluster) launch(ctx *actor.Context, instanceNum int) {
+func (c *gcpCluster) launch(ctx *actor.Context, instanceNum int) (int, error) {
 	if instanceNum <= 0 {
-		return
+		return 0, nil
 	}
 
 	var ops []*compute.Operation
@@ -227,7 +225,7 @@ func (c *gcpCluster) launch(ctx *actor.Context, instanceNum int) {
 	}
 
 	if len(ops) == 0 {
-		return
+		return 0, errors.Errorf("cannot insert GCE instances")
 	}
 	if _, ok := ctx.ActorOf(
 		fmt.Sprintf("track-batch-operation-%s", uuid.New()),
@@ -247,8 +245,12 @@ func (c *gcpCluster) launch(ctx *actor.Context, instanceNum int) {
 		},
 	); !ok {
 		ctx.Log().Error("internal error tracking GCP operation batch")
-		return
+		return len(ops), errors.Errorf("internal error tracking GCP operation batch")
 	}
+	if len(ops) != instanceNum {
+		return len(ops), errors.Errorf("cannot insert some GCE instances")
+	}
+	return instanceNum, nil
 }
 
 func (c *gcpCluster) terminate(ctx *actor.Context, instances []string) {
@@ -320,12 +322,4 @@ func (c *gcpCluster) newInstancesFromOperations(operations []*compute.Operation)
 		})
 	}
 	return instances
-}
-
-func (c *gcpCluster) getErrorInfo() *errorInfo {
-	return c.errorInfo
-}
-
-func (c *gcpCluster) clearError() {
-	c.errorInfo = nil
 }
