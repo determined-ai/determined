@@ -14,6 +14,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="DS Autotuning")
     parser.add_argument("config_path")
     parser.add_argument("model_dir")
+    parser.add_argument("-i", "--include", type=str, nargs="+")
 
     parser.add_argument("-s", "--search-runner-config", type=str)
     parser.add_argument("-t", "--tuner-type", type=str, default="random")
@@ -36,6 +37,17 @@ def parse_args() -> argparse.Namespace:
     # Convert the paths to absolute paths
     args.config_path = os.path.abspath(args.config_path)
     args.model_dir = os.path.abspath(args.model_dir)
+    args.include = [os.path.abspath(p) for p in args.include] if args.include is not None else []
+
+    assert (
+        args.tuner_type in _defaults.ALL_SEARCH_METHOD_CLASSES
+    ), f"tuner-type must be one of {list(_defaults.ALL_SEARCH_METHOD_CLASSES)}, not {args.tuner_type}"
+
+    return args
+
+    parser.add_argument("config_path")
+    parser.add_argument("model_dir")
+    args = parser.parse_args()
 
     assert (
         args.tuner_type in _defaults.ALL_SEARCH_METHOD_CLASSES
