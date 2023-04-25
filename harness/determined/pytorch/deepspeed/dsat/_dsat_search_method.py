@@ -1,4 +1,5 @@
 import argparse
+import collections
 import copy
 import logging
 import pathlib
@@ -38,7 +39,7 @@ class DSATTrial:
         self,
         hparams: Dict[str, Any],
         model_dir: str,
-        slots: int,
+        slots_per_trial: int,
         length: int,
         request_id: Optional[uuid.UUID] = None,
         parent: Optional["DSATTrial"] = None,
@@ -46,7 +47,7 @@ class DSATTrial:
     ) -> None:
         self.hparams = hparams
         self.model_dir = model_dir
-        self.slots = slots
+        self.slots_per_trial = slots_per_trial
         self.length = length
         self.request_id = request_id or uuid.uuid4()
         self.parent = parent
@@ -123,9 +124,7 @@ class DSATTrial:
 
 class DSATModelProfileInfoTrial(DSATTrial):
     """
-    Super class for processing the model profiling info run.
-
-    # TODO: avoid various recomputations.
+    Super class for differentiating the model profiling info run.
     """
 
 
@@ -143,7 +142,7 @@ class DSATTrialTracker:
         self.model_dir = model_dir
 
         # Various derived attributes
-        self.slots = self.config["resources"]["slots_per_trial"]
+        self.slots_per_trial = self.config["resources"]["slots_per_trial"]
         self.smaller_is_better = self.config["searcher"].get(
             "smaller_is_better", _defaults.SMALLER_IS_BETTER
         )
@@ -171,6 +170,9 @@ class DSATTrialTracker:
         self.num_trials_since_best_result = 0
         self.successful_stages = set()
         self._all_trials_dict = {}
+        # Using a list instead of an honest `queue` or `multiprocessing` `Queue` object because
+        # neither or the former are pickleable with the current code.
+        self._trials_queue = []
 
         self._mem_per_gpu_per_stage = None
         self._viable_zero_stages = None
@@ -188,35 +190,30 @@ class DSATTrialTracker:
     def create_trial(
         self,
         hparams: Dict[str, Any],
-        length: Optional[int] = None,
         search_data: Optional[Any] = None,
         parent_trial: Optional[DSATTrial] = None,
     ) -> DSATTrial:
         """
-        Creates a new `DSATTrial` object, updates lineages as appropriate, and updates the
-        searcher's Trial tracking dictionary.
+        Helper function which creates a new `DSATTrial` object of the appropriate length, given the
+        config.
         """
         # Create a consistent batch size configuration which obeys the DS constraints.
         self.enforce_consistent_batch_config(hparams)
-        if length is None:
-            # For some reason, DS (0.8.3) exits in the DeepSpeedEngine.step call when
-            # DeepSpeedEngine.global_step (initiated at zero) equals end_profile_step + 1,
-            # with global_step updated *before* this check happens. So, we need to run for
-            # a length of end_profile_step + 1 to trigger the exit. Presumably an off-by-one error
-            # on their end.
-            length = self.autotuning_config["end_profile_step"] + 1
 
+        # For some reason, DS (0.8.3) exits in the DeepSpeedEngine.step call when
+        # DeepSpeedEngine.global_step (initiated at zero) equals end_profile_step + 1,
+        # with global_step updated *before* this check happens. So, we need to run for
+        # a length of end_profile_step + 1 to trigger the exit. Presumably an off-by-one error
+        # on their end.
         trial = DSATTrial(
             hparams=hparams,
             model_dir=self.model_dir,
-            slots=self.slots,
-            length=length,
+            slots_per_trial=self.slots_per_trial,
+            length=self.autotuning_config["end_profile_step"] + 1,
             parent=parent_trial,
             search_data=search_data,
         )
-        self._all_trials_dict[trial.request_id] = trial
         # TODO: Delete print test.
-        logging.info(f"=============Total Trials Created: {len(self)}=============")
         return trial
 
     def create_model_profile_info_trial(
@@ -234,12 +231,21 @@ class DSATTrialTracker:
         model_profile_info_trial = DSATModelProfileInfoTrial(
             hparams=model_profile_info_hps,
             model_dir=self.model_dir,
-            slots=self.slots,
+            slots_per_trial=self.slots_per_trial,
             length=length,
         )
-        self._all_trials_dict[model_profile_info_trial.request_id] = model_profile_info_trial
         self.model_profile_info_trial = model_profile_info_trial
         return model_profile_info_trial
+
+    def register_trial(self, trial: DSATTrial) -> None:
+        logging.info(f"=============Total Trials Created: {len(self)}=============")
+        self._all_trials_dict[trial.request_id] = trial
+        self._trials_queue.append(trial)
+
+    def get_next_trials(self, num_trials: int) -> List[DSATTrial]:
+        next_trials = self._trials_queue[:num_trials]
+        self._trials_queue = self._trials_queue[num_trials:]
+        return next_trials
 
     def enforce_consistent_batch_config(self, hparams: Dict[str, Any]) -> None:
         """Enforces a consistent batch size configuration by altering `hparams` in-place."""
@@ -248,7 +254,7 @@ class DSATTrialTracker:
         # We are optimizing different things.
         ds_config = get_ds_config_from_hparams(hparams, self.model_dir)
         batch_size_config = _utils.get_batch_config_from_mbs_gas_and_slots(
-            ds_config, slots=self.slots
+            ds_config, slots=self.slots_per_trial
         )
         hparams[_defaults.OVERWRITE_KEY] = merge_dicts(
             hparams[_defaults.OVERWRITE_KEY], batch_size_config
@@ -383,9 +389,9 @@ class DSATTrialTracker:
 
             non_activation_mem_per_gpu_per_stage = {
                 0: params_mem + gradients_mem + optimizer_mem,
-                1: params_mem + gradients_mem + optimizer_mem // self.slots,
-                2: params_mem + (gradients_mem + optimizer_mem) // self.slots,
-                3: (params_mem + gradients_mem + optimizer_mem) // self.slots,
+                1: params_mem + gradients_mem + optimizer_mem // self.slots_per_trial,
+                2: params_mem + (gradients_mem + optimizer_mem) // self.slots_per_trial,
+                3: (params_mem + gradients_mem + optimizer_mem) // self.slots_per_trial,
             }
             # In DS there is an mp_size int which can be used for model parallelism and also enters
             # the memory computation, but we will not support that feature at the moment.
@@ -432,9 +438,15 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
     def __init__(
         self,
         config: Dict[str, Any],
+        max_trials: int,
+        max_concurrent_trials: int,
+        max_slots: Optional[int],
         model_dir: str,
     ) -> None:
         self.config = config
+        self.max_trials = max_trials
+        self.max_concurrent_trials = max_concurrent_trials
+        self.max_slots = max_slots
         self.model_dir = model_dir
 
         self.trial_tracker = DSATTrialTracker(
@@ -470,21 +482,18 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
         """
         pass
 
-    def get_ops_list_for_trials(self, trials: Iterable[DSATTrial]) -> List[searcher.Operation]:
+    def get_ops_for_trial(self, trial: DSATTrial) -> [searcher.Operation]:
         """
         Returns a list with the Create and ValidateAfter operations needed to initiate and run
         the specified Trial.
         """
-        ops_list = []
-        for t in trials:
-            create_op = searcher.Create(
-                request_id=t.request_id,
-                hparams=t.hparams,
-                checkpoint=None,
-            )
-            ops_list.append(create_op)
-            validate_after_op = searcher.ValidateAfter(request_id=t.request_id, length=t.length)
-            ops_list.append(validate_after_op)
+        create_op = searcher.Create(
+            request_id=trial.request_id,
+            hparams=trial.hparams,
+            checkpoint=None,
+        )
+        validate_after_op = searcher.ValidateAfter(request_id=trial.request_id, length=trial.length)
+        ops_list = [create_op, validate_after_op]
 
         return ops_list
 
@@ -496,8 +505,8 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
         inform the search.
         """
         model_profile_info_trial = self.trial_tracker.create_model_profile_info_trial()
-        # Only a single step is required for the model profiling run.
-        ops = self.get_ops_list_for_trials([model_profile_info_trial])
+        self.trial_tracker.register_trial(model_profile_info_trial)
+        ops = self.get_ops_for_trial(model_profile_info_trial)
         return ops
 
     def on_trial_created(
@@ -535,8 +544,9 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
                 last_trial=last_trial,
                 metric=metric,
             )
-            additional_ops_list = self.get_ops_list_for_trials(new_trials)
-            new_ops_list.extend(additional_ops_list)
+            for t in new_trials:
+                self.trial_tracker.register_trial(t)
+                new_ops_list.extend(self.get_ops_for_trial(t))
         return new_ops_list
 
     def on_trial_closed(
@@ -563,7 +573,6 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
 
         last_trial = self.trial_tracker[request_id]
         last_trial.error = True
-
         new_ops_list = []
         if exited_reason != searcher.ExitedReason.ERRORED:
             # In case of INVALID_HP or USER_CANCELED, shut down the searcher.
@@ -577,10 +586,39 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
                 last_trial=last_trial,
                 exited_reason=exited_reason,
             )
-            additional_ops_list = self.get_ops_list_for_trials(new_trials)
-            new_ops_list.extend(additional_ops_list)
-
+            for t in new_trials:
+                self.trial_tracker.register_trial(t)
+                new_ops_list.extend(self.get_ops_for_trial(t))
         return new_ops_list
+
+    def num_trials_to_schedule(
+        self,
+        searcher_state: searcher.SearcherState,
+    ) -> int:
+        running_trials = searcher_state.trials_created - searcher_state.trials_closed
+        num_running_trials = len(running_trials)
+        num_completed_trials = len(searcher_state.trials_closed)
+
+        total_trials_remaining = self.max_trials - num_completed_trials
+        concurrent_trials_available = self.max_concurrent_trials - num_running_trials
+        trials_to_schedule = min(total_trials_remaining, concurrent_trials_available)
+        if self.max_slots is not None:
+            occupied_slots = num_running_trials * self.trial_tracker.slots_per_trial
+            remaining_slots_available = self.max_slots - occupied_slots
+            trials_available_with_remaining_slots = (
+                remaining_slots_available // self.trial_tracker.slots_per_trial
+            )
+            trials_to_schedule = min(trials_to_schedule, trials_available_with_remaining_slots)
+
+        return trials_to_schedule
+
+    def get_next_ops(self, searcher_state: searcher.SearcherState) -> List[searcher.Operation]:
+        num_trials = self.num_trials_to_schedule(searcher_state)
+        next_trials = self.trial_tracker.get_next_trials(num_trials)
+        next_ops = []
+        for t in next_trials:
+            next_ops.extend(self.get_ops_for_trial(t))
+        return next_ops
 
     def progress(self, searcher_state: searcher.SearcherState) -> float:
         progress = len(searcher_state.trials_closed) / len(searcher_state.trials_created)
@@ -600,7 +638,13 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
     @classmethod
     def from_args(cls, args: argparse.Namespace) -> "BaseDSATSearchMethod":
         config = _utils.get_dict_from_yaml_or_json_path(args.config_path)
-        return cls(config=config, model_dir=args.model_dir)
+        return cls(
+            config=config,
+            max_trials=args.max_trials,
+            max_slots=args.max_slots,
+            max_concurrent_trials=args.max_concurrent_trials,
+            model_dir=args.model_dir,
+        )
 
 
 class RandomDSATSearchMethod(BaseDSATSearchMethod):
