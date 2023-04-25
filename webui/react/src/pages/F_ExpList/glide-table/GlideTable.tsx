@@ -87,6 +87,10 @@ export const SCROLL_SET_COUNT_NEEDED = 2;
 
 const STATIC_COLUMNS: ExperimentColumn[] = ['selected', 'name'];
 
+const isClickableCell = (cell: GridCell): cell is ClickableCell => {
+  return !!(cell as ClickableCell).data?.link?.onClick;
+};
+
 export const GlideTable: React.FC<GlideTableProps> = ({
   data,
   fetchExperiments,
@@ -246,20 +250,21 @@ export const GlideTable: React.FC<GlideTableProps> = ({
 
   const getCellContent: DataEditorProps['getCellContent'] = React.useCallback(
     (cell: Item): GridCell => {
-      const [colIdx, rowIdx] = cell;
-      const columnId = columnIds[colIdx];
-      const row = data[rowIdx];
-      if (row && Loadable.isLoaded(row)) {
-        return columnDefs[columnId].renderer(row.data, rowIdx);
-      }
-      return {
-        allowOverlay: true,
-        copyData: '',
-        data: {
-          kind: 'spinner-cell',
+      const [col, row] = cell;
+
+      return Loadable.match(data[row], {
+        Loaded: (rowData) => {
+          const columnId = columnIds[col];
+          return columnDefs[columnId].renderer(rowData, row);
         },
-        kind: GridCellKind.Custom,
-      };
+        NotLoaded: () =>
+          ({
+            allowOverlay: true,
+            copyData: '',
+            data: { kind: 'spinner-cell' },
+            kind: GridCellKind.Custom,
+          } as GridCell),
+      });
     },
     [data, columnIds, columnDefs],
   );
@@ -267,13 +272,12 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   const onCellClicked: DataEditorProps['onCellClicked'] = useCallback(
     (cell: Item, event: CellClickedEventArgs) => {
       const [col, row] = cell;
-
       Loadable.match(data[row], {
         Loaded: (rowData) => {
           const columnId = columnIds[col];
-          const cell = columnDefs[columnId].renderer(rowData, row) as ClickableCell;
+          const cell = columnDefs[columnId].renderer(rowData, row);
 
-          if (cell.data.link?.onClick) {
+          if (isClickableCell(cell)) {
             cell.data.link.onClick(event);
           } else {
             setSelection(({ rows }: GridSelection) => ({
@@ -292,8 +296,26 @@ export const GlideTable: React.FC<GlideTableProps> = ({
     (cell: Item, event: CellClickedEventArgs) => {
       contextMenuOpen.set(false);
       const [, row] = cell;
-      const experiment = Loadable.match(data?.[row], {
-        Loaded: (record) => record,
+      Loadable.match(data[row], {
+        Loaded: (rowData) => {
+          // Prevent the browser native context menu from showing up.
+          event.preventDefault();
+
+          // Update the context menu based on the cell context.
+          setContextMenuProps({
+            experiment: getProjectExperimentForExperimentItem(rowData, project),
+            handleClose: (e?: Event) => {
+              // Prevent the context menu closing click from triggering something else.
+              if (contextMenuOpen.get()) e?.stopPropagation();
+              contextMenuOpen.set(false);
+            },
+            x: Math.max(0, event.bounds.x + event.localEventX - 4),
+            y: Math.max(0, event.bounds.y + event.localEventY - 4),
+          });
+
+          // Delay needed due to the call to close previously existing context menu.
+          setTimeout(() => contextMenuOpen.set(true), 25);
+        },
         NotLoaded: () => null,
       });
       if (!experiment) return;
