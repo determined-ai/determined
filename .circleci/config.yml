@@ -225,12 +225,12 @@ commands:
 
   docker-install-codecov:
     parameters:
-      image:
+      image-name:
         type: string
     steps:
-      - run: docker exec <parameters.image> curl --output $HOME/.local/bin/codecov https://uploader.codecov.io/latest/linux/codecov
-      - run: docker exec <parameters.image> chmod +x $HOME/.local/bin/codecov
-      - run: docker exec <parameters.image> echo 'export PATH=$PATH:$HOME/.local/bin/codecov' >> $BASH_ENV
+      - run: docker exec <parameters.image-name> curl --output $HOME/.local/bin/codecov https://uploader.codecov.io/latest/linux/codecov
+      - run: docker exec <parameters.image-name> chmod +x $HOME/.local/bin/codecov
+      - run: docker exec <parameters.image-name> echo 'export PATH=$PATH:$HOME/.local/bin/codecov' >> $BASH_ENV
 
 
   setup-go-intg-deps:
@@ -425,7 +425,7 @@ commands:
     parameters:
       image:
         type: string
-      container-name:
+      image-name:
         type: string
         default: "test_container"
       bind-mount:
@@ -435,7 +435,7 @@ commands:
         type: string
         default: ""
     steps:
-      - run: docker run -v <<parameters.bind-mount>>:/usr/src/project --gpus=all -it -d --name <<parameters.container-name>> <<parameters.image>>
+      - run: docker run -v <<parameters.bind-mount>>:/usr/src/project --gpus=all -it -d --name <<parameters.image-name>> <<parameters.image>>
       - run: docker exec <<parameters.container-name>> cd /usr/src/project
       - run:
           name: Install <<parameters.extras-requires>>
@@ -1633,11 +1633,11 @@ jobs:
       - skip-if-webui-only
       - setup-docker-env:
           image: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.21.2
-          image_name: test_container
+          image-name: test_container
           extras-requires: "tensorflow==2.8.4 torch==1.9.0 torchvision==0.10.0 codecov"
       - run: docker exec test_container mkdir $HOME/.local/bin
       - docker-install-codecov:
-          image: test_container
+          image-name: test_container
       - run: docker exec test_container COVERAGE_FILE=$PWD/test-unit-harness-gpu-pycov make -C harness test-gpu
       - run: docker exec test_container coverage xml -i --data-file=./test-unit-harness-gpu-pycov
       - run: docker exec test_container codecov -v -t $CODECOV_TOKEN -F harness
