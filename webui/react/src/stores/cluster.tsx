@@ -84,6 +84,9 @@ const clusterStatusText = (
   )}%`;
 };
 
+const updateIfChanged = <T, V extends WritableObservable<T>>(o: V, next: T) =>
+  o.update((prev) => (isEqual(prev, next) ? prev : next));
+
 class ClusterStore extends PollingStore {
   #agents: WritableObservable<Loadable<Agent[]>> = observable(NotLoaded);
   #resourcePools: WritableObservable<Loadable<ResourcePool[]>> = observable(NotLoaded);
@@ -135,21 +138,19 @@ class ClusterStore extends PollingStore {
 
     getAgents({}, { signal: signal ?? canceler.signal })
       .then((response) => {
-        const next = Loaded(response);
-        this.#agents.update((prev) => (isEqual(prev, next) ? prev : next));
+        updateIfChanged(this.#agents, Loaded(response));
       })
       .catch(handleError);
 
     return () => canceler.abort();
   }
 
-  public fetchResourcePools(signal?: AbortSignal) {
+  public fetchResourcePools(signal?: AbortSignal): () => void {
     const canceler = new AbortController();
 
     getResourcePools({}, { signal: signal ?? canceler.signal })
       .then((response) => {
-        const next = Loaded(response);
-        this.#resourcePools.update((prev) => (isEqual(prev, next) ? prev : next));
+        updateIfChanged(this.#resourcePools, Loaded(response));
       })
       .catch(handleError);
 
@@ -157,10 +158,11 @@ class ClusterStore extends PollingStore {
   }
 
   public async poll() {
-    await Promise.all([
-      this.fetchResourcePools(this.canceler?.signal),
-      this.fetchAgents(this.canceler?.signal),
-    ]);
+    const agentRequest = getAgents({}, { signal: this.canceler?.signal });
+    const poolsRequest = getResourcePools({}, { signal: this.canceler?.signal });
+    const [agents, resourcePools] = await Promise.all([agentRequest, poolsRequest]);
+    updateIfChanged(this.#resourcePools, Loaded(resourcePools));
+    updateIfChanged(this.#agents, Loaded(agents));
   }
 }
 
