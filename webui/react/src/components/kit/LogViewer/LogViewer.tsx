@@ -534,7 +534,7 @@ const LogViewer: React.FC<Props> = ({
         </Tooltip>
         {handleCloseLogs && (
           <Link onClick={handleCloseLogs}>
-            <Icon aria-label="Close Logs" name="close" title="Close Logs" />
+            <Icon name="close" title="Close Logs" />
           </Link>
         )}
         {onDownload && (

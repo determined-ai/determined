@@ -4,18 +4,21 @@ import Tooltip from 'components/kit/Tooltip';
 
 import css from './Icon.module.scss';
 
-export type IconSize =
-  | 'tiny'
-  | 'small'
-  | 'medium'
-  | 'large'
-  | 'big'
-  | 'great'
-  | 'huge'
-  | 'enormous'
-  | 'giant'
-  | 'jumbo'
-  | 'mega';
+export const IconSizeArray = [
+  'tiny',
+  'small',
+  'medium',
+  'large',
+  'big',
+  'great',
+  'huge',
+  'enormous',
+  'giant',
+  'jumbo',
+  'mega',
+] as const;
+
+export type IconSize = (typeof IconSizeArray)[number];
 
 export const IconNameArray = [
   'home',

@@ -12,7 +12,7 @@ import Checkbox from 'components/kit/Checkbox';
 import Empty from 'components/kit/Empty';
 import Facepile from 'components/kit/Facepile';
 import Form from 'components/kit/Form';
-import Icon from 'components/kit/Icon';
+import Icon, { IconNameArray, IconSizeArray } from 'components/kit/Icon';
 import IconicButton from 'components/kit/IconicButton';
 import Input from 'components/kit/Input';
 import InputNumber from 'components/kit/InputNumber';
@@ -63,6 +63,7 @@ const ComponentTitles = {
   Empty: 'Empty',
   Facepile: 'Facepile',
   Form: 'Form',
+  Icons: 'Icons',
   Input: 'Input',
   InputNumber: 'InputNumber',
   InputSearch: 'InputSearch',
@@ -1816,6 +1817,38 @@ const EmptySection: React.FC = () => {
   );
 };
 
+const IconsSection: React.FC = () => {
+  return (
+    <ComponentSection id="Icons" title="Icons">
+      <AntDCard>
+        <p>
+          An <code>{'<Icon>'}</code> component displays an icon from a custom font along with an
+          optional tooltip.
+        </p>
+      </AntDCard>
+      <AntDCard title="Usage">
+        <strong>Icon default</strong>
+        <Icon />
+        <strong>Icon variations</strong>
+        <p>Icon with tooltip</p>
+        <Icon title="Tooltip" />
+        <p>Icon sizes</p>
+        <Space wrap>
+          {IconSizeArray.map((size) => (
+            <Icon key={size} size={size} title={size} />
+          ))}
+        </Space>
+        <p>All icons</p>
+        <Space wrap>
+          {IconNameArray.map((name) => (
+            <Icon key={name} name={name} title={name} />
+          ))}
+        </Space>
+      </AntDCard>
+    </ComponentSection>
+  );
+};
+
 const ToggleSection: React.FC = () => {
   return (
     <ComponentSection id="Toggle" title="Toggle">
@@ -2187,6 +2220,7 @@ const Components = {
   Empty: <EmptySection />,
   Facepile: <FacepileSection />,
   Form: <FormSection />,
+  Icons: <IconsSection />,
   Input: <InputSection />,
   InputNumber: <InputNumberSection />,
   InputSearch: <InputSearchSection />,

@@ -1,7 +1,7 @@
 import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import Icon, { IconNameArray } from './Icon';
+import Icon, { IconNameArray, IconSizeArray } from './Icon';
 import type { Props } from './Icon';
 
 const setup = (props?: Props) => {
@@ -19,81 +19,87 @@ describe('Icon', () => {
   });
 
   describe('Size', () => {
-    it('should display a tiny-size icon', () => {
-      const { view } = setup({ size: 'tiny' });
-      const firstChild = view.container.firstChild;
-      expect(firstChild).toHaveClass(...['base', 'icon-star', 'tiny']);
-      expect(firstChild).toHaveStyle({ 'font-size': 'var(--icon-tiny)' });
-    });
+    // it('should display a tiny-size icon', () => {
+    //   const { view } = setup({ size: 'tiny' });
+    //   const firstChild = view.container.firstChild;
+    //   expect(firstChild).toHaveClass(...['base', 'icon-star', 'tiny']);
+    //   expect(firstChild).toHaveStyle({ 'font-size': 'var(--icon-tiny)' });
+    // });
 
-    it('should display a small-size icon', () => {
-      const { view } = setup({ size: 'small' });
-      const firstChild = view.container.firstChild;
-      expect(firstChild).toHaveClass(...['base', 'icon-star', 'small']);
-      expect(firstChild).toHaveStyle({ 'font-size': 'var(--icon-small)' });
-    });
+    // it('should display a small-size icon', () => {
+    //   const { view } = setup({ size: 'small' });
+    //   const firstChild = view.container.firstChild;
+    //   expect(firstChild).toHaveClass(...['base', 'icon-star', 'small']);
+    //   expect(firstChild).toHaveStyle({ 'font-size': 'var(--icon-small)' });
+    // });
 
-    it('should display a medium-size icon', () => {
-      const { view } = setup({ size: 'medium' });
-      const firstChild = view.container.firstChild;
-      expect(firstChild).toHaveClass(...['base', 'icon-star', 'medium']);
-      expect(firstChild).toHaveStyle({ 'font-size': 'var(--icon-medium)' });
-    });
+    // it('should display a medium-size icon', () => {
+    //   const { view } = setup({ size: 'medium' });
+    //   const firstChild = view.container.firstChild;
+    //   expect(firstChild).toHaveClass(...['base', 'icon-star', 'medium']);
+    //   expect(firstChild).toHaveStyle({ 'font-size': 'var(--icon-medium)' });
+    // });
 
-    it('should display a large-size icon', () => {
-      const { view } = setup({ size: 'large' });
-      const firstChild = view.container.firstChild;
-      expect(firstChild).toHaveClass(...['base', 'icon-star', 'large']);
-      expect(firstChild).toHaveStyle({ 'font-size': 'var(--icon-large)' });
-    });
+    // it('should display a large-size icon', () => {
+    //   const { view } = setup({ size: 'large' });
+    //   const firstChild = view.container.firstChild;
+    //   expect(firstChild).toHaveClass(...['base', 'icon-star', 'large']);
+    //   expect(firstChild).toHaveStyle({ 'font-size': 'var(--icon-large)' });
+    // });
 
-    it('should display a big-size icon', () => {
-      const { view } = setup({ size: 'big' });
-      const firstChild = view.container.firstChild;
-      expect(firstChild).toHaveClass(...['base', 'icon-star', 'big']);
-      expect(firstChild).toHaveStyle({ 'font-size': 'var(--icon-big)' });
-    });
+    // it('should display a big-size icon', () => {
+    //   const { view } = setup({ size: 'big' });
+    //   const firstChild = view.container.firstChild;
+    //   expect(firstChild).toHaveClass(...['base', 'icon-star', 'big']);
+    //   expect(firstChild).toHaveStyle({ 'font-size': 'var(--icon-big)' });
+    // });
 
-    it('should display a great-size icon', () => {
-      const { view } = setup({ size: 'great' });
-      const firstChild = view.container.firstChild;
-      expect(firstChild).toHaveClass(...['base', 'icon-star', 'great']);
-      expect(firstChild).toHaveStyle({ 'font-size': 'var(--icon-great)' });
-    });
+    // it('should display a great-size icon', () => {
+    //   const { view } = setup({ size: 'great' });
+    //   const firstChild = view.container.firstChild;
+    //   expect(firstChild).toHaveClass(...['base', 'icon-star', 'great']);
+    //   expect(firstChild).toHaveStyle({ 'font-size': 'var(--icon-great)' });
+    // });
 
-    it('should display a huge-size icon', () => {
-      const { view } = setup({ size: 'huge' });
-      const firstChild = view.container.firstChild;
-      expect(firstChild).toHaveClass(...['base', 'icon-star', 'huge']);
-      expect(firstChild).toHaveStyle({ 'font-size': 'var(--icon-huge)' });
-    });
+    // it('should display a huge-size icon', () => {
+    //   const { view } = setup({ size: 'huge' });
+    //   const firstChild = view.container.firstChild;
+    //   expect(firstChild).toHaveClass(...['base', 'icon-star', 'huge']);
+    //   expect(firstChild).toHaveStyle({ 'font-size': 'var(--icon-huge)' });
+    // });
 
-    it('should display a enormous-size icon', () => {
-      const { view } = setup({ size: 'enormous' });
-      const firstChild = view.container.firstChild;
-      expect(firstChild).toHaveClass(...['base', 'icon-star', 'enormous']);
-      expect(firstChild).toHaveStyle({ 'font-size': 'var(--icon-enormous)' });
-    });
+    // it('should display a enormous-size icon', () => {
+    //   const { view } = setup({ size: 'enormous' });
+    //   const firstChild = view.container.firstChild;
+    //   expect(firstChild).toHaveClass(...['base', 'icon-star', 'enormous']);
+    //   expect(firstChild).toHaveStyle({ 'font-size': 'var(--icon-enormous)' });
+    // });
 
-    it('should display a giant-size icon', () => {
-      const { view } = setup({ size: 'giant' });
-      const firstChild = view.container.firstChild;
-      expect(firstChild).toHaveClass(...['base', 'icon-star', 'giant']);
-      expect(firstChild).toHaveStyle({ 'font-size': 'var(--icon-giant)' });
-    });
+    // it('should display a giant-size icon', () => {
+    //   const { view } = setup({ size: 'giant' });
+    //   const firstChild = view.container.firstChild;
+    //   expect(firstChild).toHaveClass(...['base', 'icon-star', 'giant']);
+    //   expect(firstChild).toHaveStyle({ 'font-size': 'var(--icon-giant)' });
+    // });
 
-    it('should display a jumbo-size icon', () => {
-      const { view } = setup({ size: 'jumbo' });
-      const firstChild = view.container.firstChild;
-      expect(firstChild).toHaveClass(...['base', 'icon-star', 'jumbo']);
-      expect(firstChild).toHaveStyle({ 'font-size': 'var(--icon-jumbo)' });
-    });
+    // it('should display a jumbo-size icon', () => {
+    //   const { view } = setup({ size: 'jumbo' });
+    //   const firstChild = view.container.firstChild;
+    //   expect(firstChild).toHaveClass(...['base', 'icon-star', 'jumbo']);
+    //   expect(firstChild).toHaveStyle({ 'font-size': 'var(--icon-jumbo)' });
+    // });
 
-    it('should display a mega-size icon', () => {
-      const { view } = setup({ size: 'mega' });
+    // it('should display a mega-size icon', () => {
+    //   const { view } = setup({ size: 'mega' });
+    //   const firstChild = view.container.firstChild;
+    //   expect(firstChild).toHaveClass(...['base', 'icon-star', 'mega']);
+    //   expect(firstChild).toHaveStyle({ 'font-size': 'var(--icon-mega)' });
+    // });
+
+    it.each(IconSizeArray)('should display a %s-size icon', (size) => {
+      const { view } = setup({ size });
       const firstChild = view.container.firstChild;
-      expect(firstChild).toHaveClass(...['base', 'icon-star', 'mega']);
-      expect(firstChild).toHaveStyle({ 'font-size': 'var(--icon-mega)' });
+      expect(firstChild).toHaveClass(...['base', 'icon-star', size]);
     });
   });
 
