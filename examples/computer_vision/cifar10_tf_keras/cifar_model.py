@@ -12,9 +12,8 @@ from tensorflow.keras.losses import categorical_crossentropy
 from tensorflow.keras.metrics import categorical_accuracy
 from tensorflow.keras.models import Sequential
 
-# This example is used in some examples with an explicit tf1 image,
+# This example is used in some tests with an explicit tf1 image,
 #  so we keep backwards compatibility.
-# TODO MLG-443 Migrate from legacy Keras optimizers
 if version.parse(tf.__version__) >= version.parse("2.11.0"):
     from tensorflow.keras.optimizers.legacy import RMSprop
 else:

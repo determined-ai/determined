@@ -26,7 +26,6 @@ class DCGanTrial(TFKerasTrial):
         model = self.context.wrap_model(model)
 
         # Create and wrap the optimizers.
-        # TODO MLG-443 Migrate from legacy Keras optimizers
         g_optimizer = tf.keras.optimizers.legacy.Adam(
             learning_rate=self.context.get_hparam("generator_lr")
         )
