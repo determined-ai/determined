@@ -223,6 +223,16 @@ commands:
       - run: chmod +x $HOME/.local/bin/codecov
       - run: echo 'export PATH=$PATH:$HOME/.local/bin/codecov' >> $BASH_ENV
 
+  docker-install-codecov:
+    parameters:
+      image:
+        type: string
+    steps:
+      - run: docker exec <parameters.image> curl --output $HOME/.local/bin/codecov https://uploader.codecov.io/latest/linux/codecov
+      - run: docker exec <parameters.image> chmod +x $HOME/.local/bin/codecov
+      - run: docker exec <parameters.image> echo 'export PATH=$PATH:$HOME/.local/bin/codecov' >> $BASH_ENV
+
+
   setup-go-intg-deps:
     steps:
       - install-protoc # Install newer version of protoc into $HOME/.local/bin, since default is proto2.
@@ -415,6 +425,9 @@ commands:
     parameters:
       image:
         type: string
+      container-name:
+        type: string
+        default: "test_container"
       bind-mount:
         type: string
         default: "$PWD"
@@ -422,14 +435,14 @@ commands:
         type: string
         default: ""
     steps:
-      - run: docker run -v <<parameters.bind-mount>>:/usr/src/project --gpus=all -it <<parameters.image>>
+      - run: docker run -v <<parameters.bind-mount>>:/usr/src/project --gpus=all -it -d --name <<parameters.container-name>> <<parameters.image>>
+      - run: docker exec <<parameters.container-name>> cd /usr/src/project
       - run:
           name: Install <<parameters.extras-requires>>
           command: |
             if [ -n "<<parameters.extras-requires>>" ]; then
-              tools/scripts/retry.sh pip install --progress-bar off <<parameters.extras-requires>>
+              docker exec <<parameters.container-name>> tools/scripts/retry.sh pip install --progress-bar off <<parameters.extras-requires>>
             fi
-      - run: cd /usr/src/project
 
   run-e2e-tests:
     parameters:
@@ -1619,13 +1632,15 @@ jobs:
       - skip-if-docs-only
       - skip-if-webui-only
       - setup-docker-env:
-          image: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.12-gpu-0.21.2
+          image: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.21.2
+          image_name: test_container
           extras-requires: "tensorflow==2.8.4 torch==1.9.0 torchvision==0.10.0 codecov"
-      - run: mkdir $HOME/.local/bin
-      - install-codecov
-      - run: COVERAGE_FILE=$PWD/test-unit-harness-gpu-pycov make -C harness test-gpu
-      - run: coverage xml -i --data-file=./test-unit-harness-gpu-pycov
-      - run: codecov -v -t $CODECOV_TOKEN -F harness
+      - run: docker exec test_container mkdir $HOME/.local/bin
+      - docker-install-codecov:
+          image: test_container
+      - run: docker exec test_container COVERAGE_FILE=$PWD/test-unit-harness-gpu-pycov make -C harness test-gpu
+      - run: docker exec test_container coverage xml -i --data-file=./test-unit-harness-gpu-pycov
+      - run: docker exec test_container codecov -v -t $CODECOV_TOKEN -F harness
       - persist_to_workspace:
           root: .
           paths:
