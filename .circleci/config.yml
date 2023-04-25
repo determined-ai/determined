@@ -3033,7 +3033,7 @@ workflows:
           context: aws
           matrix:
             parameters:
-              cluster-id-prefix: ["mmdetection"]
+              cluster-id-prefix: ["mmdet"]
               mark: ["model_hub_mmdetection"]
               compute-agent-instance-type: ["g4dn.metal"]
               aux-agent-instance-type: ["m5.large"]
@@ -3043,7 +3043,7 @@ workflows:
           context: aws
           matrix:
             parameters:
-              cluster-id-prefix: ["mmdetection-quarantine"]
+              cluster-id-prefix: ["mmdet-quarantine"]
               mark: ["model_hub_mmdetection_quarantine"]
               compute-agent-instance-type: ["g4dn.metal"]
               aux-agent-instance-type: ["m5.large"]
