@@ -29,7 +29,7 @@ try {
     container: "#search-algolia",
     appId: "9H1PGK6NP7",
     indexName: "determined-" + version,
-    apiKey: "18b6f7b0b2e20a6bdb00b660ff45d3b8",
+    apiKey: "c2efc1c44ce448fa3425bbbd8cf17d57",
     transformItems(items) {
       return items.map((item) => {
         /* The url we scrape for the algolia index is relative to the docroot,
