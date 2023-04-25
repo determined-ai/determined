@@ -1,7 +1,7 @@
 import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import Icon from './Icon';
+import Icon, { IconNameArray } from './Icon';
 import type { Props } from './Icon';
 
 const setup = (props?: Props) => {
@@ -99,28 +99,11 @@ describe('Icon', () => {
 
   describe('Name of icon', () => {
     // todo: wanna test pseudo-element `content` value, but cannot find a way to test it
-    it('should display a star icon', () => {
-      const { view } = setup({ name: 'star' });
-      const firstChild = view.container.firstChild;
-      expect(firstChild).toHaveClass(...['base', 'icon-star', 'medium']);
-    });
 
-    it('should display a tasks icon', () => {
-      const { view } = setup({ name: 'tasks' });
+    it.each(IconNameArray)('should display a %s icon', (name) => {
+      const { view } = setup({ name });
       const firstChild = view.container.firstChild;
-      expect(firstChild).toHaveClass(...['base', 'icon-tasks', 'medium']);
-    });
-
-    it('should display a tensor-board icon', () => {
-      const { view } = setup({ name: 'tensor-board' });
-      const firstChild = view.container.firstChild;
-      expect(firstChild).toHaveClass(...['base', 'icon-tensor-board', 'medium']);
-    });
-
-    it('should display a tensorflow icon', () => {
-      const { view } = setup({ name: 'tensorflow' });
-      const firstChild = view.container.firstChild;
-      expect(firstChild).toHaveClass(...['base', 'icon-tensorflow', 'medium']);
+      expect(firstChild).toHaveClass(...['base', `icon-${name}`, 'medium']);
     });
   });
 
