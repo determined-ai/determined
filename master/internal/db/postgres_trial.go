@@ -491,6 +491,11 @@ func (db *PgDB) updateTotalBatches(ctx context.Context, tx *sqlx.Tx, trialID int
 func (db *PgDB) addTrialMetrics(
 	ctx context.Context, m *trialv1.TrialMetrics, isValidation bool,
 ) (rollbacks map[string]int, err error) {
+	/*
+		TODO(hamid):
+		- this can take in a metric_type and always insert into `metrics`.
+		- simplify rollback logic: now it only operates on one table.
+	*/
 	rollbacks = make(map[string]int)
 	trialMetricTables := []string{"raw_steps", "raw_validations"}
 	targetTable := "raw_steps"
