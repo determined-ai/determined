@@ -103,7 +103,7 @@ args_description = [
             Arg("template_name", help="template name"),
             Arg("template_file", type=FileType("r"),
                 help="config template file (.yaml)"),
-        ]),
+        ], deprecation_message="use other options offered by `det template` instead"),
         Cmd("describe", describe_template,
             "describe config template", [
                 Arg("template_name", type=str, help="template name"),
