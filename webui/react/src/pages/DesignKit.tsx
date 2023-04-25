@@ -135,37 +135,37 @@ const PopoverSection: React.FC = () => {
         <strong>Popover placement</strong>
         <div>
           <div style={{ marginLeft: buttonWidth, whiteSpace: 'nowrap' }}>
-            <Tooltip placement="topLeft" title={text}>
+            <Popover content={text} placement="topLeft">
               <Button>TL</Button>
-            </Tooltip>
-            <Tooltip placement="top" title={text}>
+            </Popover>
+            <Popover content={text} placement="top">
               <Button>Top</Button>
-            </Tooltip>
-            <Tooltip placement="topRight" title={text}>
+            </Popover>
+            <Popover content={text} placement="topRight">
               <Button>TR</Button>
-            </Tooltip>
+            </Popover>
           </div>
           <div style={{ float: 'left', width: buttonWidth }}>
-            <Tooltip placement="leftTop" title={text}>
+            <Popover content={text} placement="leftTop">
               <Button>LT</Button>
-            </Tooltip>
-            <Tooltip placement="left" title={text}>
+            </Popover>
+            <Popover content={text} placement="left">
               <Button>Left</Button>
-            </Tooltip>
-            <Tooltip placement="leftBottom" title={text}>
+            </Popover>
+            <Popover content={text} placement="leftBottom">
               <Button>LB</Button>
-            </Tooltip>
+            </Popover>
           </div>
           <div style={{ marginLeft: buttonWidth * 4 + 24, width: buttonWidth }}>
-            <Tooltip placement="rightTop" title={text}>
+            <Popover content={text} placement="rightTop">
               <Button>RT</Button>
-            </Tooltip>
-            <Tooltip placement="right" title={text}>
+            </Popover>
+            <Popover content={text} placement="right">
               <Button>Right</Button>
-            </Tooltip>
-            <Tooltip placement="rightBottom" title={text}>
+            </Popover>
+            <Popover content={text} placement="rightBottom">
               <Button>RB</Button>
-            </Tooltip>
+            </Popover>
           </div>
           <div style={{ clear: 'both', marginLeft: buttonWidth, whiteSpace: 'nowrap' }}>
             <Tooltip placement="bottomLeft" title={text}>
