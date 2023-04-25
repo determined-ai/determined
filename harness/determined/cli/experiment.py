@@ -1009,8 +1009,8 @@ main_cmd = Cmd(
             [
                 experiment_id_arg("experiment ID"),
                 cli.output_format_args["json"],
-            ]
-            + logs_args_description,
+                *logs_args_description,
+            ],
         ),
         Cmd(
             "download-model-def",

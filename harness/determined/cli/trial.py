@@ -14,7 +14,7 @@ from determined.cli import render
 from determined.cli.master import format_log_entry
 from determined.common import api, constants
 from determined.common.api import authentication, bindings
-from determined.common.declarative_argparse import Arg, Cmd, Group
+from determined.common.declarative_argparse import Arg, Cmd, Group, Subs
 from determined.common.experimental import Determined
 
 from .checkpoint import render_checkpoint
@@ -452,12 +452,12 @@ args_description = [
                 [
                     Arg("trial_id", type=int, help="trial ID"),
                     cli.output_format_args["json"],
-                ]
-                + logs_args_description,
+                    *logs_args_description,
+                ],
             ),
             Cmd(
                 "kill", kill_trial, "forcibly terminate a trial", [Arg("trial_id", help="trial ID")]
             ),
         ],
     ),
-]  # type: List[Any]
+]  # type: Subs

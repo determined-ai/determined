@@ -1,4 +1,3 @@
-import base64
 from argparse import ArgumentError, FileType, Namespace
 from collections import namedtuple
 from typing import Any, Dict, List

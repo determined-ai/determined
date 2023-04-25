@@ -1,7 +1,10 @@
 import functools
 import itertools
+import sys
 from argparse import SUPPRESS, ArgumentDefaultsHelpFormatter, ArgumentParser, Namespace
 from typing import Any, Callable, List, NamedTuple, Optional, Tuple, Union, cast
+
+from termcolor import colored
 
 
 def make_prefixes(desc: str) -> List[str]:
@@ -33,6 +36,28 @@ def generate_aliases(spec: str) -> Tuple[str, List[str]]:
 Subs = List[Union["Arg", "Cmd", "Group", "ArgGroup", "BoolOptArg"]]
 
 
+def deprecation_warning(message: str, color: bool = True) -> str:
+    msg = f"DEPRECATED: {message}"
+    return colored(msg, "yellow") if color else msg
+
+
+def warn_on_usage(message: str) -> Callable:
+    """
+    Decorator to prints a deprecation warning when the wrapped function is
+    called.
+    """
+
+    def decorator(func: Callable) -> Callable:
+        @functools.wraps(func)
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
+            print(deprecation_warning(message), file=sys.stderr)
+            return func(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
+
+
 # Classes used to represent the structure of an argument parser setup; these
 # are turned into actual `argparse` objects by `add_args`.
 class Cmd:
@@ -54,8 +79,12 @@ class Cmd:
         """
         self.name = name
         self.help_str = help_str
-        self.func = func
         self.deprecation_message = deprecation_message
+        self.func = func
+        # wrap the fn in deprecation warning.
+        if self.deprecation_message and self.func:
+            self.func = warn_on_usage(self.deprecation_message)(self.func)
+
         if self.func:
             # Force the help string onto the actual function for later. This
             # can be used to print the help string
@@ -176,7 +205,9 @@ def add_args(parser: ArgumentParser, description: Subs, depth: int = 0) -> None:
             }
             if thing.help_str != SUPPRESS:
                 if thing.deprecation_message:
-                    thing.help_str += f" (DEPRECATED: {thing.deprecation_message})"
+                    thing.help_str += " " + deprecation_warning(
+                        thing.deprecation_message, color=False
+                    )
                 subparser_kwargs["help"] = thing.help_str
             subparser = subparsers.add_parser(main_name, **subparser_kwargs)
 

@@ -1,7 +1,7 @@
 from argparse import ONE_OR_MORE, ArgumentError, FileType, Namespace
 from functools import partial
 from pathlib import Path
-from typing import Any, List
+from typing import List
 
 from termcolor import colored
 
@@ -92,69 +92,127 @@ def open_tensorboard(args: Namespace) -> None:
     )
 
 
-# fmt: off
-
 args_description: List[Cmd] = [
-    Cmd("tensorboard", None, "manage TensorBoard instances", [
-        Cmd("list ls", partial(command.list_tasks), "list TensorBoard instances", [
-            Arg("-q", "--quiet", action="store_true",
-                help="only display the IDs"),
-            Arg("--all", "-a", action="store_true",
-                help="show all TensorBoards (including other users')"),
-            cli.workspace.workspace_arg,
-            Group(cli.output_format_args["json"], cli.output_format_args["csv"]),
-        ], is_default=True),
-        Cmd("start", start_tensorboard, "start new TensorBoard instance", [
-            Arg("experiment_ids", type=int, nargs="*",
-                help="experiment IDs to load into TensorBoard. At most 100 trials from "
-                     "the specified experiment will be loaded into TensorBoard. If the "
-                     "experiment has more trials, the 100 best-performing trials will "
-                     "be used."),
-            Arg("-t", "--trial-ids", nargs=ONE_OR_MORE, type=int,
-                help="trial IDs to load into TensorBoard; at most 100 trials are "
-                     "allowed per TensorBoard instance"),
-            cli.workspace.workspace_arg,
-            Arg("--config-file", default=None, type=FileType("r"),
-                help="command config file (.yaml)"),
-            Arg("-c", "--context", default=None, type=Path, help=command.CONTEXT_DESC),
-            Arg(
-                "-i",
-                "--include",
-                default=[],
-                action="append",
-                type=Path,
-                help=command.INCLUDE_DESC
+    Cmd(
+        "tensorboard",
+        None,
+        "manage TensorBoard instances",
+        [
+            Cmd(
+                "list ls",
+                partial(command.list_tasks),
+                "list TensorBoard instances",
+                [
+                    Arg("-q", "--quiet", action="store_true", help="only display the IDs"),
+                    Arg(
+                        "--all",
+                        "-a",
+                        action="store_true",
+                        help="show all TensorBoards (including other users')",
+                    ),
+                    cli.workspace.workspace_arg,
+                    Group(cli.output_format_args["json"], cli.output_format_args["csv"]),
+                ],
+                is_default=True,
             ),
-            Arg("--config", action="append", default=[], help=command.CONFIG_DESC),
-            Arg("--no-browser", action="store_true",
-                help="don't open TensorBoard in a browser after startup"),
-            Arg("-d", "--detach", action="store_true",
-                help="run in the background and print the ID")
-        ]),
-        Cmd("config", partial(command.config),
-            "display TensorBoard config", [
-                Arg("tensorboard_id", type=str, help="TensorBoard ID")
-        ]),
-        Cmd("open", open_tensorboard,
-            "open existing TensorBoard instance", [
-                Arg("tensorboard_id", help="TensorBoard ID")
-            ]),
-        Cmd("logs", partial(task.logs),
-            "fetch TensorBoard instance logs", [
-            Arg("task_id", help="TensorBoard ID", metavar="tensorboard_id"),
-            *task.common_log_options,
-        ]),
-        Cmd("kill", partial(command.kill), "kill TensorBoard instance", [
-            Arg("tensorboard_id", help="TensorBoard ID", nargs=ONE_OR_MORE),
-            Arg("-f", "--force", action="store_true", help="ignore errors"),
-        ]),
-        Cmd("set", None, "set TensorBoard attributes", [
-            Cmd("priority", partial(command.set_priority), "set TensorBoard priority", [
-                Arg("tensorboard_id", help="TensorBoard ID"),
-                Arg("priority", type=int, help="priority"),
-            ]),
-        ]),
-    ])
-]  # type: List[Any]
-
-# fmt: on
+            Cmd(
+                "start",
+                start_tensorboard,
+                "start new TensorBoard instance",
+                [
+                    Arg(
+                        "experiment_ids",
+                        type=int,
+                        nargs="*",
+                        help="experiment IDs to load into TensorBoard. At most 100 trials from "
+                        "the specified experiment will be loaded into TensorBoard. If the "
+                        "experiment has more trials, the 100 best-performing trials will "
+                        "be used.",
+                    ),
+                    Arg(
+                        "-t",
+                        "--trial-ids",
+                        nargs=ONE_OR_MORE,
+                        type=int,
+                        help="trial IDs to load into TensorBoard; at most 100 trials are "
+                        "allowed per TensorBoard instance",
+                    ),
+                    cli.workspace.workspace_arg,
+                    Arg(
+                        "--config-file",
+                        default=None,
+                        type=FileType("r"),
+                        help="command config file (.yaml)",
+                    ),
+                    Arg("-c", "--context", default=None, type=Path, help=command.CONTEXT_DESC),
+                    Arg(
+                        "-i",
+                        "--include",
+                        default=[],
+                        action="append",
+                        type=Path,
+                        help=command.INCLUDE_DESC,
+                    ),
+                    Arg("--config", action="append", default=[], help=command.CONFIG_DESC),
+                    Arg(
+                        "--no-browser",
+                        action="store_true",
+                        help="don't open TensorBoard in a browser after startup",
+                    ),
+                    Arg(
+                        "-d",
+                        "--detach",
+                        action="store_true",
+                        help="run in the background and print the ID",
+                    ),
+                ],
+            ),
+            Cmd(
+                "config",
+                partial(command.config),
+                "display TensorBoard config",
+                [Arg("tensorboard_id", type=str, help="TensorBoard ID")],
+            ),
+            Cmd(
+                "open",
+                open_tensorboard,
+                "open existing TensorBoard instance",
+                [Arg("tensorboard_id", help="TensorBoard ID")],
+            ),
+            Cmd(
+                "logs",
+                partial(task.logs),
+                "fetch TensorBoard instance logs",
+                [
+                    Arg("task_id", help="TensorBoard ID", metavar="tensorboard_id"),
+                    *task.common_log_options,
+                ],
+            ),
+            Cmd(
+                "kill",
+                partial(command.kill),
+                "kill TensorBoard instance",
+                [
+                    Arg("tensorboard_id", help="TensorBoard ID", nargs=ONE_OR_MORE),
+                    Arg("-f", "--force", action="store_true", help="ignore errors"),
+                ],
+            ),
+            Cmd(
+                "set",
+                None,
+                "set TensorBoard attributes",
+                [
+                    Cmd(
+                        "priority",
+                        partial(command.set_priority),
+                        "set TensorBoard priority",
+                        [
+                            Arg("tensorboard_id", help="TensorBoard ID"),
+                            Arg("priority", type=int, help="priority"),
+                        ],
+                    ),
+                ],
+            ),
+        ],
+    )
+]
