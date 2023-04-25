@@ -1040,23 +1040,54 @@ def test_patch_agentusergroup(clean_auth: None, login_admin: None) -> None:
 
 
 @pytest.mark.e2e_cpu
-def test_incorrect_password(clean_auth: None, login_admin: None) -> None:
-    """Verify the password if it is provided. Do not use the stored token in the
-    token store. If a password is not provided and a token is available in the
-    token store, it's okay to use.
-    """
-    creds = api_utils.create_test_user(add_password=True)
+def test_logout_all(clean_auth: None, login_admin: None) -> None:
+    creds = api_utils.create_test_user(True)
 
-    Determined(master=conf.make_master_url(), user=creds.username, password=creds.password)
-    with pytest.raises(errors.UnauthenticatedException):
-        Determined(
-            master=conf.make_master_url(), user=creds.username, password="incorrect_password"
-        )
-    # Without password
-    det = Determined(master=conf.make_master_url(), user=creds.username)
-    det.logout()
+    # Set Determined password to something in order to disable auto-login.
+    password = get_random_string()
+    assert change_user_password(constants.DEFAULT_DETERMINED_USER, password) == 0
 
-    # Test cli
-    log_in_user_cli(creds, 0)
-    incorrect_creds = authentication.Credentials(creds.username, "incorrect_password")
-    log_in_user_cli(incorrect_creds, 1)
+    # Log in as determined.
+    api_utils.configure_token_store(
+        authentication.Credentials(constants.DEFAULT_DETERMINED_USER, password)
+    )
+    # login test user.
+    api_utils.configure_token_store(creds)
+    # Log out all users. DEFAULT_DETERMINED_USER is still logged in because
+    # it's not specified and not the active user.
+    child = det_spawn(["user", "logout", "--all"])
+    child.wait()
+    child.close()
+    assert child.status == 0
+    # We should be able to list experiments.
+    child = det_spawn(["e", "list"])
+    child.read()
+    child.wait()
+    child.close()
+    assert child.status == 0
+
+    # login test user.
+    api_utils.configure_token_store(creds)
+    # Log in as determined.
+    api_utils.configure_token_store(
+        authentication.Credentials(constants.DEFAULT_DETERMINED_USER, password)
+    )
+    # Log out all users.
+    child = det_spawn(["user", "logout", "--all"])
+    child.wait()
+    child.close()
+    assert child.status == 0
+    # Now trying to list experiments should result in an error.
+    child = det_spawn(["e", "list"])
+    expected = "Unauthenticated"
+    assert expected in str(child.read())
+    child.wait()
+    child.close()
+    assert child.status != 0
+
+    # Log in as determined.
+    api_utils.configure_token_store(
+        authentication.Credentials(constants.DEFAULT_DETERMINED_USER, password)
+    )
+    # Change Determined password back to "".
+    change_user_password(constants.DEFAULT_DETERMINED_USER, "")

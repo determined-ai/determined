@@ -63,7 +63,7 @@ def log_in_user(parsed_args: Namespace) -> None:
 
 def log_out_user(parsed_args: Namespace) -> None:
     # Log out of the user specified by the command line, or the active user.
-    authentication.logout(parsed_args.master, parsed_args.user, certs.cli_cert)
+    authentication.logout(parsed_args.master, parsed_args.user, certs.cli_cert, parsed_args.all)
 
 
 @login_sdk_client
@@ -161,7 +161,14 @@ args_description = [
         Cmd("change-password", change_password, "change password for user", [
             Arg("target_user", nargs="?", default=None, help="name of user to change password of")
         ]),
-        Cmd("logout", log_out_user, "log out user", []),
+        Cmd("logout", log_out_user, "log out user", [
+            Arg(
+                "--all",
+                "-a",
+                action="store_true",
+                help="log all users out",
+            ),
+        ]),
         Cmd("activate", activate_user, "activate user", [
             Arg("username", help="name of user to activate")
         ]),
