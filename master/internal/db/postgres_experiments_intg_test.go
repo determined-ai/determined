@@ -239,16 +239,12 @@ func TestMetricNames(t *testing.T) {
 	trial2 := RequireMockTrial(t, db, exp)
 	addMetrics(ctx, t, db, trial2, `[{"b":1}, {"d":2}]`, `[{"f":"test"}]`)
 
-	runSummaryMigration(t) // TODO remove this after ingestion for summary metrics is added.
-
 	actualTrain, actualVal, err = MetricNames(ctx, exp.ID)
 	require.NoError(t, err)
 	require.Equal(t, []string{"a", "b", "d"}, actualTrain)
 	require.Equal(t, []string{"b", "c", "f"}, actualVal)
 
 	addMetrics(ctx, t, db, trial2, `[{"c":[]}]`, `[]`)
-
-	runSummaryMigration(t) // TODO remove this after ingestion for summary metrics is added.
 
 	actualTrain, actualVal, err = MetricNames(ctx, exp.ID)
 	require.NoError(t, err)
@@ -257,7 +253,6 @@ func TestMetricNames(t *testing.T) {
 }
 
 func TestTopTrialsByMetric(t *testing.T) {
-	// TODO consider "1.0" vs 1.0 right now in ingestion and migration code.
 	ctx := context.Background()
 
 	require.NoError(t, etc.SetRootPath(RootFromDB))
@@ -279,8 +274,6 @@ func TestTopTrialsByMetric(t *testing.T) {
 	addMetrics(ctx, t, db, trial2,
 		`[{"a":10.5}]`,
 		`[{"a":-1.5, "b":1.0, "c":"Infinity"}]`)
-
-	runSummaryMigration(t) // TODO remove this after ingestion for summary metrics is added.
 
 	const (
 		more             = false
