@@ -68,7 +68,7 @@ export const TableContextMenu: React.FC<TableContextMenuProps> = ({
         experiment={experiment}
         makeOpen={open}
         onComplete={onComplete}
-        onVisibleChange={onComplete}>
+        onVisibleChange={() => handleClose()}>
         <div />
       </ExperimentActionDropdown>
     </div>
