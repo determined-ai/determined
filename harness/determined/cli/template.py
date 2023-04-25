@@ -42,6 +42,24 @@ def describe_template(args: Namespace) -> None:
 
 
 @authentication.required
+def set_template(args: Namespace) -> None:
+    with args.template_file:
+        """
+        WARN: this downgrades the atomic behavior of upsert but it's
+        an acceptable tradeoff for now until we can remove this command.
+        """
+        session = cli.setup_session(args)
+        body = util.safe_load_yaml_with_exceptions(args.template_file)
+        try:
+            bindings.get_GetTemplate(session, templateName=args.template_name).template
+            bindings.patch_PatchTemplateConfig(session, templateName=args.template_name, body=body)
+        except api.errors.NotFoundException:
+            v1_template = bindings.v1Template(name=args.template_name, config=body, workspaceId=0)
+            bindings.post_PostTemplate(session, template_name=args.template_name, body=v1_template)
+        print(colored("Set template {}".format(args.template_name), "green"))
+
+
+@authentication.required
 def create_template(args: Namespace) -> None:
     if not args.template_file:
         raise ArgumentError(None, "template_file is required for set command")
@@ -81,6 +99,11 @@ args_description = [
             Arg("-d", "--details", action="store_true",
                 help="show the configs of the templates"),
         ], is_default=True),
+        Cmd("set", set_template, "set config template", [
+            Arg("template_name", help="template name"),
+            Arg("template_file", type=FileType("r"),
+                help="config template file (.yaml)"),
+        ]),
         Cmd("describe", describe_template,
             "describe config template", [
                 Arg("template_name", type=str, help="template name"),
