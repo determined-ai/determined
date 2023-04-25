@@ -5,10 +5,9 @@ import {
   GridCellKind,
   SizedGridColumn,
 } from '@glideapps/glide-data-grid';
-import { NavigateFunction } from 'react-router-dom';
 
 import { terminalRunStates } from 'constants/states';
-import { paths } from 'routes/utils';
+import { handlePath, paths } from 'routes/utils';
 import { getColor, getInitials } from 'shared/components/Avatar';
 import { DarkLight, Theme } from 'shared/themes';
 import { humanReadableNumber } from 'shared/utils/number';
@@ -71,7 +70,6 @@ export type ColumnDefs = Record<ExperimentColumn, ColumnDef>;
 interface Params {
   appTheme: Theme;
   columnWidths: Record<ExperimentColumn, number>;
-  navigate: NavigateFunction;
   rowSelection: CompactSelection;
   darkLight: DarkLight;
   users: Loadable<DetailedUser[]>;
@@ -79,7 +77,6 @@ interface Params {
 }
 export const getColumnDefs = ({
   columnWidths,
-  navigate,
   rowSelection,
   darkLight,
   users,
@@ -160,8 +157,11 @@ export const getColumnDefs = ({
         link:
           record.forkedFrom !== undefined
             ? {
-                onClick: () =>
-                  record.forkedFrom && navigate(paths.experimentDetails(record.forkedFrom)),
+                onClick: record.forkedFrom
+                  ? (e: MouseEvent) => {
+                      handlePath(e, { path: paths.experimentDetails(record.forkedFrom as number) });
+                    }
+                  : undefined,
                 title: String(record.forkedFrom ?? ''),
               }
             : undefined,
@@ -184,7 +184,9 @@ export const getColumnDefs = ({
       data: {
         kind: 'link-cell',
         link: {
-          onClick: () => navigate(paths.experimentDetails(record.id)),
+          onClick: (e: MouseEvent) => {
+            handlePath(e, { path: paths.experimentDetails(record.id) });
+          },
           title: String(record.id),
         },
 
@@ -207,7 +209,9 @@ export const getColumnDefs = ({
       data: {
         kind: 'link-cell',
         link: {
-          onClick: () => navigate(paths.experimentDetails(record.id)),
+          onClick: (e: MouseEvent) => {
+            handlePath(e, { path: paths.experimentDetails(record.id) });
+          },
           title: String(record.name),
         },
         navigateOn: 'click',

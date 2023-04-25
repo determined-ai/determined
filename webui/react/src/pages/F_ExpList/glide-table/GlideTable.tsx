@@ -23,7 +23,6 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { useNavigate } from 'react-router';
 
 import useUI from 'shared/contexts/stores/UI';
 import usersStore from 'stores/users';
@@ -70,7 +69,7 @@ export interface GlideTableProps {
 type ClickableCell = CustomCell<LinkCell> & {
   data: {
     link: {
-      onClick: () => void;
+      onClick: (e: CellClickedEventArgs) => void;
     };
   };
 };
@@ -144,7 +143,6 @@ export const GlideTable: React.FC<GlideTableProps> = ({
     () => [...STATIC_COLUMNS, ...sortableColumnIds],
     [sortableColumnIds],
   );
-  const navigate = useNavigate();
 
   const [selection, setSelection] = React.useState<GridSelection>({
     columns: CompactSelection.empty(),
@@ -178,12 +176,11 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         appTheme,
         columnWidths,
         darkLight,
-        navigate,
         rowSelection: selection.rows,
         selectAll,
         users,
       }),
-    [navigate, selectAll, selection.rows, columnWidths, users, darkLight, appTheme],
+    [selectAll, selection.rows, columnWidths, users, darkLight, appTheme],
   );
 
   const headerIcons = useMemo(() => getHeaderIcons(appTheme), [appTheme]);
@@ -268,24 +265,25 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   );
 
   const onCellClicked: DataEditorProps['onCellClicked'] = useCallback(
-    (cell: Item) => {
+    (cell: Item, event: CellClickedEventArgs) => {
       const [col, row] = cell;
-      if (row === undefined) return;
 
-      const columnId = columnIds[col];
-      const rowData = data[row];
-      if (Loadable.isLoaded(rowData)) {
-        const cell = columnDefs[columnId].renderer(rowData.data, row) as ClickableCell;
-        if (String(cell?.data?.kind) === 'link-cell') {
-          cell.data.link?.onClick?.();
-          return;
-        }
-      }
+      Loadable.match(data[row], {
+        Loaded: (rowData) => {
+          const columnId = columnIds[col];
+          const cell = columnDefs[columnId].renderer(rowData, row) as ClickableCell;
 
-      setSelection(({ rows }: GridSelection) => ({
-        columns: CompactSelection.empty(),
-        rows: rows.hasIndex(row) ? rows.remove(row) : rows.add(row),
-      }));
+          if (cell.data.link?.onClick) {
+            cell.data.link.onClick(event);
+          } else {
+            setSelection(({ rows }: GridSelection) => ({
+              columns: CompactSelection.empty(),
+              rows: rows.hasIndex(row) ? rows.remove(row) : rows.add(row),
+            }));
+          }
+        },
+        NotLoaded: () => null,
+      });
     },
     [data, columnIds, columnDefs],
   );
