@@ -1331,7 +1331,8 @@ func extractSlotInfo(node model.AgentSummary) (numSlots int, devType device.Type
 }
 
 func extractTolerations(tcd *model.TaskContainerDefaultsConfig) (
-	cpuTolerations, gpuTolerations []k8sV1.Toleration) {
+	cpuTolerations, gpuTolerations []k8sV1.Toleration,
+) {
 	if tcd != nil {
 		if tcd.GPUPodSpec != nil {
 			gpuTolerations = tcd.GPUPodSpec.Spec.Tolerations
