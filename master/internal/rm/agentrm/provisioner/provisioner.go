@@ -188,7 +188,6 @@ func (p *Provisioner) provision(ctx *actor.Context) {
 				err:  err,
 				time: time.Now(),
 			}
-			return
 		}
 	}
 
