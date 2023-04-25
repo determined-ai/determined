@@ -53,10 +53,6 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("model_dir")
     args = parser.parse_args()
 
-    assert (
-        args.tuner_type in _defaults.ALL_SEARCH_METHOD_CLASSES
-    ), f"tuner-type must be one of {list(_defaults.ALL_SEARCH_METHOD_CLASSES)}, not {args.tuner_type}"
-
     return args
 
 

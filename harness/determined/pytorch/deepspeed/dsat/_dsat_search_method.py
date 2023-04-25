@@ -169,10 +169,7 @@ class DSATTrialTracker:
         self.best_trial = None
         self.num_trials_since_best_result = 0
         self.successful_stages = set()
-        self._all_trials_dict = {}
-        # Using a list instead of an honest `queue` or `multiprocessing` `Queue` object because
-        # neither or the former are pickleable with the current code.
-        self._trials_queue = []
+        self._all_trials_dict = collections.OrderedDict()
 
         self._mem_per_gpu_per_stage = None
         self._viable_zero_stages = None
@@ -240,12 +237,6 @@ class DSATTrialTracker:
     def register_trial(self, trial: DSATTrial) -> None:
         logging.info(f"=============Total Trials Created: {len(self)}=============")
         self._all_trials_dict[trial.request_id] = trial
-        self._trials_queue.append(trial)
-
-    def get_next_trials(self, num_trials: int) -> List[DSATTrial]:
-        next_trials = self._trials_queue[:num_trials]
-        self._trials_queue = self._trials_queue[num_trials:]
-        return next_trials
 
     def enforce_consistent_batch_config(self, hparams: Dict[str, Any]) -> None:
         """Enforces a consistent batch size configuration by altering `hparams` in-place."""
@@ -542,8 +533,9 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
             )
             for t in new_trials:
                 self.trial_tracker.register_trial(t)
+
                 new_ops_list.extend(self.get_ops_for_trial(t))
-        logging.info(f"Trials to schedule: {self.num_trials_to_schedule()}")
+        logging.info(f"Trials to schedule: {self.num_trials_to_schedule(searcher_state)}")
         return new_ops_list
 
     def on_trial_closed(
@@ -586,7 +578,7 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
             for t in new_trials:
                 self.trial_tracker.register_trial(t)
                 new_ops_list.extend(self.get_ops_for_trial(t))
-        logging.info(f"Trials to schedule: {self.num_trials_to_schedule()}")
+        logging.info(f"Trials to schedule: {self.num_trials_to_schedule(searcher_state)}")
         return new_ops_list
 
     def num_trials_to_schedule(
@@ -610,9 +602,23 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
 
         return trials_to_schedule
 
-    def get_next_ops(self, searcher_state: searcher.SearcherState) -> List[searcher.Operation]:
+    def get_next_trials(self, searcher_state: searcher.SearcherState) -> List[DSATTrial]:
+        """
+        Returns the list of the next trials to be submitted.
+        """
+        # Should be using a queue here, but neither the `queue` nor the `multiprocessing` `Queue`
+        # objects are pickleable with the current code.
         num_trials = self.num_trials_to_schedule(searcher_state)
-        next_trials = self.trial_tracker.get_next_trials(num_trials)
+        next_trials = []
+        for request_id, trial in self._all_trials_dict.items():
+            if request_id not in searcher_state.trials_created:
+                next_trials.append(trial)
+                if len(next_trials) >= num_trials:
+                    break
+        return next_trials
+
+    def get_next_ops(self, searcher_state: searcher.SearcherState) -> List[searcher.Operation]:
+        next_trials = self.get_next_trials(searcher_state)
         next_ops = []
         for t in next_trials:
             next_ops.extend(self.get_ops_for_trial(t))
