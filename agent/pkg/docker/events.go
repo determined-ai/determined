@@ -3,6 +3,8 @@ package docker
 import (
 	"time"
 
+	"github.com/docker/docker/pkg/stdcopy"
+
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 )
 
@@ -17,6 +19,7 @@ type (
 		Level     string
 		Timestamp time.Time
 		Message   string
+		Stdtype   stdcopy.StdType
 	}
 	// StatsEvent describes some stats about a Docker operation, such as IMAGEPULL.
 	StatsEvent struct {
@@ -27,8 +30,19 @@ type (
 )
 
 // NewLogEvent initializes a new Event that is of kind 'LogEvent'.
+// TODO(DET-9076): Logs need agent IDs.
 func NewLogEvent(level, message string) Event {
-	return Event{Log: &LogEvent{Level: level, Timestamp: time.Now().UTC(), Message: message}}
+	return NewTypedLogEvent(level, message, stdcopy.Stdout)
+}
+
+// NewTypedLogEvent initializes a new Event that is of kind 'LogEvent' with a stdtype.
+func NewTypedLogEvent(level, message string, stdtype stdcopy.StdType) Event {
+	return Event{Log: &LogEvent{
+		Level:     level,
+		Timestamp: time.Now().UTC(),
+		Message:   message,
+		Stdtype:   stdcopy.Stdout,
+	}}
 }
 
 // NewBeginStatsEvent initializes a new beginning Event that is of kind 'StatsEvent' for the kind.

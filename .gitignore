@@ -88,3 +88,6 @@ model_hub/examples/mmdetection/hydra/outputs
 
 # go workspace sum file
 go.work.sum
+
+# Singularity images
+*.sif
