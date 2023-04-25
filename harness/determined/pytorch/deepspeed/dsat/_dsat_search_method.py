@@ -1,3 +1,4 @@
+import argparse
 import copy
 import logging
 import pathlib
@@ -65,9 +66,6 @@ class DSATTrial:
         self.lineage_root = self if self.parent is None else self.parent.lineage_root
 
         self.ds_config = get_ds_config_from_hparams(self.hparams, self.model_dir)
-        # TODO: Leaving this as 1 right now. In general will need some custom logic here, especially
-        # if we want to support both model and pipeline parallelism.
-        self.mp_size = 1
 
         self._error_in_direct_history = False
 
@@ -130,87 +128,6 @@ class DSATModelProfileInfoTrial(DSATTrial):
     # TODO: avoid various recomputations.
     """
 
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
-        self._mem_per_gpu_per_stage = None
-        self._viable_zero_stages = None
-        self._max_mbs_per_stage = None
-
-    @property
-    def gpu_mem(self) -> int:
-        """
-        Returns the available GPU memory in bytes.
-        """
-        return self.metric["gpu_mem"]
-
-    @property
-    def num_params(self) -> int:
-        return self.metric["num_params"]
-
-    @property
-    def trainable_num_params(self) -> int:
-        return self.metric["trainable_num_params"]
-
-    @property
-    def activation_mem_per_gpu(self) -> int:
-        return self.metric["activation_mem_per_gpu"]
-
-    @property
-    def mem_per_gpu_per_stage(self) -> Dict[int, int]:
-        """
-        Returns the required gpu memory in bytes, per stage.
-        """
-        if self._mem_per_gpu_per_stage is None:
-            params_mem = self.num_params * (2 if self.fp16 else 4)
-            gradients_mem = self.trainable_num_params * (2 if self.fp16 else 4)
-            # optimizer_mem assumes Adam, following DS. TODO: don't assume this.
-            optimizer_mem = self.trainable_num_params * (16 if self.fp16 else 8)
-
-            non_activation_mem_per_gpu_per_stage = {
-                0: params_mem + gradients_mem + optimizer_mem,
-                1: params_mem + gradients_mem + optimizer_mem // self.slots,
-                2: params_mem + (gradients_mem + optimizer_mem) // self.slots,
-                3: (params_mem + gradients_mem + optimizer_mem) // self.slots,
-            }
-            if self.mp_size > 1:
-                non_activation_mem_per_gpu_per_stage = {
-                    stage: mem // self.mp_size
-                    for stage, mem in non_activation_mem_per_gpu_per_stage.items()
-                }
-            # No need to divide by mp_size below because self.activation_mem_per_gpu already has the
-            # model parallelism accounted for (at least approximately).
-            mem_per_gpu_per_stage = {
-                stage: mem + self.activation_mem_per_gpu
-                for stage, mem in non_activation_mem_per_gpu_per_stage.items()
-            }
-            self._mem_per_gpu_per_stage = mem_per_gpu_per_stage
-        return self._mem_per_gpu_per_stage
-
-    @property
-    def viable_zero_stages(self) -> Set[int]:
-        """
-        Returns the set of viable zero stages based on a rough computation.
-        """
-        # TODO: Add a configurable fudge factor for a little leeway?
-        if self._viable_zero_stages is None:
-            self._viable_zero_stages = {
-                stage for stage, mem in self.mem_per_gpu_per_stage.items() if mem < self.gpu_mem
-            }
-        return self._viable_zero_stages
-
-    @property
-    def max_mbs_per_stage(self) -> Dict[int, int]:
-        """
-        Returns the approximate max train_micro_batch_size_per_gpu (mbs) per stage.
-        """
-        if self._max_mbs_per_stage is None:
-            self._max_mbs_per_stage = {
-                stage: (self.gpu_mem - mem) // self.activation_mem_per_gpu
-                for stage, mem in self.mem_per_gpu_per_stage.items()
-                if stage in self.viable_zero_stages
-            }
-        return self._max_mbs_per_stage
-
 
 class DSATTrialTracker:
     """
@@ -219,41 +136,45 @@ class DSATTrialTracker:
 
     def __init__(
         self,
-        submitted_config_dict: Dict[str, Any],
+        config: Dict[str, Any],
         model_dir: str,
     ) -> None:
-        self.submitted_config_dict = submitted_config_dict
+        self.config = config
         self.model_dir = model_dir
 
         # Various derived attributes
-        self.slots = self.submitted_config_dict["resources"]["slots_per_trial"]
-        self.smaller_is_better = self.submitted_config_dict["searcher"].get(
+        self.slots = self.config["resources"]["slots_per_trial"]
+        self.smaller_is_better = self.config["searcher"].get(
             "smaller_is_better", _defaults.SMALLER_IS_BETTER
         )
-        self.submitted_hps = self.submitted_config_dict["hyperparameters"]
-        self.ds_config = get_ds_config_from_hparams(self.submitted_hps, self.model_dir)
+        self.hps = self.config["hyperparameters"]
+        self.ds_config = get_ds_config_from_hparams(self.hps, self.model_dir)
         self.fp16 = self.ds_config.get("fp16", {}).get("enabled") or False
 
         self.autotuning_config = _defaults.AUTOTUNING_DICT  # TODO: let the user configure more.
-        self.searcher_metric_name = self.autotuning_config["metric"] = self.submitted_config_dict[
-            "searcher"
-        ]["metric"]
+        self.searcher_metric_name = self.autotuning_config["metric"] = self.config["searcher"][
+            "metric"
+        ]
         self.tuner_num_trials = self.autotuning_config["tuner_num_trials"]
         self.tuner_early_stopping = self.autotuning_config["tuner_early_stopping"]
         self.num_tuning_micro_batch_sizes = self.autotuning_config["num_tuning_micro_batch_sizes"]
 
-        self.submitted_hps_with_autotuning = merge_dicts(
-            self.submitted_hps, {_defaults.OVERWRITE_KEY: {"autotuning": self.autotuning_config}}
+        self.hps_with_autotuning = merge_dicts(
+            self.hps, {_defaults.OVERWRITE_KEY: {"autotuning": self.autotuning_config}}
         )
 
         # Also add an internal key to the HP dict which enable the DSAT code path for Trial classes.
-        self.submitted_hps_with_autotuning[_defaults.USE_DSAT_MODE_KEY] = True
+        self.hps_with_autotuning[_defaults.USE_DSAT_MODE_KEY] = True
 
         self.model_profile_info_trial = None
         self.best_trial = None
         self.num_trials_since_best_result = 0
         self.successful_stages = set()
         self._all_trials_dict = {}
+
+        self._mem_per_gpu_per_stage = None
+        self._viable_zero_stages = None
+        self._max_mbs_per_stage = None
 
     def __len__(self) -> int:
         return len(self._all_trials_dict)
@@ -303,7 +224,7 @@ class DSATTrialTracker:
         length: int = 1,
     ) -> DSATModelProfileInfoTrial:
         # Create the special hp dictionary used for the model profile info run.
-        model_profile_info_hps = copy.deepcopy(self.submitted_hps_with_autotuning)
+        model_profile_info_hps = copy.deepcopy(self.hps_with_autotuning)
         model_profile_info_hps[_defaults.OVERWRITE_KEY] = merge_dicts(
             model_profile_info_hps.get(_defaults.OVERWRITE_KEY, {}),
             _defaults.MODEL_INFO_PROFILE_DS_CONFIG,
@@ -349,6 +270,33 @@ class DSATTrialTracker:
                 root_trial_set.add(trial)
         return root_trial_set
 
+    def update_trial_metric(
+        self,
+        trial: DSATTrial,
+        metric: Dict[str, Any],
+    ) -> None:
+        """
+        Updates the Trial Tracker after metrics have been reported, attaching the reported metrics
+        to the `DSATTrial` instnace and updating early-stopping bookkeeping.
+        """
+        trial.metric = metric
+
+        # The model info profiling run's metric will not contain the searcher metric key and should
+        # not be counted against the early stopping criteria.
+        if not isinstance(trial, DSATModelProfileInfoTrial):
+            searcher_metric_value = metric.get(self.searcher_metric_name)
+            trial_is_best = self.best_autotuning_metric_val is None or (
+                searcher_metric_value < self.best_autotuning_metric_val
+                if self.smaller_is_better
+                else searcher_metric_value > self.best_autotuning_metric_val
+            )
+            self.successful_stages.add(trial.stage)
+            if trial_is_best:
+                self.best_trial = trial
+                self.num_trials_since_best_result = 0
+            else:
+                self.num_trials_since_best_result += 1
+
     @property
     def best_autotuning_metric_val(self) -> bool:
         autotuning_metric_vals = [
@@ -384,32 +332,95 @@ class DSATTrialTracker:
         else:
             return False
 
-    def update_trial_metric(
-        self,
-        trial: DSATTrial,
-        metric: Dict[str, Any],
-    ) -> None:
+    @property
+    def gpu_mem(self) -> int:
         """
-        Updates the Trial Tracker after metrics have been reported, attaching the reported metrics
-        to the `DSATTrial` instnace and updating early-stopping bookkeeping.
+        Returns the available GPU memory in bytes.
         """
-        trial.metric = metric
+        assert (
+            self.model_profile_info_trial is not None
+        ), "The model profile info Trial must be run before calling this method."
+        return self.model_profile_info_trial.metric["gpu_mem"]
 
-        # The model info profiling run's metric will not contain the searcher metric key and should
-        # not be counted against the early stopping criteria.
-        if not isinstance(trial, DSATModelProfileInfoTrial):
-            searcher_metric_value = metric.get(self.searcher_metric_name)
-            trial_is_best = self.best_autotuning_metric_val is None or (
-                searcher_metric_value < self.best_autotuning_metric_val
-                if self.smaller_is_better
-                else searcher_metric_value > self.best_autotuning_metric_val
+    @property
+    def num_params(self) -> int:
+        assert (
+            self.model_profile_info_trial is not None
+        ), "The model profile info Trial must be run before calling this method."
+        return self.model_profile_info_trial.metric["num_params"]
+
+    @property
+    def trainable_num_params(self) -> int:
+        assert (
+            self.model_profile_info_trial is not None
+        ), "The model profile info Trial must be run before calling this method."
+        return self.model_profile_info_trial.metric["trainable_num_params"]
+
+    @property
+    def activation_mem_per_gpu(self) -> int:
+        assert (
+            self.model_profile_info_trial is not None
+        ), "The model profile info Trial must be run before calling this method."
+        return self.model_profile_info_trial.metric["activation_mem_per_gpu"]
+
+    @property
+    def mem_per_gpu_per_stage(self) -> Dict[int, int]:
+        """
+        Returns the required gpu memory in bytes, per stage.
+        """
+        assert (
+            self.model_profile_info_trial is not None
+        ), "The model profile info Trial must be run before calling this method."
+        if self._mem_per_gpu_per_stage is None:
+            params_mem = self.num_params * (2 if self.fp16 else 4)
+            gradients_mem = self.trainable_num_params * (2 if self.fp16 else 4)
+            # optimizer_mem assumes Adam, following DS. TODO: don't assume this.
+            master_params_mem = 4 if self.fp16 else 0
+            momentum_mem = variance_mem = 4
+            optimizer_mem = self.trainable_num_params * (
+                master_params_mem + momentum_mem + variance_mem
             )
-            self.successful_stages.add(trial.stage)
-            if trial_is_best:
-                self.best_trial = trial
-                self.num_trials_since_best_result = 0
-            else:
-                self.num_trials_since_best_result += 1
+
+            non_activation_mem_per_gpu_per_stage = {
+                0: params_mem + gradients_mem + optimizer_mem,
+                1: params_mem + gradients_mem + optimizer_mem // self.slots,
+                2: params_mem + (gradients_mem + optimizer_mem) // self.slots,
+                3: (params_mem + gradients_mem + optimizer_mem) // self.slots,
+            }
+            # In DS there is an mp_size int which can be used for model parallelism and also enters
+            # the memory computation, but we will not support that feature at the moment.
+
+            mem_per_gpu_per_stage = {
+                stage: mem + self.activation_mem_per_gpu
+                for stage, mem in non_activation_mem_per_gpu_per_stage.items()
+            }
+            self._mem_per_gpu_per_stage = mem_per_gpu_per_stage
+        return self._mem_per_gpu_per_stage
+
+    @property
+    def viable_zero_stages(self) -> Set[int]:
+        """
+        Returns the set of viable zero stages based on a rough computation.
+        """
+        # TODO: Add a configurable fudge factor for a little leeway?
+        if self._viable_zero_stages is None:
+            self._viable_zero_stages = {
+                stage for stage, mem in self.mem_per_gpu_per_stage.items() if mem < self.gpu_mem
+            }
+        return self._viable_zero_stages
+
+    @property
+    def max_mbs_per_stage(self) -> Dict[int, int]:
+        """
+        Returns the approximate max train_micro_batch_size_per_gpu (mbs) per stage.
+        """
+        if self._max_mbs_per_stage is None:
+            self._max_mbs_per_stage = {
+                stage: (self.gpu_mem - mem) // self.activation_mem_per_gpu
+                for stage, mem in self.mem_per_gpu_per_stage.items()
+                if stage in self.viable_zero_stages
+            }
+        return self._max_mbs_per_stage
 
 
 class BaseDSATSearchMethod(searcher.SearchMethod):
@@ -420,14 +431,14 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
 
     def __init__(
         self,
-        submitted_config_dict: Dict[str, Any],
+        config: Dict[str, Any],
         model_dir: str,
     ) -> None:
-        self.submitted_config_dict = submitted_config_dict
+        self.config = config
         self.model_dir = model_dir
 
         self.trial_tracker = DSATTrialTracker(
-            submitted_config_dict=submitted_config_dict,
+            config=config,
             model_dir=model_dir,
         )
 
@@ -509,10 +520,12 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
 
         # TODO: remove some of these info logs. Some are just for testing.
         if isinstance(last_trial, DSATModelProfileInfoTrial):
-            logging.info(f"Approx. max mbs per stage: {last_trial.max_mbs_per_stage}")
-            logging.info(f"Approx. GPU memory per stage: {last_trial.mem_per_gpu_per_stage}")
-            logging.info(f"Total GPU memory: {last_trial.gpu_mem}")
-            logging.info(f"Viable zero stages: {last_trial.viable_zero_stages}")
+            logging.info(f"Approx. max mbs per stage: {self.trial_tracker.max_mbs_per_stage}")
+            logging.info(
+                f"Approx. GPU memory per stage: {self.trial_tracker.mem_per_gpu_per_stage}"
+            )
+            logging.info(f"Total GPU memory: {self.trial_tracker.gpu_mem}")
+            logging.info(f"Viable zero stages: {self.trial_tracker.viable_zero_stages}")
 
         # All DS AT Trials should be closed after validation.
         new_ops_list = [searcher.Close(request_id)]
@@ -579,10 +592,15 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
             pickle.dump(self.trial_tracker, f)
 
     def load_method_state(self, path: pathlib.Path) -> None:
-        logging.info(f"Restoring searcher state from checkpoint.")
+        logging.info("Restoring searcher state from checkpoint.")
         checkpoint_path = path.joinpath("trial_tracker.pkl")
         with checkpoint_path.open("rb") as f:
             self.trial_tracker = pickle.load(f)
+
+    @classmethod
+    def from_args(cls, args: argparse.Namespace) -> "BaseDSATSearchMethod":
+        config = _utils.get_dict_from_yaml_or_json_path(args.config_path)
+        return cls(config=config, model_dir=args.model_dir)
 
 
 class RandomDSATSearchMethod(BaseDSATSearchMethod):
@@ -743,16 +761,14 @@ class RandomDSATSearchMethod(BaseDSATSearchMethod):
         # due to the increased communication costs. We also don't need to choose stage 0, since that
         # would leverage DS at all.
         if zero_stage is None:
-            relevant_stages = {
-                s for s in self.trial_tracker.model_profile_info_trial.viable_zero_stages if s != 0
-            }
+            relevant_stages = {s for s in self.trial_tracker.viable_zero_stages if s != 0}
             stage_1_and_2 = {1, 2}
             if stage_1_and_2 & self.trial_tracker.successful_stages:
                 relevant_stages &= stage_1_and_2
             zero_stage = random.choice(list(relevant_stages))
 
         zero_optim_config = _utils.get_random_zero_optim_config(zero_stage)
-        new_hparams = copy.deepcopy(self.trial_tracker.submitted_hps_with_autotuning)
+        new_hparams = copy.deepcopy(self.trial_tracker.hps_with_autotuning)
         new_hparams[_defaults.OVERWRITE_KEY] = merge_dicts(
             new_hparams.get(_defaults.OVERWRITE_KEY, {}),
             {"zero_optimization": zero_optim_config},
@@ -765,9 +781,7 @@ class RandomDSATSearchMethod(BaseDSATSearchMethod):
             new_search_data["lo"] = self.trial_tracker.best_trial.mbs + 1
         # Otherwise choose the corrsponding search data based on approximate computations
         else:
-            random_zero_stage_max_mbs = (
-                self.trial_tracker.model_profile_info_trial.max_mbs_per_stage[zero_stage]
-            )
+            random_zero_stage_max_mbs = self.trial_tracker.max_mbs_per_stage[zero_stage]
             new_search_data = {
                 "lo": 1,
                 "hi": 2 * random_zero_stage_max_mbs - 1,

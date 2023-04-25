@@ -1,4 +1,4 @@
-import copy
+import argparse
 import json
 import logging
 import pathlib
@@ -10,9 +10,35 @@ import torch
 from ruamel import yaml
 
 import determined as det
-from determined.common.experimental import user
-from determined.pytorch.deepspeed.dsat import _defaults
+from determined.pytorch.deepspeed.dsat import _defaults, _dsat_search_method
 from determined.util import merge_dicts
+
+
+def get_search_method_from_args(
+    args: argparse.Namespace,
+) -> _dsat_search_method.BaseDSATSearchMethod:
+    assert (
+        args.tuner_type in _defaults.ALL_SEARCH_METHOD_CLASSES
+    ), f"tuner-type must be one of {list(_defaults.ALL_SEARCH_METHOD_CLASSES)}, not {args.tuner_type}"
+    search_method_class = _defaults.ALL_SEARCH_METHOD_CLASSES[args.tuner_type]
+    search_method = search_method_class.from_args(args)
+    return search_method
+
+
+def get_search_runner_config_from_args(args: argparse.Namespace) -> Dict[str, Any]:
+    if args.search_runner_config is not None:
+        submitted_search_runner_config = get_dict_from_yaml_or_json_path(args.search_runner_config)
+        return submitted_search_runner_config
+
+    default_search_runner_overrides = _defaults.DEFAULT_SEARCH_RUNNER_OVERRIDES
+    default_entrypoint = "python3 -m determined.pytorch.deepspeed.dsat._run_dsat -p args.pkl"
+    default_search_runner_overrides["entrypoint"] = default_entrypoint
+
+    experiment_config_dict = get_dict_from_yaml_or_json_path(args.config_path)
+    search_runner_config = merge_dicts(experiment_config_dict, default_search_runner_overrides)
+    search_runner_config["name"] += " (DS AT Searcher)"
+
+    return search_runner_config
 
 
 # TODO: move this to determined.util?
