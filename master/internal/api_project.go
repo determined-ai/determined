@@ -157,13 +157,16 @@ func (a *apiServer) getProjectColumnsByID(
 		Where("project_id = ?", id).
 		Order("id")
 
-	exputil.AuthZProvider.Get().FilterExperimentsQuery(
+	experimentQuery, err = exputil.AuthZProvider.Get().FilterExperimentsQuery(
 		ctx,
 		curUser,
 		p,
 		experimentQuery,
 		[]rbacv1.PermissionType{rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA},
 	)
+	if err != nil {
+		return nil, err
+	}
 
 	err = experimentQuery.Scan(ctx, &hyperparameters)
 	if err != nil {
@@ -215,14 +218,28 @@ func (a *apiServer) getProjectColumnsByID(
 	// Get metrics columns
 	metricNames := []struct {
 		Vname []string
+		WorkspaceId int
 	}{}
-	err = db.Bun().
+	metricQuery := db.Bun().
 		NewSelect().
 		TableExpr("exp_metrics_name").
 		TableExpr("LATERAL json_array_elements_text(vname) AS vnames").
 		ColumnExpr("array_to_json(array_agg(DISTINCT vnames)) AS vname").
-		Where("project_id = ?", id).
-		Scan(ctx, &metricNames)
+		ColumnExpr("?::int as workspace_id", p.WorkspaceId).
+		Where("project_id = ?", id)
+
+	metricQuery, err = exputil.AuthZProvider.Get().FilterExperimentsQuery(
+		ctx,
+		curUser,
+		p,
+		metricQuery,
+		[]rbacv1.PermissionType{rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_ARTIFACTS},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	err = metricQuery.Scan(ctx, &metricNames)
 	if err != nil {
 		return nil, err
 	}
