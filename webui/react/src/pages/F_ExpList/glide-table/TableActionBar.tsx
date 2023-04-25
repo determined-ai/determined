@@ -6,6 +6,7 @@ import BatchActionConfirmModalComponent from 'components/BatchActionConfirmModal
 import Dropdown from 'components/Dropdown';
 import ExperimentMoveModalComponent from 'components/ExperimentMoveModal';
 import Button from 'components/kit/Button';
+import Icon from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
 import usePermissions from 'hooks/usePermissions';
 import {
@@ -19,7 +20,6 @@ import {
   unarchiveExperiments,
 } from 'services/api';
 import { V1BulkExperimentFilters } from 'services/api-ts-sdk';
-import Icon from 'shared/components/Icon';
 import { RecordKey } from 'shared/types';
 import { ErrorLevel } from 'shared/utils/error';
 import {
