@@ -226,6 +226,18 @@ const ExperimentActionDropdown: React.FC<Props> = ({
     );
   }
 
+  const shared = (
+    <>
+      <ExperimentMoveModal.Component
+        experimentIds={[id]}
+        sourceProjectId={experiment.projectId}
+        sourceWorkspaceId={experiment.workspaceId}
+        onSubmit={handleMoveComplete}
+      />
+      {modalHyperparameterSearchContextHolder}
+    </>
+  );
+
   return children ? (
     <>
       <Dropdown
@@ -236,26 +248,14 @@ const ExperimentActionDropdown: React.FC<Props> = ({
         onOpenChange={onVisibleChange}>
         {children}
       </Dropdown>
-      <ExperimentMoveModal.Component
-        experimentIds={[id]}
-        sourceProjectId={experiment.projectId}
-        sourceWorkspaceId={experiment.workspaceId}
-        onSubmit={handleMoveComplete}
-      />
-      {modalHyperparameterSearchContextHolder}
+      {shared}
     </>
   ) : (
     <div className={css.base} title="Open actions menu" onClick={stopPropagation}>
       <Dropdown menu={menu} placement="bottomRight" trigger={['click']}>
         <Button ghost icon={<Icon name="overflow-vertical" />} onClick={stopPropagation} />
       </Dropdown>
-      <ExperimentMoveModal.Component
-        experimentIds={[id]}
-        sourceProjectId={experiment.projectId}
-        sourceWorkspaceId={experiment.workspaceId}
-        onSubmit={handleMoveComplete}
-      />
-      {modalHyperparameterSearchContextHolder}
+      {shared}
     </div>
   );
 };
