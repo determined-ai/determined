@@ -6,7 +6,6 @@ import tempfile
 
 from determined.experimental import client
 from determined.pytorch.deepspeed.dsat import _defaults, _utils
-from determined.util import merge_dicts
 
 
 def parse_args() -> argparse.Namespace:
@@ -16,9 +15,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("model_dir")
     parser.add_argument("-i", "--include", type=str, nargs="+")
 
-    parser.add_argument("-s", "--search-runner-config", type=str)
+    # A series of important parameters which cannot be easily included in the config.
     parser.add_argument("-t", "--tuner-type", type=str, default="random")
-    parser.add_argument("-n", "--num-trials", type=int, default=50)
+
+    parser.add_argument("-mt", "--max-trials", type=int, default=50)
+    parser.add_argument("-ms", "--max-slots", type=int)
+    parser.add_argument("-mct", "--max-concurrent-trials", type=int, default=16)
+    parser.add_argument("-sc", "--search-runner-config", type=str)
 
     # DS-specific args.
     parser.add_argument("-ss", "--start_profile-step", type=int, default=3)
