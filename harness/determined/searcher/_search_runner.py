@@ -194,6 +194,7 @@ class SearchRunner:
         )
         # TODO: Remove this temporary hack in favor of an actual solution around the issue described
         # in https://determined-ai.slack.com/archives/C04645NHSP6/p1680201334658789
+        # Also verify that this is actually catching the error.
         try:
             bindings.post_PostSearcherOperations(
                 session,
