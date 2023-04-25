@@ -218,7 +218,7 @@ func (a *apiServer) getProjectColumnsByID(
 	// Get metrics columns
 	metricNames := []struct {
 		Vname []string
-		WorkspaceId int
+		WorkspaceID int
 	}{}
 	metricQuery := db.Bun().
 		NewSelect().
