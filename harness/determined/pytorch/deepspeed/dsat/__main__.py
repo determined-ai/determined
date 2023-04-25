@@ -15,13 +15,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("model_dir")
     parser.add_argument("-i", "--include", type=str, nargs="+")
 
-    # A series of important parameters which cannot be easily included in the config.
+    # A series of important parameters which included in the config.
     parser.add_argument("-t", "--tuner-type", type=str, default="random")
-
     parser.add_argument("-mt", "--max-trials", type=int, default=50)
     parser.add_argument("-ms", "--max-slots", type=int)
     parser.add_argument("-mct", "--max-concurrent-trials", type=int, default=16)
     parser.add_argument("-sc", "--search-runner-config", type=str)
+    parser.add_argument("-msr", "--max-search-runner-restarts", type=int)
+    parser.add_argument("-trc", "--trials-per-random-config", type=int, default=3)
 
     # DS-specific args.
     parser.add_argument("-ss", "--start_profile-step", type=int, default=3)
@@ -71,7 +72,7 @@ def run_autotuning(args: argparse.Namespace) -> None:
 
     with tempfile.TemporaryDirectory() as temp_dir:
         # Upload the args, which will be used by the search runner on-cluster.
-        args_path = pathlib.Path(temp_dir).joinpath("args.pkl")
+        args_path = pathlib.Path(temp_dir).joinpath(_defaults.ARGS_PKL_PATH)
         with args_path.open("wb") as f:
             pickle.dump(args, f)
         includes = [args.model_dir, args.config_path] + args.include

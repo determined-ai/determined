@@ -21,7 +21,8 @@ def get_search_method_from_args(
         args.tuner_type in _defaults.ALL_SEARCH_METHOD_CLASSES
     ), f"tuner-type must be one of {list(_defaults.ALL_SEARCH_METHOD_CLASSES)}, not {args.tuner_type}"
     search_method_class = _defaults.ALL_SEARCH_METHOD_CLASSES[args.tuner_type]
-    search_method = search_method_class.from_args(args)
+    # TODO: Sanity check args.
+    search_method = search_method_class(args)
     return search_method
 
 
@@ -30,12 +31,13 @@ def get_search_runner_config_from_args(args: argparse.Namespace) -> Dict[str, An
         submitted_search_runner_config = get_dict_from_yaml_or_json_path(args.search_runner_config)
         return submitted_search_runner_config
 
-    default_search_runner_overrides = _defaults.DEFAULT_SEARCH_RUNNER_OVERRIDES
-    default_entrypoint = "python3 -m determined.pytorch.deepspeed.dsat._run_dsat -p args.pkl"
-    default_search_runner_overrides["entrypoint"] = default_entrypoint
-
+    default_search_runner_config = _defaults.DEFAULT_SEARCH_RUNNER_CONFIG
+    if args.max_search_runner_restarts is not None:
+        default_search_runner_config["max_restarts"] = args.max_search_runner_restarts
+    # Merge with the submitted experiment config so that the search runner shares the project,
+    # workspace, etc.
     experiment_config_dict = get_dict_from_yaml_or_json_path(args.config_path)
-    search_runner_config = merge_dicts(experiment_config_dict, default_search_runner_overrides)
+    search_runner_config = merge_dicts(experiment_config_dict, default_search_runner_config)
     search_runner_config["name"] += " (DS AT Searcher)"
 
     return search_runner_config

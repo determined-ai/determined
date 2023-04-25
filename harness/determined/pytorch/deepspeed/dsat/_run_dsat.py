@@ -5,11 +5,11 @@ import pickle
 
 import determined as det
 from determined import searcher
-from determined.pytorch.deepspeed.dsat import _utils
+from determined.pytorch.deepspeed.dsat import _defaults, _utils
 
 
 def main(core_context: det.core.Context) -> None:
-    with pathlib.Path("args.pkl").open("rb") as f:
+    with pathlib.Path(_defaults.ARGS_PKL_PATH).open("rb") as f:
         args = pickle.load(f)
     # On-cluster, the relative paths to the below files just come from the base names.
     args.config_path = os.path.basename(args.config_path)

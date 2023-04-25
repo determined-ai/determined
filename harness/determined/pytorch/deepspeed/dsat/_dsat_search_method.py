@@ -435,23 +435,19 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
     needs to be written overwritten when subclassing (at a minimum).
     """
 
-    def __init__(
-        self,
-        config: Dict[str, Any],
-        max_trials: int,
-        max_concurrent_trials: int,
-        max_slots: Optional[int],
-        model_dir: str,
-    ) -> None:
-        self.config = config
-        self.max_trials = max_trials
-        self.max_concurrent_trials = max_concurrent_trials
-        self.max_slots = max_slots
-        self.model_dir = model_dir
+    def __init__(self, args: argparse.Namespace) -> None:
+        self.args = args
+
+        # Derived attributes:
+        self.config = _utils.get_dict_from_yaml_or_json_path(args.config_path)
+        self.max_trials = args.max_trials
+        self.max_concurrent_trials = args.max_concurrent_trials
+        self.max_slots = args.max_slots
+        self.model_dir = args.model_dir
 
         self.trial_tracker = DSATTrialTracker(
-            config=config,
-            model_dir=model_dir,
+            config=self.config,
+            model_dir=self.model_dir,
         )
 
     @abstractmethod
@@ -547,6 +543,7 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
             for t in new_trials:
                 self.trial_tracker.register_trial(t)
                 new_ops_list.extend(self.get_ops_for_trial(t))
+        logging.info(f"Trials to schedule: {self.num_trials_to_schedule()}")
         return new_ops_list
 
     def on_trial_closed(
@@ -589,6 +586,7 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
             for t in new_trials:
                 self.trial_tracker.register_trial(t)
                 new_ops_list.extend(self.get_ops_for_trial(t))
+        logging.info(f"Trials to schedule: {self.num_trials_to_schedule()}")
         return new_ops_list
 
     def num_trials_to_schedule(
@@ -635,17 +633,6 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
         with checkpoint_path.open("rb") as f:
             self.trial_tracker = pickle.load(f)
 
-    @classmethod
-    def from_args(cls, args: argparse.Namespace) -> "BaseDSATSearchMethod":
-        config = _utils.get_dict_from_yaml_or_json_path(args.config_path)
-        return cls(
-            config=config,
-            max_trials=args.max_trials,
-            max_slots=args.max_slots,
-            max_concurrent_trials=args.max_concurrent_trials,
-            model_dir=args.model_dir,
-        )
-
 
 class RandomDSATSearchMethod(BaseDSATSearchMethod):
     """
@@ -658,6 +645,7 @@ class RandomDSATSearchMethod(BaseDSATSearchMethod):
         super().__init__(*args, **kwargs)
         # TODO: Save/restore rng state in checkpoints.
         self.rng = np.random.default_rng(42)
+        self.trials_per_random_config = self.args.trials_per_random_config
 
     def get_trials_after_validation_completed(
         self,
@@ -710,8 +698,8 @@ class RandomDSATSearchMethod(BaseDSATSearchMethod):
         new_trials = []
         # One trial for each stage. This also sets the number of concurrent trials, which should
         # really be configurable.
-        for zero_stage in range(1, 4):
-            trial = self.get_random_trial(zero_stage)
+        for _ in range(self.max_concurrent_trials):
+            trial = self.get_random_trial()
             new_trials.append(trial)
         return new_trials
 
@@ -841,6 +829,17 @@ class RandomDSATSearchMethod(BaseDSATSearchMethod):
         hparams, search_data = self.get_random_hparams_and_search_data(zero_stage)
         random_trial = self.trial_tracker.create_trial(hparams=hparams, search_data=search_data)
         return random_trial
+
+    @classmethod
+    def from_args(cls, args: argparse.Namespace) -> "BaseDSATSearchMethod":
+        config = _utils.get_dict_from_yaml_or_json_path(args.config_path)
+        return cls(
+            config=config,
+            max_trials=args.max_trials,
+            max_slots=args.max_slots,
+            max_concurrent_trials=args.max_concurrent_trials,
+            model_dir=args.model_dir,
+        )
 
 
 class SimpleDSATSearchMethod(BaseDSATSearchMethod):

@@ -7,13 +7,11 @@ ALL_SEARCH_METHOD_CLASSES = {
 
 MODEL_INFO_PROFILING_PATH = "model_info.json"
 AUTOTUNING_RESULTS_PATH = "autotuning_metric.json"
-
-ZERO_STAGE = 0
-
 SMALLER_IS_BETTER = True
 USE_DSAT_MODE_KEY = "_use_dsat_mode"
 GAS_DEFAULT = 1
 OVERWRITE_KEY = "overwrite_deepspeed_args"
+ARGS_PKL_PATH = "args.pkl"
 
 # Native DS AT uses the below settings for the model info profile run, but also with the the stage
 # set to 3, presumably since that gives a general model the best chance to run without OOMing.
@@ -61,18 +59,8 @@ AUTOTUNING_DICT = {
     "arg_mappings": None,
 }
 
-DEFAULT_SEARCH_RUNNER_OVERRIDES = {
+DEFAULT_SEARCH_RUNNER_CONFIG = {
     "searcher": {"name": "single", "max_length": 0},
-    # TODO: don't hardcode the searcher's max_restarts.
-    "max_restarts": 3,
-    # TODO: taking slots_per_trial: 0 to imply cpu-only here, but that's apparently an unsafe assumption
-    # e.g. on Grenoble.
     "resources": {"slots_per_trial": 0},
-    # TODO: remove the environment section; just needed for GG's GCP cluster.
-    "environment": {
-        "image": {
-            "cpu": "determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-deepspeed-0.7.0-gpu-0.20.1",
-            "gpu": "determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-deepspeed-0.7.0-gpu-0.20.1",
-        }
-    },
+    "entrypoint": f"python3 -m determined.pytorch.deepspeed.dsat._run_dsat -p {ARGS_PKL_PATH}",
 }
