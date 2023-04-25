@@ -94,7 +94,7 @@ def open_tensorboard(args: Namespace) -> None:
 
 # fmt: off
 
-args_description = [
+args_description: List[Cmd] = [
     Cmd("tensorboard", None, "manage TensorBoard instances", [
         Cmd("list ls", partial(command.list_tasks), "list TensorBoard instances", [
             Arg("-q", "--quiet", action="store_true",

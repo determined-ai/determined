@@ -1,6 +1,6 @@
 import sys
 from argparse import Namespace
-from typing import Any, List
+from typing import List
 
 import requests
 
@@ -37,7 +37,7 @@ def aggregated(args: Namespace) -> None:
     print_response(api.get(args.master, path, params=params))
 
 
-args_description = [
+args_description: List[Cmd] = [
     Cmd(
         "res|ources",
         None,
@@ -70,4 +70,4 @@ args_description = [
             ),
         ],
     )
-]  # type: List[Any]
+]
