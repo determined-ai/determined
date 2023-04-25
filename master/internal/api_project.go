@@ -144,7 +144,7 @@ func (a *apiServer) getProjectColumnsByID(
 	}
 
 	hyperparameters := []struct {
-		WorkspaceId     int
+		WorkspaceID     int
 		Hyperparameters expconf.HyperparametersV0
 	}{}
 
@@ -217,7 +217,7 @@ func (a *apiServer) getProjectColumnsByID(
 
 	// Get metrics columns
 	metricNames := []struct {
-		Vname []string
+		Vname       []string
 		WorkspaceID int
 	}{}
 	metricQuery := db.Bun().
