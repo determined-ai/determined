@@ -294,7 +294,9 @@ export const GlideTable: React.FC<GlideTableProps> = ({
 
   const onCellContextMenu: DataEditorProps['onCellContextMenu'] = useCallback(
     (cell: Item, event: CellClickedEventArgs) => {
+      // Close existing context menu.
       contextMenuOpen.set(false);
+
       const [, row] = cell;
       Loadable.match(data[row], {
         Loaded: (rowData) => {
@@ -318,21 +320,6 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         },
         NotLoaded: () => null,
       });
-      if (!experiment) return;
-
-      event.preventDefault();
-      setContextMenuProps({
-        experiment: getProjectExperimentForExperimentItem(experiment, project),
-        handleClose: (e?: Event) => {
-          if (contextMenuOpen.get()) {
-            e?.stopPropagation();
-          }
-          contextMenuOpen.set(false);
-        },
-        x: Math.max(0, event.bounds.x + event.localEventX - 4),
-        y: Math.max(0, event.bounds.y + event.localEventY - 4),
-      });
-      setTimeout(() => contextMenuOpen.set(true), 25);
     },
     [data, project, setContextMenuProps, contextMenuOpen],
   );
