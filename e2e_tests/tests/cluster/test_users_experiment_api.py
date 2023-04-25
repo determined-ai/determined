@@ -32,4 +32,7 @@ def test_experiment_api_determined_disabled() -> None:
 
         assert e.wait() == client.ExperimentState.COMPLETED
     finally:
-        test_users.det_spawn(["user", "activate", "determined"])
+        child = test_users.det_spawn(["user", "activate", "determined"])
+        child.wait()
+        child.close()
+        assert child.exitstatus == 0
