@@ -11,11 +11,20 @@ from tests.cluster import test_users
 @pytest.mark.e2e_cpu
 def test_experiment_api_determined_disabled() -> None:
     api_utils.configure_token_store(test_users.ADMIN_CREDENTIALS)
-
     determined_master = conf.make_master_url()
     user_creds = api_utils.create_test_user(add_password=True)
 
-    test_users.det_spawn(["user", "deactivate", "determined"])
+    print(test_users.det_run(["user", "whoami"]))
+
+
+    # First failure is user does not have permissions...
+    # OPPOSITE FAILURE!
+    # OK this makes sense.
+    
+    # WHY is this failing???
+    child = test_users.det_spawn(["user", "deactivate", "determined"])
+    child.wait()
+    assert child.exitstatus == 0
     try:
         d = client.Determined(determined_master, user_creds.username, user_creds.password)
         e = d.create_experiment(
