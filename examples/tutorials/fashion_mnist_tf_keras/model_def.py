@@ -33,8 +33,6 @@ class FashionMNISTTrial(TFKerasTrial):
         model = self.context.wrap_model(model)
 
         # Create and wrap the optimizer.
-        # TODO MLG-443 Migrate from legacy Keras optimizers
-        # TODO Why is GKE hardcoding TF-2.4?
         if version.parse(tf.__version__) >= version.parse("2.11.0"):
             optimizer = tf.keras.optimizers.legacy.Adam()
         else:
