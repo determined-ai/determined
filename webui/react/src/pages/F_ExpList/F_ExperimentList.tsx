@@ -48,6 +48,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
       };
     });
   });
+  const [sortString, setSortString] = useState<string>('');
   const [experiments, setExperiments] = useState<Loadable<ExperimentItem>[]>(() =>
     Array(page * PAGE_SIZE).fill(NotLoaded),
   );
@@ -108,6 +109,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   );
 
   const resetPagination = useCallback(() => {
+    setIsLoading(true);
     setPage(0);
     setExperiments([]);
   }, []);
@@ -115,12 +117,14 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const onSortChange = useCallback(
     (sorts: Sort[]) => {
       setSorts(sorts);
-      resetPagination();
+      const newSortString = makeSortString(sorts.filter(isValidSort));
+      setSortString(newSortString);
+      if (newSortString !== sortString) {
+        resetPagination();
+      }
     },
-    [resetPagination],
+    [resetPagination, sortString],
   );
-
-  const sortString = useMemo(() => makeSortString(sorts.filter(isValidSort)), [sorts]);
 
   const fetchExperiments = useCallback(async (): Promise<void> => {
     try {
