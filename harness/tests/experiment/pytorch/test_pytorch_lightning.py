@@ -15,6 +15,8 @@ from tests.experiment import utils  # noqa: I100
 from tests.experiment.fixtures import lightning_adapter_onevar_model as la_model
 
 
+@pytest.mark.PyTorchLightning
+@pytest.mark.gpu
 class TestLightningAdapter:
     def setup_method(self) -> None:
         # This training setup is not guaranteed to converge in general,
@@ -228,7 +230,6 @@ class TestLightningAdapter:
         assert len(os.listdir(checkpoint_dir)) == 2, "trial did not create a checkpoint"
 
 
-    @pytest.mark.PyTorchLightning
     @pytest.mark.parametrize("api_style", ["apex", "auto"])
     def test_pl_const_with_amp(self, api_style: str, tmp_path: pathlib.Path) -> None:
 
@@ -260,7 +261,6 @@ class TestLightningAdapter:
         )
 
 
-    @pytest.mark.PyTorchLightning
     def test_pl_mnist_gan(self, tmp_path: pathlib.Path) -> None:
 
         checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
@@ -285,7 +285,6 @@ class TestLightningAdapter:
         )
 
 
-    @pytest.mark.PyTorchLightning
     def test_pl_mnist(self, tmp_path: pathlib.Path) -> None:
 
         checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
