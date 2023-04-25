@@ -10,7 +10,7 @@ import React, {
 } from 'react';
 
 import Button from 'components/kit/Button';
-import Icon from 'components/kit/Icon';
+import Icon, { IconName } from 'components/kit/Icon';
 import Link from 'components/Link';
 import Spinner from 'shared/components/Spinner';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
@@ -50,7 +50,7 @@ interface ModalProps {
   danger?: boolean;
   footerLink?: LinkParams;
   headerLink?: LinkParams;
-  icon?: string;
+  icon?: IconName;
   key?: string;
   onClose?: () => void;
   size?: ModalSize;

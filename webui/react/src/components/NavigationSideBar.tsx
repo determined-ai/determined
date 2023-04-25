@@ -7,7 +7,7 @@ import { CSSTransition } from 'react-transition-group';
 import Dropdown, { Placement } from 'components/Dropdown';
 import DynamicIcon from 'components/DynamicIcon';
 import Button from 'components/kit/Button';
-import Icon, { IconSize } from 'components/kit/Icon';
+import Icon, { IconName, IconSize } from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
 import Tooltip from 'components/kit/Tooltip';
 import Link, { Props as LinkProps } from 'components/Link';
@@ -34,7 +34,7 @@ import WorkspaceCreateModalComponent from './WorkspaceCreateModal';
 interface ItemProps extends LinkProps {
   action?: React.ReactNode;
   badge?: number;
-  icon: string | React.ReactNode;
+  icon: IconName | React.ReactElement;
   iconSize?: IconSize;
   label: string;
   labelRender?: React.ReactNode;
@@ -138,12 +138,22 @@ const NavigationSideBar: React.FC = () => {
 
   const pinnedWorkspaces = useObservable(workspaceStore.pinned);
 
-  const menuConfig = useMemo(() => {
-    const topNav = canAccessUncategorized
+  interface MenuItemProps {
+    icon: IconName;
+    label: string;
+    path: string;
+    external?: boolean;
+    popout?: boolean;
+  }
+
+  const menuConfig: { bottom: MenuItemProps[]; top: MenuItemProps[] } = useMemo(() => {
+    const topNav: MenuItemProps[] = canAccessUncategorized
       ? [{ icon: 'experiment', label: 'Uncategorized', path: paths.uncategorized() }]
       : [];
-    const dashboardTopNav = [{ icon: 'home', label: 'Home', path: paths.dashboard() }];
-    const topItems = [
+    const dashboardTopNav: MenuItemProps[] = [
+      { icon: 'home', label: 'Home', path: paths.dashboard() },
+    ];
+    const topItems: MenuItemProps[] = [
       ...dashboardTopNav.concat(topNav),
       { icon: 'model', label: 'Model Registry', path: paths.modelList() },
       { icon: 'tasks', label: 'Tasks', path: paths.taskList() },

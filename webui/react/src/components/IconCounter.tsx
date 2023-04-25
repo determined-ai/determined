@@ -1,6 +1,6 @@
 import React from 'react';
 
-import Icon from 'components/kit/Icon';
+import Icon, { IconName } from 'components/kit/Icon';
 import { ValueOf } from 'shared/types';
 
 import css from './IconCounter.module.scss';
@@ -14,7 +14,7 @@ type IconCounterType = ValueOf<typeof IconCounterType>;
 
 interface Props {
   count: number;
-  name: string;
+  name: IconName;
   onClick: () => void;
   type: IconCounterType;
 }

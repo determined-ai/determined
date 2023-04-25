@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { CSSProperties } from 'react';
 
 import Tooltip from 'components/kit/Tooltip';
 
@@ -100,23 +100,17 @@ export type IconName = (typeof IconNameArray)[number];
 export interface Props {
   name?: IconName;
   size?: IconSize;
-  //style?: CSSProperties;
+  style?: CSSProperties;
   title?: string;
 }
 
-const Icon: React.FC<Props> = ({
-  name = 'star',
-  size = 'medium',
-  title,
-  //style,
-  ...rest
-}: Props) => {
+const Icon: React.FC<Props> = ({ name = 'star', size = 'medium', title, style }: Props) => {
   const classes = [css.base];
 
   if (name) classes.push(`icon-${name}`);
   if (size) classes.push(css[size]);
 
-  const icon = <span className={classes.join(' ')} {...rest} />;
+  const icon = <span className={classes.join(' ')} style={style} />;
   return title ? <Tooltip content={title}>{icon}</Tooltip> : icon;
 };
 

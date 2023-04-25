@@ -1,13 +1,13 @@
 import React, { useCallback, useRef } from 'react';
 import { CSSTransition } from 'react-transition-group';
 
-import Icon from 'components/kit/Icon';
+import Icon, { IconName } from 'components/kit/Icon';
 
 import css from './ActionSheet.module.scss';
 import Link, { Props as LinkProps } from './Link';
 
 export interface ActionItem extends LinkProps {
-  icon?: string | React.ReactNode;
+  icon?: IconName | React.ReactElement;
   label?: string;
   render?: () => JSX.Element;
 }

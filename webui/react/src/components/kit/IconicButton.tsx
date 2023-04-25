@@ -1,13 +1,13 @@
 import { Button as AntdButton } from 'antd';
 import React, { MouseEvent } from 'react';
 
-import Icon from 'components/kit/Icon';
+import Icon, { IconName } from 'components/kit/Icon';
 
 interface ButtonProps {
   danger?: boolean;
   disabled?: boolean;
   ghost?: boolean;
-  iconName: string;
+  iconName: IconName;
   loading?: boolean | { delay?: number };
   onClick?: (event: MouseEvent) => void;
   text: string;

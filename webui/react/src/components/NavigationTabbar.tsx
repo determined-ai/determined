@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 
 import ActionSheet, { ActionItem } from 'components/ActionSheet';
 import DynamicIcon from 'components/DynamicIcon';
-import Icon from 'components/kit/Icon';
+import Icon, { IconName } from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
 import Link, { Props as LinkProps } from 'components/Link';
 import usePermissions from 'hooks/usePermissions';
@@ -25,7 +25,7 @@ import WorkspaceCreateModalComponent from './WorkspaceCreateModal';
 
 interface ToolbarItemProps extends LinkProps {
   badge?: number;
-  icon: string;
+  icon: IconName;
   label: string;
   status?: string;
 }
@@ -112,7 +112,17 @@ const NavigationTabbar: React.FC = () => {
     });
   }
 
-  const overflowActionsTop = [
+  interface OverflowActionProps {
+    external?: boolean;
+    icon?: IconName;
+    label?: string;
+    onClick?: (e: AnyMouseEvent) => void;
+    path?: string;
+    popout?: boolean;
+    render?: () => JSX.Element;
+  }
+
+  const overflowActionsTop: OverflowActionProps[] = [
     {
       render: () => (
         <div className={css.user}>
@@ -132,7 +142,7 @@ const NavigationTabbar: React.FC = () => {
     },
   ];
 
-  const overflowActionsBottom = [
+  const overflowActionsBottom: OverflowActionProps[] = [
     {
       icon: 'logs',
       label: 'Cluster Logs',

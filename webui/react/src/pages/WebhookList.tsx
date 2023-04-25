@@ -211,7 +211,7 @@ const WebhooksView: React.FC = () => {
       {webhooks.length === 0 && !isLoading ? (
         <Empty
           description="Call external services when experiments complete or throw errors."
-          icon="inbox"
+          icon="webhooks"
           title="No Webhooks Registered"
         />
       ) : settings ? (

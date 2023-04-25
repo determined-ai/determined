@@ -49,7 +49,7 @@ const LogViewerEntry: React.FC<Props> = ({
       <Tooltip content={`Level: ${capitalize(level)}`} placement="top">
         <div className={levelClasses.join(' ')} style={{ width: ICON_WIDTH }}>
           <div className={css.levelLabel}>&lt;[{level}]&gt;</div>
-          <Icon name={level} size="small" />
+          {level !== LogLevel.None && <Icon name={level} size="small" />}
         </div>
       </Tooltip>
       <div className={css.time} style={timeStyle}>

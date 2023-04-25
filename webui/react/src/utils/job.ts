@@ -1,3 +1,4 @@
+import { IconName } from 'components/kit/Icon';
 import { updateJobQueue } from 'services/api';
 import * as Api from 'services/api-ts-sdk';
 import { DetError, DetErrorOptions, ErrorType, wrapPublicMessage } from 'shared/utils/error';
@@ -13,10 +14,9 @@ export const unsupportedQPosSchedulers = new Set<Api.V1SchedulerType>([
   Api.V1SchedulerType.SLURM,
 ]);
 
-export const jobTypeIconName = (jobType: JobType): string => {
+export const jobTypeIconName = (jobType: JobType): IconName => {
   const type = jobTypeToCommandType(jobType);
-  if (type) return type.toString();
-  return 'experiment';
+  return type ?? 'experiment';
 };
 
 export const jobTypeLabel = (jobType: JobType): string => {

@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { throttle } from 'throttle-debounce';
 
 import { ConditionalWrapper } from 'components/ConditionalWrapper';
-import Icon, { IconSize } from 'components/kit/Icon';
+import Icon, { IconName, IconSize } from 'components/kit/Icon';
 import Tooltip from 'components/kit/Tooltip';
 import useResize from 'hooks/useResize';
 
@@ -19,7 +19,7 @@ interface Props {
 }
 
 export interface RadioGroupOption {
-  icon?: string;
+  icon?: IconName;
   iconSize?: IconSize;
   id: string;
   label?: string;

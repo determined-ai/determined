@@ -385,7 +385,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
         filters: Object.values(CommandType).map((value) => ({
           text: (
             <div className={css.typeFilter}>
-              <Icon name={value.toLocaleLowerCase()} />
+              <Icon name={value} />
               <span>{commandTypeToLabel[value]}</span>
             </div>
           ),

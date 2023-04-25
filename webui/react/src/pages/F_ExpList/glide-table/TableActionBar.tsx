@@ -6,7 +6,7 @@ import BatchActionConfirmModalComponent from 'components/BatchActionConfirmModal
 import Dropdown from 'components/Dropdown';
 import ExperimentMoveModalComponent from 'components/ExperimentMoveModal';
 import Button from 'components/kit/Button';
-import Icon from 'components/kit/Icon';
+import Icon, { IconName } from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
 import usePermissions from 'hooks/usePermissions';
 import {
@@ -57,7 +57,7 @@ const batchActions = [
 
 export type BatchAction = (typeof batchActions)[number];
 
-const actionIcons: Record<BatchAction, string> = {
+const actionIcons: Record<BatchAction, IconName> = {
   [ExperimentAction.Activate]: 'play',
   [ExperimentAction.Pause]: 'pause',
   [ExperimentAction.Cancel]: 'stop',
