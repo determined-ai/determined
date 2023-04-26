@@ -22,12 +22,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("-mct", "--max-concurrent-trials", type=int, default=16)
     parser.add_argument("-es", "--early-stopping", type=int)
     parser.add_argument("-sc", "--search-runner-config", type=str)
-    parser.add_argument("-msr", "--max-search-runner-restarts", type=int)
+    parser.add_argument("-msrr", "--max-search-runner-restarts", type=int)
+    # Searcher specific args (TODO: refactor)
     parser.add_argument("-trc", "--trials-per-random-config", type=int, default=3)
 
     # DS-specific args.
-    parser.add_argument("-ss", "--start_profile-step", type=int, default=3)
-    parser.add_argument("-es", "--end-profile-step", type=int, default=5)
+    parser.add_argument("-sps", "--start_profile-step", type=int, default=3)
+    parser.add_argument("-eps", "--end-profile-step", type=int, default=5)
     parser.add_argument("-ds", "--deepspeed-config", type=str, default="deepspeed_config")
     parser.add_argument(
         "-m",
