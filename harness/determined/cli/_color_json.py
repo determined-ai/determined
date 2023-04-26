@@ -18,7 +18,7 @@ def render_json(obj: Any, out: TextIO, indent: str = "  ") -> None:
 
     def do_render(obj: Any, depth: int = 0) -> None:
         if obj is None:
-            out.write(colored("null", "grey"))
+            out.write(colored("null", "white"))
             return
 
         if isinstance(obj, bool):
