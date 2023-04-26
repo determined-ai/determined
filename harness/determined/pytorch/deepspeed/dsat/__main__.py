@@ -20,6 +20,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("-mt", "--max-trials", type=int, default=50)
     parser.add_argument("-ms", "--max-slots", type=int)
     parser.add_argument("-mct", "--max-concurrent-trials", type=int, default=16)
+    parser.add_argument("-es", "--early-stopping", type=int)
     parser.add_argument("-sc", "--search-runner-config", type=str)
     parser.add_argument("-msr", "--max-search-runner-restarts", type=int)
     parser.add_argument("-trc", "--trials-per-random-config", type=int, default=3)
