@@ -114,8 +114,8 @@ test-shared:
 
 .PHONY: push
 push-shared: test-shared
-	# fail if the branch name is not master
-	git rev-parse --abbrev-ref HEAD | grep -qE "^master$\" || (echo "must be on master branch" ; false)
+	# fail if the branch name is not main
+	git rev-parse --abbrev-ref HEAD | grep -qE "^main$\" || (echo "must be on main branch" ; false)
 
 	# fail if there are uncommitted changes.
 	git diff --exit-code || (echo "uncommitted changes, please commit or stash" ; false)

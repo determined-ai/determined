@@ -1,3 +1,5 @@
+.. _pytorch-mnist-tutorial:
+
 ########################
  PyTorch MNIST Tutorial
 ########################

@@ -4,6 +4,10 @@ const (
 	trialEntrypointFile = "/run/determined/train/entrypoint.sh"
 	trialEntrypointMode = 0o744
 
+	// SingularityEntrypointWrapperScript is just the name of the singularity entrypoint wrapper.
+	SingularityEntrypointWrapperScript = "singularity-entrypoint-wrapper.sh"
+	singularityEntrypointWrapperMode   = 0o744
+
 	taskLoggingSetupScript = "task-logging-setup.sh"
 	taskLoggingSetupMode   = 0o744
 

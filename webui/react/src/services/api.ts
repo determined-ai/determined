@@ -292,11 +292,11 @@ export const getTrialDetails = generateDetApi<
   Type.TrialDetails
 >(Config.getTrialDetails);
 
-export const compareTrials = generateDetApi<
-  Service.CompareTrialsParams,
+export const timeSeries = generateDetApi<
+  Service.TimeSeriesParams,
   Api.V1CompareTrialsResponse,
   Type.TrialSummary[]
->(Config.compareTrials);
+>(Config.timeSeries);
 
 export const getTrialWorkloads = generateDetApi<
   Service.TrialWorkloadsParams,

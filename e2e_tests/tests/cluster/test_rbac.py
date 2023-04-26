@@ -51,7 +51,7 @@ def create_workspaces_with_users(
     rid_to_creds: Dict[int, authentication.Credentials] = {}
     with setup_workspaces(count=len(assignments_list)) as workspaces:
         for workspace, user_list in zip(workspaces, assignments_list):
-            for (rid, roles) in user_list:
+            for rid, roles in user_list:
                 if rid not in rid_to_creds:
                     rid_to_creds[rid] = create_test_user()
                 for role in roles:

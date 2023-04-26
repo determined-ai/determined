@@ -1,4 +1,3 @@
-import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Dropdown } from 'antd';
 import type { DropdownProps } from 'antd';
 import { MenuInfo } from 'rc-menu/lib/interface';
@@ -26,10 +25,12 @@ import Icon from 'shared/components/Icon/Icon';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { capitalize } from 'shared/utils/string';
 import { ExperimentAction as Action, ProjectExperiment } from 'types';
-import { modal, notification } from 'utils/dialogApi';
+import { notification } from 'utils/dialogApi';
 import handleError from 'utils/error';
 import { getActionsForExperiment } from 'utils/experiment';
 import { openCommandResponse } from 'utils/wait';
+
+import useConfirm from './kit/useConfirm';
 
 interface Props {
   children?: React.ReactNode;
@@ -69,6 +70,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
 }: Props) => {
   const id = experiment.id;
   const ExperimentMoveModal = useModal(ExperimentMoveModalComponent);
+  const confirm = useConfirm();
   const {
     contextHolder: modalHyperparameterSearchContextHolder,
     modalOpen: openModalHyperparameterSearch,
@@ -126,14 +128,11 @@ const ExperimentActionDropdown: React.FC<Props> = ({
             break;
           }
           case Action.Kill:
-            modal.confirm({
-              content: `
-              Are you sure you want to kill
-              experiment ${id}?
-            `,
-              icon: <ExclamationCircleOutlined />,
+            confirm({
+              content: `Are you sure you want to kill experiment ${id}?`,
+              danger: true,
               okText: 'Kill',
-              onOk: async () => {
+              onConfirm: async () => {
                 await killExperiment({ experimentId: id });
                 await onComplete?.(action);
               },
@@ -149,14 +148,11 @@ const ExperimentActionDropdown: React.FC<Props> = ({
             await onComplete?.(action);
             break;
           case Action.Delete:
-            modal.confirm({
-              content: `
-            Are you sure you want to delete
-            experiment ${id}?
-          `,
-              icon: <ExclamationCircleOutlined />,
+            confirm({
+              content: `Are you sure you want to delete experiment ${id}?`,
+              danger: true,
               okText: 'Delete',
-              onOk: async () => {
+              onConfirm: async () => {
                 await deleteExperiment({ experimentId: id });
                 await onComplete?.(action);
               },
@@ -184,6 +180,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
       // TODO show loading indicator when we have a button component that supports it.
     },
     [
+      confirm,
       experiment.projectId,
       ExperimentMoveModal,
       experiment.workspaceId,

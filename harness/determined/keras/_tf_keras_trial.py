@@ -26,10 +26,18 @@ from determined.tensorboard.metric_writers import tensorflow
 # In TF 2.6, we have to import some keras internals directly from `keras`.
 if version.parse(tf.__version__) >= version.parse("2.6.0"):
     from keras.callbacks import CallbackList, make_logs, set_callback_parameters
-    from keras.saving.hdf5_format import (
-        load_optimizer_weights_from_hdf5_group,
-        save_optimizer_weights_to_hdf5_group,
-    )
+
+    # TODO MLG-444 Migrate from legacy Keras hdf5 saving methods
+    if version.parse(tf.__version__) >= version.parse("2.11.0"):
+        from keras.saving.legacy.hdf5_format import (
+            load_optimizer_weights_from_hdf5_group,
+            save_optimizer_weights_to_hdf5_group,
+        )
+    else:
+        from keras.saving.hdf5_format import (
+            load_optimizer_weights_from_hdf5_group,
+            save_optimizer_weights_to_hdf5_group,
+        )
     from keras.utils.mode_keys import ModeKeys
 else:
     from tensorflow.python.keras.callbacks import CallbackList, make_logs, set_callback_parameters

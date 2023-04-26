@@ -52,7 +52,6 @@ def train(args, model, device, train_loader, optimizer, epoch_idx, core_context)
         loss.backward()
         optimizer.step()
         if (batch_idx + 1) % args.log_interval == 0:
-
             print(
                 "Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}".format(
                     epoch_idx,
@@ -213,7 +212,6 @@ def main(core_context):
 
     # NEW: Resume training from epochs_completed. This is useful in the case of pausing and resuming an experiment.
     for epoch_idx in range(epochs_completed, args.epochs):
-
         train(args, model, device, train_loader, optimizer, epoch_idx, core_context)
         epochs_completed = epoch_idx + 1
         steps_completed = epochs_completed * len(train_loader)

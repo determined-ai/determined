@@ -40,7 +40,7 @@ export interface TrialSummaryParams extends TrialSummaryBaseParams {
   trialId: number;
 }
 
-export interface CompareTrialsParams extends TrialSummaryBaseParams {
+export interface TimeSeriesParams extends TrialSummaryBaseParams {
   trialIds: number[];
 }
 

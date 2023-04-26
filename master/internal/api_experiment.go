@@ -52,6 +52,7 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
 
 	structpb "github.com/golang/protobuf/ptypes/struct"
+	structpbmap "google.golang.org/protobuf/types/known/structpb"
 )
 
 const (
@@ -1687,14 +1688,15 @@ func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricTyp
 	}
 	switch metricType {
 	case apiv1.MetricType_METRIC_TYPE_TRAINING:
-		metricID = "training"
+		metricID = "training" //nolint:goconst
 	case apiv1.MetricType_METRIC_TYPE_VALIDATION:
-		metricID = "validation"
+		metricID = "validation" //nolint:goconst
 	default:
 		panic("Invalid metric type")
 	}
 	metricMeasurements, err = trials.MetricsTimeSeries(trialID, startTime,
-		metricName, startBatches, endBatches, xAxisLabelMetrics, maxDatapoints,
+		[]string{metricName},
+		startBatches, endBatches, xAxisLabelMetrics, maxDatapoints,
 		"batches", nil, metricID)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error fetching time series of metrics")
@@ -1706,9 +1708,13 @@ func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricTyp
 
 	if !seenBefore {
 		for _, in := range metricMeasurements {
+			valueMap, err := structpbmap.NewStruct(in.Values)
+			if err != nil {
+				return nil, errors.Wrapf(err, "failed to parse metric values")
+			}
 			out := apiv1.DataPoint{
 				Batches: int32(in.Batches),
-				Value:   in.Value,
+				Values:  valueMap,
 				Time:    timestamppb.New(in.Time),
 				Epoch:   in.Epoch,
 			}

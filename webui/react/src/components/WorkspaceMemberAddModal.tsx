@@ -28,7 +28,7 @@ interface FormInputs {
 interface SearchProp {
   label: {
     props: {
-      groupName?: string;
+      name?: string;
       user?: User;
     };
   };
@@ -47,7 +47,7 @@ const WorkspaceMemberAddModalComponent: React.FC<Props> = ({
     if (!option) return false;
     const label = option.label;
     return (
-      label.props.groupName?.includes(search) ||
+      label.props.name?.includes(search) ||
       label.props.user?.username?.includes(search) ||
       label.props.user?.displayName?.includes(search) ||
       false

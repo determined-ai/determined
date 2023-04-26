@@ -1,4 +1,3 @@
-import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Dropdown } from 'antd';
 import type { DropDownProps, MenuProps } from 'antd';
 import { MenuInfo } from 'rc-menu/lib/interface';
@@ -13,10 +12,10 @@ import Icon from 'shared/components/Icon/Icon';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { capitalize } from 'shared/utils/string';
 import { ExperimentAction as Action, AnyTask, CommandTask, DetailedUser } from 'types';
-import { modal } from 'utils/dialogApi';
 import handleError from 'utils/error';
 import { isTaskKillable } from 'utils/task';
 
+import useConfirm from './kit/useConfirm';
 import Link from './Link';
 
 interface Props {
@@ -41,6 +40,8 @@ const TaskActionDropdown: React.FC<Props> = ({
     canModifyWorkspaceNSC({ workspace: { id: task.workspaceId } }),
   );
 
+  const confirm = useConfirm();
+
   const handleMenuClick = (params: MenuInfo): void => {
     params.domEvent.stopPropagation();
     try {
@@ -49,14 +50,11 @@ const TaskActionDropdown: React.FC<Props> = ({
         action // Cases should match menu items.
       ) {
         case Action.Kill:
-          modal.confirm({
-            content: `
-              Are you sure you want to kill
-              this task?
-            `,
-            icon: <ExclamationCircleOutlined />,
+          confirm({
+            content: 'Are you sure you want to kill this task?',
+            danger: true,
             okText: 'Kill',
-            onOk: async () => {
+            onConfirm: async () => {
               await killTask(task as CommandTask);
               onComplete?.(action);
             },

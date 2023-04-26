@@ -17,7 +17,7 @@ from tensorflow.keras.layers import Dense, Input
 from tensorflow.keras.losses import categorical_crossentropy
 from tensorflow.keras.metrics import categorical_accuracy
 from tensorflow.keras.models import Model
-from tensorflow.keras.optimizers import RMSprop
+from tensorflow.keras.optimizers.legacy import RMSprop
 from tensorflow.keras.utils import to_categorical
 
 from determined import keras

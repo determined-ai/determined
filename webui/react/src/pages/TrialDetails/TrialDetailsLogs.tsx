@@ -1,4 +1,3 @@
-import { ExclamationCircleOutlined } from '@ant-design/icons';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import LogViewer, {
@@ -11,6 +10,7 @@ import {
   Settings,
   settingsConfigForTrial,
 } from 'components/kit/LogViewer/LogViewerSelect.settings';
+import useConfirm from 'components/kit/useConfirm';
 import { useSettings } from 'hooks/useSettings';
 import { serverAddress } from 'routes/utils';
 import { detApi } from 'services/apiConfig';
@@ -21,7 +21,6 @@ import useUI from 'shared/contexts/stores/UI';
 import { ErrorType } from 'shared/utils/error';
 import { ExperimentBase, TrialDetails } from 'types';
 import { downloadTrialLogs } from 'utils/browser';
-import { modal as modalApi } from 'utils/dialogApi';
 import handleError from 'utils/error';
 
 import css from './TrialDetailsLogs.module.scss';
@@ -36,7 +35,7 @@ type OrderBy = 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC';
 const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
   const { ui } = useUI();
   const [filterOptions, setFilterOptions] = useState<Filters>({});
-  const [downloadModal, setDownloadModal] = useState<{ destroy: () => void }>();
+  const confirm = useConfirm();
 
   const trialSettingsConfig = useMemo(() => settingsConfigForTrial(trial?.id || -1), [trial?.id]);
   const { resetSettings, settings, updateSettings } = useSettings<Settings>(trialSettingsConfig);
@@ -68,11 +67,6 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
   const handleFilterReset = useCallback(() => resetSettings(), [resetSettings]);
 
   const handleDownloadConfirm = useCallback(async () => {
-    if (downloadModal) {
-      downloadModal.destroy();
-      setDownloadModal(undefined);
-    }
-
     if (!trial?.id) return;
 
     try {
@@ -87,11 +81,12 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
         type: ErrorType.Ui,
       });
     }
-  }, [downloadModal, trial?.id]);
+  }, [trial?.id]);
 
   const handleDownloadLogs = useCallback(() => {
     if (!trial?.id) return;
-    const modal = modalApi.confirm({
+
+    confirm({
       content: (
         <div>
           We recommend using the Determined CLI to download trial logs:
@@ -101,14 +96,11 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
           </code>
         </div>
       ),
-      icon: <ExclamationCircleOutlined />,
       okText: 'Proceed to Download',
-      onOk: handleDownloadConfirm,
+      onConfirm: handleDownloadConfirm,
       title: `Confirm Download for Trial ${trial.id} Logs`,
-      width: 640,
     });
-    setDownloadModal(modal);
-  }, [experiment.id, handleDownloadConfirm, trial?.id]);
+  }, [confirm, experiment.id, handleDownloadConfirm, trial?.id]);
 
   const handleFetch = useCallback(
     (config: FetchConfig, type: FetchType) => {

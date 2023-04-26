@@ -10,7 +10,7 @@ import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
 import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin';
 import { trackAxis } from 'components/UPlot/UPlotChart/trackAxis';
 import css from 'pages/TrialDetails/TrialChart.module.scss';
-import { compareTrials } from 'services/api';
+import { timeSeries } from 'services/api';
 import Spinner from 'shared/components/Spinner';
 import usePolling from 'shared/hooks/usePolling';
 import { glasbeyColor } from 'shared/utils/color';
@@ -45,7 +45,7 @@ const TrialChart: React.FC<Props> = ({
 
   const fetchTrialSummary = useCallback(async () => {
     if (trialId) {
-      const summ = await compareTrials({
+      const summ = await timeSeries({
         maxDatapoints: screen.width > 1600 ? 1500 : 1000,
         metricNames: metricNames,
         scale: scale,
@@ -75,18 +75,20 @@ const TrialChart: React.FC<Props> = ({
     metrics.forEach((metric, index) => {
       yValues[index] = {};
 
-      const mWrapper = trialSumm.find(
-        (mContainer) => mContainer.name === metric.name && mContainer.type === metric.type,
-      );
+      const mWrapper = trialSumm.find((mContainer) => mContainer.type === metric.type);
       if (!mWrapper?.data) {
         return;
       }
 
-      mWrapper.data.forEach((pt) => {
-        if (!xValues.includes(pt.batches)) {
-          xValues.push(pt.batches);
+      mWrapper.data.forEach((avgMetrics) => {
+        if (avgMetrics.values[metric.name]) {
+          if (!xValues.includes(avgMetrics.batches)) {
+            xValues.push(avgMetrics.batches);
+          }
+          yValues[index][avgMetrics.batches] = Number.isFinite(avgMetrics.values[metric.name])
+            ? avgMetrics.values[metric.name]
+            : null;
         }
-        yValues[index][pt.batches] = Number.isFinite(pt.value) ? pt.value : null;
       });
     });
 

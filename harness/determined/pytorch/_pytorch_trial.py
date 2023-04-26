@@ -193,7 +193,6 @@ class _PyTorchTrialController:
         det_profiler: Optional[profiler.ProfilerAgent],
         global_batch_size: Optional[int],
     ) -> None:
-
         if not isinstance(trial_inst, PyTorchTrial):
             raise TypeError("PyTorchTrialController requires a PyTorchTrial.")
         self.trial = trial_inst
@@ -1020,6 +1019,10 @@ class _PyTorchTrialController:
             det.pytorch._log_tb_metrics(
                 self.context.get_tensorboard_writer(), "val", self.state.batches_trained, metrics
             )
+
+            # Get best validation before reporting metrics.
+            best_validation_before = self.core_context.train.get_experiment_best_validation()
+
             self.core_context.train.report_validation_metrics(self.state.batches_trained, metrics)
 
         searcher_metric = None
@@ -1052,9 +1055,6 @@ class _PyTorchTrialController:
                     ), "checkpoint policy 'best' but searcher metric name not defined"
                     assert searcher_metric is not None
 
-                    best_validation_before = (
-                        self.core_context.train.get_experiment_best_validation()
-                    )
                     if self._is_best_validation(now=searcher_metric, before=best_validation_before):
                         should_checkpoint = True
 

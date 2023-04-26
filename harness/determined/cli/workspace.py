@@ -3,6 +3,7 @@ from argparse import ArgumentError, Namespace
 from time import sleep
 from typing import Any, Dict, List, Optional, Sequence
 
+import determined.cli.render
 from determined import cli
 from determined.cli.user import AGENT_USER_GROUP_ARGS
 from determined.common import api, util
@@ -96,8 +97,8 @@ def workspace_by_name(sess: api.Session, name: str) -> bindings.v1Workspace:
 @authentication.required
 def list_workspaces(args: Namespace) -> None:
     sess = cli.setup_session(args)
-    orderArg = bindings.v1OrderBy[f"ORDER_BY_{args.order_by.upper()}"]
-    sortArg = bindings.v1GetWorkspacesRequestSortBy[f"SORT_BY_{args.sort_by.upper()}"]
+    orderArg = bindings.v1OrderBy[args.order_by.upper()]
+    sortArg = bindings.v1GetWorkspacesRequestSortBy[args.sort_by.upper()]
     internal_offset = args.offset or 0
     all_workspaces: List[bindings.v1Workspace] = []
     while True:
@@ -114,7 +115,7 @@ def list_workspaces(args: Namespace) -> None:
             break
 
     if args.json:
-        print(json.dumps([w.to_json() for w in all_workspaces], indent=2))
+        determined.cli.render.print_json([w.to_json() for w in all_workspaces])
     else:
         render_workspaces(all_workspaces, from_list_api=True)
 
@@ -123,8 +124,8 @@ def list_workspaces(args: Namespace) -> None:
 def list_workspace_projects(args: Namespace) -> None:
     sess = cli.setup_session(args)
     w = workspace_by_name(sess, args.workspace_name)
-    orderArg = bindings.v1OrderBy[f"ORDER_BY_{args.order_by.upper()}"]
-    sortArg = bindings.v1GetWorkspaceProjectsRequestSortBy[f"SORT_BY_{args.sort_by.upper()}"]
+    orderArg = bindings.v1OrderBy[args.order_by.upper()]
+    sortArg = bindings.v1GetWorkspaceProjectsRequestSortBy[args.sort_by.upper()]
     internal_offset = args.offset if ("offset" in args and args.offset) else 0
     limit = args.limit if "limit" in args else 200
     all_projects: List[bindings.v1Project] = []
@@ -144,7 +145,7 @@ def list_workspace_projects(args: Namespace) -> None:
             break
 
     if args.json:
-        print(json.dumps([p.to_json() for p in all_projects], indent=2))
+        determined.cli.render.print_json([p.to_json() for p in all_projects])
     else:
         values = [
             [
@@ -196,7 +197,7 @@ def create_workspace(args: Namespace) -> None:
     w = bindings.post_PostWorkspace(cli.setup_session(args), body=content).workspace
 
     if args.json:
-        print(json.dumps(w.to_json(), indent=2))
+        determined.cli.render.print_json(w.to_json())
     else:
         render_workspaces([w])
 
@@ -206,7 +207,7 @@ def describe_workspace(args: Namespace) -> None:
     sess = cli.setup_session(args)
     w = workspace_by_name(sess, args.workspace_name)
     if args.json:
-        print(json.dumps(w.to_json(), indent=2))
+        determined.cli.render.print_json(w.to_json())
     else:
         render_workspaces([w])
         print("\nAssociated Projects")
@@ -275,7 +276,7 @@ def edit_workspace(args: Namespace) -> None:
     w = bindings.patch_PatchWorkspace(sess, body=updated, id=current.id).workspace
 
     if args.json:
-        print(json.dumps(w.to_json(), indent=2))
+        determined.cli.render.print_json(w.to_json())
     else:
         render_workspaces([w])
 

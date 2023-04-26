@@ -57,7 +57,7 @@ def rmtree_nfs_safe(
             # This should not be possible, since rmtree empties directories before rmdir'ing them.
             logging.debug(f"rmtree() failed ({e}), is this NFS?  Retrying (tries={tries})...")
             # All 5 tries should take on the order of half a second.
-            time.sleep(2 ** tries / 100)
+            time.sleep(2**tries / 100)
 
 
 @util.preserve_random_state
@@ -72,7 +72,7 @@ def download_gcs_blob_with_backoff(blob: Any, n_retries: int = 32, max_backoff: 
         try:
             return blob.download_as_string()
         except Exception:
-            time.sleep(min(2 ** n + random.random(), max_backoff))
+            time.sleep(min(2**n + random.random(), max_backoff))
     raise Exception("Max retries exceeded for downloading blob.")
 
 

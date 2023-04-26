@@ -237,9 +237,9 @@ const LearningCurve: React.FC<Props> = ({
 
           trial.data.forEach((datapoint) => {
             batchesMap[datapoint.batches] = datapoint.batches;
-            metricsMap[id][datapoint.batches] = datapoint.value;
-            v2MetricsMap[id].push([datapoint.batches, datapoint.value]);
-            trialHpMap[id].metric = datapoint.value;
+            metricsMap[id][datapoint.batches] = datapoint.values[selectedMetric.name];
+            v2MetricsMap[id].push([datapoint.batches, datapoint.values[selectedMetric.name]]);
+            trialHpMap[id].metric = datapoint.values[selectedMetric.name];
           });
         });
 

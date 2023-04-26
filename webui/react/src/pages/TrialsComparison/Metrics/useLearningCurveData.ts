@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 
 // eslint-disable-next-line import/order
-import { compareTrials } from 'services/api';
+import { timeSeries } from 'services/api';
 type ChartData = (number | null)[][];
 type MetricKey = string;
 
@@ -50,7 +50,7 @@ const useLearningCurve = (
     };
 
     // calling the API
-    const trials = await compareTrials({
+    const trials = await timeSeries({
       maxDatapoints: 1000,
       metricNames: metrics,
       trialIds: trialIds,
@@ -61,17 +61,22 @@ const useLearningCurve = (
     trials.forEach((trial) => {
       const trialRowIndex = trialIds.indexOf(trial.id);
       if (trialRowIndex === -1) return;
-      trial.metrics.forEach((metric) => {
-        const metricKey = metricToKey(metric);
-        const metricInfo = newLearningCurveData.infoForMetrics[metricKey];
-        if (!metricInfo) return;
-        metric.data.forEach(({ batches, value }) => {
-          const batchColumnIndex = batches - 1;
-          if (batchColumnIndex >= 0 && batches <= maxBatch) {
-            metricInfo.nonEmptyTrials.add(trial.id);
-            const chartData = metricInfo.chartData;
-            chartData[trialRowIndex][batchColumnIndex] = value;
-          }
+      trial.metrics.forEach((metricContainer) => {
+        metricContainer.data.forEach(({ batches, values }) => {
+          metrics.forEach((metric) => {
+            if (metric) {
+              const metricKey = metricToKey({ name: metric.name, type: metric.type });
+              const metricInfo = newLearningCurveData.infoForMetrics[metricKey];
+              if (!metricInfo) return;
+
+              const batchColumnIndex = batches - 1;
+              if (batchColumnIndex >= 0 && batches <= maxBatch) {
+                metricInfo.nonEmptyTrials.add(trial.id);
+                const chartData = metricInfo.chartData;
+                chartData[trialRowIndex][batchColumnIndex] = values[metric.name];
+              }
+            }
+          });
         });
       });
     });

@@ -5,7 +5,7 @@ from tensorflow.keras.layers import Dense
 from tensorflow.keras.losses import binary_crossentropy
 from tensorflow.keras.metrics import categorical_accuracy
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.optimizers import SGD, Adam
+from tensorflow.keras.optimizers.legacy import SGD, Adam  # TODO MLG-443
 
 from determined import keras
 from tests.experiment.utils import make_xor_data_sequences  # noqa: I202, I100

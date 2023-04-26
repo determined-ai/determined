@@ -393,7 +393,7 @@ SELECT t.id FROM (
 // MetricMeasurements represents a metric measured by all possible
 // independent variables.
 type MetricMeasurements struct {
-	Value   float64
+	Values  map[string]interface{}
 	Batches uint
 	Time    time.Time
 	Epoch   *int32 `json:"epoch,omitempty"`

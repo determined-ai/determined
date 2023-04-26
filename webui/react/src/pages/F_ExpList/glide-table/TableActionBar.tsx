@@ -1,8 +1,8 @@
-import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Menu, Space } from 'antd';
 import { ItemType } from 'rc-menu/lib/interface';
-import React, { Dispatch, SetStateAction, useCallback, useMemo } from 'react';
+import React, { Dispatch, SetStateAction, useCallback, useMemo, useState } from 'react';
 
+import BatchActionConfirmModalComponent from 'components/BatchActionConfirmModal';
 import Dropdown from 'components/Dropdown';
 import ExperimentMoveModalComponent from 'components/ExperimentMoveModal';
 import Button from 'components/kit/Button';
@@ -30,7 +30,7 @@ import {
   ProjectExperiment,
   RunState,
 } from 'types';
-import { modal, notification } from 'utils/dialogApi';
+import { notification } from 'utils/dialogApi';
 import handleError from 'utils/error';
 import {
   canActionExperiment,
@@ -90,6 +90,8 @@ const TableActionBar: React.FC<Props> = ({
   total,
 }) => {
   const permissions = usePermissions();
+  const [batchAction, setBatchAction] = useState<BatchAction>();
+  const BatchActionConfirmModal = useModal(BatchActionConfirmModalComponent);
   const ExperimentMoveModal = useModal(ExperimentMoveModalComponent);
 
   const experimentMap = useMemo(() => {
@@ -317,24 +319,6 @@ const TableActionBar: React.FC<Props> = ({
     [sendBatchActions, closeNotification, onAction, handleUpdateExperimentList],
   );
 
-  const showConfirmation = useCallback(
-    (action: BatchAction) => {
-      modal.confirm({
-        content: `
-        Are you sure you want to ${action.toLocaleLowerCase()}
-        all eligible ${
-          selectAll ? 'experiments matching the current filters' : 'selected experiments'
-        }?
-      `,
-        icon: <ExclamationCircleOutlined />,
-        okText: /cancel/i.test(action) ? 'Confirm' : action,
-        onOk: () => submitBatchAction(action),
-        title: 'Confirm Batch Action',
-      });
-    },
-    [selectAll, submitBatchAction],
-  );
-
   const handleBatchAction = useCallback(
     (action: string) => {
       if (action === ExperimentAction.OpenTensorBoard) {
@@ -342,10 +326,11 @@ const TableActionBar: React.FC<Props> = ({
       } else if (action === ExperimentAction.Move) {
         sendBatchActions(action);
       } else {
-        showConfirmation(action as BatchAction);
+        setBatchAction(action as BatchAction);
+        BatchActionConfirmModal.open();
       }
     },
-    [submitBatchAction, sendBatchActions, showConfirmation],
+    [BatchActionConfirmModal, submitBatchAction, sendBatchActions],
   );
 
   const editMenuItems: ItemType[] = useMemo(() => {
@@ -387,6 +372,13 @@ const TableActionBar: React.FC<Props> = ({
           </Dropdown>
         )}
       </Space>
+      {batchAction && (
+        <BatchActionConfirmModal.Component
+          batchAction={batchAction}
+          selectAll={selectAll}
+          onConfirm={() => submitBatchAction(batchAction)}
+        />
+      )}
       <ExperimentMoveModal.Component
         experimentIds={selectedExperimentIds.filter(
           (id) =>

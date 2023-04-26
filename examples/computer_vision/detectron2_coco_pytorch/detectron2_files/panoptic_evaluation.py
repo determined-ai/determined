@@ -95,7 +95,6 @@ class COCOPanopticEvaluator(DatasetEvaluator):
         self._predictions = values[self.evaluator_name]
 
     def evaluate(self):
-
         # PanopticApi requires local files
         gt_json = PathManager.get_local_path(self._metadata.panoptic_json)
         gt_folder = PathManager.get_local_path(self._metadata.panoptic_root)

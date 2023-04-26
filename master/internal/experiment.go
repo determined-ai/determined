@@ -145,7 +145,7 @@ func newExperiment(
 	if err != nil {
 		return nil, launchWarnings, fmt.Errorf("getting resource availability: %w", err)
 	}
-	if m.config.LaunchError && len(launchWarnings) > 0 {
+	if m.config.ResourceManager.AgentRM != nil && m.config.LaunchError && len(launchWarnings) > 0 {
 		return nil, nil, errors.New("slots requested exceeds cluster capacity")
 	}
 
@@ -454,7 +454,12 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 					ops = append(ops, *op)
 				}
 			case *experimentv1.SearcherOperation_ShutDown:
-				ops = append(ops, searcher.NewShutdown())
+				op, err := searcher.ShutdownFromProto(concreteOperation)
+				if err != nil {
+					ctx.Log().Error(err)
+				} else {
+					ops = append(ops, *op)
+				}
 			case *experimentv1.SearcherOperation_TrialOperation:
 				switch sub := concreteOperation.TrialOperation.GetUnion().(type) {
 				case *experimentv1.TrialOperation_ValidateAfter:
