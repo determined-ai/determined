@@ -26,12 +26,6 @@ class SharedFSTensorboardManager(base.TensorboardManager):
         # specifically should just create the storage path themselves; this will not interfere.
         old_umask = os.umask(0)
         self.shared_fs_base.mkdir(parents=True, exist_ok=True, mode=0o777)
-
-        # Create the directories contained in the "base_path" to suppress the
-        # "directory does not exist" warnings for worker nodes from
-        # "list_tb_files()" in "base.py".
-        os.makedirs(self.base_path, exist_ok=True)
-
         # Restore the original umask.
         os.umask(old_umask)
 
