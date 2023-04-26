@@ -112,7 +112,10 @@ const MultiSortRow: React.FC<MultiSortRowProps> = ({ sort, columns, onChange, on
 const MultiSort: React.FC<MultiSortProps> = ({ sorts, columns, onChange }) => {
   const makeOnRowChange = (idx: number) => (sort: Sort) => {
     const newSorts = [...sorts];
-    newSorts[idx] = sort;
+    newSorts[idx] = {
+      ...sort,
+      direction: sort.direction || 'asc',
+    };
     onChange(newSorts);
   };
   const makeOnRowRemove = (idx: number) => () => {
