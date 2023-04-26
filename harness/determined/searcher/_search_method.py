@@ -146,11 +146,15 @@ class Shutdown(Operation):
     Operation shutting the experiment down
     """
 
-    def __init__(self) -> None:
+    def __init__(self, cancel: bool = False, failure: bool = False) -> None:
         super().__init__()
+        self.cancel = cancel
+        self.failure = failure
 
     def _to_searcher_operation(self) -> bindings.v1SearcherOperation:
-        return bindings.v1SearcherOperation(shutDown=bindings.v1ShutDownOperation())
+        return bindings.v1SearcherOperation(
+            shutDown=bindings.v1ShutDownOperation(cancel=self.cancel, failure=self.failure)
+        )
 
 
 class Create(Operation):

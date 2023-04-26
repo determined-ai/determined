@@ -8500,11 +8500,17 @@ export interface V1Shell {
  */
 export interface V1ShutDownOperation {
     /**
-     * Cannot have an empty message type.
-     * @type {number}
+     * Defines whether the Searcher was cancelled
+     * @type {boolean}
      * @memberof V1ShutDownOperation
      */
-    placeholder?: number;
+    cancel?: boolean;
+    /**
+     * Defines whether the Searcher failed
+     * @type {boolean}
+     * @memberof V1ShutDownOperation
+     */
+    failure?: boolean;
 }
 /**
  * Slot wraps a single device on the agent.
