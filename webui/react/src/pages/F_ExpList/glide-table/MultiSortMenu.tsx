@@ -39,14 +39,9 @@ interface ColumnOptionsProps {
 
 const DirectionOptions: React.FC<DirectionOptionsProps> = ({ onChange, type, value }) => {
   const [ascText, descText] = {
-    [V1ColumnType.NUMBER]: ['1 - 9', '9 - 1'],
+    [V1ColumnType.NUMBER]: ['0 - 9', '9 - 0'],
     [V1ColumnType.TEXT]: ['A - Z', 'Z - A'],
-    // TODO: Choose a less cute end date -- current one's specificity might give
-    // the impression that we're looking at values
-    [V1ColumnType.DATE]: [
-      '1970/01/01 00:00 - 2038/19/01 03:14',
-      '2038/19/01 03:14 - 1970/01/01 00:00',
-    ],
+    [V1ColumnType.DATE]: ['Oldest - Newest', 'Newest - Oldest'],
     [V1ColumnType.UNSPECIFIED]: ['Ascending', 'Descending'],
   }[type];
   return (
