@@ -65,8 +65,8 @@ const EditableMetadata: React.FC<Props> = ({ metadata = {}, editing, updateMetad
                 {fields.map((field, idx) => (
                   <EditableRow
                     jsonValue={
-                      typeof metadataList[idx].value === 'object'
-                        ? JSON.stringify(metadataList[idx].value)
+                      typeof metadataList[idx]?.value === 'object'
+                        ? JSON.stringify(metadataList[idx]?.value || '')
                         : undefined
                     }
                     key={field.key}
