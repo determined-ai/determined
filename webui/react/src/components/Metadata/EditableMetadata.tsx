@@ -20,8 +20,9 @@ const EditableMetadata: React.FC<Props> = ({ metadata = {}, editing, updateMetad
   const [metadataRows, metadataList] = useMemo(() => {
     const { rows, list } = Object.entries(metadata).reduce(
       (acc, [key, value]) => {
-        acc.rows.push({ content: value, label: key });
-        acc.list.push({ key, value });
+        const stringedValue = typeof value === 'object' ? JSON.stringify(value) : value;
+        acc.rows.push({ content: stringedValue, label: key });
+        acc.list.push({ key, value: stringedValue });
         return acc;
       },
       { list: [] as { key: string; value: string }[], rows: [] as InfoRow[] },
