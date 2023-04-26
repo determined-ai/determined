@@ -15,7 +15,7 @@ SEPARATORS = "yellow"
 STRING = "green"
 
 
-def render_json(obj: Any, out: TextIO, indent: str = "  ") -> None:
+def render_json(obj: Any, out: TextIO, indent: str = "  ", sort_keys: bool = False) -> None:
     """
     Render JSON object to output stream with color.
     """
@@ -63,7 +63,9 @@ def render_json(obj: Any, out: TextIO, indent: str = "  ") -> None:
 
             out.write(colored("{", SEPARATORS))
             first = True
-            for key, value in obj.items():
+            keys = sorted(obj.keys()) if sort_keys else obj.keys()
+            for key in keys:
+                value = obj[key]
                 if not first:
                     out.write(colored(",", SEPARATORS))
                 first = False
