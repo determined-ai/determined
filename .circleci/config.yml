@@ -504,11 +504,9 @@ commands:
           name: Run det-deploy tests
           working_directory: ~/project/e2e_tests
           command: |
-            for i in $(seq 1 100); do \
-              pytest -vv -s \
-              -m <<parameters.mark>> \
-              --det-version="<<parameters.det-version>>" \
-            && s=0 || (s=$? && break); done; (exit $s)
+            pytest -vv -s \
+            -m <<parameters.mark>> \
+            --det-version="<<parameters.det-version>>"
 
   deploy-aws-cluster:
     parameters:
