@@ -169,7 +169,11 @@ class DSATTrialTracker:
         self.best_trial = None
         self.num_trials_since_best_result = 0
         self.successful_stages = set()
-        self._all_trials_dict = collections.OrderedDict()
+        self._all_trials_dict = {}
+        # Should be using an actual queue here, but neither the `queue` nor the `multiprocessing`
+        # `Queue` objects are pickleable with the current code.
+        self._trial_queue = []
+        self._queue_idx = 0
 
         self._mem_per_gpu_per_stage = None
         self._viable_zero_stages = None
@@ -182,7 +186,7 @@ class DSATTrialTracker:
         return self._all_trials_dict[request_id]
 
     def __iter__(self) -> Iterator[DSATTrial]:
-        return iter(self._all_trials_dict.values())
+        return iter(self._all_trials_dict.items())
 
     def create_trial(
         self,
@@ -235,8 +239,22 @@ class DSATTrialTracker:
         return model_profile_info_trial
 
     def register_trial(self, trial: DSATTrial) -> None:
-        logging.info(f"=============Total Trials Created: {len(self)}=============")
         self._all_trials_dict[trial.request_id] = trial
+        # Only add regular DSATTrial instances to the queue.
+        if not isinstance(trial, DSATModelProfileInfoTrial):
+            self._trial_queue.append(trial)
+
+    def get_next_trial(self) -> DSATTrial:
+        try:
+            next_trial = self._trial_queue[self._queue_idx]
+        except IndexError:
+            print(self._trial_queue, self._queue_idx)
+        self._queue_idx += 1
+        return next_trial
+
+    @property
+    def num_unscheduled_trials(self) -> int:
+        return len(self._trial_queue) - self._queue_idx
 
     def enforce_consistent_batch_config(self, hparams: Dict[str, Any]) -> None:
         """Enforces a consistent batch size configuration by altering `hparams` in-place."""
@@ -257,7 +275,7 @@ class DSATTrialTracker:
         """
         # TODO: Delete if not used anywhere.
         root_trial_set = set()
-        for trial in self:
+        for _, trial in self:
             if trial.parent is None:
                 if (
                     isinstance(trial, DSATModelProfileInfoTrial)
@@ -298,7 +316,7 @@ class DSATTrialTracker:
     def best_autotuning_metric_val(self) -> bool:
         autotuning_metric_vals = [
             t.metric[self.searcher_metric_name]
-            for t in self
+            for _, t in self
             if self.searcher_metric_name in t.metric
         ]
         return max(autotuning_metric_vals) if autotuning_metric_vals else None
@@ -313,7 +331,7 @@ class DSATTrialTracker:
 
     @property
     def all_trials_closed_or_errored(self) -> bool:
-        return all(t.error or t.metric for t in self)
+        return all(t.error or t.metric for _, t in self)
 
     @property
     def should_shutdown(self) -> bool:
@@ -469,6 +487,131 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
         """
         pass
 
+    def initial_operations(
+        self, searcher_state: searcher.SearcherState
+    ) -> List[searcher.Operation]:
+        """
+        Submits the model info profiling run in order to collect model and resources info to
+        inform the search.
+        """
+        # TODO: Remove print tests.
+        logging.info("Initial operations")
+        self._searcher_state_asserts(searcher_state)
+
+        model_profile_info_trial = self.trial_tracker.create_model_profile_info_trial()
+        self.trial_tracker.register_trial(model_profile_info_trial)
+        ops = self.get_ops_for_trial(model_profile_info_trial)
+        return ops
+
+    def on_trial_created(
+        self, searcher_state: searcher.SearcherState, request_id: uuid.UUID
+    ) -> List[searcher.Operation]:
+        # TODO: Remove print tests.
+        logging.info("on trial created")
+        self._searcher_state_asserts(searcher_state)
+
+        return []
+
+    def on_validation_completed(
+        self,
+        searcher_state: searcher.SearcherState,
+        request_id: uuid.UUID,
+        metric: Union[float, Dict[str, Any]],
+        train_length: int,
+    ) -> List[searcher.Operation]:
+        # TODO: Remove print tests.
+        logging.info(f"Calling on_validation_completed for {request_id}")
+        self._searcher_state_asserts(searcher_state)
+
+        last_trial = self.trial_tracker[request_id]
+        self.trial_tracker.update_trial_metric(trial=last_trial, metric=metric)
+
+        # TODO: remove some of these info logs. Some are just for testing.
+        if isinstance(last_trial, DSATModelProfileInfoTrial):
+            logging.info(f"Approx. max mbs per stage: {self.trial_tracker.max_mbs_per_stage}")
+            logging.info(
+                f"Approx. GPU memory per stage: {self.trial_tracker.mem_per_gpu_per_stage}"
+            )
+            logging.info(f"Total GPU memory: {self.trial_tracker.gpu_mem}")
+            logging.info(f"Viable zero stages: {self.trial_tracker.viable_zero_stages}")
+
+        if not self.trial_tracker.all_trials_created:
+            new_trials = self.get_trials_after_validation_completed(
+                searcher_state=searcher_state,
+                last_trial=last_trial,
+                metric=metric,
+            )
+            for t in new_trials:
+                self.trial_tracker.register_trial(t)
+
+        # All DS AT Trials should be closed after validation.
+        return [searcher.Close(request_id)]
+
+    def on_trial_closed(
+        self, searcher_state: searcher.SearcherState, request_id: uuid.UUID
+    ) -> List[searcher.Operation]:
+        # TODO: Remove print tests.
+        logging.info(f"Calling on_trial_closed for {request_id}")
+        last_trial = self.trial_tracker[request_id]
+        logging.info(f"metrics for closed trial {last_trial.metric}")
+        self._searcher_state_asserts(searcher_state)
+
+        trials_to_schedule = self.max_trials_to_schedule(searcher_state)
+        new_ops_list = self.get_next_ops(searcher_state)
+        logging.info(f"Actual trials scheduled: {len(new_ops_list) // 2}")
+        assert trials_to_schedule >= len(new_ops_list) // 2
+        if self.trial_tracker.should_shutdown:
+            new_ops_list.append(searcher.Shutdown())
+        return new_ops_list
+
+    def on_trial_exited_early(
+        self,
+        searcher_state: searcher.SearcherState,
+        request_id: uuid.UUID,
+        exited_reason: searcher.ExitedReason,
+    ) -> List[searcher.Operation]:
+        # TODO: Remove print tests.
+        logging.info(f"Calling on_trial_exited_early for {request_id}")
+        self._searcher_state_asserts(searcher_state)
+
+        last_trial = self.trial_tracker[request_id]
+        last_trial.error = True
+        new_ops_list = []
+        if exited_reason != searcher.ExitedReason.ERRORED:
+            # In case of INVALID_HP or USER_CANCELED, shut down the searcher.
+            logging.info(f"Shutting down: unexpected early exit due to {exited_reason}")
+            new_ops_list.append(searcher.Shutdown())
+        elif not self.trial_tracker.all_trials_created:
+            # ERRORED Trials generally corresponds to OOMs, after which we may want to submit
+            # follow-on Trials.
+            new_trials = self.get_trials_after_early_exit(
+                searcher_state=searcher_state,
+                last_trial=last_trial,
+                exited_reason=exited_reason,
+            )
+            for t in new_trials:
+                self.trial_tracker.register_trial(t)
+        return new_ops_list
+
+    def progress(self, searcher_state: searcher.SearcherState) -> float:
+        # TODO: Remove print tests.
+        logging.info("progress")
+        self._searcher_state_asserts(searcher_state)
+
+        progress = len(searcher_state.trials_closed) / len(searcher_state.trials_created)
+        return progress
+
+    def save_method_state(self, path: pathlib.Path) -> None:
+        checkpoint_path = path.joinpath("trial_tracker.pkl")
+        with checkpoint_path.open("wb") as f:
+            pickle.dump(self.trial_tracker, f)
+
+    def load_method_state(self, path: pathlib.Path) -> None:
+        logging.info("Restoring searcher state from checkpoint.")
+        checkpoint_path = path.joinpath("trial_tracker.pkl")
+        with checkpoint_path.open("rb") as f:
+            self.trial_tracker = pickle.load(f)
+
     def get_ops_for_trial(self, trial: DSATTrial) -> [searcher.Operation]:
         """
         Returns a list with the Create and ValidateAfter operations needed to initiate and run
@@ -484,160 +627,78 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
 
         return ops_list
 
-    def initial_operations(
-        self, searcher_state: searcher.SearcherState
-    ) -> List[searcher.Operation]:
-        """
-        Submits the model info profiling run in order to collect model and resources info to
-        inform the search.
-        """
-        model_profile_info_trial = self.trial_tracker.create_model_profile_info_trial()
-        self.trial_tracker.register_trial(model_profile_info_trial)
-        ops = self.get_ops_for_trial(model_profile_info_trial)
-        return ops
-
-    def on_trial_created(
-        self, searcher_state: searcher.SearcherState, request_id: uuid.UUID
-    ) -> List[searcher.Operation]:
-        return []
-
-    def on_validation_completed(
-        self,
-        searcher_state: searcher.SearcherState,
-        request_id: uuid.UUID,
-        metric: Union[float, Dict[str, Any]],
-        train_length: int,
-    ) -> List[searcher.Operation]:
-        # TODO: Remove print tests.
-        logging.info(f"Calling on_validation_completed for {request_id}")
-
-        last_trial = self.trial_tracker[request_id]
-        self.trial_tracker.update_trial_metric(trial=last_trial, metric=metric)
-
-        # TODO: remove some of these info logs. Some are just for testing.
-        if isinstance(last_trial, DSATModelProfileInfoTrial):
-            logging.info(f"Approx. max mbs per stage: {self.trial_tracker.max_mbs_per_stage}")
-            logging.info(
-                f"Approx. GPU memory per stage: {self.trial_tracker.mem_per_gpu_per_stage}"
-            )
-            logging.info(f"Total GPU memory: {self.trial_tracker.gpu_mem}")
-            logging.info(f"Viable zero stages: {self.trial_tracker.viable_zero_stages}")
-
-        # All DS AT Trials should be closed after validation.
-        new_ops_list = [searcher.Close(request_id)]
-        if not self.trial_tracker.all_trials_created and not self.trial_tracker.should_shutdown:
-            new_trials = self.get_trials_after_validation_completed(
-                searcher_state=searcher_state,
-                last_trial=last_trial,
-                metric=metric,
-            )
-            for t in new_trials:
-                self.trial_tracker.register_trial(t)
-
-                new_ops_list.extend(self.get_ops_for_trial(t))
-        logging.info(f"Trials to schedule: {self.num_trials_to_schedule(searcher_state)}")
-        return new_ops_list
-
-    def on_trial_closed(
-        self, searcher_state: searcher.SearcherState, request_id: uuid.UUID
-    ) -> List[searcher.Operation]:
-        # TODO: Remove print tests.
-        logging.info(f"Calling on_trial_closed for {request_id}")
-        last_trial = self.trial_tracker[request_id]
-        logging.info(f"metrics for closed trial {last_trial.metric}")
-
-        new_ops_list = []
-        if self.trial_tracker.should_shutdown:
-            new_ops_list.append(searcher.Shutdown())
-        return new_ops_list
-
-    def on_trial_exited_early(
-        self,
-        searcher_state: searcher.SearcherState,
-        request_id: uuid.UUID,
-        exited_reason: searcher.ExitedReason,
-    ) -> List[searcher.Operation]:
-        # TODO: Remove print tests.
-        logging.info(f"Calling on_trial_exited_early for {request_id}")
-
-        last_trial = self.trial_tracker[request_id]
-        last_trial.error = True
-        new_ops_list = []
-        if exited_reason != searcher.ExitedReason.ERRORED:
-            # In case of INVALID_HP or USER_CANCELED, shut down the searcher.
-            logging.info(f"Shutting down: unexpected early exit due to {exited_reason}")
-            new_ops_list.append(searcher.Shutdown())
-        elif not self.trial_tracker.all_trials_created and not self.trial_tracker.should_shutdown:
-            # ERRORED Trials generally corresponds to OOMs, after which we may want to submit
-            # follow-on Trials.
-            new_trials = self.get_trials_after_early_exit(
-                searcher_state=searcher_state,
-                last_trial=last_trial,
-                exited_reason=exited_reason,
-            )
-            for t in new_trials:
-                self.trial_tracker.register_trial(t)
-                new_ops_list.extend(self.get_ops_for_trial(t))
-        logging.info(f"Trials to schedule: {self.num_trials_to_schedule(searcher_state)}")
-        return new_ops_list
-
-    def num_trials_to_schedule(
+    def max_trials_to_schedule(
         self,
         searcher_state: searcher.SearcherState,
     ) -> int:
+        """
+        Computes the maximum number of Trials that can currently be scheduled, given the Experiment
+        configuration.
+        """
         running_trials = searcher_state.trials_created - searcher_state.trials_closed
         num_running_trials = len(running_trials)
-        num_completed_trials = len(searcher_state.trials_closed)
 
-        total_trials_remaining = self.max_trials - num_completed_trials
+        total_trials_remaining = self.max_trials - len(searcher_state.trials_created)
         concurrent_trials_available = self.max_concurrent_trials - num_running_trials
-        trials_to_schedule = min(total_trials_remaining, concurrent_trials_available)
+        max_trials_to_schedule = min(total_trials_remaining, concurrent_trials_available)
+
+        logging.info(f"Running trials: {num_running_trials}")
+
         if self.max_slots is not None:
             occupied_slots = num_running_trials * self.trial_tracker.slots_per_trial
             remaining_slots_available = self.max_slots - occupied_slots
             trials_available_with_remaining_slots = (
                 remaining_slots_available // self.trial_tracker.slots_per_trial
             )
-            trials_to_schedule = min(trials_to_schedule, trials_available_with_remaining_slots)
+            max_trials_to_schedule = min(
+                max_trials_to_schedule, trials_available_with_remaining_slots
+            )
+        logging.info(f"Trials to schedule: {max_trials_to_schedule}")
 
-        return trials_to_schedule
-
-    def get_next_trials(self, searcher_state: searcher.SearcherState) -> List[DSATTrial]:
-        """
-        Returns the list of the next trials to be submitted.
-        """
-        # Should be using a queue here, but neither the `queue` nor the `multiprocessing` `Queue`
-        # objects are pickleable with the current code.
-        num_trials = self.num_trials_to_schedule(searcher_state)
-        next_trials = []
-        for request_id, trial in self._all_trials_dict.items():
-            if request_id not in searcher_state.trials_created:
-                next_trials.append(trial)
-                if len(next_trials) >= num_trials:
-                    break
-        return next_trials
+        return max_trials_to_schedule
 
     def get_next_ops(self, searcher_state: searcher.SearcherState) -> List[searcher.Operation]:
-        next_trials = self.get_next_trials(searcher_state)
+        max_trials_to_schedule = self.max_trials_to_schedule(searcher_state)
+        available_trials_to_schedule = self.trial_tracker.num_unscheduled_trials
+        num_trials_to_schedule = min(max_trials_to_schedule, available_trials_to_schedule)
+        next_trials = [self.trial_tracker.get_next_trial() for _ in range(num_trials_to_schedule)]
         next_ops = []
         for t in next_trials:
             next_ops.extend(self.get_ops_for_trial(t))
+        print(
+            f"next create ops: {' '.join([str(op.request_id) for op in next_ops if isinstance(op, searcher.Create)])}"
+        )
         return next_ops
 
-    def progress(self, searcher_state: searcher.SearcherState) -> float:
-        progress = len(searcher_state.trials_closed) / len(searcher_state.trials_created)
-        return progress
+    def _searcher_state_asserts(
+        self,
+        searcher_state: searcher.SearcherState,
+    ) -> None:
+        # for testing, delete later
 
-    def save_method_state(self, path: pathlib.Path) -> None:
-        checkpoint_path = path.joinpath("trial_tracker.pkl")
-        with checkpoint_path.open("wb") as f:
-            pickle.dump(self.trial_tracker, f)
+        running_trials = searcher_state.trials_created - searcher_state.trials_closed
+        trials_created = len(searcher_state.trials_created)
+        total_trials_remaining = self.max_trials - trials_created
+        num_running_trials = len(running_trials)
+        concurrent_trials_available = self.max_concurrent_trials - num_running_trials
+        total_slots = self.trial_tracker.slots_per_trial * num_running_trials
+        print(f"running trials: {num_running_trials}")
+        print(f"trials created: {trials_created}")
+        print(f"trials closed: {len(searcher_state.trials_closed)}")
+        print(f"trials remaining: {total_trials_remaining}")
+        print(f"Concurrent trials remaining: {concurrent_trials_available}")
+        print(f"total slots: {total_slots}")
 
-    def load_method_state(self, path: pathlib.Path) -> None:
-        logging.info("Restoring searcher state from checkpoint.")
-        checkpoint_path = path.joinpath("trial_tracker.pkl")
-        with checkpoint_path.open("rb") as f:
-            self.trial_tracker = pickle.load(f)
+        assert (
+            num_running_trials <= self.max_concurrent_trials
+        ), f"running trials {num_running_trials}, limit {self.max_concurrent_trials}, {running_trials}"
+        if self.max_slots is not None:
+            assert (
+                total_slots <= self.max_slots
+            ), f"total slots {total_slots}, limit {self.max_slots}, {running_trials}"
+        assert (
+            len(searcher_state.trials_created) <= self.max_trials
+        ), f"total trials {trials_created}, limit {self.max_trials}, {running_trials}"
 
 
 class RandomDSATSearchMethod(BaseDSATSearchMethod):
@@ -662,7 +723,7 @@ class RandomDSATSearchMethod(BaseDSATSearchMethod):
         new_trials = []
         if isinstance(last_trial, DSATModelProfileInfoTrial):
             new_trials = self.get_trial_list_after_model_profile_info_run()
-        elif last_trial.num_trials_in_lineage < self.trial_tracker.num_tuning_micro_batch_sizes:
+        elif last_trial.num_trials_in_lineage < self.trials_per_random_config:
             trial = self.get_trial_after_autotuning_run(last_trial)
             # trial will be None if the current lineage should be terminated.
             new_trials = [trial] if trial is not None else [self.get_random_trial()]
