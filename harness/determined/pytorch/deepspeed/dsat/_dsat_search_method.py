@@ -185,7 +185,7 @@ class DSATTrialTracker:
         self._queue_idx = 0
 
         self._mem_per_gpu_per_stage = None
-        self._max_mbs_per_stage = None
+        self._approx_max_mbs_per_stage = None
 
     def __len__(self) -> int:
         return len(self._all_trials_dict)
@@ -260,10 +260,6 @@ class DSATTrialTracker:
         self._queue_idx += 1
         return next_trial
 
-    @property
-    def num_unscheduled_trials(self) -> int:
-        return len(self._trial_queue) - self._queue_idx
-
     def enforce_consistent_batch_config(self, hparams: Dict[str, Any]) -> None:
         """Enforces a consistent batch size configuration by altering `hparams` in-place."""
         # TODO: Talk to Liam about this, because this function adjusts `train_batch_size`, whereas
@@ -329,8 +325,6 @@ class DSATTrialTracker:
         concurrent_trials_available = self.max_concurrent_trials - num_running_trials
         max_trials_to_schedule = min(total_trials_remaining, concurrent_trials_available)
 
-        logging.info(f"Running trials: {num_running_trials}")
-
         if self.max_slots is not None:
             occupied_slots = num_running_trials * self.slots_per_trial
             remaining_slots_available = self.max_slots - occupied_slots
@@ -349,7 +343,7 @@ class DSATTrialTracker:
         Returns all operations which can be scheduled given the constraints of the Experiment.
         """
         max_trials_to_schedule = self.max_trials_to_schedule(searcher_state)
-        available_trials_to_schedule = self.num_unscheduled_trials
+        available_trials_to_schedule = self.num_pending_trials
         num_trials_to_schedule = min(max_trials_to_schedule, available_trials_to_schedule)
         next_trials = [self.pop_next_trial() for _ in range(num_trials_to_schedule)]
         next_ops = []
@@ -461,17 +455,17 @@ class DSATTrialTracker:
         return self._mem_per_gpu_per_stage
 
     @property
-    def max_mbs_per_stage(self) -> Dict[int, int]:
+    def approx_max_mbs_per_stage(self) -> Dict[int, int]:
         """
         Returns the approximate max train_micro_batch_size_per_gpu (mbs) per stage.
         """
-        if self._max_mbs_per_stage is None:
-            self._max_mbs_per_stage = {
-                stage: (self.gpu_mem - mem) // self.activation_mem_per_gpu
+        if self._approx_max_mbs_per_stage is None:
+            self._approx_max_mbs_per_stage = {
+                stage: max((self.gpu_mem - mem) // self.activation_mem_per_gpu, 1)
                 for stage, mem in self.mem_per_gpu_per_stage.items()
                 if stage in self.zero_stages
             }
-        return self._max_mbs_per_stage
+        return self._approx_max_mbs_per_stage
 
     def _best_trial_fn(self, trials: List[DSATTrial]) -> DSATTrial:
         if not trials:
@@ -501,6 +495,25 @@ class DSATTrialTracker:
         )
         logging.info(f"best_trial: {best_trial}")
         return best_trial
+
+    @property
+    def num_closed_trials(self) -> int:
+        return sum(t.closed for _, t in self)
+
+    @property
+    def num_pending_trials(self) -> int:
+        return len(self._trial_queue) - self._queue_idx
+
+    @property
+    def num_running_trials(self) -> int:
+        model_profile_info_trial_running = (
+            self.model_profile_info_trial is not None and not self.model_profile_info_trial.closed
+        )
+        num_running_autotuning_trials = sum(
+            not t.closed for t in self._trial_queue[: self._queue_idx]
+        )
+
+        return model_profile_info_trial_running + num_running_autotuning_trials
 
 
 class BaseDSATSearchMethod(searcher.SearchMethod):
@@ -584,7 +597,9 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
 
         # TODO: remove some of these info logs. Some are just for testing.
         if isinstance(last_trial, DSATModelProfileInfoTrial):
-            logging.info(f"Approx. max mbs per stage: {self.trial_tracker.max_mbs_per_stage}")
+            logging.info(
+                f"Approx. max mbs per stage: {self.trial_tracker.approx_max_mbs_per_stage}"
+            )
             logging.info(
                 f"Approx. GPU memory per stage: {self.trial_tracker.mem_per_gpu_per_stage}"
             )
@@ -766,6 +781,7 @@ class RandomDSATSearchMethod(BaseDSATSearchMethod):
         new_trials = []
         # One trial for each stage. This also sets the number of concurrent trials, which should
         # really be configurable.
+        print(searcher_state)
         for _ in range(self.trial_tracker.max_trials_to_schedule(searcher_state)):
             trial = self.get_random_trial()
             new_trials.append(trial)
@@ -873,12 +889,12 @@ class RandomDSATSearchMethod(BaseDSATSearchMethod):
 
         # If a best trial has been established, use its search data bounds.
         if self.trial_tracker.best_trial is not None:
-            new_search_data = copy.deepcopy(self.trial_tracker.best_trial.new_search_data)
+            new_search_data = copy.deepcopy(self.trial_tracker.best_trial.search_data)
             # Update the floor to one greater than the mbs used.
             new_search_data["lo"] = self.trial_tracker.best_trial.mbs + 1
         # Otherwise choose the corrsponding search data based on approximate computations
         else:
-            random_zero_stage_max_mbs = self.trial_tracker.max_mbs_per_stage[zero_stage]
+            random_zero_stage_max_mbs = self.trial_tracker.approx_max_mbs_per_stage[zero_stage]
             new_search_data = {
                 "lo": 1,
                 "hi": 2 * random_zero_stage_max_mbs - 1,
