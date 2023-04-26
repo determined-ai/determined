@@ -101,6 +101,7 @@ type ExperimentFilter struct {
 	Kind        FilterType
 	ColumnName  string
 	Location    *projectv1.LocationType
+	Type        *projectv1.ColumnType
 }
 
 func (o *Operator) toSql() string {
@@ -139,8 +140,9 @@ func containsOperatorSql(o Operator, v *interface{}) (string, error) {
 	return s, nil
 }
 
-func columnNameToSql(c string, l *projectv1.LocationType) (string, error) {
+func columnNameToSql(c string, l *projectv1.LocationType, t *projectv1.ColumnType) (string, error) {
 	var lo projectv1.LocationType
+	var col string
 	if l == nil {
 		lo = projectv1.LocationType_LOCATION_TYPE_EXPERIMENT
 	} else {
@@ -176,16 +178,30 @@ func columnNameToSql(c string, l *projectv1.LocationType) (string, error) {
 		 ) `,
 	}
 
-	if lo != projectv1.LocationType_LOCATION_TYPE_EXPERIMENT {
-		return c, fmt.Errorf("currently do not support %v", lo)
+	switch lo {
+	case projectv1.LocationType_LOCATION_TYPE_EXPERIMENT:
+		col, exists := filterExperimentColMap[c]
+		if !exists {
+			return col, fmt.Errorf("invalid experiment column %s", col)
+		}
+	case projectv1.LocationType_LOCATION_TYPE_VALIDATIONS:
+		col = fmt.Sprintf(`e.validation_metrics->>'%s'`, strings.TrimPrefix(c, "validations."))
+		if t != nil {
+			switch *t {
+			case projectv1.ColumnType_COLUMN_TYPE_NUMBER:
+				col = fmt.Sprintf(`(%v)::float8`, col)
+			}
+		}
+	case projectv1.LocationType_LOCATION_TYPE_HYPERPARAMETERS:
+		// TODO support nested and categorical hyperparameters
+		col = fmt.Sprintf(`"e.config->'hyperparameters'->'%s'->>'val'"`, strings.TrimPrefix(c, "hp."))
+		if t != nil {
+			switch *t {
+			case projectv1.ColumnType_COLUMN_TYPE_NUMBER:
+				col = fmt.Sprintf(`(%v)::float8`, col)
+			}
+		}
 	}
-
-	col, exists := filterExperimentColMap[c]
-
-	if !exists {
-		return c, fmt.Errorf("invalid experiment column %s", col)
-	}
-
 	return col, nil
 }
 
@@ -193,7 +209,7 @@ func (e ExperimentFilter) toSql() (string, error) {
 	var s string
 	switch e.Kind {
 	case FIELD:
-		col, err := columnNameToSql(e.ColumnName, e.Location)
+		col, err := columnNameToSql(e.ColumnName, e.Location, e.Type)
 		if *e.Operator == CONTAINS || *e.Operator == DOES_NOT_CONTAIN {
 			oSql, err := containsOperatorSql(*e.Operator, e.Value)
 			if err != nil {
