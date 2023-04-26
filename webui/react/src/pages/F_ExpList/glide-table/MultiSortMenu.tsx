@@ -63,6 +63,7 @@ const DirectionOptions: React.FC<DirectionOptionsProps> = ({ onChange, type, val
 const ColumnOptions: React.FC<ColumnOptionsProps> = ({ onChange, columns, value }) => {
   return (
     <Select
+      autoFocus
       loading={Loadable.isLoading(columns)}
       options={Loadable.getOrElse([], columns).map((c) => ({
         label: c.displayName || c.column,
@@ -152,6 +153,7 @@ const MultiSort: React.FC<MultiSortProps> = ({ sorts, columns, onChange }) => {
     </div>
   );
 };
+
 const MultiSortMenu: React.FC<MultiSortProps> = ({ sorts, columns, onChange }) => {
   const validSorts = sorts.filter(isValidSort);
   const onSortPopoverOpenChange = (open: boolean) => {
