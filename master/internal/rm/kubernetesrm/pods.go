@@ -949,25 +949,23 @@ func (p *pods) handleGetAgentsRequest(ctx *actor.Context) {
 // the whole cluster's info. Otherwise, it matches nodes to resource pools using taints and
 // tolerations to derive that info. This may be cached, so don't use this for decisions
 // that require up-to-date information.
-func (p *pods) summarize(ctx *actor.Context) (summary map[string]model.AgentSummary, err error) {
+func (p *pods) summarize(ctx *actor.Context) (map[string]model.AgentSummary, error) {
 	p.summarizeCacheLock.Lock()
 	defer p.summarizeCacheLock.Unlock()
 
-	if time.Since(p.summarizeCacheTime) < 5*time.Second {
-		return p.summarizeCache.summary, p.summarizeCache.err
-	}
-
-	// Keep the cache up to date. Note: since this only gets deferred when the cache is expired,
-	// we won't update the time unless we're generating a new value.
-	defer func() {
+	if time.Since(p.summarizeCacheTime) > 5*time.Second {
+		summary, err := p.computeSummary(ctx)
 		p.summarizeCacheTime = time.Now()
-
 		p.summarizeCache = summarizeResult{
 			summary: summary,
 			err:     err,
 		}
-	}()
+	}
 
+	return p.summarizeCache.summary, p.summarizeCache.err
+}
+
+func (p *pods) computeSummary(ctx *actor.Context) (map[string]model.AgentSummary, error) {
 	nodeSummaries := p.summarizeClusterByNodes(ctx)
 
 	poolTaskContainerDefaults := extractTCDs(p.resourcePoolConfigs)
