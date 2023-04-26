@@ -62,8 +62,11 @@ def log_in_user(parsed_args: Namespace) -> None:
 
 
 def log_out_user(parsed_args: Namespace) -> None:
-    # Log out of the user specified by the command line, or the active user.
-    authentication.logout(parsed_args.master, parsed_args.user, certs.cli_cert, parsed_args.all)
+    if parsed_args.all:
+        authentication.logout_all(parsed_args.master, certs.cli_cert)
+    else:
+        # Log out of the user specified by the command line, or the active user.
+        authentication.logout(parsed_args.master, parsed_args.user, certs.cli_cert)
 
 
 @login_sdk_client
