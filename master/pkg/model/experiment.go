@@ -805,14 +805,16 @@ func (t TrialProfilerMetricsBatchBatch) ForEach(f func(interface{}) error) error
 	return nil
 }
 
-// MetricType denotes what type of step (training / validation) a metric is from.
-type MetricType int
+// MetricType denotes what type the metric is.
+type MetricType string
 
-const (
+const ( // TODO: change the db enum values to all caps? Checkpoint type?
 	// TrainingMetric designates metrics from training steps.
-	TrainingMetric MetricType = iota
+	TrainingMetric MetricType = "training"
 	// ValidationMetric designates metrics from validation steps.
-	ValidationMetric MetricType = iota
+	ValidationMetric MetricType = "validation"
+	// GenericMetric designates metrics from other sources.
+	GenericMetric MetricType = "generic"
 )
 
 // ExitedReason defines why a workload exited early.
