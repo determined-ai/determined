@@ -188,7 +188,6 @@ def logout(
     master_address: Optional[str],
     requested_user: Optional[str],
     cert: Optional[certs.Cert],
-    all_users: bool = False,
 ) -> None:
     """
     Logout if there is an active session for this master/username pair, otherwise do nothing.
@@ -197,37 +196,42 @@ def logout(
     master_address = master_address or util.get_default_master_address()
     token_store = TokenStore(master_address)
 
-    if not all_users:
-        session_user, _ = default_load_user_password(requested_user, None, token_store)
+    session_user, _ = default_load_user_password(requested_user, None, token_store)
+    # Don't log out of DEFAULT_DETERMINED_USER when it's not specified and not the active user.
 
-        if session_user is None:
-            return
+    if session_user is None:
+        return
 
-        usernames = [session_user]
-    else:
-        usernames = token_store.get_all_user()
-        # Don't log out of DEFAULT_DETERMINED_USER when it's not specified and not the active user.
-        if (
-            token_store.get_active_user() != constants.DEFAULT_DETERMINED_USER
-            and constants.DEFAULT_DETERMINED_USER in usernames
-        ):
-            usernames.remove(constants.DEFAULT_DETERMINED_USER)
+    session_token = token_store.get_token(session_user)
 
-    for username in usernames:
-        token = token_store.get_token(username)
+    if session_token is None:
+        return
 
-        if token is None:
-            continue
+    token_store.drop_user(session_user)
 
-        token_store.drop_user(username)
+    auth = LogoutAuthentication(session_user, session_token)
+    sess = api.Session(user=session_user, master=master_address, auth=auth, cert=cert)
+    try:
+        bindings.post_Logout(sess)
+    except (api.errors.UnauthenticatedException, api.errors.APIException):
+        # This session may have expired, but we don't care.
+        pass
 
-        auth = LogoutAuthentication(username, token)
-        sess = api.Session(user=username, master=master_address, auth=auth, cert=cert)
-        try:
-            bindings.post_Logout(sess)
-        except (api.errors.UnauthenticatedException, api.errors.APIException):
-            # This session may have expired, but we don't care.
-            pass
+
+def logout_all(master_address: Optional[str], cert: Optional[certs.Cert]) -> None:
+    master_address = master_address or util.get_default_master_address()
+    token_store = TokenStore(master_address)
+
+    users = token_store.get_all_users()
+    # Don't log out of DEFAULT_DETERMINED_USER when it's not specified and not the active user.
+    if (
+        token_store.get_active_user() != constants.DEFAULT_DETERMINED_USER
+        and constants.DEFAULT_DETERMINED_USER in users
+    ):
+        users.remove(constants.DEFAULT_DETERMINED_USER)
+
+    for user in users:
+        logout(master_address, user, cert)
 
 
 def _is_token_valid(master_address: str, token: str, cert: Optional[certs.Cert]) -> bool:
@@ -274,9 +278,8 @@ class TokenStore:
     def get_active_user(self) -> Optional[str]:
         return self._active_user
 
-    def get_all_user(self) -> List[str]:
-        usernames = [username for (username, _) in self._tokens.items()]
-        return usernames
+    def get_all_users(self) -> List[str]:
+        return list(self._tokens)
 
     def get_token(self, user: str) -> Optional[str]:
         token = self._tokens.get(user)
