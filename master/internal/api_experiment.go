@@ -184,6 +184,7 @@ func columnNameToSql(c string, l *projectv1.LocationType, t *projectv1.ColumnTyp
 		if !exists {
 			return col, fmt.Errorf("invalid experiment column %s", col)
 		}
+		return col, nil
 	case projectv1.LocationType_LOCATION_TYPE_VALIDATIONS:
 		col = fmt.Sprintf(`e.validation_metrics->>'%s'`, strings.TrimPrefix(c, "validations."))
 		if t != nil {

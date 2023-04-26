@@ -54,6 +54,8 @@ func TestExperimentSearchApiFilterParsing(t *testing.T) {
 	}
 	validTestCases := [][2]string{
 		{`{"children":[{"columnName":"resourcePool","id":"10043dda-2187-45d4-92ce-b9ade5244b6f","kind":"field","operator":"contains","value":"default"}],"conjunction":"and","id":"ROOT","kind":"group"}`, `(e.config->'resources'->>'resource_pool' LIKE '%default%')`},
+		{`{"children":[{"columnName":"id","id":"10043dda-2187-45d4-92ce-b9ade5244b6f","kind":"field","operator":"=","value":"1"}],"conjunction":"and","id":"ROOT","kind":"group"}`, `(e.id = 1)`},
+		{`{"children":[{"columnName":"projectId","id":"10043dda-2187-45d4-92ce-b9ade5244b6f","kind":"field","operator":">=","value":"-1"}],"conjunction":"and","id":"ROOT","kind":"group"}`, `(project_id >= -1)`},
 		// {`experiment.user:"username"`, `COALESCE(u.display_name, u.username) = 'username'`},
 		// {"-experiment.projectId:123456789", "project_id != 123456789"},
 		// {"experiment.checkpointSize<=12", "checkpoint_size<=12"},
