@@ -4,7 +4,7 @@ import pathlib
 import random
 import sys
 import typing
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 import pytest
 
@@ -280,7 +280,7 @@ class TestLightningAdapter:
         example_path = utils.gan_examples_path(os.path.join(exp_dir, "model_def.py"))
         example_context = utils.gan_examples_path(exp_dir)
         trial_module = utils.import_module("GANTrial", example_path, example_context)
-        trial_class = getattr(trial_module, "GANTrial")
+        trial_class = getattr(trial_module, "GANTrial")  # noqa: B009
         trial_class._searcher_metric = "validation_loss"
 
         self.checkpoint_and_restore_no_callbacks(
@@ -309,7 +309,7 @@ class TestLightningAdapter:
         example_path = utils.cv_examples_path(os.path.join(exp_dir, "model_def.py"))
         example_context = utils.cv_examples_path(exp_dir)
         trial_module = utils.import_module("MNISTTrial", example_path, example_context)
-        trial_class = getattr(trial_module, "MNISTTrial")
+        trial_class = getattr(trial_module, "MNISTTrial")  # noqa: B009
         trial_class._searcher_metric = "validation_loss"
 
         self.checkpoint_and_restore_no_callbacks(

@@ -1021,7 +1021,7 @@ class TestPyTorchTrial:
         example_path = utils.tutorials_path("mnist_pytorch/model_def.py")
         example_context = utils.tutorials_path("mnist_pytorch")
         trial_module = utils.import_module("MNistTrial", example_path, example_context)
-        trial_class = getattr(trial_module, "MNistTrial")
+        trial_class = getattr(trial_module, "MNistTrial")  # noqa: B009
         trial_class._searcher_metric = "validation_loss"
 
         self.checkpoint_and_restore_no_callbacks(

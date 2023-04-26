@@ -370,7 +370,7 @@ def test_mnist_estimator(tmp_path: Path):
 
     example_path = utils.cv_examples_path("mnist_estimator/model_def.py")
     trial_module = utils.import_module("MNistTrial", example_path)
-    trial_cls = getattr(trial_module, "MNistTrial")
+    trial_cls = getattr(trial_module, "MNistTrial")  # noqa: B009
 
     hparams = {
         "learning_rate": 1.0e-3,

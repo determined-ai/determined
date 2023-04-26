@@ -396,7 +396,7 @@ def test_cifar10_single_gpu(tmp_path: Path):
     example_path = utils.cv_examples_path("cifar10_tf_keras/model_def.py")
     example_context = utils.cv_examples_path("cifar10_tf_keras")
     trial_module = utils.import_module("CIFARTrial", example_path, example_context)
-    trial_cls = getattr(trial_module, "CIFARTrial")
+    trial_cls = getattr(trial_module, "CIFARTrial")  # noqa: B009
 
     hparams = {
         "learning_rate": 1.0e-4,
@@ -413,9 +413,8 @@ def test_cifar10_single_gpu(tmp_path: Path):
     exp_config = utils.make_default_exp_config(
         hparams, scheduling_unit=1, searcher_metric="random", checkpoint_dir=checkpoint_dir
     )
-    exp_config["data"] = {
-        "url": "https://s3-us-west-2.amazonaws.com/determined-ai-datasets/cifar10/cifar-10-python.tar.gz"
-    }
+    config = utils.load_config(utils.cv_examples_path("cifar10_tf_keras/const.yaml"))
+    exp_config["data"] = config["data"]
 
     controller = utils.make_trial_controller_from_trial_implementation(
         trial_cls,
@@ -477,7 +476,7 @@ def test_tf2_no_op(tmp_path: Path):
 
     example_path = utils.fixtures_path("keras_tf2_disabled_no_op/model_def.py")
     trial_module = utils.import_module("NoopKerasTrial", example_path)
-    trial_cls = getattr(trial_module, "NoopKerasTrial")
+    trial_cls = getattr(trial_module, "NoopKerasTrial")  # noqa: B009
     trial_cls._searcher_metric = "random"
 
     hparams = {"global_batch_size": 8}

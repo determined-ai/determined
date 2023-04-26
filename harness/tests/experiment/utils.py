@@ -210,7 +210,7 @@ def import_module(module_name: str, module_path: str, model_context: Optional[st
     for module in problematic_modules:
         try:
             sys.modules.pop(module)
-        except KeyError as e:
+        except KeyError as e:  # noqa: F841
             pass
 
     if model_context is not None:
