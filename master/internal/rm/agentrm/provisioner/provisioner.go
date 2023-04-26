@@ -202,7 +202,7 @@ func (p *Provisioner) launch(ctx *actor.Context, numToLaunch int) (int, error) {
 	ctx.Log().Infof("launching %d instances (type %s)", numToLaunch, p.provider.instanceType().Name())
 	launched, err := p.provider.launch(ctx, numToLaunch)
 	if launched != numToLaunch {
-		err = fmt.Errorf("launched %d instances, expected %d, err %w", launched, numToLaunch, err)
+		err = fmt.Errorf("launched %d instances, expected %d, provider error: %v", launched, numToLaunch, err)
 	}
 	return launched, err
 }
@@ -225,7 +225,7 @@ func (p *Provisioner) retryLaunch(ctx *actor.Context, numToLaunch int) (int, err
 		numToLaunch -= launched
 		lastErr = err
 	}
-	return launched, fmt.Errorf("failed to launch %d instances after %d retries, last error: %w", numToLaunch, p.maxRetries, lastErr)
+	return launched, fmt.Errorf("failed to launch %d instances after %d retries, last error: %v", numToLaunch, p.maxRetries, lastErr)
 }
 
 func (p *Provisioner) GetError() error {

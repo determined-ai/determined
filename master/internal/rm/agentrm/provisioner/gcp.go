@@ -156,8 +156,8 @@ func (c *gcpCluster) stateFromInstance(inst *compute.Instance) model.InstanceSta
 	return model.Unknown
 }
 
-func (c *gcpCluster) generateInstanceName() string {
-	return c.NamePrefix + petname.Generate(2, "-")
+func (c *gcpCluster) generateInstanceNamePattern() string {
+	return c.NamePrefix + petname.Generate(2, "-") + "#####"
 }
 
 func (c *gcpCluster) prestart(ctx *actor.Context) {
@@ -197,31 +197,33 @@ func (c *gcpCluster) launch(ctx *actor.Context, instanceNum int) (int, error) {
 	}
 
 	var ops []*compute.Operation
-	for i := 0; i < instanceNum; i++ {
-		clientCtx := context.Background()
+	clientCtx := context.Background()
 
-		rb := c.Merge()
-		rb.Name = c.generateInstanceName()
-		if rb.Labels == nil {
-			rb.Labels = make(map[string]string)
-		}
-		rb.Labels["determined-master-host"] = strings.ReplaceAll(c.masterURL.Hostname(), ".", "-")
-		rb.Labels["determined-master-port"] = c.masterURL.Port()
-		rb.Labels["determined-resource-pool"] = c.resourcePool
-		if rb.Metadata == nil {
-			rb.Metadata = &compute.Metadata{}
-		}
-		rb.Metadata.Items = append(c.metadata, rb.Metadata.Items...)
+	rb := c.Merge()
+	if rb.Labels == nil {
+		rb.Labels = make(map[string]string)
+	}
+	rb.Labels["determined-master-host"] = strings.ReplaceAll(c.masterURL.Hostname(), ".", "-")
+	rb.Labels["determined-master-port"] = c.masterURL.Port()
+	rb.Labels["determined-resource-pool"] = c.resourcePool
+	if rb.Metadata == nil {
+		rb.Metadata = &compute.Metadata{}
+	}
+	rb.Metadata.Items = append(c.metadata, rb.Metadata.Items...)
 
-		rb.MinCpuPlatform = provconfig.GetCPUPlatform(rb.MachineType)
+	rb.MinCpuPlatform = provconfig.GetCPUPlatform(rb.MachineType)
 
-		// TODO: Update to use BulkInset
-		resp, err := c.client.Instances.Insert(c.Project, c.Zone, rb).Context(clientCtx).Do()
-		if err != nil {
-			ctx.Log().WithError(err).Errorf("cannot insert GCE instance")
-		} else {
-			ops = append(ops, resp)
-		}
+	bulk := &compute.BulkInsertInstanceResource{
+		Count:              int64(instanceNum),
+		InstanceProperties: rb,
+		MinCount:           1,
+		NamePattern:        c.generateInstanceNamePattern(),
+	}
+	resp, err := c.client.Instances.BulkInsert(c.Project, c.Zone, bulk).Context(clientCtx).Do()
+	if err != nil {
+		ctx.Log().WithError(err).Errorf("cannot insert GCE instance")
+	} else {
+		ops = append(ops, resp)
 	}
 
 	if len(ops) == 0 {

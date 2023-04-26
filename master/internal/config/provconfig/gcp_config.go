@@ -25,7 +25,7 @@ const MaxNamePrefixLen = 30
 
 // GCPClusterConfig describes the configuration for a GCP cluster managed by Determined.
 type GCPClusterConfig struct {
-	BaseConfig *compute.Instance `json:"base_config"`
+	BaseConfig *compute.InstanceProperties `json:"base_config"`
 
 	Project string `json:"project"`
 	Zone    string `json:"zone"`
@@ -128,8 +128,8 @@ func (c *GCPClusterConfig) InitDefaultValues() error {
 }
 
 // Merge GCP cluster config.
-func (c *GCPClusterConfig) Merge() *compute.Instance {
-	rb := &compute.Instance{}
+func (c *GCPClusterConfig) Merge() *compute.InstanceProperties {
+	rb := &compute.InstanceProperties{}
 	if c.BaseConfig != nil {
 		*rb = *c.BaseConfig
 	}
