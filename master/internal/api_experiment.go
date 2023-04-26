@@ -1981,8 +1981,6 @@ func (a *apiServer) SearchExperiments(
 	}
 
 	// get the best trial associated with the experiment.
-
-	// don't query for experiments twice
 	trialIDs := make([]int32, 0, len(experiments)+1)
 	trialIDs = append(trialIDs, -1) // hack to avoid bun error for 0 length array.
 	for _, e := range experiments {
@@ -1990,42 +1988,6 @@ func (a *apiServer) SearchExperiments(
 			trialIDs = append(trialIDs, *e.BestTrialId)
 		}
 	}
-
-	// experimentValues := db.Bun().NewValues(&experiments)
-
-	/*
-		// get info for best/latest validation for best trial
-		validationsQuery := db.Bun().NewSelect().
-			Table("validations").
-			Column("id").
-			ColumnExpr("validations.trial_id as trial_id").
-			Column("total_batches").
-			ColumnExpr("proto_time(end_time) AS end_time").
-			ColumnExpr("json_build_object('avg_metrics', metrics->'validation_metrics') AS metrics").
-			ColumnExpr("metrics->'num_inputs' AS num_inputs").
-			//nolint:lll
-			ColumnExpr("row_number() OVER(PARTITION BY validations.trial_id ORDER BY total_batches DESC NULLS LAST) AS latest_rank")
-	*/
-
-	bestValidation := db.Bun().NewSelect().
-		Table("validations").
-		ColumnExpr(`jsonb_build_object(
-			'trial_id', validations.trial_id,
-			'total_batches', total_batches,
-			'end_time', proto_time(end_time),
-			'metrics', json_build_object('avg_metrics', metrics->'validation_metrics'),
-			'num_inputs', metrics->'num_inputs')`). // TODO no num_inputs
-		Where("validations.id = best_validation_id")
-
-	// latestValidation := db.Bun().NewSelect().
-
-	allocationsQuery := db.Bun().NewSelect().
-		TableExpr("allocations AS a").
-		ColumnExpr("extract(EPOCH FROM sum(coalesce(a.end_time, now()) - a.start_time))").
-		Where("a.task_id = trials.task_id")
-
-	// what do we want?
-	// grab all non nil metrics
 
 	trialsInnerQuery := db.Bun().NewSelect().
 		Table("trials").
@@ -2042,49 +2004,26 @@ func (a *apiServer) SearchExperiments(
 		ColumnExpr(exputil.ProtoStateDBCaseString(trialv1.State_value, "trials.state", "state",
 			"STATE_")).
 		//nolint:lll
-		ColumnExpr("(CASE WHEN trials.hparams = 'null'::jsonb THEN null ELSE trials.hparams END) AS hparams").
+		ColumnExpr(`(CASE WHEN trials.hparams = 'null'::jsonb
+				THEN null ELSE trials.hparams END) AS hparams`).
 		ColumnExpr("trials.total_batches AS total_batches_processed").
-		ColumnExpr("(?) AS wall_clock_time", allocationsQuery).
-		ColumnExpr("(?) AS best_validation", bestValidation).
-		// ColumnExpr("NULL as latest_validation").
-
-		/*
-			// This end_time is incorrect.
-			// One it is off by a little and two it is off by a lot in migration case.
-			ColumnExpr(`jsonb_build_object(
-				'trial_id', trials.id,
-				'total_batches', trials.total_batches,
-				'end_time', proto_time(trials.summary_metrics_timestamp),
-				'metrics', (
-					SELECT jsonb_object_agg(key, value->>'last')
-					FROM jsonb_each(summary_metrics->'validation_metrics')
-					WHERE value->>'last' IS NOT NULL
-				)
-				) AS latest_validation`).
-		*/
-
-		// Honestly we should just join to validations for this on total_batches + trial_id
-		// This end_time is incorrect.
-		// One it is off by a little.
 		ColumnExpr(`jsonb_build_object(
-			'trial_id', trials.id,
-			'total_batches', trials.total_batches,
-			'end_time', proto_time((
-				SELECT end_time FROM validations WHERE
-					trial_id = trials.id AND total_batches = trials.total_batches LIMIT 1
-			)),
-			'metrics', (
-				SELECT jsonb_object_agg(key, value->>'last')
-				FROM jsonb_each(summary_metrics->'validation_metrics')
-				WHERE value->>'last' IS NOT NULL
-			)
-			) AS latest_validation`).
+				'trial_id', trials.id,
+				'total_batches', lv.total_batches,
+				'end_time', proto_time(lv.end_time),
+				'metrics', json_build_object('avg_metrics', lv.metrics->'validation_metrics'),
+				'num_inputs', lv.metrics->'num_inputs') AS latest_validation`).
+		ColumnExpr(`jsonb_build_object(
+				'trial_id', trials.id,
+				'total_batches', bv.total_batches,
+				'end_time', proto_time(bv.end_time),
+				'metrics', json_build_object('avg_metrics', bv.metrics->'validation_metrics'),
+				'num_inputs', bv.metrics->'num_inputs') AS best_validation`).
 		ColumnExpr("null::jsonb AS best_checkpoint").
-		//
-		// Join("JOIN ex ON ex.best_trial_id = trials.id").
-		// Join("LEFT JOIN v bv ON trials.best_validation_id = bv.id").
-		// Join("LEFT JOIN v lv ON trials.id = lv.trial_id AND lv.latest_rank = 1").
-		//
+		ColumnExpr("null::jsonb AS wall_clock_time").
+		Join("LEFT JOIN validations bv ON trials.best_validation_id = bv.id").
+		Join(`LEFT JOIN validations lv ON trials.id = lv.trial_id AND
+				lv.total_batches = trials.total_batches`).
 		Join("LEFT JOIN raw_checkpoints old_ckpt ON old_ckpt.id = trials.warm_start_checkpoint_id").
 		Join("LEFT JOIN checkpoints_v2 new_ckpt ON new_ckpt.id = trials.warm_start_checkpoint_id").
 		Where("trials.id IN (?)", bun.In(trialIDs))
@@ -2092,7 +2031,6 @@ func (a *apiServer) SearchExperiments(
 	err = db.Bun().NewSelect().
 		Model(&trials).
 		ModelTableExpr("(?) AS trial", trialsInnerQuery).Scan(ctx)
-
 	if err != nil {
 		return nil, err
 	}
