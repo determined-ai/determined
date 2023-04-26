@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"path/filepath"
 	"strconv"
+	"sync"
+	"time"
 
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
@@ -93,7 +95,15 @@ type pods struct {
 
 	podInterfaces       map[string]typedV1.PodInterface
 	configMapInterfaces map[string]typedV1.ConfigMapInterface
-	quotaInterfaces     map[string]typedV1.ResourceQuotaInterface
+
+	summarizeCacheLock sync.RWMutex
+	summarizeCache     summarizeResult
+	summarizeCacheTime time.Time
+}
+
+type summarizeResult struct {
+	summary map[string]model.AgentSummary
+	err     error
 }
 
 // PodsInfo contains information for pods.
@@ -174,7 +184,6 @@ func Initialize(
 		nodeToSystemResourceRequests: make(map[string]int64),
 		podInterfaces:                make(map[string]typedV1.PodInterface),
 		configMapInterfaces:          make(map[string]typedV1.ConfigMapInterface),
-		quotaInterfaces:              make(map[string]typedV1.ResourceQuotaInterface),
 	})
 	check.Panic(check.True(ok, "pods address already taken"))
 	s.Ask(podsActor, actor.Ping{}).Get()
@@ -348,7 +357,6 @@ func (p *pods) startClientSet(ctx *actor.Context) error {
 	}
 
 	for _, ns := range append(maps.Keys(p.namespaceToPoolName), p.namespace) {
-		p.quotaInterfaces[ns] = p.clientSet.CoreV1().ResourceQuotas(ns)
 		p.podInterfaces[ns] = p.clientSet.CoreV1().Pods(ns)
 		p.configMapInterfaces[ns] = p.clientSet.CoreV1().ConfigMaps(ns)
 	}
@@ -939,8 +947,27 @@ func (p *pods) handleGetAgentsRequest(ctx *actor.Context) {
 
 // summarize describes pods' available resources. When there's exactly one resource pool, it uses
 // the whole cluster's info. Otherwise, it matches nodes to resource pools using taints and
-// tolerations to derive that info.
-func (p *pods) summarize(ctx *actor.Context) (map[string]model.AgentSummary, error) {
+// tolerations to derive that info. This may be cached, so don't use this for decisions
+// that require up-to-date information.
+func (p *pods) summarize(ctx *actor.Context) (summary map[string]model.AgentSummary, err error) {
+	p.summarizeCacheLock.Lock()
+	defer p.summarizeCacheLock.Unlock()
+
+	if time.Since(p.summarizeCacheTime) < 5*time.Second {
+		return p.summarizeCache.summary, p.summarizeCache.err
+	}
+
+	// Keep the cache up to date. Note: since this only gets deferred when the cache is expired,
+	// we won't update the time unless we're generating a new value.
+	defer func() {
+		p.summarizeCacheTime = time.Now()
+
+		p.summarizeCache = summarizeResult{
+			summary: summary,
+			err:     err,
+		}
+	}()
+
 	nodeSummaries := p.summarizeClusterByNodes(ctx)
 
 	poolTaskContainerDefaults := extractTCDs(p.resourcePoolConfigs)
