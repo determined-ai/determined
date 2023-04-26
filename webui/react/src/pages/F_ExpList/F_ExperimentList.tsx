@@ -9,7 +9,7 @@ import { getProjectColumns, searchExperiments } from 'services/api';
 import { V1BulkExperimentFilters } from 'services/api-ts-sdk';
 import usePolling from 'shared/hooks/usePolling';
 import userStore from 'stores/users';
-import { ExperimentAction, ExperimentItem, Project, RunState, ProjectColumns } from 'types';
+import { ExperimentAction, ExperimentItem, Project, RunState, ProjectColumn } from 'types';
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 
@@ -34,7 +34,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     Array(page * PAGE_SIZE).fill(NotLoaded),
   );
   const [total, setTotal] = useState<Loadable<number>>(NotLoaded);
-  const [projectColumns, setProjectColumns] = useState<Loadable<ProjectColumns>>(NotLoaded);
+  const [projectColumns, setProjectColumns] = useState<Loadable<ProjectColumn[]>>(NotLoaded);
   const [visibleColumns, setVisibleColumns] = useState<string[]>([]);
 
   useEffect(() => {

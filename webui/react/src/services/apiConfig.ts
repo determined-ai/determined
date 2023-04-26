@@ -1592,10 +1592,10 @@ export const getProjectsByUserActivity: DetApi<
 export const getProjectColumns: DetApi<
   Service.GetProjectColumnsParams,
   Api.V1GetProjectColumnsResponse,
-  Type.ProjectColumns
+  Type.ProjectColumn[]
 > = {
   name: 'getProjectsColumns',
-  postProcess: (response) => response,
+  postProcess: (response) => response.columns,
   request: (params: Service.GetProjectColumnsParams, options) =>
     detApi.Internal.getProjectColumns(params.id, options),
 };

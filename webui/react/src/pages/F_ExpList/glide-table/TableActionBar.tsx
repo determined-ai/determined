@@ -22,7 +22,7 @@ import {
   pauseExperiments,
   unarchiveExperiments,
 } from 'services/api';
-import { V1BulkExperimentFilters } from 'services/api-ts-sdk';
+import { V1BulkExperimentFilters, V1LocationType } from 'services/api-ts-sdk';
 import Icon from 'shared/components/Icon';
 import Spinner from 'shared/components/Spinner';
 import { RecordKey } from 'shared/types';
@@ -32,7 +32,7 @@ import {
   ExperimentAction,
   ExperimentItem,
   Project,
-  ProjectColumns,
+  ProjectColumn,
   ProjectExperiment,
 } from 'types';
 import { notification } from 'utils/dialogApi';
@@ -84,7 +84,7 @@ interface Props {
   handleUpdateExperimentList: (action: BatchAction, successfulIds: number[]) => void;
   setVisibleColumns: Dispatch<SetStateAction<string[]>>;
   project: Project;
-  projectColumns: Loadable<ProjectColumns>;
+  projectColumns: Loadable<ProjectColumn[]>;
   total: Loadable<number>;
 }
 
@@ -294,11 +294,9 @@ const TableActionBar: React.FC<Props> = ({
   useEffect(() => {
     const regex = new RegExp(columnSearch, 'i');
     setFilteredColumns(
-      Loadable.map(projectColumns, (columns) => ({
-        general: columns.general.filter((col) => regex.test(col)),
-        hyperparameters: columns.hyperparameters.filter((col) => regex.test(col)),
-        metrics: columns.metrics.filter((col) => regex.test(col)),
-      })),
+      Loadable.map(projectColumns, (columns) =>
+        columns.filter((col) => regex.test(col.displayName ?? col.column)),
+      ),
     );
   }, [columnSearch, projectColumns]);
 
@@ -327,22 +325,24 @@ const TableActionBar: React.FC<Props> = ({
   }, []);
 
   const tabContent = useCallback(
-    (columns: string[], tab: 'general' | 'hyperparameters' | 'metrics') => {
+    (columns: ProjectColumn[], tab: V1LocationType) => {
       return (
         <div>
           <Form.Item name="column-search">
             <Input allowClear placeholder="Search" />
           </Form.Item>
           <div style={{ maxHeight: 360, overflow: 'hidden auto' }}>
-            {columns.map((column) => (
-              <Form.Item
-                initialValue={initialVisibleColumns.includes(column)}
-                key={column}
-                name={[tab, column]}
-                valuePropName="checked">
-                <Checkbox>{column}</Checkbox>
-              </Form.Item>
-            ))}
+            {columns
+              .filter((column) => column.location === tab)
+              .map((column) => (
+                <Form.Item
+                  initialValue={initialVisibleColumns.includes(column.column)}
+                  key={column.column}
+                  name={[tab, column.column]}
+                  valuePropName="checked">
+                  <Checkbox>{column.displayName ?? column.column}</Checkbox>
+                </Form.Item>
+              ))}
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <Button type="text" onClick={handleShowHideAll}>
@@ -370,19 +370,19 @@ const TableActionBar: React.FC<Props> = ({
                     <Pivot
                       items={[
                         {
-                          children: tabContent(columns.general, 'general'),
+                          children: tabContent(columns, V1LocationType.EXPERIMENT),
                           forceRender: true,
                           key: 'general',
                           label: 'General',
                         },
                         {
-                          children: tabContent(columns.metrics, 'metrics'),
+                          children: tabContent(columns, V1LocationType.VALIDATIONS),
                           forceRender: true,
                           key: 'metrics',
                           label: 'Metrics',
                         },
                         {
-                          children: tabContent(columns.hyperparameters, 'hyperparameters'),
+                          children: tabContent(columns, V1LocationType.HYPERPARAMETERS),
                           forceRender: true,
                           key: 'hyperparameters',
                           label: 'Hyperparameters',

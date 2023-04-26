@@ -849,10 +849,11 @@ export interface ProjectPagination extends WithPagination {
   projects: Project[];
 }
 
-export interface ProjectColumns {
-  general: Api.V1GeneralColumn[];
-  hyperparameters: string[];
-  metrics: string[];
+export interface ProjectColumn {
+  column: string;
+  location: Api.V1LocationType;
+  type: Api.V1ColumnType;
+  displayName?: string;
 }
 
 export interface Permission {

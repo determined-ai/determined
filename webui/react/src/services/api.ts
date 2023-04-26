@@ -683,7 +683,7 @@ export const getProjectsByUserActivity = generateDetApi<
 export const getProjectColumns = generateDetApi<
   Service.GetProjectColumnsParams,
   Api.V1GetProjectColumnsResponse,
-  Type.ProjectColumns
+  Type.ProjectColumn[]
 >(Config.getProjectColumns);
 
 /* Tasks */
