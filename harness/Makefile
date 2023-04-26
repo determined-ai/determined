@@ -49,7 +49,7 @@ test-tf2:
 	# for tf keras which needs v2 behavior enabled. You can't enable v2 behavior
 	# anywhere but the "start" of your program. See:
 	# https://github.com/tensorflow/tensorflow/issues/18304#issuecomment-379435515.
-	coverage run -a -m pytest -v --runslow --durations=0 tests/experiment/keras
+	coverage run -a -m pytest -v --runslow --durations=0 -m "not gpu" tests/experiment/keras
 
 .PHONY: clean
 clean:
