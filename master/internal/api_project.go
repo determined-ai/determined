@@ -73,7 +73,7 @@ func (a *apiServer) getProjectColumnsByID(
 			Column:      "tags",
 			DisplayName: "Tags",
 			Location:    projectv1.LocationType_LOCATION_TYPE_EXPERIMENT,
-			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT, // is this right?
+			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
 		},
 		{
 			Column:      "forkedFrom",
@@ -91,7 +91,7 @@ func (a *apiServer) getProjectColumnsByID(
 			Column:      "duration",
 			DisplayName: "Duration",
 			Location:    projectv1.LocationType_LOCATION_TYPE_EXPERIMENT,
-			Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER, // ?
+			Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER,
 		},
 		{
 			Column:      "numTrials",
