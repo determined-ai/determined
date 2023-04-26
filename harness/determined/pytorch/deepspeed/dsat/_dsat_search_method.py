@@ -1,5 +1,4 @@
 import argparse
-import collections
 import copy
 import logging
 import pathlib
@@ -245,6 +244,7 @@ class DSATTrialTracker:
             self._trial_queue.append(trial)
 
     def get_next_trial(self) -> DSATTrial:
+        # TODO: remove test code
         try:
             next_trial = self._trial_queue[self._queue_idx]
         except IndexError:
@@ -342,7 +342,25 @@ class DSATTrialTracker:
 
         return max_trials_to_schedule
 
+    def get_ops_for_trial(self, trial: DSATTrial) -> List[searcher.Operation]:
+        """
+        Returns a list with the Create and ValidateAfter operations needed to initiate and run
+        the specified Trial.
+        """
+        create_op = searcher.Create(
+            request_id=trial.request_id,
+            hparams=trial.hparams,
+            checkpoint=None,
+        )
+        validate_after_op = searcher.ValidateAfter(request_id=trial.request_id, length=trial.length)
+        ops_list = [create_op, validate_after_op]
+
+        return ops_list
+
     def get_next_ops(self, searcher_state: searcher.SearcherState) -> List[searcher.Operation]:
+        """
+        Returns all operations which can be scheduled given the constraints of the Experiment.
+        """
         max_trials_to_schedule = self.max_trials_to_schedule(searcher_state)
         available_trials_to_schedule = self.num_unscheduled_trials
         num_trials_to_schedule = min(max_trials_to_schedule, available_trials_to_schedule)
@@ -536,7 +554,7 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
 
         model_profile_info_trial = self.trial_tracker.create_model_profile_info_trial()
         self.trial_tracker.register_trial(model_profile_info_trial)
-        ops = self.get_ops_for_trial(model_profile_info_trial)
+        ops = self.trial_tracker.get_ops_for_trial(model_profile_info_trial)
         return ops
 
     def on_trial_created(
@@ -592,8 +610,8 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
         logging.info(f"metrics for closed trial {last_trial.metric}")
         self._searcher_state_asserts(searcher_state)
 
-        trials_to_schedule = self.max_trials_to_schedule(searcher_state)
-        new_ops_list = self.get_next_ops(searcher_state)
+        trials_to_schedule = self.trial_tracker.max_trials_to_schedule(searcher_state)
+        new_ops_list = self.trial_tracker.get_next_ops(searcher_state)
         logging.info(f"Actual trials scheduled: {len(new_ops_list) // 2}")
         assert trials_to_schedule >= len(new_ops_list) // 2
         if self.trial_tracker.should_shutdown:
@@ -647,21 +665,6 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
         checkpoint_path = path.joinpath("trial_tracker.pkl")
         with checkpoint_path.open("rb") as f:
             self.trial_tracker = pickle.load(f)
-
-    def get_ops_for_trial(self, trial: DSATTrial) -> [searcher.Operation]:
-        """
-        Returns a list with the Create and ValidateAfter operations needed to initiate and run
-        the specified Trial.
-        """
-        create_op = searcher.Create(
-            request_id=trial.request_id,
-            hparams=trial.hparams,
-            checkpoint=None,
-        )
-        validate_after_op = searcher.ValidateAfter(request_id=trial.request_id, length=trial.length)
-        ops_list = [create_op, validate_after_op]
-
-        return ops_list
 
     def _searcher_state_asserts(
         self,
@@ -761,7 +764,7 @@ class RandomDSATSearchMethod(BaseDSATSearchMethod):
         new_trials = []
         # One trial for each stage. This also sets the number of concurrent trials, which should
         # really be configurable.
-        for _ in range(self.max_concurrent_trials):
+        for _ in range(self.trial_tracker.max_concurrent_trials):
             trial = self.get_random_trial()
             new_trials.append(trial)
         return new_trials
