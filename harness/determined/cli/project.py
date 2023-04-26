@@ -1,8 +1,8 @@
-import json
 from argparse import Namespace
 from time import sleep
 from typing import Any, Dict, List, Sequence, Tuple
 
+import determined.cli.render
 from determined import cli
 from determined.common import api
 from determined.common.api import authentication, bindings, errors
@@ -77,8 +77,8 @@ def list_project_experiments(args: Namespace) -> None:
     (w, p) = project_by_name(sess, args.workspace_name, args.project_name)
     kwargs: Dict[str, Any] = {
         "projectId": p.id,
-        "orderBy": bindings.v1OrderBy[f"ORDER_BY_{args.order_by.upper()}"],
-        "sortBy": bindings.v1GetExperimentsRequestSortBy[f"SORT_BY_{args.sort_by.upper()}"],
+        "orderBy": bindings.v1OrderBy[args.order_by.upper()],
+        "sortBy": bindings.v1GetExperimentsRequestSortBy[args.sort_by.upper()],
     }
     if not args.all:
         kwargs["users"] = [authentication.must_cli_auth().get_session_user()]
@@ -97,7 +97,7 @@ def list_project_experiments(args: Namespace) -> None:
             break
 
     if args.json:
-        print(json.dumps([e.to_json() for e in all_experiments], indent=2))
+        determined.cli.render.print_json([e.to_json() for e in all_experiments])
     else:
         render_experiments(args, all_experiments)
 
@@ -111,7 +111,7 @@ def create_project(args: Namespace) -> None:
     )
     p = bindings.post_PostProject(sess, body=content, workspaceId=w.id).project
     if args.json:
-        print(json.dumps(p.to_json(), indent=2))
+        determined.cli.render.print_json(p.to_json())
     else:
         render_project(p)
 
@@ -121,7 +121,7 @@ def describe_project(args: Namespace) -> None:
     sess = cli.setup_session(args)
     (w, p) = project_by_name(sess, args.workspace_name, args.project_name)
     if args.json:
-        print(json.dumps(p.to_json(), indent=2))
+        determined.cli.render.print_json(p.to_json())
     else:
         render_project(p)
         print("\nAssociated Experiments")
@@ -168,7 +168,7 @@ def edit_project(args: Namespace) -> None:
     new_p = bindings.patch_PatchProject(sess, body=updated, id=p.id).project
 
     if args.json:
-        print(json.dumps(new_p.to_json(), indent=2))
+        determined.cli.render.print_json(new_p.to_json())
     else:
         render_project(new_p)
 

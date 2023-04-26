@@ -1,4 +1,3 @@
-import json
 from argparse import Namespace
 from functools import partial
 from typing import Any, Dict, List, Union, cast
@@ -30,7 +29,7 @@ def render_tasks(args: Namespace, tasks: Dict[str, v1AllocationSummary]) -> None
         return agents
 
     if args.json:
-        print(json.dumps({a: t.to_json() for (a, t) in tasks.items()}, indent=4))
+        render.print_json({a: t.to_json() for (a, t) in tasks.items()})
         return
 
     headers = [
@@ -97,7 +96,8 @@ def logs(args: Namespace) -> None:
             timestamp_after=args.timestamp_after,
         )
         if args.json:
-            api.print_json_logs(logs)
+            for log in logs:
+                render.print_json(log.to_json())
         else:
             api.pprint_logs(logs)
     finally:

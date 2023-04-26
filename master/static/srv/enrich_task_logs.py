@@ -1,5 +1,6 @@
 import argparse
 import datetime
+import distutils.util
 import json
 import os
 import queue
@@ -10,7 +11,6 @@ import threading
 import time
 from typing import Any, Dict, Iterator
 
-import backoff
 from determined.common import api
 from determined.common.api import errors
 
@@ -49,15 +49,18 @@ class LogCollector(threading.Thread):
         self,
         ship_queue: queue.Queue,
         task_logging_metadata: Dict[str, Any],
+        emit_stdout_logs: bool,
     ):
         self.ship_queue = ship_queue
         self.task_logging_metadata = task_logging_metadata
+        self.emit_stdout_logs = emit_stdout_logs
         super().__init__()
 
     def run(self) -> None:
         try:
             for line in sys.stdin:
-                print(line, flush=True, end="")
+                if self.emit_stdout_logs:
+                    print(line, flush=True, end="")
                 try:
                     parsed_metadata = {}
 
@@ -119,17 +122,22 @@ class LogShipper(threading.Thread):
             # Timeout met.
             self.ship()
 
-    @backoff.on_exception(  # type: ignore
-        lambda: backoff.full_jitter(SHIPPER_FAILURE_BACKOFF_SECONDS),
-        errors.APIException,
-        max_tries=3,
-    )
     def ship(self) -> None:
         if len(self.logs) <= 0:
             return
 
-        api.post(self.master_url, "task-logs", self.logs)
-        self.logs = []
+        max_tries = 3
+        tries = 0
+        while tries < max_tries:
+            try:
+                api.post(self.master_url, "task-logs", self.logs)
+                self.logs = []
+                return
+            except errors.APIException as e:
+                tries += 1
+                if tries == max_tries:
+                    raise e
+                time.sleep(SHIPPER_FAILURE_BACKOFF_SECONDS)
 
 
 def pop_until_deadline(q: queue.Queue, deadline: float) -> Iterator[Any]:
@@ -147,9 +155,10 @@ def pop_until_deadline(q: queue.Queue, deadline: float) -> Iterator[Any]:
 def main(
     master_url: str,
     task_logging_metadata: Dict[str, Any],
+    emit_stdout_logs: bool,
 ) -> None:
     ship_queue = queue.Queue(maxsize=SHIP_QUEUE_MAX_SIZE)
-    collector = LogCollector(ship_queue, task_logging_metadata)
+    collector = LogCollector(ship_queue, task_logging_metadata, emit_stdout_logs)
     shipper = LogShipper(ship_queue, master_url)
 
     collector.start()
@@ -182,5 +191,8 @@ if __name__ == "__main__":
         task_logging_metadata["container_id"] = container_id
     # If trial exists, just drop it since it could mess with de-ser on the API end.
     task_logging_metadata.pop("trial_id", None)
+    emit_stdout_logs = distutils.util.strtobool(
+        os.environ.get("DET_SHIPPER_EMIT_STDOUT_LOGS", "True"),
+    )
 
-    main(master_url, task_logging_metadata)
+    main(master_url, task_logging_metadata, emit_stdout_logs)

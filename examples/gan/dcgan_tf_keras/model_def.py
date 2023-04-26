@@ -26,12 +26,12 @@ class DCGanTrial(TFKerasTrial):
         model = self.context.wrap_model(model)
 
         # Create and wrap the optimizers.
-        g_optimizer = tf.keras.optimizers.Adam(
+        g_optimizer = tf.keras.optimizers.legacy.Adam(
             learning_rate=self.context.get_hparam("generator_lr")
         )
         g_optimizer = self.context.wrap_optimizer(g_optimizer)
 
-        d_optimizer = tf.keras.optimizers.Adam(
+        d_optimizer = tf.keras.optimizers.legacy.Adam(
             learning_rate=self.context.get_hparam("discriminator_lr")
         )
         d_optimizer = self.context.wrap_optimizer(d_optimizer)

@@ -115,7 +115,7 @@ def describe_trial(args: Namespace) -> None:
     if args.json:
         data = trial_response.to_json()
         data["workloads"] = [w.to_json() for w in workloads]
-        print(json.dumps(data, indent=4))
+        render.print_json(data)
         return
 
     # Print information about the trial itself.
@@ -191,7 +191,8 @@ def trial_logs(args: Namespace) -> None:
             timestamp_after=args.timestamp_after,
         )
         if args.json:
-            api.print_json_logs(logs)
+            for log in logs:
+                render.print_json(log.to_json())
         else:
             api.pprint_logs(logs)
     finally:

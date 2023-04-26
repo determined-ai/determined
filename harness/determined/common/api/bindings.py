@@ -1791,6 +1791,12 @@ class v1ColumnFilter:
             out["name"] = self.name
         return out
 
+class v1ColumnType(enum.Enum):
+    UNSPECIFIED = "COLUMN_TYPE_UNSPECIFIED"
+    TEXT = "COLUMN_TYPE_TEXT"
+    NUMBER = "COLUMN_TYPE_NUMBER"
+    DATE = "COLUMN_TYPE_DATE"
+
 class v1Command:
     container: "typing.Optional[v1Container]" = None
     displayName: "typing.Optional[str]" = None
@@ -1878,7 +1884,7 @@ class v1ComparableTrial:
     def __init__(
         self,
         *,
-        metrics: "typing.Sequence[v1SummarizedMetric]",
+        metrics: "typing.Sequence[v1DownsampledMetrics]",
         trial: "trialv1Trial",
     ):
         self.metrics = metrics
@@ -1887,7 +1893,7 @@ class v1ComparableTrial:
     @classmethod
     def from_json(cls, obj: Json) -> "v1ComparableTrial":
         kwargs: "typing.Dict[str, typing.Any]" = {
-            "metrics": [v1SummarizedMetric.from_json(x) for x in obj["metrics"]],
+            "metrics": [v1DownsampledMetrics.from_json(x) for x in obj["metrics"]],
             "trial": trialv1Trial.from_json(obj["trial"]),
         }
         return cls(**kwargs)
@@ -2307,40 +2313,44 @@ class v1CurrentUserResponse:
 
 class v1DataPoint:
     epoch: "typing.Optional[int]" = None
+    values: "typing.Optional[typing.Dict[str, typing.Any]]" = None
 
     def __init__(
         self,
         *,
         batches: int,
         time: str,
-        value: float,
         epoch: "typing.Union[int, None, Unset]" = _unset,
+        values: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
     ):
         self.batches = batches
         self.time = time
-        self.value = value
         if not isinstance(epoch, Unset):
             self.epoch = epoch
+        if not isinstance(values, Unset):
+            self.values = values
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1DataPoint":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "batches": obj["batches"],
             "time": obj["time"],
-            "value": float(obj["value"]),
         }
         if "epoch" in obj:
             kwargs["epoch"] = obj["epoch"]
+        if "values" in obj:
+            kwargs["values"] = obj["values"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "batches": self.batches,
             "time": self.time,
-            "value": dump_float(self.value),
         }
         if not omit_unset or "epoch" in vars(self):
             out["epoch"] = self.epoch
+        if not omit_unset or "values" in vars(self):
+            out["values"] = self.values
         return out
 
 class v1DeleteCheckpointsRequest:
@@ -2687,6 +2697,32 @@ class v1DoubleFieldFilter:
             out["lt"] = None if self.lt is None else dump_float(self.lt)
         if not omit_unset or "lte" in vars(self):
             out["lte"] = None if self.lte is None else dump_float(self.lte)
+        return out
+
+class v1DownsampledMetrics:
+
+    def __init__(
+        self,
+        *,
+        data: "typing.Sequence[v1DataPoint]",
+        type: "v1MetricType",
+    ):
+        self.data = data
+        self.type = type
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1DownsampledMetrics":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "data": [v1DataPoint.from_json(x) for x in obj["data"]],
+            "type": v1MetricType(obj["type"]),
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "data": [x.to_json(omit_unset) for x in self.data],
+            "type": self.type.value,
+        }
         return out
 
 class v1EnableAgentResponse:
@@ -3188,24 +3224,6 @@ class v1FittingPolicy(enum.Enum):
     KUBERNETES = "FITTING_POLICY_KUBERNETES"
     SLURM = "FITTING_POLICY_SLURM"
     PBS = "FITTING_POLICY_PBS"
-
-class v1GeneralColumn(enum.Enum):
-    UNSPECIFIED = "GENERAL_COLUMN_UNSPECIFIED"
-    ID = "GENERAL_COLUMN_ID"
-    NAME = "GENERAL_COLUMN_NAME"
-    DESCRIPTION = "GENERAL_COLUMN_DESCRIPTION"
-    TAGS = "GENERAL_COLUMN_TAGS"
-    FORKED = "GENERAL_COLUMN_FORKED"
-    STARTTIME = "GENERAL_COLUMN_STARTTIME"
-    DURATION = "GENERAL_COLUMN_DURATION"
-    COUNT = "GENERAL_COLUMN_COUNT"
-    STATE = "GENERAL_COLUMN_STATE"
-    SEARCHER_TYPE = "GENERAL_COLUMN_SEARCHER_TYPE"
-    RESOURSE_POOL = "GENERAL_COLUMN_RESOURSE_POOL"
-    PROGRESS = "GENERAL_COLUMN_PROGRESS"
-    CHECKPOINT_SIZE = "GENERAL_COLUMN_CHECKPOINT_SIZE"
-    CHECKPOINT_COUNT = "GENERAL_COLUMN_CHECKPOINT_COUNT"
-    USER = "GENERAL_COLUMN_USER"
 
 class v1GetActiveTasksCountResponse:
 
@@ -4311,28 +4329,20 @@ class v1GetProjectColumnsResponse:
     def __init__(
         self,
         *,
-        general: "typing.Sequence[v1GeneralColumn]",
-        hyperparameters: "typing.Sequence[str]",
-        metrics: "typing.Sequence[str]",
+        columns: "typing.Sequence[v1ProjectColumn]",
     ):
-        self.general = general
-        self.hyperparameters = hyperparameters
-        self.metrics = metrics
+        self.columns = columns
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetProjectColumnsResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
-            "general": [v1GeneralColumn(x) for x in obj["general"]],
-            "hyperparameters": obj["hyperparameters"],
-            "metrics": obj["metrics"],
+            "columns": [v1ProjectColumn.from_json(x) for x in obj["columns"]],
         }
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
-            "general": [x.value for x in self.general],
-            "hyperparameters": self.hyperparameters,
-            "metrics": self.metrics,
+            "columns": [x.to_json(omit_unset) for x in self.columns],
         }
         return out
 
@@ -6292,6 +6302,12 @@ class v1ListRolesResponse:
             "roles": [x.to_json(omit_unset) for x in self.roles],
         }
         return out
+
+class v1LocationType(enum.Enum):
+    UNSPECIFIED = "LOCATION_TYPE_UNSPECIFIED"
+    EXPERIMENT = "LOCATION_TYPE_EXPERIMENT"
+    HYPERPARAMETERS = "LOCATION_TYPE_HYPERPARAMETERS"
+    VALIDATIONS = "LOCATION_TYPE_VALIDATIONS"
 
 class v1LogEntry:
 
@@ -8688,6 +8704,44 @@ class v1Project:
             out["workspaceName"] = self.workspaceName
         return out
 
+class v1ProjectColumn:
+    displayName: "typing.Optional[str]" = None
+
+    def __init__(
+        self,
+        *,
+        column: str,
+        location: "v1LocationType",
+        type: "v1ColumnType",
+        displayName: "typing.Union[str, None, Unset]" = _unset,
+    ):
+        self.column = column
+        self.location = location
+        self.type = type
+        if not isinstance(displayName, Unset):
+            self.displayName = displayName
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1ProjectColumn":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "column": obj["column"],
+            "location": v1LocationType(obj["location"]),
+            "type": v1ColumnType(obj["type"]),
+        }
+        if "displayName" in obj:
+            kwargs["displayName"] = obj["displayName"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "column": self.column,
+            "location": self.location.value,
+            "type": self.type.value,
+        }
+        if not omit_unset or "displayName" in vars(self):
+            out["displayName"] = self.displayName
+        return out
+
 class v1ProxyPortConfig:
     port: "typing.Optional[int]" = None
     proxyTcp: "typing.Optional[bool]" = None
@@ -10928,7 +10982,7 @@ class v1SummarizeTrialResponse:
     def __init__(
         self,
         *,
-        metrics: "typing.Sequence[v1SummarizedMetric]",
+        metrics: "typing.Sequence[v1DownsampledMetrics]",
         trial: "trialv1Trial",
     ):
         self.metrics = metrics
@@ -10937,7 +10991,7 @@ class v1SummarizeTrialResponse:
     @classmethod
     def from_json(cls, obj: Json) -> "v1SummarizeTrialResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
-            "metrics": [v1SummarizedMetric.from_json(x) for x in obj["metrics"]],
+            "metrics": [v1DownsampledMetrics.from_json(x) for x in obj["metrics"]],
             "trial": trialv1Trial.from_json(obj["trial"]),
         }
         return cls(**kwargs)
@@ -10946,36 +11000,6 @@ class v1SummarizeTrialResponse:
         out: "typing.Dict[str, typing.Any]" = {
             "metrics": [x.to_json(omit_unset) for x in self.metrics],
             "trial": self.trial.to_json(omit_unset),
-        }
-        return out
-
-class v1SummarizedMetric:
-
-    def __init__(
-        self,
-        *,
-        data: "typing.Sequence[v1DataPoint]",
-        name: str,
-        type: "v1MetricType",
-    ):
-        self.data = data
-        self.name = name
-        self.type = type
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1SummarizedMetric":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-            "data": [v1DataPoint.from_json(x) for x in obj["data"]],
-            "name": obj["name"],
-            "type": v1MetricType(obj["type"]),
-        }
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-            "data": [x.to_json(omit_unset) for x in self.data],
-            "name": self.name,
-            "type": self.type.value,
         }
         return out
 

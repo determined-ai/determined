@@ -60,6 +60,8 @@ interface ModalProps {
   children: ReactNode;
 }
 
+export const DEFAULT_CANCEL_LABEL = 'Cancel';
+
 const ModalContext = createContext<ModalContext | null>(null);
 
 export const Modal: React.FC<ModalProps> = ({
@@ -127,7 +129,7 @@ export const Modal: React.FC<ModalProps> = ({
           <div className={css.buttons}>
             {(cancel || cancelText) && (
               <Button key="back" onClick={close}>
-                {cancelText || 'Cancel'}
+                {cancelText || DEFAULT_CANCEL_LABEL}
               </Button>
             )}
             <Button

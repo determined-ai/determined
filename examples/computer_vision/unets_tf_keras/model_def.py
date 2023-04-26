@@ -104,7 +104,7 @@ class UNetsTrial(TFKerasTrial):
         model = self.context.wrap_model(model)
 
         # Create and wrap optimizer.
-        optimizer = tf.keras.optimizers.Adam()
+        optimizer = tf.keras.optimizers.legacy.Adam()
         optimizer = self.context.wrap_optimizer(optimizer)
 
         model.compile(

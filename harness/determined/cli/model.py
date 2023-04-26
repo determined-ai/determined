@@ -2,6 +2,7 @@ import json
 from argparse import Namespace
 from typing import Any, List
 
+import determined.cli.render
 from determined import cli
 from determined.common import api
 from determined.common.api import authentication
@@ -72,7 +73,7 @@ def list_models(args: Namespace) -> None:
         workspace_names=workspace_names,
     )
     if args.json:
-        print(json.dumps([m.to_json() for m in models], indent=2))
+        determined.cli.render.print_json([m.to_json() for m in models])
     else:
         headers = ["ID", "Name", "Workspace ID", "Creation Time", "Last Updated Time", "Metadata"]
 
@@ -106,7 +107,7 @@ def list_versions(args: Namespace) -> None:
     if args.json:
         r = api.get(args.master, "api/v1/models/{}/versions".format(model.model_id))
         data = r.json()
-        print(json.dumps(data, indent=2))
+        determined.cli.render.print_json(data)
 
     else:
         render_model(model)
@@ -146,7 +147,7 @@ def create(args: Namespace) -> None:
     )
 
     if args.json:
-        print(json.dumps(model.to_json(), indent=2))
+        determined.cli.render.print_json(model.to_json())
     else:
         render_model(model)
 
@@ -161,7 +162,7 @@ def describe(args: Namespace) -> None:
     model_version = model.get_version(args.version)
 
     if args.json:
-        print(json.dumps(model.to_json(), indent=2))
+        determined.cli.render.print_json(model.to_json())
     else:
         render_model(model)
         if model_version is not None:
@@ -179,7 +180,7 @@ def register_version(args: Namespace) -> None:
             json={"checkpointUuid": args.uuid},
         )
 
-        print(json.dumps(resp.json(), indent=2))
+        determined.cli.render.print_json(resp.json())
     else:
         model_version = model.register_version(args.uuid)
         render_model(model)
