@@ -3,7 +3,7 @@ import React, { useMemo } from 'react';
 import Badge from 'components/Badge';
 import Bar from 'components/Bar';
 import { ConditionalWrapper } from 'components/ConditionalWrapper';
-import Popover from 'components/kit/Popover';
+import Tooltip from 'components/kit/Tooltip';
 import { resourceStateToLabel } from 'constants/states';
 import { paths } from 'routes/utils';
 import { V1ResourcePoolType } from 'services/api-ts-sdk';
@@ -254,9 +254,9 @@ const SlotAllocationBar: React.FC<Props> = ({
         condition={!showLegends}
         wrapper={(ch) =>
           !isAux && hasLegend ? (
-            <Popover content={renderStateDetails()} placement="bottom">
+            <Tooltip placement="bottom" title={renderStateDetails()}>
               {ch}
-            </Popover>
+            </Tooltip>
           ) : (
             <div>{ch}</div>
           )
@@ -292,9 +292,9 @@ const SlotAllocationBar: React.FC<Props> = ({
       {showLegends && (
         <div className={css.overallLegends}>
           {hasLegend ? (
-            <Popover content={renderStateDetails()} placement="bottom">
+            <Tooltip placement="bottom" title={renderStateDetails()}>
               {renderLegend()}
-            </Popover>
+            </Tooltip>
           ) : (
             renderLegend()
           )}

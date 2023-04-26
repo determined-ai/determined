@@ -24,7 +24,6 @@ import { Modal, useModal } from 'components/kit/Modal';
 import Nameplate from 'components/kit/Nameplate';
 import Pagination from 'components/kit/Pagination';
 import Pivot from 'components/kit/Pivot';
-import Popover from 'components/kit/Popover';
 import Select, { Option } from 'components/kit/Select';
 import Toggle from 'components/kit/Toggle';
 import Tooltip from 'components/kit/Tooltip';
@@ -77,7 +76,6 @@ const ComponentTitles = {
   Nameplate: 'Nameplate',
   Pagination: 'Pagination',
   Pivot: 'Pivot',
-  Popover: 'Popover',
   Select: 'Select',
   Tags: 'Tags',
   Toggle: 'Toggle',
@@ -105,88 +103,6 @@ const ComponentSection: React.FC<Props> = ({ children, id, title }: Props): JSX.
       <h3 id={id}>{title}</h3>
       {children}
     </article>
-  );
-};
-
-const PopoverSection: React.FC = () => {
-  const text = 'Popover text';
-  const buttonWidth = 70;
-  return (
-    <ComponentSection id="Popover" title="Popover">
-      <AntDCard>
-        <p>
-          <code>{'<Popover>'}</code> is a simple popup menu to provide extra information or
-          operations.
-        </p>
-      </AntDCard>
-      <AntDCard title="Best practices">
-        <p>
-          Comparing with <code>{'<Tooltip>'}</code>, besides information <code>{'<Popover>'}</code>{' '}
-          card can also provide action elements like links and buttons.
-        </p>
-      </AntDCard>
-      <AntDCard title="Usage">
-        <strong>Popover default</strong>
-        <p>
-          <Popover content={text}>
-            <code>{'<Popover>'}</code>
-          </Popover>
-        </p>
-        <strong>Popover placement</strong>
-        <div>
-          <div style={{ marginLeft: buttonWidth, whiteSpace: 'nowrap' }}>
-            <Popover content={text} placement="topLeft">
-              <Button>TL</Button>
-            </Popover>
-            <Popover content={text} placement="top">
-              <Button>Top</Button>
-            </Popover>
-            <Popover content={text} placement="topRight">
-              <Button>TR</Button>
-            </Popover>
-          </div>
-          <div style={{ float: 'left', width: buttonWidth }}>
-            <Popover content={text} placement="leftTop">
-              <Button>LT</Button>
-            </Popover>
-            <Popover content={text} placement="left">
-              <Button>Left</Button>
-            </Popover>
-            <Popover content={text} placement="leftBottom">
-              <Button>LB</Button>
-            </Popover>
-          </div>
-          <div style={{ marginLeft: buttonWidth * 4 + 24, width: buttonWidth }}>
-            <Popover content={text} placement="rightTop">
-              <Button>RT</Button>
-            </Popover>
-            <Popover content={text} placement="right">
-              <Button>Right</Button>
-            </Popover>
-            <Popover content={text} placement="rightBottom">
-              <Button>RB</Button>
-            </Popover>
-          </div>
-          <div style={{ clear: 'both', marginLeft: buttonWidth, whiteSpace: 'nowrap' }}>
-            <Tooltip placement="bottomLeft" title={text}>
-              <Button>BL</Button>
-            </Tooltip>
-            <Tooltip placement="bottom" title={text}>
-              <Button>Bottom</Button>
-            </Tooltip>
-            <Tooltip placement="bottomRight" title={text}>
-              <Button>BR</Button>
-            </Tooltip>
-          </div>
-        </div>
-        <strong>Popover with tags</strong>
-        <p>
-          <Popover content={useTags(['tag1', 'tag2'])()}>
-            <code>{'Hover to see tags'}</code>
-          </Popover>
-        </p>
-      </AntDCard>
-    </ComponentSection>
   );
 };
 
@@ -1884,6 +1800,12 @@ const TooltipsSection: React.FC = () => {
             </Tooltip>
           </div>
         </div>
+        <strong>Tooltip with complex content</strong>
+        <p>
+          <Tooltip title={<UserAvatar />}>
+            <code>{'Hover to see user avatars'}</code>
+          </Tooltip>
+        </p>
       </AntDCard>
     </ComponentSection>
   );
@@ -2303,7 +2225,6 @@ const Components = {
   Nameplate: <NameplateSection />,
   Pagination: <PaginationSection />,
   Pivot: <PivotSection />,
-  Popover: <PopoverSection />,
   Select: <SelectSection />,
   Tags: <TagsSection />,
   Toggle: <ToggleSection />,
