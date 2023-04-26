@@ -1,6 +1,6 @@
-name: ffn_example_ds_launcher_dsat
+name: no_op_test_dsat
 workspace: DS_AT_PROTOTYPING
-project: ffn_example
+project: no_op_test
 max_restarts: 0
 environment:
   image:
@@ -8,15 +8,16 @@ environment:
     cpu: determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-deepspeed-0.7.0-gpu-0.20.1
 resources:
   slots_per_trial: 2
-  shm_size: 17179869184 # 16 GiB. Was hitting "Unexpected bus error encountered in worker. This might be caused by insufficient shared memory (shm)."
-  max_slots: 8
+  # max_slots: 8
+  shm_size: 17179869184 # 16 GiB. Was hitting "Unexpected bus error encountered in worker. This might be caused by insufficient shared memory (shm)." on Grenoble.
   # resource_pool: young # Grenoble specific; remove later.
 searcher:
-  name: custom
+  name: single
   metric: throughput
+  max_length: 100
   smaller_is_better: False
 hyperparameters:
-  dim: 4096
-  layers: 8 # Total params will be layers * dim ** 2
+  # NOTE: dsat code expects usual DS config dict to appear as in the below.
+  model_name: resnet152
   deepspeed_config: ds_config.json
-entrypoint: python3 -m determined.launch.deepspeed python3 script.py
+entrypoint: python3 -m determined.launch.torch_distributed python3 script.py
