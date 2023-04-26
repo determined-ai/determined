@@ -13,6 +13,9 @@ GAS_DEFAULT = 1
 OVERWRITE_KEY = "overwrite_deepspeed_args"
 ARGS_PKL_PATH = "args.pkl"
 
+SMALLER_IS_BETTER_METRICS = ["forward", "backward", "latency"]
+LARGER_IS_BETTER_METRICS = ["throughput", "FLOPS_per_gpu"]
+
 # Native DS AT uses the below settings for the model info profile run, but also with the the stage
 # set to 3, presumably since that gives a general model the best chance to run without OOMing.
 # However, since some model cannot run with stage 3, we do not enforce that choice here and the
@@ -29,7 +32,7 @@ MODEL_INFO_PROFILE_DS_CONFIG = {
 
 
 # Using same defaults as DS. Written as a diff between successive stages for brevity.
-NEW_ZERO_OPTIM_KEYS_AND_DEFAULTS_PER_STAGE = {
+DEFAULT_ZERO_SEARCH_SPACE = {
     1: {"reduce_bucket_size": [5e7, 5e8, 1e9], "allgather_bucket_size": [5e7, 5e8, 1e9]},
     2: {
         "overlap_comm": [True, False],
@@ -41,23 +44,7 @@ NEW_ZERO_OPTIM_KEYS_AND_DEFAULTS_PER_STAGE = {
     },
 }
 
-AUTOTUNING_DICT = {
-    "enabled": True,
-    "results_dir": "autotuning_results",
-    "exps_dir": "autotuning_exps",
-    "overwrite": False,
-    "metric": "throughput",  # TODO: dynamically populate based on searcher fields.
-    "start_profile_step": 3,
-    "end_profile_step": 5,
-    "fast": True,
-    "max_train_batch_size": None,
-    "mp_size": 1,
-    "num_tuning_micro_batch_sizes": 5,
-    "tuner_type": "model_based",
-    "tuner_early_stopping": 25,
-    "tuner_num_trials": 25,
-    "arg_mappings": None,
-}
+AUTOTUNING_DICT = {"autotuning": {"enabled": True}}
 
 DEFAULT_SEARCH_RUNNER_CONFIG = {
     "searcher": {"name": "single", "max_length": 0},

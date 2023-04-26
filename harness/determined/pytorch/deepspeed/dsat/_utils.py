@@ -14,6 +14,17 @@ from determined.pytorch.deepspeed.dsat import _defaults, _dsat_search_method
 from determined.util import merge_dicts
 
 
+def smaller_is_better(metric: str) -> bool:
+    if metric in _defaults.SMALLER_IS_BETTER_METRICS:
+        return True
+    elif metric in _defaults.LARGER_IS_BETTER_METRICS:
+        return False
+    else:
+        raise ValueError(
+            f"metric must be one of {_defaults.SMALLER_IS_BETTER_METRICS + _defaults.LARGER_IS_BETTER_METRICS}, not {metric}"
+        )
+
+
 def get_search_method_from_args(
     args: argparse.Namespace,
 ) -> _dsat_search_method.BaseDSATSearchMethod:
@@ -143,7 +154,7 @@ def report_json_results(
 def get_zero_stage_search_space(
     zero_stage: int,
 ) -> Dict[str, List[Union[bool, float]]]:
-    default_settings: dict = _defaults.NEW_ZERO_OPTIM_KEYS_AND_DEFAULTS_PER_STAGE
+    default_settings: dict = _defaults.DEFAULT_ZERO_SEARCH_SPACE
     assert (
         zero_stage in default_settings
     ), f"Invalid zero_stage, must be one of {list(default_settings)}"

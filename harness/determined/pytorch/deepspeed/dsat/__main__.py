@@ -35,7 +35,7 @@ def parse_args() -> argparse.Namespace:
         "--metric",
         type=str,
         default="throughput",
-        choices=["throughput", "FLOPS_per_gpu", "forward", "backward", "latency"],
+        choices=_defaults.SMALLER_IS_BETTER_METRICS + _defaults.LARGER_IS_BETTER_METRICS,
     )
 
     args = parser.parse_args()
