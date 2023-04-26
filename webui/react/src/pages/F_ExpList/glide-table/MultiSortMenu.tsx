@@ -120,6 +120,7 @@ const MultiSort: React.FC<MultiSortProps> = ({ sorts, columns, onChange }) => {
     onChange(newSorts.length > 0 ? newSorts : INITIAL_SORTS);
   };
   const addRow = () => onChange([...sorts, { column: undefined, direction: undefined }]);
+
   return (
     <div className={css.base}>
       <div>Sort by</div>
@@ -141,7 +142,7 @@ const MultiSort: React.FC<MultiSortProps> = ({ sorts, columns, onChange }) => {
         })}
       </div>
       <div>
-        <Button type="link" onClick={addRow}>
+        <Button type="text" onClick={addRow}>
           <Icon name="add-small" size="tiny" /> Add condition
         </Button>
       </div>
