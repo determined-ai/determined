@@ -120,13 +120,14 @@ class SearchRunner:
         experiment_id: int,
         session: client.Session,
         prior_operations: Optional[List[searcher.Operation]],
+        sleep_time: float = 1.0,
     ) -> None:
         experiment_is_active = True
 
         try:
             while experiment_is_active:
                 time.sleep(
-                    1
+                    sleep_time
                 )  # we don't want to call long polling API more often than every second.
                 events = self.get_events(session, experiment_id)
                 if not events:
