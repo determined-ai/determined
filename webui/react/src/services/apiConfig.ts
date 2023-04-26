@@ -1595,7 +1595,7 @@ export const getProjectColumns: DetApi<
   Api.V1ProjectColumn[]
 > = {
   name: 'getProjectColumns',
-  postProcess: (response) => response.columns,
+  postProcess: (response) => decoder.decodeProjectColumnsResponse(response).columns,
   request: (params) => detApi.Internal.getProjectColumns(params.projectId),
 };
 
