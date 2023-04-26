@@ -5,7 +5,6 @@ test string:
 """
 
 import json
-import sys
 from typing import Any, TextIO
 
 from termcolor import colored
@@ -80,5 +79,7 @@ def render_json(obj: Any, out: TextIO, indent: str = "  ") -> None:
 
 
 if __name__ == "__main__":
+    import sys
+
     obj = json.load(sys.stdin)
     render_json(obj, sys.stdout)
