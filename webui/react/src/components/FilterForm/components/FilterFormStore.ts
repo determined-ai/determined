@@ -14,7 +14,7 @@ import {
 
 export const ITEM_LIMIT = 50;
 
-const INIT_FORMSET: FilterFormSet = {
+const INIT_FORMSET: Readonly<FilterFormSet> = {
   filterGroup: { children: [], conjunction: Conjunction.And, id: 'ROOT', kind: FormKind.Group },
 };
 
@@ -34,11 +34,11 @@ const getInitField = (): FormField => ({
 });
 
 export class FilterFormStore {
-  #formset = observable<FilterFormSet>(INIT_FORMSET);
+  #formset = observable<FilterFormSet>(structuredClone(INIT_FORMSET));
 
-  constructor(data?: FilterFormSet) {
+  constructor(data?: Readonly<FilterFormSet>) {
     if (data) {
-      this.#formset = observable<FilterFormSet>(data);
+      this.#formset = observable<FilterFormSet>(structuredClone(data));
     }
   }
 
