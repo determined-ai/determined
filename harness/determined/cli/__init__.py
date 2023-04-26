@@ -7,6 +7,9 @@ from determined.cli._util import (
     login_sdk_client,
     print_warnings,
 )
+from determined.cli._color_json import (
+    render_json,
+)
 from determined.cli import (
     agent,
     checkpoint,

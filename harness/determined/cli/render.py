@@ -10,6 +10,7 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence, Union
 import dateutil.parser
 import tabulate
 
+from determined.cli import render_json
 from determined.common import util, yaml
 
 # Avoid reporting BrokenPipeError when piping `tabulate` output through
@@ -158,7 +159,10 @@ def print_json(data: Union[str, Any]) -> None:
     try:
         if isinstance(data, str):
             data = json.loads(data)
-        formatted_json = json.dumps(data, sort_keys=True, indent=2)
-        print(formatted_json)
+        if sys.stdout.isatty():
+            render_json(data, sys.stdout, indent="  ")
+        else:
+            formatted_json = json.dumps(data, sort_keys=True, indent=2)
+            print(formatted_json)
     except json.decoder.JSONDecodeError:
         print(data)
