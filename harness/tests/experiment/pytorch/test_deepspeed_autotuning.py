@@ -1,19 +1,15 @@
 import pathlib
 import tempfile
-import pytest
-
 from argparse import Namespace
 from collections import deque
 from typing import Any, Deque, Dict, List, Optional, Sequence, Union
 from unittest import mock
 
+import pytest
+
 from determined import searcher
 from determined.common.api import bindings
-from determined.pytorch.deepspeed.dsat import (
-    _defaults,
-    _utils,
-    autotune,
-)
+from determined.pytorch.deepspeed.dsat import _defaults, _utils, autotune
 from determined.pytorch.deepspeed.dsat._dsat_search_method import (
     BaseDSATSearchMethod,
     RandomDSATSearchMethod,
@@ -74,20 +70,7 @@ def _run_searcher(search_method: BaseDSATSearchMethod, all_metrics):
         mock_master_obj = MockMaster(all_metrics=all_metrics)
         search_runner = MockMasterSearchRunner(search_method, mock_master_obj, searcher_dir)
         search_runner.run(exp_config={}, context_dir="", includes=None)
-<<<<<<< HEAD
     return search_runner
-=======
-
-    # TODO: Use a more dynamic value if/when we enable users to configure this
-    # GG: I broke the following line when refactoring with CLI args
-    exp_num_trials = _defaults.AUTOTUNING_DICT["tuner_num_trials"]
-    assert len(search_runner.state.trials_created) == exp_num_trials
-    assert len(search_runner.state.trials_closed) == exp_num_trials
-    assert len(search_runner.state.trial_progress) == exp_num_trials
-    # TODO: Handle the progress being 6 every time...
-    # for trial_uuid in search_runner.state.trial_progress:
-    #     assert(search_runner.state.trial_progress[trial_uuid] == 1.0)
->>>>>>> 4fd8c508c (Cleanup and bug fixes)
 
 
 @pytest.mark.timeout(5)
