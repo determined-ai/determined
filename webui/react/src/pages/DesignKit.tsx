@@ -1828,14 +1828,14 @@ const IconsSection: React.FC = () => {
       </AntDCard>
       <AntDCard title="Usage">
         <strong>Icon default</strong>
-        <Icon />
+        <Icon name="star" />
         <strong>Icon variations</strong>
         <p>Icon with tooltip</p>
-        <Icon title="Tooltip" />
+        <Icon name="star" title="Tooltip" />
         <p>Icon sizes</p>
         <Space wrap>
           {IconSizeArray.map((size) => (
-            <Icon key={size} size={size} title={size} />
+            <Icon key={size} name="star" size={size} title={size} />
           ))}
         </Space>
         <p>All icons</p>

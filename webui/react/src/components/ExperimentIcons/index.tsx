@@ -10,14 +10,13 @@ import Queue from './Queue';
 import Spinner from './Spinner';
 
 interface Props {
-  isTooltipVisible?: boolean;
+  showTooltip?: boolean;
   state: CompoundRunState;
   style?: CSSProperties;
 }
 
-const ExperimentIcons: React.FC<Props> = ({ state, style, isTooltipVisible = true }) => {
+const ExperimentIcons: React.FC<Props> = ({ state, style, showTooltip = true }) => {
   const icon = useMemo(() => {
-    const IconStyle: CSSProperties = { fontWeight: 900 };
     switch (state) {
       case JobState.SCHEDULED:
       case JobState.SCHEDULEDBACKFILLED:
@@ -30,41 +29,26 @@ const ExperimentIcons: React.FC<Props> = ({ state, style, isTooltipVisible = tru
       case RunState.Running:
         return <Spinner style={style} type="shadow" />;
       case RunState.Paused:
-        return <Icon name="pause" style={{ ...style, color: 'var(--theme-ix-cancel)' }} />;
+        return <Icon color="cancel" name="pause" />;
       case RunState.Completed:
-        return (
-          <Icon
-            name="checkmark"
-            style={{ ...style, ...IconStyle, color: 'var(--theme-status-success)' }}
-          />
-        );
+        return <Icon color="success" name="checkmark" />;
       case RunState.Error:
       case RunState.Deleted:
       case RunState.Deleting:
       case RunState.DeleteFailed:
-        return (
-          <Icon
-            name="error"
-            style={{ ...style, ...IconStyle, color: 'var(--theme-status-error)' }}
-          />
-        );
+        return <Icon color="error" name="error" />;
       case RunState.Active:
       case RunState.Unspecified:
       case JobState.UNSPECIFIED:
         return <Active />;
       default:
-        return (
-          <Icon
-            name="cancelled"
-            style={{ ...style, ...IconStyle, color: 'var(--theme-ix-cancel)' }}
-          />
-        );
+        return <Icon color="cancel" name="cancelled" />;
     }
   }, [state, style]);
 
   return (
     <>
-      {isTooltipVisible ? (
+      {showTooltip ? (
         <Tooltip content={stateToLabel(state)} placement="bottom">
           <div style={{ display: 'flex' }}>{icon}</div>
         </Tooltip>

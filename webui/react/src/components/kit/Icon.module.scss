@@ -35,3 +35,12 @@
 .mega {
   font-size: var(--icon-mega);
 }
+.cancel {
+  color: var(--theme-ix-cancel);
+}
+.error {
+  color: var(--theme-status-error);
+}
+.success {
+  color: var(--theme-status-success);
+}

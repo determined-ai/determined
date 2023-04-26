@@ -91,7 +91,6 @@ const isShownAnimation = (state: CompoundRunState): boolean => {
     case RunState.Paused:
     case RunState.Unspecified:
     case JobState.UNSPECIFIED:
-      return false;
     default:
       return false;
   }
@@ -373,7 +372,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
 
         return isShownAnimation(experiment.state) ? (
           <>
-            <ExperimentIcons isTooltipVisible={false} state={experiment.state} style={cssProps} />
+            <ExperimentIcons showTooltip={false} state={experiment.state} style={cssProps} />
             <div className={css.icon}>{iconNode}</div>
           </>
         ) : (
