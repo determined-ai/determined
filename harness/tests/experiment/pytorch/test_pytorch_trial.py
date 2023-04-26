@@ -136,7 +136,7 @@ class TestPyTorchTrial:
         self.checkpoint_and_restore(updated_hparams, tmp_path, (100, 100))
 
     @pytest.mark.skipif(not torch.cuda.is_available(), reason="no gpu available")
-    @pytest.mark.gpu
+    #@pytest.mark.gpu
     @pytest.mark.parametrize(
         "trial_class",
         [
@@ -671,7 +671,7 @@ class TestPyTorchTrial:
             assert newer["loss"] <= older["loss"]
 
     @pytest.mark.skipif(not torch.cuda.is_available(), reason="no gpu available")
-    @pytest.mark.gpu
+    #@pytest.mark.gpu
     @pytest.mark.parametrize(
         "trial_class",
         [
@@ -721,7 +721,7 @@ class TestPyTorchTrial:
         amp_metrics_test(trial_class, training_metrics)
 
     @pytest.mark.skipif(not torch.cuda.is_available(), reason="no gpu available")
-    @pytest.mark.gpu
+    #@pytest.mark.gpu
     @pytest.mark.parametrize(
         "trial_class",
         [
