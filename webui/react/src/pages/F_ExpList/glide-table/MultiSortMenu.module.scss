@@ -9,6 +9,7 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+  overflow-y: scroll;
 }
 .sortRow {
   align-items: center;
@@ -16,7 +17,6 @@
   gap: 8px;
   grid-template-columns: 1fr 1fr min-content;
   justify-content: space-between;
-  overflow-y: scroll;
 
   .select {
     min-width: 0;
