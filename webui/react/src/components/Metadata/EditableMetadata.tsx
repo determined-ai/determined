@@ -62,21 +62,17 @@ const EditableMetadata: React.FC<Props> = ({ metadata = {}, editing, updateMetad
           <Form.List name="metadata">
             {(fields, { add, remove }) => (
               <>
-                {fields.map((field, idx) => (typeof metadataList[idx].value !== 'object') ? (
+                {fields.map((field, idx) => (
                   <EditableRow
+                    jsonValue={
+                      typeof metadataList[idx].value === 'object'
+                        ? JSON.stringify(metadataList[idx].value)
+                        : undefined
+                    }
                     key={field.key}
                     name={field.name}
                     onDelete={fields.length > 1 ? () => remove(field.name) : undefined}
                   />
-                ) : (
-                    <Input.Group className={rowcss.row} compact>
-                      <Form.Item noStyle>
-                        <Input disabled placeholder={String(metadataList[idx].key)} />
-                      </Form.Item>
-                      <Form.Item noStyle>
-                        <Input disabled placeholder={JSON.stringify(metadataList[idx].value)} />
-                      </Form.Item>
-                    </Input.Group>
                 ))}
                 <Button type="link" onClick={() => add({ key: '', value: '' })}>
                   {ADD_ROW_TEXT}
