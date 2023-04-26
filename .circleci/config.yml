@@ -223,16 +223,6 @@ commands:
       - run: chmod +x $HOME/.local/bin/codecov
       - run: echo 'export PATH=$PATH:$HOME/.local/bin/codecov' >> $BASH_ENV
 
-  docker-install-codecov:
-    parameters:
-      image-name:
-        type: string
-    steps:
-      - run: docker exec <<parameters.image-name>> curl --output $HOME/.local/bin/codecov https://uploader.codecov.io/latest/linux/codecov
-      - run: docker exec <<parameters.image-name>> chmod +x $HOME/.local/bin/codecov
-      - run: docker exec <<parameters.image-name>> echo 'export PATH=$PATH:$HOME/.local/bin/codecov' >> $BASH_ENV
-
-
   setup-go-intg-deps:
     steps:
       - install-protoc # Install newer version of protoc into $HOME/.local/bin, since default is proto2.
@@ -1635,11 +1625,11 @@ jobs:
           image-name: test_container
           extras-requires: "tensorflow==2.8.4 torch==1.9.0 torchvision==0.10.0 codecov mypy pytest"
       - run: docker exec test_container mkdir -p $HOME/.local/bin
-      - docker-install-codecov:
-          image-name: test_container
+      - install-codecov
       - run: docker exec -e COVERAGE_FILE=/usr/src/project/test-unit-harness-gpu-pycov test_container make -C harness test-gpu
       - run: docker exec test_container coverage xml -i --data-file=./test-unit-harness-gpu-pycov
-      - run: docker exec test_container codecov -v -t $CODECOV_TOKEN -F harness
+      - run: pip install codecov
+      - run: codecov -v -t $CODECOV_TOKEN -F harness
       - persist_to_workspace:
           root: .
           paths:
@@ -1653,15 +1643,14 @@ jobs:
       - checkout
       - skip-if-docs-only
       - skip-if-webui-only
-      - run: mkdir $HOME/.local/bin
+      - setup-docker-env:
+          image: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.21.2
+          image-name: test_container
+          extras-requires: "tensorflow==2.8.4 torch==1.9.0 torchvision==0.10.0 codecov mypy pytest"
+      - run: docker exec test_container mkdir -p $HOME/.local/bin
       - install-codecov
-      - setup-python-venv:
-          determined: true
-          extras-requires: "torch==1.9.0 torchvision==0.10.0 codecov git+https://github.com/determined-ai/apex.git@3caf0f40c92e92b40051d3afff8568a24b8be28d"
-          extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
-          executor: <<pipeline.parameters.docker-image>>
-      - run: COVERAGE_FILE=$PWD/test-unit-harness-gpu-pycov make -C harness test-gpu-lightning
-      - run: coverage xml -i --data-file=./test-unit-harness-gpu-lightning-pycov
+      - run: docker exec -e COVERAGE_FILE=/usr/src/project/test-unit-harness-gpu-lightning-pycov test_container make -C harness test-gpu-lightning
+      - run: docker exec test_container coverage xml -i --data-file=./test-unit-harness-gpu-lightning-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
       - persist_to_workspace:
           root: .
@@ -2299,7 +2288,7 @@ workflows:
       - test-unit-react
       - test-unit-harness-cpu
       - test-unit-harness-gpu
-      #- test-unit-harness-gpu-lightning
+      - test-unit-harness-gpu-lightning
       - test-unit-harness-tf2
       - test-unit-model-hub
       - test-unit-storage:
