@@ -18,6 +18,32 @@ add include in the new table.
   - define as a partition
 - create a new `generic_metrics` table. define as a partition of `metrics`
 
+
+timing: 9s on latest-master db dump to run the migration and revert.
+```
+determined> SELECT
+   'raw_validations' AS table_name,
+   COUNT(*) AS total_rows,
+   pg_size_pretty(pg_total_relation_size('raw_validations')) AS
+  total_size
+ FROM
+   raw_validations
+ UNION
+ SELECT
+   'raw_steps' AS table_name,
+   COUNT(*) AS total_rows,
+   pg_size_pretty(pg_total_relation_size('raw_steps')) AS total
+ _size
+ FROM
+   raw_steps;
++-----------------+------------+------------+
+| table_name      | total_rows | total_size |
+|-----------------+------------+------------|
+| raw_steps       | 1186745    | 1075 MB    |
+| raw_validations | 81195      | 19 MB      |
++-----------------+------------+------------+
+```
+
 ```
 determined> \d raw_validations;
 +---------------+--------------------------+--------------------------------------------+
