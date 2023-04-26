@@ -10,6 +10,7 @@ import useModalHyperparameterSearch from 'hooks/useModal/HyperparameterSearch/us
 import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings } from 'hooks/useSettings';
 import { ExperimentListSettings } from 'pages/ExperimentList.settings';
+import { BatchAction } from 'pages/F_ExpList/glide-table/TableActionBar';
 import {
   activateExperiment,
   archiveExperiment,
@@ -24,7 +25,7 @@ import css from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
 import Icon from 'shared/components/Icon/Icon';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { capitalize } from 'shared/utils/string';
-import { ExperimentAction as Action, ProjectExperiment } from 'types';
+import { ExperimentAction as Action, ExperimentAction, ProjectExperiment } from 'types';
 import { notification } from 'utils/dialogApi';
 import handleError from 'utils/error';
 import { getActionsForExperiment } from 'utils/experiment';
@@ -41,6 +42,7 @@ interface Props {
   settings?: ExperimentListSettings;
   updateSettings?: UpdateSettings;
   workspaceId?: number;
+  handleUpdateExperimentList?: (action: BatchAction, successfulIds: number[]) => void;
 }
 
 const dropdownActions = [
@@ -67,6 +69,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
   settings,
   updateSettings,
   children,
+  handleUpdateExperimentList,
 }: Props) => {
   const id = experiment.id;
   const ExperimentMoveModal = useModal(ExperimentMoveModalComponent);
@@ -91,14 +94,17 @@ const ExperimentActionDropdown: React.FC<Props> = ({
           case Action.Activate:
             await activateExperiment({ experimentId: id });
             await onComplete?.(action);
+            handleUpdateExperimentList?.(ExperimentAction.Activate, [id]);
             break;
           case Action.Archive:
             await archiveExperiment({ experimentId: id });
             await onComplete?.(action);
+            handleUpdateExperimentList?.(ExperimentAction.Archive, [id]);
             break;
           case Action.Cancel:
             await cancelExperiment({ experimentId: id });
             await onComplete?.(action);
+            handleUpdateExperimentList?.(ExperimentAction.Cancel, [id]);
             break;
           case Action.OpenTensorBoard: {
             const commandResponse = await openOrCreateTensorBoard({
@@ -106,6 +112,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
               workspaceId: experiment.workspaceId,
             });
             openCommandResponse(commandResponse);
+            handleUpdateExperimentList?.(ExperimentAction.OpenTensorBoard, [id]);
             break;
           }
           case Action.SwitchPin: {
@@ -138,14 +145,17 @@ const ExperimentActionDropdown: React.FC<Props> = ({
               },
               title: 'Confirm Experiment Kill',
             });
+            handleUpdateExperimentList?.(ExperimentAction.Kill, [id]);
             break;
           case Action.Pause:
             await pauseExperiment({ experimentId: id });
             await onComplete?.(action);
+            handleUpdateExperimentList?.(ExperimentAction.Pause, [id]);
             break;
           case Action.Unarchive:
             await unarchiveExperiment({ experimentId: id });
             await onComplete?.(action);
+            handleUpdateExperimentList?.(ExperimentAction.Unarchive, [id]);
             break;
           case Action.Delete:
             confirm({
@@ -158,6 +168,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
               },
               title: 'Confirm Experiment Deletion',
             });
+            handleUpdateExperimentList?.(ExperimentAction.Delete, [id]);
             break;
           case Action.Move:
             ExperimentMoveModal.open();
@@ -190,12 +201,14 @@ const ExperimentActionDropdown: React.FC<Props> = ({
       onVisibleChange,
       settings?.pinned,
       updateSettings,
+      handleUpdateExperimentList,
     ],
   );
 
   const handleMoveComplete = useCallback(() => {
     onComplete?.(Action.Move);
-  }, [onComplete]);
+    handleUpdateExperimentList?.(ExperimentAction.Move, [id]);
+  }, [onComplete, handleUpdateExperimentList, id]);
 
   const menuItems = getActionsForExperiment(experiment, dropdownActions, usePermissions())
     .filter((action) => action !== Action.SwitchPin || settings)

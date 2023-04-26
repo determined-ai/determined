@@ -9,14 +9,14 @@ import { searchExperiments } from 'services/api';
 import { V1BulkExperimentFilters } from 'services/api-ts-sdk';
 import usePolling from 'shared/hooks/usePolling';
 import userStore from 'stores/users';
-import { ExperimentItem, Project } from 'types';
+import { ExperimentAction, ExperimentItem, Project, RunState } from 'types';
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 
 import { defaultExperimentColumns } from './glide-table/columns';
 import { Error, Loading, NoExperiments, NoMatches } from './glide-table/exceptions';
 import GlideTable, { SCROLL_SET_COUNT_NEEDED } from './glide-table/GlideTable';
-import TableActionBar from './glide-table/TableActionBar';
+import TableActionBar, { BatchAction } from './glide-table/TableActionBar';
 import { useGlasbey } from './useGlasbey';
 
 interface Props {
@@ -136,6 +136,86 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     await fetchExperiments();
   }, [fetchExperiments]);
 
+  const handleUpdateExperimentList = useCallback(
+    (action: BatchAction, successfulIds: number[]) => {
+      const idSet = new Set(successfulIds);
+      switch (action) {
+        case ExperimentAction.OpenTensorBoard:
+          break;
+        case ExperimentAction.Activate:
+          setExperiments((prev) =>
+            prev.map((expLoadable) =>
+              Loadable.map(expLoadable, (experiment) =>
+                idSet.has(experiment.id) ? { ...experiment, state: RunState.Active } : experiment,
+              ),
+            ),
+          );
+          break;
+        case ExperimentAction.Archive:
+          setExperiments((prev) =>
+            prev.map((expLoadable) =>
+              Loadable.map(expLoadable, (experiment) =>
+                idSet.has(experiment.id) ? { ...experiment, archived: true } : experiment,
+              ),
+            ),
+          );
+          break;
+        case ExperimentAction.Cancel:
+          setExperiments((prev) =>
+            prev.map((expLoadable) =>
+              Loadable.map(expLoadable, (experiment) =>
+                idSet.has(experiment.id)
+                  ? { ...experiment, state: RunState.StoppingCanceled }
+                  : experiment,
+              ),
+            ),
+          );
+          break;
+        case ExperimentAction.Kill:
+          setExperiments((prev) =>
+            prev.map((expLoadable) =>
+              Loadable.map(expLoadable, (experiment) =>
+                idSet.has(experiment.id)
+                  ? { ...experiment, state: RunState.StoppingKilled }
+                  : experiment,
+              ),
+            ),
+          );
+          break;
+        case ExperimentAction.Pause:
+          setExperiments((prev) =>
+            prev.map((expLoadable) =>
+              Loadable.map(expLoadable, (experiment) =>
+                idSet.has(experiment.id) ? { ...experiment, state: RunState.Paused } : experiment,
+              ),
+            ),
+          );
+          break;
+        case ExperimentAction.Unarchive:
+          setExperiments((prev) =>
+            prev.map((expLoadable) =>
+              Loadable.map(expLoadable, (experiment) =>
+                idSet.has(experiment.id) ? { ...experiment, archived: false } : experiment,
+              ),
+            ),
+          );
+          break;
+        case ExperimentAction.Move:
+        case ExperimentAction.Delete:
+          setExperiments((prev) =>
+            prev.filter((expLoadable) =>
+              Loadable.match(expLoadable, {
+                Loaded: (experiment) => !idSet.has(experiment.id),
+                NotLoaded: () => true,
+              }),
+            ),
+          );
+          break;
+      }
+    },
+    [setExperiments],
+  );
+
   return (
     <Page
       bodyNoPadding
@@ -158,10 +238,10 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
             <TableActionBar
               experiments={experiments}
               filters={experimentFilters}
+              handleUpdateExperimentList={handleUpdateExperimentList}
               project={project}
               selectAll={selectAll}
               selectedExperimentIds={selectedExperimentIds}
-              setExperiments={setExperiments}
               total={total}
               onAction={handleOnAction}
             />
@@ -171,6 +251,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
               data={experiments}
               fetchExperiments={fetchExperiments}
               handleScroll={handleScroll}
+              handleUpdateExperimentList={handleUpdateExperimentList}
               height={height}
               page={page}
               project={project}

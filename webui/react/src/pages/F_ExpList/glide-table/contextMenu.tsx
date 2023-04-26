@@ -4,6 +4,8 @@ import React, { MutableRefObject, useCallback, useEffect, useRef } from 'react';
 import ExperimentActionDropdown from 'components/ExperimentActionDropdown';
 import { ProjectExperiment } from 'types';
 
+import { BatchAction } from './TableActionBar';
+
 // eslint-disable-next-line
 function useOutsideClickHandler(ref: MutableRefObject<any>, handler: (event: Event) => void) {
   useEffect(() => {
@@ -32,6 +34,7 @@ function useOutsideClickHandler(ref: MutableRefObject<any>, handler: (event: Eve
 
 export interface TableContextMenuProps extends MenuProps {
   fetchExperiments: () => Promise<void>;
+  handleUpdateExperimentList: (action: BatchAction, successfulIds: number[]) => void;
   open: boolean;
   experiment: ProjectExperiment;
   handleClose: (e?: Event) => void;
@@ -42,6 +45,7 @@ export interface TableContextMenuProps extends MenuProps {
 export const TableContextMenu: React.FC<TableContextMenuProps> = ({
   experiment,
   fetchExperiments,
+  handleUpdateExperimentList,
   handleClose,
   open,
   x,
@@ -66,6 +70,7 @@ export const TableContextMenu: React.FC<TableContextMenuProps> = ({
       }}>
       <ExperimentActionDropdown
         experiment={experiment}
+        handleUpdateExperimentList={handleUpdateExperimentList}
         makeOpen={open}
         onComplete={onComplete}
         onVisibleChange={() => handleClose()}>
