@@ -71,6 +71,118 @@ type experimentAllocation struct {
 	Starting bool
 }
 
+type FilterConjunction string
+type FilterType string
+type Operator string
+
+const (
+	AND                   FilterConjunction = "and"
+	OR                    FilterConjunction = "or"
+	FIELD                 FilterType        = "field"
+	GROUP                 FilterType        = "group"
+	EQUAL                 Operator          = "="
+	NOT_EQUAL             Operator          = "!="
+	LESS_THAN             Operator          = "<"
+	LESS_THAN_OR_EQUAL    Operator          = "<="
+	GREATER_THAN          Operator          = ">"
+	GREATER_THAN_OR_EQUAL Operator          = ">="
+	CONTAINS              Operator          = "contains"
+	DOES_NOT_CONTAIN      Operator          = "does not contain"
+	EMPTY                 Operator          = "empty"
+	NOT_EMPTY             Operator          = "not empty"
+)
+
+type ExperimentFilter struct {
+	Children    []*ExperimentFilter
+	Conjunction *FilterConjunction
+	Operator    *Operator
+	Value       *interface{}
+	Kind        FilterType
+	ColumnName  string
+	Location    *string
+}
+
+func (o *Operator) toSql() string {
+	var s string
+	switch *o {
+	case EQUAL:
+		s = "="
+	case NOT_EQUAL:
+		s = "!="
+	case LESS_THAN:
+		s = "<"
+	case LESS_THAN_OR_EQUAL:
+		s = "<="
+	case GREATER_THAN_OR_EQUAL:
+		s = ">="
+	case EMPTY:
+		s = "NULL"
+	case NOT_EMPTY:
+		s = "NOT NULL"
+	default:
+		panic(fmt.Sprintf("Invalid operator %v", *o))
+	}
+	return s
+}
+
+func containsOperatorSql(o Operator, v interface{}) string {
+	var s string
+	switch o {
+	case CONTAINS:
+		s = "LIKE %" + v.(string) + "%"
+	case DOES_NOT_CONTAIN:
+		s = "NOT LIKE %" + v.(string) + "%"
+	default:
+		panic(fmt.Sprintf("Invalid contains perator %v", o))
+	}
+	return s
+}
+
+func columnNameToSql(c string, l *string) string {
+	var s string
+	switch o {
+	case CONTAINS:
+		s = "LIKE %" + v.(string) + "%"
+	case DOES_NOT_CONTAIN:
+		s = "NOT LIKE %" + v.(string) + "%"
+	default:
+		panic(fmt.Sprintf("Invalid contains perator %v", o))
+	}
+	return s
+}
+
+func (e ExperimentFilter) toSql() string {
+	var s string
+	switch e.Kind {
+	case FIELD:
+		if *e.Operator != CONTAINS && *e.Operator != DOES_NOT_CONTAIN {
+			s = fmt.Sprintf("%v %v %v", e.ColumnName, e.Operator.toSql(), *e.Value)
+		} else {
+			s = containsOperatorSql(*e.Operator, e.Value)
+		}
+	case GROUP:
+		var childSql []string
+		var j string
+		if len(e.Children) == 0 {
+			return "true"
+		}
+		for _, c := range e.Children {
+			childSql = append(childSql, c.toSql())
+		}
+		switch *e.Conjunction {
+		case AND:
+			j = " AND "
+		case OR:
+			j = " OR "
+		default:
+			panic(fmt.Sprintf("invalid conjunction value %v", *e.Conjunction))
+		}
+		s = fmt.Sprintf("(%v)", strings.Join(childSql, j))
+
+	}
+	return s
+}
+
 // Enrich one or more experiments by converting Active state to Queued/Pulling/Starting/Running.
 func (a *apiServer) enrichExperimentState(experiments ...*experimentv1.Experiment) error {
 	// filter allocations by JobIDs on this page of experiments
@@ -2409,6 +2521,7 @@ func (a *apiServer) SearchExperiments(
 	ctx context.Context,
 	req *apiv1.SearchExperimentsRequest,
 ) (*apiv1.SearchExperimentsResponse, error) {
+	var experimentFilter ExperimentFilter
 	resp := &apiv1.SearchExperimentsResponse{}
 	var experiments []*experimentv1.Experiment
 	var trials []*trialv1.Trial
@@ -2439,11 +2552,18 @@ func (a *apiServer) SearchExperiments(
 	}
 
 	if req.Filter != nil {
-		filterExpr, err := parseFilter(*req.Filter)
+		err := json.Unmarshal([]byte(*req.Filter), &experimentFilter)
 		if err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to parse filter string: %s", err)
+			return nil, err
 		}
-		experimentQuery.Where(*filterExpr)
+		fmt.Println("experimentFilter is")
+		fmt.Println(experimentFilter)
+		fmt.Println(experimentFilter.toSql())
+		// filterExpr, err := parseFilter(*req.Filter)
+		// if err != nil {
+		// 	return nil, status.Errorf(codes.Internal, "failed to parse filter string: %s", err)
+		// }
+		// experimentQuery.Where(*filterExpr)
 	}
 
 	if req.Sort != nil {
