@@ -1623,7 +1623,7 @@ jobs:
       - setup-docker-env:
           image: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.21.2
           image-name: test_container
-          extras-requires: "tensorflow==2.12.0 torch==1.9.0 torchvision==0.10.0 codecov mypy pytest"
+          extras-requires: "tensorflow==2.8.4 torch==1.9.0 torchvision==0.10.0 codecov mypy pytest"
       - run: mkdir -p $HOME/.local/bin
       - install-codecov
       - run: docker exec -e COVERAGE_FILE=/usr/src/project/test-unit-harness-gpu-pycov test_container make -C harness test-gpu
@@ -1651,6 +1651,7 @@ jobs:
       - install-codecov
       - run: docker exec -e COVERAGE_FILE=/usr/src/project/test-unit-harness-gpu-lightning-pycov test_container make -C harness test-gpu-lightning
       - run: docker exec test_container coverage xml -i --data-file=./test-unit-harness-gpu-lightning-pycov
+      - run: pip install codecov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
       - persist_to_workspace:
           root: .
