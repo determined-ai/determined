@@ -4,78 +4,68 @@
 import json
 import sys
 from typing import Any, TextIO
-
-grn = "\x1b[32m"
-blu = "\x1b[94m"
-gry = "\x1b[90m"
-res = "\x1b[m"
+from termcolor import colored
 
 
-def render_json(obj: Any, out: TextIO, indent="  "):
+def render_json(obj: Any, out: TextIO, indent="  ") -> None:
     def do_render(obj, depth=0):
         if obj is None:
-            out.write(gry)
-            out.write("null")
-            out.write(res)
+            out.write(colored("null", "grey"))
             return
 
         if isinstance(obj, bool):
-            out.write(str(obj).lower())
+            out.write(colored(str(obj).lower(), "white"))
             return
 
         if isinstance(obj, str):
-            out.write(grn)
-            out.write(json.dumps(obj))
-            out.write(res)
+            out.write(colored(json.dumps(obj), "green"))
             return
 
         if isinstance(obj, (int, float)):
-            out.write(str(obj))
+            out.write(colored(str(obj), "white"))
             return
 
         if isinstance(obj, (list, tuple)):
             if len(obj) == 0:
-                out.write("[]")
+                out.write(colored("[]", "cyan"))
                 return
 
-            out.write("[")
+            out.write(colored("[", "cyan"))
             first = True
             for item in obj:
                 if not first:
-                    out.write(",")
+                    out.write(colored(",", "cyan"))
                 first = False
                 out.write("\n")
                 out.write(indent * (depth + 1))
                 do_render(item, depth + 1)
             out.write("\n")
             out.write(indent * depth)
-            out.write("]")
+            out.write(colored("]", "cyan"))
             return
 
         if isinstance(obj, dict):
             if len(obj) == 0:
-                out.write("{}")
+                out.write(colored("{}", "yellow"))
                 return
 
-            out.write("{")
+            out.write(colored("{", "yellow"))
             first = True
             for key, value in obj.items():
                 if not first:
-                    out.write(",")
+                    out.write(colored(",", "yellow"))
                 first = False
                 out.write("\n")
                 out.write(indent * (depth + 1))
-                out.write(blu)
-                out.write(json.dumps(key))
-                out.write(res)
-                out.write(": ")
+                out.write(colored(json.dumps(key), "blue"))
+                out.write(colored(": ", "yellow"))
                 do_render(value, depth + 1)
             out.write("\n")
             out.write(indent * depth)
-            out.write("}")
+            out.write(colored("}", "yellow"))
             return
 
-        raise ValueError(f" unsupported type: {type(obj).__name__}")
+        raise ValueError(f"unsupported type: {type(obj).__name__}")
 
     do_render(obj, depth=0)
     out.write("\n")
