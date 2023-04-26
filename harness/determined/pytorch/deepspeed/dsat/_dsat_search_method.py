@@ -922,13 +922,14 @@ class SimpleDSATSearchMethod(BaseDSATSearchMethod):
                 "model_info_path"
             ]
             for tmbs in range(2, self.trial_tracker.max_trials + 1):
-                hparams_without_profile_info_keys["train_micro_batch_size_per_gpu"] = tmbs
+                hparams = copy.deepcopy(hparams_without_profile_info_keys)
+                hparams[_defaults.OVERWRITE_KEY]["train_micro_batch_size_per_gpu"] = tmbs
                 # Choose a random zero stage:
-                hparams_without_profile_info_keys["zero_optimization"]["stage"] = random.randint(
-                    0, 3
-                )
+                hparams[_defaults.OVERWRITE_KEY]["zero_optimization"] = {
+                    "stage": random.randint(0, 3)
+                }
                 trial = self.trial_tracker.create_trial(
-                    hparams=hparams_without_profile_info_keys,
+                    hparams=hparams,
                     search_data=None,
                     parent_trial=None,
                 )
