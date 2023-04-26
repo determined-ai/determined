@@ -1791,6 +1791,12 @@ class v1ColumnFilter:
             out["name"] = self.name
         return out
 
+class v1ColumnType(enum.Enum):
+    UNSPECIFIED = "COLUMN_TYPE_UNSPECIFIED"
+    TEXT = "COLUMN_TYPE_TEXT"
+    NUMBER = "COLUMN_TYPE_NUMBER"
+    DATE = "COLUMN_TYPE_DATE"
+
 class v1Command:
     container: "typing.Optional[v1Container]" = None
     displayName: "typing.Optional[str]" = None
@@ -3219,24 +3225,6 @@ class v1FittingPolicy(enum.Enum):
     SLURM = "FITTING_POLICY_SLURM"
     PBS = "FITTING_POLICY_PBS"
 
-class v1GeneralColumn(enum.Enum):
-    UNSPECIFIED = "GENERAL_COLUMN_UNSPECIFIED"
-    ID = "GENERAL_COLUMN_ID"
-    NAME = "GENERAL_COLUMN_NAME"
-    DESCRIPTION = "GENERAL_COLUMN_DESCRIPTION"
-    TAGS = "GENERAL_COLUMN_TAGS"
-    FORKED = "GENERAL_COLUMN_FORKED"
-    STARTTIME = "GENERAL_COLUMN_STARTTIME"
-    DURATION = "GENERAL_COLUMN_DURATION"
-    COUNT = "GENERAL_COLUMN_COUNT"
-    STATE = "GENERAL_COLUMN_STATE"
-    SEARCHER_TYPE = "GENERAL_COLUMN_SEARCHER_TYPE"
-    RESOURSE_POOL = "GENERAL_COLUMN_RESOURSE_POOL"
-    PROGRESS = "GENERAL_COLUMN_PROGRESS"
-    CHECKPOINT_SIZE = "GENERAL_COLUMN_CHECKPOINT_SIZE"
-    CHECKPOINT_COUNT = "GENERAL_COLUMN_CHECKPOINT_COUNT"
-    USER = "GENERAL_COLUMN_USER"
-
 class v1GetActiveTasksCountResponse:
 
     def __init__(
@@ -4341,28 +4329,20 @@ class v1GetProjectColumnsResponse:
     def __init__(
         self,
         *,
-        general: "typing.Sequence[v1GeneralColumn]",
-        hyperparameters: "typing.Sequence[str]",
-        metrics: "typing.Sequence[str]",
+        columns: "typing.Sequence[v1ProjectColumn]",
     ):
-        self.general = general
-        self.hyperparameters = hyperparameters
-        self.metrics = metrics
+        self.columns = columns
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetProjectColumnsResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
-            "general": [v1GeneralColumn(x) for x in obj["general"]],
-            "hyperparameters": obj["hyperparameters"],
-            "metrics": obj["metrics"],
+            "columns": [v1ProjectColumn.from_json(x) for x in obj["columns"]],
         }
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
-            "general": [x.value for x in self.general],
-            "hyperparameters": self.hyperparameters,
-            "metrics": self.metrics,
+            "columns": [x.to_json(omit_unset) for x in self.columns],
         }
         return out
 
@@ -6322,6 +6302,12 @@ class v1ListRolesResponse:
             "roles": [x.to_json(omit_unset) for x in self.roles],
         }
         return out
+
+class v1LocationType(enum.Enum):
+    UNSPECIFIED = "LOCATION_TYPE_UNSPECIFIED"
+    EXPERIMENT = "LOCATION_TYPE_EXPERIMENT"
+    HYPERPARAMETERS = "LOCATION_TYPE_HYPERPARAMETERS"
+    VALIDATIONS = "LOCATION_TYPE_VALIDATIONS"
 
 class v1LogEntry:
 
@@ -8716,6 +8702,44 @@ class v1Project:
             out["lastExperimentStartedAt"] = self.lastExperimentStartedAt
         if not omit_unset or "workspaceName" in vars(self):
             out["workspaceName"] = self.workspaceName
+        return out
+
+class v1ProjectColumn:
+    displayName: "typing.Optional[str]" = None
+
+    def __init__(
+        self,
+        *,
+        column: str,
+        location: "v1LocationType",
+        type: "v1ColumnType",
+        displayName: "typing.Union[str, None, Unset]" = _unset,
+    ):
+        self.column = column
+        self.location = location
+        self.type = type
+        if not isinstance(displayName, Unset):
+            self.displayName = displayName
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1ProjectColumn":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "column": obj["column"],
+            "location": v1LocationType(obj["location"]),
+            "type": v1ColumnType(obj["type"]),
+        }
+        if "displayName" in obj:
+            kwargs["displayName"] = obj["displayName"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "column": self.column,
+            "location": self.location.value,
+            "type": self.type.value,
+        }
+        if not omit_unset or "displayName" in vars(self):
+            out["displayName"] = self.displayName
         return out
 
 class v1ProxyPortConfig:

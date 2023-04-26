@@ -511,14 +511,11 @@ def test_experiment_list_columns() -> None:
     ]
     exp_metrics = ["validation.validation_error"]
     columns = bindings.get_GetProjectColumns(api_utils.determined_test_session(), id=1)
-    assert len(columns.general) == len(bindings.v1GeneralColumn)
 
-    hyperparameters = columns.hyperparameters
     for hp in exp_hyperparameters:
-        assert hyperparameters.index(hp) >= 0
-    metrics = columns.metrics
+        assert next((c for c in columns.columns if c.column == "hp." + hp), None) is not None
     for mc in exp_metrics:
-        assert metrics.index(mc) >= 0
+        assert next((c for c in columns.columns if c.column == mc), None) is not None
 
 
 @pytest.mark.e2e_cpu
