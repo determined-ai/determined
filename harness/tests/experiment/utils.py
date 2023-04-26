@@ -1,11 +1,11 @@
+import importlib
 import os
 import pathlib
+import sys
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Type
 
 import numpy as np
 import pytest
-import importlib
-import sys
 from mypy_extensions import DefaultNamedArg
 from tensorflow.keras import utils as keras_utils
 
@@ -176,18 +176,24 @@ def fixtures_path(path: str) -> str:
 def repo_path(path: str) -> str:
     return os.path.join(os.path.dirname(__file__), "../../../", path)
 
+
 def e2e_fixtures_path(path: str) -> str:
     # This function is a helper for testing, all necessary fixtures should be refactored instead.
     # TODO: refactor fixtures.
-    return os.path.join(os.path.dirname(__file__), '../../../e2e_tests/tests/fixtures', path)
+    return os.path.join(os.path.dirname(__file__), "../../../e2e_tests/tests/fixtures", path)
+
+
 def cv_examples_path(path: str) -> str:
     return os.path.join(os.path.dirname(__file__), "../../../examples/computer_vision", path)
+
 
 def gan_examples_path(path: str) -> str:
     return os.path.join(os.path.dirname(__file__), "../../../examples/gan", path)
 
+
 def tutorials_path(path: str) -> str:
     return os.path.join(os.path.dirname(__file__), "../../../examples/tutorials", path)
+
 
 def import_module(module_name: str, module_path: str, model_context: Optional[str] = None) -> Any:
     """
@@ -200,7 +206,7 @@ def import_module(module_name: str, module_path: str, model_context: Optional[st
     they may be pre-loaded as the result of a previous module import.
     """
 
-    problematic_modules = ['model_def', 'data']
+    problematic_modules = ["model_def", "data"]
     for module in problematic_modules:
         try:
             sys.modules.pop(module)
@@ -218,6 +224,7 @@ def import_module(module_name: str, module_path: str, model_context: Optional[st
         sys.path.remove(model_context)
 
     return module
+
 
 def load_config(config_path: str) -> Any:
     with open(config_path) as f:

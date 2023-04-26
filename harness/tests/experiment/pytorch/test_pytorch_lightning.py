@@ -1,9 +1,9 @@
 # type: ignore
+import os
 import pathlib
 import random
 import sys
 import typing
-import os
 from typing import Any, Dict, Optional
 
 import pytest
@@ -204,7 +204,7 @@ class TestLightningAdapter:
             min_validation_batches=steps[0],
             min_checkpoint_batches=steps[0],
             checkpoint_dir=checkpoint_dir,
-            expose_gpus=True
+            expose_gpus=True,
         )
 
         trial_controller_A.run()
@@ -223,33 +223,31 @@ class TestLightningAdapter:
             checkpoint_dir=checkpoint_dir,
             latest_checkpoint=os.listdir(checkpoint_dir)[0],
             steps_completed=trial_controller_A.state.batches_trained,
-            expose_gpus=True
+            expose_gpus=True,
         )
         trial_controller_A.run()
 
         assert len(os.listdir(checkpoint_dir)) == 2, "trial did not create a checkpoint"
 
-
     @pytest.mark.parametrize("api_style", ["apex", "auto"])
     def test_pl_const_with_amp(self, api_style: str, tmp_path: pathlib.Path) -> None:
-
         checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
         exp_dir = "pytorch_lightning_amp"
         config = utils.load_config(utils.fixtures_path(exp_dir + "/" + api_style + "_amp.yaml"))
 
-        hparams = config['hyperparameters']
+        hparams = config["hyperparameters"]
 
         exp_config = utils.make_default_exp_config(
-            hparams, scheduling_unit=1, searcher_metric="validation_loss", checkpoint_dir=checkpoint_dir
+            hparams,
+            scheduling_unit=1,
+            searcher_metric="validation_loss",
+            checkpoint_dir=checkpoint_dir,
         )
         exp_config.update(config)
 
-        module_names = {
-            "apex": "MNistApexAMPTrial",
-            "auto": "MNistAutoAMPTrial"
-        }
+        module_names = {"apex": "MNistApexAMPTrial", "auto": "MNistAutoAMPTrial"}
 
-        example_filename = api_style + '_amp_model_def.py'
+        example_filename = api_style + "_amp_model_def.py"
         example_path = utils.fixtures_path(os.path.join(exp_dir, example_filename))
         example_context = utils.fixtures_path(exp_dir)
         trial_module = utils.import_module(module_names[api_style], example_path, example_context)
@@ -257,56 +255,71 @@ class TestLightningAdapter:
         trial_class._searcher_metric = "validation_loss"
 
         self.checkpoint_and_restore_no_callbacks(
-            trial_class=trial_class, hparams=hparams, tmp_path=tmp_path, exp_config=exp_config, steps=(1, 1)
+            trial_class=trial_class,
+            hparams=hparams,
+            tmp_path=tmp_path,
+            exp_config=exp_config,
+            steps=(1, 1),
         )
 
-
     def test_pl_mnist_gan(self, tmp_path: pathlib.Path) -> None:
-
         checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
         exp_dir = "gan_mnist_pl"
-        config = utils.load_config(utils.gan_examples_path(os.path.join(exp_dir,'const.yaml')))
+        config = utils.load_config(utils.gan_examples_path(os.path.join(exp_dir, "const.yaml")))
 
-        hparams = config['hyperparameters']
+        hparams = config["hyperparameters"]
 
         exp_config = utils.make_default_exp_config(
-            hparams, scheduling_unit=1, searcher_metric="validation_loss", checkpoint_dir=checkpoint_dir
+            hparams,
+            scheduling_unit=1,
+            searcher_metric="validation_loss",
+            checkpoint_dir=checkpoint_dir,
         )
         exp_config.update(config)
 
-        example_path = utils.gan_examples_path(os.path.join(exp_dir, 'model_def.py'))
+        example_path = utils.gan_examples_path(os.path.join(exp_dir, "model_def.py"))
         example_context = utils.gan_examples_path(exp_dir)
         trial_module = utils.import_module("GANTrial", example_path, example_context)
         trial_class = getattr(trial_module, "GANTrial")
         trial_class._searcher_metric = "validation_loss"
 
         self.checkpoint_and_restore_no_callbacks(
-            trial_class=trial_class, hparams=hparams, tmp_path=tmp_path, exp_config=exp_config, steps=(1, 1)
+            trial_class=trial_class,
+            hparams=hparams,
+            tmp_path=tmp_path,
+            exp_config=exp_config,
+            steps=(1, 1),
         )
 
-
     def test_pl_mnist(self, tmp_path: pathlib.Path) -> None:
-
         checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
         exp_dir = "mnist_pl"
-        config = utils.load_config(utils.cv_examples_path(os.path.join(exp_dir, 'const.yaml')))
+        config = utils.load_config(utils.cv_examples_path(os.path.join(exp_dir, "const.yaml")))
 
-        hparams = config['hyperparameters']
+        hparams = config["hyperparameters"]
 
         exp_config = utils.make_default_exp_config(
-            hparams, scheduling_unit=1, searcher_metric="validation_loss", checkpoint_dir=checkpoint_dir
+            hparams,
+            scheduling_unit=1,
+            searcher_metric="validation_loss",
+            checkpoint_dir=checkpoint_dir,
         )
         exp_config.update(config)
 
-        example_path = utils.cv_examples_path(os.path.join(exp_dir, 'model_def.py'))
+        example_path = utils.cv_examples_path(os.path.join(exp_dir, "model_def.py"))
         example_context = utils.cv_examples_path(exp_dir)
         trial_module = utils.import_module("MNISTTrial", example_path, example_context)
         trial_class = getattr(trial_module, "MNISTTrial")
         trial_class._searcher_metric = "validation_loss"
 
         self.checkpoint_and_restore_no_callbacks(
-            trial_class=trial_class, hparams=hparams, tmp_path=tmp_path, exp_config=exp_config, steps=(1, 1)
+            trial_class=trial_class,
+            hparams=hparams,
+            tmp_path=tmp_path,
+            exp_config=exp_config,
+            steps=(1, 1),
         )
+
 
 def create_trial_and_trial_controller(
     trial_class: lightning.LightningAdapter,

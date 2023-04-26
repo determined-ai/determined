@@ -364,7 +364,8 @@ class TestKerasTrial:
         )
         controller.run()
 
-#TODO: maybe add TF2 and TF1 images with pytest.mark (We're dropping TF1 images anyway)
+
+# TODO: maybe add TF2 and TF1 images with pytest.mark (We're dropping TF1 images anyway)
 @pytest.mark.TensorFlow
 @pytest.mark.gpu
 def test_cifar10_single_gpu(tmp_path: Path):
@@ -392,25 +393,25 @@ def test_cifar10_single_gpu(tmp_path: Path):
         latest_checkpoint = interceptor.metrics_result()["uuid"]
         steps_completed = trainer.get_steps_completed()
 
-    example_path = utils.cv_examples_path('cifar10_tf_keras/model_def.py')
-    example_context = utils.cv_examples_path('cifar10_tf_keras')
+    example_path = utils.cv_examples_path("cifar10_tf_keras/model_def.py")
+    example_context = utils.cv_examples_path("cifar10_tf_keras")
     trial_module = utils.import_module("CIFARTrial", example_path, example_context)
     trial_cls = getattr(trial_module, "CIFARTrial")
 
     hparams = {
-        'learning_rate': 1.0e-4,
-        'learning_rate_decay': 1.0e-6,
-        'layer1_dropout': 0.25,
-        'layer2_dropout': 0.25,
-        'layer3_dropout': 0.5,
-        'global_batch_size': 32,
-        'width_shift_range': 0.1,
-        'height_shift_range': 0.1,
-        'horizontal_flip': True
+        "learning_rate": 1.0e-4,
+        "learning_rate_decay": 1.0e-6,
+        "layer1_dropout": 0.25,
+        "layer2_dropout": 0.25,
+        "layer3_dropout": 0.5,
+        "global_batch_size": 32,
+        "width_shift_range": 0.1,
+        "height_shift_range": 0.1,
+        "horizontal_flip": True,
     }
 
     exp_config = utils.make_default_exp_config(
-        hparams, scheduling_unit = 1, searcher_metric="random", checkpoint_dir=checkpoint_dir
+        hparams, scheduling_unit=1, searcher_metric="random", checkpoint_dir=checkpoint_dir
     )
     exp_config["data"] = {
         "url": "https://s3-us-west-2.amazonaws.com/determined-ai-datasets/cifar10/cifar-10-python.tar.gz"
@@ -423,7 +424,7 @@ def test_cifar10_single_gpu(tmp_path: Path):
         trial_seed=777,
         exp_config=exp_config,
         checkpoint_dir=checkpoint_dir,
-        expose_gpus=True
+        expose_gpus=True,
     )
     # Verify that train/validate/ckpt doesn't puke.
     controller.run()
@@ -438,24 +439,25 @@ def test_cifar10_single_gpu(tmp_path: Path):
         hparams,
         make_workloads_2(),
         trial_seed=777,
-        exp_config = exp_config,
+        exp_config=exp_config,
         checkpoint_dir=checkpoint_dir,
         latest_checkpoint=latest_checkpoint,
         steps_completed=steps_completed,
-        expose_gpus=True
+        expose_gpus=True,
     )
     controller.run()
+
 
 @pytest.mark.TensorFlow
 @pytest.mark.gpu
 def test_tf2_no_op(tmp_path: Path):
     """
-        Make sure each example:
-         - trains
-         - validates
-         - checkpoints
-         - can load from checkpoint
-        """
+    Make sure each example:
+     - trains
+     - validates
+     - checkpoints
+     - can load from checkpoint
+    """
     checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
     latest_checkpoint = None
     steps_completed = 0
@@ -473,14 +475,12 @@ def test_tf2_no_op(tmp_path: Path):
         latest_checkpoint = interceptor.metrics_result()["uuid"]
         steps_completed = trainer.get_steps_completed()
 
-    example_path = utils.fixtures_path('keras_tf2_disabled_no_op/model_def.py')
+    example_path = utils.fixtures_path("keras_tf2_disabled_no_op/model_def.py")
     trial_module = utils.import_module("NoopKerasTrial", example_path)
     trial_cls = getattr(trial_module, "NoopKerasTrial")
     trial_cls._searcher_metric = "random"
 
-    hparams = {
-        'global_batch_size': 8
-    }
+    hparams = {"global_batch_size": 8}
 
     controller = utils.make_trial_controller_from_trial_implementation(
         trial_cls,
@@ -492,11 +492,13 @@ def test_tf2_no_op(tmp_path: Path):
     # Verify that train/validate/ckpt doesn't puke.
     controller.run()
 
+
 @pytest.mark.parametrize("ckpt_ver", ["0.17.6", "0.17.7"])
 def test_checkpoint_loading(ckpt_ver):
     checkpoint_dir = os.path.join(utils.fixtures_path("ancient-checkpoints"), f"{ckpt_ver}-keras")
     model = keras.load_model_from_checkpoint_path(checkpoint_dir)
     assert isinstance(model, tf.keras.models.Model), type(model)
+
 
 def test_surface_native_error():
     def make_workloads() -> workload.Stream:

@@ -340,16 +340,17 @@ def test_checkpoint_loading(ckpt_ver):
     estm = estimator.load_estimator_from_checkpoint_path(checkpoint_dir)
     assert isinstance(estm, tracking.AutoTrackable), type(estm)
 
+
 @pytest.mark.TensorFlow
 @pytest.mark.gpu
 def test_mnist_estimator(tmp_path: Path):
     """
-        Make sure each example:
-         - trains
-         - validates
-         - checkpoints
-         - can load from checkpoint
-        """
+    Make sure each example:
+     - trains
+     - validates
+     - checkpoints
+     - can load from checkpoint
+    """
     checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
     latest_checkpoint = None
     steps_completed = 0
@@ -367,17 +368,17 @@ def test_mnist_estimator(tmp_path: Path):
         latest_checkpoint = interceptor.metrics_result()["uuid"]
         steps_completed = trainer.get_steps_completed()
 
-    example_path = utils.cv_examples_path('mnist_estimator/model_def.py')
+    example_path = utils.cv_examples_path("mnist_estimator/model_def.py")
     trial_module = utils.import_module("MNistTrial", example_path)
     trial_cls = getattr(trial_module, "MNistTrial")
 
     hparams = {
-        'learning_rate': 1.0e-3,
-        'global_batch_size': 64,
-        'hidden_layer_1': 2500,
-        'hidden_layer_2': 1000,
-        'hidden_layer_3': 500,
-        'dropout': 0.5
+        "learning_rate": 1.0e-3,
+        "global_batch_size": 64,
+        "hidden_layer_1": 2500,
+        "hidden_layer_2": 1000,
+        "hidden_layer_3": 500,
+        "dropout": 0.5,
     }
 
     exp_config = utils.make_default_exp_config(
@@ -391,7 +392,7 @@ def test_mnist_estimator(tmp_path: Path):
         trial_seed=777,
         exp_config=exp_config,
         checkpoint_dir=checkpoint_dir,
-        expose_gpus=False
+        expose_gpus=False,
     )
     # Verify that train/validate/ckpt doesn't puke.
     controller.run()
@@ -410,7 +411,7 @@ def test_mnist_estimator(tmp_path: Path):
         checkpoint_dir=checkpoint_dir,
         latest_checkpoint=latest_checkpoint,
         steps_completed=steps_completed,
-        expose_gpus=False
+        expose_gpus=False,
     )
 
     controller.run()
