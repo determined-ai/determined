@@ -16,9 +16,12 @@
   display: grid;
   gap: 8px;
   grid-template-columns: 1fr 1fr min-content;
-  justify-content: space-between;
 
   .select {
     min-width: 0;
   }
+}
+.actions {
+  display: flex;
+  justify-content: space-between;
 }

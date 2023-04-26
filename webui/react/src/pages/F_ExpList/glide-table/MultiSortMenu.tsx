@@ -118,6 +118,7 @@ const MultiSort: React.FC<MultiSortProps> = ({ sorts, columns, onChange }) => {
     onChange(newSorts.length > 0 ? newSorts : INITIAL_SORTS);
   };
   const addRow = () => onChange([...sorts, { column: undefined, direction: undefined }]);
+  const clearAll = () => onChange(INITIAL_SORTS);
 
   return (
     <div className={css.base}>
@@ -139,9 +140,12 @@ const MultiSort: React.FC<MultiSortProps> = ({ sorts, columns, onChange }) => {
           );
         })}
       </div>
-      <div>
+      <div className={css.actions}>
         <Button type="text" onClick={addRow}>
           <Icon name="add-small" size="tiny" /> Add condition
+        </Button>
+        <Button type="text" onClick={clearAll}>
+          Clear all
         </Button>
       </div>
     </div>
