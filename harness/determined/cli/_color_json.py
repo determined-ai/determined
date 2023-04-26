@@ -1,8 +1,9 @@
 # test string:
 #    echo '{"a": "b", "c": ["1", 2.0, 3.1, 5, "4", {"d": true, "e": null, "f": [1, 2, 3]}]}'
 
-import sys
 import json
+import sys
+from typing import Any, TextIO
 
 grn = "\x1b[32m"
 blu = "\x1b[94m"
@@ -10,7 +11,7 @@ gry = "\x1b[90m"
 res = "\x1b[m"
 
 
-def render_json(obj, out, indent="  "):
+def render_json(obj: Any, out: TextIO, indent="  "):
     def do_render(obj, depth=0):
         if obj is None:
             out.write(gry)
