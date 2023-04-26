@@ -59,7 +59,6 @@ class TensorboardManager(metaclass=abc.ABCMeta):
         """
 
         if not self.base_path.exists():
-            logging.warning(f"{self.base_path} directory does not exist.")
             return []
         return [
             file
