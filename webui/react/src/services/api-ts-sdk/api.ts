@@ -1720,6 +1720,18 @@ export interface V1ColumnFilter {
     filter?: V1DoubleFieldFilter;
 }
 /**
+ * - COLUMN_TYPE_UNSPECIFIED: data type is unknown/mixed  - COLUMN_TYPE_TEXT: data type is textual  - COLUMN_TYPE_NUMBER: data type is numeric  - COLUMN_TYPE_DATE: data type is a date
+ * @export
+ * @enum {string}
+ */
+export const V1ColumnType = {
+    UNSPECIFIED: 'COLUMN_TYPE_UNSPECIFIED',
+    TEXT: 'COLUMN_TYPE_TEXT',
+    NUMBER: 'COLUMN_TYPE_NUMBER',
+    DATE: 'COLUMN_TYPE_DATE',
+} as const
+export type V1ColumnType = ValueOf<typeof V1ColumnType>
+/**
  * Command is a single container running the configured command.
  * @export
  * @interface V1Command
@@ -1812,10 +1824,10 @@ export interface V1ComparableTrial {
     trial: Trialv1Trial;
     /**
      * The downsampled datapoints.
-     * @type {Array<V1SummarizedMetric>}
+     * @type {Array<V1DownsampledMetrics>}
      * @memberof V1ComparableTrial
      */
-    metrics: Array<V1SummarizedMetric>;
+    metrics: Array<V1DownsampledMetrics>;
 }
 /**
  * Response to CompareTrialsRequest.
@@ -2106,11 +2118,11 @@ export interface V1DataPoint {
      */
     batches: number;
     /**
-     * Value of the requested metric at this point in the trial.
-     * @type {number}
+     * Values of the requested metrics at this point in the trial.
+     * @type {any}
      * @memberof V1DataPoint
      */
-    value: number;
+    values?: any;
     /**
      * The time the measurement is taken.
      * @type {Date}
@@ -2382,6 +2394,25 @@ export interface V1DoubleFieldFilter {
      * @memberof V1DoubleFieldFilter
      */
     gte?: number;
+}
+/**
+ * DownsampledMetrics captures a metric's name and downsampled data points.
+ * @export
+ * @interface V1DownsampledMetrics
+ */
+export interface V1DownsampledMetrics {
+    /**
+     * A possibly down-sampled series of metrics' readings through the progress of the trial.
+     * @type {Array<V1DataPoint>}
+     * @memberof V1DownsampledMetrics
+     */
+    data: Array<V1DataPoint>;
+    /**
+     * Type of metrics (training, validation, or unset).
+     * @type {V1MetricType}
+     * @memberof V1DownsampledMetrics
+     */
+    type: V1MetricType;
 }
 /**
  * Response to EnableAgentRequest.
@@ -2799,30 +2830,6 @@ export const V1FittingPolicy = {
     PBS: 'FITTING_POLICY_PBS',
 } as const
 export type V1FittingPolicy = ValueOf<typeof V1FittingPolicy>
-/**
- * GeneralColumn is the pre-defined column names for experiment list table.   - GENERAL_COLUMN_UNSPECIFIED: Unspecified column.  - GENERAL_COLUMN_ID: Column id.  - GENERAL_COLUMN_NAME: Column name.  - GENERAL_COLUMN_DESCRIPTION: Column description.  - GENERAL_COLUMN_TAGS: Column tags.  - GENERAL_COLUMN_FORKED: Column forked.  - GENERAL_COLUMN_STARTTIME: Column starttime.  - GENERAL_COLUMN_DURATION: Column duration.  - GENERAL_COLUMN_COUNT: Column trial count.  - GENERAL_COLUMN_STATE: Column state.  - GENERAL_COLUMN_SEARCHER_TYPE: Column searcher type.  - GENERAL_COLUMN_RESOURSE_POOL: Column resourse pool.  - GENERAL_COLUMN_PROGRESS: Column progress.  - GENERAL_COLUMN_CHECKPOINT_SIZE: Column checkpoint size.  - GENERAL_COLUMN_CHECKPOINT_COUNT: Column checkpoint count.  - GENERAL_COLUMN_USER: Column user.
- * @export
- * @enum {string}
- */
-export const V1GeneralColumn = {
-    UNSPECIFIED: 'GENERAL_COLUMN_UNSPECIFIED',
-    ID: 'GENERAL_COLUMN_ID',
-    NAME: 'GENERAL_COLUMN_NAME',
-    DESCRIPTION: 'GENERAL_COLUMN_DESCRIPTION',
-    TAGS: 'GENERAL_COLUMN_TAGS',
-    FORKED: 'GENERAL_COLUMN_FORKED',
-    STARTTIME: 'GENERAL_COLUMN_STARTTIME',
-    DURATION: 'GENERAL_COLUMN_DURATION',
-    COUNT: 'GENERAL_COLUMN_COUNT',
-    STATE: 'GENERAL_COLUMN_STATE',
-    SEARCHERTYPE: 'GENERAL_COLUMN_SEARCHER_TYPE',
-    RESOURSEPOOL: 'GENERAL_COLUMN_RESOURSE_POOL',
-    PROGRESS: 'GENERAL_COLUMN_PROGRESS',
-    CHECKPOINTSIZE: 'GENERAL_COLUMN_CHECKPOINT_SIZE',
-    CHECKPOINTCOUNT: 'GENERAL_COLUMN_CHECKPOINT_COUNT',
-    USER: 'GENERAL_COLUMN_USER',
-} as const
-export type V1GeneralColumn = ValueOf<typeof V1GeneralColumn>
 /**
  * Response to GetActiveTasksCountRequest.
  * @export
@@ -3628,23 +3635,11 @@ export interface V1GetPermissionsSummaryResponse {
  */
 export interface V1GetProjectColumnsResponse {
     /**
-     * List of general columns.
-     * @type {Array<V1GeneralColumn>}
+     * List of columns.
+     * @type {Array<V1ProjectColumn>}
      * @memberof V1GetProjectColumnsResponse
      */
-    general: Array<V1GeneralColumn>;
-    /**
-     * List of hyperparameters.
-     * @type {Array<string>}
-     * @memberof V1GetProjectColumnsResponse
-     */
-    hyperparameters: Array<string>;
-    /**
-     * List of metrics.
-     * @type {Array<string>}
-     * @memberof V1GetProjectColumnsResponse
-     */
-    metrics: Array<string>;
+    columns: Array<V1ProjectColumn>;
 }
 /**
  * Response to GetProjectRequest.
@@ -4973,6 +4968,18 @@ export interface V1ListRolesResponse {
      */
     pagination: V1Pagination;
 }
+/**
+ * - LOCATION_TYPE_UNSPECIFIED: Location unknown  - LOCATION_TYPE_EXPERIMENT: Column is located on the experiment  - LOCATION_TYPE_HYPERPARAMETERS: Column is located in the hyperparameter config of the experiment  - LOCATION_TYPE_VALIDATIONS: Column is located on the experiment's validation metrics
+ * @export
+ * @enum {string}
+ */
+export const V1LocationType = {
+    UNSPECIFIED: 'LOCATION_TYPE_UNSPECIFIED',
+    EXPERIMENT: 'LOCATION_TYPE_EXPERIMENT',
+    HYPERPARAMETERS: 'LOCATION_TYPE_HYPERPARAMETERS',
+    VALIDATIONS: 'LOCATION_TYPE_VALIDATIONS',
+} as const
+export type V1LocationType = ValueOf<typeof V1LocationType>
 /**
  * LogEntry is a log event.
  * @export
@@ -6793,6 +6800,37 @@ export interface V1Project {
     errorMessage: string;
 }
 /**
+ * Project Column is a description of a column used on experiments in the project.
+ * @export
+ * @interface V1ProjectColumn
+ */
+export interface V1ProjectColumn {
+    /**
+     * Raw column name.
+     * @type {string}
+     * @memberof V1ProjectColumn
+     */
+    column: string;
+    /**
+     * Where the column comes from.
+     * @type {V1LocationType}
+     * @memberof V1ProjectColumn
+     */
+    location: V1LocationType;
+    /**
+     * Type of data in the column.
+     * @type {V1ColumnType}
+     * @memberof V1ProjectColumn
+     */
+    type: V1ColumnType;
+    /**
+     * Human-friendly name.
+     * @type {string}
+     * @memberof V1ProjectColumn
+     */
+    displayName?: string;
+}
+/**
  * ProxyPortConfig configures a proxy the allocation should start.
  * @export
  * @interface V1ProxyPortConfig
@@ -8462,11 +8500,17 @@ export interface V1Shell {
  */
 export interface V1ShutDownOperation {
     /**
-     * Cannot have an empty message type.
-     * @type {number}
+     * Defines whether the Searcher was cancelled
+     * @type {boolean}
      * @memberof V1ShutDownOperation
      */
-    placeholder?: number;
+    cancel?: boolean;
+    /**
+     * Defines whether the Searcher failed
+     * @type {boolean}
+     * @memberof V1ShutDownOperation
+     */
+    failure?: boolean;
 }
 /**
  * Slot wraps a single device on the agent.
@@ -8525,31 +8569,6 @@ export interface V1SSOProvider {
     ssoUrl: string;
 }
 /**
- * Summarized Metric captures a metric's name and downsampled data points.
- * @export
- * @interface V1SummarizedMetric
- */
-export interface V1SummarizedMetric {
-    /**
-     * Name of the selected metric.
-     * @type {string}
-     * @memberof V1SummarizedMetric
-     */
-    name: string;
-    /**
-     * A possibly down-sampled series of metric readings through the progress of the trial.
-     * @type {Array<V1DataPoint>}
-     * @memberof V1SummarizedMetric
-     */
-    data: Array<V1DataPoint>;
-    /**
-     * Type of metrics (training, validation, or unset).
-     * @type {V1MetricType}
-     * @memberof V1SummarizedMetric
-     */
-    type: V1MetricType;
-}
-/**
  * Response to SummarizeTrialRequest.
  * @export
  * @interface V1SummarizeTrialResponse
@@ -8563,10 +8582,10 @@ export interface V1SummarizeTrialResponse {
     trial: Trialv1Trial;
     /**
      * The downsampled datapoints.
-     * @type {Array<V1SummarizedMetric>}
+     * @type {Array<V1DownsampledMetrics>}
      * @memberof V1SummarizeTrialResponse
      */
-    metrics: Array<V1SummarizedMetric>;
+    metrics: Array<V1DownsampledMetrics>;
 }
 /**
  * Task is the model for a task in the database.
@@ -10075,18 +10094,6 @@ export const V1WorkspaceState = {
     DELETED: 'WORKSPACE_STATE_DELETED',
 } as const
 export type V1WorkspaceState = ValueOf<typeof V1WorkspaceState>
-/**
- * XAxis options available in metrics charts.   - X_AXIS_UNSPECIFIED: Unknown x-axis.  - X_AXIS_BATCH: x-axis in batch. This is the default x-axis.  - X_AXIS_TIME: x-axis in time.  - X_AXIS_EPOCH: x-axis in epoch.
- * @export
- * @enum {string}
- */
-export const V1XAxis = {
-    UNSPECIFIED: 'X_AXIS_UNSPECIFIED',
-    BATCH: 'X_AXIS_BATCH',
-    TIME: 'X_AXIS_TIME',
-    EPOCH: 'X_AXIS_EPOCH',
-} as const
-export type V1XAxis = ValueOf<typeof V1XAxis>
 /**
  * AuthenticationApi - fetch parameter creator
  * @export
@@ -12499,7 +12506,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
         },
         /**
          * 
-         * @summary Return downsampled metrics from multiple trials to compare them side-by-side.
+         * @summary Return a downsampled time series of metrics from multiple trials to compare them side-by-side.
          * @param {Array<number>} [trialIds] The requested trial ids.
          * @param {number} [maxDatapoints] The maximum number of data points to return after downsampling.
          * @param {Array<string>} [metricNames] The names of selected metrics.
@@ -12507,7 +12514,6 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {number} [endBatches] Sample from metrics before this batch number.
          * @param {V1MetricType} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
          * @param {V1Scale} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
-         * @param {V1XAxis} [xAxis] x-axis selection. Default is in batch.   - X_AXIS_UNSPECIFIED: Unknown x-axis.  - X_AXIS_BATCH: x-axis in batch. This is the default x-axis.  - X_AXIS_TIME: x-axis in time.  - X_AXIS_EPOCH: x-axis in epoch.
          * @param {Array<string>} [metricIds] metric ids for the query.
          * @param {string} [timeSeriesFilterName] metric or column name for the filter.
          * @param {number} [timeSeriesFilterDoubleRangeLt] Less than.
@@ -12527,8 +12533,8 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: V1MetricType, scale?: V1Scale, xAxis?: V1XAxis, metricIds?: Array<string>, timeSeriesFilterName?: string, timeSeriesFilterDoubleRangeLt?: number, timeSeriesFilterDoubleRangeLte?: number, timeSeriesFilterDoubleRangeGt?: number, timeSeriesFilterDoubleRangeGte?: number, timeSeriesFilterIntegerRangeLt?: number, timeSeriesFilterIntegerRangeLte?: number, timeSeriesFilterIntegerRangeGt?: number, timeSeriesFilterIntegerRangeGte?: number, timeSeriesFilterIntegerRangeIncl?: Array<number>, timeSeriesFilterIntegerRangeNotIn?: Array<number>, timeSeriesFilterTimeRangeLt?: Date, timeSeriesFilterTimeRangeLte?: Date, timeSeriesFilterTimeRangeGt?: Date, timeSeriesFilterTimeRangeGte?: Date, options: any = {}): FetchArgs {
-            const localVarPath = `/api/v1/trials/compare`;
+        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: V1MetricType, scale?: V1Scale, metricIds?: Array<string>, timeSeriesFilterName?: string, timeSeriesFilterDoubleRangeLt?: number, timeSeriesFilterDoubleRangeLte?: number, timeSeriesFilterDoubleRangeGt?: number, timeSeriesFilterDoubleRangeGte?: number, timeSeriesFilterIntegerRangeLt?: number, timeSeriesFilterIntegerRangeLte?: number, timeSeriesFilterIntegerRangeGt?: number, timeSeriesFilterIntegerRangeGte?: number, timeSeriesFilterIntegerRangeIncl?: Array<number>, timeSeriesFilterIntegerRangeNotIn?: Array<number>, timeSeriesFilterTimeRangeLt?: Date, timeSeriesFilterTimeRangeLte?: Date, timeSeriesFilterTimeRangeGt?: Date, timeSeriesFilterTimeRangeGte?: Date, options: any = {}): FetchArgs {
+            const localVarPath = `/api/v1/trials/time-series`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
@@ -12568,10 +12574,6 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             
             if (scale !== undefined) {
                 localVarQueryParameter['scale'] = scale
-            }
-            
-            if (xAxis !== undefined) {
-                localVarQueryParameter['xAxis'] = xAxis
             }
             
             if (metricIds) {
@@ -14204,7 +14206,7 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Return downsampled metrics from multiple trials to compare them side-by-side.
+         * @summary Return a downsampled time series of metrics from multiple trials to compare them side-by-side.
          * @param {Array<number>} [trialIds] The requested trial ids.
          * @param {number} [maxDatapoints] The maximum number of data points to return after downsampling.
          * @param {Array<string>} [metricNames] The names of selected metrics.
@@ -14212,7 +14214,6 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
          * @param {number} [endBatches] Sample from metrics before this batch number.
          * @param {V1MetricType} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
          * @param {V1Scale} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
-         * @param {V1XAxis} [xAxis] x-axis selection. Default is in batch.   - X_AXIS_UNSPECIFIED: Unknown x-axis.  - X_AXIS_BATCH: x-axis in batch. This is the default x-axis.  - X_AXIS_TIME: x-axis in time.  - X_AXIS_EPOCH: x-axis in epoch.
          * @param {Array<string>} [metricIds] metric ids for the query.
          * @param {string} [timeSeriesFilterName] metric or column name for the filter.
          * @param {number} [timeSeriesFilterDoubleRangeLt] Less than.
@@ -14232,8 +14233,8 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: V1MetricType, scale?: V1Scale, xAxis?: V1XAxis, metricIds?: Array<string>, timeSeriesFilterName?: string, timeSeriesFilterDoubleRangeLt?: number, timeSeriesFilterDoubleRangeLte?: number, timeSeriesFilterDoubleRangeGt?: number, timeSeriesFilterDoubleRangeGte?: number, timeSeriesFilterIntegerRangeLt?: number, timeSeriesFilterIntegerRangeLte?: number, timeSeriesFilterIntegerRangeGt?: number, timeSeriesFilterIntegerRangeGte?: number, timeSeriesFilterIntegerRangeIncl?: Array<number>, timeSeriesFilterIntegerRangeNotIn?: Array<number>, timeSeriesFilterTimeRangeLt?: Date, timeSeriesFilterTimeRangeLte?: Date, timeSeriesFilterTimeRangeGt?: Date, timeSeriesFilterTimeRangeGte?: Date, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CompareTrialsResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).compareTrials(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, xAxis, metricIds, timeSeriesFilterName, timeSeriesFilterDoubleRangeLt, timeSeriesFilterDoubleRangeLte, timeSeriesFilterDoubleRangeGt, timeSeriesFilterDoubleRangeGte, timeSeriesFilterIntegerRangeLt, timeSeriesFilterIntegerRangeLte, timeSeriesFilterIntegerRangeGt, timeSeriesFilterIntegerRangeGte, timeSeriesFilterIntegerRangeIncl, timeSeriesFilterIntegerRangeNotIn, timeSeriesFilterTimeRangeLt, timeSeriesFilterTimeRangeLte, timeSeriesFilterTimeRangeGt, timeSeriesFilterTimeRangeGte, options);
+        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: V1MetricType, scale?: V1Scale, metricIds?: Array<string>, timeSeriesFilterName?: string, timeSeriesFilterDoubleRangeLt?: number, timeSeriesFilterDoubleRangeLte?: number, timeSeriesFilterDoubleRangeGt?: number, timeSeriesFilterDoubleRangeGte?: number, timeSeriesFilterIntegerRangeLt?: number, timeSeriesFilterIntegerRangeLte?: number, timeSeriesFilterIntegerRangeGt?: number, timeSeriesFilterIntegerRangeGte?: number, timeSeriesFilterIntegerRangeIncl?: Array<number>, timeSeriesFilterIntegerRangeNotIn?: Array<number>, timeSeriesFilterTimeRangeLt?: Date, timeSeriesFilterTimeRangeLte?: Date, timeSeriesFilterTimeRangeGt?: Date, timeSeriesFilterTimeRangeGte?: Date, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CompareTrialsResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).compareTrials(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, metricIds, timeSeriesFilterName, timeSeriesFilterDoubleRangeLt, timeSeriesFilterDoubleRangeLte, timeSeriesFilterDoubleRangeGt, timeSeriesFilterDoubleRangeGte, timeSeriesFilterIntegerRangeLt, timeSeriesFilterIntegerRangeLte, timeSeriesFilterIntegerRangeGt, timeSeriesFilterIntegerRangeGte, timeSeriesFilterIntegerRangeIncl, timeSeriesFilterIntegerRangeNotIn, timeSeriesFilterTimeRangeLt, timeSeriesFilterTimeRangeLte, timeSeriesFilterTimeRangeGt, timeSeriesFilterTimeRangeGte, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -14945,7 +14946,7 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
         },
         /**
          * 
-         * @summary Return downsampled metrics from multiple trials to compare them side-by-side.
+         * @summary Return a downsampled time series of metrics from multiple trials to compare them side-by-side.
          * @param {Array<number>} [trialIds] The requested trial ids.
          * @param {number} [maxDatapoints] The maximum number of data points to return after downsampling.
          * @param {Array<string>} [metricNames] The names of selected metrics.
@@ -14953,7 +14954,6 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {number} [endBatches] Sample from metrics before this batch number.
          * @param {V1MetricType} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
          * @param {V1Scale} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
-         * @param {V1XAxis} [xAxis] x-axis selection. Default is in batch.   - X_AXIS_UNSPECIFIED: Unknown x-axis.  - X_AXIS_BATCH: x-axis in batch. This is the default x-axis.  - X_AXIS_TIME: x-axis in time.  - X_AXIS_EPOCH: x-axis in epoch.
          * @param {Array<string>} [metricIds] metric ids for the query.
          * @param {string} [timeSeriesFilterName] metric or column name for the filter.
          * @param {number} [timeSeriesFilterDoubleRangeLt] Less than.
@@ -14973,8 +14973,8 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: V1MetricType, scale?: V1Scale, xAxis?: V1XAxis, metricIds?: Array<string>, timeSeriesFilterName?: string, timeSeriesFilterDoubleRangeLt?: number, timeSeriesFilterDoubleRangeLte?: number, timeSeriesFilterDoubleRangeGt?: number, timeSeriesFilterDoubleRangeGte?: number, timeSeriesFilterIntegerRangeLt?: number, timeSeriesFilterIntegerRangeLte?: number, timeSeriesFilterIntegerRangeGt?: number, timeSeriesFilterIntegerRangeGte?: number, timeSeriesFilterIntegerRangeIncl?: Array<number>, timeSeriesFilterIntegerRangeNotIn?: Array<number>, timeSeriesFilterTimeRangeLt?: Date, timeSeriesFilterTimeRangeLte?: Date, timeSeriesFilterTimeRangeGt?: Date, timeSeriesFilterTimeRangeGte?: Date, options?: any) {
-            return ExperimentsApiFp(configuration).compareTrials(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, xAxis, metricIds, timeSeriesFilterName, timeSeriesFilterDoubleRangeLt, timeSeriesFilterDoubleRangeLte, timeSeriesFilterDoubleRangeGt, timeSeriesFilterDoubleRangeGte, timeSeriesFilterIntegerRangeLt, timeSeriesFilterIntegerRangeLte, timeSeriesFilterIntegerRangeGt, timeSeriesFilterIntegerRangeGte, timeSeriesFilterIntegerRangeIncl, timeSeriesFilterIntegerRangeNotIn, timeSeriesFilterTimeRangeLt, timeSeriesFilterTimeRangeLte, timeSeriesFilterTimeRangeGt, timeSeriesFilterTimeRangeGte, options)(fetch, basePath);
+        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: V1MetricType, scale?: V1Scale, metricIds?: Array<string>, timeSeriesFilterName?: string, timeSeriesFilterDoubleRangeLt?: number, timeSeriesFilterDoubleRangeLte?: number, timeSeriesFilterDoubleRangeGt?: number, timeSeriesFilterDoubleRangeGte?: number, timeSeriesFilterIntegerRangeLt?: number, timeSeriesFilterIntegerRangeLte?: number, timeSeriesFilterIntegerRangeGt?: number, timeSeriesFilterIntegerRangeGte?: number, timeSeriesFilterIntegerRangeIncl?: Array<number>, timeSeriesFilterIntegerRangeNotIn?: Array<number>, timeSeriesFilterTimeRangeLt?: Date, timeSeriesFilterTimeRangeLte?: Date, timeSeriesFilterTimeRangeGt?: Date, timeSeriesFilterTimeRangeGte?: Date, options?: any) {
+            return ExperimentsApiFp(configuration).compareTrials(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, metricIds, timeSeriesFilterName, timeSeriesFilterDoubleRangeLt, timeSeriesFilterDoubleRangeLte, timeSeriesFilterDoubleRangeGt, timeSeriesFilterDoubleRangeGte, timeSeriesFilterIntegerRangeLt, timeSeriesFilterIntegerRangeLte, timeSeriesFilterIntegerRangeGt, timeSeriesFilterIntegerRangeGte, timeSeriesFilterIntegerRangeIncl, timeSeriesFilterIntegerRangeNotIn, timeSeriesFilterTimeRangeLt, timeSeriesFilterTimeRangeLte, timeSeriesFilterTimeRangeGt, timeSeriesFilterTimeRangeGte, options)(fetch, basePath);
         },
         /**
          * 
@@ -15420,7 +15420,7 @@ export class ExperimentsApi extends BaseAPI {
     
     /**
      * 
-     * @summary Return downsampled metrics from multiple trials to compare them side-by-side.
+     * @summary Return a downsampled time series of metrics from multiple trials to compare them side-by-side.
      * @param {Array<number>} [trialIds] The requested trial ids.
      * @param {number} [maxDatapoints] The maximum number of data points to return after downsampling.
      * @param {Array<string>} [metricNames] The names of selected metrics.
@@ -15428,7 +15428,6 @@ export class ExperimentsApi extends BaseAPI {
      * @param {number} [endBatches] Sample from metrics before this batch number.
      * @param {V1MetricType} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
      * @param {V1Scale} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
-     * @param {V1XAxis} [xAxis] x-axis selection. Default is in batch.   - X_AXIS_UNSPECIFIED: Unknown x-axis.  - X_AXIS_BATCH: x-axis in batch. This is the default x-axis.  - X_AXIS_TIME: x-axis in time.  - X_AXIS_EPOCH: x-axis in epoch.
      * @param {Array<string>} [metricIds] metric ids for the query.
      * @param {string} [timeSeriesFilterName] metric or column name for the filter.
      * @param {number} [timeSeriesFilterDoubleRangeLt] Less than.
@@ -15449,8 +15448,8 @@ export class ExperimentsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: V1MetricType, scale?: V1Scale, xAxis?: V1XAxis, metricIds?: Array<string>, timeSeriesFilterName?: string, timeSeriesFilterDoubleRangeLt?: number, timeSeriesFilterDoubleRangeLte?: number, timeSeriesFilterDoubleRangeGt?: number, timeSeriesFilterDoubleRangeGte?: number, timeSeriesFilterIntegerRangeLt?: number, timeSeriesFilterIntegerRangeLte?: number, timeSeriesFilterIntegerRangeGt?: number, timeSeriesFilterIntegerRangeGte?: number, timeSeriesFilterIntegerRangeIncl?: Array<number>, timeSeriesFilterIntegerRangeNotIn?: Array<number>, timeSeriesFilterTimeRangeLt?: Date, timeSeriesFilterTimeRangeLte?: Date, timeSeriesFilterTimeRangeGt?: Date, timeSeriesFilterTimeRangeGte?: Date, options?: any) {
-        return ExperimentsApiFp(this.configuration).compareTrials(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, xAxis, metricIds, timeSeriesFilterName, timeSeriesFilterDoubleRangeLt, timeSeriesFilterDoubleRangeLte, timeSeriesFilterDoubleRangeGt, timeSeriesFilterDoubleRangeGte, timeSeriesFilterIntegerRangeLt, timeSeriesFilterIntegerRangeLte, timeSeriesFilterIntegerRangeGt, timeSeriesFilterIntegerRangeGte, timeSeriesFilterIntegerRangeIncl, timeSeriesFilterIntegerRangeNotIn, timeSeriesFilterTimeRangeLt, timeSeriesFilterTimeRangeLte, timeSeriesFilterTimeRangeGt, timeSeriesFilterTimeRangeGte, options)(this.fetch, this.basePath)
+    public compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: V1MetricType, scale?: V1Scale, metricIds?: Array<string>, timeSeriesFilterName?: string, timeSeriesFilterDoubleRangeLt?: number, timeSeriesFilterDoubleRangeLte?: number, timeSeriesFilterDoubleRangeGt?: number, timeSeriesFilterDoubleRangeGte?: number, timeSeriesFilterIntegerRangeLt?: number, timeSeriesFilterIntegerRangeLte?: number, timeSeriesFilterIntegerRangeGt?: number, timeSeriesFilterIntegerRangeGte?: number, timeSeriesFilterIntegerRangeIncl?: Array<number>, timeSeriesFilterIntegerRangeNotIn?: Array<number>, timeSeriesFilterTimeRangeLt?: Date, timeSeriesFilterTimeRangeLte?: Date, timeSeriesFilterTimeRangeGt?: Date, timeSeriesFilterTimeRangeGte?: Date, options?: any) {
+        return ExperimentsApiFp(this.configuration).compareTrials(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, metricIds, timeSeriesFilterName, timeSeriesFilterDoubleRangeLt, timeSeriesFilterDoubleRangeLte, timeSeriesFilterDoubleRangeGt, timeSeriesFilterDoubleRangeGte, timeSeriesFilterIntegerRangeLt, timeSeriesFilterIntegerRangeLte, timeSeriesFilterIntegerRangeGt, timeSeriesFilterIntegerRangeGte, timeSeriesFilterIntegerRangeIncl, timeSeriesFilterIntegerRangeNotIn, timeSeriesFilterTimeRangeLt, timeSeriesFilterTimeRangeLte, timeSeriesFilterTimeRangeGt, timeSeriesFilterTimeRangeGte, options)(this.fetch, this.basePath)
     }
     
     /**

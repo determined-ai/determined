@@ -100,7 +100,7 @@ type ExperimentFilter struct {
 	Value       *interface{}
 	Kind        FilterType
 	ColumnName  string
-	Location    *string
+	Location    *projectv1.LocationType
 }
 
 func (o *Operator) toSql() string {
@@ -117,58 +117,110 @@ func (o *Operator) toSql() string {
 	case GREATER_THAN_OR_EQUAL:
 		s = ">="
 	case EMPTY:
-		s = "NULL"
+		s = "IS NULL"
 	case NOT_EMPTY:
-		s = "NOT NULL"
+		s = "IS NOT NULL"
 	default:
 		panic(fmt.Sprintf("Invalid operator %v", *o))
 	}
 	return s
 }
 
-func containsOperatorSql(o Operator, v interface{}) string {
+func containsOperatorSql(o Operator, v *interface{}) (string, error) {
 	var s string
 	switch o {
 	case CONTAINS:
-		s = "LIKE %" + v.(string) + "%"
+		s = "LIKE '%" + fmt.Sprintf(`%v`, *v) + "%'"
 	case DOES_NOT_CONTAIN:
-		s = "NOT LIKE %" + v.(string) + "%"
+		s = "NOT LIKE '%" + fmt.Sprintf(`%v`, *v) + "%'"
 	default:
-		panic(fmt.Sprintf("Invalid contains perator %v", o))
+		return s, fmt.Errorf("invalid contains operator %v", o)
 	}
-	return s
+	return s, nil
 }
 
-func columnNameToSql(c string, l *string) string {
-	var s string
-	switch o {
-	case CONTAINS:
-		s = "LIKE %" + v.(string) + "%"
-	case DOES_NOT_CONTAIN:
-		s = "NOT LIKE %" + v.(string) + "%"
-	default:
-		panic(fmt.Sprintf("Invalid contains perator %v", o))
+func columnNameToSql(c string, l *projectv1.LocationType) (string, error) {
+	var lo projectv1.LocationType
+	if l == nil {
+		lo = projectv1.LocationType_LOCATION_TYPE_EXPERIMENT
+	} else {
+		lo = *l
 	}
-	return s
+
+	filterExperimentColMap := map[string]string{
+		"id":              "e.id",
+		"description":     "e.config->>'description'",
+		"name":            "e.config->>'name'",
+		"startTime":       "e.start_time",
+		"endTime":         "e.end_time",
+		"state":           "e.state",
+		"numTrials":       "(SELECT COUNT(*) FROM trials t WHERE e.id = t.experiment_id)",
+		"progress":        "COALESCE(progress, 0)",
+		"user":            "COALESCE(u.display_name, u.username)",
+		"forkedFrom":      "e.parent_id",
+		"resourcePool":    "e.config->'resources'->>'resource_pool'",
+		"projectId":       "project_id",
+		"checkpointSize":  "checkpoint_size",
+		"checkpointCount": "checkpoint_count",
+		"searcherMetricsVal": `(
+			SELECT
+				searcher_metric_value
+			FROM trials t
+			WHERE t.experiment_id = e.id
+			ORDER BY (CASE
+				WHEN coalesce((config->'searcher'->>'smaller_is_better')::boolean, true)
+					THEN searcher_metric_value
+					ELSE -1.0 * searcher_metric_value
+			END) ASC
+			LIMIT 1
+		 ) `,
+	}
+
+	if lo != projectv1.LocationType_LOCATION_TYPE_EXPERIMENT {
+		return c, fmt.Errorf("currently do not support %v", lo)
+	}
+
+	col, exists := filterExperimentColMap[c]
+
+	if !exists {
+		return c, fmt.Errorf("invalid experiment column %s", col)
+	}
+
+	return col, nil
 }
 
-func (e ExperimentFilter) toSql() string {
+func (e ExperimentFilter) toSql() (string, error) {
 	var s string
 	switch e.Kind {
 	case FIELD:
-		if *e.Operator != CONTAINS && *e.Operator != DOES_NOT_CONTAIN {
-			s = fmt.Sprintf("%v %v %v", e.ColumnName, e.Operator.toSql(), *e.Value)
+		col, err := columnNameToSql(e.ColumnName, e.Location)
+		if *e.Operator == CONTAINS || *e.Operator == DOES_NOT_CONTAIN {
+			oSql, err := containsOperatorSql(*e.Operator, e.Value)
+			if err != nil {
+				return s, err
+			}
+			s = fmt.Sprintf("%v %v", col, oSql)
+		} else if *e.Operator == EMPTY || *e.Operator == NOT_EMPTY {
+			s = col + " " + e.Operator.toSql()
 		} else {
-			s = containsOperatorSql(*e.Operator, e.Value)
+			s = fmt.Sprintf("%v %v %v", col,
+				e.Operator.toSql(), *e.Value)
+		}
+		if err != nil {
+			return s, err
 		}
 	case GROUP:
 		var childSql []string
 		var j string
 		if len(e.Children) == 0 {
-			return "true"
+			return s, nil
 		}
 		for _, c := range e.Children {
-			childSql = append(childSql, c.toSql())
+			cSql, err := c.toSql()
+			if err != nil {
+				return j, nil
+			}
+			childSql = append(childSql, cSql)
 		}
 		switch *e.Conjunction {
 		case AND:
@@ -181,7 +233,7 @@ func (e ExperimentFilter) toSql() string {
 		s = fmt.Sprintf("(%v)", strings.Join(childSql, j))
 
 	}
-	return s
+	return s, nil
 }
 
 // Enrich one or more experiments by converting Active state to Queued/Pulling/Starting/Running.
@@ -2562,14 +2614,12 @@ func (a *apiServer) SearchExperiments(
 		if err != nil {
 			return nil, err
 		}
-		fmt.Println("experimentFilter is")
-		fmt.Println(experimentFilter)
-		fmt.Println(experimentFilter.toSql())
-		// filterExpr, err := parseFilter(*req.Filter)
-		// if err != nil {
-		// 	return nil, status.Errorf(codes.Internal, "failed to parse filter string: %s", err)
-		// }
-		// experimentQuery.Where(*filterExpr)
+		filterSql, err := experimentFilter.toSql()
+		if err != nil {
+			return nil, err
+		}
+
+		experimentQuery.Where(filterSql)
 	}
 
 	if req.Sort != nil {
