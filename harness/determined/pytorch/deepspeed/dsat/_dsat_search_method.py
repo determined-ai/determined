@@ -178,6 +178,7 @@ class DSATTrialTracker:
         # Should be using an actual queue here, but neither the `queue` nor the `multiprocessing`
         # `Queue` objects are pickleable with the current code.
         self._trial_queue = []
+        # _queue_idx points to the next to-be-submitted Trial
         self._queue_idx = 0
 
         self._mem_per_gpu_per_stage = None
