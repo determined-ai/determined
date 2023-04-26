@@ -1736,13 +1736,13 @@ const TooltipsSection: React.FC = () => {
       <AntDCard title="Usage">
         <strong>Tooltips default</strong>
         <Space>
-          <Tooltip title={text}>
+          <Tooltip content={text}>
             <span>Trigger on hover</span>
           </Tooltip>
-          <Tooltip title={text} trigger="click">
+          <Tooltip content={text} trigger="click">
             <span>Trigger on click</span>
           </Tooltip>
-          <Tooltip title={text} trigger="contextMenu">
+          <Tooltip content={text} trigger="contextMenu">
             <span>Trigger on right click</span>
           </Tooltip>
         </Space>
@@ -1756,53 +1756,53 @@ const TooltipsSection: React.FC = () => {
         <strong>Variations</strong>
         <div>
           <div style={{ marginLeft: buttonWidth, whiteSpace: 'nowrap' }}>
-            <Tooltip placement="topLeft" title={text}>
+            <Tooltip placement="topLeft" content={text}>
               <Button>TL</Button>
             </Tooltip>
-            <Tooltip placement="top" title={text}>
+            <Tooltip placement="top" content={text}>
               <Button>Top</Button>
             </Tooltip>
-            <Tooltip placement="topRight" title={text}>
+            <Tooltip placement="topRight" content={text}>
               <Button>TR</Button>
             </Tooltip>
           </div>
           <div style={{ float: 'left', width: buttonWidth }}>
-            <Tooltip placement="leftTop" title={text}>
+            <Tooltip placement="leftTop" content={text}>
               <Button>LT</Button>
             </Tooltip>
-            <Tooltip placement="left" title={text}>
+            <Tooltip placement="left" content={text}>
               <Button>Left</Button>
             </Tooltip>
-            <Tooltip placement="leftBottom" title={text}>
+            <Tooltip placement="leftBottom" content={text}>
               <Button>LB</Button>
             </Tooltip>
           </div>
           <div style={{ marginLeft: buttonWidth * 4 + 24, width: buttonWidth }}>
-            <Tooltip placement="rightTop" title={text}>
+            <Tooltip placement="rightTop" content={text}>
               <Button>RT</Button>
             </Tooltip>
-            <Tooltip placement="right" title={text}>
+            <Tooltip placement="right" content={text}>
               <Button>Right</Button>
             </Tooltip>
-            <Tooltip placement="rightBottom" title={text}>
+            <Tooltip placement="rightBottom" content={text}>
               <Button>RB</Button>
             </Tooltip>
           </div>
           <div style={{ clear: 'both', marginLeft: buttonWidth, whiteSpace: 'nowrap' }}>
-            <Tooltip placement="bottomLeft" title={text}>
+            <Tooltip placement="bottomLeft" content={text}>
               <Button>BL</Button>
             </Tooltip>
-            <Tooltip placement="bottom" title={text}>
+            <Tooltip placement="bottom" content={text}>
               <Button>Bottom</Button>
             </Tooltip>
-            <Tooltip placement="bottomRight" title={text}>
+            <Tooltip placement="bottomRight" content={text}>
               <Button>BR</Button>
             </Tooltip>
           </div>
         </div>
         <strong>Tooltip with complex content</strong>
         <p>
-          <Tooltip title={<UserAvatar />}>
+          <Tooltip content={<UserAvatar />}>
             <code>{'Hover to see user avatars'}</code>
           </Tooltip>
         </p>

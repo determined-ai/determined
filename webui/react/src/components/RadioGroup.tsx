@@ -113,7 +113,7 @@ const RadioGroup: React.FC<Props> = ({
           condition={!showLabels || iconOnly}
           key={option.id}
           wrapper={(children) => (
-            <Tooltip placement="top" title={option.label}>
+            <Tooltip placement="top" content={option.label}>
               {children}
             </Tooltip>
           )}>

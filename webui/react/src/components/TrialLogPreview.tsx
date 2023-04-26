@@ -121,7 +121,7 @@ const TrialLogPreview: React.FC<Props> = ({
   return (
     <div className={classes.join(' ')}>
       {children}
-      <Tooltip mouseEnterDelay={0.25} title="View Logs">
+      <Tooltip mouseEnterDelay={0.25} content="View Logs">
         <div className={css.preview} onClick={handleClick}>
           <div className={css.container} ref={containerRef}>
             {logEntry && (

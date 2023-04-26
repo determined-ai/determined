@@ -57,7 +57,7 @@ const Bar: React.FC<Props> = ({ barOnly, inline, parts, size = ShirtSize.Small }
           {parts
             .filter((part) => part.percent !== 0 && !isNaN(part.percent))
             .map((part, idx) => (
-              <Tooltip key={idx} title={part.label}>
+              <Tooltip key={idx} content={part.label}>
                 <li style={partStyle(part)} />
               </Tooltip>
             ))}

@@ -74,7 +74,7 @@ const Avatar: React.FC<Props> = ({
   return hideTooltip ? (
     avatar
   ) : (
-    <Tooltip placement="right" title={displayName}>
+    <Tooltip placement="right" content={displayName}>
       {avatar}
     </Tooltip>
   );

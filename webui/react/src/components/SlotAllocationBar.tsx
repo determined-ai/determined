@@ -254,7 +254,7 @@ const SlotAllocationBar: React.FC<Props> = ({
         condition={!showLegends}
         wrapper={(ch) =>
           !isAux && hasLegend ? (
-            <Tooltip placement="bottom" title={renderStateDetails()}>
+            <Tooltip placement="bottom" content={renderStateDetails()}>
               {ch}
             </Tooltip>
           ) : (
@@ -292,7 +292,7 @@ const SlotAllocationBar: React.FC<Props> = ({
       {showLegends && (
         <div className={css.overallLegends}>
           {hasLegend ? (
-            <Tooltip placement="bottom" title={renderStateDetails()}>
+            <Tooltip placement="bottom" content={renderStateDetails()}>
               {renderLegend()}
             </Tooltip>
           ) : (

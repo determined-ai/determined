@@ -46,7 +46,7 @@ const LogViewerEntry: React.FC<Props> = ({
 
   return (
     <div className={classes.join(' ')} style={style} tabIndex={0}>
-      <Tooltip placement="top" title={`Level: ${capitalize(level)}`}>
+      <Tooltip placement="top" content={`Level: ${capitalize(level)}`}>
         <div className={levelClasses.join(' ')} style={{ width: ICON_WIDTH }}>
           <div className={css.levelLabel}>&lt;[{level}]&gt;</div>
           <Icon name={level} size="small" />

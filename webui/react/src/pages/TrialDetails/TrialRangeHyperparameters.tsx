@@ -214,7 +214,7 @@ const ParsedHumanReadableValue: React.FC<PHRVProps> = ({ hp }: PHRVProps) => {
       return <p className={css.text}>{parseInt(hp.val as string)}</p>;
     case HyperparameterType.Log:
       return (
-        <Tooltip title={hp.val}>
+        <Tooltip content={hp.val}>
           <p className={css.text}>{parseFloat(hp.val as string).toExponential(2)}</p>
         </Tooltip>
       );

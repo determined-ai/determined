@@ -306,7 +306,7 @@ const TrialsComparisonTable: React.FC<TableProps> = ({
                     {isNumber(value) ? (
                       <HumanReadableNumber num={value} />
                     ) : (
-                      <Tooltip title={stringValue}>{stringValue}</Tooltip>
+                      <Tooltip content={stringValue}>{stringValue}</Tooltip>
                     )}
                   </div>
                 );
