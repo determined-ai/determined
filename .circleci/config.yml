@@ -1376,6 +1376,25 @@ jobs:
           paths:
             - webui/react/build
 
+  test-e2e-react:
+    docker:
+      - image: mcr.microsoft.com/playwright:v1.32.3-focal
+    resource_class: large
+    steps:
+      - checkout-with-sm
+      - skip-if-docs-only
+      - run: apt-get update && apt-get -y install make
+      - react-get-deps
+      - run: npx playwright install --with-deps && npx playwright install chrome
+      - run: SERVER_ADDRESS=${PW_SERVER_ADDRESS} npm run build --prefix webui/react
+      - run: PW_USER_NAME=${PW_USER_NAME} PW_PASSWORD=${PW_PASSWORD} npm run e2e --prefix webui/react
+      - store_artifacts:
+          path: webui/react/src/e2e/playwright-report
+      - store_artifacts:
+          path: webui/react/src/e2e/test-results
+      - store_test_results:
+          path: webui/react/src/e2e/junit-results.xml
+
   test-unit-react:
     docker:
       - image: cimg/node:16.19.0
@@ -2299,6 +2318,8 @@ workflows:
       - build-helm
       - build-react:
           dev-mode: true
+      - test-e2e-react:
+          context: playwright
       - build-docs:
           requires:
             - build-helm
