@@ -15,7 +15,6 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("model_dir")
     parser.add_argument("-i", "--include", type=str, nargs="+")
 
-    # A series of important parameters which included in the config.
     parser.add_argument("-t", "--tuner-type", type=str, default="random")
     parser.add_argument("-mt", "--max-trials", type=int, default=50)
     parser.add_argument("-ms", "--max-slots", type=int)
@@ -23,6 +22,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("-es", "--early-stopping", type=int)
     parser.add_argument("-sc", "--search-runner-config", type=str)
     parser.add_argument("-msrr", "--max-search-runner-restarts", type=int)
+    parser.add_argument(
+        "-z", "--zero-stages", type=int, nargs="+", default=[1, 2, 3], choices=list(range(4))
+    )
     # Searcher specific args (TODO: refactor)
     parser.add_argument("-trc", "--trials-per-random-config", type=int, default=3)
 
