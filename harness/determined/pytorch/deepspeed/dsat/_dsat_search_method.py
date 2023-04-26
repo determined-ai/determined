@@ -54,9 +54,9 @@ class DSATTrial:
         self.search_data = search_data
 
         # Other attrs which are updated during training:
-        # Boolean for tracking whether the Trial errored.
         self.metric = {}
         self.error = False
+        self.closed = False
         self.children = set()
 
         # If a parent was specified, register the current Trial as the parent's child.
@@ -117,10 +117,6 @@ class DSATTrial:
     @property
     def mbs(self) -> int:
         return self.ds_config["train_micro_batch_size_per_gpu"]
-
-    @property
-    def closed(self) -> bool:
-        return bool(self.metric or self.error)
 
     @property
     def create_and_val_ops(self) -> List[searcher.Operation]:
@@ -253,10 +249,7 @@ class DSATTrialTracker:
 
     def pop_next_trial(self) -> DSATTrial:
         # TODO: remove test code
-        try:
-            next_trial = self._trial_queue[self._queue_idx]
-        except IndexError:
-            print(self._trial_queue, self._queue_idx)
+        next_trial = self._trial_queue[self._queue_idx]
         self._queue_idx += 1
         return next_trial
 
@@ -299,12 +292,12 @@ class DSATTrialTracker:
         to the `DSATTrial` instnace and updating early-stopping bookkeeping.
         """
         trial.metric = metric
+        self.successful_stages.add(trial.stage)
 
         # The model info profiling run's metric will not contain the searcher metric key and should
         # not be counted against the early stopping criteria.
         if not isinstance(trial, DSATModelProfileInfoTrial):
             trial_is_best = self.best_trial == trial
-            self.successful_stages.add(trial.stage)
             if trial_is_best:
                 self.num_trials_since_best_result = 0
             else:
@@ -318,11 +311,9 @@ class DSATTrialTracker:
         Computes the maximum number of Trials that can currently be scheduled, given the Experiment
         configuration.
         """
+        remaining_trials = self.max_trials - self.num_closed_trials - self.num_running_trials
         concurrent_trials_available = self.max_concurrent_trials - self.num_running_trials
-        max_trials_to_schedule = min(self.num_pending_trials, concurrent_trials_available)
-        print(f"num_running_trials: {self.num_running_trials}")
-        print(f"num_pending_trials: {self.num_pending_trials}")
-        print(f"queue len: {len(self._trial_queue)}")
+        max_trials_to_schedule = min(concurrent_trials_available, remaining_trials)
 
         if self.max_slots is not None:
             occupied_slots = self.num_running_trials * self.slots_per_trial
@@ -454,22 +445,26 @@ class DSATTrialTracker:
             }
         return self._approx_max_mbs_per_stage
 
-    def _best_trial_fn(self, trials: List[DSATTrial]) -> DSATTrial:
-        if not trials:
+    def _best_trial_fn(self, trials: Iterable[DSATTrial]) -> DSATTrial:
+        trials_with_searcher_metric = [
+            trial
+            for trial in trials
+            if self.searcher_metric in trial.metric
+            and not isinstance(trial, DSATModelProfileInfoTrial)
+        ]
+        if not trials_with_searcher_metric:
             return None
 
-        def best_trial_fn_key(trial: DSATTrial) -> float:
-            return trial.metric.get(
-                self.searcher_metric, float("inf") if self.smaller_is_better else -float("inf")
-            )
-
         min_or_max = min if self.smaller_is_better else max
-        return min_or_max(trials, key=best_trial_fn_key)
+        best_trial = min_or_max(
+            trials_with_searcher_metric, key=lambda trial: trial.metric[self.searcher_metric]
+        )
+        return best_trial
 
     @property
     def best_trials_by_stage(self) -> Dict[str, DSATTrial]:
         best_trials_by_stage = {
-            stage: self._best_trial_fn([trial for _, trial in self if trial.stage == stage])
+            stage: self._best_trial_fn(trial for _, trial in self if trial.stage == stage)
             for stage in range(4)
         }
         return best_trials_by_stage
@@ -477,7 +472,7 @@ class DSATTrialTracker:
     @property
     def best_trial(self) -> DSATTrial:
         best_trial = self._best_trial_fn(
-            [trial for trial in self.best_trials_by_stage.values() if trial is not None]
+            trial for trial in self.best_trials_by_stage.values() if trial is not None
         )
         return best_trial
 
@@ -563,7 +558,7 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
         """
         # TODO: Remove print tests.
         logging.info("Initial operations")
-        self._searcher_state_asserts(searcher_state)
+        self._searcher_state_tests(searcher_state, "inital ops")
 
         model_profile_info_trial = self.trial_tracker.create_model_profile_info_trial()
         self.trial_tracker.register_trial(model_profile_info_trial)
@@ -575,7 +570,7 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
     ) -> List[searcher.Operation]:
         # TODO: Remove print tests.
         logging.info("on trial created")
-        self._searcher_state_asserts(searcher_state)
+        self._searcher_state_tests(searcher_state, "trial created")
 
         return []
 
@@ -588,7 +583,7 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
     ) -> List[searcher.Operation]:
         # TODO: Remove print tests.
         logging.info(f"Calling on_validation_completed for {request_id}")
-        self._searcher_state_asserts(searcher_state)
+        self._searcher_state_tests(searcher_state, "val completed")
 
         last_trial = self.trial_tracker[request_id]
         self.trial_tracker.update_trial_metric(trial=last_trial, metric=metric)
@@ -622,13 +617,15 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
         logging.info(f"Calling on_trial_closed for {request_id}")
         last_trial = self.trial_tracker[request_id]
         logging.info(f"metrics for closed trial {last_trial.metric}")
-        self._searcher_state_asserts(searcher_state)
+        self._searcher_state_tests(searcher_state, "trial closed")
+
+        last_trial.closed = True
 
         if self.trial_tracker.should_shutdown:
+            print(f"Sending shutdown after {str(request_id)}")
             return [searcher.Shutdown()]
         else:
             new_ops_list = self.trial_tracker.pop_max_ops()
-            logging.info(f"Actual trials scheduled: {len(new_ops_list) // 2}")
             return new_ops_list
 
     def on_trial_exited_early(
@@ -639,7 +636,7 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
     ) -> List[searcher.Operation]:
         # TODO: Remove print tests.
         logging.info(f"Calling on_trial_exited_early for {request_id}")
-        self._searcher_state_asserts(searcher_state)
+        self._searcher_state_tests(searcher_state, "exited early")
 
         last_trial = self.trial_tracker[request_id]
         last_trial.error = True
@@ -663,7 +660,7 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
     def progress(self, searcher_state: searcher.SearcherState) -> float:
         # TODO: Remove print tests.
         logging.info("progress")
-        self._searcher_state_asserts(searcher_state)
+        self._searcher_state_tests(searcher_state, "progress")
 
         progress = len(searcher_state.trials_closed) / len(searcher_state.trials_created)
         return progress
@@ -679,9 +676,10 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
         with checkpoint_path.open("rb") as f:
             self.trial_tracker = pickle.load(f)
 
-    def _searcher_state_asserts(
+    def _searcher_state_tests(
         self,
         searcher_state: searcher.SearcherState,
+        text: str,
     ) -> None:
         # for testing, delete later
 
@@ -693,13 +691,20 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
 
         concurrent_trials_available = self.trial_tracker.max_concurrent_trials - num_running_trials
         total_slots = self.trial_tracker.slots_per_trial * num_running_trials
-        print(f"running trials: {num_running_trials}")
-        print(f"trials created: {trials_created}")
-        print(f"trials created in tracker: {trials_created_in_tracker}")
-        print(f"trials closed: {len(searcher_state.trials_closed)}")
-        print(f"trials remaining: {total_trials_remaining}")
-        print(f"Concurrent trials remaining: {concurrent_trials_available}")
-        print(f"total slots: {total_slots}")
+        logging.info(f"running trials (SearcherState, {text}): {num_running_trials}")
+        logging.info(f"trials created (SearcherState, {text}): {trials_created}")
+        logging.info(
+            f"trials created in tracker (SearcherState, {text}): {trials_created_in_tracker}"
+        )
+        logging.info(f"trials closed (SearcherState, {text}): {len(searcher_state.trials_closed)}")
+        logging.info(f"trials remaining (SearcherState, {text}): {total_trials_remaining}")
+        logging.info(
+            f"Concurrent trials remaining (SearcherState, {text}): {concurrent_trials_available}"
+        )
+        logging.info(f"total slots (SearcherState, {text}): {total_slots}")
+
+        # These assertions can fail and report unphysical values, so I'm just commenting them out
+        # for now.
 
         # assert (
         #     num_running_trials <= self.trial_tracker.max_concurrent_trials
@@ -716,7 +721,7 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
 class RandomDSATSearchMethod(BaseDSATSearchMethod):
     """
     Semi-random search through parameters space. Attaches search_data of the form
-    {"lo": lo,  "hi": hi} which defines the inclusive bouneds on the train_micro_batch_size_per_gpu
+    {"lo": lo,  "hi": hi} which defines the inclusive bounds on the train_micro_batch_size_per_gpu
     that can be selected for the trial.
     """
 
@@ -734,7 +739,7 @@ class RandomDSATSearchMethod(BaseDSATSearchMethod):
     ) -> List[DSATTrial]:
         new_trials = []
         if isinstance(last_trial, DSATModelProfileInfoTrial):
-            new_trials = self.get_trial_list_after_model_profile_info_run(searcher_state)
+            new_trials = self.get_trial_list_after_model_profile_info_run()
         elif last_trial.num_trials_in_lineage < self.trials_per_random_config:
             trial = self.get_trial_after_autotuning_run(last_trial)
             # trial will be None if the current lineage should be terminated.
@@ -771,13 +776,10 @@ class RandomDSATSearchMethod(BaseDSATSearchMethod):
             new_trials = [self.get_random_trial()]
         return new_trials
 
-    def get_trial_list_after_model_profile_info_run(
-        self, searcher_state: searcher.SearcherState
-    ) -> List[DSATTrial]:
+    def get_trial_list_after_model_profile_info_run(self) -> List[DSATTrial]:
         new_trials = []
         # One trial for each stage. This also sets the number of concurrent trials, which should
         # really be configurable.
-        print(searcher_state)
         for _ in range(self.trial_tracker.max_trials_to_schedule):
             trial = self.get_random_trial()
             new_trials.append(trial)
@@ -938,7 +940,7 @@ class SimpleDSATSearchMethod(BaseDSATSearchMethod):
                 hparams[_defaults.OVERWRITE_KEY]["train_micro_batch_size_per_gpu"] = tmbs
                 # Choose a random zero stage:
                 hparams[_defaults.OVERWRITE_KEY]["zero_optimization"] = {
-                    "stage": random.randint(0, 3)
+                    "stage": random.choice(self.args.zero_stages)
                 }
                 trial = self.trial_tracker.create_trial(
                     hparams=hparams,
