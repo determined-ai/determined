@@ -6,7 +6,6 @@ import pickle
 import random
 import uuid
 from abc import abstractmethod
-from functools import partial
 from typing import Any, Dict, Iterable, Iterator, List, Optional, Set, Tuple, Union
 
 import numpy as np
@@ -157,6 +156,7 @@ class DSATTrialTracker:
         self,
         args: argparse.Namespace,
     ) -> None:
+        # TODO: Better to get the actual config used, which was overwritten in _run_dsat.py
         self.config = _utils.get_dict_from_yaml_or_json_path(args.config_path)
         self.max_trials = args.max_trials
         self.max_concurrent_trials = args.max_concurrent_trials
@@ -166,6 +166,7 @@ class DSATTrialTracker:
         self.searcher_metric = args.metric
         self.start_profile_step = args.start_profile_step
         self.end_profile_step = args.end_profile_step
+        self.zero_stages = args.zero_stages
 
         # Derived attributes
         self.slots_per_trial = self.config["resources"]["slots_per_trial"]
@@ -174,20 +175,7 @@ class DSATTrialTracker:
         self.fp16 = self.ds_config.get("fp16", {}).get("enabled") or False
         self.smaller_is_better = _utils.smaller_is_better(self.searcher_metric)
 
-        self.autotuning_config = _defaults.AUTOTUNING_DICT
-        self.autotuning_config["autotuning"]["start_profile_step"] = self.start_profile_step
-        self.autotuning_config["autotuning"]["end_profile_step"] = self.end_profile_step
-        # Fill in the autotuning config with user-supplied details.
-
-        self.hps_with_autotuning = merge_dicts(
-            self.hps, {_defaults.OVERWRITE_KEY: _defaults.AUTOTUNING_DICT}
-        )
-
-        # Also add an internal key to the HP dict which enable the DSAT code path for Trial classes.
-        self.hps_with_autotuning[_defaults.USE_DSAT_MODE_KEY] = True
-
         self.model_profile_info_trial = None
-        self.best_trial = None
         self.num_trials_since_best_result = 0
         self.successful_stages = set()
         self._all_trials_dict = {}
@@ -197,7 +185,6 @@ class DSATTrialTracker:
         self._queue_idx = 0
 
         self._mem_per_gpu_per_stage = None
-        self._viable_zero_stages = None
         self._max_mbs_per_stage = None
 
     def __len__(self) -> int:
@@ -208,15 +195,6 @@ class DSATTrialTracker:
 
     def __iter__(self) -> Iterator[DSATTrial]:
         return iter(self._all_trials_dict.items())
-
-    def _best_trial_fn(self, trials: Iterable[DSATTrial]) -> DSATTrial:
-        def best_trial_fn_key(trial: DSATTrial) -> float:
-            return trial.metric.get(
-                self.searcher_metric, float("inf") if self.smaller_is_better else -float("inf")
-            )
-
-        min_or_max = min if self.smaller_is_better else max
-        return min_or_max(trials, key=best_trial_fn_key)
 
     def create_trial(
         self,
@@ -251,7 +229,7 @@ class DSATTrialTracker:
         self,
     ) -> DSATModelProfileInfoTrial:
         # Create the special hp dictionary used for the model profile info run.
-        model_profile_info_hps = copy.deepcopy(self.hps_with_autotuning)
+        model_profile_info_hps = copy.deepcopy(self.hps)
         model_profile_info_hps[_defaults.OVERWRITE_KEY] = merge_dicts(
             model_profile_info_hps.get(_defaults.OVERWRITE_KEY, {}),
             _defaults.MODEL_INFO_PROFILE_DS_CONFIG,
@@ -329,15 +307,9 @@ class DSATTrialTracker:
         # The model info profiling run's metric will not contain the searcher metric key and should
         # not be counted against the early stopping criteria.
         if not isinstance(trial, DSATModelProfileInfoTrial):
-            searcher_metric_value = metric[self.searcher_metric]
-            trial_is_best = self.best_autotuning_metric_val is None or (
-                searcher_metric_value < self.best_autotuning_metric_val
-                if self.smaller_is_better
-                else searcher_metric_value > self.best_autotuning_metric_val
-            )
+            trial_is_best = self.best_trial == trial
             self.successful_stages.add(trial.stage)
             if trial_is_best:
-                self.best_trial = trial
                 self.num_trials_since_best_result = 0
             else:
                 self.num_trials_since_best_result += 1
@@ -372,7 +344,7 @@ class DSATTrialTracker:
 
         return max_trials_to_schedule
 
-    def pop_next_ops(self, searcher_state: searcher.SearcherState) -> List[searcher.Operation]:
+    def pop_max_ops(self, searcher_state: searcher.SearcherState) -> List[searcher.Operation]:
         """
         Returns all operations which can be scheduled given the constraints of the Experiment.
         """
@@ -489,18 +461,6 @@ class DSATTrialTracker:
         return self._mem_per_gpu_per_stage
 
     @property
-    def viable_zero_stages(self) -> Set[int]:
-        """
-        Returns the set of viable zero stages based on a rough computation.
-        """
-        # TODO: Add a configurable fudge factor for a little leeway?
-        if self._viable_zero_stages is None:
-            self._viable_zero_stages = {
-                stage for stage, mem in self.mem_per_gpu_per_stage.items() if mem < self.gpu_mem
-            }
-        return self._viable_zero_stages
-
-    @property
     def max_mbs_per_stage(self) -> Dict[int, int]:
         """
         Returns the approximate max train_micro_batch_size_per_gpu (mbs) per stage.
@@ -509,9 +469,38 @@ class DSATTrialTracker:
             self._max_mbs_per_stage = {
                 stage: (self.gpu_mem - mem) // self.activation_mem_per_gpu
                 for stage, mem in self.mem_per_gpu_per_stage.items()
-                if stage in self.viable_zero_stages
+                if stage in self.zero_stages
             }
         return self._max_mbs_per_stage
+
+    def _best_trial_fn(self, trials: List[DSATTrial]) -> DSATTrial:
+        if not trials:
+            return None
+
+        def best_trial_fn_key(trial: DSATTrial) -> float:
+            return trial.metric.get(
+                self.searcher_metric, float("inf") if self.smaller_is_better else -float("inf")
+            )
+
+        min_or_max = min if self.smaller_is_better else max
+        return min_or_max(trials, key=best_trial_fn_key)
+
+    @property
+    def best_trials_by_stage(self) -> Dict[str, DSATTrial]:
+        best_trials_by_stage = {
+            stage: self._best_trial_fn([trial for _, trial in self if trial.stage == stage])
+            for stage in range(4)
+        }
+        logging.info(f"best_trials_by_stage: {best_trials_by_stage}")
+        return best_trials_by_stage
+
+    @property
+    def best_trial(self) -> DSATTrial:
+        best_trial = self._best_trial_fn(
+            [trial for trial in self.best_trials_by_stage.values() if trial is not None]
+        )
+        logging.info(f"best_trial: {best_trial}")
+        return best_trial
 
 
 class BaseDSATSearchMethod(searcher.SearchMethod):
@@ -600,7 +589,6 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
                 f"Approx. GPU memory per stage: {self.trial_tracker.mem_per_gpu_per_stage}"
             )
             logging.info(f"Total GPU memory: {self.trial_tracker.gpu_mem}")
-            logging.info(f"Viable zero stages: {self.trial_tracker.viable_zero_stages}")
 
         if not self.trial_tracker.all_trials_created:
             new_trials = self.get_trials_after_validation_completed(
@@ -627,7 +615,7 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
             return [searcher.Shutdown()]
         else:
             trials_to_schedule = self.trial_tracker.max_trials_to_schedule(searcher_state)
-            new_ops_list = self.trial_tracker.pop_next_ops(searcher_state)
+            new_ops_list = self.trial_tracker.pop_max_ops(searcher_state)
             logging.info(f"Actual trials scheduled: {len(new_ops_list) // 2}")
             assert trials_to_schedule >= len(new_ops_list) // 2
             return new_ops_list
@@ -866,21 +854,18 @@ class RandomDSATSearchMethod(BaseDSATSearchMethod):
     def get_random_hparams_and_search_data(
         self, zero_stage: Optional[int] = None
     ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
-        # Select a random viable zero stage and randomly choose from the relevant parameters for
-        # that stage.
-
         # DS domain knowledge: if stages 1 or 2 run successfully, there is no need to use stage 3,
         # due to the increased communication costs. We also don't need to choose stage 0, since that
         # would leverage DS at all.
         if zero_stage is None:
-            relevant_stages = {s for s in self.trial_tracker.viable_zero_stages if s != 0}
+            relevant_stages = {s for s in self.trial_tracker.zero_stages}
             stage_1_and_2 = {1, 2}
             if stage_1_and_2 & self.trial_tracker.successful_stages:
                 relevant_stages &= stage_1_and_2
             zero_stage = random.choice(list(relevant_stages))
 
         zero_optim_config = _utils.get_random_zero_optim_config(zero_stage)
-        new_hparams = copy.deepcopy(self.trial_tracker.hps_with_autotuning)
+        new_hparams = copy.deepcopy(self.trial_tracker.hps)
         new_hparams[_defaults.OVERWRITE_KEY] = merge_dicts(
             new_hparams.get(_defaults.OVERWRITE_KEY, {}),
             {"zero_optimization": zero_optim_config},
@@ -936,8 +921,12 @@ class SimpleDSATSearchMethod(BaseDSATSearchMethod):
             del hparams_without_profile_info_keys[_defaults.OVERWRITE_KEY]["autotuning"][
                 "model_info_path"
             ]
-            for tmbs in range(2, self.max_trials + 1):
+            for tmbs in range(2, self.trial_tracker.max_trials + 1):
                 hparams_without_profile_info_keys["train_micro_batch_size_per_gpu"] = tmbs
+                # Choose a random zero stage:
+                hparams_without_profile_info_keys["zero_optimization"]["stage"] = random.randint(
+                    0, 3
+                )
                 trial = self.trial_tracker.create_trial(
                     hparams=hparams_without_profile_info_keys,
                     search_data=None,
