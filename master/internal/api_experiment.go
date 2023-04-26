@@ -193,8 +193,10 @@ func columnNameToSql(c string, l *projectv1.LocationType, t *projectv1.ColumnTyp
 			}
 		}
 	case projectv1.LocationType_LOCATION_TYPE_HYPERPARAMETERS:
-		// TODO support nested and categorical hyperparameters
-		col = fmt.Sprintf(`"e.config->'hyperparameters'->'%s'->>'val'"`, strings.TrimPrefix(c, "hp."))
+		// TODO support categorical hyperparameters
+		hps := strings.Split(strings.TrimPrefix(c, "hp."), ".")
+		hpQuery := strings.Join(hps, "->")
+		col = fmt.Sprintf(`"e.config->'hyperparameters'->'%s'->>'val'"`, hpQuery)
 		if t != nil {
 			switch *t {
 			case projectv1.ColumnType_COLUMN_TYPE_NUMBER:
