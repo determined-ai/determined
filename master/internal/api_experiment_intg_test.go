@@ -603,11 +603,17 @@ func TestSearchExperiments(t *testing.T) {
 
 	// Validations returned properly.
 	metricTrial, _, valMetrics := createTestTrialWithMetrics(ctx, t, api, curUser, true)
-	_, err = db.Bun().NewUpdate().Table("experiments"). // move experiment to our project.
-								Set("project_id = ?", projectID).
-								Where("id = ?", metricTrial.ExperimentID).
-								Exec(ctx)
+	// Move experiment to our project.
+	_, err = db.Bun().NewUpdate().Table("experiments").
+		Set("project_id = ?", projectID).
+		Where("id = ?", metricTrial.ExperimentID).
+		Exec(ctx)
 	require.NoError(t, err)
+	// Set restarts super high so it gets reduced to config number.
+	_, err = db.Bun().NewUpdate().Table("trials").
+		Set("restarts = ?", 31415).
+		Where("id = ?", metricTrial.ID).
+		Exec(ctx)
 
 	resp, err = api.SearchExperiments(ctx, req)
 	require.NoError(t, err)
@@ -636,6 +642,8 @@ func TestSearchExperiments(t *testing.T) {
 	latestExpected, err := json.Marshal(valMetrics[len(valMetrics)-1])
 	require.NoError(t, err)
 	require.Equal(t, string(latestActual), string(latestExpected))
+
+	require.Equal(t, int32(5), resp.Experiments[2].BestTrial.Restarts)
 }
 
 // Test that endpoints don't puke when running against old experiments.
