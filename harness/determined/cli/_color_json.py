@@ -1,14 +1,22 @@
-# test string:
-#    echo '{"a": "b", "c": ["1", 2.0, 3.1, 5, "4", {"d": true, "e": null, "f": [1, 2, 3]}]}'
+"""
+colorize JSON output.
+test string:
+   echo '{"a": "b", "c": ["1", 2.0, 3.1, 5, "4", {"d": true, "e": null, "f": [1, 2, 3]}]}'
+"""
 
 import json
 import sys
 from typing import Any, TextIO
+
 from termcolor import colored
 
 
-def render_json(obj: Any, out: TextIO, indent="  ") -> None:
-    def do_render(obj, depth=0):
+def render_json(obj: Any, out: TextIO, indent: str = "  ") -> None:
+    """
+    Render JSON object to output stream with color.
+    """
+
+    def do_render(obj: Any, depth: int = 0) -> None:
         if obj is None:
             out.write(colored("null", "grey"))
             return
