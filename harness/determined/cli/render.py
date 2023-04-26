@@ -196,7 +196,7 @@ def print_json(data: Union[str, Any]) -> None:
         if isinstance(data, str):
             data = json.loads(data)
         if sys.stdout.isatty():
-            render_json(data, sys.stdout, indent="  ")
+            render_json(data, sys.stdout, indent="  ", sort_keys=True)
         else:
             formatted_json = det_util.json_encode(data, sort_keys=True, indent="  ")
             print(formatted_json)
