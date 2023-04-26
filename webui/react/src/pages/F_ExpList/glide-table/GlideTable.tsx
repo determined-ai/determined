@@ -1,7 +1,6 @@
 import DataEditor, {
   CellClickedEventArgs,
   CompactSelection,
-  CustomCell,
   DataEditorProps,
   DataEditorRef,
   GridCell,
@@ -24,7 +23,9 @@ import React, {
   useState,
 } from 'react';
 
+import { handlePath } from 'routes/utils';
 import useUI from 'shared/contexts/stores/UI';
+import { AnyMouseEvent } from 'shared/utils/routes';
 import usersStore from 'stores/users';
 import { ExperimentItem, Project } from 'types';
 import { getProjectExperimentForExperimentItem } from 'utils/experiment';
@@ -66,14 +67,6 @@ export interface GlideTableProps {
   setSelectAll: Dispatch<SetStateAction<boolean>>;
 }
 
-type ClickableCell = CustomCell<LinkCell> & {
-  data: {
-    link: {
-      onClick: (e: CellClickedEventArgs) => void;
-    };
-  };
-};
-
 /**
  * Number of renders with gridRef.current !== null
  * needed for the table to be properly initialized.
@@ -87,8 +80,8 @@ export const SCROLL_SET_COUNT_NEEDED = 2;
 
 const STATIC_COLUMNS: ExperimentColumn[] = ['selected', 'name'];
 
-const isClickableCell = (cell: GridCell): cell is ClickableCell => {
-  return !!(cell as ClickableCell).data?.link?.onClick;
+const isLinkCell = (cell: GridCell): cell is LinkCell => {
+  return !!(cell as LinkCell).data?.link?.href;
 };
 
 export const GlideTable: React.FC<GlideTableProps> = ({
@@ -277,8 +270,9 @@ export const GlideTable: React.FC<GlideTableProps> = ({
           const columnId = columnIds[col];
           const cell = columnDefs[columnId].renderer(rowData, row);
 
-          if (isClickableCell(cell)) {
-            cell.data.link.onClick(event);
+          if (isLinkCell(cell)) {
+            handlePath(event as unknown as AnyMouseEvent, { path: cell.data.link.href });
+            // cell.data.link.onClick(event);
           } else {
             setSelection(({ rows }: GridSelection) => ({
               columns: CompactSelection.empty(),
@@ -297,31 +291,37 @@ export const GlideTable: React.FC<GlideTableProps> = ({
       // Close existing context menu.
       contextMenuOpen.set(false);
 
-      const [, row] = cell;
+      const [col, row] = cell;
       Loadable.match(data[row], {
         Loaded: (rowData) => {
           // Prevent the browser native context menu from showing up.
           event.preventDefault();
 
-          // Update the context menu based on the cell context.
-          setContextMenuProps({
-            experiment: getProjectExperimentForExperimentItem(rowData, project),
-            handleClose: (e?: Event) => {
-              // Prevent the context menu closing click from triggering something else.
-              if (contextMenuOpen.get()) e?.stopPropagation();
-              contextMenuOpen.set(false);
-            },
-            x: Math.max(0, event.bounds.x + event.localEventX - 4),
-            y: Math.max(0, event.bounds.y + event.localEventY - 4),
-          });
-
           // Delay needed due to the call to close previously existing context menu.
-          setTimeout(() => contextMenuOpen.set(true), 25);
+          setTimeout(() => {
+            const columnId = columnIds[col];
+            const cell = columnDefs[columnId].renderer(rowData, row);
+
+            // Update the context menu based on the cell context.
+            setContextMenuProps({
+              experiment: getProjectExperimentForExperimentItem(rowData, project),
+              handleClose: (e?: Event) => {
+                // Prevent the context menu closing click from triggering something else.
+                if (contextMenuOpen.get()) e?.stopPropagation();
+                contextMenuOpen.set(false);
+              },
+              link: isLinkCell(cell) ? cell.data.link.href : undefined,
+              x: Math.max(0, event.bounds.x + event.localEventX - 4),
+              y: Math.max(0, event.bounds.y + event.localEventY - 4),
+            });
+
+            contextMenuOpen.set(true);
+          }, 50);
         },
         NotLoaded: () => null,
       });
     },
-    [data, project, setContextMenuProps, contextMenuOpen],
+    [columnDefs, columnIds, data, project, setContextMenuProps, contextMenuOpen],
   );
 
   const onColumnMoved: DataEditorProps['onColumnMoved'] = useCallback(

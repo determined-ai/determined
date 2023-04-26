@@ -38,7 +38,7 @@ type Params = {
 const ProjectDetails: React.FC = () => {
   const { projectId } = useParams<Params>();
   const trialsComparisonEnabled = useFeature().isOn('trials_comparison');
-  const f_explist = useFeature().isOn('explist_v2');
+  const f_explist = useFeature().isOn('explist_v2') || true;
 
   const [project, setProject] = useState<Project | undefined>();
 

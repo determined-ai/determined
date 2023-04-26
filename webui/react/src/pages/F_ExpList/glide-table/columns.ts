@@ -7,7 +7,7 @@ import {
 } from '@glideapps/glide-data-grid';
 
 import { terminalRunStates } from 'constants/states';
-import { handlePath, paths } from 'routes/utils';
+import { paths } from 'routes/utils';
 import { getColor, getInitials } from 'shared/components/Avatar';
 import { DarkLight, Theme } from 'shared/themes';
 import { humanReadableNumber } from 'shared/utils/number';
@@ -157,11 +157,7 @@ export const getColumnDefs = ({
         link:
           record.forkedFrom !== undefined
             ? {
-                onClick: record.forkedFrom
-                  ? (e: MouseEvent) => {
-                      handlePath(e, { path: paths.experimentDetails(record.forkedFrom as number) });
-                    }
-                  : undefined,
+                href: record.forkedFrom ? paths.experimentDetails(record.forkedFrom) : undefined,
                 title: String(record.forkedFrom ?? ''),
               }
             : undefined,
@@ -184,9 +180,7 @@ export const getColumnDefs = ({
       data: {
         kind: 'link-cell',
         link: {
-          onClick: (e: MouseEvent) => {
-            handlePath(e, { path: paths.experimentDetails(record.id) });
-          },
+          href: paths.experimentDetails(record.id),
           title: String(record.id),
         },
 
@@ -209,9 +203,7 @@ export const getColumnDefs = ({
       data: {
         kind: 'link-cell',
         link: {
-          onClick: (e: MouseEvent) => {
-            handlePath(e, { path: paths.experimentDetails(record.id) });
-          },
+          href: paths.experimentDetails(record.id),
           title: String(record.name),
         },
         navigateOn: 'click',
