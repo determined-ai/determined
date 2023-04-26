@@ -50,6 +50,7 @@ def get_search_runner_config_from_args(args: argparse.Namespace) -> Dict[str, An
     experiment_config_dict = get_dict_from_yaml_or_json_path(args.config_path)
     search_runner_config = merge_dicts(experiment_config_dict, default_search_runner_config)
     search_runner_config["name"] += " (DS AT Searcher)"
+    # TODO: add user cli args to hp section for easier reference
 
     return search_runner_config
 
