@@ -464,7 +464,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
             preserveSelectedRowKeys: true,
             selectedRowKeys: settings.row ?? [],
           }}
-          settings={{ ...settings, columns: DEFAULT_COLUMNS } as InteractiveTableSettings}
+          settings={settings as InteractiveTableSettings}
           showSorterTooltip={false}
           size="small"
           updateSettings={updateSettings as UpdateSettings}
