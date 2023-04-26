@@ -1644,7 +1644,7 @@ jobs:
       - skip-if-docs-only
       - skip-if-webui-only
       - setup-docker-env:
-          image: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.21.2
+          image: determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.5-tf-2.4-gpu-0.18.5
           image-name: test_container
           extras-requires: "tensorflow==2.8.4 torch==1.9.0 torchvision==0.10.0 codecov mypy pytest"
       - run: mkdir -p $HOME/.local/bin
