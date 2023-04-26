@@ -1,3 +1,5 @@
+import { Popover } from 'antd';
+
 import Button from 'components/kit/Button';
 import Select, { Option } from 'components/kit/Select';
 import { V1ColumnType, V1ProjectColumn } from 'services/api-ts-sdk';
@@ -5,6 +7,8 @@ import Icon from 'shared/components/Icon';
 import { Loadable } from 'utils/loadable';
 
 import css from './MultiSortMenu.module.scss';
+
+const INITIAL_SORTS = [{ column: undefined, direction: undefined }];
 
 type DirectionType = 'asc' | 'desc';
 export interface Sort {
@@ -113,7 +117,7 @@ const MultiSort: React.FC<MultiSortProps> = ({ sorts, columns, onChange }) => {
   };
   const makeOnRowRemove = (idx: number) => () => {
     const newSorts = sorts.filter((_, cidx) => cidx !== idx);
-    onChange(newSorts.length > 0 ? newSorts : [{ column: undefined, direction: undefined }]);
+    onChange(newSorts.length > 0 ? newSorts : INITIAL_SORTS);
   };
   const addRow = () => onChange([...sorts, { column: undefined, direction: undefined }]);
   return (
@@ -144,5 +148,24 @@ const MultiSort: React.FC<MultiSortProps> = ({ sorts, columns, onChange }) => {
     </div>
   );
 };
+const MultiSortMenu: React.FC<MultiSortProps> = ({ sorts, columns, onChange }) => {
+  const validSorts = sorts.filter(isValidSort);
+  const onSortPopoverOpenChange = (open: boolean) => {
+    if (!open) {
+      onChange(validSorts.length > 0 ? validSorts : INITIAL_SORTS);
+    }
+  };
 
-export default MultiSort;
+  return (
+    <Popover
+      content={<MultiSort columns={columns} sorts={sorts} onChange={onChange} />}
+      placement="bottomRight"
+      showArrow={false}
+      trigger="click"
+      onOpenChange={onSortPopoverOpenChange}>
+      <Button>Sort {validSorts.length ? `(${validSorts.length})` : ''}</Button>
+    </Popover>
+  );
+};
+
+export default MultiSortMenu;
