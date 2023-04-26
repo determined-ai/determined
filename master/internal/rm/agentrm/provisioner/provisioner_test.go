@@ -389,11 +389,7 @@ func TestProvisionerTerminateDisconnectedInstances(t *testing.T) {
 func TestProvisionerLaunchFailure(t *testing.T) {
 	timeout := model.Duration(5 * time.Second)
 	setup := &mockConfig{
-		maxDisconnectPeriod: 5 * time.Minute,
-		instanceType: TestInstanceType{
-			NameString: "test.instanceType",
-			NumSlots:   4,
-		},
+		instanceType: TestInstanceType{},
 		Config: &Config{
 			MaxInstances: 2,
 			ErrorTimeout: &timeout,
