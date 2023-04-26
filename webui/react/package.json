@@ -138,5 +138,10 @@
     "vite-tsconfig-paths": "^4.0.7",
     "vitest": "^0.29.3",
     "whatwg-fetch": "^3.6.2"
+  },
+  "overrides": {
+    "portable-fetch": {
+      "node-fetch": "2.6.7"
+    }
   }
 }
