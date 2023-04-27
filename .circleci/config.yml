@@ -1626,6 +1626,7 @@ jobs:
           extras-requires: "tensorflow==2.8.4 torch==1.9.0 torchvision==0.10.0 mypy pytest coverage"
       - run: mkdir -p $HOME/.local/bin
       - install-codecov
+      - run: export PATH=$PATH:$HOME/.local/bin
       - run: docker exec -e COVERAGE_FILE=/usr/src/project/test-unit-harness-gpu-pycov test_container make -C harness test-gpu
       - run: docker exec test_container coverage xml -i --data-file=./test-unit-harness-gpu-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
@@ -1648,6 +1649,7 @@ jobs:
           extras-requires: "tensorflow==2.12.0 torch==1.9.0 torchvision==0.10.0 mypy pytest coverage"
       - run: mkdir -p $HOME/.local/bin
       - install-codecov
+      - run: export PATH=$PATH:$HOME/.local/bin
       - run: docker exec -e COVERAGE_FILE=/usr/src/project/test-unit-harness-gpu-lightning-pycov test_container make -C harness test-gpu-lightning
       - run: docker exec test_container coverage xml -i --data-file=./test-unit-harness-gpu-lightning-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
