@@ -1,4 +1,3 @@
-scheduling_unit: 2000
 name: torchvision_models_dsat
 workspace: DS_AT_PROTOTYPING
 project: torchvision_models
