@@ -217,8 +217,8 @@ def import_module(module_name: str, module_path: str, model_context: Optional[st
         sys.path.append(model_context)
 
     spec = importlib.util.spec_from_file_location(module_name, module_path)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
+    module = importlib.util.module_from_spec(spec)  # type: ignore
+    spec.loader.exec_module(module)  # type: ignore
 
     if model_context is not None:
         sys.path.remove(model_context)
