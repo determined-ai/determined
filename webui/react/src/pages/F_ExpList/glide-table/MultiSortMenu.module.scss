@@ -3,13 +3,13 @@
   flex-direction: column;
   gap: 8px;
   max-height: 500px;
-  width: 500px;
+  width: 376px;
 }
 .rows {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  overflow-y: scroll;
+  overflow-y: auto;
 }
 .sortRow {
   align-items: center;

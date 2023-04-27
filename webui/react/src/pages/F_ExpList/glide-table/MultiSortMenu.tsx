@@ -1,7 +1,7 @@
 import { Popover } from 'antd';
 
 import Button from 'components/kit/Button';
-import Select, { Option } from 'components/kit/Select';
+import Select from 'components/kit/Select';
 import { V1ColumnType, V1ProjectColumn } from 'services/api-ts-sdk';
 import Icon from 'shared/components/Icon';
 import { Loadable } from 'utils/loadable';
@@ -41,24 +41,34 @@ interface ColumnOptionsProps {
   value?: string;
 }
 
-const DirectionOptions: React.FC<DirectionOptionsProps> = ({ onChange, type, value }) => {
-  const [ascText, descText] = {
-    [V1ColumnType.NUMBER]: ['0 - 9', '9 - 0'],
-    [V1ColumnType.TEXT]: ['A - Z', 'Z - A'],
-    [V1ColumnType.DATE]: ['Oldest - Newest', 'Newest - Oldest'],
-    [V1ColumnType.UNSPECIFIED]: ['Ascending', 'Descending'],
-  }[type];
-  return (
-    <Select
-      placeholder="Direction"
-      value={value}
-      width="100%"
-      onChange={(val) => onChange(val as DirectionType)}>
-      <Option value="asc">{ascText}</Option>
-      <Option value="desc">{descText}</Option>
-    </Select>
-  );
+const optionsByColumnType = {
+  [V1ColumnType.NUMBER]: [
+    { label: '0 → 9', value: 'asc' },
+    { label: '9 → 0', value: 'desc' },
+  ],
+  [V1ColumnType.TEXT]: [
+    { label: 'A → Z', value: 'asc' },
+    { label: 'Z → A', value: 'desc' },
+  ],
+  [V1ColumnType.DATE]: [
+    { label: 'Newest → Oldest', value: 'desc' },
+    { label: 'Oldest → Newest', value: 'asc' },
+  ],
+  [V1ColumnType.UNSPECIFIED]: [
+    { label: 'Ascending', value: 'asc' },
+    { label: 'Descending', value: 'desc' },
+  ],
 };
+
+const DirectionOptions: React.FC<DirectionOptionsProps> = ({ onChange, type, value }) => (
+  <Select
+    options={optionsByColumnType[type]}
+    placeholder="Select direction"
+    value={value}
+    width="100%"
+    onChange={(val) => onChange(val as DirectionType)}
+  />
+);
 
 const ColumnOptions: React.FC<ColumnOptionsProps> = ({ onChange, columns, value }) => {
   return (
@@ -69,7 +79,7 @@ const ColumnOptions: React.FC<ColumnOptionsProps> = ({ onChange, columns, value 
         label: c.displayName || c.column,
         value: c.column,
       }))}
-      placeholder="Column"
+      placeholder="Select column"
       value={value}
       width="100%"
       onChange={(val) => onChange(val as string)}
@@ -124,7 +134,13 @@ const MultiSort: React.FC<MultiSortProps> = ({ sorts, columns, onChange }) => {
     onChange(newSorts.length > 0 ? newSorts : INITIAL_SORTS);
   };
   const addRow = () => onChange([...sorts, { column: undefined, direction: undefined }]);
-  const clearAll = () => onChange(INITIAL_SORTS);
+  const clearAll = () => {
+    onChange(INITIAL_SORTS);
+    // close the popover -- set timeout to ensure it runs after the popover close handler
+    setTimeout(() => {
+      window.document.body.dispatchEvent(new Event('mousedown', { bubbles: true }));
+    }, 5);
+  };
 
   return (
     <div className={css.base}>
@@ -148,7 +164,7 @@ const MultiSort: React.FC<MultiSortProps> = ({ sorts, columns, onChange }) => {
       </div>
       <div className={css.actions}>
         <Button type="text" onClick={addRow}>
-          <Icon name="add-small" size="tiny" /> Add condition
+          <Icon name="add-small" size="tiny" /> Add sort
         </Button>
         <Button type="text" onClick={clearAll}>
           Clear all
@@ -169,7 +185,7 @@ const MultiSortMenu: React.FC<MultiSortProps> = ({ sorts, columns, onChange }) =
   return (
     <Popover
       content={<MultiSort columns={columns} sorts={sorts} onChange={onChange} />}
-      placement="bottomRight"
+      placement="bottomLeft"
       showArrow={false}
       trigger="click"
       onOpenChange={onSortPopoverOpenChange}>
