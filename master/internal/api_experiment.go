@@ -146,12 +146,12 @@ func columnNameToSql(c string, l *string, t *string) (string, error) {
 	var ty string
 	var col string
 	if l == nil {
-		lo = "LOCATION_TYPE_EXPERIMENT"
+		lo = projectv1.LocationType_LOCATION_TYPE_EXPERIMENT.String()
 	} else {
 		lo = *l
 	}
 	if t == nil {
-		ty = "COLUMN_TYPE_UNSPECIFIED"
+		ty = projectv1.ColumnType_COLUMN_TYPE_UNSPECIFIED.String()
 	} else {
 		ty = *t
 	}
@@ -186,16 +186,16 @@ func columnNameToSql(c string, l *string, t *string) (string, error) {
 	}
 
 	switch lo {
-	case "LOCATION_TYPE_EXPERIMENT":
+	case projectv1.LocationType_LOCATION_TYPE_EXPERIMENT.String():
 		col, exists := filterExperimentColMap[c]
 		if !exists {
 			return col, fmt.Errorf("invalid experiment column %s", col)
 		}
 		return col, nil
-	case "LOCATION_TYPE_VALIDATIONS":
+	case projectv1.LocationType_LOCATION_TYPE_VALIDATIONS.String():
 		col = fmt.Sprintf(`e.validation_metrics->>'%s'`, strings.TrimPrefix(c, "validation."))
 		switch ty {
-		case "COLUMN_TYPE_NUMBER":
+		case projectv1.ColumnType_COLUMN_TYPE_NUMBER.String():
 			col = fmt.Sprintf(`(%v)::float8`, col)
 		}
 	}
@@ -209,7 +209,7 @@ func hpToSql(c string, t *string, v interface{}, o Operator) (string, error) {
 	var col string
 
 	if t == nil {
-		ty = "COLUMN_TYPE_UNSPECIFIED"
+		ty = projectv1.ColumnType_COLUMN_TYPE_UNSPECIFIED.String()
 	} else {
 		ty = *t
 	}
@@ -220,7 +220,7 @@ func hpToSql(c string, t *string, v interface{}, o Operator) (string, error) {
 	}
 	hpQuery := strings.Join(hps, "->")
 	switch ty {
-	case "COLUMN_TYPE_STRING":
+	case projectv1.ColumnType_COLUMN_TYPE_TEXT.String():
 		if o != EMPTY && o != NOT_EMPTY && o != CONTAINS && o != DOES_NOT_CONTAIN {
 			col = fmt.Sprintf(`config->'hyperparameters'->%[1]v->>'type' = 'const' THEN config->'hyperparameters'->%[1]v->>'val' %[2]v
 		`, hpQuery, fmt.Sprintf("%v %v", o.toSql(), v))
@@ -301,7 +301,7 @@ func (e ExperimentFilter) toSql() (string, error) {
 		if e.Value == nil {
 			return s, fmt.Errorf("field specified with value but no operator")
 		}
-		if e.Location == nil || *e.Location != "LOCATION_TYPE_HYPERPARAMETERS" {
+		if e.Location == nil || *e.Location != projectv1.LocationType_LOCATION_TYPE_HYPERPARAMETERS.String() {
 			col, err := columnNameToSql(e.ColumnName, e.Location, e.Type)
 			if *e.Operator == CONTAINS || *e.Operator == DOES_NOT_CONTAIN {
 				oSql, err := containsOperatorSql(*e.Operator, e.Value)
