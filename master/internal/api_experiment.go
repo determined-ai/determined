@@ -219,6 +219,9 @@ func (e ExperimentFilter) toSql() (string, error) {
 	var s string
 	switch e.Kind {
 	case FIELD:
+		if e.Value == nil {
+			return "true", nil
+		}
 		col, err := columnNameToSql(e.ColumnName, e.Location, e.Type)
 		if *e.Operator == CONTAINS || *e.Operator == DOES_NOT_CONTAIN {
 			oSql, err := containsOperatorSql(*e.Operator, e.Value)
