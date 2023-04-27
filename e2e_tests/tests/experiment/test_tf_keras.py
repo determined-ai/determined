@@ -31,6 +31,7 @@ def export_and_load_model(experiment_id: int) -> None:
     p.join()
     assert p.exitcode == 0, p.exitcode
 
+
 @pytest.mark.parallel
 @pytest.mark.tensorflow2
 @pytest.mark.parametrize("aggregation_frequency", [1, 4])
@@ -71,6 +72,7 @@ def test_tf_keras_parallel(
     ]
     exp.assert_patterns_in_trial_logs(trials[0].trial.id, patterns)
 
+
 @pytest.mark.parallel
 @pytest.mark.tensorflow2
 def test_tf_keras_mnist_parallel(collect_trial_profiles: Callable[[int], None]) -> None:
@@ -85,6 +87,7 @@ def test_tf_keras_mnist_parallel(collect_trial_profiles: Callable[[int], None]) 
     trials = exp.experiment_trials(experiment_id)
     assert len(trials) == 1
     collect_trial_profiles(trials[0].trial.id)
+
 
 @pytest.mark.parallel
 @pytest.mark.tensorflow2
