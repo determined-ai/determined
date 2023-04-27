@@ -3,7 +3,6 @@ import logging
 import os
 import pathlib
 import pickle
-from typing import Any, Dict
 
 import determined as det
 from determined import searcher
