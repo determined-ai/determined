@@ -41,7 +41,7 @@ echo "AMIs from environments commits that did not appear in determined:"
 cat .amis_to_deregister
 wc -l .amis_to_deregister
 
-while read ami; do
-	ami=($ami)
-	aws ec2 deregister-image --region ${ami[0]} --image-id ${ami[1]}
-done <.amis_to_deregister
+#while read ami; do
+#	ami=($ami)
+#	aws ec2 deregister-image --region ${ami[0]} --image-id ${ami[1]}
+#done <.amis_to_deregister
