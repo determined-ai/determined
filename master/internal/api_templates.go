@@ -2,7 +2,6 @@ package internal
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -55,9 +54,17 @@ func (a *apiServer) PostTemplate(
 	if req.Template.WorkspaceId != 0 {
 		workspaceID = int(req.Template.WorkspaceId)
 	}
-	err = a.m.db.QueryProto("put_template", req.Template, req.Template.Name, config, workspaceID)
-	return &apiv1.PostTemplateResponse{Template: req.Template},
-		errors.Wrapf(err, "error putting template")
+	switch err := a.m.db.QueryProto(
+		"put_template", req.Template, req.Template.Name, config, workspaceID,
+	); err {
+	case nil:
+		return &apiv1.PostTemplateResponse{Template: req.Template}, nil
+	case db.ErrNotFound:
+		return nil, status.Errorf(
+			codes.NotFound, "error posting template %s to db: %s", req.Template.Name, err.Error())
+	default:
+		return nil, status.Errorf(codes.Internal, "error posting template to db: %s", err.Error())
+	}
 }
 
 func (a *apiServer) PatchTemplateConfig(
@@ -67,14 +74,18 @@ func (a *apiServer) PatchTemplateConfig(
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid config provided: %s", err.Error())
 	}
-	fmt.Println("config", string(config))
-	fmt.Println("template", req.TemplateName)
-
 	template := templatev1.Template{}
-	if err := a.m.db.QueryProto("update_template", &template, req.TemplateName, config); err != nil {
+	switch err := a.m.db.QueryProto(
+		"update_template", &template, req.TemplateName, config,
+	); err {
+	case nil:
+		return &apiv1.PatchTemplateConfigResponse{Template: &template}, nil
+	case db.ErrNotFound:
+		return nil, status.Errorf(
+			codes.NotFound, "error updating template %s to db: %s", req.TemplateName, err.Error())
+	default:
 		return nil, status.Errorf(codes.Internal, "failed to update template: %s", err.Error())
 	}
-	return &apiv1.PatchTemplateConfigResponse{Template: &template}, nil
 }
 
 func (a *apiServer) DeleteTemplate(
