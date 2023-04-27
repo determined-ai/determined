@@ -1,10 +1,14 @@
 import { DeleteOutlined, HolderOutlined } from '@ant-design/icons';
+import { DatePicker } from 'antd';
+import type { DatePickerProps } from 'antd/es/date-picker';
+import dayjs from 'dayjs';
 import { useDrag, useDrop } from 'react-dnd';
 
 import Button from 'components/kit/Button';
 import Input from 'components/kit/Input';
 import InputNumber from 'components/kit/InputNumber';
 import Select, { Option } from 'components/kit/Select';
+import { V1ColumnType } from 'services/api-ts-sdk/api';
 
 import ConjunctionContainer from './ConjunctionContainer';
 import css from './FilterField.module.scss';
@@ -124,7 +128,7 @@ const FilterField = ({
           ))}
         </Select>
         <>
-          {ColumnType[field.columnName] === 'string' && (
+          {ColumnType[field.columnName] === V1ColumnType.TEXT && (
             <Input
               disabled={field.operator === Operator.isEmpty || field.operator === Operator.notEmpty}
               value={
@@ -135,12 +139,22 @@ const FilterField = ({
               onChange={(e) => formStore.setFieldValue(field.id, 'value', e.target.value)}
             />
           )}
-          {ColumnType[field.columnName] === 'number' && (
+          {ColumnType[field.columnName] === V1ColumnType.NUMBER && (
             <InputNumber
               className={css.fullWidth}
               value={field.value != null ? Number(field.value) : undefined}
               onChange={(val) => {
                 formStore.setFieldValue(field.id, 'value', val != null ? Number(val) : null);
+              }}
+            />
+          )}
+          {ColumnType[field.columnName] === V1ColumnType.DATE && (
+            // timezone is UTC since DB uses UTC
+            <DatePicker
+              value={dayjs(field.value).isValid() ? dayjs(field.value).utc() : null}
+              onChange={(value: DatePickerProps['value']) => {
+                const dateString = dayjs(value).utc().startOf('date').format();
+                formStore.setFieldValue(field.id, 'value', dateString);
               }}
             />
           )}

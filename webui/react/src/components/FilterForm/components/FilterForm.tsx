@@ -3,6 +3,7 @@ import { useRef } from 'react';
 import { debounce } from 'throttle-debounce';
 
 import Button from 'components/kit/Button';
+import Toggle from 'components/kit/Toggle';
 
 import css from './FilterForm.module.scss';
 import { FilterFormStore, ITEM_LIMIT } from './FilterFormStore';
@@ -27,6 +28,11 @@ const FilterForm = ({ formStore }: Props): JSX.Element => {
 
   return (
     <div className={css.base}>
+      <Toggle
+        checked={data.showArchived}
+        label="Show Archived"
+        onChange={() => formStore.setArchivedValue(!data.showArchived)}
+      />
       <div className={css.filter}>
         <FilterGroup
           conjunction={data.filterGroup.conjunction}

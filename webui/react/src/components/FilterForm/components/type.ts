@@ -1,4 +1,5 @@
 import { ExperimentColumnName } from 'pages/ExperimentList.settings';
+import { V1ColumnType } from 'services/api-ts-sdk/api';
 import { ValueOf } from 'shared/types';
 
 export type ExperimentFilterColumnName = Exclude<ExperimentColumnName, 'action' | 'archived'>;
@@ -33,6 +34,7 @@ export type KeyType =
 
 export type FilterFormSet = {
   filterGroup: FormGroup;
+  showArchived: boolean;
 };
 
 export const Conjunction = {
@@ -60,7 +62,7 @@ export const Operator = {
 export type Operator = ValueOf<typeof Operator>;
 
 export const AvaliableOperators = {
-  number: [
+  [V1ColumnType.NUMBER]: [
     Operator.eq,
     Operator.notEq,
     Operator.greater,
@@ -68,7 +70,7 @@ export const AvaliableOperators = {
     Operator.less,
     Operator.lessEq,
   ],
-  string: [
+  [V1ColumnType.TEXT]: [
     Operator.contains,
     Operator.notContain,
     Operator.isEmpty,
@@ -76,23 +78,31 @@ export const AvaliableOperators = {
     Operator.is,
     Operator.isNot,
   ],
+  [V1ColumnType.DATE]: [
+    Operator.eq,
+    Operator.notEq,
+    Operator.greater,
+    Operator.greaterEq,
+    Operator.less,
+    Operator.lessEq,
+  ],
 } as const;
 
 export const ColumnType: Record<ExperimentFilterColumnName, keyof typeof AvaliableOperators> = {
-  checkpointCount: 'number',
-  checkpointSize: 'number',
-  description: 'string',
-  duration: 'number',
-  forkedFrom: 'number',
-  id: 'number',
-  name: 'string',
-  numTrials: 'number',
-  progress: 'number',
-  resourcePool: 'number',
-  searcherMetricValue: 'number',
-  searcherType: 'string',
-  startTime: 'number',
-  state: 'string',
-  tags: 'string',
-  user: 'number',
+  checkpointCount: V1ColumnType.NUMBER,
+  checkpointSize: V1ColumnType.NUMBER,
+  description: V1ColumnType.TEXT,
+  duration: V1ColumnType.NUMBER,
+  forkedFrom: V1ColumnType.NUMBER,
+  id: V1ColumnType.NUMBER,
+  name: V1ColumnType.TEXT,
+  numTrials: V1ColumnType.NUMBER,
+  progress: V1ColumnType.NUMBER,
+  resourcePool: V1ColumnType.NUMBER,
+  searcherMetricValue: V1ColumnType.NUMBER,
+  searcherType: V1ColumnType.TEXT,
+  startTime: V1ColumnType.DATE,
+  state: V1ColumnType.TEXT,
+  tags: V1ColumnType.TEXT,
+  user: V1ColumnType.NUMBER,
 } as const;

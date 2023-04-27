@@ -16,6 +16,7 @@ export const ITEM_LIMIT = 50;
 
 const INIT_FORMSET: Readonly<FilterFormSet> = {
   filterGroup: { children: [], conjunction: Conjunction.And, id: 'ROOT', kind: FormKind.Group },
+  showArchived: false,
 };
 
 const getInitGroup = (): FormGroup => ({
@@ -52,7 +53,8 @@ export class FilterFormStore {
   }
 
   public setFieldValue(id: string, keyType: KeyType, value: FormFieldValue): void {
-    const filterGroup = this.#formset.get().filterGroup;
+    const filterSet: Readonly<FilterFormSet> = this.#formset.get();
+    const filterGroup = filterSet.filterGroup;
     const recur = (form: FormGroup | FormField): FormGroup | FormField | undefined => {
       if (form.id === id) {
         return form;
@@ -87,7 +89,7 @@ export class FilterFormStore {
           ans.conjunction = value;
         }
       }
-      this.#formset.set({ filterGroup });
+      this.#formset.set({ filterGroup, showArchived: filterSet.showArchived });
     }
   }
 
@@ -97,7 +99,8 @@ export class FilterFormStore {
     index: number,
     obj?: Readonly<FormGroup | FormField>,
   ): void {
-    const filterGroup = this.#formset.get().filterGroup;
+    const filterSet: Readonly<FilterFormSet> = this.#formset.get();
+    const filterGroup = filterSet.filterGroup;
     const recur = (form: FormGroup | FormField): void => {
       if (form.id === id && form.kind === FormKind.Group) {
         if (obj) {
@@ -116,15 +119,16 @@ export class FilterFormStore {
     };
 
     recur(filterGroup);
-    this.#formset.set({ filterGroup });
+    this.#formset.set({ filterGroup, showArchived: filterSet.showArchived });
   }
 
   public removeChild(id: string): void {
-    const filterGroup = this.#formset.get().filterGroup;
+    const filterSet: Readonly<FilterFormSet> = this.#formset.get();
+    const filterGroup = filterSet.filterGroup;
 
     if (filterGroup.id === id) {
       // if remove top group
-      this.#formset.set(structuredClone(INIT_FORMSET));
+      this.#formset.set({ ...structuredClone(INIT_FORMSET), showArchived: filterSet.showArchived });
       return;
     }
 
@@ -140,6 +144,11 @@ export class FilterFormStore {
       }
     };
     recur(filterGroup);
-    this.#formset.set({ filterGroup });
+    this.#formset.set({ filterGroup, showArchived: filterSet.showArchived });
+  }
+
+  public setArchivedValue(val: boolean): void {
+    const filterSet: Readonly<FilterFormSet> = this.#formset.get();
+    this.#formset.set({ ...filterSet, showArchived: val });
   }
 }
