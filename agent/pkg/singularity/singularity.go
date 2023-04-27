@@ -28,7 +28,7 @@ import (
 
 	"github.com/determined-ai/determined/agent/internal/container"
 	"github.com/determined-ai/determined/agent/internal/options"
-	"github.com/determined-ai/determined/agent/pkg/crutil"
+	"github.com/determined-ai/determined/agent/pkg/cruntimes"
 	"github.com/determined-ai/determined/agent/pkg/docker"
 	"github.com/determined-ai/determined/agent/pkg/events"
 	"github.com/determined-ai/determined/master/pkg/aproto"
@@ -115,7 +115,7 @@ func (s *SingularityClient) PullImage(
 	req docker.PullImage,
 	p events.Publisher[docker.Event],
 ) (err error) {
-	return crutil.PullImage(ctx, req, p, s.wg, *s.log, getPullCommand)
+	return cruntimes.PullImage(ctx, req, p, s.wg, *s.log, getPullCommand)
 }
 
 // CreateContainer implements container.ContainerRuntime.
@@ -569,7 +569,7 @@ func (s *SingularityClient) shipSingularityCmdLogs(
 	stdtype stdcopy.StdType,
 	p events.Publisher[docker.Event],
 ) {
-	crutil.ShipPodmanCmdLogs(ctx, r, stdtype, p)
+	cruntimes.ShipCmdLogs(ctx, r, stdtype, p)
 }
 
 func (s *SingularityClient) pprintSingularityCommand(
@@ -577,9 +577,9 @@ func (s *SingularityClient) pprintSingularityCommand(
 	args []string,
 	p events.Publisher[docker.Event],
 ) error {
-	return crutil.PprintCommand(ctx, "singularity", args, p, s.log)
+	return cruntimes.PprintCommand(ctx, "singularity", args, p, s.log)
 }
 
 func (s *SingularityClient) canonicalizeImage(image string) string {
-	return crutil.CanonicalizeImage(image)
+	return cruntimes.CanonicalizeImage(image)
 }

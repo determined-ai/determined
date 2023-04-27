@@ -27,7 +27,7 @@ import (
 
 	"github.com/determined-ai/determined/agent/internal/container"
 	"github.com/determined-ai/determined/agent/internal/options"
-	"github.com/determined-ai/determined/agent/pkg/crutil"
+	"github.com/determined-ai/determined/agent/pkg/cruntimes"
 	"github.com/determined-ai/determined/agent/pkg/docker"
 	"github.com/determined-ai/determined/agent/pkg/events"
 	"github.com/determined-ai/determined/master/pkg/aproto"
@@ -112,7 +112,7 @@ func (s *PodmanClient) PullImage(
 	req docker.PullImage,
 	p events.Publisher[docker.Event],
 ) (err error) {
-	return crutil.PullImage(ctx, req, p, s.wg, *s.log, getPullCommand)
+	return cruntimes.PullImage(ctx, req, p, s.wg, *s.log, getPullCommand)
 	// 	if err = p.Publish(ctx, docker.NewBeginStatsEvent(docker.ImagePullStatsKind)); err != nil {
 	// 		return err
 	// 	}
@@ -612,7 +612,7 @@ func (s *PodmanClient) shipPodmanCmdLogs(
 	stdtype stdcopy.StdType,
 	p events.Publisher[docker.Event],
 ) {
-	crutil.ShipPodmanCmdLogs(ctx, r, stdtype, p)
+	cruntimes.ShipCmdLogs(ctx, r, stdtype, p)
 	// for scan := bufio.NewScanner(r); scan.Scan(); {
 	// 	line := scan.Text()
 	// 	if len(strings.TrimSpace(line)) == 0 {
@@ -639,7 +639,7 @@ func (s *PodmanClient) pprintPodmanCommand(
 	args []string,
 	p events.Publisher[docker.Event],
 ) error {
-	return crutil.PprintCommand(ctx, "podman", args, p, s.log)
+	return cruntimes.PprintCommand(ctx, "podman", args, p, s.log)
 	// toPrint := "podman"
 	// for _, arg := range args {
 	// 	if strings.HasPrefix(arg, "--") { // print each arg on a new line
@@ -663,7 +663,7 @@ func (s *PodmanClient) pprintPodmanCommand(
 }
 
 func (s *PodmanClient) canonicalizeImage(image string) string {
-	return crutil.CanonicalizeImage(image)
+	return cruntimes.CanonicalizeImage(image)
 	// url, err := url.Parse(image)
 	// isURIForm := err == nil
 	// isFSForm := path.IsAbs(image)

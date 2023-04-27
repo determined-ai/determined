@@ -1,4 +1,4 @@
-package crutil
+package cruntimes
 
 import (
 	"bufio"
@@ -22,8 +22,8 @@ import (
 
 var logLevel = regexp.MustCompile("(?P<level>INFO|WARN|ERROR|FATAL):    (?P<log>.*)")
 
-// ShipPodmanCmdLogs does what you might expect from its name.
-func ShipPodmanCmdLogs(
+// ShipCmdLogs does what you might expect from its name.
+func ShipCmdLogs(
 	ctx context.Context,
 	r io.ReadCloser,
 	stdtype stdcopy.StdType,
@@ -154,10 +154,10 @@ func PullImage(
 			return p.Publish(ctx, t)
 		},
 	)
-	wg.Go(func(ctx context.Context) { ShipPodmanCmdLogs(ctx, stdout, stdcopy.Stdout, p) })
+	wg.Go(func(ctx context.Context) { ShipCmdLogs(ctx, stdout, stdcopy.Stdout, p) })
 	wg.Go(func(ctx context.Context) {
 		defer close(ignoreErrorsSig)
-		ShipPodmanCmdLogs(ctx, stderr, stdcopy.Stderr, checkIgnoreErrors)
+		ShipCmdLogs(ctx, stderr, stdcopy.Stderr, checkIgnoreErrors)
 	})
 
 	if err = cmd.Start(); err != nil {
