@@ -1,18 +1,15 @@
 package podman
 
 import (
-	"bufio"
 	"context"
 	"fmt"
 	"io"
 	"io/fs"
-	"net/url"
 	"os"
 	"os/exec"
 	"os/user"
 	"path"
 	"path/filepath"
-	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -30,6 +27,7 @@ import (
 
 	"github.com/determined-ai/determined/agent/internal/container"
 	"github.com/determined-ai/determined/agent/internal/options"
+	"github.com/determined-ai/determined/agent/pkg/crutil"
 	"github.com/determined-ai/determined/agent/pkg/docker"
 	"github.com/determined-ai/determined/agent/pkg/events"
 	"github.com/determined-ai/determined/master/pkg/aproto"
@@ -101,87 +99,96 @@ func (s *PodmanClient) Close() error {
 	return nil
 }
 
+func getPullCommand(req docker.PullImage, image string) (string, []string) {
+	// C.f. singularity where if req.ForcePull is set then a 'pull --force' is done.
+	// podman does not have this option, though it does have '--pull always' on the
+	// run command.
+	return "podman", []string{"pull", image}
+}
+
 // PullImage implements container.ContainerRuntime.
 func (s *PodmanClient) PullImage(
 	ctx context.Context,
 	req docker.PullImage,
 	p events.Publisher[docker.Event],
 ) (err error) {
-	if err = p.Publish(ctx, docker.NewBeginStatsEvent(docker.ImagePullStatsKind)); err != nil {
-		return err
-	}
-	defer func() {
-		if err = p.Publish(ctx, docker.NewEndStatsEvent(docker.ImagePullStatsKind)); err != nil {
-			s.log.WithError(err).Warn("did not send image pull done stats")
-		}
-	}()
+	return crutil.PullImage(ctx, req, p, s.wg, *s.log, getPullCommand)
+	// 	if err = p.Publish(ctx, docker.NewBeginStatsEvent(docker.ImagePullStatsKind)); err != nil {
+	// 		return err
+	// 	}
+	// 	defer func() {
+	// 		if err = p.Publish(ctx, docker.NewEndStatsEvent(docker.ImagePullStatsKind)); err != nil {
+	// 			s.log.WithError(err).Warn("did not send image pull done stats")
+	// 		}
+	// 	}()
 
-	image := s.canonicalizeImage(req.Name)
+	// 	image := s.canonicalizeImage(req.Name)
 
-	uri, err := url.Parse(image)
-	if err != nil || uri.Scheme == "" {
-		if err = p.Publish(ctx, docker.NewLogEvent(
-			model.LogLevelInfo,
-			fmt.Sprintf("image %s isn't a pullable URI; skipping pull", image),
-		)); err != nil {
-			return err
-		}
-		return nil
-	}
+	// 	uri, err := url.Parse(image)
+	// 	if err != nil || uri.Scheme == "" {
+	// 		if err = p.Publish(ctx, docker.NewLogEvent(
+	// 			model.LogLevelInfo,
+	// 			fmt.Sprintf("image %s isn't a pullable URI; skipping pull", image),
+	// 		)); err != nil {
+	// 			return err
+	// 		}
+	// 		return nil
+	// 	}
 
-	// TODO(DET-9078): Support registry auth. Investigate other auth mechanisms with podman.
-	args := []string{"pull"}
-	// if req.ForcePull {
-	// 	args = append(args, "--force") // Use 'podman image rm'?
-	// }
-	args = append(args, image)
+	// 	// TODO(DET-9078): Support registry auth. Investigate other auth mechanisms with podman.
+	// 	args := []string{"pull"}
+	// 	// if req.ForcePull {
+	// 	// 	args = append(args, "--force") // Use 'podman image rm'?
+	// 	// }
+	// 	args = append(args, image)
 
-	if err = s.pprintPodmanCommand(ctx, args, p); err != nil {
-		return err
-	}
+	// 	if err = s.pprintPodmanCommand(ctx, args, p); err != nil {
+	// 		return err
+	// 	}
 
-	cmd := exec.CommandContext(ctx, "podman", args...)
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		return fmt.Errorf("creating stdout pipe: %w", err)
-	}
-	stderr, err := cmd.StderrPipe()
-	if err != nil {
-		return fmt.Errorf("creating stderr pipe: %w", err)
-	}
+	// 	cmd := exec.CommandContext(ctx, "podman", args...)
+	// 	stdout, err := cmd.StdoutPipe()
+	// 	if err != nil {
+	// 		return fmt.Errorf("creating stdout pipe: %w", err)
+	// 	}
+	// 	stderr, err := cmd.StderrPipe()
+	// 	if err != nil {
+	// 		return fmt.Errorf("creating stderr pipe: %w", err)
+	// 	}
 
-	// The return codes from `podman pull` aren't super helpful in determining the error, so we
-	// wrap the publisher and skim logs to see what happened as we ship them.
-	ignoreErrorsSig := make(chan bool)
-	checkIgnoreErrors := events.FuncPublisher[docker.Event](
-		func(ctx context.Context, t docker.Event) error {
-			if t.Log != nil && strings.Contains(t.Log.Message, "Image file already exists") {
-				ignoreErrorsSig <- true
-			}
-			return p.Publish(ctx, t)
-		},
-	)
-	s.wg.Go(func(ctx context.Context) { s.shipPodmanCmdLogs(ctx, stdout, stdcopy.Stdout, p) })
-	s.wg.Go(func(ctx context.Context) {
-		defer close(ignoreErrorsSig)
-		s.shipPodmanCmdLogs(ctx, stderr, stdcopy.Stderr, checkIgnoreErrors)
-	})
+	// 	// The return codes from `podman pull` aren't super helpful in determining the error, so we
+	// 	// wrap the publisher and skim logs to see what happened as we ship them.
+	// 	ignoreErrorsSig := make(chan bool)
+	// 	checkIgnoreErrors := events.FuncPublisher[docker.Event](
+	// 		func(ctx context.Context, t docker.Event) error {
+	// 			if t.Log != nil && strings.Contains(t.Log.Message, "Image file already exists") {
+	// 				ignoreErrorsSig <- true
+	// 			}
+	// 			return p.Publish(ctx, t)
+	// 		},
+	// 	)
+	// 	s.wg.Go(func(ctx context.Context) { s.shipPodmanCmdLogs(ctx, stdout, stdcopy.Stdout, p) })
+	// 	s.wg.Go(func(ctx context.Context) {
+	// 		defer close(ignoreErrorsSig)
+	// 		s.shipPodmanCmdLogs(ctx, stderr, stdcopy.Stderr, checkIgnoreErrors)
+	// 	})
 
-	if err = cmd.Start(); err != nil {
-		return fmt.Errorf("starting pull command: %w", err)
-	}
+	// 	if err = cmd.Start(); err != nil {
+	// 		return fmt.Errorf("starting pull command: %w", err)
+	// 	}
 
-	var ignoreErrors bool
-	select {
-	case ignoreErrors = <-ignoreErrorsSig:
-	case <-ctx.Done():
-		return ctx.Err()
-	}
+	// 	var ignoreErrors bool
+	// 	select {
+	// 	case ignoreErrors = <-ignoreErrorsSig:
+	// 	case <-ctx.Done():
+	// 		return ctx.Err()
+	// 	}
 
-	if err = cmd.Wait(); err != nil && !ignoreErrors {
-		return fmt.Errorf("pulling %s: %w", image, err)
-	}
-	return nil
+	//	if err = cmd.Wait(); err != nil && !ignoreErrors {
+	//		return fmt.Errorf("pulling %s: %w", image, err)
+	//	}
+	//
+	// return nil
 }
 
 // CreateContainer implements container.ContainerRuntime.
@@ -597,7 +604,7 @@ func (s *PodmanClient) waitOnContainer(
 	return docker.ContainerWaiter{Waiter: wchan, Errs: errchan}
 }
 
-var podmanLogLevel = regexp.MustCompile("(?P<level>INFO|WARN|ERROR|FATAL):    (?P<log>.*)")
+// var podmanLogLevel = regexp.MustCompile("(?P<level>INFO|WARN|ERROR|FATAL):    (?P<log>.*)")
 
 func (s *PodmanClient) shipPodmanCmdLogs(
 	ctx context.Context,
@@ -605,25 +612,26 @@ func (s *PodmanClient) shipPodmanCmdLogs(
 	stdtype stdcopy.StdType,
 	p events.Publisher[docker.Event],
 ) {
-	for scan := bufio.NewScanner(r); scan.Scan(); {
-		line := scan.Text()
-		if len(strings.TrimSpace(line)) == 0 {
-			continue
-		}
+	crutil.ShipPodmanCmdLogs(ctx, r, stdtype, p)
+	// for scan := bufio.NewScanner(r); scan.Scan(); {
+	// 	line := scan.Text()
+	// 	if len(strings.TrimSpace(line)) == 0 {
+	// 		continue
+	// 	}
 
-		var level, log string
-		if matches := podmanLogLevel.FindStringSubmatch(line); len(matches) == 3 {
-			level, log = matches[1], matches[2]
-		} else {
-			level, log = model.LogLevelInfo, line
-		}
+	// 	var level, log string
+	// 	if matches := podmanLogLevel.FindStringSubmatch(line); len(matches) == 3 {
+	// 		level, log = matches[1], matches[2]
+	// 	} else {
+	// 		level, log = model.LogLevelInfo, line
+	// 	}
 
-		if err := p.Publish(ctx, docker.NewTypedLogEvent(level, log, stdtype)); err != nil {
-			logrus.WithError(err).Trace("log stream terminated")
-			return
-		}
-	}
-	return
+	// 	if err := p.Publish(ctx, docker.NewTypedLogEvent(level, log, stdtype)); err != nil {
+	// 		logrus.WithError(err).Trace("log stream terminated")
+	// 		return
+	// 	}
+	// }
+	// return
 }
 
 func (s *PodmanClient) pprintPodmanCommand(
@@ -631,34 +639,36 @@ func (s *PodmanClient) pprintPodmanCommand(
 	args []string,
 	p events.Publisher[docker.Event],
 ) error {
-	toPrint := "podman"
-	for _, arg := range args {
-		if strings.HasPrefix(arg, "--") { // print each arg on a new line
-			toPrint += " \\\n"
-			toPrint += "\t"
-			toPrint += arg
-		} else {
-			toPrint += " "
-			toPrint += arg
-		}
-	}
+	return crutil.PprintCommand(ctx, "podman", args, p, s.log)
+	// toPrint := "podman"
+	// for _, arg := range args {
+	// 	if strings.HasPrefix(arg, "--") { // print each arg on a new line
+	// 		toPrint += " \\\n"
+	// 		toPrint += "\t"
+	// 		toPrint += arg
+	// 	} else {
+	// 		toPrint += " "
+	// 		toPrint += arg
+	// 	}
+	// }
 
-	s.log.Trace(toPrint)
-	if err := p.Publish(ctx, docker.NewLogEvent(
-		model.LogLevelDebug,
-		toPrint,
-	)); err != nil {
-		return err
-	}
-	return nil
+	// s.log.Trace(toPrint)
+	// if err := p.Publish(ctx, docker.NewLogEvent(
+	// 	model.LogLevelDebug,
+	// 	toPrint,
+	// )); err != nil {
+	// 	return err
+	// }
+	// return nil
 }
 
 func (s *PodmanClient) canonicalizeImage(image string) string {
-	url, err := url.Parse(image)
-	isURIForm := err == nil
-	isFSForm := path.IsAbs(image)
-	if isFSForm || (isURIForm && url.Scheme != "") {
-		return image
-	}
-	return fmt.Sprintf("docker://%s", image)
+	return crutil.CanonicalizeImage(image)
+	// url, err := url.Parse(image)
+	// isURIForm := err == nil
+	// isFSForm := path.IsAbs(image)
+	// if isFSForm || (isURIForm && url.Scheme != "") {
+	// 	return image
+	// }
+	// return fmt.Sprintf("docker://%s", image)
 }
