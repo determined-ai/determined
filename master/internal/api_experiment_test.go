@@ -10,10 +10,15 @@ import (
 func TestExperimentSearchApiFilterParsing(t *testing.T) {
 	invalidTestCases := []string{
 		// TOOD add invalid test cases
-		" ",
+
+		// No operator specified in field
+		`{"children":[{"columnName":"resourcePool","id":"10043dda-2187-45d4-92ce-b9ade5244b6f","kind":"field","value":"default"}],"conjunction":"and","id":"ROOT","kind":"group"}`,
 	}
 	for _, c := range invalidTestCases {
-		_, err := parseFilter(c)
+		var experimentFilter ExperimentFilter
+		err := json.Unmarshal([]byte(c), &experimentFilter)
+		require.NoError(t, err)
+		_, err = experimentFilter.toSql()
 		require.Error(t, err)
 	}
 	validTestCases := [][2]string{

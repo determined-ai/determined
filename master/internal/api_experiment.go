@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
-	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -56,27 +55,6 @@ import (
 )
 
 const (
-	// The prefix for column names mapping to
-	// experiment table values.
-	experimentColumnPrefix = "experiment."
-	metricTypeString       = "string"
-	metricTypeNumber       = "number"
-	metricTypeNull         = "null"
-)
-
-// Catches information on active running experiments.
-type experimentAllocation struct {
-	Job      model.JobID
-	Pulling  bool
-	Running  bool
-	Starting bool
-}
-
-type FilterConjunction string
-type FilterType string
-type Operator string
-
-const (
 	AND                   FilterConjunction = "and"
 	OR                    FilterConjunction = "or"
 	FIELD                 FilterType        = "field"
@@ -92,6 +70,18 @@ const (
 	EMPTY                 Operator          = "empty"
 	NOT_EMPTY             Operator          = "not empty"
 )
+
+// Catches information on active running experiments.
+type experimentAllocation struct {
+	Job      model.JobID
+	Pulling  bool
+	Running  bool
+	Starting bool
+}
+
+type FilterConjunction string
+type FilterType string
+type Operator string
 
 type ExperimentFilter struct {
 	Children    []*ExperimentFilter
@@ -141,7 +131,6 @@ func containsOperatorSql(o Operator, v *interface{}) (string, error) {
 }
 
 func columnNameToSql(c string, l *string, t *string) (string, error) {
-	// TODO replace with correct location and type values
 	var lo string
 	var ty string
 	var col string
@@ -203,7 +192,6 @@ func columnNameToSql(c string, l *string, t *string) (string, error) {
 }
 
 func hpToSql(c string, t *string, v interface{}, o Operator) (string, error) {
-	// TODO replace with correct location and type values
 	// TODO update int, log, double logic
 	var ty string
 	var col string
@@ -298,7 +286,7 @@ func (e ExperimentFilter) toSql() (string, error) {
 		if e.Value == nil {
 			return "true", nil
 		}
-		if e.Value == nil {
+		if e.Operator == nil {
 			return s, fmt.Errorf("field specified with value but no operator")
 		}
 		if e.Location == nil || *e.Location != projectv1.LocationType_LOCATION_TYPE_HYPERPARAMETERS.String() {
@@ -328,13 +316,16 @@ func (e ExperimentFilter) toSql() (string, error) {
 	case GROUP:
 		var childSql []string
 		var j string
+		if e.Conjunction == nil {
+			return s, fmt.Errorf("group specified with no conjuction")
+		}
 		if len(e.Children) == 0 {
 			return s, nil
 		}
 		for _, c := range e.Children {
 			cSql, err := c.toSql()
 			if err != nil {
-				return j, nil
+				return j, err
 			}
 			childSql = append(childSql, cSql)
 		}
@@ -2218,477 +2209,6 @@ func sortExperiments(sortString *string, experimentQuery *bun.SelectQuery) error
 		}
 	}
 	return nil
-}
-
-func getFilterMetricPrefixes() map[string]string {
-	// Prefixes for column names matching to metric related tables
-	metricPrefixes := map[string]string{
-		"validation.": "e.validation_metrics->>'%s'",
-		"hp.":         "e.config->'hyperparameters'->'%s'->>'val'",
-	}
-	return metricPrefixes
-}
-
-func getFilterExperimentColMap() map[string]string {
-	// Mapping of experiment related filter string values to table columns
-	filterExperimentColMap := map[string]string{
-		"id":              "e.id",
-		"description":     "e.config->>'description'",
-		"name":            "e.config->>'name'",
-		"startTime":       "e.start_time",
-		"endTime":         "e.end_time",
-		"state":           "e.state",
-		"numTrials":       "(SELECT COUNT(*) FROM trials t WHERE e.id = t.experiment_id)",
-		"progress":        "COALESCE(progress, 0)",
-		"user":            "COALESCE(u.display_name, u.username)",
-		"forkedFrom":      "e.parent_id",
-		"resourcePool":    "e.config->'resources'->>'resource_pool'",
-		"projectId":       "project_id",
-		"checkpointSize":  "checkpoint_size",
-		"checkpointCount": "checkpoint_count",
-		"searcherMetricsVal": `(
-			SELECT
-				searcher_metric_value
-			FROM trials t
-			WHERE t.experiment_id = e.id
-			ORDER BY (CASE
-				WHEN coalesce((config->'searcher'->>'smaller_is_better')::boolean, true)
-					THEN searcher_metric_value
-					ELSE -1.0 * searcher_metric_value
-			END) ASC
-			LIMIT 1
-		 ) `,
-	}
-	return filterExperimentColMap
-}
-
-func validateComparisonString(filter string, prefix string) (string, error) {
-	// Ensures that there are no whitespaces around operators
-	// white spaces within value strings and between
-	// AND and OR groupings are valid and should not
-	// throw an error
-	var valueType string
-	numericRegex := regexp.MustCompile(`\d|\.|-`)
-	singleOperatorRegex := regexp.MustCompile(`>|<|:|~`)
-	sliceStart := 0
-	var initialValueType string
-	i := strings.Index(filter[sliceStart:], prefix)
-	for i > -1 {
-		comparisonIndex := i + len(prefix)
-		// the comparison index should be the index
-		// where we should find a comparison operator
-		if comparisonIndex > len(filter)-1 {
-			// There are no more characters after the comparison index
-			return valueType, fmt.Errorf("found operator at the end of the filter")
-		}
-
-		c := string(filter[comparisonIndex])
-		if !singleOperatorRegex.MatchString(c) {
-			return valueType, fmt.Errorf("no operator found at the end of column value")
-		}
-
-		comparisonIndex++
-
-		if (c == ">" || c == "<") &&
-			(comparisonIndex < len(filter)-1) &&
-			(string(filter[comparisonIndex]) == "=") {
-			comparisonIndex++
-		}
-
-		// we have reached the character after an operator if it is a whitespace then
-		// the string is invalid
-		if string(filter[comparisonIndex]) == " " {
-			return valueType, fmt.Errorf("whitespace found after operator at string index %d",
-				comparisonIndex)
-		}
-
-		// Now that we have determined that we are at the start of a value
-		// we can determine the values type
-		valueStart := string(filter[comparisonIndex])
-		if valueStart == `"` || valueStart == `'` { // nolint: gocritic
-			valueType = metricTypeString
-		} else if numericRegex.MatchString(valueStart) {
-			valueType = metricTypeNumber
-		} else if valueStart == "n" &&
-			comparisonIndex+4 <= len(filter) &&
-			filter[comparisonIndex:comparisonIndex+4] == metricTypeNull {
-			// the comparison value could be "null"
-			// which does not help us determine the type
-			valueType = metricTypeNull
-		} else {
-			return valueType, fmt.Errorf("invalid column value at string index %d", comparisonIndex)
-		}
-		if initialValueType == "" {
-			initialValueType = valueType
-		} else { // nolint: gocritic
-			if initialValueType != valueType {
-				if initialValueType != metricTypeNull && valueType != metricTypeNull { // nolint: gocritic
-					// the same metric has been sent as two different types
-					// we cannot correctly determine the metric type
-					// so we throw an error
-					return valueType, fmt.Errorf("received both a %v and %v value type for column %v",
-						initialValueType, valueType, prefix)
-				} else if initialValueType == metricTypeNull {
-					// We previously found a null value but now
-					// we know the correct type of metric
-					initialValueType = valueType
-				} else {
-					// Record the fact that we were able to determine the metric type
-					// before reaching a null value
-					valueType = initialValueType
-				}
-			}
-		}
-
-		sliceStart = comparisonIndex
-		filter = filter[sliceStart:]
-		i = strings.Index(filter, prefix)
-		if i < 0 {
-			break
-		}
-	}
-	return valueType, nil
-}
-
-func scanMetricName(filter string, startIndex int) string {
-	// Determine the name of the metric from the filter string
-	index := startIndex
-	for index < len(filter) {
-		c := string(filter[index])
-		// If we have reached an operator or space then we have parsed through the entire metric name
-		if c == "<" || c == ":" || c == " " || c == "~" || c == "=" || c == ">" {
-			break
-		}
-		index++
-	}
-	return filter[startIndex:index]
-}
-
-func buildQuery(filter string, metricTypes map[string]string) (string, error) {
-	// Builds the sql query for a filter string
-
-	// If the entire query does not contain at least one valid
-	// column name for an experiment, metric, or hyperparameter,
-	// then the filter is not valid
-	hasValidColumns := false
-
-	// Replace any needed experiment related column names
-	// with the correct sql query
-	for key, value := range getFilterExperimentColMap() {
-		if strings.Contains(filter, experimentColumnPrefix+key) {
-			hasValidColumns = true
-		}
-		filter = strings.ReplaceAll(filter, experimentColumnPrefix+key, value)
-	}
-
-	// Replace all metric related column names
-	// with the correct sql query
-	for prefix, replacement := range getFilterMetricPrefixes() {
-		i := strings.Index(filter, prefix)
-		for i != -1 {
-			var outerMetricSQL string
-			hasValidColumns = true
-			metricName := scanMetricName(filter, i+len(prefix))
-			metricType := metricTypes[prefix+metricName]
-			innerMetricSQL := fmt.Sprintf(replacement, metricName)
-			switch metricType {
-			case metricTypeNumber:
-				outerMetricSQL = "(" + innerMetricSQL + ")::float8"
-			case metricTypeString:
-				outerMetricSQL = innerMetricSQL
-			default:
-				outerMetricSQL = innerMetricSQL
-			}
-			filter = strings.ReplaceAll(filter, prefix+metricName, outerMetricSQL)
-			i = strings.Index(filter, prefix)
-		}
-	}
-
-	if !hasValidColumns {
-		return filter, fmt.Errorf("does not contain any valid query expressions")
-	}
-	return filter, nil
-}
-
-func scanString(filter string, startIndex int, operator *string, valueStart bool) (string, int32) {
-	// Determines the correct column and value for a sequence in the filter string
-	numericeRegex := regexp.MustCompile(`\d|\.|-`)
-	var query, value, col, comparator string
-	var valueIsString bool
-	valueTypeKnown := false
-	filterIndex := int32(startIndex)
-	valueHasStarted := valueStart
-	isCol := !valueHasStarted
-	isNull := false
-
-	for {
-		if filterIndex > int32(len(filter)-1) {
-			break
-		}
-		c := string(filter[filterIndex])
-
-		if valueHasStarted && valueIsString && valueTypeKnown {
-			// If the current value is a string and we have reached
-			// a string terminating character then we are at the end
-			// of the value
-			if c == "'" || c == "\"" {
-				filterIndex++
-				break
-			}
-		} else if valueHasStarted && !valueIsString && valueTypeKnown {
-			// If the current value is a number and the current character
-			// is not numeric then we are at the end of the value
-			if !numericeRegex.MatchString(c) {
-				break
-			}
-		}
-		if !valueTypeKnown && valueHasStarted {
-			// The start of the value has been reached so the type of the value
-			// can be determined
-			valueTypeKnown = true
-			if c == "'" || c == "\"" { //nolint: gocritic
-				// If the value starts with a quote character then the value is a string
-				valueIsString = true
-				filterIndex++
-				continue
-			} else if filterIndex+3 < int32(len(filter)) &&
-				filter[filterIndex:filterIndex+4] == metricTypeNull {
-				// If the value from this point forward is 'null' then the value is 'NULL'
-				filterIndex += 4
-				isNull = true
-				break
-			} else {
-				// Otherwise the value is a number
-				valueIsString = false
-			}
-		}
-		if c == ":" || c == "~" {
-			// These characters represent the end of a column name
-			// and the start of the value
-			if isCol {
-				isCol = false
-				valueHasStarted = true
-				filterIndex++
-				comparator = c
-				continue
-			}
-		}
-		if c == "\\" {
-			if filterIndex+1 < int32(len(filter)-1) {
-				nextChar := string(filter[filterIndex+1])
-				// Check to see if a terminated quote has been reached
-				// if so then add it to the sql string.
-				if nextChar == `'` || nextChar == `"` {
-					c = `\` + nextChar
-				}
-				filterIndex++
-			}
-		}
-		switch isCol {
-		case true:
-			col += c
-		case false:
-			value += c
-		}
-		filterIndex++
-	}
-	if *operator == ":" {
-		if isNull {
-			query = " IS NULL"
-		} else {
-			if valueIsString {
-				value = fmt.Sprintf(`'%s'`, value)
-			}
-			query = fmt.Sprintf(" = %v", value)
-		}
-	}
-	if *operator == "~" {
-		query = " LIKE " + `'%` + value + `%'`
-	}
-	if *operator == "-" {
-		if isNull { //nolint: gocritic
-			query = fmt.Sprintf("%v IS NOT NULL", col)
-		} else if comparator == "~" {
-			query = fmt.Sprintf("%v NOT LIKE ", col) + `'%` + value + `%'`
-		} else if comparator == ":" {
-			if valueIsString {
-				value = `'` + value + `'`
-			}
-			query = fmt.Sprintf("%v != %v", col, value)
-		}
-	}
-	if *operator == "<" || *operator == ">" {
-		if valueIsString {
-			value = fmt.Sprintf(`'%s'`, value)
-		}
-		query = value
-	}
-	return query, filterIndex
-}
-
-func parseMetricComparisons(filter string) (map[string]string, error) {
-	// Validate that all metric comparisons are valid strings.
-	// No metric comparison should have a whitespace between operators
-	// Also determine metric types. There is not a straightforward
-	// way to determine the metric or hyperparameter type
-	// so it must be inferred from the value
-
-	metricTypeMap := make(map[string]string)
-
-	for prefix := range getFilterMetricPrefixes() {
-		i := strings.Index(filter, prefix)
-		filterString := filter
-		for i != -1 {
-			metricName := scanMetricName(filterString, i+len(prefix))
-			metricColString := prefix + metricName
-			metricType, err := validateComparisonString(filterString, metricColString)
-			if err != nil {
-				return metricTypeMap, err
-			}
-			entry, exists := metricTypeMap[metricColString]
-			if exists {
-				if entry != metricType {
-					// we already have any entry in the
-					// type map but we have received a different type
-					if entry == metricTypeNull {
-						// it is safe to overwrite the null type with the updated type
-						metricTypeMap[metricColString] = metricType
-					} else if metricType != metricTypeNull {
-						// Two non null metric types have been found for the same metric
-						// so we cannot determine the correct type of the metric
-						return metricTypeMap, fmt.Errorf("found different value types for column %v",
-							metricColString)
-					}
-				}
-			} else {
-				metricTypeMap[metricColString] = metricType
-			}
-			if i+len(metricColString) >= len(filterString)-1 {
-				break
-			}
-			filterString = filterString[i+len(metricColString):]
-			i = strings.Index(filterString, prefix)
-		}
-	}
-	return metricTypeMap, nil
-}
-
-func parseFilter(filter string) (*string, error) {
-	// Iterate through the filter string and build
-	// the matching sql query
-
-	currentIndex := 0
-	currentQuery := ""
-
-	trimmedQuery := strings.ReplaceAll(filter, " ", "")
-
-	if len(trimmedQuery) == 0 {
-		return nil, fmt.Errorf("string is empty")
-	}
-	if strings.Contains(trimmedQuery, "()") {
-		return nil, fmt.Errorf("contains empty conditional group")
-	}
-
-	for key := range getFilterExperimentColMap() {
-		_, err := validateComparisonString(filter, experimentColumnPrefix+key)
-		if err != nil {
-			return &currentQuery, err
-		}
-	}
-
-	for key := range getFilterExperimentColMap() {
-		_, err := validateComparisonString(filter, experimentColumnPrefix+key)
-		if err != nil {
-			return &currentQuery, err
-		}
-	}
-
-	metricTypes, err := parseMetricComparisons(filter)
-	if err != nil {
-		return &currentQuery, err
-	}
-
-	// Keep track of the number of parentheses to ensure that the
-	// string is valid
-	openParenCount := 0
-
-	for {
-		if currentIndex > len(filter)-1 {
-			// If there are still open parantheses at the end of the string
-			// the entire string is invalid
-			if openParenCount != 0 {
-				return nil, fmt.Errorf("missing closing parentheses")
-			}
-			break
-		}
-
-		c := string(filter[currentIndex])
-
-		// Determine the appropriate way to parse the string based on the current character.
-		// If a character is an operator such as ':','-', `<`,'>', or '~' then we need to
-		// determine the correct column name, value name, and sql comparison character.
-
-		switch c {
-		case "(":
-			openParenCount++
-			currentQuery += c
-			currentIndex++
-		case ")":
-			if openParenCount < 1 {
-				return nil, fmt.Errorf("no open parentheses found for character %v at index, %x",
-					c,
-					currentIndex)
-			}
-			currentQuery += c
-			openParenCount--
-			currentIndex++
-		case ":":
-			queryString, nextIndex := scanString(filter, currentIndex+1, &c, true)
-			currentQuery += queryString
-			currentIndex = int(nextIndex)
-		case "-":
-			queryString, nextIndex := scanString(filter, currentIndex+1, &c, false)
-			currentQuery += queryString
-			currentIndex = int(nextIndex)
-		case "~":
-			queryString, nextIndex := scanString(filter, currentIndex+1, &c, true)
-			currentQuery += queryString
-			currentIndex = int(nextIndex)
-		case ">":
-			currentQuery += c
-			if (currentIndex+1 < len(filter)-1) && string(filter[currentIndex+1]) == "=" {
-				currentQuery += "="
-				queryString, nextIndex := scanString(filter, currentIndex+2, &c, true)
-				currentQuery += queryString
-				currentIndex = int(nextIndex)
-			} else {
-				queryString, nextIndex := scanString(filter, currentIndex+1, &c, true)
-				currentQuery += queryString
-				currentIndex = int(nextIndex)
-			}
-		case "<":
-			currentQuery += c
-			if (currentIndex+1 < len(filter)-1) && string(filter[currentIndex+1]) == "=" {
-				currentQuery += "="
-				queryString, nextIndex := scanString(filter, currentIndex+2, &c, true)
-				currentQuery += queryString
-				currentIndex = int(nextIndex)
-			} else {
-				queryString, nextIndex := scanString(filter, currentIndex+1, &c, true)
-				currentQuery += queryString
-				currentIndex = int(nextIndex)
-			}
-		default:
-			currentQuery += c
-			currentIndex++
-		}
-	}
-	currentQuery, err = buildQuery(currentQuery, metricTypes)
-	if err != nil {
-		return &currentQuery, err
-	}
-
-	return &currentQuery, nil
 }
 
 func (a *apiServer) SearchExperiments(
