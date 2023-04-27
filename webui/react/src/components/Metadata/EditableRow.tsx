@@ -18,11 +18,12 @@ interface Props {
   field?: FormListFieldData;
   initialKey?: string;
   initialValue?: string;
+  jsonValue?: string;
   name: string | number;
   onDelete?: () => void;
 }
 
-const EditableRow: React.FC<Props> = ({ name, onDelete, field }: Props) => {
+const EditableRow: React.FC<Props> = ({ jsonValue, name, onDelete, field }: Props) => {
   const menu: DropDownProps['menu'] = useMemo(() => {
     const MenuKey = {
       DeleteMetadataRow: 'delete-metadata-row',
@@ -49,10 +50,10 @@ const EditableRow: React.FC<Props> = ({ name, onDelete, field }: Props) => {
     <Form.Item {...field} name={name} noStyle>
       <Input.Group className={css.row} compact>
         <Form.Item name={[name, 'key']} noStyle>
-          <Input placeholder={METADATA_KEY_PLACEHOLDER} />
+          <Input disabled={!!jsonValue} placeholder={METADATA_KEY_PLACEHOLDER} />
         </Form.Item>
-        <Form.Item name={[name, 'value']} noStyle>
-          <Input placeholder={METADATA_VALUE_PLACEHOLDER} />
+        <Form.Item name={jsonValue ? '' : [name, 'value']} noStyle>
+          <Input disabled={!!jsonValue} placeholder={jsonValue || METADATA_VALUE_PLACEHOLDER} />
         </Form.Item>
         {onDelete && (
           <Dropdown
