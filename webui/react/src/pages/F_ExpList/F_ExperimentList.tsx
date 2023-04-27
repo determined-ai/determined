@@ -116,11 +116,11 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const onSortChange = useCallback(
     (sorts: Sort[]) => {
       setSorts(sorts);
-      setSortString(newSortString);
       const newSortString = makeSortString(sorts.filter(validSort.is));
       if (newSortString !== sortString) {
         resetPagination();
       }
+      setSortString(newSortString);
     },
     [resetPagination, sortString],
   );
