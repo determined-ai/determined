@@ -23,6 +23,7 @@
       align-self: flex-start;
       color: var(--theme-colors-monochrome-8);
       flex-basis: 34%;
+      flex-shrink: 0;
       font-size: 12px;
       margin-right: 20px;
       max-width: 200px;
@@ -35,6 +36,7 @@
       flex-grow: 1;
       font-size: 14px;
       margin: 0;
+      min-width: 0;
 
       .blank {
         background-color: var(--theme-background-on);

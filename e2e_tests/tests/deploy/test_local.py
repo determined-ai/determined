@@ -23,7 +23,7 @@ def det_deploy(subcommand: List) -> None:
         "deploy",
         "local",
     ] + subcommand
-    subprocess.run(command)
+    subprocess.run(command, check=True)
 
 
 def cluster_up(arguments: List, delete_db: bool = True) -> None:
@@ -101,7 +101,7 @@ def agent_disable(arguments: List) -> None:
 def test_cluster_down() -> None:
     master_host = "localhost"
     master_port = "8080"
-    name = "fixture_down_test"
+    name = "test_cluster_down"
     conf.MASTER_IP = master_host
     conf.MASTER_PORT = master_port
 
@@ -123,26 +123,29 @@ def test_cluster_down() -> None:
 def test_custom_etc() -> None:
     master_host = "localhost"
     master_port = "8080"
+    name = "test_custom_etc"
     conf.MASTER_IP = master_host
     conf.MASTER_PORT = master_port
     etc_path = str(Path(__file__).parent.joinpath("etc/master.yaml").resolve())
-    cluster_up(["--master-config-path", etc_path])
+    cluster_up(["--master-config-path", etc_path, "--cluster-name", name])
     exp.run_basic_test(
         conf.fixtures_path("no_op/single-default-ckpt.yaml"),
         conf.fixtures_path("no_op"),
         1,
     )
     assert os.path.exists("/tmp/ckpt-test/")
-    cluster_down([])
+    cluster_down(["--cluster-name", name])
 
 
 @pytest.mark.det_deploy_local
 def test_agent_config_path() -> None:
     master_host = "localhost"
     master_port = "8080"
+    cluster_name = "test_agent_config_path"
+    master_name = f"{cluster_name}_determined-master_1"
     conf.MASTER_IP = master_host
     conf.MASTER_PORT = master_port
-    master_up([])
+    master_up(["--master-name", master_name])
 
     # Config makes it unmodified.
     etc_path = str(Path(__file__).parent.joinpath("etc/agent.yaml").resolve())
@@ -164,6 +167,8 @@ def test_agent_config_path() -> None:
             print("Waiting for 'test-fluent' container to be created")
             time.sleep(10)
     else:
+        print("agent logs:")
+        print(agent_container.attach(logs=True).decode())
         pytest.fail("uh-oh, fluent didn't come online")
     agent_down(["--agent-name", agent_name])
 
@@ -175,7 +180,7 @@ def test_agent_config_path() -> None:
     assert len(agent_list) == 1
     agent_down(["--agent-name", agent_name])
 
-    master_down([])
+    master_down(["--master-name", master_name])
 
 
 @pytest.mark.det_deploy_local
@@ -229,21 +234,21 @@ def test_agents_made() -> None:
 def test_master_up_down() -> None:
     master_host = "localhost"
     master_port = "8080"
-    name = "determined"
+    cluster_name = "test_master_up_down"
+    master_name = f"{cluster_name}_determined-master_1"
     conf.MASTER_IP = master_host
     conf.MASTER_PORT = master_port
 
-    master_up(["--master-name", name])
+    master_up(["--master-name", master_name])
 
-    container_name = name + "_determined-master_1"
     client = docker.from_env()
 
-    containers = client.containers.list(filters={"name": container_name})
+    containers = client.containers.list(filters={"name": master_name})
     assert len(containers) > 0
 
-    master_down([])
+    master_down(["--master-name", master_name])
 
-    containers = client.containers.list(filters={"name": container_name})
+    containers = client.containers.list(filters={"name": master_name})
     assert len(containers) == 0
 
 
@@ -251,11 +256,13 @@ def test_master_up_down() -> None:
 def test_agent_up_down() -> None:
     master_host = "localhost"
     master_port = "8080"
-    agent_name = "determined-agent"
+    agent_name = "test_agent-determined-agent"
     conf.MASTER_IP = master_host
     conf.MASTER_PORT = master_port
+    cluster_name = "test_agent_up_down"
+    master_name = f"{cluster_name}_determined-master_1"
 
-    master_up([])
+    master_up(["--master-name", master_name])
     agent_up(["--agent-name", agent_name])
 
     client = docker.from_env()
@@ -266,7 +273,7 @@ def test_agent_up_down() -> None:
     containers = client.containers.list(filters={"name": agent_name})
     assert len(containers) == 0
 
-    master_down([])
+    master_down(["--master-name", master_name])
 
 
 @pytest.mark.parametrize("steps", [10])
@@ -277,9 +284,11 @@ def test_stress_agents_reconnect(steps: int, num_agents: int, should_disconnect:
     random.seed(42)
     master_host = "localhost"
     master_port = "8080"
+    cluster_name = "test_stress_agents_reconnect"
+    master_name = f"{cluster_name}_determined-master_1"
     conf.MASTER_IP = master_host
     conf.MASTER_PORT = master_port
-    master_up([])
+    master_up(["--master-name", master_name])
 
     # Start all agents.
     agents_are_up = [True] * num_agents
@@ -348,8 +357,8 @@ def test_stress_agents_reconnect(steps: int, num_agents: int, should_disconnect:
                 conf.fixtures_path("no_op"),
                 None,
             )
-            exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.STATE_COMPLETED)
+            exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.COMPLETED)
 
     for agent_id in range(num_agents):
         agent_down(["--agent-name", f"agent-{agent_id}"])
-    master_down([])
+    master_down(["--master-name", master_name])

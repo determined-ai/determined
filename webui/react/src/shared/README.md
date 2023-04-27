@@ -28,7 +28,3 @@ outside this directory
   - [ ] sharing an existing module
   - [ ] creating & sharing a new module
   - [ ] best practices for structuring a component directory
-
-## Future Work
-
-- [ ] set up storybooks

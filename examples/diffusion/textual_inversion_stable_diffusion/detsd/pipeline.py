@@ -250,7 +250,7 @@ class DetSDTextualInversionPipeline:
                 raise ValueError(f"Checkpoint concept conflict: {concept_str} already exists.")
             initializer_strs = embedding_dict["initializer_strs"]
             learned_embeddings = embedding_dict["learned_embeddings"]
-            (_, dummy_placeholder_ids, dummy_placeholder_strs,) = utils.add_new_tokens_to_tokenizer(
+            (_, dummy_placeholder_ids, dummy_placeholder_strs) = utils.add_new_tokens_to_tokenizer(
                 concept_str=concept_str,
                 initializer_strs=initializer_strs,
                 tokenizer=self.hf_pipeline.tokenizer,

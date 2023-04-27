@@ -1,14 +1,17 @@
 import argparse
+from typing import Optional
 
 import boto3
 
 
-def get_output_from_stack(stack_name: str, output_key: str) -> str:
+def get_output_from_stack(stack_name: str, output_key: str) -> Optional[str]:
     stack = boto3.resource("cloudformation").Stack(stack_name)
-    output_value = list(filter(lambda d: d["OutputKey"] == output_key, stack.outputs))[0][
-        "OutputValue"
-    ]  # type: str
-    return output_value
+    if stack.outputs is None:
+        return None
+    outputs = list(filter(lambda d: d.get("OutputKey", None) == output_key, stack.outputs))
+    if len(outputs) < 1:
+        return None
+    return outputs[0].get("OutputValue", None)
 
 
 def main() -> None:
@@ -18,7 +21,10 @@ def main() -> None:
     )
     parser.add_argument("output_key", help="CloudFormation stack output key")
     args = parser.parse_args()
-    print(get_output_from_stack(args.stack_name, args.output_key), end="", flush=True)
+    output = get_output_from_stack(args.stack_name, args.output_key)
+    if output is None:
+        raise RuntimeError(f"Could not find output {args.output_key} in stack {args.stack_name}")
+    print(output, end="", flush=True)
 
 
 if __name__ == "__main__":

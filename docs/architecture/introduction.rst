@@ -25,11 +25,35 @@ except a TensorBoard, is launched.
 Options set via ``--config`` take precedence over values specified in the configuration file.
 Configuration settings are compatible with any Determined task unless otherwise specified.
 
+Determined CLI
+==============
+
+One of the key components of the Determined platform is the :ref:`command-line interface (CLI)
+<cli-ug>`. The CLI serves as a primary entry point for interacting with Determined, providing a way
+to efficiently manage and control various aspects of the system. The following list describes some
+of the tasks users can perform with the Determined CLI:
+
+-  Experiment management: Running experiments is a fundamental part of the machine learning process.
+   With the CLI, users can effortlessly create, list, and manage experiments, as well as access
+   important experiment metrics and logs.
+
+-  Queue management: The CLI enables users to manage their job queues, monitor the progress of
+   ongoing tasks, and even prioritize or cancel jobs as needed.
+
+-  Notebook management: Jupyter notebooks are an essential tool for data scientists and machine
+   learning engineers. The CLI simplifies the process of creating, launching, and managing Jupyter
+   notebooks within the platform.
+
+-  TensorBoard integration: TensorBoard is a popular visualization tool for TensorFlow projects. The
+   CLI allows users to easily launch and manage TensorBoard instances, making it simple to visualize
+   and analyze the training progress of their models.
+
 Commands and Shells
 ===================
 
 In addition to structured model training workloads, which are handled using :ref:`experiments
-<experiments>`, Determined also supports more free-form tasks using *commands* and *shells*.
+<experiments>`, Determined also supports more free-form tasks using :ref:`commands and shells
+<commands-and-shells>`.
 
 Commands execute a user-specified program on the cluster. Shells start SSH servers that allow using
 cluster resources interactively.
@@ -38,9 +62,6 @@ Commands and shells enable developers to use a Determined cluster and its GPUs w
 write code conforming to the trial APIs. Commands are useful for running existing code in a batch
 manner; shells provide access to the cluster in the form of interactive `SSH
 <https://en.wikipedia.org/wiki/SSH_(Secure_Shell)>`_ sessions.
-
-This document provides an overview of the most common CLI commands related to shells and commands;
-see :ref:`cli` for full documentation.
 
 Configuration Templates
 =======================
@@ -274,7 +295,7 @@ To run tasks such as experiments or notebooks, Determined needs to have resource
 which to run the tasks. However, different tasks have different resource requirements and, given the
 cost of GPU resources, it is important to choose the right resources for specific goals so that you
 get the most value out of your money. For example, you may want to run your training on beefy V100
-GPU machines, while you want your Tensorboards to run on cheap CPU machines with minimal resources.
+GPU machines, while you want your TensorBoards to run on cheap CPU machines with minimal resources.
 
 Determined has the concept of a *resource pool*, which is a collection of identical resources that
 are located physically close to each other. Determined allows you to configure your cluster to have
@@ -283,7 +304,7 @@ different sets of resources for different tasks. Each resource pool handles sche
 provisioning independently.
 
 When you configure a cluster, you set which pool is the default for auxiliary tasks and which pool
-is the default for compute tasks. CPU-only tasks such as Tensorboards will run on the default
+is the default for compute tasks. CPU-only tasks such as TensorBoards will run on the default
 auxiliary pool unless you specify that they should run in a different pool when launching the task.
 Tasks which require a slot, such as experiments or GPU-notebooks, will use the default compute pool
 unless otherwise specified. For this reason it is recommended that you always create a cluster with
@@ -298,10 +319,10 @@ Here are some scenarios where it can be valuable to use multiple resource pools:
    You create one pool, ``aws-v100``, that provisions ``p3dn.24xlarge`` instances (large V100 EC2
    instances) and another pool, ``aws-cpu`` that provisions ``m5.large`` instances (small and cheap
    CPU instances). You train your experiments using the ``aws-v100`` pool, while you run your
-   Tensorboards in the ``aws-cpu`` pool. When your experiments complete, the ``aws-v100 pool`` can
+   TensorBoards in the ``aws-cpu`` pool. When your experiments complete, the ``aws-v100 pool`` can
    scale down to zero to save money, but you can continue to run your TensorBoard. Without resource
    pools, you would have needed to keep a ``p3dn.24xlarge`` instance running to keep the TensorBoard
-   alive. By default Tensorboard will always run on the default CPU pool.
+   alive. By default TensorBoard will always run on the default CPU pool.
 
 -  *Use GPUs in different availability zones on AWS.*
 
@@ -403,7 +424,7 @@ This example sets the cluster-wide scheduler defaults to use a best-fit, round r
 ``resource_manager.scheduler``. The scheduler settings at the pool level for ``pool1`` are then
 overwritten. Because ``scheduler.fitting_policy=worst`` is set, no settings are inherited from
 ``resource_manager.scheduler`` so pool1 uses a worst-fit, fair share scheduler because for a blank
-``scheduler.type`` field, the default value is ``fair_share``).
+``scheduler.type`` field, the default value is ``fair_share``.
 
 If you want to have ``pool1`` use a worst-fit, round robin scheduler, you need to make sure you
 redefine the scheduler type at the pool-specific level:
@@ -437,9 +458,9 @@ When creating a task, the job configuration file has a section called "resources
 
 If this field is not set, the task will be launched into one of the two default pools defined in the
 :ref:`master-config-reference`. Experiments will be launched into the default compute pool.
-Tensorboards will be launched into the default auxiliary pool. Commands, Shells, and Notebooks that
+TensorBoards will be launched into the default auxiliary pool. Commands, shells, and notebooks that
 request a slot (which is the default behavior if the ``resources.slots`` field is not set) will be
-launched into the default compute pool. Commands, Shells, and Notebooks that explicitly request 0
+launched into the default compute pool. Commands, shells, and notebooks that explicitly request 0
 slots (for example the "Launch CPU-only Notebook" button in the Web UI) will use the auxiliary pool.
 
 .. _scheduling:

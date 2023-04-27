@@ -93,9 +93,11 @@ fulfilled and configured, install and configure the Determined master:
    | ``port``                   | Communication port used by the launcher. Update this value if  |
    |                            | there are conflicts with other services on your cluster.       |
    +----------------------------+----------------------------------------------------------------+
-   | ``job_storage_root``       | Shared directory where job-related files are stored. This      |
-   |                            | directory must be visible to the launcher and from the compute |
-   |                            | nodes.                                                         |
+   | ``job_storage_root``       | Shared directory where job-related temporary files are stored. |
+   |                            | The directory must be visible to the launcher and from the     |
+   |                            | compute nodes. If ``user_name`` is configured as a user        |
+   |                            | account other than ``root``, then the default value is         |
+   |                            | ``$HOME/.launcher``.                                           |
    +----------------------------+----------------------------------------------------------------+
    | ``container_run_type``     | The container type to be launched on Slurm (``singularity``,   |
    |                            | ``enroot``, or ``podman``). The default type is                |

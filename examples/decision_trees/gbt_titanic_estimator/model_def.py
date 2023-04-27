@@ -82,7 +82,6 @@ class BoostedTreesTrial(EstimatorTrial):
         )
 
     def load_dataset(self):
-
         dftrain = pd.read_csv(self.context.get_data_config()["titanic_dataset"]["train"])
         dfeval = pd.read_csv(self.context.get_data_config()["titanic_dataset"]["eval"])
         y_train = dftrain.pop("survived")

@@ -139,13 +139,7 @@ SELECT
   t.task_id,
   t.checkpoint_size AS total_checkpoint_size,
   t.checkpoint_count,
-  (
-    SELECT s.total_batches
-    FROM steps s
-    WHERE s.trial_id = t.id
-    ORDER BY s.total_batches DESC
-    LIMIT 1
-  ) AS total_batches_processed,
+  t.total_batches AS total_batches_processed,
    t.runner_state,
   (
     SELECT extract(epoch from sum(coalesce(a.end_time, now()) - a.start_time))

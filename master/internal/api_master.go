@@ -12,6 +12,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/determined-ai/determined/master/internal/api"
+	"github.com/determined-ai/determined/master/internal/cluster"
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/plugin/sso"
@@ -107,6 +108,19 @@ func (a *apiServer) MasterLogs(
 	ctx, cancel := context.WithCancel(resp.Context())
 	defer cancel()
 
+	u, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return err
+	}
+
+	permErr, err := cluster.AuthZProvider.Get().CanGetMasterLogs(ctx, u)
+	if err != nil {
+		return err
+	}
+	if permErr != nil {
+		return status.Error(codes.PermissionDenied, permErr.Error())
+	}
+
 	res := make(chan api.BatchResult, 1)
 	go api.NewBatchStreamProcessor(
 		lReq,
@@ -133,10 +147,18 @@ func (a *apiServer) MasterLogs(
 }
 
 func (a *apiServer) ResourceAllocationRaw(
-	_ context.Context,
+	ctx context.Context,
 	req *apiv1.ResourceAllocationRawRequest,
 ) (*apiv1.ResourceAllocationRawResponse, error) {
 	resp := &apiv1.ResourceAllocationRawResponse{}
+
+	u, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err := a.m.canGetUsageDetails(ctx, u); err != nil {
+		return nil, err
+	}
 
 	if req.TimestampAfter == nil {
 		return nil, status.Error(codes.InvalidArgument, "no start time provided")
@@ -160,8 +182,16 @@ func (a *apiServer) ResourceAllocationRaw(
 }
 
 func (a *apiServer) ResourceAllocationAggregated(
-	_ context.Context,
+	ctx context.Context,
 	req *apiv1.ResourceAllocationAggregatedRequest,
 ) (*apiv1.ResourceAllocationAggregatedResponse, error) {
+	u, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err := a.m.canGetUsageDetails(ctx, u); err != nil {
+		return nil, err
+	}
+
 	return a.m.fetchAggregatedResourceAllocation(req)
 }

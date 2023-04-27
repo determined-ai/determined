@@ -82,7 +82,12 @@ def activate_experiments(experiment_ids: List[int], name: Optional[str] = None) 
 
 def cancel_experiment(experiment_id: int) -> None:
     bindings.post_CancelExperiment(api_utils.determined_test_session(), id=experiment_id)
-    wait_for_experiment_state(experiment_id, experimentv1State.STATE_CANCELED)
+    wait_for_experiment_state(experiment_id, experimentv1State.CANCELED)
+
+
+def kill_experiment(experiment_id: int) -> None:
+    bindings.post_KillExperiment(api_utils.determined_test_session(), id=experiment_id)
+    wait_for_experiment_state(experiment_id, experimentv1State.CANCELED)
 
 
 def cancel_experiments(experiment_ids: List[int], name: Optional[str] = None) -> None:
@@ -94,9 +99,18 @@ def cancel_experiments(experiment_ids: List[int], name: Optional[str] = None) ->
     bindings.post_CancelExperiments(api_utils.determined_test_session(), body=body)
 
 
-def cancel_trial(trial_id: int) -> None:
+def kill_experiments(experiment_ids: List[int], name: Optional[str] = None) -> None:
+    if name is None:
+        body = bindings.v1KillExperimentsRequest(experimentIds=experiment_ids)
+    else:
+        filters = bindings.v1BulkExperimentFilters(name=name)
+        body = bindings.v1KillExperimentsRequest(experimentIds=[], filters=filters)
+    bindings.post_KillExperiments(api_utils.determined_test_session(), body=body)
+
+
+def kill_trial(trial_id: int) -> None:
     bindings.post_KillTrial(api_utils.determined_test_session(), id=trial_id)
-    wait_for_trial_state(trial_id, experimentv1State.STATE_CANCELED)
+    wait_for_trial_state(trial_id, experimentv1State.CANCELED)
 
 
 def wait_for_experiment_by_name_is_active(
@@ -139,14 +153,14 @@ def wait_for_experiment_by_name_is_active(
 
             pytest.fail(
                 f"Experiment {experiment_id} terminated in {experiment.state.value} state, "
-                f"expected {experimentv1State.STATE_ACTIVE}"
+                f"expected {experimentv1State.ACTIVE}"
             )
 
         if seconds_waited > 0 and seconds_waited % log_every == 0:
             print(
                 f"Waited {seconds_waited} seconds for experiment {experiment_name} "
                 f"(currently {experiment.state.value}) to reach "
-                f"{experimentv1State.STATE_ACTIVE}"
+                f"{experimentv1State.ACTIVE}"
             )
 
         time.sleep(1)
@@ -157,11 +171,11 @@ def wait_for_experiment_by_name_is_active(
 
 def _is_experiment_active(exp_state: experimentv1State) -> bool:
     return exp_state in (
-        experimentv1State.STATE_ACTIVE,
-        experimentv1State.STATE_RUNNING,
-        experimentv1State.STATE_QUEUED,
-        experimentv1State.STATE_PULLING,
-        experimentv1State.STATE_STARTING,
+        experimentv1State.ACTIVE,
+        experimentv1State.RUNNING,
+        experimentv1State.QUEUED,
+        experimentv1State.PULLING,
+        experimentv1State.STARTING,
     )
 
 
@@ -203,8 +217,8 @@ def wait_for_experiment_state(
         time.sleep(1)
 
     else:
-        if target_state == experimentv1State.STATE_COMPLETED:
-            cancel_experiment(experiment_id)
+        if target_state == experimentv1State.COMPLETED:
+            kill_experiment(experiment_id)
         report_failed_experiment(experiment_id)
         pytest.fail(
             "Experiment did not reach target state {} after {} seconds".format(
@@ -249,8 +263,8 @@ def wait_for_trial_state(
 
     else:
         state = trial_state(trial_id)
-        if target_state == experimentv1State.STATE_COMPLETED:
-            cancel_trial(trial_id)
+        if target_state == experimentv1State.COMPLETED:
+            kill_trial(trial_id)
         report_failed_trial(trial_id, target_state=target_state, state=state)
         pytest.fail(
             "Trial did not reach target state {} after {} seconds".format(
@@ -384,14 +398,25 @@ def cancel_single(experiment_id: int, should_have_trial: bool = False) -> None:
         assert len(trials) == 1, len(trials)
 
         trial = trials[0].trial
-        assert trial.state == experimentv1State.STATE_CANCELED
+        assert trial.state == experimentv1State.CANCELED
+
+
+def kill_single(experiment_id: int, should_have_trial: bool = False) -> None:
+    kill_experiment(experiment_id)
+
+    if should_have_trial:
+        trials = experiment_trials(experiment_id)
+        assert len(trials) == 1, len(trials)
+
+        trial = trials[0].trial
+        assert trial.state == experimentv1State.CANCELED
 
 
 def is_terminal_state(state: experimentv1State) -> bool:
     return state in (
-        experimentv1State.STATE_CANCELED,
-        experimentv1State.STATE_COMPLETED,
-        experimentv1State.STATE_ERROR,
+        experimentv1State.CANCELED,
+        experimentv1State.COMPLETED,
+        experimentv1State.ERROR,
     )
 
 
@@ -409,21 +434,21 @@ def num_trials(experiment_id: int) -> int:
 
 def num_active_trials(experiment_id: int) -> int:
     return sum(
-        1 if t.trial.state == experimentv1State.STATE_RUNNING else 0
+        1 if t.trial.state == experimentv1State.RUNNING else 0
         for t in experiment_trials(experiment_id)
     )
 
 
 def num_completed_trials(experiment_id: int) -> int:
     return sum(
-        1 if t.trial.state == experimentv1State.STATE_COMPLETED else 0
+        1 if t.trial.state == experimentv1State.COMPLETED else 0
         for t in experiment_trials(experiment_id)
     )
 
 
 def num_error_trials(experiment_id: int) -> int:
     return sum(
-        1 if t.trial.state == experimentv1State.STATE_ERROR else 0
+        1 if t.trial.state == experimentv1State.ERROR else 0
         for t in experiment_trials(experiment_id)
     )
 
@@ -538,7 +563,7 @@ def last_workload_matches_last_checkpoint(
     checkpoint_workloads = workloads_with_checkpoint(workloads)
     assert len(checkpoint_workloads) > 0
     last_checkpoint = checkpoint_workloads[-1]
-    assert last_checkpoint.state == bindings.checkpointv1State.STATE_COMPLETED
+    assert last_checkpoint.state == bindings.checkpointv1State.COMPLETED
 
     last_workload = workloads[-1]
     if last_workload.training or last_workload.validation:
@@ -549,7 +574,7 @@ def last_workload_matches_last_checkpoint(
         last_checkpoint_detail = last_workload.checkpoint
         assert last_checkpoint_detail is not None
         assert last_checkpoint_detail.totalBatches == last_checkpoint.totalBatches
-        assert last_checkpoint_detail.state == bindings.checkpointv1State.STATE_COMPLETED
+        assert last_checkpoint_detail.state == bindings.checkpointv1State.COMPLETED
 
 
 def assert_performed_final_checkpoint(exp_id: int) -> None:
@@ -633,23 +658,19 @@ def run_list_cli_tests(experiment_id: int) -> None:
 
 def report_failed_experiment(experiment_id: int) -> None:
     trials = experiment_trials(experiment_id)
-    active = sum(1 for t in trials if t.trial.state == experimentv1State.STATE_RUNNING)
-    paused = sum(1 for t in trials if t.trial.state == experimentv1State.STATE_PAUSED)
+    active = sum(1 for t in trials if t.trial.state == experimentv1State.RUNNING)
+    paused = sum(1 for t in trials if t.trial.state == experimentv1State.PAUSED)
     stopping_completed = sum(
-        1 for t in trials if t.trial.state == experimentv1State.STATE_STOPPING_COMPLETED
+        1 for t in trials if t.trial.state == experimentv1State.STOPPING_COMPLETED
     )
     stopping_canceled = sum(
-        1 for t in trials if t.trial.state == experimentv1State.STATE_STOPPING_CANCELED
+        1 for t in trials if t.trial.state == experimentv1State.STOPPING_CANCELED
     )
-    stopping_error = sum(
-        1 for t in trials if t.trial.state == experimentv1State.STATE_STOPPING_ERROR
-    )
-    completed = sum(1 for t in trials if t.trial.state == experimentv1State.STATE_COMPLETED)
-    canceled = sum(1 for t in trials if t.trial.state == experimentv1State.STATE_CANCELED)
-    errored = sum(1 for t in trials if t.trial.state == experimentv1State.STATE_ERROR)
-    stopping_killed = sum(
-        1 for t in trials if t.trial.state == experimentv1State.STATE_STOPPING_KILLED
-    )
+    stopping_error = sum(1 for t in trials if t.trial.state == experimentv1State.STOPPING_ERROR)
+    completed = sum(1 for t in trials if t.trial.state == experimentv1State.COMPLETED)
+    canceled = sum(1 for t in trials if t.trial.state == experimentv1State.CANCELED)
+    errored = sum(1 for t in trials if t.trial.state == experimentv1State.ERROR)
+    stopping_killed = sum(1 for t in trials if t.trial.state == experimentv1State.STOPPING_KILLED)
 
     print(
         f"Experiment {experiment_id}: {len(trials)} trials, {completed} completed, "
@@ -693,7 +714,7 @@ def run_basic_test(
 
     wait_for_experiment_state(
         experiment_id,
-        experimentv1State.STATE_COMPLETED,
+        experimentv1State.COMPLETED,
         max_wait_secs=max_wait_secs,
     )
     assert num_active_trials(experiment_id) == 0
@@ -742,10 +763,10 @@ def verify_completed_experiment_metadata(
 
     for t in trials:
         trial = t.trial
-        if trial.state != experimentv1State.STATE_COMPLETED:
+        if trial.state != experimentv1State.COMPLETED:
             report_failed_trial(
                 trial.id,
-                target_state=experimentv1State.STATE_COMPLETED,
+                target_state=experimentv1State.COMPLETED,
                 state=trial.state,
             )
             pytest.fail(f"Trial {trial.id} was not STATE_COMPLETED but {trial.state.value}")
@@ -769,8 +790,8 @@ def verify_completed_experiment_metadata(
             if s.checkpoint:
                 batch_ids.append(s.checkpoint.totalBatches)
                 assert s.checkpoint.state in {
-                    bindings.checkpointv1State.STATE_COMPLETED,
-                    bindings.checkpointv1State.STATE_DELETED,
+                    bindings.checkpointv1State.COMPLETED,
+                    bindings.checkpointv1State.DELETED,
                 }
         assert all(x <= y for x, y in zip(batch_ids, batch_ids[1:]))
 
@@ -800,7 +821,7 @@ def verify_completed_experiment_metadata(
 def run_failure_test(config_file: str, model_def_file: str, error_str: Optional[str] = None) -> int:
     experiment_id = create_experiment(config_file, model_def_file)
 
-    wait_for_experiment_state(experiment_id, experimentv1State.STATE_ERROR)
+    wait_for_experiment_state(experiment_id, experimentv1State.ERROR)
 
     # The searcher is configured with a `max_trials` of 8. Since the
     # first step of each trial results in an error, there should be no
@@ -819,7 +840,7 @@ def run_failure_test(config_file: str, model_def_file: str, error_str: Optional[
     trials = experiment_trials(experiment_id)
     for t in trials:
         trial = t.trial
-        if trial.state != experimentv1State.STATE_ERROR:
+        if trial.state != experimentv1State.ERROR:
             continue
 
         logs = trial_logs(trial.id)
@@ -893,3 +914,19 @@ def s3_checkpoint_config_no_creds() -> Dict[str, str]:
 
 def root_user_home_bind_mount() -> Dict[str, str]:
     return {"host_path": "/tmp", "container_path": "/root"}
+
+
+def has_at_least_one_checkpoint(experiment_id: int) -> bool:
+    for trial in experiment_trials(experiment_id):
+        if len(workloads_with_checkpoint(trial.workloads)) > 0:
+            return True
+    return False
+
+
+def wait_for_at_least_one_checkpoint(experiment_id: int, timeout: int = 120) -> None:
+    for _ in range(timeout):
+        if has_at_least_one_checkpoint(experiment_id):
+            return
+        else:
+            time.sleep(1)
+    pytest.fail("Experiment did not reach at least one checkpoint after {} seconds".format(timeout))

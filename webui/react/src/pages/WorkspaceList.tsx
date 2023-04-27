@@ -5,6 +5,7 @@ import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup'
 import Button from 'components/kit/Button';
 import Card from 'components/kit/Card';
 import Empty from 'components/kit/Empty';
+import { useModal } from 'components/kit/Modal';
 import Select, { Option } from 'components/kit/Select';
 import Toggle from 'components/kit/Toggle';
 import Link from 'components/Link';
@@ -20,7 +21,7 @@ import {
   stateRenderer,
   userRenderer,
 } from 'components/Table/Table';
-import useModalWorkspaceCreate from 'hooks/useModal/Workspace/useModalWorkspaceCreate';
+import WorkspaceCreateModalComponent from 'components/WorkspaceCreateModal';
 import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
@@ -32,7 +33,7 @@ import usePolling from 'shared/hooks/usePolling';
 import usePrevious from 'shared/hooks/usePrevious';
 import { isEqual } from 'shared/utils/data';
 import { validateDetApiEnum } from 'shared/utils/service';
-import usersStore from 'stores/users';
+import userStore from 'stores/users';
 import { Workspace } from 'types';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
@@ -48,12 +49,9 @@ import settingsConfig, {
 } from './WorkspaceList.settings';
 
 const WorkspaceList: React.FC = () => {
-  const users = Loadable.map(useObservable(usersStore.getUsers()), ({ users }) => users);
-  const loadableCurrentUser = useObservable(usersStore.getCurrentUser());
-  const user = Loadable.match(loadableCurrentUser, {
-    Loaded: (cUser) => cUser,
-    NotLoaded: () => undefined,
-  });
+  const currentUser = Loadable.getOrElse(undefined, useObservable(userStore.currentUser));
+  const loadableUsers = useObservable(userStore.getUsers());
+  const users = Loadable.getOrElse([], loadableUsers);
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [total, setTotal] = useState(0);
   const [pageError, setPageError] = useState<Error>();
@@ -63,11 +61,9 @@ const WorkspaceList: React.FC = () => {
 
   const { canCreateWorkspace } = usePermissions();
 
-  const { contextHolder, modalOpen } = useModalWorkspaceCreate();
+  const WorkspaceCreateModal = useModal(WorkspaceCreateModalComponent);
 
   const { settings, updateSettings } = useSettings<WorkspaceListSettings>(settingsConfig);
-
-  const handleWorkspaceCreateClick = useCallback(() => modalOpen(), [modalOpen]);
 
   const fetchWorkspaces = useCallback(async () => {
     if (!settings) return;
@@ -131,25 +127,26 @@ const WorkspaceList: React.FC = () => {
 
   const prevWhose = usePrevious(settings.whose, undefined);
   useEffect(() => {
-    if (settings.whose === prevWhose || !settings.whose || Loadable.isLoading(users)) return;
+    if (settings.whose === prevWhose || !settings.whose || Loadable.isLoading(loadableUsers))
+      return;
 
     switch (settings.whose) {
       case WhoseWorkspaces.All:
         updateSettings({ user: undefined });
         break;
       case WhoseWorkspaces.Mine:
-        updateSettings({ user: user ? [user.id] : undefined });
+        updateSettings({ user: currentUser ? [currentUser.id] : undefined });
         break;
       case WhoseWorkspaces.Others:
         updateSettings({
-          user: users.data.filter((u) => u.id !== user?.id).map((u) => u.id),
+          user: users.filter((u) => u.id !== currentUser?.id).map((u) => u.id),
         });
         break;
     }
-  }, [prevWhose, settings.whose, updateSettings, user, users]);
+  }, [currentUser, loadableUsers, prevWhose, settings.whose, updateSettings, users]);
 
   const columns = useMemo(() => {
-    if (Loadable.isLoading(users)) return [];
+    if (Loadable.isLoading(loadableUsers)) return [];
 
     const workspaceNameRenderer = (value: string, record: Workspace) => (
       <Link path={paths.workspaceDetails(record.id)}>{value}</Link>
@@ -180,7 +177,7 @@ const WorkspaceList: React.FC = () => {
         dataIndex: 'userId',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['userId'],
         key: 'user',
-        render: (_, r) => userRenderer(users.data.find((u) => u.id === r.userId)),
+        render: (_, r) => userRenderer(users.find((u) => u.id === r.userId)),
         title: 'User',
       },
       {
@@ -210,7 +207,7 @@ const WorkspaceList: React.FC = () => {
         title: '',
       },
     ] as ColumnDef<Workspace>[];
-  }, [fetchWorkspaces, users]);
+  }, [fetchWorkspaces, loadableUsers, users]);
 
   const switchShowArchived = useCallback(
     (showArchived: boolean) => {
@@ -292,7 +289,7 @@ const WorkspaceList: React.FC = () => {
             containerRef={pageRef}
             ContextMenu={actionDropdown}
             dataSource={workspaces}
-            loading={isLoading || Loadable.isLoading(users)}
+            loading={isLoading || Loadable.isLoading(loadableUsers)}
             pagination={getFullPaginationConfig(
               {
                 limit: settings.tableLimit,
@@ -312,8 +309,8 @@ const WorkspaceList: React.FC = () => {
     columns,
     fetchWorkspaces,
     isLoading,
+    loadableUsers,
     settings,
-    users,
     total,
     updateSettings,
     workspaces,
@@ -339,7 +336,7 @@ const WorkspaceList: React.FC = () => {
       containerRef={pageRef}
       id="workspaces"
       options={
-        <Button disabled={!canCreateWorkspace} onClick={handleWorkspaceCreateClick}>
+        <Button disabled={!canCreateWorkspace} onClick={WorkspaceCreateModal.open}>
           New Workspace
         </Button>
       }
@@ -372,7 +369,7 @@ const WorkspaceList: React.FC = () => {
           <Message title="No workspaces matching the current filters" type={MessageType.Empty} />
         )}
       </Spinner>
-      {contextHolder}
+      <WorkspaceCreateModal.Component />
     </Page>
   );
 };

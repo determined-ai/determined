@@ -10,6 +10,7 @@ import {
   isPrimitive,
 } from 'shared/utils/data';
 import { capitalize } from 'shared/utils/string';
+import { BrandingType, DeterminedInfo } from 'stores/determinedInfo';
 import * as types from 'types';
 
 import * as Sdk from './api-ts-sdk'; // API Bindings
@@ -86,12 +87,12 @@ export const mapV1Pagination = (data?: Sdk.V1Pagination): Pagination => {
   };
 };
 
-export const mapV1MasterInfo = (data: Sdk.V1GetMasterResponse): types.DeterminedInfo => {
+export const mapV1MasterInfo = (data: Sdk.V1GetMasterResponse): DeterminedInfo => {
   // Validate branding against `BrandingType` enum.
-  const branding = Object.values(types.BrandingType).reduce((acc, value) => {
+  const branding = Object.values(BrandingType).reduce((acc, value) => {
     if (value === data.branding) acc = data.branding;
     return acc;
-  }, types.BrandingType.Determined);
+  }, BrandingType.Determined);
 
   return {
     branding,
@@ -455,6 +456,15 @@ export const mapV1GetExperimentDetailsResponse = ({
   };
 };
 
+export const mapSearchExperiment = (
+  data: Sdk.V1SearchExperimentExperiment,
+): types.ExperimentWithTrial => {
+  return {
+    bestTrial: data.bestTrial && decodeV1TrialToTrialItem(data.bestTrial),
+    experiment: data.experiment && mapV1Experiment(data.experiment),
+  };
+};
+
 export const mapV1Experiment = (
   data: Sdk.V1Experiment,
   jobSummary?: types.JobSummary,
@@ -617,16 +627,15 @@ export const decodeV1TrialToTrialItem = (data: Sdk.Trialv1Trial): types.TrialIte
   };
 };
 
-const decodeSummaryMetrics = (data: Sdk.V1SummarizedMetric[]): types.MetricContainer[] => {
+const decodeSummaryMetrics = (data: Sdk.V1DownsampledMetrics[]): types.MetricContainer[] => {
   return data.map((m) => {
     const metrics: types.MetricContainer = {
       data: m.data.map((pt) => ({
         batches: pt.batches,
         epoch: pt.epoch,
         time: pt.time,
-        value: pt.value,
+        values: pt.values,
       })),
-      name: m.name,
       type:
         m.type === Sdk.V1MetricType.TRAINING
           ? types.MetricType.Training
@@ -802,4 +811,20 @@ export const decodeJobStates = (
   return states as unknown as Array<
     'STATE_UNSPECIFIED' | 'STATE_QUEUED' | 'STATE_SCHEDULED' | 'STATE_SCHEDULED_BACKFILLED'
   >;
+};
+
+export const mapV1ExperimentActionResults = (
+  results: Sdk.V1ExperimentActionResult[],
+): types.BulkActionResult => {
+  return results.reduce(
+    (acc, cur) => {
+      if (cur.error.length > 0) {
+        acc.failed.push(cur);
+      } else {
+        acc.successful.push(cur.id);
+      }
+      return acc;
+    },
+    { failed: [], successful: [] } as types.BulkActionResult,
+  );
 };

@@ -20,12 +20,12 @@ In this topic guide, we will cover:
 
 :ref:`Installing Determined on Kubernetes <install-on-kubernetes>` deploys an instance of the
 Determined master and a Postgres database in the Kubernetes cluster. Once the master is up and
-running, users can submit :ref:`experiments <experiments>` and launch :ref:`notebooks <notebooks>`,
-:ref:`tensorboards <tensorboards>`, :ref:`commands, and shells <commands-and-shells>`. When new
-workloads are submitted to the Determined master, the master launches pods and configMaps on the
-Kubernetes cluster to execute those workloads. Users of Determined shouldn't need to interact with
-Kubernetes directly after installation, as Determined handles all the necessary interaction with the
-Kubernetes cluster.
+running, users can launch :ref:`experiments <experiments>`, :ref:`notebooks <notebooks>`,
+:ref:`TensorBoards <tensorboards>`, :ref:`commands <commands-and-shells>`, and :ref:`shells
+<commands-and-shells>`. When new workloads are submitted to the Determined master, the master
+launches pods and configMaps on the Kubernetes cluster to execute those workloads. Users of
+Determined shouldn't need to interact with Kubernetes directly after installation, as Determined
+handles all the necessary interaction with the Kubernetes cluster.
 
 It is also important to note that when running Determined on Kubernetes, a higher priority value
 means a higher priority (e.g. a priority 50 task will run before a priority 40 task). This is
@@ -60,6 +60,14 @@ the `Kubernetes Cluster Autoscaler
 <https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler>`_, which is supported on
 `GKE <https://cloud.google.com/kubernetes-engine/docs/concepts/cluster-autoscaler>`_ and `EKS
 <https://docs.aws.amazon.com/eks/latest/userguide/cluster-autoscaler.html>`_.
+
+Pod Security
+============
+
+By default, Determined runs task containers as root. However, it is possible to associate a
+Determined user with a Unix user and group, provided that the Unix user and group already exist.
+Tasks initiated by the associated Determined user will run under the linked Unix user rather than
+root. For more information, see: :ref:`run-as-user`.
 
 .. _useful-kubectl-commands:
 

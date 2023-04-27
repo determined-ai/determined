@@ -1,6 +1,7 @@
 import { Card } from 'antd';
 import type { TabsProps } from 'antd';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useObservable } from 'micro-observables';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import InfoBox from 'components/InfoBox';
@@ -10,6 +11,7 @@ import Link from 'components/Link';
 import MetadataCard from 'components/Metadata/MetadataCard';
 import NotesCard from 'components/NotesCard';
 import Page from 'components/Page';
+import PageNotFound from 'components/PageNotFound';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { getModelVersion, patchModelVersion } from 'services/api';
@@ -21,14 +23,14 @@ import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
 import { isAborted, isNotFound } from 'shared/utils/service';
 import { humanReadableBytes } from 'shared/utils/string';
-import { useEnsureWorkspacesFetched, useWorkspaces } from 'stores/workspaces';
+import workspaceStore from 'stores/workspaces';
 import { Metadata, ModelVersion } from 'types';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { checkpointSize } from 'utils/workload';
 
-import css from './ModelVersionDetails.module.scss';
 import ModelVersionHeader from './ModelVersionDetails/ModelVersionHeader';
+import css from './ModelVersionDetails.module.scss';
 
 const TabType = {
   Model: 'model',
@@ -45,12 +47,12 @@ const TAB_KEYS = Object.values(TabType);
 const DEFAULT_TAB_KEY = TabType.Model;
 
 const ModelVersionDetails: React.FC = () => {
-  const canceler = useRef(new AbortController());
   const [modelVersion, setModelVersion] = useState<ModelVersion>();
   const { modelId: modelID, versionNum: versionNUM, tab } = useParams<Params>();
-  const ensureWorkspacesFetched = useEnsureWorkspacesFetched(canceler.current);
-  const workspaces = Loadable.getOrElse([], useWorkspaces());
-  const workspace = workspaces.find((ws) => ws.id === modelVersion?.model.workspaceId);
+  const workspace = Loadable.getOrElse(
+    undefined,
+    useObservable(workspaceStore.getWorkspace(modelVersion?.model.workspaceId)),
+  );
   const [pageError, setPageError] = useState<Error>();
   const navigate = useNavigate();
   const location = useLocation();
@@ -61,7 +63,7 @@ const ModelVersionDetails: React.FC = () => {
 
   const basePath = paths.modelVersionDetails(modelId, versionNum);
 
-  const { canModifyModelVersion } = usePermissions();
+  const { canModifyModelVersion, loading: rbacLoading } = usePermissions();
 
   const fetchModelVersion = useCallback(async () => {
     try {
@@ -89,9 +91,7 @@ const ModelVersionDetails: React.FC = () => {
     [basePath, navigate],
   );
 
-  useEffect(() => {
-    ensureWorkspacesFetched();
-  }, [ensureWorkspacesFetched]);
+  useEffect(() => workspaceStore.fetch(), []);
 
   useEffect(() => {
     setTabKey(tab ?? DEFAULT_TAB_KEY);
@@ -289,7 +289,9 @@ const ModelVersionDetails: React.FC = () => {
   } else if (pageError && !isNotFound(pageError)) {
     const message = `Unable to fetch model ${modelId} version ${versionNum}`;
     return <Message title={message} type={MessageType.Warning} />;
-  } else if (!modelVersion || !workspace) {
+  } else if (pageError && isNotFound(pageError)) {
+    return <PageNotFound />;
+  } else if (!modelVersion || !workspace || rbacLoading) {
     return <Spinner spinning tip={`Loading model ${modelId} version ${versionNum} details...`} />;
   }
 

@@ -3,7 +3,7 @@ import pathlib
 import signal
 import sys
 import traceback
-from typing import Any, Optional
+from typing import Any, Dict, Optional, Union
 
 import appdirs
 
@@ -84,11 +84,27 @@ def _install_stacktrace_on_sigusr1() -> None:
     old_handler = signal.signal(signal.SIGUSR1, stacktrace_on_sigusr1)
 
 
+def _get_storage_manager(
+    checkpoint_storage: Optional[Union[str, Dict[str, Any]]]
+) -> Optional[storage.StorageManager]:
+    if checkpoint_storage is None:
+        return None
+    if isinstance(checkpoint_storage, str):
+        return storage.from_string(checkpoint_storage)
+    if isinstance(checkpoint_storage, dict):
+        if checkpoint_storage["type"] == "shared_fs":
+            raise ValueError(
+                "Cannot configure a shared_fs checkpoint storage with a "
+                "dictionary. Use a string or a configuration file."
+            )
+        return det.common.storage.build(checkpoint_storage, container_path=None)
+    raise TypeError("checkpoint_storage must be a string, dictionary, or None")
+
+
 def _dummy_init(
     *,
     distributed: Optional[core.DistributedContext] = None,
-    # TODO(DET-6153): allow a Union[StorageManager, str] here.
-    storage_manager: Optional[storage.StorageManager] = None,
+    checkpoint_storage: Optional[Union[str, Dict[str, Any]]] = None,
     tensorboard_path: Optional[pathlib.Path] = None,
     preempt_mode: core.PreemptMode = core.PreemptMode.WorkersAskChief,
 ) -> Context:
@@ -99,6 +115,8 @@ def _dummy_init(
     """
     distributed = distributed or core.DummyDistributedContext()
     preempt = core.DummyPreemptContext(distributed, preempt_mode)
+
+    storage_manager = _get_storage_manager(checkpoint_storage)
 
     if storage_manager is None:
         base_path = appdirs.user_data_dir("determined")
@@ -127,8 +145,7 @@ def _dummy_init(
 def init(
     *,
     distributed: Optional[core.DistributedContext] = None,
-    # TODO: figure out a better way to deal with checkpointing in the local training case.
-    storage_manager: Optional[storage.StorageManager] = None,
+    checkpoint_storage: Optional[Union[str, Dict[str, Any]]] = None,
     preempt_mode: core.PreemptMode = core.PreemptMode.WorkersAskChief,
     tensorboard_mode: core.TensorboardMode = core.TensorboardMode.AUTO,
 ) -> Context:
@@ -139,7 +156,7 @@ def init(
     Always use ``with core.init() as context`` instead of instantiating a ``core.Context`` directly.
     Certain components of the Core API may be configured by passing arguments to ``core.init()``.
     The only arg that is required is a ``DistributedContext``, and even that is only required for
-    for multi-slot tasks.
+    multi-slot tasks.
 
     All of your training must occur within the scope of the ``with core.init() as core_context``, as
     there are resources necessary for training which start in the ``core.Context``'s ``__enter__``
@@ -152,14 +169,21 @@ def init(
         preempt_mode (``core.PreemptMode``, optional): Configure the calling pattern for the
             ``core_context.preempt.should_preempt()`` method.  See
             :class:`~determined.core.PreemptMode` for more detail.  Defaults to ``WorkersAskChief``.
-        storage_manager: Internal use only.
+        checkpoint_storage (``Union[str, dict]``, optional): A directory path or a cloud storage URI
+            of the form ``s3://<bucket>[/<prefix>]`` (AWS) or ``gs://<bucket>[/<prefix>]`` (GCP).
+            This should only be used when IAM permissions can be assumed. You may also pass a
+            dictionary matching the ``checkpoint_storage`` field of the experiment config, with the
+            exception that ``type: shared_fs`` configs are not allowed.
         tensorboard_mode (``core.TensorboardMode``, optional): Define how Tensorboard
             metrics and profiling data are retained. See
             :class:`~determined.core.TensorboardMode`` for more detail. Defaults to ``AUTO``.
     """
     info = det.get_cluster_info()
     if info is None:
-        return _dummy_init(distributed=distributed, storage_manager=storage_manager)
+        return _dummy_init(
+            distributed=distributed,
+            checkpoint_storage=checkpoint_storage,
+        )
 
     # We are on the cluster.
     cert = certs.default_load(info.master_url)
@@ -179,6 +203,8 @@ def init(
     train = None
     searcher = None
     tensorboard_manager = None
+
+    storage_manager = _get_storage_manager(checkpoint_storage)
 
     if info.task_type == "TRIAL":
         # Prepare the tensorboard hooks.

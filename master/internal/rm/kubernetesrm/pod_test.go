@@ -178,6 +178,7 @@ var taskContainerFiles = []string{
 	"task-logging-teardown.sh",
 	"task-signal-handling.sh",
 	"enrich_task_logs.py",
+	"singularity-entrypoint-wrapper.sh",
 }
 
 func setupEntrypoint(t *testing.T) {

@@ -149,7 +149,7 @@ func TestRunContainer(t *testing.T) {
 	t.Log("creating simple container")
 	evs = make(chan docker.Event, 64)
 	pub = events.ChannelPublisher(evs)
-	dockerID, err := cl.CreateContainer(ctx, cproto.RunSpec{
+	dockerID, err := cl.CreateContainer(ctx, cproto.NewID(), cproto.RunSpec{
 		ContainerConfig: container.Config{
 			Image:      testImage,
 			Entrypoint: []string{"cat", "/tmp/whatever"},
@@ -171,7 +171,7 @@ func TestRunContainer(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Log("running simple container")
-	c, err := cl.RunContainer(ctx, ctx, dockerID)
+	c, err := cl.RunContainer(ctx, ctx, dockerID, pub)
 	require.NoError(t, err)
 
 	close(evs)
@@ -226,7 +226,7 @@ func TestRunContainerWithService(t *testing.T) {
 	t.Log("creating simple container")
 	evs = make(chan docker.Event, 64)
 	pub = events.ChannelPublisher(evs)
-	dockerID, err := cl.CreateContainer(ctx, cproto.RunSpec{
+	dockerID, err := cl.CreateContainer(ctx, cproto.NewID(), cproto.RunSpec{
 		ContainerConfig: container.Config{
 			Image: testServiceImage,
 			Labels: map[string]string{
@@ -238,7 +238,7 @@ func TestRunContainerWithService(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Log("running simple container")
-	c, err := cl.RunContainer(ctx, ctx, dockerID)
+	c, err := cl.RunContainer(ctx, ctx, dockerID, pub)
 	require.NoError(t, err)
 
 	close(evs)
@@ -265,10 +265,7 @@ func TestRunContainerWithService(t *testing.T) {
 	require.True(t, found, "did not find our container")
 
 	t.Log("ensure it can be reattached")
-	reattached, terminated, err := cl.ReattachContainer(
-		ctx,
-		docker.LabelFilter(docker.ContainerIDLabel, containerID),
-	)
+	reattached, terminated, err := cl.ReattachContainer(ctx, cproto.ID(containerID))
 	require.NoError(t, err)
 	require.Nil(t, terminated)
 

@@ -7,9 +7,9 @@ import { CSSTransition } from 'react-transition-group';
 import Dropdown, { Placement } from 'components/Dropdown';
 import DynamicIcon from 'components/DynamicIcon';
 import Button from 'components/kit/Button';
+import { useModal } from 'components/kit/Modal';
 import Tooltip from 'components/kit/Tooltip';
 import Link, { Props as LinkProps } from 'components/Link';
-import useModalWorkspaceCreate from 'hooks/useModal/Workspace/useModalWorkspaceCreate';
 import usePermissions from 'hooks/usePermissions';
 import { SettingsConfig, useSettings } from 'hooks/useSettings';
 import WorkspaceQuickSearch from 'pages/WorkspaceDetails/WorkspaceQuickSearch';
@@ -18,18 +18,18 @@ import { paths } from 'routes/utils';
 import Icon, { IconSize } from 'shared/components/Icon/Icon';
 import Spinner from 'shared/components/Spinner/Spinner';
 import useUI from 'shared/contexts/stores/UI';
-import { selectIsAuthenticated } from 'stores/auth';
-import { useClusterStore } from 'stores/cluster';
-import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
-import usersStore from 'stores/users';
-import { useWorkspaces } from 'stores/workspaces';
-import { BrandingType } from 'types';
+import authStore from 'stores/auth';
+import clusterStore from 'stores/cluster';
+import determinedStore, { BrandingType } from 'stores/determinedInfo';
+import userStore from 'stores/users';
+import workspaceStore from 'stores/workspaces';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 
 import css from './NavigationSideBar.module.scss';
 import ThemeToggle from './ThemeToggle';
 import UserBadge from './UserBadge';
+import WorkspaceCreateModalComponent from './WorkspaceCreateModal';
 
 interface ItemProps extends LinkProps {
   action?: React.ReactNode;
@@ -115,20 +115,18 @@ const NavigationSideBar: React.FC = () => {
   // `nodeRef` padding is required for CSSTransition to work with React.StrictMode.
   const nodeRef = useRef(null);
 
-  const clusterStatus = useObservable(useClusterStore().clusterStatus);
+  const clusterStatus = useObservable(clusterStore.clusterStatus);
 
-  const isAuthenticated = useObservable(selectIsAuthenticated);
-  const loadableCurrentUser = useObservable(usersStore.getCurrentUser());
-  const currentUser = Loadable.match(loadableCurrentUser, {
-    Loaded: (cUser) => cUser,
-    NotLoaded: () => undefined,
-  });
-  const info = Loadable.getOrElse(initInfo, useDeterminedInfo());
+  const isAuthenticated = useObservable(authStore.isAuthenticated);
+  const currentUser = Loadable.getOrElse(undefined, useObservable(userStore.currentUser));
+
+  const info = useObservable(determinedStore.info);
   const { ui } = useUI();
 
   const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
-  const { contextHolder: modalWorkspaceCreateContextHolder, modalOpen: openWorkspaceCreateModal } =
-    useModalWorkspaceCreate();
+
+  const WorkspaceCreateModal = useModal(WorkspaceCreateModalComponent);
+
   const showNavigation = isAuthenticated && ui.showChrome;
   const version = process.env.VERSION || '';
   const shortVersion = version.replace(/^(\d+\.\d+\.\d+).*?$/i, '$1');
@@ -137,6 +135,8 @@ const NavigationSideBar: React.FC = () => {
   const { canCreateWorkspace, canViewWorkspace, canEditWebhooks } = usePermissions();
 
   const canAccessUncategorized = canViewWorkspace({ workspace: { id: 1 } });
+
+  const pinnedWorkspaces = useObservable(workspaceStore.pinned);
 
   const menuConfig = useMemo(() => {
     const topNav = canAccessUncategorized
@@ -182,11 +182,6 @@ const NavigationSideBar: React.FC = () => {
     updateSettings({ navbarCollapsed: !settings.navbarCollapsed });
   }, [settings.navbarCollapsed, updateSettings]);
 
-  const handleCreateWorkspace = useCallback(() => {
-    openWorkspaceCreateModal();
-  }, [openWorkspaceCreateModal]);
-
-  const pinnedWorkspaces = useWorkspaces({ pinned: true });
   const { canAdministrateUsers } = usePermissions();
 
   const menuItems: MenuProps['items'] = useMemo(() => {
@@ -258,7 +253,7 @@ const NavigationSideBar: React.FC = () => {
                     </Button>
                   </WorkspaceQuickSearch>
                   {canCreateWorkspace && (
-                    <Button type="text" onClick={handleCreateWorkspace}>
+                    <Button type="text" onClick={WorkspaceCreateModal.open}>
                       <Icon name="add-small" size="tiny" />
                     </Button>
                   )}
@@ -307,7 +302,7 @@ const NavigationSideBar: React.FC = () => {
                           </Typography.Paragraph>
                         }
                         tooltip={settings.navbarCollapsed}
-                        onClick={handleCreateWorkspace}
+                        onClick={WorkspaceCreateModal.open}
                       />
                     </li>
                   ) : workspaces.length === 0 ? (
@@ -341,7 +336,7 @@ const NavigationSideBar: React.FC = () => {
             )}
           </div>
         </footer>
-        {modalWorkspaceCreateContextHolder}
+        <WorkspaceCreateModal.Component />
       </nav>
     </CSSTransition>
   );

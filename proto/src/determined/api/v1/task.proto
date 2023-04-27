@@ -167,3 +167,13 @@ message ReportCheckpointRequest {
 }
 // Response to ReportCheckpointRequest.
 message ReportCheckpointResponse {}
+
+// Request the information of all tasks.
+message GetTasksRequest {}
+
+// Response to GetTasksRequest.
+message GetTasksResponse {
+  // Information about a task for external display.
+  map<string, determined.task.v1.AllocationSummary> allocation_id_to_summary =
+      1;
+}

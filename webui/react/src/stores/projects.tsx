@@ -1,156 +1,54 @@
 import { Map } from 'immutable';
-import React, {
-  createContext,
-  PropsWithChildren,
-  useCallback,
-  useContext,
-  useEffect,
-  useState,
-} from 'react';
 
 import { getWorkspaceProjects } from 'services/api';
 import { Project } from 'types';
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
-import { observable, useObservable, WritableObservable } from 'utils/observable';
+import { Observable, observable, WritableObservable } from 'utils/observable';
 
-class ProjectService {
-  private _projects: WritableObservable<Map<number, Project>> = observable(Map());
-  private _projectsByIndex: WritableObservable<Map<string, Project[]>> = observable(Map());
+class ProjectStore {
+  #projects: WritableObservable<Map<number, Project>> = observable(Map());
+  #projectsByWorkspace: WritableObservable<Map<string, Project[]>> = observable(Map());
 
-  genWorkspaceKey = (workspaceId: number): string => `byworkspace-${workspaceId}`;
+  public fetch(workspaceId: number, signal?: AbortSignal, force = false): () => void {
+    const workspaceKey = workspaceId.toString();
+    const canceler = new AbortController();
 
-  fetchWorkspaceProjects = async (
-    workspaceId: number,
-    canceler: AbortController,
-    forceFetch = false,
-  ): Promise<void> => {
-    if (!forceFetch && this._projectsByIndex.get().get(this.genWorkspaceKey(workspaceId))) return;
-    try {
-      const response = await getWorkspaceProjects(
-        {
-          id: workspaceId,
-          limit: 0,
-        },
-        { signal: canceler.signal },
-      );
-      // Prevent unecessary re-renders
-      if (!forceFetch && this._projectsByIndex.get().get(this.genWorkspaceKey(workspaceId))) return;
-      this._projectsByIndex.update((prevState: Map<string, Project[]>) => {
-        return prevState.set(this.genWorkspaceKey(workspaceId), response.projects);
-      });
-      this._projects.update((prevState: Map<number, Project>) => {
-        return prevState.withMutations((state: Map<number, Project>) => {
-          response.projects.forEach((proj) => state.set(proj.id, proj));
-        });
-      });
-    } catch (e) {
-      handleError(e);
+    if (force || !this.#projectsByWorkspace.get().has(workspaceKey)) {
+      getWorkspaceProjects({ id: workspaceId, limit: 0 }, { signal: signal ?? canceler.signal })
+        .then((response) => {
+          // Prevent unnecessary re-renders.
+          if (!force && this.#projectsByWorkspace.get().has(workspaceKey)) return;
+          this.#projects.update((prev) =>
+            prev.withMutations((map) => {
+              response.projects.forEach((project) => map.set(project.id, project));
+            }),
+          );
+          this.#projectsByWorkspace.update((prev) => prev.set(workspaceKey, response.projects));
+        })
+        .catch(handleError);
     }
-  };
 
-  getWorkspaceProject = (workspaceId: number): Loadable<Project[]> => {
-    const projects = useObservable(this._projectsByIndex).get(this.genWorkspaceKey(workspaceId));
-    if (projects === undefined) return NotLoaded;
-    return Loaded(projects);
-  };
+    return () => canceler.abort();
+  }
 
-  getProject = (projectId: number): Loadable<Project> => {
-    const project = useObservable(this._projects).get(projectId);
-    if (project === undefined) return NotLoaded;
+  public getProject(projectId?: number): Observable<Loadable<Project>> {
+    return this.#projects.select((map) => {
+      if (projectId == null) return NotLoaded;
 
-    return Loaded(project);
-  };
+      const project = map.get(projectId);
+      return project ? Loaded(project) : NotLoaded;
+    });
+  }
+
+  public getProjectsByWorkspace(workspaceId?: number): Observable<Loadable<Project[]>> {
+    return this.#projectsByWorkspace.select((map) => {
+      if (workspaceId == null) return NotLoaded;
+
+      const projects = map.get(workspaceId.toString());
+      return projects ? Loaded(projects) : NotLoaded;
+    });
+  }
 }
 
-const ProjectsContext = createContext<ProjectService | null>(null);
-
-export const ProjectsProvider: React.FC<PropsWithChildren> = ({ children }) => {
-  const [store] = useState(() => new ProjectService());
-
-  return <ProjectsContext.Provider value={store}>{children}</ProjectsContext.Provider>;
-};
-
-const useProjectsStore = (): ProjectService => {
-  const store = useContext(ProjectsContext);
-  if (store === null) throw new Error('useProjects is not a store');
-  return store;
-};
-
-export const useFetchWorkspaceProjects = (
-  canceler: AbortController,
-): ((workspaceId: number) => Promise<void>) => {
-  const store = useProjectsStore();
-
-  useEffect(() => {
-    return () => canceler.abort();
-  }, [canceler]);
-
-  if (store === null) {
-    throw new Error('Attempted to use useFetchWorkspaceProjects outside of Projects Context');
-  }
-
-  return useCallback(
-    async (workspaceId: number): Promise<void> => {
-      await store.fetchWorkspaceProjects(workspaceId, canceler, true);
-    },
-    [store, canceler],
-  );
-};
-
-export const useEnsureWorkspaceProjectsFetched = (
-  canceler: AbortController,
-): ((workspaceId: number) => Promise<void>) => {
-  const store = useProjectsStore();
-
-  useEffect(() => {
-    return () => canceler.abort();
-  }, [canceler]);
-
-  if (store === null) {
-    throw new Error(
-      'Attempted to use useEnsureWorkspaceProjectsFetched outside of Projects Context',
-    );
-  }
-
-  return useCallback(
-    async (workspaceId: number): Promise<void> => {
-      await store.fetchWorkspaceProjects(workspaceId, canceler);
-    },
-    [store, canceler],
-  );
-};
-
-export const useWorkspaceProjects = (
-  workspaceId: number | Loadable<number>,
-): Loadable<Project[]> => {
-  const store = useProjectsStore();
-
-  if (store === null) {
-    throw new Error('Attempted to use useWorkspaceProjects outside of Projects Context');
-  }
-
-  let loadedWorkspaceId: number;
-
-  if (Loadable.isLoadable(workspaceId)) {
-    if (Loadable.isLoading(workspaceId)) {
-      return NotLoaded;
-    } else {
-      loadedWorkspaceId = workspaceId.data;
-    }
-  } else {
-    loadedWorkspaceId = workspaceId;
-  }
-
-  return store.getWorkspaceProject(loadedWorkspaceId);
-};
-
-export const useProject = (projectId: number): Loadable<Project> => {
-  const store = useProjectsStore();
-
-  if (store === null) {
-    throw new Error('Attempted to use useProject outside of Projects Context');
-  }
-
-  return store.getProject(projectId);
-};
+export default new ProjectStore();

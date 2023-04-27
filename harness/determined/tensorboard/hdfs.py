@@ -1,8 +1,6 @@
 import logging
 from typing import Any, List, Optional
 
-from hdfs.client import InsecureClient
-
 from determined.common import util
 from determined.tensorboard import base
 
@@ -26,7 +24,9 @@ class HDFSTensorboardManager(base.TensorboardManager):
         self.hdfs_path = hdfs_path
         self.user = user
 
-        self.client = InsecureClient(self.hdfs_url, root=self.hdfs_path, user=self.user)
+        from hdfs import client
+
+        self.client = client.InsecureClient(self.hdfs_url, root=self.hdfs_path, user=self.user)
         self.client.makedirs(str(self.sync_path))
 
     def _sync_impl(

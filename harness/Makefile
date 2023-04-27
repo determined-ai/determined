@@ -2,7 +2,7 @@ py_bindings_dest=determined/common/api/bindings.py
 cuda_available=$(shell python -c "import torch; print(torch.cuda.is_available())") \
 
 .PHONY: build
-build: gen
+build:
 	python -W ignore:Normalizing:UserWarning:setuptools.dist setup.py -q bdist_wheel
 
 .PHONY: publish
@@ -22,16 +22,16 @@ check: check-gen
 	mypy .
 
 .PHONY: test-cpu
-test-cpu: gen
+test-cpu:
 	coverage run -m pytest -v --runslow --durations=0 -m "not gpu" tests
 
 .PHONY: test-gpu
-test-gpu: gen
+test-gpu:
 	# We will use this target in circleci once we have access to gpu instances.
 	coverage run -m pytest -v --runslow --durations=0 -m "gpu" tests
 
 .PHONY: test
-test: gen
+test:
 	coverage run -m pytest -v --runslow --durations=0 tests
 
 .PHONY: test-tf2
@@ -46,7 +46,7 @@ test-tf2:
 	coverage run -a -m pytest -v --runslow --durations=0 tests/experiment/keras
 
 .PHONY: clean
-clean: ungen
+clean:
 	rm -rf .pytest_cache/
 	rm -rf .mypy_cache/
 	rm -rf *.egg-info/
@@ -65,31 +65,11 @@ upload-try-now-template: TEMPLATE_PATH := $(AWS_TEMPLATES_PATH)/$(TRY_NOW_TEMPLA
 upload-try-now-template:
 	aws s3 cp $(TEMPLATE_PATH) $(TRY_NOW_URL) --acl public-read
 
-GENERATED_COMMITTED := determined/common/schemas/expconf/_gen.py
-GENERATION_INPUTS = ../schemas/gen.py $(shell find ../schemas/expconf -name '*.json')
-
-.PHONY: ungen
-ungen:
-	git checkout -- $(GENERATED_COMMITTED)
-
-.PHONY: gen
-gen: $(GENERATED_COMMITTED)
-
-.PHONY: force-gen
-force-gen:
-	touch ../schemas/gen.py
-
 .PHONY: check-gen
-check-gen: force-gen aws-master-config-inject $(GENERATED_COMMITTED)
+check-gen: aws-master-config-inject
 	# Checking that committed, generated code is up-to-date by ensuring that
 	# git reports the files as unchanged after forcibly regenerating the files:
-	test -z "$(shell git status --porcelain $(GENERATED_COMMITTED))"
 	test -z "$(shell git status --porcelain $(AWS_TEMPLATES_PATH))"
-
-determined/common/schemas/expconf/_gen.py: $(GENERATION_INPUTS)
-	../schemas/gen.py python\
-		--package expconf \
-		--output $@
 
 .PHONY: gen-deploy-aws-vcpu-mapping
 gen-deploy-aws-vcpu-mapping:

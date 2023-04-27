@@ -151,3 +151,16 @@ func (c *Config) InitMasterAddress() error {
 	c.MasterURL = (&url.URL{Scheme: scheme, Host: fmt.Sprintf("%s:%s", host, port)}).String()
 	return nil
 }
+
+// Printable returns a printable object.
+func (c Config) Printable() Config {
+	const hiddenValue = "********"
+	if len(c.StartupScript) > 0 {
+		c.StartupScript = hiddenValue
+	}
+	if len(c.ContainerStartupScript) > 0 {
+		c.ContainerStartupScript = hiddenValue
+	}
+
+	return c
+}

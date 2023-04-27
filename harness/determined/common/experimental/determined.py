@@ -61,6 +61,7 @@ class Determined:
                 user_id=raw.id,
                 username=raw.username,
                 admin=raw.admin,
+                remote=raw.remote,
                 session=self._session,
                 active=raw.active,
                 display_name=raw.displayName,
@@ -74,13 +75,16 @@ class Determined:
                 user_id=raw.id,
                 username=raw.username,
                 admin=raw.admin,
+                remote=raw.remote,
                 session=self._session,
                 active=raw.active,
                 display_name=raw.displayName,
             )
 
-    def create_user(self, username: str, admin: bool, password: Optional[str]) -> user.User:
-        create_user = bindings.v1User(username=username, admin=admin, active=True)
+    def create_user(
+        self, username: str, admin: bool, password: Optional[str], remote: bool = False
+    ) -> user.User:
+        create_user = bindings.v1User(username=username, admin=admin, active=True, remote=remote)
         hashedPassword = None
         if password is not None:
             hashedPassword = api.salt_and_hash(password)
@@ -305,6 +309,7 @@ class Determined:
             model_id: If this paramter is set, models will be filtered to
                 only include the model with this unique numeric id.
         """
+
         # TODO: more parameters?
         #   - archived
         #   - labels

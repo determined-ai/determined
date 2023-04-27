@@ -4,7 +4,7 @@ import { Serie, TRAINING_SERIES_COLOR, VALIDATION_SERIES_COLOR } from 'component
 import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
 import { terminalRunStates } from 'constants/states';
 import useMetricNames from 'hooks/useMetricNames';
-import { compareTrials } from 'services/api';
+import { timeSeries } from 'services/api';
 import usePolling from 'shared/hooks/usePolling';
 import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
@@ -13,37 +13,58 @@ import handleError from 'utils/error';
 import { metricToKey } from 'utils/metric';
 
 type MetricName = string;
-
 export interface TrialMetrics {
   data: Record<MetricName, Serie>;
   metrics: Metric[];
 }
+const summarizedMetricToSeries = (
+  allDownsampledMetrics: MetricContainer[],
+  selectedMetrics: Metric[],
+): Record<string, Serie> => {
+  const rawBatchValuesMap: Record<string, [number, number][]> = {};
+  const rawBatchTimesMap: Record<string, [number, number][]> = {};
+  const rawBatchEpochMap: Record<string, [number, number][]> = {};
+  allDownsampledMetrics.forEach((summMetric) => {
+    summMetric.data.forEach((avgMetrics) => {
+      selectedMetrics.forEach((metric) => {
+        const value = avgMetrics.values[metric.name];
+        if (!rawBatchValuesMap[metric.name]) rawBatchValuesMap[metric.name] = [];
 
-const summarizedMetricToSeries = (summ: MetricContainer): Serie => {
-  const rawData: [number, number][] = [];
-  const rawTime: [number, number][] = [];
-  const rawEpochs: [number, number][] = [];
+        if (!rawBatchTimesMap[metric.name]) rawBatchTimesMap[metric.name] = [];
 
-  summ.data.forEach((dataPoint) => {
-    rawData.push([dataPoint.batches, dataPoint.value]);
-    if (dataPoint?.time) rawTime.push([new Date(dataPoint.time).getTime() / 1000, dataPoint.value]);
-    if (dataPoint?.epoch) rawEpochs.push([dataPoint.epoch, dataPoint.value]);
+        if (!rawBatchEpochMap[metric.name]) rawBatchEpochMap[metric.name] = [];
+
+        if (value) {
+          rawBatchValuesMap[metric.name]?.push([avgMetrics.batches, value]);
+          if (avgMetrics.time)
+            rawBatchTimesMap[metric.name]?.push([
+              new Date(avgMetrics.time).getTime() / 1000,
+              value,
+            ]);
+          if (avgMetrics.epoch) rawBatchEpochMap[metric.name]?.push([avgMetrics.epoch, value]);
+        }
+      });
+    });
+  });
+  const trialData: Record<string, Serie> = {};
+  selectedMetrics.forEach((metric) => {
+    const data: Partial<Record<XAxisDomain, [number, number][]>> = {
+      [XAxisDomain.Batches]: rawBatchValuesMap[metric.name],
+      [XAxisDomain.Time]: rawBatchTimesMap[metric.name],
+      [XAxisDomain.Epochs]: rawBatchEpochMap[metric.name],
+    };
+    const series: Serie = {
+      color:
+        metric.type === MetricType.Validation ? VALIDATION_SERIES_COLOR : TRAINING_SERIES_COLOR,
+      data,
+      metricType: metric.type,
+      name: metric.name,
+    };
+    trialData[metricToKey(metric)] = series;
   });
 
-  const data: Partial<Record<XAxisDomain, [number, number][]>> = {
-    [XAxisDomain.Batches]: rawData,
-    [XAxisDomain.Time]: rawTime,
-    [XAxisDomain.Epochs]: rawEpochs,
-  };
-
-  return {
-    color: summ.type === MetricType.Validation ? VALIDATION_SERIES_COLOR : TRAINING_SERIES_COLOR,
-    data,
-    metricType: summ.type,
-    name: summ.name,
-  };
+  return trialData;
 };
-
 export const useTrialMetrics = (
   trial: TrialDetails | undefined,
 ): {
@@ -71,7 +92,7 @@ export const useTrialMetrics = (
 
   const fetchTrialSummary = useCallback(async () => {
     if (trial?.id) {
-      const response = await compareTrials({
+      const response = await timeSeries({
         maxDatapoints: screen.width > 1600 ? 1500 : 1000,
         metricNames: metrics,
         scale: scale,
@@ -81,12 +102,7 @@ export const useTrialMetrics = (
 
       setData((prev) => {
         if (isEqual(prev, response)) return prev;
-        const trialData = response[0]?.metrics
-          .map((summMetric) => {
-            const key = metricToKey({ name: summMetric.name, type: summMetric.type });
-            return { [key]: summarizedMetricToSeries(summMetric) };
-          })
-          .reduce((a, b) => ({ ...a, ...b }), {});
+        const trialData = summarizedMetricToSeries(response[0]?.metrics, metrics);
         return trialData;
       });
     }

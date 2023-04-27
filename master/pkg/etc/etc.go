@@ -46,6 +46,8 @@ const (
 	TaskLoggingTeardownScriptResource = "task-logging-teardown.sh"
 	// TaskSignalHandlingScriptResource is the script to teardown stuff for logging.
 	TaskSignalHandlingScriptResource = "task-signal-handling.sh"
+	// SingularityEntrypointWrapperScriptResource is the entrypoint for singularity containers.
+	SingularityEntrypointWrapperScriptResource = "singularity-entrypoint-wrapper.sh"
 )
 
 var staticRoot string

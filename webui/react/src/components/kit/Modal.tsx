@@ -1,4 +1,4 @@
-import { Modal as AntdModal } from 'antd';
+import { Modal as AntdModal, ModalProps as AntdModalProps } from 'antd';
 import React, {
   createContext,
   Dispatch,
@@ -52,11 +52,15 @@ interface ModalProps {
   headerLink?: LinkParams;
   icon?: string;
   key?: string;
+  onClose?: () => void;
   size?: ModalSize;
   submit?: ModalSubmitParams;
   title: string;
+  okButtonProps?: AntdModalProps['okButtonProps'];
   children: ReactNode;
 }
+
+export const DEFAULT_CANCEL_LABEL = 'Cancel';
 
 const ModalContext = createContext<ModalContext | null>(null);
 
@@ -68,9 +72,11 @@ export const Modal: React.FC<ModalProps> = ({
   headerLink,
   icon,
   key,
+  onClose,
   size = 'large',
   submit,
   title,
+  okButtonProps,
   children: modalBody,
 }: ModalProps) => {
   const modalContext = useContext(ModalContext);
@@ -82,7 +88,10 @@ export const Modal: React.FC<ModalProps> = ({
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const close = useCallback(() => setIsOpen(false), [setIsOpen]);
+  const close = useCallback(() => {
+    setIsOpen(false);
+    onClose?.();
+  }, [setIsOpen, onClose]);
 
   const handleSubmit = useCallback(async () => {
     setIsSubmitting(true);
@@ -120,7 +129,7 @@ export const Modal: React.FC<ModalProps> = ({
           <div className={css.buttons}>
             {(cancel || cancelText) && (
               <Button key="back" onClick={close}>
-                {cancelText || 'Cancel'}
+                {cancelText || DEFAULT_CANCEL_LABEL}
               </Button>
             )}
             <Button
@@ -130,6 +139,7 @@ export const Modal: React.FC<ModalProps> = ({
               loading={isSubmitting}
               tooltip={submit?.disabled ? 'Address validation errors before proceeding' : undefined}
               type="primary"
+              {...okButtonProps}
               onClick={handleSubmit}>
               {submit?.text ?? 'OK'}
             </Button>

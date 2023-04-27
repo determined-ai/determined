@@ -1,16 +1,18 @@
-import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Dropdown, MenuProps, Space, Typography } from 'antd';
 import type { DropDownProps } from 'antd';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
+import ColumnsCustomizeModalComponent from 'components/ColumnsCustomizeModal';
 import { useSetDynamicTabBar } from 'components/DynamicTabs';
 import ExperimentActionDropdown from 'components/ExperimentActionDropdown';
+import ExperimentMoveModalComponent from 'components/ExperimentMoveModal';
 import FilterCounter from 'components/FilterCounter';
 import HumanReadableNumber from 'components/HumanReadableNumber';
 import Button from 'components/kit/Button';
 import Input from 'components/kit/Input';
+import { useModal } from 'components/kit/Modal';
 import Tags from 'components/kit/Tags';
 import Toggle from 'components/kit/Toggle';
 import Link from 'components/Link';
@@ -36,8 +38,6 @@ import TableBatch from 'components/Table/TableBatch';
 import TableFilterDropdown from 'components/Table/TableFilterDropdown';
 import TableFilterSearch from 'components/Table/TableFilterSearch';
 import useExperimentTags from 'hooks/useExperimentTags';
-import useModalColumnsCustomize from 'hooks/useModal/Columns/useModalColumnsCustomize';
-import useModalExperimentMove from 'hooks/useModal/Experiment/useModalExperimentMove';
 import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
@@ -65,7 +65,7 @@ import { ErrorLevel } from 'shared/utils/error';
 import { validateDetApiEnum, validateDetApiEnumList } from 'shared/utils/service';
 import { alphaNumericSorter } from 'shared/utils/sort';
 import { humanReadableBytes } from 'shared/utils/string';
-import usersStore from 'stores/users';
+import userStore from 'stores/users';
 import {
   ExperimentAction as Action,
   CommandResponse,
@@ -76,7 +76,6 @@ import {
   ProjectExperiment,
   RunState,
 } from 'types';
-import { modal } from 'utils/dialogApi';
 import handleError from 'utils/error';
 import {
   canActionExperiment,
@@ -87,6 +86,8 @@ import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 import { getDisplayName } from 'utils/user';
 import { openCommandResponse } from 'utils/wait';
+
+import BatchActionConfirmModalComponent from '../components/BatchActionConfirmModal';
 
 import {
   DEFAULT_COLUMN_WIDTHS,
@@ -116,16 +117,16 @@ interface Props {
 }
 
 const ExperimentList: React.FC<Props> = ({ project }) => {
-  const users = Loadable.map(useObservable(usersStore.getUsers()), ({ users }) => users);
-
   const [experiments, setExperiments] = useState<ExperimentItem[]>([]);
   const [labels, setLabels] = useState<string[]>([]);
-
+  const [batchMovingExperimentIds, setBatchMovingExperimentIds] = useState<number[]>();
   const [isLoading, setIsLoading] = useState(true);
   const [total, setTotal] = useState(0);
-  const [canceler] = useState(new AbortController());
+  const [batchAction, setBatchAction] = useState<Action>();
+  const canceler = useRef(new AbortController());
   const pageRef = useRef<HTMLElement>(null);
 
+  const users = Loadable.getOrElse([], useObservable(userStore.getUsers()));
   const permissions = usePermissions();
 
   const id = project?.id;
@@ -181,7 +182,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
             limit: settings.tableLimit,
             offset: 0,
           },
-          { signal: canceler.signal },
+          { signal: canceler.current.signal },
         );
       }
 
@@ -194,7 +195,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
           limit: settings.tableLimit - pinnedIds.length,
           offset: settings.tableOffset - rowsTakenUpByPins,
         },
-        { signal: canceler.signal },
+        { signal: canceler.current.signal },
       );
 
       // Due to showing pinned items in all pages, we need to adjust the number of total items
@@ -210,25 +211,24 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
       setIsLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [canceler.signal, id, settings, labelsString, pinnedString, statesString, usersString]);
+  }, [id, settings, labelsString, pinnedString, statesString, usersString]);
 
   const fetchLabels = useCallback(async () => {
     try {
-      const labels = await getExperimentLabels({ project_id: id }, { signal: canceler.signal });
+      const labels = await getExperimentLabels(
+        { project_id: id },
+        { signal: canceler.current.signal },
+      );
       labels.sort((a, b) => alphaNumericSorter(a, b));
       setLabels(labels);
     } catch (e) {
       handleError(e);
     }
-  }, [canceler.signal, id]);
+  }, [id]);
 
   const fetchAll = useCallback(async () => {
-    await Promise.allSettled([
-      fetchExperiments(),
-      usersStore.ensureUsersFetched(canceler),
-      fetchLabels(),
-    ]);
-  }, [fetchExperiments, canceler, fetchLabels]);
+    await Promise.allSettled([fetchExperiments(), fetchLabels()]);
+  }, [fetchExperiments, fetchLabels]);
 
   const { stopPolling } = usePolling(fetchAll, { rerunOnNewFn: true });
 
@@ -392,10 +392,6 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
   );
 
   const columns = useMemo(() => {
-    const matchUsers = Loadable.match(users, {
-      Loaded: (users) => users,
-      NotLoaded: () => [],
-    });
     const tagsRenderer = (value: string, record: ExperimentItem) => (
       <div className={css.tagsRenderer}>
         <Typography.Text
@@ -594,10 +590,10 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         dataIndex: 'user',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['user'],
         filterDropdown: userFilterDropdown,
-        filters: matchUsers.map((user) => ({ text: getDisplayName(user), value: user.id })),
+        filters: users.map((user) => ({ text: getDisplayName(user), value: user.id })),
         isFiltered: (settings: ExperimentListSettings) => !!settings.user,
         key: V1GetExperimentsRequestSortBy.USER,
-        render: (_, r) => userRenderer(matchUsers.find((u) => u.id === r.userId)),
+        render: (_, r) => userRenderer(users.find((u) => u.id === r.userId)),
         sorter: true,
         title: 'User',
       },
@@ -641,6 +637,8 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
     users,
   ]);
 
+  const ColumnsCustomizeModal = useModal(ColumnsCustomizeModalComponent);
+
   useLayoutEffect(() => {
     // This is the failsafe for when column settings get into a bad shape.
     if (!settings.columns?.length || !settings.columnWidths?.length) {
@@ -675,8 +673,8 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
     [settings.columns, transferColumns],
   );
 
-  const { contextHolder: modalExperimentMoveContextHolder, modalOpen: openMoveModal } =
-    useModalExperimentMove({ onClose: handleActionComplete });
+  const BatchActionConfirmModal = useModal(BatchActionConfirmModalComponent);
+  const ExperimentMoveModal = useModal(ExperimentMoveModalComponent);
 
   const sendBatchActions = useCallback(
     (action: Action): Promise<void[] | CommandTask | CommandResponse> | void => {
@@ -689,15 +687,14 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
       }
       if (action === Action.Move) {
         if (!settings?.row?.length) return;
-        return openMoveModal({
-          experimentIds: settings.row.filter(
+        setBatchMovingExperimentIds(
+          settings.row.filter(
             (id) =>
               canActionExperiment(Action.Move, experimentMap[id]) &&
               permissions.canMoveExperiment({ experiment: experimentMap[id] }),
           ),
-          sourceProjectId: project?.id,
-          sourceWorkspaceId: project?.workspaceId,
-        });
+        );
+        ExperimentMoveModal.open();
       }
 
       return Promise.all(
@@ -723,7 +720,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         }),
       );
     },
-    [settings.row, openMoveModal, project?.workspaceId, project?.id, experimentMap, permissions],
+    [settings.row, experimentMap, permissions, ExperimentMoveModal, project?.workspaceId],
   );
 
   const submitBatchAction = useCallback(
@@ -759,31 +756,16 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
     [fetchExperiments, sendBatchActions, updateSettings],
   );
 
-  const showConfirmation = useCallback(
-    (action: Action) => {
-      modal.confirm({
-        content: `
-        Are you sure you want to ${action.toLocaleLowerCase()}
-        all the eligible selected experiments?
-      `,
-        icon: <ExclamationCircleOutlined />,
-        okText: /cancel/i.test(action) ? 'Confirm' : action,
-        onOk: () => submitBatchAction(action),
-        title: 'Confirm Batch Action',
-      });
-    },
-    [submitBatchAction],
-  );
-
   const handleBatchAction = useCallback(
     (action?: string) => {
       if (action === Action.OpenTensorBoard || action === Action.Move) {
         submitBatchAction(action);
       } else {
-        showConfirmation(action as Action);
+        setBatchAction(action as Action);
+        BatchActionConfirmModal.open();
       }
     },
-    [submitBatchAction, showConfirmation],
+    [BatchActionConfirmModal, submitBatchAction],
   );
 
   const handleTableRowSelect = useCallback(
@@ -818,18 +800,6 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
     },
     [updateSettings],
   );
-
-  const { contextHolder: modalColumnsCustomizeContextHolder, modalOpen: openCustomizeColumns } =
-    useModalColumnsCustomize({
-      columns: transferColumns,
-      defaultVisibleColumns: DEFAULT_COLUMNS,
-      initialVisibleColumns,
-      onSave: handleUpdateColumns as (columns: string[]) => void,
-    });
-
-  const handleCustomizeColumnsClick = useCallback(() => {
-    openCustomizeColumns({});
-  }, [openCustomizeColumns]);
 
   const switchShowArchived = useCallback(
     (showArchived: boolean) => {
@@ -875,11 +845,15 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
   }, []);
 
   useEffect(() => {
-    return () => {
-      canceler.abort();
-      stopPolling();
-    };
-  }, [canceler, stopPolling]);
+    return () => stopPolling();
+  }, [stopPolling]);
+
+  useEffect(() => userStore.startPolling(), []);
+
+  useEffect(() => {
+    const currentCanceler = canceler.current;
+    return () => currentCanceler.abort();
+  }, []);
 
   const tabBarContent = useMemo(() => {
     const getMenuProps = (): DropDownProps['menu'] => {
@@ -894,7 +868,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
           switchShowArchived(!settings.archived);
         },
         [MenuKey.Columns]: () => {
-          handleCustomizeColumnsClick();
+          ColumnsCustomizeModal.open();
         },
         [MenuKey.ResultFilter]: () => {
           resetFilters();
@@ -921,7 +895,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
       <div className={css.tabOptions}>
         <Space className={css.actionList}>
           <Toggle checked={settings.archived} label="Show Archived" onChange={switchShowArchived} />
-          <Button onClick={handleCustomizeColumnsClick}>Columns</Button>
+          <Button onClick={ColumnsCustomizeModal.open}>Columns</Button>
           <FilterCounter activeFilterCount={filterCount} onReset={resetFilters} />
         </Space>
         <div className={css.actionOverflow} title="Open actions menu">
@@ -933,13 +907,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         </div>
       </div>
     );
-  }, [
-    filterCount,
-    handleCustomizeColumnsClick,
-    resetFilters,
-    settings.archived,
-    switchShowArchived,
-  ]);
+  }, [filterCount, ColumnsCustomizeModal, resetFilters, settings.archived, switchShowArchived]);
 
   useSetDynamicTabBar(tabBarContent);
   return (
@@ -989,8 +957,24 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
           updateSettings={updateSettings as UpdateSettings}
         />
       </>
-      {modalColumnsCustomizeContextHolder}
-      {modalExperimentMoveContextHolder}
+      {batchAction && (
+        <BatchActionConfirmModal.Component
+          batchAction={batchAction}
+          onConfirm={() => submitBatchAction(batchAction)}
+        />
+      )}
+      <ColumnsCustomizeModal.Component
+        columns={transferColumns}
+        defaultVisibleColumns={DEFAULT_COLUMNS}
+        initialVisibleColumns={initialVisibleColumns}
+        onSave={handleUpdateColumns as (columns: string[]) => void}
+      />
+      <ExperimentMoveModal.Component
+        experimentIds={batchMovingExperimentIds ?? []}
+        sourceProjectId={project?.id}
+        sourceWorkspaceId={project?.workspaceId}
+        onSubmit={handleActionComplete}
+      />
     </Page>
   );
 };

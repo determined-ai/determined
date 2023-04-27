@@ -102,8 +102,6 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
 
   const stateFilterDropdown = useCallback(
     (filterProps: FilterDropdownProps) => {
-      if (!settings.state) return;
-
       return (
         <TableFilterDropdown
           {...filterProps}

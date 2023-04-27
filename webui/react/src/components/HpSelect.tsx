@@ -1,36 +1,21 @@
 import { DefaultOptionType, LabeledValue, SelectValue } from 'antd/es/select';
 import React, { useCallback, useMemo } from 'react';
 
-import HumanReadableNumber from 'components/HumanReadableNumber';
 import Select, { Option, SelectProps } from 'components/kit/Select';
 import { clone, isObject } from 'shared/utils/data';
-import { ALL_VALUE, HpImportance } from 'types';
-
-import { hpImportanceSorter } from '../utils/experiment';
+import { ALL_VALUE } from 'types';
 
 import css from './HpSelect.module.scss';
 
 interface Props extends SelectProps {
   fullHParams: string[];
-  hpImportance?: HpImportance;
 }
 
-const HpSelect: React.FC<Props> = ({
-  fullHParams,
-  hpImportance = {},
-  onChange,
-  value,
-  ...props
-}: Props) => {
+const HpSelect: React.FC<Props> = ({ fullHParams, onChange, value, ...props }: Props) => {
   const values = useMemo(() => {
     if (!value) return [];
     return Array.isArray(value) ? value : [value];
   }, [value]);
-
-  const sortedFullHParams = useMemo(() => {
-    const hParams = clone(fullHParams) as string[];
-    return hParams.sortAll((a, b) => hpImportanceSorter(a, b, hpImportance));
-  }, [hpImportance, fullHParams]);
 
   const handleSelect = useCallback(
     (selected: SelectValue, option: DefaultOptionType | DefaultOptionType[]) => {
@@ -76,14 +61,10 @@ const HpSelect: React.FC<Props> = ({
       <Option key={ALL_VALUE} value={ALL_VALUE}>
         All
       </Option>
-      {sortedFullHParams.map((hParam) => {
-        const importance = hpImportance[hParam];
+      {fullHParams.map((hParam) => {
         return (
           <Option className={css.option} key={hParam} value={hParam}>
             {hParam}
-            {importance && (
-              <HumanReadableNumber num={importance} precision={1} tooltipPrefix="Importance: " />
-            )}
           </Option>
         );
       })}

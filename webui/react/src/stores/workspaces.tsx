@@ -1,194 +1,135 @@
-import { observable, WritableObservable } from 'micro-observables';
-import React, { createContext, PropsWithChildren, useCallback, useContext, useRef } from 'react';
+import { Observable, observable, WritableObservable } from 'micro-observables';
 
-import { createWorkspace, deleteWorkspace, getWorkspaces } from 'services/api';
+import {
+  archiveWorkspace,
+  createWorkspace,
+  deleteWorkspace,
+  getWorkspaces,
+  pinWorkspace,
+  unarchiveWorkspace,
+  unpinWorkspace,
+} from 'services/api';
 import { V1PostWorkspaceRequest } from 'services/api-ts-sdk';
 import { GetWorkspacesParams } from 'services/types';
-import { isEqual } from 'shared/utils/data';
 import { Workspace } from 'types';
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
-import { useValueMemoizedObservable } from 'utils/observable';
 
-type WorkspacesContext = { workspaces: WritableObservable<Loadable<Workspace[]>> };
+import PollingStore from './polling';
 
-const WorkspacesContext = createContext<WorkspacesContext | null>(null);
+class WorkspaceStore extends PollingStore {
+  #loadableWorkspaces: WritableObservable<Loadable<Workspace[]>> = observable(NotLoaded);
 
-export const WorkspacesProvider: React.FC<PropsWithChildren> = ({ children }) => {
-  const workspaces = useRef<WritableObservable<Loadable<Workspace[]>>>(observable(NotLoaded));
+  public readonly workspaces = this.#loadableWorkspaces.readOnly();
 
-  return (
-    <WorkspacesContext.Provider value={{ workspaces: workspaces.current }}>
-      {children}
-    </WorkspacesContext.Provider>
-  );
-};
+  public readonly unarchived = this.#loadableWorkspaces.select((loadable) => {
+    return Loadable.quickMatch(loadable, NotLoaded, (workspaces) => {
+      return Loaded(workspaces.filter((workspace) => !workspace.archived));
+    });
+  });
 
-export const useFetchWorkspaces = (
-  canceler: AbortController,
-): ((settings?: GetWorkspacesParams) => Promise<void>) => {
-  const context = useContext(WorkspacesContext);
+  public readonly pinned = this.#loadableWorkspaces.select((loadable) => {
+    return Loadable.quickMatch(loadable, NotLoaded, (workspaces) => {
+      return Loaded(workspaces.filter((workspace) => workspace.pinned));
+    });
+  });
 
-  if (context === null) {
-    throw new Error('Attempted to use useFetchWorkspaces outside of Workspace Context');
-  }
-
-  const { workspaces } = context;
-
-  return useCallback(
-    async (settings = {} as GetWorkspacesParams): Promise<void> => {
-      try {
-        const response = await getWorkspaces(settings, { signal: canceler.signal });
-
-        workspaces.set(Loaded(response.workspaces));
-      } catch (e) {
-        handleError(e);
-      }
-    },
-    [canceler, workspaces],
-  );
-};
-
-export const useEnsureWorkspacesFetched = (
-  canceler: AbortController,
-): ((settings?: GetWorkspacesParams) => Promise<void>) => {
-  const context = useContext(WorkspacesContext);
-
-  if (context === null) {
-    throw new Error('Attempted to use useEnsureWorkspacesFetched outside of Workspace Context');
-  }
-
-  const { workspaces } = context;
-  const memoWorkspaces = useValueMemoizedObservable(workspaces);
-
-  return useCallback(
-    async (settings = {} as GetWorkspacesParams): Promise<void> => {
-      if (memoWorkspaces !== NotLoaded) return;
-
-      try {
-        const response = await getWorkspaces(settings, { signal: canceler.signal });
-
-        if (!isEqual(memoWorkspaces, response.workspaces))
-          workspaces.set(Loaded(response.workspaces));
-      } catch (e) {
-        handleError(e);
-      }
-    },
-    [canceler, workspaces, memoWorkspaces],
-  );
-};
-
-export const useWorkspaces = (params?: GetWorkspacesParams): Loadable<Workspace[]> => {
-  const context = useContext(WorkspacesContext);
-
-  if (context === null) {
-    throw new Error('Attempted to use useWorkspaces outside of Workspace Context');
-  }
-
-  const { workspaces } = context;
-  const workspacesState = useValueMemoizedObservable(workspaces);
-
-  return Loadable.map(workspacesState, (workspaces: Workspace[]) =>
-    workspaces.filter((ws) =>
-      Object.keys(params || {}).reduce<boolean>((accumulator: boolean, key) => {
-        switch (key) {
-          case 'archived':
-            return accumulator && ws.archived === params?.archived;
-          case 'pinned':
-            return accumulator && ws.pinned === params?.pinned;
-          case 'name':
-            return accumulator && ws.name === params?.name;
-          case 'users':
-            return accumulator && (params?.users || []).indexOf(String(ws.userId)) > -1;
-          default:
-            return false;
-        }
-      }, true),
-    ),
-  );
-};
-
-export const useUpdateWorkspace = (): ((
-  id: number,
-  updater: (arg0: Workspace) => Workspace,
-) => void) => {
-  const context = useContext(WorkspacesContext);
-
-  if (context === null) {
-    throw new Error('Attempted to use useUpdateWorkspace outside of Workspace Context');
-  }
-
-  const { workspaces } = context;
-
-  return useCallback(
-    (id: number, updater: (arg0: Workspace) => Workspace): void => {
-      workspaces.update((ldbWorkspace) => {
-        return Loadable.map(ldbWorkspace, (ws) =>
-          ws.map((old) => (old.id === id ? updater(old) : old)),
-        );
+  public getWorkspace(id?: number): Observable<Loadable<Workspace>> {
+    return this.workspaces.select((loadable) => {
+      return Loadable.quickMatch(loadable, NotLoaded, (workspaces) => {
+        const workspace = workspaces.find((workspace) => workspace.id === id);
+        return workspace ? Loaded(workspace) : NotLoaded;
       });
-    },
-    [workspaces],
-  );
-};
-
-export const useCreateWorkspace = (): ((arg0: V1PostWorkspaceRequest) => Promise<Workspace>) => {
-  const context = useContext(WorkspacesContext);
-  if (context === null) {
-    throw new Error('Attempted to use useCreateWorkspace outside of Workspace Context');
+    });
   }
 
-  const { workspaces } = context;
+  public archiveWorkspace(id: number): Promise<void> {
+    return archiveWorkspace({ id }).then(() =>
+      this.#loadableWorkspaces.update((loadable) =>
+        Loadable.map(loadable, (workspaces) => {
+          return workspaces.map((workspace) => {
+            return workspace.id === id ? { ...workspace, archived: true } : workspace;
+          });
+        }),
+      ),
+    );
+  }
 
-  return useCallback(
-    async (params: V1PostWorkspaceRequest): Promise<Workspace> => {
-      const createdWs = await createWorkspace(params);
-      workspaces.update((ldbWorkspaces) => {
-        return Loadable.map(ldbWorkspaces, (ws: Workspace[]) => [...ws, createdWs]);
+  public unarchiveWorkspace(id: number): Promise<void> {
+    return unarchiveWorkspace({ id }).then(() =>
+      this.#loadableWorkspaces.update((loadable) =>
+        Loadable.map(loadable, (workspaces) => {
+          return workspaces.map((workspace) => {
+            return workspace.id === id ? { ...workspace, archived: false } : workspace;
+          });
+        }),
+      ),
+    );
+  }
+
+  public pinWorkspace(id: number): Promise<void> {
+    return pinWorkspace({ id }).then(() =>
+      this.#loadableWorkspaces.update((loadable) =>
+        Loadable.map(loadable, (workspaces) => {
+          return workspaces.map((workspace) => {
+            return workspace.id === id
+              ? { ...workspace, pinned: true, pinnedAt: new Date() }
+              : workspace;
+          });
+        }),
+      ),
+    );
+  }
+
+  public unpinWorkspace(id: number): Promise<void> {
+    return unpinWorkspace({ id }).then(() =>
+      this.#loadableWorkspaces.update((loadable) =>
+        Loadable.map(loadable, (workspaces) => {
+          return workspaces.map((workspace) => {
+            return workspace.id === id ? { ...workspace, pinned: false } : workspace;
+          });
+        }),
+      ),
+    );
+  }
+
+  public createWorkspace(params: V1PostWorkspaceRequest): Promise<Workspace> {
+    return createWorkspace(params).then((workspace) => {
+      this.#loadableWorkspaces.update((loadable) => {
+        return Loadable.map(loadable, (workspaces) => [...workspaces, workspace]);
       });
-
-      return createdWs;
-    },
-    [workspaces],
-  );
-};
-
-// On logout, clear old workspace records.
-export const useResetWorkspaces = (): (() => void) => {
-  const context = useContext(WorkspacesContext);
-
-  if (context === null) {
-    throw new Error('Attempted to use useResetWorkspaces outside of Workspace Context');
+      return workspace;
+    });
   }
 
-  const { workspaces } = context;
-
-  return useCallback((): void => {
-    workspaces.set(NotLoaded);
-  }, [workspaces]);
-};
-
-export const useDeleteWorkspace = (): ((id: number) => Promise<void>) => {
-  const context = useContext(WorkspacesContext);
-
-  if (context === null) {
-    throw new Error('Attempted to use useDeleteWorkspace outside of Workspace Context');
+  public deleteWorkspace(id: number): Promise<void> {
+    return deleteWorkspace({ id }).then(() =>
+      this.#loadableWorkspaces.update((loadable) =>
+        Loadable.map(loadable, (workspaces) => {
+          return workspaces.filter((workspace) => workspace.id !== id);
+        }),
+      ),
+    );
   }
 
-  const { workspaces } = context;
+  public fetch(settings = {} as GetWorkspacesParams, signal?: AbortSignal): () => void {
+    const canceler = new AbortController();
 
-  return useCallback(
-    async (id: number): Promise<void> => {
-      try {
-        await deleteWorkspace({ id });
+    getWorkspaces(settings, { signal: signal ?? canceler.signal })
+      .then((response) => this.#loadableWorkspaces.set(Loaded(response.workspaces)))
+      .catch(handleError);
 
-        workspaces.update((ldbWorkspaces) =>
-          Loadable.map(ldbWorkspaces, (ws) => ws.filter((w) => w.id !== id)),
-        );
-      } catch (e) {
-        handleError(e);
-      }
-    },
-    [workspaces],
-  );
-};
+    return () => canceler.abort();
+  }
+
+  public reset() {
+    this.#loadableWorkspaces.set(NotLoaded);
+  }
+
+  protected async poll(settings: GetWorkspacesParams = {}) {
+    const response = await getWorkspaces(settings, { signal: this.canceler?.signal });
+    this.#loadableWorkspaces.set(Loaded(response.workspaces));
+  }
+}
+
+export default new WorkspaceStore();

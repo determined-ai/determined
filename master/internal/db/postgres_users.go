@@ -32,7 +32,8 @@ func (db *PgDB) StartUserSession(user *model.User) (string, error) {
 	}
 
 	v2 := paseto.NewV2()
-	token, err := v2.Sign(db.tokenKeys.PrivateKey, userSession, nil)
+	privateKey := db.tokenKeys.PrivateKey
+	token, err := v2.Sign(privateKey, userSession, nil)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to generate user authentication token")
 	}
@@ -60,8 +61,8 @@ func (db *PgDB) DeleteUserSessionByID(sessionID model.SessionID) error {
 func addUser(tx *sqlx.Tx, user *model.User) (model.UserID, error) {
 	stmt, err := tx.PrepareNamed(`
 INSERT INTO users
-(username, admin, active, password_hash, display_name)
-VALUES (:username, :admin, :active, :password_hash, :display_name)
+(username, admin, active, password_hash, display_name, remote)
+VALUES (:username, :admin, :active, :password_hash, :display_name, :remote)
 RETURNING id`)
 	if err != nil {
 		return 0, errors.WithStack(err)

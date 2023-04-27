@@ -9,8 +9,8 @@ import {
   themeLightHpe,
 } from 'shared/themes';
 import { ValueOf } from 'shared/types';
+import { BrandingType } from 'stores/determinedInfo';
 import {
-  BrandingType,
   CheckpointState,
   CommandState,
   JobState,

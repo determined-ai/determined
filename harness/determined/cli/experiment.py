@@ -14,10 +14,11 @@ import tabulate
 import termcolor
 
 import determined as det
+import determined.cli.render
 import determined.experimental
 import determined.load
 from determined import cli
-from determined.cli import checkpoint, proxy, render
+from determined.cli import checkpoint, render
 from determined.cli.command import CONFIG_DESC, parse_config_overrides
 from determined.cli.errors import CliError
 from determined.common import api, context, set_logger, util, yaml
@@ -140,8 +141,17 @@ def _follow_experiment_logs(sess: api.Session, exp_id: int) -> None:
 
     first_trial_id = sorted(t_id.id for t_id in trials)[0]
     print(f"Following first trial with ID {first_trial_id}")
-    tlogs = logs.trial_logs(sess, first_trial_id, follow=True)
-    logs.pprint_trial_logs(first_trial_id, tlogs)
+    try:
+        tlogs = logs.trial_logs(sess, first_trial_id, follow=True)
+        logs.pprint_logs(tlogs)
+    finally:
+        print(
+            termcolor.colored(
+                "Trial log stream ended. To reopen log stream, run: "
+                "det trial logs -f {}".format(first_trial_id),
+                "green",
+            )
+        )
 
 
 def _follow_test_experiment_logs(sess: api.Session, exp_id: int) -> None:
@@ -181,7 +191,7 @@ def _follow_test_experiment_logs(sess: api.Session, exp_id: int) -> None:
         runner_state = trials[0].runnerState if trials else None
 
         # Update the active_stage by examining the experiment state and trial runner state.
-        if exp.state == bindings.experimentv1State.STATE_COMPLETED:
+        if exp.state == bindings.experimentv1State.COMPLETED:
             active_stage = 4
         elif runner_state == "checkpointing":
             active_stage = 3
@@ -194,11 +204,11 @@ def _follow_test_experiment_logs(sess: api.Session, exp_id: int) -> None:
 
         # If the experiment is in a terminal state, output the appropriate
         # message and exit. Otherwise, sleep and repeat.
-        if exp.state == bindings.experimentv1State.STATE_COMPLETED:
+        if exp.state == bindings.experimentv1State.COMPLETED:
             print_progress(active_stage, ended=True)
             print(termcolor.colored("Model definition test succeeded! 🎉", "green"))
             return
-        elif exp.state == bindings.experimentv1State.STATE_CANCELED:
+        elif exp.state == bindings.experimentv1State.CANCELED:
             print_progress(active_stage, ended=True)
             print(
                 termcolor.colored(
@@ -208,11 +218,20 @@ def _follow_test_experiment_logs(sess: api.Session, exp_id: int) -> None:
                 )
             )
             sys.exit(1)
-        elif exp.state == bindings.experimentv1State.STATE_ERROR:
+        elif exp.state == bindings.experimentv1State.ERROR:
             print_progress(active_stage, ended=True)
             trial_id = trials[0].id
-            tlogs = logs.trial_logs(sess, trial_id)
-            logs.pprint_trial_logs(trial_id, tlogs)
+            try:
+                tlogs = logs.trial_logs(sess, trial_id)
+                logs.pprint_logs(tlogs)
+            finally:
+                print(
+                    termcolor.colored(
+                        "Trial log stream ended. To reopen log stream, run: "
+                        "det trial logs -f {}".format(trial_id),
+                        "green",
+                    )
+                )
             sys.exit(1)
         else:
             print_progress(active_stage, ended=False)
@@ -275,6 +294,8 @@ def submit_experiment(args: Namespace) -> None:
 
         if not args.paused and args.follow_first_trial:
             if args.publish:
+                from determined.cli import proxy
+
                 port_map = proxy.parse_port_map_flag(args.publish)
                 with proxy.tunnel_experiment(sess, resp.experiment.id, port_map):
                     _follow_experiment_logs(sess, resp.experiment.id)
@@ -342,7 +363,7 @@ def describe(args: Namespace) -> None:
         responses.append(r)
 
     if args.json:
-        print(json.dumps([resp.to_json() for resp in responses], indent=4))
+        determined.cli.render.print_json([resp.to_json() for resp in responses])
         return
     exps = [resp.experiment for resp in responses]
 
@@ -582,23 +603,35 @@ def experiment_logs(args: Namespace) -> None:
         )
         return
     first_trial_id = sorted(t_id.id for t_id in trials)[0]
-
-    logs = api.trial_logs(
-        cli.setup_session(args),
-        first_trial_id,
-        head=args.head,
-        tail=args.tail,
-        follow=args.follow,
-        agent_ids=args.agent_ids,
-        container_ids=args.container_ids,
-        rank_ids=args.rank_ids,
-        sources=args.sources,
-        stdtypes=args.stdtypes,
-        min_level=args.level,
-        timestamp_before=args.timestamp_before,
-        timestamp_after=args.timestamp_after,
-    )
-    api.pprint_trial_logs(first_trial_id, logs)
+    try:
+        logs = api.trial_logs(
+            cli.setup_session(args),
+            first_trial_id,
+            head=args.head,
+            tail=args.tail,
+            follow=args.follow,
+            agent_ids=args.agent_ids,
+            container_ids=args.container_ids,
+            rank_ids=args.rank_ids,
+            sources=args.sources,
+            stdtypes=args.stdtypes,
+            min_level=args.level,
+            timestamp_before=args.timestamp_before,
+            timestamp_after=args.timestamp_after,
+        )
+        if args.json:
+            for log in logs:
+                render.print_json(log.to_json())
+        else:
+            api.pprint_logs(logs)
+    finally:
+        print(
+            termcolor.colored(
+                "Trial log stream ended. To reopen log stream, run: "
+                "det trial logs -f {}".format(first_trial_id),
+                "green",
+            )
+        )
 
 
 @authentication.required
@@ -963,8 +996,8 @@ main_cmd = Cmd(
                 Arg("experiment_ids", help="comma-separated list of experiment IDs to describe"),
                 Arg("--metrics", action="store_true", help="display full metrics"),
                 Group(
-                    Arg("--csv", action="store_true", help="print as CSV"),
-                    Arg("--json", action="store_true", help="print as JSON"),
+                    cli.output_format_args["csv"],
+                    cli.output_format_args["json"],
                     Arg("--outdir", type=Path, help="directory to save output"),
                 ),
             ],
@@ -975,6 +1008,7 @@ main_cmd = Cmd(
             "fetch logs of the first trial of an experiment",
             [
                 experiment_id_arg("experiment ID"),
+                cli.output_format_args["json"],
             ]
             + logs_args_description,
         ),

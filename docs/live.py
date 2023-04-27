@@ -21,33 +21,33 @@ def make_refresh_script(path, x_rebuild_time):
     x = str(x_rebuild_time).encode("utf8")
     return (
         b'''
-    <script>
-        start_check = function() {
-            let xhr = new XMLHttpRequest();
-            xhr.open("POST", "/");
-            xhr.setRequestHeader("X-rebuild-time", "'''
-        + x
-        + b'''");
-            xhr.setRequestHeader("X-rebuild-path", "'''
-        + path.encode("utf8")
-        + b"""");
-            xhr.send();
-            xhr.onload = function() {
-                // alert(`Loaded: ${xhr.status} ${xhr.response}`);
-                if (xhr.response === "new") {
+        <script>
+            start_check = function() {
+                let xhr = new XMLHttpRequest();
+                xhr.open("POST", "/");
+                xhr.setRequestHeader("X-rebuild-time", "'''
+            + x
+            + b'''");
+                xhr.setRequestHeader("X-rebuild-path", "'''
+            + path.encode("utf8")
+            + b"""");
+                xhr.send();
+                xhr.onload = function() {
+                    // alert(`Loaded: ${xhr.status} ${xhr.response}`);
+                    if (xhr.response === "new") {
+                        window.location.reload(false);
+                    } else {
+                        start_check();
+                    }
+                };
+                xhr.onerror = function() {
+                    // server is dead, refresh page to make that obvious.
                     window.location.reload(false);
-                } else {
-                    start_check();
                 }
-            };
-            xhr.onerror = function() {
-                // server is dead, refresh page to make that obvious.
-                window.location.reload(false);
             }
-        }
-        start_check()
-    </script>
-    """
+            start_check()
+        </script>
+        """
     )
 
 
@@ -130,7 +130,7 @@ def make_request_handler(long_poller, directory):
 
                 # Inject the refresh script.
                 body = body.replace(
-                    b"<body>", b"<body>" + make_refresh_script(path, stat.st_mtime), 1
+                    b"<!--dev-reload-script-location-->", make_refresh_script(path, stat.st_mtime)
                 )
 
                 self.send_response(200)

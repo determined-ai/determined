@@ -6,8 +6,8 @@
 
 .. attention::
 
-   RBAC feature applies only to Determined Enterprise Edition. Please see RBAC's current limitations
-   :ref:`here <rbac-limitations>`
+   RBAC is only available on Determined Enterprise Edition. Please see RBAC's current limitations
+   :ref:`here <rbac-limitations>`.
 
 *****************
  Getting Started
@@ -396,8 +396,8 @@ behind RBAC. These currently include:
 CLI
 ===
 
-Determined CLI has a help built-in. Please see help for the top level commands, as well as their
-subcommands:
+The :ref:`Determined CLI <cli-ug>` has built-in help. Please see help for the top level commands, as
+well as their subcommands:
 
 .. code::
 
@@ -424,8 +424,8 @@ To list all existing cluster roles and the concrete permissions they include:
 ``Viewer``
 ==========
 
-``Viewer`` role allows a user to see workspaces, projects, Notebooks, Tensorboards, Shells, Commands
-(NTSC), experiments, as well as experiment metadata and artifacts within its scope.
+``Viewer`` role allows a user to see workspaces, projects, notebooks, TensorBoards, shells, commands
+(NTSC), and experiments, as well as experiment metadata and artifacts within its scope.
 
 ``Editor``
 ==========
@@ -458,10 +458,10 @@ assigned globally.
    .. code:: yaml
 
       security:
-             authz:
-                    workspace_creator_assign_role:
-                       enabled: true
-                       role_id: ROLE_ID
+        authz:
+          workspace_creator_assign_role:
+            enabled: true
+            role_id: ROLE_ID
 
    where ``ROLE_ID`` is the integer role identifier, as listed in ``det rbac list-roles``. To
    disable the assignment of any roles to the newly created workspace, set ``enabled: false``.
@@ -485,8 +485,8 @@ all permissions, and can only be assigned globally.
    .. code:: yaml
 
       security:
-         authz:
-            rbac_ui_enabled: true
+        authz:
+          rbac_ui_enabled: true
 
 #. Restart Determined for the config change to take effect. This config option will enable RBAC APIs
    and UI, but the RBAC rules will not be enforced, allowing administrators to set it up first.
@@ -503,8 +503,8 @@ all permissions, and can only be assigned globally.
    .. code:: yaml
 
       security:
-         authz:
-            type: rbac
+        authz:
+          type: rbac
 
 #. Restart master for the change to take effect.
 

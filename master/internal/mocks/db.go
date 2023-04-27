@@ -914,58 +914,6 @@ func (_m *DB) ExperimentTrialIDs(expID int) ([]int, error) {
 	return r0, r1
 }
 
-// FetchHPImportanceTrainingData provides a mock function with given fields: experimentID, metric
-func (_m *DB) FetchHPImportanceTrainingData(experimentID int, metric string) (map[int][]model.HPImportanceTrialData, error) {
-	ret := _m.Called(experimentID, metric)
-
-	var r0 map[int][]model.HPImportanceTrialData
-	var r1 error
-	if rf, ok := ret.Get(0).(func(int, string) (map[int][]model.HPImportanceTrialData, error)); ok {
-		return rf(experimentID, metric)
-	}
-	if rf, ok := ret.Get(0).(func(int, string) map[int][]model.HPImportanceTrialData); ok {
-		r0 = rf(experimentID, metric)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(map[int][]model.HPImportanceTrialData)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(int, string) error); ok {
-		r1 = rf(experimentID, metric)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// FetchHPImportanceValidationData provides a mock function with given fields: experimentID, metric
-func (_m *DB) FetchHPImportanceValidationData(experimentID int, metric string) (map[int][]model.HPImportanceTrialData, error) {
-	ret := _m.Called(experimentID, metric)
-
-	var r0 map[int][]model.HPImportanceTrialData
-	var r1 error
-	if rf, ok := ret.Get(0).(func(int, string) (map[int][]model.HPImportanceTrialData, error)); ok {
-		return rf(experimentID, metric)
-	}
-	if rf, ok := ret.Get(0).(func(int, string) map[int][]model.HPImportanceTrialData); ok {
-		r0 = rf(experimentID, metric)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(map[int][]model.HPImportanceTrialData)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(int, string) error); ok {
-		r1 = rf(experimentID, metric)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // GetExperimentStatus provides a mock function with given fields: experimentID
 func (_m *DB) GetExperimentStatus(experimentID int) (model.State, float64, error) {
 	ret := _m.Called(experimentID)
@@ -997,30 +945,6 @@ func (_m *DB) GetExperimentStatus(experimentID int) (model.State, float64, error
 	return r0, r1, r2
 }
 
-// GetHPImportance provides a mock function with given fields: experimentID
-func (_m *DB) GetHPImportance(experimentID int) (model.ExperimentHPImportance, error) {
-	ret := _m.Called(experimentID)
-
-	var r0 model.ExperimentHPImportance
-	var r1 error
-	if rf, ok := ret.Get(0).(func(int) (model.ExperimentHPImportance, error)); ok {
-		return rf(experimentID)
-	}
-	if rf, ok := ret.Get(0).(func(int) model.ExperimentHPImportance); ok {
-		r0 = rf(experimentID)
-	} else {
-		r0 = ret.Get(0).(model.ExperimentHPImportance)
-	}
-
-	if rf, ok := ret.Get(1).(func(int) error); ok {
-		r1 = rf(experimentID)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // GetOrCreateClusterID provides a mock function with given fields:
 func (_m *DB) GetOrCreateClusterID() (string, error) {
 	ret := _m.Called()
@@ -1043,41 +967,6 @@ func (_m *DB) GetOrCreateClusterID() (string, error) {
 	}
 
 	return r0, r1
-}
-
-// GetPartialHPImportance provides a mock function with given fields:
-func (_m *DB) GetPartialHPImportance() ([]int, []model.ExperimentHPImportance, error) {
-	ret := _m.Called()
-
-	var r0 []int
-	var r1 []model.ExperimentHPImportance
-	var r2 error
-	if rf, ok := ret.Get(0).(func() ([]int, []model.ExperimentHPImportance, error)); ok {
-		return rf()
-	}
-	if rf, ok := ret.Get(0).(func() []int); ok {
-		r0 = rf()
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]int)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func() []model.ExperimentHPImportance); ok {
-		r1 = rf()
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).([]model.ExperimentHPImportance)
-		}
-	}
-
-	if rf, ok := ret.Get(2).(func() error); ok {
-		r2 = rf()
-	} else {
-		r2 = ret.Error(2)
-	}
-
-	return r0, r1, r2
 }
 
 // GetTrialProfilerMetricsBatches provides a mock function with given fields: labelsJSON, offset, limit
@@ -1144,55 +1033,6 @@ func (_m *DB) LatestCheckpointForTrial(trialID int) (*model.Checkpoint, error) {
 	}
 
 	return r0, r1
-}
-
-// MetricNames provides a mock function with given fields: experimentID, sStartTime, vStartTime
-func (_m *DB) MetricNames(experimentID int, sStartTime time.Time, vStartTime time.Time) ([]string, []string, time.Time, time.Time, error) {
-	ret := _m.Called(experimentID, sStartTime, vStartTime)
-
-	var r0 []string
-	var r1 []string
-	var r2 time.Time
-	var r3 time.Time
-	var r4 error
-	if rf, ok := ret.Get(0).(func(int, time.Time, time.Time) ([]string, []string, time.Time, time.Time, error)); ok {
-		return rf(experimentID, sStartTime, vStartTime)
-	}
-	if rf, ok := ret.Get(0).(func(int, time.Time, time.Time) []string); ok {
-		r0 = rf(experimentID, sStartTime, vStartTime)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]string)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(int, time.Time, time.Time) []string); ok {
-		r1 = rf(experimentID, sStartTime, vStartTime)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).([]string)
-		}
-	}
-
-	if rf, ok := ret.Get(2).(func(int, time.Time, time.Time) time.Time); ok {
-		r2 = rf(experimentID, sStartTime, vStartTime)
-	} else {
-		r2 = ret.Get(2).(time.Time)
-	}
-
-	if rf, ok := ret.Get(3).(func(int, time.Time, time.Time) time.Time); ok {
-		r3 = rf(experimentID, sStartTime, vStartTime)
-	} else {
-		r3 = ret.Get(3).(time.Time)
-	}
-
-	if rf, ok := ret.Get(4).(func(int, time.Time, time.Time) error); ok {
-		r4 = rf(experimentID, sStartTime, vStartTime)
-	} else {
-		r4 = ret.Error(4)
-	}
-
-	return r0, r1, r2, r3, r4
 }
 
 // Migrate provides a mock function with given fields: migrationURL, actions
@@ -1534,20 +1374,6 @@ func (_m *DB) SaveSnapshot(experimentID int, version int, experimentSnapshot []b
 	return r0
 }
 
-// SetHPImportance provides a mock function with given fields: experimentID, value
-func (_m *DB) SetHPImportance(experimentID int, value model.ExperimentHPImportance) error {
-	ret := _m.Called(experimentID, value)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(int, model.ExperimentHPImportance) error); ok {
-		r0 = rf(experimentID, value)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
 // StartAllocationSession provides a mock function with given fields: allocationID, owner
 func (_m *DB) StartAllocationSession(allocationID model.AllocationID, owner *model.User) (string, error) {
 	ret := _m.Called(allocationID, owner)
@@ -1658,32 +1484,6 @@ func (_m *DB) TerminateExperimentInRestart(id int, state model.State) error {
 	}
 
 	return r0
-}
-
-// TopTrialsByMetric provides a mock function with given fields: experimentID, maxTrials, metric, smallerIsBetter
-func (_m *DB) TopTrialsByMetric(experimentID int, maxTrials int, metric string, smallerIsBetter bool) ([]int32, error) {
-	ret := _m.Called(experimentID, maxTrials, metric, smallerIsBetter)
-
-	var r0 []int32
-	var r1 error
-	if rf, ok := ret.Get(0).(func(int, int, string, bool) ([]int32, error)); ok {
-		return rf(experimentID, maxTrials, metric, smallerIsBetter)
-	}
-	if rf, ok := ret.Get(0).(func(int, int, string, bool) []int32); ok {
-		r0 = rf(experimentID, maxTrials, metric, smallerIsBetter)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]int32)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(int, int, string, bool) error); ok {
-		r1 = rf(experimentID, maxTrials, metric, smallerIsBetter)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
 }
 
 // TopTrialsByTrainingLength provides a mock function with given fields: experimentID, maxTrials, metric, smallerIsBetter

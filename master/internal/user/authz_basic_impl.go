@@ -65,6 +65,14 @@ func (a *UserAuthZBasic) CanSetUsersAdmin(
 	return nil
 }
 
+// CanSetUsersRemote returns an error if the user is not an admin.
+func (a *UserAuthZBasic) CanSetUsersRemote(ctx context.Context, curUser model.User) error {
+	if !curUser.Admin {
+		return fmt.Errorf("only admin privileged users can update other users")
+	}
+	return nil
+}
+
 // CanSetUsersAgentUserGroup returns an error if the user is not an admin.
 func (a *UserAuthZBasic) CanSetUsersAgentUserGroup(
 	ctx context.Context, curUser, targetUser model.User, agentUserGroup model.AgentUserGroup,

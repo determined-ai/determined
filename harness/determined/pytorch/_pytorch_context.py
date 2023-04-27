@@ -302,8 +302,8 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
         The optimizer must use the models wrapped by :meth:`wrap_model`. This function
         creates a ``horovod.DistributedOptimizer`` if using parallel/distributed training.
 
-        `backward_passes_per_step` can be used to specify how many gradient aggregation
-        steps will be performed in a single `train_batch` call per optimizer step.
+        ``backward_passes_per_step`` can be used to specify how many gradient aggregation
+        steps will be performed in a single ``train_batch`` call per optimizer step.
         In most cases, this will just be the default value 1.  However, this advanced functionality
         can be used to support training loops like the one shown below:
 
@@ -403,8 +403,32 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
 
     def set_profiler(self, *args: List[str], **kwargs: Any) -> None:
         """
-        Sets a torch profiler instance on the trial context to be called in _pytorch_trial
-        when training.
+        ``set_profiler()`` is a thin wrapper around the native PyTorch profiler, torch-tb-profiler.
+        It overrides the ``on_trace_ready`` parameter to the determined tensorboard path, while all
+        other arguments are passed directly into ``torch.profiler.profile``. Stepping the profiler
+        will be handled automatically during the training loop.
+
+        See the `PyTorch profiler plugin
+        <https://github.com/pytorch/kineto/tree/master/tb_plugin>`_ for details.
+
+        Examples:
+
+        Profiling GPU and CPU activities, skipping batch 1, warming up on batch 2, and profiling
+        batches 3 and 4.
+
+        .. code-block:: python
+
+            self.context.set_profiler(
+                activities=[
+                    torch.profiler.ProfilerActivity.CPU,
+                    torch.profiler.ProfilerActivity.CUDA,
+                ],
+                schedule=torch.profiler.schedule(
+                    wait=1,
+                    warmup=1,
+                    active=2
+                ),
+            )
         """
         self.profiler = torch.profiler.profile(
             on_trace_ready=torch.profiler.tensorboard_trace_handler(
@@ -525,7 +549,7 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
         num_losses: Optional[int] = 1,
         verbosity: Optional[int] = 1,
         min_loss_scale: Optional[float] = None,
-        max_loss_scale: Optional[float] = 2.0 ** 24,
+        max_loss_scale: Optional[float] = 2.0**24,
     ) -> Tuple:
         """
         Configure automatic mixed precision for your models and optimizers using NVIDIA's Apex
@@ -571,10 +595,11 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
             verbosity (int, default=1):  Set to 0 to suppress Amp-related output.
             min_loss_scale (float, default=None):  Sets a floor for the loss scale values that
                 can be chosen by dynamic loss scaling.  The default value of None means that no
-                floor is imposed. If dynamic loss scaling is not used, `min_loss_scale` is ignored.
+                floor is imposed. If dynamic loss scaling is not used, ``min_loss_scale`` is
+                ignored.
             max_loss_scale (float, default=2.**24):  Sets a ceiling for the loss scale values
                 that can be chosen by dynamic loss scaling.  If dynamic loss scaling is not used,
-                `max_loss_scale` is ignored.
+                ``max_loss_scale`` is ignored.
 
         Returns:
             Model(s) and optimizer(s) modified according to the ``opt_level``.

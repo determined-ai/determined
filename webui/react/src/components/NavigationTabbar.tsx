@@ -1,27 +1,27 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
-import ActionSheet from 'components/ActionSheet';
+import ActionSheet, { ActionItem } from 'components/ActionSheet';
 import DynamicIcon from 'components/DynamicIcon';
+import { useModal } from 'components/kit/Modal';
 import Link, { Props as LinkProps } from 'components/Link';
-import useModalWorkspaceCreate from 'hooks/useModal/Workspace/useModalWorkspaceCreate';
 import usePermissions from 'hooks/usePermissions';
 import { handlePath, paths } from 'routes/utils';
 import Icon from 'shared/components/Icon/Icon';
 import Spinner from 'shared/components/Spinner/Spinner';
 import useUI from 'shared/contexts/stores/UI';
 import { AnyMouseEvent, routeToReactUrl } from 'shared/utils/routes';
-import { selectIsAuthenticated } from 'stores/auth';
-import { useClusterStore } from 'stores/cluster';
-import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
-import usersStore from 'stores/users';
-import { useWorkspaces } from 'stores/workspaces';
-import { BrandingType } from 'types';
+import authStore from 'stores/auth';
+import clusterStore from 'stores/cluster';
+import determinedStore, { BrandingType } from 'stores/determinedInfo';
+import userStore from 'stores/users';
+import workspaceStore from 'stores/workspaces';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 
 import css from './NavigationTabbar.module.scss';
 import UserBadge from './UserBadge';
+import WorkspaceCreateModalComponent from './WorkspaceCreateModal';
 
 interface ToolbarItemProps extends LinkProps {
   badge?: number;
@@ -48,16 +48,15 @@ const ToolbarItem: React.FC<ToolbarItemProps> = ({ path, status, ...props }: Too
 };
 
 const NavigationTabbar: React.FC = () => {
-  const isAuthenticated = useObservable(selectIsAuthenticated);
-  const loadableCurrentUser = useObservable(usersStore.getCurrentUser());
-  const authUser = Loadable.match(loadableCurrentUser, {
-    Loaded: (cUser) => cUser,
-    NotLoaded: () => undefined,
-  });
+  const isAuthenticated = useObservable(authStore.isAuthenticated);
+  const currentUser = Loadable.getOrElse(undefined, useObservable(userStore.currentUser));
 
-  const clusterStatus = useObservable(useClusterStore().clusterStatus);
+  const clusterStatus = useObservable(clusterStore.clusterStatus);
 
-  const info = Loadable.getOrElse(initInfo, useDeterminedInfo());
+  const info = useObservable(determinedStore.info);
+  const loadablePinnedWorkspaces = useObservable(workspaceStore.pinned);
+  const pinnedWorkspaces = Loadable.getOrElse([], loadablePinnedWorkspaces);
+
   const { ui } = useUI();
 
   const [isShowingOverflow, setIsShowingOverflow] = useState(false);
@@ -66,16 +65,12 @@ const NavigationTabbar: React.FC = () => {
   const showNavigation = isAuthenticated && ui.showChrome;
 
   const { canCreateWorkspace } = usePermissions();
-  const { contextHolder: modalWorkspaceCreateContextHolder, modalOpen: openWorkspaceCreateModal } =
-    useModalWorkspaceCreate();
-  const handleCreateWorkspace = useCallback(() => {
-    openWorkspaceCreateModal();
-  }, [openWorkspaceCreateModal]);
 
-  const pinnedWorkspaces = useWorkspaces({ pinned: true });
+  const WorkspaceCreateModal = useModal(WorkspaceCreateModalComponent);
+
   const handleOverflowOpen = useCallback(() => setIsShowingOverflow(true), []);
   const handleWorkspacesOpen = useCallback(() => {
-    if (Loadable.getOrElse([], pinnedWorkspaces).length === 0) {
+    if (pinnedWorkspaces.length === 0) {
       routeToReactUrl(paths.workspaceList());
       return;
     }
@@ -94,11 +89,34 @@ const NavigationTabbar: React.FC = () => {
 
   if (!showNavigation) return null;
 
+  const workspaceActions = Loadable.quickMatch(
+    loadablePinnedWorkspaces,
+    [{ icon: <Spinner />, label: 'Loading...' }],
+    (workspaces) =>
+      workspaces.map(
+        (workspace) =>
+          ({
+            icon: <DynamicIcon name={workspace.name} size={24} style={{ color: 'black' }} />,
+            label: workspace.name,
+            onClick: (e: AnyMouseEvent) =>
+              handlePathUpdate(e, paths.workspaceDetails(workspace.id)),
+          } as ActionItem),
+      ),
+  );
+
+  if (canCreateWorkspace) {
+    workspaceActions.push({
+      icon: <Icon name="add-small" size="large" />,
+      label: 'New Workspace',
+      onClick: WorkspaceCreateModal.open,
+    });
+  }
+
   const overflowActionsTop = [
     {
       render: () => (
         <div className={css.user}>
-          <UserBadge compact key="avatar" user={authUser} />
+          <UserBadge compact key="avatar" user={currentUser} />
         </div>
       ),
     },
@@ -162,30 +180,7 @@ const NavigationTabbar: React.FC = () => {
             onClick: (e: AnyMouseEvent) => handlePathUpdate(e, paths.workspaceList()),
             path: paths.workspaceList(),
           },
-          ...Loadable.match(pinnedWorkspaces, {
-            Loaded: (workspaces) => {
-              const workspaceIcons = workspaces.map((workspace) => ({
-                icon: <DynamicIcon name={workspace.name} size={24} style={{ color: 'black' }} />,
-                label: workspace.name,
-                onClick: (e: AnyMouseEvent) =>
-                  handlePathUpdate(e, paths.workspaceDetails(workspace.id)),
-              }));
-              if (canCreateWorkspace) {
-                workspaceIcons.push({
-                  icon: <Icon name="add-small" size="large" />,
-                  label: 'New Workspace',
-                  onClick: handleCreateWorkspace,
-                });
-              }
-              return workspaceIcons;
-            },
-            NotLoaded: () => [
-              {
-                icon: <Spinner />,
-                label: 'Loading...',
-              },
-            ],
-          }),
+          ...workspaceActions,
         ]}
         show={isShowingPinnedWorkspaces}
         onCancel={handleActionSheetCancel}
@@ -195,7 +190,7 @@ const NavigationTabbar: React.FC = () => {
         show={isShowingOverflow}
         onCancel={handleActionSheetCancel}
       />
-      {modalWorkspaceCreateContextHolder}
+      <WorkspaceCreateModal.Component />
     </nav>
   );
 };

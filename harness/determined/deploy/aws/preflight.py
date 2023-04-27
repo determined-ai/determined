@@ -4,11 +4,10 @@ from typing import Any, Dict
 
 import boto3
 import pkg_resources
-import yaml
 from botocore.exceptions import ClientError
 from termcolor import colored
 
-from determined.common import util
+from determined.common import util, yaml
 from determined.deploy.errors import PreflightFailure
 
 from . import constants
@@ -67,7 +66,7 @@ class LoaderIgnoreUnknown(yaml.SafeLoader):
         return None
 
 
-LoaderIgnoreUnknown.add_constructor(None, LoaderIgnoreUnknown.ignore_unknown)  # type: ignore
+LoaderIgnoreUnknown.add_constructor(None, LoaderIgnoreUnknown.ignore_unknown)
 
 
 def get_default_cf_parameter(deployment_object: DeterminedDeployment, parameter: str) -> Any:

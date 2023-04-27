@@ -143,7 +143,7 @@ func (a *apiServer) GetUsers(
 	nameFilterExpr := "%" + req.Name + "%"
 	selectExpr := `
 		SELECT
-			u.id, u.display_name, u.username, u.admin, u.active, u.modified_at,
+			u.id, u.display_name, u.username, u.admin, u.active, u.modified_at, u.remote,
 			h.uid AS agent_uid, h.gid AS agent_gid, h.user_ AS agent_user, h.group_ AS agent_group, 
 			COALESCE(u.display_name, u.username) AS name
 		FROM users u
@@ -239,10 +239,15 @@ func (a *apiServer) PostUser(
 	if req.User == nil {
 		return nil, status.Error(codes.InvalidArgument, "must specify user to create")
 	}
+	if req.Password != "" && req.User.Remote {
+		return nil, status.Error(codes.InvalidArgument, "cannot set password for remote user")
+	}
+
 	userToAdd := &model.User{
 		Username: req.User.Username,
 		Admin:    req.User.Admin,
 		Active:   req.User.Active,
+		Remote:   req.User.Remote,
 	}
 	clearedUsername, err := clearUsername(*userToAdd, userToAdd.Username, 2)
 	if err != nil {
@@ -285,15 +290,19 @@ func (a *apiServer) PostUser(
 		return nil, err
 	}
 
-	var hashedPassword string
-	if req.IsHashed {
-		hashedPassword = req.Password
+	if req.User.Remote {
+		userToAdd.PasswordHash = model.NoPasswordLogin
 	} else {
-		hashedPassword = replicateClientSideSaltAndHash(req.Password)
-	}
+		var hashedPassword string
+		if req.IsHashed {
+			hashedPassword = req.Password
+		} else {
+			hashedPassword = replicateClientSideSaltAndHash(req.Password)
+		}
 
-	if err = userToAdd.UpdatePasswordHash(hashedPassword); err != nil {
-		return nil, err
+		if err = userToAdd.UpdatePasswordHash(hashedPassword); err != nil {
+			return nil, err
+		}
 	}
 
 	userID, err := a.m.db.AddUser(userToAdd, agentUserGroup)
@@ -384,6 +393,16 @@ func (a *apiServer) PatchUser(
 		insertColumns = append(insertColumns, "admin")
 	}
 
+	if req.User.Remote != nil {
+		if err = user.AuthZProvider.Get().
+			CanSetUsersRemote(ctx, *curUser); err != nil {
+			return nil, status.Error(codes.PermissionDenied, err.Error())
+		}
+
+		updatedUser.Remote = *req.User.Remote
+		insertColumns = append(insertColumns, "remote")
+	}
+
 	if req.User.Active != nil {
 		if err = user.AuthZProvider.Get().
 			CanSetUsersActive(ctx, *curUser, targetUser, req.User.Active.Value); err != nil {
@@ -399,10 +418,8 @@ func (a *apiServer) PatchUser(
 			return nil, status.Error(codes.PermissionDenied, err.Error())
 		}
 
-		// Reject SSO and SCIM
-		if user.IsSSOUser(targetUser) {
-			return nil, status.Error(codes.InvalidArgument,
-				"Cannot change username of SSO/SCIM user through this API.")
+		if targetUser.Remote {
+			return nil, status.Error(codes.InvalidArgument, "Cannot set username for remote users")
 		}
 
 		username, err := clearUsername(targetUser, *req.User.Username, 2)
@@ -447,6 +464,10 @@ func (a *apiServer) PatchUser(
 		if err = user.AuthZProvider.Get().
 			CanSetUsersPassword(ctx, *curUser, targetUser); err != nil {
 			return nil, status.Error(codes.PermissionDenied, err.Error())
+		}
+
+		if targetUser.Remote {
+			return nil, status.Error(codes.InvalidArgument, "Cannot set password for remote users")
 		}
 
 		hashedPassword := *req.User.Password

@@ -45,7 +45,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/elastic"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
-	"github.com/determined-ai/determined/master/internal/hpimportance"
 	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/plugin/sso"
 	"github.com/determined-ai/determined/master/internal/portregistry"
@@ -94,14 +93,13 @@ type Master struct {
 	config   *config.Config
 	taskSpec *tasks.TaskSpec
 
-	logs         *logger.LogBuffer
-	system       *actor.System
-	echo         *echo.Echo
-	db           *db.PgDB
-	rm           rm.ResourceManager
-	proxy        *actor.Ref
-	taskLogger   *task.Logger
-	hpImportance *actor.Ref
+	logs       *logger.LogBuffer
+	system     *actor.System
+	echo       *echo.Echo
+	db         *db.PgDB
+	rm         rm.ResourceManager
+	proxy      *actor.Ref
+	taskLogger *task.Logger
 
 	trialLogBackend TrialLogBackend
 	taskLogBackend  task.LogBackend
@@ -295,6 +293,18 @@ type AllocationMetadata struct {
 	StartTime        time.Time
 	EndTime          time.Time
 	ImagepullingTime float64
+}
+
+// canGetUsageDetails checks if the user has permission to get cluster usage details.
+func (m *Master) canGetUsageDetails(ctx context.Context, user *model.User) error {
+	permErr, err := cluster.AuthZProvider.Get().CanGetUsageDetails(ctx, user)
+	if err != nil {
+		return err
+	}
+	if permErr != nil {
+		return status.Error(codes.PermissionDenied, permErr.Error())
+	}
+	return nil
 }
 
 //	@Summary	Get a detailed view of resource allocation at a allocation-level during the given time period (CSV).
@@ -916,12 +926,6 @@ func (m *Master) Run(ctx context.Context) error {
 	portregistry.InitPortRegistry()
 	m.system.MustActorOf(actor.Addr("allocation-aggregator"), &allocationAggregator{db: m.db})
 
-	hpi, err := hpimportance.NewManager(m.db, m.system, m.config.HPImportance, m.config.Root)
-	if err != nil {
-		return err
-	}
-	m.hpImportance, _ = m.system.ActorOf(actor.Addr(hpimportance.RootAddr), hpi)
-
 	// Initialize the HTTP server and listen for incoming requests.
 	m.echo = echo.New()
 	m.echo.Use(middleware.Recover())
@@ -1000,7 +1004,8 @@ func (m *Master) Run(ctx context.Context) error {
 		m.system,
 		m.db,
 		m.echo,
-		m.config.ResourceConfig,
+		&m.config.ResourceConfig,
+		&m.config.TaskContainerDefaults,
 		&aproto.MasterSetAgentOptions{
 			MasterInfo:     m.Info(),
 			LoggingOptions: m.config.Logging,
@@ -1124,7 +1129,7 @@ func (m *Master) Run(ctx context.Context) error {
 	trialsGroup.GET("/:trial_id", api.Route(m.getTrial))
 	trialsGroup.GET("/:trial_id/metrics", api.Route(m.getTrialMetrics))
 
-	resourcesGroup := m.echo.Group("/resources")
+	resourcesGroup := m.echo.Group("/resources", cluster.CanGetUsageDetails())
 	resourcesGroup.GET("/allocation/raw", m.getRawResourceAllocation)
 	resourcesGroup.GET("/allocation/allocations-csv", m.getResourceAllocations)
 	resourcesGroup.GET("/allocation/aggregated", m.getAggregatedResourceAllocation)

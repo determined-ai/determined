@@ -8,15 +8,19 @@ import {
 } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import DeleteModelModal from 'components/DeleteModelModal';
 import DynamicIcon from 'components/DynamicIcon';
 import FilterCounter from 'components/FilterCounter';
 import Button from 'components/kit/Button';
 import Empty from 'components/kit/Empty';
 import Input from 'components/kit/Input';
+import { useModal } from 'components/kit/Modal';
 import Tags, { tagsActionHelper } from 'components/kit/Tags';
 import Toggle from 'components/kit/Toggle';
 import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
+import ModelCreateModal from 'components/ModelCreateModal';
+import ModelMoveModal from 'components/ModelMoveModal';
 import Page from 'components/Page';
 import InteractiveTable, {
   ColumnDef,
@@ -34,9 +38,6 @@ import {
 import TableFilterDropdown from 'components/Table/TableFilterDropdown';
 import TableFilterSearch from 'components/Table/TableFilterSearch';
 import WorkspaceFilter from 'components/WorkspaceFilter';
-import useModalModelCreate from 'hooks/useModal/Model/useModalModelCreate';
-import useModalModelDelete from 'hooks/useModal/Model/useModalModelDelete';
-import useModalModelMove from 'hooks/useModal/Model/useModalModelMove';
 import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
@@ -49,8 +50,8 @@ import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
 import { validateDetApiEnum } from 'shared/utils/service';
 import { alphaNumericSorter } from 'shared/utils/sort';
-import usersStore from 'stores/users';
-import { useEnsureWorkspacesFetched, useWorkspaces } from 'stores/workspaces';
+import userStore from 'stores/users';
+import workspaceStore from 'stores/workspaces';
 import { ModelItem, Workspace } from 'types';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
@@ -72,25 +73,20 @@ interface Props {
 }
 
 const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
-  const loadableUsers = useObservable(usersStore.getUsers());
-  const users = Loadable.map(loadableUsers, ({ users }) => users);
+  const canceler = useRef(new AbortController());
+  const users = Loadable.getOrElse([], useObservable(userStore.getUsers()));
   const [models, setModels] = useState<ModelItem[]>([]);
+  const [model, setModel] = useState<ModelItem | null>(null);
   const [tags, setTags] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [canceler] = useState(new AbortController());
   const [total, setTotal] = useState(0);
   const pageRef = useRef<HTMLElement>(null);
-  const fetchWorkspaces = useEnsureWorkspacesFetched(canceler);
   const { canCreateModels, canDeleteModel, canModifyModel } = usePermissions();
+  const workspaces = Loadable.getOrElse([], useObservable(workspaceStore.workspaces));
 
-  const { contextHolder: modalModelCreateContextHolder, modalOpen: openModelCreate } =
-    useModalModelCreate({ workspaceId: workspace?.id });
-
-  const { contextHolder: modalModelDeleteContextHolder, modalOpen: openModelDelete } =
-    useModalModelDelete();
-
-  const { contextHolder: modalModelMoveContextHolder, modalOpen: openModelMove } =
-    useModalModelMove();
+  const modelCreateModal = useModal(ModelCreateModal);
+  const deleteModelModal = useModal(DeleteModelModal);
+  const modelMoveModal = useModal(ModelMoveModal);
 
   const settingConfig = useMemo(() => {
     return settingsConfig(workspace?.id.toString() ?? 'global');
@@ -126,7 +122,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
           users: settings.users,
           workspaceIds: workspace?.id ? [workspace.id] : settings.workspace,
         },
-        { signal: canceler.signal },
+        { signal: canceler.current.signal },
       );
       setTotal(response.pagination.total || 0);
       setModels((prev) => {
@@ -142,36 +138,29 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
     } finally {
       setIsLoading(false);
     }
-  }, [settings, workspace?.id, canceler.signal]);
+  }, [settings, workspace?.id]);
 
   const fetchTags = useCallback(async () => {
     try {
       const tags = await getModelLabels(
         { workspaceId: workspace?.id },
-        { signal: canceler.signal },
+        { signal: canceler.current.signal },
       );
       tags.sort((a, b) => alphaNumericSorter(a, b));
       setTags(tags);
     } catch (e) {
       handleError(e);
     }
-  }, [canceler.signal, workspace?.id]);
+  }, [workspace?.id]);
 
   const fetchAll = useCallback(async () => {
-    await Promise.allSettled([
-      fetchModels(),
-      fetchTags(),
-      usersStore.ensureUsersFetched(canceler),
-      fetchWorkspaces(),
-    ]);
-  }, [canceler, fetchModels, fetchTags, fetchWorkspaces]);
-
-  const workspaces = Loadable.match(useWorkspaces(), {
-    Loaded: (ws) => ws,
-    NotLoaded: () => [],
-  });
+    await Promise.allSettled([fetchModels(), fetchTags()]);
+  }, [fetchModels, fetchTags]);
 
   usePolling(fetchAll, { rerunOnNewFn: true });
+
+  useEffect(() => userStore.startPolling(), []);
+  useEffect(() => workspaceStore.startPolling(), []);
 
   /**
    * Get new models based on changes to the pagination and sorter.
@@ -203,13 +192,6 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
       }
     },
     [fetchModels],
-  );
-
-  const moveModelToWorkspace = useCallback(
-    (model: ModelItem) => {
-      openModelMove(model);
-    },
-    [openModelMove],
   );
 
   const setModelTags = useCallback(
@@ -383,13 +365,6 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
     [handleLabelFilterApply, handleLabelFilterReset, settings.tags],
   );
 
-  const showConfirmDelete = useCallback(
-    (model: ModelItem) => {
-      openModelDelete(model);
-    },
-    [openModelDelete],
-  );
-
   const saveModelDescription = useCallback(async (modelName: string, editedDescription: string) => {
     try {
       await patchModel({
@@ -426,10 +401,12 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
           switchArchived(record);
         },
         [MenuKey.MoveModel]: () => {
-          moveModelToWorkspace(record);
+          setModel(record);
+          modelMoveModal.open();
         },
         [MenuKey.DeleteModel]: () => {
-          showConfirmDelete(record);
+          setModel(record);
+          deleteModelModal.open();
         },
       };
 
@@ -453,15 +430,10 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
 
       return { items: menuItems, onClick: onItemClick };
     },
-    [moveModelToWorkspace, showConfirmDelete, switchArchived],
+    [deleteModelModal, modelMoveModal, switchArchived],
   );
 
   const columns = useMemo(() => {
-    const matchUsers = Loadable.match(users, {
-      Loaded: (users) => users,
-      NotLoaded: () => [],
-    });
-
     const tagsRenderer = (value: string, record: ModelItem) => (
       <div className={css.tagsRenderer}>
         <Typography.Text
@@ -593,10 +565,10 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
         dataIndex: 'user',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['user'],
         filterDropdown: userFilterDropdown,
-        filters: matchUsers.map((user) => ({ text: getDisplayName(user), value: user.id })),
+        filters: users.map((user) => ({ text: getDisplayName(user), value: user.id })),
         isFiltered: (settings: Settings) => !!settings.users,
         key: 'user',
-        render: (_, r) => userRenderer(matchUsers.find((u) => u.id === r.userId)),
+        render: (_, r) => userRenderer(users.find((u) => u.id === r.userId)),
         title: 'User',
       },
       {
@@ -612,21 +584,21 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
       },
     ] as ColumnDef<ModelItem>[];
   }, [
-    canDeleteModel,
-    canModifyModel,
+    users,
     nameFilterSearch,
     tableSearchIcon,
     descriptionFilterSearch,
+    workspaceFilterDropdown,
+    workspaces,
     labelFilterDropdown,
     tags,
     userFilterDropdown,
-    users,
+    canModifyModel,
     setModelTags,
+    canDeleteModel,
     ModelActionMenu,
     saveModelDescription,
-    workspaceFilterDropdown,
     workspaceRenderer,
-    workspaces,
   ]);
 
   const handleTableChange = useCallback(
@@ -652,10 +624,11 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
   );
 
   useEffect(() => {
-    return () => canceler.abort();
-  }, [canceler]);
+    const currentCanceler = canceler.current;
+    return () => currentCanceler.abort();
+  }, []);
 
-  const showCreateModelModal = useCallback(() => openModelCreate(), [openModelCreate]);
+  const showCreateModelModal = useCallback(() => modelCreateModal.open(), [modelCreateModal]);
 
   const switchShowArchived = useCallback(
     (showArchived: boolean) => {
@@ -779,9 +752,9 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
           onChange={handleTableChange}
         />
       )}
-      {modalModelCreateContextHolder}
-      {modalModelDeleteContextHolder}
-      {modalModelMoveContextHolder}
+      <modelCreateModal.Component workspaceId={workspace?.id} />
+      {model && <deleteModelModal.Component model={model} />}
+      {model && <modelMoveModal.Component model={model} />}
     </Page>
   );
 };

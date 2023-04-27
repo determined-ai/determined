@@ -9,7 +9,7 @@ import RadioGroup from 'components/RadioGroup';
 import ScaleSelect from 'components/ScaleSelect';
 import Icon from 'shared/components/Icon';
 import { ValueOf } from 'shared/types';
-import { HpImportance, Metric, Scale } from 'types';
+import { Metric, Scale } from 'types';
 
 import { ExperimentVisualizationType } from '../ExperimentVisualization';
 
@@ -43,7 +43,6 @@ interface Props {
   batches: number[];
   filters: VisualizationFilters;
   fullHParams: string[];
-  hpImportance?: HpImportance;
   metrics: Metric[];
   onChange?: (filters: VisualizationFilters) => void;
   onMetricChange?: (metric: Metric) => void;
@@ -106,7 +105,6 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
   batches,
   filters,
   fullHParams,
-  hpImportance,
   metrics,
   onChange,
   onMetricChange,
@@ -239,7 +237,6 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
       {showHParams && (
         <HpSelect
           fullHParams={fullHParams}
-          hpImportance={hpImportance}
           label={`HP (max ${MAX_HPARAM_COUNT})`}
           value={localFilters.hParams}
           onChange={handleHParamChange}

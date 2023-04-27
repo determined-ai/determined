@@ -43,7 +43,7 @@ class Net(nn.Module):
 
 
 # NEW: Modify function header to include core_context for metric reporting.
-def train(args, model, device, train_loader, optimizer, epoch, core_context):
+def train(args, model, device, train_loader, optimizer, epoch_idx, core_context):
     model.train()
     for batch_idx, (data, target) in enumerate(train_loader):
         data, target = data.to(device), target.to(device)
@@ -55,10 +55,9 @@ def train(args, model, device, train_loader, optimizer, epoch, core_context):
 
         # NEW: Increment batch_idx by 1 in if statement to avoid reporting metrics at batch_idx 0.
         if (batch_idx + 1) % args.log_interval == 0:
-
             print(
                 "Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}".format(
-                    epoch,
+                    epoch_idx,
                     batch_idx * len(data),
                     len(train_loader.dataset),
                     100.0 * batch_idx / len(train_loader),
@@ -69,8 +68,8 @@ def train(args, model, device, train_loader, optimizer, epoch, core_context):
             # NEW: Report epoch-based training metrics to Determined master via core_context.
             # Index by (batch_idx + 1) * (epoch-1) * len(train_loader) to continuously plot loss on one graph for consecutive epochs.
             core_context.train.report_training_metrics(
-                steps_completed=(batch_idx + 1) + (epoch - 1) * len(train_loader),
-                metrics={"train_loss": loss.item(), "epoch": epoch},
+                steps_completed=(batch_idx + 1) + epoch_idx * len(train_loader),
+                metrics={"train_loss": loss.item(), "epoch": epoch_idx},
             )
 
             if args.dry_run:
@@ -193,23 +192,29 @@ def main(core_context):
     optimizer = optim.Adadelta(model.parameters(), lr=args.lr)
 
     scheduler = StepLR(optimizer, step_size=1, gamma=args.gamma)
-    for epoch in range(1, args.epochs + 1):
-
+    for epoch_idx in range(0, args.epochs):
         # NEW: Calculate steps_completed for plotting test metrics.
-        steps_completed = epoch * len(train_loader)
+        steps_completed = epoch_idx * len(train_loader)
 
         # NEW: Pass core_context into train() and test().
-        train(args, model, device, train_loader, optimizer, epoch, core_context)
+        train(args, model, device, train_loader, optimizer, epoch_idx, core_context)
 
         # NEW: Pass args, test_loader, epoch, and steps_completed into test().
-        test(args, model, device, test_loader, epoch, core_context, steps_completed=steps_completed)
+        test(
+            args,
+            model,
+            device,
+            test_loader,
+            epoch_idx,
+            core_context,
+            steps_completed=steps_completed,
+        )
         scheduler.step()
 
         # NEW: Remove model saving logic, checkpointing shown in next stage.
 
 
 if __name__ == "__main__":
-
     # NEW: Establish new determined.core.Context and pass to main function.
     with det.core.init() as core_context:
         main(core_context=core_context)

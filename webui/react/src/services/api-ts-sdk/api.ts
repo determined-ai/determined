@@ -141,43 +141,6 @@ export const Experimentv1State = {
 } as const
 export type Experimentv1State = ValueOf<typeof Experimentv1State>
 /**
- * Hyperparameter importance as computed with respect for one specific metric.
- * @export
- * @interface GetHPImportanceResponseMetricHPImportance
- */
-export interface GetHPImportanceResponseMetricHPImportance {
-    /**
-     * A map between hyperparameter names and their relative importance.
-     * @type {{ [key: string]: number; }}
-     * @memberof GetHPImportanceResponseMetricHPImportance
-     */
-    hpImportance?: { [key: string]: number; };
-    /**
-     * The approximate portion of the experiment that was complete when the data was read.
-     * @type {number}
-     * @memberof GetHPImportanceResponseMetricHPImportance
-     */
-    experimentProgress?: number;
-    /**
-     * A description of why computation failed. Empty unless the state is (or was) 'failed'.
-     * @type {string}
-     * @memberof GetHPImportanceResponseMetricHPImportance
-     */
-    error?: string;
-    /**
-     * Whether or not a request to compute results for this metric is queued.
-     * @type {boolean}
-     * @memberof GetHPImportanceResponseMetricHPImportance
-     */
-    pending?: boolean;
-    /**
-     * Whether or not results for this metric are currently being computed.
-     * @type {boolean}
-     * @memberof GetHPImportanceResponseMetricHPImportance
-     */
-    inProgress?: boolean;
-}
-/**
  * - PRODUCT_UNSPECIFIED: Not a Cloud Community offering  - PRODUCT_COMMUNITY: Determined Cloud, Community Edition
  * @export
  * @enum {string}
@@ -255,6 +218,19 @@ export const ProtobufNullValue = {
 } as const
 export type ProtobufNullValue = ValueOf<typeof ProtobufNullValue>
 /**
+ * A wrapper message of a list of devices.
+ * @export
+ * @interface ResourcesSummaryDevices
+ */
+export interface ResourcesSummaryDevices {
+    /**
+     * The devices on an agent.
+     * @type {Array<V1Device>}
+     * @memberof ResourcesSummaryDevices
+     */
+    devices?: Array<V1Device>;
+}
+/**
  * 
  * @export
  * @interface RuntimeError
@@ -321,25 +297,6 @@ export interface RuntimeStreamError {
      * @memberof RuntimeStreamError
      */
     details?: Array<ProtobufAny>;
-}
-/**
- * 
- * @export
- * @interface StreamResultOfV1GetHPImportanceResponse
- */
-export interface StreamResultOfV1GetHPImportanceResponse {
-    /**
-     * 
-     * @type {V1GetHPImportanceResponse}
-     * @memberof StreamResultOfV1GetHPImportanceResponse
-     */
-    result?: V1GetHPImportanceResponse;
-    /**
-     * 
-     * @type {RuntimeStreamError}
-     * @memberof StreamResultOfV1GetHPImportanceResponse
-     */
-    error?: RuntimeStreamError;
 }
 /**
  * 
@@ -870,6 +827,37 @@ export interface V1AddProjectNoteResponse {
     notes: Array<V1Note>;
 }
 /**
+ * Address represents an exposed port on a container.
+ * @export
+ * @interface V1Address
+ */
+export interface V1Address {
+    /**
+     * ContainerIP is the IP address from inside the container.
+     * @type {string}
+     * @memberof V1Address
+     */
+    containerIp?: string;
+    /**
+     * ContainerPort is the port from inside the container.
+     * @type {number}
+     * @memberof V1Address
+     */
+    containerPort?: number;
+    /**
+     * HostIP is the IP address from outside the container. This can be different than the ContainerIP because of network forwarding on the host machine.
+     * @type {string}
+     * @memberof V1Address
+     */
+    hostIp?: string;
+    /**
+     * HostPort is the IP port from outside the container. This can be different than the ContainerPort because of network forwarding on the host machine.
+     * @type {number}
+     * @memberof V1Address
+     */
+    hostPort?: number;
+}
+/**
  * Agent is a pool of resources where containers are run.
  * @export
  * @interface V1Agent
@@ -1138,6 +1126,73 @@ export interface V1AllocationRendezvousInfoResponse {
      * @memberof V1AllocationRendezvousInfoResponse
      */
     rendezvousInfo: V1RendezvousInfo;
+}
+/**
+ * AllocationSummary contains information about a task for external display.
+ * @export
+ * @interface V1AllocationSummary
+ */
+export interface V1AllocationSummary {
+    /**
+     * TaskID is the unique ID of a task among all tasks.
+     * @type {string}
+     * @memberof V1AllocationSummary
+     */
+    taskId?: string;
+    /**
+     * AllocationID is the ID of an allocation of a task. It is usually of the form TaskID.allocation_number, maybe with some other metadata if different types of allocations run.
+     * @type {string}
+     * @memberof V1AllocationSummary
+     */
+    allocationId?: string;
+    /**
+     * The name of the task.
+     * @type {string}
+     * @memberof V1AllocationSummary
+     */
+    name?: string;
+    /**
+     * The registered time of the task.
+     * @type {Date}
+     * @memberof V1AllocationSummary
+     */
+    registeredTime?: Date;
+    /**
+     * The name of the resource pool.
+     * @type {string}
+     * @memberof V1AllocationSummary
+     */
+    resourcePool?: string;
+    /**
+     * The number of slots that are needed.
+     * @type {number}
+     * @memberof V1AllocationSummary
+     */
+    slotsNeeded?: number;
+    /**
+     * ResourcesSummary provides a summary of the resources comprising what we know at the time the allocation is granted.
+     * @type {Array<V1ResourcesSummary>}
+     * @memberof V1AllocationSummary
+     */
+    resources?: Array<V1ResourcesSummary>;
+    /**
+     * The type of the scheduler. Either 'FAIR_SHARE', 'PRIORITY', or 'ROUND_ROBIN'.
+     * @type {string}
+     * @memberof V1AllocationSummary
+     */
+    schedulerType?: string;
+    /**
+     * THe priority of the task.
+     * @type {number}
+     * @memberof V1AllocationSummary
+     */
+    priority?: number;
+    /**
+     * ProxyPortConfig configures a proxy the allocation should start.
+     * @type {Array<V1ProxyPortConfig>}
+     * @memberof V1AllocationSummary
+     */
+    proxyPorts?: Array<V1ProxyPortConfig>;
 }
 /**
  * Mark the given task as waiting.
@@ -1665,6 +1720,18 @@ export interface V1ColumnFilter {
     filter?: V1DoubleFieldFilter;
 }
 /**
+ * - COLUMN_TYPE_UNSPECIFIED: data type is unknown/mixed  - COLUMN_TYPE_TEXT: data type is textual  - COLUMN_TYPE_NUMBER: data type is numeric  - COLUMN_TYPE_DATE: data type is a date
+ * @export
+ * @enum {string}
+ */
+export const V1ColumnType = {
+    UNSPECIFIED: 'COLUMN_TYPE_UNSPECIFIED',
+    TEXT: 'COLUMN_TYPE_TEXT',
+    NUMBER: 'COLUMN_TYPE_NUMBER',
+    DATE: 'COLUMN_TYPE_DATE',
+} as const
+export type V1ColumnType = ValueOf<typeof V1ColumnType>
+/**
  * Command is a single container running the configured command.
  * @export
  * @interface V1Command
@@ -1757,10 +1824,10 @@ export interface V1ComparableTrial {
     trial: Trialv1Trial;
     /**
      * The downsampled datapoints.
-     * @type {Array<V1SummarizedMetric>}
+     * @type {Array<V1DownsampledMetrics>}
      * @memberof V1ComparableTrial
      */
-    metrics: Array<V1SummarizedMetric>;
+    metrics: Array<V1DownsampledMetrics>;
 }
 /**
  * Response to CompareTrialsRequest.
@@ -1800,13 +1867,6 @@ export interface V1CompleteValidateAfterOperation {
      * @memberof V1CompleteValidateAfterOperation
      */
     searcherMetric?: any;
-}
-/**
- * 
- * @export
- * @interface V1ComputeHPImportanceResponse
- */
-export interface V1ComputeHPImportanceResponse {
 }
 /**
  * Container is a Docker container that is either scheduled to run or is currently running on a set of slots.
@@ -2058,11 +2118,11 @@ export interface V1DataPoint {
      */
     batches: number;
     /**
-     * Value of the requested metric at this point in the trial.
-     * @type {number}
+     * Values of the requested metrics at this point in the trial.
+     * @type {any}
      * @memberof V1DataPoint
      */
-    value: number;
+    values?: any;
     /**
      * The time the measurement is taken.
      * @type {Date}
@@ -2102,6 +2162,38 @@ export interface V1DeleteCheckpointsResponse {
  * @interface V1DeleteExperimentResponse
  */
 export interface V1DeleteExperimentResponse {
+}
+/**
+ * Delete multiple experiments.
+ * @export
+ * @interface V1DeleteExperimentsRequest
+ */
+export interface V1DeleteExperimentsRequest {
+    /**
+     * Selecting experiments by id.
+     * @type {Array<number>}
+     * @memberof V1DeleteExperimentsRequest
+     */
+    experimentIds: Array<number>;
+    /**
+     * Targets all experiments matching filters.
+     * @type {V1BulkExperimentFilters}
+     * @memberof V1DeleteExperimentsRequest
+     */
+    filters?: V1BulkExperimentFilters;
+}
+/**
+ * Response to DeleteExperimentsRequest.
+ * @export
+ * @interface V1DeleteExperimentsResponse
+ */
+export interface V1DeleteExperimentsResponse {
+    /**
+     * Details on success or error for each experiment.
+     * @type {Array<V1ExperimentActionResult>}
+     * @memberof V1DeleteExperimentsResponse
+     */
+    results: Array<V1ExperimentActionResult>;
 }
 /**
  * DeleteGroupResponse is the body of the response for the call to delete a group.
@@ -2302,6 +2394,25 @@ export interface V1DoubleFieldFilter {
      * @memberof V1DoubleFieldFilter
      */
     gte?: number;
+}
+/**
+ * DownsampledMetrics captures a metric's name and downsampled data points.
+ * @export
+ * @interface V1DownsampledMetrics
+ */
+export interface V1DownsampledMetrics {
+    /**
+     * A possibly down-sampled series of metrics' readings through the progress of the trial.
+     * @type {Array<V1DataPoint>}
+     * @memberof V1DownsampledMetrics
+     */
+    data: Array<V1DataPoint>;
+    /**
+     * Type of metrics (training, validation, or unset).
+     * @type {V1MetricType}
+     * @memberof V1DownsampledMetrics
+     */
+    type: V1MetricType;
 }
 /**
  * Response to EnableAgentRequest.
@@ -2525,6 +2636,12 @@ export interface V1Experiment {
      * @memberof V1Experiment
      */
     bestTrialSearcherMetric?: number;
+    /**
+     * Id of experiment's best trial, calculated by the best searcher metrics value of trial's best validation.
+     * @type {number}
+     * @memberof V1Experiment
+     */
+    bestTrialId?: number;
 }
 /**
  * Message for results of individual experiments in a multi-experiment action.
@@ -2583,6 +2700,24 @@ export interface V1ExperimentSimulation {
      */
     trials?: Array<V1TrialSimulation>;
 }
+/**
+ * The failure type of a resource.   - FAILURE_TYPE_UNSPECIFIED: UNSPECIFIED denotes an error that is not defined below.  - FAILURE_TYPE_RESOURCES_FAILED: ResourcesFailed denotes that the container ran but failed with a non-zero exit code.  - FAILURE_TYPE_RESOURCES_ABORTED: ResourcesAborted denotes the container was canceled before it was started.  - FAILURE_TYPE_RESOURCES_MISSING: ResourcesMissing denotes the resources were missing when the master asked about it.  - FAILURE_TYPE_TASK_ABORTED: TaskAborted denotes that the task was canceled before it was started.  - FAILURE_TYPE_TASK_ERROR: TaskError denotes that the task failed without an associated exit code.  - FAILURE_TYPE_AGENT_FAILED: AgentFailed denotes that the agent failed while the container was running.  - FAILURE_TYPE_AGENT_ERROR: AgentError denotes that the agent failed to launch the container.  - FAILURE_TYPE_RESTORE_ERROR: RestoreError denotes a failure to restore a running allocation on master blip.  - FAILURE_TYPE_UNKNOWN_ERROR: UnknownError denotes an internal error that did not map to a know failure type.
+ * @export
+ * @enum {string}
+ */
+export const V1FailureType = {
+    UNSPECIFIED: 'FAILURE_TYPE_UNSPECIFIED',
+    RESOURCESFAILED: 'FAILURE_TYPE_RESOURCES_FAILED',
+    RESOURCESABORTED: 'FAILURE_TYPE_RESOURCES_ABORTED',
+    RESOURCESMISSING: 'FAILURE_TYPE_RESOURCES_MISSING',
+    TASKABORTED: 'FAILURE_TYPE_TASK_ABORTED',
+    TASKERROR: 'FAILURE_TYPE_TASK_ERROR',
+    AGENTFAILED: 'FAILURE_TYPE_AGENT_FAILED',
+    AGENTERROR: 'FAILURE_TYPE_AGENT_ERROR',
+    RESTOREERROR: 'FAILURE_TYPE_RESTORE_ERROR',
+    UNKNOWNERROR: 'FAILURE_TYPE_UNKNOWN_ERROR',
+} as const
+export type V1FailureType = ValueOf<typeof V1FailureType>
 /**
  * File is a Unix file.
  * @export
@@ -2695,30 +2830,6 @@ export const V1FittingPolicy = {
     PBS: 'FITTING_POLICY_PBS',
 } as const
 export type V1FittingPolicy = ValueOf<typeof V1FittingPolicy>
-/**
- * GeneralColumn is the pre-defined column names for experiment list table.   - GENERAL_COLUMN_UNSPECIFIED: Unspecified column.  - GENERAL_COLUMN_ID: Column id.  - GENERAL_COLUMN_NAME: Column name.  - GENERAL_COLUMN_DESCRIPTION: Column description.  - GENERAL_COLUMN_TAGS: Column tags.  - GENERAL_COLUMN_FORKED: Column forked.  - GENERAL_COLUMN_STARTTIME: Column starttime.  - GENERAL_COLUMN_DURATION: Column duration.  - GENERAL_COLUMN_COUNT: Column trial count.  - GENERAL_COLUMN_STATE: Column state.  - GENERAL_COLUMN_SEARCHER_TYPE: Column searcher type.  - GENERAL_COLUMN_RESOURSE_POOL: Column resourse pool.  - GENERAL_COLUMN_PROGRESS: Column progress.  - GENERAL_COLUMN_CHECKPOINT_SIZE: Column checkpoint size.  - GENERAL_COLUMN_CHECKPOINT_COUNT: Column checkpoint count.  - GENERAL_COLUMN_USER: Column user.
- * @export
- * @enum {string}
- */
-export const V1GeneralColumn = {
-    UNSPECIFIED: 'GENERAL_COLUMN_UNSPECIFIED',
-    ID: 'GENERAL_COLUMN_ID',
-    NAME: 'GENERAL_COLUMN_NAME',
-    DESCRIPTION: 'GENERAL_COLUMN_DESCRIPTION',
-    TAGS: 'GENERAL_COLUMN_TAGS',
-    FORKED: 'GENERAL_COLUMN_FORKED',
-    STARTTIME: 'GENERAL_COLUMN_STARTTIME',
-    DURATION: 'GENERAL_COLUMN_DURATION',
-    COUNT: 'GENERAL_COLUMN_COUNT',
-    STATE: 'GENERAL_COLUMN_STATE',
-    SEARCHERTYPE: 'GENERAL_COLUMN_SEARCHER_TYPE',
-    RESOURSEPOOL: 'GENERAL_COLUMN_RESOURSE_POOL',
-    PROGRESS: 'GENERAL_COLUMN_PROGRESS',
-    CHECKPOINTSIZE: 'GENERAL_COLUMN_CHECKPOINT_SIZE',
-    CHECKPOINTCOUNT: 'GENERAL_COLUMN_CHECKPOINT_COUNT',
-    USER: 'GENERAL_COLUMN_USER',
-} as const
-export type V1GeneralColumn = ValueOf<typeof V1GeneralColumn>
 /**
  * Response to GetActiveTasksCountRequest.
  * @export
@@ -3138,25 +3249,6 @@ export interface V1GetGroupsResponse {
     pagination?: V1Pagination;
 }
 /**
- * 
- * @export
- * @interface V1GetHPImportanceResponse
- */
-export interface V1GetHPImportanceResponse {
-    /**
-     * A map of training metric names to their respective entries.
-     * @type {{ [key: string]: GetHPImportanceResponseMetricHPImportance; }}
-     * @memberof V1GetHPImportanceResponse
-     */
-    trainingMetrics: { [key: string]: GetHPImportanceResponseMetricHPImportance; };
-    /**
-     * A map of validation metric names to their respective entries.
-     * @type {{ [key: string]: GetHPImportanceResponseMetricHPImportance; }}
-     * @memberof V1GetHPImportanceResponse
-     */
-    validationMetrics: { [key: string]: GetHPImportanceResponseMetricHPImportance; };
-}
-/**
  * Response to GetJobQueueStatsRequest.
  * @export
  * @interface V1GetJobQueueStatsResponse
@@ -3543,23 +3635,11 @@ export interface V1GetPermissionsSummaryResponse {
  */
 export interface V1GetProjectColumnsResponse {
     /**
-     * List of general columns.
-     * @type {Array<V1GeneralColumn>}
+     * List of columns.
+     * @type {Array<V1ProjectColumn>}
      * @memberof V1GetProjectColumnsResponse
      */
-    general: Array<V1GeneralColumn>;
-    /**
-     * List of hyperparameters.
-     * @type {Array<string>}
-     * @memberof V1GetProjectColumnsResponse
-     */
-    hyperparameters: Array<string>;
-    /**
-     * List of metrics.
-     * @type {Array<string>}
-     * @memberof V1GetProjectColumnsResponse
-     */
-    metrics: Array<string>;
+    columns: Array<V1ProjectColumn>;
 }
 /**
  * Response to GetProjectRequest.
@@ -3766,6 +3846,19 @@ export interface V1GetTaskResponse {
      * @memberof V1GetTaskResponse
      */
     task?: V1Task;
+}
+/**
+ * Response to GetTasksRequest.
+ * @export
+ * @interface V1GetTasksResponse
+ */
+export interface V1GetTasksResponse {
+    /**
+     * Information about a task for external display.
+     * @type {{ [key: string]: V1AllocationSummary; }}
+     * @memberof V1GetTasksResponse
+     */
+    allocationIdToSummary?: { [key: string]: V1AllocationSummary; };
 }
 /**
  * Response to GetTelemetryRequest.
@@ -4795,6 +4888,12 @@ export interface V1LaunchTensorboardRequest {
      * @memberof V1LaunchTensorboardRequest
      */
     workspaceId?: number;
+    /**
+     * Targets all experiments matching filters.
+     * @type {V1BulkExperimentFilters}
+     * @memberof V1LaunchTensorboardRequest
+     */
+    filters?: V1BulkExperimentFilters;
 }
 /**
  * Response to LaunchTensorboardRequest.
@@ -4869,6 +4968,18 @@ export interface V1ListRolesResponse {
      */
     pagination: V1Pagination;
 }
+/**
+ * - LOCATION_TYPE_UNSPECIFIED: Location unknown  - LOCATION_TYPE_EXPERIMENT: Column is located on the experiment  - LOCATION_TYPE_HYPERPARAMETERS: Column is located in the hyperparameter config of the experiment  - LOCATION_TYPE_VALIDATIONS: Column is located on the experiment's validation metrics
+ * @export
+ * @enum {string}
+ */
+export const V1LocationType = {
+    UNSPECIFIED: 'LOCATION_TYPE_UNSPECIFIED',
+    EXPERIMENT: 'LOCATION_TYPE_EXPERIMENT',
+    HYPERPARAMETERS: 'LOCATION_TYPE_HYPERPARAMETERS',
+    VALIDATIONS: 'LOCATION_TYPE_VALIDATIONS',
+} as const
+export type V1LocationType = ValueOf<typeof V1LocationType>
 /**
  * LogEntry is a log event.
  * @export
@@ -5939,6 +6050,12 @@ export interface V1PatchUser {
      * @memberof V1PatchUser
      */
     isHashed?: boolean;
+    /**
+     * Bool denoting whether the user should be able to login with or change a password.
+     * @type {boolean}
+     * @memberof V1PatchUser
+     */
+    remote?: boolean;
 }
 /**
  * Response to PatchUserRequest.
@@ -6056,7 +6173,7 @@ export interface V1Permission {
     scopeTypeMask?: V1ScopeTypeMask;
 }
 /**
- * List of permissions types. Value of the enum has 9xxxx for global only permissions. Permissions on the same object share the thousands place value like 2001 and 2002.   - PERMISSION_TYPE_UNSPECIFIED: The permission type is unknown.  - PERMISSION_TYPE_ADMINISTRATE_USER: Can create and update other users. Allows updating other users passwords making this permission give all other permissions effectively.  - PERMISSION_TYPE_CREATE_EXPERIMENT: Ability to create experiments.  - PERMISSION_TYPE_VIEW_EXPERIMENT_ARTIFACTS: Ability to view experiment's model code, checkpoints, trials.  - PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA: Ability to view experiment's metadata such as experiment config, progress.  - PERMISSION_TYPE_UPDATE_EXPERIMENT: Ability to update experiment and experiment's lifecycle.  - PERMISSION_TYPE_UPDATE_EXPERIMENT_METADATA: Ability to update experiment's metadata.  - PERMISSION_TYPE_DELETE_EXPERIMENT: Ability to delete experiment.  - PERMISSION_TYPE_CREATE_NSC: Ability to create Notebooks, Shells, and Commands.  - PERMISSION_TYPE_VIEW_NSC: Ability to view Notebooks, Shells, and Commands.  - PERMISSION_TYPE_UPDATE_NSC: Ability to terminate Notebooks, Shells, and Commands.  - PERMISSION_TYPE_UPDATE_GROUP: Ability to create, update, and add / remove users from groups.  - PERMISSION_TYPE_CREATE_WORKSPACE: Ability to create workspaces.  - PERMISSION_TYPE_VIEW_WORKSPACE: Ability to view workspace.  - PERMISSION_TYPE_UPDATE_WORKSPACE: Ability to update workspace.  - PERMISSION_TYPE_DELETE_WORKSPACE: Ability to delete workspace.  - PERMISSION_TYPE_SET_WORKSPACE_AGENT_USER_GROUP: Ability to set workspace agent user group config.  - PERMISSION_TYPE_SET_WORKSPACE_CHECKPOINT_STORAGE_CONFIG: Ability to set workspace checkpoint storage config.  - PERMISSION_TYPE_CREATE_PROJECT: Ability to create projects.  - PERMISSION_TYPE_VIEW_PROJECT: Ability to view projects.  - PERMISSION_TYPE_UPDATE_PROJECT: Ability to update projects.  - PERMISSION_TYPE_DELETE_PROJECT: Ability to delete projects.  - PERMISSION_TYPE_ASSIGN_ROLES: Ability to assign roles to groups / users. If assigned at a workspace scope, can only assign roles to that workspace scope.  - PERMISSION_TYPE_VIEW_MODEL_REGISTRY: Ability to view model registry.  - PERMISSION_TYPE_EDIT_MODEL_REGISTRY: Ability to edit model registry.  - PERMISSION_TYPE_CREATE_MODEL_REGISTRY: Ability to create model registry.  - PERMISSION_TYPE_DELETE_MODEL_REGISTRY: Ability to delete model registry  - PERMISSION_TYPE_UPDATE_AGENTS: Ability to update agents.  - PERMISSION_TYPE_UPDATE_ROLES: Ability to create and update role definitions.  - PERMISSION_TYPE_EDIT_WEBHOOKS: Ability to create and delete webhooks.
+ * List of permissions types. Value of the enum has 9xxxx for global only permissions. Permissions on the same object share the thousands place value like 2001 and 2002.   - PERMISSION_TYPE_UNSPECIFIED: The permission type is unknown.  - PERMISSION_TYPE_ADMINISTRATE_USER: Can create and update other users. Allows updating other users passwords making this permission give all other permissions effectively.  - PERMISSION_TYPE_CREATE_EXPERIMENT: Ability to create experiments.  - PERMISSION_TYPE_VIEW_EXPERIMENT_ARTIFACTS: Ability to view experiment's model code, checkpoints, trials.  - PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA: Ability to view experiment's metadata such as experiment config, progress.  - PERMISSION_TYPE_UPDATE_EXPERIMENT: Ability to update experiment and experiment's lifecycle.  - PERMISSION_TYPE_UPDATE_EXPERIMENT_METADATA: Ability to update experiment's metadata.  - PERMISSION_TYPE_DELETE_EXPERIMENT: Ability to delete experiment.  - PERMISSION_TYPE_CREATE_NSC: Ability to create Notebooks, Shells, and Commands.  - PERMISSION_TYPE_VIEW_NSC: Ability to view Notebooks, Shells, and Commands.  - PERMISSION_TYPE_UPDATE_NSC: Ability to terminate Notebooks, Shells, and Commands.  - PERMISSION_TYPE_UPDATE_GROUP: Ability to create, update, and add / remove users from groups.  - PERMISSION_TYPE_CREATE_WORKSPACE: Ability to create workspaces.  - PERMISSION_TYPE_VIEW_WORKSPACE: Ability to view workspace.  - PERMISSION_TYPE_UPDATE_WORKSPACE: Ability to update workspace.  - PERMISSION_TYPE_DELETE_WORKSPACE: Ability to delete workspace.  - PERMISSION_TYPE_SET_WORKSPACE_AGENT_USER_GROUP: Ability to set workspace agent user group config.  - PERMISSION_TYPE_SET_WORKSPACE_CHECKPOINT_STORAGE_CONFIG: Ability to set workspace checkpoint storage config.  - PERMISSION_TYPE_CREATE_PROJECT: Ability to create projects.  - PERMISSION_TYPE_VIEW_PROJECT: Ability to view projects.  - PERMISSION_TYPE_UPDATE_PROJECT: Ability to update projects.  - PERMISSION_TYPE_DELETE_PROJECT: Ability to delete projects.  - PERMISSION_TYPE_ASSIGN_ROLES: Ability to assign roles to groups / users. If assigned at a workspace scope, can only assign roles to that workspace scope.  - PERMISSION_TYPE_VIEW_MODEL_REGISTRY: Ability to view model registry.  - PERMISSION_TYPE_EDIT_MODEL_REGISTRY: Ability to edit model registry.  - PERMISSION_TYPE_CREATE_MODEL_REGISTRY: Ability to create model registry.  - PERMISSION_TYPE_DELETE_MODEL_REGISTRY: Ability to delete model registry  - PERMISSION_TYPE_VIEW_MASTER_LOGS: Ability to view master logs.  - PERMISSION_TYPE_VIEW_CLUSTER_USAGE: Ability to view detailed cluster usage info.  - PERMISSION_TYPE_UPDATE_AGENTS: Ability to update agents.  - PERMISSION_TYPE_UPDATE_ROLES: Ability to create and update role definitions.  - PERMISSION_TYPE_EDIT_WEBHOOKS: Ability to create and delete webhooks.
  * @export
  * @enum {string}
  */
@@ -6088,6 +6205,8 @@ export const V1PermissionType = {
     EDITMODELREGISTRY: 'PERMISSION_TYPE_EDIT_MODEL_REGISTRY',
     CREATEMODELREGISTRY: 'PERMISSION_TYPE_CREATE_MODEL_REGISTRY',
     DELETEMODELREGISTRY: 'PERMISSION_TYPE_DELETE_MODEL_REGISTRY',
+    VIEWMASTERLOGS: 'PERMISSION_TYPE_VIEW_MASTER_LOGS',
+    VIEWCLUSTERUSAGE: 'PERMISSION_TYPE_VIEW_CLUSTER_USAGE',
     UPDATEAGENTS: 'PERMISSION_TYPE_UPDATE_AGENTS',
     UPDATEROLES: 'PERMISSION_TYPE_UPDATE_ROLES',
     EDITWEBHOOKS: 'PERMISSION_TYPE_EDIT_WEBHOOKS',
@@ -6679,6 +6798,68 @@ export interface V1Project {
      * @memberof V1Project
      */
     errorMessage: string;
+}
+/**
+ * Project Column is a description of a column used on experiments in the project.
+ * @export
+ * @interface V1ProjectColumn
+ */
+export interface V1ProjectColumn {
+    /**
+     * Raw column name.
+     * @type {string}
+     * @memberof V1ProjectColumn
+     */
+    column: string;
+    /**
+     * Where the column comes from.
+     * @type {V1LocationType}
+     * @memberof V1ProjectColumn
+     */
+    location: V1LocationType;
+    /**
+     * Type of data in the column.
+     * @type {V1ColumnType}
+     * @memberof V1ProjectColumn
+     */
+    type: V1ColumnType;
+    /**
+     * Human-friendly name.
+     * @type {string}
+     * @memberof V1ProjectColumn
+     */
+    displayName?: string;
+}
+/**
+ * ProxyPortConfig configures a proxy the allocation should start.
+ * @export
+ * @interface V1ProxyPortConfig
+ */
+export interface V1ProxyPortConfig {
+    /**
+     * The service ID of the proxy port config.
+     * @type {string}
+     * @memberof V1ProxyPortConfig
+     */
+    serviceId?: string;
+    /**
+     * The port of the proxy port config.
+     * @type {number}
+     * @memberof V1ProxyPortConfig
+     */
+    port?: number;
+    /**
+     * True if proxy uses TCP.
+     * @type {boolean}
+     * @memberof V1ProxyPortConfig
+     */
+    proxyTcp?: boolean;
+    /**
+     * True if the proxy is unauthenticated.
+     * @type {boolean}
+     * @memberof V1ProxyPortConfig
+     */
+    unauthenticated?: boolean;
 }
 /**
  * Request for setting project notes.
@@ -7570,6 +7751,112 @@ export const V1ResourcePoolType = {
 } as const
 export type V1ResourcePoolType = ValueOf<typeof V1ResourcePoolType>
 /**
+ * ResourcesFailure contains information about restored resources' failure.
+ * @export
+ * @interface V1ResourcesFailure
+ */
+export interface V1ResourcesFailure {
+    /**
+     * FailureType denotes the type of failure that resulted in the container stopping.
+     * @type {V1FailureType}
+     * @memberof V1ResourcesFailure
+     */
+    failureType?: V1FailureType;
+    /**
+     * The error message of the failure.
+     * @type {string}
+     * @memberof V1ResourcesFailure
+     */
+    errMsg?: string;
+    /**
+     * The exit code of the failure.
+     * @type {number}
+     * @memberof V1ResourcesFailure
+     */
+    exitCode?: number;
+}
+/**
+ * ResourcesStarted contains the information needed by tasks from container started.
+ * @export
+ * @interface V1ResourcesStarted
+ */
+export interface V1ResourcesStarted {
+    /**
+     * Addresses represents the exposed ports on a container.
+     * @type {Array<V1Address>}
+     * @memberof V1ResourcesStarted
+     */
+    addresses?: Array<V1Address>;
+    /**
+     * NativeResourcesID is the native Docker hex container ID of the Determined container.
+     * @type {string}
+     * @memberof V1ResourcesStarted
+     */
+    nativeResourcesId?: string;
+}
+/**
+ * ResourcesStopped contains the information needed by tasks from container stopped.
+ * @export
+ * @interface V1ResourcesStopped
+ */
+export interface V1ResourcesStopped {
+    /**
+     * ResourcesFailure contains information about restored resources' failure.
+     * @type {V1ResourcesFailure}
+     * @memberof V1ResourcesStopped
+     */
+    failure?: V1ResourcesFailure;
+}
+/**
+ * ResourcesSummary provides a summary of the resources comprising what we know at the time the allocation is granted, but for k8s it is granted before being scheduled so it isn't really much and `agent_devices` are missing for k8s.
+ * @export
+ * @interface V1ResourcesSummary
+ */
+export interface V1ResourcesSummary {
+    /**
+     * ResourcesID is the ID of some set of resources.
+     * @type {string}
+     * @memberof V1ResourcesSummary
+     */
+    resourcesId?: string;
+    /**
+     * ResourcesType is the type of some set of resources. This should be purely informational.
+     * @type {string}
+     * @memberof V1ResourcesSummary
+     */
+    resourcesType?: string;
+    /**
+     * AllocationID is the ID of an allocation of a task.
+     * @type {string}
+     * @memberof V1ResourcesSummary
+     */
+    allocationId?: string;
+    /**
+     * ID, an identifier for an agent, maps to the associated devices.
+     * @type {{ [key: string]: ResourcesSummaryDevices; }}
+     * @memberof V1ResourcesSummary
+     */
+    agentDevices?: { [key: string]: ResourcesSummaryDevices; };
+    /**
+     * Available if the RM can give information on the container level.
+     * @type {string}
+     * @memberof V1ResourcesSummary
+     */
+    containerId?: string;
+    /**
+     * Available if the RM knows the resource is already started / exited.
+     * @type {V1ResourcesStarted}
+     * @memberof V1ResourcesSummary
+     */
+    started?: V1ResourcesStarted;
+    /**
+     * ResourcesStopped contains the information needed by tasks from container stopped.
+     * @type {V1ResourcesStopped}
+     * @memberof V1ResourcesSummary
+     */
+    exited?: V1ResourcesStopped;
+}
+/**
  * 
  * @export
  * @interface V1Role
@@ -8213,11 +8500,17 @@ export interface V1Shell {
  */
 export interface V1ShutDownOperation {
     /**
-     * Cannot have an empty message type.
-     * @type {number}
+     * Defines whether the Searcher was cancelled
+     * @type {boolean}
      * @memberof V1ShutDownOperation
      */
-    placeholder?: number;
+    cancel?: boolean;
+    /**
+     * Defines whether the Searcher failed
+     * @type {boolean}
+     * @memberof V1ShutDownOperation
+     */
+    failure?: boolean;
 }
 /**
  * Slot wraps a single device on the agent.
@@ -8276,31 +8569,6 @@ export interface V1SSOProvider {
     ssoUrl: string;
 }
 /**
- * Summarized Metric captures a metric's name and downsampled data points.
- * @export
- * @interface V1SummarizedMetric
- */
-export interface V1SummarizedMetric {
-    /**
-     * Name of the selected metric.
-     * @type {string}
-     * @memberof V1SummarizedMetric
-     */
-    name: string;
-    /**
-     * A possibly down-sampled series of metric readings through the progress of the trial.
-     * @type {Array<V1DataPoint>}
-     * @memberof V1SummarizedMetric
-     */
-    data: Array<V1DataPoint>;
-    /**
-     * Type of metrics (training, validation, or unset).
-     * @type {V1MetricType}
-     * @memberof V1SummarizedMetric
-     */
-    type: V1MetricType;
-}
-/**
  * Response to SummarizeTrialRequest.
  * @export
  * @interface V1SummarizeTrialResponse
@@ -8314,10 +8582,10 @@ export interface V1SummarizeTrialResponse {
     trial: Trialv1Trial;
     /**
      * The downsampled datapoints.
-     * @type {Array<V1SummarizedMetric>}
+     * @type {Array<V1DownsampledMetrics>}
      * @memberof V1SummarizeTrialResponse
      */
-    metrics: Array<V1SummarizedMetric>;
+    metrics: Array<V1DownsampledMetrics>;
 }
 /**
  * Task is the model for a task in the database.
@@ -9536,6 +9804,12 @@ export interface V1User {
      * @memberof V1User
      */
     modifiedAt?: Date;
+    /**
+     * Bool denoting whether the user should be able to login with or change a password.
+     * @type {boolean}
+     * @memberof V1User
+     */
+    remote?: boolean;
 }
 /**
  * UserRoleAssignment contains information about the users belonging to a role.
@@ -9820,18 +10094,6 @@ export const V1WorkspaceState = {
     DELETED: 'WORKSPACE_STATE_DELETED',
 } as const
 export type V1WorkspaceState = ValueOf<typeof V1WorkspaceState>
-/**
- * XAxis options available in metrics charts.   - X_AXIS_UNSPECIFIED: Unknown x-axis.  - X_AXIS_BATCH: x-axis in batch. This is the default x-axis.  - X_AXIS_TIME: x-axis in time.  - X_AXIS_EPOCH: x-axis in epoch.
- * @export
- * @enum {string}
- */
-export const V1XAxis = {
-    UNSPECIFIED: 'X_AXIS_UNSPECIFIED',
-    BATCH: 'X_AXIS_BATCH',
-    TIME: 'X_AXIS_TIME',
-    EPOCH: 'X_AXIS_EPOCH',
-} as const
-export type V1XAxis = ValueOf<typeof V1XAxis>
 /**
  * AuthenticationApi - fetch parameter creator
  * @export
@@ -12244,7 +12506,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
         },
         /**
          * 
-         * @summary Return downsampled metrics from multiple trials to compare them side-by-side.
+         * @summary Return a downsampled time series of metrics from multiple trials to compare them side-by-side.
          * @param {Array<number>} [trialIds] The requested trial ids.
          * @param {number} [maxDatapoints] The maximum number of data points to return after downsampling.
          * @param {Array<string>} [metricNames] The names of selected metrics.
@@ -12252,7 +12514,6 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {number} [endBatches] Sample from metrics before this batch number.
          * @param {V1MetricType} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
          * @param {V1Scale} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
-         * @param {V1XAxis} [xAxis] x-axis selection. Default is in batch.   - X_AXIS_UNSPECIFIED: Unknown x-axis.  - X_AXIS_BATCH: x-axis in batch. This is the default x-axis.  - X_AXIS_TIME: x-axis in time.  - X_AXIS_EPOCH: x-axis in epoch.
          * @param {Array<string>} [metricIds] metric ids for the query.
          * @param {string} [timeSeriesFilterName] metric or column name for the filter.
          * @param {number} [timeSeriesFilterDoubleRangeLt] Less than.
@@ -12272,8 +12533,8 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: V1MetricType, scale?: V1Scale, xAxis?: V1XAxis, metricIds?: Array<string>, timeSeriesFilterName?: string, timeSeriesFilterDoubleRangeLt?: number, timeSeriesFilterDoubleRangeLte?: number, timeSeriesFilterDoubleRangeGt?: number, timeSeriesFilterDoubleRangeGte?: number, timeSeriesFilterIntegerRangeLt?: number, timeSeriesFilterIntegerRangeLte?: number, timeSeriesFilterIntegerRangeGt?: number, timeSeriesFilterIntegerRangeGte?: number, timeSeriesFilterIntegerRangeIncl?: Array<number>, timeSeriesFilterIntegerRangeNotIn?: Array<number>, timeSeriesFilterTimeRangeLt?: Date, timeSeriesFilterTimeRangeLte?: Date, timeSeriesFilterTimeRangeGt?: Date, timeSeriesFilterTimeRangeGte?: Date, options: any = {}): FetchArgs {
-            const localVarPath = `/api/v1/trials/compare`;
+        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: V1MetricType, scale?: V1Scale, metricIds?: Array<string>, timeSeriesFilterName?: string, timeSeriesFilterDoubleRangeLt?: number, timeSeriesFilterDoubleRangeLte?: number, timeSeriesFilterDoubleRangeGt?: number, timeSeriesFilterDoubleRangeGte?: number, timeSeriesFilterIntegerRangeLt?: number, timeSeriesFilterIntegerRangeLte?: number, timeSeriesFilterIntegerRangeGt?: number, timeSeriesFilterIntegerRangeGte?: number, timeSeriesFilterIntegerRangeIncl?: Array<number>, timeSeriesFilterIntegerRangeNotIn?: Array<number>, timeSeriesFilterTimeRangeLt?: Date, timeSeriesFilterTimeRangeLte?: Date, timeSeriesFilterTimeRangeGt?: Date, timeSeriesFilterTimeRangeGte?: Date, options: any = {}): FetchArgs {
+            const localVarPath = `/api/v1/trials/time-series`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
@@ -12313,10 +12574,6 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             
             if (scale !== undefined) {
                 localVarQueryParameter['scale'] = scale
-            }
-            
-            if (xAxis !== undefined) {
-                localVarQueryParameter['xAxis'] = xAxis
             }
             
             if (metricIds) {
@@ -12424,6 +12681,45 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
             localVarUrlObj.search = null;
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Delete multiple experiments.
+         * @param {V1DeleteExperimentsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteExperiments(body: V1DeleteExperimentsRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling deleteExperiments.');
+            }
+            const localVarPath = `/api/v1/experiments/delete`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = { method: 'DELETE', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            localVarUrlObj.search = null;
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
             
             return {
                 url: url.format(localVarUrlObj),
@@ -13453,10 +13749,11 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {number} [projectId] ID of the project to look at.
          * @param {number} [offset] How many experiments to skip before including in the results.
          * @param {number} [limit] How many results to show.
+         * @param {string} [sort] Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc).
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        searchExperiments(projectId?: number, offset?: number, limit?: number, options: any = {}): FetchArgs {
+        searchExperiments(projectId?: number, offset?: number, limit?: number, sort?: string, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/experiments-search`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = { method: 'GET', ...options };
@@ -13481,6 +13778,10 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             
             if (limit !== undefined) {
                 localVarQueryParameter['limit'] = limit
+            }
+            
+            if (sort !== undefined) {
+                localVarQueryParameter['sort'] = sort
             }
             
             localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
@@ -13900,7 +14201,7 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Return downsampled metrics from multiple trials to compare them side-by-side.
+         * @summary Return a downsampled time series of metrics from multiple trials to compare them side-by-side.
          * @param {Array<number>} [trialIds] The requested trial ids.
          * @param {number} [maxDatapoints] The maximum number of data points to return after downsampling.
          * @param {Array<string>} [metricNames] The names of selected metrics.
@@ -13908,7 +14209,6 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
          * @param {number} [endBatches] Sample from metrics before this batch number.
          * @param {V1MetricType} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
          * @param {V1Scale} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
-         * @param {V1XAxis} [xAxis] x-axis selection. Default is in batch.   - X_AXIS_UNSPECIFIED: Unknown x-axis.  - X_AXIS_BATCH: x-axis in batch. This is the default x-axis.  - X_AXIS_TIME: x-axis in time.  - X_AXIS_EPOCH: x-axis in epoch.
          * @param {Array<string>} [metricIds] metric ids for the query.
          * @param {string} [timeSeriesFilterName] metric or column name for the filter.
          * @param {number} [timeSeriesFilterDoubleRangeLt] Less than.
@@ -13928,8 +14228,8 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: V1MetricType, scale?: V1Scale, xAxis?: V1XAxis, metricIds?: Array<string>, timeSeriesFilterName?: string, timeSeriesFilterDoubleRangeLt?: number, timeSeriesFilterDoubleRangeLte?: number, timeSeriesFilterDoubleRangeGt?: number, timeSeriesFilterDoubleRangeGte?: number, timeSeriesFilterIntegerRangeLt?: number, timeSeriesFilterIntegerRangeLte?: number, timeSeriesFilterIntegerRangeGt?: number, timeSeriesFilterIntegerRangeGte?: number, timeSeriesFilterIntegerRangeIncl?: Array<number>, timeSeriesFilterIntegerRangeNotIn?: Array<number>, timeSeriesFilterTimeRangeLt?: Date, timeSeriesFilterTimeRangeLte?: Date, timeSeriesFilterTimeRangeGt?: Date, timeSeriesFilterTimeRangeGte?: Date, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CompareTrialsResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).compareTrials(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, xAxis, metricIds, timeSeriesFilterName, timeSeriesFilterDoubleRangeLt, timeSeriesFilterDoubleRangeLte, timeSeriesFilterDoubleRangeGt, timeSeriesFilterDoubleRangeGte, timeSeriesFilterIntegerRangeLt, timeSeriesFilterIntegerRangeLte, timeSeriesFilterIntegerRangeGt, timeSeriesFilterIntegerRangeGte, timeSeriesFilterIntegerRangeIncl, timeSeriesFilterIntegerRangeNotIn, timeSeriesFilterTimeRangeLt, timeSeriesFilterTimeRangeLte, timeSeriesFilterTimeRangeGt, timeSeriesFilterTimeRangeGte, options);
+        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: V1MetricType, scale?: V1Scale, metricIds?: Array<string>, timeSeriesFilterName?: string, timeSeriesFilterDoubleRangeLt?: number, timeSeriesFilterDoubleRangeLte?: number, timeSeriesFilterDoubleRangeGt?: number, timeSeriesFilterDoubleRangeGte?: number, timeSeriesFilterIntegerRangeLt?: number, timeSeriesFilterIntegerRangeLte?: number, timeSeriesFilterIntegerRangeGt?: number, timeSeriesFilterIntegerRangeGte?: number, timeSeriesFilterIntegerRangeIncl?: Array<number>, timeSeriesFilterIntegerRangeNotIn?: Array<number>, timeSeriesFilterTimeRangeLt?: Date, timeSeriesFilterTimeRangeLte?: Date, timeSeriesFilterTimeRangeGt?: Date, timeSeriesFilterTimeRangeGte?: Date, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CompareTrialsResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).compareTrials(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, metricIds, timeSeriesFilterName, timeSeriesFilterDoubleRangeLt, timeSeriesFilterDoubleRangeLte, timeSeriesFilterDoubleRangeGt, timeSeriesFilterDoubleRangeGte, timeSeriesFilterIntegerRangeLt, timeSeriesFilterIntegerRangeLte, timeSeriesFilterIntegerRangeGt, timeSeriesFilterIntegerRangeGte, timeSeriesFilterIntegerRangeIncl, timeSeriesFilterIntegerRangeNotIn, timeSeriesFilterTimeRangeLt, timeSeriesFilterTimeRangeLte, timeSeriesFilterTimeRangeGt, timeSeriesFilterTimeRangeGte, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -13949,6 +14249,25 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
          */
         deleteExperiment(experimentId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteExperimentResponse> {
             const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).deleteExperiment(experimentId, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Delete multiple experiments.
+         * @param {V1DeleteExperimentsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteExperiments(body: V1DeleteExperimentsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteExperimentsResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).deleteExperiments(body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -14420,11 +14739,12 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
          * @param {number} [projectId] ID of the project to look at.
          * @param {number} [offset] How many experiments to skip before including in the results.
          * @param {number} [limit] How many results to show.
+         * @param {string} [sort] Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc).
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        searchExperiments(projectId?: number, offset?: number, limit?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SearchExperimentsResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).searchExperiments(projectId, offset, limit, options);
+        searchExperiments(projectId?: number, offset?: number, limit?: number, sort?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SearchExperimentsResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).searchExperiments(projectId, offset, limit, sort, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -14620,7 +14940,7 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
         },
         /**
          * 
-         * @summary Return downsampled metrics from multiple trials to compare them side-by-side.
+         * @summary Return a downsampled time series of metrics from multiple trials to compare them side-by-side.
          * @param {Array<number>} [trialIds] The requested trial ids.
          * @param {number} [maxDatapoints] The maximum number of data points to return after downsampling.
          * @param {Array<string>} [metricNames] The names of selected metrics.
@@ -14628,7 +14948,6 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {number} [endBatches] Sample from metrics before this batch number.
          * @param {V1MetricType} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
          * @param {V1Scale} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
-         * @param {V1XAxis} [xAxis] x-axis selection. Default is in batch.   - X_AXIS_UNSPECIFIED: Unknown x-axis.  - X_AXIS_BATCH: x-axis in batch. This is the default x-axis.  - X_AXIS_TIME: x-axis in time.  - X_AXIS_EPOCH: x-axis in epoch.
          * @param {Array<string>} [metricIds] metric ids for the query.
          * @param {string} [timeSeriesFilterName] metric or column name for the filter.
          * @param {number} [timeSeriesFilterDoubleRangeLt] Less than.
@@ -14648,8 +14967,8 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: V1MetricType, scale?: V1Scale, xAxis?: V1XAxis, metricIds?: Array<string>, timeSeriesFilterName?: string, timeSeriesFilterDoubleRangeLt?: number, timeSeriesFilterDoubleRangeLte?: number, timeSeriesFilterDoubleRangeGt?: number, timeSeriesFilterDoubleRangeGte?: number, timeSeriesFilterIntegerRangeLt?: number, timeSeriesFilterIntegerRangeLte?: number, timeSeriesFilterIntegerRangeGt?: number, timeSeriesFilterIntegerRangeGte?: number, timeSeriesFilterIntegerRangeIncl?: Array<number>, timeSeriesFilterIntegerRangeNotIn?: Array<number>, timeSeriesFilterTimeRangeLt?: Date, timeSeriesFilterTimeRangeLte?: Date, timeSeriesFilterTimeRangeGt?: Date, timeSeriesFilterTimeRangeGte?: Date, options?: any) {
-            return ExperimentsApiFp(configuration).compareTrials(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, xAxis, metricIds, timeSeriesFilterName, timeSeriesFilterDoubleRangeLt, timeSeriesFilterDoubleRangeLte, timeSeriesFilterDoubleRangeGt, timeSeriesFilterDoubleRangeGte, timeSeriesFilterIntegerRangeLt, timeSeriesFilterIntegerRangeLte, timeSeriesFilterIntegerRangeGt, timeSeriesFilterIntegerRangeGte, timeSeriesFilterIntegerRangeIncl, timeSeriesFilterIntegerRangeNotIn, timeSeriesFilterTimeRangeLt, timeSeriesFilterTimeRangeLte, timeSeriesFilterTimeRangeGt, timeSeriesFilterTimeRangeGte, options)(fetch, basePath);
+        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: V1MetricType, scale?: V1Scale, metricIds?: Array<string>, timeSeriesFilterName?: string, timeSeriesFilterDoubleRangeLt?: number, timeSeriesFilterDoubleRangeLte?: number, timeSeriesFilterDoubleRangeGt?: number, timeSeriesFilterDoubleRangeGte?: number, timeSeriesFilterIntegerRangeLt?: number, timeSeriesFilterIntegerRangeLte?: number, timeSeriesFilterIntegerRangeGt?: number, timeSeriesFilterIntegerRangeGte?: number, timeSeriesFilterIntegerRangeIncl?: Array<number>, timeSeriesFilterIntegerRangeNotIn?: Array<number>, timeSeriesFilterTimeRangeLt?: Date, timeSeriesFilterTimeRangeLte?: Date, timeSeriesFilterTimeRangeGt?: Date, timeSeriesFilterTimeRangeGte?: Date, options?: any) {
+            return ExperimentsApiFp(configuration).compareTrials(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, metricIds, timeSeriesFilterName, timeSeriesFilterDoubleRangeLt, timeSeriesFilterDoubleRangeLte, timeSeriesFilterDoubleRangeGt, timeSeriesFilterDoubleRangeGte, timeSeriesFilterIntegerRangeLt, timeSeriesFilterIntegerRangeLte, timeSeriesFilterIntegerRangeGt, timeSeriesFilterIntegerRangeGte, timeSeriesFilterIntegerRangeIncl, timeSeriesFilterIntegerRangeNotIn, timeSeriesFilterTimeRangeLt, timeSeriesFilterTimeRangeLte, timeSeriesFilterTimeRangeGt, timeSeriesFilterTimeRangeGte, options)(fetch, basePath);
         },
         /**
          * 
@@ -14660,6 +14979,16 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          */
         deleteExperiment(experimentId: number, options?: any) {
             return ExperimentsApiFp(configuration).deleteExperiment(experimentId, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Delete multiple experiments.
+         * @param {V1DeleteExperimentsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteExperiments(body: V1DeleteExperimentsRequest, options?: any) {
+            return ExperimentsApiFp(configuration).deleteExperiments(body, options)(fetch, basePath);
         },
         /**
          * 
@@ -14924,11 +15253,12 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {number} [projectId] ID of the project to look at.
          * @param {number} [offset] How many experiments to skip before including in the results.
          * @param {number} [limit] How many results to show.
+         * @param {string} [sort] Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc).
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        searchExperiments(projectId?: number, offset?: number, limit?: number, options?: any) {
-            return ExperimentsApiFp(configuration).searchExperiments(projectId, offset, limit, options)(fetch, basePath);
+        searchExperiments(projectId?: number, offset?: number, limit?: number, sort?: string, options?: any) {
+            return ExperimentsApiFp(configuration).searchExperiments(projectId, offset, limit, sort, options)(fetch, basePath);
         },
         /**
          * 
@@ -15083,7 +15413,7 @@ export class ExperimentsApi extends BaseAPI {
     
     /**
      * 
-     * @summary Return downsampled metrics from multiple trials to compare them side-by-side.
+     * @summary Return a downsampled time series of metrics from multiple trials to compare them side-by-side.
      * @param {Array<number>} [trialIds] The requested trial ids.
      * @param {number} [maxDatapoints] The maximum number of data points to return after downsampling.
      * @param {Array<string>} [metricNames] The names of selected metrics.
@@ -15091,7 +15421,6 @@ export class ExperimentsApi extends BaseAPI {
      * @param {number} [endBatches] Sample from metrics before this batch number.
      * @param {V1MetricType} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
      * @param {V1Scale} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
-     * @param {V1XAxis} [xAxis] x-axis selection. Default is in batch.   - X_AXIS_UNSPECIFIED: Unknown x-axis.  - X_AXIS_BATCH: x-axis in batch. This is the default x-axis.  - X_AXIS_TIME: x-axis in time.  - X_AXIS_EPOCH: x-axis in epoch.
      * @param {Array<string>} [metricIds] metric ids for the query.
      * @param {string} [timeSeriesFilterName] metric or column name for the filter.
      * @param {number} [timeSeriesFilterDoubleRangeLt] Less than.
@@ -15112,8 +15441,8 @@ export class ExperimentsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: V1MetricType, scale?: V1Scale, xAxis?: V1XAxis, metricIds?: Array<string>, timeSeriesFilterName?: string, timeSeriesFilterDoubleRangeLt?: number, timeSeriesFilterDoubleRangeLte?: number, timeSeriesFilterDoubleRangeGt?: number, timeSeriesFilterDoubleRangeGte?: number, timeSeriesFilterIntegerRangeLt?: number, timeSeriesFilterIntegerRangeLte?: number, timeSeriesFilterIntegerRangeGt?: number, timeSeriesFilterIntegerRangeGte?: number, timeSeriesFilterIntegerRangeIncl?: Array<number>, timeSeriesFilterIntegerRangeNotIn?: Array<number>, timeSeriesFilterTimeRangeLt?: Date, timeSeriesFilterTimeRangeLte?: Date, timeSeriesFilterTimeRangeGt?: Date, timeSeriesFilterTimeRangeGte?: Date, options?: any) {
-        return ExperimentsApiFp(this.configuration).compareTrials(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, xAxis, metricIds, timeSeriesFilterName, timeSeriesFilterDoubleRangeLt, timeSeriesFilterDoubleRangeLte, timeSeriesFilterDoubleRangeGt, timeSeriesFilterDoubleRangeGte, timeSeriesFilterIntegerRangeLt, timeSeriesFilterIntegerRangeLte, timeSeriesFilterIntegerRangeGt, timeSeriesFilterIntegerRangeGte, timeSeriesFilterIntegerRangeIncl, timeSeriesFilterIntegerRangeNotIn, timeSeriesFilterTimeRangeLt, timeSeriesFilterTimeRangeLte, timeSeriesFilterTimeRangeGt, timeSeriesFilterTimeRangeGte, options)(this.fetch, this.basePath)
+    public compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: V1MetricType, scale?: V1Scale, metricIds?: Array<string>, timeSeriesFilterName?: string, timeSeriesFilterDoubleRangeLt?: number, timeSeriesFilterDoubleRangeLte?: number, timeSeriesFilterDoubleRangeGt?: number, timeSeriesFilterDoubleRangeGte?: number, timeSeriesFilterIntegerRangeLt?: number, timeSeriesFilterIntegerRangeLte?: number, timeSeriesFilterIntegerRangeGt?: number, timeSeriesFilterIntegerRangeGte?: number, timeSeriesFilterIntegerRangeIncl?: Array<number>, timeSeriesFilterIntegerRangeNotIn?: Array<number>, timeSeriesFilterTimeRangeLt?: Date, timeSeriesFilterTimeRangeLte?: Date, timeSeriesFilterTimeRangeGt?: Date, timeSeriesFilterTimeRangeGte?: Date, options?: any) {
+        return ExperimentsApiFp(this.configuration).compareTrials(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, metricIds, timeSeriesFilterName, timeSeriesFilterDoubleRangeLt, timeSeriesFilterDoubleRangeLte, timeSeriesFilterDoubleRangeGt, timeSeriesFilterDoubleRangeGte, timeSeriesFilterIntegerRangeLt, timeSeriesFilterIntegerRangeLte, timeSeriesFilterIntegerRangeGt, timeSeriesFilterIntegerRangeGte, timeSeriesFilterIntegerRangeIncl, timeSeriesFilterIntegerRangeNotIn, timeSeriesFilterTimeRangeLt, timeSeriesFilterTimeRangeLte, timeSeriesFilterTimeRangeGt, timeSeriesFilterTimeRangeGte, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -15126,6 +15455,18 @@ export class ExperimentsApi extends BaseAPI {
      */
     public deleteExperiment(experimentId: number, options?: any) {
         return ExperimentsApiFp(this.configuration).deleteExperiment(experimentId, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Delete multiple experiments.
+     * @param {V1DeleteExperimentsRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ExperimentsApi
+     */
+    public deleteExperiments(body: V1DeleteExperimentsRequest, options?: any) {
+        return ExperimentsApiFp(this.configuration).deleteExperiments(body, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -15435,12 +15776,13 @@ export class ExperimentsApi extends BaseAPI {
      * @param {number} [projectId] ID of the project to look at.
      * @param {number} [offset] How many experiments to skip before including in the results.
      * @param {number} [limit] How many results to show.
+     * @param {string} [sort] Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc).
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public searchExperiments(projectId?: number, offset?: number, limit?: number, options?: any) {
-        return ExperimentsApiFp(this.configuration).searchExperiments(projectId, offset, limit, options)(this.fetch, this.basePath)
+    public searchExperiments(projectId?: number, offset?: number, limit?: number, sort?: string, options?: any) {
+        return ExperimentsApiFp(this.configuration).searchExperiments(projectId, offset, limit, sort, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -15887,43 +16229,6 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
-         * @summary Trigger the computation of hyperparameter importance on-demand for a specific metric on a specific experiment. The status and results can be retrieved with GetHPImportance.
-         * @param {number} experimentId The id of the experiment.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        computeHPImportance(experimentId: number, options: any = {}): FetchArgs {
-            // verify required parameter 'experimentId' is not null or undefined
-            if (experimentId === null || experimentId === undefined) {
-                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling computeHPImportance.');
-            }
-            const localVarPath = `/api/v1/experiments/{experimentId}/hyperparameter-importance`
-                .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
-            const localVarRequestOptions = { method: 'POST', ...options };
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-            
-            // authentication BearerToken required
-            if (configuration && configuration.apiKey) {
-                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
-                    ? configuration.apiKey("Authorization")
-                    : configuration.apiKey;
-                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-            }
-            
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
-            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
-            
-            return {
-                url: url.format(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
          * @summary Create an experiment.
          * @param {V1CreateExperimentRequest} body
          * @param {*} [options] Override http request option.
@@ -16181,48 +16486,6 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             localVarUrlObj.search = null;
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
-            
-            return {
-                url: url.format(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
-         * @summary Retrieve the latest computation of hyperparameter importance. Currently this is triggered for training loss (if emitted) and the searcher metric after 10% increments in an experiment's progress, but no more than every 10 minutes.
-         * @param {number} experimentId The id of the experiment.
-         * @param {number} [periodSeconds] Seconds to wait when polling for updates.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getHPImportance(experimentId: number, periodSeconds?: number, options: any = {}): FetchArgs {
-            // verify required parameter 'experimentId' is not null or undefined
-            if (experimentId === null || experimentId === undefined) {
-                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling getHPImportance.');
-            }
-            const localVarPath = `/api/v1/experiments/{experimentId}/hyperparameter-importance`
-                .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
-            const localVarRequestOptions = { method: 'GET', ...options };
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-            
-            // authentication BearerToken required
-            if (configuration && configuration.apiKey) {
-                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
-                    ? configuration.apiKey("Authorization")
-                    : configuration.apiKey;
-                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-            }
-            
-            if (periodSeconds !== undefined) {
-                localVarQueryParameter['periodSeconds'] = periodSeconds
-            }
-            
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
-            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
                 url: url.format(localVarUrlObj),
@@ -17091,10 +17354,11 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {number} [projectId] ID of the project to look at.
          * @param {number} [offset] How many experiments to skip before including in the results.
          * @param {number} [limit] How many results to show.
+         * @param {string} [sort] Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc).
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        searchExperiments(projectId?: number, offset?: number, limit?: number, options: any = {}): FetchArgs {
+        searchExperiments(projectId?: number, offset?: number, limit?: number, sort?: string, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/experiments-search`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = { method: 'GET', ...options };
@@ -17119,6 +17383,10 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             
             if (limit !== undefined) {
                 localVarQueryParameter['limit'] = limit
+            }
+            
+            if (sort !== undefined) {
+                localVarQueryParameter['sort'] = sort
             }
             
             localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
@@ -17540,25 +17808,6 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Trigger the computation of hyperparameter importance on-demand for a specific metric on a specific experiment. The status and results can be retrieved with GetHPImportance.
-         * @param {number} experimentId The id of the experiment.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        computeHPImportance(experimentId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ComputeHPImportanceResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).computeHPImportance(experimentId, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
-                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
-                    if (response.status >= 200 && response.status < 300) {
-                        return response.json();
-                    } else {
-                        throw response;
-                    }
-                });
-            };
-        },
-        /**
-         * 
          * @summary Create an experiment.
          * @param {V1CreateExperimentRequest} body
          * @param {*} [options] Override http request option.
@@ -17680,26 +17929,6 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         getGroups(body: V1GetGroupsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetGroupsResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getGroups(body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
-                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
-                    if (response.status >= 200 && response.status < 300) {
-                        return response.json();
-                    } else {
-                        throw response;
-                    }
-                });
-            };
-        },
-        /**
-         * 
-         * @summary Retrieve the latest computation of hyperparameter importance. Currently this is triggered for training loss (if emitted) and the searcher metric after 10% increments in an experiment's progress, but no more than every 10 minutes.
-         * @param {number} experimentId The id of the experiment.
-         * @param {number} [periodSeconds] Seconds to wait when polling for updates.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getHPImportance(experimentId: number, periodSeconds?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1GetHPImportanceResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getHPImportance(experimentId, periodSeconds, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -18102,11 +18331,12 @@ export const InternalApiFp = function (configuration?: Configuration) {
          * @param {number} [projectId] ID of the project to look at.
          * @param {number} [offset] How many experiments to skip before including in the results.
          * @param {number} [limit] How many results to show.
+         * @param {string} [sort] Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc).
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        searchExperiments(projectId?: number, offset?: number, limit?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SearchExperimentsResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).searchExperiments(projectId, offset, limit, options);
+        searchExperiments(projectId?: number, offset?: number, limit?: number, sort?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SearchExperimentsResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).searchExperiments(projectId, offset, limit, sort, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -18305,16 +18535,6 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
-         * @summary Trigger the computation of hyperparameter importance on-demand for a specific metric on a specific experiment. The status and results can be retrieved with GetHPImportance.
-         * @param {number} experimentId The id of the experiment.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        computeHPImportance(experimentId: number, options?: any) {
-            return InternalApiFp(configuration).computeHPImportance(experimentId, options)(fetch, basePath);
-        },
-        /**
-         * 
          * @summary Create an experiment.
          * @param {V1CreateExperimentRequest} body
          * @param {*} [options] Override http request option.
@@ -18382,17 +18602,6 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          */
         getGroups(body: V1GetGroupsRequest, options?: any) {
             return InternalApiFp(configuration).getGroups(body, options)(fetch, basePath);
-        },
-        /**
-         * 
-         * @summary Retrieve the latest computation of hyperparameter importance. Currently this is triggered for training loss (if emitted) and the searcher metric after 10% increments in an experiment's progress, but no more than every 10 minutes.
-         * @param {number} experimentId The id of the experiment.
-         * @param {number} [periodSeconds] Seconds to wait when polling for updates.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getHPImportance(experimentId: number, periodSeconds?: number, options?: any) {
-            return InternalApiFp(configuration).getHPImportance(experimentId, periodSeconds, options)(fetch, basePath);
         },
         /**
          * 
@@ -18615,11 +18824,12 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {number} [projectId] ID of the project to look at.
          * @param {number} [offset] How many experiments to skip before including in the results.
          * @param {number} [limit] How many results to show.
+         * @param {string} [sort] Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc).
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        searchExperiments(projectId?: number, offset?: number, limit?: number, options?: any) {
-            return InternalApiFp(configuration).searchExperiments(projectId, offset, limit, options)(fetch, basePath);
+        searchExperiments(projectId?: number, offset?: number, limit?: number, sort?: string, options?: any) {
+            return InternalApiFp(configuration).searchExperiments(projectId, offset, limit, sort, options)(fetch, basePath);
         },
         /**
          * 
@@ -18790,18 +19000,6 @@ export class InternalApi extends BaseAPI {
     
     /**
      * 
-     * @summary Trigger the computation of hyperparameter importance on-demand for a specific metric on a specific experiment. The status and results can be retrieved with GetHPImportance.
-     * @param {number} experimentId The id of the experiment.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof InternalApi
-     */
-    public computeHPImportance(experimentId: number, options?: any) {
-        return InternalApiFp(this.configuration).computeHPImportance(experimentId, options)(this.fetch, this.basePath)
-    }
-    
-    /**
-     * 
      * @summary Create an experiment.
      * @param {V1CreateExperimentRequest} body
      * @param {*} [options] Override http request option.
@@ -18882,19 +19080,6 @@ export class InternalApi extends BaseAPI {
      */
     public getGroups(body: V1GetGroupsRequest, options?: any) {
         return InternalApiFp(this.configuration).getGroups(body, options)(this.fetch, this.basePath)
-    }
-    
-    /**
-     * 
-     * @summary Retrieve the latest computation of hyperparameter importance. Currently this is triggered for training loss (if emitted) and the searcher metric after 10% increments in an experiment's progress, but no more than every 10 minutes.
-     * @param {number} experimentId The id of the experiment.
-     * @param {number} [periodSeconds] Seconds to wait when polling for updates.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof InternalApi
-     */
-    public getHPImportance(experimentId: number, periodSeconds?: number, options?: any) {
-        return InternalApiFp(this.configuration).getHPImportance(experimentId, periodSeconds, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -19156,12 +19341,13 @@ export class InternalApi extends BaseAPI {
      * @param {number} [projectId] ID of the project to look at.
      * @param {number} [offset] How many experiments to skip before including in the results.
      * @param {number} [limit] How many results to show.
+     * @param {string} [sort] Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc).
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public searchExperiments(projectId?: number, offset?: number, limit?: number, options?: any) {
-        return InternalApiFp(this.configuration).searchExperiments(projectId, offset, limit, options)(this.fetch, this.basePath)
+    public searchExperiments(projectId?: number, offset?: number, limit?: number, sort?: string, options?: any) {
+        return InternalApiFp(this.configuration).searchExperiments(projectId, offset, limit, sort, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -23763,6 +23949,37 @@ export const TasksApiFetchParamCreator = function (configuration?: Configuration
         },
         /**
          * 
+         * @summary Get all tasks.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTasks(options: any = {}): FetchArgs {
+            const localVarPath = `/api/v1/tasks`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            localVarUrlObj.search = null;
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Stream task logs.
          * @param {string} taskId The id of the task.
          * @param {number} [limit] Limit the number of trial logs. A value of 0 denotes no limit.
@@ -23953,6 +24170,24 @@ export const TasksApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Get all tasks.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTasks(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTasksResponse> {
+            const localVarFetchArgs = TasksApiFetchParamCreator(configuration).getTasks(options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Stream task logs.
          * @param {string} taskId The id of the task.
          * @param {number} [limit] Limit the number of trial logs. A value of 0 denotes no limit.
@@ -24033,6 +24268,15 @@ export const TasksApiFactory = function (configuration?: Configuration, fetch?: 
         },
         /**
          * 
+         * @summary Get all tasks.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTasks(options?: any) {
+            return TasksApiFp(configuration).getTasks(options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Stream task logs.
          * @param {string} taskId The id of the task.
          * @param {number} [limit] Limit the number of trial logs. A value of 0 denotes no limit.
@@ -24096,6 +24340,17 @@ export class TasksApi extends BaseAPI {
      */
     public getTask(taskId: string, options?: any) {
         return TasksApiFp(this.configuration).getTask(taskId, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Get all tasks.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TasksApi
+     */
+    public getTasks(options?: any) {
+        return TasksApiFp(this.configuration).getTasks(options)(this.fetch, this.basePath)
     }
     
     /**

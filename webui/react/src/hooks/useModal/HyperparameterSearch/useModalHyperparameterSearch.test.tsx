@@ -4,8 +4,7 @@ import React from 'react';
 
 import Button from 'components/kit/Button';
 import { createExperiment as mockCreateExperiment } from 'services/api';
-import { ClusterProvider } from 'stores/cluster';
-import { generateTestExperimentData } from 'storybook/shared/generateTestData';
+import { generateTestExperimentData } from 'utils/tests/generateTestData';
 
 import useModalHyperparameterSearch from './useModalHyperparameterSearch';
 
@@ -18,6 +17,7 @@ vi.mock('stores/cluster', async (importOriginal) => {
   const observable = await import('utils/observable');
 
   const store = {
+    fetchResourcePools: vi.fn(),
     resourcePools: observable.observable(
       loadable.Loaded([
         {
@@ -59,7 +59,7 @@ vi.mock('stores/cluster', async (importOriginal) => {
 
   return {
     ...(await importOriginal<typeof import('stores/cluster')>()),
-    useClusterStore: () => store,
+    default: store,
   };
 });
 
@@ -70,7 +70,7 @@ vi.mock('services/api', () => ({
       maxSlotsExceeded: false,
     }),
   ),
-  getResourcePools: () => Promise.resolve([]),
+  getResourcePools: vi.fn().mockReturnValue(Promise.resolve([])),
 }));
 
 const { experiment } = generateTestExperimentData();
@@ -87,11 +87,7 @@ const ModalTrigger: React.FC = () => {
 };
 
 const Container: React.FC = () => {
-  return (
-    <ClusterProvider>
-      <ModalTrigger />
-    </ClusterProvider>
-  );
+  return <ModalTrigger />;
 };
 
 const user = userEvent.setup({ pointerEventsCheck: PointerEventsCheckLevel.Never });

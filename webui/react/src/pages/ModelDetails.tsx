@@ -4,10 +4,14 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom';
 
 import Input from 'components/kit/Input';
+import { useModal } from 'components/kit/Modal';
 import Tags, { tagsActionHelper } from 'components/kit/Tags';
 import MetadataCard from 'components/Metadata/MetadataCard';
+import ModelDownloadModal from 'components/ModelDownloadModal';
+import ModelVersionDeleteModal from 'components/ModelVersionDeleteModal';
 import NotesCard from 'components/NotesCard';
 import Page from 'components/Page';
+import PageNotFound from 'components/PageNotFound';
 import InteractiveTable, {
   ColumnDef,
   InteractiveTableSettings,
@@ -20,8 +24,6 @@ import {
   relativeTimeRenderer,
   userRenderer,
 } from 'components/Table/Table';
-import useModalModelDownload from 'hooks/useModal/Model/useModalModelDownload';
-import useModalModelVersionDelete from 'hooks/useModal/Model/useModalModelVersionDelete';
 import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import {
@@ -38,11 +40,11 @@ import usePolling from 'shared/hooks/usePolling';
 import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
 import { isAborted, isNotFound, validateDetApiEnum } from 'shared/utils/service';
-import usersStore from 'stores/users';
-import { useEnsureWorkspacesFetched, useWorkspaces } from 'stores/workspaces';
+import userStore from 'stores/users';
+import workspaceStore from 'stores/workspaces';
 import { Metadata, ModelVersion, ModelVersions } from 'types';
 import handleError from 'utils/error';
-import { Loadable, NotLoaded } from 'utils/loadable';
+import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 
 import settingsConfig, {
@@ -59,22 +61,21 @@ type Params = {
 };
 
 const ModelDetails: React.FC = () => {
-  const canceler = useRef(new AbortController());
   const [model, setModel] = useState<ModelVersions>();
+  const [modelVersion, setModelVersion] = useState<ModelVersion | undefined>(undefined);
   const modelId = decodeURIComponent(useParams<Params>().modelId ?? '');
   const [isLoading, setIsLoading] = useState(true);
   const [pageError, setPageError] = useState<Error>();
   const [total, setTotal] = useState(0);
   const pageRef = useRef<HTMLElement>(null);
-  const loadableUsers = useObservable(usersStore.getUsers());
-  const users = Loadable.map(loadableUsers, ({ users }) => users);
-  const ensureWorkspacesFetched = useEnsureWorkspacesFetched(canceler.current);
-  const lodableWorkspaces = useWorkspaces();
-  const workspace = Loadable.getOrElse([], lodableWorkspaces).find(
-    (ws) => ws.id === model?.model.workspaceId,
+  const users = Loadable.getOrElse([], useObservable(userStore.getUsers()));
+  const workspaces = useObservable(workspaceStore.workspaces);
+  const workspace = Loadable.getOrElse(
+    undefined,
+    useObservable(workspaceStore.getWorkspace(model?.model.workspaceId)),
   );
 
-  const { canModifyModel, canModifyModelVersion } = usePermissions();
+  const { canModifyModel, canModifyModelVersion, loading: rbacLoading } = usePermissions();
 
   const {
     settings,
@@ -102,34 +103,19 @@ const ModelDetails: React.FC = () => {
     }
   }, [modelId, pageError, settings]);
 
-  const { contextHolder: modalModelDownloadContextHolder, modalOpen: openModelDownload } =
-    useModalModelDownload();
-
-  const { contextHolder: modalModelVersionDeleteContextHolder, modalOpen: openModelVersionDelete } =
-    useModalModelVersionDelete();
+  const modelDownloadModal = useModal(ModelDownloadModal);
+  const modelVersionDeleteModal = useModal(ModelVersionDeleteModal);
 
   usePolling(fetchModel, { rerunOnNewFn: true });
 
   useEffect(() => {
     setIsLoading(true);
     fetchModel();
-    ensureWorkspacesFetched();
+    const abortFetchWorkspaces = workspaceStore.fetch();
+
+    return () => abortFetchWorkspaces();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const downloadModel = useCallback(
-    (version: ModelVersion) => {
-      openModelDownload(version);
-    },
-    [openModelDownload],
-  );
-
-  const deleteModelVersion = useCallback(
-    (version: ModelVersion) => {
-      openModelVersionDelete(version);
-    },
-    [openModelVersionDelete],
-  );
 
   const saveModelVersionTags = useCallback(
     async (modelName: string, versionNum: number, tags: string[]) => {
@@ -174,11 +160,6 @@ const ModelDetails: React.FC = () => {
   );
 
   const columns = useMemo(() => {
-    const matchUsers = Loadable.match(users, {
-      Loaded: (users) => users,
-      NotLoaded: () => [],
-    });
-
     const tagsRenderer = (value: string, record: ModelVersion) => (
       <div className={css.tagsRenderer}>
         <Typography.Text
@@ -202,8 +183,14 @@ const ModelDetails: React.FC = () => {
     const actionRenderer = (_: string, record: ModelVersion) => (
       <ModelVersionActionDropdown
         version={record}
-        onDelete={() => deleteModelVersion(record)}
-        onDownload={() => downloadModel(record)}
+        onDelete={() => {
+          setModelVersion(record);
+          modelVersionDeleteModal.open();
+        }}
+        onDownload={() => {
+          setModelVersion(record);
+          modelDownloadModal.open();
+        }}
       />
     );
 
@@ -258,7 +245,7 @@ const ModelDetails: React.FC = () => {
         dataIndex: 'user',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['user'],
         key: 'user',
-        render: (_, r) => userRenderer(matchUsers.find((u) => u.id === r.userId)),
+        render: (_, r) => userRenderer(users.find((u) => u.id === r.userId)),
         title: 'User',
       },
       {
@@ -275,13 +262,14 @@ const ModelDetails: React.FC = () => {
       },
     ] as ColumnDef<ModelVersion>[];
   }, [
-    deleteModelVersion,
-    downloadModel,
-    saveModelVersionTags,
-    saveVersionDescription,
     users,
+    saveModelVersionTags,
+    modelVersionDeleteModal,
+    modelDownloadModal,
     canModifyModelVersion,
+    saveVersionDescription,
   ]);
+
   const tableIsLoading = useMemo(
     () => isLoading || isLoadingSettings,
     [isLoading, isLoadingSettings],
@@ -399,13 +387,19 @@ const ModelDetails: React.FC = () => {
       <ModelVersionActionDropdown
         trigger={['contextMenu']}
         version={record}
-        onDelete={() => deleteModelVersion(record)}
-        onDownload={() => downloadModel(record)}
+        onDelete={() => {
+          setModelVersion(record);
+          modelVersionDeleteModal.open();
+        }}
+        onDownload={() => {
+          setModelVersion(record);
+          modelDownloadModal.open();
+        }}
         onVisibleChange={onVisibleChange}>
         {children}
       </ModelVersionActionDropdown>
     ),
-    [deleteModelVersion, downloadModel],
+    [modelDownloadModal, modelVersionDeleteModal],
   );
 
   if (!modelId) {
@@ -413,8 +407,10 @@ const ModelDetails: React.FC = () => {
   } else if (pageError && !isNotFound(pageError)) {
     const message = `Unable to fetch model ${modelId}`;
     return <Message title={message} type={MessageType.Warning} />;
-  } else if (!model || lodableWorkspaces === NotLoaded) {
-    return <Spinner tip={`Loading model ${modelId} details...`} />;
+  } else if (pageError && isNotFound(pageError)) {
+    return <PageNotFound />;
+  } else if (!model || Loadable.isLoading(workspaces) || rbacLoading) {
+    return <Spinner spinning tip={`Loading model ${modelId} details...`} />;
   }
 
   return (
@@ -474,8 +470,8 @@ const ModelDetails: React.FC = () => {
           onSave={saveMetadata}
         />
       </div>
-      {modalModelDownloadContextHolder}
-      {modalModelVersionDeleteContextHolder}
+      {modelVersion && <modelDownloadModal.Component modelVersion={modelVersion} />}
+      {modelVersion && <modelVersionDeleteModal.Component modelVersion={modelVersion} />}
     </Page>
   );
 };

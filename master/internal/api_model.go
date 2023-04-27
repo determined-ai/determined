@@ -363,19 +363,29 @@ func (a *apiServer) PatchModel(
 
 	currLabels := strings.Join(currModel.Labels, ",")
 	if req.Model.Labels != nil {
-		var reqLabelList []string
+		// avoid duplicate keys
+		reqLabelSet := make(map[string]struct{}, len(req.Model.Labels.Values))
+		reqLabelList := make([]string, len(reqLabelSet))
 		for _, el := range req.Model.Labels.Values {
-			if _, ok := el.GetKind().(*structpb.Value_StringValue); ok {
-				reqLabelList = append(reqLabelList, el.GetStringValue())
+			if _, ok := el.GetKind().(*structpb.Value_StringValue); !ok {
+				// Invalid label.
+				continue
 			}
+			label := el.GetStringValue()
+			if _, ok := reqLabelSet[label]; ok {
+				// Duplicate key.
+				continue
+			}
+			reqLabelSet[label] = struct{}{}
+			reqLabelList = append(reqLabelList, label)
 		}
 		reqLabels := strings.Join(reqLabelList, ",")
 		if currLabels != reqLabels {
 			log.Infof("model %q labels changing from %q to %q",
 				currModel.Name, currModel.Labels, reqLabels)
 			madeChanges = true
+			currLabels = reqLabels
 		}
-		currLabels = reqLabels
 	}
 
 	currWorkspaceID := currModel.WorkspaceId
@@ -744,11 +754,18 @@ func (a *apiServer) PatchModelVersion(
 
 	currLabels := strings.Join(currModelVersion.Labels, ",")
 	if req.ModelVersion.Labels != nil {
-		var reqLabelList []string
+		// avoid duplicate keys
+		reqLabelSet := make(map[string]struct{}, len(req.ModelVersion.Labels.Values))
 		for _, el := range req.ModelVersion.Labels.Values {
 			if _, ok := el.GetKind().(*structpb.Value_StringValue); ok {
-				reqLabelList = append(reqLabelList, el.GetStringValue())
+				reqLabelSet[el.GetStringValue()] = struct{}{}
 			}
+		}
+		reqLabelList := make([]string, len(reqLabelSet))
+		i := 0
+		for key := range reqLabelSet {
+			reqLabelList[i] = key
+			i++
 		}
 		reqLabels := strings.Join(reqLabelList, ",")
 		if currLabels != reqLabels {

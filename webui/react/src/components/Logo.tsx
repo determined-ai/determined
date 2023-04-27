@@ -11,7 +11,7 @@ import useUI from 'shared/contexts/stores/UI';
 import { DarkLight } from 'shared/themes';
 import { ValueOf } from 'shared/types';
 import { reactHostAddress } from 'shared/utils/routes';
-import { BrandingType } from 'types';
+import { BrandingType } from 'stores/determinedInfo';
 
 import css from './Logo.module.scss';
 

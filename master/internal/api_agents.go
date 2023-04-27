@@ -6,8 +6,12 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/pkg/errors"
+
 	"github.com/determined-ai/determined/master/internal/cluster"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
+	"github.com/determined-ai/determined/master/internal/rm/actorrm"
+	"github.com/determined-ai/determined/master/internal/rm/rmerrors"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -29,7 +33,7 @@ func agentAddr(agentID string) actor.Address {
 }
 
 func slotAddr(agentID, slotID string) actor.Address {
-	return sproto.AgentsAddr.Child(agentID).Child("slots").Child(slotID)
+	return actorrm.SlotAddr(agentID, slotID)
 }
 
 func (a *apiServer) GetAgent(
@@ -90,7 +94,15 @@ func (a *apiServer) EnableSlot(
 	if err := a.canUpdateAgents(ctx); err != nil {
 		return nil, err
 	}
-	return resp, a.ask(slotAddr(req.AgentId, req.SlotId), req, &resp)
+	resp, err = a.m.rm.EnableSlot(a.m.system, req)
+	switch {
+	case errors.Is(err, rmerrors.ErrNotSupported):
+		return resp, status.Error(codes.Unimplemented, err.Error())
+	case err != nil:
+		return nil, err
+	default:
+		return resp, nil
+	}
 }
 
 func (a *apiServer) DisableSlot(
@@ -99,5 +111,13 @@ func (a *apiServer) DisableSlot(
 	if err := a.canUpdateAgents(ctx); err != nil {
 		return nil, err
 	}
-	return resp, a.ask(slotAddr(req.AgentId, req.SlotId), req, &resp)
+	resp, err = a.m.rm.DisableSlot(a.m.system, req)
+	switch {
+	case errors.Is(err, rmerrors.ErrNotSupported):
+		return resp, status.Error(codes.Unimplemented, err.Error())
+	case err != nil:
+		return nil, err
+	default:
+		return resp, nil
+	}
 }

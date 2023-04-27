@@ -106,10 +106,6 @@ For an introduction to using the training API, please visit the Training APIs se
       -  Filename
 
    -  -  PyTorch
-      -  SQuAD
-      -  :download:`bert_squad_pytorch.tgz </examples/bert_squad_pytorch.tgz>`
-
-   -  -  PyTorch
       -  SQuAD 2.0
       -  :download:`albert_squad_pytorch.tgz </examples/albert_squad_pytorch.tgz>`
 

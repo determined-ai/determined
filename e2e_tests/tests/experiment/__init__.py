@@ -6,7 +6,10 @@ from .experiment import (
     assert_performed_initial_validation,
     cancel_experiments,
     cancel_single,
-    cancel_trial,
+    cancel_experiment,
+    kill_experiments,
+    kill_single,
+    kill_trial,
     check_if_string_present_in_trial_logs,
     assert_patterns_in_trial_logs,
     create_experiment,
@@ -38,6 +41,8 @@ from .experiment import (
     workloads_with_training,
     workloads_with_validation,
     experiment_first_trial,
+    has_at_least_one_checkpoint,
+    wait_for_at_least_one_checkpoint,
 )
 
 from .record_profiling import (

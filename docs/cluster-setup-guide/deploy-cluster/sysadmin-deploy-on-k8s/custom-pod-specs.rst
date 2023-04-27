@@ -50,9 +50,13 @@ This section describes which fields users can and cannot configure when specifyi
 Determined does not currently support configuring:
 
 -  Pod Name - Determined automatically assigns a name for every pod that is created.
--  Pod Namespace - Determined launches all tasks in the Namespace in which the Determined master is
-   running.
+
+-  Pod Namespace - Determined automatically sets the pod namespace based on the resource pool the
+   task belongs to. The mapping between resource pools and namespaces can be configured in the
+   ``resourcePools`` section of the Helm ``values.yaml``.
+
 -  Host Networking - This must be configured via the :ref:`master-config-reference`.
+
 -  Restart Policy - This is always set to ``Never``.
 
 As part of their pod spec, users can specify ``initContainers`` and ``containers``. Additionally

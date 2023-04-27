@@ -7,10 +7,9 @@ import time
 from typing import Any, Dict, List, Set, Tuple
 
 import pytest
-import yaml
 
 from determined import errors
-from determined.common import api, storage
+from determined.common import api, storage, yaml
 from determined.common.api import authentication, bindings, certs
 from determined.common.api.bindings import checkpointv1State
 from tests import api_utils
@@ -198,7 +197,7 @@ def ensure_checkpoint_deleted(
 
     if d_checkpoint is not None:
         assert (
-            d_checkpoint.state == checkpointv1State.STATE_DELETED
+            d_checkpoint.state == checkpointv1State.DELETED
         ), f"checkpoint with uuid {d_checkpoint_uuid} does not have a deleted state"
     else:
         pytest.fail(
@@ -215,8 +214,8 @@ def run_gc_checkpoints_test(checkpoint_storage: Dict[str, str]) -> None:
         (
             conf.fixtures_path("no_op/gc_checkpoints_decreasing.yaml"),
             {
-                (bindings.experimentv1State.STATE_COMPLETED.value): {800, 900, 1000},
-                (bindings.experimentv1State.STATE_DELETED.value): {
+                (bindings.experimentv1State.COMPLETED.value): {800, 900, 1000},
+                (bindings.experimentv1State.DELETED.value): {
                     100,
                     200,
                     300,
@@ -230,14 +229,14 @@ def run_gc_checkpoints_test(checkpoint_storage: Dict[str, str]) -> None:
         (
             conf.fixtures_path("no_op/gc_checkpoints_increasing.yaml"),
             {
-                (bindings.experimentv1State.STATE_COMPLETED.value): {
+                (bindings.experimentv1State.COMPLETED.value): {
                     100,
                     200,
                     300,
                     900,
                     1000,
                 },
-                (bindings.experimentv1State.STATE_DELETED.value): {
+                (bindings.experimentv1State.DELETED.value): {
                     400,
                     500,
                     600,
@@ -261,7 +260,7 @@ def run_gc_checkpoints_test(checkpoint_storage: Dict[str, str]) -> None:
 
             experiment_id = exp.create_experiment(tf.name, conf.fixtures_path("no_op"))
 
-        exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.STATE_COMPLETED)
+        exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.COMPLETED)
 
         # In some configurations, checkpoint GC will run on an auxillary machine, which may have to
         # be spun up still.  So we'll wait for it to run.
@@ -309,14 +308,14 @@ def run_gc_checkpoints_test(checkpoint_storage: Dict[str, str]) -> None:
                     assert checkpoint.uuid is not None
                     last_checkpoint_uuid = storage_id = checkpoint.uuid
                     storage_state[storage_id] = {}
-                    if checkpoint.state == bindings.checkpointv1State.STATE_COMPLETED:
+                    if checkpoint.state == bindings.checkpointv1State.COMPLETED:
                         storage_state[storage_id]["found"] = False
                         try:
                             with storage_manager.restore_path(storage_id):
                                 storage_state[storage_id]["found"] = True
                         except errors.CheckpointNotFound:
                             pass
-                    elif checkpoint.state == bindings.checkpointv1State.STATE_DELETED:
+                    elif checkpoint.state == bindings.checkpointv1State.DELETED:
                         storage_state[storage_id] = {"deleted": False, "checkpoint": checkpoint}
                         try:
                             with storage_manager.restore_path(storage_id):

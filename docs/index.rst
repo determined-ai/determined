@@ -56,11 +56,14 @@
    Deployment Reference <reference/reference-deploy/index>
    Job Configuration Reference <reference/reference-interface/job-config-reference>
    Custom Searcher Reference <reference/reference-searcher/custom-searcher-reference>
+   CLI Reference <reference/cli-reference>
 
 .. toctree::
    :caption: Tools
    :hidden:
 
+   Overview <interfaces/index>
+   CLI User Guide <interfaces/cli-ug>
    Commands and Shells <interfaces/commands-and-shells>
    WebUI Interface <interfaces/webui-if>
    Jupyter Notebooks <interfaces/notebooks>
@@ -95,7 +98,7 @@ You can quickly train almost any deep learning model using Determined.
          <div class="tile-container">
              <a class="tile" href="tutorials/index.html">
                  <h2 class="tile-title">Tutorials</h2>
-                 <p class="tile-description">Try Determined. Learn the basics of working with Determined and how to port your existing code to the Determined environment.</p>
+                 <p class="tile-description">Try Determined and learn the basics including how to port your existing code to the Determined environment.</p>
              </a>
          </div>
          <div class="tile-container">

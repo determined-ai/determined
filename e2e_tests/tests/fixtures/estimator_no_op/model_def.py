@@ -38,7 +38,6 @@ class NoopEstimator(estimator.EstimatorTrial):
     def create_model_fn(self):
         def noop_model_fn(features, labels, mode):
             if mode == tf.estimator.ModeKeys.EVAL:
-
                 eval_metric_ops = {
                     name: self.context.make_metric(metric, reducer, np.float64)
                     for name, metric, reducer in [

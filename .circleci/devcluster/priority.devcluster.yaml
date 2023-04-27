@@ -31,6 +31,7 @@ stages:
         root: tools/build
         cache: 
           cache_dir: /tmp/determined-cache
+        launch_error: false
         resource_manager:
           default_aux_resource_pool: default
           default_compute_resource_pool: default

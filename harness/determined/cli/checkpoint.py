@@ -2,7 +2,7 @@ import json
 from argparse import Namespace
 from typing import Any, List, Optional
 
-from determined import cli
+from determined import cli, errors
 from determined.common import experimental
 from determined.common.api import authentication, bindings
 from determined.common.declarative_argparse import Arg, Cmd
@@ -43,9 +43,9 @@ def render_checkpoint(checkpoint: experimental.Checkpoint, path: Optional[str] =
 @authentication.required
 def list_checkpoints(args: Namespace) -> None:
     if args.best:
-        sorter = bindings.v1GetExperimentCheckpointsRequestSortBy.SORT_BY_SEARCHER_METRIC
+        sorter = bindings.v1GetExperimentCheckpointsRequestSortBy.SEARCHER_METRIC
     else:
-        sorter = bindings.v1GetExperimentCheckpointsRequestSortBy.SORT_BY_END_TIME
+        sorter = bindings.v1GetExperimentCheckpointsRequestSortBy.END_TIME
     r = bindings.get_GetExperimentCheckpoints(
         cli.setup_session(args),
         id=args.experiment_id,
@@ -96,7 +96,10 @@ def list_checkpoints(args: Namespace) -> None:
 def download(args: Namespace) -> None:
     checkpoint = Determined(args.master, None).get_checkpoint(args.uuid)
 
-    path = checkpoint.download(path=args.output_dir, mode=args.mode)
+    try:
+        path = checkpoint.download(path=args.output_dir, mode=args.mode)
+    except errors.CheckpointStateException as ex:
+        raise cli.errors.CliError(str(ex))
 
     if args.quiet:
         print(path)

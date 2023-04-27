@@ -24,7 +24,7 @@ def test_experiment_capture() -> None:
     experiment_id = exp.create_experiment(
         conf.fixtures_path("no_op/single.yaml"), conf.fixtures_path("no_op")
     )
-    exp.wait_for_experiment_state(experiment_id, experimentv1State.STATE_COMPLETED)
+    exp.wait_for_experiment_state(experiment_id, experimentv1State.COMPLETED)
 
     end_time = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     r = api.get(
@@ -36,7 +36,7 @@ def test_experiment_capture() -> None:
     # Check if an entry exists for experiment that just ran
     reader = csv.DictReader(StringIO(r.text))
     matches = [row for row in reader if int(row["experiment_id"]) == experiment_id]
-    assert len(matches) >= 1
+    assert len(matches) >= 1, f"could not find any rows for experiment {experiment_id}"
 
 
 @pytest.mark.e2e_cpu
@@ -71,7 +71,7 @@ def test_tensorboard_experiment_capture() -> None:
         conf.fixtures_path("no_op/single.yaml"), conf.fixtures_path("no_op")
     )
 
-    exp.wait_for_experiment_state(experiment_id, experimentv1State.STATE_COMPLETED)
+    exp.wait_for_experiment_state(experiment_id, experimentv1State.COMPLETED)
 
     task_id = None
     with cmd.interactive_command("tensorboard", "start", "--detach", str(experiment_id)) as tb:

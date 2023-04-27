@@ -2,7 +2,10 @@ import { Dropdown, Space, Table } from 'antd';
 import type { DropDownProps, MenuProps } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import CreateGroupModalComponent from 'components/CreateGroupModal';
+import DeleteGroupModalComponent from 'components/DeleteGroupModal';
 import Button from 'components/kit/Button';
+import { useModal } from 'components/kit/Modal';
 import Nameplate from 'components/kit/Nameplate';
 import Page from 'components/Page';
 import Section from 'components/Section';
@@ -13,8 +16,6 @@ import InteractiveTable, {
 import SkeletonTable from 'components/Table/SkeletonTable';
 import { defaultRowClassName, getFullPaginationConfig } from 'components/Table/Table';
 import useFeature from 'hooks/useFeature';
-import useModalCreateGroup from 'hooks/useModal/UserSettings/useModalCreateGroup';
-import useModalDeleteGroup from 'hooks/useModal/UserSettings/useModalDeleteGroup';
 import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { getGroup, getGroups, getUsers, updateGroup } from 'services/api';
@@ -24,7 +25,7 @@ import Icon from 'shared/components/Icon/Icon';
 import { ValueOf } from 'shared/types';
 import { clone, isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
-import { RolesStore } from 'stores/roles';
+import roleStore from 'stores/roles';
 import { DetailedUser } from 'types';
 import { message } from 'utils/dialogApi';
 import handleError from 'utils/error';
@@ -54,10 +55,8 @@ const GroupActionDropdown = ({
     fetchGroups();
     expanded && group.group.groupId && fetchGroup(group.group.groupId);
   };
-  const { modalOpen: openEditGroupModal, contextHolder: modalEditGroupContextHolder } =
-    useModalCreateGroup({ group, onClose: onFinishEdit, users });
-  const { modalOpen: openDeleteGroupModal, contextHolder: modalDeleteGroupContextHolder } =
-    useModalDeleteGroup({ group, onClose: fetchGroups });
+  const EditGroupModal = useModal(CreateGroupModalComponent);
+  const DeleteGroupModal = useModal(DeleteGroupModalComponent);
 
   const menuItems: DropDownProps['menu'] = useMemo(() => {
     const MenuKey = {
@@ -67,10 +66,10 @@ const GroupActionDropdown = ({
 
     const funcs = {
       [MenuKey.Edit]: () => {
-        openEditGroupModal();
+        EditGroupModal.open();
       },
       [MenuKey.Delete]: () => {
-        openDeleteGroupModal();
+        DeleteGroupModal.open();
       },
     };
 
@@ -83,28 +82,29 @@ const GroupActionDropdown = ({
       { key: MenuKey.Delete, label: 'Delete' },
     ];
     return { items: items, onClick: onItemClick };
-  }, [openDeleteGroupModal, openEditGroupModal]);
+  }, [DeleteGroupModal, EditGroupModal]);
 
   return (
     <div className={dropdownCss.base}>
       <Dropdown menu={menuItems} placement="bottomRight" trigger={['click']}>
         <Button ghost icon={<Icon name="overflow-vertical" />} />
       </Dropdown>
-      {modalEditGroupContextHolder}
-      {modalDeleteGroupContextHolder}
+      <EditGroupModal.Component group={group} users={users} onClose={onFinishEdit} />
+      <DeleteGroupModal.Component group={group} onClose={fetchGroups} />
     </div>
   );
 };
 
 const GroupManagement: React.FC = () => {
+  const rbacEnabled = useFeature().isOn('rbac');
   const [groups, setGroups] = useState<V1GroupSearchResult[]>([]);
   const [groupUsers, setGroupUsers] = useState<V1GroupDetails[]>([]);
   const [users, setUsers] = useState<DetailedUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [total, setTotal] = useState(0);
   const [expandedKeys, setExpandedKeys] = useState<readonly React.Key[]>([]);
-  const [canceler] = useState(new AbortController());
   const pageRef = useRef<HTMLElement>(null);
+  const canceler = useRef(new AbortController());
 
   const { settings, updateSettings } = useSettings<GroupManagementSettings>(settingsConfig);
 
@@ -118,7 +118,7 @@ const GroupManagement: React.FC = () => {
           limit: settings.tableLimit,
           offset: settings.tableOffset,
         },
-        { signal: canceler.signal },
+        { signal: canceler.current.signal },
       );
 
       setTotal(response.pagination?.total ?? 0);
@@ -131,7 +131,7 @@ const GroupManagement: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [canceler.signal, settings]);
+  }, [settings]);
 
   const fetchGroup = useCallback(
     async (groupId: number): Promise<void> => {
@@ -145,7 +145,7 @@ const GroupManagement: React.FC = () => {
 
   const fetchUsers = useCallback(async (): Promise<void> => {
     try {
-      const response = await getUsers({}, { signal: canceler.signal });
+      const response = await getUsers({}, { signal: canceler.current.signal });
       setUsers((prev) => {
         if (isEqual(prev, response.users)) return prev;
         return response.users;
@@ -153,7 +153,12 @@ const GroupManagement: React.FC = () => {
     } catch (e) {
       handleError(e, { publicSubject: 'Unable to fetch users.' });
     }
-  }, [canceler.signal]);
+  }, []);
+
+  useEffect(() => {
+    const currentCanceler = canceler.current;
+    return () => currentCanceler.abort();
+  }, []);
 
   useEffect(() => {
     fetchGroups();
@@ -161,19 +166,9 @@ const GroupManagement: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const rbacEnabled = useFeature().isOn('rbac');
-  useEffect(() => {
-    if (rbacEnabled) {
-      RolesStore.fetchRoles(canceler);
-    }
-  }, [canceler, rbacEnabled]);
+  useEffect(() => (rbacEnabled ? roleStore.fetch() : undefined), [rbacEnabled]);
 
-  const { modalOpen: openCreateGroupModal, contextHolder: modalCreateGroupContextHolder } =
-    useModalCreateGroup({ onClose: fetchGroups, users: users });
-
-  const onClickCreateGroup = useCallback(() => {
-    openCreateGroupModal();
-  }, [openCreateGroupModal]);
+  const CreateGroupModal = useModal(CreateGroupModalComponent);
 
   const onExpand = useCallback(
     (expand: boolean, record: V1GroupSearchResult) => {
@@ -326,7 +321,7 @@ const GroupManagement: React.FC = () => {
       <Section
         options={
           <Space>
-            <Button disabled={!canModifyGroups} onClick={onClickCreateGroup}>
+            <Button disabled={!canModifyGroups} onClick={CreateGroupModal.open}>
               New Group
             </Button>
           </Space>
@@ -334,7 +329,7 @@ const GroupManagement: React.FC = () => {
         title="Groups">
         {canViewGroups && <div className={css.usersTable}>{table}</div>}
       </Section>
-      {modalCreateGroupContextHolder}
+      <CreateGroupModal.Component users={users} onClose={fetchGroups} />
     </Page>
   );
 };

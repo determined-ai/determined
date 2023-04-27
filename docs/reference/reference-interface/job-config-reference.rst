@@ -45,9 +45,9 @@ The following configuration settings are supported:
       different container images for NVIDIA GPU tasks using ``cuda`` key (``gpu`` prior to 0.17.6),
       CPU tasks using ``cpu`` key, and ROCm (AMD GPU) tasks using ``rocm`` key. Default values:
 
-      -  ``determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-0.21.1`` for NVIDIA GPUs.
-      -  ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.21.1`` for ROCm.
-      -  ``determinedai/environments:py-3.8-pytorch-1.12-tf-2.8-cpu-0.21.1`` for CPUs.
+      -  ``determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.21.2`` for NVIDIA GPUs.
+      -  ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.21.2`` for ROCm.
+      -  ``determinedai/environments:py-3.8-pytorch-1.12-tf-2.11-cpu-0.21.2`` for CPUs.
 
    -  ``force_pull_image``: Forcibly pull the image from the Docker registry and bypass the Docker
       cache. Defaults to ``false``.
@@ -71,7 +71,7 @@ The following configuration settings are supported:
       -  ``email`` (optional)
 
    -  ``add_capabilities``: A list of Linux capabilities to grant to task containers. Each entry in
-      the list is equivalent to a ``--cap-add CAP`` command line argument to ``docker run``.
+      the list is equivalent to a ``--cap-add CAP`` command-line argument to ``docker run``.
       ``add_capabilities`` is honored by resource managers of type ``agent`` but is ignored by
       resource managers of type ``kubernetes``. See :ref:`master configuration
       <master-config-reference>` for details about resource managers.
@@ -105,7 +105,7 @@ The following configuration settings are supported:
       information.
 
    -  ``devices``: A list of device strings to pass to the Docker daemon. Each entry in the list is
-      equivalent to a ``--device DEVICE`` command line argument to ``docker run``. ``devices`` is
+      equivalent to a ``--device DEVICE`` command-line argument to ``docker run``. ``devices`` is
       honored by resource managers of type ``agent`` but is ignored by resource managers of type
       ``kubernetes``. See :ref:`master configuration <master-config-reference>` for details about
       resource managers.

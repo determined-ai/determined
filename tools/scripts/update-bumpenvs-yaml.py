@@ -30,7 +30,7 @@ from pathlib import Path
 from typing import Any, Dict
 
 import requests
-import yaml
+from ruamel import yaml
 
 USER = "determined-ai"
 PROJECT = "environments"
@@ -39,11 +39,11 @@ BASE_URL = f"https://circleci.com/api/v1.1/project/github/{USER}/{PROJECT}"
 JOB_SUFFIXES = [
     "tf1-cpu",
     "tf2-cpu",
-    "tf27-cpu",
+    "tf28-cpu",
     "pt-cpu",
     "tf1-gpu",
     "tf2-gpu",
-    "tf27-gpu",
+    "tf28-gpu",
     "pt-gpu",
 ]
 
@@ -267,6 +267,6 @@ if __name__ == "__main__":
         sys.exit(1)
 
     with open(path, "w") as f:
-        yaml.dump(conf, f, sort_keys=True)
+        yaml.dump(conf, f)
 
     print(f"done, {path} has been updated", file=sys.stderr)

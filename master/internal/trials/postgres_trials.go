@@ -322,7 +322,7 @@ func BuildFilterTrialsQuery(filters *apiv1.TrialFilters, selectAll bool) (*bun.S
 // MetricsTimeSeries returns a time-series of the specified metric in the specified
 // trial.
 func MetricsTimeSeries(trialID int32, startTime time.Time,
-	metricName string,
+	metricNames []string,
 	startBatches int, endBatches int, xAxisMetricLabels []string,
 	maxDatapoints int, timeSeriesColumn string,
 	timeSeriesFilter *commonv1.PolymorphicFilter, metricType string) (
@@ -349,15 +349,19 @@ func MetricsTimeSeries(trialID int32, startTime time.Time,
 	default:
 		queryColumn = timeSeriesColumn
 	}
-	measurements := []db.MetricMeasurements{}
 	subq := db.Bun().NewSelect().TableExpr(tableName).
-		ColumnExpr("setseed(1) as _seed").
+		ColumnExpr("(select setseed(1)) as _seed").
 		ColumnExpr("total_batches as batches").
 		ColumnExpr("trial_id").ColumnExpr("end_time as time").
-		ColumnExpr("(metrics ->'?' ->> ?)::float8 as value", bun.Safe(metricsObjectName), metricName).
-		ColumnExpr("(metrics ->'?' ->> 'epoch')::float8 as epoch", bun.Safe(metricsObjectName)).
-		Where("metrics ->'?' ->> ? IS NOT NULL", bun.Safe(metricsObjectName), metricName).
-		Where("trial_id = ?", trialID).OrderExpr("random()").Limit(maxDatapoints)
+		ColumnExpr("(metrics ->'?' ->> 'epoch')::float8 as epoch", bun.Safe(metricsObjectName))
+
+	for _, metricName := range metricNames {
+		subq = subq.ColumnExpr("(metrics ->'?' ->> ?)::float8 as "+metricName,
+			bun.Safe(metricsObjectName), metricName)
+	}
+
+	subq = subq.Where("trial_id = ?", trialID).OrderExpr("random()").
+		Limit(maxDatapoints)
 	switch timeSeriesFilter {
 	case nil:
 		orderColumn = batches
@@ -371,10 +375,47 @@ func MetricsTimeSeries(trialID int32, startTime time.Time,
 			return metricMeasurements, errors.Wrapf(err, "failed to get metrics to sample for experiment")
 		}
 	}
+
+	metricMeasurements = []db.MetricMeasurements{}
+	var results []map[string]interface{}
 	err = db.Bun().NewSelect().TableExpr("(?) as downsample", subq).
-		OrderExpr(orderColumn).Scan(context.TODO(), &measurements)
+		OrderExpr(orderColumn).Scan(context.TODO(), &results)
 	if err != nil {
 		return metricMeasurements, errors.Wrapf(err, "failed to get metrics to sample for experiment")
 	}
-	return measurements, nil
+
+	selectMetrics := map[string]bool{}
+
+	for i := range metricNames {
+		selectMetrics[metricNames[i]] = true
+	}
+
+	for i := range results {
+		valuesMap := make(map[string]interface{})
+		for mName, mVal := range results[i] {
+			if selectMetrics[mName] {
+				valuesMap[mName] = mVal
+			}
+		}
+		epoch := new(int32)
+		if results[i]["epoch"] != nil {
+			*epoch = int32(results[i]["epoch"].(float64))
+		}
+		var endTime time.Time
+		if results[i]["time"] == nil {
+			endTime = time.Time{}
+		} else {
+			endTime = results[i]["time"].(time.Time)
+		}
+		metricM := db.MetricMeasurements{
+			Batches: uint(results[i]["batches"].(int64)),
+			Time:    endTime,
+			Epoch:   epoch,
+			TrialID: int32(results[i]["trial_id"].(int64)),
+			Values:  valuesMap,
+		}
+
+		metricMeasurements = append(metricMeasurements, metricM)
+	}
+	return metricMeasurements, nil
 }

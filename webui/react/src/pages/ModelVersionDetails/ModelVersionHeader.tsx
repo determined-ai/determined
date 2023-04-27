@@ -6,13 +6,14 @@ import React, { useCallback, useMemo, useState } from 'react';
 import InfoBox, { InfoRow } from 'components/InfoBox';
 import Breadcrumb from 'components/kit/Breadcrumb';
 import Button from 'components/kit/Button';
+import { useModal } from 'components/kit/Modal';
 import Tags, { tagsActionHelper } from 'components/kit/Tags';
 import Avatar from 'components/kit/UserAvatar';
 import Link from 'components/Link';
+import ModelDownloadModal from 'components/ModelDownloadModal';
+import ModelVersionDeleteModal from 'components/ModelVersionDeleteModal';
+import ModelVersionEditModal from 'components/ModelVersionEditModal';
 import TimeAgo from 'components/TimeAgo';
-import useModalModelDownload from 'hooks/useModal/Model/useModalModelDownload';
-import useModalModelVersionDelete from 'hooks/useModal/Model/useModalModelVersionDelete';
-import useModalModelVersionEdit from 'hooks/useModal/Model/useModalModelVersionEdit';
 import usePermissions from 'hooks/usePermissions';
 import { WorkspaceDetailsTab } from 'pages/WorkspaceDetails';
 import { paths } from 'routes/utils';
@@ -21,7 +22,7 @@ import Icon from 'shared/components/Icon/Icon';
 import Spinner from 'shared/components/Spinner';
 import { formatDatetime } from 'shared/utils/datetime';
 import { copyToClipboard } from 'shared/utils/dom';
-import usersStore from 'stores/users';
+import userStore from 'stores/users';
 import { ModelVersion, Workspace } from 'types';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
@@ -50,40 +51,28 @@ const ModelVersionHeader: React.FC<Props> = ({
   onUpdateTags,
   fetchModelVersion,
 }: Props) => {
-  const loadableUsers = useObservable(usersStore.getUsers());
-  const users = Loadable.map(loadableUsers, ({ users }) => users);
+  const loadableUsers = useObservable(userStore.getUsers());
+  const users = Loadable.getOrElse([], useObservable(userStore.getUsers()));
   const [showUseInNotebook, setShowUseInNotebook] = useState(false);
 
-  const { contextHolder: modalModelDownloadContextHolder, modalOpen: openModelDownload } =
-    useModalModelDownload();
-
-  const { contextHolder: modalModelVersionDeleteContextHolder, modalOpen: openModalVersionDelete } =
-    useModalModelVersionDelete();
-
-  const { contextHolder: modalModelNameEditContextHolder, modalOpen: openModelNameEdit } =
-    useModalModelVersionEdit({ fetchModelVersion, modelVersion });
-
-  const handleDownloadModel = useCallback(() => {
-    openModelDownload(modelVersion);
-  }, [modelVersion, openModelDownload]);
+  const modelDownloadModal = useModal(ModelDownloadModal);
+  const modelVersionDeleteModal = useModal(ModelVersionDeleteModal);
+  const modelVersionEditModal = useModal(ModelVersionEditModal);
 
   const { canDeleteModelVersion, canModifyModelVersion } = usePermissions();
 
   const infoRows: InfoRow[] = useMemo(() => {
-    const user = Loadable.match(users, {
-      Loaded: (users) => users,
-      NotLoaded: () => [],
-    }).find((user) => user.id === modelVersion.userId);
+    const user = users.find((user) => user.id === modelVersion.userId);
 
     return [
       {
         content: (
           <Space>
-            <Spinner conditionalRender spinning={Loadable.isLoading(users)}>
+            <Spinner conditionalRender spinning={Loadable.isLoading(loadableUsers)}>
               <>
                 <Avatar user={user} />
-                {getDisplayName(user)}
-                on {formatDatetime(modelVersion.creationTime, { format: 'MMM D, YYYY' })}
+                {getDisplayName(user)} on{' '}
+                {formatDatetime(modelVersion.creationTime, { format: 'MMM D, YYYY' })}
               </>
             </Spinner>
           </Space>
@@ -121,11 +110,7 @@ const ModelVersionHeader: React.FC<Props> = ({
         label: 'Tags',
       },
     ] as InfoRow[];
-  }, [modelVersion, onUpdateTags, users, canModifyModelVersion]);
-
-  const handleDelete = useCallback(() => {
-    openModalVersionDelete(modelVersion);
-  }, [openModalVersionDelete, modelVersion]);
+  }, [loadableUsers, modelVersion, onUpdateTags, users, canModifyModelVersion]);
 
   const actions: Action[] = useMemo(() => {
     const items: Action[] = [
@@ -133,7 +118,7 @@ const ModelVersionHeader: React.FC<Props> = ({
         danger: false,
         disabled: false,
         key: 'download-model',
-        onClick: handleDownloadModel,
+        onClick: () => modelDownloadModal.open(),
         text: 'Download',
       },
       {
@@ -147,7 +132,7 @@ const ModelVersionHeader: React.FC<Props> = ({
         danger: false,
         disabled: modelVersion.model.archived || !canModifyModelVersion({ modelVersion }),
         key: 'edit-model-version-name',
-        onClick: openModelNameEdit,
+        onClick: () => modelVersionEditModal.open(),
         text: 'Edit',
       },
     ];
@@ -156,7 +141,7 @@ const ModelVersionHeader: React.FC<Props> = ({
         danger: true,
         disabled: false,
         key: 'deregister-version',
-        onClick: handleDelete,
+        onClick: () => modelVersionDeleteModal.open(),
         text: 'Deregister Version',
       });
     }
@@ -164,10 +149,10 @@ const ModelVersionHeader: React.FC<Props> = ({
   }, [
     modelVersion,
     canModifyModelVersion,
-    openModelNameEdit,
-    handleDownloadModel,
     canDeleteModelVersion,
-    handleDelete,
+    modelDownloadModal,
+    modelVersionEditModal,
+    modelVersionDeleteModal,
   ]);
 
   const referenceText = useMemo(() => {
@@ -276,9 +261,12 @@ with det.import_from_path(path + "/code"):
         </div>
         <InfoBox rows={infoRows} separator={false} />
       </div>
-      {modalModelDownloadContextHolder}
-      {modalModelVersionDeleteContextHolder}
-      {modalModelNameEditContextHolder}
+      <modelDownloadModal.Component modelVersion={modelVersion} />
+      <modelVersionDeleteModal.Component modelVersion={modelVersion} />
+      <modelVersionEditModal.Component
+        fetchModelVersion={fetchModelVersion}
+        modelVersion={modelVersion}
+      />
       <Modal
         className={css.useNotebookModal}
         footer={null}
