@@ -39,7 +39,8 @@ mounted at `/run/determined/workdir/shared_fs`.  This is done by default for clu
 
 Once a cluster is available, run the following command: 
 ```
-det experiment create zero1.yaml .
+det experiment create zero1.yaml . # For full training
+det experiment create zero1_tiny.yaml . # For quick tests
 ```
 
 **Note:** You will need to run on GPUs that support fp16 training. 
