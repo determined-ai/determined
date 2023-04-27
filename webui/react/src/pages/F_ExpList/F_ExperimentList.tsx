@@ -5,6 +5,7 @@ import { useSearchParams } from 'react-router-dom';
 
 import Page from 'components/Page';
 import useResize from 'hooks/useResize';
+import { useSettings } from 'hooks/useSettings';
 import { getProjectColumns, searchExperiments } from 'services/api';
 import { V1BulkExperimentFilters } from 'services/api-ts-sdk';
 import usePolling from 'shared/hooks/usePolling';
@@ -13,6 +14,7 @@ import { ExperimentAction, ExperimentItem, Project, RunState, ProjectColumn } fr
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 
+import { F_ExperimentListSettings, settingsConfigForProject } from './F_ExperimentList.settings';
 import { defaultExperimentColumns } from './glide-table/columns';
 import { Error, Loading, NoExperiments, NoMatches } from './glide-table/exceptions';
 import GlideTable, { SCROLL_SET_COUNT_NEEDED } from './glide-table/GlideTable';
@@ -26,6 +28,9 @@ interface Props {
 export const PAGE_SIZE = 100;
 const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const settingsConfig = useMemo(() => settingsConfigForProject(project.id), [project.id]);
+
+  const { settings, updateSettings } = useSettings<F_ExperimentListSettings>(settingsConfig);
 
   const [page, setPage] = useState(
     isFinite(Number(searchParams.get('page'))) ? Number(searchParams.get('page')) : 0,
@@ -35,7 +40,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   );
   const [total, setTotal] = useState<Loadable<number>>(NotLoaded);
   const [projectColumns, setProjectColumns] = useState<Loadable<ProjectColumn[]>>(NotLoaded);
-  const [visibleColumns, setVisibleColumns] = useState<string[]>([]);
 
   useEffect(() => {
     setSearchParams({ page: String(page) });
@@ -201,6 +205,13 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     fetchColumns();
   }, [fetchColumns]);
 
+  const setVisibleColumns = useCallback(
+    (newColumns: string[]) => {
+      updateSettings({ columns: newColumns });
+    },
+    [updateSettings],
+  );
+
   return (
     <Page
       bodyNoPadding
@@ -224,7 +235,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
               experiments={experiments}
               filters={experimentFilters}
               handleUpdateExperimentList={handleUpdateExperimentList}
-              initialVisibleColumns={visibleColumns}
+              initialVisibleColumns={settings.columns}
               project={project}
               projectColumns={projectColumns}
               selectAll={selectAll}
