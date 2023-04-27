@@ -46,6 +46,18 @@ DEFAULT_ZERO_SEARCH_SPACE = {
 
 AUTOTUNING_DICT = {"autotuning": {"enabled": True}}
 
+AUTOTUNING_ARG_DEFAULTS = {
+    "tuner-type": "random",
+    "max-trials": 50,
+    "max-concurrent-trials": 16,
+    "zero-stages": [1, 2, 3],
+    "trials-per-random-config": 3,
+    "start-profile-step": 3,
+    "end-profile-step": 5,
+    "deepspeed-config": "deepspeed_config",
+    "metric": "throughput",
+}
+
 DEFAULT_SEARCH_RUNNER_CONFIG = {
     "searcher": {"name": "single", "max_length": 0},
     "max_restarts": 5,

@@ -484,7 +484,7 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
     needs to be written overwritten when subclassing (at a minimum).
     """
 
-    def __init__(self, args: argparse.Namespace, exp_config=Dict[str, Any]) -> None:
+    def __init__(self, args: argparse.Namespace, exp_config: Dict[str, Any]) -> None:
         # Storing args so that additional args can be inherited by child classes
         self.args = args
         self.exp_config = exp_config
