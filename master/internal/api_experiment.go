@@ -198,21 +198,99 @@ func columnNameToSql(c string, l *string, t *string) (string, error) {
 		case "COLUMN_TYPE_NUMBER":
 			col = fmt.Sprintf(`(%v)::float8`, col)
 		}
-	case "LOCATION_TYPE_HYPERPARAMETERS":
-		// TODO support categorical hyperparameters
-		var hps []string
-		hp := strings.Split(strings.TrimPrefix(c, "hp."), ".")
-		for _, h := range hp {
-			hps = append(hps, fmt.Sprintf(`'%v'`, h))
-		}
-		hpQuery := strings.Join(hps, "->")
-		col = fmt.Sprintf(`"e.config->'hyperparameters'->%s->>'val'"`, hpQuery)
-		switch ty {
-		case "COLUMN_TYPE_NUMBER":
-			col = fmt.Sprintf(`(%v)::float8`, col)
-		}
 	}
 	return col, nil
+}
+
+func hpToSql(c string, t *string, v interface{}, o Operator) (string, error) {
+	// TODO replace with correct location and type values
+	// TODO update int, log, double logic
+	var ty string
+	var col string
+
+	if t == nil {
+		ty = "COLUMN_TYPE_UNSPECIFIED"
+	} else {
+		ty = *t
+	}
+	var hps []string
+	hp := strings.Split(strings.TrimPrefix(c, "hp."), ".")
+	for _, h := range hp {
+		hps = append(hps, fmt.Sprintf(`'%v'`, h))
+	}
+	hpQuery := strings.Join(hps, "->")
+	switch ty {
+	case "COLUMN_TYPE_STRING":
+		if o != EMPTY && o != NOT_EMPTY && o != CONTAINS && o != DOES_NOT_CONTAIN {
+			col = fmt.Sprintf(`config->'hyperparameters'->%[1]v->>'type' = 'const' THEN config->'hyperparameters'->%[1]v->>'val' %[2]v
+		`, hpQuery, fmt.Sprintf("%v %v", o.toSql(), v))
+			return col, nil
+		} else if o == EMPTY || o == NOT_EMPTY {
+			col = fmt.Sprintf(`(CASE 
+				WHEN config->'hyperparameters'->%[1]v->>'type' = 'const' THEN config->'hyperparameters'->%[1]v->>'val' %[2]v
+				WHEN config->'hyperparameters'->%[1]v->>'type' = 'categorical' THEN config->'hyperparameters'->%[1]v->>'vals' %[2]v
+				ELSE false
+			 END)
+			`, hpQuery, o.toSql())
+			return col, nil
+		} else {
+			if o == CONTAINS {
+				col = fmt.Sprintf(`(CASE 
+					WHEN config->'hyperparameters'->%[1]v->>'type' = 'const' THEN config->'hyperparameters'->%[1]v->>'val' %[3]v
+					WHEN config->'hyperparameters'->%[1]v->>'type' = 'categorical' THEN (config->'hyperparameters'->%[1]v->>'vals')::jsonb ? '%[2]v'
+					ELSE false
+				 END)
+				`, hpQuery, v, `LIKE '%`+fmt.Sprintf(`%v`, v)+`%'`)
+				return col, nil
+			} else {
+				col = fmt.Sprintf(`(CASE 
+					WHEN config->'hyperparameters'->%[1]v->>'type' = 'const' THEN config->'hyperparameters'->%[1]v->>'val' %[3]v
+					WHEN config->'hyperparameters'->%[1]v->>'type' = 'categorical' THEN (config->'hyperparameters'->%[1]v->>'vals')::jsonb ? '%[2]v') IS NOT TRUE
+					ELSE false
+				 END)
+				`, hpQuery, v, `NOT LIKE '%`+fmt.Sprintf(`%v`, v)+`%'`)
+				return col, nil
+			}
+		}
+	default:
+		if o != EMPTY && o != NOT_EMPTY && o != CONTAINS && o != DOES_NOT_CONTAIN {
+			col = fmt.Sprintf(`(CASE 
+				WHEN config->'hyperparameters'->%[1]v->>'type' = 'const' THEN (config->'hyperparameters'->%[1]v->>'val')::float8 %[2]v
+				WHEN config->'hyperparameters'->%[1]v->>'type' IN ('int', 'double', 'log')  THEN ((config->'hyperparameters'->%[1]v->>'minval')::float8 %[2]v OR (config->'hyperparameters'->%[1]v->>'maxval')::float8)
+				ELSE false
+			 END)
+		`, hpQuery, fmt.Sprintf("%v %v", o.toSql(), v))
+			return col, nil
+		} else if o == EMPTY || o == NOT_EMPTY {
+			col = fmt.Sprintf(`(CASE 
+				WHEN config->'hyperparameters'->%[1]v->>'type' = 'const' THEN (config->'hyperparameters'->%[1]v->>'val')::float8 %[2]v
+				WHEN config->'hyperparameters'->%[1]v->>'type' = 'categorical' THEN config->'hyperparameters'->%[1]v->>'vals' %[2]v
+				WHEN config->'hyperparameters'->%[1]v->>'type' IN ('int', 'double', 'log') THEN (config->'hyperparameters'->%[1]v) %[2]v
+				ELSE false
+			 END)
+			`, hpQuery, o.toSql())
+			return col, nil
+		} else {
+			if o == CONTAINS {
+				col = fmt.Sprintf(`(CASE 
+					WHEN config->'hyperparameters'->%[1]v->>'type' = 'categorical' THEN config->'hyperparameters'->%[1]v->>'vals')::jsonb ? '%[2]v'
+					WHEN config->'hyperparameters'->%[1]v->>'type' IN ('int', 'double', 'log') THEN (config->'hyperparameters'->%[1]v->>'minval')::float8 >= %[2]v AND config->'hyperparameters'->%[1]v->>'maxval')::float8 <= %[2]v)
+					ELSE false
+				 END)
+				`, hpQuery, v)
+				return col, nil
+			} else {
+				col = fmt.Sprintf(`
+				(CASE 
+					WHEN config->'hyperparameters'->%[1]v->>'type' = 'categorical' THEN (config->'hyperparameters'->%[1]v->>'val')::jsonb ? '%[2]v') IS NOT TRUE
+					WHEN config->'hyperparameters'->%[1]v->>'type' IN ('int', 'double', 'log') THEN (config->'hyperparameters'->%[1]v->>'minval')::float8 >= %[2]v OR config->'hyperparameters'->%[1]v->>'maxval')::float8 <= %[2]v)
+					ELSE false
+				 END)
+					`, hpQuery, v)
+				return col, nil
+			}
+		}
+	}
 }
 
 func (e ExperimentFilter) toSql() (string, error) {
@@ -222,21 +300,32 @@ func (e ExperimentFilter) toSql() (string, error) {
 		if e.Value == nil {
 			return "true", nil
 		}
-		col, err := columnNameToSql(e.ColumnName, e.Location, e.Type)
-		if *e.Operator == CONTAINS || *e.Operator == DOES_NOT_CONTAIN {
-			oSql, err := containsOperatorSql(*e.Operator, e.Value)
+		if e.Value == nil {
+			return s, fmt.Errorf("field specified with value but no operator")
+		}
+		if e.Location == nil || *e.Location != "LOCATION_TYPE_HYPERPARAMETERS" {
+			col, err := columnNameToSql(e.ColumnName, e.Location, e.Type)
+			if *e.Operator == CONTAINS || *e.Operator == DOES_NOT_CONTAIN {
+				oSql, err := containsOperatorSql(*e.Operator, e.Value)
+				if err != nil {
+					return s, err
+				}
+				s = fmt.Sprintf("%v %v", col, oSql)
+			} else if *e.Operator == EMPTY || *e.Operator == NOT_EMPTY {
+				s = col + " " + e.Operator.toSql()
+			} else {
+				s = fmt.Sprintf("%v %v %v", col,
+					e.Operator.toSql(), *e.Value)
+			}
 			if err != nil {
 				return s, err
 			}
-			s = fmt.Sprintf("%v %v", col, oSql)
-		} else if *e.Operator == EMPTY || *e.Operator == NOT_EMPTY {
-			s = col + " " + e.Operator.toSql()
 		} else {
-			s = fmt.Sprintf("%v %v %v", col,
-				e.Operator.toSql(), *e.Value)
-		}
-		if err != nil {
-			return s, err
+			sql, err := hpToSql(e.ColumnName, e.Type, *e.Value, *e.Operator)
+			if err != nil {
+				return s, nil
+			}
+			s = sql
 		}
 	case GROUP:
 		var childSql []string
