@@ -62,72 +62,15 @@ func TestExperimentSearchApiFilterParsing(t *testing.T) {
 		{`{"children":[{"type":"COLUMN_TYPE_NUMBER","location":"LOCATION_TYPE_VALIDATIONS", "columnName":"validation.loss","id":"10043dda-2187-45d4-92ce-b9ade5244b6f","kind":"field","operator":"!=","value":0.004}],"conjunction":"and","id":"ROOT","kind":"group"}`, `((e.validation_metrics->>'loss')::float8 != 0.004)`},
 		{`{"children":[{"type":"COLUMN_TYPE_NUMBER","location":"LOCATION_TYPE_VALIDATIONS", "columnName":"validation.validation_accuracy","id":"10043dda-2187-45d4-92ce-b9ade5244b6f","kind":"field","operator":"<","value":-3}],"conjunction":"and","id":"ROOT","kind":"group"}`, `((e.validation_metrics->>'validation_accuracy')::float8 < -3)`},
 		{`{"children":[{"type":"COLUMN_TYPE_NUMBER","location":"LOCATION_TYPE_VALIDATIONS", "columnName":"validation.validation_accuracy","id":"10043dda-2187-45d4-92ce-b9ade5244b6f","kind":"field","operator":"<=","value":10}],"conjunction":"and","id":"ROOT","kind":"group"}`, `((e.validation_metrics->>'validation_accuracy')::float8 <= 10)`},
-		{`{"children":[{"type":"COLUMN_TYPE_NUMBER","location":"LOCATION_TYPE_HYPERPARAMETERS", "columnName":"hp.global_batch_size","id":"10043dda-2187-45d4-92ce-b9ade5244b6f","kind":"field","operator":"=","value":32}],"conjunction":"and","id":"ROOT","kind":"group"}`, `(("e.config->'hyperparameters'->'global_batch_size'->>'val'")::float8 = 32)`},
-		{`{"children":[{"type":"COLUMN_TYPE_NUMBER","location":"LOCATION_TYPE_HYPERPARAMETERS", "columnName":"hp.nested.hp.global_batch_size","id":"10043dda-2187-45d4-92ce-b9ade5244b6f","kind":"field","operator":"!=","value":32}],"conjunction":"and","id":"ROOT","kind":"group"}`, `(("e.config->'hyperparameters'->'nested'->'hp'->'global_batch_size'->>'val'")::float8 != 32)`},
-		{`{"children":[{"type":"COLUMN_TYPE_NUMBER","location":"LOCATION_TYPE_HYPERPARAMETERS", "columnName":"hp.nested.hp.global_batch_size","id":"10043dda-2187-45d4-92ce-b9ade5244b6f","kind":"field","operator":"!=","value":null}],"conjunction":"and","id":"ROOT","kind":"group"}`, `(true)`},
 		{`{"children":[{"type":"COLUMN_TYPE_NUMBER","location":"LOCATION_TYPE_VALIDATIONS", "columnName":"validation.validation_accuracy","id":"10043dda-2187-45d4-92ce-b9ade5244b6f","kind":"field","operator":">=","value":null}],"conjunction":"and","id":"ROOT","kind":"group"}`, `(true)`},
 		{`{"children":[{"columnName":"projectId","id":"10043dda-2187-45d4-92ce-b9ade5244b6f","kind":"field","operator":">=","value":null}],"conjunction":"and","id":"ROOT","kind":"group"}`, `(true)`},
-		// {"-experiment.projectId:123456789", "project_id != 123456789"},
-		// {"experiment.checkpointSize<=12", "checkpoint_size<=12"},
-		// {
-		// 	"experiment.numTrials>=9.22",
-		// 	"(SELECT COUNT(*) FROM trials t WHERE e.id = t.experiment_id)>=9.22",
-		// },
-		// {
-		// 	"validation.validation_accuracy>1",
-		// 	"(e.validation_metrics->>'validation_accuracy')::float8>1",
-		// },
-		// {
-		// 	"validation.validation_loss<-1",
-		// 	"(e.validation_metrics->>'validation_loss')::float8<-1",
-		// },
-		// {
-		// 	"validation.validation_test>-10.98",
-		// 	"(e.validation_metrics->>'validation_test')::float8>-10.98",
-		// },
-		// {
-		// 	"hp.global_batch_size>=32",
-		// 	"(e.config->'hyperparameters'->'global_batch_size'->>'val')::float8>=32",
-		// },
-		// {
-		// 	"hp.global_batch_size<=-64",
-		// 	"(e.config->'hyperparameters'->'global_batch_size'->>'val')::float8<=-64",
-		// },
-		// {
-		// 	`hp.some_string:"string"`,
-		// 	"e.config->'hyperparameters'->'some_string'->>'val' = 'string'",
-		// },
-		// {
-		// 	"validation.validation_test_value:null",
-		// 	"e.validation_metrics->>'validation_test_value' IS NULL",
-		// },
-		// {`experiment.checkpointCount:null`, `checkpoint_count IS NULL`},
-		// {`-experiment.endTime:null`, `e.end_time IS NOT NULL`},
-		// {`experiment.description~"like"`, `e.config->>'description' LIKE '%like%'`},
-		// {
-		// 	`(experiment.description~"like" AND -experiment.description~"notlike")`,
-		// 	`(e.config->>'description' LIKE '%like%' AND e.config->>'description' NOT LIKE '%notlike%')`,
-		// }, //nolint: lll
-		// {`experiment.startTime>="2023-01-06T19:06:25.053893089Z" OR experiment.endTime<="2023-01-06T19:08:33.219618082Z"`, //nolint: lll
-		// 	`e.start_time>='2023-01-06T19:06:25.053893089Z' OR e.end_time<='2023-01-06T19:08:33.219618082Z'`}, //nolint: lll
-		// {`(experiment.description~"experiment description" AND (-experiment.id:456 OR -experiment.resourcePool~"test\"s comma value\"s"))`, //nolint: lll
-		// 	`(e.config->>'description' LIKE '%experiment description%' AND (e.id != 456 OR e.config->'resources'->>'resource_pool' NOT LIKE '%test\"s comma value\"s%'))`}, //nolint: lll
-		// {
-		// 	`(experiment.forkedFrom:5 OR (-validation.error:1 AND hp.hyperparameter<=10))`,
-		// 	`(e.parent_id = 5 OR ((e.validation_metrics->>'error')::float8 != 1 AND (e.config->'hyperparameters'->'hyperparameter'->>'val')::float8<=10))`, //nolint: lll
-		// },
-		// {
-		// 	`validation.validation_test_value>="2023-01-06T19:06:25.053893089Z"`,
-		// 	`e.validation_metrics->>'validation_test_value'>='2023-01-06T19:06:25.053893089Z'`,
-		// },
-		// {
-		// 	`(-validation.error:null OR (-validation.error:1 AND hp.hyperparameter<=10))`,
-		// 	`((e.validation_metrics->>'error')::float8 IS NOT NULL OR ((e.validation_metrics->>'error')::float8 != 1 AND (e.config->'hyperparameters'->'hyperparameter'->>'val')::float8<=10))`, //nolint: lll
-		// },
-		// {
-		// 	`(validation.error:null OR (-validation.error:"1" AND hp.hyperparameter<=10))`,
-		// 	`(e.validation_metrics->>'error' IS NULL OR (e.validation_metrics->>'error' != '1' AND (e.config->'hyperparameters'->'hyperparameter'->>'val')::float8<=10))`, //nolint: lll
-		// },
+		{`{"children":[{"columnName":"id","id":"c6d84ec0-bcb2-4e79-ab46-d0fc94ef49ed","kind":"field","operator":"=","value":1},{"children":[{"columnName":"id","id":"975e0a2e-457a-4517-baca-3f7f488e6b92","kind":"field","operator":"=","value":2},{"columnName":"id","id":"5979523b-5ec0-4184-ace8-d5e66a2d9f3e","kind":"field","operator":"=","value":3}],"conjunction":"and","id":"ea3591bd-8481-4239-b4c7-2516e7657db7","kind":"group"},{"columnName":"id","id":"f2d30c06-0286-43a0-b608-d84bdf9db84d","kind":"field","operator":"=","value":4},{"children":[{"columnName":"id","id":"e55bfdc0-e775-4776-9a10-f1b9d7ce3b89","kind":"field","operator":"=","value":5}],"conjunction":"and","id":"11b13b42-15c5-495c-982d-f663187afeaf","kind":"group"}],"conjunction":"and","id":"ROOT","kind":"group"}`, `(e.id = 1 AND (e.id = 2 AND e.id = 3) AND e.id = 4 AND (e.id = 5))`},
+		{`{"children":[{"type":"COLUMN_TYPE_NUMBER","location":"LOCATION_TYPE_HYPERPARAMETERS", "columnName":"hp.global_batch_size","id":"10043dda-2187-45d4-92ce-b9ade5244b6f","kind":"field","operator":"=","value":32}],"conjunction":"and","id":"ROOT","kind":"group"}`,
+			`((CASE
+				WHEN config->'hyperparameters'->'global_batch_size'->>'type' = 'const' THEN (config->'hyperparameters'->'global_batch_size'->>'val')::float8 = 32
+				WHEN config->'hyperparameters'->'global_batch_size'->>'type' IN ('int', 'double', 'log') THEN ((config->'hyperparameters'->'global_batch_size'->>'minval')::float8 = 32 OR (config->'hyperparameters'->'global_batch_size'->>'maxval')::float8 = 32)
+				ELSE false
+			 END))`},
 	}
 	for _, c := range validTestCases {
 		var experimentFilter ExperimentFilter
@@ -135,6 +78,6 @@ func TestExperimentSearchApiFilterParsing(t *testing.T) {
 		require.NoError(t, err)
 		filterSql, err := experimentFilter.toSql()
 		require.NoError(t, err)
-		require.Equal(t, c[1], filterSql)
+		require.Equal(t, filterSql, c[1])
 	}
 }
