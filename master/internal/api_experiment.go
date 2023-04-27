@@ -271,18 +271,17 @@ func hpToSql(c string, t *string, v interface{}, o Operator) (string, error) {
 			return col, nil
 		} else {
 			if o == CONTAINS {
-				col = fmt.Sprintf(`(CASE 
-					WHEN config->'hyperparameters'->%[1]v->>'type' = 'categorical' THEN config->'hyperparameters'->%[1]v->>'vals')::jsonb ? '%[2]v'
-					WHEN config->'hyperparameters'->%[1]v->>'type' IN ('int', 'double', 'log') THEN (config->'hyperparameters'->%[1]v->>'minval')::float8 >= %[2]v AND config->'hyperparameters'->%[1]v->>'maxval')::float8 <= %[2]v)
+				col = fmt.Sprintf(`(CASE
+					WHEN config->'hyperparameters'->%[1]v->>'type' = 'categorical' THEN (config->'hyperparameters'->%[1]v->>'vals')::jsonb ? '%[2]v'
+					WHEN config->'hyperparameters'->%[1]v->>'type' IN ('int', 'double', 'log') THEN (config->'hyperparameters'->%[1]v->>'minval')::float8 >= %[2]v AND (config->'hyperparameters'->%[1]v->>'maxval')::float8 <= %[2]v
 					ELSE false
-				 END)
-				`, hpQuery, v)
+				 END)`, hpQuery, v)
 				return col, nil
 			} else {
 				col = fmt.Sprintf(`
 				(CASE 
 					WHEN config->'hyperparameters'->%[1]v->>'type' = 'categorical' THEN (config->'hyperparameters'->%[1]v->>'val')::jsonb ? '%[2]v') IS NOT TRUE
-					WHEN config->'hyperparameters'->%[1]v->>'type' IN ('int', 'double', 'log') THEN (config->'hyperparameters'->%[1]v->>'minval')::float8 >= %[2]v OR config->'hyperparameters'->%[1]v->>'maxval')::float8 <= %[2]v)
+					WHEN config->'hyperparameters'->%[1]v->>'type' IN ('int', 'double', 'log') THEN (config->'hyperparameters'->%[1]v->>'minval')::float8 >= %[2]v OR config->'hyperparameters'->%[1]v->>'maxval')::float8 <= %[2]v
 					ELSE false
 				 END)
 					`, hpQuery, v)

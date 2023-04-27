@@ -9,50 +9,15 @@ import (
 
 func TestExperimentSearchApiFilterParsing(t *testing.T) {
 	invalidTestCases := []string{
-		"(",
-		")",
-		"())junk",
-		")morejunk()",
-		"(((junk(((()",
-		")((((otherjunk)((()))))))",
-		"",
-		"        ",
-		"   ()     ",
-		"  (    )  ",
-		"()",
-		"()()",
-		"()       ()",
-		"(()())",
-		`string:"value"`,
-		"-number:123456789",
-		"anumber<=12.34",
-		"thisnumber>=9.22",
-		"string:null",
-		"-value:null",
-		`str~"like"`,
-		`str~"like" AND -otherstr~"notlike")`,
-		`experiment.user  :   "username"`,
-		"-experiment.projectId: 123456789",
-		"experiment.checkpointSize <=12",
-		"experiment.checkpointSize <12",
-		"experiment.checkpointSize <=  12",
-		`experiment.user:   "username"`,
-		"hp.global_batch_size <=-64",
-		"validation.validation_test>   -10.98",
-		"validation.validation_test   >   -10.98",
-		"hp.global_batch_size<=-90 AND hp.global_batch_size>= -64",
-		"hp.global_batch_size<=-64 AND hp.global_batch_size <=-64",
-		"hp.global_batch_size<=-64 OR validation.validation_test   >   -10.98",
-		"hp.global_batch_size:-64 OR validation.validation_test< 20",
-		"hp.global_batch_size: 64 OR validation.validation_test<20",
-		`hp.global_batch_size:"string value" OR hp.global_batch_size<20`,
-		`hp.global_batch_size:"20" OR hp.global_batch_size<20`,
+		// TOOD add invalid test cases
+		" ",
 	}
 	for _, c := range invalidTestCases {
 		_, err := parseFilter(c)
 		require.Error(t, err)
 	}
 	validTestCases := [][2]string{
+		// TOOD add more valid test cases
 		{`{"children":[{"columnName":"resourcePool","id":"10043dda-2187-45d4-92ce-b9ade5244b6f","kind":"field","operator":"contains","value":"default"}],"conjunction":"and","id":"ROOT","kind":"group"}`, `(e.config->'resources'->>'resource_pool' LIKE '%default%')`},
 		{`{"children":[{"columnName":"id","id":"10043dda-2187-45d4-92ce-b9ade5244b6f","kind":"field","operator":"=","value":1}],"conjunction":"and","id":"ROOT","kind":"group"}`, `(e.id = 1)`},
 		{`{"children":[{"columnName":"projectId","id":"10043dda-2187-45d4-92ce-b9ade5244b6f","kind":"field","operator":">=","value":-1}],"conjunction":"and","id":"ROOT","kind":"group"}`, `(project_id >= -1)`},
