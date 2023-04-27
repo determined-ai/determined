@@ -1,0 +1,9 @@
+# Specify the sitemap location for the website
+Sitemap: https://docs.determined.ai/latest/sitemap.xml
+
+# Specify the user agents
+User-agent: *
+
+# Disallow crawling
+
+# End of robots.txt

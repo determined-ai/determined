@@ -34,6 +34,10 @@ html_js_files = [
     ("scripts/docsearch.sbt.js", {"defer": "defer"}),
 ]
 
+# Specify that the robots.txt file should be included as an 
+# additional file to be copied when building the HTML output
+html_extra_path = ['../webui/react/build/robots.txt']
+
 
 def env_get_outdated(app, env, added, changed, removed):
     return ["index"]
