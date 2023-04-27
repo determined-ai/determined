@@ -2,6 +2,9 @@
  Core API
 ##########
 
+.. meta::
+   :description: Learn how to use the Core API. With the Core API you can train arbitrary models on the Determined platform with seamless access to the following capabilities: metrics tracking, checkpoint tracking and preemption support, hyperparameter search, distributing work across multiple GPUs or nodes.
+
 In this guide, you'll learn how to use the Core API.
 
 +------------------------------------------------------------------+
@@ -11,7 +14,7 @@ In this guide, you'll learn how to use the Core API.
 +------------------------------------------------------------------+
 
 With the Core API you can train arbitrary models on the Determined platform with seamless access to
-the the following capabilities:
+the following capabilities:
 
 -  metrics tracking
 -  checkpoint tracking and preemption support
