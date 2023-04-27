@@ -442,3 +442,22 @@ func TestProvisionerLaunchOneAtATime(t *testing.T) {
 	time.Sleep(time.Second * 5) // can we do this without the sleep?
 	assert.NilError(t, provisioner.GetError(), "received error %t", provisioner.GetError())
 }
+
+func TestProvisionerLaunchOneAtATimeFail(t *testing.T) {
+	timeout := model.Duration(5 * time.Second)
+	setup := &mockConfig{
+		instanceType: TestInstanceType{},
+		Config: &Config{
+			MaxInstances:        4,
+			ErrorTimeout:        &timeout,
+			MaxProvisionRetries: 4,
+		},
+		numPerProvision: 1,
+	}
+	mock, provisioner := newMockEnvironment(t, setup)
+
+	mock.system.Ask(mock.provisioner, sproto.ScalingInfo{DesiredNewInstances: 4}).Get()
+	mock.system.Ask(mock.provisioner, provisionerTick{}).Get()
+	time.Sleep(time.Second * 5) // can we do this without the sleep?
+	assert.NilError(t, provisioner.GetError(), "expected no error but received %t", provisioner.GetError())
+}
