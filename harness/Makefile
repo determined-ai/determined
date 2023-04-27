@@ -28,13 +28,13 @@ test-cpu:
 .PHONY: test-gpu
 test-gpu:
 	# We will use this target in circleci once we have access to gpu instances.
-	# Since tests are image-specific, lightning and deepspeed tests must be excluded and run separately
-	coverage run -m pytest -v --runslow --durations=0 -m "gpu" tests/experiment --ignore=tests/experiment/pytorch/test_pytorch_lightning.py --ignore=tests/experiment/pytorch/test_deepspeed_trial.py
+	# Since integration tests are image-specific, they must be excluded and run separately
+	coverage run -m pytest -v --runslow --durations=0 -m "gpu" tests/experiment --ignore=tests/experiment/integrations
 
 .PHONY: test-gpu-lightning
 test-gpu-lightning:
 	# Lightning tests require their own docker image in circleci
-	coverage run -m pytest -v --runslow --durations=0 -m "PyTorchLightning" tests/experiment --ignore=tests/experiment/pytorch/test_deepspeed_trial.py
+	coverage run -m pytest -v --runslow --durations=0 -m "PyTorchLightning" tests/experiment/integrations/test_pytorch_lightning.py
 
 .PHONY: test
 test:
