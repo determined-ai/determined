@@ -1,6 +1,7 @@
 package provisioner
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -42,6 +43,7 @@ type mockConfig struct {
 	instanceType        model.InstanceType
 	initInstances       []*model.Instance
 	failProvisioning    bool
+	numPerProvision     int
 }
 
 type mockEnvironment struct {
@@ -100,6 +102,7 @@ type mockProvider struct {
 	maxInstances     int
 	instances        map[string]*model.Instance
 	failProvisioning bool
+	numPerProvision  int
 	history          []mockFuncCall
 }
 
@@ -113,6 +116,7 @@ func newMockProvider(config *mockConfig) (*mockProvider, error) {
 		maxInstances:     config.MaxInstances,
 		instances:        instMap,
 		failProvisioning: config.failProvisioning,
+		numPerProvision:  config.numPerProvision,
 	}
 	return cluster, nil
 }
@@ -138,10 +142,14 @@ func (c *mockProvider) list(ctx *actor.Context) ([]*model.Instance, error) {
 func (c *mockProvider) prestart(ctx *actor.Context) {}
 
 func (c *mockProvider) launch(ctx *actor.Context, instanceNum int) (int, error) {
-	if c.failProvisioning {
+	switch {
+	case c.failProvisioning:
 		return c.launchFail()
+	case c.numPerProvision > 0:
+		return c.launchSuccess(ctx, c.numPerProvision)
+	default:
+		return c.launchSuccess(ctx, instanceNum)
 	}
-	return c.launchSuccess(ctx, instanceNum)
 }
 
 func (c *mockProvider) launchSuccess(ctx *actor.Context, instanceNum int) (int, error) {
@@ -159,8 +167,21 @@ func (c *mockProvider) launchSuccess(ctx *actor.Context, instanceNum int) (int, 
 	return instanceNum, nil
 }
 
+func (c *mockProvider) launchOne(ctx *actor.Context, instanceNum int) (int, error) {
+	c.history = append(c.history, newMockFuncCall("launch", c.mockInstanceType, instanceNum))
+	name := uuid.New().String()
+	inst := model.Instance{
+		ID:         name,
+		AgentName:  name,
+		LaunchTime: time.Now(),
+		State:      model.Running,
+	}
+	c.instances[inst.ID] = &inst
+	return 1, fmt.Errorf("launched only 1, but expected %d", instanceNum)
+}
+
 func (c *mockProvider) launchFail() (int, error) {
-	return 0, nil
+	return 0, fmt.Errorf("launched no instances")
 }
 
 func (c *mockProvider) terminate(ctx *actor.Context, instanceIDs []string) {
@@ -401,4 +422,23 @@ func TestProvisionerLaunchFailure(t *testing.T) {
 	mock.system.Ask(mock.provisioner, sproto.ScalingInfo{DesiredNewInstances: 4}).Get()
 	mock.system.Ask(mock.provisioner, provisionerTick{}).Get()
 	assert.ErrorContains(t, provisioner.GetError(), "failed to launch 2", "expected provisioning error but received nil")
+}
+
+func TestProvisionerLaunchOneAtATime(t *testing.T) {
+	timeout := model.Duration(5 * time.Second)
+	setup := &mockConfig{
+		instanceType: TestInstanceType{},
+		Config: &Config{
+			MaxInstances:        4,
+			ErrorTimeout:        &timeout,
+			MaxProvisionRetries: 4,
+		},
+		numPerProvision: 1,
+	}
+	mock, provisioner := newMockEnvironment(t, setup)
+
+	mock.system.Ask(mock.provisioner, sproto.ScalingInfo{DesiredNewInstances: 4}).Get()
+	mock.system.Ask(mock.provisioner, provisionerTick{}).Get()
+	time.Sleep(time.Second * 5) // can we do this without the sleep?
+	assert.NilError(t, provisioner.GetError(), "expected no error but received %t", provisioner.GetError())
 }
