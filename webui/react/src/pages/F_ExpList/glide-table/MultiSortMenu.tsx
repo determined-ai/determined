@@ -9,6 +9,9 @@ import { Loadable } from 'utils/loadable';
 
 import css from './MultiSortMenu.module.scss';
 
+// in the list of columns from the api but not supported by the sort functionality
+const BANNED_COLUMNS = new Set(['tags', 'duration']);
+
 const directionType = io.keyof({ asc: null, desc: null });
 type DirectionType = io.TypeOf<typeof directionType>;
 
@@ -79,10 +82,12 @@ const ColumnOptions: React.FC<ColumnOptionsProps> = ({ onChange, columns, value 
     <Select
       autoFocus
       loading={Loadable.isLoading(columns)}
-      options={Loadable.getOrElse([], columns).map((c) => ({
-        label: c.displayName || c.column,
-        value: c.column,
-      }))}
+      options={Loadable.getOrElse([], columns)
+        .filter((c) => !BANNED_COLUMNS.has(c.column))
+        .map((c) => ({
+          label: c.displayName || c.column,
+          value: c.column,
+        }))}
       placeholder="Select column"
       value={value}
       width="100%"
