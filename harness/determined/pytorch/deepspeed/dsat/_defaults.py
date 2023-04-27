@@ -50,5 +50,5 @@ DEFAULT_SEARCH_RUNNER_CONFIG = {
     "searcher": {"name": "single", "max_length": 0},
     "max_restarts": 5,
     "resources": {"slots_per_trial": 0},
-    "entrypoint": f"python3 -m determined.pytorch.deepspeed.dsat._run_dsat -p {ARGS_PKL_PATH}",
+    "entrypoint": "python3 -m determined.pytorch.deepspeed.dsat._run_dsat",
 }

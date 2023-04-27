@@ -10,7 +10,7 @@ import torch
 from ruamel import yaml
 
 import determined as det
-from determined.pytorch.deepspeed.dsat import _defaults, _dsat_search_method
+from determined.pytorch.deepspeed.dsat import _defaults
 from determined.util import merge_dicts
 
 
@@ -38,6 +38,15 @@ def get_search_runner_config_from_args(args: argparse.Namespace) -> Dict[str, An
     experiment_config_dict = get_dict_from_yaml_or_json_path(args.config_path)
     search_runner_config = merge_dicts(experiment_config_dict, default_search_runner_config)
     search_runner_config["name"] += " (DS AT Searcher)"
+    search_runner_config["hyperparameters"] = {
+        "max_trials": args.max_trials,
+        "max_concurrent_trials": args.max_concurrent_trials,
+        "max_slots": args.max_slots,
+        "zero_stages": args.zero_stages,
+        "start_profile_step": args.start_profile_step,
+        "metric": args.metric,
+        "early_stopping": args.early_stopping,
+    }
     # TODO: add user cli args to hp section for easier reference
 
     return search_runner_config
