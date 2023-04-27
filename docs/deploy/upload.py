@@ -9,11 +9,6 @@ import boto3
 HERE = pathlib.Path(__file__).parent
 
 if __name__ == "__main__":
-    # get path to blob to upload
-    # get account creds
-    # check if objects already exist at destination
-    # check if upload being done is a preview site
-    # opt: flag to delete blobs missing from destination
 
     def dir_path(string):
         if os.path.isdir(string):
@@ -45,6 +40,12 @@ if __name__ == "__main__":
         type=str,
         default="us-west-2",
         help="S3 bucket region where doc pages are served from",
+    )
+    parser.add_argument(
+        "--cf-distribution",
+        type=str,
+        default=os.environ.get("CF_DISTRIBUTION_ID", ""),
+        help="CloudFront distribution ID to create invalidation for",
     )
     parser.add_argument(
         "--local-path",
@@ -131,7 +132,32 @@ if __name__ == "__main__":
         # TODO(danh): just uncomment this whenever the thought's not scary :D
         # bucket.delete_objects(Delete=delete_request)
 
+    print(
+        "upload done, {} objects uploaded, {} objects deleted".format(
+            len(uploaded_objects), len(to_delete)
+        )
+    )
+
+    # create invalidation if distribution ID provided
+    if args.cf_distribution:
+        client = boto3.client("cloudfront")
+        timestamp = time.time_ns()
+        path = "/{}/*".format(upload_root)
+        client.create_invalidation(
+            DistributionId=args.cf_distribution,
+            InvalidationBatch={
+                "Paths": {
+                    "Quantity": 1,
+                    "Items": [
+                        path,
+                    ],
+                },
+                "CallerReference": str(timestamp),
+            },
+        )
+        print("invalidation {} created for {}".format(timestamp, path))
+
     objects_url = "https://{}.s3.{}.amazonaws.com/{}/index.html".format(
         args.bucket_id, args.bucket_region, upload_root
     )
-    print("upload done, preview ready at: " + objects_url)
+    print("preview ready at: " + objects_url)
