@@ -6920,6 +6920,19 @@ export interface V1PutProjectNotesResponse {
     notes: Array<V1Note>;
 }
 /**
+ * Response to PutTemplateRequest.
+ * @export
+ * @interface V1PutTemplateResponse
+ */
+export interface V1PutTemplateResponse {
+    /**
+     * The updated or created template.
+     * @type {V1Template}
+     * @memberof V1PutTemplateResponse
+     */
+    template?: V1Template;
+}
+/**
  * Request to QueryTrials includes pagination parameters and TrialFilters.
  * @export
  * @interface V1QueryTrialsRequest
@@ -24597,7 +24610,7 @@ export const TemplatesApiFetchParamCreator = function (configuration?: Configura
          * 
          * @summary Post a new template.
          * @param {string} templateName The name of the template.
-         * @param {V1Template} body The template to put.
+         * @param {V1Template} body The template to post.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -24614,6 +24627,51 @@ export const TemplatesApiFetchParamCreator = function (configuration?: Configura
                 .replace(`{${"templateName"}}`, encodeURIComponent(String(templateName)));
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            localVarUrlObj.search = null;
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary DEPRECATED: Update or create (upsert) the requested template.
+         * @param {string} templateName The name of the template.
+         * @param {V1Template} body The template to put.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        putTemplate(templateName: string, body: V1Template, options: any = {}): FetchArgs {
+            // verify required parameter 'templateName' is not null or undefined
+            if (templateName === null || templateName === undefined) {
+                throw new RequiredError('templateName','Required parameter templateName was null or undefined when calling putTemplate.');
+            }
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling putTemplate.');
+            }
+            const localVarPath = `/api/v1/templates/{templateName}`
+                .replace(`{${"templateName"}}`, encodeURIComponent(String(templateName)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = { method: 'PUT', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
             
@@ -24732,12 +24790,32 @@ export const TemplatesApiFp = function (configuration?: Configuration) {
          * 
          * @summary Post a new template.
          * @param {string} templateName The name of the template.
-         * @param {V1Template} body The template to put.
+         * @param {V1Template} body The template to post.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
         postTemplate(templateName: string, body: V1Template, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostTemplateResponse> {
             const localVarFetchArgs = TemplatesApiFetchParamCreator(configuration).postTemplate(templateName, body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary DEPRECATED: Update or create (upsert) the requested template.
+         * @param {string} templateName The name of the template.
+         * @param {V1Template} body The template to put.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        putTemplate(templateName: string, body: V1Template, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PutTemplateResponse> {
+            const localVarFetchArgs = TemplatesApiFetchParamCreator(configuration).putTemplate(templateName, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -24806,12 +24884,23 @@ export const TemplatesApiFactory = function (configuration?: Configuration, fetc
          * 
          * @summary Post a new template.
          * @param {string} templateName The name of the template.
-         * @param {V1Template} body The template to put.
+         * @param {V1Template} body The template to post.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
         postTemplate(templateName: string, body: V1Template, options?: any) {
             return TemplatesApiFp(configuration).postTemplate(templateName, body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary DEPRECATED: Update or create (upsert) the requested template.
+         * @param {string} templateName The name of the template.
+         * @param {V1Template} body The template to put.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        putTemplate(templateName: string, body: V1Template, options?: any) {
+            return TemplatesApiFp(configuration).putTemplate(templateName, body, options)(fetch, basePath);
         },
     }
 };
@@ -24880,13 +24969,26 @@ export class TemplatesApi extends BaseAPI {
      * 
      * @summary Post a new template.
      * @param {string} templateName The name of the template.
-     * @param {V1Template} body The template to put.
+     * @param {V1Template} body The template to post.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof TemplatesApi
      */
     public postTemplate(templateName: string, body: V1Template, options?: any) {
         return TemplatesApiFp(this.configuration).postTemplate(templateName, body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary DEPRECATED: Update or create (upsert) the requested template.
+     * @param {string} templateName The name of the template.
+     * @param {V1Template} body The template to put.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TemplatesApi
+     */
+    public putTemplate(templateName: string, body: V1Template, options?: any) {
+        return TemplatesApiFp(this.configuration).putTemplate(templateName, body, options)(this.fetch, this.basePath)
     }
     
 }

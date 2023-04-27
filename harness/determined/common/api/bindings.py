@@ -8872,6 +8872,32 @@ class v1PutProjectNotesResponse:
         }
         return out
 
+class v1PutTemplateResponse:
+    template: "typing.Optional[v1Template]" = None
+
+    def __init__(
+        self,
+        *,
+        template: "typing.Union[v1Template, None, Unset]" = _unset,
+    ):
+        if not isinstance(template, Unset):
+            self.template = template
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PutTemplateResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "template" in obj:
+            kwargs["template"] = v1Template.from_json(obj["template"]) if obj["template"] is not None else None
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "template" in vars(self):
+            out["template"] = None if self.template is None else self.template.to_json(omit_unset)
+        return out
+
 class v1QueryTrialsRequest:
     limit: "typing.Optional[int]" = None
     offset: "typing.Optional[int]" = None
@@ -16567,6 +16593,27 @@ def put_PutProjectNotes(
     if _resp.status_code == 200:
         return v1PutProjectNotesResponse.from_json(_resp.json())
     raise APIHttpError("put_PutProjectNotes", _resp)
+
+def put_PutTemplate(
+    session: "api.Session",
+    *,
+    body: "v1Template",
+    template_name: str,
+) -> "v1PutTemplateResponse":
+    _params = None
+    _resp = session._do_request(
+        method="PUT",
+        path=f"/api/v1/templates/{template_name}",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1PutTemplateResponse.from_json(_resp.json())
+    raise APIHttpError("put_PutTemplate", _resp)
 
 def post_QueryTrials(
     session: "api.Session",
