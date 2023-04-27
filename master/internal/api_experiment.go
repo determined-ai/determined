@@ -100,8 +100,8 @@ type ExperimentFilter struct {
 	Value       *interface{}
 	Kind        FilterType
 	ColumnName  string
-	Location    *projectv1.LocationType
-	Type        *projectv1.ColumnType
+	Location    *string
+	Type        *string
 }
 
 func (o *Operator) toSql() string {
@@ -140,13 +140,20 @@ func containsOperatorSql(o Operator, v *interface{}) (string, error) {
 	return s, nil
 }
 
-func columnNameToSql(c string, l *projectv1.LocationType, t *projectv1.ColumnType) (string, error) {
-	var lo projectv1.LocationType
+func columnNameToSql(c string, l *string, t *string) (string, error) {
+	// TODO replace with correct location and type values
+	var lo string
+	var ty string
 	var col string
 	if l == nil {
-		lo = projectv1.LocationType_LOCATION_TYPE_EXPERIMENT
+		lo = "LOCATION_TYPE_EXPERIMENT"
 	} else {
 		lo = *l
+	}
+	if t == nil {
+		ty = "COLUMN_TYPE_UNSPECIFIED"
+	} else {
+		ty = *t
 	}
 
 	filterExperimentColMap := map[string]string{
@@ -179,30 +186,30 @@ func columnNameToSql(c string, l *projectv1.LocationType, t *projectv1.ColumnTyp
 	}
 
 	switch lo {
-	case projectv1.LocationType_LOCATION_TYPE_EXPERIMENT:
+	case "LOCATION_TYPE_EXPERIMENT":
 		col, exists := filterExperimentColMap[c]
 		if !exists {
 			return col, fmt.Errorf("invalid experiment column %s", col)
 		}
 		return col, nil
-	case projectv1.LocationType_LOCATION_TYPE_VALIDATIONS:
-		col = fmt.Sprintf(`e.validation_metrics->>'%s'`, strings.TrimPrefix(c, "validations."))
-		if t != nil {
-			switch *t {
-			case projectv1.ColumnType_COLUMN_TYPE_NUMBER:
-				col = fmt.Sprintf(`(%v)::float8`, col)
-			}
+	case "LOCATION_TYPE_VALIDATIONS":
+		col = fmt.Sprintf(`e.validation_metrics->>'%s'`, strings.TrimPrefix(c, "validation."))
+		switch ty {
+		case "COLUMN_TYPE_NUMBER":
+			col = fmt.Sprintf(`(%v)::float8`, col)
 		}
-	case projectv1.LocationType_LOCATION_TYPE_HYPERPARAMETERS:
+	case "LOCATION_TYPE_HYPERPARAMETERS":
 		// TODO support categorical hyperparameters
-		hps := strings.Split(strings.TrimPrefix(c, "hp."), ".")
+		var hps []string
+		hp := strings.Split(strings.TrimPrefix(c, "hp."), ".")
+		for _, h := range hp {
+			hps = append(hps, fmt.Sprintf(`'%v'`, h))
+		}
 		hpQuery := strings.Join(hps, "->")
-		col = fmt.Sprintf(`"e.config->'hyperparameters'->'%s'->>'val'"`, hpQuery)
-		if t != nil {
-			switch *t {
-			case projectv1.ColumnType_COLUMN_TYPE_NUMBER:
-				col = fmt.Sprintf(`(%v)::float8`, col)
-			}
+		col = fmt.Sprintf(`"e.config->'hyperparameters'->%s->>'val'"`, hpQuery)
+		switch ty {
+		case "COLUMN_TYPE_NUMBER":
+			col = fmt.Sprintf(`(%v)::float8`, col)
 		}
 	}
 	return col, nil
