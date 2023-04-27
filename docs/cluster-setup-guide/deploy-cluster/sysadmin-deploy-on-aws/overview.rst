@@ -15,6 +15,7 @@ Virtual Private Cloud (VPC); users interact with the master via a designated ext
 configured during installation.
 
 .. image:: /assets/images/det-cloud-architecture.png
+   :alt: Diagram showing Determined Cloud Deployment Architecture on AWS
 
 Following the diagram, a standard execution would be:
 

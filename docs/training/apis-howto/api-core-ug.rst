@@ -3,7 +3,7 @@
 ##########
 
 .. meta::
-   :description: Learn how to use the Core API. With the Core API you can train arbitrary models on the Determined platform with seamless access to the following capabilities: metrics tracking, checkpoint tracking and preemption support, hyperparameter search, distributing work across multiple GPUs or nodes.
+   :description: Learn how to train almost any machine learning model using Determined AI's Core API. This guide covers metrics tracking, checkpoint tracking and preemption support, hyperparameter search, and distributing work across multiple GPUs or nodes.
 
 In this guide, you'll learn how to use the Core API.
 

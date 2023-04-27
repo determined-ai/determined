@@ -2,8 +2,8 @@
  Tutorials
 ###########
 
-Learn the basics of working with Determined and how to port your existing code to the Determined
-environment.
+.. meta::
+   :description: Choose a tutorial to help you get started training machine learning models. You'll find beginner level and more advanced tutorials with links to user guides and examples.
 
 ************
  Quickstart
