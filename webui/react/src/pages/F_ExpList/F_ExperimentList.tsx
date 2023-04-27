@@ -61,7 +61,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
       } else {
         params.delete('page');
       }
-      const sortString = makeSortString(sorts.filter(isValidSort));
       if (sortString) {
         params.set('sort', sortString);
       } else {
@@ -70,7 +69,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
       return params;
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, sorts]);
+  }, [page, sortString]);
 
   const [columns, setColumns] = useState<Loadable<V1ProjectColumn[]>>(NotLoaded);
   const [sortableColumnIds, setSortableColumnIds] = useState(defaultExperimentColumns);
