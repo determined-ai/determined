@@ -25,18 +25,6 @@ def smaller_is_better(metric: str) -> bool:
         )
 
 
-def get_search_method_from_args(
-    args: argparse.Namespace,
-) -> _dsat_search_method.BaseDSATSearchMethod:
-    assert (
-        args.tuner_type in _defaults.ALL_SEARCH_METHOD_CLASSES
-    ), f"tuner-type must be one of {list(_defaults.ALL_SEARCH_METHOD_CLASSES)}, not {args.tuner_type}"
-    search_method_class = _defaults.ALL_SEARCH_METHOD_CLASSES[args.tuner_type]
-    # TODO: Sanity check args.
-    search_method = search_method_class(args)
-    return search_method
-
-
 def get_search_runner_config_from_args(args: argparse.Namespace) -> Dict[str, Any]:
     if args.search_runner_config is not None:
         submitted_search_runner_config = get_dict_from_yaml_or_json_path(args.search_runner_config)
