@@ -229,7 +229,7 @@ def generate_function(api: str, phase: Phase, function: swagger_parser.Function)
                 )
                 code += f"{line}{';' if n == len(path_params) else ''}"
             code.dedent()
-        code += "const localVarUrlObj = url.parse(localVarPath, true);"
+        code += "const localVarUrlObj = new URL(localVarPath, BASE_PATH);"
         code += (
             f"const localVarRequestOptions = {{ method: '{function.method.upper()}', ...options }};"
         )
@@ -275,9 +275,10 @@ def generate_function(api: str, phase: Phase, function: swagger_parser.Function)
             code += "localVarHeaderParameter['Content-Type'] = 'application/json';"
             code += ""
 
-        code += "localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };"
-        code += "// fix override query string Detail: https://stackoverflow.com/a/7517673/1077943"
-        code += "localVarUrlObj.search = null;"
+        # original code for queryparameters used the node querystrings module --
+        # it treats objects and arrays differently.
+        code += "objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);"
+        code += "objToSearchParams(options.query || {}, localVarUrlObj.searchParams);"
         code += (
             "localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };"
         )
@@ -292,7 +293,7 @@ def generate_function(api: str, phase: Phase, function: swagger_parser.Function)
         code += ""
         code += "return {"
         code.indent()
-        code += "url: url.format(localVarUrlObj),"
+        code += "url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,"
         code += "options: localVarRequestOptions,"
         code.dedent()
         code += "};"
@@ -312,7 +313,7 @@ def generate_function(api: str, phase: Phase, function: swagger_parser.Function)
         code += f"{function_name}({function_args}options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<{annotation(success_response)}> {{"
         code.indent()
         code += f"const localVarFetchArgs = {api}FetchParamCreator(configuration).{function_name}({call_list}options);"
-        code += "return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {"
+        code += "return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {"
         code.indent()
         code += "return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {"
         code.indent()
@@ -455,12 +456,42 @@ def tsbindings(swagger: swagger_parser.ParseResult) -> str:
  */
 
 
-import url from "url";
-import portableFetch from "portable-fetch";
 import {{ Configuration }} from "./configuration";
 
 type ValueOf<T> = T[keyof T];
 const BASE_PATH = "http://localhost".replace(/\/+$/, "");
+
+const convert = (v: unknown): string => {{
+    switch (typeof v) {{
+        case 'string':
+        case 'boolean': {{
+            return encodeURIComponent(v)
+        }}
+        case 'bigint': {{
+            return '' + v
+        }}
+        case 'number': {{
+            if (Number.isFinite(v))  {{
+                return encodeURIComponent(v);
+            }}
+            return '';
+        }}
+        default: {{
+            return '';
+        }}
+    }}
+}}
+
+const objToSearchParams = (obj: {{}}, searchParams: URLSearchParams) => {{
+    Object.entries(obj).forEach(([key, value]) => {{
+        if (Array.isArray(value) && value.length > 0) {{
+            searchParams.set(key, convert(value[0]))
+            value.slice(1).forEach((subValue) => searchParams.append(key, convert(subValue)))
+        }} else {{
+            searchParams.set(key, convert(value))
+        }}
+    }});
+}};
 
 /**
  *
@@ -500,7 +531,7 @@ export interface FetchArgs {{
 export class BaseAPI {{
     protected configuration: Configuration;
 
-    constructor(configuration?: Configuration, protected basePath: string = BASE_PATH, protected fetch: FetchAPI = portableFetch) {{
+    constructor(configuration?: Configuration, protected basePath: string = BASE_PATH, protected fetch: FetchAPI = window.fetch) {{
         if (configuration) {{
             this.configuration = configuration;
             this.basePath = configuration.basePath || this.basePath;

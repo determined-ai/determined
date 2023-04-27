@@ -1,6 +1,5 @@
 import * as t from 'io-ts';
 import { useObservable } from 'micro-observables';
-import queryString from 'query-string';
 import { useCallback, useContext, useEffect, useLayoutEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -44,20 +43,21 @@ export type UseSettingsReturn<T> = {
 };
 
 const settingsToQuery = <T>(config: SettingsConfig<T>, settings: Settings) => {
-  const fullSettings = (Object.values(config.settings) as SettingsConfigProp<T>[]).reduce<Settings>(
-    (acc, setting) => {
-      // Save settings into query if there is value defined and is not the default value.
-      const value = settings[setting.storageKey];
-      const isDefault = isEqual(setting.defaultValue, value);
+  const retVal = new URLSearchParams();
+  (Object.values(config.settings) as SettingsConfigProp<T>[]).forEach((setting) => {
+    const value = settings[setting.storageKey];
+    const isDefault = isEqual(setting.defaultValue, value);
+    if (!setting.skipUrlEncoding && !isDefault) {
+      if (Array.isArray(value) && value.length > 0) {
+        retVal.set(setting.storageKey, value[0]);
+        value.slice(1).forEach((subVal) => retVal.append(setting.storageKey, subVal));
+      } else {
+        retVal.set(setting.storageKey, value);
+      }
+    }
+  });
 
-      acc[setting.storageKey] = !setting.skipUrlEncoding && !isDefault ? value : undefined;
-
-      return acc;
-    },
-    {},
-  );
-
-  return queryString.stringify(fullSettings);
+  return retVal.toString();
 };
 
 const queryParamToType = <T>(
@@ -76,7 +76,7 @@ const queryParamToType = <T>(
 };
 
 const queryToSettings = <T>(config: SettingsConfig<T>, query: string) => {
-  const params = queryString.parse(query);
+  const params = new URLSearchParams(query);
 
   return (Object.values(config.settings) as SettingsConfigProp<typeof config>[]).reduce<Settings>(
     (acc, setting) => {
@@ -85,7 +85,12 @@ const queryToSettings = <T>(config: SettingsConfig<T>, query: string) => {
        * goes wrong, set it to the default value.
        */
       try {
-        const paramValue = params[setting.storageKey];
+        let paramValue: null | string | string[] = params.getAll(setting.storageKey);
+        if (paramValue.length === 0) {
+          paramValue = null;
+        } else if (paramValue.length === 1) {
+          paramValue = paramValue[0];
+        }
         const baseType = setting.type;
         const isArray = baseType.is([]);
 
