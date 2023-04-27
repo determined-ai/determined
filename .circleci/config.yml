@@ -2321,6 +2321,7 @@ workflows:
           dev-mode: true
       - test-e2e-react:
           context: playwright
+          filters: *any-upstream
       - build-docs:
           requires:
             - build-helm
