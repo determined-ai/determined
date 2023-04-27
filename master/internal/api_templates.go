@@ -44,18 +44,6 @@ func (a *apiServer) GetTemplate(
 	}
 }
 
-func (a *apiServer) PutTemplate(
-	_ context.Context, req *apiv1.PutTemplateRequest,
-) (*apiv1.PutTemplateResponse, error) {
-	config, err := protojson.Marshal(req.Template.Config)
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid config provided: %s", err.Error())
-	}
-	err = a.m.db.QueryProto("put_template", req.Template, req.Template.Name, config)
-	return &apiv1.PutTemplateResponse{Template: req.Template},
-		errors.Wrapf(err, "error putting template")
-}
-
 func (a *apiServer) PostTemplate(
 	_ context.Context, req *apiv1.PostTemplateRequest,
 ) (*apiv1.PostTemplateResponse, error) {

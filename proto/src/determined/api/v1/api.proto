@@ -1103,18 +1103,6 @@ service Determined {
       tags: "Templates"
     };
   }
-  // DEPRECATED: Update or create (upsert) the requested template.
-  rpc PutTemplate(PutTemplateRequest) returns (PutTemplateResponse) {
-    option (google.api.http) = {
-      put: "/api/v1/templates/{template.name}"
-      body: "template"
-    };
-    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Templates"
-    };
-    option deprecated = true;
-  }
-
   // Post a new template.
   rpc PostTemplate(PostTemplateRequest) returns (PostTemplateResponse) {
     option (google.api.http) = {

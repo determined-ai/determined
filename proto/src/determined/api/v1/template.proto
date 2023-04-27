@@ -54,22 +54,10 @@ message GetTemplateResponse {
   // The requested template.
   determined.template.v1.Template template = 1;
 }
-// Update or create (upsert) the requested template.
-message PutTemplateRequest {
-  // The template to put.
-  determined.template.v1.Template template = 1;
-}
-// Response to PutTemplateRequest.
-message PutTemplateResponse {
-  // The updated or created template.
-  determined.template.v1.Template template = 1;
-}
+
 // Post a new template.
 message PostTemplateRequest {
-  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "template" ] }
-  };
-  // The template to post.
+  // The template to put.
   determined.template.v1.Template template = 1;
 }
 // Response to PostTemplateRequest.
