@@ -9,8 +9,12 @@
   # "test-data-weights": [2., 1.],
   # "valid-data-weights": [0.5, 0.4],
 
-  "vocab-file": "/run/determined/workdir/shared_fs/data/gpt2-vocab.json",
-  "merge-file": "/run/determined/workdir/shared_fs/data/gpt2-merges.txt",
+  # Use docker image data for now.
+  "vocab-file": "/gpt-neox/data/gpt2-vocab.json",
+  "merge-file": "/gpt-neox/data/gpt2-merges.txt",
+  # TODO(daran.he|liam) Use shared fs data.
+  # "vocab-file": "/run/determined/workdir/shared_fs/data/gpt2-vocab.json",
+  # "merge-file": "/run/determined/workdir/shared_fs/data/gpt2-merges.txt",
   "save": "/tmp/checkpoints",
   "load": "/tmp/checkpoints",
   "log-dir": null,
