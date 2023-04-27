@@ -169,11 +169,19 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   // TODO: poll?
   useEffect(() => {
     let mounted = true;
-    getProjectColumns({ projectId: project.id }).then((c) => {
-      if (mounted) {
-        setColumns(Loaded(c));
+    const request = async () => {
+      try {
+        const columns = await getProjectColumns({ projectId: project.id });
+
+        if (mounted) {
+          setColumns(Loaded(columns));
+        }
+      } catch (e) {
+        handleError(e, { publicSubject: 'Unable to fetch project columns' });
       }
-    });
+    };
+
+    request();
     return () => {
       mounted = false;
     };
