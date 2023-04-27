@@ -71,6 +71,18 @@ func TestExperimentSearchApiFilterParsing(t *testing.T) {
 				WHEN config->'hyperparameters'->'global_batch_size'->>'type' IN ('int', 'double', 'log') THEN ((config->'hyperparameters'->'global_batch_size'->>'minval')::float8 = 32 OR (config->'hyperparameters'->'global_batch_size'->>'maxval')::float8 = 32)
 				ELSE false
 			 END))`},
+		{`{"children":[{"type":"COLUMN_TYPE_NUMBER","location":"LOCATION_TYPE_HYPERPARAMETERS", "columnName":"hp.global_batch_size","id":"10043dda-2187-45d4-92ce-b9ade5244b6f","kind":"field","operator":">=","value":32}],"conjunction":"and","id":"ROOT","kind":"group"}`,
+			`((CASE
+				WHEN config->'hyperparameters'->'global_batch_size'->>'type' = 'const' THEN (config->'hyperparameters'->'global_batch_size'->>'val')::float8 >= 32
+				WHEN config->'hyperparameters'->'global_batch_size'->>'type' IN ('int', 'double', 'log') THEN ((config->'hyperparameters'->'global_batch_size'->>'minval')::float8 >= 32 OR (config->'hyperparameters'->'global_batch_size'->>'maxval')::float8 >= 32)
+				ELSE false
+			 END))`},
+		{`{"children":[{"type":"COLUMN_TYPE_NUMBER","location":"LOCATION_TYPE_HYPERPARAMETERS", "columnName":"hp.global_batch_size","id":"10043dda-2187-45d4-92ce-b9ade5244b6f","kind":"field","operator":"!=","value":32}],"conjunction":"and","id":"ROOT","kind":"group"}`,
+			`((CASE
+				WHEN config->'hyperparameters'->'global_batch_size'->>'type' = 'const' THEN (config->'hyperparameters'->'global_batch_size'->>'val')::float8 != 32
+				WHEN config->'hyperparameters'->'global_batch_size'->>'type' IN ('int', 'double', 'log') THEN ((config->'hyperparameters'->'global_batch_size'->>'minval')::float8 != 32 OR (config->'hyperparameters'->'global_batch_size'->>'maxval')::float8 != 32)
+				ELSE false
+			 END))`},
 	}
 	for _, c := range validTestCases {
 		var experimentFilter ExperimentFilter

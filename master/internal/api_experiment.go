@@ -258,6 +258,7 @@ func hpToSql(c string, t *string, v interface{}, o Operator) (string, error) {
 				WHEN config->'hyperparameters'->%[1]v->>'type' IN ('int', 'double', 'log') THEN ((config->'hyperparameters'->%[1]v->>'minval')::float8 %[2]v OR (config->'hyperparameters'->%[1]v->>'maxval')::float8 %[2]v)
 				ELSE false
 			 END)`, hpQuery, fmt.Sprintf("%v %v", o.toSql(), v))
+			fmt.Println(col)
 			return col, nil
 		} else if o == EMPTY || o == NOT_EMPTY {
 			col = fmt.Sprintf(`(CASE 
