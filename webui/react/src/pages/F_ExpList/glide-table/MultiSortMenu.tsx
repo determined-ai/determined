@@ -1,4 +1,5 @@
 import { Popover } from 'antd';
+import * as io from 'io-ts';
 
 import Button from 'components/kit/Button';
 import Select from 'components/kit/Select';
@@ -8,16 +9,19 @@ import { Loadable } from 'utils/loadable';
 
 import css from './MultiSortMenu.module.scss';
 
-const INITIAL_SORTS = [{ column: undefined, direction: undefined }];
+const directionType = io.keyof({ asc: null, desc: null });
+type DirectionType = io.TypeOf<typeof directionType>;
 
-type DirectionType = 'asc' | 'desc';
-export interface Sort {
-  column?: string;
-  direction?: DirectionType;
-}
-export type ValidSort = Required<Sort>;
+export const validSort = io.type({
+  column: io.string,
+  direction: directionType,
+});
+export type ValidSort = io.TypeOf<typeof validSort>;
 
-export const isValidSort = (s: Sort): s is ValidSort => !!(s.column && s.direction);
+const sort = io.partial(validSort.props);
+export type Sort = io.TypeOf<typeof sort>;
+
+export const EMPTY_SORT: Sort = { column: undefined, direction: undefined };
 
 interface MultiSortProps {
   sorts: Sort[];
@@ -131,11 +135,11 @@ const MultiSort: React.FC<MultiSortProps> = ({ sorts, columns, onChange }) => {
   };
   const makeOnRowRemove = (idx: number) => () => {
     const newSorts = sorts.filter((_, cidx) => cidx !== idx);
-    onChange(newSorts.length > 0 ? newSorts : INITIAL_SORTS);
+    onChange(newSorts.length > 0 ? newSorts : [EMPTY_SORT]);
   };
   const addRow = () => onChange([...sorts, { column: undefined, direction: undefined }]);
   const clearAll = () => {
-    onChange(INITIAL_SORTS);
+    onChange([EMPTY_SORT]);
     // close the popover -- set timeout to ensure it runs after the popover close handler
     setTimeout(() => {
       window.document.body.dispatchEvent(new Event('mousedown', { bubbles: true }));
@@ -175,10 +179,10 @@ const MultiSort: React.FC<MultiSortProps> = ({ sorts, columns, onChange }) => {
 };
 
 const MultiSortMenu: React.FC<MultiSortProps> = ({ sorts, columns, onChange }) => {
-  const validSorts = sorts.filter(isValidSort);
+  const validSorts = sorts.filter(validSort.is);
   const onSortPopoverOpenChange = (open: boolean) => {
     if (!open) {
-      onChange(validSorts.length > 0 ? validSorts : INITIAL_SORTS);
+      onChange(validSorts.length > 0 ? validSorts : [EMPTY_SORT]);
     }
   };
 

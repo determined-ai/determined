@@ -16,7 +16,7 @@ import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { defaultExperimentColumns } from './glide-table/columns';
 import { Error, Loading, NoExperiments, NoMatches } from './glide-table/exceptions';
 import GlideTable, { SCROLL_SET_COUNT_NEEDED } from './glide-table/GlideTable';
-import { isValidSort, Sort, ValidSort } from './glide-table/MultiSortMenu';
+import { EMPTY_SORT, Sort, validSort, ValidSort } from './glide-table/MultiSortMenu';
 import TableActionBar, { BatchAction } from './glide-table/TableActionBar';
 import { useGlasbey } from './useGlasbey';
 
@@ -37,7 +37,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const [sorts, setSorts] = useState<Sort[]>(() => {
     const sortString = searchParams.get('sort') || '';
     if (!sortString) {
-      return [{ column: undefined, direction: undefined }];
+      return [EMPTY_SORT];
     }
     const components = sortString.split(',');
     return components.map((c) => {
@@ -117,8 +117,8 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const onSortChange = useCallback(
     (sorts: Sort[]) => {
       setSorts(sorts);
-      const newSortString = makeSortString(sorts.filter(isValidSort));
       setSortString(newSortString);
+      const newSortString = makeSortString(sorts.filter(validSort.is));
       if (newSortString !== sortString) {
         resetPagination();
       }
