@@ -203,16 +203,13 @@ class SearchRunner:
                 experimentId=experiment_id,
             )
         except errors.APIException as e:
-            print(f"Catching errors.APIException: {str(e)}")
+            logging.warning(f"Catching errors.APIException: {str(e)}")
             close_op_in_operations = any([isinstance(o, searcher.Close) for o in operations])
-            print(f"close_op_in_operations: {close_op_in_operations}")
-            print(f"operations: {operations}")
+            logging.warning(f"operations: {operations}")
             if close_op_in_operations and "could not be found" in str(e):
                 pass
             else:
                 raise e
-        except Exception as e:
-            print(f"Catching exception {e}")
 
     def get_events(
         self,
