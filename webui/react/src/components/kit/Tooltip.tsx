@@ -19,6 +19,7 @@ export interface TooltipProps {
     | 'rightBottom';
   content?: ReactNode;
   trigger?: 'hover' | 'focus' | 'click' | 'contextMenu' | Array<string>;
+  showArrow?: boolean;
 }
 
 const Tooltip: React.FC<TooltipProps> = ({
@@ -27,6 +28,13 @@ const Tooltip: React.FC<TooltipProps> = ({
   content,
   ...props
 }: TooltipProps) => {
-  return <AntdTooltip title={content} mouseEnterDelay={mouseEnterDelay} placement={placement} {...props} />;
+  return (
+    <AntdTooltip
+      mouseEnterDelay={mouseEnterDelay}
+      placement={placement}
+      title={content}
+      {...props}
+    />
+  );
 };
 export default Tooltip;

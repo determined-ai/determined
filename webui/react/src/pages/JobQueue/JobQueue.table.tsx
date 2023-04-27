@@ -85,7 +85,7 @@ export const columns: ColumnDef<Job>[] = [
     render: (_: unknown, record: Job): ReactNode => {
       const title = jobTypeLabel(record.type);
       const TypeCell = (
-        <Tooltip placement="topLeft" content={title}>
+        <Tooltip content={title} placement="topLeft">
           <div>
             <Icon name={jobTypeIconName(record.type)} />
           </div>

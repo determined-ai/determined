@@ -54,8 +54,8 @@ const RoutePagination: React.FC<Props> = ({ currentId, ids, onSelectId, tooltipL
           ) {
             return (
               <Tooltip
-                placement="bottom"
-                content={`${type === 'prev' ? 'Previous' : 'Next'} ${tooltipLabel}`}>
+                content={`${type === 'prev' ? 'Previous' : 'Next'} ${tooltipLabel}`}
+                placement="bottom">
                 {originalElement}
               </Tooltip>
             );
