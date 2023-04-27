@@ -470,14 +470,10 @@ class DSATTrialTracker:
             return False
         if self.num_running_trials >= self.max_concurrent_trials:
             return False
-        print(self.max_slots)
         if self.max_slots is not None:
             occupied_slots = self.num_running_trials * self.slots_per_trial
             remaining_slots = self.max_slots - occupied_slots
             trials_available_with_remaining_slots = remaining_slots // self.slots_per_trial
-            print(
-                f"MAX_SLOTS test {occupied_slots}, {remaining_slots}, {trials_available_with_remaining_slots}"
-            )
             return trials_available_with_remaining_slots > 0
         return True
 
@@ -864,7 +860,6 @@ class RandomDSATSearchMethod(BaseDSATSearchMethod):
 
         zero_optim_config = _utils.get_random_zero_optim_config(zero_stage)
         new_hparams = copy.deepcopy(self.trial_tracker.hparams)
-        print(f"Trial Tracker hparams: {new_hparams}")
         new_hparams[_defaults.OVERWRITE_KEY] = merge_dicts(
             new_hparams.get(_defaults.OVERWRITE_KEY, {}),
             {"zero_optimization": zero_optim_config},

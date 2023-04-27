@@ -44,7 +44,6 @@ def build_exp_conf_from_args(args: argparse.Namespace) -> _dsat_search_method.Ba
     # Add an internal key to the HP dict which enables the DSAT code path for Trial classes.
     exp_config["hyperparameters"][_defaults.USE_DSAT_MODE_KEY] = True
 
-    print(f"return exp conf {exp_config}")
     return exp_config
 
 
