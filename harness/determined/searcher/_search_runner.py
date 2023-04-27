@@ -194,6 +194,8 @@ class SearchRunner:
         )
         # TODO: Remove this temporary hack in favor of an actual solution around the issue described
         # in https://determined-ai.slack.com/archives/C04645NHSP6/p1680201334658789
+        # Also verify that this is actually catching the error.
+        # Remove print tests.
         try:
             bindings.post_PostSearcherOperations(
                 session,
@@ -201,7 +203,9 @@ class SearchRunner:
                 experimentId=experiment_id,
             )
         except errors.APIException as e:
+            logging.warning(f"Catching errors.APIException: {str(e)}")
             close_op_in_operations = any([isinstance(o, searcher.Close) for o in operations])
+            logging.warning(f"operations: {operations}")
             if close_op_in_operations and "could not be found" in str(e):
                 pass
             else:

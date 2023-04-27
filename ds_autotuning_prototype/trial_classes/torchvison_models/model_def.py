@@ -79,14 +79,19 @@ class TorchvisionTrial(DeepSpeedTrial):
 
         self.model_engine.backward(loss)
         self.model_engine.step()
-        return {"loss": loss.item()}
+        return {"train_loss": loss.item()}
 
     def evaluate_batch(self, iter_dataloader, batch_idx) -> Dict[str, Any]:
         """
         Calculate validation metrics for a batch and return them as a dictionary.
         This method is not necessary if the user defines evaluate_full_dataset().
         """
-        return {}
+        inputs, labels = self.context.to_device(next(iter_dataloader))
+        if self.fp16:
+            inputs = inputs.half()
+        outputs = self.model_engine(inputs)
+        loss = self.criterion(outputs, labels)
+        return {"val_loss": loss.item()}
 
     def build_training_data_loader(self) -> Any:
         trainset = RandImageNetDataset()

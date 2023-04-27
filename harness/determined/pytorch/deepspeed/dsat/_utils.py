@@ -1,4 +1,4 @@
-import copy
+import argparse
 import json
 import logging
 import pathlib
@@ -10,9 +10,37 @@ import torch
 from ruamel import yaml
 
 import determined as det
-from determined.common.experimental import user
-from determined.pytorch.deepspeed.dsat import _defaults
+from determined.pytorch.deepspeed.dsat import _defaults, _dsat_search_method
 from determined.util import merge_dicts
+
+
+def smaller_is_better(metric: str) -> bool:
+    if metric in _defaults.SMALLER_IS_BETTER_METRICS:
+        return True
+    elif metric in _defaults.LARGER_IS_BETTER_METRICS:
+        return False
+    else:
+        raise ValueError(
+            f"metric must be one of {_defaults.SMALLER_IS_BETTER_METRICS + _defaults.LARGER_IS_BETTER_METRICS}, not {metric}"
+        )
+
+
+def get_search_runner_config_from_args(args: argparse.Namespace) -> Dict[str, Any]:
+    if args.search_runner_config is not None:
+        submitted_search_runner_config = get_dict_from_yaml_or_json_path(args.search_runner_config)
+        return submitted_search_runner_config
+
+    default_search_runner_config = _defaults.DEFAULT_SEARCH_RUNNER_CONFIG
+    if args.max_search_runner_restarts is not None:
+        default_search_runner_config["max_restarts"] = args.max_search_runner_restarts
+    # Merge with the submitted experiment config so that the search runner shares the project,
+    # workspace, etc.
+    experiment_config_dict = get_dict_from_yaml_or_json_path(args.config_path)
+    search_runner_config = merge_dicts(experiment_config_dict, default_search_runner_config)
+    search_runner_config["name"] += " (DS AT Searcher)"
+    # TODO: add user cli args to hp section for easier reference
+
+    return search_runner_config
 
 
 # TODO: move this to determined.util?
@@ -115,7 +143,7 @@ def report_json_results(
 def get_zero_stage_search_space(
     zero_stage: int,
 ) -> Dict[str, List[Union[bool, float]]]:
-    default_settings: dict = _defaults.NEW_ZERO_OPTIM_KEYS_AND_DEFAULTS_PER_STAGE
+    default_settings: dict = _defaults.DEFAULT_ZERO_SEARCH_SPACE
     assert (
         zero_stage in default_settings
     ), f"Invalid zero_stage, must be one of {list(default_settings)}"

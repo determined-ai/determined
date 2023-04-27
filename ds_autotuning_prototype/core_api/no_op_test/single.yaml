@@ -12,8 +12,9 @@ resources:
   shm_size: 17179869184 # 16 GiB. Was hitting "Unexpected bus error encountered in worker. This might be caused by insufficient shared memory (shm)." on Grenoble.
   # resource_pool: young # Grenoble specific; remove later.
 searcher:
-  name: custom
+  name: single
   metric: throughput
+  max_length: 100
   smaller_is_better: False
 hyperparameters:
   # NOTE: dsat code expects usual DS config dict to appear as in the below.

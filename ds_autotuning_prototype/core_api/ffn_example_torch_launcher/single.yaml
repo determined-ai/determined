@@ -12,7 +12,8 @@ resources:
   max_slots: 8
   # resource_pool: young # Grenoble specific; remove later.
 searcher:
-  name: custom
+  name: single
+  max_length: 1000
   metric: throughput
   smaller_is_better: False
 hyperparameters:

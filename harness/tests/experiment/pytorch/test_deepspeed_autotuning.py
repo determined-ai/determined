@@ -1,19 +1,15 @@
 import pathlib
 import tempfile
-import pytest
-
 from argparse import Namespace
 from collections import deque
 from typing import Any, Deque, Dict, List, Optional, Sequence, Union
 from unittest import mock
 
+import pytest
+
 from determined import searcher
 from determined.common.api import bindings
-from determined.pytorch.deepspeed.dsat import (
-    _defaults,
-    _utils,
-    autotune,
-)
+from determined.pytorch.deepspeed.dsat import _defaults, _utils, autotune
 from determined.pytorch.deepspeed.dsat._dsat_search_method import (
     BaseDSATSearchMethod,
     RandomDSATSearchMethod,

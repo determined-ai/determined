@@ -4,12 +4,9 @@ import random
 from typing import Any, Dict
 
 import determined as det
-import torch
-import torch.nn as nn
 from attrdict import AttrDict
 from determined.pytorch.deepspeed import dsat, get_ds_config_from_hparams
 from determined.pytorch.deepspeed.dsat import _defaults
-from torch.utils.data import Dataset
 
 possible_paths = [_defaults.MODEL_INFO_PROFILING_PATH, _defaults.AUTOTUNING_RESULTS_PATH]
 

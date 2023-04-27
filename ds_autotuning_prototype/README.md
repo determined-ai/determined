@@ -13,10 +13,10 @@ The basic steps:
 
 ## Basic Usage
 
-In the same directory as this `README`, run the following, for instance:
+In the `./core_api/torchvison_models/` directory, for instance, run the following:
 
 ```bash
-python3 -m dsat.autotune examples/ffn_example/autotune_config.yaml examples/ffn_example
+python3 -m determined.pytorch.deepspeed.dsat single.yaml .
 ```
 
 (the config may need to be altered for your cluster.)
@@ -27,12 +27,11 @@ A very incomplete list.
 
 Pros:
 
-- Custom Searcher config generated from initial user config; user need only provide one config, per usual. (Might actually be problematic.)
+- No need to write a new config.
 
 Cons:
 
-- Currently, the user must configure DS through a `ds_config` sub-dictionary within the `hyperparameters` dict.
-- Config format doesn't mirror that of standard searchers; all search specific config lives under `hyperparameters`.
+- Introduces a new CLI based api.
 - Dependent on precise format of DS output files, brittle.
 - Relies on some DS internals (effectively) to kick off the model profiling run.
 
@@ -40,7 +39,5 @@ TODOs:
 
 - Support workflows which initialize DS Engine through CLI args.
 - Support option for follow-on experiment.
-- Not all native DS AT code paths are currently supported, e.g. providing explicit batch sizes to use,
-  fast mode.
 - Benchmark against native DS AT. The 0.8.1 update which fixed the DS AT units issues might have also
   broken the `--autotuning run` flag?
