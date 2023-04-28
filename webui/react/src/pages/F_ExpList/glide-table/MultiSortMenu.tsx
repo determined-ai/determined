@@ -142,7 +142,7 @@ const MultiSort: React.FC<MultiSortProps> = ({ sorts, columns, onChange }) => {
     const newSorts = sorts.filter((_, cidx) => cidx !== idx);
     onChange(newSorts.length > 0 ? newSorts : [EMPTY_SORT]);
   };
-  const addRow = () => onChange([...sorts, { column: undefined, direction: undefined }]);
+  const addRow = () => onChange([...sorts, EMPTY_SORT]);
   const clearAll = () => {
     // close the popover -- happens before the onchange so the onclose handler fires first
     window.document.body.dispatchEvent(new Event('mousedown', { bubbles: true }));
