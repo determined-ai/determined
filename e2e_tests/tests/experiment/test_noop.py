@@ -149,6 +149,9 @@ def test_noop_pause_with_multiexperiment_filter() -> None:
     exp.pause_experiments([], name=tf.name)
     exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.PAUSED)
     exp.kill_experiments([experiment_id])
+    exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.CANCELED)
+    # test state=terminalExperimentStates() filter in archive
+    exp.archive_experiments([], name=tf.name)
 
 
 @pytest.mark.e2e_cpu

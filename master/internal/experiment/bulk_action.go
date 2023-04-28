@@ -49,12 +49,12 @@ var runningOrPaused = []experimentv1.State{
 // ExperimentsAddr is the address to direct experiment actions.
 var ExperimentsAddr = actor.Addr("experiments")
 
-func completedExperimentStates () []string {
+func terminalExperimentStates () []string {
 	states := make([]string, len(model.TerminalStates))
 	idx := 0
 	for k := range model.TerminalStates {
     states[idx] = string(k)
-		idx += 1
+		idx++
 	}
 	return states
 }
@@ -407,7 +407,7 @@ func DeleteExperiments(ctx context.Context, system *actor.System,
 	} else {
 		query = queryBulkExperiments(query, filters).
 			Where("versions = 0").
-			Where("state IN (?)", bun.In(completedExperimentStates()))
+			Where("state IN (?)", bun.In(terminalExperimentStates()))
 	}
 
 	query, err = AuthZProvider.Get().
@@ -493,14 +493,14 @@ func ArchiveExperiments(ctx context.Context, system *actor.System,
 		Model(&expChecks).
 		Column("e.archived").
 		Column("e.id").
-		ColumnExpr("e.state IN (?) AS state", bun.In(completedExperimentStates()))
+		ColumnExpr("e.state IN (?) AS state", bun.In(terminalExperimentStates()))
 
 	if filters == nil {
 		query = query.Where("e.id IN (?)", bun.In(experimentIds))
 	} else {
 		query = queryBulkExperiments(query, filters).
 			Where("NOT e.archived").
-			Where("e.state IN (?)", bun.In(completedExperimentStates()))
+			Where("e.state IN (?)", bun.In(terminalExperimentStates()))
 	}
 
 	query, err = AuthZProvider.Get().
@@ -584,14 +584,14 @@ func UnarchiveExperiments(ctx context.Context, system *actor.System,
 		Model(&expChecks).
 		Column("e.archived").
 		Column("e.id").
-		ColumnExpr("e.state IN (?) AS state", bun.In(completedExperimentStates()))
+		ColumnExpr("e.state IN (?) AS state", bun.In(terminalExperimentStates()))
 
 	if filters == nil {
 		query = query.Where("e.id IN (?)", bun.In(experimentIds))
 	} else {
 		query = queryBulkExperiments(query, filters).
 			Where("archived").
-			Where("e.state IN (?)", bun.In(completedExperimentStates()))
+			Where("e.state IN (?)", bun.In(terminalExperimentStates()))
 	}
 
 	query, err = AuthZProvider.Get().
