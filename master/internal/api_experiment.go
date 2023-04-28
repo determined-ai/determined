@@ -54,22 +54,22 @@ import (
 )
 
 const (
-	and                 filterConjunction = "and"
-	or                  filterConjunction = "or"
-	field               filterType        = "field"
-	group               filterType        = "group"
-	equal               operator          = "="
-	notEqual            operator          = "!="
-	lessThan            operator          = "<"
-	lessThanOrEqual     operator          = "<="
-	greaterThan         operator          = ">"
-	ggreaterThanOrEqual operator          = ">="
-	contains            operator          = "contains"
-	doesNotContain      operator          = "does not contain"
-	empty               operator          = "is empty"
-	notEmpty            operator          = "not empty"
-	is                  operator          = "is"
-	isNot               operator          = "is not"
+	and                filterConjunction = "and"
+	or                 filterConjunction = "or"
+	field              filterType        = "field"
+	group              filterType        = "group"
+	equal              operator          = "="
+	notEqual           operator          = "!="
+	lessThan           operator          = "<"
+	lessThanOrEqual    operator          = "<="
+	greaterThan        operator          = ">"
+	greaterThanOrEqual operator          = ">="
+	contains           operator          = "contains"
+	doesNotContain     operator          = "does not contain"
+	empty              operator          = "is empty"
+	notEmpty           operator          = "not empty"
+	is                 operator          = "is"
+	isNot              operator          = "is not"
 )
 
 // Catches information on active running experiments.
@@ -115,7 +115,7 @@ func (o *operator) toSQL() (string, error) {
 		s = "<="
 	case greaterThan:
 		s = ">"
-	case ggreaterThanOrEqual:
+	case greaterThanOrEqual:
 		s = ">="
 	case empty:
 		s = "IS NULL"
@@ -134,20 +134,6 @@ func (o *operator) toSQL() (string, error) {
 	}
 	return s, nil
 }
-
-func containsOperatorSQL(o operator, v *interface{}) (string, error) {
-	var s string
-	switch o {
-	case contains:
-		s = "LIKE '%" + fmt.Sprintf(`%v`, *v) + "%'"
-	case doesNotContain:
-		s = "NOT LIKE '%" + fmt.Sprintf(`%v`, *v) + "%'"
-	default:
-		return s, fmt.Errorf("invalid contains operator %v", o)
-	}
-	return s, nil
-}
-
 func columnNameToSQL(c string, l *string, t *string) (string, error) {
 	var lo string
 	var ty string
@@ -337,94 +323,92 @@ func hpToSQL(c string, t *string, va *interface{}, op *operator) (string, error)
 	}
 }
 
-func (e experimentFilterRoot) toSQL() (string, error) {
-	var s string
-	filterGroupSQL, err := e.FilterGroup.toSQL()
+func (e experimentFilterRoot) toSQL(q *bun.SelectQuery) (*bun.SelectQuery, error) {
+	q, err := e.FilterGroup.toSQL(q)
 	if err != nil {
-		return s, err
+		return q, err
 	}
-	switch e.ShowArchived {
-	case true:
-		s = filterGroupSQL
-	case false:
-		s = fmt.Sprintf(`e.archived = false AND %v`, filterGroupSQL)
+	if !e.ShowArchived {
+		q = q.Where(`e.archived = false)`)
 	}
-
-	return s, nil
+	return q, nil
 }
 
-func (e experimentFilter) toSQL() (string, error) {
-	var s string
+func (e experimentFilter) toSQL(q *bun.SelectQuery) (*bun.SelectQuery, error) {
 	switch e.Kind {
 	case field:
 		if e.Operator == nil {
-			return s, fmt.Errorf("field specified with value but no operator")
+			return q, fmt.Errorf("field specified with value but no operator")
 		}
 		if e.Value == nil && *e.Operator != notEmpty && *e.Operator != empty {
-			return "true", nil //nolint:goconst
+			return q.Where("true"), nil //nolint:goconst
 		}
 		oSQL, err := e.Operator.toSQL()
 		if err != nil {
-			return s, err
+			return q, err
 		}
 		if e.Location == nil || *e.Location != projectv1.LocationType_LOCATION_TYPE_HYPERPARAMETERS.String() {
 			col, err := columnNameToSQL(e.ColumnName, e.Location, e.Type)
 			if *e.Operator == contains || *e.Operator == doesNotContain { //nolint: gocritic
-				opSQL, err := containsOperatorSQL(*e.Operator, e.Value)
-				if err != nil {
-					return s, err
+				switch *e.Operator {
+				case contains:
+					q = q.Where("? LIKE ?", bun.Safe(col), `%`+fmt.Sprintf(`%v`, *e.Value)+`%`)
+				case doesNotContain:
+					q = q.Where("? NOT LIKE ?", bun.Safe(col), `%`+fmt.Sprintf(`%v`, *e.Value)+`%`)
+				default:
+					return q, fmt.Errorf("invalid contains operator %v", *e.Operator)
 				}
-				s = fmt.Sprintf("%v %v", col, opSQL)
+				if err != nil {
+					return q, err
+				}
 			} else if *e.Operator == empty || *e.Operator == notEmpty {
-				s = col + " " + oSQL
+				q = q.Where("? ?", bun.Safe(col), oSQL)
 			} else {
 				if e.Type != nil &&
 					(*e.Type == projectv1.ColumnType_COLUMN_TYPE_TEXT.String() ||
 						*e.Type == projectv1.ColumnType_COLUMN_TYPE_DATE.String()) {
-					s = fmt.Sprintf(`%v %v '%v'`, col,
-						oSQL, *e.Value)
+					q = q.Where("? ? ? ", bun.Safe(col),
+						bun.Safe(oSQL), *e.Value)
 				} else {
-					s = fmt.Sprintf("%v %v %v", col,
-						oSQL, *e.Value)
+					q = q.Where("? ? ?", bun.Safe(col),
+						bun.Safe(oSQL), *e.Value)
 				}
 			}
 			if err != nil {
-				return s, err
+				return q, err
 			}
-		} else {
-			sql, err := hpToSQL(e.ColumnName, e.Type, e.Value, e.Operator)
-			if err != nil {
-				return s, nil
-			}
-			s = sql
 		}
 	case group:
-		var childSQL []string
-		var j string
+		var co string
+		var err error
 		if e.Conjunction == nil {
-			return s, fmt.Errorf("group specified with no conjunction")
+			return q, fmt.Errorf("group specified with no conjunction")
 		}
 		if len(e.Children) == 0 {
-			return "true", nil //nolint:goconst
-		}
-		for _, c := range e.Children {
-			cSQL, err := c.toSQL()
-			if err != nil {
-				return j, err
-			}
-			childSQL = append(childSQL, cSQL)
+			return q.Where("true"), nil //nolint:goconst
 		}
 		switch *e.Conjunction {
 		case and:
-			j = " AND "
+			co = " AND "
 		case or:
-			j = " OR "
+			co = " OR "
 		default:
-			return s, fmt.Errorf("invalid conjunction value %v", *e.Conjunction)
+			return q, fmt.Errorf("invalid conjunction value %v", *e.Conjunction)
 		}
-		s = fmt.Sprintf("(%v)", strings.Join(childSQL, j))
+		q = q.WhereGroup(co, func(q *bun.SelectQuery) *bun.SelectQuery {
+			for _, c := range e.Children {
+				_, err = c.toSQL(q)
+				if err != nil {
+					return nil
+				}
+			}
+			return q
+		})
+		if err != nil {
+			return q, err
+		}
 	}
-	return s, nil
+	return q, nil
 }
 
 // Enrich one or more experiments by converting Active state to Queued/Pulling/Starting/Running.
@@ -2326,12 +2310,10 @@ func (a *apiServer) SearchExperiments(
 		if err != nil {
 			return nil, err
 		}
-		filterSQL, err := efr.toSQL()
+		experimentQuery, err = efr.toSQL(experimentQuery)
 		if err != nil {
 			return nil, err
 		}
-
-		experimentQuery.Where(filterSQL)
 	}
 
 	if req.Sort != nil {

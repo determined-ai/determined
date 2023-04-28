@@ -1,13 +1,19 @@
+//go:build integration
+// +build integration
+
 package internal
 
 import (
+	"fmt"
 	"encoding/json"
 	"testing"
 
+	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/stretchr/testify/require"
 )
 
 func TestExperimentSearchApiFilterParsing(t *testing.T) {
+	setupAPITest(t, nil)
 	invalidTestCases := []string{
 		// No operator specified in field
 		`{"children":[{"columnName":"resourcePool","kind":"field","value":"default"}],"conjunction":"and","kind":"group"}`,
@@ -25,10 +31,11 @@ func TestExperimentSearchApiFilterParsing(t *testing.T) {
 		`{"children":[{"location":"LOCATION_TYPE_EXPERIMENT","columnName":"notValid","kind":"field","value":"default"}],"conjunction":"and","kind":"group"}`,
 	}
 	for _, c := range invalidTestCases {
+		q := db.Bun().NewSelect()
 		var ef experimentFilter
 		err := json.Unmarshal([]byte(c), &ef)
 		require.NoError(t, err)
-		_, err = ef.toSQL()
+		_, err = ef.toSQL(q)
 		require.Error(t, err)
 	}
 	validTestCases := [][2]string{
@@ -124,11 +131,12 @@ func TestExperimentSearchApiFilterParsing(t *testing.T) {
 				 END))`},
 	}
 	for _, c := range validTestCases {
+		q := db.Bun().NewSelect()
 		var efr experimentFilterRoot
 		err := json.Unmarshal([]byte(c[0]), &efr)
 		require.NoError(t, err)
-		filterSQL, err := efr.toSQL()
+		_, err = efr.toSQL(q)
 		require.NoError(t, err)
-		require.Equal(t, filterSQL, c[1])
+		require.Equal(t, q.String(), fmt.Sprintf(`SELECT * WHERE (%v)`, c[1]))
 	}
 }
