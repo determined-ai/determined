@@ -98,6 +98,11 @@ type ExperimentFilter struct {
 	Type        *string
 }
 
+type ExperimentFilterRoot struct {
+	FilterGroup  ExperimentFilter
+	ShowArchived bool
+}
+
 func (o *Operator) toSql() (string, error) {
 	var s string
 	switch *o {
@@ -326,6 +331,22 @@ func hpToSql(c string, t *string, v interface{}, o Operator) (string, error) {
 			}
 		}
 	}
+}
+
+func (e ExperimentFilterRoot) toSql() (string, error) {
+	var s string
+	filterGroupSQL, err := e.FilterGroup.toSql()
+	if err != nil {
+		return s, err
+	}
+	switch e.ShowArchived {
+	case true:
+		s = filterGroupSQL
+	case false:
+		s = fmt.Sprintf(`e.archived = false AND %v`, filterGroupSQL)
+	}
+
+	return s, nil
 }
 
 func (e ExperimentFilter) toSql() (string, error) {
@@ -2260,7 +2281,7 @@ func (a *apiServer) SearchExperiments(
 	ctx context.Context,
 	req *apiv1.SearchExperimentsRequest,
 ) (*apiv1.SearchExperimentsResponse, error) {
-	var experimentFilter ExperimentFilter
+	var experimentFilterRoot ExperimentFilterRoot
 	resp := &apiv1.SearchExperimentsResponse{}
 	var experiments []*experimentv1.Experiment
 	var trials []*trialv1.Trial
@@ -2291,11 +2312,11 @@ func (a *apiServer) SearchExperiments(
 	}
 
 	if req.Filter != nil {
-		err := json.Unmarshal([]byte(*req.Filter), &experimentFilter)
+		err := json.Unmarshal([]byte(*req.Filter), &experimentFilterRoot)
 		if err != nil {
 			return nil, err
 		}
-		filterSql, err := experimentFilter.toSql()
+		filterSql, err := experimentFilterRoot.toSql()
 		if err != nil {
 			return nil, err
 		}
