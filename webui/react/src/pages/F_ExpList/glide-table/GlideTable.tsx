@@ -63,7 +63,7 @@ export interface GlideTableProps {
   height: number;
   scrollPositionSetCount: WritableObservable<number>;
   sortableColumnIds: string[];
-  setSortableColumnIds: Dispatch<SetStateAction<string[]>>;
+  setSortableColumnIds: (newColumns: string[]) => void;
   page: number;
   project?: Project;
   projectColumns: Loadable<ProjectColumn[]>;
@@ -336,15 +336,13 @@ export const GlideTable: React.FC<GlideTableProps> = ({
       const sortableColumnIdsStartIdx = columnIdsStartIdx - STATIC_COLUMNS.length;
       const sortableColumnIdsEndIdx = Math.max(columnIdsEndIdx - STATIC_COLUMNS.length, 0);
       if (sortableColumnIdsStartIdx > -1) {
-        setSortableColumnIds((prevCols) => {
-          const newCols = [...prevCols];
-          const [toMove] = newCols.splice(sortableColumnIdsStartIdx, 1);
-          newCols.splice(sortableColumnIdsEndIdx, 0, toMove);
-          return newCols;
-        });
+        const newCols = [...sortableColumnIds];
+        const [toMove] = newCols.splice(sortableColumnIdsStartIdx, 1);
+        newCols.splice(sortableColumnIdsEndIdx, 0, toMove);
+        setSortableColumnIds(newCols);
       }
     },
-    [setSortableColumnIds],
+    [sortableColumnIds, setSortableColumnIds],
   );
 
   const projectColumnsMap: Loadable<Record<string, ProjectColumn>> = useMemo(() => {

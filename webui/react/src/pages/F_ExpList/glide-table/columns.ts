@@ -163,7 +163,9 @@ export const getColumnDefs = ({
         link:
           record.experiment.forkedFrom !== undefined
             ? {
-                href: record.experiment.forkedFrom ? paths.experimentDetails(record.experiment.forkedFrom) : undefined,
+                href: record.experiment.forkedFrom
+                  ? paths.experimentDetails(record.experiment.forkedFrom)
+                  : undefined,
                 title: String(record.experiment.forkedFrom ?? ''),
               }
             : undefined,
@@ -417,7 +419,7 @@ export const defaultNumberColumn = (column: ProjectColumn, dataPath?: string): C
       const data = isString(dataPath) ? getPath<number>(record, dataPath) : undefined;
       return {
         allowOverlay: false,
-        data: data,
+        data: Number(data),
         displayData: String(data),
         kind: GridCellKind.Number,
       };

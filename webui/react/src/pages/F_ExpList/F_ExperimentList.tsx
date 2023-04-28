@@ -45,7 +45,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page]);
 
-  const [sortableColumnIds, setSortableColumnIds] = useState(settings.columns);
   const [selectedExperimentIds, setSelectedExperimentIds] = useState<number[]>([]);
   const [selectAll, setSelectAll] = useState(false);
   const [clearSelectionTrigger, setClearSelectionTrigger] = useState(0);
@@ -259,8 +258,8 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
               selectedExperimentIds={selectedExperimentIds}
               setSelectAll={setSelectAll}
               setSelectedExperimentIds={setSelectedExperimentIds}
-              setSortableColumnIds={setSortableColumnIds}
-              sortableColumnIds={sortableColumnIds}
+              setSortableColumnIds={setVisibleColumns}
+              sortableColumnIds={settings.columns}
             />
           </>
         )}
