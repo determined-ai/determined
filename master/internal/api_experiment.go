@@ -374,8 +374,13 @@ func (e ExperimentFilter) toSql() (string, error) {
 			} else if *e.Operator == EMPTY || *e.Operator == NOT_EMPTY {
 				s = col + " " + oSql
 			} else {
-				s = fmt.Sprintf("%v %v %v", col,
-					oSql, *e.Value)
+				if e.Type != nil && *e.Type == projectv1.ColumnType_COLUMN_TYPE_TEXT.String() {
+					s = fmt.Sprintf(`%v %v '%v'`, col,
+						oSql, *e.Value)
+				} else {
+					s = fmt.Sprintf("%v %v %v", col,
+						oSql, *e.Value)
+				}
 			}
 			if err != nil {
 				return s, err
