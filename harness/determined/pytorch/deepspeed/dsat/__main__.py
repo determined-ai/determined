@@ -15,28 +15,62 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("model_dir")
     parser.add_argument("-i", "--include", type=str, nargs="+")
 
-    parser.add_argument("-t", "--tuner-type", type=str, default="random")
-    parser.add_argument("-mt", "--max-trials", type=int, default=50)
+    parser.add_argument(
+        "-t", "--tuner-type", type=str, default=_defaults.AUTOTUNING_ARG_DEFAULTS["tuner-type"]
+    )
+    parser.add_argument(
+        "-mt", "--max-trials", type=int, default=_defaults.AUTOTUNING_ARG_DEFAULTS["max-trials"]
+    )
     parser.add_argument("-ms", "--max-slots", type=int)
-    parser.add_argument("-mct", "--max-concurrent-trials", type=int, default=16)
+    parser.add_argument(
+        "-mct",
+        "--max-concurrent-trials",
+        type=int,
+        default=_defaults.AUTOTUNING_ARG_DEFAULTS["max-concurrent-trials"],
+    )
     parser.add_argument("-es", "--early-stopping", type=int)
     parser.add_argument("-sc", "--search-runner-config", type=str)
     parser.add_argument("-msrr", "--max-search-runner-restarts", type=int)
     parser.add_argument(
-        "-z", "--zero-stages", type=int, nargs="+", default=[1, 2, 3], choices=list(range(4))
+        "-z",
+        "--zero-stages",
+        type=int,
+        nargs="+",
+        default=_defaults.AUTOTUNING_ARG_DEFAULTS["zero-stages"],
+        choices=list(range(4)),
     )
     # Searcher specific args (TODO: refactor)
-    parser.add_argument("-trc", "--trials-per-random-config", type=int, default=3)
+    parser.add_argument(
+        "-trc",
+        "--trials-per-random-config",
+        type=int,
+        default=_defaults.AUTOTUNING_ARG_DEFAULTS["trials-per-random-config"],
+    )
 
     # DS-specific args.
-    parser.add_argument("-sps", "--start_profile-step", type=int, default=3)
-    parser.add_argument("-eps", "--end-profile-step", type=int, default=5)
-    parser.add_argument("-ds", "--deepspeed-config", type=str, default="deepspeed_config")
+    parser.add_argument(
+        "-sps",
+        "--start_profile-step",
+        type=int,
+        default=_defaults.AUTOTUNING_ARG_DEFAULTS["start-profile-step"],
+    )
+    parser.add_argument(
+        "-eps",
+        "--end-profile-step",
+        type=int,
+        default=_defaults.AUTOTUNING_ARG_DEFAULTS["end-profile-step"],
+    )
+    parser.add_argument(
+        "-ds",
+        "--deepspeed-config",
+        type=str,
+        default=_defaults.AUTOTUNING_ARG_DEFAULTS["deepspeed-config"],
+    )
     parser.add_argument(
         "-m",
         "--metric",
         type=str,
-        default="throughput",
+        default=_defaults.AUTOTUNING_ARG_DEFAULTS["metric"],
         choices=_defaults.SMALLER_IS_BETTER_METRICS + _defaults.LARGER_IS_BETTER_METRICS,
     )
 
@@ -50,12 +84,6 @@ def parse_args() -> argparse.Namespace:
     assert (
         args.tuner_type in _defaults.ALL_SEARCH_METHOD_CLASSES
     ), f"tuner-type must be one of {list(_defaults.ALL_SEARCH_METHOD_CLASSES)}, not {args.tuner_type}"
-
-    return args
-
-    parser.add_argument("config_path")
-    parser.add_argument("model_dir")
-    args = parser.parse_args()
 
     return args
 

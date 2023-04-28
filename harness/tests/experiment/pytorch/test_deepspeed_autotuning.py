@@ -9,11 +9,12 @@ import pytest
 
 from determined import searcher
 from determined.common.api import bindings
-from determined.pytorch.deepspeed.dsat import _defaults, _utils, autotune
+from determined.pytorch.deepspeed.dsat import _defaults, _utils, __main__
 from determined.pytorch.deepspeed.dsat._dsat_search_method import (
     BaseDSATSearchMethod,
     RandomDSATSearchMethod,
 )
+from determined.pytorch.deepspeed.dsat._run_dsat import build_exp_conf_from_args
 from tests.custom_search_mocks import MockMasterSearchRunner
 
 ERROR_METRIC_NAME = "error"
@@ -31,27 +32,6 @@ MODEL_INFO_PROFILE_METRIC_FIXTURE = {
 }
 
 
-@mock.patch("determined.experimental.client.create_experiment")
-def test_autotuning_module_transforms(
-    create_experiment_mock: mock.MagicMock,
-) -> None:
-    model_dir = BASE_EXPERIMENT_FIXTURE_PATH.joinpath("example_experiment")
-    config_path = model_dir.joinpath("autotune_config.yaml")
-    args = Namespace(
-        config_path=config_path,
-        model_dir=model_dir,
-        tuner_type="random",
-        search_runner_config=None,
-    )
-    autotune.run_autotuning(args)
-    create_experiment_mock.assert_called_once()
-    submitted_single_searcher_config_dict = create_experiment_mock.call_args_list[0].kwargs[
-        "config"
-    ]
-    # The Search Runner should be defaulted to a "single" searcher
-    assert submitted_single_searcher_config_dict.get("searcher", {}).get("name", "") == "single"
-
-
 def _run_searcher(search_method: BaseDSATSearchMethod, all_metrics):
     """
     Run a mocked version of the Determined master with a deterministic series of
@@ -59,14 +39,29 @@ def _run_searcher(search_method: BaseDSATSearchMethod, all_metrics):
     """
     model_dir = BASE_EXPERIMENT_FIXTURE_PATH.joinpath("example_experiment")
     config_path = model_dir.joinpath("autotune_config.yaml")
-    submitted_config_dict = _utils.get_dict_from_yaml_or_json_path(config_path)
-
     with tempfile.TemporaryDirectory() as searcher_dir:
-        searcher_dir = pathlib.Path(searcher_dir)
-        search_method = search_method(
-            submitted_config_dict=submitted_config_dict,
+        args = Namespace(
             model_dir=model_dir,
+            config_path=config_path,
+            # DEFAULTS
+            tuner_type=_defaults.AUTOTUNING_ARG_DEFAULTS["tuner-type"],
+            max_trials=_defaults.AUTOTUNING_ARG_DEFAULTS["max-trials"],
+            max_concurrent_trials=_defaults.AUTOTUNING_ARG_DEFAULTS["max-concurrent-trials"],
+            zero_stages=_defaults.AUTOTUNING_ARG_DEFAULTS["zero-stages"],
+            trials_per_random_config=_defaults.AUTOTUNING_ARG_DEFAULTS["trials-per-random-config"],
+            start_profile_step=_defaults.AUTOTUNING_ARG_DEFAULTS["start-profile-step"],
+            end_profile_step=_defaults.AUTOTUNING_ARG_DEFAULTS["end-profile-step"],
+            deepspeed_config=_defaults.AUTOTUNING_ARG_DEFAULTS["deepspeed-config"],
+            metric=_defaults.AUTOTUNING_ARG_DEFAULTS["metric"],
+            # NONE TYPES
+            max_slots=None,
+            early_stopping=None,
+            experiment_id=None,
         )
+
+        config_dict = build_exp_conf_from_args(args)
+        searcher_dir = pathlib.Path(searcher_dir)
+        search_method = search_method(args=args, exp_config=config_dict)
         mock_master_obj = MockMaster(all_metrics=all_metrics)
         search_runner = MockMasterSearchRunner(search_method, mock_master_obj, searcher_dir)
         search_runner.run(exp_config={}, context_dir="", includes=None)
@@ -83,7 +78,7 @@ def test_deepspeed_autotune_happy_path() -> None:
         search_runner = _run_searcher(
             search_method, [MODEL_INFO_PROFILE_METRIC_FIXTURE, {"throughput": 1.0}]
         )
-        exp_num_trials = _defaults.AUTOTUNING_DICT["tuner_num_trials"]
+        exp_num_trials = _defaults.AUTOTUNING_ARG_DEFAULTS["max-trials"]
         assert len(search_runner.state.trials_created) == exp_num_trials
         assert len(search_runner.state.trials_closed) == exp_num_trials
         assert len(search_runner.state.trial_progress) == exp_num_trials
@@ -106,7 +101,7 @@ def test_continuous_failures() -> None:
             {ERROR_METRIC_NAME: 1.0},
         ]
         search_runner = _run_searcher(search_method, all_mock_metrics)
-        exp_num_trials = _defaults.AUTOTUNING_DICT["tuner_num_trials"]
+        exp_num_trials = _defaults.AUTOTUNING_ARG_DEFAULTS["max-trials"]
         assert len(search_runner.state.trials_created) == exp_num_trials
         assert len(search_runner.state.failures) == exp_num_trials - 2
         assert len(search_runner.state.trials_closed) == exp_num_trials
@@ -123,7 +118,7 @@ def test_one_off_failure() -> None:
             {"throughput": 1.0},
         ]
         search_runner = _run_searcher(search_method, all_mock_metrics)
-        exp_num_trials = _defaults.AUTOTUNING_DICT["tuner_num_trials"]
+        exp_num_trials = _defaults.AUTOTUNING_ARG_DEFAULTS["max-trials"]
         assert len(search_runner.state.trials_created) == exp_num_trials
         assert len(search_runner.state.failures) == 1
         assert len(search_runner.state.trials_closed) == exp_num_trials
@@ -193,7 +188,7 @@ class MockMaster:
             if ERROR_METRIC_NAME in metric:
                 trial_exited_early = bindings.v1TrialExitedEarly(
                     requestId=str(op.request_id),
-                    exitedReason=bindings.v1TrialExitedEarlyExitedReason.EXITED_REASON_UNSPECIFIED,
+                    exitedReason=bindings.v1TrialExitedEarlyExitedReason.UNSPECIFIED,
                 )
                 self.events_count += 1
                 event = bindings.v1SearcherEvent(
@@ -242,7 +237,7 @@ class MockMaster:
             self.events_queue.append(event)
 
         elif isinstance(op, searcher.Shutdown):
-            exp_state = bindings.experimentv1State.STATE_COMPLETED
+            exp_state = bindings.experimentv1State.COMPLETED
             exp_inactive = bindings.v1ExperimentInactive(experimentState=exp_state)
             self.events_count += 1
             event = bindings.v1SearcherEvent(id=self.events_count, experimentInactive=exp_inactive)
