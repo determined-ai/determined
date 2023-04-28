@@ -275,7 +275,7 @@ func hpToSQL(c string, t *string, va *interface{}, op *operator) (string, error)
 			col = fmt.Sprintf(`(CASE
 				WHEN config->'hyperparameters'->%[1]v->>'type' = 'const' THEN config->'hyperparameters'->%[1]v->>'val' %[2]v
 				ELSE false
-			 END)`, hpQuery, fmt.Sprintf("%v %v", oSQL, v))
+			 END)`, hpQuery, fmt.Sprintf(`%v '%v'`, oSQL, v))
 			return col, nil
 		} else if o == empty || o == notEmpty {
 			col = fmt.Sprintf(`(CASE
@@ -378,7 +378,9 @@ func (e experimentFilter) toSQL() (string, error) {
 			} else if *e.Operator == empty || *e.Operator == notEmpty {
 				s = col + " " + oSQL
 			} else {
-				if e.Type != nil && *e.Type == projectv1.ColumnType_COLUMN_TYPE_TEXT.String() {
+				if e.Type != nil &&
+					(*e.Type == projectv1.ColumnType_COLUMN_TYPE_TEXT.String() ||
+						*e.Type == projectv1.ColumnType_COLUMN_TYPE_DATE.String()) {
 					s = fmt.Sprintf(`%v %v '%v'`, col,
 						oSQL, *e.Value)
 				} else {
