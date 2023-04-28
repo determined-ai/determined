@@ -253,7 +253,7 @@ func hpToSQL(c string, t *string, va *interface{}, op *operator) (string, error)
 			return col, nil
 		} else {
 			if o == contains {
-				col = fmt.Sprintf(`(CASE
+				col = fmt.Sprintf(`(CASE 
 					WHEN config->'hyperparameters'->%[1]v->>'type' = 'const' THEN config->'hyperparameters'->%[1]v->>'val' %[3]v
 					WHEN config->'hyperparameters'->%[1]v->>'type' = 'categorical' THEN (config->'hyperparameters'->%[1]v->>'vals')::jsonb ? '%[2]v'
 					ELSE false
