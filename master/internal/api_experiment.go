@@ -212,10 +212,19 @@ func columnNameToSql(c string, l *string, t *string) (string, error) {
 	return col, nil
 }
 
-func hpToSql(c string, t *string, v interface{}, o Operator) (string, error) {
+func hpToSql(c string, t *string, va *interface{}, op *Operator) (string, error) {
 	var ty string
 	var col string
-
+	var o Operator
+	var v interface{}
+	if va == nil && op != nil && *op != EMPTY && *op != NOT_EMPTY {
+		return col, fmt.Errorf("hyperparameter field defined without value and without a valid operator")
+	} else {
+		o = *op
+		if o != EMPTY && o != NOT_EMPTY {
+			v = *va
+		}
+	}
 	if t == nil {
 		ty = projectv1.ColumnType_COLUMN_TYPE_UNSPECIFIED.String()
 	} else {
@@ -237,7 +246,7 @@ func hpToSql(c string, t *string, v interface{}, o Operator) (string, error) {
 			col = fmt.Sprintf(`(CASE WHEN config->'hyperparameters'->%[1]v->>'type' = 'const' THEN config->'hyperparameters'->%[1]v->>'val' %[2]v ELSE false END)`, hpQuery, fmt.Sprintf(`%v '%v'`, oSql, v))
 			return col, nil
 		} else if o == EMPTY || o == NOT_EMPTY {
-			col = fmt.Sprintf(`(CASE 
+			col = fmt.Sprintf(`(CASE
 				WHEN config->'hyperparameters'->%[1]v->>'type' = 'const' THEN config->'hyperparameters'->%[1]v->>'val' %[2]v
 				WHEN config->'hyperparameters'->%[1]v->>'type' = 'categorical' THEN config->'hyperparameters'->%[1]v->>'vals' %[2]v
 				ELSE false
@@ -246,7 +255,7 @@ func hpToSql(c string, t *string, v interface{}, o Operator) (string, error) {
 			return col, nil
 		} else {
 			if o == CONTAINS {
-				col = fmt.Sprintf(`(CASE 
+				col = fmt.Sprintf(`(CASE
 					WHEN config->'hyperparameters'->%[1]v->>'type' = 'const' THEN config->'hyperparameters'->%[1]v->>'val' %[3]v
 					WHEN config->'hyperparameters'->%[1]v->>'type' = 'categorical' THEN (config->'hyperparameters'->%[1]v->>'vals')::jsonb ? '%[2]v'
 					ELSE false
@@ -254,7 +263,7 @@ func hpToSql(c string, t *string, v interface{}, o Operator) (string, error) {
 				`, hpQuery, v, `LIKE '%`+fmt.Sprintf(`%v`, v)+`%'`)
 				return col, nil
 			} else {
-				col = fmt.Sprintf(`(CASE 
+				col = fmt.Sprintf(`(CASE
 										WHEN config->'hyperparameters'->%[1]v->>'type' = 'const' THEN config->'hyperparameters'->%[1]v->>'val' %[3]v
 										WHEN config->'hyperparameters'->%[1]v->>'type' = 'categorical' THEN (config->'hyperparameters'->%[1]v->>'vals')::jsonb ? '%[2]v') IS NOT TRUE
 										ELSE false
@@ -270,11 +279,11 @@ func hpToSql(c string, t *string, v interface{}, o Operator) (string, error) {
 			 END)`, hpQuery, fmt.Sprintf("%v %v", oSql, v))
 			return col, nil
 		} else if o == EMPTY || o == NOT_EMPTY {
-			col = fmt.Sprintf(`(CASE 
+			col = fmt.Sprintf(`(CASE
 				WHEN config->'hyperparameters'->%[1]v->>'type' = 'const' THEN config->'hyperparameters'->%[1]v->>'val' %[2]v
 				WHEN config->'hyperparameters'->%[1]v->>'type' = 'categorical' THEN config->'hyperparameters'->%[1]v->>'vals' %[2]v
 				ELSE false
-			 END)
+			END)
 			`, hpQuery, oSql)
 			return col, nil
 		} else {
@@ -286,7 +295,7 @@ func hpToSql(c string, t *string, v interface{}, o Operator) (string, error) {
 				return col, nil
 			} else {
 				col = fmt.Sprintf(`
-				(CASE 
+				(CASE
 					WHEN config->'hyperparameters'->%[1]v->>'type' = 'categorical' THEN (config->'hyperparameters'->%[1]v->>'val')::jsonb ? '%[2]v') IS NOT TRUE
 					ELSE false
 				 END)
@@ -303,7 +312,7 @@ func hpToSql(c string, t *string, v interface{}, o Operator) (string, error) {
 			 END)`, hpQuery, fmt.Sprintf("%v %v", oSql, v))
 			return col, nil
 		} else if o == EMPTY || o == NOT_EMPTY {
-			col = fmt.Sprintf(`(CASE 
+			col = fmt.Sprintf(`(CASE
 				WHEN config->'hyperparameters'->%[1]v->>'type' = 'const' THEN (config->'hyperparameters'->%[1]v->>'val')::float8 %[2]v
 				WHEN config->'hyperparameters'->%[1]v->>'type' = 'categorical' THEN config->'hyperparameters'->%[1]v->>'vals' %[2]v
 				WHEN config->'hyperparameters'->%[1]v->>'type' IN ('int', 'double', 'log') THEN (config->'hyperparameters'->%[1]v) %[2]v
@@ -315,18 +324,16 @@ func hpToSql(c string, t *string, v interface{}, o Operator) (string, error) {
 			if o == CONTAINS {
 				col = fmt.Sprintf(`(CASE
 					WHEN config->'hyperparameters'->%[1]v->>'type' = 'categorical' THEN (config->'hyperparameters'->%[1]v->>'vals')::jsonb ? '%[2]v'
-					WHEN config->'hyperparameters'->%[1]v->>'type' IN ('int', 'double', 'log') THEN (config->'hyperparameters'->%[1]v->>'minval')::float8 >= %[2]v AND (config->'hyperparameters'->%[1]v->>'maxval')::float8 <= %[2]v
+					WHEN config->'hyperparameters'->%[1]v->>'type' IN ('int', 'double', 'log') THEN (config->'hyperparameters'->%[1]v->>'minval')::float8 <= %[2]v OR (config->'hyperparameters'->%[1]v->>'maxval')::float8 >= %[2]v
 					ELSE false
 				 END)`, hpQuery, v)
 				return col, nil
 			} else {
-				col = fmt.Sprintf(`
-				(CASE 
-					WHEN config->'hyperparameters'->%[1]v->>'type' = 'categorical' THEN (config->'hyperparameters'->%[1]v->>'val')::jsonb ? '%[2]v') IS NOT TRUE
-					WHEN config->'hyperparameters'->%[1]v->>'type' IN ('int', 'double', 'log') THEN (config->'hyperparameters'->%[1]v->>'minval')::float8 >= %[2]v OR config->'hyperparameters'->%[1]v->>'maxval')::float8 <= %[2]v
+				col = fmt.Sprintf(`(CASE
+					WHEN config->'hyperparameters'->%[1]v->>'type' = 'categorical' THEN ((config->'hyperparameters'->%[1]v->>'vals')::jsonb ? '%[2]v') IS NOT TRUE
+					WHEN config->'hyperparameters'->%[1]v->>'type' IN ('int', 'double', 'log') THEN (config->'hyperparameters'->%[1]v->>'minval')::float8 >= %[2]v OR (config->'hyperparameters'->%[1]v->>'maxval')::float8 <= %[2]v
 					ELSE false
-				 END)
-					`, hpQuery, v)
+				 END)`, hpQuery, v)
 				return col, nil
 			}
 		}
@@ -386,7 +393,7 @@ func (e ExperimentFilter) toSql() (string, error) {
 				return s, err
 			}
 		} else {
-			sql, err := hpToSql(e.ColumnName, e.Type, *e.Value, *e.Operator)
+			sql, err := hpToSql(e.ColumnName, e.Type, e.Value, e.Operator)
 			if err != nil {
 				return s, nil
 			}
