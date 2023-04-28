@@ -248,14 +248,47 @@ export const GlideTable: React.FC<GlideTableProps> = ({
     [columnIds, setSelectAll],
   );
 
+  const projectColumnsMap: Loadable<Record<string, ProjectColumn>> = useMemo(() => {
+    return Loadable.map(projectColumns, (columns) => {
+      return columns.reduce((acc, col) => Object.assign(acc, { [col.column]: col }), {});
+    });
+  }, [projectColumns]);
+
   const getCellContent: DataEditorProps['getCellContent'] = React.useCallback(
     (cell: Item): GridCell => {
       const [col, row] = cell;
 
-      return Loadable.match(data[row], {
-        Loaded: (rowData) => {
+      return Loadable.match(Loadable.all([data[row], projectColumnsMap]), {
+        Loaded: ([rowData, columnsMap]) => {
           const columnId = columnIds[col];
-          return columnDefs[columnId].renderer(rowData, row);
+
+          if (columnId in columnDefs) return columnDefs[columnId].renderer(rowData, row);
+          const currentColumn = columnsMap[columnId];
+          let dataPath: string | undefined = undefined;
+          switch (currentColumn.location) {
+            case V1LocationType.EXPERIMENT:
+              dataPath = `experiment.${currentColumn.column}`;
+              break;
+            case V1LocationType.HYPERPARAMETERS:
+              dataPath = `experiment.config.hyperparameters.${currentColumn.column}`;
+              break;
+            case V1LocationType.VALIDATIONS:
+              dataPath = `bestTrial.bestValidationMetric.metrics.${currentColumn.column}`;
+              break;
+            case V1LocationType.UNSPECIFIED:
+            default:
+              break;
+          }
+          switch (currentColumn.type) {
+            case V1ColumnType.NUMBER:
+              return defaultNumberColumn(currentColumn, dataPath).renderer(rowData, row);
+            case V1ColumnType.DATE:
+              return defaultDateColumn(currentColumn, dataPath).renderer(rowData, row);
+            case V1ColumnType.TEXT:
+            case V1ColumnType.UNSPECIFIED:
+            default:
+              return defaultTextColumn(currentColumn, dataPath).renderer(rowData, row);
+          }
         },
         NotLoaded: () =>
           ({
@@ -266,7 +299,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
           } as GridCell),
       });
     },
-    [data, columnIds, columnDefs],
+    [data, projectColumnsMap, columnIds, columnDefs],
   );
 
   const onCellClicked: DataEditorProps['onCellClicked'] = useCallback(
@@ -345,12 +378,6 @@ export const GlideTable: React.FC<GlideTableProps> = ({
     [sortableColumnIds, setSortableColumnIds],
   );
 
-  const projectColumnsMap: Loadable<Record<string, ProjectColumn>> = useMemo(() => {
-    return Loadable.map(projectColumns, (columns) => {
-      return columns.reduce((acc, col) => Object.assign(acc, { [col.column]: col }), {});
-    });
-  }, [projectColumns]);
-
   const columns: DataEditorProps['columns'] = useMemo(
     () =>
       columnIds.map((columnName) => {
@@ -360,7 +387,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         let dataPath: string | undefined = undefined;
         switch (currentColumn.location) {
           case V1LocationType.EXPERIMENT:
-            dataPath = currentColumn.column;
+            dataPath = `experiment.${currentColumn.column}`;
             break;
           case V1LocationType.HYPERPARAMETERS:
             dataPath = `experiment.config.hyperparameters.${currentColumn.column}`;
