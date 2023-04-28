@@ -2,5 +2,5 @@
 
 **Breaking Change**
 
--  Old template CRUD endpoints have been removed. These used to be serviced under `/templates/*`.
-   Please use the new apis located at `/api/v1/templates/*` instead.
+-  The previous template CRUD endpoints have been removed from the `/templates/*` location. Please
+   use the APIs found at `/api/v1/templates/*`.
