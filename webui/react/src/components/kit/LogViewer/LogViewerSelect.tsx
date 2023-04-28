@@ -107,7 +107,7 @@ const LogViewerSelect: React.FC<Props> = ({
 
   const throttledChangeFilter = useMemo(
     () =>
-      throttle(500, (f: Filters) => {
+      throttle(1000, (f: Filters) => {
         onChange?.(f);
       }),
     [onChange],
