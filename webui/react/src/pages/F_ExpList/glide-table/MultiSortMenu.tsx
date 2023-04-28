@@ -10,7 +10,7 @@ import { Loadable } from 'utils/loadable';
 import css from './MultiSortMenu.module.scss';
 
 // in the list of columns from the api but not supported by the sort functionality
-const BANNED_COLUMNS = new Set(['tags', 'duration']);
+const BANNED_COLUMNS = new Set(['tags', 'duration', 'searcherType']);
 
 const directionType = io.keyof({ asc: null, desc: null });
 type DirectionType = io.TypeOf<typeof directionType>;
