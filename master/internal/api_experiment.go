@@ -370,7 +370,7 @@ func (e ExperimentFilter) toSql() (string, error) {
 		var childSql []string
 		var j string
 		if e.Conjunction == nil {
-			return s, fmt.Errorf("group specified with no conjuction")
+			return s, fmt.Errorf("group specified with no conjunction")
 		}
 		if len(e.Children) == 0 {
 			return "true", nil

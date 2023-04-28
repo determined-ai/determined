@@ -9,12 +9,10 @@ import (
 
 func TestExperimentSearchApiFilterParsing(t *testing.T) {
 	invalidTestCases := []string{
-		// TOOD add invalid test cases
-
 		// No operator specified in field
 		`{"children":[{"columnName":"resourcePool","kind":"field","value":"default"}],"conjunction":"and","kind":"group"}`,
 
-		// No conjuction in group
+		// No conjunction in group
 		`{"children":[{"columnName":"resourcePool","kind":"field","operator":"=","value":"default"}],"kind":"group"}`,
 
 		// invalid group conjunction
