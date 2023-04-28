@@ -547,7 +547,7 @@ export interface ExperimentItem {
 }
 
 export interface ExperimentWithTrial {
-  experiment?: ExperimentItem;
+  experiment: ExperimentItem;
   bestTrial?: TrialItem;
 }
 

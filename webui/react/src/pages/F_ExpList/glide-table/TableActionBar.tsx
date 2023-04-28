@@ -38,7 +38,7 @@ import { ErrorLevel } from 'shared/utils/error';
 import {
   BulkActionResult,
   ExperimentAction,
-  ExperimentItem,
+  ExperimentWithTrial,
   Project,
   ProjectColumn,
   ProjectExperiment,
@@ -83,7 +83,7 @@ const actionIcons: Record<BatchAction, string> = {
 } as const;
 
 interface Props {
-  experiments: Loadable<ExperimentItem>[];
+  experiments: Loadable<ExperimentWithTrial>[];
   filters: V1BulkExperimentFilters;
   initialVisibleColumns: string[];
   onAction: () => Promise<void>;
@@ -92,6 +92,7 @@ interface Props {
   selectAll: boolean;
   selectedExperimentIds: number[];
   handleUpdateExperimentList: (action: BatchAction, successfulIds: number[]) => void;
+  setExperiments: Dispatch<SetStateAction<Loadable<ExperimentWithTrial>[]>>;
   setVisibleColumns: (newColumns: string[]) => void;
   total: Loadable<number>;
 }
@@ -118,7 +119,10 @@ const TableActionBar: React.FC<Props> = ({
 
   const experimentMap = useMemo(() => {
     return experiments.filter(Loadable.isLoaded).reduce((acc, experiment) => {
-      acc[experiment.data.id] = getProjectExperimentForExperimentItem(experiment.data, project);
+      acc[experiment.data.experiment.id] = getProjectExperimentForExperimentItem(
+        experiment.data.experiment,
+        project,
+      );
       return acc;
     }, {} as Record<RecordKey, ProjectExperiment>);
   }, [experiments, project]);

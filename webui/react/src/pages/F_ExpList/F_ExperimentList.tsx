@@ -10,12 +10,11 @@ import { getProjectColumns, searchExperiments } from 'services/api';
 import { V1BulkExperimentFilters } from 'services/api-ts-sdk';
 import usePolling from 'shared/hooks/usePolling';
 import userStore from 'stores/users';
-import { ExperimentAction, ExperimentItem, Project, RunState, ProjectColumn } from 'types';
+import { ExperimentAction, ExperimentWithTrial, Project, RunState, ProjectColumn } from 'types';
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 
 import { F_ExperimentListSettings, settingsConfigForProject } from './F_ExperimentList.settings';
-import { defaultExperimentColumns } from './glide-table/columns';
 import { Error, Loading, NoExperiments, NoMatches } from './glide-table/exceptions';
 import GlideTable, { SCROLL_SET_COUNT_NEEDED } from './glide-table/GlideTable';
 import TableActionBar, { BatchAction } from './glide-table/TableActionBar';
@@ -35,7 +34,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const [page, setPage] = useState(
     isFinite(Number(searchParams.get('page'))) ? Number(searchParams.get('page')) : 0,
   );
-  const [experiments, setExperiments] = useState<Loadable<ExperimentItem>[]>(
+  const [experiments, setExperiments] = useState<Loadable<ExperimentWithTrial>[]>(
     Array(page * PAGE_SIZE).fill(NotLoaded),
   );
   const [total, setTotal] = useState<Loadable<number>>(NotLoaded);
@@ -46,7 +45,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page]);
 
-  const [sortableColumnIds, setSortableColumnIds] = useState(defaultExperimentColumns);
+  const [sortableColumnIds, setSortableColumnIds] = useState(settings.columns);
   const [selectedExperimentIds, setSelectedExperimentIds] = useState<number[]>([]);
   const [selectAll, setSelectAll] = useState(false);
   const [clearSelectionTrigger, setClearSelectionTrigger] = useState(0);
@@ -105,7 +104,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         );
         return [
           ...experimentBeforeCurrentPage,
-          ...response.experiments.map((e) => Loaded(e.experiment)),
+          ...response.experiments.map((e) => Loaded(e)),
           ...experimentsAfterCurrentPage,
         ].slice(0, response.pagination.total);
       });
@@ -254,6 +253,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
               height={height}
               page={page}
               project={project}
+              projectColumns={projectColumns}
               scrollPositionSetCount={scrollPositionSetCount}
               selectAll={selectAll}
               selectedExperimentIds={selectedExperimentIds}

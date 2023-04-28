@@ -24,10 +24,11 @@ import React, {
 } from 'react';
 
 import { handlePath } from 'routes/utils';
+import { V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
 import useUI from 'shared/contexts/stores/UI';
 import { AnyMouseEvent } from 'shared/utils/routes';
 import usersStore from 'stores/users';
-import { ExperimentItem, Project } from 'types';
+import { ExperimentWithTrial, Project, ProjectColumn } from 'types';
 import { getProjectExperimentForExperimentItem } from 'utils/experiment';
 import { Loadable } from 'utils/loadable';
 import { observable, useObservable, WritableObservable } from 'utils/observable';
@@ -38,6 +39,9 @@ import { MapOfIdsToColors } from '../useGlasbey';
 import {
   ColumnDef,
   defaultColumnWidths,
+  defaultDateColumn,
+  defaultNumberColumn,
+  defaultTextColumn,
   ExperimentColumn,
   getColumnDefs,
   getHeaderIcons,
@@ -53,15 +57,16 @@ import { getTheme } from './utils';
 export interface GlideTableProps {
   clearSelectionTrigger?: number;
   colorMap: MapOfIdsToColors;
-  data: Loadable<ExperimentItem>[];
+  data: Loadable<ExperimentWithTrial>[];
   fetchExperiments: () => Promise<void>;
   handleScroll?: (r: Rectangle) => void;
   height: number;
   scrollPositionSetCount: WritableObservable<number>;
-  sortableColumnIds: ExperimentColumn[];
-  setSortableColumnIds: Dispatch<SetStateAction<ExperimentColumn[]>>;
+  sortableColumnIds: string[];
+  setSortableColumnIds: Dispatch<SetStateAction<string[]>>;
   page: number;
   project?: Project;
+  projectColumns: Loadable<ProjectColumn[]>;
   selectedExperimentIds: number[];
   setSelectedExperimentIds: Dispatch<SetStateAction<number[]>>;
   selectAll: boolean;
@@ -102,6 +107,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   page,
   project,
   handleUpdateExperimentList,
+  projectColumns,
 }) => {
   const gridRef = useRef<DataEditorRef>(null);
 
@@ -139,10 +145,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
 
   const users = useObservable(usersStore.getUsers());
 
-  const columnIds = useMemo<ExperimentColumn[]>(
-    () => [...STATIC_COLUMNS, ...sortableColumnIds],
-    [sortableColumnIds],
-  );
+  const columnIds = useMemo(() => [...STATIC_COLUMNS, ...sortableColumnIds], [sortableColumnIds]);
 
   const [selection, setSelection] = React.useState<GridSelection>({
     columns: CompactSelection.empty(),
@@ -161,7 +164,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         .map((idx) => data?.[idx])
         .filter((row) => row !== undefined)
         .filter(Loadable.isLoaded)
-        .map((record) => record.data.id);
+        .map((record) => record.data.experiment.id);
       if (prevIds === selectedIds) return prevIds;
       return selectedIds;
     });
@@ -170,7 +173,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   const [columnWidths, setColumnWidths] =
     useState<Record<ExperimentColumn, number>>(defaultColumnWidths);
 
-  const columnDefs = useMemo<Record<ExperimentColumn, ColumnDef>>(
+  const columnDefs = useMemo<Record<string, ColumnDef>>(
     () =>
       getColumnDefs({
         appTheme,
@@ -199,7 +202,8 @@ export const GlideTable: React.FC<GlideTableProps> = ({
       // avoid showing 'empty rows' below data
       if (!data[row]) return;
       const rowColorTheme = Loadable.match(data[row], {
-        Loaded: (record) => (colorMap[record.id] ? { accentColor: colorMap[record.id] } : {}),
+        Loaded: (record) =>
+          colorMap[record.experiment.id] ? { accentColor: colorMap[record.experiment.id] } : {},
         NotLoaded: () => ({}),
       });
       return { ...baseRowTheme, ...rowColorTheme };
@@ -307,7 +311,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
 
             // Update the context menu based on the cell context.
             setContextMenuProps({
-              experiment: getProjectExperimentForExperimentItem(rowData, project),
+              experiment: getProjectExperimentForExperimentItem(rowData.experiment, project),
               handleClose: (e?: Event) => {
                 // Prevent the context menu closing click from triggering something else.
                 if (contextMenuOpen.get()) e?.stopPropagation();
@@ -343,9 +347,45 @@ export const GlideTable: React.FC<GlideTableProps> = ({
     [setSortableColumnIds],
   );
 
+  const projectColumnsMap: Loadable<Record<string, ProjectColumn>> = useMemo(() => {
+    return Loadable.map(projectColumns, (columns) => {
+      return columns.reduce((acc, col) => Object.assign(acc, { [col.column]: col }), {});
+    });
+  }, [projectColumns]);
+
   const columns: DataEditorProps['columns'] = useMemo(
-    () => columnIds.map((columnName) => columnDefs[columnName as ExperimentColumn]) as GridColumn[],
-    [columnIds, columnDefs],
+    () =>
+      columnIds.map((columnName) => {
+        if (columnName in columnDefs) return columnDefs[columnName];
+        if (!Loadable.isLoaded(projectColumnsMap)) return;
+        const currentColumn = projectColumnsMap.data[columnName];
+        let dataPath: string | undefined = undefined;
+        switch (currentColumn.location) {
+          case V1LocationType.EXPERIMENT:
+            dataPath = currentColumn.column;
+            break;
+          case V1LocationType.HYPERPARAMETERS:
+            dataPath = `experiment.config.hyperparameters.${currentColumn.column}`;
+            break;
+          case V1LocationType.VALIDATIONS:
+            dataPath = `bestTrial.bestValidationMetric.metrics.${currentColumn.column}`;
+            break;
+          case V1LocationType.UNSPECIFIED:
+          default:
+            break;
+        }
+        switch (currentColumn.type) {
+          case V1ColumnType.NUMBER:
+            return defaultNumberColumn(currentColumn, dataPath);
+          case V1ColumnType.DATE:
+            return defaultDateColumn(currentColumn, dataPath);
+          case V1ColumnType.TEXT:
+          case V1ColumnType.UNSPECIFIED:
+          default:
+            return defaultTextColumn(currentColumn, dataPath);
+        }
+      }) as GridColumn[],
+    [columnIds, columnDefs, projectColumnsMap],
   );
 
   const verticalBorder: DataEditorProps['verticalBorder'] = useCallback(

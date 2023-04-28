@@ -4,7 +4,7 @@ import React, { ReactNode, useCallback, useEffect, useMemo } from 'react';
 
 import { Loadable } from 'utils/loadable';
 
-import { ColumnDefs, ExperimentColumn } from './columns';
+import { ColumnDefs } from './columns';
 import { GlideTableProps } from './GlideTable';
 
 export interface TooltipProps {
@@ -16,7 +16,7 @@ export interface TooltipProps {
 
 interface UseTooltipParams {
   data: GlideTableProps['data'];
-  columnIds: ExperimentColumn[];
+  columnIds: string[];
   columnDefs: ColumnDefs;
 }
 interface UseTooltipReturn {
