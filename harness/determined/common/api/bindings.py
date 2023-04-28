@@ -10209,36 +10209,32 @@ class v1ScopeTypeMask:
 
 class v1SearchExperimentExperiment:
     bestTrial: "typing.Optional[trialv1Trial]" = None
-    experiment: "typing.Optional[v1Experiment]" = None
 
     def __init__(
         self,
         *,
+        experiment: "v1Experiment",
         bestTrial: "typing.Union[trialv1Trial, None, Unset]" = _unset,
-        experiment: "typing.Union[v1Experiment, None, Unset]" = _unset,
     ):
+        self.experiment = experiment
         if not isinstance(bestTrial, Unset):
             self.bestTrial = bestTrial
-        if not isinstance(experiment, Unset):
-            self.experiment = experiment
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1SearchExperimentExperiment":
         kwargs: "typing.Dict[str, typing.Any]" = {
+            "experiment": v1Experiment.from_json(obj["experiment"]),
         }
         if "bestTrial" in obj:
             kwargs["bestTrial"] = trialv1Trial.from_json(obj["bestTrial"]) if obj["bestTrial"] is not None else None
-        if "experiment" in obj:
-            kwargs["experiment"] = v1Experiment.from_json(obj["experiment"]) if obj["experiment"] is not None else None
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
+            "experiment": self.experiment.to_json(omit_unset),
         }
         if not omit_unset or "bestTrial" in vars(self):
             out["bestTrial"] = None if self.bestTrial is None else self.bestTrial.to_json(omit_unset)
-        if not omit_unset or "experiment" in vars(self):
-            out["experiment"] = None if self.experiment is None else self.experiment.to_json(omit_unset)
         return out
 
 class v1SearchExperimentsResponse:
