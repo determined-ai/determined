@@ -1,14 +1,13 @@
-import base64
 from argparse import FileType, Namespace
 from collections import namedtuple
 from typing import Any, Dict, List
 
 from termcolor import colored
 
-from determined.common import api, util, yaml
+from determined import cli
+from determined.common import util, yaml
 from determined.common.api import authentication, bindings
 from determined.common.declarative_argparse import Arg, Cmd
-from determined import cli
 
 from . import render
 
