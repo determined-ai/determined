@@ -10,6 +10,38 @@
  Version 0.21
 **************
 
+Version 0.21.2
+==============
+
+**Release Date:** April 28, 2023
+
+**New Features**
+
+-  Add the ``launch_error`` configuration option to the master config, which specifies whether to
+   refuse experiments or tasks if they request more slots than the cluster has. See
+   :ref:`master-config-reference` for more information.
+
+**Improvements**
+
+-  CLI: Add ``det (experiment|trial|task) logs --json`` option, allowing users to get JSON-formatted
+   logs for experiments, trials, and tasks.
+
+-  Cluster: HPC Launcher 3.2.7 migrates the ``resource_manager.job_storage_root`` to a more
+   efficient format. This happens automatically, but once migrated you cannot downgrade to an older
+   version of the HPC launcher.
+
+-  Cluster: The ``manage-singularity-cache`` script has added the ``--docker-login`` option to
+   enable access to private Docker images.
+
+**Removed Features**
+
+-  The "hyperparameter importance" feature and associated API endpoints have been removed.
+
+**Bug Fixes**
+
+-  Tasks: Fix an issue where task proxies were not recovered when running on Slurm.
+-  Tasks: Fix an issue where ``det task list`` would sometimes return an incorrect 404 error.
+
 Version 0.21.1
 ==============
 
