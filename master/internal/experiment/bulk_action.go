@@ -41,8 +41,6 @@ type deleteExperimentOKResult struct {
 	State    experimentv1.State
 }
 
-var completedExperimentStates = []string{"CANCELED", "COMPLETED", "ERROR"}
-
 var runningOrPaused = []experimentv1.State{
 	experimentv1.State_STATE_ACTIVE,
 	experimentv1.State_STATE_PAUSED,
@@ -50,6 +48,16 @@ var runningOrPaused = []experimentv1.State{
 
 // ExperimentsAddr is the address to direct experiment actions.
 var ExperimentsAddr = actor.Addr("experiments")
+
+func completedExperimentStates () []string {
+	states := make([]string, len(model.TerminalStates))
+	idx := 0
+	for k := range model.TerminalStates {
+    states[idx] = string(k)
+		idx += 1
+	}
+	return states
+}
 
 // ProtoStateDBCaseString helps bun extract the experiment state.
 func ProtoStateDBCaseString(
@@ -135,11 +143,11 @@ func queryBulkExperiments(query *bun.SelectQuery,
 		query = query.Where("e.archived = ?", filters.Archived.Value)
 	}
 	if len(filters.States) > 0 {
-		var selectStates []string
+		var states []string
 		for _, state := range filters.States {
-			selectStates = append(selectStates, strings.TrimPrefix(state.String(), "STATE_"))
+			states = append(states, strings.TrimPrefix(state.String(), "STATE_"))
 		}
-		query = query.Where("e.state IN (?)", bun.In(selectStates))
+		query = query.Where("e.state IN (?)", bun.In(states))
 	}
 	if len(filters.UserIds) > 0 {
 		query = query.Where("e.owner_id IN (?)", bun.In(filters.UserIds))
@@ -399,7 +407,7 @@ func DeleteExperiments(ctx context.Context, system *actor.System,
 	} else {
 		query = queryBulkExperiments(query, filters).
 			Where("versions = 0").
-			Where("state IN (?)", bun.In(completedExperimentStates))
+			Where("state IN (?)", bun.In(completedExperimentStates()))
 	}
 
 	query, err = AuthZProvider.Get().
@@ -485,14 +493,14 @@ func ArchiveExperiments(ctx context.Context, system *actor.System,
 		Model(&expChecks).
 		Column("e.archived").
 		Column("e.id").
-		ColumnExpr("e.state IN (?) AS state", bun.In(completedExperimentStates))
+		ColumnExpr("e.state IN (?) AS state", bun.In(completedExperimentStates()))
 
 	if filters == nil {
 		query = query.Where("e.id IN (?)", bun.In(experimentIds))
 	} else {
 		query = queryBulkExperiments(query, filters).
 			Where("NOT e.archived").
-			Where("e.state IN (?)", bun.In(completedExperimentStates))
+			Where("e.state IN (?)", bun.In(completedExperimentStates()))
 	}
 
 	query, err = AuthZProvider.Get().
@@ -576,14 +584,14 @@ func UnarchiveExperiments(ctx context.Context, system *actor.System,
 		Model(&expChecks).
 		Column("e.archived").
 		Column("e.id").
-		ColumnExpr("e.state IN (?) AS state", bun.In(completedExperimentStates))
+		ColumnExpr("e.state IN (?) AS state", bun.In(completedExperimentStates()))
 
 	if filters == nil {
 		query = query.Where("e.id IN (?)", bun.In(experimentIds))
 	} else {
 		query = queryBulkExperiments(query, filters).
 			Where("archived").
-			Where("e.state IN (?)", bun.In(completedExperimentStates))
+			Where("e.state IN (?)", bun.In(completedExperimentStates()))
 	}
 
 	query, err = AuthZProvider.Get().
