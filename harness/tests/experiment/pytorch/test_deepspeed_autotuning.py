@@ -84,6 +84,8 @@ def test_deepspeed_autotune_happy_path() -> None:
         assert len(search_runner.state.trial_progress) == exp_num_trials
         for trial_uuid in search_runner.state.trial_progress:
             assert search_runner.state.trial_progress[trial_uuid] == 1.0
+        assert search_runner.state.experiment_failed == False
+        assert search_runner.state.experiment_completed == True
 
 
 @pytest.mark.timeout(5)
@@ -106,6 +108,8 @@ def test_continuous_failures() -> None:
         assert len(search_runner.state.failures) == exp_num_trials - 2
         assert len(search_runner.state.trials_closed) == exp_num_trials
         assert len(search_runner.state.trial_progress) == exp_num_trials
+        assert search_runner.state.experiment_failed == False
+        assert search_runner.state.experiment_completed == True
 
 
 @pytest.mark.timeout(5)
@@ -123,21 +127,27 @@ def test_one_off_failure() -> None:
         assert len(search_runner.state.failures) == 1
         assert len(search_runner.state.trials_closed) == exp_num_trials
         assert len(search_runner.state.trial_progress) == exp_num_trials
+        assert search_runner.state.experiment_failed == False
+        assert search_runner.state.experiment_completed == True
 
 
 @pytest.mark.timeout(5)
 def test_simple_model_profile_info_run_fails() -> None:
     """Run the random search method where the model profile info run fails"""
-    search_runner = _run_searcher(
-        RandomDSATSearchMethod,
-        [
+    for search_method in _defaults.ALL_SEARCH_METHOD_CLASSES.values():
+        all_mock_metrics = [
             {ERROR_METRIC_NAME: 1.0},
-        ],
-    )
-    assert len(search_runner.state.trials_created) == 1
-    assert len(search_runner.state.failures) == 1
-    assert len(search_runner.state.trials_closed) == 1
-    assert len(search_runner.state.trial_progress) == 1
+        ]
+        search_runner = _run_searcher(
+            search_method,
+            all_mock_metrics,
+        )
+        assert len(search_runner.state.trials_created) == 1
+        assert len(search_runner.state.failures) == 1
+        assert len(search_runner.state.trials_closed) == 1
+        assert len(search_runner.state.trial_progress) == 1
+        assert search_runner.state.experiment_failed == True
+        assert search_runner.state.experiment_completed == False
 
 
 class MockMaster:
@@ -237,7 +247,11 @@ class MockMaster:
             self.events_queue.append(event)
 
         elif isinstance(op, searcher.Shutdown):
-            exp_state = bindings.experimentv1State.COMPLETED
+            exp_state = (
+                bindings.experimentv1State.ERROR
+                if op.failure
+                else bindings.experimentv1State.COMPLETED
+            )
             exp_inactive = bindings.v1ExperimentInactive(experimentState=exp_state)
             self.events_count += 1
             event = bindings.v1SearcherEvent(id=self.events_count, experimentInactive=exp_inactive)

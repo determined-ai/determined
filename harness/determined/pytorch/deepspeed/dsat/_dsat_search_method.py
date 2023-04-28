@@ -463,6 +463,10 @@ class DSATTrialTracker:
             return False
 
     @property
+    def should_be_failure(self) -> bool:
+        return self.model_profile_info_trial is not None and self.model_profile_info_trial.error
+
+    @property
     def can_run_more_trials(self) -> int:
         if self.empty_queue:
             return False
@@ -597,7 +601,7 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
         if exited_reason != searcher.ExitedReason.ERRORED:
             # In case of INVALID_HP or USER_CANCELED, shut down the searcher.
             logging.info(f"Shutting down: unexpected early exit due to {exited_reason}")
-            new_ops_list.append(searcher.Shutdown())
+            new_ops_list.append(searcher.Shutdown(failure=self.trial_tracker.should_be_failure))
         if not self.trial_tracker.max_trials_queued and not self.trial_tracker.should_shutdown:
             # ERRORED Trials generally corresponds to OOMs, after which we may want to submit
             # follow-on Trials.
@@ -624,7 +628,7 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
 
         new_ops_list = []
         if self.trial_tracker.should_shutdown:
-            new_ops_list.append(searcher.Shutdown())
+            new_ops_list.append(searcher.Shutdown(failure=self.trial_tracker.should_be_failure))
         else:
             while self.trial_tracker.can_run_more_trials:
                 next_trial = self.trial_tracker.pop_next_trial()
