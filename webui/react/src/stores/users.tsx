@@ -40,6 +40,10 @@ class UserStore extends PollingStore {
     return this.getLoadableUsersByParams(params);
   }
 
+  public getUsersPagination(params: GetUsersParams = {}) {
+    return this.getLoadablePaginationByParams(params);
+  }
+
   protected getLoadableUsersByParams(params: GetUsersParams = {}) {
     return this.#usersBySearch.select((map) => {
       const userIds = map.get(encodeParams(params))?.userIds;
@@ -49,6 +53,13 @@ class UserStore extends PollingStore {
         .map((id) => this.#usersById.get().get(id))
         .filter((user) => !!user) as DetailedUser[];
       return Loaded(users.sort(compareUser));
+    });
+  }
+
+  protected getLoadablePaginationByParams(params: GetUsersParams = {}) {
+    return this.#usersBySearch.select((map) => {
+      const pagination = map.get(encodeParams(params))?.pagination;
+      return pagination ? Loaded(pagination) : NotLoaded;
     });
   }
 
