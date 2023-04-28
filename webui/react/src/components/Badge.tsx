@@ -75,7 +75,7 @@ const Badge: React.FC<BadgeProps> = ({
     </span>
   );
 
-  return tooltip ? <Tooltip title={tooltip}>{badge}</Tooltip> : badge;
+  return tooltip ? <Tooltip content={tooltip}>{badge}</Tooltip> : badge;
 };
 
 export default Badge;

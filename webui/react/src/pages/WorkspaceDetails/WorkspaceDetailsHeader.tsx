@@ -25,14 +25,14 @@ const WorkspaceDetailsHeader: React.FC<Props> = ({ workspace, fetchWorkspace }: 
         <DynamicIcon name={workspace.name} size={32} />
         <h1 className={css.name}>{workspace.name}</h1>
         {workspace.archived && (
-          <Tooltip title="Archived">
+          <Tooltip content="Archived">
             <div>
               <Icon name="archive" size="small" />
             </div>
           </Tooltip>
         )}
         {workspace.pinned && (
-          <Tooltip title="Pinned to sidebar">
+          <Tooltip content="Pinned to sidebar">
             <PushpinOutlined className={css.pinned} />
           </Tooltip>
         )}

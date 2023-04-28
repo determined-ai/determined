@@ -71,7 +71,7 @@ const MetadataCard: React.FC<Props> = ({ disabled = false, metadata = {}, onSave
           </Space>
         ) : (
           disabled || (
-            <Tooltip title="Edit">
+            <Tooltip content="Edit">
               <EditOutlined onClick={editMetadata} />
             </Tooltip>
           )

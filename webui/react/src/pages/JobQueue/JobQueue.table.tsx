@@ -85,7 +85,7 @@ export const columns: ColumnDef<Job>[] = [
     render: (_: unknown, record: Job): ReactNode => {
       const title = jobTypeLabel(record.type);
       const TypeCell = (
-        <Tooltip placement="topLeft" title={title}>
+        <Tooltip content={title} placement="topLeft">
           <div>
             <Icon name={jobTypeIconName(record.type)} />
           </div>
@@ -106,7 +106,7 @@ export const columns: ColumnDef<Job>[] = [
           label = (
             <div>
               {record.name}
-              <Tooltip title="Experiment ID">{` (${record.entityId})`}</Tooltip>
+              <Tooltip content="Experiment ID">{` (${record.entityId})`}</Tooltip>
             </div>
           );
           break;
@@ -146,9 +146,9 @@ export const columns: ColumnDef<Job>[] = [
     render: (_: unknown, record: Job): ReactNode => {
       const cell = (
         <span>
-          <Tooltip title="Allocated (scheduled) slots">{record.allocatedSlots}</Tooltip>
+          <Tooltip content="Allocated (scheduled) slots">{record.allocatedSlots}</Tooltip>
           {' / '}
-          <Tooltip title="Requested (queued) slots">{record.requestedSlots}</Tooltip>
+          <Tooltip content="Requested (queued) slots">{record.requestedSlots}</Tooltip>
         </span>
       );
       return cell;

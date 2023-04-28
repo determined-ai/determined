@@ -130,7 +130,7 @@ const NotesCard: React.FC<Props> = ({
         ) : (
           disabled || (
             <Space size="middle">
-              <Tooltip title="Edit">
+              <Tooltip content="Edit">
                 <EditOutlined onClick={editNotes} />
               </Tooltip>
               {extra}
