@@ -1,4 +1,4 @@
-Name: react
+Name: glide-data-grid
 Type: mit
 Agent: false
 Master: false
@@ -6,7 +6,7 @@ Webui: true
 
 MIT License
 
-Copyright (c) Meta Platforms, Inc. and affiliates.
+Copyright (c) 2021 typeguard, Inc.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

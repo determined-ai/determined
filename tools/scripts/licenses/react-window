@@ -1,12 +1,12 @@
-Name: react
+Name: react-window
 Type: mit
 Agent: false
 Master: false
 Webui: true
 
-MIT License
+The MIT License (MIT)
 
-Copyright (c) Meta Platforms, Inc. and affiliates.
+Copyright (c) 2018 Brian Vaughn
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
