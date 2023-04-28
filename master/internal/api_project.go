@@ -432,7 +432,7 @@ func (a *apiServer) deleteProject(ctx context.Context, projectID int32,
 	expList []*model.Experiment,
 ) (err error) {
 	holder := &projectv1.Project{}
-	_, _, err = grpcutil.GetUser(ctx)
+	user, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		log.WithError(err).Errorf("failed to access user and delete project %d", projectID)
 		_ = a.m.db.QueryProto("delete_fail_project", holder, projectID, err.Error())
@@ -440,12 +440,11 @@ func (a *apiServer) deleteProject(ctx context.Context, projectID int32,
 	}
 
 	log.Debugf("deleting project %d experiments", projectID)
-	// sema := make(chan struct{}, 1)
-	// if _, err = a.deleteExperiments(expList, user, sema); err != nil {
-	// 	log.WithError(err).Errorf("failed to delete experiments")
-	// 	_ = a.m.db.QueryProto("delete_fail_project", holder, projectID, err.Error())
-	// 	return err
-	// }
+	if _, err = a.deleteExperiments(expList, user); err != nil {
+		log.WithError(err).Errorf("failed to delete experiments")
+		_ = a.m.db.QueryProto("delete_fail_project", holder, projectID, err.Error())
+		return err
+	}
 	log.Debugf("project %d experiments deleted successfully", projectID)
 	err = a.m.db.QueryProto("delete_project", holder, projectID)
 	if err != nil {

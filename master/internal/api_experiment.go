@@ -23,6 +23,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -333,8 +334,7 @@ func (a *apiServer) DeleteExperiment(
 	}
 
 	go func() {
-		sema := make(chan struct{}, maxConcurrentDeletes)
-		if _, err := a.deleteExperiment(e, &curUser, sema); err != nil {
+		if _, err := a.deleteExperiments([]*model.Experiment{e}, &curUser); err != nil {
 			logrus.WithError(err).Errorf("deleting experiment %d", e.ID)
 			e.State = model.DeleteFailedState
 			if err := a.m.db.SaveExperimentState(e); err != nil {
@@ -360,90 +360,99 @@ func (a *apiServer) DeleteExperiments(
 		req.Filters)
 
 	go func() {
-		sema := make(chan struct{}, maxConcurrentDeletes)
-		wg := sync.WaitGroup{}
-		for idx := range experiments {
-			exp := experiments[idx]
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
-				if expIDs, err := a.deleteExperiment(exp, curUser, sema); err != nil {
-					for _, id := range expIDs {
-						logrus.WithError(err).Errorf("deleting experiment %d", id)
-					}
-					_, err = db.Bun().NewUpdate().
-						ModelTableExpr("experiments as e").
-						Set("state = ?", model.DeleteFailedState).
-						Where("id IN (?)", bun.In(expIDs)).
-						Exec(ctx)
-					if err != nil {
-						for _, id := range expIDs {
-							logrus.WithError(err).Errorf("transitioning experiment %d to %s", id,
-								model.DeleteFailedState)
-						}
-					}
-				} else {
-					for _, id := range expIDs {
-						logrus.WithError(err).Errorf("deleting experiment %d", id)
-					}
+		if expIDs, err := a.deleteExperiments(experiments, curUser); err != nil {
+			for _, id := range expIDs {
+				logrus.WithError(err).Errorf("deleting experiment %d", id)
+			}
+			_, err = db.Bun().NewUpdate().
+				ModelTableExpr("experiments as e").
+				Set("state = ?", model.DeleteFailedState).
+				Where("id IN (?)", bun.In(expIDs)).
+				Exec(ctx)
+			if err != nil {
+				for _, id := range expIDs {
+					logrus.WithError(err).Errorf("transitioning experiment %d to %s", id,
+						model.DeleteFailedState)
 				}
-			}()
+			}
+		} else {
+			for _, id := range expIDs {
+				logrus.WithError(err).Errorf("deleting experiment %d", id)
+			}
 		}
-		wg.Wait()
 	}()
 
 	return &apiv1.DeleteExperimentsResponse{Results: exputil.ToAPIResults(results)}, err
 }
 
-func (a *apiServer) deleteExperiment(exp *model.Experiment, userModel *model.User,
-	sema chan struct{},
-) ([]int, error) {
-	sema <- struct{}{}
-	defer func() { <-sema }()
+func (a *apiServer) deleteExperiments(exps []*model.Experiment, userModel *model.User) ([]int,
+	error,
+) {
+	var expIDs []int
+	for _, exp := range exps {
+		expIDs = append(expIDs, exp.ID)
+	}
 
 	taskSpec := *a.m.taskSpec
 
-	agentUserGroup, err := user.GetAgentUserGroup(*exp.OwnerID, exp)
-	if err != nil {
-		return nil, err
-	}
+	sema := make(chan struct{}, maxConcurrentDeletes)
+	wg := sync.WaitGroup{}
 
-	checkpoints, err := a.m.db.ExperimentCheckpointsToGCRaw(
-		exp.ID,
-		0,
-		0,
-		0,
-	)
-	if err != nil {
-		return nil, err
-	}
+	for _, exp := range exps {
+		wg.Add(1)
+		go func() {
+			sema <- struct{}{}
+			defer func() { <-sema }()
+			defer wg.Done()
 
-	if len(checkpoints) > 0 {
-		addr := actor.Addr(fmt.Sprintf("delete-checkpoint-gc-%s", uuid.New().String()))
-		jobSubmissionTime := exp.StartTime
-		taskID := model.NewTaskID()
-		ckptGCTask := newCheckpointGCTask(
-			a.m.rm, a.m.db, a.m.taskLogger, taskID, exp.JobID, jobSubmissionTime, taskSpec, exp.ID,
-			exp.Config, checkpoints, true, agentUserGroup, userModel, nil,
-		)
-		if gcErr := a.m.system.MustActorOf(addr, ckptGCTask).AwaitTermination(); gcErr != nil {
-			return nil, errors.Wrapf(gcErr, "failed to gc checkpoints for experiment")
-		}
-	}
+			agentUserGroup, err := user.GetAgentUserGroup(*exp.OwnerID, exp)
+			if err != nil {
+				log.WithError(err).Errorf("failed to delete experiment: %d", exp.ID)
+				return
+			}
 
-	// delete jobs per experiment
-	resp, err := a.m.rm.DeleteJob(a.m.system, sproto.DeleteJob{
-		JobID: exp.JobID,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("requesting cleanup of resource mananger resources: %w", err)
+			checkpoints, err := a.m.db.ExperimentCheckpointsToGCRaw(
+				exp.ID,
+				0,
+				0,
+				0,
+			)
+			if err != nil {
+				log.WithError(err).Errorf("failed to delete experiment: %d", exp.ID)
+				return
+			}
+
+			if len(checkpoints) > 0 {
+				addr := actor.Addr(fmt.Sprintf("delete-checkpoint-gc-%s", uuid.New().String()))
+				jobSubmissionTime := exp.StartTime
+				taskID := model.NewTaskID()
+				ckptGCTask := newCheckpointGCTask(
+					a.m.rm, a.m.db, a.m.taskLogger, taskID, exp.JobID, jobSubmissionTime, taskSpec, exp.ID,
+					exp.Config, checkpoints, true, agentUserGroup, userModel, nil,
+				)
+				if gcErr := a.m.system.MustActorOf(addr, ckptGCTask).AwaitTermination(); gcErr != nil {
+					// log.WithError(err).Errorf(gcErr.String(), "failed to gc checkpoints for experiment")
+					return
+				}
+			}
+
+			// delete jobs per experiment
+			resp, err := a.m.rm.DeleteJob(a.m.system, sproto.DeleteJob{
+				JobID: exp.JobID,
+			})
+			if err != nil {
+				log.WithError(err).Errorf("requesting cleanup of resource mananger resources: %w", err)
+				return
+			}
+			if err = <-resp.Err; err != nil {
+				log.WithError(err).Errorf("cleaning up resource mananger resources: %w", err)
+			}
+		}()
 	}
-	if err = <-resp.Err; err != nil {
-		return nil, fmt.Errorf("cleaning up resource mananger resources: %w", err)
-	}
+	wg.Wait()
 
 	ctx := context.Background()
-	trialIDs, taskIDs, err := a.m.db.ExperimentsTrialAndTaskIDs(ctx, db.Bun(), []int{exp.ID})
+	trialIDs, taskIDs, err := a.m.db.ExperimentsTrialAndTaskIDs(ctx, db.Bun(), expIDs)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to gather trial IDs for experiment")
 	}
@@ -456,10 +465,10 @@ func (a *apiServer) deleteExperiment(exp *model.Experiment, userModel *model.Use
 		return nil, errors.Wrapf(err, "failed to delete trial logs from backend (task logs)")
 	}
 
-	if err = a.m.db.DeleteExperiments(ctx, []int{exp.ID}); err != nil {
+	if err = a.m.db.DeleteExperiments(ctx, expIDs); err != nil {
 		return nil, errors.Wrapf(err, "deleting experiments from database")
 	}
-	return []int{exp.ID}, nil
+	return expIDs, nil
 }
 
 func getExperimentColumns(q *bun.SelectQuery) *bun.SelectQuery {
