@@ -63,6 +63,8 @@ type experimentAllocation struct {
 	Starting bool
 }
 
+const maxConcurrentDeletes = 10
+
 // Enrich one or more experiments by converting Active state to Queued/Pulling/Starting/Running.
 func (a *apiServer) enrichExperimentState(experiments ...*experimentv1.Experiment) error {
 	// filter allocations by JobIDs on this page of experiments
@@ -331,10 +333,8 @@ func (a *apiServer) DeleteExperiment(
 	}
 
 	go func() {
-		wg := sync.WaitGroup{}
-		wg.Add(1)
-		if _, err := a.deleteExperiments(&wg, []*model.Experiment{e},
-			&curUser); err != nil {
+		sema := make(chan struct{}, maxConcurrentDeletes)
+		if _, err := a.deleteExperiment(e, &curUser, sema); err != nil {
 			logrus.WithError(err).Errorf("deleting experiment %d", e.ID)
 			e.State = model.DeleteFailedState
 			if err := a.m.db.SaveExperimentState(e); err != nil {
@@ -360,12 +360,13 @@ func (a *apiServer) DeleteExperiments(
 		req.Filters)
 
 	go func() {
+		sema := make(chan struct{}, maxConcurrentDeletes)
 		wg := sync.WaitGroup{}
-		for i := 0; i < len(experiments); i += 10 {
-			exps := experiments[i : i+10]
+		for _, exp := range experiments {
 			wg.Add(1)
 			go func() {
-				if expIDs, err := a.deleteExperiments(&wg, exps, curUser); err != nil {
+				defer wg.Done()
+				if expIDs, err := a.deleteExperiment(exp, curUser, sema); err != nil {
 					for _, id := range expIDs {
 						logrus.WithError(err).Errorf("deleting experiment %d", id)
 					}
@@ -393,61 +394,55 @@ func (a *apiServer) DeleteExperiments(
 	return &apiv1.DeleteExperimentsResponse{Results: exputil.ToAPIResults(results)}, err
 }
 
-func (a *apiServer) deleteExperiments(wg *sync.WaitGroup, exps []*model.Experiment,
-	userModel *model.User,
+func (a *apiServer) deleteExperiment(exp *model.Experiment, userModel *model.User,
+	sema chan struct{},
 ) ([]int, error) {
-	var expIDs []int
-	for _, exp := range exps {
-		expIDs = append(expIDs, exp.ID)
-	}
-
-	defer wg.Done()
+	sema <- struct{}{}
+	defer func() { <-sema }()
 
 	taskSpec := *a.m.taskSpec
 
-	for _, exp := range exps {
-		agentUserGroup, err := user.GetAgentUserGroup(*exp.OwnerID, exp)
-		if err != nil {
-			return nil, err
-		}
+	agentUserGroup, err := user.GetAgentUserGroup(*exp.OwnerID, exp)
+	if err != nil {
+		return nil, err
+	}
 
-		checkpoints, err := a.m.db.ExperimentCheckpointsToGCRaw(
-			exp.ID,
-			0,
-			0,
-			0,
+	checkpoints, err := a.m.db.ExperimentCheckpointsToGCRaw(
+		exp.ID,
+		0,
+		0,
+		0,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(checkpoints) > 0 {
+		addr := actor.Addr(fmt.Sprintf("delete-checkpoint-gc-%s", uuid.New().String()))
+		jobSubmissionTime := exp.StartTime
+		taskID := model.NewTaskID()
+		ckptGCTask := newCheckpointGCTask(
+			a.m.rm, a.m.db, a.m.taskLogger, taskID, exp.JobID, jobSubmissionTime, taskSpec, exp.ID,
+			exp.Config, checkpoints, true, agentUserGroup, userModel, nil,
 		)
-		if err != nil {
-			return nil, err
-		}
-
-		if len(checkpoints) > 0 {
-			addr := actor.Addr(fmt.Sprintf("delete-checkpoint-gc-%s", uuid.New().String()))
-			jobSubmissionTime := exp.StartTime
-			taskID := model.NewTaskID()
-			ckptGCTask := newCheckpointGCTask(
-				a.m.rm, a.m.db, a.m.taskLogger, taskID, exp.JobID, jobSubmissionTime, taskSpec, exp.ID,
-				exp.Config, checkpoints, true, agentUserGroup, userModel, nil,
-			)
-			if gcErr := a.m.system.MustActorOf(addr, ckptGCTask).AwaitTermination(); gcErr != nil {
-				return nil, errors.Wrapf(gcErr, "failed to gc checkpoints for experiment")
-			}
-		}
-
-		// delete jobs per experiment
-		resp, err := a.m.rm.DeleteJob(a.m.system, sproto.DeleteJob{
-			JobID: exp.JobID,
-		})
-		if err != nil {
-			return nil, fmt.Errorf("requesting cleanup of resource mananger resources: %w", err)
-		}
-		if err = <-resp.Err; err != nil {
-			return nil, fmt.Errorf("cleaning up resource mananger resources: %w", err)
+		if gcErr := a.m.system.MustActorOf(addr, ckptGCTask).AwaitTermination(); gcErr != nil {
+			return nil, errors.Wrapf(gcErr, "failed to gc checkpoints for experiment")
 		}
 	}
 
+	// delete jobs per experiment
+	resp, err := a.m.rm.DeleteJob(a.m.system, sproto.DeleteJob{
+		JobID: exp.JobID,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("requesting cleanup of resource mananger resources: %w", err)
+	}
+	if err = <-resp.Err; err != nil {
+		return nil, fmt.Errorf("cleaning up resource mananger resources: %w", err)
+	}
+
 	ctx := context.Background()
-	trialIDs, taskIDs, err := a.m.db.ExperimentsTrialAndTaskIDs(ctx, db.Bun(), expIDs)
+	trialIDs, taskIDs, err := a.m.db.ExperimentsTrialAndTaskIDs(ctx, db.Bun(), []int{exp.ID})
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to gather trial IDs for experiment")
 	}
@@ -460,10 +455,10 @@ func (a *apiServer) deleteExperiments(wg *sync.WaitGroup, exps []*model.Experime
 		return nil, errors.Wrapf(err, "failed to delete trial logs from backend (task logs)")
 	}
 
-	if err = a.m.db.DeleteExperiments(ctx, expIDs); err != nil {
+	if err = a.m.db.DeleteExperiments(ctx, []int{exp.ID}); err != nil {
 		return nil, errors.Wrapf(err, "deleting experiments from database")
 	}
-	return expIDs, nil
+	return []int{exp.ID}, nil
 }
 
 func getExperimentColumns(q *bun.SelectQuery) *bun.SelectQuery {
