@@ -1,12 +1,12 @@
-import base64
 from argparse import FileType, Namespace
 from collections import namedtuple
-from typing import Any, List
+from typing import Any, Dict, List
 
 from termcolor import colored
 
-from determined.common import api, util, yaml
-from determined.common.api import authentication
+from determined import cli
+from determined.common import util, yaml
+from determined.common.api import authentication, bindings
 from determined.common.declarative_argparse import Arg, Cmd
 
 from . import render
@@ -15,17 +15,16 @@ TemplateClean = namedtuple("TemplateClean", ["name"])
 TemplateAll = namedtuple("TemplateAll", ["name", "config"])
 
 
-def _parse_config(field: Any) -> Any:
+def _parse_config(data: Dict[str, Any]) -> Any:
     # Pretty print the config field.
-    return yaml.safe_dump(yaml.safe_load(base64.b64decode(field)), default_flow_style=False)
+    return yaml.safe_dump(data, default_flow_style=False)
 
 
 @authentication.required
 def list_template(args: Namespace) -> None:
-    templates = [
-        render.unmarshal(TemplateAll, t, {"config": _parse_config})
-        for t in api.get(args.master, path="templates").json()
-    ]
+    templates: List[TemplateAll] = []
+    for tpl in bindings.get_GetTemplates(cli.setup_session(args)).templates:
+        templates.append(TemplateAll(tpl.name, _parse_config(tpl.config)))
     if args.details:
         render.render_objects(TemplateAll, templates, table_fmt="grid")
     else:
@@ -34,22 +33,26 @@ def list_template(args: Namespace) -> None:
 
 @authentication.required
 def describe_template(args: Namespace) -> None:
-    resp = api.get(args.master, path="templates/{}".format(args.template_name)).json()
-    template = render.unmarshal(TemplateAll, resp, {"config": _parse_config})
-    print(template.config)
+    tpl = bindings.get_GetTemplate(
+        cli.setup_session(args), templateName=args.template_name
+    ).template
+    print(_parse_config(tpl.config))
 
 
 @authentication.required
 def set_template(args: Namespace) -> None:
     with args.template_file:
         body = util.safe_load_yaml_with_exceptions(args.template_file)
-        api.put(args.master, path="templates/" + args.template_name, json=body)
+        v1_template = bindings.v1Template(name=args.template_name, config=body)
+        bindings.put_PutTemplate(
+            cli.setup_session(args), template_name=args.template_name, body=v1_template
+        )
         print(colored("Set template {}".format(args.template_name), "green"))
 
 
 @authentication.required
 def remove_templates(args: Namespace) -> None:
-    api.delete(args.master, path="templates/" + args.template_name)
+    bindings.delete_DeleteTemplate(cli.setup_session(args), templateName=args.template_name)
     print(colored("Removed template {}".format(args.template_name), "green"))
 
 
