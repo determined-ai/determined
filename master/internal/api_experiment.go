@@ -67,8 +67,10 @@ const (
 	GREATER_THAN_OR_EQUAL Operator          = ">="
 	CONTAINS              Operator          = "contains"
 	DOES_NOT_CONTAIN      Operator          = "does not contain"
-	EMPTY                 Operator          = "empty"
+	EMPTY                 Operator          = "is empty"
 	NOT_EMPTY             Operator          = "not empty"
+	IS                    Operator          = "is"
+	IS_NOT                Operator          = "is not"
 )
 
 // Catches information on active running experiments.
@@ -94,7 +96,7 @@ type ExperimentFilter struct {
 	Type        *string
 }
 
-func (o *Operator) toSql() string {
+func (o *Operator) toSql() (string, error) {
 	var s string
 	switch *o {
 	case EQUAL:
@@ -105,16 +107,26 @@ func (o *Operator) toSql() string {
 		s = "<"
 	case LESS_THAN_OR_EQUAL:
 		s = "<="
+	case GREATER_THAN:
+		s = ">"
 	case GREATER_THAN_OR_EQUAL:
 		s = ">="
 	case EMPTY:
 		s = "IS NULL"
 	case NOT_EMPTY:
 		s = "IS NOT NULL"
+	case IS:
+		s = "="
+	case IS_NOT:
+		s = "!="
+	case CONTAINS:
+		return s, nil
+	case DOES_NOT_CONTAIN:
+		return s, nil
 	default:
-		panic(fmt.Sprintf("Invalid operator %v", *o))
+		return s, fmt.Errorf("invalid operator %v", *o)
 	}
-	return s
+	return s, nil
 }
 
 func containsOperatorSql(o Operator, v *interface{}) (string, error) {
@@ -187,12 +199,13 @@ func columnNameToSql(c string, l *string, t *string) (string, error) {
 		case projectv1.ColumnType_COLUMN_TYPE_NUMBER.String():
 			col = fmt.Sprintf(`(%v)::float8`, col)
 		}
+	default:
+		return col, fmt.Errorf("unhandled project location %v", lo)
 	}
 	return col, nil
 }
 
 func hpToSql(c string, t *string, v interface{}, o Operator) (string, error) {
-	// TODO update int, log, double logic
 	var ty string
 	var col string
 
@@ -207,11 +220,14 @@ func hpToSql(c string, t *string, v interface{}, o Operator) (string, error) {
 		hps = append(hps, fmt.Sprintf(`'%v'`, h))
 	}
 	hpQuery := strings.Join(hps, "->")
+	oSql, err := o.toSql()
+	if err != nil {
+		return col, err
+	}
 	switch ty {
 	case projectv1.ColumnType_COLUMN_TYPE_TEXT.String():
 		if o != EMPTY && o != NOT_EMPTY && o != CONTAINS && o != DOES_NOT_CONTAIN {
-			col = fmt.Sprintf(`config->'hyperparameters'->%[1]v->>'type' = 'const' THEN config->'hyperparameters'->%[1]v->>'val' %[2]v
-		`, hpQuery, fmt.Sprintf("%v %v", o.toSql(), v))
+			col = fmt.Sprintf(`(CASE WHEN config->'hyperparameters'->%[1]v->>'type' = 'const' THEN config->'hyperparameters'->%[1]v->>'val' %[2]v ELSE false END)`, hpQuery, fmt.Sprintf(`%v '%v'`, oSql, v))
 			return col, nil
 		} else if o == EMPTY || o == NOT_EMPTY {
 			col = fmt.Sprintf(`(CASE 
@@ -219,7 +235,7 @@ func hpToSql(c string, t *string, v interface{}, o Operator) (string, error) {
 				WHEN config->'hyperparameters'->%[1]v->>'type' = 'categorical' THEN config->'hyperparameters'->%[1]v->>'vals' %[2]v
 				ELSE false
 			 END)
-			`, hpQuery, o.toSql())
+			`, hpQuery, oSql)
 			return col, nil
 		} else {
 			if o == CONTAINS {
@@ -239,14 +255,45 @@ func hpToSql(c string, t *string, v interface{}, o Operator) (string, error) {
 				return col, nil
 			}
 		}
+	case projectv1.ColumnType_COLUMN_TYPE_DATE.String():
+		if o != EMPTY && o != NOT_EMPTY && o != CONTAINS && o != DOES_NOT_CONTAIN {
+			col = fmt.Sprintf(`(CASE
+				WHEN config->'hyperparameters'->%[1]v->>'type' = 'const' THEN config->'hyperparameters'->%[1]v->>'val' %[2]v
+				ELSE false
+			 END)`, hpQuery, fmt.Sprintf("%v %v", oSql, v))
+			return col, nil
+		} else if o == EMPTY || o == NOT_EMPTY {
+			col = fmt.Sprintf(`(CASE 
+				WHEN config->'hyperparameters'->%[1]v->>'type' = 'const' THEN config->'hyperparameters'->%[1]v->>'val' %[2]v
+				WHEN config->'hyperparameters'->%[1]v->>'type' = 'categorical' THEN config->'hyperparameters'->%[1]v->>'vals' %[2]v
+				ELSE false
+			 END)
+			`, hpQuery, oSql)
+			return col, nil
+		} else {
+			if o == CONTAINS {
+				col = fmt.Sprintf(`(CASE
+					WHEN config->'hyperparameters'->%[1]v->>'type' = 'categorical' THEN (config->'hyperparameters'->%[1]v->>'vals')::jsonb ? '%[2]v'
+					ELSE false
+				 END)`, hpQuery, v)
+				return col, nil
+			} else {
+				col = fmt.Sprintf(`
+				(CASE 
+					WHEN config->'hyperparameters'->%[1]v->>'type' = 'categorical' THEN (config->'hyperparameters'->%[1]v->>'val')::jsonb ? '%[2]v') IS NOT TRUE
+					ELSE false
+				 END)
+					`, hpQuery, v)
+				return col, nil
+			}
+		}
 	default:
 		if o != EMPTY && o != NOT_EMPTY && o != CONTAINS && o != DOES_NOT_CONTAIN {
 			col = fmt.Sprintf(`(CASE
 				WHEN config->'hyperparameters'->%[1]v->>'type' = 'const' THEN (config->'hyperparameters'->%[1]v->>'val')::float8 %[2]v
 				WHEN config->'hyperparameters'->%[1]v->>'type' IN ('int', 'double', 'log') THEN ((config->'hyperparameters'->%[1]v->>'minval')::float8 %[2]v OR (config->'hyperparameters'->%[1]v->>'maxval')::float8 %[2]v)
 				ELSE false
-			 END)`, hpQuery, fmt.Sprintf("%v %v", o.toSql(), v))
-			fmt.Println(col)
+			 END)`, hpQuery, fmt.Sprintf("%v %v", oSql, v))
 			return col, nil
 		} else if o == EMPTY || o == NOT_EMPTY {
 			col = fmt.Sprintf(`(CASE 
@@ -255,7 +302,7 @@ func hpToSql(c string, t *string, v interface{}, o Operator) (string, error) {
 				WHEN config->'hyperparameters'->%[1]v->>'type' IN ('int', 'double', 'log') THEN (config->'hyperparameters'->%[1]v) %[2]v
 				ELSE false
 			 END)
-			`, hpQuery, o.toSql())
+			`, hpQuery, oSql)
 			return col, nil
 		} else {
 			if o == CONTAINS {
@@ -283,11 +330,15 @@ func (e ExperimentFilter) toSql() (string, error) {
 	var s string
 	switch e.Kind {
 	case FIELD:
-		if e.Value == nil {
-			return "true", nil
-		}
 		if e.Operator == nil {
 			return s, fmt.Errorf("field specified with value but no operator")
+		}
+		if e.Value == nil && *e.Operator != NOT_EMPTY && *e.Operator != EMPTY {
+			return "true", nil
+		}
+		oSql, err := e.Operator.toSql()
+		if err != nil {
+			return s, err
 		}
 		if e.Location == nil || *e.Location != projectv1.LocationType_LOCATION_TYPE_HYPERPARAMETERS.String() {
 			col, err := columnNameToSql(e.ColumnName, e.Location, e.Type)
@@ -298,10 +349,10 @@ func (e ExperimentFilter) toSql() (string, error) {
 				}
 				s = fmt.Sprintf("%v %v", col, oSql)
 			} else if *e.Operator == EMPTY || *e.Operator == NOT_EMPTY {
-				s = col + " " + e.Operator.toSql()
+				s = col + " " + oSql
 			} else {
 				s = fmt.Sprintf("%v %v %v", col,
-					e.Operator.toSql(), *e.Value)
+					oSql, *e.Value)
 			}
 			if err != nil {
 				return s, err
@@ -320,7 +371,7 @@ func (e ExperimentFilter) toSql() (string, error) {
 			return s, fmt.Errorf("group specified with no conjuction")
 		}
 		if len(e.Children) == 0 {
-			return s, nil
+			return "true", nil
 		}
 		for _, c := range e.Children {
 			cSql, err := c.toSql()
@@ -335,7 +386,7 @@ func (e ExperimentFilter) toSql() (string, error) {
 		case OR:
 			j = " OR "
 		default:
-			panic(fmt.Sprintf("invalid conjunction value %v", *e.Conjunction))
+			return s, fmt.Errorf("invalid conjunction value %v", *e.Conjunction)
 		}
 		s = fmt.Sprintf("(%v)", strings.Join(childSql, j))
 
