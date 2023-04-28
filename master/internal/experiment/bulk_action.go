@@ -49,11 +49,11 @@ var runningOrPaused = []experimentv1.State{
 // ExperimentsAddr is the address to direct experiment actions.
 var ExperimentsAddr = actor.Addr("experiments")
 
-func terminalExperimentStates () []string {
+func terminalExperimentStates() []string {
 	states := make([]string, len(model.TerminalStates))
 	idx := 0
-	for k := range model.TerminalStates {
-    states[idx] = string(k)
+	for state := range model.TerminalStates {
+		states[idx] = string(state)
 		idx++
 	}
 	return states
@@ -267,10 +267,8 @@ func ActivateExperiments(ctx context.Context, system *actor.System,
 func CancelExperiments(ctx context.Context, system *actor.System,
 	experimentIds []int32, filters *apiv1.BulkExperimentFilters,
 ) ([]ExperimentActionResult, error) {
-	if filters != nil {
-		if filters.States == nil {
-			filters.States = runningOrPaused
-		}
+	if filters != nil && filters.States == nil {
+		filters.States = runningOrPaused
 	}
 	expIDs, err := editableExperimentIds(ctx, experimentIds, filters)
 	if err != nil {
@@ -311,10 +309,8 @@ func CancelExperiments(ctx context.Context, system *actor.System,
 func KillExperiments(ctx context.Context, system *actor.System,
 	experimentIds []int32, filters *apiv1.BulkExperimentFilters,
 ) ([]ExperimentActionResult, error) {
-	if filters != nil {
-		if filters.States == nil {
-			filters.States = runningOrPaused
-		}
+	if filters != nil && filters.States == nil {
+		filters.States = runningOrPaused
 	}
 	expIDs, err := editableExperimentIds(ctx, experimentIds, filters)
 	if err != nil {
