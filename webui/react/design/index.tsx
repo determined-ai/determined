@@ -6,6 +6,7 @@ import { BrowserRouter } from 'react-router-dom';
 import 'uplot/dist/uPlot.min.css';
 
 import css from '../src/App.module.scss';
+import { ConfirmationProvider } from '../src/components/kit/useConfirm';
 import ThemeProvider from '../src/components/ThemeProvider';
 import { Settings, UserSettings } from '../src/hooks/useSettingsProvider';
 import DesignKit from '../src/pages/DesignKit';
@@ -27,9 +28,11 @@ createRoot(document.getElementById('root')!).render(
       <UIProvider>
         <UserSettings.Provider value={fakeSettingsContext}>
           <ThemeProvider>
-            <div className={css.base}>
-              <DesignKit />
-            </div>
+            <ConfirmationProvider>
+              <div className={css.base}>
+                <DesignKit />
+              </div>
+            </ConfirmationProvider>
           </ThemeProvider>
         </UserSettings.Provider>
       </UIProvider>
