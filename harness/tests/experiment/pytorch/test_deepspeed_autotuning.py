@@ -14,6 +14,7 @@ from determined.pytorch.deepspeed.dsat._dsat_search_method import (
     BaseDSATSearchMethod,
     RandomDSATSearchMethod,
 )
+from determined.pytorch.deepspeed.dsat._run_dsat import build_exp_conf_from_args
 from tests.custom_search_mocks import MockMasterSearchRunner
 
 ERROR_METRIC_NAME = "error"
@@ -38,8 +39,6 @@ def _run_searcher(search_method: BaseDSATSearchMethod, all_metrics):
     """
     model_dir = BASE_EXPERIMENT_FIXTURE_PATH.joinpath("example_experiment")
     config_path = model_dir.joinpath("autotune_config.yaml")
-    submitted_config_dict = _utils.get_dict_from_yaml_or_json_path(config_path)
-
     with tempfile.TemporaryDirectory() as searcher_dir:
         args = Namespace(
             model_dir=model_dir,
@@ -57,9 +56,12 @@ def _run_searcher(search_method: BaseDSATSearchMethod, all_metrics):
             # NONE TYPES
             max_slots=None,
             early_stopping=None,
+            experiment_id=None,
         )
+
+        config_dict = build_exp_conf_from_args(args)
         searcher_dir = pathlib.Path(searcher_dir)
-        search_method = search_method(args=args, exp_config=submitted_config_dict)
+        search_method = search_method(args=args, exp_config=config_dict)
         mock_master_obj = MockMaster(all_metrics=all_metrics)
         search_runner = MockMasterSearchRunner(search_method, mock_master_obj, searcher_dir)
         search_runner.run(exp_config={}, context_dir="", includes=None)
