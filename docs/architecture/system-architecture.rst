@@ -22,9 +22,11 @@ agent has no state and only communicates with the master. Each agent is responsi
 
 .. image:: /assets/images/det-ai-sys-arch-01-dark.png
    :class: only-dark
+   :alt: Determined AI system architecture diagram describing master and agent components in dark mode
 
 .. image:: /assets/images/det-ai-sys-arch-01-light.png
    :class: only-light
+   :alt: Determined AI system architecture diagram describing master and agent components in light mode
 
 The **task container** runs a training task or other task(s) in a containerized environment.
 Training tasks are expected to have access to the data that will be used in training. The **agents**
