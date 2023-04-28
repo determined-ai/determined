@@ -1,5 +1,7 @@
-ALTER TABLE public.trials
-    ADD COLUMN latest_validation_id int REFERENCES public.raw_validations(id) NULL;
+ALTER TABLE public.trials ADD COLUMN latest_validation_id int
+    REFERENCES public.raw_validations(id)
+    ON DELETE SET NULL
+    DEFAULT NULL;
 
 UPDATE trials SET latest_validation_id = sub.id
 FROM (
