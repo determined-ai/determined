@@ -362,7 +362,8 @@ func (a *apiServer) DeleteExperiments(
 	go func() {
 		sema := make(chan struct{}, maxConcurrentDeletes)
 		wg := sync.WaitGroup{}
-		for _, exp := range experiments {
+		for idx := range experiments {
+			exp := experiments[idx]
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
