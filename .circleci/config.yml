@@ -1071,7 +1071,8 @@ jobs:
             - common/dist
             - harness/dist
             - model_hub/dist
-            - docs/site/html
+            - docs/build
+            - docs/site
       - run: tar czf docs.tgz docs/site/html
       - store_artifacts:
           path: docs.tgz
@@ -2320,6 +2321,7 @@ workflows:
           dev-mode: true
       - test-e2e-react:
           context: playwright
+          filters: *any-upstream
       - build-docs:
           requires:
             - build-helm
