@@ -81,9 +81,11 @@ type experimentAllocation struct {
 	Starting bool
 }
 
-type FilterConjunction string
-type FilterType string
-type Operator string
+type (
+	FilterConjunction string
+	FilterType        string
+	Operator          string
+)
 
 type ExperimentFilter struct {
 	Children    []*ExperimentFilter
