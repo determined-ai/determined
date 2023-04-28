@@ -77,24 +77,22 @@ const DirectionOptions: React.FC<DirectionOptionsProps> = ({ onChange, type, val
   />
 );
 
-const ColumnOptions: React.FC<ColumnOptionsProps> = ({ onChange, columns, value }) => {
-  return (
-    <Select
-      autoFocus
-      loading={Loadable.isLoading(columns)}
-      options={Loadable.getOrElse([], columns)
-        .filter((c) => !BANNED_COLUMNS.has(c.column))
-        .map((c) => ({
-          label: c.displayName || c.column,
-          value: c.column,
-        }))}
-      placeholder="Select column"
-      value={value}
-      width="100%"
-      onChange={(val) => onChange(val as string)}
-    />
-  );
-};
+const ColumnOptions: React.FC<ColumnOptionsProps> = ({ onChange, columns, value }) => (
+  <Select
+    autoFocus
+    loading={Loadable.isLoading(columns)}
+    options={Loadable.getOrElse([], columns)
+      .filter((c) => !BANNED_COLUMNS.has(c.column))
+      .map((c) => ({
+        label: c.displayName || c.column,
+        value: c.column,
+      }))}
+    placeholder="Select column"
+    value={value}
+    width="100%"
+    onChange={(val) => onChange(val as string)}
+  />
+);
 
 const MultiSortRow: React.FC<MultiSortRowProps> = ({ sort, columns, onChange, onRemove }) => {
   const valueType =
