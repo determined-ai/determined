@@ -28,15 +28,14 @@ const ColumnPickerMenu: React.FC<Props> = ({
   initialVisibleColumns,
 }) => {
   const [form] = Form.useForm();
-  const columnsRemoveBanned = useMemo(
-    () =>
-      Loadable.map(projectColumns, (columns) =>
-        columns.filter((col) => !BANNED_COLUMNS.has(col.column)),
-      ),
-    [projectColumns],
+  const removeBannedColumns = useCallback(
+    (cols: Loadable<ProjectColumn[]>) =>
+      Loadable.map(cols, (columns) => columns.filter((col) => !BANNED_COLUMNS.has(col.column))),
+    [],
   );
-  const [filteredColumns, setFilteredColumns] =
-    useState<Loadable<ProjectColumn[]>>(columnsRemoveBanned);
+  const [filteredColumns, setFilteredColumns] = useState<Loadable<ProjectColumn[]>>(() =>
+    removeBannedColumns(projectColumns),
+  );
   const [isColumnsOpen, setIsColumnsOpen] = useState(false);
   const [activeColumnTab, setActiveColumnTab] = useState<V1LocationType>(V1LocationType.EXPERIMENT);
   const searchRef = useRef<InputRef>(null);
@@ -46,11 +45,13 @@ const ColumnPickerMenu: React.FC<Props> = ({
   useEffect(() => {
     const regex = new RegExp(columnSearch, 'i');
     setFilteredColumns(
-      Loadable.map(projectColumns, (columns) =>
-        columns.filter((col) => regex.test(col.displayName || col.column)),
+      removeBannedColumns(
+        Loadable.map(projectColumns, (columns) =>
+          columns.filter((col) => regex.test(col.displayName || col.column)),
+        ),
       ),
     );
-  }, [columnSearch, projectColumns]);
+  }, [columnSearch, projectColumns, removeBannedColumns]);
 
   const generalColumns: Record<string, boolean> = Form.useWatch(V1LocationType.EXPERIMENT, form);
   const hyperparametersColumns: Record<string, boolean> = Form.useWatch(
@@ -77,8 +78,26 @@ const ColumnPickerMenu: React.FC<Props> = ({
   }, [allFormColumns, setVisibleColumns]);
 
   const handleShowSuggested = useCallback(() => {
-    setVisibleColumns(defaultExperimentColumns);
-  }, [setVisibleColumns]);
+    const defaultCols: Set<string> = new Set(defaultExperimentColumns);
+
+    const newGeneral = { ...generalColumns };
+    for (const col of Object.keys(newGeneral)) {
+      newGeneral[col] = defaultCols.has(col);
+    }
+    form.setFieldValue(V1LocationType.EXPERIMENT, newGeneral);
+
+    const newHyperparameters = { ...hyperparametersColumns };
+    for (const col of Object.keys(newHyperparameters)) {
+      newHyperparameters[col] = defaultCols.has(col);
+    }
+    form.setFieldValue(V1LocationType.HYPERPARAMETERS, newHyperparameters);
+
+    const newMetrics = { ...metricsColumns };
+    for (const col of Object.keys(newMetrics)) {
+      newMetrics[col] = defaultCols.has(col);
+    }
+    form.setFieldValue(V1LocationType.VALIDATIONS, newMetrics);
+  }, [form, generalColumns, hyperparametersColumns, metricsColumns]);
 
   const tabFilteredColumnsAllChecked = useMemo(() => {
     if (!Loadable.isLoaded(filteredColumns)) return false;
