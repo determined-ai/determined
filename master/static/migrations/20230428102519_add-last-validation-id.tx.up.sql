@@ -1,0 +1,14 @@
+ALTER TABLE public.trials
+    ADD COLUMN latest_validation_id int REFERENCES public.raw_validations(id) NULL;
+
+UPDATE trials SET latest_validation_id = sub.id
+FROM (
+    SELECT id, trial_id, ROW_NUMBER() OVER(
+        PARTITION BY trial_id
+        ORDER BY end_time DESC
+    ) AS rank
+    FROM validations
+) sub
+WHERE
+  rank = 1 AND
+  sub.trial_id = trials.id;

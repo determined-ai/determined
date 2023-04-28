@@ -446,6 +446,21 @@ FROM validation_training_combined_json vtcj WHERE vtcj.trial_id = trials.id;
 	return nil
 }
 
+// updateLatestValidationID updates latest validation based on validations table.
+func (db *PgDB) updateLatestValidationID(ctx context.Context, tx *sqlx.Tx, trialID int) error {
+	if _, err := tx.ExecContext(ctx, `
+		UPDATE trials SET latest_validation_id = (
+			SELECT id
+			FROM validations
+			WHERE trial_id = $1
+			ORDER BY end_time DESC
+			LIMIT 1
+		) WHERE id = $1`, trialID); err != nil {
+		return fmt.Errorf("updating latest validation id for trial %d: %w", trialID, err)
+	}
+	return nil
+}
+
 // updateTotalBatches update precomputed total_batches based on existing steps and validations.
 func (db *PgDB) updateTotalBatches(ctx context.Context, tx *sqlx.Tx, trialID int) error {
 	if _, err := tx.ExecContext(ctx, `
@@ -528,23 +543,27 @@ WHERE trial_id = $1
 			return fmt.Errorf("error getting summary metrics from trials: %w", err)
 		}
 
-		if _, err := tx.NamedExecContext(ctx, fmt.Sprintf(`
+		var metricRowID int
+		if err := tx.QueryRowContext(ctx, fmt.Sprintf(`
 INSERT INTO %s
 	(trial_id, trial_run_id, end_time, metrics, total_batches)
 VALUES
-	(:trial_id, :trial_run_id, now(), :metrics, :total_batches)
-`, targetTable), model.TrialMetrics{
-			TrialID:      int(m.TrialId),
-			TrialRunID:   int(m.TrialRunId),
-			Metrics:      metricsBody,
-			TotalBatches: int(m.StepsCompleted),
-		}); err != nil {
+	($1, $2, now(), $3, $4)
+RETURNING id
+`, targetTable),
+			int(m.TrialId), int(m.TrialRunId), metricsBody, int(m.StepsCompleted),
+		).Scan(&metricRowID); err != nil {
 			return errors.Wrap(err, fmt.Sprintf("inserting metrics into %s", targetTable))
 		}
 
 		if rollbackHappened {
 			if err := db.updateTotalBatches(ctx, tx, int(m.TrialId)); err != nil {
 				return errors.Wrap(err, "rollback")
+			}
+
+			if err := db.updateLatestValidationID(ctx, tx, int(m.TrialId)); err != nil {
+				return fmt.Errorf(
+					"rollback updating latest validation ID for trial %d: %w", m.TrialId, err)
 			}
 
 			if err := db.fullTrialSummaryMetricsRecompute(ctx, tx, int(m.TrialId)); err != nil {
@@ -559,11 +578,17 @@ VALUES
 				m.Metrics.AvgMetrics,
 			)
 
+			var latestValidationID *int
+			if isValidation {
+				latestValidationID = &metricRowID
+			}
+
 			if _, err := tx.ExecContext(ctx, `
 UPDATE trials SET total_batches = GREATEST(total_batches, $2),
-summary_metrics = $3, summary_metrics_timestamp = NOW()
+summary_metrics = $3, summary_metrics_timestamp = NOW(),
+latest_validation_id = coalesce($4, latest_validation_id)
 WHERE id = $1;
-`, m.TrialId, m.StepsCompleted, summaryMetrics); err != nil {
+`, m.TrialId, m.StepsCompleted, summaryMetrics, latestValidationID); err != nil {
 				return errors.Wrap(err, "updating trial total batches")
 			}
 		}

@@ -421,6 +421,63 @@ func TestSummaryMetricsMigration(t *testing.T) {
 	}
 }
 
+func TestLatestMetricID(t *testing.T) {
+	ctx := context.Background()
+	require.NoError(t, etc.SetRootPath(RootFromDB))
+	db := MustResolveTestPostgres(t)
+	MustMigrateTestPostgres(t, db, MigrationsFromDB)
+
+	user := RequireMockUser(t, db)
+	exp := RequireMockExperiment(t, db, user)
+
+	// No metrics have a null latest_validation_id.
+	noMetrics := RequireMockTrial(t, db, exp).ID
+	exists, err := Bun().NewSelect().Table("trials").
+		Where("id = ?", noMetrics).
+		Where("latest_validation_id IS NULL").
+		Exists(ctx)
+	require.NoError(t, err)
+	require.True(t, exists, "latest_validation_id should be null")
+
+	// If no validations are reported we should have a null latest_validation_id.
+	onlyTraining := RequireMockTrial(t, db, exp).ID
+	addMetrics(ctx, t, db, onlyTraining, `[{"a":1.0}]`, `[]`, false)
+	exists, err = Bun().NewSelect().Table("trials").
+		Where("id = ?", onlyTraining).
+		Where("latest_validation_id IS NULL").
+		Exists(ctx)
+	require.NoError(t, err)
+	require.True(t, exists, "latest_validation_id should be null")
+
+	// Test both archived and unarchived paths.
+	for _, shouldArchive := range []bool{false} {
+		trial := RequireMockTrial(t, db, exp).ID
+		addMetrics(ctx, t, db, trial,
+			`[{"a":1.0}, {"b":1.3}]`,
+			`[{"loss":1.0}, {"gain":1.5}, {"latest":2.0}]`, shouldArchive)
+
+		type valID struct {
+			bun.BaseModel `bun:"table:validations"`
+			ID            int
+		}
+		var id valID
+		err := Bun().NewSelect().Table("validations").
+			Column("id").
+			Where("trial_id = ?", trial).
+			Where("metrics->'validation_metrics' = ?", map[string]any{"latest": 2.0}).
+			Scan(ctx, &id)
+		require.NoError(t, err)
+		require.NotEqual(t, 0, id.ID)
+
+		exists, err = Bun().NewSelect().Table("trials").
+			Where("id = ?", trial).
+			Where("latest_validation_id = ?", id.ID).
+			Exists(ctx)
+		require.NoError(t, err)
+		require.True(t, exists, "trial %d latest_validation_id is not %d", trial, id.ID)
+	}
+}
+
 func TestProtoGetTrial(t *testing.T) {
 	require.NoError(t, etc.SetRootPath(RootFromDB))
 	db := MustResolveTestPostgres(t)
