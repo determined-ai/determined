@@ -83,7 +83,7 @@ def sso(parsed_args: Namespace) -> None:
                 "Your browser should open and prompt you to sign on;"
                 " if it did not, please visit {}".format(sso_url)
             )
-            print("Killing this process before signing on will cancel authentication")
+            print("Killing this process before signing on will cancel authentication.")
             with HTTPServer(
                 ("localhost", CLI_REDIRECT_PORT),
                 make_handler(parsed_args.master, lambda code: sys.exit(code)),
