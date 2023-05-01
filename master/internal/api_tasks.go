@@ -389,7 +389,7 @@ func (a *apiServer) GetTasks(
 		} else {
 			err = expauth.AuthZProvider.Get().CanGetExperiment(ctx, *curUser, exp)
 		}
-		if !authz.IsPermissionDenied(err) || ok {
+		if !authz.IsPermissionDenied(err) || !ok {
 			pbAllocationIDToSummary[string(allocationID)] = allocationSummary.Proto()
 		} else if err != nil {
 			return nil, err
