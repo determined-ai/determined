@@ -5,7 +5,7 @@ description: resnet152 baseline
 max_restarts: 0
 environment:
   image:
-    gpu: determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-deepspeed-0.7.0-gpu-0.19.4
+    gpu: determinedai/environments:cuda-11.3-pytorch-1.10-deepspeed-0.8.3-gpu-0.21.2
 resources:
   slots_per_trial: 2
   # max_slots: 8
