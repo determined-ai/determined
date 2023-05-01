@@ -194,7 +194,7 @@ func (a *apiServer) isNTSCPermittedToLaunch(
 	if spec.TaskType == model.TaskTypeTensorboard {
 		if err := command.AuthZProvider.Get().CanGetTensorboard(
 			ctx, *user, workspaceID, spec.Metadata.ExperimentIDs, spec.Metadata.TrialIDs,
-		); err != nil {
+		); err != nil || authz.IsPermissionDenied(err) {
 			return err
 		}
 	} else {
@@ -224,7 +224,7 @@ func (a *apiServer) LaunchNotebook(
 	if req.WorkspaceId != 0 {
 		spec.Metadata.WorkspaceID = model.AccessScopeID(req.WorkspaceId)
 	}
-	if err = a.isNTSCPermittedToLaunch(ctx, spec); err != nil {
+	if err = a.isNTSCPermittedToLaunch(ctx, spec); err != nil { //TODO CAROLINA
 		return nil, err
 	}
 
