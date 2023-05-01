@@ -55,12 +55,10 @@ func terminalExperimentStates() []string {
 }
 
 func nonTerminalStates() []experimentv1.State {
-	states := make([]experimentv1.State, len(experimentv1.State_value)-len(model.TerminalStates))
-	idx := 0
+	var states []experimentv1.State
 	for s := range model.ExperimentTransitions {
-		if !model.TerminalStates[s] {
-			states[idx] = model.StateToProto(s)
-			idx++
+		if !model.TerminalStates[s] && !strings.Contains(string(s), "DELET") {
+			states = append(states, model.StateToProto(s))
 		}
 	}
 	return states
