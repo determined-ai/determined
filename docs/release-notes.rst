@@ -124,7 +124,7 @@ Version 0.21.0
 
 **Improvements**
 
--  CLI: Command-line deployments will now default to provisioning Nvidia T4 GPU instances instead of
+-  CLI: Command-line deployments will now default to provisioning NVIDIA T4 GPU instances instead of
    K80 instances. This change is intended to improve the performance/cost and driver support of the
    default deployment.
 
@@ -338,7 +338,7 @@ Version 0.19.10
 
 -  Cluster: Determined Enterprise Edition now supports the `NVIDIA Enroot
    <https://github.com/NVIDIA/enroot>`__ container platform as an alternative to
-   Apptainer/Singularity/PodMan.
+   Apptainer/Singularity/Podman.
 
 **Improvements**
 
@@ -391,7 +391,7 @@ Version 0.19.9
 
 -  Cluster: Determined Enterprise Edition now supports the `NVIDIA Enroot
    <https://github.com/NVIDIA/enroot>`__ container platform as an alternative to
-   Apptainer/Singularity/PodMan.
+   Apptainer/Singularity/Podman.
 
 Version 0.19.8
 ==============
@@ -449,7 +449,7 @@ Version 0.19.7
    experiment via the
    :meth:`~determined.experimental.client.ExperimentReference.await_first_trial()` method. Users who
    have been writing automation around the ``det e create --follow-first-trial`` CLI command may now
-   use the python SDK instead, by combining ``.await_first_trial()`` and ``.logs()``.
+   use the Python SDK instead, by combining ``.await_first_trial()`` and ``.logs()``.
 
 -  RBAC: the enterprise edition of Determined (`HPE Machine Learning Development Environment
    <https://www.hpe.com/us/en/solutions/artificial-intelligence/machine-learning-development-environment.html>`_)
@@ -580,7 +580,7 @@ Version 0.19.3
 **Improvements**
 
 -  Slurm: Singularity containers may now use AMD ROCm GPUs.
--  Slurm: PodMan V4.0+ is now supported in conjunction with the Slurm job scheduler.
+-  Slurm: Podman V4.0+ is now supported in conjunction with the Slurm job scheduler.
 -  Kubernetes: The UID and GID of Fluent Bit logging sidecars may now be configured on a
    cluster-wide basis.
 
@@ -1079,7 +1079,7 @@ Version 0.17.13
 -  Model Hub: add support for panoptic segmentation.
 
    -  Model Hub mmdetection now supports panoptic segmentation task in addition to object detection.
-      Previously, the associated docker image lacked dependencies for panoptic segmentation. Users
+      Previously, the associated Docker image lacked dependencies for panoptic segmentation. Users
       can now use mmdetection configs under ``panoptic_fpn`` and also the ``coco_panoptic`` dataset
       base config.
 
@@ -1967,9 +1967,9 @@ Version 0.15.2
 -  PyTorchTrial: Fix learning rate scheduler behavior when used with gradient aggregation.
 
 -  ``PyTorchTrial``'s :meth:`~determined.pytorch.PyTorchTrialContext.to_device` no longer throws
-   errors on non-numeric Numpy-like data. As PyTorch is still unable to move such data to the GPU,
+   errors on non-numeric NumPy-like data. As PyTorch is still unable to move such data to the GPU,
    non-numeric arrays will simply remain on the CPU. This is especially useful to NLP practitioners
-   who wish to make use of Numpy's string manipulations anywhere in their data pipelines.
+   who wish to make use of NumPy's string manipulations anywhere in their data pipelines.
 
 -  TFKerasTrial: Fix support for TensorFlow v2.2.x.
 
@@ -3076,9 +3076,9 @@ Version 0.12.13
 -  Remove ``determined.pytorch.reset_parameters()``. This should have no effect except when using
    highly customized ``nn.Module`` implementations.
 -  WebUI: Show total number of resources in the cluster resource charts.
--  Add support for Nvidia T4 GPUs.
+-  Add support for NVIDIA T4 GPUs.
 -  ``det-deploy``: Add support for ``g4`` instance types on AWS.
--  Upgrade Nvidia drivers on the default AWS and GCP images from ``410.104`` to ``450.51.05``.
+-  Upgrade NVIDIA drivers on the default AWS and GCP images from ``410.104`` to ``450.51.05``.
 
 **Bug Fixes**
 
@@ -3364,7 +3364,7 @@ Version 0.12.3
 
 -  Add REST API endpoints for trials.
 
--  Support the execution of a startup script inside the agent docker container
+-  Support the execution of a startup script inside the agent Docker container
 
 -  Master and agent Docker containers will have the 'unless-stopped' restart policy by default when
    using ``det-deploy local``.

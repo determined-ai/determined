@@ -6,7 +6,7 @@
 
 When the cluster does not have Internet access or if you want to provide a local cache of container
 images to improve performance, you can download the desired container images to a shared directory
-and then reference them using file system paths instead of docker registry references.
+and then reference them using file system paths instead of Docker registry references.
 
 There are two mechanisms you can use to reference cached container images depending upon the
 container runtime in use.
@@ -26,7 +26,7 @@ by default in this version of Determined are described below.
 +=============+==========================================================================+
 | CPUs        | ``determinedai/environments:py-3.8-pytorch-1.12-tf-2.11-cpu-6eceaca``    |
 +-------------+--------------------------------------------------------------------------+
-| Nvidia GPUs | ``determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-6eceaca`` |
+| NVIDIA GPUs | ``determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-6eceaca`` |
 +-------------+--------------------------------------------------------------------------+
 | AMD GPUs    | ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-6eceaca``  |
 +-------------+--------------------------------------------------------------------------+
@@ -40,12 +40,12 @@ each tagged image needed by your experiments to the image cache.
  Referencing Local Image Paths
 *******************************
 
-Singularity and PodMan each support various local container file formats and reference them using a
+Singularity and Podman each support various local container file formats and reference them using a
 slightly different syntax. Utilize a cached image by referencing a local path using the experiment
 configuration :ref:`environment.image <exp-environment-image>`. When using this strategy, the local
 diretory needs to be accessible on all compute nodes.
 
-When using PodMan, you could save images in OCI archive format to files in a local directory
+When using Podman, you could save images in OCI archive format to files in a local directory
 ``/shared/containers``
 
    .. code:: bash
@@ -145,7 +145,7 @@ cache avoids the overhead of downloading the images and allows for sharing of im
 multiple users. It provides the following features:
 
    -  Download the Determined default cuda, cpu, or rocm environment images
-   -  Download an arbitrary docker image reference
+   -  Download an arbitrary Docker image reference
    -  Copy a local Singularity image file into the cache
    -  List the currently available images in the cache
 
@@ -158,7 +158,7 @@ image, use the following command:
 
       manage-singularity-cache --cuda
 
-If your system has internet access, you can download any desired docker container image (e.g.
+If your system has internet access, you can download any desired Docker container image (e.g.
 ``determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-096d730``) into the cache using the
 command:
 
@@ -168,14 +168,14 @@ command:
 
 Otherwise, from an internet-connected system, download the desired image using the Singularity
 ``pull`` command, then copy it to a system with access to the ``singularity_image_root`` folder. You
-can then add the image to the cache by specifying the local file name using ``-i`` and the docker
+can then add the image to the cache by specifying the local file name using ``-i`` and the Docker
 image reference which determines the name to be added to the cache.
 
    .. code:: bash
 
       manage-singularity-cache -i localfile.sif determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-096d730
 
-You can view the current set of docker image names in the cache with the ``-l`` option.
+You can view the current set of Docker image names in the cache with the ``-l`` option.
 
    .. code:: bash
 

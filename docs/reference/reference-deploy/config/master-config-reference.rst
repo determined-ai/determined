@@ -78,7 +78,7 @@ Defines the default pod spec which will be applied to all GPU tasks when running
 ``image``
 =========
 
-Defines the default docker image to use when executing the workload. If a docker image is specified
+Defines the default Docker image to use when executing the workload. If a Docker image is specified
 in the :ref:`experiment config <exp-environment-image>` this default is overridden. This image must
 be accessible via ``docker pull`` to every Determined agent machine in the cluster. Users can
 configure different container images for NVIDIA GPU tasks using the ``cuda`` key (``gpu`` prior to
@@ -102,19 +102,19 @@ keys.
 ``force_pull_image``
 ====================
 
-Defines the default policy for forcibly pulling images from the docker registry and bypassing the
-docker cache. If a pull policy is specified in the :ref:`experiment config <exp-environment-image>`
+Defines the default policy for forcibly pulling images from the Docker registry and bypassing the
+Docker cache. If a pull policy is specified in the :ref:`experiment config <exp-environment-image>`
 this default value is overridden. Please note that as of November 1st, 2020, unauthenticated users
-will be `capped at 100 pulls from Docker per 6 hours
+will be `capped at 100 pulls from Docker Hub per 6 hours
 <https://www.docker.com/blog/scaling-docker-to-serve-millions-more-developers-network-egress/>`__.
 Defaults to ``false``.
 
 ``registry_auth``
 =================
 
-Defines the default `docker registry credentials
+Defines the default `Docker registry credentials
 <https://docs.docker.com/engine/api/v1.30/#operation/SystemAuth>`__ to use when pulling a custom
-base docker image, if needed. If credentials are specified in the :ref:`experiment config
+base Docker image, if needed. If credentials are specified in the :ref:`experiment config
 <exp-environment-image>` this default value is overridden. Credentials are specified as the
 following nested fields:
 
@@ -511,7 +511,7 @@ changed, you can adjust the ownership of this directory using the command of the
 ``path``
 --------
 
-The ``PATH`` for the launcher service so that it is able to find the Slurm, PBS, Singularity, Nvidia
+The ``PATH`` for the launcher service so that it is able to find the Slurm, PBS, Singularity, NVIDIA
 binaries, etc., in case they are not in a standard location on the compute node. For example,
 ``PATH=/opt/singularity/3.8.5/bin:${PATH}``.
 
@@ -519,7 +519,7 @@ binaries, etc., in case they are not in a standard location on the compute node.
 -------------------
 
 The ``LD_LIBRARY_PATH`` for the launcher service so that it is able to find the Slurm, PBS,
-Singularity, Nvidia libraries, etc., in case they are not in a standard location on the compute
+Singularity, NVIDIA libraries, etc., in case they are not in a standard location on the compute
 node. For example,
 ``LD_LIBRARY_PATH=/cm/shared/apps/slurm/21.08.6/lib:/cm/shared/apps/slurm/21.08.6/lib/slurm:${LD_LIBRARY_PATH}``.
 

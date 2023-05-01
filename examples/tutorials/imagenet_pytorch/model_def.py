@@ -26,7 +26,7 @@ from determined.pytorch import DataLoader, LRScheduler, PyTorchTrial, PyTorchTri
 TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
 
 
-class ImagenetTrial(PyTorchTrial):
+class ImageNetTrial(PyTorchTrial):
     def __init__(self, context: PyTorchTrialContext):
         self.context = context
 

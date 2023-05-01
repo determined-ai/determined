@@ -10,11 +10,11 @@ describe their model without boilerplate code. Determined reduces boilerplate by
 state-of-the-art training loop that provides distributed training, hyperparameter search, automatic
 mixed precision, reproducibility, and many more features.
 
-In this guide, we’ll walk through an example and provide helpful hints to successfully organize
-PyTorch code into Determined’s PyTorchTrial API. Once your code is in the PyTorchTrial format, you
-can easily take advantage of Determined Ai’s open-source platform.
+In this guide, we'll walk through an example and provide helpful hints to successfully organize
+PyTorch code into Determined's PyTorchTrial API. Once your code is in the PyTorchTrial format, you
+can easily take advantage of Determined Ai's open-source platform.
 
-We suggest you follow along using the source code found on `Determined’s GitHub repo
+We suggest you follow along using the source code found on `Determined's GitHub repo
 <https://github.com/determined-ai/determined/tree/master/examples/tutorials/imagenet_pytorch>`_.
 
 While all codebases are different, code to perform deep learning training tends to follow a typical
@@ -48,7 +48,7 @@ The model definition contains the trial class, which contains the model definiti
 loop. Your deep learning framework defines which ``Determined.Trial()`` class to inherit. In our
 case, we will be working with PyTorch, which means we will be working with
 :class:`determined.pytorch.PyTorchTrial`. Once we inherit this class, we will be required to
-override specific functions that represent a training script’s core components. When starting a new
+override specific functions that represent a training script's core components. When starting a new
 port, it is helpful to work off of a skeleton to keep track of what is still required. A good
 starting template can be found below:
 
@@ -85,12 +85,12 @@ We recommend that all hyperparameters be added to this file. A good starting poi
 command-line arguments---you may see this as parser args---from the original script and immediately
 adding them to your file.
 
-In our case, since we’re using hyperparameters that don’t change, we’ve given this specific config
+In our case, since we're using hyperparameters that don't change, we've given this specific config
 the name ``const.yaml``:
 
 .. code:: yaml
 
-   description: Imagenet_Pytorch_const
+   description: ImageNet_PyTorch_const
    hyperparameters:
        global_batch_size: 256
        dense1: 128
@@ -109,10 +109,10 @@ the name ``const.yaml``:
        smaller_is_better: false
        max_length:
            epochs: 10
-   entrypoint: model_def:ImagenetTrial
+   entrypoint: model_def:ImageNetTrial
    max_restarts: 0
 
-For now, we don’t have to worry much about the other fields; however, we suggest setting
+For now, we don't have to worry much about the other fields; however, we suggest setting
 ``max_restarts`` to zero so Determined will not retry running the experiment. For more information
 on experiment configuration, see the :ref:`experiment configuration reference
 <experiment-configuration>`.
@@ -121,14 +121,15 @@ on experiment configuration, see the :ref:`experiment configuration reference
  Model
 *******
 
-Now that we’ve finished the prep work, we can begin porting by creating the model. Model code will
-be placed in the Trial’s ``__init__()`` function.
+Now that we've finished the prep work, we can begin porting by creating the model. Model code will
+be placed in the Trial's ``__init__()`` function.
 
 To refresh, as we work on the model, we want to follow this checklist:
-   -  Remove boilerplate code.
-   -  Copy all relevant code over.
-   -  Update all relevant objects to use the ‘context’ object.
-   -  Replace all configurations or hyperparameters.
+
+-  Remove boilerplate code.
+-  Copy all relevant code over.
+-  Update all relevant objects to use the context object.
+-  Replace all configurations or hyperparameters.
 
 Remove Boilerplate Code and Copy All Relevant Code
 ==================================================
@@ -140,7 +141,7 @@ relevant code, such as the model creation, to our PyTorchTrial. In the `original
 in lines 119-168, where it defines the model and sets up the GPU and script for distributed
 training. Since Determined handles much of this logic, we can remove a lot of this as boilerplate.
 
-Let’s work through these lines:
+Let's work through these lines:
 
 .. code:: python
 
@@ -157,10 +158,14 @@ can omit this from the model definition.
            args.rank = int(os.environ["RANK"])
        if args.multiprocessing_distributed:
            # For multiprocessing distributed training, rank needs to be the
-           # global rank among all the processes
+           # global rank among all the processes.
            args.rank = args.rank * ngpus_per_node + gpu
-       dist.init_process_group(backend=args.dist_backend, init_method=args.dist_url,
-                               world_size=args.world_size, rank=args.rank)
+       dist.init_process_group(
+           backend=args.dist_backend,
+           init_method=args.dist_url,
+           world_size=args.world_size,
+           rank=args.rank,
+       )
 
 Determined will automatically set up horovod for the user. If you would like to access the rank
 (typically used to view per GPU training), you can get it by calling
@@ -372,7 +377,7 @@ There are a few pieces that need to be changed. First, the data location should 
 variable: self.download_directory. During distributed training, the data should be downloaded to
 unique directories based on rank to prevent multiple download processes (one process per GPU) from
 conflicting with one another. This root directory will be defined based on self.hparams and will
-point to where the data is stored within the docker container. If you want to learn more about how
+point to where the data is stored within the Docker container. If you want to learn more about how
 to access data with Determined, check out our documentation.
 
 We also update the ``torch.Dataloader`` to be a ``determined.pytorch.DataLoader``. The batch_size
@@ -421,7 +426,7 @@ CIFAR-10 dataset can be accessed with the code below:
  Train / Validation Batch
 **************************
 
-It’s time to set up the ``train_batch`` function. Typically in PyTorch, you loop through the
+It's time to set up the ``train_batch`` function. Typically in PyTorch, you loop through the
 DataLoader to access and train your model one batch at a time. You can usually identify this code by
 finding the common code snippet: ``for batch in dataloader``. In Determined, ``train_batch()`` also
 provides one batch at a time, so we can copy the code directly into our function.
@@ -471,7 +476,7 @@ metric arrays.
 Update Objects and Replace HP Configurations
 ============================================
 
-Now, we will convert some PyTorch functions to now use Determined’s equivalent. We need to change
+Now, we will convert some PyTorch functions to now use Determined's equivalent. We need to change
 ``loss.backward()``, ``optim.zero_grad()``, and ``optim.step()``. The ``self.context`` object will
 be used to call ``loss.backwards`` and handle zeroing and stepping the optimizer. We update these
 functions respectively:
@@ -520,20 +525,20 @@ rate to use ``torch.optim.StepLR()`` and wrap it with ``self.context.wrap_lr_sch
 .. code:: python
 
    def __init__(self, context):
-
-       . . .
-
-       lr_sch = torch.optim.lr_scheduler.StepLR(self.optimizer, gamma=.1, step_size=2)
-       self.lr_sch = self.context.wrap_lr_scheduler(lr_sch, step_mode=LRScheduler.StepMode.STEP_EVERY_EPOCH)
+       ...
+       lr_sch = torch.optim.lr_scheduler.StepLR(self.optimizer, gamma=0.1, step_size=2)
+       self.lr_sch = self.context.wrap_lr_scheduler(
+           lr_sch, step_mode=LRScheduler.StepMode.STEP_EVERY_EPOCH
+       )
 
 *********************
  Other Functionality
 *********************
 
 At this point, you can begin adding other features of your model. This may include using 16 FP
-(automatic mixed precision) or gradient clipping. It’s best to add one at a time to make it easier
+(automatic mixed precision) or gradient clipping. It's best to add one at a time to make it easier
 to check that each component is properly working. Determined has a wide range of examples to
-demonstrate several real-world use cases. Examples can be found on Determined’s github:
+demonstrate several real-world use cases. Examples can be found on Determined's GitHub account.
 
 ***************
  Helpful Hints
@@ -545,10 +550,10 @@ If you are having trouble porting your model and would like to debug it prior to
 of the code, you can use fake data in the data loader. This lets you run and test other parts of the
 ``model_def.py``.
 
-Sometimes it's useful just getting an “ugly” version of the code. This is where you first directly
+Sometimes it's useful just getting an "ugly" version of the code. This is where you first directly
 place the original code in the right function without updating any pieces.
 
-Saving the extra model “features” until later helps you ensure the core functions are correct. This
+Saving the extra model "features" until later helps you ensure the core functions are correct. This
 makes it easier to debug other portions of the script.
 
 For more debugging tips, check out the how-to guide on :ref:`model debugging <model-debug>`.

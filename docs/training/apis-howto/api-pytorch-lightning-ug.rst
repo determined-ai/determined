@@ -96,7 +96,7 @@ that there are some methods and hooks that are not supported. Read about those h
 
 In addition, we also patched some ``LightningModule`` methods to make porting your code easier:
 
--  ``log`` and ``log_dict`` are patched to always ship their values to Tensorboard. In the current
+-  ``log`` and ``log_dict`` are patched to always ship their values to TensorBoard. In the current
    version only the first two arguments in ``log``: ``key`` and ``value``, and the first argument in
    ``log_dict`` are supported.
 
@@ -108,7 +108,7 @@ In addition, we also patched some ``LightningModule`` methods to make porting yo
 .. note::
 
    Determined will automatically log the metrics you return from ``training_step`` and
-   ``validation_step`` to Tensorboard.
+   ``validation_step`` to TensorBoard.
 
 .. note::
 

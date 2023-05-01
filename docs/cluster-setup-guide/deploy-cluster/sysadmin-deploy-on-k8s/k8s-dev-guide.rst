@@ -8,8 +8,8 @@
  Prerequisites
 ***************
 
-Before setting up Determined Master, set up a Kubernetes cluster with GPU enabled nodes and
-Kubernetes version >= 1.19 and <= 1.21. Later versions of Kubernetes may work. You can set up
+Before setting up the Determined master, set up a Kubernetes cluster with GPU-enabled nodes and
+Kubernetes version >= 1.19 and <= 1.21. Later versions of Kubernetes may also work. You can set up
 Kubernetes manually, or you can use a managed Kubernetes service such as :ref:`GKE
 <setup-gke-cluster>` or :ref:`EKS <setup-eks-cluster>`.
 
@@ -17,8 +17,8 @@ Kubernetes manually, or you can use a managed Kubernetes service such as :ref:`G
  Set up a Development Environment
 **********************************
 
-To deploy a custom version of the Determined Master, we deploy a long-running pod in Kubernetes,
-command it to sleep, then exec into it and build our Master. To add a sleep command, modify the
+To deploy a custom version of the Determined master, we deploy a long-running pod in Kubernetes,
+command it to sleep, then exec into it and build our master. To add a sleep command, modify the
 template ``helm/charts/determined/templates/master-deployment.yaml`` to include the command and
 args:
 
@@ -33,13 +33,13 @@ args:
        args: ["99999m"]
        ...
 
-Next apply the Determined Helm chart and exec into the pod containing Master.
+Next apply the Determined Helm chart and exec into the pod containing the master.
 
 .. code:: bash
 
    helm install <deployment-name> helm/charts/determined
 
-   # List pods and find the Master pod
+   # List pods and find the master pod.
    kubectl get pods
 
    kubectl exec -it <master-pod-name> -- /bin/bash
@@ -52,8 +52,8 @@ Before installing Determined, install the dependencies specified in the `contrib
 <https://github.com/determined-ai/determined/blob/master/CONTRIBUTING.md>`__.
 
 You can use ``apt`` and ``pip`` to install most of the dependencies, but you will need to download
-and manually install `golang <https://golang.org/dl/>`__, `node <https://deb.nodesource.com/>`__,
-`protobuf <https://github.com/protocolbuffers/protobuf/releases>`__, and `helm
+and manually install `Go <https://golang.org/dl/>`__, `Node <https://deb.nodesource.com/>`__, `the
+protobuf compiler <https://github.com/protocolbuffers/protobuf/releases>`__, and `Helm
 <https://helm.sh/docs/intro/install/>`__. Here is an example of installing all the necessary
 dependencies:
 
@@ -64,22 +64,22 @@ dependencies:
    DEBIAN_FRONTEND=noninteractive add-apt-repository -y ppa:deadsnakes/ppa
    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends git-all python3.8-dev python3.8-venv default-jre curl build-essential libkrb5-dev unzip jq
 
-   # Download and install golang 1.15
+   # Download and install Go 1.20.
    curl -L https://go.dev/dl/go1.20.linux-amd64.tar.gz | tar -xz
-   chown -R root:root ./go/
+   chown -R root:root go
    mv go /usr/local/
 
-   # Download and install node and typescript
+   # Download and install Node and TypeScript.
    curl -sL https://deb.nodesource.com/setup_16.x | bash -
    apt-get install -y nodejs
    npm install typescript -g
 
-   # Download and install protobuf
+   # Download and install the protobuf compiler.
    PB_REL="https://github.com/protocolbuffers/protobuf/releases"
    curl -LO $PB_REL/download/v3.19.0/protoc-3.19.0-linux-x86_64.zip
    unzip protoc-3.19.0-linux-x86_64.zip -d $HOME/.local
 
-   # Download and install helm
+   # Download and install Helm.
    curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3
    chmod 700 get_helm.sh
    ./get_helm.sh
@@ -107,9 +107,9 @@ python3-venv:
 
    . ~/.virtualenvs/determined/bin/activate
 
-**********************************
- Prepare to run Determined Master
-**********************************
+**************************************
+ Prepare to run the Determined Master
+**************************************
 
 Once the dependencies are installed, prepare the repository to run ``devcluster``, a tool for
 running Determined. First, enter the Determined repository and run:

@@ -39,7 +39,7 @@ For an introduction to using the training API, please visit the Training APIs se
       -  :download:`mnist_pytorch.tgz </examples/mnist_pytorch.tgz>`
 
    -  -  PyTorch
-      -  Imagenet
+      -  ImageNet
       -  :download:`imagenet_pytorch.tgz </examples/imagenet_pytorch.tgz>`
 
    -  -  PyTorch

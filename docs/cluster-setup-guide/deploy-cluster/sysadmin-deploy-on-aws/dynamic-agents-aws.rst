@@ -8,8 +8,8 @@ This document describes how to install, configure, and upgrade a deployment of D
 dynamic agents on AWS. See :ref:`elastic-infrastructure` for an overview of using elastic
 infrastructure in Determined.
 
-Determined is able to launch dynamic agents as spot instances, which can be much cheaper than using
-standard on-demand instances. For more details on spot instances, see :ref:`aws-spot`.
+Determined is able to launch dynamic agents as spot instances, which can be much less costly than
+using standard on-demand instances. For more details on spot instances, see :ref:`aws-spot`.
 
 *********************
  System Requirements
@@ -121,13 +121,13 @@ Set up Internet Access
    proxies <agent-network-proxy>` when accessing network resources.
 
 -  For best performance, it is recommended that the Determined master and agents use the same
-   physical network or VPC. When using VPCs on a public cloud provider, additional steps might need
-   to be taken to ensure that instances in the VPC can access the Internet:
+   physical network or VPC. When using VPCs on a public cloud provider, you may need to take
+   additional steps to ensure instances in the VPC can access the Internet:
 
-   -  On GCP, the instances need to have an external IP address, or a `GCP Cloud NAT
+   -  On GCP, either the instances must have an external IP address or a `GCP Cloud NAT
       <https://cloud.google.com/nat/docs/overview>`_ should be configured for the VPC.
 
-   -  On AWS, the instances need to have a public IP address, and a `VPC Internet Gateway
+   -  On AWS, the instances must have a public IP address and a `VPC Internet Gateway
       <https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Internet_Gateway.html>`_ should be
       configured for the VPC.
 
@@ -182,7 +182,7 @@ Agents
    -  Two additional ephemeral TCP ports in the range 1024-65536 are used for additional intra-trial
       communication between trial containers.
 
-   -  For Tensorboards, an inbound and outbound TCP port between 2600-2900 is used to connect the
+   -  For TensorBoards, an inbound and outbound TCP port between 2600-2900 is used to connect the
       master and the tensorboard container.
 
 .. _aws-cluster-configuration:
@@ -192,18 +192,18 @@ Agents
 ***********************
 
 The Determined Cluster is configured with ``master.yaml`` file located at
-``/usr/local/determined/etc/`` on the Determined master instance. We need to configure AWS dynamic
+``/usr/local/determined/etc/`` on the Determined master instance. You need to configure AWS dynamic
 agents in each resource pool. See :ref:`cluster-configuration` for details.
 
 **************
  Installation
 **************
 
-These instructions describe how to install Determined for the first time; for directions on how to
+These instructions describe how to install Determined for the first time. For directions on how to
 upgrade an existing Determined installation, see the :ref:`aws-upgrades` section below.
 
-Ensure that you are using the most up-to-date Determined AMIs. Keep the AMI IDs handy as we will
-need them later (e.g., ami-0f4677bfc3161edc8).
+Ensure that you are using the most up-to-date Determined AMIs. Keep the AMI IDs handy; you will need
+them later (e.g., ami-0f4677bfc3161edc8).
 
 Master
 ======
@@ -220,9 +220,9 @@ follow the instructions below:
 #. Configure Instance: choose the ``IAM role`` according to :ref:`master-iam-role`.
 
 #. Add Storage: click ``Add New Volume`` and add an EBS volume of at least 100GB. If you have a
-   previous Determined installation that you are upgrading, you want to use the attach the same EBS
-   volume as the previous installation. This volume will be used to store all your experiment
-   metadata and checkpoints.
+   previous Determined installation that you are upgrading, you want to attach the same EBS volume
+   as the previous installation. This volume will be used to store all your experiment metadata and
+   checkpoints.
 
 #. Configure Security Group: choose or create a security group according to `Set up Internet
    Access`_.
@@ -256,7 +256,7 @@ an installation without dynamic agents. See :ref:`upgrades`.
 
 Both the Determined master and agent AMIs are configured to forward system journald logs and basic
 GPU metrics to AWS CloudWatch when their instances have the appropriate IAM permissions. These logs
-and metrics can be helpful for diagnosing infrastructure issues when using Dynamic Agents on AWS.
+and metrics can be helpful for diagnosing infrastructure issues when using dynamic agents on AWS.
 
 CloudWatch Logging
 ==================

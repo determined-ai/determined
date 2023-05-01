@@ -73,5 +73,5 @@ mounted into the master's container.
      idp_sso_descriptor_url: "http://www.okta.com/..."
      idp_cert_path: "okta.cert"
 
-Once the master is started with this configuration, users should be able to login to Determined from
-Okta by clicking the Determined tile after they have been provisioned.
+Once the master is started with this configuration, users should be able to log in to Determined
+from Okta by clicking the Determined tile after they have been provisioned.
