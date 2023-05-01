@@ -62,16 +62,9 @@ latest_validation AS (
     v.end_time,
     json_build_object('avg_metrics', v.metrics->'validation_metrics') as metrics,
     v.metrics->'num_inputs' as num_inputs
-  FROM (
-      SELECT v.*,
-        ROW_NUMBER() OVER(
-          PARTITION BY v.trial_id
-          ORDER BY v.end_time DESC
-        ) AS rank
-      FROM trial_validations v
-    ) v
+  FROM validations v
   JOIN searcher_info ON searcher_info.trial_id = v.trial_id
-  WHERE v.rank = 1
+  JOIN trials t ON t.id = v.trial_id AND t.latest_validation_id = v.id
 ),
 best_checkpoint AS (
   SELECT

@@ -450,10 +450,14 @@ FROM validation_training_combined_json vtcj WHERE vtcj.trial_id = trials.id;
 func (db *PgDB) updateLatestValidationID(ctx context.Context, tx *sqlx.Tx, trialID int) error {
 	if _, err := tx.ExecContext(ctx, `
 		UPDATE trials SET latest_validation_id = (
-			SELECT id
+			SELECT validations.id
 			FROM validations
-			WHERE trial_id = $1
-			ORDER BY end_time DESC
+			JOIN trials t ON validations.trial_id = t.id
+			JOIN experiments e on t.experiment_id = e.id
+			WHERE trial_id = $1 AND (
+				validations.metrics->'validation_metrics'->>(e.config->'searcher'->>'metric')
+			) IS NOT NULL
+			ORDER BY validations.end_time DESC
 			LIMIT 1
 		) WHERE id = $1`, trialID); err != nil {
 		return fmt.Errorf("updating latest validation id for trial %d: %w", trialID, err)
@@ -580,7 +584,18 @@ RETURNING id
 
 			var latestValidationID *int
 			if isValidation {
-				latestValidationID = &metricRowID
+				var searcherMetric *string
+				if err := tx.QueryRowContext(ctx, `
+		SELECT experiments.config->'searcher'->>'metric' AS metric_name
+		FROM experiments
+		JOIN trials t ON t.experiment_id = experiments.id
+		WHERE t.id = $1`, int(m.TrialId)).Scan(&searcherMetric); err != nil {
+					return fmt.Errorf("getting trial's searcher metric: %w", err)
+				}
+				if searcherMetric != nil &&
+					m.Metrics.AvgMetrics.Fields[*searcherMetric].AsInterface() != nil {
+					latestValidationID = &metricRowID
+				}
 			}
 
 			if _, err := tx.ExecContext(ctx, `

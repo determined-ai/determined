@@ -421,6 +421,29 @@ func TestSummaryMetricsMigration(t *testing.T) {
 	}
 }
 
+func getLatestValidation(ctx context.Context, t *testing.T, trialID int) (*int, *map[string]any) {
+	type trials struct {
+		bun.BaseModel `bun:"table:trials"`
+		ID            *int
+		Metric        *map[string]any
+	}
+	var res []trials
+	err := Bun().NewSelect().Model(&res).
+		ColumnExpr("v.id AS id").
+		ColumnExpr("v.metrics->'validation_metrics' AS metric").
+		Where("trials.id = ?", trialID).
+		Join("JOIN validations v ON v.id = trials.latest_validation_id").
+		Scan(ctx)
+	require.NoError(t, err)
+
+	if len(res) == 0 {
+		return nil, nil
+	}
+
+	require.Len(t, res, 1)
+	return res[0].ID, res[0].Metric
+}
+
 func TestLatestMetricID(t *testing.T) {
 	ctx := context.Background()
 	require.NoError(t, etc.SetRootPath(RootFromDB))
@@ -432,49 +455,41 @@ func TestLatestMetricID(t *testing.T) {
 
 	// No metrics have a null latest_validation_id.
 	noMetrics := RequireMockTrial(t, db, exp).ID
-	exists, err := Bun().NewSelect().Table("trials").
-		Where("id = ?", noMetrics).
-		Where("latest_validation_id IS NULL").
-		Exists(ctx)
-	require.NoError(t, err)
-	require.True(t, exists, "latest_validation_id should be null")
+	id, metric := getLatestValidation(ctx, t, noMetrics)
+	require.Nil(t, id)
+	require.Nil(t, metric)
 
 	// If no validations are reported we should have a null latest_validation_id.
 	onlyTraining := RequireMockTrial(t, db, exp).ID
 	addMetrics(ctx, t, db, onlyTraining, `[{"a":1.0}]`, `[]`, false)
-	exists, err = Bun().NewSelect().Table("trials").
-		Where("id = ?", onlyTraining).
-		Where("latest_validation_id IS NULL").
-		Exists(ctx)
-	require.NoError(t, err)
-	require.True(t, exists, "latest_validation_id should be null")
+	id, metric = getLatestValidation(ctx, t, onlyTraining)
+	require.Nil(t, id)
+	require.Nil(t, metric)
 
 	// Test both archived and unarchived paths.
-	for _, shouldArchive := range []bool{false} {
-		trial := RequireMockTrial(t, db, exp).ID
-		addMetrics(ctx, t, db, trial,
+	for _, shouldArchive := range []bool{false, true} {
+		// We ignore non searcher metric validation.
+		nonSearcherMetric := RequireMockTrial(t, db, exp).ID
+		addMetrics(ctx, t, db, nonSearcherMetric,
 			`[{"a":1.0}, {"b":1.3}]`,
 			`[{"loss":1.0}, {"gain":1.5}, {"latest":2.0}]`, shouldArchive)
+		id, metric = getLatestValidation(ctx, t, nonSearcherMetric)
+		require.Nil(t, id)
+		require.Nil(t, metric)
 
-		type valID struct {
-			bun.BaseModel `bun:"table:validations"`
-			ID            int
-		}
-		var id valID
-		err := Bun().NewSelect().Table("validations").
-			Column("id").
-			Where("trial_id = ?", trial).
-			Where("metrics->'validation_metrics' = ?", map[string]any{"latest": 2.0}).
-			Scan(ctx, &id)
-		require.NoError(t, err)
-		require.NotEqual(t, 0, id.ID)
-
-		exists, err = Bun().NewSelect().Table("trials").
-			Where("id = ?", trial).
-			Where("latest_validation_id = ?", id.ID).
-			Exists(ctx)
-		require.NoError(t, err)
-		require.True(t, exists, "trial %d latest_validation_id is not %d", trial, id.ID)
+		// Searcher metric gets set.
+		searcherMetric := RequireMockTrial(t, db, exp).ID
+		addMetrics(ctx, t, db, searcherMetric,
+			`[{"a":1.0}, {"b":1.3}]`,
+			fmt.Sprintf(`[{"loss":1.0}, {"%s":1.5, "b":"test"}, {"latest":2.0}]`,
+				defaultSearcherMetric), shouldArchive)
+		id, metric = getLatestValidation(ctx, t, searcherMetric)
+		require.NotNil(t, id)
+		require.NotNil(t, metric)
+		require.Equal(t, map[string]any{
+			defaultSearcherMetric: 1.5,
+			"b":                   "test",
+		}, *metric)
 	}
 }
 
