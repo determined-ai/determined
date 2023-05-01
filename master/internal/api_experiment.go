@@ -324,17 +324,17 @@ func hpToSQL(c string, t *string, va *interface{}, op *operator) (string, error)
 }
 
 func (e experimentFilterRoot) toSQL(q *bun.SelectQuery) (*bun.SelectQuery, error) {
-	q, err := e.FilterGroup.toSQL(q)
+	q, err := e.FilterGroup.toSQL(q, nil)
 	if err != nil {
 		return q, err
 	}
 	if !e.ShowArchived {
-		q = q.Where(`e.archived = false)`)
+		q.Where(`e.archived = false)`)
 	}
 	return q, nil
 }
 
-func (e experimentFilter) toSQL(q *bun.SelectQuery) (*bun.SelectQuery, error) {
+func (e experimentFilter) toSQL(q *bun.SelectQuery, c *filterConjunction) (*bun.SelectQuery, error) {
 	switch e.Kind {
 	case field:
 		if e.Operator == nil {
@@ -352,9 +352,17 @@ func (e experimentFilter) toSQL(q *bun.SelectQuery) (*bun.SelectQuery, error) {
 			if *e.Operator == contains || *e.Operator == doesNotContain { //nolint: gocritic
 				switch *e.Operator {
 				case contains:
-					q = q.Where("? LIKE ?", bun.Safe(col), `%`+fmt.Sprintf(`%v`, *e.Value)+`%`)
+					if c != nil && *c == or {
+						q.WhereOr("? LIKE ?", bun.Safe(col), `%`+fmt.Sprintf(`%v`, *e.Value)+`%`)
+					} else {
+						q.Where("? LIKE ?", bun.Safe(col), `%`+fmt.Sprintf(`%v`, *e.Value)+`%`)
+					}
 				case doesNotContain:
-					q = q.Where("? NOT LIKE ?", bun.Safe(col), `%`+fmt.Sprintf(`%v`, *e.Value)+`%`)
+					if c != nil && *c == or {
+						q.WhereOr("? NOT LIKE ?", bun.Safe(col), `%`+fmt.Sprintf(`%v`, *e.Value)+`%`)
+					} else {
+						q.Where("? NOT LIKE ?", bun.Safe(col), `%`+fmt.Sprintf(`%v`, *e.Value)+`%`)
+					}
 				default:
 					return q, fmt.Errorf("invalid contains operator %v", *e.Operator)
 				}
@@ -367,11 +375,21 @@ func (e experimentFilter) toSQL(q *bun.SelectQuery) (*bun.SelectQuery, error) {
 				if e.Type != nil &&
 					(*e.Type == projectv1.ColumnType_COLUMN_TYPE_TEXT.String() ||
 						*e.Type == projectv1.ColumnType_COLUMN_TYPE_DATE.String()) {
-					q = q.Where("? ? ? ", bun.Safe(col),
-						bun.Safe(oSQL), *e.Value)
+					if c != nil && *c == or {
+						q.WhereOr("? ? ?", bun.Safe(col),
+							bun.Safe(oSQL), *e.Value)
+					} else {
+						q.Where("? ? ? ", bun.Safe(col),
+							bun.Safe(oSQL), *e.Value)
+					}
 				} else {
-					q = q.Where("? ? ?", bun.Safe(col),
-						bun.Safe(oSQL), *e.Value)
+					if c != nil && *c == or {
+						q.WhereOr("? ? ? ", bun.Safe(col),
+							bun.Safe(oSQL), *e.Value)
+					} else {
+						q.Where("? ? ?", bun.Safe(col),
+							bun.Safe(oSQL), *e.Value)
+					}
 				}
 			}
 			if err != nil {
@@ -397,7 +415,7 @@ func (e experimentFilter) toSQL(q *bun.SelectQuery) (*bun.SelectQuery, error) {
 		}
 		q = q.WhereGroup(co, func(q *bun.SelectQuery) *bun.SelectQuery {
 			for _, c := range e.Children {
-				_, err = c.toSQL(q)
+				_, err = c.toSQL(q, e.Conjunction)
 				if err != nil {
 					return nil
 				}

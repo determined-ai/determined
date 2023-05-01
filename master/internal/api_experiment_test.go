@@ -4,8 +4,8 @@
 package internal
 
 import (
-	"fmt"
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	"github.com/determined-ai/determined/master/internal/db"
@@ -39,7 +39,7 @@ func TestExperimentSearchApiFilterParsing(t *testing.T) {
 	// 	require.Error(t, err)
 	// }
 	validTestCases := [][2]string{
-		{`{"filterGroup":{"children":[{"children":[{"columnName":"id","id":"77406a6d-73d4-4424-a24c-5ef8f91d587f","kind":"field","operator":"=","value":1},{"columnName":"id","id":"3bb51347-f559-4a27-ad2b-75cae7692752","kind":"field","operator":"=","value":2}],"conjunction":"and","id":"1be35ddc-0230-489b-a2ce-260b94ab6225","kind":"group"},{"children":[{"columnName":"id","id":"3d5bdcc4-8b96-48f4-84d0-2ebc1c9f6eb7","kind":"field","operator":"=","value":3},{"columnName":"id","id":"d1e0f1b9-48ab-4289-8102-bbb8ad3ed46d","kind":"field","operator":"=","value":4}],"conjunction":"and","id":"95c462e3-b569-4f30-a99a-50f59d8d64aa","kind":"group"}],"conjunction":"or","id":"ROOT","kind":"group"},"showArchived":false}`, `(true OR true OR true)`},                                                                                                                             //nolint: lll
+		{`{"filterGroup":{"children":[{"children":[{"columnName":"id","id":"77406a6d-73d4-4424-a24c-5ef8f91d587f","kind":"field","operator":"=","value":1},{"columnName":"id","id":"3bb51347-f559-4a27-ad2b-75cae7692752","kind":"field","operator":"=","value":2}],"conjunction":"or","id":"1be35ddc-0230-489b-a2ce-260b94ab6225","kind":"group"},{"children":[{"columnName":"id","id":"3d5bdcc4-8b96-48f4-84d0-2ebc1c9f6eb7","kind":"field","operator":"=","value":3},{"columnName":"id","id":"d1e0f1b9-48ab-4289-8102-bbb8ad3ed46d","kind":"field","operator":"=","value":4}],"conjunction":"and","id":"95c462e3-b569-4f30-a99a-50f59d8d64aa","kind":"group"}],"conjunction":"or","id":"ROOT","kind":"group"},"showArchived":false}`, `(true OR true OR true)`}, //nolint: lll
 		// {`{"filterGroup":{"children":[{"children":[],"conjunction":"and","kind":"group"},{"children":[],"conjunction":"and","kind":"group"},{"children":[],"conjunction":"and","kind":"group"}],"conjunction":"or","kind":"group"},"showArchived":false}`, `e.archived = false AND (true OR true OR true)`},                                                                                                     //nolint: lll
 		// {`{"filterGroup":{"children":[{"children":[],"conjunction":"and","kind":"group"},{"children":[],"conjunction":"and","kind":"group"},{"children":[{"columnName":"description","kind":"field","operator":"not empty","value":null}],"conjunction":"and","kind":"group"}],"conjunction":"and","kind":"group"},"showArchived":true}`, `(true AND true AND (e.config->>'description' IS NOT NULL))`},         //nolint: lll
 		// {`{"filterGroup":{"children":[{"columnName":"numTrials","kind":"field","operator":">","value":0},{"columnName":"id","kind":"field","operator":"!=","value":0},{"columnName":"forkedFrom","kind":"field","operator":"!=","value":1}],"conjunction":"and","kind":"group"},"showArchived":true}`, `((SELECT COUNT(*) FROM trials t WHERE e.id = t.experiment_id) > 0 AND e.id != 0 AND e.parent_id != 1)`}, //nolint: lll
