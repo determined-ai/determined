@@ -928,7 +928,6 @@ class TestPyTorchTrial:
         exp_config: typing.Dict,
         steps: typing.Tuple[int, int] = (1, 1),
     ) -> None:
-
         checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
 
         # Trial A: train 100 batches and checkpoint
