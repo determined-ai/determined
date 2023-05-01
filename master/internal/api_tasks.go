@@ -67,7 +67,7 @@ func canAccessNTSCTask(ctx context.Context, curUser model.User, taskID model.Tas
 	}
 	err = command.AuthZProvider.Get().CanGetNSC(
 		ctx, curUser, spec.WorkspaceID)
-	return err != nil, err
+	return authz.IsPermissionDenied(err), err
 }
 
 func (a *apiServer) canDoActionsOnTask(

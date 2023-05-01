@@ -99,7 +99,7 @@ func (a *apiServer) GetNotebook(
 
 	if err = command.AuthZProvider.Get().CanGetNSC(
 		ctx, *curUser, model.AccessScopeID(resp.Notebook.WorkspaceId)); err != nil {
-		return nil, authz.SubIfUnauthorized(err, errActorNotFound((addr)))
+		return nil, authz.SubIfUnauthorized(err, errActorNotFound(addr))
 	}
 	return resp, nil
 }
