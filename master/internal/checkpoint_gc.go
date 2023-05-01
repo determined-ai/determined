@@ -116,6 +116,12 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 		}, t.db, t.rm, t.taskLogger)
 
 		t.allocation, _ = ctx.ActorOf(t.allocationID, allocation)
+
+		t.Base.TaskContainerDefaults, err = t.rm.TaskContainerDefaults(ctx, rp, model.TaskContainerDefaultsConfig{})
+
+		if err != nil {
+			return fmt.Errorf("creating task container defaults: %v", err)
+		}
 	case task.BuildTaskSpec:
 		if ctx.ExpectingResponse() {
 			ctx.Respond(t.ToTaskSpec())

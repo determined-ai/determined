@@ -46,6 +46,8 @@ func (g GCCkptSpec) ToTaskSpec() TaskSpec {
 	res.Environment = schemas.WithDefaults(env)
 	res.ExtraEnvVars = map[string]string{"DET_TASK_TYPE": string(model.TaskTypeCheckpointGC)}
 	res.ResourcesConfig = schemas.WithDefaults(res.ResourcesConfig)
+	res.SlurmConfig = defaultConfig.SlurmConfig()
+	res.PbsConfig = defaultConfig.PbsConfig()
 
 	res.WorkDir = DefaultWorkDir
 
