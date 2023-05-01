@@ -267,7 +267,8 @@ func TestAuthZCheckpointsEcho(t *testing.T) {
 
 	addMockCheckpointDB(t, api.m.db, checkpointUUID)
 
-	authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).Return(authz2.PermissionDeniedError{}).Once()
+	authZExp.On("CanGetExperiment", mock.Anything, curUser,
+		mock.Anything).Return(authz2.PermissionDeniedError{}).Once()
 	require.Equal(t, echo.NewHTTPError(http.StatusNotFound,
 		fmt.Sprintf("checkpoint not found: %s", checkpointUUID)), api.m.getCheckpoint(ctx))
 

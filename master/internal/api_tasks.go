@@ -383,12 +383,13 @@ func (a *apiServer) GetTasks(
 			return nil, err
 		}
 
+		var ok bool
 		if !isExp {
-			_, err = canAccessNTSCTask(ctx, *curUser, summary[allocationID].TaskID)
+			ok, err = canAccessNTSCTask(ctx, *curUser, summary[allocationID].TaskID)
 		} else {
 			err = expauth.AuthZProvider.Get().CanGetExperiment(ctx, *curUser, exp)
 		}
-		if !authz.IsPermissionDenied(err) {
+		if !authz.IsPermissionDenied(err) || ok {
 			pbAllocationIDToSummary[string(allocationID)] = allocationSummary.Proto()
 		} else if err != nil {
 			return nil, err

@@ -11,9 +11,10 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	authz2 "github.com/determined-ai/determined/master/internal/authz"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+
+	authz2 "github.com/determined-ai/determined/master/internal/authz"
 )
 
 func trialNotFoundErrEcho(id int) error {

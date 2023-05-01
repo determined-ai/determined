@@ -31,7 +31,7 @@ def det_cmd_expect_error(cmd: List[str], expected: str) -> None:
 
 @pytest.mark.e2e_cpu
 @pytest.mark.parametrize("add_users", [[], ["admin", "determined"]])
-def test_group_creation(add_users: List[str]) -> None:
+def test_group_creation(add_users: List[str]) -> None:  # TODO CAROLINA
     with logged_in_user(ADMIN_CREDENTIALS):
         group_name = get_random_string()
         create_group_cmd = ["user-group", "create", group_name]

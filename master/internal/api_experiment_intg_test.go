@@ -14,15 +14,19 @@ import (
 
 	"github.com/uptrace/bun"
 
+	"github.com/ghodss/yaml"
 	"github.com/golang/protobuf/ptypes/wrappers"
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	"github.com/ghodss/yaml"
-	"github.com/google/uuid"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	authz2 "github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/db"
@@ -40,10 +44,6 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/userv1"
 	"github.com/determined-ai/determined/proto/pkg/utilv1"
 	"github.com/determined-ai/determined/proto/pkg/workspacev1"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/metadata"
-	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/structpb"
 )
 
 type mockStream[T any] struct {
@@ -842,7 +842,8 @@ func TestAuthZGetExperiments(t *testing.T) {
 	createTestExpWithProjectID(t, api, curUser, projectID, uuid.New().String())
 
 	// Can't view project gets a 404.
-	authZProject.On("CanGetProject", mock.Anything, curUser, mock.Anything).Return(authz2.PermissionDeniedError{}).Once()
+	authZProject.On("CanGetProject", mock.Anything, curUser,
+		mock.Anything).Return(authz2.PermissionDeniedError{}).Once()
 	_, err := api.GetExperiments(ctx, &apiv1.GetExperimentsRequest{ProjectId: int32(projectID)})
 	require.Equal(t, projectNotFoundErr(projectID).Error(), err.Error())
 
@@ -890,14 +891,16 @@ func TestAuthZGetExperimentLabels(t *testing.T) {
 	createTestExpWithProjectID(t, api, curUser, projectID, uuid.New().String())
 
 	// Can't view project gets a 404.
-	authZProject.On("CanGetProject", mock.Anything, curUser, mock.Anything).Return(authz2.PermissionDeniedError{}).Once()
+	authZProject.On("CanGetProject", mock.Anything, curUser,
+		mock.Anything).Return(authz2.PermissionDeniedError{}).Once()
 	_, err := api.GetExperimentLabels(ctx, &apiv1.GetExperimentLabelsRequest{
 		ProjectId: int32(projectID),
 	})
 	require.Equal(t, projectNotFoundErr(projectID).Error(), err.Error())
 
 	// Error from FilterExperimentsLabelsQuery passes through.
-	authZProject.On("CanGetProject", mock.Anything, curUser, mock.Anything).Return(nil).Once()
+	authZProject.On("CanGetProject", mock.Anything, curUser,
+		mock.Anything).Return(nil).Once()
 	expectedErr := fmt.Errorf("filterExperimentLabelsQueryError")
 	authZExp.On("FilterExperimentLabelsQuery", mock.Anything, curUser, mock.Anything, mock.Anything).
 		Return(nil, expectedErr).Once()
@@ -924,7 +927,8 @@ func TestAuthZCreateExperiment(t *testing.T) {
 	_, projectID := createProjectAndWorkspace(ctx, t, api)
 
 	// Can't view forked experiment.
-	authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).Return(authz2.PermissionDeniedError{}).Once()
+	authZExp.On("CanGetExperiment", mock.Anything, curUser,
+		mock.Anything).Return(authz2.PermissionDeniedError{}).Once()
 	_, err := api.CreateExperiment(ctx, &apiv1.CreateExperimentRequest{
 		ParentId: int32(forkFrom.ID),
 	})
@@ -941,7 +945,8 @@ func TestAuthZCreateExperiment(t *testing.T) {
 	require.Equal(t, expectedErr, err)
 
 	// Can't view project passed in.
-	pAuthZ.On("CanGetProject", mock.Anything, curUser, mock.Anything).Return(authz2.PermissionDeniedError{}).Once()
+	pAuthZ.On("CanGetProject", mock.Anything, curUser,
+		mock.Anything).Return(authz2.PermissionDeniedError{}).Once()
 	_, err = api.CreateExperiment(ctx, &apiv1.CreateExperimentRequest{
 		ProjectId: int32(projectID),
 		Config:    minExpConfToYaml(t),
@@ -950,7 +955,8 @@ func TestAuthZCreateExperiment(t *testing.T) {
 		fmt.Sprintf("project (%d) not found", projectID)), err)
 
 	// Can't view project passed in from config.
-	pAuthZ.On("CanGetProject", mock.Anything, curUser, mock.Anything).Return(authz2.PermissionDeniedError{}).Once()
+	pAuthZ.On("CanGetProject", mock.Anything, curUser,
+		mock.Anything).Return(authz2.PermissionDeniedError{}).Once()
 	_, err = api.CreateExperiment(ctx, &apiv1.CreateExperimentRequest{
 		Config: minExpConfToYaml(t) + "project: Uncategorized\nworkspace: Uncategorized",
 	})

@@ -86,7 +86,8 @@ func TestAuthZPostExperimentEcho(t *testing.T) {
 	ctx := newTestEchoContext(curUser)
 
 	// Can't view project passed in.
-	pAuthZ.On("CanGetProject", mock.Anything, curUser, mock.Anything).Return(authz2.PermissionDeniedError{}).Once()
+	pAuthZ.On("CanGetProject", mock.Anything, curUser,
+		mock.Anything).Return(authz2.PermissionDeniedError{}).Once()
 	err := echoPostExperiment(ctx, api, t, CreateExperimentParams{
 		ConfigBytes: minExpConfToYaml(t),
 		ProjectID:   &projectID,
@@ -95,7 +96,8 @@ func TestAuthZPostExperimentEcho(t *testing.T) {
 		fmt.Sprintf("project (%d) not found", projectID)).Error(), err.Error())
 
 	// Can't view project passed in from config.
-	pAuthZ.On("CanGetProject", mock.Anything, curUser, mock.Anything).Return(authz2.PermissionDeniedError{}).Once()
+	pAuthZ.On("CanGetProject", mock.Anything, curUser,
+		mock.Anything).Return(authz2.PermissionDeniedError{}).Once()
 	err = echoPostExperiment(ctx, api, t, CreateExperimentParams{
 		ConfigBytes: minExpConfToYaml(t) + "project: Uncategorized\nworkspace: Uncategorized",
 	})

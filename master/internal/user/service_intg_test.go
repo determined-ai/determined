@@ -17,9 +17,9 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/uptrace/bun"
 
-	authz2 "github.com/determined-ai/determined/master/internal/authz"
 	"github.com/pkg/errors"
 
+	authz2 "github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/context"
 	"github.com/determined-ai/determined/master/internal/db"
@@ -149,10 +149,9 @@ func TestAuthzPatchUser(t *testing.T) {
 		authzUser.On(testCase.expectedCall, testCase.args...).
 			Return(fmt.Errorf(testCase.expectedCall + "Error")).Once()
 		authzUser.On("CanGetUser", mock.Anything, model.User{}, mock.Anything).
-			Return(nil).Once() //TODO CAROLINA
+			Return(nil).Once()
 
-		_, err := svc.patchUser(ctx) //TODO: add logging -- is it returning early/why not returning an error ??
-		require.Error(t, err, "expected patchUser to return non-nil error")
+		_, err := svc.patchUser(ctx)
 		require.Equal(t, expectedErr.Error(), err.Error())
 
 		// If CanGetUser returns an error we get that error.
@@ -164,7 +163,7 @@ func TestAuthzPatchUser(t *testing.T) {
 			Return(fmt.Errorf(testCase.expectedCall + "Error")).Once()
 		cantGetUserError := fmt.Errorf("cantGetUserError")
 		authzUser.On("CanGetUser", mock.Anything, model.User{}, mock.Anything).
-			Return(cantGetUserError).Once() //TODO CAROLINA
+			Return(cantGetUserError).Once()
 
 		_, err = svc.patchUser(ctx)
 		require.Equal(t, cantGetUserError, err)
@@ -175,7 +174,7 @@ func TestAuthzPatchUser(t *testing.T) {
 		authzUser.On(testCase.expectedCall, testCase.args...).
 			Return(fmt.Errorf(testCase.expectedCall + "Error")).Once()
 		authzUser.On("CanGetUser", mock.Anything, model.User{}, mock.Anything).
-			Return(authz2.PermissionDeniedError{}).Once() //TODO CAROLINA
+			Return(authz2.PermissionDeniedError{}).Once()
 
 		_, err = svc.patchUser(ctx)
 		require.Equal(t,
