@@ -463,7 +463,7 @@ func (e experimentFilter) toSQL(q *bun.SelectQuery, c *filterConjunction) (*bun.
 			q = q.WhereGroup(co, func(q *bun.SelectQuery) *bun.SelectQuery {
 				_, err = c.toSQL(q, e.Conjunction)
 				if err != nil {
-					return nil
+					return q
 				}
 				return q
 			})

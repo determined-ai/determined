@@ -16,7 +16,7 @@ func TestExperimentSearchApiFilterParsing(t *testing.T) {
 	setupAPITest(t, nil)
 	invalidTestCases := []string{
 		// No operator specified in field
-		//`{"filterGroup":{"children":[{"columnName":"resourcePool","kind":"field","value":"default"}],"conjunction":"and","kind":"group"},"showArchived":false}`,
+		`{"filterGroup":{"children":[{"columnName":"resourcePool","kind":"field","value":"default"}],"conjunction":"and","kind":"group"},"showArchived":false}`,
 
 		// No conjunction in group
 		`{"filterGroup":{"children":[{"columnName":"resourcePool","kind":"field","operator":"=","value":"default"}],"kind":"group"},"showArchived":false}`,
@@ -25,10 +25,10 @@ func TestExperimentSearchApiFilterParsing(t *testing.T) {
 		`{"filterGroup":{"children":[{"columnName":"resourcePool","kind":"field","operator":"=","value":"default"}],"conjunction":"invalid","kind":"group"},"showArchived":false}`,
 
 		// invalid operator
-		//`{"filterGroup":{"children":[{"columnName":"resourcePool","kind":"field","operator":"invalid","value":"default"}],"conjunction":"and","kind":"group"},"showArchived":false}`,
+		`{"filterGroup":{"children":[{"columnName":"resourcePool","kind":"field","operator":"invalid","value":"default"}],"conjunction":"and","kind":"group"},"showArchived":false}`,
 
 		//  Invalid experiment field
-		//`{"filterGroup":{"children":[{"location":"LOCATION_TYPE_EXPERIMENT","columnName":"notValid","kind":"field","value":"default"}],"conjunction":"and","kind":"group"},"showArchived":false}`,
+		`{"filterGroup":{"children":[{"location":"LOCATION_TYPE_EXPERIMENT","columnName":"notValid","kind":"field","value":"default"}],"conjunction":"and","kind":"group"},"showArchived":false}`,
 	}
 	for _, c := range invalidTestCases {
 		q := db.Bun().NewSelect()
