@@ -174,3 +174,4 @@ class _TensorboardUploadThread(threading.Thread):
         while self.is_alive():
             logging.info("Waiting for Tensorboard files to finish uploading")
             self.join(10)
+        logging.info("Tensorboard upload completed")
