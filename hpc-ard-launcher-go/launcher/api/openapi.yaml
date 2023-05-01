@@ -6,7 +6,7 @@ info:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
   title: Launcher API
-  version: 3.2.0
+  version: 3.2.8
 servers:
 - url: /
 security:
@@ -110,10 +110,6 @@ paths:
                 $ref: '#/components/schemas/LogLevel'
           description: Current root log level
         "403":
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
           description: User is not permitted to read the log level
       summary: Gets the current root log level
       tags:
@@ -134,16 +130,8 @@ paths:
         "204":
           description: The root log level was updated
         "400":
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
           description: Not a valid log level
         "403":
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
           description: User is not permitted to set log level
       summary: Sets the root log level
       tags:
@@ -188,16 +176,8 @@ paths:
         "204":
           description: The requested log levels were updated
         "400":
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
           description: Not a valid log level
         "403":
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
           description: User is not permitted to set log levels
       summary: Sets the log level for multiple loggers
       tags:
@@ -226,16 +206,8 @@ paths:
                 $ref: '#/components/schemas/LogLevel'
           description: Loggers current log level
         "400":
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
           description: Not a valid logger
         "403":
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
           description: User is not permitted to set log level
       summary: Gets the log level for a specific logger
       tags:
@@ -266,16 +238,8 @@ paths:
         "204":
           description: The logger level was updated
         "400":
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
           description: Not a valid log level or logger
         "403":
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
           description: User is not permitted to set logger level
       summary: Sets the log level for a specific logger
       tags:
@@ -352,23 +316,11 @@ paths:
                 $ref: '#/components/schemas/DispatchInfo'
           description: Runtime environment was launched successfully
         "400":
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/ReferenceProblem'
           description: Invalid environment manifest
         "403":
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
           description: User does not have permission to launch environments as the
             specified impersonation user
         "500":
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
           description: Runtime environment couldn't be launched
       summary: Launches the runtime environment described by the provided manifest
         in a synchronous manner
@@ -408,23 +360,11 @@ paths:
                 $ref: '#/components/schemas/DispatchInfo'
           description: Runtime environment was accepted for launch
         "400":
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/ReferenceProblem'
           description: Invalid environment manifest
         "403":
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
           description: User does not have permission to launch environments as the
             specified impersonation user
         "500":
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
           description: Runtime environment couldn't be launched
       summary: Launches the runtime environment described by the provided manifest
         in an asynchronous manner
@@ -456,17 +396,9 @@ paths:
         "204":
           description: The specified credential was successfully removed
         "403":
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
           description: User does not have permission to manage credentials for the
             given owner
         "404":
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/ReferenceProblem'
           description: The specified credential does not exist
       summary: Removes a credential
       tags:
@@ -496,10 +428,6 @@ paths:
         "204":
           description: The specified credential exists
         "404":
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/ReferenceProblem'
           description: The specified credential does not exist
       summary: Determines whether a given credential has been provided
       tags:
@@ -537,17 +465,9 @@ paths:
         "201":
           description: Credential was created/updated
         "403":
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
           description: User does not have permission to manage credentials for the
             given owner
         "500":
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
           description: Could not add credential
       summary: Creates/updates a credential that the Dispatch Centre can use to launch
         environments on behalf of the user
@@ -586,17 +506,9 @@ paths:
                 $ref: '#/components/schemas/Manifest'
           description: Environment Manifest
         "403":
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
           description: User does not have permission to view environments with the
             given owner
         "404":
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
           description: The specified environment does not exist
       summary: Gets the current details of the environment
       tags:
@@ -627,17 +539,9 @@ paths:
         "204":
           description: Environment was deleted
         "403":
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
           description: User does not have permission to delete environments with the
             given owner
         "404":
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
           description: The specified environment does not exist
       summary: Deletes an environment regardless of status (destructive) which is
         not the same as terminating it, the environment may still be running but no
@@ -676,17 +580,9 @@ paths:
                 $ref: '#/components/schemas/DispatchManagementStatus'
           description: Management Status report
         "403":
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
           description: User does not have permission to view environments with the
             given owner
         "404":
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
           description: The specified environment does not exist
       summary: Gets the management status of the environment
       tags:
@@ -743,17 +639,9 @@ paths:
                 $ref: '#/components/schemas/DispatchInfo'
           description: The status of the environment
         "403":
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
           description: User does not have permission to view environments with the
             given owner
         "404":
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/ReferenceProblem'
           description: The specified environment does not exist
       summary: Gets the status of an environment
       tags:
@@ -784,17 +672,9 @@ paths:
         "204":
           description: Log files were deleted
         "403":
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
           description: User does not have permission to manage logs from environments
             with the given owner
         "404":
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
           description: The given environment does not exist
       summary: Deletes all available log files for the environment
       tags:
@@ -839,10 +719,6 @@ paths:
                 type: object
           description: List of log files
         "403":
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
           description: User does not have permission to view logs from environments
             with the given owner
       summary: Gets the content of a log file from the environment
@@ -883,17 +759,9 @@ paths:
         "204":
           description: Specified log file were deleted
         "403":
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
           description: User does not have permission to manage logs from environments
             with the given owner
         "404":
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
           description: The given environment or log file does not exist
       summary: Deletes a specific log file for the environment
       tags:
@@ -1011,17 +879,9 @@ paths:
         "304":
           description: The log file has not changed
         "403":
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
           description: User does not have permission to view logs from environments
             with the given owner
         "404":
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
           description: Log file or environment does not exist
         "412":
           description: The log file has changed
@@ -1108,10 +968,6 @@ paths:
                 type: object
           description: List of running environments
         "403":
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
           description: User does not have permission to view environments
       summary: Gets all running environments that the user can view
       tags:
@@ -1142,17 +998,9 @@ paths:
         "204":
           description: All running environments were terminated successfully
         "403":
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
           description: User does not have permission to terminate environments with
             the given owner
         "500":
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
           description: Could not terminate all running environments
       summary: Terminates all running environments owned by the given owner
       tags:
@@ -1240,10 +1088,6 @@ paths:
                 type: object
           description: List of owned running environments
         "403":
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
           description: User does not have permission to view environments with the
             given owner
       summary: Gets all running environments launched by the given owner
@@ -1294,23 +1138,11 @@ paths:
           description: The given environment has been terminated and can now be looked
             up elsewhere
         "403":
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
           description: User does not have permission to terminate environments with
             the given owner
         "404":
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/ReferenceProblem'
           description: The given environment does not exist or has already been terminated
         "500":
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
           description: Could not terminate running environment
       summary: Terminates a running environment
       tags:
@@ -1350,17 +1182,9 @@ paths:
           description: The given environment has been terminated and can now be looked
             up elsewhere
         "403":
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
           description: User does not have permission to view environments with the
             given owner
         "404":
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/ReferenceProblem'
           description: The given environment does not exist or is no longer running
       summary: Gets a specific running environment launched by the given owner
       tags:
@@ -1410,23 +1234,11 @@ paths:
           description: The given environment has already been terminated and can now
             be looked up elsewhere
         "403":
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
           description: User does not have permission to terminate environments with
             the given owner
         "404":
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/ReferenceProblem'
           description: The given environment does not exist or has already been terminated
         "500":
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
           description: Could not terminate running environment
       summary: Terminates a running environment in an asynchronous manner
       tags:
@@ -1475,17 +1287,9 @@ paths:
           description: The given environment has been terminated and can now be looked
             up elsewhere
         "403":
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
           description: User does not have permission to view environments with the
             given owner
         "404":
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/ReferenceProblem'
           description: The given environment does not exist
       summary: Gets the User Interfaces associated with the running environment launched
         by the given owner
@@ -1515,10 +1319,6 @@ paths:
                 $ref: '#/components/schemas/ACLS'
           description: ACLs for the given owners running environments
         "403":
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
           description: User does not have permission to manage running environment
             ACLs with the given owner
       summary: Gets the ACLs that control who can manage the running environments
@@ -1551,10 +1351,6 @@ paths:
         "204":
           description: ACLs were successfully updated
         "403":
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
           description: User does not have permission to manage running environment
             ACLs with the given owner
       summary: Sets the ACLs that control who can manage the running environments
@@ -1636,10 +1432,6 @@ paths:
                 type: object
           description: List of terminated environments
         "403":
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
           description: User does not have permission to view terminated environment
             with the given owner
       summary: Gets all terminated environments that the user can view
@@ -1662,10 +1454,6 @@ paths:
         "204":
           description: All owned environments were removed
         "403":
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
           description: User does not have permission to manage terminated environment
             with the given owner
       summary: Removes all terminated environments belonging to the given owner
@@ -1754,10 +1542,6 @@ paths:
                 type: object
           description: List of owned terminated environments
         "403":
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
           description: User does not have permission to view terminated environment
             with the given owner
       summary: Gets all terminated environments belonging to the given owner
@@ -1789,17 +1573,9 @@ paths:
         "204":
           description: The terminated environment was deleted
         "403":
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
           description: User does not have permission to manage terminated environment
             with the given owner
         "404":
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/ReferenceProblem'
           description: The given environment does not exist or has already been deleted
             permanently
       summary: Removes a terminated environment
@@ -1840,17 +1616,9 @@ paths:
           description: The given environment is still running and should be looked
             up elsewhere
         "403":
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
           description: User does not have permission to view terminated environment
             with the given owner
         "404":
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/ReferenceProblem'
           description: The given environment does not exist or has an invalid state
       summary: Gets a specific terminated environment launched by the given owner
       tags:
@@ -1879,10 +1647,6 @@ paths:
                 $ref: '#/components/schemas/ACLS'
           description: ACLs for the given owners terminated environments
         "403":
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
           description: User does not have permission to manage terminated environment
             ACLs with the given owner
       summary: Gets the ACLs that control who can manage the terminated environments
@@ -1915,10 +1679,6 @@ paths:
         "204":
           description: ACLs were successfully updated
         "403":
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
           description: User does not have permission to manage terminated environment
             ACLs with the given owner
       summary: Sets the ACLs that control who can manage the terminated environments
