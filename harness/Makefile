@@ -27,7 +27,6 @@ test-cpu:
 
 .PHONY: test-gpu
 test-gpu:
-	# We will use this target in circleci once we have access to gpu instances.
 	# Since integration tests are image-specific, they must be excluded and run separately
 	coverage run -m pytest -v --runslow --durations=0 -m "gpu" tests/experiment --ignore=tests/experiment/integrations
 

@@ -195,33 +195,14 @@ def tutorials_path(path: str) -> str:
     return os.path.join(os.path.dirname(__file__), "../../../examples/tutorials", path)
 
 
-def import_module(module_name: str, module_path: str, model_context: Optional[str] = None) -> Any:
-    """
-    Use importlib for examples since they are outside of harness.
+def import_module(module_name: str, module_path: str) -> Any:
 
-    model_context is necessary when there are extra .py files within
-    the model directory that are imported in model_def.py
+    module_dir= os.path.dirname(module_path)
 
-    there are some problematic names that are recycled between modules.
-    they may be pre-loaded as the result of a previous module import.
-    """
-
-    problematic_module_names = ["model_def", "data"]
-    for name in problematic_module_names:
-        try:
-            sys.modules.pop(name)
-        except KeyError as e:  # noqa: F841
-            pass
-
-    if model_context is not None:
-        sys.path.append(model_context)
-
-    spec = importlib.util.spec_from_file_location(module_name, module_path)
-    module = importlib.util.module_from_spec(spec)  # type: ignore
-    spec.loader.exec_module(module)  # type: ignore
-
-    if model_context is not None:
-        sys.path.remove(model_context)
+    with det.import_from_path(module_dir):
+        spec = importlib.util.spec_from_file_location(module_name, module_path)
+        module = importlib.util.module_from_spec(spec)  # type: ignore
+        spec.loader.exec_module(module)  # type: ignore
 
     return module
 

@@ -341,7 +341,7 @@ def test_checkpoint_loading(ckpt_ver):
     assert isinstance(estm, tracking.AutoTrackable), type(estm)
 
 
-@pytest.mark.TensorFlow
+@pytest.mark.tensorflow
 @pytest.mark.gpu
 def test_mnist_estimator(tmp_path: Path):
     """

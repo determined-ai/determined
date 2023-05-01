@@ -49,6 +49,7 @@ def check_equal_structures(a: typing.Any, b: typing.Any) -> None:
         assert a == b
 
 
+@pytest.mark.pytorch
 class TestPyTorchTrial:
     def setup_method(self) -> None:
         # This training setup is not guaranteed to converge in general,
@@ -133,7 +134,7 @@ class TestPyTorchTrial:
             "lr_scheduler_step_mode": pytorch.LRScheduler.StepMode.STEP_EVERY_BATCH.value,
             **self.hparams,
         }
-        self.checkpoint_and_restore(updated_hparams, tmp_path, (100, 100))
+        self.checkpoint_and_check_metrics(updated_hparams, tmp_path, (100, 100))
 
     @pytest.mark.skipif(not torch.cuda.is_available(), reason="no gpu available")
     # @pytest.mark.gpu
@@ -159,7 +160,7 @@ class TestPyTorchTrial:
             **self.hparams,
         }
 
-        tm_a, tm_b = self.checkpoint_and_restore(
+        tm_a, tm_b = self.checkpoint_and_check_metrics(
             hparams=updated_hparams, tmp_path=tmp_path, steps=(200, 200)
         )
 
@@ -839,7 +840,7 @@ class TestPyTorchTrial:
 
         assert trial.legacy_counter.__dict__ == {"legacy_on_training_epochs_start_calls": 2}
 
-    def checkpoint_and_restore(
+    def checkpoint_and_check_metrics(
         self, hparams: typing.Dict, tmp_path: pathlib.Path, steps: typing.Tuple[int, int] = (1, 1)
     ) -> typing.Tuple[
         typing.Sequence[typing.Dict[str, typing.Any]], typing.Sequence[typing.Dict[str, typing.Any]]
@@ -919,7 +920,7 @@ class TestPyTorchTrial:
 
         return (training_metrics["A"], training_metrics["B"])
 
-    def checkpoint_and_restore_no_callbacks(
+    def train_and_checkpoint(
         self,
         hparams: typing.Dict,
         trial_class: pytorch.PyTorchTrial,
@@ -927,6 +928,7 @@ class TestPyTorchTrial:
         exp_config: typing.Dict,
         steps: typing.Tuple[int, int] = (1, 1),
     ) -> None:
+
         checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
 
         # Trial A: train 100 batches and checkpoint
@@ -946,8 +948,8 @@ class TestPyTorchTrial:
 
         assert len(os.listdir(checkpoint_dir)) == 1, "trial did not create a checkpoint"
 
-        # Trial A: restore from checkpoint and train for 100 more batches
-        trial_A, trial_controller_A = create_trial_and_trial_controller(
+        # Trial B: restore from checkpoint and train for 100 more batches
+        trial_B, trial_controller_B = create_trial_and_trial_controller(
             trial_class=trial_class,
             hparams=hparams,
             trial_seed=self.trial_seed,
@@ -960,7 +962,7 @@ class TestPyTorchTrial:
             steps_completed=trial_controller_A.state.batches_trained,
             expose_gpus=True,
         )
-        trial_controller_A.run()
+        trial_controller_B.run()
 
         assert len(os.listdir(checkpoint_dir)) == 2, "trial did not create a checkpoint"
 
@@ -1017,14 +1019,14 @@ class TestPyTorchTrial:
             checkpoint_dir=checkpoint_dir,
         )
         exp_config.update(config)
+        exp_config["optimizations"] = {"aggregation_frequency": aggregation_frequency}
 
         example_path = utils.tutorials_path("mnist_pytorch/model_def.py")
-        example_context = utils.tutorials_path("mnist_pytorch")
-        trial_module = utils.import_module("MNistTrial", example_path, example_context)
+        trial_module = utils.import_module("MNistTrial", example_path)
         trial_class = getattr(trial_module, "MNistTrial")  # noqa: B009
         trial_class._searcher_metric = "validation_loss"
 
-        self.checkpoint_and_restore_no_callbacks(
+        self.train_and_checkpoint(
             trial_class=trial_class,
             hparams=hparams,
             tmp_path=tmp_path,
@@ -1033,8 +1035,7 @@ class TestPyTorchTrial:
         )
 
     @pytest.mark.gpu
-    @pytest.mark.PyTorch
-    @pytest.mark.parametrize("api_style", ["apex", "auto", "manual"])  # TODO: test apex
+    @pytest.mark.parametrize("api_style", ["apex", "auto", "manual"])
     def test_pytorch_const_with_amp(self, api_style: str, tmp_path: pathlib.Path):
         checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
         config = utils.load_config(utils.fixtures_path("pytorch_amp/" + api_style + "_amp.yaml"))
@@ -1056,12 +1057,11 @@ class TestPyTorchTrial:
 
         example_filename = api_style + "_amp_model_def.py"
         example_path = utils.fixtures_path(os.path.join("pytorch_amp", example_filename))
-        example_context = utils.fixtures_path("pytorch_amp")
-        trial_module = utils.import_module(module_names[api_style], example_path, example_context)
+        trial_module = utils.import_module(module_names[api_style], example_path)
         trial_class = getattr(trial_module, module_names[api_style])
         trial_class._searcher_metric = "validation_loss"
 
-        self.checkpoint_and_restore_no_callbacks(
+        self.train_and_checkpoint(
             trial_class=trial_class,
             hparams=hparams,
             tmp_path=tmp_path,
@@ -1070,6 +1070,7 @@ class TestPyTorchTrial:
         )
 
 
+@pytest.mark.pytorch
 @pytest.mark.parametrize(
     "ckpt,istrial,trial_spec,trial_kwargs",
     [

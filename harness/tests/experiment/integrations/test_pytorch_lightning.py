@@ -15,8 +15,7 @@ from tests.experiment import utils  # noqa: I100
 from tests.experiment.fixtures import lightning_adapter_onevar_model as la_model
 
 
-@pytest.mark.PyTorchLightning
-@pytest.mark.gpu
+@pytest.mark.pytorch_lightning
 class TestLightningAdapter:
     def setup_method(self) -> None:
         # This training setup is not guaranteed to converge in general,
@@ -229,6 +228,7 @@ class TestLightningAdapter:
 
         assert len(os.listdir(checkpoint_dir)) == 2, "trial did not create a checkpoint"
 
+    @pytest.mark.gpu
     @pytest.mark.parametrize("api_style", ["apex", "auto"])
     def test_pl_const_with_amp(self, api_style: str, tmp_path: pathlib.Path) -> None:
         checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
@@ -249,8 +249,7 @@ class TestLightningAdapter:
 
         example_filename = api_style + "_amp_model_def.py"
         example_path = utils.fixtures_path(os.path.join(exp_dir, example_filename))
-        example_context = utils.fixtures_path(exp_dir)
-        trial_module = utils.import_module(module_names[api_style], example_path, example_context)
+        trial_module = utils.import_module(module_names[api_style], example_path)
         trial_class = getattr(trial_module, module_names[api_style])
         trial_class._searcher_metric = "validation_loss"
 
@@ -262,6 +261,7 @@ class TestLightningAdapter:
             steps=(1, 1),
         )
 
+    @pytest.mark.gpu
     def test_pl_mnist_gan(self, tmp_path: pathlib.Path) -> None:
         checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
         exp_dir = "gan_mnist_pl"
@@ -278,8 +278,7 @@ class TestLightningAdapter:
         exp_config.update(config)
 
         example_path = utils.gan_examples_path(os.path.join(exp_dir, "model_def.py"))
-        example_context = utils.gan_examples_path(exp_dir)
-        trial_module = utils.import_module("GANTrial", example_path, example_context)
+        trial_module = utils.import_module("GANTrial", example_path)
         trial_class = getattr(trial_module, "GANTrial")  # noqa: B009
         trial_class._searcher_metric = "validation_loss"
 
@@ -291,6 +290,7 @@ class TestLightningAdapter:
             steps=(1, 1),
         )
 
+    @pytest.mark.gpu
     def test_pl_mnist(self, tmp_path: pathlib.Path) -> None:
         checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
         exp_dir = "mnist_pl"
@@ -307,8 +307,7 @@ class TestLightningAdapter:
         exp_config.update(config)
 
         example_path = utils.cv_examples_path(os.path.join(exp_dir, "model_def.py"))
-        example_context = utils.cv_examples_path(exp_dir)
-        trial_module = utils.import_module("MNISTTrial", example_path, example_context)
+        trial_module = utils.import_module("MNISTTrial", example_path)
         trial_class = getattr(trial_module, "MNISTTrial")  # noqa: B009
         trial_class._searcher_metric = "validation_loss"
 

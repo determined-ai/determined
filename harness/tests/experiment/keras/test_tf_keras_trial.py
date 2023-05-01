@@ -365,8 +365,7 @@ class TestKerasTrial:
         controller.run()
 
 
-# TODO: maybe add TF2 and TF1 images with pytest.mark (We're dropping TF1 images anyway)
-@pytest.mark.TensorFlow
+@pytest.mark.tensorflow
 @pytest.mark.gpu
 def test_cifar10_single_gpu(tmp_path: Path):
     """
@@ -394,8 +393,7 @@ def test_cifar10_single_gpu(tmp_path: Path):
         steps_completed = trainer.get_steps_completed()
 
     example_path = utils.cv_examples_path("cifar10_tf_keras/model_def.py")
-    example_context = utils.cv_examples_path("cifar10_tf_keras")
-    trial_module = utils.import_module("CIFARTrial", example_path, example_context)
+    trial_module = utils.import_module("CIFARTrial", example_path)
     trial_cls = getattr(trial_module, "CIFARTrial")  # noqa: B009
 
     hparams = {
@@ -447,7 +445,7 @@ def test_cifar10_single_gpu(tmp_path: Path):
     controller.run()
 
 
-@pytest.mark.TensorFlow
+@pytest.mark.tensorflow
 @pytest.mark.gpu
 def test_tf2_no_op(tmp_path: Path):
     """
