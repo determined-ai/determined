@@ -5,17 +5,22 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"io/fs"
 	"net/url"
 	"os/exec"
 	"path"
+	"path/filepath"
 	"regexp"
 	"strings"
 
 	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/sirupsen/logrus"
+	"golang.org/x/exp/slices"
 
 	"github.com/determined-ai/determined/agent/pkg/docker"
 	"github.com/determined-ai/determined/agent/pkg/events"
+	"github.com/determined-ai/determined/master/pkg/archive"
+	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/syncx/waitgroupx"
 )
@@ -95,8 +100,8 @@ func PullImage(
 	ctx context.Context,
 	req docker.PullImage,
 	p events.Publisher[docker.Event],
-	wg waitgroupx.Group,
-	log logrus.Entry,
+	wg *waitgroupx.Group,
+	log *logrus.Entry,
 	getPullCommand func(docker.PullImage, string) (string, []string),
 ) (err error) {
 	if err = p.Publish(ctx, docker.NewBeginStatsEvent(docker.ImagePullStatsKind)); err != nil {
@@ -121,15 +126,11 @@ func PullImage(
 		return nil
 	}
 
-	// TODO(DET-9078): Support registry auth. Investigate other auth mechanisms with podman.
-	// args := []string{"pull"}
-	// if req.ForcePull {
-	// 	args = append(args, "--force") // Use 'podman image rm'?
-	// }
-	// args = append(args, image)
+	// TODO(DET-9078): Support registry auth. Investigate other auth mechanisms
+	// with singularity & podman.
 	command, args := getPullCommand(req, image)
 
-	if err = PprintCommand(ctx, command, args, p, &log); err != nil {
+	if err = PprintCommand(ctx, command, args, p, log); err != nil {
 		return err
 	}
 
@@ -175,4 +176,55 @@ func PullImage(
 		return fmt.Errorf("pulling %s: %w", image, err)
 	}
 	return nil
+}
+
+// ArchiveMountPoints places the experiment archives and returns a list of mount
+// points to be made available inside the container.
+func ArchiveMountPoints(ctx context.Context,
+	req cproto.RunSpec,
+	p events.Publisher[docker.Event],
+	archivesPath string,
+	log *logrus.Entry,
+) ([]string, error) {
+	for _, a := range req.Archives {
+		src := filepath.Join(archivesPath, a.Path)
+		if wErr := archive.Write(src, a.Archive, func(level, log string) error {
+			return p.Publish(ctx, docker.NewLogEvent(level, log))
+		}); wErr != nil {
+			return nil, fmt.Errorf("writing archive for %s: %w", a.Path, wErr)
+		}
+	}
+	// Do not mount top level dirs that are likely to conflict inside of the container, since
+	// these mounts do not overlay. Instead, mount their children.
+	ignoredPathPrefixes := []string{"/", "/etc", "/opt", "/run", "/etc/ssh"}
+	var mountPoints []string
+	// This depends on walkdir walking in lexical order, which is documented.
+	if err := filepath.WalkDir(archivesPath, func(src string, d fs.DirEntry, err error) error {
+		p := strings.TrimPrefix(src, archivesPath)
+
+		for _, m := range mountPoints {
+			if strings.HasPrefix(p, m) {
+				return nil
+			}
+		}
+
+		dirPaths := filepath.SplitList(p)
+		prefix := ""
+
+		for i := 0; i < len(dirPaths); i++ {
+			prefix = filepath.Join(prefix, dirPaths[i])
+
+			log.Trace("Checking mountPoint prefix {}", prefix)
+			if !slices.Contains(ignoredPathPrefixes, prefix) {
+				log.Trace("Add mountPoint {}", prefix)
+				mountPoints = append(mountPoints, prefix)
+				return nil
+			}
+		}
+		log.Warnf("could not determine where to mount %s", src)
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+	return mountPoints, nil
 }

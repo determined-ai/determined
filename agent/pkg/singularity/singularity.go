@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
-	"io/fs"
 	"os"
 	"os/exec"
 	"os/user"
@@ -24,7 +23,6 @@ import (
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/sirupsen/logrus"
-	"golang.org/x/exp/slices"
 
 	"github.com/determined-ai/determined/agent/internal/container"
 	"github.com/determined-ai/determined/agent/internal/options"
@@ -32,7 +30,6 @@ import (
 	"github.com/determined-ai/determined/agent/pkg/docker"
 	"github.com/determined-ai/determined/agent/pkg/events"
 	"github.com/determined-ai/determined/master/pkg/aproto"
-	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/syncx/waitgroupx"
@@ -115,7 +112,7 @@ func (s *SingularityClient) PullImage(
 	req docker.PullImage,
 	p events.Publisher[docker.Event],
 ) (err error) {
-	return cruntimes.PullImage(ctx, req, p, s.wg, *s.log, getPullCommand)
+	return cruntimes.PullImage(ctx, req, p, &s.wg, s.log, getPullCommand)
 }
 
 // CreateContainer implements container.ContainerRuntime.
@@ -257,46 +254,8 @@ func (s *SingularityClient) RunContainer(
 	}
 
 	archivesPath := filepath.Join(tmpdir, archivesName)
-	for _, a := range req.Archives {
-		src := filepath.Join(archivesPath, a.Path)
-		if wErr := archive.Write(src, a.Archive, func(level, log string) error {
-			return p.Publish(ctx, docker.NewLogEvent(level, log))
-		}); wErr != nil {
-			return nil, fmt.Errorf("writing archive for %s: %w", a.Path, err)
-		}
-	}
-
-	// Do not mount top level dirs that are likely to conflict inside of the container, since
-	// these mounts do not overlay. Instead, mount their children.
-	ignoredPathPrefixes := []string{"/", "/etc", "/opt", "/run", "/etc/ssh"}
-	var mountPoints []string
-	// This depends on walkdir walking in lexical order, which is documented.
-	if wErr := filepath.WalkDir(archivesPath, func(src string, d fs.DirEntry, err error) error {
-		p := strings.TrimPrefix(src, archivesPath)
-
-		// If an existing mount point covers this path, nothing to add
-		for _, m := range mountPoints {
-			if strings.HasPrefix(p, m) {
-				return nil
-			}
-		}
-
-		dirPaths := filepath.SplitList(p)
-		prefix := ""
-		// Search to find the top-most unmounted path
-		for i := 0; i < len(dirPaths); i++ {
-			prefix = filepath.Join(prefix, dirPaths[i])
-
-			s.log.Trace("Checking mountPoint prefix {}", prefix)
-			if !slices.Contains(ignoredPathPrefixes, prefix) {
-				s.log.Trace("Add mountPoint {}", prefix)
-				mountPoints = append(mountPoints, prefix)
-				return nil
-			}
-		}
-		s.log.Warnf("could not determine where to mount %s", src)
-		return nil
-	}); wErr != nil {
+	mountPoints, wErr := cruntimes.ArchiveMountPoints(ctx, req, p, archivesPath, s.log)
+	if wErr != nil {
 		return nil, fmt.Errorf("determining mount points: %w", err)
 	}
 	for _, m := range mountPoints {
@@ -371,7 +330,7 @@ func (s *SingularityClient) RunContainer(
 		}
 	}
 
-	image := s.canonicalizeImage(req.ContainerConfig.Image)
+	image := cruntimes.CanonicalizeImage(req.ContainerConfig.Image)
 	args = append(args, image)
 	args = append(args, singularityWrapperEntrypoint)
 	args = append(args, req.ContainerConfig.Cmd...)
@@ -578,8 +537,4 @@ func (s *SingularityClient) pprintSingularityCommand(
 	p events.Publisher[docker.Event],
 ) error {
 	return cruntimes.PprintCommand(ctx, "singularity", args, p, s.log)
-}
-
-func (s *SingularityClient) canonicalizeImage(image string) string {
-	return cruntimes.CanonicalizeImage(image)
 }
