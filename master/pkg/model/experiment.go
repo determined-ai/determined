@@ -82,6 +82,12 @@ func StateFromProto(state experimentv1.State) State {
 	return State(strings.TrimPrefix(str, "STATE_"))
 }
 
+// StateToProto maps State to experimentv1.State.
+func StateToProto(state State) experimentv1.State {
+	stateEnum := experimentv1.State_value["STATE_"+string(state)]
+	return experimentv1.State(stateEnum)
+}
+
 // States and transitions
 
 // reverseTransitions computes the reverse transition table.
