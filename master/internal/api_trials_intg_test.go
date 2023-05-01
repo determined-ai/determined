@@ -120,7 +120,7 @@ func createTestTrialWithMetrics(
 							NumberValue: float64(i),
 						},
 					},
-					"val_loss": {
+					"loss": {
 						Kind: &structpb.Value_NumberValue{
 							NumberValue: float64(i),
 						},

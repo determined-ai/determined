@@ -2003,16 +2003,15 @@ func (a *apiServer) SearchExperiments(
 		ColumnExpr("trials.checkpoint_size AS total_checkpoint_size").
 		ColumnExpr(exputil.ProtoStateDBCaseString(trialv1.State_value, "trials.state", "state",
 			"STATE_")).
-		//nolint:lll
 		ColumnExpr(`(CASE WHEN trials.hparams = 'null'::jsonb
 				THEN null ELSE trials.hparams END) AS hparams`).
 		ColumnExpr("trials.total_batches AS total_batches_processed").
-		ColumnExpr(`jsonb_build_object(
+		ColumnExpr(`CASE WHEN trials.latest_validation_id IS NULL THEN NULL ELSE jsonb_build_object(
 				'trial_id', trials.id,
 				'total_batches', lv.total_batches,
 				'end_time', proto_time(lv.end_time),
 				'metrics', json_build_object('avg_metrics', lv.metrics->'validation_metrics'),
-				'num_inputs', lv.metrics->'num_inputs') AS latest_validation`).
+				'num_inputs', lv.metrics->'num_inputs') END AS latest_validation`).
 		ColumnExpr(`jsonb_build_object(
 				'trial_id', trials.id,
 				'total_batches', bv.total_batches,
@@ -2022,8 +2021,7 @@ func (a *apiServer) SearchExperiments(
 		ColumnExpr("null::jsonb AS best_checkpoint").
 		ColumnExpr("null::jsonb AS wall_clock_time").
 		Join("LEFT JOIN validations bv ON trials.best_validation_id = bv.id").
-		Join(`LEFT JOIN validations lv ON trials.id = lv.trial_id AND
-				lv.total_batches = trials.total_batches`).
+		Join("LEFT JOIN validations lv ON trials.latest_validation_id = lv.id").
 		Join("LEFT JOIN raw_checkpoints old_ckpt ON old_ckpt.id = trials.warm_start_checkpoint_id").
 		Join("LEFT JOIN checkpoints_v2 new_ckpt ON new_ckpt.id = trials.warm_start_checkpoint_id").
 		Where("trials.id IN (?)", bun.In(trialIDs))

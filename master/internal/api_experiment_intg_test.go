@@ -614,6 +614,7 @@ func TestSearchExperiments(t *testing.T) {
 		Set("restarts = ?", 31415).
 		Where("id = ?", metricTrial.ID).
 		Exec(ctx)
+	require.NoError(t, err)
 
 	resp, err = api.SearchExperiments(ctx, req)
 	require.NoError(t, err)
