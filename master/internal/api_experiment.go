@@ -199,13 +199,12 @@ func columnNameToSQL(c string, l *string, t *string) (string, error) {
 	return col, nil
 }
 
-func hpToSQL(c string, t *string, va *interface{}, op *operator) (string, error) {
+func hpToSQL(c string, t *string, va *interface{}, op *operator, q *bun.SelectQuery, fc *filterConjunction) (*bun.SelectQuery, error) {
 	var ty string
-	var col string
 	var o operator
 	var v interface{}
 	if va == nil && op != nil && *op != empty && *op != notEmpty {
-		return col, fmt.Errorf("hyperparameter field defined without value and without a valid operator")
+		return q, fmt.Errorf("hyperparameter field defined without value and without a valid operator")
 	}
 	o = *op
 	if o != empty && o != notEmpty {
@@ -224,101 +223,146 @@ func hpToSQL(c string, t *string, va *interface{}, op *operator) (string, error)
 	hpQuery := strings.Join(hps, "->")
 	oSQL, err := o.toSQL()
 	if err != nil {
-		return col, err
+		return q, err
 	}
+	var qa []interface{}
+	var qs string
 	switch ty {
 	case projectv1.ColumnType_COLUMN_TYPE_TEXT.String():
 		if o != empty && o != notEmpty && o != contains && o != doesNotContain { //nolint: gocritic
-			col = fmt.Sprintf(`(CASE WHEN config->'hyperparameters'->%[1]v->>'type' = 'const' THEN config->'hyperparameters'->%[1]v->>'val' %[2]v ELSE false END)`, hpQuery, fmt.Sprintf(`%v '%v'`, oSQL, v))
-			return col, nil
+			qa = append(qa, bun.Safe(hpQuery), bun.Safe(hpQuery), bun.Safe(oSQL), v)
+			qs = `(CASE WHEN config->'hyperparameters'->?->>'type' = 'const' THEN config->'hyperparameters'->?->>'val' ? ? ELSE false END)`
+			if fc != nil && *fc == or {
+				return q.WhereOr(qs, qa...), nil
+			}
+			return q.Where(qs, qa...), nil
 		} else if o == empty || o == notEmpty {
-			col = fmt.Sprintf(`(CASE
-				WHEN config->'hyperparameters'->%[1]v->>'type' = 'const' THEN config->'hyperparameters'->%[1]v->>'val' %[2]v
-				WHEN config->'hyperparameters'->%[1]v->>'type' = 'categorical' THEN config->'hyperparameters'->%[1]v->>'vals' %[2]v
+			qa = append(qa, bun.Safe(hpQuery), bun.Safe(hpQuery), bun.Safe(oSQL), bun.Safe(hpQuery), bun.Safe(hpQuery), bun.Safe(oSQL))
+			qs = `(CASE
+				WHEN config->'hyperparameters'->?->>'type' = 'const' THEN config->'hyperparameters'->?->>'val' ?
+				WHEN config->'hyperparameters'->?->>'type' = 'categorical' THEN config->'hyperparameters'->?->>'vals' ?
 				ELSE false
-			 END)
-			`, hpQuery, oSQL)
-			return col, nil
+			 END)`
+			if fc != nil && *fc == or {
+				return q.WhereOr(qs, qa...), nil
+			}
+			return q.Where(qs, qa...), nil
 		} else {
 			if o == contains {
-				col = fmt.Sprintf(`(CASE 
-					WHEN config->'hyperparameters'->%[1]v->>'type' = 'const' THEN config->'hyperparameters'->%[1]v->>'val' %[3]v
-					WHEN config->'hyperparameters'->%[1]v->>'type' = 'categorical' THEN (config->'hyperparameters'->%[1]v->>'vals')::jsonb ? '%[2]v'
+				qs = `(CASE 
+					WHEN config->'hyperparameters'->?->>'type' = 'const' THEN config->'hyperparameters'->?->>'val' ?
+					WHEN config->'hyperparameters'->?->>'type' = 'categorical' THEN (config->'hyperparameters'->?->>'vals')::jsonb ?? ?
 					ELSE false
-				 END)
-				`, hpQuery, v, `LIKE '%`+fmt.Sprintf(`%v`, v)+`%'`)
-				return col, nil
+				 END)`
+				qa = append(qa, bun.Safe(hpQuery), bun.Safe(hpQuery), `LIKE %`+fmt.Sprintf(`%v`, v)+`%`, bun.Safe(hpQuery), bun.Safe(hpQuery), v)
+				if fc != nil && *fc == or {
+					return q.WhereOr(qs, qa...), nil
+				}
+				return q.Where(qs, qa...), nil
 			}
-			col = fmt.Sprintf(`(CASE
-									WHEN config->'hyperparameters'->%[1]v->>'type' = 'const' THEN config->'hyperparameters'->%[1]v->>'val' %[3]v
-									WHEN config->'hyperparameters'->%[1]v->>'type' = 'categorical' THEN (config->'hyperparameters'->%[1]v->>'vals')::jsonb ? '%[2]v') IS NOT TRUE
-									ELSE false
-				 				END)`, hpQuery, v, `NOT LIKE '%`+fmt.Sprintf(`%v`, v)+`%'`)
-			return col, nil
+			qs = `(CASE 
+				WHEN config->'hyperparameters'->?->>'type' = 'const' THEN config->'hyperparameters'->?->>'val' ?
+				WHEN config->'hyperparameters'->?->>'type' = 'categorical' THEN (config->'hyperparameters'->?->>'vals')::jsonb ?? ? IS NOT TRUE
+				ELSE false
+			 END)`
+			qa = append(qa, bun.Safe(hpQuery), bun.Safe(hpQuery), `NOT LIKE %`+fmt.Sprintf(`%v`, v)+`%`, bun.Safe(hpQuery), bun.Safe(hpQuery), v)
+			if fc != nil && *fc == or {
+				return q.WhereOr(qs, qa...), nil
+			}
+			return q.Where(qs, qa...), nil
 		}
 	case projectv1.ColumnType_COLUMN_TYPE_DATE.String():
 		if o != empty && o != notEmpty && o != contains && o != doesNotContain { //nolint: gocritic
-			col = fmt.Sprintf(`(CASE
-				WHEN config->'hyperparameters'->%[1]v->>'type' = 'const' THEN config->'hyperparameters'->%[1]v->>'val' %[2]v
+			qa = append(qa, bun.Safe(hpQuery), bun.Safe(hpQuery), bun.Safe(oSQL), v)
+			qs = `(CASE
+				WHEN config->'hyperparameters'->?->>'type' = 'const' THEN config->'hyperparameters'->?->>'val' ? ?
 				ELSE false
-			 END)`, hpQuery, fmt.Sprintf(`%v '%v'`, oSQL, v))
-			return col, nil
+			 END)`
+			if fc != nil && *fc == or {
+				return q.WhereOr(qs, qa...), nil
+			}
+			return q.Where(qs, qa...), nil
 		} else if o == empty || o == notEmpty {
-			col = fmt.Sprintf(`(CASE
-				WHEN config->'hyperparameters'->%[1]v->>'type' = 'const' THEN config->'hyperparameters'->%[1]v->>'val' %[2]v
-				WHEN config->'hyperparameters'->%[1]v->>'type' = 'categorical' THEN config->'hyperparameters'->%[1]v->>'vals' %[2]v
+			qa = append(qa, bun.Safe(hpQuery), bun.Safe(hpQuery), bun.Safe(oSQL), bun.Safe(hpQuery), bun.Safe(hpQuery), bun.Safe(oSQL))
+			qs = `(CASE
+				WHEN config->'hyperparameters'->?->>'type' = 'const' THEN config->'hyperparameters'->?->>'val' ?
+				WHEN config->'hyperparameters'->?->>'type' = 'categorical' THEN config->'hyperparameters'->?->>'vals' ?
 				ELSE false
-			END)
-			`, hpQuery, oSQL)
-			return col, nil
+			END)`
+			if fc != nil && *fc == or {
+				return q.WhereOr(qs, qa...), nil
+			}
+			return q.Where(qs, qa...), nil
 		} else {
 			if o == contains {
-				col = fmt.Sprintf(`(CASE
-					WHEN config->'hyperparameters'->%[1]v->>'type' = 'categorical' THEN (config->'hyperparameters'->%[1]v->>'vals')::jsonb ? '%[2]v'
+				qa = append(qa, bun.Safe(hpQuery), bun.Safe(hpQuery), v)
+				qs = `(CASE
+					WHEN config->'hyperparameters'->?->>'type' = 'categorical' THEN (config->'hyperparameters'->?->>'vals')::jsonb ?? ?
 					ELSE false
-				 END)`, hpQuery, v)
-				return col, nil
+				 END)`
+				if fc != nil && *fc == or {
+					return q.WhereOr(qs, qa...), nil
+				}
+				return q.Where(qs, qa...), nil
 			}
-			col = fmt.Sprintf(`
+			qa = append(qa, bun.Safe(hpQuery), bun.Safe(hpQuery), v)
+			qs = `
 				(CASE
-					WHEN config->'hyperparameters'->%[1]v->>'type' = 'categorical' THEN (config->'hyperparameters'->%[1]v->>'val')::jsonb ? '%[2]v') IS NOT TRUE
+					WHEN config->'hyperparameters'->?->>'type' = 'categorical' THEN (config->'hyperparameters'->?->>'val')::jsonb ?? ?) IS NOT TRUE
 					ELSE false
-				 END)
-					`, hpQuery, v)
-			return col, nil
+				 END)`
+			if fc != nil && *fc == or {
+				return q.WhereOr(qs, qa...), nil
+			}
+			return q.Where(qs, qa...), nil
 		}
 	default:
 		if o != empty && o != notEmpty && o != contains && o != doesNotContain { //nolint: gocritic
-			col = fmt.Sprintf(`(CASE
-				WHEN config->'hyperparameters'->%[1]v->>'type' = 'const' THEN (config->'hyperparameters'->%[1]v->>'val')::float8 %[2]v
-				WHEN config->'hyperparameters'->%[1]v->>'type' IN ('int', 'double', 'log') THEN ((config->'hyperparameters'->%[1]v->>'minval')::float8 %[2]v OR (config->'hyperparameters'->%[1]v->>'maxval')::float8 %[2]v)
+			qa = append(qa, bun.Safe(hpQuery), bun.Safe(hpQuery), bun.Safe(oSQL), v, bun.Safe(hpQuery), bun.Safe(hpQuery), bun.Safe(oSQL), v, bun.Safe(hpQuery), bun.Safe(oSQL), v, bun.Safe(hpQuery), bun.Safe(oSQL), v)
+			qs = `(CASE
+				WHEN config->'hyperparameters'->?->>'type' = 'const' THEN (config->'hyperparameters'->?->>'val')::float8 ? ?
+				WHEN config->'hyperparameters'->?->>'type' IN ('int', 'double', 'log') THEN ((config->'hyperparameters'->?->>'minval')::float8 ? ? OR (config->'hyperparameters'->?->>'maxval')::float8 ? ?)
 				ELSE false
-			 END)`, hpQuery, fmt.Sprintf("%v %v", oSQL, v))
-			return col, nil
+			 END)`
+			if fc != nil && *fc == or {
+				return q.WhereOr(qs, qa...), nil
+			}
+			return q.Where(qs, qa...), nil
 		} else if o == empty || o == notEmpty {
-			col = fmt.Sprintf(`(CASE
-				WHEN config->'hyperparameters'->%[1]v->>'type' = 'const' THEN (config->'hyperparameters'->%[1]v->>'val')::float8 %[2]v
-				WHEN config->'hyperparameters'->%[1]v->>'type' = 'categorical' THEN config->'hyperparameters'->%[1]v->>'vals' %[2]v
-				WHEN config->'hyperparameters'->%[1]v->>'type' IN ('int', 'double', 'log') THEN (config->'hyperparameters'->%[1]v) %[2]v
+			qa = append(qa, bun.Safe(hpQuery), bun.Safe(hpQuery), bun.Safe(oSQL), bun.Safe(hpQuery), bun.Safe(hpQuery), bun.Safe(oSQL), bun.Safe(hpQuery), bun.Safe(hpQuery), bun.Safe(oSQL))
+			qs = `(CASE
+				WHEN config->'hyperparameters'->?->>'type' = 'const' THEN (config->'hyperparameters'->?->>'val')::float8 ?
+				WHEN config->'hyperparameters'->?->>'type' = 'categorical' THEN config->'hyperparameters'->?->>'vals' ?
+				WHEN config->'hyperparameters'->?->>'type' IN ('int', 'double', 'log') THEN (config->'hyperparameters'->?) ?
 				ELSE false
-			 END)
-			`, hpQuery, oSQL)
-			return col, nil
+			 END)`
+			if fc != nil && *fc == or {
+				return q.WhereOr(qs, qa...), nil
+			}
+			return q.Where(qs, qa...), nil
 		} else {
 			if o == contains {
-				col = fmt.Sprintf(`(CASE
-					WHEN config->'hyperparameters'->%[1]v->>'type' = 'categorical' THEN (config->'hyperparameters'->%[1]v->>'vals')::jsonb ? '%[2]v'
-					WHEN config->'hyperparameters'->%[1]v->>'type' IN ('int', 'double', 'log') THEN (config->'hyperparameters'->%[1]v->>'minval')::float8 <= %[2]v OR (config->'hyperparameters'->%[1]v->>'maxval')::float8 >= %[2]v
+				qa = append(qa, bun.Safe(hpQuery), bun.Safe(hpQuery), v, bun.Safe(hpQuery), bun.Safe(hpQuery), v, bun.Safe(hpQuery), v)
+				qs = `(CASE
+					WHEN config->'hyperparameters'->?->>'type' = 'categorical' THEN (config->'hyperparameters'->?->>'vals')::jsonb ?? ?
+					WHEN config->'hyperparameters'->?->>'type' IN ('int', 'double', 'log') THEN (config->'hyperparameters'->?->>'minval')::float8 <= ? OR (config->'hyperparameters'->?]>>'maxval')::float8 >= ?
 					ELSE false
-				 END)`, hpQuery, v)
-				return col, nil
+				 END)`
+				if fc != nil && *fc == or {
+					return q.WhereOr(qs, qa...), nil
+				}
+				return q.Where(qs, qa...), nil
 			}
-			col = fmt.Sprintf(`(CASE
-					WHEN config->'hyperparameters'->%[1]v->>'type' = 'categorical' THEN ((config->'hyperparameters'->%[1]v->>'vals')::jsonb ? '%[2]v') IS NOT TRUE
-					WHEN config->'hyperparameters'->%[1]v->>'type' IN ('int', 'double', 'log') THEN (config->'hyperparameters'->%[1]v->>'minval')::float8 >= %[2]v OR (config->'hyperparameters'->%[1]v->>'maxval')::float8 <= %[2]v
+			qa = append(qa, bun.Safe(hpQuery), bun.Safe(hpQuery), v, bun.Safe(hpQuery), bun.Safe(hpQuery), v, bun.Safe(hpQuery), v)
+			qs = `(CASE
+					WHEN config->'hyperparameters'->?->>'type' = 'categorical' THEN ((config->'hyperparameters'->?->>'vals')::jsonb ? ?) IS NOT TRUE
+					WHEN config->'hyperparameters'->?->>'type' IN ('int', 'double', 'log') THEN (config->'hyperparameters'->?->>'minval')::float8 >= ? OR (config->'hyperparameters'->?->>'maxval')::float8 <= ?
 					ELSE false
-				 END)`, hpQuery, v)
-			return col, nil
+				 END)`
+			if fc != nil && *fc == or {
+				return q.WhereOr(qs, qa...), nil
+			}
+			return q.Where(qs, qa...), nil
 		}
 	}
 }
@@ -370,7 +414,7 @@ func (e experimentFilter) toSQL(q *bun.SelectQuery, c *filterConjunction) (*bun.
 					return q, err
 				}
 			} else if *e.Operator == empty || *e.Operator == notEmpty {
-				q = q.Where("? ?", bun.Safe(col), oSQL)
+				q = q.Where("? ?", bun.Safe(col), bun.Safe(oSQL))
 			} else {
 				if e.Type != nil &&
 					(*e.Type == projectv1.ColumnType_COLUMN_TYPE_TEXT.String() ||
@@ -379,12 +423,12 @@ func (e experimentFilter) toSQL(q *bun.SelectQuery, c *filterConjunction) (*bun.
 						q.WhereOr("? ? ?", bun.Safe(col),
 							bun.Safe(oSQL), *e.Value)
 					} else {
-						q.Where("? ? ? ", bun.Safe(col),
+						q.Where("? ? ?", bun.Safe(col),
 							bun.Safe(oSQL), *e.Value)
 					}
 				} else {
 					if c != nil && *c == or {
-						q.WhereOr("? ? ? ", bun.Safe(col),
+						q.WhereOr("? ? ?", bun.Safe(col),
 							bun.Safe(oSQL), *e.Value)
 					} else {
 						q.Where("? ? ?", bun.Safe(col),
@@ -395,6 +439,8 @@ func (e experimentFilter) toSQL(q *bun.SelectQuery, c *filterConjunction) (*bun.
 			if err != nil {
 				return q, err
 			}
+		} else {
+			return hpToSQL(e.ColumnName, e.Type, e.Value, e.Operator, q, c)
 		}
 	case group:
 		var co string
@@ -413,17 +459,17 @@ func (e experimentFilter) toSQL(q *bun.SelectQuery, c *filterConjunction) (*bun.
 		default:
 			return q, fmt.Errorf("invalid conjunction value %v", *e.Conjunction)
 		}
-		q = q.WhereGroup(co, func(q *bun.SelectQuery) *bun.SelectQuery {
-			for _, c := range e.Children {
+		for _, c := range e.Children {
+			q = q.WhereGroup(co, func(q *bun.SelectQuery) *bun.SelectQuery {
 				_, err = c.toSQL(q, e.Conjunction)
 				if err != nil {
 					return nil
 				}
+				return q
+			})
+			if err != nil {
+				return q, err
 			}
-			return q
-		})
-		if err != nil {
-			return q, err
 		}
 	}
 	return q, nil
