@@ -48,7 +48,7 @@ export const useTableTooltip = ({
         const record = data[rowIdx];
         if (record && Loadable.isLoaded(record)) {
           const columnId = columnIds[columnIdx];
-          const text = columnDefs[columnId].tooltip(record.data);
+          const text = columnDefs?.[columnId]?.tooltip(record.data);
           if (text) {
             timeoutRef.current = window.setTimeout(() => {
               setTooltipProps({

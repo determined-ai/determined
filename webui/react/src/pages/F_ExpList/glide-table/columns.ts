@@ -71,7 +71,7 @@ export type ColumnDef = SizedGridColumn & {
 export type ColumnDefs = Record<string, ColumnDef>;
 interface Params {
   appTheme: Theme;
-  columnWidths: Record<ExperimentColumn, number>;
+  columnWidths: Record<string, number>;
   rowSelection: CompactSelection;
   darkLight: DarkLight;
   users: Loadable<DetailedUser[]>;
@@ -394,7 +394,11 @@ export const getColumnDefs = ({
   },
 });
 
-export const defaultTextColumn = (column: ProjectColumn, dataPath?: string): ColumnDef => {
+export const defaultTextColumn = (
+  column: ProjectColumn,
+  columnWidths?: Record<string, number>,
+  dataPath?: string,
+): ColumnDef => {
   return {
     id: column.column,
     renderer: (record: ExperimentWithTrial) => {
@@ -402,17 +406,21 @@ export const defaultTextColumn = (column: ProjectColumn, dataPath?: string): Col
       return {
         allowOverlay: false,
         data: String(data),
-        displayData: String(data),
+        displayData: String(data ?? ''),
         kind: GridCellKind.Text,
       };
     },
     title: column.displayName || column.column,
     tooltip: () => undefined,
-    width: 140,
+    width: columnWidths?.[column.column] ?? 140,
   };
 };
 
-export const defaultNumberColumn = (column: ProjectColumn, dataPath?: string): ColumnDef => {
+export const defaultNumberColumn = (
+  column: ProjectColumn,
+  columnWidths?: Record<string, number>,
+  dataPath?: string,
+): ColumnDef => {
   return {
     id: column.column,
     renderer: (record: ExperimentWithTrial) => {
@@ -420,17 +428,21 @@ export const defaultNumberColumn = (column: ProjectColumn, dataPath?: string): C
       return {
         allowOverlay: false,
         data: Number(data),
-        displayData: String(data),
+        displayData: data !== undefined ? String(data) : '',
         kind: GridCellKind.Number,
       };
     },
     title: column.displayName || column.column,
     tooltip: () => undefined,
-    width: 140,
+    width: columnWidths?.[column.column] ?? 140,
   };
 };
 
-export const defaultDateColumn = (column: ProjectColumn, dataPath?: string): ColumnDef => {
+export const defaultDateColumn = (
+  column: ProjectColumn,
+  columnWidths?: Record<string, number>,
+  dataPath?: string,
+): ColumnDef => {
   return {
     id: column.column,
     renderer: (record: ExperimentWithTrial) => {
@@ -444,7 +456,7 @@ export const defaultDateColumn = (column: ProjectColumn, dataPath?: string): Col
     },
     title: column.displayName || column.column,
     tooltip: () => undefined,
-    width: 140,
+    width: columnWidths?.[column.column] ?? 140,
   };
 };
 

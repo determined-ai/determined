@@ -170,8 +170,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
     });
   }, [selection.rows, setSelectedExperimentIds, data]);
 
-  const [columnWidths, setColumnWidths] =
-    useState<Record<ExperimentColumn, number>>(defaultColumnWidths);
+  const [columnWidths, setColumnWidths] = useState<Record<string, number>>(defaultColumnWidths);
 
   const columnDefs = useMemo<Record<string, ColumnDef>>(
     () =>
@@ -187,6 +186,12 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   );
 
   const headerIcons = useMemo(() => getHeaderIcons(appTheme), [appTheme]);
+
+  const projectColumnsMap: Loadable<Record<string, ProjectColumn>> = useMemo(() => {
+    return Loadable.map(projectColumns, (columns) => {
+      return columns.reduce((acc, col) => Object.assign(acc, { [col.column]: col }), {});
+    });
+  }, [projectColumns]);
 
   const { tooltip, onItemHovered, closeTooltip } = useTableTooltip({
     columnDefs,
@@ -216,8 +221,10 @@ export const GlideTable: React.FC<GlideTableProps> = ({
       const columnId = column.id;
       if (columnId === undefined || columnId === 'selected') return;
       setColumnWidths((prevWidths) => {
-        const prevWidth = prevWidths[columnId as ExperimentColumn];
-        if (width === prevWidth) return prevWidths;
+        if (columnId in prevWidths) {
+          const prevWidth = prevWidths[columnId];
+          if (width === prevWidth) return prevWidths;
+        }
         return { ...prevWidths, [columnId]: width };
       });
     },
@@ -248,47 +255,14 @@ export const GlideTable: React.FC<GlideTableProps> = ({
     [columnIds, setSelectAll],
   );
 
-  const projectColumnsMap: Loadable<Record<string, ProjectColumn>> = useMemo(() => {
-    return Loadable.map(projectColumns, (columns) => {
-      return columns.reduce((acc, col) => Object.assign(acc, { [col.column]: col }), {});
-    });
-  }, [projectColumns]);
-
   const getCellContent: DataEditorProps['getCellContent'] = React.useCallback(
     (cell: Item): GridCell => {
       const [col, row] = cell;
 
-      return Loadable.match(Loadable.all([data[row], projectColumnsMap]), {
-        Loaded: ([rowData, columnsMap]) => {
+      return Loadable.match(data[row], {
+        Loaded: (rowData) => {
           const columnId = columnIds[col];
-
-          if (columnId in columnDefs) return columnDefs[columnId].renderer(rowData, row);
-          const currentColumn = columnsMap[columnId];
-          let dataPath: string | undefined = undefined;
-          switch (currentColumn.location) {
-            case V1LocationType.EXPERIMENT:
-              dataPath = `experiment.${currentColumn.column}`;
-              break;
-            case V1LocationType.HYPERPARAMETERS:
-              dataPath = `experiment.config.hyperparameters.${currentColumn.column}`;
-              break;
-            case V1LocationType.VALIDATIONS:
-              dataPath = `bestTrial.bestValidationMetric.metrics.${currentColumn.column}`;
-              break;
-            case V1LocationType.UNSPECIFIED:
-            default:
-              break;
-          }
-          switch (currentColumn.type) {
-            case V1ColumnType.NUMBER:
-              return defaultNumberColumn(currentColumn, dataPath).renderer(rowData, row);
-            case V1ColumnType.DATE:
-              return defaultDateColumn(currentColumn, dataPath).renderer(rowData, row);
-            case V1ColumnType.TEXT:
-            case V1ColumnType.UNSPECIFIED:
-            default:
-              return defaultTextColumn(currentColumn, dataPath).renderer(rowData, row);
-          }
+          return columnDefs[columnId].renderer(rowData, row);
         },
         NotLoaded: () =>
           ({
@@ -299,7 +273,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
           } as GridCell),
       });
     },
-    [data, projectColumnsMap, columnIds, columnDefs],
+    [data, columnIds, columnDefs],
   );
 
   const onCellClicked: DataEditorProps['onCellClicked'] = useCallback(
@@ -390,10 +364,16 @@ export const GlideTable: React.FC<GlideTableProps> = ({
             dataPath = `experiment.${currentColumn.column}`;
             break;
           case V1LocationType.HYPERPARAMETERS:
-            dataPath = `experiment.config.hyperparameters.${currentColumn.column}`;
+            dataPath = `experiment.config.hyperparameters.${currentColumn.column.replace(
+              'hp.',
+              '',
+            )}.val`;
             break;
           case V1LocationType.VALIDATIONS:
-            dataPath = `bestTrial.bestValidationMetric.metrics.${currentColumn.column}`;
+            dataPath = `bestTrial.bestValidationMetric.metrics.${currentColumn.column.replace(
+              'validation.',
+              '',
+            )}`;
             break;
           case V1LocationType.UNSPECIFIED:
           default:
@@ -401,16 +381,31 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         }
         switch (currentColumn.type) {
           case V1ColumnType.NUMBER:
-            return defaultNumberColumn(currentColumn, dataPath);
+            columnDefs[currentColumn.column] = defaultNumberColumn(
+              currentColumn,
+              columnWidths,
+              dataPath,
+            );
+            break;
           case V1ColumnType.DATE:
-            return defaultDateColumn(currentColumn, dataPath);
+            columnDefs[currentColumn.column] = defaultDateColumn(
+              currentColumn,
+              columnWidths,
+              dataPath,
+            );
+            break;
           case V1ColumnType.TEXT:
           case V1ColumnType.UNSPECIFIED:
           default:
-            return defaultTextColumn(currentColumn, dataPath);
+            columnDefs[currentColumn.column] = defaultTextColumn(
+              currentColumn,
+              columnWidths,
+              dataPath,
+            );
         }
+        return columnDefs[currentColumn.column];
       }) as GridColumn[],
-    [columnIds, columnDefs, projectColumnsMap],
+    [columnIds, columnDefs, projectColumnsMap, columnWidths],
   );
 
   const verticalBorder: DataEditorProps['verticalBorder'] = useCallback(

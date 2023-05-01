@@ -29,12 +29,15 @@ const ColumnPickerMenu: React.FC<Props> = ({
 }) => {
   const [form] = Form.useForm();
   const removeBannedColumns = useCallback(
-    (cols: Loadable<ProjectColumn[]>) =>
-      Loadable.map(cols, (columns) => columns.filter((col) => !BANNED_COLUMNS.has(col.column))),
+    (columns: ProjectColumn[]) => columns.filter((col) => !BANNED_COLUMNS.has(col.column)),
     [],
   );
-  const [filteredColumns, setFilteredColumns] = useState<Loadable<ProjectColumn[]>>(() =>
-    removeBannedColumns(projectColumns),
+  const [totalColumns, setTotalColumns] = useState<ProjectColumn[]>(() =>
+    removeBannedColumns(Loadable.getOrElse([], projectColumns)),
+  );
+  const [filteredColumns, setFilteredColumns] = useState<Set<string>>(
+    () =>
+      new Set(removeBannedColumns(Loadable.getOrElse([], projectColumns)).map((col) => col.column)),
   );
   const [isColumnsOpen, setIsColumnsOpen] = useState(false);
   const [activeColumnTab, setActiveColumnTab] = useState<V1LocationType>(V1LocationType.EXPERIMENT);
@@ -43,15 +46,19 @@ const ColumnPickerMenu: React.FC<Props> = ({
   const columnSearch: string = Form.useWatch('column-search', form) ?? '';
 
   useEffect(() => {
+    setTotalColumns(removeBannedColumns(Loadable.getOrElse([], projectColumns)));
+  }, [projectColumns, removeBannedColumns]);
+
+  useEffect(() => {
     const regex = new RegExp(columnSearch, 'i');
     setFilteredColumns(
-      removeBannedColumns(
-        Loadable.map(projectColumns, (columns) =>
-          columns.filter((col) => regex.test(col.displayName || col.column)),
-        ),
+      new Set(
+        totalColumns
+          .filter((col) => regex.test(col.displayName || col.column))
+          .map((col) => col.column),
       ),
     );
-  }, [columnSearch, projectColumns, removeBannedColumns]);
+  }, [columnSearch, removeBannedColumns, totalColumns]);
 
   const generalColumns: Record<string, boolean> = Form.useWatch(V1LocationType.EXPERIMENT, form);
   const hyperparametersColumns: Record<string, boolean> = Form.useWatch(
@@ -100,23 +107,20 @@ const ColumnPickerMenu: React.FC<Props> = ({
   }, [form, generalColumns, hyperparametersColumns, metricsColumns]);
 
   const tabFilteredColumnsAllChecked = useMemo(() => {
-    if (!Loadable.isLoaded(filteredColumns)) return false;
-    return filteredColumns.data
-      .filter((col) => isEqual(col.location, activeColumnTab))
+    return totalColumns
+      .filter((col) => filteredColumns.has(col.column) && col.location === activeColumnTab)
       .map((col) => allFormColumns[col.column])
       .every((col) => col === true);
-  }, [activeColumnTab, allFormColumns, filteredColumns]);
+  }, [activeColumnTab, allFormColumns, filteredColumns, totalColumns]);
 
   const handleShowHideAll = useCallback(() => {
-    if (!Loadable.isLoaded(filteredColumns) || !Loadable.isLoaded(projectColumns)) return;
-
     const currentTabColumns = Object.fromEntries(
-      projectColumns.data
+      totalColumns
         .filter((col) => isEqual(col.location, activeColumnTab) && col.column in allFormColumns)
         .map((col) => [col.column, allFormColumns[col.column]]),
     );
-    const filteredTabColumns: Record<string, boolean> = filteredColumns.data
-      .filter((col) => isEqual(col.location, activeColumnTab))
+    const filteredTabColumns: Record<string, boolean> = totalColumns
+      .filter((col) => filteredColumns.has(col.column) && col.location === activeColumnTab)
       .reduce((acc, col) => ({ ...acc, [col.column]: !tabFilteredColumnsAllChecked }), {});
 
     form.setFieldValue(activeColumnTab, Object.assign(currentTabColumns, filteredTabColumns));
@@ -125,8 +129,8 @@ const ColumnPickerMenu: React.FC<Props> = ({
     allFormColumns,
     filteredColumns,
     form,
-    projectColumns,
     tabFilteredColumnsAllChecked,
+    totalColumns,
   ]);
 
   const tabContent = useCallback(
@@ -136,24 +140,24 @@ const ColumnPickerMenu: React.FC<Props> = ({
           <Form.Item name="column-search">
             <Input allowClear placeholder="Search" ref={searchRef} />
           </Form.Item>
-          {Loadable.match(filteredColumns, {
-            Loaded: (columns) => (
-              <div style={{ maxHeight: 360, overflow: 'hidden auto' }}>
-                {columns
-                  .filter((column) => column.location === tab)
-                  .map((column) => (
-                    <Form.Item
-                      initialValue={initialVisibleColumns.includes(column.column)}
-                      key={column.column}
-                      name={[tab, column.column]}
-                      valuePropName="checked">
-                      <Checkbox>{column.displayName || column.column}</Checkbox>
-                    </Form.Item>
-                  ))}
-              </div>
-            ),
-            NotLoaded: () => <Spinner />,
-          })}
+          {totalColumns.length !== 0 ? (
+            <div style={{ maxHeight: 360, overflow: 'hidden auto' }}>
+              {totalColumns
+                .filter((column) => column.location === tab)
+                .map((column) => (
+                  <Form.Item
+                    hidden={!filteredColumns.has(column.column)}
+                    initialValue={initialVisibleColumns.includes(column.column)}
+                    key={column.column}
+                    name={[tab, column.column]}
+                    valuePropName="checked">
+                    <Checkbox>{column.displayName || column.column}</Checkbox>
+                  </Form.Item>
+                ))}
+            </div>
+          ) : (
+            <Spinner />
+          )}
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <Button type="text" onClick={handleShowHideAll}>
               {tabFilteredColumnsAllChecked ? 'Hide' : 'Show'} all
@@ -171,6 +175,7 @@ const ColumnPickerMenu: React.FC<Props> = ({
       handleShowSuggested,
       initialVisibleColumns,
       tabFilteredColumnsAllChecked,
+      totalColumns,
     ],
   );
 
