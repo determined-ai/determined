@@ -1,14 +1,15 @@
 import { Observable, observable } from 'micro-observables';
 
+import { V1ColumnType, V1LocationType, V1ProjectColumn } from 'services/api-ts-sdk';
+
 import {
+  AvaliableOperators,
   Conjunction,
-  ExperimentFilterColumnName,
   FilterFormSet,
   FormField,
   FormFieldValue,
   FormGroup,
   FormKind,
-  KeyType,
   Operator,
 } from './type';
 
@@ -27,10 +28,12 @@ const getInitGroup = (): FormGroup => ({
 });
 
 const getInitField = (): FormField => ({
-  columnName: 'id',
+  columnName: 'name',
   id: crypto.randomUUID(),
   kind: FormKind.Field,
-  operator: '=',
+  location: V1LocationType.EXPERIMENT,
+  operator: AvaliableOperators[V1ColumnType.TEXT][0],
+  type: V1ColumnType.TEXT,
   value: null,
 });
 
@@ -52,9 +55,7 @@ export class FilterFormStore {
     return formGroup;
   }
 
-  public setFieldValue(id: string, keyType: KeyType, value: FormFieldValue): void {
-    const filterSet: Readonly<FilterFormSet> = this.#formset.get();
-    const filterGroup = filterSet.filterGroup;
+  private getFormById(filterGroup: FormGroup, id: string): FormField | FormGroup | undefined {
     const recur = (form: FormGroup | FormField): FormGroup | FormField | undefined => {
       if (form.id === id) {
         return form;
@@ -74,21 +75,50 @@ export class FilterFormStore {
       return undefined;
     };
 
-    const ans = recur(filterGroup);
-    if (ans) {
-      if (ans.kind === FormKind.Field) {
-        if (keyType === 'columnName' && typeof value === 'string') {
-          ans.columnName = value as ExperimentFilterColumnName;
-        } else if (keyType === 'operator' && typeof value === 'string') {
-          ans.operator = value as Operator;
-        } else if (keyType === 'value') {
-          ans.value = value;
-        }
-      } else if (ans.kind === FormKind.Group) {
-        if (keyType === 'conjunction' && (value === Conjunction.And || value === Conjunction.Or)) {
-          ans.conjunction = value;
-        }
-      }
+    return recur(filterGroup);
+  }
+
+  public setFieldColumnName(
+    id: string,
+    col: Pick<V1ProjectColumn, 'location' | 'type' | 'column'>,
+  ): void {
+    const filterSet: Readonly<FilterFormSet> = this.#formset.get();
+    const filterGroup = filterSet.filterGroup;
+    const ans = this.getFormById(filterGroup, id);
+    if (ans && ans.kind === FormKind.Field) {
+      ans.columnName = col.column;
+      ans.location = col.location;
+      ans.type = col.type;
+      this.#formset.set({ filterGroup, showArchived: filterSet.showArchived });
+    }
+  }
+
+  public setFieldOperator(id: string, operator: Operator): void {
+    const filterSet: Readonly<FilterFormSet> = this.#formset.get();
+    const filterGroup = filterSet.filterGroup;
+    const ans = this.getFormById(filterGroup, id);
+    if (ans && ans.kind === FormKind.Field && Object.values(Operator).includes(operator)) {
+      ans.operator = operator;
+      this.#formset.set({ filterGroup, showArchived: filterSet.showArchived });
+    }
+  }
+
+  public setFieldConjunction(id: string, conjunction: Conjunction): void {
+    const filterSet: Readonly<FilterFormSet> = this.#formset.get();
+    const filterGroup = filterSet.filterGroup;
+    const ans = this.getFormById(filterGroup, id);
+    if (ans && ans.kind === FormKind.Group && Object.values(Conjunction).includes(conjunction)) {
+      ans.conjunction = conjunction;
+      this.#formset.set({ filterGroup, showArchived: filterSet.showArchived });
+    }
+  }
+
+  public setFieldValue(id: string, value: FormFieldValue): void {
+    const filterSet: Readonly<FilterFormSet> = this.#formset.get();
+    const filterGroup = filterSet.filterGroup;
+    const ans = this.getFormById(filterGroup, id);
+    if (ans && ans.kind === FormKind.Field) {
+      ans.value = value;
       this.#formset.set({ filterGroup, showArchived: filterSet.showArchived });
     }
   }

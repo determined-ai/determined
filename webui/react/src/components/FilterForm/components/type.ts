@@ -1,8 +1,5 @@
-import { ExperimentColumnName } from 'pages/ExperimentList.settings';
-import { V1ColumnType } from 'services/api-ts-sdk/api';
+import { V1ColumnType, V1LocationType, V1ProjectColumn } from 'services/api-ts-sdk';
 import { ValueOf } from 'shared/types';
-
-export type ExperimentFilterColumnName = Exclude<ExperimentColumnName, 'action' | 'archived'>;
 
 export const FormKind = {
   Field: 'field',
@@ -16,7 +13,9 @@ export type FormFieldValue = string | number | null;
 export type FormField = {
   readonly id: string;
   readonly kind: typeof FormKind.Field;
-  columnName: ExperimentFilterColumnName;
+  columnName: V1ProjectColumn['column'];
+  location: V1LocationType;
+  type: V1ColumnType;
   operator: Operator;
   value: FormFieldValue;
 };
@@ -27,10 +26,6 @@ export type FormGroup = {
   conjunction: Conjunction;
   children: (FormGroup | FormField)[];
 };
-
-export type KeyType =
-  | keyof Pick<FormField, 'columnName' | 'operator' | 'value'>
-  | keyof Pick<FormGroup, 'conjunction'>;
 
 export type FilterFormSet = {
   filterGroup: FormGroup;
@@ -79,30 +74,12 @@ export const AvaliableOperators = {
     Operator.isNot,
   ],
   [V1ColumnType.DATE]: [
-    Operator.eq,
+    // no Operator.eq for date because date should be used with range
     Operator.notEq,
     Operator.greater,
     Operator.greaterEq,
     Operator.less,
     Operator.lessEq,
   ],
-} as const;
-
-export const ColumnType: Record<ExperimentFilterColumnName, keyof typeof AvaliableOperators> = {
-  checkpointCount: V1ColumnType.NUMBER,
-  checkpointSize: V1ColumnType.NUMBER,
-  description: V1ColumnType.TEXT,
-  duration: V1ColumnType.NUMBER,
-  forkedFrom: V1ColumnType.NUMBER,
-  id: V1ColumnType.NUMBER,
-  name: V1ColumnType.TEXT,
-  numTrials: V1ColumnType.NUMBER,
-  progress: V1ColumnType.NUMBER,
-  resourcePool: V1ColumnType.NUMBER,
-  searcherMetricValue: V1ColumnType.NUMBER,
-  searcherType: V1ColumnType.TEXT,
-  startTime: V1ColumnType.DATE,
-  state: V1ColumnType.TEXT,
-  tags: V1ColumnType.TEXT,
-  user: V1ColumnType.NUMBER,
+  [V1ColumnType.UNSPECIFIED]: Object.values(Operator), // show all of operators
 } as const;

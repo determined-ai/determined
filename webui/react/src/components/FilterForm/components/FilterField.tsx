@@ -8,20 +8,12 @@ import Button from 'components/kit/Button';
 import Input from 'components/kit/Input';
 import InputNumber from 'components/kit/InputNumber';
 import Select, { Option } from 'components/kit/Select';
-import { V1ColumnType } from 'services/api-ts-sdk/api';
+import { V1ColumnType, V1ProjectColumn } from 'services/api-ts-sdk';
 
 import ConjunctionContainer from './ConjunctionContainer';
 import css from './FilterField.module.scss';
 import { FilterFormStore } from './FilterFormStore';
-import {
-  AvaliableOperators,
-  ColumnType,
-  Conjunction,
-  FormField,
-  FormGroup,
-  FormKind,
-  Operator,
-} from './type';
+import { AvaliableOperators, Conjunction, FormField, FormGroup, FormKind, Operator } from './type';
 
 interface Props {
   index: number; // start from 0
@@ -30,6 +22,7 @@ interface Props {
   conjunction: Conjunction;
   formStore: FilterFormStore;
   level: number; // start from 0
+  columns: V1ProjectColumn[];
 }
 
 const FilterField = ({
@@ -39,7 +32,9 @@ const FilterField = ({
   index,
   parentId,
   level,
+  columns,
 }: Props): JSX.Element => {
+  const currentColumn = columns.find((c) => c.column === field.columnName);
   const [, drag, preview] = useDrag<{ form: FormField; index: number }, unknown, unknown>(() => ({
     item: { form: field, index },
     type: FormKind.Field,
@@ -90,7 +85,7 @@ const FilterField = ({
         conjunction={conjunction}
         index={index}
         onClick={(value) => {
-          formStore.setFieldValue(parentId, 'conjunction', value?.toString() ?? '');
+          formStore.setFieldConjunction(parentId, (value?.toString() ?? 'and') as Conjunction);
         }}
       />
       <div className={css.fieldCard} ref={preview}>
@@ -100,17 +95,21 @@ const FilterField = ({
           value={field.columnName}
           width={'100%'}
           onChange={(value) => {
-            const prevType = ColumnType[field.columnName];
-            formStore.setFieldValue(field.id, 'columnName', value?.toString() ?? '');
-            if (prevType !== ColumnType[field.columnName]) {
-              const defaultOperator = AvaliableOperators[ColumnType[field.columnName]][0];
-              formStore.setFieldValue(field.id, 'operator', defaultOperator);
-              formStore.setFieldValue(field.id, 'value', null);
+            const prevType = currentColumn?.type;
+            const newCol = columns.find((c) => c.column === value?.toString() ?? '');
+            if (newCol) {
+              formStore.setFieldColumnName(field.id, newCol);
+            }
+            if (prevType !== newCol?.type) {
+              const defaultOperator: Operator =
+                AvaliableOperators[newCol?.type ?? V1ColumnType.UNSPECIFIED][0];
+              formStore.setFieldOperator(field.id, defaultOperator);
+              formStore.setFieldValue(field.id, null);
             }
           }}>
-          {Object.keys(ColumnType).map((col) => (
-            <Option key={col} value={col}>
-              {col}
+          {columns.map((col) => (
+            <Option key={col.column} value={col.column}>
+              {col.displayName || col.column}
             </Option>
           ))}
         </Select>
@@ -119,16 +118,17 @@ const FilterField = ({
           value={field.operator}
           width={'100%'}
           onChange={(value) => {
-            formStore.setFieldValue(field.id, 'operator', value?.toString() ?? '');
+            formStore.setFieldOperator(field.id, (value?.toString() ?? '=') as Operator);
           }}>
-          {AvaliableOperators[ColumnType[field.columnName]].map((op) => (
+          {AvaliableOperators[currentColumn?.type ?? V1ColumnType.UNSPECIFIED].map((op) => (
             <Option key={op} value={op}>
               {op}
             </Option>
           ))}
         </Select>
         <>
-          {ColumnType[field.columnName] === V1ColumnType.TEXT && (
+          {(currentColumn?.type === V1ColumnType.TEXT ||
+            currentColumn?.type === V1ColumnType.UNSPECIFIED) && (
             <Input
               disabled={field.operator === Operator.isEmpty || field.operator === Operator.notEmpty}
               value={
@@ -136,25 +136,25 @@ const FilterField = ({
                   ? undefined
                   : field.value?.toString()
               }
-              onChange={(e) => formStore.setFieldValue(field.id, 'value', e.target.value)}
+              onChange={(e) => formStore.setFieldValue(field.id, e.target.value)}
             />
           )}
-          {ColumnType[field.columnName] === V1ColumnType.NUMBER && (
+          {currentColumn?.type === V1ColumnType.NUMBER && (
             <InputNumber
               className={css.fullWidth}
               value={field.value != null ? Number(field.value) : undefined}
               onChange={(val) => {
-                formStore.setFieldValue(field.id, 'value', val != null ? Number(val) : null);
+                formStore.setFieldValue(field.id, val != null ? Number(val) : null);
               }}
             />
           )}
-          {ColumnType[field.columnName] === V1ColumnType.DATE && (
+          {currentColumn?.type === V1ColumnType.DATE && (
             // timezone is UTC since DB uses UTC
             <DatePicker
               value={dayjs(field.value).isValid() ? dayjs(field.value).utc() : null}
               onChange={(value: DatePickerProps['value']) => {
                 const dateString = dayjs(value).utc().startOf('date').format();
-                formStore.setFieldValue(field.id, 'value', dateString);
+                formStore.setFieldValue(field.id, dateString);
               }}
             />
           )}

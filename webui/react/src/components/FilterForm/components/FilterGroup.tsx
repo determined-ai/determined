@@ -6,6 +6,7 @@ import { useDrag, useDrop } from 'react-dnd';
 import { debounce } from 'throttle-debounce';
 
 import Button from 'components/kit/Button';
+import { V1ProjectColumn } from 'services/api-ts-sdk';
 
 import ConjunctionContainer from './ConjunctionContainer';
 import FilterField from './FilterField';
@@ -20,6 +21,7 @@ interface Props {
   parentId: string;
   level: number; // start from 0
   formStore: FilterFormStore;
+  columns: V1ProjectColumn[];
 }
 
 const FilterGroup = ({
@@ -29,6 +31,7 @@ const FilterGroup = ({
   level,
   formStore,
   parentId,
+  columns,
 }: Props): JSX.Element => {
   const scrollBottomRef = useRef<HTMLDivElement>(null);
   const [, drag, preview] = useDrag<{ form: FormGroup; index: number }, unknown, unknown>(() => ({
@@ -129,7 +132,7 @@ const FilterGroup = ({
           conjunction={conjunction}
           index={index}
           onClick={(value) => {
-            formStore.setFieldValue(parentId, 'conjunction', value?.toString() ?? '');
+            formStore.setFieldConjunction(parentId, (value?.toString() ?? 'and') as Conjunction);
           }}
         />
       )}
@@ -172,6 +175,7 @@ const FilterGroup = ({
             if (child.kind === FormKind.Group) {
               return (
                 <FilterGroup
+                  columns={columns}
                   conjunction={group.conjunction}
                   formStore={formStore}
                   group={child}
@@ -184,6 +188,7 @@ const FilterGroup = ({
             } else {
               return (
                 <FilterField
+                  columns={columns}
                   conjunction={group.conjunction}
                   field={child}
                   formStore={formStore}

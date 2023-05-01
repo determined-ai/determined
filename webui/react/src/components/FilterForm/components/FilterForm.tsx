@@ -4,6 +4,7 @@ import { debounce } from 'throttle-debounce';
 
 import Button from 'components/kit/Button';
 import Toggle from 'components/kit/Toggle';
+import { V1ProjectColumn } from 'services/api-ts-sdk';
 
 import css from './FilterForm.module.scss';
 import { FilterFormStore, ITEM_LIMIT } from './FilterFormStore';
@@ -12,9 +13,10 @@ import { FormKind } from './type';
 
 interface Props {
   formStore: FilterFormStore;
+  columns: V1ProjectColumn[];
 }
 
-const FilterForm = ({ formStore }: Props): JSX.Element => {
+const FilterForm = ({ formStore, columns }: Props): JSX.Element => {
   const scrollBottomRef = useRef<HTMLDivElement>(null);
   const data = useObservable(formStore.formset);
   const isButtonDisabled = data.filterGroup.children.length > ITEM_LIMIT;
@@ -35,6 +37,7 @@ const FilterForm = ({ formStore }: Props): JSX.Element => {
       />
       <div className={css.filter}>
         <FilterGroup
+          columns={columns}
           conjunction={data.filterGroup.conjunction}
           formStore={formStore}
           group={data.filterGroup}
