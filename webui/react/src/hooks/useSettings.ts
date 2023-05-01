@@ -51,7 +51,7 @@ const settingsToQuery = <T>(config: SettingsConfig<T>, settings: Settings) => {
       if (Array.isArray(value) && value.length > 0) {
         retVal.set(setting.storageKey, value[0]);
         value.slice(1).forEach((subVal) => retVal.append(setting.storageKey, subVal));
-      } else {
+      } else if (!Array.isArray(value)) {
         retVal.set(setting.storageKey, value);
       }
     }

@@ -487,7 +487,7 @@ const objToSearchParams = (obj: {{}}, searchParams: URLSearchParams) => {{
         if (Array.isArray(value) && value.length > 0) {{
             searchParams.set(key, convert(value[0]))
             value.slice(1).forEach((subValue) => searchParams.append(key, convert(subValue)))
-        }} else {{
+        }} else if (!Array.isArray(value)) {{
             searchParams.set(key, convert(value))
         }}
     }});
