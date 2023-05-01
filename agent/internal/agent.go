@@ -83,6 +83,8 @@ func (a *Agent) Wait() error {
 
 // Run sets up the agent and starts the watch loop. All configurations and system depenencies should
 // be setup _before_ the watch loop is started.
+//
+//nolint:maintidx
 func (a *Agent) run(ctx context.Context) error {
 	a.log.Trace("connecting to master")
 	socket, err := a.connect(ctx, false)
