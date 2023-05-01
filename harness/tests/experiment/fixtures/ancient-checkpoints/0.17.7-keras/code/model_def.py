@@ -1,15 +1,14 @@
 import numpy as np
-import tensorflow as tf
-from tensorflow.keras.layers import Dense
-from tensorflow.keras.losses import mean_squared_error
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.optimizers.legacy import SGD  # TODO MLG-443
-from tensorflow.keras.utils import Sequence
+from tensorflow.keras import layers
+from tensorflow.keras import losses
+from tensorflow.keras import models
+from tensorflow.keras import optimizers
+from tensorflow.keras import utils
 
 from determined.keras import TFKerasTrial
 
 
-class MySequence(Sequence):
+class MySequence(utils.Sequence):
     def __init__(self, batch_size, length, data, label):
         self.batch_size = batch_size
         self.length = length
@@ -34,17 +33,17 @@ class OneVarTrial(TFKerasTrial):
         self.my_lr = self.context.get_hparams()["learning_rate"]
         self.context.env.container_gpus = []
 
-    def build_model(self) -> Sequential:
-        model = Sequential()
+    def build_model(self) -> models.Sequential:
+        model = models.Sequential()
         model.add(
-            Dense(1, activation=None, use_bias=False, kernel_initializer="zeros", input_shape=(1,))
+            layers.Dense(1, activation=None, use_bias=False, kernel_initializer="zeros", input_shape=(1,))
         )
         model = self.context.wrap_model(model)
 
-        optimizer = SGD(learning_rate=self.my_lr)
+        optimizer = optimizers.SGD(learning_rate=self.my_lr)
         optimizer = self.context.wrap_optimizer(optimizer)
 
-        model.compile(optimizer, mean_squared_error, metrics=["accuracy"])
+        model.compile(optimizer, losses.mean_squared_error, metrics=["accuracy"])
 
         return model
 

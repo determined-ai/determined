@@ -33,10 +33,7 @@ class FashionMNISTTrial(TFKerasTrial):
         model = self.context.wrap_model(model)
 
         # Create and wrap the optimizer.
-        if version.parse(tf.__version__) >= version.parse("2.11.0"):
-            optimizer = tf.keras.optimizers.legacy.Adam()
-        else:
-            optimizer = tf.keras.optimizers.Adam()
+        optimizer = tf.keras.optimizers.Adam()
         optimizer = self.context.wrap_optimizer(optimizer)
 
         model.compile(

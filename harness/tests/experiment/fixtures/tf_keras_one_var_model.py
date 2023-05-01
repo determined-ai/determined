@@ -3,10 +3,10 @@ from typing import Any, Dict, List, cast
 
 import numpy as np
 import tensorflow as tf
-from tensorflow.keras.layers import Dense
-from tensorflow.keras.losses import mean_squared_error
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.optimizers.legacy import SGD  # TODO MLG-443
+from tensorflow.keras import layers
+from tensorflow.keras import losses
+from tensorflow.keras import models
+from tensorflow.keras import optimizers
 
 from determined import keras
 from tests.experiment.fixtures import keras_cb_checker
@@ -44,14 +44,14 @@ class OneVarTrial(keras.TFKerasTrial):
         dataset = self.context.wrap_dataset(dataset)
         return dataset
 
-    def build_model(self) -> Sequential:
-        model = Sequential()
+    def build_model(self) -> models.Sequential:
+        model = models.Sequential()
         model.add(
-            Dense(1, activation=None, use_bias=False, kernel_initializer="zeros", input_shape=(1,))
+            layers.Dense(1, activation=None, use_bias=False, kernel_initializer="zeros", input_shape=(1,))
         )
         model = self.context.wrap_model(model)
-        model.compile(SGD(lr=self.my_learning_rate), mean_squared_error)
-        return cast(Sequential, model)
+        model.compile(optimizers.SGD(learning_rate=self.my_learning_rate), losses.mean_squared_error)
+        return cast(models.Sequential, model)
 
     @staticmethod
     def calc_gradient(w: float, values: List[float]) -> float:

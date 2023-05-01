@@ -13,12 +13,12 @@ from typing import List
 
 import pandas as pd
 import tensorflow as tf
-from tensorflow.keras.layers import Dense, Input
-from tensorflow.keras.losses import categorical_crossentropy
-from tensorflow.keras.metrics import categorical_accuracy
-from tensorflow.keras.models import Model
-from tensorflow.keras.optimizers.legacy import RMSprop
-from tensorflow.keras.utils import to_categorical
+from tensorflow.keras import layers
+from tensorflow.keras import losses
+from tensorflow.keras import metrics
+from tensorflow.keras import models
+from tensorflow.keras import optimizers
+from tensorflow.keras import utils
 
 from determined import keras
 
@@ -48,31 +48,33 @@ class IrisTrial(keras.TFKerasTrial):
     def __init__(self, context: keras.TFKerasTrialContext) -> None:
         self.context = context
 
-    def build_model(self) -> Model:
+    def build_model(self) -> models.Model:
         """
         Define model for iris classification.
 
         This is a simple model with one hidden layer to predict iris species (setosa, versicolor, or
         virginica) based on four input features (length and width of sepals and petals).
         """
-        inputs = Input(shape=(4,))
-        dense1 = Dense(self.context.get_hparam("layer1_dense_size"))(inputs)
-        dense2 = Dense(NUM_CLASSES, activation="softmax")(dense1)
+        inputs = layers.Input(shape=(4,))
+        dense1 = layers.Dense(self.context.get_hparam("layer1_dense_size"))(inputs)
+        dense2 = layers.Dense(NUM_CLASSES, activation="softmax")(dense1)
 
         # Wrap the model.
-        model = self.context.wrap_model(Model(inputs=inputs, outputs=dense2))
+        model = self.context.wrap_model(models.Model(inputs=inputs, outputs=dense2))
 
         # Create and wrap the optimizer.
-        optimizer = RMSprop(
-            lr=self.context.get_hparam("learning_rate"),
-            decay=self.context.get_hparam("learning_rate_decay"),
+        lr_schedule = optimizers.schedules.ExponentialDecay(
+            initial_learning_rate=self.context.get_hparam("learning_rate"),
+            decay_steps=10000,
+            decay_rate=self.context.get_hparam("learning_rate_decay"),
         )
+        optimizer = optimizers.RMSprop(learning_rate=lr_schedule)
         optimizer = self.context.wrap_optimizer(optimizer)
 
         model.compile(
             optimizer,
-            categorical_crossentropy,
-            [categorical_accuracy],
+            losses.categorical_crossentropy,
+            [metrics.categorical_accuracy],
         )
 
         return model
@@ -88,7 +90,7 @@ class IrisTrial(keras.TFKerasTrial):
         # Since we're building a classifier, convert the labels in the raw
         # dataset (0, 1, or 2) to one-hot vector encodings that we'll to
         # construct the Sequence data loaders that Determined expects.
-        train_labels_categorical = to_categorical(train_labels, num_classes=3)
+        train_labels_categorical = utils.to_categorical(train_labels, num_classes=3)
 
         return train_features.values, train_labels_categorical
 
@@ -100,6 +102,6 @@ class IrisTrial(keras.TFKerasTrial):
         # Since we're building a classifier, convert the labels in the raw
         # dataset (0, 1, or 2) to one-hot vector encodings that we'll to
         # construct the Sequence data loaders that Determined expects.
-        test_labels_categorical = to_categorical(test_labels, num_classes=3)
+        test_labels_categorical = utils.to_categorical(test_labels, num_classes=3)
 
         return test_features.values, test_labels_categorical
