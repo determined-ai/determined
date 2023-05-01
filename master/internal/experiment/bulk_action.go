@@ -44,7 +44,8 @@ type deleteExperimentOKResult struct {
 // ExperimentsAddr is the address to direct experiment actions.
 var ExperimentsAddr = actor.Addr("experiments")
 
-func terminalExperimentStates() []string {
+// terminalExperimentStates where an experiment can be deleted, archived, or unarchived.
+var terminalExperimentStates = func() []string {
 	states := make([]string, len(model.TerminalStates))
 	idx := 0
 	for state := range model.TerminalStates {
@@ -52,9 +53,10 @@ func terminalExperimentStates() []string {
 		idx++
 	}
 	return states
-}
+}()
 
-func nonTerminalStates() []experimentv1.State {
+// nonTerminalStates where an experiment can be canceled or killed.
+var nonTerminalStates = func() []experimentv1.State {
 	var states []experimentv1.State
 	for s := range model.ExperimentTransitions {
 		if !model.TerminalStates[s] && !strings.Contains(string(s), "DELET") {
@@ -62,7 +64,7 @@ func nonTerminalStates() []experimentv1.State {
 		}
 	}
 	return states
-}
+}()
 
 // ProtoStateDBCaseString helps bun extract the experiment state.
 func ProtoStateDBCaseString(
@@ -273,7 +275,7 @@ func CancelExperiments(ctx context.Context, system *actor.System,
 	experimentIds []int32, filters *apiv1.BulkExperimentFilters,
 ) ([]ExperimentActionResult, error) {
 	if filters != nil && filters.States == nil {
-		filters.States = nonTerminalStates()
+		filters.States = nonTerminalStates
 	}
 	expIDs, err := editableExperimentIds(ctx, experimentIds, filters)
 	if err != nil {
@@ -315,7 +317,7 @@ func KillExperiments(ctx context.Context, system *actor.System,
 	experimentIds []int32, filters *apiv1.BulkExperimentFilters,
 ) ([]ExperimentActionResult, error) {
 	if filters != nil && filters.States == nil {
-		filters.States = nonTerminalStates()
+		filters.States = nonTerminalStates
 	}
 	expIDs, err := editableExperimentIds(ctx, experimentIds, filters)
 	if err != nil {
@@ -408,7 +410,7 @@ func DeleteExperiments(ctx context.Context, system *actor.System,
 	} else {
 		query = queryBulkExperiments(query, filters).
 			Where("versions = 0").
-			Where("state IN (?)", bun.In(terminalExperimentStates()))
+			Where("state IN (?)", bun.In(terminalExperimentStates))
 	}
 
 	query, err = AuthZProvider.Get().
@@ -494,14 +496,14 @@ func ArchiveExperiments(ctx context.Context, system *actor.System,
 		Model(&expChecks).
 		Column("e.archived").
 		Column("e.id").
-		ColumnExpr("e.state IN (?) AS state", bun.In(terminalExperimentStates()))
+		ColumnExpr("e.state IN (?) AS state", bun.In(terminalExperimentStates))
 
 	if filters == nil {
 		query = query.Where("e.id IN (?)", bun.In(experimentIds))
 	} else {
 		query = queryBulkExperiments(query, filters).
 			Where("NOT e.archived").
-			Where("e.state IN (?)", bun.In(terminalExperimentStates()))
+			Where("e.state IN (?)", bun.In(terminalExperimentStates))
 	}
 
 	query, err = AuthZProvider.Get().
@@ -585,14 +587,14 @@ func UnarchiveExperiments(ctx context.Context, system *actor.System,
 		Model(&expChecks).
 		Column("e.archived").
 		Column("e.id").
-		ColumnExpr("e.state IN (?) AS state", bun.In(terminalExperimentStates()))
+		ColumnExpr("e.state IN (?) AS state", bun.In(terminalExperimentStates))
 
 	if filters == nil {
 		query = query.Where("e.id IN (?)", bun.In(experimentIds))
 	} else {
 		query = queryBulkExperiments(query, filters).
 			Where("archived").
-			Where("e.state IN (?)", bun.In(terminalExperimentStates()))
+			Where("e.state IN (?)", bun.In(terminalExperimentStates))
 	}
 
 	query, err = AuthZProvider.Get().
