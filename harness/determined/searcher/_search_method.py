@@ -37,6 +37,7 @@ class SearcherState:
     trials_created: Set[uuid.UUID]
     last_event_id: int = 0
     experiment_completed: bool = False
+    experiment_failed: bool = False
 
     def __init__(self) -> None:
         self.failures = set()
@@ -53,6 +54,7 @@ class SearcherState:
             "lastEventId": self.last_event_id,
             "experimentId": self.experiment_id,
             "experimentCompleted": self.experiment_completed,
+            "experimentFailed": self.experiment_failed,
         }
 
     def from_dict(self, d: Dict[str, Any]) -> None:
@@ -63,6 +65,7 @@ class SearcherState:
         self.last_event_id = d.get("lastEventId", 0)
         self.experiment_id = d.get("experimentId")
         self.experiment_completed = d.get("experimentCompleted", False)
+        self.experiment_failed = d.get("experimentFailed", False)
 
 
 class ExitedReason(Enum):

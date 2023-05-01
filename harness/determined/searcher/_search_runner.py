@@ -158,6 +158,11 @@ class SearchRunner:
                                 == bindings.experimentv1State.COMPLETED
                             ):
                                 self.state.experiment_completed = True
+                            elif (
+                                event.experimentInactive.experimentState
+                                == bindings.experimentv1State.ERROR
+                            ):
+                                self.state.experiment_failed = True
 
                             if (
                                 event.experimentInactive.experimentState
