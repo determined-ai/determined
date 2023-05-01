@@ -317,8 +317,10 @@ func (s *Service) getUsers(c echo.Context) (interface{}, error) {
 
 func canViewUserErrorHandle(currUser, user model.User, actionErr, notFoundErr error) error {
 	ctx := context.TODO()
-	err := AuthZProvider.Get().CanGetUser(ctx, currUser, user)
-	return authz.SubIfUnauthorized(err, notFoundErr)
+	if err := AuthZProvider.Get().CanGetUser(ctx, currUser, user); err != nil {
+		return authz.SubIfUnauthorized(err, notFoundErr)
+	}
+	return actionErr
 }
 
 func (s *Service) patchUser(c echo.Context) (interface{}, error) {

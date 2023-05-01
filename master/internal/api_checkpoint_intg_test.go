@@ -16,6 +16,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	authz2 "github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
@@ -127,7 +128,7 @@ func TestCheckpointAuthZ(t *testing.T) {
 			}
 
 			authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
-				Return(false, nil).Once()
+				Return(authz2.PermissionDeniedError{}).Once()
 			if curCase.UseMultiCheckpointError {
 				require.Equal(t, errCheckpointsNotFound([]string{checkpointID}),
 					curCase.IDToReqCall(checkpointID))
@@ -138,12 +139,12 @@ func TestCheckpointAuthZ(t *testing.T) {
 
 			expectedErr := fmt.Errorf("canGetExperimentError")
 			authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
-				Return(false, expectedErr).Once()
+				Return(expectedErr).Once()
 			require.Equal(t, expectedErr, curCase.IDToReqCall(checkpointID))
 
 			expectedErr = status.Error(codes.PermissionDenied, curCase.DenyFuncName+"Error")
 			authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
-				Return(true, nil).Once()
+				Return(nil).Once()
 			authZExp.On(curCase.DenyFuncName, mock.Anything, curUser, mock.Anything).
 				Return(fmt.Errorf(curCase.DenyFuncName + "Error")).Once()
 			require.Equal(t, expectedErr, curCase.IDToReqCall(checkpointID))

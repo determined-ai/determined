@@ -10,7 +10,7 @@ import (
 // UserAuthZBasic is basic OSS controls.
 type UserAuthZBasic struct{}
 
-// CanGetUser always returns true.
+// CanGetUser always returns nil.
 func (a *UserAuthZBasic) CanGetUser(
 	ctx context.Context, curUser, targetUser model.User,
 ) error {

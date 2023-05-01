@@ -25,6 +25,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	authz2 "github.com/determined-ai/determined/master/internal/authz"
 	detContext "github.com/determined-ai/determined/master/internal/context"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/user"
@@ -266,17 +267,17 @@ func TestAuthZCheckpointsEcho(t *testing.T) {
 
 	addMockCheckpointDB(t, api.m.db, checkpointUUID)
 
-	authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).Return(false, nil).Once()
+	authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).Return(authz2.PermissionDeniedError{}).Once()
 	require.Equal(t, echo.NewHTTPError(http.StatusNotFound,
 		fmt.Sprintf("checkpoint not found: %s", checkpointUUID)), api.m.getCheckpoint(ctx))
 
 	expectedErr := fmt.Errorf("canGetExperimentError")
 	authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
-		Return(false, expectedErr).Once()
+		Return(expectedErr).Once()
 	require.Equal(t, expectedErr, api.m.getCheckpoint(ctx))
 
 	expectedErr = echo.NewHTTPError(http.StatusForbidden, "canGetArtifactsError")
-	authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).Return(true, nil).Once()
+	authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).Return(nil).Once()
 	authZExp.On("CanGetExperimentArtifacts", mock.Anything, curUser, mock.Anything).
 		Return(fmt.Errorf("canGetArtifactsError")).Once()
 	require.Equal(t, expectedErr, api.m.getCheckpoint(ctx))

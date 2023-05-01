@@ -11,6 +11,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 
+	authz2 "github.com/determined-ai/determined/master/internal/authz"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
@@ -47,19 +48,19 @@ func TestTrialAuthZEcho(t *testing.T) {
 
 		// Can't view trials experiment gives same error.
 		authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
-			Return(false, nil).Once()
+			Return(authz2.PermissionDeniedError{}).Once()
 		require.Equal(t, trialNotFoundErrEcho(trial.ID), funcCall(trial.ID))
 
 		// Experiment view error returns error unmodified.
 		expectedErr := fmt.Errorf("canGetTrialError")
 		authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
-			Return(false, expectedErr).Once()
+			Return(expectedErr).Once()
 		require.Equal(t, expectedErr, funcCall(trial.ID))
 
 		// Action func error returns error in forbidden.
 		expectedErr = echo.NewHTTPError(http.StatusForbidden, fmt.Sprintf("%dError", i))
 		authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
-			Return(true, nil).Once()
+			Return(nil).Once()
 		authZExp.On("CanGetExperimentArtifacts", mock.Anything, curUser, mock.Anything).
 			Return(fmt.Errorf("%dError", i)).Once()
 		require.Equal(t, expectedErr, funcCall(trial.ID))
