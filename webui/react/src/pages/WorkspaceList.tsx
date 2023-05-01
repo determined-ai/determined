@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup';
 import Button from 'components/kit/Button';
 import Card from 'components/kit/Card';
+import { Column, Columns } from 'components/kit/Columns';
 import Empty from 'components/kit/Empty';
 import { useModal } from 'components/kit/Modal';
 import Select, { Option } from 'components/kit/Select';
@@ -40,7 +41,6 @@ import { useObservable } from 'utils/observable';
 
 import WorkspaceActionDropdown from './WorkspaceList/WorkspaceActionDropdown';
 import WorkspaceCard from './WorkspaceList/WorkspaceCard';
-import css from './WorkspaceList.module.scss';
 import settingsConfig, {
   DEFAULT_COLUMN_WIDTHS,
   WhoseWorkspaces,
@@ -332,7 +332,6 @@ const WorkspaceList: React.FC = () => {
 
   return (
     <Page
-      className={css.base}
       containerRef={pageRef}
       id="workspaces"
       options={
@@ -341,21 +340,29 @@ const WorkspaceList: React.FC = () => {
         </Button>
       }
       title="Workspaces">
-      <div className={css.controls}>
-        <Select value={settings.whose} width={180} onSelect={handleViewSelect}>
-          <Option value={WhoseWorkspaces.All}>All Workspaces</Option>
-          <Option value={WhoseWorkspaces.Mine}>My Workspaces</Option>
-          <Option value={WhoseWorkspaces.Others}>Others&apos; Workspaces</Option>
-        </Select>
-        <Space wrap>
-          <Toggle checked={settings.archived} label="Show Archived" onChange={switchShowArchived} />
-          <Select value={settings.sortKey} width={170} onSelect={handleSortSelect}>
-            <Option value={V1GetWorkspacesRequestSortBy.NAME}>Alphabetical</Option>
-            <Option value={V1GetWorkspacesRequestSortBy.ID}>Newest to Oldest</Option>
+      <Columns header>
+        <Column>
+          <Select value={settings.whose} width={180} onSelect={handleViewSelect}>
+            <Option value={WhoseWorkspaces.All}>All Workspaces</Option>
+            <Option value={WhoseWorkspaces.Mine}>My Workspaces</Option>
+            <Option value={WhoseWorkspaces.Others}>Others&apos; Workspaces</Option>
           </Select>
-          {settings && <GridListRadioGroup value={settings.view} onChange={handleViewChange} />}
-        </Space>
-      </div>
+        </Column>
+        <Column align="right">
+          <Space wrap>
+            <Toggle
+              checked={settings.archived}
+              label="Show Archived"
+              onChange={switchShowArchived}
+            />
+            <Select value={settings.sortKey} width={170} onSelect={handleSortSelect}>
+              <Option value={V1GetWorkspacesRequestSortBy.NAME}>Alphabetical</Option>
+              <Option value={V1GetWorkspacesRequestSortBy.ID}>Newest to Oldest</Option>
+            </Select>
+            {settings && <GridListRadioGroup value={settings.view} onChange={handleViewChange} />}
+          </Space>
+        </Column>
+      </Columns>
       <Spinner spinning={isLoading}>
         {workspaces.length !== 0 ? (
           workspacesList

@@ -9,6 +9,7 @@ import Breadcrumb from 'components/kit/Breadcrumb';
 import Button from 'components/kit/Button';
 import Card from 'components/kit/Card';
 import Checkbox from 'components/kit/Checkbox';
+import { Column, Columns } from 'components/kit/Columns';
 import Empty from 'components/kit/Empty';
 import Facepile from 'components/kit/Facepile';
 import Form from 'components/kit/Form';
@@ -66,6 +67,7 @@ const ComponentTitles = {
   Cards: 'Cards',
   Charts: 'Charts',
   Checkboxes: 'Checkboxes',
+  Columns: 'Columns',
   Empty: 'Empty',
   Facepile: 'Facepile',
   Form: 'Form',
@@ -1807,6 +1809,122 @@ const TooltipsSection: React.FC = () => {
   );
 };
 
+const ColumnsSection: React.FC = () => {
+  return (
+    <ComponentSection id="Columns" title="Columns">
+      <AntDCard>
+        <p>
+          The <code>{'<Columns>'}</code> component wraps child components to be displayed in
+          multiple columns.
+          <br />
+          The <code>{'<Column>'}</code> component can optionally be used to wrap the content for
+          each column and set its alignment.
+        </p>
+      </AntDCard>
+      <AntDCard title="Usage">
+        <p>
+          With <code>{'<Columns>'}</code> wrapper only:
+        </p>
+        <Columns>
+          <Card>
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
+            incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
+            exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure
+            dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
+            Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt
+            mollit anim id est laborum.
+          </Card>
+          <Card>
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
+            incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
+            exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure
+            dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
+            Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt
+            mollit anim id est laborum.
+          </Card>
+          <Card>
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
+            incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
+            exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure
+            dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
+            Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt
+            mollit anim id est laborum.
+          </Card>
+        </Columns>
+        <p>With gap between columns:</p>
+        <Columns gap={12}>
+          <Card>
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
+            incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
+            exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure
+            dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
+            Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt
+            mollit anim id est laborum.
+          </Card>
+          <Card>
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
+            incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
+            exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure
+            dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
+            Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt
+            mollit anim id est laborum.
+          </Card>
+          <Card>
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
+            incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
+            exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure
+            dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
+            Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt
+            mollit anim id est laborum.
+          </Card>
+        </Columns>
+        <p>
+          With left-aligned <code>{'<Column>'}</code>s (default):
+        </p>
+        <Columns>
+          <Column>
+            <Card>Lorem ipsum</Card>
+          </Column>
+          <Column>
+            <Card>Lorem ipsum</Card>
+          </Column>
+          <Column>
+            <Card>Lorem ipsum</Card>
+          </Column>
+        </Columns>
+        <p>
+          With center-aligned <code>{'<Column>'}</code>s:
+        </p>
+        <Columns>
+          <Column align="center">
+            <Card>Lorem ipsum</Card>
+          </Column>
+          <Column align="center">
+            <Card>Lorem ipsum</Card>
+          </Column>
+          <Column align="center">
+            <Card>Lorem ipsum</Card>
+          </Column>
+        </Columns>
+        <p>
+          With right-aligned <code>{'<Column>'}</code>s:
+        </p>
+        <Columns>
+          <Column align="right">
+            <Card>Lorem ipsum</Card>
+          </Column>
+          <Column align="right">
+            <Card>Lorem ipsum</Card>
+          </Column>
+          <Column align="right">
+            <Card>Lorem ipsum</Card>
+          </Column>
+        </Columns>
+      </AntDCard>
+    </ComponentSection>
+  );
+};
+
 const EmptySection: React.FC = () => {
   return (
     <ComponentSection id="Empty" title="Empty">
@@ -2199,6 +2317,7 @@ const Components = {
   Cards: <CardsSection />,
   Charts: <ChartsSection />,
   Checkboxes: <CheckboxesSection />,
+  Columns: <ColumnsSection />,
   Empty: <EmptySection />,
   Facepile: <FacepileSection />,
   Form: <FormSection />,

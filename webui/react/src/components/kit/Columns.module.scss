@@ -1,0 +1,19 @@
+.columns {
+  display: flex;
+  &.header {
+    margin-bottom: 16px;
+  }
+  .column {
+    display: flex;
+    flex-grow: 1;
+    &.left {
+      justify-content: start;
+    }
+    &.center {
+      justify-content: center;
+    }
+    &.right {
+      justify-content: right;
+    }
+  }
+}

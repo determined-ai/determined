@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup';
 import Button from 'components/kit/Button';
 import Card from 'components/kit/Card';
+import { Column, Columns } from 'components/kit/Columns';
 import Input from 'components/kit/Input';
 import { useModal } from 'components/kit/Modal';
 import Select, { Option } from 'components/kit/Select';
@@ -121,7 +122,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
       updateSettings({
         sortDesc:
           value === V1GetWorkspaceProjectsRequestSortBy.NAME ||
-          value === V1GetWorkspaceProjectsRequestSortBy.LASTEXPERIMENTSTARTTIME
+            value === V1GetWorkspaceProjectsRequestSortBy.LASTEXPERIMENTSTARTTIME
             ? false
             : true,
         sortKey: value as V1GetWorkspaceProjectsRequestSortBy | undefined,
@@ -390,39 +391,43 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
 
   return (
     <div className={css.base}>
-      <div className={css.controls}>
-        <Select value={settings.whose} width={160} onSelect={handleViewSelect}>
-          <Option value={WhoseProjects.All}>All Projects</Option>
-          <Option value={WhoseProjects.Mine}>My Projects</Option>
-          <Option value={WhoseProjects.Others}>Others&apos; Projects</Option>
-        </Select>
-        <Space wrap>
-          {!workspace.archived && (
-            <Toggle
-              checked={settings.archived}
-              label="Show Archived"
-              onChange={switchShowArchived}
-            />
-          )}
-          <Select value={settings.sortKey} width={170} onSelect={handleSortSelect}>
-            <Option value={V1GetWorkspaceProjectsRequestSortBy.NAME}>Alphabetical</Option>
-            <Option value={V1GetWorkspaceProjectsRequestSortBy.LASTEXPERIMENTSTARTTIME}>
-              Last Updated
-            </Option>
-            <Option value={V1GetWorkspaceProjectsRequestSortBy.CREATIONTIME}>
-              Newest to Oldest
-            </Option>
+      <Columns header>
+        <Column>
+          <Select value={settings.whose} width={160} onSelect={handleViewSelect}>
+            <Option value={WhoseProjects.All}>All Projects</Option>
+            <Option value={WhoseProjects.Mine}>My Projects</Option>
+            <Option value={WhoseProjects.Others}>Others&apos; Projects</Option>
           </Select>
-          {settings && <GridListRadioGroup value={settings.view} onChange={handleViewChange} />}
-          <div className={css.headerButton}>
-            {!workspace.immutable &&
-              !workspace.archived &&
-              canCreateProject({ workspace: workspace }) && (
-                <Button onClick={handleProjectCreateClick}>New Project</Button>
-              )}
-          </div>
-        </Space>
-      </div>
+        </Column>
+        <Column align="right">
+          <Space wrap>
+            {!workspace.archived && (
+              <Toggle
+                checked={settings.archived}
+                label="Show Archived"
+                onChange={switchShowArchived}
+              />
+            )}
+            <Select value={settings.sortKey} width={170} onSelect={handleSortSelect}>
+              <Option value={V1GetWorkspaceProjectsRequestSortBy.NAME}>Alphabetical</Option>
+              <Option value={V1GetWorkspaceProjectsRequestSortBy.LASTEXPERIMENTSTARTTIME}>
+                Last Updated
+              </Option>
+              <Option value={V1GetWorkspaceProjectsRequestSortBy.CREATIONTIME}>
+                Newest to Oldest
+              </Option>
+            </Select>
+            {settings && <GridListRadioGroup value={settings.view} onChange={handleViewChange} />}
+            <div className={css.headerButton}>
+              {!workspace.immutable &&
+                !workspace.archived &&
+                canCreateProject({ workspace: workspace }) && (
+                  <Button onClick={handleProjectCreateClick}>New Project</Button>
+                )}
+            </div>
+          </Space>
+        </Column>
+      </Columns>
       <Spinner spinning={isLoading}>
         {projects.length !== 0 ? (
           projectsList
