@@ -342,10 +342,10 @@ func hpToSQL(c string, t *string, va *interface{}, op *operator, q *bun.SelectQu
 			return q.Where(qs, qa...), nil
 		} else {
 			if o == contains {
-				qa = append(qa, bun.Safe(hpQuery), bun.Safe(hpQuery), v, bun.Safe(hpQuery), bun.Safe(hpQuery), v, bun.Safe(hpQuery), v)
+				qa = append(qa, bun.Safe(hpQuery), bun.Safe(hpQuery), bun.Safe(`?`), v, bun.Safe(hpQuery), bun.Safe(hpQuery), v, bun.Safe(hpQuery), v)
 				qs = `(CASE
-					WHEN config->'hyperparameters'->?->>'type' = 'categorical' THEN (config->'hyperparameters'->?->>'vals')::jsonb ?? ?
-					WHEN config->'hyperparameters'->?->>'type' IN ('int', 'double', 'log') THEN (config->'hyperparameters'->?->>'minval')::float8 <= ? OR (config->'hyperparameters'->?]>>'maxval')::float8 >= ?
+					WHEN config->'hyperparameters'->?->>'type' = 'categorical' THEN (config->'hyperparameters'->?->>'vals')::jsonb ? '?'
+					WHEN config->'hyperparameters'->?->>'type' IN ('int', 'double', 'log') THEN (config->'hyperparameters'->?->>'minval')::float8 <= ? OR (config->'hyperparameters'->?->>'maxval')::float8 >= ?
 					ELSE false
 				 END)`
 				if fc != nil && *fc == or {
@@ -353,9 +353,9 @@ func hpToSQL(c string, t *string, va *interface{}, op *operator, q *bun.SelectQu
 				}
 				return q.Where(qs, qa...), nil
 			}
-			qa = append(qa, bun.Safe(hpQuery), bun.Safe(hpQuery), v, bun.Safe(hpQuery), bun.Safe(hpQuery), v, bun.Safe(hpQuery), v)
+			qa = append(qa, bun.Safe(hpQuery), bun.Safe(hpQuery), bun.Safe(`?`), v, bun.Safe(hpQuery), bun.Safe(hpQuery), v, bun.Safe(hpQuery), v)
 			qs = `(CASE
-					WHEN config->'hyperparameters'->?->>'type' = 'categorical' THEN ((config->'hyperparameters'->?->>'vals')::jsonb ? ?) IS NOT TRUE
+					WHEN config->'hyperparameters'->?->>'type' = 'categorical' THEN ((config->'hyperparameters'->?->>'vals')::jsonb ? '?') IS NOT TRUE
 					WHEN config->'hyperparameters'->?->>'type' IN ('int', 'double', 'log') THEN (config->'hyperparameters'->?->>'minval')::float8 >= ? OR (config->'hyperparameters'->?->>'maxval')::float8 <= ?
 					ELSE false
 				 END)`
