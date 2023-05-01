@@ -60,11 +60,7 @@ class NoopKerasTrial(TFKerasTrial):
             ]
         )
         model = self.context.wrap_model(model)
-        # TODO MLG-443 Migrate from legacy Keras optimizers
-        if version.parse(tf.__version__) >= version.parse("2.11.0"):
-            optimizer = self.context.wrap_optimizer(tf.keras.optimizers.legacy.SGD())
-        else:
-            optimizer = self.context.wrap_optimizer(tf.keras.optimizers.SGD())
+        optimizer = self.context.wrap_optimizer(tf.keras.optimizers.SGD())
         model.compile(
             loss=tf.keras.losses.MeanSquaredError(),
             optimizer=optimizer,
