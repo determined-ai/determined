@@ -134,6 +134,7 @@ func (o *operator) toSQL() (string, error) {
 	}
 	return s, nil
 }
+
 func columnNameToSQL(c string, l *string, t *string) (string, error) {
 	var lo string
 	var ty string
@@ -416,24 +417,12 @@ func (e experimentFilter) toSQL(q *bun.SelectQuery, c *filterConjunction) (*bun.
 			} else if *e.Operator == empty || *e.Operator == notEmpty {
 				q = q.Where("? ?", bun.Safe(col), bun.Safe(oSQL))
 			} else {
-				if e.Type != nil &&
-					(*e.Type == projectv1.ColumnType_COLUMN_TYPE_TEXT.String() ||
-						*e.Type == projectv1.ColumnType_COLUMN_TYPE_DATE.String()) {
-					if c != nil && *c == or {
-						q.WhereOr("? ? ?", bun.Safe(col),
-							bun.Safe(oSQL), *e.Value)
-					} else {
-						q.Where("? ? ?", bun.Safe(col),
-							bun.Safe(oSQL), *e.Value)
-					}
+				if c != nil && *c == or {
+					q.WhereOr("? ? ?", bun.Safe(col),
+						bun.Safe(oSQL), *e.Value)
 				} else {
-					if c != nil && *c == or {
-						q.WhereOr("? ? ?", bun.Safe(col),
-							bun.Safe(oSQL), *e.Value)
-					} else {
-						q.Where("? ? ?", bun.Safe(col),
-							bun.Safe(oSQL), *e.Value)
-					}
+					q.Where("? ? ?", bun.Safe(col),
+						bun.Safe(oSQL), *e.Value)
 				}
 			}
 			if err != nil {
