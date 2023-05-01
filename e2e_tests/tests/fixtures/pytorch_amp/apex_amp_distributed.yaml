@@ -1,0 +1,25 @@
+description: mnist_pytorch with PyTorch APEX support configured
+data:
+  url: https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz
+environment:
+  environment_variables:
+    #This is specified due to an error in NCCL/veth interface
+    #https://github.com/pytorch/pytorch/issues/68893
+    - NCCL_SOCKET_IFNAME=ens,eth
+hyperparameters:
+  learning_rate: 1.0
+  global_batch_size: 64
+  n_filters1: 32
+  n_filters2: 64
+  dropout1: 0.25
+  dropout2: 0.5
+resources:
+  slots_per_trial: 8
+searcher:
+  name: single
+  metric: validation_loss
+  max_length:
+      batches: 937 #60,000 training images with batch size 64
+  smaller_is_better: true
+max_restarts: 0
+entrypoint: python3 -m determined.launch.torch_distributed --trial apex_amp_model_def:MNistApexAMPTrial
