@@ -68,7 +68,10 @@ class TrainAndValidate:
                 v_metrics = validation["metrics"]["validation_metrics"]
                 self._validation_metrics.append(v_metrics)
                 if validation.get("stop_requested"):
-                    assert step_id == self.request_stop_step_id, (step_id, self.request_stop_step_id)
+                    assert step_id == self.request_stop_step_id, (
+                        step_id,
+                        self.request_stop_step_id,
+                    )
                     stop_requested = True
 
             if stop_requested:

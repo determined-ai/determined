@@ -37,12 +37,16 @@ class XORTrial(keras.TFKerasTrial):
     def build_model(self) -> models.Sequential:
         model = models.Sequential()
         model.add(
-            layers.Dense(self.context.get_hparam("hidden_size"), activation="sigmoid", input_shape=(2,))
+            layers.Dense(
+                self.context.get_hparam("hidden_size"), activation="sigmoid", input_shape=(2,)
+            )
         )
         model.add(layers.Dense(1))
         model = self.context.wrap_model(model)
         model.compile(
-            self.context.wrap_optimizer(optimizers.SGD(learning_rate=self.context.get_hparam("learning_rate"))),
+            self.context.wrap_optimizer(
+                optimizers.SGD(learning_rate=self.context.get_hparam("learning_rate"))
+            ),
             losses.binary_crossentropy,
             metrics=[categorical_error],
         )
@@ -72,7 +76,9 @@ class XORTrialOldOptimizerAPI(XORTrial):
     def build_model(self) -> models.Sequential:
         model = models.Sequential()
         model.add(
-            layers.Dense(self.context.get_hparam("hidden_size"), activation="sigmoid", input_shape=(2,))
+            layers.Dense(
+                self.context.get_hparam("hidden_size"), activation="sigmoid", input_shape=(2,)
+            )
         )
         model.add(layers.Dense(1))
         model = self.context.wrap_model(model)
@@ -88,12 +94,16 @@ class XORTrialWithTrainingMetrics(XORTrial):
     def build_model(self) -> models.Sequential:
         model = models.Sequential()
         model.add(
-            layers.Dense(self.context.get_hparam("hidden_size"), activation="sigmoid", input_shape=(2,))
+            layers.Dense(
+                self.context.get_hparam("hidden_size"), activation="sigmoid", input_shape=(2,)
+            )
         )
         model.add(layers.Dense(1))
         model = self.context.wrap_model(model)
         model.compile(
-            self.context.wrap_optimizer(optimizers.SGD(learning_rate=self.context.get_hparam("learning_rate"))),
+            self.context.wrap_optimizer(
+                optimizers.SGD(learning_rate=self.context.get_hparam("learning_rate"))
+            ),
             losses.binary_crossentropy,
             metrics=[categorical_error, metrics.categorical_accuracy, predictions],
         )
@@ -140,12 +150,16 @@ class XORTrialWithOptimizerState(XORTrial):
     def build_model(self) -> models.Sequential:
         model = models.Sequential()
         model.add(
-            layers.Dense(self.context.get_hparam("hidden_size"), activation="sigmoid", input_shape=(2,))
+            layers.Dense(
+                self.context.get_hparam("hidden_size"), activation="sigmoid", input_shape=(2,)
+            )
         )
         model.add(layers.Dense(1))
         model = self.context.wrap_model(model)
         model.compile(
-            self.context.wrap_optimizer(optimizers.Adam(learning_rate=self.context.get_hparam("learning_rate"))),
+            self.context.wrap_optimizer(
+                optimizers.Adam(learning_rate=self.context.get_hparam("learning_rate"))
+            ),
             losses.binary_crossentropy,
             metrics=[categorical_error],
         )

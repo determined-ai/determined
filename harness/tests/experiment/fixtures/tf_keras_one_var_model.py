@@ -44,10 +44,14 @@ class OneVarTrial(keras.TFKerasTrial):
     def build_model(self) -> models.Sequential:
         model = models.Sequential()
         model.add(
-            layers.Dense(1, activation=None, use_bias=False, kernel_initializer="zeros", input_shape=(1,))
+            layers.Dense(
+                1, activation=None, use_bias=False, kernel_initializer="zeros", input_shape=(1,)
+            )
         )
         model = self.context.wrap_model(model)
-        model.compile(optimizers.SGD(learning_rate=self.my_learning_rate), losses.mean_squared_error)
+        model.compile(
+            optimizers.SGD(learning_rate=self.my_learning_rate), losses.mean_squared_error
+        )
         return cast(models.Sequential, model)
 
     @staticmethod
