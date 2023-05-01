@@ -5,13 +5,8 @@ https://github.com/fchollet/keras/blob/master/examples/cifar10_cnn.py.
 
 import numpy as np
 import tensorflow as tf
-from tensorflow.keras import layers
-from tensorflow.keras import losses
-from tensorflow.keras import metrics
-from tensorflow.keras import models
-from tensorflow.keras import optimizers
-
 from data import NUM_CLASSES
+from tensorflow.keras import layers, losses, metrics, models, optimizers
 
 # Constants about the data set.
 IMAGE_SIZE = 32
