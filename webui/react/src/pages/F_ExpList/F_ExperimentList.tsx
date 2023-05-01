@@ -139,66 +139,35 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const handleUpdateExperimentList = useCallback(
     (action: BatchAction, successfulIds: number[]) => {
       const idSet = new Set(successfulIds);
+      const updateExperiment = (updated: Partial<ExperimentItem>) => {
+        setExperiments((prev) =>
+          prev.map((expLoadable) =>
+            Loadable.map(expLoadable, (experiment) =>
+              idSet.has(experiment.id) ? { ...experiment, ...updated } : experiment,
+            ),
+          ),
+        );
+      };
       switch (action) {
         case ExperimentAction.OpenTensorBoard:
           break;
         case ExperimentAction.Activate:
-          setExperiments((prev) =>
-            prev.map((expLoadable) =>
-              Loadable.map(expLoadable, (experiment) =>
-                idSet.has(experiment.id) ? { ...experiment, state: RunState.Active } : experiment,
-              ),
-            ),
-          );
+          updateExperiment({ state: RunState.Active });
           break;
         case ExperimentAction.Archive:
-          setExperiments((prev) =>
-            prev.map((expLoadable) =>
-              Loadable.map(expLoadable, (experiment) =>
-                idSet.has(experiment.id) ? { ...experiment, archived: true } : experiment,
-              ),
-            ),
-          );
+          updateExperiment({ archived: true });
           break;
         case ExperimentAction.Cancel:
-          setExperiments((prev) =>
-            prev.map((expLoadable) =>
-              Loadable.map(expLoadable, (experiment) =>
-                idSet.has(experiment.id)
-                  ? { ...experiment, state: RunState.StoppingCanceled }
-                  : experiment,
-              ),
-            ),
-          );
+          updateExperiment({ state: RunState.StoppingCanceled });
           break;
         case ExperimentAction.Kill:
-          setExperiments((prev) =>
-            prev.map((expLoadable) =>
-              Loadable.map(expLoadable, (experiment) =>
-                idSet.has(experiment.id)
-                  ? { ...experiment, state: RunState.StoppingKilled }
-                  : experiment,
-              ),
-            ),
-          );
+          updateExperiment({ state: RunState.StoppingKilled });
           break;
         case ExperimentAction.Pause:
-          setExperiments((prev) =>
-            prev.map((expLoadable) =>
-              Loadable.map(expLoadable, (experiment) =>
-                idSet.has(experiment.id) ? { ...experiment, state: RunState.Paused } : experiment,
-              ),
-            ),
-          );
+          updateExperiment({ state: RunState.Paused });
           break;
         case ExperimentAction.Unarchive:
-          setExperiments((prev) =>
-            prev.map((expLoadable) =>
-              Loadable.map(expLoadable, (experiment) =>
-                idSet.has(experiment.id) ? { ...experiment, archived: false } : experiment,
-              ),
-            ),
-          );
+          updateExperiment({ archived: false });
           break;
         case ExperimentAction.Move:
         case ExperimentAction.Delete:
