@@ -1276,10 +1276,7 @@ func TestExperimentSearchApiFilterParsing(t *testing.T) {
 		},
 		{
 			`{"filterGroup":{"children":[{"type":"COLUMN_TYPE_DATE","location":"LOCATION_TYPE_HYPERPARAMETERS", "columnName":"hp.global_batch_start","kind":"field","operator":">=","value":"2021-04-14T14:14:18.915483952Z"}],"conjunction":"and","kind":"group"},"showArchived":true}`,
-			`(((CASE
-				WHEN config->'hyperparameters'->'global_batch_start'->>'type' = 'const' THEN config->'hyperparameters'->'global_batch_start'->>'val' >= '2021-04-14T14:14:18.915483952Z'
-				ELSE false
-			 END)))`,
+			`(((CASE WHEN config->'hyperparameters'->'global_batch_start'->>'type' = 'const' THEN config->'hyperparameters'->'global_batch_start'->>'val' >= '2021-04-14T14:14:18.915483952Z' ELSE false END)))`,
 		},
 		{
 			`{"filterGroup":{"children":[{"type":"COLUMN_TYPE_NUMBER","location":"LOCATION_TYPE_HYPERPARAMETERS", "columnName":"hp.global_batch_size","kind":"field","operator":"!=","value":32}],"conjunction":"and","kind":"group"},"showArchived":true}`,

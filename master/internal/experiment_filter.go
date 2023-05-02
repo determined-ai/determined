@@ -175,7 +175,7 @@ func hpToSQL(c string, filterColumnType *string, filterValue *interface{},
 	var queryArgs []interface{}
 	var queryString string
 	switch queryColumnType {
-	case projectv1.ColumnType_COLUMN_TYPE_TEXT.String():
+	case projectv1.ColumnType_COLUMN_TYPE_TEXT.String(), projectv1.ColumnType_COLUMN_TYPE_DATE.String():
 		switch o {
 		case empty, notEmpty:
 			queryArgs = append(queryArgs, bun.Safe(hpQuery),
@@ -208,43 +208,6 @@ func hpToSQL(c string, filterColumnType *string, filterValue *interface{},
 		default:
 			queryArgs = append(queryArgs, bun.Safe(hpQuery), bun.Safe(hpQuery), bun.Safe(oSQL), queryValue)
 			queryString = `(CASE WHEN config->'hyperparameters'->?->>'type' = 'const' THEN config->'hyperparameters'->?->>'val' ? ? ELSE false END)`
-		}
-	case projectv1.ColumnType_COLUMN_TYPE_DATE.String():
-		switch o {
-		case empty, notEmpty:
-			queryArgs = append(queryArgs, bun.Safe(hpQuery),
-				bun.Safe(hpQuery), bun.Safe(oSQL),
-				bun.Safe(hpQuery), bun.Safe(hpQuery),
-				bun.Safe(oSQL))
-			queryString = `(CASE
-				WHEN config->'hyperparameters'->?->>'type' = 'const' THEN config->'hyperparameters'->?->>'val' ?
-				WHEN config->'hyperparameters'->?->>'type' = 'categorical' THEN config->'hyperparameters'->?->>'vals' ?
-				ELSE false
-			 END)`
-		case contains:
-			queryString = `(CASE 
-				WHEN config->'hyperparameters'->?->>'type' = 'const' THEN config->'hyperparameters'->?->>'val' LIKE
-				WHEN config->'hyperparameters'->?->>'type' = 'categorical' THEN (config->'hyperparameters'->?->>'vals')::jsonb ?? ?
-				ELSE false
-			 END)`
-			queryArgs = append(queryArgs, bun.Safe(hpQuery),
-				bun.Safe(hpQuery), fmt.Sprintf(`%%%s%%`, queryValue),
-				bun.Safe(hpQuery), bun.Safe(hpQuery), queryValue)
-		case doesNotContain:
-			queryString = `(CASE 
-				WHEN config->'hyperparameters'->?->>'type' = 'const' THEN config->'hyperparameters'->?->>'val' ?
-				WHEN config->'hyperparameters'->?->>'type' = 'categorical' THEN (config->'hyperparameters'->?->>'vals')::jsonb ?? ? IS NOT TRUE
-				ELSE false
-			 END)`
-			queryArgs = append(queryArgs, bun.Safe(hpQuery),
-				bun.Safe(hpQuery), `NOT LIKE %`+fmt.Sprintf(`%v`, queryValue)+`%`,
-				bun.Safe(hpQuery), bun.Safe(hpQuery), queryValue)
-		default:
-			queryArgs = append(queryArgs, bun.Safe(hpQuery), bun.Safe(hpQuery), bun.Safe(oSQL), queryValue)
-			queryString = `(CASE
-				WHEN config->'hyperparameters'->?->>'type' = 'const' THEN config->'hyperparameters'->?->>'val' ? ?
-				ELSE false
-			 END)`
 		}
 	default:
 		switch o {
