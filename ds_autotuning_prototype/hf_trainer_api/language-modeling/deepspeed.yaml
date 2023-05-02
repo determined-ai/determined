@@ -1,4 +1,4 @@
-name: language-modeling-clm-trainer deepspeed
+name: language modeling deepspeed
 debug: false
 environment:
   environment_variables:

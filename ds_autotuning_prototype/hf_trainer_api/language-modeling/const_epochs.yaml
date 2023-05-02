@@ -1,4 +1,4 @@
-name: vision transformer const epochs
+name: language modeling const epochs
 debug: false
 environment:
   environment_variables:

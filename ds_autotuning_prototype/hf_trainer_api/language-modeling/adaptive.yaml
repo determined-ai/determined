@@ -1,4 +1,4 @@
-name: vision transformer adaptive
+name: language modeling adaptive
 debug: false
 environment:
   environment_variables:

@@ -1,4 +1,4 @@
-name: vision transformer const batches
+name: language modeling const batches
 debug: false
 environment:
   environment_variables:
