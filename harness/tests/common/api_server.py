@@ -34,6 +34,11 @@ def sample_get_experiment() -> bindings.v1GetExperimentResponse:
         return bindings.v1GetExperimentResponse.from_json(json.load(f))
 
 
+def sample_get_trial() -> bindings.v1GetTrialResponse:
+    with open(FIXTURES_DIR / "trial.json") as f:
+        return bindings.v1GetTrialResponse.from_json(json.load(f))
+
+
 @contextlib.contextmanager
 def run_api_server(
     address: Tuple[str, int] = (DEFAULT_HOST, DEFAULT_PORT),
@@ -116,6 +121,10 @@ def run_api_server(
                     return {}
             return sample_get_experiment().to_json()
 
+        def get_trial_sample(self) -> Dict[str, Any]:
+            """A trial response embedded into nested dicts and lists as though it was JSON."""
+            return sample_get_trial().to_json()
+
         def do_core(self, fn: Optional[Callable[..., Dict[str, Any]]]) -> None:
             if fn is None:
                 self.send_error(404, f"path not handled: {self.path}")
@@ -131,6 +140,7 @@ def run_api_server(
                 "/api/v1/models": self._api_v1_models,
                 "/api/v1/experiments/1": self.get_experiment_flaky,
                 "/api/v1/experiments/2": self.get_experiment_longrunning,
+                "/api/v1/trials/1": self.get_trial_sample,
             }.get(self.path.split("?")[0])
             self.do_core(fn)
 

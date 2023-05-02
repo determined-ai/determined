@@ -1,4 +1,5 @@
 import enum
+import logging
 import sys
 import time
 from typing import Any, Dict, List, Optional
@@ -6,7 +7,7 @@ from typing import Any, Dict, List, Optional
 import urllib3
 
 from determined.common import api
-from determined.common.api import bindings
+from determined.common.api import bindings, errors
 from determined.common.experimental import checkpoint, trial
 
 
@@ -52,14 +53,22 @@ class ExperimentReference:
         self._id = experiment_id
         self._session = session
 
+        try:
+            _ = self._get()
+        except errors.BadRequestException as e:
+            if isinstance(e, errors.NotFoundException):
+                logging.error(f"Experiment {self._id} does not exist.")
+                raise
+            logging.warning(
+                f"Caught APIException when fetching experiment. Continuing without validation: {e}"
+            )
+
     @property
     def id(self) -> int:
         return self._id
 
     def _get(self) -> bindings.v1Experiment:
-        """
-        _get fetches the main GET experiment endpoint and parses the response.
-        """
+        """GET the current state of the experiment."""
         resp = bindings.get_GetExperiment(self._session, experimentId=self._id)
         return resp.experiment
 

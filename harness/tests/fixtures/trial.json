@@ -1,0 +1,268 @@
+{
+  "trial": {
+    "bestCheckpoint": {
+      "endTime": "2023-05-01T23:53:14.801320Z",
+      "metadata": null,
+      "resources": {
+        "code/": "0",
+        "code/README.md": "1407",
+        "code/adaptive.yaml": "678",
+        "code/const.yaml": "434",
+        "code/data.py": "1443",
+        "code/dist_random.yaml": "725",
+        "code/distributed.yaml": "499",
+        "code/layers.py": "568",
+        "code/model_def.py": "3939",
+        "load_data.json": "2540",
+        "state_dict.pth": "14418394",
+        "trial_state.pkl": "110"
+      },
+      "state": "STATE_COMPLETED",
+      "totalBatches": 937,
+      "uuid": "2b3cd9dd-9ad5-4372-9eeb-95aded6dd3dd"
+    },
+    "bestValidation": {
+      "endTime": "2023-05-01T23:53:14.742245Z",
+      "metrics": {
+        "avgMetrics": {
+          "accuracy": 0.9809912420382165,
+          "validation_loss": 0.0562775879247473
+        },
+        "batchMetrics": []
+      },
+      "numInputs": 0,
+      "totalBatches": 937
+    },
+    "checkpointCount": 1,
+    "endTime": "2023-05-01T23:53:15.889279Z",
+    "experimentId": 1,
+    "hparams": {
+      "dropout1": 0.25,
+      "dropout2": 0.5,
+      "global_batch_size": 64,
+      "learning_rate": 1,
+      "n_filters1": 32,
+      "n_filters2": 64
+    },
+    "id": 1,
+    "latestValidation": {
+      "endTime": "2023-05-01T23:53:14.742245Z",
+      "metrics": {
+        "avgMetrics": {
+          "accuracy": 0.9809912420382165,
+          "validation_loss": 0.0562775879247473
+        },
+        "batchMetrics": []
+      },
+      "numInputs": 0,
+      "totalBatches": 937
+    },
+    "restarts": 0,
+    "runnerState": "checkpointing",
+    "startTime": "2023-05-01T23:51:06.866124Z",
+    "state": "STATE_COMPLETED",
+    "taskId": "1.87e6ff94-3098-4e28-86bf-24d22470d481",
+    "totalBatchesProcessed": 937,
+    "totalCheckpointSize": "14430737",
+    "wallClockTime": 128.990402,
+    "warmStartCheckpointUuid": ""
+  },
+  "workloads": [
+    {
+      "checkpoint": null,
+      "training": {
+        "endTime": "2023-05-01T23:52:09.995620Z",
+        "metrics": {
+          "avgMetrics": {
+            "loss": 0.5809080600738525
+          },
+          "batchMetrics": []
+        },
+        "numInputs": 0,
+        "totalBatches": 100
+      },
+      "validation": null
+    },
+    {
+      "checkpoint": null,
+      "training": {
+        "endTime": "2023-05-01T23:52:17.470354Z",
+        "metrics": {
+          "avgMetrics": {
+            "loss": 0.22650246322155
+          },
+          "batchMetrics": []
+        },
+        "numInputs": 0,
+        "totalBatches": 200
+      },
+      "validation": null
+    },
+    {
+      "checkpoint": null,
+      "training": {
+        "endTime": "2023-05-01T23:52:24.936497Z",
+        "metrics": {
+          "avgMetrics": {
+            "loss": 0.1875542849302292
+          },
+          "batchMetrics": []
+        },
+        "numInputs": 0,
+        "totalBatches": 300
+      },
+      "validation": null
+    },
+    {
+      "checkpoint": null,
+      "training": {
+        "endTime": "2023-05-01T23:52:32.211028Z",
+        "metrics": {
+          "avgMetrics": {
+            "loss": 0.1397784948348999
+          },
+          "batchMetrics": []
+        },
+        "numInputs": 0,
+        "totalBatches": 400
+      },
+      "validation": null
+    },
+    {
+      "checkpoint": null,
+      "training": {
+        "endTime": "2023-05-01T23:52:39.489476Z",
+        "metrics": {
+          "avgMetrics": {
+            "loss": 0.14318253099918365
+          },
+          "batchMetrics": []
+        },
+        "numInputs": 0,
+        "totalBatches": 500
+      },
+      "validation": null
+    },
+    {
+      "checkpoint": null,
+      "training": {
+        "endTime": "2023-05-01T23:52:46.722253Z",
+        "metrics": {
+          "avgMetrics": {
+            "loss": 0.13171085715293884
+          },
+          "batchMetrics": []
+        },
+        "numInputs": 0,
+        "totalBatches": 600
+      },
+      "validation": null
+    },
+    {
+      "checkpoint": null,
+      "training": {
+        "endTime": "2023-05-01T23:52:53.979315Z",
+        "metrics": {
+          "avgMetrics": {
+            "loss": 0.12083404511213303
+          },
+          "batchMetrics": []
+        },
+        "numInputs": 0,
+        "totalBatches": 700
+      },
+      "validation": null
+    },
+    {
+      "checkpoint": null,
+      "training": {
+        "endTime": "2023-05-01T23:53:01.097878Z",
+        "metrics": {
+          "avgMetrics": {
+            "loss": 0.12205076217651367
+          },
+          "batchMetrics": []
+        },
+        "numInputs": 0,
+        "totalBatches": 800
+      },
+      "validation": null
+    },
+    {
+      "checkpoint": null,
+      "training": {
+        "endTime": "2023-05-01T23:53:07.805116Z",
+        "metrics": {
+          "avgMetrics": {
+            "loss": 0.10544811189174652
+          },
+          "batchMetrics": []
+        },
+        "numInputs": 0,
+        "totalBatches": 900
+      },
+      "validation": null
+    },
+    {
+      "checkpoint": null,
+      "training": {
+        "endTime": "2023-05-01T23:53:10.301600Z",
+        "metrics": {
+          "avgMetrics": {
+            "loss": 0.08069463819265366
+          },
+          "batchMetrics": []
+        },
+        "numInputs": 0,
+        "totalBatches": 937
+      },
+      "validation": null
+    },
+    {
+      "checkpoint": null,
+      "training": null,
+      "validation": {
+        "endTime": "2023-05-01T23:53:14.742245Z",
+        "metrics": {
+          "avgMetrics": {
+            "accuracy": 0.9809912420382165,
+            "validation_loss": 0.0562775879247473
+          },
+          "batchMetrics": []
+        },
+        "numInputs": 0,
+        "totalBatches": 937
+      }
+    },
+    {
+      "checkpoint": {
+        "endTime": "2023-05-01T23:53:14.801320Z",
+        "metadata": {
+          "determined_version": "0.21.1",
+          "format": "pickle",
+          "framework": "torch-1.12.0+cpu",
+          "steps_completed": 937
+        },
+        "resources": {
+          "code/": "0",
+          "code/README.md": "1407",
+          "code/adaptive.yaml": "678",
+          "code/const.yaml": "434",
+          "code/data.py": "1443",
+          "code/dist_random.yaml": "725",
+          "code/distributed.yaml": "499",
+          "code/layers.py": "568",
+          "code/model_def.py": "3939",
+          "load_data.json": "2540",
+          "state_dict.pth": "14418394",
+          "trial_state.pkl": "110"
+        },
+        "state": "STATE_COMPLETED",
+        "totalBatches": 937,
+        "uuid": "2b3cd9dd-9ad5-4372-9eeb-95aded6dd3dd"
+      },
+      "training": null,
+      "validation": null
+    }
+  ]
+}

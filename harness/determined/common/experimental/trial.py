@@ -1,10 +1,11 @@
 import dataclasses
 import datetime
 import enum
+import logging
 from typing import Any, Dict, Iterable, List, Optional, Union
 
 from determined.common import api, util
-from determined.common.api import bindings, logs
+from determined.common.api import bindings, errors, logs
 from determined.common.experimental import checkpoint
 
 
@@ -125,6 +126,21 @@ class TrialReference:
     def __init__(self, trial_id: int, session: api.Session):
         self.id = trial_id
         self._session = session
+
+        try:
+            _ = self._get()
+        except errors.BadRequestException as e:
+            if isinstance(e, errors.NotFoundException):
+                logging.error(f"Trial {self.id} does not exist.")
+                raise
+            logging.warning(
+                f"Caught APIException when fetching trial. Continuing without validation: {e}"
+            )
+
+    def _get(self) -> bindings.trialv1Trial:
+        """GET the current state of the trial."""
+        resp = bindings.get_GetTrial(self._session, trialId=self.id)
+        return resp.trial
 
     def logs(
         self,
