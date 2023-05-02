@@ -12,8 +12,8 @@ from determined.common.declarative_argparse import Arg, Cmd
 
 from . import render
 
-TemplateClean = namedtuple("TemplateClean", ["name"])
-TemplateAll = namedtuple("TemplateAll", ["name", "config"])
+TemplateClean = namedtuple("TemplateClean", ["name", "workspace"])
+TemplateAll = namedtuple("TemplateAll", ["name", "workspace", "config"])
 
 
 def _parse_config(data: Dict[str, Any]) -> Any:
@@ -24,8 +24,11 @@ def _parse_config(data: Dict[str, Any]) -> Any:
 @authentication.required
 def list_template(args: Namespace) -> None:
     templates: List[TemplateAll] = []
+    w_names = cli.workspace.get_workspace_names(cli.setup_session(args))
+
     for tpl in bindings.get_GetTemplates(cli.setup_session(args)).templates:
-        templates.append(TemplateAll(tpl.name, _parse_config(tpl.config)))
+        w_name = w_names.get(tpl.workspaceId, "missing workspace")
+        templates.append(TemplateAll(tpl.name, w_name, _parse_config(tpl.config)))
     if args.details:
         render.render_objects(TemplateAll, templates, table_fmt="grid")
     else:
@@ -102,7 +105,7 @@ args_description = [
             Arg("template_name", help="template name"),
             Arg("template_file", type=FileType("r"),
                 help="config template file (.yaml)"),
-        ], deprecation_message="use other options offered by `det template` instead"),
+        ], deprecation_message="use the following options `det template create|update-config`."),
         Cmd("describe", describe_template,
             "describe config template", [
                 Arg("template_name", type=str, help="template name"),
