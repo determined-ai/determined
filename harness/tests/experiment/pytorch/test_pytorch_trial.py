@@ -134,8 +134,9 @@ class TestPyTorchTrial:
             "lr_scheduler_step_mode": pytorch.LRScheduler.StepMode.STEP_EVERY_BATCH.value,
             **self.hparams,
         }
-        self.checkpoint_and_check_metrics(pytorch_onevar_model.OneVarTrialWithLRScheduler,
-                                          updated_hparams, tmp_path, (100, 100))
+        self.checkpoint_and_check_metrics(
+            pytorch_onevar_model.OneVarTrialWithLRScheduler, updated_hparams, tmp_path, (100, 100)
+        )
 
     @pytest.mark.skipif(not torch.cuda.is_available(), reason="no gpu available")
     @pytest.mark.gpu
@@ -163,7 +164,9 @@ class TestPyTorchTrial:
 
         tm_a, tm_b = self.checkpoint_and_check_metrics(
             trial_class=pytorch_onevar_model.OneVarApexAMPTrial,
-            hparams=updated_hparams, tmp_path=tmp_path, steps=(1, 1)
+            hparams=updated_hparams,
+            tmp_path=tmp_path,
+            steps=(1, 1),
         )
 
         amp_metrics_test(trial_class, tm_a)
@@ -843,7 +846,11 @@ class TestPyTorchTrial:
         assert trial.legacy_counter.__dict__ == {"legacy_on_training_epochs_start_calls": 2}
 
     def checkpoint_and_check_metrics(
-        self, trial_class: pytorch_onevar_model.OneVarTrial, hparams: typing.Dict, tmp_path: pathlib.Path, steps: typing.Tuple[int, int] = (1, 1)
+        self,
+        trial_class: pytorch_onevar_model.OneVarTrial,
+        hparams: typing.Dict,
+        tmp_path: pathlib.Path,
+        steps: typing.Tuple[int, int] = (1, 1),
     ) -> typing.Tuple[
         typing.Sequence[typing.Dict[str, typing.Any]], typing.Sequence[typing.Dict[str, typing.Any]]
     ]:
