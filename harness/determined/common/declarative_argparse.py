@@ -33,7 +33,8 @@ def generate_aliases(spec: str) -> Tuple[str, List[str]]:
     return main, list(itertools.chain.from_iterable(prefixes))
 
 
-Subs = List[Union["Arg", "Cmd", "Group", "ArgGroup", "BoolOptArg"]]
+# ArgsDescription is a description of the subcommands and arguments for CLI arg parsing.
+ArgsDescription = List[Union["Arg", "Cmd", "Group", "ArgGroup", "BoolOptArg"]]
 
 
 def deprecation_warning(message: str, color: bool = True) -> str:
@@ -68,7 +69,7 @@ class Cmd:
         name: str,
         func: Optional[Callable],
         help_str: str,
-        subs: Subs,
+        subs: ArgsDescription,
         is_default: bool = False,
         deprecation_message: Optional[str] = None,
     ) -> None:
@@ -165,7 +166,7 @@ def help_func(parser: ArgumentParser) -> Callable:
     return inner_func
 
 
-def add_args(parser: ArgumentParser, description: Subs, depth: int = 0) -> None:
+def add_args(parser: ArgumentParser, description: ArgsDescription, depth: int = 0) -> None:
     """
     Populate the given parser with arguments, as specified by the
     description. The description is a list of Arg, Cmd, and Group objects.

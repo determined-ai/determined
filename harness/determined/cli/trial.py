@@ -14,7 +14,7 @@ from determined.cli import render
 from determined.cli.master import format_log_entry
 from determined.common import api, constants
 from determined.common.api import authentication, bindings
-from determined.common.declarative_argparse import Arg, Cmd, Group, Subs
+from determined.common.declarative_argparse import Arg, ArgsDescription, Cmd, Group
 from determined.common.experimental import Determined
 
 from .checkpoint import render_checkpoint
@@ -282,7 +282,7 @@ def create_json_file_in_dir(content: Any, file_path: str) -> None:
         json.dump(content, f)
 
 
-logs_args_description: Subs = [
+logs_args_description: ArgsDescription = [
     Arg(
         "-f",
         "--follow",
@@ -350,7 +350,7 @@ logs_args_description: Subs = [
     ),
 ]
 
-args_description: Subs = [
+args_description: ArgsDescription = [
     Cmd(
         "t|rial",
         None,

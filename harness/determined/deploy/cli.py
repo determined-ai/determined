@@ -1,12 +1,12 @@
 from determined.cli.top_arg_descriptions import deploy_cmd
-from determined.common.declarative_argparse import Arg, Subs
+from determined.common.declarative_argparse import Arg, ArgsDescription
 
 from .aws.cli import args_description as aws_args_description
 from .gcp.cli import args_description as gcp_args_description
 from .gke.cli import args_description as gke_args_description
 from .local.cli import args_description as local_args_description
 
-args_subs: Subs = [
+args_subs: ArgsDescription = [
     Arg("--no-preflight-checks", action="store_true", help="Disable preflight checks"),
     Arg(
         "--no-wait-for-master",

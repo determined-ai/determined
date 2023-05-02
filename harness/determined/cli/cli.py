@@ -50,7 +50,13 @@ from determined.cli.workspace import args_description as workspace_args_descript
 from determined.common import api, yaml
 from determined.common.api import authentication, bindings, certs
 from determined.common.check import check_not_none
-from determined.common.declarative_argparse import Arg, Cmd, Subs, add_args, generate_aliases
+from determined.common.declarative_argparse import (
+    Arg,
+    ArgsDescription,
+    Cmd,
+    add_args,
+    generate_aliases,
+)
 from determined.common.util import (
     chunks,
     debug_mode,
@@ -143,9 +149,9 @@ args_description = [
         [Arg("config_file", type=FileType("r"), help="experiment config file (.yaml)")],
     ),
     deploy_cmd,
-]  # type: Subs
+]  # type: ArgsDescription
 
-all_args_description: Subs = (
+all_args_description: ArgsDescription = (
     args_description
     + experiment_args_description
     + checkpoint_args_description
