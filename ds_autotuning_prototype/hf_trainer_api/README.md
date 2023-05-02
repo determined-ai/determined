@@ -1,23 +1,30 @@
-# Vision Transformer with HuggingFace Trainer API and Determined
+# HuggingFace Trainer API and Determined
 
-This example is adapted from the
-[VisionTransformer example in the Hugging Face examples](https://github.com/huggingface/transformers/tree/main/examples/pytorch/image-classification).
-It is intended to demonstrate how to use Determined callback with Hugging Face Trainer API to
+The examples in this directory demonstrate how to use Determined callback with Hugging Face Trainer API to
 enable Determined's distributed training, fault tolerance, checkpointing and metrics reporting.
 
-## Files
-
-- **image_classification.py**: The code from Hugging Face that (1) loads Vision Transformer from Model Hub; (2)
-  configure Trainer; (3) uses Determined callback.
-
-The key portion of the code passing the Determined callback to the Transformers Trainer starts on line 413:
+The main callback is located in `det_callback.py` and the associated `DetCallback` object is used
+in model code as in:
 
 ```
     det_callback = DetCallback(training_args, filter_metrics=["loss", "accuracy"], tokenizer=feature_extractor)
     trainer.add_callback(det_callback)
 ```
 
+The subdirectories contain two examples adapted from the official Hugging Face training scripts:
+
+- `image_classification/`: contains the [HF image classification trainer script](https://github.com/huggingface/transformers/tree/main/examples/pytorch/image-classification).
+- `language_modeling/`: contains the [HF causal language modeling trainer](https://github.com/huggingface/transformers/tree/main/examples/pytorch/language-modeling).
+
+## Script Files
+
+In both `image_classification/image_classification.py` and `language_modeling/run_clm.py`, one can
+find the training scripts which load a model from the HF Model Hub, configure the Trainer, and the
+Determined callback.
+
 ### Configuration Files
+
+Both subdirectories have each of the following configuration files:
 
 - **const.yaml**: Train the model with constant hyperparameter values for a given number of batches (or `max_steps`).
 - **const_epochs.yaml**: Train the model with constant hyperparameter values for a given number of epochs.
@@ -38,32 +45,43 @@ To learn more about DeepSpeed, see [DeepSpeed docs](https://deepspeed.readthedoc
 
 ## Data
 
-This example uses [the beans dataset](https://huggingface.co/datasets/beans).
+The image classification example uses [the beans dataset](https://huggingface.co/datasets/beans),
+while the language modeling example uses [the wikitext dataset](https://huggingface.co/datasets/wikitext)
 
 ## To Run
 
 If you have not yet installed Determined, installation instructions can be found
 under `docs/install-admin.html` or at https://docs.determined.ai/latest/index.html
 
-- To train Vision Transformer with Trainer API and Determined run the following command:
+In order to run the classification script, `cd` into `image_classification/` and run the following
+to use the `const.yaml` configk
 
 ```
-det experiment create const.yaml .
+det experiment create const.yaml . --include ../det_callback.py
 ```
 
-The other configuration can be run by specifying the appropriate configuration file in place
-of `const.yaml`.
+The language modeling script is run similarly: `cd` instead into `language_modeling/` before entering
+the above command.
 
-- To train Vision Transformer with Trainer API, DeepSpeed and Determined run the following command:
+Other configurations can be run by specifying the appropriate configuration file in place
+of `const.yaml`. For instance, to use DeepSpeed, run
 
 ```
-det experiment create deepspeed.yaml .
+det experiment create deepspeed.yaml . --include ../det_callback.py
 ```
 
-To select DeepSpeed optimization, modify line 35 in `deepspeed.yaml` to point to your preferred DeepSpeed configuration
-file. By default, `deepspeed.yaml` is using `ds_configs/ds_config_stage_1.json`.
+The deepspeed configuration can be changed by altering the `hyperparameters.deepspeed_config` entry
+of the `deepspeed.yaml` config, as well as the corresponding line in the `entrypoing`. The default
+configuration is `ds_configs/ds_config_stage_1.json`.
+
+One can also use Determined's DeepSpeed Autotune functionality to autotmatically optimize the
+DeepSpeed settings. From either subdirectory, run the following script:
+
+```
+python3 -m determined.pytorch.deepspeed.dsat deepspeed.yaml . --include ../det_callback.py
+```
 
 ## Results
 
-Training the model with the hyperparameter settings in `const.yaml` should yield
+Training the image classification model with the hyperparameter settings in `const.yaml` should yield
 a validation accuracy of ~96% after 3 epochs.
