@@ -89,15 +89,18 @@ const LogViewerSelect: React.FC<Props> = ({
 
   const handleChange = useCallback(
     (key: keyof Filters, caster: NumberConstructor | StringConstructor) => (value: SelectValue) => {
-      setFilters({ ...values, [key]: (value as Array<string>).map((item) => caster(item)) });
+      setFilters((prev) => ({
+        ...prev,
+        [key]: (value as Array<string>).map((item) => caster(item)),
+      }));
     },
-    [values],
+    [],
   );
 
   const handleSearch = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) =>
-      setFilters({ ...values, searchText: e.target.value }),
-    [values],
+      setFilters((prev) => ({ ...prev, searchText: e.target.value })),
+    [],
   );
 
   const handleReset = useCallback(() => {
