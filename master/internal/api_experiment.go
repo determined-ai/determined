@@ -387,20 +387,15 @@ func (a *apiServer) DeleteExperiments(
 func (a *apiServer) deleteExperiments(exps []*model.Experiment, userModel *model.User) ([]int,
 	error,
 ) {
-	var expIDs []int
-	for _, exp := range exps {
-		expIDs = append(expIDs, exp.ID)
-	}
-
 	taskSpec := *a.m.taskSpec
 
 	sema := make(chan struct{}, maxConcurrentDeletes)
 	wg := sync.WaitGroup{}
 	successfulExpIDs := make(chan int, len(exps))
 
-	for _, exp := range exps {
+	for _, e := range exps {
 		wg.Add(1)
-		go func() {
+		go func(exp *model.Experiment) {
 			sema <- struct{}{}
 			defer func() { <-sema }()
 			defer wg.Done()
@@ -431,7 +426,7 @@ func (a *apiServer) deleteExperiments(exps []*model.Experiment, userModel *model
 					exp.Config, checkpoints, true, agentUserGroup, userModel, nil,
 				)
 				if gcErr := a.m.system.MustActorOf(addr, ckptGCTask).AwaitTermination(); gcErr != nil {
-					logrus.WithError(err).Errorf("failed to gc checkpoints for experiment: %w", gcErr)
+					logrus.WithError(gcErr).Errorf("failed to gc checkpoints for experiment")
 					return
 				}
 			}
@@ -441,15 +436,15 @@ func (a *apiServer) deleteExperiments(exps []*model.Experiment, userModel *model
 				JobID: exp.JobID,
 			})
 			if err != nil {
-				logrus.WithError(err).Errorf("requesting cleanup of resource mananger resources: %w", err)
+				logrus.WithError(err).Errorf("requesting cleanup of resource mananger resources")
 				return
 			}
 			if err = <-resp.Err; err != nil {
-				logrus.WithError(err).Errorf("cleaning up resource mananger resources: %w", err)
+				logrus.WithError(err).Errorf("cleaning up resource mananger resources")
 				return
 			}
 			successfulExpIDs <- exp.ID
-		}()
+		}(e)
 	}
 	wg.Wait()
 
