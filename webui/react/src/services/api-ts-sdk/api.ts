@@ -730,6 +730,12 @@ export interface Trialv1Trial {
      * @memberof Trialv1Trial
      */
     checkpointCount?: number;
+    /**
+     * summary metrics
+     * @type {any}
+     * @memberof Trialv1Trial
+     */
+    summaryMetrics?: any;
 }
 /**
  * struct for the ids parameter.
