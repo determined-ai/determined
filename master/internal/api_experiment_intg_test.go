@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/uptrace/bun"
-	"json"
 	"sort"
 	"testing"
 	"time"
