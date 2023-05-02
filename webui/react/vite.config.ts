@@ -39,18 +39,19 @@ const devServerRedirects = (redirects: Record<string, string>): Plugin => {
         config = c;
       },
         configureServer(server) {
-            Object.entries(redirects).forEach(([from, to]) => {
-                server.middlewares.use(from, (req, res, next) => {
-                    if (req.originalUrl === `${config.base || ''}${from}`) {
-                        res.writeHead(302, {
-                            Location: `${config.base || ''}${to}`,
-                        });
-                        res.end();
-                    } else {
-                        next();
-                    }
+          Object.entries(redirects).forEach(([from, to]) => {
+            const fromUrl = `${config.base || ''}${from}`;
+            server.middlewares.use(fromUrl, (req, res, next) => {
+              if (req.originalUrl === fromUrl) {
+                res.writeHead(302, {
+                  Location: `${config.base || ''}${to}`,
                 });
+                res.end();
+              } else {
+                next();
+              }
             });
+          });
         },
         name: 'dev-server-redirects',
     });
