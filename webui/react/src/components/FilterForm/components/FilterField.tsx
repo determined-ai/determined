@@ -13,7 +13,15 @@ import { V1ColumnType, V1ProjectColumn } from 'services/api-ts-sdk';
 import ConjunctionContainer from './ConjunctionContainer';
 import css from './FilterField.module.scss';
 import { FilterFormStore } from './FilterFormStore';
-import { AvaliableOperators, Conjunction, FormField, FormGroup, FormKind, Operator } from './type';
+import {
+  AvaliableOperators,
+  Conjunction,
+  FormField,
+  FormGroup,
+  FormKind,
+  Operator,
+  ReadableOperator,
+} from './type';
 
 interface Props {
   index: number; // start from 0
@@ -35,6 +43,7 @@ const FilterField = ({
   columns,
 }: Props): JSX.Element => {
   const currentColumn = columns.find((c) => c.column === field.columnName);
+
   const [, drag, preview] = useDrag<{ form: FormField; index: number }, unknown, unknown>(() => ({
     item: { form: field, index },
     type: FormKind.Field,
@@ -73,7 +82,7 @@ const FilterField = ({
       const hoverIndex = index;
       if (dragIndex !== hoverIndex && isOverCurrent && canDrop) {
         formStore.removeChild(item.form.id);
-        formStore.addChild(parentId, item.form.kind, hoverIndex, item.form);
+        formStore.addChild(parentId, item.form.kind, { index: hoverIndex, item: item.form });
         item.index = hoverIndex;
       }
     },
@@ -99,12 +108,13 @@ const FilterField = ({
             const newCol = columns.find((c) => c.column === value?.toString() ?? '');
             if (newCol) {
               formStore.setFieldColumnName(field.id, newCol);
-            }
-            if (prevType !== newCol?.type) {
-              const defaultOperator: Operator =
-                AvaliableOperators[newCol?.type ?? V1ColumnType.UNSPECIFIED][0];
-              formStore.setFieldOperator(field.id, defaultOperator);
-              formStore.setFieldValue(field.id, null);
+
+              if (prevType !== newCol?.type) {
+                const defaultOperator: Operator =
+                  AvaliableOperators[newCol?.type ?? V1ColumnType.UNSPECIFIED][0];
+                formStore.setFieldOperator(field.id, defaultOperator);
+                formStore.setFieldValue(field.id, null);
+              }
             }
           }}>
           {columns.map((col) => (
@@ -122,7 +132,7 @@ const FilterField = ({
           }}>
           {AvaliableOperators[currentColumn?.type ?? V1ColumnType.UNSPECIFIED].map((op) => (
             <Option key={op} value={op}>
-              {op}
+              {ReadableOperator[op]}
             </Option>
           ))}
         </Select>
@@ -130,9 +140,9 @@ const FilterField = ({
           {(currentColumn?.type === V1ColumnType.TEXT ||
             currentColumn?.type === V1ColumnType.UNSPECIFIED) && (
             <Input
-              disabled={field.operator === Operator.isEmpty || field.operator === Operator.notEmpty}
+              disabled={field.operator === Operator.IsEmpty || field.operator === Operator.NotEmpty}
               value={
-                field.operator === Operator.isEmpty || field.operator === Operator.notEmpty
+                field.operator === Operator.IsEmpty || field.operator === Operator.NotEmpty
                   ? undefined
                   : field.value?.toString()
               }

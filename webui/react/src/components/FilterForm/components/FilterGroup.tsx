@@ -87,7 +87,7 @@ const FilterGroup = ({
             return (diffOffset?.y ?? 0) > 0 ? group.children.length : 0;
           }
         })();
-        formStore.addChild(group.id, item.form.kind, insertIndex, item.form);
+        formStore.addChild(group.id, item.form.kind, { index: insertIndex, item: item.form });
         item.index = hoverIndex;
       }
     },
@@ -95,13 +95,8 @@ const FilterGroup = ({
 
   const menuItems: DropDownProps['menu'] = useMemo(() => {
     const onItemClick: MenuProps['onClick'] = (e) => {
-      if (e.key === FormKind.Field) {
-        formStore.addChild(group.id, FormKind.Field, group.children.length);
-        debounce(100, () => {
-          scrollBottomRef?.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-        })();
-      } else if (e.key === FormKind.Group) {
-        formStore.addChild(group.id, FormKind.Group, group.children.length);
+      if (e.key === FormKind.Field || e.key === FormKind.Group) {
+        formStore.addChild(group.id, e.key);
         debounce(100, () => {
           scrollBottomRef?.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
         })();
@@ -118,7 +113,7 @@ const FilterGroup = ({
       },
     ];
     return { items: items, onClick: onItemClick };
-  }, [formStore, group.children.length, group.id, level]);
+  }, [formStore, group.id, level]);
 
   if (level === 0 && group.children.length === 0) {
     // return empty div if there's nothing to show
@@ -139,16 +134,10 @@ const FilterGroup = ({
       <div className={`${css.groupCard} ${css[`level${level}`]}`} ref={preview}>
         <div className={css.header}>
           <div>
-            {level === 0 ? (
-              <div>Show experiments…</div>
+            {group.conjunction === Conjunction.And ? (
+              <div>All of the following conditions are true</div>
             ) : (
-              <>
-                {group.conjunction === Conjunction.And ? (
-                  <div>All of the following conditions are true</div>
-                ) : (
-                  <div>Some of the following conditions are true</div>
-                )}
-              </>
+              <div>Some of the following conditions are true</div>
             )}
           </div>
           {level > 0 && (

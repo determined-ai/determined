@@ -22,7 +22,7 @@ const FilterForm = ({ formStore, columns }: Props): JSX.Element => {
   const isButtonDisabled = data.filterGroup.children.length > ITEM_LIMIT;
 
   const onAddItem = (formKind: FormKind) => {
-    formStore.addChild(data.filterGroup.id, formKind, data.filterGroup.children.length);
+    formStore.addChild(data.filterGroup.id, formKind);
     debounce(100, () => {
       scrollBottomRef?.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
     })();
@@ -30,11 +30,14 @@ const FilterForm = ({ formStore, columns }: Props): JSX.Element => {
 
   return (
     <div className={css.base}>
-      <Toggle
-        checked={data.showArchived}
-        label="Show Archived"
-        onChange={() => formStore.setArchivedValue(!data.showArchived)}
-      />
+      <div className={css.header}>
+        <div>Show experiments…</div>
+        <Toggle
+          checked={data.showArchived}
+          label="Show Archived"
+          onChange={() => formStore.setArchivedValue(!data.showArchived)}
+        />
+      </div>
       <div className={css.filter}>
         <FilterGroup
           columns={columns}
@@ -61,7 +64,7 @@ const FilterForm = ({ formStore, columns }: Props): JSX.Element => {
         </Button>
       </div>
       <div style={{ maxWidth: '500px', wordWrap: 'break-word' }}>
-        {JSON.stringify(formStore.json)}
+        {JSON.stringify(formStore.jsonWithoutId)}
       </div>
     </div>
   );

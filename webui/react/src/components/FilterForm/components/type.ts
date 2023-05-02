@@ -32,6 +32,19 @@ export type FilterFormSet = {
   showArchived: boolean;
 };
 
+type FormFieldWithoutId = Omit<FormField, 'id'>;
+
+type FormGroupWithoutId = {
+  readonly kind: typeof FormKind.Group;
+  conjunction: Conjunction;
+  children: (FormGroupWithoutId | FormFieldWithoutId)[];
+};
+
+export type FilterFormSetWithoutId = {
+  filterGroup: FormGroupWithoutId;
+  showArchived: boolean;
+};
+
 export const Conjunction = {
   And: 'and',
   Or: 'or',
@@ -40,46 +53,57 @@ export const Conjunction = {
 export type Conjunction = ValueOf<typeof Conjunction>;
 
 export const Operator = {
-  contains: 'contains',
-  eq: '=',
-  greater: '>',
-  greaterEq: '>=',
-  is: 'is',
-  isEmpty: 'is empty',
-  isNot: 'is not',
-  less: '<',
-  lessEq: '<=',
-  notContain: 'not contains',
-  notEmpty: 'not empty',
-  notEq: '!=',
+  Contains: 'contains',
+  Eq: '=',
+  Greater: '>',
+  GreaterEq: '>=',
+  IsEmpty: 'isEmpty',
+  Less: '<',
+  LessEq: '<=',
+  NotContains: 'notContains',
+  NotEmpty: 'notEmpty',
+  NotEq: '!=',
 } as const;
 
 export type Operator = ValueOf<typeof Operator>;
 
+export const ReadableOperator: Record<Operator, string> = {
+  [Operator.Contains]: 'contains',
+  [Operator.Eq]: '=',
+  [Operator.Greater]: '>',
+  [Operator.GreaterEq]: '>=',
+  [Operator.IsEmpty]: 'is empty',
+  [Operator.Less]: '<',
+  [Operator.LessEq]: '<=',
+  [Operator.NotContains]: 'not contains',
+  [Operator.NotEmpty]: 'not empty',
+  [Operator.NotEq]: '!=',
+} as const;
+
 export const AvaliableOperators = {
   [V1ColumnType.NUMBER]: [
-    Operator.eq,
-    Operator.notEq,
-    Operator.greater,
-    Operator.greaterEq,
-    Operator.less,
-    Operator.lessEq,
+    Operator.Eq,
+    Operator.NotEq,
+    Operator.Greater,
+    Operator.GreaterEq,
+    Operator.Less,
+    Operator.LessEq,
   ],
   [V1ColumnType.TEXT]: [
-    Operator.contains,
-    Operator.notContain,
-    Operator.isEmpty,
-    Operator.notEmpty,
-    Operator.is,
-    Operator.isNot,
+    Operator.Contains,
+    Operator.NotContains,
+    Operator.IsEmpty,
+    Operator.NotEmpty,
+    Operator.Eq,
+    Operator.NotEq,
   ],
   [V1ColumnType.DATE]: [
     // no Operator.eq for date because date should be used with range
-    Operator.notEq,
-    Operator.greater,
-    Operator.greaterEq,
-    Operator.less,
-    Operator.lessEq,
+    Operator.NotEq,
+    Operator.Greater,
+    Operator.GreaterEq,
+    Operator.Less,
+    Operator.LessEq,
   ],
   [V1ColumnType.UNSPECIFIED]: Object.values(Operator), // show all of operators
 } as const;

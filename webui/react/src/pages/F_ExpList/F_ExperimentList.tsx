@@ -3,6 +3,7 @@ import { observable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
+import TableFilter from 'components/FilterForm/TableFilter';
 import Page from 'components/Page';
 import useResize from 'hooks/useResize';
 import { useSettings } from 'hooks/useSettings';
@@ -235,6 +236,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
           <Error />
         ) : (
           <>
+            <TableFilter loadableColumns={projectColumns} />
             <TableActionBar
               experiments={experiments}
               filters={experimentFilters}

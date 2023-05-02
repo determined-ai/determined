@@ -515,7 +515,3 @@ export interface SearchRolesAssignableToScopeParams {
 export interface GetProjectsByUserActivityParams {
   limit?: number;
 }
-
-export interface GetProjectColumnsParams {
-  projectId: number;
-}
