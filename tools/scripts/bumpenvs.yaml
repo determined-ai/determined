@@ -168,9 +168,9 @@ us_east_2_agent_ami: {new: ami-058ac473ddc822489, old: ami-0088f8c6e981955e2}
 us_east_2_bastion_ami: {new: ami-0bafa3699418551cd, old: ami-0cbea92f2377277a4}
 us_east_2_master_ami: {new: ami-0bafa3699418551cd, old: ami-0cbea92f2377277a4}
 us_gov_east_1_agent_ami: {new: ami-0d8b56ee7e55aa239, old: ami-0729480cbea1fed69}
-us_gov_east_1_master_ami: {new: ami-0cd066f69b98b61b2, old: ami-0b36c558c9dd26c75}
+us_gov_east_1_master_ami: {new: ami-01d71f6009765d511, old: ami-0cd066f69b98b61b2}
 us_gov_west_1_agent_ami: {new: ami-04511f8b20b58cb11, old: ami-02d16d4cd37ae0b7d}
-us_gov_west_1_master_ami: {new: ami-0cbd5dbd94f397bdd, old: ami-0f1289f37e46c1eff}
+us_gov_west_1_master_ami: {new: ami-0b64b04df085adbf1, old: ami-0cbd5dbd94f397bdd}
 us_west_2_agent_ami: {new: ami-0f095c663126efe04, old: ami-004cc7841b2b1216c}
 us_west_2_bastion_ami: {new: ami-0ceeab680f529cc36, old: ami-0d31d7c9fc9503726}
 us_west_2_master_ami: {new: ami-0ceeab680f529cc36, old: ami-0d31d7c9fc9503726}
