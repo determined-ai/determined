@@ -46,7 +46,7 @@ const LogViewerSelect: React.FC<Props> = ({
   showSearch,
   values,
 }: Props) => {
-  const [filters, setFilters] = useState<Filters>({});
+  const [filters, setFilters] = useState<Filters>(values);
 
   const selectOptions = useMemo(() => {
     const { agentIds, allocationIds, containerIds, rankIds } = options;
@@ -132,18 +132,14 @@ const LogViewerSelect: React.FC<Props> = ({
     <>
       <Space>
         {showSearch && (
-          <Input
-            placeholder="Search Logs..."
-            value={filters.searchText || values.searchText}
-            onChange={handleSearch}
-          />
+          <Input placeholder="Search Logs..." value={filters.searchText} onChange={handleSearch} />
         )}
         {moreThanOne.allocationIds && (
           <Select
             disableTags
             mode="multiple"
             placeholder={`All ${LABELS.allocationIds}`}
-            value={filters.allocationIds || values.allocationIds}
+            value={filters.allocationIds}
             width={150}
             onChange={handleChange('allocationIds', String)}>
             {selectOptions?.allocationIds?.map((id, index) => (
@@ -158,7 +154,7 @@ const LogViewerSelect: React.FC<Props> = ({
             disableTags
             mode="multiple"
             placeholder={`All ${LABELS.agentIds}`}
-            value={filters.agentIds || values.agentIds}
+            value={filters.agentIds}
             width={150}
             onChange={handleChange('agentIds', String)}>
             {selectOptions?.agentIds?.map((id, index) => (
@@ -173,7 +169,7 @@ const LogViewerSelect: React.FC<Props> = ({
             disableTags
             mode="multiple"
             placeholder={`All ${LABELS.containerIds}`}
-            value={filters.allocationIds || values.containerIds}
+            value={filters.containerIds}
             width={150}
             onChange={handleChange('containerIds', String)}>
             {selectOptions?.containerIds?.map((id, index) => (
@@ -188,7 +184,7 @@ const LogViewerSelect: React.FC<Props> = ({
             disableTags
             mode="multiple"
             placeholder={`All ${LABELS.rankIds}`}
-            value={filters.rankIds || values.rankIds}
+            value={filters.rankIds}
             width={150}
             onChange={handleChange('rankIds', Number)}>
             {selectOptions?.rankIds?.map((id, index) => (
@@ -202,7 +198,7 @@ const LogViewerSelect: React.FC<Props> = ({
           disableTags
           mode="multiple"
           placeholder={`All ${LABELS.levels}`}
-          value={filters.levels || values.levels}
+          value={filters.levels}
           width={150}
           onChange={handleChange('levels', String)}>
           {selectOptions?.levels.map((level) => (
