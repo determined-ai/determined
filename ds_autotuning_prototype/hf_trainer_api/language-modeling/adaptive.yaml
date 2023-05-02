@@ -1,26 +1,34 @@
-name: language-modeling-clm-trainer deepspeed
+name: vision transformer adaptive
 debug: false
 environment:
   environment_variables:
     - NCCL_DEBUG=INFO
     # You may need to modify this to match your network configuration.
     - NCCL_SOCKET_IFNAME=ens,eth,ib
-  image:
-    gpu: determinedai/environments:cuda-11.3-pytorch-1.10-deepspeed-0.8.3-gpu-0.21.2
-    cpu: determinedai/environments:cuda-11.3-pytorch-1.10-deepspeed-0.8.3-gpu-0.21.2
 resources:
   slots_per_trial: 2
 searcher:
-  name: single
+  name: adaptive_asha
   max_length:
     batches: 100
+  max_trials: 64
+  max_rungs: 4
+  divisor: 4
   metric: eval_loss
 hyperparameters:
-  deepspeed_config: ds_configs/ds_config_stage_1.json
   training_arguments:
-    learning_rate: 1e-5
+    learning_rate:
+      type: log
+      base: 10
+      minval: -5
+      maxval: -2
+    adam_epsilon:
+      type: log
+      base: 10
+      minval: -10
+      maxval: -7
 entrypoint: >-
-  python -m determined.launch.deepspeed
+  python -m determined.launch.torch_distributed
   python run_clm.py 
   --model_name_or_path gpt2 
   --dataset_name wikitext 
@@ -37,9 +45,6 @@ entrypoint: >-
   --seed 1337
   --save_strategy steps
   --save_steps 20
-  --deepspeed ds_configs/ds_config_stage_1.json
   --per_device_train_batch_size 8 
   --per_device_eval_batch_size 8
-  --cache_dir ./garrettgoon/cache_dir
-# TODO: Delete the cache_dir field; just using them for fast testing.
 max_restarts: 0
