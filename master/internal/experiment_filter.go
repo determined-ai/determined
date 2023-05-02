@@ -316,29 +316,22 @@ func (e experimentFilter) toSQL(q *bun.SelectQuery,
 		if e.Location == nil ||
 			*e.Location != projectv1.LocationType_LOCATION_TYPE_HYPERPARAMETERS.String() {
 			col, err := columnNameToSQL(e.ColumnName, e.Location, e.Type)
-			if *e.Operator == contains || *e.Operator == doesNotContain { //nolint: gocritic
-				switch *e.Operator {
-				case contains:
-					if c != nil && *c == or {
-						q.WhereOr("? LIKE ?", bun.Safe(col), fmt.Sprintf("%%%s%%", *e.Value))
-					} else {
-						q.Where("? LIKE ?", bun.Safe(col), fmt.Sprintf("%%%s%%", *e.Value))
-					}
-				case doesNotContain:
-					if c != nil && *c == or {
-						q.WhereOr("? NOT LIKE ?", bun.Safe(col), fmt.Sprintf("%%%s%%", *e.Value))
-					} else {
-						q.Where("? NOT LIKE ?", bun.Safe(col), fmt.Sprintf("%%%s%%", *e.Value))
-					}
-				default:
-					return q, fmt.Errorf("invalid contains operator %v", *e.Operator)
+			switch *e.Operator {
+			case contains:
+				if c != nil && *c == or {
+					q.WhereOr("? LIKE ?", bun.Safe(col), fmt.Sprintf("%%%s%%", *e.Value))
+				} else {
+					q.Where("? LIKE ?", bun.Safe(col), fmt.Sprintf("%%%s%%", *e.Value))
 				}
-				if err != nil {
-					return q, err
+			case doesNotContain:
+				if c != nil && *c == or {
+					q.WhereOr("? NOT LIKE ?", bun.Safe(col), fmt.Sprintf("%%%s%%", *e.Value))
+				} else {
+					q.Where("? NOT LIKE ?", bun.Safe(col), fmt.Sprintf("%%%s%%", *e.Value))
 				}
-			} else if *e.Operator == empty || *e.Operator == notEmpty {
+			case empty, notEmpty:
 				q = q.Where("? ?", bun.Safe(col), bun.Safe(oSQL))
-			} else {
+			default:
 				if c != nil && *c == or {
 					q.WhereOr("? ? ?", bun.Safe(col),
 						bun.Safe(oSQL), *e.Value)
