@@ -199,8 +199,7 @@ func (a *apiServer) isNTSCPermittedToLaunch(
 		}
 	} else {
 		if err := command.AuthZProvider.Get().CanCreateNSC(
-			ctx, *user, workspaceID,
-		); err != nil {
+			ctx, *user, workspaceID); err != nil {
 			return apiutils.MapAndFilterErrors(err, nil, nil)
 		}
 	}
@@ -225,7 +224,7 @@ func (a *apiServer) LaunchNotebook(
 		spec.Metadata.WorkspaceID = model.AccessScopeID(req.WorkspaceId)
 	}
 
-	if err = a.isNTSCPermittedToLaunch(ctx, spec); err != nil { // TODO CAROLINA
+	if err = a.isNTSCPermittedToLaunch(ctx, spec); err != nil {
 		return nil, err
 	}
 
