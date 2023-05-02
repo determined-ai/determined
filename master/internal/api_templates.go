@@ -54,18 +54,26 @@ func (a *apiServer) PostTemplate(
 	if req.Template.WorkspaceId != 0 {
 		workspaceID = int(req.Template.WorkspaceId)
 	}
-	w := model.Workspace{}
 	notFoundErr := status.Errorf(codes.NotFound, "workspace (%d) not found", workspaceID)
-	if err = db.Bun().NewSelect().Model(w).
-		Where("id = ? AND archived = false", workspaceID).Scan(ctx); err != nil {
+	var exists bool
+	err = db.Bun().NewSelect().ColumnExpr("1").Table("workspaces").
+		Where("id = ?", workspaceID).
+		Where("archived = false").
+		Limit(1).
+		Scan(ctx, &exists)
+	if err != nil {
+		return nil, errors.Wrapf(err, "error checking workspace %d", workspaceID)
+	}
+	if !exists {
 		return nil, notFoundErr
 	}
-	res := &apiv1.PostTemplateResponse{}
+
+	res := apiv1.PostTemplateResponse{Template: &templatev1.Template{}}
 	switch err := a.m.db.QueryProto(
 		"put_template", res.Template, req.Template.Name, config, workspaceID,
 	); err {
 	case nil:
-		return res, nil
+		return &res, nil
 	default:
 		return nil, status.Errorf(codes.Internal, "error posting template %s to db: %s",
 			req.Template.Name, err.Error())
