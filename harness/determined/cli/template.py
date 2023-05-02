@@ -4,8 +4,8 @@ from typing import Any, Dict, List
 
 from termcolor import colored
 
-from determined.common import util, yaml
 from determined import cli
+from determined.common import util, yaml
 from determined.common.api import authentication, bindings
 from determined.common.declarative_argparse import Arg, Cmd
 
