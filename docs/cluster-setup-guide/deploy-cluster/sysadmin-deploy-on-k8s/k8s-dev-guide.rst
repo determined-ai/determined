@@ -60,8 +60,8 @@ dependencies:
 .. code:: bash
 
    apt-get update
-   DEBIAN_FRONTEND=noninteractive apt-get install -y software-properties-common 
-   DEBIAN_FRONTEND=noninteractive add-apt-repository -y ppa:deadsnakes/ppa 
+   DEBIAN_FRONTEND=noninteractive apt-get install -y software-properties-common
+   DEBIAN_FRONTEND=noninteractive add-apt-repository -y ppa:deadsnakes/ppa
    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends git-all python3.8-dev python3.8-venv default-jre curl build-essential libkrb5-dev unzip jq
 
    # Download and install golang 1.15
@@ -94,8 +94,9 @@ In addition to installing these packages, ``.bashrc`` needs to be updated with n
    export PATH="$PATH:$HOME/.local/bin"
 
 After completing these steps, clone the Determined repository and create and activate a virtual
-environment for Determined. To create a virtual environment, you may use conda or python3-venv. 
-Here is an example for cloning the repository, then creating and activating an environment with python3-venv:
+environment for Determined. To create a virtual environment, you may use conda or python3-venv. Here
+is an example for cloning the repository, then creating and activating an environment with
+python3-venv:
 
 .. code:: bash
 
@@ -110,16 +111,18 @@ Here is an example for cloning the repository, then creating and activating an e
  Prepare to run Determined Master
 **********************************
 
-Once the dependencies are installed, you will need to prepare the repository to run `devcluster`, 
-a tool for running Determined. First, enter the Determined reposiroty and run:
+Once the dependencies are installed, you will need to prepare the repository to run `devcluster`, a
+tool for running Determined. First, enter the Determined reposiroty and run:
 
 .. code:: bash
-   
+
    ``make all``
 
-Once that has finished, create a new file at ``~/.devcluster.yaml`` and populate it with the following options:
+Once that has finished, create a new file at ``~/.devcluster.yaml`` and populate it with the
+following options:
 
 .. code:: bash
+
    startup_input: "p"
 
    cwd: /root/determined
@@ -157,13 +160,13 @@ Once that has finished, create a new file at ``~/.devcluster.yaml`` and populate
             namespace: default
             max_slots_per_pod: 1
             master_service_name: determined-master-service-eliu-deployment
-               
+
          log:
             level: debug
          root: tools/build
 
-We are now ready to build and run the Determined Master! From the Determined repo, run ``devcluster --no-guess-host``
-to build and run the Master.
+We are now ready to build and run the Determined Master! From the Determined repo, run ``devcluster
+--no-guess-host`` to build and run the Master.
 
 ************
  Next Steps
