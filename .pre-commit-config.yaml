@@ -79,6 +79,8 @@ repos:
     rev: 3.9.2
     hooks:
       - id: flake8
+        exclude: ^(?!harness/).*|(harness/tests/experiment/fixtures/ancient-checkpoints/).*
+
 
   # - repo: https://github.com/jumanjihouse/pre-commit-hooks
   #   rev: 3.0.0
