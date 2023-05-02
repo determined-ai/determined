@@ -116,7 +116,7 @@ const TimeAgo: React.FC<Props> = ({
   }, [updateInterval]);
 
   return (
-    <Tooltip title={dayjs(milliseconds).format(tooltipFormat)}>
+    <Tooltip content={dayjs(milliseconds).format(tooltipFormat)}>
       <div className={classes.join(' ')}>{durationString}</div>
     </Tooltip>
   );

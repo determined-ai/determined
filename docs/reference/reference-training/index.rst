@@ -6,6 +6,9 @@
  Python Modules APIs
 *********************
 
+.. meta::
+   :description: Discover reference guides and resources for Python modules APIs and the experiment configuration YAML file.
+
 -  :doc:`det <training/api-det-reference>`
 -  :doc:`det.core <training/api-core-reference>`
 -  :doc:`det.pytorch <training/api-pytorch-reference>`

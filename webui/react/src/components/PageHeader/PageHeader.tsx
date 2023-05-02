@@ -35,7 +35,7 @@ const PageHeader: React.FC<Props> = (props: Props) => {
         <Breadcrumb.Item>
           <Link path={route.path}>
             {route.breadcrumbTooltip ? (
-              <Tooltip title={route.breadcrumbTooltip}>
+              <Tooltip content={route.breadcrumbTooltip}>
                 <span>{route.breadcrumbName}</span>
               </Tooltip>
             ) : (

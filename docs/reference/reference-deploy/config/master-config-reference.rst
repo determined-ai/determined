@@ -95,7 +95,7 @@ values:
 A list of environment variables that will be set in every task container. Each element of the list
 should be a string of the form ``NAME=VALUE``. See :ref:`environment-variables` for more details.
 Environment variables specified in experiment config will override default values specified here.
-Users can customize environment variables for CUDA (NVIDIA GPU), CPU, and ROCm (AMD GPU) tasks
+You can customize environment variables for CUDA (NVIDIA GPU), CPU, and ROCm (AMD GPU) tasks
 differently by specifying a dict with ``cuda`` (``gpu`` prior to 0.17.6), ``cpu``, and ``rocm``
 keys.
 
@@ -659,10 +659,10 @@ tools that summarize usage by each WCKey/Project value.
  ``resource_pools``
 ********************
 
-A list of resource pools. A resource pool is a collection of identical computational resources.
-Users can specify which resource pool a job should be assigned to when the job is submitted. Refer
-to the documentation on :ref:`resource-pools` for more information. Defaults to a resource pool with
-a name ``default``.
+A list of resource pools. A resource pool is a collection of identical computational resources. You
+can specify which resource pool a job should be assigned to when the job is submitted. Refer to the
+documentation on :ref:`resource-pools` for more information. Defaults to a resource pool with a name
+``default``.
 
 ``pool_name``
 =============

@@ -112,8 +112,10 @@ the desired number of trials is reached.
 See the difference in asynchronous vs. synchronous promotions in the two animated GIFs below:
 
 .. image:: /assets/images/sha.gif
+   :alt: Determined AI successive halving (SHA) animation showing how each rung waits to complete before performing promotions.
 
 .. image:: /assets/images/asha.gif
+   :alt: Determined AI asynchronous successive halving (ASHA) animation showing how each trials are continuously added to the bottom rung until the desired number is reached.
 
 Adaptive over ASHA
 ==================

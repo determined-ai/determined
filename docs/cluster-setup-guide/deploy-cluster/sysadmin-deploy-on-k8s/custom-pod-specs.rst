@@ -5,7 +5,7 @@
 #################
 
 In a :ref:`Determined cluster running on Kubernetes <determined-on-kubernetes>`, tasks (e.g.,
-experiments, notebooks) are executed by launching one or more Kubernetes pods. Users can customize
+experiments, notebooks) are executed by launching one or more Kubernetes pods. You can customize
 these pods by providing custom `pod specs
 <https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.19/#pod-v1-core>`__. Common use
 cases include assigning pods to specific nodes, specifying additional volume mounts, and attaching
@@ -35,7 +35,7 @@ some of the fields for the ``determined-container``.
 
 Determined provides two ways to configure pod specs. When Determined is installed, the system
 administrator can configure pod specs that are used by default for all GPU and CPU tasks. In
-addition, users can specify a custom pod spec for individual tasks (e.g., for an experiment by
+addition, you can specify a custom pod spec for individual tasks (e.g., for an experiment by
 specifying ``environment.pod_spec`` in the :ref:`experiment configuration
 <experiment-config-reference>`). If a custom pod spec is specified for a task, it overrides the
 default pod spec (if any).

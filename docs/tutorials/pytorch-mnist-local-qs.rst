@@ -5,7 +5,7 @@
 #########################################
 
 .. meta::
-   :description: Learn how to integrate the PyTorch MNIST model into Determined AI using only a single CPU or GPU.
+   :description: Learn how to run your first experiment in Determined by working with the PyTorch MNIST model. You'll need only a single CPU or GPU.
    :keywords: PyTorch API,MNIST,model developer,quickstart
 
 In this tutorial, we’ll show you how to integrate a training example with the Determined
