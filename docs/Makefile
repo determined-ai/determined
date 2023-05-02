@@ -74,7 +74,7 @@ pre-publish:
 publish: pre-publish
 	$(MAKE) -C deploy publish
 
-live: build/stamp
+live: build/sp-html.stamp
 	python3 live.py
 
 RSTFMT_WIDTH = 100

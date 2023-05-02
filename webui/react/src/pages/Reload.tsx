@@ -7,20 +7,18 @@
  * to show up on experiment 2 page.
  */
 
-import queryString from 'query-string';
 import { useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 const Reload: React.FC = () => {
   const navigate = useNavigate();
-  const location = useLocation();
+  const [searchParams] = useSearchParams();
 
   useEffect(() => {
-    const queryParams = queryString.parse(location.search);
-    if (queryParams.path) {
-      navigate(queryParams.path as string, { replace: true });
+    if (searchParams.has('path')) {
+      navigate(searchParams.get('path') as string, { replace: true });
     }
-  }, [location.search, navigate]);
+  }, [searchParams, navigate]);
 
   return null;
 };

@@ -1,6 +1,5 @@
-import queryString from 'query-string';
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 
 import Badge, { BadgeType } from 'components/Badge';
 import PageMessage from 'components/PageMessage';
@@ -22,18 +21,15 @@ type Params = {
   taskType: string;
 };
 
-interface Queries {
-  eventUrl?: string;
-  serviceAddr?: string;
-}
-
 const Wait: React.FC = () => {
   const {
     actions: { showChrome, hideChrome },
   } = useUI();
+  const [searchParams] = useSearchParams();
   const { taskType } = useParams<Params>();
   const [waitStatus, setWaitStatus] = useState<WaitStatus>();
-  const { eventUrl, serviceAddr }: Queries = queryString.parse(location.search);
+  const eventUrl = searchParams.get('eventUrl');
+  const serviceAddr = searchParams.get('serviceAddr');
 
   const capitalizedTaskType = capitalize(taskType ?? '');
   const isLoading = !waitStatus || !terminalCommandStates.has(waitStatus.state);
