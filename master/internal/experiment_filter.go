@@ -184,10 +184,6 @@ func hpToSQL(c string, filterColumnType *string, filterValue *interface{},
 				WHEN config->'hyperparameters'->?->>'type' = 'categorical' THEN config->'hyperparameters'->?->>'vals' ?
 				ELSE false
 			 END)`
-			if fc != nil && *fc == or {
-				return q.WhereOr(queryString, queryArgs...), nil
-			}
-			return q.Where(queryString, queryArgs...), nil
 		case contains:
 			queryString = `(CASE 
 				WHEN config->'hyperparameters'->?->>'type' = 'const' THEN config->'hyperparameters'->?->>'val' LIKE
@@ -197,10 +193,6 @@ func hpToSQL(c string, filterColumnType *string, filterValue *interface{},
 			queryArgs = append(queryArgs, bun.Safe(hpQuery),
 				bun.Safe(hpQuery), fmt.Sprintf(`%%%s%%`, queryValue),
 				bun.Safe(hpQuery), bun.Safe(hpQuery), queryValue)
-			if fc != nil && *fc == or {
-				return q.WhereOr(queryString, queryArgs...), nil
-			}
-			return q.Where(queryString, queryArgs...), nil
 		case doesNotContain:
 			queryString = `(CASE 
 				WHEN config->'hyperparameters'->?->>'type' = 'const' THEN config->'hyperparameters'->?->>'val' ?
@@ -210,17 +202,9 @@ func hpToSQL(c string, filterColumnType *string, filterValue *interface{},
 			queryArgs = append(queryArgs, bun.Safe(hpQuery),
 				bun.Safe(hpQuery), `NOT LIKE %`+fmt.Sprintf(`%v`, queryValue)+`%`,
 				bun.Safe(hpQuery), bun.Safe(hpQuery), queryValue)
-			if fc != nil && *fc == or {
-				return q.WhereOr(queryString, queryArgs...), nil
-			}
-			return q.Where(queryString, queryArgs...), nil
 		default:
 			queryArgs = append(queryArgs, bun.Safe(hpQuery), bun.Safe(hpQuery), bun.Safe(oSQL), queryValue)
 			queryString = `(CASE WHEN config->'hyperparameters'->?->>'type' = 'const' THEN config->'hyperparameters'->?->>'val' ? ? ELSE false END)`
-			if fc != nil && *fc == or {
-				return q.WhereOr(queryString, queryArgs...), nil
-			}
-			return q.Where(queryString, queryArgs...), nil
 		}
 	case projectv1.ColumnType_COLUMN_TYPE_DATE.String():
 		switch o {
@@ -233,19 +217,12 @@ func hpToSQL(c string, filterColumnType *string, filterValue *interface{},
 				WHEN config->'hyperparameters'->?->>'type' = 'categorical' THEN config->'hyperparameters'->?->>'vals' ?
 				ELSE false
 			END)`
-			if fc != nil && *fc == or {
-				return q.WhereOr(queryString, queryArgs...), nil
-			}
 		case contains:
 			queryArgs = append(queryArgs, bun.Safe(hpQuery), bun.Safe(hpQuery), queryValue)
 			queryString = `(CASE
 					WHEN config->'hyperparameters'->?->>'type' = 'categorical' THEN (config->'hyperparameters'->?->>'vals')::jsonb ?? ?
 					ELSE false
 				 END)`
-			if fc != nil && *fc == or {
-				return q.WhereOr(queryString, queryArgs...), nil
-			}
-			return q.Where(queryString, queryArgs...), nil
 		case doesNotContain:
 			queryArgs = append(queryArgs, bun.Safe(hpQuery), bun.Safe(hpQuery), queryValue)
 			queryString = `
@@ -253,10 +230,6 @@ func hpToSQL(c string, filterColumnType *string, filterValue *interface{},
 					WHEN config->'hyperparameters'->?->>'type' = 'categorical' THEN (config->'hyperparameters'->?->>'val')::jsonb ?? ?) IS NOT TRUE
 					ELSE false
 				 END)`
-			if fc != nil && *fc == or {
-				return q.WhereOr(queryString, queryArgs...), nil
-			}
-			return q.Where(queryString, queryArgs...), nil
 		default:
 			queryArgs = append(queryArgs, bun.Safe(hpQuery),
 				bun.Safe(hpQuery), bun.Safe(oSQL),
@@ -265,10 +238,6 @@ func hpToSQL(c string, filterColumnType *string, filterValue *interface{},
 				WHEN config->'hyperparameters'->?->>'type' = 'const' THEN config->'hyperparameters'->?->>'val' ? ?
 				ELSE false
 			 END)`
-			if fc != nil && *fc == or {
-				return q.WhereOr(queryString, queryArgs...), nil
-			}
-			return q.Where(queryString, queryArgs...), nil
 		}
 	default:
 		switch o {
@@ -283,10 +252,6 @@ func hpToSQL(c string, filterColumnType *string, filterValue *interface{},
 				WHEN config->'hyperparameters'->?->>'type' IN ('int', 'double', 'log') THEN (config->'hyperparameters'->?) ?
 				ELSE false
 			 END)`
-			if fc != nil && *fc == or {
-				return q.WhereOr(queryString, queryArgs...), nil
-			}
-			return q.Where(queryString, queryArgs...), nil
 		case contains:
 			queryArgs = append(queryArgs, bun.Safe(hpQuery), bun.Safe(hpQuery),
 				bun.Safe(`?`), queryValue, bun.Safe(hpQuery), bun.Safe(hpQuery),
@@ -296,10 +261,6 @@ func hpToSQL(c string, filterColumnType *string, filterValue *interface{},
 					WHEN config->'hyperparameters'->?->>'type' IN ('int', 'double', 'log') THEN (config->'hyperparameters'->?->>'minval')::float8 <= ? OR (config->'hyperparameters'->?->>'maxval')::float8 >= ?
 					ELSE false
 				 END)`
-			if fc != nil && *fc == or {
-				return q.WhereOr(queryString, queryArgs...), nil
-			}
-			return q.Where(queryString, queryArgs...), nil
 		case doesNotContain:
 			queryArgs = append(queryArgs, bun.Safe(hpQuery), bun.Safe(hpQuery),
 				bun.Safe(`?`), queryValue, bun.Safe(hpQuery), bun.Safe(hpQuery),
@@ -309,10 +270,6 @@ func hpToSQL(c string, filterColumnType *string, filterValue *interface{},
 					WHEN config->'hyperparameters'->?->>'type' IN ('int', 'double', 'log') THEN (config->'hyperparameters'->?->>'minval')::float8 >= ? OR (config->'hyperparameters'->?->>'maxval')::float8 <= ?
 					ELSE false
 				 END)`
-			if fc != nil && *fc == or {
-				return q.WhereOr(queryString, queryArgs...), nil
-			}
-			return q.Where(queryString, queryArgs...), nil
 		default:
 			queryArgs = append(queryArgs, bun.Safe(hpQuery), bun.Safe(hpQuery),
 				bun.Safe(oSQL), queryValue, bun.Safe(hpQuery), bun.Safe(hpQuery),
@@ -323,13 +280,12 @@ func hpToSQL(c string, filterColumnType *string, filterValue *interface{},
 				WHEN config->'hyperparameters'->?->>'type' IN ('int', 'double', 'log') THEN ((config->'hyperparameters'->?->>'minval')::float8 ? ? OR (config->'hyperparameters'->?->>'maxval')::float8 ? ?)
 				ELSE false
 			 END)`
-			if fc != nil && *fc == or {
-				return q.WhereOr(queryString, queryArgs...), nil
-			}
-			return q.Where(queryString, queryArgs...), nil
 		}
 	}
-	return q, nil
+	if fc != nil && *fc == or {
+		return q.WhereOr(queryString, queryArgs...), nil
+	}
+	return q.Where(queryString, queryArgs...), nil
 }
 
 func (e experimentFilterRoot) toSQL(q *bun.SelectQuery) (*bun.SelectQuery, error) {
