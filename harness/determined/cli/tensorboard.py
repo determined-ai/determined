@@ -1,7 +1,6 @@
 from argparse import ONE_OR_MORE, ArgumentError, FileType, Namespace
 from functools import partial
 from pathlib import Path
-from typing import List
 
 from termcolor import colored
 
@@ -10,7 +9,7 @@ from determined.cli import command, task
 from determined.common import api, context
 from determined.common.api import authentication, bindings, request
 from determined.common.check import check_eq
-from determined.common.declarative_argparse import Arg, Cmd, Group
+from determined.common.declarative_argparse import Arg, Cmd, Group, Subs
 
 
 @authentication.required
@@ -92,7 +91,7 @@ def open_tensorboard(args: Namespace) -> None:
     )
 
 
-args_description: List[Cmd] = [
+args_description: Subs = [
     Cmd(
         "tensorboard",
         None,
