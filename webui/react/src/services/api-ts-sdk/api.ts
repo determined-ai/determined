@@ -3890,7 +3890,7 @@ export interface V1GetTemplateResponse {
      * @type {V1Template}
      * @memberof V1GetTemplateResponse
      */
-    template?: V1Template;
+    template: V1Template;
 }
 /**
  * Sorts templates by the given field.   - SORT_BY_UNSPECIFIED: Returns templates in an unsorted list.  - SORT_BY_NAME: Returns templates sorted by name.
@@ -3913,13 +3913,13 @@ export interface V1GetTemplatesResponse {
      * @type {Array<V1Template>}
      * @memberof V1GetTemplatesResponse
      */
-    templates?: Array<V1Template>;
+    templates: Array<V1Template>;
     /**
      * Pagination information of the full dataset.
      * @type {V1Pagination}
      * @memberof V1GetTemplatesResponse
      */
-    pagination?: V1Pagination;
+    pagination: V1Pagination;
 }
 /**
  * Response to GetTensorboardRequest.
