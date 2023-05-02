@@ -6,7 +6,23 @@ exclude =
     build,
     dist,
     _gen.py,
-    tests/experiment/fixtures/ancient-checkpoints/
+    harness/tests/experiment/fixtures/ancient-checkpoints/,
+    webui,
+    helm,
+    pre-commit,
+    examples,
+    agent,
+    e2e_tests,
+    schemas,
+    master,
+    tools,
+    bindings,
+    cli,
+    common,
+    deploy,
+    docs,
+    model_hub,
+    proto
 
 # We ignore F401 in __init__.py because it is expected for there to be
 # "unused imports" when defining a "regular" package. (This file is
@@ -32,7 +48,7 @@ ignore = D1,D200,D202,D203,D205,D212,D4,E203,W503,C812,C813,C814,C815,C816,A003
 show_source = true
 
 # flake8-colors
-format = ${cyan}%(path)s${reset}:${yellow_bold}%(row)d${reset}:${green_bold}%(col)d${reset}: ${red_bold}%(code)s${reset} %(text)s
+# format = ${cyan}%(path)s${reset}:${yellow_bold}%(row)d${reset}:${green_bold}%(col)d${reset}: ${red_bold}%(code)s${reset} %(text)s
 
 # flake8-docstrings
 docstring-convention = google
