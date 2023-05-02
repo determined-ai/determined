@@ -6,6 +6,7 @@ interface CheckboxProps {
   checked?: boolean;
   children?: ReactNode;
   disabled?: boolean;
+  id?: string;
   indeterminate?: boolean;
   onChange?: (event: CheckboxChangeEvent) => void;
 }
