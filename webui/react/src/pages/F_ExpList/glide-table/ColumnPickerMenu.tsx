@@ -1,10 +1,11 @@
 import { Popover } from 'antd';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 
 import Button from 'components/kit/Button';
 import Checkbox from 'components/kit/Checkbox';
 import Form from 'components/kit/Form';
-import Input, { InputRef } from 'components/kit/Input';
+import { FormInstance } from 'components/kit/Form';
+import Input from 'components/kit/Input';
 import Pivot from 'components/kit/Pivot';
 import { V1LocationType } from 'services/api-ts-sdk';
 import Spinner from 'shared/components/Spinner';
@@ -16,49 +17,117 @@ import { defaultExperimentColumns } from './columns';
 
 const BANNED_COLUMNS = new Set(['name']);
 
-interface Props {
+const removeBannedColumns = (columns: ProjectColumn[]) =>
+  columns.filter((col) => !BANNED_COLUMNS.has(col.column));
+
+const locationLabelMap = {
+  [V1LocationType.EXPERIMENT]: 'General',
+  [V1LocationType.VALIDATIONS]: 'Metrics',
+  [V1LocationType.HYPERPARAMETERS]: 'Hyperparameters',
+} as const;
+
+interface ColumnMenuProps {
   initialVisibleColumns: string[];
   projectColumns: Loadable<ProjectColumn[]>;
   setVisibleColumns: (newColumns: string[]) => void;
 }
 
-const ColumnPickerMenu: React.FC<Props> = ({
+interface ColumnTabProps {
+  allFormColumns: Record<string, boolean>;
+  filteredColumns: Set<string>;
+  form: FormInstance;
+  handleShowSuggested: () => void;
+  initialVisibleColumns: string[];
+  tab: V1LocationType;
+  totalColumns: ProjectColumn[];
+}
+
+const ColumnPickerTab: React.FC<ColumnTabProps> = ({
+  allFormColumns,
+  filteredColumns,
+  form,
+  handleShowSuggested,
+  initialVisibleColumns,
+  tab,
+  totalColumns,
+}) => {
+  const allFilteredColumnsChecked = useMemo(() => {
+    return totalColumns
+      .filter((col) => filteredColumns.has(col.column) && col.location === tab)
+      .map((col) => allFormColumns[col.column])
+      .every((col) => col === true);
+  }, [tab, allFormColumns, filteredColumns, totalColumns]);
+
+  const handleShowHideAll = useCallback(() => {
+    const currentTabColumns = Object.fromEntries(
+      totalColumns
+        .filter((col) => isEqual(col.location, tab) && col.column in allFormColumns)
+        .map((col) => [col.column, allFormColumns[col.column]]),
+    );
+    const filteredTabColumns: Record<string, boolean> = totalColumns
+      .filter((col) => filteredColumns.has(col.column) && col.location === tab)
+      .reduce((acc, col) => ({ ...acc, [col.column]: !allFilteredColumnsChecked }), {});
+
+    form.setFieldValue(tab, Object.assign(currentTabColumns, filteredTabColumns));
+  }, [tab, allFormColumns, filteredColumns, form, allFilteredColumnsChecked, totalColumns]);
+
+  return (
+    <div>
+      <Form.Item name="column-search">
+        <Input allowClear autoFocus placeholder="Search" />
+      </Form.Item>
+      {totalColumns.length !== 0 ? (
+        <div style={{ maxHeight: 360, overflow: 'hidden auto' }}>
+          {totalColumns
+            .filter((column) => column.location === tab)
+            .map((column) => (
+              <Form.Item
+                hidden={!filteredColumns.has(column.column)}
+                initialValue={initialVisibleColumns.includes(column.column)}
+                key={column.column}
+                name={[tab, column.column]}
+                valuePropName="checked">
+                <Checkbox>{column.displayName || column.column}</Checkbox>
+              </Form.Item>
+            ))}
+        </div>
+      ) : (
+        <Spinner />
+      )}
+      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+        <Button type="text" onClick={handleShowHideAll}>
+          {allFilteredColumnsChecked ? 'Hide' : 'Show'} all
+        </Button>
+        <Button type="text" onClick={handleShowSuggested}>
+          Show suggested
+        </Button>
+      </div>
+    </div>
+  );
+};
+
+const ColumnPickerMenu: React.FC<ColumnMenuProps> = ({
   projectColumns,
   setVisibleColumns,
   initialVisibleColumns,
 }) => {
   const [form] = Form.useForm();
-  const removeBannedColumns = useCallback(
-    (columns: ProjectColumn[]) => columns.filter((col) => !BANNED_COLUMNS.has(col.column)),
-    [],
-  );
-  const [totalColumns, setTotalColumns] = useState<ProjectColumn[]>(() =>
-    removeBannedColumns(Loadable.getOrElse([], projectColumns)),
-  );
-  const [filteredColumns, setFilteredColumns] = useState<Set<string>>(
-    () =>
-      new Set(removeBannedColumns(Loadable.getOrElse([], projectColumns)).map((col) => col.column)),
-  );
-  const [isColumnsOpen, setIsColumnsOpen] = useState(false);
-  const [activeColumnTab, setActiveColumnTab] = useState<V1LocationType>(V1LocationType.EXPERIMENT);
-  const searchRef = useRef<InputRef>(null);
 
   const columnSearch: string = Form.useWatch('column-search', form) ?? '';
 
-  useEffect(() => {
-    setTotalColumns(removeBannedColumns(Loadable.getOrElse([], projectColumns)));
-  }, [projectColumns, removeBannedColumns]);
+  const totalColumns = useMemo(
+    () => removeBannedColumns(Loadable.getOrElse([], projectColumns)),
+    [projectColumns],
+  );
 
-  useEffect(() => {
+  const filteredColumns = useMemo(() => {
     const regex = new RegExp(columnSearch, 'i');
-    setFilteredColumns(
-      new Set(
-        totalColumns
-          .filter((col) => regex.test(col.displayName || col.column))
-          .map((col) => col.column),
-      ),
+    return new Set(
+      totalColumns
+        .filter((col) => regex.test(col.displayName || col.column))
+        .map((col) => col.column),
     );
-  }, [columnSearch, removeBannedColumns, totalColumns]);
+  }, [columnSearch, totalColumns]);
 
   const generalColumns: Record<string, boolean> = Form.useWatch(V1LocationType.EXPERIMENT, form);
   const hyperparametersColumns: Record<string, boolean> = Form.useWatch(
@@ -106,92 +175,6 @@ const ColumnPickerMenu: React.FC<Props> = ({
     form.setFieldValue(V1LocationType.VALIDATIONS, newMetrics);
   }, [form, generalColumns, hyperparametersColumns, metricsColumns]);
 
-  const tabFilteredColumnsAllChecked = useMemo(() => {
-    return totalColumns
-      .filter((col) => filteredColumns.has(col.column) && col.location === activeColumnTab)
-      .map((col) => allFormColumns[col.column])
-      .every((col) => col === true);
-  }, [activeColumnTab, allFormColumns, filteredColumns, totalColumns]);
-
-  const handleShowHideAll = useCallback(() => {
-    const currentTabColumns = Object.fromEntries(
-      totalColumns
-        .filter((col) => isEqual(col.location, activeColumnTab) && col.column in allFormColumns)
-        .map((col) => [col.column, allFormColumns[col.column]]),
-    );
-    const filteredTabColumns: Record<string, boolean> = totalColumns
-      .filter((col) => filteredColumns.has(col.column) && col.location === activeColumnTab)
-      .reduce((acc, col) => ({ ...acc, [col.column]: !tabFilteredColumnsAllChecked }), {});
-
-    form.setFieldValue(activeColumnTab, Object.assign(currentTabColumns, filteredTabColumns));
-  }, [
-    activeColumnTab,
-    allFormColumns,
-    filteredColumns,
-    form,
-    tabFilteredColumnsAllChecked,
-    totalColumns,
-  ]);
-
-  const tabContent = useCallback(
-    (tab: V1LocationType) => {
-      return (
-        <div>
-          <Form.Item name="column-search">
-            <Input allowClear placeholder="Search" ref={searchRef} />
-          </Form.Item>
-          {totalColumns.length !== 0 ? (
-            <div style={{ maxHeight: 360, overflow: 'hidden auto' }}>
-              {totalColumns
-                .filter((column) => column.location === tab)
-                .map((column) => (
-                  <Form.Item
-                    hidden={!filteredColumns.has(column.column)}
-                    initialValue={initialVisibleColumns.includes(column.column)}
-                    key={column.column}
-                    name={[tab, column.column]}
-                    valuePropName="checked">
-                    <Checkbox>{column.displayName || column.column}</Checkbox>
-                  </Form.Item>
-                ))}
-            </div>
-          ) : (
-            <Spinner />
-          )}
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <Button type="text" onClick={handleShowHideAll}>
-              {tabFilteredColumnsAllChecked ? 'Hide' : 'Show'} all
-            </Button>
-            <Button type="text" onClick={handleShowSuggested}>
-              Show suggested
-            </Button>
-          </div>
-        </div>
-      );
-    },
-    [
-      filteredColumns,
-      handleShowHideAll,
-      handleShowSuggested,
-      initialVisibleColumns,
-      tabFilteredColumnsAllChecked,
-      totalColumns,
-    ],
-  );
-
-  const handleColumnTabChange = useCallback((activeKey: string) => {
-    setActiveColumnTab(activeKey as V1LocationType);
-  }, []);
-
-  const handleOnOpenChange = useCallback((open: boolean) => {
-    setIsColumnsOpen(open);
-  }, []);
-
-  useEffect(() => {
-    if (!isColumnsOpen) return;
-    searchRef.current?.focus();
-  }, [isColumnsOpen]);
-
   return (
     <Popover
       content={
@@ -199,33 +182,31 @@ const ColumnPickerMenu: React.FC<Props> = ({
           <Form form={form}>
             <Pivot
               items={[
-                {
-                  children: tabContent(V1LocationType.EXPERIMENT),
-                  forceRender: true,
-                  key: 'general',
-                  label: 'General',
-                },
-                {
-                  children: tabContent(V1LocationType.VALIDATIONS),
-                  forceRender: true,
-                  key: 'metrics',
-                  label: 'Metrics',
-                },
-                {
-                  children: tabContent(V1LocationType.HYPERPARAMETERS),
-                  forceRender: true,
-                  key: 'hyperparameters',
-                  label: 'Hyperparameters',
-                },
-              ]}
-              onChange={handleColumnTabChange}
+                V1LocationType.EXPERIMENT,
+                V1LocationType.VALIDATIONS,
+                V1LocationType.HYPERPARAMETERS,
+              ].map((tab) => ({
+                children: (
+                  <ColumnPickerTab
+                    allFormColumns={allFormColumns}
+                    filteredColumns={filteredColumns}
+                    form={form}
+                    handleShowSuggested={handleShowSuggested}
+                    initialVisibleColumns={initialVisibleColumns}
+                    tab={tab}
+                    totalColumns={totalColumns}
+                  />
+                ),
+                forceRender: true,
+                key: tab,
+                label: locationLabelMap[tab],
+              }))}
             />
           </Form>
         </div>
       }
       placement="bottom"
-      trigger="click"
-      onOpenChange={handleOnOpenChange}>
+      trigger="click">
       <Button>Columns</Button>
     </Popover>
   );

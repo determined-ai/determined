@@ -189,7 +189,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
 
   const projectColumnsMap: Loadable<Record<string, ProjectColumn>> = useMemo(() => {
     return Loadable.map(projectColumns, (columns) => {
-      return columns.reduce((acc, col) => Object.assign(acc, { [col.column]: col }), {});
+      return columns.reduce((acc, col) => ({ ...acc, [col.column]: col }), {});
     });
   }, [projectColumns]);
 
