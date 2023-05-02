@@ -172,16 +172,8 @@ func hpToSQL(c string, filterColumnType *string, filterValue *interface{},
 	var queryString string
 	switch queryColumnType {
 	case projectv1.ColumnType_COLUMN_TYPE_TEXT.String():
-		if o != empty && o != notEmpty && //nolint: gocritic
-			o != contains && o != doesNotContain { //nolint: gocritic
-			queryArgs = append(queryArgs, bun.Safe(hpQuery), bun.Safe(hpQuery), bun.Safe(oSQL), queryValue)
-			// nolint: lll
-			queryString = `(CASE WHEN config->'hyperparameters'->?->>'type' = 'const' THEN config->'hyperparameters'->?->>'val' ? ? ELSE false END)`
-			if fc != nil && *fc == or {
-				return q.WhereOr(queryString, queryArgs...), nil
-			}
-			return q.Where(queryString, queryArgs...), nil
-		} else if o == empty || o == notEmpty {
+		switch o {
+		case empty, notEmpty:
 			queryArgs = append(queryArgs, bun.Safe(hpQuery),
 				bun.Safe(hpQuery), bun.Safe(oSQL),
 				bun.Safe(hpQuery), bun.Safe(hpQuery),
@@ -196,23 +188,20 @@ func hpToSQL(c string, filterColumnType *string, filterValue *interface{},
 				return q.WhereOr(queryString, queryArgs...), nil
 			}
 			return q.Where(queryString, queryArgs...), nil
-		} else {
-			if o == contains {
-				// nolint: lll
-				queryString = `(CASE 
-					WHEN config->'hyperparameters'->?->>'type' = 'const' THEN config->'hyperparameters'->?->>'val' LIKE
-					WHEN config->'hyperparameters'->?->>'type' = 'categorical' THEN (config->'hyperparameters'->?->>'vals')::jsonb ?? ?
-					ELSE false
-				 END)`
-				queryArgs = append(queryArgs, bun.Safe(hpQuery),
-					bun.Safe(hpQuery), fmt.Sprintf(`%%%s%%`, queryValue),
-					bun.Safe(hpQuery), bun.Safe(hpQuery), queryValue)
-				if fc != nil && *fc == or {
-					return q.WhereOr(queryString, queryArgs...), nil
-				}
-				return q.Where(queryString, queryArgs...), nil
+		case contains:
+			queryString = `(CASE 
+				WHEN config->'hyperparameters'->?->>'type' = 'const' THEN config->'hyperparameters'->?->>'val' LIKE
+				WHEN config->'hyperparameters'->?->>'type' = 'categorical' THEN (config->'hyperparameters'->?->>'vals')::jsonb ?? ?
+				ELSE false
+			 END)`
+			queryArgs = append(queryArgs, bun.Safe(hpQuery),
+				bun.Safe(hpQuery), fmt.Sprintf(`%%%s%%`, queryValue),
+				bun.Safe(hpQuery), bun.Safe(hpQuery), queryValue)
+			if fc != nil && *fc == or {
+				return q.WhereOr(queryString, queryArgs...), nil
 			}
-			// nolint: lll
+			return q.Where(queryString, queryArgs...), nil
+		case doesNotContain:
 			queryString = `(CASE 
 				WHEN config->'hyperparameters'->?->>'type' = 'const' THEN config->'hyperparameters'->?->>'val' ?
 				WHEN config->'hyperparameters'->?->>'type' = 'categorical' THEN (config->'hyperparameters'->?->>'vals')::jsonb ?? ? IS NOT TRUE
@@ -221,6 +210,14 @@ func hpToSQL(c string, filterColumnType *string, filterValue *interface{},
 			queryArgs = append(queryArgs, bun.Safe(hpQuery),
 				bun.Safe(hpQuery), `NOT LIKE %`+fmt.Sprintf(`%v`, queryValue)+`%`,
 				bun.Safe(hpQuery), bun.Safe(hpQuery), queryValue)
+			if fc != nil && *fc == or {
+				return q.WhereOr(queryString, queryArgs...), nil
+			}
+			return q.Where(queryString, queryArgs...), nil
+		default:
+			queryArgs = append(queryArgs, bun.Safe(hpQuery), bun.Safe(hpQuery), bun.Safe(oSQL), queryValue)
+			// nolint: lll
+			queryString = `(CASE WHEN config->'hyperparameters'->?->>'type' = 'const' THEN config->'hyperparameters'->?->>'val' ? ? ELSE false END)`
 			if fc != nil && *fc == or {
 				return q.WhereOr(queryString, queryArgs...), nil
 			}
