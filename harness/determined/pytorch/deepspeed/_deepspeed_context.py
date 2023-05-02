@@ -3,7 +3,7 @@ import importlib.util
 import json
 import logging
 import pathlib
-from typing import Any, Dict, Iterator, List, Optional, Set, Type, Union, cast
+from typing import Any, Dict, Iterator, Union, cast
 
 import deepspeed
 import torch
@@ -12,7 +12,6 @@ from deepspeed.runtime import config_utils
 import determined as det
 from determined import profiler, pytorch
 from determined.pytorch import deepspeed as det_ds
-from determined.pytorch.deepspeed.dsat import _defaults
 from determined.util import merge_dicts
 
 
@@ -41,8 +40,8 @@ def overwrite_deepspeed_config(
 def get_ds_config_from_hparams(
     hparams: Dict[str, Any],
     model_dir: Union[pathlib.Path, str] = pathlib.Path("."),
-    config_key: str = _defaults.CONFIG_KEY,
-    overwrite_key: str = _defaults.OVERWRITE_KEY,
+    config_key: str = "deepspeed_config",
+    overwrite_key: str = "overwrite_deepspeed_args",
 ) -> Dict[str, Any]:
     """Fetch and recursively merge the deepspeed config from the experiment config
 
