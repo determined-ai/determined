@@ -162,7 +162,10 @@ const UserManagement: React.FC = () => {
   );
   const loadableUsers = useObservable(userStore.getUsers(params));
   const users = Loadable.getOrElse([], loadableUsers);
-  const total = users.length;
+  const pagination = Loadable.getOrElse(
+    undefined,
+    useObservable(userStore.getUsersPagination(params)),
+  );
   const canceler = useRef(new AbortController());
 
   const rbacEnabled = useFeature().isOn('rbac');
@@ -308,7 +311,7 @@ const UserManagement: React.FC = () => {
             limit: settings.tableLimit,
             offset: settings.tableOffset,
           },
-          total,
+          pagination?.total ?? 0,
         )}
         rowClassName={defaultRowClassName({ clickable: false })}
         rowKey="id"
@@ -326,7 +329,7 @@ const UserManagement: React.FC = () => {
     ) : (
       <SkeletonTable columns={columns.length} />
     );
-  }, [users, loadableUsers, settings, columns, total, updateSettings]);
+  }, [users, loadableUsers, settings, columns, pagination, updateSettings]);
   return (
     <Page bodyNoPadding containerRef={pageRef}>
       <Section

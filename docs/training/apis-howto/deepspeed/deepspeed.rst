@@ -4,7 +4,10 @@
  Usage Guide
 #############
 
-This document introduces DeepSpeed and guides you through how to train a PyTorch model with the
+.. meta::
+   :description: This comprehensive guide explains the DeepSpeed API and provides step-by-step instructions for getting started. Learn how to use the DeepSpeed API by training a PyTorch model with the DeepSpeed engine.
+
+This usage guide introduces DeepSpeed and guides you through how to train a PyTorch model with the
 DeepSpeed engine. To implement :class:`~determined.pytorch.deepspeed.DeepSpeedTrial`, you need to
 overwrite specific functions corresponding to common training aspects. It is helpful to work from a
 skeleton trial to keep track of what is required, as the following example template shows:

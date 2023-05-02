@@ -31,10 +31,10 @@ Determined CLI
 One of the key components of the Determined platform is the :ref:`command-line interface (CLI)
 <cli-ug>`. The CLI serves as a primary entry point for interacting with Determined, providing a way
 to efficiently manage and control various aspects of the system. The following list describes some
-of the tasks users can perform with the Determined CLI:
+of the tasks you can perform with the Determined CLI:
 
 -  Experiment management: Running experiments is a fundamental part of the machine learning process.
-   With the CLI, users can effortlessly create, list, and manage experiments, as well as access
+   With the CLI, you can effortlessly create, list, and manage experiments, as well as access
    important experiment metrics and logs.
 
 -  Queue management: The CLI enables users to manage their job queues, monitor the progress of
@@ -69,8 +69,8 @@ Configuration Templates
 At a typical organization, many Determined configuration files will contain similar settings. For
 example, all of the training workloads run at a given organization might use the same checkpoint
 storage configuration. One way to reduce this redundancy is to use *configuration templates*. With
-this feature, users can move settings that are shared by many experiments into a single YAML file
-that can then be referenced by configurations that require those settings.
+this feature, you can move settings that are shared by many experiments into a single YAML file that
+can then be referenced by configurations that require those settings.
 
 Each configuration template has a unique name and is stored by the Determined master. If a
 configuration specifies a template, the effective configuration of the task will be the result of
@@ -247,6 +247,7 @@ instances as the set of deep learning workloads on the cluster changes. This cap
 The diagram below outlines the high-level system architecture when using dynamic agents:
 
 .. image:: /assets/images/det-arch-elastic-infra.png
+   :alt: Determined AI system architecture when using dynamic agents
 
 Following the diagram, the execution would be:
 

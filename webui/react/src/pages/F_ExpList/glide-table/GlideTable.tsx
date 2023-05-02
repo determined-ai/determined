@@ -1,7 +1,6 @@
 import DataEditor, {
   CellClickedEventArgs,
   CompactSelection,
-  CustomCell,
   DataEditorProps,
   DataEditorRef,
   GridCell,
@@ -23,9 +22,10 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { useNavigate } from 'react-router';
 
+import { handlePath } from 'routes/utils';
 import useUI from 'shared/contexts/stores/UI';
+import { AnyMouseEvent } from 'shared/utils/routes';
 import usersStore from 'stores/users';
 import { ExperimentItem, Project } from 'types';
 import { getProjectExperimentForExperimentItem } from 'utils/experiment';
@@ -46,6 +46,7 @@ import { TableContextMenu, TableContextMenuProps } from './contextMenu';
 import { customRenderers } from './custom-renderers';
 import { LinkCell } from './custom-renderers/cells/linkCell';
 import { placeholderMenuItems, TableActionMenu, TableActionMenuProps } from './menu';
+import { BatchAction } from './TableActionBar';
 import { useTableTooltip } from './tooltip';
 import { getTheme } from './utils';
 
@@ -65,15 +66,8 @@ export interface GlideTableProps {
   setSelectedExperimentIds: Dispatch<SetStateAction<number[]>>;
   selectAll: boolean;
   setSelectAll: Dispatch<SetStateAction<boolean>>;
+  handleUpdateExperimentList: (action: BatchAction, successfulIds: number[]) => void;
 }
-
-type ClickableCell = CustomCell<LinkCell> & {
-  data: {
-    link: {
-      onClick: () => void;
-    };
-  };
-};
 
 /**
  * Number of renders with gridRef.current !== null
@@ -87,6 +81,10 @@ type ClickableCell = CustomCell<LinkCell> & {
 export const SCROLL_SET_COUNT_NEEDED = 2;
 
 const STATIC_COLUMNS: ExperimentColumn[] = ['selected', 'name'];
+
+const isLinkCell = (cell: GridCell): cell is LinkCell => {
+  return !!(cell as LinkCell).data?.link?.href;
+};
 
 export const GlideTable: React.FC<GlideTableProps> = ({
   data,
@@ -103,6 +101,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   scrollPositionSetCount,
   page,
   project,
+  handleUpdateExperimentList,
 }) => {
   const gridRef = useRef<DataEditorRef>(null);
 
@@ -130,7 +129,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
 
   const [contextMenuProps, setContextMenuProps] = useState<null | Omit<
     TableContextMenuProps,
-    'open' | 'fetchExperiments'
+    'open' | 'fetchExperiments' | 'handleUpdateExperimentList'
   >>(null);
 
   const {
@@ -144,7 +143,6 @@ export const GlideTable: React.FC<GlideTableProps> = ({
     () => [...STATIC_COLUMNS, ...sortableColumnIds],
     [sortableColumnIds],
   );
-  const navigate = useNavigate();
 
   const [selection, setSelection] = React.useState<GridSelection>({
     columns: CompactSelection.empty(),
@@ -178,12 +176,11 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         appTheme,
         columnWidths,
         darkLight,
-        navigate,
         rowSelection: selection.rows,
         selectAll,
         users,
       }),
-    [navigate, selectAll, selection.rows, columnWidths, users, darkLight, appTheme],
+    [selectAll, selection.rows, columnWidths, users, darkLight, appTheme],
   );
 
   const headerIcons = useMemo(() => getHeaderIcons(appTheme), [appTheme]);
@@ -249,72 +246,85 @@ export const GlideTable: React.FC<GlideTableProps> = ({
 
   const getCellContent: DataEditorProps['getCellContent'] = React.useCallback(
     (cell: Item): GridCell => {
-      const [colIdx, rowIdx] = cell;
-      const columnId = columnIds[colIdx];
-      const row = data[rowIdx];
-      if (row && Loadable.isLoaded(row)) {
-        return columnDefs[columnId].renderer(row.data, rowIdx);
-      }
-      return {
-        allowOverlay: true,
-        copyData: '',
-        data: {
-          kind: 'spinner-cell',
+      const [col, row] = cell;
+
+      return Loadable.match(data[row], {
+        Loaded: (rowData) => {
+          const columnId = columnIds[col];
+          return columnDefs[columnId].renderer(rowData, row);
         },
-        kind: GridCellKind.Custom,
-      };
+        NotLoaded: () =>
+          ({
+            allowOverlay: true,
+            copyData: '',
+            data: { kind: 'spinner-cell' },
+            kind: GridCellKind.Custom,
+          } as GridCell),
+      });
     },
     [data, columnIds, columnDefs],
   );
 
   const onCellClicked: DataEditorProps['onCellClicked'] = useCallback(
-    (cell: Item) => {
+    (cell: Item, event: CellClickedEventArgs) => {
       const [col, row] = cell;
-      if (row === undefined) return;
+      Loadable.match(data[row], {
+        Loaded: (rowData) => {
+          const columnId = columnIds[col];
+          const cell = columnDefs[columnId].renderer(rowData, row);
 
-      const columnId = columnIds[col];
-      const rowData = data[row];
-      if (Loadable.isLoaded(rowData)) {
-        const cell = columnDefs[columnId].renderer(rowData.data, row) as ClickableCell;
-        if (String(cell?.data?.kind) === 'link-cell') {
-          cell.data.link?.onClick?.();
-          return;
-        }
-      }
-
-      setSelection(({ rows }: GridSelection) => ({
-        columns: CompactSelection.empty(),
-        rows: rows.hasIndex(row) ? rows.remove(row) : rows.add(row),
-      }));
+          if (isLinkCell(cell)) {
+            handlePath(event as unknown as AnyMouseEvent, { path: cell.data.link.href });
+            // cell.data.link.onClick(event);
+          } else {
+            setSelection(({ rows }: GridSelection) => ({
+              columns: CompactSelection.empty(),
+              rows: rows.hasIndex(row) ? rows.remove(row) : rows.add(row),
+            }));
+          }
+        },
+        NotLoaded: () => null,
+      });
     },
     [data, columnIds, columnDefs],
   );
 
   const onCellContextMenu: DataEditorProps['onCellContextMenu'] = useCallback(
     (cell: Item, event: CellClickedEventArgs) => {
+      // Close existing context menu.
       contextMenuOpen.set(false);
-      const [, row] = cell;
-      const experiment = Loadable.match(data?.[row], {
-        Loaded: (record) => record,
+
+      const [col, row] = cell;
+      Loadable.match(data[row], {
+        Loaded: (rowData) => {
+          // Prevent the browser native context menu from showing up.
+          event.preventDefault();
+
+          // Delay needed due to the call to close previously existing context menu.
+          setTimeout(() => {
+            const columnId = columnIds[col];
+            const cell = columnDefs[columnId].renderer(rowData, row);
+
+            // Update the context menu based on the cell context.
+            setContextMenuProps({
+              experiment: getProjectExperimentForExperimentItem(rowData, project),
+              handleClose: (e?: Event) => {
+                // Prevent the context menu closing click from triggering something else.
+                if (contextMenuOpen.get()) e?.stopPropagation();
+                contextMenuOpen.set(false);
+              },
+              link: isLinkCell(cell) ? cell.data.link.href : undefined,
+              x: Math.max(0, event.bounds.x + event.localEventX - 4),
+              y: Math.max(0, event.bounds.y + event.localEventY - 4),
+            });
+
+            contextMenuOpen.set(true);
+          }, 50);
+        },
         NotLoaded: () => null,
       });
-      if (!experiment) return;
-
-      event.preventDefault();
-      setContextMenuProps({
-        experiment: getProjectExperimentForExperimentItem(experiment, project),
-        handleClose: (e?: Event) => {
-          if (contextMenuOpen.get()) {
-            e?.stopPropagation();
-          }
-          contextMenuOpen.set(false);
-        },
-        x: Math.max(0, event.bounds.x + event.localEventX - 4),
-        y: Math.max(0, event.bounds.y + event.localEventY - 4),
-      });
-      setTimeout(() => contextMenuOpen.set(true), 25);
     },
-    [data, project, setContextMenuProps, contextMenuOpen],
+    [columnDefs, columnIds, data, project, setContextMenuProps, contextMenuOpen],
   );
 
   const onColumnMoved: DataEditorProps['onColumnMoved'] = useCallback(
@@ -382,6 +392,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         <TableContextMenu
           {...contextMenuProps}
           fetchExperiments={fetchExperiments}
+          handleUpdateExperimentList={handleUpdateExperimentList}
           open={contextMenuIsOpen}
         />
       )}

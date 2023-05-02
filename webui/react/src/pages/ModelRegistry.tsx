@@ -334,7 +334,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
       }
       const workspaceId = record.workspaceId;
       return (
-        <Tooltip placement="top" title={workspace?.name}>
+        <Tooltip content={workspace?.name} placement="top">
           <div className={`${css.centerVertically} ${css.centerHorizontally}`}>
             <Link
               path={
@@ -705,7 +705,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
           {canCreateModels ? (
             <Button onClick={showCreateModelModal}>New Model</Button>
           ) : (
-            <Tooltip placement="leftBottom" title="User lacks permission to create models">
+            <Tooltip content="User lacks permission to create models" placement="leftBottom">
               <div>
                 <Button disabled onClick={showCreateModelModal}>
                   New Model

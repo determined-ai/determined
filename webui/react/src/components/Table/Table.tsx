@@ -104,7 +104,7 @@ export const expStateRenderer: Renderer<{ state: RunState }> = (_, record) => (
 );
 
 export const tooltipRenderer: Renderer = (text) => (
-  <Tooltip placement="topLeft" title={text}>
+  <Tooltip content={text} placement="topLeft">
     <span>{text}</span>
   </Tooltip>
 );
@@ -120,7 +120,7 @@ export const userRenderer: React.FC<DetailedUser | undefined> = (user) => {
 /* Command Task Table Column Renderers */
 
 export const taskIdRenderer: TaskRenderer = (_, record) => (
-  <Tooltip placement="topLeft" title={record.id}>
+  <Tooltip content={record.id} placement="topLeft">
     <div className={css.centerVertically}>
       <ConditionalWrapper
         condition={canBeOpened(record)}
@@ -132,7 +132,7 @@ export const taskIdRenderer: TaskRenderer = (_, record) => (
 );
 
 export const taskTypeRenderer: TaskRenderer = (_, record) => (
-  <Tooltip placement="topLeft" title={commandTypeToLabel[record.type as unknown as CommandType]}>
+  <Tooltip content={commandTypeToLabel[record.type as unknown as CommandType]} placement="topLeft">
     <div className={css.centerVertically}>
       <Icon name={record.type.toLowerCase()} />
     </div>
@@ -162,7 +162,7 @@ export const taskWorkspaceRenderer = (
   const isUncategorized = workspaceId === 1;
 
   return (
-    <Tooltip placement="top" title={workspace?.name}>
+    <Tooltip content={workspace?.name} placement="top">
       <div className={`${css.centerVertically} ${css.centerHorizontally}`}>
         <Link
           path={

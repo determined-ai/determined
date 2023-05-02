@@ -316,14 +316,14 @@ export const useTrialCollections = (
               )) ?? []),
             ]}
           </Select>
-          <Tooltip title="View Active Filters">
+          <Tooltip content="View Active Filters">
             <Button
               ghost={!hasUnsavedFilters}
               icon={<Icon name="settings" />}
               onClick={viewFilters}
             />
           </Tooltip>
-          <Tooltip title={collectionIsActive ? 'Save Collection' : 'No Collection Active'}>
+          <Tooltip content={collectionIsActive ? 'Save Collection' : 'No Collection Active'}>
             <Button
               disabled={!userOwnsCollection || !collectionIsActive}
               ghost={!hasUnsavedFilters}
@@ -332,7 +332,7 @@ export const useTrialCollections = (
             />
           </Tooltip>
           <Tooltip
-            title={collectionIsActive ? 'Reset Filters to Collection' : 'No Collection Active'}>
+            content={collectionIsActive ? 'Reset Filters to Collection' : 'No Collection Active'}>
             <Button
               disabled={!collectionIsActive}
               ghost={!hasUnsavedFilters}

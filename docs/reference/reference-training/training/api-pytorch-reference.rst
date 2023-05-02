@@ -2,6 +2,9 @@
  ``det.pytorch`` API Reference
 ###############################
 
+.. meta::
+   :description: Familiarize yourself with the det.pytorch API. This PyTorch-based training loop includes the PyTorchTrial class, the PyTorchTrialContext class, and the Trainer class.
+
 +--------------------------------------------+
 | User Guide                                 |
 +============================================+

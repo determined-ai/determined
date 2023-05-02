@@ -2,6 +2,9 @@
  Training APIs
 ###############
 
+.. meta::
+   :description: You can train almost any deep learning model using the Determined Training APIs. By using the Training API guides, you'll discover how to take your existing model code and train your model in Determined. Each API guide contains a link to its corresponding API reference.
+
 You can train almost any deep learning model using the Determined Training APIs. The Training API
 guides describe how to take your existing model code and train your model in Determined. Each API
 guide contains a link to its corresponding API reference.

@@ -2,6 +2,9 @@
  DeepSpeed API
 ###############
 
+.. meta::
+   :description: Learn how you can train your model in Determined using the DeepSpeed engine.
+
 In this guide, you'll learn how to use the DeepSpeed API.
 
 +-----------------------------------------------------------------------+

@@ -481,6 +481,12 @@ func (db *PgDB) AddExperiment(
 	if experiment.ID != 0 {
 		return errors.Errorf("error adding an experiment with non-zero id %v", experiment.ID)
 	}
+
+	activeConfigStr, err := json.Marshal(activeConfig)
+	if err != nil {
+		return errors.Wrapf(err, "error handling experiment config %v", activeConfig)
+	}
+
 	ctx := context.TODO()
 	tx, err := Bun().BeginTx(ctx, nil)
 	defer func() {
@@ -500,13 +506,14 @@ func (db *PgDB) AddExperiment(
 	}
 	err = tx.NewRaw(`INSERT INTO experiments
 	(state, config, model_definition, start_time, end_time, archived, parent_id, progress,
-	 git_remote, git_commit, git_committer, git_commit_date, owner_id, original_config, notes, job_id,
- 	project_id)
-	VALUES (?, 'null'::jsonb, ?, ?, ?, ?, ?,
-					0, ?, ?, ?, ?, ?,
-					?, ?, ?, ?)
+	 git_remote, git_commit, git_committer, git_commit_date,
+	 owner_id, original_config, notes, job_id, project_id)
+	VALUES (?, ?, ?, ?, ?, ?, ?, 0,
+		    ?, ?, ?, ?,
+	        ?, ?, ?, ?, ?)
 	RETURNING id`,
 		experiment.State,
+		string(activeConfigStr),
 		experiment.ModelDefinitionBytes,
 		experiment.StartTime,
 		experiment.EndTime,
@@ -523,16 +530,6 @@ func (db *PgDB) AddExperiment(
 		experiment.ProjectID).Scan(ctx, &experiment.ID)
 	if err != nil {
 		return errors.Wrapf(err, "error inserting experiment %v", experiment)
-	}
-	activeConfigStr, err := json.Marshal(activeConfig)
-	if err != nil {
-		return errors.Wrapf(err, "error handling experiment config %v", activeConfig)
-	}
-	_, err = tx.Exec(
-		`UPDATE experiments SET config = ? WHERE id = ?`, string(activeConfigStr), experiment.ID,
-	)
-	if err != nil {
-		return errors.Wrapf(err, "error inserting experiment config")
 	}
 	if err = AddProjectHyperparameters(
 		ctx, tx, int32(experiment.ProjectID), []int32{int32(experiment.ID)}); err != nil {

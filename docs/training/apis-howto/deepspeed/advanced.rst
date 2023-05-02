@@ -4,6 +4,9 @@
  Advanced Usage
 ################
 
+.. meta::
+   :description: This article covers advanced usage of the DeepSpeed API including model parallelism and pipeline parallelism, gradient accumulation, zero-offloading, and more.
+
 *********************************
  Training Multiple Model Engines
 *********************************

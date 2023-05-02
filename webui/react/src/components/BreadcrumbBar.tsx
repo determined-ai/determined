@@ -160,7 +160,7 @@ const BreadcrumbBar: React.FC<Props> = ({
                 path={project ? paths.workspaceDetails(project.workspaceId) : undefined}>
                 {workspace?.name ?? '...'}
                 {workspace?.archived && (
-                  <Tooltip title="Archived">
+                  <Tooltip content="Archived">
                     <div>
                       <Icon name="archive" />
                     </div>
@@ -177,7 +177,7 @@ const BreadcrumbBar: React.FC<Props> = ({
             path={experiment ? paths.projectDetails(experiment.projectId) : undefined}>
             {projectName}
             {project?.archived && (
-              <Tooltip title="Archived">
+              <Tooltip content="Archived">
                 <div>
                   <Icon name="archive" />
                 </div>
@@ -194,7 +194,7 @@ const BreadcrumbBar: React.FC<Props> = ({
                 path={trial ? paths.experimentDetails(trial.experimentId) : undefined}>
                 {experiment?.name ?? '...'}
                 {experiment?.archived && (
-                  <Tooltip title="Archived">
+                  <Tooltip content="Archived">
                     <div>
                       <Icon name="archive" />
                     </div>

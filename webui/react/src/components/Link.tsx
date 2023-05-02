@@ -17,7 +17,7 @@ export interface Props {
   label?: string;
   onClick?: AnyMouseEventHandler;
   path?: string;
-  popout?: boolean;
+  popout?: boolean | 'tab' | 'window';
   size?: 'tiny' | 'small' | 'medium' | 'large';
   style?: CSSProperties;
 }
