@@ -78,7 +78,7 @@ func (o *operator) toSQL() (string, error) {
 	case doesNotContain:
 		return s, nil
 	default:
-		return s, fmt.Errorf("invalid operator %v", *o)
+		return "", fmt.Errorf("invalid operator %v", *o)
 	}
 	return s, nil
 }
@@ -129,7 +129,7 @@ func columnNameToSQL(c string, l *string, t *string) (string, error) {
 		var exists bool
 		col, exists = filterExperimentColMap[c]
 		if !exists {
-			return col, fmt.Errorf("invalid experiment column %s", col)
+			return "", fmt.Errorf("invalid experiment column %s", col)
 		}
 		return col, nil
 	case projectv1.LocationType_LOCATION_TYPE_VALIDATIONS.String():
@@ -139,7 +139,7 @@ func columnNameToSQL(c string, l *string, t *string) (string, error) {
 			col = fmt.Sprintf(`(%v)::float8`, col)
 		}
 	default:
-		return col, fmt.Errorf("unhandled column location type %v", locationType)
+		return "", fmt.Errorf("unhandled column location type %v", locationType)
 	}
 	return col, nil
 }
@@ -153,7 +153,7 @@ func hpToSQL(c string, filterColumnType *string, filterValue *interface{},
 	var o operator
 	var queryValue interface{}
 	if filterValue == nil && op != nil && *op != empty && *op != notEmpty {
-		return q, fmt.Errorf("hyperparameter field defined without value and without a valid operator")
+		return nil, fmt.Errorf("hyperparameter field defined without value and without a valid operator")
 	}
 	o = *op
 	if o != empty && o != notEmpty {
@@ -170,7 +170,7 @@ func hpToSQL(c string, filterColumnType *string, filterValue *interface{},
 	hpQuery := strings.Join(hps, "->")
 	oSQL, err := o.toSQL()
 	if err != nil {
-		return q, err
+		return nil, err
 	}
 	var queryArgs []interface{}
 	var queryString string
@@ -210,6 +210,42 @@ func hpToSQL(c string, filterColumnType *string, filterValue *interface{},
 			queryString = `(CASE WHEN config->'hyperparameters'->?->>'type' = 'const' THEN config->'hyperparameters'->?->>'val' ? ? ELSE false END)`
 		}
 	case projectv1.ColumnType_COLUMN_TYPE_DATE.String():
+		switch o {
+		case empty, notEmpty:
+			queryArgs = append(queryArgs, bun.Safe(hpQuery),
+				bun.Safe(hpQuery), bun.Safe(oSQL),
+				bun.Safe(hpQuery), bun.Safe(hpQuery),
+				bun.Safe(oSQL))
+			queryString = `(CASE
+				WHEN config->'hyperparameters'->?->>'type' = 'const' THEN config->'hyperparameters'->?->>'val' ?
+				WHEN config->'hyperparameters'->?->>'type' = 'categorical' THEN config->'hyperparameters'->?->>'vals' ?
+				ELSE false
+			 END)`
+		case contains:
+			queryString = `(CASE 
+				WHEN config->'hyperparameters'->?->>'type' = 'const' THEN config->'hyperparameters'->?->>'val' LIKE
+				WHEN config->'hyperparameters'->?->>'type' = 'categorical' THEN (config->'hyperparameters'->?->>'vals')::jsonb ?? ?
+				ELSE false
+			 END)`
+			queryArgs = append(queryArgs, bun.Safe(hpQuery),
+				bun.Safe(hpQuery), fmt.Sprintf(`%%%s%%`, queryValue),
+				bun.Safe(hpQuery), bun.Safe(hpQuery), queryValue)
+		case doesNotContain:
+			queryString = `(CASE 
+				WHEN config->'hyperparameters'->?->>'type' = 'const' THEN config->'hyperparameters'->?->>'val' ?
+				WHEN config->'hyperparameters'->?->>'type' = 'categorical' THEN (config->'hyperparameters'->?->>'vals')::jsonb ?? ? IS NOT TRUE
+				ELSE false
+			 END)`
+			queryArgs = append(queryArgs, bun.Safe(hpQuery),
+				bun.Safe(hpQuery), `NOT LIKE %`+fmt.Sprintf(`%v`, queryValue)+`%`,
+				bun.Safe(hpQuery), bun.Safe(hpQuery), queryValue)
+		default:
+			queryArgs = append(queryArgs, bun.Safe(hpQuery), bun.Safe(hpQuery), bun.Safe(oSQL), queryValue)
+			queryString = `(CASE
+				WHEN config->'hyperparameters'->?->>'type' = 'const' THEN config->'hyperparameters'->?->>'val' ? ?
+				ELSE false
+			 END)`
+		}
 	default:
 		switch o {
 		case empty, notEmpty:
@@ -262,7 +298,7 @@ func hpToSQL(c string, filterColumnType *string, filterValue *interface{},
 func (e experimentFilterRoot) toSQL(q *bun.SelectQuery) (*bun.SelectQuery, error) {
 	q, err := e.FilterGroup.toSQL(q, nil)
 	if err != nil {
-		return q, err
+		return nil, err
 	}
 	if !e.ShowArchived {
 		q.Where(`e.archived = false`)
@@ -276,14 +312,14 @@ func (e experimentFilter) toSQL(q *bun.SelectQuery,
 	switch e.Kind {
 	case field:
 		if e.Operator == nil {
-			return q, fmt.Errorf("field specified with value but no operator")
+			return nil, fmt.Errorf("field specified with value but no operator")
 		}
 		if e.Value == nil && *e.Operator != notEmpty && *e.Operator != empty {
 			return q.Where("true"), nil //nolint:goconst
 		}
 		oSQL, err := e.Operator.toSQL()
 		if err != nil {
-			return q, err
+			return nil, err
 		}
 		if e.Location == nil ||
 			*e.Location != projectv1.LocationType_LOCATION_TYPE_HYPERPARAMETERS.String() {
@@ -313,7 +349,7 @@ func (e experimentFilter) toSQL(q *bun.SelectQuery,
 				}
 			}
 			if err != nil {
-				return q, err
+				return nil, err
 			}
 		} else {
 			return hpToSQL(e.ColumnName, e.Type, e.Value, e.Operator, q, c)
@@ -322,7 +358,7 @@ func (e experimentFilter) toSQL(q *bun.SelectQuery,
 		var co string
 		var err error
 		if e.Conjunction == nil {
-			return q, fmt.Errorf("group specified with no conjunction")
+			return nil, fmt.Errorf("group specified with no conjunction")
 		}
 		if len(e.Children) == 0 {
 			return q.Where("true"), nil //nolint:goconst
@@ -333,7 +369,7 @@ func (e experimentFilter) toSQL(q *bun.SelectQuery,
 		case or:
 			co = " OR "
 		default:
-			return q, fmt.Errorf("invalid conjunction value %v", *e.Conjunction)
+			return nil, fmt.Errorf("invalid conjunction value %v", *e.Conjunction)
 		}
 		for _, c := range e.Children {
 			q = q.WhereGroup(co, func(q *bun.SelectQuery) *bun.SelectQuery {
