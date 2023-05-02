@@ -6,4 +6,3 @@ datasets
 evaluate
 transformers==4.28.1
 scikit-learn
-deepspeed == 0.8.3
