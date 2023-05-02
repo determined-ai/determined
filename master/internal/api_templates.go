@@ -44,7 +44,7 @@ func (a *apiServer) GetTemplate(
 }
 
 func (a *apiServer) PostTemplate(
-	_ context.Context, req *apiv1.PostTemplateRequest,
+	ctx context.Context, req *apiv1.PostTemplateRequest,
 ) (*apiv1.PostTemplateResponse, error) {
 	config, err := protojson.Marshal(req.Template.Config)
 	if err != nil {
@@ -54,16 +54,21 @@ func (a *apiServer) PostTemplate(
 	if req.Template.WorkspaceId != 0 {
 		workspaceID = int(req.Template.WorkspaceId)
 	}
+	w := model.Workspace{}
+	notFoundErr := status.Errorf(codes.NotFound, "workspace (%d) not found", workspaceID)
+	if err = db.Bun().NewSelect().Model(w).
+		Where("id = ? AND archived = false", workspaceID).Scan(ctx); err != nil {
+		return nil, notFoundErr
+	}
+	res := &apiv1.PostTemplateResponse{}
 	switch err := a.m.db.QueryProto(
-		"put_template", req.Template, req.Template.Name, config, workspaceID,
+		"put_template", res.Template, req.Template.Name, config, workspaceID,
 	); err {
 	case nil:
-		return &apiv1.PostTemplateResponse{Template: req.Template}, nil
-	case db.ErrNotFound:
-		return nil, status.Errorf(
-			codes.NotFound, "error posting template %s to db: %s", req.Template.Name, err.Error())
+		return res, nil
 	default:
-		return nil, status.Errorf(codes.Internal, "error posting template to db: %s", err.Error())
+		return nil, status.Errorf(codes.Internal, "error posting template %s to db: %s",
+			req.Template.Name, err.Error())
 	}
 }
 
