@@ -1,6 +1,6 @@
 import { Menu, Space } from 'antd';
 import { ItemType } from 'rc-menu/lib/interface';
-import React, { Dispatch, SetStateAction, useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 
 import BatchActionConfirmModalComponent from 'components/BatchActionConfirmModal';
 import Dropdown from 'components/Dropdown';
@@ -28,7 +28,6 @@ import {
   ExperimentItem,
   Project,
   ProjectExperiment,
-  RunState,
 } from 'types';
 import { notification } from 'utils/dialogApi';
 import handleError from 'utils/error';
@@ -54,7 +53,7 @@ const batchActions = [
   ExperimentAction.Kill,
 ] as const;
 
-type BatchAction = (typeof batchActions)[number];
+export type BatchAction = (typeof batchActions)[number];
 
 const actionIcons: Record<BatchAction, string> = {
   [ExperimentAction.Activate]: 'play',
@@ -74,7 +73,7 @@ interface Props {
   onAction: () => Promise<void>;
   selectAll: boolean;
   selectedExperimentIds: number[];
-  setExperiments: Dispatch<SetStateAction<Loadable<ExperimentItem>[]>>;
+  handleUpdateExperimentList: (action: BatchAction, successfulIds: number[]) => void;
   project: Project;
   total: Loadable<number>;
 }
@@ -85,7 +84,7 @@ const TableActionBar: React.FC<Props> = ({
   onAction,
   selectAll,
   selectedExperimentIds,
-  setExperiments,
+  handleUpdateExperimentList,
   project,
   total,
 }) => {
@@ -160,86 +159,6 @@ const TableActionBar: React.FC<Props> = ({
       }
     },
     [selectedExperimentIds, selectAll, filters, project?.workspaceId, ExperimentMoveModal],
-  );
-
-  const handleUpdateExperimentList = useCallback(
-    (action: BatchAction, successfulIds: number[]) => {
-      const idSet = new Set(successfulIds);
-      switch (action) {
-        case ExperimentAction.OpenTensorBoard:
-          break;
-        case ExperimentAction.Activate:
-          setExperiments((prev) =>
-            prev.map((expLoadable) =>
-              Loadable.map(expLoadable, (experiment) =>
-                idSet.has(experiment.id) ? { ...experiment, state: RunState.Active } : experiment,
-              ),
-            ),
-          );
-          break;
-        case ExperimentAction.Archive:
-          setExperiments((prev) =>
-            prev.map((expLoadable) =>
-              Loadable.map(expLoadable, (experiment) =>
-                idSet.has(experiment.id) ? { ...experiment, archived: true } : experiment,
-              ),
-            ),
-          );
-          break;
-        case ExperimentAction.Cancel:
-          setExperiments((prev) =>
-            prev.map((expLoadable) =>
-              Loadable.map(expLoadable, (experiment) =>
-                idSet.has(experiment.id)
-                  ? { ...experiment, state: RunState.StoppingCanceled }
-                  : experiment,
-              ),
-            ),
-          );
-          break;
-        case ExperimentAction.Kill:
-          setExperiments((prev) =>
-            prev.map((expLoadable) =>
-              Loadable.map(expLoadable, (experiment) =>
-                idSet.has(experiment.id)
-                  ? { ...experiment, state: RunState.StoppingKilled }
-                  : experiment,
-              ),
-            ),
-          );
-          break;
-        case ExperimentAction.Pause:
-          setExperiments((prev) =>
-            prev.map((expLoadable) =>
-              Loadable.map(expLoadable, (experiment) =>
-                idSet.has(experiment.id) ? { ...experiment, state: RunState.Paused } : experiment,
-              ),
-            ),
-          );
-          break;
-        case ExperimentAction.Unarchive:
-          setExperiments((prev) =>
-            prev.map((expLoadable) =>
-              Loadable.map(expLoadable, (experiment) =>
-                idSet.has(experiment.id) ? { ...experiment, archived: false } : experiment,
-              ),
-            ),
-          );
-          break;
-        case ExperimentAction.Move:
-        case ExperimentAction.Delete:
-          setExperiments((prev) =>
-            prev.filter((expLoadable) =>
-              Loadable.match(expLoadable, {
-                Loaded: (experiment) => !idSet.has(experiment.id),
-                NotLoaded: () => true,
-              }),
-            ),
-          );
-          break;
-      }
-    },
-    [setExperiments],
   );
 
   const handleSubmitMove = useCallback(

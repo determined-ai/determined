@@ -46,6 +46,7 @@ import { TableContextMenu, TableContextMenuProps } from './contextMenu';
 import { customRenderers } from './custom-renderers';
 import { LinkCell } from './custom-renderers/cells/linkCell';
 import { placeholderMenuItems, TableActionMenu, TableActionMenuProps } from './menu';
+import { BatchAction } from './TableActionBar';
 import { useTableTooltip } from './tooltip';
 import { getTheme } from './utils';
 
@@ -65,6 +66,7 @@ export interface GlideTableProps {
   setSelectedExperimentIds: Dispatch<SetStateAction<number[]>>;
   selectAll: boolean;
   setSelectAll: Dispatch<SetStateAction<boolean>>;
+  handleUpdateExperimentList: (action: BatchAction, successfulIds: number[]) => void;
 }
 
 /**
@@ -99,6 +101,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   scrollPositionSetCount,
   page,
   project,
+  handleUpdateExperimentList,
 }) => {
   const gridRef = useRef<DataEditorRef>(null);
 
@@ -126,7 +129,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
 
   const [contextMenuProps, setContextMenuProps] = useState<null | Omit<
     TableContextMenuProps,
-    'open' | 'fetchExperiments'
+    'open' | 'fetchExperiments' | 'handleUpdateExperimentList'
   >>(null);
 
   const {
@@ -389,6 +392,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         <TableContextMenu
           {...contextMenuProps}
           fetchExperiments={fetchExperiments}
+          handleUpdateExperimentList={handleUpdateExperimentList}
           open={contextMenuIsOpen}
         />
       )}
