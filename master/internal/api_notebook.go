@@ -224,11 +224,11 @@ func (a *apiServer) LaunchNotebook(
 	if req.WorkspaceId != 0 {
 		spec.Metadata.WorkspaceID = model.AccessScopeID(req.WorkspaceId)
 	}
-	/*
-		if err = a.isNTSCPermittedToLaunch(ctx, spec); err != nil { // TODO CAROLINA
-			return nil, err
-		}
-	*/
+
+	if err = a.isNTSCPermittedToLaunch(ctx, spec); err != nil { // TODO CAROLINA
+		return nil, err
+	}
+
 	spec.WatchProxyIdleTimeout = true
 	spec.WatchRunnerIdleTimeout = true
 

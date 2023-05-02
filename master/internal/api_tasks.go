@@ -109,7 +109,7 @@ func (a *apiServer) canDoActionsOnTask(
 	default: // NTSC case + checkpointGC.
 		if ok, err := canAccessNTSCTask(ctx, *curUser, taskID); err != nil {
 			return err
-		} else if !ok {
+		} else if ok {
 			return errTaskNotFound
 		}
 	}
