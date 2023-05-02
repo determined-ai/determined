@@ -13,7 +13,7 @@ import css from './MultiSortMenu.module.scss';
 const BANNED_COLUMNS = new Set(['tags', 'duration', 'searcherType']);
 
 const directionType = io.keyof({ asc: null, desc: null });
-type DirectionType = io.TypeOf<typeof directionType>;
+export type DirectionType = io.TypeOf<typeof directionType>;
 
 export const validSort = io.type({
   column: io.string,
@@ -48,7 +48,7 @@ interface ColumnOptionsProps {
   value?: string;
 }
 
-const optionsByColumnType = {
+export const optionsByColumnType = {
   [V1ColumnType.NUMBER]: [
     { label: '0 → 9', value: 'asc' },
     { label: '9 → 0', value: 'desc' },

@@ -298,6 +298,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
             height={height}
             page={page}
             project={project}
+            projectColumns={columns}
             scrollPositionSetCount={scrollPositionSetCount}
             selectAll={selectAll}
             selectedExperimentIds={selectedExperimentIds}
@@ -305,6 +306,8 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
             setSelectedExperimentIds={setSelectedExperimentIds}
             setSortableColumnIds={setSortableColumnIds}
             sortableColumnIds={sortableColumnIds}
+            sorts={sorts}
+            onSortChange={onSortChange}
           />
         )}
       </>

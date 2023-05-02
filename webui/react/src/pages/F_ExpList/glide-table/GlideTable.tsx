@@ -24,6 +24,7 @@ import React, {
 } from 'react';
 
 import { handlePath } from 'routes/utils';
+import { V1ProjectColumn } from 'services/api-ts-sdk';
 import useUI from 'shared/contexts/stores/UI';
 import { AnyMouseEvent } from 'shared/utils/routes';
 import usersStore from 'stores/users';
@@ -45,7 +46,13 @@ import {
 import { TableContextMenu, TableContextMenuProps } from './contextMenu';
 import { customRenderers } from './custom-renderers';
 import { LinkCell } from './custom-renderers/cells/linkCell';
-import { placeholderMenuItems, TableActionMenu, TableActionMenuProps } from './menu';
+import {
+  placeholderMenuItems,
+  sortMenuItemsForColumn,
+  TableActionMenu,
+  TableActionMenuProps,
+} from './menu';
+import { Sort } from './MultiSortMenu';
 import { BatchAction } from './TableActionBar';
 import { useTableTooltip } from './tooltip';
 import { getTheme } from './utils';
@@ -67,6 +74,9 @@ export interface GlideTableProps {
   selectAll: boolean;
   setSelectAll: Dispatch<SetStateAction<boolean>>;
   handleUpdateExperimentList: (action: BatchAction, successfulIds: number[]) => void;
+  projectColumns: Loadable<V1ProjectColumn[]>;
+  sorts: Sort[];
+  onSortChange: (sorts: Sort[]) => void;
 }
 
 /**
@@ -102,6 +112,9 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   page,
   project,
   handleUpdateExperimentList,
+  onSortChange,
+  projectColumns,
+  sorts,
 }) => {
   const gridRef = useRef<DataEditorRef>(null);
 
@@ -233,15 +246,23 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         setSelectAll((prev) => !prev);
         return;
       }
+      const column = Loadable.getOrElse([], projectColumns).find((c) => c.column === columnId);
+      if (!column) {
+        return;
+      }
 
       const { bounds } = args;
-      const items: MenuProps['items'] = placeholderMenuItems;
+      const items: MenuProps['items'] = [
+        ...placeholderMenuItems,
+        { type: 'divider' },
+        ...sortMenuItemsForColumn(column, sorts, onSortChange),
+      ];
       const x = bounds.x;
       const y = bounds.y + bounds.height;
       setMenuProps((prev) => ({ ...prev, items, title: `${columnId} menu`, x, y }));
       setMenuIsOpen(true);
     },
-    [columnIds, setSelectAll],
+    [columnIds, projectColumns, sorts, onSortChange, setSelectAll],
   );
 
   const getCellContent: DataEditorProps['getCellContent'] = React.useCallback(
