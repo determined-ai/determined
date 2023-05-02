@@ -200,7 +200,9 @@ func columnNameToSQL(c string, l *string, t *string) (string, error) {
 	return col, nil
 }
 
-func hpToSQL(c string, t *string, va *interface{}, op *operator, q *bun.SelectQuery, fc *filterConjunction) (*bun.SelectQuery, error) {
+func hpToSQL(c string, t *string, va *interface{},
+	op *operator, q *bun.SelectQuery,
+	fc *filterConjunction) (*bun.SelectQuery, error) {
 	var ty string
 	var o operator
 	var v interface{}
@@ -230,7 +232,8 @@ func hpToSQL(c string, t *string, va *interface{}, op *operator, q *bun.SelectQu
 	var qs string
 	switch ty {
 	case projectv1.ColumnType_COLUMN_TYPE_TEXT.String():
-		if o != empty && o != notEmpty && o != contains && o != doesNotContain { //nolint: gocritic
+		if o != empty && o != notEmpty && //nolint: gocritic
+			o != contains && o != doesNotContain { //nolint: gocritic
 			qa = append(qa, bun.Safe(hpQuery), bun.Safe(hpQuery), bun.Safe(oSQL), v)
 			qs = `(CASE WHEN config->'hyperparameters'->?->>'type' = 'const' THEN config->'hyperparameters'->?->>'val' ? ? ELSE false END)`
 			if fc != nil && *fc == or {
@@ -238,7 +241,10 @@ func hpToSQL(c string, t *string, va *interface{}, op *operator, q *bun.SelectQu
 			}
 			return q.Where(qs, qa...), nil
 		} else if o == empty || o == notEmpty {
-			qa = append(qa, bun.Safe(hpQuery), bun.Safe(hpQuery), bun.Safe(oSQL), bun.Safe(hpQuery), bun.Safe(hpQuery), bun.Safe(oSQL))
+			qa = append(qa, bun.Safe(hpQuery),
+				bun.Safe(hpQuery), bun.Safe(oSQL),
+				bun.Safe(hpQuery), bun.Safe(hpQuery),
+				bun.Safe(oSQL))
 			qs = `(CASE
 				WHEN config->'hyperparameters'->?->>'type' = 'const' THEN config->'hyperparameters'->?->>'val' ?
 				WHEN config->'hyperparameters'->?->>'type' = 'categorical' THEN config->'hyperparameters'->?->>'vals' ?
@@ -255,7 +261,9 @@ func hpToSQL(c string, t *string, va *interface{}, op *operator, q *bun.SelectQu
 					WHEN config->'hyperparameters'->?->>'type' = 'categorical' THEN (config->'hyperparameters'->?->>'vals')::jsonb ?? ?
 					ELSE false
 				 END)`
-				qa = append(qa, bun.Safe(hpQuery), bun.Safe(hpQuery), `LIKE %`+fmt.Sprintf(`%v`, v)+`%`, bun.Safe(hpQuery), bun.Safe(hpQuery), v)
+				qa = append(qa, bun.Safe(hpQuery),
+					bun.Safe(hpQuery), `LIKE %`+fmt.Sprintf(`%v`, v)+`%`,
+					bun.Safe(hpQuery), bun.Safe(hpQuery), v)
 				if fc != nil && *fc == or {
 					return q.WhereOr(qs, qa...), nil
 				}
@@ -273,8 +281,11 @@ func hpToSQL(c string, t *string, va *interface{}, op *operator, q *bun.SelectQu
 			return q.Where(qs, qa...), nil
 		}
 	case projectv1.ColumnType_COLUMN_TYPE_DATE.String():
-		if o != empty && o != notEmpty && o != contains && o != doesNotContain { //nolint: gocritic
-			qa = append(qa, bun.Safe(hpQuery), bun.Safe(hpQuery), bun.Safe(oSQL), v)
+		if o != empty && o != notEmpty && //nolint: gocritic
+			o != contains && o != doesNotContain { //nolint: gocritic
+			qa = append(qa, bun.Safe(hpQuery),
+				bun.Safe(hpQuery), bun.Safe(oSQL),
+				v)
 			qs = `(CASE
 				WHEN config->'hyperparameters'->?->>'type' = 'const' THEN config->'hyperparameters'->?->>'val' ? ?
 				ELSE false
@@ -284,7 +295,9 @@ func hpToSQL(c string, t *string, va *interface{}, op *operator, q *bun.SelectQu
 			}
 			return q.Where(qs, qa...), nil
 		} else if o == empty || o == notEmpty {
-			qa = append(qa, bun.Safe(hpQuery), bun.Safe(hpQuery), bun.Safe(oSQL), bun.Safe(hpQuery), bun.Safe(hpQuery), bun.Safe(oSQL))
+			qa = append(qa, bun.Safe(hpQuery), bun.Safe(hpQuery),
+				bun.Safe(oSQL), bun.Safe(hpQuery), bun.Safe(hpQuery),
+				bun.Safe(oSQL))
 			qs = `(CASE
 				WHEN config->'hyperparameters'->?->>'type' = 'const' THEN config->'hyperparameters'->?->>'val' ?
 				WHEN config->'hyperparameters'->?->>'type' = 'categorical' THEN config->'hyperparameters'->?->>'vals' ?
@@ -318,8 +331,12 @@ func hpToSQL(c string, t *string, va *interface{}, op *operator, q *bun.SelectQu
 			return q.Where(qs, qa...), nil
 		}
 	default:
-		if o != empty && o != notEmpty && o != contains && o != doesNotContain { //nolint: gocritic
-			qa = append(qa, bun.Safe(hpQuery), bun.Safe(hpQuery), bun.Safe(oSQL), v, bun.Safe(hpQuery), bun.Safe(hpQuery), bun.Safe(oSQL), v, bun.Safe(hpQuery), bun.Safe(oSQL), v, bun.Safe(hpQuery), bun.Safe(oSQL), v)
+		if o != empty && o != notEmpty && //nolint: gocritic
+			o != contains && o != doesNotContain { //nolint: gocritic
+			qa = append(qa, bun.Safe(hpQuery), bun.Safe(hpQuery),
+				bun.Safe(oSQL), v, bun.Safe(hpQuery), bun.Safe(hpQuery),
+				bun.Safe(oSQL), v, bun.Safe(hpQuery), bun.Safe(oSQL),
+				v, bun.Safe(hpQuery), bun.Safe(oSQL), v)
 			qs = `(CASE
 				WHEN config->'hyperparameters'->?->>'type' = 'const' THEN (config->'hyperparameters'->?->>'val')::float8 ? ?
 				WHEN config->'hyperparameters'->?->>'type' IN ('int', 'double', 'log') THEN ((config->'hyperparameters'->?->>'minval')::float8 ? ? OR (config->'hyperparameters'->?->>'maxval')::float8 ? ?)
@@ -330,7 +347,10 @@ func hpToSQL(c string, t *string, va *interface{}, op *operator, q *bun.SelectQu
 			}
 			return q.Where(qs, qa...), nil
 		} else if o == empty || o == notEmpty {
-			qa = append(qa, bun.Safe(hpQuery), bun.Safe(hpQuery), bun.Safe(oSQL), bun.Safe(hpQuery), bun.Safe(hpQuery), bun.Safe(oSQL), bun.Safe(hpQuery), bun.Safe(hpQuery), bun.Safe(oSQL))
+			qa = append(qa, bun.Safe(hpQuery), bun.Safe(hpQuery),
+				bun.Safe(oSQL), bun.Safe(hpQuery), bun.Safe(hpQuery),
+				bun.Safe(oSQL), bun.Safe(hpQuery), bun.Safe(hpQuery),
+				bun.Safe(oSQL))
 			qs = `(CASE
 				WHEN config->'hyperparameters'->?->>'type' = 'const' THEN (config->'hyperparameters'->?->>'val')::float8 ?
 				WHEN config->'hyperparameters'->?->>'type' = 'categorical' THEN config->'hyperparameters'->?->>'vals' ?
@@ -343,7 +363,9 @@ func hpToSQL(c string, t *string, va *interface{}, op *operator, q *bun.SelectQu
 			return q.Where(qs, qa...), nil
 		} else {
 			if o == contains {
-				qa = append(qa, bun.Safe(hpQuery), bun.Safe(hpQuery), bun.Safe(`?`), v, bun.Safe(hpQuery), bun.Safe(hpQuery), v, bun.Safe(hpQuery), v)
+				qa = append(qa, bun.Safe(hpQuery), bun.Safe(hpQuery),
+					bun.Safe(`?`), v, bun.Safe(hpQuery), bun.Safe(hpQuery),
+					v, bun.Safe(hpQuery), v)
 				qs = `(CASE
 					WHEN config->'hyperparameters'->?->>'type' = 'categorical' THEN (config->'hyperparameters'->?->>'vals')::jsonb ? '?'
 					WHEN config->'hyperparameters'->?->>'type' IN ('int', 'double', 'log') THEN (config->'hyperparameters'->?->>'minval')::float8 <= ? OR (config->'hyperparameters'->?->>'maxval')::float8 >= ?
@@ -354,7 +376,9 @@ func hpToSQL(c string, t *string, va *interface{}, op *operator, q *bun.SelectQu
 				}
 				return q.Where(qs, qa...), nil
 			}
-			qa = append(qa, bun.Safe(hpQuery), bun.Safe(hpQuery), bun.Safe(`?`), v, bun.Safe(hpQuery), bun.Safe(hpQuery), v, bun.Safe(hpQuery), v)
+			qa = append(qa, bun.Safe(hpQuery), bun.Safe(hpQuery),
+				bun.Safe(`?`), v, bun.Safe(hpQuery), bun.Safe(hpQuery),
+				v, bun.Safe(hpQuery), v)
 			qs = `(CASE
 					WHEN config->'hyperparameters'->?->>'type' = 'categorical' THEN ((config->'hyperparameters'->?->>'vals')::jsonb ? '?') IS NOT TRUE
 					WHEN config->'hyperparameters'->?->>'type' IN ('int', 'double', 'log') THEN (config->'hyperparameters'->?->>'minval')::float8 >= ? OR (config->'hyperparameters'->?->>'maxval')::float8 <= ?
@@ -379,7 +403,8 @@ func (e experimentFilterRoot) toSQL(q *bun.SelectQuery) (*bun.SelectQuery, error
 	return q, nil
 }
 
-func (e experimentFilter) toSQL(q *bun.SelectQuery, c *filterConjunction) (*bun.SelectQuery, error) {
+func (e experimentFilter) toSQL(q *bun.SelectQuery,
+	c *filterConjunction) (*bun.SelectQuery, error) {
 	switch e.Kind {
 	case field:
 		if e.Operator == nil {
@@ -392,7 +417,8 @@ func (e experimentFilter) toSQL(q *bun.SelectQuery, c *filterConjunction) (*bun.
 		if err != nil {
 			return q, err
 		}
-		if e.Location == nil || *e.Location != projectv1.LocationType_LOCATION_TYPE_HYPERPARAMETERS.String() {
+		if e.Location == nil ||
+			*e.Location != projectv1.LocationType_LOCATION_TYPE_HYPERPARAMETERS.String() {
 			col, err := columnNameToSQL(e.ColumnName, e.Location, e.Type)
 			if *e.Operator == contains || *e.Operator == doesNotContain { //nolint: gocritic
 				switch *e.Operator {
