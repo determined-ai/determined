@@ -7,11 +7,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/uptrace/bun"
 	"sort"
 	"testing"
 	"time"
 	"unsafe"
+
+	"github.com/uptrace/bun"
 
 	"github.com/golang/protobuf/ptypes/wrappers"
 	"google.golang.org/protobuf/proto"

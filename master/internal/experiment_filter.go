@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/determined-ai/determined/proto/pkg/projectv1"
 	"github.com/uptrace/bun"
+
+	"github.com/determined-ai/determined/proto/pkg/projectv1"
 )
 
 const (
@@ -125,7 +126,8 @@ func columnNameToSQL(c string, l *string, t *string) (string, error) {
 
 	switch locationType {
 	case projectv1.LocationType_LOCATION_TYPE_EXPERIMENT.String():
-		col, exists := filterExperimentColMap[c]
+		var exists bool
+		col, exists = filterExperimentColMap[c]
 		if !exists {
 			return col, fmt.Errorf("invalid experiment column %s", col)
 		}
@@ -145,7 +147,8 @@ func columnNameToSQL(c string, l *string, t *string) (string, error) {
 // nolint: lll
 func hpToSQL(c string, filterColumnType *string, filterValue *interface{},
 	op *operator, q *bun.SelectQuery,
-	fc *filterConjunction) (*bun.SelectQuery, error) {
+	fc *filterConjunction,
+) (*bun.SelectQuery, error) {
 	queryColumnType := projectv1.ColumnType_COLUMN_TYPE_UNSPECIFIED.String()
 	var o operator
 	var queryValue interface{}
@@ -207,38 +210,6 @@ func hpToSQL(c string, filterColumnType *string, filterValue *interface{},
 			queryString = `(CASE WHEN config->'hyperparameters'->?->>'type' = 'const' THEN config->'hyperparameters'->?->>'val' ? ? ELSE false END)`
 		}
 	case projectv1.ColumnType_COLUMN_TYPE_DATE.String():
-		switch o {
-		case empty, notEmpty:
-			queryArgs = append(queryArgs, bun.Safe(hpQuery), bun.Safe(hpQuery),
-				bun.Safe(oSQL), bun.Safe(hpQuery), bun.Safe(hpQuery),
-				bun.Safe(oSQL))
-			queryString = `(CASE
-				WHEN config->'hyperparameters'->?->>'type' = 'const' THEN config->'hyperparameters'->?->>'val' ?
-				WHEN config->'hyperparameters'->?->>'type' = 'categorical' THEN config->'hyperparameters'->?->>'vals' ?
-				ELSE false
-			END)`
-		case contains:
-			queryArgs = append(queryArgs, bun.Safe(hpQuery), bun.Safe(hpQuery), queryValue)
-			queryString = `(CASE
-					WHEN config->'hyperparameters'->?->>'type' = 'categorical' THEN (config->'hyperparameters'->?->>'vals')::jsonb ?? ?
-					ELSE false
-				 END)`
-		case doesNotContain:
-			queryArgs = append(queryArgs, bun.Safe(hpQuery), bun.Safe(hpQuery), queryValue)
-			queryString = `
-				(CASE
-					WHEN config->'hyperparameters'->?->>'type' = 'categorical' THEN (config->'hyperparameters'->?->>'val')::jsonb ?? ?) IS NOT TRUE
-					ELSE false
-				 END)`
-		default:
-			queryArgs = append(queryArgs, bun.Safe(hpQuery),
-				bun.Safe(hpQuery), bun.Safe(oSQL),
-				queryValue)
-			queryString = `(CASE
-				WHEN config->'hyperparameters'->?->>'type' = 'const' THEN config->'hyperparameters'->?->>'val' ? ?
-				ELSE false
-			 END)`
-		}
 	default:
 		switch o {
 		case empty, notEmpty:
@@ -300,7 +271,8 @@ func (e experimentFilterRoot) toSQL(q *bun.SelectQuery) (*bun.SelectQuery, error
 }
 
 func (e experimentFilter) toSQL(q *bun.SelectQuery,
-	c *filterConjunction) (*bun.SelectQuery, error) {
+	c *filterConjunction,
+) (*bun.SelectQuery, error) {
 	switch e.Kind {
 	case field:
 		if e.Operator == nil {
