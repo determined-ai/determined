@@ -4,6 +4,7 @@ import React, { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'r
 
 import Button from 'components/kit/Button';
 import Checkbox from 'components/kit/Checkbox';
+import Empty from 'components/kit/Empty';
 import Input from 'components/kit/Input';
 import Pivot from 'components/kit/Pivot';
 import { V1LocationType } from 'services/api-ts-sdk';
@@ -91,15 +92,19 @@ const ColumnPickerTabNF: React.FC<ColumnTabProps> = ({
       <Input allowClear autoFocus placeholder="Search" value={search} onChange={handleSearch} />
       {totalColumns.length !== 0 ? (
         <Space className={css.columnList} direction="vertical">
-          {filteredColumns.map((col) => (
-            <Checkbox
-              checked={columnState[col.column] ?? false}
-              id={col.column}
-              key={col.column}
-              onChange={handleColumnChange}>
-              {col.displayName || col.column}
-            </Checkbox>
-          ))}
+          {filteredColumns.length > 0 ? (
+            filteredColumns.map((col) => (
+              <Checkbox
+                checked={columnState[col.column] ?? false}
+                id={col.column}
+                key={col.column}
+                onChange={handleColumnChange}>
+                {col.displayName || col.column}
+              </Checkbox>
+            ))
+          ) : (
+            <Empty description="No results" />
+          )}
         </Space>
       ) : (
         <Spinner />
@@ -109,7 +114,7 @@ const ColumnPickerTabNF: React.FC<ColumnTabProps> = ({
           {allFilteredColumnsChecked ? 'Hide' : 'Show'} all
         </Button>
         <Button type="text" onClick={handleShowSuggested}>
-          Show suggested
+          Reset
         </Button>
       </div>
     </div>
