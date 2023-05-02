@@ -235,6 +235,7 @@ func hpToSQL(c string, t *string, va *interface{},
 		if o != empty && o != notEmpty && //nolint: gocritic
 			o != contains && o != doesNotContain { //nolint: gocritic
 			qa = append(qa, bun.Safe(hpQuery), bun.Safe(hpQuery), bun.Safe(oSQL), v)
+			// nolint: lll
 			qs = `(CASE WHEN config->'hyperparameters'->?->>'type' = 'const' THEN config->'hyperparameters'->?->>'val' ? ? ELSE false END)`
 			if fc != nil && *fc == or {
 				return q.WhereOr(qs, qa...), nil
@@ -245,6 +246,7 @@ func hpToSQL(c string, t *string, va *interface{},
 				bun.Safe(hpQuery), bun.Safe(oSQL),
 				bun.Safe(hpQuery), bun.Safe(hpQuery),
 				bun.Safe(oSQL))
+			// nolint: lll
 			qs = `(CASE
 				WHEN config->'hyperparameters'->?->>'type' = 'const' THEN config->'hyperparameters'->?->>'val' ?
 				WHEN config->'hyperparameters'->?->>'type' = 'categorical' THEN config->'hyperparameters'->?->>'vals' ?
@@ -256,6 +258,7 @@ func hpToSQL(c string, t *string, va *interface{},
 			return q.Where(qs, qa...), nil
 		} else {
 			if o == contains {
+				// nolint: lll
 				qs = `(CASE 
 					WHEN config->'hyperparameters'->?->>'type' = 'const' THEN config->'hyperparameters'->?->>'val' ?
 					WHEN config->'hyperparameters'->?->>'type' = 'categorical' THEN (config->'hyperparameters'->?->>'vals')::jsonb ?? ?
@@ -269,12 +272,15 @@ func hpToSQL(c string, t *string, va *interface{},
 				}
 				return q.Where(qs, qa...), nil
 			}
+			// nolint: lll
 			qs = `(CASE 
 				WHEN config->'hyperparameters'->?->>'type' = 'const' THEN config->'hyperparameters'->?->>'val' ?
 				WHEN config->'hyperparameters'->?->>'type' = 'categorical' THEN (config->'hyperparameters'->?->>'vals')::jsonb ?? ? IS NOT TRUE
 				ELSE false
 			 END)`
-			qa = append(qa, bun.Safe(hpQuery), bun.Safe(hpQuery), `NOT LIKE %`+fmt.Sprintf(`%v`, v)+`%`, bun.Safe(hpQuery), bun.Safe(hpQuery), v)
+			qa = append(qa, bun.Safe(hpQuery),
+				bun.Safe(hpQuery), `NOT LIKE %`+fmt.Sprintf(`%v`, v)+`%`,
+				bun.Safe(hpQuery), bun.Safe(hpQuery), v)
 			if fc != nil && *fc == or {
 				return q.WhereOr(qs, qa...), nil
 			}
@@ -286,6 +292,7 @@ func hpToSQL(c string, t *string, va *interface{},
 			qa = append(qa, bun.Safe(hpQuery),
 				bun.Safe(hpQuery), bun.Safe(oSQL),
 				v)
+			// nolint: lll
 			qs = `(CASE
 				WHEN config->'hyperparameters'->?->>'type' = 'const' THEN config->'hyperparameters'->?->>'val' ? ?
 				ELSE false
@@ -298,6 +305,7 @@ func hpToSQL(c string, t *string, va *interface{},
 			qa = append(qa, bun.Safe(hpQuery), bun.Safe(hpQuery),
 				bun.Safe(oSQL), bun.Safe(hpQuery), bun.Safe(hpQuery),
 				bun.Safe(oSQL))
+			// nolint: lll
 			qs = `(CASE
 				WHEN config->'hyperparameters'->?->>'type' = 'const' THEN config->'hyperparameters'->?->>'val' ?
 				WHEN config->'hyperparameters'->?->>'type' = 'categorical' THEN config->'hyperparameters'->?->>'vals' ?
@@ -310,6 +318,7 @@ func hpToSQL(c string, t *string, va *interface{},
 		} else {
 			if o == contains {
 				qa = append(qa, bun.Safe(hpQuery), bun.Safe(hpQuery), v)
+				// nolint: lll
 				qs = `(CASE
 					WHEN config->'hyperparameters'->?->>'type' = 'categorical' THEN (config->'hyperparameters'->?->>'vals')::jsonb ?? ?
 					ELSE false
@@ -320,6 +329,7 @@ func hpToSQL(c string, t *string, va *interface{},
 				return q.Where(qs, qa...), nil
 			}
 			qa = append(qa, bun.Safe(hpQuery), bun.Safe(hpQuery), v)
+			// nolint: lll
 			qs = `
 				(CASE
 					WHEN config->'hyperparameters'->?->>'type' = 'categorical' THEN (config->'hyperparameters'->?->>'val')::jsonb ?? ?) IS NOT TRUE
@@ -337,6 +347,7 @@ func hpToSQL(c string, t *string, va *interface{},
 				bun.Safe(oSQL), v, bun.Safe(hpQuery), bun.Safe(hpQuery),
 				bun.Safe(oSQL), v, bun.Safe(hpQuery), bun.Safe(oSQL),
 				v, bun.Safe(hpQuery), bun.Safe(oSQL), v)
+			// nolint: lll
 			qs = `(CASE
 				WHEN config->'hyperparameters'->?->>'type' = 'const' THEN (config->'hyperparameters'->?->>'val')::float8 ? ?
 				WHEN config->'hyperparameters'->?->>'type' IN ('int', 'double', 'log') THEN ((config->'hyperparameters'->?->>'minval')::float8 ? ? OR (config->'hyperparameters'->?->>'maxval')::float8 ? ?)
@@ -351,6 +362,7 @@ func hpToSQL(c string, t *string, va *interface{},
 				bun.Safe(oSQL), bun.Safe(hpQuery), bun.Safe(hpQuery),
 				bun.Safe(oSQL), bun.Safe(hpQuery), bun.Safe(hpQuery),
 				bun.Safe(oSQL))
+			// nolint: lll
 			qs = `(CASE
 				WHEN config->'hyperparameters'->?->>'type' = 'const' THEN (config->'hyperparameters'->?->>'val')::float8 ?
 				WHEN config->'hyperparameters'->?->>'type' = 'categorical' THEN config->'hyperparameters'->?->>'vals' ?
@@ -366,6 +378,7 @@ func hpToSQL(c string, t *string, va *interface{},
 				qa = append(qa, bun.Safe(hpQuery), bun.Safe(hpQuery),
 					bun.Safe(`?`), v, bun.Safe(hpQuery), bun.Safe(hpQuery),
 					v, bun.Safe(hpQuery), v)
+				// nolint: lll
 				qs = `(CASE
 					WHEN config->'hyperparameters'->?->>'type' = 'categorical' THEN (config->'hyperparameters'->?->>'vals')::jsonb ? '?'
 					WHEN config->'hyperparameters'->?->>'type' IN ('int', 'double', 'log') THEN (config->'hyperparameters'->?->>'minval')::float8 <= ? OR (config->'hyperparameters'->?->>'maxval')::float8 >= ?
@@ -379,6 +392,7 @@ func hpToSQL(c string, t *string, va *interface{},
 			qa = append(qa, bun.Safe(hpQuery), bun.Safe(hpQuery),
 				bun.Safe(`?`), v, bun.Safe(hpQuery), bun.Safe(hpQuery),
 				v, bun.Safe(hpQuery), v)
+			// nolint: lll
 			qs = `(CASE
 					WHEN config->'hyperparameters'->?->>'type' = 'categorical' THEN ((config->'hyperparameters'->?->>'vals')::jsonb ? '?') IS NOT TRUE
 					WHEN config->'hyperparameters'->?->>'type' IN ('int', 'double', 'log') THEN (config->'hyperparameters'->?->>'minval')::float8 >= ? OR (config->'hyperparameters'->?->>'maxval')::float8 <= ?
