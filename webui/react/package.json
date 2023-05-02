@@ -52,9 +52,7 @@
     "notebook": "file:src/vendor/notebook",
     "omnibar": "github:hamidzr/omnibar",
     "path-to-regexp": "^6.2.1",
-    "portable-fetch": "^3.0.0",
     "pretty-bytes": "^6.1.0",
-    "query-string": "^8.1.0",
     "react": "^18.2.0",
     "react-dnd": "^16.0.1",
     "react-dnd-html5-backend": "^16.0.1",
@@ -70,8 +68,7 @@
     "smoothscroll-polyfill": "^0.4.4",
     "sprintf-js": "^1.1.2",
     "throttle-debounce": "^5.0.0",
-    "uplot": "^1.6.18",
-    "url": "^0.11.0"
+    "uplot": "^1.6.18"
   },
   "browserslist": {
     "production": [

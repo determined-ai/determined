@@ -1,5 +1,4 @@
 import { pathToRegexp } from 'path-to-regexp';
-import queryString from 'query-string';
 
 import { globalStorage } from 'globalStorage';
 import { ClusterApi, Configuration } from 'services/api-ts-sdk';
@@ -140,7 +139,7 @@ export const paths = {
     return `/projects/${projectId}`;
   },
   reload: (path: string): string => {
-    return `/reload?${queryString.stringify({ path })}`;
+    return `/reload?${new URLSearchParams({ path })}`;
   },
   resourcePool: (name: string): string => {
     return `/resourcepool/${name}`;

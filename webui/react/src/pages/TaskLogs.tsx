@@ -1,6 +1,5 @@
-import queryString from 'query-string';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 
 import LogViewer, {
   FetchConfig,
@@ -39,10 +38,10 @@ export const TaskLogsWrapper: React.FC = () => {
 };
 const TaskLogs: React.FC<Props> = ({ taskId, taskType, onCloseLogs, headerComponent }: Props) => {
   const [filterOptions, setFilterOptions] = useState<Filters>({});
+  const [searchParams] = useSearchParams();
 
-  const queries = queryString.parse(location.search);
   const taskTypeLabel = commandTypeToLabel[taskType as CommandType];
-  const title = `${queries.id ? `${queries.id} ` : ''}Logs`;
+  const title = `${searchParams.has('id') ? `${searchParams.get('id')} ` : ''}Logs`;
 
   const taskSettingsConfig = useMemo(() => settingsConfigForTask(taskId), [taskId]);
   const { resetSettings, settings, updateSettings } = useSettings<Settings>(taskSettingsConfig);
