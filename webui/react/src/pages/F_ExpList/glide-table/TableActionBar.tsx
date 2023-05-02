@@ -284,6 +284,7 @@ const TableActionBar: React.FC<Props> = ({
   return (
     <>
       <Space className={css.base}>
+        <MultiSortMenu columns={columns} sorts={sorts} onChange={onSortChange} />
         {(selectAll || selectedExperimentIds.length > 0) && (
           <Dropdown content={<Menu items={editMenuItems} onClick={handleAction} />}>
             <Button icon={<Icon name="pencil" />}>
@@ -297,7 +298,6 @@ const TableActionBar: React.FC<Props> = ({
             </Button>
           </Dropdown>
         )}
-        <MultiSortMenu columns={columns} sorts={sorts} onChange={onSortChange} />
       </Space>
       {batchAction && (
         <BatchActionConfirmModal.Component

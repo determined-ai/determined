@@ -172,7 +172,7 @@ const MultiSort: React.FC<MultiSortProps> = ({ sorts, columns, onChange }) => {
           <Icon name="add-small" size="tiny" /> Add sort
         </Button>
         <Button type="text" onClick={clearAll}>
-          Clear all
+          Reset
         </Button>
       </div>
     </div>
