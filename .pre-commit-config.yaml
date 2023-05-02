@@ -74,6 +74,10 @@ repos:
     hooks:
       - id: black
         exclude: ^(harness/determined/common/api/bindings.py)
+  - repo: https://github.com/pycqa/flake8
+    rev: 3.9.2
+    hooks:
+      - id: flake8
 
   # - repo: https://github.com/jumanjihouse/pre-commit-hooks
   #   rev: 3.0.0
