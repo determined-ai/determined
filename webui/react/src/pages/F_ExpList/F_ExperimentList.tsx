@@ -9,14 +9,14 @@ import { searchExperiments } from 'services/api';
 import { V1BulkExperimentFilters } from 'services/api-ts-sdk';
 import usePolling from 'shared/hooks/usePolling';
 import userStore from 'stores/users';
-import { ExperimentItem, Project } from 'types';
+import { ExperimentAction, ExperimentItem, Project, RunState } from 'types';
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 
 import { defaultExperimentColumns } from './glide-table/columns';
 import { Error, Loading, NoExperiments, NoMatches } from './glide-table/exceptions';
 import GlideTable, { SCROLL_SET_COUNT_NEEDED } from './glide-table/GlideTable';
-import TableActionBar from './glide-table/TableActionBar';
+import TableActionBar, { BatchAction } from './glide-table/TableActionBar';
 import { useGlasbey } from './useGlasbey';
 
 interface Props {
@@ -136,6 +136,55 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     await fetchExperiments();
   }, [fetchExperiments]);
 
+  const handleUpdateExperimentList = useCallback(
+    (action: BatchAction, successfulIds: number[]) => {
+      const idSet = new Set(successfulIds);
+      const updateExperiment = (updated: Partial<ExperimentItem>) => {
+        setExperiments((prev) =>
+          prev.map((expLoadable) =>
+            Loadable.map(expLoadable, (experiment) =>
+              idSet.has(experiment.id) ? { ...experiment, ...updated } : experiment,
+            ),
+          ),
+        );
+      };
+      switch (action) {
+        case ExperimentAction.OpenTensorBoard:
+          break;
+        case ExperimentAction.Activate:
+          updateExperiment({ state: RunState.Active });
+          break;
+        case ExperimentAction.Archive:
+          updateExperiment({ archived: true });
+          break;
+        case ExperimentAction.Cancel:
+          updateExperiment({ state: RunState.StoppingCanceled });
+          break;
+        case ExperimentAction.Kill:
+          updateExperiment({ state: RunState.StoppingKilled });
+          break;
+        case ExperimentAction.Pause:
+          updateExperiment({ state: RunState.Paused });
+          break;
+        case ExperimentAction.Unarchive:
+          updateExperiment({ archived: false });
+          break;
+        case ExperimentAction.Move:
+        case ExperimentAction.Delete:
+          setExperiments((prev) =>
+            prev.filter((expLoadable) =>
+              Loadable.match(expLoadable, {
+                Loaded: (experiment) => !idSet.has(experiment.id),
+                NotLoaded: () => true,
+              }),
+            ),
+          );
+          break;
+      }
+    },
+    [setExperiments],
+  );
+
   return (
     <Page
       bodyNoPadding
@@ -158,10 +207,10 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
             <TableActionBar
               experiments={experiments}
               filters={experimentFilters}
+              handleUpdateExperimentList={handleUpdateExperimentList}
               project={project}
               selectAll={selectAll}
               selectedExperimentIds={selectedExperimentIds}
-              setExperiments={setExperiments}
               total={total}
               onAction={handleOnAction}
             />
@@ -171,6 +220,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
               data={experiments}
               fetchExperiments={fetchExperiments}
               handleScroll={handleScroll}
+              handleUpdateExperimentList={handleUpdateExperimentList}
               height={height}
               page={page}
               project={project}
