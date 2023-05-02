@@ -336,15 +336,26 @@ class OneVarAMPBaseTrial(OneVarTrial):
 
     def __init__(self, context: pytorch.PyTorchTrialContext):
         super().__init__(context)
-        self._agg_freq = self.context.env.experiment_config.get_optimizations_config()[
+        self._agg_freq = self.context.get_experiment_config()["optimizations"][
             "aggregation_frequency"
         ]
 
     def build_training_data_loader(self) -> torch.utils.data.DataLoader:
-        return pytorch.DataLoader(
-            AMPTestDataset(self._stages, self._agg_freq),
-            batch_size=self.context.get_per_slot_batch_size(),
-        )
+        dataset = AMPTestDataset(self._stages, self._agg_freq)
+        seed = self.context.get_trial_seed()
+        num_workers = self.context.distributed.get_size()
+        rank = self.context.distributed.get_rank()
+        batch_size = self.context.get_per_slot_batch_size()
+        skip_batches = self.context.get_initial_batch()
+
+        sampler = torch.utils.data.SequentialSampler(dataset)
+        sampler = samplers.ReproducibleShuffleSampler(sampler, seed)
+        sampler = samplers.RepeatSampler(sampler)
+        sampler = samplers.DistributedSampler(sampler, num_workers=num_workers, rank=rank)
+        batch_sampler = torch.utils.data.BatchSampler(sampler, batch_size, drop_last=False)
+        batch_sampler = samplers.SkipBatchSampler(batch_sampler, skip_batches)
+
+        return pytorch.DataLoader(dataset, batch_sampler=batch_sampler)
 
 
 class OneVarApexAMPTrial(OneVarAMPBaseTrial):

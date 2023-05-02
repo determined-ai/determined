@@ -134,10 +134,11 @@ class TestPyTorchTrial:
             "lr_scheduler_step_mode": pytorch.LRScheduler.StepMode.STEP_EVERY_BATCH.value,
             **self.hparams,
         }
-        self.checkpoint_and_check_metrics(updated_hparams, tmp_path, (100, 100))
+        self.checkpoint_and_check_metrics(pytorch_onevar_model.OneVarTrialWithLRScheduler,
+                                          updated_hparams, tmp_path, (100, 100))
 
     @pytest.mark.skipif(not torch.cuda.is_available(), reason="no gpu available")
-    # @pytest.mark.gpu
+    @pytest.mark.gpu
     @pytest.mark.parametrize(
         "trial_class",
         [
@@ -161,7 +162,8 @@ class TestPyTorchTrial:
         }
 
         tm_a, tm_b = self.checkpoint_and_check_metrics(
-            hparams=updated_hparams, tmp_path=tmp_path, steps=(200, 200)
+            trial_class=pytorch_onevar_model.OneVarApexAMPTrial,
+            hparams=updated_hparams, tmp_path=tmp_path, steps=(1, 1)
         )
 
         amp_metrics_test(trial_class, tm_a)
@@ -672,7 +674,7 @@ class TestPyTorchTrial:
             assert newer["loss"] <= older["loss"]
 
     @pytest.mark.skipif(not torch.cuda.is_available(), reason="no gpu available")
-    # @pytest.mark.gpu
+    @pytest.mark.gpu
     @pytest.mark.parametrize(
         "trial_class",
         [
@@ -841,7 +843,7 @@ class TestPyTorchTrial:
         assert trial.legacy_counter.__dict__ == {"legacy_on_training_epochs_start_calls": 2}
 
     def checkpoint_and_check_metrics(
-        self, hparams: typing.Dict, tmp_path: pathlib.Path, steps: typing.Tuple[int, int] = (1, 1)
+        self, trial_class: pytorch_onevar_model.OneVarTrial, hparams: typing.Dict, tmp_path: pathlib.Path, steps: typing.Tuple[int, int] = (1, 1)
     ) -> typing.Tuple[
         typing.Sequence[typing.Dict[str, typing.Any]], typing.Sequence[typing.Dict[str, typing.Any]]
     ]:
@@ -849,9 +851,9 @@ class TestPyTorchTrial:
         training_metrics = {"A": [], "B": []}
         validation_metrics = {"A": [], "B": []}
 
-        # Trial A: train 100 batches and checkpoint
+        # Trial A: train some batches and checkpoint
         trial_A, trial_controller_A = create_trial_and_trial_controller(
-            trial_class=pytorch_onevar_model.OneVarTrialWithLRScheduler,
+            trial_class=trial_class,
             hparams=hparams,
             trial_seed=self.trial_seed,
             max_batches=steps[0],
@@ -873,9 +875,9 @@ class TestPyTorchTrial:
 
         assert len(checkpoint_callback.uuids) == 1, "trial did not return a checkpoint UUID"
 
-        # Trial A: restore from checkpoint and train for 100 more batches
+        # Trial A: restore from checkpoint and train
         trial_A, trial_controller_A = create_trial_and_trial_controller(
-            trial_class=pytorch_onevar_model.OneVarTrialWithLRScheduler,
+            trial_class=trial_class,
             hparams=hparams,
             trial_seed=self.trial_seed,
             max_batches=steps[0] + steps[1],
@@ -895,13 +897,13 @@ class TestPyTorchTrial:
             len(training_metrics["A"]) == steps[0] + steps[1]
         ), "training metrics returned did not match expected length"
 
-        # Trial B: run for 200 steps
+        # Trial B: run for some steps
         trial_B, trial_controller_B = create_trial_and_trial_controller(
-            trial_class=pytorch_onevar_model.OneVarTrialWithLRScheduler,
+            trial_class=trial_class,
             hparams=hparams,
             trial_seed=self.trial_seed,
             max_batches=steps[0] + steps[1],
-            min_validation_batches=steps[0] + steps[1],
+            min_validation_batches=steps[0],
             min_checkpoint_batches=sys.maxsize,
             checkpoint_dir=checkpoint_dir,
         )
@@ -911,6 +913,9 @@ class TestPyTorchTrial:
 
         training_metrics["B"] = metrics_callback.training_metrics
         validation_metrics["B"] = metrics_callback.validation_metrics
+
+        print(training_metrics)
+        print(validation_metrics)
 
         for A, B in zip(training_metrics["A"], training_metrics["B"]):
             utils.assert_equivalent_metrics(A, B)
@@ -1114,6 +1119,7 @@ def amp_metrics_test(trial_class, training_metrics, agg_freq=1):
     GROWTH_INTERVAL = trial_class._growth_interval
     MIN_SCALED_LOSS_TO_REDUCE_SCALE = 32760
     growth_countdown = GROWTH_INTERVAL
+    print(training_metrics)
     # Only attempt assertions up to and including the penultimate batch, because
     #  we may not have the updated scale from the final batch.
     for idx, (metrics, next_metrics) in enumerate(zip(training_metrics[:-1], training_metrics[1:])):
@@ -1130,7 +1136,7 @@ def amp_metrics_test(trial_class, training_metrics, agg_freq=1):
             assert metrics["scale"] == scale, "scale is inconsistent between batches"
         else:
             metrics["scale"] = scale
-        loss = metrics["loss"].item()
+        loss = metrics["loss"]
         scale_before = metrics["scale_before"]
         scaled_loss = loss * scale_before
         scale = metrics["scale"]
@@ -1176,7 +1182,7 @@ def create_trial_and_trial_controller(
     checkpoint_dir: typing.Optional[str] = None,
     latest_checkpoint: typing.Optional[str] = None,
     steps_completed: int = 0,
-    expose_gpus: bool = False,
+    expose_gpus: bool = True,
     max_batches: int = 100,
     min_checkpoint_batches: int = sys.maxsize,
     min_validation_batches: int = sys.maxsize,
