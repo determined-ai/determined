@@ -5,6 +5,7 @@ package internal
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"sort"
 	"testing"
@@ -555,6 +556,95 @@ func getExperimentsTest(ctx context.Context, t *testing.T, api *apiServer, pid i
 		require.Equal(t, expected[i], res.Experiments[i],
 			fmt.Sprintf("wrong result request %+v", req))
 	}
+}
+
+func TestSearchExperiments(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	_, projectIDInt := createProjectAndWorkspace(ctx, t, api)
+	projectID := int32(projectIDInt)
+
+	// Empty response causes no errors.
+	req := &apiv1.SearchExperimentsRequest{
+		ProjectId: &projectID,
+		Sort:      ptrs.Ptr("id=asc"),
+	}
+	resp, err := api.SearchExperiments(ctx, req)
+	require.NoError(t, err)
+	require.Len(t, resp.Experiments, 0)
+
+	// No trial doesn't cause errors.
+	exp := createTestExpWithProjectID(t, api, curUser, projectIDInt)
+
+	resp, err = api.SearchExperiments(ctx, req)
+	require.NoError(t, err)
+	require.Len(t, resp.Experiments, 1)
+	require.Nil(t, resp.Experiments[0].BestTrial)
+	require.Equal(t, int32(exp.ID), resp.Experiments[0].Experiment.Id)
+
+	// Trial without validations doesn't cause issues.
+	noValidationsExp := createTestExpWithProjectID(t, api, curUser, projectIDInt)
+	task := &model.Task{TaskType: model.TaskTypeTrial}
+	require.NoError(t, api.m.db.AddTask(task))
+	require.NoError(t, api.m.db.AddTrial(&model.Trial{
+		State:        model.PausedState,
+		ExperimentID: noValidationsExp.ID,
+		TaskID:       task.TaskID,
+	}))
+
+	resp, err = api.SearchExperiments(ctx, req)
+	require.NoError(t, err)
+	require.Len(t, resp.Experiments, 2)
+
+	require.Nil(t, resp.Experiments[0].BestTrial)
+	require.Equal(t, int32(exp.ID), resp.Experiments[0].Experiment.Id)
+
+	require.Nil(t, resp.Experiments[1].BestTrial) // Still nil since no validations reported.
+	require.Equal(t, int32(noValidationsExp.ID), resp.Experiments[1].Experiment.Id)
+
+	// Validations returned properly.
+	metricTrial, _, valMetrics := createTestTrialWithMetrics(ctx, t, api, curUser, true)
+	// Move experiment to our project.
+	_, err = db.Bun().NewUpdate().Table("experiments").
+		Set("project_id = ?", projectID).
+		Where("id = ?", metricTrial.ExperimentID).
+		Exec(ctx)
+	require.NoError(t, err)
+	// Set restarts super high so it gets reduced to config number.
+	_, err = db.Bun().NewUpdate().Table("trials").
+		Set("restarts = ?", 31415).
+		Where("id = ?", metricTrial.ID).
+		Exec(ctx)
+	require.NoError(t, err)
+
+	resp, err = api.SearchExperiments(ctx, req)
+	require.NoError(t, err)
+	require.Len(t, resp.Experiments, 3)
+
+	require.Nil(t, resp.Experiments[0].BestTrial)
+	require.Equal(t, int32(exp.ID), resp.Experiments[0].Experiment.Id)
+
+	require.Nil(t, resp.Experiments[1].BestTrial)
+	require.Equal(t, int32(noValidationsExp.ID), resp.Experiments[1].Experiment.Id)
+
+	require.NotNil(t, resp.Experiments[2].BestTrial)
+
+	require.Equal(t, int32(9), resp.Experiments[2].BestTrial.TotalBatchesProcessed)
+
+	require.Equal(t, int32(0), resp.Experiments[2].BestTrial.BestValidation.TotalBatches)
+	bestActual, err := json.Marshal(resp.Experiments[2].BestTrial.BestValidation.Metrics)
+	require.NoError(t, err)
+	bestExpected, err := json.Marshal(valMetrics[0])
+	require.NoError(t, err)
+	require.Equal(t, string(bestActual), string(bestExpected))
+
+	require.Equal(t, int32(9), resp.Experiments[2].BestTrial.LatestValidation.TotalBatches)
+	latestActual, err := json.Marshal(resp.Experiments[2].BestTrial.LatestValidation.Metrics)
+	require.NoError(t, err)
+	latestExpected, err := json.Marshal(valMetrics[len(valMetrics)-1])
+	require.NoError(t, err)
+	require.Equal(t, string(latestActual), string(latestExpected))
+
+	require.Equal(t, int32(5), resp.Experiments[2].BestTrial.Restarts)
 }
 
 // Test that endpoints don't puke when running against old experiments.

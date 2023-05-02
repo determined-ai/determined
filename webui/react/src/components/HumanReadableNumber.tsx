@@ -21,7 +21,7 @@ const HumanReadableNumber: React.FC<Props> = ({
   const content = humanReadableNumber(num, precision);
 
   return (
-    <Tooltip title={`${tooltipPrefix}${stringNum}`}>
+    <Tooltip content={`${tooltipPrefix}${stringNum}`}>
       <span>{content}</span>
     </Tooltip>
   );

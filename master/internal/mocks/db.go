@@ -1446,32 +1446,6 @@ func (_m *DB) TemplateByName(name string) (model.Template, error) {
 	return r0, r1
 }
 
-// TemplateList provides a mock function with given fields:
-func (_m *DB) TemplateList() ([]model.Template, error) {
-	ret := _m.Called()
-
-	var r0 []model.Template
-	var r1 error
-	if rf, ok := ret.Get(0).(func() ([]model.Template, error)); ok {
-		return rf()
-	}
-	if rf, ok := ret.Get(0).(func() []model.Template); ok {
-		r0 = rf()
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]model.Template)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func() error); ok {
-		r1 = rf()
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // TerminateExperimentInRestart provides a mock function with given fields: id, state
 func (_m *DB) TerminateExperimentInRestart(id int, state model.State) error {
 	ret := _m.Called(id, state)
@@ -1836,6 +1810,20 @@ func (_m *DB) TrialStatus(trialID int) (model.State, *time.Time, error) {
 	return r0, r1, r2
 }
 
+// UpdateAllocationProxyAddress provides a mock function with given fields: allocation
+func (_m *DB) UpdateAllocationProxyAddress(allocation model.Allocation) error {
+	ret := _m.Called(allocation)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(model.Allocation) error); ok {
+		r0 = rf(allocation)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // UpdateAllocationStartTime provides a mock function with given fields: allocation
 func (_m *DB) UpdateAllocationStartTime(allocation model.Allocation) error {
 	ret := _m.Called(allocation)
@@ -1969,20 +1957,6 @@ func (_m *DB) UpdateUsername(userID *model.UserID, newUsername string) error {
 	var r0 error
 	if rf, ok := ret.Get(0).(func(*model.UserID, string) error); ok {
 		r0 = rf(userID, newUsername)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// UpsertTemplate provides a mock function with given fields: tpl
-func (_m *DB) UpsertTemplate(tpl *model.Template) error {
-	ret := _m.Called(tpl)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(*model.Template) error); ok {
-		r0 = rf(tpl)
 	} else {
 		r0 = ret.Error(0)
 	}

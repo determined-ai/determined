@@ -72,7 +72,7 @@ const CheckpointModalTrigger: React.FC<Props> = ({
         {children !== undefined ? (
           children
         ) : (
-          <Tooltip title="View Checkpoint">
+          <Tooltip content="View Checkpoint">
             <Button aria-label="View Checkpoint" icon={<Icon name="checkpoint" />} />
           </Tooltip>
         )}

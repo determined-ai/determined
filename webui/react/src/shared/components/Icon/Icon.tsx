@@ -39,7 +39,7 @@ const Icon: React.FC<Props> = ({
   if (size) classes.push(css[size]);
 
   const icon = <i className={classes.join(' ')} {...rest} style={style} />;
-  return title ? <Tooltip title={title}>{icon}</Tooltip> : icon;
+  return title ? <Tooltip content={title}>{icon}</Tooltip> : icon;
 };
 
 export default Icon;

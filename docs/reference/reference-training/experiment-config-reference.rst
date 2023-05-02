@@ -6,6 +6,9 @@
  Experiment Configuration Reference
 ####################################
 
+.. meta::
+   :description: Browse this complete description of the experiment configuration reference or YAML file, including metadata, entrypoint, basic behaviors, validation policy, checkpoint policy, checkpoint storage, and so on.
+
 The behavior of an experiment is configured via a YAML file. A configuration file is typically
 passed as a command-line argument when an experiment is created with the Determined CLI. For
 example:
@@ -167,7 +170,7 @@ object delimited by a period (``.``).
 
 Examples:
 
--  ``:MnistTrial`` expects an *MnistTrial* class exposed in a ``__init__.py`` file at the top level
+-  ``MnistTrial`` expects an *MnistTrial* class exposed in a ``__init__.py`` file at the top level
    of the context directory.
 -  ``model_def:CIFAR10Trial`` expects a *CIFAR10Trial* class defined in the ``model_def.py`` file at
    the top level of the context directory.
@@ -1298,7 +1301,7 @@ base Docker image, if needed. Credentials are specified as the following nested 
 
 Optional. A list of environment variables that will be set in every trial container. Each element of
 the list should be a string of the form ``NAME=VALUE``. See :ref:`environment-variables` for more
-details. Users can customize environment variables for CUDA (NVIDIA GPU), CPU, and ROCm (AMD GPU)
+details. You can customize environment variables for CUDA (NVIDIA GPU), CPU, and ROCm (AMD GPU)
 tasks differently by specifying a dict with ``cuda`` (``gpu`` prior to 0.17.6), ``cpu``, and
 ``rocm`` keys.
 

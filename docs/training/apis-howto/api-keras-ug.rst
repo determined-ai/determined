@@ -2,6 +2,9 @@
  Keras API
 ###########
 
+.. meta::
+   :description: Learn how to use the Keras API to train a Keras model. This user guide walks you through loading your data, defining the model, customizing how the model.fit function is called, checkpointing, and callbacks.
+
 In this guide, you'll learn how to use the Keras API.
 
 +---------------------------------------------------------------------+
@@ -25,7 +28,7 @@ To learn about this API, you can start by reading the trial definitions from the
 
 .. note::
 
-   Before loading data, read :doc:`/training/load-model-data` to understand how to work with
+   Before loading data, visit :doc:`/training/load-model-data` to understand how to work with
    different sources of data.
 
 Loading data is done by defining :meth:`~determined.keras.TFKerasTrial.build_training_data_loader`
@@ -72,7 +75,7 @@ is called by calling :meth:`self.context.configure_fit()
 A checkpoint includes the model definition (Python source code), experiment configuration file,
 network architecture, and the values of the model's parameters (i.e., weights) and hyperparameters.
 When using a stateful optimizer during training, checkpoints will also include the state of the
-optimizer (i.e., learning rate). Users can also embed arbitrary metadata in checkpoints via a
+optimizer (i.e., learning rate). You can also embed arbitrary metadata in checkpoints via a
 :ref:`Python SDK <store-checkpoint-metadata>`.
 
 TensorFlow Keras trials are checkpointed to a file named ``determined-keras-model.h5`` using

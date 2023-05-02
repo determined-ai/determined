@@ -21,7 +21,7 @@ const ExperimentHeaderProgress: React.FC<Props> = ({ experiment }: Props) => {
       : undefined;
 
   return experiment.progress === undefined ? null : (
-    <Tooltip title={progressPercent.toFixed(0) + '%'}>
+    <Tooltip content={progressPercent.toFixed(0) + '%'}>
       <Progress
         className={css.base}
         percent={progressPercent}

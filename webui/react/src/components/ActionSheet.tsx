@@ -9,7 +9,6 @@ import Link, { Props as LinkProps } from './Link';
 export interface ActionItem extends LinkProps {
   icon?: string | React.ReactNode;
   label?: string;
-  popout?: boolean;
   render?: () => JSX.Element;
 }
 

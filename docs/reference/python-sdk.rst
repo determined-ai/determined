@@ -67,7 +67,6 @@ Now that the experiment has completed, you can grab the top-performing checkpoin
 
 .. autoclass:: determined.experimental.client.Checkpoint
    :members:
-   :inherited-members:
    :member-order: bysource
 
 ``Determined``
@@ -75,7 +74,6 @@ Now that the experiment has completed, you can grab the top-performing checkpoin
 
 .. autoclass:: determined.experimental.client.Determined
    :members:
-   :inherited-members:
    :member-order: bysource
 
 ``ExperimentReference``
@@ -83,7 +81,13 @@ Now that the experiment has completed, you can grab the top-performing checkpoin
 
 .. autoclass:: determined.experimental.client.ExperimentReference
    :members:
-   :inherited-members:
+   :member-order: bysource
+
+``DownloadMode``
+================
+
+.. autoclass:: determined.experimental.client.DownloadMode
+   :members:
    :member-order: bysource
 
 ``Model``
@@ -91,7 +95,6 @@ Now that the experiment has completed, you can grab the top-performing checkpoin
 
 .. autoclass:: determined.experimental.client.Model
    :members:
-   :inherited-members:
    :member-order: bysource
 
 ``ModelOrderBy``
@@ -99,7 +102,6 @@ Now that the experiment has completed, you can grab the top-performing checkpoin
 
 .. autoclass:: determined.experimental.client.ModelOrderBy
    :members:
-   :inherited-members:
    :member-order: bysource
 
 ``ModelSortBy``
@@ -107,7 +109,6 @@ Now that the experiment has completed, you can grab the top-performing checkpoin
 
 .. autoclass:: determined.experimental.client.ModelSortBy
    :members:
-   :inherited-members:
    :member-order: bysource
 
 ``TrialReference``
@@ -115,7 +116,6 @@ Now that the experiment has completed, you can grab the top-performing checkpoin
 
 .. autoclass:: determined.experimental.client.TrialReference
    :members:
-   :inherited-members:
    :member-order: bysource
 
 ``TrainingMetrics``
@@ -123,7 +123,6 @@ Now that the experiment has completed, you can grab the top-performing checkpoin
 
 .. autoclass:: determined.experimental.client.TrainingMetrics
    :members:
-   :inherited-members:
    :member-order: bysource
 
 ``ValidationMetrics``
@@ -131,5 +130,4 @@ Now that the experiment has completed, you can grab the top-performing checkpoin
 
 .. autoclass:: determined.experimental.client.ValidationMetrics
    :members:
-   :inherited-members:
    :member-order: bysource
