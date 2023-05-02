@@ -61,12 +61,6 @@ def parse_args() -> argparse.Namespace:
         default=_defaults.AUTOTUNING_ARG_DEFAULTS["end-profile-step"],
     )
     parser.add_argument(
-        "-ds",
-        "--deepspeed-config",
-        type=str,
-        default=_defaults.AUTOTUNING_ARG_DEFAULTS["deepspeed-config"],
-    )
-    parser.add_argument(
         "-m",
         "--metric",
         type=str,
