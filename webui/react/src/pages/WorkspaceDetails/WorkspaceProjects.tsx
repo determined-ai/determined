@@ -390,7 +390,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
   }, [canceler]);
 
   return (
-    <div className={css.base}>
+    <>
       <Columns header>
         <Column>
           <Select value={settings.whose} width={160} onSelect={handleViewSelect}>
@@ -446,7 +446,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
         )}
       </Spinner>
       <ProjectCreateModal.Component workspaceId={workspace.id} />
-    </div>
+    </>
   );
 };
 

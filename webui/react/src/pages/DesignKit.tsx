@@ -52,6 +52,7 @@ import { noOp } from 'shared/utils/service';
 import { BrandingType } from 'stores/determinedInfo';
 import { MetricType, Project, ResourcePool, User } from 'types';
 import { NotLoaded } from 'utils/loadable';
+import loremIpsum from 'utils/loremIpsum';
 import { generateTestProjectData, generateTestWorkspaceData } from 'utils/tests/generateTestData';
 
 import useConfirm, { voidPromiseFn } from '../components/kit/useConfirm';
@@ -1826,70 +1827,34 @@ const ColumnsSection: React.FC = () => {
           With <code>{'<Columns>'}</code> wrapper only:
         </p>
         <Columns>
-          <Card>
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
-            incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
-            exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure
-            dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
-            Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt
-            mollit anim id est laborum.
-          </Card>
-          <Card>
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
-            incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
-            exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure
-            dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
-            Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt
-            mollit anim id est laborum.
-          </Card>
-          <Card>
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
-            incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
-            exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure
-            dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
-            Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt
-            mollit anim id est laborum.
-          </Card>
+          <Card>{loremIpsum}</Card>
+          <Card>{loremIpsum}</Card>
+          <Card>{loremIpsum}</Card>
         </Columns>
-        <p>With gap between columns:</p>
-        <Columns gap={12}>
-          <Card>
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
-            incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
-            exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure
-            dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
-            Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt
-            mollit anim id est laborum.
-          </Card>
-          <Card>
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
-            incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
-            exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure
-            dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
-            Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt
-            mollit anim id est laborum.
-          </Card>
-          <Card>
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
-            incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
-            exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure
-            dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
-            Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt
-            mollit anim id est laborum.
-          </Card>
+        <p>With gap set to 0:</p>
+        <Columns gap={0}>
+          <Card>{loremIpsum}</Card>
+          <Card>{loremIpsum}</Card>
+          <Card>{loremIpsum}</Card>
+        </Columns>
+        <p>With gap set to 16:</p>
+        <Columns gap={16}>
+          <Card>{loremIpsum}</Card>
+          <Card>{loremIpsum}</Card>
+          <Card>{loremIpsum}</Card>
         </Columns>
         <p>
           With left-aligned <code>{'<Column>'}</code>s (default):
         </p>
         <Columns>
           <Column>
-            <Card>Lorem ipsum</Card>
+            <Button>Content</Button>
           </Column>
           <Column>
-            <Card>Lorem ipsum</Card>
+            <Button>Content</Button>
           </Column>
           <Column>
-            <Card>Lorem ipsum</Card>
+            <Button>Content</Button>
           </Column>
         </Columns>
         <p>
@@ -1897,13 +1862,13 @@ const ColumnsSection: React.FC = () => {
         </p>
         <Columns>
           <Column align="center">
-            <Card>Lorem ipsum</Card>
+            <Button>Content</Button>
           </Column>
           <Column align="center">
-            <Card>Lorem ipsum</Card>
+            <Button>Content</Button>
           </Column>
           <Column align="center">
-            <Card>Lorem ipsum</Card>
+            <Button>Content</Button>
           </Column>
         </Columns>
         <p>
@@ -1911,13 +1876,13 @@ const ColumnsSection: React.FC = () => {
         </p>
         <Columns>
           <Column align="right">
-            <Card>Lorem ipsum</Card>
+            <Button>Content</Button>
           </Column>
           <Column align="right">
-            <Card>Lorem ipsum</Card>
+            <Button>Content</Button>
           </Column>
           <Column align="right">
-            <Card>Lorem ipsum</Card>
+            <Button>Content</Button>
           </Column>
         </Columns>
       </AntDCard>

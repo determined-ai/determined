@@ -1,9 +1,8 @@
 .columns {
   display: flex;
+  gap: var(--gap);
+  margin-bottom: var(--margin-bottom);
 
-  &.header {
-    margin-bottom: 16px;
-  }
   .column {
     display: flex;
     flex-grow: 1;
@@ -17,5 +16,11 @@
     &.right {
       justify-content: right;
     }
+  }
+}
+
+@media only screen and (max-width: $breakpoint-mobile) {
+  .columns {
+    flex-wrap: wrap;
   }
 }
