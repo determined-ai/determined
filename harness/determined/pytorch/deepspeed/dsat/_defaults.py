@@ -10,6 +10,7 @@ AUTOTUNING_RESULTS_PATH = "autotuning_metric.json"
 SMALLER_IS_BETTER = True
 USE_DSAT_MODE_KEY = "_use_dsat_mode"
 GAS_DEFAULT = 1
+CONFIG_KEY = "deepspeed_config"
 OVERWRITE_KEY = "overwrite_deepspeed_args"
 ARGS_PKL_PATH = "args.pkl"
 
@@ -54,8 +55,7 @@ AUTOTUNING_ARG_DEFAULTS = {
     "trials-per-random-config": 3,
     "start-profile-step": 3,
     "end-profile-step": 5,
-    "deepspeed-config": "deepspeed_config",
-    "metric": "throughput",
+    "metric": "FLOPS_per_gpu",
 }
 
 DEFAULT_SEARCH_RUNNER_CONFIG = {

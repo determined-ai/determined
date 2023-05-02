@@ -44,6 +44,7 @@ class DSATTrial:
         request_id: Optional[uuid.UUID] = None,
         parent: Optional["DSATTrial"] = None,
         search_data: Optional[Any] = None,
+        searcher_metric_name: Optional[str] = None,
     ) -> None:
         self.hparams = hparams
         self.model_dir = model_dir
@@ -53,6 +54,7 @@ class DSATTrial:
         self.parent = parent
         # Arbitrary attribute for search-specific data tracking.
         self.search_data = search_data
+        self.searcher_metric_name = searcher_metric_name
 
         # Other attrs which are updated during training:
         self.metric = {}
@@ -136,6 +138,10 @@ class DSATTrial:
 
         return ops_list
 
+    @property
+    def searcher_metric_val(self) -> Any:
+        return self.metric.get(self.searcher_metric_name)
+
     # TODO: More important properties, like train_batch_size, gas, etc.
 
 
@@ -164,13 +170,12 @@ class DSATTrialTracker:
         self.searcher_metric = args.metric
         self.start_profile_step = args.start_profile_step
         self.end_profile_step = args.end_profile_step
-        self.zero_stages = args.zero_stages
+        self.zero_stages = set(args.zero_stages)
 
         # Derived attributes
         self.slots_per_trial = self.exp_config["resources"]["slots_per_trial"]
         self.hparams = self.exp_config["hyperparameters"]
-        self.ds_config = get_ds_config_from_hparams(self.hparams, self.model_dir)
-        self.fp16 = self.ds_config.get("fp16", {}).get("enabled") or False
+
         self.smaller_is_better = _utils.smaller_is_better(self.searcher_metric)
 
         self.model_profile_info_trial = None
@@ -216,6 +221,7 @@ class DSATTrialTracker:
             length=self.end_profile_step + 1,
             parent=parent_trial,
             search_data=search_data,
+            searcher_metric_name=self.searcher_metric,
         )
         return trial
 
@@ -264,22 +270,6 @@ class DSATTrialTracker:
             hparams[_defaults.OVERWRITE_KEY], batch_size_config
         )
 
-    def get_root_trial_set(self, include_model_profile_info_trial: bool = False) -> Set[DSATTrial]:
-        """
-        Returns the set DSATTrials which are the root element in their lineage.
-        """
-        # TODO: Delete if not used anywhere.
-        root_trial_set = set()
-        for _, trial in self:
-            if trial.parent is None:
-                if (
-                    isinstance(trial, DSATModelProfileInfoTrial)
-                    and not include_model_profile_info_trial
-                ):
-                    continue
-                root_trial_set.add(trial)
-        return root_trial_set
-
     def update_trial_metric(
         self,
         trial: DSATTrial,
@@ -290,11 +280,11 @@ class DSATTrialTracker:
         to the `DSATTrial` instnace and updating early-stopping bookkeeping.
         """
         trial.metric = metric
-        self.successful_stages.add(trial.stage)
 
         # The model info profiling run's metric will not contain the searcher metric key and should
         # not be counted against the early stopping criteria.
         if not isinstance(trial, DSATModelProfileInfoTrial):
+            self.successful_stages.add(trial.stage)
             trial_is_best = self.best_trial == trial
             if trial_is_best:
                 self.num_trials_since_best_result = 0
@@ -335,16 +325,20 @@ class DSATTrialTracker:
     @property
     def mem_per_gpu_per_stage(self) -> Dict[int, int]:
         """
-        Returns the required gpu memory in bytes, per stage.
+        Returns the required gpu memory in bytes, per stage, according to whether fp16 training was
+        used (other low-precision cases not handled).
         """
         assert (
             self.model_profile_info_trial is not None
         ), "The model profile info Trial must be run before calling this method."
+        fp16 = self.model_profile_info_trial.fp16
         if self._mem_per_gpu_per_stage is None:
-            params_mem = self.num_params * (2 if self.fp16 else 4)
-            gradients_mem = self.trainable_num_params * (2 if self.fp16 else 4)
+            params_mem = self.num_params * (2 if fp16 else 4)
+            # Gradients must be converted to fp32 to update master weights, so they eventually
+            # require the same memory regardless of whether mixed-precision is used.
+            gradients_mem = self.trainable_num_params * 4
             # optimizer_mem assumes Adam, following DS. TODO: don't assume this.
-            master_params_mem = 4 if self.fp16 else 0
+            master_params_mem = 4 if fp16 else 0
             momentum_mem = variance_mem = 4
             optimizer_mem = self.trainable_num_params * (
                 master_params_mem + momentum_mem + variance_mem
@@ -370,12 +364,12 @@ class DSATTrialTracker:
     def approx_max_mbs_per_stage(self) -> Dict[int, int]:
         """
         Returns the approximate max train_micro_batch_size_per_gpu (mbs) per stage.
+
         """
         if self._approx_max_mbs_per_stage is None:
             self._approx_max_mbs_per_stage = {
                 stage: max((self.gpu_mem - mem) // self.activation_mem_per_gpu, 1)
                 for stage, mem in self.mem_per_gpu_per_stage.items()
-                if stage in self.zero_stages
             }
         return self._approx_max_mbs_per_stage
 
@@ -493,6 +487,12 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
         self.args = args
         self.exp_config = exp_config
         self.trial_tracker = DSATTrialTracker(args=args, exp_config=exp_config)
+        self.rng = np.random.default_rng(seed=args.random_seed)
+        random.seed(args.random_seed)
+
+        self._tracker_ckpt_path = "trial_tracker.pkl"
+        self._py_rand_ckpt_path = "py_random_state.pkl"
+        self._np_rand_ckpt_path = "np_rng.pkl"
 
     @abstractmethod
     def get_trials_after_validation_completed(
@@ -647,15 +647,22 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
         return progress
 
     def save_method_state(self, path: pathlib.Path) -> None:
-        checkpoint_path = path.joinpath("trial_tracker.pkl")
-        with checkpoint_path.open("wb") as f:
+        with path.joinpath(self._tracker_ckpt_path).open("wb") as f:
             pickle.dump(self.trial_tracker, f)
+        with path.joinpath(self._py_rand_ckpt_path).open("wb") as f:
+            pickle.dump(random.getstate(), f)
+        with path.joinpath(self._np_rand_ckpt_path).open("wb") as f:
+            pickle.dump(self.rng, f)
 
     def load_method_state(self, path: pathlib.Path) -> None:
         logging.info("Restoring searcher state from checkpoint.")
-        checkpoint_path = path.joinpath("trial_tracker.pkl")
-        with checkpoint_path.open("rb") as f:
+        with path.joinpath(self._tracker_ckpt_path).open("rb") as f:
             self.trial_tracker = pickle.load(f)
+        with path.joinpath(self._py_rand_ckpt_path).open("rb") as f:
+            py_random_state = pickle.load(f)
+            random.setstate(py_random_state)
+        with path.joinpath(self._np_rand_ckpt_path).open("rb") as f:
+            self.rng = pickle.load(f)
 
     def _searcher_state_tests(
         self,
@@ -706,7 +713,6 @@ class RandomDSATSearchMethod(BaseDSATSearchMethod):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # TODO: Save/restore rng state in checkpoints.
-        self.rng = np.random.default_rng(42)
         self.trials_per_random_config = self.args.trials_per_random_config
 
     def get_trials_after_validation_completed(
@@ -718,12 +724,8 @@ class RandomDSATSearchMethod(BaseDSATSearchMethod):
         new_trials = []
         if isinstance(last_trial, DSATModelProfileInfoTrial):
             new_trials = self.get_trial_list_after_model_profile_info_run()
-        elif last_trial.num_trials_in_lineage < self.trials_per_random_config:
-            trial = self.get_trial_after_autotuning_run(last_trial)
-            # trial will be None if the current lineage should be terminated.
-            new_trials = [trial] if trial is not None else [self.get_random_trial()]
         else:
-            new_trials = [self.get_random_trial()]
+            new_trials = self.get_trial_list_after_successful_run(last_trial)
         return new_trials
 
     def get_trials_after_early_exit(
@@ -735,10 +737,11 @@ class RandomDSATSearchMethod(BaseDSATSearchMethod):
         # TODO: delete print test
         logging.info("Calling get_trials_after_early_exit")
 
-        if last_trial.num_trials_in_lineage < self.trials_per_random_config:
-            new_search_data = copy.deepcopy(last_trial.search_data)
-            "Lower the ceiling after the failure."
-            new_search_data["hi"] = last_trial.mbs - 1
+        if self.should_stop_lineage(last_trial):
+            new_trials = [self.get_random_trial()]
+        else:
+            # Lower the ceiling after the failure.
+            new_search_data = {"lo": last_trial.search_data["lo"], "hi": last_trial.mbs - 1}
 
             mbs = self.get_random_mbs_from_search_data(new_search_data)
             new_hparams = copy.deepcopy(last_trial.hparams)
@@ -750,29 +753,21 @@ class RandomDSATSearchMethod(BaseDSATSearchMethod):
                 parent_trial=last_trial,
             )
             new_trials = [trial]
-        else:
-            new_trials = [self.get_random_trial()]
         return new_trials
 
     def get_trial_list_after_model_profile_info_run(self) -> List[DSATTrial]:
         new_trials = []
-        # Start as many lineages as the configuration will allow
         num_remaining_trials = self.trial_tracker.max_trials - 1
-        num_initial_lineages = min(num_remaining_trials, self.trial_tracker.max_concurrent_trials)
-        if self.trial_tracker.max_slots is not None:
-            num_initial_lineages = min(
-                num_initial_lineages,
-                self.trial_tracker.max_slots // self.trial_tracker.slots_per_trial,
-            )
+        num_initial_lineages = num_remaining_trials // self.trials_per_random_config
         for _ in range(num_initial_lineages):
             trial = self.get_random_trial()
             new_trials.append(trial)
         return new_trials
 
-    def get_trial_after_autotuning_run(
+    def get_trial_list_after_successful_run(
         self,
         last_trial: DSATTrial,
-    ) -> Optional[DSATTrial]:
+    ) -> List[DSATTrial]:
         # TODO: remove below print tests.
         logging.info("**************** BSZ History ****************")
         bsz_history = []
@@ -785,83 +780,90 @@ class RandomDSATSearchMethod(BaseDSATSearchMethod):
         logging.info("**************** BSZ History End ****************")
 
         # TODO: verify we are always quitting when no more non-trivial trials are possible.
+        if self.should_stop_lineage(last_trial=last_trial):
+            return [self.get_random_trial()]
 
-        # Let the best trial inform the next one, if it exists.
-        if self.trial_tracker.best_trial is not None:
-            new_search_data = copy.deepcopy(self.trial_tracker.best_trial.search_data)
+        # Let the best trial for this stage inform the next one, if it exists.
+        best_trial_for_stage = self.trial_tracker.best_trials_by_stage[last_trial.stage]
+        if best_trial_for_stage is not None:
+            new_search_data = copy.deepcopy(best_trial_for_stage.search_data)
             # Update the floor to one greater than the mbs used.
-            new_search_data["lo"] = self.trial_tracker.best_trial.mbs + 1
+            new_search_data["lo"] = best_trial_for_stage.mbs + 1
         else:
-            # Otherwise, start from the data from the last trial (which was successful).
+            # Otherwise, start from the data from the last trial.
             new_search_data = copy.deepcopy(last_trial.search_data)
             new_search_data["lo"] = last_trial.mbs + 1
-            if not last_trial.error_in_direct_history:
-                # If no error has occurred in this trial's direct history, the ceiling is still
-                # soft and should be increased.
+            # The initial `hi` ceiling is just a soft guess, so double it, if the ceiling was
+            # successfully run.
+            if last_trial.mbs == last_trial.search_data["hi"]:
                 new_search_data["hi"] *= 2
 
-        # Catch all cases where we should end this lineage by returning None
-        if self.should_stop_lineage(last_trial=last_trial, new_search_data=new_search_data):
-            logging.info(f"Killing lineage for trial {last_trial.request_id}")
-            return None
-        else:
-            mbs = self.get_random_mbs_from_search_data(new_search_data)
-            while mbs in last_trial.mbs_in_lineage:
-                mbs = self.get_random_mbs_from_search_data(new_search_data)
+        mbs = self.get_random_mbs_from_search_data(new_search_data)
+        # TODO: Check we haven't run this experiment before.
 
-            new_hparams = copy.deepcopy(last_trial.hparams)
-            new_hparams[_defaults.OVERWRITE_KEY]["train_micro_batch_size_per_gpu"] = mbs
+        new_hparams = copy.deepcopy(last_trial.hparams)
+        new_hparams[_defaults.OVERWRITE_KEY]["train_micro_batch_size_per_gpu"] = mbs
+        trial = self.trial_tracker.create_trial(
+            hparams=new_hparams,
+            search_data=new_search_data,
+            parent_trial=last_trial,
+        )
+        return [trial]
 
-            trial = self.trial_tracker.create_trial(
-                hparams=new_hparams,
-                search_data=new_search_data,
-                parent_trial=last_trial,
-            )
-            return trial
-
-    def should_stop_lineage(self, last_trial: DSATTrial, new_search_data: Dict[str, int]) -> bool:
-        """
-        Helper function for determining if we should stop the lineage, given the last trial and the
-        search data that would be used if continuing the lineage.
-        """
-        # Various stopping conditions
-        trivial_search_range = new_search_data["hi"] < new_search_data["lo"]
+    def should_stop_lineage(self, last_trial: DSATTrial) -> bool:
+        # Generic stopping conditions first
+        if last_trial.num_trials_in_lineage >= self.trials_per_random_config:
+            return True
 
         # DS domain knowledge: if stages 1 or 2 run successfully, there is no need to use stage 3.
-        should_stop_this_stage_3_trial = last_trial.stage == 3 and any(
-            n in self.trial_tracker.successful_stages for n in (1, 2)
-        )
+        stage_one_or_two_successful = {1, 2} & self.trial_tracker.successful_stages
+        should_stop_this_stage_3_trial = last_trial.stage == 3 and stage_one_or_two_successful
+        if should_stop_this_stage_3_trial:
+            return True
 
-        num_mbs_in_search_range = new_search_data["hi"] - new_search_data["lo"] + 1
-        num_tested_mbs_in_search_range = sum(
-            new_search_data["lo"] <= mbs <= new_search_data["hi"]
-            for mbs in last_trial.mbs_in_lineage
-        )
-        all_mbs_already_tested = num_tested_mbs_in_search_range >= num_mbs_in_search_range
+        if last_trial.error:
+            failed_on_minimal_batch = last_trial.mbs == last_trial.search_data["lo"]
+            if failed_on_minimal_batch:
+                return True
 
-        should_stop_lineage = (
-            trivial_search_range or all_mbs_already_tested or should_stop_this_stage_3_trial
-        )
-        return should_stop_lineage
+            successful_configs_at_same_mbs_and_stage = any(
+                trial.mbs >= last_trial.mbs
+                for request_id, trial in self.trial_tracker
+                if request_id != last_trial.request_id
+                and trial.stage == last_trial.stage
+                and trial.searcher_metric_val
+            )
+            if successful_configs_at_same_mbs_and_stage:
+                return True
+
+        elif not last_trial.error:
+
+            def better(trial1, trial2):
+                if self.trial_tracker.smaller_is_better:
+                    return trial1.searcher_metric_val < trial2.searcher_metric_val
+                else:
+                    return trial1.searcher_metric_val > trial2.searcher_metric_val
+
+            better_configs_at_same_mbs_and_stage = any(
+                better(trial, last_trial)
+                for request_id, trial in self.trial_tracker
+                if request_id != last_trial.request_id
+                and trial.stage == last_trial.stage
+                and trial.searcher_metric_val
+            )
+            if better_configs_at_same_mbs_and_stage:
+                return True
+
+        return False
 
     def get_random_mbs_from_search_data(self, search_data: Dict[str, int]) -> int:
-        num_possible_mbs = search_data["hi"] - search_data["lo"] + 1
-        mbs = search_data["lo"] + self.rng.binomial(n=num_possible_mbs, p=0.5)
+        mbs = search_data["lo"] + self.rng.binomial(search_data["hi"] - search_data["lo"], 0.5)
+        assert search_data["lo"] <= mbs <= search_data["hi"]  # TODO: remove
         return mbs
 
     def get_random_hparams_and_search_data(
-        self, zero_stage: Optional[int] = None
+        self, zero_stage
     ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
-        # DS domain knowledge: if stages 1 or 2 run successfully, there is no need to use stage 3,
-        # due to the increased communication costs. We also don't need to choose stage 0, since that
-        # would leverage DS at all.
-        if zero_stage is None:
-            relevant_stages = {s for s in self.trial_tracker.zero_stages}
-            stage_1_and_2 = {1, 2}
-            if stage_1_and_2 & self.trial_tracker.successful_stages:
-                relevant_stages &= stage_1_and_2
-            zero_stage = random.choice(list(relevant_stages))
-
         zero_optim_config = _utils.get_random_zero_optim_config(zero_stage)
         new_hparams = copy.deepcopy(self.trial_tracker.hparams)
         new_hparams[_defaults.OVERWRITE_KEY] = merge_dicts(
@@ -869,26 +871,40 @@ class RandomDSATSearchMethod(BaseDSATSearchMethod):
             {"zero_optimization": zero_optim_config},
         )
 
-        # If a best trial has been established, use its search data bounds.
-        if self.trial_tracker.best_trial is not None:
-            new_search_data = copy.deepcopy(self.trial_tracker.best_trial.search_data)
+        # If a best trial has been established for the given stage, use its search data bounds to
+        # choose a better starting point.
+        best_trial_for_stage = self.trial_tracker.best_trials_by_stage[zero_stage]
+        if best_trial_for_stage is not None:
+            new_search_data = copy.deepcopy(best_trial_for_stage.search_data)
             # Update the floor to one greater than the mbs used.
             new_search_data["lo"] = self.trial_tracker.best_trial.mbs + 1
+            # If the new floor is higher than the ceiling, double the ceiling
+            while new_search_data["lo"] >= new_search_data["hi"]:
+                new_search_data["hi"] *= 2
         # Otherwise choose the corrsponding search data based on approximate computations
         else:
             random_zero_stage_max_mbs = self.trial_tracker.approx_max_mbs_per_stage[zero_stage]
             new_search_data = {
                 "lo": 1,
-                "hi": 2 * random_zero_stage_max_mbs - 1,
+                "hi": random_zero_stage_max_mbs,
             }
 
-        # Randomly choose the actual batch size by drawing from a binomial distribution
-        new_hparams[_defaults.OVERWRITE_KEY][
-            "train_micro_batch_size_per_gpu"
-        ] = self.get_random_mbs_from_search_data(new_search_data)
+        # Randomly choose the actual batch size.
+        mbs = self.get_random_mbs_from_search_data(new_search_data)
+        new_hparams[_defaults.OVERWRITE_KEY]["train_micro_batch_size_per_gpu"] = mbs
         return (new_hparams, new_search_data)
 
-    def get_random_trial(self, zero_stage: Optional[int] = None) -> DSATTrial:
+    def get_random_trial(self) -> DSATTrial:
+        # Choose the stage randomly from user provided stages, after some performance filtering.
+        # If stage one or two was successful, don't continue with stage 3.
+        stage_one_and_two = {1, 2}
+        successful_one_or_two_stages = stage_one_and_two & self.trial_tracker.successful_stages
+        filtered_zero_stages = successful_one_or_two_stages & self.trial_tracker.zero_stages
+        if filtered_zero_stages:
+            zero_stage = random.choice(list(filtered_zero_stages))
+        else:
+            zero_stage = random.choice(list(self.trial_tracker.zero_stages))
+
         hparams, search_data = self.get_random_hparams_and_search_data(zero_stage)
         random_trial = self.trial_tracker.create_trial(hparams=hparams, search_data=search_data)
         return random_trial
@@ -924,7 +940,7 @@ class SimpleDSATSearchMethod(BaseDSATSearchMethod):
                 hparams[_defaults.OVERWRITE_KEY]["train_micro_batch_size_per_gpu"] = tmbs
                 # Choose a random zero stage:
                 hparams[_defaults.OVERWRITE_KEY]["zero_optimization"] = {
-                    "stage": random.choice(self.args.zero_stages)
+                    "stage": random.choice(list(self.args.zero_stages))
                 }
                 trial = self.trial_tracker.create_trial(
                     hparams=hparams,

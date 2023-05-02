@@ -3,7 +3,7 @@ import importlib.util
 import json
 import logging
 import pathlib
-from typing import Any, Dict, Iterator, List, Optional, Set, Type, Union, cast
+from typing import Any, Dict, Iterator, Union, cast
 
 import deepspeed
 import torch
@@ -40,6 +40,8 @@ def overwrite_deepspeed_config(
 def get_ds_config_from_hparams(
     hparams: Dict[str, Any],
     model_dir: Union[pathlib.Path, str] = pathlib.Path("."),
+    config_key: str = "deepspeed_config",
+    overwrite_key: str = "overwrite_deepspeed_args",
 ) -> Dict[str, Any]:
     """Fetch and recursively merge the deepspeed config from the experiment config
 
@@ -53,15 +55,12 @@ def get_ds_config_from_hparams(
         The Deepspeed Configuration for this experiment following the overwriting rules
     """
     model_dir = pathlib.Path(model_dir)
-    base_config_file_name = hparams.get("deepspeed_config", "")
-    # TODO: deprecate ds_config option.
-    manual_ds_config = hparams.get("ds_config", {})
-    if base_config_file_name != "":
-        base_ds_config = normalize_base_ds_config(base_config_file_name, model_dir=model_dir)
-    else:
-        base_ds_config = manual_ds_config
-    overwrite_ds_config = hparams.get("overwrite_deepspeed_args", {})
-    return merge_dicts(cast(Dict[str, Any], base_ds_config), overwrite_ds_config)
+    assert config_key in hparams, f"Expected to find {config_key} in the Hyperparameters section."
+    base_config_file_name = hparams[config_key]
+    base_ds_config = normalize_base_ds_config(base_config_file_name, model_dir=model_dir)
+    overwrite_ds_config = hparams.get(overwrite_key, {})
+    ds_config = merge_dicts(cast(Dict[str, Any], base_ds_config), overwrite_ds_config)
+    return ds_config
 
 
 def normalize_base_ds_config(

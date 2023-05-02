@@ -30,13 +30,50 @@ def get_search_runner_config_from_args(args: argparse.Namespace) -> Dict[str, An
         submitted_search_runner_config = get_dict_from_yaml_or_json_path(args.search_runner_config)
         return submitted_search_runner_config
 
+    submitted_exp_config_dict = get_dict_from_yaml_or_json_path(args.config_path)
+    assert (
+        "deepspeed_config" in submitted_exp_config_dict["hyperparameters"]
+    ), "DS AT requires a `hyperparameters.deepspeed_config` key which points to the deepspeed config json file"
+
+    # Also sanity check that if a --deepspeed_config (or in the case of HF
+    # --deepspeed) arg is passed in, both configs match. Probably some gotchas here because
+    # --deepspeed is also a boolean arg for vanilla deepspeed.
+    possible_config_flags = ("--deepspeed", "--deepspeed_config")
+    submitted_entrypoint = submitted_exp_config_dict["entrypoint"]
+    # The entrypoint may be a string or list of strings. Strip all white space from each entry and
+    # convert to a list, in either case.
+    if isinstance(submitted_entrypoint, str):
+        split_entrypoint = submitted_entrypoint.split(" ")
+    elif isinstance(submitted_entrypoint, list):
+        # Join and re-split to remove any possile white space.
+        split_entrypoint = " ".join(submitted_entrypoint)
+        split_entrypoint = submitted_entrypoint.split(" ")
+    else:
+        raise ValueError(
+            f"Expected a string or list for an entrypoint, but received {type(submitted_entrypoint)}"
+        )
+
+    split_entrypoint = [s.strip() for s in split_entrypoint if s.strip()]
+
+    for idx in range(len(split_entrypoint) - 1):
+        curr_arg, next_arg = split_entrypoint[idx : idx + 2]
+        next_arg_is_not_a_flag = next_arg != "-"
+        if curr_arg in possible_config_flags and next_arg_is_not_a_flag:
+            entrypoint_deepspeed_config = next_arg
+            hp_deepspeed_config = submitted_exp_config_dict["hyperparameters"]["deepspeed_config"]
+            if entrypoint_deepspeed_config != hp_deepspeed_config:
+                raise ValueError(
+                    f"The deepspeed config path in the `hyperparameters` section, "
+                    f"{hp_deepspeed_config}, does not match the path in the entrypoint, "
+                    f"{entrypoint_deepspeed_config}."
+                )
+
     default_search_runner_config = _defaults.DEFAULT_SEARCH_RUNNER_CONFIG
     if args.max_search_runner_restarts is not None:
         default_search_runner_config["max_restarts"] = args.max_search_runner_restarts
     # Merge with the submitted experiment config so that the search runner shares the project,
     # workspace, etc.
-    experiment_config_dict = get_dict_from_yaml_or_json_path(args.config_path)
-    search_runner_config = merge_dicts(experiment_config_dict, default_search_runner_config)
+    search_runner_config = merge_dicts(submitted_exp_config_dict, default_search_runner_config)
     search_runner_config["name"] += " (DS AT Searcher)"
     search_runner_config["hyperparameters"] = {
         "max_trials": args.max_trials,
@@ -46,6 +83,7 @@ def get_search_runner_config_from_args(args: argparse.Namespace) -> Dict[str, An
         "start_profile_step": args.start_profile_step,
         "metric": args.metric,
         "early_stopping": args.early_stopping,
+        "tuner_type": args.tuner_type,
     }
     # TODO: add user cli args to hp section for easier reference
 
@@ -179,6 +217,9 @@ def get_batch_config_from_mbs_gas_and_slots(
     """
     mbs = ds_config["train_micro_batch_size_per_gpu"]
     gas = ds_config.get("gradient_accumulation_steps", _defaults.GAS_DEFAULT)
+    # TODO: remove this auto hack needed for hf by an actual solution.
+    if gas == "auto":
+        gas = 1
     tbs = mbs * gas * slots
     return {
         "train_batch_size": tbs,

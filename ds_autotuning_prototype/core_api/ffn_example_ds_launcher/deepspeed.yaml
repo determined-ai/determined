@@ -18,6 +18,6 @@ searcher:
   smaller_is_better: False
 hyperparameters:
   dim: 4096
-  layers: 8 # Total params will be layers * dim ** 2
+  layers: 3 # Total params will be layers * dim ** 2
   deepspeed_config: ds_config.json
 entrypoint: python3 -m determined.launch.deepspeed python3 script.py
