@@ -83,20 +83,15 @@ func (o *operator) toSQL() (string, error) {
 }
 
 func columnNameToSQL(c string, l *string, t *string) (string, error) {
-	var lo string
-	var ty string
+	locationType := projectv1.LocationType_LOCATION_TYPE_EXPERIMENT.String()
+	columnType := projectv1.ColumnType_COLUMN_TYPE_UNSPECIFIED.String()
 	var col string
-	if l == nil {
-		lo = projectv1.LocationType_LOCATION_TYPE_EXPERIMENT.String()
-	} else {
-		lo = *l
+	if l != nil {
+		locationType = *l
 	}
-	if t == nil {
-		ty = projectv1.ColumnType_COLUMN_TYPE_UNSPECIFIED.String()
-	} else {
-		ty = *t
+	if t != nil {
+		columnType = *t
 	}
-
 	filterExperimentColMap := map[string]string{
 		"id":              "e.id",
 		"description":     "e.config->>'description'",
@@ -128,7 +123,7 @@ func columnNameToSQL(c string, l *string, t *string) (string, error) {
 		 ) `,
 	}
 
-	switch lo {
+	switch locationType {
 	case projectv1.LocationType_LOCATION_TYPE_EXPERIMENT.String():
 		col, exists := filterExperimentColMap[c]
 		if !exists {
@@ -137,12 +132,12 @@ func columnNameToSQL(c string, l *string, t *string) (string, error) {
 		return col, nil
 	case projectv1.LocationType_LOCATION_TYPE_VALIDATIONS.String():
 		col = fmt.Sprintf(`e.validation_metrics->>'%s'`, strings.TrimPrefix(c, "validation."))
-		switch ty {
+		switch columnType {
 		case projectv1.ColumnType_COLUMN_TYPE_NUMBER.String():
 			col = fmt.Sprintf(`(%v)::float8`, col)
 		}
 	default:
-		return col, fmt.Errorf("unhandled project location %v", lo)
+		return col, fmt.Errorf("unhandled column location type %v", locationType)
 	}
 	return col, nil
 }
@@ -150,7 +145,7 @@ func columnNameToSQL(c string, l *string, t *string) (string, error) {
 func hpToSQL(c string, filterColumnType *string, filterValue *interface{},
 	op *operator, q *bun.SelectQuery,
 	fc *filterConjunction) (*bun.SelectQuery, error) {
-	var queryColumnType string
+	queryColumnType := projectv1.ColumnType_COLUMN_TYPE_UNSPECIFIED.String()
 	var o operator
 	var queryValue interface{}
 	if filterValue == nil && op != nil && *op != empty && *op != notEmpty {
@@ -160,9 +155,7 @@ func hpToSQL(c string, filterColumnType *string, filterValue *interface{},
 	if o != empty && o != notEmpty {
 		queryValue = *filterValue
 	}
-	if filterColumnType == nil {
-		queryColumnType = projectv1.ColumnType_COLUMN_TYPE_UNSPECIFIED.String()
-	} else {
+	if filterColumnType != nil {
 		queryColumnType = *filterColumnType
 	}
 	var hps []string
