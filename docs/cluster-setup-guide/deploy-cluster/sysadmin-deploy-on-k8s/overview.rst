@@ -20,7 +20,7 @@ In this topic guide, we will cover:
 
 :ref:`Installing Determined on Kubernetes <install-on-kubernetes>` deploys an instance of the
 Determined master and a Postgres database in the Kubernetes cluster. Once the master is up and
-running, users can launch :ref:`experiments <experiments>`, :ref:`notebooks <notebooks>`,
+running, you can launch :ref:`experiments <experiments>`, :ref:`notebooks <notebooks>`,
 :ref:`TensorBoards <tensorboards>`, :ref:`commands <commands-and-shells>`, and :ref:`shells
 <commands-and-shells>`. When new workloads are submitted to the Determined master, the master
 launches pods and configMaps on the Kubernetes cluster to execute those workloads. Users of

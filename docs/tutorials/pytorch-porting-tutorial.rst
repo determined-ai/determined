@@ -2,6 +2,9 @@
  PyTorch Porting Tutorial
 ##########################
 
+.. meta::
+   :description: By walking through this simple example, you'll learn how to organize your PyTorch code into Determined's PyTorch Trial API.
+
 Determined provides a high-level framework APIs for PyTorch, Keras, and Estimators that let users
 describe their model without boilerplate code. Determined reduces boilerplate by providing a
 state-of-the-art training loop that provides distributed training, hyperparameter search, automatic

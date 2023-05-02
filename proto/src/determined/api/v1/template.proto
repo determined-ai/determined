@@ -6,6 +6,7 @@ option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 import "determined/api/v1/pagination.proto";
 
 import "determined/template/v1/template.proto";
+import "protoc-gen-swagger/options/annotations.proto";
 
 // Get a list of templates.
 message GetTemplatesRequest {
@@ -30,6 +31,9 @@ message GetTemplatesRequest {
 }
 // Response to GetTemplatesRequest.
 message GetTemplatesResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "templates", "pagination" ] }
+  };
   // the list of requested templates.
   repeated determined.template.v1.Template templates = 1;
   // Pagination information of the full dataset.
@@ -43,6 +47,9 @@ message GetTemplateRequest {
 }
 // Response to GetTemplateRequest.
 message GetTemplateResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "template" ] }
+  };
   // The requested template.
   determined.template.v1.Template template = 1;
 }

@@ -14,11 +14,21 @@ from determined.common.storage import shared
 
 
 class DownloadMode(enum.Enum):
-    """A list of supported checkpoint download modes."""
+    """
+    A list of supported checkpoint download modes.
 
-    DIRECT = "direct"  # Download directly from checkpoint storage.
-    MASTER = "master"  # Proxy download through the master.
-    AUTO = "auto"  # Attemp DIRECT and fall back to MASTER.
+    Attributes:
+        DIRECT
+            Download directly from checkpoint storage.
+        MASTER
+            Proxy download through the master.
+        AUTO
+            Attempt DIRECT and fall back to MASTER.
+    """
+
+    DIRECT = "direct"
+    MASTER = "master"
+    AUTO = "auto"
 
     def __str__(self) -> str:
         return self.value
@@ -140,8 +150,8 @@ class Checkpoint:
                 checkpoint under. If this parameter is not set, the checkpoint will
                 be downloaded to ``checkpoints/<checkpoint_uuid>`` relative to the
                 current working directory.
-            mode (DownloadMode): Mode governs how a checkpoint is downloaded. Refer to
-                the definition of DownloadMode for details.
+            mode (DownloadMode, optional): Governs how a checkpoint is downloaded. Defaults to
+                ``AUTO``.
         """
         if self.state != CheckpointState.COMPLETED:
             raise errors.CheckpointStateException(

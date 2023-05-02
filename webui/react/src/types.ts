@@ -420,7 +420,7 @@ export interface Metrics extends Api.V1Metrics {
   batchMetrics?: Array<MetricStruct>;
 }
 
-export type Metadata = Record<RecordKey, string>;
+export type Metadata = Record<RecordKey, string | object>;
 
 export interface CoreApiGenericCheckpoint {
   allocationId?: string;

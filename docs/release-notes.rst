@@ -10,6 +10,38 @@
  Version 0.21
 **************
 
+Version 0.21.2
+==============
+
+**Release Date:** April 28, 2023
+
+**New Features**
+
+-  Add the ``launch_error`` configuration option to the master config, which specifies whether to
+   refuse experiments or tasks if they request more slots than the cluster has. See
+   :ref:`master-config-reference` for more information.
+
+**Improvements**
+
+-  CLI: Add ``det (experiment|trial|task) logs --json`` option, allowing users to get JSON-formatted
+   logs for experiments, trials, and tasks.
+
+-  Cluster: HPC Launcher 3.2.7 migrates the ``resource_manager.job_storage_root`` to a more
+   efficient format. This happens automatically, but once migrated you cannot downgrade to an older
+   version of the HPC launcher.
+
+-  Cluster: The ``manage-singularity-cache`` script has added the ``--docker-login`` option to
+   enable access to private Docker images.
+
+**Removed Features**
+
+-  The "hyperparameter importance" feature and associated API endpoints have been removed.
+
+**Bug Fixes**
+
+-  Tasks: Fix an issue where task proxies were not recovered when running on Slurm.
+-  Tasks: Fix an issue where ``det task list`` would sometimes return an incorrect 404 error.
+
 Version 0.21.1
 ==============
 
@@ -877,8 +909,10 @@ Version 0.18.1
    column in the `Trials` table.
 
    .. image:: https://user-images.githubusercontent.com/220971/169450333-c3dde9f4-abc0-4f8b-9e83-216e13ee2ca0.png
+      :alt: Trial restart counter
 
    .. image:: https://user-images.githubusercontent.com/220971/169450323-d169f4ee-2698-4ae8-9b1a-c04460751310.png
+      :alt: Restarts column in the Trials table
 
 **Improvements**
 
@@ -1186,8 +1220,10 @@ Version 0.17.9
    to display.
 
    .. image:: https://user-images.githubusercontent.com/15078396/152874244-51e0d84a-3678-4427-b082-ccc0c865200f.png
+      :alt: Customize columns picker
 
    .. image:: https://user-images.githubusercontent.com/15078396/152874240-6365b276-3f3e-4fb6-aa2b-0cedc7451b12.png
+      :alt: Customize columns picker displaying columns matching search criteria
 
 -  Notebooks: Add a config field ``notebook_idle_type`` that changes how the idleness of a notebook
    is determined for the idle timeout feature. If the value is different from the default, users do
@@ -1346,10 +1382,13 @@ Version 0.17.5
    or on the Model Registry page.
 
    .. image:: https://user-images.githubusercontent.com/15078396/144926870-bb93d587-f7ad-4052-a338-6fc000bd2ed9.png
+      :alt: Model Registry page
 
    .. image:: https://user-images.githubusercontent.com/15078396/144926881-98aeb187-aa3f-4e40-b502-d7af624573db.png
+      :alt: Register Checkpoint page
 
    .. image:: https://user-images.githubusercontent.com/15078396/144926889-eec0216a-dacc-4fe5-ac28-858ea6587d04.png
+      :alt: Create Model page
 
 -  API: Add a method for listing trials within an experiment.
 
@@ -1464,6 +1503,7 @@ Version 0.17.1
    experiment.
 
    .. image:: https://user-images.githubusercontent.com/15078396/136809928-11c815cc-3751-4908-8c6e-34fef3b9858d.png
+      :alt: Notes tab in the WebUI
 
 **Improvements**
 
@@ -1553,13 +1593,16 @@ Version 0.17.0
 -  WebUI: Allow experiment owners to delete their own experiments, singly or in batches.
 
    .. image:: https://user-images.githubusercontent.com/220971/134048799-cd663a75-cb24-4f44-9a8a-c2ff23222cef.png
+      :alt: WebUI showing Delete action
 
    .. image:: https://user-images.githubusercontent.com/220971/133659677-aea0d1bc-95ce-4652-8218-92b97d114358.png
+      :alt: WebUI showing action dropdown selector
 
 -  WebUI: Display the latest log entry available for a trial at the bottom of the trial's page. This
    works for both single-trial experiments and trials within a multi-trial experiment.
 
    .. image:: https://user-images.githubusercontent.com/220971/131391658-4be1a1f4-1d46-4766-a737-7eb8efcb65b4.png
+      :alt: WebUI displaying the latest log entry
 
 -  WebUI: Add support for displaying NaN and Infinity metric values.
 

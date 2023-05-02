@@ -38,6 +38,7 @@ export interface TableContextMenuProps extends MenuProps {
   open: boolean;
   experiment: ProjectExperiment;
   handleClose: (e?: Event) => void;
+  link?: string;
   x: number;
   y: number;
 }
@@ -48,6 +49,7 @@ export const TableContextMenu: React.FC<TableContextMenuProps> = ({
   handleUpdateExperimentList,
   handleClose,
   open,
+  link,
   x,
   y,
 }) => {
@@ -71,8 +73,10 @@ export const TableContextMenu: React.FC<TableContextMenuProps> = ({
       <ExperimentActionDropdown
         experiment={experiment}
         handleUpdateExperimentList={handleUpdateExperimentList}
+        link={link}
         makeOpen={open}
         onComplete={onComplete}
+        onLink={handleClose}
         onVisibleChange={() => handleClose()}>
         <div />
       </ExperimentActionDropdown>

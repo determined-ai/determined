@@ -104,7 +104,6 @@ class UNetsTrial(TFKerasTrial):
         model = self.context.wrap_model(model)
 
         # Create and wrap optimizer.
-        # TODO MLG-443 Migrate from legacy Keras optimizers
         optimizer = tf.keras.optimizers.legacy.Adam()
         optimizer = self.context.wrap_optimizer(optimizer)
 

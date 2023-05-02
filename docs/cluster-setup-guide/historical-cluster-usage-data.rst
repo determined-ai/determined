@@ -30,6 +30,7 @@ We build WebUI visualizations for a quick snapshot of the historical cluster usa
 
 .. image:: /assets/images/historical-cluster-usage-data.png
    :width: 100%
+   :alt: WebUI showing historical cluster usage data
 
 ************************
  Command-line Interface

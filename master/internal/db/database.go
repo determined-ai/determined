@@ -86,9 +86,7 @@ type DB interface {
 		queryName string, args []interface{}, v interface{}, params ...interface{}) error
 	RawQuery(queryName string, params ...interface{}) ([]byte, error)
 	UpdateResourceAllocationAggregation() error
-	TemplateList() (values []model.Template, err error)
 	TemplateByName(name string) (value model.Template, err error)
-	UpsertTemplate(tpl *model.Template) error
 	DeleteTemplate(name string) error
 	InsertTrialProfilerMetricsBatch(
 		values []float32, batches []int32, timestamps []time.Time, labels []byte,
@@ -101,8 +99,6 @@ type DB interface {
 	ExperimentLabelUsage(projectID int32) (labelUsage map[string]int, err error)
 	GetExperimentStatus(experimentID int) (state model.State, progress float64,
 		err error)
-	MetricNames(experimentID int, sStartTime time.Time, vStartTime time.Time) (
-		training []string, validation []string, sEndTime time.Time, vEndTime time.Time, err error)
 	TrainingMetricBatches(experimentID int, metricName string, startTime time.Time) (
 		batches []int32, endTime time.Time, err error)
 	ValidationMetricBatches(experimentID int, metricName string, startTime time.Time) (
@@ -113,8 +109,6 @@ type DB interface {
 	ValidationTrialsSnapshot(experimentID int, minBatches int, maxBatches int,
 		metricName string, startTime time.Time) (trials []*apiv1.TrialsSnapshotResponse_Trial,
 		endTime time.Time, err error)
-	TopTrialsByMetric(experimentID int, maxTrials int, metric string,
-		smallerIsBetter bool) (trials []int32, err error)
 	TopTrialsByTrainingLength(experimentID int, maxTrials int, metric string,
 		smallerIsBetter bool) (trials []int32, err error)
 	ExperimentBestSearcherValidation(id int) (float32, error)
@@ -122,6 +116,7 @@ type DB interface {
 	DeleteAllocationSession(allocationID model.AllocationID) error
 	UpdateAllocationState(allocation model.Allocation) error
 	UpdateAllocationStartTime(allocation model.Allocation) error
+	UpdateAllocationProxyAddress(allocation model.Allocation) error
 	ExperimentSnapshot(experimentID int) ([]byte, int, error)
 	SaveSnapshot(
 		experimentID int, version int, experimentSnapshot []byte,

@@ -9,6 +9,7 @@
   "scripts": {
     "postshrinkwrap": "npx npm-force-resolutions && npm install --ignore-scripts",
     "start": "vite serve",
+    "preview": "vite preview",
     "build": "NODE_OPTIONS=--max-old-space-size=6144 vite build --mode=${DET_NODE_ENV:-production}",
     "prettier": "prettier",
     "eslint": "eslint",
@@ -25,6 +26,7 @@
     "format-check:css": "prettier --check \"src/**/*.{css,less,scss}\"",
     "format-check:misc": "prettier --check \"src/**/*.{md,json}\"",
     "test": "vitest",
+    "e2e": "playwright test",
     "test:coverage": "vitest --run --coverage --silent",
     "analyze": "source-map-explorer --no-border-checks 'build/assets/*.js'"
   },
@@ -84,6 +86,7 @@
     ]
   },
   "devDependencies": {
+    "@playwright/test": "^1.32.3",
     "@testing-library/dom": "^8.20.0",
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^13.4.0",
@@ -110,6 +113,7 @@
     "@vitest/coverage-c8": "^0.29.3",
     "browserslist": "^4.21.5",
     "cheerio": "^1.0.0-rc.12",
+    "dotenv": "^16.0.3",
     "eslint": "^8.36.0",
     "eslint-config-prettier": "^8.7.0",
     "eslint-config-react": "^1.1.7",

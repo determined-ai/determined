@@ -2,6 +2,9 @@
  Estimator API
 ###############
 
+.. meta::
+   :description: Learn how to use the Estimator API to train an Estimator model in Determined. Steps include defining an optimizer and datasets, defining custom reducers, checkpointing, and callbacks.
+
 In this guide, you'll learn how to use the Estimator API.
 
 +-----------------------------------------------------------------------+
@@ -28,7 +31,7 @@ To learn about this API, you can start by reading the trial definitions from the
    Before loading data, read this document :doc:`/training/load-model-data` to understand how to
    work with different sources of data.
 
-To use ``tf.estimator`` models with Determined, users need to wrap their optimizer and datasets
+To use ``tf.estimator`` models with Determined, you'll need to wrap your optimizer and datasets
 using :meth:`~determined.estimator.EstimatorTrialContext.wrap_optimizer` and
 :meth:`~determined.estimator.EstimatorTrialContext.wrap_dataset`. Note that the concrete context
 object where these functions will be found will be in
@@ -54,7 +57,7 @@ details.
 A checkpoint includes the model definition (Python source code), experiment configuration file,
 network architecture, and the values of the model's parameters (i.e., weights) and hyperparameters.
 When using a stateful optimizer during training, checkpoints will also include the state of the
-optimizer (i.e., learning rate). Users can also embed arbitrary metadata in checkpoints via the
+optimizer (i.e., learning rate). You can also embed arbitrary metadata in checkpoints via the
 :ref:`Python SDK <store-checkpoint-metadata>`.
 
 TensorFlow Estimator trials are checkpointed using the `SavedModel

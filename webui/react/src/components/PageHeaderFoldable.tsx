@@ -27,7 +27,7 @@ interface Props {
 
 const renderOptionLabel = (option: Option): React.ReactNode => {
   return option.tooltip ? (
-    <Tooltip title={option.tooltip}>
+    <Tooltip content={option.tooltip}>
       <span>{option.label}</span>
     </Tooltip>
   ) : (
@@ -68,7 +68,7 @@ const PageHeaderFoldable: React.FC<Props> = ({ foldableContent, leftContent, opt
         <div className={css.left}>{leftContent}</div>
         <div className={css.options}>
           {foldableContent && (
-            <Tooltip title="Toggle">
+            <Tooltip content="Toggle">
               <Button type="text" onClick={() => setIsExpanded((prev) => !prev)}>
                 <Icon name={isExpanded ? 'arrow-up' : 'arrow-down'} size="tiny" />
               </Button>

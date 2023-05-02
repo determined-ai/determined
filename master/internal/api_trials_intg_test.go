@@ -120,7 +120,7 @@ func createTestTrialWithMetrics(
 							NumberValue: float64(i),
 						},
 					},
-					"val_loss": {
+					"loss": {
 						Kind: &structpb.Value_NumberValue{
 							NumberValue: float64(i),
 						},
@@ -204,7 +204,8 @@ func compareMetrics(
 }
 
 func isMultiTrialSampleCorrect(expectedMetrics []*commonv1.Metrics,
-	actualMetrics *apiv1.DownsampledMetrics) bool {
+	actualMetrics *apiv1.DownsampledMetrics,
+) bool {
 	// Checking if metric names and their values are equal.
 	for i := 0; i < len(actualMetrics.Data); i++ {
 		allActualAvgMetrics := actualMetrics.Data
@@ -284,6 +285,7 @@ func TestMultiTrialSampleMetrics(t *testing.T) {
 	require.True(t, isMultiTrialSampleCorrect(expectedTrainMetrics, actualAllMetrics[0]))
 	require.True(t, isMultiTrialSampleCorrect(expectedValMetrics, actualAllMetrics[1]))
 }
+
 func TestStreamTrainingMetrics(t *testing.T) {
 	api, curUser, ctx := setupAPITest(t, nil)
 
