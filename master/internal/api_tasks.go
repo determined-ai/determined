@@ -67,7 +67,7 @@ func canAccessNTSCTask(ctx context.Context, curUser model.User, taskID model.Tas
 	}
 	err = command.AuthZProvider.Get().CanGetNSC(
 		ctx, curUser, spec.WorkspaceID)
-	return authz.IsPermissionDenied(err), err
+	return !authz.IsPermissionDenied(err), err
 }
 
 func (a *apiServer) canDoActionsOnTask(
@@ -109,7 +109,7 @@ func (a *apiServer) canDoActionsOnTask(
 	default: // NTSC case + checkpointGC.
 		if ok, err := canAccessNTSCTask(ctx, *curUser, taskID); err != nil {
 			return err
-		} else if ok {
+		} else if !ok {
 			return errTaskNotFound
 		}
 	}
