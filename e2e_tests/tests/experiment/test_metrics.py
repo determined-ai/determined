@@ -7,6 +7,8 @@ import pytest
 
 from determined.common import api
 from determined.common.api import authentication, certs
+from determined.common.api import bindings
+from tests import api_utils
 from tests import config as conf
 from tests import experiment as exp
 
@@ -315,3 +317,14 @@ def test_trial_describe_metrics() -> None:
     losses = [m["loss"] for m in flattened_batch_metrics]
 
     assert len(losses) == 100
+
+    # assert summary metrics in trial 
+    sess = api_utils.determined_test_session(admin=True)
+    resp = bindings.get_GetTrial(session=sess, trialId=trial_id)
+    summaryMetrics = resp.trial.summaryMetrics 
+    assert summaryMetrics is not None 
+    assert summaryMetrics['avg_metrics']['loss']['count'] == 100
+    assert summaryMetrics['avg_metrics']['loss']['max'] is not None
+    assert summaryMetrics['avg_metrics']['loss']['min'] is not None
+    assert summaryMetrics['avg_metrics']['loss']['sum'] is not None
+    assert summaryMetrics['avg_metrics']['loss']['type'] == 'number'
