@@ -54,7 +54,7 @@ If you have not yet installed Determined, installation instructions can be found
 under `docs/install-admin.html` or at https://docs.determined.ai/latest/index.html
 
 In order to run the classification script, `cd` into `image_classification/` and run the following
-to use the `const.yaml` configk
+to use the `const.yaml` config
 
 ```
 det experiment create const.yaml . --include ../det_callback.py
@@ -78,7 +78,7 @@ One can also use Determined's DeepSpeed Autotune functionality to autotmatically
 DeepSpeed settings. From either subdirectory, run the following script:
 
 ```
-python3 -m determined.pytorch.deepspeed.dsat deepspeed.yaml . --include ../det_callback.py
+python3 -m determined.pytorch.dsat deepspeed.yaml . --include ../det_callback.py
 ```
 
 ## Results

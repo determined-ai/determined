@@ -5,7 +5,7 @@ import pickle
 import tempfile
 
 from determined.experimental import client
-from determined.pytorch.deepspeed.dsat import _defaults, _utils
+from determined.pytorch.dsat import _defaults, _utils
 
 
 def parse_args() -> argparse.Namespace:
@@ -71,7 +71,7 @@ def parse_args() -> argparse.Namespace:
         "-r",
         "--random_seed",
         type=int,
-        default=42,
+        default=_defaults.AUTOTUNING_ARG_DEFAULTS["random-seed"],
     )
 
     args = parser.parse_args()

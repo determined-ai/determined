@@ -5,8 +5,8 @@ from typing import Any, Dict
 
 import determined as det
 from attrdict import AttrDict
-from determined.pytorch.deepspeed import dsat, get_ds_config_from_hparams
-from determined.pytorch.deepspeed.dsat import _defaults
+from determined.pytorch import dsat
+from determined.pytorch.dsat import _defaults
 
 possible_paths = [_defaults.MODEL_INFO_PROFILING_PATH, _defaults.AUTOTUNING_RESULTS_PATH]
 
@@ -20,7 +20,7 @@ def main(
     logging.info(f"HPs seen by trial: {hparams}")
     # Hack for clashing 'type' key. Need to change config parsing behavior so that
     # user scripts don't need to inject helper functions like this.
-    ds_config = get_ds_config_from_hparams(hparams)
+    ds_config = dsat.get_ds_config_from_hparams(hparams)
     is_model_profile_info_run = ds_config.get("autotuning", {}).get("model_info_path") is not None
 
     # We will simulate periodic OOMs.

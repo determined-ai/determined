@@ -33,7 +33,7 @@ from det_callback import (
     get_ds_config_path_from_args,
     replace_ds_config_file_using_overwrites,
 )
-from determined.pytorch.deepspeed import dsat
+from determined.pytorch import dsat
 from PIL import Image
 from torch.utils.tensorboard import SummaryWriter
 from torchvision.transforms import (

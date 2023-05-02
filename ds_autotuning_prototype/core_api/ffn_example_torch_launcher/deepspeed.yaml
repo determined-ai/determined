@@ -5,7 +5,6 @@ max_restarts: 0
 environment:
   image:
     gpu: determinedai/environments:cuda-11.3-pytorch-1.10-deepspeed-0.8.3-gpu-0.21.2
-    cpu: determinedai/environments:cuda-11.3-pytorch-1.10-deepspeed-0.8.3-gpu-0.21.2
 resources:
   slots_per_trial: 2
   shm_size: 17179869184 # 16 GiB. Was hitting "Unexpected bus error encountered in worker. This might be caused by insufficient shared memory (shm)."

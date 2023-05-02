@@ -1,4 +1,4 @@
-from determined.pytorch.deepspeed.dsat import _dsat_search_method
+from determined.pytorch.dsat import _dsat_search_method
 
 ALL_SEARCH_METHOD_CLASSES = {
     "random": _dsat_search_method.RandomDSATSearchMethod,
@@ -56,11 +56,12 @@ AUTOTUNING_ARG_DEFAULTS = {
     "start-profile-step": 3,
     "end-profile-step": 5,
     "metric": "FLOPS_per_gpu",
+    "random-seed": 42,
 }
 
 DEFAULT_SEARCH_RUNNER_CONFIG = {
     "searcher": {"name": "single", "max_length": 0},
     "max_restarts": 5,
     "resources": {"slots_per_trial": 0},
-    "entrypoint": "python3 -m determined.pytorch.deepspeed.dsat._run_dsat",
+    "entrypoint": "python3 -m determined.pytorch.dsat._run_dsat",
 }

@@ -16,7 +16,7 @@ The basic steps:
 In the `./core_api/torchvison_models/` directory, for instance, run the following:
 
 ```bash
-python3 -m determined.pytorch.deepspeed.dsat single.yaml .
+python3 -m determined.pytorch.dsat single.yaml .
 ```
 
 (the config may need to be altered for your cluster.)

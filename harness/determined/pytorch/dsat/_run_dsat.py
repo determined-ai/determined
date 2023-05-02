@@ -6,7 +6,7 @@ import pickle
 
 import determined as det
 from determined import searcher
-from determined.pytorch.deepspeed.dsat import _defaults, _dsat_search_method, _utils
+from determined.pytorch.dsat import _defaults, _dsat_search_method, _utils
 from determined.util import merge_dicts
 
 
