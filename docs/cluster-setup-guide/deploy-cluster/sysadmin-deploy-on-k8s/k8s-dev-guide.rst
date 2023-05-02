@@ -119,7 +119,7 @@ tool for running Determined. First, enter the Determined reposiroty and run:
    ``make all``
 
 Once that has finished, create a new file at ``~/.devcluster.yaml`` and populate it with the
-following options:
+following fields:
 
 .. code:: bash
 
@@ -150,7 +150,7 @@ following options:
          db:
             user: "postgres"
             password: "postgres"
-            host: <name of determined db service from kubectl get services>
+            host: <name of determined db service from `kubectl get services`>
             port: 5432
             name: "determined"
          port: 8081
@@ -159,7 +159,7 @@ following options:
             type: "kubernetes"
             namespace: default
             max_slots_per_pod: 1
-            master_service_name: determined-master-service-eliu-deployment
+            master_service_name: <name of determined master service from `kubectl get services`>
 
          log:
             level: debug
