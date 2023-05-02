@@ -23,7 +23,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
-	log "github.com/sirupsen/logrus"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -397,6 +396,7 @@ func (a *apiServer) deleteExperiments(exps []*model.Experiment, userModel *model
 
 	sema := make(chan struct{}, maxConcurrentDeletes)
 	wg := sync.WaitGroup{}
+	successfulExpIDs := make(chan int, len(exps))
 
 	for _, exp := range exps {
 		wg.Add(1)
@@ -407,7 +407,7 @@ func (a *apiServer) deleteExperiments(exps []*model.Experiment, userModel *model
 
 			agentUserGroup, err := user.GetAgentUserGroup(*exp.OwnerID, exp)
 			if err != nil {
-				log.WithError(err).Errorf("failed to delete experiment: %d", exp.ID)
+				logrus.WithError(err).Errorf("failed to delete experiment: %d", exp.ID)
 				return
 			}
 
@@ -418,7 +418,7 @@ func (a *apiServer) deleteExperiments(exps []*model.Experiment, userModel *model
 				0,
 			)
 			if err != nil {
-				log.WithError(err).Errorf("failed to delete experiment: %d", exp.ID)
+				logrus.WithError(err).Errorf("failed to delete experiment: %d", exp.ID)
 				return
 			}
 
@@ -431,7 +431,7 @@ func (a *apiServer) deleteExperiments(exps []*model.Experiment, userModel *model
 					exp.Config, checkpoints, true, agentUserGroup, userModel, nil,
 				)
 				if gcErr := a.m.system.MustActorOf(addr, ckptGCTask).AwaitTermination(); gcErr != nil {
-					// log.WithError(err).Errorf(gcErr.String(), "failed to gc checkpoints for experiment")
+					logrus.WithError(err).Errorf("failed to gc checkpoints for experiment: %w", gcErr)
 					return
 				}
 			}
@@ -441,18 +441,24 @@ func (a *apiServer) deleteExperiments(exps []*model.Experiment, userModel *model
 				JobID: exp.JobID,
 			})
 			if err != nil {
-				log.WithError(err).Errorf("requesting cleanup of resource mananger resources: %w", err)
+				logrus.WithError(err).Errorf("requesting cleanup of resource mananger resources: %w", err)
 				return
 			}
 			if err = <-resp.Err; err != nil {
-				log.WithError(err).Errorf("cleaning up resource mananger resources: %w", err)
+				logrus.WithError(err).Errorf("cleaning up resource mananger resources: %w", err)
+				return
 			}
+			successfulExpIDs <- exp.ID
 		}()
 	}
 	wg.Wait()
 
 	ctx := context.Background()
-	trialIDs, taskIDs, err := a.m.db.ExperimentsTrialAndTaskIDs(ctx, db.Bun(), expIDs)
+	var processExpIDs []int
+	for expID := range successfulExpIDs {
+		processExpIDs = append(processExpIDs, expID)
+	}
+	trialIDs, taskIDs, err := a.m.db.ExperimentsTrialAndTaskIDs(ctx, db.Bun(), processExpIDs)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to gather trial IDs for experiment")
 	}
@@ -465,10 +471,10 @@ func (a *apiServer) deleteExperiments(exps []*model.Experiment, userModel *model
 		return nil, errors.Wrapf(err, "failed to delete trial logs from backend (task logs)")
 	}
 
-	if err = a.m.db.DeleteExperiments(ctx, expIDs); err != nil {
+	if err = a.m.db.DeleteExperiments(ctx, processExpIDs); err != nil {
 		return nil, errors.Wrapf(err, "deleting experiments from database")
 	}
-	return expIDs, nil
+	return processExpIDs, nil
 }
 
 func getExperimentColumns(q *bun.SelectQuery) *bun.SelectQuery {
