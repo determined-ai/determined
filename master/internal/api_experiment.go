@@ -11,8 +11,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/uptrace/bun"
 	"golang.org/x/exp/slices"
+
+	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/internal/prom"
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -1979,7 +1980,6 @@ func (a *apiServer) SearchExperiments(
 		int(req.Offset),
 		int(req.Limit),
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -1993,33 +1993,13 @@ func (a *apiServer) SearchExperiments(
 	}
 
 	// get the best trial associated with the experiment.
-
-	// don't query for experiments twice
-	experimentValues := db.Bun().NewValues(&experiments)
-
-	// get info for best/latest validation for best trial
-	validationsQuery := db.Bun().NewSelect().
-		Table("validations").
-		Column("id").
-		ColumnExpr("validations.trial_id as trial_id").
-		Column("total_batches").
-		ColumnExpr("proto_time(end_time) AS end_time").
-		ColumnExpr("json_build_object('avg_metrics', metrics->'validation_metrics') AS metrics").
-		ColumnExpr("metrics->'num_inputs' AS num_inputs").
-		//nolint:lll
-		ColumnExpr("row_number() OVER(PARTITION BY validations.trial_id ORDER BY total_batches DESC NULLS LAST) AS latest_rank")
-
-	stepsQuery := db.Bun().NewSelect().
-		TableExpr("steps AS s").
-		Column("s.total_batches").
-		Where("s.trial_id = trials.id").
-		Order("s.total_batches DESC").
-		Limit(1)
-
-	allocationsQuery := db.Bun().NewSelect().
-		TableExpr("allocations AS a").
-		ColumnExpr("extract(EPOCH FROM sum(coalesce(a.end_time, now()) - a.start_time))").
-		Where("a.task_id = trials.task_id")
+	trialIDs := make([]int32, 0, len(experiments)+1)
+	trialIDs = append(trialIDs, -1) // hack to avoid bun error for 0 length array.
+	for _, e := range experiments {
+		if e.BestTrialId != nil {
+			trialIDs = append(trialIDs, *e.BestTrialId)
+		}
+	}
 
 	trialsInnerQuery := db.Bun().NewSelect().
 		Table("trials").
@@ -2030,31 +2010,37 @@ func (a *apiServer) SearchExperiments(
 		Column("trials.task_id").
 		ColumnExpr("proto_time(trials.start_time) AS start_time").
 		ColumnExpr("proto_time(trials.end_time) AS end_time").
-		ColumnExpr("least(trials.restarts, (ex.config->>'max_restarts')::int) AS restarts").
+		Column("trials.restarts").
 		ColumnExpr("coalesce(new_ckpt.uuid, old_ckpt.uuid) AS warm_start_checkpoint_uuid").
 		ColumnExpr("trials.checkpoint_size AS total_checkpoint_size").
 		ColumnExpr(exputil.ProtoStateDBCaseString(trialv1.State_value, "trials.state", "state",
 			"STATE_")).
-		//nolint:lll
-		ColumnExpr("(CASE WHEN trials.hparams = 'null'::jsonb THEN null ELSE trials.hparams END) AS hparams").
-		ColumnExpr("(?) AS total_batches_processed", stepsQuery).
-		ColumnExpr("(?) AS wall_clock_time", allocationsQuery).
-		ColumnExpr("row_to_json(lv)::jsonb AS latest_validation").
-		ColumnExpr("row_to_json(bv)::jsonb AS best_validation").
+		ColumnExpr(`(CASE WHEN trials.hparams = 'null'::jsonb
+				THEN null ELSE trials.hparams END) AS hparams`).
+		ColumnExpr("trials.total_batches AS total_batches_processed").
+		ColumnExpr(`CASE WHEN trials.latest_validation_id IS NULL THEN NULL ELSE jsonb_build_object(
+				'trial_id', trials.id,
+				'total_batches', lv.total_batches,
+				'end_time', proto_time(lv.end_time),
+				'metrics', json_build_object('avg_metrics', lv.metrics->'validation_metrics'),
+				'num_inputs', lv.metrics->'num_inputs') END AS latest_validation`).
+		ColumnExpr(`jsonb_build_object(
+				'trial_id', trials.id,
+				'total_batches', bv.total_batches,
+				'end_time', proto_time(bv.end_time),
+				'metrics', json_build_object('avg_metrics', bv.metrics->'validation_metrics'),
+				'num_inputs', bv.metrics->'num_inputs') AS best_validation`).
 		ColumnExpr("null::jsonb AS best_checkpoint").
-		//nolint:lll
-		Join("JOIN ex ON ex.best_trial_id = trials.id").
-		Join("LEFT JOIN v bv ON trials.best_validation_id = bv.id").
-		Join("LEFT JOIN v lv ON trials.id = lv.trial_id AND lv.latest_rank = 1").
+		ColumnExpr("null::jsonb AS wall_clock_time").
+		Join("LEFT JOIN validations bv ON trials.best_validation_id = bv.id").
+		Join("LEFT JOIN validations lv ON trials.latest_validation_id = lv.id").
 		Join("LEFT JOIN raw_checkpoints old_ckpt ON old_ckpt.id = trials.warm_start_checkpoint_id").
-		Join("LEFT JOIN checkpoints_v2 new_ckpt ON new_ckpt.id = trials.warm_start_checkpoint_id")
+		Join("LEFT JOIN checkpoints_v2 new_ckpt ON new_ckpt.id = trials.warm_start_checkpoint_id").
+		Where("trials.id IN (?)", bun.In(trialIDs))
 
 	err = db.Bun().NewSelect().
-		With("ex", experimentValues).
-		With("v", validationsQuery).
 		Model(&trials).
 		ModelTableExpr("(?) AS trial", trialsInnerQuery).Scan(ctx)
-
 	if err != nil {
 		return nil, err
 	}
@@ -2065,6 +2051,16 @@ func (a *apiServer) SearchExperiments(
 	}
 	for _, experiment := range experiments {
 		trial := trialsByExperimentID[experiment.Id]
+		if trial != nil {
+			// Correct trial restarts because
+			// `restart` count is incremented before `restart <= max_restarts` stop restart check,
+			// so trials in terminal state have restarts = max + 1.
+			configRestarts, ok := experiment.Config.Fields["max_restarts"].AsInterface().(float64)
+			if ok && trial.Restarts > int32(configRestarts) {
+				trial.Restarts = int32(configRestarts)
+			}
+		}
+
 		resp.Experiments = append(
 			resp.Experiments,
 			&apiv1.SearchExperimentExperiment{Experiment: experiment, BestTrial: trial},
