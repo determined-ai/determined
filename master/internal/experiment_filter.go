@@ -207,12 +207,12 @@ func hpToSQL(c string, filterColumnType *string, filterValue *interface{},
 			if o == contains {
 				// nolint: lll
 				queryString = `(CASE 
-					WHEN config->'hyperparameters'->?->>'type' = 'const' THEN config->'hyperparameters'->?->>'val' ?
+					WHEN config->'hyperparameters'->?->>'type' = 'const' THEN config->'hyperparameters'->?->>'val' LIKE
 					WHEN config->'hyperparameters'->?->>'type' = 'categorical' THEN (config->'hyperparameters'->?->>'vals')::jsonb ?? ?
 					ELSE false
 				 END)`
 				queryArgs = append(queryArgs, bun.Safe(hpQuery),
-					bun.Safe(hpQuery), `LIKE %`+fmt.Sprintf(`%v`, queryValue)+`%`,
+					bun.Safe(hpQuery), fmt.Sprintf(`%%%s%%`, queryValue),
 					bun.Safe(hpQuery), bun.Safe(hpQuery), queryValue)
 				if fc != nil && *fc == or {
 					return q.WhereOr(queryString, queryArgs...), nil
@@ -385,15 +385,15 @@ func (e experimentFilter) toSQL(q *bun.SelectQuery,
 				switch *e.Operator {
 				case contains:
 					if c != nil && *c == or {
-						q.WhereOr("? LIKE ?", bun.Safe(col), `%`+fmt.Sprintf(`%v`, *e.Value)+`%`)
+						q.WhereOr("? LIKE ?", bun.Safe(col), fmt.Sprintf("%%%s%%", *e.Value))
 					} else {
-						q.Where("? LIKE ?", bun.Safe(col), `%`+fmt.Sprintf(`%v`, *e.Value)+`%`)
+						q.Where("? LIKE ?", bun.Safe(col), fmt.Sprintf("%%%s%%", *e.Value))
 					}
 				case doesNotContain:
 					if c != nil && *c == or {
-						q.WhereOr("? NOT LIKE ?", bun.Safe(col), `%`+fmt.Sprintf(`%v`, *e.Value)+`%`)
+						q.WhereOr("? NOT LIKE ?", bun.Safe(col), fmt.Sprintf("%%%s%%", *e.Value))
 					} else {
-						q.Where("? NOT LIKE ?", bun.Safe(col), `%`+fmt.Sprintf(`%v`, *e.Value)+`%`)
+						q.Where("? NOT LIKE ?", bun.Safe(col), fmt.Sprintf("%%%s%%", *e.Value))
 					}
 				default:
 					return q, fmt.Errorf("invalid contains operator %v", *e.Operator)
