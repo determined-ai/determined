@@ -1926,7 +1926,6 @@ func (a *apiServer) SearchExperiments(
 	ctx context.Context,
 	req *apiv1.SearchExperimentsRequest,
 ) (*apiv1.SearchExperimentsResponse, error) {
-	var efr experimentFilterRoot
 	resp := &apiv1.SearchExperimentsResponse{}
 	var experiments []*experimentv1.Experiment
 	var trials []*trialv1.Trial
@@ -1957,6 +1956,7 @@ func (a *apiServer) SearchExperiments(
 	}
 
 	if req.Filter != nil {
+		var efr experimentFilterRoot
 		err := json.Unmarshal([]byte(*req.Filter), &efr)
 		if err != nil {
 			return nil, err
