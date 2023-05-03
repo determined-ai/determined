@@ -255,7 +255,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
               fetchExperiments={fetchExperiments}
               handleScroll={handleScroll}
               handleUpdateExperimentList={handleUpdateExperimentList}
-              height={height}
+              height={height - 20}
               page={page}
               project={project}
               projectColumns={projectColumns}
