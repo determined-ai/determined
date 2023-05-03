@@ -27,7 +27,7 @@ import numpy as np
 import torch
 import transformers
 from datasets import load_dataset
-from det_callback import (
+from determined.hf_callback import (
     DetCallback,
     create_consistent_hf_args_for_deepspeed,
     get_ds_config_path_from_args,
