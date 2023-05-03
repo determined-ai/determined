@@ -8,10 +8,10 @@
  Prerequisites
 ***************
 
-Before setting up Determined Master, the user should set up a Kubernetes cluster with GPU enabled
-nodes and Kubernetes version >= 1.19 and <= 1.21, though later versions may work. You can setup
-Kubernetes manually, or you can use a managed Kubernetes service such as :ref:`GKE
-<setup-gke-cluster>` or :ref:`EKS <setup-eks-cluster>`.
+Before setting up Determined Master, set up a Kubernetes cluster with GPU enabled
+nodes and Kubernetes version >= 1.19 and <= 1.21. Later versions of Kubernetes may work. 
+You can set up Kubernetes manually, or you can use a managed Kubernetes service such as 
+:ref:`GKE <setup-gke-cluster>` or :ref:`EKS <setup-eks-cluster>`.
 
 **********************************
  Set up a Development Environment
@@ -48,7 +48,7 @@ Next apply the Determined Helm chart and exec into the pod containing Master.
  Set up a Determined Environment
 *********************************
 
-Before installing Determined, you will need to install the dependencies specified in the
+Before installing Determined, install the dependencies specified in the
 `contributing guide <https://github.com/determined-ai/determined/blob/master/CONTRIBUTING.md>`__.
 
 You can use ``apt`` and ``pip`` to install most of the dependencies, but you will need to download
@@ -84,7 +84,7 @@ dependencies:
    chmod 700 get_helm.sh
    ./get_helm.sh
 
-In addition to installing these packages, ``.bashrc`` needs to be updated with new paths.
+In addition to installing these packages, update ``.bashrc`` with the new paths.
 
 .. code:: bash
 
@@ -165,7 +165,7 @@ following fields:
             level: debug
          root: tools/build
 
-We are now ready to build and run the Determined Master! From the Determined repo, run ``devcluster
+You are now ready to build and run the Determined Master! From the Determined repo, run ``devcluster
 --no-guess-host`` to build and run the Master.
 
 ************
