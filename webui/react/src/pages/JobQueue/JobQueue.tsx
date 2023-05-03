@@ -122,8 +122,6 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
     }
   }, [canceler.signal, selectedRp.name, settings, jobState, topJob]);
 
-  useEffect(() => clusterStore.startPolling(), []);
-
   useEffect(() => {
     fetchAll();
     // eslint-disable-next-line react-hooks/exhaustive-deps
