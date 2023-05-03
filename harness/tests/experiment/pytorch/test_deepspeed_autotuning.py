@@ -9,12 +9,9 @@ import pytest
 
 from determined import searcher
 from determined.common.api import bindings
-from determined.pytorch.deepspeed.dsat import _defaults, _utils, __main__
-from determined.pytorch.deepspeed.dsat._dsat_search_method import (
-    BaseDSATSearchMethod,
-    RandomDSATSearchMethod,
-)
-from determined.pytorch.deepspeed.dsat._run_dsat import build_exp_conf_from_args
+from determined.pytorch.dsat import _defaults, _utils, __main__
+from determined.pytorch.dsat._dsat_search_method import BaseDSATSearchMethod
+from determined.pytorch.dsat._run_dsat import build_exp_conf_from_args
 from tests.custom_search_mocks import MockMasterSearchRunner
 
 ERROR_METRIC_NAME = "error"
@@ -51,8 +48,8 @@ def _run_searcher(search_method: BaseDSATSearchMethod, all_metrics):
             trials_per_random_config=_defaults.AUTOTUNING_ARG_DEFAULTS["trials-per-random-config"],
             start_profile_step=_defaults.AUTOTUNING_ARG_DEFAULTS["start-profile-step"],
             end_profile_step=_defaults.AUTOTUNING_ARG_DEFAULTS["end-profile-step"],
-            deepspeed_config=_defaults.AUTOTUNING_ARG_DEFAULTS["deepspeed-config"],
             metric=_defaults.AUTOTUNING_ARG_DEFAULTS["metric"],
+            random_seed=_defaults.AUTOTUNING_ARG_DEFAULTS["random-seed"],
             # NONE TYPES
             max_slots=None,
             early_stopping=None,

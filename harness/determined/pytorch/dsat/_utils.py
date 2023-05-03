@@ -1,16 +1,17 @@
 import argparse
+import collections
 import json
 import logging
 import pathlib
 import random
 from contextlib import contextmanager
-from typing import Any, Dict, Generator, List, Optional, Union
+from typing import Any, Dict, Generator, List, Optional, Union, cast
 
 import torch
 from ruamel import yaml
 
 import determined as det
-from determined.pytorch.deepspeed.dsat import _defaults
+from determined.pytorch.dsat import _defaults
 from determined.util import merge_dicts
 
 
@@ -226,3 +227,73 @@ def get_batch_config_from_mbs_gas_and_slots(
         "train_micro_batch_size_per_gpu": mbs,
         "gradient_accumulation_steps": gas,
     }
+
+
+def dict_raise_error_on_duplicate_keys(ordered_pairs):
+    """Reject duplicate keys."""
+    d = dict((k, v) for k, v in ordered_pairs)
+    if len(d) != len(ordered_pairs):
+        counter = collections.Counter([pair[0] for pair in ordered_pairs])
+        keys = [key for key, value in counter.items() if value > 1]
+        raise ValueError("Duplicate keys in DeepSpeed config: {}".format(keys))
+    return d
+
+
+def normalize_base_ds_config(
+    base_ds_config: Union[str, Dict], model_dir: pathlib.Path = pathlib.Path(".")
+) -> Dict[str, Any]:
+    if isinstance(base_ds_config, str):
+        full_path = model_dir.joinpath(pathlib.Path(base_ds_config))
+        with open(full_path, "r") as f:
+            base_ds_config = json.load(
+                f,
+                object_pairs_hook=dict_raise_error_on_duplicate_keys,
+            )
+    else:
+        if not isinstance(base_ds_config, dict):
+            raise TypeError("Expected string or dict for base_ds_config argument.")
+    return base_ds_config
+
+
+def get_ds_config_from_hparams(
+    hparams: Dict[str, Any],
+    model_dir: Union[pathlib.Path, str] = pathlib.Path("."),
+    config_key: str = "deepspeed_config",
+    overwrite_key: str = "overwrite_deepspeed_args",
+) -> Dict[str, Any]:
+    """Fetch and recursively merge the deepspeed config from the experiment config
+    Follows the rules as described here:
+    https://docs.determined.ai/latest/training/apis-howto/deepspeed/deepspeed.html#configuration
+    Arguments:
+        hparams (Dict): Hyperparameters dictionary
+        model_dir (pathlib.Path): Base path for the Experiment Model
+    Returns:
+        The Deepspeed Configuration for this experiment following the overwriting rules
+    """
+    model_dir = pathlib.Path(model_dir)
+    assert config_key in hparams, f"Expected to find {config_key} in the Hyperparameters section."
+    base_config_file_name = hparams[config_key]
+    base_ds_config = normalize_base_ds_config(base_config_file_name, model_dir=model_dir)
+    overwrite_ds_config = hparams.get(overwrite_key, {})
+    ds_config = merge_dicts(cast(Dict[str, Any], base_ds_config), overwrite_ds_config)
+    return ds_config
+
+
+def overwrite_deepspeed_config(
+    base_ds_config: Union[str, Dict],
+    source_ds_dict: Dict[str, Any],
+    model_dir: pathlib.Path = pathlib.Path("."),
+) -> Dict[str, Any]:
+    """Overwrite a base_ds_config with values from a source_ds_dict.
+    You can use source_ds_dict to overwrite leaf nodes of the base_ds_config.
+    More precisely, we will iterate depth first into source_ds_dict and if a node corresponds to
+    a leaf node of base_ds_config, we copy the node value over to base_ds_config.
+    Arguments:
+        base_ds_config (str or Dict): either a path to a DeepSpeed config file or a dictionary.
+        source_ds_dict (Dict): dictionary with fields that we want to copy to base_ds_config
+        model_dir (pathlib.Path): Base path for the Experiment Model
+    Returns:
+        The resulting dictionary when base_ds_config is overwritten with source_ds_dict.
+    """
+    normalized_base_ds_config = normalize_base_ds_config(base_ds_config, model_dir=model_dir)
+    return merge_dicts(cast(Dict[str, Any], normalized_base_ds_config), source_ds_dict)

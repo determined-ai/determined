@@ -6,7 +6,7 @@ import determined as det
 import torch
 import torch.nn as nn
 from attrdict import AttrDict
-from determined.pytorch.deepspeed import dsat, get_ds_config_from_hparams
+from determined.pytorch import dsat
 from torch.utils.data import Dataset
 from torchvision import models
 
@@ -18,7 +18,7 @@ class RandImageNetDataset(Dataset):
         self.labels = torch.randint(1000, size=(self.num_actual_datapoints,))
 
     def __len__(self) -> int:
-        return 10 ** 6
+        return 10**6
 
     def __getitem__(self, idx: int) -> torch.Tensor:
         img = self.imgs[idx % self.num_actual_datapoints]
@@ -36,7 +36,7 @@ def main(
     logging.info(f"HPs seen by trial: {hparams}")
     # Hack for clashing 'type' key. Need to change config parsing behavior so that
     # user scripts don't need to inject helper functions like this.
-    ds_config = get_ds_config_from_hparams(hparams)
+    ds_config = dsat.get_ds_config_from_hparams(hparams)
     logging.info(f"ds_config: {ds_config}")
 
     deepspeed.init_distributed()

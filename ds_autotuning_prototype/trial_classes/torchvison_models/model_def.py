@@ -6,11 +6,10 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from attrdict import AttrDict
-from determined.pytorch import DataLoader
+from determined.pytorch import DataLoader, dsat
 from determined.pytorch.deepspeed import (
     DeepSpeedTrial,
     DeepSpeedTrialContext,
-    get_ds_config_from_hparams,
 )
 from torch.utils.data import Dataset
 from torchvision import models
@@ -23,7 +22,7 @@ class RandImageNetDataset(Dataset):
         self.labels = torch.randint(1000, size=(self.num_actual_datapoints,))
 
     def __len__(self) -> int:
-        return 10 ** 6
+        return 10**6
 
     def __getitem__(self, idx: int) -> torch.Tensor:
         img = self.imgs[idx % self.num_actual_datapoints]
@@ -59,7 +58,7 @@ class TorchvisionTrial(DeepSpeedTrial):
         parameters = filter(lambda p: p.requires_grad, model.parameters())
         logging.info(f"Seeing args:{self.args}")
 
-        ds_config = get_ds_config_from_hparams(self.args)
+        ds_config = dsat.get_ds_config_from_hparams(self.args)
         logging.info(f"Using ds_config: {ds_config}")
         model_engine, optimizer, __, __ = deepspeed.initialize(
             model=model, model_parameters=parameters, config=ds_config

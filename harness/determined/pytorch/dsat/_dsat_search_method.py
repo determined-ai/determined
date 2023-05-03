@@ -12,8 +12,7 @@ from typing import Any, Dict, Iterable, Iterator, List, Optional, Set, Tuple, Un
 import numpy as np
 
 from determined import searcher
-from determined.pytorch.deepspeed import get_ds_config_from_hparams
-from determined.pytorch.deepspeed.dsat import _defaults, _utils
+from determined.pytorch.dsat import _defaults, _utils
 from determined.util import merge_dicts
 
 """
@@ -69,7 +68,7 @@ class DSATTrial:
 
         self.lineage_root = self if self.parent is None else self.parent.lineage_root
 
-        self.ds_config = get_ds_config_from_hparams(self.hparams, self.model_dir)
+        self.ds_config = _utils.get_ds_config_from_hparams(self.hparams, self.model_dir)
 
         self._error_in_direct_history = False
 
@@ -262,7 +261,7 @@ class DSATTrialTracker:
         # TODO: Talk to Liam about this, because this function adjusts `train_batch_size`, whereas
         # he probably wants this to be the only constant, in order to hold training dynamics fixed.
         # We are optimizing different things.
-        ds_config = get_ds_config_from_hparams(hparams, self.model_dir)
+        ds_config = _utils.get_ds_config_from_hparams(hparams, self.model_dir)
         batch_size_config = _utils.get_batch_config_from_mbs_gas_and_slots(
             ds_config, slots=self.slots_per_trial
         )

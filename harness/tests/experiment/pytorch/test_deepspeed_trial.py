@@ -7,11 +7,13 @@ from typing import Any, Dict, Iterator, Optional
 
 import pytest
 import torch
-from deepspeed.runtime import config_utils
 
 import determined
 import determined.pytorch.deepspeed as det_deepspeed
+from determined.pytorch.dsat import _utils
+
 from determined import workload
+
 from tests.experiment import utils  # noqa: I100
 from tests.experiment.fixtures import deepspeed_linear_model
 
@@ -20,7 +22,7 @@ ds_config_path = str(
 )
 deepspeed_config = json.load(
     open(ds_config_path, "r"),
-    object_pairs_hook=config_utils.dict_raise_error_on_duplicate_keys,
+    object_pairs_hook=_utils.dict_raise_error_on_duplicate_keys,
 )
 
 
@@ -649,16 +651,16 @@ def test_overwrite_deepspeed_config() -> None:
     expected_config = copy.deepcopy(deepspeed_config)
     expected_config["train_micro_batch_size_per_gpu"] = 2
     expected_config["optimizer"]["params"]["lr"] = 0.001
-    result = det_deepspeed.overwrite_deepspeed_config(base_ds_config, source_ds_config)
+    result = _utils.overwrite_deepspeed_config(base_ds_config, source_ds_config)
     assert result == expected_config
 
     # Test load base deepspeed config from json file.
     base_ds_config = str(
         pathlib.Path(__file__).resolve().parent.parent.joinpath("fixtures/ds_config.json")
     )
-    result = det_deepspeed.overwrite_deepspeed_config(base_ds_config, source_ds_config)
+    result = _utils.overwrite_deepspeed_config(base_ds_config, source_ds_config)
     assert result == expected_config
 
     # Test fail invalid base_ds_config argument.
     with pytest.raises(TypeError, match="Expected string or dict for base_ds_config argument."):
-        _ = det_deepspeed.overwrite_deepspeed_config([1, 2], source_ds_config)
+        _ = _utils.overwrite_deepspeed_config([1, 2], source_ds_config)
