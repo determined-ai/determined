@@ -2,6 +2,12 @@
  Estimator API
 ###############
 
+.. warning::
+
+   ``EstimatorTrial`` is deprecated and will be removed in a future version. TensorFlow has advised
+   Estimator users to switch to Keras since TensorFlow 2.0 was released. Consequently, we recommend
+   users of EstimatorTrial to switch to the :class:`~determined.keras.TFKerasTrial` class.
+
 .. meta::
    :description: Learn how to use the Estimator API to train an Estimator model in Determined. Steps include defining an optimizer and datasets, defining custom reducers, checkpointing, and callbacks.
 
@@ -17,10 +23,6 @@ This document guides you through training a Estimator model in Determined. You n
 trial class that inherits :class:`~determined.estimator.EstimatorTrial` and specify it as the
 entrypoint in the :doc:`experiment configuration
 </reference/reference-training/experiment-config-reference>`.
-
-To learn about this API, you can start by reading the trial definitions from the following examples:
-
--  :download:`MNIST example </examples/mnist_estimator.tgz>`
 
 *******************************
  Define Optimizer and Datasets
