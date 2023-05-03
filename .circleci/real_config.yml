@@ -2155,10 +2155,10 @@ jobs:
             sudo scontrol update nodename=znode5[0-1,3-4] state=resume || true
             sudo su - launcher -c "pdsh -R ssh -w znode50,znode51,znode53,znode54 mkdir -p /tmp/launcher_podman" || true
             # Cleanup podman state from any issues in prior runs
-            sudo su - launcher -c "pdsh -R ssh -w znode50,znode51,znode53,znode54 XDG_RUNTIME_DIR=/tmp/launcher_podman podman system migrate" || true
+            #sudo su - launcher -c "pdsh -R ssh -w znode50,znode51,znode53,znode54 XDG_RUNTIME_DIR=/tmp/launcher_podman podman system migrate" || true
             sinfo -R
-            sudo su - launcher -c "/etc/launcher/scripts/manage-singularity-cache --cuda --cpu" || true
-            sudo su - launcher -c "ENROOT_RUNTIME_PATH=/tmp/launcher /etc/launcher/scripts/manage-enroot-cache -s /lustre/ssd/foundation_engineering/ --cuda --cpu" || true
+            sudo su - launcher -c "/etc/launcher/scripts/manage-singularity-cache --cuda --cpu <<pipeline.parameters.default-pt-gpu-image>>" || true
+            sudo su - launcher -c "ENROOT_RUNTIME_PATH=/tmp/launcher /etc/launcher/scripts/manage-enroot-cache -s /lustre/ssd/foundation_engineering/ --cuda --cpu <<pipeline.parameters.default-pt-gpu-image>>" || true
 
       - wait-for-master:
           host: localhost
