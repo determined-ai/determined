@@ -10,6 +10,7 @@ import Button from 'components/kit/Button';
 import Card from 'components/kit/Card';
 import Checkbox from 'components/kit/Checkbox';
 import { Column, Columns } from 'components/kit/Columns';
+import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 import Empty from 'components/kit/Empty';
 import Facepile from 'components/kit/Facepile';
 import Form from 'components/kit/Form';
@@ -63,6 +64,7 @@ const ComponentTitles = {
   Charts: 'Charts',
   Checkboxes: 'Checkboxes',
   Columns: 'Columns',
+  Dropdown: 'Dropdown',
   Empty: 'Empty',
   Facepile: 'Facepile',
   Form: 'Form',
@@ -743,6 +745,59 @@ const CheckboxesSection: React.FC = () => {
         <p>Mandatory checkbox - not implemented.</p>
         <p>Mandatory checkbox with info sign - not implemented.</p>
         <Checkbox indeterminate>Indeterminate checkbox</Checkbox>
+      </AntDCard>
+    </ComponentSection>
+  );
+};
+
+const DropdownSection: React.FC = () => {
+  const menu: MenuItem[] = [
+    { key: 'start', label: 'Start' },
+    { key: 'stop', label: 'Stop' },
+  ];
+  const menuWithDivider: MenuItem[] = [
+    ...menu,
+    { type: 'divider' },
+    { key: 'archive', label: 'Archive' },
+  ];
+  const menuWithDanger: MenuItem[] = [...menu, { danger: true, key: 'delete', label: 'Delete' }];
+  const menuWithDisabled: MenuItem[] = [
+    ...menu,
+    { disabled: true, key: 'delete', label: 'Delete' },
+  ];
+
+  return (
+    <ComponentSection id="Dropdown" title="Dropdown">
+      <AntDCard>
+        <p>
+          Dropdown (<code>{'<Dropdown>'}</code>) give people a way to select one item from a group
+          of choices. The item is typically an action to apply to a relevant entity. For example, an
+          experiment dropdown would show actions you can perform on the relevant experiment, such as
+          `Activate`, `Stop`, `Archive`, etc.
+        </p>
+      </AntDCard>
+      <AntDCard title="Usage">
+        <strong>Basic Dropdowns</strong>
+        <Space>
+          <Dropdown menu={menu}>
+            <Button>Basic Dropdown</Button>
+          </Dropdown>
+          <Dropdown menu={menuWithDivider}>
+            <Button>Dropdown with a Divider</Button>
+          </Dropdown>
+          <Dropdown disabled menu={menu}>
+            <Button>Disabled Dropdown</Button>
+          </Dropdown>
+        </Space>
+        <strong>Various Dropdown Options</strong>
+        <Space>
+          <Dropdown menu={menuWithDanger}>
+            <Button>Dangerous Options</Button>
+          </Dropdown>
+          <Dropdown menu={menuWithDisabled}>
+            <Button>Disabled Options</Button>
+          </Dropdown>
+        </Space>
       </AntDCard>
     </ComponentSection>
   );
@@ -2321,6 +2376,7 @@ const Components = {
   Charts: <ChartsSection />,
   Checkboxes: <CheckboxesSection />,
   Columns: <ColumnsSection />,
+  Dropdown: <DropdownSection />,
   Empty: <EmptySection />,
   Facepile: <FacepileSection />,
   Form: <FormSection />,
