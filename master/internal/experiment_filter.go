@@ -21,11 +21,9 @@ const (
 	greaterThan        operator          = ">"
 	greaterThanOrEqual operator          = ">="
 	contains           operator          = "contains"
-	doesNotContain     operator          = "does not contain"
-	empty              operator          = "is empty"
-	notEmpty           operator          = "not empty"
-	is                 operator          = "is"
-	isNot              operator          = "is not"
+	doesNotContain     operator          = "notContains"
+	empty              operator          = "isEmpty"
+	notEmpty           operator          = "notEmpty"
 )
 
 type (
@@ -56,7 +54,7 @@ func (o *operator) toSQL() (string, error) {
 	case equal:
 		s = "="
 	case notEqual:
-		s = "!=" //nolint: goconst
+		s = "!="
 	case lessThan:
 		s = "<"
 	case lessThanOrEqual:
@@ -69,10 +67,6 @@ func (o *operator) toSQL() (string, error) {
 		s = "IS NULL"
 	case notEmpty:
 		s = "IS NOT NULL"
-	case is:
-		s = "="
-	case isNot:
-		s = "!="
 	case contains:
 		return s, nil
 	case doesNotContain:
