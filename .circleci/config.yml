@@ -131,6 +131,23 @@ commands:
               echo "detected non-docs-only changes: $DIFF_DIRS"
             fi
 
+  skip-if-not-docs:
+    steps:
+      - run: git remote add upstream https://github.com/determined-ai/determined
+      - run: git fetch upstream
+      - run:
+          name: check for any docs changes
+          command: |
+            MERGE_BASE="$(git merge-base upstream/main HEAD)"
+            DIFF_DIRS="$(git diff-tree --no-commit-id --name-only "$MERGE_BASE" HEAD)"
+            # check "shared" is in the list of changed directories
+            if [[ "$DIFF_DIRS" == *"docs"* ]]; then
+              echo "docs change detected, running downstream steps"
+            else
+              echo "detected non-docs changes, halting job now"
+              circleci-agent step halt
+            fi
+
   skip-if-webui-only:
     steps:
       - run: git fetch upstream
@@ -1109,6 +1126,33 @@ jobs:
       - run: apk add make curl python3 py3-pip
       - run: pip3 install awscli
       - run: make -C docs publish
+
+  # TODO(danh): eventually replace 'publish-docs' with this new workflow after
+  # all dependent scripts are updated.
+  # Related work: https://hpe-aiatscale.atlassian.net/browse/INFENG-183
+  publish-docs-new:
+    parameters:
+      preview:
+        type: boolean
+        default: true
+    docker:
+      - image: <<pipeline.parameters.docker-image>>
+    steps:
+      - checkout
+      - skip-if-not-docs
+      - attach_workspace:
+          at: .
+      - setup-python-venv:
+          install-python: false
+          determined: true
+          extras-requires: "tensorflow==2.12.0 torch==1.9.0 torchvision==0.10.0"
+          model-hub: true
+          extra-requirements-file: "docs/requirements.txt"
+          executor: <<pipeline.parameters.docker-image>>
+      - when:
+          condition: <<parameters.preview>>
+          steps:
+            - run: make -C docs preview
 
   package-and-push-system-local:
     docker:
@@ -2278,6 +2322,19 @@ workflows:
       - lint-go
       - lint-react
       - lint-secrets
+
+  previews:
+    jobs:
+      - build-proto
+      - build-helm
+      - build-docs:
+          requires:
+            - build-helm
+            - build-proto
+      - publish-docs-new:
+          requires:
+            - build-docs
+          context: aws
 
   test-cli:
     jobs:
