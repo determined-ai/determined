@@ -9,7 +9,7 @@ import pytest
 
 from determined import searcher
 from determined.common.api import bindings
-from determined.pytorch.dsat import _defaults, _utils, __main__
+from determined.pytorch.dsat import __main__, _defaults, _utils
 from determined.pytorch.dsat._dsat_search_method import BaseDSATSearchMethod
 from determined.pytorch.dsat._run_dsat import build_exp_conf_from_args
 from tests.custom_search_mocks import MockMasterSearchRunner

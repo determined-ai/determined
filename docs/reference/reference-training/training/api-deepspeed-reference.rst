@@ -30,10 +30,10 @@
    :show-inheritance:
 
 *************************************************************
- ``determined.pytorch.deepspeed.overwrite_deepspeed_config``
+ ``determined.pytorch.dsat.overwrite_deepspeed_config``
 *************************************************************
 
-.. autofunction:: determined.pytorch.deepspeed.overwrite_deepspeed_config
+.. autofunction:: determined.pytorch.dsat.overwrite_deepspeed_config
 
 ****************************************************
  ``determined.pytorch.deepspeed.ModelParallelUnit``

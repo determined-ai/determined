@@ -25,7 +25,7 @@ class RandImageNetDataset(Dataset):
         self.labels = torch.randint(1000, size=(self.num_actual_datapoints,))
 
     def __len__(self) -> int:
-        return 2 ** 32
+        return 2**32
 
     def __getitem__(self, idx: int) -> torch.Tensor:
         img = self.imgs[idx % self.num_actual_datapoints]
