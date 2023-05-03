@@ -139,6 +139,15 @@ const ColumnPickerMenu: React.FC<ColumnMenuProps> = ({
   initialVisibleColumns,
 }) => {
   const [searchString, setSearchString] = useState('');
+  const [open, setOpen] = useState(false);
+
+  const closeMenu = () => {
+    setOpen(false);
+  };
+
+  const handleOpenChange = (newOpen: boolean) => {
+    setOpen(newOpen);
+  };
 
   const totalColumns = useMemo(
     () => removeBannedColumns(Loadable.getOrElse([], projectColumns)),
@@ -149,6 +158,7 @@ const ColumnPickerMenu: React.FC<ColumnMenuProps> = ({
 
   const handleShowSuggested = useCallback(() => {
     setVisibleColumns(defaultExperimentColumns);
+    closeMenu();
   }, [setVisibleColumns]);
 
   return (
@@ -179,8 +189,10 @@ const ColumnPickerMenu: React.FC<ColumnMenuProps> = ({
           />
         </div>
       }
+      open={open}
       placement="bottom"
-      trigger="click">
+      trigger="click"
+      onOpenChange={handleOpenChange}>
       <Button>Columns</Button>
     </Popover>
   );
