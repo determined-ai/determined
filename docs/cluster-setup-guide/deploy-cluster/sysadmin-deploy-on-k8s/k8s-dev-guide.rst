@@ -8,10 +8,10 @@
  Prerequisites
 ***************
 
-Before setting up Determined Master, set up a Kubernetes cluster with GPU enabled
-nodes and Kubernetes version >= 1.19 and <= 1.21. Later versions of Kubernetes may work. 
-You can set up Kubernetes manually, or you can use a managed Kubernetes service such as 
-:ref:`GKE <setup-gke-cluster>` or :ref:`EKS <setup-eks-cluster>`.
+Before setting up Determined Master, set up a Kubernetes cluster with GPU enabled nodes and
+Kubernetes version >= 1.19 and <= 1.21. Later versions of Kubernetes may work. You can set up
+Kubernetes manually, or you can use a managed Kubernetes service such as :ref:`GKE
+<setup-gke-cluster>` or :ref:`EKS <setup-eks-cluster>`.
 
 **********************************
  Set up a Development Environment
@@ -48,8 +48,8 @@ Next apply the Determined Helm chart and exec into the pod containing Master.
  Set up a Determined Environment
 *********************************
 
-Before installing Determined, install the dependencies specified in the
-`contributing guide <https://github.com/determined-ai/determined/blob/master/CONTRIBUTING.md>`__.
+Before installing Determined, install the dependencies specified in the `contributing guide
+<https://github.com/determined-ai/determined/blob/master/CONTRIBUTING.md>`__.
 
 You can use ``apt`` and ``pip`` to install most of the dependencies, but you will need to download
 and manually install `golang <https://golang.org/dl/>`__, `node <https://deb.nodesource.com/>`__,
@@ -111,8 +111,8 @@ python3-venv:
  Prepare to run Determined Master
 **********************************
 
-Once the dependencies are installed, prepare the repository to run ``devcluster``, a
-tool for running Determined. First, enter the Determined repository and run:
+Once the dependencies are installed, prepare the repository to run ``devcluster``, a tool for
+running Determined. First, enter the Determined repository and run:
 
 .. code:: bash
 
