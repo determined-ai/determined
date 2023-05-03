@@ -1,6 +1,6 @@
 import { Menu, Space } from 'antd';
 import { ItemType } from 'rc-menu/lib/interface';
-import React, { Dispatch, SetStateAction, useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 
 import BatchActionConfirmModalComponent from 'components/BatchActionConfirmModal';
 import Dropdown from 'components/Dropdown';
@@ -79,7 +79,6 @@ interface Props {
   selectAll: boolean;
   selectedExperimentIds: number[];
   handleUpdateExperimentList: (action: BatchAction, successfulIds: number[]) => void;
-  setExperiments: Dispatch<SetStateAction<Loadable<ExperimentWithTrial>[]>>;
   setVisibleColumns: (newColumns: string[]) => void;
   total: Loadable<number>;
 }

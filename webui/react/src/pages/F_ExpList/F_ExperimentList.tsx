@@ -10,7 +10,14 @@ import { getProjectColumns, searchExperiments } from 'services/api';
 import { V1BulkExperimentFilters } from 'services/api-ts-sdk';
 import usePolling from 'shared/hooks/usePolling';
 import userStore from 'stores/users';
-import { ExperimentAction, ExperimentWithTrial, Project, RunState, ProjectColumn } from 'types';
+import {
+  ExperimentAction,
+  ExperimentItem,
+  ExperimentWithTrial,
+  Project,
+  ProjectColumn,
+  RunState,
+} from 'types';
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 
@@ -147,7 +154,9 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         setExperiments((prev) =>
           prev.map((expLoadable) =>
             Loadable.map(expLoadable, (experiment) =>
-              idSet.has(experiment.id) ? { ...experiment, ...updated } : experiment,
+              idSet.has(experiment.experiment.id)
+                ? { ...experiment, experiment: { ...experiment.experiment, ...updated } }
+                : experiment,
             ),
           ),
         );
@@ -178,7 +187,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
           setExperiments((prev) =>
             prev.filter((expLoadable) =>
               Loadable.match(expLoadable, {
-                Loaded: (experiment) => !idSet.has(experiment.id),
+                Loaded: (experiment) => !idSet.has(experiment.experiment.id),
                 NotLoaded: () => true,
               }),
             ),

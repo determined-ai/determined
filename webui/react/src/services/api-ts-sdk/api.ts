@@ -8195,7 +8195,7 @@ export interface V1SearchExperimentExperiment {
      * @type {V1Experiment}
      * @memberof V1SearchExperimentExperiment
      */
-    experiment?: V1Experiment;
+    experiment: V1Experiment;
     /**
      * The best performing trial associated with the experiment
      * @type {Trialv1Trial}
