@@ -1592,11 +1592,11 @@ export const getProjectsByUserActivity: DetApi<
 export const getProjectColumns: DetApi<
   Service.GetProjectColumnsParams,
   Api.V1GetProjectColumnsResponse,
-  Api.V1ProjectColumn[]
+  Type.ProjectColumn[]
 > = {
   name: 'getProjectColumns',
   postProcess: (response) => decoder.decodeProjectColumnsResponse(response).columns,
-  request: (params) => detApi.Internal.getProjectColumns(params.projectId),
+  request: (params) => detApi.Internal.getProjectColumns(params.id),
 };
 
 /* Tasks */

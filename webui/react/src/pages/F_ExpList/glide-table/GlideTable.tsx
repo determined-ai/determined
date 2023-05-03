@@ -24,11 +24,11 @@ import React, {
 } from 'react';
 
 import { handlePath } from 'routes/utils';
-import { V1ProjectColumn } from 'services/api-ts-sdk';
+import { V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
 import useUI from 'shared/contexts/stores/UI';
 import { AnyMouseEvent } from 'shared/utils/routes';
 import usersStore from 'stores/users';
-import { ExperimentItem, Project } from 'types';
+import { ExperimentWithTrial, Project, ProjectColumn } from 'types';
 import { getProjectExperimentForExperimentItem } from 'utils/experiment';
 import { Loadable } from 'utils/loadable';
 import { observable, useObservable, WritableObservable } from 'utils/observable';
@@ -39,6 +39,9 @@ import { MapOfIdsToColors } from '../useGlasbey';
 import {
   ColumnDef,
   defaultColumnWidths,
+  defaultDateColumn,
+  defaultNumberColumn,
+  defaultTextColumn,
   ExperimentColumn,
   getColumnDefs,
   getHeaderIcons,
@@ -60,15 +63,16 @@ import { getTheme } from './utils';
 export interface GlideTableProps {
   clearSelectionTrigger?: number;
   colorMap: MapOfIdsToColors;
-  data: Loadable<ExperimentItem>[];
+  data: Loadable<ExperimentWithTrial>[];
   fetchExperiments: () => Promise<void>;
   handleScroll?: (r: Rectangle) => void;
   height: number;
   scrollPositionSetCount: WritableObservable<number>;
-  sortableColumnIds: ExperimentColumn[];
-  setSortableColumnIds: Dispatch<SetStateAction<ExperimentColumn[]>>;
+  sortableColumnIds: string[];
+  setSortableColumnIds: (newColumns: string[]) => void;
   page: number;
   project?: Project;
+  projectColumns: Loadable<ProjectColumn[]>;
   selectedExperimentIds: number[];
   setSelectedExperimentIds: Dispatch<SetStateAction<number[]>>;
   selectAll: boolean;
@@ -113,8 +117,8 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   project,
   handleUpdateExperimentList,
   onSortChange,
-  projectColumns,
   sorts,
+  projectColumns,
 }) => {
   const gridRef = useRef<DataEditorRef>(null);
 
@@ -152,10 +156,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
 
   const users = useObservable(usersStore.getUsers());
 
-  const columnIds = useMemo<ExperimentColumn[]>(
-    () => [...STATIC_COLUMNS, ...sortableColumnIds],
-    [sortableColumnIds],
-  );
+  const columnIds = useMemo(() => [...STATIC_COLUMNS, ...sortableColumnIds], [sortableColumnIds]);
 
   const [selection, setSelection] = React.useState<GridSelection>({
     columns: CompactSelection.empty(),
@@ -174,16 +175,15 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         .map((idx) => data?.[idx])
         .filter((row) => row !== undefined)
         .filter(Loadable.isLoaded)
-        .map((record) => record.data.id);
+        .map((record) => record.data.experiment.id);
       if (prevIds === selectedIds) return prevIds;
       return selectedIds;
     });
   }, [selection.rows, setSelectedExperimentIds, data]);
 
-  const [columnWidths, setColumnWidths] =
-    useState<Record<ExperimentColumn, number>>(defaultColumnWidths);
+  const [columnWidths, setColumnWidths] = useState<Record<string, number>>(defaultColumnWidths);
 
-  const columnDefs = useMemo<Record<ExperimentColumn, ColumnDef>>(
+  const columnDefs = useMemo<Record<string, ColumnDef>>(
     () =>
       getColumnDefs({
         appTheme,
@@ -197,6 +197,12 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   );
 
   const headerIcons = useMemo(() => getHeaderIcons(appTheme), [appTheme]);
+
+  const projectColumnsMap: Loadable<Record<string, ProjectColumn>> = useMemo(() => {
+    return Loadable.map(projectColumns, (columns) => {
+      return columns.reduce((acc, col) => ({ ...acc, [col.column]: col }), {});
+    });
+  }, [projectColumns]);
 
   const { tooltip, onItemHovered, closeTooltip } = useTableTooltip({
     columnDefs,
@@ -212,7 +218,8 @@ export const GlideTable: React.FC<GlideTableProps> = ({
       // avoid showing 'empty rows' below data
       if (!data[row]) return;
       const rowColorTheme = Loadable.match(data[row], {
-        Loaded: (record) => (colorMap[record.id] ? { accentColor: colorMap[record.id] } : {}),
+        Loaded: (record) =>
+          colorMap[record.experiment.id] ? { accentColor: colorMap[record.experiment.id] } : {},
         NotLoaded: () => ({}),
       });
       return { ...baseRowTheme, ...rowColorTheme };
@@ -225,8 +232,10 @@ export const GlideTable: React.FC<GlideTableProps> = ({
       const columnId = column.id;
       if (columnId === undefined || columnId === 'selected') return;
       setColumnWidths((prevWidths) => {
-        const prevWidth = prevWidths[columnId as ExperimentColumn];
-        if (width === prevWidth) return prevWidths;
+        if (columnId in prevWidths) {
+          const prevWidth = prevWidths[columnId];
+          if (width === prevWidth) return prevWidths;
+        }
         return { ...prevWidths, [columnId]: width };
       });
     },
@@ -328,7 +337,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
 
             // Update the context menu based on the cell context.
             setContextMenuProps({
-              experiment: getProjectExperimentForExperimentItem(rowData, project),
+              experiment: getProjectExperimentForExperimentItem(rowData.experiment, project),
               handleClose: (e?: Event) => {
                 // Prevent the context menu closing click from triggering something else.
                 if (contextMenuOpen.get()) e?.stopPropagation();
@@ -353,20 +362,69 @@ export const GlideTable: React.FC<GlideTableProps> = ({
       const sortableColumnIdsStartIdx = columnIdsStartIdx - STATIC_COLUMNS.length;
       const sortableColumnIdsEndIdx = Math.max(columnIdsEndIdx - STATIC_COLUMNS.length, 0);
       if (sortableColumnIdsStartIdx > -1) {
-        setSortableColumnIds((prevCols) => {
-          const newCols = [...prevCols];
-          const [toMove] = newCols.splice(sortableColumnIdsStartIdx, 1);
-          newCols.splice(sortableColumnIdsEndIdx, 0, toMove);
-          return newCols;
-        });
+        const newCols = [...sortableColumnIds];
+        const [toMove] = newCols.splice(sortableColumnIdsStartIdx, 1);
+        newCols.splice(sortableColumnIdsEndIdx, 0, toMove);
+        setSortableColumnIds(newCols);
       }
     },
-    [setSortableColumnIds],
+    [sortableColumnIds, setSortableColumnIds],
   );
 
   const columns: DataEditorProps['columns'] = useMemo(
-    () => columnIds.map((columnName) => columnDefs[columnName as ExperimentColumn]) as GridColumn[],
-    [columnIds, columnDefs],
+    () =>
+      columnIds.map((columnName) => {
+        if (columnName in columnDefs) return columnDefs[columnName];
+        if (!Loadable.isLoaded(projectColumnsMap)) return;
+        const currentColumn = projectColumnsMap.data[columnName];
+        let dataPath: string | undefined = undefined;
+        switch (currentColumn.location) {
+          case V1LocationType.EXPERIMENT:
+            dataPath = `experiment.${currentColumn.column}`;
+            break;
+          case V1LocationType.HYPERPARAMETERS:
+            dataPath = `experiment.config.hyperparameters.${currentColumn.column.replace(
+              'hp.',
+              '',
+            )}.val`;
+            break;
+          case V1LocationType.VALIDATIONS:
+            dataPath = `bestTrial.bestValidationMetric.metrics.${currentColumn.column.replace(
+              'validation.',
+              '',
+            )}`;
+            break;
+          case V1LocationType.UNSPECIFIED:
+          default:
+            break;
+        }
+        switch (currentColumn.type) {
+          case V1ColumnType.NUMBER:
+            columnDefs[currentColumn.column] = defaultNumberColumn(
+              currentColumn,
+              columnWidths,
+              dataPath,
+            );
+            break;
+          case V1ColumnType.DATE:
+            columnDefs[currentColumn.column] = defaultDateColumn(
+              currentColumn,
+              columnWidths,
+              dataPath,
+            );
+            break;
+          case V1ColumnType.TEXT:
+          case V1ColumnType.UNSPECIFIED:
+          default:
+            columnDefs[currentColumn.column] = defaultTextColumn(
+              currentColumn,
+              columnWidths,
+              dataPath,
+            );
+        }
+        return columnDefs[currentColumn.column];
+      }) as GridColumn[],
+    [columnIds, columnDefs, projectColumnsMap, columnWidths],
   );
 
   const verticalBorder: DataEditorProps['verticalBorder'] = useCallback(

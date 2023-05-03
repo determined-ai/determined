@@ -5,7 +5,7 @@ import getpass
 import hashlib
 import json
 import pathlib
-from typing import Any, Callable, Dict, Iterator, NamedTuple, Optional, Tuple, cast
+from typing import Any, Callable, Dict, Iterator, List, NamedTuple, Optional, Tuple, cast
 
 import filelock
 
@@ -218,6 +218,16 @@ def logout(
         pass
 
 
+def logout_all(master_address: Optional[str], cert: Optional[certs.Cert]) -> None:
+    master_address = master_address or util.get_default_master_address()
+    token_store = TokenStore(master_address)
+
+    users = token_store.get_all_users()
+
+    for user in users:
+        logout(master_address, user, cert)
+
+
 def _is_token_valid(master_address: str, token: str, cert: Optional[certs.Cert]) -> bool:
     """
     Find out whether the given token is valid by attempting to use it
@@ -261,6 +271,9 @@ class TokenStore:
 
     def get_active_user(self) -> Optional[str]:
         return self._active_user
+
+    def get_all_users(self) -> List[str]:
+        return list(self._tokens)
 
     def get_token(self, user: str) -> Optional[str]:
         token = self._tokens.get(user)

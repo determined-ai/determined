@@ -484,6 +484,10 @@ export interface ArchiveProjectParams {
 
 export type UnarchiveProjectParams = ArchiveProjectParams;
 
+export interface GetProjectColumnsParams {
+  id: number;
+}
+
 export interface ArchiveWorkspaceParams {
   id: number;
 }
@@ -508,8 +512,4 @@ export interface SearchRolesAssignableToScopeParams {
 
 export interface GetProjectsByUserActivityParams {
   limit?: number;
-}
-
-export interface GetProjectColumnsParams {
-  projectId: number;
 }

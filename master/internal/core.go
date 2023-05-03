@@ -79,9 +79,10 @@ const (
 
 // staticWebDirectoryPaths are the locations of static files that comprise the webui.
 var staticWebDirectoryPaths = map[string]bool{
-	"/docs":          true,
-	webuiBaseRoute:   true,
-	"/docs/rest-api": true,
+	"/docs":                    true,
+	webuiBaseRoute + "/design": true,
+	webuiBaseRoute:             true,
+	"/docs/rest-api":           true,
 }
 
 // Master manages the Determined master state.
@@ -1058,12 +1059,15 @@ func (m *Master) Run(ctx context.Context) error {
 		return errors.Wrap(err, "failed to get absolute path to react root")
 	}
 	reactIndex := filepath.Join(reactRoot, "index.html")
+	designIndex := filepath.Join(reactRoot, "design", "index.html")
 
 	// Docs.
 	m.echo.Static("/docs/rest-api", filepath.Join(webuiRoot, "docs", "rest-api"))
 	m.echo.Static("/docs", filepath.Join(webuiRoot, "docs"))
 
 	webuiGroup := m.echo.Group(webuiBaseRoute)
+	webuiGroup.File("/design", designIndex)
+	webuiGroup.File("/design/", designIndex)
 	webuiGroup.File("", reactIndex)
 	webuiGroup.File("/", reactIndex)
 	webuiGroup.GET("/*", func(c echo.Context) error {

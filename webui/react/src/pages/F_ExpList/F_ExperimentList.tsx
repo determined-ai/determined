@@ -5,15 +5,23 @@ import { useSearchParams } from 'react-router-dom';
 
 import Page from 'components/Page';
 import useResize from 'hooks/useResize';
+import { useSettings } from 'hooks/useSettings';
 import { getProjectColumns, searchExperiments } from 'services/api';
-import { V1BulkExperimentFilters, V1ProjectColumn } from 'services/api-ts-sdk';
+import { V1BulkExperimentFilters } from 'services/api-ts-sdk';
 import usePolling from 'shared/hooks/usePolling';
 import userStore from 'stores/users';
-import { ExperimentAction, ExperimentItem, Project, RunState } from 'types';
+import {
+  ExperimentAction,
+  ExperimentItem,
+  ExperimentWithTrial,
+  Project,
+  ProjectColumn,
+  RunState,
+} from 'types';
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 
-import { defaultExperimentColumns } from './glide-table/columns';
+import { F_ExperimentListSettings, settingsConfigForProject } from './F_ExperimentList.settings';
 import { Error, Loading, NoExperiments, NoMatches } from './glide-table/exceptions';
 import GlideTable, { SCROLL_SET_COUNT_NEEDED } from './glide-table/GlideTable';
 import { EMPTY_SORT, Sort, validSort, ValidSort } from './glide-table/MultiSortMenu';
@@ -30,6 +38,9 @@ const makeSortString = (sorts: ValidSort[]): string =>
 export const PAGE_SIZE = 100;
 const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const settingsConfig = useMemo(() => settingsConfigForProject(project.id), [project.id]);
+
+  const { settings, updateSettings } = useSettings<F_ExperimentListSettings>(settingsConfig);
 
   const [page, setPage] = useState(() =>
     isFinite(Number(searchParams.get('page'))) ? Number(searchParams.get('page')) : 0,
@@ -49,10 +60,11 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     });
   });
   const [sortString, setSortString] = useState<string>('');
-  const [experiments, setExperiments] = useState<Loadable<ExperimentItem>[]>(() =>
+  const [experiments, setExperiments] = useState<Loadable<ExperimentWithTrial>[]>(
     Array(page * PAGE_SIZE).fill(NotLoaded),
   );
   const [total, setTotal] = useState<Loadable<number>>(NotLoaded);
+  const [projectColumns, setProjectColumns] = useState<Loadable<ProjectColumn[]>>(NotLoaded);
 
   useEffect(() => {
     setSearchParams((params) => {
@@ -71,8 +83,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, sortString]);
 
-  const [columns, setColumns] = useState<Loadable<V1ProjectColumn[]>>(NotLoaded);
-  const [sortableColumnIds, setSortableColumnIds] = useState(defaultExperimentColumns);
   const [selectedExperimentIds, setSelectedExperimentIds] = useState<number[]>([]);
   const [selectAll, setSelectAll] = useState(false);
   const [clearSelectionTrigger, setClearSelectionTrigger] = useState(0);
@@ -150,7 +160,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         );
         return [
           ...experimentBeforeCurrentPage,
-          ...response.experiments.map((e) => Loaded(e.experiment)),
+          ...response.experiments.map((e) => Loaded(e)),
           ...experimentsAfterCurrentPage,
         ].slice(0, response.pagination.total);
       });
@@ -169,19 +179,17 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   // TODO: poll?
   useEffect(() => {
     let mounted = true;
-    const request = async () => {
+    (async () => {
       try {
-        const columns = await getProjectColumns({ projectId: project.id });
+        const columns = await getProjectColumns({ id: project.id });
 
         if (mounted) {
-          setColumns(Loaded(columns));
+          setProjectColumns(Loaded(columns));
         }
       } catch (e) {
         handleError(e, { publicSubject: 'Unable to fetch project columns' });
       }
-    };
-
-    request();
+    })();
     return () => {
       mounted = false;
     };
@@ -215,7 +223,9 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         setExperiments((prev) =>
           prev.map((expLoadable) =>
             Loadable.map(expLoadable, (experiment) =>
-              idSet.has(experiment.id) ? { ...experiment, ...updated } : experiment,
+              idSet.has(experiment.experiment.id)
+                ? { ...experiment, experiment: { ...experiment.experiment, ...updated } }
+                : experiment,
             ),
           ),
         );
@@ -246,7 +256,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
           setExperiments((prev) =>
             prev.filter((expLoadable) =>
               Loadable.match(expLoadable, {
-                Loaded: (experiment) => !idSet.has(experiment.id),
+                Loaded: (experiment) => !idSet.has(experiment.experiment.id),
                 NotLoaded: () => true,
               }),
             ),
@@ -257,6 +267,13 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     [setExperiments],
   );
 
+  const setVisibleColumns = useCallback(
+    (newColumns: string[]) => {
+      updateSettings({ columns: newColumns });
+    },
+    [updateSettings],
+  );
+
   return (
     <Page
       bodyNoPadding
@@ -265,13 +282,15 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
       id="projectDetails">
       <>
         <TableActionBar
-          columns={columns}
           experiments={experiments}
           filters={experimentFilters}
+          handleUpdateExperimentList={handleUpdateExperimentList}
+          initialVisibleColumns={settings.columns}
           project={project}
+          projectColumns={projectColumns}
           selectAll={selectAll}
           selectedExperimentIds={selectedExperimentIds}
-          setExperiments={setExperiments}
+          setVisibleColumns={setVisibleColumns}
           sorts={sorts}
           total={total}
           onAction={handleOnAction}
@@ -298,14 +317,14 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
             height={height}
             page={page}
             project={project}
-            projectColumns={columns}
+            projectColumns={projectColumns}
             scrollPositionSetCount={scrollPositionSetCount}
             selectAll={selectAll}
             selectedExperimentIds={selectedExperimentIds}
             setSelectAll={setSelectAll}
             setSelectedExperimentIds={setSelectedExperimentIds}
-            setSortableColumnIds={setSortableColumnIds}
-            sortableColumnIds={sortableColumnIds}
+            setSortableColumnIds={setVisibleColumns}
+            sortableColumnIds={settings.columns}
             sorts={sorts}
             onSortChange={onSortChange}
           />

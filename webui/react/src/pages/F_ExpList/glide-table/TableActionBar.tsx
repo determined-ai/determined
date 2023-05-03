@@ -18,15 +18,16 @@ import {
   pauseExperiments,
   unarchiveExperiments,
 } from 'services/api';
-import { V1BulkExperimentFilters, V1ProjectColumn } from 'services/api-ts-sdk';
+import { V1BulkExperimentFilters } from 'services/api-ts-sdk';
 import Icon from 'shared/components/Icon';
 import { RecordKey } from 'shared/types';
 import { ErrorLevel } from 'shared/utils/error';
 import {
   BulkActionResult,
   ExperimentAction,
-  ExperimentItem,
+  ExperimentWithTrial,
   Project,
+  ProjectColumn,
   ProjectExperiment,
 } from 'types';
 import { notification } from 'utils/dialogApi';
@@ -39,6 +40,7 @@ import {
 import { Loadable } from 'utils/loadable';
 import { openCommandResponse } from 'utils/wait';
 
+import ColumnPickerMenu from './ColumnPickerMenu';
 import MultiSortMenu, { Sort } from './MultiSortMenu';
 import css from './TableActionBar.module.scss';
 
@@ -69,21 +71,22 @@ const actionIcons: Record<BatchAction, string> = {
 } as const;
 
 interface Props {
-  columns: Loadable<V1ProjectColumn[]>;
-  experiments: Loadable<ExperimentItem>[];
+  experiments: Loadable<ExperimentWithTrial>[];
   filters: V1BulkExperimentFilters;
+  initialVisibleColumns: string[];
   onAction: () => Promise<void>;
+  sorts: Sort[];
   onSortChange: (sorts: Sort[]) => void;
+  project: Project;
+  projectColumns: Loadable<ProjectColumn[]>;
   selectAll: boolean;
   selectedExperimentIds: number[];
   handleUpdateExperimentList: (action: BatchAction, successfulIds: number[]) => void;
-  sorts: Sort[];
-  project: Project;
+  setVisibleColumns: (newColumns: string[]) => void;
   total: Loadable<number>;
 }
 
 const TableActionBar: React.FC<Props> = ({
-  columns,
   experiments,
   filters,
   onAction,
@@ -93,7 +96,10 @@ const TableActionBar: React.FC<Props> = ({
   handleUpdateExperimentList,
   sorts,
   project,
+  projectColumns,
   total,
+  initialVisibleColumns,
+  setVisibleColumns,
 }) => {
   const permissions = usePermissions();
   const [batchAction, setBatchAction] = useState<BatchAction>();
@@ -102,7 +108,10 @@ const TableActionBar: React.FC<Props> = ({
 
   const experimentMap = useMemo(() => {
     return experiments.filter(Loadable.isLoaded).reduce((acc, experiment) => {
-      acc[experiment.data.id] = getProjectExperimentForExperimentItem(experiment.data, project);
+      acc[experiment.data.experiment.id] = getProjectExperimentForExperimentItem(
+        experiment.data.experiment,
+        project,
+      );
       return acc;
     }, {} as Record<RecordKey, ProjectExperiment>);
   }, [experiments, project]);
@@ -284,7 +293,12 @@ const TableActionBar: React.FC<Props> = ({
   return (
     <>
       <Space className={css.base}>
-        <MultiSortMenu columns={columns} sorts={sorts} onChange={onSortChange} />
+        <MultiSortMenu columns={projectColumns} sorts={sorts} onChange={onSortChange} />
+        <ColumnPickerMenu
+          initialVisibleColumns={initialVisibleColumns}
+          projectColumns={projectColumns}
+          setVisibleColumns={setVisibleColumns}
+        />
         {(selectAll || selectedExperimentIds.length > 0) && (
           <Dropdown content={<Menu items={editMenuItems} onClick={handleAction} />}>
             <Button icon={<Icon name="pencil" />}>

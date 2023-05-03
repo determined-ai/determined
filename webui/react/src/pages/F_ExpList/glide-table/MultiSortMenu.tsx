@@ -3,8 +3,9 @@ import * as io from 'io-ts';
 
 import Button from 'components/kit/Button';
 import Select from 'components/kit/Select';
-import { V1ColumnType, V1ProjectColumn } from 'services/api-ts-sdk';
+import { V1ColumnType } from 'services/api-ts-sdk';
 import Icon from 'shared/components/Icon';
+import { ProjectColumn } from 'types';
 import { Loadable } from 'utils/loadable';
 
 import css from './MultiSortMenu.module.scss';
@@ -28,12 +29,12 @@ export const EMPTY_SORT: Sort = { column: undefined, direction: undefined };
 
 interface MultiSortProps {
   sorts: Sort[];
-  columns: Loadable<V1ProjectColumn[]>;
+  columns: Loadable<ProjectColumn[]>;
   onChange: (sorts: Sort[]) => void;
 }
 interface MultiSortRowProps {
   sort: Sort;
-  columns: Loadable<V1ProjectColumn[]>;
+  columns: Loadable<ProjectColumn[]>;
   onChange: (sort: Sort) => void;
   onRemove: () => void;
 }
@@ -44,7 +45,7 @@ interface DirectionOptionsProps {
 }
 interface ColumnOptionsProps {
   onChange: (column: string) => void;
-  columns: Loadable<V1ProjectColumn[]>;
+  columns: Loadable<ProjectColumn[]>;
   value?: string;
 }
 
