@@ -8,7 +8,7 @@
    This has the effect of causing upgrades from a previous version to this version or a future
    version to take an extended period of time for clusters to upgrade with a large amount of trials
    and training steps reported. An example database with 10,000 trials with 125 million training
-   metrics can have 6+ hours of downtime upgrading.
+   metrics on a small instance can have 6+ hours of downtime upgrading.
 
    As an optional mitigation users with large databases can choose to manually run the `this sql
    file
