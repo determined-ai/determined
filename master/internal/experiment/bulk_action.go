@@ -243,10 +243,8 @@ func ToAPIResults(results []ExperimentActionResult) []*apiv1.ExperimentActionRes
 func ActivateExperiments(ctx context.Context, system *actor.System,
 	experimentIds []int32, filters *apiv1.BulkExperimentFilters,
 ) ([]ExperimentActionResult, error) {
-	if filters != nil {
-		if filters.States == nil {
-			filters.States = []experimentv1.State{experimentv1.State_STATE_PAUSED}
-		}
+	if filters != nil && filters.States == nil {
+		filters.States = []experimentv1.State{experimentv1.State_STATE_PAUSED}
 	}
 	expIDs, err := editableExperimentIds(ctx, experimentIds, filters)
 	if err != nil {
@@ -358,10 +356,8 @@ func KillExperiments(ctx context.Context, system *actor.System,
 func PauseExperiments(ctx context.Context, system *actor.System,
 	experimentIds []int32, filters *apiv1.BulkExperimentFilters,
 ) ([]ExperimentActionResult, error) {
-	if filters != nil {
-		if filters.States == nil {
-			filters.States = []experimentv1.State{experimentv1.State_STATE_ACTIVE}
-		}
+	if filters != nil && filters.States == nil {
+		filters.States = []experimentv1.State{experimentv1.State_STATE_ACTIVE}
 	}
 	expIDs, err := editableExperimentIds(ctx, experimentIds, filters)
 	if err != nil {
