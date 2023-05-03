@@ -33,69 +33,81 @@ interface ColumnMenuProps {
 }
 
 interface ColumnTabProps {
-  columnState: Record<string, boolean>;
+  columnState: Set<string>;
   handleShowSuggested: () => void;
-  search: string;
-  setSearch: React.Dispatch<React.SetStateAction<string>>;
-  setColumnState: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
+  searchString: string;
+  setSearchString: React.Dispatch<React.SetStateAction<string>>;
+  setVisibleColumns: (newColumns: string[]) => void;
   tab: V1LocationType;
   totalColumns: ProjectColumn[];
 }
 
-const ColumnPickerTabNF: React.FC<ColumnTabProps> = ({
+const ColumnPickerTab: React.FC<ColumnTabProps> = ({
   columnState,
-  setColumnState,
   handleShowSuggested,
-  search,
-  setSearch,
+  searchString,
+  setSearchString,
+  setVisibleColumns,
   tab,
   totalColumns,
 }) => {
   const filteredColumns = useMemo(() => {
-    const regex = new RegExp(search, 'i');
+    const regex = new RegExp(searchString, 'i');
     return totalColumns.filter(
       (col) => col.location === tab && regex.test(col.displayName || col.column),
     );
-  }, [search, totalColumns, tab]);
+  }, [searchString, totalColumns, tab]);
 
   const allFilteredColumnsChecked = useMemo(() => {
-    return filteredColumns.map((col) => columnState[col.column]).every((col) => col === true);
+    return filteredColumns.map((col) => columnState.has(col.column)).every((col) => col === true);
   }, [columnState, filteredColumns]);
 
   const handleShowHideAll = useCallback(() => {
     const filteredColumnMap: Record<string, boolean> = filteredColumns.reduce(
-      (acc, col) => ({ ...acc, [col.column]: !allFilteredColumnsChecked }),
+      (acc, col) => ({ ...acc, [col.column]: columnState.has(col.column) }),
       {},
     );
 
-    setColumnState((prevCols) => ({ ...prevCols, ...filteredColumnMap }));
-  }, [allFilteredColumnsChecked, filteredColumns, setColumnState]);
+    const newColumns = allFilteredColumnsChecked
+      ? [...columnState].filter((col) => !filteredColumnMap[col])
+      : [...new Set([...columnState, ...filteredColumns.map((col) => col.column)])];
+    setVisibleColumns(newColumns);
+  }, [allFilteredColumnsChecked, filteredColumns, setVisibleColumns, columnState]);
 
   const handleColumnChange = useCallback(
     (event: CheckboxChangeEvent) => {
-      const [id, checked] = [event.target.id, event.target.checked];
+      const { id, checked } = event.target;
       if (id === undefined) return;
-      setColumnState((prevState) => ({ ...prevState, [id]: checked }));
+
+      const newColumnSet = new Set(columnState);
+      checked ? newColumnSet.add(id) : newColumnSet.delete(id);
+      setVisibleColumns([...newColumnSet]);
     },
-    [setColumnState],
+    [columnState, setVisibleColumns],
   );
 
   const handleSearch = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
-      setSearch(e.target.value);
+      setSearchString(e.target.value);
     },
-    [setSearch],
+    [setSearchString],
   );
 
   return (
     <div>
-      <Input allowClear autoFocus placeholder="Search" value={search} onChange={handleSearch} />
+      <Input
+        allowClear
+        autoFocus
+        placeholder="Search"
+        value={searchString}
+        onChange={handleSearch}
+      />
       {totalColumns.length !== 0 ? (
         <Space className={css.columnList} direction="vertical">
           {filteredColumns.length > 0 ? (
             filteredColumns.map((col) => (
               <Checkbox
-                checked={columnState[col.column] ?? false}
+                checked={columnState.has(col.column)}
                 id={col.column}
                 key={col.column}
                 onChange={handleColumnChange}>
@@ -126,19 +138,14 @@ const ColumnPickerMenu: React.FC<ColumnMenuProps> = ({
   setVisibleColumns,
   initialVisibleColumns,
 }) => {
-  const [search, setSearch] = useState('');
+  const [searchString, setSearchString] = useState('');
 
   const totalColumns = useMemo(
     () => removeBannedColumns(Loadable.getOrElse([], projectColumns)),
     [projectColumns],
   );
 
-  const [columnState, setColumnState] = useState<Record<string, boolean>>(() =>
-    totalColumns.reduce(
-      (acc, col) => ({ ...acc, [col.column]: initialVisibleColumns.includes(col.column) }),
-      {},
-    ),
-  );
+  const columnState = useMemo(() => new Set(initialVisibleColumns), [initialVisibleColumns]);
 
   useEffect(() => {
     if (Object.keys(columnState).length === 0) return;
@@ -152,12 +159,8 @@ const ColumnPickerMenu: React.FC<ColumnMenuProps> = ({
   }, [columnState, setVisibleColumns]);
 
   const handleShowSuggested = useCallback(() => {
-    const defaultCols: Set<string> = new Set(defaultExperimentColumns);
-
-    setColumnState((prevColumns) =>
-      Object.fromEntries(Object.keys(prevColumns).map((col) => [col, defaultCols.has(col)])),
-    );
-  }, []);
+    setVisibleColumns(defaultExperimentColumns);
+  }, [setVisibleColumns]);
 
   return (
     <Popover
@@ -170,12 +173,12 @@ const ColumnPickerMenu: React.FC<ColumnMenuProps> = ({
               V1LocationType.HYPERPARAMETERS,
             ].map((tab) => ({
               children: (
-                <ColumnPickerTabNF
+                <ColumnPickerTab
                   columnState={columnState}
                   handleShowSuggested={handleShowSuggested}
-                  search={search}
-                  setColumnState={setColumnState}
-                  setSearch={setSearch}
+                  searchString={searchString}
+                  setSearchString={setSearchString}
+                  setVisibleColumns={setVisibleColumns}
                   tab={tab}
                   totalColumns={totalColumns}
                 />

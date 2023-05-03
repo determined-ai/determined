@@ -32,7 +32,6 @@ const experimentColumns = [
   'progress',
   'resourcePool',
   'searcherType',
-  'searcherMetricValue',
   'selected',
   'startTime',
   'state',
@@ -58,7 +57,6 @@ export const defaultExperimentColumns: ExperimentColumn[] = [
   'resourcePool',
   'checkpointSize',
   'checkpointCount',
-  'searcherMetricValue',
 ];
 
 export type ColumnDef = SizedGridColumn & {
@@ -472,7 +470,6 @@ export const defaultColumnWidths: Record<ExperimentColumn, number> = {
   numTrials: 74,
   progress: 111,
   resourcePool: 140,
-  searcherMetricValue: 160,
   searcherType: 140,
   selected: 40,
   startTime: 118,
