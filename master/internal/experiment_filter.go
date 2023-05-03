@@ -164,8 +164,8 @@ func hpToSQL(c string, filterColumnType *string, filterValue *interface{},
 	}
 	var hps []string
 	hp := strings.Split(strings.TrimPrefix(c, "hp."), ".")
-	for _, h := range hp {
-		hps = append(hps, fmt.Sprintf(`'%s'`, h))
+	for len(hps) < len(hp) {
+		hps = append(hps, `?`)
 	}
 	hpQuery := strings.Join(hps, "->")
 	oSQL, err := o.toSQL()
@@ -178,78 +178,121 @@ func hpToSQL(c string, filterColumnType *string, filterValue *interface{},
 	case projectv1.ColumnType_COLUMN_TYPE_TEXT.String(), projectv1.ColumnType_COLUMN_TYPE_DATE.String():
 		switch o {
 		case empty, notEmpty:
-			queryArgs = append(queryArgs, bun.Safe(hpQuery),
-				bun.Safe(hpQuery), bun.Safe(oSQL),
-				bun.Safe(hpQuery), bun.Safe(hpQuery),
-				bun.Safe(oSQL))
-			queryString = `(CASE
-				WHEN config->'hyperparameters'->?->>'type' = 'const' THEN config->'hyperparameters'->?->>'val' ?
-				WHEN config->'hyperparameters'->?->>'type' = 'categorical' THEN config->'hyperparameters'->?->>'vals' ?
+			i := 0
+			for i < 2 {
+				for _, hp := range hp {
+					queryArgs = append(queryArgs, hp, hp)
+				}
+				queryArgs = append(queryArgs, bun.Safe(oSQL))
+				i++
+			}
+			queryString = fmt.Sprintf(`(CASE
+				WHEN config->'hyperparameters'->%s->>'type' = 'const' THEN config->'hyperparameters'->%s->>'val' %s
+				WHEN config->'hyperparameters'->%s->>'type' = 'categorical' THEN config->'hyperparameters'->%s->>'vals' %s
 				ELSE false
-			 END)`
+			 END)`, hpQuery, hpQuery, "?", hpQuery, hpQuery, "?")
 		case contains:
 			queryString = `(CASE 
 				WHEN config->'hyperparameters'->?->>'type' = 'const' THEN config->'hyperparameters'->?->>'val' LIKE
 				WHEN config->'hyperparameters'->?->>'type' = 'categorical' THEN (config->'hyperparameters'->?->>'vals')::jsonb ?? ?
 				ELSE false
 			 END)`
-			queryArgs = append(queryArgs, bun.Safe(hpQuery),
-				bun.Safe(hpQuery), fmt.Sprintf(`%%%s%%`, queryValue),
-				bun.Safe(hpQuery), bun.Safe(hpQuery), queryValue)
+			queryArgs = append(queryArgs, hpQuery,
+				hpQuery, fmt.Sprintf(`%%%s%%`, queryValue),
+				hpQuery, hpQuery, queryValue)
 		case doesNotContain:
 			queryString = `(CASE 
 				WHEN config->'hyperparameters'->?->>'type' = 'const' THEN config->'hyperparameters'->?->>'val' ?
 				WHEN config->'hyperparameters'->?->>'type' = 'categorical' THEN (config->'hyperparameters'->?->>'vals')::jsonb ?? ? IS NOT TRUE
 				ELSE false
 			 END)`
-			queryArgs = append(queryArgs, bun.Safe(hpQuery),
-				bun.Safe(hpQuery), `NOT LIKE %`+fmt.Sprintf(`%v`, queryValue)+`%`,
-				bun.Safe(hpQuery), bun.Safe(hpQuery), queryValue)
+			queryArgs = append(queryArgs, hpQuery,
+				hpQuery, `NOT LIKE %`+fmt.Sprintf(`%v`, queryValue)+`%`,
+				hpQuery, hpQuery, queryValue)
 		default:
-			queryArgs = append(queryArgs, bun.Safe(hpQuery), bun.Safe(hpQuery), bun.Safe(oSQL), queryValue)
-			queryString = `(CASE WHEN config->'hyperparameters'->?->>'type' = 'const' THEN config->'hyperparameters'->?->>'val' ? ? ELSE false END)`
+			for _, hp := range hp {
+				queryArgs = append(queryArgs, hp, hp)
+			}
+			queryArgs = append(queryArgs, bun.Safe(oSQL), queryValue)
+			queryString = fmt.Sprintf(`(CASE WHEN config->'hyperparameters'->%s->>'type' = 'const' THEN config->'hyperparameters'->%s->>'val' %s %s ELSE false END)`,
+				hpQuery, hpQuery, "?", "?")
 		}
 	default:
 		switch o {
 		case empty, notEmpty:
-			queryArgs = append(queryArgs, bun.Safe(hpQuery), bun.Safe(hpQuery),
-				bun.Safe(oSQL), bun.Safe(hpQuery), bun.Safe(hpQuery),
-				bun.Safe(oSQL), bun.Safe(hpQuery), bun.Safe(hpQuery),
-				bun.Safe(oSQL))
-			queryString = `(CASE
-				WHEN config->'hyperparameters'->?->>'type' = 'const' THEN (config->'hyperparameters'->?->>'val')::float8 ?
-				WHEN config->'hyperparameters'->?->>'type' = 'categorical' THEN config->'hyperparameters'->?->>'vals' ?
-				WHEN config->'hyperparameters'->?->>'type' IN ('int', 'double', 'log') THEN (config->'hyperparameters'->?) ?
+			i := 0
+			for i < 3 {
+				for _, hp := range hp {
+					queryArgs = append(queryArgs, hp, hp)
+				}
+				queryArgs = append(queryArgs, bun.Safe(oSQL))
+				i++
+			}
+			queryString = fmt.Sprintf(`(CASE
+				WHEN config->'hyperparameters'->%s->>'type' = 'const' THEN (config->'hyperparameters'->%s->>'val')::float8 %s
+				WHEN config->'hyperparameters'->%s->>'type' = 'categorical' THEN config->'hyperparameters'->%s->>'vals' %s
+				WHEN config->'hyperparameters'->%s->>'type' IN ('int', 'double', 'log') THEN (config->'hyperparameters'->%s) %s
 				ELSE false
-			 END)`
+			 END)`, hpQuery, hpQuery, "?", hpQuery, hpQuery, "?", hpQuery, hpQuery, "?")
 		case contains:
-			queryArgs = append(queryArgs, bun.Safe(hpQuery), bun.Safe(hpQuery),
-				bun.Safe(`?`), queryValue, bun.Safe(hpQuery), bun.Safe(hpQuery),
-				queryValue, bun.Safe(hpQuery), queryValue)
-			queryString = `(CASE
-					WHEN config->'hyperparameters'->?->>'type' = 'categorical' THEN (config->'hyperparameters'->?->>'vals')::jsonb ? '?'
-					WHEN config->'hyperparameters'->?->>'type' IN ('int', 'double', 'log') THEN (config->'hyperparameters'->?->>'minval')::float8 <= ? OR (config->'hyperparameters'->?->>'maxval')::float8 >= ?
+			for _, hp := range hp {
+				queryArgs = append(queryArgs, hp, hp)
+			}
+			queryArgs = append(queryArgs, bun.Safe(`?`), queryValue)
+			for _, hp := range hp {
+				queryArgs = append(queryArgs, hp, hp)
+			}
+			queryArgs = append(queryArgs, queryValue)
+			for _, hp := range hp {
+				queryArgs = append(queryArgs, hp)
+			}
+			queryArgs = append(queryArgs, queryValue)
+			queryString = fmt.Sprintf(`(CASE
+					WHEN config->'hyperparameters'->%s->>'type' = 'categorical' THEN (config->'hyperparameters'->%s->>'vals')::jsonb %s '%s'
+					WHEN config->'hyperparameters'->%s->>'type' IN ('int', 'double', 'log') THEN (config->'hyperparameters'->%s->>'minval')::float8 <= %s OR (config->'hyperparameters'->%s->>'maxval')::float8 >= %s
 					ELSE false
-				 END)`
+				 END)`, hpQuery, hpQuery, "?", "?", hpQuery, hpQuery, "?", hpQuery, "?")
 		case doesNotContain:
-			queryArgs = append(queryArgs, bun.Safe(hpQuery), bun.Safe(hpQuery),
-				bun.Safe(`?`), queryValue, bun.Safe(hpQuery), bun.Safe(hpQuery),
-				queryValue, bun.Safe(hpQuery), queryValue)
-			queryString = `(CASE
-					WHEN config->'hyperparameters'->?->>'type' = 'categorical' THEN ((config->'hyperparameters'->?->>'vals')::jsonb ? '?') IS NOT TRUE
-					WHEN config->'hyperparameters'->?->>'type' IN ('int', 'double', 'log') THEN (config->'hyperparameters'->?->>'minval')::float8 >= ? OR (config->'hyperparameters'->?->>'maxval')::float8 <= ?
+			for _, hp := range hp {
+				queryArgs = append(queryArgs, hp, hp)
+			}
+			queryArgs = append(queryArgs, bun.Safe(`?`), queryValue)
+			for _, hp := range hp {
+				queryArgs = append(queryArgs, hp, hp)
+			}
+			queryArgs = append(queryArgs, queryValue)
+			for _, hp := range hp {
+				queryArgs = append(queryArgs, hp)
+			}
+			queryArgs = append(queryArgs, queryValue)
+			queryString = fmt.Sprintf(`(CASE
+					WHEN config->'hyperparameters'->%s->>'type' = 'categorical' THEN ((config->'hyperparameters'->%s->>'vals')::jsonb %s '%s') IS NOT TRUE
+					WHEN config->'hyperparameters'->%s->>'type' IN ('int', 'double', 'log') THEN (config->'hyperparameters'->%s->>'minval')::float8 >= %s OR (config->'hyperparameters'->%s->>'maxval')::float8 <= %s
 					ELSE false
-				 END)`
+				 END)`, hpQuery, hpQuery, "?", "?", hpQuery, hpQuery, "?", hpQuery, "?")
 		default:
-			queryArgs = append(queryArgs, bun.Safe(hpQuery), bun.Safe(hpQuery),
-				bun.Safe(oSQL), queryValue, bun.Safe(hpQuery), bun.Safe(hpQuery),
-				bun.Safe(oSQL), queryValue, bun.Safe(hpQuery), bun.Safe(oSQL),
-				queryValue, bun.Safe(hpQuery), bun.Safe(oSQL), queryValue)
-			queryString = `(CASE
-				WHEN config->'hyperparameters'->?->>'type' = 'const' THEN (config->'hyperparameters'->?->>'val')::float8 ? ?
-				WHEN config->'hyperparameters'->?->>'type' IN ('int', 'double', 'log') THEN ((config->'hyperparameters'->?->>'minval')::float8 ? ? OR (config->'hyperparameters'->?->>'maxval')::float8 ? ?)
+			i := 0
+			for i < 2 {
+				for _, hp := range hp {
+					queryArgs = append(queryArgs, hp, hp)
+				}
+				queryArgs = append(queryArgs, bun.Safe(oSQL), queryValue)
+				i++
+			}
+			for _, hp := range hp {
+				queryArgs = append(queryArgs, hp)
+			}
+			queryArgs = append(queryArgs, bun.Safe(oSQL),
+				queryValue)
+			for _, hp := range hp {
+				queryArgs = append(queryArgs, hp)
+			}
+			queryArgs = append(queryArgs, bun.Safe(oSQL), queryValue)
+			queryString = fmt.Sprintf(`(CASE
+				WHEN config->'hyperparameters'->%s->>'type' = 'const' THEN (config->'hyperparameters'->%s->>'val')::float8 %s %s
+				WHEN config->'hyperparameters'->%s->>'type' IN ('int', 'double', 'log') THEN ((config->'hyperparameters'->%s->>'minval')::float8 %s %s OR (config->'hyperparameters'->%s->>'maxval')::float8 %s %s)
 				ELSE false
-			 END)`
+			 END)`, hpQuery, hpQuery, "?", "?", hpQuery, hpQuery, "?", "?", hpQuery, "?", "?")
 		}
 	}
 	if fc != nil && *fc == or {
