@@ -1356,18 +1356,18 @@ const CardsSection: React.FC = () => {
         <strong>Card variations</strong>
         <p>Small cards (default)</p>
         <Card.Group>
-          <Card actionMenu={{ items: [{ key: 'test', label: 'Test' }] }}>Card with actions</Card>
-          <Card actionMenu={{ items: [{ key: 'test', label: 'Test' }] }} disabled>
+          <Card actionMenu={[{ key: 'test', label: 'Test' }]}>Card with actions</Card>
+          <Card actionMenu={[{ key: 'test', label: 'Test' }]} disabled>
             Disabled card
           </Card>
           <Card onClick={noOp}>Clickable card</Card>
         </Card.Group>
         <p>Medium cards</p>
         <Card.Group size="medium">
-          <Card actionMenu={{ items: [{ key: 'test', label: 'Test' }] }} size="medium">
+          <Card actionMenu={[{ key: 'test', label: 'Test' }]} size="medium">
             Card with actions
           </Card>
-          <Card actionMenu={{ items: [{ key: 'test', label: 'Test' }] }} disabled size="medium">
+          <Card actionMenu={[{ key: 'test', label: 'Test' }]} disabled size="medium">
             Disabled card
           </Card>
           <Card size="medium" onClick={noOp}>

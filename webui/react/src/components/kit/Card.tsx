@@ -1,4 +1,3 @@
-import { Dropdown, MenuProps } from 'antd';
 import React, { Children, CSSProperties } from 'react';
 
 import { ConditionalWrapper } from 'components/ConditionalWrapper';
@@ -9,9 +8,10 @@ import { isNumber } from 'shared/utils/data';
 
 import Button from './Button';
 import css from './Card.module.scss';
+import Dropdown, { MenuItem } from './Dropdown';
 
 type CardPropsBase = {
-  actionMenu?: MenuProps;
+  actionMenu?: MenuItem[];
   children?: React.ReactNode;
   disabled?: boolean;
   size?: keyof typeof CardSize;
@@ -26,10 +26,12 @@ type CardProps = (
   | {
       href?: string;
       onClick?: never;
+      onDropdown?: (key: string) => void;
     }
   | {
       href?: never;
       onClick?: () => void;
+      onDropdown?: (key: string) => void;
     }
 ) &
   CardPropsBase;
@@ -46,6 +48,7 @@ const Card: Card = ({
   disabled = false,
   href,
   onClick,
+  onDropdown,
   size = 'small',
 }: CardProps) => {
   const classnames = [css.cardBase];
@@ -60,7 +63,7 @@ const Card: Card = ({
       break;
   }
 
-  const actionsAvailable = actionMenu?.items?.length !== undefined && actionMenu.items.length > 0;
+  const actionsAvailable = actionMenu?.length !== undefined && actionMenu.length > 0;
 
   return (
     <ConditionalWrapper
@@ -88,7 +91,7 @@ const Card: Card = ({
               disabled={disabled}
               menu={actionMenu}
               placement="bottomRight"
-              trigger={['click']}>
+              onClick={onDropdown}>
               <Button size="small" type="text" onClick={stopPropagation}>
                 <Icon name="overflow-horizontal" title="Action menu" />
               </Button>
