@@ -12,6 +12,6 @@
 
    (Optional) To minimize downtime, users with large databases can choose to manually run `this sql
    file
-   <https://github.com/determined-ai/determined/blob/main/master/static/migrations/20230425100036_add-summary-metrics.tx.up.sql>`__
+   <https://github.com/determined-ai/determined/blob/main/master/static/migrations/20230503144448_add-summary-metrics.tx.up.sql>`__
    against their cluster's database while it is still running before upgrading to a new version.
    This is an optional step and is only recommended for significantly large databases.
