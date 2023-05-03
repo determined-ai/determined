@@ -760,6 +760,12 @@ export interface Trialv1Trial {
      * @memberof Trialv1Trial
      */
     checkpointCount?: number;
+    /**
+     * summary metrics
+     * @type {any}
+     * @memberof Trialv1Trial
+     */
+    summaryMetrics?: any;
 }
 /**
  * struct for the ids parameter.
@@ -8195,7 +8201,7 @@ export interface V1SearchExperimentExperiment {
      * @type {V1Experiment}
      * @memberof V1SearchExperimentExperiment
      */
-    experiment?: V1Experiment;
+    experiment: V1Experiment;
     /**
      * The best performing trial associated with the experiment
      * @type {Trialv1Trial}

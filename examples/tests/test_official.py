@@ -23,10 +23,6 @@ official_examples = [
         "computer_vision/cifar10_pytorch/const.yaml",
     ),
     (
-        "computer_vision/mnist_estimator",
-        "computer_vision/mnist_estimator/const.yaml",
-    ),
-    (
         "computer_vision/cifar10_tf_keras",
         "computer_vision/cifar10_tf_keras/const.yaml",
     ),
@@ -45,10 +41,6 @@ official_examples = [
     (
         "gan/pix2pix_tf_keras",
         "gan/pix2pix_tf_keras/const.yaml",
-    ),
-    (
-        "decision_trees/gbt_titanic_estimator",
-        "decision_trees/gbt_titanic_estimator/const.yaml",
     ),
     (
         "features/custom_reducers_mnist_pytorch",

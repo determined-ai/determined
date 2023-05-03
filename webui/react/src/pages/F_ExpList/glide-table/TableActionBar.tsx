@@ -25,8 +25,9 @@ import { ErrorLevel } from 'shared/utils/error';
 import {
   BulkActionResult,
   ExperimentAction,
-  ExperimentItem,
+  ExperimentWithTrial,
   Project,
+  ProjectColumn,
   ProjectExperiment,
 } from 'types';
 import { notification } from 'utils/dialogApi';
@@ -39,6 +40,7 @@ import {
 import { Loadable } from 'utils/loadable';
 import { openCommandResponse } from 'utils/wait';
 
+import ColumnPickerMenu from './ColumnPickerMenu';
 import css from './TableActionBar.module.scss';
 
 const batchActions = [
@@ -68,13 +70,16 @@ const actionIcons: Record<BatchAction, string> = {
 } as const;
 
 interface Props {
-  experiments: Loadable<ExperimentItem>[];
+  experiments: Loadable<ExperimentWithTrial>[];
   filters: V1BulkExperimentFilters;
+  initialVisibleColumns: string[];
   onAction: () => Promise<void>;
+  project: Project;
+  projectColumns: Loadable<ProjectColumn[]>;
   selectAll: boolean;
   selectedExperimentIds: number[];
   handleUpdateExperimentList: (action: BatchAction, successfulIds: number[]) => void;
-  project: Project;
+  setVisibleColumns: (newColumns: string[]) => void;
   total: Loadable<number>;
 }
 
@@ -86,7 +91,10 @@ const TableActionBar: React.FC<Props> = ({
   selectedExperimentIds,
   handleUpdateExperimentList,
   project,
+  projectColumns,
   total,
+  initialVisibleColumns,
+  setVisibleColumns,
 }) => {
   const permissions = usePermissions();
   const [batchAction, setBatchAction] = useState<BatchAction>();
@@ -95,7 +103,10 @@ const TableActionBar: React.FC<Props> = ({
 
   const experimentMap = useMemo(() => {
     return experiments.filter(Loadable.isLoaded).reduce((acc, experiment) => {
-      acc[experiment.data.id] = getProjectExperimentForExperimentItem(experiment.data, project);
+      acc[experiment.data.experiment.id] = getProjectExperimentForExperimentItem(
+        experiment.data.experiment,
+        project,
+      );
       return acc;
     }, {} as Record<RecordKey, ProjectExperiment>);
   }, [experiments, project]);
@@ -277,6 +288,11 @@ const TableActionBar: React.FC<Props> = ({
   return (
     <>
       <Space className={css.base}>
+        <ColumnPickerMenu
+          initialVisibleColumns={initialVisibleColumns}
+          projectColumns={projectColumns}
+          setVisibleColumns={setVisibleColumns}
+        />
         {(selectAll || selectedExperimentIds.length > 0) && (
           <Dropdown content={<Menu items={editMenuItems} onClick={handleAction} />}>
             <Button icon={<Icon name="pencil" />}>

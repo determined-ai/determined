@@ -13,6 +13,32 @@ import { cspHtml } from './src/shared/configs/vite-plugin-csp';
 // want to fallback in case of empty string, hence no ??
 const webpackProxyUrl = process.env.DET_WEBPACK_PROXY_URL || 'http://localhost:8080';
 
+
+const devServerRedirects = (redirects: Record<string, string>): Plugin => {
+  let config: UserConfig;
+    return ({
+      config(c) {
+        config = c;
+      },
+        configureServer(server) {
+          Object.entries(redirects).forEach(([from, to]) => {
+            const fromUrl = `${config.base || ''}${from}`;
+            server.middlewares.use(fromUrl, (req, res, next) => {
+              if (req.originalUrl === fromUrl) {
+                res.writeHead(302, {
+                  Location: `${config.base || ''}${to}`,
+                });
+                res.end();
+              } else {
+                next();
+              }
+            });
+          });
+        },
+        name: 'dev-server-redirects',
+    });
+};
+
 const publicUrlBaseHref = (): Plugin => {
   let config: UserConfig;
   return {
@@ -50,6 +76,10 @@ export default defineConfig(({ mode }) => ({
     },
     outDir: 'build',
     rollupOptions: {
+      input: {
+        design: path.resolve(__dirname, 'design', 'index.html'),
+        main: path.resolve(__dirname, 'index.html'),
+      },
       output: {
         manualChunks: (id) => {
           if (id.includes('node_modules')) {
@@ -93,6 +123,9 @@ export default defineConfig(({ mode }) => ({
       checker({
         typescript: true,
       }),
+    devServerRedirects({
+      '/design': '/design/',
+    }),
     cspHtml({
       cspRules: {
         'frame-src': ["'self'", 'netlify.determined.ai'],
