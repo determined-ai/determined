@@ -227,7 +227,7 @@ func (s *SingularityClient) RunContainer(
 	if err != nil {
 		return nil, fmt.Errorf("writing to envfile: %w", err)
 	}
-	if err := envFile.Close(); err != nil {
+	if err = envFile.Close(); err != nil {
 		return nil, fmt.Errorf("closing envfile: %w", err)
 	}
 	switch {
