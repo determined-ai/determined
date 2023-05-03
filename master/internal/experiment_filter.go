@@ -178,13 +178,17 @@ func hpToSQL(c string, filterColumnType *string, filterValue *interface{},
 	case projectv1.ColumnType_COLUMN_TYPE_TEXT.String(), projectv1.ColumnType_COLUMN_TYPE_DATE.String():
 		switch o {
 		case empty, notEmpty:
-			i := 0
+			i, j := 0, 0
 			for i < 2 {
-				for _, hp := range hp {
-					queryArgs = append(queryArgs, hp, hp)
+				for j < 2 {
+					for _, hp := range hp {
+						queryArgs = append(queryArgs, hp)
+					}
+					j++
 				}
 				queryArgs = append(queryArgs, bun.Safe(oSQL))
 				i++
+				j = 0
 			}
 			queryString = fmt.Sprintf(`(CASE
 				WHEN config->'hyperparameters'->%s->>'type' = 'const' THEN config->'hyperparameters'->%s->>'val' %s

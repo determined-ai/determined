@@ -1417,6 +1417,14 @@ func TestExperimentSearchApiFilterParsing(t *testing.T) {
 			 END)))`,
 		},
 		{
+			`{"filterGroup":{"children":[{"type":"COLUMN_TYPE_TEXT","location":"LOCATION_TYPE_HYPERPARAMETERS", "columnName":"hp.clip_grad.clip.grad","kind":"field","operator":"is empty", "value":"some_string"}],"conjunction":"and","kind":"group"},"showArchived":true}`,
+			`(((CASE
+				WHEN config->'hyperparameters'->'clip_grad'->'clip'->'grad'->>'type' = 'const' THEN config->'hyperparameters'->'clip_grad'->'clip'->'grad'->>'val' IS NULL
+				WHEN config->'hyperparameters'->'clip_grad'->'clip'->'grad'->>'type' = 'categorical' THEN config->'hyperparameters'->'clip_grad'->'clip'->'grad'->>'vals' IS NULL
+				ELSE false
+			 END)))`,
+		},
+		{
 			`{"filterGroup":{"children":[{"type":"COLUMN_TYPE_TEXT","location":"LOCATION_TYPE_HYPERPARAMETERS", "columnName":"hp.clip_grad.clip.grad","kind":"field","operator":"does not contain", "value":"some_string"}],"conjunction":"and","kind":"group"},"showArchived":true}`,
 			`(((CASE
 				WHEN config->'hyperparameters'->'clip_grad'->'clip'->'grad'->>'type' = 'const' THEN config->'hyperparameters'->'clip_grad'->'clip'->'grad'->>'val' NOT LIKE '%some_string%'
