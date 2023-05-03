@@ -134,6 +134,7 @@ SELECT
   t.checkpoint_count,
   t.total_batches AS total_batches_processed,
    t.runner_state,
+   t.summary_metrics AS summary_metrics, 
   (
     SELECT extract(epoch from sum(coalesce(a.end_time, now()) - a.start_time))
     FROM allocations a

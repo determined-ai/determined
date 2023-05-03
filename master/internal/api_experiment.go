@@ -1995,6 +1995,7 @@ func (a *apiServer) SearchExperiments(
 		Column("trials.experiment_id").
 		Column("trials.runner_state").
 		Column("trials.checkpoint_count").
+		Column("trials.summary_metrics").
 		Column("trials.task_id").
 		ColumnExpr("proto_time(trials.start_time) AS start_time").
 		ColumnExpr("proto_time(trials.end_time) AS end_time").

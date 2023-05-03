@@ -392,6 +392,7 @@ class trialv1Trial:
     endTime: "typing.Optional[str]" = None
     latestValidation: "typing.Optional[v1MetricsWorkload]" = None
     runnerState: "typing.Optional[str]" = None
+    summaryMetrics: "typing.Optional[typing.Dict[str, typing.Any]]" = None
     taskId: "typing.Optional[str]" = None
     totalCheckpointSize: "typing.Optional[str]" = None
     wallClockTime: "typing.Optional[float]" = None
@@ -413,6 +414,7 @@ class trialv1Trial:
         endTime: "typing.Union[str, None, Unset]" = _unset,
         latestValidation: "typing.Union[v1MetricsWorkload, None, Unset]" = _unset,
         runnerState: "typing.Union[str, None, Unset]" = _unset,
+        summaryMetrics: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
         taskId: "typing.Union[str, None, Unset]" = _unset,
         totalCheckpointSize: "typing.Union[str, None, Unset]" = _unset,
         wallClockTime: "typing.Union[float, None, Unset]" = _unset,
@@ -437,6 +439,8 @@ class trialv1Trial:
             self.latestValidation = latestValidation
         if not isinstance(runnerState, Unset):
             self.runnerState = runnerState
+        if not isinstance(summaryMetrics, Unset):
+            self.summaryMetrics = summaryMetrics
         if not isinstance(taskId, Unset):
             self.taskId = taskId
         if not isinstance(totalCheckpointSize, Unset):
@@ -469,6 +473,8 @@ class trialv1Trial:
             kwargs["latestValidation"] = v1MetricsWorkload.from_json(obj["latestValidation"]) if obj["latestValidation"] is not None else None
         if "runnerState" in obj:
             kwargs["runnerState"] = obj["runnerState"]
+        if "summaryMetrics" in obj:
+            kwargs["summaryMetrics"] = obj["summaryMetrics"]
         if "taskId" in obj:
             kwargs["taskId"] = obj["taskId"]
         if "totalCheckpointSize" in obj:
@@ -501,6 +507,8 @@ class trialv1Trial:
             out["latestValidation"] = None if self.latestValidation is None else self.latestValidation.to_json(omit_unset)
         if not omit_unset or "runnerState" in vars(self):
             out["runnerState"] = self.runnerState
+        if not omit_unset or "summaryMetrics" in vars(self):
+            out["summaryMetrics"] = self.summaryMetrics
         if not omit_unset or "taskId" in vars(self):
             out["taskId"] = self.taskId
         if not omit_unset or "totalCheckpointSize" in vars(self):
