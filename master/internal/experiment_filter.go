@@ -367,29 +367,27 @@ func (e experimentFilter) toSQL(q *bun.SelectQuery,
 		switch location {
 		case projectv1.LocationType_LOCATION_TYPE_EXPERIMENT.String():
 			col, err := columnNameToSQL(e.ColumnName, e.Location, e.Type)
+			var queryArgs []interface{}
+			var queryString string
 			switch *e.Operator {
 			case contains:
-				if c != nil && *c == or {
-					q.WhereOr("? LIKE ?", bun.Safe(col), fmt.Sprintf("%%%s%%", *e.Value))
-				} else {
-					q.Where("? LIKE ?", bun.Safe(col), fmt.Sprintf("%%%s%%", *e.Value))
-				}
+				queryString = "? LIKE ?"
+				queryArgs = append(queryArgs, bun.Safe(col), fmt.Sprintf("%%%s%%", *e.Value))
 			case doesNotContain:
-				if c != nil && *c == or {
-					q.WhereOr("? NOT LIKE ?", bun.Safe(col), fmt.Sprintf("%%%s%%", *e.Value))
-				} else {
-					q.Where("? NOT LIKE ?", bun.Safe(col), fmt.Sprintf("%%%s%%", *e.Value))
-				}
+				queryString = "? NOT LIKE ?"
+				queryArgs = append(queryArgs, bun.Safe(col), fmt.Sprintf("%%%s%%", *e.Value))
 			case empty, notEmpty:
-				q = q.Where("? ?", bun.Safe(col), bun.Safe(oSQL))
+				queryString = "? ?"
+				queryArgs = append(queryArgs, bun.Safe(col), bun.Safe(oSQL))
 			default:
-				if c != nil && *c == or {
-					q.WhereOr("? ? ?", bun.Safe(col),
-						bun.Safe(oSQL), *e.Value)
-				} else {
-					q.Where("? ? ?", bun.Safe(col),
-						bun.Safe(oSQL), *e.Value)
-				}
+				queryArgs = append(queryArgs, bun.Safe(col),
+					bun.Safe(oSQL), *e.Value)
+				queryString = "? ? ?"
+			}
+			if c != nil && *c == or {
+				q.WhereOr(queryString, queryArgs...)
+			} else {
+				q.Where(queryString, queryArgs...)
 			}
 			if err != nil {
 				return nil, err
