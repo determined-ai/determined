@@ -24,7 +24,7 @@ const publicUrl = process.env['PUBLIC_URL'] || '';
 const { address, port } = devServer.httpServer.address();
 
 // start chrome playwright
-const browser = await chromium.launch({ headless: false });
+const browser = await chromium.launch();
 const page = await browser.newPage();
 await page.goto(`http://${address}:${port}${publicUrl}/design/`);
 // take screenshots of each section
