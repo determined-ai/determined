@@ -215,14 +215,28 @@ func hpToSQL(c string, filterColumnType *string, filterValue *interface{},
 				ELSE false
 			 END)`, hpQuery, hpQuery, "?", hpQuery, hpQuery, "?", "?")
 		case doesNotContain:
-			queryString = `(CASE 
-				WHEN config->'hyperparameters'->?->>'type' = 'const' THEN config->'hyperparameters'->?->>'val' ?
-				WHEN config->'hyperparameters'->?->>'type' = 'categorical' THEN (config->'hyperparameters'->?->>'vals')::jsonb ?? ? IS NOT TRUE
+			i := 0
+			queryLikeValue := `%` + queryValue.(string) + `%`
+			for i < 2 {
+				for _, hp := range hp {
+					queryArgs = append(queryArgs, hp)
+				}
+				i++
+			}
+			queryArgs = append(queryArgs, queryLikeValue)
+			i = 0
+			for i < 2 {
+				for _, hp := range hp {
+					queryArgs = append(queryArgs, hp)
+				}
+				i++
+			}
+			queryArgs = append(queryArgs, bun.Safe("?"), queryValue)
+			queryString = fmt.Sprintf(`(CASE
+				WHEN config->'hyperparameters'->%s->>'type' = 'const' THEN config->'hyperparameters'->%s->>'val' NOT LIKE %s
+				WHEN config->'hyperparameters'->%s->>'type' = 'categorical' THEN (config->'hyperparameters'->%s->>'vals')::jsonb %s %s) IS NOT TRUE
 				ELSE false
-			 END)`
-			queryArgs = append(queryArgs, hpQuery,
-				hpQuery, `NOT LIKE %`+fmt.Sprintf(`%v`, queryValue)+`%`,
-				hpQuery, hpQuery, queryValue)
+			 END)`, hpQuery, hpQuery, "?", hpQuery, hpQuery, "?", "?")
 		default:
 			i := 0
 			for i < 2 {
