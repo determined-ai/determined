@@ -27,8 +27,9 @@ import (
 
 var logLevel = regexp.MustCompile("(?P<level>INFO|WARN|ERROR|FATAL):    (?P<log>.*)")
 
-// ShipCmdLogs does what you might expect from its name.
-func ShipCmdLogs(
+// ShipContainerCommandLogs forwards the given output stream to the specified publisher.
+// It is used to reveal the result of container command lines, e.g. podman pull...
+func ShipContainerCommandLogs(
 	ctx context.Context,
 	r io.ReadCloser,
 	stdtype stdcopy.StdType,
@@ -155,10 +156,10 @@ func PullImage(
 			return p.Publish(ctx, t)
 		},
 	)
-	wg.Go(func(ctx context.Context) { ShipCmdLogs(ctx, stdout, stdcopy.Stdout, p) })
+	wg.Go(func(ctx context.Context) { ShipContainerCommandLogs(ctx, stdout, stdcopy.Stdout, p) })
 	wg.Go(func(ctx context.Context) {
 		defer close(ignoreErrorsSig)
-		ShipCmdLogs(ctx, stderr, stdcopy.Stderr, checkIgnoreErrors)
+		ShipContainerCommandLogs(ctx, stderr, stdcopy.Stderr, checkIgnoreErrors)
 	})
 
 	if err = cmd.Start(); err != nil {

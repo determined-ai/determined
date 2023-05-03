@@ -171,7 +171,6 @@ func (s *PodmanClient) RunContainer(
 	var args []string
 	args = append(args, "run")
 	args = append(args, "--rm")
-	// args = append(args, "--writable-tmpfs")
 	args = append(args, "--workdir", req.ContainerConfig.WorkingDir)
 
 	// Env. variables. c.f. launcher PodmanOverSlurm.java
@@ -200,6 +199,9 @@ func (s *PodmanClient) RunContainer(
 		if err != nil {
 			return nil, fmt.Errorf("writing to envfile: %w", err)
 		}
+	}
+	if err := envFile.Close(); err != nil {
+		return nil, fmt.Errorf("closing envfile: %w", err)
 	}
 
 	switch {
@@ -267,18 +269,6 @@ func (s *PodmanClient) RunContainer(
 	}
 	s.wg.Go(func(ctx context.Context) { s.shipPodmanCmdLogs(ctx, stdout, stdcopy.Stdout, p) })
 	s.wg.Go(func(ctx context.Context) { s.shipPodmanCmdLogs(ctx, stderr, stdcopy.Stderr, p) })
-
-	// cudaVisibleDevicesVar := strings.Join(cudaVisibleDevices, ",")
-	// cmd.Env = append(cmd.Env,
-	// 	fmt.Sprintf("SINGULARITYENV_CUDA_VISIBLE_DEVICES=%s", cudaVisibleDevicesVar),
-	// 	fmt.Sprintf("APPTAINERENV_CUDA_VISIBLE_DEVICES=%s", cudaVisibleDevicesVar),
-	// )
-
-	// HACK(singularity): without this, --nv doesn't work right. If the singularity run command
-	// cannot find nvidia-smi, the --nv fails to make it available inside the container, e.g.,
-	// env -i /usr/bin/singularity run --nv \\
-	//   docker://determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-24586f0 nvidia-smi
-	// cmd.Env = append(cmd.Env, fmt.Sprintf("PATH=%s", os.Getenv("PATH")))
 
 	if err := cmd.Start(); err != nil {
 		return nil, fmt.Errorf("starting podman container: %w", err)
@@ -469,7 +459,7 @@ func (s *PodmanClient) shipPodmanCmdLogs(
 	stdtype stdcopy.StdType,
 	p events.Publisher[docker.Event],
 ) {
-	cruntimes.ShipCmdLogs(ctx, r, stdtype, p)
+	cruntimes.ShipContainerCommandLogs(ctx, r, stdtype, p)
 }
 
 func (s *PodmanClient) pprintPodmanCommand(

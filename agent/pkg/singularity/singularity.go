@@ -227,7 +227,9 @@ func (s *SingularityClient) RunContainer(
 	if err != nil {
 		return nil, fmt.Errorf("writing to envfile: %w", err)
 	}
-
+	if err := envFile.Close(); err != nil {
+		return nil, fmt.Errorf("closing envfile: %w", err)
+	}
 	switch {
 	case req.HostConfig.NetworkMode == bridgeNetworking && s.opts.AllowNetworkCreation:
 		// --net sets up a bridge network by default
@@ -528,7 +530,7 @@ func (s *SingularityClient) shipSingularityCmdLogs(
 	stdtype stdcopy.StdType,
 	p events.Publisher[docker.Event],
 ) {
-	cruntimes.ShipCmdLogs(ctx, r, stdtype, p)
+	cruntimes.ShipContainerCommandLogs(ctx, r, stdtype, p)
 }
 
 func (s *SingularityClient) pprintSingularityCommand(
