@@ -78,15 +78,7 @@ func (o *operator) toSQL() (string, error) {
 }
 
 func columnNameToSQL(c string, l *string, t *string) (string, error) {
-	locationType := projectv1.LocationType_LOCATION_TYPE_EXPERIMENT.String()
-	columnType := projectv1.ColumnType_COLUMN_TYPE_UNSPECIFIED.String()
 	var col string
-	if l != nil {
-		locationType = *l
-	}
-	if t != nil {
-		columnType = *t
-	}
 	filterExperimentColMap := map[string]string{
 		"id":              "e.id",
 		"description":     "e.config->>'description'",
@@ -117,23 +109,10 @@ func columnNameToSQL(c string, l *string, t *string) (string, error) {
 			LIMIT 1
 		 ) `,
 	}
-
-	switch locationType {
-	case projectv1.LocationType_LOCATION_TYPE_EXPERIMENT.String():
-		var exists bool
-		col, exists = filterExperimentColMap[c]
-		if !exists {
-			return "", fmt.Errorf("invalid experiment column %s", c)
-		}
-		return col, nil
-	case projectv1.LocationType_LOCATION_TYPE_VALIDATIONS.String():
-		col = fmt.Sprintf(`e.validation_metrics->>'%s'`, strings.TrimPrefix(c, "validation."))
-		switch columnType {
-		case projectv1.ColumnType_COLUMN_TYPE_NUMBER.String():
-			col = fmt.Sprintf(`(%v)::float8`, col)
-		}
-	default:
-		return "", fmt.Errorf("unhandled column location type %v", locationType)
+	var exists bool
+	col, exists = filterExperimentColMap[c]
+	if !exists {
+		return "", fmt.Errorf("invalid experiment column %s", c)
 	}
 	return col, nil
 }
@@ -381,8 +360,8 @@ func (e experimentFilter) toSQL(q *bun.SelectQuery,
 		if err != nil {
 			return nil, err
 		}
-		if e.Location == nil ||
-			*e.Location != projectv1.LocationType_LOCATION_TYPE_HYPERPARAMETERS.String() {
+		if e.Location != nil &&
+			*e.Location == projectv1.LocationType_LOCATION_TYPE_EXPERIMENT.String() {
 			col, err := columnNameToSQL(e.ColumnName, e.Location, e.Type)
 			switch *e.Operator {
 			case contains:
@@ -410,6 +389,29 @@ func (e experimentFilter) toSQL(q *bun.SelectQuery,
 			}
 			if err != nil {
 				return nil, err
+			}
+		} else if e.Location != nil &&
+			*e.Location == projectv1.LocationType_LOCATION_TYPE_VALIDATIONS.String() {
+			queryColumnType := projectv1.ColumnType_COLUMN_TYPE_UNSPECIFIED.String()
+			if e.Type != nil {
+				queryColumnType = *e.Type
+			}
+			col := `e.validation_metrics->>?`
+			switch queryColumnType {
+			case projectv1.ColumnType_COLUMN_TYPE_NUMBER.String():
+				col = fmt.Sprintf(`(%v)::float8`, col)
+			}
+			switch *e.Operator {
+			case empty, notEmpty:
+				q = q.Where(fmt.Sprintf("%s ?", col), c, bun.Safe(oSQL))
+			default:
+				if c != nil && *c == or {
+					q.WhereOr(fmt.Sprintf("%s ? ?", col), c,
+						bun.Safe(oSQL), *e.Value)
+				} else {
+					q.WhereOr(fmt.Sprintf("%s ? ?", col), c,
+						bun.Safe(oSQL), *e.Value)
+				}
 			}
 		} else {
 			return hpToSQL(e.ColumnName, e.Type, e.Value, e.Operator, q, c)
