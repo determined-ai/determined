@@ -426,7 +426,7 @@ class _PyTorchTrialController:
         return util.is_overridden(self.trial.evaluate_full_dataset, PyTorchTrial)
 
     def _set_data_loaders(self) -> None:
-        skip_batches = self.state.batches_trained
+        skip_batches = self.start_from_batch
 
         num_replicas = self.context.distributed.size
         rank = self.context.distributed.rank
