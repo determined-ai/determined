@@ -10,6 +10,7 @@ from .experiment import (
     kill_experiments,
     kill_single,
     kill_trial,
+    print_trial_logs,
     check_if_string_present_in_trial_logs,
     assert_patterns_in_trial_logs,
     create_experiment,
