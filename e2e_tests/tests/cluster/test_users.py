@@ -1053,31 +1053,11 @@ def test_logout_all(clean_auth: None, login_admin: None) -> None:
     )
     # login test user.
     api_utils.configure_token_store(creds)
-    # Log out all users. DEFAULT_DETERMINED_USER is still logged in because
-    # it's not specified and not the active user.
     child = det_spawn(["user", "logout", "--all"])
     child.wait()
     child.close()
     assert child.status == 0
-    # We should be able to list experiments.
-    child = det_spawn(["e", "list"])
-    child.read()
-    child.wait()
-    child.close()
-    assert child.status == 0
-
-    # login test user.
-    api_utils.configure_token_store(creds)
-    # Log in as determined.
-    api_utils.configure_token_store(
-        authentication.Credentials(constants.DEFAULT_DETERMINED_USER, password)
-    )
-    # Log out all users.
-    child = det_spawn(["user", "logout", "--all"])
-    child.wait()
-    child.close()
-    assert child.status == 0
-    # Now trying to list experiments should result in an error.
+    # Trying to list experiments should result in an error.
     child = det_spawn(["e", "list"])
     expected = "Unauthenticated"
     assert expected in str(child.read())

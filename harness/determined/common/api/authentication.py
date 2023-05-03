@@ -223,12 +223,6 @@ def logout_all(master_address: Optional[str], cert: Optional[certs.Cert]) -> Non
     token_store = TokenStore(master_address)
 
     users = token_store.get_all_users()
-    # Don't log out of DEFAULT_DETERMINED_USER when it's not specified and not the active user.
-    if (
-        token_store.get_active_user() != constants.DEFAULT_DETERMINED_USER
-        and constants.DEFAULT_DETERMINED_USER in users
-    ):
-        users.remove(constants.DEFAULT_DETERMINED_USER)
 
     for user in users:
         logout(master_address, user, cert)
