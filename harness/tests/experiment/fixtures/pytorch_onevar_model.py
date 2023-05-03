@@ -341,7 +341,7 @@ class OneVarAMPBaseTrial(OneVarTrial):
         ]
 
     def build_training_data_loader(self) -> torch.utils.data.DataLoader:
-        dataset = AMPTestDataset(self._stages, self._agg_freq)
+        '''dataset = AMPTestDataset(self._stages, self._agg_freq)
         seed = self.context.get_trial_seed()
         num_workers = self.context.distributed.get_size()
         rank = self.context.distributed.get_rank()
@@ -355,7 +355,11 @@ class OneVarAMPBaseTrial(OneVarTrial):
         batch_sampler = torch.utils.data.BatchSampler(sampler, batch_size, drop_last=False)
         batch_sampler = samplers.SkipBatchSampler(batch_sampler, skip_batches)
 
-        return pytorch.DataLoader(dataset, batch_sampler=batch_sampler)
+        return pytorch.DataLoader(dataset, batch_sampler=batch_sampler)'''
+        return pytorch.DataLoader(
+            AMPTestDataset(self._stages, self._agg_freq),
+            batch_size=self.context.get_per_slot_batch_size(),
+        )
 
 
 class OneVarApexAMPTrial(OneVarAMPBaseTrial):
@@ -417,6 +421,7 @@ class OneVarManualAMPTrial(OneVarAMPBaseTrial):
             )
         )
         super().__init__(context)
+        self.accum = 0
 
     def train_batch(
         self, batch: pytorch.TorchData, epoch_idx: int, batch_idx: int
@@ -428,9 +433,11 @@ class OneVarManualAMPTrial(OneVarAMPBaseTrial):
         # Measure the weight right now.
         w_before = self.model.weight.data.item()
 
+        # XXXXXX LOOK AT THIS AS WELL XXXXXXXXX
         # Calculate expected values for loss (eq 1) and weight (eq 4).
         loss_exp = (label[0] - data[0] * w_before) ** 2
-        w_exp = w_before + 2 * self.lr * data[0] * (label[0] - (data[0] * w_before))
+        #w_exp = w_before + 2 * self.lr * data[0] * (label[0] - (data[0] * w_before))
+        self.accum += 2 * self.lr * data[0] * (label[0] - (data[0] * w_before))
 
         with torch.cuda.amp.autocast():
             output = self.model(data)
@@ -438,12 +445,18 @@ class OneVarManualAMPTrial(OneVarAMPBaseTrial):
 
         scaled_loss = self.scaler.scale(loss)
         self.context.backward(scaled_loss)
-        self.context.step_optimizer(self.opt, scaler=self.scaler)
-        if (batch_idx + 1) % self._agg_freq == 0:
-            self.scaler.update()
 
-        # Measure the weight after the update.
-        w_after = self.model.weight.data.item()
+        if (batch_idx + 1) % self._agg_freq == 0:
+            self.context.step_optimizer(self.opt, scaler=self.scaler)
+            self.scaler.update()
+            # Measure the weight after the update.
+            w_after = self.model.weight.data.item()
+            w_exp = w_before + self.accum
+            self.accum = 0
+        else:
+            # there is no update when aggregating
+            w_exp = w_before
+            w_after = w_exp
 
         # Return values that we can compare as part of the tests.
         return {

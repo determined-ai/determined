@@ -728,6 +728,7 @@ class TestPyTorchTrial:
 
     @pytest.mark.skipif(not torch.cuda.is_available(), reason="no gpu available")
     # @pytest.mark.gpu
+    @pytest.mark.dothis
     @pytest.mark.parametrize(
         "trial_class",
         [
@@ -921,8 +922,6 @@ class TestPyTorchTrial:
         training_metrics["B"] = metrics_callback.training_metrics
         validation_metrics["B"] = metrics_callback.validation_metrics
 
-        print(training_metrics)
-        print(validation_metrics)
 
         for A, B in zip(training_metrics["A"], training_metrics["B"]):
             utils.assert_equivalent_metrics(A, B)
@@ -1126,7 +1125,6 @@ def amp_metrics_test(trial_class, training_metrics, agg_freq=1):
     GROWTH_INTERVAL = trial_class._growth_interval
     MIN_SCALED_LOSS_TO_REDUCE_SCALE = 32760
     growth_countdown = GROWTH_INTERVAL
-    print(training_metrics)
     # Only attempt assertions up to and including the penultimate batch, because
     #  we may not have the updated scale from the final batch.
     for idx, (metrics, next_metrics) in enumerate(zip(training_metrics[:-1], training_metrics[1:])):
