@@ -60,8 +60,8 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
 
   const colorMap = useGlasbey(selectedExperimentIds);
   const pageRef = useRef<HTMLElement>(null);
-  const { width, height } = useResize(pageRef);
-
+  const { width } = useResize(pageRef);
+  const { height: wholePageHeight } = useResize();
   const [scrollPositionSetCount] = useState(observable(0));
 
   const handleScroll = useCallback(
@@ -234,7 +234,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         ) : error ? (
           <Error />
         ) : (
-          <>
+          <div>
             <TableActionBar
               experiments={experiments}
               filters={experimentFilters}
@@ -255,7 +255,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
               fetchExperiments={fetchExperiments}
               handleScroll={handleScroll}
               handleUpdateExperimentList={handleUpdateExperimentList}
-              height={height - 20}
+              height={wholePageHeight - 140}
               page={page}
               project={project}
               projectColumns={projectColumns}
@@ -267,7 +267,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
               setSortableColumnIds={setVisibleColumns}
               sortableColumnIds={settings.columns}
             />
-          </>
+          </div>
         )}
       </>
     </Page>
