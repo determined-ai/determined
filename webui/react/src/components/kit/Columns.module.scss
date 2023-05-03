@@ -19,7 +19,7 @@
   }
 }
 
-@media only screen and (max-width: $breakpoint-mobile) {
+@media only screen and (max-width: $breakpoint-tablet) {
   .columns {
     flex-wrap: wrap;
   }
