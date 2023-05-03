@@ -48,7 +48,6 @@ def _run_searcher(search_method: BaseDSATSearchMethod, all_metrics):
             trials_per_random_config=_defaults.AUTOTUNING_ARG_DEFAULTS["trials-per-random-config"],
             start_profile_step=_defaults.AUTOTUNING_ARG_DEFAULTS["start-profile-step"],
             end_profile_step=_defaults.AUTOTUNING_ARG_DEFAULTS["end-profile-step"],
-            # deepspeed_config=_defaults.AUTOTUNING_ARG_DEFAULTS["deepspeed-config"],
             metric=_defaults.AUTOTUNING_ARG_DEFAULTS["metric"],
             random_seed=_defaults.AUTOTUNING_ARG_DEFAULTS["random-seed"],
             # NONE TYPES

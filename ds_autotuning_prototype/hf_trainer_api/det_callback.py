@@ -4,7 +4,7 @@ import os
 from typing import Any, Dict, List, Optional, Tuple
 
 import determined as det
-from determined.pytorch.deepspeed import dsat, overwrite_deepspeed_config
+from determined.pytorch import dsat
 from transformers import TrainerCallback, TrainerControl, TrainerState, TrainingArguments
 from transformers.trainer_utils import get_last_checkpoint
 
@@ -318,7 +318,7 @@ def replace_ds_config_file_using_overwrites(
         # If overwrites are provided, use them. The deepspeed configuration is assumed to have a
         # consistent batch size configuration at this point, with all of train_batch_size,
         # train_micro_batch_size_per_gpu, and gradient_accumulation_steps filled in.
-        ds_config_dict_with_overwrites = overwrite_deepspeed_config(
+        ds_config_dict_with_overwrites = dsat.overwrite_deepspeed_config(
             ds_config_dict_with_overwrites, hparams.get(overwrite_key, {})
         )
         # overwrite the original config
