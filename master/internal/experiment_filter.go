@@ -123,7 +123,7 @@ func columnNameToSQL(c string, l *string, t *string) (string, error) {
 		var exists bool
 		col, exists = filterExperimentColMap[c]
 		if !exists {
-			return "", fmt.Errorf("invalid experiment column %s", col)
+			return "", fmt.Errorf("invalid experiment column %s", c)
 		}
 		return col, nil
 	case projectv1.LocationType_LOCATION_TYPE_VALIDATIONS.String():
