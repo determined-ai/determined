@@ -360,8 +360,12 @@ func (e experimentFilter) toSQL(q *bun.SelectQuery,
 		if err != nil {
 			return nil, err
 		}
-		if e.Location != nil &&
-			*e.Location == projectv1.LocationType_LOCATION_TYPE_EXPERIMENT.String() {
+		location := projectv1.LocationType_LOCATION_TYPE_EXPERIMENT.String()
+		if e.Location != nil {
+			location = *e.Location
+		}
+		switch location {
+		case projectv1.LocationType_LOCATION_TYPE_EXPERIMENT.String():
 			col, err := columnNameToSQL(e.ColumnName, e.Location, e.Type)
 			switch *e.Operator {
 			case contains:
@@ -390,8 +394,7 @@ func (e experimentFilter) toSQL(q *bun.SelectQuery,
 			if err != nil {
 				return nil, err
 			}
-		} else if e.Location != nil &&
-			*e.Location == projectv1.LocationType_LOCATION_TYPE_VALIDATIONS.String() {
+		case projectv1.LocationType_LOCATION_TYPE_VALIDATIONS.String():
 			queryColumnType := projectv1.ColumnType_COLUMN_TYPE_UNSPECIFIED.String()
 			if e.Type != nil {
 				queryColumnType = *e.Type
@@ -413,7 +416,7 @@ func (e experimentFilter) toSQL(q *bun.SelectQuery,
 						bun.Safe(oSQL), *e.Value)
 				}
 			}
-		} else {
+		case projectv1.LocationType_LOCATION_TYPE_HYPERPARAMETERS.String():
 			return hpToSQL(e.ColumnName, e.Type, e.Value, e.Operator, q, c)
 		}
 	case group:
