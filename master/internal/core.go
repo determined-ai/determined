@@ -79,10 +79,10 @@ const (
 
 // staticWebDirectoryPaths are the locations of static files that comprise the webui.
 var staticWebDirectoryPaths = map[string]bool{
-	"/docs":          true,
+	"/docs":                    true,
 	webuiBaseRoute + "/design": true,
-	webuiBaseRoute:   true,
-	"/docs/rest-api": true,
+	webuiBaseRoute:             true,
+	"/docs/rest-api":           true,
 }
 
 // Master manages the Determined master state.
