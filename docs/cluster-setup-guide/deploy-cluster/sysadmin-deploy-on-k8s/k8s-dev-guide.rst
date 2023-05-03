@@ -111,8 +111,8 @@ python3-venv:
  Prepare to run Determined Master
 **********************************
 
-Once the dependencies are installed, you will need to prepare the repository to run `devcluster`, a
-tool for running Determined. First, enter the Determined reposiroty and run:
+Once the dependencies are installed, you will need to prepare the repository to run ``devcluster``, a
+tool for running Determined. First, enter the Determined repository and run:
 
 .. code:: bash
 
@@ -129,8 +129,8 @@ following fields:
 
    commands:
    p: make -C harness build  # rebuild Python
-   w: make -C webui build    # rebuild Webui
-   c: make -C docs build     # rebuild doCs
+   w: make -C webui build    # rebuild WebUI
+   c: make -C docs build     # rebuild docs
 
    stages:
    - master:
@@ -166,7 +166,7 @@ following fields:
          root: tools/build
 
 You are now ready to build and run the Determined Master! From the Determined repo, run ``devcluster
---no-guess-host`` to build and run the Master.
+--no-guess-host`` to build and run the master.
 
 ************
  Next Steps
