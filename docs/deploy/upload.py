@@ -138,8 +138,12 @@ if __name__ == "__main__":
         )
     )
 
-    # create invalidation if distribution ID provided
-    if args.cf_distribution:
+    # create invalidation if distribution ID provided and not a preview site
+    # NOTE: we're explicitly avoiding invalidations for preview site uploads as
+    # we have a quota on how many invalidations we can create, and we really
+    # shouldn't waste them on what could potentially be dozens of changesets per
+    # docs PR.
+    if args.cf_distribution and not args.preview:
         client = boto3.client("cloudfront")
         timestamp = time.time_ns()
         path = "/{}/*".format(upload_root)
