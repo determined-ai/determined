@@ -3,7 +3,7 @@ import React, { CSSProperties, ReactNode } from 'react';
 import css from './Columns.module.scss';
 
 interface ColumnProps {
-  children: ReactNode;
+  children?: ReactNode;
   align?: 'left' | 'center' | 'right';
 }
 
