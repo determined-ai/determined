@@ -395,6 +395,7 @@ func (e experimentFilter) toSQL(q *bun.SelectQuery,
 				return nil, err
 			}
 		case projectv1.LocationType_LOCATION_TYPE_VALIDATIONS.String():
+			metricName := strings.TrimPrefix(e.ColumnName, "validation.")
 			queryColumnType := projectv1.ColumnType_COLUMN_TYPE_UNSPECIFIED.String()
 			if e.Type != nil {
 				queryColumnType = *e.Type
@@ -405,14 +406,26 @@ func (e experimentFilter) toSQL(q *bun.SelectQuery,
 				col = fmt.Sprintf(`(%v)::float8`, col)
 			}
 			switch *e.Operator {
+			case contains:
+				if c != nil && *c == or {
+					q.WhereOr(fmt.Sprintf("%s LIKE ?", col), metricName, fmt.Sprintf("%%%s%%", *e.Value))
+				} else {
+					q.Where(fmt.Sprintf("%s LIKE ?", col), metricName, fmt.Sprintf("%%%s%%", *e.Value))
+				}
+			case doesNotContain:
+				if c != nil && *c == or {
+					q.WhereOr(fmt.Sprintf("%s NOT LIKE ?", col), metricName, fmt.Sprintf("%%%s%%", *e.Value))
+				} else {
+					q.Where(fmt.Sprintf("%s NOT LIKE ?", col), metricName, fmt.Sprintf("%%%s%%", *e.Value))
+				}
 			case empty, notEmpty:
-				q = q.Where(fmt.Sprintf("%s ?", col), c, bun.Safe(oSQL))
+				q = q.Where(fmt.Sprintf("%s ?", col), metricName, bun.Safe(oSQL))
 			default:
 				if c != nil && *c == or {
-					q.WhereOr(fmt.Sprintf("%s ? ?", col), c,
+					q.WhereOr(fmt.Sprintf("%s ? ?", col), metricName,
 						bun.Safe(oSQL), *e.Value)
 				} else {
-					q.Where(fmt.Sprintf("%s ? ?", col), c,
+					q.Where(fmt.Sprintf("%s ? ?", col), metricName,
 						bun.Safe(oSQL), *e.Value)
 				}
 			}
