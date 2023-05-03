@@ -75,7 +75,7 @@ publish: pre-publish
 	$(MAKE) -C deploy publish
 
 .PHONY: preview
-preview: build/stamp
+preview: build
 	python deploy/upload.py --preview
 
 live: build/sp-html.stamp
