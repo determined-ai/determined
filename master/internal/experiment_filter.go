@@ -409,7 +409,7 @@ func (e experimentFilter) toSQL(q *bun.SelectQuery,
 					q.WhereOr(fmt.Sprintf("%s ? ?", col), c,
 						bun.Safe(oSQL), *e.Value)
 				} else {
-					q.WhereOr(fmt.Sprintf("%s ? ?", col), c,
+					q.Where(fmt.Sprintf("%s ? ?", col), c,
 						bun.Safe(oSQL), *e.Value)
 				}
 			}
