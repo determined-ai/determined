@@ -399,33 +399,31 @@ func (e experimentFilter) toSQL(q *bun.SelectQuery,
 				queryColumnType = *e.Type
 			}
 			col := `e.validation_metrics->>?`
+			var queryArgs []interface{}
+			var queryString string
 			switch queryColumnType {
 			case projectv1.ColumnType_COLUMN_TYPE_NUMBER.String():
 				col = fmt.Sprintf(`(%v)::float8`, col)
 			}
 			switch *e.Operator {
 			case contains:
-				if c != nil && *c == or {
-					q.WhereOr(fmt.Sprintf("%s LIKE ?", col), metricName, fmt.Sprintf("%%%s%%", *e.Value))
-				} else {
-					q.Where(fmt.Sprintf("%s LIKE ?", col), metricName, fmt.Sprintf("%%%s%%", *e.Value))
-				}
+				queryArgs = append(queryArgs, metricName, fmt.Sprintf("%%%s%%", *e.Value))
+				queryString = fmt.Sprintf("%s LIKE ?", col)
 			case doesNotContain:
-				if c != nil && *c == or {
-					q.WhereOr(fmt.Sprintf("%s NOT LIKE ?", col), metricName, fmt.Sprintf("%%%s%%", *e.Value))
-				} else {
-					q.Where(fmt.Sprintf("%s NOT LIKE ?", col), metricName, fmt.Sprintf("%%%s%%", *e.Value))
-				}
+				queryArgs = append(queryArgs, metricName, fmt.Sprintf("%%%s%%", *e.Value))
+				queryString = fmt.Sprintf("%s NOT LIKE ?", col)
 			case empty, notEmpty:
-				q = q.Where(fmt.Sprintf("%s ?", col), metricName, bun.Safe(oSQL))
+				queryArgs = append(queryArgs, metricName, bun.Safe(oSQL))
+				queryString = fmt.Sprintf("%s ?", col)
 			default:
-				if c != nil && *c == or {
-					q.WhereOr(fmt.Sprintf("%s ? ?", col), metricName,
-						bun.Safe(oSQL), *e.Value)
-				} else {
-					q.Where(fmt.Sprintf("%s ? ?", col), metricName,
-						bun.Safe(oSQL), *e.Value)
-				}
+				queryArgs = append(queryArgs, metricName,
+					bun.Safe(oSQL), *e.Value)
+				queryString = fmt.Sprintf("%s ? ?", col)
+			}
+			if c != nil && *c == or {
+				q.WhereOr(queryString, queryArgs...)
+			} else {
+				q.Where(queryString, queryArgs...)
 			}
 		case projectv1.LocationType_LOCATION_TYPE_HYPERPARAMETERS.String():
 			return hpToSQL(e.ColumnName, e.Type, e.Value, e.Operator, q, c)
