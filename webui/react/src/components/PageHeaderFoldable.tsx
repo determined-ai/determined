@@ -1,8 +1,7 @@
-import { Dropdown } from 'antd';
-import type { DropdownProps, MenuProps } from 'antd';
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 
 import Button from 'components/kit/Button';
+import Dropdown, { DropdownEvent, MenuItem } from 'components/kit/Dropdown';
 import Icon from 'components/kit/Icon';
 import Tooltip from 'components/kit/Tooltip';
 import { isMouseEvent } from 'shared/utils/routes';
@@ -39,28 +38,26 @@ const PageHeaderFoldable: React.FC<Props> = ({ foldableContent, leftContent, opt
   const [isExpanded, setIsExpanded] = useState(false);
 
   const dropdownClasses = [css.optionsDropdown];
-
-  let dropdownOptions: DropdownProps['menu'] = {};
   if (options && options.length > 0) {
     if (options.length === 1) dropdownClasses.push(css.optionsDropdownOneChild);
     if (options.length === 2) dropdownClasses.push(css.optionsDropdownTwoChild);
     if (options.length === 3) dropdownClasses.push(css.optionsDropdownThreeChild);
-    const onItemClick: MenuProps['onClick'] = (e) => {
-      const opt = options.find((opt) => opt.key === e.key) as Option;
-      if (isMouseEvent(e.domEvent)) {
-        opt.onClick?.(e.domEvent);
-      }
-    };
-
-    const menuItems: MenuProps['items'] = options.map((opt) => ({
-      className: css.optionsDropdownItem,
-      disabled: opt.disabled || !opt.onClick,
-      key: opt.key,
-      label: renderOptionLabel(opt),
-    }));
-
-    dropdownOptions = { items: menuItems, onClick: onItemClick };
   }
+
+  const menu: MenuItem[] = (options ?? []).map((option) => ({
+    className: css.optionsDropdownItem,
+    disabled: option.disabled || !option.onClick,
+    key: option.key,
+    label: renderOptionLabel(option),
+  }));
+
+  const handleDropdown = useCallback(
+    (key: string, e: DropdownEvent) => {
+      const option = options?.find((option) => option.key === key);
+      if (isMouseEvent(e)) option?.onClick?.(e);
+    },
+    [options],
+  );
 
   return (
     <div className={css.base}>
@@ -96,8 +93,8 @@ const PageHeaderFoldable: React.FC<Props> = ({ foldableContent, leftContent, opt
               </div>
             ))}
           </div>
-          {dropdownOptions && (
-            <Dropdown menu={dropdownOptions} placement="bottomRight" trigger={['click']}>
+          {menu.length !== 0 && (
+            <Dropdown menu={menu} placement="bottomRight" onClick={handleDropdown}>
               <div className={dropdownClasses.join(' ')}>
                 <Button ghost icon={<Icon name="overflow-vertical" title="Action menu" />} />
               </div>

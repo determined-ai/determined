@@ -3,11 +3,11 @@ import { MenuProps } from 'antd/es/menu/menu';
 import { PropsWithChildren, useMemo } from 'react';
 import * as React from 'react';
 
-interface MenuDivider {
+export interface MenuDivider {
   type: 'divider';
 }
 
-interface MenuOption {
+export interface MenuOption {
   className?: string;
   danger?: boolean;
   disabled?: boolean;

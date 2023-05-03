@@ -249,17 +249,13 @@ const WorkspaceList: React.FC = () => {
   const actionDropdown = useCallback(
     ({
       record,
-      onVisibleChange,
       children,
     }: {
       children: React.ReactNode;
       onVisibleChange?: (visible: boolean) => void;
       record: Workspace;
     }) => (
-      <WorkspaceActionDropdown
-        workspace={record}
-        onComplete={fetchWorkspaces}
-        onVisibleChange={onVisibleChange}>
+      <WorkspaceActionDropdown workspace={record} onComplete={fetchWorkspaces}>
         {children}
       </WorkspaceActionDropdown>
     ),

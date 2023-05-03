@@ -1,9 +1,9 @@
-import { Dropdown, Space } from 'antd';
-import type { DropDownProps, MenuProps } from 'antd';
+import { Space } from 'antd';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo } from 'react';
 
 import Button from 'components/kit/Button';
+import Dropdown from 'components/kit/Dropdown';
 import Icon from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
 import Nameplate from 'components/kit/Nameplate';
@@ -18,7 +18,6 @@ import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { V1Group, V1Role, V1RoleWithAssignments } from 'services/api-ts-sdk';
-import { ValueOf } from 'shared/types';
 import { alphaNumericSorter } from 'shared/utils/sort';
 import { User, UserOrGroup, UserOrGroupWithRoleInfo, Workspace } from 'types';
 import { getUserOrGroupWithRoleInfo, isUserWithRoleInfo } from 'utils/user';
@@ -51,6 +50,12 @@ interface GroupOrMemberActionDropdownProps {
   workspace: Workspace;
 }
 
+const MenuKey = {
+  Remove: 'Remove',
+} as const;
+
+const DROPDOWN_MENU = [{ danger: true, key: MenuKey.Remove, label: MenuKey.Remove }];
+
 const GroupOrMemberActionDropdown: React.FC<GroupOrMemberActionDropdownProps> = ({
   name,
   roleIds,
@@ -60,30 +65,20 @@ const GroupOrMemberActionDropdown: React.FC<GroupOrMemberActionDropdownProps> = 
 }) => {
   const WorkspaceMemberRemoveModal = useModal(WorkspaceMemberRemoveComponent);
 
-  const menuItems: DropDownProps['menu'] = useMemo(() => {
-    const MenuKey = {
-      Remove: 'remove',
-    } as const;
-
-    const funcs = {
-      [MenuKey.Remove]: () => {
-        WorkspaceMemberRemoveModal.open();
-      },
-    };
-
-    const onItemClick: MenuProps['onClick'] = (e) => {
-      funcs[e.key as ValueOf<typeof MenuKey>]();
-    };
-
-    return {
-      items: [{ danger: true, key: MenuKey.Remove, label: 'Remove' }],
-      onClick: onItemClick,
-    };
-  }, [WorkspaceMemberRemoveModal]);
+  const handleDropdown = useCallback(
+    (key: string) => {
+      switch (key) {
+        case MenuKey.Remove:
+          WorkspaceMemberRemoveModal.open();
+          break;
+      }
+    },
+    [WorkspaceMemberRemoveModal],
+  );
 
   return (
     <div className={css.dropdown}>
-      <Dropdown menu={menuItems} placement="bottomRight" trigger={['click']}>
+      <Dropdown menu={DROPDOWN_MENU} placement="bottomRight" onClick={handleDropdown}>
         <Button icon={<Icon name="overflow-vertical" title="Action menu" />} type="text" />
       </Dropdown>
       <WorkspaceMemberRemoveModal.Component

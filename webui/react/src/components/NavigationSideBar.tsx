@@ -285,9 +285,9 @@ const NavigationSideBar: React.FC = () => {
                     .sort((a, b) => ((a.pinnedAt ?? 0) < (b.pinnedAt ?? 0) ? -1 : 1))
                     .map((workspace) => (
                       <WorkspaceActionDropdown
+                        isContextMenu
                         key={workspace.id}
                         returnIndexOnDelete={false}
-                        trigger={['contextMenu']}
                         workspace={workspace}>
                         <li>
                           <NavigationItem

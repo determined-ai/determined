@@ -316,8 +316,8 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
       record: Project;
     }) => (
       <ProjectActionDropdown
+        isContextMenu
         project={record}
-        trigger={['contextMenu']}
         workspaceArchived={workspace?.archived}
         onComplete={fetchProjects}
         onVisibleChange={onVisibleChange}>

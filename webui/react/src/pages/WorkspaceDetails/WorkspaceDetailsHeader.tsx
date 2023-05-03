@@ -31,10 +31,7 @@ const WorkspaceDetailsHeader: React.FC<Props> = ({ workspace, fetchWorkspace }: 
           </Tooltip>
         )}
         {!workspace.immutable && (
-          <WorkspaceActionDropdown
-            trigger={['click']}
-            workspace={workspace}
-            onComplete={fetchWorkspace}>
+          <WorkspaceActionDropdown workspace={workspace} onComplete={fetchWorkspace}>
             <DownOutlined className={css.dropdown} />
           </WorkspaceActionDropdown>
         )}
