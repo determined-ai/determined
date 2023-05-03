@@ -2,7 +2,9 @@
 export PUBLIC_URL ?= /det
 export ESLINT_NO_DEV_ERRORS ?= true
 export NODE_OPTIONS=--max-old-space-size=6144
+export PLAYWRIGHT_BROWSERS_PATH=0
 source_files := $(shell find src public -type f)
+merge_base := $(shell git merge-base main HEAD)
 
 .PHONY: default
 default: get-deps
@@ -105,6 +107,32 @@ test:
 .PHONY: test-ci
 test-ci:
 	VITEST_MAX_THREADS=6 VITEST_MIN_THREADS=1 npm run test:coverage -- --reporter=junit --reporter=default --outputFile.junit=coverage/junit.xml
+
+.PHONY: visual-test-deps
+visual-test-deps:
+	npx playwright install-deps
+
+screenshots/HEAD: node_modules visual-test-deps
+	node scripts/designkit-screenshot.mjs HEAD
+
+# copying the scripts/fetch dependency from head should only be necessary until the pr is
+# merged. we can remove it afterwards.
+screenshots/MAIN: node_modules visual-test-deps
+	cp -r scripts new-scripts
+	git checkout $(merge_base)
+	npm ci --no-audit
+	npm install undici
+	node new-scripts/designkit-screenshot.mjs MAIN
+	git reset --hard HEAD
+	rm -rf new-scripts
+	git checkout -
+	npm ci --no-audit
+
+screenshot-summary.html: screenshots/HEAD screenshots/MAIN
+	node scripts/make-screenshot-diff.mjs
+
+.PHONY: visual-test
+visual-test: screenshot-summary.html
 
 # shared-web helpers
 
