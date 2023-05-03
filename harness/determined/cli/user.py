@@ -169,7 +169,7 @@ args_description = [
                 "--all",
                 "-a",
                 action="store_true",
-                help="log all users out",
+                help="log out of all cached sessions for the current master",
             ),
         ]),
         Cmd("activate", activate_user, "activate user", [
