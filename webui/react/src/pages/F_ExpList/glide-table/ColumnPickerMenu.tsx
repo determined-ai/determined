@@ -1,6 +1,6 @@
 import { Popover, Space } from 'antd';
 import { CheckboxChangeEvent } from 'antd/es/checkbox';
-import React, { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { ChangeEvent, useCallback, useMemo, useState } from 'react';
 
 import Button from 'components/kit/Button';
 import Checkbox from 'components/kit/Checkbox';
@@ -146,17 +146,6 @@ const ColumnPickerMenu: React.FC<ColumnMenuProps> = ({
   );
 
   const columnState = useMemo(() => new Set(initialVisibleColumns), [initialVisibleColumns]);
-
-  useEffect(() => {
-    if (Object.keys(columnState).length === 0) return;
-    /* eslint-disable @typescript-eslint/no-unused-vars */
-    setVisibleColumns(
-      Object.entries(columnState)
-        .filter(([_, checked]) => checked)
-        .map(([column, _]) => column),
-    );
-    /* eslint-enable @typescript-eslint/no-unused-vars */
-  }, [columnState, setVisibleColumns]);
 
   const handleShowSuggested = useCallback(() => {
     setVisibleColumns(defaultExperimentColumns);
