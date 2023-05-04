@@ -1343,11 +1343,8 @@ func (a *apiServer) getCreateExperimentsProject(projectID int,
 	} else if err != nil {
 		return nil, err
 	}
-	var ok bool
-	if ok, err = project.AuthZProvider.Get().CanGetProject(context.TODO(), *user, p); err != nil {
+	if err = project.AuthZProvider.Get().CanGetProject(context.TODO(), *user, p); err != nil {
 		return nil, err
-	} else if !ok {
-		return nil, errProjectNotFound
 	}
 	return p, nil
 }
