@@ -392,7 +392,7 @@ def test_cifar10(tmp_path: Path):
         steps_completed = trainer.get_steps_completed()
 
     example_path = utils.cv_examples_path("cifar10_tf_keras/model_def.py")
-    trial_module = utils.import_module("CIFARTrial", example_path)
+    trial_module = utils.import_module("model_def", example_path)
     trial_cls = getattr(trial_module, "CIFARTrial")  # noqa: B009
 
     hparams = {
@@ -472,7 +472,7 @@ def test_tf2_no_op(tmp_path: Path):
         steps_completed = trainer.get_steps_completed()
 
     example_path = utils.fixtures_path("keras_tf2_disabled_no_op/model_def.py")
-    trial_module = utils.import_module("NoopKerasTrial", example_path)
+    trial_module = utils.import_module("model_def", example_path)
     trial_cls = getattr(trial_module, "NoopKerasTrial")  # noqa: B009
     trial_cls._searcher_metric = "random"
 

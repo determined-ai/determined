@@ -1060,6 +1060,7 @@ class TestPyTorchTrial:
         assert state.batches_trained == 1, "batches_trained does not match"
         assert state.epochs_trained == 0, "epochs_trained does not match"
 
+    @pytest.mark.dothis
     def test_pytorch_mnist(self, tmp_path: pathlib.Path):
         checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
 
@@ -1075,7 +1076,7 @@ class TestPyTorchTrial:
         exp_config.update(config)
 
         example_path = utils.tutorials_path("mnist_pytorch/model_def.py")
-        trial_module = utils.import_module("MNistTrial", example_path)
+        trial_module = utils.import_module("model_def", example_path)
         trial_class = getattr(trial_module, "MNistTrial")  # noqa: B009
         trial_class._searcher_metric = "validation_loss"
 
