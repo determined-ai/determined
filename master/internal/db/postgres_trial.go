@@ -496,10 +496,8 @@ func (db *PgDB) addTrialMetrics(
 		- this can take in a metric_type and always insert into `metrics`.
 		- simplify rollback logic: now it only operates on one table.
 		- MetricType could live in trialv1.TrialMetrics :thinking_face:
-		- swap targetTable with `metrics`
 	*/
-	isValidation := model.MetricType(mType) == model.ValidationMetric
-	const targetTable = "metrics"
+	isValidation := mType == model.ValidationMetric
 
 	metricsJSONPath := "avg_metrics"
 	metricsBody := map[string]interface{}{
@@ -559,16 +557,15 @@ WHERE trial_id = $1
 		}
 
 		var metricRowID int
-		if err := tx.QueryRowContext(ctx, fmt.Sprintf(`
+		if err := tx.QueryRowContext(ctx, `
 INSERT INTO metrics
 	(trial_id, trial_run_id, end_time, metrics, total_batches, type)
 VALUES
 	($1, $2, now(), $3, $4, $5)
-RETURNING id
-`, targetTable),
-			int(m.TrialId), int(m.TrialRunId), metricsBody, int(m.StepsCompleted), mType
+RETURNING id`,
+			int(m.TrialId), int(m.TrialRunId), metricsBody, int(m.StepsCompleted), mType,
 		).Scan(&metricRowID); err != nil {
-			return errors.Wrap(err, fmt.Sprintf("inserting metrics into %s", targetTable))
+			return errors.Wrap(err, "inserting metrics")
 		}
 
 		if rollbacks > 0 {
