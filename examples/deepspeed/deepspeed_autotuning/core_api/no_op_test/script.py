@@ -3,8 +3,9 @@ import logging
 import random
 from typing import Any, Dict
 
-import determined as det
 from attrdict import AttrDict
+
+import determined as det
 from determined.pytorch import dsat
 from determined.pytorch.dsat import _defaults
 
@@ -36,7 +37,10 @@ def main(
     else:
         should_oom = random.randint(0, 3) == 0
         path = _defaults.AUTOTUNING_RESULTS_PATH
-        metrics = {"throughput": random.randint(1, 100)}
+        metrics = {
+            name: random.randint(1, 100)
+            for name in _defaults.SMALLER_IS_BETTER_METRICS + _defaults.LARGER_IS_BETTER_METRICS
+        }
     if not should_oom:
         with open(path, "w") as f:
             json.dump(metrics, f)
