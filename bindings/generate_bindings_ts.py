@@ -465,7 +465,7 @@ const convert = (v: unknown): string => {{
     switch (typeof v) {{
         case 'string':
         case 'boolean': {{
-            return encodeURIComponent(v)
+            return v.toString();
         }}
         case 'bigint': {{
             return '' + v
