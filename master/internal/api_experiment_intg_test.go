@@ -967,7 +967,12 @@ func TestAuthZCreateExperiment(t *testing.T) {
 		ProjectId: int32(projectID),
 		Config:    minExpConfToYaml(t),
 	})
+<<<<<<< HEAD
 	require.Equal(t, apiPkg.NotFoundErrs("project", fmt.Sprint(projectID), true), err)
+=======
+	require.Equal(t, status.Errorf(codes.PermissionDenied,
+		fmt.Sprintf("access denied")), err)
+>>>>>>> 0ee5e2139 (fix intg test)
 
 	// Can't view project passed in from config.
 	pAuthZ.On("CanGetProject", mock.Anything, curUser,
@@ -975,8 +980,14 @@ func TestAuthZCreateExperiment(t *testing.T) {
 	_, err = api.CreateExperiment(ctx, &apiv1.CreateExperimentRequest{
 		Config: minExpConfToYaml(t) + "project: Uncategorized\nworkspace: Uncategorized",
 	})
+<<<<<<< HEAD
 	require.Equal(t,
 		apiPkg.NotFoundErrs("workspace/project", "Uncategorized/Uncategorized", true), err)
+=======
+	require.Equal(t, status.Errorf(codes.PermissionDenied,
+		"access denied"), err)
+
+>>>>>>> 0ee5e2139 (fix intg test)
 	// Same as passing in a non existent project.
 	_, err = api.CreateExperiment(ctx, &apiv1.CreateExperimentRequest{
 		Config: minExpConfToYaml(t) + "project: doesntexist123\nworkspace: doesntexist123",

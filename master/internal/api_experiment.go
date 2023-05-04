@@ -1462,10 +1462,18 @@ func (a *apiServer) CreateExperiment(
 		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
 	}
 
+	var commitDate *time.Time
+	pt, err := protoutils.ToTime(req.GitCommitDate)
+	if err == nil {
+		commitDate = &pt
+	}
+
+	var parentIDPtr *int
 	if req.ParentId != 0 {
+		parentIDPtr = ptrs.Ptr(int(req.ParentId))
 		// Can't use getExperimentAndCheckDoActions since model.Experiment doesn't have ParentArchived.
 		var parentExp *experimentv1.Experiment
-		parentExp, err = a.getExperiment(ctx, *user, int(req.ParentId))
+		parentExp, err = a.getExperiment(ctx, *user, *parentIDPtr)
 		if err != nil {
 			return nil, err
 		}
@@ -1492,11 +1500,13 @@ func (a *apiServer) CreateExperiment(
 		if _, ok := err.(ErrProjectNotFound); ok {
 			return nil, status.Errorf(codes.NotFound, err.Error())
 		}
+		if err.Error() == "access denied" {
+			return nil, status.Errorf(codes.PermissionDenied, err.Error())
+		}
 		return nil, status.Errorf(codes.InvalidArgument, "invalid experiment: %s", err)
 	}
 
 	modelDef := filesToArchive(req.ModelDefinition)
-	parentIDPtr := ptrs.Ptr(int(req.ParentId))
 	taskSpec, err := a.populateTaskSpec(user, modelDef, activeConfig)
 	if err != nil {
 		return nil, err
