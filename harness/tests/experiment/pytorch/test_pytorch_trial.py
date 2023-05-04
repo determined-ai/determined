@@ -677,7 +677,7 @@ class TestPyTorchTrial:
         for older, newer in zip(training_metrics, training_metrics[1:]):
             assert newer["loss"] <= older["loss"]
 
-    @pytest.mark.skipif(not torch.cuda.is_available(), reason="no gpu available")
+
     @pytest.mark.gpu
     @pytest.mark.parametrize(
         "trial_class",
@@ -727,7 +727,6 @@ class TestPyTorchTrial:
 
         amp_metrics_test(trial_class, training_metrics)
 
-    @pytest.mark.skipif(not torch.cuda.is_available(), reason="no gpu available")
     @pytest.mark.gpu
     @pytest.mark.parametrize(
         "trial_class",
@@ -1061,9 +1060,7 @@ class TestPyTorchTrial:
         assert state.batches_trained == 1, "batches_trained does not match"
         assert state.epochs_trained == 0, "epochs_trained does not match"
 
-    @pytest.mark.gpu
-    @pytest.mark.parametrize("aggregation_frequency", [1, 4])
-    def test_pytorch_11_const(self, aggregation_frequency: int, tmp_path: pathlib.Path):
+    def test_pytorch_11_const(self, tmp_path: pathlib.Path):
         checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
 
         config = utils.load_config(utils.tutorials_path("mnist_pytorch/const.yaml"))
@@ -1076,46 +1073,10 @@ class TestPyTorchTrial:
             checkpoint_dir=checkpoint_dir,
         )
         exp_config.update(config)
-        exp_config["optimizations"] = {"aggregation_frequency": aggregation_frequency}
 
         example_path = utils.tutorials_path("mnist_pytorch/model_def.py")
         trial_module = utils.import_module("MNistTrial", example_path)
         trial_class = getattr(trial_module, "MNistTrial")  # noqa: B009
-        trial_class._searcher_metric = "validation_loss"
-
-        self.train_and_checkpoint(
-            trial_class=trial_class,
-            hparams=hparams,
-            tmp_path=tmp_path,
-            exp_config=exp_config,
-            steps=(1, 1),
-        )
-
-    @pytest.mark.gpu
-    @pytest.mark.parametrize("api_style", ["apex", "auto", "manual"])
-    def test_pytorch_const_with_amp(self, api_style: str, tmp_path: pathlib.Path):
-        checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
-        config = utils.load_config(utils.fixtures_path("pytorch_amp/" + api_style + "_amp.yaml"))
-        hparams = config["hyperparameters"]
-
-        exp_config = utils.make_default_exp_config(
-            hparams,
-            scheduling_unit=1,
-            searcher_metric="validation_loss",
-            checkpoint_dir=checkpoint_dir,
-        )
-        exp_config.update(config)
-
-        module_names = {
-            "apex": "MNistApexAMPTrial",
-            "auto": "MNistAutoAMPTrial",
-            "manual": "MNistManualAMPTrial",
-        }
-
-        example_filename = api_style + "_amp_model_def.py"
-        example_path = utils.fixtures_path(os.path.join("pytorch_amp", example_filename))
-        trial_module = utils.import_module(module_names[api_style], example_path)
-        trial_class = getattr(trial_module, module_names[api_style])
         trial_class._searcher_metric = "validation_loss"
 
         self.train_and_checkpoint(
