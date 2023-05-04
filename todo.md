@@ -18,6 +18,10 @@ add include in the new table.
   - define as a partition
 - create a new `generic_metrics` table. define as a partition of `metrics`
 
+TODO:
+- [ ] remove go references to raw_steps and raw_validations
+- [ ] no need to mess with underlying table ids. revert
+
 
 timing: 9s on latest-master db dump to run the migration and revert.
 ```
