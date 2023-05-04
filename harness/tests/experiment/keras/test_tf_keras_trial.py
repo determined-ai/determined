@@ -366,8 +366,7 @@ class TestKerasTrial:
 
 
 @pytest.mark.tensorflow
-@pytest.mark.gpu
-def test_cifar10_single_gpu(tmp_path: Path):
+def test_cifar10(tmp_path: Path):
     """
     Make sure each example:
      - trains

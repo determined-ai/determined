@@ -342,7 +342,6 @@ def test_checkpoint_loading(ckpt_ver):
 
 
 @pytest.mark.tensorflow
-@pytest.mark.gpu
 def test_mnist_estimator(tmp_path: Path):
     """
     Make sure each example:

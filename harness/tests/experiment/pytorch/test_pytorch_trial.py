@@ -1060,7 +1060,7 @@ class TestPyTorchTrial:
         assert state.batches_trained == 1, "batches_trained does not match"
         assert state.epochs_trained == 0, "epochs_trained does not match"
 
-    def test_pytorch_11_const(self, tmp_path: pathlib.Path):
+    def test_pytorch_mnist(self, tmp_path: pathlib.Path):
         checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
 
         config = utils.load_config(utils.tutorials_path("mnist_pytorch/const.yaml"))
