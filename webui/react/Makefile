@@ -120,8 +120,10 @@ screenshots/HEAD: node_modules visual-test-deps
 # merged. we can remove it afterwards.
 screenshots/MAIN: node_modules visual-test-deps
 	cp -r scripts new-scripts
+	cp -r node_modules/playwright-core/.local-browsers browsers
 	git checkout $(merge_base)
 	npm ci --no-audit
+	cp browsers node_modules/playwright-core/.local-browsers
 	npm install undici
 	node new-scripts/designkit-screenshot.mjs MAIN
 	git reset --hard HEAD
