@@ -727,8 +727,7 @@ class TestPyTorchTrial:
         amp_metrics_test(trial_class, training_metrics)
 
     @pytest.mark.skipif(not torch.cuda.is_available(), reason="no gpu available")
-    # @pytest.mark.gpu
-    @pytest.mark.dothis
+    @pytest.mark.gpu
     @pytest.mark.parametrize(
         "trial_class",
         [
@@ -750,18 +749,12 @@ class TestPyTorchTrial:
         # The assertions logic in make_amp_workloads require a batch size of one
         hparams = dict(self.hparams)
         hparams["global_batch_size"] = 1
+        aggregation_frequency = 2
 
-        AGG_FREQ = 2
         exp_config = utils.make_default_exp_config(
             hparams,
             scheduling_unit=1,
             searcher_metric=trial_class._searcher_metric,
-        )
-        exp_config["optimizations"].update(
-            {
-                "aggregation_frequency": AGG_FREQ,
-                "average_aggregated_gradients": True,
-            }
         )
 
         trial, trial_controller = create_trial_and_trial_controller(
@@ -770,16 +763,17 @@ class TestPyTorchTrial:
             hparams=hparams,
             trial_seed=self.trial_seed,
             expose_gpus=True,
-            max_batches=20 * AGG_FREQ,
+            max_batches=20 * aggregation_frequency,
             min_validation_batches=1,
             min_checkpoint_batches=sys.maxsize,
+            aggregation_frequency=aggregation_frequency,
         )
         trial_controller.run()
 
         metrics_callback = trial.metrics_callback
         training_metrics = metrics_callback.training_metrics
 
-        amp_metrics_test(trial_class, training_metrics, agg_freq=AGG_FREQ)
+        amp_metrics_test(trial_class, training_metrics, agg_freq=aggregation_frequency)
 
     def test_trainer(self) -> None:
         # Train for 100 batches, checkpoint and validate every 50 batches
@@ -921,7 +915,6 @@ class TestPyTorchTrial:
 
         training_metrics["B"] = metrics_callback.training_metrics
         validation_metrics["B"] = metrics_callback.validation_metrics
-
 
         for A, B in zip(training_metrics["A"], training_metrics["B"]):
             utils.assert_equivalent_metrics(A, B)
@@ -1191,6 +1184,7 @@ def create_trial_and_trial_controller(
     max_batches: int = 100,
     min_checkpoint_batches: int = sys.maxsize,
     min_validation_batches: int = sys.maxsize,
+    aggregation_frequency: int = 1,
 ) -> typing.Tuple[pytorch.PyTorchTrial, pytorch._PyTorchTrialController]:
     assert issubclass(
         trial_class, pytorch.PyTorchTrial
@@ -1225,9 +1219,9 @@ def create_trial_and_trial_controller(
             slots_per_trial=1,
             num_gpus=len(gpu_uuids),
             exp_conf=exp_config,
-            aggregation_frequency=1,
+            aggregation_frequency=aggregation_frequency,
             steps_completed=steps_completed,
-            managed_training=True,  # dev note: this must be True to put model on GPU
+            managed_training=True,  # this must be True to put model on GPU
             debug_enabled=False,
         )
         trial_context._set_default_gradient_compression(False)
