@@ -8,14 +8,7 @@ import useResize from 'hooks/useResize';
 import { searchExperiments } from 'services/api';
 import { V1BulkExperimentFilters } from 'services/api-ts-sdk';
 import usePolling from 'shared/hooks/usePolling';
-import {
-  ExperimentAction,
-  ExperimentItem,
-  ExperimentWithTrial,
-  Project,
-  ProjectColumn,
-  RunState,
-} from 'types';
+import { ExperimentAction, ExperimentItem, Project, RunState } from 'types';
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 
