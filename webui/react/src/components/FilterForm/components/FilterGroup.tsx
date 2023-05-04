@@ -1,4 +1,4 @@
-import { DeleteOutlined, HolderOutlined, PlusOutlined } from '@ant-design/icons';
+import { HolderOutlined, PlusOutlined } from '@ant-design/icons';
 import { Dropdown, DropDownProps } from 'antd';
 import type { MenuProps } from 'antd';
 import { useMemo, useRef } from 'react';
@@ -7,6 +7,7 @@ import { debounce } from 'throttle-debounce';
 
 import Button from 'components/kit/Button';
 import { V1ProjectColumn } from 'services/api-ts-sdk';
+import Icon from 'shared/components/Icon';
 
 import ConjunctionContainer from './ConjunctionContainer';
 import FilterField from './FilterField';
@@ -104,7 +105,7 @@ const FilterGroup = ({
     };
 
     const items: MenuProps['items'] = [
-      { icon: <PlusOutlined />, key: FormKind.Field, label: <div>Add condition field</div> },
+      { icon: <PlusOutlined />, key: FormKind.Field, label: <div>Add condition</div> },
       {
         disabled: !(0 <= level && level <= 1),
         icon: <PlusOutlined />,
@@ -134,10 +135,14 @@ const FilterGroup = ({
       <div className={`${css.groupCard} ${css[`level${level}`]}`} ref={preview}>
         <div className={css.header}>
           <div>
-            {group.conjunction === Conjunction.And ? (
-              <div>All of the following conditions are true</div>
-            ) : (
-              <div>Some of the following conditions are true</div>
+            {level > 0 && (
+              <>
+                {group.conjunction === Conjunction.And ? (
+                  <div>All of the following are true...</div>
+                ) : (
+                  <div>Any of the following are true...</div>
+                )}
+              </>
             )}
           </div>
           {level > 0 && (
@@ -149,7 +154,7 @@ const FilterGroup = ({
                 <Button icon={<PlusOutlined />} type="text" />
               </Dropdown>
               <Button
-                icon={<DeleteOutlined />}
+                icon={<Icon name="close" />}
                 type="text"
                 onClick={() => formStore.removeChild(group.id)}
               />

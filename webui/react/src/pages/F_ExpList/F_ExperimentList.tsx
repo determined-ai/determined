@@ -1,8 +1,10 @@
 import { Rectangle } from '@glideapps/glide-data-grid';
+import { Space } from 'antd';
 import { observable } from 'micro-observables';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
+import { FilterFormStore } from 'components/FilterForm/components/FilterFormStore';
 import TableFilter from 'components/FilterForm/TableFilter';
 import Page from 'components/Page';
 import useResize from 'hooks/useResize';
@@ -46,6 +48,8 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   );
   const [total, setTotal] = useState<Loadable<number>>(NotLoaded);
   const [projectColumns, setProjectColumns] = useState<Loadable<ProjectColumn[]>>(NotLoaded);
+  const [formStore] = useState<FilterFormStore>(() => new FilterFormStore());
+  const jsonString: string = useDeferredValue(JSON.stringify(formStore.jsonWithoutId));
 
   useEffect(() => {
     setSearchParams({ page: String(page) });
@@ -93,6 +97,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
       const response = await searchExperiments(
         {
           ...experimentFilters,
+          filter: jsonString,
           limit: 2 * PAGE_SIZE,
           offset: tableOffset,
         },
@@ -122,7 +127,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [page, experimentFilters, canceler.signal]);
+  }, [page, experimentFilters, jsonString, canceler.signal]);
 
   const { stopPolling } = usePolling(fetchExperiments, { rerunOnNewFn: true });
 
@@ -224,6 +229,22 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
       docTitle={project.id === 1 ? 'Uncategorized Experiments' : 'Project Details'}
       id="projectDetails">
       <>
+        <Space>
+          <TableFilter formStore={formStore} loadableColumns={projectColumns} />
+          <TableActionBar
+            experiments={experiments}
+            filters={experimentFilters}
+            handleUpdateExperimentList={handleUpdateExperimentList}
+            initialVisibleColumns={settings.columns}
+            project={project}
+            projectColumns={projectColumns}
+            selectAll={selectAll}
+            selectedExperimentIds={selectedExperimentIds}
+            setVisibleColumns={setVisibleColumns}
+            total={total}
+            onAction={handleOnAction}
+          />
+        </Space>
         {isLoading ? (
           <Loading width={width} />
         ) : experiments.length === 0 ? (
@@ -236,20 +257,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
           <Error />
         ) : (
           <>
-            <TableFilter loadableColumns={projectColumns} />
-            <TableActionBar
-              experiments={experiments}
-              filters={experimentFilters}
-              handleUpdateExperimentList={handleUpdateExperimentList}
-              initialVisibleColumns={settings.columns}
-              project={project}
-              projectColumns={projectColumns}
-              selectAll={selectAll}
-              selectedExperimentIds={selectedExperimentIds}
-              setVisibleColumns={setVisibleColumns}
-              total={total}
-              onAction={handleOnAction}
-            />
             <GlideTable
               clearSelectionTrigger={clearSelectionTrigger}
               colorMap={colorMap}

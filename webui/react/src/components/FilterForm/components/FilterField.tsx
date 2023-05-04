@@ -1,4 +1,4 @@
-import { DeleteOutlined, HolderOutlined } from '@ant-design/icons';
+import { HolderOutlined } from '@ant-design/icons';
 import { DatePicker } from 'antd';
 import type { DatePickerProps } from 'antd/es/date-picker';
 import dayjs from 'dayjs';
@@ -9,6 +9,7 @@ import Input from 'components/kit/Input';
 import InputNumber from 'components/kit/InputNumber';
 import Select, { Option } from 'components/kit/Select';
 import { V1ColumnType, V1ProjectColumn } from 'services/api-ts-sdk';
+import Icon from 'shared/components/Icon';
 
 import ConjunctionContainer from './ConjunctionContainer';
 import css from './FilterField.module.scss';
@@ -100,7 +101,6 @@ const FilterField = ({
       <div className={css.fieldCard} ref={preview}>
         <Select
           dropdownMatchSelectWidth={250} // TODO(fix): set corrent width
-          searchable={false}
           value={field.columnName}
           width={'100%'}
           onChange={(value) => {
@@ -124,7 +124,6 @@ const FilterField = ({
           ))}
         </Select>
         <Select
-          searchable={false}
           value={field.operator}
           width={'100%'}
           onChange={(value) => {
@@ -170,7 +169,7 @@ const FilterField = ({
           )}
         </>
         <Button
-          icon={<DeleteOutlined />}
+          icon={<Icon name="close" />}
           type="text"
           onClick={() => formStore.removeChild(field.id)}
         />

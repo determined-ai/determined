@@ -1,9 +1,10 @@
+import { Switch } from 'antd';
 import { useObservable } from 'micro-observables';
 import { useRef } from 'react';
 import { debounce } from 'throttle-debounce';
 
 import Button from 'components/kit/Button';
-import Toggle from 'components/kit/Toggle';
+import Label from 'components/Label';
 import { V1ProjectColumn } from 'services/api-ts-sdk';
 
 import css from './FilterForm.module.scss';
@@ -14,9 +15,10 @@ import { FormKind } from './type';
 interface Props {
   formStore: FilterFormStore;
   columns: V1ProjectColumn[];
+  onHidePopOver: () => void;
 }
 
-const FilterForm = ({ formStore, columns }: Props): JSX.Element => {
+const FilterForm = ({ formStore, columns, onHidePopOver }: Props): JSX.Element => {
   const scrollBottomRef = useRef<HTMLDivElement>(null);
   const data = useObservable(formStore.formset);
   const isButtonDisabled = data.filterGroup.children.length > ITEM_LIMIT;
@@ -30,14 +32,7 @@ const FilterForm = ({ formStore, columns }: Props): JSX.Element => {
 
   return (
     <div className={css.base}>
-      <div className={css.header}>
-        <div>Show experiments…</div>
-        <Toggle
-          checked={data.showArchived}
-          label="Show Archived"
-          onChange={() => formStore.setArchivedValue(!data.showArchived)}
-        />
-      </div>
+      <div>Show experiments…</div>
       <div className={css.filter}>
         <FilterGroup
           columns={columns}
@@ -59,12 +54,22 @@ const FilterForm = ({ formStore, columns }: Props): JSX.Element => {
             + Add condition group
           </Button>
         </div>
-        <Button type="text" onClick={() => formStore.removeChild(data.filterGroup.id)}>
-          Clear all
+        <Button
+          type="text"
+          onClick={() => {
+            formStore.removeChild(data.filterGroup.id);
+            onHidePopOver();
+          }}>
+          Reset
         </Button>
       </div>
-      <div style={{ maxWidth: '500px', wordWrap: 'break-word' }}>
-        {JSON.stringify(formStore.jsonWithoutId)}
+      <div className={css.showArchived}>
+        <Switch
+          checked={data.showArchived}
+          size="small"
+          onChange={() => formStore.setArchivedValue(!data.showArchived)}
+        />
+        <Label>Show Archived</Label>
       </div>
     </div>
   );
