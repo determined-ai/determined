@@ -35,6 +35,14 @@ func getWorkspaceFromExperiment(ctx context.Context, e *model.Experiment,
 	return workspaceID, err
 }
 
+func getWorkspaceFromProject(ctx context.Context, p *projectv1.Project,
+) (int32, error) {
+	var workspaceID int32
+	err := db.Bun().NewRaw("SELECT workspace_id FROM projects WHERE id = ?",
+		p.Id).Scan(ctx, &workspaceID)
+	return workspaceID, err
+}
+
 func addExpInfo(
 	curUser model.User,
 	e *model.Experiment,
@@ -304,15 +312,14 @@ func (a *ExperimentAuthZRBAC) CanEditExperimentsMetadata(
 
 // CanCreateExperiment checks if a user can create an experiment.
 func (a *ExperimentAuthZRBAC) CanCreateExperiment(
-	ctx context.Context, curUser model.User, proj *projectv1.Project, e *model.Experiment,
+	ctx context.Context, curUser model.User, proj *projectv1.Project,
 ) (err error) {
 	fields := audit.ExtractLogFields(ctx)
-	addExpInfo(curUser, e, fields, rbacv1.PermissionType_PERMISSION_TYPE_CREATE_EXPERIMENT)
 	defer func() {
 		audit.LogFromErr(fields, err)
 	}()
 
-	workspaceID, err := getWorkspaceFromExperiment(ctx, e)
+	workspaceID, err := getWorkspaceFromProject(ctx, proj)
 	if err != nil {
 		return err
 	}
