@@ -237,7 +237,7 @@ func (t *TaskSpec) ToDispatcherManifest(
 	customParams["slurmArgs"] = slurmArgs
 
 	var pbsArgs []string
-	pbsArgs = append(pbsArgs, t.TaskContainerDefaults.Pbs.SbatchArgs()...)
+
 	pbsArgs = append(pbsArgs, t.PbsConfig.SbatchArgs()...)
 	ctx.Log().WithField("allocation-id", allocationID).Debugf("Custom pbs arguments: %s", pbsArgs)
 	errList = ValidatePbs(pbsArgs)
