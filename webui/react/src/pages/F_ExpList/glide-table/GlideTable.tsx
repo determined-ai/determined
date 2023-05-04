@@ -231,11 +231,6 @@ export const GlideTable: React.FC<GlideTableProps> = ({
     [],
   );
 
-  const onColumnResizeEnd: DataEditorProps['onColumnResizeEnd'] = useCallback(() => {
-    // presumably update the settings, but maybe have a different API
-    // like Record<ColumnName, width>
-  }, []);
-
   const onHeaderClicked: DataEditorProps['onHeaderClicked'] = React.useCallback(
     (col: number, args: HeaderClickedEventArgs) => {
       const columnId = columnIds[col];
@@ -431,6 +426,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         customRenderers={customRenderers}
         freezeColumns={2}
         getCellContent={getCellContent}
+        getCellsForSelection
         getRowThemeOverride={getRowThemeOverride}
         gridSelection={selection}
         headerHeight={36}
@@ -448,7 +444,6 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         onCellContextMenu={onCellContextMenu}
         onColumnMoved={onColumnMoved}
         onColumnResize={onColumnResize}
-        onColumnResizeEnd={onColumnResizeEnd}
         onHeaderClicked={onHeaderClicked}
         onItemHovered={onItemHovered}
         onVisibleRegionChanged={handleScroll}
