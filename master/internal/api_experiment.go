@@ -447,12 +447,14 @@ func (a *apiServer) deleteExperiments(exps []*model.Experiment, userModel *model
 		}(e)
 	}
 	wg.Wait()
+	close(successfulExpIDs)
 
-	ctx := context.Background()
 	var processExpIDs []int
 	for expID := range successfulExpIDs {
 		processExpIDs = append(processExpIDs, expID)
 	}
+
+	ctx := context.Background()
 	trialIDs, taskIDs, err := a.m.db.ExperimentsTrialAndTaskIDs(ctx, db.Bun(), processExpIDs)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to gather trial IDs for experiment")
