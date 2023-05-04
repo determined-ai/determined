@@ -13,7 +13,7 @@ resources:
   # resource_pool: young # Grenoble specific; remove later.
 searcher:
   name: single
-  metric: throughput
+  metric: loss
   max_length: 100
   smaller_is_better: False
 hyperparameters:

@@ -14,7 +14,7 @@ resources:
 searcher:
   name: single
   max_length: 1000
-  metric: throughput
+  metric: val_loss
   smaller_is_better: False
 hyperparameters:
   model_name: resnet152
