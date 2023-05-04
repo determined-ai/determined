@@ -486,6 +486,10 @@ export interface ArchiveProjectParams {
 
 export type UnarchiveProjectParams = ArchiveProjectParams;
 
+export interface GetProjectColumnsParams {
+  id: number;
+}
+
 export interface ArchiveWorkspaceParams {
   id: number;
 }
