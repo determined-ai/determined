@@ -20,8 +20,17 @@ CREATE UNIQUE INDEX generic_trial_id_total_batches_run_id_type_unique ON generic
     trial_id, total_batches, trial_run_id, type
 );
 
-CREATE TABLE metrics (LIKE generic_metrics INCLUDING ALL)
-PARTITION BY LIST (type);
+CREATE TABLE metrics (
+    trial_id integer NOT NULL,
+    end_time timestamp with time zone,
+    metrics jsonb,
+    total_batches integer NOT NULL DEFAULT 0,
+    trial_run_id integer NOT NULL DEFAULT 0,
+    archived boolean NOT NULL DEFAULT false,
+    id integer NOT NULL,
+    type metric_type NOT NULL DEFAULT 'generic'
+    -- CONSTRAINT metrics_trial_id_fkey FOREIGN KEY (trial_id) REFERENCES trials(id). Not supported
+) PARTITION BY LIST (type);
 
 ALTER TABLE metrics ATTACH PARTITION generic_metrics FOR VALUES IN ('generic');
 ALTER TABLE metrics ATTACH PARTITION raw_validations FOR VALUES IN (
