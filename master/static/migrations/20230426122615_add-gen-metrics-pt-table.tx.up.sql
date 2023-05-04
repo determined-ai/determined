@@ -41,12 +41,8 @@ CREATE TABLE metrics (
     -- CONSTRAINT metrics_trial_id_fkey FOREIGN KEY (trial_id) REFERENCES trials(id). Not supported
 ) PARTITION BY LIST (type);
 
+ALTER TABLE metrics ATTACH PARTITION generic_metrics FOR VALUES IN ('generic');
 ALTER TABLE metrics ATTACH PARTITION raw_validations FOR VALUES IN (
     'validation'
 );
 ALTER TABLE metrics ATTACH PARTITION raw_steps FOR VALUES IN ('training');
-
--- will hold an ACCESS EXCLUSIVE lock on the DEFAULT partition to verify that it does not contain
--- any records that should be located in the new partition being attached
-ALTER TABLE metrics ATTACH PARTITION generic_metrics DEFAULT; 
-
