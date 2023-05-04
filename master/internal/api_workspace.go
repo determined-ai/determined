@@ -13,6 +13,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/command"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
@@ -77,10 +78,8 @@ func (a *apiServer) GetWorkspaceByID(
 		return nil, errors.Wrapf(err, "error fetching workspace (%d) from database", id)
 	}
 
-	if ok, err := workspace.AuthZProvider.Get().CanGetWorkspace(ctx, curUser, w); err != nil {
-		return nil, err
-	} else if !ok {
-		return nil, notFoundErr
+	if err := workspace.AuthZProvider.Get().CanGetWorkspace(ctx, curUser, w); err != nil {
+		return nil, authz.SubIfUnauthorized(err, notFoundErr)
 	}
 
 	if err := maskStorageConfigSecrets(w); err != nil {

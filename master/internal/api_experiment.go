@@ -15,6 +15,7 @@ import (
 
 	"github.com/uptrace/bun"
 
+	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/prom"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/trials"
@@ -137,13 +138,10 @@ func (a *apiServer) getExperiment(
 	if err != nil {
 		return nil, err
 	}
-	if ok, authErr := exputil.AuthZProvider.Get().
+	if authErr := exputil.AuthZProvider.Get().
 		CanGetExperiment(ctx, curUser, modelExp); authErr != nil {
-		return nil, authErr
-	} else if !ok {
-		return nil, expNotFound
+		return nil, authz.SubIfUnauthorized(authErr, expNotFound)
 	}
-
 	sort.Slice(exp.TrialIds, func(i, j int) bool {
 		return exp.TrialIds[i] < exp.TrialIds[j]
 	})
@@ -174,11 +172,8 @@ func (a *apiServer) getExperimentAndCheckCanDoActions(
 		return nil, model.User{}, err
 	}
 
-	var ok bool
-	if ok, err = exputil.AuthZProvider.Get().CanGetExperiment(ctx, *curUser, e); err != nil {
-		return nil, model.User{}, err
-	} else if !ok {
-		return nil, model.User{}, expNotFound
+	if err = exputil.AuthZProvider.Get().CanGetExperiment(ctx, *curUser, e); err != nil {
+		return nil, model.User{}, authz.SubIfUnauthorized(err, expNotFound)
 	}
 
 	for _, action := range actions {

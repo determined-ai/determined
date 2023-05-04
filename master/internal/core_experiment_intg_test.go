@@ -18,6 +18,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	authz2 "github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/context"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/etc"
@@ -85,7 +86,8 @@ func TestAuthZPostExperimentEcho(t *testing.T) {
 	ctx := newTestEchoContext(curUser)
 
 	// Can't view project passed in.
-	pAuthZ.On("CanGetProject", mock.Anything, curUser, mock.Anything).Return(false, nil).Once()
+	pAuthZ.On("CanGetProject", mock.Anything, curUser,
+		mock.Anything).Return(authz2.PermissionDeniedError{}).Once()
 	err := echoPostExperiment(ctx, api, t, CreateExperimentParams{
 		ConfigBytes: minExpConfToYaml(t),
 		ProjectID:   &projectID,
@@ -94,7 +96,8 @@ func TestAuthZPostExperimentEcho(t *testing.T) {
 		fmt.Sprintf("project (%d) not found", projectID)).Error(), err.Error())
 
 	// Can't view project passed in from config.
-	pAuthZ.On("CanGetProject", mock.Anything, curUser, mock.Anything).Return(false, nil).Once()
+	pAuthZ.On("CanGetProject", mock.Anything, curUser,
+		mock.Anything).Return(authz2.PermissionDeniedError{}).Once()
 	err = echoPostExperiment(ctx, api, t, CreateExperimentParams{
 		ConfigBytes: minExpConfToYaml(t) + "project: Uncategorized\nworkspace: Uncategorized",
 	})
@@ -110,7 +113,7 @@ func TestAuthZPostExperimentEcho(t *testing.T) {
 
 	// Can't create experiment deny.
 	expectedErr := echo.NewHTTPError(http.StatusForbidden, "canCreateExperimentError")
-	pAuthZ.On("CanGetProject", mock.Anything, curUser, mock.Anything).Return(true, nil).Once()
+	pAuthZ.On("CanGetProject", mock.Anything, curUser, mock.Anything).Return(nil).Once()
 	authZExp.On("CanCreateExperiment", mock.Anything, curUser, mock.Anything, mock.Anything).
 		Return(fmt.Errorf("canCreateExperimentError")).Once()
 	err = echoPostExperiment(ctx, api, t, CreateExperimentParams{
@@ -120,7 +123,7 @@ func TestAuthZPostExperimentEcho(t *testing.T) {
 
 	// Can't activate experiment deny.
 	expectedErr = echo.NewHTTPError(http.StatusForbidden, "canActivateExperimentError")
-	pAuthZ.On("CanGetProject", mock.Anything, curUser, mock.Anything).Return(true, nil).Once()
+	pAuthZ.On("CanGetProject", mock.Anything, curUser, mock.Anything).Return(nil).Once()
 	authZExp.On("CanCreateExperiment", mock.Anything, curUser, mock.Anything, mock.Anything).
 		Return(nil).Once()
 	authZExp.On("CanEditExperiment", mock.Anything, curUser, mock.Anything, mock.Anything).
@@ -224,19 +227,19 @@ func TestAuthZGetExperimentAndCanDoActionsEcho(t *testing.T) {
 		require.Equal(t, expNotFoundErrEcho(-999), curCase.IDToReqCall(-999))
 
 		authZExp.On("CanGetExperiment", mock.Anything, mock.Anything, mock.Anything).
-			Return(false, nil).Once()
+			Return(authz2.PermissionDeniedError{}).Once()
 		require.Equal(t, expNotFoundErrEcho(exp.ID), curCase.IDToReqCall(exp.ID))
 
 		// CanGetExperiment error returns unmodified.
 		expectedErr := fmt.Errorf("canGetExperimentError")
 		authZExp.On("CanGetExperiment", mock.Anything, mock.Anything, mock.Anything).
-			Return(false, expectedErr).Once()
+			Return(expectedErr).Once()
 		require.Equal(t, expectedErr, curCase.IDToReqCall(exp.ID))
 
 		// Deny returns error with Forbidden.
 		expectedErr = echo.NewHTTPError(http.StatusForbidden, curCase.DenyFuncName+"Error")
 		authZExp.On("CanGetExperiment", mock.Anything, mock.Anything, mock.Anything).
-			Return(true, nil).Once()
+			Return(nil).Once()
 		authZExp.On(curCase.DenyFuncName, curCase.Params...).
 			Return(fmt.Errorf(curCase.DenyFuncName + "Error")).Once()
 		require.Equal(t, expectedErr.Error(), curCase.IDToReqCall(exp.ID).Error())

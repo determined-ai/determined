@@ -13,10 +13,8 @@ import (
 type UserGroupAuthZBasic struct{}
 
 // CanGetGroup always returns nil.
-func (a *UserGroupAuthZBasic) CanGetGroup(ctx context.Context, curUser model.User, gid int) (
-	bool, error,
-) {
-	return true, nil
+func (a *UserGroupAuthZBasic) CanGetGroup(ctx context.Context, curUser model.User, gid int) error {
+	return nil
 }
 
 // FilterGroupsList returns the list it was given and a nil error.

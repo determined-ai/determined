@@ -18,6 +18,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/api"
+	"github.com/determined-ai/determined/master/internal/authz"
 	detContext "github.com/determined-ai/determined/master/internal/context"
 	"github.com/determined-ai/determined/master/internal/db"
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
@@ -91,10 +92,8 @@ func echoGetExperimentAndCheckCanDoActions(ctx context.Context, c echo.Context, 
 	} else if err != nil {
 		return nil, model.User{}, err
 	}
-	if ok, err := expauth.AuthZProvider.Get().CanGetExperiment(ctx, user, e); err != nil {
-		return nil, model.User{}, err
-	} else if !ok {
-		return nil, model.User{}, expNotFound
+	if err = expauth.AuthZProvider.Get().CanGetExperiment(ctx, user, e); err != nil {
+		return nil, model.User{}, authz.SubIfUnauthorized(err, expNotFound)
 	}
 
 	for _, action := range actions {
@@ -436,11 +435,8 @@ func getCreateExperimentsProject(
 	} else if err != nil {
 		return nil, err
 	}
-	var ok bool
-	if ok, err = project.AuthZProvider.Get().CanGetProject(context.TODO(), *user, p); err != nil {
-		return nil, err
-	} else if !ok {
-		return nil, errProjectNotFound
+	if err = project.AuthZProvider.Get().CanGetProject(context.TODO(), *user, p); err != nil {
+		return nil, authz.SubIfUnauthorized(err, errProjectNotFound)
 	}
 	return p, nil
 }

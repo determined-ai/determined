@@ -17,7 +17,7 @@ type ExperimentAuthZ interface {
 	// GET /tasks
 	CanGetExperiment(
 		ctx context.Context, curUser model.User, e *model.Experiment,
-	) (canGetExp bool, serverError error)
+	) error
 
 	// GET /api/v1/experiments/:exp_id/file_tree
 	// POST /api/v1/experiments/{experimentId}/file

@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/determined-ai/determined/master/internal/api/apiutils"
+	"github.com/determined-ai/determined/master/internal/authz"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -122,12 +123,10 @@ func (a *apiServer) GetTensorboard(
 		return nil, err
 	}
 
-	if ok, err := command.AuthZProvider.Get().CanGetTensorboard(
+	if err = command.AuthZProvider.Get().CanGetTensorboard(
 		ctx, *curUser, model.AccessScopeID(resp.Tensorboard.WorkspaceId),
 		resp.Tensorboard.ExperimentIds, resp.Tensorboard.TrialIds); err != nil {
-		return nil, err
-	} else if !ok {
-		return nil, errActorNotFound(addr)
+		return nil, authz.SubIfUnauthorized(err, errActorNotFound(addr))
 	}
 	return resp, nil
 }

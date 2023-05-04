@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/sproto"
 
 	"github.com/google/uuid"
@@ -140,20 +141,15 @@ func canAccessCommandEvents(ctx *actor.Context, c echo.Context) error {
 		return err
 	}
 
-	var ok bool
 	if spec.TaskType == model.TaskTypeTensorboard {
-		ok, err = AuthZProvider.Get().CanGetTensorboard(
+		err = AuthZProvider.Get().CanGetTensorboard(
 			reqCtx, curUser, spec.WorkspaceID, nil, nil)
 	} else {
-		ok, err = AuthZProvider.Get().CanGetNSC(
+		err = AuthZProvider.Get().CanGetNSC(
 			reqCtx, curUser, spec.WorkspaceID)
 	}
-	if err != nil {
-		return err
-	} else if !ok {
-		return echo.NewHTTPError(http.StatusNotFound, "service not found: "+taskID)
-	}
-	return nil
+	return authz.SubIfUnauthorized(err,
+		echo.NewHTTPError(http.StatusNotFound, "service not found: "+taskID))
 }
 
 // validEvent returns true if the given event's Seq value is within the bounds specified

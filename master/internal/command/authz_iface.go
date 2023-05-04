@@ -16,7 +16,7 @@ type NSCAuthZ interface {
 	// GET /tasks
 	CanGetNSC(
 		ctx context.Context, curUser model.User, workspaceID model.AccessScopeID,
-	) (canGetNsc bool, serverError error)
+	) error
 
 	// GET /api/v1/tasks/count
 	CanGetActiveTasksCount(ctx context.Context, curUser model.User) error
@@ -52,7 +52,7 @@ type NSCAuthZ interface {
 	CanGetTensorboard(
 		ctx context.Context, curUser model.User, workspaceID model.AccessScopeID,
 		experimentIDs []int32, trialIDs []int32,
-	) (canGetTensorboard bool, serverError error)
+	) error
 
 	// POST /api/v1/tensorboards/:tb_id/kill
 	CanTerminateTensorboard(

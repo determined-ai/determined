@@ -15,8 +15,8 @@ type WorkspaceAuthZBasic struct{}
 // CanGetWorkspace always return true and a nil error.
 func (a *WorkspaceAuthZBasic) CanGetWorkspace(
 	ctx context.Context, curUser model.User, workspace *workspacev1.Workspace,
-) (canGetWorkspace bool, serverError error) {
-	return true, nil
+) error {
+	return nil
 }
 
 // FilterWorkspaceProjects always returns the list provided and a nil error.
