@@ -111,6 +111,7 @@ const ButtonsSection: React.FC = () => {
           found in forms, dialog panels, and dialogs. Some buttons are specialized for particular
           tasks, such as navigation, repeated actions, or presenting menus.
         </p>
+        <p>I&apos;m an extra paragraph to trigger a diff</p>
       </AntDCard>
       <AntDCard title="Best practices">
         <strong>Layout</strong>
