@@ -143,7 +143,7 @@ export class FilterFormStore {
     const recur = (form: FormGroup | FormField): void => {
       if (form.id === id && form.kind === FormKind.Group) {
         if (obj) {
-          form.children.splice(obj.index, 0, obj.item);
+          form.children.splice(obj.index, 0, structuredClone(obj.item));
         } else {
           form.children.push(addType === FormKind.Group ? getInitGroup() : getInitField());
         }
