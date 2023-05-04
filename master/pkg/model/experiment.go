@@ -106,6 +106,13 @@ func reverseTransitions(
 	return ret
 }
 
+// DeletingStates are the valid deleting states.
+var DeletingStates = map[State]bool{
+	DeletedState:      true,
+	DeleteFailedState: true,
+	DeletingState:     true,
+}
+
 // RunningStates are the valid running states.
 var RunningStates = map[State]bool{
 	ActiveState: true,

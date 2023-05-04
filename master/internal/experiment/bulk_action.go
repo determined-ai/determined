@@ -59,7 +59,7 @@ var terminalExperimentStates = func() []string {
 var nonTerminalStates = func() []experimentv1.State {
 	var states []experimentv1.State
 	for s := range model.ExperimentTransitions {
-		if !model.TerminalStates[s] && !strings.Contains(string(s), "DELET") {
+		if !model.TerminalStates[s] && !model.DeletingStates[s] {
 			states = append(states, model.StateToProto(s))
 		}
 	}
