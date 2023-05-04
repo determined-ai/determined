@@ -118,6 +118,8 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 
 		t.allocation, _ = ctx.ActorOf(t.allocationID, allocation)
 
+		// t.Base is just a shallow copy of the m.taskSpec on the master, so
+		// use caution when mutating it.
 		t.Base.TaskContainerDefaults, err = t.rm.TaskContainerDefaults(
 			ctx,
 			rp,
