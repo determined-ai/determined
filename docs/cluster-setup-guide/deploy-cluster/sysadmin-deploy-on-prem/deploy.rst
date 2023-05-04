@@ -4,15 +4,16 @@
  Install Determined Using ``det deploy``
 #########################################
 
-This document shows how to deploy Determined locally or in a production cluster using the ``det
-deploy`` command-line tool, which automates the process of starting Determined as a collection of
-Docker containers. ``det deploy`` can also be used to install Determined on the cloud; for more
-information, see the :ref:`AWS <install-aws>` and :ref:`GCP <install-gcp>` installation guides,
-respectively.
+This user guide provides instructions for using the ``det deploy`` command-line tool to deploy
+Determined locally or in a production cluster. ``det deploy`` automates the process of starting
+Determined as a collection of Docker containers.
 
-In a typical production setup, the master and agents will run on separate machines. They can also
-run on a single machine, which is especially useful for local development. This guide provides
-instructions for both scenarios.
+You can also use ``det deploy`` to install Determined on the cloud. For more information, see the
+:ref:`AWS <install-aws>` and :ref:`GCP <install-gcp>` installation guides.
+
+In a typical production setup, the master and agent nodes run on separate machines. The master and
+agent nodes can also run on a single machine, which is useful for local development. This user guide
+provides instructions for both scenarios.
 
 *******************
  Preliminary Setup
@@ -20,10 +21,10 @@ instructions for both scenarios.
 
 .. note::
 
-   Docker must be installed to use ``det deploy`` for local installations. Please refer to our
-   :ref:`installation <install-docker>` steps for Docker.
+   To use ``det deploy`` for local installations, Docker must be installed. For Docker installation
+   instructions, visit :ref:`installation <install-docker>`.
 
-Install ``determined`` python package by running
+Install the ``determined`` Python package by running
 
 .. code::
 
@@ -63,8 +64,8 @@ This will start a master and an agent on that machine. To verify that the master
 navigate to ``http://<master-hostname>:8080`` in a browser, which should bring up the Determined
 WebUI. If you're using your local machine, for example, navigate to ``http://localhost:8080``.
 
-In the WebUI, navigate to the ``Cluster`` page, where you should now see slots available (either CPU
-or GPU, depending on what hardware is available on the machine).
+In the WebUI, navigate to the ``Cluster`` page. You should now see slots available (either CPU or
+GPU, depending on what hardware is available on the machine).
 
 For single-agent clusters launched with:
 

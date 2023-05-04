@@ -18,7 +18,7 @@
    If you are looking to enable RBAC on an existing Determined installation, please see the
    :ref:`migration guide below <rbac-migrate-existing>`.
 
-By default, a Determined installation comes with Role Based Access Control disabled. To enable RBAC,
+By default, a Determined installation comes with role-based access control disabled. To enable RBAC,
 set the following option in the master config:
 
 .. code:: yaml
@@ -28,13 +28,15 @@ set the following option in the master config:
        type: rbac
 
 Brand new Determined installations include two user accounts:
-   -  ``admin`` user has full cluster access by default through pre-canned ``ClusterAdmin`` role.
-   -  ``determined`` user has no permissions.
+
+-  The ``admin`` user has full cluster access by default through the pre-canned ``ClusterAdmin``
+   role.
+-  The ``determined`` user has no permissions.
 
 Both accounts have empty passwords. You are encouraged to set strong passwords or deactivate these
 accounts for security reasons.
 
-Example setup - CLI
+Example setup (CLI)
 ===================
 
 In this section, we will configure a Determined instance to support a cluster administrator account,
@@ -102,8 +104,8 @@ they can create the project themselves, no cluster admin access or participation
 
    Similarly, you can run ``det user login USER_NAME`` to switch the current CLI user permanently.
 
-As a non-priviledged user, we can now :ref:`submit an experiment <quickstart-submit-experiment>`
-into this project:
+As a non-privileged user, we can now :ref:`submit an experiment <quickstart-submit-experiment>` into
+this project:
 
 .. code:: bash
 
@@ -118,7 +120,7 @@ Repeat the process to submit a second test experiment as a Stop Signs engineer:
    det -u mle-stop-00 experiment create const.yaml . --config workspace="Stop Signs" --config project="Euro" --config name="euro stop"
 
 Since the admin and non-admin users on various teams have different access, listing all experiments
-will produce different results. Admin will see both experiments. Traffic lights and stop signs
+will produce different results. The admin will see both experiments. Traffic lights and stop signs
 engineers will only have access to the experiments in their respective workspaces. Compare:
 
 .. code:: bash
@@ -174,7 +176,7 @@ To list the role assignments for a user or a group:
 WebUI
 -----
 
-To see user and group management UI,
+To see the user and group management UI,
 
 #. Click on your username in the upper left corner.
 #. Click "Settings"
@@ -309,7 +311,7 @@ To assign or unassign a role for a user or a group on a particular workspace,
 
 .. attention::
 
-   Only users with the WorkspaceAdmin role can add/edit workspaced-scoped role assignments for users
+   Only users with the WorkspaceAdmin role can add/edit workspace-scoped role assignments for users
    and groups.
 
 #. Go to the workspaces page, select the target workspace.
@@ -329,8 +331,8 @@ To assign or unassign a role for a user or a group on a particular workspace,
 User Groups
 ===========
 
-User Groups in Determined are organizational units containing one or more Determined users. User
-Groups currently have no inherent functionality and are not directly useful unless paired with the
+User groups in Determined are organizational units containing one or more Determined users. User
+groups currently have no inherent functionality and are not directly useful unless paired with the
 RBAC feature. Users with cluster admin permissions may create groups and add as many users to them
 as needed.
 
@@ -344,30 +346,30 @@ comprised of security principal, role, and scope. Roles, in turn, are comprised 
 Security Principal
 ------------------
 
-Security Principal is an entity that is performing an action on a resource. Determined supports
-invidividual users or user groups as a security principal.
+A security principal is an entity that is performing an action on a resource. Determined supports
+individual users or user groups as security principals.
 
 Scope
 -----
 
-Scope in Determined refers to where a user may exercise their permitted actions and currently has
-two possible values: global and workspace^specific. A global^level permission is valid anywhere in
-Determined, allowing the user to perform the action on any workspace. A workspace^level permission
+A scope in Determined refers to where a user may exercise their permitted actions and currently has
+two possible values: global and workspace-specific. A global-level permission is valid anywhere in
+Determined, allowing the user to perform the action on any workspace. A workspace-level permission
 restricts actions so that they are only permissible on the specified workspaces. When using
-workspace^level permissions, the admin must specify which workspace(s) the permission is valid for.
+workspace-level permissions, the admin must specify which workspace(s) the permission is valid for.
 
 Role
 ----
 
-Role is a collection of permissions. It allows combining commonly used permissions, for example when
-several permissions are used by the same persona, like a ML Engineer. Determined currently supports
-several :ref:`built-in roles <rbac-precanned>`.
+A role is a collection of permissions. It allows combining commonly used permissions, for example
+when several permissions are used by the same persona, like an ML engineer. Determined currently
+supports several :ref:`built-in roles <rbac-precanned>`.
 
 Permission
 ----------
 
-A description of a type of access to a resource or set of resources. Permissions typically map to an
-action on an entity type, for example:
+A permission is a description of a type of access to a resource or set of resources. Permissions
+typically map to an action on an entity type, for example:
 
 -  ``PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA``: view high-level experiment properties.
 -  ``PERMISSION_TYPE_VIEW_EXPERIMENT_ARTIFACTS``: view experiment code and checkpoints.
@@ -383,9 +385,9 @@ Current Limitations
 As RBAC is progressively rolled out there are various parts of Determined that are not yet gated
 behind RBAC. These currently include:
 
--  The job queue APIs: Any logged-in user user can see high level metadata about all active jobs in
-   the queue though RBAC is enforced when clicking on a task to access its details and artifacts.
--  RBAC is not currently applied to Master logs which can contain information about jobs that the
+-  The job queue APIs: Any logged-in user can see high-level metadata about all active jobs in the
+   queue, though RBAC is enforced when clicking on a task to access its details and artifacts.
+-  RBAC is not currently applied to master logs, which can contain information about jobs that the
    user is not authorized to see.
 -  Historical usage shows cluster-wide usage related to other users and workspaces.
 
@@ -396,7 +398,7 @@ behind RBAC. These currently include:
 CLI
 ===
 
-The :ref:`Determined CLI <cli-ug>` has built-in help. Please see help for the top level commands, as
+The :ref:`Determined CLI <cli-ug>` has built-in help. Please see help for the top-level commands, as
 well as their subcommands:
 
 .. code::
@@ -424,20 +426,20 @@ To list all existing cluster roles and the concrete permissions they include:
 ``Viewer``
 ==========
 
-``Viewer`` role allows a user to see workspaces, projects, notebooks, TensorBoards, shells, commands
-(NTSC), and experiments, as well as experiment metadata and artifacts within its scope.
+The ``Viewer`` role allows a user to see workspaces, projects, notebooks, TensorBoards, shells,
+commands (NTSC), and experiments, as well as experiment metadata and artifacts within its scope.
 
 ``Editor``
 ==========
 
-``Editor`` role supersedes the ``Viewer`` role, and includes permissions to create, edit, or delete
-projects, NTSC, and experiments within its scope.
+The ``Editor`` role supersedes the ``Viewer`` role, and includes permissions to create, edit, or
+delete projects, NTSC, and experiments within its scope.
 
 ``WorkspaceAdmin``
 ==================
 
-``WorkspaceAdmin`` role supersedes the ``Editor`` role, and includes permissions to edit or delete
-workspaces, and modify role assignments within its scope.
+The ``WorkspaceAdmin`` role supersedes the ``Editor`` role, and includes permissions to edit or
+delete workspaces, and modify role assignments within its scope.
 
 Users who take this role on a particular workspace can assign roles to other users on this
 workspace, that is, add other members (viewers, editors, or workspace admins) to the workspace.
@@ -445,7 +447,7 @@ workspace, that is, add other members (viewers, editors, or workspace admins) to
 ``WorkspaceCreator``
 ====================
 
-``WorkspaceCreator`` role grants the single permission to create new workspaces. It can only be
+The ``WorkspaceCreator`` role grants the single permission to create new workspaces. It can only be
 assigned globally.
 
 .. note::

@@ -8,7 +8,7 @@
  Basic Requirements
 ********************
 
-Deploying the Determined HPC Launcher on Slurm/PBS has the following requirements.
+To deploy the Determined HPC Launcher on Slurm/PBS, the following requirements must be met.
 
 -  The login node, admin node, and compute nodes must be installed and configured with one of the
    following Linux distributions:
@@ -26,7 +26,7 @@ Deploying the Determined HPC Launcher on Slurm/PBS has the following requirement
 -  Slurm 20.02 or greater (excluding 22.05.5 through at least 22.05.8 - see
    :ref:`slurm-known-issues`) or PBS 2021.1.2 or greater.
 
--  Apptainer 1.0 or greater, Singularity 3.7 or greater, Enroot 3.4.0 or greater or PodMan 3.3.1 or
+-  Apptainer 1.0 or greater, Singularity 3.7 or greater, Enroot 3.4.0 or greater or Podman 3.3.1 or
    greater.
 
 -  A cluster-wide shared filesystem with consistent path names across the HPC cluster.
@@ -35,8 +35,8 @@ Deploying the Determined HPC Launcher on Slurm/PBS has the following requirement
 
 -  All nodes must be able to resolve the hostnames of all other nodes.
 
--  To run jobs with GPUs, the Nvidia or AMD drivers must be installed on each compute node.
-   Determined requires a version greater than or equal to 450.80 of the Nvidia drivers. The Nvidia
+-  To run jobs with GPUs, the NVIDIA or AMD drivers must be installed on each compute node.
+   Determined requires a version greater than or equal to 450.80 of the NVIDIA drivers. The NVIDIA
    drivers can be installed as part of a CUDA installation but the rest of the CUDA toolkit is not
    required.
 
@@ -84,8 +84,8 @@ uppercase into any launched jobs and containers.
  Slurm Requirements
 ********************
 
-Determined should function with your existing Slurm configuration. The following steps are
-recommended to optimize how Determined interacts with Slurm:
+Determined should function with your existing Slurm configuration. To optimize how Determined
+interacts with Slurm, we recommend the following steps:
 
 -  Enable Slurm for GPU Scheduling.
 
@@ -161,8 +161,8 @@ recommended to optimize how Determined interacts with Slurm:
  PBS Requirements
 ******************
 
-Determined should function with your existing PBS configuration. The following steps are recommended
-to optimize how Determined interacts with PBS:
+Determined should function with your existing PBS configuration. To optimize how Determined
+interacts with PBS, we recommend the following steps:
 
 -  Configure PBS to manage GPU resources.
 
@@ -291,14 +291,14 @@ on the compute nodes of the cluster.
 .. _podman-config-requirements:
 
 *********************
- PodMan Requirements
+ Podman Requirements
 *********************
 
-When Determined is configured to use PodMan, the containers are launched in `rootless mode
+When Determined is configured to use Podman, the containers are launched in `rootless mode
 <https://docs.podman.io/en/latest/markdown/podman.1.html#rootless-mode>`__. Your HPC cluster
 administrator should have completed most of the configuration for you, but there may be additional
 per-user configuration that is required. Before attempting to launch Determined jobs, verify that
-you can run simple PodMan containers on a compute node. For example:
+you can run simple Podman containers on a compute node. For example:
 
 .. code:: bash
 
@@ -307,7 +307,7 @@ you can run simple PodMan containers on a compute node. For example:
 If you are unable to do that successfully, then one or more of the following configuration changes
 may be required in your ``$HOME/.config/containers/storage.conf`` file:
 
-#. PodMan does not support rootless container storage on distributed file systems (e.g. NFS, Lustre,
+#. Podman does not support rootless container storage on distributed file systems (e.g. NFS, Lustre,
    GPSF). On a typical HPC cluster, user directories are on a distributed file system and the
    default container storage location of ``$HOME/.local/share/containers/storage`` is therefore not
    supported. If this is the case on your HPC cluster, configure the ``graphroot`` option in your
@@ -315,11 +315,11 @@ may be required in your ``$HOME/.config/containers/storage.conf`` file:
    can request that your system administrator configure the ``rootless_storage_path`` in
    ``/etc/containers/storage.conf`` on all compute nodes.
 
-#. PodMan utilizes the directory specified by the environment variable ``XDG_RUNTIME_DIR``.
+#. Podman utilizes the directory specified by the environment variable ``XDG_RUNTIME_DIR``.
    Normally, this is provided by the login process. Slurm and PBS, however, do not provide this
-   variable when launching jobs on compute nodes. When ``XDG_RUNTIME_DIR`` is not defined, PodMan
+   variable when launching jobs on compute nodes. When ``XDG_RUNTIME_DIR`` is not defined, Podman
    attempts to create the directory ``/run/user/$UID`` for this purpose. If ``/run/user`` is not
-   writable by a non-root user, then PodMan commands will fail with a permission error. To avoid
+   writable by a non-root user, then Podman commands will fail with a permission error. To avoid
    this problem, configure the ``runroot`` option in your ``storage.conf`` to a writeable local
    directory available on all compute nodes. Alternatively, you can request your system
    administrator to configure the ``/run/user`` to be user-writable on all compute nodes.
@@ -376,11 +376,11 @@ platform. There may be additional per-user configuration that is required.
    -  If using Slurm, provide an ``ENROOT_RUNTIME_PATH`` definition in your experiment
       configuration.
 
-#. Unlike Singularity or PodMan, you must manually download the docker image file to the local file
+#. Unlike Singularity or Podman, you must manually download the Docker image file to the local file
    system (``enroot import``) and then each user must create an Enroot container using that image
    (``enroot create``). When the HPC launcher generates the enroot command for a job, it
    automatically applies the same transformation to the name that Enroot does on import (``/`` and
-   ``:`` characters are replaced with ``+``) to enable docker mage references to match the
+   ``:`` characters are replaced with ``+``) to enable Docker image references to match the
    associated Enroot container. The following shell commands will download and then create an Enroot
    container for the current user. If other users have read access to ``/shared/enroot/images``,
    they need only perform the ``enroot create`` step to make the container available for their use.

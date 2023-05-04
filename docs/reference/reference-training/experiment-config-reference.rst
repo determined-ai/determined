@@ -1260,9 +1260,9 @@ image. The image can be:
 
 When the cluster is configured with :ref:`resource_manager.type: slurm
 <cluster-configuration-slurm>` and ``container_run_type: podman``, images are executed using the
-PodMan container runtime. The image can be any of the supported PodMan container formats identified
+Podman container runtime. The image can be any of the supported PodMan container formats identified
 by transport (e.g. ``docker:`` (the default), ``docker-archive:``, ``docker-daemon:``, or
-``oci-archive:``). See the `PodMan run
+``oci-archive:``). See the `Podman run
 <https://docs.podman.io/en/latest/markdown/podman-run.1.html>`__ command documentation for a full
 description of the capabilities.
 
@@ -1480,7 +1480,7 @@ GPU type with:
 
 Optional. Additional Slurm options to be passed when launching trials with ``sbatch``. These options
 enable control of Slurm options not otherwise managed by Determined. For example, to specify
-required memory per cpu and exclusive access to an entire node when scheduled, you could specify:
+required memory per CPU and exclusive access to an entire node when scheduled, you could specify:
 
 .. code:: yaml
 

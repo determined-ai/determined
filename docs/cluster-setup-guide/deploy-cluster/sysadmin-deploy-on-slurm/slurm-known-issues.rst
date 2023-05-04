@@ -5,7 +5,7 @@
 ##############
 
 ***********************************************
- Agent-specific Scheduling Options are Ignored
+ Agent-Specific Scheduling Options are Ignored
 ***********************************************
 
 When using the HPC Launcher, Determined delegates all job scheduling and prioritization to the HPC
@@ -131,10 +131,10 @@ containers. Review the `Installing Apptainer
 sometimes resolved by additionally installing the ``apptainer-setuid`` package.
 
 *********************
- PodMan Known Issues
+ Podman Known Issues
 *********************
 
--  Determined uses PodMan in `rootless mode
+-  Determined uses Podman in `rootless mode
    <https://docs.podman.io/en/latest/markdown/podman.1.html#rootless-mode>`__. There are several
    configuration errors that may be encountered:
 
@@ -157,7 +157,7 @@ sometimes resolved by additionally installing the ``apptainer-setuid`` package.
 
    #. Ensure that the ``/etc/hosts`` file is being mounted in the container by a :ref:`bind mount
       <exp-bind-mounts>` in the ``task_container_defaults`` section of your master configuration as
-      shown below. Unlike Singularity, PodMan V4.0+ no longer maps ``/etc/hosts`` from the host into
+      shown below. Unlike Singularity, Podman V4.0+ no longer maps ``/etc/hosts`` from the host into
       the running container by default. On the initial startup, the Determined Slurm launcher
       automatically adds the ``task_container_defaults`` fragment below when adding the
       ``resource_manager`` section. If, however, you have since changed the file you may need to
@@ -251,7 +251,7 @@ sometimes resolved by additionally installing the ``apptainer-setuid`` package.
 -  Enroot requires manual download and creation of containers. The error ``[ERROR] No such file or
    directory:
    /home/users/test/.local/share/enroot/determinedai+environments+cuda-11.1-base-gpu-mpi-0.18.5``
-   indicates the user ``test`` has not created an Enroot container for docker image
+   indicates the user ``test`` has not created an Enroot container for Docker image
    ``determinedai/environments:cuda-11.1-base-gpu-mpi-0.18.5``. Check the available containers using
    the ``enroot list`` command. See :ref:`enroot-config-requirements` for guidance on creating
    Enroot containers.
@@ -294,7 +294,7 @@ sometimes resolved by additionally installing the ``apptainer-setuid`` package.
    <https://slurm.schedmd.com/squeue.html#SECTION_JOB-REASON-CODES>`__. Some common reasons are:
 
    -  ``Resources``: Expected when resources are in use by other jobs. Otherwise, verify you have
-      not requested more resources (gpus, cpus, nodes, memory) than are available in your cluster.
+      not requested more resources (GPUs, CPUs, nodes, memory) than are available in your cluster.
 
    -  ``PartitionNodeLimit``: Ensure that the job is not requesting more nodes than ``MaxNodes`` of
       the partition.
@@ -323,7 +323,7 @@ sometimes resolved by additionally installing the ``apptainer-setuid`` package.
 ***********************
 
 -  AMD/ROCm support is available only with Singularity containers. While Determined does add the
-   proper PodMan arguments to enable ROCm GPU support, the capabilities have not yet been verified.
+   proper Podman arguments to enable ROCm GPU support, the capabilities have not yet been verified.
 
 -  Launching experiments with ``slot_type: rocm``, may fail with the error ``RuntimeError: No HIP
    GPUs are available``. Ensure that the compute nodes are providing ROCm drivers and libraries
@@ -448,8 +448,8 @@ the GPUs used for the experiment to be evenly distributed among the compute node
    /root/.config/containers/registries.conf.d: permission denied`` when Docker login information is
    not provided.
 
-   This happens when access to an otherwise public container image is being blocked by the `docker
-   download rate limit <https://docs.docker.com/docker-hub/download-rate-limit>`__, or if the
+   This happens when access to an otherwise public container image is being blocked by the `Docker
+   Hub download rate limit <https://docs.docker.com/docker-hub/download-rate-limit>`__, or if the
    container is in a private registry.
 
    You can avoid this problem by either:

@@ -18,8 +18,8 @@ different image from this default, update your job configuration to include:
 
    environment:
      image:
-       cpu: # full cpu image path e.g. determined/environments/<tag>
-       gpu: # full gpu image path e.g. determined/environments/<tag>
+       cpu: # full CPU image path, e.g., determined/environments/<tag>
+       gpu: # full GPU image path, e.g., determined/environments/<tag>
 
 If one of the images above contain your required libraries, there is no additional environment
 preparation needed.

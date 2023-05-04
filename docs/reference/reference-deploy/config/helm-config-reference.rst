@@ -166,24 +166,24 @@
       interface, the ``dtrainNetworkInterface`` option can be used to set it explicitly (e.g.,
       ``eth11``).
 
-   -  ``forcePullImage``: Defines the default policy for forcibly pulling images from the docker
-      registry and bypassing the docker cache. If a pull policy is specified in the :ref:`experiment
+   -  ``forcePullImage``: Defines the default policy for forcibly pulling images from the Docker
+      registry and bypassing the Docker cache. If a pull policy is specified in the :ref:`experiment
       config <exp-environment-image>` this default is overriden. Please note that as of November
       1st, 2020 unauthenticated users will be `capped at 100 pulls from Docker per 6 hours
       <https://www.docker.com/blog/scaling-docker-to-serve-millions-more-developers-network-egress/>`__.
       Defaults to ``false``.
 
-   -  ``cpuPodSpec``: Sets the default pod spec for all non-gpu tasks. See :ref:`custom-pod-specs`
+   -  ``cpuPodSpec``: Sets the default pod spec for all non-GPU tasks. See :ref:`custom-pod-specs`
       for details.
 
-   -  ``gpuPodSpec``: Sets the default pod spec for all ngpu tasks. See :ref:`custom-pod-specs` for
+   -  ``gpuPodSpec``: Sets the default pod spec for all GPU tasks. See :ref:`custom-pod-specs` for
       details.
 
-   -  ``cpuImage``: Sets the default docker image for all non-gpu tasks. If a docker image is
+   -  ``cpuImage``: Sets the default Docker image for all non-GPU tasks. If a Docker image is
       specified in the :ref:`experiment config <exp-environment-image>` this default is overriden.
       Defaults to: ``determinedai/environments:py-3.8-pytorch-1.12-tf-2.11-cpu-0.21.2``.
 
-   -  ``gpuImage``: Sets the default docker image for all gpu tasks. If a docker image is specified
+   -  ``gpuImage``: Sets the default Docker image for all GPU tasks. If a Docker image is specified
       in the :ref:`experiment config <exp-environment-image>` this default is overriden. Defaults
       to: ``determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.21.2``.
 

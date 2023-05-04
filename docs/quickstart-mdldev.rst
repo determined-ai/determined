@@ -35,7 +35,7 @@ Software
 
 -  Agent nodes must have Docker installed.
 
--  To run jobs with GPUs, install Nvidia drivers, version 384.81 or higher, on each agent. The
+-  To run jobs with GPUs, install NVIDIA drivers, version 384.81 or higher, on each agent. The
    drivers can be installed as part of a CUDA installation but the rest of the CUDA toolkit is not
    required.
 
@@ -44,14 +44,14 @@ Hardware
 
 -  Master node:
 
-   -  At least 4-CPU cores, Intel Broadwell or later. The master node does not require GPUs.
+   -  At least 4 CPU cores, Intel Broadwell or later. The master node does not require GPUs.
    -  8GB RAM
    -  200GB of free disk space.
 
 -  Agent Node:
 
-   -  At least 2-CPU cores, Intel Broadwell or later.
-   -  If you are using GPUs, Nvidia GPUs with compute capability 3.7 or greater are required: K80,
+   -  At least 2 CPU cores, Intel Broadwell or later.
+   -  If you are using GPUs, NVIDIA GPUs with compute capability 3.7 or greater are required: K80,
       P100, V100, A100, GTX 1080, GTX 1080 Ti, TITAN, or TITAN XP.
    -  4GB RAM
    -  50GB of free disk space.
@@ -146,7 +146,7 @@ schedules to run.
       pip install determined
       det deploy local cluster-up
 
-   If your local machine does not have a supported Nvidia GPU, include the ``no-gpu`` option:
+   If your local machine does not have a supported NVIDIA GPU, include the ``no-gpu`` option:
 
    .. code:: bash
 
