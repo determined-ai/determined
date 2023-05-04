@@ -56,7 +56,7 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
     projectStore.getProjectsByWorkspace(workspaceId),
   );
 
-  useEffect(() => workspaceStore.fetch(), []);
+  useEffect(() => workspaceStore.fetchCached(), []);
 
   useEffect(
     () => (workspaceId === undefined ? undefined : projectStore.fetch(workspaceId)),

@@ -162,7 +162,7 @@ const JupyterLabModalComponent: React.FC<Props> = ({ workspace }: Props) => {
     [validateFullConfigForm],
   );
 
-  useEffect(() => workspaceStore.fetch(), []);
+  useEffect(() => workspaceStore.fetchCached(), []);
 
   // Fetch full config when showing advanced mode.
   useEffect(() => {

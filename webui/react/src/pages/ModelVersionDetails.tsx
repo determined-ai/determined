@@ -91,7 +91,7 @@ const ModelVersionDetails: React.FC = () => {
     [basePath, navigate],
   );
 
-  useEffect(() => workspaceStore.fetch(), []);
+  useEffect(() => workspaceStore.fetchCached(), []);
 
   useEffect(() => {
     setTabKey(tab ?? DEFAULT_TAB_KEY);
