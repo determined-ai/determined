@@ -14,37 +14,11 @@ CREATE UNIQUE INDEX steps_trial_id_total_batches_run_id_type_unique ON raw_steps
 );
 DROP INDEX steps_trial_id_total_batches_run_id_unique_old;
 
--- determined> \d raw_steps;
--- +---------------+--------------------------+---------------------------------------------------------+
--- | Column        | Type                     | Modifiers                                               |
--- |---------------+--------------------------+---------------------------------------------------------|
--- | trial_id      | integer                  |  not null                                               |
--- | end_time      | timestamp with time zone |                                                         |
--- | metrics       | jsonb                    |                                                         |
--- | total_batches | integer                  |  not null default 0                                     |
--- | trial_run_id  | integer                  |  not null default 0                                     |
--- | archived      | boolean                  |  not null default false                                 |
--- | id            | integer                  |  not null default nextval('raw_steps_id_seq'::regclass) |
--- | type          | metric_type              |  not null default 'training'::metric_type               |
--- +---------------+--------------------------+---------------------------------------------------------+
--- Indexes:
---     "steps_trial_id_total_batches_run_id_type_unique" UNIQUE, btree (trial_id, total_batches, trial_run_id, type)
---     "steps_archived" btree (archived)
--- Foreign-key constraints:
---     "steps_trial_id_fkey" FOREIGN KEY (trial_id) REFERENCES trials(id)
-
 CREATE TABLE generic_metrics (LIKE raw_steps INCLUDING ALL);
 ALTER TABLE generic_metrics ALTER COLUMN type SET DEFAULT 'generic';
 CREATE UNIQUE INDEX generic_trial_id_total_batches_run_id_type_unique ON generic_metrics (
     trial_id, total_batches, trial_run_id, type
 );
-ALTER TABLE generic_metrics ADD CONSTRAINT generic_metrics_trial_id_fkey FOREIGN KEY (trial_id) REFERENCES trials(id);
--- change the default id nextval for generic_metrics 
-CREATE SEQUENCE generic_metrics_id_seq START WITH 1;
-ALTER SEQUENCE generic_metrics_id_seq OWNED BY generic_metrics.id;
-
-
-
 
 CREATE TABLE metrics (
     trial_id integer NOT NULL,
