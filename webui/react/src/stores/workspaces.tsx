@@ -11,7 +11,6 @@ import {
 } from 'services/api';
 import { V1PostWorkspaceRequest } from 'services/api-ts-sdk';
 import { GetWorkspacesParams } from 'services/types';
-import { noOp } from 'shared/utils/service';
 import { Workspace } from 'types';
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
@@ -113,19 +112,20 @@ class WorkspaceStore extends PollingStore {
     );
   }
 
-  public fetch(signal?: AbortSignal): () => void {
+  public fetch(signal?: AbortSignal, force = false): () => void {
     const canceler = new AbortController();
 
-    getWorkspaces({}, { signal: signal ?? canceler.signal })
-      .then((response) => this.#loadableWorkspaces.set(Loaded(response.workspaces)))
-      .catch(handleError);
+    if (force || this.#loadableWorkspaces.get() === NotLoaded) {
+      getWorkspaces({}, { signal: signal ?? canceler.signal })
+        .then((response) => {
+          // Prevents unnecessary re-renders.
+          if (!force && this.#loadableWorkspaces.get() !== NotLoaded) return;
+          this.#loadableWorkspaces.set(Loaded(response.workspaces));
+        })
+        .catch(handleError);
+    }
 
     return () => canceler.abort();
-  }
-
-  public fetchCached(signal?: AbortSignal): () => void {
-    const loadable = this.#loadableWorkspaces.get();
-    return loadable === NotLoaded ? this.fetch(signal) : noOp;
   }
 
   public reset() {

@@ -567,7 +567,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
 
   usePolling(fetchTasks, { rerunOnNewFn: true });
 
-  useEffect(() => workspaceStore.fetchCached(), []);
+  useEffect(() => workspaceStore.fetch(), []);
 
   useEffect(() => {
     const currentCanceler = canceler.current;

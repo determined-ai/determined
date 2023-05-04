@@ -111,7 +111,7 @@ const ModelDetails: React.FC = () => {
   useEffect(() => {
     setIsLoading(true);
     fetchModel();
-    return workspaceStore.fetchCached();
+    return workspaceStore.fetch();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
