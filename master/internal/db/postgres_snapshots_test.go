@@ -4,6 +4,7 @@
 package db
 
 import (
+	"context"
 	"testing"
 
 	"github.com/google/uuid"
@@ -58,6 +59,7 @@ func TestCustomSearcherSnapshot(t *testing.T) {
 
 	err = db.DeleteSnapshotsForExperiment(exp.ID)
 	require.NoError(t, err)
-	err = db.DeleteExperiment(exp.ID)
+	ctx := context.Background()
+	err = db.DeleteExperiments(ctx, []int{exp.ID})
 	require.NoError(t, err)
 }
