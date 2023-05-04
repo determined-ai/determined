@@ -1075,8 +1075,7 @@ class TestPyTorchTrial:
         exp_config.update(config)
 
         example_path = utils.tutorials_path("mnist_pytorch/model_def.py")
-        trial_module = utils.import_module("model_def", example_path)
-        trial_class = getattr(trial_module, "MNistTrial")  # noqa: B009
+        trial_class = utils.import_class_from_module("MNistTrial", example_path)
         trial_class._searcher_metric = "validation_loss"
 
         self.train_and_checkpoint(

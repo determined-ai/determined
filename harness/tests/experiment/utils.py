@@ -193,15 +193,16 @@ def tutorials_path(path: str) -> str:
     return os.path.join(os.path.dirname(__file__), "../../../examples/tutorials", path)
 
 
-def import_module(module_name: str, module_path: str) -> Any:
+def import_class_from_module(class_name: str, module_path: str) -> Any:
     module_dir = pathlib.Path(os.path.dirname(module_path))
 
     with det.import_from_path(module_dir):
-        spec = importlib.util.spec_from_file_location(module_name, module_path)
+        spec = importlib.util.spec_from_file_location(class_name, module_path)
         module = importlib.util.module_from_spec(spec)  # type: ignore
         spec.loader.exec_module(module)  # type: ignore
+        trial_cls = getattr(module, class_name)  # noqa: B009
 
-    return module
+    return trial_cls
 
 
 def load_config(config_path: str) -> Any:
