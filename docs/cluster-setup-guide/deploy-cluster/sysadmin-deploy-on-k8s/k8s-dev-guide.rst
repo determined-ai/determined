@@ -8,8 +8,8 @@
  Prerequisites
 ***************
 
-Before setting up Determined Master, the user should set up a Kubernetes cluster with GPU enabled
-nodes and Kubernetes version >= 1.19 and <= 1.21, though later versions may work. You can setup
+Before setting up Determined Master, set up a Kubernetes cluster with GPU enabled nodes and
+Kubernetes version >= 1.19 and <= 1.21. Later versions of Kubernetes may work. You can set up
 Kubernetes manually, or you can use a managed Kubernetes service such as :ref:`GKE
 <setup-gke-cluster>` or :ref:`EKS <setup-eks-cluster>`.
 
@@ -48,8 +48,8 @@ Next apply the Determined Helm chart and exec into the pod containing Master.
  Set up a Determined Environment
 *********************************
 
-Before installing Determined, you will need to install the dependencies specified in the
-`contributing guide <https://github.com/determined-ai/determined/blob/master/CONTRIBUTING.md>`__.
+Before installing Determined, install the dependencies specified in the `contributing guide
+<https://github.com/determined-ai/determined/blob/master/CONTRIBUTING.md>`__.
 
 You can use ``apt`` and ``pip`` to install most of the dependencies, but you will need to download
 and manually install `golang <https://golang.org/dl/>`__, `node <https://deb.nodesource.com/>`__,
@@ -59,33 +59,32 @@ dependencies:
 
 .. code:: bash
 
-   # Making man1 is necessary to prevent errors associated with installing jre
-   mkdir /usr/share/man/man1
-
    apt-get update
-   apt-get install -y --no-install-recommends software-properties-common git-all python3.7 python3-venv default-jre curl build-essential libkrb5-dev unzip
+   DEBIAN_FRONTEND=noninteractive apt-get install -y software-properties-common
+   DEBIAN_FRONTEND=noninteractive add-apt-repository -y ppa:deadsnakes/ppa
+   DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends git-all python3.8-dev python3.8-venv default-jre curl build-essential libkrb5-dev unzip jq
 
    # Download and install golang 1.15
-   curl -L https://golang.org/dl/go1.15.7.linux-amd64.tar.gz | tar -xz
+   curl -L https://go.dev/dl/go1.20.linux-amd64.tar.gz | tar -xz
    chown -R root:root ./go/
    mv go /usr/local/
 
    # Download and install node and typescript
-   curl -sL https://deb.nodesource.com/setup_12.x | bash -
+   curl -sL https://deb.nodesource.com/setup_16.x | bash -
    apt-get install -y nodejs
    npm install typescript -g
 
    # Download and install protobuf
    PB_REL="https://github.com/protocolbuffers/protobuf/releases"
-   curl -LO $PB_REL/download/v3.12.1/protoc-3.12.1-linux-x86_64.zip
-   unzip protoc-3.12.1-linux-x86_64.zip -d $HOME/.local
+   curl -LO $PB_REL/download/v3.19.0/protoc-3.19.0-linux-x86_64.zip
+   unzip protoc-3.19.0-linux-x86_64.zip -d $HOME/.local
 
    # Download and install helm
    curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3
    chmod 700 get_helm.sh
    ./get_helm.sh
 
-In addition to installing these packages, ``.bashrc`` needs to be updated with new paths.
+In addition to installing these packages, update ``.bashrc`` with the new paths.
 
 .. code:: bash
 
@@ -95,57 +94,79 @@ In addition to installing these packages, ``.bashrc`` needs to be updated with n
    export PATH="$PATH:$HOME/.local/bin"
 
 After completing these steps, clone the Determined repository and create and activate a virtual
-environment for Determined.
+environment for Determined. To create a virtual environment, you may use conda or python3-venv. Here
+is an example for cloning the repository, then creating and activating an environment with
+python3-venv:
+
+.. code:: bash
+
+   git clone https://github.com/determined-ai/determined.git
+
+   mkdir ~/.virtualenvs
+   python3.8 -m venv ~/.virtualenvs/determined
+
+   . ~/.virtualenvs/determined/bin/activate
 
 **********************************
  Prepare to run Determined Master
 **********************************
 
-Once the dependencies are installed, you need to make some modifications within the Determined
-repository. First, create a copy of the Master configuration located at
-``/etc/determined/master.yaml``. Then, place this copy inside the Determined repo under a new name,
-such as ``determined/tools/k8s-master.yaml``. Note that there is already a ``master.yaml`` file in
-the tools directory.
+Once the dependencies are installed, prepare the repository to run ``devcluster``, a tool for
+running Determined. First, enter the Determined repository and run:
 
 .. code:: bash
 
-   cp /etc/determined/master.yaml <path-to-determined>/tools/k8s-master.yaml
+   ``make all``
 
-Next, modify the config file you copied and add one extra line at the end:
+Once that has finished, create a new file at ``~/.devcluster.yaml`` and populate it with the
+following fields:
 
 .. code:: bash
 
-   root: build
+   startup_input: "p"
 
-After that, edit the file ``determined/tools/run-server.py``. Inside the main function's ``try``
-clause, comment out everything except for four lines related to ``master``:
+   cwd: /root/determined
 
-.. code::
+   commands:
+   p: make -C harness build  # rebuild Python
+   w: make -C webui build    # rebuild WebUI
+   c: make -C docs build     # rebuild docs
 
-   def main() -> None:
-     ...
-     try: # comment out all lines in here except for these four:
-       master = run_master()
-       ...
-       master.start()
-       wait_for_server(8080)
-       ...
-       master.join()
+   stages:
+   - master:
+         pre:
+         - sh: make -C proto build
+         - sh: make -C master build
+         - sh: make -C tools prep-root
 
-Do not modify the ``except`` or ``finally`` clauses.
+         config_file:
+         checkpoint_storage:
+            type: "gcs"
+            bucket: <name of your bucket>
+            save_experiment_best: 0
+            save_trial_best: 1
+            save_trial_latest: 1
 
-Lastly, inside the ``run_master`` function of ``determined/tools/run-server.py``, change the config
-file from ``master.yaml`` to the copied master config, i.e. ``k8s-master.yaml``.
+         db:
+            user: "postgres"
+            password: "postgres"
+            host: <name of determined db service from `kubectl get services`>
+            port: 5432
+            name: "determined"
+         port: 8081
 
-.. code::
+         resource_manager:
+            type: "kubernetes"
+            namespace: default
+            max_slots_per_pod: 1
+            master_service_name: <name of determined master service from `kubectl get services`>
 
-   def run_master() -> mp.Process:
-     ...
-       ["../master/build/determined-master", "--config-file", "k8s-master.yaml"],
-     ...
+         log:
+            level: debug
+         root: tools/build
 
-We are now ready to build and run the Determined Master! From the Determined repo, run ``make all``
-to build and ``make -C tools run`` to start the Master.
+You are now ready to build and run the Determined master! From the Determined repo, run ``devcluster
+--no-guess-host`` to build and run the master.
 
 ************
  Next Steps
