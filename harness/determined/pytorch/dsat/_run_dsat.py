@@ -21,7 +21,7 @@ def build_exp_conf_from_args(args: argparse.Namespace) -> _dsat_search_method.Ba
     additional_description = f"(#{args.experiment_id}) generated"
     existing_description = exp_config.get("description")
     if existing_description is not None:
-        exp_config["description"] += "(" + additional_description + ")"
+        exp_config["description"] = f"{additional_description} - {exp_config['description']}"
     else:
         exp_config["description"] = additional_description
 
