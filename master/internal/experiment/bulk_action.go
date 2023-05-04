@@ -46,11 +46,9 @@ var ExperimentsAddr = actor.Addr("experiments")
 
 // terminalExperimentStates where an experiment can be deleted, archived, or unarchived.
 var terminalExperimentStates = func() []string {
-	states := make([]string, len(model.TerminalStates))
-	idx := 0
+	states := make([]string, 0, len(model.TerminalStates))
 	for state := range model.TerminalStates {
-		states[idx] = string(state)
-		idx++
+		states = append(states, string(state))
 	}
 	return states
 }()
