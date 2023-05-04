@@ -11,16 +11,14 @@ import {
 } from 'services/api';
 import { V1PostWorkspaceRequest } from 'services/api-ts-sdk';
 import { GetWorkspacesParams } from 'services/types';
+import { noOp } from 'shared/utils/service';
 import { Workspace } from 'types';
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 
 import PollingStore from './polling';
 
-const FETCH_EXPIRATION = 3600 * 1000;
-
 class WorkspaceStore extends PollingStore {
-  #fetchExpiration = 0;
   #loadableWorkspaces: WritableObservable<Loadable<Workspace[]>> = observable(NotLoaded);
 
   public readonly workspaces = this.#loadableWorkspaces.readOnly();
@@ -118,17 +116,16 @@ class WorkspaceStore extends PollingStore {
   public fetch(signal?: AbortSignal): () => void {
     const canceler = new AbortController();
 
-    if (Date.now() - this.#fetchExpiration > FETCH_EXPIRATION) {
-      this.#fetchExpiration = Date.now();
-      getWorkspaces({}, { signal: signal ?? canceler.signal })
-        .then((response) => this.#loadableWorkspaces.set(Loaded(response.workspaces)))
-        .catch((e) => {
-          this.#fetchExpiration = 0;
-          handleError(e);
-        });
-    }
+    getWorkspaces({}, { signal: signal ?? canceler.signal })
+      .then((response) => this.#loadableWorkspaces.set(Loaded(response.workspaces)))
+      .catch(handleError);
 
     return () => canceler.abort();
+  }
+
+  public fetchCached(signal?: AbortSignal): () => void {
+    const loadable = this.#loadableWorkspaces.get();
+    return loadable === NotLoaded ? this.fetch(signal) : noOp;
   }
 
   public reset() {
