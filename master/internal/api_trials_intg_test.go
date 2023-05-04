@@ -366,6 +366,19 @@ func TestStreamTrainingMetrics(t *testing.T) {
 	}
 }
 
+func TestCompareTrialsNonNumeric(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	trial0, _, _ := createTestTrialWithMetrics(ctx, t, api, curUser, true)
+	trial1, _, _ := createTestTrialWithMetrics(ctx, t, api, curUser, true)
+
+	resp, err := api.CompareTrials(ctx, &apiv1.CompareTrialsRequest{
+		TrialIds:    []int32{int32(trial0.ID), int32(trial1.ID)},
+		MetricNames: []string{"loss", "textMetric"},
+	})
+	require.NoError(t, err)
+	require.NotNil(t, resp)
+}
+
 func TestTrialAuthZ(t *testing.T) {
 	api, authZExp, _, curUser, ctx := setupExpAuthTest(t, nil)
 	authZNSC := setupNSCAuthZ()

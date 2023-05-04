@@ -356,6 +356,7 @@ func MetricsTimeSeries(trialID int32, startTime time.Time,
 		ColumnExpr("(metrics ->'?' ->> 'epoch')::float8 as epoch", bun.Safe(metricsObjectName))
 
 	for _, metricName := range metricNames {
+		// TODO: This cast is wrong?!
 		subq = subq.ColumnExpr("(metrics ->'?' ->> ?)::float8 as ?",
 			bun.Safe(metricsObjectName), metricName, bun.Ident(metricName))
 	}
