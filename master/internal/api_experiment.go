@@ -1950,6 +1950,18 @@ func (a *apiServer) SearchExperiments(
 		return nil, err
 	}
 
+	if req.Filter != nil {
+		var efr experimentFilterRoot
+		err := json.Unmarshal([]byte(*req.Filter), &efr)
+		if err != nil {
+			return nil, err
+		}
+		experimentQuery, err = efr.toSQL(experimentQuery)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	if req.Sort != nil {
 		err = sortExperiments(req.Sort, experimentQuery)
 		if err != nil {
