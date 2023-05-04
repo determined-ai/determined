@@ -1,8 +1,8 @@
 import tempfile
 from pathlib import Path
 
+from tests.custom_search_mocks import MockMasterSearchRunner, SimulateMaster
 from tests.search_methods import ASHASearchMethod, RandomSearchMethod
-from tests.custom_search_mocks import SimulateMaster, MockMasterSearchRunner
 
 
 def test_run_random_searcher_exp_mock_master() -> None:

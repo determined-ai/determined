@@ -10,10 +10,8 @@ import torch
 
 import determined
 import determined.pytorch.deepspeed as det_deepspeed
-from determined.pytorch.dsat import _utils
-
 from determined import workload
-
+from determined.pytorch.dsat import _utils
 from tests.experiment import utils  # noqa: I100
 from tests.experiment.fixtures import deepspeed_linear_model
 

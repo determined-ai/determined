@@ -1,12 +1,11 @@
 import logging
+from pathlib import Path
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Union
+from unittest.mock import Mock
 
 from determined import searcher
 from determined.common.api import bindings
 from determined.experimental import client
-
-from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Union
-from unittest.mock import Mock
 
 
 class SimulateMaster:

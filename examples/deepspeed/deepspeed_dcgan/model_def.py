@@ -11,10 +11,10 @@ from gan_model import Discriminator, Generator, weights_init
 
 import deepspeed
 from determined.pytorch import DataLoader, TorchData
+from determined.pytorch.dsat import overwrite_deepspeed_config
 from determined.pytorch.deepspeed import (
     DeepSpeedTrial,
     DeepSpeedTrialContext,
-    overwrite_deepspeed_config,
 )
 
 REAL_LABEL = 1

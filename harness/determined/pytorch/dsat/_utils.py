@@ -75,7 +75,7 @@ def get_search_runner_config_from_args(args: argparse.Namespace) -> Dict[str, An
     # Merge with the submitted experiment config so that the search runner shares the project,
     # workspace, etc.
     search_runner_config = merge_dicts(submitted_exp_config_dict, default_search_runner_config)
-    search_runner_config["name"] += " (DS AT Searcher)"
+    search_runner_config["name"] = f"(DSAT) {search_runner_config['name']}"
     search_runner_config["hyperparameters"] = {
         "max_trials": args.max_trials,
         "max_concurrent_trials": args.max_concurrent_trials,
