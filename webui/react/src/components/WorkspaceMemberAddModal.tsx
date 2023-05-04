@@ -88,7 +88,7 @@ const WorkspaceMemberAddModalComponent: React.FC<Props> = ({
         form.resetFields();
         setSelectedOption(undefined);
         onClose?.();
-        message.success(`${getName(selectedOption)} added to workspace,`);
+        message.success(`${getName(selectedOption)} added to workspace.`);
       }
     } catch (e) {
       if (e instanceof DetError) {
