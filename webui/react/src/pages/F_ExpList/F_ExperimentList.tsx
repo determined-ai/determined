@@ -234,7 +234,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         ) : error ? (
           <Error />
         ) : (
-          <div>
+          <>
             <TableActionBar
               experiments={experiments}
               filters={experimentFilters}
@@ -267,7 +267,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
               setSortableColumnIds={setVisibleColumns}
               sortableColumnIds={settings.columns}
             />
-          </div>
+          </>
         )}
       </>
     </Page>
