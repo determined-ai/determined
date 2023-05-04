@@ -16,6 +16,7 @@ get-deps-npm:
 
 node_modules/done.stamp: package-lock.json
 	$(MAKE) get-deps-npm
+	npx playwright install
 	touch $@
 
 .PHONY: get-deps
@@ -110,7 +111,7 @@ test-ci:
 
 .PHONY: visual-test-deps
 visual-test-deps:
-	npx playwright install-deps
+	npx playwright install --with-deps
 
 screenshots/HEAD: node_modules visual-test-deps
 	node scripts/designkit-screenshot.mjs HEAD
