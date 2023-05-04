@@ -120,14 +120,6 @@ const useModalHyperparameterSearch = ({
   const [validationError, setValidationError] = useState(false);
   const formValues = Form.useWatch([], form);
 
-  useEffect(() => {
-    const cancelerTemp = canceler.current;
-    clusterStore.fetchResourcePools(cancelerTemp.signal);
-    return () => {
-      cancelerTemp.abort();
-    };
-  }, []);
-
   const trialHyperparameters = useMemo(() => {
     if (!trial) return;
     const continueFn = (value: unknown) => value === 'object';

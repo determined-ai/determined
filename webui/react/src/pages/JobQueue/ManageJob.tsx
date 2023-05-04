@@ -1,5 +1,5 @@
 import { List, Modal, Select, Typography } from 'antd';
-import React, { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { ReactNode, useCallback, useMemo, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
 import Form from 'components/kit/Form';
@@ -150,8 +150,6 @@ const ManageJob: React.FC<Props> = ({
       </div>
     );
   }, [currentPool, currentPoolStats]);
-
-  useEffect(() => clusterStore.startPolling(), []);
 
   // eslint-disable-next-line  @typescript-eslint/no-explicit-any
   const handleUpdateResourcePool = useCallback((changedValues: any) => {

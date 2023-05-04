@@ -9,7 +9,6 @@ import { useSettings } from 'hooks/useSettings';
 import { getProjectColumns, searchExperiments } from 'services/api';
 import { V1BulkExperimentFilters } from 'services/api-ts-sdk';
 import usePolling from 'shared/hooks/usePolling';
-import userStore from 'stores/users';
 import {
   ExperimentAction,
   ExperimentItem,
@@ -125,8 +124,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   }, [page, experimentFilters, canceler.signal]);
 
   const { stopPolling } = usePolling(fetchExperiments, { rerunOnNewFn: true });
-
-  useEffect(() => userStore.startPolling(), []);
 
   useEffect(() => {
     return () => {
