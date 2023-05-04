@@ -221,7 +221,7 @@ class _PyTorchTrialController:
         else:
             self.trial_id = self.core_context.train._trial_id
 
-        self.state = _TrialState(trial_id=self.trial_id)
+        self.state = None
         self.start_from_batch = steps_completed
         self.val_from_previous_run = self.core_context.train._get_last_validation()
         self.step_zero_validation = step_zero_validation
@@ -587,6 +587,9 @@ class _PyTorchTrialController:
                     self.latest_checkpoint
                 ) as load_path:
                     self._load(load_path)
+            else:
+                # If we are not loading, initialize a fresh state.
+                self.state = _TrialState(trial_id=self.trial_id)
 
             if self.context.distributed.size > 1 and self.use_horovod:
                 hvd.broadcast_parameters(self.context._main_model.state_dict(), root_rank=0)
