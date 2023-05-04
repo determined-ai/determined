@@ -62,7 +62,7 @@ CREATE UNIQUE INDEX steps_trial_id_total_batches_run_id_type_unique ON raw_steps
 DROP INDEX steps_trial_id_total_batches_run_id_unique_old;
 
 
-CREATE SEQUENCE generic_metrics_id_seq START WITH 1;
+-- CREATE SEQUENCE generic_metrics_id_seq START WITH 1;
 CREATE TABLE generic_metrics (
     trial_id integer NOT NULL,
     end_time timestamp with time zone,
@@ -70,11 +70,18 @@ CREATE TABLE generic_metrics (
     total_batches integer NOT NULL DEFAULT 0,
     trial_run_id integer NOT NULL DEFAULT 0,
     archived boolean NOT NULL DEFAULT false,
-    id integer NOT NULL DEFAULT nextval('generic_metrics_id_seq'),
+    id integer NOT NULL,
     type metric_type NOT NULL DEFAULT 'generic',
     CONSTRAINT generic_metrics_trial_id_fkey FOREIGN KEY (trial_id) REFERENCES trials(id)
 );
 
+-- drop default values on partitions
+ALTER TABLE raw_validations ALTER COLUMN id DROP IDENTITY;
+ALTER TABLE raw_steps ALTER COLUMN id DROP DEFAULT;
+
+-- start with max of existing ids in raw_steps and raw_validations. find it using select on both tables
+CREATE SEQUENCE metrics_id_seq;
+SELECT setval('metrics_id_seq', GREATEST(COALESCE((SELECT MAX(id) FROM raw_steps), 0), COALESCE((SELECT MAX(id) FROM raw_validations), 0)) + 1, true);
 
 CREATE TABLE metrics (
     trial_id integer NOT NULL,
@@ -83,7 +90,7 @@ CREATE TABLE metrics (
     total_batches integer NOT NULL DEFAULT 0,
     trial_run_id integer NOT NULL DEFAULT 0,
     archived boolean NOT NULL DEFAULT false,
-    id integer NOT NULL,
+    id integer NOT NULL default nextval('metrics_id_seq'),
     type metric_type NOT NULL DEFAULT 'generic'
     -- CONSTRAINT metrics_trial_id_fkey FOREIGN KEY (trial_id) REFERENCES trials(id). Not supported
 ) PARTITION BY LIST (type);
