@@ -72,7 +72,10 @@ const LearningCurveChart: React.FC<Props> = ({
           },
           yScale: 'y',
         }),
-        tooltipsPlugin({ isShownEmptyVal: false }),
+        tooltipsPlugin({
+          isShownEmptyVal: false,
+          seriesColors: trialIds.map((t) => glasbeyColor(t)),
+        }),
       ],
       scales: { x: { time: false }, y: { distr: selectedScale === Scale.Log ? 3 : 1 } },
       series: [
