@@ -101,12 +101,13 @@ func addMetrics(ctx context.Context,
 
 func addMetricCustomTime(ctx context.Context, t *testing.T, trialID int, endTime time.Time) {
 	metric := struct {
-		bun.BaseModel `bun:"table:steps"`
+		bun.BaseModel `bun:"table:metrics"`
 		TrialID       int
 		TrialRunID    int
 		Metrics       map[string]any
 		TotalBatches  int
 		EndTime       time.Time
+		Type          model.MetricType
 	}{
 		TrialID:    trialID,
 		TrialRunID: 1,
@@ -117,17 +118,19 @@ func addMetricCustomTime(ctx context.Context, t *testing.T, trialID int, endTime
 		},
 		TotalBatches: 999999,
 		EndTime:      endTime,
+		Type:         model.TrainingMetric,
 	}
 	_, err := Bun().NewInsert().Model(&metric).Exec(ctx)
 	require.NoError(t, err)
 
 	valMetric := struct {
-		bun.BaseModel `bun:"table:validations"`
+		bun.BaseModel `bun:"table:metrics"`
 		TrialID       int
 		TrialRunID    int
 		Metrics       map[string]any
 		TotalBatches  int
 		EndTime       time.Time
+		Type          model.MetricType
 	}{
 		TrialID:    trialID,
 		TrialRunID: 1,
@@ -138,6 +141,7 @@ func addMetricCustomTime(ctx context.Context, t *testing.T, trialID int, endTime
 		},
 		TotalBatches: 999999,
 		EndTime:      endTime,
+		Type:         model.ValidationMetric,
 	}
 	_, err = Bun().NewInsert().Model(&valMetric).Exec(ctx)
 	require.NoError(t, err)
