@@ -1489,7 +1489,10 @@ func (a *apiServer) CreateExperiment(
 	activeConfig, project, err := a.populateConfigWithProject(user,
 		req.ProjectId, req.Config, req.Template) // with defaults
 	if err != nil {
-		return nil, err
+		if _, ok := err.(ErrProjectNotFound); ok {
+			return nil, status.Errorf(codes.NotFound, err.Error())
+		}
+		return nil, status.Errorf(codes.InvalidArgument, "invalid experiment: %s", err)
 	}
 
 	modelDef := filesToArchive(req.ModelDefinition)
