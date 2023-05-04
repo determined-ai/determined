@@ -1,12 +1,12 @@
 import json
 import logging
 import os
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Dict, List, Tuple
 
 import determined as det
-from determined.pytorch import dsat
 from transformers import TrainerCallback, TrainerControl, TrainerState, TrainingArguments
 from transformers.trainer_utils import get_last_checkpoint
+
 
 logging.basicConfig(level=logging.INFO)
 
@@ -293,37 +293,6 @@ def get_metric_type(d):
             return TRAIN_AVG
         else:
             return TRAIN
-
-
-def get_ds_config_path_from_args(args: List[str]) -> Optional[str]:
-    for idx in range(len(args)):
-        if args[idx] == "--deepspeed":
-            ds_config_idx = idx + 1
-            ds_config_path = args[ds_config_idx]
-            return ds_config_path
-
-
-def replace_ds_config_file_using_overwrites(
-    args: List[str], hparams: Dict[str, Any], overwrite_key: str = dsat._defaults.OVERWRITE_KEY
-):
-    """
-    Gets the deepspeed json config path from the list of HF args, overwrites its values using
-    the provided overwrite values, and the re-writes the result to the original config path.
-    Intended primarily for use with DeepSpeed Autotuning. The resulting DeepSpeed config will have
-    a consistent batch size configuration.
-    """
-    ds_config_path = get_ds_config_path_from_args(args)
-    with open(ds_config_path, "r") as f:
-        ds_config_dict_with_overwrites = json.load(f)
-        # If overwrites are provided, use them. The deepspeed configuration is assumed to have a
-        # consistent batch size configuration at this point, with all of train_batch_size,
-        # train_micro_batch_size_per_gpu, and gradient_accumulation_steps filled in.
-        ds_config_dict_with_overwrites = dsat.overwrite_deepspeed_config(
-            ds_config_dict_with_overwrites, hparams.get(overwrite_key, {})
-        )
-        # overwrite the original config
-        with open(ds_config_path, "w") as f:
-            json.dump(ds_config_dict_with_overwrites, f)
 
 
 def create_consistent_hf_args_for_deepspeed(args: List[str], ds_config_path: str) -> List[str]:

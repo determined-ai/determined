@@ -297,3 +297,34 @@ def overwrite_deepspeed_config(
     """
     normalized_base_ds_config = normalize_base_ds_config(base_ds_config, model_dir=model_dir)
     return merge_dicts(cast(Dict[str, Any], normalized_base_ds_config), source_ds_dict)
+
+
+def get_ds_config_path_from_args(args: List[str]) -> Optional[str]:
+    for idx in range(len(args)):
+        if args[idx] == "--deepspeed":
+            ds_config_idx = idx + 1
+            ds_config_path = args[ds_config_idx]
+            return ds_config_path
+
+
+def replace_ds_config_file_using_overwrites(
+    args: List[str], hparams: Dict[str, Any], overwrite_key: str = _defaults.OVERWRITE_KEY
+):
+    """
+    Gets the deepspeed json config path from the list of HF args, overwrites its values using
+    the provided overwrite values, and the re-writes the result to the original config path.
+    Intended primarily for use with DeepSpeed Autotuning. The resulting DeepSpeed config will have
+    a consistent batch size configuration.
+    """
+    ds_config_path = get_ds_config_path_from_args(args)
+    with open(ds_config_path, "r") as f:
+        ds_config_dict_with_overwrites = json.load(f)
+        # If overwrites are provided, use them. The deepspeed configuration is assumed to have a
+        # consistent batch size configuration at this point, with all of train_batch_size,
+        # train_micro_batch_size_per_gpu, and gradient_accumulation_steps filled in.
+        ds_config_dict_with_overwrites = overwrite_deepspeed_config(
+            ds_config_dict_with_overwrites, hparams.get(overwrite_key, {})
+        )
+        # overwrite the original config
+        with open(ds_config_path, "w") as f:
+            json.dump(ds_config_dict_with_overwrites, f)

@@ -15,6 +15,7 @@ searcher:
     batches: 100
   metric: eval_loss
 hyperparameters:
+  deepspeed_config: ds_configs/ds_config_stage_1.json
   training_arguments:
     learning_rate: 1e-5
 entrypoint: >-
