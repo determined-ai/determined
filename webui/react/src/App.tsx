@@ -59,8 +59,8 @@ const AppView: React.FC = () => {
   useRouteTracker();
 
   useEffect(() => (isAuthenticated ? userStore.fetchCurrentUser() : undefined), [isAuthenticated]);
-  useEffect(() => (isAuthenticated ? userStore.fetchUsers() : undefined), [isAuthenticated]);
   useEffect(() => (isAuthenticated ? clusterStore.startPolling() : undefined), [isAuthenticated]);
+  useEffect(() => (isAuthenticated ? userStore.startPolling() : undefined), [isAuthenticated]);
   useEffect(() => (isAuthenticated ? workspaceStore.startPolling() : undefined), [isAuthenticated]);
   useEffect(() => determinedStore.startPolling({ delay: 600_000 }), []);
 

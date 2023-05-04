@@ -159,8 +159,6 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
 
   usePolling(fetchAll, { rerunOnNewFn: true });
 
-  useEffect(() => userStore.startPolling(), []);
-
   /**
    * Get new models based on changes to the pagination and sorter.
    */

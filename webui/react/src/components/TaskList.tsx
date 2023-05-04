@@ -569,8 +569,6 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
 
   useEffect(() => workspaceStore.fetchCached(), []);
 
-  useEffect(() => userStore.startPolling(), []);
-
   useEffect(() => {
     const currentCanceler = canceler.current;
     return () => currentCanceler.abort();
