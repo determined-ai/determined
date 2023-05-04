@@ -17,7 +17,10 @@ import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 
 import PollingStore from './polling';
 
+const FETCH_EXPIRATION = 3600 * 1000;
+
 class WorkspaceStore extends PollingStore {
+  #fetchExpiration = 0;
   #loadableWorkspaces: WritableObservable<Loadable<Workspace[]>> = observable(NotLoaded);
 
   public readonly workspaces = this.#loadableWorkspaces.readOnly();
@@ -112,12 +115,18 @@ class WorkspaceStore extends PollingStore {
     );
   }
 
-  public fetch(settings = {} as GetWorkspacesParams, signal?: AbortSignal): () => void {
+  public fetch(signal?: AbortSignal): () => void {
     const canceler = new AbortController();
 
-    getWorkspaces(settings, { signal: signal ?? canceler.signal })
-      .then((response) => this.#loadableWorkspaces.set(Loaded(response.workspaces)))
-      .catch(handleError);
+    if (Date.now() - this.#fetchExpiration > FETCH_EXPIRATION) {
+      this.#fetchExpiration = Date.now();
+      getWorkspaces({}, { signal: signal ?? canceler.signal })
+        .then((response) => this.#loadableWorkspaces.set(Loaded(response.workspaces)))
+        .catch((e) => {
+          this.#fetchExpiration = 0;
+          handleError(e);
+        });
+    }
 
     return () => canceler.abort();
   }
