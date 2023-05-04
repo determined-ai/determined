@@ -214,9 +214,9 @@ func isMultiTrialSampleCorrect(expectedMetrics []*commonv1.Metrics,
 		// use epoch to match because in downsampling returned values are randomized.
 		expectedAvgMetrics := expectedMetrics[epoch].AvgMetrics.AsMap()
 		for metricName := range expectedAvgMetrics {
+			actualAvgMetrics := allActualAvgMetrics[i].Values.AsMap()
 			switch expectedAvgMetrics[metricName].(type) { //nolint:gocritic
 			case float64:
-				actualAvgMetrics := allActualAvgMetrics[i].Values.AsMap()
 				expectedVal := expectedAvgMetrics[metricName].(float64)
 				if metricName == "epoch" {
 					if expectedVal != float64(*allActualAvgMetrics[i].Epoch) {
@@ -231,8 +231,14 @@ func isMultiTrialSampleCorrect(expectedMetrics []*commonv1.Metrics,
 				if expectedVal != actualVal {
 					return false
 				}
+			case string:
+				if actual, ok := actualAvgMetrics[metricName].(string); !ok {
+					return false
+				} else if actual != expectedAvgMetrics[metricName].(string) {
+					return false
+				}
 			default:
-				continue // non-float values are not handled in API
+				panic("unexpected metric type in multi trial sample")
 			}
 		}
 	}
@@ -248,9 +254,6 @@ func TestMultiTrialSampleMetrics(t *testing.T) {
 	var trainMetricNames []string
 	var metricIds []string
 	for metricName := range expectedTrainMetrics[0].AvgMetrics.AsMap() {
-		if metricName == "textMetric" { //nolint:goconst
-			continue
-		}
 		trainMetricNames = append(trainMetricNames, metricName)
 		metricIds = append(metricIds, "training."+metricName)
 	}
@@ -262,9 +265,6 @@ func TestMultiTrialSampleMetrics(t *testing.T) {
 	require.Equal(t, 1, len(actualTrainingMetrics))
 	var validationMetricNames []string
 	for metricName := range expectedValMetrics[0].AvgMetrics.AsMap() {
-		if metricName == "textMetric" {
-			continue
-		}
 		validationMetricNames = append(validationMetricNames, metricName)
 		metricIds = append(metricIds, "validation."+metricName)
 	}

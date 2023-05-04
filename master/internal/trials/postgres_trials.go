@@ -352,13 +352,39 @@ func MetricsTimeSeries(trialID int32, startTime time.Time,
 	subq := db.Bun().NewSelect().TableExpr(tableName).
 		ColumnExpr("(select setseed(1)) as _seed").
 		ColumnExpr("total_batches as batches").
-		ColumnExpr("trial_id").ColumnExpr("end_time as time").
-		ColumnExpr("(metrics ->'?' ->> 'epoch')::float8 as epoch", bun.Safe(metricsObjectName))
+		ColumnExpr("trial_id").ColumnExpr("end_time as time")
 
-	for _, metricName := range metricNames {
-		// TODO: This cast is wrong?!
-		subq = subq.ColumnExpr("(metrics ->'?' ->> ?)::float8 as ?",
-			bun.Safe(metricsObjectName), metricName, bun.Ident(metricName))
+	type summary struct {
+		bun.BaseModel `bun:"table:trials"`
+		Metrics       map[string]any
+	}
+	var summaryMetrics summary
+	if err := db.Bun().NewSelect().Table("trials").
+		ColumnExpr("summary_metrics->? AS metrics", metricsObjectName).
+		Where("id = ?", trialID).
+		Scan(context.TODO(), &summaryMetrics); err != nil {
+		return nil, fmt.Errorf("getting summary metrics for trial %d: %w", trialID, err)
+	}
+
+	for _, metricName := range append(metricNames, "epoch") {
+		metricType := db.MetricTypeString
+		if curSummary, ok := summaryMetrics.Metrics[metricName].(map[string]any); ok {
+			if m, ok := curSummary["type"].(string); ok {
+				metricType = m
+			}
+		}
+
+		cast := "text"
+		switch metricType {
+		case db.MetricTypeNumber:
+			cast = "float8"
+		case db.MetricTypeDate:
+			cast = "timestamp"
+		case db.MetricTypeBool:
+			cast = "boolean"
+		}
+		subq = subq.ColumnExpr("(metrics->?->>?)::? as ?",
+			metricsObjectName, metricName, bun.Safe(cast), bun.Ident(metricName))
 	}
 
 	subq = subq.Where("trial_id = ?", trialID).OrderExpr("random()").
@@ -400,6 +426,8 @@ func MetricsTimeSeries(trialID int32, startTime time.Time,
 		}
 		epoch := new(int32)
 		if results[i]["epoch"] != nil {
+			// ERROR here
+			fmt.Printf("%v %T\n", results[i]["epoch"], results[i]["epoch"])
 			*epoch = int32(results[i]["epoch"].(float64))
 		}
 		var endTime time.Time
