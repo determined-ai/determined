@@ -77,8 +77,10 @@ func (o *operator) toSQL() (string, error) {
 	return s, nil
 }
 
-func columnNameToSQL(c string, l *string, t *string) (string, error) {
-	var col string
+func expColumnNameToSQL(columnName string) (string, error) {
+	// To prevent SQL injection this function should never
+	// return a user generated field name
+
 	filterExperimentColMap := map[string]string{
 		"id":              "e.id",
 		"description":     "e.config->>'description'",
@@ -110,9 +112,9 @@ func columnNameToSQL(c string, l *string, t *string) (string, error) {
 		 ) `,
 	}
 	var exists bool
-	col, exists = filterExperimentColMap[c]
+	col, exists := filterExperimentColMap[columnName]
 	if !exists {
-		return "", fmt.Errorf("invalid experiment column %s", c)
+		return "", fmt.Errorf("invalid experiment column %s", columnName)
 	}
 	return col, nil
 }
@@ -151,17 +153,13 @@ func hpToSQL(c string, filterColumnType *string, filterValue *interface{},
 	case projectv1.ColumnType_COLUMN_TYPE_TEXT.String(), projectv1.ColumnType_COLUMN_TYPE_DATE.String():
 		switch o {
 		case empty, notEmpty:
-			i, j := 0, 0
-			for i < 2 {
-				for j < 2 {
+			for i := 0; i < 2; i++ {
+				for j := 0; j < 2; j++ {
 					for _, hp := range hp {
 						queryArgs = append(queryArgs, hp)
 					}
-					j++
 				}
 				queryArgs = append(queryArgs, bun.Safe(oSQL))
-				i++
-				j = 0
 			}
 			queryString = fmt.Sprintf(`(CASE
 				WHEN config->'hyperparameters'->%s->>'type' = 'const' THEN config->'hyperparameters'->%s->>'val' %s
@@ -169,21 +167,17 @@ func hpToSQL(c string, filterColumnType *string, filterValue *interface{},
 				ELSE false
 			 END)`, hpQuery, hpQuery, "?", hpQuery, hpQuery, "?")
 		case contains:
-			i := 0
 			queryLikeValue := `%` + queryValue.(string) + `%`
-			for i < 2 {
+			for i := 0; i < 2; i++ {
 				for _, hp := range hp {
 					queryArgs = append(queryArgs, hp)
 				}
-				i++
 			}
 			queryArgs = append(queryArgs, queryLikeValue)
-			i = 0
-			for i < 2 {
+			for i := 0; i < 2; i++ {
 				for _, hp := range hp {
 					queryArgs = append(queryArgs, hp)
 				}
-				i++
 			}
 			queryArgs = append(queryArgs, bun.Safe("?"), queryValue)
 			queryString = fmt.Sprintf(`(CASE
@@ -192,21 +186,17 @@ func hpToSQL(c string, filterColumnType *string, filterValue *interface{},
 				ELSE false
 			 END)`, hpQuery, hpQuery, "?", hpQuery, hpQuery, "?", "?")
 		case doesNotContain:
-			i := 0
 			queryLikeValue := `%` + queryValue.(string) + `%`
-			for i < 2 {
+			for i := 0; i < 2; i++ {
 				for _, hp := range hp {
 					queryArgs = append(queryArgs, hp)
 				}
-				i++
 			}
 			queryArgs = append(queryArgs, queryLikeValue)
-			i = 0
-			for i < 2 {
+			for i := 0; i < 2; i++ {
 				for _, hp := range hp {
 					queryArgs = append(queryArgs, hp)
 				}
-				i++
 			}
 			queryArgs = append(queryArgs, bun.Safe("?"), queryValue)
 			queryString = fmt.Sprintf(`(CASE
@@ -215,12 +205,10 @@ func hpToSQL(c string, filterColumnType *string, filterValue *interface{},
 				ELSE false
 			 END)`, hpQuery, hpQuery, "?", hpQuery, hpQuery, "?", "?")
 		default:
-			i := 0
-			for i < 2 {
+			for i := 0; i < 2; i++ {
 				for _, hp := range hp {
 					queryArgs = append(queryArgs, hp)
 				}
-				i++
 			}
 			queryArgs = append(queryArgs, bun.Safe(oSQL), queryValue)
 			queryString = fmt.Sprintf(`(CASE WHEN config->'hyperparameters'->%s->>'type' = 'const' THEN config->'hyperparameters'->%s->>'val' %s %s ELSE false END)`,
@@ -229,17 +217,13 @@ func hpToSQL(c string, filterColumnType *string, filterValue *interface{},
 	default:
 		switch o {
 		case empty, notEmpty:
-			i, j := 0, 0
-			for i < 3 {
-				for j < 2 {
+			for i := 0; i < 3; i++ {
+				for j := 0; j < 2; j++ {
 					for _, hp := range hp {
 						queryArgs = append(queryArgs, hp)
 					}
-					j++
 				}
 				queryArgs = append(queryArgs, bun.Safe(oSQL))
-				i++
-				j = 0
 			}
 			queryString = fmt.Sprintf(`(CASE
 				WHEN config->'hyperparameters'->%s->>'type' = 'const' THEN (config->'hyperparameters'->%s->>'val')::float8 %s
@@ -248,20 +232,16 @@ func hpToSQL(c string, filterColumnType *string, filterValue *interface{},
 				ELSE false
 			 END)`, hpQuery, hpQuery, "?", hpQuery, hpQuery, "?", hpQuery, hpQuery, "?")
 		case contains:
-			i := 0
-			for i < 2 {
+			for i := 0; i < 2; i++ {
 				for _, hp := range hp {
 					queryArgs = append(queryArgs, hp)
 				}
-				i++
 			}
 			queryArgs = append(queryArgs, bun.Safe(`?`), queryValue)
-			i = 0
-			for i < 2 {
+			for i := 0; i < 2; i++ {
 				for _, hp := range hp {
 					queryArgs = append(queryArgs, hp)
 				}
-				i++
 			}
 			queryArgs = append(queryArgs, queryValue)
 			for _, hp := range hp {
@@ -274,20 +254,16 @@ func hpToSQL(c string, filterColumnType *string, filterValue *interface{},
 					ELSE false
 				 END)`, hpQuery, hpQuery, "?", "?", hpQuery, hpQuery, "?", hpQuery, "?")
 		case doesNotContain:
-			i := 0
-			for i < 2 {
+			for i := 0; i < 2; i++ {
 				for _, hp := range hp {
 					queryArgs = append(queryArgs, hp)
 				}
-				i++
 			}
 			queryArgs = append(queryArgs, bun.Safe(`?`), queryValue)
-			i = 0
-			for i < 2 {
+			for i := 0; i < 2; i++ {
 				for _, hp := range hp {
 					queryArgs = append(queryArgs, hp)
 				}
-				i++
 			}
 			queryArgs = append(queryArgs, queryValue)
 			for _, hp := range hp {
@@ -300,17 +276,13 @@ func hpToSQL(c string, filterColumnType *string, filterValue *interface{},
 					ELSE false
 				 END)`, hpQuery, hpQuery, "?", "?", hpQuery, hpQuery, "?", hpQuery, "?")
 		default:
-			i, j := 0, 0
-			for i < 2 {
-				for j < 2 {
+			for i := 0; i < 2; i++ {
+				for j := 0; j < 2; j++ {
 					for _, hp := range hp {
 						queryArgs = append(queryArgs, hp)
 					}
-					j++
 				}
 				queryArgs = append(queryArgs, bun.Safe(oSQL), queryValue)
-				i++
-				j = 0
 			}
 			for _, hp := range hp {
 				queryArgs = append(queryArgs, hp)
@@ -366,7 +338,10 @@ func (e experimentFilter) toSQL(q *bun.SelectQuery,
 		}
 		switch location {
 		case projectv1.LocationType_LOCATION_TYPE_EXPERIMENT.String():
-			col, err := columnNameToSQL(e.ColumnName, e.Location, e.Type)
+			col, err := expColumnNameToSQL(e.ColumnName)
+			if err != nil {
+				return nil, err
+			}
 			var queryArgs []interface{}
 			var queryString string
 			switch *e.Operator {
