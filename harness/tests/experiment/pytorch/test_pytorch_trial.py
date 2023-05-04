@@ -677,7 +677,6 @@ class TestPyTorchTrial:
         for older, newer in zip(training_metrics, training_metrics[1:]):
             assert newer["loss"] <= older["loss"]
 
-
     @pytest.mark.gpu
     @pytest.mark.parametrize(
         "trial_class",
