@@ -22,18 +22,11 @@ from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
 
 import datasets
-import determined as det
 import numpy as np
 import torch
 import transformers
 from datasets import load_dataset
-from det_callback import (
-    DetCallback,
-    create_consistent_hf_args_for_deepspeed,
-    get_ds_config_path_from_args,
-    replace_ds_config_file_using_overwrites,
-)
-from determined.pytorch import dsat
+from det_callback import DetCallback, get_hf_args_with_overwrites
 from PIL import Image
 from torch.utils.tensorboard import SummaryWriter
 from torchvision.transforms import (
@@ -57,6 +50,9 @@ from transformers import (
 from transformers.integrations import TensorBoardCallback
 from transformers.trainer_utils import get_last_checkpoint
 from transformers.utils.versions import require_version
+
+import determined as det
+from determined.pytorch import dsat
 
 """ Fine-tuning a 🤗 Transformers model for image classification"""
 
@@ -222,11 +218,11 @@ def parse_input_arguments(
     else:
         args = sys.argv[1:]
         args.extend(dict2args(training_arguments))
-        ds_config_path = get_ds_config_path_from_args(args)
-        if ds_config_path is not None:
-            replace_ds_config_file_using_overwrites(args, hparams)
-            args = create_consistent_hf_args_for_deepspeed(args, ds_config_path)
-        model_args, data_args, training_args = parser.parse_args_into_dataclasses(args)
+        if any("--deepspeed" == arg.strip() for arg in args):
+            args = get_hf_args_with_overwrites(args, hparams)
+        model_args, data_args, training_args = parser.parse_args_into_dataclasses(
+            args, look_for_args_file=False
+        )
 
     return model_args, data_args, training_args
 

@@ -1,12 +1,17 @@
+import copy
 import json
 import logging
 import os
 from typing import Any, Dict, List, Optional, Tuple
 
-import determined as det
-from determined.pytorch import dsat
+import filelock
+import torch
 from transformers import TrainerCallback, TrainerControl, TrainerState, TrainingArguments
 from transformers.trainer_utils import get_last_checkpoint
+
+import determined as det
+from determined.pytorch import dsat
+from determined.util import merge_dicts
 
 logging.basicConfig(level=logging.INFO)
 
@@ -148,8 +153,8 @@ class DetCallback(TrainerCallback):
         if latest_checkpoint is not None:
             if args.overwrite_output_dir is True:
                 logging.info(
-                    f"Skip downloading last checkpoint from Determined due "
-                    f"to overwrite_output_dir=True."
+                    "Skip downloading last checkpoint from Determined due "
+                    "to overwrite_output_dir=True."
                 )
                 return
 
@@ -303,70 +308,75 @@ def get_ds_config_path_from_args(args: List[str]) -> Optional[str]:
             return ds_config_path
 
 
-def replace_ds_config_file_using_overwrites(
-    args: List[str], hparams: Dict[str, Any], overwrite_key: str = dsat._defaults.OVERWRITE_KEY
-):
+def overwrite_ds_json_file(overwrite_dict: Dict[str, Any], ds_json_path: str) -> None:
+    with filelock.FileLock(ds_json_path + ".lock"):
+        with open(ds_json_path, "w") as f:
+            json.dump(overwrite_dict, f)
+
+
+def update_hf_args(args: List[str], ds_config_dict: Dict[str, Any]) -> List[str]:
     """
-    Gets the deepspeed json config path from the list of HF args, overwrites its values using
-    the provided overwrite values, and the re-writes the result to the original config path.
-    Intended primarily for use with DeepSpeed Autotuning. The resulting DeepSpeed config will have
-    a consistent batch size configuration.
+    Updates batch-size-related HF CLI args to be consistent with the values specified in the
+    provided DeepSpeed config dictionary.
     """
-    ds_config_path = get_ds_config_path_from_args(args)
-    with open(ds_config_path, "r") as f:
-        ds_config_dict_with_overwrites = json.load(f)
-        # If overwrites are provided, use them. The deepspeed configuration is assumed to have a
-        # consistent batch size configuration at this point, with all of train_batch_size,
-        # train_micro_batch_size_per_gpu, and gradient_accumulation_steps filled in.
-        ds_config_dict_with_overwrites = dsat.overwrite_deepspeed_config(
-            ds_config_dict_with_overwrites, hparams.get(overwrite_key, {})
-        )
-        # overwrite the original config
-        with open(ds_config_path, "w") as f:
-            json.dump(ds_config_dict_with_overwrites, f)
-
-
-def create_consistent_hf_args_for_deepspeed(args: List[str], ds_config_path: str) -> List[str]:
-    """
-    TODO: Cleanup and write actual doc string.
-
-    Helper function which modifies the *HFConfig* batch-size-related args based on the deepspeed
-    json file, if present.
-
-    The default HF behavior is to use "auto" for these values in the json file when combining
-    deepspeed and HF Trainer, and then HF will populate the ds config values based on other
-    HF args. This helper function exactly reverses the logic and modifies the HF args based on the
-    ds json config values, if they are not "auto".
-    """
-    # Next we need to ensure that the HF batch config aligns with the deepspeed one.
-    with open(ds_config_path, "r") as f:
-        ds_config_dict = json.load(f)
-
     hf_flag_to_ds_key = {
         "--per_device_train_batch_size": "train_micro_batch_size_per_gpu",
         "--gradient_accumulation_steps": "gradient_accumulation_steps",
     }
-
-    # For every provided HF flag, check if a non-"auto" value is specified in the corresponding
-    # DS config file and update the corresponding HF value, if so.
+    # Overwrite CLI args
+    args = copy.deepcopy(args)
     for idx in range(len(args)):
         if args[idx] in hf_flag_to_ds_key:
             ds_key = hf_flag_to_ds_key[args[idx]]
             overwrite_value = str(ds_config_dict[ds_key])
-            if overwrite_value != "auto" and args[idx + 1] != overwrite_value:
+            if args[idx + 1] != overwrite_value:
                 logging.warning(
-                    f"Changing {args[idx]} from {args[idx +1]} to {overwrite_value} to match the DeepSpeed configuration."
+                    f"Changing {args[idx]} from {args[idx +1]} to {overwrite_value} to match "
+                    " the deespspeed config values."
                 )
                 args[idx + 1] = overwrite_value
             del hf_flag_to_ds_key[args[idx]]
 
-    # All remaining keys in hf_flag_to_ds_key were not provided as args to the HF CLI entrypoint,
-    # but their corresponding values may still be specified in the DS config. If they are, and they
-    # are not "auto", add the HF CLI args correspondingly.
+    # Any remaining keys in hf_flag_to_ds_key were not provided as args to the HF CLI entrypoint,
+    # but they must be added in explicitly, to avoid falling back to HF defaults.
     for hf_flag, ds_key in hf_flag_to_ds_key.items():
-        if ds_key in ds_config_dict:
-            hf_flag_value = str(ds_config_dict[ds_key])
-            if hf_flag_value != "auto":
-                args.extend([hf_flag, hf_flag_value])
+        hf_flag_value = str(ds_config_dict[ds_key])
+        args.extend([hf_flag, hf_flag_value])
+        logging.warning(
+            f"Adding {hf_flag} {hf_flag_value} to HF CLI args to reflect overwrite values."
+        )
+    return args
+
+
+def get_hf_args_with_overwrites(
+    args: List[str], hparams: Dict[str, Any], overwrite_key: str = dsat._defaults.OVERWRITE_KEY
+) -> List[str]:
+    """
+    Helper function which modifies the HF CLI args (`--per_device_train_batch_size` and
+    `--gradient_accumulation_steps`) to reflect any batch-size related DeepSpeed parameters
+    present in `hparams[overwrite_key]` (`train_batch_size`, `train_micro_batch_size_per_gpu`, and
+    `gradient_accumulation_steps`). Assumes that each of these three keys are in
+    `hparams[overwrite_key]` and that they are consistent with each other. Primarily intended for
+    use with DeepSpeed Autotune, which populates `hparams[overwrite_key]` using values which
+    obey the above constraints.
+    """
+    assert overwrite_key in hparams, (
+        f"`create_consistent_hf_args_for_deepspeed` expected {overwrite_key} to be a key in "
+        f"`hparams. Received {hparams}"
+    )
+    # Verify that the appropriate keys in the DS json file have `"auto"` values
+    ds_config_path = get_ds_config_path_from_args(args)
+
+    with open(ds_config_path, "r") as f:
+        ds_config_dict = json.load(f)
+
+    # Then merge all overwrites into the ds_config
+    overwritten_ds_config_dict = merge_dicts(ds_config_dict, hparams[overwrite_key])
+
+    # We need to actually overwrite the ds json config file, due to how HF processes args.
+    overwrite_ds_json_file(overwritten_ds_config_dict, ds_config_path)
+
+    # Finally overwrite the CLI args
+    args = update_hf_args(args, overwritten_ds_config_dict)
 
     return args

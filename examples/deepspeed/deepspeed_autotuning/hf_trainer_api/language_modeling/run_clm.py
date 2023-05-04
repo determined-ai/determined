@@ -30,18 +30,11 @@ from itertools import chain
 from typing import Any, Dict, Optional, Tuple
 
 import datasets
-import determined as det
 import evaluate
 import torch
 import transformers
 from datasets import load_dataset
-from det_callback import (
-    DetCallback,
-    create_consistent_hf_args_for_deepspeed,
-    get_ds_config_path_from_args,
-    replace_ds_config_file_using_overwrites,
-)
-from determined.pytorch import dsat
+from det_callback import DetCallback, get_hf_args_with_overwrites
 from torch.utils.tensorboard import SummaryWriter
 from transformers import (
     CONFIG_MAPPING,
@@ -61,6 +54,9 @@ from transformers.testing_utils import CaptureLogger
 from transformers.trainer_utils import get_last_checkpoint
 from transformers.utils import check_min_version, send_example_telemetry
 from transformers.utils.versions import require_version
+
+import determined as det
+from determined.pytorch import dsat
 
 # Will error if the minimal version of Transformers is not installed. Remove at your own risks.
 check_min_version("4.28.0")
@@ -286,11 +282,11 @@ def parse_input_arguments(
     else:
         args = sys.argv[1:]
         args.extend(dict2args(training_arguments))
-        ds_config_path = get_ds_config_path_from_args(args)
-        if ds_config_path is not None:
-            replace_ds_config_file_using_overwrites(args, hparams)
-            args = create_consistent_hf_args_for_deepspeed(args, ds_config_path)
-        model_args, data_args, training_args = parser.parse_args_into_dataclasses(args)
+        if any("--deepspeed" == arg.strip() for arg in args):
+            args = get_hf_args_with_overwrites(args, hparams)
+        model_args, data_args, training_args = parser.parse_args_into_dataclasses(
+            args, look_for_args_file=False
+        )
     return model_args, data_args, training_args
 
 
