@@ -27,7 +27,7 @@ class TestLightningAdapter:
         }
 
     def test_checkpointing_and_restoring(self, tmp_path: pathlib.Path) -> None:
-        self.checkpoint_and_restore(
+        self.checkpoint_and_check_metrics(
             trial_class=la_model.OneVarTrial, hparams=self.hparams, tmp_path=tmp_path, steps=(1, 1)
         )
 
@@ -44,7 +44,7 @@ class TestLightningAdapter:
             def __init__(self, context):
                 super().__init__(context, OneVarLM)
 
-        self.checkpoint_and_restore(
+        self.checkpoint_and_check_metrics(
             trial_class=OneVarLA, hparams=self.hparams, tmp_path=tmp_path, steps=(1, 1)
         )
 
@@ -58,7 +58,7 @@ class TestLightningAdapter:
                 super().__init__(context, OneVarLM)
 
         with pytest.raises(AssertionError):
-            self.checkpoint_and_restore(
+            self.checkpoint_and_check_metrics(
                 trial_class=OneVarLA, hparams=self.hparams, tmp_path=tmp_path, steps=(1, 1)
             )
 
@@ -98,7 +98,7 @@ class TestLightningAdapter:
         )
         trial_controller.run()
 
-    def checkpoint_and_restore(
+    def checkpoint_and_check_metrics(
         self,
         hparams: typing.Dict,
         trial_class: pytorch.PyTorchTrial,
@@ -182,13 +182,13 @@ class TestLightningAdapter:
 
         return (training_metrics["A"], training_metrics["B"])
 
-    def checkpoint_and_restore_no_callbacks(
+    def train_and_checkpoint(
         self,
         hparams: typing.Dict,
         trial_class: pytorch.PyTorchTrial,
         tmp_path: pathlib.Path,
         exp_config: typing.Dict,
-        expose_gpus: bool = False,
+        expose_gpus: bool = True,
         steps: typing.Tuple[int, int] = (1, 1),
     ) -> None:
         checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
@@ -249,11 +249,10 @@ class TestLightningAdapter:
 
         example_filename = api_style + "_amp_model_def.py"
         example_path = utils.fixtures_path(os.path.join(exp_dir, example_filename))
-        trial_module = utils.import_module(module_names[api_style], example_path)
-        trial_class = getattr(trial_module, module_names[api_style])
+        trial_class = utils.import_class_from_module(module_names[api_style], example_path)
         trial_class._searcher_metric = "validation_loss"
 
-        self.checkpoint_and_restore_no_callbacks(
+        self.train_and_checkpoint(
             trial_class=trial_class,
             hparams=hparams,
             tmp_path=tmp_path,
@@ -278,11 +277,10 @@ class TestLightningAdapter:
         exp_config.update(config)
 
         example_path = utils.gan_examples_path(os.path.join(exp_dir, "model_def.py"))
-        trial_module = utils.import_module("GANTrial", example_path)
-        trial_class = getattr(trial_module, "GANTrial")  # noqa: B009
+        trial_class = utils.import_class_from_module("GANTrial", example_path)
         trial_class._searcher_metric = "validation_loss"
 
-        self.checkpoint_and_restore_no_callbacks(
+        self.train_and_checkpoint(
             trial_class=trial_class,
             hparams=hparams,
             tmp_path=tmp_path,
@@ -307,11 +305,10 @@ class TestLightningAdapter:
         exp_config.update(config)
 
         example_path = utils.cv_examples_path(os.path.join(exp_dir, "model_def.py"))
-        trial_module = utils.import_module("MNISTTrial", example_path)
-        trial_class = getattr(trial_module, "MNISTTrial")  # noqa: B009
+        trial_class = utils.import_class_from_module("MNISTTrial", example_path)
         trial_class._searcher_metric = "validation_loss"
 
-        self.checkpoint_and_restore_no_callbacks(
+        self.train_and_checkpoint(
             trial_class=trial_class,
             hparams=hparams,
             tmp_path=tmp_path,
