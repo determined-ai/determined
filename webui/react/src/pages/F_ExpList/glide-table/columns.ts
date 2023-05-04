@@ -460,22 +460,22 @@ export const defaultDateColumn = (
 
 export const defaultColumnWidths: Record<ExperimentColumn, number> = {
   archived: 80,
-  checkpointCount: 140,
-  checkpointSize: 140,
+  checkpointCount: 120,
+  checkpointSize: 110,
   description: 148,
-  duration: 96,
-  forkedFrom: 128,
+  duration: 86,
+  forkedFrom: 86,
   id: 50,
   name: 290,
-  numTrials: 74,
-  progress: 111,
+  numTrials: 50,
+  progress: 65,
   resourcePool: 140,
-  searcherType: 140,
+  searcherType: 120,
   selected: 40,
   startTime: 118,
-  state: 106,
+  state: 60,
   tags: 106,
-  user: 85,
+  user: 50,
 };
 
 // TODO: use theme here
