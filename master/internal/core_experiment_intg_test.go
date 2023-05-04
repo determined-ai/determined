@@ -12,7 +12,6 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	apiPkg "github.com/determined-ai/determined/master/internal/api"

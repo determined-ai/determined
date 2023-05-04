@@ -15,11 +15,13 @@ import (
 
 	"golang.org/x/exp/slices"
 
-	"github.com/labstack/echo/v4"
+	"github.com/ghodss/yaml"
 	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/authz"
+	"github.com/determined-ai/determined/master/pkg/archive"
+
 	"github.com/determined-ai/determined/master/internal/prom"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/trials"
@@ -38,7 +40,10 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	exputil "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
+	"github.com/determined-ai/determined/master/internal/project"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/tasks"
+
 	command "github.com/determined-ai/determined/master/pkg/command"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
@@ -1302,6 +1307,156 @@ func (a *apiServer) GetExperimentCheckpoints(
 	return resp, a.paginate(&resp.Pagination, &resp.Checkpoints, req.Offset, req.Limit)
 }
 
+func (a *apiServer) getCreateExperimentsProject(projectID int,
+	user *model.User, config expconf.ExperimentConfig,
+) (*projectv1.Project, error) {
+	// Place experiment in Uncategorized, unless project set in config or CreateExperimentParams.
+	// CreateExperimentParams has highest priority.
+	var err error
+	var errProjectNotFound error
+	if projectID > 1 {
+		errProjectNotFound = ErrProjectNotFound(fmt.Sprintf("project (%d) not found", projectID))
+	} else {
+		projectID = 1
+		errProjectNotFound = ErrProjectNotFound(fmt.Sprintf("project (%d) not found", projectID))
+		if (config.Workspace() == "") != (config.Project() == "") {
+			return nil,
+				errors.New("workspace and project must both be included in config if one is provided")
+		}
+		if config.Workspace() != "" && config.Project() != "" {
+			errProjectNotFound = ErrProjectNotFound(fmt.Sprintf(
+				"workspace '%s' or project '%s' not found",
+				config.Workspace(), config.Project()))
+
+			projectID, err = a.m.db.ProjectByName(config.Workspace(), config.Project())
+			if errors.Is(err, db.ErrNotFound) {
+				return nil, errProjectNotFound
+			} else if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	p := &projectv1.Project{}
+	if err = a.m.db.QueryProto("get_project", p, projectID); errors.Is(err, db.ErrNotFound) {
+		return nil, errProjectNotFound
+	} else if err != nil {
+		return nil, err
+	}
+	var ok bool
+	if ok, err = project.AuthZProvider.Get().CanGetProject(context.TODO(), *user, p); err != nil {
+		return nil, err
+	} else if !ok {
+		return nil, errProjectNotFound
+	}
+	return p, nil
+}
+
+func (a *apiServer) populateConfigWithProject(user *model.User, projectID int32,
+	configStr string, givenTemplate *string) (expconf.ExperimentConfig, *projectv1.Project, error) {
+	config, err := expconf.ParseAnyExperimentConfigYAML([]byte(configStr))
+	if err != nil {
+		return config, nil, errors.Wrap(err, "invalid experiment configuration")
+	}
+
+	// Apply the template that the user specified.
+	if givenTemplate != nil {
+		template, terr := a.m.db.TemplateByName(*givenTemplate)
+		if terr != nil {
+			return config, nil, errors.Wrapf(
+				terr, "TemplateByName(%q)", *givenTemplate,
+			)
+		}
+		var tc expconf.ExperimentConfig
+		if yerr := yaml.Unmarshal(template.Config, &tc, yaml.DisallowUnknownFields); yerr != nil {
+			return config, nil, errors.Wrapf(
+				terr, "yaml.Unmarshal(template=%q)", *givenTemplate,
+			)
+		}
+		// Merge the template into the config.
+		config = schemas.Merge(config, tc)
+	}
+
+	defaulted := schemas.WithDefaults(config)
+
+	project, err := a.getCreateExperimentsProject(int(projectID), user, defaulted)
+	if err != nil {
+		return config, nil, err
+	}
+
+	// Merge in workspace's checkpoint storage into the conifg.
+	w := &model.Workspace{}
+	if err = db.Bun().NewSelect().Model(w).
+		Where("id = ?", project.WorkspaceId).
+		Column("checkpoint_storage_config").
+		Scan(context.TODO()); err != nil {
+		return config, nil, err
+	}
+	config.RawCheckpointStorage = schemas.Merge(
+		config.RawCheckpointStorage, w.CheckpointStorageConfig)
+
+	// Merge in the master's checkpoint storage into the config.
+	config.RawCheckpointStorage = schemas.Merge(
+		config.RawCheckpointStorage, &a.m.config.CheckpointStorage,
+	)
+
+	// Lastly, apply any json-schema-defined defaults.
+	config = schemas.WithDefaults(config)
+
+	// Make sure the experiment config has all eventuallyRequired fields.
+	if err = schemas.IsComplete(config); err != nil {
+		return config, nil, errors.Wrap(err, "invalid experiment configuration")
+	}
+
+	// Disallow EOL searchers.
+	if err = config.Searcher().AssertCurrent(); err != nil {
+		return config, nil, errors.Wrap(err, "invalid experiment configuration")
+	}
+
+	return config, project, nil
+}
+
+func (a *apiServer) populateTaskSpec(user *model.User, modelDef archive.Archive,
+	config expconf.ExperimentConfig) (*tasks.TaskSpec, error) {
+	resources := config.Resources()
+	poolName, err := a.m.rm.ResolveResourcePool(
+		a.m.system, resources.ResourcePool(), resources.SlotsPerTrial())
+	if err != nil {
+		return nil, errors.Wrapf(err, "invalid resource configuration")
+	}
+	if err = a.m.rm.ValidateResources(a.m.system, poolName,
+		resources.SlotsPerTrial(), false); err != nil {
+		return nil, errors.Wrapf(err, "error validating resources")
+	}
+	taskContainerDefaults, err := a.m.rm.TaskContainerDefaults(
+		a.m.system,
+		poolName,
+		a.m.config.TaskContainerDefaults,
+	)
+	if err != nil {
+		return nil, errors.Wrapf(err, "error getting TaskContainerDefaults")
+	}
+	taskSpec := *a.m.taskSpec
+	taskSpec.TaskContainerDefaults = taskContainerDefaults
+	taskSpec.TaskContainerDefaults.MergeIntoExpConfig(&config)
+
+	token, createSessionErr := a.m.db.StartUserSession(user)
+	if createSessionErr != nil {
+		return nil, errors.Wrapf(
+			createSessionErr, "unable to create user session inside task")
+	}
+	taskSpec.UserSessionToken = token
+	taskSpec.Owner = user
+
+	taskSpec.Project = config.Project()
+	taskSpec.Workspace = config.Workspace()
+	for label := range config.Labels() {
+		taskSpec.Labels = append(taskSpec.Labels, label)
+	}
+
+	return &taskSpec, nil
+}
+
 func (a *apiServer) CreateExperiment(
 	ctx context.Context, req *apiv1.CreateExperimentRequest,
 ) (*apiv1.CreateExperimentResponse, error) {
@@ -1332,14 +1487,55 @@ func (a *apiServer) CreateExperiment(
 				"forking an experiment in an archived workspace/project")
 		}
 	}
-
-	dbExp, activeConfig, p, taskSpec, err := a.m.parseCreateExperiment(
-		req, user,
-	)
+	// START or parseCreateExperiment
+	// Read the config as the user provided it.
+	activeConfig, project, err := a.populateConfigWithProject(user,
+		req.ProjectId, req.Config, req.Template) // with defaults
 	if err != nil {
 		return nil, err
 	}
-	if err = exputil.AuthZProvider.Get().CanCreateExperiment(ctx, *user, p); err != nil {
+
+	modelDef := filesToArchive(req.ModelDefinition)
+	parentIDPtr := ptrs.Ptr(int(req.ParentId))
+	taskSpec, err := a.populateTaskSpec(user, modelDef, activeConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	var modelBytes []byte
+	if parentIDPtr != nil {
+		var dbErr error
+		modelBytes, dbErr = a.m.db.ExperimentModelDefinitionRaw(*parentIDPtr)
+		if dbErr != nil {
+			return nil, errors.Wrapf(
+				dbErr, "unable to find parent experiment %v", *parentIDPtr)
+		}
+	} else {
+		var compressErr error
+		modelBytes, compressErr = archive.ToTarGz(modelDef)
+		if compressErr != nil {
+			return nil, errors.Wrapf(
+				compressErr, "unable to find compress model definition")
+		}
+	}
+
+	dbExp, err := model.NewExperiment(
+		activeConfig, req.Config, modelBytes, parentIDPtr, false,
+		req.GitRemote, req.GitCommit, req.GitCommitter, commitDate,
+		int(project.Id),
+	)
+
+	if user != nil {
+		dbExp.OwnerID = &user.ID
+		dbExp.Username = user.Username
+	}
+
+	// END of parseCreateExperiment (Remove comment after review.)
+
+	if err != nil {
+		return nil, err
+	}
+	if err = exputil.AuthZProvider.Get().CanCreateExperiment(ctx, *user, project, dbExp); err != nil {
 		return nil, status.Errorf(codes.PermissionDenied, err.Error())
 	}
 

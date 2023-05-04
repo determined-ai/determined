@@ -7,10 +7,7 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/determined-ai/determined/proto/pkg/apiv1"
-	"github.com/determined-ai/determined/proto/pkg/projectv1"
-
-	"github.com/ghodss/yaml"
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
 
@@ -19,14 +16,11 @@ import (
 	detContext "github.com/determined-ai/determined/master/internal/context"
 	"github.com/determined-ai/determined/master/internal/db"
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
-	"github.com/determined-ai/determined/master/internal/project"
+	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/determined-ai/determined/master/internal/user"
+	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/master/pkg/protoutils"
-	"github.com/determined-ai/determined/master/pkg/ptrs"
-	"github.com/determined-ai/determined/master/pkg/schemas"
-	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
-	"github.com/determined-ai/determined/master/pkg/tasks"
 )
 
 // ExperimentRequestQuery contains values for the experiments request queries with defaults already
@@ -220,180 +214,11 @@ func (m *Master) getExperimentModelDefinition(c echo.Context) error {
 	return c.Blob(http.StatusOK, "application/x-gtar", modelDef)
 }
 
-func getCreateExperimentsProject(
-	m *Master, req *apiv1.CreateExperimentRequest, user *model.User, config expconf.ExperimentConfig,
-) (*projectv1.Project, error) {
-	// Place experiment in Uncategorized, unless project set in request params or config.
-	var err error
-	projectID := model.DefaultProjectID
-	errProjectNotFound := api.NotFoundErrs("project", fmt.Sprint(projectID), true)
-	if req.ProjectId > 1 {
-		projectID = int(req.ProjectId)
-		errProjectNotFound = api.NotFoundErrs("project", fmt.Sprint(projectID), true)
-	} else {
-		if (config.Workspace() == "") != (config.Project() == "") {
-			return nil,
-				errors.New("workspace and project must both be included in config if one is provided")
-		}
-		if config.Workspace() != "" && config.Project() != "" {
-			errProjectNotFound = api.NotFoundErrs("workspace/project",
-				config.Workspace()+"/"+config.Project(), true)
+// ErrProjectNotFound is returned in parseCreateExperiment for when project cannot be found
+// or when project cannot be viewed due to RBAC restrictions.
+type ErrProjectNotFound string
 
-			projectID, err = m.db.ProjectByName(config.Workspace(), config.Project())
-			if errors.Is(err, db.ErrNotFound) {
-				return nil, errProjectNotFound
-			} else if err != nil {
-				return nil, err
-			}
-		}
-	}
-
-	p := &projectv1.Project{}
-	if err = m.db.QueryProto("get_project", p, projectID); errors.Is(err, db.ErrNotFound) {
-		return nil, errProjectNotFound
-	} else if err != nil {
-		return nil, err
-	}
-	if err = project.AuthZProvider.Get().CanGetProject(context.TODO(), *user, p); err != nil {
-		return nil, authz.SubIfUnauthorized(err, errProjectNotFound)
-	}
-	return p, nil
-}
-
-func (m *Master) parseCreateExperiment(req *apiv1.CreateExperimentRequest, user *model.User) (
-	*model.Experiment, expconf.ExperimentConfig, *projectv1.Project, *tasks.TaskSpec, error,
-) {
-	// Read the config as the user provided it.
-	config, err := expconf.ParseAnyExperimentConfigYAML([]byte(req.Config))
-	if err != nil {
-		return nil, config, nil, nil, errors.Wrap(err, "invalid experiment configuration")
-	}
-
-	// Apply the template that the user specified.
-	if req.Template != nil {
-		template, terr := m.db.TemplateByName(*req.Template)
-		if terr != nil {
-			return nil, config, nil, nil, errors.Wrapf(
-				terr, "TemplateByName(%q)", *req.Template,
-			)
-		}
-		var tc expconf.ExperimentConfig
-		if yerr := yaml.Unmarshal(template.Config, &tc, yaml.DisallowUnknownFields); yerr != nil {
-			return nil, config, nil, nil, errors.Wrapf(
-				terr, "yaml.Unmarshal(template=%q)", *req.Template,
-			)
-		}
-		// Merge the template into the config.
-		config = schemas.Merge(config, tc)
-	}
-
-	defaulted := schemas.WithDefaults(config)
-	resources := defaulted.Resources()
-	poolName, err := m.rm.ResolveResourcePool(
-		m.system, resources.ResourcePool(), resources.SlotsPerTrial())
-	if err != nil {
-		return nil, config, nil, nil, errors.Wrapf(err, "invalid resource configuration")
-	}
-	if err = m.rm.ValidateResources(m.system, poolName, resources.SlotsPerTrial(), false); err != nil {
-		return nil, config, nil, nil, errors.Wrapf(err, "error validating resources")
-	}
-	taskContainerDefaults, err := m.rm.TaskContainerDefaults(
-		m.system,
-		poolName,
-		m.config.TaskContainerDefaults,
-	)
-	if err != nil {
-		return nil, config, nil, nil, errors.Wrapf(err, "error getting TaskContainerDefaults")
-	}
-	taskSpec := *m.taskSpec
-	taskSpec.TaskContainerDefaults = taskContainerDefaults
-	taskSpec.TaskContainerDefaults.MergeIntoExpConfig(&config)
-	if defaulted.RawEntrypoint == nil && (req.Unmanaged == nil || !*req.Unmanaged) {
-		return nil, config, nil, nil, errors.New("managed experiments require entrypoint")
-	}
-
-	project, err := getCreateExperimentsProject(m, req, user, defaulted)
-	if err != nil {
-		return nil, config, nil, nil, err
-	}
-
-	// Merge in workspace's checkpoint storage into the conifg.
-	w := &model.Workspace{}
-	if err = db.Bun().NewSelect().Model(w).
-		Where("id = ?", project.WorkspaceId).
-		Column("checkpoint_storage_config").
-		Scan(context.TODO()); err != nil {
-		return nil, config, nil, nil, err
-	}
-	config.RawCheckpointStorage = schemas.Merge(
-		config.RawCheckpointStorage, w.CheckpointStorageConfig)
-
-	// Merge in the master's checkpoint storage into the config.
-	config.RawCheckpointStorage = schemas.Merge(
-		config.RawCheckpointStorage, &m.config.CheckpointStorage,
-	)
-
-	// Lastly, apply any json-schema-defined defaults.
-	config = schemas.WithDefaults(config)
-
-	// Make sure the experiment config has all eventuallyRequired fields.
-	if err = schemas.IsComplete(config); err != nil {
-		return nil, config, nil, nil, errors.Wrap(err, "invalid experiment configuration")
-	}
-
-	// Disallow EOL searchers.
-	if err = config.Searcher().AssertCurrent(); err != nil {
-		return nil, config, nil, nil, errors.Wrap(err, "invalid experiment configuration")
-	}
-
-	var modelBytes []byte
-	var parentID *int
-	if req.ParentId != 0 {
-		parentID = ptrs.Ptr(int(req.ParentId))
-		var dbErr error
-		modelBytes, dbErr = m.db.ExperimentModelDefinitionRaw(int(req.ParentId))
-		if dbErr != nil {
-			return nil, config, nil, nil, errors.Wrapf(
-				dbErr, "unable to find parent experiment %v", req.ParentId)
-		}
-	} else {
-		var compressErr error
-		modelBytes, compressErr = archive.ToTarGz(filesToArchive(req.ModelDefinition))
-		if compressErr != nil {
-			return nil, config, nil, nil, errors.Wrapf(
-				compressErr, "unable to find compress model definition")
-		}
-	}
-
-	token, createSessionErr := m.db.StartUserSession(user)
-	if createSessionErr != nil {
-		return nil, config, nil, nil, errors.Wrapf(
-			createSessionErr, "unable to create user session inside task")
-	}
-	taskSpec.UserSessionToken = token
-	taskSpec.Owner = user
-
-	var commitDate *time.Time
-	pt, err := protoutils.ToTime(req.GitCommitDate)
-	if err == nil {
-		commitDate = &pt
-	}
-
-	dbExp, err := model.NewExperiment(
-		config, req.Config, modelBytes, parentID, false,
-		req.GitRemote, req.GitCommit, req.GitCommitter, commitDate,
-		int(project.Id),
-	)
-	if user != nil {
-		dbExp.OwnerID = &user.ID
-		dbExp.Username = user.Username
-	}
-
-	taskSpec.Project = config.Project()
-	taskSpec.Workspace = config.Workspace()
-	for label := range config.Labels() {
-		taskSpec.Labels = append(taskSpec.Labels, label)
-	}
-
-	return dbExp, config, project, &taskSpec, err
+// Error implements the error interface.
+func (p ErrProjectNotFound) Error() string {
+	return string(p)
 }
