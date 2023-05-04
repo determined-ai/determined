@@ -103,7 +103,7 @@ export const NavigationItem: React.FC<ItemProps> = ({
   );
 
   return props.tooltip ? (
-    <Tooltip placement="right" title={props.label}>
+    <Tooltip content={props.label} placement="right">
       <div>{link}</div>
     </Tooltip>
   ) : (
@@ -328,7 +328,7 @@ const NavigationSideBar: React.FC = () => {
         <footer>
           <div className={css.version}>
             {isVersionLong && settings.navbarCollapsed ? (
-              <Tooltip placement="right" title={`Version ${version}`}>
+              <Tooltip content={`Version ${version}`} placement="right">
                 <span className={css.versionLabel}>{shortVersion}</span>
               </Tooltip>
             ) : (

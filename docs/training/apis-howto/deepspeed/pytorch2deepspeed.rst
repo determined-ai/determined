@@ -4,6 +4,9 @@
  ``PyTorchTrial`` to ``DeepSpeedTrial``
 ########################################
 
+.. meta::
+   :description: Learn how to adapt an existing PyTorchTrial to use DeepSpeed. This article explains how adapting an existing PyTorchTrial to use DeepSpeed mirrors the process for adapting existing code to use DeepSpeed outside of Determined.
+
 Adapting an existing :class:`~determined.pytorch.PyTorchTrial` to use DeepSpeed mirrors the process
 for adapting existing code to use DeepSpeed outside of Determined.
 

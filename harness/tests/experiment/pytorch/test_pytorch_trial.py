@@ -5,6 +5,7 @@ import pathlib
 import random
 import sys
 import typing
+from unittest import mock
 
 import numpy as np
 import pytest
@@ -968,6 +969,59 @@ class TestPyTorchTrial:
         trial_controller_B.run()
 
         assert len(os.listdir(checkpoint_dir)) == 2, "trial did not create a checkpoint"
+
+    def test_trial_validation_checkpointing(self):
+        trial, controller = create_trial_and_trial_controller(
+            trial_class=pytorch_onevar_model.OneVarTrial,
+            hparams=self.hparams,
+            trial_seed=self.trial_seed,
+            max_batches=100,
+        )
+
+        # Checkpoint only if the following conditions are met:
+        # - the checkpoint is not current
+        # - the best validation metric returned is better per smaller_is_better
+        checkpoint_conditions = [
+            {
+                "checkpoint_is_current": False,
+                "best_validation": float("inf"),
+                "smaller_is_better": True,
+                "checkpoint": True,
+            },
+            {
+                "checkpoint_is_current": False,
+                "best_validation": float("-inf"),
+                "smaller_is_better": False,
+                "checkpoint": True,
+            },
+            {
+                "checkpoint_is_current": False,
+                "best_validation": sys.maxsize,
+                "smaller_is_better": False,
+                "checkpoint": False,
+            },
+            {
+                "checkpoint_is_current": True,
+                "best_validation": sys.maxsize,
+                "smaller_is_better": False,
+                "checkpoint": False,
+            },
+        ]
+        for checkpoint_condition in checkpoint_conditions:
+            controller.smaller_is_better = checkpoint_condition["smaller_is_better"]
+            controller._checkpoint_is_current = mock.MagicMock(
+                return_value=checkpoint_condition["checkpoint_is_current"]
+            )
+            controller.core_context.train.get_experiment_best_validation = mock.MagicMock(
+                return_value=checkpoint_condition["best_validation"]
+            )
+            controller._checkpoint = mock.MagicMock()
+            controller._validate(det.core.DummySearcherOperation(length=100, is_chief=True))
+            controller.core_context.train.get_experiment_best_validation.assert_called_once()
+            if checkpoint_condition["checkpoint"]:
+                controller._checkpoint.assert_called_once()
+            controller.core_context.train.get_experiment_best_validation.reset_mock()
+            controller._checkpoint.reset_mock()
 
     @pytest.mark.parametrize(
         "ckpt",

@@ -121,6 +121,7 @@ side menu, and click on the top right corner button "New Webhook"
 
 .. image:: /assets/images/webhook.png
    :width: 100%
+   :alt: Det Webhooks interface showing New Webhook button
 
 .. note::
 
@@ -136,6 +137,7 @@ At the modal input:
 
 .. image:: /assets/images/webhook_modal.png
    :width: 100%
+   :alt: New Webhook user interface showing the fields you will interact with.
 
 Once created, your webhook will begin executing for the chosen events.
 
@@ -148,6 +150,7 @@ actions.
 
 .. image:: /assets/images/webhook_action.png
    :width: 100%
+   :alt: Webhooks interface showing where to find the actions menu
 
 Clicking on "Test Webhook" will trigger a test event to be sent to the defined webhook URL with a
 mock payload as stated below:

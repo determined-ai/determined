@@ -116,6 +116,7 @@ the tasks currently running on the cluster.
 
 .. image:: /assets/images/task-list@2x.jpg
    :width: 100%
+   :alt: Determined AI model training interactive WebUI where you can visualize your cluster tasks.
 
 |
 
@@ -126,6 +127,7 @@ click the dropdown arrow and select "Launch CPU-only Notebook".
 
 .. image:: /assets/images/launch-cpu-notebook@2x.jpg
    :width: 100%
+   :alt: Determined AI model training interactive WebUI where you can launch a new Jupyter Notebook.
 
 .. _notebook-configuration:
 

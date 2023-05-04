@@ -205,7 +205,7 @@ export interface PatchModelParams {
   body: {
     description?: string;
     labels?: string[];
-    metadata?: Record<RecordKey, string>;
+    metadata?: Record<RecordKey, string | object>;
     name: string;
     notes?: string;
   };
@@ -216,7 +216,7 @@ export interface PatchModelVersionParams {
   body: {
     comment?: string;
     labels?: string[];
-    metadata?: Record<RecordKey, string>;
+    metadata?: Record<RecordKey, string | object>;
     modelName: string;
     name?: string;
     notes?: string;
@@ -484,6 +484,10 @@ export interface ArchiveProjectParams {
 }
 
 export type UnarchiveProjectParams = ArchiveProjectParams;
+
+export interface GetProjectColumnsParams {
+  id: number;
+}
 
 export interface ArchiveWorkspaceParams {
   id: number;

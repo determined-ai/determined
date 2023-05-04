@@ -4,6 +4,9 @@
  Determined CLI Reference
 ##########################
 
+.. meta::
+   :description: Browse this complete description of the Determined command-line interface that tells you how to print the built-in documentation and formulate your cli commands.
+
 +-----------------------------------------------+
 | User Guide                                    |
 +===============================================+

@@ -197,7 +197,7 @@ describe('useSettings', () => {
           'booleanArray=false&booleanArray=true',
           'number=3.14e-12',
           'numberArray=0&numberArray=100&numberArray=-5280',
-          'string=Hello%20World',
+          'string=Hello+World',
           'stringArray=abc&stringArray=def&stringArray=ghi',
         ].join('&'),
       );

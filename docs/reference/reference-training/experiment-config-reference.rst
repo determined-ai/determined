@@ -6,6 +6,9 @@
  Experiment Configuration Reference
 ####################################
 
+.. meta::
+   :description: Browse this complete description of the experiment configuration reference or YAML file, including metadata, entrypoint, basic behaviors, validation policy, checkpoint policy, checkpoint storage, and so on.
+
 The behavior of an experiment is configured via a YAML file. A configuration file is typically
 passed as a command-line argument when an experiment is created with the Determined CLI. For
 example:
@@ -167,7 +170,7 @@ object delimited by a period (``.``).
 
 Examples:
 
--  ``:MnistTrial`` expects an *MnistTrial* class exposed in a ``__init__.py`` file at the top level
+-  ``MnistTrial`` expects an *MnistTrial* class exposed in a ``__init__.py`` file at the top level
    of the context directory.
 -  ``model_def:CIFAR10Trial`` expects a *CIFAR10Trial* class defined in the ``model_def.py`` file at
    the top level of the context directory.
@@ -1234,8 +1237,8 @@ Optional. The Docker image to use when executing the workload. This image must b
 container images for NVIDIA GPU tasks using ``cuda`` key (``gpu`` prior to 0.17.6), CPU tasks using
 ``cpu`` key, and ROCm (AMD GPU) tasks using ``rocm`` key. Default values:
 
--  ``determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-0.21.2`` for NVIDIA GPUs.
--  ``determinedai/environments:py-3.8-pytorch-1.12-tf-2.8-cpu-0.21.2`` for CPUs.
+-  ``determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.21.2`` for NVIDIA GPUs.
+-  ``determinedai/environments:py-3.8-pytorch-1.12-tf-2.11-cpu-0.21.2`` for CPUs.
 -  ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.21.2`` for ROCm.
 
 When the cluster is configured with :ref:`resource_manager.type: slurm
@@ -1298,7 +1301,7 @@ base Docker image, if needed. Credentials are specified as the following nested 
 
 Optional. A list of environment variables that will be set in every trial container. Each element of
 the list should be a string of the form ``NAME=VALUE``. See :ref:`environment-variables` for more
-details. Users can customize environment variables for CUDA (NVIDIA GPU), CPU, and ROCm (AMD GPU)
+details. You can customize environment variables for CUDA (NVIDIA GPU), CPU, and ROCm (AMD GPU)
 tasks differently by specifying a dict with ``cuda`` (``gpu`` prior to 0.17.6), ``cpu``, and
 ``rocm`` keys.
 

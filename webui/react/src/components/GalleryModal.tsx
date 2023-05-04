@@ -70,14 +70,14 @@ const GalleryModal: React.FC<Props> = ({
       <div className={css.base} style={{ minHeight }}>
         {children}
         <div className={css.prev}>
-          <Tooltip placement="right" title="Previous">
+          <Tooltip content="Previous" placement="right">
             <Button onClick={handlePrevious}>
               <Icon name="arrow-left" />
             </Button>
           </Tooltip>
         </div>
         <div className={css.next}>
-          <Tooltip placement="left" title="Next">
+          <Tooltip content="Next" placement="left">
             <Button onClick={handleNext}>
               <Icon name="arrow-right" />
             </Button>

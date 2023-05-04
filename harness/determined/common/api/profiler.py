@@ -1,7 +1,7 @@
+import time
 from typing import Any, Dict, List, Optional
 
-import backoff
-from requests.exceptions import RequestException
+from requests import exceptions
 
 from determined.common import api
 
@@ -25,12 +25,6 @@ class TrialProfilerMetricsBatch:
         self.labels = labels
 
 
-@backoff.on_exception(  # type: ignore
-    backoff.constant,
-    RequestException,
-    max_tries=2,
-    giveup=lambda e: e.response is not None and e.response.status_code < 500,
-)
 def post_trial_profiler_metrics_batches(
     master_url: str,
     batches: List[TrialProfilerMetricsBatch],
@@ -41,11 +35,27 @@ def post_trial_profiler_metrics_batches(
     gpu_uuid, agent_id and metric_type, where metric_type is one
     of PROFILER_METRIC_TYPE_SYSTEM or PROFILER_METRIC_TYPE_TIMING.
     """
-    api.post(
-        master_url,
-        "/api/v1/trials/profiler/metrics",
-        json={"batches": [b.__dict__ for b in batches]},
-    )
+    backoff_interval = 1
+    max_tries = 2
+    tries = 0
+
+    while tries < max_tries:
+        try:
+            api.post(
+                master_url,
+                "/api/v1/trials/profiler/metrics",
+                json={"batches": [b.__dict__ for b in batches]},
+            )
+            return
+        except exceptions.RequestException as e:
+            if e.response is not None and e.response.status_code < 500:
+                raise e
+
+            tries += 1
+            if tries == max_tries:
+                raise e
+            time.sleep(backoff_interval)
+    return
 
 
 class TrialProfilerSeriesLabels:
@@ -57,12 +67,6 @@ class TrialProfilerSeriesLabels:
         self.metric_type = metric_type
 
 
-@backoff.on_exception(  # type: ignore
-    backoff.constant,
-    RequestException,
-    max_tries=2,
-    giveup=lambda e: e.response is not None and e.response.status_code < 500,
-)
 def get_trial_profiler_available_series(
     master_url: str,
     trial_id: str,
@@ -71,11 +75,29 @@ def get_trial_profiler_available_series(
     Get available profiler series for a trial. This uses the non-streaming version of the API
     """
     follow = False
-    response = api.get(
-        host=master_url,
-        path=f"/api/v1/trials/{trial_id}/profiler/available_series",
-        params={"follow": follow},
-    )
+    backoff_interval = 1
+    max_tries = 2
+    tries = 0
+
+    response = None
+    while tries < max_tries:
+        try:
+            response = api.get(
+                host=master_url,
+                path=f"/api/v1/trials/{trial_id}/profiler/available_series",
+                params={"follow": follow},
+            )
+            break
+        except exceptions.RequestException as e:
+            if e.response is not None and e.response.status_code < 500:
+                raise e
+
+            tries += 1
+            if tries == max_tries:
+                raise e
+            time.sleep(backoff_interval)
+
+    assert response
     j = response.json()
     labels = [
         TrialProfilerSeriesLabels(

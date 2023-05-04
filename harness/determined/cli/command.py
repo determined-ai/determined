@@ -8,6 +8,7 @@ from typing import IO, Any, Dict, Iterable, List, Optional, Tuple, Union
 
 from termcolor import colored
 
+import determined.cli.render
 from determined import cli
 from determined.cli import render
 from determined.common import api, context, util, yaml
@@ -226,7 +227,7 @@ def list_tasks(args: Namespace) -> None:
             )
 
     if getattr(args, "json", None):
-        print(json.dumps(res, indent=4))
+        determined.cli.render.print_json(res)
         return
 
     values = render.select_values(res, table_header)

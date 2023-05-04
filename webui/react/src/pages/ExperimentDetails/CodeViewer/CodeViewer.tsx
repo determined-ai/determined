@@ -489,7 +489,7 @@ const CodeViewer: React.FC<Props> = ({
                  * TODO: Add notebook integration
                  * <Button className={css.noBorderButton}>Open in Notebook</Button>
                  */
-                <Tooltip title="Download File">
+                <Tooltip content="Download File">
                   <DownloadOutlined className={css.noBorderButton} onClick={handleDownloadClick} />
                   {/* this is an invisible button to programatically download the config files */}
                   <a

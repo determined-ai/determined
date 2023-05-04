@@ -511,14 +511,12 @@ def test_experiment_list_columns() -> None:
     ]
     exp_metrics = ["validation.validation_error"]
     columns = bindings.get_GetProjectColumns(api_utils.determined_test_session(), id=1)
-    assert len(columns.general) == len(bindings.v1GeneralColumn)
 
-    hyperparameters = columns.hyperparameters
+    column_values = {c.column for c in columns.columns}
     for hp in exp_hyperparameters:
-        assert hyperparameters.index(hp) >= 0
-    metrics = columns.metrics
+        assert "hp." + hp in column_values
     for mc in exp_metrics:
-        assert metrics.index(mc) >= 0
+        assert mc in column_values
 
 
 @pytest.mark.e2e_cpu

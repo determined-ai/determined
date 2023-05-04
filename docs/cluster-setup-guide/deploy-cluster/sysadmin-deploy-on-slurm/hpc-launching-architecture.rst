@@ -11,6 +11,7 @@ any Determined Agents. Instead, Determined interfaces with the workload managers
 HPC launcher component.
 
 .. image:: hpc-launching-arch-diagram.png
+   :alt: Diagram showing how Determined interfaces with the workload managers
 
 **************
  HPC Launcher
@@ -198,10 +199,10 @@ provided that they do not conflict with Determined-controlled settings.
 Slurm Resource Calculations
 ---------------------------
 
-Resource requirements for Slurm jobs submitted by Determined are generated as per the table below.
-Users can specify a ``--gres`` expression via ``slurm.sbatch_args`` as long as it does not reference
-a GPU resource. All other ``--gres`` options from the ``slurm.sbatch_args`` will be generated into
-the generated batch script.
+Resource requirements for Slurm jobs submitted by Determined are generated according to the table
+below. You can specify a ``--gres`` expression via ``slurm.sbatch_args`` as long as it does not
+reference a GPU resource. All other ``--gres`` options from the ``slurm.sbatch_args`` will be
+generated into the generated batch script.
 
 .. table::
    :width: 1000px
@@ -307,9 +308,9 @@ provided that they do not conflict with Determined-controlled settings.
 PBS Resource Calculations
 -------------------------
 
-Resource requirements for PBS jobs submitted by Determined are generated as per the table below.
-Users can specify a ``-l select`` expression via ``pbs.pbsbatch_args``, however chunk count, chunk
-arrangement, and GPU or CPU counts per chunk (depending on the value of ``slot_type``) are
+Resource requirements for PBS jobs submitted by Determined are generated according to the table
+below. You can specify a ``-l select`` expression via ``pbs.pbsbatch_args``, however chunk count,
+chunk arrangement, and GPU or CPU counts per chunk (depending on the value of ``slot_type``) are
 controlled by Determined; any values specified for these quantities will be ignored. All other
 resource requests from the ``pbs.pbsbatch_args`` will be appended to the select expression generated
 into the generated batch script.

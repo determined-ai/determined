@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
     name="determined",
-    version="0.21.2-dev0",
+    version="0.21.3-dev0",
     author="Determined AI",
     author_email="hello@determined.ai",
     url="https://determined.ai/",
@@ -11,7 +11,7 @@ setup(
     license="Apache License 2.0",
     classifiers=["License :: OSI Approved :: Apache Software License"],
     packages=find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"]),
-    # Technically, we haven't supported 3.6 or tested against it since it went EOL.  But some users
+    # Technically, we haven't supported 3.6 or tested against it since it went EOL. But some users
     # are still using it successfully so there's hardly a point in breaking them.
     python_requires=">=3.6",
     package_data={"determined": ["py.typed"]},
@@ -24,7 +24,6 @@ setup(
         "pyzmq>=18.1.0",
         "yogadl==0.1.4",
         # Common:
-        "backoff",
         "certifi",
         "filelock",
         "google-cloud-storage",

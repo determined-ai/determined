@@ -20,11 +20,12 @@ const EditableMetadata: React.FC<Props> = ({ metadata = {}, editing, updateMetad
   const [metadataRows, metadataList] = useMemo(() => {
     const { rows, list } = Object.entries(metadata).reduce(
       (acc, [key, value]) => {
-        acc.rows.push({ content: value, label: key });
+        const stringedValue = typeof value === 'object' ? JSON.stringify(value) : value;
+        acc.rows.push({ content: stringedValue, label: key });
         acc.list.push({ key, value });
         return acc;
       },
-      { list: [] as { key: string; value: string }[], rows: [] as InfoRow[] },
+      { list: [] as { key: string; value: string | object }[], rows: [] as InfoRow[] },
     );
     if (list.length === 0) list.push({ key: '', value: '' });
     return [rows, list];
@@ -38,7 +39,7 @@ const EditableMetadata: React.FC<Props> = ({ metadata = {}, editing, updateMetad
           if (row.value === undefined) {
             row.value = '';
           }
-          if (row?.key) acc[row.key] = row.value;
+          if (typeof row?.key === 'string') acc[row.key] = row.value;
           return acc;
         }, {} as Metadata);
 
@@ -61,8 +62,13 @@ const EditableMetadata: React.FC<Props> = ({ metadata = {}, editing, updateMetad
           <Form.List name="metadata">
             {(fields, { add, remove }) => (
               <>
-                {fields.map((field) => (
+                {fields.map((field, idx) => (
                   <EditableRow
+                    jsonValue={
+                      typeof metadataList[idx]?.value === 'object'
+                        ? JSON.stringify(metadataList[idx]?.value || '')
+                        : undefined
+                    }
                     key={field.key}
                     name={field.name}
                     onDelete={fields.length > 1 ? () => remove(field.name) : undefined}

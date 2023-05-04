@@ -173,7 +173,7 @@ const ProjectDetails: React.FC = () => {
         extra={
           <Space>
             {project.description && (
-              <Tooltip title={project.description}>
+              <Tooltip content={project.description}>
                 <InfoCircleOutlined style={{ color: 'var(--theme-float-on)' }} />
               </Tooltip>
             )}

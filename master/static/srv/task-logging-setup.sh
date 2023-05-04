@@ -51,7 +51,7 @@ if [ -n "$DET_K8S_LOG_TO_FILE" ]; then
     ((DET_LOG_WAIT_COUNT += 2))
 fi
 
-if [ "$DET_RESOURCES_TYPE" == "slurm-job" ]; then
+if [ "$DET_RESOURCES_TYPE" == "slurm-job" ] || [ "$DET_NO_FLUENT" == "true" ]; then
     export PATH="/run/determined/pythonuserbase/bin:$PATH"
     if [ -z "$DET_PYTHON_EXECUTABLE" ]; then
         export DET_PYTHON_EXECUTABLE="python3"
@@ -82,7 +82,9 @@ if [ "$DET_RESOURCES_TYPE" == "slurm-job" ]; then
     )
 
     ((DET_LOG_WAIT_COUNT += 2))
+fi
 
+if [ "$DET_RESOURCES_TYPE" == "slurm-job" ]; then
     # Each container sends the Determined Master a notification that it's
     # running, so that the Determined Master knows whether to set the state
     # of the experiment to "Pulling", meaning some nodes are pulling down

@@ -1035,55 +1035,6 @@ func (_m *DB) LatestCheckpointForTrial(trialID int) (*model.Checkpoint, error) {
 	return r0, r1
 }
 
-// MetricNames provides a mock function with given fields: experimentID, sStartTime, vStartTime
-func (_m *DB) MetricNames(experimentID int, sStartTime time.Time, vStartTime time.Time) ([]string, []string, time.Time, time.Time, error) {
-	ret := _m.Called(experimentID, sStartTime, vStartTime)
-
-	var r0 []string
-	var r1 []string
-	var r2 time.Time
-	var r3 time.Time
-	var r4 error
-	if rf, ok := ret.Get(0).(func(int, time.Time, time.Time) ([]string, []string, time.Time, time.Time, error)); ok {
-		return rf(experimentID, sStartTime, vStartTime)
-	}
-	if rf, ok := ret.Get(0).(func(int, time.Time, time.Time) []string); ok {
-		r0 = rf(experimentID, sStartTime, vStartTime)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]string)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(int, time.Time, time.Time) []string); ok {
-		r1 = rf(experimentID, sStartTime, vStartTime)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).([]string)
-		}
-	}
-
-	if rf, ok := ret.Get(2).(func(int, time.Time, time.Time) time.Time); ok {
-		r2 = rf(experimentID, sStartTime, vStartTime)
-	} else {
-		r2 = ret.Get(2).(time.Time)
-	}
-
-	if rf, ok := ret.Get(3).(func(int, time.Time, time.Time) time.Time); ok {
-		r3 = rf(experimentID, sStartTime, vStartTime)
-	} else {
-		r3 = ret.Get(3).(time.Time)
-	}
-
-	if rf, ok := ret.Get(4).(func(int, time.Time, time.Time) error); ok {
-		r4 = rf(experimentID, sStartTime, vStartTime)
-	} else {
-		r4 = ret.Error(4)
-	}
-
-	return r0, r1, r2, r3, r4
-}
-
 // Migrate provides a mock function with given fields: migrationURL, actions
 func (_m *DB) Migrate(migrationURL string, actions []string) error {
 	ret := _m.Called(migrationURL, actions)
@@ -1495,32 +1446,6 @@ func (_m *DB) TemplateByName(name string) (model.Template, error) {
 	return r0, r1
 }
 
-// TemplateList provides a mock function with given fields:
-func (_m *DB) TemplateList() ([]model.Template, error) {
-	ret := _m.Called()
-
-	var r0 []model.Template
-	var r1 error
-	if rf, ok := ret.Get(0).(func() ([]model.Template, error)); ok {
-		return rf()
-	}
-	if rf, ok := ret.Get(0).(func() []model.Template); ok {
-		r0 = rf()
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]model.Template)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func() error); ok {
-		r1 = rf()
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // TerminateExperimentInRestart provides a mock function with given fields: id, state
 func (_m *DB) TerminateExperimentInRestart(id int, state model.State) error {
 	ret := _m.Called(id, state)
@@ -1533,32 +1458,6 @@ func (_m *DB) TerminateExperimentInRestart(id int, state model.State) error {
 	}
 
 	return r0
-}
-
-// TopTrialsByMetric provides a mock function with given fields: experimentID, maxTrials, metric, smallerIsBetter
-func (_m *DB) TopTrialsByMetric(experimentID int, maxTrials int, metric string, smallerIsBetter bool) ([]int32, error) {
-	ret := _m.Called(experimentID, maxTrials, metric, smallerIsBetter)
-
-	var r0 []int32
-	var r1 error
-	if rf, ok := ret.Get(0).(func(int, int, string, bool) ([]int32, error)); ok {
-		return rf(experimentID, maxTrials, metric, smallerIsBetter)
-	}
-	if rf, ok := ret.Get(0).(func(int, int, string, bool) []int32); ok {
-		r0 = rf(experimentID, maxTrials, metric, smallerIsBetter)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]int32)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(int, int, string, bool) error); ok {
-		r1 = rf(experimentID, maxTrials, metric, smallerIsBetter)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
 }
 
 // TopTrialsByTrainingLength provides a mock function with given fields: experimentID, maxTrials, metric, smallerIsBetter
@@ -1911,6 +1810,20 @@ func (_m *DB) TrialStatus(trialID int) (model.State, *time.Time, error) {
 	return r0, r1, r2
 }
 
+// UpdateAllocationProxyAddress provides a mock function with given fields: allocation
+func (_m *DB) UpdateAllocationProxyAddress(allocation model.Allocation) error {
+	ret := _m.Called(allocation)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(model.Allocation) error); ok {
+		r0 = rf(allocation)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // UpdateAllocationStartTime provides a mock function with given fields: allocation
 func (_m *DB) UpdateAllocationStartTime(allocation model.Allocation) error {
 	ret := _m.Called(allocation)
@@ -2044,20 +1957,6 @@ func (_m *DB) UpdateUsername(userID *model.UserID, newUsername string) error {
 	var r0 error
 	if rf, ok := ret.Get(0).(func(*model.UserID, string) error); ok {
 		r0 = rf(userID, newUsername)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// UpsertTemplate provides a mock function with given fields: tpl
-func (_m *DB) UpsertTemplate(tpl *model.Template) error {
-	ret := _m.Called(tpl)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(*model.Template) error); ok {
-		r0 = rf(tpl)
 	} else {
 		r0 = ret.Error(0)
 	}

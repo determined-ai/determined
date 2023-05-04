@@ -6,6 +6,7 @@ import { HTML5Backend } from 'react-dnd-html5-backend';
 import { HelmetProvider } from 'react-helmet-async';
 
 import Button from 'components/kit/Button';
+import { ConfirmationProvider } from 'components/kit/useConfirm';
 import Link from 'components/Link';
 import Navigation from 'components/Navigation';
 import PageMessage from 'components/PageMessage';
@@ -117,11 +118,13 @@ const AppView: React.FC = () => {
               <SettingsProvider>
                 <ThemeProvider>
                   <AntdApp>
-                    <Navigation>
-                      <main>
-                        <Router routes={appRoutes} />
-                      </main>
-                    </Navigation>
+                    <ConfirmationProvider>
+                      <Navigation>
+                        <main>
+                          <Router routes={appRoutes} />
+                        </main>
+                      </Navigation>
+                    </ConfirmationProvider>
                   </AntdApp>
                 </ThemeProvider>
               </SettingsProvider>

@@ -1,4 +1,3 @@
-import json
 from argparse import ONE_OR_MORE, Namespace
 from datetime import datetime
 from typing import Any, List
@@ -39,7 +38,7 @@ def ls(args: Namespace) -> None:
         if args.yaml:
             print(yaml.safe_dump(data, default_flow_style=False))
         elif args.json:
-            print(json.dumps(data, indent=4, default=str))
+            render.print_json(data)
         return
 
     headers = [

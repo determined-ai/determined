@@ -14,10 +14,11 @@ import tabulate
 import termcolor
 
 import determined as det
+import determined.cli.render
 import determined.experimental
 import determined.load
 from determined import cli
-from determined.cli import checkpoint, proxy, render
+from determined.cli import checkpoint, render
 from determined.cli.command import CONFIG_DESC, parse_config_overrides
 from determined.cli.errors import CliError
 from determined.common import api, context, set_logger, util, yaml
@@ -293,6 +294,8 @@ def submit_experiment(args: Namespace) -> None:
 
         if not args.paused and args.follow_first_trial:
             if args.publish:
+                from determined.cli import proxy
+
                 port_map = proxy.parse_port_map_flag(args.publish)
                 with proxy.tunnel_experiment(sess, resp.experiment.id, port_map):
                     _follow_experiment_logs(sess, resp.experiment.id)
@@ -360,7 +363,7 @@ def describe(args: Namespace) -> None:
         responses.append(r)
 
     if args.json:
-        print(json.dumps([resp.to_json() for resp in responses], indent=4))
+        determined.cli.render.print_json([resp.to_json() for resp in responses])
         return
     exps = [resp.experiment for resp in responses]
 
@@ -617,7 +620,8 @@ def experiment_logs(args: Namespace) -> None:
             timestamp_after=args.timestamp_after,
         )
         if args.json:
-            api.print_json_logs(logs)
+            for log in logs:
+                render.print_json(log.to_json())
         else:
             api.pprint_logs(logs)
     finally:

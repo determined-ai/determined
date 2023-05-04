@@ -1,9 +1,4 @@
-import {
-  message as antdMessage,
-  Modal as antdModal,
-  notification as antdNotification,
-  App,
-} from 'antd';
+import { message as antdMessage, notification as antdNotification, App } from 'antd';
 import { useAppProps } from 'antd/es/app/context';
 import { useEffect } from 'react';
 
@@ -17,15 +12,14 @@ import { useEffect } from 'react';
  */
 
 let notification: useAppProps['notification'] = antdNotification;
-let modal: useAppProps['modal'] = antdModal;
 let message: useAppProps['message'] = antdMessage;
 
 export const useInitApi = (): void => {
   const api = App.useApp();
   // minimize reassignments
   useEffect(() => {
-    ({ notification, modal, message } = api);
+    ({ notification, message } = api);
   }, [api]);
 };
 
-export { notification, modal, message };
+export { notification, message };

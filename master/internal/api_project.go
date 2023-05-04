@@ -3,6 +3,7 @@ package internal
 import (
 	"context"
 	"fmt"
+	"sort"
 
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -11,11 +12,14 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/api/apiutils"
 	"github.com/determined-ai/determined/master/internal/db"
+	exputil "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/project"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
+	"github.com/determined-ai/determined/proto/pkg/rbacv1"
 	"github.com/determined-ai/determined/proto/pkg/workspacev1"
 )
 
@@ -41,57 +45,216 @@ func (a *apiServer) GetProjectByID(
 func (a *apiServer) getProjectColumnsByID(
 	ctx context.Context, id int32, curUser model.User,
 ) (*apiv1.GetProjectColumnsResponse, error) {
-	notFoundErr := status.Errorf(codes.NotFound, "project (%d) not found", id)
-	p := &projectv1.Project{}
-	if err := a.m.db.QueryProto("get_project", p, id); errors.Is(err, db.ErrNotFound) {
-		return nil, notFoundErr
-	} else if err != nil {
-		return nil, errors.Wrapf(err, "error fetching project (%d) from database", id)
-	}
-	if ok, err := project.AuthZProvider.Get().CanGetProject(ctx, curUser, p); err != nil {
-		return nil, err
-	} else if !ok {
-		return nil, notFoundErr
-	}
-	// Get general columns
-	generalColumns := make([]projectv1.GeneralColumn, 0, len(projectv1.GeneralColumn_value))
-	for gc := range projectv1.GeneralColumn_value {
-		generalColumns = append(
-			generalColumns, projectv1.GeneralColumn(projectv1.GeneralColumn_value[gc]))
-	}
-	// Get hyperpatameters columns
-	hyperparameters := struct {
-		Hyperparameters []string
-	}{}
-	err := db.Bun().
-		NewSelect().Table("projects").Column("hyperparameters").Where(
-		"id = ?", id).Scan(ctx, &hyperparameters)
+	p, err := a.GetProjectByID(ctx, id, curUser)
 	if err != nil {
 		return nil, err
 	}
 
+	columns := []*projectv1.ProjectColumn{
+		{
+			Column:      "id",
+			DisplayName: "ID",
+			Location:    projectv1.LocationType_LOCATION_TYPE_EXPERIMENT,
+			Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER,
+		},
+		{
+			Column:      "name",
+			DisplayName: "Name",
+			Location:    projectv1.LocationType_LOCATION_TYPE_EXPERIMENT,
+			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
+		},
+		{
+			Column:      "description",
+			DisplayName: "Description",
+			Location:    projectv1.LocationType_LOCATION_TYPE_EXPERIMENT,
+			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
+		},
+		{
+			Column:      "tags",
+			DisplayName: "Tags",
+			Location:    projectv1.LocationType_LOCATION_TYPE_EXPERIMENT,
+			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
+		},
+		{
+			Column:      "forkedFrom",
+			DisplayName: "Forked",
+			Location:    projectv1.LocationType_LOCATION_TYPE_EXPERIMENT,
+			Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER,
+		},
+		{
+			Column:      "startTime",
+			DisplayName: "Start time",
+			Location:    projectv1.LocationType_LOCATION_TYPE_EXPERIMENT,
+			Type:        projectv1.ColumnType_COLUMN_TYPE_DATE,
+		},
+		{
+			Column:      "duration",
+			DisplayName: "Duration",
+			Location:    projectv1.LocationType_LOCATION_TYPE_EXPERIMENT,
+			Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER,
+		},
+		{
+			Column:      "numTrials",
+			DisplayName: "Trial count",
+			Location:    projectv1.LocationType_LOCATION_TYPE_EXPERIMENT,
+			Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER,
+		},
+		{
+			Column:      "state",
+			DisplayName: "State",
+			Location:    projectv1.LocationType_LOCATION_TYPE_EXPERIMENT,
+			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
+		},
+		{
+			Column:      "searcherType",
+			DisplayName: "Searcher type",
+			Location:    projectv1.LocationType_LOCATION_TYPE_EXPERIMENT,
+			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
+		},
+		{
+			Column:      "resourcePool",
+			DisplayName: "Resource pool",
+			Location:    projectv1.LocationType_LOCATION_TYPE_EXPERIMENT,
+			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
+		},
+		{
+			Column:      "progress",
+			DisplayName: "Progress",
+			Location:    projectv1.LocationType_LOCATION_TYPE_EXPERIMENT,
+			Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER,
+		},
+		{
+			Column:      "checkpointSize",
+			DisplayName: "Checkpoint size",
+			Location:    projectv1.LocationType_LOCATION_TYPE_EXPERIMENT,
+			Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER,
+		},
+		{
+			Column:      "checkpointCount",
+			DisplayName: "Checkpoint count",
+			Location:    projectv1.LocationType_LOCATION_TYPE_EXPERIMENT,
+			Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER,
+		},
+		{
+			Column:      "user",
+			DisplayName: "User",
+			Location:    projectv1.LocationType_LOCATION_TYPE_EXPERIMENT,
+			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
+		},
+	}
+
+	hyperparameters := []struct {
+		WorkspaceID     int
+		Hyperparameters expconf.HyperparametersV0
+	}{}
+
+	// get all experiments in project
+	experimentQuery := db.Bun().NewSelect().
+		ColumnExpr("?::int as workspace_id", p.WorkspaceId).
+		ColumnExpr("config->'hyperparameters' as hyperparameters").
+		TableExpr("experiments").
+		Where("config->>'hyperparameters' IS NOT NULL").
+		Where("project_id = ?", id).
+		Order("id")
+
+	experimentQuery, err = exputil.AuthZProvider.Get().FilterExperimentsQuery(
+		ctx,
+		curUser,
+		p,
+		experimentQuery,
+		[]rbacv1.PermissionType{rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	err = experimentQuery.Scan(ctx, &hyperparameters)
+	if err != nil {
+		return nil, err
+	}
+	hparamSet := make(map[string]struct{})
+	for _, hparam := range hyperparameters {
+		flatHparam := expconf.FlattenHPs(hparam.Hyperparameters)
+
+		// ensure we're iterating in order
+		paramKeys := make([]string, len(flatHparam))
+		for key := range flatHparam {
+			paramKeys = append(paramKeys, key)
+		}
+		sort.Strings(paramKeys)
+
+		for _, key := range paramKeys {
+			value := flatHparam[key]
+			_, seen := hparamSet[key]
+			if !seen {
+				hparamSet[key] = struct{}{}
+				var columnType projectv1.ColumnType
+				switch {
+				case value.RawIntHyperparameter != nil ||
+					value.RawDoubleHyperparameter != nil ||
+					value.RawLogHyperparameter != nil:
+					columnType = projectv1.ColumnType_COLUMN_TYPE_NUMBER
+				case value.RawConstHyperparameter != nil:
+					switch value.RawConstHyperparameter.RawVal.(type) {
+					case float64:
+						columnType = projectv1.ColumnType_COLUMN_TYPE_NUMBER
+					case string:
+						columnType = projectv1.ColumnType_COLUMN_TYPE_TEXT
+					default:
+						columnType = projectv1.ColumnType_COLUMN_TYPE_UNSPECIFIED
+					}
+				default:
+					columnType = projectv1.ColumnType_COLUMN_TYPE_UNSPECIFIED
+				}
+				columns = append(columns, &projectv1.ProjectColumn{
+					Column:   fmt.Sprintf("hp.%s", key),
+					Location: projectv1.LocationType_LOCATION_TYPE_HYPERPARAMETERS,
+					Type:     columnType,
+				})
+			}
+		}
+	}
+
 	// Get metrics columns
 	metricNames := []struct {
-		Vname []string
+		Vname       []string
+		WorkspaceID int
 	}{}
-	metricColumns := make([]string, 0)
-	err = db.Bun().
+	metricQuery := db.Bun().
 		NewSelect().
 		TableExpr("exp_metrics_name").
 		TableExpr("LATERAL json_array_elements_text(vname) AS vnames").
 		ColumnExpr("array_to_json(array_agg(DISTINCT vnames)) AS vname").
-		Where("project_id = ?", id).Scan(ctx, &metricNames)
+		ColumnExpr("?::int as workspace_id", p.WorkspaceId).
+		Where("project_id = ?", id)
+
+	metricQuery, err = exputil.AuthZProvider.Get().FilterExperimentsQuery(
+		ctx,
+		curUser,
+		p,
+		metricQuery,
+		[]rbacv1.PermissionType{rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_ARTIFACTS},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	err = metricQuery.Scan(ctx, &metricNames)
 	if err != nil {
 		return nil, err
 	}
 	for _, mn := range metricNames {
 		for _, mnv := range mn.Vname {
-			metricColumns = append(metricColumns, fmt.Sprintf("%s.%s", "validation", mnv))
+			columns = append(columns, &projectv1.ProjectColumn{
+				Column:   fmt.Sprintf("validation.%s", mnv),
+				Location: projectv1.LocationType_LOCATION_TYPE_VALIDATIONS,
+				Type:     projectv1.ColumnType_COLUMN_TYPE_NUMBER,
+			})
 		}
 	}
 
 	return &apiv1.GetProjectColumnsResponse{
-		General: generalColumns, Hyperparameters: hyperparameters.Hyperparameters, Metrics: metricColumns,
+		Columns: columns,
 	}, nil
 }
 

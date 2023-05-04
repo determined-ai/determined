@@ -2,6 +2,9 @@
  PyTorch Lightning API
 #######################
 
+.. meta::
+   :description: Discover how to use the PyTorch Lightning API to train a PyTorch Lightning model in Determined. It includes step-by-step instructions for installation and usage, as well as sample code snippets and tips.
+
 In this guide, you'll learn how to use the PyTorch Lightning API.
 
 +-------------------------------------------------------------------------------+

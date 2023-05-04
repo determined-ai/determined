@@ -4,7 +4,7 @@ class defaults:
     DB_PASSWORD = "postgres"
     BOOT_DISK_SIZE = 200
     BOOT_DISK_TYPE = "pd-standard"
-    ENVIRONMENT_IMAGE = "det-environments-9b5db1b"
+    ENVIRONMENT_IMAGE = "det-environments-6eceaca"
     GPU_NUM = 4
     GPU_TYPE = "nvidia-tesla-t4"
     MASTER_INSTANCE_TYPE = "n1-standard-2"

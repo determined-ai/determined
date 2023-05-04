@@ -1,8 +1,8 @@
-import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Dropdown } from 'antd';
 import type { DropdownProps } from 'antd';
+import { ItemType } from 'antd/es/menu/hooks/useItems';
 import { MenuInfo } from 'rc-menu/lib/interface';
-import React, { useCallback, useMemo } from 'react';
+import React, { MouseEvent, useCallback, useMemo } from 'react';
 
 import ExperimentMoveModalComponent from 'components/ExperimentMoveModal';
 import Button from 'components/kit/Button';
@@ -11,6 +11,8 @@ import useModalHyperparameterSearch from 'hooks/useModal/HyperparameterSearch/us
 import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings } from 'hooks/useSettings';
 import { ExperimentListSettings } from 'pages/ExperimentList.settings';
+import { BatchAction } from 'pages/F_ExpList/glide-table/TableActionBar';
+import { handlePath } from 'routes/utils';
 import {
   activateExperiment,
   archiveExperiment,
@@ -23,24 +25,38 @@ import {
 } from 'services/api';
 import css from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
 import Icon from 'shared/components/Icon/Icon';
+import { ValueOf } from 'shared/types';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { capitalize } from 'shared/utils/string';
-import { ExperimentAction as Action, ProjectExperiment } from 'types';
-import { modal, notification } from 'utils/dialogApi';
+import { ExperimentAction, ProjectExperiment } from 'types';
+import { notification } from 'utils/dialogApi';
 import handleError from 'utils/error';
 import { getActionsForExperiment } from 'utils/experiment';
 import { openCommandResponse } from 'utils/wait';
 
+import useConfirm from './kit/useConfirm';
+
 interface Props {
   children?: React.ReactNode;
   experiment: ProjectExperiment;
+  link?: string;
   makeOpen?: boolean;
   onComplete?: (action?: Action) => Promise<void>;
+  onLink?: () => void;
   onVisibleChange?: (visible: boolean) => void;
   settings?: ExperimentListSettings;
   updateSettings?: UpdateSettings;
   workspaceId?: number;
+  handleUpdateExperimentList?: (action: BatchAction, successfulIds: number[]) => void;
 }
+
+const Action = {
+  NewTab: 'Open Link in New Tab',
+  NewWindow: 'Open Link in New Window',
+  ...ExperimentAction,
+};
+
+type Action = ValueOf<typeof Action>;
 
 const dropdownActions = [
   Action.SwitchPin,
@@ -60,15 +76,19 @@ const stopPropagation = (e: React.MouseEvent): void => e.stopPropagation();
 
 const ExperimentActionDropdown: React.FC<Props> = ({
   experiment,
+  link,
   makeOpen,
   onComplete,
+  onLink,
   onVisibleChange,
   settings,
   updateSettings,
   children,
+  handleUpdateExperimentList,
 }: Props) => {
   const id = experiment.id;
   const ExperimentMoveModal = useModal(ExperimentMoveModalComponent);
+  const confirm = useConfirm();
   const {
     contextHolder: modalHyperparameterSearchContextHolder,
     modalOpen: openModalHyperparameterSearch,
@@ -86,17 +106,28 @@ const ExperimentActionDropdown: React.FC<Props> = ({
         switch (
           action // Cases should match menu items.
         ) {
+          case Action.NewTab:
+            handlePath(params.domEvent as MouseEvent, { path: link, popout: 'tab' });
+            await onLink?.();
+            break;
+          case Action.NewWindow:
+            handlePath(params.domEvent as MouseEvent, { path: link, popout: 'window' });
+            await onLink?.();
+            break;
           case Action.Activate:
             await activateExperiment({ experimentId: id });
             await onComplete?.(action);
+            handleUpdateExperimentList?.(Action.Activate, [id]);
             break;
           case Action.Archive:
             await archiveExperiment({ experimentId: id });
             await onComplete?.(action);
+            handleUpdateExperimentList?.(Action.Archive, [id]);
             break;
           case Action.Cancel:
             await cancelExperiment({ experimentId: id });
             await onComplete?.(action);
+            handleUpdateExperimentList?.(Action.Cancel, [id]);
             break;
           case Action.OpenTensorBoard: {
             const commandResponse = await openOrCreateTensorBoard({
@@ -104,6 +135,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
               workspaceId: experiment.workspaceId,
             });
             openCommandResponse(commandResponse);
+            handleUpdateExperimentList?.(Action.OpenTensorBoard, [id]);
             break;
           }
           case Action.SwitchPin: {
@@ -126,42 +158,40 @@ const ExperimentActionDropdown: React.FC<Props> = ({
             break;
           }
           case Action.Kill:
-            modal.confirm({
-              content: `
-              Are you sure you want to kill
-              experiment ${id}?
-            `,
-              icon: <ExclamationCircleOutlined />,
+            confirm({
+              content: `Are you sure you want to kill experiment ${id}?`,
+              danger: true,
               okText: 'Kill',
-              onOk: async () => {
+              onConfirm: async () => {
                 await killExperiment({ experimentId: id });
                 await onComplete?.(action);
               },
               title: 'Confirm Experiment Kill',
             });
+            handleUpdateExperimentList?.(Action.Kill, [id]);
             break;
           case Action.Pause:
             await pauseExperiment({ experimentId: id });
             await onComplete?.(action);
+            handleUpdateExperimentList?.(Action.Pause, [id]);
             break;
           case Action.Unarchive:
             await unarchiveExperiment({ experimentId: id });
             await onComplete?.(action);
+            handleUpdateExperimentList?.(Action.Unarchive, [id]);
             break;
           case Action.Delete:
-            modal.confirm({
-              content: `
-            Are you sure you want to delete
-            experiment ${id}?
-          `,
-              icon: <ExclamationCircleOutlined />,
+            confirm({
+              content: `Are you sure you want to delete experiment ${id}?`,
+              danger: true,
               okText: 'Delete',
-              onOk: async () => {
+              onConfirm: async () => {
                 await deleteExperiment({ experimentId: id });
                 await onComplete?.(action);
               },
               title: 'Confirm Experiment Deletion',
             });
+            handleUpdateExperimentList?.(Action.Delete, [id]);
             break;
           case Action.Move:
             ExperimentMoveModal.open();
@@ -184,21 +214,26 @@ const ExperimentActionDropdown: React.FC<Props> = ({
       // TODO show loading indicator when we have a button component that supports it.
     },
     [
+      confirm,
       experiment.projectId,
       ExperimentMoveModal,
       experiment.workspaceId,
       handleHyperparameterSearch,
       id,
+      link,
       onComplete,
+      onLink,
       onVisibleChange,
       settings?.pinned,
       updateSettings,
+      handleUpdateExperimentList,
     ],
   );
 
   const handleMoveComplete = useCallback(() => {
     onComplete?.(Action.Move);
-  }, [onComplete]);
+    handleUpdateExperimentList?.(Action.Move, [id]);
+  }, [onComplete, handleUpdateExperimentList, id]);
 
   const menuItems = getActionsForExperiment(experiment, dropdownActions, usePermissions())
     .filter((action) => action !== Action.SwitchPin || settings)
@@ -214,8 +249,16 @@ const ExperimentActionDropdown: React.FC<Props> = ({
     });
 
   const menu: DropdownProps['menu'] = useMemo(() => {
-    return { items: [...menuItems], onClick: handleMenuClick };
-  }, [menuItems, handleMenuClick]);
+    const items: ItemType[] = [...menuItems];
+    if (link) {
+      items.unshift(
+        { key: Action.NewTab, label: Action.NewTab },
+        { key: Action.NewWindow, label: Action.NewWindow },
+        { type: 'divider' },
+      );
+    }
+    return { items, onClick: handleMenuClick };
+  }, [link, menuItems, handleMenuClick]);
 
   if (menuItems.length === 0) {
     return (
@@ -229,6 +272,18 @@ const ExperimentActionDropdown: React.FC<Props> = ({
     );
   }
 
+  const shared = (
+    <>
+      <ExperimentMoveModal.Component
+        experimentIds={[id]}
+        sourceProjectId={experiment.projectId}
+        sourceWorkspaceId={experiment.workspaceId}
+        onSubmit={handleMoveComplete}
+      />
+      {modalHyperparameterSearchContextHolder}
+    </>
+  );
+
   return children ? (
     <>
       <Dropdown
@@ -239,26 +294,14 @@ const ExperimentActionDropdown: React.FC<Props> = ({
         onOpenChange={onVisibleChange}>
         {children}
       </Dropdown>
-      <ExperimentMoveModal.Component
-        experimentIds={[id]}
-        sourceProjectId={experiment.projectId}
-        sourceWorkspaceId={experiment.workspaceId}
-        onSubmit={handleMoveComplete}
-      />
-      {modalHyperparameterSearchContextHolder}
+      {shared}
     </>
   ) : (
     <div className={css.base} title="Open actions menu" onClick={stopPropagation}>
       <Dropdown menu={menu} placement="bottomRight" trigger={['click']}>
         <Button ghost icon={<Icon name="overflow-vertical" />} onClick={stopPropagation} />
       </Dropdown>
-      <ExperimentMoveModal.Component
-        experimentIds={[id]}
-        sourceProjectId={experiment.projectId}
-        sourceWorkspaceId={experiment.workspaceId}
-        onSubmit={handleMoveComplete}
-      />
-      {modalHyperparameterSearchContextHolder}
+      {shared}
     </div>
   );
 };

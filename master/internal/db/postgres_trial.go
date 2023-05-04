@@ -3,13 +3,17 @@ package db
 import (
 	"context"
 	"fmt"
+	"math"
+	"regexp"
 	"strings"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -155,6 +159,312 @@ WHERE id = $1`, id, restartCount); err != nil {
 	return nil
 }
 
+// fullTrialSummaryMetricsRecompute recomputes all summary metrics for a given trial.
+func (db *PgDB) fullTrialSummaryMetricsRecompute(
+	ctx context.Context, tx *sqlx.Tx, trialID int,
+) error {
+	_, err := tx.ExecContext(ctx, `
+-- Returns pairs of metric names and trial_ids and if they are numeric or not.
+WITH training_trial_metrics as (
+SELECT
+	name,
+	trial_id,
+	CASE sum(entries)
+		WHEN sum(entries) FILTER (WHERE metric_type = 'number') THEN 'number'
+		WHEN sum(entries) FILTER (WHERE metric_type = 'string') THEN 'string'
+		WHEN sum(entries) FILTER (WHERE metric_type = 'date') THEN 'date'
+		WHEN sum(entries) FILTER (WHERE metric_type = 'object') THEN 'object'
+		WHEN sum(entries) FILTER (WHERE metric_type = 'boolean') THEN 'boolean'
+		WHEN sum(entries) FILTER (WHERE metric_type = 'array') THEN 'array'
+		WHEN sum(entries) FILTER (WHERE metric_type = 'null') THEN 'null'
+		ELSE 'string'
+	END as metric_type
+FROM (
+	SELECT
+	name,
+	CASE
+		WHEN jsonb_typeof(metrics->'avg_metrics'->name) = 'string' THEN
+			CASE
+				WHEN (metrics->'avg_metrics'->name)::text = '"Infinity"'::text THEN 'number'
+				WHEN (metrics->'avg_metrics'->name)::text = '"-Infinity"'::text THEN 'number'
+				WHEN (metrics->'avg_metrics'->name)::text = '"NaN"'::text THEN 'number'
+				WHEN metrics->'avg_metrics'->>name ~
+					'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})?$' THEN 'date'
+				ELSE 'string'
+			END
+		ELSE jsonb_typeof(metrics->'avg_metrics'->name)
+	END as metric_type,
+	trial_id,
+	count(1) as entries
+	FROM (
+		SELECT DISTINCT
+		jsonb_object_keys(s.metrics->'avg_metrics') as name
+		FROM steps s
+		WHERE s.trial_id = $1
+	) names, steps
+	JOIN trials ON trial_id = trials.id
+	WHERE trials.id = $1
+	GROUP BY name, metric_type, trial_id
+) typed
+where metric_type IS NOT NULL
+GROUP BY name, trial_id
+ORDER BY trial_id, name
+),
+-- Filters to only numeric metrics.
+training_numeric_trial_metrics as (
+SELECT name, trial_id
+FROM training_trial_metrics
+WHERE metric_type = 'number'
+),
+-- Calculates count, sum, min, max on each numeric metric name and trial ID pair.
+-- Also adds just the name for non numeric metrics to ensure we record every metric.
+training_trial_metric_aggs as (
+SELECT
+	name,
+	ntm.trial_id,
+	count(1) as count_agg,
+	sum((steps.metrics->'avg_metrics'->>name)::double precision) as sum_agg,
+	min((steps.metrics->'avg_metrics'->>name)::double precision) as min_agg,
+	max((steps.metrics->'avg_metrics'->>name)::double precision) as max_agg,
+	'number' as metric_type
+FROM training_numeric_trial_metrics ntm INNER JOIN steps
+ON steps.trial_id=ntm.trial_id
+WHERE steps.metrics->'avg_metrics'->name IS NOT NULL
+GROUP BY 1, 2
+UNION
+SELECT
+	name,
+	trial_id,
+	NULL as count_agg,
+	NULL as sum,
+	NULL as min,
+	NULL as max,
+	metric_type as metric_type
+FROM training_trial_metrics
+WHERE metric_type != 'number'
+),
+-- Gets the last reported metric for each trial. Note if we report
+-- {"a": 1} and {"b": 1} we consider {"b": 1} to be the last reported
+-- metric and "a"'s last will be NULL.
+latest_training as (
+  SELECT s.trial_id,
+	unpacked.key as name,
+	unpacked.value as latest_value
+  FROM (
+	  SELECT s.*,
+		ROW_NUMBER() OVER(
+		  PARTITION BY s.trial_id
+		  ORDER BY s.end_time DESC
+		) as rank
+	  FROM steps s
+	  JOIN trials ON s.trial_id = trials.id
+	  WHERE s.trial_id = $1
+	) s, jsonb_each(s.metrics->'avg_metrics') unpacked
+  WHERE s.rank = 1
+),
+-- Adds the last reported metric to training the aggregation.
+training_combined_latest_agg as (SELECT
+	coalesce(lt.trial_id, tma.trial_id) as trial_id,
+	coalesce(lt.name, tma.name) as name,
+	tma.count_agg,
+	tma.sum_agg,
+	tma.min_agg,
+	tma.max_agg,
+	lt.latest_value,
+	tma.metric_type
+FROM latest_training lt FULL OUTER JOIN training_trial_metric_aggs tma ON
+	lt.trial_id = tma.trial_id AND lt.name = tma.name
+),
+-- Turns each rows into a JSONB object.
+training_trial_metrics_final as (
+	SELECT
+		trial_id, jsonb_collect(jsonb_build_object(
+			name, jsonb_build_object(
+				'count', count_agg,
+				'sum', sum_agg,
+				'min', CASE WHEN max_agg = 'NaN'::double precision THEN 'NaN'::double precision
+					ELSE min_agg END,
+				'max', max_agg,
+				'last', latest_value,
+				'type', metric_type
+			)
+		)) as training_metrics
+	FROM training_combined_latest_agg
+	GROUP BY trial_id
+),
+-- We repeat the same process as above to validation metrics.
+validation_trial_metrics as (
+SELECT
+	name,
+	trial_id,
+	CASE sum(entries)
+		WHEN sum(entries) FILTER (WHERE metric_type = 'number') THEN 'number'
+		WHEN sum(entries) FILTER (WHERE metric_type = 'string') THEN 'string'
+		WHEN sum(entries) FILTER (WHERE metric_type = 'date') THEN 'date'
+		WHEN sum(entries) FILTER (WHERE metric_type = 'object') THEN 'object'
+		WHEN sum(entries) FILTER (WHERE metric_type = 'boolean') THEN 'boolean'
+		WHEN sum(entries) FILTER (WHERE metric_type = 'array') THEN 'array'
+		WHEN sum(entries) FILTER (WHERE metric_type = 'null') THEN 'null'
+		ELSE 'string'
+	END as metric_type
+FROM (
+	SELECT
+	name,
+	CASE
+		WHEN jsonb_typeof(metrics->'validation_metrics'->name) = 'string' THEN
+			CASE
+				WHEN (metrics->'validation_metrics'->name)::text = '"Infinity"'::text THEN 'number'
+				WHEN (metrics->'validation_metrics'->name)::text = '"-Infinity"'::text THEN 'number'
+				WHEN (metrics->'validation_metrics'->name)::text = '"NaN"'::text THEN 'number'
+				WHEN metrics->'validation_metrics'->>name ~
+					'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})?$' THEN 'date'
+				ELSE 'string'
+			END
+		ELSE jsonb_typeof(metrics->'validation_metrics'->name)
+	END as metric_type,
+	trial_id,
+	count(1) as entries
+	FROM (
+		SELECT DISTINCT
+		jsonb_object_keys(s.metrics->'validation_metrics') as name
+		FROM validations s
+		JOIN trials ON s.trial_id = trials.id
+		WHERE s.trial_id = $1
+	) names, validations
+	JOIN trials ON trial_id = trials.id
+	WHERE trials.id = $1
+	GROUP BY name, metric_type, trial_id
+) typed
+where metric_type is not NULL
+GROUP BY name, trial_id
+ORDER BY trial_id, name
+),
+validation_numeric_trial_metrics as (
+SELECT name, trial_id
+FROM validation_trial_metrics
+WHERE metric_type = 'number'
+),
+validation_trial_metric_aggs as (
+SELECT
+	name,
+	ntm.trial_id,
+	count(1) as count_agg,
+	sum((validations.metrics->'validation_metrics'->>name)::double precision) as sum_agg,
+	min((validations.metrics->'validation_metrics'->>name)::double precision) as min_agg,
+	max((validations.metrics->'validation_metrics'->>name)::double precision) as max_agg,
+	'number' as metric_type
+FROM validation_numeric_trial_metrics ntm INNER JOIN validations
+ON validations.trial_id=ntm.trial_id
+WHERE validations.metrics->'validation_metrics'->name IS NOT NULL
+GROUP BY 1, 2
+UNION
+SELECT
+	name,
+	trial_id,
+	NULL as count_agg,
+	NULL as sum,
+	NULL as min,
+	NULL as max,
+	metric_type as metric_type
+FROM validation_trial_metrics
+WHERE metric_type != 'number'
+),
+latest_validation as (
+	SELECT s.trial_id,
+		unpacked.key as name,
+		unpacked.value as latest_value
+	FROM (
+		SELECT s.*,
+			ROW_NUMBER() OVER(
+				PARTITION BY s.trial_id
+				ORDER BY s.end_time DESC
+			) as rank
+		FROM validations s
+		JOIN trials ON s.trial_id = trials.id
+		WHERE s.trial_id = $1
+	) s, jsonb_each(s.metrics->'validation_metrics') unpacked
+	WHERE s.rank = 1
+),
+validation_combined_latest_agg as (SELECT
+	coalesce(lt.trial_id, tma.trial_id) as trial_id,
+	coalesce(lt.name, tma.name) as name,
+	tma.count_agg,
+	tma.sum_agg,
+	tma.min_agg,
+	tma.max_agg,
+	lt.latest_value,
+	tma.metric_type
+FROM latest_validation lt FULL OUTER JOIN validation_trial_metric_aggs tma ON
+	lt.trial_id = tma.trial_id AND lt.name = tma.name
+),
+validation_trial_metrics_final as (
+	SELECT
+		trial_id, jsonb_collect(jsonb_build_object(
+			name, jsonb_build_object(
+				'count', count_agg,
+				'sum', sum_agg,
+				'min', CASE WHEN max_agg = 'NaN'::double precision THEN 'NaN'::double precision
+					ELSE min_agg END,
+				'max', max_agg,
+				'last', latest_value,
+				'type', metric_type
+			)
+		)) as validation_metrics
+	FROM validation_combined_latest_agg
+	GROUP BY trial_id
+),
+-- Combine both training and validation metrics into a single JSON object.
+validation_training_combined_json as (
+	SELECT
+	coalesce(ttm.trial_id, vtm.trial_id) as trial_id,
+	(CASE
+		WHEN ttm.training_metrics IS NOT NULL AND vtm.validation_metrics IS NOT NULL THEN
+			jsonb_build_object(
+				'avg_metrics', ttm.training_metrics,
+				'validation_metrics', vtm.validation_metrics
+			)
+		WHEN ttm.training_metrics IS NOT NULL THEN
+			jsonb_build_object(
+				'avg_metrics', ttm.training_metrics
+			)
+		WHEN vtm.validation_metrics IS NOT NULL THEN jsonb_build_object(
+				'validation_metrics', vtm.validation_metrics
+		   )
+		ELSE '{}'::jsonb END) as summary_metrics
+	FROM training_trial_metrics_final ttm FULL OUTER JOIN validation_trial_metrics_final vtm
+	ON ttm.trial_id = vtm.trial_id
+)
+-- Updates trials with this training and validation object.
+UPDATE trials SET
+	summary_metrics = vtcj.summary_metrics, summary_metrics_timestamp = NOW()
+FROM validation_training_combined_json vtcj WHERE vtcj.trial_id = trials.id;
+`, trialID)
+	if err != nil {
+		return errors.Wrapf(err, "updating trial %d summary metrics", trialID)
+	}
+
+	return nil
+}
+
+// updateLatestValidationID updates latest validation based on validations table.
+func (db *PgDB) updateLatestValidationID(ctx context.Context, tx *sqlx.Tx, trialID int) error {
+	if _, err := tx.ExecContext(ctx, `
+		UPDATE trials SET latest_validation_id = (
+			SELECT validations.id
+			FROM validations
+			JOIN trials t ON validations.trial_id = t.id
+			JOIN experiments e on t.experiment_id = e.id
+			WHERE trial_id = $1 AND (
+				validations.metrics->'validation_metrics'->>(e.config->'searcher'->>'metric')
+			) IS NOT NULL
+			ORDER BY validations.end_time DESC
+			LIMIT 1
+		) WHERE id = $1`, trialID); err != nil {
+		return fmt.Errorf("updating latest validation id for trial %d: %w", trialID, err)
+	}
+	return nil
+}
+
 // updateTotalBatches update precomputed total_batches based on existing steps and validations.
 func (db *PgDB) updateTotalBatches(ctx context.Context, tx *sqlx.Tx, trialID int) error {
 	if _, err := tx.ExecContext(ctx, `
@@ -180,20 +490,23 @@ func (db *PgDB) updateTotalBatches(ctx context.Context, tx *sqlx.Tx, trialID int
 // AddTrialMetrics inserts a set of trial metrics to the database.
 func (db *PgDB) addTrialMetrics(
 	ctx context.Context, m *trialv1.TrialMetrics, isValidation bool,
-) (err error) {
+) (rollbacks map[string]int, err error) {
+	rollbacks = make(map[string]int)
 	trialMetricTables := []string{"raw_steps", "raw_validations"}
 	targetTable := "raw_steps"
+	metricsJSONPath := "avg_metrics"
 	metricsBody := map[string]interface{}{
 		"avg_metrics":   m.Metrics.AvgMetrics,
 		"batch_metrics": m.Metrics.BatchMetrics,
 	}
 	if isValidation {
+		metricsJSONPath = "validation_metrics"
 		targetTable = "raw_validations"
 		metricsBody = map[string]interface{}{
 			"validation_metrics": m.Metrics.AvgMetrics,
 		}
 	}
-	return db.withTransaction("add training metrics", func(tx *sqlx.Tx) error {
+	return rollbacks, db.withTransaction("add training metrics", func(tx *sqlx.Tx) error {
 		if err := checkTrialRunID(ctx, tx, m.TrialId, m.TrialRunId); err != nil {
 			return err
 		}
@@ -209,6 +522,7 @@ func (db *PgDB) addTrialMetrics(
 			res, err := tx.ExecContext(ctx, fmt.Sprintf(`
 UPDATE %s SET archived = true
 WHERE trial_id = $1
+  AND archived = false
   AND trial_run_id < $2
   AND total_batches %s $3;
 	`, table, comparator), m.TrialId, m.TrialRunId, m.StepsCompleted)
@@ -219,22 +533,30 @@ WHERE trial_id = $1
 			if err != nil {
 				return errors.Wrap(err, "checking for metric rollbacks")
 			}
+			rollbacks[table] = int(affectedRows)
 			if affectedRows > 0 {
 				rollbackHappened = true
 			}
 		}
 
-		if _, err := tx.NamedExecContext(ctx, fmt.Sprintf(`
+		var summaryMetrics model.JSONObj
+		err := tx.QueryRowContext(ctx, `
+		SELECT summary_metrics FROM trials WHERE id = $1 FOR UPDATE;
+	`, m.TrialId).Scan(&summaryMetrics)
+		if err != nil {
+			return fmt.Errorf("error getting summary metrics from trials: %w", err)
+		}
+
+		var metricRowID int
+		if err := tx.QueryRowContext(ctx, fmt.Sprintf(`
 INSERT INTO %s
 	(trial_id, trial_run_id, end_time, metrics, total_batches)
 VALUES
-	(:trial_id, :trial_run_id, now(), :metrics, :total_batches)
-`, targetTable), model.TrialMetrics{
-			TrialID:      int(m.TrialId),
-			TrialRunID:   int(m.TrialRunId),
-			Metrics:      metricsBody,
-			TotalBatches: int(m.StepsCompleted),
-		}); err != nil {
+	($1, $2, now(), $3, $4)
+RETURNING id
+`, targetTable),
+			int(m.TrialId), int(m.TrialRunId), metricsBody, int(m.StepsCompleted),
+		).Scan(&metricRowID); err != nil {
 			return errors.Wrap(err, fmt.Sprintf("inserting metrics into %s", targetTable))
 		}
 
@@ -242,11 +564,46 @@ VALUES
 			if err := db.updateTotalBatches(ctx, tx, int(m.TrialId)); err != nil {
 				return errors.Wrap(err, "rollback")
 			}
+
+			if err := db.updateLatestValidationID(ctx, tx, int(m.TrialId)); err != nil {
+				return fmt.Errorf(
+					"rollback updating latest validation ID for trial %d: %w", m.TrialId, err)
+			}
+
+			if err := db.fullTrialSummaryMetricsRecompute(ctx, tx, int(m.TrialId)); err != nil {
+				return errors.Wrap(err, "error on rollback compute of summary metrics")
+			}
 		} else {
+			if _, ok := summaryMetrics[metricsJSONPath]; !ok {
+				summaryMetrics[metricsJSONPath] = map[string]any{}
+			}
+			summaryMetrics[metricsJSONPath] = calculateNewSummaryMetrics(
+				summaryMetrics[metricsJSONPath].(map[string]any),
+				m.Metrics.AvgMetrics,
+			)
+
+			var latestValidationID *int
+			if isValidation {
+				var searcherMetric *string
+				if err := tx.QueryRowContext(ctx, `
+		SELECT experiments.config->'searcher'->>'metric' AS metric_name
+		FROM experiments
+		JOIN trials t ON t.experiment_id = experiments.id
+		WHERE t.id = $1`, int(m.TrialId)).Scan(&searcherMetric); err != nil {
+					return fmt.Errorf("getting trial's searcher metric: %w", err)
+				}
+				if searcherMetric != nil &&
+					m.Metrics.AvgMetrics.Fields[*searcherMetric].AsInterface() != nil {
+					latestValidationID = &metricRowID
+				}
+			}
+
 			if _, err := tx.ExecContext(ctx, `
-UPDATE trials SET total_batches = GREATEST(total_batches, $2)
+UPDATE trials SET total_batches = GREATEST(total_batches, $2),
+summary_metrics = $3, summary_metrics_timestamp = NOW(),
+latest_validation_id = coalesce($4, latest_validation_id)
 WHERE id = $1;
-`, m.TrialId, m.StepsCompleted); err != nil {
+`, m.TrialId, m.StepsCompleted, summaryMetrics, latestValidationID); err != nil {
 				return errors.Wrap(err, "updating trial total batches")
 			}
 		}
@@ -267,7 +624,8 @@ WHERE id = $1;
 // If these training metrics occur before any others, a rollback is assumed and later
 // training and validation metrics are cleaned up.
 func (db *PgDB) AddTrainingMetrics(ctx context.Context, m *trialv1.TrialMetrics) error {
-	return db.addTrialMetrics(ctx, m, false)
+	_, err := db.addTrialMetrics(ctx, m, false)
+	return err
 }
 
 // AddValidationMetrics adds a completed validation to the database with the given
@@ -276,7 +634,160 @@ func (db *PgDB) AddTrainingMetrics(ctx context.Context, m *trialv1.TrialMetrics)
 func (db *PgDB) AddValidationMetrics(
 	ctx context.Context, m *trialv1.TrialMetrics,
 ) error {
-	return db.addTrialMetrics(ctx, m, true)
+	_, err := db.addTrialMetrics(ctx, m, true)
+	return err
+}
+
+const (
+	// InfPostgresString how we store infinity in JSONB in postgres.
+	InfPostgresString = "Infinity"
+	// NegInfPostgresString how we store -infinity in JSONB in postgres.
+	NegInfPostgresString = "-Infinity"
+	// NaNPostgresString how we store NaN in JSONB in postgres.
+	NaNPostgresString = "NaN"
+
+	// MetricTypeString is the summary metric type for string or mixed types.
+	MetricTypeString = "string"
+	// MetricTypeNumber is the summary metric type for floats or ints.
+	MetricTypeNumber = "number"
+	// MetricTypeBool is the summary metric type for boolean.
+	MetricTypeBool = "boolean"
+	// MetricTypeDate is the summary metric type for date metrics.
+	MetricTypeDate = "date"
+	// MetricTypeObject is the summary metric type for object types.
+	MetricTypeObject = "object"
+	// MetricTypeArray is the summary metric type for array types.
+	MetricTypeArray = "array"
+	// MetricTypeNull is the summary metric type for array types.
+	MetricTypeNull = "null"
+)
+
+func jsonAnyToFloat(v any) float64 {
+	if s, ok := v.(string); ok {
+		if f, isSpecial := stringToSpecialFloats(s); isSpecial {
+			return f
+		}
+	}
+
+	if f, ok := v.(float64); ok {
+		return f
+	}
+
+	log.Errorf("summary metric value expected as float instead got %T %v", v, v)
+	return 0.0
+}
+
+func stringToSpecialFloats(s string) (float64, bool) {
+	switch s {
+	case NaNPostgresString:
+		return math.NaN(), true
+	case InfPostgresString:
+		return math.Inf(1), true
+	case NegInfPostgresString:
+		return math.Inf(-1), true
+	default:
+		return 0.0, false
+	}
+}
+
+func replaceSpecialFloatsWithString(v any) any {
+	if f, ok := v.(float64); ok {
+		switch {
+		case math.IsNaN(f):
+			return NaNPostgresString
+		case math.IsInf(f, 1.0):
+			return InfPostgresString
+		case math.IsInf(f, -1.0):
+			return NegInfPostgresString
+		}
+	}
+	return v
+}
+
+var pythonISOFormatRegex = regexp.MustCompile(
+	`^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})?$`)
+
+func calculateNewSummaryMetrics(
+	summaryMetrics model.JSONObj, metrics *structpb.Struct,
+) model.JSONObj {
+	// Calculate numeric metrics.
+	for metricName, metric := range metrics.Fields {
+		// Get type of provided metric.
+		metricFloatValue := 0.0
+		metricType := ""
+		switch metricValue := metric.AsInterface().(type) {
+		case float64:
+			metricFloatValue = metricValue
+			metricType = MetricTypeNumber
+		case string:
+			switch f, ok := stringToSpecialFloats(metricValue); {
+			case ok:
+				metricFloatValue = f
+				metricType = MetricTypeNumber
+			case pythonISOFormatRegex.MatchString(metricValue):
+				metricType = MetricTypeDate
+			default:
+				metricType = MetricTypeString
+			}
+		case bool:
+			metricType = MetricTypeBool
+		case map[string]any:
+			metricType = MetricTypeObject
+		case []any:
+			metricType = MetricTypeArray
+		case nil:
+			metricType = MetricTypeNull
+		default:
+			metricType = MetricTypeString
+		}
+
+		// If we haven't seen this metric before just add the type we have.
+		var ok bool
+		var summaryMetric map[string]any
+		if summaryMetric, ok = summaryMetrics[metricName].(map[string]any); !ok {
+			summaryMetric = map[string]any{"type": metricType}
+		} else if summaryMetric["type"] != metricType {
+			// If we have seen this before check if we disagree on types and set to string if we do.
+			metricType = "string"
+			summaryMetric = map[string]any{"type": metricType}
+		}
+		summaryMetrics[metricName] = summaryMetric
+
+		if metricType != MetricTypeNumber {
+			continue
+		}
+
+		// Is this the first time seeing a number metric?
+		if _, ok = summaryMetric["count"]; !ok {
+			summaryMetric["max"] = replaceSpecialFloatsWithString(metricFloatValue)
+			summaryMetric["min"] = replaceSpecialFloatsWithString(metricFloatValue)
+			summaryMetric["sum"] = replaceSpecialFloatsWithString(metricFloatValue)
+			summaryMetric["count"] = 1
+		} else {
+			summaryMetric["min"] = replaceSpecialFloatsWithString(
+				math.Min(jsonAnyToFloat(summaryMetric["min"]), metricFloatValue))
+			summaryMetric["max"] = replaceSpecialFloatsWithString(
+				math.Max(jsonAnyToFloat(summaryMetric["max"]), metricFloatValue))
+			summaryMetric["sum"] = replaceSpecialFloatsWithString(
+				jsonAnyToFloat(summaryMetric["sum"]) + metricFloatValue)
+			// Go parsing odditity treats JSON whole numbers as floats.
+			summaryMetric["count"] = int(jsonAnyToFloat(summaryMetric["count"])) + 1
+		}
+	}
+
+	// Add last value for all metrics provided.
+	for metricName, sumMetric := range summaryMetrics {
+		metric, ok := sumMetric.(map[string]any)
+		if !ok {
+			// Should not happen.
+			log.Errorf("summary metric %T %+v is not a map", sumMetric, sumMetric)
+			continue
+		}
+
+		metric["last"] = replaceSpecialFloatsWithString(metrics.Fields[metricName])
+	}
+
+	return summaryMetrics
 }
 
 // AddCheckpointMetadata persists metadata for a completed checkpoint to the database.
@@ -434,7 +945,8 @@ UPDATE trials t
 SET best_validation_id = (SELECT bv.id FROM best_validation bv),
 searcher_metric_value = (SELECT bv.searcher_metric_value FROM best_validation bv),
 searcher_metric_value_signed = 
-(SELECT bv.searcher_metric_value * const.sign FROM best_validation bv, const);
+(SELECT bv.searcher_metric_value * const.sign FROM best_validation bv, const)
+WHERE t.id = $1;
 `, trialID, trialRunID, stepsCompleted)
 	return errors.Wrapf(err, "error updating best validation for trial %d", trialID)
 }
