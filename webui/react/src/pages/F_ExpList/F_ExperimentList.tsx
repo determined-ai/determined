@@ -8,8 +8,14 @@ import useResize from 'hooks/useResize';
 import { searchExperiments } from 'services/api';
 import { V1BulkExperimentFilters } from 'services/api-ts-sdk';
 import usePolling from 'shared/hooks/usePolling';
-import userStore from 'stores/users';
-import { ExperimentAction, ExperimentItem, Project, RunState } from 'types';
+import {
+  ExperimentAction,
+  ExperimentItem,
+  ExperimentWithTrial,
+  Project,
+  ProjectColumn,
+  RunState,
+} from 'types';
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 
@@ -114,8 +120,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   }, [page, experimentFilters, canceler.signal]);
 
   const { stopPolling } = usePolling(fetchExperiments, { rerunOnNewFn: true });
-
-  useEffect(() => userStore.startPolling(), []);
 
   useEffect(() => {
     return () => {

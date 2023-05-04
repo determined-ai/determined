@@ -1,5 +1,5 @@
 import type { TabsProps } from 'antd';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import Pivot from 'components/kit/Pivot';
@@ -39,8 +39,6 @@ const Clusters: React.FC = () => {
   const [tabKey, setTabKey] = useState<TabType>(tab || DEFAULT_TAB_KEY);
 
   const clusterStatus = useObservable(clusterStore.clusterStatus);
-
-  useEffect(() => clusterStore.startPolling(), []);
 
   const handleTabChange = useCallback(
     (key: string) => {
