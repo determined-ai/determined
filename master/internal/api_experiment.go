@@ -1255,7 +1255,7 @@ func (a *apiServer) CreateExperiment(
 		}
 		return nil, status.Errorf(codes.InvalidArgument, "invalid experiment: %s", err)
 	}
-	if err = exputil.AuthZProvider.Get().CanCreateExperiment(ctx, *user, p, dbExp); err != nil {
+	if err = exputil.AuthZProvider.Get().CanCreateExperiment(ctx, *user, p); err != nil {
 		return nil, status.Errorf(codes.PermissionDenied, err.Error())
 	}
 
@@ -1830,9 +1830,7 @@ func (a *apiServer) MoveExperiment(
 		return nil, errors.Errorf("project (%v) is archived and cannot add new experiments.",
 			req.DestinationProjectId)
 	}
-	// need to update CanCreateExperiment to check project when experiment is nil
-	if err = exputil.AuthZProvider.Get().CanCreateExperiment(ctx, curUser, destProject,
-		nil); err != nil {
+	if err = exputil.AuthZProvider.Get().CanCreateExperiment(ctx, curUser, destProject); err != nil {
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
@@ -1867,9 +1865,7 @@ func (a *apiServer) MoveExperiments(
 		return nil, errors.Errorf("project (%v) is archived and cannot add new experiments.",
 			req.DestinationProjectId)
 	}
-	// need to update CanCreateExperiment to check project when experiment is nil
-	if err = exputil.AuthZProvider.Get().CanCreateExperiment(ctx, *curUser, destProject,
-		nil); err != nil {
+	if err = exputil.AuthZProvider.Get().CanCreateExperiment(ctx, *curUser, destProject); err != nil {
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 

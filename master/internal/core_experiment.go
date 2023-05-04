@@ -597,7 +597,7 @@ func (m *Master) postExperiment(c echo.Context) (interface{}, error) {
 	}
 
 	// Can we create the experiment?
-	if err = expauth.AuthZProvider.Get().CanCreateExperiment(ctx, user, p, dbExp); err != nil {
+	if err = expauth.AuthZProvider.Get().CanCreateExperiment(ctx, user, p); err != nil {
 		return nil, echo.NewHTTPError(http.StatusForbidden, err.Error())
 	}
 	if validateOnly {
