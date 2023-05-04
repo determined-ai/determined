@@ -14,11 +14,20 @@ CREATE UNIQUE INDEX steps_trial_id_total_batches_run_id_type_unique ON raw_steps
 );
 DROP INDEX steps_trial_id_total_batches_run_id_unique_old;
 
-CREATE TABLE generic_metrics (LIKE raw_steps INCLUDING ALL);
-ALTER TABLE generic_metrics ALTER COLUMN type SET DEFAULT 'generic';
-CREATE UNIQUE INDEX generic_trial_id_total_batches_run_id_type_unique ON generic_metrics (
-    trial_id, total_batches, trial_run_id, type
+
+CREATE SEQUENCE generic_metrics_id_seq START WITH 1;
+CREATE TABLE generic_metrics (
+    trial_id integer NOT NULL,
+    end_time timestamp with time zone,
+    metrics jsonb,
+    total_batches integer NOT NULL DEFAULT 0,
+    trial_run_id integer NOT NULL DEFAULT 0,
+    archived boolean NOT NULL DEFAULT false,
+    id integer NOT NULL DEFAULT nextval('generic_metrics_id_seq'),
+    type metric_type NOT NULL DEFAULT 'generic',
+    CONSTRAINT generic_metrics_trial_id_fkey FOREIGN KEY (trial_id) REFERENCES trials(id)
 );
+
 
 CREATE TABLE metrics (
     trial_id integer NOT NULL,
