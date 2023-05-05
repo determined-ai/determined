@@ -1059,7 +1059,6 @@ class TestPyTorchTrial:
         assert state.batches_trained == 1, "batches_trained does not match"
         assert state.epochs_trained == 0, "epochs_trained does not match"
 
-    @pytest.mark.dothis
     def test_pytorch_mnist(self, tmp_path: pathlib.Path):
         checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
 

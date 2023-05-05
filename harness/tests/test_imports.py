@@ -129,3 +129,6 @@ def test_import_from_path() -> None:
     # We will have created some __pycache__ dirs but we don't want to pollute.
     shutil.rmtree(fixture / "a" / "__pycache__")
     shutil.rmtree(fixture / "libraries" / "__pycache__")
+
+    for mod in [a.data, lib1, lib2, a]:
+        del sys.modules[mod]

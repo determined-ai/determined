@@ -197,10 +197,6 @@ def tutorials_path(path: str) -> str:
 def import_class_from_module(class_name: str, module_path: str) -> Any:
     module_dir = pathlib.Path(os.path.dirname(module_path))
 
-    try:
-        sys.modules.pop("data")
-    except KeyError:
-        pass
 
     with det.import_from_path(module_dir):
         spec = importlib.util.spec_from_file_location(class_name, module_path)
