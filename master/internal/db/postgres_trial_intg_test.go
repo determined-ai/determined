@@ -107,7 +107,7 @@ func addMetricCustomTime(ctx context.Context, t *testing.T, trialID int, endTime
 		Metrics       map[string]any
 		TotalBatches  int
 		EndTime       time.Time
-		Type          model.MetricType
+		PartitionType model.MetricPartitionType
 	}{
 		TrialID:    trialID,
 		TrialRunID: 1,
@@ -116,9 +116,9 @@ func addMetricCustomTime(ctx context.Context, t *testing.T, trialID int, endTime
 				"b": -1.0,
 			},
 		},
-		TotalBatches: 999999,
-		EndTime:      endTime,
-		Type:         model.TrainingMetric,
+		TotalBatches:  999999,
+		EndTime:       endTime,
+		PartitionType: model.TrainingMetric,
 	}
 	_, err := Bun().NewInsert().Model(&metric).Exec(ctx)
 	require.NoError(t, err)
@@ -130,7 +130,7 @@ func addMetricCustomTime(ctx context.Context, t *testing.T, trialID int, endTime
 		Metrics       map[string]any
 		TotalBatches  int
 		EndTime       time.Time
-		Type          model.MetricType
+		PartitionType model.MetricPartitionType
 	}{
 		TrialID:    trialID,
 		TrialRunID: 1,
@@ -139,9 +139,9 @@ func addMetricCustomTime(ctx context.Context, t *testing.T, trialID int, endTime
 				"val_loss": 3.0,
 			},
 		},
-		TotalBatches: 999999,
-		EndTime:      endTime,
-		Type:         model.ValidationMetric,
+		TotalBatches:  999999,
+		EndTime:       endTime,
+		PartitionType: model.ValidationMetric,
 	}
 	_, err = Bun().NewInsert().Model(&valMetric).Exec(ctx)
 	require.NoError(t, err)

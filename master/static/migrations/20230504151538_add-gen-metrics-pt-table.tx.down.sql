@@ -17,4 +17,4 @@ CREATE UNIQUE INDEX validations_trial_id_total_batches_run_id_unique ON raw_vali
 );
 ALTER TABLE raw_validations DROP COLUMN IF EXISTS type;
 
-DROP TYPE metric_type;
+DROP TYPE metric_partition_type;

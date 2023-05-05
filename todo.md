@@ -21,6 +21,8 @@ add include in the new table.
 TODO:
 - [ ] remove go references to raw_steps and raw_validations
 - [ ] no need to mess with underlying table ids. revert
+- [ ] update (or leave off) code directly working with the underlying tables
+  `ag 'from .*(steps|validations)' master -l | grep -v migration`
 
 
 timing: 9s on latest-master db dump to run the migration and revert.

@@ -489,12 +489,10 @@ func (db *PgDB) updateTotalBatches(ctx context.Context, tx *sqlx.Tx, trialID int
 
 // AddTrialMetrics inserts a set of trial metrics to the database.
 func (db *PgDB) addTrialMetrics(
-	ctx context.Context, m *trialv1.TrialMetrics, mType model.MetricType,
+	ctx context.Context, m *trialv1.TrialMetrics, mType model.MetricPartitionType,
 ) (rollbacks int, err error) {
 	/*
 		TODO(hamid):
-		- this can take in a metric_type and always insert into `metrics`.
-		- simplify rollback logic: now it only operates on one table.
 		- MetricType could live in trialv1.TrialMetrics :thinking_face:
 	*/
 	isValidation := mType == model.ValidationMetric
@@ -531,10 +529,10 @@ WHERE trial_id = $1
 	-- as the metric being added as "archived"
   AND (
 		(
-			type != $4 AND total_batches > $3
+			partition_type != $4 AND total_batches > $3
 		) OR
 		(
-			type = $4 AND total_batches >= $3
+			partition_type = $4 AND total_batches >= $3
 		)
 		
 	);
@@ -559,7 +557,7 @@ WHERE trial_id = $1
 		var metricRowID int
 		if err := tx.QueryRowContext(ctx, `
 INSERT INTO metrics
-	(trial_id, trial_run_id, end_time, metrics, total_batches, type)
+	(trial_id, trial_run_id, end_time, metrics, total_batches, partition_type)
 VALUES
 	($1, $2, now(), $3, $4, $5)
 RETURNING id`,
@@ -844,6 +842,7 @@ WHERE id = $1
 // returning nil if none exists.
 func (db *PgDB) ValidationByTotalBatches(trialID, totalBatches int) (*model.TrialMetrics, error) {
 	var validation model.TrialMetrics
+	// TODO: update to go through `metrics`.
 	if err := db.query(`
 SELECT id, trial_id, total_batches, end_time, metrics
 FROM validations
