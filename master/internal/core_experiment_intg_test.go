@@ -114,7 +114,7 @@ func TestAuthZPostExperimentEcho(t *testing.T) {
 	// Can't create experiment deny.
 	expectedErr := echo.NewHTTPError(http.StatusForbidden, "canCreateExperimentError")
 	pAuthZ.On("CanGetProject", mock.Anything, curUser, mock.Anything).Return(nil).Once()
-	authZExp.On("CanCreateExperiment", mock.Anything, curUser, mock.Anything, mock.Anything).
+	authZExp.On("CanCreateExperiment", mock.Anything, curUser, mock.Anything).
 		Return(fmt.Errorf("canCreateExperimentError")).Once()
 	err = echoPostExperiment(ctx, api, t, CreateExperimentParams{
 		ConfigBytes: minExpConfToYaml(t),
@@ -124,7 +124,7 @@ func TestAuthZPostExperimentEcho(t *testing.T) {
 	// Can't activate experiment deny.
 	expectedErr = echo.NewHTTPError(http.StatusForbidden, "canActivateExperimentError")
 	pAuthZ.On("CanGetProject", mock.Anything, curUser, mock.Anything).Return(nil).Once()
-	authZExp.On("CanCreateExperiment", mock.Anything, curUser, mock.Anything, mock.Anything).
+	authZExp.On("CanCreateExperiment", mock.Anything, curUser, mock.Anything).
 		Return(nil).Once()
 	authZExp.On("CanEditExperiment", mock.Anything, curUser, mock.Anything, mock.Anything).
 		Return(fmt.Errorf("canActivateExperimentError")).Once()

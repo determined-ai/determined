@@ -21,13 +21,13 @@ type ExperimentAuthZ struct {
 	mock.Mock
 }
 
-// CanCreateExperiment provides a mock function with given fields: ctx, curUser, proj, e
-func (_m *ExperimentAuthZ) CanCreateExperiment(ctx context.Context, curUser model.User, proj *projectv1.Project, e *model.Experiment) error {
-	ret := _m.Called(ctx, curUser, proj, e)
+// CanCreateExperiment provides a mock function with given fields: ctx, curUser, proj
+func (_m *ExperimentAuthZ) CanCreateExperiment(ctx context.Context, curUser model.User, proj *projectv1.Project) error {
+	ret := _m.Called(ctx, curUser, proj)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, model.User, *projectv1.Project, *model.Experiment) error); ok {
-		r0 = rf(ctx, curUser, proj, e)
+	if rf, ok := ret.Get(0).(func(context.Context, model.User, *projectv1.Project) error); ok {
+		r0 = rf(ctx, curUser, proj)
 	} else {
 		r0 = ret.Error(0)
 	}

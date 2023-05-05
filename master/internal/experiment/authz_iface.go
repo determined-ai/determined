@@ -93,7 +93,7 @@ type ExperimentAuthZ interface {
 
 	// POST /api/v1/experiments
 	CanCreateExperiment(
-		ctx context.Context, curUser model.User, proj *projectv1.Project, e *model.Experiment,
+		ctx context.Context, curUser model.User, proj *projectv1.Project,
 	) error
 	CanForkFromExperiment(ctx context.Context, curUser model.User, e *model.Experiment) error
 
