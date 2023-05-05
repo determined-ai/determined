@@ -1,12 +1,12 @@
 import json
 import logging
 import os
-import typing
+from typing import Dict, List, Tuple
 
+import determined as det
 from transformers import TrainerCallback, TrainerControl, TrainerState, TrainingArguments
 from transformers.trainer_utils import get_last_checkpoint
 
-import determined as det
 
 logging.basicConfig(level=logging.INFO)
 
@@ -16,8 +16,8 @@ class DetCallback(TrainerCallback):
         self,
         core_context: det.core.Context,
         args: TrainingArguments,
-        filter_metrics: typing.List[str] = None,
-        user_data: typing.Dict = None,
+        filter_metrics: List[str] = None,
+        user_data: Dict = None,
     ) -> None:
         super().__init__()
 
@@ -27,16 +27,21 @@ class DetCallback(TrainerCallback):
         self.user_data = user_data
         self.load_last_checkpoint(args)
 
-        self.last_metrics: typing.Dict[str, float] = {"train_step": -1, "eval_step": -1}
+        self.last_metrics: Dict[str, float] = {"train_step": -1, "eval_step": -1}
+        self.searcher_ops = self.core_context.searcher.operations()
+        self.current_op = next(self.searcher_ops)
+        self.updating_searcher = False
 
         searcher_config = det.get_cluster_info().trial._config["searcher"]
         self.searcher_metric = searcher_config["metric"]
-        self.searcher_unit = list(searcher_config["max_length"].keys())[0]
-        self.searcher_max_length = list(searcher_config["max_length"].values())[0]
-        self.searcher_ops = self.core_context.searcher.operations()
-        self.current_op = next(self.searcher_ops)
-        self._check_searcher_compatibility(args)
-        self.updating_searcher = False
+        # Custom searchers have a different config structure which need to be handled differently
+        if searcher_config["name"] == "custom":
+            self.searcher_unit = "batches"
+            self.searcher_max_length = self.current_op.length
+        else:
+            self.searcher_unit = list(searcher_config["max_length"].keys())[0]
+            self.searcher_max_length = list(searcher_config["max_length"].values())[0]
+            self._check_searcher_compatibility(args)
 
     def on_log(
         self,
@@ -47,6 +52,7 @@ class DetCallback(TrainerCallback):
         **kwargs,
     ):
         metrics, metric_type = self._get_metrics(logs)
+        print(f"on_log metrics, global_step {state.global_step}", metrics)
         if metric_type == TRAIN:
             # Prevents reporting metrics for the same step twice. This happens after
             # training is completed and average training metrics are reported with
@@ -84,7 +90,7 @@ class DetCallback(TrainerCallback):
         if self.updating_searcher is False and self.core_context.preempt.should_preempt():
             control.should_save = True
 
-    def _get_metrics(self, logs: typing.Dict) -> typing.Tuple[typing.Dict, str]:
+    def _get_metrics(self, logs: Dict) -> Tuple[Dict, str]:
         metrics = logs
         metric_type = get_metric_type(logs)
         if self.filter_metrics:
@@ -202,17 +208,17 @@ class DetCallback(TrainerCallback):
         if state.is_world_process_zero:
             if self.last_metrics is None:
                 logging.warning(
-                    f"No training or evaluation metrics has been recorded. Please check your settings for "
-                    f"training metrics (--logging_strategy and --logging_steps) or "
-                    f"evaluation metrics (--evaluation_strategy and --eval_steps). "
-                    f"Reporting trainer_state.best_metric to the searcher."
+                    "No training or evaluation metrics has been recorded. Please check your settings for "
+                    "training metrics (--logging_strategy and --logging_steps) or "
+                    "evaluation metrics (--evaluation_strategy and --eval_steps). "
+                    "Reporting trainer_state.best_metric to the searcher."
                 )
                 searcher_metric = state.best_metric
             elif self.searcher_metric not in self.last_metrics:
                 logging.warning(
                     f"Searcher metric {self.searcher_metric} from the yaml config file does not match any "
                     f"of the recorded metrics in {self.last_metrics}. "
-                    f"Reporting trainer_state.best_metric to the searcher."
+                    "Reporting trainer_state.best_metric to the searcher."
                 )
                 searcher_metric = state.best_metric
             else:
@@ -287,3 +293,49 @@ def get_metric_type(d):
             return TRAIN_AVG
         else:
             return TRAIN
+
+
+def create_consistent_hf_args_for_deepspeed(args: List[str], ds_config_path: str) -> List[str]:
+    """
+    TODO: Cleanup and write actual doc string.
+
+    Helper function which modifies the *HFConfig* batch-size-related args based on the deepspeed
+    json file, if present.
+
+    The default HF behavior is to use "auto" for these values in the json file when combining
+    deepspeed and HF Trainer, and then HF will populate the ds config values based on other
+    HF args. This helper function exactly reverses the logic and modifies the HF args based on the
+    ds json config values, if they are not "auto".
+    """
+    # Next we need to ensure that the HF batch config aligns with the deepspeed one.
+    with open(ds_config_path, "r") as f:
+        ds_config_dict = json.load(f)
+
+    hf_flag_to_ds_key = {
+        "--per_device_train_batch_size": "train_micro_batch_size_per_gpu",
+        "--gradient_accumulation_steps": "gradient_accumulation_steps",
+    }
+
+    # For every provided HF flag, check if a non-"auto" value is specified in the corresponding
+    # DS config file and update the corresponding HF value, if so.
+    for idx in range(len(args)):
+        if args[idx] in hf_flag_to_ds_key:
+            ds_key = hf_flag_to_ds_key[args[idx]]
+            overwrite_value = str(ds_config_dict[ds_key])
+            if overwrite_value != "auto" and args[idx + 1] != overwrite_value:
+                logging.warning(
+                    f"Changing {args[idx]} from {args[idx +1]} to {overwrite_value} to match the DeepSpeed configuration."
+                )
+                args[idx + 1] = overwrite_value
+            del hf_flag_to_ds_key[args[idx]]
+
+    # All remaining keys in hf_flag_to_ds_key were not provided as args to the HF CLI entrypoint,
+    # but their corresponding values may still be specified in the DS config. If they are, and they
+    # are not "auto", add the HF CLI args correspondingly.
+    for hf_flag, ds_key in hf_flag_to_ds_key.items():
+        if ds_key in ds_config_dict:
+            hf_flag_value = str(ds_config_dict[ds_key])
+            if hf_flag_value != "auto":
+                args.extend([hf_flag, hf_flag_value])
+
+    return args
