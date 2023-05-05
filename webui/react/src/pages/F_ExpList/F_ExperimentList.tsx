@@ -209,6 +209,19 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     fetchColumns();
   }, [fetchColumns]);
 
+  useEffect(() => {
+    const handleEsc = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setClearSelectionTrigger((prev) => prev + 1);
+      }
+    };
+    window.addEventListener('keydown', handleEsc);
+
+    return () => {
+      window.removeEventListener('keydown', handleEsc);
+    };
+  }, []);
+
   const setVisibleColumns = useCallback(
     (newColumns: string[]) => {
       updateSettings({ columns: newColumns });
