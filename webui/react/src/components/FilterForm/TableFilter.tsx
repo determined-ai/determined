@@ -1,12 +1,11 @@
 import { FilterOutlined } from '@ant-design/icons';
 import { Button, Popover } from 'antd';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 
+import FilterForm from 'components/FilterForm/components/FilterForm';
+import { FilterFormStore } from 'components/FilterForm/components/FilterFormStore';
 import { V1ProjectColumn } from 'services/api-ts-sdk';
 import { Loadable } from 'utils/loadable';
-
-import FilterForm from './components/FilterForm';
-import { FilterFormStore } from './components/FilterFormStore';
 
 interface Props {
   loadableColumns: Loadable<V1ProjectColumn[]>;
@@ -14,11 +13,9 @@ interface Props {
 }
 
 const TableFilter = ({ loadableColumns, formStore }: Props): JSX.Element => {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState<boolean>(false);
 
-  const columns: V1ProjectColumn[] = useMemo(() => {
-    return Loadable.getOrElse([], loadableColumns);
-  }, [loadableColumns]);
+  const columns: V1ProjectColumn[] = Loadable.getOrElse([], loadableColumns);
 
   const handleOpenChange = (newOpen: boolean) => {
     setOpen(newOpen);

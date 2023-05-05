@@ -5,15 +5,15 @@ import { useMemo, useRef } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
 import { debounce } from 'throttle-debounce';
 
+import ConjunctionContainer from 'components/FilterForm/components/ConjunctionContainer';
+import FilterField from 'components/FilterForm/components/FilterField';
+import { FilterFormStore, ITEM_LIMIT } from 'components/FilterForm/components/FilterFormStore';
+import { Conjunction, FormField, FormGroup, FormKind } from 'components/FilterForm/components/type';
 import Button from 'components/kit/Button';
 import { V1ProjectColumn } from 'services/api-ts-sdk';
 import Icon from 'shared/components/Icon';
 
-import ConjunctionContainer from './ConjunctionContainer';
-import FilterField from './FilterField';
-import { FilterFormStore, ITEM_LIMIT } from './FilterFormStore';
 import css from './FilterGroup.module.scss';
-import { Conjunction, FormField, FormGroup, FormKind } from './type';
 
 interface Props {
   conjunction: Conjunction;

@@ -1,10 +1,7 @@
-import { Observable, observable } from 'micro-observables';
-import { v4 as uuidv4 } from 'uuid';
-
-import { V1ColumnType, V1LocationType, V1ProjectColumn } from 'services/api-ts-sdk';
+import { observable, Observable, WritableObservable } from 'micro-observables';
 
 import {
-  AvaliableOperators,
+  AvailableOperators,
   Conjunction,
   FilterFormSet,
   FilterFormSetWithoutId,
@@ -13,7 +10,8 @@ import {
   FormGroup,
   FormKind,
   Operator,
-} from './type';
+} from 'components/FilterForm/components/type';
+import { V1ColumnType, V1LocationType, V1ProjectColumn } from 'services/api-ts-sdk';
 
 export const ITEM_LIMIT = 50;
 
@@ -25,44 +23,43 @@ const INIT_FORMSET: Readonly<FilterFormSet> = {
 const getInitGroup = (): FormGroup => ({
   children: [],
   conjunction: Conjunction.And,
-  id: uuidv4(),
+  id: crypto.randomUUID(),
   kind: FormKind.Group,
 });
 
 const getInitField = (): FormField => ({
   columnName: 'name',
-  id: uuidv4(),
+  id: crypto.randomUUID(),
   kind: FormKind.Field,
   location: V1LocationType.EXPERIMENT,
-  operator: AvaliableOperators[V1ColumnType.TEXT][0],
+  operator: AvailableOperators[V1ColumnType.TEXT][0],
   type: V1ColumnType.TEXT,
   value: null,
 });
 
 export class FilterFormStore {
-  #formset = observable<FilterFormSet>(structuredClone(INIT_FORMSET));
+  #formset: WritableObservable<FilterFormSet>;
 
   constructor(data?: Readonly<FilterFormSet>) {
-    if (data) {
-      this.#formset = observable<FilterFormSet>(structuredClone(data));
-    }
+    this.init(data);
+  }
+
+  public init(data?: Readonly<FilterFormSet>): void {
+    this.#formset = observable<FilterFormSet>(structuredClone(data ? data : INIT_FORMSET));
   }
 
   public get formset(): Observable<Readonly<FilterFormSet>> {
     return this.#formset.readOnly();
   }
 
-  public get json(): Readonly<FilterFormSet> {
-    const filterFormSet: Readonly<FilterFormSet> = this.#formset.get();
-    return filterFormSet;
-  }
-
-  public get jsonWithoutId(): Readonly<FilterFormSetWithoutId> {
+  public get jsonWithoutId(): Observable<Readonly<FilterFormSetWithoutId>> {
     const replacer = (key: string, value: unknown): unknown => {
       return key === 'id' ? undefined : value;
     };
-    const filterFormSet = this.#formset.get();
-    return JSON.parse(JSON.stringify(filterFormSet, replacer));
+    return this.#formset.select((formset) => {
+      const newFormSet: FilterFormSetWithoutId = JSON.parse(JSON.stringify(formset, replacer));
+      return newFormSet;
+    });
   }
 
   #getFormById(filterGroup: FormGroup, id: string): FormField | FormGroup | undefined {
@@ -99,7 +96,7 @@ export class FilterFormStore {
       ans.columnName = col.column;
       ans.location = col.location;
       ans.type = col.type;
-      this.#formset.set({ filterGroup, showArchived: filterSet.showArchived });
+      this.#formset.update((prev) => ({ ...prev, filterGroup }));
     }
   }
 
@@ -109,7 +106,7 @@ export class FilterFormStore {
     const ans = this.#getFormById(filterGroup, id);
     if (ans && ans.kind === FormKind.Field && Object.values(Operator).includes(operator)) {
       ans.operator = operator;
-      this.#formset.set({ filterGroup, showArchived: filterSet.showArchived });
+      this.#formset.update((prev) => ({ ...prev, filterGroup }));
     }
   }
 
@@ -119,7 +116,7 @@ export class FilterFormStore {
     const ans = this.#getFormById(filterGroup, id);
     if (ans && ans.kind === FormKind.Group && Object.values(Conjunction).includes(conjunction)) {
       ans.conjunction = conjunction;
-      this.#formset.set({ filterGroup, showArchived: filterSet.showArchived });
+      this.#formset.update((prev) => ({ ...prev, filterGroup }));
     }
   }
 
@@ -129,7 +126,7 @@ export class FilterFormStore {
     const ans = this.#getFormById(filterGroup, id);
     if (ans && ans.kind === FormKind.Field) {
       ans.value = value;
-      this.#formset.set({ filterGroup, showArchived: filterSet.showArchived });
+      this.#formset.update((prev) => ({ ...prev, filterGroup }));
     }
   }
 
@@ -158,7 +155,7 @@ export class FilterFormStore {
     };
 
     recur(filterGroup);
-    this.#formset.set({ filterGroup, showArchived: filterSet.showArchived });
+    this.#formset.update((prev) => ({ ...prev, filterGroup }));
   }
 
   public removeChild(id: string): void {
@@ -183,7 +180,7 @@ export class FilterFormStore {
       }
     };
     recur(filterGroup);
-    this.#formset.set({ filterGroup, showArchived: filterSet.showArchived });
+    this.#formset.update((prev) => ({ ...prev, filterGroup }));
   }
 
   public setArchivedValue(val: boolean): void {

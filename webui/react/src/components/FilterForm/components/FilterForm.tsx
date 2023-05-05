@@ -3,14 +3,14 @@ import { useObservable } from 'micro-observables';
 import { useRef } from 'react';
 import { debounce } from 'throttle-debounce';
 
+import { FilterFormStore, ITEM_LIMIT } from 'components/FilterForm/components/FilterFormStore';
+import FilterGroup from 'components/FilterForm/components/FilterGroup';
+import { FormKind } from 'components/FilterForm/components/type';
 import Button from 'components/kit/Button';
 import Label from 'components/Label';
 import { V1ProjectColumn } from 'services/api-ts-sdk';
 
 import css from './FilterForm.module.scss';
-import { FilterFormStore, ITEM_LIMIT } from './FilterFormStore';
-import FilterGroup from './FilterGroup';
-import { FormKind } from './type';
 
 interface Props {
   formStore: FilterFormStore;

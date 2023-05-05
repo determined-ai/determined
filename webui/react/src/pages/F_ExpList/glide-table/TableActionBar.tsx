@@ -5,6 +5,8 @@ import React, { useCallback, useMemo, useState } from 'react';
 import BatchActionConfirmModalComponent from 'components/BatchActionConfirmModal';
 import Dropdown from 'components/Dropdown';
 import ExperimentMoveModalComponent from 'components/ExperimentMoveModal';
+import { FilterFormStore } from 'components/FilterForm/components/FilterFormStore';
+import TableFilter from 'components/FilterForm/TableFilter';
 import Button from 'components/kit/Button';
 import { useModal } from 'components/kit/Modal';
 import usePermissions from 'hooks/usePermissions';
@@ -81,6 +83,7 @@ interface Props {
   handleUpdateExperimentList: (action: BatchAction, successfulIds: number[]) => void;
   setVisibleColumns: (newColumns: string[]) => void;
   total: Loadable<number>;
+  formStore: FilterFormStore;
 }
 
 const TableActionBar: React.FC<Props> = ({
@@ -95,6 +98,7 @@ const TableActionBar: React.FC<Props> = ({
   total,
   initialVisibleColumns,
   setVisibleColumns,
+  formStore,
 }) => {
   const permissions = usePermissions();
   const [batchAction, setBatchAction] = useState<BatchAction>();
@@ -288,6 +292,7 @@ const TableActionBar: React.FC<Props> = ({
   return (
     <>
       <Space className={css.base}>
+        <TableFilter formStore={formStore} loadableColumns={projectColumns} />
         <ColumnPickerMenu
           initialVisibleColumns={initialVisibleColumns}
           projectColumns={projectColumns}

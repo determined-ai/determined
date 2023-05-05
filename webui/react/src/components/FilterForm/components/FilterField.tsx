@@ -1,28 +1,53 @@
 import { HolderOutlined } from '@ant-design/icons';
 import { DatePicker } from 'antd';
+import type { SelectProps as AntdSelectProps } from 'antd';
 import type { DatePickerProps } from 'antd/es/date-picker';
 import dayjs from 'dayjs';
+import { useObservable } from 'micro-observables';
+import { useState } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
+import { debounce } from 'throttle-debounce';
 
-import Button from 'components/kit/Button';
-import Input from 'components/kit/Input';
-import InputNumber from 'components/kit/InputNumber';
-import Select, { Option } from 'components/kit/Select';
-import { V1ColumnType, V1ProjectColumn } from 'services/api-ts-sdk';
-import Icon from 'shared/components/Icon';
-
-import ConjunctionContainer from './ConjunctionContainer';
-import css from './FilterField.module.scss';
-import { FilterFormStore } from './FilterFormStore';
+import ConjunctionContainer from 'components/FilterForm/components/ConjunctionContainer';
+import { FilterFormStore } from 'components/FilterForm/components/FilterFormStore';
 import {
-  AvaliableOperators,
+  AvailableOperators,
   Conjunction,
   FormField,
+  FormFieldValue,
   FormGroup,
   FormKind,
   Operator,
   ReadableOperator,
-} from './type';
+} from 'components/FilterForm/components/type';
+import Button from 'components/kit/Button';
+import Input from 'components/kit/Input';
+import InputNumber from 'components/kit/InputNumber';
+import Select, { SelectValue } from 'components/kit/Select';
+import { V1ColumnType, V1ProjectColumn } from 'services/api-ts-sdk';
+import Icon from 'shared/components/Icon';
+import clusterStore from 'stores/cluster';
+import userStore from 'stores/users';
+import { RunState } from 'types';
+import { Loadable } from 'utils/loadable';
+
+import css from './FilterField.module.scss';
+
+const RUN_STATES = [
+  RunState.Active,
+  RunState.Paused,
+  RunState.Canceled,
+  RunState.Completed,
+  RunState.Error,
+] as const;
+const SEARCHER_TYPE = ['adaptive_asha', 'single', 'random'] as const;
+
+const SpecialColumnNames = ['user', 'state', 'resourcePool', 'searcherType'] as const;
+type SpecialColumnNames = (typeof SpecialColumnNames)[number];
+
+const debounceFunc = debounce(1000, (func: () => void) => {
+  func();
+});
 
 interface Props {
   index: number; // start from 0
@@ -43,7 +68,58 @@ const FilterField = ({
   level,
   columns,
 }: Props): JSX.Element => {
+  const users = Loadable.getOrElse([], useObservable(userStore.getUsers()));
+  const resourcePools = Loadable.getOrElse([], useObservable(clusterStore.resourcePools));
+
   const currentColumn = columns.find((c) => c.column === field.columnName);
+  const isSpecialColumn = (SpecialColumnNames as ReadonlyArray<string>).includes(field.columnName);
+
+  const [fieldValue, setFieldValue] = useState<FormFieldValue>(field.value);
+
+  // use this function to update field value
+  const updateFieldValue = (fieldId: string, value: FormFieldValue, isDounce = false) => {
+    if (isDounce) {
+      debounceFunc(() => formStore.setFieldValue(fieldId, value));
+    } else {
+      formStore.setFieldValue(fieldId, value);
+    }
+    setFieldValue(value);
+  };
+
+  const onChangeColumnName = (value: SelectValue) => {
+    const prevType = currentColumn?.type;
+    const newCol = columns.find((c) => c.column === value?.toString() ?? '');
+    if (newCol) {
+      formStore.setFieldColumnName(field.id, newCol);
+
+      if ((SpecialColumnNames as ReadonlyArray<string>).includes(field.columnName)) {
+        formStore.setFieldOperator(field.id, Operator.Eq);
+        updateFieldValue(field.id, null);
+      } else if (prevType !== newCol?.type) {
+        const defaultOperator: Operator =
+          AvailableOperators[newCol?.type ?? V1ColumnType.UNSPECIFIED][0];
+        formStore.setFieldOperator(field.id, defaultOperator);
+        updateFieldValue(field.id, null);
+      }
+    }
+  };
+
+  const getSpecialOptions = (columnName: SpecialColumnNames): AntdSelectProps['options'] => {
+    switch (columnName) {
+      case 'resourcePool':
+        return resourcePools.map((rp) => ({ label: rp.name, value: rp.name }));
+      case 'state':
+        return RUN_STATES.map((state) => ({ label: state, value: state }));
+      case 'searcherType':
+        return SEARCHER_TYPE.map((searcher) => ({ label: searcher, value: searcher }));
+      case 'user':
+        return users.map((user) => ({ label: user.username, value: user.username }));
+      default:
+        // eslint-disable-next-line no-case-declarations, @typescript-eslint/no-unused-vars
+        const _exhaustiveCheck: never = columnName;
+        throw new Error(`${columnName} is not columnName.`);
+    }
+  };
 
   const [, drag, preview] = useDrag<{ form: FormField; index: number }, unknown, unknown>(() => ({
     item: { form: field, index },
@@ -99,73 +175,83 @@ const FilterField = ({
         }}
       />
       <div className={css.fieldCard} ref={preview}>
-        <Select
-          dropdownMatchSelectWidth={250} // TODO(fix): set corrent width
-          value={field.columnName}
-          width={'100%'}
-          onChange={(value) => {
-            const prevType = currentColumn?.type;
-            const newCol = columns.find((c) => c.column === value?.toString() ?? '');
-            if (newCol) {
-              formStore.setFieldColumnName(field.id, newCol);
-
-              if (prevType !== newCol?.type) {
-                const defaultOperator: Operator =
-                  AvaliableOperators[newCol?.type ?? V1ColumnType.UNSPECIFIED][0];
-                formStore.setFieldOperator(field.id, defaultOperator);
-                formStore.setFieldValue(field.id, null);
-              }
-            }
-          }}>
-          {columns.map((col) => (
-            <Option key={col.column} value={col.column}>
-              {col.displayName || col.column}
-            </Option>
-          ))}
-        </Select>
-        <Select
-          value={field.operator}
-          width={'100%'}
-          onChange={(value) => {
-            formStore.setFieldOperator(field.id, (value?.toString() ?? '=') as Operator);
-          }}>
-          {AvaliableOperators[currentColumn?.type ?? V1ColumnType.UNSPECIFIED].map((op) => (
-            <Option key={op} value={op}>
-              {ReadableOperator[op]}
-            </Option>
-          ))}
-        </Select>
         <>
-          {(currentColumn?.type === V1ColumnType.TEXT ||
-            currentColumn?.type === V1ColumnType.UNSPECIFIED) && (
-            <Input
-              disabled={field.operator === Operator.IsEmpty || field.operator === Operator.NotEmpty}
-              value={
-                field.operator === Operator.IsEmpty || field.operator === Operator.NotEmpty
-                  ? undefined
-                  : field.value?.toString()
+          <Select
+            dropdownMatchSelectWidth={250}
+            options={columns.map((col) => ({
+              label: col.displayName || col.column,
+              value: col.column,
+            }))}
+            value={field.columnName}
+            width={'100%'}
+            onChange={onChangeColumnName}
+          />
+          <Select
+            options={(isSpecialColumn
+              ? [Operator.Eq, Operator.NotEq] // just Eq and NotEq for Special column
+              : AvailableOperators[currentColumn?.type ?? V1ColumnType.UNSPECIFIED]
+            ).map((op) => ({
+              label: ReadableOperator[op],
+              value: op,
+            }))}
+            value={field.operator}
+            width={'100%'}
+            onChange={(value) => {
+              const op = (value?.toString() ?? '=') as Operator;
+              formStore.setFieldOperator(field.id, op);
+              if (op === Operator.IsEmpty || op === Operator.NotEmpty) {
+                updateFieldValue(field.id, null);
               }
-              onChange={(e) => formStore.setFieldValue(field.id, e.target.value)}
-            />
-          )}
-          {currentColumn?.type === V1ColumnType.NUMBER && (
-            <InputNumber
-              className={css.fullWidth}
-              value={field.value != null ? Number(field.value) : undefined}
-              onChange={(val) => {
-                formStore.setFieldValue(field.id, val != null ? Number(val) : null);
-              }}
-            />
-          )}
-          {currentColumn?.type === V1ColumnType.DATE && (
-            // timezone is UTC since DB uses UTC
-            <DatePicker
-              value={dayjs(field.value).isValid() ? dayjs(field.value).utc() : null}
-              onChange={(value: DatePickerProps['value']) => {
-                const dateString = dayjs(value).utc().startOf('date').format();
-                formStore.setFieldValue(field.id, dateString);
-              }}
-            />
+            }}
+          />
+          {isSpecialColumn ? (
+            <>
+              <Select
+                options={getSpecialOptions(field.columnName as SpecialColumnNames)}
+                value={fieldValue?.toString()}
+                width={'100%'}
+                onChange={(value) => {
+                  const val = value?.toString() ?? null;
+                  updateFieldValue(field.id, val);
+                }}
+              />
+            </>
+          ) : (
+            <>
+              {(currentColumn?.type === V1ColumnType.TEXT ||
+                currentColumn?.type === V1ColumnType.UNSPECIFIED) && (
+                <Input
+                  disabled={
+                    field.operator === Operator.IsEmpty || field.operator === Operator.NotEmpty
+                  }
+                  value={fieldValue?.toString() ?? undefined}
+                  onChange={(e) => {
+                    const val = e.target.value || null; // when empty string, val is null
+                    updateFieldValue(field.id, val, true);
+                  }}
+                />
+              )}
+              {currentColumn?.type === V1ColumnType.NUMBER && (
+                <InputNumber
+                  className={css.fullWidth}
+                  value={fieldValue != null ? Number(fieldValue) : undefined}
+                  onChange={(val) => {
+                    const value = val != null ? Number(val) : null;
+                    updateFieldValue(field.id, value, true);
+                  }}
+                />
+              )}
+              {currentColumn?.type === V1ColumnType.DATE && (
+                // timezone is UTC since DB uses UTC
+                <DatePicker
+                  value={dayjs(fieldValue).isValid() ? dayjs(fieldValue).utc() : null}
+                  onChange={(value: DatePickerProps['value']) => {
+                    const dateString = dayjs(value).utc().startOf('date').format();
+                    updateFieldValue(field.id, dateString);
+                  }}
+                />
+              )}
+            </>
           )}
         </>
         <Button

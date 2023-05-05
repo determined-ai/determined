@@ -31,6 +31,13 @@ Object.defineProperty(window, 'matchMedia', {
   }),
 });
 
+let counter = 0;
+Object.defineProperty(window, 'crypto', {
+  value: {
+    randomUUID: () => `${Math.random()}-${counter++}`,
+  },
+});
+
 vi.mock('router');
 vi.mock('services/api', () => ({}));
 

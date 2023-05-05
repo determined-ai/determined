@@ -80,7 +80,7 @@ export const ReadableOperator: Record<Operator, string> = {
   [Operator.NotEq]: '!=',
 } as const;
 
-export const AvaliableOperators = {
+export const AvailableOperators = {
   [V1ColumnType.NUMBER]: [
     Operator.Eq,
     Operator.NotEq,
@@ -92,14 +92,13 @@ export const AvaliableOperators = {
   [V1ColumnType.TEXT]: [
     Operator.Contains,
     Operator.NotContains,
-    Operator.IsEmpty,
-    Operator.NotEmpty,
     Operator.Eq,
     Operator.NotEq,
+    Operator.IsEmpty,
+    Operator.NotEmpty,
   ],
   [V1ColumnType.DATE]: [
-    // no Operator.eq for date because date should be used with range
-    Operator.NotEq,
+    // No Eq and NotEq for date because date should be used with range
     Operator.Greater,
     Operator.GreaterEq,
     Operator.Less,
