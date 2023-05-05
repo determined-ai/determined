@@ -70,8 +70,11 @@ clean:
 pre-publish:
 	cp ./swagger-ui/swagger-ui-main-deploy.js ./site/html/rest-api/swagger-ui-main.js
 
+.PHONY: publish-check
+	python3 redirects.py publish-check
+
 .PHONY: publish
-publish: pre-publish
+publish: pre-publish publish-check
 	$(MAKE) -C deploy publish
 
 .PHONY: preview
@@ -88,5 +91,6 @@ fmt:
 	git ls-files -z '*.rst' | xargs -0 rstfmt -w $(RSTFMT_WIDTH)
 
 .PHONY: check
-check:
+check: attributions.rst
 	git ls-files -z '*.rst' | xargs -0 rstfmt -w $(RSTFMT_WIDTH) --check
+	python3 redirects.py check
