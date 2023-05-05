@@ -259,18 +259,24 @@ export const GlideTable: React.FC<GlideTableProps> = ({
     (cell: Item): GridCell => {
       const [col, row] = cell;
 
+      const loadingCell: GridCell = {
+        allowOverlay: true,
+        copyData: '',
+        data: { kind: 'spinner-cell' },
+        kind: GridCellKind.Custom,
+      };
+
+      if (!data[row]) {
+        // When data length is changed, data[row] can be undefined
+        return loadingCell;
+      }
+
       return Loadable.match(data[row], {
         Loaded: (rowData) => {
           const columnId = columnIds[col];
           return columnDefs[columnId].renderer(rowData, row);
         },
-        NotLoaded: () =>
-          ({
-            allowOverlay: true,
-            copyData: '',
-            data: { kind: 'spinner-cell' },
-            kind: GridCellKind.Custom,
-          } as GridCell),
+        NotLoaded: () => loadingCell,
       });
     },
     [data, columnIds, columnDefs],
