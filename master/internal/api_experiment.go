@@ -1309,7 +1309,7 @@ func (a *apiServer) GetExperimentCheckpoints(
 
 func (a *apiServer) getCreateExperimentsProject(
 	projectID int,
-	user *model.User,
+	user *model.User, subsUnauthorizedError error,
 ) (*projectv1.Project, error) {
 	var p projectv1.Project
 	if err := a.m.db.QueryProto("get_project", &p, projectID); errors.Is(err, db.ErrNotFound) {
@@ -1319,18 +1319,18 @@ func (a *apiServer) getCreateExperimentsProject(
 	}
 
 	if err := project.AuthZProvider.Get().CanGetProject(context.TODO(), *user, &p); err != nil {
-		return nil, err
+		return nil, authz.SubIfUnauthorized(err, subsUnauthorizedError)
 	}
 	return &p, nil
 }
 
-func (a *apiServer) populateConfigWithProject(
+func (a *apiServer) mergeProjectSettingsWithConfig(
 	user *model.User,
 	project *projectv1.Project,
 	config expconf.ExperimentConfigV0,
 ) (expconf.ExperimentConfig, error) {
 	// Merge in workspace's checkpoint storage into the conifg.
-	var w model.Workspace
+	w := &model.Workspace{}
 	if err := db.Bun().NewSelect().Model(w).
 		Where("id = ?", project.WorkspaceId).
 		Column("checkpoint_storage_config").
@@ -1406,6 +1406,40 @@ func (a *apiServer) populateTaskSpec(user *model.User, modelDef archive.Archive,
 	return &taskSpec, nil
 }
 
+func (a *apiServer) resolveProjectID(reqProjectID int,
+	config expconf.ExperimentConfigV0) (int, error, error) {
+	var projectID int
+	var subsUnauthorizedError error
+	if reqProjectID < 1 {
+		switch {
+		case (config.Workspace() == "") != (config.Project() == ""):
+			return 0, nil,
+				errors.New("workspace and project must both be included in config if one is provided")
+		case config.Workspace() != "" && config.Project() != "":
+			id, err := a.m.db.ProjectByName(config.Workspace(), config.Project())
+			switch {
+			case errors.Is(err, db.ErrNotFound):
+				return reqProjectID, nil, ErrProjectNotFound(fmt.Sprintf(
+					"workspace '%s' or project '%s' not found",
+					config.Workspace(), config.Project()))
+			case err != nil:
+				return reqProjectID, nil, err
+			}
+			projectID = id
+			subsUnauthorizedError = ErrProjectNotFound(fmt.Sprintf(
+				"workspace '%s' or project '%s' not found",
+				config.Workspace(), config.Project()))
+		default:
+			projectID = 1
+			subsUnauthorizedError = ErrProjectNotFound(fmt.Sprintf("project (%d) not found", projectID))
+		}
+	} else {
+		projectID = reqProjectID
+		subsUnauthorizedError = ErrProjectNotFound(fmt.Sprintf("project (%d) not found", projectID))
+	}
+
+	return projectID, subsUnauthorizedError, nil
+}
 func (a *apiServer) CreateExperiment(
 	ctx context.Context, req *apiv1.CreateExperimentRequest,
 ) (*apiv1.CreateExperimentResponse, error) {
@@ -1467,42 +1501,25 @@ func (a *apiServer) CreateExperiment(
 	activeConfig := schemas.WithDefaults(config)
 
 	// Resolve project ID.
-	var projectID int
-	if req.ProjectId < 1 {
-		if (config.Workspace() == "") != (config.Project() == "") {
-			return nil, errors.New("workspace and project must both be included in config if one is provided")
-		} else if config.Workspace() != "" && config.Project() != "" {
-			id, err := a.m.db.ProjectByName(config.Workspace(), config.Project())
-			switch {
-			case errors.Is(err, db.ErrNotFound):
-				return nil, ErrProjectNotFound(fmt.Sprintf(
-					"workspace '%s' or project '%s' not found",
-					config.Workspace(), config.Project()))
-			case err != nil:
-				return nil, err
-			}
-			projectID = id
-		} else {
-			projectID = 1
-		}
-	} else {
-		projectID = int(req.ProjectId)
-	}
-
-	project, err := a.getCreateExperimentsProject(int(projectID), user)
-	if err != nil {
-		return nil, err
-	}
-
-	// Apply project level defaults.
-	activeConfig, err = a.populateConfigWithProject(user, project, activeConfig)
+	projectID, subsUnauthorizedError, err := a.resolveProjectID(int(req.ProjectId), activeConfig)
 	if err != nil {
 		if _, ok := err.(ErrProjectNotFound); ok {
 			return nil, status.Errorf(codes.NotFound, err.Error())
 		}
-		if err.Error() == "access denied" {
-			return nil, status.Errorf(codes.PermissionDenied, err.Error())
+		return nil, status.Errorf(codes.InvalidArgument, "invalid experiment: %s", err)
+	}
+
+	project, err := a.getCreateExperimentsProject(projectID, user, subsUnauthorizedError)
+	if err != nil {
+		if _, ok := err.(ErrProjectNotFound); ok {
+			return nil, status.Errorf(codes.NotFound, err.Error())
 		}
+		return nil, status.Errorf(codes.InvalidArgument, "invalid experiment: %s", err)
+	}
+
+	// Apply project level defaults.
+	activeConfig, err = a.mergeProjectSettingsWithConfig(user, project, activeConfig)
+	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid experiment: %s", err)
 	}
 
@@ -1535,16 +1552,14 @@ func (a *apiServer) CreateExperiment(
 		int(project.Id),
 	)
 
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid experiment: %s", err)
+	}
 	if user != nil {
 		dbExp.OwnerID = &user.ID
 		dbExp.Username = user.Username
 	}
 
-	// END of parseCreateExperiment (Remove comment after review.)
-
-	if err != nil {
-		return nil, err
-	}
 	if err = exputil.AuthZProvider.Get().CanCreateExperiment(ctx, *user, project, dbExp); err != nil {
 		return nil, status.Errorf(codes.PermissionDenied, err.Error())
 	}
