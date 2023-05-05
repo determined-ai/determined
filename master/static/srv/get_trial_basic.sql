@@ -6,5 +6,7 @@ SELECT
     t.end_time,
     t.hparams,
     t.runner_state
-FROM trials t
-WHERE t.id = $1
+FROM
+    trials t
+WHERE
+    t.id = $1

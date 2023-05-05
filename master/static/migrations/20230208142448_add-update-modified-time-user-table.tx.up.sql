@@ -14,3 +14,4 @@ CREATE TRIGGER autoupdate_users_modified_at
     BEFORE UPDATE ON users
     FOR EACH ROW
     EXECUTE PROCEDURE set_modified_time ();
+

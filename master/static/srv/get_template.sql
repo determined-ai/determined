@@ -1,1 +1,8 @@
-SELECT name, config FROM templates WHERE name = $1;
+SELECT
+    name,
+    config
+FROM
+    templates
+WHERE
+    name = $1;
+

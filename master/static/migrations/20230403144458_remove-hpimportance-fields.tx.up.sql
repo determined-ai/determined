@@ -1,1 +1,3 @@
-ALTER TABLE public.experiments DROP COLUMN hpimportance;
+ALTER TABLE public.experiments
+    DROP COLUMN hpimportance;
+

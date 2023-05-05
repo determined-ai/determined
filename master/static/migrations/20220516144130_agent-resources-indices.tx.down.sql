@@ -1,2 +1,4 @@
 DROP INDEX IF EXISTS ix_allocation_resources_allocation_id;
+
 DROP INDEX IF EXISTS ix_resourcemanagers_agent_containers_resource_id;
+

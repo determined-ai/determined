@@ -1,2 +1,3 @@
 ALTER TABLE users
-ADD COLUMN remote boolean DEFAULT false NOT NULL;
+    ADD COLUMN remote boolean DEFAULT FALSE NOT NULL;
+

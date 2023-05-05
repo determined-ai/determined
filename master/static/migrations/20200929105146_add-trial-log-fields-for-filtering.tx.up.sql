@@ -1,6 +1,6 @@
 ALTER TABLE public.trial_logs
     ADD COLUMN agent_id text NULL,
-     -- In the case of k8s, this is a pod name.
+    -- In the case of k8s, this is a pod name.
     ADD COLUMN container_id text NULL,
     ADD COLUMN rank_id smallint NULL,
     -- For backward compatibility, add a new column for logs that have been parsed through Fluent
@@ -11,3 +11,4 @@ ALTER TABLE public.trial_logs
     ADD COLUMN level text NULL,
     ADD COLUMN source text NULL,
     ADD COLUMN stdtype text NULL;
+

@@ -4,3 +4,4 @@ ALTER TABLE public.experiments
 DROP TABLE public.jobs;
 
 DROP TYPE public.job_type;
+

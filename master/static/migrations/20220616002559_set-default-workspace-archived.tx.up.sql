@@ -1,7 +1,22 @@
-UPDATE workspaces SET archived = FALSE;
-ALTER TABLE workspaces ALTER COLUMN archived SET DEFAULT FALSE;
-ALTER TABLE workspaces ALTER COLUMN archived SET NOT NULL;
+UPDATE
+    workspaces
+SET
+    archived = FALSE;
 
-UPDATE projects SET archived = FALSE;
-ALTER TABLE projects ALTER COLUMN archived SET DEFAULT FALSE;
-ALTER TABLE projects ALTER COLUMN archived SET NOT NULL;
+ALTER TABLE workspaces
+    ALTER COLUMN archived SET DEFAULT FALSE;
+
+ALTER TABLE workspaces
+    ALTER COLUMN archived SET NOT NULL;
+
+UPDATE
+    projects
+SET
+    archived = FALSE;
+
+ALTER TABLE projects
+    ALTER COLUMN archived SET DEFAULT FALSE;
+
+ALTER TABLE projects
+    ALTER COLUMN archived SET NOT NULL;
+

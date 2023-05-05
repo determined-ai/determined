@@ -1,5 +1,6 @@
-SELECT
-    distinct e.config->'labels' AS labels
+SELECT DISTINCT
+    e.config -> 'labels' AS labels
 FROM
     experiments e
-WHERE ($1 = 0) OR (project_id = $1)
+WHERE ($1 = 0)
+    OR (project_id = $1)

@@ -3,3 +3,4 @@ ALTER TABLE public.jobs
 
 ALTER TABLE public.tasks
     DROP COLUMN job_id;
+

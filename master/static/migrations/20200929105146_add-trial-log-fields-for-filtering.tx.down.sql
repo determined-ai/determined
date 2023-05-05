@@ -7,3 +7,4 @@ ALTER TABLE public.trial_logs
     DROP COLUMN level,
     DROP COLUMN source,
     DROP COLUMN stdtype;
+

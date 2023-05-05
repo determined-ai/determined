@@ -1,2 +1,4 @@
 DROP TABLE resourcemanagers_agent_containers;
+
 DROP TABLE allocation_resources;
+

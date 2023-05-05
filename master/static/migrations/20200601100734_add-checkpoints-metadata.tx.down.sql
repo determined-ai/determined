@@ -1,1 +1,4 @@
-ALTER TABLE public.checkpoints RENAME COLUMN metadata TO labels;;
+ALTER TABLE public.checkpoints RENAME COLUMN metadata TO labels;
+
+;
+

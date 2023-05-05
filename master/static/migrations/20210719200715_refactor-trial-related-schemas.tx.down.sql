@@ -1,10 +1,18 @@
 TRUNCATE TABLE public.allocation_sessions;
-ALTER TABLE public.allocation_sessions DROP CONSTRAINT allocation_sessions_allocation_id_uniq;
-ALTER TABLE public.allocation_sessions ALTER COLUMN allocation_id TYPE text USING allocation_id::uuid;
+
+ALTER TABLE public.allocation_sessions
+    DROP CONSTRAINT allocation_sessions_allocation_id_uniq;
+
+ALTER TABLE public.allocation_sessions
+    ALTER COLUMN allocation_id TYPE text
+    USING allocation_id::uuid;
+
 ALTER TABLE public.allocation_sessions RENAME COLUMN allocation_id TO task_id;
+
 ALTER TABLE public.allocation_sessions RENAME TO task_sessions;
 
 ALTER TYPE public.experiment_state RENAME TO _experiment_state;
+
 CREATE TYPE public.experiment_state AS ENUM (
     'ACTIVE',
     'CANCELED',
@@ -17,17 +25,26 @@ CREATE TYPE public.experiment_state AS ENUM (
     'DELETING',
     'DELETE_FAILED'
 );
-ALTER TABLE public.experiments ALTER COLUMN state TYPE experiment_state USING state::text::experiment_state;
+
+ALTER TABLE public.experiments
+    ALTER COLUMN state TYPE experiment_state
+    USING state::text::experiment_state;
+
 DROP TYPE _experiment_state;
 
 ALTER TYPE public.trial_state RENAME TO _trial_state;
+
 CREATE TYPE public.trial_state AS ENUM (
     'ACTIVE',
     'CANCELED',
     'COMPLETED',
     'ERROR'
 );
-ALTER TABLE public.trials ALTER COLUMN state TYPE trial_state USING state::text::trial_state;
+
+ALTER TABLE public.trials
+    ALTER COLUMN state TYPE trial_state
+    USING state::text::trial_state;
+
 DROP TYPE _trial_state;
 
 ALTER TABLE public.trials
@@ -53,9 +70,8 @@ CREATE TABLE public.runs (
     CONSTRAINT trial_runs_id_trial_id_unique UNIQUE (run_type, run_type_fk, id)
 );
 
-
 CREATE TABLE public.trial_snapshots (
-    id SERIAL,
+    id serial,
     trial_id integer NOT NULL UNIQUE,
     request_id bytea NOT NULL,
     experiment_id integer NOT NULL,
@@ -63,8 +79,8 @@ CREATE TABLE public.trial_snapshots (
     version integer NOT NULL,
     created_at timestamp with time zone NOT NULL DEFAULT NOW(),
     updated_at timestamp with time zone NOT NULL DEFAULT NOW(),
-
-    CONSTRAINT fk_trial_snapshots_trials_trial_id FOREIGN KEY(trial_id) REFERENCES public.trials(id),
-    CONSTRAINT fk_trial_snapshots_experiments_experiment_id FOREIGN KEY(experiment_id) REFERENCES public.experiments(id),
-    CONSTRAINT uq_trial_snapshots_experiment_id_request_id UNIQUE(experiment_id, request_id)
+    CONSTRAINT fk_trial_snapshots_trials_trial_id FOREIGN KEY (trial_id) REFERENCES public.trials (id),
+    CONSTRAINT fk_trial_snapshots_experiments_experiment_id FOREIGN KEY (experiment_id) REFERENCES public.experiments (id),
+    CONSTRAINT uq_trial_snapshots_experiment_id_request_id UNIQUE (experiment_id, request_id)
 );
+

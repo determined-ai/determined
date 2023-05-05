@@ -1,1 +1,2 @@
 DROP FUNCTION public.frequencies;
+
