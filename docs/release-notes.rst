@@ -35,10 +35,10 @@ Version 0.22.0
 
 **Deprecated Features**
 
--  Legacy Tensorflow 1 + PyTorch 1.7 + CUDA 10.2 support is deprecated and will be removed in a
-   future version. The final Tensorflow 1.15.5 patch was released in January 2021, and no further
+-  Legacy TensorFlow 1 + PyTorch 1.7 + CUDA 10.2 support is deprecated and will be removed in a
+   future version. The final TensorFlow 1.15.5 patch was released in January 2021, and no further
    security patches are planned. Consequently, we recommend users migrate to modern versions
-   Tensorflow 2 and PyTorch. Our default environment images currently ship with
+   TensorFlow 2.0 and PyTorch. Our default environment images currently ship with
    ``tensorflow==2.11.1`` and ``torch==1.12.0``.
 
 -  ``EstimatorTrial`` is deprecated and will be removed in a future version. TensorFlow has advised
@@ -62,7 +62,7 @@ Version 0.22.0
    reported. For example, a database with 10,000 trials with 125 million training metrics on a small
    instance may experience 6 or more hours of downtime during the upgrade.
 
-   (Optional) To minimize downtime, users with large databases can choose to manually run `this sql
+   (Optional) To minimize downtime, users with large databases can choose to manually run `this SQL
    file
    <https://github.com/determined-ai/determined/blob/main/master/static/migrations/20230503144448_add-summary-metrics.tx.up.sql>`__
    against their cluster's database while it is still running before upgrading to a new version.
