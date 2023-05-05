@@ -45,12 +45,14 @@ Version 0.22.0
    Estimator users to switch to Keras since TensorFlow 2.0 was released. Consequently, we recommend
    users of EstimatorTrial switch to the :class:`~determined.keras.TFKerasTrial` class.
 
+-  Master config option ``logging.additional_fluent_outputs`` is deprecated and will be removed in a
+   future version. We do not plan to offer a replacement at this time. If you are interested in
+   additional logging integrations, please contact us.
+
 **Improvement**
 
 -  HP Search: Trials are persisted as soon as they are requested by the searcher, instead of after
    they are first scheduled.
-
-**Improvements**
 
 -  Trials: Metric storage has been optimized for reading summaries of metrics reported during a
    trial.
