@@ -61,12 +61,12 @@ def test_deepspeed_autotune_happy_path() -> None:
     """
     for search_method in _defaults.ALL_SEARCH_METHOD_CLASSES.values():
         exp_num_trials = _defaults.AUTOTUNING_ARG_DEFAULTS["max-trials"]
-        model_info_profile_trial = [MODEL_INFO_PROFILE_METRIC_FIXTURE]
-        autotuning_trials = [
+        model_info_profile_trial_metrics = [MODEL_INFO_PROFILE_METRIC_FIXTURE]
+        successful_trial_metrics = [
             {_defaults.AUTOTUNING_ARG_DEFAULTS["metric"]: 1.0} for _ in range(exp_num_trials - 1)
         ]
-        all_trials = model_info_profile_trial + autotuning_trials
-        search_runner = _run_searcher(search_method, all_trials)
+        all_metrics = model_info_profile_trial_metrics + successful_trial_metrics
+        search_runner = _run_searcher(search_method, all_metrics)
         assert len(search_runner.state.trials_created) == exp_num_trials
         assert len(search_runner.state.trials_closed) == exp_num_trials
         assert len(search_runner.state.trial_progress) == exp_num_trials
@@ -84,10 +84,10 @@ def test_continuous_failures() -> None:
     """
     for search_method in _defaults.ALL_SEARCH_METHOD_CLASSES.values():
         exp_num_trials = _defaults.AUTOTUNING_ARG_DEFAULTS["max-trials"]
-        model_info_profile_trial = [MODEL_INFO_PROFILE_METRIC_FIXTURE]
-        failed_trials = [{ERROR_METRIC_NAME: True} for _ in range(exp_num_trials - 1)]
-        all_trials = model_info_profile_trial + failed_trials
-        search_runner = _run_searcher(search_method, all_trials)
+        model_info_profile_trial_metrics = [MODEL_INFO_PROFILE_METRIC_FIXTURE]
+        failed_trial_metrics = [{ERROR_METRIC_NAME: True} for _ in range(exp_num_trials - 1)]
+        all_metrics = model_info_profile_trial_metrics + failed_trial_metrics
+        search_runner = _run_searcher(search_method, all_metrics)
 
         assert len(search_runner.state.trials_created) == exp_num_trials
         assert len(search_runner.state.failures) == exp_num_trials - 1
@@ -102,13 +102,15 @@ def test_one_off_failure() -> None:
     """Make sure that DSAT Search Methods can properly handle a single failure"""
     for search_method in _defaults.ALL_SEARCH_METHOD_CLASSES.values():
         exp_num_trials = _defaults.AUTOTUNING_ARG_DEFAULTS["max-trials"]
-        model_info_profile_trial = [MODEL_INFO_PROFILE_METRIC_FIXTURE]
-        one_failed_trial = [{ERROR_METRIC_NAME: True}]
-        successful_trials = [
+        model_info_profile_trial_metrics = [MODEL_INFO_PROFILE_METRIC_FIXTURE]
+        one_failed_trial_metrics = [{ERROR_METRIC_NAME: True}]
+        successful_trial_metrics = [
             {_defaults.AUTOTUNING_ARG_DEFAULTS["metric"]: 1.0} for _ in range(exp_num_trials - 2)
         ]
-        all_trials = model_info_profile_trial + one_failed_trial + successful_trials
-        search_runner = _run_searcher(search_method, all_trials)
+        all_metrics = (
+            model_info_profile_trial_metrics + one_failed_trial_metrics + successful_trial_metrics
+        )
+        search_runner = _run_searcher(search_method, all_metrics)
 
         assert len(search_runner.state.trials_created) == exp_num_trials
         assert len(search_runner.state.failures) == 1
@@ -122,12 +124,12 @@ def test_one_off_failure() -> None:
 def test_simple_model_profile_info_run_fails() -> None:
     """Test DSAT with a failed model profile info run."""
     for search_method in _defaults.ALL_SEARCH_METHOD_CLASSES.values():
-        failed_model_profile_info_trial = [
+        failed_model_profile_info_trial_metrics = [
             {ERROR_METRIC_NAME: True},
         ]
         search_runner = _run_searcher(
             search_method,
-            failed_model_profile_info_trial,
+            failed_model_profile_info_trial_metrics,
         )
         assert len(search_runner.state.trials_created) == 1
         assert len(search_runner.state.failures) == 1
