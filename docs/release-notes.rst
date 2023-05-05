@@ -20,7 +20,7 @@ Version 0.22.0
 -  The previous template CRUD endpoints have been removed from the `/templates/*` location. Please
    use the APIs found at `/api/v1/templates/*`.
 
--  Experiment: Optimizer has to be an instance of tensorflow.keras.optimizers.legacy.Optimizer
+-  Experiment: Optimizer must be an instance of tensorflow.keras.optimizers.legacy.Optimizer
    starting from Keras 2.11
 
       -  Experiments now use images with TensorFlow 2.11 by default. TensorFlow users who are not
@@ -37,8 +37,8 @@ Version 0.22.0
 
 -  Legacy TensorFlow 1 + PyTorch 1.7 + CUDA 10.2 support is deprecated and will be removed in a
    future version. The final TensorFlow 1.15.5 patch was released in January 2021, and no further
-   security patches are planned. Consequently, we recommend users migrate to modern versions
-   TensorFlow 2.0 and PyTorch. Our default environment images currently ship with
+   security patches are planned. Consequently, we recommend users migrate to modern versions of
+   TensorFlow 2 and PyTorch. Our default environment images currently ship with
    ``tensorflow==2.11.1`` and ``torch==1.12.0``.
 
 -  ``EstimatorTrial`` is deprecated and will be removed in a future version. TensorFlow has advised
