@@ -12,6 +12,7 @@ import (
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/exp/maps"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
@@ -22,6 +23,8 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/commonv1"
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
+
+	"github.com/determined-ai/determined/master/internal/db"
 )
 
 func errTrialNotFound(id int) error {
@@ -366,17 +369,122 @@ func TestStreamTrainingMetrics(t *testing.T) {
 	}
 }
 
-func TestCompareTrialsNonNumeric(t *testing.T) {
+func TestNonNumericEpochMetric(t *testing.T) {
 	api, curUser, ctx := setupAPITest(t, nil)
-	trial0, _, _ := createTestTrialWithMetrics(ctx, t, api, curUser, true)
-	trial1, _, _ := createTestTrialWithMetrics(ctx, t, api, curUser, true)
+	expectedMetricsMap := map[string]any{
+		"numeric_met": 1.5,
+		"epoch":       "x",
+	}
+	expectedMetrics, err := structpb.NewStruct(expectedMetricsMap)
+	require.NoError(t, err)
 
-	resp, err := api.CompareTrials(ctx, &apiv1.CompareTrialsRequest{
-		TrialIds:    []int32{int32(trial0.ID), int32(trial1.ID)},
-		MetricNames: []string{"loss", "textMetric"},
+	trial := createTestTrial(t, api, curUser)
+	_, err = api.ReportTrialValidationMetrics(ctx, &apiv1.ReportTrialValidationMetricsRequest{
+		ValidationMetrics: &trialv1.TrialMetrics{
+			TrialId:        int32(trial.ID),
+			TrialRunId:     0,
+			StepsCompleted: 1,
+			Metrics: &commonv1.Metrics{
+				AvgMetrics: expectedMetrics,
+			},
+		},
 	})
 	require.NoError(t, err)
-	require.NotNil(t, resp)
+
+	_, err = api.CompareTrials(ctx, &apiv1.CompareTrialsRequest{
+		TrialIds:    []int32{int32(trial.ID)},
+		MetricNames: maps.Keys(expectedMetricsMap),
+	})
+	require.ErrorContains(t, err, "metric 'epoch' has nonnumeric value reported value='x'")
+}
+
+func TestTrialsNonNumericMetrics(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+
+	expectedMetricsMap := map[string]any{
+		"string_met":  "abc",
+		"numeric_met": 1.5,
+		"date_met":    "2021-03-15T13:32:18.91626111111Z",
+		"bool_met":    false,
+		"null_met":    nil,
+	}
+	expectedMetrics, err := structpb.NewStruct(expectedMetricsMap)
+	require.NoError(t, err)
+
+	trial := createTestTrial(t, api, curUser)
+	_, err = api.ReportTrialValidationMetrics(ctx, &apiv1.ReportTrialValidationMetricsRequest{
+		ValidationMetrics: &trialv1.TrialMetrics{
+			TrialId:        int32(trial.ID),
+			TrialRunId:     0,
+			StepsCompleted: 1,
+			Metrics: &commonv1.Metrics{
+				AvgMetrics: expectedMetrics,
+			},
+		},
+	})
+	require.NoError(t, err)
+
+	t.Run("CompareTrialsNonNumeric", func(t *testing.T) {
+		resp, err := api.CompareTrials(ctx, &apiv1.CompareTrialsRequest{
+			TrialIds:    []int32{int32(trial.ID)},
+			MetricNames: maps.Keys(expectedMetricsMap),
+		})
+		require.NoError(t, err)
+
+		require.Len(t, resp.Trials, 1)
+		require.Len(t, resp.Trials[0].Metrics, 1)
+		require.Len(t, resp.Trials[0].Metrics[0].Data, 1)
+		require.Equal(t, expectedMetricsMap, resp.Trials[0].Metrics[0].Data[0].Values.AsMap())
+	})
+
+	t.Run("SummarizeTrialsNonNumeric", func(t *testing.T) {
+		resp, err := api.SummarizeTrial(ctx, &apiv1.SummarizeTrialRequest{
+			TrialId:     int32(trial.ID),
+			MetricNames: maps.Keys(expectedMetricsMap),
+		})
+		require.NoError(t, err)
+
+		require.Len(t, resp.Metrics, 1)
+		require.Len(t, resp.Metrics[0].Data, 1)
+		require.Equal(t, expectedMetricsMap, resp.Metrics[0].Data[0].Values.AsMap())
+	})
+
+	t.Run("TrialsSample", func(t *testing.T) {
+		_, err := db.Bun().NewUpdate().Table("experiments").
+			Set("config = jsonb_set(config, '{searcher,name}', ?, true)", `"custom"`).
+			Where("id = ?", trial.ExperimentID).
+			Exec(ctx)
+		require.NoError(t, err)
+
+		for metricName := range expectedMetricsMap {
+			childCtx, cancel := context.WithCancel(ctx)
+			resp := &mockStream[*apiv1.TrialsSampleResponse]{ctx: childCtx}
+			go func() {
+				for i := 0; i < 100; i++ {
+					if len(resp.data) > 0 {
+						cancel()
+					}
+					time.Sleep(50 * time.Millisecond)
+				}
+				cancel()
+			}()
+
+			err = api.TrialsSample(&apiv1.TrialsSampleRequest{
+				ExperimentId:  int32(trial.ExperimentID),
+				MetricType:    apiv1.MetricType_METRIC_TYPE_VALIDATION,
+				MetricName:    metricName,
+				PeriodSeconds: 1,
+			}, resp)
+			require.NoError(t, err)
+
+			require.Greater(t, len(resp.data), 0)
+			require.Len(t, resp.data[0].Trials, 1)
+			require.Len(t, resp.data[0].Trials[0].Data, 1)
+			require.Equal(t, map[string]any{
+				metricName: expectedMetricsMap[metricName],
+			}, resp.data[0].Trials[0].Data[0].Values.AsMap())
+		}
+	})
 }
 
 func TestTrialAuthZ(t *testing.T) {

@@ -378,8 +378,6 @@ func MetricsTimeSeries(trialID int32, startTime time.Time,
 		switch metricType {
 		case db.MetricTypeNumber:
 			cast = "float8"
-		case db.MetricTypeDate:
-			cast = "timestamp"
 		case db.MetricTypeBool:
 			cast = "boolean"
 		}
@@ -426,9 +424,12 @@ func MetricsTimeSeries(trialID int32, startTime time.Time,
 		}
 		epoch := new(int32)
 		if results[i]["epoch"] != nil {
-			// ERROR here
-			fmt.Printf("%v %T\n", results[i]["epoch"], results[i]["epoch"])
-			*epoch = int32(results[i]["epoch"].(float64))
+			if e, ok := results[i]["epoch"].(float64); ok {
+				*epoch = int32(e)
+			} else {
+				return nil, fmt.Errorf(
+					"metric 'epoch' has nonnumeric value reported value='%v'", results[i]["epoch"])
+			}
 		}
 		var endTime time.Time
 		if results[i]["time"] == nil {
