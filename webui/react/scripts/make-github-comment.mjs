@@ -37,10 +37,10 @@ const commentOptions = {
   },
 };
 if (commentToUpdate) {
-  commentOptions.method = 'patch';
+  commentOptions.method = 'PATCH';
   const updateUrl = new URL(commentToUpdate.url);
   fetch(updateUrl.toString(), commentOptions).then((r) => r.json());
 } else {
-  commentOptions.method = 'post';
+  commentOptions.method = 'POST';
   await fetch(commentsUrl.toString(), commentOptions).then((r) => r.json());
 }
