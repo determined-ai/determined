@@ -120,7 +120,7 @@ fmt-sql:
 	# the original docker image offerd by the author is missing.
 	# darold.net/pgformatter
 
-	find . -name "*.sql" | xargs docker run --rm --volume "$(shell pwd):/work" backplane/pgformatter -i || exit 0
+	# find . -name "*.sql" | xargs docker run --rm --volume "$(shell pwd):/work" backplane/pgformatter -i || exit 0
 
 .PHONY: check-sql
 check-sql:
