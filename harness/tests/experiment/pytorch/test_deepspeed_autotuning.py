@@ -7,8 +7,7 @@ import pytest
 
 from determined import searcher
 from determined.common.api import bindings
-from determined.pytorch.dsat import __main__, _defaults, _utils
-from determined.pytorch.dsat._dsat_search_method import BaseDSATSearchMethod
+from determined.pytorch.dsat import BaseDSATSearchMethod, DSATTrial, _defaults, _utils
 from determined.pytorch.dsat._run_dsat import build_exp_conf_from_args
 from tests.custom_search_mocks import MockMasterSearchRunner
 
@@ -19,7 +18,8 @@ BASE_EXPERIMENT_FIXTURE_PATH = (
 )
 MODEL_DIR = BASE_EXPERIMENT_FIXTURE_PATH.joinpath("example_experiment")
 CONFIG_PATH = MODEL_DIR.joinpath("deepspeed.yaml")
-ARGS = _utils.get_parser().parse_args([str(MODEL_DIR), str(CONFIG_PATH)])
+DEFAULT_ARGS = _utils.get_parser().parse_args([str(CONFIG_PATH), str(MODEL_DIR)])
+DEFAULT_ARGS.experiment_id = 0
 
 MODEL_INFO_PROFILE_METRIC_FIXTURE = {
     "num_params": 60192808,
@@ -43,31 +43,10 @@ def _run_searcher(search_method: BaseDSATSearchMethod, all_metrics):
     Run a mocked version of the Determined master with a deterministic series of
     returned metrics for a given Deepspeed Autotune Custom Search Method
     """
-    model_dir = BASE_EXPERIMENT_FIXTURE_PATH.joinpath("example_experiment")
-    config_path = model_dir.joinpath("autotune_config.yaml")
     with tempfile.TemporaryDirectory() as searcher_dir:
-        args = Namespace(
-            model_dir=model_dir,
-            config_path=config_path,
-            # DEFAULTS
-            tuner_type=_defaults.AUTOTUNING_ARG_DEFAULTS["tuner-type"],
-            max_trials=_defaults.AUTOTUNING_ARG_DEFAULTS["max-trials"],
-            max_concurrent_trials=_defaults.AUTOTUNING_ARG_DEFAULTS["max-concurrent-trials"],
-            zero_stages=_defaults.AUTOTUNING_ARG_DEFAULTS["zero-stages"],
-            trials_per_random_config=_defaults.AUTOTUNING_ARG_DEFAULTS["trials-per-random-config"],
-            start_profile_step=_defaults.AUTOTUNING_ARG_DEFAULTS["start-profile-step"],
-            end_profile_step=_defaults.AUTOTUNING_ARG_DEFAULTS["end-profile-step"],
-            metric=_defaults.AUTOTUNING_ARG_DEFAULTS["metric"],
-            random_seed=_defaults.AUTOTUNING_ARG_DEFAULTS["random-seed"],
-            # NONE TYPES
-            max_slots=None,
-            early_stopping=None,
-            experiment_id=None,
-        )
-
-        config_dict = build_exp_conf_from_args(args)
+        config_dict = build_exp_conf_from_args(DEFAULT_ARGS)
         searcher_dir = pathlib.Path(searcher_dir)
-        search_method = search_method(args=args, exp_config=config_dict)
+        search_method = search_method(args=DEFAULT_ARGS, exp_config=config_dict)
         mock_master_obj = MockMaster(all_metrics=all_metrics)
         search_runner = MockMasterSearchRunner(search_method, mock_master_obj, searcher_dir)
         search_runner.run(exp_config={}, context_dir="", includes=None)
@@ -81,10 +60,13 @@ def test_deepspeed_autotune_happy_path() -> None:
     nothing falls over
     """
     for search_method in _defaults.ALL_SEARCH_METHOD_CLASSES.values():
-        search_runner = _run_searcher(
-            search_method, [MODEL_INFO_PROFILE_METRIC_FIXTURE, {"throughput": 1.0}]
-        )
         exp_num_trials = _defaults.AUTOTUNING_ARG_DEFAULTS["max-trials"]
+        model_info_profile_trial = [MODEL_INFO_PROFILE_METRIC_FIXTURE]
+        autotuning_trials = [
+            {_defaults.AUTOTUNING_ARG_DEFAULTS["metric"]: 1.0} for _ in range(exp_num_trials - 1)
+        ]
+        all_trials = model_info_profile_trial + autotuning_trials
+        search_runner = _run_searcher(search_method, all_trials)
         assert len(search_runner.state.trials_created) == exp_num_trials
         assert len(search_runner.state.trials_closed) == exp_num_trials
         assert len(search_runner.state.trial_progress) == exp_num_trials
@@ -97,38 +79,37 @@ def test_deepspeed_autotune_happy_path() -> None:
 @pytest.mark.timeout(5)
 def test_continuous_failures() -> None:
     """
-    Make sure that DSAT Search Methods can handle continuous failures.
-    Note that the `ERROR_METRIC_NAME` triggered `v1TrialExitedEarly` event
-    will happen for all trials after the first model profile info and single
-    successful run
+    Make sure that DSAT Search Methods can handle continuous failures. The experiment should be
+    marked as failed.
     """
     for search_method in _defaults.ALL_SEARCH_METHOD_CLASSES.values():
-        all_mock_metrics = [
-            MODEL_INFO_PROFILE_METRIC_FIXTURE,
-            {"throughput": 1.0},
-            {ERROR_METRIC_NAME: 1.0},
-        ]
-        search_runner = _run_searcher(search_method, all_mock_metrics)
         exp_num_trials = _defaults.AUTOTUNING_ARG_DEFAULTS["max-trials"]
+        model_info_profile_trial = [MODEL_INFO_PROFILE_METRIC_FIXTURE]
+        failed_trials = [{ERROR_METRIC_NAME: True} for _ in range(exp_num_trials - 1)]
+        all_trials = model_info_profile_trial + failed_trials
+        search_runner = _run_searcher(search_method, all_trials)
+
         assert len(search_runner.state.trials_created) == exp_num_trials
-        assert len(search_runner.state.failures) == exp_num_trials - 2
+        assert len(search_runner.state.failures) == exp_num_trials - 1
         assert len(search_runner.state.trials_closed) == exp_num_trials
         assert len(search_runner.state.trial_progress) == exp_num_trials
-        assert search_runner.state.experiment_failed == False
-        assert search_runner.state.experiment_completed == True
+        assert search_runner.state.experiment_failed == True
+        assert search_runner.state.experiment_completed == False
 
 
 @pytest.mark.timeout(5)
 def test_one_off_failure() -> None:
     """Make sure that DSAT Search Methods can properly handle a single failure"""
     for search_method in _defaults.ALL_SEARCH_METHOD_CLASSES.values():
-        all_mock_metrics = [
-            MODEL_INFO_PROFILE_METRIC_FIXTURE,
-            {ERROR_METRIC_NAME: 1.0},
-            {"throughput": 1.0},
-        ]
-        search_runner = _run_searcher(search_method, all_mock_metrics)
         exp_num_trials = _defaults.AUTOTUNING_ARG_DEFAULTS["max-trials"]
+        model_info_profile_trial = [MODEL_INFO_PROFILE_METRIC_FIXTURE]
+        one_failed_trial = [{ERROR_METRIC_NAME: True}]
+        successful_trials = [
+            {_defaults.AUTOTUNING_ARG_DEFAULTS["metric"]: 1.0} for _ in range(exp_num_trials - 2)
+        ]
+        all_trials = model_info_profile_trial + one_failed_trial + successful_trials
+        search_runner = _run_searcher(search_method, all_trials)
+
         assert len(search_runner.state.trials_created) == exp_num_trials
         assert len(search_runner.state.failures) == 1
         assert len(search_runner.state.trials_closed) == exp_num_trials
@@ -139,14 +120,14 @@ def test_one_off_failure() -> None:
 
 @pytest.mark.timeout(5)
 def test_simple_model_profile_info_run_fails() -> None:
-    """Run the random search method where the model profile info run fails"""
+    """Test DSAT with a failed model profile info run."""
     for search_method in _defaults.ALL_SEARCH_METHOD_CLASSES.values():
-        all_mock_metrics = [
-            {ERROR_METRIC_NAME: 1.0},
+        failed_model_profile_info_trial = [
+            {ERROR_METRIC_NAME: True},
         ]
         search_runner = _run_searcher(
             search_method,
-            all_mock_metrics,
+            failed_model_profile_info_trial,
         )
         assert len(search_runner.state.trials_created) == 1
         assert len(search_runner.state.failures) == 1
@@ -198,8 +179,7 @@ class MockMaster:
 
     def _append_events_for_op(self, op: searcher.Operation) -> None:
         if isinstance(op, searcher.ValidateAfter):
-            index = min(self.metric_index, len(self.all_metrics) - 1)
-            metric = self.all_metrics[index]
+            metric = self.all_metrics[self.metric_index]
             self.metric_index += 1
             if ERROR_METRIC_NAME in metric:
                 trial_exited_early = bindings.v1TrialExitedEarly(

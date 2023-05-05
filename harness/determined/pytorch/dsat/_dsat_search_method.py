@@ -462,7 +462,9 @@ class DSATTrialTracker:
             self.model_profile_info_trial is not None and self.model_profile_info_trial.error
         )
         every_autotuning_trial_failed = all(
-            trial.error for _, trial in self if not isinstance(trial, DSATModelProfileInfoTrial)
+            trial.error
+            for _, trial in self
+            if trial.closed and not isinstance(trial, DSATModelProfileInfoTrial)
         )
         return model_profile_info_trial_failed or every_autotuning_trial_failed
 
