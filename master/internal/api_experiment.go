@@ -1307,88 +1307,37 @@ func (a *apiServer) GetExperimentCheckpoints(
 	return resp, a.paginate(&resp.Pagination, &resp.Checkpoints, req.Offset, req.Limit)
 }
 
-func (a *apiServer) getCreateExperimentsProject(projectID int,
-	user *model.User, config expconf.ExperimentConfig,
+func (a *apiServer) getCreateExperimentsProject(
+	projectID int,
+	user *model.User,
 ) (*projectv1.Project, error) {
-	// Place experiment in Uncategorized, unless project set in config or CreateExperimentParams.
-	// CreateExperimentParams has highest priority.
-	var err error
-	var errProjectNotFound error
-	if projectID > 1 {
-		errProjectNotFound = ErrProjectNotFound(fmt.Sprintf("project (%d) not found", projectID))
-	} else {
-		projectID = 1
-		errProjectNotFound = ErrProjectNotFound(fmt.Sprintf("project (%d) not found", projectID))
-		if (config.Workspace() == "") != (config.Project() == "") {
-			return nil,
-				errors.New("workspace and project must both be included in config if one is provided")
-		}
-		if config.Workspace() != "" && config.Project() != "" {
-			errProjectNotFound = ErrProjectNotFound(fmt.Sprintf(
-				"workspace '%s' or project '%s' not found",
-				config.Workspace(), config.Project()))
-
-			projectID, err = a.m.db.ProjectByName(config.Workspace(), config.Project())
-			if errors.Is(err, db.ErrNotFound) {
-				return nil, errProjectNotFound
-			} else if err != nil {
-				return nil, err
-			}
-		}
-	}
-
-	p := &projectv1.Project{}
-	if err = a.m.db.QueryProto("get_project", p, projectID); errors.Is(err, db.ErrNotFound) {
-		return nil, errProjectNotFound
+	var p projectv1.Project
+	if err := a.m.db.QueryProto("get_project", &p, projectID); errors.Is(err, db.ErrNotFound) {
+		return nil, ErrProjectNotFound(fmt.Sprintf("project (%d) not found", projectID))
 	} else if err != nil {
 		return nil, err
 	}
-	if err = project.AuthZProvider.Get().CanGetProject(context.TODO(), *user, p); err != nil {
+
+	if err := project.AuthZProvider.Get().CanGetProject(context.TODO(), *user, &p); err != nil {
 		return nil, err
 	}
-	return p, nil
+	return &p, nil
 }
 
-func (a *apiServer) populateConfigWithProject(user *model.User, projectID int32,
-	configStr string, givenTemplate *string) (expconf.ExperimentConfig, *projectv1.Project, error) {
-	config, err := expconf.ParseAnyExperimentConfigYAML([]byte(configStr))
-	if err != nil {
-		return config, nil, errors.Wrap(err, "invalid experiment configuration")
-	}
-
-	// Apply the template that the user specified.
-	if givenTemplate != nil {
-		template, terr := a.m.db.TemplateByName(*givenTemplate)
-		if terr != nil {
-			return config, nil, errors.Wrapf(
-				terr, "TemplateByName(%q)", *givenTemplate,
-			)
-		}
-		var tc expconf.ExperimentConfig
-		if yerr := yaml.Unmarshal(template.Config, &tc, yaml.DisallowUnknownFields); yerr != nil {
-			return config, nil, errors.Wrapf(
-				terr, "yaml.Unmarshal(template=%q)", *givenTemplate,
-			)
-		}
-		// Merge the template into the config.
-		config = schemas.Merge(config, tc)
-	}
-
-	defaulted := schemas.WithDefaults(config)
-
-	project, err := a.getCreateExperimentsProject(int(projectID), user, defaulted)
-	if err != nil {
-		return config, nil, err
-	}
-
+func (a *apiServer) populateConfigWithProject(
+	user *model.User,
+	project *projectv1.Project,
+	config expconf.ExperimentConfigV0,
+) (expconf.ExperimentConfig, error) {
 	// Merge in workspace's checkpoint storage into the conifg.
-	w := &model.Workspace{}
-	if err = db.Bun().NewSelect().Model(w).
+	var w model.Workspace
+	if err := db.Bun().NewSelect().Model(w).
 		Where("id = ?", project.WorkspaceId).
 		Column("checkpoint_storage_config").
 		Scan(context.TODO()); err != nil {
-		return config, nil, err
+		return config, err
 	}
+
 	config.RawCheckpointStorage = schemas.Merge(
 		config.RawCheckpointStorage, w.CheckpointStorageConfig)
 
@@ -1401,20 +1350,23 @@ func (a *apiServer) populateConfigWithProject(user *model.User, projectID int32,
 	config = schemas.WithDefaults(config)
 
 	// Make sure the experiment config has all eventuallyRequired fields.
-	if err = schemas.IsComplete(config); err != nil {
-		return config, nil, errors.Wrap(err, "invalid experiment configuration")
+	err := schemas.IsComplete(config)
+	if err != nil {
+		return config, errors.Wrap(err, "invalid experiment configuration")
 	}
 
 	// Disallow EOL searchers.
-	if err = config.Searcher().AssertCurrent(); err != nil {
-		return config, nil, errors.Wrap(err, "invalid experiment configuration")
+	err = config.Searcher().AssertCurrent()
+	if err != nil {
+		return config, errors.Wrap(err, "invalid experiment configuration")
 	}
 
-	return config, project, nil
+	return config, nil
 }
 
 func (a *apiServer) populateTaskSpec(user *model.User, modelDef archive.Archive,
-	config expconf.ExperimentConfig) (*tasks.TaskSpec, error) {
+	config expconf.ExperimentConfig,
+) (*tasks.TaskSpec, error) {
 	resources := config.Resources()
 	poolName, err := a.m.rm.ResolveResourcePool(
 		a.m.system, resources.ResourcePool(), resources.SlotsPerTrial())
@@ -1492,10 +1444,58 @@ func (a *apiServer) CreateExperiment(
 				"forking an experiment in an archived workspace/project")
 		}
 	}
-	// START or parseCreateExperiment
-	// Read the config as the user provided it.
-	activeConfig, project, err := a.populateConfigWithProject(user,
-		req.ProjectId, req.Config, req.Template) // with defaults
+
+	// Parse config.
+	config, err := expconf.ParseAnyExperimentConfigYAML([]byte(req.Config))
+	if err != nil {
+		return nil, errors.Wrap(err, "invalid experiment configuration")
+	}
+
+	// Apply the template that the user specified.
+	if req.Template != nil {
+		template, terr := a.m.db.TemplateByName(*req.Template)
+		if terr != nil {
+			return nil, errors.Wrapf(terr, "TemplateByName(%q)", *req.Template)
+		}
+		var tc expconf.ExperimentConfig
+		if yerr := yaml.Unmarshal(template.Config, &tc, yaml.DisallowUnknownFields); yerr != nil {
+			return nil, errors.Wrapf(terr, "yaml.Unmarshal(template=%q)", *req.Template)
+		}
+		// Merge the template into the config.
+		config = schemas.Merge(config, tc)
+	}
+	activeConfig := schemas.WithDefaults(config)
+
+	// Resolve project ID.
+	var projectID int
+	if req.ProjectId < 1 {
+		if (config.Workspace() == "") != (config.Project() == "") {
+			return nil, errors.New("workspace and project must both be included in config if one is provided")
+		} else if config.Workspace() != "" && config.Project() != "" {
+			id, err := a.m.db.ProjectByName(config.Workspace(), config.Project())
+			switch {
+			case errors.Is(err, db.ErrNotFound):
+				return nil, ErrProjectNotFound(fmt.Sprintf(
+					"workspace '%s' or project '%s' not found",
+					config.Workspace(), config.Project()))
+			case err != nil:
+				return nil, err
+			}
+			projectID = id
+		} else {
+			projectID = 1
+		}
+	} else {
+		projectID = int(req.ProjectId)
+	}
+
+	project, err := a.getCreateExperimentsProject(int(projectID), user)
+	if err != nil {
+		return nil, err
+	}
+
+	// Apply project level defaults.
+	activeConfig, err = a.populateConfigWithProject(user, project, activeConfig)
 	if err != nil {
 		if _, ok := err.(ErrProjectNotFound); ok {
 			return nil, status.Errorf(codes.NotFound, err.Error())
