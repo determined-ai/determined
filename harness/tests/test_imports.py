@@ -130,5 +130,5 @@ def test_import_from_path() -> None:
     shutil.rmtree(fixture / "a" / "__pycache__")
     shutil.rmtree(fixture / "libraries" / "__pycache__")
 
-    for mod in [a.data, lib1, lib2, a]:
+    for mod in [lib1, lib2, a, a.data]:
         del sys.modules[mod]

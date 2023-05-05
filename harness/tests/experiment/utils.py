@@ -1,7 +1,6 @@
 import importlib
 import os
 import pathlib
-import sys
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Type
 
 import numpy as np
@@ -196,7 +195,6 @@ def tutorials_path(path: str) -> str:
 
 def import_class_from_module(class_name: str, module_path: str) -> Any:
     module_dir = pathlib.Path(os.path.dirname(module_path))
-
 
     with det.import_from_path(module_dir):
         spec = importlib.util.spec_from_file_location(class_name, module_path)
