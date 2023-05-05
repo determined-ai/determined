@@ -442,6 +442,29 @@ commands:
       # Allow this to fail, but it is useful for debugging.
       - run: sh -c "pip check || true"
 
+  setup-docker-env:
+    description: Set up and create docker env.
+    parameters:
+      image:
+        type: string
+      image-name:
+        type: string
+        default: "test_container"
+      bind-mount:
+        type: string
+        default: "$PWD"
+      extras-requires:
+        type: string
+        default: ""
+    steps:
+      - run: docker run -v <<parameters.bind-mount>>:/mnt/project --gpus=all -it -d --name <<parameters.image-name>> --workdir /mnt/project <<parameters.image>>
+      - run:
+          name: Install <<parameters.extras-requires>>
+          command: |
+            if [ -n "<<parameters.extras-requires>>" ]; then
+              docker exec <<parameters.image-name>> tools/scripts/retry.sh pip install --progress-bar off <<parameters.extras-requires>>
+            fi
+
   run-e2e-tests:
     parameters:
       mark:
@@ -1686,25 +1709,49 @@ jobs:
 
   test-unit-harness-gpu:
     machine:
-      resource_class: gpu.nvidia.small
       image: <<pipeline.parameters.gpu-machine-image>>
+    resource_class: gpu.nvidia.small
     steps:
       - checkout
       - skip-if-docs-only
       - skip-if-webui-only
+      - setup-docker-env:
+          image: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.21.2
+          image-name: test_container
+          extras-requires: "tensorflow==2.11.0 mypy pytest coverage"
+      - run: mkdir -p $HOME/.local/bin
       - install-codecov
-      - setup-python-venv:
-          determined: true
-          extras-requires: "tensorflow==2.12.0 torch==1.9.0 torchvision==0.10.0"
-          extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
-          executor: <<pipeline.parameters.docker-image>>
-      - run: COVERAGE_FILE=$PWD/test-unit-harness-gpu-pycov make -C harness test-gpu
-      - run: coverage xml -i --data-file=./test-unit-harness-gpu-pycov
+      - run: echo 'export PATH=$PATH:$HOME/.local/bin' >> $BASH_ENV
+      - run: docker exec -e COVERAGE_FILE=/mnt/project/test-unit-harness-gpu-pycov test_container make -C harness test-gpu
+      - run: docker exec test_container coverage xml -i --data-file=./test-unit-harness-gpu-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
       - persist_to_workspace:
           root: .
           paths:
             - test-unit-harness-gpu-pycov
+
+  test-unit-harness-gpu-lightning:
+    machine:
+      image: <<pipeline.parameters.gpu-machine-image>>
+    resource_class: gpu.nvidia.small
+    steps:
+      - checkout
+      - skip-if-docs-only
+      - skip-if-webui-only
+      - setup-docker-env:
+          image: determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.5-tf-2.4-gpu-0.18.5
+          image-name: test_container
+          extras-requires: "tensorflow==2.12.0 torch==1.9.0 torchvision==0.10.0 mypy pytest coverage"
+      - run: mkdir -p $HOME/.local/bin
+      - install-codecov
+      - run: echo 'export PATH=$PATH:$HOME/.local/bin' >> $BASH_ENV
+      - run: docker exec -e COVERAGE_FILE=/mnt/project/test-unit-harness-gpu-lightning-pycov test_container make -C harness test-gpu-lightning
+      - run: docker exec test_container coverage xml -i --data-file=./test-unit-harness-gpu-lightning-pycov
+      - run: codecov -v -t $CODECOV_TOKEN -F harness
+      - persist_to_workspace:
+          root: .
+          paths:
+            - test-unit-harness-gpu-lightning-pycov
 
   test-unit-harness-tf2:
     docker:
@@ -2349,8 +2396,8 @@ workflows:
       - test-unit-go
       - test-unit-react
       - test-unit-harness-cpu
-      # Exclude gpu tests for now since we do not have access to those instance types on circleci.
-      #- test-unit-harness-gpu
+      - test-unit-harness-gpu
+      - test-unit-harness-gpu-lightning
       - test-unit-harness-tf2
       - test-unit-model-hub
       - test-unit-storage:
