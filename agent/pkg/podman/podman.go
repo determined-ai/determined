@@ -1,8 +1,7 @@
-package singularity
+package podman
 
 import (
 	"context"
-	"encoding/base64"
 	"fmt"
 	"io"
 	"os"
@@ -10,7 +9,6 @@ import (
 	"os/user"
 	"path"
 	"path/filepath"
-	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -21,6 +19,7 @@ import (
 	"github.com/docker/docker/api/types"
 	dcontainer "github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
+	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/sirupsen/logrus"
 
@@ -36,7 +35,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/tasks"
 )
 
-var singularityWrapperEntrypoint = path.Join(tasks.RunDir, tasks.SingularityEntrypointWrapperScript)
+var podmanWrapperEntrypoint = path.Join(tasks.RunDir, tasks.SingularityEntrypointWrapperScript)
 
 const (
 	// TODO(DET-9111): Parameterize this by agent ID.
@@ -47,8 +46,8 @@ const (
 	archivesName     = "archives"
 )
 
-// SingularityContainer captures the state of a container.
-type SingularityContainer struct {
+// PodmanContainer captures the state of a container.
+type PodmanContainer struct {
 	PID     int            `json:"pid"`
 	Req     cproto.RunSpec `json:"req"`
 	TmpDir  string         `json:"tmp_dir"`
@@ -56,17 +55,17 @@ type SingularityContainer struct {
 	Started atomic.Bool    `json:"started"`
 }
 
-// SingularityClient implements ContainerRuntime.
-type SingularityClient struct {
+// PodmanClient implements ContainerRuntime.
+type PodmanClient struct {
 	log        *logrus.Entry
-	opts       options.SingularityOptions
+	opts       options.PodmanOptions
 	mu         sync.Mutex
 	wg         waitgroupx.Group
-	containers map[cproto.ID]*SingularityContainer
+	containers map[cproto.ID]*PodmanContainer
 }
 
-// New returns a new singularity client, which launches and tracks containers.
-func New(opts options.SingularityOptions) (*SingularityClient, error) {
+// New returns a new podman client, which launches and tracks containers.
+func New(opts options.PodmanOptions) (*PodmanClient, error) {
 	if err := os.RemoveAll(agentTmp); err != nil {
 		return nil, fmt.Errorf("removing agent tmp from previous runs: %w", err)
 	}
@@ -75,16 +74,16 @@ func New(opts options.SingularityOptions) (*SingularityClient, error) {
 		return nil, fmt.Errorf("preparing agent tmp: %w", err)
 	}
 
-	return &SingularityClient{
-		log:        logrus.WithField("compotent", "singularity"),
+	return &PodmanClient{
+		log:        logrus.WithField("component", "podman"),
 		opts:       opts,
 		wg:         waitgroupx.WithContext(context.Background()),
-		containers: make(map[cproto.ID]*SingularityContainer),
+		containers: make(map[cproto.ID]*PodmanContainer),
 	}, nil
 }
 
 // Close the client, killing all running containers and removing our scratch space.
-func (s *SingularityClient) Close() error {
+func (s *PodmanClient) Close() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -98,16 +97,14 @@ func (s *SingularityClient) Close() error {
 }
 
 func getPullCommand(req docker.PullImage, image string) (string, []string) {
-	args := []string{"pull"}
-	if req.ForcePull {
-		args = append(args, "--force")
-	}
-	args = append(args, image)
-	return "singularity", args
+	// C.f. singularity where if req.ForcePull is set then a 'pull --force' is done.
+	// podman does not have this option, though it does have '--pull always' on the
+	// run command.
+	return "podman", []string{"pull", image}
 }
 
 // PullImage implements container.ContainerRuntime.
-func (s *SingularityClient) PullImage(
+func (s *PodmanClient) PullImage(
 	ctx context.Context,
 	req docker.PullImage,
 	p events.Publisher[docker.Event],
@@ -116,7 +113,7 @@ func (s *SingularityClient) PullImage(
 }
 
 // CreateContainer implements container.ContainerRuntime.
-func (s *SingularityClient) CreateContainer(
+func (s *PodmanClient) CreateContainer(
 	ctx context.Context,
 	id cproto.ID,
 	req cproto.RunSpec,
@@ -125,20 +122,20 @@ func (s *SingularityClient) CreateContainer(
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	s.containers[id] = &SingularityContainer{Req: req}
+	s.containers[id] = &PodmanContainer{Req: req}
 	return id.String(), nil
 }
 
 // RunContainer implements container.ContainerRuntime.
 // nolint: golint,maintidx // Both contexts can't both be first / TODO refactor.
-func (s *SingularityClient) RunContainer(
+func (s *PodmanClient) RunContainer(
 	ctx context.Context,
 	waitCtx context.Context,
 	id string,
 	p events.Publisher[docker.Event],
 ) (*docker.Container, error) {
 	s.mu.Lock()
-	var cont *SingularityContainer
+	var cont *PodmanContainer
 	for cID, rcont := range s.containers {
 		if cproto.ID(id) != cID {
 			continue
@@ -173,8 +170,15 @@ func (s *SingularityClient) RunContainer(
 
 	var args []string
 	args = append(args, "run")
-	args = append(args, "--writable-tmpfs")
-	args = append(args, "--pwd", req.ContainerConfig.WorkingDir)
+	args = append(args, "--rm")
+	args = append(args, "--workdir", req.ContainerConfig.WorkingDir)
+
+	// Env. variables. c.f. launcher PodmanOverSlurm.java
+	args = append(args, "--env", "SLURM_*")
+	args = append(args, "--env", "CUDA_VISIBLE_DEVICES")
+	args = append(args, "--env", "NVIDIA_VISIBLE_DEVICES")
+	args = append(args, "--env", "ROCR_VISIBLE_DEVICES")
+	args = append(args, "--env", "HIP_VISIBLE_DEVICES")
 
 	envFilePath := path.Join(tmpdir, envFileName)
 	envFile, err := os.OpenFile(
@@ -190,56 +194,24 @@ func (s *SingularityClient) RunContainer(
 	req.ContainerConfig.Env = append(req.ContainerConfig.Env, "DET_NO_FLUENT=true")
 	req.ContainerConfig.Env = append(req.ContainerConfig.Env, "DET_SHIPPER_EMIT_STDOUT_LOGS=False")
 
-	var b64EnvVars []string
 	for _, env := range req.ContainerConfig.Env {
-		parts := strings.SplitN(env, "=", 2)
-
-		var formattedEnv string
-		switch len(parts) {
-		case 0:
-			continue // Must be empty envvar.
-		case 1:
-			formattedEnv = env
-		case 2:
-			// Don't even attempt to escape quotes, strconv.Quote doesn't work - singularity seems
-			// to unescape it multiple times.
-			if strings.Contains(parts[1], "\"") {
-				b64EnvVars = append(b64EnvVars, parts[0])
-				formattedEnv = fmt.Sprintf(
-					"%s=\"%s\"",
-					parts[0], base64.StdEncoding.EncodeToString([]byte(parts[1])),
-				)
-			} else {
-				formattedEnv = fmt.Sprintf("%s=%s", parts[0], strconv.Quote(parts[1]))
-			}
-		}
-
-		_, err = envFile.WriteString(formattedEnv + "\n")
+		_, err = envFile.WriteString(env + "\n")
 		if err != nil {
 			return nil, fmt.Errorf("writing to envfile: %w", err)
 		}
 	}
-
-	_, err = envFile.WriteString(fmt.Sprintf(
-		"DET_B64_ENCODED_ENVVARS=%s",
-		strings.Join(b64EnvVars, ","),
-	))
-	if err != nil {
-		return nil, fmt.Errorf("writing to envfile: %w", err)
-	}
 	if err = envFile.Close(); err != nil {
 		return nil, fmt.Errorf("closing envfile: %w", err)
 	}
+
 	switch {
 	case req.HostConfig.NetworkMode == bridgeNetworking && s.opts.AllowNetworkCreation:
-		// --net sets up a bridge network by default
-		// (see https://apptainer.org/user-docs/3.0/networking.html#net)
-		args = append(args, "--net")
-		// Do the equivalent of Docker's PublishAllPorts = true
+		// ?? publish ports only for bridgeNetworking
 		for port := range req.ContainerConfig.ExposedPorts {
 			p := port.Int()
-			args = append(args, "--network-args", fmt.Sprintf("portmap=%d:%d/tcp", p, p))
+			args = append(args, "-p", fmt.Sprintf("%d:%d/tcp", p, p))
 		}
+		args = append(args, "--network=bridge")
 	case req.HostConfig.NetworkMode == bridgeNetworking:
 		if err = p.Publish(ctx, docker.NewLogEvent(
 			model.LogLevelDebug,
@@ -251,6 +223,7 @@ func (s *SingularityClient) RunContainer(
 		req.HostConfig.NetworkMode = hostNetworking
 		fallthrough
 	case req.HostConfig.NetworkMode == hostNetworking:
+		args = append(args, "--network=host")
 	default:
 		return nil, fmt.Errorf("unsupported network mode %s", req.HostConfig.NetworkMode)
 	}
@@ -261,88 +234,31 @@ func (s *SingularityClient) RunContainer(
 		return nil, fmt.Errorf("determining mount points: %w", err)
 	}
 	for _, m := range mountPoints {
-		args = append(args, "--bind", fmt.Sprintf("%s:%s", path.Join(archivesPath, m), m))
+		args = append(args, "--volume", fmt.Sprintf("%s:%s", path.Join(archivesPath, m), m))
 	}
 
 	for _, m := range req.HostConfig.Mounts {
-		// TODO(DET-9079): Investigate handling these options.
-		if m.ReadOnly {
-			if err = p.Publish(ctx, docker.NewLogEvent(model.LogLevelWarning, fmt.Sprintf(
-				"mount %s:%s was requested as readonly but singularity does not support this; "+
-					"will bind mount anyway, without it being readonly",
-				m.Source, m.Target,
-			))); err != nil {
-				return nil, err
-			}
-		}
-		if m.BindOptions != nil && m.BindOptions.Propagation != "rprivate" { // rprivate is default.
-			if err = p.Publish(ctx, docker.NewLogEvent(model.LogLevelWarning, fmt.Sprintf(
-				"mount %s:%s had propagation settings but singularity does not support this; "+
-					"will bind mount anyway, without them",
-				m.Source, m.Target,
-			))); err != nil {
-				return nil, err
-			}
-		}
-		args = append(args, "--bind", fmt.Sprintf("%s:%s", m.Source, m.Target))
+		args = hostMountsToPodmanArgs(m, args)
 	}
 
+	// from master task_container_defaults.shm_size_bytes
 	if shmsize := req.HostConfig.ShmSize; shmsize != 4294967296 { // 4294967296 is the default.
-		if err = p.Publish(ctx, docker.NewLogEvent(model.LogLevelWarning, fmt.Sprintf(
-			"shmsize was requested as %d but singularity does not support this; "+
-				"we do not launch with `--contain`, so we inherit the configuration of the host",
-			shmsize,
-		))); err != nil {
-			return nil, err
-		}
+		args = append(args, "--shm-size", fmt.Sprintf("%d", shmsize))
 	}
 
-	// TODO(DET-9075): Un-dockerize the RunContainer API so we can know to pass `--rocm` without
-	// regexing on devices.
-	// TODO(DET-9080): Test this on ROCM devices.
-	rocmDevice := regexp.MustCompile("/dev/dri/by-path/pci-.*-card")
-	for _, d := range req.HostConfig.Devices {
-		if rocmDevice.MatchString(d.PathOnHost) {
-			args = append(args, "--rocm")
-			break
-		}
-	}
-
-	// Visible devices are set later by modifying the exec.Command's env.
-	var cudaVisibleDevices []string
-	for _, d := range cont.Req.HostConfig.DeviceRequests {
-		if d.Driver == "nvidia" {
-			cudaVisibleDevices = append(cudaVisibleDevices, d.DeviceIDs...)
-		}
-	}
-	if len(cudaVisibleDevices) > 0 {
-		// TODO(DET-9081): We need to move to --nvccli --nv, because --nv does not provide
-		// sufficient isolation (e.g., nvidia-smi see all GPUs on the machine, not just ours).
-		args = append(args, "--nv")
-	}
-
-	// TODO(DET-9079): It is unlikely we can handle this, but we should do better at documenting.
-	if len(req.HostConfig.CapAdd) != 0 || len(req.HostConfig.CapDrop) != 0 {
-		if err = p.Publish(ctx, docker.NewLogEvent(model.LogLevelWarning, fmt.Sprintf(
-			"cap add or drop was requested but singularity does not support this; "+
-				"will be ignored (cap_add: %+v, cap_drop: %+v)", req.HostConfig.CapAdd,
-			req.HostConfig.CapDrop,
-		))); err != nil {
-			return nil, err
-		}
-	}
+	args = capabilitiesToPodmanArgs(req, args)
 
 	image := cruntimes.CanonicalizeImage(req.ContainerConfig.Image)
 	args = append(args, image)
-	args = append(args, singularityWrapperEntrypoint)
+	args = append(args, podmanWrapperEntrypoint)
 	args = append(args, req.ContainerConfig.Cmd...)
 
-	if err = s.pprintSingularityCommand(ctx, args, p); err != nil {
+	if err = s.pprintPodmanCommand(ctx, args, p); err != nil {
 		return nil, err
 	}
 
 	// #nosec G204 // We launch arbitrary user code as a service.
-	cmd := exec.CommandContext(waitCtx, "singularity", args...)
+	cmd := exec.CommandContext(waitCtx, "podman", args...)
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		return nil, fmt.Errorf("creating stdout pipe: %w", err)
@@ -351,23 +267,11 @@ func (s *SingularityClient) RunContainer(
 	if err != nil {
 		return nil, fmt.Errorf("creating stderr pipe: %w", err)
 	}
-	s.wg.Go(func(ctx context.Context) { s.shipSingularityCmdLogs(ctx, stdout, stdcopy.Stdout, p) })
-	s.wg.Go(func(ctx context.Context) { s.shipSingularityCmdLogs(ctx, stderr, stdcopy.Stderr, p) })
-
-	cudaVisibleDevicesVar := strings.Join(cudaVisibleDevices, ",")
-	cmd.Env = append(cmd.Env,
-		fmt.Sprintf("SINGULARITYENV_CUDA_VISIBLE_DEVICES=%s", cudaVisibleDevicesVar),
-		fmt.Sprintf("APPTAINERENV_CUDA_VISIBLE_DEVICES=%s", cudaVisibleDevicesVar),
-	)
-
-	// HACK(singularity): without this, --nv doesn't work right. If the singularity run command
-	// cannot find nvidia-smi, the --nv fails to make it available inside the container, e.g.,
-	// env -i /usr/bin/singularity run --nv \\
-	//   docker://determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-24586f0 nvidia-smi
-	cmd.Env = append(cmd.Env, fmt.Sprintf("PATH=%s", os.Getenv("PATH")))
+	s.wg.Go(func(ctx context.Context) { s.shipPodmanCmdLogs(ctx, stdout, stdcopy.Stdout, p) })
+	s.wg.Go(func(ctx context.Context) { s.shipPodmanCmdLogs(ctx, stderr, stdcopy.Stderr, p) })
 
 	if err := cmd.Start(); err != nil {
-		return nil, fmt.Errorf("starting singularity container: %w", err)
+		return nil, fmt.Errorf("starting podman container: %w", err)
 	}
 
 	cont.PID = cmd.Process.Pid
@@ -382,7 +286,7 @@ func (s *SingularityClient) RunContainer(
 			ContainerJSONBase: &types.ContainerJSONBase{
 				ID:      strconv.Itoa(cont.Proc.Pid),
 				Created: at,
-				Path:    singularityWrapperEntrypoint,
+				Path:    podmanWrapperEntrypoint,
 				Args:    req.ContainerConfig.Cmd,
 				State: &types.ContainerState{
 					Status:    "running",
@@ -403,9 +307,34 @@ func (s *SingularityClient) RunContainer(
 	}, nil
 }
 
+func capabilitiesToPodmanArgs(req cproto.RunSpec, args []string) []string {
+	for _, cap := range req.HostConfig.CapAdd {
+		args = append(args, "--cap-add", cap)
+	}
+	for _, cap := range req.HostConfig.CapDrop {
+		args = append(args, "--cap-drop", cap)
+	}
+	return args
+}
+
+func hostMountsToPodmanArgs(m mount.Mount, args []string) []string {
+	var mountOptions []string
+	if m.ReadOnly {
+		mountOptions = append(mountOptions, "ro")
+	}
+	if m.BindOptions != nil && string(m.BindOptions.Propagation) != "" {
+		mountOptions = append(mountOptions, string(m.BindOptions.Propagation))
+	}
+	var options string
+	if len(mountOptions) > 0 {
+		options = fmt.Sprintf(":%s", strings.Join(mountOptions, ","))
+	}
+	return append(args, "--volume", fmt.Sprintf("%s:%s%s", m.Source, m.Target, options))
+}
+
 // ReattachContainer implements container.ContainerRuntime.
 // TODO(DET-9082): Ensure orphaned processes are cleaned up on reattach.
-func (s *SingularityClient) ReattachContainer(
+func (s *PodmanClient) ReattachContainer(
 	ctx context.Context,
 	reattachID cproto.ID,
 ) (*docker.Container, *aproto.ExitCode, error) {
@@ -413,7 +342,7 @@ func (s *SingularityClient) ReattachContainer(
 }
 
 // RemoveContainer implements container.ContainerRuntime.
-func (s *SingularityClient) RemoveContainer(ctx context.Context, id string, force bool) error {
+func (s *PodmanClient) RemoveContainer(ctx context.Context, id string, force bool) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -429,7 +358,7 @@ func (s *SingularityClient) RemoveContainer(ctx context.Context, id string, forc
 }
 
 // SignalContainer implements container.ContainerRuntime.
-func (s *SingularityClient) SignalContainer(
+func (s *PodmanClient) SignalContainer(
 	ctx context.Context,
 	id string,
 	sig syscall.Signal,
@@ -449,7 +378,7 @@ func (s *SingularityClient) SignalContainer(
 }
 
 // ListRunningContainers implements container.ContainerRuntime.
-func (s *SingularityClient) ListRunningContainers(
+func (s *PodmanClient) ListRunningContainers(
 	ctx context.Context,
 	fs filters.Args,
 ) (map[cproto.ID]types.Container, error) {
@@ -466,9 +395,9 @@ func (s *SingularityClient) ListRunningContainers(
 	return resp, nil
 }
 
-func (s *SingularityClient) waitOnContainer(
+func (s *PodmanClient) waitOnContainer(
 	id cproto.ID,
-	cont *SingularityContainer,
+	cont *PodmanContainer,
 	p events.Publisher[docker.Event],
 ) docker.ContainerWaiter {
 	wchan := make(chan dcontainer.ContainerWaitOKBody, 1)
@@ -524,7 +453,7 @@ func (s *SingularityClient) waitOnContainer(
 	return docker.ContainerWaiter{Waiter: wchan, Errs: errchan}
 }
 
-func (s *SingularityClient) shipSingularityCmdLogs(
+func (s *PodmanClient) shipPodmanCmdLogs(
 	ctx context.Context,
 	r io.ReadCloser,
 	stdtype stdcopy.StdType,
@@ -533,10 +462,10 @@ func (s *SingularityClient) shipSingularityCmdLogs(
 	cruntimes.ShipContainerCommandLogs(ctx, r, stdtype, p)
 }
 
-func (s *SingularityClient) pprintSingularityCommand(
+func (s *PodmanClient) pprintPodmanCommand(
 	ctx context.Context,
 	args []string,
 	p events.Publisher[docker.Event],
 ) error {
-	return cruntimes.PprintCommand(ctx, "singularity", args, p, s.log)
+	return cruntimes.PprintCommand(ctx, "podman", args, p, s.log)
 }
