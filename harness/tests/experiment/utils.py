@@ -176,11 +176,6 @@ def repo_path(path: str) -> str:
     return os.path.join(os.path.dirname(__file__), "../../../", path)
 
 
-def e2e_fixtures_path(path: str) -> str:
-    # This function is a helper for testing, all necessary fixtures should be refactored instead.
-    return os.path.join(os.path.dirname(__file__), "../../../e2e_tests/tests/fixtures", path)
-
-
 def cv_examples_path(path: str) -> str:
     return os.path.join(os.path.dirname(__file__), "../../../examples/computer_vision", path)
 

@@ -415,7 +415,6 @@ class OneVarManualAMPTrial(OneVarAMPBaseTrial):
         # Measure the weight right now.
         w_before = self.model.weight.data.item()
 
-        # XXXXXX LOOK AT THIS AS WELL XXXXXXXXX
         # Calculate expected values for loss (eq 1) and weight (eq 4).
         loss_exp = (label[0] - data[0] * w_before) ** 2
         w_exp = w_before + 2 * self.lr * data[0] * (label[0] - (data[0] * w_before))
