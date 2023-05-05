@@ -36,20 +36,15 @@ def main():
     client = Determined()
 
     if dist.get_rank() == 0:
-        exp_id = det.experimental.detached.create_unmanaged_experiment(client, config_text=config_text)
-        print(f"Created experiment {exp_id}")
-
-        hparams = {"hparam": "distributed"}
-
-        detached_info = det.experimental.detached.create_unmanaged_trial_cluster_info(
-            client, config_text, exp_id, hparams=hparams)
-        broadcast = [exp_id, detached_info]
+        detached_info = det.experimental.detached.create_unmanaged_cluster_info(
+            client, config_text=config_text)
+        broadcast = [detached_info]
     else:
-        broadcast = [None, None]
+        broadcast = [None]
 
     # Sync the detached cluster info from the chief.
     dist.broadcast_object_list(object_list=broadcast, src=0)
-    exp_id, detached_info = broadcast
+    detached_info = broadcast[0]
 
     distributed = det.core.DistributedContext.from_torch_distributed()
 
@@ -72,6 +67,7 @@ def main():
                     fout.write(f"{i},{detached_info.trial.trial_id},{dist.get_rank()}")
 
     if dist.get_rank() == 0:
+        exp_id = detached_info._trial_info.experiment_id
         print("See the experiment at:", det.experimental.detached.url_reverse_webui_exp_view(client, exp_id))
 
 

@@ -93,9 +93,11 @@ def build_unmanaged_trial_cluster_info(
     )
 
 
-def create_detached_trial_cluster_info(client: Determined, config_text: str) -> det.ClusterInfo:
+def create_unmanaged_cluster_info(
+    client: Determined, config_text: str, hparams: Optional[dict] = None
+) -> det.ClusterInfo:
     exp_id = create_unmanaged_experiment(client, config_text=config_text)
-    return create_unmanaged_trial_cluster_info(client, config_text, exp_id)
+    return create_unmanaged_trial_cluster_info(client, config_text, exp_id, hparams)
 
 
 def init(
