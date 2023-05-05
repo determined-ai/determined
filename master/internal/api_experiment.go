@@ -319,7 +319,11 @@ func (a *apiServer) DeleteExperiment(
 	results, _, err := exputil.DeleteExperiments(ctx, a.m.system,
 		[]int32{req.ExperimentId}, nil)
 
-	if err == nil {
+	if err != nil {
+		// report error from the multi-experiment selection code
+		return nil, err
+	} else {
+		// report any error on the individual experiment
 		if len(results) == 0 {
 			return nil, errors.Errorf("unknown error during delete query.")
 		} else if results[0].Error != nil {
@@ -354,7 +358,9 @@ func (a *apiServer) DeleteExperiments(
 		req.Filters)
 
 	go func() {
-		if expIDs, err := a.deleteExperiments(experiments, curUser); err != nil {
+		expIDs, err := a.deleteExperiments(experiments, curUser)
+		if err != nil {
+			// set experiment state to DeleteFailed
 			for _, id := range expIDs {
 				logrus.WithError(err).Errorf("deleting experiment %d", id)
 			}
