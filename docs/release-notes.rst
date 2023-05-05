@@ -7,6 +7,68 @@
 ###############
 
 **************
+ Version 0.22
+**************
+
+Version 0.22.0
+==============
+
+**Release Date:** May 05, 2023
+
+**Breaking Change**
+
+-  The previous template CRUD endpoints have been removed from the `/templates/*` location. Please
+   use the APIs found at `/api/v1/templates/*`.
+
+-  Experiment: Optimizer must be an instance of tensorflow.keras.optimizers.legacy.Optimizer
+   starting from Keras 2.11
+
+   -  Experiments now use images with TensorFlow 2.11 by default. TensorFlow users who are not
+      explicitly configuring their training image(s) will need to adapt their model code to reflect
+      these changes. Users will likely need to use Keras optimizers located in
+      ``tensorflow.keras.optimizers.legacy``. Depending on the sophistication of users' model code,
+      there may be other breaking changes. Determined is not responsible for these breakages. See
+      the `TensorFlow release notes
+      <https://github.com/tensorflow/tensorflow/releases/tag/v2.11.0>`_ for more details.
+
+   -  PyTorch users and users who specify custom images should not be affected.
+
+**Deprecated Features**
+
+-  Legacy TensorFlow 1 + PyTorch 1.7 + CUDA 10.2 support is deprecated and will be removed in a
+   future version. The final TensorFlow 1.15.5 patch was released in January 2021, and no further
+   security patches are planned. Consequently, we recommend users migrate to modern versions of
+   TensorFlow 2 and PyTorch. Our default environment images currently ship with
+   ``tensorflow==2.11.1`` and ``torch==1.12.0``.
+
+-  ``EstimatorTrial`` is deprecated and will be removed in a future version. TensorFlow has advised
+   Estimator users to switch to Keras since TensorFlow 2.0 was released. Consequently, we recommend
+   users of EstimatorTrial switch to the :class:`~determined.keras.TFKerasTrial` class.
+
+-  Master config option ``logging.additional_fluent_outputs`` is deprecated and will be removed in a
+   future version. We do not plan to offer a replacement at this time. If you are interested in
+   additional logging integrations, please contact us.
+
+**Improvement**
+
+-  HP Search: Trials are persisted as soon as they are requested by the searcher, instead of after
+   they are first scheduled.
+
+-  Trials: Metric storage has been optimized for reading summaries of metrics reported during a
+   trial.
+
+   Extended downtime may result when upgrading from a previous version to this version or a later
+   version. This will occur when your cluster contains a large number of trials and training steps
+   reported. For example, a database with 10,000 trials with 125 million training metrics on a small
+   instance may experience 6 or more hours of downtime during the upgrade.
+
+   (Optional) To minimize downtime, users with large databases can choose to manually run `this SQL
+   file
+   <https://github.com/determined-ai/determined/blob/main/master/static/migrations/20230503144448_add-summary-metrics.tx.up.sql>`__
+   against their cluster's database while it is still running before upgrading to a new version.
+   This is an optional step and is only recommended for significantly large databases.
+
+**************
  Version 0.21
 **************
 
