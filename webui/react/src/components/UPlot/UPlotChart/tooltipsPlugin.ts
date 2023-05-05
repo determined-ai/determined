@@ -7,7 +7,14 @@ import css from './tooltipsPlugin.module.scss';
 
 export type ChartTooltip = string | null;
 
+interface TooltipResult {
+  html?: string;
+  val: number | null | undefined;
+  yDist?: number;
+}
+
 interface Props {
+  closeOnMouseExit?: boolean;
   getXTooltipHeader?: (xIndex: number) => ChartTooltip;
   getXTooltipYLabels?: (xIndex: number) => ChartTooltip[];
   isShownEmptyVal: boolean;
@@ -15,7 +22,13 @@ interface Props {
 }
 
 export const tooltipsPlugin = (
-  { getXTooltipHeader, getXTooltipYLabels, isShownEmptyVal, seriesColors }: Props = {
+  {
+    closeOnMouseExit,
+    getXTooltipHeader,
+    getXTooltipYLabels,
+    isShownEmptyVal,
+    seriesColors,
+  }: Props = {
     isShownEmptyVal: true,
     seriesColors: [],
   },
@@ -45,7 +58,7 @@ export const tooltipsPlugin = (
       </div>`;
 
     let minYDist = 1000;
-    const seriesValues = uPlot.series
+    const seriesValues: Array<TooltipResult | undefined> = uPlot.series
       .map((serie, i) => {
         if (serie.scale === 'x' || !serie.show) return;
 
@@ -161,6 +174,11 @@ export const tooltipsPlugin = (
             hide();
           }
         };
+        if (closeOnMouseExit) {
+          uPlot.over.onmouseout = () => {
+            hide();
+          };
+        }
       },
       ready: (uPlot: uPlot) => {
         tooltipEl = document.createElement('div');

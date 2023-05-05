@@ -73,6 +73,7 @@ const LearningCurveChart: React.FC<Props> = ({
           yScale: 'y',
         }),
         tooltipsPlugin({
+          closeOnMouseExit: true,
           isShownEmptyVal: false,
           seriesColors: trialIds.map((t) => glasbeyColor(t)),
         }),
