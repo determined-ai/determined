@@ -86,8 +86,10 @@ const deletedComponents = await Promise.all(
   ),
 );
 
+const filteredResults = results.filter((r) => r.some((t) => !!t.diff));
 const hasDiff =
-  newComponents.length > 0 || deletedComponents.length > 0 || results.some((r) => !!r.diff);
+  newComponents.length > 0 || deletedComponents.length > 0 || filteredResults.length > 0;
+
 const diffIndicatorPath = path.resolve(process.cwd(), '.diff-detected');
 if (hasDiff) {
   fs.writeFile(diffIndicatorPath, '');
@@ -112,7 +114,7 @@ const makeComparison = ({ component, diff, head, main }, theme) => `
   </div>
 </div>
 `;
-const comparisons = results.map(([darkComparison, lightComparison]) => {
+const comparisons = filteredResults.map(([darkComparison, lightComparison]) => {
   const componentName = darkComparison.component;
   return `
 <div class="comparison" id="${componentName.replace(' ', '_')}_diff">
@@ -141,7 +143,7 @@ const makeStandaloneComponent = ([darkComponent, lightComponent]) => {
 const newSections = newComponents.map(makeStandaloneComponent);
 const deletedSections = deletedComponents.map(makeStandaloneComponent);
 
-const comparisonNavItems = results.map((result) => {
+const comparisonNavItems = filteredResults.map((result) => {
   const componentName = result[0].component;
   const hasDiff = result.some((c) => c.diff);
   return `
