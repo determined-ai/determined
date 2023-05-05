@@ -73,6 +73,7 @@ def parse_args() -> argparse.Namespace:
         type=int,
         default=_defaults.AUTOTUNING_ARG_DEFAULTS["random-seed"],
     )
+    parser.add_argument("--run-full-experiment", action="store_true")
 
     args = parser.parse_args()
 

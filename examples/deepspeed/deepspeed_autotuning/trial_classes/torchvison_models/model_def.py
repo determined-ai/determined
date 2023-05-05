@@ -1,18 +1,15 @@
 import logging
 from typing import Any, Dict
 
-import deepspeed
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 from attrdict import AttrDict
-from determined.pytorch import DataLoader, dsat
-from determined.pytorch.deepspeed import (
-    DeepSpeedTrial,
-    DeepSpeedTrialContext,
-)
 from torch.utils.data import Dataset
 from torchvision import models
+
+import deepspeed
+from determined.pytorch import DataLoader, dsat
+from determined.pytorch.deepspeed import DeepSpeedTrial, DeepSpeedTrialContext
 
 
 class RandImageNetDataset(Dataset):

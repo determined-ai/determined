@@ -12,6 +12,7 @@ from typing import Any, Dict, Iterable, Iterator, List, Optional, Set, Tuple, Un
 import numpy as np
 
 from determined import searcher
+from determined.experimental.client import create_experiment
 from determined.pytorch.dsat import _defaults, _utils
 from determined.util import merge_dicts
 
@@ -457,7 +458,13 @@ class DSATTrialTracker:
 
     @property
     def should_be_failure(self) -> bool:
-        return self.model_profile_info_trial is not None and self.model_profile_info_trial.error
+        model_profile_info_trial_failed = (
+            self.model_profile_info_trial is not None and self.model_profile_info_trial.error
+        )
+        every_autotuning_trial_failed = all(
+            trial.error for _, trial in self if not isinstance(trial, DSATModelProfileInfoTrial)
+        )
+        return model_profile_info_trial_failed or every_autotuning_trial_failed
 
     @property
     def can_run_more_trials(self) -> int:
@@ -627,6 +634,18 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
 
         new_ops_list = []
         if self.trial_tracker.should_shutdown:
+            if self.trial_tracker.best_trial is not None and self.args.run_full_experiment:
+                submitted_config = _utils.get_dict_from_yaml_or_json_path(self.args.config_path)
+                optimal_config = merge_dicts(
+                    submitted_config, {"hyperparameters": self.trial_tracker.best_trial.hparams}
+                )
+                # Delete the keys which enforce autotuning code paths
+                del optimal_config["hyperparameters"][_defaults.OVERWRITE_KEY]["autotuning"]
+                del optimal_config["hyperparameters"][_defaults.USE_DSAT_MODE_KEY]
+                # TODO: add searcher exp_id to the config so the user knows where this came from
+                # and also some "optimal config" label somewhere.
+                create_experiment(optimal_config, self.args.model_dir, self.args.include)
+
             new_ops_list.append(searcher.Shutdown(failure=self.trial_tracker.should_be_failure))
         else:
             while self.trial_tracker.can_run_more_trials:

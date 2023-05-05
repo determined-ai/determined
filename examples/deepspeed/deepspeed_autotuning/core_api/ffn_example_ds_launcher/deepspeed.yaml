@@ -13,7 +13,7 @@ resources:
 searcher:
   name: single
   max_length: 1000
-  metric: throughput
+  metric: loss
   smaller_is_better: False
 hyperparameters:
   dim: 4096

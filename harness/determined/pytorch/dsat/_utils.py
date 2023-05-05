@@ -48,7 +48,7 @@ def get_search_runner_config_from_args(args: argparse.Namespace) -> Dict[str, An
     elif isinstance(submitted_entrypoint, list):
         # Join and re-split to remove any possile white space.
         split_entrypoint = " ".join(submitted_entrypoint)
-        split_entrypoint = submitted_entrypoint.split(" ")
+        split_entrypoint = split_entrypoint.split(" ")
     else:
         raise ValueError(
             f"Expected a string or list for an entrypoint, but received {type(submitted_entrypoint)}"
@@ -258,8 +258,8 @@ def normalize_base_ds_config(
 def get_ds_config_from_hparams(
     hparams: Dict[str, Any],
     model_dir: Union[pathlib.Path, str] = pathlib.Path("."),
-    config_key: str = "deepspeed_config",
-    overwrite_key: str = "overwrite_deepspeed_args",
+    config_key: str = _defaults.CONFIG_KEY,
+    overwrite_key: str = _defaults.OVERWRITE_KEY,
 ) -> Dict[str, Any]:
     """Fetch and recursively merge the deepspeed config from the experiment config
     Follows the rules as described here:
