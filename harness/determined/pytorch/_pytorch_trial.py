@@ -221,6 +221,7 @@ class _PyTorchTrialController:
         else:
             self.trial_id = self.core_context.train._trial_id
 
+        # Don't initialize the state here because it will be invalid until we load a checkpoint.
         self.state = None  # type: Optional[_TrialState]
         self.start_from_batch = steps_completed
         self.val_from_previous_run = self.core_context.train._get_last_validation()
