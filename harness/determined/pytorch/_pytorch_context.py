@@ -15,7 +15,7 @@ try:
     import apex
 except ImportError:  # pragma: no cover
     if torch.cuda.is_available():
-        logging.warning("Failed to import apex.")
+        logging.warning("Failed to import apex. :| ")
     pass
 
 # AMP is only available in PyTorch 1.6+
