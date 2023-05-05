@@ -253,3 +253,55 @@ class MockMaster:
             self.events_count += 1
             event = bindings.v1SearcherEvent(id=self.events_count, experimentInactive=exp_inactive)
             self.events_queue.append(event)
+
+
+class TestDSATTrial:
+    def setup_class(self):
+        self.first_trial = DSATTrial(**DSATTRIAL_ARGS)
+
+    def test_lineage_methods(self):
+        # Create a lineage of ten trials.
+        trials = [self.first_trial]
+        for _ in range(10):
+            trials.append(DSATTrial(parent=trials[-1], **DSATTRIAL_ARGS))
+
+        for idx, trial in enumerate(trials):
+            if idx == 0:
+                assert trial.parent is None
+            else:
+                assert trial.parent == trials[idx - 1]
+            if idx != len(trials) - 1:
+                assert trial.children == set((trials[idx + 1],))
+            else:
+                assert trial.children == set()
+            assert trial.lineage_root == self.first_trial
+            assert trial.lineage_set == set(trials)
+            assert trial.num_trials_in_lineage == len(trials)
+
+    def test_error_checking(self):
+        initial_successful_trials = [self.first_trial]
+        for _ in range(10):
+            initial_successful_trials.append(
+                DSATTrial(parent=initial_successful_trials[-1], **DSATTRIAL_ARGS)
+            )
+
+        errored_trial = DSATTrial(parent=initial_successful_trials[-1], **DSATTRIAL_ARGS)
+        errored_trial.error = True
+        alternating_errored_trials = [errored_trial]
+        for _ in range(10):
+            last_trial = alternating_errored_trials[-1]
+            next_trial = DSATTrial(parent=last_trial, **DSATTRIAL_ARGS)
+            if not last_trial.error:
+                next_trial.error
+            alternating_errored_trials.append(next_trial)
+
+        all_trials = initial_successful_trials + alternating_errored_trials
+
+        seen_errored = False
+        for trial in all_trials:
+            if trial.error:
+                seen_errored = True
+            if not seen_errored:
+                assert not trial.error_in_direct_history
+            else:
+                assert trial.error_in_direct_history

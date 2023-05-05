@@ -271,7 +271,9 @@ def get_ds_config_from_hparams(
         The Deepspeed Configuration for this experiment following the overwriting rules
     """
     model_dir = pathlib.Path(model_dir)
-    assert config_key in hparams, f"Expected to find {config_key} in the Hyperparameters section."
+    assert config_key in hparams, (
+        f"Expected to find {config_key} in the Hyperparameters section. " f"Instead found {hparams}"
+    )
     base_config_file_name = hparams[config_key]
     base_ds_config = normalize_base_ds_config(base_config_file_name, model_dir=model_dir)
     overwrite_ds_config = hparams.get(overwrite_key, {})
