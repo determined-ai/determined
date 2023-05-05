@@ -25,6 +25,10 @@ TODO:
   `ag 'from .*(steps|validations)' master -l | grep -v migration`
 
 
+metrics have test type. (test validation set)
+0 w/ steps completed.
+
+
 timing: 9s on latest-master db dump to run the migration and revert.
 ```
 determined> SELECT

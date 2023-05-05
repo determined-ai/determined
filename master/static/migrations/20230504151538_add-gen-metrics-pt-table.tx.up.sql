@@ -78,6 +78,7 @@ CREATE TABLE generic_metrics (
     partition_type metric_partition_type NOT NULL DEFAULT 'generic',
     CONSTRAINT generic_metrics_trial_id_fkey FOREIGN KEY (trial_id) REFERENCES trials(id)
 );
+-- TODO: set these up to use metrics_id_seq?
 -- drop default values on partitions
 ALTER TABLE raw_validations
 ALTER COLUMN id DROP IDENTITY;
