@@ -221,7 +221,7 @@ class _PyTorchTrialController:
         else:
             self.trial_id = self.core_context.train._trial_id
 
-        self.state = None
+        self.state = None  # type: Optional[_TrialState]
         self.start_from_batch = steps_completed
         self.val_from_previous_run = self.core_context.train._get_last_validation()
         self.step_zero_validation = step_zero_validation
@@ -333,6 +333,7 @@ class _PyTorchTrialController:
         avg_metrics = metrics.get("avg_metrics", {})
         batch_metrics = metrics.get("batch_metrics", [])
 
+        assert self.state
         det.pytorch._log_tb_metrics(
             self.context.get_tensorboard_writer(),
             "train",
@@ -379,6 +380,8 @@ class _PyTorchTrialController:
     def _checkpoint(self, already_exiting: bool) -> None:
         if self.is_chief:
             self.core_context.train.set_status("checkpointing")
+
+        assert self.state
         self.state.last_ckpt = self.state.batches_trained
 
         try:
@@ -487,6 +490,7 @@ class _PyTorchTrialController:
                 self.validation_loader = validation_data
 
     def _step_batch(self) -> None:
+        assert self.state
         self.state.batches_trained += 1
 
         epoch_len = self.context._epoch_len
@@ -508,6 +512,7 @@ class _PyTorchTrialController:
     def _report_searcher_progress(
         self, op: core.SearcherOperation, unit: Optional[core.Unit]
     ) -> None:
+        assert self.state
         if unit == core.Unit.BATCHES:
             op.report_progress(self.state.batches_trained)
         elif unit == core.Unit.RECORDS:
@@ -517,15 +522,18 @@ class _PyTorchTrialController:
             op.report_progress(self.state.epochs_trained)
 
     def _checkpoint_is_current(self) -> bool:
+        assert self.state
         # State always persists checkpoint step in batches
         return self.state.last_ckpt == self.state.batches_trained
 
     def _validation_is_current(self) -> bool:
+        assert self.state
         # State persists validation step in batches
         return self.state.last_val == self.state.batches_trained
 
     def _steps_until_complete(self, train_unit: TrainUnit) -> int:
         assert isinstance(train_unit.value, int), "invalid length type"
+        assert self.state
         if isinstance(train_unit, Batch):
             return train_unit.value - self.state.batches_trained
         elif isinstance(train_unit, Epoch):
@@ -553,7 +561,7 @@ class _PyTorchTrialController:
                 with self.prof.record_timing(
                     f"callbacks.{callback.__class__.__name__}.on_trial_startup"
                 ):
-                    callback.on_trial_startup(self.state.batches_trained, self.latest_checkpoint)
+                    callback.on_trial_startup(self.start_from_batch, self.latest_checkpoint)
                 exit_stack.enter_context(
                     defer(on_shutdown, callback.__class__.__name__, callback.on_trial_shutdown)
                 )
@@ -607,6 +615,7 @@ class _PyTorchTrialController:
 
     def _run(self) -> None:
         ops: Iterator[det.core.SearcherOperation]
+        assert self.state
 
         try:
             if (
@@ -1007,6 +1016,7 @@ class _PyTorchTrialController:
         for callback in self.callbacks.values():
             callback.on_validation_end(metrics)
 
+        assert self.state
         self.state.last_val = self.state.batches_trained
 
         # Report metrics.
@@ -1231,6 +1241,7 @@ class _PyTorchTrialController:
             return
 
         self.state = _TrialState(**state)
+        assert self.state
 
         # Detect the case where the final validation we made was against this exact checkpoint.  In
         # that case, the master will know about the validation, but it would not appear in the
@@ -1255,6 +1266,7 @@ class _PyTorchTrialController:
             epochs_trained=self._get_epoch_idx(state.get("steps_completed")),
         )
 
+        assert self.state
         if self.state.batches_trained == self.val_from_previous_run:
             self.state.last_val = self.state.batches_trained
 
@@ -1302,6 +1314,7 @@ class _PyTorchTrialController:
 
         torch.save(checkpoint, str(path.joinpath("state_dict.pth")))
 
+        assert self.state
         with path.joinpath("trial_state.pkl").open("wb") as f:
             pickle.dump(vars(self.state), f)
 
