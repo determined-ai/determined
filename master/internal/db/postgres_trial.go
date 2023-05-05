@@ -468,19 +468,13 @@ func (db *PgDB) updateLatestValidationID(ctx context.Context, tx *sqlx.Tx, trial
 // updateTotalBatches update precomputed total_batches based on existing steps and validations.
 func (db *PgDB) updateTotalBatches(ctx context.Context, tx *sqlx.Tx, trialID int) error {
 	if _, err := tx.ExecContext(ctx, `
-		UPDATE trials SET total_batches = sub.new_max_total_batches_processed
+		UPDATE trials
+		SET total_batches = latest.total_batches_processed
 		FROM (
-			SELECT max(q.total_batches) AS new_max_total_batches_processed
-			FROM (
-			SELECT coalesce(max(s.total_batches), 0) AS total_batches
-			FROM steps s
-			WHERE s.trial_id = $1
-			UNION ALL
-			SELECT coalesce(max(v.total_batches), 0) AS total_batches
-			FROM validations v
-			WHERE v.trial_id = $1
-		) q
-		) AS sub;
+				SELECT max(m.total_batches) AS total_batches_processed
+				FROM metrics m
+				WHERE m.trial_id = $1 AND m.archived = false
+			) AS latest;
 		`, trialID); err != nil {
 		return errors.Wrap(err, "error computing total_batches")
 	}
