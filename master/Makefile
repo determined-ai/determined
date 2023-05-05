@@ -113,8 +113,14 @@ check: check-gen
 fmt-sql:
 	# there are complaints from this tool that cannot be auto-fixed
 	# and we ignore them for now.
-	sqlfluff format -p 0 --dialect postgres . || exit 0
+	# sqlfluff format -p 0 --dialect postgres . || exit 0
 	# sqlfluff fix -p 0 --dialect postgres . || exit 0
+
+	# FIXME: not sure why it fails.
+	# the original docker image offerd by the author is missing.
+	# darold.net/pgformatter
+
+	find . -name "*.sql" | xargs docker run --rm --volume "$(shell pwd):/work" backplane/pgformatter -i || exit 0
 
 .PHONY: check-sql
 check-sql:
