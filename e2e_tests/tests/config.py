@@ -84,6 +84,12 @@ def deepspeed_examples_path(path: str) -> str:
     return os.path.join(os.path.dirname(__file__), "../../examples/deepspeed", path)
 
 
+def deepspeed_autotuning_examples_path(path: str) -> str:
+    return os.path.join(
+        os.path.dirname(__file__), "../../examples/deepspeed/deepspeed_autotuning", path
+    )
+
+
 def custom_search_method_examples_path(path: str) -> str:
     return os.path.join(os.path.dirname(__file__), "../../examples/custom_search_method", path)
 

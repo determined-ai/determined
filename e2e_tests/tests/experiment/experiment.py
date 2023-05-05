@@ -53,6 +53,29 @@ def create_experiment(
     return int(m.group(1))
 
 
+def maybe_run_autotuning_experiment(
+    config_file: str, model_def_file: str, create_args: Optional[List[str]] = None
+) -> subprocess.CompletedProcess:
+    command = [
+        "python3",
+        "-m",
+        "determined.pytorch.dsat",
+        config_file,
+        model_def_file,
+    ]
+
+    if create_args is not None:
+        command += create_args
+
+    env = os.environ.copy()
+    env["DET_DEBUG"] = "true"
+    env["DET_MASTER"] = conf.make_master_url()
+
+    return subprocess.run(
+        command, universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env
+    )
+
+
 def pause_experiment(experiment_id: int) -> None:
     command = ["det", "-m", conf.make_master_url(), "experiment", "pause", str(experiment_id)]
     subprocess.check_call(command)

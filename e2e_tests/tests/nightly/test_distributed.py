@@ -213,6 +213,20 @@ def test_hf_trainer_api_integration() -> None:
     )
 
 
+@pytest.mark.distributed
+@pytest.mark.gpu_required
+@pytest.mark.deepspeed
+def test_hf_trainer_deepspeed_autotuning() -> None:
+    config_path = conf.deepspeed_autotuning_examples_path(
+        "hf_trainer_api/image_classification/deepspeed.yaml"
+    )
+    config = conf.load_config(config_path)
+
+    exp.run_basic_test_with_temp_config(
+        config, conf.deepspeed_autotuning_examples_path("hf_trainer_api/image_classification"), 1
+    )
+
+
 @pytest.mark.deepspeed
 @pytest.mark.gpu_required
 def test_deepspeed_moe() -> None:
