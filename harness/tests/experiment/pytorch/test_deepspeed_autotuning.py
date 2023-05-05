@@ -1,9 +1,7 @@
 import pathlib
 import tempfile
-from argparse import Namespace
 from collections import deque
 from typing import Any, Deque, Dict, List, Optional, Sequence, Union
-from unittest import mock
 
 import pytest
 
@@ -19,6 +17,9 @@ ERROR_METRIC_NAME = "error"
 BASE_EXPERIMENT_FIXTURE_PATH = (
     pathlib.Path(__file__).resolve().parent.parent.joinpath("fixtures/deepspeed_autotune")
 )
+MODEL_DIR = BASE_EXPERIMENT_FIXTURE_PATH.joinpath("example_experiment")
+CONFIG_PATH = MODEL_DIR.joinpath("deepspeed.yaml")
+ARGS = _utils.get_parser().parse_args([str(MODEL_DIR), str(CONFIG_PATH)])
 
 MODEL_INFO_PROFILE_METRIC_FIXTURE = {
     "num_params": 60192808,
@@ -26,6 +27,14 @@ MODEL_INFO_PROFILE_METRIC_FIXTURE = {
     "activation_mem_per_gpu": 89828352,
     "rank": 0,
     "gpu_mem": 15843721216,
+}
+
+
+DSATTRIAL_ARGS = {
+    "hparams": {"deepspeed_config": "ds_config.json"},
+    "model_dir": BASE_EXPERIMENT_FIXTURE_PATH.joinpath("example_experiment"),
+    "slots_per_trial": 2,
+    "length": 5,
 }
 
 
