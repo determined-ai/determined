@@ -525,7 +525,7 @@ const CodeViewer: React.FC<Props> = ({
             <h5>Please, choose a file to preview.</h5>
           ) : editorMode === 'monaco' ? (
             <MonacoEditor
-              height={resize.height - 320}
+              height={resize.height - 240}
               language={getSyntaxHighlight()}
               options={{
                 minimap: {
