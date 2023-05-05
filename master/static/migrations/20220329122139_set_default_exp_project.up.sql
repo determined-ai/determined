@@ -6,10 +6,9 @@ EXECUTE format('ALTER TABLE experiments ALTER COLUMN project_id SET DEFAULT %L'
 END $$;
 
 -- Update any experiments after the previous release
-UPDATE experiments SET
-    project_id = (
-        SELECT MIN(id) FROM projects WHERE name = 'Uncategorized'
-    )
+UPDATE experiments SET project_id = (
+  SELECT MIN(id) FROM projects WHERE name = 'Uncategorized'
+)
 WHERE project_id IS NULL;
 
 -- Disallow nulls in the future

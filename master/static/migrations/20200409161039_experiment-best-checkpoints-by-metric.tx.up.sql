@@ -1,8 +1,6 @@
-CREATE FUNCTION public.experiments_best_checkpoints_by_metric(
-    exp experiments, metric text, smaller_is_better boolean, lim integer
-) RETURNS SETOF checkpoints
-LANGUAGE sql STABLE
-AS $$
+CREATE FUNCTION public.experiments_best_checkpoints_by_metric(exp experiments, metric text, smaller_is_better boolean, lim integer) RETURNS SETOF checkpoints
+    LANGUAGE sql STABLE
+    AS $$
     WITH const AS (
         SELECT
             coalesce(smaller_is_better, (exp.config->'searcher'->>'smaller_is_better')::boolean, true) AS smaller_is_better,
