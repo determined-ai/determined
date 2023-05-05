@@ -135,6 +135,7 @@ const LogViewer: React.FC<Props> = ({
   const [showButtons, setShowButtons] = useState<boolean>(false);
   const [logs, setLogs] = useState<ViewerLog[]>([]);
   const containerSize = useResize(logsRef);
+  const pageSize = useResize();
   const charMeasures = useGetCharMeasureInContainer(logsRef);
 
   const { dateTimeWidth, maxCharPerLine } = useMemo(() => {
@@ -578,7 +579,7 @@ const LogViewer: React.FC<Props> = ({
         <div className={css.container}>
           <div className={css.logs} ref={logsRef}>
             <VariableSizeList
-              height={containerSize.height}
+              height={pageSize.height - 240}
               itemCount={logs.length}
               itemData={logs}
               itemSize={getItemHeight}
