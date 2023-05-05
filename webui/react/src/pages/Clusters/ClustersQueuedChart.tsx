@@ -20,11 +20,9 @@ const ClustersQueuedChart: React.FC<Props> = ({ poolStats }: Props) => {
   const queuedStats = useMemo(() => {
     if (!poolStats?.aggregates) return;
     const { aggregates } = poolStats;
-    const agg = aggregates.filter(
+    const aggd = aggregates.filter(
       (item) => Date.parse(item.periodStart) >= Date.now() - viewDays * DURATION_DAY,
     );
-    // If aggregates only has one record of today, then do not display.
-    const aggd = agg.length > 1 ? agg : [];
     return {
       hoursAverage: { average: aggd.map((item) => item.seconds / 60) },
       time: aggd.map((item) => item.periodStart),
@@ -49,7 +47,7 @@ const ClustersQueuedChart: React.FC<Props> = ({ poolStats }: Props) => {
         <ClusterHistoricalUsageChart
           chartKey={viewDays}
           hoursByLabel={queuedStats.hoursAverage}
-          label="Queued Minuts"
+          label="Queued Minutes"
           time={queuedStats.time}
         />
       </Section>
