@@ -47,6 +47,22 @@ const (
 	terminatedDispatchCleanupInterval = 18 * time.Hour
 )
 
+// The launcher can only run up to 8 concurrent async launch threads. It will
+// queue anything after that.  Therefore, set the maximum number of job launch
+// goroutines to 8 to match the number of concurrent async launch threads that
+// the launcher is able to handle.  We don't want any launch requests sitting
+// in the launcher's queue, because the request contains a lot of data that's
+// needed for the experiment, so we don't want to needlessly consume a lot of
+// memory.
+const maxJobLaunchGoRoutines = 8
+
+// Maximum time to wait, in seconds, for the HPC job ID to be reported after we
+// request an asynchronous launch.
+const maxWaitTimeForHpcJobIDAfterAsyncLaunch = 120
+
+// Keeps track of how many times "schedulePendingTasks()" was called.
+var numTimesScheduledPendingTasksCalled uint64 = 0
+
 var errNotSupportedOnHpcCluster = fmt.Errorf("%w on HPC clusters", rmerrors.ErrNotSupported)
 
 type wlmType string
@@ -215,8 +231,10 @@ type dispatcherResourceManager struct {
 	hpcDetailsCache               *hpcResourceDetailsCache
 	poolProviderMap               map[string][]string
 	dispatchIDToHPCJobID          map[string]string
+	scheduledLaunches             map[string]bool
 	dispatchIDToAllocationIDMutex sync.RWMutex
 	dispatchIDToHPCJobIDMutex     sync.RWMutex
+	scheduledLaunchesMutex        sync.RWMutex
 	dbState                       dispatcherState
 }
 
@@ -256,6 +274,7 @@ func newDispatcherResourceManager(
 		poolConfig:               poolConfig,
 		poolProviderMap:          makeProvidedPoolsMap(poolConfig),
 		dispatchIDToHPCJobID:     make(map[string]string),
+		scheduledLaunches:        make(map[string]bool),
 		dbState:                  *dbState,
 	}
 	watcher.rm = result
@@ -608,6 +627,7 @@ func (m *dispatcherResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 		if !ok {
 			sendResourceStateChangedErrorResponse(ctx, errors.New("no such task"), msg,
 				"task not found in the task list")
+
 			// no request to process, so bail
 			return nil
 		}
@@ -890,17 +910,83 @@ func (m *dispatcherResourceManager) waitForDispatchTerminalState(ctx *actor.Cont
 	ctx.Log().Warnf("Dispatch %s still active, but wait time exceeded.  Continuing...", dispatchID)
 }
 
+// Called when "startLauncherJob()" finishes, it calls this function to wait
+// until the launcher async thread, which is responsible for running the
+// Slurm/PBS job, completes. The way we detect completion of the launcher
+// async thread is when we get the HPC job ID.  The launcher async thread can
+// take in the neighborhood of 10 seconds to complete, so we can to make sure
+// that the async thread completes before we send more jobs to the launcher.
+// The launcher is configured to run at most 8 concurrent async threads, and
+// anything beyond that gets queued. We don't want job requests containing a
+// large amount of data sitting in the launcher's queue, so we have to be
+// careful to only send job requests to the launcher that it can run
+// immediately.
+func (m *dispatcherResourceManager) waitForLauncherAsyncThreadToComplete(
+	ctx *actor.Context,
+	msg StartDispatcherResources,
+	dispatchID *string,
+) {
+	allocationID := msg.AllocationID.String()
+
+	// No longer a scheduled launch, since we've now actually launched the job.
+	defer m.deleteScheduledLaunch(allocationID)
+
+	if *dispatchID == "" {
+		ctx.Log().WithField("allocation-id", allocationID).
+			Warn("Cannot check for HPC job ID because dispatch ID is empty")
+		return
+	}
+
+	hpcJobID := ""
+
+	jobExited := false
+
+	for i := 0; i < maxWaitTimeForHpcJobIDAfterAsyncLaunch; i++ {
+		if id, ok := m.getHpcJobIDFromDispatchID(*dispatchID); ok {
+			hpcJobID = id
+			break
+		}
+
+		// If the allocation ID is no longer in the "scheduledLaunches" map,
+		// then that means that "resourcesReleased()" was called, and the
+		// job must have job completed or was terminated.
+		if !m.isScheduledLaunch(allocationID) {
+			jobExited = true
+			break
+		}
+
+		time.Sleep(1 * time.Second)
+	}
+
+	if jobExited {
+		ctx.Log().WithField("allocation-id", allocationID).
+			WithField("dispatch-id", *dispatchID).
+			Warnf("startLauncherJob goroutine completed but job has already exited")
+		return
+	}
+
+	if len(hpcJobID) == 0 {
+		ctx.Log().WithField("allocation-id", allocationID).
+			WithField("dispatch-id", *dispatchID).
+			WithField("hpc-job-id", hpcJobID).
+			Warn("startLauncherJob goroutine completed without HPC job ID")
+		return
+	}
+
+	ctx.Log().WithField("allocation-id", allocationID).
+		WithField("dispatch-id", *dispatchID).
+		WithField("hpc-job-id", hpcJobID).
+		Info("startLauncherJob goroutine completed with HPC job ID")
+}
+
 func (m *dispatcherResourceManager) startLauncherJob(
 	ctx *actor.Context,
 	msg StartDispatcherResources,
 	req *sproto.AllocateRequest,
 ) {
-	hpcDetails, err := m.hpcDetailsCache.load()
-	if err != nil {
-		sendResourceStateChangedErrorResponse(ctx, err, msg,
-			"unable to start jobs without HPC details cache written")
-		return
-	}
+	dispatchID := ""
+
+	defer m.waitForLauncherAsyncThreadToComplete(ctx, msg, &dispatchID)
 
 	// Log at INFO level so that we know we got this far. We had an issue on the
 	// Grenoble cluster where an attempt to delete completed experiments failed
@@ -910,7 +996,15 @@ func (m *dispatcherResourceManager) startLauncherJob(
 	// help us troubleshoot customer issues.
 	ctx.Log().WithField("allocation-id", msg.AllocationID).
 		WithField("description", msg.Spec.Description).
+		WithField("scheduled-launches", m.getNumScheduledLaunches()).
 		Info("Received request to launch job")
+
+	hpcDetails, err := m.hpcDetailsCache.load()
+	if err != nil {
+		sendResourceStateChangedErrorResponse(ctx, err, msg,
+			"unable to start jobs without HPC details cache written")
+		return
+	}
 
 	// TODO: There is a 'which first?' issue with resolving slot type and partition that needs to be
 	// unwound before it causes a bug.
@@ -981,12 +1075,15 @@ func (m *dispatcherResourceManager) startLauncherJob(
 		})
 	}
 
-	dispatchID, err := m.sendManifestToDispatcher(ctx, manifest, impersonatedUser)
+	tempDispatchID, err := m.sendManifestToDispatcher(ctx, manifest, impersonatedUser)
+
 	if err != nil {
 		sendResourceStateChangedErrorResponse(ctx, err, msg,
 			"unable to create the launcher job")
 		return
 	}
+
+	dispatchID = tempDispatchID
 
 	ctx.Log().WithField("allocation-id", msg.AllocationID).
 		WithField("description", msg.Spec.Description).
@@ -1554,9 +1651,6 @@ func (m *dispatcherResourceManager) addTask(ctx *actor.Context, msg sproto.Alloc
 		AllocationRef: msg.AllocationRef,
 	})
 
-	if len(msg.AllocationID) == 0 {
-		msg.AllocationID = model.AllocationID(uuid.New().String())
-	}
 	if msg.Group == nil {
 		msg.Group = msg.AllocationRef
 	}
@@ -1666,8 +1760,37 @@ func (m *dispatcherResourceManager) assignResources(
 	}
 }
 
-func (m *dispatcherResourceManager) resourcesReleased(ctx *actor.Context, handler *actor.Ref) {
-	ctx.Log().Infof("resources are released for %s", handler.Address())
+func (m *dispatcherResourceManager) resourcesReleased(
+	ctx *actor.Context,
+	handler *actor.Ref,
+) {
+	allocationID := ""
+
+	allocation := m.reqList.Allocation(handler)
+
+	if allocation != nil {
+		allocationID = allocation.ID.String()
+
+		// Remove any scheduled launch for the job associated with the
+		// allocation ID.  Typically, this would be called at the end of
+		// "startLauncherJob()". However, if the experiment is canceled
+		// immediately, it is possible for "resourcesReleased()" to be called
+		// without ever getting a "StartDispatcherResources" message.
+		// Therefore, we make sure we remove the allocation ID from the
+		// "scheduledLaunches" map here, since the size of the map determines
+		// if "schedulePendingTasks()" will assign resources to another job
+		// (i.e., send another StartDispatcherResources message). It should
+		// also be noted that "resourcesReleased()" may get called multiple
+		// times, but there's no harm in calling "deleteScheduledLaunch()"
+		// more than once.
+		m.deleteScheduledLaunch(allocationID)
+	}
+
+	ctx.Log().WithField("allocation-id", allocationID).
+		WithField("address", handler.Address()).
+		WithField("scheduled-launches", m.getNumScheduledLaunches()).
+		Info("resources are released")
+
 	m.reqList.RemoveTaskByHandler(handler)
 }
 
@@ -1736,13 +1859,75 @@ func (m *dispatcherResourceManager) getOrCreateGroup(
 }
 
 func (m *dispatcherResourceManager) schedulePendingTasks(ctx *actor.Context) {
+	numTimesScheduledPendingTasksCalled++
+
 	for it := m.reqList.Iterator(); it.Next(); {
 		req := it.Value()
 		assigned := m.reqList.Allocation(req.AllocationRef)
 		if !tasklist.AssignmentIsScheduled(assigned) {
+			// A restore means that the Determined master was restarted and
+			// we're simply monitoring the jobs we previously launched. When
+			// it's not a restore, we want to limit the number of launch
+			// requests we send to the launcher, so that we don't overwhelm
+			// the launcher with too many concurrent requests.
+			if !req.Restore {
+				count := m.getNumScheduledLaunches()
+
+				if count >= maxJobLaunchGoRoutines {
+					// To help us troubleshoot problems, log a message every 10
+					// seconds when we've reached our goroutine limit. The
+					// "schedulePendingTasks()" function gets called twice a
+					// second, so we modulo divide by 20 to log the message
+					// every 10 seconds.
+					if numTimesScheduledPendingTasksCalled%20 == 0 {
+						ctx.Log().WithField("scheduled-launches", count).
+							Info("Delaying start of task because the concurrent launch limit has been reached")
+					}
+					return
+				}
+
+				// Add the allocation ID to the "scheduledLaunches" map. The
+				// "startLauncherJob()" function will remove the allocation ID
+				// from the map when it's launched the job. The
+				// "resourcesReleased()" function will also remove the
+				// allocation ID from the map, since jobs that are canceled
+				// too quickly may never call "startLauncherJob()".
+				m.addScheduledLaunch(req.AllocationID.String())
+			}
+
 			m.assignResources(ctx, req)
 		}
 	}
+}
+
+func (m *dispatcherResourceManager) addScheduledLaunch(allocationID string) {
+	m.scheduledLaunchesMutex.Lock()
+	defer m.scheduledLaunchesMutex.Unlock()
+
+	m.scheduledLaunches[allocationID] = true
+}
+
+func (m *dispatcherResourceManager) deleteScheduledLaunch(allocationID string) {
+	m.scheduledLaunchesMutex.Lock()
+	defer m.scheduledLaunchesMutex.Unlock()
+
+	delete(m.scheduledLaunches, allocationID)
+}
+
+func (m *dispatcherResourceManager) isScheduledLaunch(allocationID string) bool {
+	m.scheduledLaunchesMutex.RLock()
+	defer m.scheduledLaunchesMutex.RUnlock()
+
+	_, ok := m.scheduledLaunches[allocationID]
+
+	return ok
+}
+
+func (m *dispatcherResourceManager) getNumScheduledLaunches() int {
+	m.scheduledLaunchesMutex.RLock()
+	defer m.scheduledLaunchesMutex.RUnlock()
+
+	return len(m.scheduledLaunches)
 }
 
 func (m *dispatcherResourceManager) disableAgent(
