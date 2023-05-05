@@ -28,7 +28,6 @@ import transformers
 from datasets import load_dataset
 from determined.integrations.huggingface import (
     DetCallback,
-    create_consistent_hf_args_for_deepspeed,
     get_hf_args_with_overwrites,
 )
 from determined.pytorch import dsat
@@ -223,19 +222,11 @@ def parse_input_arguments(
     else:
         args = sys.argv[1:]
         args.extend(dict2args(training_arguments))
-<<<<<<< HEAD
-        ds_config_path = dsat.get_ds_config_path_from_args(args)
-        if ds_config_path is not None:
-            dsat.replace_ds_config_file_using_overwrites(args, hparams)
-            args = create_consistent_hf_args_for_deepspeed(args, ds_config_path)
-        model_args, data_args, training_args = parser.parse_args_into_dataclasses(args)
-=======
         if any("--deepspeed" == arg.strip() for arg in args):
             args = get_hf_args_with_overwrites(args, hparams)
         model_args, data_args, training_args = parser.parse_args_into_dataclasses(
             args, look_for_args_file=False
         )
->>>>>>> 8630a0fd1 (feat: use lock with json overwrite for hf)
 
     return model_args, data_args, training_args
 

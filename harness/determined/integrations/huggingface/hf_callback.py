@@ -360,7 +360,7 @@ def get_hf_args_with_overwrites(
     obey the above constraints.
     """
     assert overwrite_key in hparams, (
-        f"`create_consistent_hf_args_for_deepspeed` expected {overwrite_key} to be a key in "
+        f"`get_hf_args_with_overwrites` expected {overwrite_key} to be a key in "
         f"`hparams. Received {hparams}"
     )
     # Verify that the appropriate keys in the DS json file have `"auto"` values
