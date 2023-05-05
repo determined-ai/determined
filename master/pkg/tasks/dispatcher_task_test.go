@@ -1762,6 +1762,19 @@ func TestTaskSpec_jobAndProjectSource(t *testing.T) {
 			wantPbsResult:   []string{"-P \"el1_el2\""},
 			wantSlurmResult: []string{"--wckey=\"el1,el2\""},
 		},
+		{
+			name: "label:prefix mode; invalid PBS project characters",
+			fields: fields{
+				Project:   "project1",
+				Workspace: "workspace1",
+				Labels:    []string{"label1", "label2", "label3/[]\";:|<>+,?*"},
+			},
+			args: args{
+				mode: ptrs.Ptr("label:lab"),
+			},
+			wantPbsResult:   []string{"-P \"el1_el2_el3_____________\""},
+			wantSlurmResult: []string{"--wckey=\"el1,el2,el3/[]\\\";:|<>+,?*\""},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

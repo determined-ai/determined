@@ -46,6 +46,8 @@ const (
 	podmanCarrierPbs          = "com.cray.analytics.capsules.carriers.hpc.pbs.PodmanOverPbs"
 	enrootCarrierPbs          = "com.cray.analytics.capsules.carriers.hpc.pbs.EnrootOverPbs"
 	unspecifiedSlotsPerNode   = 0
+
+	pbsDisallowedProjectCharacters = "/[]\";:|<>+,?*"
 )
 
 // The "launcher" is very sensitive when it comes to the payload name. There
@@ -409,7 +411,16 @@ func computeJobProjectResultForLabels(
 }
 
 func formatPbsLabelResult(label string) string {
+	label = strings.Map(mapPbsInvalidChars, label)
 	return fmt.Sprintf("-P %s", addQuotes(label))
+}
+
+// mapPbsInvalidChars maps any character not valid for a PBS project name to the '_'.
+func mapPbsInvalidChars(in rune) rune {
+	if strings.ContainsRune(pbsDisallowedProjectCharacters, in) {
+		return '_'
+	}
+	return in
 }
 
 func formatSlurmLabelResult(label string) string {
