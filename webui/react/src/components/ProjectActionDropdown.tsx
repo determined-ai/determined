@@ -157,7 +157,6 @@ const ProjectActionDropdown: React.FC<Props> = ({
         disabled={menu?.length === 0}
         isContextMenu={isContextMenu}
         menu={menu}
-        placement="bottomLeft"
         onClick={onClick}>
         {children}
       </Dropdown>

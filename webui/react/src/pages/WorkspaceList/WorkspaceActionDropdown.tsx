@@ -150,7 +150,7 @@ const WorkspaceActionDropdown: React.FC<Props> = ({
 
   return children ? (
     <>
-      <Dropdown isContextMenu={isContextMenu} menu={menu} placement="bottomLeft" onClick={onClick}>
+      <Dropdown isContextMenu={isContextMenu} menu={menu} onClick={onClick}>
         {children}
       </Dropdown>
       {contextHolders}

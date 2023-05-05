@@ -281,7 +281,6 @@ const ExperimentActionDropdown: React.FC<Props> = ({
         isContextMenu={isContextMenu}
         menu={dropdownMenu}
         open={makeOpen}
-        placement="bottomLeft"
         onClick={handleDropdown}>
         {children}
       </Dropdown>

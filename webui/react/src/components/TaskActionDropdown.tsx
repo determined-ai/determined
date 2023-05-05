@@ -73,7 +73,7 @@ const TaskActionDropdown: React.FC<Props> = ({ task, onComplete, children }: Pro
   };
 
   return children ? (
-    <Dropdown isContextMenu menu={menuItems} placement="bottomLeft" onClick={handleDropdown}>
+    <Dropdown isContextMenu menu={menuItems} onClick={handleDropdown}>
       {children}
     </Dropdown>
   ) : (

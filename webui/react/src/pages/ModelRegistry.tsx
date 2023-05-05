@@ -387,7 +387,9 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
   }, [resetSettings]);
 
   const ModelActionMenu = useCallback(
-    (record: ModelItem, canDeleteModelFlag: boolean, canModifyModelFlag: boolean) => {
+    (record: ModelItem) => {
+      const canDeleteModelFlag = canDeleteModel({ model: record });
+      const canModifyModelFlag = canModifyModel({ model: record });
       const menuItems: MenuItem[] = [];
       if (canModifyModelFlag) {
         menuItems.push({
@@ -404,7 +406,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
 
       return menuItems;
     },
-    [],
+    [canDeleteModel, canModifyModel],
   );
 
   const handleDropdown = useCallback(
@@ -453,7 +455,8 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
       return (
         <Dropdown
           disabled={!canDeleteModelFlag && !canModifyModelFlag}
-          menu={ModelActionMenu(record, canDeleteModelFlag, canModifyModelFlag)}
+          menu={ModelActionMenu(record)}
+          placement="bottomRight"
           onClick={(key) => handleDropdown(key, record)}>
           <Button icon={<Icon name="overflow-vertical" title="Action menu" />} type="text" />
         </Dropdown>
@@ -664,17 +667,16 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
 
   const ModelActionDropdown = useCallback(
     ({ record, children }: { children: React.ReactNode; record: ModelItem }) => {
-      const canDeleteModelFlag = canDeleteModel({ model: record });
-      const canModifyModelFlag = canModifyModel({ model: record });
       return (
         <Dropdown
-          menu={ModelActionMenu(record, canDeleteModelFlag, canModifyModelFlag)}
+          isContextMenu
+          menu={ModelActionMenu(record)}
           onClick={(key) => handleDropdown(key, record)}>
           {children}
         </Dropdown>
       );
     },
-    [ModelActionMenu, canDeleteModel, canModifyModel, handleDropdown],
+    [ModelActionMenu, handleDropdown],
   );
 
   return (

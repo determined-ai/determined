@@ -38,11 +38,9 @@ const PageHeaderFoldable: React.FC<Props> = ({ foldableContent, leftContent, opt
   const [isExpanded, setIsExpanded] = useState(false);
 
   const dropdownClasses = [css.optionsDropdown];
-  if (options && options.length > 0) {
-    if (options.length === 1) dropdownClasses.push(css.optionsDropdownOneChild);
-    if (options.length === 2) dropdownClasses.push(css.optionsDropdownTwoChild);
-    if (options.length === 3) dropdownClasses.push(css.optionsDropdownThreeChild);
-  }
+  if (options?.length === 1) dropdownClasses.push(css.optionsDropdownOneChild);
+  if (options?.length === 2) dropdownClasses.push(css.optionsDropdownTwoChild);
+  if (options?.length === 3) dropdownClasses.push(css.optionsDropdownThreeChild);
 
   const menu: MenuItem[] = (options ?? []).map((option) => ({
     className: css.optionsDropdownItem,

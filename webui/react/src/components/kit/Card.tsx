@@ -15,6 +15,7 @@ type CardPropsBase = {
   children?: React.ReactNode;
   disabled?: boolean;
   size?: keyof typeof CardSize;
+  onDropdown?: (key: string) => void;
 };
 
 const CardSize: Record<string, CSSProperties> = {
@@ -26,12 +27,10 @@ type CardProps = (
   | {
       href?: string;
       onClick?: never;
-      onDropdown?: (key: string) => void;
     }
   | {
       href?: never;
       onClick?: () => void;
-      onDropdown?: (key: string) => void;
     }
 ) &
   CardPropsBase;

@@ -160,7 +160,7 @@ const useTrialActions = ({
 
     return children ? (
       <>
-        <Dropdown menu={menu} placement="bottomLeft" onClick={handleDropdown}>
+        <Dropdown menu={menu} onClick={handleDropdown}>
           {children}
         </Dropdown>
       </>

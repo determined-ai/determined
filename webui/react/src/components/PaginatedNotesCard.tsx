@@ -150,22 +150,8 @@ const PaginatedNotesCard: React.FC<Props> = ({
     setEditedName((prev) => notes?.[currentPage]?.name ?? prev);
   }, [currentPage, notes]);
 
-  // const ActionMenu = useCallback(
-  //   (pageNumber: number) => {
-  //     const onItemClick: MenuProps['onClick'] = (e) => {
-  //       e.domEvent.stopPropagation();
-  //       handleDeletePage(pageNumber);
-  //     };
-  //     const menuItems: MenuProps['items'] = [{ danger: true, key: 'delete', label: 'Delete...' }];
-  //     return { items: menuItems, onClick: onItemClick };
-  //   },
-  //   [handleDeletePage],
-  // );
-
   const handleDropdown = useCallback(
-    (key: string, pageNumber: number) => {
-      handleDeletePage(pageNumber);
-    },
+    (pageNumber: number) => handleDeletePage(pageNumber),
     [handleDeletePage],
   );
 
@@ -199,7 +185,7 @@ const PaginatedNotesCard: React.FC<Props> = ({
                   onClick={() => handleSwitchPage(idx)}>
                   <span>{note.name}</span>
                   {!disabled && (
-                    <Dropdown menu={DROPDOWN_MENU} onClick={(key) => handleDropdown(key, idx)}>
+                    <Dropdown menu={DROPDOWN_MENU} onClick={() => handleDropdown(idx)}>
                       <div className={css.action} onClick={(e) => e.stopPropagation()}>
                         <Icon name="overflow-horizontal" title="Action menu" />
                       </div>
@@ -233,7 +219,7 @@ const PaginatedNotesCard: React.FC<Props> = ({
         <NotesCard
           disabled={disabled}
           extra={
-            <Dropdown menu={DROPDOWN_MENU} onClick={(key) => handleDropdown(key, currentPage)}>
+            <Dropdown menu={DROPDOWN_MENU} onClick={() => handleDropdown(currentPage)}>
               <div style={{ cursor: 'pointer' }}>
                 <Icon name="overflow-horizontal" title="Action menu" />
               </div>

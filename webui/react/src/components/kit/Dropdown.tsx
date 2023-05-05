@@ -8,26 +8,16 @@ export interface MenuDivider {
 }
 
 export interface MenuOption {
-  className?: string;
   danger?: boolean;
   disabled?: boolean;
   key: string;
   label: React.ReactNode;
   icon?: React.ReactNode;
-  type?: 'item';
 }
 
 export type MenuItem = MenuDivider | MenuOption;
 
-export type Placement =
-  | 'topLeft'
-  | 'topCenter'
-  | 'topRight'
-  | 'bottomLeft'
-  | 'bottomCenter'
-  | 'bottomRight'
-  | 'top'
-  | 'bottom';
+export type Placement = 'bottomLeft' | 'bottomRight';
 
 export type DropdownEvent = React.MouseEvent<HTMLElement> | React.KeyboardEvent<HTMLElement>;
 
@@ -37,9 +27,7 @@ interface Props {
   menu: MenuItem[];
   open?: boolean;
   placement?: Placement;
-  onClick?:
-    | ((key: string, e: DropdownEvent) => void)
-    | ((key: string, e: DropdownEvent) => Promise<void>);
+  onClick?: (key: string, e: DropdownEvent) => void | Promise<void>;
 }
 const Dropdown: React.FC<PropsWithChildren<Props>> = ({
   children,

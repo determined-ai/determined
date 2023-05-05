@@ -143,7 +143,7 @@ const ActionDropdown = <T extends string>({
   return children ? (
     <>
       <Dropdown
-        isContextMenu={isContextMenu != null ? isContextMenu : true}
+        isContextMenu={isContextMenu ?? true}
         menu={menuItems}
         placement="bottomRight"
         onClick={handleDropdown}>

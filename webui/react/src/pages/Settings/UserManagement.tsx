@@ -120,10 +120,11 @@ const UserActionDropdown = ({ fetchUsers, user, groups, userManagementEnabled }:
           await onToggleActive();
           break;
         case MenuKey.View:
+          ViewUserModal.open();
           break;
       }
     },
-    [ConfigureAgentModal, EditUserModal, ManageGroupsModal, onToggleActive, user],
+    [ConfigureAgentModal, EditUserModal, ManageGroupsModal, onToggleActive, user, ViewUserModal],
   );
 
   return (
