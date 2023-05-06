@@ -57,6 +57,7 @@ AUTOTUNING_ARG_DEFAULTS = {
     "end-profile-step": 5,
     "metric": "FLOPS_per_gpu",
     "random-seed": 42,
+    "run-full-experiment": False,
 }
 
 DEFAULT_SEARCH_RUNNER_CONFIG = {
