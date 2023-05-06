@@ -295,11 +295,12 @@ class LocalSearchRunner(SearchRunner):
                 f.write(str(exp.id))
             state_path = self._get_state_path(exp.id)
             state_path.mkdir(parents=True)
-            logger.info(f"Starting HP searcher for experiment {exp.id}")
             self.state.experiment_id = exp.id
             self.state.last_event_id = 0
             self.save_state(exp.id, [])
             experiment_id = exp.id
+            # Note: Simulating the same print functionality as our CLI when making an experiment.
+            logger.info(f"Created experiment {experiment_id}")
 
         # make sure client is initialized
         client._require_singleton(lambda: None)()

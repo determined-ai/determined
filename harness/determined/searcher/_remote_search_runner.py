@@ -61,6 +61,9 @@ class RemoteSearchRunner(searcher.SearchRunner):
             self.state.last_event_id = 0
             self.save_state(exp.id, [])
             experiment_id = exp.id
+            # Note: Simulating the same print functionality as our CLI when making an experiment.
+            # This line is needed for the e2e tests
+            logger.info(f"Created experiment {exp.id}")
 
         # make sure client is initialized
         client._require_singleton(lambda: None)()

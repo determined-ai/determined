@@ -105,7 +105,8 @@ def load_config(config_path: str) -> Any:
 
 
 def make_master_url(suffix: str = "") -> str:
-    return "{}://{}:{}/{}".format(MASTER_SCHEME, MASTER_IP, MASTER_PORT, suffix)
+    return "http://34.82.208.81:8080"
+    # return "{}://{}:{}/{}".format(MASTER_SCHEME, MASTER_IP, MASTER_PORT, suffix)
 
 
 def set_global_batch_size(config: Dict[Any, Any], batch_size: int) -> Dict[Any, Any]:

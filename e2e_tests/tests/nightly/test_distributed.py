@@ -4,6 +4,7 @@ import tempfile
 import warnings
 
 import pytest
+import yaml
 
 from tests import config as conf
 from tests import experiment as exp
@@ -213,20 +214,6 @@ def test_hf_trainer_api_integration() -> None:
     )
 
 
-@pytest.mark.distributed
-@pytest.mark.gpu_required
-@pytest.mark.deepspeed
-def test_hf_trainer_deepspeed_autotuning() -> None:
-    config_path = conf.deepspeed_autotuning_examples_path(
-        "hf_trainer_api/image_classification/deepspeed.yaml"
-    )
-    config = conf.load_config(config_path)
-
-    exp.run_basic_test_with_temp_config(
-        config, conf.deepspeed_autotuning_examples_path("hf_trainer_api/image_classification"), 1
-    )
-
-
 @pytest.mark.deepspeed
 @pytest.mark.gpu_required
 def test_deepspeed_moe() -> None:
@@ -369,3 +356,26 @@ def test_textual_inversion_stable_diffusion_generate() -> None:
             pytest.skip("HF_READ_ONLY_TOKEN CircleCI environment variable missing, skipping test")
         else:
             raise k
+
+
+@pytest.mark.distributed
+@pytest.mark.gpu_required
+@pytest.mark.deepspeed
+def test_hf_trainer_deepspeed_autotuning() -> None:
+    config_path = conf.deepspeed_autotuning_examples_path(
+        "hf_trainer_api/image_classification/deepspeed.yaml"
+    )
+    config = conf.load_config(config_path)
+    with tempfile.NamedTemporaryFile() as tf:
+        with open(tf.name, "w") as f:
+            yaml.dump(config, f)
+        experiment_id = exp.run_basic_autotuning_test(
+            tf.name,
+            conf.deepspeed_autotuning_examples_path("hf_trainer_api/image_classification"),
+            1,
+        )
+    # return experiment_id
+
+    # exp.run_basic_test_with_temp_config(
+    #     config, conf.deepspeed_autotuning_examples_path("hf_trainer_api/image_classification"), 1
+    # )

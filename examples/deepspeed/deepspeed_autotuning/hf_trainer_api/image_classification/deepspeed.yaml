@@ -27,7 +27,7 @@ entrypoint: >-
   --remove_unused_columns False 
   --do_train  
   --do_eval 
-  --max_steps 100
+  --max_steps 2
   --per_device_train_batch_size 8 
   --per_device_eval_batch_size 8
   --logging_strategy steps 
