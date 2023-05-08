@@ -19,6 +19,7 @@ func Setup(
 	db db.DB,
 ) (*Provisioner, *actor.Ref, error) {
 	ctx.Log().Info("found provisioner configuration")
+	ctx.Log().Debugf("provisioner config: %#v", config)
 	if config.AWS != nil {
 		ctx.Log().Info("connecting to AWS")
 	}

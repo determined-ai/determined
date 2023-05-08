@@ -42,6 +42,15 @@ type Provisioner struct {
 	provider         provider
 	scaleDecider     *scaleDecider
 	telemetryLimiter *rate.Limiter
+	errorTimeout     time.Duration
+	errorRetries     int
+	errorInfo        *errorInfo
+}
+
+type errorInfo struct {
+	err     error
+	time    time.Time
+	retries int
 }
 
 type provider interface {
@@ -49,7 +58,7 @@ type provider interface {
 	slotsPerInstance() int
 	prestart(ctx *actor.Context)
 	list(ctx *actor.Context) ([]*model.Instance, error)
-	launch(ctx *actor.Context, instanceNum int)
+	launch(ctx *actor.Context, instanceNum int) error
 	terminate(ctx *actor.Context, instanceIDs []string)
 }
 
@@ -74,6 +83,11 @@ func New(
 		}
 	}
 
+	var errorTimeout time.Duration
+	if config != nil && config.ErrorTimeout != nil {
+		errorTimeout = time.Duration(*config.ErrorTimeout)
+	}
+
 	return &Provisioner{
 		provider: cluster,
 		scaleDecider: newScaleDecider(
@@ -86,6 +100,8 @@ func New(
 			db,
 		),
 		telemetryLimiter: rate.NewLimiter(rate.Every(telemetryCooldown), 1),
+		errorTimeout:     errorTimeout,
+		errorRetries:     config.ErrorTimeoutRetries,
 	}, nil
 }
 
@@ -116,6 +132,16 @@ func (p *Provisioner) SlotsPerInstance() int {
 	return p.provider.slotsPerInstance()
 }
 
+// CurrentSlotCount returns the number of Slots available in the cluster.
+func (p *Provisioner) CurrentSlotCount(ctx *actor.Context) int {
+	nodes, err := p.provider.list(ctx)
+	if err != nil {
+		ctx.Log().WithError(err).Error("cannot list instances for current slot count")
+		return 0
+	}
+	return p.SlotsPerInstance() * len(nodes)
+}
+
 // InstanceType returns the instance type of the provider for the provisioner.
 func (p *Provisioner) InstanceType() string {
 	return p.provider.instanceType().Name()
@@ -124,7 +150,7 @@ func (p *Provisioner) InstanceType() string {
 func (p *Provisioner) provision(ctx *actor.Context) {
 	instances, err := p.provider.list(ctx)
 	if err != nil {
-		ctx.Log().WithError(err).Error("cannot list instances")
+		ctx.Log().WithError(err).Error("cannot list instances for provisioning")
 		return
 	}
 	updated := p.scaleDecider.updateInstanceSnapshot(instances)
@@ -155,7 +181,9 @@ func (p *Provisioner) provision(ctx *actor.Context) {
 	if numToLaunch := p.scaleDecider.calculateNumInstancesToLaunch(); numToLaunch > 0 {
 		ctx.Log().Infof("decided to launch %d instances (type %s)",
 			numToLaunch, p.provider.instanceType().Name())
-		p.provider.launch(ctx, numToLaunch)
+		if err := p.launch(ctx, numToLaunch); err != nil {
+			ctx.Log().WithError(err).Error("failure launching instances")
+		}
 	}
 
 	if p.telemetryLimiter.Allow() {
@@ -163,4 +191,41 @@ func (p *Provisioner) provision(ctx *actor.Context) {
 			instances,
 			p.InstanceType())
 	}
+}
+
+func (p *Provisioner) launch(ctx *actor.Context, numToLaunch int) error {
+	if err := p.GetError(); err != nil {
+		return err
+	}
+	p.setError(p.provider.launch(ctx, numToLaunch))
+	return p.GetError()
+}
+
+// GetError returns the last error encountered by the provisioner.
+func (p *Provisioner) GetError() error {
+	if p == nil || p.errorInfo == nil {
+		return nil
+	}
+	if time.Now().After(p.errorInfo.time.Add(p.errorTimeout)) {
+		p.errorInfo = nil
+		return nil
+	}
+	if p.errorInfo.retries < p.errorRetries {
+		return nil
+	}
+	return p.errorInfo.err
+}
+
+func (p *Provisioner) setError(err error) {
+	if err == nil || p.errorTimeout <= 0 {
+		p.errorInfo = nil
+		return
+	}
+	if p.errorInfo == nil || time.Now().After(p.errorInfo.time.Add(p.errorTimeout)) {
+		p.errorInfo = &errorInfo{}
+	} else {
+		p.errorInfo.retries++
+	}
+	p.errorInfo.err = err
+	p.errorInfo.time = time.Now()
 }

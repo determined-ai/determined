@@ -277,9 +277,9 @@ func (c *awsCluster) terminateSpot(ctx *actor.Context, instanceIDs []*string) {
 func (c *awsCluster) launchSpot(
 	ctx *actor.Context,
 	instanceNum int,
-) {
-	if instanceNum < 0 {
-		return
+) error {
+	if instanceNum <= 0 {
+		return nil
 	}
 
 	ctx.Log().
@@ -288,7 +288,7 @@ func (c *awsCluster) launchSpot(
 	resp, err := c.createSpotInstanceRequestsCorrectingForClockSkew(ctx, instanceNum, false)
 	if err != nil {
 		ctx.Log().WithError(err).Error("cannot launch EC2 spot requests")
-		return
+		return err
 	}
 
 	// Update the internal spotRequest tracker because there can be a large delay
@@ -312,6 +312,7 @@ func (c *awsCluster) launchSpot(
 				*request.State,
 			)
 	}
+	return nil
 }
 
 func (c *awsCluster) setTagsOnInstances(ctx *actor.Context, activeReqs *setOfSpotRequests) error {

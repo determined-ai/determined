@@ -216,9 +216,13 @@ func (t *trial) Receive(ctx *actor.Context) error {
 			ctx.Respond(err)
 		}
 	case *task.AllocationExited:
-		if t.allocation != nil && t.runID == mustParseTrialRunID(ctx.Sender()) {
-			return t.allocationExited(ctx, msg)
+		if !t.idSet {
+			t.state = model.ActiveState
+			if _, err := t.buildTaskSpec(ctx); err != nil {
+				ctx.Log().WithError(err).Error("failed to build task spec")
+			}
 		}
+		return t.allocationExited(ctx, msg)
 	case sproto.ContainerLog:
 		if log, err := t.enrichTaskLog(model.TaskLog{
 			ContainerID: ptrs.Ptr(string(msg.ContainerID)),
