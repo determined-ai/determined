@@ -318,7 +318,6 @@ func (a *apiServer) DeleteExperiment(
 
 	results, _, err := exputil.DeleteExperiments(ctx, a.m.system,
 		[]int32{req.ExperimentId}, nil)
-
 	// report error from the multi-experiment selection code
 	if err != nil {
 		return nil, err
@@ -326,7 +325,7 @@ func (a *apiServer) DeleteExperiment(
 
 	// report any error on the individual experiment
 	if len(results) == 0 {
-		return nil, errors.Errorf("unknown error during delete query.")
+		return nil, errors.Errorf("DeleteExperiments returned neither pass nor fail on delete query.")
 	}
 	if results[0].Error != nil {
 		return nil, results[0].Error
@@ -914,7 +913,7 @@ func (a *apiServer) PauseExperiment(
 
 	if err == nil {
 		if len(results) == 0 {
-			return nil, errors.Errorf("unknown error during pause query.")
+			return nil, errors.Errorf("PauseExperiments returned neither pass nor fail on query.")
 		} else if results[0].Error != nil {
 			return nil, results[0].Error
 		}
@@ -937,7 +936,7 @@ func (a *apiServer) CancelExperiment(
 
 	if err == nil {
 		if len(results) == 0 {
-			return nil, errors.Errorf("unknown error during cancel query.")
+			return nil, errors.Errorf("CancelExperiments returned neither pass nor fail on query.")
 		} else if results[0].Error != nil {
 			return nil, results[0].Error
 		}
@@ -960,7 +959,7 @@ func (a *apiServer) KillExperiment(
 
 	if err == nil {
 		if len(results) == 0 {
-			return nil, errors.Errorf("unknown error during kill query.")
+			return nil, errors.Errorf("KillExperiments returned neither pass nor fail on query.")
 		} else if results[0].Error != nil {
 			return nil, results[0].Error
 		}
@@ -983,7 +982,7 @@ func (a *apiServer) ArchiveExperiment(
 
 	if err == nil {
 		if len(results) == 0 {
-			return nil, errors.Errorf("unknown error during archive query.")
+			return nil, errors.Errorf("ArchiveExperiments returned neither pass nor fail on query.")
 		} else if results[0].Error != nil {
 			return nil, results[0].Error
 		}
@@ -1006,7 +1005,7 @@ func (a *apiServer) UnarchiveExperiment(
 
 	if err == nil {
 		if len(results) == 0 {
-			return nil, errors.Errorf("unknown error during unarchive query.")
+			return nil, errors.Errorf("UnarchiveExperiments returned neither pass nor fail on query.")
 		} else if results[0].Error != nil {
 			return nil, results[0].Error
 		}
@@ -1846,7 +1845,7 @@ func (a *apiServer) MoveExperiment(
 
 	if err == nil {
 		if len(results) == 0 {
-			return nil, errors.Errorf("unknown error during move query.")
+			return nil, errors.Errorf("MoveExperiments returned neither pass nor fail on query.")
 		} else if results[0].Error != nil {
 			return nil, results[0].Error
 		}
