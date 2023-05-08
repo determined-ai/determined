@@ -42,6 +42,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
 
   const [sortableColumnIds, setSortableColumnIds] = useState(defaultExperimentColumns);
   const [selectedExperimentIds, setSelectedExperimentIds] = useState<number[]>([]);
+  const [excludedExperimentIds, setExcludedExperimentIds] = useState<Set<number>>(new Set<number>());
   const [selectAll, setSelectAll] = useState(false);
   const [clearSelectionTrigger, setClearSelectionTrigger] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -156,6 +157,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         ) : (
           <>
             <TableActionBar
+              excludedExperimentIds={excludedExperimentIds}
               experiments={experiments}
               filters={experimentFilters}
               project={project}
@@ -169,6 +171,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
               clearSelectionTrigger={clearSelectionTrigger}
               colorMap={colorMap}
               data={experiments}
+              excludedExperimentIds={excludedExperimentIds}
               fetchExperiments={fetchExperiments}
               handleScroll={handleScroll}
               height={height}
@@ -177,6 +180,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
               scrollPositionSetCount={scrollPositionSetCount}
               selectAll={selectAll}
               selectedExperimentIds={selectedExperimentIds}
+              setExcludedExperimentIds={setExcludedExperimentIds}
               setSelectAll={setSelectAll}
               setSelectedExperimentIds={setSelectedExperimentIds}
               setSortableColumnIds={setSortableColumnIds}

@@ -40,7 +40,7 @@ const experimentColumns = [
   'user',
 ] as const;
 
-export type ExperimentColumn = (typeof experimentColumns)[number];
+export type ExperimentColumn = typeof experimentColumns[number];
 
 export const defaultExperimentColumns: ExperimentColumn[] = [
   'id',
@@ -301,7 +301,7 @@ export const getColumnDefs = ({
       contentAlign: 'left',
       copyData: String(rowSelection.hasIndex(idx)),
       data: {
-        checked: selectAll || rowSelection.hasIndex(idx),
+        checked: rowSelection.hasIndex(idx),
         kind: 'checkbox-cell',
       },
       kind: GridCellKind.Custom,

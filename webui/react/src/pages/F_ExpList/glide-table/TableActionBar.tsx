@@ -73,6 +73,7 @@ interface Props {
   filters: V1BulkExperimentFilters;
   onAction: () => Promise<void>;
   selectAll: boolean;
+  excludedExperimentIds: Set<number>;
   selectedExperimentIds: number[];
   setExperiments: Dispatch<SetStateAction<Loadable<ExperimentItem>[]>>;
   project: Project;
@@ -81,6 +82,7 @@ interface Props {
 
 const TableActionBar: React.FC<Props> = ({
   experiments,
+  excludedExperimentIds,
   filters,
   onAction,
   selectAll,
@@ -115,6 +117,7 @@ const TableActionBar: React.FC<Props> = ({
         case ExperimentAction.OpenTensorBoard:
           return openCommandResponse(
             await openOrCreateTensorBoard({
+              // excludedExperimentIds,
               experimentIds: selectedExperimentIds,
               filters: selectAll ? filters : undefined,
               workspaceId: project?.workspaceId,
@@ -124,42 +127,54 @@ const TableActionBar: React.FC<Props> = ({
           return ExperimentMoveModal.open();
         case ExperimentAction.Activate:
           return await activateExperiments({
+            // excludedExperimentIds,
             experimentIds: selectedExperimentIds,
             filters: selectAll ? filters : undefined,
           });
         case ExperimentAction.Archive:
           return await archiveExperiments({
+            // excludedExperimentIds,
             experimentIds: selectedExperimentIds,
             filters: selectAll ? filters : undefined,
           });
         case ExperimentAction.Cancel:
           return await cancelExperiments({
+            // excludedExperimentIds,
             experimentIds: selectedExperimentIds,
             filters: selectAll ? filters : undefined,
           });
         case ExperimentAction.Kill:
           return await killExperiments({
+            // excludedExperimentIds,
             experimentIds: selectedExperimentIds,
             filters: selectAll ? filters : undefined,
           });
         case ExperimentAction.Pause:
           return await pauseExperiments({
+            // excludedExperimentIds,
             experimentIds: selectedExperimentIds,
             filters: selectAll ? filters : undefined,
           });
         case ExperimentAction.Unarchive:
           return await unarchiveExperiments({
+            // excludedExperimentIds,
             experimentIds: selectedExperimentIds,
             filters: selectAll ? filters : undefined,
           });
         case ExperimentAction.Delete:
           return await deleteExperiments({
+            // excludedExperimentIds,
             experimentIds: selectedExperimentIds,
             filters: selectAll ? filters : undefined,
           });
       }
     },
-    [selectedExperimentIds, selectAll, filters, project?.workspaceId, ExperimentMoveModal],
+    [selectedExperimentIds,
+      selectAll,
+      // excludedExperimentIds,
+      filters,
+      project?.workspaceId,
+      ExperimentMoveModal],
   );
 
   const handleUpdateExperimentList = useCallback(
@@ -364,7 +379,7 @@ const TableActionBar: React.FC<Props> = ({
               Edit (
               {selectAll
                 ? Loadable.isLoaded(total)
-                  ? total.data.toLocaleString()
+                  ? (total.data - excludedExperimentIds.size).toLocaleString()
                   : 'All'
                 : selectedExperimentIds.length}
               )
@@ -382,6 +397,7 @@ const TableActionBar: React.FC<Props> = ({
       <ExperimentMoveModal.Component
         experimentIds={selectedExperimentIds.filter(
           (id) =>
+            // !excludedExperimentIds.has(id) &&
             canActionExperiment(ExperimentAction.Move, experimentMap[id]) &&
             permissions.canMoveExperiment({ experiment: experimentMap[id] }),
         )}

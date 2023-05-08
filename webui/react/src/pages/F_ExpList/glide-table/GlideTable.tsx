@@ -53,6 +53,7 @@ export interface GlideTableProps {
   clearSelectionTrigger?: number;
   colorMap: MapOfIdsToColors;
   data: Loadable<ExperimentItem>[];
+  excludedExperimentIds: Set<number>;
   fetchExperiments: () => Promise<void>;
   handleScroll?: (r: Rectangle) => void;
   height: number;
@@ -62,6 +63,7 @@ export interface GlideTableProps {
   page: number;
   project?: Project;
   selectedExperimentIds: number[];
+  setExcludedExperimentIds: Dispatch<SetStateAction<Set<number>>>;
   setSelectedExperimentIds: Dispatch<SetStateAction<number[]>>;
   selectAll: boolean;
   setSelectAll: Dispatch<SetStateAction<boolean>>;
@@ -91,6 +93,7 @@ const STATIC_COLUMNS: ExperimentColumn[] = ['selected', 'name'];
 export const GlideTable: React.FC<GlideTableProps> = ({
   data,
   fetchExperiments,
+  excludedExperimentIds,
   clearSelectionTrigger,
   setSelectedExperimentIds,
   sortableColumnIds,
@@ -99,6 +102,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   height,
   selectAll,
   setSelectAll,
+  setExcludedExperimentIds,
   handleScroll,
   scrollPositionSetCount,
   page,
@@ -228,12 +232,40 @@ export const GlideTable: React.FC<GlideTableProps> = ({
     // like Record<ColumnName, width>
   }, []);
 
+  const deselectAllRows = useCallback(() => {
+    setSelectAll(false);
+    setSelection((prev) => ({ ...prev, rows: CompactSelection.empty() }));
+  }, [setSelectAll, setSelection]);
+
+  const selectAllRows = useCallback((clearExcluded?: boolean) => {
+    if (clearExcluded) {
+      setExcludedExperimentIds(new Set());
+    }
+    setSelectAll(true);
+    setSelection(({ columns, rows }: GridSelection) => ({
+      columns,
+      rows: rows.add([0, data.length]),
+    }));
+  }, [setSelectAll, setSelection, data, setExcludedExperimentIds]);
+
+  useEffect(() => {
+    if (selectAll) selectAllRows();
+  }, [data, selectAll, selectAllRows]);
+
   const onHeaderClicked: DataEditorProps['onHeaderClicked'] = React.useCallback(
     (col: number, args: HeaderClickedEventArgs) => {
       const columnId = columnIds[col];
 
       if (columnId === 'selected') {
-        setSelectAll((prev) => !prev);
+        if (selectAll) {
+          if (excludedExperimentIds.size) {
+            selectAllRows(true);
+          } else {
+            deselectAllRows();
+          }
+        } else {
+          selectAllRows();
+        }
         return;
       }
 
@@ -244,7 +276,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
       setMenuProps((prev) => ({ ...prev, items, title: `${columnId} menu`, x, y }));
       setMenuIsOpen(true);
     },
-    [columnIds, setSelectAll],
+    [columnIds, deselectAllRows, excludedExperimentIds, selectAllRows, selectAll],
   );
 
   const getCellContent: DataEditorProps['getCellContent'] = React.useCallback(
@@ -282,12 +314,33 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         }
       }
 
-      setSelection(({ rows }: GridSelection) => ({
-        columns: CompactSelection.empty(),
-        rows: rows.hasIndex(row) ? rows.remove(row) : rows.add(row),
-      }));
+      if (selection.rows.hasIndex(row)) {
+        setSelection(({ columns, rows }: GridSelection) => ({
+          columns,
+          rows: rows.remove(row),
+        }));
+        if (selectAll) {
+          const experiment = data[row];
+          if (Loadable.isLoaded(experiment)) {
+            setExcludedExperimentIds((prev) => {
+              return new Set([...prev, experiment.data.id]);
+            });
+          }
+        }
+      } else {
+        setSelection(({ columns, rows }: GridSelection) => ({
+          columns,
+          rows: rows.add(row),
+        }));
+        const experiment = data[row];
+        if (Loadable.isLoaded(experiment)) {
+          setExcludedExperimentIds((prev) => {
+            return new Set([...prev].filter((id) => id !== experiment.data.id));
+          });
+        }
+      }
     },
-    [data, columnIds, columnDefs],
+    [data, columnIds, columnDefs, selection, selectAll, setExcludedExperimentIds],
   );
 
   const onCellContextMenu: DataEditorProps['onCellContextMenu'] = useCallback(
