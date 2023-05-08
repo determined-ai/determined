@@ -11,4 +11,4 @@ from determined.common.experimental import (
 )
 from determined.experimental._native import test_one_batch
 
-from determined.experimental import detached
+from determined.experimental import client, detached

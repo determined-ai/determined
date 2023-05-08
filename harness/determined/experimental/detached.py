@@ -1,6 +1,6 @@
 import io
 import logging
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional, Tuple, Union
 
 import determined as det
 from determined import core, tensorboard
@@ -17,13 +17,24 @@ logger = logging.getLogger("determined.experimental.detached")
 # - Make config.entrypoint optional.
 
 
-def create_unmanaged_experiment(client: Determined, config_text: str) -> int:
-    sess = client._session
+def create_unmanaged_experiment(
+    client: Determined,
+    config_text: str,
+    distributed: Optional[core.DistributedContext] = None,
+) -> int:
+    exp_id = None
 
-    req1 = bindings.v1CreateExperimentRequest(config=config_text, unmanaged=True)
-    resp1 = bindings.post_CreateExperiment(session=sess, body=req1)
+    if distributed is None or distributed.rank == 0:
+        sess = client._session
 
-    exp_id = resp1.experiment.id
+        req1 = bindings.v1CreateExperimentRequest(config=config_text, unmanaged=True)
+        resp1 = bindings.post_CreateExperiment(session=sess, body=req1)
+
+        exp_id = resp1.experiment.id
+    if distributed is not None:
+        exp_id = distributed.broadcast(exp_id)
+
+    assert exp_id
 
     return exp_id
 
@@ -37,9 +48,11 @@ def _get_cluster_id(sess: api.Session) -> str:
     return resp.clusterId
 
 
-def create_unmanaged_trial_cluster_info(
-    client: Determined, config_text: str, exp_id: int, hparams: Optional[dict] = None
-) -> det.ClusterInfo:
+def _create_unmanaged_trial(
+    client: Determined,
+    exp_id: int,
+    hparams: Optional[dict] = None,
+) -> Tuple[int, str]:
     sess = client._session
     assert sess
 
@@ -49,13 +62,41 @@ def create_unmanaged_trial_cluster_info(
     trial_id = resp2.trial.id
     task_id = resp2.trial.taskId
     assert task_id
+    return trial_id, task_id
 
-    cluster_id = _get_cluster_id(sess)
-    assert sess._auth
-    token = sess._auth.get_session_token(True)
+
+def create_unmanaged_trial(
+    client: Determined,
+    exp_id: int,
+    hparams: Optional[dict] = None,
+    distributed: Optional[core.DistributedContext] = None,
+) -> Tuple[int, str]:
+    trial_id, task_id = None, None
+
+    if distributed is None or distributed.rank == 0:
+        trial_id, task_id = _create_unmanaged_trial(client, exp_id=exp_id, hparams=hparams)
+    if distributed is not None:
+        trial_id, task_id = distributed.broadcast([trial_id, task_id])
+
+    assert trial_id
+    assert task_id
+
+    return trial_id, task_id
+
+
+def create_unmanaged_trial_cluster_info(
+    client: Determined,
+    config_text: str,
+    exp_id: int,
+    hparams: Optional[dict] = None,
+    distributed: Optional[core.DistributedContext] = None,
+) -> det.ClusterInfo:
+    trial_id, task_id = create_unmanaged_trial(
+        client, exp_id=exp_id, hparams=hparams, distributed=distributed
+    )
 
     return build_unmanaged_trial_cluster_info(
-        client, exp_id, trial_id, task_id, cluster_id, token, config_text, hparams
+        client, exp_id, trial_id, task_id, config_text, hparams
     )
 
 
@@ -64,11 +105,16 @@ def build_unmanaged_trial_cluster_info(
     exp_id: int,
     trial_id: int,
     task_id: str,
-    cluster_id: str,
-    token: str,
     config_text: str,
     hparams: Optional[dict] = None,
 ) -> det.ClusterInfo:
+    sess = client._session
+    assert sess
+
+    cluster_id = _get_cluster_id(sess)
+    assert sess._auth
+    token = sess._auth.get_session_token(True)
+
     return det.ClusterInfo(
         master_url=client._master,
         cluster_id=cluster_id,  # Required for tensorboard paths correctness.
@@ -94,10 +140,15 @@ def build_unmanaged_trial_cluster_info(
 
 
 def create_unmanaged_cluster_info(
-    client: Determined, config_text: str, hparams: Optional[dict] = None
+    client: Determined,
+    config_text: str,
+    hparams: Optional[dict] = None,
+    distributed: Optional[core.DistributedContext] = None,
 ) -> det.ClusterInfo:
-    exp_id = create_unmanaged_experiment(client, config_text=config_text)
-    return create_unmanaged_trial_cluster_info(client, config_text, exp_id, hparams)
+    exp_id = create_unmanaged_experiment(client, config_text=config_text, distributed=distributed)
+    return create_unmanaged_trial_cluster_info(
+        client, config_text=config_text, exp_id=exp_id, hparams=hparams, distributed=distributed
+    )
 
 
 def init(
@@ -107,13 +158,18 @@ def init(
     preempt_mode: core.PreemptMode = core.PreemptMode.WorkersAskChief,
     tensorboard_mode: core.TensorboardMode = core.TensorboardMode.AUTO,
     detached_info: Optional[det.ClusterInfo] = None,
-    session: Optional[api.Session] = None,
+    client: Optional[Determined] = None,
 ) -> Context:
-    if detached_info is None or session is None:
+    if detached_info is None:
         raise ValueError(
-            "for detached mode context, you must provide the `detached_info` and "
-            "`session` objects. Otherwise, use `det.core.init`."
+            "for detached mode context, you must provide the `detached_info` object. "
+            "Otherwise, use `det.core.init`."
         )
+
+    if client is None:
+        session = det.experimental.client._get_singleton_session()
+    else:
+        session = client._session
 
     # Reported, unmanaged, on- or off-cluster.
     info = detached_info

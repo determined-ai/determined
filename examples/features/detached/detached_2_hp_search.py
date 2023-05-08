@@ -4,7 +4,7 @@ import logging
 import random
 
 import determined as det
-from determined.experimental import Determined
+import determined.experimental
 
 config_text = """
 name: detached-mode-stage-2
@@ -21,13 +21,13 @@ searcher:
 """
 
 
-def runner(client: Determined, exp_id: int, hparams: dict = {}):
+def runner(client: det.experimental.Determined, exp_id: int, hparams: dict = {}):
     detached_info = det.experimental.detached.create_unmanaged_trial_cluster_info(
         client, config_text, exp_id, hparams=hparams)
 
     with det.experimental.detached.init(
         detached_info=detached_info,
-        session=client._session) as core_context:
+        client=client) as core_context:
         for i in range(100):
             core_context.train.report_training_metrics(
                 steps_completed=i, metrics={"loss": random.random()})
@@ -43,7 +43,7 @@ def runner(client: Determined, exp_id: int, hparams: dict = {}):
 def main():
     logging.basicConfig(format=det.LOG_FORMAT)
     logging.getLogger("determined").setLevel(logging.INFO)
-    client = Determined()
+    client = det.experimental.Determined()
 
     exp_id = det.experimental.detached.create_unmanaged_experiment(client, config_text=config_text)
     print(f"Created experiment {exp_id}")
