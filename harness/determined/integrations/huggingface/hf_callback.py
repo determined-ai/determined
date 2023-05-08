@@ -359,10 +359,12 @@ def get_hf_args_with_overwrites(
     use with DeepSpeed Autotune, which populates `hparams[overwrite_key]` using values which
     obey the above constraints.
     """
-    assert overwrite_key in hparams, (
-        f"`get_hf_args_with_overwrites` expected {overwrite_key} to be a key in "
-        f"`hparams. Received {hparams}"
-    )
+    if overwrite_key not in hparams:
+        logging.info(
+            f"{overwrite_key} key not found in hparams, `get_hf_args_with_overwrites` is a no-op"
+        )
+        return
+
     # Verify that the appropriate keys in the DS json file have `"auto"` values
     ds_config_path = get_ds_config_path_from_args(args)
 
