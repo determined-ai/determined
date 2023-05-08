@@ -3,19 +3,19 @@ $preview-transition-in: height 0.2s ease-in-out;
 $preview-transition-out: height 0s;
 
 .base {
-  height: calc(100% - #{$preview-height});
   transition: $preview-transition-in;
 
   .preview {
     background-color: var(--theme-surface);
     border-top: solid var(--theme-stroke-width) var(--theme-surface-border);
+    bottom: 0;
     cursor: pointer;
     height: $preview-height;
     overflow: hidden;
-    position: sticky;
-    top: 100%;
+    position: fixed;
     transition: $preview-transition-in;
-    width: 100%;
+    width: calc(100% - 63px - var(--nav-side-bar-width-max));
+    z-index: 99;
   }
   .preview:hover {
     background-color: var(--theme-surface-strong);
