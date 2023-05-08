@@ -17,16 +17,8 @@ import (
 type UserGroupAuthZRBAC struct{}
 
 // CanGetGroup checks if a user can view a given group.
-func (a *UserGroupAuthZRBAC) CanGetGroup(ctx context.Context, curUser model.User, gid int) (
-	bool, error,
-) {
-	err := CanViewGroup(ctx, curUser.ID, gid)
-	if err == nil {
-		return true, nil
-	} else if _, ok := err.(authz.PermissionDeniedError); ok {
-		return false, nil
-	}
-	return false, err
+func (a *UserGroupAuthZRBAC) CanGetGroup(ctx context.Context, curUser model.User, gid int) error {
+	return CanViewGroup(ctx, curUser.ID, gid)
 }
 
 // FilterGroupsList returns the list it was given and a nil error.
@@ -106,7 +98,7 @@ func CanViewGroup(ctx context.Context, userBelongsTo model.UserID, gid int) (err
 		rbacv1.PermissionType_PERMISSION_TYPE_ASSIGN_ROLES)
 	if err == nil {
 		return nil
-	} else if _, ok := err.(authz.PermissionDeniedError); !ok {
+	} else if !authz.IsPermissionDenied(err) {
 		return err
 	}
 

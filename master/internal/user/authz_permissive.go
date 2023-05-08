@@ -12,8 +12,8 @@ type UserAuthZPermissive struct{}
 // CanGetUser calls RBAC authz but enforces basic authz.
 func (p *UserAuthZPermissive) CanGetUser(
 	ctx context.Context, curUser, targetUser model.User,
-) (bool, error) {
-	_, _ = (&UserAuthZRBAC{}).CanGetUser(ctx, curUser, targetUser)
+) error {
+	_ = (&UserAuthZRBAC{}).CanGetUser(ctx, curUser, targetUser)
 	return (&UserAuthZBasic{}).CanGetUser(ctx, curUser, targetUser)
 }
 

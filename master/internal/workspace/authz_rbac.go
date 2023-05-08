@@ -8,7 +8,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/exp/slices"
 
-	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/rbac"
 	"github.com/determined-ai/determined/master/internal/rbac/audit"
@@ -105,7 +104,7 @@ func (r *WorkspaceAuthZRBAC) FilterWorkspaces(
 // CanGetWorkspace determines whether a user can view a workspace.
 func (r *WorkspaceAuthZRBAC) CanGetWorkspace(
 	ctx context.Context, curUser model.User, workspace *workspacev1.Workspace,
-) (canGetWorkspace bool, serverError error) {
+) (serverError error) {
 	fields := audit.ExtractLogFields(ctx)
 	addWorkspaceInfo(curUser, workspace, fields,
 		rbacv1.PermissionType_PERMISSION_TYPE_VIEW_WORKSPACE)
@@ -113,13 +112,8 @@ func (r *WorkspaceAuthZRBAC) CanGetWorkspace(
 		audit.LogFromErr(fields, serverError)
 	}()
 
-	can, err := hasPermissionOnWorkspace(ctx, curUser.ID, workspace,
+	return hasPermissionOnWorkspace(ctx, curUser.ID, workspace,
 		rbacv1.PermissionType_PERMISSION_TYPE_VIEW_WORKSPACE)
-	if err != nil {
-		return false, err
-	}
-
-	return can, nil
 }
 
 // CanCreateWorkspace determines whether a user can create workspaces.
@@ -286,20 +280,12 @@ func (r *WorkspaceAuthZRBAC) CanCreateWorkspaceWithCheckpointStorageConfig(
 
 func hasPermissionOnWorkspace(ctx context.Context, uid model.UserID,
 	workspace *workspacev1.Workspace, permID rbacv1.PermissionType,
-) (bool, error) {
+) error {
 	var workspaceID *int32
 	if workspace != nil {
 		workspaceID = &workspace.Id
 	}
-
-	err := db.DoesPermissionMatch(ctx, uid, workspaceID, permID)
-	if _, ok := err.(authz.PermissionDeniedError); ok {
-		return false, nil
-	} else if err != nil {
-		return false, errors.Wrap(err, ErrorLookup.Error())
-	}
-
-	return true, nil
+	return db.DoesPermissionMatch(ctx, uid, workspaceID, permID)
 }
 
 func workspacesUserHasPermissionOn(ctx context.Context, uid model.UserID,

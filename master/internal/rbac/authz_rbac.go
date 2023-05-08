@@ -48,7 +48,7 @@ func (a *RBACAuthZRBAC) CanGetRoles(ctx context.Context, curUser model.User,
 		rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_ROLES)
 	if err == nil {
 		return nil
-	} else if _, ok := err.(authz.PermissionDeniedError); !ok {
+	} else if !authz.IsPermissionDenied(err) {
 		return err
 	}
 
@@ -100,7 +100,7 @@ func (a *RBACAuthZRBAC) FilterRolesQuery(ctx context.Context, curUser model.User
 		rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_ROLES)
 	if err == nil {
 		return query, nil
-	} else if _, ok := err.(authz.PermissionDeniedError); !ok {
+	} else if !authz.IsPermissionDenied(err) {
 		return query, err
 	}
 
@@ -163,7 +163,7 @@ func (a *RBACAuthZRBAC) CanGetGroupRoles(ctx context.Context, curUser model.User
 	err = db.DoPermissionsExist(ctx, curUser.ID, rbacv1.PermissionType_PERMISSION_TYPE_ASSIGN_ROLES)
 	if err == nil {
 		return nil
-	} else if _, ok := err.(authz.PermissionDeniedError); !ok {
+	} else if !authz.IsPermissionDenied(err) {
 		return err
 	}
 
@@ -219,7 +219,7 @@ func (a *RBACAuthZRBAC) CanSearchScope(ctx context.Context, curUser model.User,
 // CanGetWorkspaceMembership checks if a user can get membership on a workspace.
 func (a *RBACAuthZRBAC) CanGetWorkspaceMembership(
 	ctx context.Context, curUser model.User, workspaceID int32,
-) (canGetWorkspace bool, err error) {
+) (err error) {
 	fields := audit.ExtractLogFields(ctx)
 	fields["userID"] = curUser.ID
 	fields["permissionRequired"] = []audit.PermissionWithSubject{
@@ -235,14 +235,8 @@ func (a *RBACAuthZRBAC) CanGetWorkspaceMembership(
 		audit.LogFromErr(fields, err)
 	}()
 
-	if err := db.DoesPermissionMatch(ctx, curUser.ID, &workspaceID,
-		rbacv1.PermissionType_PERMISSION_TYPE_VIEW_WORKSPACE); err != nil {
-		if _, ok := err.(authz.PermissionDeniedError); ok {
-			return false, nil
-		}
-		return false, err
-	}
-	return true, nil
+	return db.DoesPermissionMatch(ctx, curUser.ID, &workspaceID,
+		rbacv1.PermissionType_PERMISSION_TYPE_VIEW_WORKSPACE)
 }
 
 // CanAssignRoles checks if a user can assign roles.

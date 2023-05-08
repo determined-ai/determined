@@ -10,6 +10,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/determined-ai/determined/master/internal/api/apiutils"
+	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
@@ -88,11 +89,11 @@ func (a *RBACAPIServerImpl) GetGroupsAndUsersAssignedToWorkspace(
 	if err != nil {
 		return nil, err
 	}
-	var ok bool
-	if ok, err = AuthZProvider.Get().CanGetWorkspaceMembership(ctx, *u, req.WorkspaceId); err != nil {
+	if err = AuthZProvider.Get().CanGetWorkspaceMembership(ctx, *u, req.WorkspaceId); err != nil {
+		if authz.IsPermissionDenied(err) {
+			return &apiv1.GetGroupsAndUsersAssignedToWorkspaceResponse{}, nil
+		}
 		return nil, err
-	} else if !ok {
-		return &apiv1.GetGroupsAndUsersAssignedToWorkspaceResponse{}, nil
 	}
 
 	users, membership, err := GetUsersAndGroupMembershipOnWorkspace(ctx, int(req.WorkspaceId))
@@ -251,11 +252,11 @@ func (a *RBACAPIServerImpl) GetRolesAssignedToGroup(ctx context.Context,
 		return nil, err
 	}
 
-	ok, err := usergroup.AuthZProvider.Get().CanGetGroup(ctx, *u, int(req.GroupId))
-	if err != nil {
-		return nil, err
-	} else if !ok {
+	err = usergroup.AuthZProvider.Get().CanGetGroup(ctx, *u, int(req.GroupId))
+	if authz.IsPermissionDenied(err) {
 		return resp, errors.Wrapf(db.ErrNotFound, "Error getting group %d", req.GroupId)
+	} else if err != nil {
+		return nil, err
 	}
 
 	roles, err := GetRolesAssignedToGroupsTx(ctx, nil, req.GroupId)

@@ -55,10 +55,9 @@ func canAdministrateUser(ctx context.Context, curUserID model.UserID) (err error
 // CanGetUser always returns true.
 func (a *UserAuthZRBAC) CanGetUser(
 	ctx context.Context, curUser, targetUser model.User,
-) (canGetUser bool, serverError error) {
+) error {
 	noPermissionRequired(ctx, curUser.ID, targetUser.ID)
-
-	return true, nil
+	return nil
 }
 
 // FilterUserList always returns the input user list and does not filtering.

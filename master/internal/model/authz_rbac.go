@@ -39,18 +39,19 @@ func addExpInfo(
 
 // CanGetModels checks if a user has permissions to view models.
 func (a *ModelAuthZRBAC) CanGetModels(ctx context.Context, curUser model.User, workspaceIDs []int32,
-) (workspaceIDsWithPermsFilter []int32, canGetModels bool, serverError error) {
+) (workspaceIDsWithPermsFilter []int32, serverError error) {
 	fields := audit.ExtractLogFields(ctx)
 	addExpInfo(curUser, fields, fmt.Sprintf("all models in workspaces %v", workspaceIDs),
 		[]rbacv1.PermissionType{rbacv1.PermissionType_PERMISSION_TYPE_VIEW_MODEL_REGISTRY})
 	defer func() {
-		fields["permissionGranted"] = canGetModels
+		permGranted := (serverError == nil)
+		fields["permissionGranted"] = permGranted
 		audit.Log(fields)
 	}()
 
 	assignmentsMap, err := rbac.GetPermissionSummary(ctx, curUser.ID)
 	if err != nil {
-		return workspaceIDs, false, err
+		return workspaceIDs, err
 	}
 
 	workspacesIDsWithPermsSet := make(map[int32]bool)
@@ -66,7 +67,7 @@ func (a *ModelAuthZRBAC) CanGetModels(ctx context.Context, curUser model.User, w
 						workspacesIDsWithPerms = append(workspacesIDsWithPerms, assignment.Scope.WorkspaceID.Int32)
 					} else {
 						// if permission is global, return true and the list provided by user.
-						return workspaceIDs, true, nil
+						return workspaceIDs, nil
 					}
 				}
 			}
@@ -74,44 +75,45 @@ func (a *ModelAuthZRBAC) CanGetModels(ctx context.Context, curUser model.User, w
 	}
 
 	if workspacesIDsWithPerms == nil {
-		return nil, false, nil // user doesn't have permissions to see models in any workspace.
+		// user doesn't have permissions to see models in any workspace.
+		return nil, authz.PermissionDeniedError{
+			RequiredPermissions: []rbacv1.PermissionType{
+				rbacv1.PermissionType_PERMISSION_TYPE_VIEW_MODEL_REGISTRY}}
 	}
 
 	for _, givenWID := range workspaceIDs {
 		if _, ok := workspacesIDsWithPermsSet[givenWID]; !ok {
-			return nil, false, nil
 			// user doesn't have permissions to see models in the user given list of workspaces.
+			return nil, authz.PermissionDeniedError{
+				RequiredPermissions: []rbacv1.PermissionType{
+					rbacv1.PermissionType_PERMISSION_TYPE_VIEW_MODEL_REGISTRY}}
 		}
 	}
 
 	if workspaceIDs != nil {
-		return workspaceIDs, true, nil // at this point the user given workspaceIDs
+		return workspaceIDs, nil // at this point the user given workspaceIDs
 		// could be smaller than the workspaces with permissions.
 	}
 
-	return workspacesIDsWithPerms, true, nil
+	return workspacesIDsWithPerms, nil
 }
 
 // CanGetModel checks if a user has permissions to view model.
 func (a *ModelAuthZRBAC) CanGetModel(ctx context.Context, curUser model.User,
 	m *modelv1.Model, workspaceID int32,
-) (canGetModel bool, serverError error) {
+) (err error) {
 	fields := audit.ExtractLogFields(ctx)
 	addExpInfo(curUser, fields, string(m.Id),
 		[]rbacv1.PermissionType{rbacv1.PermissionType_PERMISSION_TYPE_VIEW_MODEL_REGISTRY})
 	defer func() {
-		fields["permissionGranted"] = canGetModel
-		audit.Log(fields)
+		if err == nil || authz.IsPermissionDenied(err) {
+			fields["permissionGranted"] = (authz.IsPermissionDenied(err) == false)
+			audit.Log(fields)
+		}
 	}()
 
-	if err := db.DoesPermissionMatch(ctx, curUser.ID, &workspaceID,
-		rbacv1.PermissionType_PERMISSION_TYPE_VIEW_MODEL_REGISTRY); err != nil {
-		if _, ok := err.(authz.PermissionDeniedError); ok {
-			return false, nil
-		}
-		return false, err
-	}
-	return true, nil
+	return db.DoesPermissionMatch(ctx, curUser.ID, &workspaceID,
+		rbacv1.PermissionType_PERMISSION_TYPE_VIEW_MODEL_REGISTRY)
 }
 
 // CanEditModel checks is user has permissions to edit models.

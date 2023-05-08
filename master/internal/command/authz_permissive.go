@@ -10,13 +10,13 @@ import (
 // NSCAuthZPermissive is permissive implementation of the NSCAuthZ interface.
 type NSCAuthZPermissive struct{}
 
-// CanGetNSC returns true and nil error unless the developer master config option
+// CanGetNSC returns nil error unless the developer master config option
 // security.authz._strict_ntsc_enabled is true then it returns a boolean if the user is
 // an admin or if the user owns the task and a nil error.
 func (a *NSCAuthZPermissive) CanGetNSC(
 	ctx context.Context, curUser model.User, workspaceID model.AccessScopeID,
-) (canGetCmd bool, err error) {
-	_, _ = (&NSCAuthZRBAC{}).CanGetNSC(ctx, curUser, workspaceID)
+) error {
+	_ = (&NSCAuthZRBAC{}).CanGetNSC(ctx, curUser, workspaceID)
 	return (&NSCAuthZBasic{}).CanGetNSC(ctx, curUser, workspaceID)
 }
 
@@ -71,8 +71,8 @@ func (a *NSCAuthZPermissive) FilterTensorboards(
 func (a *NSCAuthZPermissive) CanGetTensorboard(
 	ctx context.Context, curUser model.User, workspaceID model.AccessScopeID,
 	experimentIDs []int32, trialIDs []int32,
-) (canGetTensorboards bool, serverError error) {
-	_, _ = (&NSCAuthZRBAC{}).CanGetTensorboard(ctx, curUser, workspaceID, experimentIDs, trialIDs)
+) error {
+	_ = (&NSCAuthZRBAC{}).CanGetTensorboard(ctx, curUser, workspaceID, experimentIDs, trialIDs)
 	return (&NSCAuthZBasic{}).CanGetTensorboard(ctx, curUser, workspaceID, experimentIDs, trialIDs)
 }
 

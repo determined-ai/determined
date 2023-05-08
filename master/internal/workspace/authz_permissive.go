@@ -14,8 +14,8 @@ type WorkspaceAuthZPermissive struct{}
 // CanGetWorkspace calls RBAC authz but enforces basic authz.
 func (p *WorkspaceAuthZPermissive) CanGetWorkspace(
 	ctx context.Context, curUser model.User, workspace *workspacev1.Workspace,
-) (bool, error) {
-	_, _ = (&WorkspaceAuthZRBAC{}).CanGetWorkspace(ctx, curUser, workspace)
+) error {
+	_ = (&WorkspaceAuthZRBAC{}).CanGetWorkspace(ctx, curUser, workspace)
 	return (&WorkspaceAuthZBasic{}).CanGetWorkspace(ctx, curUser, workspace)
 }
 
