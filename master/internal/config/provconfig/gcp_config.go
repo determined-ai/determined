@@ -25,7 +25,7 @@ const MaxNamePrefixLen = 30
 
 // GCPClusterConfig describes the configuration for a GCP cluster managed by Determined.
 type GCPClusterConfig struct {
-	BaseConfig *compute.Instance `json:"base_config"`
+	BaseConfig *compute.InstanceProperties `json:"base_config"`
 
 	Project string `json:"project"`
 	Zone    string `json:"zone"`
@@ -128,24 +128,20 @@ func (c *GCPClusterConfig) InitDefaultValues() error {
 }
 
 // Merge GCP cluster config.
-func (c *GCPClusterConfig) Merge() *compute.Instance {
-	rb := &compute.Instance{}
+func (c *GCPClusterConfig) Merge() *compute.InstanceProperties {
+	rb := &compute.InstanceProperties{}
 	if c.BaseConfig != nil {
 		*rb = *c.BaseConfig
 	}
 
 	if len(c.InstanceType.MachineType) > 0 {
-		rb.MachineType = fmt.Sprintf(
-			"zones/%s/machineTypes/%s", c.Zone, c.InstanceType.MachineType,
-		)
+		rb.MachineType = c.InstanceType.MachineType
 	}
 
 	if len(c.InstanceType.GPUType) > 0 && c.InstanceType.GPUNum > 0 {
 		rb.GuestAccelerators = []*compute.AcceleratorConfig{
 			{
-				AcceleratorType: fmt.Sprintf(
-					"zones/%s/acceleratorTypes/%s", c.Zone, c.InstanceType.GPUType,
-				),
+				AcceleratorType:  c.InstanceType.GPUType,
 				AcceleratorCount: int64(c.InstanceType.GPUNum),
 			},
 		}
@@ -158,7 +154,7 @@ func (c *GCPClusterConfig) Merge() *compute.Instance {
 				InitializeParams: &compute.AttachedDiskInitializeParams{
 					SourceImage: c.BootDiskSourceImage,
 					DiskSizeGb:  int64(c.BootDiskSize),
-					DiskType:    c.BootDiskType,
+					DiskType:    c.BootDiskType[strings.LastIndex(c.BootDiskType, "/")+1:],
 				},
 				AutoDelete: true,
 			},
@@ -182,6 +178,7 @@ func (c *GCPClusterConfig) Merge() *compute.Instance {
 			networkInterface.AccessConfigs = []*compute.AccessConfig{
 				{
 					NetworkTier: "PREMIUM",
+					Type:        "ONE_TO_ONE_NAT",
 				},
 			}
 		}
