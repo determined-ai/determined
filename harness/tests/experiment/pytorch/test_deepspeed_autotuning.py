@@ -1,3 +1,4 @@
+import copy
 import pathlib
 import tempfile
 from collections import deque
@@ -7,7 +8,13 @@ import pytest
 
 from determined import searcher
 from determined.common.api import bindings
-from determined.pytorch.dsat import BaseDSATSearchMethod, DSATTrial, _defaults, _utils
+from determined.pytorch.dsat import (
+    BaseDSATSearchMethod,
+    DSATTrial,
+    DSATTrialTracker,
+    _defaults,
+    _utils,
+)
 from determined.pytorch.dsat._run_dsat import build_exp_conf_from_args
 from tests.custom_search_mocks import MockMasterSearchRunner
 
@@ -20,6 +27,7 @@ MODEL_DIR = BASE_EXPERIMENT_FIXTURE_PATH.joinpath("example_experiment")
 CONFIG_PATH = MODEL_DIR.joinpath("deepspeed.yaml")
 DEFAULT_ARGS = _utils.get_parser().parse_args([str(CONFIG_PATH), str(MODEL_DIR)])
 DEFAULT_ARGS.experiment_id = 0
+SEARCH_RUNNER_CONFIG = _utils.get_search_runner_config_from_args(DEFAULT_ARGS)
 
 MODEL_INFO_PROFILE_METRIC_FIXTURE = {
     "num_params": 60192808,
@@ -35,6 +43,11 @@ DSATTRIAL_ARGS = {
     "model_dir": BASE_EXPERIMENT_FIXTURE_PATH.joinpath("example_experiment"),
     "slots_per_trial": 2,
     "length": 5,
+}
+
+HPARAMS_FIXTURE = {
+    "deepspeed_config": "ds_config.json",
+    _defaults.OVERWRITE_KEY: {"train_micro_batch_size_per_gpu": 1},
 }
 
 
@@ -139,6 +152,7 @@ def test_simple_model_profile_info_run_fails() -> None:
         assert search_runner.state.experiment_completed == False
 
 
+@pytest.mark.timeout(5)
 class TestDSATTrial:
     def setup_class(self):
         self.first_trial = DSATTrial(**DSATTRIAL_ARGS)
@@ -194,6 +208,141 @@ class TestDSATTrial:
                 assert not trial.error_in_direct_history
             else:
                 assert trial.error_in_direct_history
+
+
+def trial_tracker_builder(args):
+    exp_config = build_exp_conf_from_args(args)
+    trial_tracker = DSATTrialTracker(args=args, exp_config=exp_config)
+    model_profile_info_trial = trial_tracker.create_model_profile_info_trial()
+    trial_tracker.register_trial(model_profile_info_trial)
+    trial_tracker.update_trial_metric(
+        trial_tracker.pop_next_trial(), MODEL_INFO_PROFILE_METRIC_FIXTURE
+    )
+    trial_tracker.model_profile_info_trial.running = False
+    trial_tracker.model_profile_info_trial.closed = True
+
+    queued_trials = []
+    for idx in range(trial_tracker.max_trials - 1):
+        overwrites = {_defaults.OVERWRITE_KEY: {"zero_optimization": {"stage": 1 + (idx % 3)}}}
+        hparams = {**HPARAMS_FIXTURE, **overwrites}
+        trial = trial_tracker.create_trial(hparams)
+        queued_trials.append(trial)
+        trial_tracker.register_trial(trial)
+    return queued_trials, trial_tracker
+
+
+@pytest.fixture
+def basic_trial_tracker():
+    yield trial_tracker_builder(DEFAULT_ARGS)
+
+
+@pytest.fixture
+def max_concurrent_trials_tracker():
+    args = copy.deepcopy(DEFAULT_ARGS)
+    args.max_concurrent_trials = 2
+    yield trial_tracker_builder(args)
+
+
+@pytest.fixture
+def max_slots_tracker():
+    args = copy.deepcopy(DEFAULT_ARGS)
+    args.max_slots = 4
+    yield trial_tracker_builder(args)
+
+
+@pytest.mark.timeout(5)
+class TestDSATTrialTracker:
+    def test_trial_registration(self, basic_trial_tracker):
+        queued_trials, trial_tracker = basic_trial_tracker
+        for trial in queued_trials:
+            assert trial.request_id in trial_tracker
+
+    def test_trial_queue_and_state_all_successes(self, basic_trial_tracker):
+        queued_trials, trial_tracker = basic_trial_tracker
+        for idx, trial in enumerate(queued_trials):
+            num_trials_in_queue = len(queued_trials) - idx
+            assert trial_tracker.num_trials_in_queue == num_trials_in_queue
+            assert trial_tracker.num_closed_trials == 1 + idx
+            assert not trial.running
+            assert trial_tracker.can_run_more_trials
+
+            popped_trial = trial_tracker.pop_next_trial()
+
+            assert popped_trial == trial
+            assert trial_tracker.num_trials_in_queue == num_trials_in_queue - 1
+            assert trial_tracker.num_closed_trials == 1 + idx
+            assert popped_trial.running
+            assert trial_tracker.num_running_trials == 1
+
+            trial_tracker.update_trial_metric(popped_trial, {popped_trial.searcher_metric_name: 1})
+            assert trial_tracker.num_closed_trials == 2 + idx
+            assert trial_tracker.num_running_trials == 0
+
+        assert not trial_tracker.can_run_more_trials
+        assert trial_tracker.empty_queue
+        assert trial_tracker.max_trials_are_running_or_closed
+        assert trial_tracker.should_shutdown
+        assert not trial_tracker.should_be_failure
+
+    def test_trial_queue_and_state_all_errors(self, basic_trial_tracker):
+        queued_trials, trial_tracker = basic_trial_tracker
+        for idx, trial in enumerate(queued_trials):
+            num_trials_in_queue = len(queued_trials) - idx
+            assert trial_tracker.num_trials_in_queue == num_trials_in_queue
+            assert trial_tracker.num_closed_trials == 1 + idx
+            assert not trial.running
+            assert trial_tracker.can_run_more_trials
+
+            popped_trial = trial_tracker.pop_next_trial()
+
+            assert popped_trial == trial
+            assert trial_tracker.num_trials_in_queue == num_trials_in_queue - 1
+            assert trial_tracker.num_closed_trials == 1 + idx
+            assert popped_trial.running
+            assert trial_tracker.num_running_trials == 1
+
+            trial_tracker.report_trial_early_exit(popped_trial)
+            assert trial_tracker.num_closed_trials == 2 + idx
+            assert trial_tracker.num_running_trials == 0
+
+        assert not trial_tracker.can_run_more_trials
+        assert trial_tracker.empty_queue
+        assert trial_tracker.max_trials_are_running_or_closed
+        assert trial_tracker.should_shutdown
+        assert trial_tracker.should_be_failure
+
+    def test_max_concurrent_trials(self, max_concurrent_trials_tracker):
+        _, trial_tracker = max_concurrent_trials_tracker
+        while trial_tracker.can_run_more_trials:
+            popped_trial = trial_tracker.pop_next_trial()
+            trial_tracker.update_trial_metric(popped_trial, {popped_trial.searcher_metric_name: 1})
+            assert trial_tracker.num_running_trials <= trial_tracker.max_concurrent_trials
+
+    def test_max_slots(self, max_slots_tracker):
+        _, trial_tracker = max_slots_tracker
+        while trial_tracker.can_run_more_trials:
+            popped_trial = trial_tracker.pop_next_trial()
+            trial_tracker.update_trial_metric(popped_trial, {popped_trial.searcher_metric_name: 1})
+            assert (
+                trial_tracker.num_running_trials * popped_trial.slots_per_trial
+                <= trial_tracker.max_slots
+            )
+
+    def test_best_metric_tracking(self, basic_trial_tracker):
+        """
+        Series of successful trials where each trial is better than the previous one.
+        """
+        _, trial_tracker = basic_trial_tracker
+        metrics = [n for n in range(len(trial_tracker) - 1)]
+        if not trial_tracker.smaller_is_better:
+            metrics = list(reversed(metrics))
+        while trial_tracker.can_run_more_trials:
+            popped_trial = trial_tracker.pop_next_trial()
+            trial_tracker.update_trial_metric(
+                popped_trial, {popped_trial.searcher_metric_name: metrics.pop()}
+            )
+            assert trial_tracker.best_trial == popped_trial
+            assert trial_tracker.best_trials_by_stage[popped_trial.stage] == popped_trial
 
 
 class MockMaster:
