@@ -1,6 +1,6 @@
-from setuptools import find_packages, setup
+import setuptools
 
-setup(
+setuptools.setup(
     name="model-hub",
     version="0.22.1-dev0",
     author="Determined AI",
@@ -10,9 +10,9 @@ setup(
     long_description="See https://docs.determined.ai/ for more information.",
     license="Apache License 2.0",
     classifiers=["License :: OSI Approved :: Apache Software License"],
-    packages=find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"]),
+    packages=setuptools.find_packages(include=["model_hub*"]),
     python_requires=">=3.6",
-    package_data={"model_hub": ["py.typed"]},
+    include_package_data=True,
     # Versions of model-hub will correspond to specific versions of third party
     # libraries that are guaranteed to work with our code.  Other versions
     # may work with model-hub as well but are not officially supported.
@@ -20,5 +20,4 @@ setup(
         "attrdict",
         "determined>=0.13.11",  # We require custom reducers for PyTorchTrial.
     ],
-    zip_safe=False,
 )
