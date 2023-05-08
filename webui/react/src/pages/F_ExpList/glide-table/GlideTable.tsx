@@ -426,6 +426,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         customRenderers={customRenderers}
         freezeColumns={2}
         getCellContent={getCellContent}
+        // `getCellsForSelection` is required for double click column resize to content.
         getCellsForSelection
         getRowThemeOverride={getRowThemeOverride}
         gridSelection={selection}
