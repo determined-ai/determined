@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "private": true,
   "engines": {
-    "node": ">=18.14.2 <19",
-    "npm": ">=9.5.0"
+    "node": ">=18.16.0 <19",
+    "npm": ">=9.5.1"
   },
   "scripts": {
     "postshrinkwrap": "npx npm-force-resolutions && npm install --ignore-scripts",
@@ -84,7 +84,7 @@
     ]
   },
   "devDependencies": {
-    "@playwright/test": "^1.32.3",
+    "@playwright/test": "^1.33.0",
     "@testing-library/dom": "^8.20.0",
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^13.4.0",
