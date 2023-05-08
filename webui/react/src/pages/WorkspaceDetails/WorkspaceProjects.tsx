@@ -391,7 +391,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
 
   return (
     <>
-      <Columns header>
+      <Columns page>
         <Column>
           <Select value={settings.whose} width={160} onSelect={handleViewSelect}>
             <Option value={WhoseProjects.All}>All Projects</Option>

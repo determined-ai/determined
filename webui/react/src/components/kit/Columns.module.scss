@@ -1,8 +1,10 @@
 .columns {
   display: flex;
-  gap: var(--gap);
-  margin-bottom: var(--margin-bottom);
+  gap: var(--columns-gap);
 
+  &.page {
+    margin-bottom: 16px;
+  }
   .column {
     display: flex;
     flex-grow: 1;
@@ -20,7 +22,7 @@
 }
 
 @media only screen and (max-width: $breakpoint-tablet) {
-  .columns {
+  .columns.page {
     flex-wrap: wrap;
   }
 }

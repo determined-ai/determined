@@ -340,7 +340,7 @@ const WorkspaceList: React.FC = () => {
         </Button>
       }
       title="Workspaces">
-      <Columns header>
+      <Columns page>
         <Column>
           <Select value={settings.whose} width={180} onSelect={handleViewSelect}>
             <Option value={WhoseWorkspaces.All}>All Workspaces</Option>
