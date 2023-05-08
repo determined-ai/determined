@@ -49,13 +49,8 @@ import {
 import { TableContextMenu, TableContextMenuProps } from './contextMenu';
 import { customRenderers } from './custom-renderers';
 import { LinkCell } from './custom-renderers/cells/linkCell';
-import {
-  placeholderMenuItems,
-  sortMenuItemsForColumn,
-  TableActionMenu,
-  TableActionMenuProps,
-} from './menu';
-import { Sort } from './MultiSortMenu';
+import { placeholderMenuItems, TableActionMenu, TableActionMenuProps } from './menu';
+import { Sort, sortMenuItemsForColumn } from './MultiSortMenu';
 import { BatchAction } from './TableActionBar';
 import { useTableTooltip } from './tooltip';
 import { getTheme } from './utils';

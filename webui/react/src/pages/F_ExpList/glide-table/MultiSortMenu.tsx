@@ -1,4 +1,5 @@
 import { Popover } from 'antd';
+import { ItemType } from 'antd/es/menu/hooks/useItems';
 import * as io from 'io-ts';
 
 import Button from 'components/kit/Button';
@@ -67,6 +68,71 @@ export const optionsByColumnType = {
     { label: 'Descending', value: 'desc' },
   ],
 };
+
+const SortArrow = ({ direction = 'asc' }: { direction: DirectionType }) => (
+  <svg
+    className={css.sortIcon + ' ' + (css[`sortIcon--${direction}`] || '')}
+    fill="none"
+    height="1em"
+    viewBox="0 0 240 240"
+    width="1em"
+    xmlns="http://www.w3.org/2000/svg">
+    <g stroke="currentcolor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="10">
+      <path d="M180 80L120 20L60 80" />
+      <path d="M120 25L120 220" />
+    </g>
+  </svg>
+);
+
+const SortButtonIcon = () => (
+  <svg
+    className="anticon"
+    fill="none"
+    height="1em"
+    viewBox="0 0 240 240"
+    width="1em"
+    xmlns="http://www.w3.org/2000/svg">
+    <g stroke="currentcolor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="10">
+      <path d="M108.5 85.5001L60 37.0001L11.5 85.5001" />
+      <path d="M60 42L60 202" />
+      <path d="M133 153.5L181.5 202L230 153.5" />
+      <path d="M181.5 197L181.5 37.0001" />
+    </g>
+  </svg>
+);
+
+export const sortMenuItemsForColumn = (
+  column: ProjectColumn,
+  sorts: Sort[],
+  onSortChange: (sorts: Sort[]) => void,
+): ItemType[] =>
+  optionsByColumnType[column.type].map((option) => {
+    const curSort = sorts.find((s) => s.column === column.column);
+    const isSortMatch = curSort && curSort.direction === option.value;
+    return {
+      icon: <SortArrow direction={option.value as DirectionType} />,
+      key: option.value,
+      label: `Sort ${option.label}`,
+      onClick: () => {
+        let newSort: Sort[];
+        if (isSortMatch) {
+          return;
+        } else if (curSort) {
+          newSort = sorts.map((s) =>
+            s.column !== column.column
+              ? s
+              : {
+                  ...s,
+                  direction: option.value as DirectionType,
+                },
+          );
+        } else {
+          newSort = [{ column: column.column, direction: option.value as DirectionType }];
+        }
+        onSortChange(newSort);
+      },
+    };
+  });
 
 const DirectionOptions: React.FC<DirectionOptionsProps> = ({ onChange, type, value }) => (
   <Select
@@ -195,7 +261,9 @@ const MultiSortMenu: React.FC<MultiSortProps> = ({ sorts, columns, onChange }) =
       showArrow={false}
       trigger="click"
       onOpenChange={onSortPopoverOpenChange}>
-      <Button>Sort {validSorts.length ? `(${validSorts.length})` : ''}</Button>
+      <Button icon={<SortButtonIcon />}>
+        Sort {validSorts.length ? `(${validSorts.length})` : ''}
+      </Button>
     </Popover>
   );
 };

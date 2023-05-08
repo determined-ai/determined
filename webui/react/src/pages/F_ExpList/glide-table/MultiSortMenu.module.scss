@@ -25,3 +25,10 @@
   display: flex;
   justify-content: space-between;
 }
+.sortIcon {
+  margin-right: 10px;
+  vertical-align: -0.125em;
+}
+.sortIcon--desc {
+  transform: rotate(180deg);
+}

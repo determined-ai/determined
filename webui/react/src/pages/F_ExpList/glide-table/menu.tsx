@@ -1,11 +1,7 @@
-import { CheckOutlined, SmileOutlined } from '@ant-design/icons';
+import { SmileOutlined } from '@ant-design/icons';
 import { Menu, MenuProps } from 'antd';
 import { ItemType } from 'antd/es/menu/hooks/useItems';
 import React, { MutableRefObject, useEffect, useRef } from 'react';
-
-import { V1ProjectColumn } from 'services/api-ts-sdk';
-
-import { DirectionType, optionsByColumnType, Sort } from './MultiSortMenu';
 
 // eslint-disable-next-line
 function useOutsideClickHandler(ref: MutableRefObject<any>, handler: () => void) {
@@ -59,39 +55,6 @@ export const TableActionMenu: React.FC<TableActionMenuProps> = ({
     </div>
   );
 };
-
-export const sortMenuItemsForColumn = (
-  column: V1ProjectColumn,
-  sorts: Sort[],
-  onSortChange: (sorts: Sort[]) => void,
-): ItemType[] =>
-  optionsByColumnType[column.type].map((option) => {
-    const curSort = sorts.find((s) => s.column === column.column);
-    const isSortMatch = curSort && curSort.direction === option.value;
-    return {
-      icon: isSortMatch ? <CheckOutlined /> : <div />,
-      key: option.value,
-      label: `Sort ${option.label}`,
-      onClick: () => {
-        let newSort: Sort[];
-        if (isSortMatch) {
-          newSort = sorts.filter((s) => s.column !== column.column);
-        } else if (curSort) {
-          newSort = sorts.map((s) =>
-            s.column !== column.column
-              ? s
-              : {
-                  ...s,
-                  direction: option.value as DirectionType,
-                },
-          );
-        } else {
-          newSort = [{ column: column.column, direction: option.value as DirectionType }];
-        }
-        onSortChange(newSort);
-      },
-    };
-  });
 
 export const placeholderMenuItems: ItemType[] = [
   {
