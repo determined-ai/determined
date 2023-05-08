@@ -174,7 +174,7 @@ const ResourcepoolDetailInner: React.FC = () => {
     ];
   }, [pool, poolStats, renderPoolConfig]);
 
-  if (!pool || Loadable.isLoading(resourcePools)) return <Spinner spinning />;
+  if (!pool || Loadable.isLoading(resourcePools)) return <Spinner center spinning />;
 
   return (
     <Page className={css.poolDetailPage}>

@@ -24,7 +24,7 @@ executors:
 parameters:
   det-version:
     type: string
-    default: 0.21.3-dev0
+    default: 0.22.1-dev0
   docker-image:
     type: string
     default: determinedai/cimg-base:latest
@@ -129,6 +129,23 @@ commands:
               circleci-agent step halt
             else
               echo "detected non-docs-only changes: $DIFF_DIRS"
+            fi
+
+  skip-if-not-docs:
+    steps:
+      - run: git remote add upstream https://github.com/determined-ai/determined
+      - run: git fetch upstream
+      - run:
+          name: check for any docs changes
+          command: |
+            MERGE_BASE="$(git merge-base upstream/main HEAD)"
+            DIFF_DIRS="$(git diff-tree --no-commit-id --name-only "$MERGE_BASE" HEAD)"
+            # check "shared" is in the list of changed directories
+            if [[ "$DIFF_DIRS" == *"docs"* ]]; then
+              echo "docs change detected, running downstream steps"
+            else
+              echo "detected non-docs changes, halting job now"
+              circleci-agent step halt
             fi
 
   skip-if-webui-only:
@@ -424,6 +441,29 @@ commands:
       - run: pip freeze --all
       # Allow this to fail, but it is useful for debugging.
       - run: sh -c "pip check || true"
+
+  setup-docker-env:
+    description: Set up and create docker env.
+    parameters:
+      image:
+        type: string
+      image-name:
+        type: string
+        default: "test_container"
+      bind-mount:
+        type: string
+        default: "$PWD"
+      extras-requires:
+        type: string
+        default: ""
+    steps:
+      - run: docker run -v <<parameters.bind-mount>>:/mnt/project --gpus=all -it -d --name <<parameters.image-name>> --workdir /mnt/project <<parameters.image>>
+      - run:
+          name: Install <<parameters.extras-requires>>
+          command: |
+            if [ -n "<<parameters.extras-requires>>" ]; then
+              docker exec <<parameters.image-name>> tools/scripts/retry.sh pip install --progress-bar off <<parameters.extras-requires>>
+            fi
 
   run-e2e-tests:
     parameters:
@@ -1110,6 +1150,33 @@ jobs:
       - run: pip3 install awscli
       - run: make -C docs publish
 
+  # TODO(danh): eventually replace 'publish-docs' with this new workflow after
+  # all dependent scripts are updated.
+  # Related work: https://hpe-aiatscale.atlassian.net/browse/INFENG-183
+  publish-docs-new:
+    parameters:
+      preview:
+        type: boolean
+        default: true
+    docker:
+      - image: <<pipeline.parameters.docker-image>>
+    steps:
+      - checkout
+      - skip-if-not-docs
+      - attach_workspace:
+          at: .
+      - setup-python-venv:
+          install-python: false
+          determined: true
+          extras-requires: "tensorflow==2.12.0 torch==1.9.0 torchvision==0.10.0"
+          model-hub: true
+          extra-requirements-file: "docs/requirements.txt"
+          executor: <<pipeline.parameters.docker-image>>
+      - when:
+          condition: <<parameters.preview>>
+          steps:
+            - run: make -C docs preview
+
   package-and-push-system-local:
     docker:
       - image: <<pipeline.parameters.docker-image>>
@@ -1642,25 +1709,49 @@ jobs:
 
   test-unit-harness-gpu:
     machine:
-      resource_class: gpu.nvidia.small
       image: <<pipeline.parameters.gpu-machine-image>>
+    resource_class: gpu.nvidia.small
     steps:
       - checkout
       - skip-if-docs-only
       - skip-if-webui-only
+      - setup-docker-env:
+          image: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.21.2
+          image-name: test_container
+          extras-requires: "tensorflow==2.11.0 mypy pytest coverage"
+      - run: mkdir -p $HOME/.local/bin
       - install-codecov
-      - setup-python-venv:
-          determined: true
-          extras-requires: "tensorflow==2.12.0 torch==1.9.0 torchvision==0.10.0"
-          extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
-          executor: <<pipeline.parameters.docker-image>>
-      - run: COVERAGE_FILE=$PWD/test-unit-harness-gpu-pycov make -C harness test-gpu
-      - run: coverage xml -i --data-file=./test-unit-harness-gpu-pycov
+      - run: echo 'export PATH=$PATH:$HOME/.local/bin' >> $BASH_ENV
+      - run: docker exec -e COVERAGE_FILE=/mnt/project/test-unit-harness-gpu-pycov test_container make -C harness test-gpu
+      - run: docker exec test_container coverage xml -i --data-file=./test-unit-harness-gpu-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
       - persist_to_workspace:
           root: .
           paths:
             - test-unit-harness-gpu-pycov
+
+  test-unit-harness-gpu-lightning:
+    machine:
+      image: <<pipeline.parameters.gpu-machine-image>>
+    resource_class: gpu.nvidia.small
+    steps:
+      - checkout
+      - skip-if-docs-only
+      - skip-if-webui-only
+      - setup-docker-env:
+          image: determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.5-tf-2.4-gpu-0.18.5
+          image-name: test_container
+          extras-requires: "tensorflow==2.12.0 torch==1.9.0 torchvision==0.10.0 mypy pytest coverage"
+      - run: mkdir -p $HOME/.local/bin
+      - install-codecov
+      - run: echo 'export PATH=$PATH:$HOME/.local/bin' >> $BASH_ENV
+      - run: docker exec -e COVERAGE_FILE=/mnt/project/test-unit-harness-gpu-lightning-pycov test_container make -C harness test-gpu-lightning
+      - run: docker exec test_container coverage xml -i --data-file=./test-unit-harness-gpu-lightning-pycov
+      - run: codecov -v -t $CODECOV_TOKEN -F harness
+      - persist_to_workspace:
+          root: .
+          paths:
+            - test-unit-harness-gpu-lightning-pycov
 
   test-unit-harness-tf2:
     docker:
@@ -2279,6 +2370,19 @@ workflows:
       - lint-react
       - lint-secrets
 
+  previews:
+    jobs:
+      - build-proto
+      - build-helm
+      - build-docs:
+          requires:
+            - build-helm
+            - build-proto
+      - publish-docs-new:
+          requires:
+            - build-docs
+          context: aws
+
   test-cli:
     jobs:
       - test-cli:
@@ -2292,8 +2396,8 @@ workflows:
       - test-unit-go
       - test-unit-react
       - test-unit-harness-cpu
-      # Exclude gpu tests for now since we do not have access to those instance types on circleci.
-      #- test-unit-harness-gpu
+      - test-unit-harness-gpu
+      - test-unit-harness-gpu-lightning
       - test-unit-harness-tf2
       - test-unit-model-hub
       - test-unit-storage:

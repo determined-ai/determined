@@ -10,11 +10,11 @@ import (
 // UserAuthZBasic is basic OSS controls.
 type UserAuthZBasic struct{}
 
-// CanGetUser always returns true.
+// CanGetUser always returns nil.
 func (a *UserAuthZBasic) CanGetUser(
 	ctx context.Context, curUser, targetUser model.User,
-) (canGetUser bool, serverError error) {
-	return true, nil
+) error {
+	return nil
 }
 
 // FilterUserList always returns the input user list and does not filtering.

@@ -29,13 +29,13 @@ The next step is to call create_experiment():
 
 .. code:: python
 
-   # config can be a path to a config file or a python dict of the config.
+   # Config can be a path to a config file or a Python dict of the config.
    exp = client.create_experiment(config="my_config.yaml", model_dir=".")
    print(f"started experiment {exp.id}")
 
-The returned object will be an ExperimentReference which has methods for controlling the lifetime of
-the experiment running on the cluster. In this example, we will just wait for the experiment to
-complete.
+The returned object will be an ``ExperimentReference`` object, which has methods for controlling the
+lifetime of the experiment running on the cluster. In this example, we will just wait for the
+experiment to complete.
 
 .. code:: python
 

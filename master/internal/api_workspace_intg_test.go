@@ -18,6 +18,7 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
+	authz2 "github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/mocks"
 	"github.com/determined-ai/determined/master/internal/workspace"
@@ -205,14 +206,14 @@ func TestAuthzGetWorkspace(t *testing.T) {
 	require.Equal(t, workspaceNotFoundErr(-9999).Error(), err.Error())
 
 	workspaceAuthZ.On("CanGetWorkspace", mock.Anything, mock.Anything, mock.Anything).
-		Return(false, nil).Once()
+		Return(authz2.PermissionDeniedError{}).Once()
 	_, err = api.GetWorkspace(ctx, &apiv1.GetWorkspaceRequest{Id: 1})
 	require.Equal(t, workspaceNotFoundErr(1).Error(), err.Error())
 
 	// A error returned by CanGetWorkspace is returned unmodified.
 	expectedErr := fmt.Errorf("canGetWorkspaceError")
 	workspaceAuthZ.On("CanGetWorkspace", mock.Anything, mock.Anything, mock.Anything).
-		Return(false, expectedErr).Once()
+		Return(expectedErr).Once()
 	_, err = api.GetWorkspace(ctx, &apiv1.GetWorkspaceRequest{Id: 1})
 	require.Equal(t, expectedErr, err)
 }
@@ -223,7 +224,7 @@ func TestAuthzGetWorkspaceProjects(t *testing.T) {
 	// Deny with error returns error unmodified.
 	expectedErr := fmt.Errorf("filterWorkspaceProjectsError")
 	workspaceAuthZ.On("CanGetWorkspace", mock.Anything, mock.Anything, mock.Anything).
-		Return(true, nil).Once()
+		Return(nil).Once()
 	workspaceAuthZ.On("FilterWorkspaceProjects", mock.Anything, mock.Anything, mock.Anything).
 		Return(nil, expectedErr).Once()
 	_, err := api.GetWorkspaceProjects(ctx, &apiv1.GetWorkspaceProjectsRequest{Id: 1})
@@ -232,7 +233,7 @@ func TestAuthzGetWorkspaceProjects(t *testing.T) {
 	// Nil error returns whatever the filtering returned.
 	expected := []*projectv1.Project{{Name: "test"}}
 	workspaceAuthZ.On("CanGetWorkspace", mock.Anything, mock.Anything, mock.Anything).
-		Return(true, nil).Once()
+		Return(nil).Once()
 	workspaceAuthZ.On("FilterWorkspaceProjects", mock.Anything, mock.Anything, mock.Anything).
 		Return(expected, nil).Once()
 	resp, err := api.GetWorkspaceProjects(ctx, &apiv1.GetWorkspaceProjectsRequest{Id: 1})
@@ -276,7 +277,7 @@ func TestAuthzPostWorkspace(t *testing.T) {
 
 	workspaceAuthZ.On("CanCreateWorkspace", mock.Anything, mock.Anything).Return(nil).Once()
 	workspaceAuthZ.On("CanGetWorkspace", mock.Anything, mock.Anything, mock.Anything).
-		Return(true, nil).Once()
+		Return(nil).Once()
 	getResp, err := api.GetWorkspace(ctx, &apiv1.GetWorkspaceRequest{Id: resp.Workspace.Id})
 	require.NoError(t, err)
 	proto.Equal(resp.Workspace, getResp.Workspace)
@@ -367,19 +368,19 @@ func TestAuthzWorkspaceGetThenActionRoutes(t *testing.T) {
 
 		// Without permission to view returns not found.
 		workspaceAuthZ.On("CanGetWorkspace", mock.Anything, mock.Anything, mock.Anything).
-			Return(false, nil).Once()
+			Return(authz2.PermissionDeniedError{}).Once()
 		require.Equal(t, workspaceNotFoundErr(id).Error(), curCase.IDToReqCall(id).Error())
 
 		// A error returned by CanGetWorkspace is returned unmodified.
 		cantGetWorkspaceErr := fmt.Errorf("canGetWorkspaceError")
 		workspaceAuthZ.On("CanGetWorkspace", mock.Anything, mock.Anything, mock.Anything).
-			Return(false, cantGetWorkspaceErr).Once()
+			Return(cantGetWorkspaceErr).Once()
 		require.Equal(t, cantGetWorkspaceErr, curCase.IDToReqCall(id))
 
 		// Deny with permission to view returns error wrapped in forbidden.
 		expectedErr := status.Error(codes.PermissionDenied, curCase.DenyFuncName+"Deny")
 		workspaceAuthZ.On("CanGetWorkspace", mock.Anything, mock.Anything, mock.Anything).
-			Return(true, nil).Once()
+			Return(nil).Once()
 		workspaceAuthZ.On(curCase.DenyFuncName, mock.Anything, mock.Anything, mock.Anything).
 			Return(fmt.Errorf("%sDeny", curCase.DenyFuncName)).Once()
 		require.Equal(t, expectedErr.Error(), curCase.IDToReqCall(id).Error())

@@ -35,11 +35,11 @@ Loading data is done by defining :meth:`~determined.keras.TFKerasTrial.build_tra
 and :meth:`~determined.keras.TFKerasTrial.build_validation_data_loader` methods. Each should return
 one of the following data types:
 
-#. A tuple ``(x, y)`` of Numpy arrays. x must be a NumPy array (or array-like), a list of arrays (in
+#. A tuple ``(x, y)`` of NumPy arrays. x must be a NumPy array (or array-like), a list of arrays (in
    case the model has multiple inputs), or a dict mapping input names to the corresponding array, if
    the model has named inputs. y should be a numpy array.
 
-#. A tuple ``(x, y, sample_weights)`` of Numpy arrays.
+#. A tuple ``(x, y, sample_weights)`` of NumPy arrays.
 
 #. A ``tf.data.dataset`` returning a tuple of either (inputs, targets) or (inputs, targets,
    sample_weights).

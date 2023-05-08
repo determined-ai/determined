@@ -1,6 +1,7 @@
 from .experiment import (
     activate_experiment,
     activate_experiments,
+    archive_experiments,
     assert_equivalent_trials,
     assert_performed_final_checkpoint,
     assert_performed_initial_validation,
@@ -10,6 +11,7 @@ from .experiment import (
     kill_experiments,
     kill_single,
     kill_trial,
+    print_trial_logs,
     check_if_string_present_in_trial_logs,
     assert_patterns_in_trial_logs,
     create_experiment,

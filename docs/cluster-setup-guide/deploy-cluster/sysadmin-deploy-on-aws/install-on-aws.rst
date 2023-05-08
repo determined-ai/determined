@@ -73,9 +73,9 @@ newly deployed cluster will be printed, including the URL of the Determined mast
 Deployment Types
 ================
 
-``det deploy`` supports multiple different deployment types to work with different security needs.
-The deployment type can be specified using the ``--deployment-type`` argument (e.g., ``det deploy
-aws --deployment-type secure``).
+``det deploy`` supports multiple deployment types to work with different security needs. The
+deployment type can be specified using the ``--deployment-type`` argument (e.g., ``det deploy aws
+--deployment-type secure``).
 
 -  ``simple``: The simple deployment provides an easy way to deploy a Determined cluster in AWS.
    This creates the master instance in the default subnet for the account.
@@ -645,7 +645,7 @@ To run Determined:
 
    .. warning::
 
-      An important assumption of Determined with Dynamic Agents is that any EC2 instances with the
+      An important assumption of Determined with dynamic agents is that any EC2 instances with the
       configured tag_key:tag_value pair are managed by the Determined master. This pair should be
       unique to your Determined installation. If it is not, Determined may inadvertently manage your
       non-Determined EC2 instances.

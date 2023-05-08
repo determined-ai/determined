@@ -112,12 +112,18 @@ class WorkspaceStore extends PollingStore {
     );
   }
 
-  public fetch(settings = {} as GetWorkspacesParams, signal?: AbortSignal): () => void {
+  public fetch(signal?: AbortSignal, force = false): () => void {
     const canceler = new AbortController();
 
-    getWorkspaces(settings, { signal: signal ?? canceler.signal })
-      .then((response) => this.#loadableWorkspaces.set(Loaded(response.workspaces)))
-      .catch(handleError);
+    if (force || this.#loadableWorkspaces.get() === NotLoaded) {
+      getWorkspaces({}, { signal: signal ?? canceler.signal })
+        .then((response) => {
+          // Prevents unnecessary re-renders.
+          if (!force && this.#loadableWorkspaces.get() !== NotLoaded) return;
+          this.#loadableWorkspaces.set(Loaded(response.workspaces));
+        })
+        .catch(handleError);
+    }
 
     return () => canceler.abort();
   }

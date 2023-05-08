@@ -14,7 +14,7 @@ type WorkspaceAuthZ interface {
 	// GET /api/v1/workspaces/:workspace_id
 	CanGetWorkspace(
 		ctx context.Context, curUser model.User, workspace *workspacev1.Workspace,
-	) (canGetWorkspace bool, serverError error)
+	) error
 
 	// GET /api/v1/workspaces/:workspace_id/projects
 	FilterWorkspaceProjects(

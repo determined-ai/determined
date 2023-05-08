@@ -19,6 +19,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/api/apiutils"
+	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/command"
 	mconfig "github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
@@ -264,11 +265,9 @@ func (a *apiServer) GetCommand(
 		return nil, err
 	}
 
-	if ok, err := command.AuthZProvider.Get().CanGetNSC(
+	if err := command.AuthZProvider.Get().CanGetNSC(
 		ctx, *curUser, model.AccessScopeID(resp.Command.WorkspaceId)); err != nil {
-		return nil, err
-	} else if !ok {
-		return nil, errActorNotFound(addr)
+		return nil, authz.SubIfUnauthorized(err, errActorNotFound(addr))
 	}
 	return resp, nil
 }

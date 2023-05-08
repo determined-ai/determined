@@ -82,7 +82,7 @@ const (
 	PermissionType_PERMISSION_TYPE_EDIT_MODEL_REGISTRY PermissionType = 7002
 	// Ability to create model registry.
 	PermissionType_PERMISSION_TYPE_CREATE_MODEL_REGISTRY PermissionType = 7003
-	// Ability to delete model registry
+	// Ability to delete model registry.
 	PermissionType_PERMISSION_TYPE_DELETE_MODEL_REGISTRY PermissionType = 7004
 	// Ability to view master logs.
 	PermissionType_PERMISSION_TYPE_VIEW_MASTER_LOGS PermissionType = 8001

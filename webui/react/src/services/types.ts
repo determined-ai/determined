@@ -97,6 +97,7 @@ export interface GetExperimentsParams extends PaginationParams {
 }
 
 export interface SearchExperimentsParams extends PaginationParams {
+  filter?: string;
   projectId?: number;
   sort?: string;
 }

@@ -14,6 +14,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 
+	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/db"
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
@@ -65,10 +66,8 @@ func (m *Master) canDoActionOnCheckpoint(
 		return err
 	}
 
-	if ok, err := expauth.AuthZProvider.Get().CanGetExperiment(ctx, curUser, exp); err != nil {
-		return err
-	} else if !ok {
-		return errCheckpointNotFound(id)
+	if err := expauth.AuthZProvider.Get().CanGetExperiment(ctx, curUser, exp); err != nil {
+		return authz.SubIfUnauthorized(err, errCheckpointNotFound(id))
 	}
 	if err := action(ctx, curUser, exp); err != nil {
 		return status.Error(codes.PermissionDenied, err.Error())
@@ -89,15 +88,11 @@ func (m *Master) canDoActionOnCheckpointThroughModel(
 		if !errors.Is(err, db.ErrNotFound) {
 			return err
 		}
-		ok, err := modelauth.AuthZProvider.Get().CanGetModel(ctx, curUser, model, model.WorkspaceId)
-		if err != nil {
-			return err
-		}
-		if ok {
-			return nil
+		if err := modelauth.AuthZProvider.Get().CanGetModel(
+			ctx, curUser, model, model.WorkspaceId); err != nil {
+			return authz.SubIfUnauthorized(err, nil)
 		}
 	}
-
 	return status.Error(codes.PermissionDenied,
 		fmt.Sprintf("cannot access checkpoint: %s", id.String()))
 }
@@ -204,13 +199,13 @@ func (a *apiServer) DeleteCheckpoints(
 		if err != nil {
 			return nil, err
 		}
-		var ok bool
-		if ok, err = expauth.AuthZProvider.Get().CanGetExperiment(ctx, *curUser, exp); err != nil {
-			return nil, err
-		} else if !ok {
+		err = expauth.AuthZProvider.Get().CanGetExperiment(ctx, *curUser, exp)
+		if authz.IsPermissionDenied(err) {
 			notFoundCheckpoints = append(notFoundCheckpoints,
 				strings.Split(expIDcUUIDs.CheckpointUUIDSStr, ",")...)
 			continue
+		} else if err != nil {
+			return nil, err
 		}
 		if err = expauth.AuthZProvider.Get().CanEditExperiment(ctx, *curUser, exp); err != nil {
 			return nil, status.Error(codes.PermissionDenied, err.Error())

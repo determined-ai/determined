@@ -14,7 +14,7 @@ type TrialAuthZ interface {
 	// POST /trial-comparison/collections
 	CanCreateTrialCollection(
 		ctx context.Context, curUser *model.User, projectID int32,
-	) (canGetCollections bool, serverError error)
+	) error
 
 	// POST /trial-comparison/query
 	// POST /trial-comparison/update-trial-tags

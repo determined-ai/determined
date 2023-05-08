@@ -77,10 +77,10 @@ Example experiment configuration file:
 
 For detailed configuration settings, refer to the :ref:`command-notebook-configuration`.
 
-To launch Tensorboard with an experiment configuration file, use ``det tensorboard start
+To launch TensorBoard with an experiment configuration file, use ``det tensorboard start
 <experiment-id> --config-file=my_config.yaml``.
 
-To view the configuration of a running Tensorboard instance, use ``det tensorboard config
+To view the configuration of a running TensorBoard instance, use ``det tensorboard config
 <tensorboard_id>``.
 
 ***************************

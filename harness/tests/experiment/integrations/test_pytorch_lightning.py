@@ -1,4 +1,5 @@
 # type: ignore
+import os
 import pathlib
 import random
 import sys
@@ -14,6 +15,7 @@ from tests.experiment import utils  # noqa: I100
 from tests.experiment.fixtures import lightning_adapter_onevar_model as la_model
 
 
+@pytest.mark.pytorch_lightning
 class TestLightningAdapter:
     def setup_method(self) -> None:
         # This training setup is not guaranteed to converge in general,
@@ -25,7 +27,7 @@ class TestLightningAdapter:
         }
 
     def test_checkpointing_and_restoring(self, tmp_path: pathlib.Path) -> None:
-        self.checkpoint_and_restore(
+        self.checkpoint_and_check_metrics(
             trial_class=la_model.OneVarTrial, hparams=self.hparams, tmp_path=tmp_path, steps=(1, 1)
         )
 
@@ -42,7 +44,7 @@ class TestLightningAdapter:
             def __init__(self, context):
                 super().__init__(context, OneVarLM)
 
-        self.checkpoint_and_restore(
+        self.checkpoint_and_check_metrics(
             trial_class=OneVarLA, hparams=self.hparams, tmp_path=tmp_path, steps=(1, 1)
         )
 
@@ -56,7 +58,7 @@ class TestLightningAdapter:
                 super().__init__(context, OneVarLM)
 
         with pytest.raises(AssertionError):
-            self.checkpoint_and_restore(
+            self.checkpoint_and_check_metrics(
                 trial_class=OneVarLA, hparams=self.hparams, tmp_path=tmp_path, steps=(1, 1)
             )
 
@@ -96,7 +98,7 @@ class TestLightningAdapter:
         )
         trial_controller.run()
 
-    def checkpoint_and_restore(
+    def checkpoint_and_check_metrics(
         self,
         hparams: typing.Dict,
         trial_class: pytorch.PyTorchTrial,
@@ -180,6 +182,140 @@ class TestLightningAdapter:
 
         return (training_metrics["A"], training_metrics["B"])
 
+    def train_and_checkpoint(
+        self,
+        hparams: typing.Dict,
+        trial_class: pytorch.PyTorchTrial,
+        tmp_path: pathlib.Path,
+        exp_config: typing.Dict,
+        expose_gpus: bool = True,
+        steps: typing.Tuple[int, int] = (1, 1),
+    ) -> None:
+        checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
+
+        # Trial A: train 100 batches and checkpoint
+        trial_A, trial_controller_A = create_trial_and_trial_controller(
+            trial_class=trial_class,
+            hparams=hparams,
+            trial_seed=self.trial_seed,
+            exp_config=exp_config,
+            max_batches=steps[0],
+            min_validation_batches=steps[0],
+            min_checkpoint_batches=steps[0],
+            checkpoint_dir=checkpoint_dir,
+            expose_gpus=True,
+        )
+
+        trial_controller_A.run()
+
+        assert len(os.listdir(checkpoint_dir)) == 1, "trial did not create a checkpoint"
+
+        # Trial A: restore from checkpoint and train for 100 more batches
+        trial_A, trial_controller_A = create_trial_and_trial_controller(
+            trial_class=trial_class,
+            hparams=hparams,
+            trial_seed=self.trial_seed,
+            exp_config=exp_config,
+            max_batches=steps[0] + steps[1],
+            min_validation_batches=steps[1],
+            min_checkpoint_batches=sys.maxsize,
+            checkpoint_dir=checkpoint_dir,
+            latest_checkpoint=os.listdir(checkpoint_dir)[0],
+            steps_completed=trial_controller_A.state.batches_trained,
+            expose_gpus=True,
+        )
+        trial_controller_A.run()
+
+        assert len(os.listdir(checkpoint_dir)) == 2, "trial did not create a checkpoint"
+
+    @pytest.mark.gpu
+    @pytest.mark.parametrize("api_style", ["apex", "auto"])
+    def test_pl_const_with_amp(self, api_style: str, tmp_path: pathlib.Path) -> None:
+        checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
+        exp_dir = "pytorch_lightning_amp"
+        config = utils.load_config(utils.fixtures_path(exp_dir + "/" + api_style + "_amp.yaml"))
+
+        hparams = config["hyperparameters"]
+
+        exp_config = utils.make_default_exp_config(
+            hparams,
+            scheduling_unit=1,
+            searcher_metric="validation_loss",
+            checkpoint_dir=checkpoint_dir,
+        )
+        exp_config.update(config)
+
+        module_names = {"apex": "MNistApexAMPTrial", "auto": "MNistAutoAMPTrial"}
+
+        example_filename = api_style + "_amp_model_def.py"
+        example_path = utils.fixtures_path(os.path.join(exp_dir, example_filename))
+        trial_class = utils.import_class_from_module(module_names[api_style], example_path)
+        trial_class._searcher_metric = "validation_loss"
+
+        self.train_and_checkpoint(
+            trial_class=trial_class,
+            hparams=hparams,
+            tmp_path=tmp_path,
+            exp_config=exp_config,
+            steps=(1, 1),
+        )
+
+    @pytest.mark.gpu
+    def test_pl_mnist_gan(self, tmp_path: pathlib.Path) -> None:
+        checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
+        exp_dir = "gan_mnist_pl"
+        config = utils.load_config(utils.gan_examples_path(os.path.join(exp_dir, "const.yaml")))
+
+        hparams = config["hyperparameters"]
+
+        exp_config = utils.make_default_exp_config(
+            hparams,
+            scheduling_unit=1,
+            searcher_metric="validation_loss",
+            checkpoint_dir=checkpoint_dir,
+        )
+        exp_config.update(config)
+
+        example_path = utils.gan_examples_path(os.path.join(exp_dir, "model_def.py"))
+        trial_class = utils.import_class_from_module("GANTrial", example_path)
+        trial_class._searcher_metric = "validation_loss"
+
+        self.train_and_checkpoint(
+            trial_class=trial_class,
+            hparams=hparams,
+            tmp_path=tmp_path,
+            exp_config=exp_config,
+            steps=(1, 1),
+        )
+
+    @pytest.mark.gpu
+    def test_pl_mnist(self, tmp_path: pathlib.Path) -> None:
+        checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
+        exp_dir = "mnist_pl"
+        config = utils.load_config(utils.cv_examples_path(os.path.join(exp_dir, "const.yaml")))
+
+        hparams = config["hyperparameters"]
+
+        exp_config = utils.make_default_exp_config(
+            hparams,
+            scheduling_unit=1,
+            searcher_metric="validation_loss",
+            checkpoint_dir=checkpoint_dir,
+        )
+        exp_config.update(config)
+
+        example_path = utils.cv_examples_path(os.path.join(exp_dir, "model_def.py"))
+        trial_class = utils.import_class_from_module("MNISTTrial", example_path)
+        trial_class._searcher_metric = "validation_loss"
+
+        self.train_and_checkpoint(
+            trial_class=trial_class,
+            hparams=hparams,
+            tmp_path=tmp_path,
+            exp_config=exp_config,
+            steps=(1, 1),
+        )
+
 
 def create_trial_and_trial_controller(
     trial_class: lightning.LightningAdapter,
@@ -230,7 +366,7 @@ def create_trial_and_trial_controller(
             exp_conf=exp_config,
             aggregation_frequency=1,
             steps_completed=steps_completed,
-            managed_training=False,
+            managed_training=True,
             debug_enabled=False,
         )
         trial_context._set_default_gradient_compression(False)

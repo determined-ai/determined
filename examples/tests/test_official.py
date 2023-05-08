@@ -7,10 +7,6 @@ from packaging import version
 
 official_examples = [
     (
-        "tutorials/mnist_pytorch",
-        "tutorials/mnist_pytorch/const.yaml",
-    ),
-    (
         "tutorials/fashion_mnist_tf_keras",
         "tutorials/fashion_mnist_tf_keras/const.yaml",
     ),
@@ -21,10 +17,6 @@ official_examples = [
     (
         "computer_vision/cifar10_pytorch",
         "computer_vision/cifar10_pytorch/const.yaml",
-    ),
-    (
-        "computer_vision/cifar10_tf_keras",
-        "computer_vision/cifar10_tf_keras/const.yaml",
     ),
     (
         "computer_vision/iris_tf_keras",

@@ -15,6 +15,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 
+	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	modelauth "github.com/determined-ai/determined/master/internal/model"
@@ -77,12 +78,11 @@ func (a *apiServer) GetModel(
 	if err != nil {
 		return nil, err
 	}
-	if ok, err := modelauth.AuthZProvider.Get().CanGetModel(ctx, *curUser, m,
+	if err = modelauth.AuthZProvider.Get().CanGetModel(ctx, *curUser, m,
 		m.WorkspaceId); err != nil {
-		return nil, err
-	} else if !ok {
-		return nil, errors.Errorf("current user %q doesn't have permissions to get model %q.",
-			curUser.Username, m.Name)
+		return nil, authz.SubIfUnauthorized(err,
+			errors.Errorf("current user %q doesn't have permissions to get model %q.",
+				curUser.Username, m.Name))
 	}
 	return &apiv1.GetModelResponse{Model: m}, err
 }
@@ -152,13 +152,11 @@ func (a *apiServer) GetModels(
 	// function below returns a list of workspaces that have permissions
 	// filtered according to user given workspaces.
 	// if global permissions and no filter list given by user then it's an empty list.
-	workspaceIdsWithPermsAndFilterList, ok, err := modelauth.AuthZProvider.Get().
+	workspaceIdsWithPermsAndFilterList, err := modelauth.AuthZProvider.Get().
 		CanGetModels(ctx, *curUser, workspaceIdsGiven)
 	if err != nil {
-		return nil, err
-	} else if !ok {
-		return nil, errors.Errorf(
-			"current user doesn't have view permissions in related workspaces.")
+		return nil, authz.SubIfUnauthorized(err, errors.Errorf(
+			"current user doesn't have view permissions in related workspaces."))
 	}
 	var workspaceIds []string
 	var workspaceIdsWithPermsAndFilter string
@@ -569,18 +567,17 @@ func (a *apiServer) GetModelVersion(
 	if err != nil {
 		return nil, err
 	}
-	currModel, err := a.ModelFromIdentifier(req.ModelName)
-	if ok, err := modelauth.AuthZProvider.Get().CanGetModel(ctx, *curUser, currModel,
+	currModel, _ := a.ModelFromIdentifier(req.ModelName)
+	if err = modelauth.AuthZProvider.Get().CanGetModel(ctx, *curUser, currModel,
 		currModel.WorkspaceId); err != nil {
-		return nil, err
-	} else if !ok {
-		return nil, errors.Errorf("current user %q doesn't have permissions to get model %q.",
-			curUser.Username, currModel.Name)
+		return nil, authz.SubIfUnauthorized(err,
+			errors.Errorf("current user %q doesn't have permissions to get model %q.",
+				curUser.Username, currModel.Name))
 	}
 
 	resp := &apiv1.GetModelVersionResponse{}
 	resp.ModelVersion = mv
-	return resp, err
+	return resp, nil
 }
 
 func (a *apiServer) GetModelVersions(
@@ -596,12 +593,11 @@ func (a *apiServer) GetModelVersions(
 		return nil, err
 	}
 
-	if ok, err := modelauth.AuthZProvider.Get().CanGetModel(ctx, *curUser, parentModel,
+	if err := modelauth.AuthZProvider.Get().CanGetModel(ctx, *curUser, parentModel,
 		parentModel.WorkspaceId); err != nil {
-		return nil, err
-	} else if !ok {
-		return nil, errors.Errorf("current user %q doesn't have permissions to get model %q.",
-			curUser.Username, parentModel.Name)
+		return nil, authz.SubIfUnauthorized(err,
+			errors.Errorf("current user %q doesn't have permissions to get model %q.",
+				curUser.Username, parentModel.Name))
 	}
 
 	resp := &apiv1.GetModelVersionsResponse{Model: parentModel}

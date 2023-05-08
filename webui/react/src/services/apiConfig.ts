@@ -621,6 +621,7 @@ export const searchExperiments: DetApi<
       params.offset,
       params.limit,
       params.sort,
+      params.filter,
       options,
     );
   },

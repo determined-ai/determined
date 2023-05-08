@@ -77,14 +77,14 @@ Image Registry Configuration
 ============================
 
 To configure which image registry of Determined will be installed by the Helm chart, change
-``imageRegistry`` in ``values.yaml``. You can specify the DockerHub public registry ``determinedai``
-or specify any private registry that hosts the Determined master image.
+``imageRegistry`` in ``values.yaml``. You can specify the Docker Hub public registry
+``determinedai`` or specify any private registry that hosts the Determined master image.
 
 Image Pull Secret Configuration
 ===============================
 
 To configure which image pull secret will be used by the Helm chart, change ``imagePullSecretName``
-in ``values.yaml``. You can set it to empty for the DockerHub public registry or specify any secret
+in ``values.yaml``. You can set it to empty for the Docker Hub public registry or specify any secret
 that is configured using `kubectl create secret
 <https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/>`_.
 
@@ -116,7 +116,7 @@ Resource Configuration (CPU-based setups)
 =========================================
 
 For CPU-only configurations, you need to set ``slotType: cpu`` as well as
-``slotResourceRequests.cpu: <number of cpus per slot>`` in ``values.yaml``. Please note that the
+``slotResourceRequests.cpu: <number of CPUs per slot>`` in ``values.yaml``. Please note that the
 number of CPUs allocatable by Kubernetes may be lower than the number of "hardware" CPU cores. For
 example, an 8-core node may provide 7.91 CPUs, with the rest allocated for the Kubernetes system
 tasks. If ``slotResourceRequests.cpu`` was set to 8 in this example, the pods would fail to
@@ -352,8 +352,7 @@ The next example is a toleration for when a node has the ``gpu`` taint type.
 Setting Up Multiple Resource Pools
 ==================================
 
-In order to set up multiple resource pools for Determined on your Kubernetes cluster, you need to do
-the following:
+To set up multiple resource pools for Determined on your Kubernetes cluster:
 
 #. `Create a namespace
    <https://kubernetes.io/docs/tasks/administer-cluster/namespaces/#creating-a-new-namespace>`__ for

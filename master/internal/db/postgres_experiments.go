@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
@@ -874,68 +873,75 @@ WHERE id = :id`
 	return db.namedExecOne(query, experiment)
 }
 
-// DeleteExperiment deletes an existing experiment.
-func (db *PgDB) DeleteExperiment(id int) error {
-	return db.withTransaction("delete experiment", func(tx *sqlx.Tx) error {
-		if _, err := tx.Exec(`
-DELETE FROM raw_steps
-WHERE trial_id IN (SELECT id FROM trials WHERE experiment_id = $1)
-`, id); err != nil {
-			return errors.Wrapf(err, "error deleting steps for experiment %v", id)
+// DeleteExperiments deletes one or more experiments.
+func (db *PgDB) DeleteExperiments(ctx context.Context, ids []int) error {
+	tx, err := Bun().BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		txErr := tx.Rollback()
+		if txErr != nil && txErr != sql.ErrTxDone {
+			log.WithError(txErr).Error("error rolling back transaction in DeleteExperiments")
 		}
+	}()
+	var delIDs []int32
+	if _, err = tx.NewDelete().Model(&delIDs).Table("raw_steps").
+		Where("trial_id IN (SELECT id FROM trials WHERE experiment_id IN (?))", bun.In(ids)).
+		Returning("id").
+		Exec(ctx); err != nil {
+		return errors.Wrapf(err, "error deleting steps for experiments %v", ids)
+	}
 
-		if _, err := tx.Exec(`
-DELETE FROM raw_validations
-WHERE trial_id IN (SELECT id FROM trials WHERE experiment_id = $1)
-`, id); err != nil {
-			return errors.Wrapf(err, "error deleting validations for experiment %v", id)
-		}
+	if _, err = tx.NewDelete().Model(&delIDs).Table("raw_validations").
+		Where("trial_id IN (SELECT id FROM trials WHERE experiment_id IN (?))", bun.In(ids)).
+		Returning("id").
+		Exec(ctx); err != nil {
+		return errors.Wrapf(err, "error deleting validations for experiments %v", ids)
+	}
 
-		if _, err := tx.Exec(`
-DELETE FROM raw_checkpoints
-WHERE trial_id IN (SELECT id FROM trials WHERE experiment_id = $1)
-`, id); err != nil {
-			return errors.Wrapf(err, "error deleting checkpoints for experiment %v", id)
-		}
+	if _, err = tx.NewDelete().Model(&delIDs).Table("raw_checkpoints").
+		Where("trial_id IN (SELECT id FROM trials WHERE experiment_id IN (?))", bun.In(ids)).
+		Returning("id").
+		Exec(ctx); err != nil {
+		return errors.Wrapf(err, "error deleting checkpoints for experiments %v", ids)
+	}
 
-		if _, err := tx.Exec(`
-DELETE FROM checkpoints_v2
-WHERE task_id IN (
+	if _, err = tx.NewDelete().Model(&delIDs).Table("checkpoints_v2").
+		Where(`task_id IN (
 	SELECT tk.task_id
 	FROM tasks tk
 	JOIN trials t ON t.task_id = tk.task_id
 	JOIN experiments e ON t.experiment_id = e.id
-	WHERE experiment_id = $1
-)`, id); err != nil {
-			return errors.Wrapf(err, "error deleting checkpoints (v2) for experiment %v", id)
-		}
+	WHERE experiment_id IN (?)
+)`, bun.In(ids)).
+		Returning("id").
+		Exec(ctx); err != nil {
+		return errors.Wrapf(err, "error deleting checkpoints (v2) for experiments %v", ids)
+	}
 
-		if err := db.deleteSnapshotsForExperiment(id)(tx); err != nil {
-			return errors.Wrapf(err, "error deleting snapshots for experiment %v", id)
-		}
+	if err := db.DeleteSnapshotsForExperiments(ids)(ctx, &tx); err != nil {
+		return errors.Wrapf(err, "error deleting snapshots for experiments %v", ids)
+	}
 
-		if _, err := tx.Exec(`
-DELETE FROM trials
-WHERE experiment_id = $1;
-`, id); err != nil {
-			return errors.Wrapf(err, "error deleting trials for experiment %v", id)
-		}
+	if _, err = tx.NewDelete().Model(&delIDs).Table("trials").
+		Where("experiment_id IN (?)", bun.In(ids)).
+		Returning("id").
+		Exec(ctx); err != nil {
+		return errors.Wrapf(err, "error deleting trials for experiments %v", ids)
+	}
 
-		result, err := tx.Exec(`
-DELETE FROM experiments
-WHERE id = $1
-`, id)
-		if err != nil {
-			return errors.Wrapf(err, "error deleting experiment %v", id)
-		}
-		switch num, err := result.RowsAffected(); {
-		case err != nil:
-			return errors.Wrapf(err, "error in RowsAffected when deleting experiment %v", id)
-		case num != 1:
-			return errors.Errorf("error deleting non-existing experiment %v", id)
-		}
-		return nil
-	})
+	_, err = tx.NewDelete().Model(&delIDs).Table("experiments").
+		Where("id IN (?)", bun.In(ids)).
+		Returning("id").
+		Exec(ctx)
+	if err != nil {
+		return errors.Wrapf(err, "error deleting experiments %v", ids)
+	}
+	if len(delIDs) != len(ids) {
+		return errors.Errorf("mis-match in delete-able experiments versus requested %v", ids)
+	}
+	return tx.Commit()
 }
 
 // ExperimentHasCheckpointsInRegistry checks if the experiment has any checkpoints in the registry.
@@ -1030,18 +1036,22 @@ WHERE trials.experiment_id = $1
 	return trialIDs, nil
 }
 
-// ExperimentTrialAndTaskIDs returns the trial and task IDs for the experiment.
-func (db *PgDB) ExperimentTrialAndTaskIDs(expID int) ([]int, []model.TaskID, error) {
+// ExperimentsTrialAndTaskIDs returns the trial and task IDs for one or more experiments.
+func (db *PgDB) ExperimentsTrialAndTaskIDs(ctx context.Context, idb bun.IDB, expIDs []int) ([]int,
+	[]model.TaskID, error,
+) {
 	var trialIDRows []struct {
 		ID     int          `db:"id"`
 		TaskID model.TaskID `db:"task_id"`
 	}
-	if err := db.queryRows(`
-SELECT id, task_id
-FROM trials
-WHERE trials.experiment_id = $1
-`, &trialIDRows, expID); err != nil {
-		return nil, nil, errors.Wrapf(err, "querying for trial IDs of experiment %v", expID)
+	query := idb.NewSelect().
+		ColumnExpr("id").
+		ColumnExpr("task_id").
+		Table("trials").
+		Model(&trialIDRows).
+		Where("trials.experiment_id IN (?)", bun.In(expIDs))
+	if err := query.Scan(ctx); err != nil {
+		return nil, nil, errors.Wrapf(err, "querying for trial IDs of experiments %v", expIDs)
 	}
 	var trialIDs []int
 	var taskIDs []model.TaskID

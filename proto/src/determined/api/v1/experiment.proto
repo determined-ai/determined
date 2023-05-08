@@ -817,6 +817,8 @@ message SearchExperimentsRequest {
   int32 limit = 3;
   // Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc)
   optional string sort = 4;
+  // Filter expression
+  optional string filter = 5;
 }
 
 // combination of experiment and best trial with metrics

@@ -7,7 +7,6 @@ import clusterStore from 'stores/cluster';
 import determinedStore, { BrandingType } from 'stores/determinedInfo';
 import permissionStore from 'stores/permissions';
 import userStore from 'stores/users';
-import workspaceStore from 'stores/workspaces';
 import { ResourceType } from 'types';
 import { updateFaviconType } from 'utils/browser';
 import { useInitApi } from 'utils/dialogApi';
@@ -28,8 +27,6 @@ const Navigation: React.FC<Props> = ({ children }) => {
   const info = useObservable(determinedStore.info);
   const loadableCurrentUser = useObservable(userStore.currentUser);
   const clusterOverview = useObservable(clusterStore.clusterOverview);
-
-  useEffect(() => workspaceStore.startPolling(), []);
 
   useEffect(() => {
     updateFaviconType(
