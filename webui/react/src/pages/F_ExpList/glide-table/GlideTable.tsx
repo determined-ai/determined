@@ -78,7 +78,6 @@ export interface GlideTableProps {
   selectAll: boolean;
   setSelectAll: Dispatch<SetStateAction<boolean>>;
   handleUpdateExperimentList: (action: BatchAction, successfulIds: number[]) => void;
-  projectColumns: Loadable<V1ProjectColumn[]>;
   sorts: Sort[];
   onSortChange: (sorts: Sort[]) => void;
 }
