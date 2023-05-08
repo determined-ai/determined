@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "private": true,
   "engines": {
-    "node": ">=16.19 <20",
-    "npm": ">=8.0.0"
+    "node": ">=18.14.2 <19",
+    "npm": ">=9.5.0"
   },
   "scripts": {
     "postshrinkwrap": "npx npm-force-resolutions && npm install --ignore-scripts",

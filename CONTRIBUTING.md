@@ -51,7 +51,7 @@ git clone --recurse-submodules https://github.com/determined-ai/determined.git
   - python3-venv
   - python3-wheel
   - python3-dev
-- Node (>= 16.13, < 20)
+- Node (>= 18.14.2, < 19)
 - NPM (>= 8)
 - Docker (>= 19.03)
 - Helm (>= 3.0.0)
@@ -252,4 +252,3 @@ git secrets --add '"private_key":\s"-----BEGIN\sPRIVATE\sKEY-----'
 ## Documentation
 
 Visit our [Documentation Guide](https://github.com/determined-ai/determined/blob/main/docs/README.md) to find out how we generate and maintain our docs.
-
