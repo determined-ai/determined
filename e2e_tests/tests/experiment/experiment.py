@@ -759,7 +759,6 @@ def run_basic_test(
     return experiment_id
 
 
-# TODO: Actually use this
 def run_basic_autotuning_test(
     config_file: str,
     model_def_file: str,
@@ -802,7 +801,7 @@ def run_basic_autotuning_test(
 
 
 def fetch_autotuning_client_experiment(exp_id: int) -> subprocess.CompletedProcess:
-    command = ["det", "-m", conf.make_master_url(), "logs", str(exp_id)]
+    command = ["det", "-m", conf.make_master_url(), "experiment", "logs", str(exp_id)]
     env = os.environ.copy()
     env["DET_DEBUG"] = "true"
     completed_process = subprocess.run(
@@ -897,6 +896,12 @@ def verify_completed_experiment_metadata(
     # take some time.
     max_secs_to_free_slots = 30
     for _ in range(max_secs_to_free_slots):
+        print(
+            f"Trying to close out the slots... free: {cluster_utils.num_free_slots()} num_slots: {cluster_utils.num_slots()}"
+        )
+        logging.info(
+            f"Trying to close out the slots... free: {cluster_utils.num_free_slots()} num_slots: {cluster_utils.num_slots()}"
+        )
         if cluster_utils.num_free_slots() == cluster_utils.num_slots():
             break
         time.sleep(1)
