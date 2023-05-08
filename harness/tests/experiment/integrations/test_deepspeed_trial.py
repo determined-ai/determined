@@ -87,7 +87,7 @@ class TestDeepSpeedTrial:
             for metrics in validation_metrics:
                 assert "loss" in metrics
 
-        with pytest.raises(AssertionError, match=r"Torch distributed not initialized. .*"):
+        with pytest.raises(AssertionError, match=r"Distributed backend is not initialized. .*"):
             _ = utils.make_trial_controller_from_trial_implementation(
                 trial_class=deepspeed_linear_model.LinearDeepSpeedTrial,
                 hparams=updated_hparams,
