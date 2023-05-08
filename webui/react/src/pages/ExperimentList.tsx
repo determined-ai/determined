@@ -236,7 +236,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
 
   const handleActionComplete = useCallback(() => fetchExperiments(), [fetchExperiments]);
 
-  const tableSearchIcon = useCallback(() => <Icon name="search" size="tiny" />, []);
+  const tableSearchIcon = useCallback(() => <Icon name="search" size="tiny" title="Search" />, []);
 
   const handleNameSearchApply = useCallback(
     (newSearch: string) => {
@@ -899,7 +899,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         <div className={css.actionOverflow} title="Open actions menu">
           <Dropdown menu={getMenuProps()} trigger={['click']}>
             <div>
-              <Icon name="overflow-vertical" />
+              <Icon name="overflow-vertical" title="Action menu" />
             </div>
           </Dropdown>
         </div>

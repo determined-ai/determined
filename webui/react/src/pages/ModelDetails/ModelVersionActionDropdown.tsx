@@ -82,9 +82,11 @@ const ModelVersionActionDropdown: React.FC<Props> = ({
         menu={ModelVersionActionMenu}
         placement="bottomRight"
         trigger={trigger ?? ['click']}>
-        <Button type="text" onClick={stopPropagation}>
-          <Icon name={`overflow-${direction}`} />
-        </Button>
+        <Button
+          icon={<Icon name={`overflow-${direction}`} title="Action menu" />}
+          type="text"
+          onClick={stopPropagation}
+        />
       </Dropdown>
     </div>
   );

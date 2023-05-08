@@ -103,11 +103,18 @@ export type IconName = (typeof IconNameArray)[number];
 export interface Props {
   color?: 'cancel' | 'error' | 'success';
   name: IconName;
+  showTooltip?: boolean;
   size?: IconSize;
-  title?: string;
+  title: string;
 }
 
-const Icon: React.FC<Props> = ({ name, size = 'medium', title, color }: Props) => {
+const Icon: React.FC<Props> = ({
+  name,
+  showTooltip = false,
+  size = 'medium',
+  title,
+  color,
+}: Props) => {
   const classes = [css.base];
 
   if (name) classes.push(`icon-${name}`);
@@ -115,7 +122,7 @@ const Icon: React.FC<Props> = ({ name, size = 'medium', title, color }: Props) =
   if (color) classes.push(css[color]);
 
   const icon = <span aria-label={title} className={classes.join(' ')} />;
-  return title ? <Tooltip content={title}>{icon}</Tooltip> : icon;
+  return showTooltip ? <Tooltip content={title}>{icon}</Tooltip> : icon;
 };
 
 export default Icon;

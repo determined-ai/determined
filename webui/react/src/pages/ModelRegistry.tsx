@@ -232,7 +232,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
     [handleUserFilterApply, handleUserFilterReset, settings.users],
   );
 
-  const tableSearchIcon = useCallback(() => <Icon name="search" size="tiny" />, []);
+  const tableSearchIcon = useCallback(() => <Icon name="search" size="tiny" title="Search" />, []);
 
   const handleNameSearchApply = useCallback(
     (newSearch: string) => {
@@ -459,7 +459,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
           disabled={!canDeleteModelFlag && !canModifyModelFlag}
           menu={ModelActionMenu(record, canDeleteModelFlag, canModifyModelFlag)}
           trigger={['click']}>
-          <Button icon={<Icon name="overflow-vertical" />} type="text" />
+          <Button icon={<Icon name="overflow-vertical" title="Action menu" />} type="text" />
         </Dropdown>
       );
     };

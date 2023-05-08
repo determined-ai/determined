@@ -90,7 +90,7 @@ const Card: Card = ({
               placement="bottomRight"
               trigger={['click']}>
               <Button size="small" type="text" onClick={stopPropagation}>
-                <Icon name="overflow-horizontal" />
+                <Icon name="overflow-horizontal" title="Action menu" />
               </Button>
             </Dropdown>
           </div>

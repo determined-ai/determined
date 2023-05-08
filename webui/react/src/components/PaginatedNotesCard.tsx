@@ -196,7 +196,7 @@ const PaginatedNotesCard: React.FC<Props> = ({
                   {!disabled && (
                     <Dropdown menu={ActionMenu(idx)} trigger={['click']}>
                       <div className={css.action} onClick={(e) => e.stopPropagation()}>
-                        <Icon name="overflow-horizontal" />
+                        <Icon name="overflow-horizontal" title="Action menu" />
                       </div>
                     </Dropdown>
                   )}
@@ -230,7 +230,7 @@ const PaginatedNotesCard: React.FC<Props> = ({
           extra={
             <Dropdown menu={ActionMenu(currentPage)} trigger={['click']}>
               <div style={{ cursor: 'pointer' }}>
-                <Icon name="overflow-horizontal" />
+                <Icon name="overflow-horizontal" title="Action menu" />
               </div>
             </Dropdown>
           }

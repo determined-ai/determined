@@ -54,7 +54,7 @@ const TableFilterSearch: React.FC<Props> = ({
           allowClear
           bordered={false}
           placeholder="search"
-          prefix={<Icon name="search" size="tiny" />}
+          prefix={<Icon name="search" size="tiny" title="Search" />}
           ref={inputRef}
           value={search}
           onChange={handleSearchChange}

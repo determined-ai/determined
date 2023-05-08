@@ -62,7 +62,7 @@ const ProjectCard: React.FC<Props> = ({
                   `${project.numExperiments.toLocaleString()}` +
                   ` experiment${project.numExperiments === 1 ? '' : 's'}`
                 }>
-                <Icon name="experiment" size="small" />
+                <Icon name="experiment" size="small" title="Number of experiments" />
                 <span>{nearestCardinalNumber(project.numExperiments)}</span>
               </Tooltip>
             </div>

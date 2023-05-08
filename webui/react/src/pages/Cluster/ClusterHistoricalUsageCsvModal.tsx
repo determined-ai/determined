@@ -81,7 +81,7 @@ const ClusterHistoricalUsageCsvModal: React.FC<Props> = ({
           <Select
             showSearch={false}
             style={{ maxWidth: '150px' }}
-            suffixIcon={<Icon name="arrow-down" size="tiny" />}>
+            suffixIcon={<Icon name="arrow-down" size="tiny" title="Open" />}>
             <Option value={CSVGroupBy.Workloads}>Workloads</Option>
             <Option value={CSVGroupBy.Allocations}>Allocations</Option>
           </Select>

@@ -84,7 +84,7 @@ const GroupOrMemberActionDropdown: React.FC<GroupOrMemberActionDropdownProps> = 
   return (
     <div className={css.dropdown}>
       <Dropdown menu={menuItems} placement="bottomRight" trigger={['click']}>
-        <Button icon={<Icon name="overflow-vertical" />} type="text" />
+        <Button icon={<Icon name="overflow-vertical" title="Action menu" />} type="text" />
       </Dropdown>
       <WorkspaceMemberRemoveModal.Component
         {...{
@@ -155,7 +155,7 @@ const WorkspaceMembers: React.FC<Props> = ({
     [handleNameSearchApply, handleNameSearchReset, settings.name],
   );
 
-  const tableSearchIcon = useCallback(() => <Icon name="search" size="tiny" />, []);
+  const tableSearchIcon = useCallback(() => <Icon name="search" size="tiny" title="Search" />, []);
 
   const generateTableKey = useCallback((record: Readonly<UserOrGroupWithRoleInfo>) => {
     const roleId = record.roleAssignment.role.roleId;
@@ -174,7 +174,7 @@ const WorkspaceMembers: React.FC<Props> = ({
         };
         return <UserBadge user={member} />;
       }
-      return <Nameplate icon={<Icon name="group" />} name={record.groupName ?? ''} />;
+      return <Nameplate icon={<Icon name="group" title="Group" />} name={record.groupName ?? ''} />;
     };
 
     const roleRenderer = (value: string, record: Readonly<UserOrGroupWithRoleInfo>) => (

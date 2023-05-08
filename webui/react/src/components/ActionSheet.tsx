@@ -8,7 +8,7 @@ import Link, { Props as LinkProps } from './Link';
 
 export interface ActionItem extends LinkProps {
   icon?: IconName | React.ReactElement;
-  label?: string;
+  label: string;
   render?: () => JSX.Element;
 }
 
@@ -43,7 +43,7 @@ const ActionSheet: React.FC<Props> = ({ onCancel, ...props }: Props) => {
         <Link className={css.item} key={action.label} path={action.path} {...action}>
           {action.icon && typeof action.icon === 'string' ? (
             <div className={css.icon}>
-              <Icon name={action.icon} size="large" />
+              <Icon name={action.icon} size="large" title={action.label} />
             </div>
           ) : (
             <div className={css.icon}>{action.icon}</div>
@@ -77,7 +77,7 @@ const ActionSheet: React.FC<Props> = ({ onCancel, ...props }: Props) => {
           {!props.hideCancel && (
             <Link className={css.item} key="cancel" onClick={handleCancelClick}>
               <div className={css.icon}>
-                <Icon name="error" size="large" />
+                <Icon name="error" size="large" title="Cancel" />
               </div>
               <div className={css.label}>Cancel</div>
             </Link>

@@ -73,17 +73,17 @@ interface SearchMethod {
 const SEARCH_METHODS: Record<string, SearchMethod> = {
   ASHA: {
     displayName: 'Adaptive',
-    icon: <Icon name="searcher-adaptive" />,
+    icon: <Icon name="searcher-adaptive" title="Adaptive" />,
     name: 'adaptive_asha',
   },
   Grid: {
     displayName: 'Grid',
-    icon: <Icon name="searcher-grid" />,
+    icon: <Icon name="searcher-grid" title="Grid" />,
     name: 'grid',
   },
   Random: {
     displayName: 'Random',
-    icon: <Icon name="searcher-random" />,
+    icon: <Icon name="searcher-random" title="Random" />,
     name: 'random',
   },
 } as const;

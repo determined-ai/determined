@@ -118,7 +118,7 @@ const descForConfig = {
   [Config.Runtime]: 'after merge with defaults and templates',
 };
 
-const configIcon = <Icon name="settings" />;
+const configIcon = <Icon name="settings" title="Settings" />;
 
 const isConfig = (key: unknown): key is Config =>
   key === Config.Submitted || key === Config.Runtime;

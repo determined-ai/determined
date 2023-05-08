@@ -62,7 +62,7 @@ const TrialDetailsHeader: React.FC<Props> = ({ experiment, fetchTrialDetails, tr
 
     if (!trialNeverData) {
       options.push({
-        icon: <Icon name="tensor-board" size="small" />,
+        icon: <Icon name="tensor-board" size="small" title={Action.OpenTensorBoard} />,
         isLoading: isRunningTensorBoard,
         key: Action.OpenTensorBoard,
         label: 'TensorBoard',
@@ -82,14 +82,14 @@ const TrialDetailsHeader: React.FC<Props> = ({ experiment, fetchTrialDetails, tr
     if (canActionExperiment(ExperimentAction.ContinueTrial, experiment, trial)) {
       if (trial.bestAvailableCheckpoint !== undefined) {
         options.push({
-          icon: <Icon name="fork" size="small" />,
+          icon: <Icon name="fork" size="small" title={Action.Fork} />,
           key: Action.ContinueTrial,
           label: 'Continue Trial',
           onClick: ExperimentCreateModal.open,
         });
       } else {
         options.push({
-          icon: <Icon name="fork" size="small" />,
+          icon: <Icon name="fork" size="small" title={Action.Fork} />,
           key: Action.ContinueTrial,
           label: 'Continue Trial',
           tooltip: 'No checkpoints found. Cannot continue trial',

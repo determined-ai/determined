@@ -99,8 +99,10 @@ const ProjectMoveModalComponent: React.FC<Props> = ({ onClose, project }: Props)
             <Option disabled={disabled} key={workspace.id} value={workspace.id}>
               <div className={disabled ? css.workspaceOptionDisabled : ''}>
                 <Typography.Text ellipsis={true}>{workspace.name}</Typography.Text>
-                {workspace.archived && <Icon name="archive" />}
-                {workspace.id === project.workspaceId && <Icon name="checkmark" />}
+                {workspace.archived && <Icon name="archive" title="Archived" />}
+                {workspace.id === project.workspaceId && (
+                  <Icon name="checkmark" title="Project's current workspace" />
+                )}
               </div>
             </Option>
           );

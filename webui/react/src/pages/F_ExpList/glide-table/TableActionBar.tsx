@@ -270,7 +270,7 @@ const TableActionBar: React.FC<Props> = ({
       // The icon doesn't show up without being wrapped in a div.
       icon: (
         <div>
-          <Icon name={actionIcons[action]} />
+          <Icon name={actionIcons[action]} title={action} />
         </div>
       ),
       key: action,
@@ -295,7 +295,7 @@ const TableActionBar: React.FC<Props> = ({
         />
         {(selectAll || selectedExperimentIds.length > 0) && (
           <Dropdown content={<Menu items={editMenuItems} onClick={handleAction} />}>
-            <Button icon={<Icon name="pencil" />}>
+            <Button icon={<Icon name="pencil" title="Edit" />}>
               Edit (
               {selectAll
                 ? Loadable.isLoaded(total)

@@ -1,4 +1,3 @@
-import { Tooltip } from 'antd';
 import React, { useCallback, useEffect, useMemo, useReducer } from 'react';
 
 import HpSelect from 'components/HpSelect';
@@ -266,11 +265,9 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
         />
       )}
       <div className={css.buttons}>
-        <Tooltip title="Reset">
-          <Button onClick={handleReset}>
-            <Icon name="reset" />
-          </Button>
-        </Tooltip>
+        <Button onClick={handleReset}>
+          <Icon name="reset" showTooltip title="Reset" />
+        </Button>
       </div>
     </>
   );

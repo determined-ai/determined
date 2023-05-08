@@ -1175,9 +1175,9 @@ const NameplateSection: React.FC = () => {
           name={testUser.username}
         />
         <li>No alias</li>
-        <Nameplate icon={<Icon name="group" />} name="testGroup123" />
+        <Nameplate icon={<Icon name="group" title="Group" />} name="testGroup123" />
         <li>Compact, no alias</li>
-        <Nameplate compact icon={<Icon name="group" />} name="testGroup123" />
+        <Nameplate compact icon={<Icon name="group" title="Group" />} name="testGroup123" />
       </AntDCard>
     </ComponentSection>
   );
@@ -1828,20 +1828,20 @@ const IconsSection: React.FC = () => {
       </AntDCard>
       <AntDCard title="Usage">
         <strong>Icon default</strong>
-        <Icon name="star" />
+        <Icon name="star" title="star" />
         <strong>Icon variations</strong>
         <p>Icon with tooltip</p>
         <Icon name="star" title="Tooltip" />
         <p>Icon sizes</p>
         <Space wrap>
           {IconSizeArray.map((size) => (
-            <Icon key={size} name="star" size={size} title={size} />
+            <Icon key={size} name="star" showTooltip size={size} title={size} />
           ))}
         </Space>
         <p>All icons</p>
         <Space wrap>
           {IconNameArray.map((name) => (
-            <Icon key={name} name={name} title={name} />
+            <Icon key={name} name={name} showTooltip title={name} />
           ))}
         </Space>
       </AntDCard>

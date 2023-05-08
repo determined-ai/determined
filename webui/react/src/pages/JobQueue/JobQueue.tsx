@@ -290,7 +290,7 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
                 return (
                   <div className={css.centerVertically}>
                     {record.summary.jobsAhead}
-                    {!record.isPreemptible && <Icon name="lock" title="Not Preemtible" />}
+                    {!record.isPreemptible && <Icon name="lock" title="Not Preemptible" />}
                   </div>
                 );
               };

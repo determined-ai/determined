@@ -132,7 +132,7 @@ const UserActionDropdown = ({ fetchUsers, user, groups, userManagementEnabled }:
         menu={{ items: menuItems, onClick: onItemClick }}
         placement="bottomRight"
         trigger={['click']}>
-        <Button ghost icon={<Icon name="overflow-vertical" />} />
+        <Button ghost icon={<Icon name="overflow-vertical" title="Action menu" />} />
       </Dropdown>
       <ViewUserModal.Component user={user} viewOnly onClose={fetchUsers} />
       <EditUserModal.Component user={user} onClose={fetchUsers} />
@@ -231,7 +231,7 @@ const UserManagement: React.FC = () => {
     [handleNameSearchApply, handleNameSearchReset, settings.name],
   );
 
-  const filterIcon = useCallback(() => <Icon name="search" size="tiny" />, []);
+  const filterIcon = useCallback(() => <Icon name="search" size="tiny" title="Search" />, []);
 
   const columns = useMemo(() => {
     const actionRenderer = (_: string, record: DetailedUser) => {

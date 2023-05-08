@@ -112,10 +112,17 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
             required: true,
           },
         ]}>
-        <Input autoFocus placeholder="username" prefix={<Icon name="user-small" size="small" />} />
+        <Input
+          autoFocus
+          placeholder="username"
+          prefix={<Icon name="user-small" size="small" title="Username" />}
+        />
       </Form.Item>
       <Form.Item name="password">
-        <Input.Password placeholder="password" prefix={<Icon name="lock" size="small" />} />
+        <Input.Password
+          placeholder="password"
+          prefix={<Icon name="lock" size="small" title="Password" />}
+        />
       </Form.Item>
       {isBadCredentials && (
         <p className={[css.errorMessage, css.message].join(' ')}>Incorrect username or password.</p>

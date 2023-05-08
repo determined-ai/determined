@@ -111,7 +111,7 @@ const TableFilterDropdown: React.FC<Props> = ({
           style={style}
           onClick={handleOptionClick}>
           {isJSX ? data[index].text : <span>{data[index].text}</span>}
-          <Icon name="checkmark" />
+          <Icon name="checkmark" title="" />
         </div>
       );
     },
@@ -150,7 +150,7 @@ const TableFilterDropdown: React.FC<Props> = ({
             aria-label={ARIA_LABEL_INPUT}
             bordered={false}
             placeholder="search filters"
-            prefix={<Icon name="search" size="tiny" />}
+            prefix={<Icon name="search" size="tiny" title="Search" />}
             ref={inputRef}
             value={search}
             onChange={handleSearchChange}

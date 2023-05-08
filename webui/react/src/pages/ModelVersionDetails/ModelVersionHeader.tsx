@@ -253,9 +253,10 @@ with det.import_from_path(path + "/code"):
               </Button>
             ))}
             <Dropdown menu={menu} trigger={['click']}>
-              <Button type="text">
-                <Icon name="overflow-horizontal" size="tiny" />
-              </Button>
+              <Button
+                icon={<Icon name="overflow-horizontal" size="tiny" title="Action menu" />}
+                type="text"
+              />
             </Dropdown>
           </div>
         </div>

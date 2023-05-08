@@ -180,7 +180,7 @@ const ResourcepoolDetailInner: React.FC = () => {
     <Page className={css.poolDetailPage}>
       <Section>
         <div className={css.nav} onClick={() => navigate(paths.cluster(), { replace: true })}>
-          <Icon name="arrow-left" size="tiny" />
+          <Icon name="arrow-left" showTooltip size="tiny" title="Back to cluster" />
           <div className={css.icon}>
             <PoolLogo type={pool.type} />
           </div>

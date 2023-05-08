@@ -64,7 +64,7 @@ const EditableRow: React.FC<Props> = ({ jsonValue, name, onDelete, field }: Prop
             <Button
               aria-label="action"
               ghost
-              icon={<Icon name="overflow-vertical" size="tiny" />}
+              icon={<Icon name="overflow-vertical" size="tiny" title="Action menu" />}
             />
           </Dropdown>
         )}

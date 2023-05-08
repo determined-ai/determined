@@ -41,7 +41,7 @@ const ToolbarItem: React.FC<ToolbarItemProps> = ({ path, status, ...props }: Too
 
   return (
     <Link className={classes.join(' ')} path={path} {...props}>
-      <Icon name={props.icon} size="large" />
+      <Icon name={props.icon} size="large" title={props.label} />
       {status && <div className={css.status}>{status}</div>}
     </Link>
   );
@@ -106,7 +106,7 @@ const NavigationTabbar: React.FC = () => {
 
   if (canCreateWorkspace) {
     workspaceActions.push({
-      icon: <Icon name="add-small" size="large" />,
+      icon: <Icon name="add-small" size="large" title="Create Workspace" />,
       label: 'New Workspace',
       onClick: WorkspaceCreateModal.open,
     });
@@ -115,7 +115,7 @@ const NavigationTabbar: React.FC = () => {
   interface OverflowActionProps {
     external?: boolean;
     icon?: IconName;
-    label?: string;
+    label: string;
     onClick?: (e: AnyMouseEvent) => void;
     path?: string;
     popout?: boolean;
@@ -124,6 +124,7 @@ const NavigationTabbar: React.FC = () => {
 
   const overflowActionsTop: OverflowActionProps[] = [
     {
+      label: 'Current user',
       render: () => (
         <div className={css.user}>
           <UserBadge compact key="avatar" user={currentUser} />

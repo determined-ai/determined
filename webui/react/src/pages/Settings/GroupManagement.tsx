@@ -87,7 +87,7 @@ const GroupActionDropdown = ({
   return (
     <div className={dropdownCss.base}>
       <Dropdown menu={menuItems} placement="bottomRight" trigger={['click']}>
-        <Button ghost icon={<Icon name="overflow-vertical" />} />
+        <Button ghost icon={<Icon name="overflow-vertical" title="Action menu" />} />
       </Dropdown>
       <EditGroupModal.Component group={group} users={users} onClose={onFinishEdit} />
       <DeleteGroupModal.Component group={group} onClose={fetchGroups} />
@@ -264,7 +264,7 @@ const GroupManagement: React.FC = () => {
         key: 'name',
         onCell: onRightClickableCell,
         render: (_: string, r: V1GroupSearchResult) => (
-          <Nameplate icon={<Icon name="group" />} name={r.group.name ?? ''} />
+          <Nameplate icon={<Icon name="group" title="Group" />} name={r.group.name ?? ''} />
         ),
         title: 'Group',
       },

@@ -52,7 +52,7 @@ const ResponsiveFilters: React.FC<Props> = ({ children, hasFiltersApplied }: Pro
             <Button>Filters</Button>
           </div>
           <div className={css.filtersButtonMobile}>
-            <Button icon={<Icon name="filter" />} />
+            <Button icon={<Icon name="filter" title="Filters" />} />
           </div>
         </Dropdown>
       ) : (

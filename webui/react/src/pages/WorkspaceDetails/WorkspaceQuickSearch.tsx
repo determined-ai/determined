@@ -121,7 +121,7 @@ const WorkspaceQuickSearch: React.FC<Props> = ({ children }: Props) => {
           key: `workspace-${workspace.id}`,
           title: (
             <div className={`${css.flexRow} ${css.ellipsis}`}>
-              <Icon name="workspaces" />
+              <Icon name="workspaces" title="Workspace" />
               <Link onClick={() => onClickWorkspace(workspace.id)}>{workspace.name}</Link>
             </div>
           ),
@@ -142,7 +142,7 @@ const WorkspaceQuickSearch: React.FC<Props> = ({ children }: Props) => {
           <Input
             autoFocus
             placeholder="Search workspace or project"
-            prefix={<Icon name="search" />}
+            prefix={<Icon name="search" title="Search" />}
             value={searchText}
             width={'100%'}
             onChange={onChange}

@@ -265,7 +265,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
         onClick: handleHyperparameterSearch,
       },
       [Action.DownloadCode]: {
-        icon: <Icon name="download" size="small" />,
+        icon: <Icon name="download" size="small" title={Action.DownloadCode} />,
         key: 'download-model',
         label: 'Download Experiment Code',
         onClick: (e) => {
@@ -273,7 +273,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
         },
       },
       [Action.Fork]: {
-        icon: <Icon name="fork" size="small" />,
+        icon: <Icon name="fork" size="small" title={Action.Fork} />,
         key: 'fork',
         label: 'Fork',
         onClick: ForkModal.open,
@@ -289,7 +289,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
         onClick: ExperimentMoveModal.open,
       },
       [Action.OpenTensorBoard]: {
-        icon: <Icon name="tensor-board" size="small" />,
+        icon: <Icon name="tensor-board" size="small" title={Action.OpenTensorBoard} />,
         isLoading: isRunningTensorBoard,
         key: 'tensorboard',
         label: 'TensorBoard',
@@ -482,7 +482,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
                             : css.buttonPause
                         }
                         disabled={!canPausePlay}
-                        icon={returnStatusIcon(<Icon name="pause" size="large" />)}
+                        icon={returnStatusIcon(<Icon name="pause" size="large" title="Pause" />)}
                         shape="circle"
                         onClick={handlePauseClick}
                       />
@@ -495,7 +495,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
                             : css.buttonPlay
                         }
                         disabled={!canPausePlay}
-                        icon={returnStatusIcon(<Icon name="play" size="large" />)}
+                        icon={returnStatusIcon(<Icon name="play" size="large" title="Play" />)}
                         shape="circle"
                         onClick={handlePlayClick}
                       />
@@ -504,7 +504,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
                       <Button
                         className={css.buttonStop}
                         disabled={!canPausePlay}
-                        icon={<Icon name="stop" size="large" />}
+                        icon={<Icon name="stop" size="large" title="Stop" />}
                         shape="circle"
                         onClick={ExperimentStopModal.open}
                       />
@@ -522,7 +522,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
             </div>
             {trial ? (
               <>
-                <Icon name="arrow-right" size="tiny" />
+                <Icon name="arrow-right" size="tiny" title="Trial" />
                 <div className={css.trial}>Trial {trial.id}</div>
               </>
             ) : null}

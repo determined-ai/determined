@@ -98,7 +98,7 @@ export const TaskBar: React.FC<Props> = ({
         <Dropdown menu={dropdownOverlay} placement="bottomRight" trigger={['click']}>
           <div className={css.dropdownTrigger} data-testid="task-action-dropdown-trigger">
             <span className={css.dropdownTrigger}>{resourcePool}</span>
-            <Icon name="arrow-down" size="tiny" />
+            <Icon name="arrow-down" size="tiny" title="Action menu" />
           </div>
         </Dropdown>
       </div>

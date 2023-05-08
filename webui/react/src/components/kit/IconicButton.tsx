@@ -30,7 +30,7 @@ const IconicButton: React.FC<ButtonProps> = ({
       type={type}
       {...props}>
       <div style={{ alignItems: 'center', display: 'flex', flexDirection: 'column' }}>
-        <Icon name={iconName} />
+        <Icon name={iconName} title={props.text} />
         <p>{props.text}</p>
       </div>
     </AntdButton>

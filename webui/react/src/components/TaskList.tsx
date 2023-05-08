@@ -189,7 +189,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
 
   const handleActionComplete = useCallback(() => fetchTasks(), [fetchTasks]);
 
-  const tableSearchIcon = useCallback(() => <Icon name="search" size="tiny" />, []);
+  const tableSearchIcon = useCallback(() => <Icon name="search" size="tiny" title="Search" />, []);
 
   const handleNameSearchApply = useCallback(
     (newSearch: string) => {
@@ -385,7 +385,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
         filters: Object.values(CommandType).map((value) => ({
           text: (
             <div className={css.typeFilter}>
-              <Icon name={value} />
+              <Icon name={value} title={commandTypeToLabel[value]} />
               <span>{commandTypeToLabel[value]}</span>
             </div>
           ),

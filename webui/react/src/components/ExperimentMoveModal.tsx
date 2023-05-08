@@ -167,7 +167,7 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
                   value={workspace.id}>
                   <div>
                     <Typography.Text ellipsis={true}>{workspace.name}</Typography.Text>
-                    {workspace.archived && <Icon name="archive" />}
+                    {workspace.archived && <Icon name="archive" title="Archived" />}
                   </div>
                 </Option>
               );
@@ -194,7 +194,7 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
                       value={project.id}>
                       <div>
                         <Typography.Text ellipsis={true}>{project.name}</Typography.Text>
-                        {project.archived && <Icon name="archive" />}
+                        {project.archived && <Icon name="archive" title="Archived" />}
                       </div>
                     </Option>
                   ))}

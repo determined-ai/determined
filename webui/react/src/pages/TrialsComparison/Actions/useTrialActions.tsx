@@ -173,9 +173,11 @@ const useTrialActions = ({
     ) : (
       <div className={css.base} title="Open actions menu" onClick={(e) => e.stopPropagation()}>
         <Dropdown menu={menu} placement="bottomRight" trigger={['click']}>
-          <Button type="text" onClick={(e) => e.stopPropagation()}>
-            <Icon name="overflow-vertical" />
-          </Button>
+          <Button
+            icon={<Icon name="overflow-vertical" title="Action menu" />}
+            type="text"
+            onClick={(e) => e.stopPropagation()}
+          />
         </Dropdown>
       </div>
     );

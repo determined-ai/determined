@@ -68,11 +68,18 @@ const PageHeaderFoldable: React.FC<Props> = ({ foldableContent, leftContent, opt
         <div className={css.left}>{leftContent}</div>
         <div className={css.options}>
           {foldableContent && (
-            <Tooltip content="Toggle">
-              <Button type="text" onClick={() => setIsExpanded((prev) => !prev)}>
-                <Icon name={isExpanded ? 'arrow-up' : 'arrow-down'} size="tiny" />
-              </Button>
-            </Tooltip>
+            <Button
+              icon={
+                <Icon
+                  name={isExpanded ? 'arrow-up' : 'arrow-down'}
+                  showTooltip
+                  size="tiny"
+                  title="Toggle expansion"
+                />
+              }
+              type="text"
+              onClick={() => setIsExpanded((prev) => !prev)}
+            />
           )}
           <div className={css.optionsButtons}>
             {options?.slice(0, 3).map((option) => (
@@ -92,7 +99,7 @@ const PageHeaderFoldable: React.FC<Props> = ({ foldableContent, leftContent, opt
           {dropdownOptions && (
             <Dropdown menu={dropdownOptions} placement="bottomRight" trigger={['click']}>
               <div className={dropdownClasses.join(' ')}>
-                <Button ghost icon={<Icon name="overflow-vertical" />} />
+                <Button ghost icon={<Icon name="overflow-vertical" title="Action menu" />} />
               </div>
             </Dropdown>
           )}

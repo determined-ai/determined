@@ -186,7 +186,7 @@ const ProjectDetails: React.FC = () => {
                 onComplete={fetchProject}
                 onDelete={onProjectDelete}>
                 <div style={{ cursor: 'pointer' }}>
-                  <Icon name="arrow-down" size="tiny" />
+                  <Icon name="arrow-down" size="tiny" title="Action menu" />
                 </div>
               </ProjectActionDropdown>
             )}

@@ -87,7 +87,7 @@ export const columns: ColumnDef<Job>[] = [
       const TypeCell = (
         <Tooltip content={title} placement="topLeft">
           <div>
-            <Icon name={jobTypeIconName(record.type)} />
+            <Icon name={jobTypeIconName(record.type)} title={jobTypeLabel(record.type)} />
           </div>
         </Tooltip>
       );

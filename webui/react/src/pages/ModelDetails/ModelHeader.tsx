@@ -206,7 +206,7 @@ const ModelHeader: React.FC<Props> = ({
       <div className={css.headerContent}>
         <div className={css.mainRow}>
           <Space className={css.nameAndIcon}>
-            <Icon name="model" size="big" />
+            <Icon name="model" size="big" title="Model name" />
             <h1 className={css.name}>{model.name}</h1>
           </Space>
           <Space size="small">
@@ -214,9 +214,10 @@ const ModelHeader: React.FC<Props> = ({
               disabled={!canDeleteModelFlag && !canModifyModelFlag}
               menu={menu}
               trigger={['click']}>
-              <Button type="text">
-                <Icon name="overflow-horizontal" size="tiny" />
-              </Button>
+              <Button
+                icon={<Icon name="overflow-horizontal" size="tiny" title="Action menu" />}
+                type="text"
+              />
             </Dropdown>
           </Space>
         </div>

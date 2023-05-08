@@ -265,7 +265,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
       (children as JSX.Element) ?? (
         <div className={css.base} title="No actions available" onClick={stopPropagation}>
           <Button disabled ghost type="text">
-            <Icon name="overflow-vertical" />
+            <Icon name="overflow-vertical" title="Disabled action menu" />
           </Button>
         </div>
       )
@@ -299,7 +299,11 @@ const ExperimentActionDropdown: React.FC<Props> = ({
   ) : (
     <div className={css.base} title="Open actions menu" onClick={stopPropagation}>
       <Dropdown menu={menu} placement="bottomRight" trigger={['click']}>
-        <Button ghost icon={<Icon name="overflow-vertical" />} onClick={stopPropagation} />
+        <Button
+          ghost
+          icon={<Icon name="overflow-vertical" title="Action menu" />}
+          onClick={stopPropagation}
+        />
       </Dropdown>
       {shared}
     </div>

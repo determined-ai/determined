@@ -22,7 +22,7 @@ export interface RadioGroupOption {
   icon?: IconName;
   iconSize?: IconSize;
   id: string;
-  label?: string;
+  label: string;
 }
 
 interface SizeInfo {

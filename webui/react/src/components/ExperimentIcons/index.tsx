@@ -29,20 +29,20 @@ const ExperimentIcons: React.FC<Props> = ({ state, style, showTooltip = true }) 
       case RunState.Running:
         return <Spinner style={style} type="shadow" />;
       case RunState.Paused:
-        return <Icon color="cancel" name="pause" />;
+        return <Icon color="cancel" name="pause" title="Paused" />;
       case RunState.Completed:
-        return <Icon color="success" name="checkmark" />;
+        return <Icon color="success" name="checkmark" title="Completed" />;
       case RunState.Error:
       case RunState.Deleted:
       case RunState.Deleting:
       case RunState.DeleteFailed:
-        return <Icon color="error" name="error" />;
+        return <Icon color="error" name="error" title="Error" />;
       case RunState.Active:
       case RunState.Unspecified:
       case JobState.UNSPECIFIED:
         return <Active />;
       default:
-        return <Icon color="cancel" name="cancelled" />;
+        return <Icon color="cancel" name="cancelled" title="Cancelled" />;
     }
   }, [state, style]);
 

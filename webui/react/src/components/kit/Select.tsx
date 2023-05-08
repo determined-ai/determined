@@ -135,7 +135,7 @@ const Select: React.FC<React.PropsWithChildren<SelectProps>> = forwardRef(functi
         ref={ref}
         showSearch={!!onSearch || !!filterOption || searchable}
         style={{ width }}
-        suffixIcon={!loading ? <Icon name="arrow-down" size="tiny" /> : undefined}
+        suffixIcon={!loading ? <Icon name="arrow-down" size="tiny" title="Open" /> : undefined}
         value={value}
         onBlur={onBlur}
         onChange={onChange}
