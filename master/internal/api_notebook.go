@@ -170,7 +170,7 @@ func (a *apiServer) isNTSCPermittedToLaunch(
 ) error {
 	workspaceID := spec.Metadata.WorkspaceID
 	if workspaceID == 0 {
-		panic("workspace ID must be set")
+		return status.Errorf(codes.InvalidArgument, "workspace_id is required")
 	}
 
 	user, _, err := grpcutil.GetUser(ctx)
