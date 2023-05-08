@@ -49,7 +49,6 @@ import { BrandingType } from 'stores/determinedInfo';
 import { MetricType, User } from 'types';
 import { NotLoaded } from 'utils/loadable';
 import loremIpsum from 'utils/loremIpsum';
-import { generateTestProjectData, generateTestWorkspaceData } from 'utils/tests/generateTestData';
 
 import useConfirm, { voidPromiseFn } from '../components/kit/useConfirm';
 
