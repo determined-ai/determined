@@ -1,4 +1,4 @@
-import { Dropdown as AntDropdown } from 'antd';
+import { Popover as AntdPopover, Dropdown as AntDropdown } from 'antd';
 import { MenuProps } from 'antd/es/menu/menu';
 import { PropsWithChildren, useMemo } from 'react';
 import * as React from 'react';
@@ -22,18 +22,20 @@ export type Placement = 'bottomLeft' | 'bottomRight';
 export type DropdownEvent = React.MouseEvent<HTMLElement> | React.KeyboardEvent<HTMLElement>;
 
 interface Props {
+  content?: React.ReactNode;
   disabled?: boolean;
   isContextMenu?: boolean;
-  menu: MenuItem[];
+  menu?: MenuItem[];
   open?: boolean;
   placement?: Placement;
   onClick?: (key: string, e: DropdownEvent) => void | Promise<void>;
 }
 const Dropdown: React.FC<PropsWithChildren<Props>> = ({
   children,
+  content,
   disabled,
   isContextMenu,
-  menu,
+  menu = [],
   open,
   placement = 'bottomLeft',
   onClick,
@@ -48,7 +50,20 @@ const Dropdown: React.FC<PropsWithChildren<Props>> = ({
     };
   }, [menu, onClick]);
 
-  return (
+  /**
+   * Using `dropdownRender` for Dropdown causes some issues with triggering the dropdown.
+   * Instead, Popover is used when rendering content (as opposed to menu).
+   */
+  return content ? (
+    <AntdPopover
+      content={content}
+      open={open}
+      placement={placement}
+      showArrow={false}
+      trigger="click">
+      {children}
+    </AntdPopover>
+  ) : (
     <AntDropdown
       disabled={disabled}
       menu={antdMenu}
