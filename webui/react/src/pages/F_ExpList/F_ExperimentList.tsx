@@ -213,6 +213,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     const handleEsc = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         setClearSelectionTrigger((prev) => prev + 1);
+        setSelectAll(false);
       }
     };
     window.addEventListener('keydown', handleEsc);
