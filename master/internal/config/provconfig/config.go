@@ -38,6 +38,8 @@ type Config struct {
 	MaxAgentStartingPeriod  model.Duration    `json:"max_agent_starting_period"`
 	MinInstances            int               `json:"min_instances"`
 	MaxInstances            int               `json:"max_instances"`
+	ErrorTimeout            *model.Duration   `json:"error_timeout"`
+	ErrorTimeoutRetries     int               `json:"error_timeout_retries"`
 }
 
 // HpcClusterConfig describes the configuration for a HPC cluster managed by Determined.

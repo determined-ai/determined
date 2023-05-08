@@ -191,9 +191,9 @@ func (c *gcpCluster) list(ctx *actor.Context) ([]*model.Instance, error) {
 	return res, nil
 }
 
-func (c *gcpCluster) launch(ctx *actor.Context, instanceNum int) {
+func (c *gcpCluster) launch(ctx *actor.Context, instanceNum int) (err error) {
 	if instanceNum <= 0 {
-		return
+		return nil
 	}
 
 	var ops []*compute.Operation
@@ -217,14 +217,15 @@ func (c *gcpCluster) launch(ctx *actor.Context, instanceNum int) {
 
 		resp, err := c.client.Instances.Insert(c.Project, c.Zone, rb).Context(clientCtx).Do()
 		if err != nil {
-			ctx.Log().WithError(err).Errorf("cannot insert GCE instance")
+			err = errors.Wrap(err, "cannot insert GCE instance")
+			ctx.Log().Error(err)
 		} else {
 			ops = append(ops, resp)
 		}
 	}
 
 	if len(ops) == 0 {
-		return
+		return nil
 	}
 	if _, ok := ctx.ActorOf(
 		fmt.Sprintf("track-batch-operation-%s", uuid.New()),
@@ -243,9 +244,10 @@ func (c *gcpCluster) launch(ctx *actor.Context, instanceNum int) {
 			},
 		},
 	); !ok {
-		ctx.Log().Error("internal error tracking GCP operation batch")
-		return
+		err = errors.New("internal error tracking GCP operation batch")
+		ctx.Log().Error(err)
 	}
+	return
 }
 
 func (c *gcpCluster) terminate(ctx *actor.Context, instances []string) {

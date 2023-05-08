@@ -33,8 +33,11 @@ type resourcePool struct {
 
 	scheduler        Scheduler
 	fittingMethod    SoftConstraint
-	provisioner      *actor.Ref
 	slotsPerInstance int
+
+	provisioner      *provisioner.Provisioner
+	provisionerActor *actor.Ref
+	provisionerError error
 
 	agents           map[*actor.Ref]bool
 	agentStatesCache map[*actor.Ref]*agentState
@@ -103,7 +106,8 @@ func (rp *resourcePool) setupProvisioner(ctx *actor.Context) error {
 		return errors.Wrapf(err, "cannot create resource pool: %s", rp.config.PoolName)
 	}
 	rp.slotsPerInstance = p.SlotsPerInstance()
-	rp.provisioner = pRef
+	rp.provisioner = p
+	rp.provisionerActor = pRef
 	return nil
 }
 
@@ -413,8 +417,8 @@ func (rp *resourcePool) updateScalingInfo() bool {
 }
 
 func (rp *resourcePool) sendScalingInfo(ctx *actor.Context) {
-	if rp.provisioner != nil && rp.updateScalingInfo() {
-		ctx.Tell(rp.provisioner, *rp.scalingInfo)
+	if rp.provisionerActor != nil && rp.updateScalingInfo() {
+		ctx.Tell(rp.provisionerActor, *rp.scalingInfo)
 	}
 }
 
@@ -522,13 +526,27 @@ func (rp *resourcePool) Receive(ctx *actor.Context) error {
 		})
 
 	case schedulerTick:
+		if err := rp.provisioner.GetError(); err != rp.provisionerError {
+			rp.provisionerError = err
+			if err != nil {
+				rp.reschedule = true
+			}
+		}
 		if rp.reschedule {
+			ctx.Log().Debug("scheduling")
 			rp.agentStatesCache = rp.fetchAgentStates(ctx)
 			defer func() {
 				rp.agentStatesCache = nil
 			}()
 
-			toAllocate, toRelease := rp.scheduler.Schedule(rp)
+			rp.pruneTaskList(ctx)
+			toAllocate, toRelease := rp.scheduler.Schedule(ctx, rp)
+			if len(toAllocate) > 0 || len(toRelease) > 0 {
+				ctx.Log().
+					WithField("toAllocate", len(toAllocate)).
+					WithField("toRelease", len(toRelease)).
+					Debugf("scheduled")
+			}
 			for _, req := range toAllocate {
 				rp.allocateResources(ctx, req)
 			}
@@ -697,7 +715,7 @@ func (rp *resourcePool) receiveJobQueueMsg(ctx *actor.Context) error {
 		ctx.Respond(tasklist.JobStats(rp.taskList))
 
 	case sproto.GetJobQ:
-		ctx.Respond(rp.scheduler.JobQInfo(rp))
+		ctx.Respond(rp.scheduler.JobQInfo(ctx, rp))
 
 	case sproto.MoveJob:
 		err := rp.moveJob(ctx, msg.ID, msg.Anchor, msg.Ahead)
@@ -823,4 +841,46 @@ func (rp *resourcePool) refreshAgentStateCacheFor(ctx *actor.Context, agents []*
 			delete(rp.agentStatesCache, ref)
 		}
 	}
+}
+
+func (rp *resourcePool) pruneTaskList(ctx *actor.Context) {
+	if rp.provisioner == nil {
+		return
+	}
+	err := rp.provisioner.GetError()
+	if err == nil {
+		return
+	}
+
+	before := rp.taskList.Len()
+	slotCount := rp.provisioner.CurrentSlotCount(ctx)
+	ctx.Log().WithError(err).WithField("slotCount", slotCount).Error("provisioner in error state")
+	var refsToRemove = []*actor.Ref{}
+	var groupsToNotify = map[*actor.Ref]bool{}
+	for it := rp.taskList.Iterator(); it.Next(); {
+		task := it.Value()
+		ref := task.AllocationRef
+		if tasklist.AssignmentIsScheduled(rp.taskList.Allocation(ref)) {
+			ctx.Log().Debugf("task %s already in progress", task.AllocationID)
+			continue
+		}
+		if task.SlotsNeeded <= slotCount {
+			ctx.Log().Debugf("task %s can be scheduled with number of available slots", task.AllocationID)
+			continue
+		}
+		ctx.Log().WithError(err).Warnf("removing task %s from task list", task.AllocationID)
+		if ref != task.Group {
+			groupsToNotify[task.Group] = true
+		}
+		refsToRemove = append(refsToRemove, ref)
+	}
+	for ref := range groupsToNotify {
+		ctx.Tell(ref, sproto.InvalidResourcesRequestError{Cause: err})
+	}
+	for _, ref := range refsToRemove {
+		ctx.Tell(ref, sproto.InvalidResourcesRequestError{Cause: err})
+		rp.taskList.RemoveTaskByHandler(ref)
+	}
+	after := rp.taskList.Len()
+	ctx.Log().WithField("before", before).WithField("after", after).Warn("pruned task list")
 }
