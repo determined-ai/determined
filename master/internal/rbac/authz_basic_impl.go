@@ -49,11 +49,11 @@ func (a *RBACAuthZBasic) CanSearchScope(ctx context.Context, curUser model.User,
 	return nil
 }
 
-// CanGetWorkspaceMembership always returns true and a nil error.
+// CanGetWorkspaceMembership always a nil error.
 func (a *RBACAuthZBasic) CanGetWorkspaceMembership(
 	ctx context.Context, curUser model.User, workspaceID int32,
-) (bool, error) {
-	return true, nil
+) error {
+	return nil
 }
 
 // CanAssignRoles returns nil if a user has admin privileges.

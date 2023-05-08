@@ -16,8 +16,8 @@ type ExperimentAuthZPermissive struct{}
 // CanGetExperiment calls RBAC authz but enforces basic authz.
 func (p *ExperimentAuthZPermissive) CanGetExperiment(
 	ctx context.Context, curUser model.User, e *model.Experiment,
-) (bool, error) {
-	_, _ = (&ExperimentAuthZRBAC{}).CanGetExperiment(ctx, curUser, e)
+) error {
+	_ = (&ExperimentAuthZRBAC{}).CanGetExperiment(ctx, curUser, e)
 	return (&ExperimentAuthZBasic{}).CanGetExperiment(ctx, curUser, e)
 }
 

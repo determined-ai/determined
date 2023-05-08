@@ -63,27 +63,23 @@ func addExpInfo(
 // CanGetExperiment checks if a user has permission to view an experiment.
 func (a *ExperimentAuthZRBAC) CanGetExperiment(
 	ctx context.Context, curUser model.User, e *model.Experiment,
-) (canGetExp bool, serverError error) {
+) (err error) {
 	fields := audit.ExtractLogFields(ctx)
 	addExpInfo(curUser, e, fields, rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA)
 	defer func() {
-		fields["permissionGranted"] = canGetExp
-		audit.Log(fields)
+		if err == nil || authz.IsPermissionDenied(err) {
+			fields["permissionGranted"] = (authz.IsPermissionDenied(err) == false)
+			audit.Log(fields)
+		}
 	}()
 
 	workspaceID, err := getWorkspaceFromExperiment(ctx, e)
 	if err != nil {
-		return false, err
+		return err
 	}
 
-	if err = db.DoesPermissionMatch(ctx, curUser.ID, &workspaceID,
-		rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA); err != nil {
-		if _, ok := err.(authz.PermissionDeniedError); ok {
-			return false, nil
-		}
-		return false, err
-	}
-	return true, nil
+	return db.DoesPermissionMatch(ctx, curUser.ID, &workspaceID,
+		rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA)
 }
 
 // CanGetExperimentArtifacts checks if a user has permission to view experiment artifacts.

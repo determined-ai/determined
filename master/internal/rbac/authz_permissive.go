@@ -55,8 +55,8 @@ func (p *RBACAuthZPermissive) CanSearchScope(
 // CanGetWorkspaceMembership calls RBAC authz but enforces basic authz.
 func (p *RBACAuthZPermissive) CanGetWorkspaceMembership(
 	ctx context.Context, curUser model.User, workspaceID int32,
-) (bool, error) {
-	_, _ = (&RBACAuthZRBAC{}).CanGetWorkspaceMembership(ctx, curUser, workspaceID)
+) error {
+	_ = (&RBACAuthZRBAC{}).CanGetWorkspaceMembership(ctx, curUser, workspaceID)
 	return (&RBACAuthZBasic{}).CanGetWorkspaceMembership(ctx, curUser, workspaceID)
 }
 

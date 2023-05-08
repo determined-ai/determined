@@ -112,12 +112,12 @@ func (a *NSCAuthZRBAC) addLogInfoWorkspaces(
 func (a *NSCAuthZRBAC) checkForPermissions(
 	ctx context.Context, curUser model.User, workspaceIDs []model.AccessScopeID,
 	permission rbacv1.PermissionType,
-) (permErr *authz.PermissionDeniedError, serverErr error) {
+) (err error) {
 	fields := audit.ExtractLogFields(ctx)
 	a.addLogInfoWorkspaces(&fields, curUser, permission, workspaceIDs)
 	defer func() {
-		if serverErr == nil {
-			fields["permissionGranted"] = permErr == nil
+		if err == nil || authz.IsPermissionDenied(err) {
+			fields["permissionGranted"] = authz.IsPermissionDenied(err) == false
 			audit.Log(fields)
 		}
 	}()
@@ -125,50 +125,34 @@ func (a *NSCAuthZRBAC) checkForPermissions(
 	for _, id := range workspaceIDs {
 		wids = append(wids, int32(id))
 	}
-	if err := db.DoesPermissionMatchAll(ctx, curUser.ID, permission, wids...); err != nil {
-		switch typedErr := err.(type) {
-		case authz.PermissionDeniedError:
-			return &typedErr, nil
-		default:
-			return nil, err
-		}
-	}
-	return nil, nil
+	return db.DoesPermissionMatchAll(ctx, curUser.ID, permission, wids...)
 }
 
 func (a *NSCAuthZRBAC) checkForPermission(
 	ctx context.Context, curUser model.User, workspaceID model.AccessScopeID,
 	permission rbacv1.PermissionType,
-) (permErr *authz.PermissionDeniedError, serverErr error) {
+) (err error) {
 	fields := audit.ExtractLogFields(ctx)
 	a.addLogInfo(&fields, curUser, permission, workspaceID)
 	defer func() {
-		if serverErr == nil {
-			fields["permissionGranted"] = permErr == nil
+		if err == nil || authz.IsPermissionDenied(err) {
+			fields["permissionGranted"] = authz.IsPermissionDenied(err) == false
 			audit.Log(fields)
 		}
 	}()
 
 	wID := int32(workspaceID)
-	if err := db.DoesPermissionMatch(ctx, curUser.ID, &wID,
-		permission); err != nil {
-		switch typedErr := err.(type) {
-		case authz.PermissionDeniedError:
-			return &typedErr, nil
-		default:
-			return nil, err
-		}
-	}
-	return nil, nil
+	err = db.DoesPermissionMatch(ctx, curUser.ID, &wID,
+		permission)
+	return err
 }
 
 // CanGetNSC checks if the user is authorized to view NSCs in the specified workspace.
 func (a *NSCAuthZRBAC) CanGetNSC(
 	ctx context.Context, curUser model.User, workspaceID model.AccessScopeID,
-) (canGetCmd bool, serverErr error) {
-	permErr, serverErr := a.checkForPermission(ctx, curUser, workspaceID,
+) error {
+	return a.checkForPermission(ctx, curUser, workspaceID,
 		rbacv1.PermissionType_PERMISSION_TYPE_VIEW_NSC)
-	return permErr == nil, serverErr
 }
 
 // CanGetActiveTasksCount always returns a nil error.
@@ -180,12 +164,8 @@ func (a *NSCAuthZRBAC) CanGetActiveTasksCount(ctx context.Context, curUser model
 func (a *NSCAuthZRBAC) CanTerminateNSC(
 	ctx context.Context, curUser model.User, workspaceID model.AccessScopeID,
 ) (err error) {
-	permErr, serverErr := a.checkForPermission(ctx, curUser, workspaceID,
+	return a.checkForPermission(ctx, curUser, workspaceID,
 		rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_NSC)
-	if permErr != nil {
-		return *permErr
-	}
-	return serverErr
 }
 
 // CanCreateNSC checks if the user is authorized to create NSCs in the workspace.
@@ -193,12 +173,8 @@ func (a *NSCAuthZRBAC) CanCreateNSC(
 	ctx context.Context, curUser model.User, workspaceID model.AccessScopeID,
 ) error {
 	// TODO(DET-8774): the caller should check for workspace status (archived).
-	permErr, serverErr := a.checkForPermission(ctx, curUser, workspaceID,
+	return a.checkForPermission(ctx, curUser, workspaceID,
 		rbacv1.PermissionType_PERMISSION_TYPE_CREATE_NSC)
-	if permErr != nil {
-		return *permErr
-	}
-	return serverErr
 }
 
 // CanSetNSCsPriority checks if the user is authorized to set NSCs priority in the workspace.
@@ -206,12 +182,8 @@ func (a *NSCAuthZRBAC) CanSetNSCsPriority(
 	ctx context.Context, curUser model.User, workspaceID model.AccessScopeID, priority int,
 ) error {
 	// CHECK(DET-8794): we only just need workspaceID here.
-	permErr, serverErr := a.checkForPermission(ctx, curUser, workspaceID,
+	return a.checkForPermission(ctx, curUser, workspaceID,
 		rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_NSC)
-	if permErr != nil {
-		return *permErr
-	}
-	return serverErr
 }
 
 // AccessibleScopes returns the set of scopes that the user should be limited to.
@@ -261,23 +233,22 @@ func (a *NSCAuthZRBAC) FilterTensorboards(
 func (a *NSCAuthZRBAC) CanGetTensorboard(
 	ctx context.Context, curUser model.User, workspaceID model.AccessScopeID,
 	experimentIDs []int32, trialIDs []int32,
-) (canGetTensorboards bool, serverError error) {
-	accessDenied, err := a.checkForPermission(ctx, curUser, workspaceID,
+) error {
+	err := a.checkForPermission(ctx, curUser, workspaceID,
 		rbacv1.PermissionType_PERMISSION_TYPE_VIEW_WORKSPACE)
-	if accessDenied != nil {
-		return false, status.Errorf(codes.NotFound, "workspace (%d) not found", workspaceID)
-	} else if err != nil {
-		return false, err
+	if err != nil {
+		return authz.SubIfUnauthorized(err,
+			status.Errorf(codes.NotFound, "workspace (%d) not found", workspaceID))
 	}
 
 	expToWorkspaceIDs, err := db.ExperimentIDsToWorkspaceIDs(ctx, experimentIDs)
 	if err != nil {
-		return false, errors.Wrapf(err, "error getting workspaceIDs from experiment IDs")
+		return err
 	}
 
 	trialsToWorkspaceIDs, err := db.TrialIDsToWorkspaceIDs(ctx, trialIDs)
 	if err != nil {
-		return false, errors.Wrapf(err, "error getting workspaceIDs from trial IDs")
+		return err
 	}
 
 	var workspaceIDs []model.AccessScopeID
@@ -285,16 +256,13 @@ func (a *NSCAuthZRBAC) CanGetTensorboard(
 	workspaceIDs = append(workspaceIDs, trialsToWorkspaceIDs...)
 
 	if len(workspaceIDs) == 0 {
-		return true, nil
+		return nil
 	}
 
-	accessDenied, err = a.checkForPermissions(ctx, curUser,
+	err = a.checkForPermissions(ctx, curUser,
 		workspaceIDs, rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_ARTIFACTS)
 
-	if accessDenied != nil {
-		return false, nil
-	}
-	return true, err
+	return err
 }
 
 // CanTerminateTensorboard always returns nil.

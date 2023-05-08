@@ -15,16 +15,16 @@ type ModelAuthZPermissive struct{}
 // CanGetModels calls RBAC authz but enforces basic authz..
 func (a *ModelAuthZPermissive) CanGetModels(ctx context.Context,
 	curUser model.User, workspaceIDs []int32,
-) (workspaceIDsWithPermsFilter []int32, canGetModels bool, serverError error) {
-	_, _, _ = (&ModelAuthZRBAC{}).CanGetModels(ctx, curUser, workspaceIDs) //nolint:dogsled
+) (workspaceIDsWithPermsFilter []int32, serverError error) {
+	_, _ = (&ModelAuthZRBAC{}).CanGetModels(ctx, curUser, workspaceIDs) //nolint:dogsled
 	return (&ModelAuthZBasic{}).CanGetModels(ctx, curUser, workspaceIDs)
 }
 
 // CanGetModel calls RBAC authz but enforces basic authz..
 func (a *ModelAuthZPermissive) CanGetModel(ctx context.Context, curUser model.User,
 	m *modelv1.Model, workspaceID int32,
-) (canGetModel bool, serverError error) {
-	_, _ = (&ModelAuthZRBAC{}).CanGetModel(ctx, curUser, m, workspaceID)
+) error {
+	_ = (&ModelAuthZRBAC{}).CanGetModel(ctx, curUser, m, workspaceID)
 	return (&ModelAuthZBasic{}).CanGetModel(ctx, curUser, m, workspaceID)
 }
 

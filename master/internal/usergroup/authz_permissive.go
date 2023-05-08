@@ -14,8 +14,8 @@ type UserGroupAuthZPermissive struct{}
 // CanGetGroup calls RBAC authz but enforces basic authz.
 func (p *UserGroupAuthZPermissive) CanGetGroup(
 	ctx context.Context, curUser model.User, gid int,
-) (bool, error) {
-	_, _ = (&UserGroupAuthZRBAC{}).CanGetGroup(ctx, curUser, gid)
+) error {
+	_ = (&UserGroupAuthZRBAC{}).CanGetGroup(ctx, curUser, gid)
 	return (&UserGroupAuthZBasic{}).CanGetGroup(ctx, curUser, gid)
 }
 

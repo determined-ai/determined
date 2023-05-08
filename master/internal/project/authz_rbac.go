@@ -6,7 +6,6 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/rbac/audit"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -51,23 +50,16 @@ func permCheck(
 // with a serverError in case of a database failure.
 func (a *ProjectAuthZRBAC) CanGetProject(
 	ctx context.Context, curUser model.User, project *projectv1.Project,
-) (canGetProject bool, serverError error) {
+) (serverError error) {
 	fields := audit.ExtractLogFields(ctx)
 	logEntryWithProjectTarget(fields, curUser, rbacv1.PermissionType_PERMISSION_TYPE_VIEW_PROJECT,
 		project.Id)
 	defer func() {
-		fields["permissionGranted"] = canGetProject
+		fields["permissionGranted"] = (serverError == nil)
 		audit.Log(fields)
 	}()
-
-	if err := permCheck(ctx, curUser, project.WorkspaceId,
-		rbacv1.PermissionType_PERMISSION_TYPE_VIEW_PROJECT); err != nil {
-		if _, ok := err.(authz.PermissionDeniedError); ok {
-			return false, nil
-		}
-		return false, err
-	}
-	return true, nil
+	return permCheck(ctx, curUser, project.WorkspaceId,
+		rbacv1.PermissionType_PERMISSION_TYPE_VIEW_PROJECT)
 }
 
 // CanCreateProject returns an error if a user doesn't have "CREATE_PROJECT" globally

@@ -14,8 +14,8 @@ type ProjectAuthZPermissive struct{}
 // CanGetProject calls RBAC authz but enforces basic authz.
 func (p *ProjectAuthZPermissive) CanGetProject(
 	ctx context.Context, curUser model.User, project *projectv1.Project,
-) (bool, error) {
-	_, _ = (&ProjectAuthZRBAC{}).CanGetProject(ctx, curUser, project)
+) error {
+	_ = (&ProjectAuthZRBAC{}).CanGetProject(ctx, curUser, project)
 	return (&ProjectAuthZBasic{}).CanGetProject(ctx, curUser, project)
 }
 
