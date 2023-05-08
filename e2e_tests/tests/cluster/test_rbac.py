@@ -560,11 +560,13 @@ def test_rbac_describe_role() -> None:
 @pytest.mark.e2e_cpu
 @pytest.mark.skipif(roles_not_implemented(), reason="ee is required for this test")
 def test_group_access() -> None:
-    # create relevant workspace, with group having access
+    # create relevant workspace and project, with group having access
     group_name = get_random_string()
     workspace_name = get_random_string()
+    project_name = get_random_string()
     with logged_in_user(ADMIN_CREDENTIALS):
         det_cmd(["workspace", "create", workspace_name], check=True)
+        det_cmd(["project", "create", workspace_name, project_name], check=True)
         det_cmd(["user-group", "create", group_name], check=True)
         det_cmd(
             ["rbac", "assign-role", "WorkspaceAdmin", "-w", workspace_name, "-g", group_name],
@@ -585,3 +587,5 @@ def test_group_access() -> None:
     # with user now in group, access possible
     with logged_in_user(creds1):
         det_cmd(["workspace", "describe", workspace_name], check=True)
+        # test code from https://github.com/determined-ai/determined/pull/6503
+        det_cmd(["project", "list-experiments", workspace_name, project_name], check=True)
