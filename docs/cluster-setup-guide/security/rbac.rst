@@ -36,7 +36,7 @@ Brand new Determined installations include two user accounts:
 Both accounts have empty passwords. You are encouraged to set strong passwords or deactivate these
 accounts for security reasons.
 
-Example setup (CLI)
+Example Setup (CLI)
 ===================
 
 In this section, we will configure a Determined instance to support a cluster administrator account,
@@ -85,8 +85,13 @@ workspace.
    det rbac assign-role -u mle-traffic-00 -w "Traffic Lights" WorkspaceAdmin
    det rbac assign-role -u mle-stop-00 -w "Stop Signs" WorkspaceAdmin
 
-Learn more about pre-canned roles such as ``Editor``, ``WorkspaceAdmin`` :ref:`in the section below
-<rbac-precanned>`.
+We now have two independent workspaces, one for each team.
+
+   .. image:: /assets/images/rbac-example-setup-light.png
+      :alt: Example of a role-based access control setup.
+
+You can learn more about pre-canned roles such as ``Editor``, ``WorkspaceAdmin`` :ref:`in the
+section below <rbac-precanned>`.
 
 Determined requires the projects to exist within the workspaces to run and organize the experiments.
 Project creation requires ``PERMISSION_TYPE_CREATE_PROJECT`` permission which is included in
@@ -411,7 +416,7 @@ well as their subcommands:
 .. _rbac-precanned:
 
 ******************
- Pre-canned roles
+ Pre-Canned roles
 ******************
 
 Determined ships with several pre-canned roles. We are looking to add an ability to edit or create
@@ -477,7 +482,7 @@ all permissions, and can only be assigned globally.
 .. _rbac-migrate-existing:
 
 *****************************************
- Migrating existing installation to RBAC
+ Migrating Existing Installation to RBAC
 *****************************************
 
 #. Upgrade Determined to the latest RBAC-enabled version.
