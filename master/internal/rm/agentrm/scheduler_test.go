@@ -347,7 +347,7 @@ func TestJobOrder(t *testing.T) {
 		toAllocate, _ := p.prioritySchedule(taskList, groupMap,
 			make(map[model.JobID]decimal.Decimal), agentMap, BestFit)
 		AllocateTasks(toAllocate, agentMap, taskList)
-		return p.JobQInfo(&resourcePool{taskList: taskList, groups: groupMap})
+		return p.JobQInfo(&actor.Context{}, &resourcePool{taskList: taskList, groups: groupMap})
 	}
 
 	setupFairshare := func(
@@ -361,7 +361,7 @@ func TestJobOrder(t *testing.T) {
 		AllocateTasks(toAllocate, agentMap, taskList)
 		fairshareSchedule(taskList, groupMap, agentMap, BestFit, false)
 		f := fairShare{}
-		return f.JobQInfo(&resourcePool{taskList: taskList, groups: groupMap})
+		return f.JobQInfo(&actor.Context{}, &resourcePool{taskList: taskList, groups: groupMap})
 	}
 
 	groups, agents := prepMockData()
@@ -424,7 +424,7 @@ func TestJobOrderPriority(t *testing.T) {
 	toAllocate, _ := p.prioritySchedule(taskList, groupMap,
 		make(map[model.JobID]decimal.Decimal), agentMap, BestFit)
 	AllocateTasks(toAllocate, agentMap, taskList)
-	jobInfo := p.JobQInfo(&resourcePool{taskList: taskList, groups: groupMap})
+	jobInfo := p.JobQInfo(&actor.Context{}, &resourcePool{taskList: taskList, groups: groupMap})
 	assert.Equal(t, len(jobInfo), 1)
 	assert.Equal(t, jobInfo["job1"].State, sproto.SchedulingStateScheduled)
 	assert.Equal(t, jobInfo["job1"].AllocatedSlots, 1)
@@ -439,7 +439,7 @@ func TestJobOrderPriority(t *testing.T) {
 		make(map[model.JobID]decimal.Decimal), agentMap, BestFit)
 	assert.Equal(t, len(toRelease), 0)
 	AllocateTasks(toAllocate, agentMap, taskList)
-	jobInfo = p.JobQInfo(&resourcePool{taskList: taskList, groups: groupMap})
+	jobInfo = p.JobQInfo(&actor.Context{}, &resourcePool{taskList: taskList, groups: groupMap})
 	assert.Equal(t, len(jobInfo), 2)
 	assert.Equal(t, jobInfo["job1"].State, sproto.SchedulingStateScheduled)
 	assert.Equal(t, jobInfo["job1"].AllocatedSlots, 1)

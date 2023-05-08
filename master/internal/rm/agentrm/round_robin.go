@@ -18,7 +18,10 @@ func NewRoundRobinScheduler() Scheduler {
 	return &roundRobinScheduler{}
 }
 
-func (p *roundRobinScheduler) Schedule(rp *resourcePool) ([]*sproto.AllocateRequest, []*actor.Ref) {
+func (p *roundRobinScheduler) Schedule(
+	ctx *actor.Context,
+	rp *resourcePool,
+) ([]*sproto.AllocateRequest, []*actor.Ref) {
 	return roundRobinSchedule(
 		rp.taskList,
 		rp.groups,
@@ -28,7 +31,10 @@ func (p *roundRobinScheduler) Schedule(rp *resourcePool) ([]*sproto.AllocateRequ
 	)
 }
 
-func (p *roundRobinScheduler) JobQInfo(rp *resourcePool) map[model.JobID]*sproto.RMJobInfo {
+func (p *roundRobinScheduler) JobQInfo(
+	ctx *actor.Context,
+	rp *resourcePool,
+) map[model.JobID]*sproto.RMJobInfo {
 	// not supported
 	return make(map[model.JobID]*sproto.RMJobInfo)
 }

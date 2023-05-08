@@ -2,6 +2,7 @@ package provisioner
 
 import (
 	"crypto/tls"
+	"fmt"
 	"time"
 
 	"golang.org/x/time/rate"
@@ -42,6 +43,16 @@ type Provisioner struct {
 	provider         provider
 	scaleDecider     *scaleDecider
 	telemetryLimiter *rate.Limiter
+	errorTimeout     time.Duration
+	maxRetries       int
+	poolName         string
+
+	errorInfo *errorInfo
+}
+
+type errorInfo struct {
+	err  error
+	time time.Time
 }
 
 type provider interface {
@@ -49,7 +60,7 @@ type provider interface {
 	slotsPerInstance() int
 	prestart(ctx *actor.Context)
 	list(ctx *actor.Context) ([]*model.Instance, error)
-	launch(ctx *actor.Context, instanceNum int)
+	launch(ctx *actor.Context, instanceNum int) (int, error)
 	terminate(ctx *actor.Context, instanceIDs []string)
 }
 
@@ -74,6 +85,11 @@ func New(
 		}
 	}
 
+	var errorTimeout time.Duration
+	if config != nil && config.ErrorTimeout != nil {
+		errorTimeout = time.Duration(*config.ErrorTimeout)
+	}
+
 	return &Provisioner{
 		provider: cluster,
 		scaleDecider: newScaleDecider(
@@ -86,6 +102,9 @@ func New(
 			db,
 		),
 		telemetryLimiter: rate.NewLimiter(rate.Every(telemetryCooldown), 1),
+		errorTimeout:     errorTimeout,
+		maxRetries:       config.MaxProvisionRetries,
+		poolName:         resourcePool,
 	}, nil
 }
 
@@ -116,6 +135,16 @@ func (p *Provisioner) SlotsPerInstance() int {
 	return p.provider.slotsPerInstance()
 }
 
+// CurrentSlotCount returns the number of Slots available in the cluster.
+func (p *Provisioner) CurrentSlotCount(ctx *actor.Context) int {
+	nodes, err := p.provider.list(ctx)
+	if err != nil {
+		ctx.Log().WithError(err).Error("cannot list instances for current slot count")
+		return 0
+	}
+	return p.SlotsPerInstance() * len(nodes)
+}
+
 // InstanceType returns the instance type of the provider for the provisioner.
 func (p *Provisioner) InstanceType() string {
 	return p.provider.instanceType().Name()
@@ -124,7 +153,7 @@ func (p *Provisioner) InstanceType() string {
 func (p *Provisioner) provision(ctx *actor.Context) {
 	instances, err := p.provider.list(ctx)
 	if err != nil {
-		ctx.Log().WithError(err).Error("cannot list instances")
+		ctx.Log().WithError(err).Error("cannot list instances for provisioning")
 		return
 	}
 	updated := p.scaleDecider.updateInstanceSnapshot(instances)
@@ -153,9 +182,13 @@ func (p *Provisioner) provision(ctx *actor.Context) {
 	}
 
 	if numToLaunch := p.scaleDecider.calculateNumInstancesToLaunch(); numToLaunch > 0 {
-		ctx.Log().Infof("decided to launch %d instances (type %s)",
-			numToLaunch, p.provider.instanceType().Name())
-		p.provider.launch(ctx, numToLaunch)
+		if launched, err := p.retryLaunch(ctx, numToLaunch); err != nil {
+			ctx.Log().WithError(err).WithField("launched", launched).Error("cannot launch instances")
+			p.errorInfo = &errorInfo{
+				err:  err,
+				time: time.Now(),
+			}
+		}
 	}
 
 	if p.telemetryLimiter.Allow() {
@@ -163,4 +196,46 @@ func (p *Provisioner) provision(ctx *actor.Context) {
 			instances,
 			p.InstanceType())
 	}
+}
+
+func (p *Provisioner) launch(ctx *actor.Context, numToLaunch int) (int, error) {
+	ctx.Log().Infof("launching %d instances (type %s)", numToLaunch, p.provider.instanceType().Name())
+	launched, err := p.provider.launch(ctx, numToLaunch)
+	if launched != numToLaunch {
+		err = fmt.Errorf("launched %d/%d instances, provider error: %v", launched, numToLaunch, err)
+	}
+	return launched, err
+}
+
+func (p *Provisioner) retryLaunch(ctx *actor.Context, numToLaunch int) (int, error) {
+	launched := 0
+	delay := time.Second
+	var lastErr error
+	for i := 0; i <= p.maxRetries; i++ {
+		thisLaunch, err := p.launch(ctx, numToLaunch)
+		launched += thisLaunch
+		if err == nil {
+			return launched, nil
+		}
+		ctx.Log().WithError(err).Errorf("failed to launch %d instances", numToLaunch)
+		if i < p.maxRetries {
+			time.Sleep(delay)
+			delay *= 2
+		}
+		numToLaunch -= launched
+		lastErr = err
+	}
+	return launched, fmt.Errorf("failed launch with %d retries, error: %v", p.maxRetries, lastErr)
+}
+
+// GetError returns the last error encountered by the provisioner.
+func (p *Provisioner) GetError() error {
+	if p.errorInfo == nil {
+		return nil
+	}
+	if p.errorTimeout <= 0 || time.Now().After(p.errorInfo.time.Add(p.errorTimeout)) {
+		p.errorInfo = nil
+		return nil
+	}
+	return p.errorInfo.err
 }

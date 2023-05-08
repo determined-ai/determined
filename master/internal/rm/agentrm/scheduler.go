@@ -16,8 +16,8 @@ import (
 // and etc,. Schedule should avoid unnecessary shuffling tasks on agents to avoid
 // the overhead of restarting a preempted task.
 type Scheduler interface {
-	Schedule(rp *resourcePool) ([]*sproto.AllocateRequest, []*actor.Ref)
-	JobQInfo(rp *resourcePool) map[model.JobID]*sproto.RMJobInfo
+	Schedule(ctx *actor.Context, rp *resourcePool) ([]*sproto.AllocateRequest, []*actor.Ref)
+	JobQInfo(ctx *actor.Context, rp *resourcePool) map[model.JobID]*sproto.RMJobInfo
 }
 
 // MakeScheduler returns the corresponding scheduler implementation.

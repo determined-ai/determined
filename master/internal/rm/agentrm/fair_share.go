@@ -51,7 +51,10 @@ func (g groupState) String() string {
 		address, g.disabled, g.slotDemand, g.activeSlots, g.offered)
 }
 
-func (f *fairShare) Schedule(rp *resourcePool) ([]*sproto.AllocateRequest, []*actor.Ref) {
+func (f *fairShare) Schedule(
+	ctx *actor.Context,
+	rp *resourcePool,
+) ([]*sproto.AllocateRequest, []*actor.Ref) {
 	return fairshareSchedule(
 		rp.taskList,
 		rp.groups,
@@ -76,7 +79,10 @@ func (f *fairShare) createJobQInfo(
 	return jobQ
 }
 
-func (f *fairShare) JobQInfo(rp *resourcePool) map[model.JobID]*sproto.RMJobInfo {
+func (f *fairShare) JobQInfo(
+	ctx *actor.Context,
+	rp *resourcePool,
+) map[model.JobID]*sproto.RMJobInfo {
 	jobQ := f.createJobQInfo(rp.taskList)
 	return jobQ
 }
