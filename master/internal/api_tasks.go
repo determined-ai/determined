@@ -108,9 +108,10 @@ func (a *apiServer) canDoActionsOnTask(
 		}
 	default: // NTSC case + checkpointGC.
 		if ok, err := canAccessNTSCTask(ctx, *curUser, taskID); err != nil {
+			if !ok || authz.IsPermissionDenied(err) {
+				return errTaskNotFound
+			}
 			return err
-		} else if !ok {
-			return errTaskNotFound
 		}
 	}
 	return nil
