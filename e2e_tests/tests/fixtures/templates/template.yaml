@@ -1,4 +1,4 @@
-description: test_template
+name: test_template
 resources:
   agent_label: ""
   slots: 100

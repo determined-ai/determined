@@ -1,4 +1,4 @@
-description: noop_single
+name: noop_single
 checkpoint_storage:
   type: shared_fs
   host_path: /tmp
