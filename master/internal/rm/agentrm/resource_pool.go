@@ -33,9 +33,11 @@ type resourcePool struct {
 
 	scheduler        Scheduler
 	fittingMethod    SoftConstraint
+	slotsPerInstance int
+
 	provisioner      *provisioner.Provisioner
 	provisionerActor *actor.Ref
-	slotsPerInstance int
+	provisionerError error
 
 	agents           map[*actor.Ref]bool
 	agentStatesCache map[*actor.Ref]*agentState
@@ -488,6 +490,7 @@ func (rp *resourcePool) Receive(ctx *actor.Context) error {
 		ctx.Respond(resourceSummaryFromAgentStates(rp.agentStatesCache))
 
 	case sproto.CapacityCheck:
+		reschedule = false
 		var totalSlots int
 		switch {
 		case rp.config.Provider == nil:
@@ -524,6 +527,12 @@ func (rp *resourcePool) Receive(ctx *actor.Context) error {
 		})
 
 	case schedulerTick:
+		if err := rp.provisioner.GetError(); err != rp.provisionerError {
+			rp.provisionerError = err
+			if err != nil {
+				rp.reschedule = true
+			}
+		}
 		if rp.reschedule {
 			ctx.Log().Debug("scheduling")
 			rp.agentStatesCache = rp.fetchAgentStates(ctx)
