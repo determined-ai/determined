@@ -2014,7 +2014,10 @@ func (a *apiServer) SearchExperiments(
 		if err != nil {
 			return nil, err
 		}
-		experimentQuery, err = efr.toSQL(experimentQuery)
+		experimentQuery = experimentQuery.WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
+			_, err = efr.toSQL(experimentQuery)
+			return q
+		})
 		if err != nil {
 			return nil, err
 		}
