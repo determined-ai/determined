@@ -2,7 +2,6 @@ package provisioner
 
 import (
 	"crypto/tls"
-	"fmt"
 	"time"
 
 	"golang.org/x/time/rate"
@@ -51,8 +50,9 @@ type Provisioner struct {
 }
 
 type errorInfo struct {
-	err  error
-	time time.Time
+	err     error
+	time    time.Time
+	retries int
 }
 
 type provider interface {
@@ -60,7 +60,7 @@ type provider interface {
 	slotsPerInstance() int
 	prestart(ctx *actor.Context)
 	list(ctx *actor.Context) ([]*model.Instance, error)
-	launch(ctx *actor.Context, instanceNum int) (int, error)
+	launch(ctx *actor.Context, instanceNum int) error
 	terminate(ctx *actor.Context, instanceIDs []string)
 }
 
@@ -182,12 +182,9 @@ func (p *Provisioner) provision(ctx *actor.Context) {
 	}
 
 	if numToLaunch := p.scaleDecider.calculateNumInstancesToLaunch(); numToLaunch > 0 {
-		if launched, err := p.retryLaunch(ctx, numToLaunch); err != nil {
-			ctx.Log().WithError(err).WithField("launched", launched).Error("cannot launch instances")
-			p.errorInfo = &errorInfo{
-				err:  err,
-				time: time.Now(),
-			}
+		err = p.launch(ctx, numToLaunch)
+		if err != nil {
+			ctx.Log().WithError(err).Error("cannot launch instances")
 		}
 	}
 
@@ -198,34 +195,16 @@ func (p *Provisioner) provision(ctx *actor.Context) {
 	}
 }
 
-func (p *Provisioner) launch(ctx *actor.Context, numToLaunch int) (int, error) {
+func (p *Provisioner) launch(ctx *actor.Context, numToLaunch int) error {
 	ctx.Log().Infof("launching %d instances (type %s)", numToLaunch, p.provider.instanceType().Name())
-	launched, err := p.provider.launch(ctx, numToLaunch)
-	if launched != numToLaunch {
-		err = fmt.Errorf("launched %d/%d instances, provider error: %v", launched, numToLaunch, err)
+	if err := p.GetError(); err != nil {
+		return err
 	}
-	return launched, err
-}
-
-func (p *Provisioner) retryLaunch(ctx *actor.Context, numToLaunch int) (int, error) {
-	launched := 0
-	delay := time.Second
-	var lastErr error
-	for i := 0; i <= p.maxRetries; i++ {
-		thisLaunch, err := p.launch(ctx, numToLaunch)
-		launched += thisLaunch
-		if err == nil {
-			return launched, nil
-		}
-		ctx.Log().WithError(err).Errorf("failed to launch %d instances", numToLaunch)
-		if i < p.maxRetries {
-			time.Sleep(delay)
-			delay *= 2
-		}
-		numToLaunch -= launched
-		lastErr = err
+	if err := p.provider.launch(ctx, numToLaunch); err != nil {
+		ctx.Log().WithError(err).Warn("provider error while launching instances")
+		p.setError(err)
 	}
-	return launched, fmt.Errorf("failed launch with %d retries, error: %v", p.maxRetries, lastErr)
+	return p.GetError()
 }
 
 // GetError returns the last error encountered by the provisioner.
@@ -233,9 +212,26 @@ func (p *Provisioner) GetError() error {
 	if p.errorInfo == nil {
 		return nil
 	}
-	if p.errorTimeout <= 0 || time.Now().After(p.errorInfo.time.Add(p.errorTimeout)) {
+	if time.Now().After(p.errorInfo.time.Add(p.errorTimeout)) {
 		p.errorInfo = nil
 		return nil
 	}
+	if p.errorInfo.retries < p.maxRetries {
+		return nil
+	}
 	return p.errorInfo.err
+}
+
+func (p *Provisioner) setError(err error) {
+	if err == nil || p.errorTimeout <= 0 {
+		p.errorInfo = nil
+		return
+	}
+	if p.errorInfo == nil || time.Now().After(p.errorInfo.time.Add(p.errorTimeout)) {
+		p.errorInfo = &errorInfo{}
+	} else {
+		p.errorInfo.retries++
+	}
+	p.errorInfo.err = err
+	p.errorInfo.time = time.Now()
 }

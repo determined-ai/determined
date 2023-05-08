@@ -141,7 +141,7 @@ func (c *mockProvider) list(ctx *actor.Context) ([]*model.Instance, error) {
 
 func (c *mockProvider) prestart(ctx *actor.Context) {}
 
-func (c *mockProvider) launch(ctx *actor.Context, instanceNum int) (int, error) {
+func (c *mockProvider) launch(ctx *actor.Context, instanceNum int) error {
 	switch {
 	case c.failProvisioning:
 		return c.launchFail()
@@ -152,7 +152,7 @@ func (c *mockProvider) launch(ctx *actor.Context, instanceNum int) (int, error) 
 	}
 }
 
-func (c *mockProvider) launchSuccess(ctx *actor.Context, instanceNum int) (int, error) {
+func (c *mockProvider) launchSuccess(ctx *actor.Context, instanceNum int) error {
 	c.history = append(c.history, newMockFuncCall("launch", c.mockInstanceType, instanceNum))
 	for i := 0; i < instanceNum; i++ {
 		name := uuid.New().String()
@@ -164,7 +164,7 @@ func (c *mockProvider) launchSuccess(ctx *actor.Context, instanceNum int) (int, 
 		}
 		c.instances[inst.ID] = &inst
 	}
-	return instanceNum, nil
+	return nil
 }
 
 func (c *mockProvider) launchOne(ctx *actor.Context, instanceNum int) (int, error) {
@@ -180,8 +180,8 @@ func (c *mockProvider) launchOne(ctx *actor.Context, instanceNum int) (int, erro
 	return 1, fmt.Errorf("launched only 1, but expected %d", instanceNum)
 }
 
-func (c *mockProvider) launchFail() (int, error) {
-	return 0, fmt.Errorf("launched no instances")
+func (c *mockProvider) launchFail() error {
+	return fmt.Errorf("launched no instances")
 }
 
 func (c *mockProvider) terminate(ctx *actor.Context, instanceIDs []string) {
