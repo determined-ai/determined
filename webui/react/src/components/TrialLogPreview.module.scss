@@ -11,10 +11,11 @@ $preview-transition-out: height 0s;
     bottom: 0;
     cursor: pointer;
     height: $preview-height;
+    left: calc(var(--nav-side-bar-width-max) + 32px - 0.1rem);
     overflow: hidden;
     position: fixed;
     transition: $preview-transition-in;
-    width: calc(100% - 63px - var(--nav-side-bar-width-max));
+    width: calc(100vw - var(--nav-side-bar-width-max) - 60px);
     z-index: 99;
   }
   .preview:hover {
