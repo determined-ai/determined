@@ -29,6 +29,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	exputil "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
+	"github.com/determined-ai/determined/master/internal/rbac/audit"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/check"
@@ -122,8 +123,8 @@ func (a *apiServer) GetTensorboard(
 		return nil, err
 	}
 
-	ctx = command.SupplyEntityID(ctx, req.TensorboardId)
-	if ok, err := command.AuthZProvider.Get().CanGetTensorboard(
+	ctx = audit.SupplyEntityID(ctx, req.TensorboardId)
+	if err := command.AuthZProvider.Get().CanGetTensorboard(
 		ctx, *curUser, model.AccessScopeID(resp.Tensorboard.WorkspaceId),
 		resp.Tensorboard.ExperimentIds, resp.Tensorboard.TrialIds); err != nil {
 		return nil, authz.SubIfUnauthorized(err, errActorNotFound(addr))
@@ -151,7 +152,7 @@ func (a *apiServer) KillTensorboard(
 		return nil, err
 	}
 
-	ctx = command.SupplyEntityID(ctx, req.TensorboardId)
+	ctx = audit.SupplyEntityID(ctx, req.TensorboardId)
 	err = command.AuthZProvider.Get().CanTerminateTensorboard(
 		ctx, *curUser, model.AccessScopeID(getResponse.Tensorboard.WorkspaceId))
 	if err != nil {
@@ -181,7 +182,7 @@ func (a *apiServer) SetTensorboardPriority(
 		return nil, err
 	}
 
-	ctx = command.SupplyEntityID(ctx, req.TensorboardId)
+	ctx = audit.SupplyEntityID(ctx, req.TensorboardId)
 	err = command.AuthZProvider.Get().CanSetNSCsPriority(
 		ctx, *curUser, model.AccessScopeID(getResponse.Tensorboard.WorkspaceId), int(req.Priority))
 	if err != nil {

@@ -494,7 +494,7 @@ func TestTrialAuthZ(t *testing.T) {
 		}, false},
 		{"CanGetExperimentArtifacts", func(id int) error {
 			authZNSC.On("CanGetTensorboard", mock.Anything, curUser, mock.Anything, mock.Anything,
-				mock.Anything).Return(true, nil).Once()
+				mock.Anything).Return(nil).Once()
 			_, err := api.LaunchTensorboard(ctx, &apiv1.LaunchTensorboardRequest{
 				TrialIds: []int32{int32(id)},
 			})

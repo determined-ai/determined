@@ -20,6 +20,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/command"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
+	"github.com/determined-ai/determined/master/internal/rbac/audit"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/check"
@@ -32,7 +33,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/notebookv1"
-	"github.com/determined-ai/determined/proto/pkg/rbacv1"
 	"github.com/determined-ai/determined/proto/pkg/workspacev1"
 )
 
@@ -98,14 +98,11 @@ func (a *apiServer) GetNotebook(
 		return nil, err
 	}
 
-	ctx = command.SupplyEntityID(ctx, req.NotebookId)
-	if ok, err := command.AuthZProvider.Get().CanGetNSC(
+	ctx = audit.SupplyEntityID(ctx, req.NotebookId)
+	if err := command.AuthZProvider.Get().CanGetNSC(
 		ctx, *curUser, model.AccessScopeID(resp.Notebook.WorkspaceId),
 	); err != nil {
-		return nil, err
-	} else if !ok { // permission denied.
-		// report the error as if the notebook does not exist.
-		return nil, errActorNotFound(addr)
+		return nil, authz.SubIfUnauthorized(err, errActorNotFound(addr))
 	}
 	return resp, nil
 }
@@ -120,7 +117,7 @@ func (a *apiServer) validateToKillNotebook(ctx context.Context, notebookID strin
 		return err
 	}
 
-	ctx = command.SupplyEntityID(ctx, notebookID)
+	ctx = audit.SupplyEntityID(ctx, notebookID)
 	err = command.AuthZProvider.Get().CanTerminateNSC(
 		ctx, *curUser, model.AccessScopeID(targetNotebook.Notebook.WorkspaceId),
 	)
@@ -160,7 +157,7 @@ func (a *apiServer) SetNotebookPriority(
 		return nil, err
 	}
 
-	ctx = command.SupplyEntityID(ctx, req.NotebookId)
+	ctx = audit.SupplyEntityID(ctx, req.NotebookId)
 	err = command.AuthZProvider.Get().CanSetNSCsPriority(
 		ctx, *curUser, model.AccessScopeID(targetNotebook.Notebook.WorkspaceId), int(req.Priority),
 	)
@@ -200,17 +197,11 @@ func (a *apiServer) isNTSCPermittedToLaunch(
 	}
 
 	if spec.TaskType == model.TaskTypeTensorboard {
-		ok, err := command.AuthZProvider.Get().CanGetTensorboard(
+		err := command.AuthZProvider.Get().CanGetTensorboard(
 			ctx, *user, workspaceID, spec.Metadata.ExperimentIDs, spec.Metadata.TrialIDs,
 		)
 		if err != nil {
 			return err
-		} else if !ok {
-			return apiutils.MapAndFilterErrors(authz.PermissionDeniedError{
-				RequiredPermissions: []rbacv1.PermissionType{
-					rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_ARTIFACTS,
-				},
-			}, nil, nil)
 		}
 	} else {
 		if err := command.AuthZProvider.Get().CanCreateNSC(

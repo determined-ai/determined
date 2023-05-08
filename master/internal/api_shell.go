@@ -19,6 +19,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/command"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
+	"github.com/determined-ai/determined/master/internal/rbac/audit"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/check"
@@ -108,8 +109,8 @@ func (a *apiServer) GetShell(
 		return nil, err
 	}
 
-	ctx = command.SupplyEntityID(ctx, req.ShellId)
-	if ok, err := command.AuthZProvider.Get().CanGetNSC(
+	ctx = audit.SupplyEntityID(ctx, req.ShellId)
+	if err := command.AuthZProvider.Get().CanGetNSC(
 		ctx, *curUser, model.AccessScopeID(resp.Shell.WorkspaceId)); err != nil {
 		return nil, authz.SubIfUnauthorized(err, errActorNotFound(addr))
 	}
@@ -135,7 +136,7 @@ func (a *apiServer) KillShell(
 		return nil, err
 	}
 
-	ctx = command.SupplyEntityID(ctx, req.ShellId)
+	ctx = audit.SupplyEntityID(ctx, req.ShellId)
 	err = command.AuthZProvider.Get().CanTerminateNSC(
 		ctx, *curUser, model.AccessScopeID(getResponse.Shell.WorkspaceId))
 	if err != nil {
@@ -164,7 +165,7 @@ func (a *apiServer) SetShellPriority(
 		return nil, err
 	}
 
-	ctx = command.SupplyEntityID(ctx, req.ShellId)
+	ctx = audit.SupplyEntityID(ctx, req.ShellId)
 	err = command.AuthZProvider.Get().CanSetNSCsPriority(
 		ctx, *curUser, model.AccessScopeID(getResponse.Shell.WorkspaceId), int(req.Priority))
 	if err != nil {
