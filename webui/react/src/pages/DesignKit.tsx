@@ -1809,20 +1809,20 @@ const ColumnsSection: React.FC = () => {
       </AntDCard>
       <AntDCard title="Usage">
         <p>
-          With <code>{'<Columns>'}</code> wrapper only:
+          With <code>{'<Columns>'}</code> wrapper only, and <code>{'gap'}</code> set to 8 (default):
         </p>
         <Columns>
           <Card>{loremIpsum}</Card>
           <Card>{loremIpsum}</Card>
           <Card>{loremIpsum}</Card>
         </Columns>
-        <p>With gap set to 0:</p>
+        <p>With <code>{'gap'}</code> set to 0:</p>
         <Columns gap={0}>
           <Card>{loremIpsum}</Card>
           <Card>{loremIpsum}</Card>
           <Card>{loremIpsum}</Card>
         </Columns>
-        <p>With gap set to 16:</p>
+        <p>With <code>{'gap'}</code> set to 16:</p>
         <Columns gap={16}>
           <Card>{loremIpsum}</Card>
           <Card>{loremIpsum}</Card>
@@ -1868,6 +1868,26 @@ const ColumnsSection: React.FC = () => {
           </Column>
           <Column align="right">
             <Button>Content</Button>
+          </Column>
+        </Columns>
+        <p>
+          Variant with <code>{'page'}</code> prop, with margins and wrapping behavior, used for page-level layouts/headers:
+        </p>
+        <Columns page>
+          <Column>
+            <Button>Content 1</Button>
+            <Button>Content 2</Button>
+            <Button>Content 3</Button>
+          </Column>
+          <Column>
+            <Button>Content 1</Button>
+            <Button>Content 2</Button>
+            <Button>Content 3</Button>
+          </Column>
+          <Column>
+            <Button>Content 1</Button>
+            <Button>Content 2</Button>
+            <Button>Content 3</Button>
           </Column>
         </Columns>
       </AntDCard>
