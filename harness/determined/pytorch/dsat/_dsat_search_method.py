@@ -196,6 +196,16 @@ class DSATTrialTracker:
     def __iter__(self) -> Iterator[DSATTrial]:
         return iter(self._all_trials_dict.items())
 
+    def __contains__(self, item: Union[uuid.UUID, DSATTrial]) -> bool:
+        if isinstance(item, uuid.UUID):
+            return item in self._all_trials_dict
+        elif isinstance(item, DSATTrial):
+            return item in self._all_trials_dict.values()
+        else:
+            raise ValueError(
+                f"Expected a `uuid.UUID` or `DSATTrial` instance, instead received an object of type {type(item)}"
+            )
+
     def create_trial(
         self,
         hparams: Dict[str, Any],
@@ -290,6 +300,13 @@ class DSATTrialTracker:
                 self.num_trials_since_best_result = 0
             else:
                 self.num_trials_since_best_result += 1
+        trial.closed = True
+        trial.running = False
+
+    def report_trial_early_exit(self, trial: DSATTrial) -> None:
+        trial.error = True
+        trial.closed = True
+        trial.running = False
 
     @property
     def gpu_mem(self) -> int:
@@ -599,7 +616,7 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
         exited_reason: searcher.ExitedReason,
     ) -> List[searcher.Operation]:
         last_trial = self.trial_tracker[request_id]
-        last_trial.error = True
+        self.trial_tracker.report_trial_early_exit(last_trial)
 
         # TODO: Remove print tests.
         logging.info(f"Calling on_trial_exited_early for {request_id}")
@@ -627,8 +644,6 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
         self, searcher_state: searcher.SearcherState, request_id: uuid.UUID
     ) -> List[searcher.Operation]:
         last_trial = self.trial_tracker[request_id]
-        last_trial.closed = True
-        last_trial.running = False
 
         # TODO: Remove print tests.
         logging.info(f"Calling on_trial_closed for {request_id}")
