@@ -7,7 +7,7 @@ repos:
         name: Web JS Lint Check
         entry: ./pre-commit/web_lint_check.py js
         language: system
-        files: '^webui/react/src/'
+        files: '^webui/react/'
         types_or: [javascript, jsx, ts, tsx]
         stages:
           - commit
