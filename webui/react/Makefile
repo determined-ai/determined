@@ -10,13 +10,16 @@ merge_base := $(shell git merge-base main HEAD)
 default: get-deps
 	$(MAKE) build
 
+node_modules/playwright-core/.local-browsers:
+	npx playwright install
+
 .PHONY: get-deps-npm
 get-deps-npm:
 	npm ci --no-audit
+	$(MAKE) node_modules/playwright-core/.local-browsers
 
 node_modules/done.stamp: package-lock.json
 	$(MAKE) get-deps-npm
-	npx playwright install
 	touch $@
 
 .PHONY: get-deps
@@ -108,9 +111,6 @@ test:
 .PHONY: test-ci
 test-ci:
 	VITEST_MAX_THREADS=6 VITEST_MIN_THREADS=1 npm run test:coverage -- --reporter=junit --reporter=default --outputFile.junit=coverage/junit.xml
-
-node_modules/playwright-core/.local-browsers:
-	npx playwright install
 
 .PHONY: visual-test-deps
 visual-test-deps: node_modules/playwright-core/.local-browsers
