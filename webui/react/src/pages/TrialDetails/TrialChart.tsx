@@ -81,7 +81,7 @@ const TrialChart: React.FC<Props> = ({
       }
 
       mWrapper.data.forEach((avgMetrics) => {
-        if (avgMetrics.values[metric.name]) {
+        if (avgMetrics.values[metric.name] || avgMetrics.values[metric.name] === 0) {
           if (!xValues.includes(avgMetrics.batches)) {
             xValues.push(avgMetrics.batches);
           }
