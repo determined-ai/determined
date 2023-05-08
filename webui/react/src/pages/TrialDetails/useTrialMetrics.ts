@@ -34,7 +34,7 @@ const summarizedMetricToSeries = (
 
         if (!rawBatchEpochMap[metric.name]) rawBatchEpochMap[metric.name] = [];
 
-        if (value) {
+        if (value || value === 0) {
           rawBatchValuesMap[metric.name]?.push([avgMetrics.batches, value]);
           if (avgMetrics.time)
             rawBatchTimesMap[metric.name]?.push([
