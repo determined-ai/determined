@@ -327,7 +327,8 @@ func (a *apiServer) DeleteExperiment(
 	// report any error on the individual experiment
 	if len(results) == 0 {
 		return nil, errors.Errorf("unknown error during delete query.")
-	} else if results[0].Error != nil {
+	}
+	if results[0].Error != nil {
 		return nil, results[0].Error
 	}
 
