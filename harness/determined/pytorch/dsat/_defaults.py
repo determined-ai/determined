@@ -34,6 +34,7 @@ MODEL_INFO_PROFILE_DS_CONFIG = {
 
 # Using same defaults as DS. Written as a diff between successive stages for brevity.
 DEFAULT_ZERO_SEARCH_SPACE = {
+    0: {},
     1: {"reduce_bucket_size": [5e7, 5e8, 1e9], "allgather_bucket_size": [5e7, 5e8, 1e9]},
     2: {
         "overlap_comm": [True, False],

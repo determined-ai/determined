@@ -10,7 +10,9 @@ from determined.pytorch.dsat import _defaults, _dsat_search_method, _utils
 from determined.util import merge_dicts
 
 
-def build_exp_conf_from_args(args: argparse.Namespace) -> _dsat_search_method.BaseDSATSearchMethod:
+def get_custom_dsat_exp_conf_from_args(
+    args: argparse.Namespace,
+) -> _dsat_search_method.BaseDSATSearchMethod:
     """
     Helper function which alters the user-submitted configuration and args into a configuration
     for the DS AT custom searchers.
@@ -54,7 +56,7 @@ def main(core_context: det.core.Context) -> None:
     args.include = [os.path.basename(p) for p in args.include] if args.include is not None else []
     args.experiment_id = det.get_cluster_info()._trial_info.experiment_id
 
-    exp_config = build_exp_conf_from_args(args)
+    exp_config = get_custom_dsat_exp_conf_from_args(args)
 
     assert (
         args.tuner_type in _defaults.ALL_SEARCH_METHOD_CLASSES

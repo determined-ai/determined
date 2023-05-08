@@ -9,6 +9,4 @@ searcher:
 hyperparameters:
   model_name: resnet152
   deepspeed_config: ds_config.json
-  overwrite_deepspeed_args:
-    zero_optimization.stage: 2
 entrypoint: python3 -m determined.launch.deepspeed python3 script.py
