@@ -48,6 +48,8 @@ Installation
 
    pip install determined
 
+.. include:: ../../../_shared/pip-install-determined.txt
+
 Deploying
 =========
 

@@ -30,6 +30,8 @@ Install the ``determined`` Python package by running
 
    pip install determined
 
+.. include:: ../../../_shared/pip-install-determined.txt
+
 .. _configuring-cluster-install:
 
 *********************************
