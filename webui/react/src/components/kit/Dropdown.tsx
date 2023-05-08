@@ -3,6 +3,8 @@ import { MenuProps } from 'antd/es/menu/menu';
 import { PropsWithChildren, useMemo } from 'react';
 import * as React from 'react';
 
+import css from './Dropdown.module.scss';
+
 export interface MenuDivider {
   type: 'divider';
 }
@@ -56,6 +58,7 @@ const Dropdown: React.FC<PropsWithChildren<Props>> = ({
    */
   return content ? (
     <AntdPopover
+      className={css.base}
       content={content}
       open={open}
       placement={placement}
@@ -65,6 +68,7 @@ const Dropdown: React.FC<PropsWithChildren<Props>> = ({
     </AntdPopover>
   ) : (
     <AntDropdown
+      className={css.base}
       disabled={disabled}
       menu={antdMenu}
       open={open}
