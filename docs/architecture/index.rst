@@ -18,9 +18,11 @@ so you can spend your time building models instead of managing infrastructure.
 
 .. image:: /assets/images/det-ai-sys-arch-01-start-dark.png
    :class: only-dark
+   :alt: Determined AI system architecture diagram dark mode
 
 .. image:: /assets/images/det-ai-sys-arch-01-start-light.png
    :class: only-light
+   :alt: Determined AI system architecture diagram light mode
 
 Learn more:
 

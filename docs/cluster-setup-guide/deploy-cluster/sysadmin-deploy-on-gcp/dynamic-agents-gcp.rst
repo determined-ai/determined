@@ -5,8 +5,8 @@
 #######################################
 
 This document describes how to install, configure, and upgrade a deployment of Determined with
-dynamic agents on GCP. See :ref:`elastic-infrastructure` for an overview of the elastic
-infrastructure in Determined.
+dynamic agents on GCP. For an overview of the elastic infrastructure in Determined, visit
+:ref:`elastic-infrastructure`.
 
 *********************
  System Requirements
@@ -145,7 +145,7 @@ Agents
    -  Two additional ephemeral TCP ports in the range 1024-65536 are used for additional intra-trial
       communication between trial containers.
 
-   -  For Tensorboards, an inbound and outbound TCP port between 2600-2900 is used to connect the
+   -  For TensorBoards, an inbound and outbound TCP port between 2600-2900 is used to connect the
       master and the tensorboard container.
 
 .. _gcp-gpu-requirements:
@@ -165,7 +165,7 @@ The following GPU types are supported by Determined:
 ***********************
 
 The Determined Cluster is configured with ``master.yaml`` file located at
-``/usr/local/determined/etc`` on the Determined master instance. We need to configure GPU dynamic
+``/usr/local/determined/etc`` on the Determined master instance. You need to configure GPU dynamic
 agents in each resource pool. See :ref:`cluster-configuration` for details.
 
 .. _gcp-attach-disk:
@@ -247,7 +247,7 @@ service account associated with a GCE instance, for accessing GCR.
 .. note::
 
    This is an example of an operation that requires use of ``container_startup_script``. Because
-   docker credential helpers alter the docker client configuration to depend on the helper binary by
+   Docker credential helpers alter the Docker client configuration to depend on the helper binary by
    name, it must be installed and configured in the container.
 
 **************

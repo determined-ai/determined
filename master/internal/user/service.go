@@ -15,6 +15,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/api"
+	"github.com/determined-ai/determined/master/internal/authz"
 	detContext "github.com/determined-ai/determined/master/internal/context"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/telemetry"
@@ -316,10 +317,8 @@ func (s *Service) getUsers(c echo.Context) (interface{}, error) {
 
 func canViewUserErrorHandle(currUser, user model.User, actionErr, notFoundErr error) error {
 	ctx := context.TODO()
-	if ok, err := AuthZProvider.Get().CanGetUser(ctx, currUser, user); err != nil {
-		return err
-	} else if !ok {
-		return notFoundErr
+	if err := AuthZProvider.Get().CanGetUser(ctx, currUser, user); err != nil {
+		return authz.SubIfUnauthorized(err, notFoundErr)
 	}
 	return actionErr
 }

@@ -52,6 +52,7 @@
    Python SDK <reference/python-sdk>
    REST API <reference/rest-api>
    Training Reference <reference/reference-training/index>
+   Experiment Configuration Reference <reference/reference-training/experiment-config-reference>
    Model Hub Reference <reference/reference-model-hub/index>
    Deployment Reference <reference/reference-deploy/index>
    Job Configuration Reference <reference/reference-interface/job-config-reference>
@@ -82,6 +83,9 @@
 ##########################
  *Welcome to Determined!*
 ##########################
+
+.. meta::
+   :description: Visit the Determined AI documentation home page and get quick access to information, tutorials, quickstarts, user guides, and reference material.
 
 You can quickly train almost any deep learning model using Determined.
 

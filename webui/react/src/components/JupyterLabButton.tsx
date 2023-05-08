@@ -19,7 +19,7 @@ const JupyterLabButton: React.FC<Props> = ({ enabled, workspace }: Props) => {
       {enabled ? (
         <Button onClick={JupyterLabModal.open}>Launch JupyterLab</Button>
       ) : (
-        <Tooltip placement="leftBottom" title="You do not have permission to launch JupyterLab">
+        <Tooltip content="You do not have permission to launch JupyterLab" placement="leftBottom">
           <div>
             <Button disabled>Launch JupyterLab</Button>
           </div>

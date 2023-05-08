@@ -5,6 +5,7 @@ package internal
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"sort"
 	"testing"
@@ -13,21 +14,21 @@ import (
 
 	"github.com/uptrace/bun"
 
-	"github.com/golang/protobuf/ptypes/wrappers"
-	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/types/known/timestamppb"
-	"google.golang.org/protobuf/types/known/wrapperspb"
-
 	"github.com/ghodss/yaml"
+	"github.com/golang/protobuf/ptypes/wrappers"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/timestamppb"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/structpb"
 
+	authz2 "github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/db"
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/mocks"
@@ -557,6 +558,95 @@ func getExperimentsTest(ctx context.Context, t *testing.T, api *apiServer, pid i
 	}
 }
 
+func TestSearchExperiments(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	_, projectIDInt := createProjectAndWorkspace(ctx, t, api)
+	projectID := int32(projectIDInt)
+
+	// Empty response causes no errors.
+	req := &apiv1.SearchExperimentsRequest{
+		ProjectId: &projectID,
+		Sort:      ptrs.Ptr("id=asc"),
+	}
+	resp, err := api.SearchExperiments(ctx, req)
+	require.NoError(t, err)
+	require.Len(t, resp.Experiments, 0)
+
+	// No trial doesn't cause errors.
+	exp := createTestExpWithProjectID(t, api, curUser, projectIDInt)
+
+	resp, err = api.SearchExperiments(ctx, req)
+	require.NoError(t, err)
+	require.Len(t, resp.Experiments, 1)
+	require.Nil(t, resp.Experiments[0].BestTrial)
+	require.Equal(t, int32(exp.ID), resp.Experiments[0].Experiment.Id)
+
+	// Trial without validations doesn't cause issues.
+	noValidationsExp := createTestExpWithProjectID(t, api, curUser, projectIDInt)
+	task := &model.Task{TaskType: model.TaskTypeTrial}
+	require.NoError(t, api.m.db.AddTask(task))
+	require.NoError(t, api.m.db.AddTrial(&model.Trial{
+		State:        model.PausedState,
+		ExperimentID: noValidationsExp.ID,
+		TaskID:       task.TaskID,
+	}))
+
+	resp, err = api.SearchExperiments(ctx, req)
+	require.NoError(t, err)
+	require.Len(t, resp.Experiments, 2)
+
+	require.Nil(t, resp.Experiments[0].BestTrial)
+	require.Equal(t, int32(exp.ID), resp.Experiments[0].Experiment.Id)
+
+	require.Nil(t, resp.Experiments[1].BestTrial) // Still nil since no validations reported.
+	require.Equal(t, int32(noValidationsExp.ID), resp.Experiments[1].Experiment.Id)
+
+	// Validations returned properly.
+	metricTrial, _, valMetrics := createTestTrialWithMetrics(ctx, t, api, curUser, true)
+	// Move experiment to our project.
+	_, err = db.Bun().NewUpdate().Table("experiments").
+		Set("project_id = ?", projectID).
+		Where("id = ?", metricTrial.ExperimentID).
+		Exec(ctx)
+	require.NoError(t, err)
+	// Set restarts super high so it gets reduced to config number.
+	_, err = db.Bun().NewUpdate().Table("trials").
+		Set("restarts = ?", 31415).
+		Where("id = ?", metricTrial.ID).
+		Exec(ctx)
+	require.NoError(t, err)
+
+	resp, err = api.SearchExperiments(ctx, req)
+	require.NoError(t, err)
+	require.Len(t, resp.Experiments, 3)
+
+	require.Nil(t, resp.Experiments[0].BestTrial)
+	require.Equal(t, int32(exp.ID), resp.Experiments[0].Experiment.Id)
+
+	require.Nil(t, resp.Experiments[1].BestTrial)
+	require.Equal(t, int32(noValidationsExp.ID), resp.Experiments[1].Experiment.Id)
+
+	require.NotNil(t, resp.Experiments[2].BestTrial)
+
+	require.Equal(t, int32(9), resp.Experiments[2].BestTrial.TotalBatchesProcessed)
+
+	require.Equal(t, int32(0), resp.Experiments[2].BestTrial.BestValidation.TotalBatches)
+	bestActual, err := json.Marshal(resp.Experiments[2].BestTrial.BestValidation.Metrics)
+	require.NoError(t, err)
+	bestExpected, err := json.Marshal(valMetrics[0])
+	require.NoError(t, err)
+	require.Equal(t, string(bestActual), string(bestExpected))
+
+	require.Equal(t, int32(9), resp.Experiments[2].BestTrial.LatestValidation.TotalBatches)
+	latestActual, err := json.Marshal(resp.Experiments[2].BestTrial.LatestValidation.Metrics)
+	require.NoError(t, err)
+	latestExpected, err := json.Marshal(valMetrics[len(valMetrics)-1])
+	require.NoError(t, err)
+	require.Equal(t, string(latestActual), string(latestExpected))
+
+	require.Equal(t, int32(5), resp.Experiments[2].BestTrial.Restarts)
+}
+
 // Test that endpoints don't puke when running against old experiments.
 func TestLegacyExperiments(t *testing.T) {
 	err := etc.SetRootPath("../static/srv")
@@ -728,18 +818,18 @@ func TestAuthZGetExperiment(t *testing.T) {
 	require.Equal(t, expNotFoundErr(-999).Error(), err.Error())
 
 	authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
-		Return(false, nil).Once()
+		Return(authz2.PermissionDeniedError{}).Once()
 	_, err = api.GetExperiment(ctx, &apiv1.GetExperimentRequest{ExperimentId: int32(exp.ID)})
 	require.Equal(t, expNotFoundErr(exp.ID).Error(), err.Error())
 
 	// Error returns error unmodified.
 	expectedErr := fmt.Errorf("canGetExperimentError")
 	authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
-		Return(false, expectedErr).Once()
+		Return(expectedErr).Once()
 	_, err = api.GetExperiment(ctx, &apiv1.GetExperimentRequest{ExperimentId: int32(exp.ID)})
 	require.Equal(t, expectedErr, err)
 
-	authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).Return(true, nil).Once()
+	authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).Return(nil).Once()
 	res, err := api.GetExperiment(ctx, &apiv1.GetExperimentRequest{ExperimentId: int32(exp.ID)})
 	require.NoError(t, err)
 	require.Equal(t, int32(exp.ID), res.Experiment.Id)
@@ -752,13 +842,14 @@ func TestAuthZGetExperiments(t *testing.T) {
 	createTestExpWithProjectID(t, api, curUser, projectID, uuid.New().String())
 
 	// Can't view project gets a 404.
-	authZProject.On("CanGetProject", mock.Anything, curUser, mock.Anything).Return(false, nil).Once()
+	authZProject.On("CanGetProject", mock.Anything, curUser,
+		mock.Anything).Return(authz2.PermissionDeniedError{}).Once()
 	_, err := api.GetExperiments(ctx, &apiv1.GetExperimentsRequest{ProjectId: int32(projectID)})
 	require.Equal(t, projectNotFoundErr(projectID).Error(), err.Error())
 
 	// Error from FilterExperimentsQuery passes through.
 	authZProject.On("CanGetProject", mock.Anything, curUser, mock.Anything).
-		Return(true, nil).Once()
+		Return(nil).Once()
 	expectedErr := fmt.Errorf("filterExperimentsQueryError")
 	authZExp.On("FilterExperimentsQuery", mock.Anything, curUser, mock.Anything, mock.Anything,
 		[]rbacv1.PermissionType{rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA}).
@@ -800,14 +891,16 @@ func TestAuthZGetExperimentLabels(t *testing.T) {
 	createTestExpWithProjectID(t, api, curUser, projectID, uuid.New().String())
 
 	// Can't view project gets a 404.
-	authZProject.On("CanGetProject", mock.Anything, curUser, mock.Anything).Return(false, nil).Once()
+	authZProject.On("CanGetProject", mock.Anything, curUser,
+		mock.Anything).Return(authz2.PermissionDeniedError{}).Once()
 	_, err := api.GetExperimentLabels(ctx, &apiv1.GetExperimentLabelsRequest{
 		ProjectId: int32(projectID),
 	})
 	require.Equal(t, projectNotFoundErr(projectID).Error(), err.Error())
 
 	// Error from FilterExperimentsLabelsQuery passes through.
-	authZProject.On("CanGetProject", mock.Anything, curUser, mock.Anything).Return(true, nil).Once()
+	authZProject.On("CanGetProject", mock.Anything, curUser,
+		mock.Anything).Return(nil).Once()
 	expectedErr := fmt.Errorf("filterExperimentLabelsQueryError")
 	authZExp.On("FilterExperimentLabelsQuery", mock.Anything, curUser, mock.Anything, mock.Anything).
 		Return(nil, expectedErr).Once()
@@ -834,7 +927,8 @@ func TestAuthZCreateExperiment(t *testing.T) {
 	_, projectID := createProjectAndWorkspace(ctx, t, api)
 
 	// Can't view forked experiment.
-	authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).Return(false, nil).Once()
+	authZExp.On("CanGetExperiment", mock.Anything, curUser,
+		mock.Anything).Return(authz2.PermissionDeniedError{}).Once()
 	_, err := api.CreateExperiment(ctx, &apiv1.CreateExperimentRequest{
 		ParentId: int32(forkFrom.ID),
 	})
@@ -842,7 +936,7 @@ func TestAuthZCreateExperiment(t *testing.T) {
 
 	// Can't fork from experiment.
 	expectedErr := status.Errorf(codes.PermissionDenied, "canForkExperimentError")
-	authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).Return(true, nil).Once()
+	authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).Return(nil).Once()
 	authZExp.On("CanForkFromExperiment", mock.Anything, curUser, mock.Anything).
 		Return(fmt.Errorf("canForkExperimentError")).Once()
 	_, err = api.CreateExperiment(ctx, &apiv1.CreateExperimentRequest{
@@ -851,7 +945,8 @@ func TestAuthZCreateExperiment(t *testing.T) {
 	require.Equal(t, expectedErr, err)
 
 	// Can't view project passed in.
-	pAuthZ.On("CanGetProject", mock.Anything, curUser, mock.Anything).Return(false, nil).Once()
+	pAuthZ.On("CanGetProject", mock.Anything, curUser,
+		mock.Anything).Return(authz2.PermissionDeniedError{}).Once()
 	_, err = api.CreateExperiment(ctx, &apiv1.CreateExperimentRequest{
 		ProjectId: int32(projectID),
 		Config:    minExpConfToYaml(t),
@@ -860,7 +955,8 @@ func TestAuthZCreateExperiment(t *testing.T) {
 		fmt.Sprintf("project (%d) not found", projectID)), err)
 
 	// Can't view project passed in from config.
-	pAuthZ.On("CanGetProject", mock.Anything, curUser, mock.Anything).Return(false, nil).Once()
+	pAuthZ.On("CanGetProject", mock.Anything, curUser,
+		mock.Anything).Return(authz2.PermissionDeniedError{}).Once()
 	_, err = api.CreateExperiment(ctx, &apiv1.CreateExperimentRequest{
 		Config: minExpConfToYaml(t) + "project: Uncategorized\nworkspace: Uncategorized",
 	})
@@ -876,8 +972,8 @@ func TestAuthZCreateExperiment(t *testing.T) {
 
 	// Can't create experiment deny.
 	expectedErr = status.Errorf(codes.PermissionDenied, "canCreateExperimentError")
-	pAuthZ.On("CanGetProject", mock.Anything, curUser, mock.Anything).Return(true, nil).Once()
-	authZExp.On("CanCreateExperiment", mock.Anything, curUser, mock.Anything, mock.Anything).
+	pAuthZ.On("CanGetProject", mock.Anything, curUser, mock.Anything).Return(nil).Once()
+	authZExp.On("CanCreateExperiment", mock.Anything, curUser, mock.Anything).
 		Return(fmt.Errorf("canCreateExperimentError")).Once()
 	_, err = api.CreateExperiment(ctx, &apiv1.CreateExperimentRequest{
 		ProjectId: int32(projectID),
@@ -887,8 +983,8 @@ func TestAuthZCreateExperiment(t *testing.T) {
 
 	// Can't activate experiment deny.
 	expectedErr = status.Errorf(codes.PermissionDenied, "canActivateExperimentError")
-	pAuthZ.On("CanGetProject", mock.Anything, curUser, mock.Anything).Return(true, nil).Once()
-	authZExp.On("CanCreateExperiment", mock.Anything, curUser, mock.Anything, mock.Anything).
+	pAuthZ.On("CanGetProject", mock.Anything, curUser, mock.Anything).Return(nil).Once()
+	authZExp.On("CanCreateExperiment", mock.Anything, curUser, mock.Anything).
 		Return(nil).Once()
 	authZExp.On("CanEditExperiment", mock.Anything, curUser, mock.Anything, mock.Anything).Return(
 		fmt.Errorf("canActivateExperimentError")).Once()
@@ -1036,19 +1132,19 @@ func TestAuthZGetExperimentAndCanDoActions(t *testing.T) {
 		require.Equal(t, expNotFoundErr(-999), curCase.IDToReqCall(-999))
 
 		authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
-			Return(false, nil).Once()
+			Return(authz2.PermissionDeniedError{}).Once()
 		require.Equal(t, expNotFoundErr(exp.ID), curCase.IDToReqCall(exp.ID))
 
 		// CanGetExperiment error returns unmodified.
 		expectedErr := fmt.Errorf("canGetExperimentError")
 		authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
-			Return(false, expectedErr).Once()
+			Return(expectedErr).Once()
 		require.Equal(t, expectedErr, curCase.IDToReqCall(exp.ID))
 
 		// Deny returns error with PermissionDenied.
 		expectedErr = status.Errorf(codes.PermissionDenied, curCase.DenyFuncName+"Error")
 		authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
-			Return(true, nil).Once()
+			Return(nil).Once()
 		authZExp.On(curCase.DenyFuncName, mock.Anything, curUser, mock.Anything).
 			Return(fmt.Errorf(curCase.DenyFuncName + "Error")).Once()
 		require.Equal(t, expectedErr.Error(), curCase.IDToReqCall(exp.ID).Error())
@@ -1193,5 +1289,171 @@ func TestAuthZGetExperimentAndCanDoActions(t *testing.T) {
 		})
 		_, apiErr := curCase.IDToReqCall(exp.ID)
 		require.Equal(t, expectedErr, apiErr)
+	}
+}
+
+// nolint: lll
+func TestExperimentSearchApiFilterParsing(t *testing.T) {
+	setupAPITest(t, nil)
+	invalidTestCases := []string{
+		// No operator specified in field
+		`{"filterGroup":{"children":[{"columnName":"resourcePool","kind":"field","value":"default"}],"conjunction":"and","kind":"group"},"showArchived":false}`,
+
+		// No conjunction in group
+		`{"filterGroup":{"children":[{"columnName":"resourcePool","kind":"field","operator":"=","value":"default"}],"kind":"group"},"showArchived":false}`,
+
+		// invalid group conjunction
+		`{"filterGroup":{"children":[{"columnName":"resourcePool","kind":"field","operator":"=","value":"default"}],"conjunction":"invalid","kind":"group"},"showArchived":false}`,
+
+		// invalid operator
+		`{"filterGroup":{"children":[{"columnName":"resourcePool","kind":"field","operator":"invalid","value":"default"}],"conjunction":"and","kind":"group"},"showArchived":false}`,
+
+		//  Invalid experiment field
+		`{"filterGroup":{"children":[{"location":"LOCATION_TYPE_EXPERIMENT","columnName":"notValid","kind":"field","value":"default"}],"conjunction":"and","kind":"group"},"showArchived":false}`,
+	}
+	for _, c := range invalidTestCases {
+		q := db.Bun().NewSelect()
+		var efr experimentFilterRoot
+		err := json.Unmarshal([]byte(c), &efr)
+		require.NoError(t, err)
+		_, err = efr.toSQL(q)
+		require.Error(t, err)
+	}
+	validTestCases := [][2]string{
+		{`{"filterGroup":{"children":[{"columnName":"id","kind":"field","operator":"=","value":1}],"conjunction":"and","kind":"group"},"showArchived":false}`, `((e.id = 1)) AND (e.archived = false)`},
+		{`{"filterGroup":{"children":[{"children":[{"columnName":"id","kind":"field","operator":"=","value":1},{"columnName":"id","kind":"field","operator":"=","value":2}],"conjunction":"and","kind":"group"},{"children":[{"columnName":"id","kind":"field","operator":"=","value":3},{"columnName":"id","kind":"field","operator":"=","value":4}],"conjunction":"and","kind":"group"},{"children":[{"columnName":"id","kind":"field","operator":"=","value":5},{"columnName":"id","kind":"field","operator":"=","value":6}],"conjunction":"and","kind":"group"}],"conjunction":"or","kind":"group"},"showArchived":false}`, `(((e.id = 1)) AND ((e.id = 2))) OR (((e.id = 3)) AND ((e.id = 4))) OR (((e.id = 5)) AND ((e.id = 6))) AND (e.archived = false)`},
+		{`{"filterGroup":{"children":[{"columnName":"id","kind":"field","operator":"=","value":1},{"columnName":"id","kind":"field","operator":"=","value":2}],"conjunction":"and","kind":"group"},"showArchived":false}`, `((e.id = 1)) AND ((e.id = 2)) AND (e.archived = false)`},
+		{`{"filterGroup":{"children":[{"columnName":"id","kind":"field","operator":"=","value":1},{"columnName":"id","kind":"field","operator":"=","value":2}],"conjunction":"or","kind":"group"},"showArchived":false}`, `((e.id = 1)) OR ((e.id = 2)) AND (e.archived = false)`},
+		{`{"filterGroup":{"children":[{"columnName":"id","kind":"field","operator":"=","value":1},{"columnName":"id","kind":"field","operator":"=","value":2},{"children":[{"columnName":"id","kind":"field","operator":"=","value":3},{"columnName":"id","kind":"field","operator":"=","value":4}],"conjunction":"and","kind":"group"},{"children":[{"columnName":"id","kind":"field","operator":"=","value":5},{"children":[{"columnName":"id","kind":"field","operator":"=","value":6},{"columnName":"id","kind":"field","operator":"=","value":7}],"conjunction":"and","kind":"group"}],"conjunction":"or","kind":"group"}],"conjunction":"or","kind":"group"},"showArchived":false}`, `((e.id = 1)) OR ((e.id = 2)) OR (((e.id = 3)) AND ((e.id = 4))) OR (((e.id = 5)) OR (((e.id = 6)) AND ((e.id = 7)))) AND (e.archived = false)`},
+		{`{"filterGroup":{"children":[{"children":[{"columnName":"id","kind":"field","operator":"=","value":1},{"columnName":"id","kind":"field","operator":"=","value":2}],"conjunction":"and","kind":"group"},{"children":[{"columnName":"id","kind":"field","operator":"=","value":3},{"columnName":"id","kind":"field","operator":"=","value":4}],"conjunction":"and","kind":"group"},{"children":[{"columnName":"id","kind":"field","operator":"=","value":5},{"columnName":"id","kind":"field","operator":"=","value":6}],"conjunction":"and","kind":"group"}],"conjunction":"or","kind":"group"},"showArchived":false}`, `(((e.id = 1)) AND ((e.id = 2))) OR (((e.id = 3)) AND ((e.id = 4))) OR (((e.id = 5)) AND ((e.id = 6))) AND (e.archived = false)`},
+		{`{"filterGroup":{"children":[{"children":[],"conjunction":"and","kind":"group"},{"children":[],"conjunction":"and","kind":"group"},{"children":[],"conjunction":"and","kind":"group"}],"conjunction":"or","kind":"group"},"showArchived":false}`, `((true)) OR ((true)) OR ((true)) AND (e.archived = false)`},
+		{`{"filterGroup":{"children":[{"children":[],"conjunction":"and","kind":"group"},{"children":[],"conjunction":"and","kind":"group"},{"children":[{"columnName":"description","kind":"field","operator":"notEmpty","value":null}],"conjunction":"and","kind":"group"}],"conjunction":"and","kind":"group"},"showArchived":true}`, `((true)) AND ((true)) AND (((e.config->>'description' IS NOT NULL)))`},
+		{`{"filterGroup":{"children":[{"columnName":"numTrials","kind":"field","operator":">","value":0},{"columnName":"id","kind":"field","operator":"!=","value":0},{"columnName":"forkedFrom","kind":"field","operator":"!=","value":1}],"conjunction":"and","kind":"group"},"showArchived":true}`, `(((SELECT COUNT(*) FROM trials t WHERE e.id = t.experiment_id) > 0)) AND ((e.id != 0)) AND ((e.parent_id != 1))`},
+		{`{"filterGroup":{"children":[{"columnName":"description","kind":"field","operator":"contains","value":"t\\set"}],"conjunction":"and","kind":"group"},"showArchived":false}`, `((e.config->>'description' LIKE '%t\set%')) AND (e.archived = false)`},
+		{`{"filterGroup":{"children":[{"columnName":"resourcePool","kind":"field","operator":"contains","value":"default"}],"conjunction":"and","kind":"group"},"showArchived":true}`, `((e.config->'resources'->>'resource_pool' LIKE '%default%'))`},
+		{`{"filterGroup":{"children":[{"columnName":"id","kind":"field","operator":"=","value":1}],"conjunction":"and","kind":"group"},"showArchived":true}`, `((e.id = 1))`},
+		{`{"filterGroup":{"children":[{"type":"COLUMN_TYPE_DATE","location":"LOCATION_TYPE_EXPERIMENT", "columnName":"startTime","kind":"field","operator":">", "value":"2021-04-14T14:14:18.915483952Z"}],"conjunction":"and","kind":"group"},"showArchived":false}`, `((e.start_time > '2021-04-14T14:14:18.915483952Z')) AND (e.archived = false)`},
+		{`{"filterGroup":{"children":[{"type":"COLUMN_TYPE_DATE","location":"LOCATION_TYPE_EXPERIMENT", "columnName":"endTime","kind":"field","operator":"<=", "value":"2021-04-14T14:14:18.915483952Z"}],"conjunction":"and","kind":"group"},"showArchived":false}`, `((e.end_time <= '2021-04-14T14:14:18.915483952Z')) AND (e.archived = false)`},
+		{`{"filterGroup":{"children":[{"type":"COLUMN_TYPE_TEXT","location":"LOCATION_TYPE_EXPERIMENT", "columnName":"tags","kind":"field","operator":"contains", "value":"val"}],"conjunction":"and","kind":"group"},"showArchived":true}`, `((e.config->>'labels' LIKE '%val%'))`},
+		{`{"filterGroup":{"children":[{"type":"COLUMN_TYPE_TEXT","location":"LOCATION_TYPE_EXPERIMENT", "columnName":"tags","kind":"field","operator":"notContains", "value":"val"}],"conjunction":"and","kind":"group"},"showArchived":true}`, `((e.config->>'labels' NOT LIKE '%val%'))`},
+		{`{"filterGroup":{"children":[{"type":"COLUMN_TYPE_NUMBER","location":"LOCATION_TYPE_EXPERIMENT", "columnName":"duration","kind":"field","operator":">", "value":0}],"conjunction":"and","kind":"group"},"showArchived":true}`, `((extract(seconds FROM coalesce(e.end_time, now()) - e.start_time) > 0))`},
+		{`{"filterGroup":{"children":[{"columnName":"projectId","location":"LOCATION_TYPE_EXPERIMENT", "kind":"field","operator":">=","value":-1}],"conjunction":"and","kind":"group"},"showArchived":true}`, `((project_id >= -1))`},
+		{`{"filterGroup":{"children":[{"type":"COLUMN_TYPE_NUMBER","location":"LOCATION_TYPE_VALIDATIONS", "columnName":"validation.validation_accuracy","kind":"field","operator":">=","value":0}],"conjunction":"and","kind":"group"},"showArchived":true}`, `(((e.validation_metrics->>'validation_accuracy')::float8 >= 0))`},
+		{`{"filterGroup":{"children":[{"type":"COLUMN_TYPE_TEXT","location":"LOCATION_TYPE_VALIDATIONS", "columnName":"validation.validation_string","kind":"field","operator":"=","value":"string"}],"conjunction":"and","kind":"group"},"showArchived":true}`, `((e.validation_metrics->>'validation_string' = 'string'))`},
+		{`{"filterGroup":{"children":[{"type":"COLUMN_TYPE_TEXT","location":"LOCATION_TYPE_VALIDATIONS", "columnName":"validation.validation_string","kind":"field","operator":"!=","value":"string"}],"conjunction":"and","kind":"group"},"showArchived":true}`, `((e.validation_metrics->>'validation_string' != 'string'))`},
+		{`{"filterGroup":{"children":[{"type":"COLUMN_TYPE_TEXT","location":"LOCATION_TYPE_VALIDATIONS", "columnName":"validation.validation_string","kind":"field","operator":"contains","value":"string"}],"conjunction":"and","kind":"group"},"showArchived":true}`, `((e.validation_metrics->>'validation_string' LIKE '%string%'))`},
+		{`{"filterGroup":{"children":[{"type":"COLUMN_TYPE_TEXT","location":"LOCATION_TYPE_VALIDATIONS", "columnName":"validation.validation_string","kind":"field","operator":"notContains","value":"string"}],"conjunction":"and","kind":"group"},"showArchived":true}`, `((e.validation_metrics->>'validation_string' NOT LIKE '%string%'))`},
+		{`{"filterGroup":{"children":[{"type":"COLUMN_TYPE_NUMBER","location":"LOCATION_TYPE_VALIDATIONS", "columnName":"validation.validation_error","kind":"field","operator":">=","value":0}],"conjunction":"and","kind":"group"},"showArchived":true}`, `(((e.validation_metrics->>'validation_error')::float8 >= 0))`},
+		{`{"filterGroup":{"children":[{"type":"COLUMN_TYPE_NUMBER","location":"LOCATION_TYPE_VALIDATIONS", "columnName":"validation.validation_error","kind":"field","operator":"notEmpty","value":0}],"conjunction":"and","kind":"group"},"showArchived":true}`, `(((e.validation_metrics->>'validation_error')::float8 IS NOT NULL))`},
+		{`{"filterGroup":{"children":[{"type":"COLUMN_TYPE_NUMBER","location":"LOCATION_TYPE_VALIDATIONS", "columnName":"validation.validation_error","kind":"field","operator":"isEmpty","value":0}],"conjunction":"and","kind":"group"},"showArchived":true}`, `(((e.validation_metrics->>'validation_error')::float8 IS NULL))`},
+		{`{"filterGroup":{"children":[{"type":"COLUMN_TYPE_NUMBER","location":"LOCATION_TYPE_VALIDATIONS", "columnName":"validation.x","kind":"field","operator":"=","value": 0}],"conjunction":"and","kind":"group"},"showArchived":true}`, `(((e.validation_metrics->>'x')::float8 = 0))`},
+		{`{"filterGroup":{"children":[{"type":"COLUMN_TYPE_NUMBER","location":"LOCATION_TYPE_VALIDATIONS", "columnName":"validation.loss","kind":"field","operator":"!=","value":0.004}],"conjunction":"and","kind":"group"},"showArchived":true}`, `(((e.validation_metrics->>'loss')::float8 != 0.004))`},
+		{`{"filterGroup":{"children":[{"type":"COLUMN_TYPE_NUMBER","location":"LOCATION_TYPE_VALIDATIONS", "columnName":"validation.validation_accuracy","kind":"field","operator":"<","value":-3}],"conjunction":"and","kind":"group"},"showArchived":true}`, `(((e.validation_metrics->>'validation_accuracy')::float8 < -3))`},
+		{`{"filterGroup":{"children":[{"type":"COLUMN_TYPE_NUMBER","location":"LOCATION_TYPE_VALIDATIONS", "columnName":"validation.validation_accuracy","kind":"field","operator":"<=","value":10}],"conjunction":"and","kind":"group"},"showArchived":true}`, `(((e.validation_metrics->>'validation_accuracy')::float8 <= 10))`},
+		{`{"filterGroup":{"children":[{"columnName":"projectId","kind":"field","operator":">=","value":null}],"conjunction":"and","kind":"group"},"showArchived":true}`, `((true))`},
+		{`{"filterGroup":{"children":[{"columnName":"id","kind":"field","operator":"=","value":1},{"children":[{"columnName":"id","kind":"field","operator":"=","value":2},{"columnName":"id","kind":"field","operator":"=","value":3}],"conjunction":"and","kind":"group"},{"columnName":"id","kind":"field","operator":"=","value":4},{"children":[{"columnName":"id","kind":"field","operator":"=","value":5}],"conjunction":"and","kind":"group"}],"conjunction":"and","kind":"group"},"showArchived":true}`, `((e.id = 1)) AND (((e.id = 2)) AND ((e.id = 3))) AND ((e.id = 4)) AND (((e.id = 5)))`},
+		{`{"filterGroup":{"children":[{"children":[{"columnName":"checkpointCount","kind":"field","operator":"=","value":4},{"columnName":"numTrials","kind":"field","operator":"=","value":1},{"columnName":"progress","kind":"field","operator":"=","value":100}],"conjunction":"and","kind":"group"}],"conjunction":"and","kind":"group"},"showArchived":true}`, `(((checkpoint_count = 4)) AND (((SELECT COUNT(*) FROM trials t WHERE e.id = t.experiment_id) = 1)) AND ((COALESCE(progress, 0) = 100)))`},
+		{
+			`{"filterGroup":{"children":[{"type":"COLUMN_TYPE_NUMBER","location":"LOCATION_TYPE_HYPERPARAMETERS", "columnName":"hp.global_batch_size","kind":"field","operator":"=","value":32}],"conjunction":"and","kind":"group"},"showArchived":true}`,
+			`(((CASE
+				WHEN config->'hyperparameters'->'global_batch_size'->>'type' = 'const' THEN (config->'hyperparameters'->'global_batch_size'->>'val')::float8 = 32
+				WHEN config->'hyperparameters'->'global_batch_size'->>'type' IN ('int', 'double', 'log') THEN ((config->'hyperparameters'->'global_batch_size'->>'minval')::float8 = 32 OR (config->'hyperparameters'->'global_batch_size'->>'maxval')::float8 = 32)
+				ELSE false
+			 END)))`,
+		},
+		{
+			`{"filterGroup":{"children":[{"type":"COLUMN_TYPE_NUMBER","location":"LOCATION_TYPE_HYPERPARAMETERS", "columnName":"hp.global_batch_size","kind":"field","operator":">=","value":32}],"conjunction":"and","kind":"group"},"showArchived":true}`,
+			`(((CASE
+				WHEN config->'hyperparameters'->'global_batch_size'->>'type' = 'const' THEN (config->'hyperparameters'->'global_batch_size'->>'val')::float8 >= 32
+				WHEN config->'hyperparameters'->'global_batch_size'->>'type' IN ('int', 'double', 'log') THEN ((config->'hyperparameters'->'global_batch_size'->>'minval')::float8 >= 32 OR (config->'hyperparameters'->'global_batch_size'->>'maxval')::float8 >= 32)
+				ELSE false
+			 END)))`,
+		},
+		{
+			`{"filterGroup":{"children":[{"type":"COLUMN_TYPE_DATE","location":"LOCATION_TYPE_HYPERPARAMETERS", "columnName":"hp.global_batch_start","kind":"field","operator":">=","value":"2021-04-14T14:14:18.915483952Z"}],"conjunction":"and","kind":"group"},"showArchived":true}`,
+			`(((CASE WHEN config->'hyperparameters'->'global_batch_start'->>'type' = 'const' THEN config->'hyperparameters'->'global_batch_start'->>'val' >= '2021-04-14T14:14:18.915483952Z' ELSE false END)))`,
+		},
+		{
+			`{"filterGroup":{"children":[{"type":"COLUMN_TYPE_NUMBER","location":"LOCATION_TYPE_HYPERPARAMETERS", "columnName":"hp.global_batch_size","kind":"field","operator":"!=","value":32}],"conjunction":"and","kind":"group"},"showArchived":true}`,
+			`(((CASE
+				WHEN config->'hyperparameters'->'global_batch_size'->>'type' = 'const' THEN (config->'hyperparameters'->'global_batch_size'->>'val')::float8 != 32
+				WHEN config->'hyperparameters'->'global_batch_size'->>'type' IN ('int', 'double', 'log') THEN ((config->'hyperparameters'->'global_batch_size'->>'minval')::float8 != 32 OR (config->'hyperparameters'->'global_batch_size'->>'maxval')::float8 != 32)
+				ELSE false
+			 END)))`,
+		},
+		{
+			`{"filterGroup":{"children":[{"type":"COLUMN_TYPE_NUMBER","location":"LOCATION_TYPE_HYPERPARAMETERS", "columnName":"hp.global_batch_size","kind":"field","operator":"isEmpty"}],"conjunction":"and","kind":"group"},"showArchived":true}`,
+			`(((CASE
+				WHEN config->'hyperparameters'->'global_batch_size'->>'type' = 'const' THEN (config->'hyperparameters'->'global_batch_size'->>'val')::float8 IS NULL
+				WHEN config->'hyperparameters'->'global_batch_size'->>'type' = 'categorical' THEN config->'hyperparameters'->'global_batch_size'->>'vals' IS NULL
+				WHEN config->'hyperparameters'->'global_batch_size'->>'type' IN ('int', 'double', 'log') THEN (config->'hyperparameters'->'global_batch_size') IS NULL
+				ELSE false
+			 END)))`,
+		},
+		{
+			`{"filterGroup":{"children":[{"type":"COLUMN_TYPE_NUMBER","location":"LOCATION_TYPE_HYPERPARAMETERS", "columnName":"hp.global_batch_size","kind":"field","operator":"notEmpty"}],"conjunction":"and","kind":"group"},"showArchived":true}`,
+			`(((CASE
+				WHEN config->'hyperparameters'->'global_batch_size'->>'type' = 'const' THEN (config->'hyperparameters'->'global_batch_size'->>'val')::float8 IS NOT NULL
+				WHEN config->'hyperparameters'->'global_batch_size'->>'type' = 'categorical' THEN config->'hyperparameters'->'global_batch_size'->>'vals' IS NOT NULL
+				WHEN config->'hyperparameters'->'global_batch_size'->>'type' IN ('int', 'double', 'log') THEN (config->'hyperparameters'->'global_batch_size') IS NOT NULL
+				ELSE false
+			 END)))`,
+		},
+		{`{"filterGroup":{"children":[{"type":"COLUMN_TYPE_TEXT","location":"LOCATION_TYPE_HYPERPARAMETERS", "columnName":"hp.model","kind":"field","operator":"=","value":"efficientdet_d0"}],"conjunction":"and","kind":"group"},"showArchived":true}`, `(((CASE WHEN config->'hyperparameters'->'model'->>'type' = 'const' THEN config->'hyperparameters'->'model'->>'val' = 'efficientdet_d0' ELSE false END)))`},
+		{`{"filterGroup":{"children":[{"type":"COLUMN_TYPE_TEXT","location":"LOCATION_TYPE_HYPERPARAMETERS", "columnName":"hp.model","kind":"field","operator":"=","value":"efficientdet_d0"}],"conjunction":"and","kind":"group"},"showArchived":false}`, `(((CASE WHEN config->'hyperparameters'->'model'->>'type' = 'const' THEN config->'hyperparameters'->'model'->>'val' = 'efficientdet_d0' ELSE false END))) AND (e.archived = false)`},
+		{`{"filterGroup":{"children":[{"type":"COLUMN_TYPE_TEXT","location":"LOCATION_TYPE_HYPERPARAMETERS", "columnName":"hp.model","kind":"field","operator":"isEmpty"}],"conjunction":"and","kind":"group"},"showArchived":true}`, `(((CASE
+				WHEN config->'hyperparameters'->'model'->>'type' = 'const' THEN config->'hyperparameters'->'model'->>'val' IS NULL
+				WHEN config->'hyperparameters'->'model'->>'type' = 'categorical' THEN config->'hyperparameters'->'model'->>'vals' IS NULL
+				ELSE false
+			 END)))`},
+		{
+			`{"filterGroup":{"children":[{"type":"COLUMN_TYPE_NUMBER","location":"LOCATION_TYPE_HYPERPARAMETERS", "columnName":"hp.clip_grad","kind":"field","operator":"contains", "value":8}],"conjunction":"and","kind":"group"},"showArchived":true}`,
+			`(((CASE
+					WHEN config->'hyperparameters'->'clip_grad'->>'type' = 'categorical' THEN (config->'hyperparameters'->'clip_grad'->>'vals')::jsonb ? '8'
+					WHEN config->'hyperparameters'->'clip_grad'->>'type' IN ('int', 'double', 'log') THEN (config->'hyperparameters'->'clip_grad'->>'minval')::float8 <= 8 OR (config->'hyperparameters'->'clip_grad'->>'maxval')::float8 >= 8
+					ELSE false
+				 END)))`,
+		},
+		{
+			`{"filterGroup":{"children":[{"type":"COLUMN_TYPE_TEXT","location":"LOCATION_TYPE_HYPERPARAMETERS", "columnName":"hp.clip_grad.clip.grad","kind":"field","operator":"contains", "value":"some_string"}],"conjunction":"and","kind":"group"},"showArchived":true}`,
+			`(((CASE
+				WHEN config->'hyperparameters'->'clip_grad'->'clip'->'grad'->>'type' = 'const' THEN config->'hyperparameters'->'clip_grad'->'clip'->'grad'->>'val' LIKE '%some_string%'
+				WHEN config->'hyperparameters'->'clip_grad'->'clip'->'grad'->>'type' = 'categorical' THEN (config->'hyperparameters'->'clip_grad'->'clip'->'grad'->>'vals')::jsonb ? 'some_string'
+				ELSE false
+			 END)))`,
+		},
+		{
+			`{"filterGroup":{"children":[{"type":"COLUMN_TYPE_TEXT","location":"LOCATION_TYPE_HYPERPARAMETERS", "columnName":"hp.clip_grad.clip.grad","kind":"field","operator":"isEmpty", "value":"some_string"}],"conjunction":"and","kind":"group"},"showArchived":true}`,
+			`(((CASE
+				WHEN config->'hyperparameters'->'clip_grad'->'clip'->'grad'->>'type' = 'const' THEN config->'hyperparameters'->'clip_grad'->'clip'->'grad'->>'val' IS NULL
+				WHEN config->'hyperparameters'->'clip_grad'->'clip'->'grad'->>'type' = 'categorical' THEN config->'hyperparameters'->'clip_grad'->'clip'->'grad'->>'vals' IS NULL
+				ELSE false
+			 END)))`,
+		},
+		{
+			`{"filterGroup":{"children":[{"type":"COLUMN_TYPE_TEXT","location":"LOCATION_TYPE_HYPERPARAMETERS", "columnName":"hp.clip_grad.clip.grad","kind":"field","operator":"notContains", "value":"some_string"}],"conjunction":"and","kind":"group"},"showArchived":true}`,
+			`(((CASE
+				WHEN config->'hyperparameters'->'clip_grad'->'clip'->'grad'->>'type' = 'const' THEN config->'hyperparameters'->'clip_grad'->'clip'->'grad'->>'val' NOT LIKE '%some_string%'
+				WHEN config->'hyperparameters'->'clip_grad'->'clip'->'grad'->>'type' = 'categorical' THEN (config->'hyperparameters'->'clip_grad'->'clip'->'grad'->>'vals')::jsonb ? 'some_string') IS NOT TRUE
+				ELSE false
+			 END)))`,
+		},
+		{
+			`{"filterGroup":{"children":[{"type":"COLUMN_TYPE_NUMBER","location":"LOCATION_TYPE_HYPERPARAMETERS", "columnName":"hp.clip_grad","kind":"field","operator":"notContains", "value":8}],"conjunction":"and","kind":"group"},"showArchived":true}`,
+			`(((CASE
+					WHEN config->'hyperparameters'->'clip_grad'->>'type' = 'categorical' THEN ((config->'hyperparameters'->'clip_grad'->>'vals')::jsonb ? '8') IS NOT TRUE
+					WHEN config->'hyperparameters'->'clip_grad'->>'type' IN ('int', 'double', 'log') THEN (config->'hyperparameters'->'clip_grad'->>'minval')::float8 >= 8 OR (config->'hyperparameters'->'clip_grad'->>'maxval')::float8 <= 8
+					ELSE false
+				 END)))`,
+		},
+	}
+	for _, c := range validTestCases {
+		q := db.Bun().NewSelect()
+		var efr experimentFilterRoot
+		err := json.Unmarshal([]byte(c[0]), &efr)
+		require.NoError(t, err)
+		_, err = efr.toSQL(q)
+		require.NoError(t, err)
+		require.Equal(t, fmt.Sprintf(`SELECT * WHERE %v`, c[1]), q.String())
 	}
 }

@@ -32,7 +32,7 @@ const Button: React.FC<ButtonProps> = ({
   return (
     <ConditionalWrapper
       condition={tooltip.length > 0}
-      wrapper={(children) => <Tooltip title={tooltip}>{children}</Tooltip>}>
+      wrapper={(children) => <Tooltip content={tooltip}>{children}</Tooltip>}>
       <AntdButton
         className={css.base}
         shape={shape}

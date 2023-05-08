@@ -120,14 +120,6 @@ const useModalHyperparameterSearch = ({
   const [validationError, setValidationError] = useState(false);
   const formValues = Form.useWatch([], form);
 
-  useEffect(() => {
-    const cancelerTemp = canceler.current;
-    clusterStore.fetchResourcePools(cancelerTemp.signal);
-    return () => {
-      cancelerTemp.abort();
-    };
-  }, []);
-
   const trialHyperparameters = useMemo(() => {
     if (!trial) return;
     const continueFn = (value: unknown) => value === 'object';
@@ -524,7 +516,7 @@ const useModalHyperparameterSearch = ({
             label={
               <div className={css.labelWithTooltip}>
                 Early stopping mode
-                <Tooltip title="How aggressively to perform early stopping of underperforming trials">
+                <Tooltip content="How aggressively to perform early stopping of underperforming trials">
                   <InfoCircleOutlined />
                 </Tooltip>
               </div>
@@ -565,7 +557,7 @@ const useModalHyperparameterSearch = ({
             label={
               <div className={css.labelWithTooltip}>
                 Max concurrent trials
-                <Tooltip title="Use 0 for max possible parallelism">
+                <Tooltip content="Use 0 for max possible parallelism">
                   <InfoCircleOutlined style={{ color: 'var(--theme-colors-monochrome-8)' }} />
                 </Tooltip>
               </div>

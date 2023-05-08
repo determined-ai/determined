@@ -29,13 +29,13 @@ The next step is to call create_experiment():
 
 .. code:: python
 
-   # config can be a path to a config file or a python dict of the config.
+   # Config can be a path to a config file or a Python dict of the config.
    exp = client.create_experiment(config="my_config.yaml", model_dir=".")
    print(f"started experiment {exp.id}")
 
-The returned object will be an ExperimentReference which has methods for controlling the lifetime of
-the experiment running on the cluster. In this example, we will just wait for the experiment to
-complete.
+The returned object will be an ``ExperimentReference`` object, which has methods for controlling the
+lifetime of the experiment running on the cluster. In this example, we will just wait for the
+experiment to complete.
 
 .. code:: python
 
@@ -67,7 +67,6 @@ Now that the experiment has completed, you can grab the top-performing checkpoin
 
 .. autoclass:: determined.experimental.client.Checkpoint
    :members:
-   :inherited-members:
    :member-order: bysource
 
 ``Determined``
@@ -75,7 +74,6 @@ Now that the experiment has completed, you can grab the top-performing checkpoin
 
 .. autoclass:: determined.experimental.client.Determined
    :members:
-   :inherited-members:
    :member-order: bysource
 
 ``ExperimentReference``
@@ -83,7 +81,13 @@ Now that the experiment has completed, you can grab the top-performing checkpoin
 
 .. autoclass:: determined.experimental.client.ExperimentReference
    :members:
-   :inherited-members:
+   :member-order: bysource
+
+``DownloadMode``
+================
+
+.. autoclass:: determined.experimental.client.DownloadMode
+   :members:
    :member-order: bysource
 
 ``Model``
@@ -91,7 +95,6 @@ Now that the experiment has completed, you can grab the top-performing checkpoin
 
 .. autoclass:: determined.experimental.client.Model
    :members:
-   :inherited-members:
    :member-order: bysource
 
 ``ModelOrderBy``
@@ -99,7 +102,6 @@ Now that the experiment has completed, you can grab the top-performing checkpoin
 
 .. autoclass:: determined.experimental.client.ModelOrderBy
    :members:
-   :inherited-members:
    :member-order: bysource
 
 ``ModelSortBy``
@@ -107,7 +109,6 @@ Now that the experiment has completed, you can grab the top-performing checkpoin
 
 .. autoclass:: determined.experimental.client.ModelSortBy
    :members:
-   :inherited-members:
    :member-order: bysource
 
 ``TrialReference``
@@ -115,7 +116,6 @@ Now that the experiment has completed, you can grab the top-performing checkpoin
 
 .. autoclass:: determined.experimental.client.TrialReference
    :members:
-   :inherited-members:
    :member-order: bysource
 
 ``TrainingMetrics``
@@ -123,7 +123,6 @@ Now that the experiment has completed, you can grab the top-performing checkpoin
 
 .. autoclass:: determined.experimental.client.TrainingMetrics
    :members:
-   :inherited-members:
    :member-order: bysource
 
 ``ValidationMetrics``
@@ -131,5 +130,4 @@ Now that the experiment has completed, you can grab the top-performing checkpoin
 
 .. autoclass:: determined.experimental.client.ValidationMetrics
    :members:
-   :inherited-members:
    :member-order: bysource

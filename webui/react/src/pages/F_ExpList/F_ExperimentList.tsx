@@ -5,18 +5,25 @@ import { useSearchParams } from 'react-router-dom';
 
 import Page from 'components/Page';
 import useResize from 'hooks/useResize';
-import { searchExperiments } from 'services/api';
+import { useSettings } from 'hooks/useSettings';
+import { getProjectColumns, searchExperiments } from 'services/api';
 import { V1BulkExperimentFilters } from 'services/api-ts-sdk';
 import usePolling from 'shared/hooks/usePolling';
-import userStore from 'stores/users';
-import { ExperimentItem, Project } from 'types';
+import {
+  ExperimentAction,
+  ExperimentItem,
+  ExperimentWithTrial,
+  Project,
+  ProjectColumn,
+  RunState,
+} from 'types';
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 
-import { defaultExperimentColumns } from './glide-table/columns';
+import { F_ExperimentListSettings, settingsConfigForProject } from './F_ExperimentList.settings';
 import { Error, Loading, NoExperiments, NoMatches } from './glide-table/exceptions';
 import GlideTable, { SCROLL_SET_COUNT_NEEDED } from './glide-table/GlideTable';
-import TableActionBar from './glide-table/TableActionBar';
+import TableActionBar, { BatchAction } from './glide-table/TableActionBar';
 import { useGlasbey } from './useGlasbey';
 
 interface Props {
@@ -26,21 +33,24 @@ interface Props {
 export const PAGE_SIZE = 100;
 const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const settingsConfig = useMemo(() => settingsConfigForProject(project.id), [project.id]);
+
+  const { settings, updateSettings } = useSettings<F_ExperimentListSettings>(settingsConfig);
 
   const [page, setPage] = useState(
     isFinite(Number(searchParams.get('page'))) ? Number(searchParams.get('page')) : 0,
   );
-  const [experiments, setExperiments] = useState<Loadable<ExperimentItem>[]>(
+  const [experiments, setExperiments] = useState<Loadable<ExperimentWithTrial>[]>(
     Array(page * PAGE_SIZE).fill(NotLoaded),
   );
   const [total, setTotal] = useState<Loadable<number>>(NotLoaded);
+  const [projectColumns, setProjectColumns] = useState<Loadable<ProjectColumn[]>>(NotLoaded);
 
   useEffect(() => {
     setSearchParams({ page: String(page) });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page]);
 
-  const [sortableColumnIds, setSortableColumnIds] = useState(defaultExperimentColumns);
   const [selectedExperimentIds, setSelectedExperimentIds] = useState<number[]>([]);
   const [selectAll, setSelectAll] = useState(false);
   const [clearSelectionTrigger, setClearSelectionTrigger] = useState(0);
@@ -50,8 +60,8 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
 
   const colorMap = useGlasbey(selectedExperimentIds);
   const pageRef = useRef<HTMLElement>(null);
-  const { width, height } = useResize(pageRef);
-
+  const { width } = useResize(pageRef);
+  const { height: wholePageHeight } = useResize();
   const [scrollPositionSetCount] = useState(observable(0));
 
   const handleScroll = useCallback(
@@ -99,7 +109,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         );
         return [
           ...experimentBeforeCurrentPage,
-          ...response.experiments.map((e) => Loaded(e.experiment)),
+          ...response.experiments.map((e) => Loaded(e)),
           ...experimentsAfterCurrentPage,
         ].slice(0, response.pagination.total);
       });
@@ -114,8 +124,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   }, [page, experimentFilters, canceler.signal]);
 
   const { stopPolling } = usePolling(fetchExperiments, { rerunOnNewFn: true });
-
-  useEffect(() => userStore.startPolling(), []);
 
   useEffect(() => {
     return () => {
@@ -135,6 +143,78 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     // Refetch experiment list to get updates based on batch action.
     await fetchExperiments();
   }, [fetchExperiments]);
+
+  const handleUpdateExperimentList = useCallback(
+    (action: BatchAction, successfulIds: number[]) => {
+      const idSet = new Set(successfulIds);
+      const updateExperiment = (updated: Partial<ExperimentItem>) => {
+        setExperiments((prev) =>
+          prev.map((expLoadable) =>
+            Loadable.map(expLoadable, (experiment) =>
+              idSet.has(experiment.experiment.id)
+                ? { ...experiment, experiment: { ...experiment.experiment, ...updated } }
+                : experiment,
+            ),
+          ),
+        );
+      };
+      switch (action) {
+        case ExperimentAction.OpenTensorBoard:
+          break;
+        case ExperimentAction.Activate:
+          updateExperiment({ state: RunState.Active });
+          break;
+        case ExperimentAction.Archive:
+          updateExperiment({ archived: true });
+          break;
+        case ExperimentAction.Cancel:
+          updateExperiment({ state: RunState.StoppingCanceled });
+          break;
+        case ExperimentAction.Kill:
+          updateExperiment({ state: RunState.StoppingKilled });
+          break;
+        case ExperimentAction.Pause:
+          updateExperiment({ state: RunState.Paused });
+          break;
+        case ExperimentAction.Unarchive:
+          updateExperiment({ archived: false });
+          break;
+        case ExperimentAction.Move:
+        case ExperimentAction.Delete:
+          setExperiments((prev) =>
+            prev.filter((expLoadable) =>
+              Loadable.match(expLoadable, {
+                Loaded: (experiment) => !idSet.has(experiment.experiment.id),
+                NotLoaded: () => true,
+              }),
+            ),
+          );
+          break;
+      }
+    },
+    [setExperiments],
+  );
+
+  const fetchColumns = useCallback(async () => {
+    try {
+      const response = await getProjectColumns({ id: project.id });
+
+      setProjectColumns(Loaded(response));
+    } catch (e) {
+      handleError(e, { publicSubject: 'Unable to fetch project columns.' });
+    }
+  }, [project.id]);
+
+  useEffect(() => {
+    fetchColumns();
+  }, [fetchColumns]);
+
+  const setVisibleColumns = useCallback(
+    (newColumns: string[]) => {
+      updateSettings({ columns: newColumns });
+    },
+    [updateSettings],
+  );
 
   return (
     <Page
@@ -158,10 +238,13 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
             <TableActionBar
               experiments={experiments}
               filters={experimentFilters}
+              handleUpdateExperimentList={handleUpdateExperimentList}
+              initialVisibleColumns={settings.columns}
               project={project}
+              projectColumns={projectColumns}
               selectAll={selectAll}
               selectedExperimentIds={selectedExperimentIds}
-              setExperiments={setExperiments}
+              setVisibleColumns={setVisibleColumns}
               total={total}
               onAction={handleOnAction}
             />
@@ -171,16 +254,18 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
               data={experiments}
               fetchExperiments={fetchExperiments}
               handleScroll={handleScroll}
-              height={height}
+              handleUpdateExperimentList={handleUpdateExperimentList}
+              height={wholePageHeight - 140}
               page={page}
               project={project}
+              projectColumns={projectColumns}
               scrollPositionSetCount={scrollPositionSetCount}
               selectAll={selectAll}
               selectedExperimentIds={selectedExperimentIds}
               setSelectAll={setSelectAll}
               setSelectedExperimentIds={setSelectedExperimentIds}
-              setSortableColumnIds={setSortableColumnIds}
-              sortableColumnIds={sortableColumnIds}
+              setSortableColumnIds={setVisibleColumns}
+              sortableColumnIds={settings.columns}
             />
           </>
         )}

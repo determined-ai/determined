@@ -1,7 +1,6 @@
 import { Observable, useObservable } from 'micro-observables';
-import queryString from 'query-string';
 import { useCallback } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 
 import { globalStorage } from 'globalStorage';
 import { routeAll } from 'routes/utils';
@@ -12,7 +11,7 @@ import { getCookie } from 'utils/browser';
 
 const useAuthCheck = (): (() => void) => {
   const info = useObservable(determinedStore.info);
-  const location = useLocation();
+  const [searchParams] = useSearchParams();
 
   const updateBearerToken = useCallback((token: string) => {
     globalStorage.authToken = token;
@@ -32,8 +31,8 @@ const useAuthCheck = (): (() => void) => {
      *   2 - server cookie
      *   3 - local storage
      */
-    const { jwt } = queryString.parse(location.search);
-    const jwtToken = jwt && !Array.isArray(jwt) ? jwt : null;
+    const jwt = searchParams.getAll('jwt');
+    const jwtToken = jwt.length === 1 ? jwt[0] : null;
     const cookieToken = getCookie(AUTH_COOKIE_KEY);
     const authToken = jwtToken ?? cookieToken ?? globalStorage.authToken;
 
@@ -55,7 +54,7 @@ const useAuthCheck = (): (() => void) => {
     } else {
       authStore.setAuthChecked();
     }
-  }, [info.externalLoginUri, location.search, redirectToExternalSignin, updateBearerToken]);
+  }, [info.externalLoginUri, searchParams, redirectToExternalSignin, updateBearerToken]);
 
   return checkAuth;
 };

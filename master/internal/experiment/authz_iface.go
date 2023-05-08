@@ -17,7 +17,7 @@ type ExperimentAuthZ interface {
 	// GET /tasks
 	CanGetExperiment(
 		ctx context.Context, curUser model.User, e *model.Experiment,
-	) (canGetExp bool, serverError error)
+	) error
 
 	// GET /api/v1/experiments/:exp_id/file_tree
 	// POST /api/v1/experiments/{experimentId}/file
@@ -93,7 +93,7 @@ type ExperimentAuthZ interface {
 
 	// POST /api/v1/experiments
 	CanCreateExperiment(
-		ctx context.Context, curUser model.User, proj *projectv1.Project, e *model.Experiment,
+		ctx context.Context, curUser model.User, proj *projectv1.Project,
 	) error
 	CanForkFromExperiment(ctx context.Context, curUser model.User, e *model.Experiment) error
 

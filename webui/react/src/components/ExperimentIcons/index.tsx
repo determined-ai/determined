@@ -65,7 +65,7 @@ const ExperimentIcons: React.FC<Props> = ({ state, style, isTooltipVisible = tru
   return (
     <>
       {isTooltipVisible ? (
-        <Tooltip placement="bottom" title={stateToLabel(state)}>
+        <Tooltip content={stateToLabel(state)} placement="bottom">
           <div style={{ display: 'flex' }}>{icon}</div>
         </Tooltip>
       ) : (

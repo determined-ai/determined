@@ -119,7 +119,7 @@ enum PermissionType {
   PERMISSION_TYPE_EDIT_MODEL_REGISTRY = 7002;
   // Ability to create model registry.
   PERMISSION_TYPE_CREATE_MODEL_REGISTRY = 7003;
-  // Ability to delete model registry
+  // Ability to delete model registry.
   PERMISSION_TYPE_DELETE_MODEL_REGISTRY = 7004;
 
   // Ability to view master logs.

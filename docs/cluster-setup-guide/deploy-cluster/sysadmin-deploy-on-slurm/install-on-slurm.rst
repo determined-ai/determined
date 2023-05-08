@@ -42,8 +42,8 @@ fulfilled and configured, install and configure the Determined master:
    management capabilities.
 
    If launcher dependencies are not satisfied, warning messages are displayed. Install or update
-   missing dependencies or adjust the ``path`` and ``ld_libary_path`` in the next step to locate the
-   dependencies.
+   missing dependencies or adjust the ``path`` and ``ld_library_path`` in the next step to locate
+   the dependencies.
 
 .. _using_slurm:
 

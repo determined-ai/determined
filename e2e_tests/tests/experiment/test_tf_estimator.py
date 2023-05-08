@@ -16,49 +16,8 @@ def test_mnist_estimator_const_parallel(tf2: bool) -> None:
     config = conf.set_tf2_image(config) if tf2 else conf.set_tf1_image(config)
     config = conf.set_perform_initial_validation(config, True)
 
-    exp_id = exp.run_basic_test_with_temp_config(
-        config, conf.cv_examples_path("mnist_estimator"), 1
-    )
+    exp_id = exp.run_basic_test_with_temp_config(config, conf.fixtures_path("mnist_estimator"), 1)
     exp.assert_performed_initial_validation(exp_id)
-
-
-@pytest.mark.tensorflow2
-@pytest.mark.parametrize(
-    "tf2",
-    [
-        pytest.param(True, marks=pytest.mark.tensorflow2_cpu),
-        pytest.param(False, marks=pytest.mark.tensorflow1_cpu),
-    ],
-)
-def test_mnist_estimator_warm_start(tf2: bool) -> None:
-    config = conf.load_config(conf.fixtures_path("mnist_estimator/single.yaml"))
-    config = conf.set_tf2_image(config) if tf2 else conf.set_tf1_image(config)
-    experiment_id1 = exp.run_basic_test_with_temp_config(
-        config, conf.cv_examples_path("mnist_estimator"), 1
-    )
-
-    trials = exp.experiment_trials(experiment_id1)
-    assert len(trials) == 1
-
-    first_trial = trials[0]
-    first_trial_id = first_trial.trial.id
-
-    assert len(first_trial.workloads) == 3
-    checkpoint_workloads = exp.workloads_with_checkpoint(first_trial.workloads)
-    first_checkpoint_uuid = checkpoint_workloads[0].uuid
-
-    config_obj = conf.load_config(conf.fixtures_path("mnist_estimator/single.yaml"))
-
-    config_obj["searcher"]["source_trial_id"] = first_trial_id
-    config_obj = conf.set_tf2_image(config_obj) if tf2 else conf.set_tf1_image(config_obj)
-
-    experiment_id2 = exp.run_basic_test_with_temp_config(
-        config_obj, conf.cv_examples_path("mnist_estimator"), 1
-    )
-
-    trials = exp.experiment_trials(experiment_id2)
-    assert len(trials) == 1
-    assert trials[0].trial.warmStartCheckpointUuid == first_checkpoint_uuid
 
 
 @pytest.mark.parallel

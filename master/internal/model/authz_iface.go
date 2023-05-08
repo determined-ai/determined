@@ -14,14 +14,14 @@ import (
 type ModelAuthZ interface {
 	// GET /api/v1/models
 	CanGetModels(ctx context.Context, curUser model.User, workspaceIDs []int32,
-	) (workspaceIDsWithPermsFilter []int32, canGetModels bool, serverError error)
+	) (workspaceIDsWithPermsFilter []int32, serverError error)
 	// GET /api/v1/checkpoints/{checkpoint_uuid}
 	// GET /api/v1/models/{model_name}
 	// GET /api/v1/models/{model_name}/versions/{model_version_num}
 	// GET /api/v1/models/{model_name}/versions
 	CanGetModel(ctx context.Context, curUser model.User,
 		m *modelv1.Model, workspaceID int32,
-	) (canGetModel bool, serverError error)
+	) error
 	// PATCH /api/v1/models/{model_name}
 	// PATCH /api/v1/models/{model_name}/versions/{model_version_num}
 	// POST /api/v1/models/{model_name}/versions

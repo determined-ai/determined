@@ -6,6 +6,9 @@
  Experiment Configuration Reference
 ####################################
 
+.. meta::
+   :description: Browse this complete description of the experiment configuration reference or YAML file, including metadata, entrypoint, basic behaviors, validation policy, checkpoint policy, checkpoint storage, and so on.
+
 The behavior of an experiment is configured via a YAML file. A configuration file is typically
 passed as a command-line argument when an experiment is created with the Determined CLI. For
 example:
@@ -167,7 +170,7 @@ object delimited by a period (``.``).
 
 Examples:
 
--  ``:MnistTrial`` expects an *MnistTrial* class exposed in a ``__init__.py`` file at the top level
+-  ``MnistTrial`` expects an *MnistTrial* class exposed in a ``__init__.py`` file at the top level
    of the context directory.
 -  ``model_def:CIFAR10Trial`` expects a *CIFAR10Trial* class defined in the ``model_def.py`` file at
    the top level of the context directory.
@@ -1257,9 +1260,9 @@ image. The image can be:
 
 When the cluster is configured with :ref:`resource_manager.type: slurm
 <cluster-configuration-slurm>` and ``container_run_type: podman``, images are executed using the
-PodMan container runtime. The image can be any of the supported PodMan container formats identified
+Podman container runtime. The image can be any of the supported PodMan container formats identified
 by transport (e.g. ``docker:`` (the default), ``docker-archive:``, ``docker-daemon:``, or
-``oci-archive:``). See the `PodMan run
+``oci-archive:``). See the `Podman run
 <https://docs.podman.io/en/latest/markdown/podman-run.1.html>`__ command documentation for a full
 description of the capabilities.
 
@@ -1298,7 +1301,7 @@ base Docker image, if needed. Credentials are specified as the following nested 
 
 Optional. A list of environment variables that will be set in every trial container. Each element of
 the list should be a string of the form ``NAME=VALUE``. See :ref:`environment-variables` for more
-details. Users can customize environment variables for CUDA (NVIDIA GPU), CPU, and ROCm (AMD GPU)
+details. You can customize environment variables for CUDA (NVIDIA GPU), CPU, and ROCm (AMD GPU)
 tasks differently by specifying a dict with ``cuda`` (``gpu`` prior to 0.17.6), ``cpu``, and
 ``rocm`` keys.
 
@@ -1477,7 +1480,7 @@ GPU type with:
 
 Optional. Additional Slurm options to be passed when launching trials with ``sbatch``. These options
 enable control of Slurm options not otherwise managed by Determined. For example, to specify
-required memory per cpu and exclusive access to an entire node when scheduled, you could specify:
+required memory per CPU and exclusive access to an entire node when scheduled, you could specify:
 
 .. code:: yaml
 

@@ -17,6 +17,7 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/structpb"
 
+	authz2 "github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/commonv1"
@@ -120,7 +121,7 @@ func createTestTrialWithMetrics(
 							NumberValue: float64(i),
 						},
 					},
-					"val_loss": {
+					"loss": {
 						Kind: &structpb.Value_NumberValue{
 							NumberValue: float64(i),
 						},
@@ -204,7 +205,8 @@ func compareMetrics(
 }
 
 func isMultiTrialSampleCorrect(expectedMetrics []*commonv1.Metrics,
-	actualMetrics *apiv1.DownsampledMetrics) bool {
+	actualMetrics *apiv1.DownsampledMetrics,
+) bool {
 	// Checking if metric names and their values are equal.
 	for i := 0; i < len(actualMetrics.Data); i++ {
 		allActualAvgMetrics := actualMetrics.Data
@@ -284,6 +286,7 @@ func TestMultiTrialSampleMetrics(t *testing.T) {
 	require.True(t, isMultiTrialSampleCorrect(expectedTrainMetrics, actualAllMetrics[0]))
 	require.True(t, isMultiTrialSampleCorrect(expectedValMetrics, actualAllMetrics[1]))
 }
+
 func TestStreamTrainingMetrics(t *testing.T) {
 	api, curUser, ctx := setupAPITest(t, nil)
 
@@ -501,19 +504,19 @@ func TestTrialAuthZ(t *testing.T) {
 
 		// Can't view trials experiment gives same error.
 		authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
-			Return(false, nil).Once()
+			Return(authz2.PermissionDeniedError{}).Once()
 		require.ErrorIs(t, curCase.IDToReqCall(trial.ID), errTrialNotFound(trial.ID))
 
 		// Experiment view error returns error unmodified.
 		expectedErr := fmt.Errorf("canGetTrialError")
 		authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
-			Return(false, expectedErr).Once()
+			Return(expectedErr).Once()
 		require.ErrorIs(t, curCase.IDToReqCall(trial.ID), expectedErr)
 
 		// Action func error returns error in forbidden.
 		expectedErr = status.Error(codes.PermissionDenied, curCase.DenyFuncName+"Error")
 		authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
-			Return(true, nil).Once()
+			Return(nil).Once()
 		authZExp.On(curCase.DenyFuncName, mock.Anything, curUser, mock.Anything).
 			Return(fmt.Errorf(curCase.DenyFuncName + "Error")).Once()
 		require.ErrorIs(t, curCase.IDToReqCall(trial.ID), expectedErr)

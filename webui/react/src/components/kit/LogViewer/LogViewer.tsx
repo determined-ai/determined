@@ -135,6 +135,7 @@ const LogViewer: React.FC<Props> = ({
   const [showButtons, setShowButtons] = useState<boolean>(false);
   const [logs, setLogs] = useState<ViewerLog[]>([]);
   const containerSize = useResize(logsRef);
+  const pageSize = useResize();
   const charMeasures = useGetCharMeasureInContainer(logsRef);
 
   const { dateTimeWidth, maxCharPerLine } = useMemo(() => {
@@ -516,7 +517,7 @@ const LogViewer: React.FC<Props> = ({
   const logViewerOptions = (
     <div className={css.options}>
       <Space>
-        <Tooltip placement="bottomRight" title="Copy to Clipboard">
+        <Tooltip content="Copy to Clipboard" placement="bottomRight">
           <Button
             aria-label="Copy to Clipboard"
             disabled={logs.length === 0}
@@ -524,7 +525,7 @@ const LogViewer: React.FC<Props> = ({
             onClick={handleCopyToClipboard}
           />
         </Tooltip>
-        <Tooltip placement="bottomRight" title="Toggle Fullscreen Mode">
+        <Tooltip content="Toggle Fullscreen Mode" placement="bottomRight">
           <Button
             aria-label="Toggle Fullscreen Mode"
             icon={<Icon name="fullscreen" />}
@@ -537,7 +538,7 @@ const LogViewer: React.FC<Props> = ({
           </Link>
         )}
         {onDownload && (
-          <Tooltip placement="bottomRight" title="Download Logs">
+          <Tooltip content="Download Logs" placement="bottomRight">
             <Button
               aria-label="Download Logs"
               icon={<Icon name="download" />}
@@ -578,7 +579,7 @@ const LogViewer: React.FC<Props> = ({
         <div className={css.container}>
           <div className={css.logs} ref={logsRef}>
             <VariableSizeList
-              height={containerSize.height}
+              height={pageSize.height - 240}
               itemCount={logs.length}
               itemData={logs}
               itemSize={getItemHeight}
@@ -594,7 +595,7 @@ const LogViewer: React.FC<Props> = ({
           </Spinner>
         </div>
         <div className={css.buttons} style={{ display: showButtons ? 'flex' : 'none' }}>
-          <Tooltip placement="left" title={ARIA_LABEL_SCROLL_TO_OLDEST}>
+          <Tooltip content={ARIA_LABEL_SCROLL_TO_OLDEST} placement="left">
             <Button
               aria-label={ARIA_LABEL_SCROLL_TO_OLDEST}
               icon={<Icon name="arrow-up" />}
@@ -602,8 +603,8 @@ const LogViewer: React.FC<Props> = ({
             />
           </Tooltip>
           <Tooltip
-            placement="left"
-            title={isTailing ? 'Tailing Enabled' : ARIA_LABEL_ENABLE_TAILING}>
+            content={isTailing ? 'Tailing Enabled' : ARIA_LABEL_ENABLE_TAILING}
+            placement="left">
             <Button
               aria-label={ARIA_LABEL_ENABLE_TAILING}
               icon={<Icon name="arrow-down" />}

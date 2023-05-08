@@ -848,8 +848,6 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
     return () => stopPolling();
   }, [stopPolling]);
 
-  useEffect(() => userStore.startPolling(), []);
-
   useEffect(() => {
     const currentCanceler = canceler.current;
     return () => currentCanceler.abort();

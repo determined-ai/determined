@@ -621,6 +621,7 @@ export const searchExperiments: DetApi<
       params.offset,
       params.limit,
       undefined,
+      params.filter,
       options,
     );
   },
@@ -1587,6 +1588,17 @@ export const getProjectsByUserActivity: DetApi<
   },
   request: (params: Service.GetProjectsByUserActivityParams) =>
     detApi.Projects.getProjectsByUserActivity(params.limit),
+};
+
+export const getProjectColumns: DetApi<
+  Service.GetProjectColumnsParams,
+  Api.V1GetProjectColumnsResponse,
+  Type.ProjectColumn[]
+> = {
+  name: 'getProjectsColumns',
+  postProcess: (response) => response.columns,
+  request: (params: Service.GetProjectColumnsParams, options) =>
+    detApi.Internal.getProjectColumns(params.id, options),
 };
 
 /* Tasks */

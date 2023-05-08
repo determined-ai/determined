@@ -144,7 +144,7 @@ func addMetricCustomTime(ctx context.Context, t *testing.T, trialID int, endTime
 }
 
 func runSummaryMigration(t *testing.T) {
-	bytes, err := os.ReadFile("../../static/migrations/20230425100036_add-summary-metrics.tx.up.sql")
+	bytes, err := os.ReadFile("../../static/migrations/20230503144448_add-summary-metrics.tx.up.sql")
 	require.NoError(t, err)
 
 	_, err = Bun().Exec(string(bytes))
@@ -418,6 +418,78 @@ func TestSummaryMetricsMigration(t *testing.T) {
 
 	for i := 0; i < len(trialIDs); i++ {
 		validateSummaryMetrics(ctx, t, trialIDs[i], expectedTrain[i], expectedVal[i])
+	}
+}
+
+func getLatestValidation(ctx context.Context, t *testing.T, trialID int) (*int, *map[string]any) {
+	type trials struct {
+		bun.BaseModel `bun:"table:trials"`
+		ID            *int
+		Metric        *map[string]any
+	}
+	var res []trials
+	err := Bun().NewSelect().Model(&res).
+		ColumnExpr("v.id AS id").
+		ColumnExpr("v.metrics->'validation_metrics' AS metric").
+		Where("trials.id = ?", trialID).
+		Join("JOIN validations v ON v.id = trials.latest_validation_id").
+		Scan(ctx)
+	require.NoError(t, err)
+
+	if len(res) == 0 {
+		return nil, nil
+	}
+
+	require.Len(t, res, 1)
+	return res[0].ID, res[0].Metric
+}
+
+func TestLatestMetricID(t *testing.T) {
+	ctx := context.Background()
+	require.NoError(t, etc.SetRootPath(RootFromDB))
+	db := MustResolveTestPostgres(t)
+	MustMigrateTestPostgres(t, db, MigrationsFromDB)
+
+	user := RequireMockUser(t, db)
+	exp := RequireMockExperiment(t, db, user)
+
+	// No metrics have a null latest_validation_id.
+	noMetrics := RequireMockTrial(t, db, exp).ID
+	id, metric := getLatestValidation(ctx, t, noMetrics)
+	require.Nil(t, id)
+	require.Nil(t, metric)
+
+	// If no validations are reported we should have a null latest_validation_id.
+	onlyTraining := RequireMockTrial(t, db, exp).ID
+	addMetrics(ctx, t, db, onlyTraining, `[{"a":1.0}]`, `[]`, false)
+	id, metric = getLatestValidation(ctx, t, onlyTraining)
+	require.Nil(t, id)
+	require.Nil(t, metric)
+
+	// Test both archived and unarchived paths.
+	for _, shouldArchive := range []bool{false, true} {
+		// We ignore non searcher metric validation.
+		nonSearcherMetric := RequireMockTrial(t, db, exp).ID
+		addMetrics(ctx, t, db, nonSearcherMetric,
+			`[{"a":1.0}, {"b":1.3}]`,
+			`[{"loss":1.0}, {"gain":1.5}, {"latest":2.0}]`, shouldArchive)
+		id, metric = getLatestValidation(ctx, t, nonSearcherMetric)
+		require.Nil(t, id)
+		require.Nil(t, metric)
+
+		// Searcher metric gets set.
+		searcherMetric := RequireMockTrial(t, db, exp).ID
+		addMetrics(ctx, t, db, searcherMetric,
+			`[{"a":1.0}, {"b":1.3}]`,
+			fmt.Sprintf(`[{"loss":1.0}, {"%s":1.5, "b":"test"}, {"latest":2.0}]`,
+				defaultSearcherMetric), shouldArchive)
+		id, metric = getLatestValidation(ctx, t, searcherMetric)
+		require.NotNil(t, id)
+		require.NotNil(t, metric)
+		require.Equal(t, map[string]any{
+			defaultSearcherMetric: 1.5,
+			"b":                   "test",
+		}, *metric)
 	}
 }
 

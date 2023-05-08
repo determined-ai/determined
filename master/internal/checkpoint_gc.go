@@ -14,6 +14,7 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -116,6 +117,16 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 		}, t.db, t.rm, t.taskLogger)
 
 		t.allocation, _ = ctx.ActorOf(t.allocationID, allocation)
+
+		// t.Base is just a shallow copy of the m.taskSpec on the master, so
+		// use caution when mutating it.
+		t.Base.TaskContainerDefaults, err = t.rm.TaskContainerDefaults(
+			ctx,
+			rp,
+			config.GetMasterConfig().TaskContainerDefaults)
+		if err != nil {
+			return fmt.Errorf("creating task container defaults: %v", err)
+		}
 	case task.BuildTaskSpec:
 		if ctx.ExpectingResponse() {
 			ctx.Respond(t.ToTaskSpec())

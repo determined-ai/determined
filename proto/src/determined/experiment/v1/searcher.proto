@@ -164,8 +164,10 @@ message CloseTrialOperation {
 
 // Shut down custom searcher method.
 message ShutDownOperation {
-  // Cannot have an empty message type.
-  int32 placeholder = 1;
+  // Defines whether the Searcher was cancelled
+  bool cancel = 1;
+  // Defines whether the Searcher failed
+  bool failure = 2;
 }
 
 // SearcherOperation is an operation issued by the custom searcher.

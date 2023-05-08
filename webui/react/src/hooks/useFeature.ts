@@ -1,5 +1,4 @@
 import { useObservable } from 'micro-observables';
-import queryString from 'query-string';
 
 import determinedStore, { DeterminedInfo } from 'stores/determinedInfo';
 
@@ -13,7 +12,7 @@ export type ValidFeature =
   | 'explist_v2'
   | 'chart';
 
-const queryParams = queryString.parse(window.location.search);
+const queryParams = new URLSearchParams(window.location.search);
 
 interface FeatureHook {
   isOn: (feature: ValidFeature) => boolean;
@@ -28,9 +27,9 @@ const IsOn = (feature: string, info: DeterminedInfo): boolean => {
   const { rbacEnabled, featureSwitches } = info;
   switch (feature) {
     case 'rbac':
-      return rbacEnabled || queryParams[`f_${feature}`] === 'on';
+      return rbacEnabled || queryParams.get(`f_${feature}`) === 'on';
     default:
-      return queryParams[`f_${feature}`] === 'on' || featureSwitches.includes(feature);
+      return queryParams.get(`f_${feature}`) === 'on' || featureSwitches.includes(feature);
   }
 };
 

@@ -489,7 +489,7 @@ const CodeViewer: React.FC<Props> = ({
                  * TODO: Add notebook integration
                  * <Button className={css.noBorderButton}>Open in Notebook</Button>
                  */
-                <Tooltip title="Download File">
+                <Tooltip content="Download File">
                   <DownloadOutlined className={css.noBorderButton} onClick={handleDownloadClick} />
                   {/* this is an invisible button to programatically download the config files */}
                   <a
@@ -525,7 +525,7 @@ const CodeViewer: React.FC<Props> = ({
             <h5>Please, choose a file to preview.</h5>
           ) : editorMode === 'monaco' ? (
             <MonacoEditor
-              height="100%"
+              height={resize.height - 240}
               language={getSyntaxHighlight()}
               options={{
                 minimap: {

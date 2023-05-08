@@ -48,7 +48,7 @@ const ProjectCard: React.FC<Props> = ({
           </div>
           <div className={css.workspaceContainer}>
             {showWorkspace && project.workspaceId !== 1 && (
-              <Tooltip title={project.workspaceName}>
+              <Tooltip content={project.workspaceName}>
                 <div className={css.workspaceIcon}>
                   <DynamicIcon name={project.workspaceName} size={20} />
                 </div>
@@ -58,7 +58,7 @@ const ProjectCard: React.FC<Props> = ({
           <div className={css.footerContainer}>
             <div className={css.experiments}>
               <Tooltip
-                title={
+                content={
                   `${project.numExperiments.toLocaleString()}` +
                   ` experiment${project.numExperiments === 1 ? '' : 's'}`
                 }>

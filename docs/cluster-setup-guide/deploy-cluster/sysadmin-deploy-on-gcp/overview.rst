@@ -21,6 +21,7 @@ with the master via a designated port configured during installation.
 The diagram below outlines the high level architecture of a Determined cluster in GCP.
 
 .. image:: /assets/images/det-cloud-architecture.png
+   :alt: Diagram showing Determined Cloud Deployment Architecture on GCP
 
 Following the diagram, a standard execution would be:
 
@@ -32,7 +33,7 @@ Following the diagram, a standard execution would be:
 
 There are two types of resources used to run Determined: core resources that enable the Determined
 platform, and periphery resources that add optional functionality. The section below provides
-additional detail on these resources, and users can deploy these resources in GCP by following the
+additional detail on these resources. You can deploy these resources in GCP by following the
 :ref:`install-gcp` guide.
 
 ****************

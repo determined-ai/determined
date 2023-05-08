@@ -15,6 +15,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/api/apiutils"
+	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/command"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
@@ -107,11 +108,9 @@ func (a *apiServer) GetShell(
 		return nil, err
 	}
 
-	if ok, err := command.AuthZProvider.Get().CanGetNSC(
+	if err = command.AuthZProvider.Get().CanGetNSC(
 		ctx, *curUser, model.AccessScopeID(resp.Shell.WorkspaceId)); err != nil {
-		return nil, err
-	} else if !ok {
-		return nil, errActorNotFound(addr)
+		return nil, authz.SubIfUnauthorized(err, errActorNotFound(addr))
 	}
 	return resp, nil
 }

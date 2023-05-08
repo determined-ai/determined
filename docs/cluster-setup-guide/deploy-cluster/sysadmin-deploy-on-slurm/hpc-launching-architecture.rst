@@ -7,10 +7,11 @@
 When configured to perform training on an HPC cluster (cluster configuration
 :ref:`resource_manager.type: slurm/pbs <cluster-configuration-slurm>`), Determined delegates all job
 scheduling and prioritization to the HPC workload manager (either Slurm or PBS) and does not utilize
-any Determined Agents. Instead, Determined interfaces with the workload managers via the Determined
-HPC launcher component.
+any Determined agents. Instead, Determined interfaces with the workload managers through the
+Determined HPC launcher component.
 
 .. image:: hpc-launching-arch-diagram.png
+   :alt: Diagram showing how Determined interfaces with the workload managers
 
 **************
  HPC Launcher
@@ -32,33 +33,34 @@ Therefore, it can be hosted on any system that meets these requirements.
 HPC Launcher Feature Summary
 ============================
 
--  Secure, private internal REST interface for use by Determined Master
-      -  Provides a high-level abstraction to enable Determined to manage Slurm/PBS jobs:
+-  Secure, private internal REST interface for use by Determined master.
 
-      -  Generates the batch script and ancillary files to enable job submission (``sbatch``,
-         ``qsub``)
+   -  High-level abstraction to enable Determined to manage Slurm/PBS jobs.
 
-      -  User-impersonation via a setuid program to enable the configured Determined user agent to
-         submit jobs to the cluster. Existing OS and workload manager permissions, and resource
-         enforcement is maintained. Launcher need not be configured to run as the root user.
+   -  Generates the batch script and ancillary files to enable job submission (``sbatch``,
+      ``qsub``).
 
-      -  Job submission and launch failure logs
+   -  User impersonation via a setuid program to enable the configured Determined user agent to
+      submit jobs to the cluster. Existing OS and workload manager permissions and resource
+      enforcement are maintained. Launcher need not be configured to run as the root user.
 
-      -  On-demand job status query (``sinfo``, ``squery``, ``pbsnodes``, ``qstat``)
+   -  Job submission and launch failure logs.
 
-      -  Job cancellation (``scancel``, ``qdel``)
+   -  On-demand job status query (``sinfo``, ``squery``, ``pbsnodes``, ``qstat``).
+
+   -  Job cancellation (``scancel``, ``qdel``).
 
 -  Support for various workload managers (Slurm/PBS) and container runtimes
-   (Apptainer/Singularity/Podman/Enroot)
+   (Apptainer/Singularity/Podman/Enroot).
 
--  Provides an image caching model for Apptainer/Singularity
+-  Image caching model for Apptainer/Singularity.
 
--  Minimal state stored solely on the filesystem
+-  Minimal state stored solely on the file system.
 
 Job Management Overview
 =======================
 
-Temporary files (generated batch files, model python code, ``startup-hook.sh``, etc.), per-rank
+Temporary files (generated batch files, model Python code, ``startup-hook.sh``, etc.), per-rank
 local directories in each container (``/tmp``, ``/run/determined/workdir``, etc.), and job log files
 are all stored under the cluster-wide directory specified via ``resource_manager.job_storage_root``.
 The lifetime of these files is limited to that of the submitted job, and are removed when job
@@ -102,7 +104,7 @@ failure or completion is detected by Determined.
  Job Resource Scheduling
 *************************
 
-As noted earlier, when using the HPC launcher, Determined delegates all job scheduling and
+As mentioned previously, when using the HPC launcher, Determined delegates all job scheduling and
 prioritization to the HPC workload manager (Slurm/PBS). Resource requests are generated into the
 submitted batch file derived from the following configuration attributes described in the following
 sections.
@@ -122,9 +124,10 @@ configuration options.
    configuration.
 
 -  ``gres_supported``:
-      -  For Slurm, it indicates that ``GresTypes=gpu`` is set in the Slurm configuration, and nodes
-         with GPUs have properly configured GRES indicating the presence of any GPUs. T
-      -  For PBS, the ngpus resource can be used to identify the number of GPUs available on a node.
+
+   -  For Slurm, it indicates that ``GresTypes=gpu`` is set in the Slurm configuration, and nodes
+      with GPUs have properly configured GRES indicating the presence of any GPUs. T
+   -  For PBS, the ngpus resource can be used to identify the number of GPUs available on a node.
 
 -  ``default_aux_resource_pool``: The default resource pool to use for tasks that do not need
    dedicated compute resources, auxiliary, or systems tasks. Defaults to the Slurm/PBS default
@@ -148,18 +151,20 @@ The experiment contributes the following resource scheduling configuration. See 
 -  ``slots_per_trial``: The number of slots to use for each trial of this experiment.
 
 -  ``slurm``:
-      -  ``sbatch_args``: Array of Slurm options added as ``#SBATCH`` options in the generated batch
-         script.
-      -  ``slots_per_node``: The minimum number of slots required for a node to be scheduled during
-         a trial.
-      -  ``gpu_type``: The Slurm gres type of the GPU to be injected into any generated
-         ``--gpus``/``–gres`` expressions. By default, no type is specified.
+
+   -  ``sbatch_args``: Array of Slurm options added as ``#SBATCH`` options in the generated batch
+      script.
+   -  ``slots_per_node``: The minimum number of slots required for a node to be scheduled during a
+      trial.
+   -  ``gpu_type``: The Slurm gres type of the GPU to be injected into any generated
+      ``--gpus``/``–gres`` expressions. By default, no type is specified.
 
 -  ``pbs``:
-      -  ``pbsbatch_args``: Array of PBS options added as ``#PBS`` options in the generated batch
-         script.
-      -  ``slots_per_node``: The minimum number of slots required for a node to be scheduled during
-         a trial.
+
+   -  ``pbsbatch_args``: Array of PBS options added as ``#PBS`` options in the generated batch
+      script.
+   -  ``slots_per_node``: The minimum number of slots required for a node to be scheduled during a
+      trial.
 
 Slurm Scheduling
 ================
@@ -198,10 +203,10 @@ provided that they do not conflict with Determined-controlled settings.
 Slurm Resource Calculations
 ---------------------------
 
-Resource requirements for Slurm jobs submitted by Determined are generated as per the table below.
-Users can specify a ``--gres`` expression via ``slurm.sbatch_args`` as long as it does not reference
-a GPU resource. All other ``--gres`` options from the ``slurm.sbatch_args`` will be generated into
-the generated batch script.
+Resource requirements for Slurm jobs submitted by Determined are generated according to the table
+below. You can specify a ``--gres`` expression via ``slurm.sbatch_args`` as long as it does not
+reference a GPU resource. All other ``--gres`` options from the ``slurm.sbatch_args`` will be
+generated into the generated batch script.
 
 .. table::
    :width: 1000px
@@ -307,9 +312,9 @@ provided that they do not conflict with Determined-controlled settings.
 PBS Resource Calculations
 -------------------------
 
-Resource requirements for PBS jobs submitted by Determined are generated as per the table below.
-Users can specify a ``-l select`` expression via ``pbs.pbsbatch_args``, however chunk count, chunk
-arrangement, and GPU or CPU counts per chunk (depending on the value of ``slot_type``) are
+Resource requirements for PBS jobs submitted by Determined are generated according to the table
+below. You can specify a ``-l select`` expression via ``pbs.pbsbatch_args``, however chunk count,
+chunk arrangement, and GPU or CPU counts per chunk (depending on the value of ``slot_type``) are
 controlled by Determined; any values specified for these quantities will be ignored. All other
 resource requests from the ``pbs.pbsbatch_args`` will be appended to the select expression generated
 into the generated batch script.
