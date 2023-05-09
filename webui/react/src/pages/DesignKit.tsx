@@ -2,7 +2,7 @@ import { PoweroffOutlined } from '@ant-design/icons';
 import { Card as AntDCard, Space } from 'antd';
 import { SelectValue } from 'antd/es/select';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 import Accordion from 'components/kit/Accordion';
 import Breadcrumb from 'components/kit/Breadcrumb';
@@ -1817,13 +1817,17 @@ const ColumnsSection: React.FC = () => {
           <Card>{loremIpsum}</Card>
           <Card>{loremIpsum}</Card>
         </Columns>
-        <p>With <code>{'gap'}</code> set to 0:</p>
+        <p>
+          With <code>{'gap'}</code> set to 0:
+        </p>
         <Columns gap={0}>
           <Card>{loremIpsum}</Card>
           <Card>{loremIpsum}</Card>
           <Card>{loremIpsum}</Card>
         </Columns>
-        <p>With <code>{'gap'}</code> set to 16:</p>
+        <p>
+          With <code>{'gap'}</code> set to 16:
+        </p>
         <Columns gap={16}>
           <Card>{loremIpsum}</Card>
           <Card>{loremIpsum}</Card>
@@ -1872,7 +1876,8 @@ const ColumnsSection: React.FC = () => {
           </Column>
         </Columns>
         <p>
-          Variant with <code>{'page'}</code> prop, with margins and wrapping behavior, used for page-level layouts/headers:
+          Variant with <code>{'page'}</code> prop, with margins and wrapping behavior, used for
+          page-level layouts/headers:
         </p>
         <Columns page>
           <Column>
@@ -2344,6 +2349,9 @@ const Components = {
 
 const DesignKit: React.FC = () => {
   const { actions } = useUI();
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const isExclusiveMode = searchParams.get('exclusive') === 'true';
 
   useEffect(() => {
     actions.hideChrome();
@@ -2360,17 +2368,17 @@ const DesignKit: React.FC = () => {
           <ul>
             {componentOrder.map((componentId) => (
               <li key={componentId}>
-                <Link reloadDocument to={`#${componentId}`}>
-                  {ComponentTitles[componentId]}
-                </Link>
+                <a href={`#${componentId}`}>{ComponentTitles[componentId]}</a>
               </li>
             ))}
           </ul>
         </nav>
         <article>
-          {componentOrder.map((componentId) => (
-            <React.Fragment key={componentId}>{Components[componentId]}</React.Fragment>
-          ))}
+          {componentOrder
+            .filter((id) => !isExclusiveMode || !location.hash || id === location.hash.substring(1))
+            .map((componentId) => (
+              <React.Fragment key={componentId}>{Components[componentId]}</React.Fragment>
+            ))}
         </article>
       </div>
     </Page>
