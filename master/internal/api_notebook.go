@@ -197,11 +197,10 @@ func (a *apiServer) isNTSCPermittedToLaunch(
 	}
 
 	if spec.TaskType == model.TaskTypeTensorboard {
-		err := command.AuthZProvider.Get().CanGetTensorboard(
+		if err := command.AuthZProvider.Get().CanGetTensorboard(
 			ctx, *user, workspaceID, spec.Metadata.ExperimentIDs, spec.Metadata.TrialIDs,
-		)
-		if err != nil {
-			return err
+		); err != nil {
+			return authz.SubIfUnauthorized(err, apiutils.MapAndFilterErrors(err, nil, nil))
 		}
 	} else {
 		if err := command.AuthZProvider.Get().CanCreateNSC(

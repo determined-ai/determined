@@ -50,6 +50,7 @@ import { TableContextMenu, TableContextMenuProps } from './contextMenu';
 import { customRenderers } from './custom-renderers';
 import { LinkCell } from './custom-renderers/cells/linkCell';
 import { placeholderMenuItems, TableActionMenu, TableActionMenuProps } from './menu';
+import { Sort, sortMenuItemsForColumn } from './MultiSortMenu';
 import { BatchAction } from './TableActionBar';
 import { useTableTooltip } from './tooltip';
 import { getTheme } from './utils';
@@ -72,6 +73,8 @@ export interface GlideTableProps {
   selectAll: boolean;
   setSelectAll: Dispatch<SetStateAction<boolean>>;
   handleUpdateExperimentList: (action: BatchAction, successfulIds: number[]) => void;
+  sorts: Sort[];
+  onSortChange: (sorts: Sort[]) => void;
 }
 
 /**
@@ -107,6 +110,8 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   page,
   project,
   handleUpdateExperimentList,
+  onSortChange,
+  sorts,
   projectColumns,
 }) => {
   const gridRef = useRef<DataEditorRef>(null);
@@ -231,11 +236,6 @@ export const GlideTable: React.FC<GlideTableProps> = ({
     [],
   );
 
-  const onColumnResizeEnd: DataEditorProps['onColumnResizeEnd'] = useCallback(() => {
-    // presumably update the settings, but maybe have a different API
-    // like Record<ColumnName, width>
-  }, []);
-
   const onHeaderClicked: DataEditorProps['onHeaderClicked'] = React.useCallback(
     (col: number, args: HeaderClickedEventArgs) => {
       const columnId = columnIds[col];
@@ -244,15 +244,23 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         setSelectAll((prev) => !prev);
         return;
       }
+      const column = Loadable.getOrElse([], projectColumns).find((c) => c.column === columnId);
+      if (!column) {
+        return;
+      }
 
       const { bounds } = args;
-      const items: MenuProps['items'] = placeholderMenuItems;
+      const items: MenuProps['items'] = [
+        ...placeholderMenuItems,
+        { type: 'divider' },
+        ...sortMenuItemsForColumn(column, sorts, onSortChange),
+      ];
       const x = bounds.x;
       const y = bounds.y + bounds.height;
       setMenuProps((prev) => ({ ...prev, items, title: `${columnId} menu`, x, y }));
       setMenuIsOpen(true);
     },
-    [columnIds, setSelectAll],
+    [columnIds, projectColumns, sorts, onSortChange, setSelectAll],
   );
 
   const getCellContent: DataEditorProps['getCellContent'] = React.useCallback(
@@ -415,7 +423,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   );
 
   const verticalBorder: DataEditorProps['verticalBorder'] = useCallback(
-    (col: number) => columnIds[col] === 'name',
+    (col: number) => columnIds[col - 1] === STATIC_COLUMNS.last(),
     [columnIds],
   );
 
@@ -429,8 +437,10 @@ export const GlideTable: React.FC<GlideTableProps> = ({
       <DataEditor
         columns={columns}
         customRenderers={customRenderers}
-        freezeColumns={2}
+        freezeColumns={STATIC_COLUMNS.length}
         getCellContent={getCellContent}
+        // `getCellsForSelection` is required for double click column resize to content.
+        getCellsForSelection
         getRowThemeOverride={getRowThemeOverride}
         gridSelection={selection}
         headerHeight={36}
@@ -448,7 +458,6 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         onCellContextMenu={onCellContextMenu}
         onColumnMoved={onColumnMoved}
         onColumnResize={onColumnResize}
-        onColumnResizeEnd={onColumnResizeEnd}
         onHeaderClicked={onHeaderClicked}
         onItemHovered={onItemHovered}
         onVisibleRegionChanged={handleScroll}

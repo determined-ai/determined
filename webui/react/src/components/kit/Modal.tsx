@@ -10,8 +10,8 @@ import React, {
 } from 'react';
 
 import Button from 'components/kit/Button';
+import Icon, { IconName } from 'components/kit/Icon';
 import Link from 'components/Link';
-import Icon from 'shared/components/Icon';
 import Spinner from 'shared/components/Spinner';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import handleError from 'utils/error';
@@ -50,7 +50,7 @@ interface ModalProps {
   danger?: boolean;
   footerLink?: LinkParams;
   headerLink?: LinkParams;
-  icon?: string;
+  icon?: IconName;
   key?: string;
   onClose?: () => void;
   size?: ModalSize;
@@ -116,7 +116,7 @@ export const Modal: React.FC<ModalProps> = ({
     <AntdModal
       cancelText={cancelText}
       className={css.modalContent}
-      closeIcon={<Icon name="close" size="small" />}
+      closeIcon={<Icon name="close" size="small" title="Close modal" />}
       footer={
         <div className={css.footer}>
           <div className={css.footerLink}>
@@ -153,10 +153,10 @@ export const Modal: React.FC<ModalProps> = ({
         <div className={css.header}>
           {danger ? (
             <div className={css.dangerIcon}>
-              <Icon name="warning-large" size="large" />
+              <Icon name="warning-large" size="large" title="Danger" />
             </div>
           ) : (
-            icon && <Icon name={icon} size="large" />
+            icon && <Icon name={icon} size="large" title={icon} />
           )}
           <div className={css.headerTitle}>{title}</div>
           <div className={css.headerLink}>

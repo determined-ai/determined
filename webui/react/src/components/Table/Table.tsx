@@ -6,6 +6,7 @@ import { ConditionalWrapper } from 'components/ConditionalWrapper';
 import DynamicIcon from 'components/DynamicIcon';
 import ExperimentIcons from 'components/ExperimentIcons';
 import HumanReadableNumber from 'components/HumanReadableNumber';
+import Icon from 'components/kit/Icon';
 import Tooltip from 'components/kit/Tooltip';
 import UserAvatar from 'components/kit/UserAvatar';
 import Link from 'components/Link';
@@ -14,7 +15,6 @@ import TimeAgo from 'components/TimeAgo';
 import TimeDuration from 'components/TimeDuration';
 import { commandTypeToLabel } from 'constants/states';
 import { paths } from 'routes/utils';
-import Icon from 'shared/components/Icon/Icon';
 import Spinner from 'shared/components/Spinner';
 import { Pagination } from 'shared/types';
 import { getDuration } from 'shared/utils/datetime';
@@ -76,7 +76,7 @@ export const defaultPaginationConfig = {
 /* Table Column Renderers */
 
 export const checkmarkRenderer = (yesNo: boolean): React.ReactNode => {
-  return yesNo ? <Icon name="checkmark" /> : null;
+  return yesNo ? <Icon name="checkmark" title="Checkmark" /> : null;
 };
 
 export const durationRenderer = (times: StartEndTimes): React.ReactNode => (
@@ -134,7 +134,7 @@ export const taskIdRenderer: TaskRenderer = (_, record) => (
 export const taskTypeRenderer: TaskRenderer = (_, record) => (
   <Tooltip content={commandTypeToLabel[record.type as unknown as CommandType]} placement="topLeft">
     <div className={css.centerVertically}>
-      <Icon name={record.type.toLowerCase()} />
+      <Icon name={record.type} title={record.displayName || record.name} />
     </div>
   </Tooltip>
 );
@@ -203,7 +203,7 @@ export const experimentProgressRenderer: ExperimentRenderer = (_, record) => {
 export const modelNameRenderer = (value: string, record: ModelItem): React.ReactNode => (
   <Space className={css.wordBreak}>
     <div style={{ paddingInline: 4 }}>
-      <Icon name="model" size="medium" />
+      <Icon name="model" size="medium" title="Model" />
     </div>
     <Link path={paths.modelDetails(String(record.id))}>{value}</Link>
   </Space>

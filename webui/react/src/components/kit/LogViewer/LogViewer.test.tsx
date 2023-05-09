@@ -227,8 +227,16 @@ describe('LogViewer', () => {
       setup({ decoder, initialLogs: [] });
 
       await waitFor(() => {
-        expect(screen.queryByLabelText(src.ARIA_LABEL_SCROLL_TO_OLDEST)).not.toBeVisible();
-        expect(screen.queryByLabelText(src.ARIA_LABEL_ENABLE_TAILING)).not.toBeVisible();
+        expect(
+          screen.queryByLabelText(src.ARIA_LABEL_SCROLL_TO_OLDEST, {
+            selector: 'button',
+          }),
+        ).not.toBeVisible();
+        expect(
+          screen.queryByLabelText(src.ARIA_LABEL_ENABLE_TAILING, {
+            selector: 'button',
+          }),
+        ).not.toBeVisible();
       });
     });
 
@@ -299,7 +307,9 @@ describe('LogViewer', () => {
         expect(screen.queryByText(lastExistingLog.message)).toBeInTheDocument();
       });
 
-      const scrollToOldestButton = screen.getByLabelText(src.ARIA_LABEL_SCROLL_TO_OLDEST);
+      const scrollToOldestButton = screen.getByLabelText(src.ARIA_LABEL_SCROLL_TO_OLDEST, {
+        selector: 'button',
+      });
       await user.click(scrollToOldestButton);
 
       await waitFor(() => {
@@ -311,7 +321,9 @@ describe('LogViewer', () => {
     it('should show newest logs when enabling tailing', async () => {
       setup({ decoder, onFetch });
 
-      const scrollToOldestButton = screen.getByLabelText(src.ARIA_LABEL_SCROLL_TO_OLDEST);
+      const scrollToOldestButton = screen.getByLabelText(src.ARIA_LABEL_SCROLL_TO_OLDEST, {
+        selector: 'button',
+      });
       await user.click(scrollToOldestButton);
 
       await waitFor(() => {
@@ -319,7 +331,9 @@ describe('LogViewer', () => {
         expect(screen.queryByText(firstLog.message)).toBeInTheDocument();
       });
 
-      const enableTailingButton = screen.getByLabelText(src.ARIA_LABEL_ENABLE_TAILING);
+      const enableTailingButton = screen.getByLabelText(src.ARIA_LABEL_ENABLE_TAILING, {
+        selector: 'button',
+      });
       await user.click(enableTailingButton);
 
       await waitFor(() => {

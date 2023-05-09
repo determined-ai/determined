@@ -6,6 +6,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Badge, { BadgeType } from 'components/Badge';
 import Button from 'components/kit/Button';
 import Empty from 'components/kit/Empty';
+import Icon from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
 import Page from 'components/Page';
 import InteractiveTable, {
@@ -20,7 +21,6 @@ import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { getWebhooks, testWebhook } from 'services/api';
 import { V1Trigger, V1TriggerType } from 'services/api-ts-sdk/api';
-import Icon from 'shared/components/Icon/Icon';
 import usePolling from 'shared/hooks/usePolling';
 import { ValueOf } from 'shared/types';
 import { isEqual } from 'shared/utils/data';
@@ -120,7 +120,7 @@ const WebhooksView: React.FC = () => {
   const columns = useMemo(() => {
     const actionRenderer = (_: string, record: Webhook) => (
       <Dropdown menu={WebhookActionMenu(record)} trigger={['click']}>
-        <Button icon={<Icon name="overflow-vertical" />} type="text" />
+        <Button icon={<Icon name="overflow-vertical" title="Action menu" />} type="text" />
       </Dropdown>
     );
 
@@ -211,7 +211,7 @@ const WebhooksView: React.FC = () => {
       {webhooks.length === 0 && !isLoading ? (
         <Empty
           description="Call external services when experiments complete or throw errors."
-          icon="inbox"
+          icon="webhooks"
           title="No Webhooks Registered"
         />
       ) : settings ? (

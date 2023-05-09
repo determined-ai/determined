@@ -55,15 +55,6 @@ parameters:
     type: string
     default: xlarge
 
-main-and-release-and-rc-filters: &main-and-release-and-rc-filters
-  branches:
-    only:
-      - main
-  tags:
-    only:
-      - /(\d)+(\.(\d)+)+/
-      - /((\d)+(\.(\d)+)+)(-rc)(\d)+/
-
 release-and-rc-filters: &release-and-rc-filters
   branches:
     ignore:
@@ -381,6 +372,17 @@ commands:
                   python3 -m venv /tmp/venv
                   echo 'export PATH=/tmp/venv/bin:$PATH' >> $BASH_ENV
                   /tmp/venv/bin/python -m pip install --upgrade pip wheel setuptools
+
+      # Either of make -C {harness,model_hub} build require pypa's build module.
+      - when:
+          condition:
+            or:
+              - <<parameters.determined>>
+              - <<parameters.model-hub>>
+          steps:
+            - run:
+                name: Install pypa builder
+                command: python3 -m pip install build
 
       - run:
           name: Write cache key
@@ -1121,7 +1123,7 @@ jobs:
       - store_artifacts:
           path: docs.tgz
 
-  scrape-docs:
+  upload-docs-search-index:
     docker:
       - image: <<pipeline.parameters.docker-image>>
     steps:
@@ -2486,11 +2488,14 @@ workflows:
             - build-docs
           filters: *any-upstream
 
-      - scrape-docs:
+      - upload-docs-search-index:
           requires:
             - build-docs
           context: determined-production
-          filters: *main-and-release-and-rc-filters
+          filters:
+            branches:
+              only:
+                - main
 
       - test-debian-packaging:
           requires:
@@ -3270,6 +3275,12 @@ workflows:
           requires:
             - build-helm
             - build-proto
+
+      - upload-docs-search-index:
+          requires:
+            - build-docs
+          context: determined-production
+          filters: *release-and-rc-filters
 
       - package-and-push-system-rc:
           requires:

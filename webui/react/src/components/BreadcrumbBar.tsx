@@ -1,10 +1,9 @@
 import React, { useCallback, useEffect, useState } from 'react';
 
 import Breadcrumb from 'components/kit/Breadcrumb';
-import Tooltip from 'components/kit/Tooltip';
+import Icon from 'components/kit/Icon';
 import { paths } from 'routes/utils';
 import { getExperimentDetails, getProject, getTrialDetails, getWorkspace } from 'services/api';
-import Icon from 'shared/components/Icon/Icon';
 import usePolling from 'shared/hooks/usePolling';
 import { isEqual } from 'shared/utils/data';
 import { ExperimentBase, Project, TrialDetails, Workspace } from 'types';
@@ -159,13 +158,7 @@ const BreadcrumbBar: React.FC<Props> = ({
                 className={css.link}
                 path={project ? paths.workspaceDetails(project.workspaceId) : undefined}>
                 {workspace?.name ?? '...'}
-                {workspace?.archived && (
-                  <Tooltip content="Archived">
-                    <div>
-                      <Icon name="archive" />
-                    </div>
-                  </Tooltip>
-                )}
+                {workspace?.archived && <Icon name="archive" showTooltip title="Archived" />}
               </Link>
             </Breadcrumb.Item>
             <Breadcrumb.Separator />
@@ -176,13 +169,7 @@ const BreadcrumbBar: React.FC<Props> = ({
             className={css.link}
             path={experiment ? paths.projectDetails(experiment.projectId) : undefined}>
             {projectName}
-            {project?.archived && (
-              <Tooltip content="Archived">
-                <div>
-                  <Icon name="archive" />
-                </div>
-              </Tooltip>
-            )}
+            {project?.archived && <Icon name="archive" showTooltip title="Archived" />}
           </Link>
         </Breadcrumb.Item>
         {(type === 'experiment' || type === 'trial') && (
@@ -193,13 +180,7 @@ const BreadcrumbBar: React.FC<Props> = ({
                 className={css.link}
                 path={trial ? paths.experimentDetails(trial.experimentId) : undefined}>
                 {experiment?.name ?? '...'}
-                {experiment?.archived && (
-                  <Tooltip content="Archived">
-                    <div>
-                      <Icon name="archive" />
-                    </div>
-                  </Tooltip>
-                )}
+                {experiment?.archived && <Icon name="archive" showTooltip title="Archived" />}
               </Link>
             </Breadcrumb.Item>
           </>
