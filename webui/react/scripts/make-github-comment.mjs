@@ -1,5 +1,3 @@
-import { fetch } from 'undici';
-
 const message = process.argv[2];
 if (!message) {
   throw new Error('node make-github-comment.mjs <message>');

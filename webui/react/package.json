@@ -68,7 +68,6 @@
     "smoothscroll-polyfill": "^0.4.4",
     "sprintf-js": "^1.1.2",
     "throttle-debounce": "^5.0.0",
-    "undici": "^5.22.0",
     "uplot": "^1.6.18"
   },
   "browserslist": {
