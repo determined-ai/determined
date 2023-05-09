@@ -8,7 +8,7 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.optimizers.legacy import SGD, Adam  # TODO MLG-443
 
 from determined import keras
-from tests.experiment.utils import make_xor_data_sequences  # noqa: I202, I100
+from tests.experiment.tf_utils import make_xor_data_sequences  # noqa: I202, I100
 
 
 class StopVeryEarlyCallback(keras.callbacks.Callback):
