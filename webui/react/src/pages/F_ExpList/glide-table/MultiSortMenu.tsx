@@ -3,9 +3,9 @@ import { ItemType } from 'antd/es/menu/hooks/useItems';
 import * as io from 'io-ts';
 
 import Button from 'components/kit/Button';
+import Icon from 'components/kit/Icon';
 import Select from 'components/kit/Select';
 import { V1ColumnType } from 'services/api-ts-sdk';
-import Icon from 'shared/components/Icon';
 import { ProjectColumn } from 'types';
 import { Loadable } from 'utils/loadable';
 
@@ -183,7 +183,7 @@ const MultiSortRow: React.FC<MultiSortRowProps> = ({ sort, columns, onChange, on
       </div>
       <div>
         <Button
-          icon={<Icon name="close" />}
+          icon={<Icon name="close" title="close" />}
           shape="circle"
           size="small"
           type="text"
@@ -236,7 +236,7 @@ const MultiSort: React.FC<MultiSortProps> = ({ sorts, columns, onChange }) => {
       </div>
       <div className={css.actions}>
         <Button type="text" onClick={addRow}>
-          <Icon name="add-small" size="tiny" /> Add sort
+          <Icon name="add-small" size="tiny" title="add" /> Add sort
         </Button>
         <Button type="text" onClick={clearAll}>
           Reset
