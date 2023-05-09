@@ -23,6 +23,7 @@ prUrl.searchParams.set('head', `${projectUsername}:${branch}`);
 const [prPayload] = await fetch(prUrl.toString(), { headers }).then((r) => r.json());
 if (!prPayload) {
   console.error('No PR found, not reporting artifact to github');
+  process.exit();
 }
 
 const commentsUrl = new URL(prPayload.comments_url);
