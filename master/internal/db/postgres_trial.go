@@ -487,7 +487,8 @@ DISCUSS: how do we decide if a utility should be namespaced under PgDB or not?
 the goal is to make it clear we don't have direct db access other than through tx
 */
 func rollbackMetrics(ctx context.Context, tx *sqlx.Tx, runID, trialID,
-	lastProcessedBatch int32, isValidation bool) (int, error) {
+	lastProcessedBatch int32, isValidation bool,
+) (int, error) {
 	pType := model.TrainingMetric
 	if isValidation {
 		pType = model.ValidationMetric
@@ -510,7 +511,6 @@ WHERE trial_id = $1
 		
 	);
 	`, trialID, runID, lastProcessedBatch, pType)
-
 	if err != nil {
 		return 0, errors.Wrap(err, "archiving metrics")
 	}
@@ -523,7 +523,8 @@ WHERE trial_id = $1
 
 func (db *PgDB) addRawMetrics(ctx context.Context, tx *sqlx.Tx, metricsBody *map[string]interface{},
 	runID, trialID, lastProcessedBatch int32,
-	pType model.MetricPartitionType) (int, error) {
+	pType model.MetricPartitionType,
+) (int, error) {
 	var metricRowID int
 	if err := tx.QueryRowContext(ctx, `
 INSERT INTO metrics
@@ -572,6 +573,7 @@ func (db *PgDB) addTrialMetrics(
 			return err
 		}
 
+		// CHECK: we skip rollbacks, summary metrics, and total batch updates for generic metrics.
 		var metricRowID int
 		if pType == model.GenericMetric {
 			if metricRowID, err = db.addRawMetrics(ctx, tx, &metricsBody, m.TrialRunId,
@@ -611,7 +613,7 @@ func (db *PgDB) addTrialMetrics(
 			if err := db.fullTrialSummaryMetricsRecompute(ctx, tx, int(m.TrialId)); err != nil {
 				return errors.Wrap(err, "error on rollback compute of summary metrics")
 			}
-		} else {
+		} else { // no rollbacks.
 			if _, ok := summaryMetrics[metricsJSONPath]; !ok {
 				summaryMetrics[metricsJSONPath] = map[string]any{}
 			}
@@ -679,7 +681,7 @@ func (db *PgDB) AddValidationMetrics(
 func (db *PgDB) AddGenericMetrics(
 	ctx context.Context, m *trialv1.TrialMetrics, mType string,
 ) error {
-	_, err := db.addTrialMetrics(ctx, m, model.ValidationMetric)
+	_, err := db.addTrialMetrics(ctx, m, model.GenericMetric)
 	return err
 }
 
