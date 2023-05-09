@@ -404,4 +404,5 @@ func (m *Master) parseCreateExperiment(req *apiv1.CreateExperimentRequest, user 
 	}
 
 	return dbExp, config, project, &taskSpec, err
+	return dbExp, config, project, &taskSpec, err
 }
