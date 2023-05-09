@@ -470,9 +470,8 @@ func TestProvisionerLaunchOneAtATimeFail(t *testing.T) {
 	mock, provisioner := newMockEnvironment(t, setup)
 
 	mock.system.Ask(mock.provisioner, sproto.ScalingInfo{DesiredNewInstances: 4}).Get()
-	mock.system.Ask(mock.provisioner, provisionerTick{}).Get()
-	mock.system.Ask(mock.provisioner, provisionerTick{}).Get()
-	mock.system.Ask(mock.provisioner, provisionerTick{}).Get()
-	mock.system.Ask(mock.provisioner, provisionerTick{}).Get()
+	for i := 0; i < 4; i++ {
+		mock.system.Ask(mock.provisioner, provisionerTick{}).Get()
+	}
 	assert.Error(t, provisioner.GetError(), "failed to launch", "expected error")
 }
