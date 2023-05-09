@@ -56,7 +56,7 @@ def list_agents(args: argparse.Namespace) -> None:
         "Registered Time",
         "Slots",
         "Containers",
-        "Resource Pool",
+        "Resource Pool", # remove resource pool? only for kubernetees? testing this on a GKE cluster? 
         "Enabled",
         "Draining",
         "Addresses",

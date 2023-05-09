@@ -928,15 +928,11 @@ func (p *pods) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
 }
 
 func (p *pods) handleGetAgentsRequest(ctx *actor.Context) {
-	summaries, err := p.summarize(ctx)
-	if err != nil {
-		ctx.Respond(err)
-		return
-	}
+	nodeSummaries := p.summarizeClusterByNodes(ctx)
 
 	response := &apiv1.GetAgentsResponse{}
 
-	for _, summary := range summaries {
+	for _, summary := range nodeSummaries {
 		response.Agents = append(response.Agents, summary.ToProto())
 	}
 	ctx.Respond(response)
