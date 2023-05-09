@@ -62,7 +62,7 @@ AUTOTUNING_ARG_DEFAULTS = {
 
 DEFAULT_SEARCH_RUNNER_CONFIG = {
     "searcher": {"name": "single", "max_length": 0},
-    "max_restarts": 5,
+    "max_restarts": 0,
     "resources": {"slots_per_trial": 0},
     "entrypoint": "python3 -m determined.pytorch.dsat._run_dsat",
 }

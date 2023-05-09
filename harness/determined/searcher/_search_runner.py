@@ -123,7 +123,7 @@ class SearchRunner:
         sleep_time: float = 1.0,
     ) -> None:
         experiment_is_active = True
-
+        curr_event = None
         try:
             while experiment_is_active:
                 time.sleep(
@@ -139,6 +139,7 @@ class SearchRunner:
                 last_event_id = self.state.last_event_id
                 first_event = True
                 for event in events:
+                    curr_event = event
                     if (
                         first_event
                         and last_event_id != 0
@@ -184,6 +185,12 @@ class SearchRunner:
 
         except KeyboardInterrupt:
             print("Runner interrupted")
+        except Exception as e:
+            if curr_event is not None and experiment_is_active:
+                logging.error(f"Searcher hit an exception! Shutting down experiment...\n{e}")
+                operations = [searcher.Shutdown(failure=True)]
+                self.post_operations(session, experiment_id, curr_event, operations)
+                raise e
 
     def post_operations(
         self,

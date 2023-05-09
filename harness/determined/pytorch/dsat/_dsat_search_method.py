@@ -625,7 +625,10 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
         new_ops_list = []
         if exited_reason != searcher.ExitedReason.ERRORED:
             # In case of INVALID_HP or USER_CANCELED, shut down the searcher.
-            logging.info(f"Shutting down: unexpected early exit due to {exited_reason}")
+            logging.info(
+                f"Shutting down: unexpected early exit due to {exited_reason}"
+                f"\nLast trial: {last_trial}, request_id: {request_id}"
+            )
             new_ops_list.append(searcher.Shutdown(failure=self.trial_tracker.should_be_failure))
         if not self.trial_tracker.max_trials_queued and not self.trial_tracker.should_shutdown:
             # ERRORED Trials generally corresponds to OOMs, after which we may want to submit
@@ -892,6 +895,7 @@ class RandomDSATSearchMethod(BaseDSATSearchMethod):
         return False
 
     def get_random_mbs_from_search_data(self, search_data: Dict[str, int]) -> int:
+        # raise Exception
         mbs = search_data["lo"] + self.rng.binomial(search_data["hi"] - search_data["lo"], 0.5)
         assert search_data["lo"] <= mbs <= search_data["hi"]  # TODO: remove
         return mbs

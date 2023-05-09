@@ -362,8 +362,8 @@ def test_textual_inversion_stable_diffusion_generate() -> None:
 @pytest.mark.gpu_required
 @pytest.mark.deepspeed
 def test_hf_trainer_deepspeed_autotuning() -> None:
-    # test_dir = "hf_trainer_api/image_classification"
-    test_dir = "hf_trainer_api/language_modeling"
+    test_dir = "hf_trainer_api/image_classification"
+    # test_dir = "hf_trainer_api/language_modeling"
     config_path = conf.deepspeed_autotuning_examples_path(f"{test_dir}/deepspeed.yaml")
     config = conf.load_config(config_path)
     with tempfile.NamedTemporaryFile() as tf:
