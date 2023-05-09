@@ -1,13 +1,12 @@
 import { Switch } from 'antd';
 import { useObservable } from 'micro-observables';
-import { useRef } from 'react';
+import { useId, useRef } from 'react';
 import { debounce } from 'throttle-debounce';
 
 import { FilterFormStore, ITEM_LIMIT } from 'components/FilterForm/components/FilterFormStore';
 import FilterGroup from 'components/FilterForm/components/FilterGroup';
 import { FormKind } from 'components/FilterForm/components/type';
 import Button from 'components/kit/Button';
-import Label from 'components/Label';
 import { V1ProjectColumn } from 'services/api-ts-sdk';
 
 import css from './FilterForm.module.scss';
@@ -22,6 +21,7 @@ const FilterForm = ({ formStore, columns, onHidePopOver }: Props): JSX.Element =
   const scrollBottomRef = useRef<HTMLDivElement>(null);
   const data = useObservable(formStore.formset);
   const isButtonDisabled = data.filterGroup.children.length > ITEM_LIMIT;
+  const showArchivedSwitchId = useId();
 
   const onAddItem = (formKind: FormKind) => {
     formStore.addChild(data.filterGroup.id, formKind);
@@ -32,7 +32,7 @@ const FilterForm = ({ formStore, columns, onHidePopOver }: Props): JSX.Element =
 
   return (
     <div className={css.base}>
-      <div>Show experiments…</div>
+      <div className={css.showExpText}>Show experiments…</div>
       <div className={css.filter}>
         <FilterGroup
           columns={columns}
@@ -66,10 +66,11 @@ const FilterForm = ({ formStore, columns, onHidePopOver }: Props): JSX.Element =
       <div className={css.showArchived}>
         <Switch
           checked={data.showArchived}
+          id={showArchivedSwitchId}
           size="small"
           onChange={() => formStore.setArchivedValue(!data.showArchived)}
         />
-        <Label>Show Archived</Label>
+        <label htmlFor={showArchivedSwitchId}>Show Archived</label>
       </div>
     </div>
   );

@@ -293,7 +293,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
           disabled: false,
           icon: <FilterOutlined />,
           key: 'filter',
-          label: `Add ${column.displayName || column.column} in Filter`,
+          label: 'Filter by this column',
           onClick: filterMenuItemsForColumn,
         },
       ];

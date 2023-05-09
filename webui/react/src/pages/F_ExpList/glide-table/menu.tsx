@@ -37,7 +37,7 @@ export const TableActionMenu: React.FC<TableActionMenuProps> = ({
   handleClose,
   items,
 }) => {
-  const menuWidth = 200;
+  const menuWidth = 220;
   const containerRef = useRef(null);
   useOutsideClickHandler(containerRef, handleClose);
   const { width } = useResize();
