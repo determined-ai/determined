@@ -23,7 +23,7 @@ interface Props {
 }
 
 const WorkspaceCard: React.FC<Props> = ({ workspace, fetchWorkspaces }: Props) => {
-  const { menuProps, contextHolders } = useWorkspaceActionMenu({
+  const { contextHolders, menu, onClick } = useWorkspaceActionMenu({
     onComplete: fetchWorkspaces,
     workspace,
   });
@@ -33,9 +33,10 @@ const WorkspaceCard: React.FC<Props> = ({ workspace, fetchWorkspaces }: Props) =
   return (
     <>
       <Card
-        actionMenu={!workspace.immutable ? menuProps : undefined}
+        actionMenu={!workspace.immutable ? menu : undefined}
         href={paths.workspaceDetails(workspace.id)}
-        size="medium">
+        size="medium"
+        onDropdown={onClick}>
         <div className={workspace.archived ? css.archived : ''}>
           <Columns gap={8}>
             <div className={css.icon}>

@@ -373,17 +373,9 @@ const ModelDetails: React.FC = () => {
   }, [model?.model.archived, model?.model.name]);
 
   const actionDropdown = useCallback(
-    ({
-      record,
-      onVisibleChange,
-      children,
-    }: {
-      children: React.ReactNode;
-      onVisibleChange?: (visible: boolean) => void;
-      record: ModelVersion;
-    }) => (
+    ({ record, children }: { children: React.ReactNode; record: ModelVersion }) => (
       <ModelVersionActionDropdown
-        trigger={['contextMenu']}
+        isContextMenu
         version={record}
         onDelete={() => {
           setModelVersion(record);
@@ -392,8 +384,7 @@ const ModelDetails: React.FC = () => {
         onDownload={() => {
           setModelVersion(record);
           modelDownloadModal.open();
-        }}
-        onVisibleChange={onVisibleChange}>
+        }}>
         {children}
       </ModelVersionActionDropdown>
     ),

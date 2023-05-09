@@ -1,9 +1,7 @@
-import { Dropdown } from 'antd';
-import type { MenuProps } from 'antd';
-import { MenuInfo } from 'rc-menu/lib/interface';
 import React, { JSXElementConstructor, useCallback } from 'react';
 
 import Button from 'components/kit/Button';
+import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 import Icon from 'components/kit/Icon';
 import useConfirm, { ConfirmModalProps } from 'components/kit/useConfirm';
 import { DetError, ErrorLevel, ErrorType, wrapPublicMessage } from 'shared/utils/error';
@@ -45,6 +43,7 @@ interface Props<T extends string> {
    * This is used to generate the modal content and for logging purposes.
    */
   id: string;
+  isContextMenu?: boolean;
   /**
    * kind of the entity that the action is being performed on.
    */
@@ -61,17 +60,13 @@ interface Props<T extends string> {
    * what to do when an action is selected.
    */
   onTrigger: Triggers<T>;
-  onVisibleChange?: (visible: boolean) => void;
-  /**
-   * how to open dropdown.
-   */
-  trigger?: ('click' | 'contextMenu' | 'hover')[];
 }
 
 const stopPropagation = (e: React.MouseEvent): void => e.stopPropagation();
 
 const ActionDropdown = <T extends string>({
   id,
+  isContextMenu,
   kind,
   onComplete,
   onTrigger,
@@ -80,8 +75,6 @@ const ActionDropdown = <T extends string>({
   disabled,
   actionOrder,
   onError,
-  trigger,
-  onVisibleChange,
   children,
 }: Props<T>): React.ReactElement<unknown, JSXElementConstructor<unknown>> | null => {
   const confirm = useConfirm();
@@ -101,10 +94,30 @@ const ActionDropdown = <T extends string>({
     [onError],
   );
 
-  const handleMenuClick = async (params: MenuInfo): Promise<void> => {
-    params.domEvent.stopPropagation();
+  const menuItems: MenuItem[] = actionOrder
+    .filter((act) => !!onTrigger[act])
+    .map((action) => ({
+      danger: danger?.[action],
+      disabled: disabled?.[action],
+      key: action,
+      label: action,
+    }));
+
+  if (menuItems.length === 0) {
+    return (
+      <div className={css.base} title="No actions available" onClick={stopPropagation}>
+        <Button
+          disabled
+          icon={<Icon name="overflow-vertical" size="small" title="Action menu" />}
+          type="text"
+        />
+      </div>
+    );
+  }
+
+  const handleDropdown = async (key: string): Promise<void> => {
     try {
-      const action = params.key as T;
+      const action = key as T;
       const handleTrigger = onTrigger[action];
       if (!handleTrigger) throw new Error(`No triggers for action ${action}`);
       const onOk = async () => {
@@ -127,49 +140,24 @@ const ActionDropdown = <T extends string>({
         await onOk();
       }
     } catch (e) {
-      menuClickErrorHandler(e, params.key, kind, id);
+      menuClickErrorHandler(e, key, kind, id);
     }
   };
-
-  const menuItems: MenuProps['items'] = actionOrder
-    .filter((act) => !!onTrigger[act])
-    .map((action) => ({
-      danger: danger?.[action],
-      disabled: disabled?.[action],
-      key: action,
-      label: action,
-    }));
-
-  if (menuItems.length === 0) {
-    return (
-      <div className={css.base} title="No actions available" onClick={stopPropagation}>
-        <Button disabled icon={<Icon name="overflow-vertical" title="Action menu" />} type="text" />
-      </div>
-    );
-  }
 
   return children ? (
     <>
       <Dropdown
-        menu={{ items: menuItems, onClick: handleMenuClick }}
+        isContextMenu={isContextMenu ?? true}
+        menu={menuItems}
         placement="bottomRight"
-        trigger={trigger ?? ['contextMenu']}
-        onOpenChange={onVisibleChange}>
+        onClick={handleDropdown}>
         {children}
       </Dropdown>
     </>
   ) : (
-    <div className={css.base} title="Open actions menu" onClick={stopPropagation}>
-      <Dropdown
-        menu={{ items: menuItems, onClick: handleMenuClick }}
-        placement="bottomRight"
-        trigger={trigger ?? ['click']}
-        onOpenChange={onVisibleChange}>
-        <Button
-          icon={<Icon name="overflow-vertical" title="Action menu" />}
-          type="text"
-          onClick={stopPropagation}
-        />
+    <div className={css.base} title="Open actions menu">
+      <Dropdown menu={menuItems} placement="bottomRight" onClick={handleDropdown}>
+        <Button icon={<Icon name="overflow-vertical" title="Action menu" />} type="text" />
       </Dropdown>
     </div>
   );
