@@ -473,6 +473,12 @@ class CheckpointContext:
         you should save your model to.  When the context manager exits, the model is automatically
         uploaded (at least, for cloud-backed checkpoint storage backends).
 
+        .. note::
+            metadata must include a 'steps_completed' key in the current implementation.
+            Raises ValueError if the 'steps_completed' key is not present in the metadata
+            dictionary.
+
+
         When ``shard=False``, only the chief worker (``distributed.rank==0``) may call
         ``store_path()``.
 
