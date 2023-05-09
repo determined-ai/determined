@@ -17,7 +17,6 @@ import { useModal } from 'components/kit/Modal';
 import Tags from 'components/kit/Tags';
 import Toggle from 'components/kit/Toggle';
 import Link from 'components/Link';
-import Page from 'components/Page';
 import InteractiveTable, {
   ColumnDef,
   InteractiveTableSettings,
@@ -905,52 +904,45 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
 
   useSetDynamicTabBar(tabBarContent);
   return (
-    <Page
-      bodyNoPadding
-      containerRef={pageRef}
-      // for docTitle, when id is 1 that means Uncategorized from webui/react/src/routes/routes.ts
-      docTitle={id === 1 ? 'Uncategorized Experiments' : 'Project Details'}
-      id="projectDetails">
-      <>
-        <TableBatch
-          actions={batchActions.map((action) => ({
-            disabled: !availableBatchActions.includes(action),
-            label: action,
-            value: action,
-          }))}
-          selectedRowCount={(settings.row ?? []).length}
-          onAction={handleBatchAction}
-          onClear={clearSelected}
-        />
-        <InteractiveTable
-          areRowsSelected={!!settings.row}
-          columns={columns}
-          containerRef={pageRef}
-          ContextMenu={ContextMenu}
-          dataSource={experiments}
-          loading={isLoading}
-          numOfPinned={(settings.pinned?.[id] ?? []).length}
-          pagination={getFullPaginationConfig(
-            {
-              limit: settings.tableLimit || 0,
-              offset: settings.tableOffset || 0,
-            },
-            total,
-          )}
-          rowClassName={defaultRowClassName({ clickable: false })}
-          rowKey="id"
-          rowSelection={{
-            onChange: handleTableRowSelect,
-            preserveSelectedRowKeys: true,
-            selectedRowKeys: settings.row ?? [],
-          }}
-          scroll={{ y: `calc(100vh - ${availableBatchActions.length === 0 ? '230' : '280'}px)` }}
-          settings={settings as InteractiveTableSettings}
-          showSorterTooltip={false}
-          size="small"
-          updateSettings={updateSettings as UpdateSettings}
-        />
-      </>
+    <>
+      <TableBatch
+        actions={batchActions.map((action) => ({
+          disabled: !availableBatchActions.includes(action),
+          label: action,
+          value: action,
+        }))}
+        selectedRowCount={(settings.row ?? []).length}
+        onAction={handleBatchAction}
+        onClear={clearSelected}
+      />
+      <InteractiveTable
+        areRowsSelected={!!settings.row}
+        columns={columns}
+        containerRef={pageRef}
+        ContextMenu={ContextMenu}
+        dataSource={experiments}
+        loading={isLoading}
+        numOfPinned={(settings.pinned?.[id] ?? []).length}
+        pagination={getFullPaginationConfig(
+          {
+            limit: settings.tableLimit || 0,
+            offset: settings.tableOffset || 0,
+          },
+          total,
+        )}
+        rowClassName={defaultRowClassName({ clickable: false })}
+        rowKey="id"
+        rowSelection={{
+          onChange: handleTableRowSelect,
+          preserveSelectedRowKeys: true,
+          selectedRowKeys: settings.row ?? [],
+        }}
+        scroll={{ y: `calc(100vh - ${availableBatchActions.length === 0 ? '230' : '280'}px)` }}
+        settings={settings as InteractiveTableSettings}
+        showSorterTooltip={false}
+        size="small"
+        updateSettings={updateSettings as UpdateSettings}
+      />
       {batchAction && (
         <BatchActionConfirmModal.Component
           batchAction={batchAction}
@@ -969,7 +961,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         sourceWorkspaceId={project?.workspaceId}
         onSubmit={handleActionComplete}
       />
-    </Page>
+    </>
   );
 };
 

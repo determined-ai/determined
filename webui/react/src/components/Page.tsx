@@ -1,18 +1,37 @@
 import { useObservable } from 'micro-observables';
-import React from 'react';
+import React, { MutableRefObject } from 'react';
 import { Helmet } from 'react-helmet-async';
 
 import PageHeader from 'components/PageHeader';
 import PageNotFound from 'components/PageNotFound';
 import usePermissions from 'hooks/usePermissions';
-import BasePage, { Props as BasePageProps } from 'shared/components/Page';
 import Spinner from 'shared/components/Spinner';
+import { CommonProps } from 'shared/types';
 import determinedStore, { BrandingType } from 'stores/determinedInfo';
 
-export interface Props extends Omit<BasePageProps, 'pageHeader'> {
+import css from './Page.module.scss';
+
+export interface BreadCrumbRoute {
+  breadcrumbName: string;
+  breadcrumbTooltip?: string;
+  path: string;
+}
+
+export interface Props extends CommonProps {
+  bodyNoPadding?: boolean;
+  breadcrumb?: BreadCrumbRoute[];
+  containerRef?: MutableRefObject<HTMLElement | null>;
   docTitle?: string;
+  headerComponent?: React.ReactNode;
+  id?: string;
   ignorePermissions?: boolean;
+  loading?: boolean;
+  noScroll?: boolean;
   notFound?: boolean;
+  options?: React.ReactNode;
+  stickyHeader?: boolean;
+  subTitle?: React.ReactNode;
+  title?: string;
 }
 
 const getFullDocTitle = (branding: string, title?: string, clusterName?: string) => {
@@ -35,6 +54,14 @@ const Page: React.FC<Props> = (props: Props) => {
 
   const docTitle = getFullDocTitle(branding, props.docTitle || props.title, info.clusterName);
 
+  const classes = [props.className, css.base];
+
+  const showHeader = !props.headerComponent && (!!props.breadcrumb || !!props.title);
+
+  if (props.bodyNoPadding) classes.push(css.bodyNoPadding);
+  if (props.stickyHeader) classes.push(css.stickyHeader);
+  if (props.noScroll) classes.push(css.noScroll);
+
   return (
     <>
       <Helmet>
@@ -52,9 +79,9 @@ const Page: React.FC<Props> = (props: Props) => {
       ) : props.notFound ? (
         <PageNotFound /> // hide until permissions are loaded
       ) : (
-        <BasePage
-          {...props}
-          pageHeader={
+        <article className={classes.join(' ')} id={props.id} ref={props.containerRef}>
+          {props.headerComponent}
+          {showHeader && (
             <PageHeader
               breadcrumb={props.breadcrumb}
               options={props.options}
@@ -62,8 +89,11 @@ const Page: React.FC<Props> = (props: Props) => {
               subTitle={props.subTitle}
               title={props.title}
             />
-          }
-        />
+          )}
+          <div className={css.body}>
+            <Spinner spinning={!!props.loading}>{props.children}</Spinner>
+          </div>
+        </article>
       )}
     </>
   );
