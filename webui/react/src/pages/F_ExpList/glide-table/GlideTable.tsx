@@ -410,7 +410,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   );
 
   const verticalBorder: DataEditorProps['verticalBorder'] = useCallback(
-    (col: number) => columnIds[col] === 'name',
+    (col: number) => columnIds[col - 1] === STATIC_COLUMNS.last(),
     [columnIds],
   );
 
@@ -424,7 +424,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
       <DataEditor
         columns={columns}
         customRenderers={customRenderers}
-        freezeColumns={2}
+        freezeColumns={STATIC_COLUMNS.length}
         getCellContent={getCellContent}
         // `getCellsForSelection` is required for double click column resize to content.
         getCellsForSelection
