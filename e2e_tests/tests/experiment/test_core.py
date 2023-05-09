@@ -2,7 +2,6 @@ import json
 import subprocess
 import tempfile
 
-import numpy as np
 import pytest
 
 from determined.common import yaml
