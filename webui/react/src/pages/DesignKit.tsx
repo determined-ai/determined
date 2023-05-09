@@ -9,6 +9,7 @@ import Breadcrumb from 'components/kit/Breadcrumb';
 import Button from 'components/kit/Button';
 import Card from 'components/kit/Card';
 import Checkbox from 'components/kit/Checkbox';
+import { Column, Columns } from 'components/kit/Columns';
 import Empty from 'components/kit/Empty';
 import Facepile from 'components/kit/Facepile';
 import Form from 'components/kit/Form';
@@ -47,6 +48,7 @@ import { noOp } from 'shared/utils/service';
 import { BrandingType } from 'stores/determinedInfo';
 import { MetricType, User } from 'types';
 import { NotLoaded } from 'utils/loadable';
+import loremIpsum from 'utils/loremIpsum';
 
 import useConfirm, { voidPromiseFn } from '../components/kit/useConfirm';
 
@@ -60,6 +62,7 @@ const ComponentTitles = {
   Cards: 'Cards',
   Charts: 'Charts',
   Checkboxes: 'Checkboxes',
+  Columns: 'Columns',
   Empty: 'Empty',
   Facepile: 'Facepile',
   Form: 'Form',
@@ -1792,6 +1795,106 @@ const TooltipsSection: React.FC = () => {
   );
 };
 
+const ColumnsSection: React.FC = () => {
+  return (
+    <ComponentSection id="Columns" title="Columns">
+      <AntDCard>
+        <p>
+          The <code>{'<Columns>'}</code> component wraps child components to be displayed in
+          multiple columns.
+          <br />
+          The <code>{'<Column>'}</code> component can optionally be used to wrap the content for
+          each column and set its alignment.
+        </p>
+      </AntDCard>
+      <AntDCard title="Usage">
+        <p>
+          With <code>{'<Columns>'}</code> wrapper only, and <code>{'gap'}</code> set to 8 (default):
+        </p>
+        <Columns>
+          <Card>{loremIpsum}</Card>
+          <Card>{loremIpsum}</Card>
+          <Card>{loremIpsum}</Card>
+        </Columns>
+        <p>With <code>{'gap'}</code> set to 0:</p>
+        <Columns gap={0}>
+          <Card>{loremIpsum}</Card>
+          <Card>{loremIpsum}</Card>
+          <Card>{loremIpsum}</Card>
+        </Columns>
+        <p>With <code>{'gap'}</code> set to 16:</p>
+        <Columns gap={16}>
+          <Card>{loremIpsum}</Card>
+          <Card>{loremIpsum}</Card>
+          <Card>{loremIpsum}</Card>
+        </Columns>
+        <p>
+          With left-aligned <code>{'<Column>'}</code>s (default):
+        </p>
+        <Columns>
+          <Column>
+            <Button>Content</Button>
+          </Column>
+          <Column>
+            <Button>Content</Button>
+          </Column>
+          <Column>
+            <Button>Content</Button>
+          </Column>
+        </Columns>
+        <p>
+          With center-aligned <code>{'<Column>'}</code>s:
+        </p>
+        <Columns>
+          <Column align="center">
+            <Button>Content</Button>
+          </Column>
+          <Column align="center">
+            <Button>Content</Button>
+          </Column>
+          <Column align="center">
+            <Button>Content</Button>
+          </Column>
+        </Columns>
+        <p>
+          With right-aligned <code>{'<Column>'}</code>s:
+        </p>
+        <Columns>
+          <Column align="right">
+            <Button>Content</Button>
+          </Column>
+          <Column align="right">
+            <Button>Content</Button>
+          </Column>
+          <Column align="right">
+            <Button>Content</Button>
+          </Column>
+        </Columns>
+        <p>
+          Variant with <code>{'page'}</code> prop, with margins and wrapping behavior, used for page-level layouts/headers:
+        </p>
+        <Columns page>
+          <Column>
+            <Button>Content 1</Button>
+            <Button>Content 2</Button>
+            <Button>Content 3</Button>
+          </Column>
+          <Column>
+            <Button>Content 1</Button>
+            <Button>Content 2</Button>
+            <Button>Content 3</Button>
+          </Column>
+          <Column>
+            <Button>Content 1</Button>
+            <Button>Content 2</Button>
+            <Button>Content 3</Button>
+          </Column>
+        </Columns>
+      </AntDCard>
+    </ComponentSection>
+  );
+};
+
 const EmptySection: React.FC = () => {
   return (
     <ComponentSection id="Empty" title="Empty">
@@ -2184,6 +2287,7 @@ const Components = {
   Cards: <CardsSection />,
   Charts: <ChartsSection />,
   Checkboxes: <CheckboxesSection />,
+  Columns: <ColumnsSection />,
   Empty: <EmptySection />,
   Facepile: <FacepileSection />,
   Form: <FormSection />,
