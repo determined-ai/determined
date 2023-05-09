@@ -40,9 +40,10 @@
  TABLE "trials" CONSTRAINT "trials_latest_validation_id_fkey" FOREIGN KEY (latest_validation_id) REFERENCES raw_validations(id) ON DELETE SET NULL
  Triggers:
  autoupdate_exp_validation_metrics_name AFTER INSERT ON raw_validations FOR EACH ROW EXECUTE PROCEDURE autoupdate_exp_validation_metrics_name()
- 
- determined>
  */
+-- fix missing foreign key constraint
+ALTER TABLE raw_validations
+ADD CONSTRAINT validations_trial_id_fkey FOREIGN KEY (trial_id) REFERENCES trials(id);
 CREATE TYPE metric_partition_type AS ENUM ('validation', 'training', 'generic');
 ALTER TABLE raw_validations
 ADD COLUMN partition_type metric_partition_type NOT NULL DEFAULT 'validation';
