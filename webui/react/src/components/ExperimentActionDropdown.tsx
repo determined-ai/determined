@@ -289,7 +289,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
   ) : (
     <div className={css.base} title="Open actions menu">
       <Dropdown menu={dropdownMenu} placement="bottomRight" onClick={handleDropdown}>
-        <Button ghost icon={<Icon name="overflow-vertical"title="Action menu" />} />
+        <Button ghost icon={<Icon name="overflow-vertical" size="small" title="Action menu" />} />
       </Dropdown>
       {shared}
     </div>

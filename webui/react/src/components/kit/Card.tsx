@@ -91,9 +91,11 @@ const Card: Card = ({
               menu={actionMenu}
               placement="bottomRight"
               onClick={onDropdown}>
-              <Button size="small" type="text" onClick={stopPropagation}>
-                <Icon name="overflow-horizontal" title="Action menu" />
-              </Button>
+              <Button
+                icon={<Icon name="overflow-horizontal" size="tiny" title="Action menu" />}
+                type="text"
+                onClick={stopPropagation}
+              />
             </Dropdown>
           </div>
         )}

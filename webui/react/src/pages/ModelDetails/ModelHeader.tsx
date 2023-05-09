@@ -206,9 +206,10 @@ const ModelHeader: React.FC<Props> = ({
               disabled={!canDeleteModelFlag && !canModifyModelFlag}
               menu={menu}
               onClick={handleDropdown}>
-              <Button type="text">
-                <Icon name="overflow-horizontal" size="tiny" title="Action menu" />
-              </Button>
+              <Button
+                icon={<Icon name="overflow-horizontal" size="small" title="Action menu" />}
+                type="text"
+              />
             </Dropdown>
           </Space>
         </div>

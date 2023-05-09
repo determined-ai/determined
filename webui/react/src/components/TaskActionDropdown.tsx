@@ -33,14 +33,14 @@ const TaskActionDropdown: React.FC<Props> = ({ task, onComplete, children }: Pro
 
   const confirm = useConfirm();
 
-  const menuItems: MenuItem[] = [];
+  const menuItems: MenuItem[] = [
+    {
+      key: Action.ViewLogs,
+      label: <Link path={paths.taskLogs(task as CommandTask)}>View Logs</Link>,
+    },
+  ];
 
-  if (isKillable) menuItems.push({ key: Action.Kill, label: 'Kill' });
-
-  menuItems.push({
-    key: Action.ViewLogs,
-    label: <Link path={paths.taskLogs(task as CommandTask)}>View Logs</Link>,
-  });
+  if (isKillable) menuItems.unshift({ key: Action.Kill, label: 'Kill' });
 
   const handleDropdown = (key: string) => {
     try {
@@ -79,7 +79,10 @@ const TaskActionDropdown: React.FC<Props> = ({ task, onComplete, children }: Pro
   ) : (
     <div className={css.base} title="Open actions menu">
       <Dropdown menu={menuItems} placement="bottomRight" onClick={handleDropdown}>
-        <Button icon={<Icon name="overflow-vertical" title="Action menu" />} type="text" />
+        <Button
+          icon={<Icon name="overflow-vertical" size="small" title="Action menu" />}
+          type="text"
+        />
       </Dropdown>
     </div>
   );

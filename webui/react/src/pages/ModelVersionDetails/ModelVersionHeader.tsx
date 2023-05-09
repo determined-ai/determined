@@ -143,19 +143,14 @@ with det.import_from_path(path + "/code"):
   const menu = useMemo(() => {
     const items: MenuItem[] = [
       {
-        danger: false,
-        disabled: false,
         key: MenuKey.DownloadModel,
         label: MenuKey.DownloadModel,
       },
       {
-        danger: false,
-        disabled: false,
         key: MenuKey.UseInNotebook,
         label: MenuKey.UseInNotebook,
       },
       {
-        danger: false,
         disabled: modelVersion.model.archived || !canModifyModelVersion({ modelVersion }),
         key: MenuKey.EditModelVersionName,
         label: MenuKey.EditModelVersionName,
@@ -164,7 +159,6 @@ with det.import_from_path(path + "/code"):
     if (canDeleteModelVersion({ modelVersion })) {
       items.push({
         danger: true,
-        disabled: false,
         key: MenuKey.DeregisterVersion,
         label: MenuKey.DeregisterVersion,
       });
@@ -247,9 +241,10 @@ with det.import_from_path(path + "/code"):
               );
             })}
             <Dropdown menu={menu.slice(2)} onClick={handleDropdown}>
-              <Button type="text">
-                <Icon name="overflow-horizontal" size="tiny" title="Action menu" />
-              </Button>
+              <Button
+                icon={<Icon name="overflow-horizontal" size="small" title="Action menu" />}
+                type="text"
+              />
             </Dropdown>
           </div>
         </div>

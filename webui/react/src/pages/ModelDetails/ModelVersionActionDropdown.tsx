@@ -62,9 +62,10 @@ const ModelVersionActionDropdown: React.FC<Props> = ({
   ) : (
     <div className={[css.base, className].join(' ')} title="Open actions menu">
       <Dropdown menu={dropdownMenu} placement="bottomRight" onClick={handleDropdown}>
-        <Button type="text">
-          <Icon name={`overflow-${direction}`} title="Action menu" />
-        </Button>
+        <Button
+          icon={<Icon name={`overflow-${direction}`} size="small" title="Action menu" />}
+          type="text"
+        />
       </Dropdown>
     </div>
   );

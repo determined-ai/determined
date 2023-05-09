@@ -23,7 +23,7 @@ const ResponsiveFilters: React.FC<Props> = ({ children, hasFiltersApplied }: Pro
   if (isCollapsed) contentClasses.push(css.collapsed);
 
   /**
-   * If the height of the container is more than 32,
+   * If the height of the container is more than 48,
    * it means that the filter options are wrapping and
    * needs to collapse into a filter/dropdown view.
    */

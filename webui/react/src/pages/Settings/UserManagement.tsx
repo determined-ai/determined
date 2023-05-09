@@ -42,6 +42,8 @@ import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 
+import { ErrorType } from '../../shared/utils/error';
+
 import css from './UserManagement.module.scss';
 import settingsConfig, {
   DEFAULT_COLUMN_WIDTHS,
@@ -80,9 +82,18 @@ const UserActionDropdown = ({ fetchUsers, user, groups, userManagementEnabled }:
   const rbacEnabled = useFeature().isOn('rbac');
 
   const onToggleActive = useCallback(async () => {
-    await patchUser({ userId: user.id, userParams: { active: !user.isActive } });
-    message.success(`User has been ${user.isActive ? 'deactivated' : 'activated'}`);
-    fetchUsers();
+    try {
+      await patchUser({ userId: user.id, userParams: { active: !user.isActive } });
+      message.success(`User has been ${user.isActive ? 'deactivated' : 'activated'}`);
+      fetchUsers();
+    } catch (e) {
+      handleError(e, {
+        isUserTriggered: true,
+        publicSubject: `Unable to ${user.isActive ? 'deactivate' : 'activate'} user.`,
+        silent: false,
+        type: ErrorType.Api,
+      });
+    }
   }, [fetchUsers, user]);
 
   const menuItems =
@@ -130,7 +141,7 @@ const UserActionDropdown = ({ fetchUsers, user, groups, userManagementEnabled }:
   return (
     <div className={dropdownCss.base}>
       <Dropdown menu={menuItems} placement="bottomRight" onClick={handleDropdown}>
-        <Button ghost icon={<Icon name="overflow-vertical" title="Action menu" />} />
+        <Button ghost icon={<Icon name="overflow-vertical" size="small" title="Action menu" />} />
       </Dropdown>
       <ViewUserModal.Component user={user} viewOnly onClose={fetchUsers} />
       <EditUserModal.Component user={user} onClose={fetchUsers} />

@@ -175,7 +175,12 @@ const PaginatedNotesCard: React.FC<Props> = ({
         <div className={css.sidebar}>
           <ul className={css.listContainer} role="list">
             {(notes as Note[]).map((note, idx) => (
-              <Dropdown disabled={disabled} key={idx} menu={DROPDOWN_MENU}>
+              <Dropdown
+                disabled={disabled}
+                isContextMenu
+                key={idx}
+                menu={DROPDOWN_MENU}
+                onClick={() => handleDropdown(idx)}>
                 <li
                   className={css.listItem}
                   style={{

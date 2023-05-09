@@ -1,5 +1,5 @@
 import { Popover as AntdPopover, Dropdown as AntDropdown } from 'antd';
-import { MenuProps } from 'antd/es/menu/menu';
+import { MenuProps as AntdMenuProps } from 'antd/es/menu/menu';
 import { PropsWithChildren, useMemo } from 'react';
 import * as React from 'react';
 
@@ -23,7 +23,7 @@ export type Placement = 'bottomLeft' | 'bottomRight';
 
 export type DropdownEvent = React.MouseEvent<HTMLElement> | React.KeyboardEvent<HTMLElement>;
 
-export interface Props {
+interface BaseProps {
   content?: React.ReactNode;
   disabled?: boolean;
   isContextMenu?: boolean;
@@ -32,6 +32,19 @@ export interface Props {
   placement?: Placement;
   onClick?: (key: string, e: DropdownEvent) => void | Promise<void>;
 }
+
+type ContentProps = {
+  content?: React.ReactNode;
+  menu?: never;
+};
+
+type MenuProps = {
+  content?: never;
+  menu?: MenuItem[];
+};
+
+export type Props = (ContentProps | MenuProps) & BaseProps;
+
 const Dropdown: React.FC<PropsWithChildren<Props>> = ({
   children,
   content,
@@ -42,7 +55,7 @@ const Dropdown: React.FC<PropsWithChildren<Props>> = ({
   placement = 'bottomLeft',
   onClick,
 }) => {
-  const antdMenu: MenuProps = useMemo(() => {
+  const antdMenu: AntdMenuProps = useMemo(() => {
     return {
       items: menu,
       onClick: (info) => {

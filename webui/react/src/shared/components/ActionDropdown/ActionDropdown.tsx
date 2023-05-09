@@ -106,7 +106,11 @@ const ActionDropdown = <T extends string>({
   if (menuItems.length === 0) {
     return (
       <div className={css.base} title="No actions available" onClick={stopPropagation}>
-        <Button disabled icon={<Icon name="overflow-vertical" title="Action menu" />} type="text" />
+        <Button
+          disabled
+          icon={<Icon name="overflow-vertical" size="small" title="Action menu" />}
+          type="text"
+        />
       </div>
     );
   }
