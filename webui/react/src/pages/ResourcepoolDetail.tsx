@@ -4,8 +4,8 @@ import React, { Fragment, Suspense, useCallback, useEffect, useMemo, useState } 
 import { useNavigate, useParams } from 'react-router-dom';
 
 import Json from 'components/Json';
-import Icon from 'components/kit/Icon';
 import Empty from 'components/kit/Empty';
+import Icon from 'components/kit/Icon';
 import Pivot from 'components/kit/Pivot';
 import Page from 'components/Page';
 import { PoolLogo, RenderAllocationBarResourcePool } from 'components/ResourcePoolCard';
