@@ -209,6 +209,13 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     fetchColumns();
   }, [fetchColumns]);
 
+  const setVisibleColumns = useCallback(
+    (newColumns: string[]) => {
+      updateSettings({ columns: newColumns });
+    },
+    [updateSettings],
+  );
+
   useEffect(() => {
     const handleEsc = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
@@ -222,13 +229,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
       window.removeEventListener('keydown', handleEsc);
     };
   }, []);
-
-  const setVisibleColumns = useCallback(
-    (newColumns: string[]) => {
-      updateSettings({ columns: newColumns });
-    },
-    [updateSettings],
-  );
 
   return (
     <Page

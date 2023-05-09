@@ -2,6 +2,8 @@ import { SmileOutlined } from '@ant-design/icons';
 import { Menu, MenuProps } from 'antd';
 import React, { MutableRefObject, useEffect, useRef } from 'react';
 
+import useResize from 'hooks/useResize';
+
 // eslint-disable-next-line
 function useOutsideClickHandler(ref: MutableRefObject<any>, handler: () => void) {
   useEffect(() => {
@@ -36,8 +38,10 @@ export const TableActionMenu: React.FC<TableActionMenuProps> = ({
   handleClose,
   items,
 }) => {
+  const menuWidth = 200;
   const containerRef = useRef(null);
   useOutsideClickHandler(containerRef, handleClose);
+  const { width } = useResize();
 
   return (
     <div
@@ -45,10 +49,10 @@ export const TableActionMenu: React.FC<TableActionMenuProps> = ({
       style={{
         border: 'solid 1px gold',
         display: !open ? 'none' : undefined,
-        left: x,
+        left: width - x < menuWidth ? width - menuWidth : x,
         position: 'fixed',
         top: y,
-        width: 200,
+        width: menuWidth,
       }}>
       <Menu items={items} />
     </div>
