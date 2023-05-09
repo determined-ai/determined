@@ -977,9 +977,9 @@ func Test_getEnvVarsForLauncherManifest(t *testing.T) {
 
 	environment := expconf.EnvironmentConfigV0{
 		RawEnvironmentVariables: &expconf.EnvironmentVariablesMap{
-			RawCPU:  []string{"cpu=default", "myenv=xyz"},
-			RawCUDA: []string{"cuda=default", "extra=expconf", "empty"},
-			RawROCM: []string{"rocm=default"},
+			RawCPU:  []string{"CPU_ENV=CPU_VAL"},
+			RawCUDA: []string{"CUDA_ENV=CUDA_VAL"},
+			RawROCM: []string{"ROCM_ENV=ROCM_VAL"},
 		},
 		RawRegistryAuth: &types.AuthConfig{
 			Username:      "user",
@@ -1011,7 +1011,7 @@ func Test_getEnvVarsForLauncherManifest(t *testing.T) {
 	}
 
 	envVars, err := getEnvVarsForLauncherManifest(ctx, allocationID, ts,
-		"masterHost", 8888, "certName", false, device.CUDA, "singularity", "/", 4)
+		"masterHost", 8888, "certName", false, device.CPU, "singularity", "/", 4)
 
 	assert.NilError(t, err)
 	assert.Assert(t, len(envVars) > 0)
@@ -1024,7 +1024,7 @@ func Test_getEnvVarsForLauncherManifest(t *testing.T) {
 	assert.Equal(t, envVars["DET_CLUSTER_ID"], "Cluster_ID")
 	assert.Equal(t, envVars["DET_SLOT_IDS"], "[0,1,2,3]")
 	assert.Equal(t, envVars["SLURM_KILL_BAD_EXIT"], "1")
-	assert.Equal(t, envVars["DET_SLOT_TYPE"], "cuda")
+	assert.Equal(t, envVars["DET_SLOT_TYPE"], "cpu")
 	assert.Equal(t, envVars["DET_MASTER_CERT_NAME"], "certName")
 	assert.Equal(t, envVars["DET_CONTAINER_LOCAL_TMP"], "1")
 	assert.Equal(t, envVars["SINGULARITY_DOCKER_USERNAME"], "user")
@@ -1032,9 +1032,23 @@ func Test_getEnvVarsForLauncherManifest(t *testing.T) {
 	assert.Equal(t, envVars["SINGULARITY_DOCKER_PASSWORD"], "pwd")
 	assert.Equal(t, envVars["APPTAINER_DOCKER_PASSWORD"], "pwd")
 
-	assert.Equal(t, envVars["cpu"], "default")
-	assert.Equal(t, envVars["myenv"], "xyz")
-	assert.Equal(t, envVars["empty"], "")
+	assert.Equal(t, envVars["CPU_ENV"], "CPU_VAL")
+	assert.Equal(t, envVars["CUDA_ENV"], "")
+	assert.Equal(t, envVars["ROCM_ENV"], "")
+
+	envVars, _ = getEnvVarsForLauncherManifest(ctx, allocationID, ts,
+		"masterHost", 8888, "certName", false, device.CUDA, "singularity", "/", 4)
+	assert.Equal(t, envVars["DET_SLOT_TYPE"], "cuda")
+	assert.Equal(t, envVars["CUDA_ENV"], "CUDA_VAL")
+	assert.Equal(t, envVars["CPU_ENV"], "")
+	assert.Equal(t, envVars["ROCM_ENV"], "")
+
+	envVars, _ = getEnvVarsForLauncherManifest(ctx, allocationID, ts,
+		"masterHost", 8888, "certName", false, device.ROCM, "singularity", "/", 4)
+	assert.Equal(t, envVars["DET_SLOT_TYPE"], "rocm")
+	assert.Equal(t, envVars["ROCM_ENV"], "ROCM_VAL")
+	assert.Equal(t, envVars["CPU_ENV"], "")
+	assert.Equal(t, envVars["CUDA_ENV"], "")
 
 	envVarsPodman, _ := getEnvVarsForLauncherManifest(ctx, allocationID, ts,
 		"masterHost", 8888, "certName", false, device.CUDA, "podman", "/", 0)

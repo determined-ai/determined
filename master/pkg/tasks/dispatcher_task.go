@@ -699,15 +699,6 @@ func getEnvVarsForLauncherManifest(
 		m[k] = v
 	}
 
-	// For some reason, getting the user-defined environment variable requires a device type.
-	// Merely copying the same code that's in "ToDockerSpec()" without fully understanding
-	// the connection between the deviceType and the user-defined environment variables.
-	deviceType := device.CPU
-
-	if len(taskSpec.Devices) > 0 {
-		deviceType = taskSpec.Devices[0].Type
-	}
-
 	// The user-defined environment variables, if any. These come from the experiment's
 	// YAML file.  For example,
 	//
@@ -718,7 +709,19 @@ func getEnvVarsForLauncherManifest(
 	//     - MY_ENV_VAR1=abc
 	//     - MY_ENV_VAR2=xyz
 	//     - EMPTY
-	envVars := taskSpec.Environment.EnvironmentVariables().For(deviceType)
+	//
+	// Or
+	//
+	// environment:
+	//   image: "environment:cuda-11.2-tf-2.5-gpu-0.17.7.sif"
+	//   environment_variables:
+	//     cuda:
+	//       - DETECTRON2_DATASETS=/mnt/dtrain-fsx/detectron2
+	//       - MY_ENV_VAR1=abc
+	//       - MY_ENV_VAR2=xyz
+	//       - EMPTY
+
+	envVars := taskSpec.Environment.EnvironmentVariables().For(slotType)
 
 	// Add each user-defined environment variable to the map.
 	for _, s := range envVars {
