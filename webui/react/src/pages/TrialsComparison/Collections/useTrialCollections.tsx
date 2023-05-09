@@ -373,21 +373,25 @@ export const useTrialCollections = (
           <Button
             disabled={!userOwnsCollection || !collectionIsActive}
             ghost={!hasUnsavedFilters}
-            icon={<Icon
-              name="checkmark"
-              showTooltip
-              title={collectionIsActive ? 'Save Collection' : 'No Collection Active'}
-                  />}
+            icon={
+              <Icon
+                name="checkmark"
+                showTooltip
+                title={collectionIsActive ? 'Save Collection' : 'No Collection Active'}
+              />
+            }
             onClick={saveCollection}
           />
           <Button
             disabled={!collectionIsActive}
             ghost={!hasUnsavedFilters}
-            icon={<Icon
-              name="reset"
-              showTooltip
-              title={collectionIsActive ? 'Reset Filters to Collection' : 'No Collection Active'}
-                  />}
+            icon={
+              <Icon
+                name="reset"
+                showTooltip
+                title={collectionIsActive ? 'Reset Filters to Collection' : 'No Collection Active'}
+              />
+            }
             onClick={resetFiltersToCollection}
           />
           <Dropdown menu={menu} onClick={handleDropdown}>

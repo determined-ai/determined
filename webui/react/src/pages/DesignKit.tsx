@@ -1872,13 +1872,17 @@ const ColumnsSection: React.FC = () => {
           <Card>{loremIpsum}</Card>
           <Card>{loremIpsum}</Card>
         </Columns>
-        <p>With <code>{'gap'}</code> set to 0:</p>
+        <p>
+          With <code>{'gap'}</code> set to 0:
+        </p>
         <Columns gap={0}>
           <Card>{loremIpsum}</Card>
           <Card>{loremIpsum}</Card>
           <Card>{loremIpsum}</Card>
         </Columns>
-        <p>With <code>{'gap'}</code> set to 16:</p>
+        <p>
+          With <code>{'gap'}</code> set to 16:
+        </p>
         <Columns gap={16}>
           <Card>{loremIpsum}</Card>
           <Card>{loremIpsum}</Card>
@@ -1927,7 +1931,8 @@ const ColumnsSection: React.FC = () => {
           </Column>
         </Columns>
         <p>
-          Variant with <code>{'page'}</code> prop, with margins and wrapping behavior, used for page-level layouts/headers:
+          Variant with <code>{'page'}</code> prop, with margins and wrapping behavior, used for
+          page-level layouts/headers:
         </p>
         <Columns page>
           <Column>
