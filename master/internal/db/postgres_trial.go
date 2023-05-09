@@ -653,6 +653,13 @@ func (db *PgDB) AddValidationMetrics(
 	return err
 }
 
+func (db *PgDB) AddGenericMetrics(
+	ctx context.Context, m *trialv1.TrialMetrics, mType string,
+) error {
+	_, err := db.addTrialMetrics(ctx, m, model.ValidationMetric)
+	return err
+}
+
 const (
 	// InfPostgresString how we store infinity in JSONB in postgres.
 	InfPostgresString = "Infinity"

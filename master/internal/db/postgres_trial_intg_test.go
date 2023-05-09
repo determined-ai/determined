@@ -828,3 +828,45 @@ func TestBatchesProcessed(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 2, archivedValidations, "trial id %d", tr.ID)
 }
+
+func TestGenericMetricsIO(t *testing.T) {
+	ctx := context.Background()
+	require.NoError(t, etc.SetRootPath(RootFromDB))
+	db := MustResolveTestPostgres(t)
+	MustMigrateTestPostgres(t, db, MigrationsFromDB)
+	exp, activeConfig := model.ExperimentModel()
+	require.NoError(t, db.AddExperiment(exp, activeConfig))
+	task := RequireMockTask(t, db, exp.OwnerID)
+	tr := model.Trial{
+		TaskID:       task.TaskID,
+		JobID:        exp.JobID,
+		ExperimentID: exp.ID,
+		State:        model.ActiveState,
+		StartTime:    time.Now(),
+	}
+	require.NoError(t, db.AddTrial(&tr))
+
+	dbTr, err := db.TrialByID(tr.ID)
+	require.NoError(t, err)
+	require.Equal(t, 0, dbTr.TotalBatches)
+
+	a := &model.Allocation{
+		AllocationID: model.AllocationID(fmt.Sprintf("%s-%d", tr.TaskID, 0)),
+		TaskID:       tr.TaskID,
+		StartTime:    ptrs.Ptr(time.Now()),
+	}
+	err = db.AddAllocation(a)
+	require.NoError(t, err, "failed to add allocation")
+
+	metrics, err := structpb.NewStruct(map[string]any{"loss": 10})
+	require.NoError(t, err)
+
+	// require.NoError(t, db.UpdateTrialRunID(tr.ID, trialRunId))
+	trialMetrics := &trialv1.TrialMetrics{
+		TrialId: int32(tr.ID),
+		// TrialRunId:     int32(trialRunId),
+		// StepsCompleted: int32(batches),
+		Metrics: &commonv1.Metrics{AvgMetrics: metrics},
+	}
+	t.Logf("Adding %s metrics: %v", typ, trialMetrics)
+}
