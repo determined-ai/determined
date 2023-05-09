@@ -902,7 +902,8 @@ func (a *apiServer) ActivateExperiment(
 func (a *apiServer) ActivateExperiments(
 	ctx context.Context, req *apiv1.ActivateExperimentsRequest,
 ) (*apiv1.ActivateExperimentsResponse, error) {
-	results, err := exputil.ActivateExperiments(ctx, a.m.system, req.ExperimentIds, req.Filters, req.ExcludedExperimentIds)
+	results, err := exputil.ActivateExperiments(ctx, a.m.system, req.ExperimentIds, req.Filters,
+		req.ExcludedExperimentIds)
 	return &apiv1.ActivateExperimentsResponse{Results: exputil.ToAPIResults(results)}, err
 }
 
@@ -925,7 +926,8 @@ func (a *apiServer) PauseExperiment(
 func (a *apiServer) PauseExperiments(
 	ctx context.Context, req *apiv1.PauseExperimentsRequest,
 ) (*apiv1.PauseExperimentsResponse, error) {
-	results, err := exputil.PauseExperiments(ctx, a.m.system, req.ExperimentIds, req.Filters, req.ExcludedExperimentIds)
+	results, err := exputil.PauseExperiments(ctx, a.m.system, req.ExperimentIds, req.Filters,
+		req.ExcludedExperimentIds)
 	return &apiv1.PauseExperimentsResponse{Results: exputil.ToAPIResults(results)}, err
 }
 
@@ -948,7 +950,8 @@ func (a *apiServer) CancelExperiment(
 func (a *apiServer) CancelExperiments(
 	ctx context.Context, req *apiv1.CancelExperimentsRequest,
 ) (*apiv1.CancelExperimentsResponse, error) {
-	results, err := exputil.CancelExperiments(ctx, a.m.system, req.ExperimentIds, req.Filters, req.ExcludedExperimentIds)
+	results, err := exputil.CancelExperiments(ctx, a.m.system, req.ExperimentIds, req.Filters,
+		req.ExcludedExperimentIds)
 	return &apiv1.CancelExperimentsResponse{Results: exputil.ToAPIResults(results)}, err
 }
 
@@ -971,7 +974,8 @@ func (a *apiServer) KillExperiment(
 func (a *apiServer) KillExperiments(
 	ctx context.Context, req *apiv1.KillExperimentsRequest,
 ) (*apiv1.KillExperimentsResponse, error) {
-	results, err := exputil.KillExperiments(ctx, a.m.system, req.ExperimentIds, req.Filters, req.ExcludedExperimentIds)
+	results, err := exputil.KillExperiments(ctx, a.m.system, req.ExperimentIds, req.Filters,
+		req.ExcludedExperimentIds)
 	return &apiv1.KillExperimentsResponse{Results: exputil.ToAPIResults(results)}, err
 }
 
@@ -994,7 +998,8 @@ func (a *apiServer) ArchiveExperiment(
 func (a *apiServer) ArchiveExperiments(
 	ctx context.Context, req *apiv1.ArchiveExperimentsRequest,
 ) (*apiv1.ArchiveExperimentsResponse, error) {
-	results, err := exputil.ArchiveExperiments(ctx, a.m.system, req.ExperimentIds, req.Filters, req.ExcludedExperimentIds)
+	results, err := exputil.ArchiveExperiments(ctx, a.m.system, req.ExperimentIds, req.Filters,
+		req.ExcludedExperimentIds)
 	return &apiv1.ArchiveExperimentsResponse{Results: exputil.ToAPIResults(results)}, err
 }
 
@@ -1017,7 +1022,8 @@ func (a *apiServer) UnarchiveExperiment(
 func (a *apiServer) UnarchiveExperiments(
 	ctx context.Context, req *apiv1.UnarchiveExperimentsRequest,
 ) (*apiv1.UnarchiveExperimentsResponse, error) {
-	results, err := exputil.UnarchiveExperiments(ctx, a.m.system, req.ExperimentIds, req.Filters, req.ExcludedExperimentIds)
+	results, err := exputil.UnarchiveExperiments(ctx, a.m.system, req.ExperimentIds, req.Filters,
+		req.ExcludedExperimentIds)
 	return &apiv1.UnarchiveExperimentsResponse{Results: exputil.ToAPIResults(results)}, err
 }
 

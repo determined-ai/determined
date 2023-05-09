@@ -149,7 +149,8 @@ func queryBulkExperiments(query *bun.SelectQuery,
 }
 
 // FilterToExperimentIds applies a request's filters to get a list of matching experiment IDs.
-func FilterToExperimentIds(ctx context.Context, filters *apiv1.BulkExperimentFilters, excludedExperimentIds []int32) ([]int32,
+func FilterToExperimentIds(ctx context.Context, filters *apiv1.BulkExperimentFilters,
+	excludedExperimentIds []int32) ([]int32,
 	error,
 ) {
 	var experimentIDList []int32
@@ -647,7 +648,8 @@ func UnarchiveExperiments(ctx context.Context, system *actor.System,
 
 // MoveExperiments works on one or many experiments.
 func MoveExperiments(ctx context.Context, system *actor.System,
-	experimentIds []int32, filters *apiv1.BulkExperimentFilters, destinationProjectID int32, excludedExperimentIds []int32,
+	experimentIds []int32, filters *apiv1.BulkExperimentFilters, destinationProjectID int32,
+	excludedExperimentIds []int32,
 ) ([]ExperimentActionResult, error) {
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
