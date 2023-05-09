@@ -166,7 +166,7 @@ const Tags: React.FC<Props> = ({ compact, disabled = false, ghost, tags, onActio
             </Tag>
           );
           return isLongTag && !compact ? (
-            <Tooltip key={tag} title={tag}>
+            <Tooltip content={tag} key={tag}>
               {tagElement}
             </Tooltip>
           ) : (

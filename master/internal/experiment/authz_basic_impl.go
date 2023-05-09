@@ -17,8 +17,8 @@ type ExperimentAuthZBasic struct{}
 // CanGetExperiment always returns true and a nill error.
 func (a *ExperimentAuthZBasic) CanGetExperiment(
 	ctx context.Context, curUser model.User, e *model.Experiment,
-) (canGetExp bool, serverError error) {
-	return true, nil
+) error {
+	return nil
 }
 
 // CanGetExperimentArtifacts always returns a nil error.
@@ -78,7 +78,7 @@ func (a *ExperimentAuthZBasic) CanEditExperimentsMetadata(
 
 // CanCreateExperiment always returns a nil error.
 func (a *ExperimentAuthZBasic) CanCreateExperiment(
-	ctx context.Context, curUser model.User, proj *projectv1.Project, e *model.Experiment,
+	ctx context.Context, curUser model.User, proj *projectv1.Project,
 ) error {
 	return nil
 }

@@ -2,10 +2,10 @@ import { Typography } from 'antd';
 import React from 'react';
 
 import Card from 'components/kit/Card';
+import Icon from 'components/kit/Icon';
 import Tooltip from 'components/kit/Tooltip';
 import TimeAgo from 'components/TimeAgo';
 import { paths } from 'routes/utils';
-import Icon from 'shared/components/Icon/Icon';
 import { nearestCardinalNumber } from 'shared/utils/number';
 import { Project } from 'types';
 
@@ -48,7 +48,7 @@ const ProjectCard: React.FC<Props> = ({
           </div>
           <div className={css.workspaceContainer}>
             {showWorkspace && project.workspaceId !== 1 && (
-              <Tooltip title={project.workspaceName}>
+              <Tooltip content={project.workspaceName}>
                 <div className={css.workspaceIcon}>
                   <DynamicIcon name={project.workspaceName} size={20} />
                 </div>
@@ -58,11 +58,11 @@ const ProjectCard: React.FC<Props> = ({
           <div className={css.footerContainer}>
             <div className={css.experiments}>
               <Tooltip
-                title={
+                content={
                   `${project.numExperiments.toLocaleString()}` +
                   ` experiment${project.numExperiments === 1 ? '' : 's'}`
                 }>
-                <Icon name="experiment" size="small" />
+                <Icon name="experiment" size="small" title="Number of experiments" />
                 <span>{nearestCardinalNumber(project.numExperiments)}</span>
               </Tooltip>
             </div>

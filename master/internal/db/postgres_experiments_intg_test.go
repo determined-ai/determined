@@ -218,3 +218,155 @@ func TestCheckpointMetadata(t *testing.T) {
 		})
 	}
 }
+
+func TestMetricNames(t *testing.T) {
+	ctx := context.Background()
+
+	require.NoError(t, etc.SetRootPath(RootFromDB))
+	db := MustResolveTestPostgres(t)
+	MustMigrateTestPostgres(t, db, MigrationsFromDB)
+
+	actualTrain, actualVal, err := MetricNames(ctx, -1)
+	require.NoError(t, err)
+	require.Len(t, actualTrain, 0)
+	require.Len(t, actualVal, 0)
+
+	user := RequireMockUser(t, db)
+
+	exp := RequireMockExperiment(t, db, user)
+	trial1 := RequireMockTrial(t, db, exp).ID
+	addMetrics(ctx, t, db, trial1, `[{"a":1}, {"b":2}]`, `[{"b":2, "c":3}]`, false)
+	trial2 := RequireMockTrial(t, db, exp).ID
+	addMetrics(ctx, t, db, trial2, `[{"b":1}, {"d":2}]`, `[{"f":"test"}]`, false)
+
+	actualTrain, actualVal, err = MetricNames(ctx, exp.ID)
+	require.NoError(t, err)
+	require.Equal(t, []string{"a", "b", "d"}, actualTrain)
+	require.Equal(t, []string{"b", "c", "f"}, actualVal)
+
+	addMetricCustomTime(ctx, t, trial2, time.Now())
+	runSummaryMigration(t)
+
+	actualTrain, actualVal, err = MetricNames(ctx, exp.ID)
+	require.NoError(t, err)
+	require.Equal(t, []string{"a", "b", "d"}, actualTrain)
+	require.Equal(t, []string{"b", "c", "f", "val_loss"}, actualVal)
+}
+
+func TestTopTrialsByMetric(t *testing.T) {
+	ctx := context.Background()
+
+	require.NoError(t, etc.SetRootPath(RootFromDB))
+	db := MustResolveTestPostgres(t)
+	MustMigrateTestPostgres(t, db, MigrationsFromDB)
+
+	user := RequireMockUser(t, db)
+
+	res, err := TopTrialsByMetric(ctx, -1, 1, "metric", true)
+	require.NoError(t, err)
+	require.Len(t, res, 0)
+
+	exp := RequireMockExperiment(t, db, user)
+	trial1 := RequireMockTrial(t, db, exp).ID
+	addMetrics(ctx, t, db, trial1,
+		`[{"a":-10.0}]`, // Only care about validation.
+		`[{"a":1.5, "b":"NaN", "c":"-Infinity", "d":1.5}, {"d":"nonumeric", "e":1.0}]`, false)
+	trial2 := RequireMockTrial(t, db, exp).ID
+	addMetrics(ctx, t, db, trial2,
+		`[{"a":10.5}]`,
+		`[{"a":-1.5, "b":1.0, "c":"Infinity"}]`, false)
+
+	const (
+		more             = false
+		less             = true
+		noError          = true
+		error            = false
+		orderExpected    = true
+		orderNotRequired = false
+	)
+
+	tests := []struct {
+		name                  string
+		metric                string
+		lessIsBetter          bool
+		limit                 int
+		expectNoError         bool
+		expected              []int
+		expectedOrderRequired bool
+	}{
+		{"'a' limit 1 less", "a", less, 1, noError, []int{trial2}, orderExpected},
+		{"'a' limit 1 more", "a", more, 1, noError, []int{trial1}, orderExpected},
+
+		{"'a' limit 2 less", "a", less, 2, noError, []int{trial2, trial1}, orderExpected},
+		{"'a' limit 2 more", "a", more, 2, noError, []int{trial1, trial2}, orderExpected},
+
+		{
+			"NaNs are bigger than everything less", "b", less, 2, noError,
+			[]int{trial2, trial1},
+			orderExpected,
+		},
+		{
+			"NaNs are bigger than everything more", "b", more, 2, noError,
+			[]int{trial1, trial2},
+			orderExpected,
+		},
+
+		{
+			"Infinity works as expected less", "c", less, 2, noError,
+			[]int{trial1, trial2},
+			orderExpected,
+		},
+		{
+			"Infinity works as expected more", "c", more, 2, noError,
+			[]int{trial2, trial1},
+			orderExpected,
+		},
+
+		{"Non numeric metrics error less", "d", less, 2, error, nil, orderExpected},
+		{"Non numeric metrics error more", "d", more, 2, error, nil, orderExpected},
+
+		{
+			"Metrics only reported in one trial appear first less", "e", less, 2, noError,
+			[]int{trial1, trial2},
+			orderExpected,
+		},
+		{
+			"Metrics only reported in one trial appear first more", "e", more, 2, noError,
+			[]int{trial1, trial2},
+			orderExpected,
+		},
+
+		{
+			"Metric doesn't exist order doesn't matter less", "z", less, 2, noError,
+			[]int{trial1, trial2},
+			orderNotRequired,
+		},
+		{
+			"Metric doesn't exist order doesn't matter more", "z", more, 2, noError,
+			[]int{trial1, trial2},
+			orderNotRequired,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			res, err := TopTrialsByMetric(ctx, exp.ID, tt.limit, tt.metric, tt.lessIsBetter)
+			if tt.expectNoError {
+				require.NoError(t, err)
+			} else {
+				require.Error(t, err)
+			}
+
+			var i32s []int32
+			for _, i := range tt.expected {
+				i32s = append(i32s, int32(i))
+			}
+
+			if tt.expectedOrderRequired {
+				require.Equal(t, i32s, res)
+			} else {
+				require.ElementsMatch(t, i32s, res)
+			}
+		})
+	}
+}

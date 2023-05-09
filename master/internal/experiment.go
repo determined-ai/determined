@@ -454,7 +454,12 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 					ops = append(ops, *op)
 				}
 			case *experimentv1.SearcherOperation_ShutDown:
-				ops = append(ops, searcher.NewShutdown())
+				op, err := searcher.ShutdownFromProto(concreteOperation)
+				if err != nil {
+					ctx.Log().Error(err)
+				} else {
+					ops = append(ops, *op)
+				}
 			case *experimentv1.SearcherOperation_TrialOperation:
 				switch sub := concreteOperation.TrialOperation.GetUnion().(type) {
 				case *experimentv1.TrialOperation_ValidateAfter:

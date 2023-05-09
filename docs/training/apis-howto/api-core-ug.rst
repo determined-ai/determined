@@ -2,6 +2,9 @@
  Core API
 ##########
 
+.. meta::
+   :description: Learn how to train almost any machine learning model using Determined AI's Core API. This guide covers metrics tracking, checkpoint tracking and preemption support, hyperparameter search, and distributing work across multiple GPUs or nodes.
+
 In this guide, you'll learn how to use the Core API.
 
 +------------------------------------------------------------------+
@@ -11,7 +14,7 @@ In this guide, you'll learn how to use the Core API.
 +------------------------------------------------------------------+
 
 With the Core API you can train arbitrary models on the Determined platform with seamless access to
-the the following capabilities:
+the following capabilities:
 
 -  metrics tracking
 -  checkpoint tracking and preemption support
@@ -118,7 +121,7 @@ with only a few new lines of code.
    training and validation metrics.
 
 The complete ``1_metrics.py`` and ``1_metrics.yaml`` listings used in this example can be found in
-the :download:`core_api.tgz </examples/core_api.tgz>` download or in the `Github repository
+the :download:`core_api.tgz </examples/core_api.tgz>` download or in the `GitHub repository
 <https://github.com/determined-ai/determined/tree/master/examples/tutorials/core_api>`_.
 
 .. _core-checkpoints:
@@ -198,7 +201,7 @@ trial ID in the checkpoint and use it to distinguish the two types of continues.
    weight continues from where previous training finished.
 
 The complete ``2_checkpoints.py`` and ``2_checkpoints.yaml`` listings used in this example can be
-found in the :download:`core_api.tgz </examples/core_api.tgz>` download or in the `Github repository
+found in the :download:`core_api.tgz </examples/core_api.tgz>` download or in the `GitHub repository
 <https://github.com/determined-ai/determined/tree/master/examples/tutorials/core_api>`_.
 
 .. _core-hpsearch:
@@ -278,7 +281,7 @@ runs a train-validate-report loop:
       det e create 3_hpsearch.yaml . -f
 
 The complete ``3_hpsearch.py`` and ``3_hpsearch.yaml`` listings used in this example can be found in
-the :download:`core_api.tgz </examples/core_api.tgz>` download or in the `Github repository
+the :download:`core_api.tgz </examples/core_api.tgz>` download or in the `GitHub repository
 <https://github.com/determined-ai/determined/tree/master/examples/tutorials/core_api>`_.
 
 .. _core-distributed:
@@ -406,5 +409,5 @@ considerations are:
       det e create 4_distributed.yaml . -f
 
 The complete ``4_distributed.py`` and ``3_hpsearch.yaml`` listings used in this example can be found
-in the :download:`core_api.tgz </examples/core_api.tgz>` download or in the `Github repository
+in the :download:`core_api.tgz </examples/core_api.tgz>` download or in the `GitHub repository
 <https://github.com/determined-ai/determined/tree/master/examples/tutorials/core_api>`_.

@@ -6,6 +6,8 @@
 
 # testing
 /coverage
+/screenshots
+screenshot-summary.html
 
 # production
 build/
@@ -21,3 +23,10 @@ node_modules/
 
 report.*.json
 done.stamp
+.diff-detected
+/test-results/
+/playwright-report/
+/playwright/.cache/
+src/e2e/test-results/
+src/e2e/playwright-report/
+src/e2e/junit-results.xml

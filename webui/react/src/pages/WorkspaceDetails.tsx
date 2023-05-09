@@ -253,8 +253,6 @@ const WorkspaceDetails: React.FC = () => {
     tab && setTabKey(tab as WorkspaceDetailsTab);
   }, [workspaceId, navigate, tab]);
 
-  useEffect(() => userStore.startPolling(), []);
-
   if (!workspace || Loadable.isLoading(loadableUsers)) {
     return <Spinner spinning tip={`Loading workspace ${workspaceId} details...`} />;
   } else if (isNaN(id)) {

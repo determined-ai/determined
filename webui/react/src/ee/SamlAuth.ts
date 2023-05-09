@@ -1,25 +1,24 @@
-import queryString from 'query-string';
-
 import router from 'router';
-import { clone } from 'shared/utils/data';
 
 export const samlUrl = (basePath: string, queries?: string): string => {
   if (!queries) return basePath;
   return `${basePath}?relayState=${encodeURIComponent(queries)}`;
 };
 
-type WithRelayState<T> = T & { relayState?: string };
-
 // Decode relayState into expected query params T.
-export const handleRelayState = <T>(queries: WithRelayState<T>): T => {
-  if (!queries.relayState) return clone(queries);
+export const handleRelayState = (queries: URLSearchParams): URLSearchParams => {
+  const clone = new URLSearchParams(queries);
+  if (!queries.has('relayState')) return clone;
 
-  const newQueries = {
-    ...queries,
-    ...queryString.parse(queries.relayState),
-  };
-  delete newQueries.relayState;
-  router.getRouter().navigate(`${window.location.pathname}?${queryString.stringify(newQueries)}`);
+  const relayState = new URLSearchParams(clone.get('relayState') || '');
+  for (const key of relayState.keys()) {
+    // not using entries here in order to handle arrays properly
+    const value = relayState.getAll(key);
+    clone.set(key, value[0]);
+    value.slice(1).forEach((subValue) => clone.append(key, subValue));
+  }
+  clone.delete('relayState');
+  router.getRouter().navigate(`${window.location.pathname}?${clone}`);
 
-  return newQueries;
+  return clone;
 };

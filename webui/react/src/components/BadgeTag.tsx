@@ -17,13 +17,13 @@ const BadgeTag: React.FC<Props> = ({ children, label, preLabel, ...props }: Prop
   return (
     <span className={css.base}>
       {preLabel && (
-        <Tooltip mouseEnterDelay={TOOLTIP_DELAY} title={label}>
+        <Tooltip content={label} mouseEnterDelay={TOOLTIP_DELAY}>
           <span className={css.preLabel}>{preLabel}</span>
         </Tooltip>
       )}
       <Badge {...props}>{children}</Badge>
       {label && (
-        <Tooltip mouseEnterDelay={TOOLTIP_DELAY} title={label}>
+        <Tooltip content={label} mouseEnterDelay={TOOLTIP_DELAY}>
           <span className={css.label}>{label}</span>
         </Tooltip>
       )}

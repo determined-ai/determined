@@ -112,7 +112,7 @@ def get_proxy_addr() -> str:
 
 def _wait_for_master(master_host: str, master_port: int, cluster_name: str) -> None:
     try:
-        wait_for_master(master_host, master_port, timeout=100)
+        wait_for_master(master_host, master_port)
         return
     except MasterTimeoutExpired:
         print("Timed out connecting to master, but attempting to dump logs from cluster...")
@@ -261,11 +261,9 @@ def master_up(
             restart_policy={"Name": restart_policy},
             device_requests=None,
             ports={"8080": f"{port}"},
+            network=NETWORK_NAME,
+            hostname="determined-master",
         )
-
-        # Connect to the network separately to set alias.
-        network = client.networks.get(NETWORK_NAME)
-        network.connect(container=master_name, aliases=["determined-master"])
 
         _wait_for_master("localhost", port, cluster_name)
 
@@ -292,10 +290,9 @@ def db_up(name: str, password: str, network_name: str, cluster_name: str, volume
             "test": ["CMD-SHELL", "pg_isready", "-d", "determined"],
             "interval": 1000000,
         },
+        network=network_name,
+        hostname="determined-db",
     )
-    # Connect to the network separately to set alias.
-    network = client.networks.get(network_name)
-    network.connect(container=name, aliases=["determined-db"])
 
 
 def master_down(master_name: str, delete_db: bool, cluster_name: str) -> None:

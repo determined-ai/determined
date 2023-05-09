@@ -1,5 +1,6 @@
 import { SmileOutlined } from '@ant-design/icons';
 import { Menu, MenuProps } from 'antd';
+import { ItemType } from 'antd/es/menu/hooks/useItems';
 import React, { MutableRefObject, useEffect, useRef } from 'react';
 
 // eslint-disable-next-line
@@ -55,7 +56,7 @@ export const TableActionMenu: React.FC<TableActionMenuProps> = ({
   );
 };
 
-export const placeholderMenuItems: MenuProps['items'] = [
+export const placeholderMenuItems: ItemType[] = [
   {
     disabled: false,
     icon: <SmileOutlined />,

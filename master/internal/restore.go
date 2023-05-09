@@ -147,7 +147,7 @@ func (e *experiment) restoreTrial(
 	var terminal bool
 	switch trial, err := e.db.TrialByExperimentAndRequestID(e.ID, searcher.Create.RequestID); {
 	case errors.Cause(err) == db.ErrNotFound:
-		l.Debug("trial was never previously allocated")
+		l.Debug("trial was not previously persisted")
 	case err != nil:
 		// This is the only place we _have_ to error, because if the trial did previously exist
 		// and we failed to retrieve it, continuing will result in an invalid state (we'll get a
@@ -182,11 +182,7 @@ func (e *experiment) restoreTrial(
 	if trialID != nil {
 		t.id = *trialID
 		t.idSet = true
-		if _, ok := e.searcher.TrialsCreated[searcher.Create.RequestID]; !ok {
-			ctx.Tell(ctx.Self(), trialCreated{
-				requestID: searcher.Create.RequestID,
-			})
-		}
+		t.trialCreationSent = e.searcher.TrialsCreated[searcher.Create.RequestID]
 	}
 	trialActor, _ := ctx.ActorOf(searcher.Create.RequestID, t)
 	ctx.Ask(trialActor, actor.Ping{}).Get()

@@ -18,7 +18,7 @@ interface LinkCellProps {
   readonly navigateOn?: 'click' | 'control-click';
   readonly link: {
     readonly title: string;
-    readonly href?: string;
+    readonly href: string;
   };
 }
 

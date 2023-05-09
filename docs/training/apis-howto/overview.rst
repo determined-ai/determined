@@ -2,6 +2,9 @@
  Training APIs
 ###############
 
+.. meta::
+   :description: You can train almost any deep learning model using the Determined Training APIs. By using the Training API guides, you'll discover how to take your existing model code and train your model in Determined. Each API guide contains a link to its corresponding API reference.
+
 You can train almost any deep learning model using the Determined Training APIs. The Training API
 guides describe how to take your existing model code and train your model in Determined. Each API
 guide contains a link to its corresponding API reference.
@@ -93,7 +96,7 @@ images.
 .. _rocm-support:
 
 Determined has experimental support for ROCm. Determined provides a prebuilt Docker image that
-includes ROCm 5.0, PyTorch 1.10 and Tensorflow 2.7:
+includes ROCm 5.0, PyTorch 1.10 and TensorFlow 2.7:
 
 -  ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.21.2``
 

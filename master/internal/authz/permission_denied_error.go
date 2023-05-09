@@ -26,3 +26,19 @@ func (p PermissionDeniedError) Error() string {
 	return fmt.Sprintf("access denied; required permissions: %s", strings.Join(
 		permissions, ", "))
 }
+
+// IsPermissionDenied checks if err is of type PermissionDeniedError.
+func IsPermissionDenied(err error) bool {
+	if _, ok := err.(PermissionDeniedError); ok {
+		return true
+	}
+	return false
+}
+
+// SubIfUnauthorized substitutes an error if it is of type PermissionDeniedError.
+func SubIfUnauthorized(err error, sub error) error {
+	if IsPermissionDenied(err) {
+		return sub
+	}
+	return err
+}

@@ -52,7 +52,6 @@ func TestTrial(t *testing.T) {
 	require.NotNil(t, tr.allocation)
 
 	// Pre-allocated stage.
-	db.On("AddTrial", mock.Anything).Return(nil)
 	db.On("UpdateTrialRunID", 0, 1).Return(nil)
 	db.On("LatestCheckpointForTrial", 0).Return(&model.Checkpoint{}, nil)
 	require.NoError(t, system.Ask(tr.allocation, actors.ForwardThroughMock{
@@ -107,9 +106,6 @@ func TestTrialRestarts(t *testing.T) {
 		require.Equal(t, i, tr.restarts)
 
 		// Pre-allocated stage.
-		if i == 0 {
-			db.On("AddTrial", mock.Anything).Return(nil)
-		}
 		db.On("UpdateTrialRunID", 0, i+1).Return(nil)
 		db.On("LatestCheckpointForTrial", 0).Return(&model.Checkpoint{}, nil)
 		require.NoError(t, system.Ask(tr.allocation, actors.ForwardThroughMock{
@@ -157,28 +153,27 @@ func TestTrialSimultaneousCancelAndAllocation(t *testing.T) {
 
 	// Send the trial a termination, but don't setup our mock allocation to handle it, as if it
 	// is busy handling receiving resources.
+	db.On("UpdateTrial", 0, model.StoppingCanceledState).Return(nil)
 	require.NoError(t, system.Ask(self, model.StateWithReason{
 		State: model.StoppingCanceledState,
 	}).Error())
+	require.True(t, db.AssertExpectations(t))
 
 	// Now the allocation checks in to get what to launch while we're canceled.
-	require.Error(t, system.Ask(tr.allocation, actors.ForwardThroughMock{
+	require.ErrorIs(t, system.Ask(tr.allocation, actors.ForwardThroughMock{
 		To:  self,
 		Msg: task.BuildTaskSpec{},
-	}).Error())
-	require.True(t, db.AssertNotCalled(t, "AddTrial", mock.Anything),
-		"trial should not save itself when canceled before ready")
+	}).Error(), task.ErrAlreadyCancelled{})
 	require.True(t, db.AssertExpectations(t))
 
 	// After the allocation exits, we should error.
+	db.On("UpdateTrial", 0, model.CanceledState).Return(nil)
 	system.Tell(tr.allocation, actors.ForwardThroughMock{
 		To:  self,
 		Msg: &task.AllocationExited{},
 	})
 	require.NoError(t, tr.allocation.StopAndAwaitTermination())
 	require.NoError(t, self.AwaitTermination())
-	require.True(t, db.AssertNotCalled(t, "UpdateTrial", mock.Anything),
-		"trial was not saved so no update should happen")
 	require.True(t, db.AssertExpectations(t))
 
 	// But the actor itself should have the state recorded.
@@ -209,7 +204,9 @@ func setup(t *testing.T) (*actor.System, *mocks.DB, model.RequestID, *trial, *ac
 
 	// mock db.
 	db := &mocks.DB{}
+	db.On("AddTrial", mock.Anything).Return(nil)
 	db.On("AddTask", mock.Anything).Return(nil)
+	db.On("UpdateTrial", mock.Anything, model.ActiveState).Return(nil)
 
 	// instantiate the trial
 	rID := model.NewRequestID(rand.Reader)

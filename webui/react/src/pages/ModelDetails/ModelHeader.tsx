@@ -7,6 +7,7 @@ import DeleteModelModal from 'components/DeleteModelModal';
 import InfoBox, { InfoRow } from 'components/InfoBox';
 import Breadcrumb from 'components/kit/Breadcrumb';
 import Button from 'components/kit/Button';
+import Icon from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
 import Tags, { tagsActionHelper } from 'components/kit/Tags';
 import Avatar from 'components/kit/UserAvatar';
@@ -17,7 +18,6 @@ import TimeAgo from 'components/TimeAgo';
 import usePermissions from 'hooks/usePermissions';
 import { WorkspaceDetailsTab } from 'pages/WorkspaceDetails';
 import { paths } from 'routes/utils';
-import Icon from 'shared/components/Icon/Icon';
 import Spinner from 'shared/components/Spinner';
 import { ValueOf } from 'shared/types';
 import { formatDatetime } from 'shared/utils/datetime';
@@ -206,7 +206,7 @@ const ModelHeader: React.FC<Props> = ({
       <div className={css.headerContent}>
         <div className={css.mainRow}>
           <Space className={css.nameAndIcon}>
-            <Icon name="model" size="big" />
+            <Icon name="model" size="big" title="Model name" />
             <h1 className={css.name}>{model.name}</h1>
           </Space>
           <Space size="small">
@@ -214,9 +214,10 @@ const ModelHeader: React.FC<Props> = ({
               disabled={!canDeleteModelFlag && !canModifyModelFlag}
               menu={menu}
               trigger={['click']}>
-              <Button type="text">
-                <Icon name="overflow-horizontal" size="tiny" />
-              </Button>
+              <Button
+                icon={<Icon name="overflow-horizontal" size="tiny" title="Action menu" />}
+                type="text"
+              />
             </Dropdown>
           </Space>
         </div>

@@ -420,7 +420,7 @@ export interface Metrics extends Api.V1Metrics {
   batchMetrics?: Array<MetricStruct>;
 }
 
-export type Metadata = Record<RecordKey, string>;
+export type Metadata = Record<RecordKey, string | object>;
 
 export interface CoreApiGenericCheckpoint {
   allocationId?: string;
@@ -547,7 +547,7 @@ export interface ExperimentItem {
 }
 
 export interface ExperimentWithTrial {
-  experiment?: ExperimentItem;
+  experiment: ExperimentItem;
   bestTrial?: TrialItem;
 }
 
@@ -847,6 +847,13 @@ export interface Project {
 
 export interface ProjectPagination extends WithPagination {
   projects: Project[];
+}
+
+export interface ProjectColumn {
+  column: string;
+  location: Api.V1LocationType;
+  type: Api.V1ColumnType;
+  displayName?: string;
 }
 
 export interface Permission {

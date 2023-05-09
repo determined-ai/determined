@@ -12,7 +12,7 @@ Determined EE provides an OpenID Connect (OIDC) integration allowing users to us
 (SSO) with their organization's identity provider (IdP). OIDC is an extension of OAuth 2.0 which
 allows applications to request information about authenticated users.
 
-Note that users can only login in via OpenID Connect if they have already been provisioned into
+Note that users can only log in via OpenID Connect if they have already been provisioned into
 Determined. This can be done manually, or via SCIM.
 
 ********************
@@ -60,7 +60,7 @@ Then configure the following options:
    -  -  Sign-out redirect URIs
       -  ``https://determined.example.com/det/logout``
 
-Take note of the Domain, Client ID and Client Secret as you will need to add them to the Determined
+Take note of the Domain, Client ID, and Client Secret. You will need to add these to the Determined
 Determined master configuration in ``master.yaml``. The Domain corresponds to the ``idp_sso_url``
 field.
 

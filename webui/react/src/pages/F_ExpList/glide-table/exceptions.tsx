@@ -93,7 +93,7 @@ export const Error: React.FC<{ fetchExperiments?: () => void }> = ({ fetchExperi
 
 export const Loading: React.FC<{ width: number }> = ({ width }) => (
   <>
-    {[...Array(22)].map((x, i) => (
+    {[...Array(21)].map((x, i) => (
       <Row key={i} style={{ paddingBottom: '4px' }}>
         <SkeletonButton style={{ width: width - 20 }} />
       </Row>

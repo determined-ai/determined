@@ -13,6 +13,7 @@ import DynamicIcon from 'components/DynamicIcon';
 import FilterCounter from 'components/FilterCounter';
 import Button from 'components/kit/Button';
 import Empty from 'components/kit/Empty';
+import Icon from 'components/kit/Icon';
 import Input from 'components/kit/Input';
 import { useModal } from 'components/kit/Modal';
 import Tags, { tagsActionHelper } from 'components/kit/Tags';
@@ -43,7 +44,6 @@ import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { archiveModel, getModelLabels, getModels, patchModel, unarchiveModel } from 'services/api';
 import { V1GetModelsRequestSortBy } from 'services/api-ts-sdk';
-import Icon from 'shared/components/Icon/Icon';
 import usePolling from 'shared/hooks/usePolling';
 import { ValueOf } from 'shared/types';
 import { isEqual } from 'shared/utils/data';
@@ -159,9 +159,6 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
 
   usePolling(fetchAll, { rerunOnNewFn: true });
 
-  useEffect(() => userStore.startPolling(), []);
-  useEffect(() => workspaceStore.startPolling(), []);
-
   /**
    * Get new models based on changes to the pagination and sorter.
    */
@@ -235,7 +232,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
     [handleUserFilterApply, handleUserFilterReset, settings.users],
   );
 
-  const tableSearchIcon = useCallback(() => <Icon name="search" size="tiny" />, []);
+  const tableSearchIcon = useCallback(() => <Icon name="search" size="tiny" title="Search" />, []);
 
   const handleNameSearchApply = useCallback(
     (newSearch: string) => {
@@ -334,7 +331,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
       }
       const workspaceId = record.workspaceId;
       return (
-        <Tooltip placement="top" title={workspace?.name}>
+        <Tooltip content={workspace?.name} placement="top">
           <div className={`${css.centerVertically} ${css.centerHorizontally}`}>
             <Link
               path={
@@ -462,7 +459,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
           disabled={!canDeleteModelFlag && !canModifyModelFlag}
           menu={ModelActionMenu(record, canDeleteModelFlag, canModifyModelFlag)}
           trigger={['click']}>
-          <Button icon={<Icon name="overflow-vertical" />} type="text" />
+          <Button icon={<Icon name="overflow-vertical" title="Action menu" />} type="text" />
         </Dropdown>
       );
     };
@@ -705,7 +702,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
           {canCreateModels ? (
             <Button onClick={showCreateModelModal}>New Model</Button>
           ) : (
-            <Tooltip placement="leftBottom" title="User lacks permission to create models">
+            <Tooltip content="User lacks permission to create models" placement="leftBottom">
               <div>
                 <Button disabled onClick={showCreateModelModal}>
                   New Model

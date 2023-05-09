@@ -1,6 +1,7 @@
 import { Space } from 'antd';
 import { SelectValue } from 'antd/es/select';
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { throttle } from 'throttle-debounce';
 
 import Button from 'components/kit/Button';
 import Input from 'components/kit/Input';
@@ -45,6 +46,8 @@ const LogViewerSelect: React.FC<Props> = ({
   showSearch,
   values,
 }: Props) => {
+  const [filters, setFilters] = useState<Filters>(values);
+
   const selectOptions = useMemo(() => {
     const { agentIds, allocationIds, containerIds, rankIds } = options;
     return {
@@ -86,31 +89,60 @@ const LogViewerSelect: React.FC<Props> = ({
 
   const handleChange = useCallback(
     (key: keyof Filters, caster: NumberConstructor | StringConstructor) => (value: SelectValue) => {
-      onChange?.({ ...values, [key]: (value as Array<string>).map((item) => caster(item)) });
+      setFilters((prev) => ({
+        ...prev,
+        [key]: (value as Array<string>).map((item) => caster(item)),
+      }));
     },
-    [onChange, values],
+    [],
   );
 
   const handleSearch = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) =>
-      onChange?.({ ...values, searchText: e.target.value }),
-    [onChange, values],
+      setFilters((prev) => ({ ...prev, searchText: e.target.value })),
+    [],
   );
 
-  const handleReset = useCallback(() => onReset?.(), [onReset]);
+  const handleReset = useCallback(() => {
+    setFilters({});
+    onReset?.();
+  }, [onReset]);
+
+  const throttledChangeFilter = useMemo(
+    () =>
+      throttle(
+        500,
+        (f: Filters) => {
+          onChange?.(f);
+        },
+        { noLeading: true },
+      ),
+    [onChange],
+  );
+
+  useEffect(() => {
+    if (!filters) return;
+    throttledChangeFilter(filters);
+  }, [filters, throttledChangeFilter]);
+
+  useEffect(() => {
+    return () => {
+      throttledChangeFilter.cancel();
+    };
+  }, [throttledChangeFilter]);
 
   return (
     <>
       <Space>
         {showSearch && (
-          <Input placeholder="Search Logs..." value={values.searchText} onChange={handleSearch} />
+          <Input placeholder="Search Logs..." value={filters.searchText} onChange={handleSearch} />
         )}
         {moreThanOne.allocationIds && (
           <Select
             disableTags
             mode="multiple"
             placeholder={`All ${LABELS.allocationIds}`}
-            value={values.allocationIds}
+            value={filters.allocationIds}
             width={150}
             onChange={handleChange('allocationIds', String)}>
             {selectOptions?.allocationIds?.map((id, index) => (
@@ -125,7 +157,7 @@ const LogViewerSelect: React.FC<Props> = ({
             disableTags
             mode="multiple"
             placeholder={`All ${LABELS.agentIds}`}
-            value={values.agentIds}
+            value={filters.agentIds}
             width={150}
             onChange={handleChange('agentIds', String)}>
             {selectOptions?.agentIds?.map((id, index) => (
@@ -140,7 +172,7 @@ const LogViewerSelect: React.FC<Props> = ({
             disableTags
             mode="multiple"
             placeholder={`All ${LABELS.containerIds}`}
-            value={values.containerIds}
+            value={filters.containerIds}
             width={150}
             onChange={handleChange('containerIds', String)}>
             {selectOptions?.containerIds?.map((id, index) => (
@@ -155,7 +187,7 @@ const LogViewerSelect: React.FC<Props> = ({
             disableTags
             mode="multiple"
             placeholder={`All ${LABELS.rankIds}`}
-            value={values.rankIds}
+            value={filters.rankIds}
             width={150}
             onChange={handleChange('rankIds', Number)}>
             {selectOptions?.rankIds?.map((id, index) => (
@@ -169,7 +201,7 @@ const LogViewerSelect: React.FC<Props> = ({
           disableTags
           mode="multiple"
           placeholder={`All ${LABELS.levels}`}
-          value={values.levels}
+          value={filters.levels}
           width={150}
           onChange={handleChange('levels', String)}>
           {selectOptions?.levels.map((level) => (

@@ -6,6 +6,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import ConfigureAgentModalComponent from 'components/ConfigureAgentModal';
 import CreateUserModalComponent from 'components/CreateUserModal';
 import Button from 'components/kit/Button';
+import Icon from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
 import ManageGroupsModalComponent from 'components/ManageGroupsModal';
 import Page from 'components/Page';
@@ -30,7 +31,6 @@ import { getGroups, patchUser } from 'services/api';
 import { V1GetUsersRequestSortBy, V1GroupSearchResult } from 'services/api-ts-sdk';
 import { GetUsersParams } from 'services/types';
 import dropdownCss from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
-import Icon from 'shared/components/Icon/Icon';
 import { ValueOf } from 'shared/types';
 import { isEqual } from 'shared/utils/data';
 import { validateDetApiEnum } from 'shared/utils/service';
@@ -132,7 +132,7 @@ const UserActionDropdown = ({ fetchUsers, user, groups, userManagementEnabled }:
         menu={{ items: menuItems, onClick: onItemClick }}
         placement="bottomRight"
         trigger={['click']}>
-        <Button ghost icon={<Icon name="overflow-vertical" />} />
+        <Button ghost icon={<Icon name="overflow-vertical" title="Action menu" />} />
       </Dropdown>
       <ViewUserModal.Component user={user} viewOnly onClose={fetchUsers} />
       <EditUserModal.Component user={user} onClose={fetchUsers} />
@@ -162,7 +162,10 @@ const UserManagement: React.FC = () => {
   );
   const loadableUsers = useObservable(userStore.getUsers(params));
   const users = Loadable.getOrElse([], loadableUsers);
-  const total = users.length;
+  const pagination = Loadable.getOrElse(
+    undefined,
+    useObservable(userStore.getUsersPagination(params)),
+  );
   const canceler = useRef(new AbortController());
 
   const rbacEnabled = useFeature().isOn('rbac');
@@ -228,7 +231,7 @@ const UserManagement: React.FC = () => {
     [handleNameSearchApply, handleNameSearchReset, settings.name],
   );
 
-  const filterIcon = useCallback(() => <Icon name="search" size="tiny" />, []);
+  const filterIcon = useCallback(() => <Icon name="search" size="tiny" title="Search" />, []);
 
   const columns = useMemo(() => {
     const actionRenderer = (_: string, record: DetailedUser) => {
@@ -308,7 +311,7 @@ const UserManagement: React.FC = () => {
             limit: settings.tableLimit,
             offset: settings.tableOffset,
           },
-          total,
+          pagination?.total ?? 0,
         )}
         rowClassName={defaultRowClassName({ clickable: false })}
         rowKey="id"
@@ -326,7 +329,7 @@ const UserManagement: React.FC = () => {
     ) : (
       <SkeletonTable columns={columns.length} />
     );
-  }, [users, loadableUsers, settings, columns, total, updateSettings]);
+  }, [users, loadableUsers, settings, columns, pagination, updateSettings]);
   return (
     <Page bodyNoPadding containerRef={pageRef}>
       <Section

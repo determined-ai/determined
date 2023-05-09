@@ -3,6 +3,7 @@ import { default as MarkdownViewer } from 'markdown-to-jsx';
 import React, { useMemo } from 'react';
 
 import Pivot from 'components/kit/Pivot';
+import useResize from 'hooks/useResize';
 import Spinner from 'shared/components/Spinner/Spinner';
 
 import css from './Markdown.module.scss';
@@ -48,6 +49,7 @@ const Markdown: React.FC<Props> = ({
   onChange,
   onClick,
 }: Props) => {
+  const resize = useResize();
   const tabItems: TabsProps['items'] = useMemo(() => {
     return [
       {
@@ -61,6 +63,7 @@ const Markdown: React.FC<Props> = ({
               }>
               <MonacoEditor
                 defaultValue={markdown}
+                height={resize.height - 420}
                 language="markdown"
                 options={{
                   folding: false,
@@ -87,7 +90,7 @@ const Markdown: React.FC<Props> = ({
         label: 'Preview',
       },
     ];
-  }, [markdown, onChange, onClick]);
+  }, [markdown, onChange, onClick, resize]);
 
   return (
     <div aria-label="markdown-editor" className={css.base} tabIndex={0}>

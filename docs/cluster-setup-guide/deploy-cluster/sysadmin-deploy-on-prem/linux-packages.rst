@@ -126,7 +126,7 @@ Master and Agent
          sudo rpm -i <path to downloaded package>
 
    Before running the Determined agent, you will have to :ref:`install Docker <install-docker>` on
-   each agent machine and, if the machine has GPUs, ensure that the :ref:`Nvidia Container Toolkit
+   each agent machine and, if the machine has GPUs, ensure that the :ref:`NVIDIA Container Toolkit
    <validate-nvidia-container-toolkit>` is working as expected.
 
 .. _configure_the_cluster:

@@ -828,3 +828,6 @@ export const mapV1ExperimentActionResults = (
     { failed: [], successful: [] } as types.BulkActionResult,
   );
 };
+
+export const decodeProjectColumnsResponse = (r: unknown): ioTypes.ioTypeProjectColumnsResponse =>
+  ioTypes.decode(ioTypes.ioProjectColumnsResponse, r);

@@ -13,7 +13,7 @@
 | PBS >= 2021.1.2                            |
 +--------------------------------------------+
 | Apptainer >= 1.0 Singularity >= 3.7 or     |
-| Enroot >= 3.4.0 or PodMan >= 3.3.1         |
+| Enroot >= 3.4.0 or Podman >= 3.3.1         |
 +--------------------------------------------+
 | Launcher (``hpe-hpc-launcher``) >= 3.2.7   |
 +--------------------------------------------+
@@ -46,7 +46,7 @@ follow the steps in the
 -  `Singularity <https://docs.sylabs.io/guides/3.7/user-guide/introduction.html>`__
 -  `Apptainer <https://apptainer.org/>`__
 -  `NVIDIA Enroot <https://github.com/NVIDIA/enroot>`__
--  `PodMan <https://docs.podman.io>`__
+-  `Podman <https://docs.podman.io>`__
 
 .. toctree::
    :maxdepth: 1

@@ -81,7 +81,7 @@ const TrialChart: React.FC<Props> = ({
       }
 
       mWrapper.data.forEach((avgMetrics) => {
-        if (avgMetrics.values[metric.name]) {
+        if (avgMetrics.values[metric.name] || avgMetrics.values[metric.name] === 0) {
           if (!xValues.includes(avgMetrics.batches)) {
             xValues.push(avgMetrics.batches);
           }
@@ -110,7 +110,10 @@ const TrialChart: React.FC<Props> = ({
       height: 400,
       key: trialId,
       legend: { show: false },
-      plugins: [tooltipsPlugin(), trackAxis()],
+      plugins: [
+        tooltipsPlugin({ closeOnMouseExit: true, isShownEmptyVal: true, seriesColors: [] }),
+        trackAxis(),
+      ],
       scales: { x: { time: false }, y: { distr: scale === Scale.Log ? 3 : 1 } },
       series: [
         { label: 'Batch' },

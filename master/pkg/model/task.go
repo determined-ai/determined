@@ -102,6 +102,9 @@ type Allocation struct {
 	State        *AllocationState `db:"state" bun:"state"`
 	IsReady      *bool            `db:"is_ready" bun:"is_ready"`
 	Ports        map[string]int   `db:"ports" bun:"ports,notnull"`
+	// ProxyAddress stores the explicitly provided task-provided proxy address for resource
+	// managers that do not supply us with it. Comes from `determined.exec.prep_container --proxy`.
+	ProxyAddress *string `db:"proxy_address" bun:"proxy_address"`
 }
 
 // AllocationState represents the current state of the task. Value indicates a partial ordering.

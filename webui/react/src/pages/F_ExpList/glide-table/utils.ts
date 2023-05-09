@@ -56,7 +56,7 @@ export const getTheme = (appTheme: Theme): DataEditorProps['theme'] => {
     bgCell: appTheme.stageWeak,
     bgHeader: appTheme.surface,
     bgHeaderHovered: appTheme.surfaceStrong,
-    borderColor: '#00000000',
+    borderColor: appTheme.stageBorderStrong,
     fontFamily: appTheme.fontFamily,
     headerBottomBorderColor: appTheme.stageStrong,
     headerFontStyle: 'normal 12px',

@@ -2,8 +2,8 @@ import React, { useEffect, useRef, useState } from 'react';
 
 import Dropdown, { Placement } from 'components/Dropdown';
 import Button from 'components/kit/Button';
+import Icon from 'components/kit/Icon';
 import useResize from 'hooks/useResize';
-import Icon from 'shared/components/Icon/Icon';
 
 import css from './ResponsiveFilters.module.scss';
 
@@ -52,7 +52,7 @@ const ResponsiveFilters: React.FC<Props> = ({ children, hasFiltersApplied }: Pro
             <Button>Filters</Button>
           </div>
           <div className={css.filtersButtonMobile}>
-            <Button icon={<Icon name="filter" />} />
+            <Button icon={<Icon name="filter" title="Filters" />} />
           </div>
         </Dropdown>
       ) : (

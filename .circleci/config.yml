@@ -24,7 +24,7 @@ executors:
 parameters:
   det-version:
     type: string
-    default: 0.21.2-dev0
+    default: 0.22.1-dev0
   docker-image:
     type: string
     default: determinedai/cimg-base:latest
@@ -34,6 +34,12 @@ parameters:
   gpu-machine-image:
     type: string
     default: ubuntu-2004-cuda-11.2:202103-01
+  # DEFAULT_PT_GPU_IMAGE: Pytorch training image reference used by the tests
+  # Inject here as a parameter so that it is updated by bumpversion, and can
+  # be referenced by --ee testing.
+  default-pt-gpu-image:
+    type: string
+    default: determinedai/environments:cuda-11.3-pytorch-1.12-gpu-6eceaca
   # Some python, go, and react dependencies are cached by circleci via `save_cache`/`restore_cache`.
   # If the dependencies stay the same, but the circleci code that would produce them is changed,
   # it may be necessary to invalidate the cache by incrementing this value.
@@ -41,7 +47,7 @@ parameters:
   # the old build may be cached, and you may need to invalidate it.
   cache-buster:
     type: string
-    default: v1dev20
+    default: v1dev23
   gke-version:
     type: string
     default: "1.23.16"
@@ -125,6 +131,23 @@ commands:
               echo "detected non-docs-only changes: $DIFF_DIRS"
             fi
 
+  skip-if-not-docs:
+    steps:
+      - run: git remote add upstream https://github.com/determined-ai/determined
+      - run: git fetch upstream
+      - run:
+          name: check for any docs changes
+          command: |
+            MERGE_BASE="$(git merge-base upstream/main HEAD)"
+            DIFF_DIRS="$(git diff-tree --no-commit-id --name-only "$MERGE_BASE" HEAD)"
+            # check "shared" is in the list of changed directories
+            if [[ "$DIFF_DIRS" == *"docs"* ]]; then
+              echo "docs change detected, running downstream steps"
+            else
+              echo "detected non-docs changes, halting job now"
+              circleci-agent step halt
+            fi
+
   skip-if-webui-only:
     steps:
       - run: git fetch upstream
@@ -191,11 +214,11 @@ commands:
       - when:
           condition: <<parameters.tf1>>
           steps:
-            - run: docker pull determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-a8b9c02
+            - run: docker pull determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-6eceaca
       - when:
           condition: <<parameters.tf2>>
           steps:
-            - run: docker pull determinedai/environments:py-3.8-pytorch-1.12-tf-2.11-cpu-a8b9c02
+            - run: docker pull determinedai/environments:py-3.8-pytorch-1.12-tf-2.11-cpu-6eceaca
 
   login-docker:
     parameters:
@@ -268,9 +291,7 @@ commands:
       - run:
           name: Get React dependencies
           command: |
-            if [ ! -d "webui/react/node_modules" ]; then
-              make -C webui/react get-deps-npm
-            fi
+            make -C webui/react node_modules/done.stamp
       - save_cache:
           key: det-react-deps-<<pipeline.parameters.cache-buster>>-{{ checksum  "webui/react/package-lock.json" }}
           paths:
@@ -361,6 +382,17 @@ commands:
                   echo 'export PATH=/tmp/venv/bin:$PATH' >> $BASH_ENV
                   /tmp/venv/bin/python -m pip install --upgrade pip wheel setuptools
 
+      # Either of make -C {harness,model_hub} build require pypa's build module.
+      - when:
+          condition:
+            or:
+              - <<parameters.determined>>
+              - <<parameters.model-hub>>
+          steps:
+            - run:
+                name: Install pypa builder
+                command: python3 -m pip install build
+
       - run:
           name: Write cache key
           command: |
@@ -418,6 +450,29 @@ commands:
       - run: pip freeze --all
       # Allow this to fail, but it is useful for debugging.
       - run: sh -c "pip check || true"
+
+  setup-docker-env:
+    description: Set up and create docker env.
+    parameters:
+      image:
+        type: string
+      image-name:
+        type: string
+        default: "test_container"
+      bind-mount:
+        type: string
+        default: "$PWD"
+      extras-requires:
+        type: string
+        default: ""
+    steps:
+      - run: docker run -v <<parameters.bind-mount>>:/mnt/project --gpus=all -it -d --name <<parameters.image-name>> --workdir /mnt/project <<parameters.image>>
+      - run:
+          name: Install <<parameters.extras-requires>>
+          command: |
+            if [ -n "<<parameters.extras-requires>>" ]; then
+              docker exec <<parameters.image-name>> tools/scripts/retry.sh pip install --progress-bar off <<parameters.extras-requires>>
+            fi
 
   run-e2e-tests:
     parameters:
@@ -1071,7 +1126,8 @@ jobs:
             - common/dist
             - harness/dist
             - model_hub/dist
-            - docs/site/html
+            - docs/build
+            - docs/site
       - run: tar czf docs.tgz docs/site/html
       - store_artifacts:
           path: docs.tgz
@@ -1102,6 +1158,33 @@ jobs:
       - run: apk add make curl python3 py3-pip
       - run: pip3 install awscli
       - run: make -C docs publish
+
+  # TODO(danh): eventually replace 'publish-docs' with this new workflow after
+  # all dependent scripts are updated.
+  # Related work: https://hpe-aiatscale.atlassian.net/browse/INFENG-183
+  publish-docs-new:
+    parameters:
+      preview:
+        type: boolean
+        default: true
+    docker:
+      - image: <<pipeline.parameters.docker-image>>
+    steps:
+      - checkout
+      - skip-if-not-docs
+      - attach_workspace:
+          at: .
+      - setup-python-venv:
+          install-python: false
+          determined: true
+          extras-requires: "tensorflow==2.12.0 torch==1.9.0 torchvision==0.10.0"
+          model-hub: true
+          extra-requirements-file: "docs/requirements.txt"
+          executor: <<pipeline.parameters.docker-image>>
+      - when:
+          condition: <<parameters.preview>>
+          steps:
+            - run: make -C docs preview
 
   package-and-push-system-local:
     docker:
@@ -1376,6 +1459,25 @@ jobs:
           paths:
             - webui/react/build
 
+  test-e2e-react:
+    docker:
+      - image: mcr.microsoft.com/playwright:v1.32.3-focal
+    resource_class: large
+    steps:
+      - checkout-with-sm
+      - skip-if-docs-only
+      - run: apt-get update && apt-get -y install make
+      - react-get-deps
+      - run: npx playwright install --with-deps && npx playwright install chrome
+      - run: SERVER_ADDRESS=${PW_SERVER_ADDRESS} npm run build --prefix webui/react
+      - run: PW_USER_NAME=${PW_USER_NAME} PW_PASSWORD=${PW_PASSWORD} npm run e2e --prefix webui/react
+      - store_artifacts:
+          path: webui/react/src/e2e/playwright-report
+      - store_artifacts:
+          path: webui/react/src/e2e/test-results
+      - store_test_results:
+          path: webui/react/src/e2e/junit-results.xml
+
   test-unit-react:
     docker:
       - image: cimg/node:16.19.0
@@ -1394,6 +1496,43 @@ jobs:
           path: webui/react/coverage/junit.xml
       - store_artifacts:
           path: webui/react/coverage
+
+  test-unit-react-screenshot:
+    docker:
+      - image: cimg/node:16.19.0
+        environment:
+          CI: "true"
+    resource_class: xlarge
+    steps:
+      - checkout-with-sm
+      - skip-if-docs-only
+      - run:
+          command: |
+            MERGE_BASE="$(git merge-base upstream/main HEAD)"
+            DIFF_PATHS="webui/react/src/components/kit webui/react/src/pages/DesignKit.tsx webui/react/design"
+            if git diff --quiet $MERGE_BASE -- $DIFF_PATHS; then
+              echo "DesignKit not changed, halting job now."
+              circleci-agent step halt
+            else
+              echo "DesignKit changed, running downstream check."
+            fi
+          name: check for designkit changes
+      - react-get-deps
+      - run:
+          command: make -C webui/react visual-test
+          name: generate screenshots
+      - store_artifacts:
+          path: webui/react/screenshot-summary.html
+      - run:
+          command: |
+            export ARTIFACT_URL="https://output.circle-artifacts.com/output/job/$CIRCLE_WORKFLOW_JOB_ID/artifacts/0/webui/react/screenshot-summary.html"
+            if [ -f webui/react/.diff-detected ] ; then
+              export MESSAGE="Hello! DesignKit diffs for commit $CIRCLE_SHA1 are available for you to view [here]($ARTIFACT_URL)"
+            else
+              export MESSAGE="Hello! No changes detected to DesignKit for commit $CIRCLE_SHA1. Verify [here]($ARTIFACT_URL)"
+            fi
+            node webui/react/scripts/make-github-comment.mjs "$MESSAGE"
+          name: report results
 
   test-intg-downstream:
     docker:
@@ -1616,25 +1755,49 @@ jobs:
 
   test-unit-harness-gpu:
     machine:
-      resource_class: gpu.nvidia.small
       image: <<pipeline.parameters.gpu-machine-image>>
+    resource_class: gpu.nvidia.small
     steps:
       - checkout
       - skip-if-docs-only
       - skip-if-webui-only
+      - setup-docker-env:
+          image: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.21.2
+          image-name: test_container
+          extras-requires: "tensorflow==2.11.0 mypy pytest coverage"
+      - run: mkdir -p $HOME/.local/bin
       - install-codecov
-      - setup-python-venv:
-          determined: true
-          extras-requires: "tensorflow==2.12.0 torch==1.9.0 torchvision==0.10.0"
-          extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
-          executor: <<pipeline.parameters.docker-image>>
-      - run: COVERAGE_FILE=$PWD/test-unit-harness-gpu-pycov make -C harness test-gpu
-      - run: coverage xml -i --data-file=./test-unit-harness-gpu-pycov
+      - run: echo 'export PATH=$PATH:$HOME/.local/bin' >> $BASH_ENV
+      - run: docker exec -e COVERAGE_FILE=/mnt/project/test-unit-harness-gpu-pycov test_container make -C harness test-gpu
+      - run: docker exec test_container coverage xml -i --data-file=./test-unit-harness-gpu-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
       - persist_to_workspace:
           root: .
           paths:
             - test-unit-harness-gpu-pycov
+
+  test-unit-harness-gpu-lightning:
+    machine:
+      image: <<pipeline.parameters.gpu-machine-image>>
+    resource_class: gpu.nvidia.small
+    steps:
+      - checkout
+      - skip-if-docs-only
+      - skip-if-webui-only
+      - setup-docker-env:
+          image: determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.5-tf-2.4-gpu-0.18.5
+          image-name: test_container
+          extras-requires: "tensorflow==2.12.0 torch==1.9.0 torchvision==0.10.0 mypy pytest coverage"
+      - run: mkdir -p $HOME/.local/bin
+      - install-codecov
+      - run: echo 'export PATH=$PATH:$HOME/.local/bin' >> $BASH_ENV
+      - run: docker exec -e COVERAGE_FILE=/mnt/project/test-unit-harness-gpu-lightning-pycov test_container make -C harness test-gpu-lightning
+      - run: docker exec test_container coverage xml -i --data-file=./test-unit-harness-gpu-lightning-pycov
+      - run: codecov -v -t $CODECOV_TOKEN -F harness
+      - persist_to_workspace:
+          root: .
+          paths:
+            - test-unit-harness-gpu-lightning-pycov
 
   test-unit-harness-tf2:
     docker:
@@ -2253,6 +2416,19 @@ workflows:
       - lint-react
       - lint-secrets
 
+  previews:
+    jobs:
+      - build-proto
+      - build-helm
+      - build-docs:
+          requires:
+            - build-helm
+            - build-proto
+      - publish-docs-new:
+          requires:
+            - build-docs
+          context: aws
+
   test-cli:
     jobs:
       - test-cli:
@@ -2265,9 +2441,12 @@ workflows:
     jobs:
       - test-unit-go
       - test-unit-react
+      - test-unit-react-screenshot:
+          context: github-write
+          filters: *any-upstream
       - test-unit-harness-cpu
-      # Exclude gpu tests for now since we do not have access to those instance types on circleci.
-      #- test-unit-harness-gpu
+      - test-unit-harness-gpu
+      - test-unit-harness-gpu-lightning
       - test-unit-harness-tf2
       - test-unit-model-hub
       - test-unit-storage:
@@ -2299,6 +2478,9 @@ workflows:
       - build-helm
       - build-react:
           dev-mode: true
+      - test-e2e-react:
+          context: playwright
+          filters: *any-upstream
       - build-docs:
           requires:
             - build-helm
