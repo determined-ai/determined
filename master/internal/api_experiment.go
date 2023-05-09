@@ -40,7 +40,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
 	"github.com/determined-ai/determined/master/pkg/protoutils/protoless"
-	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/searcher"
@@ -1208,27 +1207,10 @@ func (a *apiServer) CreateExperiment(
 		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
 	}
 
-	var commitDate *time.Time
-	pt, err := protoutils.ToTime(req.GitCommitDate)
-	if err == nil {
-		commitDate = &pt
-	}
-
-	detParams := CreateExperimentParams{
-		ConfigBytes:   req.Config,
-		ModelDef:      filesToArchive(req.ModelDefinition),
-		ValidateOnly:  req.ValidateOnly,
-		Template:      req.Template,
-		GitRemote:     req.GitRemote,
-		GitCommit:     req.GitCommit,
-		GitCommitter:  req.GitCommitter,
-		GitCommitDate: commitDate,
-	}
 	if req.ParentId != 0 {
-		detParams.ParentID = ptrs.Ptr(int(req.ParentId))
 		// Can't use getExperimentAndCheckDoActions since model.Experiment doesn't have ParentArchived.
 		var parentExp *experimentv1.Experiment
-		parentExp, err = a.getExperiment(ctx, *user, *detParams.ParentID)
+		parentExp, err = a.getExperiment(ctx, *user, int(req.ParentId))
 		if err != nil {
 			return nil, err
 		}
@@ -1247,13 +1229,9 @@ func (a *apiServer) CreateExperiment(
 				"forking an experiment in an archived workspace/project")
 		}
 	}
-	if req.ProjectId > 1 {
-		projectID := int(req.ProjectId)
-		detParams.ProjectID = &projectID
-	}
 
-	dbExp, activeConfig, p, validateOnly, taskSpec, err := a.m.parseCreateExperiment(
-		&detParams, user,
+	dbExp, activeConfig, p, taskSpec, err := a.m.parseCreateExperiment(
+		req, user,
 	)
 	if err != nil {
 		if _, ok := err.(ErrProjectNotFound); ok {
@@ -1265,7 +1243,7 @@ func (a *apiServer) CreateExperiment(
 		return nil, status.Errorf(codes.PermissionDenied, err.Error())
 	}
 
-	if validateOnly {
+	if req.ValidateOnly {
 		return &apiv1.CreateExperimentResponse{
 			Experiment: &experimentv1.Experiment{},
 		}, nil

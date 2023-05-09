@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
 
 	"github.com/ghodss/yaml"
@@ -21,6 +22,8 @@ import (
 	"github.com/determined-ai/determined/master/internal/project"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/protoutils"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/tasks"
@@ -218,22 +221,6 @@ func (m *Master) getExperimentModelDefinition(c echo.Context) error {
 	return c.Blob(http.StatusOK, "application/x-gtar", modelDef)
 }
 
-// CreateExperimentParams defines a request to create an experiment.
-type CreateExperimentParams struct {
-	Activate      bool            `json:"activate"`
-	ConfigBytes   string          `json:"experiment_config"`
-	Template      *string         `json:"template"`
-	ModelDef      archive.Archive `json:"model_definition"`
-	ParentID      *int            `json:"parent_id"`
-	Archived      bool            `json:"archived"`
-	GitRemote     *string         `json:"git_remote"`
-	GitCommit     *string         `json:"git_commit"`
-	GitCommitter  *string         `json:"git_committer"`
-	GitCommitDate *time.Time      `json:"git_commit_date"`
-	ValidateOnly  bool            `json:"validate_only"`
-	ProjectID     *int            `json:"project_id"`
-}
-
 // ErrProjectNotFound is returned in parseCreateExperiment for when project cannot be found
 // or when project cannot be viewed due to RBAC restrictions.
 type ErrProjectNotFound string
@@ -244,15 +231,14 @@ func (p ErrProjectNotFound) Error() string {
 }
 
 func getCreateExperimentsProject(
-	m *Master, params *CreateExperimentParams, user *model.User, config expconf.ExperimentConfig,
+	m *Master, req *apiv1.CreateExperimentRequest, user *model.User, config expconf.ExperimentConfig,
 ) (*projectv1.Project, error) {
-	// Place experiment in Uncategorized, unless project set in config or CreateExperimentParams.
-	// CreateExperimentParams has highest priority.
+	// Place experiment in Uncategorized, unless project set in request params or config.
 	var err error
 	projectID := 1
 	errProjectNotFound := ErrProjectNotFound(fmt.Sprintf("project (%d) not found", projectID))
-	if params.ProjectID != nil {
-		projectID = *params.ProjectID
+	if req.ProjectId > 1 {
+		projectID = int(req.ProjectId)
 		errProjectNotFound = ErrProjectNotFound(fmt.Sprintf("project (%d) not found", projectID))
 	} else {
 		if (config.Workspace() == "") != (config.Project() == "") {
@@ -285,27 +271,27 @@ func getCreateExperimentsProject(
 	return p, nil
 }
 
-func (m *Master) parseCreateExperiment(params *CreateExperimentParams, user *model.User) (
-	*model.Experiment, expconf.ExperimentConfig, *projectv1.Project, bool, *tasks.TaskSpec, error,
+func (m *Master) parseCreateExperiment(req *apiv1.CreateExperimentRequest, user *model.User) (
+	*model.Experiment, expconf.ExperimentConfig, *projectv1.Project, *tasks.TaskSpec, error,
 ) {
 	// Read the config as the user provided it.
-	config, err := expconf.ParseAnyExperimentConfigYAML([]byte(params.ConfigBytes))
+	config, err := expconf.ParseAnyExperimentConfigYAML([]byte(req.Config))
 	if err != nil {
-		return nil, config, nil, false, nil, errors.Wrap(err, "invalid experiment configuration")
+		return nil, config, nil, nil, errors.Wrap(err, "invalid experiment configuration")
 	}
 
 	// Apply the template that the user specified.
-	if params.Template != nil {
-		template, terr := m.db.TemplateByName(*params.Template)
+	if req.Template != nil {
+		template, terr := m.db.TemplateByName(*req.Template)
 		if terr != nil {
-			return nil, config, nil, false, nil, errors.Wrapf(
-				terr, "TemplateByName(%q)", *params.Template,
+			return nil, config, nil, nil, errors.Wrapf(
+				terr, "TemplateByName(%q)", *req.Template,
 			)
 		}
 		var tc expconf.ExperimentConfig
 		if yerr := yaml.Unmarshal(template.Config, &tc, yaml.DisallowUnknownFields); yerr != nil {
-			return nil, config, nil, false, nil, errors.Wrapf(
-				terr, "yaml.Unmarshal(template=%q)", *params.Template,
+			return nil, config, nil, nil, errors.Wrapf(
+				terr, "yaml.Unmarshal(template=%q)", *req.Template,
 			)
 		}
 		// Merge the template into the config.
@@ -317,10 +303,10 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams, user *mod
 	poolName, err := m.rm.ResolveResourcePool(
 		m.system, resources.ResourcePool(), resources.SlotsPerTrial())
 	if err != nil {
-		return nil, config, nil, false, nil, errors.Wrapf(err, "invalid resource configuration")
+		return nil, config, nil, nil, errors.Wrapf(err, "invalid resource configuration")
 	}
 	if err = m.rm.ValidateResources(m.system, poolName, resources.SlotsPerTrial(), false); err != nil {
-		return nil, config, nil, false, nil, errors.Wrapf(err, "error validating resources")
+		return nil, config, nil, nil, errors.Wrapf(err, "error validating resources")
 	}
 	taskContainerDefaults, err := m.rm.TaskContainerDefaults(
 		m.system,
@@ -328,15 +314,15 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams, user *mod
 		m.config.TaskContainerDefaults,
 	)
 	if err != nil {
-		return nil, config, nil, false, nil, errors.Wrapf(err, "error getting TaskContainerDefaults")
+		return nil, config, nil, nil, errors.Wrapf(err, "error getting TaskContainerDefaults")
 	}
 	taskSpec := *m.taskSpec
 	taskSpec.TaskContainerDefaults = taskContainerDefaults
 	taskSpec.TaskContainerDefaults.MergeIntoExpConfig(&config)
 
-	project, err := getCreateExperimentsProject(m, params, user, defaulted)
+	project, err := getCreateExperimentsProject(m, req, user, defaulted)
 	if err != nil {
-		return nil, config, nil, false, nil, err
+		return nil, config, nil, nil, err
 	}
 
 	// Merge in workspace's checkpoint storage into the conifg.
@@ -345,7 +331,7 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams, user *mod
 		Where("id = ?", project.WorkspaceId).
 		Column("checkpoint_storage_config").
 		Scan(context.TODO()); err != nil {
-		return nil, config, nil, false, nil, err
+		return nil, config, nil, nil, err
 	}
 	config.RawCheckpointStorage = schemas.Merge(
 		config.RawCheckpointStorage, w.CheckpointStorageConfig)
@@ -360,42 +346,50 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams, user *mod
 
 	// Make sure the experiment config has all eventuallyRequired fields.
 	if err = schemas.IsComplete(config); err != nil {
-		return nil, config, nil, false, nil, errors.Wrap(err, "invalid experiment configuration")
+		return nil, config, nil, nil, errors.Wrap(err, "invalid experiment configuration")
 	}
 
 	// Disallow EOL searchers.
 	if err = config.Searcher().AssertCurrent(); err != nil {
-		return nil, config, nil, false, nil, errors.Wrap(err, "invalid experiment configuration")
+		return nil, config, nil, nil, errors.Wrap(err, "invalid experiment configuration")
 	}
 
 	var modelBytes []byte
-	if params.ParentID != nil {
+	var parentID *int
+	if req.ParentId != 0 {
+		parentID = ptrs.Ptr(int(req.ParentId))
 		var dbErr error
-		modelBytes, dbErr = m.db.ExperimentModelDefinitionRaw(*params.ParentID)
+		modelBytes, dbErr = m.db.ExperimentModelDefinitionRaw(int(req.ParentId))
 		if dbErr != nil {
-			return nil, config, nil, false, nil, errors.Wrapf(
-				dbErr, "unable to find parent experiment %v", *params.ParentID)
+			return nil, config, nil, nil, errors.Wrapf(
+				dbErr, "unable to find parent experiment %v", req.ParentId)
 		}
 	} else {
 		var compressErr error
-		modelBytes, compressErr = archive.ToTarGz(params.ModelDef)
+		modelBytes, compressErr = archive.ToTarGz(filesToArchive(req.ModelDefinition))
 		if compressErr != nil {
-			return nil, config, nil, false, nil, errors.Wrapf(
+			return nil, config, nil, nil, errors.Wrapf(
 				compressErr, "unable to find compress model definition")
 		}
 	}
 
 	token, createSessionErr := m.db.StartUserSession(user)
 	if createSessionErr != nil {
-		return nil, config, nil, false, nil, errors.Wrapf(
+		return nil, config, nil, nil, errors.Wrapf(
 			createSessionErr, "unable to create user session inside task")
 	}
 	taskSpec.UserSessionToken = token
 	taskSpec.Owner = user
 
+	var commitDate *time.Time
+	pt, err := protoutils.ToTime(req.GitCommitDate)
+	if err == nil {
+		commitDate = &pt
+	}
+
 	dbExp, err := model.NewExperiment(
-		config, params.ConfigBytes, modelBytes, params.ParentID, params.Archived,
-		params.GitRemote, params.GitCommit, params.GitCommitter, params.GitCommitDate,
+		config, req.Config, modelBytes, parentID, false,
+		req.GitRemote, req.GitCommit, req.GitCommitter, commitDate,
 		int(project.Id),
 	)
 	if user != nil {
@@ -409,5 +403,5 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams, user *mod
 		taskSpec.Labels = append(taskSpec.Labels, label)
 	}
 
-	return dbExp, config, project, params.ValidateOnly, &taskSpec, err
+	return dbExp, config, project, &taskSpec, err
 }

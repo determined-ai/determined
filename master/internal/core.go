@@ -73,7 +73,6 @@ import (
 
 const (
 	maxConcurrentRestores = 10
-	defaultAskTimeout     = 2 * time.Second
 	webuiBaseRoute        = "/det"
 )
 
