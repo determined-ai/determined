@@ -128,7 +128,7 @@ test-intg: build/mock_gen.stamp
 
 .PHONY: bench
 bench:
-	go test -tags=integration -v -run="TestBenchmark" ./test/integration/api
+	go test -tags=integration -v -run="TestBenchmark" -benchtime=1x ./test/integration/api # TODO 1x
 
 
 .PHONY: pre-package
