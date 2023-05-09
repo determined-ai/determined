@@ -41,6 +41,7 @@ import { Loadable } from 'utils/loadable';
 import { openCommandResponse } from 'utils/wait';
 
 import ColumnPickerMenu from './ColumnPickerMenu';
+import MultiSortMenu, { Sort } from './MultiSortMenu';
 import css from './TableActionBar.module.scss';
 
 const batchActions = [
@@ -74,6 +75,8 @@ interface Props {
   filters: V1BulkExperimentFilters;
   initialVisibleColumns: string[];
   onAction: () => Promise<void>;
+  sorts: Sort[];
+  onSortChange: (sorts: Sort[]) => void;
   project: Project;
   projectColumns: Loadable<ProjectColumn[]>;
   selectAll: boolean;
@@ -87,9 +90,11 @@ const TableActionBar: React.FC<Props> = ({
   experiments,
   filters,
   onAction,
+  onSortChange,
   selectAll,
   selectedExperimentIds,
   handleUpdateExperimentList,
+  sorts,
   project,
   projectColumns,
   total,
@@ -288,6 +293,7 @@ const TableActionBar: React.FC<Props> = ({
   return (
     <>
       <Space className={css.base}>
+        <MultiSortMenu columns={projectColumns} sorts={sorts} onChange={onSortChange} />
         <ColumnPickerMenu
           initialVisibleColumns={initialVisibleColumns}
           projectColumns={projectColumns}

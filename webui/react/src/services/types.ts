@@ -99,8 +99,7 @@ export interface GetExperimentsParams extends PaginationParams {
 export interface SearchExperimentsParams extends PaginationParams {
   filter?: string;
   projectId?: number;
-  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-  options?: any;
+  sort?: string;
 }
 
 export interface BulkActionParams {
