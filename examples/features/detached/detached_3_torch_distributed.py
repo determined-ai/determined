@@ -14,7 +14,6 @@ import torch.distributed as dist
 
 config_text = """
 name: detached-mode-stage-3
-entrypoint: does not matter
 
 checkpoint_storage:
   host_path: /tmp

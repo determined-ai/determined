@@ -8,7 +8,6 @@ import determined.experimental
 
 config_text = """
 name: detached-mode-stage-2
-entrypoint: does not matter
 
 checkpoint_storage:
   host_path: /tmp
