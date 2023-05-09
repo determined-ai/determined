@@ -2,8 +2,8 @@ import { Select as AntdSelect, SelectProps as AntdSelectProps } from 'antd';
 import type { DefaultOptionType, RefSelectProps, SelectValue } from 'antd/es/select';
 import React, { forwardRef, useCallback, useMemo, useState } from 'react';
 
+import Icon from 'components/kit/Icon';
 import Label, { LabelTypes } from 'components/Label';
-import Icon from 'shared/components/Icon/Icon';
 
 import css from './Select.module.scss';
 
@@ -120,7 +120,7 @@ const Select: React.FC<React.PropsWithChildren<SelectProps>> = forwardRef(functi
         ref={ref}
         showSearch={!!onSearch || !!filterOption || searchable}
         style={{ width }}
-        suffixIcon={!loading ? <Icon name="arrow-down" size="tiny" /> : undefined}
+        suffixIcon={!loading ? <Icon name="arrow-down" size="tiny" title="Open" /> : undefined}
         value={value}
         onDropdownVisibleChange={handleDropdownVisibleChange}
         onSearch={onSearch}

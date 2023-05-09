@@ -13,6 +13,7 @@ import { Column, Columns } from 'components/kit/Columns';
 import Empty from 'components/kit/Empty';
 import Facepile from 'components/kit/Facepile';
 import Form from 'components/kit/Form';
+import Icon, { IconNameArray, IconSizeArray } from 'components/kit/Icon';
 import IconicButton from 'components/kit/IconicButton';
 import Input from 'components/kit/Input';
 import InputNumber from 'components/kit/InputNumber';
@@ -41,7 +42,6 @@ import { drawPointsPlugin } from 'components/UPlot/UPlotChart/drawPointsPlugin';
 import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin';
 import { V1LogLevel } from 'services/api-ts-sdk';
 import { mapV1LogsResponse } from 'services/decoder';
-import Icon from 'shared/components/Icon';
 import useUI from 'shared/contexts/stores/UI';
 import { ValueOf } from 'shared/types';
 import { noOp } from 'shared/utils/service';
@@ -66,6 +66,7 @@ const ComponentTitles = {
   Empty: 'Empty',
   Facepile: 'Facepile',
   Form: 'Form',
+  Icons: 'Icons',
   Input: 'Input',
   InputNumber: 'InputNumber',
   InputSearch: 'InputSearch',
@@ -1177,9 +1178,9 @@ const NameplateSection: React.FC = () => {
           name={testUser.username}
         />
         <li>No alias</li>
-        <Nameplate icon={<Icon name="group" />} name="testGroup123" />
+        <Nameplate icon={<Icon name="group" title="Group" />} name="testGroup123" />
         <li>Compact, no alias</li>
-        <Nameplate compact icon={<Icon name="group" />} name="testGroup123" />
+        <Nameplate compact icon={<Icon name="group" title="Group" />} name="testGroup123" />
       </AntDCard>
     </ComponentSection>
   );
@@ -1919,6 +1920,38 @@ const EmptySection: React.FC = () => {
   );
 };
 
+const IconsSection: React.FC = () => {
+  return (
+    <ComponentSection id="Icons" title="Icons">
+      <AntDCard>
+        <p>
+          An <code>{'<Icon>'}</code> component displays an icon from a custom font along with an
+          optional tooltip.
+        </p>
+      </AntDCard>
+      <AntDCard title="Usage">
+        <strong>Icon default</strong>
+        <Icon name="star" title="star" />
+        <strong>Icon variations</strong>
+        <p>Icon with tooltip</p>
+        <Icon name="star" title="Tooltip" />
+        <p>Icon sizes</p>
+        <Space wrap>
+          {IconSizeArray.map((size) => (
+            <Icon key={size} name="star" showTooltip size={size} title={size} />
+          ))}
+        </Space>
+        <p>All icons</p>
+        <Space wrap>
+          {IconNameArray.map((name) => (
+            <Icon key={name} name={name} showTooltip title={name} />
+          ))}
+        </Space>
+      </AntDCard>
+    </ComponentSection>
+  );
+};
+
 const ToggleSection: React.FC = () => {
   return (
     <ComponentSection id="Toggle" title="Toggle">
@@ -2291,6 +2324,7 @@ const Components = {
   Empty: <EmptySection />,
   Facepile: <FacepileSection />,
   Form: <FormSection />,
+  Icons: <IconsSection />,
   Input: <InputSection />,
   InputNumber: <InputNumberSection />,
   InputSearch: <InputSearchSection />,

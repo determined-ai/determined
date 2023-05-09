@@ -1,13 +1,13 @@
 import React, { ReactNode } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
+import Icon from 'components/kit/Icon';
 import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
 import { ColumnDef } from 'components/Table/InteractiveTable';
 import { relativeTimeRenderer } from 'components/Table/Table';
 import { paths } from 'routes/utils';
 import { getJupyterLabs, getTensorBoards } from 'services/api';
-import Icon from 'shared/components/Icon/Icon';
 import { floatToPercent, truncate } from 'shared/utils/string';
 import { CommandTask, Job, JobType } from 'types';
 import { jobTypeIconName, jobTypeLabel } from 'utils/job';
@@ -87,7 +87,7 @@ export const columns: ColumnDef<Job>[] = [
       const TypeCell = (
         <Tooltip content={title} placement="topLeft">
           <div>
-            <Icon name={jobTypeIconName(record.type)} />
+            <Icon name={jobTypeIconName(record.type)} title={jobTypeLabel(record.type)} />
           </div>
         </Tooltip>
       );
