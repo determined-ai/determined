@@ -34,12 +34,6 @@ import evaluate
 import torch
 import transformers
 from datasets import load_dataset
-from determined.integrations.huggingface import (
-    DetCallback,
-    create_consistent_hf_args_for_deepspeed,
-    get_hf_args_with_overwrites,
-)
-from determined.pytorch import dsat
 from torch.utils.tensorboard import SummaryWriter
 from transformers import (
     CONFIG_MAPPING,
@@ -61,6 +55,7 @@ from transformers.utils import check_min_version, send_example_telemetry
 from transformers.utils.versions import require_version
 
 import determined as det
+from determined.integrations.huggingface import DetCallback, get_hf_args_with_overwrites
 from determined.pytorch import dsat
 
 # Will error if the minimal version of Transformers is not installed. Remove at your own risks.
