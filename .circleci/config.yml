@@ -1432,9 +1432,6 @@ jobs:
       dev-mode:
         type: boolean
         default: false
-      quarantined:
-        type: boolean
-        default: false
     docker:
       - image: cimg/node:18.16.0
     resource_class: large
@@ -1446,10 +1443,6 @@ jobs:
           if <<parameters.dev-mode>>; then
             echo 'Setting development mode...'
             export DET_NODE_ENV=development
-          fi
-          if <<parameters.quarantined>>; then
-            echo 'Running quarantined tests...'
-            export QUARANTINED=yes
           fi
           make -C webui/react build
       - persist_to_workspace:
@@ -1494,6 +1487,19 @@ jobs:
           path: webui/react/coverage/junit.xml
       - store_artifacts:
           path: webui/react/coverage
+
+  test-unit-react-quarantined:
+    docker:
+      - image: cimg/node:16.19.0
+        environment:
+          CI: "true"
+          QUARANTINED: "true"
+    resource_class: xlarge
+    steps:
+      - checkout-with-sm
+      - skip-if-docs-only
+      - react-get-deps
+      - run: make -C webui/react test-ci
 
   test-unit-react-screenshot:
     docker:
@@ -2795,7 +2801,6 @@ workflows:
       - build-helm
       - build-react:
           dev-mode: true
-          quarantined: true
       - build-docs:
           requires:
             - build-helm
@@ -2825,6 +2830,8 @@ workflows:
               parallelism: [2]
               mark: ["det_deploy_local"]
               det-version: [$CIRCLE_SHA1]
+
+      - test-unit-react-quarantined
 
   test-e2e-longrunning:
     jobs:
