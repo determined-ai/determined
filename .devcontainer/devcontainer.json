@@ -35,7 +35,7 @@
 		{
 			"type": "volume",
 			"source": "dev-home",
-			"target": "/home/vscode"
+			"target": "/home"
 		},
 		{
 			"type": "volume",
@@ -44,8 +44,13 @@
 		},
 		{
 			"type": "volume",
-			"source": "dev-usr-local",
-			"target": "/usr/local"
+			"source": "dev-usr",
+			"target": "/usr"
+		},
+		{
+			"type": "volume",
+			"source": "dev-var",
+			"target": "/var"
 		}
 	],
 
@@ -57,5 +62,5 @@
 	// "remoteUser": "root",
 	"privileged": true,
 
-	"postStartCommand": ".devcontainer/startup.sh"
+	"postStartCommand": ".devcontainer/start.sh"
 }
