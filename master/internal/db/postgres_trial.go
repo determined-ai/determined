@@ -483,13 +483,13 @@ func (db *PgDB) updateTotalBatches(ctx context.Context, tx *sqlx.Tx, trialID int
 
 // AddTrialMetrics inserts a set of trial metrics to the database.
 func (db *PgDB) addTrialMetrics(
-	ctx context.Context, m *trialv1.TrialMetrics, mType model.MetricPartitionType,
+	ctx context.Context, m *trialv1.TrialMetrics, pType model.MetricPartitionType,
 ) (rollbacks int, err error) {
 	/*
 		TODO(hamid):
 		- MetricType could live in trialv1.TrialMetrics :thinking_face:
 	*/
-	isValidation := mType == model.ValidationMetric
+	isValidation := pType == model.ValidationMetric
 
 	metricsJSONPath := "avg_metrics"
 	metricsBody := map[string]interface{}{
@@ -530,7 +530,7 @@ WHERE trial_id = $1
 		)
 		
 	);
-	`, m.TrialId, m.TrialRunId, m.StepsCompleted, mType)
+	`, m.TrialId, m.TrialRunId, m.StepsCompleted, pType)
 		if err != nil {
 			return errors.Wrap(err, "archiving metrics")
 		}
@@ -555,7 +555,7 @@ INSERT INTO metrics
 VALUES
 	($1, $2, now(), $3, $4, $5)
 RETURNING id`,
-			int(m.TrialId), int(m.TrialRunId), metricsBody, int(m.StepsCompleted), mType,
+			int(m.TrialId), int(m.TrialRunId), metricsBody, int(m.StepsCompleted), pType,
 		).Scan(&metricRowID); err != nil {
 			return errors.Wrap(err, "inserting metrics")
 		}

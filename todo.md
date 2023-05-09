@@ -19,9 +19,9 @@ add include in the new table.
 - create a new `generic_metrics` table. define as a partition of `metrics`
 
 TODO:
-- [ ] remove go references to raw_steps and raw_validations
-- [ ] no need to mess with underlying table ids. revert
-- [ ] update (or leave off) code directly working with the underlying tables
+- [n] remove go references to raw_steps and raw_validations
+- [x] no need to mess with underlying table ids: sequence on top table but we'd still have duplicates
+- [x] update (or leave off) code directly working with the underlying tables
   `ag 'from .*(steps|validations)' master -l | grep -v migration`
 
 
