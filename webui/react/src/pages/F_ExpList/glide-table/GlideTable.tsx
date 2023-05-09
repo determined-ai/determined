@@ -306,6 +306,8 @@ export const GlideTable: React.FC<GlideTableProps> = ({
       setMenuIsOpen(true);
     },
     [
+      data,
+      selection,
       columnIds,
       deselectAllRows,
       excludedExperimentIds,
@@ -401,10 +403,10 @@ export const GlideTable: React.FC<GlideTableProps> = ({
                         ? rows.add([smallestClosest, row + 1])
                         : CompactSelection.fromSingleSelection([smallestLinked, row + 1])
                       : largestClosest
-                        ? event.metaKey
-                          ? rows.add([row, largestClosest + 1])
-                          : CompactSelection.fromSingleSelection([row, greatestLinked + 1])
-                        : CompactSelection.fromSingleSelection(row),
+                      ? event.metaKey
+                        ? rows.add([row, largestClosest + 1])
+                        : CompactSelection.fromSingleSelection([row, greatestLinked + 1])
+                      : CompactSelection.fromSingleSelection(row),
                 };
               });
             } else {
