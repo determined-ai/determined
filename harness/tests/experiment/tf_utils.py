@@ -1,9 +1,9 @@
-from typing import Type, Any, Tuple, Optional
+from typing import Any, Optional, Tuple, Type
 
 import numpy as np
+from tensorflow.keras import utils as keras_utils
 
 from determined import keras
-from tensorflow.keras import utils as keras_utils
 
 
 def xor_data(dtype: Type[Any] = np.int64) -> Tuple[np.ndarray, np.ndarray]:
