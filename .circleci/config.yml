@@ -1493,13 +1493,11 @@ jobs:
       - image: cimg/node:16.19.0
         environment:
           CI: "true"
-          QUARANTINED: "true"
-    resource_class: xlarge
     steps:
       - checkout-with-sm
       - skip-if-docs-only
       - react-get-deps
-      - run: make -C webui/react test-ci
+      - run: make -C webui/react test-ci-quarantined
 
   test-unit-react-screenshot:
     docker:
