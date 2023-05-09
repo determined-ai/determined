@@ -896,12 +896,6 @@ def verify_completed_experiment_metadata(
     # take some time.
     max_secs_to_free_slots = 30
     for _ in range(max_secs_to_free_slots):
-        print(
-            f"Trying to close out the slots... free: {cluster_utils.num_free_slots()} num_slots: {cluster_utils.num_slots()}"
-        )
-        logging.info(
-            f"Trying to close out the slots... free: {cluster_utils.num_free_slots()} num_slots: {cluster_utils.num_slots()}"
-        )
         if cluster_utils.num_free_slots() == cluster_utils.num_slots():
             break
         time.sleep(1)

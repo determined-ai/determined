@@ -895,7 +895,6 @@ class RandomDSATSearchMethod(BaseDSATSearchMethod):
         return False
 
     def get_random_mbs_from_search_data(self, search_data: Dict[str, int]) -> int:
-        # raise Exception
         mbs = search_data["lo"] + self.rng.binomial(search_data["hi"] - search_data["lo"], 0.5)
         assert search_data["lo"] <= mbs <= search_data["hi"]  # TODO: remove
         return mbs
