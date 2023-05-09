@@ -763,12 +763,12 @@ func TestBatchesProcessed(t *testing.T) {
 		switch typ {
 		case "training":
 			// require.NoError(t, db.AddTrainingMetrics(ctx, trialMetrics))
-			rollbacksCnts, err := db.addTrialMetrics(ctx, trialMetrics, model.TrainingMetric)
+			rollbacksCnts, err := db.addTrialMetrics(ctx, trialMetrics, model.TrainingMetric, nil)
 			require.NoError(t, err)
 			require.Equal(t, int(expectedRollbacks), rollbacksCnts)
 		case "validation":
 			// require.NoError(t, db.AddValidationMetrics(ctx, trialMetrics))
-			rollbacksCnts, err := db.addTrialMetrics(ctx, trialMetrics, model.ValidationMetric)
+			rollbacksCnts, err := db.addTrialMetrics(ctx, trialMetrics, model.ValidationMetric, nil)
 			require.NoError(t, err)
 			require.Equal(t, int(expectedRollbacks), rollbacksCnts)
 		case "checkpoint":

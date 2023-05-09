@@ -523,16 +523,16 @@ WHERE trial_id = $1
 
 func (db *PgDB) addRawMetrics(ctx context.Context, tx *sqlx.Tx, metricsBody *map[string]interface{},
 	runID, trialID, lastProcessedBatch int32,
-	pType model.MetricPartitionType,
+	pType model.MetricPartitionType, mType *string,
 ) (int, error) {
 	var metricRowID int
 	if err := tx.QueryRowContext(ctx, `
 INSERT INTO metrics
-	(trial_id, trial_run_id, end_time, metrics, total_batches, partition_type)
+	(trial_id, trial_run_id, end_time, metrics, total_batches, partition_type, custom_type)
 VALUES
-	($1, $2, now(), $3, $4, $5)
+	($1, $2, now(), $3, $4, $5, $6)
 RETURNING id`,
-		trialID, runID, *metricsBody, lastProcessedBatch, pType,
+		trialID, runID, *metricsBody, lastProcessedBatch, pType, mType, // CHECK: are nulls handled?
 	).Scan(&metricRowID); err != nil {
 		return metricRowID, errors.Wrap(err, "inserting metrics")
 	}
@@ -543,6 +543,7 @@ RETURNING id`,
 // AddTrialMetrics inserts a set of trial metrics to the database.
 func (db *PgDB) addTrialMetrics(
 	ctx context.Context, m *trialv1.TrialMetrics, pType model.MetricPartitionType,
+	mType *string,
 ) (rollbacks int, err error) {
 	/*
 		TODO(hamid):
@@ -577,7 +578,7 @@ func (db *PgDB) addTrialMetrics(
 		var metricRowID int
 		if pType == model.GenericMetric {
 			if metricRowID, err = db.addRawMetrics(ctx, tx, &metricsBody, m.TrialRunId,
-				m.TrialId, m.StepsCompleted, pType); err != nil {
+				m.TrialId, m.StepsCompleted, pType, mType); err != nil {
 				return err
 			}
 			return nil
@@ -596,7 +597,7 @@ func (db *PgDB) addTrialMetrics(
 		}
 
 		if metricRowID, err = db.addRawMetrics(ctx, tx, &metricsBody, m.TrialRunId,
-			m.TrialId, m.StepsCompleted, pType); err != nil {
+			m.TrialId, m.StepsCompleted, pType, mType); err != nil {
 			return err
 		}
 
@@ -664,7 +665,7 @@ WHERE id = $1;
 // If these training metrics occur before any others, a rollback is assumed and later
 // training and validation metrics are cleaned up.
 func (db *PgDB) AddTrainingMetrics(ctx context.Context, m *trialv1.TrialMetrics) error {
-	_, err := db.addTrialMetrics(ctx, m, model.TrainingMetric)
+	_, err := db.addTrialMetrics(ctx, m, model.TrainingMetric, nil)
 	return err
 }
 
@@ -674,14 +675,25 @@ func (db *PgDB) AddTrainingMetrics(ctx context.Context, m *trialv1.TrialMetrics)
 func (db *PgDB) AddValidationMetrics(
 	ctx context.Context, m *trialv1.TrialMetrics,
 ) error {
-	_, err := db.addTrialMetrics(ctx, m, model.ValidationMetric)
+	_, err := db.addTrialMetrics(ctx, m, model.ValidationMetric, nil)
 	return err
 }
 
-func (db *PgDB) AddGenericMetrics(
+func (db *PgDB) AddMetrics(
 	ctx context.Context, m *trialv1.TrialMetrics, mType string,
 ) error {
-	_, err := db.addTrialMetrics(ctx, m, model.GenericMetric)
+	// TODO(hamid): remove partition_type once we move away from pg10 and
+	// we can use DEFAULT partitioning.
+	var pType model.MetricPartitionType
+	switch mType {
+	case string(model.TrainingMetric): // FIXME: case sensitive.
+		pType = model.TrainingMetric
+	case string(model.ValidationMetric):
+		pType = model.ValidationMetric
+	default:
+		pType = model.GenericMetric
+	}
+	_, err := db.addTrialMetrics(ctx, m, pType, &mType)
 	return err
 }
 
