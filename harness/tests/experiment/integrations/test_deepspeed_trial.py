@@ -640,6 +640,7 @@ class TestDeepSpeedTrial:
         }
 
 
+@pytest.mark.deepspeed
 def test_overwrite_deepspeed_config() -> None:
     base_ds_config = deepspeed_config
     source_ds_config = {
