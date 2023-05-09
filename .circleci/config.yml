@@ -1420,7 +1420,7 @@ jobs:
 
   lint-react:
     docker:
-      - image: cimg/node:16.19.0
+      - image: cimg/node:18.16.0
     steps:
       - checkout-with-sm
       - skip-if-docs-only
@@ -1433,7 +1433,7 @@ jobs:
         type: boolean
         default: false
     docker:
-      - image: cimg/node:16.19.0
+      - image: cimg/node:18.16.0
     resource_class: large
     steps:
       - checkout-with-sm
@@ -1452,7 +1452,7 @@ jobs:
 
   test-e2e-react:
     docker:
-      - image: mcr.microsoft.com/playwright:v1.32.3-focal
+      - image: mcr.microsoft.com/playwright:v1.33.0-focal
     resource_class: large
     steps:
       - checkout-with-sm
@@ -1471,7 +1471,7 @@ jobs:
 
   test-unit-react:
     docker:
-      - image: cimg/node:16.19.0
+      - image: cimg/node:18.16.0
         environment:
           CI: "true"
     resource_class: xlarge
@@ -1490,7 +1490,7 @@ jobs:
 
   test-unit-react-screenshot:
     docker:
-      - image: cimg/node:16.19.0
+      - image: cimg/node:18.16.0
         environment:
           CI: "true"
     resource_class: xlarge
@@ -1527,7 +1527,7 @@ jobs:
 
   test-intg-downstream:
     docker:
-      - image: cimg/node:16.19.0
+      - image: cimg/node:18.16.0
     steps:
       - checkout-with-sm
       - skip-if-not-shared
