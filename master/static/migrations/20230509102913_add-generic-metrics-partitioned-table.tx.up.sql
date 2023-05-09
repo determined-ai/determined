@@ -67,6 +67,10 @@ CREATE UNIQUE INDEX steps_trial_id_total_batches_run_id_type_unique ON raw_steps
     partition_type
 );
 DROP INDEX steps_trial_id_total_batches_run_id_unique_old;
+ALTER TABLE raw_validations
+ADD COLUMN metric_type text NOT NULL DEFAULT 'validation';
+ALTER TABLE raw_steps
+ADD COLUMN metric_type text NOT NULL DEFAULT 'training';
 CREATE TABLE generic_metrics (
     trial_id integer NOT NULL,
     end_time timestamp with time zone,
@@ -76,6 +80,7 @@ CREATE TABLE generic_metrics (
     archived boolean NOT NULL DEFAULT false,
     id integer NOT NULL,
     partition_type metric_partition_type NOT NULL DEFAULT 'generic',
+    metric_type text NOT NULL DEFAULT 'generic',
     CONSTRAINT generic_metrics_trial_id_fkey FOREIGN KEY (trial_id) REFERENCES trials(id)
 );
 -- start with max of existing ids in raw_steps and raw_validations. find it using select on both tables
@@ -116,6 +121,7 @@ CREATE TABLE metrics (
     trial_run_id integer NOT NULL DEFAULT 0,
     archived boolean NOT NULL DEFAULT false,
     id integer NOT NULL default nextval('metrics_id_seq'),
+    metric_type text NOT NULL,
     partition_type metric_partition_type NOT NULL DEFAULT 'generic' -- CONSTRAINT metrics_trial_id_fkey FOREIGN KEY (trial_id) REFERENCES trials(id). Not supported
 ) PARTITION BY LIST (partition_type);
 ALTER TABLE metrics ATTACH PARTITION generic_metrics FOR
