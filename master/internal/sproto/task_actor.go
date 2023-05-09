@@ -77,16 +77,6 @@ func (c ContainerLog) String() string {
 	return fmt.Sprintf("[%s] %s || %s", timestamp, shortID, c.Message())
 }
 
-// ToEvent converts a container log to a container event.
-func (c ContainerLog) ToEvent() Event {
-	return Event{
-		ContainerID: c.ContainerID.String(),
-		Time:        c.Timestamp.UTC(),
-		LogEvent:    ptrs.Ptr(c.Message()),
-		Level:       c.Level,
-	}
-}
-
 // ToTaskLog converts a container log to a task log.
 func (c ContainerLog) ToTaskLog() model.TaskLog {
 	return model.TaskLog{
