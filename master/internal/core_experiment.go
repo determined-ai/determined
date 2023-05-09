@@ -2,18 +2,14 @@ package internal
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"regexp"
 	"time"
 
-	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
 
 	"github.com/ghodss/yaml"
-	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
 
@@ -23,9 +19,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/project"
-	"github.com/determined-ai/determined/master/internal/sproto"
-	"github.com/determined-ai/determined/master/internal/user"
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas"
@@ -225,153 +218,6 @@ func (m *Master) getExperimentModelDefinition(c echo.Context) error {
 	return c.Blob(http.StatusOK, "application/x-gtar", modelDef)
 }
 
-func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
-	// Allow clients to apply partial updates to an experiment via the JSON Merge Patch format
-	// (RFC 7386). Clients can only update certain fields of the experiment.
-	args := struct {
-		ExperimentID int `path:"experiment_id"`
-	}{}
-	if err := api.BindArgs(&args, c); err != nil {
-		return nil, err
-	}
-	ctx := c.Request().Context()
-	dbExp, userModel, err := echoGetExperimentAndCheckCanDoActions(ctx, c, m, args.ExperimentID)
-	if err != nil {
-		return nil, err
-	}
-
-	// Merge Patch (RFC 7386) format.
-	// TODO: check for extraneous fields.
-	patch := struct {
-		Resources *struct {
-			MaxSlots api.MaybeInt `json:"max_slots"`
-			Weight   *float64     `json:"weight"`
-			Priority *int         `json:"priority"`
-		} `json:"resources"`
-		CheckpointStorage *struct {
-			SaveExperimentBest int `json:"save_experiment_best"`
-			SaveTrialBest      int `json:"save_trial_best"`
-			SaveTrialLatest    int `json:"save_trial_latest"`
-		} `json:"checkpoint_storage"`
-	}{}
-	if err = api.BindPatch(&patch, c); err != nil {
-		return nil, err
-	}
-
-	agentUserGroup, err := user.GetAgentUserGroup(*dbExp.OwnerID, dbExp)
-	if err != nil {
-		return nil, err
-	}
-
-	ownerFullUser, err := user.UserByID(*dbExp.OwnerID)
-	if err != nil {
-		return nil, errors.Errorf("cannot find user %v who owns experiment", dbExp.OwnerID)
-	}
-
-	// TODO(DET-8577): Remove unnecessary active config usage.
-	activeConfig, err := m.db.ActiveExperimentConfig(args.ExperimentID)
-	if err != nil {
-		return nil, errors.Wrapf(
-			err, "unable to load no-longer-valid config for experiment %v", args.ExperimentID,
-		)
-	}
-
-	if patch.Resources != nil {
-		resources := activeConfig.Resources()
-		if patch.Resources.MaxSlots.IsPresent {
-			if err = expauth.AuthZProvider.Get().
-				CanSetExperimentsMaxSlots(ctx, userModel, dbExp, *patch.Resources.MaxSlots.Value); err != nil {
-				return nil, echo.NewHTTPError(http.StatusForbidden, err.Error())
-			}
-
-			resources.SetMaxSlots(patch.Resources.MaxSlots.Value)
-		}
-		if patch.Resources.Weight != nil {
-			if err = expauth.AuthZProvider.Get().
-				CanSetExperimentsWeight(ctx, userModel, dbExp, *patch.Resources.Weight); err != nil {
-				return nil, echo.NewHTTPError(http.StatusForbidden, err.Error())
-			}
-
-			resources.SetWeight(*patch.Resources.Weight)
-		}
-		if patch.Resources.Priority != nil {
-			if err = expauth.AuthZProvider.Get().
-				CanSetExperimentsPriority(ctx, userModel, dbExp, *patch.Resources.Priority); err != nil {
-				return nil, echo.NewHTTPError(http.StatusForbidden, err.Error())
-			}
-
-			resources.SetPriority(patch.Resources.Priority)
-		}
-		activeConfig.SetResources(resources)
-	}
-	if patch.CheckpointStorage != nil {
-		if err = expauth.AuthZProvider.Get().
-			CanSetExperimentsCheckpointGCPolicy(ctx, userModel, dbExp); err != nil {
-			return nil, echo.NewHTTPError(http.StatusForbidden, err.Error())
-		}
-
-		storage := activeConfig.CheckpointStorage()
-		storage.SetSaveExperimentBest(patch.CheckpointStorage.SaveExperimentBest)
-		storage.SetSaveTrialBest(patch.CheckpointStorage.SaveTrialBest)
-		storage.SetSaveTrialLatest(patch.CheckpointStorage.SaveTrialLatest)
-		activeConfig.SetCheckpointStorage(storage)
-	}
-
-	// `patch` represents the allowed mutations that can be performed on an experiment, in JSON
-	if err := m.db.SaveExperimentConfig(dbExp.ID, activeConfig); err != nil {
-		return nil, errors.Wrapf(err, "patching experiment %d", dbExp.ID)
-	}
-
-	if patch.Resources != nil {
-		if patch.Resources.MaxSlots.IsPresent {
-			m.system.TellAt(actor.Addr("experiments", args.ExperimentID),
-				sproto.SetGroupMaxSlots{MaxSlots: patch.Resources.MaxSlots.Value})
-		}
-		if patch.Resources.Weight != nil {
-			resp := m.system.AskAt(actor.Addr("experiments", args.ExperimentID),
-				sproto.SetGroupWeight{Weight: *patch.Resources.Weight})
-			if resp.Error() != nil {
-				return nil, errors.Errorf("cannot change experiment weight to %v", *patch.Resources.Weight)
-			}
-		}
-		if patch.Resources.Priority != nil {
-			resp := m.system.AskAt(actor.Addr("experiments", args.ExperimentID),
-				sproto.SetGroupPriority{Priority: *patch.Resources.Priority})
-			if resp.Error() != nil {
-				return nil, errors.Errorf("cannot change experiment priority to %v", *patch.Resources.Priority)
-			}
-		}
-	}
-
-	if patch.CheckpointStorage != nil {
-		checkpoints, err := m.db.ExperimentCheckpointsToGCRaw(
-			dbExp.ID,
-			dbExp.Config.CheckpointStorage.SaveExperimentBest(),
-			dbExp.Config.CheckpointStorage.SaveTrialBest(),
-			dbExp.Config.CheckpointStorage.SaveTrialLatest(),
-		)
-		if err != nil {
-			return nil, err
-		}
-
-		taskSpec := *m.taskSpec
-		user := &model.User{
-			ID:       ownerFullUser.ID,
-			Username: ownerFullUser.Username,
-		}
-
-		taskID := model.NewTaskID()
-		ckptGCTask := newCheckpointGCTask(
-			m.rm, m.db, m.taskLogger, taskID, dbExp.JobID, dbExp.StartTime, taskSpec, dbExp.ID,
-			dbExp.Config, checkpoints, true, agentUserGroup, user, nil,
-		)
-		m.system.ActorOf(actor.Addr(fmt.Sprintf("patch-checkpoint-gc-%s", uuid.New().String())),
-			ckptGCTask)
-	}
-
-	return nil, nil
-}
-
 // CreateExperimentParams defines a request to create an experiment.
 type CreateExperimentParams struct {
 	Activate      bool            `json:"activate"`
@@ -385,9 +231,7 @@ type CreateExperimentParams struct {
 	GitCommitter  *string         `json:"git_committer"`
 	GitCommitDate *time.Time      `json:"git_commit_date"`
 	ValidateOnly  bool            `json:"validate_only"`
-	Project       *string         `json:"project"`
 	ProjectID     *int            `json:"project_id"`
-	Workspace     *string         `json:"workspace"`
 }
 
 // ErrProjectNotFound is returned in parseCreateExperiment for when project cannot be found
@@ -566,77 +410,4 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams, user *mod
 	}
 
 	return dbExp, config, project, params.ValidateOnly, &taskSpec, err
-}
-
-func (m *Master) postExperiment(c echo.Context) (interface{}, error) {
-	body, err := ioutil.ReadAll(c.Request().Body)
-	if err != nil {
-		return nil, err
-	}
-
-	user := c.(*detContext.DetContext).MustGetUser()
-
-	var params CreateExperimentParams
-	if err = json.Unmarshal(body, &params); err != nil {
-		return nil, errors.Wrap(err, "invalid experiment params")
-	}
-	ctx := c.Request().Context()
-	if params.ParentID != nil {
-		if _, _, err = echoGetExperimentAndCheckCanDoActions(ctx, c, m, *params.ParentID,
-			expauth.AuthZProvider.Get().CanForkFromExperiment); err != nil {
-			return nil, err
-		}
-	}
-
-	dbExp, activeConf, p, validateOnly, taskSpec, err := m.parseCreateExperiment(&params, &user)
-	if err != nil {
-		if _, ok := err.(ErrProjectNotFound); ok {
-			return nil, echo.NewHTTPError(http.StatusNotFound, err.Error())
-		}
-		return nil, err
-	}
-
-	// Can we create the experiment?
-	if err = expauth.AuthZProvider.Get().CanCreateExperiment(ctx, user, p); err != nil {
-		return nil, echo.NewHTTPError(http.StatusForbidden, err.Error())
-	}
-	if validateOnly {
-		return nil, nil
-	}
-	// Check user has permission for what they are trying to do
-	// before actually saving the experiment.
-	if params.Activate {
-		if err = expauth.AuthZProvider.Get().CanEditExperiment(ctx, user, dbExp); err != nil {
-			return nil, echo.NewHTTPError(http.StatusForbidden, err.Error())
-		}
-	}
-
-	e, launchWarnings, err := newExperiment(m, dbExp, activeConf, taskSpec)
-	if err != nil {
-		return nil, errors.Wrap(err, "starting experiment")
-	}
-	config := schemas.Copy(activeConf)
-	m.system.ActorOf(actor.Addr("experiments", e.ID), e)
-
-	if params.Activate {
-		exp := actor.Addr("experiments", e.ID)
-		resp := m.system.AskAt(exp, &apiv1.ActivateExperimentRequest{Id: int32(e.ID)})
-		if resp.Source() == nil {
-			return nil, echo.NewHTTPError(http.StatusNotFound,
-				fmt.Sprintf("experiment not found: %d", e.ID))
-		}
-		if _, notTimedOut := resp.GetOrTimeout(defaultAskTimeout); !notTimedOut {
-			return nil, errors.Errorf("attempt to activate experiment timed out")
-		}
-	}
-
-	c.Response().Header().Set(echo.HeaderLocation, fmt.Sprintf("/experiments/%v", e.ID))
-	response := model.ExperimentDescriptor{
-		ID:       e.ID,
-		Archived: false,
-		Config:   config,
-		Labels:   make([]string, 0),
-		Warnings: launchWarnings,
-	}
-	return response, nil
 }

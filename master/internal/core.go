@@ -1119,18 +1119,12 @@ func (m *Master) Run(ctx context.Context) error {
 	experimentsGroup.GET("/:experiment_id/model_def", m.getExperimentModelDefinition)
 	experimentsGroup.GET("/:experiment_id/file/download", m.getExperimentModelFile)
 	experimentsGroup.GET("/:experiment_id/preview_gc", api.Route(m.getExperimentCheckpointsToGC))
-	experimentsGroup.PATCH("/:experiment_id", api.Route(m.patchExperiment))
-	experimentsGroup.POST("", api.Route(m.postExperiment))
 
 	checkpointsGroup := m.echo.Group("/checkpoints")
 	checkpointsGroup.GET("/:checkpoint_uuid", m.getCheckpoint)
 
 	searcherGroup := m.echo.Group("/searcher")
 	searcherGroup.POST("/preview", api.Route(m.getSearcherPreview))
-
-	trialsGroup := m.echo.Group("/trials")
-	trialsGroup.GET("/:trial_id", api.Route(m.getTrial))
-	trialsGroup.GET("/:trial_id/metrics", api.Route(m.getTrialMetrics))
 
 	resourcesGroup := m.echo.Group("/resources", cluster.CanGetUsageDetails())
 	resourcesGroup.GET("/allocation/raw", m.getRawResourceAllocation)
