@@ -87,11 +87,18 @@ workspace.
 
 We now have two independent workspaces, one for each team.
 
-   .. image:: /assets/images/rbac-example-setup-light.png
-      :alt: Example of a role-based access control setup.
+.. image:: /assets/images/rbac-example-setup-dark.png
+   :class: only-dark
+   :alt: Determined AI system architecture diagram dark mode
 
-You can learn more about pre-canned roles such as ``Editor``, ``WorkspaceAdmin`` :ref:`in the
-section below <rbac-precanned>`.
+.. image:: /assets/images/rbac-example-setup-light.png
+   :class: only-light
+   :alt: Determined AI system architecture diagram light mode
+
+.. note::
+
+   You can learn more about pre-canned roles such as ``Editor``, ``WorkspaceAdmin`` :ref:`in the
+   Pre-Canned Roles section <rbac-precanned>`.
 
 Determined requires the projects to exist within the workspaces to run and organize the experiments.
 Project creation requires ``PERMISSION_TYPE_CREATE_PROJECT`` permission which is included in
@@ -416,7 +423,7 @@ well as their subcommands:
 .. _rbac-precanned:
 
 ******************
- Pre-Canned roles
+ Pre-Canned Roles
 ******************
 
 Determined ships with several pre-canned roles. We are looking to add an ability to edit or create
