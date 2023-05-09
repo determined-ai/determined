@@ -162,6 +162,10 @@ export const GlideTable: React.FC<GlideTableProps> = ({
     rows: CompactSelection.empty(),
   });
 
+  // Detect if user just click a row away from current selected group.
+  // If this stand alone select is set, use it as the base when doing multi select.
+  const [standAloneSelect, setStandAloneSelect] = React.useState<number>();
+
   useEffect(() => {
     if (clearSelectionTrigger === 0) return;
     setSelection({ columns: CompactSelection.empty(), rows: CompactSelection.empty() });
@@ -338,6 +342,28 @@ export const GlideTable: React.FC<GlideTableProps> = ({
 
   const onCellClicked: DataEditorProps['onCellClicked'] = useCallback(
     (cell: Item, event: CellClickedEventArgs) => {
+      const findConsecutiveBefore = (rows: number[], row: number) => {
+        while (row >= 0) {
+          row = row - 1;
+          if (!rows.includes(row)) return row + 1;
+        }
+        return row;
+      };
+      const findConsecutiveAfter = (rows: number[], row: number) => {
+        while (row < data.length) {
+          row = row + 1;
+          if (!rows.includes(row)) return row - 1;
+        }
+        return row;
+      };
+      const isStandAlone = (rows: CompactSelection, row: number) => {
+        if (row === 0) return !rows.hasIndex(row + 1);
+        if (row === data.length - 1) return !rows.hasIndex(row - 1);
+        return !rows.hasIndex(row - 1) && !rows.hasIndex(row + 1);
+      };
+
+      setStandAloneSelect(undefined);
+
       const [col, row] = cell;
       Loadable.match(data[row], {
         Loaded: (rowData) => {
@@ -348,33 +374,66 @@ export const GlideTable: React.FC<GlideTableProps> = ({
             handlePath(event as unknown as AnyMouseEvent, { path: cell.data.link.href });
             // cell.data.link.onClick(event);
           } else {
-            if (selection.rows.hasIndex(row)) {
-              setSelection(({ columns, rows }: GridSelection) => ({
-                columns,
-                rows: rows.remove(row),
-              }));
-              if (selectAll) {
+            if (event.shiftKey) {
+              setSelection(({ rows }: GridSelection) => {
+                if (standAloneSelect && standAloneSelect > row) {
+                  return {
+                    columns: CompactSelection.empty(),
+                    rows: event.metaKey
+                      ? rows.add([row, standAloneSelect + 1])
+                      : CompactSelection.fromSingleSelection([row, standAloneSelect + 1]),
+                  };
+                }
+                const rowsArray = rows.toArray();
+                const smallestClosest = rowsArray.filter((r) => r < row).last();
+                const largestClosest = rowsArray.filter((r) => r > row).first();
+                const smallestLinked = findConsecutiveBefore(rowsArray, smallestClosest);
+                const greatestLinked = findConsecutiveAfter(rowsArray, largestClosest);
+                return {
+                  columns: CompactSelection.empty(),
+                  rows:
+                    smallestClosest >= 0
+                      ? event.metaKey
+                        ? rows.add([smallestClosest, row + 1])
+                        : CompactSelection.fromSingleSelection([smallestLinked, row + 1])
+                      : largestClosest
+                        ? event.metaKey
+                          ? rows.add([row, largestClosest + 1])
+                          : CompactSelection.fromSingleSelection([row, greatestLinked + 1])
+                        : CompactSelection.fromSingleSelection(row),
+                };
+              });
+            } else {
+              isStandAlone(selection.rows, row) && !selection.rows.hasIndex(row) && setStandAloneSelect(row);
+
+              if (selection.rows.hasIndex(row)) {
+                setSelection(({ columns, rows }: GridSelection) => ({
+                  columns,
+                  rows: rows.remove(row),
+                }));
+                if (selectAll) {
+                  const experiment = data[row];
+                  if (Loadable.isLoaded(experiment)) {
+                    setExcludedExperimentIds((prev) => {
+                      if (experiment.data.experiment) {
+                        return new Set([...prev, experiment.data.experiment?.id]);
+                      } else {
+                        return prev;
+                      }
+                    });
+                  }
+                }
+              } else {
+                setSelection(({ columns, rows }: GridSelection) => ({
+                  columns,
+                  rows: rows.add(row),
+                }));
                 const experiment = data[row];
                 if (Loadable.isLoaded(experiment)) {
                   setExcludedExperimentIds((prev) => {
-                    if (experiment.data.experiment) {
-                      return new Set([...prev, experiment.data.experiment?.id]);
-                    } else {
-                      return prev;
-                    }
+                    return new Set([...prev].filter((id) => id !== experiment.data.experiment?.id));
                   });
                 }
-              }
-            } else {
-              setSelection(({ columns, rows }: GridSelection) => ({
-                columns,
-                rows: rows.add(row),
-              }));
-              const experiment = data[row];
-              if (Loadable.isLoaded(experiment)) {
-                setExcludedExperimentIds((prev) => {
-                  return new Set([...prev].filter((id) => id !== experiment.data.experiment?.id));
-                });
               }
             }
           }
@@ -382,7 +441,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         NotLoaded: () => null,
       });
     },
-    [data, columnIds, columnDefs, selection, selectAll, setExcludedExperimentIds],
+    [data, columnIds, columnDefs, selection, selectAll, setExcludedExperimentIds, standAloneSelect],
   );
 
   const onCellContextMenu: DataEditorProps['onCellContextMenu'] = useCallback(

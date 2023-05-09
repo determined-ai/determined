@@ -274,6 +274,20 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     [updateSettings],
   );
 
+  useEffect(() => {
+    const handleEsc = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setClearSelectionTrigger((prev) => prev + 1);
+        setSelectAll(false);
+      }
+    };
+    window.addEventListener('keydown', handleEsc);
+
+    return () => {
+      window.removeEventListener('keydown', handleEsc);
+    };
+  }, []);
+
   return (
     <Page
       bodyNoPadding
@@ -316,7 +330,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
             fetchExperiments={fetchExperiments}
             handleScroll={handleScroll}
             handleUpdateExperimentList={handleUpdateExperimentList}
-            height={wholePageHeight}
+            height={wholePageHeight - 140}
             page={page}
             project={project}
             projectColumns={projectColumns}

@@ -143,7 +143,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
 
   const CheckpointActionDropdown: React.FC<ContextMenuProps<CoreApiGenericCheckpoint>> =
     useCallback(
-      ({ record, onVisibleChange, children }) => {
+      ({ record, children }) => {
         return (
           <ActionDropdown<CheckpointAction>
             actionOrder={batchActions}
@@ -153,11 +153,10 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
               [checkpointAction.Delete]: !canActionCheckpoint(checkpointAction.Delete, record),
             }}
             id={record.uuid}
+            isContextMenu
             kind="checkpoint"
-            trigger={['contextMenu']}
             onError={handleError}
-            onTrigger={dropDownOnTrigger(record.uuid)}
-            onVisibleChange={onVisibleChange}>
+            onTrigger={dropDownOnTrigger(record.uuid)}>
             {children}
           </ActionDropdown>
         );

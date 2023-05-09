@@ -1,15 +1,13 @@
-import { Dropdown } from 'antd';
-import type { MenuProps } from 'antd';
 import React, { useCallback, useMemo } from 'react';
 
 import Button from 'components/kit/Button';
+import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 import Icon from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
 import WorkspaceCreateModalComponent from 'components/WorkspaceCreateModal';
 import WorkspaceDeleteModalComponent from 'components/WorkspaceDeleteModal';
 import usePermissions from 'hooks/usePermissions';
 import css from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
-import { ValueOf } from 'shared/types';
 import workspaceStore from 'stores/workspaces';
 import { Workspace } from 'types';
 import handleError from 'utils/error';
@@ -18,14 +16,11 @@ interface Props {
   children?: React.ReactNode;
   className?: string;
   direction?: 'vertical' | 'horizontal';
+  isContextMenu?: boolean;
   onComplete?: () => void;
-  onVisibleChange?: (visible: boolean) => void;
   returnIndexOnDelete?: boolean;
-  trigger?: ('click' | 'hover' | 'contextMenu')[];
   workspace: Workspace;
 }
-
-const stopPropagation = (e: React.UIEvent): void => e.stopPropagation();
 
 interface WorkspaceMenuPropsIn {
   onComplete?: () => void;
@@ -35,7 +30,8 @@ interface WorkspaceMenuPropsIn {
 
 interface WorkspaceMenuPropsOut {
   contextHolders: React.ReactElement;
-  menuProps: MenuProps;
+  menu: MenuItem[];
+  onClick: (key: string) => void;
 }
 
 export const useWorkspaceActionMenu: (props: WorkspaceMenuPropsIn) => WorkspaceMenuPropsOut = ({
@@ -96,27 +92,24 @@ export const useWorkspaceActionMenu: (props: WorkspaceMenuPropsIn) => WorkspaceM
     SwitchPin: 'switchPin',
   } as const;
 
-  const funcs = {
-    [MenuKey.SwitchPin]: () => {
-      handlePinClick();
-    },
-    [MenuKey.Edit]: () => {
-      WorkspaceEditModal.open();
-    },
-    [MenuKey.SwitchArchived]: () => {
-      handleArchiveClick();
-    },
-    [MenuKey.Delete]: () => {
-      WorkspaceDeleteModal.open();
-    },
+  const handleDropdown = (key: string) => {
+    switch (key) {
+      case MenuKey.Edit:
+        WorkspaceEditModal.open();
+        break;
+      case MenuKey.Delete:
+        WorkspaceDeleteModal.open();
+        break;
+      case MenuKey.SwitchArchived:
+        handleArchiveClick();
+        break;
+      case MenuKey.SwitchPin:
+        handlePinClick();
+        break;
+    }
   };
 
-  const onItemClick: MenuProps['onClick'] = (e) => {
-    funcs[e.key as ValueOf<typeof MenuKey>]();
-    stopPropagation(e.domEvent);
-  };
-
-  const menuItems: MenuProps['items'] = [
+  const menuItems: MenuItem[] = [
     {
       key: MenuKey.SwitchPin,
       label: workspace.pinned ? 'Unpin from sidebar' : 'Pin to sidebar',
@@ -136,20 +129,20 @@ export const useWorkspaceActionMenu: (props: WorkspaceMenuPropsIn) => WorkspaceM
     menuItems.push({ type: 'divider' });
     menuItems.push({ danger: true, key: MenuKey.Delete, label: 'Delete...' });
   }
-  return { contextHolders, menuProps: { items: menuItems, onClick: onItemClick } };
+
+  return { contextHolders, menu: menuItems, onClick: handleDropdown };
 };
 
 const WorkspaceActionDropdown: React.FC<Props> = ({
   children,
   className,
   direction = 'vertical',
+  isContextMenu,
   returnIndexOnDelete = true,
   workspace,
   onComplete,
-  trigger,
-  onVisibleChange,
 }: Props) => {
-  const { menuProps, contextHolders } = useWorkspaceActionMenu({
+  const { contextHolders, menu, onClick } = useWorkspaceActionMenu({
     onComplete,
     returnIndexOnDelete,
     workspace,
@@ -157,26 +150,15 @@ const WorkspaceActionDropdown: React.FC<Props> = ({
 
   return children ? (
     <>
-      <Dropdown
-        menu={menuProps}
-        placement="bottomLeft"
-        trigger={trigger ?? ['contextMenu', 'click']}
-        onOpenChange={onVisibleChange}>
+      <Dropdown isContextMenu={isContextMenu} menu={menu} onClick={onClick}>
         {children}
       </Dropdown>
       {contextHolders}
     </>
   ) : (
-    <div
-      className={[css.base, className].join(' ')}
-      title="Open actions menu"
-      onClick={stopPropagation}>
-      <Dropdown menu={menuProps} placement="bottomRight" trigger={trigger ?? ['click']}>
-        <Button
-          ghost
-          icon={<Icon name={`overflow-${direction}`} title="Action menu" />}
-          onClick={stopPropagation}
-        />
+    <div className={[css.base, className].join(' ')} title="Open actions menu">
+      <Dropdown menu={menu} placement="bottomRight" onClick={onClick}>
+        <Button ghost icon={<Icon name={`overflow-${direction}`} title="Action menu" />} />
       </Dropdown>
       {contextHolders}
     </div>

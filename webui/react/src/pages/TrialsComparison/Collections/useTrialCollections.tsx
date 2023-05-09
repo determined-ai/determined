@@ -1,8 +1,9 @@
-import { Dropdown, Select } from 'antd';
+import { Select } from 'antd';
 import { string } from 'io-ts';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Button from 'components/kit/Button';
+import Dropdown from 'components/kit/Dropdown';
 import Icon from 'components/kit/Icon';
 import { InteractiveTableSettings } from 'components/Table/InteractiveTable';
 import { SettingsConfig, useSettings, UseSettingsReturn } from 'hooks/useSettings';
@@ -73,6 +74,12 @@ const defaultSorter: TrialSorter = {
   sortKey: 'trialId',
 };
 
+const MenuKey = {
+  ClearFilters: 'Clear Filters',
+  DeleteCollection: 'Delete Collection',
+  RenameCollection: 'Rename Collection',
+} as const;
+
 export const useTrialCollections = (
   projectId: string,
   tableSettingsHook: UseSettingsReturn<InteractiveTableSettings>,
@@ -109,7 +116,7 @@ export const useTrialCollections = (
   const sorter: TrialSorter = useMemo(
     () => ({
       ...defaultSorter,
-      sortDesc: !!tableSettings.sortDesc,
+      sortDesc: tableSettings.sortDesc,
       sortKey: tableSettings.sortKey ? String(tableSettings.sortKey) : '',
     }),
     [tableSettings.sortDesc, tableSettings.sortKey],
@@ -126,9 +133,7 @@ export const useTrialCollections = (
 
   const hasUnsavedFilters = useMemo(() => {
     if (!collectionFiltersStringified) return false;
-    const unsaved = filtersStringified !== collectionFiltersStringified;
-
-    return unsaved;
+    return filtersStringified !== collectionFiltersStringified;
   }, [collectionFiltersStringified, filtersStringified]);
 
   const [collections, setCollections] = useState<TrialsCollection[]>([]);
@@ -294,6 +299,51 @@ export const useTrialCollections = (
 
   const collectionIsActive = !!(collections.length && settings.collection);
 
+  const menu = useMemo(
+    () =>
+      collectionIsActive
+        ? [
+            {
+              disabled: !userOwnsCollection,
+              key: MenuKey.RenameCollection,
+              label: MenuKey.RenameCollection,
+            },
+            {
+              disabled: !userOwnsCollection,
+              key: MenuKey.DeleteCollection,
+              label: MenuKey.DeleteCollection,
+            },
+            {
+              key: MenuKey.ClearFilters,
+              label: MenuKey.ClearFilters,
+            },
+          ]
+        : [
+            {
+              key: MenuKey.ClearFilters,
+              label: MenuKey.ClearFilters,
+            },
+          ],
+    [collectionIsActive, userOwnsCollection],
+  );
+
+  const handleDropdown = useCallback(
+    (key: string) => {
+      switch (key) {
+        case MenuKey.ClearFilters:
+          clearFilters();
+          break;
+        case MenuKey.DeleteCollection:
+          deleteCollection();
+          break;
+        case MenuKey.RenameCollection:
+          renameCollection();
+          break;
+      }
+    },
+    [clearFilters, deleteCollection, renameCollection],
+  );
+
   const controls = useMemo(
     () => (
       <div className={css.base}>
@@ -338,42 +388,13 @@ export const useTrialCollections = (
             icon={
               <Icon
                 name="reset"
+                showTooltip
                 title={collectionIsActive ? 'Reset Filters to Collection' : 'No Collection Active'}
               />
             }
             onClick={resetFiltersToCollection}
           />
-          <Dropdown
-            menu={{
-              items: collectionIsActive
-                ? [
-                    {
-                      disabled: !userOwnsCollection,
-                      key: 'ren',
-                      label: 'Rename Collection',
-                      onClick: renameCollection,
-                    },
-                    {
-                      disabled: !userOwnsCollection,
-                      key: 'del',
-                      label: 'Delete Collection',
-                      onClick: deleteCollection,
-                    },
-                    {
-                      key: 'clr',
-                      label: 'Clear Filters',
-                      onClick: clearFilters,
-                    },
-                  ]
-                : [
-                    {
-                      key: 'clr',
-                      label: 'Clear Filters',
-                      onClick: clearFilters,
-                    },
-                  ],
-            }}
-            trigger={['click']}>
+          <Dropdown menu={menu} onClick={handleDropdown}>
             <Button ghost icon={<Icon name="overflow-vertical" title="Action menu" />} />
           </Dropdown>
           {viewFiltersContextHolder}
@@ -383,14 +404,13 @@ export const useTrialCollections = (
       </div>
     ),
     [
-      clearFilters,
       collectionContextHolder,
       collectionIsActive,
       collections,
       createCollectionFromFilters,
-      deleteCollection,
+      handleDropdown,
       hasUnsavedFilters,
-      renameCollection,
+      menu,
       renameContextHolder,
       resetFiltersToCollection,
       saveCollection,
