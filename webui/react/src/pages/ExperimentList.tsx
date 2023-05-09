@@ -1,5 +1,4 @@
-import { Dropdown, MenuProps, Space, Typography } from 'antd';
-import type { DropDownProps } from 'antd';
+import { Space, Typography } from 'antd';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
@@ -11,6 +10,7 @@ import ExperimentMoveModalComponent from 'components/ExperimentMoveModal';
 import FilterCounter from 'components/FilterCounter';
 import HumanReadableNumber from 'components/HumanReadableNumber';
 import Button from 'components/kit/Button';
+import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 import Icon from 'components/kit/Icon';
 import Input from 'components/kit/Input';
 import { useModal } from 'components/kit/Modal';
@@ -60,7 +60,7 @@ import { encodeExperimentState } from 'services/decoder';
 import { GetExperimentsParams } from 'services/types';
 import Spinner from 'shared/components/Spinner';
 import usePolling from 'shared/hooks/usePolling';
-import { RecordKey, ValueOf } from 'shared/types';
+import { RecordKey } from 'shared/types';
 import { ErrorLevel } from 'shared/utils/error';
 import { validateDetApiEnum, validateDetApiEnumList } from 'shared/utils/service';
 import { alphaNumericSorter } from 'shared/utils/sort';
@@ -115,6 +115,12 @@ const batchActions = [
 interface Props {
   project: Project;
 }
+
+const MenuKey = {
+  Columns: 'columns',
+  ResultFilter: 'resetFilters',
+  SwitchArchived: 'switchArchive',
+} as const;
 
 const ExperimentList: React.FC<Props> = ({ project }) => {
   const [experiments, setExperiments] = useState<ExperimentItem[]>([]);
@@ -380,6 +386,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
       return (
         <ExperimentActionDropdown
           experiment={getProjectExperimentForExperimentItem(record, project)}
+          isContextMenu
           settings={settings}
           updateSettings={updateSettings}
           onComplete={handleActionComplete}
@@ -854,41 +861,30 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
   }, []);
 
   const tabBarContent = useMemo(() => {
-    const getMenuProps = (): DropDownProps['menu'] => {
-      const MenuKey = {
-        Columns: 'columns',
-        ResultFilter: 'resetFilters',
-        SwitchArchived: 'switchArchive',
-      } as const;
-
-      const funcs = {
-        [MenuKey.SwitchArchived]: () => {
-          switchShowArchived(!settings.archived);
-        },
-        [MenuKey.Columns]: () => {
+    const menuItems: MenuItem[] = [
+      {
+        key: MenuKey.SwitchArchived,
+        label: settings.archived ? 'Hide Archived' : 'Show Archived',
+      },
+      { key: MenuKey.Columns, label: 'Columns' },
+    ];
+    if (filterCount > 0) {
+      menuItems.push({ key: MenuKey.ResultFilter, label: `Clear Filters (${filterCount})` });
+    }
+    const handleDropdown = (key: string) => {
+      switch (key) {
+        case MenuKey.Columns:
           ColumnsCustomizeModal.open();
-        },
-        [MenuKey.ResultFilter]: () => {
+          break;
+        case MenuKey.ResultFilter:
           resetFilters();
-        },
-      };
-
-      const onItemClick: MenuProps['onClick'] = (e) => {
-        funcs[e.key as ValueOf<typeof MenuKey>]();
-      };
-
-      const menuItems: MenuProps['items'] = [
-        {
-          key: MenuKey.SwitchArchived,
-          label: settings.archived ? 'Hide Archived' : 'Show Archived',
-        },
-        { key: MenuKey.Columns, label: 'Columns' },
-      ];
-      if (filterCount > 0) {
-        menuItems.push({ key: MenuKey.ResultFilter, label: `Clear Filters (${filterCount})` });
+          break;
+        case MenuKey.SwitchArchived:
+          switchShowArchived(!settings.archived);
+          break;
       }
-      return { items: menuItems, onClick: onItemClick };
     };
+
     return (
       <div className={css.tabOptions}>
         <Space className={css.actionList}>
@@ -897,7 +893,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
           <FilterCounter activeFilterCount={filterCount} onReset={resetFilters} />
         </Space>
         <div className={css.actionOverflow} title="Open actions menu">
-          <Dropdown menu={getMenuProps()} trigger={['click']}>
+          <Dropdown menu={menuItems} onClick={handleDropdown}>
             <div>
               <Icon name="overflow-vertical" title="Action menu" />
             </div>

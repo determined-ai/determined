@@ -183,7 +183,7 @@ const MultiSortRow: React.FC<MultiSortRowProps> = ({ sort, columns, onChange, on
       </div>
       <div>
         <Button
-          icon={<Icon name="close" title="" />}
+          icon={<Icon name="close" title="Remove sort" />}
           shape="circle"
           size="small"
           type="text"
@@ -236,7 +236,7 @@ const MultiSort: React.FC<MultiSortProps> = ({ sorts, columns, onChange }) => {
       </div>
       <div className={css.actions}>
         <Button type="text" onClick={addRow}>
-          <Icon name="add-small" size="tiny" title="" /> Add sort
+          <Icon name="add-small" size="tiny" title="Add sort" /> Add sort
         </Button>
         <Button type="text" onClick={clearAll}>
           Reset

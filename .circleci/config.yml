@@ -55,15 +55,6 @@ parameters:
     type: string
     default: xlarge
 
-main-and-release-and-rc-filters: &main-and-release-and-rc-filters
-  branches:
-    only:
-      - main
-  tags:
-    only:
-      - /(\d)+(\.(\d)+)+/
-      - /((\d)+(\.(\d)+)+)(-rc)(\d)+/
-
 release-and-rc-filters: &release-and-rc-filters
   branches:
     ignore:
@@ -1132,7 +1123,7 @@ jobs:
       - store_artifacts:
           path: docs.tgz
 
-  scrape-docs:
+  upload-docs-search-index:
     docker:
       - image: <<pipeline.parameters.docker-image>>
     steps:
@@ -1429,7 +1420,7 @@ jobs:
 
   lint-react:
     docker:
-      - image: cimg/node:16.19.0
+      - image: cimg/node:18.16.0
     steps:
       - checkout-with-sm
       - skip-if-docs-only
@@ -1442,7 +1433,7 @@ jobs:
         type: boolean
         default: false
     docker:
-      - image: cimg/node:16.19.0
+      - image: cimg/node:18.16.0
     resource_class: large
     steps:
       - checkout-with-sm
@@ -1461,7 +1452,7 @@ jobs:
 
   test-e2e-react:
     docker:
-      - image: mcr.microsoft.com/playwright:v1.32.3-focal
+      - image: mcr.microsoft.com/playwright:v1.33.0-focal
     resource_class: large
     steps:
       - checkout-with-sm
@@ -1480,7 +1471,7 @@ jobs:
 
   test-unit-react:
     docker:
-      - image: cimg/node:16.19.0
+      - image: cimg/node:18.16.0
         environment:
           CI: "true"
     resource_class: xlarge
@@ -1499,7 +1490,7 @@ jobs:
 
   test-unit-react-screenshot:
     docker:
-      - image: cimg/node:16.19.0
+      - image: cimg/node:18.16.0
         environment:
           CI: "true"
     resource_class: xlarge
@@ -1536,7 +1527,7 @@ jobs:
 
   test-intg-downstream:
     docker:
-      - image: cimg/node:16.19.0
+      - image: cimg/node:18.16.0
     steps:
       - checkout-with-sm
       - skip-if-not-shared
@@ -2497,11 +2488,14 @@ workflows:
             - build-docs
           filters: *any-upstream
 
-      - scrape-docs:
+      - upload-docs-search-index:
           requires:
             - build-docs
           context: determined-production
-          filters: *main-and-release-and-rc-filters
+          filters:
+            branches:
+              only:
+                - main
 
       - test-debian-packaging:
           requires:
@@ -3281,6 +3275,12 @@ workflows:
           requires:
             - build-helm
             - build-proto
+
+      - upload-docs-search-index:
+          requires:
+            - build-docs
+          context: determined-production
+          filters: *release-and-rc-filters
 
       - package-and-push-system-rc:
           requires:

@@ -1,13 +1,12 @@
-import { Menu, Space } from 'antd';
-import { ItemType } from 'rc-menu/lib/interface';
+import { Space } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import BatchActionConfirmModalComponent from 'components/BatchActionConfirmModal';
-import Dropdown from 'components/Dropdown';
 import ExperimentMoveModalComponent from 'components/ExperimentMoveModal';
 import { FilterFormStore } from 'components/FilterForm/components/FilterFormStore';
 import TableFilter from 'components/FilterForm/TableFilter';
 import Button from 'components/kit/Button';
+import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 import Icon, { IconName } from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
 import usePermissions from 'hooks/usePermissions';
@@ -276,7 +275,7 @@ const TableActionBar: React.FC<Props> = ({
     [BatchActionConfirmModal, submitBatchAction, sendBatchActions],
   );
 
-  const editMenuItems: ItemType[] = useMemo(() => {
+  const editMenuItems: MenuItem[] = useMemo(() => {
     return batchActions.map((action) => ({
       danger: action === ExperimentAction.Delete,
       disabled: !availableBatchActions.includes(action),
@@ -291,12 +290,7 @@ const TableActionBar: React.FC<Props> = ({
     }));
   }, [availableBatchActions]);
 
-  const handleAction = useCallback(
-    ({ key }: { key: string }) => {
-      handleBatchAction(key);
-    },
-    [handleBatchAction],
-  );
+  const handleAction = useCallback((key: string) => handleBatchAction(key), [handleBatchAction]);
 
   return (
     <>
@@ -314,7 +308,7 @@ const TableActionBar: React.FC<Props> = ({
           setVisibleColumns={setVisibleColumns}
         />
         {(selectAll || selectedExperimentIds.length > 0) && (
-          <Dropdown content={<Menu items={editMenuItems} onClick={handleAction} />}>
+          <Dropdown menu={editMenuItems} onClick={handleAction}>
             <Button icon={<Icon name="pencil" title="Edit" />}>
               Edit (
               {selectAll

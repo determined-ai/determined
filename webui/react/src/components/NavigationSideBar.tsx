@@ -1,12 +1,12 @@
-import { Menu, MenuProps, Typography } from 'antd';
+import { Typography } from 'antd';
 import { boolean } from 'io-ts';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { CSSTransition } from 'react-transition-group';
 
-import Dropdown, { Placement } from 'components/Dropdown';
 import DynamicIcon from 'components/DynamicIcon';
 import Button from 'components/kit/Button';
+import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 import Icon, { IconName, IconSize } from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
 import Tooltip from 'components/kit/Tooltip';
@@ -194,8 +194,8 @@ const NavigationSideBar: React.FC = () => {
 
   const { canAdministrateUsers } = usePermissions();
 
-  const menuItems: MenuProps['items'] = useMemo(() => {
-    const items = [
+  const menuItems = useMemo(() => {
+    const items: MenuItem[] = [
       {
         key: 'settings',
         label: <Link path={paths.settings('account')}>Settings</Link>,
@@ -233,10 +233,7 @@ const NavigationSideBar: React.FC = () => {
       timeout={200}>
       <nav className={css.base} ref={nodeRef}>
         <header>
-          <Dropdown
-            content={<Menu items={menuItems} selectable={false} />}
-            offset={settings.navbarCollapsed ? { x: -8, y: 16 } : { x: 16, y: -8 }}
-            placement={settings.navbarCollapsed ? Placement.RightTop : Placement.BottomLeft}>
+          <Dropdown menu={menuItems}>
             <div className={css.user}>
               <UserBadge compact hideAvatarTooltip user={currentUser} />
             </div>
@@ -285,9 +282,9 @@ const NavigationSideBar: React.FC = () => {
                     .sort((a, b) => ((a.pinnedAt ?? 0) < (b.pinnedAt ?? 0) ? -1 : 1))
                     .map((workspace) => (
                       <WorkspaceActionDropdown
+                        isContextMenu
                         key={workspace.id}
                         returnIndexOnDelete={false}
-                        trigger={['contextMenu']}
                         workspace={workspace}>
                         <li>
                           <NavigationItem
