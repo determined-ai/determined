@@ -481,6 +481,44 @@ func (db *PgDB) updateTotalBatches(ctx context.Context, tx *sqlx.Tx, trialID int
 	return nil
 }
 
+/*
+rollbackMetrics ensures old training and validation metrics from a previous run id are archived.
+*/
+func rollbackMetrics(ctx context.Context, tx *sqlx.Tx, runID, trialID,
+	lastProcessedBatch int32, isValidation bool) (int, error) {
+	pType := model.TrainingMetric
+	if isValidation {
+		pType = model.ValidationMetric
+	}
+
+	res, err := tx.ExecContext(ctx, `
+UPDATE metrics SET archived = true
+WHERE trial_id = $1
+  AND archived = false
+  AND trial_run_id < $2
+	-- we mark metrics reported in the same table with the same batch number
+	-- as the metric being added as "archived"
+  AND (
+		(
+			partition_type != $4 AND total_batches > $3
+		) OR
+		(
+			partition_type = $4 AND total_batches >= $3
+		)
+		
+	);
+	`, trialID, runID, lastProcessedBatch, pType)
+
+	if err != nil {
+		return 0, errors.Wrap(err, "archiving metrics")
+	}
+	affectedRows, err := res.RowsAffected()
+	if err != nil {
+		return 0, errors.Wrap(err, "checking for metric rollbacks")
+	}
+	return int(affectedRows), nil
+}
+
 // AddTrialMetrics inserts a set of trial metrics to the database.
 func (db *PgDB) addTrialMetrics(
 	ctx context.Context, m *trialv1.TrialMetrics, pType model.MetricPartitionType,
@@ -513,33 +551,10 @@ func (db *PgDB) addTrialMetrics(
 		if err := checkTrialRunID(ctx, tx, m.TrialId, m.TrialRunId); err != nil {
 			return err
 		}
-
-		res, err := tx.ExecContext(ctx, `
-UPDATE metrics SET archived = true
-WHERE trial_id = $1
-  AND archived = false
-  AND trial_run_id < $2
-	-- we mark metrics reported in the same table with the same batch number
-	-- as the metric being added as "archived"
-  AND (
-		(
-			partition_type != $4 AND total_batches > $3
-		) OR
-		(
-			partition_type = $4 AND total_batches >= $3
-		)
-		
-	);
-	`, m.TrialId, m.TrialRunId, m.StepsCompleted, pType)
-		if err != nil {
-			return errors.Wrap(err, "archiving metrics")
+		if rollbacks, err = rollbackMetrics(ctx, tx, m.TrialRunId, m.TrialId, m.StepsCompleted,
+			isValidation); err != nil {
+			return err
 		}
-		affectedRows, err := res.RowsAffected()
-		if err != nil {
-			return errors.Wrap(err, "checking for metric rollbacks")
-		}
-		rollbacks = int(affectedRows)
-
 		var summaryMetrics model.JSONObj
 		err = tx.QueryRowContext(ctx, `
 		SELECT summary_metrics FROM trials WHERE id = $1 FOR UPDATE;
