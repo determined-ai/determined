@@ -19,6 +19,9 @@ import {
   FormKind,
   Operator,
   ReadableOperator,
+  RUN_STATES,
+  SEARCHER_TYPE,
+  SpecialColumnNames,
 } from 'components/FilterForm/components/type';
 import Button from 'components/kit/Button';
 import Icon from 'components/kit/Icon';
@@ -28,22 +31,9 @@ import Select, { SelectValue } from 'components/kit/Select';
 import { V1ColumnType, V1ProjectColumn } from 'services/api-ts-sdk';
 import clusterStore from 'stores/cluster';
 import userStore from 'stores/users';
-import { RunState } from 'types';
 import { Loadable } from 'utils/loadable';
 
 import css from './FilterField.module.scss';
-
-const RUN_STATES = [
-  RunState.Active,
-  RunState.Paused,
-  RunState.Canceled,
-  RunState.Completed,
-  RunState.Error,
-] as const;
-const SEARCHER_TYPE = ['adaptive_asha', 'single', 'random'] as const;
-
-const SpecialColumnNames = ['user', 'state', 'resourcePool', 'searcherType'] as const;
-type SpecialColumnNames = (typeof SpecialColumnNames)[number];
 
 const debounceFunc = debounce(1000, (func: () => void) => {
   func();
@@ -255,7 +245,7 @@ const FilterField = ({
           )}
         </>
         <Button
-          icon={<Icon name="close" title="" />}
+          icon={<Icon name="close" title="close field" />}
           type="text"
           onClick={() => formStore.removeChild(field.id)}
         />

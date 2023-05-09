@@ -154,7 +154,7 @@ const FilterGroup = ({
                 <Button icon={<PlusOutlined />} type="text" />
               </Dropdown>
               <Button
-                icon={<Icon name="close" title="" />}
+                icon={<Icon name="close" title="close group" />}
                 type="text"
                 onClick={() => formStore.removeChild(group.id)}
               />

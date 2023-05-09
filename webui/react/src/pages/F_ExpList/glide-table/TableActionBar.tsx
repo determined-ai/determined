@@ -87,6 +87,8 @@ interface Props {
   setVisibleColumns: (newColumns: string[]) => void;
   total: Loadable<number>;
   formStore: FilterFormStore;
+  setIsOpenFilter: (value: boolean) => void;
+  isOpenFilter: boolean;
 }
 
 const TableActionBar: React.FC<Props> = ({
@@ -104,6 +106,8 @@ const TableActionBar: React.FC<Props> = ({
   initialVisibleColumns,
   setVisibleColumns,
   formStore,
+  setIsOpenFilter,
+  isOpenFilter,
 }) => {
   const permissions = usePermissions();
   const [batchAction, setBatchAction] = useState<BatchAction>();
@@ -297,7 +301,12 @@ const TableActionBar: React.FC<Props> = ({
   return (
     <>
       <Space className={css.base}>
-        <TableFilter formStore={formStore} loadableColumns={projectColumns} />
+        <TableFilter
+          formStore={formStore}
+          isOpenFilter={isOpenFilter}
+          loadableColumns={projectColumns}
+          setIsOpenFilter={setIsOpenFilter}
+        />
         <MultiSortMenu columns={projectColumns} sorts={sorts} onChange={onSortChange} />
         <ColumnPickerMenu
           initialVisibleColumns={initialVisibleColumns}

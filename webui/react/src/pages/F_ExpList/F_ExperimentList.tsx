@@ -68,7 +68,12 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   );
   const [total, setTotal] = useState<Loadable<number>>(NotLoaded);
   const [projectColumns, setProjectColumns] = useState<Loadable<ProjectColumn[]>>(NotLoaded);
+  const [isOpenFilter, setIsOpenFilter] = useState<boolean>(false);
   const filtersString: string = JSON.stringify(useObservable(formStore.jsonWithoutId));
+
+  const onIsOpenFilterChange = (newOpen: boolean) => {
+    setIsOpenFilter(newOpen);
+  };
 
   useEffect(() => {
     setSearchParams((params) => {
@@ -290,10 +295,12 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
           formStore={formStore}
           handleUpdateExperimentList={handleUpdateExperimentList}
           initialVisibleColumns={settings.columns}
+          isOpenFilter={isOpenFilter}
           project={project}
           projectColumns={projectColumns}
           selectAll={selectAll}
           selectedExperimentIds={selectedExperimentIds}
+          setIsOpenFilter={setIsOpenFilter}
           setVisibleColumns={setVisibleColumns}
           sorts={sorts}
           total={total}
@@ -316,6 +323,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
             colorMap={colorMap}
             data={experiments}
             fetchExperiments={fetchExperiments}
+            formStore={formStore}
             handleScroll={handleScroll}
             handleUpdateExperimentList={handleUpdateExperimentList}
             height={wholePageHeight}
@@ -330,6 +338,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
             setSortableColumnIds={setVisibleColumns}
             sortableColumnIds={settings.columns}
             sorts={sorts}
+            onIsOpenFilterChange={onIsOpenFilterChange}
             onSortChange={onSortChange}
           />
         )}

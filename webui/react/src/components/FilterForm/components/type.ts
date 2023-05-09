@@ -1,5 +1,6 @@
 import { V1ColumnType, V1LocationType, V1ProjectColumn } from 'services/api-ts-sdk';
 import { ValueOf } from 'shared/types';
+import { RunState } from 'types';
 
 export const FormKind = {
   Field: 'field',
@@ -106,3 +107,17 @@ export const AvailableOperators = {
   ],
   [V1ColumnType.UNSPECIFIED]: Object.values(Operator), // show all of operators
 } as const;
+
+export const RUN_STATES = [
+  RunState.Active,
+  RunState.Paused,
+  RunState.Canceled,
+  RunState.Completed,
+  RunState.Error,
+] as const;
+
+export const SEARCHER_TYPE = ['adaptive_asha', 'single', 'random'] as const;
+
+export const SpecialColumnNames = ['user', 'state', 'resourcePool', 'searcherType'] as const;
+
+export type SpecialColumnNames = (typeof SpecialColumnNames)[number];

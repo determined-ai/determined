@@ -1,6 +1,5 @@
 import { FilterOutlined } from '@ant-design/icons';
 import { Button, Popover } from 'antd';
-import { useState } from 'react';
 
 import FilterForm from 'components/FilterForm/components/FilterForm';
 import { FilterFormStore } from 'components/FilterForm/components/FilterFormStore';
@@ -10,19 +9,24 @@ import { Loadable } from 'utils/loadable';
 interface Props {
   loadableColumns: Loadable<V1ProjectColumn[]>;
   formStore: FilterFormStore;
+  setIsOpenFilter: (value: boolean) => void;
+  isOpenFilter: boolean;
 }
 
-const TableFilter = ({ loadableColumns, formStore }: Props): JSX.Element => {
-  const [open, setOpen] = useState<boolean>(false);
-
+const TableFilter = ({
+  loadableColumns,
+  formStore,
+  isOpenFilter,
+  setIsOpenFilter,
+}: Props): JSX.Element => {
   const columns: V1ProjectColumn[] = Loadable.getOrElse([], loadableColumns);
 
-  const handleOpenChange = (newOpen: boolean) => {
-    setOpen(newOpen);
+  const onIsOpenFilterChange = (newOpen: boolean) => {
+    setIsOpenFilter(newOpen);
   };
 
   const onHidePopOver = () => {
-    setOpen(false);
+    setIsOpenFilter(false);
   };
 
   return (
@@ -31,10 +35,10 @@ const TableFilter = ({ loadableColumns, formStore }: Props): JSX.Element => {
         content={
           <FilterForm columns={columns} formStore={formStore} onHidePopOver={onHidePopOver} />
         }
-        open={open}
+        open={isOpenFilter}
         placement="bottomLeft"
         trigger="click"
-        onOpenChange={handleOpenChange}>
+        onOpenChange={onIsOpenFilterChange}>
         <Button icon={<FilterOutlined />}>Filter</Button>
       </Popover>
     </div>
