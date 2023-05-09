@@ -483,6 +483,8 @@ func (db *PgDB) updateTotalBatches(ctx context.Context, tx *sqlx.Tx, trialID int
 
 /*
 rollbackMetrics ensures old training and validation metrics from a previous run id are archived.
+DISCUSS: how do we decide if a utility should be namespaced under PgDB or not?
+the goal is to make it clear we don't have direct db access other than through tx
 */
 func rollbackMetrics(ctx context.Context, tx *sqlx.Tx, runID, trialID,
 	lastProcessedBatch int32, isValidation bool) (int, error) {
@@ -519,6 +521,24 @@ WHERE trial_id = $1
 	return int(affectedRows), nil
 }
 
+func (db *PgDB) addRawMetrics(ctx context.Context, tx *sqlx.Tx, metricsBody *map[string]interface{},
+	runID, trialID, lastProcessedBatch int32,
+	pType model.MetricPartitionType) (int, error) {
+	var metricRowID int
+	if err := tx.QueryRowContext(ctx, `
+INSERT INTO metrics
+	(trial_id, trial_run_id, end_time, metrics, total_batches, partition_type)
+VALUES
+	($1, $2, now(), $3, $4, $5)
+RETURNING id`,
+		trialID, runID, *metricsBody, lastProcessedBatch, pType,
+	).Scan(&metricRowID); err != nil {
+		return metricRowID, errors.Wrap(err, "inserting metrics")
+	}
+
+	return metricRowID, nil
+}
+
 // AddTrialMetrics inserts a set of trial metrics to the database.
 func (db *PgDB) addTrialMetrics(
 	ctx context.Context, m *trialv1.TrialMetrics, pType model.MetricPartitionType,
@@ -551,6 +571,16 @@ func (db *PgDB) addTrialMetrics(
 		if err := checkTrialRunID(ctx, tx, m.TrialId, m.TrialRunId); err != nil {
 			return err
 		}
+
+		var metricRowID int
+		if pType == model.GenericMetric {
+			if metricRowID, err = db.addRawMetrics(ctx, tx, &metricsBody, m.TrialRunId,
+				m.TrialId, m.StepsCompleted, pType); err != nil {
+				return err
+			}
+			return nil
+		}
+
 		if rollbacks, err = rollbackMetrics(ctx, tx, m.TrialRunId, m.TrialId, m.StepsCompleted,
 			isValidation); err != nil {
 			return err
@@ -563,16 +593,9 @@ func (db *PgDB) addTrialMetrics(
 			return fmt.Errorf("error getting summary metrics from trials: %w", err)
 		}
 
-		var metricRowID int
-		if err := tx.QueryRowContext(ctx, `
-INSERT INTO metrics
-	(trial_id, trial_run_id, end_time, metrics, total_batches, partition_type)
-VALUES
-	($1, $2, now(), $3, $4, $5)
-RETURNING id`,
-			int(m.TrialId), int(m.TrialRunId), metricsBody, int(m.StepsCompleted), pType,
-		).Scan(&metricRowID); err != nil {
-			return errors.Wrap(err, "inserting metrics")
+		if metricRowID, err = db.addRawMetrics(ctx, tx, &metricsBody, m.TrialRunId,
+			m.TrialId, m.StepsCompleted, pType); err != nil {
+			return err
 		}
 
 		if rollbacks > 0 {
