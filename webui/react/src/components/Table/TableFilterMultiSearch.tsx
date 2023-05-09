@@ -3,8 +3,8 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { FixedSizeList, ListChildComponentProps } from 'react-window';
 
 import Button from 'components/kit/Button';
+import Icon from 'components/kit/Icon';
 import Input, { InputRef } from 'components/kit/Input';
-import Icon from 'shared/components/Icon/Icon';
 import usePrevious from 'shared/hooks/usePrevious';
 
 import css from './TableFilterMultiSearch.module.scss';
@@ -29,7 +29,7 @@ export const ARIA_LABEL_APPLY = 'table-filter-apply';
 
 const ITEM_HEIGHT = 28;
 
-const TableFilterDropdown: React.FC<Props> = ({
+const TableFilterMultiSearch: React.FC<Props> = ({
   clearFilters,
   confirm,
   filters,
@@ -147,7 +147,7 @@ const TableFilterDropdown: React.FC<Props> = ({
           style={style}
           onClick={handleOptionClick}>
           {isJSX ? data[index].text : <span>{data[index].text}</span>}
-          <Icon name="checkmark" />
+          <Icon name="checkmark" title="" />
         </div>
       );
     },
@@ -186,7 +186,7 @@ const TableFilterDropdown: React.FC<Props> = ({
             aria-label={ARIA_LABEL_INPUT}
             bordered={false}
             placeholder={placeholder ?? 'search filters'}
-            prefix={<Icon name="search" size="tiny" />}
+            prefix={<Icon name="search" size="tiny" title="Search" />}
             ref={inputRef}
             value={search}
             onChange={handleSearchChange}
@@ -219,4 +219,4 @@ const TableFilterDropdown: React.FC<Props> = ({
   );
 };
 
-export default TableFilterDropdown;
+export default TableFilterMultiSearch;

@@ -195,7 +195,7 @@ func (a *apiServer) isNTSCPermittedToLaunch(
 		if err := command.AuthZProvider.Get().CanGetTensorboard(
 			ctx, *user, workspaceID, spec.Metadata.ExperimentIDs, spec.Metadata.TrialIDs,
 		); err != nil {
-			return err
+			return authz.SubIfUnauthorized(err, apiutils.MapAndFilterErrors(err, nil, nil))
 		}
 	} else {
 		if err := command.AuthZProvider.Get().CanCreateNSC(

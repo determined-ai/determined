@@ -1,6 +1,7 @@
 import React, { Suspense, useMemo } from 'react';
 
 import Card from 'components/kit/Card';
+import Icon from 'components/kit/Icon';
 import SlotAllocationBar from 'components/SlotAllocationBar';
 import { V1ResourcePoolTypeToLabel, V1SchedulerTypeToLabel } from 'constants/states';
 import { paths } from 'routes/utils';
@@ -10,7 +11,6 @@ import awsLogo from 'shared/assets/images/aws-logo.svg';
 import gcpLogo from 'shared/assets/images/gcp-logo.svg';
 import k8sLogo from 'shared/assets/images/k8s-logo.svg';
 import staticLogo from 'shared/assets/images/on-prem-logo.svg';
-import Icon from 'shared/components/Icon/Icon';
 import Spinner from 'shared/components/Spinner';
 import useUI from 'shared/contexts/stores/UI';
 import { DarkLight } from 'shared/themes';

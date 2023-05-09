@@ -11,10 +11,10 @@ import React, {
 } from 'react';
 
 import Button from 'components/kit/Button';
+import Icon from 'components/kit/Icon';
 import TableBatch from 'components/Table/TableBulkActions';
 import { SettingsConfig, useSettings } from 'hooks/useSettings';
 import css from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
-import Icon from 'shared/components/Icon';
 import usePrevious from 'shared/hooks/usePrevious';
 import { isEqual } from 'shared/utils/data';
 import { noOp } from 'shared/utils/service';
@@ -173,9 +173,11 @@ const useTrialActions = ({
     ) : (
       <div className={css.base} title="Open actions menu" onClick={(e) => e.stopPropagation()}>
         <Dropdown menu={menu} placement="bottomRight" trigger={['click']}>
-          <Button type="text" onClick={(e) => e.stopPropagation()}>
-            <Icon name="overflow-vertical" />
-          </Button>
+          <Button
+            icon={<Icon name="overflow-vertical" title="Action menu" />}
+            type="text"
+            onClick={(e) => e.stopPropagation()}
+          />
         </Dropdown>
       </div>
     );

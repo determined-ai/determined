@@ -1,3 +1,4 @@
+import importlib
 import os
 import pathlib
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Type
@@ -9,6 +10,7 @@ from tensorflow.keras import utils as keras_utils
 
 import determined as det
 from determined import core, gpu, keras, workload
+from determined.common import util
 
 
 class TrainAndValidate:
@@ -172,6 +174,36 @@ def fixtures_path(path: str) -> str:
 
 def repo_path(path: str) -> str:
     return os.path.join(os.path.dirname(__file__), "../../../", path)
+
+
+def cv_examples_path(path: str) -> str:
+    return os.path.join(os.path.dirname(__file__), "../../../examples/computer_vision", path)
+
+
+def gan_examples_path(path: str) -> str:
+    return os.path.join(os.path.dirname(__file__), "../../../examples/gan", path)
+
+
+def tutorials_path(path: str) -> str:
+    return os.path.join(os.path.dirname(__file__), "../../../examples/tutorials", path)
+
+
+def import_class_from_module(class_name: str, module_path: str) -> Any:
+    module_dir = pathlib.Path(os.path.dirname(module_path))
+
+    with det.import_from_path(module_dir):
+        spec = importlib.util.spec_from_file_location(class_name, module_path)
+        module = importlib.util.module_from_spec(spec)  # type: ignore
+        spec.loader.exec_module(module)  # type: ignore
+        trial_cls = getattr(module, class_name)  # noqa: B009
+
+    return trial_cls
+
+
+def load_config(config_path: str) -> Any:
+    with open(config_path) as f:
+        config = util.safe_load_yaml_with_exceptions(f)
+    return config
 
 
 def assert_equivalent_metrics(metrics_A: Dict[str, Any], metrics_B: Dict[str, Any]) -> None:

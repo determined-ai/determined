@@ -6,6 +6,7 @@ import BatchActionConfirmModalComponent from 'components/BatchActionConfirmModal
 import Dropdown from 'components/Dropdown';
 import ExperimentMoveModalComponent from 'components/ExperimentMoveModal';
 import Button from 'components/kit/Button';
+import Icon, { IconName } from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
 import usePermissions from 'hooks/usePermissions';
 import {
@@ -19,7 +20,6 @@ import {
   unarchiveExperiments,
 } from 'services/api';
 import { V1BulkExperimentFilters } from 'services/api-ts-sdk';
-import Icon from 'shared/components/Icon';
 import { RecordKey } from 'shared/types';
 import { ErrorLevel } from 'shared/utils/error';
 import {
@@ -41,6 +41,7 @@ import { Loadable } from 'utils/loadable';
 import { openCommandResponse } from 'utils/wait';
 
 import ColumnPickerMenu from './ColumnPickerMenu';
+import MultiSortMenu, { Sort } from './MultiSortMenu';
 import css from './TableActionBar.module.scss';
 
 const batchActions = [
@@ -57,7 +58,7 @@ const batchActions = [
 
 export type BatchAction = (typeof batchActions)[number];
 
-const actionIcons: Record<BatchAction, string> = {
+const actionIcons: Record<BatchAction, IconName> = {
   [ExperimentAction.Activate]: 'play',
   [ExperimentAction.Pause]: 'pause',
   [ExperimentAction.Cancel]: 'stop',
@@ -74,6 +75,8 @@ interface Props {
   filters: V1BulkExperimentFilters;
   initialVisibleColumns: string[];
   onAction: () => Promise<void>;
+  sorts: Sort[];
+  onSortChange: (sorts: Sort[]) => void;
   project: Project;
   projectColumns: Loadable<ProjectColumn[]>;
   selectAll: boolean;
@@ -87,9 +90,11 @@ const TableActionBar: React.FC<Props> = ({
   experiments,
   filters,
   onAction,
+  onSortChange,
   selectAll,
   selectedExperimentIds,
   handleUpdateExperimentList,
+  sorts,
   project,
   projectColumns,
   total,
@@ -270,7 +275,7 @@ const TableActionBar: React.FC<Props> = ({
       // The icon doesn't show up without being wrapped in a div.
       icon: (
         <div>
-          <Icon name={actionIcons[action]} />
+          <Icon name={actionIcons[action]} title={action} />
         </div>
       ),
       key: action,
@@ -288,6 +293,7 @@ const TableActionBar: React.FC<Props> = ({
   return (
     <>
       <Space className={css.base}>
+        <MultiSortMenu columns={projectColumns} sorts={sorts} onChange={onSortChange} />
         <ColumnPickerMenu
           initialVisibleColumns={initialVisibleColumns}
           projectColumns={projectColumns}
@@ -295,7 +301,7 @@ const TableActionBar: React.FC<Props> = ({
         />
         {(selectAll || selectedExperimentIds.length > 0) && (
           <Dropdown content={<Menu items={editMenuItems} onClick={handleAction} />}>
-            <Button icon={<Icon name="pencil" />}>
+            <Button icon={<Icon name="pencil" title="Edit" />}>
               Edit (
               {selectAll
                 ? Loadable.isLoaded(total)

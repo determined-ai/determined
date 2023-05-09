@@ -973,7 +973,7 @@ func TestAuthZCreateExperiment(t *testing.T) {
 	// Can't create experiment deny.
 	expectedErr = status.Errorf(codes.PermissionDenied, "canCreateExperimentError")
 	pAuthZ.On("CanGetProject", mock.Anything, curUser, mock.Anything).Return(nil).Once()
-	authZExp.On("CanCreateExperiment", mock.Anything, curUser, mock.Anything, mock.Anything).
+	authZExp.On("CanCreateExperiment", mock.Anything, curUser, mock.Anything).
 		Return(fmt.Errorf("canCreateExperimentError")).Once()
 	_, err = api.CreateExperiment(ctx, &apiv1.CreateExperimentRequest{
 		ProjectId: int32(projectID),
@@ -984,7 +984,7 @@ func TestAuthZCreateExperiment(t *testing.T) {
 	// Can't activate experiment deny.
 	expectedErr = status.Errorf(codes.PermissionDenied, "canActivateExperimentError")
 	pAuthZ.On("CanGetProject", mock.Anything, curUser, mock.Anything).Return(nil).Once()
-	authZExp.On("CanCreateExperiment", mock.Anything, curUser, mock.Anything, mock.Anything).
+	authZExp.On("CanCreateExperiment", mock.Anything, curUser, mock.Anything).
 		Return(nil).Once()
 	authZExp.On("CanEditExperiment", mock.Anything, curUser, mock.Anything, mock.Anything).Return(
 		fmt.Errorf("canActivateExperimentError")).Once()

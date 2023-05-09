@@ -318,13 +318,17 @@ func (a *apiServer) DeleteExperiment(
 
 	results, _, err := exputil.DeleteExperiments(ctx, a.m.system,
 		[]int32{req.ExperimentId}, nil)
+	// report error from the multi-experiment selection code
+	if err != nil {
+		return nil, err
+	}
 
-	if err == nil {
-		if len(results) == 0 {
-			return nil, errors.Errorf("unknown error during delete query.")
-		} else if results[0].Error != nil {
-			return nil, results[0].Error
-		}
+	// report any error on the individual experiment
+	if len(results) == 0 {
+		return nil, errors.Errorf("DeleteExperiments returned neither pass nor fail on delete query.")
+	}
+	if results[0].Error != nil {
+		return nil, results[0].Error
 	}
 
 	go func() {
@@ -354,7 +358,9 @@ func (a *apiServer) DeleteExperiments(
 		req.Filters)
 
 	go func() {
-		if expIDs, err := a.deleteExperiments(experiments, curUser); err != nil {
+		expIDs, err := a.deleteExperiments(experiments, curUser)
+		if err != nil {
+			// set experiment state to DeleteFailed
 			for _, id := range expIDs {
 				logrus.WithError(err).Errorf("deleting experiment %d", id)
 			}
@@ -907,7 +913,7 @@ func (a *apiServer) PauseExperiment(
 
 	if err == nil {
 		if len(results) == 0 {
-			return nil, errors.Errorf("unknown error during pause query.")
+			return nil, errors.Errorf("PauseExperiments returned neither pass nor fail on query.")
 		} else if results[0].Error != nil {
 			return nil, results[0].Error
 		}
@@ -930,7 +936,7 @@ func (a *apiServer) CancelExperiment(
 
 	if err == nil {
 		if len(results) == 0 {
-			return nil, errors.Errorf("unknown error during cancel query.")
+			return nil, errors.Errorf("CancelExperiments returned neither pass nor fail on query.")
 		} else if results[0].Error != nil {
 			return nil, results[0].Error
 		}
@@ -953,7 +959,7 @@ func (a *apiServer) KillExperiment(
 
 	if err == nil {
 		if len(results) == 0 {
-			return nil, errors.Errorf("unknown error during kill query.")
+			return nil, errors.Errorf("KillExperiments returned neither pass nor fail on query.")
 		} else if results[0].Error != nil {
 			return nil, results[0].Error
 		}
@@ -976,7 +982,7 @@ func (a *apiServer) ArchiveExperiment(
 
 	if err == nil {
 		if len(results) == 0 {
-			return nil, errors.Errorf("unknown error during archive query.")
+			return nil, errors.Errorf("ArchiveExperiments returned neither pass nor fail on query.")
 		} else if results[0].Error != nil {
 			return nil, results[0].Error
 		}
@@ -999,7 +1005,7 @@ func (a *apiServer) UnarchiveExperiment(
 
 	if err == nil {
 		if len(results) == 0 {
-			return nil, errors.Errorf("unknown error during unarchive query.")
+			return nil, errors.Errorf("UnarchiveExperiments returned neither pass nor fail on query.")
 		} else if results[0].Error != nil {
 			return nil, results[0].Error
 		}
@@ -1255,7 +1261,7 @@ func (a *apiServer) CreateExperiment(
 		}
 		return nil, status.Errorf(codes.InvalidArgument, "invalid experiment: %s", err)
 	}
-	if err = exputil.AuthZProvider.Get().CanCreateExperiment(ctx, *user, p, dbExp); err != nil {
+	if err = exputil.AuthZProvider.Get().CanCreateExperiment(ctx, *user, p); err != nil {
 		return nil, status.Errorf(codes.PermissionDenied, err.Error())
 	}
 
@@ -1830,9 +1836,7 @@ func (a *apiServer) MoveExperiment(
 		return nil, errors.Errorf("project (%v) is archived and cannot add new experiments.",
 			req.DestinationProjectId)
 	}
-	// need to update CanCreateExperiment to check project when experiment is nil
-	if err = exputil.AuthZProvider.Get().CanCreateExperiment(ctx, curUser, destProject,
-		nil); err != nil {
+	if err = exputil.AuthZProvider.Get().CanCreateExperiment(ctx, curUser, destProject); err != nil {
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
@@ -1841,7 +1845,7 @@ func (a *apiServer) MoveExperiment(
 
 	if err == nil {
 		if len(results) == 0 {
-			return nil, errors.Errorf("unknown error during move query.")
+			return nil, errors.Errorf("MoveExperiments returned neither pass nor fail on query.")
 		} else if results[0].Error != nil {
 			return nil, results[0].Error
 		}
@@ -1867,9 +1871,7 @@ func (a *apiServer) MoveExperiments(
 		return nil, errors.Errorf("project (%v) is archived and cannot add new experiments.",
 			req.DestinationProjectId)
 	}
-	// need to update CanCreateExperiment to check project when experiment is nil
-	if err = exputil.AuthZProvider.Get().CanCreateExperiment(ctx, *curUser, destProject,
-		nil); err != nil {
+	if err = exputil.AuthZProvider.Get().CanCreateExperiment(ctx, *curUser, destProject); err != nil {
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
@@ -2012,7 +2014,10 @@ func (a *apiServer) SearchExperiments(
 		if err != nil {
 			return nil, err
 		}
-		experimentQuery, err = efr.toSQL(experimentQuery)
+		experimentQuery = experimentQuery.WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
+			_, err = efr.toSQL(q)
+			return q
+		})
 		if err != nil {
 			return nil, err
 		}

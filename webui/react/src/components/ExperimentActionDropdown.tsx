@@ -6,6 +6,7 @@ import React, { MouseEvent, useCallback, useMemo } from 'react';
 
 import ExperimentMoveModalComponent from 'components/ExperimentMoveModal';
 import Button from 'components/kit/Button';
+import Icon from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
 import useModalHyperparameterSearch from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
 import usePermissions from 'hooks/usePermissions';
@@ -24,7 +25,6 @@ import {
   unarchiveExperiment,
 } from 'services/api';
 import css from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
-import Icon from 'shared/components/Icon/Icon';
 import { ValueOf } from 'shared/types';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { capitalize } from 'shared/utils/string';
@@ -265,7 +265,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
       (children as JSX.Element) ?? (
         <div className={css.base} title="No actions available" onClick={stopPropagation}>
           <Button disabled ghost type="text">
-            <Icon name="overflow-vertical" />
+            <Icon name="overflow-vertical" title="Disabled action menu" />
           </Button>
         </div>
       )
@@ -299,7 +299,11 @@ const ExperimentActionDropdown: React.FC<Props> = ({
   ) : (
     <div className={css.base} title="Open actions menu" onClick={stopPropagation}>
       <Dropdown menu={menu} placement="bottomRight" trigger={['click']}>
-        <Button ghost icon={<Icon name="overflow-vertical" />} onClick={stopPropagation} />
+        <Button
+          ghost
+          icon={<Icon name="overflow-vertical" title="Action menu" />}
+          onClick={stopPropagation}
+        />
       </Dropdown>
       {shared}
     </div>

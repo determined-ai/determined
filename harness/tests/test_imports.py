@@ -129,3 +129,7 @@ def test_import_from_path() -> None:
     # We will have created some __pycache__ dirs but we don't want to pollute.
     shutil.rmtree(fixture / "a" / "__pycache__")
     shutil.rmtree(fixture / "libraries" / "__pycache__")
+
+    # These modules may leak into other imports in tests downstream
+    for mod in ["lib1", "lib2", "data"]:
+        sys.modules.pop(mod)

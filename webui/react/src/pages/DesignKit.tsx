@@ -9,9 +9,11 @@ import Breadcrumb from 'components/kit/Breadcrumb';
 import Button from 'components/kit/Button';
 import Card from 'components/kit/Card';
 import Checkbox from 'components/kit/Checkbox';
+import { Column, Columns } from 'components/kit/Columns';
 import Empty from 'components/kit/Empty';
 import Facepile from 'components/kit/Facepile';
 import Form from 'components/kit/Form';
+import Icon, { IconNameArray, IconSizeArray } from 'components/kit/Icon';
 import IconicButton from 'components/kit/IconicButton';
 import Input from 'components/kit/Input';
 import InputNumber from 'components/kit/InputNumber';
@@ -37,16 +39,16 @@ import Page from 'components/Page';
 import ResponsiveTable from 'components/Table/ResponsiveTable';
 import ThemeToggle from 'components/ThemeToggle';
 import { drawPointsPlugin } from 'components/UPlot/UPlotChart/drawPointsPlugin';
-import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin2';
+import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin';
 import { V1LogLevel } from 'services/api-ts-sdk';
 import { mapV1LogsResponse } from 'services/decoder';
-import Icon from 'shared/components/Icon';
 import useUI from 'shared/contexts/stores/UI';
 import { ValueOf } from 'shared/types';
 import { noOp } from 'shared/utils/service';
 import { BrandingType } from 'stores/determinedInfo';
 import { MetricType, User } from 'types';
 import { NotLoaded } from 'utils/loadable';
+import loremIpsum from 'utils/loremIpsum';
 
 import useConfirm, { voidPromiseFn } from '../components/kit/useConfirm';
 
@@ -60,9 +62,11 @@ const ComponentTitles = {
   Cards: 'Cards',
   Charts: 'Charts',
   Checkboxes: 'Checkboxes',
+  Columns: 'Columns',
   Empty: 'Empty',
   Facepile: 'Facepile',
   Form: 'Form',
+  Icons: 'Icons',
   Input: 'Input',
   InputNumber: 'InputNumber',
   InputSearch: 'InputSearch',
@@ -1174,9 +1178,9 @@ const NameplateSection: React.FC = () => {
           name={testUser.username}
         />
         <li>No alias</li>
-        <Nameplate icon={<Icon name="group" />} name="testGroup123" />
+        <Nameplate icon={<Icon name="group" title="Group" />} name="testGroup123" />
         <li>Compact, no alias</li>
-        <Nameplate compact icon={<Icon name="group" />} name="testGroup123" />
+        <Nameplate compact icon={<Icon name="group" title="Group" />} name="testGroup123" />
       </AntDCard>
     </ComponentSection>
   );
@@ -1792,6 +1796,106 @@ const TooltipsSection: React.FC = () => {
   );
 };
 
+const ColumnsSection: React.FC = () => {
+  return (
+    <ComponentSection id="Columns" title="Columns">
+      <AntDCard>
+        <p>
+          The <code>{'<Columns>'}</code> component wraps child components to be displayed in
+          multiple columns.
+          <br />
+          The <code>{'<Column>'}</code> component can optionally be used to wrap the content for
+          each column and set its alignment.
+        </p>
+      </AntDCard>
+      <AntDCard title="Usage">
+        <p>
+          With <code>{'<Columns>'}</code> wrapper only, and <code>{'gap'}</code> set to 8 (default):
+        </p>
+        <Columns>
+          <Card>{loremIpsum}</Card>
+          <Card>{loremIpsum}</Card>
+          <Card>{loremIpsum}</Card>
+        </Columns>
+        <p>With <code>{'gap'}</code> set to 0:</p>
+        <Columns gap={0}>
+          <Card>{loremIpsum}</Card>
+          <Card>{loremIpsum}</Card>
+          <Card>{loremIpsum}</Card>
+        </Columns>
+        <p>With <code>{'gap'}</code> set to 16:</p>
+        <Columns gap={16}>
+          <Card>{loremIpsum}</Card>
+          <Card>{loremIpsum}</Card>
+          <Card>{loremIpsum}</Card>
+        </Columns>
+        <p>
+          With left-aligned <code>{'<Column>'}</code>s (default):
+        </p>
+        <Columns>
+          <Column>
+            <Button>Content</Button>
+          </Column>
+          <Column>
+            <Button>Content</Button>
+          </Column>
+          <Column>
+            <Button>Content</Button>
+          </Column>
+        </Columns>
+        <p>
+          With center-aligned <code>{'<Column>'}</code>s:
+        </p>
+        <Columns>
+          <Column align="center">
+            <Button>Content</Button>
+          </Column>
+          <Column align="center">
+            <Button>Content</Button>
+          </Column>
+          <Column align="center">
+            <Button>Content</Button>
+          </Column>
+        </Columns>
+        <p>
+          With right-aligned <code>{'<Column>'}</code>s:
+        </p>
+        <Columns>
+          <Column align="right">
+            <Button>Content</Button>
+          </Column>
+          <Column align="right">
+            <Button>Content</Button>
+          </Column>
+          <Column align="right">
+            <Button>Content</Button>
+          </Column>
+        </Columns>
+        <p>
+          Variant with <code>{'page'}</code> prop, with margins and wrapping behavior, used for page-level layouts/headers:
+        </p>
+        <Columns page>
+          <Column>
+            <Button>Content 1</Button>
+            <Button>Content 2</Button>
+            <Button>Content 3</Button>
+          </Column>
+          <Column>
+            <Button>Content 1</Button>
+            <Button>Content 2</Button>
+            <Button>Content 3</Button>
+          </Column>
+          <Column>
+            <Button>Content 1</Button>
+            <Button>Content 2</Button>
+            <Button>Content 3</Button>
+          </Column>
+        </Columns>
+      </AntDCard>
+    </ComponentSection>
+  );
+};
+
 const EmptySection: React.FC = () => {
   return (
     <ComponentSection id="Empty" title="Empty">
@@ -1811,6 +1915,38 @@ const EmptySection: React.FC = () => {
           icon="warning-large"
           title="Empty title"
         />
+      </AntDCard>
+    </ComponentSection>
+  );
+};
+
+const IconsSection: React.FC = () => {
+  return (
+    <ComponentSection id="Icons" title="Icons">
+      <AntDCard>
+        <p>
+          An <code>{'<Icon>'}</code> component displays an icon from a custom font along with an
+          optional tooltip.
+        </p>
+      </AntDCard>
+      <AntDCard title="Usage">
+        <strong>Icon default</strong>
+        <Icon name="star" title="star" />
+        <strong>Icon variations</strong>
+        <p>Icon with tooltip</p>
+        <Icon name="star" title="Tooltip" />
+        <p>Icon sizes</p>
+        <Space wrap>
+          {IconSizeArray.map((size) => (
+            <Icon key={size} name="star" showTooltip size={size} title={size} />
+          ))}
+        </Space>
+        <p>All icons</p>
+        <Space wrap>
+          {IconNameArray.map((name) => (
+            <Icon key={name} name={name} showTooltip title={name} />
+          ))}
+        </Space>
       </AntDCard>
     </ComponentSection>
   );
@@ -2184,9 +2320,11 @@ const Components = {
   Cards: <CardsSection />,
   Charts: <ChartsSection />,
   Checkboxes: <CheckboxesSection />,
+  Columns: <ColumnsSection />,
   Empty: <EmptySection />,
   Facepile: <FacepileSection />,
   Form: <FormSection />,
+  Icons: <IconsSection />,
   Input: <InputSection />,
   InputNumber: <InputNumberSection />,
   InputSearch: <InputSearchSection />,

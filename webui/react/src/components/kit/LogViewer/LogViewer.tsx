@@ -12,14 +12,13 @@ import { sprintf } from 'sprintf-js';
 import { throttle } from 'throttle-debounce';
 
 import Button from 'components/kit/Button';
-import Tooltip from 'components/kit/Tooltip';
+import Icon from 'components/kit/Icon';
 import Link from 'components/Link';
 import Section from 'components/Section';
 import useGetCharMeasureInContainer from 'hooks/useGetCharMeasureInContainer';
 import useResize from 'hooks/useResize';
 import { FetchArgs } from 'services/api-ts-sdk';
 import { readStream } from 'services/utils';
-import Icon from 'shared/components/Icon/Icon';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner';
 import { RecordKey, ValueOf } from 'shared/types';
@@ -517,34 +516,28 @@ const LogViewer: React.FC<Props> = ({
   const logViewerOptions = (
     <div className={css.options}>
       <Space>
-        <Tooltip content="Copy to Clipboard" placement="bottomRight">
-          <Button
-            aria-label="Copy to Clipboard"
-            disabled={logs.length === 0}
-            icon={<Icon name="clipboard" />}
-            onClick={handleCopyToClipboard}
-          />
-        </Tooltip>
-        <Tooltip content="Toggle Fullscreen Mode" placement="bottomRight">
-          <Button
-            aria-label="Toggle Fullscreen Mode"
-            icon={<Icon name="fullscreen" />}
-            onClick={handleFullScreen}
-          />
-        </Tooltip>
+        <Button
+          aria-label="Copy to Clipboard"
+          disabled={logs.length === 0}
+          icon={<Icon name="clipboard" showTooltip title="Copy to Clipboard" />}
+          onClick={handleCopyToClipboard}
+        />
+        <Button
+          aria-label="Toggle Fullscreen Mode"
+          icon={<Icon name="fullscreen" showTooltip title="Toggle Fullscreen Mode" />}
+          onClick={handleFullScreen}
+        />
         {handleCloseLogs && (
           <Link onClick={handleCloseLogs}>
-            <Icon aria-label="Close Logs" name="close" title="Close Logs" />
+            <Icon name="close" title="Close Logs" />
           </Link>
         )}
         {onDownload && (
-          <Tooltip content="Download Logs" placement="bottomRight">
-            <Button
-              aria-label="Download Logs"
-              icon={<Icon name="download" />}
-              onClick={handleDownload}
-            />
-          </Tooltip>
+          <Button
+            aria-label="Download Logs"
+            icon={<Icon name="download" showTooltip title="Download Logs" />}
+            onClick={handleDownload}
+          />
         )}
       </Space>
     </div>
@@ -595,22 +588,22 @@ const LogViewer: React.FC<Props> = ({
           </Spinner>
         </div>
         <div className={css.buttons} style={{ display: showButtons ? 'flex' : 'none' }}>
-          <Tooltip content={ARIA_LABEL_SCROLL_TO_OLDEST} placement="left">
-            <Button
-              aria-label={ARIA_LABEL_SCROLL_TO_OLDEST}
-              icon={<Icon name="arrow-up" />}
-              onClick={handleScrollToOldest}
-            />
-          </Tooltip>
-          <Tooltip
-            content={isTailing ? 'Tailing Enabled' : ARIA_LABEL_ENABLE_TAILING}
-            placement="left">
-            <Button
-              aria-label={ARIA_LABEL_ENABLE_TAILING}
-              icon={<Icon name="arrow-down" />}
-              onClick={handleEnableTailing}
-            />
-          </Tooltip>
+          <Button
+            aria-label={ARIA_LABEL_SCROLL_TO_OLDEST}
+            icon={<Icon name="arrow-up" showTooltip title={ARIA_LABEL_SCROLL_TO_OLDEST} />}
+            onClick={handleScrollToOldest}
+          />
+          <Button
+            aria-label={ARIA_LABEL_ENABLE_TAILING}
+            icon={
+              <Icon
+                name="arrow-down"
+                showTooltip
+                title={isTailing ? 'Tailing Enabled' : ARIA_LABEL_ENABLE_TAILING}
+              />
+            }
+            onClick={handleEnableTailing}
+          />
         </div>
       </div>
     </Section>

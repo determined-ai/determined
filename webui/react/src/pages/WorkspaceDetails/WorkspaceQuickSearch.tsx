@@ -3,11 +3,11 @@ import { Modal, Tree } from 'antd';
 import type { DefaultOptionType } from 'rc-tree-select/lib/TreeSelect';
 import React, { useCallback, useMemo, useState } from 'react';
 
+import Icon from 'components/kit/Icon';
 import Input from 'components/kit/Input';
 import Link from 'components/Link';
 import { paths } from 'routes/utils';
 import { getWorkspaceProjects, getWorkspaces } from 'services/api';
-import Icon from 'shared/components/Icon/Icon';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
@@ -121,7 +121,7 @@ const WorkspaceQuickSearch: React.FC<Props> = ({ children }: Props) => {
           key: `workspace-${workspace.id}`,
           title: (
             <div className={`${css.flexRow} ${css.ellipsis}`}>
-              <Icon name="workspaces" />
+              <Icon name="workspaces" title="Workspace" />
               <Link onClick={() => onClickWorkspace(workspace.id)}>{workspace.name}</Link>
             </div>
           ),
@@ -142,7 +142,7 @@ const WorkspaceQuickSearch: React.FC<Props> = ({ children }: Props) => {
           <Input
             autoFocus
             placeholder="Search workspace or project"
-            prefix={<Icon name="search" />}
+            prefix={<Icon name="search" title="Search" />}
             value={searchText}
             width={'100%'}
             onChange={onChange}
