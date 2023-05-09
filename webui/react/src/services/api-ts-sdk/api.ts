@@ -825,6 +825,12 @@ export interface V1ActivateExperimentsRequest {
      * @memberof V1ActivateExperimentsRequest
      */
     filters?: V1BulkExperimentFilters;
+    /**
+     * Experiment ids to exclude when filters are used.
+     * @type {Array<number>}
+     * @memberof V1ActivateExperimentsRequest
+     */
+    excludedExperimentIds?: Array<number>;
 }
 /**
  * Response to ActivateExperimentsRequest.
@@ -1275,6 +1281,12 @@ export interface V1ArchiveExperimentsRequest {
      * @memberof V1ArchiveExperimentsRequest
      */
     filters?: V1BulkExperimentFilters;
+    /**
+     * Experiment ids to exclude when filters are used.
+     * @type {Array<number>}
+     * @memberof V1ArchiveExperimentsRequest
+     */
+    excludedExperimentIds?: Array<number>;
 }
 /**
  * Response to ArchiveExperimentsRequest.
@@ -1562,6 +1574,12 @@ export interface V1CancelExperimentsRequest {
      * @memberof V1CancelExperimentsRequest
      */
     filters?: V1BulkExperimentFilters;
+    /**
+     * Experiment ids to exclude when filters are used.
+     * @type {Array<number>}
+     * @memberof V1CancelExperimentsRequest
+     */
+    excludedExperimentIds?: Array<number>;
 }
 /**
  * Response to CancelExperimentsRequest.
@@ -2217,6 +2235,12 @@ export interface V1DeleteExperimentsRequest {
      * @memberof V1DeleteExperimentsRequest
      */
     filters?: V1BulkExperimentFilters;
+    /**
+     * Experiment ids to exclude when filters are used.
+     * @type {Array<number>}
+     * @memberof V1DeleteExperimentsRequest
+     */
+    excludedExperimentIds?: Array<number>;
 }
 /**
  * Response to DeleteExperimentsRequest.
@@ -4636,6 +4660,12 @@ export interface V1KillExperimentsRequest {
      * @memberof V1KillExperimentsRequest
      */
     filters?: V1BulkExperimentFilters;
+    /**
+     * Experiment ids to exclude when filters are used.
+     * @type {Array<number>}
+     * @memberof V1KillExperimentsRequest
+     */
+    excludedExperimentIds?: Array<number>;
 }
 /**
  * Response to KillExperimentsRequest.
@@ -4930,6 +4960,12 @@ export interface V1LaunchTensorboardRequest {
      * @memberof V1LaunchTensorboardRequest
      */
     filters?: V1BulkExperimentFilters;
+    /**
+     * Experiment ids to exclude when filters are used.
+     * @type {Array<number>}
+     * @memberof V1LaunchTensorboardRequest
+     */
+    excludedExperimentIds?: Array<number>;
 }
 /**
  * Response to LaunchTensorboardRequest.
@@ -5520,6 +5556,12 @@ export interface V1MoveExperimentsRequest {
      * @memberof V1MoveExperimentsRequest
      */
     filters?: V1BulkExperimentFilters;
+    /**
+     * Experiment ids to exclude when filters are used.
+     * @type {Array<number>}
+     * @memberof V1MoveExperimentsRequest
+     */
+    excludedExperimentIds?: Array<number>;
 }
 /**
  * Response to MoveExperimentsRequest.
@@ -6169,6 +6211,12 @@ export interface V1PauseExperimentsRequest {
      * @memberof V1PauseExperimentsRequest
      */
     filters?: V1BulkExperimentFilters;
+    /**
+     * Experiment ids to exclude when filters are used.
+     * @type {Array<number>}
+     * @memberof V1PauseExperimentsRequest
+     */
+    excludedExperimentIds?: Array<number>;
 }
 /**
  * Response to PauseExperimentsRequest.
@@ -9648,6 +9696,12 @@ export interface V1UnarchiveExperimentsRequest {
      * @memberof V1UnarchiveExperimentsRequest
      */
     filters?: V1BulkExperimentFilters;
+    /**
+     * Experiment ids to exclude when filters are used.
+     * @type {Array<number>}
+     * @memberof V1UnarchiveExperimentsRequest
+     */
+    excludedExperimentIds?: Array<number>;
 }
 /**
  * Response to UnarchiveExperimentsRequest.

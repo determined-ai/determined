@@ -542,15 +542,19 @@ class v1AckAllocationPreemptionSignalRequest:
         return out
 
 class v1ActivateExperimentsRequest:
+    excludedExperimentIds: "typing.Optional[typing.Sequence[int]]" = None
     filters: "typing.Optional[v1BulkExperimentFilters]" = None
 
     def __init__(
         self,
         *,
         experimentIds: "typing.Sequence[int]",
+        excludedExperimentIds: "typing.Union[typing.Sequence[int], None, Unset]" = _unset,
         filters: "typing.Union[v1BulkExperimentFilters, None, Unset]" = _unset,
     ):
         self.experimentIds = experimentIds
+        if not isinstance(excludedExperimentIds, Unset):
+            self.excludedExperimentIds = excludedExperimentIds
         if not isinstance(filters, Unset):
             self.filters = filters
 
@@ -559,6 +563,8 @@ class v1ActivateExperimentsRequest:
         kwargs: "typing.Dict[str, typing.Any]" = {
             "experimentIds": obj["experimentIds"],
         }
+        if "excludedExperimentIds" in obj:
+            kwargs["excludedExperimentIds"] = obj["excludedExperimentIds"]
         if "filters" in obj:
             kwargs["filters"] = v1BulkExperimentFilters.from_json(obj["filters"]) if obj["filters"] is not None else None
         return cls(**kwargs)
@@ -567,6 +573,8 @@ class v1ActivateExperimentsRequest:
         out: "typing.Dict[str, typing.Any]" = {
             "experimentIds": self.experimentIds,
         }
+        if not omit_unset or "excludedExperimentIds" in vars(self):
+            out["excludedExperimentIds"] = self.excludedExperimentIds
         if not omit_unset or "filters" in vars(self):
             out["filters"] = None if self.filters is None else self.filters.to_json(omit_unset)
         return out
@@ -1190,15 +1198,19 @@ class v1AllocationWaitingRequest:
         return out
 
 class v1ArchiveExperimentsRequest:
+    excludedExperimentIds: "typing.Optional[typing.Sequence[int]]" = None
     filters: "typing.Optional[v1BulkExperimentFilters]" = None
 
     def __init__(
         self,
         *,
         experimentIds: "typing.Sequence[int]",
+        excludedExperimentIds: "typing.Union[typing.Sequence[int], None, Unset]" = _unset,
         filters: "typing.Union[v1BulkExperimentFilters, None, Unset]" = _unset,
     ):
         self.experimentIds = experimentIds
+        if not isinstance(excludedExperimentIds, Unset):
+            self.excludedExperimentIds = excludedExperimentIds
         if not isinstance(filters, Unset):
             self.filters = filters
 
@@ -1207,6 +1219,8 @@ class v1ArchiveExperimentsRequest:
         kwargs: "typing.Dict[str, typing.Any]" = {
             "experimentIds": obj["experimentIds"],
         }
+        if "excludedExperimentIds" in obj:
+            kwargs["excludedExperimentIds"] = obj["excludedExperimentIds"]
         if "filters" in obj:
             kwargs["filters"] = v1BulkExperimentFilters.from_json(obj["filters"]) if obj["filters"] is not None else None
         return cls(**kwargs)
@@ -1215,6 +1229,8 @@ class v1ArchiveExperimentsRequest:
         out: "typing.Dict[str, typing.Any]" = {
             "experimentIds": self.experimentIds,
         }
+        if not omit_unset or "excludedExperimentIds" in vars(self):
+            out["excludedExperimentIds"] = self.excludedExperimentIds
         if not omit_unset or "filters" in vars(self):
             out["filters"] = None if self.filters is None else self.filters.to_json(omit_unset)
         return out
@@ -1494,15 +1510,19 @@ class v1BulkExperimentFilters:
         return out
 
 class v1CancelExperimentsRequest:
+    excludedExperimentIds: "typing.Optional[typing.Sequence[int]]" = None
     filters: "typing.Optional[v1BulkExperimentFilters]" = None
 
     def __init__(
         self,
         *,
         experimentIds: "typing.Sequence[int]",
+        excludedExperimentIds: "typing.Union[typing.Sequence[int], None, Unset]" = _unset,
         filters: "typing.Union[v1BulkExperimentFilters, None, Unset]" = _unset,
     ):
         self.experimentIds = experimentIds
+        if not isinstance(excludedExperimentIds, Unset):
+            self.excludedExperimentIds = excludedExperimentIds
         if not isinstance(filters, Unset):
             self.filters = filters
 
@@ -1511,6 +1531,8 @@ class v1CancelExperimentsRequest:
         kwargs: "typing.Dict[str, typing.Any]" = {
             "experimentIds": obj["experimentIds"],
         }
+        if "excludedExperimentIds" in obj:
+            kwargs["excludedExperimentIds"] = obj["excludedExperimentIds"]
         if "filters" in obj:
             kwargs["filters"] = v1BulkExperimentFilters.from_json(obj["filters"]) if obj["filters"] is not None else None
         return cls(**kwargs)
@@ -1519,6 +1541,8 @@ class v1CancelExperimentsRequest:
         out: "typing.Dict[str, typing.Any]" = {
             "experimentIds": self.experimentIds,
         }
+        if not omit_unset or "excludedExperimentIds" in vars(self):
+            out["excludedExperimentIds"] = self.excludedExperimentIds
         if not omit_unset or "filters" in vars(self):
             out["filters"] = None if self.filters is None else self.filters.to_json(omit_unset)
         return out
@@ -2384,15 +2408,19 @@ class v1DeleteCheckpointsRequest:
         return out
 
 class v1DeleteExperimentsRequest:
+    excludedExperimentIds: "typing.Optional[typing.Sequence[int]]" = None
     filters: "typing.Optional[v1BulkExperimentFilters]" = None
 
     def __init__(
         self,
         *,
         experimentIds: "typing.Sequence[int]",
+        excludedExperimentIds: "typing.Union[typing.Sequence[int], None, Unset]" = _unset,
         filters: "typing.Union[v1BulkExperimentFilters, None, Unset]" = _unset,
     ):
         self.experimentIds = experimentIds
+        if not isinstance(excludedExperimentIds, Unset):
+            self.excludedExperimentIds = excludedExperimentIds
         if not isinstance(filters, Unset):
             self.filters = filters
 
@@ -2401,6 +2429,8 @@ class v1DeleteExperimentsRequest:
         kwargs: "typing.Dict[str, typing.Any]" = {
             "experimentIds": obj["experimentIds"],
         }
+        if "excludedExperimentIds" in obj:
+            kwargs["excludedExperimentIds"] = obj["excludedExperimentIds"]
         if "filters" in obj:
             kwargs["filters"] = v1BulkExperimentFilters.from_json(obj["filters"]) if obj["filters"] is not None else None
         return cls(**kwargs)
@@ -2409,6 +2439,8 @@ class v1DeleteExperimentsRequest:
         out: "typing.Dict[str, typing.Any]" = {
             "experimentIds": self.experimentIds,
         }
+        if not omit_unset or "excludedExperimentIds" in vars(self):
+            out["excludedExperimentIds"] = self.excludedExperimentIds
         if not omit_unset or "filters" in vars(self):
             out["filters"] = None if self.filters is None else self.filters.to_json(omit_unset)
         return out
@@ -5726,15 +5758,19 @@ class v1KillCommandResponse:
         return out
 
 class v1KillExperimentsRequest:
+    excludedExperimentIds: "typing.Optional[typing.Sequence[int]]" = None
     filters: "typing.Optional[v1BulkExperimentFilters]" = None
 
     def __init__(
         self,
         *,
         experimentIds: "typing.Sequence[int]",
+        excludedExperimentIds: "typing.Union[typing.Sequence[int], None, Unset]" = _unset,
         filters: "typing.Union[v1BulkExperimentFilters, None, Unset]" = _unset,
     ):
         self.experimentIds = experimentIds
+        if not isinstance(excludedExperimentIds, Unset):
+            self.excludedExperimentIds = excludedExperimentIds
         if not isinstance(filters, Unset):
             self.filters = filters
 
@@ -5743,6 +5779,8 @@ class v1KillExperimentsRequest:
         kwargs: "typing.Dict[str, typing.Any]" = {
             "experimentIds": obj["experimentIds"],
         }
+        if "excludedExperimentIds" in obj:
+            kwargs["excludedExperimentIds"] = obj["excludedExperimentIds"]
         if "filters" in obj:
             kwargs["filters"] = v1BulkExperimentFilters.from_json(obj["filters"]) if obj["filters"] is not None else None
         return cls(**kwargs)
@@ -5751,6 +5789,8 @@ class v1KillExperimentsRequest:
         out: "typing.Dict[str, typing.Any]" = {
             "experimentIds": self.experimentIds,
         }
+        if not omit_unset or "excludedExperimentIds" in vars(self):
+            out["excludedExperimentIds"] = self.excludedExperimentIds
         if not omit_unset or "filters" in vars(self):
             out["filters"] = None if self.filters is None else self.filters.to_json(omit_unset)
         return out
@@ -6133,6 +6173,7 @@ class v1LaunchShellResponse:
 
 class v1LaunchTensorboardRequest:
     config: "typing.Optional[typing.Dict[str, typing.Any]]" = None
+    excludedExperimentIds: "typing.Optional[typing.Sequence[int]]" = None
     experimentIds: "typing.Optional[typing.Sequence[int]]" = None
     files: "typing.Optional[typing.Sequence[v1File]]" = None
     filters: "typing.Optional[v1BulkExperimentFilters]" = None
@@ -6144,6 +6185,7 @@ class v1LaunchTensorboardRequest:
         self,
         *,
         config: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
+        excludedExperimentIds: "typing.Union[typing.Sequence[int], None, Unset]" = _unset,
         experimentIds: "typing.Union[typing.Sequence[int], None, Unset]" = _unset,
         files: "typing.Union[typing.Sequence[v1File], None, Unset]" = _unset,
         filters: "typing.Union[v1BulkExperimentFilters, None, Unset]" = _unset,
@@ -6153,6 +6195,8 @@ class v1LaunchTensorboardRequest:
     ):
         if not isinstance(config, Unset):
             self.config = config
+        if not isinstance(excludedExperimentIds, Unset):
+            self.excludedExperimentIds = excludedExperimentIds
         if not isinstance(experimentIds, Unset):
             self.experimentIds = experimentIds
         if not isinstance(files, Unset):
@@ -6172,6 +6216,8 @@ class v1LaunchTensorboardRequest:
         }
         if "config" in obj:
             kwargs["config"] = obj["config"]
+        if "excludedExperimentIds" in obj:
+            kwargs["excludedExperimentIds"] = obj["excludedExperimentIds"]
         if "experimentIds" in obj:
             kwargs["experimentIds"] = obj["experimentIds"]
         if "files" in obj:
@@ -6191,6 +6237,8 @@ class v1LaunchTensorboardRequest:
         }
         if not omit_unset or "config" in vars(self):
             out["config"] = self.config
+        if not omit_unset or "excludedExperimentIds" in vars(self):
+            out["excludedExperimentIds"] = self.excludedExperimentIds
         if not omit_unset or "experimentIds" in vars(self):
             out["experimentIds"] = self.experimentIds
         if not omit_unset or "files" in vars(self):
@@ -6854,6 +6902,7 @@ class v1MoveExperimentRequest:
         return out
 
 class v1MoveExperimentsRequest:
+    excludedExperimentIds: "typing.Optional[typing.Sequence[int]]" = None
     filters: "typing.Optional[v1BulkExperimentFilters]" = None
 
     def __init__(
@@ -6861,10 +6910,13 @@ class v1MoveExperimentsRequest:
         *,
         destinationProjectId: int,
         experimentIds: "typing.Sequence[int]",
+        excludedExperimentIds: "typing.Union[typing.Sequence[int], None, Unset]" = _unset,
         filters: "typing.Union[v1BulkExperimentFilters, None, Unset]" = _unset,
     ):
         self.destinationProjectId = destinationProjectId
         self.experimentIds = experimentIds
+        if not isinstance(excludedExperimentIds, Unset):
+            self.excludedExperimentIds = excludedExperimentIds
         if not isinstance(filters, Unset):
             self.filters = filters
 
@@ -6874,6 +6926,8 @@ class v1MoveExperimentsRequest:
             "destinationProjectId": obj["destinationProjectId"],
             "experimentIds": obj["experimentIds"],
         }
+        if "excludedExperimentIds" in obj:
+            kwargs["excludedExperimentIds"] = obj["excludedExperimentIds"]
         if "filters" in obj:
             kwargs["filters"] = v1BulkExperimentFilters.from_json(obj["filters"]) if obj["filters"] is not None else None
         return cls(**kwargs)
@@ -6883,6 +6937,8 @@ class v1MoveExperimentsRequest:
             "destinationProjectId": self.destinationProjectId,
             "experimentIds": self.experimentIds,
         }
+        if not omit_unset or "excludedExperimentIds" in vars(self):
+            out["excludedExperimentIds"] = self.excludedExperimentIds
         if not omit_unset or "filters" in vars(self):
             out["filters"] = None if self.filters is None else self.filters.to_json(omit_unset)
         return out
@@ -7781,15 +7837,19 @@ class v1PatchWorkspaceResponse:
         return out
 
 class v1PauseExperimentsRequest:
+    excludedExperimentIds: "typing.Optional[typing.Sequence[int]]" = None
     filters: "typing.Optional[v1BulkExperimentFilters]" = None
 
     def __init__(
         self,
         *,
         experimentIds: "typing.Sequence[int]",
+        excludedExperimentIds: "typing.Union[typing.Sequence[int], None, Unset]" = _unset,
         filters: "typing.Union[v1BulkExperimentFilters, None, Unset]" = _unset,
     ):
         self.experimentIds = experimentIds
+        if not isinstance(excludedExperimentIds, Unset):
+            self.excludedExperimentIds = excludedExperimentIds
         if not isinstance(filters, Unset):
             self.filters = filters
 
@@ -7798,6 +7858,8 @@ class v1PauseExperimentsRequest:
         kwargs: "typing.Dict[str, typing.Any]" = {
             "experimentIds": obj["experimentIds"],
         }
+        if "excludedExperimentIds" in obj:
+            kwargs["excludedExperimentIds"] = obj["excludedExperimentIds"]
         if "filters" in obj:
             kwargs["filters"] = v1BulkExperimentFilters.from_json(obj["filters"]) if obj["filters"] is not None else None
         return cls(**kwargs)
@@ -7806,6 +7868,8 @@ class v1PauseExperimentsRequest:
         out: "typing.Dict[str, typing.Any]" = {
             "experimentIds": self.experimentIds,
         }
+        if not omit_unset or "excludedExperimentIds" in vars(self):
+            out["excludedExperimentIds"] = self.excludedExperimentIds
         if not omit_unset or "filters" in vars(self):
             out["filters"] = None if self.filters is None else self.filters.to_json(omit_unset)
         return out
@@ -12328,15 +12392,19 @@ class v1TriggerType(enum.Enum):
     METRIC_THRESHOLD_EXCEEDED = "TRIGGER_TYPE_METRIC_THRESHOLD_EXCEEDED"
 
 class v1UnarchiveExperimentsRequest:
+    excludedExperimentIds: "typing.Optional[typing.Sequence[int]]" = None
     filters: "typing.Optional[v1BulkExperimentFilters]" = None
 
     def __init__(
         self,
         *,
         experimentIds: "typing.Sequence[int]",
+        excludedExperimentIds: "typing.Union[typing.Sequence[int], None, Unset]" = _unset,
         filters: "typing.Union[v1BulkExperimentFilters, None, Unset]" = _unset,
     ):
         self.experimentIds = experimentIds
+        if not isinstance(excludedExperimentIds, Unset):
+            self.excludedExperimentIds = excludedExperimentIds
         if not isinstance(filters, Unset):
             self.filters = filters
 
@@ -12345,6 +12413,8 @@ class v1UnarchiveExperimentsRequest:
         kwargs: "typing.Dict[str, typing.Any]" = {
             "experimentIds": obj["experimentIds"],
         }
+        if "excludedExperimentIds" in obj:
+            kwargs["excludedExperimentIds"] = obj["excludedExperimentIds"]
         if "filters" in obj:
             kwargs["filters"] = v1BulkExperimentFilters.from_json(obj["filters"]) if obj["filters"] is not None else None
         return cls(**kwargs)
@@ -12353,6 +12423,8 @@ class v1UnarchiveExperimentsRequest:
         out: "typing.Dict[str, typing.Any]" = {
             "experimentIds": self.experimentIds,
         }
+        if not omit_unset or "excludedExperimentIds" in vars(self):
+            out["excludedExperimentIds"] = self.excludedExperimentIds
         if not omit_unset or "filters" in vars(self):
             out["filters"] = None if self.filters is None else self.filters.to_json(omit_unset)
         return out

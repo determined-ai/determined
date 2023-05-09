@@ -40,7 +40,7 @@ const experimentColumns = [
   'user',
 ] as const;
 
-export type ExperimentColumn = typeof experimentColumns[number];
+export type ExperimentColumn = (typeof experimentColumns)[number];
 
 export const defaultExperimentColumns: ExperimentColumn[] = [
   'id',

@@ -163,6 +163,8 @@ message DeleteExperimentsRequest {
   repeated int32 experiment_ids = 1;
   // Targets all experiments matching filters.
   BulkExperimentFilters filters = 2;
+  // Experiment ids to exclude when filters are used.
+  repeated int32 excluded_experiment_ids = 3;
 }
 
 // Response to DeleteExperimentsRequest.
@@ -228,6 +230,8 @@ message ActivateExperimentsRequest {
   repeated int32 experiment_ids = 1;
   // Targets all experiments matching filters.
   BulkExperimentFilters filters = 2;
+  // Experiment ids to exclude when filters are used.
+  repeated int32 excluded_experiment_ids = 3;
 }
 // Response to ActivateExperimentsRequest.
 message ActivateExperimentsResponse {
@@ -277,6 +281,8 @@ message PauseExperimentsRequest {
   repeated int32 experiment_ids = 1;
   // Targets all experiments matching filters.
   BulkExperimentFilters filters = 2;
+  // Experiment ids to exclude when filters are used.
+  repeated int32 excluded_experiment_ids = 3;
 }
 
 // Response to PauseExperimentsRequest.
@@ -307,6 +313,8 @@ message CancelExperimentsRequest {
   repeated int32 experiment_ids = 1;
   // Targets all experiments matching filters.
   BulkExperimentFilters filters = 2;
+  // Experiment ids to exclude when filters are used.
+  repeated int32 excluded_experiment_ids = 3;
 }
 // Response to CancelExperimentsRequest.
 message CancelExperimentsResponse {
@@ -336,6 +344,8 @@ message KillExperimentsRequest {
   repeated int32 experiment_ids = 1;
   // Targets all experiments matching filters.
   BulkExperimentFilters filters = 2;
+  // Experiment ids to exclude when filters are used.
+  repeated int32 excluded_experiment_ids = 3;
 }
 // Response to KillExperimentsRequest.
 message KillExperimentsResponse {
@@ -365,6 +375,8 @@ message ArchiveExperimentsRequest {
   repeated int32 experiment_ids = 1;
   // Targets all experiments matching filters.
   BulkExperimentFilters filters = 2;
+  // Experiment ids to exclude when filters are used.
+  repeated int32 excluded_experiment_ids = 3;
 }
 // Response to ArchiveExperimentsRequest.
 message ArchiveExperimentsResponse {
@@ -394,6 +406,8 @@ message UnarchiveExperimentsRequest {
   repeated int32 experiment_ids = 1;
   // Targets all experiments matching filters.
   BulkExperimentFilters filters = 2;
+  // Experiment ids to exclude when filters are used.
+  repeated int32 excluded_experiment_ids = 3;
 }
 // Response to UnarchiveExperimentsRequest.
 message UnarchiveExperimentsResponse {
@@ -744,6 +758,8 @@ message MoveExperimentsRequest {
   int32 destination_project_id = 2;
   // Targets all experiments matching filters.
   BulkExperimentFilters filters = 3;
+  // Experiment ids to exclude when filters are used.
+  repeated int32 excluded_experiment_ids = 4;
 }
 
 // Response to MoveExperimentsRequest.
