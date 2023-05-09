@@ -23,7 +23,7 @@ export type Placement = 'bottomLeft' | 'bottomRight';
 
 export type DropdownEvent = React.MouseEvent<HTMLElement> | React.KeyboardEvent<HTMLElement>;
 
-interface Props {
+export interface Props {
   content?: React.ReactNode;
   disabled?: boolean;
   isContextMenu?: boolean;
