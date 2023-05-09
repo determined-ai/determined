@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Icon from 'components/kit/Icon';
-import Page from 'components/Page';
 import Section from 'components/Section';
 import InteractiveTable, { InteractiveTableSettings } from 'components/Table/InteractiveTable';
 import SkeletonTable from 'components/Table/SkeletonTable';
@@ -42,12 +41,11 @@ import settingsConfig, { Settings } from './JobQueue.settings';
 import ManageJob from './ManageJob';
 
 interface Props {
-  bodyNoPadding?: boolean;
   jobState: JobState;
   selectedRp: ResourcePool;
 }
 
-const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
+const JobQueue: React.FC<Props> = ({ selectedRp, jobState }) => {
   const users = Loadable.getOrElse([], useObservable(userStore.getUsers()));
   const resourcePools = useObservable(clusterStore.resourcePools);
   const [managingJob, setManagingJob] = useState<Job>();
@@ -333,13 +331,7 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
   }, [selectedRp]);
 
   return (
-    <Page
-      bodyNoPadding={bodyNoPadding}
-      className={css.base}
-      containerRef={pageRef}
-      headerComponent={<div />}
-      id="jobs"
-      title="Job Queue by Resource Pool">
+    <div className={css.base} id="jobs" title="Job Queue by Resource Pool">
       <Section hideTitle={!!selectedRp} title={tableTitle}>
         {settings ? (
           <InteractiveTable
@@ -376,7 +368,7 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
           onFinish={onModalClose}
         />
       )}
-    </Page>
+    </div>
   );
 };
 

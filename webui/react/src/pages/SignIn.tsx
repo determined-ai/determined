@@ -117,7 +117,7 @@ const SignIn: React.FC = () => {
     );
 
   return (
-    <Page docTitle="Sign In" ignorePermissions>
+    <Page docTitle="Sign In" ignorePermissions noScroll>
       <div className={css.base}>
         <div className={css.content}>
           <Logo

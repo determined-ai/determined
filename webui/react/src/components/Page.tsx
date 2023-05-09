@@ -6,7 +6,6 @@ import PageHeader from 'components/PageHeader';
 import PageNotFound from 'components/PageNotFound';
 import usePermissions from 'hooks/usePermissions';
 import Spinner from 'shared/components/Spinner';
-import { CommonProps } from 'shared/types';
 import determinedStore, { BrandingType } from 'stores/determinedInfo';
 
 import css from './Page.module.scss';
@@ -17,9 +16,10 @@ export interface BreadCrumbRoute {
   path: string;
 }
 
-export interface Props extends CommonProps {
+export interface Props {
   bodyNoPadding?: boolean;
   breadcrumb?: BreadCrumbRoute[];
+  children?: React.ReactNode;
   containerRef?: MutableRefObject<HTMLElement | null>;
   docTitle?: string;
   headerComponent?: React.ReactNode;
@@ -54,7 +54,7 @@ const Page: React.FC<Props> = (props: Props) => {
 
   const docTitle = getFullDocTitle(branding, props.docTitle || props.title, info.clusterName);
 
-  const classes = [props.className, css.base];
+  const classes = [css.base];
 
   const showHeader = !props.headerComponent && (!!props.breadcrumb || !!props.title);
 
