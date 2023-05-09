@@ -66,7 +66,6 @@ CREATE UNIQUE INDEX steps_trial_id_total_batches_run_id_type_unique ON raw_steps
     partition_type
 );
 DROP INDEX steps_trial_id_total_batches_run_id_unique_old;
--- CREATE SEQUENCE generic_metrics_id_seq START WITH 1;
 CREATE TABLE generic_metrics (
     trial_id integer NOT NULL,
     end_time timestamp with time zone,
@@ -78,12 +77,6 @@ CREATE TABLE generic_metrics (
     partition_type metric_partition_type NOT NULL DEFAULT 'generic',
     CONSTRAINT generic_metrics_trial_id_fkey FOREIGN KEY (trial_id) REFERENCES trials(id)
 );
--- TODO: set these up to use metrics_id_seq?
--- drop default values on partitions
-ALTER TABLE raw_validations
-ALTER COLUMN id DROP IDENTITY;
-ALTER TABLE raw_steps
-ALTER COLUMN id DROP DEFAULT;
 -- start with max of existing ids in raw_steps and raw_validations. find it using select on both tables
 CREATE SEQUENCE metrics_id_seq;
 SELECT setval(
@@ -106,6 +99,14 @@ SELECT setval(
         ) + 1,
         true
     );
+ALTER TABLE raw_validations
+ALTER COLUMN id DROP IDENTITY;
+ALTER TABLE raw_validations
+ALTER COLUMN id
+SET DEFAULT nextval('metrics_id_seq');
+ALTER TABLE raw_steps
+ALTER COLUMN id
+SET DEFAULT nextval('metrics_id_seq');
 CREATE TABLE metrics (
     trial_id integer NOT NULL,
     end_time timestamp with time zone,
