@@ -7201,6 +7201,32 @@ export interface V1RendezvousInfo {
 export interface V1ReportCheckpointResponse {
 }
 /**
+ * Persist the given metrics for the trial.
+ * @export
+ * @interface V1ReportTrialMetricsRequest
+ */
+export interface V1ReportTrialMetricsRequest {
+    /**
+     * The metrics to persist.
+     * @type {V1TrialMetrics}
+     * @memberof V1ReportTrialMetricsRequest
+     */
+    metrics: V1TrialMetrics;
+    /**
+     * The type of metrics to persist eg 'training', 'validation', etc.
+     * @type {string}
+     * @memberof V1ReportTrialMetricsRequest
+     */
+    type: string;
+}
+/**
+ * 
+ * @export
+ * @interface V1ReportTrialMetricsResponse
+ */
+export interface V1ReportTrialMetricsResponse {
+}
+/**
  * 
  * @export
  * @interface V1ReportTrialProgressResponse
@@ -17222,6 +17248,50 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Record metrics for specified trial.
+         * @param {number} metricsTrialId The trial associated with these metrics.
+         * @param {V1ReportTrialMetricsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        reportTrialMetrics(metricsTrialId: number, body: V1ReportTrialMetricsRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'metricsTrialId' is not null or undefined
+            if (metricsTrialId === null || metricsTrialId === undefined) {
+                throw new RequiredError('metricsTrialId','Required parameter metricsTrialId was null or undefined when calling reportTrialMetrics.');
+            }
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling reportTrialMetrics.');
+            }
+            const localVarPath = `/api/v1/trials/{metricsTrialId}/metrics`
+                .replace(`{${"metricsTrialId"}}`, encodeURIComponent(String(metricsTrialId)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary For bookkeeping, updates the progress towards to current requested searcher training length.
          * @param {number} trialId The id of the trial.
          * @param {number} body Total units completed by the trial, in terms of the unit used to configure the searcher.
@@ -18295,6 +18365,26 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Record metrics for specified trial.
+         * @param {number} metricsTrialId The trial associated with these metrics.
+         * @param {V1ReportTrialMetricsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        reportTrialMetrics(metricsTrialId: number, body: V1ReportTrialMetricsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ReportTrialMetricsResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).reportTrialMetrics(metricsTrialId, body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary For bookkeeping, updates the progress towards to current requested searcher training length.
          * @param {number} trialId The id of the trial.
          * @param {number} body Total units completed by the trial, in terms of the unit used to configure the searcher.
@@ -18825,6 +18915,17 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Record metrics for specified trial.
+         * @param {number} metricsTrialId The trial associated with these metrics.
+         * @param {V1ReportTrialMetricsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        reportTrialMetrics(metricsTrialId: number, body: V1ReportTrialMetricsRequest, options?: any) {
+            return InternalApiFp(configuration).reportTrialMetrics(metricsTrialId, body, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary For bookkeeping, updates the progress towards to current requested searcher training length.
          * @param {number} trialId The id of the trial.
          * @param {number} body Total units completed by the trial, in terms of the unit used to configure the searcher.
@@ -19331,6 +19432,19 @@ export class InternalApi extends BaseAPI {
      */
     public reportCheckpoint(body: V1Checkpoint, options?: any) {
         return InternalApiFp(this.configuration).reportCheckpoint(body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Record metrics for specified trial.
+     * @param {number} metricsTrialId The trial associated with these metrics.
+     * @param {V1ReportTrialMetricsRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public reportTrialMetrics(metricsTrialId: number, body: V1ReportTrialMetricsRequest, options?: any) {
+        return InternalApiFp(this.configuration).reportTrialMetrics(metricsTrialId, body, options)(this.fetch, this.basePath)
     }
     
     /**

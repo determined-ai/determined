@@ -938,6 +938,19 @@ message ReportTrialProgressRequest {
 // Response to ReportTrialProgressRequest
 message ReportTrialProgressResponse {}
 
+// Persist the given metrics for the trial.
+message ReportTrialMetricsRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "metrics", "type" ] }
+  };
+  // The metrics to persist.
+  determined.trial.v1.TrialMetrics metrics = 1;
+  // The type of metrics to persist eg 'training', 'validation', etc.
+  string type = 2;
+}
+// Response to ReportTrialMetricsRequest
+message ReportTrialMetricsResponse {}
+
 // Persist the given training metrics for the trial.
 message ReportTrialTrainingMetricsRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
