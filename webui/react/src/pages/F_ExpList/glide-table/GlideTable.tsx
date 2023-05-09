@@ -228,9 +228,8 @@ export const GlideTable: React.FC<GlideTableProps> = ({
 
   const getRowThemeOverride: DataEditorProps['getRowThemeOverride'] = React.useCallback(
     (row: number): Partial<Theme> | undefined => {
-      const baseRowTheme = { borderColor: appTheme.stageStrong };
       // to put a border on the bottom row (actually the top of the row below it)
-      if (row === data.length) return baseRowTheme;
+      if (row === data.length) return;
       // avoid showing 'empty rows' below data
       if (!data[row]) return;
       const rowColorTheme = Loadable.match(data[row], {
@@ -238,9 +237,9 @@ export const GlideTable: React.FC<GlideTableProps> = ({
           colorMap[record.experiment.id] ? { accentColor: colorMap[record.experiment.id] } : {},
         NotLoaded: () => ({}),
       });
-      return { ...baseRowTheme, ...rowColorTheme };
+      return { ...rowColorTheme };
     },
-    [colorMap, data, appTheme],
+    [colorMap, data],
   );
 
   const onColumnResize: DataEditorProps['onColumnResize'] = useCallback(
