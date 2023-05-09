@@ -4,8 +4,8 @@ import { MenuInfo } from 'rc-menu/lib/interface';
 import React, { JSXElementConstructor, useCallback } from 'react';
 
 import Button from 'components/kit/Button';
+import Icon from 'components/kit/Icon';
 import useConfirm, { ConfirmModalProps } from 'components/kit/useConfirm';
-import Icon from 'shared/components/Icon/Icon';
 import { DetError, ErrorLevel, ErrorType, wrapPublicMessage } from 'shared/utils/error';
 import { capitalize } from 'shared/utils/string';
 
@@ -143,7 +143,7 @@ const ActionDropdown = <T extends string>({
   if (menuItems.length === 0) {
     return (
       <div className={css.base} title="No actions available" onClick={stopPropagation}>
-        <Button disabled icon={<Icon name="overflow-vertical" />} type="text" />
+        <Button disabled icon={<Icon name="overflow-vertical" title="Action menu" />} type="text" />
       </div>
     );
   }
@@ -165,7 +165,11 @@ const ActionDropdown = <T extends string>({
         placement="bottomRight"
         trigger={trigger ?? ['click']}
         onOpenChange={onVisibleChange}>
-        <Button icon={<Icon name="overflow-vertical" />} type="text" onClick={stopPropagation} />
+        <Button
+          icon={<Icon name="overflow-vertical" title="Action menu" />}
+          type="text"
+          onClick={stopPropagation}
+        />
       </Dropdown>
     </div>
   );

@@ -5,6 +5,7 @@ import JupyterLabButton from 'components/JupyterLabButton';
 import Breadcrumb from 'components/kit/Breadcrumb';
 import Card from 'components/kit/Card';
 import Empty from 'components/kit/Empty';
+import Icon from 'components/kit/Icon';
 import Link from 'components/Link';
 import Page from 'components/Page';
 import ProjectCard from 'components/ProjectCard';
@@ -26,7 +27,6 @@ import {
   getShells,
   getTensorBoards,
 } from 'services/api';
-import Icon from 'shared/components/Icon/Icon';
 import Spinner from 'shared/components/Spinner';
 import usePolling from 'shared/hooks/usePolling';
 import { ErrorType } from 'shared/utils/error';

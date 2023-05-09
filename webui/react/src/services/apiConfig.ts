@@ -609,7 +609,7 @@ export const searchExperiments: DetApi<
   Type.SearchExperimentPagination
 > = {
   name: 'searchExperiments',
-  postProcess: (response: Api.V1SearchExperimentsResponse) => {
+  postProcess: (response) => {
     return {
       experiments: response.experiments.map((e) => decoder.mapSearchExperiment(e)),
       pagination: response.pagination,
@@ -620,7 +620,7 @@ export const searchExperiments: DetApi<
       params.projectId,
       params.offset,
       params.limit,
-      undefined,
+      params.sort,
       params.filter,
       options,
     );
@@ -1595,10 +1595,9 @@ export const getProjectColumns: DetApi<
   Api.V1GetProjectColumnsResponse,
   Type.ProjectColumn[]
 > = {
-  name: 'getProjectsColumns',
-  postProcess: (response) => response.columns,
-  request: (params: Service.GetProjectColumnsParams, options) =>
-    detApi.Internal.getProjectColumns(params.id, options),
+  name: 'getProjectColumns',
+  postProcess: (response) => decoder.decodeProjectColumnsResponse(response).columns,
+  request: (params) => detApi.Internal.getProjectColumns(params.id),
 };
 
 /* Tasks */

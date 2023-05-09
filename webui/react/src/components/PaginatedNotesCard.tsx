@@ -5,8 +5,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 
 import Button from 'components/kit/Button';
 import Empty from 'components/kit/Empty';
+import Icon from 'components/kit/Icon';
 import Select, { Option, SelectValue } from 'components/kit/Select';
-import Icon from 'shared/components/Icon/Icon';
 import usePrevious from 'shared/hooks/usePrevious';
 import { Note } from 'types';
 
@@ -196,7 +196,7 @@ const PaginatedNotesCard: React.FC<Props> = ({
                   {!disabled && (
                     <Dropdown menu={ActionMenu(idx)} trigger={['click']}>
                       <div className={css.action} onClick={(e) => e.stopPropagation()}>
-                        <Icon name="overflow-horizontal" />
+                        <Icon name="overflow-horizontal" title="Action menu" />
                       </div>
                     </Dropdown>
                   )}
@@ -230,7 +230,7 @@ const PaginatedNotesCard: React.FC<Props> = ({
           extra={
             <Dropdown menu={ActionMenu(currentPage)} trigger={['click']}>
               <div style={{ cursor: 'pointer' }}>
-                <Icon name="overflow-horizontal" />
+                <Icon name="overflow-horizontal" title="Action menu" />
               </div>
             </Dropdown>
           }

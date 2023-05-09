@@ -10,8 +10,8 @@ import FilterField from 'components/FilterForm/components/FilterField';
 import { FilterFormStore, ITEM_LIMIT } from 'components/FilterForm/components/FilterFormStore';
 import { Conjunction, FormField, FormGroup, FormKind } from 'components/FilterForm/components/type';
 import Button from 'components/kit/Button';
+import Icon from 'components/kit/Icon';
 import { V1ProjectColumn } from 'services/api-ts-sdk';
-import Icon from 'shared/components/Icon';
 
 import css from './FilterGroup.module.scss';
 
@@ -154,7 +154,7 @@ const FilterGroup = ({
                 <Button icon={<PlusOutlined />} type="text" />
               </Dropdown>
               <Button
-                icon={<Icon name="close" />}
+                icon={<Icon name="close" title="" />}
                 type="text"
                 onClick={() => formStore.removeChild(group.id)}
               />

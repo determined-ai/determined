@@ -382,6 +382,17 @@ commands:
                   echo 'export PATH=/tmp/venv/bin:$PATH' >> $BASH_ENV
                   /tmp/venv/bin/python -m pip install --upgrade pip wheel setuptools
 
+      # Either of make -C {harness,model_hub} build require pypa's build module.
+      - when:
+          condition:
+            or:
+              - <<parameters.determined>>
+              - <<parameters.model-hub>>
+          steps:
+            - run:
+                name: Install pypa builder
+                command: python3 -m pip install build
+
       - run:
           name: Write cache key
           command: |

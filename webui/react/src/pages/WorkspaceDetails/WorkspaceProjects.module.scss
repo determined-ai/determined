@@ -1,29 +1,11 @@
-.base {
-  height: fit-content;
+.descriptionRenderer {
+  border: 1px solid transparent;
 
-  .controls {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 16px;
-  }
-  .descriptionRenderer {
-    border: 1px solid transparent;
-
-    &:focus,
-    &:hover {
-      border: 1px solid var(--theme-status-active);
-    }
+  &:focus,
+  &:hover {
+    border: 1px solid var(--theme-status-active);
   }
 }
-
-@media only screen and (max-width: $breakpoint-mobile) {
-  .base {
-    .controls {
-      flex-wrap: wrap;
-    }
-  }
-}
-
 .userRowItem {
   display: inline-block;
   vertical-align: middle;

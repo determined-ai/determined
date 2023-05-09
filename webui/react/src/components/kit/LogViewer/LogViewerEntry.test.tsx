@@ -20,10 +20,10 @@ describe('LogViewerEntry', () => {
     expect(await screen.getByText(message)).toBeInTheDocument();
   });
 
-  it('should render with all level types', () => {
-    const enumRecord = LogLevel as Record<string, string>;
-    Object.values(enumRecord).forEach((level) => {
-      const { container } = setup({ formattedTime, level: level as LogLevel, message });
+  it('should render with all level types except None', () => {
+    Object.values(LogLevel).forEach((level) => {
+      if (level === LogLevel.None) return;
+      const { container } = setup({ formattedTime, level: level, message });
       const icon = container.querySelector(`.icon-${level}`);
       expect(icon).not.toBeNull();
       expect(icon).toBeInTheDocument();

@@ -12,6 +12,7 @@ import FilterCounter from 'components/FilterCounter';
 import Grid from 'components/Grid';
 import JupyterLabButton from 'components/JupyterLabButton';
 import Button from 'components/kit/Button';
+import Icon from 'components/kit/Icon';
 import Link from 'components/Link';
 import Page from 'components/Page';
 import InteractiveTable, {
@@ -45,7 +46,6 @@ import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { getCommands, getJupyterLabs, getShells, getTensorBoards, killTask } from 'services/api';
-import Icon from 'shared/components/Icon/Icon';
 import usePolling from 'shared/hooks/usePolling';
 import { ValueOf } from 'shared/types';
 import { isEqual } from 'shared/utils/data';
@@ -189,7 +189,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
 
   const handleActionComplete = useCallback(() => fetchTasks(), [fetchTasks]);
 
-  const tableSearchIcon = useCallback(() => <Icon name="search" size="tiny" />, []);
+  const tableSearchIcon = useCallback(() => <Icon name="search" size="tiny" title="Search" />, []);
 
   const handleNameSearchApply = useCallback(
     (newSearch: string) => {
@@ -385,7 +385,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
         filters: Object.values(CommandType).map((value) => ({
           text: (
             <div className={css.typeFilter}>
-              <Icon name={value.toLocaleLowerCase()} />
+              <Icon name={value} title={commandTypeToLabel[value]} />
               <span>{commandTypeToLabel[value]}</span>
             </div>
           ),

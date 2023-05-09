@@ -21,11 +21,11 @@ import {
   ReadableOperator,
 } from 'components/FilterForm/components/type';
 import Button from 'components/kit/Button';
+import Icon from 'components/kit/Icon';
 import Input from 'components/kit/Input';
 import InputNumber from 'components/kit/InputNumber';
 import Select, { SelectValue } from 'components/kit/Select';
 import { V1ColumnType, V1ProjectColumn } from 'services/api-ts-sdk';
-import Icon from 'shared/components/Icon';
 import clusterStore from 'stores/cluster';
 import userStore from 'stores/users';
 import { RunState } from 'types';
@@ -255,7 +255,7 @@ const FilterField = ({
           )}
         </>
         <Button
-          icon={<Icon name="close" />}
+          icon={<Icon name="close" title="" />}
           type="text"
           onClick={() => formStore.removeChild(field.id)}
         />
