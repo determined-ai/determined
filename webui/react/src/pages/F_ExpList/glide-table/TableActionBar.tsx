@@ -343,7 +343,6 @@ const TableActionBar: React.FC<Props> = ({
       {batchAction && (
         <BatchActionConfirmModal.Component
           batchAction={batchAction}
-          selectAll={selectAll}
           onConfirm={() => submitBatchAction(batchAction)}
         />
       )}
