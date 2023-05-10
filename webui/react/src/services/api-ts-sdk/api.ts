@@ -220,6 +220,56 @@ export const Jobv1Type = {
 } as const
 export type Jobv1Type = ValueOf<typeof Jobv1Type>
 /**
+ * 
+ * @export
+ * @interface PatchExperimentPatchCheckpointStorage
+ */
+export interface PatchExperimentPatchCheckpointStorage {
+    /**
+     * Experiment config checkpoint_storage.save_experiment_best.
+     * @type {number}
+     * @memberof PatchExperimentPatchCheckpointStorage
+     */
+    saveExperimentBest?: number;
+    /**
+     * Experiment config checkpoint_storage.save_trial_best.
+     * @type {number}
+     * @memberof PatchExperimentPatchCheckpointStorage
+     */
+    saveTrialBest?: number;
+    /**
+     * Experiment config checkpoint_storage.save_trial_latest.
+     * @type {number}
+     * @memberof PatchExperimentPatchCheckpointStorage
+     */
+    saveTrialLatest?: number;
+}
+/**
+ * 
+ * @export
+ * @interface PatchExperimentPatchResources
+ */
+export interface PatchExperimentPatchResources {
+    /**
+     * Experiment config resources.max_slots.
+     * @type {number}
+     * @memberof PatchExperimentPatchResources
+     */
+    maxSlots?: number;
+    /**
+     * Experiment config resources.weight.
+     * @type {number}
+     * @memberof PatchExperimentPatchResources
+     */
+    weight?: number;
+    /**
+     * Experiment config resources.priority.
+     * @type {number}
+     * @memberof PatchExperimentPatchResources
+     */
+    priority?: number;
+}
+/**
  * https://developers.google.com/protocol-buffers/docs/reference/java/com/google/protobuf/Any
  * @export
  * @interface ProtobufAny
@@ -5830,6 +5880,18 @@ export interface V1PatchExperiment {
      * @memberof V1PatchExperiment
      */
     notes?: string;
+    /**
+     * 
+     * @type {PatchExperimentPatchResources}
+     * @memberof V1PatchExperiment
+     */
+    resources?: PatchExperimentPatchResources;
+    /**
+     * 
+     * @type {PatchExperimentPatchCheckpointStorage}
+     * @memberof V1PatchExperiment
+     */
+    checkpointStorage?: PatchExperimentPatchCheckpointStorage;
 }
 /**
  * Response to PatchExperimentRequest.
