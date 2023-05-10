@@ -862,7 +862,7 @@ func (a *apiServer) GetTrainingMetrics(
 	sendFunc := func(m []*trialv1.MetricsReport) error {
 		return resp.Send(&apiv1.GetTrainingMetricsResponse{Metrics: m})
 	}
-	if err := a.streamMetrics(resp.Context(), req.TrialIds, sendFunc, "steps"); err != nil {
+	if err := a.streamMetrics(resp.Context(), req.TrialIds, sendFunc, "training"); err != nil {
 		return err
 	}
 
@@ -875,7 +875,7 @@ func (a *apiServer) GetValidationMetrics(
 	sendFunc := func(m []*trialv1.MetricsReport) error {
 		return resp.Send(&apiv1.GetValidationMetricsResponse{Metrics: m})
 	}
-	if err := a.streamMetrics(resp.Context(), req.TrialIds, sendFunc, "validations"); err != nil {
+	if err := a.streamMetrics(resp.Context(), req.TrialIds, sendFunc, "validation"); err != nil {
 		return err
 	}
 
@@ -883,7 +883,7 @@ func (a *apiServer) GetValidationMetrics(
 }
 
 func (a *apiServer) streamMetrics(ctx context.Context,
-	trialIDs []int32, sendFunc func(m []*trialv1.MetricsReport) error, table string,
+	trialIDs []int32, sendFunc func(m []*trialv1.MetricsReport) error, metricType string,
 ) error {
 	if len(trialIDs) == 0 {
 		return status.Error(codes.InvalidArgument, "must specify at least one trialId")
@@ -908,18 +908,10 @@ func (a *apiServer) streamMetrics(ctx context.Context,
 	trialIDIndex := 0
 	key := -1
 	for {
-		var res []*trialv1.MetricsReport
-		if err := db.Bun().NewSelect().Table(table).
-			Column("trial_id", "metrics", "total_batches", "archived", "id", "trial_run_id").
-			ColumnExpr("proto_time(end_time) AS end_time").
-			Where("trial_id = ?", trialIDs[trialIDIndex]).
-			Where("total_batches > ?", key).
-			Order("trial_id", "trial_run_id", "total_batches").
-			Limit(size).
-			Scan(ctx, &res); err != nil {
+		res, err := a.m.db.GetMetrics(ctx, int(trialIDs[trialIDIndex]), key, size, table)
+		if err != nil {
 			return err
 		}
-
 		if len(res) > 0 {
 			for i := 0; i < len(res); i++ {
 				// TODO we are giving too precise timestamps for our Python parsing code somehow.
