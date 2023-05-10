@@ -63,7 +63,7 @@ To start your experiment, you'll need a Determined cluster. If you are new to De
    # If your machine does not have GPUs:
    det deploy local cluster-up --no-gpu
 
-.. include:: ../_shared/pip-install-determined.txt
+.. include:: ../_shared/note-pip-install-determined.txt
 
 ********************
  Run the Experiment
