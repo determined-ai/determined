@@ -43,15 +43,12 @@ def deprecation_warning(message: str, color: bool = True) -> str:
 
 
 def warn_on_usage(message: str) -> Callable:
-    """
-    Decorator to prints a deprecation warning when the wrapped function is
-    called.
-    """
+    """Wrap a function to print out a warning on usage."""
 
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> Any:
-            print(deprecation_warning(message), file=sys.stderr)
+            print(message, file=sys.stderr)
             return func(*args, **kwargs)
 
         return wrapper
@@ -84,7 +81,7 @@ class Cmd:
         self.func = func
         # wrap the fn in deprecation warning.
         if self.deprecation_message and self.func:
-            self.func = warn_on_usage(self.deprecation_message)(self.func)
+            self.func = warn_on_usage(deprecation_warning(self.deprecation_message))(self.func)
 
         if self.func:
             # Force the help string onto the actual function for later. This

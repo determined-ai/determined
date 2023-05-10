@@ -77,7 +77,7 @@ def create_template(args: Namespace) -> None:
 
 
 @authentication.required
-def patch_tempalte_config(args: Namespace) -> None:
+def patch_template_config(args: Namespace) -> None:
     if not args.template_file:
         raise ArgumentError(None, "template_file is required for set command")
     body = util.safe_load_yaml_with_exceptions(args.template_file)
@@ -116,7 +116,7 @@ args_description = [
                 help="config template file (.yaml)"),
             workspace_arg,
         ]),
-        Cmd("update-config", patch_tempalte_config, "update config template", [
+        Cmd("update-config", patch_template_config, "update config template", [
             Arg("template_name", help="template name"),
             Arg("template_file", type=FileType("r"),
                 help="config template file (.yaml)"),
