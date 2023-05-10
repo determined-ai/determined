@@ -123,7 +123,7 @@ class SearchRunner:
         sleep_time: float = 1.0,
     ) -> None:
         experiment_is_active = True
-
+        curr_event = None
         try:
             while experiment_is_active:
                 time.sleep(
@@ -139,6 +139,7 @@ class SearchRunner:
                 last_event_id = self.state.last_event_id
                 first_event = True
                 for event in events:
+                    curr_event = event
                     if (
                         first_event
                         and last_event_id != 0
@@ -184,6 +185,12 @@ class SearchRunner:
 
         except KeyboardInterrupt:
             print("Runner interrupted")
+        except Exception as e:
+            if curr_event is not None and experiment_is_active:
+                logging.error(f"Searcher hit an exception! Shutting down experiment...\n{e}")
+                operations = [searcher.Shutdown(failure=True)]
+                self.post_operations(session, experiment_id, curr_event, operations)
+                raise e
 
     def post_operations(
         self,
@@ -295,11 +302,12 @@ class LocalSearchRunner(SearchRunner):
                 f.write(str(exp.id))
             state_path = self._get_state_path(exp.id)
             state_path.mkdir(parents=True)
-            logger.info(f"Starting HP searcher for experiment {exp.id}")
             self.state.experiment_id = exp.id
             self.state.last_event_id = 0
             self.save_state(exp.id, [])
             experiment_id = exp.id
+            # Note: Simulating the same print functionality as our CLI when making an experiment.
+            logger.info(f"Created experiment {experiment_id}")
 
         # make sure client is initialized
         client._require_singleton(lambda: None)()

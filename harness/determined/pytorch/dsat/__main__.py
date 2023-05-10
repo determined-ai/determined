@@ -41,7 +41,10 @@ def run_autotuning(args: argparse.Namespace) -> None:
         with args_path.open("wb") as f:
             pickle.dump(args, f)
         includes = [args.model_dir, args.config_path] + args.include
-        client.create_experiment(config=config, model_dir=temp_dir, includes=includes)
+        exp = client.create_experiment(config=config, model_dir=temp_dir, includes=includes)
+        # Note: Simulating the same print functionality as our CLI when making an experiment.
+        # This line is needed for the e2e tests
+        print(f"Created experiment {exp.id}")
 
 
 if __name__ == "__main__":

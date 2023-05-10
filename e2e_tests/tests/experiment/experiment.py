@@ -53,6 +53,41 @@ def create_experiment(
     return int(m.group(1))
 
 
+def maybe_run_autotuning_experiment(
+    config_file: str, model_def_file: str, create_args: Optional[List[str]] = None
+) -> subprocess.CompletedProcess:
+    command = [
+        "python3",
+        "-m",
+        "determined.pytorch.dsat",
+        config_file,
+        model_def_file,
+    ]
+
+    if create_args is not None:
+        command += create_args
+
+    env = os.environ.copy()
+    env["DET_DEBUG"] = "true"
+    env["DET_MASTER"] = conf.make_master_url()
+
+    return subprocess.run(
+        command, universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env
+    )
+
+
+def run_autotuning_experiment(
+    config_file: str, model_def_file: str, create_args: Optional[List[str]] = None
+) -> int:
+    completed_process = maybe_run_autotuning_experiment(config_file, model_def_file, create_args)
+    assert completed_process.returncode == 0, "\nstdout:\n{} \nstderr:\n{}".format(
+        completed_process.stdout, completed_process.stderr
+    )
+    m = re.search(r"Created experiment (\d+)\n", str(completed_process.stdout))
+    assert m is not None
+    return int(m.group(1))
+
+
 def pause_experiment(experiment_id: int) -> None:
     command = ["det", "-m", conf.make_master_url(), "experiment", "pause", str(experiment_id)]
     subprocess.check_call(command)
@@ -722,6 +757,62 @@ def run_basic_test(
         experiment_id, expected_trials, expect_workloads, expect_checkpoints
     )
     return experiment_id
+
+
+def run_basic_autotuning_test(
+    config_file: str,
+    model_def_file: str,
+    expected_trials: Optional[int],
+    create_args: Optional[List[str]] = None,
+    max_wait_secs: int = conf.DEFAULT_MAX_WAIT_SECS,
+    expect_workloads: bool = True,
+    expect_checkpoints: bool = True,
+    priority: int = -1,
+    expect_client_failed: bool = False,
+) -> int:
+    assert os.path.isdir(model_def_file)
+    orchestrator_exp_id = run_autotuning_experiment(config_file, model_def_file, create_args)
+    if priority != -1:
+        set_priority(experiment_id=orchestrator_exp_id, priority=priority)
+
+    # Wait for the Autotuning Single Searcher ("Orchestrator") to finish
+    wait_for_experiment_state(
+        orchestrator_exp_id,
+        experimentv1State.COMPLETED,
+        max_wait_secs=max_wait_secs,
+    )
+    assert num_active_trials(orchestrator_exp_id) == 0
+    verify_completed_experiment_metadata(
+        orchestrator_exp_id, expected_trials, expect_workloads, expect_checkpoints
+    )
+    client_exp_id = fetch_autotuning_client_experiment(orchestrator_exp_id)
+
+    # Wait for the Autotuning Custom Searcher Experiment ("Client Experiment") to finish
+    wait_for_experiment_state(
+        client_exp_id,
+        experimentv1State.COMPLETED if not expect_client_failed else experimentv1State.ERRORED,
+        max_wait_secs=max_wait_secs,
+    )
+    assert num_active_trials(orchestrator_exp_id) == 0
+    verify_completed_experiment_metadata(
+        orchestrator_exp_id, expected_trials, expect_workloads, expect_checkpoints
+    )
+    return client_exp_id
+
+
+def fetch_autotuning_client_experiment(exp_id: int) -> subprocess.CompletedProcess:
+    command = ["det", "-m", conf.make_master_url(), "experiment", "logs", str(exp_id)]
+    env = os.environ.copy()
+    env["DET_DEBUG"] = "true"
+    completed_process = subprocess.run(
+        command, universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env
+    )
+    assert completed_process.returncode == 0, "\nstdout:\n{} \nstderr:\n{}".format(
+        completed_process.stdout, completed_process.stderr
+    )
+    m = re.search(r"Created experiment (\d+)\n", str(completed_process.stdout))
+    assert m is not None
+    return int(m.group(1))
 
 
 def set_priority(experiment_id: int, priority: int) -> None:
