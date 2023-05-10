@@ -1,0 +1,14 @@
+.base {
+  width: 300px;
+
+  .columnList {
+    margin-top: 8px;
+    max-height: 360px;
+    overflow: hidden auto;
+    width: 100%;
+  }
+  .actionRow {
+    display: flex;
+    justify-content: space-between;
+  }
+}

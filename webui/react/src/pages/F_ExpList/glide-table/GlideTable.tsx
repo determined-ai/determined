@@ -24,10 +24,11 @@ import React, {
 } from 'react';
 
 import { handlePath } from 'routes/utils';
+import { V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
 import useUI from 'shared/contexts/stores/UI';
 import { AnyMouseEvent } from 'shared/utils/routes';
 import usersStore from 'stores/users';
-import { ExperimentItem, Project } from 'types';
+import { ExperimentWithTrial, Project, ProjectColumn } from 'types';
 import { getProjectExperimentForExperimentItem } from 'utils/experiment';
 import { Loadable } from 'utils/loadable';
 import { observable, useObservable, WritableObservable } from 'utils/observable';
@@ -38,6 +39,9 @@ import { MapOfIdsToColors } from '../useGlasbey';
 import {
   ColumnDef,
   defaultColumnWidths,
+  defaultDateColumn,
+  defaultNumberColumn,
+  defaultTextColumn,
   ExperimentColumn,
   getColumnDefs,
   getHeaderIcons,
@@ -46,6 +50,7 @@ import { TableContextMenu, TableContextMenuProps } from './contextMenu';
 import { customRenderers } from './custom-renderers';
 import { LinkCell } from './custom-renderers/cells/linkCell';
 import { placeholderMenuItems, TableActionMenu, TableActionMenuProps } from './menu';
+import { Sort, sortMenuItemsForColumn } from './MultiSortMenu';
 import { BatchAction } from './TableActionBar';
 import { useTableTooltip } from './tooltip';
 import { getTheme } from './utils';
@@ -53,20 +58,23 @@ import { getTheme } from './utils';
 export interface GlideTableProps {
   clearSelectionTrigger?: number;
   colorMap: MapOfIdsToColors;
-  data: Loadable<ExperimentItem>[];
+  data: Loadable<ExperimentWithTrial>[];
   fetchExperiments: () => Promise<void>;
   handleScroll?: (r: Rectangle) => void;
   height: number;
   scrollPositionSetCount: WritableObservable<number>;
-  sortableColumnIds: ExperimentColumn[];
-  setSortableColumnIds: Dispatch<SetStateAction<ExperimentColumn[]>>;
+  sortableColumnIds: string[];
+  setSortableColumnIds: (newColumns: string[]) => void;
   page: number;
   project?: Project;
+  projectColumns: Loadable<ProjectColumn[]>;
   selectedExperimentIds: number[];
   setSelectedExperimentIds: Dispatch<SetStateAction<number[]>>;
   selectAll: boolean;
   setSelectAll: Dispatch<SetStateAction<boolean>>;
   handleUpdateExperimentList: (action: BatchAction, successfulIds: number[]) => void;
+  sorts: Sort[];
+  onSortChange: (sorts: Sort[]) => void;
 }
 
 /**
@@ -102,6 +110,9 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   page,
   project,
   handleUpdateExperimentList,
+  onSortChange,
+  sorts,
+  projectColumns,
 }) => {
   const gridRef = useRef<DataEditorRef>(null);
 
@@ -139,15 +150,16 @@ export const GlideTable: React.FC<GlideTableProps> = ({
 
   const users = useObservable(usersStore.getUsers());
 
-  const columnIds = useMemo<ExperimentColumn[]>(
-    () => [...STATIC_COLUMNS, ...sortableColumnIds],
-    [sortableColumnIds],
-  );
+  const columnIds = useMemo(() => [...STATIC_COLUMNS, ...sortableColumnIds], [sortableColumnIds]);
 
   const [selection, setSelection] = React.useState<GridSelection>({
     columns: CompactSelection.empty(),
     rows: CompactSelection.empty(),
   });
+
+  // Detect if user just click a row away from current selected group.
+  // If this stand alone select is set, use it as the base when doing multi select.
+  const [standAloneSelect, setStandAloneSelect] = React.useState<number>();
 
   useEffect(() => {
     if (clearSelectionTrigger === 0) return;
@@ -161,16 +173,15 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         .map((idx) => data?.[idx])
         .filter((row) => row !== undefined)
         .filter(Loadable.isLoaded)
-        .map((record) => record.data.id);
+        .map((record) => record.data.experiment.id);
       if (prevIds === selectedIds) return prevIds;
       return selectedIds;
     });
   }, [selection.rows, setSelectedExperimentIds, data]);
 
-  const [columnWidths, setColumnWidths] =
-    useState<Record<ExperimentColumn, number>>(defaultColumnWidths);
+  const [columnWidths, setColumnWidths] = useState<Record<string, number>>(defaultColumnWidths);
 
-  const columnDefs = useMemo<Record<ExperimentColumn, ColumnDef>>(
+  const columnDefs = useMemo<Record<string, ColumnDef>>(
     () =>
       getColumnDefs({
         appTheme,
@@ -184,6 +195,12 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   );
 
   const headerIcons = useMemo(() => getHeaderIcons(appTheme), [appTheme]);
+
+  const projectColumnsMap: Loadable<Record<string, ProjectColumn>> = useMemo(() => {
+    return Loadable.map(projectColumns, (columns) => {
+      return columns.reduce((acc, col) => ({ ...acc, [col.column]: col }), {});
+    });
+  }, [projectColumns]);
 
   const { tooltip, onItemHovered, closeTooltip } = useTableTooltip({
     columnDefs,
@@ -199,7 +216,8 @@ export const GlideTable: React.FC<GlideTableProps> = ({
       // avoid showing 'empty rows' below data
       if (!data[row]) return;
       const rowColorTheme = Loadable.match(data[row], {
-        Loaded: (record) => (colorMap[record.id] ? { accentColor: colorMap[record.id] } : {}),
+        Loaded: (record) =>
+          colorMap[record.experiment.id] ? { accentColor: colorMap[record.experiment.id] } : {},
         NotLoaded: () => ({}),
       });
       return { ...baseRowTheme, ...rowColorTheme };
@@ -212,18 +230,15 @@ export const GlideTable: React.FC<GlideTableProps> = ({
       const columnId = column.id;
       if (columnId === undefined || columnId === 'selected') return;
       setColumnWidths((prevWidths) => {
-        const prevWidth = prevWidths[columnId as ExperimentColumn];
-        if (width === prevWidth) return prevWidths;
+        if (columnId in prevWidths) {
+          const prevWidth = prevWidths[columnId];
+          if (width === prevWidth) return prevWidths;
+        }
         return { ...prevWidths, [columnId]: width };
       });
     },
     [],
   );
-
-  const onColumnResizeEnd: DataEditorProps['onColumnResizeEnd'] = useCallback(() => {
-    // presumably update the settings, but maybe have a different API
-    // like Record<ColumnName, width>
-  }, []);
 
   const onHeaderClicked: DataEditorProps['onHeaderClicked'] = React.useCallback(
     (col: number, args: HeaderClickedEventArgs) => {
@@ -233,33 +248,47 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         setSelectAll((prev) => !prev);
         return;
       }
+      const column = Loadable.getOrElse([], projectColumns).find((c) => c.column === columnId);
+      if (!column) {
+        return;
+      }
 
       const { bounds } = args;
-      const items: MenuProps['items'] = placeholderMenuItems;
+      const items: MenuProps['items'] = [
+        ...placeholderMenuItems,
+        { type: 'divider' },
+        ...sortMenuItemsForColumn(column, sorts, onSortChange),
+      ];
       const x = bounds.x;
       const y = bounds.y + bounds.height;
       setMenuProps((prev) => ({ ...prev, items, title: `${columnId} menu`, x, y }));
       setMenuIsOpen(true);
     },
-    [columnIds, setSelectAll],
+    [columnIds, projectColumns, sorts, onSortChange, setSelectAll],
   );
 
   const getCellContent: DataEditorProps['getCellContent'] = React.useCallback(
     (cell: Item): GridCell => {
       const [col, row] = cell;
 
+      const loadingCell: GridCell = {
+        allowOverlay: true,
+        copyData: '',
+        data: { kind: 'spinner-cell' },
+        kind: GridCellKind.Custom,
+      };
+
+      if (!data[row]) {
+        // When data length is changed, data[row] can be undefined
+        return loadingCell;
+      }
+
       return Loadable.match(data[row], {
         Loaded: (rowData) => {
           const columnId = columnIds[col];
           return columnDefs[columnId].renderer(rowData, row);
         },
-        NotLoaded: () =>
-          ({
-            allowOverlay: true,
-            copyData: '',
-            data: { kind: 'spinner-cell' },
-            kind: GridCellKind.Custom,
-          } as GridCell),
+        NotLoaded: () => loadingCell,
       });
     },
     [data, columnIds, columnDefs],
@@ -267,6 +296,28 @@ export const GlideTable: React.FC<GlideTableProps> = ({
 
   const onCellClicked: DataEditorProps['onCellClicked'] = useCallback(
     (cell: Item, event: CellClickedEventArgs) => {
+      const findConsecutiveBefore = (rows: number[], row: number) => {
+        while (row >= 0) {
+          row = row - 1;
+          if (!rows.includes(row)) return row + 1;
+        }
+        return row;
+      };
+      const findConsecutiveAfter = (rows: number[], row: number) => {
+        while (row < data.length) {
+          row = row + 1;
+          if (!rows.includes(row)) return row - 1;
+        }
+        return row;
+      };
+      const isStandAlone = (rows: CompactSelection, row: number) => {
+        if (row === 0) return !rows.hasIndex(row + 1);
+        if (row === data.length - 1) return !rows.hasIndex(row - 1);
+        return !rows.hasIndex(row - 1) && !rows.hasIndex(row + 1);
+      };
+
+      setStandAloneSelect(undefined);
+
       const [col, row] = cell;
       Loadable.match(data[row], {
         Loaded: (rowData) => {
@@ -277,16 +328,51 @@ export const GlideTable: React.FC<GlideTableProps> = ({
             handlePath(event as unknown as AnyMouseEvent, { path: cell.data.link.href });
             // cell.data.link.onClick(event);
           } else {
-            setSelection(({ rows }: GridSelection) => ({
-              columns: CompactSelection.empty(),
-              rows: rows.hasIndex(row) ? rows.remove(row) : rows.add(row),
-            }));
+            if (event.shiftKey) {
+              setSelection(({ rows }: GridSelection) => {
+                if (standAloneSelect && standAloneSelect > row) {
+                  return {
+                    columns: CompactSelection.empty(),
+                    rows: event.metaKey
+                      ? rows.add([row, standAloneSelect + 1])
+                      : CompactSelection.fromSingleSelection([row, standAloneSelect + 1]),
+                  };
+                }
+                const rowsArray = rows.toArray();
+                const smallestClosest = rowsArray.filter((r) => r < row).last();
+                const largestClosest = rowsArray.filter((r) => r > row).first();
+                const smallestLinked = findConsecutiveBefore(rowsArray, smallestClosest);
+                const greatestLinked = findConsecutiveAfter(rowsArray, largestClosest);
+                return {
+                  columns: CompactSelection.empty(),
+                  rows:
+                    smallestClosest >= 0
+                      ? event.metaKey
+                        ? rows.add([smallestClosest, row + 1])
+                        : CompactSelection.fromSingleSelection([smallestLinked, row + 1])
+                      : largestClosest
+                      ? event.metaKey
+                        ? rows.add([row, largestClosest + 1])
+                        : CompactSelection.fromSingleSelection([row, greatestLinked + 1])
+                      : CompactSelection.fromSingleSelection(row),
+                };
+              });
+            } else {
+              setSelection(({ rows }: GridSelection) => {
+                isStandAlone(rows, row) && !rows.hasIndex(row) && setStandAloneSelect(row);
+
+                return {
+                  columns: CompactSelection.empty(),
+                  rows: rows.hasIndex(row) ? rows.remove(row) : rows.add(row),
+                };
+              });
+            }
           }
         },
         NotLoaded: () => null,
       });
     },
-    [data, columnIds, columnDefs],
+    [data, columnIds, columnDefs, standAloneSelect],
   );
 
   const onCellContextMenu: DataEditorProps['onCellContextMenu'] = useCallback(
@@ -307,7 +393,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
 
             // Update the context menu based on the cell context.
             setContextMenuProps({
-              experiment: getProjectExperimentForExperimentItem(rowData, project),
+              experiment: getProjectExperimentForExperimentItem(rowData.experiment, project),
               handleClose: (e?: Event) => {
                 // Prevent the context menu closing click from triggering something else.
                 if (contextMenuOpen.get()) e?.stopPropagation();
@@ -332,24 +418,73 @@ export const GlideTable: React.FC<GlideTableProps> = ({
       const sortableColumnIdsStartIdx = columnIdsStartIdx - STATIC_COLUMNS.length;
       const sortableColumnIdsEndIdx = Math.max(columnIdsEndIdx - STATIC_COLUMNS.length, 0);
       if (sortableColumnIdsStartIdx > -1) {
-        setSortableColumnIds((prevCols) => {
-          const newCols = [...prevCols];
-          const [toMove] = newCols.splice(sortableColumnIdsStartIdx, 1);
-          newCols.splice(sortableColumnIdsEndIdx, 0, toMove);
-          return newCols;
-        });
+        const newCols = [...sortableColumnIds];
+        const [toMove] = newCols.splice(sortableColumnIdsStartIdx, 1);
+        newCols.splice(sortableColumnIdsEndIdx, 0, toMove);
+        setSortableColumnIds(newCols);
       }
     },
-    [setSortableColumnIds],
+    [sortableColumnIds, setSortableColumnIds],
   );
 
   const columns: DataEditorProps['columns'] = useMemo(
-    () => columnIds.map((columnName) => columnDefs[columnName as ExperimentColumn]) as GridColumn[],
-    [columnIds, columnDefs],
+    () =>
+      columnIds.map((columnName) => {
+        if (columnName in columnDefs) return columnDefs[columnName];
+        if (!Loadable.isLoaded(projectColumnsMap)) return;
+        const currentColumn = projectColumnsMap.data[columnName];
+        let dataPath: string | undefined = undefined;
+        switch (currentColumn.location) {
+          case V1LocationType.EXPERIMENT:
+            dataPath = `experiment.${currentColumn.column}`;
+            break;
+          case V1LocationType.HYPERPARAMETERS:
+            dataPath = `experiment.config.hyperparameters.${currentColumn.column.replace(
+              'hp.',
+              '',
+            )}.val`;
+            break;
+          case V1LocationType.VALIDATIONS:
+            dataPath = `bestTrial.bestValidationMetric.metrics.${currentColumn.column.replace(
+              'validation.',
+              '',
+            )}`;
+            break;
+          case V1LocationType.UNSPECIFIED:
+          default:
+            break;
+        }
+        switch (currentColumn.type) {
+          case V1ColumnType.NUMBER:
+            columnDefs[currentColumn.column] = defaultNumberColumn(
+              currentColumn,
+              columnWidths,
+              dataPath,
+            );
+            break;
+          case V1ColumnType.DATE:
+            columnDefs[currentColumn.column] = defaultDateColumn(
+              currentColumn,
+              columnWidths,
+              dataPath,
+            );
+            break;
+          case V1ColumnType.TEXT:
+          case V1ColumnType.UNSPECIFIED:
+          default:
+            columnDefs[currentColumn.column] = defaultTextColumn(
+              currentColumn,
+              columnWidths,
+              dataPath,
+            );
+        }
+        return columnDefs[currentColumn.column];
+      }) as GridColumn[],
+    [columnIds, columnDefs, projectColumnsMap, columnWidths],
   );
 
   const verticalBorder: DataEditorProps['verticalBorder'] = useCallback(
-    (col: number) => columnIds[col] === 'name',
+    (col: number) => columnIds[col - 1] === STATIC_COLUMNS.last(),
     [columnIds],
   );
 
@@ -363,8 +498,10 @@ export const GlideTable: React.FC<GlideTableProps> = ({
       <DataEditor
         columns={columns}
         customRenderers={customRenderers}
-        freezeColumns={2}
+        freezeColumns={STATIC_COLUMNS.length}
         getCellContent={getCellContent}
+        // `getCellsForSelection` is required for double click column resize to content.
+        getCellsForSelection
         getRowThemeOverride={getRowThemeOverride}
         gridSelection={selection}
         headerHeight={36}
@@ -382,7 +519,6 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         onCellContextMenu={onCellContextMenu}
         onColumnMoved={onColumnMoved}
         onColumnResize={onColumnResize}
-        onColumnResizeEnd={onColumnResizeEnd}
         onHeaderClicked={onHeaderClicked}
         onItemHovered={onItemHovered}
         onVisibleRegionChanged={handleScroll}

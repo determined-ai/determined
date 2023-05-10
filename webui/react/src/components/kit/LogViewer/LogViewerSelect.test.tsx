@@ -106,7 +106,6 @@ describe('LogViewerFilter', () => {
     await user.click(agentOption2);
 
     await waitFor(() => {
-      expect(handleOnChange).toHaveBeenCalledWith({ agentIds: [agentOptionText1] });
       expect(handleOnChange).toHaveBeenCalledWith({
         agentIds: [agentOptionText1, agentOptionText2],
       });

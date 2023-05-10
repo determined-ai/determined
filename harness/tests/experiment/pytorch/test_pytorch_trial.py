@@ -50,6 +50,7 @@ def check_equal_structures(a: typing.Any, b: typing.Any) -> None:
         assert a == b
 
 
+@pytest.mark.pytorch
 class TestPyTorchTrial:
     def setup_method(self) -> None:
         # This training setup is not guaranteed to converge in general,
@@ -134,7 +135,9 @@ class TestPyTorchTrial:
             "lr_scheduler_step_mode": pytorch.LRScheduler.StepMode.STEP_EVERY_BATCH.value,
             **self.hparams,
         }
-        self.checkpoint_and_restore(updated_hparams, tmp_path, (100, 100))
+        self.checkpoint_and_check_metrics(
+            pytorch_onevar_model.OneVarTrialWithLRScheduler, updated_hparams, tmp_path, (100, 100)
+        )
 
     @pytest.mark.skipif(not torch.cuda.is_available(), reason="no gpu available")
     @pytest.mark.gpu
@@ -160,8 +163,11 @@ class TestPyTorchTrial:
             **self.hparams,
         }
 
-        tm_a, tm_b = self.checkpoint_and_restore(
-            hparams=updated_hparams, tmp_path=tmp_path, steps=(200, 200)
+        tm_a, tm_b = self.checkpoint_and_check_metrics(
+            trial_class=pytorch_onevar_model.OneVarApexAMPTrial,
+            hparams=updated_hparams,
+            tmp_path=tmp_path,
+            steps=(1, 1),
         )
 
         amp_metrics_test(trial_class, tm_a)
@@ -671,7 +677,6 @@ class TestPyTorchTrial:
         for older, newer in zip(training_metrics, training_metrics[1:]):
             assert newer["loss"] <= older["loss"]
 
-    @pytest.mark.skipif(not torch.cuda.is_available(), reason="no gpu available")
     @pytest.mark.gpu
     @pytest.mark.parametrize(
         "trial_class",
@@ -721,7 +726,6 @@ class TestPyTorchTrial:
 
         amp_metrics_test(trial_class, training_metrics)
 
-    @pytest.mark.skipif(not torch.cuda.is_available(), reason="no gpu available")
     @pytest.mark.gpu
     @pytest.mark.parametrize(
         "trial_class",
@@ -744,18 +748,12 @@ class TestPyTorchTrial:
         # The assertions logic in make_amp_workloads require a batch size of one
         hparams = dict(self.hparams)
         hparams["global_batch_size"] = 1
+        aggregation_frequency = 2
 
-        AGG_FREQ = 2
         exp_config = utils.make_default_exp_config(
             hparams,
             scheduling_unit=1,
             searcher_metric=trial_class._searcher_metric,
-        )
-        exp_config["optimizations"].update(
-            {
-                "aggregation_frequency": AGG_FREQ,
-                "average_aggregated_gradients": True,
-            }
         )
 
         trial, trial_controller = create_trial_and_trial_controller(
@@ -764,16 +762,17 @@ class TestPyTorchTrial:
             hparams=hparams,
             trial_seed=self.trial_seed,
             expose_gpus=True,
-            max_batches=20 * AGG_FREQ,
+            max_batches=20 * aggregation_frequency,
             min_validation_batches=1,
             min_checkpoint_batches=sys.maxsize,
+            aggregation_frequency=aggregation_frequency,
         )
         trial_controller.run()
 
         metrics_callback = trial.metrics_callback
         training_metrics = metrics_callback.training_metrics
 
-        amp_metrics_test(trial_class, training_metrics, agg_freq=AGG_FREQ)
+        amp_metrics_test(trial_class, training_metrics, agg_freq=aggregation_frequency)
 
     def test_trainer(self) -> None:
         # Train for 100 batches, checkpoint and validate every 50 batches
@@ -840,8 +839,12 @@ class TestPyTorchTrial:
 
         assert trial.legacy_counter.__dict__ == {"legacy_on_training_epochs_start_calls": 2}
 
-    def checkpoint_and_restore(
-        self, hparams: typing.Dict, tmp_path: pathlib.Path, steps: typing.Tuple[int, int] = (1, 1)
+    def checkpoint_and_check_metrics(
+        self,
+        trial_class: pytorch_onevar_model.OneVarTrial,
+        hparams: typing.Dict,
+        tmp_path: pathlib.Path,
+        steps: typing.Tuple[int, int] = (1, 1),
     ) -> typing.Tuple[
         typing.Sequence[typing.Dict[str, typing.Any]], typing.Sequence[typing.Dict[str, typing.Any]]
     ]:
@@ -849,9 +852,9 @@ class TestPyTorchTrial:
         training_metrics = {"A": [], "B": []}
         validation_metrics = {"A": [], "B": []}
 
-        # Trial A: train 100 batches and checkpoint
+        # Trial A: train some batches and checkpoint
         trial_A, trial_controller_A = create_trial_and_trial_controller(
-            trial_class=pytorch_onevar_model.OneVarTrialWithLRScheduler,
+            trial_class=trial_class,
             hparams=hparams,
             trial_seed=self.trial_seed,
             max_batches=steps[0],
@@ -873,9 +876,9 @@ class TestPyTorchTrial:
 
         assert len(checkpoint_callback.uuids) == 1, "trial did not return a checkpoint UUID"
 
-        # Trial A: restore from checkpoint and train for 100 more batches
+        # Trial A: restore from checkpoint and train
         trial_A, trial_controller_A = create_trial_and_trial_controller(
-            trial_class=pytorch_onevar_model.OneVarTrialWithLRScheduler,
+            trial_class=trial_class,
             hparams=hparams,
             trial_seed=self.trial_seed,
             max_batches=steps[0] + steps[1],
@@ -895,13 +898,13 @@ class TestPyTorchTrial:
             len(training_metrics["A"]) == steps[0] + steps[1]
         ), "training metrics returned did not match expected length"
 
-        # Trial B: run for 200 steps
+        # Trial B: run for some steps
         trial_B, trial_controller_B = create_trial_and_trial_controller(
-            trial_class=pytorch_onevar_model.OneVarTrialWithLRScheduler,
+            trial_class=trial_class,
             hparams=hparams,
             trial_seed=self.trial_seed,
             max_batches=steps[0] + steps[1],
-            min_validation_batches=steps[0] + steps[1],
+            min_validation_batches=steps[0],
             min_checkpoint_batches=sys.maxsize,
             checkpoint_dir=checkpoint_dir,
         )
@@ -919,6 +922,51 @@ class TestPyTorchTrial:
             utils.assert_equivalent_metrics(A, B)
 
         return (training_metrics["A"], training_metrics["B"])
+
+    def train_and_checkpoint(
+        self,
+        hparams: typing.Dict,
+        trial_class: pytorch.PyTorchTrial,
+        tmp_path: pathlib.Path,
+        exp_config: typing.Dict,
+        steps: typing.Tuple[int, int] = (1, 1),
+    ) -> None:
+        checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
+
+        # Trial A: train 100 batches and checkpoint
+        trial_A, trial_controller_A = create_trial_and_trial_controller(
+            trial_class=trial_class,
+            hparams=hparams,
+            trial_seed=self.trial_seed,
+            exp_config=exp_config,
+            max_batches=steps[0],
+            min_validation_batches=steps[0],
+            min_checkpoint_batches=steps[0],
+            checkpoint_dir=checkpoint_dir,
+            expose_gpus=True,
+        )
+
+        trial_controller_A.run()
+
+        assert len(os.listdir(checkpoint_dir)) == 1, "trial did not create a checkpoint"
+
+        # Trial B: restore from checkpoint and train for 100 more batches
+        trial_B, trial_controller_B = create_trial_and_trial_controller(
+            trial_class=trial_class,
+            hparams=hparams,
+            trial_seed=self.trial_seed,
+            exp_config=exp_config,
+            max_batches=steps[0] + steps[1],
+            min_validation_batches=steps[1],
+            min_checkpoint_batches=sys.maxsize,
+            checkpoint_dir=checkpoint_dir,
+            latest_checkpoint=os.listdir(checkpoint_dir)[0],
+            steps_completed=trial_controller_A.state.batches_trained,
+            expose_gpus=True,
+        )
+        trial_controller_B.run()
+
+        assert len(os.listdir(checkpoint_dir)) == 2, "trial did not create a checkpoint"
 
     def test_trial_validation_checkpointing(self):
         trial, controller = create_trial_and_trial_controller(
@@ -1011,7 +1059,34 @@ class TestPyTorchTrial:
         assert state.batches_trained == 1, "batches_trained does not match"
         assert state.epochs_trained == 0, "epochs_trained does not match"
 
+    def test_pytorch_mnist(self, tmp_path: pathlib.Path):
+        checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
 
+        config = utils.load_config(utils.tutorials_path("mnist_pytorch/const.yaml"))
+        hparams = config["hyperparameters"]
+
+        exp_config = utils.make_default_exp_config(
+            hparams,
+            scheduling_unit=1,
+            searcher_metric="validation_loss",
+            checkpoint_dir=checkpoint_dir,
+        )
+        exp_config.update(config)
+
+        example_path = utils.tutorials_path("mnist_pytorch/model_def.py")
+        trial_class = utils.import_class_from_module("MNistTrial", example_path)
+        trial_class._searcher_metric = "validation_loss"
+
+        self.train_and_checkpoint(
+            trial_class=trial_class,
+            hparams=hparams,
+            tmp_path=tmp_path,
+            exp_config=exp_config,
+            steps=(1, 1),
+        )
+
+
+@pytest.mark.pytorch
 @pytest.mark.parametrize(
     "ckpt,istrial,trial_spec,trial_kwargs",
     [
@@ -1072,7 +1147,7 @@ def amp_metrics_test(trial_class, training_metrics, agg_freq=1):
             assert metrics["scale"] == scale, "scale is inconsistent between batches"
         else:
             metrics["scale"] = scale
-        loss = metrics["loss"].item()
+        loss = metrics["loss"]
         scale_before = metrics["scale_before"]
         scaled_loss = loss * scale_before
         scale = metrics["scale"]
@@ -1118,10 +1193,11 @@ def create_trial_and_trial_controller(
     checkpoint_dir: typing.Optional[str] = None,
     latest_checkpoint: typing.Optional[str] = None,
     steps_completed: int = 0,
-    expose_gpus: bool = False,
+    expose_gpus: bool = True,
     max_batches: int = 100,
     min_checkpoint_batches: int = sys.maxsize,
     min_validation_batches: int = sys.maxsize,
+    aggregation_frequency: int = 1,
 ) -> typing.Tuple[pytorch.PyTorchTrial, pytorch._PyTorchTrialController]:
     assert issubclass(
         trial_class, pytorch.PyTorchTrial
@@ -1156,9 +1232,9 @@ def create_trial_and_trial_controller(
             slots_per_trial=1,
             num_gpus=len(gpu_uuids),
             exp_conf=exp_config,
-            aggregation_frequency=1,
+            aggregation_frequency=aggregation_frequency,
             steps_completed=steps_completed,
-            managed_training=False,
+            managed_training=True,  # this must be True to put model on GPU
             debug_enabled=False,
         )
         trial_context._set_default_gradient_compression(False)

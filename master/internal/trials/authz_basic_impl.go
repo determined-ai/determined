@@ -63,8 +63,8 @@ func (a *TrialAuthZBasic) AuthFilterCollectionsDeleteQuery(
 // CanCreateTrialCollection indicates whether a user can create a collection in a project.
 func (a *TrialAuthZBasic) CanCreateTrialCollection(
 	ctx context.Context, curUser *model.User, projectID int32,
-) (canCreateTrialCollection bool, serverError error) {
-	return true, nil
+) error {
+	return nil
 }
 
 // AuthFilterTrialsQuery filters a trials SelectQuery to those the user is authorized for.

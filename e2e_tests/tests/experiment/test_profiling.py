@@ -1,4 +1,5 @@
 import json
+import os
 import tempfile
 from typing import Any, Dict, Optional, Sequence
 from urllib.parse import urlencode
@@ -14,32 +15,26 @@ from tests import experiment as exp
 @pytest.mark.e2e_gpu
 @pytest.mark.timeout(30 * 60)
 @pytest.mark.parametrize(
-    "framework_base_experiment,framework_timings_enabled",
+    "model_def,timings_enabled",
     [
-        ("tutorials/mnist_pytorch", True),
-        ("tutorials/fashion_mnist_tf_keras", False),
-        ("computer_vision/mnist_estimator", False),
+        (conf.tutorials_path("mnist_pytorch"), True),
+        (conf.tutorials_path("fashion_mnist_tf_keras"), False),
+        (conf.fixtures_path("mnist_estimator"), False),
     ],
 )
-def test_streaming_observability_metrics_apis(
-    framework_base_experiment: str, framework_timings_enabled: bool
-) -> None:
+def test_streaming_observability_metrics_apis(model_def: str, timings_enabled: bool) -> None:
     # TODO: refactor tests to not use cli singleton auth.
     certs.cli_cert = certs.default_load(conf.make_master_url())
     authentication.cli_auth = authentication.Authentication(conf.make_master_url())
 
-    config_path = conf.tutorials_path(f"../{framework_base_experiment}/const.yaml")
-    model_def_path = conf.tutorials_path(f"../{framework_base_experiment}")
+    config_path = os.path.join(model_def, "const.yaml")
 
     config_obj = conf.load_config(config_path)
     config_obj = conf.set_profiling_enabled(config_obj)
     with tempfile.NamedTemporaryFile() as tf:
         with open(tf.name, "w") as f:
             yaml.dump(config_obj, f)
-        experiment_id = exp.create_experiment(
-            tf.name,
-            model_def_path,
-        )
+        experiment_id = exp.create_experiment(tf.name, model_def)
 
     exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.COMPLETED)
     trials = exp.experiment_trials(experiment_id)
@@ -47,10 +42,10 @@ def test_streaming_observability_metrics_apis(
 
     gpu_enabled = conf.GPU_ENABLED
 
-    request_profiling_metric_labels(trial_id, framework_timings_enabled, gpu_enabled)
+    request_profiling_metric_labels(trial_id, timings_enabled, gpu_enabled)
     if gpu_enabled:
         request_profiling_system_metrics(trial_id, "gpu_util")
-    if framework_timings_enabled:
+    if timings_enabled:
         request_profiling_pytorch_timing_metrics(trial_id, "train_batch")
         request_profiling_pytorch_timing_metrics(trial_id, "train_batch.backward", accumulated=True)
 

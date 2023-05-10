@@ -392,6 +392,7 @@ class trialv1Trial:
     endTime: "typing.Optional[str]" = None
     latestValidation: "typing.Optional[v1MetricsWorkload]" = None
     runnerState: "typing.Optional[str]" = None
+    summaryMetrics: "typing.Optional[typing.Dict[str, typing.Any]]" = None
     taskId: "typing.Optional[str]" = None
     totalCheckpointSize: "typing.Optional[str]" = None
     wallClockTime: "typing.Optional[float]" = None
@@ -413,6 +414,7 @@ class trialv1Trial:
         endTime: "typing.Union[str, None, Unset]" = _unset,
         latestValidation: "typing.Union[v1MetricsWorkload, None, Unset]" = _unset,
         runnerState: "typing.Union[str, None, Unset]" = _unset,
+        summaryMetrics: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
         taskId: "typing.Union[str, None, Unset]" = _unset,
         totalCheckpointSize: "typing.Union[str, None, Unset]" = _unset,
         wallClockTime: "typing.Union[float, None, Unset]" = _unset,
@@ -437,6 +439,8 @@ class trialv1Trial:
             self.latestValidation = latestValidation
         if not isinstance(runnerState, Unset):
             self.runnerState = runnerState
+        if not isinstance(summaryMetrics, Unset):
+            self.summaryMetrics = summaryMetrics
         if not isinstance(taskId, Unset):
             self.taskId = taskId
         if not isinstance(totalCheckpointSize, Unset):
@@ -469,6 +473,8 @@ class trialv1Trial:
             kwargs["latestValidation"] = v1MetricsWorkload.from_json(obj["latestValidation"]) if obj["latestValidation"] is not None else None
         if "runnerState" in obj:
             kwargs["runnerState"] = obj["runnerState"]
+        if "summaryMetrics" in obj:
+            kwargs["summaryMetrics"] = obj["summaryMetrics"]
         if "taskId" in obj:
             kwargs["taskId"] = obj["taskId"]
         if "totalCheckpointSize" in obj:
@@ -501,6 +507,8 @@ class trialv1Trial:
             out["latestValidation"] = None if self.latestValidation is None else self.latestValidation.to_json(omit_unset)
         if not omit_unset or "runnerState" in vars(self):
             out["runnerState"] = self.runnerState
+        if not omit_unset or "summaryMetrics" in vars(self):
+            out["summaryMetrics"] = self.summaryMetrics
         if not omit_unset or "taskId" in vars(self):
             out["taskId"] = self.taskId
         if not omit_unset or "totalCheckpointSize" in vars(self):
@@ -10227,36 +10235,32 @@ class v1ScopeTypeMask:
 
 class v1SearchExperimentExperiment:
     bestTrial: "typing.Optional[trialv1Trial]" = None
-    experiment: "typing.Optional[v1Experiment]" = None
 
     def __init__(
         self,
         *,
+        experiment: "v1Experiment",
         bestTrial: "typing.Union[trialv1Trial, None, Unset]" = _unset,
-        experiment: "typing.Union[v1Experiment, None, Unset]" = _unset,
     ):
+        self.experiment = experiment
         if not isinstance(bestTrial, Unset):
             self.bestTrial = bestTrial
-        if not isinstance(experiment, Unset):
-            self.experiment = experiment
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1SearchExperimentExperiment":
         kwargs: "typing.Dict[str, typing.Any]" = {
+            "experiment": v1Experiment.from_json(obj["experiment"]),
         }
         if "bestTrial" in obj:
             kwargs["bestTrial"] = trialv1Trial.from_json(obj["bestTrial"]) if obj["bestTrial"] is not None else None
-        if "experiment" in obj:
-            kwargs["experiment"] = v1Experiment.from_json(obj["experiment"]) if obj["experiment"] is not None else None
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
+            "experiment": self.experiment.to_json(omit_unset),
         }
         if not omit_unset or "bestTrial" in vars(self):
             out["bestTrial"] = None if self.bestTrial is None else self.bestTrial.to_json(omit_unset)
-        if not omit_unset or "experiment" in vars(self):
-            out["experiment"] = None if self.experiment is None else self.experiment.to_json(omit_unset)
         return out
 
 class v1SearchExperimentsResponse:
@@ -16783,12 +16787,14 @@ def get_ResourceAllocationRaw(
 def get_SearchExperiments(
     session: "api.Session",
     *,
+    filter: "typing.Optional[str]" = None,
     limit: "typing.Optional[int]" = None,
     offset: "typing.Optional[int]" = None,
     projectId: "typing.Optional[int]" = None,
     sort: "typing.Optional[str]" = None,
 ) -> "v1SearchExperimentsResponse":
     _params = {
+        "filter": filter,
         "limit": limit,
         "offset": offset,
         "projectId": projectId,

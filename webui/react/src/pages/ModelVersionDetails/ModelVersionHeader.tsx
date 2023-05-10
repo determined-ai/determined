@@ -1,11 +1,12 @@
 import { LeftOutlined } from '@ant-design/icons';
-import { Dropdown, Modal, Space, Typography } from 'antd';
-import type { DropDownProps, MenuProps } from 'antd';
+import { Modal, Space, Typography } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import InfoBox, { InfoRow } from 'components/InfoBox';
 import Breadcrumb from 'components/kit/Breadcrumb';
 import Button from 'components/kit/Button';
+import Dropdown, { MenuItem, MenuOption } from 'components/kit/Dropdown';
+import Icon from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
 import Tags, { tagsActionHelper } from 'components/kit/Tags';
 import Avatar from 'components/kit/UserAvatar';
@@ -18,7 +19,6 @@ import usePermissions from 'hooks/usePermissions';
 import { WorkspaceDetailsTab } from 'pages/WorkspaceDetails';
 import { paths } from 'routes/utils';
 import CopyButton from 'shared/components/CopyButton';
-import Icon from 'shared/components/Icon/Icon';
 import Spinner from 'shared/components/Spinner';
 import { formatDatetime } from 'shared/utils/datetime';
 import { copyToClipboard } from 'shared/utils/dom';
@@ -30,20 +30,19 @@ import { getDisplayName } from 'utils/user';
 
 import css from './ModelVersionHeader.module.scss';
 
-type Action = {
-  danger: boolean;
-  disabled: boolean;
-  key: string;
-  onClick: () => void;
-  text: string;
-};
-
 interface Props {
   modelVersion: ModelVersion;
   fetchModelVersion: () => Promise<void>;
   onUpdateTags: (newTags: string[]) => Promise<void>;
   workspace: Workspace;
 }
+
+const MenuKey = {
+  DeregisterVersion: 'Deregister Version',
+  DownloadModel: 'Download',
+  EditModelVersionName: 'Edit',
+  UseInNotebook: 'Use in Notebook',
+} as const;
 
 const ModelVersionHeader: React.FC<Props> = ({
   modelVersion,
@@ -112,49 +111,6 @@ const ModelVersionHeader: React.FC<Props> = ({
     ] as InfoRow[];
   }, [loadableUsers, modelVersion, onUpdateTags, users, canModifyModelVersion]);
 
-  const actions: Action[] = useMemo(() => {
-    const items: Action[] = [
-      {
-        danger: false,
-        disabled: false,
-        key: 'download-model',
-        onClick: () => modelDownloadModal.open(),
-        text: 'Download',
-      },
-      {
-        danger: false,
-        disabled: false,
-        key: 'use-in-notebook',
-        onClick: () => setShowUseInNotebook(true),
-        text: 'Use in Notebook',
-      },
-      {
-        danger: false,
-        disabled: modelVersion.model.archived || !canModifyModelVersion({ modelVersion }),
-        key: 'edit-model-version-name',
-        onClick: () => modelVersionEditModal.open(),
-        text: 'Edit',
-      },
-    ];
-    if (canDeleteModelVersion({ modelVersion })) {
-      items.push({
-        danger: true,
-        disabled: false,
-        key: 'deregister-version',
-        onClick: () => modelVersionDeleteModal.open(),
-        text: 'Deregister Version',
-      });
-    }
-    return items;
-  }, [
-    modelVersion,
-    canModifyModelVersion,
-    canDeleteModelVersion,
-    modelDownloadModal,
-    modelVersionEditModal,
-    modelVersionDeleteModal,
-  ]);
-
   const referenceText = useMemo(() => {
     const escapedModelName = modelVersion.model.name.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
     return `import determined as det
@@ -184,22 +140,51 @@ with det.import_from_path(path + "/code"):
     await copyToClipboard(referenceText);
   }, [referenceText]);
 
-  const menu: DropDownProps['menu'] = useMemo(() => {
-    const onItemClick: MenuProps['onClick'] = (e) => {
-      const action = actions.find((ac) => ac.key === e.key) as Action;
-      action.onClick();
-    };
+  const menu = useMemo(() => {
+    const items: MenuItem[] = [
+      {
+        key: MenuKey.DownloadModel,
+        label: MenuKey.DownloadModel,
+      },
+      {
+        key: MenuKey.UseInNotebook,
+        label: MenuKey.UseInNotebook,
+      },
+      {
+        disabled: modelVersion.model.archived || !canModifyModelVersion({ modelVersion }),
+        key: MenuKey.EditModelVersionName,
+        label: MenuKey.EditModelVersionName,
+      },
+    ];
+    if (canDeleteModelVersion({ modelVersion })) {
+      items.push({
+        danger: true,
+        key: MenuKey.DeregisterVersion,
+        label: MenuKey.DeregisterVersion,
+      });
+    }
+    return items;
+  }, [canDeleteModelVersion, canModifyModelVersion, modelVersion]);
 
-    const menuItems: MenuProps['items'] = actions.map((action) => ({
-      className: css.overflowAction,
-      danger: action.danger,
-      disabled: action.disabled,
-      key: action.key,
-      label: action.text,
-    }));
-
-    return { className: css.overflow, items: menuItems, onClick: onItemClick };
-  }, [actions]);
+  const handleDropdown = useCallback(
+    (key: string) => {
+      switch (key) {
+        case MenuKey.DeregisterVersion:
+          modelVersionDeleteModal.open();
+          break;
+        case MenuKey.DownloadModel:
+          modelDownloadModal.open();
+          break;
+        case MenuKey.EditModelVersionName:
+          modelVersionEditModal.open();
+          break;
+        case MenuKey.UseInNotebook:
+          setShowUseInNotebook(true);
+          break;
+      }
+    },
+    [modelDownloadModal, modelVersionEditModal, modelVersionDeleteModal],
+  );
 
   return (
     <header className={css.base}>
@@ -243,19 +228,23 @@ with det.import_from_path(path + "/code"):
             </h1>
           </div>
           <div className={css.buttons}>
-            {actions.slice(0, 2).map((action) => (
+            {menu.slice(0, 2).map((item) => {
+              const option = item as MenuOption;
+              return (
+                <Button
+                  danger={option.danger}
+                  disabled={option.disabled}
+                  key={option.key}
+                  onClick={() => handleDropdown(option.key)}>
+                  {option.label}
+                </Button>
+              );
+            })}
+            <Dropdown menu={menu.slice(2)} onClick={handleDropdown}>
               <Button
-                danger={action.danger}
-                disabled={action.disabled}
-                key={action.key}
-                onClick={action.onClick}>
-                {action.text}
-              </Button>
-            ))}
-            <Dropdown menu={menu} trigger={['click']}>
-              <Button type="text">
-                <Icon name="overflow-horizontal" size="tiny" />
-              </Button>
+                icon={<Icon name="overflow-horizontal" size="small" title="Action menu" />}
+                type="text"
+              />
             </Dropdown>
           </div>
         </div>

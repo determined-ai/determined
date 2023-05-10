@@ -1,14 +1,14 @@
-import { Dropdown, Select } from 'antd';
+import { Select } from 'antd';
 import { string } from 'io-ts';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Button from 'components/kit/Button';
-import Tooltip from 'components/kit/Tooltip';
+import Dropdown from 'components/kit/Dropdown';
+import Icon from 'components/kit/Icon';
 import { InteractiveTableSettings } from 'components/Table/InteractiveTable';
 import { SettingsConfig, useSettings, UseSettingsReturn } from 'hooks/useSettings';
 import useStorage from 'hooks/useStorage';
 import { deleteTrialsCollection, getTrialsCollections, patchTrialsCollection } from 'services/api';
-import Icon from 'shared/components/Icon';
 import { clone, finiteElseUndefined, isFiniteNumber } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
 import userStore from 'stores/users';
@@ -74,6 +74,12 @@ const defaultSorter: TrialSorter = {
   sortKey: 'trialId',
 };
 
+const MenuKey = {
+  ClearFilters: 'Clear Filters',
+  DeleteCollection: 'Delete Collection',
+  RenameCollection: 'Rename Collection',
+} as const;
+
 export const useTrialCollections = (
   projectId: string,
   tableSettingsHook: UseSettingsReturn<InteractiveTableSettings>,
@@ -110,7 +116,7 @@ export const useTrialCollections = (
   const sorter: TrialSorter = useMemo(
     () => ({
       ...defaultSorter,
-      sortDesc: !!tableSettings.sortDesc,
+      sortDesc: tableSettings.sortDesc,
       sortKey: tableSettings.sortKey ? String(tableSettings.sortKey) : '',
     }),
     [tableSettings.sortDesc, tableSettings.sortKey],
@@ -127,9 +133,7 @@ export const useTrialCollections = (
 
   const hasUnsavedFilters = useMemo(() => {
     if (!collectionFiltersStringified) return false;
-    const unsaved = filtersStringified !== collectionFiltersStringified;
-
-    return unsaved;
+    return filtersStringified !== collectionFiltersStringified;
   }, [collectionFiltersStringified, filtersStringified]);
 
   const [collections, setCollections] = useState<TrialsCollection[]>([]);
@@ -295,6 +299,51 @@ export const useTrialCollections = (
 
   const collectionIsActive = !!(collections.length && settings.collection);
 
+  const menu = useMemo(
+    () =>
+      collectionIsActive
+        ? [
+            {
+              disabled: !userOwnsCollection,
+              key: MenuKey.RenameCollection,
+              label: MenuKey.RenameCollection,
+            },
+            {
+              disabled: !userOwnsCollection,
+              key: MenuKey.DeleteCollection,
+              label: MenuKey.DeleteCollection,
+            },
+            {
+              key: MenuKey.ClearFilters,
+              label: MenuKey.ClearFilters,
+            },
+          ]
+        : [
+            {
+              key: MenuKey.ClearFilters,
+              label: MenuKey.ClearFilters,
+            },
+          ],
+    [collectionIsActive, userOwnsCollection],
+  );
+
+  const handleDropdown = useCallback(
+    (key: string) => {
+      switch (key) {
+        case MenuKey.ClearFilters:
+          clearFilters();
+          break;
+        case MenuKey.DeleteCollection:
+          deleteCollection();
+          break;
+        case MenuKey.RenameCollection:
+          renameCollection();
+          break;
+      }
+    },
+    [clearFilters, deleteCollection, renameCollection],
+  );
+
   const controls = useMemo(
     () => (
       <div className={css.base}>
@@ -310,68 +359,43 @@ export const useTrialCollections = (
             {[
               ...(collections?.map((collection) => (
                 <Select.Option key={collection.name} value={collection.name}>
-                  {userId === collection.userId ? <Icon name="user-small" /> : '   '}{' '}
+                  {userId === collection.userId ? <Icon name="user-small" title="User" /> : '   '}{' '}
                   {collection.name}
                 </Select.Option>
               )) ?? []),
             ]}
           </Select>
-          <Tooltip content="View Active Filters">
-            <Button
-              ghost={!hasUnsavedFilters}
-              icon={<Icon name="settings" />}
-              onClick={viewFilters}
-            />
-          </Tooltip>
-          <Tooltip content={collectionIsActive ? 'Save Collection' : 'No Collection Active'}>
-            <Button
-              disabled={!userOwnsCollection || !collectionIsActive}
-              ghost={!hasUnsavedFilters}
-              icon={<Icon name="checkmark" />}
-              onClick={saveCollection}
-            />
-          </Tooltip>
-          <Tooltip
-            content={collectionIsActive ? 'Reset Filters to Collection' : 'No Collection Active'}>
-            <Button
-              disabled={!collectionIsActive}
-              ghost={!hasUnsavedFilters}
-              icon={<Icon name="reset" />}
-              onClick={resetFiltersToCollection}
-            />
-          </Tooltip>
-          <Dropdown
-            menu={{
-              items: collectionIsActive
-                ? [
-                    {
-                      disabled: !userOwnsCollection,
-                      key: 'ren',
-                      label: 'Rename Collection',
-                      onClick: renameCollection,
-                    },
-                    {
-                      disabled: !userOwnsCollection,
-                      key: 'del',
-                      label: 'Delete Collection',
-                      onClick: deleteCollection,
-                    },
-                    {
-                      key: 'clr',
-                      label: 'Clear Filters',
-                      onClick: clearFilters,
-                    },
-                  ]
-                : [
-                    {
-                      key: 'clr',
-                      label: 'Clear Filters',
-                      onClick: clearFilters,
-                    },
-                  ],
-            }}
-            trigger={['click']}>
-            <Button ghost icon={<Icon name="overflow-vertical" />} />
+          <Button
+            ghost={!hasUnsavedFilters}
+            icon={<Icon name="settings" showTooltip title="View Active Filters" />}
+            onClick={viewFilters}
+          />
+          <Button
+            disabled={!userOwnsCollection || !collectionIsActive}
+            ghost={!hasUnsavedFilters}
+            icon={
+              <Icon
+                name="checkmark"
+                showTooltip
+                title={collectionIsActive ? 'Save Collection' : 'No Collection Active'}
+              />
+            }
+            onClick={saveCollection}
+          />
+          <Button
+            disabled={!collectionIsActive}
+            ghost={!hasUnsavedFilters}
+            icon={
+              <Icon
+                name="reset"
+                showTooltip
+                title={collectionIsActive ? 'Reset Filters to Collection' : 'No Collection Active'}
+              />
+            }
+            onClick={resetFiltersToCollection}
+          />
+          <Dropdown menu={menu} onClick={handleDropdown}>
+            <Button ghost icon={<Icon name="overflow-vertical" title="Action menu" />} />
           </Dropdown>
           {viewFiltersContextHolder}
           {collectionContextHolder}
@@ -380,14 +404,13 @@ export const useTrialCollections = (
       </div>
     ),
     [
-      clearFilters,
       collectionContextHolder,
       collectionIsActive,
       collections,
       createCollectionFromFilters,
-      deleteCollection,
+      handleDropdown,
       hasUnsavedFilters,
-      renameCollection,
+      menu,
       renameContextHolder,
       resetFiltersToCollection,
       saveCollection,

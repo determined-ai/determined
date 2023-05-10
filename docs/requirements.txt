@@ -21,3 +21,6 @@ watchdog
 
 # Uploading to algolia search index
 algoliasearch>=2.0,<3.0
+
+# Uploading doc site files to S3
+boto3>=1.24.4<2.0

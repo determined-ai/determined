@@ -4,13 +4,13 @@ import BreadcrumbBar from 'components/BreadcrumbBar';
 import ExperimentCreateModalComponent, {
   CreateExperimentType,
 } from 'components/ExperimentCreateModal';
+import Icon from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
 import PageHeaderFoldable, { Option } from 'components/PageHeaderFoldable';
 import { terminalRunStates } from 'constants/states';
 import useModalHyperparameterSearch from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
 import TrialHeaderLeft from 'pages/TrialDetails/Header/TrialHeaderLeft';
 import { getTrialWorkloads, openOrCreateTensorBoard } from 'services/api';
-import Icon from 'shared/components/Icon/Icon';
 import {
   ExperimentAction as Action,
   ExperimentAction,
@@ -62,7 +62,7 @@ const TrialDetailsHeader: React.FC<Props> = ({ experiment, fetchTrialDetails, tr
 
     if (!trialNeverData) {
       options.push({
-        icon: <Icon name="tensor-board" size="small" />,
+        icon: <Icon name="tensor-board" size="small" title={Action.OpenTensorBoard} />,
         isLoading: isRunningTensorBoard,
         key: Action.OpenTensorBoard,
         label: 'TensorBoard',
@@ -82,14 +82,14 @@ const TrialDetailsHeader: React.FC<Props> = ({ experiment, fetchTrialDetails, tr
     if (canActionExperiment(ExperimentAction.ContinueTrial, experiment, trial)) {
       if (trial.bestAvailableCheckpoint !== undefined) {
         options.push({
-          icon: <Icon name="fork" size="small" />,
+          icon: <Icon name="fork" size="small" title={Action.Fork} />,
           key: Action.ContinueTrial,
           label: 'Continue Trial',
           onClick: ExperimentCreateModal.open,
         });
       } else {
         options.push({
-          icon: <Icon name="fork" size="small" />,
+          icon: <Icon name="fork" size="small" title={Action.Fork} />,
           key: Action.ContinueTrial,
           label: 'Continue Trial',
           tooltip: 'No checkpoints found. Cannot continue trial',

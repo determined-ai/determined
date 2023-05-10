@@ -515,7 +515,7 @@ Determined provides support for the native PyTorch profiler, `torch-tb-profiler
 <https://github.com/pytorch/kineto/tree/main/tb_plugin>`_. You can configure this by calling
 :meth:`~determined.pytorch.PyTorchTrialContext.set_profiler` from within your Trial's ``__init__``.
 ``set_profiler`` accepts the same arguments as the PyTorch plugin's ``torch.profiler.profile``
-method. However, Determined sets ``on_trace_ready`` to the appropriate Tensorboard path, and the
+method. However, Determined sets ``on_trace_ready`` to the appropriate TensorBoard path, and the
 stepping of the profiler during training is automatically handled.
 
 The following example profiles CPU and GPU activities on batches 3 and 4 (skipping batch 1, warming

@@ -3,11 +3,11 @@ import { useLocation } from 'react-router-dom';
 
 import ActionSheet, { ActionItem } from 'components/ActionSheet';
 import DynamicIcon from 'components/DynamicIcon';
+import Icon, { IconName } from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
 import Link, { Props as LinkProps } from 'components/Link';
 import usePermissions from 'hooks/usePermissions';
 import { handlePath, paths } from 'routes/utils';
-import Icon from 'shared/components/Icon/Icon';
 import Spinner from 'shared/components/Spinner/Spinner';
 import useUI from 'shared/contexts/stores/UI';
 import { AnyMouseEvent, routeToReactUrl } from 'shared/utils/routes';
@@ -25,7 +25,7 @@ import WorkspaceCreateModalComponent from './WorkspaceCreateModal';
 
 interface ToolbarItemProps extends LinkProps {
   badge?: number;
-  icon: string;
+  icon: IconName;
   label: string;
   status?: string;
 }
@@ -41,7 +41,7 @@ const ToolbarItem: React.FC<ToolbarItemProps> = ({ path, status, ...props }: Too
 
   return (
     <Link className={classes.join(' ')} path={path} {...props}>
-      <Icon name={props.icon} size="large" />
+      <Icon name={props.icon} size="large" title={props.label} />
       {status && <div className={css.status}>{status}</div>}
     </Link>
   );
@@ -106,14 +106,25 @@ const NavigationTabbar: React.FC = () => {
 
   if (canCreateWorkspace) {
     workspaceActions.push({
-      icon: <Icon name="add-small" size="large" />,
+      icon: <Icon name="add-small" size="large" title="Create Workspace" />,
       label: 'New Workspace',
       onClick: WorkspaceCreateModal.open,
     });
   }
 
-  const overflowActionsTop = [
+  interface OverflowActionProps {
+    external?: boolean;
+    icon?: IconName;
+    label: string;
+    onClick?: (e: AnyMouseEvent) => void;
+    path?: string;
+    popout?: boolean;
+    render?: () => JSX.Element;
+  }
+
+  const overflowActionsTop: OverflowActionProps[] = [
     {
+      label: 'Current user',
       render: () => (
         <div className={css.user}>
           <UserBadge compact key="avatar" user={currentUser} />
@@ -132,7 +143,7 @@ const NavigationTabbar: React.FC = () => {
     },
   ];
 
-  const overflowActionsBottom = [
+  const overflowActionsBottom: OverflowActionProps[] = [
     {
       icon: 'logs',
       label: 'Cluster Logs',

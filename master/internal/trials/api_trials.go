@@ -10,6 +10,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -235,8 +236,8 @@ func (a *TrialsAPIServer) CreateTrialsCollection(
 	if req.ProjectId == 0 {
 		return nil, errors.New("failed to create trials collection: must specify project_id")
 	}
-	canCreate, err := AuthZProvider.Get().CanCreateTrialCollection(ctx, curUser, req.ProjectId)
-	if !canCreate {
+	err = AuthZProvider.Get().CanCreateTrialCollection(ctx, curUser, req.ProjectId)
+	if authz.IsPermissionDenied(err) {
 		return nil, status.Error(
 			codes.PermissionDenied,
 			"unable to create collection",

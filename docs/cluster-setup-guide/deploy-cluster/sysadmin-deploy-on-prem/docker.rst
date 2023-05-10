@@ -9,7 +9,7 @@
 *******************
 
 #. :ref:`Install Docker <install-docker>` on all machines in the cluster. If the agent machines have
-   GPUs, ensure that the :ref:`Nvidia Container Toolkit <validate-nvidia-container-toolkit>` on each
+   GPUs, ensure that the :ref:`NVIDIA Container Toolkit <validate-nvidia-container-toolkit>` on each
    one is working as expected.
 
 #. Pull the official Docker image for PostgreSQL. We recommend using the version listed below.
@@ -99,7 +99,7 @@ machine, you may specify the loopback interface in the published port mapping, i
 Determined Agents
 =================
 
-As is the case for the master, Determined agent configuration values can come from a file,
+Similar to the master configuration, Determined agent configuration values can come from a file,
 environment variables, or command-line arguments.
 
 To start the agent with a configuration file, we recommend starting from our `default agent
@@ -150,7 +150,7 @@ unless both the master and agent containers were started with ``--network host``
 that in that case, you will also have to configure workload containers to use ``host`` network mode,
 as described :ref:`below <network-host>`. Otherwise, if the master machine has a static IP address
 from your router, you can use that. What is important is that it is reliably addressable from both
-inside and outside of docker containers (since the Fluentbit container will always use host
+inside and outside of Docker containers (since the Fluent Bit container will always use host
 networking).
 
 Determined internally makes use of `Fluent Bit <https://fluentbit.io>`__. The agent uses the
@@ -198,10 +198,10 @@ Mac, Docker Desktop for Windows, or Docker EE for Windows Server.
 
 See `Docker's documentation <https://docs.docker.com/network/host/>`_ for more details.
 
-Note that at this time, even if you run the agents in a named docker network (e.g. ``--network
-my-named-network``), the workloads launched by the agent will execute in a different docker network.
+Note that at this time, even if you run the agents in a named Docker network (e.g. ``--network
+my-named-network``), the workloads launched by the agent will execute in a different Docker network.
 This will affect address resolution if you try to set the master hostname as the master's container
-name, as the workload containers will not be in the correct docker network to reach the master by
+name, as the workload containers will not be in the correct Docker network to reach the master by
 that name.
 
 ********************

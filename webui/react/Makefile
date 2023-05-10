@@ -2,15 +2,21 @@
 export PUBLIC_URL ?= /det
 export ESLINT_NO_DEV_ERRORS ?= true
 export NODE_OPTIONS=--max-old-space-size=6144
+export PLAYWRIGHT_BROWSERS_PATH=0
 source_files := $(shell find src public -type f)
+merge_base := $(shell git merge-base main HEAD)
 
 .PHONY: default
 default: get-deps
 	$(MAKE) build
 
+node_modules/playwright-core/.local-browsers:
+	npx playwright install
+
 .PHONY: get-deps-npm
 get-deps-npm:
 	npm ci --no-audit
+	$(MAKE) node_modules/playwright-core/.local-browsers
 
 node_modules/done.stamp: package-lock.json
 	$(MAKE) get-deps-npm
@@ -105,6 +111,40 @@ test:
 .PHONY: test-ci
 test-ci:
 	VITEST_MAX_THREADS=6 VITEST_MIN_THREADS=1 npm run test:coverage -- --reporter=junit --reporter=default --outputFile.junit=coverage/junit.xml
+
+# INCLUDE_FLAKY runs all tests even if they use flakyIt.
+# By default this would run ALL tests.
+# To avoid duplication, I use a filename (LogViewer) here to specify which group of tests to run.
+.PHONY: test-ci-flaky
+test-ci-flaky:
+	INCLUDE_FLAKY=true VITEST_MAX_THREADS=6 VITEST_MIN_THREADS=1 npm run test -- LogViewer --reporter=default
+
+.PHONY: visual-test-deps
+visual-test-deps: node_modules/playwright-core/.local-browsers
+	npx playwright install-deps
+
+screenshots/HEAD: node_modules visual-test-deps
+	node scripts/designkit-screenshot.mjs HEAD
+
+# copying the scripts/fetch dependency from head should only be necessary until the pr is
+# merged. we can remove it afterwards.
+screenshots/MAIN: node_modules visual-test-deps
+	cp -r scripts new-scripts
+	cp -r node_modules/playwright-core/.local-browsers browsers
+	git checkout $(merge_base)
+	npm ci --no-audit
+	cp -r browsers node_modules/playwright-core/.local-browsers
+	node new-scripts/designkit-screenshot.mjs MAIN
+	git reset --hard HEAD
+	rm -rf new-scripts
+	git checkout -
+	npm ci --no-audit
+
+screenshot-summary.html: screenshots/HEAD screenshots/MAIN
+	node scripts/make-screenshot-diff.mjs
+
+.PHONY: visual-test
+visual-test: screenshot-summary.html
 
 # shared-web helpers
 

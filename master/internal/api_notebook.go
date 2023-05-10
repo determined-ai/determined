@@ -16,9 +16,11 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/api/apiutils"
+	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/command"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
+	"github.com/determined-ai/determined/master/internal/rbac/audit"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/check"
@@ -96,13 +98,11 @@ func (a *apiServer) GetNotebook(
 		return nil, err
 	}
 
-	if ok, err := command.AuthZProvider.Get().CanGetNSC(
+	ctx = audit.SupplyEntityID(ctx, req.NotebookId)
+	if err := command.AuthZProvider.Get().CanGetNSC(
 		ctx, *curUser, model.AccessScopeID(resp.Notebook.WorkspaceId),
 	); err != nil {
-		return nil, err
-	} else if !ok { // permission denied.
-		// report the error as if the notebook does not exist.
-		return nil, errActorNotFound(addr)
+		return nil, authz.SubIfUnauthorized(err, errActorNotFound(addr))
 	}
 	return resp, nil
 }
@@ -117,6 +117,7 @@ func (a *apiServer) validateToKillNotebook(ctx context.Context, notebookID strin
 		return err
 	}
 
+	ctx = audit.SupplyEntityID(ctx, notebookID)
 	err = command.AuthZProvider.Get().CanTerminateNSC(
 		ctx, *curUser, model.AccessScopeID(targetNotebook.Notebook.WorkspaceId),
 	)
@@ -156,6 +157,7 @@ func (a *apiServer) SetNotebookPriority(
 		return nil, err
 	}
 
+	ctx = audit.SupplyEntityID(ctx, req.NotebookId)
 	err = command.AuthZProvider.Get().CanSetNSCsPriority(
 		ctx, *curUser, model.AccessScopeID(targetNotebook.Notebook.WorkspaceId), int(req.Priority),
 	)
@@ -195,15 +197,14 @@ func (a *apiServer) isNTSCPermittedToLaunch(
 	}
 
 	if spec.TaskType == model.TaskTypeTensorboard {
-		if ok, err := command.AuthZProvider.Get().CanGetTensorboard(
+		if err := command.AuthZProvider.Get().CanGetTensorboard(
 			ctx, *user, workspaceID, spec.Metadata.ExperimentIDs, spec.Metadata.TrialIDs,
-		); err != nil || !ok {
-			return err
+		); err != nil {
+			return authz.SubIfUnauthorized(err, apiutils.MapAndFilterErrors(err, nil, nil))
 		}
 	} else {
 		if err := command.AuthZProvider.Get().CanCreateNSC(
-			ctx, *user, workspaceID,
-		); err != nil {
+			ctx, *user, workspaceID); err != nil {
 			return apiutils.MapAndFilterErrors(err, nil, nil)
 		}
 	}
@@ -227,6 +228,7 @@ func (a *apiServer) LaunchNotebook(
 	if req.WorkspaceId != 0 {
 		spec.Metadata.WorkspaceID = model.AccessScopeID(req.WorkspaceId)
 	}
+
 	if err = a.isNTSCPermittedToLaunch(ctx, spec); err != nil {
 		return nil, err
 	}

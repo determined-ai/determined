@@ -108,9 +108,9 @@ def test_fasterrcnn_coco_pytorch_accuracy() -> None:
 
 @pytest.mark.nightly
 def test_mnist_estimator_accuracy() -> None:
-    config = conf.load_config(conf.cv_examples_path("mnist_estimator/const.yaml"))
+    config = conf.load_config(conf.fixtures_path("mnist_estimator/const.yaml"))
     experiment_id = exp.run_basic_test_with_temp_config(
-        config, conf.cv_examples_path("mnist_estimator"), 1
+        config, conf.fixtures_path("mnist_estimator"), 1
     )
 
     trials = exp.experiment_trials(experiment_id)

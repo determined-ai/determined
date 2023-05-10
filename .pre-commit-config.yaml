@@ -7,7 +7,7 @@ repos:
         name: Web JS Lint Check
         entry: ./pre-commit/web_lint_check.py js
         language: system
-        files: '^webui/react/src/'
+        files: '^webui/react/'
         types_or: [javascript, jsx, ts, tsx]
         stages:
           - commit
@@ -74,6 +74,13 @@ repos:
     hooks:
       - id: black
         exclude: ^(harness/determined/common/api/bindings.py)
+  - repo: https://github.com/pycqa/flake8
+    # Note: this should be kept in sync with the version in `requirements.txt`.
+    rev: 3.9.2
+    hooks:
+      - id: flake8
+        exclude: ^(?!harness/).*|(harness/tests/experiment/fixtures/ancient-checkpoints/).*
+
 
   # - repo: https://github.com/jumanjihouse/pre-commit-hooks
   #   rev: 3.0.0

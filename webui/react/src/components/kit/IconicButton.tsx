@@ -1,13 +1,13 @@
 import { Button as AntdButton } from 'antd';
 import React, { MouseEvent } from 'react';
 
-import Icon from 'shared/components/Icon';
+import Icon, { IconName } from 'components/kit/Icon';
 
 interface ButtonProps {
   danger?: boolean;
   disabled?: boolean;
   ghost?: boolean;
-  iconName: string;
+  iconName: IconName;
   loading?: boolean | { delay?: number };
   onClick?: (event: MouseEvent) => void;
   text: string;
@@ -30,7 +30,7 @@ const IconicButton: React.FC<ButtonProps> = ({
       type={type}
       {...props}>
       <div style={{ alignItems: 'center', display: 'flex', flexDirection: 'column' }}>
-        <Icon name={iconName} />
+        <Icon name={iconName} title={props.text} />
         <p>{props.text}</p>
       </div>
     </AntdButton>

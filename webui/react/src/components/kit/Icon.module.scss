@@ -1,0 +1,46 @@
+.base {
+  user-select: none;
+  width: fit-content;
+}
+.tiny {
+  font-size: var(--icon-tiny);
+}
+.small {
+  font-size: var(--icon-small);
+}
+.medium {
+  font-size: var(--icon-medium);
+}
+.large {
+  font-size: var(--icon-large);
+}
+.big {
+  font-size: var(--icon-big);
+}
+.great {
+  font-size: var(--icon-great);
+}
+.huge {
+  font-size: var(--icon-huge);
+}
+.enormous {
+  font-size: var(--icon-enormous);
+}
+.giant {
+  font-size: var(--icon-giant);
+}
+.jumbo {
+  font-size: var(--icon-jumbo);
+}
+.mega {
+  font-size: var(--icon-mega);
+}
+.cancel {
+  color: var(--theme-ix-cancel);
+}
+.error {
+  color: var(--theme-status-error);
+}
+.success {
+  color: var(--theme-status-success);
+}

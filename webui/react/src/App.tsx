@@ -25,8 +25,10 @@ import { paths, serverAddress } from 'routes/utils';
 import Spinner from 'shared/components/Spinner/Spinner';
 import { StoreProvider } from 'stores';
 import authStore from 'stores/auth';
+import clusterStore from 'stores/cluster';
 import determinedStore from 'stores/determinedInfo';
 import userStore from 'stores/users';
+import workspaceStore from 'stores/workspaces';
 import { correctViewportHeight, refreshPage } from 'utils/browser';
 import { notification } from 'utils/dialogApi';
 import { Loadable } from 'utils/loadable';
@@ -57,7 +59,9 @@ const AppView: React.FC = () => {
   useRouteTracker();
 
   useEffect(() => (isAuthenticated ? userStore.fetchCurrentUser() : undefined), [isAuthenticated]);
-  useEffect(() => (isAuthenticated ? userStore.fetchUsers() : undefined), [isAuthenticated]);
+  useEffect(() => (isAuthenticated ? clusterStore.startPolling() : undefined), [isAuthenticated]);
+  useEffect(() => (isAuthenticated ? userStore.startPolling() : undefined), [isAuthenticated]);
+  useEffect(() => (isAuthenticated ? workspaceStore.startPolling() : undefined), [isAuthenticated]);
   useEffect(() => determinedStore.startPolling({ delay: 600_000 }), []);
 
   useEffect(() => {

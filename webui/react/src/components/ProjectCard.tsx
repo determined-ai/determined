@@ -2,10 +2,10 @@ import { Typography } from 'antd';
 import React from 'react';
 
 import Card from 'components/kit/Card';
+import Icon from 'components/kit/Icon';
 import Tooltip from 'components/kit/Tooltip';
 import TimeAgo from 'components/TimeAgo';
 import { paths } from 'routes/utils';
-import Icon from 'shared/components/Icon/Icon';
 import { nearestCardinalNumber } from 'shared/utils/number';
 import { Project } from 'types';
 
@@ -26,7 +26,7 @@ const ProjectCard: React.FC<Props> = ({
   workspaceArchived,
   showWorkspace,
 }: Props) => {
-  const { menuProps, contextHolders } = useProjectActionMenu({
+  const { contextHolders, menu, onClick } = useProjectActionMenu({
     onComplete: fetchProjects,
     project,
     workspaceArchived,
@@ -38,8 +38,9 @@ const ProjectCard: React.FC<Props> = ({
   return (
     <>
       <Card
-        actionMenu={!project.immutable ? menuProps : undefined}
-        href={paths.projectDetails(project.id)}>
+        actionMenu={!project.immutable ? menu : undefined}
+        href={paths.projectDetails(project.id)}
+        onDropdown={onClick}>
         <div className={classnames.join(' ')}>
           <div className={css.headerContainer}>
             <Typography.Title className={css.name} ellipsis={{ rows: 3, tooltip: true }} level={5}>
@@ -62,7 +63,7 @@ const ProjectCard: React.FC<Props> = ({
                   `${project.numExperiments.toLocaleString()}` +
                   ` experiment${project.numExperiments === 1 ? '' : 's'}`
                 }>
-                <Icon name="experiment" size="small" />
+                <Icon name="experiment" size="small" title="Number of experiments" />
                 <span>{nearestCardinalNumber(project.numExperiments)}</span>
               </Tooltip>
             </div>

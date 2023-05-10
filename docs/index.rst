@@ -52,6 +52,7 @@
    Python SDK <reference/python-sdk>
    REST API <reference/rest-api>
    Training Reference <reference/reference-training/index>
+   Experiment Configuration Reference <reference/reference-training/experiment-config-reference>
    Model Hub Reference <reference/reference-model-hub/index>
    Deployment Reference <reference/reference-deploy/index>
    Job Configuration Reference <reference/reference-interface/job-config-reference>

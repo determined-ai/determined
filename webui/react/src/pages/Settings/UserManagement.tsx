@@ -1,11 +1,12 @@
-import { Dropdown, Space } from 'antd';
-import type { MenuProps } from 'antd';
+import { Space } from 'antd';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import ConfigureAgentModalComponent from 'components/ConfigureAgentModal';
 import CreateUserModalComponent from 'components/CreateUserModal';
 import Button from 'components/kit/Button';
+import Dropdown from 'components/kit/Dropdown';
+import Icon from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
 import ManageGroupsModalComponent from 'components/ManageGroupsModal';
 import Page from 'components/Page';
@@ -30,8 +31,6 @@ import { getGroups, patchUser } from 'services/api';
 import { V1GetUsersRequestSortBy, V1GroupSearchResult } from 'services/api-ts-sdk';
 import { GetUsersParams } from 'services/types';
 import dropdownCss from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
-import Icon from 'shared/components/Icon/Icon';
-import { ValueOf } from 'shared/types';
 import { isEqual } from 'shared/utils/data';
 import { validateDetApiEnum } from 'shared/utils/service';
 import determinedStore from 'stores/determinedInfo';
@@ -42,6 +41,8 @@ import { message } from 'utils/dialogApi';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
+
+import { ErrorType } from '../../shared/utils/error';
 
 import css from './UserManagement.module.scss';
 import settingsConfig, {
@@ -62,6 +63,14 @@ interface DropdownProps {
   userManagementEnabled: boolean;
 }
 
+const MenuKey = {
+  Agent: 'agent',
+  Edit: 'edit',
+  Groups: 'groups',
+  State: 'state',
+  View: 'view',
+} as const;
+
 const UserActionDropdown = ({ fetchUsers, user, groups, userManagementEnabled }: DropdownProps) => {
   const EditUserModal = useModal(CreateUserModalComponent);
   const ViewUserModal = useModal(CreateUserModalComponent);
@@ -72,45 +81,22 @@ const UserActionDropdown = ({ fetchUsers, user, groups, userManagementEnabled }:
   const { canModifyUsers } = usePermissions();
   const rbacEnabled = useFeature().isOn('rbac');
 
-  const onToggleActive = async () => {
-    await patchUser({ userId: user.id, userParams: { active: !user.isActive } });
-    message.success(`User has been ${user.isActive ? 'deactivated' : 'activated'}`);
-    fetchUsers();
-  };
+  const onToggleActive = useCallback(async () => {
+    try {
+      await patchUser({ userId: user.id, userParams: { active: !user.isActive } });
+      message.success(`User has been ${user.isActive ? 'deactivated' : 'activated'}`);
+      fetchUsers();
+    } catch (e) {
+      handleError(e, {
+        isUserTriggered: true,
+        publicSubject: `Unable to ${user.isActive ? 'deactivate' : 'activate'} user.`,
+        silent: false,
+        type: ErrorType.Api,
+      });
+    }
+  }, [fetchUsers, user]);
 
-  const MenuKey = {
-    Agent: 'agent',
-    Edit: 'edit',
-    Groups: 'groups',
-    State: 'state',
-    View: 'view',
-  } as const;
-
-  const funcs = {
-    [MenuKey.Edit]: () => {
-      EditUserModal.open();
-    },
-    [MenuKey.State]: () => {
-      onToggleActive();
-    },
-    [MenuKey.View]: () => {
-      ViewUserModal.open();
-    },
-    [MenuKey.Groups]: async () => {
-      const response = await getGroups({ userId: user.id });
-      setSelectedUserGroups(response.groups ?? []);
-      ManageGroupsModal.open();
-    },
-    [MenuKey.Agent]: () => {
-      ConfigureAgentModal.open();
-    },
-  };
-
-  const onItemClick: MenuProps['onClick'] = (e) => {
-    funcs[e.key as ValueOf<typeof MenuKey>]();
-  };
-
-  const menuItems: MenuProps['items'] =
+  const menuItems =
     userManagementEnabled && canModifyUsers
       ? rbacEnabled
         ? [
@@ -126,13 +112,36 @@ const UserActionDropdown = ({ fetchUsers, user, groups, userManagementEnabled }:
           ]
       : [{ key: MenuKey.View, label: 'View User' }];
 
+  const handleDropdown = useCallback(
+    async (key: string) => {
+      switch (key) {
+        case MenuKey.Agent:
+          ConfigureAgentModal.open();
+          break;
+        case MenuKey.Edit:
+          EditUserModal.open();
+          break;
+        case MenuKey.Groups: {
+          const response = await getGroups({ userId: user.id });
+          setSelectedUserGroups(response.groups ?? []);
+          ManageGroupsModal.open();
+          break;
+        }
+        case MenuKey.State:
+          await onToggleActive();
+          break;
+        case MenuKey.View:
+          ViewUserModal.open();
+          break;
+      }
+    },
+    [ConfigureAgentModal, EditUserModal, ManageGroupsModal, onToggleActive, user, ViewUserModal],
+  );
+
   return (
     <div className={dropdownCss.base}>
-      <Dropdown
-        menu={{ items: menuItems, onClick: onItemClick }}
-        placement="bottomRight"
-        trigger={['click']}>
-        <Button ghost icon={<Icon name="overflow-vertical" />} />
+      <Dropdown menu={menuItems} placement="bottomRight" onClick={handleDropdown}>
+        <Button ghost icon={<Icon name="overflow-vertical" size="small" title="Action menu" />} />
       </Dropdown>
       <ViewUserModal.Component user={user} viewOnly onClose={fetchUsers} />
       <EditUserModal.Component user={user} onClose={fetchUsers} />
@@ -231,7 +240,7 @@ const UserManagement: React.FC = () => {
     [handleNameSearchApply, handleNameSearchReset, settings.name],
   );
 
-  const filterIcon = useCallback(() => <Icon name="search" size="tiny" />, []);
+  const filterIcon = useCallback(() => <Icon name="search" size="tiny" title="Search" />, []);
 
   const columns = useMemo(() => {
     const actionRenderer = (_: string, record: DetailedUser) => {

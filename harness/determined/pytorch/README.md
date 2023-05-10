@@ -19,7 +19,7 @@ left in-place on the tensors to which they apply.
 
 ### `optimizer.step()`
 
-Gather up all of the gradents for the tensors this optimizer is responsible for
+Gather up all of the gradients for the tensors this optimizer is responsible for
 tuning, and apply the `gradient * learning_rate` to each weight.  Now you have
 new weights, congratulations!
 

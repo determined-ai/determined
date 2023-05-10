@@ -1,6 +1,7 @@
 import { isLeft } from 'fp-ts/lib/Either';
 import * as io from 'io-ts';
 
+import { V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
 import { DetError, ErrorLevel, ErrorType } from 'shared/utils/error';
 import {
   CheckpointStorageType,
@@ -205,3 +206,31 @@ export const ioTaskLogs = io.array(ioTaskLog);
 
 export type ioTypeTaskLog = io.TypeOf<typeof ioTaskLog>;
 export type ioTypeTaskLogs = io.TypeOf<typeof ioTaskLogs>;
+
+const ioLocationType = io.keyof({
+  [V1LocationType.EXPERIMENT]: null,
+  [V1LocationType.HYPERPARAMETERS]: null,
+  [V1LocationType.VALIDATIONS]: null,
+  [V1LocationType.UNSPECIFIED]: null,
+});
+const ioColumnType = io.keyof({
+  [V1ColumnType.DATE]: null,
+  [V1ColumnType.NUMBER]: null,
+  [V1ColumnType.TEXT]: null,
+  [V1ColumnType.UNSPECIFIED]: null,
+});
+const ioProjectColumnRequired = io.type({
+  column: io.string,
+  location: ioLocationType,
+  type: ioColumnType,
+});
+const ioProjectColumnOptionals = io.partial({
+  displayName: io.string,
+});
+const ioProjectColumn = io.intersection([ioProjectColumnRequired, ioProjectColumnOptionals]);
+const ioProjectColumns = io.array(ioProjectColumn);
+export const ioProjectColumnsResponse = io.type({
+  columns: ioProjectColumns,
+});
+
+export type ioTypeProjectColumnsResponse = io.TypeOf<typeof ioProjectColumnsResponse>;

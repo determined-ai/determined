@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "private": true,
   "engines": {
-    "node": ">=16.19 <20",
-    "npm": ">=8.0.0"
+    "node": ">=18.16.0 <19",
+    "npm": ">=9.5.1"
   },
   "scripts": {
     "postshrinkwrap": "npx npm-force-resolutions && npm install --ignore-scripts",
@@ -83,7 +83,7 @@
     ]
   },
   "devDependencies": {
-    "@playwright/test": "^1.32.3",
+    "@playwright/test": "^1.33.0",
     "@testing-library/dom": "^8.20.0",
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^13.4.0",
@@ -106,8 +106,8 @@
     "@types/throttle-debounce": "^5.0.0",
     "@typescript-eslint/eslint-plugin": "^5.55.0",
     "@typescript-eslint/parser": "^5.55.0",
-    "@vitejs/plugin-react-swc": "^3.2.0",
-    "@vitest/coverage-c8": "^0.29.3",
+    "@vitejs/plugin-react-swc": "^3.3.1",
+    "@vitest/coverage-c8": "^0.31.0",
     "browserslist": "^4.21.5",
     "cheerio": "^1.0.0-rc.12",
     "dotenv": "^16.0.3",
@@ -122,7 +122,6 @@
     "eslint-plugin-sort-keys-fix": "^1.1.2",
     "express": "^4.18.2",
     "jsdom": "^16.7.0",
-    "magic-string": "^0.30.0",
     "morgan": "^1.10.0",
     "npm-force-resolutions": "0.0.10",
     "prettier": "^2.8.4",
@@ -134,10 +133,10 @@
     "stylelint-order": "^6.0.3",
     "stylelint-scss": "^4.5.0",
     "typescript": "^4.9.5",
-    "vite": "^4.1.4",
-    "vite-plugin-checker": "^0.5.6",
-    "vite-tsconfig-paths": "^4.0.7",
-    "vitest": "^0.29.3",
+    "vite": "^4.3.5",
+    "vite-plugin-checker": "^0.6.0",
+    "vite-tsconfig-paths": "^4.2.0",
+    "vitest": "^0.31.0",
     "whatwg-fetch": "^3.6.2"
   }
 }

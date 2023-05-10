@@ -1,10 +1,11 @@
-import { Dropdown, Space, Table } from 'antd';
-import type { DropDownProps, MenuProps } from 'antd';
+import { Space, Table } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import CreateGroupModalComponent from 'components/CreateGroupModal';
 import DeleteGroupModalComponent from 'components/DeleteGroupModal';
 import Button from 'components/kit/Button';
+import Dropdown from 'components/kit/Dropdown';
+import Icon from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
 import Nameplate from 'components/kit/Nameplate';
 import Page from 'components/Page';
@@ -21,8 +22,6 @@ import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { getGroup, getGroups, getUsers, updateGroup } from 'services/api';
 import { V1GroupDetails, V1GroupSearchResult, V1User } from 'services/api-ts-sdk';
 import dropdownCss from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
-import Icon from 'shared/components/Icon/Icon';
-import { ValueOf } from 'shared/types';
 import { clone, isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
 import roleStore from 'stores/roles';
@@ -44,6 +43,16 @@ interface DropdownProps {
   users: DetailedUser[];
 }
 
+const MenuKey = {
+  Delete: 'delete',
+  Edit: 'edit',
+} as const;
+
+const DROPDOWN_MENU = [
+  { key: MenuKey.Edit, label: 'Edit' },
+  { key: MenuKey.Delete, label: 'Delete' },
+];
+
 const GroupActionDropdown = ({
   expanded,
   fetchGroups,
@@ -58,36 +67,24 @@ const GroupActionDropdown = ({
   const EditGroupModal = useModal(CreateGroupModalComponent);
   const DeleteGroupModal = useModal(DeleteGroupModalComponent);
 
-  const menuItems: DropDownProps['menu'] = useMemo(() => {
-    const MenuKey = {
-      Delete: 'delete',
-      Edit: 'edit',
-    } as const;
-
-    const funcs = {
-      [MenuKey.Edit]: () => {
-        EditGroupModal.open();
-      },
-      [MenuKey.Delete]: () => {
-        DeleteGroupModal.open();
-      },
-    };
-
-    const onItemClick: MenuProps['onClick'] = (e) => {
-      funcs[e.key as ValueOf<typeof MenuKey>]();
-    };
-
-    const items: MenuProps['items'] = [
-      { key: MenuKey.Edit, label: 'Edit' },
-      { key: MenuKey.Delete, label: 'Delete' },
-    ];
-    return { items: items, onClick: onItemClick };
-  }, [DeleteGroupModal, EditGroupModal]);
+  const handleDropdown = useCallback(
+    (key: string) => {
+      switch (key) {
+        case MenuKey.Delete:
+          DeleteGroupModal.open();
+          break;
+        case MenuKey.Edit:
+          EditGroupModal.open();
+          break;
+      }
+    },
+    [DeleteGroupModal, EditGroupModal],
+  );
 
   return (
     <div className={dropdownCss.base}>
-      <Dropdown menu={menuItems} placement="bottomRight" trigger={['click']}>
-        <Button ghost icon={<Icon name="overflow-vertical" />} />
+      <Dropdown menu={DROPDOWN_MENU} placement="bottomRight" onClick={handleDropdown}>
+        <Button ghost icon={<Icon name="overflow-vertical" size="small" title="Action menu" />} />
       </Dropdown>
       <EditGroupModal.Component group={group} users={users} onClose={onFinishEdit} />
       <DeleteGroupModal.Component group={group} onClose={fetchGroups} />
@@ -264,7 +261,7 @@ const GroupManagement: React.FC = () => {
         key: 'name',
         onCell: onRightClickableCell,
         render: (_: string, r: V1GroupSearchResult) => (
-          <Nameplate icon={<Icon name="group" />} name={r.group.name ?? ''} />
+          <Nameplate icon={<Icon name="group" title="Group" />} name={r.group.name ?? ''} />
         ),
         title: 'Group',
       },

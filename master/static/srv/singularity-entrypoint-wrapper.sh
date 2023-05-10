@@ -64,6 +64,24 @@ if [ $(ulimit -l) == 64 ]; then
     ulimit -l unlimited
 fi
 
+# When running under podman rootless, the default user on entry is root/uid=0 inside the
+# container, which maps to the launching user outside the container.  In this case,
+# rewrite the determined agent user uid/gid in /run/determined/etc/passwd to be
+# 0:0 to match.
+#
+# cat  /run/determined/etc/passwd
+#     username:x:1001:39::/run/determined/workdir:/bin/bash
+#
+# This maps the launching user into the same account when entering vis SSH
+# as the user what is executing the entry-point script here, and will
+# result in:
+# cat  /run/determined/etc/passwd
+#     username:x:0:0::/run/determined/workdir:/bin/bash
+if [ $(whoami) == "root" ] && [ -r /run/determined/etc/passwd ]; then
+    log_debug "DEBUG: Running as root inside container, changing agent user passwd entry to uid/gid 0/0."
+    sed -i "s/\([a-zA-Z0-9]\+\):x:[0-9]\+:[0-9]\+:/\1:x:0:0:/" /run/determined/etc/passwd
+fi
+
 log_debug "DEBUG: Will utilize slots DET_SLOT_IDS $DET_SLOT_IDS"
 
 log "INFO: executing $@" >&2

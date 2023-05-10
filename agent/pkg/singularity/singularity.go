@@ -1,13 +1,10 @@
 package singularity
 
 import (
-	"bufio"
 	"context"
 	"encoding/base64"
 	"fmt"
 	"io"
-	"io/fs"
-	"net/url"
 	"os"
 	"os/exec"
 	"os/user"
@@ -26,14 +23,13 @@ import (
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/sirupsen/logrus"
-	"golang.org/x/exp/slices"
 
 	"github.com/determined-ai/determined/agent/internal/container"
 	"github.com/determined-ai/determined/agent/internal/options"
+	"github.com/determined-ai/determined/agent/pkg/cruntimes"
 	"github.com/determined-ai/determined/agent/pkg/docker"
 	"github.com/determined-ai/determined/agent/pkg/events"
 	"github.com/determined-ai/determined/master/pkg/aproto"
-	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/syncx/waitgroupx"
@@ -101,87 +97,22 @@ func (s *SingularityClient) Close() error {
 	return nil
 }
 
+func getPullCommand(req docker.PullImage, image string) (string, []string) {
+	args := []string{"pull"}
+	if req.ForcePull {
+		args = append(args, "--force")
+	}
+	args = append(args, image)
+	return "singularity", args
+}
+
 // PullImage implements container.ContainerRuntime.
 func (s *SingularityClient) PullImage(
 	ctx context.Context,
 	req docker.PullImage,
 	p events.Publisher[docker.Event],
 ) (err error) {
-	if err = p.Publish(ctx, docker.NewBeginStatsEvent(docker.ImagePullStatsKind)); err != nil {
-		return err
-	}
-	defer func() {
-		if err = p.Publish(ctx, docker.NewEndStatsEvent(docker.ImagePullStatsKind)); err != nil {
-			s.log.WithError(err).Warn("did not send image pull done stats")
-		}
-	}()
-
-	image := s.canonicalizeImage(req.Name)
-
-	uri, err := url.Parse(image)
-	if err != nil || uri.Scheme == "" {
-		if err = p.Publish(ctx, docker.NewLogEvent(
-			model.LogLevelInfo,
-			fmt.Sprintf("image %s isn't a pullable URI; skipping pull", image),
-		)); err != nil {
-			return err
-		}
-		return nil
-	}
-
-	// TODO(DET-9078): Support registry auth. Investigate other auth mechanisms with singularity.
-	args := []string{"pull"}
-	if req.ForcePull {
-		args = append(args, "--force")
-	}
-	args = append(args, image)
-
-	if err = s.pprintSingularityCommand(ctx, args, p); err != nil {
-		return err
-	}
-
-	cmd := exec.CommandContext(ctx, "singularity", args...)
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		return fmt.Errorf("creating stdout pipe: %w", err)
-	}
-	stderr, err := cmd.StderrPipe()
-	if err != nil {
-		return fmt.Errorf("creating stderr pipe: %w", err)
-	}
-
-	// The return codes from `singularity pull` aren't super helpful in determining the error, so we
-	// wrap the publisher and skim logs to see what happened as we ship them.
-	ignoreErrorsSig := make(chan bool)
-	checkIgnoreErrors := events.FuncPublisher[docker.Event](
-		func(ctx context.Context, t docker.Event) error {
-			if t.Log != nil && strings.Contains(t.Log.Message, "Image file already exists") {
-				ignoreErrorsSig <- true
-			}
-			return p.Publish(ctx, t)
-		},
-	)
-	s.wg.Go(func(ctx context.Context) { s.shipSingularityCmdLogs(ctx, stdout, stdcopy.Stdout, p) })
-	s.wg.Go(func(ctx context.Context) {
-		defer close(ignoreErrorsSig)
-		s.shipSingularityCmdLogs(ctx, stderr, stdcopy.Stderr, checkIgnoreErrors)
-	})
-
-	if err = cmd.Start(); err != nil {
-		return fmt.Errorf("starting pull command: %w", err)
-	}
-
-	var ignoreErrors bool
-	select {
-	case ignoreErrors = <-ignoreErrorsSig:
-	case <-ctx.Done():
-		return ctx.Err()
-	}
-
-	if err = cmd.Wait(); err != nil && !ignoreErrors {
-		return fmt.Errorf("pulling %s: %w", image, err)
-	}
-	return nil
+	return cruntimes.PullImage(ctx, req, p, &s.wg, s.log, getPullCommand)
 }
 
 // CreateContainer implements container.ContainerRuntime.
@@ -296,7 +227,9 @@ func (s *SingularityClient) RunContainer(
 	if err != nil {
 		return nil, fmt.Errorf("writing to envfile: %w", err)
 	}
-
+	if err = envFile.Close(); err != nil {
+		return nil, fmt.Errorf("closing envfile: %w", err)
+	}
 	switch {
 	case req.HostConfig.NetworkMode == bridgeNetworking && s.opts.AllowNetworkCreation:
 		// --net sets up a bridge network by default
@@ -323,46 +256,8 @@ func (s *SingularityClient) RunContainer(
 	}
 
 	archivesPath := filepath.Join(tmpdir, archivesName)
-	for _, a := range req.Archives {
-		src := filepath.Join(archivesPath, a.Path)
-		if wErr := archive.Write(src, a.Archive, func(level, log string) error {
-			return p.Publish(ctx, docker.NewLogEvent(level, log))
-		}); wErr != nil {
-			return nil, fmt.Errorf("writing archive for %s: %w", a.Path, err)
-		}
-	}
-
-	// Do not mount top level dirs that are likely to conflict inside of the container, since
-	// these mounts do not overlay. Instead, mount their children.
-	ignoredPathPrefixes := []string{"/", "/etc", "/opt", "/run", "/etc/ssh"}
-	var mountPoints []string
-	// This depends on walkdir walking in lexical order, which is documented.
-	if wErr := filepath.WalkDir(archivesPath, func(src string, d fs.DirEntry, err error) error {
-		p := strings.TrimPrefix(src, archivesPath)
-
-		// If an existing mount point covers this path, nothing to add
-		for _, m := range mountPoints {
-			if strings.HasPrefix(p, m) {
-				return nil
-			}
-		}
-
-		dirPaths := filepath.SplitList(p)
-		prefix := ""
-		// Search to find the top-most unmounted path
-		for i := 0; i < len(dirPaths); i++ {
-			prefix = filepath.Join(prefix, dirPaths[i])
-
-			s.log.Trace("Checking mountPoint prefix {}", prefix)
-			if !slices.Contains(ignoredPathPrefixes, prefix) {
-				s.log.Trace("Add mountPoint {}", prefix)
-				mountPoints = append(mountPoints, prefix)
-				return nil
-			}
-		}
-		s.log.Warnf("could not determine where to mount %s", src)
-		return nil
-	}); wErr != nil {
+	mountPoints, wErr := cruntimes.ArchiveMountPoints(ctx, req, p, archivesPath, s.log)
+	if wErr != nil {
 		return nil, fmt.Errorf("determining mount points: %w", err)
 	}
 	for _, m := range mountPoints {
@@ -437,7 +332,7 @@ func (s *SingularityClient) RunContainer(
 		}
 	}
 
-	image := s.canonicalizeImage(req.ContainerConfig.Image)
+	image := cruntimes.CanonicalizeImage(req.ContainerConfig.Image)
 	args = append(args, image)
 	args = append(args, singularityWrapperEntrypoint)
 	args = append(args, req.ContainerConfig.Cmd...)
@@ -629,33 +524,13 @@ func (s *SingularityClient) waitOnContainer(
 	return docker.ContainerWaiter{Waiter: wchan, Errs: errchan}
 }
 
-var singularityLogLevel = regexp.MustCompile("(?P<level>INFO|WARN|ERROR|FATAL):    (?P<log>.*)")
-
 func (s *SingularityClient) shipSingularityCmdLogs(
 	ctx context.Context,
 	r io.ReadCloser,
 	stdtype stdcopy.StdType,
 	p events.Publisher[docker.Event],
 ) {
-	for scan := bufio.NewScanner(r); scan.Scan(); {
-		line := scan.Text()
-		if len(strings.TrimSpace(line)) == 0 {
-			continue
-		}
-
-		var level, log string
-		if matches := singularityLogLevel.FindStringSubmatch(line); len(matches) == 3 {
-			level, log = matches[1], matches[2]
-		} else {
-			level, log = model.LogLevelInfo, line
-		}
-
-		if err := p.Publish(ctx, docker.NewTypedLogEvent(level, log, stdtype)); err != nil {
-			logrus.WithError(err).Trace("log stream terminated")
-			return
-		}
-	}
-	return
+	cruntimes.ShipContainerCommandLogs(ctx, r, stdtype, p)
 }
 
 func (s *SingularityClient) pprintSingularityCommand(
@@ -663,34 +538,5 @@ func (s *SingularityClient) pprintSingularityCommand(
 	args []string,
 	p events.Publisher[docker.Event],
 ) error {
-	toPrint := "singularity"
-	for _, arg := range args {
-		if strings.HasPrefix(arg, "--") { // print each arg on a new line
-			toPrint += " \\\n"
-			toPrint += "\t"
-			toPrint += arg
-		} else {
-			toPrint += " "
-			toPrint += arg
-		}
-	}
-
-	s.log.Trace(toPrint)
-	if err := p.Publish(ctx, docker.NewLogEvent(
-		model.LogLevelDebug,
-		toPrint,
-	)); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (s *SingularityClient) canonicalizeImage(image string) string {
-	url, err := url.Parse(image)
-	isURIForm := err == nil
-	isFSForm := path.IsAbs(image)
-	if isFSForm || (isURIForm && url.Scheme != "") {
-		return image
-	}
-	return fmt.Sprintf("docker://%s", image)
+	return cruntimes.PprintCommand(ctx, "singularity", args, p, s.log)
 }

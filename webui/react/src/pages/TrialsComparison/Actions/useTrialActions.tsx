@@ -1,6 +1,4 @@
-import { Dropdown } from 'antd';
 import { array, number } from 'io-ts';
-import { MenuInfo } from 'rc-menu/lib/interface';
 import React, {
   Dispatch,
   ReactNode,
@@ -11,10 +9,11 @@ import React, {
 } from 'react';
 
 import Button from 'components/kit/Button';
+import Dropdown from 'components/kit/Dropdown';
+import Icon from 'components/kit/Icon';
 import TableBatch from 'components/Table/TableBulkActions';
 import { SettingsConfig, useSettings } from 'hooks/useSettings';
 import css from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
-import Icon from 'shared/components/Icon';
 import usePrevious from 'shared/hooks/usePrevious';
 import { isEqual } from 'shared/utils/data';
 import { noOp } from 'shared/utils/service';
@@ -141,40 +140,35 @@ const useTrialActions = ({
     id,
     children,
   }) => {
-    const menuItems = [
+    const menu = [
       { key: TrialAction.OpenTensorBoard, label: 'Open in Tensorboard' },
       { key: TrialAction.AddTags, label: 'Add Tags' },
     ];
 
-    const menu = {
-      items: menuItems,
-      onClick: (params: MenuInfo) => {
-        params.domEvent.stopPropagation();
-        const { key: action } = params;
-        dispatchTrialAction(
-          action as TrialAction,
-          { trialIds: [id] },
-          action === TrialAction.OpenTensorBoard
-            ? openTensorBoard
-            : action === TrialAction.AddTags
-            ? modalOpen
-            : noOp,
-          workspaceId,
-        );
-      },
+    const handleDropdown = (key: string) => {
+      dispatchTrialAction(
+        key as TrialAction,
+        { trialIds: [id] },
+        key === TrialAction.OpenTensorBoard
+          ? openTensorBoard
+          : key === TrialAction.AddTags
+          ? modalOpen
+          : noOp,
+        workspaceId,
+      );
     };
 
     return children ? (
       <>
-        <Dropdown menu={menu} placement="bottomLeft" trigger={['contextMenu']}>
+        <Dropdown menu={menu} onClick={handleDropdown}>
           {children}
         </Dropdown>
       </>
     ) : (
       <div className={css.base} title="Open actions menu" onClick={(e) => e.stopPropagation()}>
-        <Dropdown menu={menu} placement="bottomRight" trigger={['click']}>
+        <Dropdown menu={menu} placement="bottomRight" onClick={handleDropdown}>
           <Button type="text" onClick={(e) => e.stopPropagation()}>
-            <Icon name="overflow-vertical" />
+            <Icon name="overflow-vertical" title="Action menu" />
           </Button>
         </Dropdown>
       </div>

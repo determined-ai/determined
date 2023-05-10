@@ -1,11 +1,11 @@
-import { Menu, Space } from 'antd';
-import { ItemType } from 'rc-menu/lib/interface';
+import { Space } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import BatchActionConfirmModalComponent from 'components/BatchActionConfirmModal';
-import Dropdown from 'components/Dropdown';
 import ExperimentMoveModalComponent from 'components/ExperimentMoveModal';
 import Button from 'components/kit/Button';
+import Dropdown, { MenuItem } from 'components/kit/Dropdown';
+import Icon, { IconName } from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
 import usePermissions from 'hooks/usePermissions';
 import {
@@ -19,14 +19,14 @@ import {
   unarchiveExperiments,
 } from 'services/api';
 import { V1BulkExperimentFilters } from 'services/api-ts-sdk';
-import Icon from 'shared/components/Icon';
 import { RecordKey } from 'shared/types';
 import { ErrorLevel } from 'shared/utils/error';
 import {
   BulkActionResult,
   ExperimentAction,
-  ExperimentItem,
+  ExperimentWithTrial,
   Project,
+  ProjectColumn,
   ProjectExperiment,
 } from 'types';
 import { notification } from 'utils/dialogApi';
@@ -39,6 +39,8 @@ import {
 import { Loadable } from 'utils/loadable';
 import { openCommandResponse } from 'utils/wait';
 
+import ColumnPickerMenu from './ColumnPickerMenu';
+import MultiSortMenu, { Sort } from './MultiSortMenu';
 import css from './TableActionBar.module.scss';
 
 const batchActions = [
@@ -55,7 +57,7 @@ const batchActions = [
 
 export type BatchAction = (typeof batchActions)[number];
 
-const actionIcons: Record<BatchAction, string> = {
+const actionIcons: Record<BatchAction, IconName> = {
   [ExperimentAction.Activate]: 'play',
   [ExperimentAction.Pause]: 'pause',
   [ExperimentAction.Cancel]: 'stop',
@@ -68,13 +70,18 @@ const actionIcons: Record<BatchAction, string> = {
 } as const;
 
 interface Props {
-  experiments: Loadable<ExperimentItem>[];
+  experiments: Loadable<ExperimentWithTrial>[];
   filters: V1BulkExperimentFilters;
+  initialVisibleColumns: string[];
   onAction: () => Promise<void>;
+  sorts: Sort[];
+  onSortChange: (sorts: Sort[]) => void;
+  project: Project;
+  projectColumns: Loadable<ProjectColumn[]>;
   selectAll: boolean;
   selectedExperimentIds: number[];
   handleUpdateExperimentList: (action: BatchAction, successfulIds: number[]) => void;
-  project: Project;
+  setVisibleColumns: (newColumns: string[]) => void;
   total: Loadable<number>;
 }
 
@@ -82,11 +89,16 @@ const TableActionBar: React.FC<Props> = ({
   experiments,
   filters,
   onAction,
+  onSortChange,
   selectAll,
   selectedExperimentIds,
   handleUpdateExperimentList,
+  sorts,
   project,
+  projectColumns,
   total,
+  initialVisibleColumns,
+  setVisibleColumns,
 }) => {
   const permissions = usePermissions();
   const [batchAction, setBatchAction] = useState<BatchAction>();
@@ -95,7 +107,10 @@ const TableActionBar: React.FC<Props> = ({
 
   const experimentMap = useMemo(() => {
     return experiments.filter(Loadable.isLoaded).reduce((acc, experiment) => {
-      acc[experiment.data.id] = getProjectExperimentForExperimentItem(experiment.data, project);
+      acc[experiment.data.experiment.id] = getProjectExperimentForExperimentItem(
+        experiment.data.experiment,
+        project,
+      );
       return acc;
     }, {} as Record<RecordKey, ProjectExperiment>);
   }, [experiments, project]);
@@ -252,14 +267,14 @@ const TableActionBar: React.FC<Props> = ({
     [BatchActionConfirmModal, submitBatchAction, sendBatchActions],
   );
 
-  const editMenuItems: ItemType[] = useMemo(() => {
+  const editMenuItems: MenuItem[] = useMemo(() => {
     return batchActions.map((action) => ({
       danger: action === ExperimentAction.Delete,
       disabled: !availableBatchActions.includes(action),
       // The icon doesn't show up without being wrapped in a div.
       icon: (
         <div>
-          <Icon name={actionIcons[action]} />
+          <Icon name={actionIcons[action]} title={action} />
         </div>
       ),
       key: action,
@@ -267,19 +282,20 @@ const TableActionBar: React.FC<Props> = ({
     }));
   }, [availableBatchActions]);
 
-  const handleAction = useCallback(
-    ({ key }: { key: string }) => {
-      handleBatchAction(key);
-    },
-    [handleBatchAction],
-  );
+  const handleAction = useCallback((key: string) => handleBatchAction(key), [handleBatchAction]);
 
   return (
     <>
       <Space className={css.base}>
+        <MultiSortMenu columns={projectColumns} sorts={sorts} onChange={onSortChange} />
+        <ColumnPickerMenu
+          initialVisibleColumns={initialVisibleColumns}
+          projectColumns={projectColumns}
+          setVisibleColumns={setVisibleColumns}
+        />
         {(selectAll || selectedExperimentIds.length > 0) && (
-          <Dropdown content={<Menu items={editMenuItems} onClick={handleAction} />}>
-            <Button icon={<Icon name="pencil" />}>
+          <Dropdown menu={editMenuItems} onClick={handleAction}>
+            <Button icon={<Icon name="pencil" title="Edit" />}>
               Edit (
               {selectAll
                 ? Loadable.isLoaded(total)

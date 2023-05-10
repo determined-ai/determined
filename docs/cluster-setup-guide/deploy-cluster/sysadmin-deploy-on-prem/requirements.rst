@@ -20,8 +20,8 @@ Software
 
 -  The agent nodes must have :ref:`Docker installed <install-docker>`.
 
--  To run jobs with GPUs, the Nvidia drivers must be installed on each Determined agent. Determined
-   requires a version greater than or equal to 450.80 of the Nvidia drivers. The Nvidia drivers can
+-  To run jobs with GPUs, the NVIDIA drivers must be installed on each Determined agent. Determined
+   requires a version greater than or equal to 450.80 of the NVIDIA drivers. The NVIDIA drivers can
    be installed as part of a CUDA installation but the rest of the CUDA toolkit is not required.
 
 -  Determined supports the `active Python versions <https://endoflife.date/python>`__.
@@ -33,7 +33,7 @@ Hardware
    cores, 8GB of RAM, and 200GB of free disk space. The Determined master node does not need GPUs.
 
 -  Each Determined agent node should be configured with at least two Intel Broadwell or later CPU
-   cores, 4GB of RAM, and 50GB of free disk space. If you are using GPUs, Nvidia GPUs with compute
+   cores, 4GB of RAM, and 50GB of free disk space. If you are using GPUs, NVIDIA GPUs with compute
    capability 6.0 or greater are required. These include P100, V100, A100, RTX 2080 Ti, RTX 3090,
    TITAN X, and TITAN XP.
 
@@ -78,9 +78,9 @@ Install on Linux
       sudo yum install -y docker-ce
       sudo systemctl start docker
 
-#. If the machine has GPUs that you want to use with Determined, install the Nvidia Container
+#. If the machine has GPUs that you want to use with Determined, install the NVIDIA Container
    Toolkit to allow Docker to run containers that use the GPUs. For more information, see the
-   `Nvidia documentation <https://github.com/NVIDIA/nvidia-docker>`__.
+   `NVIDIA documentation <https://github.com/NVIDIA/nvidia-docker>`__.
 
    On Ubuntu:
 

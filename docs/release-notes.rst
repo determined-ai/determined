@@ -7,6 +7,68 @@
 ###############
 
 **************
+ Version 0.22
+**************
+
+Version 0.22.0
+==============
+
+**Release Date:** May 05, 2023
+
+**Breaking Change**
+
+-  The previous template CRUD endpoints have been removed from the `/templates/*` location. Please
+   use the APIs found at `/api/v1/templates/*`.
+
+-  Experiment: Optimizer must be an instance of tensorflow.keras.optimizers.legacy.Optimizer
+   starting from Keras 2.11
+
+   -  Experiments now use images with TensorFlow 2.11 by default. TensorFlow users who are not
+      explicitly configuring their training image(s) will need to adapt their model code to reflect
+      these changes. Users will likely need to use Keras optimizers located in
+      ``tensorflow.keras.optimizers.legacy``. Depending on the sophistication of users' model code,
+      there may be other breaking changes. Determined is not responsible for these breakages. See
+      the `TensorFlow release notes
+      <https://github.com/tensorflow/tensorflow/releases/tag/v2.11.0>`_ for more details.
+
+   -  PyTorch users and users who specify custom images should not be affected.
+
+**Deprecated Features**
+
+-  Legacy TensorFlow 1 + PyTorch 1.7 + CUDA 10.2 support is deprecated and will be removed in a
+   future version. The final TensorFlow 1.15.5 patch was released in January 2021, and no further
+   security patches are planned. Consequently, we recommend users migrate to modern versions of
+   TensorFlow 2 and PyTorch. Our default environment images currently ship with
+   ``tensorflow==2.11.1`` and ``torch==1.12.0``.
+
+-  ``EstimatorTrial`` is deprecated and will be removed in a future version. TensorFlow has advised
+   Estimator users to switch to Keras since TensorFlow 2.0 was released. Consequently, we recommend
+   users of EstimatorTrial switch to the :class:`~determined.keras.TFKerasTrial` class.
+
+-  Master config option ``logging.additional_fluent_outputs`` is deprecated and will be removed in a
+   future version. We do not plan to offer a replacement at this time. If you are interested in
+   additional logging integrations, please contact us.
+
+**Improvement**
+
+-  HP Search: Trials are persisted as soon as they are requested by the searcher, instead of after
+   they are first scheduled.
+
+-  Trials: Metric storage has been optimized for reading summaries of metrics reported during a
+   trial.
+
+   Extended downtime may result when upgrading from a previous version to this version or a later
+   version. This will occur when your cluster contains a large number of trials and training steps
+   reported. For example, a database with 10,000 trials with 125 million training metrics on a small
+   instance may experience 6 or more hours of downtime during the upgrade.
+
+   (Optional) To minimize downtime, users with large databases can choose to manually run `this SQL
+   file
+   <https://github.com/determined-ai/determined/blob/main/master/static/migrations/20230503144448_add-summary-metrics.tx.up.sql>`__
+   against their cluster's database while it is still running before upgrading to a new version.
+   This is an optional step and is only recommended for significantly large databases.
+
+**************
  Version 0.21
 **************
 
@@ -124,7 +186,7 @@ Version 0.21.0
 
 **Improvements**
 
--  CLI: Command-line deployments will now default to provisioning Nvidia T4 GPU instances instead of
+-  CLI: Command-line deployments will now default to provisioning NVIDIA T4 GPU instances instead of
    K80 instances. This change is intended to improve the performance/cost and driver support of the
    default deployment.
 
@@ -338,7 +400,7 @@ Version 0.19.10
 
 -  Cluster: Determined Enterprise Edition now supports the `NVIDIA Enroot
    <https://github.com/NVIDIA/enroot>`__ container platform as an alternative to
-   Apptainer/Singularity/PodMan.
+   Apptainer/Singularity/Podman.
 
 **Improvements**
 
@@ -391,7 +453,7 @@ Version 0.19.9
 
 -  Cluster: Determined Enterprise Edition now supports the `NVIDIA Enroot
    <https://github.com/NVIDIA/enroot>`__ container platform as an alternative to
-   Apptainer/Singularity/PodMan.
+   Apptainer/Singularity/Podman.
 
 Version 0.19.8
 ==============
@@ -449,7 +511,7 @@ Version 0.19.7
    experiment via the
    :meth:`~determined.experimental.client.ExperimentReference.await_first_trial()` method. Users who
    have been writing automation around the ``det e create --follow-first-trial`` CLI command may now
-   use the python SDK instead, by combining ``.await_first_trial()`` and ``.logs()``.
+   use the Python SDK instead, by combining ``.await_first_trial()`` and ``.logs()``.
 
 -  RBAC: the enterprise edition of Determined (`HPE Machine Learning Development Environment
    <https://www.hpe.com/us/en/solutions/artificial-intelligence/machine-learning-development-environment.html>`_)
@@ -580,7 +642,7 @@ Version 0.19.3
 **Improvements**
 
 -  Slurm: Singularity containers may now use AMD ROCm GPUs.
--  Slurm: PodMan V4.0+ is now supported in conjunction with the Slurm job scheduler.
+-  Slurm: Podman V4.0+ is now supported in conjunction with the Slurm job scheduler.
 -  Kubernetes: The UID and GID of Fluent Bit logging sidecars may now be configured on a
    cluster-wide basis.
 
@@ -1079,7 +1141,7 @@ Version 0.17.13
 -  Model Hub: add support for panoptic segmentation.
 
    -  Model Hub mmdetection now supports panoptic segmentation task in addition to object detection.
-      Previously, the associated docker image lacked dependencies for panoptic segmentation. Users
+      Previously, the associated Docker image lacked dependencies for panoptic segmentation. Users
       can now use mmdetection configs under ``panoptic_fpn`` and also the ``coco_panoptic`` dataset
       base config.
 
@@ -1967,9 +2029,9 @@ Version 0.15.2
 -  PyTorchTrial: Fix learning rate scheduler behavior when used with gradient aggregation.
 
 -  ``PyTorchTrial``'s :meth:`~determined.pytorch.PyTorchTrialContext.to_device` no longer throws
-   errors on non-numeric Numpy-like data. As PyTorch is still unable to move such data to the GPU,
+   errors on non-numeric NumPy-like data. As PyTorch is still unable to move such data to the GPU,
    non-numeric arrays will simply remain on the CPU. This is especially useful to NLP practitioners
-   who wish to make use of Numpy's string manipulations anywhere in their data pipelines.
+   who wish to make use of NumPy's string manipulations anywhere in their data pipelines.
 
 -  TFKerasTrial: Fix support for TensorFlow v2.2.x.
 
@@ -3076,9 +3138,9 @@ Version 0.12.13
 -  Remove ``determined.pytorch.reset_parameters()``. This should have no effect except when using
    highly customized ``nn.Module`` implementations.
 -  WebUI: Show total number of resources in the cluster resource charts.
--  Add support for Nvidia T4 GPUs.
+-  Add support for NVIDIA T4 GPUs.
 -  ``det-deploy``: Add support for ``g4`` instance types on AWS.
--  Upgrade Nvidia drivers on the default AWS and GCP images from ``410.104`` to ``450.51.05``.
+-  Upgrade NVIDIA drivers on the default AWS and GCP images from ``410.104`` to ``450.51.05``.
 
 **Bug Fixes**
 
@@ -3364,7 +3426,7 @@ Version 0.12.3
 
 -  Add REST API endpoints for trials.
 
--  Support the execution of a startup script inside the agent docker container
+-  Support the execution of a startup script inside the agent Docker container
 
 -  Master and agent Docker containers will have the 'unless-stopped' restart policy by default when
    using ``det-deploy local``.

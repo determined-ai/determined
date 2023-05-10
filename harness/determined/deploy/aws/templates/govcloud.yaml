@@ -4,10 +4,10 @@ Description: Determined Template
 Mappings:
   RegionMap:
     us-gov-east-1:
-      Master: ami-0cd066f69b98b61b2
+      Master: ami-01d71f6009765d511
       Agent: ami-0b71e56244b8ac1cb
     us-gov-west-1:
-      Master: ami-0cbd5dbd94f397bdd
+      Master: ami-0b64b04df085adbf1
       Agent: ami-0d26002529bfac823
 Parameters:
   Keypair:
@@ -67,7 +67,7 @@ Parameters:
   Version:
     Type: String
     Description: Determined version or commit for master docker image
-    Default: 0.21.3-dev0
+    Default: 0.22.1-dev0
 
   DBPassword:
     Type: String
