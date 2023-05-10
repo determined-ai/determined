@@ -1596,7 +1596,7 @@ jobs:
       - install-devcluster
       - start-devcluster:
           target-stage: elastic
-          devcluster-config: performance-test.devcluster.yaml
+          devcluster-config: test-perf.devcluster.yaml
       # END maybe use this
       - run: make -C master test-perf
       # TODO do this result + monitoring + coverage
