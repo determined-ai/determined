@@ -43,6 +43,21 @@ func (a *apiServer) GetTemplate(
 	}
 }
 
+func (a *apiServer) PutTemplate(
+	_ context.Context, req *apiv1.PutTemplateRequest,
+) (*apiv1.PutTemplateResponse, error) {
+	config, err := protojson.Marshal(req.Template.Config)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid config provided: %s", err.Error())
+	}
+	if req.Template.WorkspaceId != 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "setting workspace_id is not supported.")
+	}
+	err = a.m.db.QueryProto("put_template", req.Template, req.Template.Name, config)
+	return &apiv1.PutTemplateResponse{Template: req.Template},
+		errors.Wrapf(err, "error putting template")
+}
+
 func (a *apiServer) PostTemplate(
 	ctx context.Context, req *apiv1.PostTemplateRequest,
 ) (*apiv1.PostTemplateResponse, error) {
@@ -70,7 +85,7 @@ func (a *apiServer) PostTemplate(
 
 	res := apiv1.PostTemplateResponse{Template: &templatev1.Template{}}
 	switch err := a.m.db.QueryProto(
-		"put_template", res.Template, req.Template.Name, config, workspaceID,
+		"insert_template", res.Template, req.Template.Name, config, workspaceID,
 	); err {
 	case nil:
 		return &res, nil
