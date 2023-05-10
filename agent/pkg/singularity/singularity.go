@@ -97,22 +97,13 @@ func (s *SingularityClient) Close() error {
 	return nil
 }
 
-func getPullCommand(req docker.PullImage, image string) (string, []string) {
-	args := []string{"pull"}
-	if req.ForcePull {
-		args = append(args, "--force")
-	}
-	args = append(args, image)
-	return "singularity", args
-}
-
 // PullImage implements container.ContainerRuntime.
 func (s *SingularityClient) PullImage(
 	ctx context.Context,
 	req docker.PullImage,
 	p events.Publisher[docker.Event],
 ) (err error) {
-	return cruntimes.PullImage(ctx, req, p, &s.wg, s.log, getPullCommand)
+	return nil // 'singularity run' will pull the image & cache the result for reuse
 }
 
 // CreateContainer implements container.ContainerRuntime.
