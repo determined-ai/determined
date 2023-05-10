@@ -14,7 +14,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
-	"github.com/uptrace/bun/extra/bundebug"
 
 	"github.com/determined-ai/determined/master/pkg/model"
 )
@@ -61,7 +60,7 @@ func initTheOneBun(db *PgDB) {
 	// theOneBun.AddQueryHook(bundebug.NewQueryHook(bundebug.WithVerbose(true)))
 
 	// This will print only the failed queries.
-	theOneBun.AddQueryHook(bundebug.NewQueryHook())
+	// theOneBun.AddQueryHook(bundebug.NewQueryHook())
 }
 
 func setTokenKeys(tk *model.AuthTokenKeypair) {
