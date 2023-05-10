@@ -2,6 +2,9 @@
  Core API User Guide
 #####################
 
+.. meta::
+   :description: Learn how to use the flexible Core API to train any deep learning model. This user guide walks you through plugging in your existing training code to get up and running.
+
 This guide will help you get up and running with the Core API.
 
 +------------------------------------------------------------------+
@@ -331,7 +334,7 @@ settings in our experiment configuration file:
 
 -  ``max_length``: 20 epochs (The max length of a trial. For more information, visit Adaptive ASHA
    in the :doc:`Experiment Configuration Reference
-   </reference/reference-training/experiment-config-reference>`.
+   </reference/training/experiment-config-reference>`.
 
 In addition, we also need to define the hyperparameters themselves. Adaptive ASHA will pick values
 between the ``minval`` and ``maxval`` for each hyperparameter for each trial.

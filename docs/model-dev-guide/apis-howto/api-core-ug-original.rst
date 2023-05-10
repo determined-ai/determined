@@ -7,7 +7,7 @@ In this guide, you'll learn how to use the Core API.
 +------------------------------------------------------------------+
 | Visit the API reference                                          |
 +==================================================================+
-| :doc:`/reference/reference-training/training/api-core-reference` |
+| :ref:`core-reference`                                            |
 +------------------------------------------------------------------+
 
 With the Core API you can train arbitrary models on the Determined platform with seamless access to
