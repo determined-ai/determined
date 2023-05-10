@@ -1762,7 +1762,7 @@ jobs:
       - skip-if-docs-only
       - skip-if-webui-only
       - setup-docker-env:
-          image: determinedai/environments:cuda-11.3-pytorch-1.10-deepspeed-0.8.3-gpu-0.21.2
+          image: determinedai/environments:cuda-11.3-pytorch-1.10-deepspeed-0.8.3-gpu-0.22.1
           image-name: test_container
           extras-requires: "mypy pytest coverage"
       - run: mkdir -p $HOME/.local/bin
