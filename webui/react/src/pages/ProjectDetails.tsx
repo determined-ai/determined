@@ -181,7 +181,6 @@ const ProjectDetails: React.FC = () => {
               <ProjectActionDropdown
                 project={project}
                 showChildrenIfEmpty={false}
-                trigger={['click']}
                 workspaceArchived={workspace?.archived}
                 onComplete={fetchProject}
                 onDelete={onProjectDelete}>

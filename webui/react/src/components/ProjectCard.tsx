@@ -26,7 +26,7 @@ const ProjectCard: React.FC<Props> = ({
   workspaceArchived,
   showWorkspace,
 }: Props) => {
-  const { menuProps, contextHolders } = useProjectActionMenu({
+  const { contextHolders, menu, onClick } = useProjectActionMenu({
     onComplete: fetchProjects,
     project,
     workspaceArchived,
@@ -38,8 +38,9 @@ const ProjectCard: React.FC<Props> = ({
   return (
     <>
       <Card
-        actionMenu={!project.immutable ? menuProps : undefined}
-        href={paths.projectDetails(project.id)}>
+        actionMenu={!project.immutable ? menu : undefined}
+        href={paths.projectDetails(project.id)}
+        onDropdown={onClick}>
         <div className={classnames.join(' ')}>
           <div className={css.headerContainer}>
             <Typography.Title className={css.name} ellipsis={{ rows: 3, tooltip: true }} level={5}>

@@ -127,7 +127,6 @@ screenshots/MAIN: node_modules visual-test-deps
 	git checkout $(merge_base)
 	npm ci --no-audit
 	cp -r browsers node_modules/playwright-core/.local-browsers
-	npm install undici
 	node new-scripts/designkit-screenshot.mjs MAIN
 	git reset --hard HEAD
 	rm -rf new-scripts

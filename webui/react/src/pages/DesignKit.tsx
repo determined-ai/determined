@@ -10,6 +10,7 @@ import Button from 'components/kit/Button';
 import Card from 'components/kit/Card';
 import Checkbox from 'components/kit/Checkbox';
 import { Column, Columns } from 'components/kit/Columns';
+import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 import Empty from 'components/kit/Empty';
 import Facepile from 'components/kit/Facepile';
 import Form from 'components/kit/Form';
@@ -63,6 +64,7 @@ const ComponentTitles = {
   Charts: 'Charts',
   Checkboxes: 'Checkboxes',
   Columns: 'Columns',
+  Dropdown: 'Dropdown',
   Empty: 'Empty',
   Facepile: 'Facepile',
   Form: 'Form',
@@ -748,6 +750,59 @@ const CheckboxesSection: React.FC = () => {
   );
 };
 
+const DropdownSection: React.FC = () => {
+  const menu: MenuItem[] = [
+    { key: 'start', label: 'Start' },
+    { key: 'stop', label: 'Stop' },
+  ];
+  const menuWithDivider: MenuItem[] = [
+    ...menu,
+    { type: 'divider' },
+    { key: 'archive', label: 'Archive' },
+  ];
+  const menuWithDanger: MenuItem[] = [...menu, { danger: true, key: 'delete', label: 'Delete' }];
+  const menuWithDisabled: MenuItem[] = [
+    ...menu,
+    { disabled: true, key: 'delete', label: 'Delete' },
+  ];
+
+  return (
+    <ComponentSection id="Dropdown" title="Dropdown">
+      <AntDCard>
+        <p>
+          Dropdown (<code>{'<Dropdown>'}</code>) give people a way to select one item from a group
+          of choices. The item is typically an action to apply to a relevant entity. For example, an
+          experiment dropdown would show actions you can perform on the relevant experiment, such as
+          `Activate`, `Stop`, `Archive`, etc.
+        </p>
+      </AntDCard>
+      <AntDCard title="Usage">
+        <strong>Basic Dropdowns</strong>
+        <Space>
+          <Dropdown menu={menu}>
+            <Button>Basic Dropdown</Button>
+          </Dropdown>
+          <Dropdown menu={menuWithDivider}>
+            <Button>Dropdown with a Divider</Button>
+          </Dropdown>
+          <Dropdown disabled menu={menu}>
+            <Button>Disabled Dropdown</Button>
+          </Dropdown>
+        </Space>
+        <strong>Various Dropdown Options</strong>
+        <Space>
+          <Dropdown menu={menuWithDanger}>
+            <Button>Dangerous Options</Button>
+          </Dropdown>
+          <Dropdown menu={menuWithDisabled}>
+            <Button>Disabled Options</Button>
+          </Dropdown>
+        </Space>
+      </AntDCard>
+    </ComponentSection>
+  );
+};
+
 const InputSearchSection: React.FC = () => {
   return (
     <ComponentSection id="InputSearch" title="InputSearch">
@@ -1356,18 +1411,18 @@ const CardsSection: React.FC = () => {
         <strong>Card variations</strong>
         <p>Small cards (default)</p>
         <Card.Group>
-          <Card actionMenu={{ items: [{ key: 'test', label: 'Test' }] }}>Card with actions</Card>
-          <Card actionMenu={{ items: [{ key: 'test', label: 'Test' }] }} disabled>
+          <Card actionMenu={[{ key: 'test', label: 'Test' }]}>Card with actions</Card>
+          <Card actionMenu={[{ key: 'test', label: 'Test' }]} disabled>
             Disabled card
           </Card>
           <Card onClick={noOp}>Clickable card</Card>
         </Card.Group>
         <p>Medium cards</p>
         <Card.Group size="medium">
-          <Card actionMenu={{ items: [{ key: 'test', label: 'Test' }] }} size="medium">
+          <Card actionMenu={[{ key: 'test', label: 'Test' }]} size="medium">
             Card with actions
           </Card>
-          <Card actionMenu={{ items: [{ key: 'test', label: 'Test' }] }} disabled size="medium">
+          <Card actionMenu={[{ key: 'test', label: 'Test' }]} disabled size="medium">
             Disabled card
           </Card>
           <Card size="medium" onClick={noOp}>
@@ -1817,13 +1872,17 @@ const ColumnsSection: React.FC = () => {
           <Card>{loremIpsum}</Card>
           <Card>{loremIpsum}</Card>
         </Columns>
-        <p>With <code>{'gap'}</code> set to 0:</p>
+        <p>
+          With <code>{'gap'}</code> set to 0:
+        </p>
         <Columns gap={0}>
           <Card>{loremIpsum}</Card>
           <Card>{loremIpsum}</Card>
           <Card>{loremIpsum}</Card>
         </Columns>
-        <p>With <code>{'gap'}</code> set to 16:</p>
+        <p>
+          With <code>{'gap'}</code> set to 16:
+        </p>
         <Columns gap={16}>
           <Card>{loremIpsum}</Card>
           <Card>{loremIpsum}</Card>
@@ -1872,7 +1931,8 @@ const ColumnsSection: React.FC = () => {
           </Column>
         </Columns>
         <p>
-          Variant with <code>{'page'}</code> prop, with margins and wrapping behavior, used for page-level layouts/headers:
+          Variant with <code>{'page'}</code> prop, with margins and wrapping behavior, used for
+          page-level layouts/headers:
         </p>
         <Columns page>
           <Column>
@@ -2321,6 +2381,7 @@ const Components = {
   Charts: <ChartsSection />,
   Checkboxes: <CheckboxesSection />,
   Columns: <ColumnsSection />,
+  Dropdown: <DropdownSection />,
   Empty: <EmptySection />,
   Facepile: <FacepileSection />,
   Form: <FormSection />,

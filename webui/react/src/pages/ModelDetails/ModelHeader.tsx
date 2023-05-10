@@ -1,12 +1,12 @@
 import { LeftOutlined } from '@ant-design/icons';
-import { Alert, Dropdown, Space, Typography } from 'antd';
-import type { DropDownProps, MenuProps } from 'antd';
-import React, { useMemo } from 'react';
+import { Alert, Space, Typography } from 'antd';
+import React, { useCallback, useMemo } from 'react';
 
 import DeleteModelModal from 'components/DeleteModelModal';
 import InfoBox, { InfoRow } from 'components/InfoBox';
 import Breadcrumb from 'components/kit/Breadcrumb';
 import Button from 'components/kit/Button';
+import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 import Icon from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
 import Tags, { tagsActionHelper } from 'components/kit/Tags';
@@ -19,7 +19,6 @@ import usePermissions from 'hooks/usePermissions';
 import { WorkspaceDetailsTab } from 'pages/WorkspaceDetails';
 import { paths } from 'routes/utils';
 import Spinner from 'shared/components/Spinner';
-import { ValueOf } from 'shared/types';
 import { formatDatetime } from 'shared/utils/datetime';
 import userStore from 'stores/users';
 import { ModelItem, Workspace } from 'types';
@@ -36,6 +35,13 @@ interface Props {
   onUpdateTags: (newTags: string[]) => Promise<void>;
   workspace?: Workspace;
 }
+
+const MenuKey = {
+  DeleteModel: 'delete-model',
+  EditModelName: 'edit-model-name',
+  MoveModel: 'move-model',
+  SwitchArchived: 'switch-archive',
+} as const;
 
 const ModelHeader: React.FC<Props> = ({
   model,
@@ -98,34 +104,8 @@ const ModelHeader: React.FC<Props> = ({
     ] as InfoRow[];
   }, [canModifyModelFlag, loadableUsers, model, onUpdateTags, users]);
 
-  const menu: DropDownProps['menu'] = useMemo(() => {
-    const MenuKey = {
-      DeleteModel: 'delete-model',
-      EditModelName: 'edit-model-name',
-      MoveModel: 'move-model',
-      SwitchArchived: 'switch-archive',
-    } as const;
-
-    const funcs = {
-      [MenuKey.SwitchArchived]: () => {
-        onSwitchArchive();
-      },
-      [MenuKey.EditModelName]: () => {
-        modelEditModal.open();
-      },
-      [MenuKey.MoveModel]: () => {
-        modelMoveModal.open();
-      },
-      [MenuKey.DeleteModel]: () => {
-        deleteModelModal.open();
-      },
-    };
-
-    const onItemClick: MenuProps['onClick'] = (e) => {
-      funcs[e.key as ValueOf<typeof MenuKey>]();
-    };
-
-    const menuItems: MenuProps['items'] = [
+  const menu = useMemo(() => {
+    const menuItems: MenuItem[] = [
       {
         disabled: model.archived || !canModifyModelFlag,
         key: MenuKey.EditModelName,
@@ -146,16 +126,28 @@ const ModelHeader: React.FC<Props> = ({
       menuItems.push({ danger: true, key: MenuKey.DeleteModel, label: 'Delete' });
     }
 
-    return { items: menuItems, onClick: onItemClick };
-  }, [
-    model.archived,
-    canModifyModelFlag,
-    canDeleteModelFlag,
-    onSwitchArchive,
-    modelEditModal,
-    modelMoveModal,
-    deleteModelModal,
-  ]);
+    return menuItems;
+  }, [model.archived, canModifyModelFlag, canDeleteModelFlag]);
+
+  const handleDropdown = useCallback(
+    (key: string) => {
+      switch (key) {
+        case MenuKey.DeleteModel:
+          deleteModelModal.open();
+          break;
+        case MenuKey.EditModelName:
+          modelEditModal.open();
+          break;
+        case MenuKey.MoveModel:
+          modelMoveModal.open();
+          break;
+        case MenuKey.SwitchArchived:
+          onSwitchArchive();
+          break;
+      }
+    },
+    [deleteModelModal, modelEditModal, modelMoveModal, onSwitchArchive],
+  );
 
   return (
     <header className={css.base}>
@@ -213,9 +205,9 @@ const ModelHeader: React.FC<Props> = ({
             <Dropdown
               disabled={!canDeleteModelFlag && !canModifyModelFlag}
               menu={menu}
-              trigger={['click']}>
+              onClick={handleDropdown}>
               <Button
-                icon={<Icon name="overflow-horizontal" size="tiny" title="Action menu" />}
+                icon={<Icon name="overflow-horizontal" size="small" title="Action menu" />}
                 type="text"
               />
             </Dropdown>

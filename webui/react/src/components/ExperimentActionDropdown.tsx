@@ -1,11 +1,8 @@
-import { Dropdown } from 'antd';
-import type { DropdownProps } from 'antd';
-import { ItemType } from 'antd/es/menu/hooks/useItems';
-import { MenuInfo } from 'rc-menu/lib/interface';
 import React, { MouseEvent, useCallback, useMemo } from 'react';
 
 import ExperimentMoveModalComponent from 'components/ExperimentMoveModal';
 import Button from 'components/kit/Button';
+import Dropdown, { DropdownEvent, MenuItem } from 'components/kit/Dropdown';
 import Icon from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
 import useModalHyperparameterSearch from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
@@ -39,6 +36,7 @@ import useConfirm from './kit/useConfirm';
 interface Props {
   children?: React.ReactNode;
   experiment: ProjectExperiment;
+  isContextMenu?: boolean;
   link?: string;
   makeOpen?: boolean;
   onComplete?: (action?: Action) => Promise<void>;
@@ -72,10 +70,9 @@ const dropdownActions = [
   Action.Delete,
 ];
 
-const stopPropagation = (e: React.MouseEvent): void => e.stopPropagation();
-
 const ExperimentActionDropdown: React.FC<Props> = ({
   experiment,
+  isContextMenu,
   link,
   makeOpen,
   onComplete,
@@ -98,20 +95,45 @@ const ExperimentActionDropdown: React.FC<Props> = ({
     openModalHyperparameterSearch();
   }, [openModalHyperparameterSearch]);
 
-  const handleMenuClick = useCallback(
-    async (params: MenuInfo): Promise<void> => {
-      params.domEvent.stopPropagation();
+  const handleMoveComplete = useCallback(() => {
+    onComplete?.(Action.Move);
+  }, [onComplete]);
+
+  const menuItems = getActionsForExperiment(experiment, dropdownActions, usePermissions())
+    .filter((action) => action !== Action.SwitchPin || settings)
+    .map((action) => {
+      if (action === Action.SwitchPin) {
+        const label = (settings?.pinned?.[experiment.projectId] ?? []).includes(id)
+          ? 'Unpin'
+          : 'Pin';
+        return { key: action, label };
+      } else {
+        return { danger: action === Action.Delete, key: action, label: action };
+      }
+    });
+
+  const dropdownMenu = useMemo(() => {
+    const items: MenuItem[] = [...menuItems];
+    if (link) {
+      items.unshift(
+        { key: Action.NewTab, label: Action.NewTab },
+        { key: Action.NewWindow, label: Action.NewWindow },
+        { type: 'divider' },
+      );
+    }
+    return items;
+  }, [link, menuItems]);
+
+  const handleDropdown = useCallback(
+    async (action: string, e: DropdownEvent) => {
       try {
-        const action = params.key as Action;
-        switch (
-          action // Cases should match menu items.
-        ) {
+        switch (action) {
           case Action.NewTab:
-            handlePath(params.domEvent as MouseEvent, { path: link, popout: 'tab' });
+            handlePath(e as MouseEvent, { path: link, popout: 'tab' });
             await onLink?.();
             break;
           case Action.NewWindow:
-            handlePath(params.domEvent as MouseEvent, { path: link, popout: 'window' });
+            handlePath(e as MouseEvent, { path: link, popout: 'window' });
             await onLink?.();
             break;
           case Action.Activate:
@@ -203,15 +225,14 @@ const ExperimentActionDropdown: React.FC<Props> = ({
       } catch (e) {
         handleError(e, {
           level: ErrorLevel.Error,
-          publicMessage: `Unable to ${params.key} experiment ${id}.`,
-          publicSubject: `${capitalize(params.key.toString())} failed.`,
+          publicMessage: `Unable to ${action} experiment ${id}.`,
+          publicSubject: `${capitalize(action)} failed.`,
           silent: false,
           type: ErrorType.Server,
         });
       } finally {
         onVisibleChange?.(false);
       }
-      // TODO show loading indicator when we have a button component that supports it.
     },
     [
       confirm,
@@ -230,40 +251,10 @@ const ExperimentActionDropdown: React.FC<Props> = ({
     ],
   );
 
-  const handleMoveComplete = useCallback(() => {
-    onComplete?.(Action.Move);
-    handleUpdateExperimentList?.(Action.Move, [id]);
-  }, [onComplete, handleUpdateExperimentList, id]);
-
-  const menuItems = getActionsForExperiment(experiment, dropdownActions, usePermissions())
-    .filter((action) => action !== Action.SwitchPin || settings)
-    .map((action) => {
-      if (action === Action.SwitchPin) {
-        const label = (settings?.pinned?.[experiment.projectId] ?? []).includes(id)
-          ? 'Unpin'
-          : 'Pin';
-        return { key: action, label };
-      } else {
-        return { danger: action === Action.Delete, key: action, label: action };
-      }
-    });
-
-  const menu: DropdownProps['menu'] = useMemo(() => {
-    const items: ItemType[] = [...menuItems];
-    if (link) {
-      items.unshift(
-        { key: Action.NewTab, label: Action.NewTab },
-        { key: Action.NewWindow, label: Action.NewWindow },
-        { type: 'divider' },
-      );
-    }
-    return { items, onClick: handleMenuClick };
-  }, [link, menuItems, handleMenuClick]);
-
   if (menuItems.length === 0) {
     return (
       (children as JSX.Element) ?? (
-        <div className={css.base} title="No actions available" onClick={stopPropagation}>
+        <div className={css.base} title="No actions available">
           <Button disabled ghost type="text">
             <Icon name="overflow-vertical" title="Disabled action menu" />
           </Button>
@@ -287,23 +278,18 @@ const ExperimentActionDropdown: React.FC<Props> = ({
   return children ? (
     <>
       <Dropdown
-        menu={menu}
+        isContextMenu={isContextMenu}
+        menu={dropdownMenu}
         open={makeOpen}
-        placement="bottomLeft"
-        trigger={['contextMenu']}
-        onOpenChange={onVisibleChange}>
+        onClick={handleDropdown}>
         {children}
       </Dropdown>
       {shared}
     </>
   ) : (
-    <div className={css.base} title="Open actions menu" onClick={stopPropagation}>
-      <Dropdown menu={menu} placement="bottomRight" trigger={['click']}>
-        <Button
-          ghost
-          icon={<Icon name="overflow-vertical" title="Action menu" />}
-          onClick={stopPropagation}
-        />
+    <div className={css.base} title="Open actions menu">
+      <Dropdown menu={dropdownMenu} placement="bottomRight" onClick={handleDropdown}>
+        <Button ghost icon={<Icon name="overflow-vertical" size="small" title="Action menu" />} />
       </Dropdown>
       {shared}
     </div>

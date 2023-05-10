@@ -1,5 +1,4 @@
-import { Dropdown, Space, Typography } from 'antd';
-import type { DropDownProps, MenuProps } from 'antd';
+import { Space, Typography } from 'antd';
 import {
   FilterDropdownProps,
   FilterValue,
@@ -12,6 +11,7 @@ import DeleteModelModal from 'components/DeleteModelModal';
 import DynamicIcon from 'components/DynamicIcon';
 import FilterCounter from 'components/FilterCounter';
 import Button from 'components/kit/Button';
+import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 import Empty from 'components/kit/Empty';
 import Icon from 'components/kit/Icon';
 import Input from 'components/kit/Input';
@@ -45,7 +45,6 @@ import { paths } from 'routes/utils';
 import { archiveModel, getModelLabels, getModels, patchModel, unarchiveModel } from 'services/api';
 import { V1GetModelsRequestSortBy } from 'services/api-ts-sdk';
 import usePolling from 'shared/hooks/usePolling';
-import { ValueOf } from 'shared/types';
 import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
 import { validateDetApiEnum } from 'shared/utils/service';
@@ -71,6 +70,12 @@ const filterKeys: Array<keyof Settings> = ['tags', 'name', 'users', 'description
 interface Props {
   workspace?: Workspace;
 }
+
+const MenuKey = {
+  DeleteModel: 'delete-model',
+  MoveModel: 'move-model',
+  SwitchArchived: 'switch-archived',
+} as const;
 
 const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
   const canceler = useRef(new AbortController());
@@ -382,36 +387,10 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
   }, [resetSettings]);
 
   const ModelActionMenu = useCallback(
-    (
-      record: ModelItem,
-      canDeleteModelFlag: boolean,
-      canModifyModelFlag: boolean,
-    ): DropDownProps['menu'] => {
-      const MenuKey = {
-        DeleteModel: 'delete-model',
-        MoveModel: 'move-model',
-        SwitchArchived: 'switch-archived',
-      } as const;
-
-      const funcs = {
-        [MenuKey.SwitchArchived]: () => {
-          switchArchived(record);
-        },
-        [MenuKey.MoveModel]: () => {
-          setModel(record);
-          modelMoveModal.open();
-        },
-        [MenuKey.DeleteModel]: () => {
-          setModel(record);
-          deleteModelModal.open();
-        },
-      };
-
-      const onItemClick: MenuProps['onClick'] = (e) => {
-        funcs[e.key as ValueOf<typeof MenuKey>]();
-      };
-
-      const menuItems: MenuProps['items'] = [];
+    (record: ModelItem) => {
+      const canDeleteModelFlag = canDeleteModel({ model: record });
+      const canModifyModelFlag = canModifyModel({ model: record });
+      const menuItems: MenuItem[] = [];
       if (canModifyModelFlag) {
         menuItems.push({
           key: MenuKey.SwitchArchived,
@@ -425,7 +404,26 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
         menuItems.push({ danger: true, key: MenuKey.DeleteModel, label: 'Delete Model' });
       }
 
-      return { items: menuItems, onClick: onItemClick };
+      return menuItems;
+    },
+    [canDeleteModel, canModifyModel],
+  );
+
+  const handleDropdown = useCallback(
+    (key: string, record: ModelItem) => {
+      switch (key) {
+        case MenuKey.DeleteModel:
+          setModel(record);
+          deleteModelModal.open();
+          break;
+        case MenuKey.MoveModel:
+          setModel(record);
+          modelMoveModal.open();
+          break;
+        case MenuKey.SwitchArchived:
+          switchArchived(record);
+          break;
+      }
     },
     [deleteModelModal, modelMoveModal, switchArchived],
   );
@@ -457,8 +455,9 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
       return (
         <Dropdown
           disabled={!canDeleteModelFlag && !canModifyModelFlag}
-          menu={ModelActionMenu(record, canDeleteModelFlag, canModifyModelFlag)}
-          trigger={['click']}>
+          menu={ModelActionMenu(record)}
+          placement="bottomRight"
+          onClick={(key) => handleDropdown(key, record)}>
           <Button icon={<Icon name="overflow-vertical" title="Action menu" />} type="text" />
         </Dropdown>
       );
@@ -594,6 +593,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
     setModelTags,
     canDeleteModel,
     ModelActionMenu,
+    handleDropdown,
     saveModelDescription,
     workspaceRenderer,
   ]);
@@ -666,27 +666,17 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
   );
 
   const ModelActionDropdown = useCallback(
-    ({
-      record,
-      onVisibleChange,
-      children,
-    }: {
-      children: React.ReactNode;
-      onVisibleChange?: (visible: boolean) => void;
-      record: ModelItem;
-    }) => {
-      const canDeleteModelFlag = canDeleteModel({ model: record });
-      const canModifyModelFlag = canModifyModel({ model: record });
+    ({ record, children }: { children: React.ReactNode; record: ModelItem }) => {
       return (
         <Dropdown
-          menu={ModelActionMenu(record, canDeleteModelFlag, canModifyModelFlag)}
-          trigger={['contextMenu']}
-          onOpenChange={onVisibleChange}>
+          isContextMenu
+          menu={ModelActionMenu(record)}
+          onClick={(key) => handleDropdown(key, record)}>
           {children}
         </Dropdown>
       );
     },
-    [ModelActionMenu, canDeleteModel, canModifyModel],
+    [ModelActionMenu, handleDropdown],
   );
 
   return (
