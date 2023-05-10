@@ -359,7 +359,10 @@ func (s *SingularityClient) RunContainer(
 		fmt.Sprintf("SINGULARITYENV_CUDA_VISIBLE_DEVICES=%s", cudaVisibleDevicesVar),
 		fmt.Sprintf("APPTAINERENV_CUDA_VISIBLE_DEVICES=%s", cudaVisibleDevicesVar),
 	)
-
+	httpsProxy := os.Getenv("https_proxy")
+	if httpsProxy != "" {
+		cmd.Env = append(cmd.Env, fmt.Sprintf("https_proxy=%s", httpsProxy))
+	}
 	// HACK(singularity): without this, --nv doesn't work right. If the singularity run command
 	// cannot find nvidia-smi, the --nv fails to make it available inside the container, e.g.,
 	// env -i /usr/bin/singularity run --nv \\
