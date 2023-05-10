@@ -23,4 +23,3 @@ message CreateUnmanagedTrialResponse {
   // The requested trial.
   determined.trial.v1.Trial trial = 1;
 }
-
