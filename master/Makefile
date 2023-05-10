@@ -127,8 +127,8 @@ test-intg: build/mock_gen.stamp
 	gotestsum --junitfile test-intg.junit.xml -- -tags=integration -coverprofile=coverage.out -covermode count -cover ./...
 
 .PHONY: test-perf
-bench:
-	go test -tags=integration -v -run="TestBenchmark" -benchtime=1x ./test/integration/api # TODO 1x
+test-perf:
+	go test -tags=integration -v -run="TestBenchmark" -count=1 -benchtime=1x ./test/integration/api # TODO 1x
 
 
 .PHONY: pre-package
