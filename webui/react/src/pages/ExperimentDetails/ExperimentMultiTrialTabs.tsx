@@ -2,8 +2,8 @@ import type { TabsProps } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
+import NoteCard from 'components/kit/NoteCard';
 import Pivot from 'components/kit/Pivot';
-import NotesCard from 'components/NotesCard';
 import usePermissions from 'hooks/usePermissions';
 import ExperimentTrials from 'pages/ExperimentDetails/ExperimentTrials';
 import { paths } from 'routes/utils';
@@ -141,10 +141,9 @@ const ExperimentMultiTrialTabs: React.FC<Props> = ({
 
     items.push({
       children: (
-        <NotesCard
+        <NoteCard
           disabled={!editableNotes}
           notes={experiment.notes ?? ''}
-          style={{ border: 0 }}
           onSave={handleNotesUpdate}
         />
       ),

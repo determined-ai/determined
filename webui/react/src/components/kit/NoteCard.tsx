@@ -6,14 +6,14 @@ import { unstable_useBlocker as useBlocker } from 'react-router-dom';
 import Button from 'components/kit/Button';
 import Input from 'components/kit/Input';
 import Tooltip from 'components/kit/Tooltip';
+import Markdown from 'components/Markdown';
 import Spinner from 'shared/components/Spinner/Spinner';
 import { ErrorType } from 'shared/utils/error';
 import handleError from 'utils/error';
 
-import Markdown from './Markdown';
-import css from './NotesCard.module.scss';
+import css from './NoteCard.module.scss';
 
-interface Props {
+export interface Props {
   disabled?: boolean;
   extra?: React.ReactNode;
   noteChangeSignal?: number;
@@ -21,16 +21,14 @@ interface Props {
   onChange?: (editedNotes: string) => void;
   onSave?: (editedNotes: string) => Promise<void>;
   onSaveTitle?: (editedTitle: string) => Promise<void>;
-  style?: React.CSSProperties;
   title?: string;
 }
 
-const NotesCard: React.FC<Props> = ({
+const NoteCard: React.FC<Props> = ({
   disabled = false,
   notes,
   onSave,
   onSaveTitle,
-  style,
   title = 'Notes',
   extra,
   onChange,
@@ -139,11 +137,11 @@ const NotesCard: React.FC<Props> = ({
         )
       }
       headStyle={{ marginTop: '16px', minHeight: 'fit-content', paddingInline: '16px' }}
-      style={{ ...style }}
       title={
         <Input
           defaultValue={title}
           disabled={!onSaveTitle || disabled}
+          style={{ width: '99%' }}
           onBlur={(e) => {
             const newValue = e.currentTarget.value;
             onSaveTitle?.(newValue);
@@ -166,4 +164,4 @@ const NotesCard: React.FC<Props> = ({
   );
 };
 
-export default NotesCard;
+export default NoteCard;

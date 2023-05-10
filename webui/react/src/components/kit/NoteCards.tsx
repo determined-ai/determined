@@ -10,10 +10,10 @@ import Select, { Option, SelectValue } from 'components/kit/Select';
 import usePrevious from 'shared/hooks/usePrevious';
 import { Note } from 'types';
 
-import NotesCard from './NotesCard';
-import css from './PaginatedNotesCard.module.scss';
+import NoteCard from './NoteCard';
+import css from './NoteCards.module.scss';
 
-interface Props {
+export interface Props {
   disabled?: boolean;
   notes: Note[];
   onDelete: (pageNumber: number) => void;
@@ -23,7 +23,7 @@ interface Props {
 
 const DROPDOWN_MENU = [{ danger: true, key: 'delete', label: 'Delete...' }];
 
-const PaginatedNotesCard: React.FC<Props> = ({
+const NoteCards: React.FC<Props> = ({
   notes,
   onNewPage,
   onSave,
@@ -170,78 +170,84 @@ const PaginatedNotesCard: React.FC<Props> = ({
   }
 
   return (
-    <div className={css.base}>
-      {notes.length > 0 && (
-        <div className={css.sidebar}>
-          <ul className={css.listContainer} role="list">
-            {(notes as Note[]).map((note, idx) => (
-              <Dropdown
-                disabled={disabled}
-                isContextMenu
-                key={idx}
-                menu={DROPDOWN_MENU}
-                onClick={() => handleDropdown(idx)}>
-                <li
-                  className={css.listItem}
-                  style={{
-                    borderColor:
-                      idx === currentPage ? 'var(--theme-stage-border-strong)' : undefined,
-                  }}
-                  onClick={() => handleSwitchPage(idx)}>
+    <>
+      <div className={css.tabOptions}>
+        <Button type="text" onClick={onNewPage}>
+          + New Page
+        </Button>
+      </div>
+      <div className={css.base}>
+        {notes.length > 0 && (
+          <div className={css.sidebar}>
+            <ul className={css.listContainer} role="list">
+              {(notes as Note[]).map((note, idx) => (
+                <Dropdown
+                  disabled={disabled}
+                  isContextMenu
+                  key={idx}
+                  menu={DROPDOWN_MENU}
+                  onClick={() => handleDropdown(idx)}>
+                  <li
+                    className={css.listItem}
+                    style={{
+                      borderColor:
+                        idx === currentPage ? 'var(--theme-stage-border-strong)' : undefined,
+                    }}
+                    onClick={() => handleSwitchPage(idx)}>
+                    <span>{note.name}</span>
+                    {!disabled && (
+                      <Dropdown menu={DROPDOWN_MENU} onClick={() => handleDropdown(idx)}>
+                        <div className={css.action} onClick={(e) => e.stopPropagation()}>
+                          <Icon name="overflow-horizontal" title="Action menu" />
+                        </div>
+                      </Dropdown>
+                    )}
+                  </li>
+                </Dropdown>
+              ))}
+            </ul>
+          </div>
+        )}
+        <div className={css.pageSelectRow}>
+          <Select value={currentPage} onSelect={handleSwitchPage}>
+            {notes.map((note, idx) => {
+              return (
+                <Option className={css.selectOption} key={idx} value={idx}>
+                  <CheckOutlined
+                    className={css.currentPage}
+                    style={{
+                      marginRight: 8,
+                      visibility: idx === currentPage ? 'visible' : 'hidden',
+                    }}
+                  />
                   <span>{note.name}</span>
-                  {!disabled && (
-                    <Dropdown menu={DROPDOWN_MENU} onClick={() => handleDropdown(idx)}>
-                      <div className={css.action} onClick={(e) => e.stopPropagation()}>
-                        <Icon name="overflow-horizontal" title="Action menu" />
-                      </div>
-                    </Dropdown>
-                  )}
-                </li>
-              </Dropdown>
-            ))}
-          </ul>
+                </Option>
+              );
+            })}
+          </Select>
         </div>
-      )}
-      <div className={css.pageSelectRow}>
-        <Select value={currentPage} onSelect={handleSwitchPage}>
-          {notes.map((note, idx) => {
-            return (
-              <Option className={css.selectOption} key={idx} value={idx}>
-                <CheckOutlined
-                  className={css.currentPage}
-                  style={{
-                    marginRight: 8,
-                    visibility: idx === currentPage ? 'visible' : 'hidden',
-                  }}
-                />
-                <span>{note.name}</span>
-              </Option>
-            );
-          })}
-        </Select>
+        <div className={css.notesContainer}>
+          <NoteCard
+            disabled={disabled}
+            extra={
+              <Dropdown menu={DROPDOWN_MENU} onClick={() => handleDropdown(currentPage)}>
+                <div style={{ cursor: 'pointer' }}>
+                  <Icon name="overflow-horizontal" title="Action menu" />
+                </div>
+              </Dropdown>
+            }
+            noteChangeSignal={noteChangeSignal}
+            notes={notes?.[currentPage]?.contents ?? ''}
+            title={notes?.[currentPage]?.name ?? ''}
+            onChange={handleEditedNotes}
+            onSave={handleSave}
+            onSaveTitle={handleSaveTitle}
+          />
+        </div>
+        {contextHolder}
       </div>
-      <div className={css.notesContainer}>
-        <NotesCard
-          disabled={disabled}
-          extra={
-            <Dropdown menu={DROPDOWN_MENU} onClick={() => handleDropdown(currentPage)}>
-              <div style={{ cursor: 'pointer' }}>
-                <Icon name="overflow-horizontal" title="Action menu" />
-              </div>
-            </Dropdown>
-          }
-          noteChangeSignal={noteChangeSignal}
-          notes={notes?.[currentPage]?.contents ?? ''}
-          style={{ border: 0 }}
-          title={notes?.[currentPage]?.name ?? ''}
-          onChange={handleEditedNotes}
-          onSave={handleSave}
-          onSaveTitle={handleSaveTitle}
-        />
-      </div>
-      {contextHolder}
-    </div>
+    </>
   );
 };
 
-export default PaginatedNotesCard;
+export default NoteCards;

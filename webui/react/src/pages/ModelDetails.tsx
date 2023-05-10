@@ -5,11 +5,11 @@ import { useParams } from 'react-router-dom';
 
 import Input from 'components/kit/Input';
 import { useModal } from 'components/kit/Modal';
+import NoteCard from 'components/kit/NoteCard';
 import Tags, { tagsActionHelper } from 'components/kit/Tags';
 import MetadataCard from 'components/Metadata/MetadataCard';
 import ModelDownloadModal from 'components/ModelDownloadModal';
 import ModelVersionDeleteModal from 'components/ModelVersionDeleteModal';
-import NotesCard from 'components/NotesCard';
 import Page from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
 import InteractiveTable, {
@@ -448,7 +448,7 @@ const ModelDetails: React.FC = () => {
             onChange={handleTableChange}
           />
         )}
-        <NotesCard
+        <NoteCard
           disabled={model.model.archived || !canModifyModel({ model: model.model })}
           notes={model.model.notes ?? ''}
           onSave={saveNotes}

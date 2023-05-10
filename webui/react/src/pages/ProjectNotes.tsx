@@ -1,15 +1,11 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 
-import { useSetDynamicTabBar } from 'components/DynamicTabs';
-import Button from 'components/kit/Button';
 import { useModal } from 'components/kit/Modal';
-import PaginatedNotesCard from 'components/PaginatedNotesCard';
+import NoteCards from 'components/kit/NoteCards';
 import ProjectNoteDeleteModalComponent from 'components/ProjectNoteDeleteModal';
 import { addProjectNote, setProjectNotes } from 'services/api';
 import { Note, Project } from 'types';
 import handleError from 'utils/error';
-
-import css from './ProjectDetails.module.scss';
 
 interface Props {
   fetchProject: () => void;
@@ -56,22 +52,9 @@ const ProjectNotes: React.FC<Props> = ({ project, fetchProject }) => {
     [ProjectNoteDeleteModal, project?.id],
   );
 
-  const notesTabBarContent = useMemo(
-    () => (
-      <div className={css.tabOptions}>
-        <Button type="text" onClick={handleNewNotesPage}>
-          + New Page
-        </Button>
-      </div>
-    ),
-    [handleNewNotesPage],
-  );
-
-  useSetDynamicTabBar(notesTabBarContent);
-
   return (
     <>
-      <PaginatedNotesCard
+      <NoteCards
         disabled={project?.archived}
         notes={project?.notes ?? []}
         onDelete={handleDeleteNote}

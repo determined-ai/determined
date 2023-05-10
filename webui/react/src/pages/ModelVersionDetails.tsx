@@ -6,10 +6,10 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import InfoBox from 'components/InfoBox';
 import Breadcrumb from 'components/kit/Breadcrumb';
+import NoteCard from 'components/kit/NoteCard';
 import Pivot from 'components/kit/Pivot';
 import Link from 'components/Link';
 import MetadataCard from 'components/Metadata/MetadataCard';
-import NotesCard from 'components/NotesCard';
 import Page from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
 import usePermissions from 'hooks/usePermissions';
@@ -262,7 +262,7 @@ const ModelVersionDetails: React.FC = () => {
       {
         children: (
           <div className={css.base}>
-            <NotesCard
+            <NoteCard
               disabled={modelVersion.model.archived || !canModifyModelVersion({ modelVersion })}
               notes={modelVersion.notes ?? ''}
               onSave={saveNotes}

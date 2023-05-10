@@ -69,6 +69,10 @@
     }
   }
 }
+.tabOptions {
+  display: flex;
+  justify-content: flex-end;
+}
 
 @media only screen and (max-width: $breakpoint-tablet) {
   .base {

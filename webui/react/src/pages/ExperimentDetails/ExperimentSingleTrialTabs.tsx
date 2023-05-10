@@ -3,8 +3,8 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import Button from 'components/kit/Button';
+import NoteCard from 'components/kit/NoteCard';
 import Pivot from 'components/kit/Pivot';
-import NotesCard from 'components/NotesCard';
 import TrialLogPreview from 'components/TrialLogPreview';
 import { terminalRunStates } from 'constants/states';
 import useFeature from 'hooks/useFeature';
@@ -259,10 +259,9 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
 
     items.push({
       children: (
-        <NotesCard
+        <NoteCard
           disabled={!editableNotes}
           notes={experiment.notes ?? ''}
-          style={{ border: 0 }}
           onSave={handleNotesUpdate}
         />
       ),
