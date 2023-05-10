@@ -75,9 +75,12 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
     const values = await form.validateFields();
     const projId = values.projectId ?? 1;
 
+    if (excludedExperimentIds?.size) {
+      filters = { ...filters, excludedExperimentIds: Array.from(excludedExperimentIds) };
+    }
+
     const results = await moveExperiments({
       destinationProjectId: projId,
-      excludedExperimentIds: excludedExperimentIds ? Array.from(excludedExperimentIds) : undefined,
       experimentIds,
       filters,
     });

@@ -127,15 +127,16 @@ const TableActionBar: React.FC<Props> = ({
 
   const sendBatchActions = useCallback(
     async (action: BatchAction): Promise<BulkActionResult | void> => {
+      let requestFilters = selectAll ? filters : undefined;
+      if (excludedExperimentIds?.size) {
+        requestFilters = { ...filters, excludedExperimentIds: Array.from(excludedExperimentIds) };
+      }
       switch (action) {
         case ExperimentAction.OpenTensorBoard:
           return openCommandResponse(
             await openOrCreateTensorBoard({
-              excludedExperimentIds: excludedExperimentIds
-                ? Array.from(excludedExperimentIds)
-                : undefined,
               experimentIds: selectedExperimentIds,
-              filters: selectAll ? filters : undefined,
+              filters: requestFilters,
               workspaceId: project?.workspaceId,
             }),
           );
@@ -143,59 +144,38 @@ const TableActionBar: React.FC<Props> = ({
           return ExperimentMoveModal.open();
         case ExperimentAction.Activate:
           return await activateExperiments({
-            excludedExperimentIds: excludedExperimentIds
-              ? Array.from(excludedExperimentIds)
-              : undefined,
             experimentIds: selectedExperimentIds,
-            filters: selectAll ? filters : undefined,
+            filters: requestFilters,
           });
         case ExperimentAction.Archive:
           return await archiveExperiments({
-            excludedExperimentIds: excludedExperimentIds
-              ? Array.from(excludedExperimentIds)
-              : undefined,
             experimentIds: selectedExperimentIds,
-            filters: selectAll ? filters : undefined,
+            filters: requestFilters,
           });
         case ExperimentAction.Cancel:
           return await cancelExperiments({
-            excludedExperimentIds: excludedExperimentIds
-              ? Array.from(excludedExperimentIds)
-              : undefined,
             experimentIds: selectedExperimentIds,
-            filters: selectAll ? filters : undefined,
+            filters: requestFilters,
           });
         case ExperimentAction.Kill:
           return await killExperiments({
-            excludedExperimentIds: excludedExperimentIds
-              ? Array.from(excludedExperimentIds)
-              : undefined,
             experimentIds: selectedExperimentIds,
-            filters: selectAll ? filters : undefined,
+            filters: requestFilters,
           });
         case ExperimentAction.Pause:
           return await pauseExperiments({
-            excludedExperimentIds: excludedExperimentIds
-              ? Array.from(excludedExperimentIds)
-              : undefined,
             experimentIds: selectedExperimentIds,
-            filters: selectAll ? filters : undefined,
+            filters: requestFilters,
           });
         case ExperimentAction.Unarchive:
           return await unarchiveExperiments({
-            excludedExperimentIds: excludedExperimentIds
-              ? Array.from(excludedExperimentIds)
-              : undefined,
             experimentIds: selectedExperimentIds,
-            filters: selectAll ? filters : undefined,
+            filters: requestFilters,
           });
         case ExperimentAction.Delete:
           return await deleteExperiments({
-            excludedExperimentIds: excludedExperimentIds
-              ? Array.from(excludedExperimentIds)
-              : undefined,
             experimentIds: selectedExperimentIds,
-            filters: selectAll ? filters : undefined,
+            filters: requestFilters,
           });
       }
     },
