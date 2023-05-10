@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"net/http"
 	"sort"
 	"strconv"
 	"strings"
@@ -14,6 +15,7 @@ import (
 
 	"golang.org/x/exp/slices"
 
+	"github.com/labstack/echo/v4"
 	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/internal/authz"
@@ -1108,6 +1110,123 @@ func (a *apiServer) PatchExperiment(
 		}
 	}
 
+	if req.Experiment.Resources != nil || req.Experiment.CheckpointStorage != nil {
+		// TODO(DET-8577): Remove unnecessary active config usage.
+		activeConfig, err := a.m.db.ActiveExperimentConfig(int(exp.Id))
+		if err != nil {
+			return nil, errors.Wrapf(
+				err, "unable to load no-longer-valid config for experiment %v", exp.Id,
+			)
+		}
+
+		newResources := req.Experiment.Resources
+		if newResources != nil {
+			resources := activeConfig.Resources()
+			if newResources.MaxSlots != nil {
+				if err = exputil.AuthZProvider.Get().
+					CanSetExperimentsMaxSlots(ctx, *curUser, modelExp, int(*newResources.MaxSlots)); err != nil {
+					return nil, echo.NewHTTPError(http.StatusForbidden, err.Error())
+				}
+
+				resources.SetMaxSlots(ptrs.Ptr(int(*newResources.MaxSlots)))
+			}
+			if newResources.Weight != nil {
+				if err = exputil.AuthZProvider.Get().
+					CanSetExperimentsWeight(ctx, *curUser, modelExp, *newResources.Weight); err != nil {
+					return nil, echo.NewHTTPError(http.StatusForbidden, err.Error())
+				}
+
+				resources.SetWeight(*newResources.Weight)
+			}
+			if newResources.Priority != nil {
+				if err = exputil.AuthZProvider.Get().
+					CanSetExperimentsPriority(ctx, *curUser, modelExp, int(*newResources.Priority)); err != nil {
+					return nil, echo.NewHTTPError(http.StatusForbidden, err.Error())
+				}
+
+				resources.SetPriority(ptrs.Ptr(int(*newResources.Priority)))
+			}
+			activeConfig.SetResources(resources)
+		}
+		newCheckpointStorage := req.Experiment.CheckpointStorage
+
+		if newCheckpointStorage != nil {
+			if err = exputil.AuthZProvider.Get().
+				CanSetExperimentsCheckpointGCPolicy(ctx, *curUser, modelExp); err != nil {
+				return nil, echo.NewHTTPError(http.StatusForbidden, err.Error())
+			}
+
+			storage := activeConfig.CheckpointStorage()
+			storage.SetSaveExperimentBest(int(newCheckpointStorage.SaveExperimentBest))
+			storage.SetSaveTrialBest(int(newCheckpointStorage.SaveTrialBest))
+			storage.SetSaveTrialLatest(int(newCheckpointStorage.SaveTrialLatest))
+			activeConfig.SetCheckpointStorage(storage)
+		}
+
+		// `patch` represents the allowed mutations that can be performed on an experiment, in JSON
+		if err := a.m.db.SaveExperimentConfig(modelExp.ID, activeConfig); err != nil {
+			return nil, errors.Wrapf(err, "patching experiment %d", modelExp.ID)
+		}
+
+		if newResources != nil {
+			if newResources.MaxSlots != nil {
+				a.m.system.TellAt(actor.Addr("experiments", int(exp.Id)),
+					sproto.SetGroupMaxSlots{MaxSlots: ptrs.Ptr(int(*newResources.MaxSlots))})
+			}
+			if newResources.Weight != nil {
+				resp := a.m.system.AskAt(actor.Addr("experiments", int(exp.Id)),
+					sproto.SetGroupWeight{Weight: *newResources.Weight})
+				if resp.Error() != nil {
+					return nil, errors.Errorf("cannot change experiment weight to %v", *newResources.Weight)
+				}
+			}
+			if newResources.Priority != nil {
+				resp := a.m.system.AskAt(actor.Addr("experiments", int(exp.Id)),
+					sproto.SetGroupPriority{Priority: int(*newResources.Priority)})
+				if resp.Error() != nil {
+					return nil, errors.Errorf("cannot change experiment priority to %v", *newResources.Priority)
+				}
+			}
+		}
+
+		if newCheckpointStorage != nil {
+			checkpoints, err := a.m.db.ExperimentCheckpointsToGCRaw(
+				modelExp.ID,
+				modelExp.Config.CheckpointStorage.SaveExperimentBest(),
+				modelExp.Config.CheckpointStorage.SaveTrialBest(),
+				modelExp.Config.CheckpointStorage.SaveTrialLatest(),
+			)
+			if err != nil {
+				return nil, err
+			}
+
+			agentUserGroup, err := user.GetAgentUserGroup(*modelExp.OwnerID, modelExp)
+			if err != nil {
+				return nil, err
+			}
+
+			ownerFullUser, err := user.UserByID(*modelExp.OwnerID)
+			if err != nil {
+				return nil, errors.Errorf("cannot find user %v who owns experiment", modelExp.OwnerID)
+			}
+
+			taskSpec := *a.m.taskSpec
+			user := &model.User{
+				ID:       ownerFullUser.ID,
+				Username: ownerFullUser.Username,
+			}
+
+			taskID := model.NewTaskID()
+			ckptGCTask := newCheckpointGCTask(
+				a.m.rm, a.m.db, a.m.taskLogger, taskID, modelExp.JobID, modelExp.StartTime,
+				taskSpec, modelExp.ID,
+				modelExp.Config, checkpoints, true, agentUserGroup, user, nil,
+			)
+			a.m.system.ActorOf(actor.Addr(fmt.Sprintf("patch-checkpoint-gc-%s", uuid.New().String())),
+				ckptGCTask)
+		}
+	}
+
 	// include queued / pulling / starting / running state
 	if err = a.enrichExperimentState(exp); err != nil {
 		return nil, err
@@ -1208,27 +1327,10 @@ func (a *apiServer) CreateExperiment(
 		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
 	}
 
-	var commitDate *time.Time
-	pt, err := protoutils.ToTime(req.GitCommitDate)
-	if err == nil {
-		commitDate = &pt
-	}
-
-	detParams := CreateExperimentParams{
-		ConfigBytes:   req.Config,
-		ModelDef:      filesToArchive(req.ModelDefinition),
-		ValidateOnly:  req.ValidateOnly,
-		Template:      req.Template,
-		GitRemote:     req.GitRemote,
-		GitCommit:     req.GitCommit,
-		GitCommitter:  req.GitCommitter,
-		GitCommitDate: commitDate,
-	}
 	if req.ParentId != 0 {
-		detParams.ParentID = ptrs.Ptr(int(req.ParentId))
 		// Can't use getExperimentAndCheckDoActions since model.Experiment doesn't have ParentArchived.
 		var parentExp *experimentv1.Experiment
-		parentExp, err = a.getExperiment(ctx, *user, *detParams.ParentID)
+		parentExp, err = a.getExperiment(ctx, *user, int(req.ParentId))
 		if err != nil {
 			return nil, err
 		}
@@ -1247,13 +1349,9 @@ func (a *apiServer) CreateExperiment(
 				"forking an experiment in an archived workspace/project")
 		}
 	}
-	if req.ProjectId > 1 {
-		projectID := int(req.ProjectId)
-		detParams.ProjectID = &projectID
-	}
 
-	dbExp, activeConfig, p, validateOnly, taskSpec, err := a.m.parseCreateExperiment(
-		&detParams, user,
+	dbExp, activeConfig, p, taskSpec, err := a.m.parseCreateExperiment(
+		req, user,
 	)
 	if err != nil {
 		if _, ok := err.(ErrProjectNotFound); ok {
@@ -1265,7 +1363,7 @@ func (a *apiServer) CreateExperiment(
 		return nil, status.Errorf(codes.PermissionDenied, err.Error())
 	}
 
-	if validateOnly {
+	if req.ValidateOnly {
 		return &apiv1.CreateExperimentResponse{
 			Experiment: &experimentv1.Experiment{},
 		}, nil
