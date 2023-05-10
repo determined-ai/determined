@@ -1016,7 +1016,7 @@ type MetricsReport struct {
 	EndTime *timestamp.Timestamp `protobuf:"bytes,2,opt,name=end_time,json=endTime,proto3" json:"end_time,omitempty"`
 	// Struct of the reported metrics.
 	Metrics *_struct.Struct `protobuf:"bytes,3,opt,name=metrics,proto3" json:"metrics,omitempty"`
-	// Steps completed in the report.
+	// batches completed in the report.
 	TotalBatches int32 `protobuf:"varint,4,opt,name=total_batches,json=totalBatches,proto3" json:"total_batches,omitempty"`
 	// If metric is archived.
 	Archived bool `protobuf:"varint,5,opt,name=archived,proto3" json:"archived,omitempty"`

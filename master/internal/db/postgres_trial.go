@@ -661,7 +661,7 @@ WHERE id = $1;
 	})
 }
 
-// AddTrainingMetrics adds a completed step to the database with the given training metrics.
+// DEPRECATED: AddTrainingMetrics adds a completed step to the database with the given training metrics.
 // If these training metrics occur before any others, a rollback is assumed and later
 // training and validation metrics are cleaned up.
 func (db *PgDB) AddTrainingMetrics(ctx context.Context, m *trialv1.TrialMetrics) error {
@@ -669,7 +669,7 @@ func (db *PgDB) AddTrainingMetrics(ctx context.Context, m *trialv1.TrialMetrics)
 	return err
 }
 
-// AddValidationMetrics adds a completed validation to the database with the given
+// DEPRECATED: AddValidationMetrics adds a completed validation to the database with the given
 // validation metrics. If these validation metrics occur before any others, a rollback
 // is assumed and later metrics are cleaned up from the database.
 func (db *PgDB) AddValidationMetrics(

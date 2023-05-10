@@ -5290,7 +5290,7 @@ export interface V1MetricsReport {
      */
     metrics: any;
     /**
-     * Steps completed in the report.
+     * batches completed in the report.
      * @type {number}
      * @memberof V1MetricsReport
      */

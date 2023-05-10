@@ -195,7 +195,7 @@ message TrialEarlyExit {
 }
 
 // Metrics from the trial some duration of training.
-message TrialMetrics {
+message TrialMetrics {  // SEE MetricsReport
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: {
       required: [ "trial_id", "trial_run_id", "steps_completed", "metrics" ]
@@ -256,7 +256,7 @@ message MetricsReport {
   google.protobuf.Timestamp end_time = 2;
   // Struct of the reported metrics.
   google.protobuf.Struct metrics = 3;
-  // Steps completed in the report.
+  // batches completed in the report.
   int32 total_batches = 4;
   // If metric is archived.
   bool archived = 5;
