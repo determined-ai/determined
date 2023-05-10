@@ -5,6 +5,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import InfoBox, { InfoRow } from 'components/InfoBox';
 import Breadcrumb from 'components/kit/Breadcrumb';
 import Button from 'components/kit/Button';
+import ClipboardButton from 'components/kit/ClipboardButton';
 import Dropdown, { MenuItem, MenuOption } from 'components/kit/Dropdown';
 import Icon from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
@@ -18,10 +19,8 @@ import TimeAgo from 'components/TimeAgo';
 import usePermissions from 'hooks/usePermissions';
 import { WorkspaceDetailsTab } from 'pages/WorkspaceDetails';
 import { paths } from 'routes/utils';
-import CopyButton from 'shared/components/CopyButton';
 import Spinner from 'shared/components/Spinner';
 import { formatDatetime } from 'shared/utils/datetime';
-import { copyToClipboard } from 'shared/utils/dom';
 import userStore from 'stores/users';
 import { ModelVersion, Workspace } from 'types';
 import { Loadable } from 'utils/loadable';
@@ -135,10 +134,6 @@ with det.import_from_path(path + "/code"):
     import my_model_def as ckpt_model_def
 `;
   }, [modelVersion]);
-
-  const handleCopy = useCallback(async () => {
-    await copyToClipboard(referenceText);
-  }, [referenceText]);
 
   const menu = useMemo(() => {
     const items: MenuItem[] = [
@@ -264,7 +259,7 @@ with det.import_from_path(path + "/code"):
         onCancel={() => setShowUseInNotebook(false)}>
         <div className={css.topLine}>
           <p>Reference this model in a notebook</p>
-          <CopyButton onCopy={handleCopy} />
+          <ClipboardButton getContent={() => referenceText} />
         </div>
         <pre className={css.codeSample}>
           <code>{referenceText}</code>

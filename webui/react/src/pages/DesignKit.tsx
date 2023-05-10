@@ -9,6 +9,7 @@ import Breadcrumb from 'components/kit/Breadcrumb';
 import Button from 'components/kit/Button';
 import Card from 'components/kit/Card';
 import Checkbox from 'components/kit/Checkbox';
+import ClipboardButton from 'components/kit/ClipboardButton';
 import { Column, Columns } from 'components/kit/Columns';
 import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 import Empty from 'components/kit/Empty';
@@ -63,6 +64,7 @@ const ComponentTitles = {
   Cards: 'Cards',
   Charts: 'Charts',
   Checkboxes: 'Checkboxes',
+  ClipboardButton: 'ClipboardButton',
   Columns: 'Columns',
   Dropdown: 'Dropdown',
   Empty: 'Empty',
@@ -745,6 +747,37 @@ const CheckboxesSection: React.FC = () => {
         <p>Mandatory checkbox - not implemented.</p>
         <p>Mandatory checkbox with info sign - not implemented.</p>
         <Checkbox indeterminate>Indeterminate checkbox</Checkbox>
+      </AntDCard>
+    </ComponentSection>
+  );
+};
+
+const ClipboardButtonSection: React.FC = () => {
+  const defaultContent = 'This is the content to copy to clipboard.';
+  const [content, setContent] = useState(defaultContent);
+  const getContent = useCallback(() => content, [content]);
+  return (
+    <ComponentSection id="ClipboardButton" title="ClipboardButton">
+      <AntDCard>
+        <p>
+          ClipboardButton (<code>{'<ClipboardButton>'}</code> provides a special button for the
+          purpose of copying some text into the browser clipboard.
+          <br />
+          <b>Note:</b> This capability is only available on `https` and `localhost` hosts. `http`
+          protocol is purposefully blocked for&nbsp;
+          <a href="https://developer.mozilla.org/en-US/docs/Web/API/Clipboard">security reasons</a>.
+        </p>
+      </AntDCard>
+      <AntDCard title="Usage">
+        <Label>Copy Content</Label>
+        <Input value={content} onChange={(s) => setContent(String(s.target.value))} />
+        <hr />
+        <strong>Default Clipboard Button</strong>
+        <ClipboardButton getContent={getContent} />
+        <strong>Disabled Clipboard Button</strong>
+        <ClipboardButton disabled getContent={getContent} />
+        <strong>Custom Copied Message Clipboard Button</strong>
+        <ClipboardButton copiedMessage="Yay it's copied!" getContent={getContent} />
       </AntDCard>
     </ComponentSection>
   );
@@ -2380,6 +2413,7 @@ const Components = {
   Cards: <CardsSection />,
   Charts: <ChartsSection />,
   Checkboxes: <CheckboxesSection />,
+  ClipboardButton: <ClipboardButtonSection />,
   Columns: <ColumnsSection />,
   Dropdown: <DropdownSection />,
   Empty: <EmptySection />,
