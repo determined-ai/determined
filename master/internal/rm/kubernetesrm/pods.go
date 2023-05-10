@@ -917,10 +917,7 @@ func (p *pods) cleanUpPodHandler(ctx *actor.Context, podHandler *actor.Ref) erro
 func (p *pods) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
 	switch apiCtx.Request().Method {
 	case echo.GET:
-		summary, err := p.summarize(ctx)
-		if err != nil {
-			ctx.Respond(apiCtx.JSON(http.StatusInternalServerError, err))
-		}
+		summary := p.summarizeClusterByNodes(ctx)
 		ctx.Respond(apiCtx.JSON(http.StatusOK, summary))
 	default:
 		ctx.Respond(echo.ErrMethodNotAllowed)
