@@ -181,7 +181,7 @@ message PatchExperiment {
     int32 save_trial_latest = 3;
   }
 
-  optional PatchResources resources = 6;
+  optional PatchResources resources                  = 6;
   optional PatchCheckpointStorage checkpoint_storage = 7;
 }
 
