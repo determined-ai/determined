@@ -282,7 +282,7 @@ describe('LogViewer', () => {
       });
     });
 
-    quarantinedIt()(
+    quarantinedIt(
       'should render logs with streaming',
       async () => {
         setup({ decoder, onFetch });
