@@ -700,7 +700,7 @@ func (db *PgDB) AddMetrics(
 	return err
 }
 
-func (db *PgDB) GetMetrics(ctx context.Context, trialID, totalBatches, limit int,
+func (db *PgDB) GetMetrics(ctx context.Context, trialID, afterBatches, limit int,
 	mType string,
 ) ([]*trialv1.MetricsReport, error) {
 	var res []*trialv1.MetricsReport
@@ -709,7 +709,7 @@ func (db *PgDB) GetMetrics(ctx context.Context, trialID, totalBatches, limit int
 		Column("trial_id", "metrics", "total_batches", "archived", "id", "trial_run_id").
 		ColumnExpr("proto_time(end_time) AS end_time").
 		Where("trial_id = ?", trialID).
-		Where("total_batches > ?", totalBatches).
+		Where("total_batches > ?", afterBatches).
 		Where("archived = false").
 		Where("partition_type = ?", customMetricTypeToPartitionType(mType)).
 		Order("trial_id", "trial_run_id", "total_batches").

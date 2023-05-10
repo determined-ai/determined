@@ -862,14 +862,23 @@ func TestGenericMetricsIO(t *testing.T) {
 	require.NoError(t, err)
 
 	trialRunID := 1
+	batches := 10
 	require.NoError(t, db.UpdateTrialRunID(tr.ID, trialRunID))
 	trialMetrics := &trialv1.TrialMetrics{
 		TrialId:        int32(tr.ID),
 		TrialRunId:     int32(trialRunID),
-		StepsCompleted: 10,
+		StepsCompleted: int32(batches),
 		Metrics:        &commonv1.Metrics{AvgMetrics: metrics},
 	}
 
 	err = db.AddMetrics(ctx, trialMetrics, "inference")
 	require.NoError(t, err)
+
+	metricReports, err := db.GetMetrics(ctx, tr.ID, batches-1, 10, "inference")
+	require.NoError(t, err)
+	require.Len(t, metricReports, 1)
+	require.EqualValues(t, trialRunID, metricReports[0].TrialRunId)
+	require.EqualValues(t, batches, metricReports[0].TotalBatches)
+	require.EqualValues(t, tr.ID, metricReports[0].TrialId)
+	require.Equal(t, metrics, metricReports[0].Metrics.Fields["avg_metrics"].GetStructValue())
 }
