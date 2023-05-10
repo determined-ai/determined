@@ -9,7 +9,9 @@ import contextlib
 import os
 import pathlib
 import time
-from typing import Dict, Generator, List, Sequence, Set, Tuple
+import subprocess
+import tempfile
+from typing import Generator, List, Tuple
 
 import psycopg  # pip install "psycopg[binary]"
 
@@ -43,30 +45,18 @@ def db_transaction():
             cur.execute("BEGIN")
             yield cur
         except Exception:
-            print("rolling back")
+            print("Rolling back the transaction")
             cur.execute("ROLLBACK")
             raise
         else:
             cur.execute("COMMIT")
 
 
-# query the current db schemas for all tables into a dict
-def get_db_schemas() -> Dict[str, Set[str]]:
-    with db_cursor() as cur:
-        cur.execute(
-            """
-            SELECT table_name, column_name
-            FROM information_schema.columns
-            WHERE table_schema = 'public'
-            """
-        )
-        rows = cur.fetchall()
-        schemas = {}
-        for table_name, column_name in rows:
-            if table_name not in schemas:
-                schemas[table_name] = set()
-            schemas[table_name].add(column_name)
-        return schemas
+def generate_schema(dbname: str = DB_NAME) -> pathlib.Path:
+    with tempfile.NamedTemporaryFile(mode="w", delete=False) as temp_file:
+        command = ["pg_dump", "-U", DB_USERNAME, "-h", DB_HOST, "-p", DB_PORT, "-s", dbname]
+        subprocess.run(command, stdout=temp_file)
+        return pathlib.Path(temp_file.name)
 
 
 def run_migration(name: str, statements: str) -> None:
@@ -77,16 +67,6 @@ def run_migration(name: str, statements: str) -> None:
         print(f"Ran {name} in {end - start:.2f}s")
 
 
-def run_sql_file(file_path: pathlib.Path) -> None:
-    """
-    run a set of sql statements from a file in a transaction
-    and time it.
-    """
-    with file_path.open("r") as f:
-        sql_statements = f.read()
-    run_migration(file_path.name, sql_statements)
-
-
 def get_migration_paths(query: str) -> List[Tuple[pathlib.Path, pathlib.Path]]:
     migration_files = list(MIGRATIONS_DIR.glob(f"*{query}*"))
     assert len(migration_files) % 2 == 0, f"expected even files for {query} got {migration_files}"
@@ -95,19 +75,9 @@ def get_migration_paths(query: str) -> List[Tuple[pathlib.Path, pathlib.Path]]:
     return list(zip(sorted(up_files), sorted(down_files)))
 
 
-def diff_dicts(old: Dict[str, Set[str]], new: Dict[str, Set[str]]) -> Dict[str, Set[str]]:
-    """
-    return a dict of table names to the set of changes
-    """
-    diff = {}
-    for table_name, old_columns in old.items():
-        if table_name not in new:
-            diff[table_name] = old_columns
-        else:
-            new_columns = new[table_name]
-            if old_columns != new_columns:
-                diff[table_name] = old_columns ^ new_columns
-    return diff
+def diff_files(old_path: pathlib.Path, new_path: pathlib.Path) -> str:
+    out = subprocess.run(["diff", old_path, new_path], check=True)
+    return out.stdout.decode("utf-8") if out.stdout else ""
 
 
 def test_det_migration(name: str, reverse: bool = False):
@@ -125,19 +95,15 @@ def test_det_migration(name: str, reverse: bool = False):
     up_file, down_file = migration_files[0]
     assert up_file.exists(), f"{up_file} does not exist"
     assert down_file.exists(), f"{down_file} does not exist"
-    name = up_file.name.split(".up")[0]
+    name = up_file.name.split(".up")[0].split("_", 1)[1]
     migration_files = [up_file, down_file] if not reverse else [down_file, up_file]
     statements = "\n".join([f.read_text() for f in migration_files])
 
-    old_schema = get_db_schemas()
+    old_schema_path = generate_schema()
     run_migration(name + "-merged", statements)
-    # for file in migration_files:
-    #     print(f"Running migration {file}")
-    #     run_sql_file(file)
-    new_schema = get_db_schemas()
-    assert (
-        old_schema == new_schema
-    ), f"{up_file} is not reversible, {diff_dicts(old_schema, new_schema)}"
+    new_schema_path = generate_schema()
+    schema_diff = diff_files(old_schema_path, new_schema_path)
+    assert schema_diff == "", f"{up_file} did not reverse cleanly: \n\n{schema_diff}"
 
 
 if __name__ == "__main__":
@@ -151,5 +117,4 @@ if __name__ == "__main__":
         help="run the migration in reverse",
     )
     args = parser.parse_args()
-
     test_det_migration(args.name, args.reverse)
