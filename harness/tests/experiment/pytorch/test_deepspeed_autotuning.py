@@ -326,7 +326,7 @@ class TestDSATTrialTracker:
             assert trial_tracker.num_running_trials == 0
 
         assert not trial_tracker.can_run_more_trials
-        assert trial_tracker.empty_queue
+        assert len(trial_tracker.queue) == 0
         assert trial_tracker.max_trials_are_running_or_closed
         assert trial_tracker.should_shutdown
         assert not trial_tracker.should_be_failure
@@ -356,7 +356,7 @@ class TestDSATTrialTracker:
             assert trial_tracker.num_running_trials == 0
 
         assert not trial_tracker.can_run_more_trials
-        assert trial_tracker.empty_queue
+        assert len(trial_tracker.queue) == 0
         assert trial_tracker.max_trials_are_running_or_closed
         assert trial_tracker.should_shutdown
         assert trial_tracker.should_be_failure
