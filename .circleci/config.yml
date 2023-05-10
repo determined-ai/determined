@@ -2454,6 +2454,8 @@ workflows:
       - test-intg-master:
           context: storage-unit-tests
       - test-intg-agent
+      - test-master-performance:
+          context: storage-unit-tests # TODO context?
       - go-coverage:
           requires:
             - test-intg-master
