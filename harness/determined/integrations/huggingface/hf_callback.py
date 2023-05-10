@@ -139,7 +139,8 @@ class DetCallback(TrainerCallback):
     def _on_save_user_data(self, save_path: str) -> None:
         """
         User-defined saving of objects from self.checkpoint_metadata under save_path.
-        After objects are saved, Determined handles uploading and downloading objects to/from selected storage.
+        After objects are saved, Determined handles uploading and downloading objects
+        to/from selected storage.
         """
         with open(os.path.join(save_path, "my_data.json"), "w") as f:
             json.dump(self.user_data, f)
@@ -212,16 +213,18 @@ class DetCallback(TrainerCallback):
         if state.is_world_process_zero:
             if self.last_metrics is None:
                 logging.warning(
-                    "No training or evaluation metrics has been recorded. Please check your settings for "
-                    "training metrics (--logging_strategy and --logging_steps) or "
+                    "No training or evaluation metrics has been recorded. Please "
+                    "check your settings for training metrics "
+                    "(--logging_strategy and --logging_steps) or "
                     "evaluation metrics (--evaluation_strategy and --eval_steps). "
                     "Reporting trainer_state.best_metric to the searcher."
                 )
                 searcher_metric = state.best_metric
             elif self.searcher_metric not in self.last_metrics:
                 logging.warning(
-                    f"Searcher metric {self.searcher_metric} from the yaml config file does not match any "
-                    f"of the recorded metrics in {self.last_metrics}. "
+                    f"Searcher metric {self.searcher_metric} from the yaml config file does "
+                    "not match any of the recorded metrics "
+                    f"in {self.last_metrics}. "
                     "Reporting trainer_state.best_metric to the searcher."
                 )
                 searcher_metric = state.best_metric
@@ -288,7 +291,7 @@ TRAIN = "train_progress"
 
 
 def get_metric_type(d):
-    for k, v in d.items():
+    for k, _ in d.items():
         if k.startswith(EVAL):
             return EVAL
         elif k.startswith(TEST):

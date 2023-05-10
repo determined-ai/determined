@@ -83,7 +83,8 @@ class DSATTrial:
         """Computes set of trials in lineage tree."""
         root = self.lineage_root
         trials_set = {root}
-        children = {c for c in root.children}
+        # children = {c for c in root.children}
+        children = set(root.children)
         while children:
             random_child = children.pop()
             trials_set.add(random_child)

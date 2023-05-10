@@ -14,6 +14,8 @@ import determined as det
 from determined.pytorch.dsat import _defaults
 from determined.util import merge_dicts
 
+CURR_DIR = pathlib.Path(".")
+
 
 def get_base_parser() -> argparse.ArgumentParser:
     base_parser = argparse.ArgumentParser(add_help=False)
@@ -106,9 +108,8 @@ def smaller_is_better(metric: str) -> bool:
     elif metric in _defaults.LARGER_IS_BETTER_METRICS:
         return False
     else:
-        raise ValueError(
-            f"metric must be one of {_defaults.SMALLER_IS_BETTER_METRICS + _defaults.LARGER_IS_BETTER_METRICS}, not {metric}"
-        )
+        valid_metrics = _defaults.SMALLER_IS_BETTER_METRICS + _defaults.LARGER_IS_BETTER_METRICS
+        raise ValueError(f"metric must be one of {valid_metrics}, not {metric}")
 
 
 def get_search_runner_config_from_args(args: argparse.Namespace) -> Dict[str, Any]:
@@ -117,9 +118,10 @@ def get_search_runner_config_from_args(args: argparse.Namespace) -> Dict[str, An
         return submitted_search_runner_config
 
     submitted_exp_config_dict = get_dict_from_yaml_or_json_path(args.config_path)
-    assert (
-        "deepspeed_config" in submitted_exp_config_dict["hyperparameters"]
-    ), "DS AT requires a `hyperparameters.deepspeed_config` key which points to the deepspeed config json file"
+    assert "deepspeed_config" in submitted_exp_config_dict["hyperparameters"], (
+        "DS AT requires a `hyperparameters.deepspeed_config` key which points "
+        "to the deepspeed config json file"
+    )
 
     # Also sanity check that if a --deepspeed_config (or in the case of HF
     # --deepspeed) arg is passed in, both configs match. Probably some gotchas here because
@@ -136,7 +138,8 @@ def get_search_runner_config_from_args(args: argparse.Namespace) -> Dict[str, An
         split_entrypoint = split_entrypoint.split(" ")
     else:
         raise ValueError(
-            f"Expected a string or list for an entrypoint, but received {type(submitted_entrypoint)}"
+            f"Expected a string or list for an entrypoint, but received "
+            f"{type(submitted_entrypoint)}"
         )
 
     split_entrypoint = [s.strip() for s in split_entrypoint if s.strip()]
@@ -171,7 +174,8 @@ def get_dict_from_yaml_or_json_path(
     path: str, convert_json_keys_to_int: bool = True
 ) -> Dict[Any, Any]:
     """
-    Load a json or yaml file as a dict. Optionally convert all json dict keys to ints, where possible.
+    Load a json or yaml file as a dict. Optionally convert all json dict keys to
+    ints, where possible.
     """
     p = pathlib.Path(path)
     if p.suffix == ".json":
@@ -306,7 +310,8 @@ def get_batch_config_from_mbs_gas_and_slots(
 
 def dict_raise_error_on_duplicate_keys(ordered_pairs):
     """Reject duplicate keys."""
-    d = dict((k, v) for k, v in ordered_pairs)
+    # d = dict((k, v) for k, v in ordered_pairs)
+    d = {k: v for (k, v) in ordered_pairs}
     if len(d) != len(ordered_pairs):
         counter = collections.Counter([pair[0] for pair in ordered_pairs])
         keys = [key for key, value in counter.items() if value > 1]
@@ -315,7 +320,7 @@ def dict_raise_error_on_duplicate_keys(ordered_pairs):
 
 
 def normalize_base_ds_config(
-    base_ds_config: Union[str, Dict], model_dir: pathlib.Path = pathlib.Path(".")
+    base_ds_config: Union[str, Dict], model_dir: pathlib.Path = CURR_DIR
 ) -> Dict[str, Any]:
     if isinstance(base_ds_config, str):
         full_path = model_dir.joinpath(pathlib.Path(base_ds_config))
@@ -332,7 +337,7 @@ def normalize_base_ds_config(
 
 def get_ds_config_from_hparams(
     hparams: Dict[str, Any],
-    model_dir: Union[pathlib.Path, str] = pathlib.Path("."),
+    model_dir: Union[pathlib.Path, str] = CURR_DIR,
     config_key: str = _defaults.CONFIG_KEY,
     overwrite_key: str = _defaults.OVERWRITE_KEY,
 ) -> Dict[str, Any]:
@@ -359,7 +364,7 @@ def get_ds_config_from_hparams(
 def overwrite_deepspeed_config(
     base_ds_config: Union[str, Dict],
     source_ds_dict: Dict[str, Any],
-    model_dir: pathlib.Path = pathlib.Path("."),
+    model_dir: pathlib.Path = CURR_DIR,
 ) -> Dict[str, Any]:
     """Overwrite a base_ds_config with values from a source_ds_dict.
     You can use source_ds_dict to overwrite leaf nodes of the base_ds_config.

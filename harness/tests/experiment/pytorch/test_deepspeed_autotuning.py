@@ -219,7 +219,7 @@ class TestDSATTrial:
             else:
                 assert trial.parent == trials[idx - 1]
             if idx != len(trials) - 1:
-                assert trial.children == set((trials[idx + 1],))
+                assert trial.children == {trials[idx + 1]}
             else:
                 assert trial.children == set()
             assert trial.lineage_root == self.first_trial

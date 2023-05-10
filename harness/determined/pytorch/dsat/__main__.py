@@ -22,8 +22,8 @@ def parse_args() -> argparse.Namespace:
 
 
 def run_autotuning(args: argparse.Namespace) -> None:
-    # Build the default SearchRunner's config from the submitted config. The original config yaml file
-    # is added as an include and is reimported by the SearchRunner later.
+    # Build the default SearchRunner's config from the submitted config. The original
+    # config yaml file is added as an include and is reimported by the SearchRunner later.
 
     config = _utils.get_search_runner_config_from_args(args)
     # TODO: early sanity check the submitted config.
