@@ -35,6 +35,7 @@ def manual_init_distributed() -> Iterator[None]:
         del os.environ["DET_MANUAL_INIT_DISTRIBUTED"]
 
 
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="no gpu available")
 @pytest.mark.deepspeed
 @pytest.mark.gpu
 class TestDeepSpeedTrial:
