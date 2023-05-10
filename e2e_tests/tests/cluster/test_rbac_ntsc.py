@@ -1,5 +1,5 @@
 import contextlib
-from typing import Generator, List, Optional, Sequence, Set
+from typing import Generator, List, Optional, Sequence, Set, Tuple
 
 import pytest
 
@@ -485,3 +485,49 @@ def test_tsb_listed() -> None:
             ).tensorboards
             assert len(tsbs) == 1, "should be one tensorboard"
             assert tsbs[0].id == created_id, "should be the tensorboard we created"
+
+
+@pytest.mark.e2e_cpu_rbac
+@pytest.mark.skipif(rbac_disabled(), reason="ee rbac is required for this test")
+def test_tsb_launch_on_trials() -> None:
+    with create_workspaces_with_users(
+        [
+            [
+                (0, ["Editor"]),
+            ],
+        ]
+    ) as ([workspace], creds):
+        session = determined_test_session(creds[0])
+        pid = bindings.post_PostProject(
+            session,
+            body=bindings.v1PostProjectRequest(name="test", workspaceId=workspace.id),
+            workspaceId=workspace.id,
+        ).project.id
+    with logged_in_user(ADMIN_CREDENTIALS):
+        experiment_id = exp.create_experiment(
+            conf.fixtures_path("no_op/single.yaml"),
+            conf.fixtures_path("no_op"),
+            ["--project_id", str(pid)],
+        )
+
+        def get_exp_trials() -> Tuple[bool, List[int]]:
+            trial_ids: List[int] = []
+            try:
+                trials = bindings.get_GetExperimentTrials(
+                    session,
+                    experimentId=experiment_id,
+                ).trials
+                trial_ids = [t.id for t in trials]
+            except errors.APIException:
+                return False, []
+            if len(trial_ids) > 0:
+                return True, trial_ids
+            return False, []
+
+        trial_ids: List[int] = utils.wait_for(get_exp_trials, conf.DEFAULT_MAX_WAIT_SECS)
+        assert len(trial_ids) == 1, f"we should get 1 trials {trial_ids}"
+
+        bindings.post_LaunchTensorboard(
+            session,
+            body=bindings.v1LaunchTensorboardRequest(workspaceId=workspace.id, trialIds=trial_ids),
+        ).tensorboard.id

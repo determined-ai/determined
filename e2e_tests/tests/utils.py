@@ -1,7 +1,25 @@
-from typing import Any
+import time
+from typing import Any, Callable, Tuple, TypeVar
 
 from determined.common.api import authentication
 from tests import config as conf
+
+T = TypeVar("T")
+
+
+def wait_for(predicate: Callable[[], Tuple[bool, T]], timeout: int) -> T:
+    """
+    Wait for the predicate to return (Done, ReturnValue) while
+    checking for a timeout. without preempting the predicate.
+    """
+
+    start = time.time()
+    done, rv = predicate()
+    while not done:
+        if time.time() - start > timeout:
+            raise TimeoutError("timed out waiting for predicate")
+        time.sleep(0.1)
+    return rv
 
 
 class CliArgsMock:
