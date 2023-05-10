@@ -66,11 +66,10 @@ const renderer: CustomRenderer<LoadingCell> = {
     ctx.restore();
 
     requestAnimationFrame();
-
-    return true;
   },
-  isMatch: (cell: CustomCell): cell is LoadingCell =>
-    (cell.data as LoadingCellProps).kind === 'loading-cell',
+  isMatch: (cell: CustomCell): cell is LoadingCell => {
+    return 'kind' in cell.data && cell.data.kind === 'loading-cell';
+  },
   kind: GridCellKind.Custom,
   needsHover: true,
   needsHoverPosition: true,
