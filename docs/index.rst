@@ -2,8 +2,6 @@
    :hidden:
 
    Welcome <self>
-   Get Started <1getting-started/index>
-   Set Up <2setup/index>
 
 .. toctree::
    :caption: Getting Started
