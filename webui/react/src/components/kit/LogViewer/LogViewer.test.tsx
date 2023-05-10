@@ -281,8 +281,9 @@ describe('LogViewer', () => {
       });
     });
 
-    it('should render logs with streaming', async () => {
-      if (process.env.QUARANTINED) {
+    quarantinedIt(
+      'should render logs with streaming',
+      async () => {
         setup({ decoder, onFetch });
 
         await waitFor(
@@ -293,8 +294,9 @@ describe('LogViewer', () => {
           },
           { timeout: 6000 },
         );
-      }
-    }, 6500);
+      },
+      6500,
+    );
 
     it('should show oldest logs', async () => {
       setup({ decoder, onFetch });
