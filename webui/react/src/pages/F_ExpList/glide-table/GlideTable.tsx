@@ -16,7 +16,7 @@ import DataEditor, {
   Theme,
 } from '@glideapps/glide-data-grid';
 import { DrawHeaderCallback } from '@glideapps/glide-data-grid/dist/ts/data-grid/data-grid-types';
-import { MenuProps } from 'antd';
+import { ItemType } from 'antd/es/menu/hooks/useItems';
 import React, {
   Dispatch,
   SetStateAction,
@@ -321,20 +321,37 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   const onHeaderClicked: DataEditorProps['onHeaderClicked'] = React.useCallback(
     (col: number, args: HeaderClickedEventArgs) => {
       const columnId = columnIds[col];
+      const { bounds } = args;
+      const x = bounds.x;
+      const y = bounds.y + bounds.height;
 
       if (columnId === 'selected') {
-        if (selectAll) {
-          if (excludedExperimentIds.size) {
-            selectAllRows();
-          } else {
-            deselectAllRows();
-          }
+        if ((selectAll && excludedExperimentIds.size) || selection.rows.length !== data.length) {
+          const items: ItemType[] = [
+            ...[5, 10, 25, 50].map((n) => ({
+              key: `select-${n}`,
+              label: `Select ${n}`,
+              onClick: () => {
+                setSelection((s) => ({
+                  ...s,
+                  rows: CompactSelection.empty().add([0, n]),
+                }));
+                setMenuIsOpen(false);
+              },
+            })),
+            {
+              key: 'select-all',
+              label: 'Select all',
+              onClick: () => {
+                selectAllRows();
+                setMenuIsOpen(false);
+              },
+            },
+          ];
+          setMenuProps((prev) => ({ ...prev, items, title: 'Selection menu', x, y }));
+          setMenuIsOpen(true);
         } else {
-          if (selection.rows.length === data.length) {
-            deselectAllRows();
-          } else {
-            selectAllRows();
-          }
+          deselectAllRows();
         }
         return;
       }
@@ -368,8 +385,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         setMenuIsOpen(false);
       };
 
-      const { bounds } = args;
-      const items: MenuProps['items'] = [
+      const items: ItemType[] = [
         ...(BANNED_FILTER_COLUMNS.includes(column.column)
           ? []
           : [
@@ -413,8 +429,6 @@ export const GlideTable: React.FC<GlideTableProps> = ({
               },
             },
       ];
-      const x = bounds.x;
-      const y = bounds.y + bounds.height;
       setMenuProps((prev) => ({ ...prev, items, title: `${columnId} menu`, x, y }));
       setMenuIsOpen(true);
     },
