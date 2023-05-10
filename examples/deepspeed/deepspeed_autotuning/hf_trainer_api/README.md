@@ -78,7 +78,7 @@ One can also use Determined's DeepSpeed Autotune functionality to autotmatically
 DeepSpeed settings. From either subdirectory, run the following script:
 
 ```
-python3 -m determined.pytorch.dsat deepspeed.yaml . --include ../det_callback.py
+python3 -m determined.pytorch.dsat deepspeed.yaml .
 ```
 
 ## Results
