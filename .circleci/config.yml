@@ -1490,7 +1490,7 @@ jobs:
 
   test-unit-react-quarantined:
     docker:
-      - image: cimg/node:16.19.0
+      - image: cimg/node:18.16.0
         environment:
           CI: "true"
     steps:
