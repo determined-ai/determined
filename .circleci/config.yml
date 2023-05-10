@@ -457,7 +457,7 @@ commands:
         type: string
         default: ""
     steps:
-      - run: docker run -v <<parameters.bind-mount>>:/mnt/project --gpus=all -it -d --name <<parameters.image-name>> --workdir /mnt/project <<parameters.image>>
+      - run: docker run -v <<parameters.bind-mount>>:/mnt/project --gpus=all -it -d --name <<parameters.image-name>> --workdir /mnt/project <<parameters.image>> /bin/bash
       - run:
           name: Install <<parameters.extras-requires>>
           command: |
@@ -1801,6 +1801,29 @@ jobs:
           paths:
             - test-unit-harness-gpu-lightning-pycov
 
+  test-unit-harness-gpu-deepspeed:
+    machine:
+      image: <<pipeline.parameters.gpu-machine-image>>
+    resource_class: gpu.nvidia.small
+    steps:
+      - checkout
+      - skip-if-docs-only
+      - skip-if-webui-only
+      - setup-docker-env:
+          image: determinedai/environments:cuda-11.3-pytorch-1.10-deepspeed-0.8.3-gpu-0.22.1
+          image-name: test_container
+          extras-requires: "mypy pytest coverage"
+      - run: mkdir -p $HOME/.local/bin
+      - install-codecov
+      - run: echo 'export PATH=$PATH:$HOME/.local/bin' >> $BASH_ENV
+      - run: docker exec -e COVERAGE_FILE=/mnt/project/test-unit-harness-gpu-deepspeed-pycov test_container make -C harness test-gpu-deepspeed
+      - run: docker exec test_container coverage xml -i --data-file=./test-unit-harness-gpu-deepspeed-pycov
+      - run: codecov -v -t $CODECOV_TOKEN -F harness
+      - persist_to_workspace:
+          root: .
+          paths:
+            - test-unit-harness-gpu-deepspeed-pycov
+
   test-unit-harness-tf2:
     docker:
       - image: <<pipeline.parameters.docker-image>>
@@ -2450,6 +2473,7 @@ workflows:
       - test-unit-harness-cpu
       - test-unit-harness-gpu
       - test-unit-harness-gpu-lightning
+      - test-unit-harness-gpu-deepspeed
       - test-unit-harness-tf2
       - test-unit-model-hub
       - test-unit-storage:
