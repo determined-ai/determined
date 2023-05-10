@@ -5,8 +5,8 @@
 ###################
 
 You can use `Jupyter Notebooks <https://jupyter.org/>`__ to conveniently develop and debug machine
-learning models, visualize the behavior of trained models, and manage the training lifecycle of
-a model manually. Determined makes launching and managing notebooks easy.
+learning models, visualize the behavior of trained models, and manage the training lifecycle of a
+model manually. Determined makes launching and managing notebooks easy.
 
 Determined Notebooks provide the following benefits:
 
@@ -22,12 +22,12 @@ Determined Notebooks provide the following benefits:
    enable it for a particular notebook, set ``idle_timeout`` option in the notebook config.
 
 After a Notebook is terminated, it is not possible to restore the files that are not stored in the
-persistent directories. **It is important to configure the cluster to mount persistent
-directories into the container and save files in the persistent directories in the container.** See
+persistent directories. **It is important to configure the cluster to mount persistent directories
+into the container and save files in the persistent directories in the container.** See
 :ref:`notebook-state` for more information.
 
-If you open a Notebook tab in JupyterLab, a kernel is automatically opened. This kernel will not 
-be shut down automatically, so you'll need to manually terminate it.
+If you open a Notebook tab in JupyterLab, a kernel is automatically opened. This kernel will not be
+shut down automatically, so you'll need to manually terminate it.
 
 There are two ways to access notebooks in Determined: the :ref:`CLI <cli-ug>` and the :ref:`WebUI
 <web-ui-if>`. To install the CLI, see :ref:`install-cli`.
@@ -111,8 +111,8 @@ To kill a notebook, you need its ID, which can be found using the ``list`` comma
  WebUI
 *******
 
-Notebooks can also be started from the WebUI. Selecting the "Tasks" tab takes you to a list of
-tasks currently running on the cluster.
+Notebooks can also be started from the WebUI. Selecting the "Tasks" tab takes you to a list of tasks
+currently running on the cluster.
 
 .. image:: /assets/images/task-list@2x.jpg
    :width: 100%
@@ -209,9 +209,9 @@ could use the following configuration to launch a notebook:
    EOL
    $ det notebook start --config-file config.yaml
 
-By default, clusters that are launched by ``det deploy gcp up``, ``det deploy aws --deployment-type
-efs``, or ``det deploy aws --deployment-type fsx`` will create a Network file system that is shared
-by all the agents and automatically mounted into Notebook containers at
+By default, launching a cluster by ``det deploy gcp up``, ``det deploy aws --deployment-type efs``,
+or ``det deploy aws --deployment-type fsx`` creates a Network file system that is shared by all the
+agents and is automatically mounted into Notebook containers at
 ``/run/determined/workdir/shared_fs/``.
 
 To launch a notebook with ``det deploy local cluster-up``, a user can add the ``--auto-bind-mount``
@@ -240,8 +240,7 @@ functionality.
  Use the Determined CLI in Notebooks
 *************************************
 
-The :ref:`Determined CLI <cli-ug>` is installed into notebook containers by default. This allows
-you to interact with Determined from inside a notebook---e.g., launch new deep learning
-workloads or examine the metrics from an active or historical Determined experiment. For example, to
-list Determined experiments from inside a notebook, run the notebook command ``!det experiment
-list``.
+The :ref:`Determined CLI <cli-ug>` is installed into notebook containers by default. This allows you
+to interact with Determined from inside a notebook---e.g., launch new deep learning workloads or
+examine the metrics from an active or historical Determined experiment. For example, to list
+Determined experiments from inside a notebook, run the notebook command ``!det experiment list``.
