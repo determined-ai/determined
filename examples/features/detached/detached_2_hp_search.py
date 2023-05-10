@@ -4,7 +4,7 @@ import logging
 import random
 
 import determined as det
-import determined.experimental
+import determined.experimental.detached
 
 config_text = """
 name: detached-mode-stage-2
@@ -47,7 +47,7 @@ def main():
     exp_id = det.experimental.detached.create_unmanaged_experiment(client, config_text=config_text)
     print(f"Created experiment {exp_id}")
 
-	# Grid search.
+    # Grid search.
     for i in range(4):
         runner(client, exp_id, {'i': i})
 

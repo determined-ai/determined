@@ -8,7 +8,7 @@ import logging
 import random
 
 import determined as det
-import determined.experimental
+import determined.experimental.detached
 
 import torch.distributed as dist
 
