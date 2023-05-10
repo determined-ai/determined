@@ -270,8 +270,9 @@ export const GlideTable: React.FC<GlideTableProps> = ({
       const loadingCell: GridCell = {
         allowOverlay: true,
         copyData: '',
-        data: { kind: 'spinner-cell' },
+        data: { appTheme, kind: 'loading-cell' },
         kind: GridCellKind.Custom,
+        readonly: true,
       };
 
       if (!data[row]) {
@@ -287,7 +288,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         NotLoaded: () => loadingCell,
       });
     },
-    [data, columnIds, columnDefs],
+    [appTheme, data, columnIds, columnDefs],
   );
 
   const onCellClicked: DataEditorProps['onCellClicked'] = useCallback(
