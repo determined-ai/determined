@@ -457,7 +457,7 @@ commands:
         type: string
         default: ""
     steps:
-      - run: docker run -v <<parameters.bind-mount>>:/mnt/project --gpus=all -it -d --name <<parameters.image-name>> --workdir /mnt/project <<parameters.image>>
+      - run: docker run -v <<parameters.bind-mount>>:/mnt/project --gpus=all -it -d --name <<parameters.image-name>> --workdir /mnt/project <<parameters.image>> /bin/bash
       - run:
           name: Install <<parameters.extras-requires>>
           command: |
