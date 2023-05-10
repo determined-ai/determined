@@ -197,9 +197,6 @@ To ensure that your work is saved even if your notebook gets terminated, it is r
 all notebooks with a shared filesystem directory *bind-mounted* into the notebook container and work
 on files inside of the bind mounted directory.
 
-By default, clusters that are launched by ``det deploy aws/gcp up`` create a Network file system
-that is shared by all the agents and automatically mounted into Notebook containers.
-
 For example, a user ``jimmy`` with a shared filesystem home directory at ``/shared/home/jimmy``
 could use the following configuration to launch a notebook:
 
@@ -211,6 +208,11 @@ could use the following configuration to launch a notebook:
        container_path: /shared/home/jimmy
    EOL
    $ det notebook start --config-file config.yaml
+
+By default, clusters that are launched by ``det deploy gcp up``, ``det deploy aws --deployment-type
+efs``, or ``det deploy aws --deployment-type fsx`` will create a Network file system that is shared
+by all the agents and automatically mounted into Notebook containers at
+``/run/determined/workdir/shared_fs/``.
 
 To launch a notebook with ``det deploy local cluster-up``, a user can add the ``--auto-bind-mount``
 flag, which mounts the user's home directory into the task containers by default:
