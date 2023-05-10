@@ -37,7 +37,7 @@ test-gpu-lightning:
 
 .PHONY: test-gpu-deepspeed
 test-gpu-deepspeed:
-	coverage run -m pytest -v --runslow --durations=0 -m "deepspeed" tests/experiment/integrations/test_deepspeed_trial.py
+	coverage run -m pytest -v --runslow --durations=0 -m "deepspeed and gpu" tests/experiment/integrations/test_deepspeed_trial.py
 
 .PHONY: test
 test:
