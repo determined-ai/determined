@@ -1,3 +1,4 @@
+import { Breadcrumb } from 'antd';
 import { useObservable } from 'micro-observables';
 import React from 'react';
 import { Helmet } from 'react-helmet-async';
@@ -9,10 +10,12 @@ import BasePage, { Props as BasePageProps } from 'shared/components/Page';
 import Spinner from 'shared/components/Spinner';
 import determinedStore, { BrandingType } from 'stores/determinedInfo';
 
+import css from './Page.module.scss';
 export interface Props extends Omit<BasePageProps, 'pageHeader'> {
   docTitle?: string;
   ignorePermissions?: boolean;
   notFound?: boolean;
+  hideBreadcrumb?: boolean;
 }
 
 const getFullDocTitle = (branding: string, title?: string, clusterName?: string) => {
@@ -55,13 +58,21 @@ const Page: React.FC<Props> = (props: Props) => {
         <BasePage
           {...props}
           pageHeader={
-            <PageHeader
-              breadcrumb={props.breadcrumb}
-              options={props.options}
-              sticky={props.stickyHeader}
-              subTitle={props.subTitle}
-              title={props.title}
-            />
+            <>
+              {!props.hideBreadcrumb && props.title && (
+                <div className={css.breadcrumbBar}>
+                  <Breadcrumb>
+                    <Breadcrumb.Item>{props.title}</Breadcrumb.Item>
+                  </Breadcrumb>
+                </div>
+              )}
+              <PageHeader
+                breadcrumb={props.breadcrumb}
+                options={props.options}
+                sticky={props.stickyHeader}
+                subTitle={props.subTitle}
+              />
+            </>
           }
         />
       )}

@@ -170,7 +170,7 @@ const WorkspaceDetails: React.FC = () => {
         label: 'Projects',
       },
       {
-        children: <TaskList workspace={workspace} />,
+        children: <TaskList hideBreadcrumb={true} workspace={workspace} />,
         key: WorkspaceDetailsTab.Tasks,
         label: 'Tasks',
       },
@@ -198,7 +198,7 @@ const WorkspaceDetails: React.FC = () => {
 
     if (canViewModelRegistry({ workspace })) {
       items.push({
-        children: <ModelRegistry workspace={workspace} />,
+        children: <ModelRegistry hideBreadcrumb={true} workspace={workspace} />,
         key: WorkspaceDetailsTab.ModelRegistry,
         label: 'Model Registry',
       });

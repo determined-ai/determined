@@ -69,6 +69,7 @@ const filterKeys: Array<keyof Settings> = ['tags', 'name', 'users', 'description
 
 interface Props {
   workspace?: Workspace;
+  hideBreadcrumb?: boolean;
 }
 
 const MenuKey = {
@@ -77,7 +78,7 @@ const MenuKey = {
   SwitchArchived: 'switch-archived',
 } as const;
 
-const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
+const ModelRegistry: React.FC<Props> = ({ workspace, hideBreadcrumb }: Props) => {
   const canceler = useRef(new AbortController());
   const users = Loadable.getOrElse([], useObservable(userStore.getUsers()));
   const [models, setModels] = useState<ModelItem[]>([]);
@@ -682,6 +683,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
   return (
     <Page
       containerRef={pageRef}
+      hideBreadcrumb={hideBreadcrumb}
       id="models"
       options={
         <Space>

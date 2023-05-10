@@ -82,6 +82,7 @@ type TensorBoardSourceType = ValueOf<typeof TensorBoardSourceType>;
 
 interface Props {
   workspace?: Workspace;
+  hideBreadcrumb?: boolean;
 }
 
 interface TensorBoardSource {
@@ -98,7 +99,7 @@ interface SourceInfo {
 
 const filterKeys: Array<keyof Settings> = ['search', 'state', 'type', 'user', 'workspace'];
 
-const TaskList: React.FC<Props> = ({ workspace }: Props) => {
+const TaskList: React.FC<Props> = ({ workspace, hideBreadcrumb = false }: Props) => {
   const currentUser = Loadable.getOrElse(undefined, useObservable(userStore.currentUser));
   const users = Loadable.getOrElse([], useObservable(userStore.getUsers()));
   const workspaces = Loadable.getOrElse([], useObservable(workspaceStore.workspaces));
@@ -598,6 +599,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
   return (
     <Page
       containerRef={pageRef}
+      hideBreadcrumb={hideBreadcrumb}
       id="tasks"
       options={
         <Space>
