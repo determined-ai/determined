@@ -112,9 +112,12 @@ test:
 test-ci:
 	VITEST_MAX_THREADS=6 VITEST_MIN_THREADS=1 npm run test:coverage -- --reporter=junit --reporter=default --outputFile.junit=coverage/junit.xml
 
-.PHONY: test-ci-quarantined
-test-ci-quarantined:
-	QUARANTINED=true VITEST_MAX_THREADS=6 VITEST_MIN_THREADS=1 npm run test -- LogViewer --reporter=default
+# INCLUDE_FLAKY runs all tests even if they use flakyIt.
+# By default this would run ALL tests.
+# To avoid duplication, I use a filename (LogViewer) here to specify which group of tests to run.
+.PHONY: test-ci-flaky
+test-ci-flaky:
+	INCLUDE_FLAKY=true VITEST_MAX_THREADS=6 VITEST_MIN_THREADS=1 npm run test -- LogViewer --reporter=default
 
 .PHONY: visual-test-deps
 visual-test-deps: node_modules/playwright-core/.local-browsers

@@ -1,3 +1,3 @@
-export const quarantinedIt = (name: string, fn?: jest.ProvidesCallback, timeout?: number): void => {
-  return (process.env.QUARANTINED ? it : it.skip)(name, fn, timeout);
+export const flakyIt = (name: string, fn?: jest.ProvidesCallback, timeout?: number): void => {
+  return (process.env.INCLUDE_FLAKY ? it : it.skip)(name, fn, timeout);
 };
