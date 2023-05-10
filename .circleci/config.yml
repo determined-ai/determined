@@ -2430,6 +2430,7 @@ workflows:
           requires:
             - build-docs
           context: aws
+          filters: *any-upstream
 
   test-cli:
     jobs:
