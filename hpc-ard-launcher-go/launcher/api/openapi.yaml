@@ -6,7 +6,7 @@ info:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
   title: Launcher API
-  version: 3.2.8
+  version: 3.2.9
 servers:
 - url: /
 security:
@@ -43,6 +43,7 @@ paths:
       summary: Gets the API version
       tags:
       - info
+      x-accepts: application/json
   /info/version/server:
     get:
       operationId: getServerVersion
@@ -61,6 +62,7 @@ paths:
       summary: Gets the Server version
       tags:
       - info
+      x-accepts: application/json
   /info/version/revision:
     get:
       operationId: getServerRevision
@@ -79,6 +81,7 @@ paths:
       summary: Gets the Server revision
       tags:
       - info
+      x-accepts: application/json
   /info/api:
     get:
       operationId: getApi
@@ -96,6 +99,7 @@ paths:
       summary: Gets the API definition
       tags:
       - info
+      x-accepts: application/yaml
   /admin/log-level:
     get:
       operationId: getRootLogLevel
@@ -114,6 +118,7 @@ paths:
       summary: Gets the current root log level
       tags:
       - admin
+      x-accepts: application/json
     put:
       operationId: setRootLogLevel
       requestBody:
@@ -136,6 +141,8 @@ paths:
       summary: Sets the root log level
       tags:
       - admin
+      x-contentType: application/json
+      x-accepts: application/json
   /admin/loggers:
     get:
       operationId: listAllLoggerLevels
@@ -156,6 +163,7 @@ paths:
       summary: Gets the log level for all loggers
       tags:
       - admin
+      x-accepts: application/json
     put:
       operationId: setAllLoggerLevels
       requestBody:
@@ -182,6 +190,8 @@ paths:
       summary: Sets the log level for multiple loggers
       tags:
       - admin
+      x-contentType: application/json
+      x-accepts: application/json
   /admin/loggers/{logger}:
     get:
       operationId: getLoggerLevel
@@ -212,6 +222,7 @@ paths:
       summary: Gets the log level for a specific logger
       tags:
       - admin
+      x-accepts: application/json
     put:
       operationId: setLoggerLevel
       parameters:
@@ -244,6 +255,8 @@ paths:
       summary: Sets the log level for a specific logger
       tags:
       - admin
+      x-contentType: application/json
+      x-accepts: application/json
   /launch:
     put:
       operationId: launch
@@ -253,6 +266,15 @@ paths:
         explode: true
         in: query
         name: impersonate
+        required: false
+        schema:
+          type: string
+        style: form
+      - description: Force the use of a specific DispatchID instead of generation
+          of a new one.
+        explode: true
+        in: query
+        name: dispatchId
         required: false
         schema:
           type: string
@@ -326,6 +348,8 @@ paths:
         in a synchronous manner
       tags:
       - launch
+      x-contentType: application/json
+      x-accepts: application/json
   /launch/async:
     put:
       operationId: launchAsync
@@ -335,6 +359,15 @@ paths:
         explode: true
         in: query
         name: impersonate
+        required: false
+        schema:
+          type: string
+        style: form
+      - description: Force the use of a specific DispatchID instead of generation
+          of a new one.
+        explode: true
+        in: query
+        name: dispatchId
         required: false
         schema:
           type: string
@@ -370,6 +403,8 @@ paths:
         in an asynchronous manner
       tags:
       - launch
+      x-contentType: application/json
+      x-accepts: application/json
   /launch/credentials/{owner}/{name}:
     delete:
       operationId: removeCredential
@@ -403,6 +438,7 @@ paths:
       summary: Removes a credential
       tags:
       - launch
+      x-accepts: application/json
     head:
       operationId: hasCredential
       parameters:
@@ -432,6 +468,7 @@ paths:
       summary: Determines whether a given credential has been provided
       tags:
       - launch
+      x-accepts: application/json
     put:
       operationId: addCredential
       parameters:
@@ -473,6 +510,8 @@ paths:
         environments on behalf of the user
       tags:
       - launch
+      x-contentType: application/octet-stream
+      x-accepts: application/json
   /monitoring/{owner}/environments/{environment}:
     get:
       operationId: getEnvironmentDetails
@@ -513,6 +552,7 @@ paths:
       summary: Gets the current details of the environment
       tags:
       - monitoring
+      x-accepts: application/json
   /monitoring/{owner}/environments/{environment}/management:
     delete:
       operationId: deleteEnvironment
@@ -548,6 +588,7 @@ paths:
         longer visible to the dispatch server after this operation succeeds
       tags:
       - monitoring
+      x-accepts: application/json
     get:
       operationId: canManageEnvironment
       parameters:
@@ -587,6 +628,7 @@ paths:
       summary: Gets the management status of the environment
       tags:
       - monitoring
+      x-accepts: application/json
   /monitoring/{owner}/environments/{environment}/status:
     get:
       operationId: getEnvironmentStatus
@@ -646,6 +688,7 @@ paths:
       summary: Gets the status of an environment
       tags:
       - monitoring
+      x-accepts: application/json
   /monitoring/{owner}/environments/{environment}/logs:
     delete:
       operationId: deleteEnvironmentLogs
@@ -679,6 +722,7 @@ paths:
       summary: Deletes all available log files for the environment
       tags:
       - monitoring
+      x-accepts: application/json
     get:
       operationId: listEnvironmentLogs
       parameters:
@@ -724,6 +768,7 @@ paths:
       summary: Gets the content of a log file from the environment
       tags:
       - monitoring
+      x-accepts: application/json
   /monitoring/{owner}/environments/{environment}/logs/{log}:
     delete:
       operationId: deleteEnvironmentLog
@@ -766,6 +811,7 @@ paths:
       summary: Deletes a specific log file for the environment
       tags:
       - monitoring
+      x-accepts: application/json
     get:
       operationId: loadEnvironmentLog
       parameters:
@@ -893,6 +939,7 @@ paths:
       summary: Gets the available log files for the environment
       tags:
       - monitoring
+      x-accepts: application/octet-stream,multipart/byteranges
   /running:
     get:
       operationId: listAllRunning
@@ -972,6 +1019,7 @@ paths:
       summary: Gets all running environments that the user can view
       tags:
       - running
+      x-accepts: application/json
   /running/{owner}:
     delete:
       operationId: terminateAllRunning
@@ -1005,6 +1053,7 @@ paths:
       summary: Terminates all running environments owned by the given owner
       tags:
       - running
+      x-accepts: application/json
     get:
       operationId: listOwnedRunning
       parameters:
@@ -1093,6 +1142,7 @@ paths:
       summary: Gets all running environments launched by the given owner
       tags:
       - running
+      x-accepts: application/json
   /running/{owner}/environments/{environment}:
     delete:
       operationId: terminateRunning
@@ -1147,6 +1197,7 @@ paths:
       summary: Terminates a running environment
       tags:
       - running
+      x-accepts: application/json
     get:
       operationId: getRunning
       parameters:
@@ -1189,6 +1240,7 @@ paths:
       summary: Gets a specific running environment launched by the given owner
       tags:
       - running
+      x-accepts: application/json
   /running/{owner}/environments/{environment}/async:
     delete:
       operationId: terminateRunningAsync
@@ -1243,6 +1295,7 @@ paths:
       summary: Terminates a running environment in an asynchronous manner
       tags:
       - running
+      x-accepts: application/json
   /running/{owner}/environments/{environment}/uis:
     get:
       operationId: getUserInterfaces
@@ -1295,6 +1348,7 @@ paths:
         by the given owner
       tags:
       - running
+      x-accepts: application/json
   /running/{owner}/acls:
     get:
       operationId: getRunningACLs
@@ -1325,6 +1379,7 @@ paths:
         belonging to the given owner
       tags:
       - running
+      x-accepts: application/json
     put:
       operationId: setRunningACLs
       parameters:
@@ -1357,6 +1412,8 @@ paths:
         belonging to the given owner
       tags:
       - running
+      x-contentType: application/json
+      x-accepts: application/json
   /terminated:
     get:
       operationId: listAllTerminated
@@ -1437,6 +1494,7 @@ paths:
       summary: Gets all terminated environments that the user can view
       tags:
       - terminated
+      x-accepts: application/json
   /terminated/{owner}:
     delete:
       operationId: deleteAllTerminated
@@ -1459,6 +1517,7 @@ paths:
       summary: Removes all terminated environments belonging to the given owner
       tags:
       - terminated
+      x-accepts: application/json
     get:
       operationId: listOwnedTerminated
       parameters:
@@ -1547,6 +1606,7 @@ paths:
       summary: Gets all terminated environments belonging to the given owner
       tags:
       - terminated
+      x-accepts: application/json
   /terminated/{owner}/environments/{environment}:
     delete:
       operationId: deleteTerminated
@@ -1581,6 +1641,7 @@ paths:
       summary: Removes a terminated environment
       tags:
       - terminated
+      x-accepts: application/json
     get:
       operationId: getTerminated
       parameters:
@@ -1623,6 +1684,7 @@ paths:
       summary: Gets a specific terminated environment launched by the given owner
       tags:
       - terminated
+      x-accepts: application/json
   /terminated/{owner}/acls:
     get:
       operationId: getTerminatedACLs
@@ -1653,6 +1715,7 @@ paths:
         belonging to the given owner
       tags:
       - terminated
+      x-accepts: application/json
     put:
       operationId: setTerminatedACLs
       parameters:
@@ -1685,6 +1748,8 @@ paths:
         belonging to the given owner
       tags:
       - terminated
+      x-contentType: application/json
+      x-accepts: application/json
 components:
   parameters:
     OwnerParam:
@@ -1888,6 +1953,16 @@ components:
       schema:
         type: string
       style: simple
+    DispatchIdParam:
+      description: Force the use of a specific DispatchID instead of generation of
+        a new one.
+      explode: true
+      in: query
+      name: dispatchId
+      required: false
+      schema:
+        type: string
+      style: form
   schemas:
     DispatchState:
       enum:
@@ -2471,3 +2546,4 @@ components:
       bearerFormat: A launcher-generated authorization token.
       scheme: Bearer
       type: http
+

@@ -1075,7 +1075,8 @@ func (m *dispatcherResourceManager) startLauncherJob(
 		})
 	}
 
-	tempDispatchID, err := m.sendManifestToDispatcher(ctx, manifest, impersonatedUser)
+	tempDispatchID, err := m.sendManifestToDispatcher(
+		ctx, manifest, impersonatedUser, string(msg.AllocationID))
 
 	if err != nil {
 		sendResourceStateChangedErrorResponse(ctx, err, msg,
@@ -1607,6 +1608,7 @@ func (m *dispatcherResourceManager) sendManifestToDispatcher(
 	ctx *actor.Context,
 	manifest *launcher.Manifest,
 	impersonatedUser string,
+	allocationID string,
 ) (string, error) {
 	/*
 	 * "LaunchAsync()" does not wait for the "launcher" to move the job to the "RUNNING"
@@ -1626,6 +1628,7 @@ func (m *dispatcherResourceManager) sendManifestToDispatcher(
 		LaunchAsync(m.apiClient.withAuth(context.TODO())).
 		Manifest(*manifest).
 		Impersonate(impersonatedUser).
+		DispatchId(allocationID).
 		Execute() //nolint:bodyclose
 	dispatcherHistogram.WithLabelValues("launch").Observe(time.Since(start).Seconds())
 	if err != nil {

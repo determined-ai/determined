@@ -1,70 +1,70 @@
-# \TerminatedApi
+# TerminatedApi
 
 All URIs are relative to *http://localhost*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**DeleteAllTerminated**](TerminatedApi.md#DeleteAllTerminated) | **Delete** /terminated/{owner} | Removes all terminated environments belonging to the given owner
-[**DeleteTerminated**](TerminatedApi.md#DeleteTerminated) | **Delete** /terminated/{owner}/environments/{environment} | Removes a terminated environment
-[**GetTerminated**](TerminatedApi.md#GetTerminated) | **Get** /terminated/{owner}/environments/{environment} | Gets a specific terminated environment launched by the given owner
-[**GetTerminatedACLs**](TerminatedApi.md#GetTerminatedACLs) | **Get** /terminated/{owner}/acls | Gets the ACLs that control who can manage the terminated environments belonging to the given owner
-[**ListAllTerminated**](TerminatedApi.md#ListAllTerminated) | **Get** /terminated | Gets all terminated environments that the user can view
-[**ListOwnedTerminated**](TerminatedApi.md#ListOwnedTerminated) | **Get** /terminated/{owner} | Gets all terminated environments belonging to the given owner
-[**SetTerminatedACLs**](TerminatedApi.md#SetTerminatedACLs) | **Put** /terminated/{owner}/acls | Sets the ACLs that control who can manage the terminated environments belonging to the given owner
+[**deleteAllTerminated**](TerminatedApi.md#deleteAllTerminated) | **DELETE** /terminated/{owner} | Removes all terminated environments belonging to the given owner
+[**deleteTerminated**](TerminatedApi.md#deleteTerminated) | **DELETE** /terminated/{owner}/environments/{environment} | Removes a terminated environment
+[**getTerminated**](TerminatedApi.md#getTerminated) | **GET** /terminated/{owner}/environments/{environment} | Gets a specific terminated environment launched by the given owner
+[**getTerminatedACLs**](TerminatedApi.md#getTerminatedACLs) | **GET** /terminated/{owner}/acls | Gets the ACLs that control who can manage the terminated environments belonging to the given owner
+[**listAllTerminated**](TerminatedApi.md#listAllTerminated) | **GET** /terminated | Gets all terminated environments that the user can view
+[**listOwnedTerminated**](TerminatedApi.md#listOwnedTerminated) | **GET** /terminated/{owner} | Gets all terminated environments belonging to the given owner
+[**setTerminatedACLs**](TerminatedApi.md#setTerminatedACLs) | **PUT** /terminated/{owner}/acls | Sets the ACLs that control who can manage the terminated environments belonging to the given owner
 
 
 
-## DeleteAllTerminated
+## deleteAllTerminated
 
-> DeleteAllTerminated(ctx, owner).Execute()
+> deleteAllTerminated(owner)
 
 Removes all terminated environments belonging to the given owner
 
 ### Example
 
-```go
-package main
+```java
+// Import classes:
+import com.cray.analytics.capsules.dispatch.client.invoker.ApiClient;
+import com.cray.analytics.capsules.dispatch.client.invoker.ApiException;
+import com.cray.analytics.capsules.dispatch.client.invoker.Configuration;
+import com.cray.analytics.capsules.dispatch.client.invoker.auth.*;
+import com.cray.analytics.capsules.dispatch.client.invoker.models.*;
+import com.cray.analytics.capsules.dispatch.client.api.TerminatedApi;
 
-import (
-    "context"
-    "fmt"
-    "os"
-    openapiclient "./openapi"
-)
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost");
+        
+        // Configure HTTP bearer authorization: BearerAuth
+        HttpBearerAuth BearerAuth = (HttpBearerAuth) defaultClient.getAuthentication("BearerAuth");
+        BearerAuth.setBearerToken("BEARER TOKEN");
 
-func main() {
-    owner := "lhamilton" // string | The username of the user whose resources that you wish to access
-
-    configuration := openapiclient.NewConfiguration()
-    api_client := openapiclient.NewAPIClient(configuration)
-    resp, r, err := api_client.TerminatedApi.DeleteAllTerminated(context.Background(), owner).Execute()
-    if err != nil {
-        fmt.Fprintf(os.Stderr, "Error when calling `TerminatedApi.DeleteAllTerminated``: %v\n", err)
-        fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+        TerminatedApi apiInstance = new TerminatedApi(defaultClient);
+        String owner = "lhamilton"; // String | The username of the user whose resources that you wish to access
+        try {
+            apiInstance.deleteAllTerminated(owner);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling TerminatedApi#deleteAllTerminated");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
     }
 }
 ```
 
-### Path Parameters
+### Parameters
 
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
-**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**owner** | **string** | The username of the user whose resources that you wish to access | 
-
-### Other Parameters
-
-Other parameters are passed through a pointer to a apiDeleteAllTerminatedRequest struct via the builder pattern
-
-
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
-
+ **owner** | **String**| The username of the user whose resources that you wish to access |
 
 ### Return type
 
- (empty response body)
+null (empty response body)
 
 ### Authorization
 
@@ -75,65 +75,67 @@ Name | Type | Description  | Notes
 - **Content-Type**: Not defined
 - **Accept**: Not defined
 
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
-[[Back to Model list]](../README.md#documentation-for-models)
-[[Back to README]](../README.md)
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **204** | All owned environments were removed |  -  |
+| **403** | User does not have permission to manage terminated environment with the given owner |  -  |
 
 
-## DeleteTerminated
+## deleteTerminated
 
-> DeleteTerminated(ctx, owner, environment).Execute()
+> deleteTerminated(owner, environment)
 
 Removes a terminated environment
 
 ### Example
 
-```go
-package main
+```java
+// Import classes:
+import com.cray.analytics.capsules.dispatch.client.invoker.ApiClient;
+import com.cray.analytics.capsules.dispatch.client.invoker.ApiException;
+import com.cray.analytics.capsules.dispatch.client.invoker.Configuration;
+import com.cray.analytics.capsules.dispatch.client.invoker.auth.*;
+import com.cray.analytics.capsules.dispatch.client.invoker.models.*;
+import com.cray.analytics.capsules.dispatch.client.api.TerminatedApi;
 
-import (
-    "context"
-    "fmt"
-    "os"
-    openapiclient "./openapi"
-)
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost");
+        
+        // Configure HTTP bearer authorization: BearerAuth
+        HttpBearerAuth BearerAuth = (HttpBearerAuth) defaultClient.getAuthentication("BearerAuth");
+        BearerAuth.setBearerToken("BEARER TOKEN");
 
-func main() {
-    owner := "lhamilton" // string | The username of the user whose resources that you wish to access
-    environment := "abcdef1234" // string | The environment that you wish to access
-
-    configuration := openapiclient.NewConfiguration()
-    api_client := openapiclient.NewAPIClient(configuration)
-    resp, r, err := api_client.TerminatedApi.DeleteTerminated(context.Background(), owner, environment).Execute()
-    if err != nil {
-        fmt.Fprintf(os.Stderr, "Error when calling `TerminatedApi.DeleteTerminated``: %v\n", err)
-        fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+        TerminatedApi apiInstance = new TerminatedApi(defaultClient);
+        String owner = "lhamilton"; // String | The username of the user whose resources that you wish to access
+        String environment = "abcdef1234"; // String | The environment that you wish to access
+        try {
+            apiInstance.deleteTerminated(owner, environment);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling TerminatedApi#deleteTerminated");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
     }
 }
 ```
 
-### Path Parameters
+### Parameters
 
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
-**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**owner** | **string** | The username of the user whose resources that you wish to access | 
-**environment** | **string** | The environment that you wish to access | 
-
-### Other Parameters
-
-Other parameters are passed through a pointer to a apiDeleteTerminatedRequest struct via the builder pattern
-
-
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
-
-
+ **owner** | **String**| The username of the user whose resources that you wish to access |
+ **environment** | **String**| The environment that you wish to access |
 
 ### Return type
 
- (empty response body)
+null (empty response body)
 
 ### Authorization
 
@@ -144,67 +146,69 @@ Name | Type | Description  | Notes
 - **Content-Type**: Not defined
 - **Accept**: Not defined
 
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
-[[Back to Model list]](../README.md#documentation-for-models)
-[[Back to README]](../README.md)
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **204** | The terminated environment was deleted |  -  |
+| **403** | User does not have permission to manage terminated environment with the given owner |  -  |
+| **404** | The given environment does not exist or has already been deleted permanently |  -  |
 
 
-## GetTerminated
+## getTerminated
 
-> Manifest GetTerminated(ctx, owner, environment).Execute()
+> com.cray.analytics.capsules.model.EnvironmentManifest getTerminated(owner, environment)
 
 Gets a specific terminated environment launched by the given owner
 
 ### Example
 
-```go
-package main
+```java
+// Import classes:
+import com.cray.analytics.capsules.dispatch.client.invoker.ApiClient;
+import com.cray.analytics.capsules.dispatch.client.invoker.ApiException;
+import com.cray.analytics.capsules.dispatch.client.invoker.Configuration;
+import com.cray.analytics.capsules.dispatch.client.invoker.auth.*;
+import com.cray.analytics.capsules.dispatch.client.invoker.models.*;
+import com.cray.analytics.capsules.dispatch.client.api.TerminatedApi;
 
-import (
-    "context"
-    "fmt"
-    "os"
-    openapiclient "./openapi"
-)
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost");
+        
+        // Configure HTTP bearer authorization: BearerAuth
+        HttpBearerAuth BearerAuth = (HttpBearerAuth) defaultClient.getAuthentication("BearerAuth");
+        BearerAuth.setBearerToken("BEARER TOKEN");
 
-func main() {
-    owner := "lhamilton" // string | The username of the user whose resources that you wish to access
-    environment := "abcdef1234" // string | The environment that you wish to access
-
-    configuration := openapiclient.NewConfiguration()
-    api_client := openapiclient.NewAPIClient(configuration)
-    resp, r, err := api_client.TerminatedApi.GetTerminated(context.Background(), owner, environment).Execute()
-    if err != nil {
-        fmt.Fprintf(os.Stderr, "Error when calling `TerminatedApi.GetTerminated``: %v\n", err)
-        fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+        TerminatedApi apiInstance = new TerminatedApi(defaultClient);
+        String owner = "lhamilton"; // String | The username of the user whose resources that you wish to access
+        String environment = "abcdef1234"; // String | The environment that you wish to access
+        try {
+            com.cray.analytics.capsules.model.EnvironmentManifest result = apiInstance.getTerminated(owner, environment);
+            System.out.println(result);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling TerminatedApi#getTerminated");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
     }
-    // response from `GetTerminated`: Manifest
-    fmt.Fprintf(os.Stdout, "Response from `TerminatedApi.GetTerminated`: %v\n", resp)
 }
 ```
 
-### Path Parameters
+### Parameters
 
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
-**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**owner** | **string** | The username of the user whose resources that you wish to access | 
-**environment** | **string** | The environment that you wish to access | 
-
-### Other Parameters
-
-Other parameters are passed through a pointer to a apiGetTerminatedRequest struct via the builder pattern
-
-
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
-
-
+ **owner** | **String**| The username of the user whose resources that you wish to access |
+ **environment** | **String**| The environment that you wish to access |
 
 ### Return type
 
-[**Manifest**](Manifest.md)
+[**com.cray.analytics.capsules.model.EnvironmentManifest**](com.cray.analytics.capsules.model.EnvironmentManifest.md)
 
 ### Authorization
 
@@ -215,64 +219,68 @@ Name | Type | Description  | Notes
 - **Content-Type**: Not defined
 - **Accept**: application/json, application/yaml
 
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
-[[Back to Model list]](../README.md#documentation-for-models)
-[[Back to README]](../README.md)
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | A manifest describing the terminated environment |  -  |
+| **301** | The given environment is still running and should be looked up elsewhere |  -  |
+| **403** | User does not have permission to view terminated environment with the given owner |  -  |
+| **404** | The given environment does not exist or has an invalid state |  -  |
 
 
-## GetTerminatedACLs
+## getTerminatedACLs
 
-> ACLS GetTerminatedACLs(ctx, owner).Execute()
+> com.cray.analytics.capsules.security.ACL getTerminatedACLs(owner)
 
 Gets the ACLs that control who can manage the terminated environments belonging to the given owner
 
 ### Example
 
-```go
-package main
+```java
+// Import classes:
+import com.cray.analytics.capsules.dispatch.client.invoker.ApiClient;
+import com.cray.analytics.capsules.dispatch.client.invoker.ApiException;
+import com.cray.analytics.capsules.dispatch.client.invoker.Configuration;
+import com.cray.analytics.capsules.dispatch.client.invoker.auth.*;
+import com.cray.analytics.capsules.dispatch.client.invoker.models.*;
+import com.cray.analytics.capsules.dispatch.client.api.TerminatedApi;
 
-import (
-    "context"
-    "fmt"
-    "os"
-    openapiclient "./openapi"
-)
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost");
+        
+        // Configure HTTP bearer authorization: BearerAuth
+        HttpBearerAuth BearerAuth = (HttpBearerAuth) defaultClient.getAuthentication("BearerAuth");
+        BearerAuth.setBearerToken("BEARER TOKEN");
 
-func main() {
-    owner := "lhamilton" // string | The username of the user whose resources that you wish to access
-
-    configuration := openapiclient.NewConfiguration()
-    api_client := openapiclient.NewAPIClient(configuration)
-    resp, r, err := api_client.TerminatedApi.GetTerminatedACLs(context.Background(), owner).Execute()
-    if err != nil {
-        fmt.Fprintf(os.Stderr, "Error when calling `TerminatedApi.GetTerminatedACLs``: %v\n", err)
-        fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+        TerminatedApi apiInstance = new TerminatedApi(defaultClient);
+        String owner = "lhamilton"; // String | The username of the user whose resources that you wish to access
+        try {
+            com.cray.analytics.capsules.security.ACL result = apiInstance.getTerminatedACLs(owner);
+            System.out.println(result);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling TerminatedApi#getTerminatedACLs");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
     }
-    // response from `GetTerminatedACLs`: ACLS
-    fmt.Fprintf(os.Stdout, "Response from `TerminatedApi.GetTerminatedACLs`: %v\n", resp)
 }
 ```
 
-### Path Parameters
+### Parameters
 
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
-**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**owner** | **string** | The username of the user whose resources that you wish to access | 
-
-### Other Parameters
-
-Other parameters are passed through a pointer to a apiGetTerminatedACLsRequest struct via the builder pattern
-
-
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
-
+ **owner** | **String**| The username of the user whose resources that you wish to access |
 
 ### Return type
 
-[**ACLS**](ACLS.md)
+[**com.cray.analytics.capsules.security.ACL**](com.cray.analytics.capsules.security.ACL.md)
 
 ### Authorization
 
@@ -283,68 +291,74 @@ Name | Type | Description  | Notes
 - **Content-Type**: Not defined
 - **Accept**: application/json, application/yaml
 
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
-[[Back to Model list]](../README.md#documentation-for-models)
-[[Back to README]](../README.md)
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | ACLs for the given owners terminated environments |  -  |
+| **403** | User does not have permission to manage terminated environment ACLs with the given owner |  -  |
 
 
-## ListAllTerminated
+## listAllTerminated
 
-> map[string][]DispatchInfo ListAllTerminated(ctx).Limit(limit).Offset(offset).Reverse(reverse).EventLimit(eventLimit).State(state).Execute()
+> Map&lt;String, List&lt;com.cray.analytics.capsules.model.DispatchInfo&gt;&gt; listAllTerminated(limit, offset, reverse, eventLimit, state)
 
 Gets all terminated environments that the user can view
 
 ### Example
 
-```go
-package main
+```java
+// Import classes:
+import com.cray.analytics.capsules.dispatch.client.invoker.ApiClient;
+import com.cray.analytics.capsules.dispatch.client.invoker.ApiException;
+import com.cray.analytics.capsules.dispatch.client.invoker.Configuration;
+import com.cray.analytics.capsules.dispatch.client.invoker.auth.*;
+import com.cray.analytics.capsules.dispatch.client.invoker.models.*;
+import com.cray.analytics.capsules.dispatch.client.api.TerminatedApi;
 
-import (
-    "context"
-    "fmt"
-    "os"
-    openapiclient "./openapi"
-)
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost");
+        
+        // Configure HTTP bearer authorization: BearerAuth
+        HttpBearerAuth BearerAuth = (HttpBearerAuth) defaultClient.getAuthentication("BearerAuth");
+        BearerAuth.setBearerToken("BEARER TOKEN");
 
-func main() {
-    limit := int32(56) // int32 | Number of results to limit to, used in conjunction with offset to page through results (optional)
-    offset := int32(56) // int32 | Number of results to offset by, used in conjunction with limit to page through results (optional) (default to 0)
-    reverse := true // bool | Whether to reverse the default sort order in the returned results (optional) (default to false)
-    eventLimit := int32(56) // int32 | Number of events to limit to per DispatchInfo (optional)
-    state := []openapiclient.DispatchState{openapiclient.DispatchState("UNKNOWN")} // []DispatchState | Results must be in the given state(s) (optional)
-
-    configuration := openapiclient.NewConfiguration()
-    api_client := openapiclient.NewAPIClient(configuration)
-    resp, r, err := api_client.TerminatedApi.ListAllTerminated(context.Background()).Limit(limit).Offset(offset).Reverse(reverse).EventLimit(eventLimit).State(state).Execute()
-    if err != nil {
-        fmt.Fprintf(os.Stderr, "Error when calling `TerminatedApi.ListAllTerminated``: %v\n", err)
-        fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+        TerminatedApi apiInstance = new TerminatedApi(defaultClient);
+        Integer limit = 56; // Integer | Number of results to limit to, used in conjunction with offset to page through results
+        Integer offset = 0; // Integer | Number of results to offset by, used in conjunction with limit to page through results
+        Boolean reverse = false; // Boolean | Whether to reverse the default sort order in the returned results
+        Integer eventLimit = 56; // Integer | Number of events to limit to per DispatchInfo
+        List<com.cray.analytics.capsules.model.DispatchState> state = Arrays.asList(); // List<com.cray.analytics.capsules.model.DispatchState> | Results must be in the given state(s)
+        try {
+            Map<String, List<com.cray.analytics.capsules.model.DispatchInfo>> result = apiInstance.listAllTerminated(limit, offset, reverse, eventLimit, state);
+            System.out.println(result);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling TerminatedApi#listAllTerminated");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
     }
-    // response from `ListAllTerminated`: map[string][]DispatchInfo
-    fmt.Fprintf(os.Stdout, "Response from `TerminatedApi.ListAllTerminated`: %v\n", resp)
 }
 ```
 
-### Path Parameters
-
-
-
-### Other Parameters
-
-Other parameters are passed through a pointer to a apiListAllTerminatedRequest struct via the builder pattern
+### Parameters
 
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **limit** | **int32** | Number of results to limit to, used in conjunction with offset to page through results | 
- **offset** | **int32** | Number of results to offset by, used in conjunction with limit to page through results | [default to 0]
- **reverse** | **bool** | Whether to reverse the default sort order in the returned results | [default to false]
- **eventLimit** | **int32** | Number of events to limit to per DispatchInfo | 
- **state** | [**[]DispatchState**](DispatchState.md) | Results must be in the given state(s) | 
+ **limit** | **Integer**| Number of results to limit to, used in conjunction with offset to page through results | [optional]
+ **offset** | **Integer**| Number of results to offset by, used in conjunction with limit to page through results | [optional] [default to 0]
+ **reverse** | **Boolean**| Whether to reverse the default sort order in the returned results | [optional] [default to false]
+ **eventLimit** | **Integer**| Number of events to limit to per DispatchInfo | [optional]
+ **state** | [**List&lt;com.cray.analytics.capsules.model.DispatchState&gt;**](com.cray.analytics.capsules.model.DispatchState.md)| Results must be in the given state(s) | [optional]
 
 ### Return type
 
-[**map[string][]DispatchInfo**](array.md)
+[**Map&lt;String, List&lt;com.cray.analytics.capsules.model.DispatchInfo&gt;&gt;**](List.md)
 
 ### Authorization
 
@@ -355,74 +369,76 @@ Name | Type | Description  | Notes
 - **Content-Type**: Not defined
 - **Accept**: application/json, application/yaml
 
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
-[[Back to Model list]](../README.md#documentation-for-models)
-[[Back to README]](../README.md)
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | List of terminated environments |  -  |
+| **403** | User does not have permission to view terminated environment with the given owner |  -  |
 
 
-## ListOwnedTerminated
+## listOwnedTerminated
 
-> map[string][]DispatchInfo ListOwnedTerminated(ctx, owner).Limit(limit).Offset(offset).Reverse(reverse).EventLimit(eventLimit).State(state).Execute()
+> Map&lt;String, List&lt;com.cray.analytics.capsules.model.DispatchInfo&gt;&gt; listOwnedTerminated(owner, limit, offset, reverse, eventLimit, state)
 
 Gets all terminated environments belonging to the given owner
 
 ### Example
 
-```go
-package main
+```java
+// Import classes:
+import com.cray.analytics.capsules.dispatch.client.invoker.ApiClient;
+import com.cray.analytics.capsules.dispatch.client.invoker.ApiException;
+import com.cray.analytics.capsules.dispatch.client.invoker.Configuration;
+import com.cray.analytics.capsules.dispatch.client.invoker.auth.*;
+import com.cray.analytics.capsules.dispatch.client.invoker.models.*;
+import com.cray.analytics.capsules.dispatch.client.api.TerminatedApi;
 
-import (
-    "context"
-    "fmt"
-    "os"
-    openapiclient "./openapi"
-)
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost");
+        
+        // Configure HTTP bearer authorization: BearerAuth
+        HttpBearerAuth BearerAuth = (HttpBearerAuth) defaultClient.getAuthentication("BearerAuth");
+        BearerAuth.setBearerToken("BEARER TOKEN");
 
-func main() {
-    owner := "lhamilton" // string | The username of the user whose resources that you wish to access
-    limit := int32(56) // int32 | Number of results to limit to, used in conjunction with offset to page through results (optional)
-    offset := int32(56) // int32 | Number of results to offset by, used in conjunction with limit to page through results (optional) (default to 0)
-    reverse := true // bool | Whether to reverse the default sort order in the returned results (optional) (default to false)
-    eventLimit := int32(56) // int32 | Number of events to limit to per DispatchInfo (optional)
-    state := []openapiclient.DispatchState{openapiclient.DispatchState("UNKNOWN")} // []DispatchState | Results must be in the given state(s) (optional)
-
-    configuration := openapiclient.NewConfiguration()
-    api_client := openapiclient.NewAPIClient(configuration)
-    resp, r, err := api_client.TerminatedApi.ListOwnedTerminated(context.Background(), owner).Limit(limit).Offset(offset).Reverse(reverse).EventLimit(eventLimit).State(state).Execute()
-    if err != nil {
-        fmt.Fprintf(os.Stderr, "Error when calling `TerminatedApi.ListOwnedTerminated``: %v\n", err)
-        fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+        TerminatedApi apiInstance = new TerminatedApi(defaultClient);
+        String owner = "lhamilton"; // String | The username of the user whose resources that you wish to access
+        Integer limit = 56; // Integer | Number of results to limit to, used in conjunction with offset to page through results
+        Integer offset = 0; // Integer | Number of results to offset by, used in conjunction with limit to page through results
+        Boolean reverse = false; // Boolean | Whether to reverse the default sort order in the returned results
+        Integer eventLimit = 56; // Integer | Number of events to limit to per DispatchInfo
+        List<com.cray.analytics.capsules.model.DispatchState> state = Arrays.asList(); // List<com.cray.analytics.capsules.model.DispatchState> | Results must be in the given state(s)
+        try {
+            Map<String, List<com.cray.analytics.capsules.model.DispatchInfo>> result = apiInstance.listOwnedTerminated(owner, limit, offset, reverse, eventLimit, state);
+            System.out.println(result);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling TerminatedApi#listOwnedTerminated");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
     }
-    // response from `ListOwnedTerminated`: map[string][]DispatchInfo
-    fmt.Fprintf(os.Stdout, "Response from `TerminatedApi.ListOwnedTerminated`: %v\n", resp)
 }
 ```
 
-### Path Parameters
+### Parameters
 
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
-**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**owner** | **string** | The username of the user whose resources that you wish to access | 
-
-### Other Parameters
-
-Other parameters are passed through a pointer to a apiListOwnedTerminatedRequest struct via the builder pattern
-
-
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
-
- **limit** | **int32** | Number of results to limit to, used in conjunction with offset to page through results | 
- **offset** | **int32** | Number of results to offset by, used in conjunction with limit to page through results | [default to 0]
- **reverse** | **bool** | Whether to reverse the default sort order in the returned results | [default to false]
- **eventLimit** | **int32** | Number of events to limit to per DispatchInfo | 
- **state** | [**[]DispatchState**](DispatchState.md) | Results must be in the given state(s) | 
+ **owner** | **String**| The username of the user whose resources that you wish to access |
+ **limit** | **Integer**| Number of results to limit to, used in conjunction with offset to page through results | [optional]
+ **offset** | **Integer**| Number of results to offset by, used in conjunction with limit to page through results | [optional] [default to 0]
+ **reverse** | **Boolean**| Whether to reverse the default sort order in the returned results | [optional] [default to false]
+ **eventLimit** | **Integer**| Number of events to limit to per DispatchInfo | [optional]
+ **state** | [**List&lt;com.cray.analytics.capsules.model.DispatchState&gt;**](com.cray.analytics.capsules.model.DispatchState.md)| Results must be in the given state(s) | [optional]
 
 ### Return type
 
-[**map[string][]DispatchInfo**](array.md)
+[**Map&lt;String, List&lt;com.cray.analytics.capsules.model.DispatchInfo&gt;&gt;**](List.md)
 
 ### Authorization
 
@@ -433,64 +449,67 @@ Name | Type | Description  | Notes
 - **Content-Type**: Not defined
 - **Accept**: application/json, application/yaml
 
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
-[[Back to Model list]](../README.md#documentation-for-models)
-[[Back to README]](../README.md)
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | List of owned terminated environments |  -  |
+| **403** | User does not have permission to view terminated environment with the given owner |  -  |
 
 
-## SetTerminatedACLs
+## setTerminatedACLs
 
-> SetTerminatedACLs(ctx, owner).ACLS(aCLS).Execute()
+> setTerminatedACLs(owner, comCrayAnalyticsCapsulesSecurityACL)
 
 Sets the ACLs that control who can manage the terminated environments belonging to the given owner
 
 ### Example
 
-```go
-package main
+```java
+// Import classes:
+import com.cray.analytics.capsules.dispatch.client.invoker.ApiClient;
+import com.cray.analytics.capsules.dispatch.client.invoker.ApiException;
+import com.cray.analytics.capsules.dispatch.client.invoker.Configuration;
+import com.cray.analytics.capsules.dispatch.client.invoker.auth.*;
+import com.cray.analytics.capsules.dispatch.client.invoker.models.*;
+import com.cray.analytics.capsules.dispatch.client.api.TerminatedApi;
 
-import (
-    "context"
-    "fmt"
-    "os"
-    openapiclient "./openapi"
-)
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost");
+        
+        // Configure HTTP bearer authorization: BearerAuth
+        HttpBearerAuth BearerAuth = (HttpBearerAuth) defaultClient.getAuthentication("BearerAuth");
+        BearerAuth.setBearerToken("BEARER TOKEN");
 
-func main() {
-    owner := "lhamilton" // string | The username of the user whose resources that you wish to access
-    aCLS := *openapiclient.NewACLS() // ACLS | The ACLs to set
-
-    configuration := openapiclient.NewConfiguration()
-    api_client := openapiclient.NewAPIClient(configuration)
-    resp, r, err := api_client.TerminatedApi.SetTerminatedACLs(context.Background(), owner).ACLS(aCLS).Execute()
-    if err != nil {
-        fmt.Fprintf(os.Stderr, "Error when calling `TerminatedApi.SetTerminatedACLs``: %v\n", err)
-        fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+        TerminatedApi apiInstance = new TerminatedApi(defaultClient);
+        String owner = "lhamilton"; // String | The username of the user whose resources that you wish to access
+        com.cray.analytics.capsules.security.ACL comCrayAnalyticsCapsulesSecurityACL = new com.cray.analytics.capsules.security.ACL(); // com.cray.analytics.capsules.security.ACL | The ACLs to set
+        try {
+            apiInstance.setTerminatedACLs(owner, comCrayAnalyticsCapsulesSecurityACL);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling TerminatedApi#setTerminatedACLs");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
     }
 }
 ```
 
-### Path Parameters
+### Parameters
 
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
-**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**owner** | **string** | The username of the user whose resources that you wish to access | 
-
-### Other Parameters
-
-Other parameters are passed through a pointer to a apiSetTerminatedACLsRequest struct via the builder pattern
-
-
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
-
- **aCLS** | [**ACLS**](ACLS.md) | The ACLs to set | 
+ **owner** | **String**| The username of the user whose resources that you wish to access |
+ **comCrayAnalyticsCapsulesSecurityACL** | [**com.cray.analytics.capsules.security.ACL**](com.cray.analytics.capsules.security.ACL.md)| The ACLs to set |
 
 ### Return type
 
- (empty response body)
+null (empty response body)
 
 ### Authorization
 
@@ -501,7 +520,10 @@ Name | Type | Description  | Notes
 - **Content-Type**: application/json, application/yaml
 - **Accept**: Not defined
 
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
-[[Back to Model list]](../README.md#documentation-for-models)
-[[Back to README]](../README.md)
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **204** | ACLs were successfully updated |  -  |
+| **403** | User does not have permission to manage terminated environment ACLs with the given owner |  -  |
 
