@@ -1,60 +1,64 @@
-# \InfoApi
+# InfoApi
 
 All URIs are relative to *http://localhost*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**GetApi**](InfoApi.md#GetApi) | **Get** /info/api | Gets the API definition
-[**GetApiVersion**](InfoApi.md#GetApiVersion) | **Get** /info/version/api | Gets the API version
-[**GetServerRevision**](InfoApi.md#GetServerRevision) | **Get** /info/version/revision | Gets the Server revision
-[**GetServerVersion**](InfoApi.md#GetServerVersion) | **Get** /info/version/server | Gets the Server version
+[**getApi**](InfoApi.md#getApi) | **GET** /info/api | Gets the API definition
+[**getApiVersion**](InfoApi.md#getApiVersion) | **GET** /info/version/api | Gets the API version
+[**getServerRevision**](InfoApi.md#getServerRevision) | **GET** /info/version/revision | Gets the Server revision
+[**getServerVersion**](InfoApi.md#getServerVersion) | **GET** /info/version/server | Gets the Server version
 
 
 
-## GetApi
+## getApi
 
-> map[string]map[string]interface{} GetApi(ctx).Execute()
+> Map&lt;String, Object&gt; getApi()
 
 Gets the API definition
 
 ### Example
 
-```go
-package main
+```java
+// Import classes:
+import com.cray.analytics.capsules.dispatch.client.invoker.ApiClient;
+import com.cray.analytics.capsules.dispatch.client.invoker.ApiException;
+import com.cray.analytics.capsules.dispatch.client.invoker.Configuration;
+import com.cray.analytics.capsules.dispatch.client.invoker.auth.*;
+import com.cray.analytics.capsules.dispatch.client.invoker.models.*;
+import com.cray.analytics.capsules.dispatch.client.api.InfoApi;
 
-import (
-    "context"
-    "fmt"
-    "os"
-    openapiclient "./openapi"
-)
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost");
+        
+        // Configure HTTP bearer authorization: BearerAuth
+        HttpBearerAuth BearerAuth = (HttpBearerAuth) defaultClient.getAuthentication("BearerAuth");
+        BearerAuth.setBearerToken("BEARER TOKEN");
 
-func main() {
-
-    configuration := openapiclient.NewConfiguration()
-    api_client := openapiclient.NewAPIClient(configuration)
-    resp, r, err := api_client.InfoApi.GetApi(context.Background()).Execute()
-    if err != nil {
-        fmt.Fprintf(os.Stderr, "Error when calling `InfoApi.GetApi``: %v\n", err)
-        fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+        InfoApi apiInstance = new InfoApi(defaultClient);
+        try {
+            Map<String, Object> result = apiInstance.getApi();
+            System.out.println(result);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling InfoApi#getApi");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
     }
-    // response from `GetApi`: map[string]map[string]interface{}
-    fmt.Fprintf(os.Stdout, "Response from `InfoApi.GetApi`: %v\n", resp)
 }
 ```
 
-### Path Parameters
+### Parameters
 
 This endpoint does not need any parameter.
 
-### Other Parameters
-
-Other parameters are passed through a pointer to a apiGetApiRequest struct via the builder pattern
-
-
 ### Return type
 
-**map[string]map[string]interface{}**
+**Map&lt;String, Object&gt;**
 
 ### Authorization
 
@@ -65,55 +69,61 @@ Other parameters are passed through a pointer to a apiGetApiRequest struct via t
 - **Content-Type**: Not defined
 - **Accept**: application/yaml
 
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
-[[Back to Model list]](../README.md#documentation-for-models)
-[[Back to README]](../README.md)
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | API Definition |  -  |
 
 
-## GetApiVersion
+## getApiVersion
 
-> string GetApiVersion(ctx).Execute()
+> String getApiVersion()
 
 Gets the API version
 
 ### Example
 
-```go
-package main
+```java
+// Import classes:
+import com.cray.analytics.capsules.dispatch.client.invoker.ApiClient;
+import com.cray.analytics.capsules.dispatch.client.invoker.ApiException;
+import com.cray.analytics.capsules.dispatch.client.invoker.Configuration;
+import com.cray.analytics.capsules.dispatch.client.invoker.auth.*;
+import com.cray.analytics.capsules.dispatch.client.invoker.models.*;
+import com.cray.analytics.capsules.dispatch.client.api.InfoApi;
 
-import (
-    "context"
-    "fmt"
-    "os"
-    openapiclient "./openapi"
-)
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost");
+        
+        // Configure HTTP bearer authorization: BearerAuth
+        HttpBearerAuth BearerAuth = (HttpBearerAuth) defaultClient.getAuthentication("BearerAuth");
+        BearerAuth.setBearerToken("BEARER TOKEN");
 
-func main() {
-
-    configuration := openapiclient.NewConfiguration()
-    api_client := openapiclient.NewAPIClient(configuration)
-    resp, r, err := api_client.InfoApi.GetApiVersion(context.Background()).Execute()
-    if err != nil {
-        fmt.Fprintf(os.Stderr, "Error when calling `InfoApi.GetApiVersion``: %v\n", err)
-        fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+        InfoApi apiInstance = new InfoApi(defaultClient);
+        try {
+            String result = apiInstance.getApiVersion();
+            System.out.println(result);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling InfoApi#getApiVersion");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
     }
-    // response from `GetApiVersion`: string
-    fmt.Fprintf(os.Stdout, "Response from `InfoApi.GetApiVersion`: %v\n", resp)
 }
 ```
 
-### Path Parameters
+### Parameters
 
 This endpoint does not need any parameter.
 
-### Other Parameters
-
-Other parameters are passed through a pointer to a apiGetApiVersionRequest struct via the builder pattern
-
-
 ### Return type
 
-**string**
+**String**
 
 ### Authorization
 
@@ -124,55 +134,61 @@ Other parameters are passed through a pointer to a apiGetApiVersionRequest struc
 - **Content-Type**: Not defined
 - **Accept**: application/json, application/yaml
 
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
-[[Back to Model list]](../README.md#documentation-for-models)
-[[Back to README]](../README.md)
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | API Version |  -  |
 
 
-## GetServerRevision
+## getServerRevision
 
-> string GetServerRevision(ctx).Execute()
+> String getServerRevision()
 
 Gets the Server revision
 
 ### Example
 
-```go
-package main
+```java
+// Import classes:
+import com.cray.analytics.capsules.dispatch.client.invoker.ApiClient;
+import com.cray.analytics.capsules.dispatch.client.invoker.ApiException;
+import com.cray.analytics.capsules.dispatch.client.invoker.Configuration;
+import com.cray.analytics.capsules.dispatch.client.invoker.auth.*;
+import com.cray.analytics.capsules.dispatch.client.invoker.models.*;
+import com.cray.analytics.capsules.dispatch.client.api.InfoApi;
 
-import (
-    "context"
-    "fmt"
-    "os"
-    openapiclient "./openapi"
-)
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost");
+        
+        // Configure HTTP bearer authorization: BearerAuth
+        HttpBearerAuth BearerAuth = (HttpBearerAuth) defaultClient.getAuthentication("BearerAuth");
+        BearerAuth.setBearerToken("BEARER TOKEN");
 
-func main() {
-
-    configuration := openapiclient.NewConfiguration()
-    api_client := openapiclient.NewAPIClient(configuration)
-    resp, r, err := api_client.InfoApi.GetServerRevision(context.Background()).Execute()
-    if err != nil {
-        fmt.Fprintf(os.Stderr, "Error when calling `InfoApi.GetServerRevision``: %v\n", err)
-        fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+        InfoApi apiInstance = new InfoApi(defaultClient);
+        try {
+            String result = apiInstance.getServerRevision();
+            System.out.println(result);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling InfoApi#getServerRevision");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
     }
-    // response from `GetServerRevision`: string
-    fmt.Fprintf(os.Stdout, "Response from `InfoApi.GetServerRevision`: %v\n", resp)
 }
 ```
 
-### Path Parameters
+### Parameters
 
 This endpoint does not need any parameter.
 
-### Other Parameters
-
-Other parameters are passed through a pointer to a apiGetServerRevisionRequest struct via the builder pattern
-
-
 ### Return type
 
-**string**
+**String**
 
 ### Authorization
 
@@ -183,55 +199,61 @@ Other parameters are passed through a pointer to a apiGetServerRevisionRequest s
 - **Content-Type**: Not defined
 - **Accept**: application/json, application/yaml
 
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
-[[Back to Model list]](../README.md#documentation-for-models)
-[[Back to README]](../README.md)
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | Server Revision |  -  |
 
 
-## GetServerVersion
+## getServerVersion
 
-> string GetServerVersion(ctx).Execute()
+> String getServerVersion()
 
 Gets the Server version
 
 ### Example
 
-```go
-package main
+```java
+// Import classes:
+import com.cray.analytics.capsules.dispatch.client.invoker.ApiClient;
+import com.cray.analytics.capsules.dispatch.client.invoker.ApiException;
+import com.cray.analytics.capsules.dispatch.client.invoker.Configuration;
+import com.cray.analytics.capsules.dispatch.client.invoker.auth.*;
+import com.cray.analytics.capsules.dispatch.client.invoker.models.*;
+import com.cray.analytics.capsules.dispatch.client.api.InfoApi;
 
-import (
-    "context"
-    "fmt"
-    "os"
-    openapiclient "./openapi"
-)
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost");
+        
+        // Configure HTTP bearer authorization: BearerAuth
+        HttpBearerAuth BearerAuth = (HttpBearerAuth) defaultClient.getAuthentication("BearerAuth");
+        BearerAuth.setBearerToken("BEARER TOKEN");
 
-func main() {
-
-    configuration := openapiclient.NewConfiguration()
-    api_client := openapiclient.NewAPIClient(configuration)
-    resp, r, err := api_client.InfoApi.GetServerVersion(context.Background()).Execute()
-    if err != nil {
-        fmt.Fprintf(os.Stderr, "Error when calling `InfoApi.GetServerVersion``: %v\n", err)
-        fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+        InfoApi apiInstance = new InfoApi(defaultClient);
+        try {
+            String result = apiInstance.getServerVersion();
+            System.out.println(result);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling InfoApi#getServerVersion");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
     }
-    // response from `GetServerVersion`: string
-    fmt.Fprintf(os.Stdout, "Response from `InfoApi.GetServerVersion`: %v\n", resp)
 }
 ```
 
-### Path Parameters
+### Parameters
 
 This endpoint does not need any parameter.
 
-### Other Parameters
-
-Other parameters are passed through a pointer to a apiGetServerVersionRequest struct via the builder pattern
-
-
 ### Return type
 
-**string**
+**String**
 
 ### Authorization
 
@@ -242,7 +264,9 @@ Other parameters are passed through a pointer to a apiGetServerVersionRequest st
 - **Content-Type**: Not defined
 - **Accept**: application/json, application/yaml
 
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
-[[Back to Model list]](../README.md#documentation-for-models)
-[[Back to README]](../README.md)
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | Server Version |  -  |
 

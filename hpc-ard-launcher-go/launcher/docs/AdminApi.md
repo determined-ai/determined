@@ -1,71 +1,70 @@
-# \AdminApi
+# AdminApi
 
 All URIs are relative to *http://localhost*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**GetLoggerLevel**](AdminApi.md#GetLoggerLevel) | **Get** /admin/loggers/{logger} | Gets the log level for a specific logger
-[**GetRootLogLevel**](AdminApi.md#GetRootLogLevel) | **Get** /admin/log-level | Gets the current root log level
-[**ListAllLoggerLevels**](AdminApi.md#ListAllLoggerLevels) | **Get** /admin/loggers | Gets the log level for all loggers
-[**SetAllLoggerLevels**](AdminApi.md#SetAllLoggerLevels) | **Put** /admin/loggers | Sets the log level for multiple loggers
-[**SetLoggerLevel**](AdminApi.md#SetLoggerLevel) | **Put** /admin/loggers/{logger} | Sets the log level for a specific logger
-[**SetRootLogLevel**](AdminApi.md#SetRootLogLevel) | **Put** /admin/log-level | Sets the root log level
+[**getLoggerLevel**](AdminApi.md#getLoggerLevel) | **GET** /admin/loggers/{logger} | Gets the log level for a specific logger
+[**getRootLogLevel**](AdminApi.md#getRootLogLevel) | **GET** /admin/log-level | Gets the current root log level
+[**listAllLoggerLevels**](AdminApi.md#listAllLoggerLevels) | **GET** /admin/loggers | Gets the log level for all loggers
+[**setAllLoggerLevels**](AdminApi.md#setAllLoggerLevels) | **PUT** /admin/loggers | Sets the log level for multiple loggers
+[**setLoggerLevel**](AdminApi.md#setLoggerLevel) | **PUT** /admin/loggers/{logger} | Sets the log level for a specific logger
+[**setRootLogLevel**](AdminApi.md#setRootLogLevel) | **PUT** /admin/log-level | Sets the root log level
 
 
 
-## GetLoggerLevel
+## getLoggerLevel
 
-> LogLevel GetLoggerLevel(ctx, logger).Execute()
+> com.cray.analytics.capsules.model.admin.LogLevel getLoggerLevel(logger)
 
 Gets the log level for a specific logger
 
 ### Example
 
-```go
-package main
+```java
+// Import classes:
+import com.cray.analytics.capsules.dispatch.client.invoker.ApiClient;
+import com.cray.analytics.capsules.dispatch.client.invoker.ApiException;
+import com.cray.analytics.capsules.dispatch.client.invoker.Configuration;
+import com.cray.analytics.capsules.dispatch.client.invoker.auth.*;
+import com.cray.analytics.capsules.dispatch.client.invoker.models.*;
+import com.cray.analytics.capsules.dispatch.client.api.AdminApi;
 
-import (
-    "context"
-    "fmt"
-    "os"
-    openapiclient "./openapi"
-)
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost");
+        
+        // Configure HTTP bearer authorization: BearerAuth
+        HttpBearerAuth BearerAuth = (HttpBearerAuth) defaultClient.getAuthentication("BearerAuth");
+        BearerAuth.setBearerToken("BEARER TOKEN");
 
-func main() {
-    logger := "io.swagger.oas.inflector.controllers.OpenAPIOperationController" // string | The logger whose log level you wish to access
-
-    configuration := openapiclient.NewConfiguration()
-    api_client := openapiclient.NewAPIClient(configuration)
-    resp, r, err := api_client.AdminApi.GetLoggerLevel(context.Background(), logger).Execute()
-    if err != nil {
-        fmt.Fprintf(os.Stderr, "Error when calling `AdminApi.GetLoggerLevel``: %v\n", err)
-        fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+        AdminApi apiInstance = new AdminApi(defaultClient);
+        String logger = "io.swagger.oas.inflector.controllers.OpenAPIOperationController"; // String | The logger whose log level you wish to access
+        try {
+            com.cray.analytics.capsules.model.admin.LogLevel result = apiInstance.getLoggerLevel(logger);
+            System.out.println(result);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling AdminApi#getLoggerLevel");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
     }
-    // response from `GetLoggerLevel`: LogLevel
-    fmt.Fprintf(os.Stdout, "Response from `AdminApi.GetLoggerLevel`: %v\n", resp)
 }
 ```
 
-### Path Parameters
+### Parameters
 
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
-**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**logger** | **string** | The logger whose log level you wish to access | 
-
-### Other Parameters
-
-Other parameters are passed through a pointer to a apiGetLoggerLevelRequest struct via the builder pattern
-
-
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
-
+ **logger** | **String**| The logger whose log level you wish to access |
 
 ### Return type
 
-[**LogLevel**](LogLevel.md)
+[**com.cray.analytics.capsules.model.admin.LogLevel**](com.cray.analytics.capsules.model.admin.LogLevel.md)
 
 ### Authorization
 
@@ -76,55 +75,63 @@ Name | Type | Description  | Notes
 - **Content-Type**: Not defined
 - **Accept**: application/json, application/yaml
 
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
-[[Back to Model list]](../README.md#documentation-for-models)
-[[Back to README]](../README.md)
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | Loggers current log level |  -  |
+| **400** | Not a valid logger |  -  |
+| **403** | User is not permitted to set log level |  -  |
 
 
-## GetRootLogLevel
+## getRootLogLevel
 
-> LogLevel GetRootLogLevel(ctx).Execute()
+> com.cray.analytics.capsules.model.admin.LogLevel getRootLogLevel()
 
 Gets the current root log level
 
 ### Example
 
-```go
-package main
+```java
+// Import classes:
+import com.cray.analytics.capsules.dispatch.client.invoker.ApiClient;
+import com.cray.analytics.capsules.dispatch.client.invoker.ApiException;
+import com.cray.analytics.capsules.dispatch.client.invoker.Configuration;
+import com.cray.analytics.capsules.dispatch.client.invoker.auth.*;
+import com.cray.analytics.capsules.dispatch.client.invoker.models.*;
+import com.cray.analytics.capsules.dispatch.client.api.AdminApi;
 
-import (
-    "context"
-    "fmt"
-    "os"
-    openapiclient "./openapi"
-)
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost");
+        
+        // Configure HTTP bearer authorization: BearerAuth
+        HttpBearerAuth BearerAuth = (HttpBearerAuth) defaultClient.getAuthentication("BearerAuth");
+        BearerAuth.setBearerToken("BEARER TOKEN");
 
-func main() {
-
-    configuration := openapiclient.NewConfiguration()
-    api_client := openapiclient.NewAPIClient(configuration)
-    resp, r, err := api_client.AdminApi.GetRootLogLevel(context.Background()).Execute()
-    if err != nil {
-        fmt.Fprintf(os.Stderr, "Error when calling `AdminApi.GetRootLogLevel``: %v\n", err)
-        fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+        AdminApi apiInstance = new AdminApi(defaultClient);
+        try {
+            com.cray.analytics.capsules.model.admin.LogLevel result = apiInstance.getRootLogLevel();
+            System.out.println(result);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling AdminApi#getRootLogLevel");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
     }
-    // response from `GetRootLogLevel`: LogLevel
-    fmt.Fprintf(os.Stdout, "Response from `AdminApi.GetRootLogLevel`: %v\n", resp)
 }
 ```
 
-### Path Parameters
+### Parameters
 
 This endpoint does not need any parameter.
 
-### Other Parameters
-
-Other parameters are passed through a pointer to a apiGetRootLogLevelRequest struct via the builder pattern
-
-
 ### Return type
 
-[**LogLevel**](LogLevel.md)
+[**com.cray.analytics.capsules.model.admin.LogLevel**](com.cray.analytics.capsules.model.admin.LogLevel.md)
 
 ### Authorization
 
@@ -135,55 +142,62 @@ Other parameters are passed through a pointer to a apiGetRootLogLevelRequest str
 - **Content-Type**: Not defined
 - **Accept**: application/json, application/yaml
 
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
-[[Back to Model list]](../README.md#documentation-for-models)
-[[Back to README]](../README.md)
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | Current root log level |  -  |
+| **403** | User is not permitted to read the log level |  -  |
 
 
-## ListAllLoggerLevels
+## listAllLoggerLevels
 
-> map[string]LogLevel ListAllLoggerLevels(ctx).Execute()
+> Map&lt;String, com.cray.analytics.capsules.model.admin.LogLevel&gt; listAllLoggerLevels()
 
 Gets the log level for all loggers
 
 ### Example
 
-```go
-package main
+```java
+// Import classes:
+import com.cray.analytics.capsules.dispatch.client.invoker.ApiClient;
+import com.cray.analytics.capsules.dispatch.client.invoker.ApiException;
+import com.cray.analytics.capsules.dispatch.client.invoker.Configuration;
+import com.cray.analytics.capsules.dispatch.client.invoker.auth.*;
+import com.cray.analytics.capsules.dispatch.client.invoker.models.*;
+import com.cray.analytics.capsules.dispatch.client.api.AdminApi;
 
-import (
-    "context"
-    "fmt"
-    "os"
-    openapiclient "./openapi"
-)
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost");
+        
+        // Configure HTTP bearer authorization: BearerAuth
+        HttpBearerAuth BearerAuth = (HttpBearerAuth) defaultClient.getAuthentication("BearerAuth");
+        BearerAuth.setBearerToken("BEARER TOKEN");
 
-func main() {
-
-    configuration := openapiclient.NewConfiguration()
-    api_client := openapiclient.NewAPIClient(configuration)
-    resp, r, err := api_client.AdminApi.ListAllLoggerLevels(context.Background()).Execute()
-    if err != nil {
-        fmt.Fprintf(os.Stderr, "Error when calling `AdminApi.ListAllLoggerLevels``: %v\n", err)
-        fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+        AdminApi apiInstance = new AdminApi(defaultClient);
+        try {
+            Map<String, com.cray.analytics.capsules.model.admin.LogLevel> result = apiInstance.listAllLoggerLevels();
+            System.out.println(result);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling AdminApi#listAllLoggerLevels");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
     }
-    // response from `ListAllLoggerLevels`: map[string]LogLevel
-    fmt.Fprintf(os.Stdout, "Response from `AdminApi.ListAllLoggerLevels`: %v\n", resp)
 }
 ```
 
-### Path Parameters
+### Parameters
 
 This endpoint does not need any parameter.
 
-### Other Parameters
-
-Other parameters are passed through a pointer to a apiListAllLoggerLevelsRequest struct via the builder pattern
-
-
 ### Return type
 
-[**map[string]LogLevel**](LogLevel.md)
+[**Map&lt;String, com.cray.analytics.capsules.model.admin.LogLevel&gt;**](com.cray.analytics.capsules.model.admin.LogLevel.md)
 
 ### Authorization
 
@@ -194,58 +208,64 @@ Other parameters are passed through a pointer to a apiListAllLoggerLevelsRequest
 - **Content-Type**: Not defined
 - **Accept**: application/json, application/yaml
 
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
-[[Back to Model list]](../README.md#documentation-for-models)
-[[Back to README]](../README.md)
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | All loggers current log levels |  -  |
 
 
-## SetAllLoggerLevels
+## setAllLoggerLevels
 
-> SetAllLoggerLevels(ctx).RequestBody(requestBody).Execute()
+> setAllLoggerLevels(requestBody)
 
 Sets the log level for multiple loggers
 
 ### Example
 
-```go
-package main
+```java
+// Import classes:
+import com.cray.analytics.capsules.dispatch.client.invoker.ApiClient;
+import com.cray.analytics.capsules.dispatch.client.invoker.ApiException;
+import com.cray.analytics.capsules.dispatch.client.invoker.Configuration;
+import com.cray.analytics.capsules.dispatch.client.invoker.auth.*;
+import com.cray.analytics.capsules.dispatch.client.invoker.models.*;
+import com.cray.analytics.capsules.dispatch.client.api.AdminApi;
 
-import (
-    "context"
-    "fmt"
-    "os"
-    openapiclient "./openapi"
-)
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost");
+        
+        // Configure HTTP bearer authorization: BearerAuth
+        HttpBearerAuth BearerAuth = (HttpBearerAuth) defaultClient.getAuthentication("BearerAuth");
+        BearerAuth.setBearerToken("BEARER TOKEN");
 
-func main() {
-    requestBody := map[string]LogLevel{"key": openapiclient.LogLevel("false")} // map[string]LogLevel | The loggers and levels to set for each logger
-
-    configuration := openapiclient.NewConfiguration()
-    api_client := openapiclient.NewAPIClient(configuration)
-    resp, r, err := api_client.AdminApi.SetAllLoggerLevels(context.Background()).RequestBody(requestBody).Execute()
-    if err != nil {
-        fmt.Fprintf(os.Stderr, "Error when calling `AdminApi.SetAllLoggerLevels``: %v\n", err)
-        fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+        AdminApi apiInstance = new AdminApi(defaultClient);
+        Map<String, com.cray.analytics.capsules.model.admin.LogLevel> requestBody = new HashMap(); // Map<String, com.cray.analytics.capsules.model.admin.LogLevel> | The loggers and levels to set for each logger
+        try {
+            apiInstance.setAllLoggerLevels(requestBody);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling AdminApi#setAllLoggerLevels");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
     }
 }
 ```
 
-### Path Parameters
-
-
-
-### Other Parameters
-
-Other parameters are passed through a pointer to a apiSetAllLoggerLevelsRequest struct via the builder pattern
+### Parameters
 
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **requestBody** | [**map[string]LogLevel**](LogLevel.md) | The loggers and levels to set for each logger | 
+ **requestBody** | [**Map&lt;String, com.cray.analytics.capsules.model.admin.LogLevel&gt;**](com.cray.analytics.capsules.model.admin.LogLevel.md)| The loggers and levels to set for each logger |
 
 ### Return type
 
- (empty response body)
+null (empty response body)
 
 ### Authorization
 
@@ -256,64 +276,68 @@ Name | Type | Description  | Notes
 - **Content-Type**: application/json, application/yaml
 - **Accept**: Not defined
 
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
-[[Back to Model list]](../README.md#documentation-for-models)
-[[Back to README]](../README.md)
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **204** | The requested log levels were updated |  -  |
+| **400** | Not a valid log level |  -  |
+| **403** | User is not permitted to set log levels |  -  |
 
 
-## SetLoggerLevel
+## setLoggerLevel
 
-> SetLoggerLevel(ctx, logger).Body(body).Execute()
+> setLoggerLevel(logger, body)
 
 Sets the log level for a specific logger
 
 ### Example
 
-```go
-package main
+```java
+// Import classes:
+import com.cray.analytics.capsules.dispatch.client.invoker.ApiClient;
+import com.cray.analytics.capsules.dispatch.client.invoker.ApiException;
+import com.cray.analytics.capsules.dispatch.client.invoker.Configuration;
+import com.cray.analytics.capsules.dispatch.client.invoker.auth.*;
+import com.cray.analytics.capsules.dispatch.client.invoker.models.*;
+import com.cray.analytics.capsules.dispatch.client.api.AdminApi;
 
-import (
-    "context"
-    "fmt"
-    "os"
-    openapiclient "./openapi"
-)
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost");
+        
+        // Configure HTTP bearer authorization: BearerAuth
+        HttpBearerAuth BearerAuth = (HttpBearerAuth) defaultClient.getAuthentication("BearerAuth");
+        BearerAuth.setBearerToken("BEARER TOKEN");
 
-func main() {
-    logger := "io.swagger.oas.inflector.controllers.OpenAPIOperationController" // string | The logger whose log level you wish to access
-    body := string(987) // string | The log level to set
-
-    configuration := openapiclient.NewConfiguration()
-    api_client := openapiclient.NewAPIClient(configuration)
-    resp, r, err := api_client.AdminApi.SetLoggerLevel(context.Background(), logger).Body(body).Execute()
-    if err != nil {
-        fmt.Fprintf(os.Stderr, "Error when calling `AdminApi.SetLoggerLevel``: %v\n", err)
-        fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+        AdminApi apiInstance = new AdminApi(defaultClient);
+        String logger = "io.swagger.oas.inflector.controllers.OpenAPIOperationController"; // String | The logger whose log level you wish to access
+        String body = "body_example"; // String | The log level to set
+        try {
+            apiInstance.setLoggerLevel(logger, body);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling AdminApi#setLoggerLevel");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
     }
 }
 ```
 
-### Path Parameters
+### Parameters
 
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
-**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**logger** | **string** | The logger whose log level you wish to access | 
-
-### Other Parameters
-
-Other parameters are passed through a pointer to a apiSetLoggerLevelRequest struct via the builder pattern
-
-
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
-
- **body** | **string** | The log level to set | 
+ **logger** | **String**| The logger whose log level you wish to access |
+ **body** | **String**| The log level to set |
 
 ### Return type
 
- (empty response body)
+null (empty response body)
 
 ### Authorization
 
@@ -324,58 +348,66 @@ Name | Type | Description  | Notes
 - **Content-Type**: application/json, application/yaml
 - **Accept**: Not defined
 
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
-[[Back to Model list]](../README.md#documentation-for-models)
-[[Back to README]](../README.md)
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **204** | The logger level was updated |  -  |
+| **400** | Not a valid log level or logger |  -  |
+| **403** | User is not permitted to set logger level |  -  |
 
 
-## SetRootLogLevel
+## setRootLogLevel
 
-> SetRootLogLevel(ctx).Body(body).Execute()
+> setRootLogLevel(body)
 
 Sets the root log level
 
 ### Example
 
-```go
-package main
+```java
+// Import classes:
+import com.cray.analytics.capsules.dispatch.client.invoker.ApiClient;
+import com.cray.analytics.capsules.dispatch.client.invoker.ApiException;
+import com.cray.analytics.capsules.dispatch.client.invoker.Configuration;
+import com.cray.analytics.capsules.dispatch.client.invoker.auth.*;
+import com.cray.analytics.capsules.dispatch.client.invoker.models.*;
+import com.cray.analytics.capsules.dispatch.client.api.AdminApi;
 
-import (
-    "context"
-    "fmt"
-    "os"
-    openapiclient "./openapi"
-)
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost");
+        
+        // Configure HTTP bearer authorization: BearerAuth
+        HttpBearerAuth BearerAuth = (HttpBearerAuth) defaultClient.getAuthentication("BearerAuth");
+        BearerAuth.setBearerToken("BEARER TOKEN");
 
-func main() {
-    body := string(987) // string | The log level to set
-
-    configuration := openapiclient.NewConfiguration()
-    api_client := openapiclient.NewAPIClient(configuration)
-    resp, r, err := api_client.AdminApi.SetRootLogLevel(context.Background()).Body(body).Execute()
-    if err != nil {
-        fmt.Fprintf(os.Stderr, "Error when calling `AdminApi.SetRootLogLevel``: %v\n", err)
-        fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+        AdminApi apiInstance = new AdminApi(defaultClient);
+        String body = "body_example"; // String | The log level to set
+        try {
+            apiInstance.setRootLogLevel(body);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling AdminApi#setRootLogLevel");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
     }
 }
 ```
 
-### Path Parameters
-
-
-
-### Other Parameters
-
-Other parameters are passed through a pointer to a apiSetRootLogLevelRequest struct via the builder pattern
+### Parameters
 
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | **string** | The log level to set | 
+ **body** | **String**| The log level to set |
 
 ### Return type
 
- (empty response body)
+null (empty response body)
 
 ### Authorization
 
@@ -386,7 +418,11 @@ Name | Type | Description  | Notes
 - **Content-Type**: application/json, application/yaml
 - **Accept**: Not defined
 
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
-[[Back to Model list]](../README.md#documentation-for-models)
-[[Back to README]](../README.md)
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **204** | The root log level was updated |  -  |
+| **400** | Not a valid log level |  -  |
+| **403** | User is not permitted to set log level |  -  |
 
