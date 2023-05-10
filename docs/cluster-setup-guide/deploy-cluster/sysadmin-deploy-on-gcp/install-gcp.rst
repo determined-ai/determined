@@ -75,6 +75,8 @@ relatively low; you may wish to request a quota increase.
 
       pip install determined
 
+.. include:: ../../../_shared/note-pip-install-determined.txt
+
 ******************
  Deploy a Cluster
 ******************

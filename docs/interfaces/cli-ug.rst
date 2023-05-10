@@ -43,6 +43,8 @@ a `virtualenv <https://virtualenv.pypa.io/en/latest/>`__ and using the ``pip`` u
 
    pip install determined
 
+.. include:: ../_shared/note-pip-install-determined.txt
+
 After installing the CLI, configure it to connect to the Determined master at the appropriate IP
 address. To do this, set the ``DET_MASTER`` environment variable:
 
@@ -84,7 +86,7 @@ If you need to uninstall the Determined CLI, use the following command:
 
    pip uninstall determined-cli
 
-This command uninstalls the Determined CLI from your system.
+This command uninstalls the ``determined`` library, including the Determined CLI, from your system.
 
 Upgrading
 =========

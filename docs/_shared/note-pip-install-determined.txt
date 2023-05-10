@@ -1,0 +1,3 @@
+.. note::
+    
+    The command, ``pip install determined``, installs the ``determined`` library which includes the Determined command-line interface (CLI). 
