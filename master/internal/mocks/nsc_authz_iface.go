@@ -5,9 +5,8 @@ package mocks
 import (
 	context "context"
 
-	mock "github.com/stretchr/testify/mock"
-
 	model "github.com/determined-ai/determined/master/pkg/model"
+	mock "github.com/stretchr/testify/mock"
 
 	tensorboardv1 "github.com/determined-ai/determined/proto/pkg/tensorboardv1"
 )

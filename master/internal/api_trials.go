@@ -908,7 +908,7 @@ func (a *apiServer) streamMetrics(ctx context.Context,
 	trialIDIndex := 0
 	key := -1
 	for {
-		res, err := a.m.db.GetMetrics(ctx, int(trialIDs[trialIDIndex]), key, size, table)
+		res, err := a.m.db.GetMetrics(ctx, int(trialIDs[trialIDIndex]), key, size, metricType)
 		if err != nil {
 			return err
 		}

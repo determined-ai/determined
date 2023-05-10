@@ -484,7 +484,7 @@ func (db *PgDB) updateTotalBatches(ctx context.Context, tx *sqlx.Tx, trialID int
 /*
 rollbackMetrics ensures old training and validation metrics from a previous run id are archived.
 DISCUSS: how do we decide if a utility should be namespaced under PgDB or not?
-the goal is to make it clear we don't have direct db access other than through tx
+the goal is to make it clear we don't have direct db access other than through tx.
 */
 func rollbackMetrics(ctx context.Context, tx *sqlx.Tx, runID, trialID,
 	lastProcessedBatch int32, isValidation bool,
@@ -661,15 +661,15 @@ WHERE id = $1;
 	})
 }
 
-// DEPRECATED: AddTrainingMetrics adds a completed step to the database with the given training metrics.
-// If these training metrics occur before any others, a rollback is assumed and later
+// AddTrainingMetrics [DEPRECATED] adds a completed step to the database with the given training
+// metrics. If these training metrics occur before any others, a rollback is assumed and later
 // training and validation metrics are cleaned up.
 func (db *PgDB) AddTrainingMetrics(ctx context.Context, m *trialv1.TrialMetrics) error {
 	_, err := db.addTrialMetrics(ctx, m, model.TrainingMetric, nil)
 	return err
 }
 
-// DEPRECATED: AddValidationMetrics adds a completed validation to the database with the given
+// AddValidationMetrics [DEPRECATED] adds a completed validation to the database with the given
 // validation metrics. If these validation metrics occur before any others, a rollback
 // is assumed and later metrics are cleaned up from the database.
 func (db *PgDB) AddValidationMetrics(
@@ -692,6 +692,7 @@ func customMetricTypeToPartitionType(mType string) model.MetricPartitionType {
 	}
 }
 
+// AddMetrics persists the given metrics to the database.
 func (db *PgDB) AddMetrics(
 	ctx context.Context, m *trialv1.TrialMetrics, mType string,
 ) error {
@@ -700,6 +701,7 @@ func (db *PgDB) AddMetrics(
 	return err
 }
 
+// GetMetrics returns a subset metrics of the requested type for the given trial ID.
 func (db *PgDB) GetMetrics(ctx context.Context, trialID, afterBatches, limit int,
 	mType string,
 ) ([]*trialv1.MetricsReport, error) {
