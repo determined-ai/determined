@@ -9,7 +9,6 @@ This directory contains the custom cell renderers used with the Glide Table. The
 - [loading](./cells/loadingCell.tsx) shows a loading animation for a cell that is loading
 - [progress](./cells/progressCell.tsx) shows a progress bar. is adapted to allow for passing different colors in props, and also has a shadow.
 - [sparkline](./cells/sparklineCell.tsx) shows graphs within the table row
-- [spinner](./cells/spinnerCell.tsx) shows a spinner for a cell that is loading
 - [tags](./cells/tagsCell.tsx) shows tags for experiments. is adapted for styling purposes.
 
 In order to make your own cell, you need to create a render that satisfies the `CustomRenderer` interface. The main thing is to provide a `draw` function that takes `args` (which includes the canvas context), and the `cell : GridCell` definition returned by `getCellContent`. For custom cells, you can pass whichever "props" you like through `cell.data` in order to access them in the draw function.
