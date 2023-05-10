@@ -1586,6 +1586,12 @@ export interface V1BulkExperimentFilters {
      * @memberof V1BulkExperimentFilters
      */
     projectId?: number;
+    /**
+     * Experiment ids to exclude when filters are used.
+     * @type {Array<number>}
+     * @memberof V1BulkExperimentFilters
+     */
+    excludedExperimentIds?: Array<number>;
 }
 /**
  * Response to CancelExperimentRequest.

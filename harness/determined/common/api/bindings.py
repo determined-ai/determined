@@ -1506,6 +1506,7 @@ class v1AwsCustomTag:
 class v1BulkExperimentFilters:
     archived: "typing.Optional[bool]" = None
     description: "typing.Optional[str]" = None
+    excludedExperimentIds: "typing.Optional[typing.Sequence[int]]" = None
     labels: "typing.Optional[typing.Sequence[str]]" = None
     name: "typing.Optional[str]" = None
     projectId: "typing.Optional[int]" = None
@@ -1517,6 +1518,7 @@ class v1BulkExperimentFilters:
         *,
         archived: "typing.Union[bool, None, Unset]" = _unset,
         description: "typing.Union[str, None, Unset]" = _unset,
+        excludedExperimentIds: "typing.Union[typing.Sequence[int], None, Unset]" = _unset,
         labels: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
         name: "typing.Union[str, None, Unset]" = _unset,
         projectId: "typing.Union[int, None, Unset]" = _unset,
@@ -1527,6 +1529,8 @@ class v1BulkExperimentFilters:
             self.archived = archived
         if not isinstance(description, Unset):
             self.description = description
+        if not isinstance(excludedExperimentIds, Unset):
+            self.excludedExperimentIds = excludedExperimentIds
         if not isinstance(labels, Unset):
             self.labels = labels
         if not isinstance(name, Unset):
@@ -1546,6 +1550,8 @@ class v1BulkExperimentFilters:
             kwargs["archived"] = obj["archived"]
         if "description" in obj:
             kwargs["description"] = obj["description"]
+        if "excludedExperimentIds" in obj:
+            kwargs["excludedExperimentIds"] = obj["excludedExperimentIds"]
         if "labels" in obj:
             kwargs["labels"] = obj["labels"]
         if "name" in obj:
@@ -1565,6 +1571,8 @@ class v1BulkExperimentFilters:
             out["archived"] = self.archived
         if not omit_unset or "description" in vars(self):
             out["description"] = self.description
+        if not omit_unset or "excludedExperimentIds" in vars(self):
+            out["excludedExperimentIds"] = self.excludedExperimentIds
         if not omit_unset or "labels" in vars(self):
             out["labels"] = self.labels
         if not omit_unset or "name" in vars(self):

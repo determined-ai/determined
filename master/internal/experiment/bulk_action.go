@@ -108,6 +108,10 @@ func nonTerminalExperiments(system *actor.System, expIDs []int32,
 func queryBulkExperiments(query *bun.SelectQuery,
 	filters *apiv1.BulkExperimentFilters,
 ) *bun.SelectQuery {
+	if len(filters.ExcludedExperimentIds) > 0 {
+		query = query.Where("e.id NOT IN (?)", bun.In(filters.ExcludedExperimentIds))
+	}
+
 	if filters.Description != "" {
 		query = query.Where("e.config->>'description' ILIKE ('%%' || ? || '%%')", filters.Description)
 	}

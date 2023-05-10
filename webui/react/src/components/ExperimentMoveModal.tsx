@@ -27,6 +27,7 @@ type FormInputs = {
 interface Props {
   onSubmit?: (successfulIds?: number[]) => void;
   experimentIds: number[];
+  excludedExperimentIds?: Set<number>;
   filters?: V1BulkExperimentFilters;
   sourceProjectId?: number;
   sourceWorkspaceId?: number;
@@ -35,6 +36,7 @@ interface Props {
 const ExperimentMoveModalComponent: React.FC<Props> = ({
   onSubmit,
   experimentIds,
+  excludedExperimentIds,
   filters,
   sourceProjectId,
   sourceWorkspaceId,
@@ -73,7 +75,15 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
     const values = await form.validateFields();
     const projId = values.projectId ?? 1;
 
-    const results = await moveExperiments({ destinationProjectId: projId, experimentIds, filters });
+    if (excludedExperimentIds?.size) {
+      filters = { ...filters, excludedExperimentIds: Array.from(excludedExperimentIds) };
+    }
+
+    const results = await moveExperiments({
+      destinationProjectId: projId,
+      experimentIds,
+      filters,
+    });
 
     onSubmit?.(results.successful);
 

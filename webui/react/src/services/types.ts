@@ -103,6 +103,7 @@ export interface SearchExperimentsParams extends PaginationParams {
 }
 
 export interface BulkActionParams {
+  excludedExperimentIds?: number[];
   experimentIds: number[];
   filters?: Api.V1BulkExperimentFilters;
 }
@@ -263,6 +264,7 @@ export interface PatchExperimentParams extends ExperimentIdParams {
 }
 
 export interface LaunchTensorBoardParams {
+  excludedExperimentIds?: Array<number>;
   experimentIds?: Array<number>;
   trialIds?: Array<number>;
   workspaceId?: number;

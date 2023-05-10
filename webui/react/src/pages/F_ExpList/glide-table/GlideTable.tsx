@@ -26,6 +26,7 @@ import React, {
 import { handlePath } from 'routes/utils';
 import { V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
 import useUI from 'shared/contexts/stores/UI';
+import usePrevious from 'shared/hooks/usePrevious';
 import { AnyMouseEvent } from 'shared/utils/routes';
 import usersStore from 'stores/users';
 import { ExperimentWithTrial, Project, ProjectColumn } from 'types';
@@ -58,6 +59,7 @@ import { getTheme } from './utils';
 export interface GlideTableProps {
   clearSelectionTrigger?: number;
   colorMap: MapOfIdsToColors;
+  excludedExperimentIds: Set<number>;
   data: Loadable<ExperimentWithTrial>[];
   fetchExperiments: () => Promise<void>;
   handleScroll?: (r: Rectangle) => void;
@@ -69,6 +71,7 @@ export interface GlideTableProps {
   project?: Project;
   projectColumns: Loadable<ProjectColumn[]>;
   selectedExperimentIds: number[];
+  setExcludedExperimentIds: Dispatch<SetStateAction<Set<number>>>;
   setSelectedExperimentIds: Dispatch<SetStateAction<number[]>>;
   selectAll: boolean;
   setSelectAll: Dispatch<SetStateAction<boolean>>;
@@ -97,6 +100,7 @@ const isLinkCell = (cell: GridCell): cell is LinkCell => {
 export const GlideTable: React.FC<GlideTableProps> = ({
   data,
   fetchExperiments,
+  excludedExperimentIds,
   clearSelectionTrigger,
   setSelectedExperimentIds,
   sortableColumnIds,
@@ -105,6 +109,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   height,
   selectAll,
   setSelectAll,
+  setExcludedExperimentIds,
   handleScroll,
   scrollPositionSetCount,
   page,
@@ -240,12 +245,48 @@ export const GlideTable: React.FC<GlideTableProps> = ({
     [],
   );
 
+  const deselectAllRows = useCallback(() => {
+    setSelectAll(false);
+    setSelection((prev) => ({ ...prev, rows: CompactSelection.empty() }));
+  }, [setSelectAll, setSelection]);
+
+  const selectAllRows = useCallback(() => {
+    setExcludedExperimentIds(new Set());
+    setSelectAll(true);
+    setSelection(({ columns, rows }: GridSelection) => ({
+      columns,
+      rows: rows.add([0, data.length]),
+    }));
+  }, [setSelectAll, setSelection, data, setExcludedExperimentIds]);
+
+  const previousData = usePrevious(data, undefined);
+  useEffect(() => {
+    if (previousData && data.length > previousData.length) {
+      setSelection(({ columns, rows }: GridSelection) => ({
+        columns,
+        rows: rows.add([previousData.length, data.length]),
+      }));
+    }
+  }, [data, previousData]);
+
   const onHeaderClicked: DataEditorProps['onHeaderClicked'] = React.useCallback(
     (col: number, args: HeaderClickedEventArgs) => {
       const columnId = columnIds[col];
 
       if (columnId === 'selected') {
-        setSelectAll((prev) => !prev);
+        if (selectAll) {
+          if (excludedExperimentIds.size) {
+            selectAllRows();
+          } else {
+            deselectAllRows();
+          }
+        } else {
+          if (selection.rows.length === data.length) {
+            deselectAllRows();
+          } else {
+            selectAllRows();
+          }
+        }
         return;
       }
       const column = Loadable.getOrElse([], projectColumns).find((c) => c.column === columnId);
@@ -264,7 +305,18 @@ export const GlideTable: React.FC<GlideTableProps> = ({
       setMenuProps((prev) => ({ ...prev, items, title: `${columnId} menu`, x, y }));
       setMenuIsOpen(true);
     },
-    [columnIds, projectColumns, sorts, onSortChange, setSelectAll],
+    [
+      data,
+      selection,
+      columnIds,
+      deselectAllRows,
+      excludedExperimentIds,
+      onSortChange,
+      projectColumns,
+      sorts,
+      selectAllRows,
+      selectAll,
+    ],
   );
 
   const getCellContent: DataEditorProps['getCellContent'] = React.useCallback(
@@ -358,21 +410,46 @@ export const GlideTable: React.FC<GlideTableProps> = ({
                 };
               });
             } else {
-              setSelection(({ rows }: GridSelection) => {
-                isStandAlone(rows, row) && !rows.hasIndex(row) && setStandAloneSelect(row);
+              isStandAlone(selection.rows, row) &&
+                !selection.rows.hasIndex(row) &&
+                setStandAloneSelect(row);
 
-                return {
-                  columns: CompactSelection.empty(),
-                  rows: rows.hasIndex(row) ? rows.remove(row) : rows.add(row),
-                };
-              });
+              if (selection.rows.hasIndex(row)) {
+                setSelection(({ columns, rows }: GridSelection) => ({
+                  columns,
+                  rows: rows.remove(row),
+                }));
+                if (selectAll) {
+                  const experiment = data[row];
+                  if (Loadable.isLoaded(experiment)) {
+                    setExcludedExperimentIds((prev) => {
+                      if (experiment.data.experiment) {
+                        return new Set([...prev, experiment.data.experiment?.id]);
+                      } else {
+                        return prev;
+                      }
+                    });
+                  }
+                }
+              } else {
+                setSelection(({ columns, rows }: GridSelection) => ({
+                  columns,
+                  rows: rows.add(row),
+                }));
+                const experiment = data[row];
+                if (Loadable.isLoaded(experiment)) {
+                  setExcludedExperimentIds((prev) => {
+                    return new Set([...prev].filter((id) => id !== experiment.data.experiment?.id));
+                  });
+                }
+              }
             }
           }
         },
         NotLoaded: () => null,
       });
     },
-    [data, columnIds, columnDefs, standAloneSelect],
+    [data, columnIds, columnDefs, selection, selectAll, setExcludedExperimentIds, standAloneSelect],
   );
 
   const onCellContextMenu: DataEditorProps['onCellContextMenu'] = useCallback(
