@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import { flakyIt } from 'quarantineTests';
 import { FetchArgs } from 'services/api-ts-sdk';
 import { mapV1LogsResponse } from 'services/decoder';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
@@ -281,18 +282,22 @@ describe('LogViewer', () => {
       });
     });
 
-    it('should render logs with streaming', async () => {
-      setup({ decoder, onFetch });
+    flakyIt(
+      'should render logs with streaming',
+      async () => {
+        setup({ decoder, onFetch });
 
-      await waitFor(
-        () => {
-          const lastLog = logsReference[logsReference.length - 1];
-          expect(lastLog.message).not.toBeNull();
-          expect(screen.queryByText(lastLog.message)).toBeInTheDocument();
-        },
-        { timeout: 6000 },
-      );
-    }, 6500);
+        await waitFor(
+          () => {
+            const lastLog = logsReference[logsReference.length - 1];
+            expect(lastLog.message).not.toBeNull();
+            expect(screen.queryByText(lastLog.message)).toBeInTheDocument();
+          },
+          { timeout: 6000 },
+        );
+      },
+      6500,
+    );
 
     it('should show oldest logs', async () => {
       setup({ decoder, onFetch });
