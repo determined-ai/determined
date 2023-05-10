@@ -19,7 +19,7 @@ interface Props {
 }
 
 export const TOOLTIP_LABEL_DEFAULT = 'Copy to clipboard';
-export const TOOLTIP_LABEL_SUCCESS = 'Copied!';
+const TOOLTIP_LABEL_SUCCESS = 'Copied!';
 
 const ClipboardButton: React.FC<Props> = ({
   copiedMessage = TOOLTIP_LABEL_SUCCESS,
@@ -74,7 +74,7 @@ const ClipboardButton: React.FC<Props> = ({
   return (
     <Tooltip content={tooltipLabel} open={tooltipOpen} placement={tooltipPlacement}>
       <Button
-        aria-label={TOOLTIP_LABEL_DEFAULT}
+        aria-label={tooltipLabel}
         disabled={disabled}
         icon={icon}
         ref={buttonRef}
