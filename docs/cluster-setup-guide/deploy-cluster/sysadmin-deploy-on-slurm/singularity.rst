@@ -43,7 +43,7 @@ each tagged image needed by your experiments to the image cache.
 Singularity and Podman each support various local container file formats and reference them using a
 slightly different syntax. Utilize a cached image by referencing a local path using the experiment
 configuration :ref:`environment.image <exp-environment-image>`. When using this strategy, the local
-diretory needs to be accessible on all compute nodes.
+directory needs to be accessible on all compute nodes.
 
 When using Podman, you could save images in OCI archive format to files in a local directory
 ``/shared/containers``
