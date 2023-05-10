@@ -220,7 +220,7 @@ export const Jobv1Type = {
 } as const
 export type Jobv1Type = ValueOf<typeof Jobv1Type>
 /**
- * 
+ * Nested object for checkpoint_storage field patch.
  * @export
  * @interface PatchExperimentPatchCheckpointStorage
  */
@@ -245,7 +245,7 @@ export interface PatchExperimentPatchCheckpointStorage {
     saveTrialLatest?: number;
 }
 /**
- * 
+ * Nested object for resources field patch.
  * @export
  * @interface PatchExperimentPatchResources
  */
@@ -5881,13 +5881,13 @@ export interface V1PatchExperiment {
      */
     notes?: string;
     /**
-     * 
+     * Experiment config resources.
      * @type {PatchExperimentPatchResources}
      * @memberof V1PatchExperiment
      */
     resources?: PatchExperimentPatchResources;
     /**
-     * 
+     * Experiment config checkpoint_storage.
      * @type {PatchExperimentPatchCheckpointStorage}
      * @memberof V1PatchExperiment
      */

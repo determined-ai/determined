@@ -524,8 +524,10 @@ type PatchExperiment struct {
 	// The experiment name.
 	Name *wrappers.StringValue `protobuf:"bytes,4,opt,name=name,proto3" json:"name,omitempty"`
 	// The experiment notes.
-	Notes             *wrappers.StringValue                   `protobuf:"bytes,5,opt,name=notes,proto3" json:"notes,omitempty"`
-	Resources         *PatchExperiment_PatchResources         `protobuf:"bytes,6,opt,name=resources,proto3,oneof" json:"resources,omitempty"`
+	Notes *wrappers.StringValue `protobuf:"bytes,5,opt,name=notes,proto3" json:"notes,omitempty"`
+	// Experiment config resources.
+	Resources *PatchExperiment_PatchResources `protobuf:"bytes,6,opt,name=resources,proto3,oneof" json:"resources,omitempty"`
+	// Experiment config checkpoint_storage.
 	CheckpointStorage *PatchExperiment_PatchCheckpointStorage `protobuf:"bytes,7,opt,name=checkpoint_storage,json=checkpointStorage,proto3,oneof" json:"checkpoint_storage,omitempty"`
 }
 
@@ -782,6 +784,7 @@ func (x *FileNode) GetFiles() []*FileNode {
 	return nil
 }
 
+// Nested object for resources field patch.
 type PatchExperiment_PatchResources struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -848,6 +851,7 @@ func (x *PatchExperiment_PatchResources) GetPriority() int32 {
 	return 0
 }
 
+// Nested object for checkpoint_storage field patch.
 type PatchExperiment_PatchCheckpointStorage struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

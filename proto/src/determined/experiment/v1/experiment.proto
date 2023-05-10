@@ -163,6 +163,7 @@ message PatchExperiment {
   // The experiment notes.
   google.protobuf.StringValue notes = 5;
 
+  // Nested object for resources field patch.
   message PatchResources {
     // Experiment config resources.max_slots.
     optional int32 max_slots = 1;
@@ -172,6 +173,7 @@ message PatchExperiment {
     optional int32 priority = 3;
   }
 
+  // Nested object for checkpoint_storage field patch.
   message PatchCheckpointStorage {
     // Experiment config checkpoint_storage.save_experiment_best.
     int32 save_experiment_best = 1;
@@ -181,7 +183,9 @@ message PatchExperiment {
     int32 save_trial_latest = 3;
   }
 
-  optional PatchResources resources                  = 6;
+  // Experiment config resources.
+  optional PatchResources resources = 6;
+  // Experiment config checkpoint_storage.
   optional PatchCheckpointStorage checkpoint_storage = 7;
 }
 
