@@ -1327,8 +1327,8 @@ func (a *apiServer) getCreateExperimentsProject(
 func (a *apiServer) mergeProjectSettingsWithConfig(
 	user *model.User,
 	project *projectv1.Project,
-	config expconf.ExperimentConfigV0,
-) (expconf.ExperimentConfig, error) {
+	config *expconf.ExperimentConfigV0,
+) (*expconf.ExperimentConfigV0, error) {
 	// Merge in workspace's checkpoint storage into the conifg.
 	w := &model.Workspace{}
 	if err := db.Bun().NewSelect().Model(w).
@@ -1346,7 +1346,7 @@ func (a *apiServer) mergeProjectSettingsWithConfig(
 		config.RawCheckpointStorage, &a.m.config.CheckpointStorage,
 	)
 
-	// Lastly, apply any json-schema-defined defaults.
+	// Lastly, apply any json-schema-defined defaults. THIS RETURNS A NEW POINTER.
 	config = schemas.WithDefaults(config)
 
 	// Make sure the experiment config has all eventuallyRequired fields.
@@ -1365,7 +1365,7 @@ func (a *apiServer) mergeProjectSettingsWithConfig(
 }
 
 func (a *apiServer) populateTaskSpec(user *model.User, modelDef archive.Archive,
-	config expconf.ExperimentConfig,
+	config *expconf.ExperimentConfig,
 ) (*tasks.TaskSpec, error) {
 	resources := config.Resources()
 	poolName, err := a.m.rm.ResolveResourcePool(
@@ -1387,7 +1387,7 @@ func (a *apiServer) populateTaskSpec(user *model.User, modelDef archive.Archive,
 	}
 	taskSpec := *a.m.taskSpec
 	taskSpec.TaskContainerDefaults = taskContainerDefaults
-	taskSpec.TaskContainerDefaults.MergeIntoExpConfig(&config)
+	taskSpec.TaskContainerDefaults.MergeIntoExpConfig(config)
 
 	token, createSessionErr := a.m.db.StartUserSession(user)
 	if createSessionErr != nil {
@@ -1518,13 +1518,14 @@ func (a *apiServer) CreateExperiment(
 	}
 
 	// Apply project level defaults.
-	activeConfig, err = a.mergeProjectSettingsWithConfig(user, project, activeConfig)
+	activeConfigPointer, err := a.mergeProjectSettingsWithConfig(user, project, &activeConfig)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid experiment: %s", err)
 	}
+	activeConfig = *activeConfigPointer
 
 	modelDef := filesToArchive(req.ModelDefinition)
-	taskSpec, err := a.populateTaskSpec(user, modelDef, activeConfig)
+	taskSpec, err := a.populateTaskSpec(user, modelDef, &activeConfig)
 	if err != nil {
 		return nil, err
 	}
