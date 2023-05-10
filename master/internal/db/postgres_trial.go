@@ -710,6 +710,8 @@ func (db *PgDB) GetMetrics(ctx context.Context, trialID, totalBatches, limit int
 		ColumnExpr("proto_time(end_time) AS end_time").
 		Where("trial_id = ?", trialID).
 		Where("total_batches > ?", totalBatches).
+		Where("archived = false").
+		Where("partition_type = ?", customMetricTypeToPartitionType(mType)).
 		Order("trial_id", "trial_run_id", "total_batches").
 		Limit(limit).
 		Scan(ctx, &res); err != nil {
