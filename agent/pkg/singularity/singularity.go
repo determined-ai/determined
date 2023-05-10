@@ -405,7 +405,7 @@ func (s *SingularityClient) RunContainer(
 }
 
 func addEnvironmentValueIfSet(variables []string, cmd *exec.Cmd) {
-	for _,variable := range variables {
+	for _, variable := range variables {
 		setting := os.Getenv(variable)
 		if setting != "" {
 			cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", variable, setting))
