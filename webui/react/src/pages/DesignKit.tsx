@@ -475,11 +475,7 @@ const SelectSection: React.FC = () => {
           width={999999}
         />
         <span>
-          Also see{' '}
-          <Link reloadDocument to={`#${ComponentTitles.Form}`}>
-            Form
-          </Link>{' '}
-          for form-specific variations
+          Also see <a href={`#${ComponentTitles.Form}`}>Form</a> for form-specific variations
         </span>
       </AntDCard>
     </ComponentSection>
@@ -837,11 +833,7 @@ const InputNumberSection: React.FC = () => {
         <InputNumber disabled />
         <hr />
         <span>
-          Also see{' '}
-          <Link reloadDocument to={`#${ComponentTitles.Form}`}>
-            Form
-          </Link>{' '}
-          for form-specific variations
+          Also see <a href={`#${ComponentTitles.Form}`}>Form</a> for form-specific variations
         </span>
       </AntDCard>
     </ComponentSection>
@@ -897,11 +889,7 @@ const InputSection: React.FC = () => {
         <Input.Password disabled />
         <hr />
         <span>
-          Also see{' '}
-          <Link reloadDocument to={`#${ComponentTitles.Form}`}>
-            Form
-          </Link>{' '}
-          for form-specific variations
+          Also see <a href={`#${ComponentTitles.Form}`}>Form</a> for form-specific variations
         </span>
       </AntDCard>
     </ComponentSection>
@@ -1498,11 +1486,7 @@ const FormSection: React.FC = () => {
       <AntDCard title="Usage">
         <Form>
           <strong>
-            Form-specific{' '}
-            <Link reloadDocument to={`#${ComponentTitles.Input}`}>
-              Input
-            </Link>{' '}
-            variations
+            Form-specific <a href={ComponentTitles.Input}>Input</a> variations
           </strong>
           <br />
           <Form.Item label="Required input" name="required_input" required>
@@ -1519,11 +1503,7 @@ const FormSection: React.FC = () => {
           <hr />
           <br />
           <strong>
-            Form-specific{' '}
-            <Link reloadDocument to={`#${ComponentTitles.Input}`}>
-              TextArea
-            </Link>{' '}
-            variations
+            Form-specific <a href={ComponentTitles.Input}>TextArea</a> variations
           </strong>
           <br />
           <Form.Item label="Required TextArea" name="required_textarea" required>
@@ -1540,11 +1520,7 @@ const FormSection: React.FC = () => {
           <hr />
           <br />
           <strong>
-            Form-specific{' '}
-            <Link reloadDocument to={`#${ComponentTitles.Input}`}>
-              Password
-            </Link>{' '}
-            variations
+            Form-specific <a href={ComponentTitles.Input}>Password</a> variations
           </strong>
           <br />
           <Form.Item label="Required Password" name="required_label" required>
@@ -1561,11 +1537,7 @@ const FormSection: React.FC = () => {
           <hr />
           <br />
           <strong>
-            Form-specific{' '}
-            <Link reloadDocument to={`#${ComponentTitles.InputNumber}`}>
-              InputNumber
-            </Link>{' '}
-            variations
+            Form-specific <a href={ComponentTitles.Input}>InputNumber</a> variations
           </strong>
           <Form.Item label="Required InputNumber" name="number" required>
             <InputNumber />
@@ -1580,11 +1552,7 @@ const FormSection: React.FC = () => {
           <hr />
           <br />
           <strong>
-            Form-specific{' '}
-            <Link reloadDocument to={`#${ComponentTitles.Select}`}>
-              Select
-            </Link>{' '}
-            variations
+            Form-specific <a href={ComponentTitles.Select}>Select</a> variations
           </strong>
           <Form.Item initialValue={1} label="Required dropdown" name="required_dropdown" required>
             <Select
