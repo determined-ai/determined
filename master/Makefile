@@ -126,7 +126,7 @@ test-intg: export DET_INTEGRATION_ES_PORT ?= 9200
 test-intg: build/mock_gen.stamp
 	gotestsum --junitfile test-intg.junit.xml -- -tags=integration -coverprofile=coverage.out -covermode count -cover ./...
 
-.PHONY: bench
+.PHONY: test-perf
 bench:
 	go test -tags=integration -v -run="TestBenchmark" -benchtime=1x ./test/integration/api # TODO 1x
 

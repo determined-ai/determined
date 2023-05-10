@@ -1573,6 +1573,42 @@ jobs:
       - store_test_results:
           path: agent/test.junit.xml
 
+  test-master-performance:
+    machine:
+      image: <<pipeline.parameters.machine-image>>
+    resource_class: xlarge
+    steps:
+      - checkout
+      - skip-if-docs-only
+      - skip-if-webui-only
+      - attach_workspace:
+          at: .
+      - reinstall-go
+      - setup-python-venv:
+          executor: <<pipeline.parameters.machine-image>>
+      # TODO maybe use this - setup-go-intg-deps
+      - install-protoc # Install newer version of protoc into $HOME/.local/bin, since default is proto2.
+      - run: PATH=$HOME/.local/bin:$PATH make -C proto get-deps
+      - run: PATH=$HOME/.local/bin:$PATH make -C proto build
+      - run: make -C master get-deps
+      - run: make -C agent get-deps
+      # TODO download database dump
+      - install-devcluster
+      - start-devcluster:
+          target-stage: elastic
+          devcluster-config: performance-test.devcluster.yaml
+      # END maybe use this
+      - run: make -C master test-perf
+      # TODO do this result + monitoring + coverage
+      #
+      #
+      #- store_test_results:
+      #    path: master/test-intg.junit.xml
+      #- persist_to_workspace:
+      #    root: .
+      #    paths:
+      #      - master/coverage.out
+
   test-intg-master:
     machine:
       image: <<pipeline.parameters.machine-image>>
