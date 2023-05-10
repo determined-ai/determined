@@ -158,11 +158,11 @@ machine.
  Step 7 - Configure the Cluster
 ********************************
 
-Common configuration reference: :doc:`/reference/reference-deploy/config/common-config-options`
+Common configuration reference: :doc:`/reference/deploy/config/common-config-options`
 
-Master configuration reference: :doc:`/reference/reference-deploy/config/master-config-reference`
+Master configuration reference: :doc:`/reference/deploy/config/master-config-reference`
 
-Agent configuration reference: :doc:`/reference/reference-deploy/config/agent-config-reference`
+Agent configuration reference: :doc:`/reference/deploy/config/agent-config-reference`
 
 Basic Configuration
 ===================
