@@ -19,7 +19,6 @@ import (
 	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/internal/authz"
-	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/prom"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/trials"
@@ -1124,7 +1123,7 @@ func (a *apiServer) PatchExperiment(
 		if newResources != nil {
 			resources := activeConfig.Resources()
 			if newResources.MaxSlots != nil {
-				if err = expauth.AuthZProvider.Get().
+				if err = exputil.AuthZProvider.Get().
 					CanSetExperimentsMaxSlots(ctx, *curUser, modelExp, int(*newResources.MaxSlots)); err != nil {
 					return nil, echo.NewHTTPError(http.StatusForbidden, err.Error())
 				}
@@ -1132,7 +1131,7 @@ func (a *apiServer) PatchExperiment(
 				resources.SetMaxSlots(ptrs.Ptr(int(*newResources.MaxSlots)))
 			}
 			if newResources.Weight != nil {
-				if err = expauth.AuthZProvider.Get().
+				if err = exputil.AuthZProvider.Get().
 					CanSetExperimentsWeight(ctx, *curUser, modelExp, *newResources.Weight); err != nil {
 					return nil, echo.NewHTTPError(http.StatusForbidden, err.Error())
 				}
@@ -1140,7 +1139,7 @@ func (a *apiServer) PatchExperiment(
 				resources.SetWeight(*newResources.Weight)
 			}
 			if newResources.Priority != nil {
-				if err = expauth.AuthZProvider.Get().
+				if err = exputil.AuthZProvider.Get().
 					CanSetExperimentsPriority(ctx, *curUser, modelExp, int(*newResources.Priority)); err != nil {
 					return nil, echo.NewHTTPError(http.StatusForbidden, err.Error())
 				}
@@ -1152,7 +1151,7 @@ func (a *apiServer) PatchExperiment(
 		newCheckpointStorage := req.Experiment.CheckpointStorage
 
 		if newCheckpointStorage != nil {
-			if err = expauth.AuthZProvider.Get().
+			if err = exputil.AuthZProvider.Get().
 				CanSetExperimentsCheckpointGCPolicy(ctx, *curUser, modelExp); err != nil {
 				return nil, echo.NewHTTPError(http.StatusForbidden, err.Error())
 			}
@@ -1219,7 +1218,8 @@ func (a *apiServer) PatchExperiment(
 
 			taskID := model.NewTaskID()
 			ckptGCTask := newCheckpointGCTask(
-				a.m.rm, a.m.db, a.m.taskLogger, taskID, modelExp.JobID, modelExp.StartTime, taskSpec, modelExp.ID,
+				a.m.rm, a.m.db, a.m.taskLogger, taskID, modelExp.JobID, modelExp.StartTime,
+				taskSpec, modelExp.ID,
 				modelExp.Config, checkpoints, true, agentUserGroup, user, nil,
 			)
 			a.m.system.ActorOf(actor.Addr(fmt.Sprintf("patch-checkpoint-gc-%s", uuid.New().String())),
