@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import { quarantinedIt } from 'quarantineTests';
 import { FetchArgs } from 'services/api-ts-sdk';
 import { mapV1LogsResponse } from 'services/decoder';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
@@ -281,7 +282,7 @@ describe('LogViewer', () => {
       });
     });
 
-    quarantinedIt(
+    quarantinedIt()(
       'should render logs with streaming',
       async () => {
         setup({ decoder, onFetch });

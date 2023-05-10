@@ -35,7 +35,3 @@ vi.mock('router');
 vi.mock('services/api', () => ({}));
 
 global.ResizeObserver = require('resize-observer-polyfill');
-
-global.quarantinedIt = () => {
-  return process.env.QUARANTINED ? it.skip : it;
-};
