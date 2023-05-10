@@ -177,11 +177,10 @@ func TrialIDsToWorkspaceIDs(ctx context.Context, trialIDs []int32) (
 	var rows []map[string]interface{}
 	err := Bun().NewSelect().TableExpr("workspaces AS w").
 		ColumnExpr("w.id AS workspace_id").
-		ColumnExpr("t.id AS trial_id").
 		Join("JOIN projects p ON w.id = p.workspace_id").
 		Join("JOIN experiments e ON p.id = e.project_id").
 		Join("JOIN trials t ON e.id = t.experiment_id").
-		Where("trial_id IN (?)", bun.In(trialIDs)).
+		Where("t.id IN (?)", bun.In(trialIDs)).
 		Scan(ctx, &rows)
 	if err != nil {
 		return nil, err
