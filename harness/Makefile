@@ -36,6 +36,10 @@ test-gpu-lightning:
 	# Lightning tests require their own docker image in circleci
 	coverage run -m pytest -v --runslow --durations=0 -m "pytorch_lightning" tests/experiment/integrations/test_pytorch_lightning.py
 
+.PHONY: test-gpu-deepspeed
+test-gpu-deepspeed:
+	coverage run -m pytest -v --runslow --durations=0 -m "deepspeed and gpu" tests/experiment/integrations/test_deepspeed_trial.py
+
 .PHONY: test
 test:
 	coverage run -m pytest -v --runslow --durations=0 tests

@@ -1,4 +1,4 @@
-description: noop_single
+name: noop_single
 hyperparameters:
   global_batch_size: 32
   metrics_progression: decreasing

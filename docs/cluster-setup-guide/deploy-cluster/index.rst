@@ -32,10 +32,9 @@ To set up Determined, start by following the cluster deployment guide for your e
  Configuring the Determined Cluster
 ************************************
 
--  :doc:`Common configuration options </reference/reference-deploy/config/common-config-options>`
--  :doc:`Master configuration reference
-   </reference/reference-deploy/config/master-config-reference>`
--  :doc:`Agent configuration reference </reference/reference-deploy/config/agent-config-reference>`
+-  :doc:`Common configuration options </reference/deploy/config/common-config-options>`
+-  :doc:`Master configuration reference </reference/deploy/config/master-config-reference>`
+-  :doc:`Agent configuration reference </reference/deploy/config/agent-config-reference>`
 
 .. toctree::
    :hidden:

@@ -162,6 +162,31 @@ message PatchExperiment {
   google.protobuf.StringValue name = 4;
   // The experiment notes.
   google.protobuf.StringValue notes = 5;
+
+  // Nested object for resources field patch.
+  message PatchResources {
+    // Experiment config resources.max_slots.
+    optional int32 max_slots = 1;
+    // Experiment config resources.weight.
+    optional double weight = 2;
+    // Experiment config resources.priority.
+    optional int32 priority = 3;
+  }
+
+  // Nested object for checkpoint_storage field patch.
+  message PatchCheckpointStorage {
+    // Experiment config checkpoint_storage.save_experiment_best.
+    int32 save_experiment_best = 1;
+    // Experiment config checkpoint_storage.save_trial_best.
+    int32 save_trial_best = 2;
+    // Experiment config checkpoint_storage.save_trial_latest.
+    int32 save_trial_latest = 3;
+  }
+
+  // Experiment config resources.
+  optional PatchResources resources = 6;
+  // Experiment config checkpoint_storage.
+  optional PatchCheckpointStorage checkpoint_storage = 7;
 }
 
 // ValidationHistoryEntry is a single entry for a validation history for an

@@ -63,6 +63,8 @@ To start your experiment, you'll need a Determined cluster. If you are new to De
    # If your machine does not have GPUs:
    det deploy local cluster-up --no-gpu
 
+.. include:: ../_shared/note-pip-install-determined.txt
+
 ********************
  Run the Experiment
 ********************
@@ -101,4 +103,4 @@ training the PyTorch MNIST example.
 
 In this article, we learned how to run an experiment on a local, single CPU or GPU. To learn how to
 change your configuration settings, including how to run a distributed training job on multiple
-GPUs, visit the :doc:`Quickstart for Model Developers </quickstart-mdldev>`.
+GPUs, visit the :ref:`Quickstart for Model Developers <qs-mdldev>`.

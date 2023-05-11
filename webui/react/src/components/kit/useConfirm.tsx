@@ -1,11 +1,12 @@
 import React, { PropsWithChildren, ReactNode, useState } from 'react';
 
-import { Modal, useModal } from './Modal';
+import { Modal, ModalSize, useModal } from './Modal';
 
 export interface ConfirmModalProps {
   cancelText?: string;
   content?: ReactNode;
   danger?: boolean;
+  size?: ModalSize;
   title?: string;
   okText?: string;
   onClose?: () => void;
@@ -20,6 +21,7 @@ const ConfirmModal = ({
   cancelText,
   content,
   danger = false,
+  size = 'small',
   title,
   okText,
   onClose,
@@ -31,7 +33,7 @@ const ConfirmModal = ({
       cancelText={cancelText}
       danger={danger}
       icon="warning-large"
-      size="small"
+      size={size}
       submit={{
         handler: onConfirm,
         text: okText ?? DEFAULT_CONFIRM_LABEL,
@@ -59,11 +61,12 @@ export const ConfirmationProvider: React.FC<PropsWithChildren> = ({ children }) 
     content = DEFAULT_CONTENT,
     danger = false,
     okText,
+    size = 'small',
     title,
     onClose = voidFn,
     onConfirm = voidPromiseFn,
   }: ConfirmModalProps) => {
-    setModalProps({ cancelText, content, danger, okText, onClose, onConfirm, title });
+    setModalProps({ cancelText, content, danger, okText, onClose, onConfirm, size, title });
     Modal.open();
   };
 

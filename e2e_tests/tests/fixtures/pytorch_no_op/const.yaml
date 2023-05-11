@@ -1,4 +1,4 @@
-description: noop-pytorch
+name: noop-pytorch
 data:
   model_type: single_output
 entrypoint: model_def:NoopPyTorchTrial

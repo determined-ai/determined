@@ -7,7 +7,6 @@ import { Modal } from './kit/Modal';
 interface Props {
   batchAction: ExperimentAction;
   itemName?: string;
-  selectAll?: boolean;
   onConfirm: () => Promise<void>;
   onClose?: () => void;
 }
@@ -23,7 +22,6 @@ const DANGEROUS_BATCH_ACTIONS: ExperimentAction[] = [
 const BatchActionConfirmModalComponent: React.FC<Props> = ({
   batchAction,
   itemName = 'experiment',
-  selectAll,
   onConfirm,
   onClose,
 }: Props) => {
@@ -43,8 +41,7 @@ const BatchActionConfirmModalComponent: React.FC<Props> = ({
       title={`Confirm Batch ${batchAction}`}
       onClose={onClose}>
       <div>
-        Are you sure you want to <b>{batchAction.toLocaleLowerCase()}</b> all eligible{' '}
-        {selectAll ? `${itemName}s matching the current filters` : `selected ${itemName}s`}?
+        Are you sure you want to <b>{batchAction.toLocaleLowerCase()}</b> all selected {itemName}s?
       </div>
     </Modal>
   );
