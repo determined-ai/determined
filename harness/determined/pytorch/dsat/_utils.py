@@ -112,6 +112,24 @@ def smaller_is_better(metric: str) -> bool:
         raise ValueError(f"metric must be one of {valid_metrics}, not {metric}")
 
 
+def get_split_entrypoint(submitted_entrypoint: Union[List[str], str]) -> List[str]:
+    # The entrypoint may be a string or list of strings. Strip all white space from each entry and
+    # convert to a list, in either case.
+    if isinstance(submitted_entrypoint, str):
+        split_entrypoint = submitted_entrypoint.split(" ")
+    elif isinstance(submitted_entrypoint, list):
+        # Join and re-split to remove any possile white space.
+        # submitted_entrypoint: List[str]
+        str_entrypoint: str = " ".join(submitted_entrypoint)
+        split_entrypoint = str_entrypoint.split(" ")
+    else:
+        raise ValueError(
+            f"Expected a string or list for an entrypoint, but received "
+            f"{type(submitted_entrypoint)}"
+        )
+    return [s.strip() for s in split_entrypoint if s.strip()]
+
+
 def get_search_runner_config_from_args(args: argparse.Namespace) -> Dict[str, Any]:
     if args.search_runner_config is not None:
         submitted_search_runner_config = get_dict_from_yaml_or_json_path(args.search_runner_config)
@@ -127,22 +145,9 @@ def get_search_runner_config_from_args(args: argparse.Namespace) -> Dict[str, An
     # --deepspeed) arg is passed in, both configs match. Probably some gotchas here because
     # --deepspeed is also a boolean arg for vanilla deepspeed.
     possible_config_flags = ("--deepspeed", "--deepspeed_config")
-    submitted_entrypoint = submitted_exp_config_dict["entrypoint"]
-    # The entrypoint may be a string or list of strings. Strip all white space from each entry and
-    # convert to a list, in either case.
-    if isinstance(submitted_entrypoint, str):
-        split_entrypoint = submitted_entrypoint.split(" ")
-    elif isinstance(submitted_entrypoint, list):
-        # Join and re-split to remove any possile white space.
-        split_entrypoint = " ".join(submitted_entrypoint)
-        split_entrypoint = split_entrypoint.split(" ")
-    else:
-        raise ValueError(
-            f"Expected a string or list for an entrypoint, but received "
-            f"{type(submitted_entrypoint)}"
-        )
 
-    split_entrypoint = [s.strip() for s in split_entrypoint if s.strip()]
+    submitted_entrypoint: Union[List[str], str] = submitted_exp_config_dict["entrypoint"]
+    split_entrypoint = get_split_entrypoint(submitted_entrypoint)
 
     for idx in range(len(split_entrypoint) - 1):
         curr_arg, next_arg = split_entrypoint[idx : idx + 2]
@@ -194,6 +199,7 @@ def get_dict_from_yaml_or_json_path(
             return json_dict
         except Exception as e:
             logging.info(f"Exception {e} raised when loading {path} with json. Attempting yaml.")
+            return {}
     else:
         with open(p, "r") as f:
             yaml_dict: Dict[Any, Any] = yaml.YAML(typ="safe").load(f)
@@ -308,9 +314,8 @@ def get_batch_config_from_mbs_gas_and_slots(
     }
 
 
-def dict_raise_error_on_duplicate_keys(ordered_pairs):
+def dict_raise_error_on_duplicate_keys(ordered_pairs: Dict[str, Any]) -> Dict[str, Any]:
     """Reject duplicate keys."""
-    # d = dict((k, v) for k, v in ordered_pairs)
     d = {k: v for (k, v) in ordered_pairs}
     if len(d) != len(ordered_pairs):
         counter = collections.Counter([pair[0] for pair in ordered_pairs])
