@@ -1,10 +1,10 @@
 import yaml from 'js-yaml';
 import React, { useMemo, useState } from 'react';
 
+import Icon from 'components/kit/Icon';
 import { paths } from 'routes/utils';
 import { getExperimentFileFromTree, getExperimentFileTree } from 'services/api';
 import { V1FileNode } from 'services/api-ts-sdk';
-import Icon from 'shared/components/Icon';
 import Spinner from 'shared/components/Spinner/Spinner';
 import { RawJson } from 'shared/types';
 import { ExperimentBase, TreeNode } from 'types';
@@ -12,7 +12,7 @@ import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 
 const CodeEditor = React.lazy(() => import('components/kit/CodeEditor'));
 
-const configIcon = <Icon name="settings" />;
+const configIcon = <Icon name="settings" title="settings" />;
 
 export interface Props {
   experiment: ExperimentBase;

@@ -10,7 +10,7 @@ import Button from 'components/kit/Button';
 import Card from 'components/kit/Card';
 import Checkbox from 'components/kit/Checkbox';
 import ClipboardButton from 'components/kit/ClipboardButton';
-import CodeViewer from 'components/kit/CodeViewer';
+import CodeEditor from 'components/kit/CodeEditor';
 import { Column, Columns } from 'components/kit/Columns';
 import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 import Empty from 'components/kit/Empty';
@@ -49,9 +49,11 @@ import useUI from 'shared/contexts/stores/UI';
 import { ValueOf } from 'shared/types';
 import { noOp } from 'shared/utils/service';
 import { BrandingType } from 'stores/determinedInfo';
-import { MetricType, Project, ResourcePool, User } from 'types';
+import { MetricType, User } from 'types';
 import { Loaded, NotLoaded } from 'utils/loadable';
-import { generateTestProjectData, generateTestWorkspaceData } from 'utils/tests/generateTestData';
+import loremIpsum from 'utils/loremIpsum';
+
+import useConfirm, { voidPromiseFn } from '../components/kit/useConfirm';
 
 import css from './DesignKit.module.scss';
 import { CheckpointsDict } from './TrialDetails/F_TrialDetailsOverview';
@@ -64,7 +66,7 @@ const ComponentTitles = {
   Charts: 'Charts',
   Checkboxes: 'Checkboxes',
   ClipboardButton: 'ClipboardButton',
-  CodeViewer: 'CodeViewer',
+  CodeEditor: 'CodeEditor',
   Columns: 'Columns',
   Dropdown: 'Dropdown',
   Empty: 'Empty',
@@ -836,12 +838,12 @@ const DropdownSection: React.FC = () => {
   );
 };
 
-const CodeViewerSection: React.FC = () => {
+const CodeEditorSection: React.FC = () => {
   return (
     <ComponentSection id="CodeEditor" title="CodeEditor">
       <AntDCard>
         <p>
-          The Code Viewer (<code>{'<CodeEditor>'}</code>) shows Python and YAML files with syntax
+          The Code Editor (<code>{'<CodeEditor>'}</code>) shows Python and YAML files with syntax
           highlighting. If multiple files are sent, the component shows a file tree browser.
         </p>
         <ul>
@@ -897,7 +899,6 @@ const CodeViewerSection: React.FC = () => {
     </ComponentSection>
   );
 };
-
 
 const InputSearchSection: React.FC = () => {
   return (
@@ -2477,7 +2478,7 @@ const Components = {
   Charts: <ChartsSection />,
   Checkboxes: <CheckboxesSection />,
   ClipboardButton: <ClipboardButtonSection />,
-  CodeViewer: <CodeViewerSection />,
+  CodeEditor: <CodeEditorSection />,
   Columns: <ColumnsSection />,
   Dropdown: <DropdownSection />,
   Empty: <EmptySection />,
