@@ -265,6 +265,8 @@ message BulkExperimentFilters {
   // Limit experiments to those within a specified project, or 0 for all
   // projects.
   int32 project_id = 7;
+  // Experiment ids to exclude when filters are used.
+  repeated int32 excluded_experiment_ids = 8;
 }
 
 // Pause multiple experiments.

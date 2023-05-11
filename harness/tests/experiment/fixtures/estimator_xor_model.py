@@ -5,7 +5,7 @@ from typing import Any, Callable, Dict, Tuple
 import tensorflow as tf
 
 from determined import estimator
-from tests.experiment.utils import xor_data
+from tests.experiment.tf_utils import xor_data
 
 
 def xor_input_fn(
