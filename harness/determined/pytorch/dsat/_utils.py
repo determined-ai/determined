@@ -15,29 +15,25 @@ from determined.pytorch.dsat import _defaults
 from determined.util import merge_dicts
 
 
-def get_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="DS Autotuning")
-    parser.add_argument("config_path")
-    parser.add_argument("model_dir")
-    parser.add_argument("-i", "--include", type=str, nargs="+")
+def get_base_parser() -> argparse.ArgumentParser:
+    base_parser = argparse.ArgumentParser(add_help=False)
+    base_parser.add_argument("config_path")
+    base_parser.add_argument("model_dir")
+    base_parser.add_argument("-i", "--include", type=str, nargs="+")
 
-    parser.add_argument(
-        "-t", "--tuner-type", type=str, default=_defaults.AUTOTUNING_ARG_DEFAULTS["tuner-type"]
-    )
-    parser.add_argument(
+    base_parser.add_argument(
         "-mt", "--max-trials", type=int, default=_defaults.AUTOTUNING_ARG_DEFAULTS["max-trials"]
     )
-    parser.add_argument("-ms", "--max-slots", type=int)
-    parser.add_argument(
+    base_parser.add_argument("-ms", "--max-slots", type=int)
+    base_parser.add_argument(
         "-mct",
         "--max-concurrent-trials",
         type=int,
         default=_defaults.AUTOTUNING_ARG_DEFAULTS["max-concurrent-trials"],
     )
-    parser.add_argument("-es", "--early-stopping", type=int)
-    parser.add_argument("-sc", "--search-runner-config", type=str)
-    parser.add_argument("-msrr", "--max-search-runner-restarts", type=int)
-    parser.add_argument(
+    base_parser.add_argument("-sc", "--search-runner-config", type=str)
+    base_parser.add_argument("-msrr", "--max-search-runner-restarts", type=int)
+    base_parser.add_argument(
         "-z",
         "--zero-stages",
         type=int,
@@ -45,41 +41,54 @@ def get_parser() -> argparse.ArgumentParser:
         default=_defaults.AUTOTUNING_ARG_DEFAULTS["zero-stages"],
         choices=list(range(4)),
     )
-    # Searcher specific args (TODO: refactor)
-    parser.add_argument(
-        "-trc",
-        "--trials-per-random-config",
-        type=int,
-        default=_defaults.AUTOTUNING_ARG_DEFAULTS["trials-per-random-config"],
-    )
 
     # DS-specific args.
-    parser.add_argument(
+    base_parser.add_argument(
         "-sps",
         "--start_profile-step",
         type=int,
         default=_defaults.AUTOTUNING_ARG_DEFAULTS["start-profile-step"],
     )
-    parser.add_argument(
+    base_parser.add_argument(
         "-eps",
         "--end-profile-step",
         type=int,
         default=_defaults.AUTOTUNING_ARG_DEFAULTS["end-profile-step"],
     )
-    parser.add_argument(
+    base_parser.add_argument(
         "-m",
         "--metric",
         type=str,
         default=_defaults.AUTOTUNING_ARG_DEFAULTS["metric"],
         choices=_defaults.SMALLER_IS_BETTER_METRICS + _defaults.LARGER_IS_BETTER_METRICS,
     )
-    parser.add_argument(
+    base_parser.add_argument(
         "-r",
         "--random_seed",
         type=int,
         default=_defaults.AUTOTUNING_ARG_DEFAULTS["random-seed"],
     )
-    parser.add_argument("--run-full-experiment", action="store_true")
+    base_parser.add_argument("--run-full-experiment", action="store_true")
+
+    return base_parser
+
+
+def get_full_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser()
+    subparsers = parser.add_subparsers(required=True, dest="search_method")
+    base_parser = get_base_parser()
+
+    subparsers.add_parser("_test", parents=[base_parser])
+
+    random_subparser = subparsers.add_parser("random", parents=[base_parser])
+    random_subparser.add_argument(
+        "-trc",
+        "--trials-per-random-config",
+        type=int,
+        default=_defaults.AUTOTUNING_ARG_DEFAULTS["trials-per-random-config"],
+    )
+    random_subparser.add_argument("-es", "--early-stopping", type=int)
+
     return parser
 
 
@@ -144,17 +153,7 @@ def get_search_runner_config_from_args(args: argparse.Namespace) -> Dict[str, An
     # workspace, etc.
     search_runner_config = merge_dicts(submitted_exp_config_dict, default_search_runner_config)
     search_runner_config["name"] = f"(DSAT) {search_runner_config['name']}"
-    search_runner_config["hyperparameters"] = {
-        "max_trials": args.max_trials,
-        "max_concurrent_trials": args.max_concurrent_trials,
-        "max_slots": args.max_slots,
-        "zero_stages": args.zero_stages,
-        "start_profile_step": args.start_profile_step,
-        "metric": args.metric,
-        "early_stopping": args.early_stopping,
-        "tuner_type": args.tuner_type,
-    }
-    # TODO: add user cli args to hp section for easier reference
+    search_runner_config["hyperparameters"] = vars(args)
 
     return search_runner_config
 

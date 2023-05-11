@@ -10,17 +10,13 @@ from determined.pytorch.dsat import _defaults, _utils
 
 def parse_args() -> argparse.Namespace:
     # TODO: Allow for additional includes args to be specified, as in the CLI.
-    parser = _utils.get_parser()
+    parser = _utils.get_full_parser()
     args = parser.parse_args()
 
     # Convert the paths to absolute paths
     args.config_path = os.path.abspath(args.config_path)
     args.model_dir = os.path.abspath(args.model_dir)
     args.include = [os.path.abspath(p) for p in args.include] if args.include is not None else []
-
-    assert (
-        args.tuner_type in _defaults.ALL_SEARCH_METHOD_CLASSES
-    ), f"tuner-type must be one of {list(_defaults.ALL_SEARCH_METHOD_CLASSES)}, not {args.tuner_type}"
 
     return args
 
