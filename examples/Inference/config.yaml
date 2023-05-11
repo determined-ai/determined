@@ -1,0 +1,15 @@
+name: det_inference_demo
+entrypoint: >-
+   python3 -m determined.launch.torch_distributed
+   python3 main.py
+
+# NEW: configure multiple slots per trial.
+resources:
+  slots_per_trial: 2
+
+searcher:
+   name: single
+   metric: x
+   max_length: 100
+
+max_restarts: 0
