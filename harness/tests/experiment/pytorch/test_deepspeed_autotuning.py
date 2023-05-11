@@ -1,4 +1,5 @@
 import copy
+import math
 import pathlib
 import tempfile
 from collections import deque
@@ -9,7 +10,6 @@ import pytest
 from determined import searcher
 from determined.common.api import bindings
 from determined.pytorch.dsat import (
-    BaseDSATSearchMethod,
     DSATTrial,
     DSATTrialTracker,
     _defaults,
@@ -47,11 +47,11 @@ DEFAULT_CUSTOM_DSAT_EXP_CONFIG_DICT = {
 
 
 MODEL_INFO_PROFILE_METRIC_FIXTURE = {
-    "num_params": 60192808,
-    "trainable_num_params": 60192808,
-    "activation_mem_per_gpu": 89828352,
+    "num_params": 1,
+    "trainable_num_params": 1,
+    "activation_mem_per_gpu": 1,
     "rank": 0,
-    "gpu_mem": 15843721216,
+    "gpu_mem": 32,
 }
 
 
@@ -92,6 +92,8 @@ def test_deepspeed_autotune_happy_path() -> None:
     nothing falls over
     """
     for search_method_name in _defaults.ALL_SEARCH_METHOD_CLASSES:
+        # All of our search methods currently run all of the specified `max-trials` in the
+        # happy path.
         exp_num_trials = _defaults.AUTOTUNING_ARG_DEFAULTS["max-trials"]
         model_info_profile_trial_metrics = [MODEL_INFO_PROFILE_METRIC_FIXTURE]
         successful_trial_metrics = [
@@ -410,12 +412,15 @@ class TestDSATTrialTracker:
             assert trial_tracker.best_trials_by_stage[popped_trial.stage] == popped_trial
 
 
-def random_search_builder(args):
+def search_state_and_method_builder(args):
     """
-    Creates a `RandomDSATSearchMethod` instance with a completed model profile info run.
+    Creates the appropriate `BaseDSATSearchMethod` superclass instance with a completed model
+    profile info run and a populated queue.
     """
     exp_config = get_custom_dsat_exp_conf_from_args(args)
-    search_method = _dsat_search_method.RandomDSATSearchMethod(args=args, exp_config=exp_config)
+    search_method = _defaults.ALL_SEARCH_METHOD_CLASSES[args.search_method](
+        args=args, exp_config=exp_config
+    )
     searcher_state = _search_method.SearcherState()
     search_method.initial_operations(searcher_state)
     search_method.on_validation_completed(
@@ -428,8 +433,8 @@ def random_search_builder(args):
 
 
 @pytest.fixture
-def default_random_search_method():
-    searcher_state, search_method = random_search_builder(DEFAULT_ARGS_DICT["random"])
+def default_random_state_and_search_method():
+    searcher_state, search_method = search_state_and_method_builder(DEFAULT_ARGS_DICT["random"])
     yield searcher_state, search_method
 
 
@@ -438,8 +443,8 @@ class TestRandomDSATSearchMethodTrialCreation:
     Testing the various `RandomDSATSearchMethod` methods related to trial creation.
     """
 
-    def test_random_hparams_and_search_data(self, default_random_search_method):
-        _, search_method = default_random_search_method
+    def test_random_hparams_and_search_data(self, default_random_state_and_search_method):
+        _, search_method = default_random_state_and_search_method
         for _ in range(100):
             for stage in range(4):
                 hparams, search_data = search_method.get_random_hparams_and_search_data(stage)
@@ -447,9 +452,11 @@ class TestRandomDSATSearchMethodTrialCreation:
                 assert hparams[_defaults.OVERWRITE_KEY]["zero_optimization"]["stage"] == stage
                 assert search_data.lo <= mbs <= search_data.hi
 
-    def test_random_hparams_and_search_data_after_best(self, default_random_search_method):
+    def test_random_hparams_and_search_data_after_best(
+        self, default_random_state_and_search_method
+    ):
         for _ in range(100):
-            _, search_method = default_random_search_method
+            _, search_method = default_random_state_and_search_method
             for stage in range(4):
                 hparams, search_data = search_method.get_random_hparams_and_search_data(stage)
                 trial = search_method.trial_tracker.create_trial(hparams, search_data)
@@ -461,12 +468,12 @@ class TestRandomDSATSearchMethodTrialCreation:
                 _, new_search_data = search_method.get_random_hparams_and_search_data(stage)
                 assert new_search_data.lo <= new_search_data.hi
 
-    def test_lineage_continuation_after_failures(self, default_random_search_method):
+    def test_lineage_continuation_after_failures(self, default_random_state_and_search_method):
         """
         Verifying that a lineage will be attempted for `trials_per_random_config` total attempts
         even when each trial fails.
         """
-        searcher_state, search_method = default_random_search_method
+        searcher_state, search_method = default_random_state_and_search_method
         # Take and fail the next trial
         first_trial = next_trial = search_method.choose_next_trial_from_queue()
         # Remove everything else, so that we only have this lineage to handle.
@@ -486,12 +493,12 @@ class TestRandomDSATSearchMethodTrialCreation:
         next_trial = search_method.choose_next_trial_from_queue()
         assert next_trial.lineage_root != first_trial
 
-    def test_lineage_continuation_after_successes(self, default_random_search_method):
+    def test_lineage_continuation_after_successes(self, default_random_state_and_search_method):
         """
         Verifying that a lineage will be attempted for `trials_per_random_config` total attempts
         even when each trial succeeds, each improving on the last.
         """
-        searcher_state, search_method = default_random_search_method
+        searcher_state, search_method = default_random_state_and_search_method
         # Take and fail the next trial
         first_trial = next_trial = search_method.choose_next_trial_from_queue()
         metrics = list(range(search_method.trials_per_random_config))
@@ -526,11 +533,11 @@ class TestRandomDSATSearchMethodShouldStopLineage:
     Testing the various conditions which should trigger RandomDSATSearchMethod.should_stop_lineage
     """
 
-    def test_trials_per_random_config_stopping(self, default_random_search_method):
+    def test_trials_per_random_config_stopping(self, default_random_state_and_search_method):
         """
         Test that we respect the trials_per_random_config bound.
         """
-        searcher_state, search_method = default_random_search_method
+        searcher_state, search_method = default_random_state_and_search_method
         trial = None
         for stage in range(4):
             for _ in range(search_method.trials_per_random_config):
@@ -543,11 +550,11 @@ class TestRandomDSATSearchMethodShouldStopLineage:
 
             assert search_method.should_stop_lineage(trial)
 
-    def test_stop_stage_3(self, default_random_search_method):
+    def test_stop_stage_3(self, default_random_state_and_search_method):
         """
         Verify that we stop a stage 3 lineage when a successful stage-1 or 2 trial has been found.
         """
-        searcher_state, search_method = default_random_search_method
+        searcher_state, search_method = default_random_state_and_search_method
         trial_dict_by_stage = {}
         for stage in (1, 2, 3):
             overwrites = {_defaults.OVERWRITE_KEY: {"zero_optimization": {"stage": stage}}}
@@ -566,12 +573,12 @@ class TestRandomDSATSearchMethodShouldStopLineage:
         )
         assert search_method.should_stop_lineage(trial_dict_by_stage[3])
 
-    def test_stop_after_fail_on_min_mbs(self, default_random_search_method):
+    def test_stop_after_fail_on_min_mbs(self, default_random_state_and_search_method):
         """
         Verify that we stop a lineage after a trial erors out when attempting its minimum batch
         size.
         """
-        searcher_state, search_method = default_random_search_method
+        searcher_state, search_method = default_random_state_and_search_method
         for stage in range(4):
             hparams, search_data = search_method.get_random_hparams_and_search_data(stage)
             hparams[_defaults.OVERWRITE_KEY]["train_micro_batch_size_per_gpu"] = search_data.lo
@@ -581,12 +588,12 @@ class TestRandomDSATSearchMethodShouldStopLineage:
             search_method.trial_tracker.report_trial_early_exit(trial)
             assert search_method.should_stop_lineage(trial)
 
-    def test_stop_after_max_possible_mbs_run(self, default_random_search_method):
+    def test_stop_after_max_possible_mbs_run(self, default_random_state_and_search_method):
         """
         Verify that we stop a lineage after a trial has attempted its largest possible batch size
         once a hard ceiling has been established.
         """
-        searcher_state, search_method = default_random_search_method
+        searcher_state, search_method = default_random_state_and_search_method
         # Go through stages in reversed order, in order to avoid early stage-3 exiting triggers.
         for stage in reversed(range(4)):
             # Lineage should be abandoned regardless of whether the follow-on Trial errors.
@@ -616,12 +623,14 @@ class TestRandomDSATSearchMethodShouldStopLineage:
 
                 assert search_method.should_stop_lineage(next_trial)
 
-    def test_stop_when_other_configs_run_larger_batches(self, default_random_search_method):
+    def test_stop_when_other_configs_run_larger_batches(
+        self, default_random_state_and_search_method
+    ):
         """
         Verify that we stop a lineage which cannot possibly run batches as large as other same-stage
         configs can run.
         """
-        searcher_state, search_method = default_random_search_method
+        searcher_state, search_method = default_random_state_and_search_method
         for stage in range(4):
             hparams, search_data = search_method.get_random_hparams_and_search_data(stage)
             good_hparams = copy.deepcopy(hparams)
@@ -648,11 +657,11 @@ class TestRandomDSATSearchMethodChooseNextTrial:
     RandomDSATSearchMethod.choose_next_trial_from_queue
     """
 
-    def test_pruning_stage_3_trials(self, default_random_search_method):
+    def test_pruning_stage_3_trials(self, default_random_state_and_search_method):
         """
         Test the pruning of stage 3 trials.
         """
-        searcher_state, search_method = default_random_search_method
+        searcher_state, search_method = default_random_state_and_search_method
         # Run a successful stage-1 trial.
         hparams, search_data = search_method.get_random_hparams_and_search_data(1)
         successful_trial = search_method.trial_tracker.create_trial(hparams, search_data)
@@ -677,12 +686,12 @@ class TestRandomDSATSearchMethodChooseNextTrial:
             next_trial = search_method.choose_next_trial_from_queue()
             assert next_trial.stage != 3
 
-    def test_queue_pruning_small_mbs_trials(self, default_random_search_method):
+    def test_queue_pruning_small_mbs_trials(self, default_random_state_and_search_method):
         """
         Test the pruning of trials with smaller `train_micro_batch_size_per_gpu` than
         already-successfully-run trials of the same stage.
         """
-        searcher_state, search_method = default_random_search_method
+        searcher_state, search_method = default_random_state_and_search_method
         # Run successful train_micro_batch_size_per_gpu = 2 trials.
         for stage in reversed(range(4)):
             hparams, search_data = search_method.get_random_hparams_and_search_data(stage)
@@ -710,16 +719,16 @@ class TestRandomDSATSearchMethodChooseNextTrial:
 
 
 @pytest.fixture
-def random_search_method_with_early_stopping():
+def random_early_stopping_state_and_search_method():
     args = DEFAULT_ARGS_DICT["random"]
     args.early_stopping = 3
-    searcher_state, search_method = random_search_builder(args)
+    searcher_state, search_method = search_state_and_method_builder(args)
     yield searcher_state, search_method
 
 
 @pytest.mark.timeout(5)
-def test_random_dsat_early_stopping(random_search_method_with_early_stopping) -> None:
-    searcher_state, search_method = random_search_method_with_early_stopping
+def test_random_dsat_early_stopping(random_early_stopping_state_and_search_method) -> None:
+    searcher_state, search_method = random_early_stopping_state_and_search_method
     hparams, search_data = search_method.get_random_hparams_and_search_data(1)
     successful_trial = search_method.trial_tracker.create_trial(hparams, search_data)
     search_method.trial_tracker.queue_and_register_trial(successful_trial)
@@ -735,6 +744,141 @@ def test_random_dsat_early_stopping(random_search_method_with_early_stopping) ->
         search_method.trial_tracker.queue.popleft()
         search_method.trial_tracker.report_trial_early_exit(failed_trial)
     assert search_method.early_stopping_triggered()
+
+
+@pytest.fixture
+def default_binary_state_and_search_method():
+    searcher_state, search_method = search_state_and_method_builder(DEFAULT_ARGS_DICT["binary"])
+    yield searcher_state, search_method
+
+
+@pytest.fixture
+def long_binary_state_and_search_method():
+    """
+    For long-running tests which need a longer max_trials.
+    """
+    args = DEFAULT_ARGS_DICT["binary"]
+    args.max_trials = 10**9
+    searcher_state, search_method = search_state_and_method_builder(args)
+    yield searcher_state, search_method
+
+
+class TestBinaryDSATSearchMethod:
+    def test_binary_happy_path(self, long_binary_state_and_search_method):
+        """
+        Ensure that when the actual `train_micro_batch_size_per_gpu` lies between the
+        search bounds, this optimal value will be found.
+        """
+        searcher_state, search_method = long_binary_state_and_search_method
+        search_method.trial_tracker.queue.clear()
+        # Test for that all stages successfully find all possible values in their search range:
+        for stage in range(4):
+            _, search_data = search_method.get_random_hparams_and_search_data(stage)
+            num_possible_mbs = search_data.hi - search_data.lo + 1
+            for target_mbs in range(search_data.lo, search_data.hi + 1):
+                search_method.trial_tracker.queue.clear()
+                hparams, search_data = search_method.get_random_hparams_and_search_data(stage)
+                first_trial = search_method.trial_tracker.create_trial(hparams, search_data)
+                search_method.trial_tracker.queue_and_register_trial(first_trial)
+                curr_trial = search_method.trial_tracker.queue.popleft()
+                for num_halvings in range(1, num_possible_mbs + 1):
+                    assert curr_trial.search_data.lo <= curr_trial.mbs <= curr_trial.search_data.hi
+                    if curr_trial.mbs >= target_mbs:
+                        search_method.on_trial_exited_early(
+                            searcher_state, curr_trial.request_id, searcher.ExitedReason.ERRORED
+                        )
+                        assert search_method.trial_tracker.queue
+                    else:
+                        search_method.on_validation_completed(
+                            searcher_state,
+                            curr_trial.request_id,
+                            {curr_trial.searcher_metric_name: 0.0},
+                            curr_trial.length,
+                        )
+                        assert search_method.trial_tracker.queue
+                    if curr_trial.mbs == target_mbs:
+                        break
+                    curr_trial = search_method.trial_tracker.queue.popleft()
+                    # queue should now be empty
+                    assert not search_method.trial_tracker.queue
+                    # Every trial should belong to the same lineage.
+                    assert curr_trial.lineage_root == first_trial
+                # Affirm that the solution was found as quickly as expected.
+                assert num_halvings <= int(math.log(num_possible_mbs, 2)) + 1
+
+    def test_binary_no_trials_can_run(self, long_binary_state_and_search_method):
+        """
+        Verify expected behavior if every trial fails to even run batch size one.
+        """
+        searcher_state, search_method = long_binary_state_and_search_method
+        search_method.trial_tracker.queue.clear()
+        # Test for that all stages successfully find all possible values in their search range:
+        for stage in range(4):
+            _, search_data = search_method.get_random_hparams_and_search_data(stage)
+            num_possible_mbs = search_data.hi - search_data.lo + 1
+            target_mbs = 0
+            search_method.trial_tracker.queue.clear()
+            hparams, search_data = search_method.get_random_hparams_and_search_data(stage)
+            first_trial = search_method.trial_tracker.create_trial(hparams, search_data)
+            search_method.trial_tracker.queue_and_register_trial(first_trial)
+            curr_trial = search_method.trial_tracker.queue.popleft()
+            for num_halvings in range(1, num_possible_mbs + 1):
+                assert curr_trial.search_data.lo <= curr_trial.mbs <= curr_trial.search_data.hi
+                assert curr_trial.mbs > target_mbs
+                search_method.on_trial_exited_early(
+                    searcher_state, curr_trial.request_id, searcher.ExitedReason.ERRORED
+                )
+                assert search_method.trial_tracker.queue
+                if curr_trial.mbs == curr_trial.search_data.lo:
+                    # Next trial should start a new lineage in this case.
+                    next_lineage_trial = search_method.trial_tracker.queue.popleft()
+                    assert not search_method.trial_tracker.queue
+                    assert next_lineage_trial.lineage_root != first_trial
+                    assert num_halvings <= int(math.log(num_possible_mbs, 2)) + 1
+                    break
+                else:
+                    curr_trial = search_method.trial_tracker.queue.popleft()
+                    assert not search_method.trial_tracker.queue
+                    assert curr_trial.lineage_root == first_trial
+
+    def test_binary_range_too_small(self, long_binary_state_and_search_method):
+        """
+        Ensure that if the actual optimal batch size is larger than the initial range (which
+        hopefully never happens, but is possible), then the largest batch size in the range is
+        returned.
+        """
+        searcher_state, search_method = long_binary_state_and_search_method
+        search_method.trial_tracker.queue.clear()
+        # test for that all stages successfully find all possible values in their search range:
+        for stage in range(4):
+            _, search_data = search_method.get_random_hparams_and_search_data(stage)
+            num_possible_mbs = search_data.hi - search_data.lo + 1
+            target_mbs = search_data.hi + 1
+            search_method.trial_tracker.queue.clear()
+            hparams, search_data = search_method.get_random_hparams_and_search_data(stage)
+            first_trial = search_method.trial_tracker.create_trial(hparams, search_data)
+            search_method.trial_tracker.queue_and_register_trial(first_trial)
+            curr_trial = search_method.trial_tracker.queue.popleft()
+            for num_halvings in range(1, num_possible_mbs + 1):
+                assert curr_trial.search_data.lo <= curr_trial.mbs <= curr_trial.search_data.hi
+                assert curr_trial.mbs < target_mbs
+                search_method.on_validation_completed(
+                    searcher_state,
+                    curr_trial.request_id,
+                    {curr_trial.searcher_metric_name: 0.0},
+                    curr_trial.length,
+                )
+                assert search_method.trial_tracker.queue
+                if curr_trial.mbs == search_data.hi:
+                    # Next trial should start a new lineage in this case.
+                    next_lineage_trial = search_method.trial_tracker.queue.popleft()
+                    assert not search_method.trial_tracker.queue
+                    assert next_lineage_trial.lineage_root != first_trial
+                    assert num_halvings <= int(math.log(num_possible_mbs, 2)) + 1
+                    break
+                curr_trial = search_method.trial_tracker.queue.popleft()
+                assert not search_method.trial_tracker.queue
+                assert curr_trial.lineage_root == first_trial
 
 
 class MockMaster:
