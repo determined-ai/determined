@@ -4,7 +4,7 @@
    Welcome <self>
 
 .. toctree::
-   :caption: Getting Started
+   :caption: Get Started
    :maxdepth: 2
    :hidden:
 
@@ -15,7 +15,7 @@
    Model Hub Library <model-hub-library/index>
 
 .. toctree::
-   :caption: Set Up Determined
+   :caption: Set Up
    :hidden:
 
    Set Up Guide <cluster-setup-guide/deploy-cluster/index>
