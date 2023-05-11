@@ -105,7 +105,14 @@ args_description = [
             Arg("template_name", help="template name"),
             Arg("template_file", type=FileType("r"),
                 help="config template file (.yaml)"),
-        ], deprecation_message="use the following options `det template create|update-config`."),
+        ], deprecation_message="use the following options `det template create|set-value`."),
+        Cmd("set-value", None, "set template attributes", [
+            Cmd("config", patch_template_config, "update config template", [
+                Arg("template_name", help="template name"),
+                Arg("template_file", type=FileType("r"),
+                    help="config template file (.yaml)"),
+            ]),
+        ]),
         Cmd("describe", describe_template,
             "describe config template", [
                 Arg("template_name", type=str, help="template name"),
@@ -115,11 +122,6 @@ args_description = [
             Arg("template_file", type=FileType("r"),
                 help="config template file (.yaml)"),
             workspace_arg,
-        ]),
-        Cmd("update-config", patch_template_config, "update config template", [
-            Arg("template_name", help="template name"),
-            Arg("template_file", type=FileType("r"),
-                help="config template file (.yaml)"),
         ]),
         Cmd("remove rm", remove_templates,
             "remove config template", [
