@@ -216,6 +216,9 @@ const CodeEditor: React.FC<Props> = ({
   const [pageError, setPageError] = useState<PageError>(PageError.None);
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> f1c898101 (Update webui/react/src/components/kit/CodeEditor.tsx)
   const [activeFile, setActiveFile] = useState<TreeNode | null>(files[0] || null);
   const [downloadInfo, setDownloadInfo] = useState(DEFAULT_DOWNLOAD_INFO);
   const configDownloadButton = useRef<HTMLAnchorElement>(null);
