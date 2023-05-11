@@ -1,25 +1,14 @@
 import { DownloadOutlined, FileOutlined } from '@ant-design/icons';
 import { Tree } from 'antd';
-import React, {
-  lazy,
-  Suspense,
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { lazy, Suspense, useCallback, useMemo, useRef, useState } from 'react';
 
 import Tooltip from 'components/kit/Tooltip';
 import MonacoEditor from 'components/MonacoEditor';
 import Section from 'components/Section';
-import { handlePath } from 'routes/utils';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner';
 import { ValueOf } from 'shared/types';
 import { ErrorType } from 'shared/utils/error';
-import { AnyMouseEvent } from 'shared/utils/routes';
 import { TreeNode } from 'types';
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
@@ -37,11 +26,6 @@ export type Props = {
   onSelectFile?: (arg0: string) => void;
   readonly?: boolean;
   selectedFilePath?: string;
-};
-
-const DEFAULT_DOWNLOAD_INFO = {
-  fileName: '',
-  url: '',
 };
 
 const sortTree = (a: TreeNode, b: TreeNode) => {
@@ -120,11 +104,19 @@ const isConfig = (key: unknown): key is Config =>
 
 const CodeEditor: React.FC<Props> = ({ files, onSelectFile, readonly, selectedFilePath }) => {
   const [pageError, setPageError] = useState<PageError>(PageError.None);
-
+  const blobifyFileText = (loadableTxt: Loadable<string>) =>
+    URL.createObjectURL(new Blob([Loadable.getOrElse('', loadableTxt)]));
   const [activeFile, setActiveFile] = useState<TreeNode | null>(files[0] || null);
-  const [downloadInfo, setDownloadInfo] = useState(DEFAULT_DOWNLOAD_INFO);
+  const [downloadURL, setDownloadURL] = useState<string>(
+    files[0] ? blobifyFileText(files[0].content) : '',
+  );
   const configDownloadButton = useRef<HTMLAnchorElement>(null);
-  const timeout = useRef<NodeJS.Timeout>();
+
+  const clearDownloadableFile = useCallback(() => {
+    if (downloadURL) {
+      URL.revokeObjectURL(downloadURL);
+    }
+  }, [downloadURL]);
 
   const viewMode = useMemo(() => (files.length === 1 ? 'editor' : 'split'), [files.length]);
   const editorMode = useMemo(() => {
@@ -132,55 +124,57 @@ const CodeEditor: React.FC<Props> = ({ files, onSelectFile, readonly, selectedFi
     return isIpybnFile ? 'ipynb' : 'monaco';
   }, [activeFile]);
 
-  const downloadHandler = useCallback(() => {
-    timeout.current = setTimeout(() => {
-      URL.revokeObjectURL(downloadInfo.url);
-    }, 2000);
-  }, [downloadInfo.url]);
+  const fetchFile = useCallback(
+    async (fileInfo: TreeNode) => {
+      if (!fileInfo) return;
+      setPageError(PageError.None);
 
-  const fetchFile = useCallback(async (fileInfo: TreeNode) => {
-    if (!fileInfo) return;
-    setPageError(PageError.None);
+      if (isConfig(fileInfo.key) || fileInfo.content !== NotLoaded) {
+        clearDownloadableFile();
+        setActiveFile(fileInfo);
+        setDownloadURL(blobifyFileText(fileInfo.content));
+        return;
+      }
 
-    if (isConfig(fileInfo.key) || fileInfo.content !== NotLoaded) {
-      setActiveFile(fileInfo);
-      return;
-    }
+      let file,
+        content: Loadable<string> = NotLoaded;
+      try {
+        file = await fileInfo.get?.(String(fileInfo.key));
+      } catch (error) {
+        handleError(error, {
+          publicMessage: 'Failed to load selected file.',
+          publicSubject: 'Unable to fetch the selected file.',
+          silent: false,
+          type: ErrorType.Api,
+        });
+        setPageError(PageError.Fetch);
+      }
+      if (!file) {
+        clearDownloadableFile();
+        setActiveFile({
+          ...fileInfo,
+          content: NotLoaded,
+        });
+        return;
+      }
 
-    let file,
-      content: Loadable<string> = NotLoaded;
-    try {
-      file = await fileInfo.get?.(String(fileInfo.key));
-    } catch (error) {
-      handleError(error, {
-        publicMessage: 'Failed to load selected file.',
-        publicSubject: 'Unable to fetch the selected file.',
-        silent: false,
-        type: ErrorType.Api,
-      });
-      setPageError(PageError.Fetch);
-    }
-    if (!file) {
-      setActiveFile({
-        ...fileInfo,
-        content: NotLoaded,
-      });
-      return;
-    }
+      try {
+        const text = decodeURIComponent(escape(window.atob(file)));
 
-    try {
-      const text = decodeURIComponent(escape(window.atob(file)));
-
-      if (!text) setPageError(PageError.Empty); // Emmits a "Empty file" error message
-      content = Loaded(text);
-      setActiveFile({
-        ...fileInfo,
-        content,
-      });
-    } catch {
-      setPageError(PageError.Decode);
-    }
-  }, []);
+        if (!text) setPageError(PageError.Empty); // Emmits a "Empty file" error message
+        content = Loaded(text);
+        clearDownloadableFile();
+        setActiveFile({
+          ...fileInfo,
+          content,
+        });
+        setDownloadURL(blobifyFileText(content));
+      } catch {
+        setPageError(PageError.Decode);
+      }
+    },
+    [clearDownloadableFile],
+  );
 
   const treeData = useMemo(() => {
     if (selectedFilePath && activeFile?.key !== selectedFilePath) {
@@ -228,39 +222,6 @@ const CodeEditor: React.FC<Props> = ({ files, onSelectFile, readonly, selectedFi
     return 'yaml';
   }, [activeFile]);
 
-  const handleDownloadClick = useCallback(
-    (e: AnyMouseEvent) => {
-      if (!activeFile) return;
-
-      const filePath = String(activeFile?.key);
-      if (activeFile.content !== NotLoaded) {
-        const url = URL.createObjectURL(new Blob([Loadable.getOrElse('', activeFile.content)]));
-        setDownloadInfo({
-          fileName: isConfig(filePath) ? activeFile.download || '' : String(activeFile.title),
-          url,
-        });
-      } else if (activeFile.download) {
-        handlePath(e, {
-          external: true,
-          path: activeFile.download,
-        });
-      }
-    },
-    [activeFile],
-  );
-
-  useLayoutEffect(() => {
-    if (configDownloadButton.current && downloadInfo.url && downloadInfo.fileName)
-      configDownloadButton.current.click();
-  }, [downloadInfo]);
-
-  // clear the timeout ref from memory
-  useEffect(() => {
-    return () => {
-      if (timeout.current) clearTimeout(timeout.current);
-    };
-  }, []);
-
   const classes = [
     css.fileTree,
     css.codeEditorBase,
@@ -302,23 +263,23 @@ const CodeEditor: React.FC<Props> = ({ files, onSelectFile, readonly, selectedFi
                  * <Button className={css.noBorderButton}>Open in Notebook</Button>
                  */
                 <Tooltip content="Download File">
-                  <DownloadOutlined
-                    className={
-                      readonly && activeFile?.content !== NotLoaded
-                        ? css.noBorderButton
-                        : css.hideElement
-                    }
-                    onClick={handleDownloadClick}
-                  />
-                  {/* this is an invisible button to programatically download the config files */}
                   <a
-                    aria-disabled
-                    className={css.hideElement}
-                    download={downloadInfo.fileName}
-                    href={downloadInfo.url}
-                    ref={configDownloadButton}
-                    onClick={downloadHandler}
-                  />
+                    aria-disabled={!activeFile || !downloadURL.length}
+                    download={
+                      isConfig(activeFile?.key)
+                        ? activeFile.download || ''
+                        : String(activeFile.title)
+                    }
+                    href={downloadURL}
+                    ref={configDownloadButton}>
+                    <DownloadOutlined
+                      className={
+                        readonly && activeFile?.content !== NotLoaded
+                          ? css.noBorderButton
+                          : css.hideElement
+                      }
+                    />
+                  </a>
                 </Tooltip>
               }
             </div>
