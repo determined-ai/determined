@@ -16,13 +16,12 @@ In this guide, you'll learn how to use the Estimator API.
 +-----------------------------------------------------------------------+
 | Visit the API reference                                               |
 +=======================================================================+
-| :doc:`/reference/reference-training/training/api-estimator-reference` |
+| :doc:`/reference/training/api-estimator-reference`                    |
 +-----------------------------------------------------------------------+
 
 This document guides you through training a Estimator model in Determined. You need to implement a
 trial class that inherits :class:`~determined.estimator.EstimatorTrial` and specify it as the
-entrypoint in the :doc:`experiment configuration
-</reference/reference-training/experiment-config-reference>`.
+entrypoint in the :doc:`experiment configuration </reference/training/experiment-config-reference>`.
 
 *******************************
  Define Optimizer and Datasets

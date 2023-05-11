@@ -7,7 +7,7 @@
 +-----------------------------------------------------------------+
 | Configuration Reference                                         |
 +=================================================================+
-| :doc:`/reference/reference-deploy/config/helm-config-reference` |
+| :doc:`/reference/deploy/config/helm-config-reference`           |
 +-----------------------------------------------------------------+
 
 This document describes how to install Determined on `Kubernetes <https://kubernetes.io/>`__. using

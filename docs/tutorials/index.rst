@@ -9,8 +9,8 @@
  Quickstart
 ************
 
-To get started with your first experiment, visit the :doc:`Quickstart for Model Developers
-<../quickstart-mdldev>`.
+To get started with your first experiment, visit the :ref:`Quickstart for Model Developers
+<qs-mdldev>`.
 
 ******************************
  Get Started with a Trial API

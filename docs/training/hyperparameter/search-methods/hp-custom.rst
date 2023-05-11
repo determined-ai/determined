@@ -7,7 +7,7 @@
 +----------------------------------------------------------------+
 | API reference                                                  |
 +================================================================+
-| :doc:`/reference/reference-searcher/custom-searcher-reference` |
+| :doc:`/reference/searcher/custom-searcher-reference`           |
 +----------------------------------------------------------------+
 
 Determined supports defining your own hyperparameter search algorithms and provides search runner
