@@ -177,7 +177,12 @@ const ResourcepoolDetailInner: React.FC = () => {
   if (!pool || Loadable.isLoading(resourcePools)) return <Spinner center spinning />;
 
   return (
-    <Page>
+    <Page
+      title={
+        tabKey === TabType.Active || tabKey === TabType.Queued
+          ? 'Job Queue by Resource Pool'
+          : undefined
+      }>
       <div className={css.poolDetailPage}>
         <Section>
           <div className={css.nav} onClick={() => navigate(paths.cluster(), { replace: true })}>

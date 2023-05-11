@@ -331,7 +331,7 @@ const JobQueue: React.FC<Props> = ({ selectedRp, jobState }) => {
   }, [selectedRp]);
 
   return (
-    <div className={css.base} id="jobs" title="Job Queue by Resource Pool">
+    <div className={css.base} id="jobs">
       <Section hideTitle={!!selectedRp} title={tableTitle}>
         {settings ? (
           <InteractiveTable
