@@ -748,12 +748,16 @@ const CodeEditor: React.FC<Props> = ({ files, onSelectFile, readonly, selectedFi
               options={{
                 minimap: {
 <<<<<<< HEAD
+<<<<<<< HEAD
                   enabled: false,
 =======
                   enabled: ['split', 'editor'].includes(viewMode) && !!activeFile?.content,
                   showSlider: 'mouseover',
                   size: 'fit',
 >>>>>>> 110e8f963 (single trial experiment tree)
+=======
+                  enabled: false,
+>>>>>>> 8961f2b8b (disable minimap)
                 },
                 occurrencesHighlight: false,
                 readOnly: readonly,
