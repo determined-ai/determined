@@ -334,7 +334,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
               onClick: () => {
                 setSelection((s) => ({
                   ...s,
-                  rows: CompactSelection.empty().add([0, n]),
+                  rows: CompactSelection.fromSingleSelection([0, n]),
                 }));
                 setMenuIsOpen(false);
               },
