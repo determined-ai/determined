@@ -1,4 +1,4 @@
-import Hermes from '@determined-ai/hermes-parallel-coordinates';
+import Hermes from 'hermes-parallel-coordinates';
 import React, { useEffect, useRef } from 'react';
 
 import useUI from 'shared/contexts/stores/UI';

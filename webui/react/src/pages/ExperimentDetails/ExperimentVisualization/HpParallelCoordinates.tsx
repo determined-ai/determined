@@ -1,5 +1,5 @@
-import Hermes, { DimensionType } from '@determined-ai/hermes-parallel-coordinates';
 import { Alert } from 'antd';
+import Hermes from 'hermes-parallel-coordinates';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import ParallelCoordinates from 'components/ParallelCoordinates';
@@ -56,17 +56,6 @@ interface HpTrialData {
   trialIds: number[];
 }
 
-export interface HermesInternalFilter {
-  p0: number;
-  p1: number;
-  value0: Primitive;
-  value1: Primitive;
-}
-
-export interface HermesInternalFilters {
-  [key: string]: HermesInternalFilter[];
-}
-
 const HpParallelCoordinates: React.FC<Props> = ({
   experiment,
   filters,
@@ -88,7 +77,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
   const [filteredTrialIdMap, setFilteredTrialIdMap] = useState<Record<number, boolean>>();
   const [selectedRowKeys, setSelectedRowKeys] = useState<number[]>([]);
   const [showCompareTrials, setShowCompareTrials] = useState(false);
-  const [hermesCreatedFilters, setHermesCreatedFilters] = useState<HermesInternalFilters>({});
+  const [hermesCreatedFilters, setHermesCreatedFilters] = useState<Hermes.Filters>({});
 
   const hyperparameters = useMemo(() => {
     return fullHParams.reduce((acc, key) => {
@@ -128,9 +117,9 @@ const HpParallelCoordinates: React.FC<Props> = ({
       chartData.data[key].forEach((value, index) => {
         let isWithinFilter = false;
 
-        list.forEach((filter: HermesInternalFilter) => {
-          const min = Math.min(Number(filter.value0), Number(filter.value1));
-          const max = Math.max(Number(filter.value0), Number(filter.value1));
+        list.forEach((filter: Hermes.Filter) => {
+          const min = Math.min(Number(filter[0]), Number(filter[1]));
+          const max = Math.max(Number(filter[0]), Number(filter[1]));
           if (value >= min && value <= max) {
             isWithinFilter = true;
           }
@@ -164,10 +153,8 @@ const HpParallelCoordinates: React.FC<Props> = ({
       style: {
         axes: { label: { placement: 'after' } },
         data: {
-          colorScale: {
-            colors: colorScale.map((scale) => scale.color),
-            dimensionKey: selectedMetric ? metricToStr(selectedMetric) : '',
-          },
+          targetColorScale: colorScale.map((scale) => scale.color),
+          targetDimensionKey: selectedMetric ? metricToStr(selectedMetric) : '',
         },
         dimension: { label: { angle: Math.PI / 4, truncate: 24 } },
         padding: [4, 120, 4, 16],
@@ -185,13 +172,13 @@ const HpParallelCoordinates: React.FC<Props> = ({
           categories: hp.vals?.map((val) => (isPrimitive(val) ? val : JSON.stringify(val))) ?? [],
           key,
           label: key,
-          type: DimensionType.Categorical,
+          type: 'categorical',
         };
       } else if (hp.type === HyperparameterType.Log) {
-        return { key, label: key, logBase: hp.base, type: DimensionType.Logarithmic };
+        return { key, label: key, logBase: hp.base, type: 'logarithmic' };
       }
 
-      return { key, label: key, type: DimensionType.Linear };
+      return { key, label: key, type: 'linear' };
     });
 
     // Add metric as column to parcoords dimension list
@@ -203,12 +190,12 @@ const HpParallelCoordinates: React.FC<Props> = ({
               key,
               label: key,
               logBase: 10,
-              type: DimensionType.Logarithmic,
+              type: 'logarithmic',
             }
           : {
               key,
               label: key,
-              type: DimensionType.Linear,
+              type: 'linear',
             },
       );
     }
