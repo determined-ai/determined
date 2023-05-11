@@ -2,7 +2,7 @@ from determined.pytorch.dsat import _dsat_search_method
 
 ALL_SEARCH_METHOD_CLASSES = {
     "random": _dsat_search_method.RandomDSATSearchMethod,
-    "simple": _dsat_search_method.SimpleDSATSearchMethod,
+    "_test": _dsat_search_method._TestDSATSearchMethod,
 }
 
 MODEL_INFO_PROFILING_PATH = "model_info.json"
@@ -49,7 +49,6 @@ DEFAULT_ZERO_SEARCH_SPACE = {
 AUTOTUNING_DICT = {"autotuning": {"enabled": True}}
 
 AUTOTUNING_ARG_DEFAULTS = {
-    "tuner-type": "random",
     "max-trials": 50,
     "max-concurrent-trials": 16,
     "zero-stages": [1, 2, 3],

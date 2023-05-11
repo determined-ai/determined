@@ -60,6 +60,7 @@ def maybe_run_autotuning_experiment(
         "python3",
         "-m",
         "determined.pytorch.dsat",
+        "_test",
         config_file,
         model_def_file,
     ]

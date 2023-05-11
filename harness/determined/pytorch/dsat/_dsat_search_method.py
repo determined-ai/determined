@@ -61,7 +61,6 @@ class DSATTrial:
         # Other attrs which are updated during training:
         self.metric = {}
         self.error = False
-        self.closed = False
         self.running = False
         self.children = set()
 
@@ -74,6 +73,10 @@ class DSATTrial:
         self.ds_config = _utils.get_ds_config_from_hparams(self.hparams, self.model_dir)
 
         self._error_in_direct_history = False
+
+    @property
+    def completed(self) -> bool:
+        return bool(self.error or self.metric)
 
     @property
     def lineage_set(self) -> Set["DSATTrial"]:
@@ -90,7 +93,7 @@ class DSATTrial:
     @property
     def num_completed_trials_in_lineage(self) -> int:
         """Computes total number of trials in lineage tree."""
-        num_trials = sum(trial.closed for trial in self.lineage_set)
+        num_trials = sum(trial.completed for trial in self.lineage_set)
         return num_trials
 
     @property
@@ -167,7 +170,6 @@ class DSATTrialTracker:
         self.max_trials = args.max_trials
         self.max_concurrent_trials = args.max_concurrent_trials
         self.max_slots = args.max_slots
-        self.early_stopping = args.early_stopping
         self.model_dir = args.model_dir
         self.searcher_metric = args.metric
         self.start_profile_step = args.start_profile_step
@@ -298,18 +300,15 @@ class DSATTrialTracker:
                 self.num_trials_since_best_result = 0
             else:
                 self.num_trials_since_best_result += 1
-        trial.closed = True
         trial.running = False
 
     def report_trial_early_exit(self, trial: DSATTrial) -> None:
-        # Only count early exits against the early_stopping criteria if there has already been a
-        # successful trial. Otherwise, it is very possible to just OOM for `early_stopping` trials
-        # and then quit without any results, because the initial batch size guesses are estimates.
-        if self.successful_stages:
+        # `self.num_trials_since_best_result` is only incremented after a best trial has been
+        # established.
+        if self.best_trial is not None:
             self.num_trials_since_best_result += 1
 
         trial.error = True
-        trial.closed = True
         trial.running = False
 
     @property
@@ -430,16 +429,16 @@ class DSATTrialTracker:
         return [trial for _, trial in self if trial.running]
 
     @property
-    def closed_trials(self) -> List[DSATTrial]:
-        return [trial for _, trial in self if trial.closed]
+    def completed_trials(self) -> List[DSATTrial]:
+        return [trial for _, trial in self if trial.completed]
 
     @property
     def num_running_trials(self) -> int:
         return len(self.running_trials)
 
     @property
-    def num_closed_trials(self) -> int:
-        return len(self.closed_trials)
+    def num_completed_trials(self) -> int:
+        return len(self.completed_trials)
 
     @property
     def max_trials_queued(self) -> bool:
@@ -447,26 +446,7 @@ class DSATTrialTracker:
 
     @property
     def max_trials_are_running_or_closed(self) -> bool:
-        return self.num_running_trials + self.num_closed_trials >= self.max_trials
-
-    @property
-    def early_stopping_triggered(self) -> bool:
-        if self.early_stopping is None:
-            return False
-        return self.num_trials_since_best_result >= self.early_stopping
-
-    @property
-    def should_shutdown(self) -> bool:
-        if self.model_profile_info_trial is not None and self.model_profile_info_trial.error:
-            logging.info("Shutting down: error in model profile info Trial.")
-            return True
-        if self.early_stopping_triggered:
-            logging.info("Shutting down: early stopping criteria met.")
-            return True
-        if self.num_closed_trials >= self.max_trials:
-            logging.info("Shutting down: all Trials completed.")
-            return True
-        return False
+        return self.num_running_trials + self.num_completed_trials >= self.max_trials
 
     @property
     def should_be_failure(self) -> bool:
@@ -476,7 +456,7 @@ class DSATTrialTracker:
         every_autotuning_trial_failed = all(
             trial.error
             for _, trial in self
-            if trial.closed and not isinstance(trial, DSATModelProfileInfoTrial)
+            if trial.completed and not isinstance(trial, DSATModelProfileInfoTrial)
         )
         return model_profile_info_trial_failed or every_autotuning_trial_failed
 
@@ -595,7 +575,7 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
             )
             logging.info(f"Total GPU memory: {self.trial_tracker.gpu_mem}")
 
-        if not self.trial_tracker.max_trials_queued and not self.trial_tracker.should_shutdown:
+        if not self.trial_tracker.max_trials_queued and not self.should_shutdown():
             new_trials = self.get_trials_after_validation_completed(
                 searcher_state=searcher_state,
                 last_trial=last_trial,
@@ -632,7 +612,7 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
                 f"\nLast trial: {last_trial}, request_id: {request_id}"
             )
             new_ops_list.append(searcher.Shutdown(failure=self.trial_tracker.should_be_failure))
-        if not self.trial_tracker.max_trials_queued and not self.trial_tracker.should_shutdown:
+        if not self.trial_tracker.max_trials_queued and not self.should_shutdown():
             # ERRORED Trials generally corresponds to OOMs, after which we may want to submit
             # follow-on Trials.
             new_trials = self.get_trials_after_early_exit(
@@ -656,7 +636,7 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
         logging.info(f"metrics for closed trial {last_trial.metric}")
 
         new_ops_list = []
-        if self.trial_tracker.should_shutdown:
+        if self.should_shutdown():
             if self.trial_tracker.best_trial is not None and self.args.run_full_experiment:
                 submitted_config = _utils.get_dict_from_yaml_or_json_path(self.args.config_path)
                 optimal_config = merge_dicts(
@@ -708,6 +688,30 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
             random.setstate(py_random_state)
         with path.joinpath(self._np_rand_ckpt_path).open("rb") as f:
             self.rng = pickle.load(f)
+
+    def should_shutdown(self) -> bool:
+        """
+        Conditions on which to shutdown the search.
+        """
+        if (
+            self.trial_tracker.model_profile_info_trial is not None
+            and self.trial_tracker.model_profile_info_trial.error
+        ):
+            logging.info("Shutting down: error in model profile info Trial.")
+            return True
+        if self.early_stopping_triggered():
+            logging.info("Shutting down: early stopping criteria met.")
+            return True
+        if self.trial_tracker.num_completed_trials >= self.trial_tracker.max_trials:
+            logging.info("Shutting down: all Trials completed.")
+            return True
+        return False
+
+    def early_stopping_triggered(self) -> bool:
+        """
+        Overwrite to implement search-method-specific early-stopping logic.
+        """
+        return False
 
     def _searcher_state_tests(
         self,
@@ -765,6 +769,7 @@ class RandomDSATSearchMethod(BaseDSATSearchMethod):
         super().__init__(*args, **kwargs)
         # TODO: Save/restore rng state in checkpoints.
         self.trials_per_random_config = self.args.trials_per_random_config
+        self.early_stopping = self.args.early_stopping
 
     def get_trials_after_validation_completed(
         self,
@@ -986,8 +991,13 @@ class RandomDSATSearchMethod(BaseDSATSearchMethod):
         random_trial = self.trial_tracker.create_trial(hparams=hparams, search_data=search_data)
         return random_trial
 
+    def early_stopping_triggered(self) -> bool:
+        if self.early_stopping is None:
+            return False
+        return self.trial_tracker.num_trials_since_best_result >= self.early_stopping
 
-class SimpleDSATSearchMethod(BaseDSATSearchMethod):
+
+class _TestDSATSearchMethod(BaseDSATSearchMethod):
     """
     Dumb searcher which just submits Trials with linearly increasing batch sizes, from 2 up to
     max_trials
