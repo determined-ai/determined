@@ -4,7 +4,7 @@
    Welcome <self>
 
 .. toctree::
-   :caption: Getting Started
+   :caption: Getting Started2
    :maxdepth: 2
    :hidden:
 
