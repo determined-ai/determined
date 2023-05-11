@@ -178,7 +178,7 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
   }, []);
 
   useEffect(() => {
-    if (onChange) onChange(localFilters);
+    onChange?.(localFilters);
   }, [localFilters, onChange]);
 
   const handleReset = useCallback(() => {
@@ -188,7 +188,7 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
 
   // Pick the first valid option if the current local batch is invalid.
   useEffect(() => {
-    if (batches.includes(localFilters.batch)) return;
+    if (batches.includes(localFilters.batch) || batches.length === 0) return;
     dispatch({ type: ActionType.SetBatch, value: batches.first() });
   }, [batches, localFilters.batch]);
 

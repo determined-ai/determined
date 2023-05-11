@@ -14,7 +14,6 @@ import TrialDetailsHyperparameters from 'pages/TrialDetails/TrialDetailsHyperpar
 import TrialDetailsLogs from 'pages/TrialDetails/TrialDetailsLogs';
 import TrialDetailsOverview from 'pages/TrialDetails/TrialDetailsOverview';
 import TrialDetailsProfiles from 'pages/TrialDetails/TrialDetailsProfiles';
-import TrialRangeHyperparameters from 'pages/TrialDetails/TrialRangeHyperparameters';
 import { paths } from 'routes/utils';
 import { getExperimentDetails, getTrialDetails } from 'services/api';
 import Message, { MessageType } from 'shared/components/Message';
@@ -26,6 +25,8 @@ import { isAborted, isNotFound } from 'shared/utils/service';
 import { ExperimentBase, TrialDetails } from 'types';
 import handleError from 'utils/error';
 import { isSingleTrialExperiment } from 'utils/experiment';
+
+import MultiTrialDetailsHyperparameters from './TrialDetails/MultiTrialDetailsHyperparameters';
 
 const TabType = {
   Hyperparameters: 'hyperparameters',
@@ -143,7 +144,11 @@ const TrialDetailsComp: React.FC = () => {
         children: isSingleTrialExperiment(experiment) ? (
           <TrialDetailsHyperparameters pageRef={pageRef} trial={trial} />
         ) : (
-          <TrialRangeHyperparameters experiment={experiment} trial={trial} />
+          <MultiTrialDetailsHyperparameters
+            experiment={experiment}
+            pageRef={pageRef}
+            trial={trial}
+          />
         ),
         key: TabType.Hyperparameters,
         label: 'Hyperparameters',
