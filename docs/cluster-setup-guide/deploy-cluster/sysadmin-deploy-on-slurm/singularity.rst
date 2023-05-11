@@ -14,26 +14,6 @@ container runtime in use.
    -  :ref:`referencing-local-image-paths`
    -  :ref:`singularity-image-cache`
 
-***********************
- Default Docker Images
-***********************
-
-Each version of Determined utilizes specifically-tagged Docker containers. The image tags referenced
-by default in this version of Determined are described below.
-
-+-------------+--------------------------------------------------------------------------+
-| Environment | File Name                                                                |
-+=============+==========================================================================+
-| CPUs        | ``determinedai/environments:py-3.8-pytorch-1.12-tf-2.11-cpu-6eceaca``    |
-+-------------+--------------------------------------------------------------------------+
-| NVIDIA GPUs | ``determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-6eceaca`` |
-+-------------+--------------------------------------------------------------------------+
-| AMD GPUs    | ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-6eceaca``  |
-+-------------+--------------------------------------------------------------------------+
-
-See :doc:`/training/setup-guide/set-environment-images` for the images Docker Hub location, and add
-each tagged image needed by your experiments to the image cache.
-
 .. _referencing-local-image-paths:
 
 *******************************
