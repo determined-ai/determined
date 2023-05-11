@@ -89,6 +89,14 @@ def get_full_parser() -> argparse.ArgumentParser:
     )
     random_subparser.add_argument("-es", "--early-stopping", type=int)
 
+    binary_subparser = subparsers.add_parser("binary", parents=[base_parser])
+    binary_subparser.add_argument(
+        "-srf",
+        "--search-range-factor",
+        type=float,
+        default=_defaults.AUTOTUNING_ARG_DEFAULTS["search-range-factor"],
+    )
+
     return parser
 
 

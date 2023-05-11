@@ -2,6 +2,7 @@ from determined.pytorch.dsat import _dsat_search_method
 
 ALL_SEARCH_METHOD_CLASSES = {
     "random": _dsat_search_method.RandomDSATSearchMethod,
+    "binary": _dsat_search_method.BinarySearchDSATSearchMethod,
     "_test": _dsat_search_method._TestDSATSearchMethod,
 }
 
@@ -58,6 +59,7 @@ AUTOTUNING_ARG_DEFAULTS = {
     "metric": "FLOPS_per_gpu",
     "random-seed": 42,
     "run-full-experiment": False,
+    "search-range-factor": 1.0,
 }
 
 DEFAULT_SEARCH_RUNNER_CONFIG = {
