@@ -1103,7 +1103,7 @@ service Determined {
       tags: "Templates"
     };
   }
-  // Update or create (upsert) the requested template.
+  // DEPRECATED: Update or create (upsert) the requested template.
   rpc PutTemplate(PutTemplateRequest) returns (PutTemplateResponse) {
     option (google.api.http) = {
       put: "/api/v1/templates/{template.name}"
@@ -1112,7 +1112,31 @@ service Determined {
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Templates"
     };
+    option deprecated = true;
   }
+
+  // Post a new template.
+  rpc PostTemplate(PostTemplateRequest) returns (PostTemplateResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/templates/{template.name}"
+      body: "template"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Templates"
+    };
+  }
+  // Patch template config.
+  rpc PatchTemplateConfig(PatchTemplateConfigRequest)
+      returns (PatchTemplateConfigResponse) {
+    option (google.api.http) = {
+      patch: "/api/v1/templates/{template_name}"
+      body: "config"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Templates"
+    };
+  }
+
   // Delete a template.
   rpc DeleteTemplate(DeleteTemplateRequest) returns (DeleteTemplateResponse) {
     option (google.api.http) = {
