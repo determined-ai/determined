@@ -39,7 +39,7 @@ parameters:
   # be referenced by --ee testing.
   default-pt-gpu-image:
     type: string
-    default: determinedai/environments:cuda-11.3-pytorch-1.12-gpu-6eceaca
+    default: determinedai/environments:cuda-11.3-pytorch-1.12-gpu-cc5289c
   # Some python, go, and react dependencies are cached by circleci via `save_cache`/`restore_cache`.
   # If the dependencies stay the same, but the circleci code that would produce them is changed,
   # it may be necessary to invalidate the cache by incrementing this value.
@@ -205,11 +205,11 @@ commands:
       - when:
           condition: <<parameters.tf1>>
           steps:
-            - run: docker pull determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-6eceaca
+            - run: docker pull determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-cc5289c
       - when:
           condition: <<parameters.tf2>>
           steps:
-            - run: docker pull determinedai/environments:py-3.8-pytorch-1.12-tf-2.11-cpu-6eceaca
+            - run: docker pull determinedai/environments:py-3.8-pytorch-1.12-tf-2.11-cpu-cc5289c
 
   login-docker:
     parameters:
@@ -1764,7 +1764,7 @@ jobs:
       - skip-if-docs-only
       - skip-if-webui-only
       - setup-docker-env:
-          image: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.21.2
+          image: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.22.1
           image-name: test_container
           extras-requires: "tensorflow==2.11.0 mypy pytest coverage"
       - run: mkdir -p $HOME/.local/bin
@@ -2220,7 +2220,7 @@ jobs:
         type: string
         default: "1"
       environment-image:
-        default: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.21.2
+        default: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.22.1
         type: string
       accel-node-taints:
         type: string
