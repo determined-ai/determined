@@ -1,13 +1,6 @@
 import { DownloadOutlined, FileOutlined } from '@ant-design/icons';
 import { Tree } from 'antd';
-import React, {
-  lazy,
-  Suspense,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
+import React, { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 
 import Tooltip from 'components/kit/Tooltip';
 import MonacoEditor from 'components/MonacoEditor';
@@ -112,9 +105,12 @@ const isConfig = (key: unknown): key is Config =>
 const CodeEditor: React.FC<Props> = ({ files, onSelectFile, readonly, selectedFilePath }) => {
   const [pageError, setPageError] = useState<PageError>(PageError.None);
 
-  const blobifyFileText = (loadableTxt: Loadable<string>) => URL.createObjectURL(new Blob([Loadable.getOrElse('', loadableTxt)]))
+  const blobifyFileText = (loadableTxt: Loadable<string>) =>
+    URL.createObjectURL(new Blob([Loadable.getOrElse('', loadableTxt)]));
   const [activeFile, setActiveFile] = useState<TreeNode | null>(files[0] || null);
-  const [downloadURL, setDownloadURL] = useState<string>(files[0] ? blobifyFileText(files[0].content) : "");
+  const [downloadURL, setDownloadURL] = useState<string>(
+    files[0] ? blobifyFileText(files[0].content) : '',
+  );
 
   const clearDownloadableFile = useCallback(() => {
     if (downloadURL) {
@@ -128,54 +124,57 @@ const CodeEditor: React.FC<Props> = ({ files, onSelectFile, readonly, selectedFi
     return isIpybnFile ? 'ipynb' : 'monaco';
   }, [activeFile]);
 
-  const fetchFile = useCallback(async (fileInfo: TreeNode) => {
-    if (!fileInfo) return;
-    setPageError(PageError.None);
+  const fetchFile = useCallback(
+    async (fileInfo: TreeNode) => {
+      if (!fileInfo) return;
+      setPageError(PageError.None);
 
-    if (isConfig(fileInfo.key) || fileInfo.content !== NotLoaded) {
-      clearDownloadableFile();
-      setActiveFile(fileInfo);
-      setDownloadURL(blobifyFileText(fileInfo.content));
-      return;
-    }
+      if (isConfig(fileInfo.key) || fileInfo.content !== NotLoaded) {
+        clearDownloadableFile();
+        setActiveFile(fileInfo);
+        setDownloadURL(blobifyFileText(fileInfo.content));
+        return;
+      }
 
-    let file,
-      content: Loadable<string> = NotLoaded;
-    try {
-      file = await fileInfo.get?.(String(fileInfo.key));
-    } catch (error) {
-      handleError(error, {
-        publicMessage: 'Failed to load selected file.',
-        publicSubject: 'Unable to fetch the selected file.',
-        silent: false,
-        type: ErrorType.Api,
-      });
-      setPageError(PageError.Fetch);
-    }
-    if (!file) {
-      clearDownloadableFile();
-      setActiveFile({
-        ...fileInfo,
-        content: NotLoaded,
-      });
-      return;
-    }
+      let file,
+        content: Loadable<string> = NotLoaded;
+      try {
+        file = await fileInfo.get?.(String(fileInfo.key));
+      } catch (error) {
+        handleError(error, {
+          publicMessage: 'Failed to load selected file.',
+          publicSubject: 'Unable to fetch the selected file.',
+          silent: false,
+          type: ErrorType.Api,
+        });
+        setPageError(PageError.Fetch);
+      }
+      if (!file) {
+        clearDownloadableFile();
+        setActiveFile({
+          ...fileInfo,
+          content: NotLoaded,
+        });
+        return;
+      }
 
-    try {
-      const text = decodeURIComponent(escape(window.atob(file)));
+      try {
+        const text = decodeURIComponent(escape(window.atob(file)));
 
-      if (!text) setPageError(PageError.Empty); // Emmits a "Empty file" error message
-      content = Loaded(text);
-      clearDownloadableFile();
-      setActiveFile({
-        ...fileInfo,
-        content,
-      });
-      setDownloadURL(blobifyFileText(content));
-    } catch {
-      setPageError(PageError.Decode);
-    }
-  }, [clearDownloadableFile]);
+        if (!text) setPageError(PageError.Empty); // Emmits a "Empty file" error message
+        content = Loaded(text);
+        clearDownloadableFile();
+        setActiveFile({
+          ...fileInfo,
+          content,
+        });
+        setDownloadURL(blobifyFileText(content));
+      } catch {
+        setPageError(PageError.Decode);
+      }
+    },
+    [clearDownloadableFile],
+  );
 
   useEffect(() => {
     if (selectedFilePath && activeFile?.key !== selectedFilePath) {
@@ -265,9 +264,12 @@ const CodeEditor: React.FC<Props> = ({ files, onSelectFile, readonly, selectedFi
                 <Tooltip content="Download File">
                   <a
                     aria-disabled={!activeFile || !downloadURL?.length}
-                    download={isConfig(activeFile?.key) ? activeFile.download || '' : String(activeFile.title)}
-                    href={downloadURL}
-                  >
+                    download={
+                      isConfig(activeFile?.key)
+                        ? activeFile.download || ''
+                        : String(activeFile.title)
+                    }
+                    href={downloadURL}>
                     <DownloadOutlined
                       className={
                         readonly && activeFile?.content !== NotLoaded
