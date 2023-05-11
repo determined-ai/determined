@@ -1,5 +1,6 @@
 import argparse
 import copy
+import json
 import logging
 import pathlib
 import pickle
@@ -694,6 +695,9 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
             pickle.dump(random.getstate(), f)
         with path.joinpath(self._np_rand_ckpt_path).open("wb") as f:
             pickle.dump(self.rng, f)
+        if self.trial_tracker.best_trial is not None:
+            with path.joinpath("best_ds_config.json").open("w") as f:
+                json.dump(self.trial_tracker.best_trial.ds_config, f)
 
     def load_method_state(self, path: pathlib.Path) -> None:
         logging.info("Restoring searcher state from checkpoint.")
