@@ -264,7 +264,7 @@ const CodeEditor: React.FC<Props> = ({ files, onSelectFile, readonly, selectedFi
                  */
                 <Tooltip content="Download File">
                   <a
-                    aria-disabled={!activeFile || !downloadURL.length}
+                    aria-disabled={!activeFile || !downloadURL?.length}
                     download={isConfig(activeFile?.key) ? activeFile.download || '' : String(activeFile.title)}
                     href={downloadURL}
                   >
