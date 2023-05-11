@@ -17,7 +17,7 @@ export const ITEM_LIMIT = 50;
 
 export const ROOT_ID = 'ROOT';
 
-const INIT_FORMSET: Readonly<FilterFormSet> = {
+export const INIT_FORMSET: Readonly<FilterFormSet> = {
   filterGroup: { children: [], conjunction: Conjunction.And, id: ROOT_ID, kind: FormKind.Group },
   showArchived: false,
 };

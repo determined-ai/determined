@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom';
 
 import { FilterFormStore } from 'components/FilterForm/components/FilterFormStore';
+import { FilterFormSet } from 'components/FilterForm/components/type';
 import Page from 'components/Page';
 import useResize from 'hooks/useResize';
 import { useSettings } from 'hooks/useSettings';
@@ -35,9 +36,9 @@ interface Props {
 const makeSortString = (sorts: ValidSort[]): string =>
   sorts.map((s) => `${s.column}=${s.direction}`).join(',');
 
-export const PAGE_SIZE = 100;
-
 const formStore = new FilterFormStore();
+
+export const PAGE_SIZE = 100;
 
 const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -73,6 +74,10 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
 
   const onIsOpenFilterChange = (newOpen: boolean) => {
     setIsOpenFilter(newOpen);
+    if (!newOpen) {
+      // when closed
+      updateSettings({ filterset: JSON.stringify(formStore.formset.get()) });
+    }
   };
 
   useEffect(() => {
@@ -91,6 +96,19 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, sortString]);
+
+  useEffect(() => {
+    let ignore = false;
+
+    if (!ignore) {
+      const formSet: FilterFormSet = JSON.parse(settings.filterset);
+      formStore.init(formSet);
+    }
+
+    return () => {
+      ignore = true;
+    };
+  }, [settings.filterset]);
 
   const [selectedExperimentIds, setSelectedExperimentIds] = useState<number[]>([]);
   const [excludedExperimentIds, setExcludedExperimentIds] = useState<Set<number>>(
@@ -318,7 +336,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
           projectColumns={projectColumns}
           selectAll={selectAll}
           selectedExperimentIds={selectedExperimentIds}
-          setIsOpenFilter={setIsOpenFilter}
+          setIsOpenFilter={onIsOpenFilterChange}
           setVisibleColumns={setVisibleColumns}
           sorts={sorts}
           total={total}
