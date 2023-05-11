@@ -3,7 +3,6 @@ import { Dropdown, DropDownProps } from 'antd';
 import type { MenuProps } from 'antd';
 import { useMemo, useRef } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
-import { debounce } from 'throttle-debounce';
 
 import ConjunctionContainer from 'components/FilterForm/components/ConjunctionContainer';
 import FilterField from 'components/FilterForm/components/FilterField';
@@ -98,9 +97,9 @@ const FilterGroup = ({
     const onItemClick: MenuProps['onClick'] = (e) => {
       if (e.key === FormKind.Field || e.key === FormKind.Group) {
         formStore.addChild(group.id, e.key);
-        debounce(100, () => {
+        setTimeout(() => {
           scrollBottomRef?.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-        })();
+        }, 100);
       }
     };
 

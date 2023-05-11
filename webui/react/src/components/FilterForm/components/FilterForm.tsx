@@ -1,7 +1,6 @@
 import { Switch } from 'antd';
 import { useObservable } from 'micro-observables';
 import { useId, useRef } from 'react';
-import { debounce } from 'throttle-debounce';
 
 import { FilterFormStore, ITEM_LIMIT } from 'components/FilterForm/components/FilterFormStore';
 import FilterGroup from 'components/FilterForm/components/FilterGroup';
@@ -25,9 +24,9 @@ const FilterForm = ({ formStore, columns, onHidePopOver }: Props): JSX.Element =
 
   const onAddItem = (formKind: FormKind) => {
     formStore.addChild(data.filterGroup.id, formKind);
-    debounce(100, () => {
+    setTimeout(() => {
       scrollBottomRef?.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-    })();
+    }, 100);
   };
 
   return (

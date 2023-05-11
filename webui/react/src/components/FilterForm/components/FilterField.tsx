@@ -67,8 +67,8 @@ const FilterField = ({
   const [fieldValue, setFieldValue] = useState<FormFieldValue>(field.value);
 
   // use this function to update field value
-  const updateFieldValue = (fieldId: string, value: FormFieldValue, isDounce = false) => {
-    if (isDounce) {
+  const updateFieldValue = (fieldId: string, value: FormFieldValue, debounceUpdate = false) => {
+    if (debounceUpdate) {
       debounceFunc(() => formStore.setFieldValue(fieldId, value));
     } else {
       formStore.setFieldValue(fieldId, value);

@@ -65,7 +65,7 @@ export class FilterFormStore {
   }
 
   #getFormById(filterGroup: FormGroup, id: string): FormField | FormGroup | undefined {
-    const recur = (form: FormGroup | FormField): FormGroup | FormField | undefined => {
+    const traverse = (form: FormGroup | FormField): FormGroup | FormField | undefined => {
       if (form.id === id) {
         return form;
       }
@@ -75,7 +75,7 @@ export class FilterFormStore {
 
       if (form.kind === FormKind.Group) {
         for (const child of form.children) {
-          const ans = recur(child);
+          const ans = traverse(child);
           if (ans) {
             return ans;
           }
@@ -84,7 +84,7 @@ export class FilterFormStore {
       return undefined;
     };
 
-    return recur(filterGroup);
+    return traverse(filterGroup);
   }
 
   public setFieldColumnName(
@@ -139,7 +139,7 @@ export class FilterFormStore {
   ): void {
     const filterSet: Readonly<FilterFormSet> = this.#formset.get();
     const filterGroup = filterSet.filterGroup;
-    const recur = (form: FormGroup | FormField): void => {
+    const traverse = (form: FormGroup | FormField): void => {
       if (form.id === id && form.kind === FormKind.Group) {
         if (obj) {
           form.children.splice(obj.index, 0, structuredClone(obj.item));
@@ -151,12 +151,12 @@ export class FilterFormStore {
 
       if (form.kind === FormKind.Group) {
         for (const child of form.children) {
-          recur(child);
+          traverse(child);
         }
       }
     };
 
-    recur(filterGroup);
+    traverse(filterGroup);
     this.#formset.update((prev) => ({ ...prev, filterGroup }));
   }
 
@@ -170,18 +170,18 @@ export class FilterFormStore {
       return;
     }
 
-    const recur = (form: FormGroup | FormField): void => {
+    const traverse = (form: FormGroup | FormField): void => {
       if (form.kind === FormKind.Group) {
         const prevLength = form.children.length;
         form.children = form.children.filter((c) => c.id !== id);
         if (prevLength === form.children.length) {
           for (const child of form.children) {
-            recur(child);
+            traverse(child);
           }
         }
       }
     };
-    recur(filterGroup);
+    traverse(filterGroup);
     this.#formset.update((prev) => ({ ...prev, filterGroup }));
   }
 
