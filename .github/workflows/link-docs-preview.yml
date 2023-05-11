@@ -17,10 +17,16 @@ jobs:
       contents: read
       pull-requests: write
     steps:
+      - name: Quick debug
+        run: |
+          echo ${{ github.ref_name }}
+          echo ${{ toJSON(github.event) }}
+          md5 -qs "fooey" || echo 'no md5 here'
+          echo 'fooey' | md5sum || echo 'no md5sum here'
       - uses: pplanel/hash-calculator-action@v1.3.1
         id: hash
         with:
-          input: ${{ github.ref }}
+          input: ${{ pull_request.head.ref }}
           method: MD5
       - uses: peter-evans/create-or-update-comment@v3
         with:
