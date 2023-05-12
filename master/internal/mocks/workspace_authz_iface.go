@@ -5,8 +5,9 @@ package mocks
 import (
 	context "context"
 
-	model "github.com/determined-ai/determined/master/pkg/model"
 	mock "github.com/stretchr/testify/mock"
+
+	model "github.com/determined-ai/determined/master/pkg/model"
 
 	projectv1 "github.com/determined-ai/determined/proto/pkg/projectv1"
 
