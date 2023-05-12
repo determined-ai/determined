@@ -817,6 +817,21 @@ const ( // TODO: change the db enum values to all caps? Checkpoint type?
 	GenericMetric MetricPartitionType = "generic"
 )
 
+// LegacyMetricType denotes what custom type the metric is.
+type LegacyMetricType string
+
+const (
+	// ValidationMetricType designates metrics from validation runs.
+	ValidationMetricType LegacyMetricType = "validation"
+	// TrainingMetricType designates metrics from training runs.
+	TrainingMetricType LegacyMetricType = "training"
+)
+
+// ToString returns the string representation of the metric type.
+func (t LegacyMetricType) ToString() string {
+	return string(t)
+}
+
 // ExitedReason defines why a workload exited early.
 type ExitedReason string
 
