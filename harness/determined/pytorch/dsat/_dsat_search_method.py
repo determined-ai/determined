@@ -697,7 +697,11 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
             self.trial_tracker.model_profile_info_trial is not None
             and self.trial_tracker.model_profile_info_trial.error
         ):
-            logging.info("Shutting down: error in model profile info Trial.")
+            logging.info(
+                "Shutting down: error in model profile info Trial."
+                " You may need to specify a configuration which can successfully run with"
+                " `train_micro_batch_size_per_gpu = 1`."
+            )
             return True
         if self.early_stopping_triggered():
             logging.info("Shutting down: early stopping criteria met.")
