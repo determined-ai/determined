@@ -2,18 +2,18 @@
 # To run:
 # python -m torch.distributed.run --nnodes=1 --nproc_per_node=2 \
 #   --master_addr 127.0.0.1 --master_port 29400 --max_restarts 0 \
-#   detached_3_torch_distributed.py
+#   unmanaged_3_torch_distributed.py
 
 import logging
 import random
 
 import determined as det
-import determined.experimental.detached
+import determined.experimental.unmanaged
 
 import torch.distributed as dist
 
 config_text = """
-name: detached-mode-stage-3
+name: unmanaged-mode-stage-3
 
 checkpoint_storage:
   host_path: /tmp
@@ -36,12 +36,12 @@ def main():
     client = det.experimental.Determined()
     distributed = det.core.DistributedContext.from_torch_distributed()
 
-    detached_info = det.experimental.detached.create_unmanaged_cluster_info(
+    unmanaged_info = det.experimental.unmanaged.create_unmanaged_cluster_info(
         client, distributed=distributed, config_text=config_text)
 
-    with det.experimental.detached.init(
+    with det.experimental.unmanaged.init(
         distributed=distributed,
-        detached_info=detached_info,
+        unmanaged_info=unmanaged_info,
         client=client) as core_context:
         size = dist.get_world_size()
         for i in range(100):
@@ -55,11 +55,11 @@ def main():
             ckpt_metadata = {"steps_completed": i, f"rank_{dist.get_rank()}": "ok"}
             with core_context.checkpoint.store_path(ckpt_metadata, shard=True) as (path, uuid):
                 with (path / f"state_{dist.get_rank()}").open("w") as fout:
-                    fout.write(f"{i},{detached_info.trial.trial_id},{dist.get_rank()}")
+                    fout.write(f"{i},{unmanaged_info.trial.trial_id},{dist.get_rank()}")
 
     if dist.get_rank() == 0:
-        exp_id = detached_info._trial_info.experiment_id
-        print("See the experiment at:", det.experimental.detached.url_reverse_webui_exp_view(client, exp_id))
+        exp_id = unmanaged_info._trial_info.experiment_id
+        print("See the experiment at:", det.experimental.unmanaged.url_reverse_webui_exp_view(client, exp_id))
 
 
 if __name__ == "__main__":

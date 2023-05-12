@@ -4,10 +4,10 @@ import logging
 import random
 
 import determined as det
-import determined.experimental.detached
+import determined.experimental.unmanaged
 
 config_text = """
-name: detached-mode-stage-2
+name: unmanaged-mode-stage-2
 
 checkpoint_storage:
   host_path: /tmp
@@ -21,11 +21,11 @@ searcher:
 
 
 def runner(client: det.experimental.Determined, exp_id: int, hparams: dict = {}):
-    detached_info = det.experimental.detached.create_unmanaged_trial_cluster_info(
+    unmanaged_info = det.experimental.unmanaged.create_unmanaged_trial_cluster_info(
         client, config_text, exp_id, hparams=hparams)
 
-    with det.experimental.detached.init(
-        detached_info=detached_info,
+    with det.experimental.unmanaged.init(
+        unmanaged_info=unmanaged_info,
         client=client) as core_context:
         for i in range(100):
             core_context.train.report_training_metrics(
@@ -36,7 +36,7 @@ def runner(client: det.experimental.Determined, exp_id: int, hparams: dict = {})
 
                 with core_context.checkpoint.store_path({"steps_completed": i}) as (path, uuid):
                     with (path / "state").open("w") as fout:
-                        fout.write(f"{i},{detached_info.trial.trial_id}")
+                        fout.write(f"{i},{unmanaged_info.trial.trial_id}")
 
 
 def main():
@@ -44,14 +44,14 @@ def main():
     logging.getLogger("determined").setLevel(logging.INFO)
     client = det.experimental.Determined()
 
-    exp_id = det.experimental.detached.create_unmanaged_experiment(client, config_text=config_text)
+    exp_id = det.experimental.unmanaged.create_unmanaged_experiment(client, config_text=config_text)
     print(f"Created experiment {exp_id}")
 
     # Grid search.
     for i in range(4):
         runner(client, exp_id, {'i': i})
 
-    print("See the experiment at:", det.experimental.detached.url_reverse_webui_exp_view(client, exp_id))
+    print("See the experiment at:", det.experimental.unmanaged.url_reverse_webui_exp_view(client, exp_id))
 
 
 if __name__ == "__main__":

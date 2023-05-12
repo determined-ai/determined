@@ -1347,7 +1347,6 @@ func (a *apiServer) CreateExperiment(
 	}
 
 	if req.Unmanaged != nil && *req.Unmanaged {
-		dbExp.Unmanaged = true
 		e, _, err := newUnmanagedExperiment(a.m, dbExp, activeConfig, taskSpec)
 		if err != nil {
 			return nil, err
@@ -2234,9 +2233,13 @@ func (a *apiServer) SearchExperiments(
 	return resp, nil
 }
 
-func (a *apiServer) CreateUnmanagedTrial(
-	ctx context.Context, req *apiv1.CreateUnmanagedTrialRequest,
-) (*apiv1.CreateUnmanagedTrialResponse, error) {
+func (a *apiServer) CreateTrial(
+	ctx context.Context, req *apiv1.CreateTrialRequest,
+) (*apiv1.CreateTrialResponse, error) {
+	if req.Unmanaged != true {
+		return nil, errors.New("only unmanaged trials are supported")
+	}
+
 	exp, _, err := a.getExperimentAndCheckCanDoActions(ctx, int(req.ExperimentId),
 		exputil.AuthZProvider.Get().CanEditExperiment)
 	if err != nil {
@@ -2274,7 +2277,7 @@ func (a *apiServer) CreateUnmanagedTrial(
 		return nil, err
 	}
 
-	resp := &apiv1.CreateUnmanagedTrialResponse{Trial: &trialv1.Trial{}}
+	resp := &apiv1.CreateTrialResponse{Trial: &trialv1.Trial{}}
 
 	if err := a.m.db.QueryProtof(
 		"proto_get_trials_plus",

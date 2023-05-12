@@ -9,10 +9,10 @@ from determined.common.api import bindings
 from determined.core._context import Context, _get_storage_manager, _install_stacktrace_on_sigusr1
 from determined.experimental import Determined
 
-logger = logging.getLogger("determined.experimental.detached")
+logger = logging.getLogger("determined.experimental.unmanaged")
 
 
-# TODO: Missing unmanaged/detached features:
+# TODO: Missing unmanaged / detached mode features:
 # - Add unmanaged experiment state management.
 # - Make config.entrypoint optional.
 
@@ -56,8 +56,8 @@ def _create_unmanaged_trial(
     sess = client._session
     assert sess
 
-    req2 = bindings.v1CreateUnmanagedTrialRequest(experimentId=exp_id, hparams=hparams)
-    resp2 = bindings.post_CreateUnmanagedTrial(session=sess, body=req2)
+    req2 = bindings.v1CreateTrialRequest(experimentId=exp_id, hparams=hparams, unmanaged=True)
+    resp2 = bindings.post_CreateTrial(session=sess, body=req2)
 
     trial_id = resp2.trial.id
     task_id = resp2.trial.taskId
@@ -118,7 +118,7 @@ def build_unmanaged_trial_cluster_info(
     return det.ClusterInfo(
         master_url=client._master,
         cluster_id=cluster_id,  # Required for tensorboard paths correctness.
-        agent_id="detached",  # TODO(ilia): when does this matter?
+        agent_id="unmanaged",  # TODO(ilia): when does this matter?
         slot_ids=[],
         task_id=task_id,
         allocation_id=task_id,  # TODO(ilia): when does this matter?
@@ -157,12 +157,12 @@ def init(
     checkpoint_storage: Optional[Union[str, Dict[str, Any]]] = None,
     preempt_mode: core.PreemptMode = core.PreemptMode.WorkersAskChief,
     tensorboard_mode: core.TensorboardMode = core.TensorboardMode.AUTO,
-    detached_info: Optional[det.ClusterInfo] = None,
+    unmanaged_info: Optional[det.ClusterInfo] = None,
     client: Optional[Determined] = None,
 ) -> Context:
-    if detached_info is None:
+    if unmanaged_info is None:
         raise ValueError(
-            "for detached mode context, you must provide the `detached_info` object. "
+            "for unmanaged mode context, you must provide the `unmanaged_info` object. "
             "Otherwise, use `det.core.init`."
         )
 
@@ -172,11 +172,7 @@ def init(
         session = client._session
 
     # Reported, unmanaged, on- or off-cluster.
-    info = detached_info
-
-    if distributed is None:
-        if len(info.container_addrs) > 1 or len(info.slot_ids) > 1:
-            raise ValueError("you must provide a valid DistributedContext for a multi-slot task")
+    info = unmanaged_info
 
     distributed = distributed or core.DummyDistributedContext()
 
@@ -196,7 +192,7 @@ def init(
             str(info.trial.experiment_id),
             str(info.trial.trial_id),
             info.trial._config["checkpoint_storage"],
-            container_path=None,  # No bind mounts in detached mode.
+            container_path=None,  # No bind mounts for unmanaged tasks.
             async_upload=True,
         )
         if tensorboard_mode == core.TensorboardMode.AUTO:
@@ -225,7 +221,7 @@ def init(
         if storage_manager is None:
             storage_manager = storage.build(
                 info.trial._config["checkpoint_storage"],
-                container_path=None,  # No bind mounts in detached mode.
+                container_path=None,  # No bind mounts for unmanaged tasks.
             )
 
         checkpoint = core.CheckpointContext(
@@ -242,7 +238,7 @@ def init(
         preempt = core.DummyPreemptContext(distributed, preempt_mode)
 
     else:
-        raise NotImplementedError("detached mode is not supported for non-trial tasks")
+        raise NotImplementedError("unmanaged mode is not supported for non-trial tasks")
 
     _install_stacktrace_on_sigusr1()
 

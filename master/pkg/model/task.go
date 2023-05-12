@@ -5,12 +5,12 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"unsafe"
 
 	"github.com/google/uuid"
 	"github.com/uptrace/bun"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/logv1"
 	"github.com/determined-ai/determined/proto/pkg/taskv1"
@@ -83,7 +83,10 @@ type AllocationID string
 
 // NewAllocationID casts string ptr to AllocationID ptr.
 func NewAllocationID(in *string) *AllocationID {
-	return (*AllocationID)(unsafe.Pointer(in)) //nolint: gosec
+	if in == nil {
+		return nil
+	}
+	return ptrs.Ptr(AllocationID(*in))
 }
 
 func (a AllocationID) String() string {

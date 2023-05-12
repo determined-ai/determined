@@ -208,7 +208,9 @@ func newUnmanagedExperiment(
 	activeConfig expconf.ExperimentConfig,
 	taskSpec *tasks.TaskSpec,
 ) (*experiment, []command.LaunchWarning, error) {
+	// TODO(DET-9477): Experiment state management.
 	expModel.State = model.CompletedState
+	expModel.Unmanaged = true
 
 	if err := m.db.AddExperiment(expModel, activeConfig); err != nil {
 		return nil, nil, err
