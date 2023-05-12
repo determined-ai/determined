@@ -101,6 +101,7 @@ type DB interface {
 	ExperimentLabelUsage(projectID int32) (labelUsage map[string]int, err error)
 	GetExperimentStatus(experimentID int) (state model.State, progress float64,
 		err error)
+	GetNonTerminalExperimentCount(experimentIDs []int32) (count int, err error)
 	TrainingMetricBatches(experimentID int, metricName string, startTime time.Time) (
 		batches []int32, endTime time.Time, err error)
 	ValidationMetricBatches(experimentID int, metricName string, startTime time.Time) (

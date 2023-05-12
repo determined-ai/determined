@@ -116,6 +116,14 @@ func (db *PgDB) GetExperimentStatus(experimentID int) (state model.State, progre
 	return state, progress, err
 }
 
+// GetNonTerminalExperimentCount returns the number of non terminal experiments.
+func (db *PgDB) GetNonTerminalExperimentCount(experimentIDs []int32) (count int, err error) {
+	return Bun().NewSelect().Table("experiments").
+		Where("experiment_id IN (?)", bun.In(experimentIDs)).
+		Where("state NOT IN (?)", reflect.ValueOf(model.TerminalStates).MapKeys()).
+		Count(context.TODO())
+}
+
 // MetricNames returns the set of training and validation metric names that have been recorded for
 // an experiment.
 func MetricNames(ctx context.Context, experimentIDs []int) (

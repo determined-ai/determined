@@ -1547,8 +1547,14 @@ func (a *apiServer) ExpMetricNames(req *apiv1.ExpMetricNamesRequest,
 			return err
 		}
 
+		numNonTermialExperiments, err := db.GetNonTerminalExperimentCount(req.Ids)
+
 		if err != nil {
-			return errors.Wrap(err, "error looking up experiment state")
+			return errors.Wrap(err, "error looking up state of experiments")
+		}
+
+		if numNonTermialExperiments == 0 {
+			return nil
 		}
 
 		time.Sleep(period)
