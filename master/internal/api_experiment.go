@@ -1435,7 +1435,8 @@ func (a *apiServer) MetricNames(req *apiv1.MetricNamesRequest,
 
 		var response apiv1.MetricNamesResponse
 		response.SearcherMetric = searcherMetric
-		newTrain, newValid, err := db.MetricNames(resp.Context(), experimentID)
+		expIdArray := []int{experimentID}
+		newTrain, newValid, err := db.MetricNames(resp.Context(), expIdArray)
 		if err != nil {
 			return errors.Wrapf(err,
 				"error fetching metric names for experiment: %d", experimentID)
@@ -1467,6 +1468,84 @@ func (a *apiServer) MetricNames(req *apiv1.MetricNamesRequest,
 		}
 		if model.TerminalStates[state] {
 			return nil
+		}
+
+		time.Sleep(period)
+		if grpcutil.ConnectionIsClosed(resp) {
+			return nil
+		}
+	}
+}
+
+func (a *apiServer) ExpMetricNames(req *apiv1.ExpMetricNamesRequest,
+	resp apiv1.Determined_ExpMetricNamesServer,
+) error {
+	period := time.Duration(req.PeriodSeconds) * time.Second
+	if period == 0 {
+		period = defaultMetricsStreamPeriod
+	}
+
+	seenSearcher := make(map[string]bool)
+	seenTrain := make(map[string]bool)
+	seenValid := make(map[string]bool)
+
+	var timeSinceLastAuth time.Time
+	for {
+		var response apiv1.ExpMetricNamesResponse
+		if time.Now().Sub(timeSinceLastAuth) >= recheckAuthPeriod {
+			for _, expID := range req.Ids {
+				exp, _, err := a.getExperimentAndCheckCanDoActions(resp.Context(), int(expID),
+					exputil.AuthZProvider.Get().CanGetExperimentArtifacts)
+				if err != nil {
+					return err
+				}
+
+				if timeSinceLastAuth == (time.Time{}) { // Initialzation.
+					searcherMetric := exp.Config.Searcher.Metric
+
+					if seen := seenSearcher[searcherMetric]; !seen {
+						response.SearcherMetrics = append(response.SearcherMetrics, searcherMetric)
+						seenTrain[searcherMetric] = true
+					}
+
+				}
+			}
+			timeSinceLastAuth = time.Now()
+		}
+		expIDs := make([]int, len(req.Ids))
+
+		for i, ID := range req.Ids {
+			expIDs[i] = int(ID)
+		}
+
+		newTrain, newValid, err := db.MetricNames(resp.Context(), expIDs)
+		if err != nil {
+			return errors.Wrapf(err,
+				"error fetching metric names for experiment: %d", req.Ids)
+		}
+
+		for _, name := range newTrain {
+			if seen := seenTrain[name]; !seen {
+				response.TrainingMetrics = append(response.TrainingMetrics, name)
+				seenTrain[name] = true
+			}
+		}
+		for _, name := range newValid {
+			if seen := seenValid[name]; !seen {
+				response.ValidationMetrics = append(response.ValidationMetrics, name)
+				seenValid[name] = true
+			}
+		}
+
+		if grpcutil.ConnectionIsClosed(resp) {
+			return nil
+		}
+		if err = resp.Send(&response); err != nil {
+			return err
+		}
+
+		if err != nil {
+			return errors.Wrap(err, "error looking up experiment state")
 		}
 
 		time.Sleep(period)

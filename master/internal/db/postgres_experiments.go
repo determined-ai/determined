@@ -118,27 +118,27 @@ func (db *PgDB) GetExperimentStatus(experimentID int) (state model.State, progre
 
 // MetricNames returns the set of training and validation metric names that have been recorded for
 // an experiment.
-func MetricNames(ctx context.Context, experimentID int) (
+func MetricNames(ctx context.Context, experimentIDs []int) (
 	training []string, validation []string, err error,
 ) {
 	if err := Bun().NewSelect().Table("trials").
 		ColumnExpr("jsonb_object_keys(summary_metrics->'avg_metrics') AS name").
-		Where("experiment_id = ?", experimentID).
+		Where("experiment_id IN (?)", bun.In(experimentIDs)).
 		Group("name").
 		Order("name").
 		Scan(ctx, &training); err != nil {
 		return nil, nil, errors.Wrapf(err,
-			"error querying training metric names for experiment %d", experimentID)
+			"error querying training metric names for experiments")
 	}
 
 	if err := Bun().NewSelect().Table("trials").
 		ColumnExpr("jsonb_object_keys(summary_metrics->'validation_metrics') AS name").
-		Where("experiment_id = ?", experimentID).
+		Where("experiment_id IN (?)", bun.In(experimentIDs)).
 		Group("name").
 		Order("name").
 		Scan(ctx, &validation); err != nil {
 		return nil, nil, errors.Wrapf(err,
-			"error querying validation metric names for experiment %d", experimentID)
+			"error querying validation metric names for experiments")
 	}
 
 	return training, validation, nil
