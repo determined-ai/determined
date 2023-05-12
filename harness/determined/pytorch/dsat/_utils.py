@@ -20,6 +20,7 @@ CURR_DIR = pathlib.Path(".")
 
 
 def get_base_parser() -> argparse.ArgumentParser:
+    # TODO: better args everyhwere, namely shorter flags and abbrevs
     base_parser = argparse.ArgumentParser(add_help=False)
     base_parser.add_argument("config_path")
     base_parser.add_argument("model_dir")
@@ -99,6 +100,25 @@ def get_full_parser() -> argparse.ArgumentParser:
         "--search-range-factor",
         type=float,
         default=_defaults.AUTOTUNING_ARG_DEFAULTS["search-range-factor"],
+    )
+
+    # TODO: just using the paper's notation now, but should make align with existing Determined.
+    asha_subparser = subparsers.add_parser("asha", parents=[base_parser])
+    asha_subparser.add_argument(
+        "--R",
+        default=10,
+    )
+    asha_subparser.add_argument(
+        "--r",
+        default=3,
+    )
+    asha_subparser.add_argument(
+        "--s",
+        default=0,
+    )
+    asha_subparser.add_argument(
+        "--eta",
+        default=2,
     )
 
     return parser
