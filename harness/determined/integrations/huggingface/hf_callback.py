@@ -307,12 +307,6 @@ def get_ds_config_path_from_args(args: List[str]) -> Optional[str]:
             return ds_config_path
 
 
-def overwrite_ds_json_file(overwrite_dict: Dict[str, Any], ds_json_path: str) -> None:
-    with filelock.FileLock(ds_json_path + ".lock"):
-        with open(ds_json_path, "w") as f:
-            json.dump(overwrite_dict, f)
-
-
 def update_hf_args(args: List[str], ds_config_dict: Dict[str, Any]) -> List[str]:
     """
     Updates batch-size-related HF CLI args to be consistent with the values specified in the
@@ -375,9 +369,11 @@ def get_hf_args_with_overwrites(
     overwritten_ds_config_dict = merge_dicts(ds_config_dict, hparams[overwrite_key])
 
     # We need to actually overwrite the ds json config file, due to how HF processes args.
-    overwrite_ds_json_file(overwritten_ds_config_dict, ds_config_path)
-
-    # Finally overwrite the CLI args
-    args = update_hf_args(args, overwritten_ds_config_dict)
+    # A file lock is required during both the writing and reading.
+    with filelock.FileLock(ds_config_path + ".lock"):
+        with open(ds_config_path, "w") as f:
+            json.dump(overwritten_ds_config_dict, f)
+        # Finally overwrite the CLI args
+        args = update_hf_args(args, overwritten_ds_config_dict)
 
     return args
