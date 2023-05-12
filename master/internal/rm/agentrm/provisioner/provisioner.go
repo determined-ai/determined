@@ -14,6 +14,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/telemetry"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
+	errInfo "github.com/determined-ai/determined/master/pkg/errors"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
@@ -42,9 +43,7 @@ type Provisioner struct {
 	provider         provider
 	scaleDecider     *scaleDecider
 	telemetryLimiter *rate.Limiter
-	errorTimeout     time.Duration
-	errorRetries     int
-	errorInfo        *errorInfo
+	ErrInfo          *errInfo.ErrorTimeoutRetry
 }
 
 type errorInfo struct {
@@ -83,9 +82,9 @@ func New(
 		}
 	}
 
-	var errorTimeout time.Duration
-	if config != nil && config.ErrorTimeout != nil {
-		errorTimeout = time.Duration(*config.ErrorTimeout)
+	var launchErrorTimeout time.Duration
+	if config != nil && config.LaunchErrorTimeout != nil {
+		launchErrorTimeout = time.Duration(*config.LaunchErrorTimeout)
 	}
 
 	return &Provisioner{
@@ -100,8 +99,7 @@ func New(
 			db,
 		),
 		telemetryLimiter: rate.NewLimiter(rate.Every(telemetryCooldown), 1),
-		errorTimeout:     errorTimeout,
-		errorRetries:     config.ErrorTimeoutRetries,
+		ErrInfo:          errInfo.NewErrorTimeoutRetry(launchErrorTimeout, config.LaunchErrorRetries),
 	}, nil
 }
 
@@ -194,38 +192,9 @@ func (p *Provisioner) provision(ctx *actor.Context) {
 }
 
 func (p *Provisioner) launch(ctx *actor.Context, numToLaunch int) error {
-	if err := p.GetError(); err != nil {
+	if err := p.ErrInfo.GetError(); err != nil {
 		return err
 	}
-	p.setError(p.provider.launch(ctx, numToLaunch))
-	return p.GetError()
-}
-
-// GetError returns the last error encountered by the provisioner.
-func (p *Provisioner) GetError() error {
-	if p == nil || p.errorInfo == nil {
-		return nil
-	}
-	if time.Now().After(p.errorInfo.time.Add(p.errorTimeout)) {
-		p.errorInfo = nil
-		return nil
-	}
-	if p.errorInfo.retries < p.errorRetries {
-		return nil
-	}
-	return p.errorInfo.err
-}
-
-func (p *Provisioner) setError(err error) {
-	if err == nil || p.errorTimeout <= 0 {
-		p.errorInfo = nil
-		return
-	}
-	if p.errorInfo == nil || time.Now().After(p.errorInfo.time.Add(p.errorTimeout)) {
-		p.errorInfo = &errorInfo{}
-	} else {
-		p.errorInfo.retries++
-	}
-	p.errorInfo.err = err
-	p.errorInfo.time = time.Now()
+	p.ErrInfo.SetError(p.provider.launch(ctx, numToLaunch))
+	return p.ErrInfo.GetError()
 }

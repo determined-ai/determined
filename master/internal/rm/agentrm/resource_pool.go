@@ -526,7 +526,7 @@ func (rp *resourcePool) Receive(ctx *actor.Context) error {
 		})
 
 	case schedulerTick:
-		if err := rp.provisioner.GetError(); err != rp.provisionerError {
+		if err := rp.provisioner.ErrInfo.GetError(); err != rp.provisionerError {
 			rp.provisionerError = err
 			if err != nil {
 				rp.reschedule = true
@@ -847,7 +847,7 @@ func (rp *resourcePool) pruneTaskList(ctx *actor.Context) {
 	if rp.provisioner == nil {
 		return
 	}
-	err := rp.provisioner.GetError()
+	err := rp.provisioner.ErrInfo.GetError()
 	if err == nil {
 		return
 	}
