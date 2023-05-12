@@ -736,6 +736,7 @@ func Test_ToDispatcherManifest(t *testing.T) {
 				assert.ErrorContains(t, err, tt.errorContains)
 			} else {
 				assert.NilError(t, err)
+				assert.DeepEqual(t, manifest.GetWarehouseMetadata(), *launcher.NewWarehouseMetadata())
 				assert.Equal(t, userName, "determined")
 				assert.Equal(t, payloadName, "ai")
 				assert.Assert(t, manifest != nil)
