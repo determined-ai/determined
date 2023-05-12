@@ -191,9 +191,8 @@ const NoteCards: React.FC<Props> = ({
           <Select value={currentPage} onSelect={handleSwitchPage}>
             {notes.map((note, idx) => {
               return (
-                <Option className={css.selectOption} key={idx} value={idx}>
+                <Option key={idx} value={idx}>
                   <CheckOutlined
-                    className={css.currentPage}
                     style={{
                       marginRight: 8,
                       visibility: idx === currentPage ? 'visible' : 'hidden',
