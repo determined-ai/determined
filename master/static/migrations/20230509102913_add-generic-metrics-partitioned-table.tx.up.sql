@@ -41,7 +41,13 @@
  Triggers:
  autoupdate_exp_validation_metrics_name AFTER INSERT ON raw_validations FOR EACH ROW EXECUTE PROCEDURE autoupdate_exp_validation_metrics_name()
  */
--- fix missing foreign key constraint
+-- fix missing foreign key constraint on raw_validations
+DELETE FROM raw_validations
+WHERE NOT EXISTS (
+        SELECT 1
+        FROM trials
+        WHERE trials.id = raw_validations.trial_id
+    );
 ALTER TABLE raw_validations
 ADD FOREIGN KEY (trial_id) REFERENCES trials(id);
 CREATE TYPE metric_partition_type AS ENUM ('VALIDATION', 'TRAINING', 'GENERIC');
