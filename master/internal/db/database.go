@@ -70,6 +70,10 @@ type DB interface {
 	TrialRunIDAndRestarts(trialID int) (int, int, error)
 	UpdateTrialRunID(id, runID int) error
 	UpdateTrialRestarts(id, restarts int) error
+	AddTrainingMetrics(ctx context.Context, m *trialv1.TrialMetrics) error
+	AddValidationMetrics(
+		ctx context.Context, m *trialv1.TrialMetrics,
+	) error
 	ValidationByTotalBatches(trialID, totalBatches int) (*model.TrialMetrics, error)
 	CheckpointByTotalBatches(trialID, totalBatches int) (*model.Checkpoint, error)
 	CheckpointByUUID(id uuid.UUID) (*model.Checkpoint, error)
