@@ -1479,7 +1479,13 @@ func (a *apiServer) MetricNames(req *apiv1.MetricNamesRequest,
 func (a *apiServer) ExpMetricNames(req *apiv1.ExpMetricNamesRequest,
 	resp apiv1.Determined_ExpMetricNamesServer,
 ) error {
+
+	if len(req.Ids) == 0 {
+		return status.Error(codes.InvalidArgument, "must specify at least one experiment id")
+	}
+
 	period := time.Duration(req.PeriodSeconds) * time.Second
+
 	if period == 0 {
 		period = defaultMetricsStreamPeriod
 	}
