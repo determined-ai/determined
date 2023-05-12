@@ -3,6 +3,7 @@ import pathlib
 import subprocess
 import tempfile
 import time
+import uuid
 from typing import Iterator, List, Optional
 
 import pytest
@@ -11,6 +12,7 @@ from urllib3 import connectionpool
 from determined import searcher
 from determined.common import yaml
 from determined.common.api import bindings
+from determined.common.api.bindings import experimentv1State
 from determined.experimental import client
 from tests import api_utils
 from tests import config as conf
@@ -582,3 +584,102 @@ class FallibleSearchRunner(searcher.LocalSearchRunner):
                 connectionpool.HTTPConnectionPool(host="dummyhost", port=8080), "http://dummyurl"
             )
             raise ex
+
+
+@pytest.mark.e2e_cpu
+def test_archived_proj_exp_list() -> None:
+    session = api_utils.determined_test_session(admin=True)
+    workspaces: List[bindings.v1Workspace] = []
+    count = 2
+
+    for _ in range(count):
+        body = bindings.v1PostWorkspaceRequest(name=f"workspace_{uuid.uuid4().hex[:8]}")
+        workspaces.append(bindings.post_PostWorkspace(session, body=body).workspace)
+
+    projects = []
+    experiments = []
+    for i in workspaces:
+        body1 = bindings.v1PostProjectRequest(name=f"p_{uuid.uuid4().hex[:8]}", workspaceId=i.id)
+        pid1 = bindings.post_PostProject(
+            session,
+            body=body1,
+            workspaceId=i.id,
+        ).project.id
+
+        body2 = bindings.v1PostProjectRequest(name=f"p_{uuid.uuid4().hex[:8]}", workspaceId=i.id)
+        pid2 = bindings.post_PostProject(
+            session,
+            body=body2,
+            workspaceId=i.id,
+        ).project.id
+
+        projects.append(pid1)
+        projects.append(pid2)
+
+        experiments.append(
+            exp.create_experiment(
+                conf.fixtures_path("no_op/single.yaml"),
+                conf.fixtures_path("no_op"),
+                ["--project_id", str(pid1)],
+            )
+        )
+        experiments.append(
+            exp.create_experiment(
+                conf.fixtures_path("no_op/single.yaml"),
+                conf.fixtures_path("no_op"),
+                ["--project_id", str(pid1)],
+            )
+        )
+        experiments.append(
+            exp.create_experiment(
+                conf.fixtures_path("no_op/single.yaml"),
+                conf.fixtures_path("no_op"),
+                ["--project_id", str(pid2)],
+            )
+        )
+        experiments.append(
+            exp.create_experiment(
+                conf.fixtures_path("no_op/single.yaml"),
+                conf.fixtures_path("no_op"),
+                ["--project_id", str(pid2)],
+            )
+        )
+
+    for x in experiments:
+        exp.wait_for_experiment_state(experiment_id=x, target_state=experimentv1State.COMPLETED)
+    bindings.post_KillExperiments(
+        session, body=bindings.v1KillExperimentsRequest(experimentIds=experiments)
+    )
+
+    bindings.post_ArchiveExperiment(session, id=experiments[0])
+    bindings.post_ArchiveExperiment(session, id=experiments[3])
+    bindings.post_ArchiveExperiment(session, id=experiments[5])
+    bindings.post_ArchiveExperiment(session, id=experiments[6])
+
+    archived_exp = [experiments[0], experiments[3], experiments[5], experiments[6]]
+
+    r1 = bindings.get_GetExperiments(session, archived=False)
+
+    for e in r1.experiments:
+        assert e.id not in archived_exp
+
+    bindings.post_ArchiveProject(session, id=projects[1])
+    bindings.post_ArchiveProject(session, id=projects[2])
+
+    archived_exp.append(experiments[2])
+    archived_exp.append(experiments[4])
+
+    r2 = bindings.get_GetExperiments(session, archived=False)
+    for e in r2.experiments:
+        assert e.id not in archived_exp
+
+    bindings.post_ArchiveWorkspace(session, id=workspaces[1].id)
+
+    archived_exp.append(experiments[7])
+
+    r3 = bindings.get_GetExperiments(session, archived=False)
+    for e in r3.experiments:
+        assert e.id not in archived_exp
+
+    for w in workspaces:
+        bindings.delete_DeleteWorkspace(session, id=w.id)

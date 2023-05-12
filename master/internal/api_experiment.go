@@ -608,6 +608,10 @@ func (a *apiServer) GetExperiments(
 	}
 	if req.Archived != nil {
 		query = query.Where("e.archived = ?", req.Archived.Value)
+		if req.ProjectId == 0 {
+			query = query.Where("w.archived= ?", false)
+			query = query.Where("p.archived= ?", false)
+		}
 	}
 	if len(req.States) > 0 {
 		var allStates []string
