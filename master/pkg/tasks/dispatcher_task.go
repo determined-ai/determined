@@ -11,7 +11,6 @@ import (
 	"strings"
 
 	"github.com/docker/docker/api/types/mount"
-	"github.com/google/uuid"
 	launcher "github.hpe.com/hpe/hpc-ard-launcher-go/launcher"
 
 	"github.com/determined-ai/determined/master/internal/config"
@@ -48,6 +47,9 @@ const (
 	unspecifiedSlotsPerNode   = 0
 
 	pbsDisallowedProjectCharacters = "/[]\";:|<>+,?*"
+
+	// ManifestName is the name used by DAI RM when creating HPC job manifests.
+	ManifestName = "det"
 )
 
 // The "launcher" is very sensitive when it comes to the payload name. There
@@ -292,17 +294,11 @@ func (t *TaskSpec) ToDispatcherManifest(
 	payload.SetResourceRequirements(*resources)
 
 	clientMetadata := launcher.NewClientMetadataWithDefaults()
-	clientMetadata.SetName("det")
+	clientMetadata.SetName(ManifestName)
 
 	// Create & populate the manifest
 	manifest := *launcher.NewManifest("v1", *clientMetadata) // Manifest | The manifest to launch
 	manifest.SetPayloads([]launcher.Payload{*payload})
-	// manifest.SetManifestVersion("latest") //?
-
-	// Supply a unique version to reduce potential launcher file management conflicts
-	warehouseMetadata := launcher.NewWarehouseMetadata()
-	warehouseMetadata.SetVersion(uuid.NewString())
-	manifest.SetWarehouseMetadata(*warehouseMetadata)
 
 	return &manifest, impersonatedUser, payloadName, err
 }

@@ -17,7 +17,11 @@ import (
 )
 
 // Blank user runs as launcher-configured user.
-const blankImpersonatedUser = ""
+const (
+	blankImpersonatedUser = ""
+	resourceQueryName     = "DAI-HPC-Resources"
+	queueQueryName        = "DAI-HPC-Queues"
+)
 
 // One time activity to create a manifest using SlurmResources carrier.
 // This manifest is used on demand to retrieve details regarding HPC resources
@@ -242,7 +246,7 @@ func (c *launcherAPIClient) handleLauncherError(r *http.Response,
 // This Manifest is used to retrieve information about resources available on the HPC system.
 func createSlurmResourcesManifest() launcher.Manifest {
 	payload := launcher.NewPayloadWithDefaults()
-	payload.SetName("DAI-HPC-Resources")
+	payload.SetName(resourceQueryName)
 	payload.SetId("com.cray.analytics.capsules.hpc.resources")
 	payload.SetVersion("latest")
 	payload.SetCarriers([]string{slurmResourcesCarrier, pbsResourcesCarrier})
@@ -253,7 +257,7 @@ func createSlurmResourcesManifest() launcher.Manifest {
 	payload.SetLaunchParameters(*launchParameters)
 
 	clientMetadata := launcher.NewClientMetadataWithDefaults()
-	clientMetadata.SetName("DAI-HPC-Resources")
+	clientMetadata.SetName(resourceQueryName)
 
 	// Create & populate the manifest
 	manifest := *launcher.NewManifest("v1", *clientMetadata)
@@ -266,7 +270,7 @@ func createSlurmResourcesManifest() launcher.Manifest {
 // This Manifest is used to retrieve information about pending/running jobs.
 func createHpcQueueManifest() launcher.Manifest {
 	payload := launcher.NewPayloadWithDefaults()
-	payload.SetName("DAI-HPC-Queues")
+	payload.SetName(queueQueryName)
 	payload.SetId("com.cray.analytics.capsules.hpc.queue")
 	payload.SetVersion("latest")
 	payload.SetCarriers([]string{
@@ -279,7 +283,7 @@ func createHpcQueueManifest() launcher.Manifest {
 	payload.SetLaunchParameters(*launchParameters)
 
 	clientMetadata := launcher.NewClientMetadataWithDefaults()
-	clientMetadata.SetName("DAI-HPC-Queues")
+	clientMetadata.SetName(queueQueryName)
 
 	manifest := *launcher.NewManifest("v1", *clientMetadata)
 	manifest.SetPayloads([]launcher.Payload{*payload})
