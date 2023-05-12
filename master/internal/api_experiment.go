@@ -606,9 +606,9 @@ func (a *apiServer) GetExperiments(
 				ELSE e.config->'labels' END
 			))`, strings.Join(req.Labels, ",")) // Trying bun.In doesn't work.
 	}
-	if req.Archived != nil {
+	if req.Archived != nil && req.ProjectId == 0 {
 		query = query.Where("e.archived = ?", req.Archived.Value)
-		if req.ProjectId == 0 {
+		if !req.Archived.Value {
 			query = query.Where("w.archived= ?", false)
 			query = query.Where("p.archived= ?", false)
 		}
