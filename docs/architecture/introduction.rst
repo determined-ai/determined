@@ -714,14 +714,14 @@ Workspaces and Projects
 
 **Workspaces** and **projects** provide a way to organize experiments. A project is a collection of
 experiments, and a workspace is a collection of projects. Learn more about workspaces and projects
-at :doc:`/cluster-setup-guide/workspaces`.
+at :doc:`/setup-cluster/workspaces`.
 
 RBAC and User Groups
 ====================
 
 **Role Based Access Control (RBAC)** enables administrators to control user access to various
 actions and data within Determined. RBAC feature requires Determined Enterprise Edition. Learn more
-about RBAC and User Group usage at :doc:`/cluster-setup-guide/security/rbac`.
+about RBAC and User Group usage at :doc:`/setup-cluster/security/rbac`.
 
 .. _topic-guides_yaml:
 
