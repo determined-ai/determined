@@ -556,7 +556,7 @@ const LogViewer: React.FC<Props> = ({
         <div className={css.container}>
           <div className={css.logs} ref={logsRef}>
             <VariableSizeList
-              height={pageSize.height - 240}
+              height={pageSize.height - 200}
               itemCount={logs.length}
               itemData={logs}
               itemSize={getItemHeight}

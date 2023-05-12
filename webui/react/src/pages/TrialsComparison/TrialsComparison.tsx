@@ -82,79 +82,81 @@ const TrialsComparison: React.FC<Props> = ({ projectId, workspaceId }) => {
   const handleTrialFocus = useMemo(() => debounce(1000, highlights.focus), [highlights.focus]);
 
   return (
-    <Page className={css.base} containerRef={containerRef}>
-      <Section bodyBorder bodyScroll>
-        <div className={css.container}>
-          <div className={css.chart}>
-            {actions.selectedTrials.length === 0 ? (
-              <Empty
-                description={
-                  <>
-                    Choose trials to plot or <a onClick={handleClickFirstFive}>select first five</a>
-                  </>
-                }
-                icon="experiment"
-                title="No Trials Selected"
-              />
-            ) : trials.metrics.length === 0 ? (
-              <Message title="No Metrics for Selected Trials" type={MessageType.Empty} />
-            ) : (
-              <Grid
-                border={true}
-                //  TODO: use screen size
-                minItemWidth={600}
-                mode={GridMode.AutoFill}>
-                <SyncProvider>
-                  {trials.metrics.map((metric) => {
-                    const metricKey = metricToKey(metric);
-                    const metricInfo = learningCurveData?.infoForMetrics?.[metricKey];
-
-                    const nonEmptyTrials = metricInfo?.nonEmptyTrials;
-                    const selectedTrials = new Set(actions.selectedTrials);
-                    const hasData =
-                      nonEmptyTrials && intersection(selectedTrials, nonEmptyTrials).size > 0;
-                    if (!hasData)
+    <Page containerRef={containerRef}>
+      <div className={css.base}>
+        <Section bodyBorder bodyScroll>
+          <div className={css.container}>
+            <div className={css.chart}>
+              {actions.selectedTrials.length === 0 ? (
+                <Empty
+                  description={
+                    <>
+                      Choose trials to plot or{' '}
+                      <a onClick={handleClickFirstFive}>select first five</a>
+                    </>
+                  }
+                  icon="experiment"
+                  title="No Trials Selected"
+                />
+              ) : trials.metrics.length === 0 ? (
+                <Message title="No Metrics for Selected Trials" type={MessageType.Empty} />
+              ) : (
+                <Grid
+                  border={true}
+                  //  TODO: use screen size
+                  minItemWidth={600}
+                  mode={GridMode.AutoFill}>
+                  <SyncProvider>
+                    {trials.metrics.map((metric) => {
+                      const metricKey = metricToKey(metric);
+                      const metricInfo = learningCurveData?.infoForMetrics?.[metricKey];
+                      const nonEmptyTrials = metricInfo?.nonEmptyTrials;
+                      const selectedTrials = new Set(actions.selectedTrials);
+                      const hasData =
+                        nonEmptyTrials && intersection(selectedTrials, nonEmptyTrials).size > 0;
+                      if (!hasData)
+                        return (
+                          <Message
+                            key={metricKey}
+                            title={`No ${metric.type} ${metric.name} data for selected trials`}
+                            type={MessageType.Empty}
+                          />
+                        );
                       return (
-                        <Message
+                        <LearningCurveChart
+                          data={metricInfo.chartData}
+                          focusedTrialId={highlights.id}
                           key={metricKey}
-                          title={`No ${metric.type} ${metric.name} data for selected trials`}
-                          type={MessageType.Empty}
+                          selectedMetric={metric}
+                          selectedScale={Scale.Linear}
+                          selectedTrialIds={actions.selectedTrials}
+                          trialIds={trials.ids}
+                          xValues={learningCurveData?.batches ?? []}
+                          onTrialClick={handleTrialClick}
+                          onTrialFocus={handleTrialFocus}
                         />
                       );
-                    return (
-                      <LearningCurveChart
-                        data={metricInfo.chartData}
-                        focusedTrialId={highlights.id}
-                        key={metricKey}
-                        selectedMetric={metric}
-                        selectedScale={Scale.Linear}
-                        selectedTrialIds={actions.selectedTrials}
-                        trialIds={trials.ids}
-                        xValues={learningCurveData?.batches ?? []}
-                        onTrialClick={handleTrialClick}
-                        onTrialFocus={handleTrialFocus}
-                      />
-                    );
-                  })}
-                </SyncProvider>
-              </Grid>
-            )}
+                    })}
+                  </SyncProvider>
+                </Grid>
+              )}
+            </div>
+            <div className={css.table}>
+              {actions.dispatcher}
+              <TrialTable
+                actionsInterface={actions}
+                collectionsInterface={collections}
+                containerRef={containerRef}
+                highlights={highlights}
+                loading={loading}
+                tableSettingsHook={tableSettingsHook}
+                trialsWithMetadata={trials}
+              />
+            </div>
           </div>
-          <div className={css.table}>
-            {actions.dispatcher}
-            <TrialTable
-              actionsInterface={actions}
-              collectionsInterface={collections}
-              containerRef={containerRef}
-              highlights={highlights}
-              loading={loading}
-              tableSettingsHook={tableSettingsHook}
-              trialsWithMetadata={trials}
-            />
-          </div>
-        </div>
-      </Section>
-      {actions.modalContextHolder}
+        </Section>
+        {actions.modalContextHolder}
+      </div>
     </Page>
   );
 };
