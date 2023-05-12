@@ -104,10 +104,9 @@ const FilterGroup = ({
     };
 
     const items: MenuProps['items'] = [
-      { icon: <PlusOutlined />, key: FormKind.Field, label: <div>Add condition</div> },
+      { key: FormKind.Field, label: <div>Add condition</div> },
       {
         disabled: !(0 <= level && level <= 1),
-        icon: <PlusOutlined />,
         key: FormKind.Group,
         label: <div>Add condition group</div>,
       },
@@ -145,7 +144,7 @@ const FilterGroup = ({
             )}
           </div>
           {level > 0 && (
-            <div className={css.headerButtonGroup}>
+            <>
               <Dropdown
                 disabled={group.children.length > ITEM_LIMIT}
                 menu={menuItems}
@@ -160,7 +159,7 @@ const FilterGroup = ({
               <div ref={drag}>
                 <Button icon={<HolderOutlined />} type="text" />
               </div>
-            </div>
+            </>
           )}
         </div>
         <div className={css.children}>

@@ -68,28 +68,53 @@ export const Operator = {
 
 export type Operator = ValueOf<typeof Operator>;
 
-export const ReadableOperator: Record<Operator, string> = {
+const READABLE_TEXT_OPERATOR: Record<Operator, string> = {
   [Operator.Contains]: 'contains',
-  [Operator.Eq]: '=',
+  [Operator.NotContains]: 'does not contain',
+  [Operator.Eq]: 'is',
+  [Operator.NotEq]: 'is not',
   [Operator.Greater]: '>',
   [Operator.GreaterEq]: '>=',
-  [Operator.IsEmpty]: 'is empty',
   [Operator.Less]: '<',
   [Operator.LessEq]: '<=',
-  [Operator.NotContains]: 'not contains',
-  [Operator.NotEmpty]: 'not empty',
+  [Operator.IsEmpty]: 'is empty',
+  [Operator.NotEmpty]: 'is not empty',
+} as const;
+
+const READABLE_NUMBER_OPERATOR: Record<Operator, string> = {
+  [Operator.Contains]: 'contains',
+  [Operator.NotContains]: 'does not contain',
+  [Operator.Eq]: '=',
   [Operator.NotEq]: '!=',
+  [Operator.Greater]: '>',
+  [Operator.GreaterEq]: '>=',
+  [Operator.Less]: '<',
+  [Operator.LessEq]: '<=',
+  [Operator.IsEmpty]: 'is empty',
+  [Operator.NotEmpty]: 'is not empty',
+} as const;
+
+const READABLE_DATE_OPERATOR: Record<Operator, string> = {
+  [Operator.Contains]: 'contains',
+  [Operator.NotContains]: 'does not contain',
+  [Operator.Eq]: 'on',
+  [Operator.NotEq]: 'not on',
+  [Operator.Greater]: 'after',
+  [Operator.GreaterEq]: 'on or after',
+  [Operator.Less]: 'before',
+  [Operator.LessEq]: 'on or before',
+  [Operator.IsEmpty]: 'is empty',
+  [Operator.NotEmpty]: 'is not empty',
+} as const;
+
+export const ReadableOperator: Record<V1ColumnType, Record<Operator, string>> = {
+  [V1ColumnType.TEXT]: READABLE_TEXT_OPERATOR,
+  [V1ColumnType.NUMBER]: READABLE_NUMBER_OPERATOR,
+  [V1ColumnType.DATE]: READABLE_DATE_OPERATOR,
+  [V1ColumnType.UNSPECIFIED]: READABLE_TEXT_OPERATOR,
 } as const;
 
 export const AvailableOperators = {
-  [V1ColumnType.NUMBER]: [
-    Operator.Eq,
-    Operator.NotEq,
-    Operator.Greater,
-    Operator.GreaterEq,
-    Operator.Less,
-    Operator.LessEq,
-  ],
   [V1ColumnType.TEXT]: [
     Operator.Contains,
     Operator.NotContains,
@@ -97,6 +122,14 @@ export const AvailableOperators = {
     Operator.NotEq,
     Operator.IsEmpty,
     Operator.NotEmpty,
+  ],
+  [V1ColumnType.NUMBER]: [
+    Operator.Eq,
+    Operator.NotEq,
+    Operator.Greater,
+    Operator.GreaterEq,
+    Operator.Less,
+    Operator.LessEq,
   ],
   [V1ColumnType.DATE]: [
     // No Eq and NotEq for date because date should be used with range

@@ -29,6 +29,7 @@ import Input from 'components/kit/Input';
 import InputNumber from 'components/kit/InputNumber';
 import Select, { SelectValue } from 'components/kit/Select';
 import { V1ColumnType, V1ProjectColumn } from 'services/api-ts-sdk';
+import { alphaNumericSorter } from 'shared/utils/sort';
 import clusterStore from 'stores/cluster';
 import userStore from 'stores/users';
 import { Loadable } from 'utils/loadable';
@@ -103,7 +104,9 @@ const FilterField = ({
       case 'searcherType':
         return SEARCHER_TYPE.map((searcher) => ({ label: searcher, value: searcher }));
       case 'user':
-        return users.map((user) => ({ label: user.username, value: user.username }));
+        return users
+          .sort((a, b) => alphaNumericSorter(a.username, b.username))
+          .map((user) => ({ label: user.username, value: user.username }));
       default:
         // eslint-disable-next-line no-case-declarations, @typescript-eslint/no-unused-vars
         const _exhaustiveCheck: never = columnName;
@@ -181,7 +184,7 @@ const FilterField = ({
               ? [Operator.Eq, Operator.NotEq] // just Eq and NotEq for Special column
               : AvailableOperators[currentColumn?.type ?? V1ColumnType.UNSPECIFIED]
             ).map((op) => ({
-              label: ReadableOperator[op],
+              label: ReadableOperator[field.type][op],
               value: op,
             }))}
             value={field.operator}

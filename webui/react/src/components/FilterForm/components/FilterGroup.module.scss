@@ -11,8 +11,12 @@
 }
 .groupCard {
   border-radius: 4px;
-  padding: 8px;
+  padding-left: 8px;
 
+  &.level0 {
+    background-color: inherit;
+    border: inherit;
+  }
   &.level1 {
     background-color: var(--theme-surface);
     border: 1px solid var(--theme-surface-border);
@@ -20,21 +24,16 @@
   &.level2 {
     background-color: var(--theme-stage);
     border: 1px solid var(--theme-stage-border);
+    margin-right: 8px;
   }
 }
 .header {
   align-items: center;
   color: var(--theme-stage-on);
   display: grid;
-  grid-template-columns: 7fr 3fr;
+  grid-template-columns: 7fr 32px 32px 32px;
   justify-content: space-between;
-  padding-bottom: 4px;
-
-  & > .headerButtonGroup {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, 32px);
-    justify-content: end;
-  }
+  padding: 4px 0;
 }
 .children {
   display: flex;

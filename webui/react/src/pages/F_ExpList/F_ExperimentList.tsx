@@ -5,6 +5,7 @@ import { useSearchParams } from 'react-router-dom';
 
 import { FilterFormStore } from 'components/FilterForm/components/FilterFormStore';
 import { FilterFormSet } from 'components/FilterForm/components/type';
+import Empty from 'components/kit/Empty';
 import useResize from 'hooks/useResize';
 import { useSettings } from 'hooks/useSettings';
 import { getProjectColumns, searchExperiments } from 'services/api';
@@ -22,7 +23,7 @@ import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 
 import { F_ExperimentListSettings, settingsConfigForProject } from './F_ExperimentList.settings';
-import { Error, Loading, NoExperiments, NoMatches } from './glide-table/exceptions';
+import { Error, Loading, NoExperiments } from './glide-table/exceptions';
 import GlideTable, { SCROLL_SET_COUNT_NEEDED } from './glide-table/GlideTable';
 import { EMPTY_SORT, Sort, validSort, ValidSort } from './glide-table/MultiSortMenu';
 import TableActionBar, { BatchAction } from './glide-table/TableActionBar';
@@ -70,6 +71,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const [projectColumns, setProjectColumns] = useState<Loadable<ProjectColumn[]>>(NotLoaded);
   const [isOpenFilter, setIsOpenFilter] = useState<boolean>(false);
   const filtersString: string = JSON.stringify(useObservable(formStore.jsonWithoutId));
+  const rootFilterChildren = useObservable(formStore.formset).filterGroup.children;
 
   const onIsOpenFilterChange = (newOpen: boolean) => {
     setIsOpenFilter(newOpen);
@@ -97,6 +99,8 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   }, [page, sortString]);
 
   useEffect(() => {
+    // useSettings load the default value first, and then load the data from DB
+    // use this useEffect to re-init the correct useSettings value when settings.filterset is changed
     let ignore = false;
 
     if (!ignore) {
@@ -142,8 +146,11 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   }, [project.id]);
 
   const numFilters = useMemo(
-    () => Object.values(experimentFilters).filter((x) => x !== undefined).length - 1,
-    [experimentFilters],
+    () =>
+      Object.values(experimentFilters).filter((x) => x !== undefined).length -
+      1 +
+      rootFilterChildren.length,
+    [experimentFilters, rootFilterChildren.length],
   );
 
   const resetPagination = useCallback(() => {
@@ -318,37 +325,37 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
 
   return (
     <>
+      <TableActionBar
+        excludedExperimentIds={excludedExperimentIds}
+        experiments={experiments}
+        filters={experimentFilters}
+        formStore={formStore}
+        handleUpdateExperimentList={handleUpdateExperimentList}
+        initialVisibleColumns={settings.columns}
+        isOpenFilter={isOpenFilter}
+        project={project}
+        projectColumns={projectColumns}
+        selectAll={selectAll}
+        selectedExperimentIds={selectedExperimentIds}
+        setIsOpenFilter={onIsOpenFilterChange}
+        setVisibleColumns={setVisibleColumns}
+        sorts={sorts}
+        total={total}
+        onAction={handleOnAction}
+        onSortChange={onSortChange}
+      />
       {isLoading ? (
         <Loading width={width} />
       ) : experiments.length === 0 ? (
         numFilters === 0 ? (
           <NoExperiments />
         ) : (
-          <NoMatches />
+          <Empty description="No results matching your filters" icon="search" />
         )
       ) : error ? (
         <Error />
       ) : (
         <>
-          <TableActionBar
-            excludedExperimentIds={excludedExperimentIds}
-            experiments={experiments}
-            filters={experimentFilters}
-            formStore={formStore}
-            handleUpdateExperimentList={handleUpdateExperimentList}
-            initialVisibleColumns={settings.columns}
-            isOpenFilter={isOpenFilter}
-            project={project}
-            projectColumns={projectColumns}
-            selectAll={selectAll}
-            selectedExperimentIds={selectedExperimentIds}
-            setIsOpenFilter={onIsOpenFilterChange}
-            setVisibleColumns={setVisibleColumns}
-            sorts={sorts}
-            total={total}
-            onAction={handleOnAction}
-            onSortChange={onSortChange}
-          />
           <GlideTable
             clearSelectionTrigger={clearSelectionTrigger}
             colorMap={colorMap}
