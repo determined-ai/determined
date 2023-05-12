@@ -125,14 +125,26 @@ func GetMetrics(ctx context.Context, trialID, afterBatches, limit int,
 ) ([]*trialv1.MetricsReport, error) {
 	var res []*trialv1.MetricsReport
 	// TODO view on top of metrics table?
-	return res, Bun().NewSelect().Table("metrics").
+	pType := customMetricTypeToPartitionType(mType)
+	query := Bun().NewSelect().Table("metrics").
 		Column("trial_id", "metrics", "total_batches", "archived", "id", "trial_run_id").
 		ColumnExpr("proto_time(end_time) AS end_time").
+		Where("partition_type = ?", pType).
 		Where("trial_id = ?", trialID).
 		Where("total_batches > ?", afterBatches).
-		Where("archived = false").
-		Where("partition_type = ?", customMetricTypeToPartitionType(mType)).
+		Where("archived = false")
+
+	if pType == GenericMetric {
+		// Going off of our current schema were looking for custom types in our legacy
+		// metrics tables is pointless.
+		// CHECK: this should be saving us something?
+		query.Where("custom_type = ?", &mType)
+	}
+
+	err := query.
 		Order("trial_id", "trial_run_id", "total_batches").
 		Limit(limit).
 		Scan(ctx, &res)
+
+	return res, err
 }
