@@ -5,7 +5,7 @@ import { useParams } from 'react-router-dom';
 
 import Input from 'components/kit/Input';
 import { useModal } from 'components/kit/Modal';
-import NoteCard from 'components/kit/NoteCard';
+import Notes from 'components/kit/Notes';
 import Tags, { tagsActionHelper } from 'components/kit/Tags';
 import MetadataCard from 'components/Metadata/MetadataCard';
 import ModelDownloadModal from 'components/ModelDownloadModal';
@@ -42,7 +42,7 @@ import { ErrorType } from 'shared/utils/error';
 import { isAborted, isNotFound, validateDetApiEnum } from 'shared/utils/service';
 import userStore from 'stores/users';
 import workspaceStore from 'stores/workspaces';
-import { Metadata, ModelVersion, ModelVersions } from 'types';
+import { Metadata, ModelVersion, ModelVersions, Note } from 'types';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
@@ -318,7 +318,8 @@ const ModelDetails: React.FC = () => {
   );
 
   const saveNotes = useCallback(
-    async (editedNotes: string) => {
+    async (notes: Note[]) => {
+      const editedNotes = notes[0].contents;
       try {
         const modelName = model?.model.name;
         if (modelName) {
@@ -448,9 +449,10 @@ const ModelDetails: React.FC = () => {
             onChange={handleTableChange}
           />
         )}
-        <NoteCard
+        <Notes
           disabled={model.model.archived || !canModifyModel({ model: model.model })}
-          notes={model.model.notes ?? ''}
+          disableTitle
+          notes={[{ contents: model.model.notes ?? '', name: 'Notes' }]}
           onSave={saveNotes}
         />
         <MetadataCard

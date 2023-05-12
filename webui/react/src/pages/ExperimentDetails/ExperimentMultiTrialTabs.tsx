@@ -2,7 +2,7 @@ import type { TabsProps } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
-import NoteCard from 'components/kit/NoteCard';
+import Notes from 'components/kit/Notes';
 import Pivot from 'components/kit/Pivot';
 import usePermissions from 'hooks/usePermissions';
 import ExperimentTrials from 'pages/ExperimentDetails/ExperimentTrials';
@@ -11,7 +11,7 @@ import { patchExperiment } from 'services/api';
 import Spinner from 'shared/components/Spinner/Spinner';
 import { ValueOf } from 'shared/types';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
-import { ExperimentBase } from 'types';
+import { ExperimentBase, Note } from 'types';
 import handleError from 'utils/error';
 
 import { ExperimentVisualizationType } from './ExperimentVisualization';
@@ -76,7 +76,8 @@ const ExperimentMultiTrialTabs: React.FC<Props> = ({
   }, [basePath, navigate, tab, tabKey]);
 
   const handleNotesUpdate = useCallback(
-    async (editedNotes: string) => {
+    async (notes: Note[]) => {
+      const editedNotes = notes[0].contents;
       try {
         await patchExperiment({ body: { notes: editedNotes }, experimentId: experiment.id });
         await fetchExperimentDetails();
@@ -141,9 +142,10 @@ const ExperimentMultiTrialTabs: React.FC<Props> = ({
 
     items.push({
       children: (
-        <NoteCard
+        <Notes
           disabled={!editableNotes}
-          notes={experiment.notes ?? ''}
+          disableTitle
+          notes={[{ contents: experiment.notes ?? '', name: 'Notes' }]}
           onSave={handleNotesUpdate}
         />
       ),

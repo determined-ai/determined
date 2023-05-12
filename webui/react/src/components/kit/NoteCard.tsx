@@ -1,6 +1,6 @@
 import { EditOutlined } from '@ant-design/icons';
 import { Card, Space } from 'antd';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { unstable_useBlocker as useBlocker } from 'react-router-dom';
 
 import Button from 'components/kit/Button';
@@ -9,34 +9,35 @@ import Tooltip from 'components/kit/Tooltip';
 import Markdown from 'components/Markdown';
 import Spinner from 'shared/components/Spinner/Spinner';
 import { ErrorType } from 'shared/utils/error';
+import { Note } from 'types';
 import handleError from 'utils/error';
 
 import css from './NoteCard.module.scss';
 
-export interface Props {
+interface Props {
   disabled?: boolean;
+  disableTitle?: boolean;
   extra?: React.ReactNode;
   noteChangeSignal?: number;
-  notes: string;
+  note: Note;
   onChange?: (editedNotes: string) => void;
-  onSave?: (editedNotes: string) => Promise<void>;
-  onSaveTitle?: (editedTitle: string) => Promise<void>;
-  title?: string;
+  onSaveNote: (notes: Note) => Promise<void>;
 }
 
 const NoteCard: React.FC<Props> = ({
   disabled = false,
-  notes,
-  onSave,
-  onSaveTitle,
-  title = 'Notes',
+  disableTitle = false,
+  note,
   extra,
   onChange,
+  onSaveNote,
   noteChangeSignal,
 }: Props) => {
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [editedNotes, setEditedNotes] = useState(notes);
+  const [editedNotes, setEditedNotes] = useState(note?.contents || '');
+  const [editedTitle, setEditedTitle] = useState(note?.name || '');
+  const [notes, title] = useMemo(() => [note?.contents || '', note?.name || ''], [note]);
 
   const blocker = () => {
     if (isEditing && notes !== editedNotes) {
@@ -50,15 +51,20 @@ const NoteCard: React.FC<Props> = ({
   useBlocker(() => blocker());
 
   const existingNotes = useRef(notes);
+  const existingTitle = useRef(title);
 
   useEffect(() => {
     existingNotes.current = notes;
   }, [notes]);
+  useEffect(() => {
+    existingTitle.current = title;
+  }, [title]);
 
   useEffect(() => {
     setIsEditing(false);
     setIsLoading(false);
     setEditedNotes(existingNotes.current);
+    setEditedTitle(existingTitle.current);
   }, [noteChangeSignal]);
 
   const editNotes = useCallback(() => {
@@ -69,7 +75,23 @@ const NoteCard: React.FC<Props> = ({
   const cancelEdit = useCallback(() => {
     setIsEditing(false);
     setEditedNotes(notes);
-  }, [notes]);
+    onChange?.(notes);
+    setEditedTitle(title);
+  }, [notes, title, onChange]);
+
+  const onSave = useCallback(
+    async (editNotes: string) => {
+      await onSaveNote({ contents: editNotes, name: editedTitle });
+    },
+    [onSaveNote, editedTitle],
+  );
+
+  const onSaveTitle = useCallback(
+    async (editTitle: string) => {
+      await onSaveNote({ contents: editedNotes, name: editTitle });
+    },
+    [onSaveNote, editedNotes],
+  );
 
   const saveNotes = useCallback(async () => {
     try {
@@ -140,11 +162,15 @@ const NoteCard: React.FC<Props> = ({
       title={
         <Input
           defaultValue={title}
-          disabled={!onSaveTitle || disabled}
-          style={{ width: '99%' }}
+          disabled={disableTitle || disabled}
+          value={editedTitle}
           onBlur={(e) => {
             const newValue = e.currentTarget.value;
             onSaveTitle?.(newValue);
+          }}
+          onChange={(e) => {
+            const newValue = e.currentTarget.value;
+            setEditedTitle(newValue);
           }}
           onPressEnter={(e) => {
             e.currentTarget.blur();

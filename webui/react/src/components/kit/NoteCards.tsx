@@ -1,6 +1,6 @@
 import { CheckOutlined } from '@ant-design/icons';
 import { Modal } from 'antd';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Button from 'components/kit/Button';
 import Dropdown from 'components/kit/Dropdown';
@@ -13,15 +13,13 @@ import { Note } from 'types';
 import NoteCard from './NoteCard';
 import css from './NoteCards.module.scss';
 
-export interface Props {
+interface Props {
   disabled?: boolean;
   notes: Note[];
-  onDelete: (pageNumber: number) => void;
+  onDelete?: (pageNumber: number) => void;
   onNewPage: () => void;
   onSave: (notes: Note[]) => Promise<void>;
 }
-
-const DROPDOWN_MENU = [{ danger: true, key: 'delete', label: 'Delete...' }];
 
 const NoteCards: React.FC<Props> = ({
   notes,
@@ -33,7 +31,6 @@ const NoteCards: React.FC<Props> = ({
   const [currentPage, setCurrentPage] = useState(0);
   const [deleteTarget, setDeleteTarget] = useState(0);
   const [editedContents, setEditedContents] = useState(notes?.[currentPage]?.contents ?? '');
-  const [editedName, setEditedName] = useState(notes?.[currentPage]?.name ?? '');
   const [modal, contextHolder] = Modal.useModal();
   const [noteChangeSignal, setNoteChangeSignal] = useState(1);
   const fireNoteChangeSignal = useCallback(
@@ -42,6 +39,11 @@ const NoteCards: React.FC<Props> = ({
   );
 
   const previousNumberOfNotes = usePrevious(notes.length, undefined);
+
+  const DROPDOWN_MENU = useMemo(
+    () => [{ danger: true, disabled: !onDelete, key: 'delete', label: 'Delete...' }],
+    [onDelete],
+  );
 
   const handleSwitchPage = useCallback(
     (pageNumber: number | SelectValue) => {
@@ -92,38 +94,16 @@ const NoteCards: React.FC<Props> = ({
   }, [notes.length, onNewPage, handleSwitchPage]);
 
   const handleSave = useCallback(
-    async (editedNotes: string) => {
-      setEditedContents(editedNotes);
-      await onSave(
-        notes.map((note, idx) => {
-          if (idx === currentPage) {
-            return { contents: editedNotes, name: editedName } as Note;
-          }
-          return note;
-        }),
-      );
+    async (note: Note) => {
+      setEditedContents(note.contents);
+      await onSave(notes.map((n, idx) => (idx === currentPage ? note : n)));
     },
-    [currentPage, editedName, notes, onSave],
-  );
-
-  const handleSaveTitle = useCallback(
-    async (newName: string) => {
-      setEditedName(newName);
-      await onSave(
-        notes.map((note, idx) => {
-          if (idx === currentPage) {
-            return { contents: editedContents ?? note?.contents, name: newName } as Note;
-          }
-          return note;
-        }),
-      );
-    },
-    [currentPage, notes, onSave, editedContents],
+    [currentPage, notes, onSave],
   );
 
   const handleDeletePage = useCallback(
     (deletePageNumber: number) => {
-      onDelete(deletePageNumber);
+      onDelete?.(deletePageNumber);
       setDeleteTarget(deletePageNumber);
     },
     [onDelete, setDeleteTarget],
@@ -147,7 +127,6 @@ const NoteCards: React.FC<Props> = ({
 
   useEffect(() => {
     setEditedContents((prev) => notes?.[currentPage]?.contents ?? prev);
-    setEditedName((prev) => notes?.[currentPage]?.name ?? prev);
   }, [currentPage, notes]);
 
   const handleDropdown = useCallback(
@@ -236,12 +215,10 @@ const NoteCards: React.FC<Props> = ({
                 </div>
               </Dropdown>
             }
+            note={notes?.[currentPage]}
             noteChangeSignal={noteChangeSignal}
-            notes={notes?.[currentPage]?.contents ?? ''}
-            title={notes?.[currentPage]?.name ?? ''}
             onChange={handleEditedNotes}
-            onSave={handleSave}
-            onSaveTitle={handleSaveTitle}
+            onSaveNote={handleSave}
           />
         </div>
         {contextHolder}

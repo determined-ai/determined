@@ -32,7 +32,7 @@ import Toggle from 'components/kit/Toggle';
 import Tooltip from 'components/kit/Tooltip';
 import Header from 'components/kit/Typography/Header';
 import Paragraph from 'components/kit/Typography/Paragraph';
-import { useNote, useNotes } from 'components/kit/useNote';
+import { useNoteDemo, useNotesDemo } from 'components/kit/useNoteDemo';
 import UserAvatar from 'components/kit/UserAvatar';
 import { useTags } from 'components/kit/useTags';
 import Label from 'components/Label';
@@ -77,8 +77,7 @@ const ComponentTitles = {
   LogViewer: 'LogViewer',
   Modals: 'Modals',
   Nameplate: 'Nameplate',
-  NoteCard: 'NoteCard',
-  NoteCards: 'NoteCards',
+  Notes: 'Notes',
   Pagination: 'Pagination',
   Pivot: 'Pivot',
   Select: 'Select',
@@ -1191,30 +1190,22 @@ const FacepileSection: React.FC = () => {
   );
 };
 
-const NoteCardSection: React.FC = () => {
+const NotesSection: React.FC = () => {
   return (
-    <ComponentSection id="NoteCard" title="NoteCard">
+    <ComponentSection id="Notes" title="Notes">
       <AntDCard>
         <p>
-          A <code>{'<NoteCard>'}</code> is used for taking note. It consists of a title and one
-          sheet of note.
+          A <code>{'<Notes>'}</code> is used for taking notes. It can be single page note or multi
+          pages notes. Each page of note consists of a title and a sheet of note.
         </p>
       </AntDCard>
-      <AntDCard title="Usage">{useNote()()}</AntDCard>
-    </ComponentSection>
-  );
-};
-
-const NoteCardsSection: React.FC = () => {
-  return (
-    <ComponentSection id="NoteCards" title="NoteCards">
-      <AntDCard>
-        <p>
-          A <code>{'<NoteCards>'}</code> is a group of notes. Each note consists of a title and one
-          sheet of note.
-        </p>
+      <AntDCard title="Usage">
+        <strong>Single page note</strong>
+        {useNoteDemo()()}
+        <hr />
+        <strong>Multi pages notes</strong>
+        {useNotesDemo()()}
       </AntDCard>
-      <AntDCard title="Usage">{useNotes()()}</AntDCard>
     </ComponentSection>
   );
 };
@@ -2424,8 +2415,7 @@ const Components = {
   LogViewer: <LogViewerSection />,
   Modals: <ModalSection />,
   Nameplate: <NameplateSection />,
-  NoteCard: <NoteCardSection />,
-  NoteCards: <NoteCardsSection />,
+  Notes: <NotesSection />,
   Pagination: <PaginationSection />,
   Pivot: <PivotSection />,
   Select: <SelectSection />,

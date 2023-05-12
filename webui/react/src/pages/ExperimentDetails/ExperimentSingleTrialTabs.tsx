@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import Button from 'components/kit/Button';
-import NoteCard from 'components/kit/NoteCard';
+import Notes from 'components/kit/Notes';
 import Pivot from 'components/kit/Pivot';
 import TrialLogPreview from 'components/TrialLogPreview';
 import { terminalRunStates } from 'constants/states';
@@ -19,7 +19,7 @@ import usePolling from 'shared/hooks/usePolling';
 import usePrevious from 'shared/hooks/usePrevious';
 import { ValueOf } from 'shared/types';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
-import { ExperimentBase, TrialDetails, TrialItem } from 'types';
+import { ExperimentBase, Note, TrialDetails, TrialItem } from 'types';
 import handleError from 'utils/error';
 
 import TrialDetailsHyperparameters from '../TrialDetails/TrialDetailsHyperparameters';
@@ -182,7 +182,8 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
   }, [fetchTrialDetails, prevTrialId, trialId]);
 
   const handleNotesUpdate = useCallback(
-    async (editedNotes: string) => {
+    async (notes: Note[]) => {
+      const editedNotes = notes[0].contents;
       try {
         await patchExperiment({ body: { notes: editedNotes }, experimentId: experiment.id });
         await fetchExperimentDetails();
@@ -259,9 +260,10 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
 
     items.push({
       children: (
-        <NoteCard
+        <Notes
           disabled={!editableNotes}
-          notes={experiment.notes ?? ''}
+          disableTitle
+          notes={[{ contents: experiment.notes ?? '', name: 'Notes' }]}
           onSave={handleNotesUpdate}
         />
       ),

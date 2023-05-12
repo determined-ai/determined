@@ -6,7 +6,7 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import InfoBox from 'components/InfoBox';
 import Breadcrumb from 'components/kit/Breadcrumb';
-import NoteCard from 'components/kit/NoteCard';
+import Notes from 'components/kit/Notes';
 import Pivot from 'components/kit/Pivot';
 import Link from 'components/Link';
 import MetadataCard from 'components/Metadata/MetadataCard';
@@ -24,7 +24,7 @@ import { ErrorType } from 'shared/utils/error';
 import { isAborted, isNotFound } from 'shared/utils/service';
 import { humanReadableBytes } from 'shared/utils/string';
 import workspaceStore from 'stores/workspaces';
-import { Metadata, ModelVersion } from 'types';
+import { Metadata, ModelVersion, Note } from 'types';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { checkpointSize } from 'utils/workload';
@@ -126,7 +126,8 @@ const ModelVersionDetails: React.FC = () => {
   );
 
   const saveNotes = useCallback(
-    async (editedNotes: string) => {
+    async (notes: Note[]) => {
+      const editedNotes = notes[0].contents;
       try {
         await patchModelVersion({
           body: { modelName: modelId, notes: editedNotes },
@@ -262,9 +263,10 @@ const ModelVersionDetails: React.FC = () => {
       {
         children: (
           <div className={css.base}>
-            <NoteCard
+            <Notes
               disabled={modelVersion.model.archived || !canModifyModelVersion({ modelVersion })}
-              notes={modelVersion.notes ?? ''}
+              disableTitle
+              notes={[{ contents: modelVersion.notes ?? '', name: 'Notes' }]}
               onSave={saveNotes}
             />
           </div>
