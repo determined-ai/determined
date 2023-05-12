@@ -677,7 +677,9 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
             pickle.dump(self.rng, f)
         if self.trial_tracker.best_trial is not None:
             with path.joinpath("best_ds_config.json").open("w") as f:
-                json.dump(self.trial_tracker.best_trial.ds_config, f)
+                best_ds_config = copy.deepcopy(self.trial_tracker.best_trial.ds_config)
+                del best_ds_config["autotuning"]
+                json.dump(best_ds_config, f)
 
     def load_method_state(self, path: pathlib.Path) -> None:
         logging.info("Restoring searcher state from checkpoint.")
