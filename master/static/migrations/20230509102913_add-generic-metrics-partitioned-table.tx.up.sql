@@ -44,9 +44,9 @@
 -- fix missing foreign key constraint
 ALTER TABLE raw_validations
 ADD CONSTRAINT validations_trial_id_fkey FOREIGN KEY (trial_id) REFERENCES trials(id);
-CREATE TYPE metric_partition_type AS ENUM ('validation', 'training', 'generic');
+CREATE TYPE metric_partition_type AS ENUM ('VALIDATION', 'TRAINING', 'GENERIC');
 ALTER TABLE raw_validations
-ADD COLUMN partition_type metric_partition_type NOT NULL DEFAULT 'validation';
+ADD COLUMN partition_type metric_partition_type NOT NULL DEFAULT 'VALIDATION';
 ALTER INDEX validations_trial_id_total_batches_run_id_unique
 RENAME TO validations_trial_id_total_batches_run_id_unique_old;
 CREATE UNIQUE INDEX validations_trial_id_total_batches_run_id_type_unique ON raw_validations (
@@ -57,7 +57,7 @@ CREATE UNIQUE INDEX validations_trial_id_total_batches_run_id_type_unique ON raw
 );
 DROP INDEX validations_trial_id_total_batches_run_id_unique_old;
 ALTER TABLE raw_steps
-ADD COLUMN partition_type metric_partition_type NOT NULL DEFAULT 'training';
+ADD COLUMN partition_type metric_partition_type NOT NULL DEFAULT 'TRAINING';
 ALTER INDEX steps_trial_id_total_batches_run_id_unique
 RENAME TO steps_trial_id_total_batches_run_id_unique_old;
 CREATE UNIQUE INDEX steps_trial_id_total_batches_run_id_type_unique ON raw_steps (
@@ -79,7 +79,7 @@ CREATE TABLE generic_metrics (
     trial_run_id integer NOT NULL DEFAULT 0,
     archived boolean NOT NULL DEFAULT false,
     id integer NOT NULL,
-    partition_type metric_partition_type NOT NULL DEFAULT 'generic',
+    partition_type metric_partition_type NOT NULL DEFAULT 'GENERIC',
     custom_type text,
     CONSTRAINT generic_metrics_trial_id_fkey FOREIGN KEY (trial_id) REFERENCES trials(id)
 );
@@ -122,11 +122,11 @@ CREATE TABLE metrics (
     archived boolean NOT NULL DEFAULT false,
     id integer NOT NULL default nextval('metrics_id_seq'),
     custom_type text,
-    partition_type metric_partition_type NOT NULL DEFAULT 'generic' -- CONSTRAINT metrics_trial_id_fkey FOREIGN KEY (trial_id) REFERENCES trials(id). Not supported
+    partition_type metric_partition_type NOT NULL DEFAULT 'GENERIC' -- CONSTRAINT metrics_trial_id_fkey FOREIGN KEY (trial_id) REFERENCES trials(id). Not supported
 ) PARTITION BY LIST (partition_type);
 ALTER TABLE metrics ATTACH PARTITION generic_metrics FOR
-VALUES IN ('generic');
+VALUES IN ('GENERIC');
 ALTER TABLE metrics ATTACH PARTITION raw_validations FOR
-VALUES IN ('validation');
+VALUES IN ('VALIDATION');
 ALTER TABLE metrics ATTACH PARTITION raw_steps FOR
-VALUES IN ('training');
+VALUES IN ('TRAINING');
