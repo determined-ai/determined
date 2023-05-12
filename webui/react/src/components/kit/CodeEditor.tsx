@@ -1,6 +1,6 @@
 import { DownloadOutlined, FileOutlined } from '@ant-design/icons';
 import { Tree } from 'antd';
-import React, { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 
 import Tooltip from 'components/kit/Tooltip';
 import MonacoEditor from 'components/MonacoEditor';
@@ -106,7 +106,6 @@ const CodeEditor: React.FC<Props> = ({ files, onSelectFile, readonly, selectedFi
   const [pageError, setPageError] = useState<PageError>(PageError.None);
   const sortedFiles = useMemo(() => [...files].sort(sortTree), [files]);
   const [activeFile, setActiveFile] = useState<TreeNode | null>(sortedFiles[0] || null);
-  const timeout = useRef<NodeJS.Timeout>();
 
   const viewMode = useMemo(() => (files.length === 1 ? 'editor' : 'split'), [files.length]);
   const editorMode = useMemo(() => {
@@ -216,7 +215,7 @@ const CodeEditor: React.FC<Props> = ({ files, onSelectFile, readonly, selectedFi
       : String(activeFile.title);
     link.href = URL.createObjectURL(new Blob([Loadable.getOrElse('', activeFile?.content)]));
     link.dispatchEvent(new MouseEvent('click'));
-    timeout.current = setTimeout(() => {
+    setTimeout(() => {
       URL.revokeObjectURL(link.href);
     }, 2000);
   }, [activeFile]);
