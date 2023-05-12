@@ -362,6 +362,8 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 			a.Error(ctx, err)
 		}
 	case sproto.InvalidResourcesRequestError:
+		ref := a.req.AllocationRef
+		ctx.Tell(ref, msg)
 		a.Error(ctx, msg)
 
 	default:
