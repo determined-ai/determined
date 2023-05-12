@@ -330,10 +330,10 @@ func MetricsTimeSeries(trialID int32, startTime time.Time,
 ) {
 	var metricsObjectName, tableName, queryColumn, orderColumn string
 	switch metricType {
-	case "training":
+	case model.TrainingMetricType.ToString():
 		metricsObjectName = "avg_metrics"
 		tableName = "steps"
-	case "validation":
+	case model.ValidationMetricType.ToString():
 		metricsObjectName = "validation_metrics"
 		tableName = "validations"
 	default:

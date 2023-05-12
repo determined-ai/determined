@@ -862,7 +862,8 @@ func (a *apiServer) GetTrainingMetrics(
 	sendFunc := func(m []*trialv1.MetricsReport) error {
 		return resp.Send(&apiv1.GetTrainingMetricsResponse{Metrics: m})
 	}
-	if err := a.streamMetrics(resp.Context(), req.TrialIds, sendFunc, "training"); err != nil {
+	if err := a.streamMetrics(resp.Context(), req.TrialIds, sendFunc,
+		model.TrainingMetricType.ToString()); err != nil {
 		return err
 	}
 
@@ -875,7 +876,8 @@ func (a *apiServer) GetValidationMetrics(
 	sendFunc := func(m []*trialv1.MetricsReport) error {
 		return resp.Send(&apiv1.GetValidationMetricsResponse{Metrics: m})
 	}
-	if err := a.streamMetrics(resp.Context(), req.TrialIds, sendFunc, "validation"); err != nil {
+	if err := a.streamMetrics(resp.Context(), req.TrialIds, sendFunc,
+		model.ValidationMetricType.ToString()); err != nil {
 		return err
 	}
 
