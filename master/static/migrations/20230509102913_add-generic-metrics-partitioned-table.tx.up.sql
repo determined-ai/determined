@@ -53,26 +53,8 @@ ADD FOREIGN KEY (trial_id) REFERENCES trials(id);
 CREATE TYPE metric_partition_type AS ENUM ('VALIDATION', 'TRAINING', 'GENERIC');
 ALTER TABLE raw_validations
 ADD COLUMN partition_type metric_partition_type NOT NULL DEFAULT 'VALIDATION';
-ALTER INDEX validations_trial_id_total_batches_run_id_unique
-RENAME TO validations_trial_id_total_batches_run_id_unique_old;
-CREATE UNIQUE INDEX validations_trial_id_total_batches_run_id_type_unique ON raw_validations (
-    trial_id,
-    total_batches,
-    trial_run_id,
-    partition_type
-);
-DROP INDEX validations_trial_id_total_batches_run_id_unique_old;
 ALTER TABLE raw_steps
 ADD COLUMN partition_type metric_partition_type NOT NULL DEFAULT 'TRAINING';
-ALTER INDEX steps_trial_id_total_batches_run_id_unique
-RENAME TO steps_trial_id_total_batches_run_id_unique_old;
-CREATE UNIQUE INDEX steps_trial_id_total_batches_run_id_type_unique ON raw_steps (
-    trial_id,
-    total_batches,
-    trial_run_id,
-    partition_type
-);
-DROP INDEX steps_trial_id_total_batches_run_id_unique_old;
 ALTER TABLE raw_validations
 ADD COLUMN custom_type text;
 ALTER TABLE raw_steps
