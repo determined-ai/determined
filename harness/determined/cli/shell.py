@@ -17,7 +17,7 @@ from termcolor import colored
 from determined import cli
 from determined.cli import command, task
 from determined.common import api
-from determined.common.api import authentication, certs
+from determined.common.api import authentication, certs, bindings
 from determined.common.check import check_eq
 from determined.common.declarative_argparse import Arg, Cmd, Group
 
@@ -41,27 +41,24 @@ def start_shell(args: Namespace) -> None:
         workspace_id=workspace_id,
     )["shell"]
 
+    sid = resp["id"]
+
     if args.detach:
-        print(resp["id"])
+        print(sid)
         return
 
-    ready = False
-    with api.ws(args.master, f"shells/{resp['id']}/events") as ws:
-        for msg in ws:
-            if msg["service_ready_event"]:
-                ready = True
-                break
-            command.render_event_stream(msg)
-    if ready:
-        shell = api.get(args.master, f"api/v1/shells/{resp['id']}").json()["shell"]
-        check_eq(shell["state"], "STATE_RUNNING", "Shell must be in a running state")
-        _open_shell(
-            args.master,
-            shell,
-            args.ssh_opts,
-            retain_keys_and_print=args.show_ssh_command,
-            print_only=False,
-        )
+    session = cli.setup_session(args)
+    api.wait_for_ntsc_state(
+        session, api.NTSC_Kind.shell, sid, lambda s: s == bindings.taskv1State.RUNNING, timeout=300
+    )
+    shell = bindings.get_GetShell(session, shellId=sid).shell
+    _open_shell(
+        args.master,
+        shell.to_json(),
+        args.ssh_opts,
+        retain_keys_and_print=args.show_ssh_command,
+        print_only=False,
+    )
 
 
 @authentication.required

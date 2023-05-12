@@ -6,6 +6,7 @@ import os
 import pathlib
 import platform
 import random
+import time
 import sys
 from typing import (
     IO,
@@ -13,6 +14,7 @@ from typing import (
     Callable,
     Iterator,
     Optional,
+    Tuple,
     Sequence,
     TypeVar,
     Union,
@@ -200,3 +202,21 @@ def parse_protobuf_timestamp(ts: str) -> datetime.datetime:
     if ts.endswith("Z"):
         ts = ts[:-1] + "+00:00"
     return datetime.datetime.fromisoformat(ts)
+
+
+T = TypeVar("T")
+
+
+def wait_for(predicate: Callable[[], Tuple[bool, T]], timeout: int) -> T:
+    """
+    Wait for the predicate to return (Done, ReturnValue) while
+    checking for a timeout. without preempting the predicate.
+    """
+
+    start = time.time()
+    done, rv = predicate()
+    while not done:
+        if time.time() - start > timeout:
+            raise TimeoutError("timed out waiting for predicate")
+        time.sleep(0.1)
+    return rv

@@ -1,8 +1,8 @@
 import enum
-import time
-from typing import Callable, Iterator, Optional, TypeVar, Union
+from typing import Callable, Iterator, TypeVar, Union
 
 from determined.common.api import Session, bindings
+from determined.common import util
 
 
 class PageOpts(str, enum.Enum):
@@ -71,14 +71,11 @@ def wait_for_ntsc_state(
     ntsc_id: str,
     predicate: Callable[[bindings.taskv1State], bool],
     timeout: int = 10,  # seconds
-) -> Optional[bindings.taskv1State]:
+) -> bindings.taskv1State:
     """wait for ntsc to reach a state that satisfies the predicate"""
-    start = time.time()
-    last_state = None
-    while True:
-        if time.time() - start > timeout:
-            raise Exception(f"timed out waiting for state predicate to pass. reached {last_state}")
+
+    def get_state():
         last_state = get_ntsc_details(session, typ, ntsc_id).state
-        if predicate(last_state):
-            return last_state
-        time.sleep(0.5)
+        return predicate(last_state), last_state
+
+    return util.wait_for(get_state, timeout)
