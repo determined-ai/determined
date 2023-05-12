@@ -1,6 +1,7 @@
 import sys
 import time
 from typing import Any, Dict, List, Optional, Tuple
+from pprint import pprint
 
 import boto3
 import tqdm
@@ -75,6 +76,11 @@ def delete(stack_name: str, boto3_session: boto3.session.Session) -> None:
             f"Stack {stack_name} is in inconsistent state. "
             "This error is ignored as stack is going to be deleted."
         )
+
+        cfn = boto3_session.client("cloudformation")
+        print("Stack events log:")
+        pprint(cfn.describe_stack_events(StackName=stack_name))
+
         delete_stack(stack_name, boto3_session)
         return
 
