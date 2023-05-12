@@ -110,7 +110,6 @@ Known limitations:
    :hidden:
 
    api-core-ug
-   api-core-ug-original
    api-pytorch-ug
    api-pytorch-lightning-ug
    api-keras-ug

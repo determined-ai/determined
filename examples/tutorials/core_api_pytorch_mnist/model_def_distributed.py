@@ -10,6 +10,8 @@ import os
 import pathlib
 
 import filelock
+# Docs snippet start: import torch distrib
+# NEW: Import torch distributed libraries.
 import torch
 import torch.distributed as dist
 import torch.nn as nn
@@ -225,28 +227,28 @@ def main(core_context):
     )
 
     with filelock.FileLock(os.path.join(os.getcwd(), "lock")):
-        dataset1 = datasets.MNIST("../data", train=True, download=True, transform=transform)
-        dataset2 = datasets.MNIST("../data", train=False, transform=transform)
+        train_dataset = datasets.MNIST("../data", train=True, download=True, transform=transform)
+        test_dataset = datasets.MNIST("../data", train=False, transform=transform)
 
     # Docs snippet start: shard data
     # NEW: Create DistributedSampler object for sharding data into
     # core_context.distributed.size parts.
-    sampler1 = DistributedSampler(
-        dataset1,
+    train_sampler = DistributedSampler(
+        train_dataset,
         num_replicas=core_context.distributed.size,
         rank=core_context.distributed.rank,
         shuffle=True,
     )
-    sampler2 = DistributedSampler(
-        dataset2,
+    test_sampler = DistributedSampler(
+        test_dataset,
         num_replicas=core_context.distributed.size,
         rank=core_context.distributed.rank,
         shuffle=True,
     )
 
     # NEW: Shard data.
-    train_loader = torch.utils.data.DataLoader(dataset1, sampler=sampler1, **train_kwargs)
-    test_loader = torch.utils.data.DataLoader(dataset2, sampler=sampler2, **test_kwargs)
+    train_loader = torch.utils.data.DataLoader(train_dataset, sampler=train_sampler, **train_kwargs)
+    test_loader = torch.utils.data.DataLoader(test_dataset, sampler=test_sampler, **test_kwargs)
     # Docs snippet end: shard data
 
     hparams = info.trial.hparams

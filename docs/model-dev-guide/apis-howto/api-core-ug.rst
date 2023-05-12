@@ -55,15 +55,10 @@ To run an experiment, you need, at minimum, a script and an experiment configura
 
 Create a new directory.
 
-Get the files from the :download:`core_api_pytorch_mnist.tgz </examples/core_api_pytorch_mnist.tgz>`
-download or from the `Github repository
+Access the tutorial files via the :download:`core_api_pytorch_mnist.tgz
+</examples/core_api_pytorch_mnist.tgz>` download link or directly from the `Github repository
 <https://github.com/determined-ai/determined/tree/master/examples/tutorials/core_api_pytorch_mnist>`_.
-
-.. note::
-
-   Throughout this user guide, we’ll show you how to make modifications to your script. After each
-   step, we’ll re-run our experiment using the appropriate script and its accompanying experiment
-   configuration file.
+These scripts have already been modified to fit the steps outlined in this tutorial.
 
 In this initial step, we’ll run our experiment using the ``model_def.py`` script and its
 accompanying ``const.yaml`` experiment configuration file.
@@ -74,10 +69,24 @@ CD into the directory and run this command:
 
    det e create const.yaml . -f
 
-Open the Determined WebUI by navigating to ``http://localhost:8080/``. Accept the default determined
-username, leave the password empty, and click **Sign In**.
+.. note::
 
-In the WebUI, select your experiment, and then navigate to the **Logs** tab.
+   ``det e create const.yaml . -f`` instructs Determined to follow the logs of the first trial that
+   is created as part of the experiment. The command will stay active and display the live output
+   from the logs of the first trial as it progresses.
+
+Open the Determined WebUI by navigating to the master URL. One way to do this is to navigate to
+``http://localhost:8080/``, accept the default determined username, leave the password empty, and
+click **Sign In**.
+
+.. note::
+
+   This tutorial provides instructions for running a local distributed training job. Your setup may
+   be different. For example, for instructions on how to run a remote distributed training job,
+   visit the :ref:`qs-mdldev`.
+
+In the WebUI, select your experiment. You'll notice the tabs do not yet contain any information. In
+the next section, we'll report training and validation metrics.
 
 ************************
  Step 2: Report Metrics
@@ -91,6 +100,8 @@ interaction with the master. Then, we'll pass the ``core_context`` as an argumen
 To run our experiment, we'll use the ``model_def_metrics.py`` script and its accompanying
 ``metrics.yaml`` experiment configuration file.
 
+.. include:: ../../_shared/note-premade-tutorial-script.txt
+
 Begin by importing Determined:
 
 .. code:: python
@@ -100,8 +111,8 @@ Begin by importing Determined:
 Step 2.1: Modify the Main Loop
 ==============================
 
-We'll need a ``core.Context`` object for interacting with the master. To accomplish this, we'll
-modify the __main__loop to include ``core_context``:
+We'll need a :class:`~determined.core.Context` object for interacting with the master. To accomplish
+this, we'll modify the ``__main__`` loop to include ``core_context``:
 
 .. note::
 
@@ -110,7 +121,8 @@ modify the __main__loop to include ``core_context``:
 .. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_metrics.py
    :language: python
    :start-after: # Docs snippet start: modify main loop core context
-   :end-at: main(core_context=core_context)
+   :end-before: # Docs snippet end: modify main loop core content
+   :dedent:
 
 Step 2.2: Modify the Train Method
 =================================
@@ -133,31 +145,13 @@ and ``core_context.train.report_validation_metrics()``:
    :end-before: # Docs snippet end: report validation metrics
    :dedent:
 
-.. note::
-
-   Viewing Epoch-Based Metrics in the WebUI
-
-   You can modify your code to report epoch-based metrics as shown in this example. When you report
-   epoch-based metrics during training, you'll be able to view epoch-based metric data in the WebUI.
-
-.. tip::
-
-   Avoiding a Duplicate Key Error
-
-   It is best to stitch metrics together in one continuous graph as your experiment progresses. To
-   accomplish this, calculate the index used for ``steps_completed`` appropriately. The appropriate
-   calculation avoids re-writing metrics with the same index each time a new epoch begins and avoids
-   a duplicate key error.
-
-After an epoch value has been reported, **Epoch** will be an available option for the X-Axis when
-viewing the metric data graph in the WebUI.
-
 Step 2.3: Modify the Test Method
 ================================
 
 Modify the ``test()`` function header to include ``args`` and other elements you’ll need during the
-evaluation loop. In addition, pass the newly created ``core_context`` into both ``train()`` and
-``test()``:
+evaluation loop. The ``args`` variable lets you pass configuration settings such as batch size and
+learning rate. In addition, pass the newly created ``core_context`` into both ``train()`` and
+``test()``. Passing ``core_context`` enables reporting of metrics to the Determined master.
 
 .. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_metrics.py
    :language: python
@@ -199,6 +193,8 @@ checkpointing.
 In this step, we’ll run our experiment using the ``model_def_checkpoints.py`` script and its
 accompanying ``checkpoints.yaml`` experiment configuration file.
 
+.. include:: ../../_shared/note-premade-tutorial-script.txt
+
 Step 3.1: Save Checkpoints
 ==========================
 
@@ -216,10 +212,11 @@ Step 3.2: Continuations
 There are two types of continuations: pausing and reactivating training using the WebUI or clicking
 **Continue Trial** after the experiment completes.
 
-Each type of continuation has its own behavior. While you always want to preserve the value you are
-incrementing (the “model weight”), you do not always want to preserve the batch index. When you
-pause and reactivate you want training to continue from the same batch index. However, when starting
-a fresh experiment, you want training to start with a fresh batch index.
+These two types of continuations have different behaviors. While you always want to preserve the
+model's state, you do not always want to preserve the batch index. When you pause and reactivate you
+want training to continue from the same batch index, but when starting a fresh experiment you want
+training to start with a fresh batch index. You can save the trial ID in the checkpoint and use it
+to distinguish the two types of continuations.
 
 To distinguish between the two types of continuations, you can save the trial ID in the checkpoint.
 
@@ -288,8 +285,6 @@ Run the following command to run the experiment:
 
    det e create checkpoints.yaml . -f
 
-The ``-f`` option is the short form of ``--follow``.
-
 In the Determined WebUI, nagivate to the **Checkpoints** tab.
 
 Checkpoints are saved and deleted according to the default
@@ -323,7 +318,7 @@ settings we want to use for our experiment. More specifically, we'll need to def
 settings in our experiment configuration file:
 
 -  ``name:`` ``adaptive_asha`` (name of our searcher. For all options, visit :doc:`Search Methods
-   </training/hyperparameter/search-methods/overview>`.
+   </model-dev-guide/hyperparameter/search-methods/overview>`.
 
 -  ``metric``: ``test_loss``
 
@@ -346,6 +341,8 @@ between the ``minval`` and ``maxval`` for each hyperparameter for each trial.
 
 In this step, we’ll run our experiment using the ``model_def_adaptive.py`` script and its
 accompanying ``adaptive.yaml`` experiment configuration file.
+
+.. include:: ../../_shared/note-premade-tutorial-script.txt
 
 Begin by accessing the hyperparameters in your code:
 
@@ -412,14 +409,13 @@ features are:
    torch.distributed, and DeepSpeed. For more information about launcher options, visit
    :ref:`experiments`.
 
-To perform distributed training with the Core API, you’ll need to use the appropriate distributed
-training library *before* creating a Determined :class:`~determined.core.DistributedContext`.
-
 In this example, we’ll be using PyTorch’s DistributedDataParallel. We’ll also need to make specific
 changes to our configuration experiment file.
 
 In this step, we’ll run our experiment using the ``model_def_distributed.py`` script and its
 accompanying ``distributed.yaml`` experiment configuration file.
+
+.. include:: ../../_shared/note-premade-tutorial-script.txt
 
 Step 5.1: Edit Your Experiment Configuration File
 =================================================
@@ -451,7 +447,8 @@ Add a few more imports to your training script:
    :end-before: # Docs snippet end: import torch distrib
    :dedent:
 
-Initialize a process group and a Determined distributed context using ``from_torch_distributed``:
+Initialize a process group using ``torch``. After initializing a process group, initialize a
+Determined distributed context using ``from_torch_distributed``:
 
 .. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_distributed.py
    :language: python

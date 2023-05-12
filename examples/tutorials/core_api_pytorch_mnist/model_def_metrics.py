@@ -75,8 +75,7 @@ def train(args, model, device, train_loader, optimizer, epoch_idx, core_context)
             # epochs.
             core_context.train.report_training_metrics(
                 steps_completed=batches_completed + epoch_idx * len(train_loader),
-                metrics={"train_loss": loss.item(), "epoch": epoch_idx},
-
+                metrics={"train_loss": loss.item()}
             )
             # Docs snippet end: report training metrics
             if args.dry_run:
@@ -115,7 +114,7 @@ def test(args, model, device, test_loader, epoch, core_context, steps_completed)
     # via core_context.
     core_context.train.report_validation_metrics(
         steps_completed=steps_completed,
-        metrics={"test_loss": test_loss, "epoch": epoch},
+        metrics={"test_loss": test_loss},
     )
     # Docs snippet end: report validation metrics
 
@@ -203,10 +202,12 @@ def main(core_context):
     transform = transforms.Compose(
         [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))]
     )
-    dataset1 = datasets.MNIST("../data", train=True, download=True, transform=transform)
-    dataset2 = datasets.MNIST("../data", train=False, transform=transform)
-    train_loader = torch.utils.data.DataLoader(dataset1, **train_kwargs)
-    test_loader = torch.utils.data.DataLoader(dataset2, **test_kwargs)
+
+    # NEW: change dataset1 to train_dataset and dataset_2 to test_dataset 
+    train_dataset = datasets.MNIST("../data", train=True, download=True, transform=transform)
+    test_dataset = datasets.MNIST("../data", train=False, transform=transform)
+    train_loader = torch.utils.data.DataLoader(train_dataset, **train_kwargs)
+    test_loader = torch.utils.data.DataLoader(test_dataset, **test_kwargs)
 
     model = Net().to(device)
     optimizer = optim.Adadelta(model.parameters(), lr=args.lr)
