@@ -692,8 +692,8 @@ func customMetricTypeToPartitionType(mType string) model.MetricPartitionType {
 	}
 }
 
-// AddMetrics persists the given metrics to the database.
-func (db *PgDB) AddMetrics(
+// AddTrialMetrics persists the given trial metrics to the database.
+func (db *PgDB) AddTrialMetrics(
 	ctx context.Context, m *trialv1.TrialMetrics, mType string,
 ) error {
 	pType := customMetricTypeToPartitionType(mType)

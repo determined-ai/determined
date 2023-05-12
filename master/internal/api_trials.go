@@ -1376,7 +1376,7 @@ func (a *apiServer) ReportTrialMetrics(
 		expauth.AuthZProvider.Get().CanEditExperiment); err != nil {
 		return nil, err
 	}
-	if err := a.m.db.AddMetrics(ctx, req.Metrics, req.Type); err != nil {
+	if err := a.m.db.AddTrialMetrics(ctx, req.Metrics, req.Type); err != nil {
 		return nil, err
 	}
 	return &apiv1.ReportTrialMetricsResponse{}, nil

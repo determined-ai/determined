@@ -871,7 +871,7 @@ func TestGenericMetricsIO(t *testing.T) {
 		Metrics:        &commonv1.Metrics{AvgMetrics: metrics},
 	}
 
-	err = db.AddMetrics(ctx, trialMetrics, "inference")
+	err = db.AddTrialMetrics(ctx, trialMetrics, "inference")
 	require.NoError(t, err)
 
 	metricReports, err := GetMetrics(ctx, tr.ID, batches-1, 10, "inference")
