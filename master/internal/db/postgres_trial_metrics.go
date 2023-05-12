@@ -9,6 +9,18 @@ import (
 	"github.com/pkg/errors"
 )
 
+// MetricPartitionType denotes what type the metric is.
+type MetricPartitionType string
+
+const ( // TODO: change the db enum values to all caps? Checkpoint type?
+	// TrainingMetric designates metrics from training steps.
+	TrainingMetric MetricPartitionType = "training"
+	// ValidationMetric designates metrics from validation steps.
+	ValidationMetric MetricPartitionType = "validation"
+	// GenericMetric designates metrics from other sources.
+	GenericMetric MetricPartitionType = "generic"
+)
+
 /*
 rollbackMetrics ensures old training and validation metrics from a previous run id are archived.
 DISCUSS: how do we decide if a utility should be namespaced under PgDB or not?
@@ -17,9 +29,9 @@ the goal is to make it clear we don't have direct db access other than through t
 func rollbackMetrics(ctx context.Context, tx *sqlx.Tx, runID, trialID,
 	lastProcessedBatch int32, isValidation bool,
 ) (int, error) {
-	pType := model.TrainingMetric
+	pType := TrainingMetric
 	if isValidation {
-		pType = model.ValidationMetric
+		pType = ValidationMetric
 	}
 
 	res, err := tx.ExecContext(ctx, `
@@ -51,7 +63,7 @@ WHERE trial_id = $1
 
 func (db *PgDB) addRawMetrics(ctx context.Context, tx *sqlx.Tx, metricsBody *map[string]interface{},
 	runID, trialID, lastProcessedBatch int32,
-	pType model.MetricPartitionType, mType *string,
+	pType MetricPartitionType, mType *string,
 ) (int, error) {
 	var metricRowID int
 	if err := tx.QueryRowContext(ctx, `
@@ -68,7 +80,7 @@ RETURNING id`,
 	return metricRowID, nil
 }
 
-func customMetricTypeToPartitionType(mType string) model.MetricPartitionType {
+func customMetricTypeToPartitionType(mType string) MetricPartitionType {
 	// TODO(hamid): remove partition_type once we move away from pg10 and
 	// we can use DEFAULT partitioning.
 	switch mType {

@@ -805,18 +805,6 @@ func (t TrialProfilerMetricsBatchBatch) ForEach(f func(interface{}) error) error
 	return nil
 }
 
-// MetricPartitionType denotes what type the metric is.
-type MetricPartitionType string
-
-const ( // TODO: change the db enum values to all caps? Checkpoint type?
-	// TrainingMetric designates metrics from training steps.
-	TrainingMetric MetricPartitionType = "training"
-	// ValidationMetric designates metrics from validation steps.
-	ValidationMetric MetricPartitionType = "validation"
-	// GenericMetric designates metrics from other sources.
-	GenericMetric MetricPartitionType = "generic"
-)
-
 // LegacyMetricType denotes what custom type the metric is.
 type LegacyMetricType string
 
