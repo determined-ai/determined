@@ -38,6 +38,16 @@
 			"target": "/home"
 		},
 		{
+			"type": "bind",
+			"source": "${localEnv:HOME}/.ssh",
+			"target": "/home/vscode/.ssh"
+		},
+		{
+			"type": "bind",
+			"source": "${localEnv:HOME}/.gitconfig",
+			"target": "/home/vscode/.gitconfig"
+		},
+		{
 			"type": "volume",
 			"source": "dev-go",
 			"target": "/go"
