@@ -684,12 +684,12 @@ func (db *PgDB) AddMetrics(
 }
 
 // GetMetrics returns a subset metrics of the requested type for the given trial ID.
-func (db *PgDB) GetMetrics(ctx context.Context, trialID, afterBatches, limit int,
+func GetMetrics(ctx context.Context, trialID, afterBatches, limit int,
 	mType string,
 ) ([]*trialv1.MetricsReport, error) {
 	var res []*trialv1.MetricsReport
 	// TODO view on top of metrics table?
-	if err := Bun().NewSelect().Table("metrics").
+	return res, Bun().NewSelect().Table("metrics").
 		Column("trial_id", "metrics", "total_batches", "archived", "id", "trial_run_id").
 		ColumnExpr("proto_time(end_time) AS end_time").
 		Where("trial_id = ?", trialID).
@@ -698,10 +698,7 @@ func (db *PgDB) GetMetrics(ctx context.Context, trialID, afterBatches, limit int
 		Where("partition_type = ?", customMetricTypeToPartitionType(mType)).
 		Order("trial_id", "trial_run_id", "total_batches").
 		Limit(limit).
-		Scan(ctx, &res); err != nil {
-		return res, err
-	}
-	return res, nil
+		Scan(ctx, &res)
 }
 
 const (

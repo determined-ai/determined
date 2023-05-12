@@ -874,7 +874,7 @@ func TestGenericMetricsIO(t *testing.T) {
 	err = db.AddMetrics(ctx, trialMetrics, "inference")
 	require.NoError(t, err)
 
-	metricReports, err := db.GetMetrics(ctx, tr.ID, batches-1, 10, "inference")
+	metricReports, err := GetMetrics(ctx, tr.ID, batches-1, 10, "inference")
 	require.NoError(t, err)
 	require.Len(t, metricReports, 1)
 	require.EqualValues(t, trialRunID, metricReports[0].TrialRunId)
