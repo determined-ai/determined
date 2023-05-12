@@ -2152,6 +2152,13 @@ jobs:
             if rpm -q $DET_PKG_NAME; then
               sudo rpm -e $DET_PKG_NAME
             fi
+
+      - setup-python-venv:
+          determined: True
+          extra-requirements-file: "e2e_tests/tests/requirements.txt"
+          install-python: false
+          executor: <<parameters.runner_class>>
+
       - run:
           name: Recreate Fresh Database
           command: |
@@ -2214,12 +2221,6 @@ jobs:
                 }
               }
             EOF
-
-      - setup-python-venv:
-          determined: True
-          extra-requirements-file: "e2e_tests/tests/requirements.txt"
-          install-python: false
-          executor: <<parameters.runner_class>>
 
       - run-e2e-tests:
           mark: <<parameters.mark>>
