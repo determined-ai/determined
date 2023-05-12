@@ -104,7 +104,8 @@ const isConfig = (key: unknown): key is Config =>
 
 const CodeEditor: React.FC<Props> = ({ files, onSelectFile, readonly, selectedFilePath }) => {
   const [pageError, setPageError] = useState<PageError>(PageError.None);
-  const [activeFile, setActiveFile] = useState<TreeNode | null>(files[0] || null);
+  const sortedFiles = useMemo(() => [...files].sort(sortTree), [files]);
+  const [activeFile, setActiveFile] = useState<TreeNode | null>(sortedFiles[0] || null);
   const timeout = useRef<NodeJS.Timeout>();
 
   const viewMode = useMemo(() => (files.length === 1 ? 'editor' : 'split'), [files.length]);
@@ -159,7 +160,17 @@ const CodeEditor: React.FC<Props> = ({ files, onSelectFile, readonly, selectedFi
 
   useEffect(() => {
     if (selectedFilePath && activeFile?.key !== selectedFilePath) {
-      const matchTopFileOrFolder = files.find((f) => f.key === selectedFilePath);
+      const splitFilePath = selectedFilePath.split('/');
+      let matchTopFileOrFolder = null;
+      let fileDir = files;
+      for (let dir = 0; dir < splitFilePath.length; dir++) {
+        matchTopFileOrFolder = fileDir.find(
+          (f) => f.key === splitFilePath[dir] || f.key === selectedFilePath,
+        );
+        if (matchTopFileOrFolder?.children) {
+          fileDir = matchTopFileOrFolder.children;
+        }
+      }
       if (matchTopFileOrFolder) {
         fetchFile(matchTopFileOrFolder);
       }
@@ -232,8 +243,8 @@ const CodeEditor: React.FC<Props> = ({ files, onSelectFile, readonly, selectedFi
           className={css.fileTree}
           data-testid="fileTree"
           defaultExpandAll
-          defaultSelectedKeys={[selectedFilePath ? selectedFilePath.split('/')[0] : files[0]?.key]}
-          treeData={files.sort(sortTree)}
+          defaultSelectedKeys={[selectedFilePath || sortedFiles[0]?.key]}
+          treeData={sortedFiles}
           onSelect={handleSelectFile}
         />
       </div>
