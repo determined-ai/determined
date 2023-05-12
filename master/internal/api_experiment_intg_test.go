@@ -678,11 +678,11 @@ func TestLegacyExperiments(t *testing.T) {
 	})
 
 	t.Run("ExpMetricNames", func(t *testing.T) {
-		IDs := []int{prse.CompletedPBTExpID}
-		req := &apiv1.MetricNamesRequest{
+		IDs := []int32{prse.CompletedPBTExpID}
+		req := &apiv1.ExpMetricNamesRequest{
 			Ids: IDs,
 		}
-		err = api.ExpMetricNames(req, &mockStream[*apiv1.MetricNamesResponse]{ctx: ctx})
+		err = api.ExpMetricNames(req, &mockStream[*apiv1.ExpMetricNamesResponse]{ctx: ctx})
 		require.NoError(t, err)
 	})
 

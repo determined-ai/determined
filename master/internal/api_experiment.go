@@ -1435,8 +1435,7 @@ func (a *apiServer) MetricNames(req *apiv1.MetricNamesRequest,
 
 		var response apiv1.MetricNamesResponse
 		response.SearcherMetric = searcherMetric
-		expIdArray := []int{experimentID}
-		newTrain, newValid, err := db.MetricNames(resp.Context(), expIdArray)
+		newTrain, newValid, err := db.MetricNames(resp.Context(), []int{experimentID})
 		if err != nil {
 			return errors.Wrapf(err,
 				"error fetching metric names for experiment: %d", experimentID)
@@ -1507,7 +1506,6 @@ func (a *apiServer) ExpMetricNames(req *apiv1.ExpMetricNamesRequest,
 						response.SearcherMetrics = append(response.SearcherMetrics, searcherMetric)
 						seenTrain[searcherMetric] = true
 					}
-
 				}
 			}
 			timeSinceLastAuth = time.Now()
