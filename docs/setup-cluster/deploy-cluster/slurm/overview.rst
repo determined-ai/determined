@@ -31,9 +31,8 @@ enables existing HPC workloads and Determined workloads to coexist and Determine
 access all of the advanced capabilities of the HPC workload manager.
 
 To install Determined on the HPC cluster, ensure that the
-:doc:`/cluster-setup-guide/deploy-cluster/sysadmin-deploy-on-slurm/slurm-requirements` are met, then
-follow the steps in the
-:doc:`/cluster-setup-guide/deploy-cluster/sysadmin-deploy-on-slurm/install-on-slurm` document.
+:doc:`/setup-cluster/deploy-cluster/slurm/slurm-requirements` are met, then follow the steps in the
+:doc:`/setup-cluster/deploy-cluster/slurm/install-on-slurm` document.
 
 ***********
  Reference

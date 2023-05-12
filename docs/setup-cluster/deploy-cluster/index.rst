@@ -7,25 +7,25 @@ To set up Determined, start by following the cluster deployment guide for your e
 +--------------------------------------------------------+
 | Environment                                            |
 +========================================================+
-| :doc:`sysadmin-deploy-on-prem/overview`                |
+| :doc:`on-prem/overview`                                |
 |                                                        |
-| -  :doc:`sysadmin-deploy-on-prem/linux-packages`       |
-| -  :doc:`sysadmin-deploy-on-prem/deploy`               |
-| -  :doc:`sysadmin-deploy-on-prem/docker`               |
-| -  :doc:`sysadmin-deploy-on-prem/homebrew`             |
+| -  :doc:`on-prem/linux-packages`                       |
+| -  :doc:`on-prem/deploy`                               |
+| -  :doc:`on-prem/docker`                               |
+| -  :doc:`on-prem/homebrew`                             |
 +--------------------------------------------------------+
-| :doc:`sysadmin-deploy-on-aws/overview`                 |
+| :doc:`aws/overview`                                    |
 +--------------------------------------------------------+
-| :doc:`sysadmin-deploy-on-gcp/overview`                 |
+| :doc:`gcp/overview`                                    |
 +--------------------------------------------------------+
-| :doc:`sysadmin-deploy-on-k8s/overview`                 |
+| :doc:`k8s/overview`                                    |
 |                                                        |
-| -  :doc:`sysadmin-deploy-on-k8s/install-on-kubernetes` |
-| -  :doc:`sysadmin-deploy-on-k8s/setup-aks-cluster`     |
-| -  :doc:`sysadmin-deploy-on-k8s/setup-eks-cluster`     |
-| -  :doc:`sysadmin-deploy-on-k8s/setup-gke-cluster`     |
+| -  :doc:`k8s/install-on-kubernetes`                    |
+| -  :doc:`k8s/setup-aks-cluster`                        |
+| -  :doc:`k8s/setup-eks-cluster`                        |
+| -  :doc:`k8s/setup-gke-cluster`                        |
 +--------------------------------------------------------+
-| :doc:`sysadmin-deploy-on-slurm/overview`               |
+| :doc:`slurm/overview`                                  |
 +--------------------------------------------------------+
 
 ************************************
@@ -39,8 +39,8 @@ To set up Determined, start by following the cluster deployment guide for your e
 .. toctree::
    :hidden:
 
-   Deploy on Prem <sysadmin-deploy-on-prem/overview>
-   Deploy on AWS <sysadmin-deploy-on-aws/overview>
-   Deploy on GCP <sysadmin-deploy-on-gcp/overview>
-   Deploy on Kubernetes <sysadmin-deploy-on-k8s/overview>
-   Deploy on Slurm/PBS <sysadmin-deploy-on-slurm/overview>
+   Deploy on Prem <on-prem/overview>
+   Deploy on AWS <aws/overview>
+   Deploy on GCP <gcp/overview>
+   Deploy on Kubernetes <k8s/overview>
+   Deploy on Slurm/PBS <slurm/overview>

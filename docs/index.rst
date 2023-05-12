@@ -18,16 +18,16 @@
    :caption: Set Up
    :hidden:
 
-   Set Up Guide <cluster-setup-guide/deploy-cluster/index>
-   Basic Setup <cluster-setup-guide/basic>
-   Security <cluster-setup-guide/security/overview>
-   User Accounts <cluster-setup-guide/users>
-   Workspaces and Projects <cluster-setup-guide/workspaces>
-   Logging and Elasticsearch <cluster-setup-guide/elasticsearch-logging-backend>
-   Cluster Usage History <cluster-setup-guide/historical-cluster-usage-data>
+   Basic Setup <setup-cluster/basic>
+   Setup Guides <setup-cluster/deploy-cluster/index>
+   Security <setup-cluster/security/overview>
+   User Accounts <setup-cluster/users>
+   Workspaces and Projects <setup-cluster/workspaces>
+   Logging and Elasticsearch <setup-cluster/elasticsearch-logging-backend>
+   Cluster Usage History <setup-cluster/historical-cluster-usage-data>
    Monitor Experiment Through Webhooks  <integrations/notification/index>
-   Upgrade <cluster-setup-guide/upgrade>
-   Troubleshooting <cluster-setup-guide/troubleshooting>
+   Upgrade <setup-cluster/upgrade>
+   Troubleshooting <setup-cluster/troubleshooting>
 
 .. toctree::
    :caption: Model Developer Guide
@@ -106,7 +106,7 @@ You can quickly train almost any deep learning model using Determined.
              </a>
          </div>
          <div class="tile-container">
-             <a class="tile" href="cluster-setup-guide/deploy-cluster/index.html">
+             <a class="tile" href="setup-cluster/deploy-cluster/index.html">
                  <h2 class="tile-title">Set Up Determined</h2>
                  <p class="tile-description">Set up an on-premise or cloud-based cluster, including AWS, GCP, and Azure.</p>
              </a>
