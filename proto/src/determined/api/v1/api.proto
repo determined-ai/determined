@@ -1569,6 +1569,16 @@ service Determined {
     };
   }
 
+  // Get the set of metric names recorded for a list of experiments.
+  rpc ExpMetricNames(ExpMetricNamesRequest) returns (stream ExpMetricNamesResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/experiments/metrics-stream/metric-names"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+
   // Get the milestones (in batches processed) at which a metric is recorded by
   // an experiment.
   rpc MetricBatches(MetricBatchesRequest)

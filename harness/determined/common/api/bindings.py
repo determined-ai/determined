@@ -2881,6 +2881,48 @@ class v1EntityType(enum.Enum):
     UNSPECIFIED = "ENTITY_TYPE_UNSPECIFIED"
     PROJECT = "ENTITY_TYPE_PROJECT"
 
+class v1ExpMetricNamesResponse:
+    searcherMetrics: "typing.Optional[typing.Sequence[str]]" = None
+    trainingMetrics: "typing.Optional[typing.Sequence[str]]" = None
+    validationMetrics: "typing.Optional[typing.Sequence[str]]" = None
+
+    def __init__(
+        self,
+        *,
+        searcherMetrics: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
+        trainingMetrics: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
+        validationMetrics: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
+    ):
+        if not isinstance(searcherMetrics, Unset):
+            self.searcherMetrics = searcherMetrics
+        if not isinstance(trainingMetrics, Unset):
+            self.trainingMetrics = trainingMetrics
+        if not isinstance(validationMetrics, Unset):
+            self.validationMetrics = validationMetrics
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1ExpMetricNamesResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "searcherMetrics" in obj:
+            kwargs["searcherMetrics"] = obj["searcherMetrics"]
+        if "trainingMetrics" in obj:
+            kwargs["trainingMetrics"] = obj["trainingMetrics"]
+        if "validationMetrics" in obj:
+            kwargs["validationMetrics"] = obj["validationMetrics"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "searcherMetrics" in vars(self):
+            out["searcherMetrics"] = self.searcherMetrics
+        if not omit_unset or "trainingMetrics" in vars(self):
+            out["trainingMetrics"] = self.trainingMetrics
+        if not omit_unset or "validationMetrics" in vars(self):
+            out["validationMetrics"] = self.validationMetrics
+        return out
+
 class v1Experiment:
     bestTrialId: "typing.Optional[int]" = None
     bestTrialSearcherMetric: "typing.Optional[float]" = None
@@ -13891,6 +13933,41 @@ def post_EnableSlot(
     if _resp.status_code == 200:
         return v1EnableSlotResponse.from_json(_resp.json())
     raise APIHttpError("post_EnableSlot", _resp)
+
+def get_ExpMetricNames(
+    session: "api.Session",
+    *,
+    ids: "typing.Optional[typing.Sequence[int]]" = None,
+    periodSeconds: "typing.Optional[int]" = None,
+) -> "typing.Iterable[v1ExpMetricNamesResponse]":
+    _params = {
+        "ids": ids,
+        "periodSeconds": periodSeconds,
+    }
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/experiments/metrics-stream/metric-names",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=True,
+    )
+    if _resp.status_code == 200:
+        try:
+            for _line in _resp.iter_lines(chunk_size=1024 * 1024):
+                _j = json.loads(_line)
+                if "error" in _j:
+                    raise APIHttpStreamError(
+                        "get_ExpMetricNames",
+                        runtimeStreamError.from_json(_j["error"])
+                )
+                yield v1ExpMetricNamesResponse.from_json(_j["result"])
+        except requests.exceptions.ChunkedEncodingError:
+            raise APIHttpStreamError("get_ExpMetricNames", runtimeStreamError(message="ChunkedEncodingError"))
+        return
+    raise APIHttpError("get_ExpMetricNames", _resp)
 
 def get_GetActiveTasksCount(
     session: "api.Session",

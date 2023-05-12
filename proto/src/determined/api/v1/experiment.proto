@@ -547,6 +547,24 @@ message MetricNamesResponse {
   repeated string validation_metrics = 3;
 }
 
+// Request for the set of metrics recorded by multiple experiments.
+message ExpMetricNamesRequest {
+  // The ids for the experiments.
+  repeated int32 ids = 1;
+  // Seconds to wait when polling for updates.
+  int32 period_seconds = 2;
+}
+
+// Response to ExpMetricNamesRequest.
+message ExpMetricNamesResponse {
+  // The names of the searcher metrics.
+  repeated string searcher_metrics = 1;
+  // List of training metric names.
+  repeated string training_metrics = 2;
+  // List of validation metric names.
+  repeated string validation_metrics = 3;
+}
+
 // To distinguish the different categories of metrics.
 enum MetricType {
   // Zero-value (not allowed).
