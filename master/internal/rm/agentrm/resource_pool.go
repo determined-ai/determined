@@ -540,7 +540,7 @@ func (rp *resourcePool) Receive(ctx *actor.Context) error {
 			}()
 
 			rp.pruneTaskList(ctx)
-			toAllocate, toRelease := rp.scheduler.Schedule(ctx, rp)
+			toAllocate, toRelease := rp.scheduler.Schedule(rp)
 			if len(toAllocate) > 0 || len(toRelease) > 0 {
 				ctx.Log().
 					WithField("toAllocate", len(toAllocate)).
@@ -715,7 +715,7 @@ func (rp *resourcePool) receiveJobQueueMsg(ctx *actor.Context) error {
 		ctx.Respond(tasklist.JobStats(rp.taskList))
 
 	case sproto.GetJobQ:
-		ctx.Respond(rp.scheduler.JobQInfo(ctx, rp))
+		ctx.Respond(rp.scheduler.JobQInfo(rp))
 
 	case sproto.MoveJob:
 		err := rp.moveJob(ctx, msg.ID, msg.Anchor, msg.Ahead)

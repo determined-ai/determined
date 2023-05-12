@@ -29,10 +29,7 @@ func NewPriorityScheduler(config *config.SchedulerConfig) Scheduler {
 	}
 }
 
-func (p priorityScheduler) Schedule(
-	ctx *actor.Context,
-	rp *resourcePool,
-) ([]*sproto.AllocateRequest, []*actor.Ref) {
+func (p priorityScheduler) Schedule(rp *resourcePool) ([]*sproto.AllocateRequest, []*actor.Ref) {
 	return p.prioritySchedule(
 		rp.taskList,
 		rp.groups,
@@ -42,10 +39,7 @@ func (p priorityScheduler) Schedule(
 	)
 }
 
-func (p priorityScheduler) JobQInfo(
-	ctx *actor.Context,
-	rp *resourcePool,
-) map[model.JobID]*sproto.RMJobInfo {
+func (p priorityScheduler) JobQInfo(rp *resourcePool) map[model.JobID]*sproto.RMJobInfo {
 	reqs := tasklist.SortTasksWithPosition(rp.taskList, rp.groups, rp.queuePositions, false)
 	jobQInfo := tasklist.ReduceToJobQInfo(reqs)
 	return jobQInfo
