@@ -3,6 +3,7 @@ from determined.pytorch.dsat import _dsat_search_method
 ALL_SEARCH_METHOD_CLASSES = {
     "random": _dsat_search_method.RandomDSATSearchMethod,
     "binary": _dsat_search_method.BinarySearchDSATSearchMethod,
+    "asha": _dsat_search_method.ASHADSATSearchMethod,
     "_test": _dsat_search_method._TestDSATSearchMethod,
 }
 
