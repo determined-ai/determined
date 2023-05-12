@@ -118,8 +118,8 @@ const HpParallelCoordinates: React.FC<Props> = ({
         let isWithinFilter = false;
 
         list.forEach((filter: Hermes.Filter) => {
-          const min = Math.min(Number(filter[0]), Number(filter[1]));
-          const max = Math.max(Number(filter[0]), Number(filter[1]));
+          const min = Math.min(Number(filter.p0), Number(filter.p0));
+          const max = Math.max(Number(filter.p1), Number(filter.p1));
           if (value >= min && value <= max) {
             isWithinFilter = true;
           }
