@@ -44,9 +44,18 @@ import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin';
 import { V1LogLevel } from 'services/api-ts-sdk';
 import { mapV1LogsResponse } from 'services/decoder';
 import useUI from 'shared/contexts/stores/UI';
+// import {
+//   DarkLight,
+//   getCssVar,
+//   themeDarkDetermined,
+//   themeDarkHpe,
+//   themeLightDetermined,
+//   themeLightHpe,
+// } from 'shared/themes';
 import { ValueOf } from 'shared/types';
 import { noOp } from 'shared/utils/service';
 import { BrandingType } from 'stores/determinedInfo';
+// import { getStateColor, getStateColorCssVar, StateOfUnion } from 'themes';
 import { MetricType, User } from 'types';
 import { NotLoaded } from 'utils/loadable';
 import loremIpsum from 'utils/loremIpsum';
@@ -55,6 +64,116 @@ import useConfirm, { voidPromiseFn } from '../components/kit/useConfirm';
 
 import css from './DesignKit.module.scss';
 import { CheckpointsDict } from './TrialDetails/F_TrialDetailsOverview';
+
+const themeStatus = [
+  'status-active',
+  'status-active-strong',
+  'status-active-weak',
+  'status-active-on',
+  'status-active-on-strong',
+  'status-active-on-weak',
+  'status-critical',
+  'status-critical-strong',
+  'status-critical-weak',
+  'status-critical-on',
+  'status-critical-on-strong',
+  'status-critical-on-weak',
+  'status-inactive',
+  'status-inactive-strong',
+  'status-inactive-weak',
+  'status-inactive-on',
+  'status-inactive-on-strong',
+  'status-inactive-on-weak',
+  'status-pending',
+  'status-pending-strong',
+  'status-pending-weak',
+  'status-pending-on',
+  'status-pending-on-strong',
+  'status-pending-on-weak',
+  'status-potential',
+  'status-success',
+  'status-success-strong',
+  'status-success-weak',
+  'status-success-on',
+  'status-success-on-strong',
+  'status-success-on-weak',
+  'status-warning',
+  'status-warning-strong',
+  'status-warning-weak',
+  'status-warning-on',
+  'status-warning-on-strong',
+  'status-warning-on-weak',
+];
+
+const backgrounds = [
+  'background',
+  'background-strong',
+  'background-weak',
+  'background-on',
+  'background-on-strong',
+  'background-on-weak',
+  'background-border',
+  'background-border-strong',
+  'background-border-weak',
+];
+
+const stage = [
+  'stage',
+  'stage-strong',
+  'stage-weak',
+  'stage-on',
+  'stage-on-strong',
+  'stage-on-weak',
+  'stage-border',
+  'stage-border-strong',
+  'stage-border-weak',
+];
+
+const surface = [
+  'surface',
+  'surface-strong',
+  'surface-weak',
+  'surface-on',
+  'surface-on-strong',
+  'surface-on-weak',
+  'surface-border',
+  'surface-border-strong',
+  'surface-border-weak',
+];
+
+const float = [
+  'float',
+  'float-strong',
+  'float-weak',
+  'float-on',
+  'float-on-strong',
+  'float-on-weak',
+  'float-border',
+  'float-border-strong',
+  'float-border-weak',
+];
+
+const overlay = ['overlay', 'overlay-strong', 'overlay-weak'];
+
+const brand = ['brand', 'brand-strong', 'brand-weak'];
+
+const interactive = [
+  'ix',
+  'ix-strong',
+  'ix-weak',
+  'ix-active',
+  'ix-inactive',
+  'ix-on',
+  'ix-on-strong',
+  'ix-on-weak',
+  'ix-on-active',
+  'ix-on-inactive',
+  'ix-border',
+  'ix-border-strong',
+  'ix-border-weak',
+  'ix-border-active',
+  'ix-border-inactive',
+];
 
 const ComponentTitles = {
   Accordion: 'Accordion',
@@ -80,6 +199,7 @@ const ComponentTitles = {
   Pivot: 'Pivot',
   Select: 'Select',
   Tags: 'Tags',
+  Theme: 'Theme',
   Toggle: 'Toggle',
   Tooltips: 'Tooltips',
   Typography: 'Typography',
@@ -1734,6 +1854,37 @@ const TypographySection: React.FC = () => {
   );
 };
 
+const ThemeSection: React.FC = () => {
+  const renderColorComponent = (colorArray: string[], name: string) => (
+    <AntDCard title={`${name} Colors`}>
+      {colorArray.map((cName, idx) => (
+        <div
+          key={`${idx}-${name.toLowerCase()}`}
+          style={{ display: 'flex', justifyContent: 'space-between', width: '320px' }}>
+          <div
+            style={{ backgroundColor: `var(--theme-${cName})`, height: '20px', width: '20px' }}
+          />
+          <span>{`--theme-${cName}`}</span>
+        </div>
+      ))}
+    </AntDCard>
+  );
+  const iterateOverThemes = (themes: Array<string[]>, names: string[]) =>
+    themes.map((theme, idx) => renderColorComponent(theme, names[idx]));
+
+  return (
+    <ComponentSection id="Theme" title="Theme">
+      <AntDCard>
+        <p>Here are a quick demo of the current theme (colors, fonts, etc)</p>
+      </AntDCard>
+      {iterateOverThemes(
+        [themeStatus, backgrounds, stage, surface, float, overlay, brand, interactive],
+        ['Status', 'Background', 'Stage', 'Surface', 'Float', 'Overlay', 'Brand', 'Interactive'],
+      )}
+    </ComponentSection>
+  );
+};
+
 const TooltipsSection: React.FC = () => {
   const text = 'Tooltip text';
   const buttonWidth = 70;
@@ -2397,6 +2548,7 @@ const Components = {
   Pivot: <PivotSection />,
   Select: <SelectSection />,
   Tags: <TagsSection />,
+  Theme: <ThemeSection />,
   Toggle: <ToggleSection />,
   Tooltips: <TooltipsSection />,
   Typography: <TypographySection />,
