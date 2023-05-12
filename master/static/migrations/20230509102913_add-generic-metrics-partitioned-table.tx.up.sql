@@ -43,7 +43,7 @@
  */
 -- fix missing foreign key constraint
 ALTER TABLE raw_validations
-ADD CONSTRAINT validations_trial_id_fkey FOREIGN KEY (trial_id) REFERENCES trials(id);
+ADD FOREIGN KEY (trial_id) REFERENCES trials(id);
 CREATE TYPE metric_partition_type AS ENUM ('VALIDATION', 'TRAINING', 'GENERIC');
 ALTER TABLE raw_validations
 ADD COLUMN partition_type metric_partition_type NOT NULL DEFAULT 'VALIDATION';
@@ -81,7 +81,7 @@ CREATE TABLE generic_metrics (
     id integer NOT NULL,
     partition_type metric_partition_type NOT NULL DEFAULT 'GENERIC',
     custom_type text,
-    CONSTRAINT generic_metrics_trial_id_fkey FOREIGN KEY (trial_id) REFERENCES trials(id)
+    FOREIGN KEY (trial_id) REFERENCES trials(id)
 );
 -- start with max of existing ids in raw_steps and raw_validations. find it using select on both tables
 CREATE SEQUENCE metrics_id_seq;
