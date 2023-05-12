@@ -540,7 +540,7 @@ func (rp *resourcePool) Receive(ctx *actor.Context) error {
 			}()
 
 			rp.pruneTaskList(ctx)
-			toAllocate, toRelease := rp.scheduler.Schedule(ctx, rp)
+			toAllocate, toRelease := rp.scheduler.Schedule(rp)
 			if len(toAllocate) > 0 || len(toRelease) > 0 {
 				ctx.Log().
 					WithField("toAllocate", len(toAllocate)).
@@ -715,7 +715,7 @@ func (rp *resourcePool) receiveJobQueueMsg(ctx *actor.Context) error {
 		ctx.Respond(tasklist.JobStats(rp.taskList))
 
 	case sproto.GetJobQ:
-		ctx.Respond(rp.scheduler.JobQInfo(ctx, rp))
+		ctx.Respond(rp.scheduler.JobQInfo(rp))
 
 	case sproto.MoveJob:
 		err := rp.moveJob(ctx, msg.ID, msg.Anchor, msg.Ahead)
@@ -844,17 +844,22 @@ func (rp *resourcePool) refreshAgentStateCacheFor(ctx *actor.Context, agents []*
 }
 
 func (rp *resourcePool) pruneTaskList(ctx *actor.Context) {
-	if rp.provisioner == nil {
-		return
-	}
-	err := rp.provisioner.GetError()
-	if err == nil {
+	provisionerErr := rp.provisioner.GetError()
+	if provisionerErr == nil {
 		return
 	}
 
 	before := rp.taskList.Len()
-	slotCount := rp.provisioner.CurrentSlotCount(ctx)
-	ctx.Log().WithError(err).WithField("slotCount", slotCount).Error("provisioner in error state")
+	slotCount, err := rp.provisioner.CurrentSlotCount(ctx)
+	if err != nil {
+		return
+	}
+
+	ctx.Log().
+		WithError(provisionerErr).
+		WithField("slotCount", slotCount).
+		Error("provisioner in error state")
+
 	var refsToRemove = []*actor.Ref{}
 	for it := rp.taskList.Iterator(); it.Next(); {
 		task := it.Value()
@@ -867,11 +872,11 @@ func (rp *resourcePool) pruneTaskList(ctx *actor.Context) {
 			ctx.Log().Debugf("task %s can be scheduled with number of available slots", task.AllocationID)
 			continue
 		}
-		ctx.Log().WithError(err).Warnf("removing task %s from task list", task.AllocationID)
+		ctx.Log().WithError(provisionerErr).Warnf("removing task %s from task list", task.AllocationID)
 		refsToRemove = append(refsToRemove, ref)
 	}
 	for _, ref := range refsToRemove {
-		ctx.Tell(ref, sproto.InvalidResourcesRequestError{Cause: err})
+		ctx.Tell(ref, sproto.InvalidResourcesRequestError{Cause: provisionerErr})
 	}
 	after := rp.taskList.Len()
 	ctx.Log().WithField("before", before).WithField("after", after).Warn("pruned task list")

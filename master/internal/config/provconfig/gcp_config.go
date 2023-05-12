@@ -3,6 +3,7 @@ package provconfig
 import (
 	"encoding/json"
 	"fmt"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -127,8 +128,8 @@ func (c *GCPClusterConfig) InitDefaultValues() error {
 	return nil
 }
 
-// Merge GCP cluster config.
-func (c *GCPClusterConfig) Merge() *compute.InstanceProperties {
+// InstanceProperties GCP cluster config.
+func (c *GCPClusterConfig) InstanceProperties() *compute.InstanceProperties {
 	rb := &compute.InstanceProperties{}
 	if c.BaseConfig != nil {
 		*rb = *c.BaseConfig
@@ -154,7 +155,7 @@ func (c *GCPClusterConfig) Merge() *compute.InstanceProperties {
 				InitializeParams: &compute.AttachedDiskInitializeParams{
 					SourceImage: c.BootDiskSourceImage,
 					DiskSizeGb:  int64(c.BootDiskSize),
-					DiskType:    c.BootDiskType[strings.LastIndex(c.BootDiskType, "/")+1:],
+					DiskType:    filepath.Base(c.BootDiskType),
 				},
 				AutoDelete: true,
 			},

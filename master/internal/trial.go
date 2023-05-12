@@ -216,12 +216,6 @@ func (t *trial) Receive(ctx *actor.Context) error {
 			ctx.Respond(err)
 		}
 	case *task.AllocationExited:
-		if !t.idSet {
-			t.state = model.ActiveState
-			if _, err := t.buildTaskSpec(ctx); err != nil {
-				ctx.Log().WithError(err).Error("failed to build task spec")
-			}
-		}
 		return t.allocationExited(ctx, msg)
 	case sproto.ContainerLog:
 		if log, err := t.enrichTaskLog(model.TaskLog{

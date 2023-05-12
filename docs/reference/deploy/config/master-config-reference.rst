@@ -856,17 +856,17 @@ Min number of Determined agent instances. Defaults to ``0``.
 
 Max number of Determined agent instances. Defaults to ``5``.
 
-``error_timeout``
------------------
+``launch_error_timeout``
+------------------------
 
-Duration for memorizing provider provisioning errors. Further provisioning attempts will not be made
-during this window of time and any unschedulable jobs may be canceled. Defaults to ``0s``.
+Duration for which a provisioning error is valid. Tasks that are unschedulable in the existing
+cluster may be canceled. After the timeout period, the error state is reset. Defaults to ``0s``.
 
-``error_timeout_retries``
--------------------------
+``launch_error_retries``
+------------------------
 
-Number of retries to allow before memorizing a provider provisioning error with ``error_timeout``
-duration. Defaults to ``0``.
+Number of retries to allow before registering a provider provisioning error with
+``launch_error_timeout`` duration. Defaults to ``0``.
 
 ``type: aws``
 -------------

@@ -14,6 +14,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/telemetry"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
+	errInfo "github.com/determined-ai/determined/master/pkg/errors"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
@@ -42,15 +43,7 @@ type Provisioner struct {
 	provider         provider
 	scaleDecider     *scaleDecider
 	telemetryLimiter *rate.Limiter
-	errorTimeout     time.Duration
-	errorRetries     int
-	errorInfo        *errorInfo
-}
-
-type errorInfo struct {
-	err     error
-	time    time.Time
-	retries int
+	errInfo          *errInfo.ErrorTimeoutRetry
 }
 
 type provider interface {
@@ -83,9 +76,9 @@ func New(
 		}
 	}
 
-	var errorTimeout time.Duration
-	if config != nil && config.ErrorTimeout != nil {
-		errorTimeout = time.Duration(*config.ErrorTimeout)
+	var launchErrorTimeout time.Duration
+	if config != nil && config.LaunchErrorTimeout != nil {
+		launchErrorTimeout = time.Duration(*config.LaunchErrorTimeout)
 	}
 
 	return &Provisioner{
@@ -100,8 +93,7 @@ func New(
 			db,
 		),
 		telemetryLimiter: rate.NewLimiter(rate.Every(telemetryCooldown), 1),
-		errorTimeout:     errorTimeout,
-		errorRetries:     config.ErrorTimeoutRetries,
+		errInfo:          errInfo.NewErrorTimeoutRetry(launchErrorTimeout, config.LaunchErrorRetries),
 	}, nil
 }
 
@@ -133,13 +125,13 @@ func (p *Provisioner) SlotsPerInstance() int {
 }
 
 // CurrentSlotCount returns the number of Slots available in the cluster.
-func (p *Provisioner) CurrentSlotCount(ctx *actor.Context) int {
+func (p *Provisioner) CurrentSlotCount(ctx *actor.Context) (int, error) {
 	nodes, err := p.provider.list(ctx)
 	if err != nil {
 		ctx.Log().WithError(err).Error("cannot list instances for current slot count")
-		return 0
+		return 0, err
 	}
-	return p.SlotsPerInstance() * len(nodes)
+	return p.SlotsPerInstance() * len(nodes), nil
 }
 
 // InstanceType returns the instance type of the provider for the provisioner.
@@ -194,38 +186,17 @@ func (p *Provisioner) provision(ctx *actor.Context) {
 }
 
 func (p *Provisioner) launch(ctx *actor.Context, numToLaunch int) error {
-	if err := p.GetError(); err != nil {
+	if err := p.errInfo.GetError(); err != nil {
 		return err
 	}
-	p.setError(p.provider.launch(ctx, numToLaunch))
-	return p.GetError()
+	p.errInfo.SetError(p.provider.launch(ctx, numToLaunch))
+	return p.errInfo.GetError()
 }
 
 // GetError returns the last error encountered by the provisioner.
 func (p *Provisioner) GetError() error {
-	if p == nil || p.errorInfo == nil {
+	if p == nil {
 		return nil
 	}
-	if time.Now().After(p.errorInfo.time.Add(p.errorTimeout)) {
-		p.errorInfo = nil
-		return nil
-	}
-	if p.errorInfo.retries < p.errorRetries {
-		return nil
-	}
-	return p.errorInfo.err
-}
-
-func (p *Provisioner) setError(err error) {
-	if err == nil || p.errorTimeout <= 0 {
-		p.errorInfo = nil
-		return
-	}
-	if p.errorInfo == nil || time.Now().After(p.errorInfo.time.Add(p.errorTimeout)) {
-		p.errorInfo = &errorInfo{}
-	} else {
-		p.errorInfo.retries++
-	}
-	p.errorInfo.err = err
-	p.errorInfo.time = time.Now()
+	return p.errInfo.GetError()
 }

@@ -13,6 +13,7 @@ import (
 	. "github.com/determined-ai/determined/master/internal/config/provconfig"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	errInfo "github.com/determined-ai/determined/master/pkg/errors"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
@@ -56,6 +57,10 @@ func newMockEnvironment(t *testing.T, setup *mockConfig) (*mockEnvironment, *Pro
 	system := actor.NewSystem(t.Name())
 	cluster, err := newMockProvider(setup)
 	assert.NilError(t, err)
+	var launchErrorTimeout time.Duration
+	if setup.LaunchErrorTimeout != nil {
+		launchErrorTimeout = time.Duration(*setup.LaunchErrorTimeout)
+	}
 	p := &Provisioner{
 		provider: cluster,
 		scaleDecider: newScaleDecider(
@@ -68,9 +73,11 @@ func newMockEnvironment(t *testing.T, setup *mockConfig) (*mockEnvironment, *Pro
 			nil,
 		),
 		telemetryLimiter: rate.NewLimiter(rate.Every(telemetryCooldown), 1),
+		errInfo:          errInfo.NewErrorTimeoutRetry(launchErrorTimeout, setup.LaunchErrorRetries),
 	}
-	if setup.ErrorTimeout != nil {
-		p.errorTimeout = time.Duration(*setup.ErrorTimeout)
+	if setup.LaunchErrorTimeout != nil {
+		timeout := time.Duration(*setup.LaunchErrorTimeout)
+		p.errInfo = errInfo.NewErrorTimeoutRetry(timeout, setup.LaunchErrorRetries)
 	}
 	provisioner, created := system.ActorOf(actor.Addr("provisioner"), p)
 	assert.Assert(t, created)
@@ -415,8 +422,8 @@ func TestProvisionerLaunchFailure(t *testing.T) {
 	setup := &mockConfig{
 		instanceType: TestInstanceType{},
 		Config: &Config{
-			MaxInstances: 2,
-			ErrorTimeout: &timeout,
+			MaxInstances:       2,
+			LaunchErrorTimeout: &timeout,
 		},
 		failProvisioning: true,
 	}
@@ -432,9 +439,9 @@ func TestProvisionerLaunchOneAtATime(t *testing.T) {
 	setup := &mockConfig{
 		instanceType: TestInstanceType{},
 		Config: &Config{
-			MaxInstances:        4,
-			ErrorTimeout:        &timeout,
-			ErrorTimeoutRetries: 4,
+			MaxInstances:       4,
+			LaunchErrorTimeout: &timeout,
+			LaunchErrorRetries: 4,
 		},
 		maxDisconnectPeriod: 5 * time.Second,
 		numPerProvision:     1,
@@ -443,7 +450,8 @@ func TestProvisionerLaunchOneAtATime(t *testing.T) {
 
 	mock.system.Ask(mock.provisioner, sproto.ScalingInfo{DesiredNewInstances: 4}).Get()
 	mock.system.Ask(mock.provisioner, provisionerTick{}).Get()
-	assert.NilError(t, provisioner.GetError(), "received error %t", provisioner.GetError())
+	err := provisioner.GetError()
+	assert.NilError(t, err, "received error %t", err)
 
 	setup.Config.MaxInstances = 3
 	mock, provisioner = newMockEnvironment(t, setup)
@@ -451,7 +459,8 @@ func TestProvisionerLaunchOneAtATime(t *testing.T) {
 	mock.system.Ask(mock.provisioner, provisionerTick{}).Get()
 	mock.system.Ask(mock.provisioner, provisionerTick{}).Get()
 	mock.system.Ask(mock.provisioner, provisionerTick{}).Get()
-	assert.NilError(t, provisioner.GetError(), "received error %t", provisioner.GetError())
+	err = provisioner.GetError()
+	assert.NilError(t, err, "received error %t", err)
 }
 
 func TestProvisionerLaunchOneAtATimeFail(t *testing.T) {
@@ -459,9 +468,9 @@ func TestProvisionerLaunchOneAtATimeFail(t *testing.T) {
 	setup := &mockConfig{
 		instanceType: TestInstanceType{},
 		Config: &Config{
-			MaxInstances:        4,
-			ErrorTimeout:        &timeout,
-			ErrorTimeoutRetries: 4,
+			MaxInstances:       4,
+			LaunchErrorTimeout: &timeout,
+			LaunchErrorRetries: 4,
 		},
 		maxDisconnectPeriod: 5 * time.Second,
 		numPerProvision:     1,
@@ -470,7 +479,7 @@ func TestProvisionerLaunchOneAtATimeFail(t *testing.T) {
 	mock, provisioner := newMockEnvironment(t, setup)
 
 	mock.system.Ask(mock.provisioner, sproto.ScalingInfo{DesiredNewInstances: 4}).Get()
-	for i := 0; i < 4; i++ {
+	for i := 0; i <= 4; i++ {
 		mock.system.Ask(mock.provisioner, provisionerTick{}).Get()
 	}
 	assert.Error(t, provisioner.GetError(), "failed to launch", "expected error")
