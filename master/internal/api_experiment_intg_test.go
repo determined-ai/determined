@@ -1066,9 +1066,9 @@ func TestAuthZGetExperimentAndCanDoActions(t *testing.T) {
 			return err
 		}},
 		{"CanGetExperimentArtifacts", func(id int) error {
-			return api.ExpMetricNames(&apiv1.MetricNamesRequest{
+			return api.ExpMetricNames(&apiv1.ExpMetricNamesRequest{
 				Ids: []int{id},
-			}, &mockStream[*apiv1.MetricNamesResponse]{ctx: ctx})
+			}, &mockStream[*apiv1.ExpMetricNamesResponse]{ctx: ctx})
 		}},
 		{"CanGetExperimentArtifacts", func(id int) error {
 			return api.MetricBatches(&apiv1.MetricBatchesRequest{
