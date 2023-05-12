@@ -1570,7 +1570,8 @@ service Determined {
   }
 
   // Get the set of metric names recorded for a list of experiments.
-  rpc ExpMetricNames(ExpMetricNamesRequest) returns (stream ExpMetricNamesResponse) {
+  rpc ExpMetricNames(ExpMetricNamesRequest)
+      returns (stream ExpMetricNamesResponse) {
     option (google.api.http) = {
       get: "/api/v1/experiments/metrics-stream/metric-names"
     };
