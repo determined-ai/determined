@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import Page from 'components/Page';
+import Icon from 'components/kit/Icon';
 import Section from 'components/Section';
 import InteractiveTable, { InteractiveTableSettings } from 'components/Table/InteractiveTable';
 import SkeletonTable from 'components/Table/SkeletonTable';
@@ -17,7 +17,6 @@ import { paths } from 'routes/utils';
 import { cancelExperiment, getJobQ, getJobQStats, killExperiment, killTask } from 'services/api';
 import * as Api from 'services/api-ts-sdk';
 import ActionDropdown, { Triggers } from 'shared/components/ActionDropdown/ActionDropdown';
-import Icon from 'shared/components/Icon/Icon';
 import { isEqual } from 'shared/utils/data';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { routeToReactUrl } from 'shared/utils/routes';
@@ -42,12 +41,11 @@ import settingsConfig, { Settings } from './JobQueue.settings';
 import ManageJob from './ManageJob';
 
 interface Props {
-  bodyNoPadding?: boolean;
   jobState: JobState;
   selectedRp: ResourcePool;
 }
 
-const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
+const JobQueue: React.FC<Props> = ({ selectedRp, jobState }) => {
   const users = Loadable.getOrElse([], useObservable(userStore.getUsers()));
   const resourcePools = useObservable(clusterStore.resourcePools);
   const [managingJob, setManagingJob] = useState<Job>();
@@ -121,8 +119,6 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
       setPageState((cur) => ({ ...cur, isLoading: false }));
     }
   }, [canceler.signal, selectedRp.name, settings, jobState, topJob]);
-
-  useEffect(() => clusterStore.startPolling(), []);
 
   useEffect(() => {
     fetchAll();
@@ -292,7 +288,7 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
                 return (
                   <div className={css.centerVertically}>
                     {record.summary.jobsAhead}
-                    {!record.isPreemptible && <Icon name="lock" title="Not Preemtible" />}
+                    {!record.isPreemptible && <Icon name="lock" title="Not Preemptible" />}
                   </div>
                 );
               };
@@ -335,13 +331,7 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
   }, [selectedRp]);
 
   return (
-    <Page
-      bodyNoPadding={bodyNoPadding}
-      className={css.base}
-      containerRef={pageRef}
-      headerComponent={<div />}
-      id="jobs"
-      title="Job Queue by Resource Pool">
+    <div className={css.base} id="jobs">
       <Section hideTitle={!!selectedRp} title={tableTitle}>
         {settings ? (
           <InteractiveTable
@@ -378,7 +368,7 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
           onFinish={onModalClose}
         />
       )}
-    </Page>
+    </div>
   );
 };
 

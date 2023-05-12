@@ -35,12 +35,6 @@ from .trial import logs_args_description
 FLUSH = False
 
 
-def patch_experiment(args: Namespace, patch_doc: Dict[str, Any]) -> None:
-    path = f"experiments/{args.experiment_id}"
-    headers = {"Content-Type": "application/merge-patch+json"}
-    cli.setup_session(args).patch(path, json=patch_doc, headers=headers)
-
-
 @authentication.required
 def activate(args: Namespace) -> None:
     bindings.post_ActivateExperiment(cli.setup_session(args), id=args.experiment_id)
@@ -650,6 +644,7 @@ def download_model_def(args: Namespace) -> None:
         f.write(base64.b64decode(resp.b64Tgz))
 
 
+@authentication.required
 def download(args: Namespace) -> None:
     exp = client.ExperimentReference(args.experiment_id, cli.setup_session(args))
     checkpoints = exp.top_n_checkpoints(
@@ -856,31 +851,45 @@ def remove_label(args: Namespace) -> None:
 
 @authentication.required
 def set_max_slots(args: Namespace) -> None:
-    patch_experiment(args, {"resources": {"max_slots": args.max_slots}})
+    session = cli.setup_session(args)
+    exp_patch = bindings.v1PatchExperiment(
+        id=args.experiment_id,
+        resources=bindings.PatchExperimentPatchResources(maxSlots=args.max_slots),
+    )
+    bindings.patch_PatchExperiment(session, body=exp_patch, experiment_id=args.experiment_id)
     print(f"Set `max_slots` of experiment {args.experiment_id} to {args.max_slots}")
 
 
 @authentication.required
 def set_weight(args: Namespace) -> None:
-    patch_experiment(args, {"resources": {"weight": args.weight}})
+    session = cli.setup_session(args)
+    exp_patch = bindings.v1PatchExperiment(
+        id=args.experiment_id, resources=bindings.PatchExperimentPatchResources(weight=args.weight)
+    )
+    bindings.patch_PatchExperiment(session, body=exp_patch, experiment_id=args.experiment_id)
     print(f"Set `weight` of experiment {args.experiment_id} to {args.weight}")
 
 
 @authentication.required
 def set_priority(args: Namespace) -> None:
-    patch_experiment(args, {"resources": {"priority": args.priority}})
+    session = cli.setup_session(args)
+    exp_patch = bindings.v1PatchExperiment(
+        id=args.experiment_id,
+        resources=bindings.PatchExperimentPatchResources(priority=args.priority),
+    )
+    bindings.patch_PatchExperiment(session, body=exp_patch, experiment_id=args.experiment_id)
     print(f"Set `priority` of experiment {args.experiment_id} to {args.priority}")
 
 
 @authentication.required
 def set_gc_policy(args: Namespace) -> None:
-    policy = {
-        "save_experiment_best": args.save_experiment_best,
-        "save_trial_best": args.save_trial_best,
-        "save_trial_latest": args.save_trial_latest,
-    }
-
     if not args.yes:
+        policy = {
+            "save_experiment_best": args.save_experiment_best,
+            "save_trial_best": args.save_trial_best,
+            "save_trial_latest": args.save_trial_latest,
+        }
+
         r = api.get(args.master, f"experiments/{args.experiment_id}/preview_gc", params=policy)
         response = r.json()
         checkpoints = response["checkpoints"]
@@ -926,7 +935,16 @@ def set_gc_policy(args: Namespace) -> None:
         "in the unrecoverable deletion of checkpoints.  Do you wish to "
         "proceed?"
     ):
-        patch_experiment(args, {"checkpoint_storage": policy})
+        session = cli.setup_session(args)
+        exp_patch = bindings.v1PatchExperiment(
+            id=args.experiment_id,
+            checkpointStorage=bindings.PatchExperimentPatchCheckpointStorage(
+                saveExperimentBest=args.save_experiment_best,
+                saveTrialBest=args.save_trial_best,
+                saveTrialLatest=args.save_trial_latest,
+            ),
+        )
+        bindings.patch_PatchExperiment(session, body=exp_patch, experiment_id=args.experiment_id)
         print(f"Set GC policy of experiment {args.experiment_id} to\n{pformat(policy)}")
     else:
         print("Aborting operations.")
@@ -1009,8 +1027,8 @@ main_cmd = Cmd(
             [
                 experiment_id_arg("experiment ID"),
                 cli.output_format_args["json"],
-            ]
-            + logs_args_description,
+                *logs_args_description,
+            ],
         ),
         Cmd(
             "download-model-def",

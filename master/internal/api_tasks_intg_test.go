@@ -12,6 +12,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	authz2 "github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
 )
@@ -59,19 +60,19 @@ func TestTaskAuthZ(t *testing.T) {
 
 		// Can't view allocation's experiment gives same error.
 		authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
-			Return(false, nil).Once()
+			Return(authz2.PermissionDeniedError{}).Once()
 		require.ErrorIs(t, curCase.IDToReqCall(taskID), errTaskNotFound(taskID))
 
 		// Experiment view error is returned unmodified.
 		expectedErr := fmt.Errorf("canGetExperimentError")
 		authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
-			Return(false, expectedErr).Once()
+			Return(expectedErr).Once()
 		require.ErrorIs(t, curCase.IDToReqCall(taskID), expectedErr)
 
 		// Action func error returns err in forbidden.
 		expectedErr = status.Error(codes.PermissionDenied, curCase.DenyFuncName+"Error")
 		authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
-			Return(true, nil).Once()
+			Return(nil).Once()
 		authZExp.On(curCase.DenyFuncName, mock.Anything, curUser, mock.Anything).
 			Return(fmt.Errorf(curCase.DenyFuncName + "Error")).Once()
 		require.ErrorIs(t, curCase.IDToReqCall(taskID), expectedErr)

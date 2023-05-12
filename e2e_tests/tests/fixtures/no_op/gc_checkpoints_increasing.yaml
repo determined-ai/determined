@@ -1,4 +1,4 @@
-description: noop_gc_checkpoints_s3_increasing
+name: noop_gc_checkpoints_s3_increasing
 checkpoint_storage:
   save_experiment_best: 3
   save_trial_latest: 2

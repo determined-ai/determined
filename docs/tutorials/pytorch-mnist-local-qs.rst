@@ -5,7 +5,7 @@
 #########################################
 
 .. meta::
-   :description: Learn how to integrate the PyTorch MNIST model into Determined AI using only a single CPU or GPU.
+   :description: Learn how to run your first experiment in Determined by working with the PyTorch MNIST model. You'll need only a single CPU or GPU.
    :keywords: PyTorch API,MNIST,model developer,quickstart
 
 In this tutorial, we’ll show you how to integrate a training example with the Determined
@@ -29,8 +29,7 @@ Our goal is to integrate the `PyTorch MNIST training example
 
 **Prerequisites**
 
--  :doc:`Installation Requirements
-   </cluster-setup-guide/deploy-cluster/sysadmin-deploy-on-prem/requirements>`
+-  :doc:`Installation Requirements </setup-cluster/deploy-cluster/on-prem/requirements>`
 
 ********************
  Download the Files
@@ -62,6 +61,8 @@ To start your experiment, you'll need a Determined cluster. If you are new to De
 
    # If your machine does not have GPUs:
    det deploy local cluster-up --no-gpu
+
+.. include:: ../_shared/note-pip-install-determined.txt
 
 ********************
  Run the Experiment
@@ -101,4 +102,4 @@ training the PyTorch MNIST example.
 
 In this article, we learned how to run an experiment on a local, single CPU or GPU. To learn how to
 change your configuration settings, including how to run a distributed training job on multiple
-GPUs, visit the :doc:`Quickstart for Model Developers </quickstart-mdldev>`.
+GPUs, visit the :ref:`Quickstart for Model Developers <qs-mdldev>`.

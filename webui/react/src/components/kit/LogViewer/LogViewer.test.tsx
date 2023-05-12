@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import { flakyIt } from 'quarantineTests';
 import { FetchArgs } from 'services/api-ts-sdk';
 import { mapV1LogsResponse } from 'services/decoder';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
@@ -227,8 +228,16 @@ describe('LogViewer', () => {
       setup({ decoder, initialLogs: [] });
 
       await waitFor(() => {
-        expect(screen.queryByLabelText(src.ARIA_LABEL_SCROLL_TO_OLDEST)).not.toBeVisible();
-        expect(screen.queryByLabelText(src.ARIA_LABEL_ENABLE_TAILING)).not.toBeVisible();
+        expect(
+          screen.queryByLabelText(src.ARIA_LABEL_SCROLL_TO_OLDEST, {
+            selector: 'button',
+          }),
+        ).not.toBeVisible();
+        expect(
+          screen.queryByLabelText(src.ARIA_LABEL_ENABLE_TAILING, {
+            selector: 'button',
+          }),
+        ).not.toBeVisible();
       });
     });
 
@@ -273,18 +282,22 @@ describe('LogViewer', () => {
       });
     });
 
-    it('should render logs with streaming', async () => {
-      setup({ decoder, onFetch });
+    flakyIt(
+      'should render logs with streaming',
+      async () => {
+        setup({ decoder, onFetch });
 
-      await waitFor(
-        () => {
-          const lastLog = logsReference[logsReference.length - 1];
-          expect(lastLog.message).not.toBeNull();
-          expect(screen.queryByText(lastLog.message)).toBeInTheDocument();
-        },
-        { timeout: 6000 },
-      );
-    }, 6500);
+        await waitFor(
+          () => {
+            const lastLog = logsReference[logsReference.length - 1];
+            expect(lastLog.message).not.toBeNull();
+            expect(screen.queryByText(lastLog.message)).toBeInTheDocument();
+          },
+          { timeout: 6000 },
+        );
+      },
+      6500,
+    );
 
     it('should show oldest logs', async () => {
       setup({ decoder, onFetch });
@@ -299,7 +312,9 @@ describe('LogViewer', () => {
         expect(screen.queryByText(lastExistingLog.message)).toBeInTheDocument();
       });
 
-      const scrollToOldestButton = screen.getByLabelText(src.ARIA_LABEL_SCROLL_TO_OLDEST);
+      const scrollToOldestButton = screen.getByLabelText(src.ARIA_LABEL_SCROLL_TO_OLDEST, {
+        selector: 'button',
+      });
       await user.click(scrollToOldestButton);
 
       await waitFor(() => {
@@ -311,7 +326,9 @@ describe('LogViewer', () => {
     it('should show newest logs when enabling tailing', async () => {
       setup({ decoder, onFetch });
 
-      const scrollToOldestButton = screen.getByLabelText(src.ARIA_LABEL_SCROLL_TO_OLDEST);
+      const scrollToOldestButton = screen.getByLabelText(src.ARIA_LABEL_SCROLL_TO_OLDEST, {
+        selector: 'button',
+      });
       await user.click(scrollToOldestButton);
 
       await waitFor(() => {
@@ -319,7 +336,9 @@ describe('LogViewer', () => {
         expect(screen.queryByText(firstLog.message)).toBeInTheDocument();
       });
 
-      const enableTailingButton = screen.getByLabelText(src.ARIA_LABEL_ENABLE_TAILING);
+      const enableTailingButton = screen.getByLabelText(src.ARIA_LABEL_ENABLE_TAILING, {
+        selector: 'button',
+      });
       await user.click(enableTailingButton);
 
       await waitFor(() => {

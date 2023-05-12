@@ -1,3 +1,4 @@
+import importlib
 import os
 import pathlib
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Type
@@ -5,10 +6,10 @@ from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Type
 import numpy as np
 import pytest
 from mypy_extensions import DefaultNamedArg
-from tensorflow.keras import utils as keras_utils
 
 import determined as det
-from determined import core, gpu, keras, workload
+from determined import core, gpu, workload
+from determined.common import util
 
 
 class TrainAndValidate:
@@ -174,6 +175,36 @@ def repo_path(path: str) -> str:
     return os.path.join(os.path.dirname(__file__), "../../../", path)
 
 
+def cv_examples_path(path: str) -> str:
+    return os.path.join(os.path.dirname(__file__), "../../../examples/computer_vision", path)
+
+
+def gan_examples_path(path: str) -> str:
+    return os.path.join(os.path.dirname(__file__), "../../../examples/gan", path)
+
+
+def tutorials_path(path: str) -> str:
+    return os.path.join(os.path.dirname(__file__), "../../../examples/tutorials", path)
+
+
+def import_class_from_module(class_name: str, module_path: str) -> Any:
+    module_dir = pathlib.Path(os.path.dirname(module_path))
+
+    with det.import_from_path(module_dir):
+        spec = importlib.util.spec_from_file_location(class_name, module_path)
+        module = importlib.util.module_from_spec(spec)  # type: ignore
+        spec.loader.exec_module(module)  # type: ignore
+        trial_cls = getattr(module, class_name)  # noqa: B009
+
+    return trial_cls
+
+
+def load_config(config_path: str) -> Any:
+    with open(config_path) as f:
+        config = util.safe_load_yaml_with_exceptions(f)
+    return config
+
+
 def assert_equivalent_metrics(metrics_A: Dict[str, Any], metrics_B: Dict[str, Any]) -> None:
     """
     Helper function to verify that two dictionaries of metrics are equivalent
@@ -187,39 +218,6 @@ def assert_equivalent_metrics(metrics_A: Dict[str, Any], metrics_B: Dict[str, An
             assert np.array_equal(metrics_A[key], metrics_B[key])
         else:
             assert metrics_A[key] == metrics_B[key]
-
-
-def xor_data(dtype: Type[Any] = np.int64) -> Tuple[np.ndarray, np.ndarray]:
-    training_data = np.array([[0, 0], [0, 1], [1, 0], [1, 1]], dtype=dtype)
-    training_labels = np.array([0, 1, 1, 0], dtype=dtype)
-    return training_data, training_labels
-
-
-def make_xor_data_sequences(
-    shuffle: bool = False,
-    seed: Optional[int] = None,
-    dtype: Type[Any] = np.int64,
-    multi_input_output: bool = False,
-    batch_size: int = 1,
-) -> Tuple[keras_utils.Sequence, keras_utils.Sequence]:
-    """
-    Generates data loaders for the toy XOR problem.  The dataset only has four
-    possible inputs.  For the purposes of testing, the validation set is the
-    same as the training dataset.
-    """
-    training_data, training_labels = xor_data(dtype)
-
-    if shuffle:
-        if seed is not None:
-            np.random.seed(seed)
-        idxs = np.random.permutation(4)
-        training_data = training_data[idxs]
-        training_labels = training_labels[idxs]
-
-    return (
-        keras._ArrayLikeAdapter(training_data, training_labels, batch_size=batch_size),
-        keras._ArrayLikeAdapter(training_data, training_labels, batch_size=batch_size),
-    )
 
 
 def make_trial_controller_from_trial_implementation(

@@ -6,6 +6,7 @@ import { useParams } from 'react-router-dom';
 
 import BreadcrumbBar from 'components/BreadcrumbBar';
 import DynamicTabs from 'components/DynamicTabs';
+import Icon from 'components/kit/Icon';
 import Tooltip from 'components/kit/Tooltip';
 import Page from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
@@ -15,7 +16,6 @@ import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { getProject, getWorkspace, postUserActivity } from 'services/api';
 import { V1ActivityType, V1EntityType } from 'services/api-ts-sdk';
-import Icon from 'shared/components/Icon/Icon';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner';
 import usePolling from 'shared/hooks/usePolling';
@@ -164,46 +164,44 @@ const ProjectDetails: React.FC = () => {
   }
   return (
     <Page
-      bodyNoPadding
       containerRef={pageRef}
       // for docTitle, when id is 1 that means Uncategorized from webui/react/src/routes/routes.ts
       docTitle={id === 1 ? 'Uncategorized Experiments' : 'Project Details'}
-      id="projectDetails">
-      <BreadcrumbBar
-        extra={
-          <Space>
-            {project.description && (
-              <Tooltip title={project.description}>
-                <InfoCircleOutlined style={{ color: 'var(--theme-float-on)' }} />
-              </Tooltip>
-            )}
-            {id !== 1 && (
-              <ProjectActionDropdown
-                project={project}
-                showChildrenIfEmpty={false}
-                trigger={['click']}
-                workspaceArchived={workspace?.archived}
-                onComplete={fetchProject}
-                onDelete={onProjectDelete}>
-                <div style={{ cursor: 'pointer' }}>
-                  <Icon name="arrow-down" size="tiny" />
-                </div>
-              </ProjectActionDropdown>
-            )}
-          </Space>
-        }
-        id={project.id}
-        project={project}
-        type="project"
-      />
-      {/* TODO: Clean up once we standardize page layouts */}
-      <div style={{ height: '100%', padding: '16px 16px 0px 16px' }}>
-        <DynamicTabs
-          basePath={paths.projectDetailsBasePath(id)}
-          destroyInactiveTabPane
-          items={tabItems}
+      headerComponent={
+        <BreadcrumbBar
+          extra={
+            <Space>
+              {project.description && (
+                <Tooltip content={project.description}>
+                  <InfoCircleOutlined style={{ color: 'var(--theme-float-on)' }} />
+                </Tooltip>
+              )}
+              {id !== 1 && (
+                <ProjectActionDropdown
+                  project={project}
+                  showChildrenIfEmpty={false}
+                  workspaceArchived={workspace?.archived}
+                  onComplete={fetchProject}
+                  onDelete={onProjectDelete}>
+                  <div style={{ cursor: 'pointer' }}>
+                    <Icon name="arrow-down" size="tiny" title="Action menu" />
+                  </div>
+                </ProjectActionDropdown>
+              )}
+            </Space>
+          }
+          id={project.id}
+          project={project}
+          type="project"
         />
-      </div>
+      }
+      id="projectDetails"
+      noScroll>
+      <DynamicTabs
+        basePath={paths.projectDetailsBasePath(id)}
+        destroyInactiveTabPane
+        items={tabItems}
+      />
     </Page>
   );
 };

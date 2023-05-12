@@ -18,8 +18,8 @@ type ProjectAuthZBasic struct{}
 // CanGetProject always return true and a nil error for basic auth.
 func (a *ProjectAuthZBasic) CanGetProject(
 	ctx context.Context, curUser model.User, project *projectv1.Project,
-) (canGetProject bool, serverError error) {
-	return true, nil
+) error {
+	return nil
 }
 
 // CanCreateProject always returns true and a nil error for basic auth.

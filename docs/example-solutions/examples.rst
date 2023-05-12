@@ -39,7 +39,7 @@ For an introduction to using the training API, please visit the Training APIs se
       -  :download:`mnist_pytorch.tgz </examples/mnist_pytorch.tgz>`
 
    -  -  PyTorch
-      -  Imagenet
+      -  ImageNet
       -  :download:`imagenet_pytorch.tgz </examples/imagenet_pytorch.tgz>`
 
    -  -  PyTorch
@@ -69,10 +69,6 @@ For an introduction to using the training API, please visit the Training APIs se
    -  -  PyTorch (Lightning Adapter)
       -  MNIST
       -  :download:`mnist_pl.tgz </examples/mnist_pl.tgz>`
-
-   -  -  TensorFlow (Estimator API)
-      -  MNIST
-      -  :download:`mnist_estimator.tgz </examples/mnist_estimator.tgz>`
 
    -  -  TensorFlow (tf.keras)
       -  Fashion MNIST
@@ -270,21 +266,6 @@ For an introduction to using the training API, please visit the Training APIs se
    -  -  PyTorch
       -  PROTEINS
       -  :download:`proteins_pytorch_geometric.tgz </examples/proteins_pytorch_geometric.tgz>`
-
-****************
- Decision Trees
-****************
-
-.. list-table::
-   :header-rows: 1
-
-   -  -  Framework
-      -  Dataset
-      -  Filename
-
-   -  -  TensorFlow (Estimator API)
-      -  Titanic
-      -  :download:`gbt_titanic_estimator.tgz </examples/gbt_titanic_estimator.tgz>`
 
 ***************************
  Features: Custom Reducers

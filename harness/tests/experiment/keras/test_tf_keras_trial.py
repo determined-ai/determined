@@ -365,6 +365,128 @@ class TestKerasTrial:
         controller.run()
 
 
+@pytest.mark.tensorflow
+def test_cifar10(tmp_path: Path):
+    """
+    Make sure each example:
+     - trains
+     - validates
+     - checkpoints
+     - can load from checkpoint
+    """
+    checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
+    latest_checkpoint = None
+    steps_completed = 0
+
+    def make_workloads_1() -> workload.Stream:
+        """
+        Train one batch, validate one batch, checkpoint.
+        """
+        trainer = utils.TrainAndValidate()
+        yield from trainer.send(steps=2, validation_freq=2, scheduling_unit=1)
+
+        interceptor = workload.WorkloadResponseInterceptor()
+        yield from interceptor.send(workload.checkpoint_workload())
+        nonlocal latest_checkpoint, steps_completed
+        latest_checkpoint = interceptor.metrics_result()["uuid"]
+        steps_completed = trainer.get_steps_completed()
+
+    example_path = utils.cv_examples_path("cifar10_tf_keras/model_def.py")
+    trial_cls = utils.import_class_from_module("CIFARTrial", example_path)
+
+    hparams = {
+        "learning_rate": 1.0e-4,
+        "learning_rate_decay": 1.0e-6,
+        "layer1_dropout": 0.25,
+        "layer2_dropout": 0.25,
+        "layer3_dropout": 0.5,
+        "global_batch_size": 32,
+        "width_shift_range": 0.1,
+        "height_shift_range": 0.1,
+        "horizontal_flip": True,
+    }
+
+    exp_config = utils.make_default_exp_config(
+        hparams, scheduling_unit=1, searcher_metric="random", checkpoint_dir=checkpoint_dir
+    )
+    config = utils.load_config(utils.cv_examples_path("cifar10_tf_keras/const.yaml"))
+    exp_config["data"] = config["data"]
+
+    controller = utils.make_trial_controller_from_trial_implementation(
+        trial_cls,
+        hparams,
+        make_workloads_1(),
+        trial_seed=777,
+        exp_config=exp_config,
+        checkpoint_dir=checkpoint_dir,
+        expose_gpus=True,
+    )
+    # Verify that train/validate/ckpt doesn't puke.
+    controller.run()
+
+    # Verify that load/train/validate doesn't puke.
+    def make_workloads_2() -> workload.Stream:
+        trainer = utils.TrainAndValidate()
+        yield from trainer.send(steps=1, validation_freq=1, scheduling_unit=1)
+
+    controller = utils.make_trial_controller_from_trial_implementation(
+        trial_cls,
+        hparams,
+        make_workloads_2(),
+        trial_seed=777,
+        exp_config=exp_config,
+        checkpoint_dir=checkpoint_dir,
+        latest_checkpoint=latest_checkpoint,
+        steps_completed=steps_completed,
+        expose_gpus=True,
+    )
+    controller.run()
+
+
+@pytest.mark.tensorflow
+@pytest.mark.gpu
+def test_tf2_no_op(tmp_path: Path):
+    """
+    Make sure each example:
+     - trains
+     - validates
+     - checkpoints
+     - can load from checkpoint
+    """
+    checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
+    latest_checkpoint = None
+    steps_completed = 0
+
+    def make_workloads_1() -> workload.Stream:
+        """
+        Train one batch, validate one batch, checkpoint.
+        """
+        trainer = utils.TrainAndValidate()
+        yield from trainer.send(steps=1, validation_freq=1, scheduling_unit=1)
+
+        interceptor = workload.WorkloadResponseInterceptor()
+        yield from interceptor.send(workload.checkpoint_workload())
+        nonlocal latest_checkpoint, steps_completed
+        latest_checkpoint = interceptor.metrics_result()["uuid"]
+        steps_completed = trainer.get_steps_completed()
+
+    example_path = utils.fixtures_path("keras_tf2_disabled_no_op/model_def.py")
+    trial_cls = utils.import_class_from_module("NoopKerasTrial", example_path)
+    trial_cls._searcher_metric = "random"
+
+    hparams = {"global_batch_size": 8}
+
+    controller = utils.make_trial_controller_from_trial_implementation(
+        trial_cls,
+        hparams,
+        make_workloads_1(),
+        trial_seed=777,
+        checkpoint_dir=checkpoint_dir,
+    )
+    # Verify that train/validate/ckpt doesn't puke.
+    controller.run()
+
+
 @pytest.mark.parametrize("ckpt_ver", ["0.17.6", "0.17.7"])
 def test_checkpoint_loading(ckpt_ver):
     checkpoint_dir = os.path.join(utils.fixtures_path("ancient-checkpoints"), f"{ckpt_ver}-keras")

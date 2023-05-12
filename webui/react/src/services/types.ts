@@ -97,12 +97,13 @@ export interface GetExperimentsParams extends PaginationParams {
 }
 
 export interface SearchExperimentsParams extends PaginationParams {
+  filter?: string;
   projectId?: number;
-  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-  options?: any;
+  sort?: string;
 }
 
 export interface BulkActionParams {
+  excludedExperimentIds?: number[];
   experimentIds: number[];
   filters?: Api.V1BulkExperimentFilters;
 }
@@ -263,6 +264,7 @@ export interface PatchExperimentParams extends ExperimentIdParams {
 }
 
 export interface LaunchTensorBoardParams {
+  excludedExperimentIds?: Array<number>;
   experimentIds?: Array<number>;
   trialIds?: Array<number>;
   workspaceId?: number;
@@ -484,6 +486,10 @@ export interface ArchiveProjectParams {
 }
 
 export type UnarchiveProjectParams = ArchiveProjectParams;
+
+export interface GetProjectColumnsParams {
+  id: number;
+}
 
 export interface ArchiveWorkspaceParams {
   id: number;

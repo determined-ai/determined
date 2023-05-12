@@ -2,15 +2,15 @@
  Tutorials
 ###########
 
-Learn the basics of working with Determined and how to port your existing code to the Determined
-environment.
+.. meta::
+   :description: Choose a tutorial to help you get started training machine learning models. You'll find beginner level and more advanced tutorials with links to user guides and examples.
 
 ************
  Quickstart
 ************
 
-To get started with your first experiment, visit the :doc:`Quickstart for Model Developers
-<../quickstart-mdldev>`.
+To get started with your first experiment, visit the :ref:`Quickstart for Model Developers
+<qs-mdldev>`.
 
 ******************************
  Get Started with a Trial API

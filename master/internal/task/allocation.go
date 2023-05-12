@@ -73,8 +73,6 @@ type (
 		idleTimeoutWatcher *IdleTimeoutWatcher
 		// proxy state
 		proxies []string
-		// proxyAddress is provided by determined.exec.prep_container if the RM doesn't provide it.
-		proxyAddress *string
 		// active all gather state
 		allGather *allGather
 		// records whether the allocation has completed any all gathers.
@@ -268,7 +266,11 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 			}
 			return nil
 		}
-		a.proxyAddress = &msg.ProxyAddress
+		a.model.ProxyAddress = &msg.ProxyAddress
+		if err := a.db.UpdateAllocationProxyAddress(a.model); err != nil {
+			a.Error(ctx, err)
+			return nil
+		}
 		a.registerProxies(ctx, a.containerProxyAddresses())
 	case WatchRendezvousInfo, UnwatchRendezvousInfo, rendezvousTimeout:
 		if a.rendezvous == nil {
@@ -485,8 +487,11 @@ func (a *Allocation) ResourcesAllocated(ctx *actor.Context, msg sproto.Resources
 			// Restore proxies.
 			if len(a.req.ProxyPorts) > 0 {
 				for _, r := range a.resources {
-					if r.Rank == 0 && r.Started != nil && r.Started.Addresses != nil {
+					switch {
+					case r.Rank == 0 && r.Started != nil && r.Started.Addresses != nil:
 						a.registerProxies(ctx, r.Started.Addresses)
+					case a.model.ProxyAddress != nil:
+						a.registerProxies(ctx, a.containerProxyAddresses())
 					}
 				}
 			}
@@ -913,9 +918,9 @@ func (a *Allocation) unregisterProxies(ctx *actor.Context) {
 	}
 }
 
-// containerProxyAddresses forms the container address when proxyAddress is given.
+// containerProxyAddresses forms the container address _only_ when proxyAddress is given.
 func (a *Allocation) containerProxyAddresses() []cproto.Address {
-	if a.proxyAddress == nil || len(a.req.ProxyPorts) == 0 {
+	if a.model.ProxyAddress == nil || len(a.req.ProxyPorts) == 0 {
 		return []cproto.Address{}
 	}
 
@@ -923,9 +928,9 @@ func (a *Allocation) containerProxyAddresses() []cproto.Address {
 
 	for _, pp := range a.req.ProxyPorts {
 		result = append(result, cproto.Address{
-			ContainerIP:   *a.proxyAddress,
+			ContainerIP:   *a.model.ProxyAddress,
 			ContainerPort: pp.Port,
-			HostIP:        *a.proxyAddress,
+			HostIP:        *a.model.ProxyAddress,
 			HostPort:      pp.Port,
 		})
 	}
@@ -1129,7 +1134,7 @@ func (a *Allocation) State() AllocationState {
 			na := make([]cproto.Address, len(a))
 			copy(na, a)
 			addresses[id] = na
-		case a.proxyAddress != nil:
+		case a.model.ProxyAddress != nil:
 			addresses[id] = a.containerProxyAddresses()
 		}
 

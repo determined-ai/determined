@@ -2,6 +2,9 @@
  PyTorch API
 #############
 
+.. meta::
+   :description: Learn how to train a PyTorch model in Determined. This user guide covers everything from PyTorch's tensor operations, data loading, and preprocessing techniques, to how to train and evaluate your models using Determined AI's PyTorch Trial and PyTorch Trainer.
+
 In this guide, you'll learn how to use :ref:`pytorch_trial_ug` and :ref:`pytorch_trainer_ug`.
 
 +---------------------------------------------------------------------+
@@ -322,7 +325,7 @@ Checkpointing
 A checkpoint includes the model definition (Python source code), experiment configuration file,
 network architecture, and the values of the model's parameters (i.e., weights) and hyperparameters.
 When using a stateful optimizer during training, checkpoints will also include the state of the
-optimizer (i.e., learning rate). Users can also embed arbitrary metadata in checkpoints via a
+optimizer (i.e., learning rate). You can also embed arbitrary metadata in checkpoints via a
 :ref:`Python SDK <store-checkpoint-metadata>`.
 
 PyTorch trials are checkpointed as a ``state-dict.pth`` file. This file is created in a similar
@@ -512,7 +515,7 @@ Determined provides support for the native PyTorch profiler, `torch-tb-profiler
 <https://github.com/pytorch/kineto/tree/main/tb_plugin>`_. You can configure this by calling
 :meth:`~determined.pytorch.PyTorchTrialContext.set_profiler` from within your Trial's ``__init__``.
 ``set_profiler`` accepts the same arguments as the PyTorch plugin's ``torch.profiler.profile``
-method. However, Determined sets ``on_trace_ready`` to the appropriate Tensorboard path, and the
+method. However, Determined sets ``on_trace_ready`` to the appropriate TensorBoard path, and the
 stepping of the profiler during training is automatically handled.
 
 The following example profiles CPU and GPU activities on batches 3 and 4 (skipping batch 1, warming

@@ -4,6 +4,8 @@ import React, { Fragment, Suspense, useCallback, useEffect, useMemo, useState } 
 import { useNavigate, useParams } from 'react-router-dom';
 
 import Json from 'components/Json';
+import Empty from 'components/kit/Empty';
+import Icon from 'components/kit/Icon';
 import Pivot from 'components/kit/Pivot';
 import Page from 'components/Page';
 import { PoolLogo, RenderAllocationBarResourcePool } from 'components/ResourcePoolCard';
@@ -12,8 +14,6 @@ import { V1SchedulerTypeToLabel } from 'constants/states';
 import { paths } from 'routes/utils';
 import { getJobQStats } from 'services/api';
 import { V1GetJobQueueStatsResponse, V1RPQueueStat, V1SchedulerType } from 'services/api-ts-sdk';
-import Icon from 'shared/components/Icon/Icon';
-import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner';
 import { ValueOf } from 'shared/types';
 import { clone } from 'shared/utils/data';
@@ -152,12 +152,12 @@ const ResourcepoolDetailInner: React.FC = () => {
 
     return [
       {
-        children: <JobQueue bodyNoPadding jobState={JobState.SCHEDULED} selectedRp={pool} />,
+        children: <JobQueue jobState={JobState.SCHEDULED} selectedRp={pool} />,
         key: TabType.Active,
         label: `${poolStats?.stats.scheduledCount ?? ''} Active`,
       },
       {
-        children: <JobQueue bodyNoPadding jobState={JobState.QUEUED} selectedRp={pool} />,
+        children: <JobQueue jobState={JobState.QUEUED} selectedRp={pool} />,
         key: TabType.Queued,
         label: `${poolStats?.stats.queuedCount ?? ''} Queued`,
       },
@@ -174,49 +174,51 @@ const ResourcepoolDetailInner: React.FC = () => {
     ];
   }, [pool, poolStats, renderPoolConfig]);
 
-  if (!pool || Loadable.isLoading(resourcePools)) return <Spinner spinning />;
+  if (!pool || Loadable.isLoading(resourcePools)) return <Spinner center spinning />;
 
   return (
-    <Page className={css.poolDetailPage}>
-      <Section>
-        <div className={css.nav} onClick={() => navigate(paths.cluster(), { replace: true })}>
-          <Icon name="arrow-left" size="tiny" />
-          <div className={css.icon}>
-            <PoolLogo type={pool.type} />
+    <Page
+      title={
+        tabKey === TabType.Active || tabKey === TabType.Queued
+          ? 'Job Queue by Resource Pool'
+          : undefined
+      }>
+      <div className={css.poolDetailPage}>
+        <Section>
+          <div className={css.nav} onClick={() => navigate(paths.cluster(), { replace: true })}>
+            <Icon name="arrow-left" showTooltip size="tiny" title="Back to cluster" />
+            <div className={css.icon}>
+              <PoolLogo type={pool.type} />
+            </div>
+            <div>
+              {`${pool.name} (${V1SchedulerTypeToLabel[pool.schedulerType]}) ${
+                usage ? `- ${floatToPercent(usage)}` : ''
+              } `}
+            </div>
           </div>
-          <div>
-            {`${pool.name} (${V1SchedulerTypeToLabel[pool.schedulerType]}) ${
-              usage ? `- ${floatToPercent(usage)}` : ''
-            } `}
-          </div>
-        </div>
-      </Section>
-      <Section>
-        <RenderAllocationBarResourcePool
-          poolStats={poolStats}
-          resourcePool={pool}
-          size={ShirtSize.Large}
-        />
-      </Section>
-      <Section>
-        {pool.schedulerType === V1SchedulerType.ROUNDROBIN ? (
-          <Page className={css.poolDetailPage}>
-            <Section>
-              <Message
-                title="Resource Pool is unavailable for Round Robin schedulers."
-                type={MessageType.Empty}
-              />
-            </Section>
-          </Page>
-        ) : (
-          <Pivot
-            activeKey={tabKey}
-            destroyInactiveTabPane={true}
-            items={tabItems}
-            onChange={handleTabChange}
+        </Section>
+        <Section>
+          <RenderAllocationBarResourcePool
+            poolStats={poolStats}
+            resourcePool={pool}
+            size={ShirtSize.Large}
           />
-        )}
-      </Section>
+        </Section>
+        <Section>
+          {pool.schedulerType === V1SchedulerType.ROUNDROBIN ? (
+            <Section>
+              <Empty description="Resource Pool is unavailable for Round Robin schedulers." />
+            </Section>
+          ) : (
+            <Pivot
+              activeKey={tabKey}
+              destroyInactiveTabPane={true}
+              items={tabItems}
+              onChange={handleTabChange}
+            />
+          )}
+        </Section>
+      </div>
     </Page>
   );
 };

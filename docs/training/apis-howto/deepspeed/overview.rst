@@ -2,12 +2,15 @@
  DeepSpeed API
 ###############
 
+.. meta::
+   :description: Learn how you can train your model in Determined using the DeepSpeed engine.
+
 In this guide, you'll learn how to use the DeepSpeed API.
 
 +-----------------------------------------------------------------------+
 | Visit the API reference                                               |
 +=======================================================================+
-| :doc:`/reference/reference-training/training/api-deepspeed-reference` |
+| :doc:`/reference/training/api-deepspeed-reference`                    |
 +-----------------------------------------------------------------------+
 
 `DeepSpeed <https://deepspeed.ai/>`_ is a Microsoft library that supports large-scale, distributed

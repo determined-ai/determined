@@ -12,23 +12,22 @@ import { sprintf } from 'sprintf-js';
 import { throttle } from 'throttle-debounce';
 
 import Button from 'components/kit/Button';
-import Tooltip from 'components/kit/Tooltip';
+import Icon from 'components/kit/Icon';
 import Link from 'components/Link';
 import Section from 'components/Section';
 import useGetCharMeasureInContainer from 'hooks/useGetCharMeasureInContainer';
 import useResize from 'hooks/useResize';
 import { FetchArgs } from 'services/api-ts-sdk';
 import { readStream } from 'services/utils';
-import Icon from 'shared/components/Icon/Icon';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner';
 import { RecordKey, ValueOf } from 'shared/types';
 import { clone } from 'shared/utils/data';
 import { formatDatetime } from 'shared/utils/datetime';
-import { copyToClipboard } from 'shared/utils/dom';
 import { dateTimeStringSorter, numericSorter } from 'shared/utils/sort';
 import { Log, LogLevel } from 'types';
-import { notification } from 'utils/dialogApi';
+
+import ClipboardButton from '../ClipboardButton';
 
 import css from './LogViewer.module.scss';
 import LogViewerEntry, { DATETIME_FORMAT, ICON_WIDTH, MAX_DATETIME_LENGTH } from './LogViewerEntry';
@@ -135,6 +134,7 @@ const LogViewer: React.FC<Props> = ({
   const [showButtons, setShowButtons] = useState<boolean>(false);
   const [logs, setLogs] = useState<ViewerLog[]>([]);
   const containerSize = useResize(logsRef);
+  const pageSize = useResize();
   const charMeasures = useGetCharMeasureInContainer(logsRef);
 
   const { dateTimeWidth, maxCharPerLine } = useMemo(() => {
@@ -331,24 +331,13 @@ const LogViewer: React.FC<Props> = ({
     }
   }, [fetchDirection, logs.length]);
 
-  const handleCopyToClipboard = useCallback(async () => {
-    const content = logs
-      .map((log) => `${formatClipboardHeader(log)}${log.message || ''}`)
-      .join('\n');
+  const clipboardCopiedMessage = useMemo(() => {
+    const linesLabel = logs.length === 1 ? 'entry' : 'entries';
+    return `Copied ${logs.length} ${linesLabel}!`;
+  }, [logs]);
 
-    try {
-      await copyToClipboard(content);
-      const linesLabel = logs.length === 1 ? 'entry' : 'entries';
-      notification.open({
-        description: `${logs.length} ${linesLabel} copied to the clipboard.`,
-        message: 'Available logs Copied',
-      });
-    } catch (e) {
-      notification.warning({
-        description: (e as Error)?.message,
-        message: 'Unable to Copy to Clipboard',
-      });
-    }
+  const getClipboardContent = useCallback(() => {
+    return logs.map((log) => `${formatClipboardHeader(log)}${log.message || ''}`).join('\n');
   }, [logs]);
 
   const handleFullScreen = useCallback(() => {
@@ -516,34 +505,23 @@ const LogViewer: React.FC<Props> = ({
   const logViewerOptions = (
     <div className={css.options}>
       <Space>
-        <Tooltip placement="bottomRight" title="Copy to Clipboard">
-          <Button
-            aria-label="Copy to Clipboard"
-            disabled={logs.length === 0}
-            icon={<Icon name="clipboard" />}
-            onClick={handleCopyToClipboard}
-          />
-        </Tooltip>
-        <Tooltip placement="bottomRight" title="Toggle Fullscreen Mode">
-          <Button
-            aria-label="Toggle Fullscreen Mode"
-            icon={<Icon name="fullscreen" />}
-            onClick={handleFullScreen}
-          />
-        </Tooltip>
+        <ClipboardButton copiedMessage={clipboardCopiedMessage} getContent={getClipboardContent} />
+        <Button
+          aria-label="Toggle Fullscreen Mode"
+          icon={<Icon name="fullscreen" showTooltip title="Toggle Fullscreen Mode" />}
+          onClick={handleFullScreen}
+        />
         {handleCloseLogs && (
           <Link onClick={handleCloseLogs}>
-            <Icon aria-label="Close Logs" name="close" title="Close Logs" />
+            <Icon name="close" title="Close Logs" />
           </Link>
         )}
         {onDownload && (
-          <Tooltip placement="bottomRight" title="Download Logs">
-            <Button
-              aria-label="Download Logs"
-              icon={<Icon name="download" />}
-              onClick={handleDownload}
-            />
-          </Tooltip>
+          <Button
+            aria-label="Download Logs"
+            icon={<Icon name="download" showTooltip title="Download Logs" />}
+            onClick={handleDownload}
+          />
         )}
       </Space>
     </div>
@@ -578,7 +556,7 @@ const LogViewer: React.FC<Props> = ({
         <div className={css.container}>
           <div className={css.logs} ref={logsRef}>
             <VariableSizeList
-              height={containerSize.height}
+              height={pageSize.height - 200}
               itemCount={logs.length}
               itemData={logs}
               itemSize={getItemHeight}
@@ -594,22 +572,22 @@ const LogViewer: React.FC<Props> = ({
           </Spinner>
         </div>
         <div className={css.buttons} style={{ display: showButtons ? 'flex' : 'none' }}>
-          <Tooltip placement="left" title={ARIA_LABEL_SCROLL_TO_OLDEST}>
-            <Button
-              aria-label={ARIA_LABEL_SCROLL_TO_OLDEST}
-              icon={<Icon name="arrow-up" />}
-              onClick={handleScrollToOldest}
-            />
-          </Tooltip>
-          <Tooltip
-            placement="left"
-            title={isTailing ? 'Tailing Enabled' : ARIA_LABEL_ENABLE_TAILING}>
-            <Button
-              aria-label={ARIA_LABEL_ENABLE_TAILING}
-              icon={<Icon name="arrow-down" />}
-              onClick={handleEnableTailing}
-            />
-          </Tooltip>
+          <Button
+            aria-label={ARIA_LABEL_SCROLL_TO_OLDEST}
+            icon={<Icon name="arrow-up" showTooltip title={ARIA_LABEL_SCROLL_TO_OLDEST} />}
+            onClick={handleScrollToOldest}
+          />
+          <Button
+            aria-label={ARIA_LABEL_ENABLE_TAILING}
+            icon={
+              <Icon
+                name="arrow-down"
+                showTooltip
+                title={isTailing ? 'Tailing Enabled' : ARIA_LABEL_ENABLE_TAILING}
+              />
+            }
+            onClick={handleEnableTailing}
+          />
         </div>
       </div>
     </Section>

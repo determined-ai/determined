@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 
 import Breadcrumb from 'components/kit/Breadcrumb';
 import Tooltip from 'components/kit/Tooltip';
-import { BreadCrumbRoute } from 'shared/components/Page';
+import { BreadCrumbRoute } from 'components/Page';
 import { CommonProps } from 'shared/types';
 
 import Link from '../Link';
@@ -35,7 +35,7 @@ const PageHeader: React.FC<Props> = (props: Props) => {
         <Breadcrumb.Item>
           <Link path={route.path}>
             {route.breadcrumbTooltip ? (
-              <Tooltip title={route.breadcrumbTooltip}>
+              <Tooltip content={route.breadcrumbTooltip}>
                 <span>{route.breadcrumbName}</span>
               </Tooltip>
             ) : (

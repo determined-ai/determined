@@ -1,17 +1,21 @@
 import { PoweroffOutlined } from '@ant-design/icons';
 import { Card as AntDCard, Space } from 'antd';
 import { SelectValue } from 'antd/es/select';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 
 import Accordion from 'components/kit/Accordion';
 import Breadcrumb from 'components/kit/Breadcrumb';
 import Button from 'components/kit/Button';
 import Card from 'components/kit/Card';
 import Checkbox from 'components/kit/Checkbox';
+import ClipboardButton from 'components/kit/ClipboardButton';
+import { Column, Columns } from 'components/kit/Columns';
+import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 import Empty from 'components/kit/Empty';
 import Facepile from 'components/kit/Facepile';
 import Form from 'components/kit/Form';
+import Icon, { IconNameArray, IconSizeArray } from 'components/kit/Icon';
 import IconicButton from 'components/kit/IconicButton';
 import Input from 'components/kit/Input';
 import InputNumber from 'components/kit/InputNumber';
@@ -33,31 +37,25 @@ import UserAvatar from 'components/kit/UserAvatar';
 import { useTags } from 'components/kit/useTags';
 import Label from 'components/Label';
 import Logo from 'components/Logo';
-import OverviewStats from 'components/OverviewStats';
 import Page from 'components/Page';
-import ProjectCard from 'components/ProjectCard';
-import ResourcePoolCard from 'components/ResourcePoolCard';
 import ResponsiveTable from 'components/Table/ResponsiveTable';
 import ThemeToggle from 'components/ThemeToggle';
 import { drawPointsPlugin } from 'components/UPlot/UPlotChart/drawPointsPlugin';
-import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin2';
-import resourcePools from 'fixtures/responses/cluster/resource-pools.json';
+import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin';
 import { V1LogLevel } from 'services/api-ts-sdk';
 import { mapV1LogsResponse } from 'services/decoder';
-import Icon from 'shared/components/Icon';
 import useUI from 'shared/contexts/stores/UI';
 import { ValueOf } from 'shared/types';
 import { noOp } from 'shared/utils/service';
 import { BrandingType } from 'stores/determinedInfo';
-import { MetricType, Project, ResourcePool, User } from 'types';
+import { MetricType, User } from 'types';
 import { NotLoaded } from 'utils/loadable';
-import { generateTestProjectData, generateTestWorkspaceData } from 'utils/tests/generateTestData';
+import loremIpsum from 'utils/loremIpsum';
 
 import useConfirm, { voidPromiseFn } from '../components/kit/useConfirm';
 
 import css from './DesignKit.module.scss';
 import { CheckpointsDict } from './TrialDetails/F_TrialDetailsOverview';
-import WorkspaceCard from './WorkspaceList/WorkspaceCard';
 
 const ComponentTitles = {
   Accordion: 'Accordion',
@@ -66,9 +64,13 @@ const ComponentTitles = {
   Cards: 'Cards',
   Charts: 'Charts',
   Checkboxes: 'Checkboxes',
+  ClipboardButton: 'ClipboardButton',
+  Columns: 'Columns',
+  Dropdown: 'Dropdown',
   Empty: 'Empty',
   Facepile: 'Facepile',
   Form: 'Form',
+  Icons: 'Icons',
   Input: 'Input',
   InputNumber: 'InputNumber',
   InputSearch: 'InputSearch',
@@ -477,50 +479,67 @@ const SelectSection: React.FC = () => {
           width={999999}
         />
         <span>
-          Also see{' '}
-          <Link reloadDocument to={`#${ComponentTitles.Form}`}>
-            Form
-          </Link>{' '}
-          for form-specific variations
+          Also see <a href={`#${ComponentTitles.Form}`}>Form</a> for form-specific variations
         </span>
       </AntDCard>
     </ComponentSection>
   );
 };
 
-const line1BatchesDataRaw: [number, number][] = [
-  [0, -2],
-  [2, Math.random() * 12],
-  [4, 15],
-  [6, Math.random() * 60],
-  [9, Math.random() * 40],
-  [10, Math.random() * 76],
-  [18, Math.random() * 80],
-  [19, 89],
-];
-const line2BatchesDataRaw: [number, number][] = [
-  [1, 15],
-  [2, 10.123456789],
-  [2.5, Math.random() * 22],
-  [3, 10.3909],
-  [3.25, 19],
-  [3.75, 4],
-  [4, 12],
-];
-
 const ChartsSection: React.FC = () => {
-  const timerRef = useRef<NodeJS.Timer | null>(null);
-  const [timer, setTimer] = useState(1);
+  const [line1Data, setLine1Data] = useState<[number, number][]>([
+    [0, -2],
+    [2, 7],
+    [4, 15],
+    [6, 35],
+    [9, 22],
+    [10, 76],
+    [18, 1],
+    [19, 89],
+  ]);
+  const [line2Data, setLine2Data] = useState<[number, number][]>([
+    [1, 15],
+    [2, 10.123456789],
+    [2.5, 22],
+    [3, 10.3909],
+    [3.25, 19],
+    [3.75, 4],
+    [4, 12],
+  ]);
+  const [timer, setTimer] = useState(line1Data.length);
   useEffect(() => {
-    timerRef.current = setInterval(() => setTimer((t) => t + 1), 2000);
+    let timeout: NodeJS.Timer | void;
+    if (timer <= line1Data.length) {
+      timeout = setTimeout(() => setTimer((t) => t + 1), 2000);
+    }
+    return () => timeout && clearTimeout(timeout);
+  }, [timer, line1Data]);
 
-    return () => {
-      if (timerRef.current !== null) clearInterval(timerRef.current);
-    };
+  const randomizeLineData = useCallback(() => {
+    setLine1Data([
+      [0, -2],
+      [2, Math.random() * 12],
+      [4, 15],
+      [6, Math.random() * 60],
+      [9, Math.random() * 40],
+      [10, Math.random() * 76],
+      [18, Math.random() * 80],
+      [19, 89],
+    ]);
+    setLine2Data([
+      [1, 15],
+      [2, 10.123456789],
+      [2.5, Math.random() * 22],
+      [3, 10.3909],
+      [3.25, 19],
+      [3.75, 4],
+      [4, 12],
+    ]);
   }, []);
+  const streamLineData = useCallback(() => setTimer(1), []);
 
-  const line1BatchesDataStreamed = useMemo(() => line1BatchesDataRaw.slice(0, timer), [timer]);
-  const line2BatchesDataStreamed = useMemo(() => line2BatchesDataRaw.slice(0, timer), [timer]);
+  const line1BatchesDataStreamed = useMemo(() => line1Data.slice(0, timer), [timer, line1Data]);
+  const line2BatchesDataStreamed = useMemo(() => line2Data.slice(0, timer), [timer, line2Data]);
 
   const line1: Serie = {
     color: '#009BDE',
@@ -589,10 +608,18 @@ const ChartsSection: React.FC = () => {
       </AntDCard>
       <AntDCard title="Label options">
         <p>A chart with two metrics, a title, a legend, an x-axis label, a y-axis label.</p>
+        <div>
+          <Button onClick={randomizeLineData}>Randomize line data</Button>
+          <Button onClick={streamLineData}>Stream line data</Button>
+        </div>
         <LineChart height={250} series={[line1, line2]} showLegend={true} title="Sample" />
       </AntDCard>
       <AntDCard title="Focus series">
         <p>Highlight a specific metric in the chart.</p>
+        <div>
+          <Button onClick={randomizeLineData}>Randomize line data</Button>
+          <Button onClick={streamLineData}>Stream line data</Button>
+        </div>
         <LineChart focusedSeries={1} height={250} series={[line1, line2]} title="Sample" />
       </AntDCard>
       <AntDCard title="States without data">
@@ -721,6 +748,90 @@ const CheckboxesSection: React.FC = () => {
   );
 };
 
+const ClipboardButtonSection: React.FC = () => {
+  const defaultContent = 'This is the content to copy to clipboard.';
+  const [content, setContent] = useState(defaultContent);
+  const getContent = useCallback(() => content, [content]);
+  return (
+    <ComponentSection id="ClipboardButton" title="ClipboardButton">
+      <AntDCard>
+        <p>
+          ClipboardButton (<code>{'<ClipboardButton>'}</code> provides a special button for the
+          purpose of copying some text into the browser clipboard.
+          <br />
+          <b>Note:</b> This capability is only available on `https` and `localhost` hosts. `http`
+          protocol is purposefully blocked for&nbsp;
+          <a href="https://developer.mozilla.org/en-US/docs/Web/API/Clipboard">security reasons</a>.
+        </p>
+      </AntDCard>
+      <AntDCard title="Usage">
+        <Label>Copy Content</Label>
+        <Input value={content} onChange={(s) => setContent(String(s.target.value))} />
+        <hr />
+        <strong>Default Clipboard Button</strong>
+        <ClipboardButton getContent={getContent} />
+        <strong>Disabled Clipboard Button</strong>
+        <ClipboardButton disabled getContent={getContent} />
+        <strong>Custom Copied Message Clipboard Button</strong>
+        <ClipboardButton copiedMessage="Yay it's copied!" getContent={getContent} />
+      </AntDCard>
+    </ComponentSection>
+  );
+};
+
+const DropdownSection: React.FC = () => {
+  const menu: MenuItem[] = [
+    { key: 'start', label: 'Start' },
+    { key: 'stop', label: 'Stop' },
+  ];
+  const menuWithDivider: MenuItem[] = [
+    ...menu,
+    { type: 'divider' },
+    { key: 'archive', label: 'Archive' },
+  ];
+  const menuWithDanger: MenuItem[] = [...menu, { danger: true, key: 'delete', label: 'Delete' }];
+  const menuWithDisabled: MenuItem[] = [
+    ...menu,
+    { disabled: true, key: 'delete', label: 'Delete' },
+  ];
+
+  return (
+    <ComponentSection id="Dropdown" title="Dropdown">
+      <AntDCard>
+        <p>
+          Dropdown (<code>{'<Dropdown>'}</code>) give people a way to select one item from a group
+          of choices. The item is typically an action to apply to a relevant entity. For example, an
+          experiment dropdown would show actions you can perform on the relevant experiment, such as
+          `Activate`, `Stop`, `Archive`, etc.
+        </p>
+      </AntDCard>
+      <AntDCard title="Usage">
+        <strong>Basic Dropdowns</strong>
+        <Space>
+          <Dropdown menu={menu}>
+            <Button>Basic Dropdown</Button>
+          </Dropdown>
+          <Dropdown menu={menuWithDivider}>
+            <Button>Dropdown with a Divider</Button>
+          </Dropdown>
+          <Dropdown disabled menu={menu}>
+            <Button>Disabled Dropdown</Button>
+          </Dropdown>
+        </Space>
+        <strong>Various Dropdown Options</strong>
+        <Space>
+          <Dropdown menu={menuWithDanger}>
+            <Button>Dangerous Options</Button>
+          </Dropdown>
+          <Dropdown menu={menuWithDisabled}>
+            <Button>Disabled Options</Button>
+          </Dropdown>
+        </Space>
+      </AntDCard>
+    </ComponentSection>
+  );
+};
+
 const InputSearchSection: React.FC = () => {
   return (
     <ComponentSection id="InputSearch" title="InputSearch">
@@ -810,11 +921,7 @@ const InputNumberSection: React.FC = () => {
         <InputNumber disabled />
         <hr />
         <span>
-          Also see{' '}
-          <Link reloadDocument to={`#${ComponentTitles.Form}`}>
-            Form
-          </Link>{' '}
-          for form-specific variations
+          Also see <a href={`#${ComponentTitles.Form}`}>Form</a> for form-specific variations
         </span>
       </AntDCard>
     </ComponentSection>
@@ -870,11 +977,7 @@ const InputSection: React.FC = () => {
         <Input.Password disabled />
         <hr />
         <span>
-          Also see{' '}
-          <Link reloadDocument to={`#${ComponentTitles.Form}`}>
-            Form
-          </Link>{' '}
-          for form-specific variations
+          Also see <a href={`#${ComponentTitles.Form}`}>Form</a> for form-specific variations
         </span>
       </AntDCard>
     </ComponentSection>
@@ -1151,9 +1254,9 @@ const NameplateSection: React.FC = () => {
           name={testUser.username}
         />
         <li>No alias</li>
-        <Nameplate icon={<Icon name="group" />} name="testGroup123" />
+        <Nameplate icon={<Icon name="group" title="Group" />} name="testGroup123" />
         <li>Compact, no alias</li>
-        <Nameplate compact icon={<Icon name="group" />} name="testGroup123" />
+        <Nameplate compact icon={<Icon name="group" title="Group" />} name="testGroup123" />
       </AntDCard>
     </ComponentSection>
   );
@@ -1279,10 +1382,6 @@ const PaginationSection: React.FC = () => {
 };
 
 const CardsSection: React.FC = () => {
-  const rps = resourcePools as unknown as ResourcePool[];
-  const project: Project = { ...generateTestProjectData(), lastExperimentStartedAt: new Date() };
-  const workspace = generateTestWorkspaceData();
-
   return (
     <ComponentSection id="Cards" title="Cards">
       <AntDCard>
@@ -1333,18 +1432,18 @@ const CardsSection: React.FC = () => {
         <strong>Card variations</strong>
         <p>Small cards (default)</p>
         <Card.Group>
-          <Card actionMenu={{ items: [{ key: 'test', label: 'Test' }] }}>Card with actions</Card>
-          <Card actionMenu={{ items: [{ key: 'test', label: 'Test' }] }} disabled>
+          <Card actionMenu={[{ key: 'test', label: 'Test' }]}>Card with actions</Card>
+          <Card actionMenu={[{ key: 'test', label: 'Test' }]} disabled>
             Disabled card
           </Card>
           <Card onClick={noOp}>Clickable card</Card>
         </Card.Group>
         <p>Medium cards</p>
         <Card.Group size="medium">
-          <Card actionMenu={{ items: [{ key: 'test', label: 'Test' }] }} size="medium">
+          <Card actionMenu={[{ key: 'test', label: 'Test' }]} size="medium">
             Card with actions
           </Card>
-          <Card actionMenu={{ items: [{ key: 'test', label: 'Test' }] }} disabled size="medium">
+          <Card actionMenu={[{ key: 'test', label: 'Test' }]} disabled size="medium">
             Disabled card
           </Card>
           <Card size="medium" onClick={noOp}>
@@ -1372,51 +1471,6 @@ const CardsSection: React.FC = () => {
           <Card size="medium" />
           <Card size="medium" />
         </Card.Group>
-        <strong>Card examples</strong>
-        <ul>
-          <li>
-            Project card (<code>{'<ProjectCard>'}</code>)
-          </li>
-          <Card.Group>
-            <ProjectCard project={project} />
-            <ProjectCard project={{ ...project, archived: true }} />
-            <ProjectCard
-              project={{
-                ...project,
-                name: 'Project with a very long name that spans many lines and eventually gets cut off',
-              }}
-            />
-            <ProjectCard
-              project={{
-                ...project,
-                workspaceId: 2,
-              }}
-              showWorkspace
-            />
-          </Card.Group>
-          <li>
-            Workspace card (<code>{'<WorkspaceCard>'}</code>)
-          </li>
-          <Card.Group size="medium">
-            <WorkspaceCard workspace={workspace} />
-            <WorkspaceCard workspace={{ ...workspace, archived: true }} />
-          </Card.Group>
-          <li>
-            Stats overview (<code>{'<OverviewStats>'}</code>)
-          </li>
-          <Card.Group>
-            <OverviewStats title="Active Experiments">0</OverviewStats>
-            <OverviewStats title="Clickable card" onClick={noOp}>
-              Example
-            </OverviewStats>
-          </Card.Group>
-          <li>
-            Resource pool card (<code>{'<ResourcePoolCard>'}</code>)
-          </li>
-          <Card.Group size="medium">
-            <ResourcePoolCard resourcePool={rps[0]} />
-          </Card.Group>
-        </ul>
       </AntDCard>
     </ComponentSection>
   );
@@ -1520,11 +1574,7 @@ const FormSection: React.FC = () => {
       <AntDCard title="Usage">
         <Form>
           <strong>
-            Form-specific{' '}
-            <Link reloadDocument to={`#${ComponentTitles.Input}`}>
-              Input
-            </Link>{' '}
-            variations
+            Form-specific <a href={ComponentTitles.Input}>Input</a> variations
           </strong>
           <br />
           <Form.Item label="Required input" name="required_input" required>
@@ -1541,11 +1591,7 @@ const FormSection: React.FC = () => {
           <hr />
           <br />
           <strong>
-            Form-specific{' '}
-            <Link reloadDocument to={`#${ComponentTitles.Input}`}>
-              TextArea
-            </Link>{' '}
-            variations
+            Form-specific <a href={ComponentTitles.Input}>TextArea</a> variations
           </strong>
           <br />
           <Form.Item label="Required TextArea" name="required_textarea" required>
@@ -1562,11 +1608,7 @@ const FormSection: React.FC = () => {
           <hr />
           <br />
           <strong>
-            Form-specific{' '}
-            <Link reloadDocument to={`#${ComponentTitles.Input}`}>
-              Password
-            </Link>{' '}
-            variations
+            Form-specific <a href={ComponentTitles.Input}>Password</a> variations
           </strong>
           <br />
           <Form.Item label="Required Password" name="required_label" required>
@@ -1583,11 +1625,7 @@ const FormSection: React.FC = () => {
           <hr />
           <br />
           <strong>
-            Form-specific{' '}
-            <Link reloadDocument to={`#${ComponentTitles.InputNumber}`}>
-              InputNumber
-            </Link>{' '}
-            variations
+            Form-specific <a href={ComponentTitles.Input}>InputNumber</a> variations
           </strong>
           <Form.Item label="Required InputNumber" name="number" required>
             <InputNumber />
@@ -1602,11 +1640,7 @@ const FormSection: React.FC = () => {
           <hr />
           <br />
           <strong>
-            Form-specific{' '}
-            <Link reloadDocument to={`#${ComponentTitles.Select}`}>
-              Select
-            </Link>{' '}
-            variations
+            Form-specific <a href={ComponentTitles.Select}>Select</a> variations
           </strong>
           <Form.Item initialValue={1} label="Required dropdown" name="required_dropdown" required>
             <Select
@@ -1738,14 +1772,19 @@ const TooltipsSection: React.FC = () => {
       <AntDCard title="Usage">
         <strong>Tooltips default</strong>
         <Space>
-          <Tooltip title={text}>
-            <span>Trigger on hover</span>
+          <Tooltip content={text}>
+            <Button>Trigger on hover</Button>
           </Tooltip>
-          <Tooltip title={text} trigger="click">
-            <span>Trigger on click</span>
+          <Tooltip content={text} trigger="click">
+            <Button>Trigger on click</Button>
           </Tooltip>
-          <Tooltip title={text} trigger="contextMenu">
-            <span>Trigger on right click</span>
+          <Tooltip content={text} trigger="contextMenu">
+            <Button>Trigger on right click</Button>
+          </Tooltip>
+        </Space>
+        <Space>
+          <Tooltip content={text} placement="bottom" showArrow={false}>
+            <Button>Tooltip without arrow</Button>
           </Tooltip>
         </Space>
         <strong>Considerations</strong>
@@ -1758,50 +1797,161 @@ const TooltipsSection: React.FC = () => {
         <strong>Variations</strong>
         <div>
           <div style={{ marginLeft: buttonWidth, whiteSpace: 'nowrap' }}>
-            <Tooltip placement="topLeft" title={text}>
+            <Tooltip content={text} placement="topLeft">
               <Button>TL</Button>
             </Tooltip>
-            <Tooltip placement="top" title={text}>
+            <Tooltip content={text} placement="top">
               <Button>Top</Button>
             </Tooltip>
-            <Tooltip placement="topRight" title={text}>
+            <Tooltip content={text} placement="topRight">
               <Button>TR</Button>
             </Tooltip>
           </div>
           <div style={{ float: 'left', width: buttonWidth }}>
-            <Tooltip placement="leftTop" title={text}>
+            <Tooltip content={text} placement="leftTop">
               <Button>LT</Button>
             </Tooltip>
-            <Tooltip placement="left" title={text}>
+            <Tooltip content={text} placement="left">
               <Button>Left</Button>
             </Tooltip>
-            <Tooltip placement="leftBottom" title={text}>
+            <Tooltip content={text} placement="leftBottom">
               <Button>LB</Button>
             </Tooltip>
           </div>
           <div style={{ marginLeft: buttonWidth * 4 + 24, width: buttonWidth }}>
-            <Tooltip placement="rightTop" title={text}>
+            <Tooltip content={text} placement="rightTop">
               <Button>RT</Button>
             </Tooltip>
-            <Tooltip placement="right" title={text}>
+            <Tooltip content={text} placement="right">
               <Button>Right</Button>
             </Tooltip>
-            <Tooltip placement="rightBottom" title={text}>
+            <Tooltip content={text} placement="rightBottom">
               <Button>RB</Button>
             </Tooltip>
           </div>
           <div style={{ clear: 'both', marginLeft: buttonWidth, whiteSpace: 'nowrap' }}>
-            <Tooltip placement="bottomLeft" title={text}>
+            <Tooltip content={text} placement="bottomLeft">
               <Button>BL</Button>
             </Tooltip>
-            <Tooltip placement="bottom" title={text}>
+            <Tooltip content={text} placement="bottom">
               <Button>Bottom</Button>
             </Tooltip>
-            <Tooltip placement="bottomRight" title={text}>
+            <Tooltip content={text} placement="bottomRight">
               <Button>BR</Button>
             </Tooltip>
           </div>
         </div>
+        <strong>Tooltip with complex content</strong>
+        <p>
+          <Tooltip content={<UserAvatar />}>
+            <Button>{'Hover to see user avatars'}</Button>
+          </Tooltip>
+        </p>
+      </AntDCard>
+    </ComponentSection>
+  );
+};
+
+const ColumnsSection: React.FC = () => {
+  return (
+    <ComponentSection id="Columns" title="Columns">
+      <AntDCard>
+        <p>
+          The <code>{'<Columns>'}</code> component wraps child components to be displayed in
+          multiple columns.
+          <br />
+          The <code>{'<Column>'}</code> component can optionally be used to wrap the content for
+          each column and set its alignment.
+        </p>
+      </AntDCard>
+      <AntDCard title="Usage">
+        <p>
+          With <code>{'<Columns>'}</code> wrapper only, and <code>{'gap'}</code> set to 8 (default):
+        </p>
+        <Columns>
+          <Card>{loremIpsum}</Card>
+          <Card>{loremIpsum}</Card>
+          <Card>{loremIpsum}</Card>
+        </Columns>
+        <p>
+          With <code>{'gap'}</code> set to 0:
+        </p>
+        <Columns gap={0}>
+          <Card>{loremIpsum}</Card>
+          <Card>{loremIpsum}</Card>
+          <Card>{loremIpsum}</Card>
+        </Columns>
+        <p>
+          With <code>{'gap'}</code> set to 16:
+        </p>
+        <Columns gap={16}>
+          <Card>{loremIpsum}</Card>
+          <Card>{loremIpsum}</Card>
+          <Card>{loremIpsum}</Card>
+        </Columns>
+        <p>
+          With left-aligned <code>{'<Column>'}</code>s (default):
+        </p>
+        <Columns>
+          <Column>
+            <Button>Content</Button>
+          </Column>
+          <Column>
+            <Button>Content</Button>
+          </Column>
+          <Column>
+            <Button>Content</Button>
+          </Column>
+        </Columns>
+        <p>
+          With center-aligned <code>{'<Column>'}</code>s:
+        </p>
+        <Columns>
+          <Column align="center">
+            <Button>Content</Button>
+          </Column>
+          <Column align="center">
+            <Button>Content</Button>
+          </Column>
+          <Column align="center">
+            <Button>Content</Button>
+          </Column>
+        </Columns>
+        <p>
+          With right-aligned <code>{'<Column>'}</code>s:
+        </p>
+        <Columns>
+          <Column align="right">
+            <Button>Content</Button>
+          </Column>
+          <Column align="right">
+            <Button>Content</Button>
+          </Column>
+          <Column align="right">
+            <Button>Content</Button>
+          </Column>
+        </Columns>
+        <p>
+          Variant with <code>{'page'}</code> prop, with margins and wrapping behavior, used for
+          page-level layouts/headers:
+        </p>
+        <Columns page>
+          <Column>
+            <Button>Content 1</Button>
+            <Button>Content 2</Button>
+            <Button>Content 3</Button>
+          </Column>
+          <Column>
+            <Button>Content 1</Button>
+            <Button>Content 2</Button>
+            <Button>Content 3</Button>
+          </Column>
+          <Column>
+            <Button>Content 1</Button>
+            <Button>Content 2</Button>
+            <Button>Content 3</Button>
+          </Column>
+        </Columns>
       </AntDCard>
     </ComponentSection>
   );
@@ -1826,6 +1976,38 @@ const EmptySection: React.FC = () => {
           icon="warning-large"
           title="Empty title"
         />
+      </AntDCard>
+    </ComponentSection>
+  );
+};
+
+const IconsSection: React.FC = () => {
+  return (
+    <ComponentSection id="Icons" title="Icons">
+      <AntDCard>
+        <p>
+          An <code>{'<Icon>'}</code> component displays an icon from a custom font along with an
+          optional tooltip.
+        </p>
+      </AntDCard>
+      <AntDCard title="Usage">
+        <strong>Icon default</strong>
+        <Icon name="star" title="star" />
+        <strong>Icon variations</strong>
+        <p>Icon with tooltip</p>
+        <Icon name="star" title="Tooltip" />
+        <p>Icon sizes</p>
+        <Space wrap>
+          {IconSizeArray.map((size) => (
+            <Icon key={size} name="star" showTooltip size={size} title={size} />
+          ))}
+        </Space>
+        <p>All icons</p>
+        <Space wrap>
+          {IconNameArray.map((name) => (
+            <Icon key={name} name={name} showTooltip title={name} />
+          ))}
+        </Space>
       </AntDCard>
     </ComponentSection>
   );
@@ -2199,9 +2381,13 @@ const Components = {
   Cards: <CardsSection />,
   Charts: <ChartsSection />,
   Checkboxes: <CheckboxesSection />,
+  ClipboardButton: <ClipboardButtonSection />,
+  Columns: <ColumnsSection />,
+  Dropdown: <DropdownSection />,
   Empty: <EmptySection />,
   Facepile: <FacepileSection />,
   Form: <FormSection />,
+  Icons: <IconsSection />,
   Input: <InputSection />,
   InputNumber: <InputNumberSection />,
   InputSearch: <InputSearchSection />,
@@ -2221,6 +2407,9 @@ const Components = {
 
 const DesignKit: React.FC = () => {
   const { actions } = useUI();
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const isExclusiveMode = searchParams.get('exclusive') === 'true';
 
   useEffect(() => {
     actions.hideChrome();
@@ -2237,17 +2426,17 @@ const DesignKit: React.FC = () => {
           <ul>
             {componentOrder.map((componentId) => (
               <li key={componentId}>
-                <Link reloadDocument to={`#${componentId}`}>
-                  {ComponentTitles[componentId]}
-                </Link>
+                <a href={`#${componentId}`}>{ComponentTitles[componentId]}</a>
               </li>
             ))}
           </ul>
         </nav>
         <article>
-          {componentOrder.map((componentId) => (
-            <React.Fragment key={componentId}>{Components[componentId]}</React.Fragment>
-          ))}
+          {componentOrder
+            .filter((id) => !isExclusiveMode || !location.hash || id === location.hash.substring(1))
+            .map((componentId) => (
+              <React.Fragment key={componentId}>{Components[componentId]}</React.Fragment>
+            ))}
         </article>
       </div>
     </Page>

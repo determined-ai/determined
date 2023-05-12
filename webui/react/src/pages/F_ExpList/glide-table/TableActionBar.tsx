@@ -1,11 +1,11 @@
-import { Menu, Space } from 'antd';
-import { ItemType } from 'rc-menu/lib/interface';
-import React, { Dispatch, SetStateAction, useCallback, useMemo, useState } from 'react';
+import { Space } from 'antd';
+import React, { useCallback, useMemo, useState } from 'react';
 
 import BatchActionConfirmModalComponent from 'components/BatchActionConfirmModal';
-import Dropdown from 'components/Dropdown';
 import ExperimentMoveModalComponent from 'components/ExperimentMoveModal';
 import Button from 'components/kit/Button';
+import Dropdown, { MenuItem } from 'components/kit/Dropdown';
+import Icon, { IconName } from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
 import usePermissions from 'hooks/usePermissions';
 import {
@@ -19,16 +19,15 @@ import {
   unarchiveExperiments,
 } from 'services/api';
 import { V1BulkExperimentFilters } from 'services/api-ts-sdk';
-import Icon from 'shared/components/Icon';
 import { RecordKey } from 'shared/types';
 import { ErrorLevel } from 'shared/utils/error';
 import {
   BulkActionResult,
   ExperimentAction,
-  ExperimentItem,
+  ExperimentWithTrial,
   Project,
+  ProjectColumn,
   ProjectExperiment,
-  RunState,
 } from 'types';
 import { notification } from 'utils/dialogApi';
 import handleError from 'utils/error';
@@ -40,6 +39,8 @@ import {
 import { Loadable } from 'utils/loadable';
 import { openCommandResponse } from 'utils/wait';
 
+import ColumnPickerMenu from './ColumnPickerMenu';
+import MultiSortMenu, { Sort } from './MultiSortMenu';
 import css from './TableActionBar.module.scss';
 
 const batchActions = [
@@ -54,9 +55,9 @@ const batchActions = [
   ExperimentAction.Kill,
 ] as const;
 
-type BatchAction = (typeof batchActions)[number];
+export type BatchAction = (typeof batchActions)[number];
 
-const actionIcons: Record<BatchAction, string> = {
+const actionIcons: Record<BatchAction, IconName> = {
   [ExperimentAction.Activate]: 'play',
   [ExperimentAction.Pause]: 'pause',
   [ExperimentAction.Cancel]: 'stop',
@@ -69,25 +70,37 @@ const actionIcons: Record<BatchAction, string> = {
 } as const;
 
 interface Props {
-  experiments: Loadable<ExperimentItem>[];
+  experiments: Loadable<ExperimentWithTrial>[];
   filters: V1BulkExperimentFilters;
+  initialVisibleColumns: string[];
   onAction: () => Promise<void>;
-  selectAll: boolean;
-  selectedExperimentIds: number[];
-  setExperiments: Dispatch<SetStateAction<Loadable<ExperimentItem>[]>>;
+  sorts: Sort[];
+  onSortChange: (sorts: Sort[]) => void;
   project: Project;
+  projectColumns: Loadable<ProjectColumn[]>;
+  selectAll: boolean;
+  excludedExperimentIds?: Set<number>;
+  selectedExperimentIds: number[];
+  handleUpdateExperimentList: (action: BatchAction, successfulIds: number[]) => void;
+  setVisibleColumns: (newColumns: string[]) => void;
   total: Loadable<number>;
 }
 
 const TableActionBar: React.FC<Props> = ({
   experiments,
+  excludedExperimentIds,
   filters,
   onAction,
+  onSortChange,
   selectAll,
   selectedExperimentIds,
-  setExperiments,
+  handleUpdateExperimentList,
+  sorts,
   project,
+  projectColumns,
   total,
+  initialVisibleColumns,
+  setVisibleColumns,
 }) => {
   const permissions = usePermissions();
   const [batchAction, setBatchAction] = useState<BatchAction>();
@@ -96,7 +109,10 @@ const TableActionBar: React.FC<Props> = ({
 
   const experimentMap = useMemo(() => {
     return experiments.filter(Loadable.isLoaded).reduce((acc, experiment) => {
-      acc[experiment.data.id] = getProjectExperimentForExperimentItem(experiment.data, project);
+      acc[experiment.data.experiment.id] = getProjectExperimentForExperimentItem(
+        experiment.data.experiment,
+        project,
+      );
       return acc;
     }, {} as Record<RecordKey, ProjectExperiment>);
   }, [experiments, project]);
@@ -111,12 +127,16 @@ const TableActionBar: React.FC<Props> = ({
 
   const sendBatchActions = useCallback(
     async (action: BatchAction): Promise<BulkActionResult | void> => {
+      let requestFilters = selectAll ? filters : undefined;
+      if (excludedExperimentIds?.size) {
+        requestFilters = { ...filters, excludedExperimentIds: Array.from(excludedExperimentIds) };
+      }
       switch (action) {
         case ExperimentAction.OpenTensorBoard:
           return openCommandResponse(
             await openOrCreateTensorBoard({
               experimentIds: selectedExperimentIds,
-              filters: selectAll ? filters : undefined,
+              filters: requestFilters,
               workspaceId: project?.workspaceId,
             }),
           );
@@ -125,121 +145,48 @@ const TableActionBar: React.FC<Props> = ({
         case ExperimentAction.Activate:
           return await activateExperiments({
             experimentIds: selectedExperimentIds,
-            filters: selectAll ? filters : undefined,
+            filters: requestFilters,
           });
         case ExperimentAction.Archive:
           return await archiveExperiments({
             experimentIds: selectedExperimentIds,
-            filters: selectAll ? filters : undefined,
+            filters: requestFilters,
           });
         case ExperimentAction.Cancel:
           return await cancelExperiments({
             experimentIds: selectedExperimentIds,
-            filters: selectAll ? filters : undefined,
+            filters: requestFilters,
           });
         case ExperimentAction.Kill:
           return await killExperiments({
             experimentIds: selectedExperimentIds,
-            filters: selectAll ? filters : undefined,
+            filters: requestFilters,
           });
         case ExperimentAction.Pause:
           return await pauseExperiments({
             experimentIds: selectedExperimentIds,
-            filters: selectAll ? filters : undefined,
+            filters: requestFilters,
           });
         case ExperimentAction.Unarchive:
           return await unarchiveExperiments({
             experimentIds: selectedExperimentIds,
-            filters: selectAll ? filters : undefined,
+            filters: requestFilters,
           });
         case ExperimentAction.Delete:
           return await deleteExperiments({
             experimentIds: selectedExperimentIds,
-            filters: selectAll ? filters : undefined,
+            filters: requestFilters,
           });
       }
     },
-    [selectedExperimentIds, selectAll, filters, project?.workspaceId, ExperimentMoveModal],
-  );
-
-  const handleUpdateExperimentList = useCallback(
-    (action: BatchAction, successfulIds: number[]) => {
-      const idSet = new Set(successfulIds);
-      switch (action) {
-        case ExperimentAction.OpenTensorBoard:
-          break;
-        case ExperimentAction.Activate:
-          setExperiments((prev) =>
-            prev.map((expLoadable) =>
-              Loadable.map(expLoadable, (experiment) =>
-                idSet.has(experiment.id) ? { ...experiment, state: RunState.Active } : experiment,
-              ),
-            ),
-          );
-          break;
-        case ExperimentAction.Archive:
-          setExperiments((prev) =>
-            prev.map((expLoadable) =>
-              Loadable.map(expLoadable, (experiment) =>
-                idSet.has(experiment.id) ? { ...experiment, archived: true } : experiment,
-              ),
-            ),
-          );
-          break;
-        case ExperimentAction.Cancel:
-          setExperiments((prev) =>
-            prev.map((expLoadable) =>
-              Loadable.map(expLoadable, (experiment) =>
-                idSet.has(experiment.id)
-                  ? { ...experiment, state: RunState.StoppingCanceled }
-                  : experiment,
-              ),
-            ),
-          );
-          break;
-        case ExperimentAction.Kill:
-          setExperiments((prev) =>
-            prev.map((expLoadable) =>
-              Loadable.map(expLoadable, (experiment) =>
-                idSet.has(experiment.id)
-                  ? { ...experiment, state: RunState.StoppingKilled }
-                  : experiment,
-              ),
-            ),
-          );
-          break;
-        case ExperimentAction.Pause:
-          setExperiments((prev) =>
-            prev.map((expLoadable) =>
-              Loadable.map(expLoadable, (experiment) =>
-                idSet.has(experiment.id) ? { ...experiment, state: RunState.Paused } : experiment,
-              ),
-            ),
-          );
-          break;
-        case ExperimentAction.Unarchive:
-          setExperiments((prev) =>
-            prev.map((expLoadable) =>
-              Loadable.map(expLoadable, (experiment) =>
-                idSet.has(experiment.id) ? { ...experiment, archived: false } : experiment,
-              ),
-            ),
-          );
-          break;
-        case ExperimentAction.Move:
-        case ExperimentAction.Delete:
-          setExperiments((prev) =>
-            prev.filter((expLoadable) =>
-              Loadable.match(expLoadable, {
-                Loaded: (experiment) => !idSet.has(experiment.id),
-                NotLoaded: () => true,
-              }),
-            ),
-          );
-          break;
-      }
-    },
-    [setExperiments],
+    [
+      selectedExperimentIds,
+      selectAll,
+      excludedExperimentIds,
+      filters,
+      project?.workspaceId,
+      ExperimentMoveModal,
+    ],
   );
 
   const handleSubmitMove = useCallback(
@@ -333,14 +280,14 @@ const TableActionBar: React.FC<Props> = ({
     [BatchActionConfirmModal, submitBatchAction, sendBatchActions],
   );
 
-  const editMenuItems: ItemType[] = useMemo(() => {
+  const editMenuItems: MenuItem[] = useMemo(() => {
     return batchActions.map((action) => ({
       danger: action === ExperimentAction.Delete,
       disabled: !availableBatchActions.includes(action),
       // The icon doesn't show up without being wrapped in a div.
       icon: (
         <div>
-          <Icon name={actionIcons[action]} />
+          <Icon name={actionIcons[action]} title={action} />
         </div>
       ),
       key: action,
@@ -348,23 +295,24 @@ const TableActionBar: React.FC<Props> = ({
     }));
   }, [availableBatchActions]);
 
-  const handleAction = useCallback(
-    ({ key }: { key: string }) => {
-      handleBatchAction(key);
-    },
-    [handleBatchAction],
-  );
+  const handleAction = useCallback((key: string) => handleBatchAction(key), [handleBatchAction]);
 
   return (
     <>
       <Space className={css.base}>
+        <MultiSortMenu columns={projectColumns} sorts={sorts} onChange={onSortChange} />
+        <ColumnPickerMenu
+          initialVisibleColumns={initialVisibleColumns}
+          projectColumns={projectColumns}
+          setVisibleColumns={setVisibleColumns}
+        />
         {(selectAll || selectedExperimentIds.length > 0) && (
-          <Dropdown content={<Menu items={editMenuItems} onClick={handleAction} />}>
-            <Button icon={<Icon name="pencil" />}>
+          <Dropdown menu={editMenuItems} onClick={handleAction}>
+            <Button icon={<Icon name="pencil" title="Edit" />}>
               Edit (
               {selectAll
                 ? Loadable.isLoaded(total)
-                  ? total.data.toLocaleString()
+                  ? (total.data - (excludedExperimentIds?.size ?? 0)).toLocaleString()
                   : 'All'
                 : selectedExperimentIds.length}
               )
@@ -375,11 +323,11 @@ const TableActionBar: React.FC<Props> = ({
       {batchAction && (
         <BatchActionConfirmModal.Component
           batchAction={batchAction}
-          selectAll={selectAll}
           onConfirm={() => submitBatchAction(batchAction)}
         />
       )}
       <ExperimentMoveModal.Component
+        excludedExperimentIds={excludedExperimentIds}
         experimentIds={selectedExperimentIds.filter(
           (id) =>
             canActionExperiment(ExperimentAction.Move, experimentMap[id]) &&

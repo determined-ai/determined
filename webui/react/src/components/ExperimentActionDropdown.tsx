@@ -1,15 +1,16 @@
-import { Dropdown } from 'antd';
-import type { DropdownProps } from 'antd';
-import { MenuInfo } from 'rc-menu/lib/interface';
-import React, { useCallback, useMemo } from 'react';
+import React, { MouseEvent, useCallback, useMemo } from 'react';
 
 import ExperimentMoveModalComponent from 'components/ExperimentMoveModal';
 import Button from 'components/kit/Button';
+import Dropdown, { DropdownEvent, MenuItem } from 'components/kit/Dropdown';
+import Icon from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
 import useModalHyperparameterSearch from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
 import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings } from 'hooks/useSettings';
 import { ExperimentListSettings } from 'pages/ExperimentList.settings';
+import { BatchAction } from 'pages/F_ExpList/glide-table/TableActionBar';
+import { handlePath } from 'routes/utils';
 import {
   activateExperiment,
   archiveExperiment,
@@ -21,10 +22,10 @@ import {
   unarchiveExperiment,
 } from 'services/api';
 import css from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
-import Icon from 'shared/components/Icon/Icon';
+import { ValueOf } from 'shared/types';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { capitalize } from 'shared/utils/string';
-import { ExperimentAction as Action, ProjectExperiment } from 'types';
+import { ExperimentAction, ProjectExperiment } from 'types';
 import { notification } from 'utils/dialogApi';
 import handleError from 'utils/error';
 import { getActionsForExperiment } from 'utils/experiment';
@@ -35,13 +36,25 @@ import useConfirm from './kit/useConfirm';
 interface Props {
   children?: React.ReactNode;
   experiment: ProjectExperiment;
+  isContextMenu?: boolean;
+  link?: string;
   makeOpen?: boolean;
   onComplete?: (action?: Action) => Promise<void>;
+  onLink?: () => void;
   onVisibleChange?: (visible: boolean) => void;
   settings?: ExperimentListSettings;
   updateSettings?: UpdateSettings;
   workspaceId?: number;
+  handleUpdateExperimentList?: (action: BatchAction, successfulIds: number[]) => void;
 }
+
+const Action = {
+  NewTab: 'Open Link in New Tab',
+  NewWindow: 'Open Link in New Window',
+  ...ExperimentAction,
+};
+
+type Action = ValueOf<typeof Action>;
 
 const dropdownActions = [
   Action.SwitchPin,
@@ -57,16 +70,18 @@ const dropdownActions = [
   Action.Delete,
 ];
 
-const stopPropagation = (e: React.MouseEvent): void => e.stopPropagation();
-
 const ExperimentActionDropdown: React.FC<Props> = ({
   experiment,
+  isContextMenu,
+  link,
   makeOpen,
   onComplete,
+  onLink,
   onVisibleChange,
   settings,
   updateSettings,
   children,
+  handleUpdateExperimentList,
 }: Props) => {
   const id = experiment.id;
   const ExperimentMoveModal = useModal(ExperimentMoveModalComponent);
@@ -80,25 +95,61 @@ const ExperimentActionDropdown: React.FC<Props> = ({
     openModalHyperparameterSearch();
   }, [openModalHyperparameterSearch]);
 
-  const handleMenuClick = useCallback(
-    async (params: MenuInfo): Promise<void> => {
-      params.domEvent.stopPropagation();
+  const handleMoveComplete = useCallback(() => {
+    onComplete?.(Action.Move);
+  }, [onComplete]);
+
+  const menuItems = getActionsForExperiment(experiment, dropdownActions, usePermissions())
+    .filter((action) => action !== Action.SwitchPin || settings)
+    .map((action) => {
+      if (action === Action.SwitchPin) {
+        const label = (settings?.pinned?.[experiment.projectId] ?? []).includes(id)
+          ? 'Unpin'
+          : 'Pin';
+        return { key: action, label };
+      } else {
+        return { danger: action === Action.Delete, key: action, label: action };
+      }
+    });
+
+  const dropdownMenu = useMemo(() => {
+    const items: MenuItem[] = [...menuItems];
+    if (link) {
+      items.unshift(
+        { key: Action.NewTab, label: Action.NewTab },
+        { key: Action.NewWindow, label: Action.NewWindow },
+        { type: 'divider' },
+      );
+    }
+    return items;
+  }, [link, menuItems]);
+
+  const handleDropdown = useCallback(
+    async (action: string, e: DropdownEvent) => {
       try {
-        const action = params.key as Action;
-        switch (
-          action // Cases should match menu items.
-        ) {
+        switch (action) {
+          case Action.NewTab:
+            handlePath(e as MouseEvent, { path: link, popout: 'tab' });
+            await onLink?.();
+            break;
+          case Action.NewWindow:
+            handlePath(e as MouseEvent, { path: link, popout: 'window' });
+            await onLink?.();
+            break;
           case Action.Activate:
             await activateExperiment({ experimentId: id });
             await onComplete?.(action);
+            handleUpdateExperimentList?.(Action.Activate, [id]);
             break;
           case Action.Archive:
             await archiveExperiment({ experimentId: id });
             await onComplete?.(action);
+            handleUpdateExperimentList?.(Action.Archive, [id]);
             break;
           case Action.Cancel:
             await cancelExperiment({ experimentId: id });
             await onComplete?.(action);
+            handleUpdateExperimentList?.(Action.Cancel, [id]);
             break;
           case Action.OpenTensorBoard: {
             const commandResponse = await openOrCreateTensorBoard({
@@ -106,6 +157,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
               workspaceId: experiment.workspaceId,
             });
             openCommandResponse(commandResponse);
+            handleUpdateExperimentList?.(Action.OpenTensorBoard, [id]);
             break;
           }
           case Action.SwitchPin: {
@@ -138,14 +190,17 @@ const ExperimentActionDropdown: React.FC<Props> = ({
               },
               title: 'Confirm Experiment Kill',
             });
+            handleUpdateExperimentList?.(Action.Kill, [id]);
             break;
           case Action.Pause:
             await pauseExperiment({ experimentId: id });
             await onComplete?.(action);
+            handleUpdateExperimentList?.(Action.Pause, [id]);
             break;
           case Action.Unarchive:
             await unarchiveExperiment({ experimentId: id });
             await onComplete?.(action);
+            handleUpdateExperimentList?.(Action.Unarchive, [id]);
             break;
           case Action.Delete:
             confirm({
@@ -158,6 +213,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
               },
               title: 'Confirm Experiment Deletion',
             });
+            handleUpdateExperimentList?.(Action.Delete, [id]);
             break;
           case Action.Move:
             ExperimentMoveModal.open();
@@ -169,15 +225,14 @@ const ExperimentActionDropdown: React.FC<Props> = ({
       } catch (e) {
         handleError(e, {
           level: ErrorLevel.Error,
-          publicMessage: `Unable to ${params.key} experiment ${id}.`,
-          publicSubject: `${capitalize(params.key.toString())} failed.`,
+          publicMessage: `Unable to ${action} experiment ${id}.`,
+          publicSubject: `${capitalize(action)} failed.`,
           silent: false,
           type: ErrorType.Server,
         });
       } finally {
         onVisibleChange?.(false);
       }
-      // TODO show loading indicator when we have a button component that supports it.
     },
     [
       confirm,
@@ -186,56 +241,30 @@ const ExperimentActionDropdown: React.FC<Props> = ({
       experiment.workspaceId,
       handleHyperparameterSearch,
       id,
+      link,
       onComplete,
+      onLink,
       onVisibleChange,
       settings?.pinned,
       updateSettings,
+      handleUpdateExperimentList,
     ],
   );
-
-  const handleMoveComplete = useCallback(() => {
-    onComplete?.(Action.Move);
-  }, [onComplete]);
-
-  const menuItems = getActionsForExperiment(experiment, dropdownActions, usePermissions())
-    .filter((action) => action !== Action.SwitchPin || settings)
-    .map((action) => {
-      if (action === Action.SwitchPin) {
-        const label = (settings?.pinned?.[experiment.projectId] ?? []).includes(id)
-          ? 'Unpin'
-          : 'Pin';
-        return { key: action, label };
-      } else {
-        return { danger: action === Action.Delete, key: action, label: action };
-      }
-    });
-
-  const menu: DropdownProps['menu'] = useMemo(() => {
-    return { items: [...menuItems], onClick: handleMenuClick };
-  }, [menuItems, handleMenuClick]);
 
   if (menuItems.length === 0) {
     return (
       (children as JSX.Element) ?? (
-        <div className={css.base} title="No actions available" onClick={stopPropagation}>
+        <div className={css.base} title="No actions available">
           <Button disabled ghost type="text">
-            <Icon name="overflow-vertical" />
+            <Icon name="overflow-vertical" title="Disabled action menu" />
           </Button>
         </div>
       )
     );
   }
 
-  return children ? (
+  const shared = (
     <>
-      <Dropdown
-        menu={menu}
-        open={makeOpen}
-        placement="bottomLeft"
-        trigger={['contextMenu']}
-        onOpenChange={onVisibleChange}>
-        {children}
-      </Dropdown>
       <ExperimentMoveModal.Component
         experimentIds={[id]}
         sourceProjectId={experiment.projectId}
@@ -244,18 +273,25 @@ const ExperimentActionDropdown: React.FC<Props> = ({
       />
       {modalHyperparameterSearchContextHolder}
     </>
-  ) : (
-    <div className={css.base} title="Open actions menu" onClick={stopPropagation}>
-      <Dropdown menu={menu} placement="bottomRight" trigger={['click']}>
-        <Button ghost icon={<Icon name="overflow-vertical" />} onClick={stopPropagation} />
+  );
+
+  return children ? (
+    <>
+      <Dropdown
+        isContextMenu={isContextMenu}
+        menu={dropdownMenu}
+        open={makeOpen}
+        onClick={handleDropdown}>
+        {children}
       </Dropdown>
-      <ExperimentMoveModal.Component
-        experimentIds={[id]}
-        sourceProjectId={experiment.projectId}
-        sourceWorkspaceId={experiment.workspaceId}
-        onSubmit={handleMoveComplete}
-      />
-      {modalHyperparameterSearchContextHolder}
+      {shared}
+    </>
+  ) : (
+    <div className={css.base} title="Open actions menu">
+      <Dropdown menu={dropdownMenu} placement="bottomRight" onClick={handleDropdown}>
+        <Button ghost icon={<Icon name="overflow-vertical" size="small" title="Action menu" />} />
+      </Dropdown>
+      {shared}
     </div>
   );
 };

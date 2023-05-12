@@ -3,6 +3,7 @@ import { useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import Form from 'components/kit/Form';
+import Icon from 'components/kit/Icon';
 import { Modal } from 'components/kit/Modal';
 import Select, { Option } from 'components/kit/Select';
 import Link from 'components/Link';
@@ -10,7 +11,6 @@ import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { moveExperiments } from 'services/api';
 import { V1BulkExperimentFilters } from 'services/api-ts-sdk';
-import Icon from 'shared/components/Icon/Icon';
 import Spinner from 'shared/components/Spinner';
 import { pluralizer } from 'shared/utils/string';
 import projectStore from 'stores/projects';
@@ -27,6 +27,7 @@ type FormInputs = {
 interface Props {
   onSubmit?: (successfulIds?: number[]) => void;
   experimentIds: number[];
+  excludedExperimentIds?: Set<number>;
   filters?: V1BulkExperimentFilters;
   sourceProjectId?: number;
   sourceWorkspaceId?: number;
@@ -35,6 +36,7 @@ interface Props {
 const ExperimentMoveModalComponent: React.FC<Props> = ({
   onSubmit,
   experimentIds,
+  excludedExperimentIds,
   filters,
   sourceProjectId,
   sourceWorkspaceId,
@@ -73,7 +75,15 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
     const values = await form.validateFields();
     const projId = values.projectId ?? 1;
 
-    const results = await moveExperiments({ destinationProjectId: projId, experimentIds, filters });
+    if (excludedExperimentIds?.size) {
+      filters = { ...filters, excludedExperimentIds: Array.from(excludedExperimentIds) };
+    }
+
+    const results = await moveExperiments({
+      destinationProjectId: projId,
+      experimentIds,
+      filters,
+    });
 
     onSubmit?.(results.successful);
 
@@ -167,7 +177,7 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
                   value={workspace.id}>
                   <div>
                     <Typography.Text ellipsis={true}>{workspace.name}</Typography.Text>
-                    {workspace.archived && <Icon name="archive" />}
+                    {workspace.archived && <Icon name="archive" title="Archived" />}
                   </div>
                 </Option>
               );
@@ -194,7 +204,7 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
                       value={project.id}>
                       <div>
                         <Typography.Text ellipsis={true}>{project.name}</Typography.Text>
-                        {project.archived && <Icon name="archive" />}
+                        {project.archived && <Icon name="archive" title="Archived" />}
                       </div>
                     </Option>
                   ))}

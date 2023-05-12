@@ -24,12 +24,13 @@ simultaneously:
 For details on the supported searchers and their respective configuration options, refer to
 :ref:`hyperparameter-tuning`.
 
-That's it! After submitting an experiment, users can easily see the best validation metric observed
-across all trials over time in the WebUI. After the experiment has completed, they can view the
+That's it! After submitting an experiment, you can easily see the best validation metric observed
+across all trials over time in the WebUI. After the experiment has completed, you can view the
 hyperparameter values for the best-performing trials and then export the associated model
 checkpoints for downstream serving.
 
 .. image:: /assets/images/adaptive-asha-experiment-detail.png
+   :alt: You can use the Determined WebUI to see the best validation metric observed across all trials over time.
 
 *****************
  Adaptive Search

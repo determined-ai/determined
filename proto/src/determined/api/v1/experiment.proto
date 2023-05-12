@@ -265,6 +265,8 @@ message BulkExperimentFilters {
   // Limit experiments to those within a specified project, or 0 for all
   // projects.
   int32 project_id = 7;
+  // Experiment ids to exclude when filters are used.
+  repeated int32 excluded_experiment_ids = 8;
 }
 
 // Pause multiple experiments.
@@ -817,10 +819,15 @@ message SearchExperimentsRequest {
   int32 limit = 3;
   // Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc)
   optional string sort = 4;
+  // Filter expression
+  optional string filter = 5;
 }
 
 // combination of experiment and best trial with metrics
 message SearchExperimentExperiment {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "experiment" ] }
+  };
   // The experiment in question
   determined.experiment.v1.Experiment experiment = 1;
   // The best performing trial associated with the experiment

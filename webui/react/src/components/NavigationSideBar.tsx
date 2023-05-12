@@ -1,12 +1,13 @@
-import { Menu, MenuProps, Typography } from 'antd';
+import { Typography } from 'antd';
 import { boolean } from 'io-ts';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { CSSTransition } from 'react-transition-group';
 
-import Dropdown, { Placement } from 'components/Dropdown';
 import DynamicIcon from 'components/DynamicIcon';
 import Button from 'components/kit/Button';
+import Dropdown, { MenuItem } from 'components/kit/Dropdown';
+import Icon, { IconName, IconSize } from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
 import Tooltip from 'components/kit/Tooltip';
 import Link, { Props as LinkProps } from 'components/Link';
@@ -15,7 +16,6 @@ import { SettingsConfig, useSettings } from 'hooks/useSettings';
 import WorkspaceQuickSearch from 'pages/WorkspaceDetails/WorkspaceQuickSearch';
 import WorkspaceActionDropdown from 'pages/WorkspaceList/WorkspaceActionDropdown';
 import { paths } from 'routes/utils';
-import Icon, { IconSize } from 'shared/components/Icon/Icon';
 import Spinner from 'shared/components/Spinner/Spinner';
 import useUI from 'shared/contexts/stores/UI';
 import authStore from 'stores/auth';
@@ -34,7 +34,7 @@ import WorkspaceCreateModalComponent from './WorkspaceCreateModal';
 interface ItemProps extends LinkProps {
   action?: React.ReactNode;
   badge?: number;
-  icon: string | React.ReactNode;
+  icon: IconName | React.ReactElement;
   iconSize?: IconSize;
   label: string;
   labelRender?: React.ReactNode;
@@ -84,7 +84,7 @@ export const NavigationItem: React.FC<ItemProps> = ({
       <Link className={classes.join(' ')} path={path} {...props}>
         {typeof props.icon === 'string' ? (
           <div className={css.icon}>
-            <Icon name={props.icon} size={props.iconSize ?? 'large'} />
+            <Icon name={props.icon} size={props.iconSize ?? 'large'} title={props.label} />
           </div>
         ) : (
           <div className={css.icon}>{props.icon}</div>
@@ -103,7 +103,7 @@ export const NavigationItem: React.FC<ItemProps> = ({
   );
 
   return props.tooltip ? (
-    <Tooltip placement="right" title={props.label}>
+    <Tooltip content={props.label} placement="right">
       <div>{link}</div>
     </Tooltip>
   ) : (
@@ -138,12 +138,22 @@ const NavigationSideBar: React.FC = () => {
 
   const pinnedWorkspaces = useObservable(workspaceStore.pinned);
 
-  const menuConfig = useMemo(() => {
-    const topNav = canAccessUncategorized
+  interface MenuItemProps {
+    icon: IconName;
+    label: string;
+    path: string;
+    external?: boolean;
+    popout?: boolean;
+  }
+
+  const menuConfig: { bottom: MenuItemProps[]; top: MenuItemProps[] } = useMemo(() => {
+    const topNav: MenuItemProps[] = canAccessUncategorized
       ? [{ icon: 'experiment', label: 'Uncategorized', path: paths.uncategorized() }]
       : [];
-    const dashboardTopNav = [{ icon: 'home', label: 'Home', path: paths.dashboard() }];
-    const topItems = [
+    const dashboardTopNav: MenuItemProps[] = [
+      { icon: 'home', label: 'Home', path: paths.dashboard() },
+    ];
+    const topItems: MenuItemProps[] = [
       ...dashboardTopNav.concat(topNav),
       { icon: 'model', label: 'Model Registry', path: paths.modelList() },
       { icon: 'tasks', label: 'Tasks', path: paths.taskList() },
@@ -184,8 +194,8 @@ const NavigationSideBar: React.FC = () => {
 
   const { canAdministrateUsers } = usePermissions();
 
-  const menuItems: MenuProps['items'] = useMemo(() => {
-    const items = [
+  const menuItems = useMemo(() => {
+    const items: MenuItem[] = [
       {
         key: 'settings',
         label: <Link path={paths.settings('account')}>Settings</Link>,
@@ -223,10 +233,7 @@ const NavigationSideBar: React.FC = () => {
       timeout={200}>
       <nav className={css.base} ref={nodeRef}>
         <header>
-          <Dropdown
-            content={<Menu items={menuItems} selectable={false} />}
-            offset={settings.navbarCollapsed ? { x: -8, y: 16 } : { x: 16, y: -8 }}
-            placement={settings.navbarCollapsed ? Placement.RightTop : Placement.BottomLeft}>
+          <Dropdown menu={menuItems}>
             <div className={css.user}>
               <UserBadge compact hideAvatarTooltip user={currentUser} />
             </div>
@@ -248,14 +255,17 @@ const NavigationSideBar: React.FC = () => {
               action={
                 <div className={css.actionButtons}>
                   <WorkspaceQuickSearch>
-                    <Button type="text">
-                      <Icon name="search" size="tiny" />
-                    </Button>
+                    <Button
+                      icon={<Icon name="search" size="tiny" title="Search workspaces" />}
+                      type="text"
+                    />
                   </WorkspaceQuickSearch>
                   {canCreateWorkspace && (
-                    <Button type="text" onClick={WorkspaceCreateModal.open}>
-                      <Icon name="add-small" size="tiny" />
-                    </Button>
+                    <Button
+                      icon={<Icon name="add-small" size="tiny" title="Create workspace" />}
+                      type="text"
+                      onClick={WorkspaceCreateModal.open}
+                    />
                   )}
                 </div>
               }
@@ -272,9 +282,9 @@ const NavigationSideBar: React.FC = () => {
                     .sort((a, b) => ((a.pinnedAt ?? 0) < (b.pinnedAt ?? 0) ? -1 : 1))
                     .map((workspace) => (
                       <WorkspaceActionDropdown
+                        isContextMenu
                         key={workspace.id}
                         returnIndexOnDelete={false}
-                        trigger={['contextMenu']}
                         workspace={workspace}>
                         <li>
                           <NavigationItem
@@ -328,7 +338,7 @@ const NavigationSideBar: React.FC = () => {
         <footer>
           <div className={css.version}>
             {isVersionLong && settings.navbarCollapsed ? (
-              <Tooltip placement="right" title={`Version ${version}`}>
+              <Tooltip content={`Version ${version}`} placement="right">
                 <span className={css.versionLabel}>{shortVersion}</span>
               </Tooltip>
             ) : (

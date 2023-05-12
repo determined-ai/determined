@@ -9,12 +9,42 @@
  */
 
 
-import url from "url";
-import portableFetch from "portable-fetch";
 import { Configuration } from "./configuration";
 
 type ValueOf<T> = T[keyof T];
 const BASE_PATH = "http://localhost".replace(/\/+$/, "");
+
+const convert = (v: unknown): string => {
+    switch (typeof v) {
+        case 'string':
+        case 'boolean': {
+            return v.toString();
+        }
+        case 'bigint': {
+            return '' + v
+        }
+        case 'number': {
+            if (Number.isFinite(v))  {
+                return encodeURIComponent(v);
+            }
+            return '';
+        }
+        default: {
+            return '';
+        }
+    }
+}
+
+const objToSearchParams = (obj: {}, searchParams: URLSearchParams) => {
+    Object.entries(obj).forEach(([key, value]) => {
+        if (Array.isArray(value) && value.length > 0) {
+            searchParams.set(key, convert(value[0]))
+            value.slice(1).forEach((subValue) => searchParams.append(key, convert(subValue)))
+        } else if (!Array.isArray(value)) {
+            searchParams.set(key, convert(value))
+        }
+    });
+};
 
 /**
  *
@@ -54,7 +84,7 @@ export interface FetchArgs {
 export class BaseAPI {
     protected configuration: Configuration;
 
-    constructor(configuration?: Configuration, protected basePath: string = BASE_PATH, protected fetch: FetchAPI = portableFetch) {
+    constructor(configuration?: Configuration, protected basePath: string = BASE_PATH, protected fetch: FetchAPI = window.fetch) {
         if (configuration) {
             this.configuration = configuration;
             this.basePath = configuration.basePath || this.basePath;
@@ -189,6 +219,56 @@ export const Jobv1Type = {
     CHECKPOINTGC: 'TYPE_CHECKPOINT_GC',
 } as const
 export type Jobv1Type = ValueOf<typeof Jobv1Type>
+/**
+ * Nested object for checkpoint_storage field patch.
+ * @export
+ * @interface PatchExperimentPatchCheckpointStorage
+ */
+export interface PatchExperimentPatchCheckpointStorage {
+    /**
+     * Experiment config checkpoint_storage.save_experiment_best.
+     * @type {number}
+     * @memberof PatchExperimentPatchCheckpointStorage
+     */
+    saveExperimentBest?: number;
+    /**
+     * Experiment config checkpoint_storage.save_trial_best.
+     * @type {number}
+     * @memberof PatchExperimentPatchCheckpointStorage
+     */
+    saveTrialBest?: number;
+    /**
+     * Experiment config checkpoint_storage.save_trial_latest.
+     * @type {number}
+     * @memberof PatchExperimentPatchCheckpointStorage
+     */
+    saveTrialLatest?: number;
+}
+/**
+ * Nested object for resources field patch.
+ * @export
+ * @interface PatchExperimentPatchResources
+ */
+export interface PatchExperimentPatchResources {
+    /**
+     * Experiment config resources.max_slots.
+     * @type {number}
+     * @memberof PatchExperimentPatchResources
+     */
+    maxSlots?: number;
+    /**
+     * Experiment config resources.weight.
+     * @type {number}
+     * @memberof PatchExperimentPatchResources
+     */
+    weight?: number;
+    /**
+     * Experiment config resources.priority.
+     * @type {number}
+     * @memberof PatchExperimentPatchResources
+     */
+    priority?: number;
+}
 /**
  * https://developers.google.com/protocol-buffers/docs/reference/java/com/google/protobuf/Any
  * @export
@@ -730,6 +810,12 @@ export interface Trialv1Trial {
      * @memberof Trialv1Trial
      */
     checkpointCount?: number;
+    /**
+     * summary metrics
+     * @type {any}
+     * @memberof Trialv1Trial
+     */
+    summaryMetrics?: any;
 }
 /**
  * struct for the ids parameter.
@@ -1500,6 +1586,12 @@ export interface V1BulkExperimentFilters {
      * @memberof V1BulkExperimentFilters
      */
     projectId?: number;
+    /**
+     * Experiment ids to exclude when filters are used.
+     * @type {Array<number>}
+     * @memberof V1BulkExperimentFilters
+     */
+    excludedExperimentIds?: Array<number>;
 }
 /**
  * Response to CancelExperimentRequest.
@@ -3890,7 +3982,7 @@ export interface V1GetTemplateResponse {
      * @type {V1Template}
      * @memberof V1GetTemplateResponse
      */
-    template?: V1Template;
+    template: V1Template;
 }
 /**
  * Sorts templates by the given field.   - SORT_BY_UNSPECIFIED: Returns templates in an unsorted list.  - SORT_BY_NAME: Returns templates sorted by name.
@@ -3913,13 +4005,13 @@ export interface V1GetTemplatesResponse {
      * @type {Array<V1Template>}
      * @memberof V1GetTemplatesResponse
      */
-    templates?: Array<V1Template>;
+    templates: Array<V1Template>;
     /**
      * Pagination information of the full dataset.
      * @type {V1Pagination}
      * @memberof V1GetTemplatesResponse
      */
-    pagination?: V1Pagination;
+    pagination: V1Pagination;
 }
 /**
  * Response to GetTensorboardRequest.
@@ -5794,6 +5886,18 @@ export interface V1PatchExperiment {
      * @memberof V1PatchExperiment
      */
     notes?: string;
+    /**
+     * Experiment config resources.
+     * @type {PatchExperimentPatchResources}
+     * @memberof V1PatchExperiment
+     */
+    resources?: PatchExperimentPatchResources;
+    /**
+     * Experiment config checkpoint_storage.
+     * @type {PatchExperimentPatchCheckpointStorage}
+     * @memberof V1PatchExperiment
+     */
+    checkpointStorage?: PatchExperimentPatchCheckpointStorage;
 }
 /**
  * Response to PatchExperimentRequest.
@@ -5957,6 +6061,19 @@ export interface V1PatchProjectResponse {
      * @memberof V1PatchProjectResponse
      */
     project: V1Project;
+}
+/**
+ * Response to PatchTemplateConfigRequest.
+ * @export
+ * @interface V1PatchTemplateConfigResponse
+ */
+export interface V1PatchTemplateConfigResponse {
+    /**
+     * The updated template.
+     * @type {V1Template}
+     * @memberof V1PatchTemplateConfigResponse
+     */
+    template: V1Template;
 }
 /**
  * Request message to PatchTrialsCollection.
@@ -6173,7 +6290,7 @@ export interface V1Permission {
     scopeTypeMask?: V1ScopeTypeMask;
 }
 /**
- * List of permissions types. Value of the enum has 9xxxx for global only permissions. Permissions on the same object share the thousands place value like 2001 and 2002.   - PERMISSION_TYPE_UNSPECIFIED: The permission type is unknown.  - PERMISSION_TYPE_ADMINISTRATE_USER: Can create and update other users. Allows updating other users passwords making this permission give all other permissions effectively.  - PERMISSION_TYPE_CREATE_EXPERIMENT: Ability to create experiments.  - PERMISSION_TYPE_VIEW_EXPERIMENT_ARTIFACTS: Ability to view experiment's model code, checkpoints, trials.  - PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA: Ability to view experiment's metadata such as experiment config, progress.  - PERMISSION_TYPE_UPDATE_EXPERIMENT: Ability to update experiment and experiment's lifecycle.  - PERMISSION_TYPE_UPDATE_EXPERIMENT_METADATA: Ability to update experiment's metadata.  - PERMISSION_TYPE_DELETE_EXPERIMENT: Ability to delete experiment.  - PERMISSION_TYPE_CREATE_NSC: Ability to create Notebooks, Shells, and Commands.  - PERMISSION_TYPE_VIEW_NSC: Ability to view Notebooks, Shells, and Commands.  - PERMISSION_TYPE_UPDATE_NSC: Ability to terminate Notebooks, Shells, and Commands.  - PERMISSION_TYPE_UPDATE_GROUP: Ability to create, update, and add / remove users from groups.  - PERMISSION_TYPE_CREATE_WORKSPACE: Ability to create workspaces.  - PERMISSION_TYPE_VIEW_WORKSPACE: Ability to view workspace.  - PERMISSION_TYPE_UPDATE_WORKSPACE: Ability to update workspace.  - PERMISSION_TYPE_DELETE_WORKSPACE: Ability to delete workspace.  - PERMISSION_TYPE_SET_WORKSPACE_AGENT_USER_GROUP: Ability to set workspace agent user group config.  - PERMISSION_TYPE_SET_WORKSPACE_CHECKPOINT_STORAGE_CONFIG: Ability to set workspace checkpoint storage config.  - PERMISSION_TYPE_CREATE_PROJECT: Ability to create projects.  - PERMISSION_TYPE_VIEW_PROJECT: Ability to view projects.  - PERMISSION_TYPE_UPDATE_PROJECT: Ability to update projects.  - PERMISSION_TYPE_DELETE_PROJECT: Ability to delete projects.  - PERMISSION_TYPE_ASSIGN_ROLES: Ability to assign roles to groups / users. If assigned at a workspace scope, can only assign roles to that workspace scope.  - PERMISSION_TYPE_VIEW_MODEL_REGISTRY: Ability to view model registry.  - PERMISSION_TYPE_EDIT_MODEL_REGISTRY: Ability to edit model registry.  - PERMISSION_TYPE_CREATE_MODEL_REGISTRY: Ability to create model registry.  - PERMISSION_TYPE_DELETE_MODEL_REGISTRY: Ability to delete model registry  - PERMISSION_TYPE_VIEW_MASTER_LOGS: Ability to view master logs.  - PERMISSION_TYPE_VIEW_CLUSTER_USAGE: Ability to view detailed cluster usage info.  - PERMISSION_TYPE_UPDATE_AGENTS: Ability to update agents.  - PERMISSION_TYPE_UPDATE_ROLES: Ability to create and update role definitions.  - PERMISSION_TYPE_EDIT_WEBHOOKS: Ability to create and delete webhooks.
+ * List of permissions types. Value of the enum has 9xxxx for global only permissions. Permissions on the same object share the thousands place value like 2001 and 2002.   - PERMISSION_TYPE_UNSPECIFIED: The permission type is unknown.  - PERMISSION_TYPE_ADMINISTRATE_USER: Can create and update other users. Allows updating other users passwords making this permission give all other permissions effectively.  - PERMISSION_TYPE_CREATE_EXPERIMENT: Ability to create experiments.  - PERMISSION_TYPE_VIEW_EXPERIMENT_ARTIFACTS: Ability to view experiment's model code, checkpoints, trials.  - PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA: Ability to view experiment's metadata such as experiment config, progress.  - PERMISSION_TYPE_UPDATE_EXPERIMENT: Ability to update experiment and experiment's lifecycle.  - PERMISSION_TYPE_UPDATE_EXPERIMENT_METADATA: Ability to update experiment's metadata.  - PERMISSION_TYPE_DELETE_EXPERIMENT: Ability to delete experiment.  - PERMISSION_TYPE_CREATE_NSC: Ability to create Notebooks, Shells, and Commands.  - PERMISSION_TYPE_VIEW_NSC: Ability to view Notebooks, Shells, and Commands.  - PERMISSION_TYPE_UPDATE_NSC: Ability to terminate Notebooks, Shells, and Commands.  - PERMISSION_TYPE_UPDATE_GROUP: Ability to create, update, and add / remove users from groups.  - PERMISSION_TYPE_CREATE_WORKSPACE: Ability to create workspaces.  - PERMISSION_TYPE_VIEW_WORKSPACE: Ability to view workspace.  - PERMISSION_TYPE_UPDATE_WORKSPACE: Ability to update workspace.  - PERMISSION_TYPE_DELETE_WORKSPACE: Ability to delete workspace.  - PERMISSION_TYPE_SET_WORKSPACE_AGENT_USER_GROUP: Ability to set workspace agent user group config.  - PERMISSION_TYPE_SET_WORKSPACE_CHECKPOINT_STORAGE_CONFIG: Ability to set workspace checkpoint storage config.  - PERMISSION_TYPE_CREATE_PROJECT: Ability to create projects.  - PERMISSION_TYPE_VIEW_PROJECT: Ability to view projects.  - PERMISSION_TYPE_UPDATE_PROJECT: Ability to update projects.  - PERMISSION_TYPE_DELETE_PROJECT: Ability to delete projects.  - PERMISSION_TYPE_ASSIGN_ROLES: Ability to assign roles to groups / users. If assigned at a workspace scope, can only assign roles to that workspace scope.  - PERMISSION_TYPE_VIEW_MODEL_REGISTRY: Ability to view model registry.  - PERMISSION_TYPE_EDIT_MODEL_REGISTRY: Ability to edit model registry.  - PERMISSION_TYPE_CREATE_MODEL_REGISTRY: Ability to create model registry.  - PERMISSION_TYPE_DELETE_MODEL_REGISTRY: Ability to delete model registry.  - PERMISSION_TYPE_VIEW_MASTER_LOGS: Ability to view master logs.  - PERMISSION_TYPE_VIEW_CLUSTER_USAGE: Ability to view detailed cluster usage info.  - PERMISSION_TYPE_UPDATE_AGENTS: Ability to update agents.  - PERMISSION_TYPE_UPDATE_ROLES: Ability to create and update role definitions.  - PERMISSION_TYPE_EDIT_WEBHOOKS: Ability to create and delete webhooks.
  * @export
  * @enum {string}
  */
@@ -6495,6 +6612,19 @@ export interface V1PostSearcherOperationsRequest {
  * @interface V1PostSearcherOperationsResponse
  */
 export interface V1PostSearcherOperationsResponse {
+}
+/**
+ * Response to PostTemplateRequest.
+ * @export
+ * @interface V1PostTemplateResponse
+ */
+export interface V1PostTemplateResponse {
+    /**
+     * The created template.
+     * @type {V1Template}
+     * @memberof V1PostTemplateResponse
+     */
+    template: V1Template;
 }
 /**
  * Create a batch of trial profiler metrics.
@@ -8165,7 +8295,7 @@ export interface V1SearchExperimentExperiment {
      * @type {V1Experiment}
      * @memberof V1SearchExperimentExperiment
      */
-    experiment?: V1Experiment;
+    experiment: V1Experiment;
     /**
      * The best performing trial associated with the experiment
      * @type {Trialv1Trial}
@@ -8752,6 +8882,12 @@ export interface V1Template {
      * @memberof V1Template
      */
     config: any;
+    /**
+     * The id of the workspace associated with this model.
+     * @type {number}
+     * @memberof V1Template
+     */
+    workspaceId: number;
 }
 /**
  * Tensorboard is a tensorboard instance in a containerized environment.
@@ -10108,7 +10244,7 @@ export const AuthenticationApiFetchParamCreator = function (configuration?: Conf
          */
         currentUser(options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/auth/user`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -10121,13 +10257,12 @@ export const AuthenticationApiFetchParamCreator = function (configuration?: Conf
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -10144,21 +10279,20 @@ export const AuthenticationApiFetchParamCreator = function (configuration?: Conf
                 throw new RequiredError('body','Required parameter body was null or undefined when calling login.');
             }
             const localVarPath = `/api/v1/auth/login`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -10170,7 +10304,7 @@ export const AuthenticationApiFetchParamCreator = function (configuration?: Conf
          */
         logout(options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/auth/logout`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -10183,13 +10317,12 @@ export const AuthenticationApiFetchParamCreator = function (configuration?: Conf
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -10210,7 +10343,7 @@ export const AuthenticationApiFp = function (configuration?: Configuration) {
          */
         currentUser(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CurrentUserResponse> {
             const localVarFetchArgs = AuthenticationApiFetchParamCreator(configuration).currentUser(options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -10229,7 +10362,7 @@ export const AuthenticationApiFp = function (configuration?: Configuration) {
          */
         login(body: V1LoginRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1LoginResponse> {
             const localVarFetchArgs = AuthenticationApiFetchParamCreator(configuration).login(body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -10247,7 +10380,7 @@ export const AuthenticationApiFp = function (configuration?: Configuration) {
          */
         logout(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1LogoutResponse> {
             const localVarFetchArgs = AuthenticationApiFetchParamCreator(configuration).logout(options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -10359,7 +10492,7 @@ export const CheckpointsApiFetchParamCreator = function (configuration?: Configu
                 throw new RequiredError('body','Required parameter body was null or undefined when calling deleteCheckpoints.');
             }
             const localVarPath = `/api/v1/checkpoints`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'DELETE', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -10374,14 +10507,13 @@ export const CheckpointsApiFetchParamCreator = function (configuration?: Configu
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -10399,7 +10531,7 @@ export const CheckpointsApiFetchParamCreator = function (configuration?: Configu
             }
             const localVarPath = `/api/v1/checkpoints/{checkpointUuid}`
                 .replace(`{${"checkpointUuid"}}`, encodeURIComponent(String(checkpointUuid)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -10412,13 +10544,12 @@ export const CheckpointsApiFetchParamCreator = function (configuration?: Configu
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -10441,7 +10572,7 @@ export const CheckpointsApiFetchParamCreator = function (configuration?: Configu
             }
             const localVarPath = `/api/v1/checkpoints/{checkpointUuid}/metadata`
                 .replace(`{${"checkpointUuid"}}`, encodeURIComponent(String(checkpointUuid)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -10456,14 +10587,13 @@ export const CheckpointsApiFetchParamCreator = function (configuration?: Configu
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -10485,7 +10615,7 @@ export const CheckpointsApiFp = function (configuration?: Configuration) {
          */
         deleteCheckpoints(body: V1DeleteCheckpointsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteCheckpointsResponse> {
             const localVarFetchArgs = CheckpointsApiFetchParamCreator(configuration).deleteCheckpoints(body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -10504,7 +10634,7 @@ export const CheckpointsApiFp = function (configuration?: Configuration) {
          */
         getCheckpoint(checkpointUuid: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetCheckpointResponse> {
             const localVarFetchArgs = CheckpointsApiFetchParamCreator(configuration).getCheckpoint(checkpointUuid, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -10524,7 +10654,7 @@ export const CheckpointsApiFp = function (configuration?: Configuration) {
          */
         postCheckpointMetadata(checkpointUuid: string, body: V1PostCheckpointMetadataRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostCheckpointMetadataResponse> {
             const localVarFetchArgs = CheckpointsApiFetchParamCreator(configuration).postCheckpointMetadata(checkpointUuid, body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -10648,7 +10778,7 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
             }
             const localVarPath = `/api/v1/agents/{agentId}/disable`
                 .replace(`{${"agentId"}}`, encodeURIComponent(String(agentId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -10663,14 +10793,13 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -10699,7 +10828,7 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
             const localVarPath = `/api/v1/agents/{agentId}/slots/{slotId}/disable`
                 .replace(`{${"agentId"}}`, encodeURIComponent(String(agentId)))
                 .replace(`{${"slotId"}}`, encodeURIComponent(String(slotId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -10714,14 +10843,13 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -10739,7 +10867,7 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
             }
             const localVarPath = `/api/v1/agents/{agentId}/enable`
                 .replace(`{${"agentId"}}`, encodeURIComponent(String(agentId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -10752,13 +10880,12 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -10782,7 +10909,7 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
             const localVarPath = `/api/v1/agents/{agentId}/slots/{slotId}/enable`
                 .replace(`{${"agentId"}}`, encodeURIComponent(String(agentId)))
                 .replace(`{${"slotId"}}`, encodeURIComponent(String(slotId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -10795,13 +10922,12 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -10819,7 +10945,7 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
             }
             const localVarPath = `/api/v1/agents/{agentId}`
                 .replace(`{${"agentId"}}`, encodeURIComponent(String(agentId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -10832,13 +10958,12 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -10855,7 +10980,7 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
          */
         getAgents(sortBy?: V1GetAgentsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, label?: string, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/agents`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -10888,13 +11013,12 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
                 localVarQueryParameter['label'] = label
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -10906,18 +11030,17 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
          */
         getMaster(options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/master`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -10929,7 +11052,7 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
          */
         getMasterConfig(options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/master/config`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -10942,13 +11065,12 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -10972,7 +11094,7 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
             const localVarPath = `/api/v1/agents/{agentId}/slots/{slotId}`
                 .replace(`{${"agentId"}}`, encodeURIComponent(String(agentId)))
                 .replace(`{${"slotId"}}`, encodeURIComponent(String(slotId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -10985,13 +11107,12 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -11009,7 +11130,7 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
             }
             const localVarPath = `/api/v1/agents/{agentId}/slots`
                 .replace(`{${"agentId"}}`, encodeURIComponent(String(agentId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -11022,13 +11143,12 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -11043,7 +11163,7 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
          */
         masterLogs(offset?: number, limit?: number, follow?: boolean, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/master/logs`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -11068,13 +11188,12 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
                 localVarQueryParameter['follow'] = follow
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -11101,7 +11220,7 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
                 throw new RequiredError('period','Required parameter period was null or undefined when calling resourceAllocationAggregated.');
             }
             const localVarPath = `/api/v1/resources/allocation/aggregated`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -11126,13 +11245,12 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
                 localVarQueryParameter['period'] = period
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -11154,7 +11272,7 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
                 throw new RequiredError('timestampBefore','Required parameter timestampBefore was null or undefined when calling resourceAllocationRaw.');
             }
             const localVarPath = `/api/v1/resources/allocation/raw`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -11175,13 +11293,12 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
                 localVarQueryParameter['timestampBefore'] = timestampBefore.toISOString()
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -11204,7 +11321,7 @@ export const ClusterApiFp = function (configuration?: Configuration) {
          */
         disableAgent(agentId: string, body: V1DisableAgentRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DisableAgentResponse> {
             const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).disableAgent(agentId, body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -11225,7 +11342,7 @@ export const ClusterApiFp = function (configuration?: Configuration) {
          */
         disableSlot(agentId: string, slotId: string, body: V1DisableSlotRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DisableSlotResponse> {
             const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).disableSlot(agentId, slotId, body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -11244,7 +11361,7 @@ export const ClusterApiFp = function (configuration?: Configuration) {
          */
         enableAgent(agentId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1EnableAgentResponse> {
             const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).enableAgent(agentId, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -11264,7 +11381,7 @@ export const ClusterApiFp = function (configuration?: Configuration) {
          */
         enableSlot(agentId: string, slotId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1EnableSlotResponse> {
             const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).enableSlot(agentId, slotId, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -11283,7 +11400,7 @@ export const ClusterApiFp = function (configuration?: Configuration) {
          */
         getAgent(agentId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetAgentResponse> {
             const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).getAgent(agentId, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -11306,7 +11423,7 @@ export const ClusterApiFp = function (configuration?: Configuration) {
          */
         getAgents(sortBy?: V1GetAgentsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, label?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetAgentsResponse> {
             const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).getAgents(sortBy, orderBy, offset, limit, label, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -11324,7 +11441,7 @@ export const ClusterApiFp = function (configuration?: Configuration) {
          */
         getMaster(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetMasterResponse> {
             const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).getMaster(options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -11342,7 +11459,7 @@ export const ClusterApiFp = function (configuration?: Configuration) {
          */
         getMasterConfig(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetMasterConfigResponse> {
             const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).getMasterConfig(options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -11362,7 +11479,7 @@ export const ClusterApiFp = function (configuration?: Configuration) {
          */
         getSlot(agentId: string, slotId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetSlotResponse> {
             const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).getSlot(agentId, slotId, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -11381,7 +11498,7 @@ export const ClusterApiFp = function (configuration?: Configuration) {
          */
         getSlots(agentId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetSlotsResponse> {
             const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).getSlots(agentId, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -11402,7 +11519,7 @@ export const ClusterApiFp = function (configuration?: Configuration) {
          */
         masterLogs(offset?: number, limit?: number, follow?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1MasterLogsResponse> {
             const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).masterLogs(offset, limit, follow, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -11423,7 +11540,7 @@ export const ClusterApiFp = function (configuration?: Configuration) {
          */
         resourceAllocationAggregated(startDate: string, endDate: string, period: V1ResourceAllocationAggregationPeriod, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ResourceAllocationAggregatedResponse> {
             const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).resourceAllocationAggregated(startDate, endDate, period, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -11443,7 +11560,7 @@ export const ClusterApiFp = function (configuration?: Configuration) {
          */
         resourceAllocationRaw(timestampAfter: Date, timestampBefore: Date, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ResourceAllocationRawResponse> {
             const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).resourceAllocationRaw(timestampAfter, timestampBefore, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -11804,7 +11921,7 @@ export const CommandsApiFetchParamCreator = function (configuration?: Configurat
             }
             const localVarPath = `/api/v1/commands/{commandId}`
                 .replace(`{${"commandId"}}`, encodeURIComponent(String(commandId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -11817,13 +11934,12 @@ export const CommandsApiFetchParamCreator = function (configuration?: Configurat
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -11842,7 +11958,7 @@ export const CommandsApiFetchParamCreator = function (configuration?: Configurat
          */
         getCommands(sortBy?: V1GetTensorboardsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, workspaceId?: number, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/commands`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -11883,13 +11999,12 @@ export const CommandsApiFetchParamCreator = function (configuration?: Configurat
                 localVarQueryParameter['workspaceId'] = workspaceId
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -11907,7 +12022,7 @@ export const CommandsApiFetchParamCreator = function (configuration?: Configurat
             }
             const localVarPath = `/api/v1/commands/{commandId}/kill`
                 .replace(`{${"commandId"}}`, encodeURIComponent(String(commandId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -11920,13 +12035,12 @@ export const CommandsApiFetchParamCreator = function (configuration?: Configurat
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -11943,7 +12057,7 @@ export const CommandsApiFetchParamCreator = function (configuration?: Configurat
                 throw new RequiredError('body','Required parameter body was null or undefined when calling launchCommand.');
             }
             const localVarPath = `/api/v1/commands`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -11958,14 +12072,13 @@ export const CommandsApiFetchParamCreator = function (configuration?: Configurat
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -11988,7 +12101,7 @@ export const CommandsApiFetchParamCreator = function (configuration?: Configurat
             }
             const localVarPath = `/api/v1/commands/{commandId}/set_priority`
                 .replace(`{${"commandId"}}`, encodeURIComponent(String(commandId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -12003,14 +12116,13 @@ export const CommandsApiFetchParamCreator = function (configuration?: Configurat
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -12032,7 +12144,7 @@ export const CommandsApiFp = function (configuration?: Configuration) {
          */
         getCommand(commandId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetCommandResponse> {
             const localVarFetchArgs = CommandsApiFetchParamCreator(configuration).getCommand(commandId, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -12057,7 +12169,7 @@ export const CommandsApiFp = function (configuration?: Configuration) {
          */
         getCommands(sortBy?: V1GetTensorboardsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, workspaceId?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetCommandsResponse> {
             const localVarFetchArgs = CommandsApiFetchParamCreator(configuration).getCommands(sortBy, orderBy, offset, limit, users, userIds, workspaceId, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -12076,7 +12188,7 @@ export const CommandsApiFp = function (configuration?: Configuration) {
          */
         killCommand(commandId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1KillCommandResponse> {
             const localVarFetchArgs = CommandsApiFetchParamCreator(configuration).killCommand(commandId, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -12095,7 +12207,7 @@ export const CommandsApiFp = function (configuration?: Configuration) {
          */
         launchCommand(body: V1LaunchCommandRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1LaunchCommandResponse> {
             const localVarFetchArgs = CommandsApiFetchParamCreator(configuration).launchCommand(body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -12115,7 +12227,7 @@ export const CommandsApiFp = function (configuration?: Configuration) {
          */
         setCommandPriority(commandId: string, body: V1SetCommandPriorityRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SetCommandPriorityResponse> {
             const localVarFetchArgs = CommandsApiFetchParamCreator(configuration).setCommandPriority(commandId, body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -12290,7 +12402,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             }
             const localVarPath = `/api/v1/experiments/{id}/activate`
                 .replace(`{${"id"}}`, encodeURIComponent(String(id)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -12303,13 +12415,12 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -12326,7 +12437,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
                 throw new RequiredError('body','Required parameter body was null or undefined when calling activateExperiments.');
             }
             const localVarPath = `/api/v1/experiments/activate`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -12341,14 +12452,13 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -12366,7 +12476,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             }
             const localVarPath = `/api/v1/experiments/{id}/archive`
                 .replace(`{${"id"}}`, encodeURIComponent(String(id)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -12379,13 +12489,12 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -12402,7 +12511,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
                 throw new RequiredError('body','Required parameter body was null or undefined when calling archiveExperiments.');
             }
             const localVarPath = `/api/v1/experiments/archive`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -12417,14 +12526,13 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -12442,7 +12550,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             }
             const localVarPath = `/api/v1/experiments/{id}/cancel`
                 .replace(`{${"id"}}`, encodeURIComponent(String(id)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -12455,13 +12563,12 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -12478,7 +12585,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
                 throw new RequiredError('body','Required parameter body was null or undefined when calling cancelExperiments.');
             }
             const localVarPath = `/api/v1/experiments/cancel`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -12493,14 +12600,13 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -12535,7 +12641,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          */
         compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: V1MetricType, scale?: V1Scale, metricIds?: Array<string>, timeSeriesFilterName?: string, timeSeriesFilterDoubleRangeLt?: number, timeSeriesFilterDoubleRangeLte?: number, timeSeriesFilterDoubleRangeGt?: number, timeSeriesFilterDoubleRangeGte?: number, timeSeriesFilterIntegerRangeLt?: number, timeSeriesFilterIntegerRangeLte?: number, timeSeriesFilterIntegerRangeGt?: number, timeSeriesFilterIntegerRangeGte?: number, timeSeriesFilterIntegerRangeIncl?: Array<number>, timeSeriesFilterIntegerRangeNotIn?: Array<number>, timeSeriesFilterTimeRangeLt?: Date, timeSeriesFilterTimeRangeLte?: Date, timeSeriesFilterTimeRangeGt?: Date, timeSeriesFilterTimeRangeGte?: Date, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/trials/time-series`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -12640,13 +12746,12 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
                 localVarQueryParameter['timeSeriesFilter.timeRange.gte'] = timeSeriesFilterTimeRangeGte.toISOString()
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -12664,7 +12769,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             }
             const localVarPath = `/api/v1/experiments/{experimentId}`
                 .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'DELETE', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -12677,13 +12782,12 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -12700,7 +12804,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
                 throw new RequiredError('body','Required parameter body was null or undefined when calling deleteExperiments.');
             }
             const localVarPath = `/api/v1/experiments/delete`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'DELETE', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -12715,14 +12819,13 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -12740,7 +12843,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             }
             const localVarPath = `/api/v1/experiments/{experimentId}`
                 .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -12753,13 +12856,12 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -12782,7 +12884,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             }
             const localVarPath = `/api/v1/experiments/{id}/checkpoints`
                 .replace(`{${"id"}}`, encodeURIComponent(String(id)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -12815,13 +12917,12 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
                 localVarQueryParameter['states'] = states
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -12834,7 +12935,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          */
         getExperimentLabels(projectId?: number, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/experiment/labels`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -12851,13 +12952,12 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
                 localVarQueryParameter['projectId'] = projectId
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -12888,7 +12988,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          */
         getExperiments(sortBy?: V1GetExperimentsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, description?: string, name?: string, labels?: Array<string>, archived?: boolean, states?: Array<Experimentv1State>, users?: Array<string>, userIds?: Array<number>, projectId?: number, experimentIdFilterLt?: number, experimentIdFilterLte?: number, experimentIdFilterGt?: number, experimentIdFilterGte?: number, experimentIdFilterIncl?: Array<number>, experimentIdFilterNotIn?: Array<number>, showTrialData?: boolean, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/experiments`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -12977,13 +13077,12 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
                 localVarQueryParameter['showTrialData'] = showTrialData
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -13006,7 +13105,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             }
             const localVarPath = `/api/v1/experiments/{experimentId}/trials`
                 .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -13039,13 +13138,12 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
                 localVarQueryParameter['states'] = states
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -13063,7 +13161,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             }
             const localVarPath = `/api/v1/experiments/{experimentId}/validation-history`
                 .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -13076,13 +13174,12 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -13100,7 +13197,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             }
             const localVarPath = `/api/v1/experiments/{experimentId}/model_def`
                 .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -13113,13 +13210,12 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -13142,7 +13238,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             }
             const localVarPath = `/api/v1/experiments/{experimentId}/file`
                 .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -13157,14 +13253,13 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -13182,7 +13277,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             }
             const localVarPath = `/api/v1/experiments/{experimentId}/file_tree`
                 .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -13195,13 +13290,12 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -13219,7 +13313,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             }
             const localVarPath = `/api/v1/experiments/{experimentId}/searcher_events`
                 .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -13232,13 +13326,12 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -13256,7 +13349,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             }
             const localVarPath = `/api/v1/trials/{trialId}`
                 .replace(`{${"trialId"}}`, encodeURIComponent(String(trialId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -13269,13 +13362,12 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -13298,7 +13390,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             }
             const localVarPath = `/api/v1/trials/{id}/checkpoints`
                 .replace(`{${"id"}}`, encodeURIComponent(String(id)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -13331,13 +13423,12 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
                 localVarQueryParameter['states'] = states
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -13355,7 +13446,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             }
             const localVarPath = `/api/v1/experiments/{id}/kill`
                 .replace(`{${"id"}}`, encodeURIComponent(String(id)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -13368,13 +13459,12 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -13391,7 +13481,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
                 throw new RequiredError('body','Required parameter body was null or undefined when calling killExperiments.');
             }
             const localVarPath = `/api/v1/experiments/kill`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -13406,14 +13496,13 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -13431,7 +13520,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             }
             const localVarPath = `/api/v1/trials/{id}/kill`
                 .replace(`{${"id"}}`, encodeURIComponent(String(id)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -13444,13 +13533,12 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -13473,7 +13561,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             }
             const localVarPath = `/api/v1/experiments/{experimentId}/move`
                 .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -13488,14 +13576,13 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -13512,7 +13599,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
                 throw new RequiredError('body','Required parameter body was null or undefined when calling moveExperiments.');
             }
             const localVarPath = `/api/v1/experiments/move`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -13527,14 +13614,13 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -13557,7 +13643,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             }
             const localVarPath = `/api/v1/experiments/{experimentId}`
                 .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'PATCH', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -13572,14 +13658,13 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -13597,7 +13682,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             }
             const localVarPath = `/api/v1/experiments/{id}/pause`
                 .replace(`{${"id"}}`, encodeURIComponent(String(id)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -13610,13 +13695,12 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -13633,7 +13717,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
                 throw new RequiredError('body','Required parameter body was null or undefined when calling pauseExperiments.');
             }
             const localVarPath = `/api/v1/experiments/pause`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -13648,14 +13732,13 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -13678,7 +13761,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             }
             const localVarPath = `/api/v1/experiments/{experimentId}/searcher_operations`
                 .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -13693,14 +13776,13 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -13717,7 +13799,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
                 throw new RequiredError('body','Required parameter body was null or undefined when calling previewHPSearch.');
             }
             const localVarPath = `/api/v1/preview-hp-search`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -13732,14 +13814,13 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -13750,12 +13831,13 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {number} [offset] How many experiments to skip before including in the results.
          * @param {number} [limit] How many results to show.
          * @param {string} [sort] Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc).
+         * @param {string} [filter] Filter expression.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        searchExperiments(projectId?: number, offset?: number, limit?: number, sort?: string, options: any = {}): FetchArgs {
+        searchExperiments(projectId?: number, offset?: number, limit?: number, sort?: string, filter?: string, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/experiments-search`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -13784,13 +13866,16 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
                 localVarQueryParameter['sort'] = sort
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            if (filter !== undefined) {
+                localVarQueryParameter['filter'] = filter
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -13814,7 +13899,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             }
             const localVarPath = `/api/v1/trials/{trialId}/summarize`
                 .replace(`{${"trialId"}}`, encodeURIComponent(String(trialId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -13851,13 +13936,12 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
                 localVarQueryParameter['scale'] = scale
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -13887,7 +13971,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             }
             const localVarPath = `/api/v1/trials/{trialId}/logs`
                 .replace(`{${"trialId"}}`, encodeURIComponent(String(trialId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -13948,13 +14032,12 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
                 localVarQueryParameter['searchText'] = searchText
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -13973,7 +14056,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             }
             const localVarPath = `/api/v1/trials/{trialId}/logs/fields`
                 .replace(`{${"trialId"}}`, encodeURIComponent(String(trialId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -13990,13 +14073,12 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
                 localVarQueryParameter['follow'] = follow
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -14014,7 +14096,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             }
             const localVarPath = `/api/v1/experiments/{id}/unarchive`
                 .replace(`{${"id"}}`, encodeURIComponent(String(id)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -14027,13 +14109,12 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -14050,7 +14131,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
                 throw new RequiredError('body','Required parameter body was null or undefined when calling unarchiveExperiments.');
             }
             const localVarPath = `/api/v1/experiments/unarchive`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -14065,14 +14146,13 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -14094,7 +14174,7 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
          */
         activateExperiment(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ActivateExperimentResponse> {
             const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).activateExperiment(id, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -14113,7 +14193,7 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
          */
         activateExperiments(body: V1ActivateExperimentsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ActivateExperimentsResponse> {
             const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).activateExperiments(body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -14132,7 +14212,7 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
          */
         archiveExperiment(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ArchiveExperimentResponse> {
             const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).archiveExperiment(id, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -14151,7 +14231,7 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
          */
         archiveExperiments(body: V1ArchiveExperimentsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ArchiveExperimentsResponse> {
             const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).archiveExperiments(body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -14170,7 +14250,7 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
          */
         cancelExperiment(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CancelExperimentResponse> {
             const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).cancelExperiment(id, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -14189,7 +14269,7 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
          */
         cancelExperiments(body: V1CancelExperimentsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CancelExperimentsResponse> {
             const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).cancelExperiments(body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -14230,7 +14310,7 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
          */
         compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: V1MetricType, scale?: V1Scale, metricIds?: Array<string>, timeSeriesFilterName?: string, timeSeriesFilterDoubleRangeLt?: number, timeSeriesFilterDoubleRangeLte?: number, timeSeriesFilterDoubleRangeGt?: number, timeSeriesFilterDoubleRangeGte?: number, timeSeriesFilterIntegerRangeLt?: number, timeSeriesFilterIntegerRangeLte?: number, timeSeriesFilterIntegerRangeGt?: number, timeSeriesFilterIntegerRangeGte?: number, timeSeriesFilterIntegerRangeIncl?: Array<number>, timeSeriesFilterIntegerRangeNotIn?: Array<number>, timeSeriesFilterTimeRangeLt?: Date, timeSeriesFilterTimeRangeLte?: Date, timeSeriesFilterTimeRangeGt?: Date, timeSeriesFilterTimeRangeGte?: Date, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CompareTrialsResponse> {
             const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).compareTrials(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, metricIds, timeSeriesFilterName, timeSeriesFilterDoubleRangeLt, timeSeriesFilterDoubleRangeLte, timeSeriesFilterDoubleRangeGt, timeSeriesFilterDoubleRangeGte, timeSeriesFilterIntegerRangeLt, timeSeriesFilterIntegerRangeLte, timeSeriesFilterIntegerRangeGt, timeSeriesFilterIntegerRangeGte, timeSeriesFilterIntegerRangeIncl, timeSeriesFilterIntegerRangeNotIn, timeSeriesFilterTimeRangeLt, timeSeriesFilterTimeRangeLte, timeSeriesFilterTimeRangeGt, timeSeriesFilterTimeRangeGte, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -14249,7 +14329,7 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
          */
         deleteExperiment(experimentId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteExperimentResponse> {
             const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).deleteExperiment(experimentId, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -14268,7 +14348,7 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
          */
         deleteExperiments(body: V1DeleteExperimentsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteExperimentsResponse> {
             const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).deleteExperiments(body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -14287,7 +14367,7 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
          */
         getExperiment(experimentId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetExperimentResponse> {
             const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getExperiment(experimentId, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -14311,7 +14391,7 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
          */
         getExperimentCheckpoints(id: number, sortBy?: V1GetExperimentCheckpointsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, states?: Array<Checkpointv1State>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetExperimentCheckpointsResponse> {
             const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getExperimentCheckpoints(id, sortBy, orderBy, offset, limit, states, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -14330,7 +14410,7 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
          */
         getExperimentLabels(projectId?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetExperimentLabelsResponse> {
             const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getExperimentLabels(projectId, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -14367,7 +14447,7 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
          */
         getExperiments(sortBy?: V1GetExperimentsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, description?: string, name?: string, labels?: Array<string>, archived?: boolean, states?: Array<Experimentv1State>, users?: Array<string>, userIds?: Array<number>, projectId?: number, experimentIdFilterLt?: number, experimentIdFilterLte?: number, experimentIdFilterGt?: number, experimentIdFilterGte?: number, experimentIdFilterIncl?: Array<number>, experimentIdFilterNotIn?: Array<number>, showTrialData?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetExperimentsResponse> {
             const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getExperiments(sortBy, orderBy, offset, limit, description, name, labels, archived, states, users, userIds, projectId, experimentIdFilterLt, experimentIdFilterLte, experimentIdFilterGt, experimentIdFilterGte, experimentIdFilterIncl, experimentIdFilterNotIn, showTrialData, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -14391,7 +14471,7 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
          */
         getExperimentTrials(experimentId: number, sortBy?: V1GetExperimentTrialsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, states?: Array<Experimentv1State>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetExperimentTrialsResponse> {
             const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getExperimentTrials(experimentId, sortBy, orderBy, offset, limit, states, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -14410,7 +14490,7 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
          */
         getExperimentValidationHistory(experimentId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetExperimentValidationHistoryResponse> {
             const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getExperimentValidationHistory(experimentId, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -14429,7 +14509,7 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
          */
         getModelDef(experimentId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelDefResponse> {
             const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getModelDef(experimentId, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -14449,7 +14529,7 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
          */
         getModelDefFile(experimentId: number, body: V1GetModelDefFileRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelDefFileResponse> {
             const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getModelDefFile(experimentId, body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -14468,7 +14548,7 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
          */
         getModelDefTree(experimentId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelDefTreeResponse> {
             const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getModelDefTree(experimentId, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -14487,7 +14567,7 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
          */
         getSearcherEvents(experimentId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetSearcherEventsResponse> {
             const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getSearcherEvents(experimentId, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -14506,7 +14586,7 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
          */
         getTrial(trialId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTrialResponse> {
             const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getTrial(trialId, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -14530,7 +14610,7 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
          */
         getTrialCheckpoints(id: number, sortBy?: V1GetTrialCheckpointsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, states?: Array<Checkpointv1State>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTrialCheckpointsResponse> {
             const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getTrialCheckpoints(id, sortBy, orderBy, offset, limit, states, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -14549,7 +14629,7 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
          */
         killExperiment(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1KillExperimentResponse> {
             const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).killExperiment(id, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -14568,7 +14648,7 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
          */
         killExperiments(body: V1KillExperimentsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1KillExperimentsResponse> {
             const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).killExperiments(body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -14587,7 +14667,7 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
          */
         killTrial(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1KillTrialResponse> {
             const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).killTrial(id, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -14607,7 +14687,7 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
          */
         moveExperiment(experimentId: number, body: V1MoveExperimentRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1MoveExperimentResponse> {
             const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).moveExperiment(experimentId, body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -14626,7 +14706,7 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
          */
         moveExperiments(body: V1MoveExperimentsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1MoveExperimentsResponse> {
             const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).moveExperiments(body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -14646,7 +14726,7 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
          */
         patchExperiment(experimentId: number, body: V1PatchExperiment, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchExperimentResponse> {
             const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).patchExperiment(experimentId, body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -14665,7 +14745,7 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
          */
         pauseExperiment(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PauseExperimentResponse> {
             const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).pauseExperiment(id, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -14684,7 +14764,7 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
          */
         pauseExperiments(body: V1PauseExperimentsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PauseExperimentsResponse> {
             const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).pauseExperiments(body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -14704,7 +14784,7 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
          */
         postSearcherOperations(experimentId: number, body: V1PostSearcherOperationsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostSearcherOperationsResponse> {
             const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).postSearcherOperations(experimentId, body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -14723,7 +14803,7 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
          */
         previewHPSearch(body: V1PreviewHPSearchRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PreviewHPSearchResponse> {
             const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).previewHPSearch(body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -14740,12 +14820,13 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
          * @param {number} [offset] How many experiments to skip before including in the results.
          * @param {number} [limit] How many results to show.
          * @param {string} [sort] Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc).
+         * @param {string} [filter] Filter expression.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        searchExperiments(projectId?: number, offset?: number, limit?: number, sort?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SearchExperimentsResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).searchExperiments(projectId, offset, limit, sort, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+        searchExperiments(projectId?: number, offset?: number, limit?: number, sort?: string, filter?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SearchExperimentsResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).searchExperiments(projectId, offset, limit, sort, filter, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -14770,7 +14851,7 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
          */
         summarizeTrial(trialId: number, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: V1MetricType, scale?: V1Scale, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SummarizeTrialResponse> {
             const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).summarizeTrial(trialId, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -14801,7 +14882,7 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
          */
         trialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<V1LogLevel>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: V1OrderBy, searchText?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TrialLogsResponse> {
             const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).trialLogs(trialId, limit, follow, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -14821,7 +14902,7 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
          */
         trialLogsFields(trialId: number, follow?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TrialLogsFieldsResponse> {
             const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).trialLogsFields(trialId, follow, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -14840,7 +14921,7 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
          */
         unarchiveExperiment(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1UnarchiveExperimentResponse> {
             const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).unarchiveExperiment(id, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -14859,7 +14940,7 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
          */
         unarchiveExperiments(body: V1UnarchiveExperimentsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1UnarchiveExperimentsResponse> {
             const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).unarchiveExperiments(body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -15254,11 +15335,12 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {number} [offset] How many experiments to skip before including in the results.
          * @param {number} [limit] How many results to show.
          * @param {string} [sort] Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc).
+         * @param {string} [filter] Filter expression.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        searchExperiments(projectId?: number, offset?: number, limit?: number, sort?: string, options?: any) {
-            return ExperimentsApiFp(configuration).searchExperiments(projectId, offset, limit, sort, options)(fetch, basePath);
+        searchExperiments(projectId?: number, offset?: number, limit?: number, sort?: string, filter?: string, options?: any) {
+            return ExperimentsApiFp(configuration).searchExperiments(projectId, offset, limit, sort, filter, options)(fetch, basePath);
         },
         /**
          * 
@@ -15777,12 +15859,13 @@ export class ExperimentsApi extends BaseAPI {
      * @param {number} [offset] How many experiments to skip before including in the results.
      * @param {number} [limit] How many results to show.
      * @param {string} [sort] Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc).
+     * @param {string} [filter] Filter expression.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public searchExperiments(projectId?: number, offset?: number, limit?: number, sort?: string, options?: any) {
-        return ExperimentsApiFp(this.configuration).searchExperiments(projectId, offset, limit, sort, options)(this.fetch, this.basePath)
+    public searchExperiments(projectId?: number, offset?: number, limit?: number, sort?: string, filter?: string, options?: any) {
+        return ExperimentsApiFp(this.configuration).searchExperiments(projectId, offset, limit, sort, filter, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -15891,7 +15974,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             }
             const localVarPath = `/api/v1/allocations/{allocationId}/signals/ack_preemption`
                 .replace(`{${"allocationId"}}`, encodeURIComponent(String(allocationId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -15906,14 +15989,13 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -15936,7 +16018,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             }
             const localVarPath = `/api/v1/allocations/{allocationId}/all_gather`
                 .replace(`{${"allocationId"}}`, encodeURIComponent(String(allocationId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -15951,14 +16033,13 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -15981,7 +16062,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             }
             const localVarPath = `/api/v1/allocations/{allocationId}/signals/pending_preemption`
                 .replace(`{${"allocationId"}}`, encodeURIComponent(String(allocationId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -15996,14 +16077,13 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -16022,7 +16102,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             }
             const localVarPath = `/api/v1/allocations/{allocationId}/signals/preemption`
                 .replace(`{${"allocationId"}}`, encodeURIComponent(String(allocationId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -16039,13 +16119,12 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                 localVarQueryParameter['timeoutSeconds'] = timeoutSeconds
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -16068,7 +16147,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             }
             const localVarPath = `/api/v1/allocations/{allocationId}/ready`
                 .replace(`{${"allocationId"}}`, encodeURIComponent(String(allocationId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -16083,14 +16162,13 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -16114,7 +16192,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             const localVarPath = `/api/v1/allocations/{allocationId}/resources/{resourcesId}/rendezvous`
                 .replace(`{${"allocationId"}}`, encodeURIComponent(String(allocationId)))
                 .replace(`{${"resourcesId"}}`, encodeURIComponent(String(resourcesId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -16127,13 +16205,12 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -16156,7 +16233,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             }
             const localVarPath = `/api/v1/allocations/{allocationId}/waiting`
                 .replace(`{${"allocationId"}}`, encodeURIComponent(String(allocationId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -16171,14 +16248,13 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -16201,7 +16277,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             }
             const localVarPath = `/api/v1/trials/{trialId}/searcher/completed_operation`
                 .replace(`{${"trialId"}}`, encodeURIComponent(String(trialId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -16216,14 +16292,13 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -16240,7 +16315,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                 throw new RequiredError('body','Required parameter body was null or undefined when calling createExperiment.');
             }
             const localVarPath = `/api/v1/experiments`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -16255,14 +16330,13 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -16279,7 +16353,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                 throw new RequiredError('body','Required parameter body was null or undefined when calling createGroup.');
             }
             const localVarPath = `/api/v1/groups`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -16294,14 +16368,13 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -16319,7 +16392,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             }
             const localVarPath = `/api/v1/groups/{groupId}`
                 .replace(`{${"groupId"}}`, encodeURIComponent(String(groupId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'DELETE', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -16332,13 +16405,12 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -16356,7 +16428,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             }
             const localVarPath = `/api/v1/experiments/{experimentId}/searcher/best_searcher_validation_metric`
                 .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -16369,13 +16441,12 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -16393,7 +16464,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             }
             const localVarPath = `/api/v1/trials/{trialId}/searcher/operation`
                 .replace(`{${"trialId"}}`, encodeURIComponent(String(trialId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -16406,13 +16477,12 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -16430,7 +16500,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             }
             const localVarPath = `/api/v1/groups/{groupId}`
                 .replace(`{${"groupId"}}`, encodeURIComponent(String(groupId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -16443,13 +16513,12 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -16466,7 +16535,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                 throw new RequiredError('body','Required parameter body was null or undefined when calling getGroups.');
             }
             const localVarPath = `/api/v1/groups/search`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -16481,14 +16550,13 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -16501,7 +16569,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          */
         getJobQueueStats(resourcePools?: Array<string>, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/job-queues/stats`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -16518,13 +16586,12 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                 localVarQueryParameter['resourcePools'] = resourcePools
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -16541,7 +16608,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          */
         getJobs(offset?: number, limit?: number, resourcePool?: string, orderBy?: V1OrderBy, states?: Array<Jobv1State>, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/job-queues`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -16574,13 +16641,12 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                 localVarQueryParameter['states'] = states
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -16598,7 +16664,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             }
             const localVarPath = `/api/v1/projects/{id}/columns`
                 .replace(`{${"id"}}`, encodeURIComponent(String(id)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -16611,13 +16677,12 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -16631,7 +16696,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          */
         getResourcePools(offset?: number, limit?: number, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/resource-pools`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -16652,13 +16717,12 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                 localVarQueryParameter['limit'] = limit
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -16670,18 +16734,17 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          */
         getTelemetry(options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/master/telemetry`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -16706,7 +16769,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             }
             const localVarPath = `/api/v1/trials/{trialId}/workloads`
                 .replace(`{${"trialId"}}`, encodeURIComponent(String(trialId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -16747,13 +16810,12 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                 localVarQueryParameter['metricType'] = metricType
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -16776,7 +16838,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             }
             const localVarPath = `/api/v1/notebooks/{notebookId}/report_idle`
                 .replace(`{${"notebookId"}}`, encodeURIComponent(String(notebookId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'PUT', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -16791,14 +16853,13 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -16827,7 +16888,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             const localVarPath = `/api/v1/allocations/{allocationId}/resources/{resourcesId}/daemon`
                 .replace(`{${"allocationId"}}`, encodeURIComponent(String(allocationId)))
                 .replace(`{${"resourcesId"}}`, encodeURIComponent(String(resourcesId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -16842,14 +16903,13 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -16878,7 +16938,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             }
             const localVarPath = `/api/v1/experiments/{experimentId}/metrics-stream/batches`
                 .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -16903,13 +16963,12 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                 localVarQueryParameter['periodSeconds'] = periodSeconds
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -16928,7 +16987,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             }
             const localVarPath = `/api/v1/experiments/{experimentId}/metrics-stream/metric-names`
                 .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -16945,13 +17004,12 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                 localVarQueryParameter['periodSeconds'] = periodSeconds
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -16974,7 +17032,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             }
             const localVarPath = `/api/v1/allocations/{allocationId}/notify_container_running`
                 .replace(`{${"allocationId"}}`, encodeURIComponent(String(allocationId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -16989,14 +17047,13 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -17019,7 +17076,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             }
             const localVarPath = `/api/v1/allocations/{allocationId}/proxy_address`
                 .replace(`{${"allocationId"}}`, encodeURIComponent(String(allocationId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -17034,14 +17091,13 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -17058,7 +17114,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                 throw new RequiredError('body','Required parameter body was null or undefined when calling postTrialProfilerMetricsBatch.');
             }
             const localVarPath = `/api/v1/trials/profiler/metrics`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -17073,14 +17129,13 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -17103,7 +17158,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             }
             const localVarPath = `/api/v1/trials/{trialId}/runner/metadata`
                 .replace(`{${"trialId"}}`, encodeURIComponent(String(trialId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -17118,14 +17173,13 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -17142,7 +17196,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                 throw new RequiredError('body','Required parameter body was null or undefined when calling reportCheckpoint.');
             }
             const localVarPath = `/api/v1/checkpoints`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -17157,14 +17211,13 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -17187,7 +17240,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             }
             const localVarPath = `/api/v1/trials/{trialId}/progress`
                 .replace(`{${"trialId"}}`, encodeURIComponent(String(trialId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -17202,14 +17255,13 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -17232,7 +17284,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             }
             const localVarPath = `/api/v1/trials/{trialId}/early_exit`
                 .replace(`{${"trialId"}}`, encodeURIComponent(String(trialId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -17247,14 +17299,13 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -17277,7 +17328,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             }
             const localVarPath = `/api/v1/trials/{trainingMetricsTrialId}/training_metrics`
                 .replace(`{${"trainingMetricsTrialId"}}`, encodeURIComponent(String(trainingMetricsTrialId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -17292,14 +17343,13 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -17322,7 +17372,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             }
             const localVarPath = `/api/v1/trials/{validationMetricsTrialId}/validation_metrics`
                 .replace(`{${"validationMetricsTrialId"}}`, encodeURIComponent(String(validationMetricsTrialId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -17337,14 +17387,13 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -17355,12 +17404,13 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {number} [offset] How many experiments to skip before including in the results.
          * @param {number} [limit] How many results to show.
          * @param {string} [sort] Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc).
+         * @param {string} [filter] Filter expression.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        searchExperiments(projectId?: number, offset?: number, limit?: number, sort?: string, options: any = {}): FetchArgs {
+        searchExperiments(projectId?: number, offset?: number, limit?: number, sort?: string, filter?: string, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/experiments-search`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -17389,13 +17439,16 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                 localVarQueryParameter['sort'] = sort
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            if (filter !== undefined) {
+                localVarQueryParameter['filter'] = filter
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -17428,7 +17481,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             }
             const localVarPath = `/api/v1/experiments/{experimentId}/metrics-stream/trials-sample`
                 .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -17469,13 +17522,12 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                 localVarQueryParameter['periodSeconds'] = periodSeconds
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -17510,7 +17562,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             }
             const localVarPath = `/api/v1/experiments/{experimentId}/metrics-stream/trials-snapshot`
                 .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -17543,13 +17595,12 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                 localVarQueryParameter['periodSeconds'] = periodSeconds
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -17572,7 +17623,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             }
             const localVarPath = `/api/v1/groups/{groupId}`
                 .replace(`{${"groupId"}}`, encodeURIComponent(String(groupId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'PUT', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -17587,14 +17638,13 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -17611,7 +17661,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                 throw new RequiredError('body','Required parameter body was null or undefined when calling updateJobQueue.');
             }
             const localVarPath = `/api/v1/job-queues`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -17626,14 +17676,13 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -17656,7 +17705,7 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         ackAllocationPreemptionSignal(allocationId: string, body: V1AckAllocationPreemptionSignalRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1AckAllocationPreemptionSignalResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).ackAllocationPreemptionSignal(allocationId, body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -17676,7 +17725,7 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         allocationAllGather(allocationId: string, body: V1AllocationAllGatherRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1AllocationAllGatherResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).allocationAllGather(allocationId, body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -17696,7 +17745,7 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         allocationPendingPreemptionSignal(allocationId: string, body: V1AllocationPendingPreemptionSignalRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1AllocationPendingPreemptionSignalResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).allocationPendingPreemptionSignal(allocationId, body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -17716,7 +17765,7 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         allocationPreemptionSignal(allocationId: string, timeoutSeconds?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1AllocationPreemptionSignalResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).allocationPreemptionSignal(allocationId, timeoutSeconds, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -17736,7 +17785,7 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         allocationReady(allocationId: string, body: V1AllocationReadyRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1AllocationReadyResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).allocationReady(allocationId, body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -17756,7 +17805,7 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         allocationRendezvousInfo(allocationId: string, resourcesId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1AllocationRendezvousInfoResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).allocationRendezvousInfo(allocationId, resourcesId, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -17776,7 +17825,7 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         allocationWaiting(allocationId: string, body: V1AllocationWaitingRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1AllocationWaitingResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).allocationWaiting(allocationId, body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -17796,7 +17845,7 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         completeTrialSearcherValidation(trialId: number, body: V1CompleteValidateAfterOperation, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CompleteTrialSearcherValidationResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).completeTrialSearcherValidation(trialId, body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -17815,7 +17864,7 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         createExperiment(body: V1CreateExperimentRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CreateExperimentResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).createExperiment(body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -17834,7 +17883,7 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         createGroup(body: V1CreateGroupRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CreateGroupResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).createGroup(body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -17853,7 +17902,7 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         deleteGroup(groupId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteGroupResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).deleteGroup(groupId, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -17872,7 +17921,7 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         getBestSearcherValidationMetric(experimentId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetBestSearcherValidationMetricResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getBestSearcherValidationMetric(experimentId, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -17891,7 +17940,7 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         getCurrentTrialSearcherOperation(trialId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetCurrentTrialSearcherOperationResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getCurrentTrialSearcherOperation(trialId, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -17910,7 +17959,7 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         getGroup(groupId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetGroupResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getGroup(groupId, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -17929,7 +17978,7 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         getGroups(body: V1GetGroupsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetGroupsResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getGroups(body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -17948,7 +17997,7 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         getJobQueueStats(resourcePools?: Array<string>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetJobQueueStatsResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getJobQueueStats(resourcePools, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -17971,7 +18020,7 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         getJobs(offset?: number, limit?: number, resourcePool?: string, orderBy?: V1OrderBy, states?: Array<Jobv1State>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetJobsResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getJobs(offset, limit, resourcePool, orderBy, states, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -17990,7 +18039,7 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         getProjectColumns(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetProjectColumnsResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getProjectColumns(id, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -18010,7 +18059,7 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         getResourcePools(offset?: number, limit?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetResourcePoolsResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getResourcePools(offset, limit, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -18028,7 +18077,7 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         getTelemetry(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTelemetryResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getTelemetry(options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -18054,7 +18103,7 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         getTrialWorkloads(trialId: number, orderBy?: V1OrderBy, offset?: number, limit?: number, sortKey?: string, filter?: GetTrialWorkloadsRequestFilterOption, includeBatchMetrics?: boolean, metricType?: V1MetricType, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTrialWorkloadsResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getTrialWorkloads(trialId, orderBy, offset, limit, sortKey, filter, includeBatchMetrics, metricType, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -18074,7 +18123,7 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         idleNotebook(notebookId: string, body: V1IdleNotebookRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1IdleNotebookResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).idleNotebook(notebookId, body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -18095,7 +18144,7 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         markAllocationResourcesDaemon(allocationId: string, resourcesId: string, body: V1MarkAllocationResourcesDaemonRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1MarkAllocationResourcesDaemonResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).markAllocationResourcesDaemon(allocationId, resourcesId, body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -18117,7 +18166,7 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         metricBatches(experimentId: number, metricName: string, metricType: V1MetricType, periodSeconds?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1MetricBatchesResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).metricBatches(experimentId, metricName, metricType, periodSeconds, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -18137,7 +18186,7 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         metricNames(experimentId: number, periodSeconds?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1MetricNamesResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).metricNames(experimentId, periodSeconds, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -18157,7 +18206,7 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         notifyContainerRunning(allocationId: string, body: V1NotifyContainerRunningRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1NotifyContainerRunningResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).notifyContainerRunning(allocationId, body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -18177,7 +18226,7 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         postAllocationProxyAddress(allocationId: string, body: V1PostAllocationProxyAddressRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostAllocationProxyAddressResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).postAllocationProxyAddress(allocationId, body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -18196,7 +18245,7 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         postTrialProfilerMetricsBatch(body: V1PostTrialProfilerMetricsBatchRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostTrialProfilerMetricsBatchResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).postTrialProfilerMetricsBatch(body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -18216,7 +18265,7 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         postTrialRunnerMetadata(trialId: number, body: V1TrialRunnerMetadata, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostTrialRunnerMetadataResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).postTrialRunnerMetadata(trialId, body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -18235,7 +18284,7 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         reportCheckpoint(body: V1Checkpoint, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ReportCheckpointResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).reportCheckpoint(body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -18255,7 +18304,7 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         reportTrialProgress(trialId: number, body: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ReportTrialProgressResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).reportTrialProgress(trialId, body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -18275,7 +18324,7 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         reportTrialSearcherEarlyExit(trialId: number, body: V1TrialEarlyExit, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ReportTrialSearcherEarlyExitResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).reportTrialSearcherEarlyExit(trialId, body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -18295,7 +18344,7 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         reportTrialTrainingMetrics(trainingMetricsTrialId: number, body: V1TrialMetrics, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ReportTrialTrainingMetricsResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).reportTrialTrainingMetrics(trainingMetricsTrialId, body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -18315,7 +18364,7 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         reportTrialValidationMetrics(validationMetricsTrialId: number, body: V1TrialMetrics, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ReportTrialValidationMetricsResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).reportTrialValidationMetrics(validationMetricsTrialId, body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -18332,12 +18381,13 @@ export const InternalApiFp = function (configuration?: Configuration) {
          * @param {number} [offset] How many experiments to skip before including in the results.
          * @param {number} [limit] How many results to show.
          * @param {string} [sort] Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc).
+         * @param {string} [filter] Filter expression.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        searchExperiments(projectId?: number, offset?: number, limit?: number, sort?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SearchExperimentsResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).searchExperiments(projectId, offset, limit, sort, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+        searchExperiments(projectId?: number, offset?: number, limit?: number, sort?: string, filter?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SearchExperimentsResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).searchExperiments(projectId, offset, limit, sort, filter, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -18363,7 +18413,7 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         trialsSample(experimentId: number, metricName: string, metricType: V1MetricType, maxTrials?: number, maxDatapoints?: number, startBatches?: number, endBatches?: number, periodSeconds?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TrialsSampleResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).trialsSample(experimentId, metricName, metricType, maxTrials, maxDatapoints, startBatches, endBatches, periodSeconds, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -18387,7 +18437,7 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         trialsSnapshot(experimentId: number, metricName: string, metricType: V1MetricType, batchesProcessed: number, batchesMargin?: number, periodSeconds?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TrialsSnapshotResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).trialsSnapshot(experimentId, metricName, metricType, batchesProcessed, batchesMargin, periodSeconds, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -18407,7 +18457,7 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         updateGroup(groupId: number, body: V1UpdateGroupRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1UpdateGroupResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).updateGroup(groupId, body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -18426,7 +18476,7 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         updateJobQueue(body: V1UpdateJobQueueRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1UpdateJobQueueResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).updateJobQueue(body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -18825,11 +18875,12 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {number} [offset] How many experiments to skip before including in the results.
          * @param {number} [limit] How many results to show.
          * @param {string} [sort] Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc).
+         * @param {string} [filter] Filter expression.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        searchExperiments(projectId?: number, offset?: number, limit?: number, sort?: string, options?: any) {
-            return InternalApiFp(configuration).searchExperiments(projectId, offset, limit, sort, options)(fetch, basePath);
+        searchExperiments(projectId?: number, offset?: number, limit?: number, sort?: string, filter?: string, options?: any) {
+            return InternalApiFp(configuration).searchExperiments(projectId, offset, limit, sort, filter, options)(fetch, basePath);
         },
         /**
          * 
@@ -19342,12 +19393,13 @@ export class InternalApi extends BaseAPI {
      * @param {number} [offset] How many experiments to skip before including in the results.
      * @param {number} [limit] How many results to show.
      * @param {string} [sort] Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc).
+     * @param {string} [filter] Filter expression.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public searchExperiments(projectId?: number, offset?: number, limit?: number, sort?: string, options?: any) {
-        return InternalApiFp(this.configuration).searchExperiments(projectId, offset, limit, sort, options)(this.fetch, this.basePath)
+    public searchExperiments(projectId?: number, offset?: number, limit?: number, sort?: string, filter?: string, options?: any) {
+        return InternalApiFp(this.configuration).searchExperiments(projectId, offset, limit, sort, filter, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -19446,7 +19498,7 @@ export const JobsApiFetchParamCreator = function (configuration?: Configuration)
             }
             const localVarPath = `/api/v1/tasks/{taskId}/logs`
                 .replace(`{${"taskId"}}`, encodeURIComponent(String(taskId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -19511,13 +19563,12 @@ export const JobsApiFetchParamCreator = function (configuration?: Configuration)
                 localVarQueryParameter['searchText'] = searchText
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -19536,7 +19587,7 @@ export const JobsApiFetchParamCreator = function (configuration?: Configuration)
             }
             const localVarPath = `/api/v1/tasks/{taskId}/logs/fields`
                 .replace(`{${"taskId"}}`, encodeURIComponent(String(taskId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -19553,13 +19604,12 @@ export const JobsApiFetchParamCreator = function (configuration?: Configuration)
                 localVarQueryParameter['follow'] = follow
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -19594,7 +19644,7 @@ export const JobsApiFp = function (configuration?: Configuration) {
          */
         taskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<V1LogLevel>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: V1OrderBy, searchText?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TaskLogsResponse> {
             const localVarFetchArgs = JobsApiFetchParamCreator(configuration).taskLogs(taskId, limit, follow, allocationIds, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -19614,7 +19664,7 @@ export const JobsApiFp = function (configuration?: Configuration) {
          */
         taskLogsFields(taskId: string, follow?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TaskLogsFieldsResponse> {
             const localVarFetchArgs = JobsApiFetchParamCreator(configuration).taskLogsFields(taskId, follow, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -19737,7 +19787,7 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
             }
             const localVarPath = `/api/v1/models/{modelName}/archive`
                 .replace(`{${"modelName"}}`, encodeURIComponent(String(modelName)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -19750,13 +19800,12 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -19774,7 +19823,7 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
             }
             const localVarPath = `/api/v1/models/{modelName}`
                 .replace(`{${"modelName"}}`, encodeURIComponent(String(modelName)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'DELETE', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -19787,13 +19836,12 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -19817,7 +19865,7 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
             const localVarPath = `/api/v1/models/{modelName}/versions/{modelVersionNum}`
                 .replace(`{${"modelName"}}`, encodeURIComponent(String(modelName)))
                 .replace(`{${"modelVersionNum"}}`, encodeURIComponent(String(modelVersionNum)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'DELETE', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -19830,13 +19878,12 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -19854,7 +19901,7 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
             }
             const localVarPath = `/api/v1/models/{modelName}`
                 .replace(`{${"modelName"}}`, encodeURIComponent(String(modelName)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -19867,13 +19914,12 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -19886,7 +19932,7 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
          */
         getModelLabels(workspaceId?: number, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/model/labels`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -19903,13 +19949,12 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
                 localVarQueryParameter['workspaceId'] = workspaceId
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -19934,7 +19979,7 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
          */
         getModels(sortBy?: V1GetModelsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, description?: string, labels?: Array<string>, archived?: boolean, users?: Array<string>, workspaceNames?: Array<string>, userIds?: Array<number>, id?: number, workspaceIds?: Array<number>, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/models`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -19999,13 +20044,12 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
                 localVarQueryParameter['workspaceIds'] = workspaceIds
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -20029,7 +20073,7 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
             const localVarPath = `/api/v1/models/{modelName}/versions/{modelVersionNum}`
                 .replace(`{${"modelName"}}`, encodeURIComponent(String(modelName)))
                 .replace(`{${"modelVersionNum"}}`, encodeURIComponent(String(modelVersionNum)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -20042,13 +20086,12 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -20070,7 +20113,7 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
             }
             const localVarPath = `/api/v1/models/{modelName}/versions`
                 .replace(`{${"modelName"}}`, encodeURIComponent(String(modelName)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -20099,13 +20142,12 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
                 localVarQueryParameter['limit'] = limit
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -20128,7 +20170,7 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
             }
             const localVarPath = `/api/v1/models/{modelName}/move`
                 .replace(`{${"modelName"}}`, encodeURIComponent(String(modelName)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -20143,14 +20185,13 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -20173,7 +20214,7 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
             }
             const localVarPath = `/api/v1/models/{modelName}`
                 .replace(`{${"modelName"}}`, encodeURIComponent(String(modelName)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'PATCH', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -20188,14 +20229,13 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -20224,7 +20264,7 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
             const localVarPath = `/api/v1/models/{modelName}/versions/{modelVersionNum}`
                 .replace(`{${"modelName"}}`, encodeURIComponent(String(modelName)))
                 .replace(`{${"modelVersionNum"}}`, encodeURIComponent(String(modelVersionNum)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'PATCH', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -20239,14 +20279,13 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -20263,7 +20302,7 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
                 throw new RequiredError('body','Required parameter body was null or undefined when calling postModel.');
             }
             const localVarPath = `/api/v1/models`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -20278,14 +20317,13 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -20308,7 +20346,7 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
             }
             const localVarPath = `/api/v1/models/{modelName}/versions`
                 .replace(`{${"modelName"}}`, encodeURIComponent(String(modelName)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -20323,14 +20361,13 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -20348,7 +20385,7 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
             }
             const localVarPath = `/api/v1/models/{modelName}/unarchive`
                 .replace(`{${"modelName"}}`, encodeURIComponent(String(modelName)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -20361,13 +20398,12 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -20389,7 +20425,7 @@ export const ModelsApiFp = function (configuration?: Configuration) {
          */
         archiveModel(modelName: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ArchiveModelResponse> {
             const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).archiveModel(modelName, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -20408,7 +20444,7 @@ export const ModelsApiFp = function (configuration?: Configuration) {
          */
         deleteModel(modelName: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteModelResponse> {
             const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).deleteModel(modelName, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -20428,7 +20464,7 @@ export const ModelsApiFp = function (configuration?: Configuration) {
          */
         deleteModelVersion(modelName: string, modelVersionNum: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteModelVersionResponse> {
             const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).deleteModelVersion(modelName, modelVersionNum, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -20447,7 +20483,7 @@ export const ModelsApiFp = function (configuration?: Configuration) {
          */
         getModel(modelName: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelResponse> {
             const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).getModel(modelName, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -20466,7 +20502,7 @@ export const ModelsApiFp = function (configuration?: Configuration) {
          */
         getModelLabels(workspaceId?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelLabelsResponse> {
             const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).getModelLabels(workspaceId, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -20497,7 +20533,7 @@ export const ModelsApiFp = function (configuration?: Configuration) {
          */
         getModels(sortBy?: V1GetModelsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, description?: string, labels?: Array<string>, archived?: boolean, users?: Array<string>, workspaceNames?: Array<string>, userIds?: Array<number>, id?: number, workspaceIds?: Array<number>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelsResponse> {
             const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).getModels(sortBy, orderBy, offset, limit, name, description, labels, archived, users, workspaceNames, userIds, id, workspaceIds, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -20517,7 +20553,7 @@ export const ModelsApiFp = function (configuration?: Configuration) {
          */
         getModelVersion(modelName: string, modelVersionNum: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelVersionResponse> {
             const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).getModelVersion(modelName, modelVersionNum, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -20540,7 +20576,7 @@ export const ModelsApiFp = function (configuration?: Configuration) {
          */
         getModelVersions(modelName: string, sortBy?: V1GetModelVersionsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelVersionsResponse> {
             const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).getModelVersions(modelName, sortBy, orderBy, offset, limit, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -20560,7 +20596,7 @@ export const ModelsApiFp = function (configuration?: Configuration) {
          */
         moveModel(modelName: string, body: V1MoveModelRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1MoveModelResponse> {
             const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).moveModel(modelName, body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -20580,7 +20616,7 @@ export const ModelsApiFp = function (configuration?: Configuration) {
          */
         patchModel(modelName: string, body: V1PatchModel, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchModelResponse> {
             const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).patchModel(modelName, body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -20601,7 +20637,7 @@ export const ModelsApiFp = function (configuration?: Configuration) {
          */
         patchModelVersion(modelName: string, modelVersionNum: number, body: V1PatchModelVersion, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchModelVersionResponse> {
             const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).patchModelVersion(modelName, modelVersionNum, body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -20620,7 +20656,7 @@ export const ModelsApiFp = function (configuration?: Configuration) {
          */
         postModel(body: V1PostModelRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostModelResponse> {
             const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).postModel(body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -20640,7 +20676,7 @@ export const ModelsApiFp = function (configuration?: Configuration) {
          */
         postModelVersion(modelName: string, body: V1PostModelVersionRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostModelVersionResponse> {
             const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).postModelVersion(modelName, body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -20659,7 +20695,7 @@ export const ModelsApiFp = function (configuration?: Configuration) {
          */
         unarchiveModel(modelName: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1UnarchiveModelResponse> {
             const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).unarchiveModel(modelName, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -21064,7 +21100,7 @@ export const NotebooksApiFetchParamCreator = function (configuration?: Configura
             }
             const localVarPath = `/api/v1/notebooks/{notebookId}`
                 .replace(`{${"notebookId"}}`, encodeURIComponent(String(notebookId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -21077,13 +21113,12 @@ export const NotebooksApiFetchParamCreator = function (configuration?: Configura
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -21102,7 +21137,7 @@ export const NotebooksApiFetchParamCreator = function (configuration?: Configura
          */
         getNotebooks(sortBy?: V1GetTensorboardsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, workspaceId?: number, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/notebooks`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -21143,13 +21178,12 @@ export const NotebooksApiFetchParamCreator = function (configuration?: Configura
                 localVarQueryParameter['workspaceId'] = workspaceId
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -21167,7 +21201,7 @@ export const NotebooksApiFetchParamCreator = function (configuration?: Configura
             }
             const localVarPath = `/api/v1/notebooks/{notebookId}/kill`
                 .replace(`{${"notebookId"}}`, encodeURIComponent(String(notebookId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -21180,13 +21214,12 @@ export const NotebooksApiFetchParamCreator = function (configuration?: Configura
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -21203,7 +21236,7 @@ export const NotebooksApiFetchParamCreator = function (configuration?: Configura
                 throw new RequiredError('body','Required parameter body was null or undefined when calling launchNotebook.');
             }
             const localVarPath = `/api/v1/notebooks`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -21218,14 +21251,13 @@ export const NotebooksApiFetchParamCreator = function (configuration?: Configura
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -21248,7 +21280,7 @@ export const NotebooksApiFetchParamCreator = function (configuration?: Configura
             }
             const localVarPath = `/api/v1/notebooks/{notebookId}/set_priority`
                 .replace(`{${"notebookId"}}`, encodeURIComponent(String(notebookId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -21263,14 +21295,13 @@ export const NotebooksApiFetchParamCreator = function (configuration?: Configura
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -21292,7 +21323,7 @@ export const NotebooksApiFp = function (configuration?: Configuration) {
          */
         getNotebook(notebookId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetNotebookResponse> {
             const localVarFetchArgs = NotebooksApiFetchParamCreator(configuration).getNotebook(notebookId, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -21317,7 +21348,7 @@ export const NotebooksApiFp = function (configuration?: Configuration) {
          */
         getNotebooks(sortBy?: V1GetTensorboardsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, workspaceId?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetNotebooksResponse> {
             const localVarFetchArgs = NotebooksApiFetchParamCreator(configuration).getNotebooks(sortBy, orderBy, offset, limit, users, userIds, workspaceId, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -21336,7 +21367,7 @@ export const NotebooksApiFp = function (configuration?: Configuration) {
          */
         killNotebook(notebookId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1KillNotebookResponse> {
             const localVarFetchArgs = NotebooksApiFetchParamCreator(configuration).killNotebook(notebookId, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -21355,7 +21386,7 @@ export const NotebooksApiFp = function (configuration?: Configuration) {
          */
         launchNotebook(body: V1LaunchNotebookRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1LaunchNotebookResponse> {
             const localVarFetchArgs = NotebooksApiFetchParamCreator(configuration).launchNotebook(body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -21375,7 +21406,7 @@ export const NotebooksApiFp = function (configuration?: Configuration) {
          */
         setNotebookPriority(notebookId: string, body: V1SetNotebookPriorityRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SetNotebookPriorityResponse> {
             const localVarFetchArgs = NotebooksApiFetchParamCreator(configuration).setNotebookPriority(notebookId, body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -21551,7 +21582,7 @@ export const ProfilerApiFetchParamCreator = function (configuration?: Configurat
             }
             const localVarPath = `/api/v1/trials/{trialId}/profiler/available_series`
                 .replace(`{${"trialId"}}`, encodeURIComponent(String(trialId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -21568,13 +21599,12 @@ export const ProfilerApiFetchParamCreator = function (configuration?: Configurat
                 localVarQueryParameter['follow'] = follow
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -21597,7 +21627,7 @@ export const ProfilerApiFetchParamCreator = function (configuration?: Configurat
             }
             const localVarPath = `/api/v1/trials/{labelsTrialId}/profiler/metrics`
                 .replace(`{${"labelsTrialId"}}`, encodeURIComponent(String(labelsTrialId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -21630,13 +21660,12 @@ export const ProfilerApiFetchParamCreator = function (configuration?: Configurat
                 localVarQueryParameter['follow'] = follow
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -21659,7 +21688,7 @@ export const ProfilerApiFp = function (configuration?: Configuration) {
          */
         getTrialProfilerAvailableSeries(trialId: number, follow?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1GetTrialProfilerAvailableSeriesResponse> {
             const localVarFetchArgs = ProfilerApiFetchParamCreator(configuration).getTrialProfilerAvailableSeries(trialId, follow, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -21683,7 +21712,7 @@ export const ProfilerApiFp = function (configuration?: Configuration) {
          */
         getTrialProfilerMetrics(labelsTrialId: number, labelsName?: string, labelsAgentId?: string, labelsGpuUuid?: string, labelsMetricType?: TrialProfilerMetricLabelsProfilerMetricType, follow?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1GetTrialProfilerMetricsResponse> {
             const localVarFetchArgs = ProfilerApiFetchParamCreator(configuration).getTrialProfilerMetrics(labelsTrialId, labelsName, labelsAgentId, labelsGpuUuid, labelsMetricType, follow, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -21795,7 +21824,7 @@ export const ProjectsApiFetchParamCreator = function (configuration?: Configurat
             }
             const localVarPath = `/api/v1/projects/{projectId}/notes`
                 .replace(`{${"projectId"}}`, encodeURIComponent(String(projectId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -21810,14 +21839,13 @@ export const ProjectsApiFetchParamCreator = function (configuration?: Configurat
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -21835,7 +21863,7 @@ export const ProjectsApiFetchParamCreator = function (configuration?: Configurat
             }
             const localVarPath = `/api/v1/projects/{id}/archive`
                 .replace(`{${"id"}}`, encodeURIComponent(String(id)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -21848,13 +21876,12 @@ export const ProjectsApiFetchParamCreator = function (configuration?: Configurat
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -21872,7 +21899,7 @@ export const ProjectsApiFetchParamCreator = function (configuration?: Configurat
             }
             const localVarPath = `/api/v1/projects/{id}`
                 .replace(`{${"id"}}`, encodeURIComponent(String(id)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'DELETE', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -21885,13 +21912,12 @@ export const ProjectsApiFetchParamCreator = function (configuration?: Configurat
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -21909,7 +21935,7 @@ export const ProjectsApiFetchParamCreator = function (configuration?: Configurat
             }
             const localVarPath = `/api/v1/projects/{id}`
                 .replace(`{${"id"}}`, encodeURIComponent(String(id)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -21922,13 +21948,12 @@ export const ProjectsApiFetchParamCreator = function (configuration?: Configurat
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -21941,7 +21966,7 @@ export const ProjectsApiFetchParamCreator = function (configuration?: Configurat
          */
         getProjectsByUserActivity(limit?: number, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/user/projects/activity`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -21958,13 +21983,12 @@ export const ProjectsApiFetchParamCreator = function (configuration?: Configurat
                 localVarQueryParameter['limit'] = limit
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -21987,7 +22011,7 @@ export const ProjectsApiFetchParamCreator = function (configuration?: Configurat
             }
             const localVarPath = `/api/v1/projects/{projectId}/move`
                 .replace(`{${"projectId"}}`, encodeURIComponent(String(projectId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -22002,14 +22026,13 @@ export const ProjectsApiFetchParamCreator = function (configuration?: Configurat
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -22032,7 +22055,7 @@ export const ProjectsApiFetchParamCreator = function (configuration?: Configurat
             }
             const localVarPath = `/api/v1/projects/{id}`
                 .replace(`{${"id"}}`, encodeURIComponent(String(id)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'PATCH', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -22047,14 +22070,13 @@ export const ProjectsApiFetchParamCreator = function (configuration?: Configurat
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -22077,7 +22099,7 @@ export const ProjectsApiFetchParamCreator = function (configuration?: Configurat
             }
             const localVarPath = `/api/v1/workspaces/{workspaceId}/projects`
                 .replace(`{${"workspaceId"}}`, encodeURIComponent(String(workspaceId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -22092,14 +22114,13 @@ export const ProjectsApiFetchParamCreator = function (configuration?: Configurat
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -22122,7 +22143,7 @@ export const ProjectsApiFetchParamCreator = function (configuration?: Configurat
             }
             const localVarPath = `/api/v1/projects/{projectId}/notes`
                 .replace(`{${"projectId"}}`, encodeURIComponent(String(projectId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'PUT', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -22137,14 +22158,13 @@ export const ProjectsApiFetchParamCreator = function (configuration?: Configurat
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -22162,7 +22182,7 @@ export const ProjectsApiFetchParamCreator = function (configuration?: Configurat
             }
             const localVarPath = `/api/v1/projects/{id}/unarchive`
                 .replace(`{${"id"}}`, encodeURIComponent(String(id)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -22175,13 +22195,12 @@ export const ProjectsApiFetchParamCreator = function (configuration?: Configurat
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -22204,7 +22223,7 @@ export const ProjectsApiFp = function (configuration?: Configuration) {
          */
         addProjectNote(projectId: number, body: V1Note, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1AddProjectNoteResponse> {
             const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).addProjectNote(projectId, body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -22223,7 +22242,7 @@ export const ProjectsApiFp = function (configuration?: Configuration) {
          */
         archiveProject(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ArchiveProjectResponse> {
             const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).archiveProject(id, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -22242,7 +22261,7 @@ export const ProjectsApiFp = function (configuration?: Configuration) {
          */
         deleteProject(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteProjectResponse> {
             const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).deleteProject(id, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -22261,7 +22280,7 @@ export const ProjectsApiFp = function (configuration?: Configuration) {
          */
         getProject(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetProjectResponse> {
             const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).getProject(id, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -22280,7 +22299,7 @@ export const ProjectsApiFp = function (configuration?: Configuration) {
          */
         getProjectsByUserActivity(limit?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetProjectsByUserActivityResponse> {
             const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).getProjectsByUserActivity(limit, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -22300,7 +22319,7 @@ export const ProjectsApiFp = function (configuration?: Configuration) {
          */
         moveProject(projectId: number, body: V1MoveProjectRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1MoveProjectResponse> {
             const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).moveProject(projectId, body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -22320,7 +22339,7 @@ export const ProjectsApiFp = function (configuration?: Configuration) {
          */
         patchProject(id: number, body: V1PatchProject, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchProjectResponse> {
             const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).patchProject(id, body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -22340,7 +22359,7 @@ export const ProjectsApiFp = function (configuration?: Configuration) {
          */
         postProject(workspaceId: number, body: V1PostProjectRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostProjectResponse> {
             const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).postProject(workspaceId, body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -22360,7 +22379,7 @@ export const ProjectsApiFp = function (configuration?: Configuration) {
          */
         putProjectNotes(projectId: number, body: V1PutProjectNotesRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PutProjectNotesResponse> {
             const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).putProjectNotes(projectId, body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -22379,7 +22398,7 @@ export const ProjectsApiFp = function (configuration?: Configuration) {
          */
         unarchiveProject(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1UnarchiveProjectResponse> {
             const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).unarchiveProject(id, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -22659,7 +22678,7 @@ export const RBACApiFetchParamCreator = function (configuration?: Configuration)
                 throw new RequiredError('body','Required parameter body was null or undefined when calling assignRoles.');
             }
             const localVarPath = `/api/v1/roles/add-assignments`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -22674,14 +22693,13 @@ export const RBACApiFetchParamCreator = function (configuration?: Configuration)
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -22700,7 +22718,7 @@ export const RBACApiFetchParamCreator = function (configuration?: Configuration)
             }
             const localVarPath = `/api/v1/roles/workspace/{workspaceId}`
                 .replace(`{${"workspaceId"}}`, encodeURIComponent(String(workspaceId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -22717,13 +22735,12 @@ export const RBACApiFetchParamCreator = function (configuration?: Configuration)
                 localVarQueryParameter['name'] = name
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -22735,7 +22752,7 @@ export const RBACApiFetchParamCreator = function (configuration?: Configuration)
          */
         getPermissionsSummary(options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/permissions/summary`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -22748,13 +22765,12 @@ export const RBACApiFetchParamCreator = function (configuration?: Configuration)
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -22772,7 +22788,7 @@ export const RBACApiFetchParamCreator = function (configuration?: Configuration)
             }
             const localVarPath = `/api/v1/roles/search/by-group/{groupId}`
                 .replace(`{${"groupId"}}`, encodeURIComponent(String(groupId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -22785,13 +22801,12 @@ export const RBACApiFetchParamCreator = function (configuration?: Configuration)
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -22809,7 +22824,7 @@ export const RBACApiFetchParamCreator = function (configuration?: Configuration)
             }
             const localVarPath = `/api/v1/roles/search/by-user/{userId}`
                 .replace(`{${"userId"}}`, encodeURIComponent(String(userId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -22822,13 +22837,12 @@ export const RBACApiFetchParamCreator = function (configuration?: Configuration)
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -22845,7 +22859,7 @@ export const RBACApiFetchParamCreator = function (configuration?: Configuration)
                 throw new RequiredError('body','Required parameter body was null or undefined when calling getRolesByID.');
             }
             const localVarPath = `/api/v1/roles/search/by-ids`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -22860,14 +22874,13 @@ export const RBACApiFetchParamCreator = function (configuration?: Configuration)
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -22884,7 +22897,7 @@ export const RBACApiFetchParamCreator = function (configuration?: Configuration)
                 throw new RequiredError('body','Required parameter body was null or undefined when calling listRoles.');
             }
             const localVarPath = `/api/v1/roles/search`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -22899,14 +22912,13 @@ export const RBACApiFetchParamCreator = function (configuration?: Configuration)
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -22923,7 +22935,7 @@ export const RBACApiFetchParamCreator = function (configuration?: Configuration)
                 throw new RequiredError('body','Required parameter body was null or undefined when calling removeAssignments.');
             }
             const localVarPath = `/api/v1/roles/remove-assignments`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -22938,14 +22950,13 @@ export const RBACApiFetchParamCreator = function (configuration?: Configuration)
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -22962,7 +22973,7 @@ export const RBACApiFetchParamCreator = function (configuration?: Configuration)
                 throw new RequiredError('body','Required parameter body was null or undefined when calling searchRolesAssignableToScope.');
             }
             const localVarPath = `/api/v1/roles/search/by-assignability`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -22977,14 +22988,13 @@ export const RBACApiFetchParamCreator = function (configuration?: Configuration)
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -23006,7 +23016,7 @@ export const RBACApiFp = function (configuration?: Configuration) {
          */
         assignRoles(body: V1AssignRolesRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1AssignRolesResponse> {
             const localVarFetchArgs = RBACApiFetchParamCreator(configuration).assignRoles(body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -23026,7 +23036,7 @@ export const RBACApiFp = function (configuration?: Configuration) {
          */
         getGroupsAndUsersAssignedToWorkspace(workspaceId: number, name?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetGroupsAndUsersAssignedToWorkspaceResponse> {
             const localVarFetchArgs = RBACApiFetchParamCreator(configuration).getGroupsAndUsersAssignedToWorkspace(workspaceId, name, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -23044,7 +23054,7 @@ export const RBACApiFp = function (configuration?: Configuration) {
          */
         getPermissionsSummary(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetPermissionsSummaryResponse> {
             const localVarFetchArgs = RBACApiFetchParamCreator(configuration).getPermissionsSummary(options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -23063,7 +23073,7 @@ export const RBACApiFp = function (configuration?: Configuration) {
          */
         getRolesAssignedToGroup(groupId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetRolesAssignedToGroupResponse> {
             const localVarFetchArgs = RBACApiFetchParamCreator(configuration).getRolesAssignedToGroup(groupId, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -23082,7 +23092,7 @@ export const RBACApiFp = function (configuration?: Configuration) {
          */
         getRolesAssignedToUser(userId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetRolesAssignedToUserResponse> {
             const localVarFetchArgs = RBACApiFetchParamCreator(configuration).getRolesAssignedToUser(userId, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -23101,7 +23111,7 @@ export const RBACApiFp = function (configuration?: Configuration) {
          */
         getRolesByID(body: V1GetRolesByIDRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetRolesByIDResponse> {
             const localVarFetchArgs = RBACApiFetchParamCreator(configuration).getRolesByID(body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -23120,7 +23130,7 @@ export const RBACApiFp = function (configuration?: Configuration) {
          */
         listRoles(body: V1ListRolesRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ListRolesResponse> {
             const localVarFetchArgs = RBACApiFetchParamCreator(configuration).listRoles(body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -23139,7 +23149,7 @@ export const RBACApiFp = function (configuration?: Configuration) {
          */
         removeAssignments(body: V1RemoveAssignmentsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1RemoveAssignmentsResponse> {
             const localVarFetchArgs = RBACApiFetchParamCreator(configuration).removeAssignments(body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -23158,7 +23168,7 @@ export const RBACApiFp = function (configuration?: Configuration) {
          */
         searchRolesAssignableToScope(body: V1SearchRolesAssignableToScopeRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SearchRolesAssignableToScopeResponse> {
             const localVarFetchArgs = RBACApiFetchParamCreator(configuration).searchRolesAssignableToScope(body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -23407,7 +23417,7 @@ export const ShellsApiFetchParamCreator = function (configuration?: Configuratio
             }
             const localVarPath = `/api/v1/shells/{shellId}`
                 .replace(`{${"shellId"}}`, encodeURIComponent(String(shellId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -23420,13 +23430,12 @@ export const ShellsApiFetchParamCreator = function (configuration?: Configuratio
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -23445,7 +23454,7 @@ export const ShellsApiFetchParamCreator = function (configuration?: Configuratio
          */
         getShells(sortBy?: V1GetTensorboardsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, workspaceId?: number, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/shells`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -23486,13 +23495,12 @@ export const ShellsApiFetchParamCreator = function (configuration?: Configuratio
                 localVarQueryParameter['workspaceId'] = workspaceId
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -23510,7 +23518,7 @@ export const ShellsApiFetchParamCreator = function (configuration?: Configuratio
             }
             const localVarPath = `/api/v1/shells/{shellId}/kill`
                 .replace(`{${"shellId"}}`, encodeURIComponent(String(shellId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -23523,13 +23531,12 @@ export const ShellsApiFetchParamCreator = function (configuration?: Configuratio
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -23546,7 +23553,7 @@ export const ShellsApiFetchParamCreator = function (configuration?: Configuratio
                 throw new RequiredError('body','Required parameter body was null or undefined when calling launchShell.');
             }
             const localVarPath = `/api/v1/shells`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -23561,14 +23568,13 @@ export const ShellsApiFetchParamCreator = function (configuration?: Configuratio
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -23591,7 +23597,7 @@ export const ShellsApiFetchParamCreator = function (configuration?: Configuratio
             }
             const localVarPath = `/api/v1/shells/{shellId}/set_priority`
                 .replace(`{${"shellId"}}`, encodeURIComponent(String(shellId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -23606,14 +23612,13 @@ export const ShellsApiFetchParamCreator = function (configuration?: Configuratio
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -23635,7 +23640,7 @@ export const ShellsApiFp = function (configuration?: Configuration) {
          */
         getShell(shellId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetShellResponse> {
             const localVarFetchArgs = ShellsApiFetchParamCreator(configuration).getShell(shellId, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -23660,7 +23665,7 @@ export const ShellsApiFp = function (configuration?: Configuration) {
          */
         getShells(sortBy?: V1GetTensorboardsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, workspaceId?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetShellsResponse> {
             const localVarFetchArgs = ShellsApiFetchParamCreator(configuration).getShells(sortBy, orderBy, offset, limit, users, userIds, workspaceId, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -23679,7 +23684,7 @@ export const ShellsApiFp = function (configuration?: Configuration) {
          */
         killShell(shellId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1KillShellResponse> {
             const localVarFetchArgs = ShellsApiFetchParamCreator(configuration).killShell(shellId, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -23698,7 +23703,7 @@ export const ShellsApiFp = function (configuration?: Configuration) {
          */
         launchShell(body: V1LaunchShellRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1LaunchShellResponse> {
             const localVarFetchArgs = ShellsApiFetchParamCreator(configuration).launchShell(body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -23718,7 +23723,7 @@ export const ShellsApiFp = function (configuration?: Configuration) {
          */
         setShellPriority(shellId: string, body: V1SetShellPriorityRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SetShellPriorityResponse> {
             const localVarFetchArgs = ShellsApiFetchParamCreator(configuration).setShellPriority(shellId, body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -23887,7 +23892,7 @@ export const TasksApiFetchParamCreator = function (configuration?: Configuration
          */
         getActiveTasksCount(options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/tasks/count`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -23900,13 +23905,12 @@ export const TasksApiFetchParamCreator = function (configuration?: Configuration
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -23924,7 +23928,7 @@ export const TasksApiFetchParamCreator = function (configuration?: Configuration
             }
             const localVarPath = `/api/v1/tasks/{taskId}`
                 .replace(`{${"taskId"}}`, encodeURIComponent(String(taskId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -23937,13 +23941,12 @@ export const TasksApiFetchParamCreator = function (configuration?: Configuration
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -23955,7 +23958,7 @@ export const TasksApiFetchParamCreator = function (configuration?: Configuration
          */
         getTasks(options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/tasks`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -23968,13 +23971,12 @@ export const TasksApiFetchParamCreator = function (configuration?: Configuration
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -24005,7 +24007,7 @@ export const TasksApiFetchParamCreator = function (configuration?: Configuration
             }
             const localVarPath = `/api/v1/tasks/{taskId}/logs`
                 .replace(`{${"taskId"}}`, encodeURIComponent(String(taskId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -24070,13 +24072,12 @@ export const TasksApiFetchParamCreator = function (configuration?: Configuration
                 localVarQueryParameter['searchText'] = searchText
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -24095,7 +24096,7 @@ export const TasksApiFetchParamCreator = function (configuration?: Configuration
             }
             const localVarPath = `/api/v1/tasks/{taskId}/logs/fields`
                 .replace(`{${"taskId"}}`, encodeURIComponent(String(taskId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -24112,13 +24113,12 @@ export const TasksApiFetchParamCreator = function (configuration?: Configuration
                 localVarQueryParameter['follow'] = follow
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -24139,7 +24139,7 @@ export const TasksApiFp = function (configuration?: Configuration) {
          */
         getActiveTasksCount(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetActiveTasksCountResponse> {
             const localVarFetchArgs = TasksApiFetchParamCreator(configuration).getActiveTasksCount(options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -24158,7 +24158,7 @@ export const TasksApiFp = function (configuration?: Configuration) {
          */
         getTask(taskId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTaskResponse> {
             const localVarFetchArgs = TasksApiFetchParamCreator(configuration).getTask(taskId, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -24176,7 +24176,7 @@ export const TasksApiFp = function (configuration?: Configuration) {
          */
         getTasks(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTasksResponse> {
             const localVarFetchArgs = TasksApiFetchParamCreator(configuration).getTasks(options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -24208,7 +24208,7 @@ export const TasksApiFp = function (configuration?: Configuration) {
          */
         taskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<V1LogLevel>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: V1OrderBy, searchText?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TaskLogsResponse> {
             const localVarFetchArgs = TasksApiFetchParamCreator(configuration).taskLogs(taskId, limit, follow, allocationIds, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -24228,7 +24228,7 @@ export const TasksApiFp = function (configuration?: Configuration) {
          */
         taskLogsFields(taskId: string, follow?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TaskLogsFieldsResponse> {
             const localVarFetchArgs = TasksApiFetchParamCreator(configuration).taskLogsFields(taskId, follow, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -24413,7 +24413,7 @@ export const TemplatesApiFetchParamCreator = function (configuration?: Configura
             }
             const localVarPath = `/api/v1/templates/{templateName}`
                 .replace(`{${"templateName"}}`, encodeURIComponent(String(templateName)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'DELETE', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -24426,13 +24426,12 @@ export const TemplatesApiFetchParamCreator = function (configuration?: Configura
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -24450,7 +24449,7 @@ export const TemplatesApiFetchParamCreator = function (configuration?: Configura
             }
             const localVarPath = `/api/v1/templates/{templateName}`
                 .replace(`{${"templateName"}}`, encodeURIComponent(String(templateName)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -24463,13 +24462,12 @@ export const TemplatesApiFetchParamCreator = function (configuration?: Configura
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -24486,7 +24484,7 @@ export const TemplatesApiFetchParamCreator = function (configuration?: Configura
          */
         getTemplates(sortBy?: V1GetTemplatesRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/templates`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -24519,19 +24517,106 @@ export const TemplatesApiFetchParamCreator = function (configuration?: Configura
                 localVarQueryParameter['name'] = name
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
         /**
          * 
-         * @summary Update or create (upsert) the requested template.
+         * @summary Patch template config.
+         * @param {string} templateName The name of the template.
+         * @param {any} body The template value.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchTemplateConfig(templateName: string, body: any, options: any = {}): FetchArgs {
+            // verify required parameter 'templateName' is not null or undefined
+            if (templateName === null || templateName === undefined) {
+                throw new RequiredError('templateName','Required parameter templateName was null or undefined when calling patchTemplateConfig.');
+            }
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling patchTemplateConfig.');
+            }
+            const localVarPath = `/api/v1/templates/{templateName}`
+                .replace(`{${"templateName"}}`, encodeURIComponent(String(templateName)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'PATCH', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Post a new template.
+         * @param {string} templateName The name of the template.
+         * @param {V1Template} body The template to put.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postTemplate(templateName: string, body: V1Template, options: any = {}): FetchArgs {
+            // verify required parameter 'templateName' is not null or undefined
+            if (templateName === null || templateName === undefined) {
+                throw new RequiredError('templateName','Required parameter templateName was null or undefined when calling postTemplate.');
+            }
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling postTemplate.');
+            }
+            const localVarPath = `/api/v1/templates/{templateName}`
+                .replace(`{${"templateName"}}`, encodeURIComponent(String(templateName)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary DEPRECATED: Update or create (upsert) the requested template.
          * @param {string} templateName The name of the template.
          * @param {V1Template} body The template to put.
          * @param {*} [options] Override http request option.
@@ -24548,7 +24633,7 @@ export const TemplatesApiFetchParamCreator = function (configuration?: Configura
             }
             const localVarPath = `/api/v1/templates/{templateName}`
                 .replace(`{${"templateName"}}`, encodeURIComponent(String(templateName)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'PUT', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -24563,14 +24648,13 @@ export const TemplatesApiFetchParamCreator = function (configuration?: Configura
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -24592,7 +24676,7 @@ export const TemplatesApiFp = function (configuration?: Configuration) {
          */
         deleteTemplate(templateName: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteTemplateResponse> {
             const localVarFetchArgs = TemplatesApiFetchParamCreator(configuration).deleteTemplate(templateName, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -24611,7 +24695,7 @@ export const TemplatesApiFp = function (configuration?: Configuration) {
          */
         getTemplate(templateName: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTemplateResponse> {
             const localVarFetchArgs = TemplatesApiFetchParamCreator(configuration).getTemplate(templateName, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -24634,7 +24718,7 @@ export const TemplatesApiFp = function (configuration?: Configuration) {
          */
         getTemplates(sortBy?: V1GetTemplatesRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTemplatesResponse> {
             const localVarFetchArgs = TemplatesApiFetchParamCreator(configuration).getTemplates(sortBy, orderBy, offset, limit, name, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -24646,7 +24730,47 @@ export const TemplatesApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Update or create (upsert) the requested template.
+         * @summary Patch template config.
+         * @param {string} templateName The name of the template.
+         * @param {any} body The template value.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchTemplateConfig(templateName: string, body: any, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchTemplateConfigResponse> {
+            const localVarFetchArgs = TemplatesApiFetchParamCreator(configuration).patchTemplateConfig(templateName, body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Post a new template.
+         * @param {string} templateName The name of the template.
+         * @param {V1Template} body The template to put.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postTemplate(templateName: string, body: V1Template, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostTemplateResponse> {
+            const localVarFetchArgs = TemplatesApiFetchParamCreator(configuration).postTemplate(templateName, body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary DEPRECATED: Update or create (upsert) the requested template.
          * @param {string} templateName The name of the template.
          * @param {V1Template} body The template to put.
          * @param {*} [options] Override http request option.
@@ -24654,7 +24778,7 @@ export const TemplatesApiFp = function (configuration?: Configuration) {
          */
         putTemplate(templateName: string, body: V1Template, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PutTemplateResponse> {
             const localVarFetchArgs = TemplatesApiFetchParamCreator(configuration).putTemplate(templateName, body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -24709,7 +24833,29 @@ export const TemplatesApiFactory = function (configuration?: Configuration, fetc
         },
         /**
          * 
-         * @summary Update or create (upsert) the requested template.
+         * @summary Patch template config.
+         * @param {string} templateName The name of the template.
+         * @param {any} body The template value.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchTemplateConfig(templateName: string, body: any, options?: any) {
+            return TemplatesApiFp(configuration).patchTemplateConfig(templateName, body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Post a new template.
+         * @param {string} templateName The name of the template.
+         * @param {V1Template} body The template to put.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postTemplate(templateName: string, body: V1Template, options?: any) {
+            return TemplatesApiFp(configuration).postTemplate(templateName, body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary DEPRECATED: Update or create (upsert) the requested template.
          * @param {string} templateName The name of the template.
          * @param {V1Template} body The template to put.
          * @param {*} [options] Override http request option.
@@ -24770,7 +24916,33 @@ export class TemplatesApi extends BaseAPI {
     
     /**
      * 
-     * @summary Update or create (upsert) the requested template.
+     * @summary Patch template config.
+     * @param {string} templateName The name of the template.
+     * @param {any} body The template value.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TemplatesApi
+     */
+    public patchTemplateConfig(templateName: string, body: any, options?: any) {
+        return TemplatesApiFp(this.configuration).patchTemplateConfig(templateName, body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Post a new template.
+     * @param {string} templateName The name of the template.
+     * @param {V1Template} body The template to put.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TemplatesApi
+     */
+    public postTemplate(templateName: string, body: V1Template, options?: any) {
+        return TemplatesApiFp(this.configuration).postTemplate(templateName, body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary DEPRECATED: Update or create (upsert) the requested template.
      * @param {string} templateName The name of the template.
      * @param {V1Template} body The template to put.
      * @param {*} [options] Override http request option.
@@ -24803,7 +24975,7 @@ export const TensorboardsApiFetchParamCreator = function (configuration?: Config
             }
             const localVarPath = `/api/v1/tensorboards/{tensorboardId}`
                 .replace(`{${"tensorboardId"}}`, encodeURIComponent(String(tensorboardId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -24816,13 +24988,12 @@ export const TensorboardsApiFetchParamCreator = function (configuration?: Config
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -24841,7 +25012,7 @@ export const TensorboardsApiFetchParamCreator = function (configuration?: Config
          */
         getTensorboards(sortBy?: V1GetTensorboardsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, workspaceId?: number, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/tensorboards`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -24882,13 +25053,12 @@ export const TensorboardsApiFetchParamCreator = function (configuration?: Config
                 localVarQueryParameter['workspaceId'] = workspaceId
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -24906,7 +25076,7 @@ export const TensorboardsApiFetchParamCreator = function (configuration?: Config
             }
             const localVarPath = `/api/v1/tensorboards/{tensorboardId}/kill`
                 .replace(`{${"tensorboardId"}}`, encodeURIComponent(String(tensorboardId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -24919,13 +25089,12 @@ export const TensorboardsApiFetchParamCreator = function (configuration?: Config
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -24942,7 +25111,7 @@ export const TensorboardsApiFetchParamCreator = function (configuration?: Config
                 throw new RequiredError('body','Required parameter body was null or undefined when calling launchTensorboard.');
             }
             const localVarPath = `/api/v1/tensorboards`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -24957,14 +25126,13 @@ export const TensorboardsApiFetchParamCreator = function (configuration?: Config
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -24987,7 +25155,7 @@ export const TensorboardsApiFetchParamCreator = function (configuration?: Config
             }
             const localVarPath = `/api/v1/tensorboards/{tensorboardId}/set_priority`
                 .replace(`{${"tensorboardId"}}`, encodeURIComponent(String(tensorboardId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -25002,14 +25170,13 @@ export const TensorboardsApiFetchParamCreator = function (configuration?: Config
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -25031,7 +25198,7 @@ export const TensorboardsApiFp = function (configuration?: Configuration) {
          */
         getTensorboard(tensorboardId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTensorboardResponse> {
             const localVarFetchArgs = TensorboardsApiFetchParamCreator(configuration).getTensorboard(tensorboardId, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -25056,7 +25223,7 @@ export const TensorboardsApiFp = function (configuration?: Configuration) {
          */
         getTensorboards(sortBy?: V1GetTensorboardsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, workspaceId?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTensorboardsResponse> {
             const localVarFetchArgs = TensorboardsApiFetchParamCreator(configuration).getTensorboards(sortBy, orderBy, offset, limit, users, userIds, workspaceId, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -25075,7 +25242,7 @@ export const TensorboardsApiFp = function (configuration?: Configuration) {
          */
         killTensorboard(tensorboardId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1KillTensorboardResponse> {
             const localVarFetchArgs = TensorboardsApiFetchParamCreator(configuration).killTensorboard(tensorboardId, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -25094,7 +25261,7 @@ export const TensorboardsApiFp = function (configuration?: Configuration) {
          */
         launchTensorboard(body: V1LaunchTensorboardRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1LaunchTensorboardResponse> {
             const localVarFetchArgs = TensorboardsApiFetchParamCreator(configuration).launchTensorboard(body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -25114,7 +25281,7 @@ export const TensorboardsApiFp = function (configuration?: Configuration) {
          */
         setTensorboardPriority(tensorboardId: string, body: V1SetTensorboardPriorityRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SetTensorboardPriorityResponse> {
             const localVarFetchArgs = TensorboardsApiFetchParamCreator(configuration).setTensorboardPriority(tensorboardId, body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -25288,7 +25455,7 @@ export const TrialComparisonApiFetchParamCreator = function (configuration?: Con
                 throw new RequiredError('body','Required parameter body was null or undefined when calling createTrialsCollection.');
             }
             const localVarPath = `/api/v1/trial-comparison/collections`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -25303,14 +25470,13 @@ export const TrialComparisonApiFetchParamCreator = function (configuration?: Con
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -25323,7 +25489,7 @@ export const TrialComparisonApiFetchParamCreator = function (configuration?: Con
          */
         deleteTrialsCollection(id?: number, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/trial-comparison/collections`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'DELETE', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -25340,13 +25506,12 @@ export const TrialComparisonApiFetchParamCreator = function (configuration?: Con
                 localVarQueryParameter['id'] = id
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -25359,7 +25524,7 @@ export const TrialComparisonApiFetchParamCreator = function (configuration?: Con
          */
         getTrialsCollections(projectId?: number, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/trial-comparison/collections`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -25376,13 +25541,12 @@ export const TrialComparisonApiFetchParamCreator = function (configuration?: Con
                 localVarQueryParameter['projectId'] = projectId
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -25399,7 +25563,7 @@ export const TrialComparisonApiFetchParamCreator = function (configuration?: Con
                 throw new RequiredError('body','Required parameter body was null or undefined when calling patchTrialsCollection.');
             }
             const localVarPath = `/api/v1/trial-comparison/collections`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'PATCH', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -25414,14 +25578,13 @@ export const TrialComparisonApiFetchParamCreator = function (configuration?: Con
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -25438,7 +25601,7 @@ export const TrialComparisonApiFetchParamCreator = function (configuration?: Con
                 throw new RequiredError('body','Required parameter body was null or undefined when calling queryTrials.');
             }
             const localVarPath = `/api/v1/trial-comparison/query`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -25453,14 +25616,13 @@ export const TrialComparisonApiFetchParamCreator = function (configuration?: Con
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -25477,7 +25639,7 @@ export const TrialComparisonApiFetchParamCreator = function (configuration?: Con
                 throw new RequiredError('body','Required parameter body was null or undefined when calling updateTrialTags.');
             }
             const localVarPath = `/api/v1/trial-comparison/update-trial-tags`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -25492,14 +25654,13 @@ export const TrialComparisonApiFetchParamCreator = function (configuration?: Con
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -25521,7 +25682,7 @@ export const TrialComparisonApiFp = function (configuration?: Configuration) {
          */
         createTrialsCollection(body: V1CreateTrialsCollectionRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CreateTrialsCollectionResponse> {
             const localVarFetchArgs = TrialComparisonApiFetchParamCreator(configuration).createTrialsCollection(body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -25540,7 +25701,7 @@ export const TrialComparisonApiFp = function (configuration?: Configuration) {
          */
         deleteTrialsCollection(id?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteTrialsCollectionResponse> {
             const localVarFetchArgs = TrialComparisonApiFetchParamCreator(configuration).deleteTrialsCollection(id, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -25559,7 +25720,7 @@ export const TrialComparisonApiFp = function (configuration?: Configuration) {
          */
         getTrialsCollections(projectId?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTrialsCollectionsResponse> {
             const localVarFetchArgs = TrialComparisonApiFetchParamCreator(configuration).getTrialsCollections(projectId, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -25578,7 +25739,7 @@ export const TrialComparisonApiFp = function (configuration?: Configuration) {
          */
         patchTrialsCollection(body: V1PatchTrialsCollectionRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchTrialsCollectionResponse> {
             const localVarFetchArgs = TrialComparisonApiFetchParamCreator(configuration).patchTrialsCollection(body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -25597,7 +25758,7 @@ export const TrialComparisonApiFp = function (configuration?: Configuration) {
          */
         queryTrials(body: V1QueryTrialsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1QueryTrialsResponse> {
             const localVarFetchArgs = TrialComparisonApiFetchParamCreator(configuration).queryTrials(body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -25616,7 +25777,7 @@ export const TrialComparisonApiFp = function (configuration?: Configuration) {
          */
         updateTrialTags(body: V1UpdateTrialTagsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1UpdateTrialTagsResponse> {
             const localVarFetchArgs = TrialComparisonApiFetchParamCreator(configuration).updateTrialTags(body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -25804,7 +25965,7 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
             }
             const localVarPath = `/api/v1/experiments/{experimentId}/trials`
                 .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -25837,13 +25998,12 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
                 localVarQueryParameter['states'] = states
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -25856,7 +26016,7 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
          */
         getTrainingMetrics(trialIds?: Array<number>, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/trials/metrics/training_metrics`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -25873,13 +26033,12 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
                 localVarQueryParameter['trialIds'] = trialIds
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -25897,7 +26056,7 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
             }
             const localVarPath = `/api/v1/trials/{trialId}`
                 .replace(`{${"trialId"}}`, encodeURIComponent(String(trialId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -25910,13 +26069,12 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -25941,7 +26099,7 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
             }
             const localVarPath = `/api/v1/trials/{trialId}/workloads`
                 .replace(`{${"trialId"}}`, encodeURIComponent(String(trialId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -25982,13 +26140,12 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
                 localVarQueryParameter['metricType'] = metricType
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -26001,7 +26158,7 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
          */
         getValidationMetrics(trialIds?: Array<number>, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/trials/metrics/validation_metrics`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -26018,13 +26175,12 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
                 localVarQueryParameter['trialIds'] = trialIds
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -26042,7 +26198,7 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
             }
             const localVarPath = `/api/v1/trials/{id}/kill`
                 .replace(`{${"id"}}`, encodeURIComponent(String(id)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -26055,13 +26211,12 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -26085,7 +26240,7 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
             }
             const localVarPath = `/api/v1/trials/{trialId}/summarize`
                 .replace(`{${"trialId"}}`, encodeURIComponent(String(trialId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -26122,13 +26277,12 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
                 localVarQueryParameter['scale'] = scale
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -26158,7 +26312,7 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
             }
             const localVarPath = `/api/v1/trials/{trialId}/logs`
                 .replace(`{${"trialId"}}`, encodeURIComponent(String(trialId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -26219,13 +26373,12 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
                 localVarQueryParameter['searchText'] = searchText
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -26244,7 +26397,7 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
             }
             const localVarPath = `/api/v1/trials/{trialId}/logs/fields`
                 .replace(`{${"trialId"}}`, encodeURIComponent(String(trialId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -26261,13 +26414,12 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
                 localVarQueryParameter['follow'] = follow
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -26294,7 +26446,7 @@ export const TrialsApiFp = function (configuration?: Configuration) {
          */
         getExperimentTrials(experimentId: number, sortBy?: V1GetExperimentTrialsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, states?: Array<Experimentv1State>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetExperimentTrialsResponse> {
             const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).getExperimentTrials(experimentId, sortBy, orderBy, offset, limit, states, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -26313,7 +26465,7 @@ export const TrialsApiFp = function (configuration?: Configuration) {
          */
         getTrainingMetrics(trialIds?: Array<number>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1GetTrainingMetricsResponse> {
             const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).getTrainingMetrics(trialIds, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -26332,7 +26484,7 @@ export const TrialsApiFp = function (configuration?: Configuration) {
          */
         getTrial(trialId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTrialResponse> {
             const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).getTrial(trialId, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -26358,7 +26510,7 @@ export const TrialsApiFp = function (configuration?: Configuration) {
          */
         getTrialWorkloads(trialId: number, orderBy?: V1OrderBy, offset?: number, limit?: number, sortKey?: string, filter?: GetTrialWorkloadsRequestFilterOption, includeBatchMetrics?: boolean, metricType?: V1MetricType, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTrialWorkloadsResponse> {
             const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).getTrialWorkloads(trialId, orderBy, offset, limit, sortKey, filter, includeBatchMetrics, metricType, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -26377,7 +26529,7 @@ export const TrialsApiFp = function (configuration?: Configuration) {
          */
         getValidationMetrics(trialIds?: Array<number>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1GetValidationMetricsResponse> {
             const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).getValidationMetrics(trialIds, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -26396,7 +26548,7 @@ export const TrialsApiFp = function (configuration?: Configuration) {
          */
         killTrial(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1KillTrialResponse> {
             const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).killTrial(id, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -26421,7 +26573,7 @@ export const TrialsApiFp = function (configuration?: Configuration) {
          */
         summarizeTrial(trialId: number, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: V1MetricType, scale?: V1Scale, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SummarizeTrialResponse> {
             const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).summarizeTrial(trialId, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -26452,7 +26604,7 @@ export const TrialsApiFp = function (configuration?: Configuration) {
          */
         trialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<V1LogLevel>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: V1OrderBy, searchText?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TrialLogsResponse> {
             const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).trialLogs(trialId, limit, follow, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -26472,7 +26624,7 @@ export const TrialsApiFp = function (configuration?: Configuration) {
          */
         trialLogsFields(trialId: number, follow?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TrialLogsFieldsResponse> {
             const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).trialLogsFields(trialId, follow, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -26777,7 +26929,7 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
          */
         getMe(options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/me`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -26790,13 +26942,12 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -26814,7 +26965,7 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
             }
             const localVarPath = `/api/v1/users/{userId}`
                 .replace(`{${"userId"}}`, encodeURIComponent(String(userId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -26827,13 +26978,12 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -26851,7 +27001,7 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
             }
             const localVarPath = `/api/v1/users/{username}/by-username`
                 .replace(`{${"username"}}`, encodeURIComponent(String(username)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -26864,13 +27014,12 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -26887,7 +27036,7 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
          */
         getUsers(sortBy?: V1GetUsersRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/users`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -26920,13 +27069,12 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
                 localVarQueryParameter['name'] = name
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -26938,7 +27086,7 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
          */
         getUserSetting(options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/users/setting`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -26951,13 +27099,12 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -26980,7 +27127,7 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
             }
             const localVarPath = `/api/v1/users/{userId}`
                 .replace(`{${"userId"}}`, encodeURIComponent(String(userId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'PATCH', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -26995,14 +27142,13 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -27019,7 +27165,7 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
                 throw new RequiredError('body','Required parameter body was null or undefined when calling postUser.');
             }
             const localVarPath = `/api/v1/users`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -27034,14 +27180,13 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -27058,7 +27203,7 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
                 throw new RequiredError('body','Required parameter body was null or undefined when calling postUserActivity.');
             }
             const localVarPath = `/api/v1/users/activity`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -27073,14 +27218,13 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -27097,7 +27241,7 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
                 throw new RequiredError('body','Required parameter body was null or undefined when calling postUserSetting.');
             }
             const localVarPath = `/api/v1/users/setting`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -27112,14 +27256,13 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -27131,7 +27274,7 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
          */
         resetUserSetting(options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/users/setting/reset`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -27144,13 +27287,12 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -27173,7 +27315,7 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
             }
             const localVarPath = `/api/v1/users/{userId}/password`
                 .replace(`{${"userId"}}`, encodeURIComponent(String(userId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -27188,15 +27330,14 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             const needsSerialization = localVarRequestOptions.headers['Content-Type'] === 'application/json';
             localVarRequestOptions.body = needsSerialization ? JSON.stringify(body) : body
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -27217,7 +27358,7 @@ export const UsersApiFp = function (configuration?: Configuration) {
          */
         getMe(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetMeResponse> {
             const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getMe(options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -27236,7 +27377,7 @@ export const UsersApiFp = function (configuration?: Configuration) {
          */
         getUser(userId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetUserResponse> {
             const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getUser(userId, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -27255,7 +27396,7 @@ export const UsersApiFp = function (configuration?: Configuration) {
          */
         getUserByUsername(username: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetUserByUsernameResponse> {
             const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getUserByUsername(username, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -27278,7 +27419,7 @@ export const UsersApiFp = function (configuration?: Configuration) {
          */
         getUsers(sortBy?: V1GetUsersRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetUsersResponse> {
             const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getUsers(sortBy, orderBy, offset, limit, name, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -27296,7 +27437,7 @@ export const UsersApiFp = function (configuration?: Configuration) {
          */
         getUserSetting(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetUserSettingResponse> {
             const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getUserSetting(options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -27316,7 +27457,7 @@ export const UsersApiFp = function (configuration?: Configuration) {
          */
         patchUser(userId: number, body: V1PatchUser, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchUserResponse> {
             const localVarFetchArgs = UsersApiFetchParamCreator(configuration).patchUser(userId, body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -27335,7 +27476,7 @@ export const UsersApiFp = function (configuration?: Configuration) {
          */
         postUser(body: V1PostUserRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostUserResponse> {
             const localVarFetchArgs = UsersApiFetchParamCreator(configuration).postUser(body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -27354,7 +27495,7 @@ export const UsersApiFp = function (configuration?: Configuration) {
          */
         postUserActivity(body: V1PostUserActivityRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostUserActivityResponse> {
             const localVarFetchArgs = UsersApiFetchParamCreator(configuration).postUserActivity(body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -27373,7 +27514,7 @@ export const UsersApiFp = function (configuration?: Configuration) {
          */
         postUserSetting(body: V1PostUserSettingRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostUserSettingResponse> {
             const localVarFetchArgs = UsersApiFetchParamCreator(configuration).postUserSetting(body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -27391,7 +27532,7 @@ export const UsersApiFp = function (configuration?: Configuration) {
          */
         resetUserSetting(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ResetUserSettingResponse> {
             const localVarFetchArgs = UsersApiFetchParamCreator(configuration).resetUserSetting(options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -27411,7 +27552,7 @@ export const UsersApiFp = function (configuration?: Configuration) {
          */
         setUserPassword(userId: number, body: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SetUserPasswordResponse> {
             const localVarFetchArgs = UsersApiFetchParamCreator(configuration).setUserPassword(userId, body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -27710,7 +27851,7 @@ export const WebhooksApiFetchParamCreator = function (configuration?: Configurat
             }
             const localVarPath = `/api/v1/webhooks/{id}`
                 .replace(`{${"id"}}`, encodeURIComponent(String(id)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'DELETE', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -27723,13 +27864,12 @@ export const WebhooksApiFetchParamCreator = function (configuration?: Configurat
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -27741,7 +27881,7 @@ export const WebhooksApiFetchParamCreator = function (configuration?: Configurat
          */
         getWebhooks(options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/webhooks`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -27754,13 +27894,12 @@ export const WebhooksApiFetchParamCreator = function (configuration?: Configurat
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -27777,7 +27916,7 @@ export const WebhooksApiFetchParamCreator = function (configuration?: Configurat
                 throw new RequiredError('body','Required parameter body was null or undefined when calling postWebhook.');
             }
             const localVarPath = `/api/v1/webhooks`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -27792,14 +27931,13 @@ export const WebhooksApiFetchParamCreator = function (configuration?: Configurat
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -27817,7 +27955,7 @@ export const WebhooksApiFetchParamCreator = function (configuration?: Configurat
             }
             const localVarPath = `/api/v1/webhooks/{id}/test`
                 .replace(`{${"id"}}`, encodeURIComponent(String(id)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -27830,13 +27968,12 @@ export const WebhooksApiFetchParamCreator = function (configuration?: Configurat
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -27858,7 +27995,7 @@ export const WebhooksApiFp = function (configuration?: Configuration) {
          */
         deleteWebhook(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteWebhookResponse> {
             const localVarFetchArgs = WebhooksApiFetchParamCreator(configuration).deleteWebhook(id, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -27876,7 +28013,7 @@ export const WebhooksApiFp = function (configuration?: Configuration) {
          */
         getWebhooks(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetWebhooksResponse> {
             const localVarFetchArgs = WebhooksApiFetchParamCreator(configuration).getWebhooks(options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -27895,7 +28032,7 @@ export const WebhooksApiFp = function (configuration?: Configuration) {
          */
         postWebhook(body: V1Webhook, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostWebhookResponse> {
             const localVarFetchArgs = WebhooksApiFetchParamCreator(configuration).postWebhook(body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -27914,7 +28051,7 @@ export const WebhooksApiFp = function (configuration?: Configuration) {
          */
         testWebhook(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1TestWebhookResponse> {
             const localVarFetchArgs = WebhooksApiFetchParamCreator(configuration).testWebhook(id, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -28051,7 +28188,7 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
             }
             const localVarPath = `/api/v1/workspaces/{id}/archive`
                 .replace(`{${"id"}}`, encodeURIComponent(String(id)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -28064,13 +28201,12 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -28088,7 +28224,7 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
             }
             const localVarPath = `/api/v1/workspaces/{id}`
                 .replace(`{${"id"}}`, encodeURIComponent(String(id)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'DELETE', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -28101,13 +28237,12 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -28125,7 +28260,7 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
             }
             const localVarPath = `/api/v1/workspaces/{id}`
                 .replace(`{${"id"}}`, encodeURIComponent(String(id)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -28138,13 +28273,12 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -28170,7 +28304,7 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
             }
             const localVarPath = `/api/v1/workspaces/{id}/projects`
                 .replace(`{${"id"}}`, encodeURIComponent(String(id)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -28215,13 +28349,12 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
                 localVarQueryParameter['userIds'] = userIds
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -28242,7 +28375,7 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
          */
         getWorkspaces(sortBy?: V1GetWorkspacesRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, userIds?: Array<number>, pinned?: boolean, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/workspaces`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -28291,13 +28424,12 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
                 localVarQueryParameter['pinned'] = pinned
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -28320,7 +28452,7 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
             }
             const localVarPath = `/api/v1/workspaces/{id}`
                 .replace(`{${"id"}}`, encodeURIComponent(String(id)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'PATCH', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -28335,14 +28467,13 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -28360,7 +28491,7 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
             }
             const localVarPath = `/api/v1/workspaces/{id}/pin`
                 .replace(`{${"id"}}`, encodeURIComponent(String(id)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -28373,13 +28504,12 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -28396,7 +28526,7 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
                 throw new RequiredError('body','Required parameter body was null or undefined when calling postWorkspace.');
             }
             const localVarPath = `/api/v1/workspaces`;
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -28411,14 +28541,13 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
             
             localVarHeaderParameter['Content-Type'] = 'application/json';
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -28436,7 +28565,7 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
             }
             const localVarPath = `/api/v1/workspaces/{id}/unarchive`
                 .replace(`{${"id"}}`, encodeURIComponent(String(id)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -28449,13 +28578,12 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -28473,7 +28601,7 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
             }
             const localVarPath = `/api/v1/workspaces/{id}/unpin`
                 .replace(`{${"id"}}`, encodeURIComponent(String(id)));
-            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
@@ -28486,13 +28614,12 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
-                url: url.format(localVarUrlObj),
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
@@ -28514,7 +28641,7 @@ export const WorkspacesApiFp = function (configuration?: Configuration) {
          */
         archiveWorkspace(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ArchiveWorkspaceResponse> {
             const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).archiveWorkspace(id, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -28533,7 +28660,7 @@ export const WorkspacesApiFp = function (configuration?: Configuration) {
          */
         deleteWorkspace(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteWorkspaceResponse> {
             const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).deleteWorkspace(id, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -28552,7 +28679,7 @@ export const WorkspacesApiFp = function (configuration?: Configuration) {
          */
         getWorkspace(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetWorkspaceResponse> {
             const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).getWorkspace(id, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -28579,7 +28706,7 @@ export const WorkspacesApiFp = function (configuration?: Configuration) {
          */
         getWorkspaceProjects(id: number, sortBy?: V1GetWorkspaceProjectsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, userIds?: Array<number>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetWorkspaceProjectsResponse> {
             const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).getWorkspaceProjects(id, sortBy, orderBy, offset, limit, name, archived, users, userIds, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -28606,7 +28733,7 @@ export const WorkspacesApiFp = function (configuration?: Configuration) {
          */
         getWorkspaces(sortBy?: V1GetWorkspacesRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, userIds?: Array<number>, pinned?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetWorkspacesResponse> {
             const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).getWorkspaces(sortBy, orderBy, offset, limit, name, archived, users, userIds, pinned, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -28626,7 +28753,7 @@ export const WorkspacesApiFp = function (configuration?: Configuration) {
          */
         patchWorkspace(id: number, body: V1PatchWorkspace, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchWorkspaceResponse> {
             const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).patchWorkspace(id, body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -28645,7 +28772,7 @@ export const WorkspacesApiFp = function (configuration?: Configuration) {
          */
         pinWorkspace(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PinWorkspaceResponse> {
             const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).pinWorkspace(id, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -28664,7 +28791,7 @@ export const WorkspacesApiFp = function (configuration?: Configuration) {
          */
         postWorkspace(body: V1PostWorkspaceRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostWorkspaceResponse> {
             const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).postWorkspace(body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -28683,7 +28810,7 @@ export const WorkspacesApiFp = function (configuration?: Configuration) {
          */
         unarchiveWorkspace(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1UnarchiveWorkspaceResponse> {
             const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).unarchiveWorkspace(id, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
@@ -28702,7 +28829,7 @@ export const WorkspacesApiFp = function (configuration?: Configuration) {
          */
         unpinWorkspace(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1UnpinWorkspaceResponse> {
             const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).unpinWorkspace(id, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();

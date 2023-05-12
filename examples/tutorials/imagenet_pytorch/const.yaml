@@ -17,7 +17,7 @@ searcher:
   smaller_is_better: true
   max_length:
     epochs: 60
-entrypoint: model_def:ImagenetTrial
+entrypoint: model_def:ImageNetTrial
 # set to imagenet path
 bind_mounts:
   - host_path: /mnt/data

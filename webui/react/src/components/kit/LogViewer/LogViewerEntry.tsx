@@ -1,7 +1,7 @@
 import React from 'react';
 
+import Icon from 'components/kit/Icon';
 import Tooltip from 'components/kit/Tooltip';
-import Icon from 'shared/components/Icon/Icon';
 import { ansiToHtml } from 'shared/utils/dom';
 import { capitalize } from 'shared/utils/string';
 import { LogLevel } from 'types';
@@ -46,10 +46,10 @@ const LogViewerEntry: React.FC<Props> = ({
 
   return (
     <div className={classes.join(' ')} style={style} tabIndex={0}>
-      <Tooltip placement="top" title={`Level: ${capitalize(level)}`}>
+      <Tooltip content={`Level: ${capitalize(level)}`} placement="top">
         <div className={levelClasses.join(' ')} style={{ width: ICON_WIDTH }}>
           <div className={css.levelLabel}>&lt;[{level}]&gt;</div>
-          <Icon name={level} size="small" />
+          {level !== LogLevel.None && <Icon name={level} size="small" title={level} />}
         </div>
       </Tooltip>
       <div className={css.time} style={timeStyle}>

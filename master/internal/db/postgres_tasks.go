@@ -210,6 +210,16 @@ func (db *PgDB) UpdateAllocationStartTime(a model.Allocation) error {
 	return err
 }
 
+// UpdateAllocationProxyAddress stores the proxy address.
+func (db *PgDB) UpdateAllocationProxyAddress(a model.Allocation) error {
+	_, err := db.sql.Exec(`
+		UPDATE allocations
+		SET proxy_address = $2
+		WHERE allocation_id = $1
+	`, a.AllocationID, a.ProxyAddress)
+	return err
+}
+
 // CloseOpenAllocations finds all allocations that were open when the master crashed
 // and adds an end time.
 func (db *PgDB) CloseOpenAllocations(exclude []model.AllocationID) error {

@@ -1,6 +1,7 @@
 import sys
 import webbrowser
 from argparse import Namespace
+from getpass import getpass
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from typing import Any, Callable, List
 from urllib.parse import parse_qs, urlparse
@@ -83,6 +84,7 @@ def sso(parsed_args: Namespace) -> None:
                 "Your browser should open and prompt you to sign on;"
                 " if it did not, please visit {}".format(sso_url)
             )
+            print("Killing this process before signing on will cancel authentication.")
             with HTTPServer(
                 ("localhost", CLI_REDIRECT_PORT),
                 make_handler(parsed_args.master, lambda code: sys.exit(code)),
@@ -100,12 +102,12 @@ def sso(parsed_args: Namespace) -> None:
     )
     token = None
     while not token:
-        user_input_url = input("\nlocalhost URL? ")
+        user_input_url = getpass(prompt="\n(hidden) localhost URL? ")
         try:
             token = parse_qs(urlparse(user_input_url).query)["token"][0]
             handle_token(parsed_args.master, token)
         except (KeyError, IndexError):
-            print("Could not extract token from localhost URL. {example_url}")
+            print(f"Could not extract token from localhost URL. {example_url}")
 
 
 def list_providers(parsed_args: Namespace) -> None:

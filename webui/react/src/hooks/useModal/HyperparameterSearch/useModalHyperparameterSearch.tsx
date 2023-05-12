@@ -15,6 +15,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Button from 'components/kit/Button';
 import Checkbox from 'components/kit/Checkbox';
 import Form from 'components/kit/Form';
+import Icon from 'components/kit/Icon';
 import Input from 'components/kit/Input';
 import InputNumber from 'components/kit/InputNumber';
 import Select, { Option, SelectValue } from 'components/kit/Select';
@@ -23,7 +24,6 @@ import Link from 'components/Link';
 import { paths } from 'routes/utils';
 import { createExperiment } from 'services/api';
 import { V1LaunchWarning } from 'services/api-ts-sdk';
-import Icon from 'shared/components/Icon';
 import useModal, { ModalHooks as Hooks, ModalCloseReason } from 'shared/hooks/useModal/useModal';
 import { Primitive } from 'shared/types';
 import { clone, flattenObject, isBoolean, unflattenObject } from 'shared/utils/data';
@@ -73,17 +73,17 @@ interface SearchMethod {
 const SEARCH_METHODS: Record<string, SearchMethod> = {
   ASHA: {
     displayName: 'Adaptive',
-    icon: <Icon name="searcher-adaptive" />,
+    icon: <Icon name="searcher-adaptive" title="Adaptive" />,
     name: 'adaptive_asha',
   },
   Grid: {
     displayName: 'Grid',
-    icon: <Icon name="searcher-grid" />,
+    icon: <Icon name="searcher-grid" title="Grid" />,
     name: 'grid',
   },
   Random: {
     displayName: 'Random',
-    icon: <Icon name="searcher-random" />,
+    icon: <Icon name="searcher-random" title="Random" />,
     name: 'random',
   },
 } as const;
@@ -119,14 +119,6 @@ const useModalHyperparameterSearch = ({
   const [currentPage, setCurrentPage] = useState(0);
   const [validationError, setValidationError] = useState(false);
   const formValues = Form.useWatch([], form);
-
-  useEffect(() => {
-    const cancelerTemp = canceler.current;
-    clusterStore.fetchResourcePools(cancelerTemp.signal);
-    return () => {
-      cancelerTemp.abort();
-    };
-  }, []);
 
   const trialHyperparameters = useMemo(() => {
     if (!trial) return;
@@ -524,7 +516,7 @@ const useModalHyperparameterSearch = ({
             label={
               <div className={css.labelWithTooltip}>
                 Early stopping mode
-                <Tooltip title="How aggressively to perform early stopping of underperforming trials">
+                <Tooltip content="How aggressively to perform early stopping of underperforming trials">
                   <InfoCircleOutlined />
                 </Tooltip>
               </div>
@@ -565,7 +557,7 @@ const useModalHyperparameterSearch = ({
             label={
               <div className={css.labelWithTooltip}>
                 Max concurrent trials
-                <Tooltip title="Use 0 for max possible parallelism">
+                <Tooltip content="Use 0 for max possible parallelism">
                   <InfoCircleOutlined style={{ color: 'var(--theme-colors-monochrome-8)' }} />
                 </Tooltip>
               </div>

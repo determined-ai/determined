@@ -1,11 +1,11 @@
-import { Dropdown, TablePaginationConfig } from 'antd';
-import type { MenuProps } from 'antd';
+import { TablePaginationConfig } from 'antd';
 import { FilterDropdownProps, FilterValue, SorterResult } from 'antd/es/table/interface';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
 import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
 import HumanReadableNumber from 'components/HumanReadableNumber';
+import Dropdown from 'components/kit/Dropdown';
 import Link from 'components/Link';
 import Section from 'components/Section';
 import InteractiveTable, { InteractiveTableSettings } from 'components/Table/InteractiveTable';
@@ -42,12 +42,7 @@ import { getMetricValue } from 'utils/metric';
 import { openCommandResponse } from 'utils/wait';
 
 import css from './ExperimentTrials.module.scss';
-import {
-  configForExperiment,
-  DEFAULT_COLUMNS,
-  isOfSortKey,
-  Settings,
-} from './ExperimentTrials.settings';
+import { configForExperiment, isOfSortKey, Settings } from './ExperimentTrials.settings';
 import { columns as defaultColumns } from './ExperimentTrials.table';
 import TrialsComparisonModal from './TrialsComparisonModal';
 
@@ -385,7 +380,6 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
   const TrialActionDropdown = useCallback(
     ({
       record,
-      onVisibleChange,
       children,
     }: {
       children: React.ReactNode;
@@ -398,33 +392,28 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
         ViewLogs: 'view-logs',
       } as const;
 
-      const funcs = {
-        [MenuKey.OpenTensorboard]: () => {
-          handleOpenTensorBoard(record);
-        },
-        [MenuKey.HyperparameterSearch]: () => {
-          handleHyperparameterSearch(record);
-        },
-        [MenuKey.ViewLogs]: () => {
-          handleViewLogs(record);
-        },
-      };
-
-      const onItemClick: MenuProps['onClick'] = (e) => {
-        funcs[e.key as ValueOf<typeof MenuKey>]();
-      };
-
       const menuItems = [
         { key: MenuKey.OpenTensorboard, label: TrialAction.OpenTensorBoard },
         { key: MenuKey.HyperparameterSearch, label: TrialAction.HyperparameterSearch },
         { key: MenuKey.ViewLogs, label: TrialAction.ViewLogs },
       ];
 
+      const handleDropdown = (key: string) => {
+        switch (key) {
+          case MenuKey.HyperparameterSearch:
+            handleHyperparameterSearch(record);
+            break;
+          case MenuKey.OpenTensorboard:
+            handleOpenTensorBoard(record);
+            break;
+          case MenuKey.ViewLogs:
+            handleViewLogs(record);
+            break;
+        }
+      };
+
       return (
-        <Dropdown
-          menu={{ items: menuItems, onClick: onItemClick }}
-          trigger={['contextMenu']}
-          onOpenChange={onVisibleChange}>
+        <Dropdown isContextMenu menu={menuItems} onClick={handleDropdown}>
           {children}
         </Dropdown>
       );
@@ -464,7 +453,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
             preserveSelectedRowKeys: true,
             selectedRowKeys: settings.row ?? [],
           }}
-          settings={{ ...settings, columns: DEFAULT_COLUMNS } as InteractiveTableSettings}
+          settings={settings as InteractiveTableSettings}
           showSorterTooltip={false}
           size="small"
           updateSettings={updateSettings as UpdateSettings}

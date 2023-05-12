@@ -11,6 +11,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/determined-ai/determined/master/internal/api/apiutils"
+	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/db"
 	exputil "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
@@ -34,10 +35,8 @@ func (a *apiServer) GetProjectByID(
 		return nil, errors.Wrapf(err, "error fetching project (%d) from database", id)
 	}
 
-	if ok, err := project.AuthZProvider.Get().CanGetProject(ctx, curUser, p); err != nil {
-		return nil, err
-	} else if !ok {
-		return nil, notFoundErr
+	if err := project.AuthZProvider.Get().CanGetProject(ctx, curUser, p); err != nil {
+		return nil, authz.SubIfUnauthorized(err, notFoundErr)
 	}
 	return p, nil
 }
@@ -440,12 +439,10 @@ func (a *apiServer) deleteProject(ctx context.Context, projectID int32,
 	}
 
 	log.Debugf("deleting project %d experiments", projectID)
-	for _, exp := range expList {
-		if err = a.deleteExperiment(exp, user); err != nil {
-			log.WithError(err).Errorf("failed to delete experiment %d", exp.ID)
-			_ = a.m.db.QueryProto("delete_fail_project", holder, projectID, err.Error())
-			return err
-		}
+	if _, err = a.deleteExperiments(expList, user); err != nil {
+		log.WithError(err).Errorf("failed to delete experiments")
+		_ = a.m.db.QueryProto("delete_fail_project", holder, projectID, err.Error())
+		return err
 	}
 	log.Debugf("project %d experiments deleted successfully", projectID)
 	err = a.m.db.QueryProto("delete_project", holder, projectID)
@@ -636,12 +633,11 @@ func (a *apiServer) GetProjectsByUserActivity(
 	viewableProjects := []*projectv1.Project{}
 
 	for _, pr := range projects {
-		canView, err := project.AuthZProvider.Get().CanGetProject(ctx, *curUser, pr)
-		if err != nil {
-			return nil, err
-		}
-		if canView {
+		err := project.AuthZProvider.Get().CanGetProject(ctx, *curUser, pr)
+		if !authz.IsPermissionDenied(err) {
 			viewableProjects = append(viewableProjects, pr)
+		} else if err != nil {
+			return nil, err
 		}
 	}
 

@@ -68,6 +68,7 @@ const ClusterHistoricalUsageChart: React.FC<ClusterHistoricalUsageChartProps> = 
         width: 2,
       });
     });
+    const singlePoint = Object.keys(hoursByLabel).length + (hoursTotal?.length || 0) <= 1;
 
     return {
       axes: [
@@ -90,6 +91,17 @@ const ClusterHistoricalUsageChart: React.FC<ClusterHistoricalUsageChartProps> = 
       ],
       height,
       key: chartKey,
+      scales: {
+        x: {
+          auto: !singlePoint,
+          range: singlePoint
+            ? [
+                new Date(`${new Date().getFullYear()}-01-01`).getTime() / 1000,
+                new Date(`${new Date().getFullYear() + 1}-01-01`).getTime() / 1000,
+              ]
+            : undefined,
+        },
+      },
       series,
       tzDate: (ts) => uPlot.tzDate(new Date(ts * 1e3), 'Etc/UTC'),
     };

@@ -21,7 +21,6 @@ import (
 	"github.com/pkg/errors"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/determined-ai/determined/master/pkg/command"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -82,6 +81,12 @@ func StateFromProto(state experimentv1.State) State {
 	return State(strings.TrimPrefix(str, "STATE_"))
 }
 
+// StateToProto maps State to experimentv1.State.
+func StateToProto(state State) experimentv1.State {
+	stateEnum := experimentv1.State_value["STATE_"+string(state)]
+	return experimentv1.State(stateEnum)
+}
+
 // States and transitions
 
 // reverseTransitions computes the reverse transition table.
@@ -98,6 +103,13 @@ func reverseTransitions(
 		}
 	}
 	return ret
+}
+
+// DeletingStates are the valid deleting states.
+var DeletingStates = map[State]bool{
+	DeletedState:      true,
+	DeleteFailedState: true,
+	DeletingState:     true,
 }
 
 // RunningStates are the valid running states.
@@ -188,6 +200,26 @@ var ExperimentTransitions = map[State]map[State]bool{
 	},
 	DeletedState: {},
 }
+
+// StatesToStrings converts a State map to a list of strings for db queries.
+func StatesToStrings(inStates map[State]bool) []string {
+	states := make([]string, 0, len(inStates))
+	for state := range inStates {
+		states = append(states, string(state))
+	}
+	return states
+}
+
+// NonTerminalStates where an experiment can be canceled or killed.
+var NonTerminalStates = func() []State {
+	var states []State
+	for s := range ExperimentTransitions {
+		if !TerminalStates[s] && !DeletingStates[s] {
+			states = append(states, s)
+		}
+	}
+	return states
+}()
 
 // ExperimentReverseTransitions lists possible ancestor states.
 var ExperimentReverseTransitions = reverseTransitions(ExperimentTransitions)
@@ -348,15 +380,6 @@ func ExperimentFromProto(e *experimentv1.Experiment) (*Experiment, error) {
 		Username:  e.Username,
 		ProjectID: int(e.ProjectId),
 	}, nil
-}
-
-// ExperimentDescriptor is a minimal description of an experiment.
-type ExperimentDescriptor struct {
-	ID       int                      `json:"id"`
-	Archived bool                     `json:"archived"`
-	Config   expconf.ExperimentConfig `json:"config"`
-	Labels   []string                 `json:"labels"`
-	Warnings []command.LaunchWarning  `json:"warnings"`
 }
 
 // NewExperiment creates a new experiment struct in the paused state.  Note

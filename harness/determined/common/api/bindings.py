@@ -65,6 +65,90 @@ class GetTrialWorkloadsRequestFilterOption(enum.Enum):
     VALIDATION = "FILTER_OPTION_VALIDATION"
     CHECKPOINT_OR_VALIDATION = "FILTER_OPTION_CHECKPOINT_OR_VALIDATION"
 
+class PatchExperimentPatchCheckpointStorage:
+    saveExperimentBest: "typing.Optional[int]" = None
+    saveTrialBest: "typing.Optional[int]" = None
+    saveTrialLatest: "typing.Optional[int]" = None
+
+    def __init__(
+        self,
+        *,
+        saveExperimentBest: "typing.Union[int, None, Unset]" = _unset,
+        saveTrialBest: "typing.Union[int, None, Unset]" = _unset,
+        saveTrialLatest: "typing.Union[int, None, Unset]" = _unset,
+    ):
+        if not isinstance(saveExperimentBest, Unset):
+            self.saveExperimentBest = saveExperimentBest
+        if not isinstance(saveTrialBest, Unset):
+            self.saveTrialBest = saveTrialBest
+        if not isinstance(saveTrialLatest, Unset):
+            self.saveTrialLatest = saveTrialLatest
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "PatchExperimentPatchCheckpointStorage":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "saveExperimentBest" in obj:
+            kwargs["saveExperimentBest"] = obj["saveExperimentBest"]
+        if "saveTrialBest" in obj:
+            kwargs["saveTrialBest"] = obj["saveTrialBest"]
+        if "saveTrialLatest" in obj:
+            kwargs["saveTrialLatest"] = obj["saveTrialLatest"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "saveExperimentBest" in vars(self):
+            out["saveExperimentBest"] = self.saveExperimentBest
+        if not omit_unset or "saveTrialBest" in vars(self):
+            out["saveTrialBest"] = self.saveTrialBest
+        if not omit_unset or "saveTrialLatest" in vars(self):
+            out["saveTrialLatest"] = self.saveTrialLatest
+        return out
+
+class PatchExperimentPatchResources:
+    maxSlots: "typing.Optional[int]" = None
+    priority: "typing.Optional[int]" = None
+    weight: "typing.Optional[float]" = None
+
+    def __init__(
+        self,
+        *,
+        maxSlots: "typing.Union[int, None, Unset]" = _unset,
+        priority: "typing.Union[int, None, Unset]" = _unset,
+        weight: "typing.Union[float, None, Unset]" = _unset,
+    ):
+        if not isinstance(maxSlots, Unset):
+            self.maxSlots = maxSlots
+        if not isinstance(priority, Unset):
+            self.priority = priority
+        if not isinstance(weight, Unset):
+            self.weight = weight
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "PatchExperimentPatchResources":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "maxSlots" in obj:
+            kwargs["maxSlots"] = obj["maxSlots"]
+        if "priority" in obj:
+            kwargs["priority"] = obj["priority"]
+        if "weight" in obj:
+            kwargs["weight"] = float(obj["weight"]) if obj["weight"] is not None else None
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "maxSlots" in vars(self):
+            out["maxSlots"] = self.maxSlots
+        if not omit_unset or "priority" in vars(self):
+            out["priority"] = self.priority
+        if not omit_unset or "weight" in vars(self):
+            out["weight"] = None if self.weight is None else dump_float(self.weight)
+        return out
+
 class ResourcesSummaryDevices:
     devices: "typing.Optional[typing.Sequence[v1Device]]" = None
 
@@ -392,6 +476,7 @@ class trialv1Trial:
     endTime: "typing.Optional[str]" = None
     latestValidation: "typing.Optional[v1MetricsWorkload]" = None
     runnerState: "typing.Optional[str]" = None
+    summaryMetrics: "typing.Optional[typing.Dict[str, typing.Any]]" = None
     taskId: "typing.Optional[str]" = None
     totalCheckpointSize: "typing.Optional[str]" = None
     wallClockTime: "typing.Optional[float]" = None
@@ -413,6 +498,7 @@ class trialv1Trial:
         endTime: "typing.Union[str, None, Unset]" = _unset,
         latestValidation: "typing.Union[v1MetricsWorkload, None, Unset]" = _unset,
         runnerState: "typing.Union[str, None, Unset]" = _unset,
+        summaryMetrics: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
         taskId: "typing.Union[str, None, Unset]" = _unset,
         totalCheckpointSize: "typing.Union[str, None, Unset]" = _unset,
         wallClockTime: "typing.Union[float, None, Unset]" = _unset,
@@ -437,6 +523,8 @@ class trialv1Trial:
             self.latestValidation = latestValidation
         if not isinstance(runnerState, Unset):
             self.runnerState = runnerState
+        if not isinstance(summaryMetrics, Unset):
+            self.summaryMetrics = summaryMetrics
         if not isinstance(taskId, Unset):
             self.taskId = taskId
         if not isinstance(totalCheckpointSize, Unset):
@@ -469,6 +557,8 @@ class trialv1Trial:
             kwargs["latestValidation"] = v1MetricsWorkload.from_json(obj["latestValidation"]) if obj["latestValidation"] is not None else None
         if "runnerState" in obj:
             kwargs["runnerState"] = obj["runnerState"]
+        if "summaryMetrics" in obj:
+            kwargs["summaryMetrics"] = obj["summaryMetrics"]
         if "taskId" in obj:
             kwargs["taskId"] = obj["taskId"]
         if "totalCheckpointSize" in obj:
@@ -501,6 +591,8 @@ class trialv1Trial:
             out["latestValidation"] = None if self.latestValidation is None else self.latestValidation.to_json(omit_unset)
         if not omit_unset or "runnerState" in vars(self):
             out["runnerState"] = self.runnerState
+        if not omit_unset or "summaryMetrics" in vars(self):
+            out["summaryMetrics"] = self.summaryMetrics
         if not omit_unset or "taskId" in vars(self):
             out["taskId"] = self.taskId
         if not omit_unset or "totalCheckpointSize" in vars(self):
@@ -1414,6 +1506,7 @@ class v1AwsCustomTag:
 class v1BulkExperimentFilters:
     archived: "typing.Optional[bool]" = None
     description: "typing.Optional[str]" = None
+    excludedExperimentIds: "typing.Optional[typing.Sequence[int]]" = None
     labels: "typing.Optional[typing.Sequence[str]]" = None
     name: "typing.Optional[str]" = None
     projectId: "typing.Optional[int]" = None
@@ -1425,6 +1518,7 @@ class v1BulkExperimentFilters:
         *,
         archived: "typing.Union[bool, None, Unset]" = _unset,
         description: "typing.Union[str, None, Unset]" = _unset,
+        excludedExperimentIds: "typing.Union[typing.Sequence[int], None, Unset]" = _unset,
         labels: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
         name: "typing.Union[str, None, Unset]" = _unset,
         projectId: "typing.Union[int, None, Unset]" = _unset,
@@ -1435,6 +1529,8 @@ class v1BulkExperimentFilters:
             self.archived = archived
         if not isinstance(description, Unset):
             self.description = description
+        if not isinstance(excludedExperimentIds, Unset):
+            self.excludedExperimentIds = excludedExperimentIds
         if not isinstance(labels, Unset):
             self.labels = labels
         if not isinstance(name, Unset):
@@ -1454,6 +1550,8 @@ class v1BulkExperimentFilters:
             kwargs["archived"] = obj["archived"]
         if "description" in obj:
             kwargs["description"] = obj["description"]
+        if "excludedExperimentIds" in obj:
+            kwargs["excludedExperimentIds"] = obj["excludedExperimentIds"]
         if "labels" in obj:
             kwargs["labels"] = obj["labels"]
         if "name" in obj:
@@ -1473,6 +1571,8 @@ class v1BulkExperimentFilters:
             out["archived"] = self.archived
         if not omit_unset or "description" in vars(self):
             out["description"] = self.description
+        if not omit_unset or "excludedExperimentIds" in vars(self):
+            out["excludedExperimentIds"] = self.excludedExperimentIds
         if not omit_unset or "labels" in vars(self):
             out["labels"] = self.labels
         if not omit_unset or "name" in vars(self):
@@ -4752,29 +4852,25 @@ class v1GetTelemetryResponse:
         return out
 
 class v1GetTemplateResponse:
-    template: "typing.Optional[v1Template]" = None
 
     def __init__(
         self,
         *,
-        template: "typing.Union[v1Template, None, Unset]" = _unset,
+        template: "v1Template",
     ):
-        if not isinstance(template, Unset):
-            self.template = template
+        self.template = template
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetTemplateResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
+            "template": v1Template.from_json(obj["template"]),
         }
-        if "template" in obj:
-            kwargs["template"] = v1Template.from_json(obj["template"]) if obj["template"] is not None else None
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
+            "template": self.template.to_json(omit_unset),
         }
-        if not omit_unset or "template" in vars(self):
-            out["template"] = None if self.template is None else self.template.to_json(omit_unset)
         return out
 
 class v1GetTemplatesRequestSortBy(enum.Enum):
@@ -4782,37 +4878,29 @@ class v1GetTemplatesRequestSortBy(enum.Enum):
     NAME = "SORT_BY_NAME"
 
 class v1GetTemplatesResponse:
-    pagination: "typing.Optional[v1Pagination]" = None
-    templates: "typing.Optional[typing.Sequence[v1Template]]" = None
 
     def __init__(
         self,
         *,
-        pagination: "typing.Union[v1Pagination, None, Unset]" = _unset,
-        templates: "typing.Union[typing.Sequence[v1Template], None, Unset]" = _unset,
+        pagination: "v1Pagination",
+        templates: "typing.Sequence[v1Template]",
     ):
-        if not isinstance(pagination, Unset):
-            self.pagination = pagination
-        if not isinstance(templates, Unset):
-            self.templates = templates
+        self.pagination = pagination
+        self.templates = templates
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetTemplatesResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
+            "pagination": v1Pagination.from_json(obj["pagination"]),
+            "templates": [v1Template.from_json(x) for x in obj["templates"]],
         }
-        if "pagination" in obj:
-            kwargs["pagination"] = v1Pagination.from_json(obj["pagination"]) if obj["pagination"] is not None else None
-        if "templates" in obj:
-            kwargs["templates"] = [v1Template.from_json(x) for x in obj["templates"]] if obj["templates"] is not None else None
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
+            "pagination": self.pagination.to_json(omit_unset),
+            "templates": [x.to_json(omit_unset) for x in self.templates],
         }
-        if not omit_unset or "pagination" in vars(self):
-            out["pagination"] = None if self.pagination is None else self.pagination.to_json(omit_unset)
-        if not omit_unset or "templates" in vars(self):
-            out["templates"] = None if self.templates is None else [x.to_json(omit_unset) for x in self.templates]
         return out
 
 class v1GetTensorboardResponse:
@@ -7225,21 +7313,27 @@ class v1Pagination:
         return out
 
 class v1PatchExperiment:
+    checkpointStorage: "typing.Optional[PatchExperimentPatchCheckpointStorage]" = None
     description: "typing.Optional[str]" = None
     labels: "typing.Optional[typing.Sequence[str]]" = None
     name: "typing.Optional[str]" = None
     notes: "typing.Optional[str]" = None
+    resources: "typing.Optional[PatchExperimentPatchResources]" = None
 
     def __init__(
         self,
         *,
         id: int,
+        checkpointStorage: "typing.Union[PatchExperimentPatchCheckpointStorage, None, Unset]" = _unset,
         description: "typing.Union[str, None, Unset]" = _unset,
         labels: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
         name: "typing.Union[str, None, Unset]" = _unset,
         notes: "typing.Union[str, None, Unset]" = _unset,
+        resources: "typing.Union[PatchExperimentPatchResources, None, Unset]" = _unset,
     ):
         self.id = id
+        if not isinstance(checkpointStorage, Unset):
+            self.checkpointStorage = checkpointStorage
         if not isinstance(description, Unset):
             self.description = description
         if not isinstance(labels, Unset):
@@ -7248,12 +7342,16 @@ class v1PatchExperiment:
             self.name = name
         if not isinstance(notes, Unset):
             self.notes = notes
+        if not isinstance(resources, Unset):
+            self.resources = resources
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1PatchExperiment":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "id": obj["id"],
         }
+        if "checkpointStorage" in obj:
+            kwargs["checkpointStorage"] = PatchExperimentPatchCheckpointStorage.from_json(obj["checkpointStorage"]) if obj["checkpointStorage"] is not None else None
         if "description" in obj:
             kwargs["description"] = obj["description"]
         if "labels" in obj:
@@ -7262,12 +7360,16 @@ class v1PatchExperiment:
             kwargs["name"] = obj["name"]
         if "notes" in obj:
             kwargs["notes"] = obj["notes"]
+        if "resources" in obj:
+            kwargs["resources"] = PatchExperimentPatchResources.from_json(obj["resources"]) if obj["resources"] is not None else None
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "id": self.id,
         }
+        if not omit_unset or "checkpointStorage" in vars(self):
+            out["checkpointStorage"] = None if self.checkpointStorage is None else self.checkpointStorage.to_json(omit_unset)
         if not omit_unset or "description" in vars(self):
             out["description"] = self.description
         if not omit_unset or "labels" in vars(self):
@@ -7276,6 +7378,8 @@ class v1PatchExperiment:
             out["name"] = self.name
         if not omit_unset or "notes" in vars(self):
             out["notes"] = self.notes
+        if not omit_unset or "resources" in vars(self):
+            out["resources"] = None if self.resources is None else self.resources.to_json(omit_unset)
         return out
 
 class v1PatchExperimentResponse:
@@ -7541,6 +7645,28 @@ class v1PatchProjectResponse:
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "project": self.project.to_json(omit_unset),
+        }
+        return out
+
+class v1PatchTemplateConfigResponse:
+
+    def __init__(
+        self,
+        *,
+        template: "v1Template",
+    ):
+        self.template = template
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PatchTemplateConfigResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "template": v1Template.from_json(obj["template"]),
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "template": self.template.to_json(omit_unset),
         }
         return out
 
@@ -8320,6 +8446,28 @@ class v1PostSearcherOperationsRequest:
             out["searcherOperations"] = None if self.searcherOperations is None else [x.to_json(omit_unset) for x in self.searcherOperations]
         if not omit_unset or "triggeredByEvent" in vars(self):
             out["triggeredByEvent"] = None if self.triggeredByEvent is None else self.triggeredByEvent.to_json(omit_unset)
+        return out
+
+class v1PostTemplateResponse:
+
+    def __init__(
+        self,
+        *,
+        template: "v1Template",
+    ):
+        self.template = template
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PostTemplateResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "template": v1Template.from_json(obj["template"]),
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "template": self.template.to_json(omit_unset),
+        }
         return out
 
 class v1PostTrialProfilerMetricsBatchRequest:
@@ -10221,36 +10369,32 @@ class v1ScopeTypeMask:
 
 class v1SearchExperimentExperiment:
     bestTrial: "typing.Optional[trialv1Trial]" = None
-    experiment: "typing.Optional[v1Experiment]" = None
 
     def __init__(
         self,
         *,
+        experiment: "v1Experiment",
         bestTrial: "typing.Union[trialv1Trial, None, Unset]" = _unset,
-        experiment: "typing.Union[v1Experiment, None, Unset]" = _unset,
     ):
+        self.experiment = experiment
         if not isinstance(bestTrial, Unset):
             self.bestTrial = bestTrial
-        if not isinstance(experiment, Unset):
-            self.experiment = experiment
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1SearchExperimentExperiment":
         kwargs: "typing.Dict[str, typing.Any]" = {
+            "experiment": v1Experiment.from_json(obj["experiment"]),
         }
         if "bestTrial" in obj:
             kwargs["bestTrial"] = trialv1Trial.from_json(obj["bestTrial"]) if obj["bestTrial"] is not None else None
-        if "experiment" in obj:
-            kwargs["experiment"] = v1Experiment.from_json(obj["experiment"]) if obj["experiment"] is not None else None
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
+            "experiment": self.experiment.to_json(omit_unset),
         }
         if not omit_unset or "bestTrial" in vars(self):
             out["bestTrial"] = None if self.bestTrial is None else self.bestTrial.to_json(omit_unset)
-        if not omit_unset or "experiment" in vars(self):
-            out["experiment"] = None if self.experiment is None else self.experiment.to_json(omit_unset)
         return out
 
 class v1SearchExperimentsResponse:
@@ -11216,15 +11360,18 @@ class v1Template:
         *,
         config: "typing.Dict[str, typing.Any]",
         name: str,
+        workspaceId: int,
     ):
         self.config = config
         self.name = name
+        self.workspaceId = workspaceId
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Template":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "config": obj["config"],
             "name": obj["name"],
+            "workspaceId": obj["workspaceId"],
         }
         return cls(**kwargs)
 
@@ -11232,6 +11379,7 @@ class v1Template:
         out: "typing.Dict[str, typing.Any]" = {
             "config": self.config,
             "name": self.name,
+            "workspaceId": self.workspaceId,
         }
         return out
 
@@ -16087,6 +16235,27 @@ def patch_PatchProject(
         return v1PatchProjectResponse.from_json(_resp.json())
     raise APIHttpError("patch_PatchProject", _resp)
 
+def patch_PatchTemplateConfig(
+    session: "api.Session",
+    *,
+    body: "typing.Dict[str, typing.Any]",
+    templateName: str,
+) -> "v1PatchTemplateConfigResponse":
+    _params = None
+    _resp = session._do_request(
+        method="PATCH",
+        path=f"/api/v1/templates/{templateName}",
+        params=_params,
+        json=body,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1PatchTemplateConfigResponse.from_json(_resp.json())
+    raise APIHttpError("patch_PatchTemplateConfig", _resp)
+
 def patch_PatchTrialsCollection(
     session: "api.Session",
     *,
@@ -16333,6 +16502,27 @@ def post_PostSearcherOperations(
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_PostSearcherOperations", _resp)
+
+def post_PostTemplate(
+    session: "api.Session",
+    *,
+    body: "v1Template",
+    template_name: str,
+) -> "v1PostTemplateResponse":
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/templates/{template_name}",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1PostTemplateResponse.from_json(_resp.json())
+    raise APIHttpError("post_PostTemplate", _resp)
 
 def post_PostTrialProfilerMetricsBatch(
     session: "api.Session",
@@ -16752,12 +16942,14 @@ def get_ResourceAllocationRaw(
 def get_SearchExperiments(
     session: "api.Session",
     *,
+    filter: "typing.Optional[str]" = None,
     limit: "typing.Optional[int]" = None,
     offset: "typing.Optional[int]" = None,
     projectId: "typing.Optional[int]" = None,
     sort: "typing.Optional[str]" = None,
 ) -> "v1SearchExperimentsResponse":
     _params = {
+        "filter": filter,
         "limit": limit,
         "offset": offset,
         "projectId": projectId,

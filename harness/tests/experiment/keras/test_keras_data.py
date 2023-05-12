@@ -8,7 +8,7 @@ from tensorflow.keras.utils import Sequence
 import determined as det
 from determined import keras
 from determined.common import check
-from tests.experiment import utils  # noqa: I100
+from tests.experiment import tf_utils  # noqa: I100
 
 
 class IdentitySequence(Sequence):
@@ -49,7 +49,7 @@ def test_arraylike_data_adapter_with_unmatched_batch_size() -> None:
 
 
 def test_adapt_invalid_data_type() -> None:
-    seqs = utils.make_xor_data_sequences()
+    seqs = tf_utils.make_xor_data_sequences()
     test = keras._adapt_data_from_data_loader(seqs[1], batch_size=1)
     with pytest.raises(det.errors.InvalidDataTypeException) as err:
         keras._adapt_data_from_data_loader((None, test), batch_size=1)

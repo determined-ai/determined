@@ -5,7 +5,9 @@ option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
 import "determined/api/v1/pagination.proto";
 
+import "google/protobuf/struct.proto";
 import "determined/template/v1/template.proto";
+import "protoc-gen-swagger/options/annotations.proto";
 
 // Get a list of templates.
 message GetTemplatesRequest {
@@ -30,6 +32,9 @@ message GetTemplatesRequest {
 }
 // Response to GetTemplatesRequest.
 message GetTemplatesResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "templates", "pagination" ] }
+  };
   // the list of requested templates.
   repeated determined.template.v1.Template templates = 1;
   // Pagination information of the full dataset.
@@ -43,6 +48,9 @@ message GetTemplateRequest {
 }
 // Response to GetTemplateRequest.
 message GetTemplateResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "template" ] }
+  };
   // The requested template.
   determined.template.v1.Template template = 1;
 }
@@ -55,6 +63,39 @@ message PutTemplateRequest {
 // Response to PutTemplateRequest.
 message PutTemplateResponse {
   // The updated or created template.
+  determined.template.v1.Template template = 1;
+}
+
+// Post a new template.
+message PostTemplateRequest {
+  // The template to put.
+  determined.template.v1.Template template = 1;
+}
+// Response to PostTemplateRequest.
+message PostTemplateResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "template" ] }
+  };
+  // The created template.
+  determined.template.v1.Template template = 1;
+}
+
+// Patch the template with the given id.
+message PatchTemplateConfigRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "template_name", "config" ] }
+  };
+  // The name of the template.
+  string template_name = 1;
+  // The template value.
+  google.protobuf.Struct config = 2;
+}
+// Response to PatchTemplateConfigRequest.
+message PatchTemplateConfigResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "template" ] }
+  };
+  // The updated template.
   determined.template.v1.Template template = 1;
 }
 

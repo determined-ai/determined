@@ -4,9 +4,10 @@
 from __future__ import print_function
 
 import argparse
+import os
 import pathlib
 
-# NEW: Import torch distributed libraries.
+import filelock
 import torch
 import torch.distributed as dist
 import torch.nn as nn
@@ -215,8 +216,9 @@ def main(core_context):
         [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))]
     )
 
-    dataset1 = datasets.MNIST("../data", train=True, download=True, transform=transform)
-    dataset2 = datasets.MNIST("../data", train=False, transform=transform)
+    with filelock.FileLock(os.path.join(os.getcwd(), "lock")):
+        dataset1 = datasets.MNIST("../data", train=True, download=True, transform=transform)
+        dataset2 = datasets.MNIST("../data", train=False, transform=transform)
 
     # NEW: Create DistributedSampler object for sharding data into core_context.distributed.size parts.
     sampler1 = DistributedSampler(

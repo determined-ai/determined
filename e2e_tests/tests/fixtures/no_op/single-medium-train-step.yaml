@@ -1,4 +1,4 @@
-description: noop-medium-step
+name: noop-medium-step
 checkpoint_storage:
   type: shared_fs
   host_path: /tmp

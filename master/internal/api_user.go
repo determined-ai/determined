@@ -15,6 +15,7 @@ import (
 	"google.golang.org/grpc/status"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/user"
@@ -184,14 +185,11 @@ func (a *apiServer) GetUser(
 	if err != nil {
 		return nil, err
 	}
-	var ok bool
-	if ok, err = user.AuthZProvider.Get().CanGetUser(
+	if err = user.AuthZProvider.Get().CanGetUser(
 		ctx, *curUser, targetFullUser.ToUser()); err != nil {
-		return nil, err
-	} else if !ok {
-		return nil, errUserNotFound
+		return nil, authz.SubIfUnauthorized(err, errUserNotFound)
 	}
-	return &apiv1.GetUserResponse{User: toProtoUserFromFullUser(*targetFullUser)}, err
+	return &apiv1.GetUserResponse{User: toProtoUserFromFullUser(*targetFullUser)}, nil
 }
 
 func (a *apiServer) GetMe(
@@ -220,14 +218,10 @@ func (a *apiServer) GetUserByUsername(
 		return nil, err
 	}
 
-	ok, err := user.AuthZProvider.Get().CanGetUser(ctx, *curUser, targetFullUser.ToUser())
-	if err != nil {
-		return nil, err
+	if err = user.AuthZProvider.Get().CanGetUser(ctx, *curUser, targetFullUser.ToUser()); err != nil {
+		return nil, authz.SubIfUnauthorized(err, errUserNotFound)
 	}
-	if !ok {
-		return nil, errUserNotFound
-	}
-	return &apiv1.GetUserByUsernameResponse{User: toProtoUserFromFullUser(*targetFullUser)}, err
+	return &apiv1.GetUserByUsernameResponse{User: toProtoUserFromFullUser(*targetFullUser)}, nil
 }
 
 func (a *apiServer) PostUser(
@@ -333,11 +327,9 @@ func (a *apiServer) SetUserPassword(
 	}
 	targetUser := targetFullUser.ToUser()
 	if err = user.AuthZProvider.Get().CanSetUsersPassword(ctx, *curUser, targetUser); err != nil {
-		if ok, canGetErr := user.AuthZProvider.
+		if canGetErr := user.AuthZProvider.
 			Get().CanGetUser(ctx, *curUser, targetFullUser.ToUser()); canGetErr != nil {
-			return nil, canGetErr
-		} else if !ok {
-			return nil, errUserNotFound
+			return nil, authz.SubIfUnauthorized(canGetErr, errUserNotFound)
 		}
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
@@ -375,10 +367,8 @@ func (a *apiServer) PatchUser(
 		return nil, err
 	}
 	targetUser := targetFullUser.ToUser()
-	if ok, err := user.AuthZProvider.Get().CanGetUser(ctx, *curUser, targetUser); err != nil {
-		return nil, err
-	} else if !ok {
-		return nil, errUserNotFound
+	if err = user.AuthZProvider.Get().CanGetUser(ctx, *curUser, targetUser); err != nil {
+		return nil, authz.SubIfUnauthorized(err, errUserNotFound)
 	}
 
 	updatedUser := &model.User{ID: targetUser.ID}

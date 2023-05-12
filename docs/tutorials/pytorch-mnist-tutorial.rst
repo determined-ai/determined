@@ -4,6 +4,10 @@
  PyTorch MNIST Tutorial
 ########################
 
+.. meta::
+   :description: Using a simple image classification model for the MNIST dataset, you'll Learn how to port an existing PyTorch model to Determined.
+   :keywords: PyTorch API,MNIST,model developer,quickstart
+
 This tutorial describes how to port an existing PyTorch model to Determined. We will port a simple
 image classification model for the MNIST dataset. This tutorial is based on the official `PyTorch
 MNIST example <https://github.com/PyTorch/examples/blob/master/mnist/main.py>`_.

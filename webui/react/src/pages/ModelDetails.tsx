@@ -111,9 +111,7 @@ const ModelDetails: React.FC = () => {
   useEffect(() => {
     setIsLoading(true);
     fetchModel();
-    const abortFetchWorkspaces = workspaceStore.fetch();
-
-    return () => abortFetchWorkspaces();
+    return workspaceStore.fetch();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -375,17 +373,9 @@ const ModelDetails: React.FC = () => {
   }, [model?.model.archived, model?.model.name]);
 
   const actionDropdown = useCallback(
-    ({
-      record,
-      onVisibleChange,
-      children,
-    }: {
-      children: React.ReactNode;
-      onVisibleChange?: (visible: boolean) => void;
-      record: ModelVersion;
-    }) => (
+    ({ record, children }: { children: React.ReactNode; record: ModelVersion }) => (
       <ModelVersionActionDropdown
-        trigger={['contextMenu']}
+        isContextMenu
         version={record}
         onDelete={() => {
           setModelVersion(record);
@@ -394,8 +384,7 @@ const ModelDetails: React.FC = () => {
         onDownload={() => {
           setModelVersion(record);
           modelDownloadModal.open();
-        }}
-        onVisibleChange={onVisibleChange}>
+        }}>
         {children}
       </ModelVersionActionDropdown>
     ),

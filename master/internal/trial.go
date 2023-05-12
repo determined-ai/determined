@@ -55,6 +55,7 @@ type trial struct {
 	idSet             bool
 	experimentID      int
 	restored          bool
+	trialCreationSent bool
 
 	// System dependencies.
 	taskLogger *task.Logger
@@ -143,13 +144,17 @@ func (t *trial) Receive(ctx *actor.Context) error {
 	case actor.PreStart:
 		if t.idSet {
 			if err := t.recover(); err != nil {
-				return err
+				return fmt.Errorf("recovering trial in prestart: %w", err)
 			}
-			t.logCtx = logger.MergeContexts(t.logCtx, logger.Context{
-				"trial-id":     t.id,
-				"trial-run-id": t.runID,
-			})
+		} else {
+			if err := t.create(ctx); err != nil {
+				return fmt.Errorf("persisting trial in prestart: %w", err)
+			}
 		}
+		t.logCtx = logger.MergeContexts(t.logCtx, logger.Context{
+			"trial-id":     t.id,
+			"trial-run-id": t.runID,
+		})
 		ctx.AddLabels(t.logCtx)
 
 		return t.maybeAllocateTask(ctx)
@@ -237,6 +242,32 @@ func (t *trial) Receive(ctx *actor.Context) error {
 	return nil
 }
 
+func (t *trial) create(ctx *actor.Context) error {
+	m := model.NewTrial(
+		t.jobID,
+		t.taskID,
+		t.searcher.Create.RequestID,
+		t.experimentID,
+		model.JSONObj(t.searcher.Create.Hparams),
+		t.warmStartCheckpoint,
+		int64(t.searcher.Create.TrialSeed),
+	)
+
+	err := t.addTask()
+	if err != nil {
+		return err
+	}
+
+	err = t.db.AddTrial(m)
+	if err != nil {
+		return errors.Wrap(err, "failed to save trial to database")
+	}
+
+	t.id = m.ID
+	t.idSet = true
+	return nil
+}
+
 // recover recovers the trial minimal (hopefully to stay) state for a trial actor.
 // Separately, the experiment stores and recovers our searcher state.
 func (t *trial) recover() error {
@@ -260,19 +291,8 @@ func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
 		return nil
 	}
 
-	var name string
-	if t.idSet {
-		name = fmt.Sprintf("Trial %d (Experiment %d)", t.id, t.experimentID)
-	} else {
-		name = fmt.Sprintf("Trial (Experiment %d)", t.experimentID)
-	}
-
+	name := fmt.Sprintf("Trial %d (Experiment %d)", t.id, t.experimentID)
 	ctx.Log().Info("decided to allocate trial")
-	t.logCtx = logger.MergeContexts(t.logCtx, logger.Context{"trial-run-id": t.runID})
-	ctx.AddLabel("trial-run-id", t.runID)
-	if err := t.addTask(); err != nil {
-		return err
-	}
 
 	restoredAllocation, err := t.maybeRestoreAllocation(ctx)
 	if err != nil {
@@ -307,11 +327,9 @@ func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
 		return nil
 	}
 
-	if err := t.addTask(); err != nil {
-		return err
-	}
-
 	t.runID++
+	t.logCtx = logger.MergeContexts(t.logCtx, logger.Context{"trial-run-id": t.runID})
+	ctx.AddLabels(t.logCtx)
 
 	ar := sproto.AllocateRequest{
 		AllocationID:      model.AllocationID(fmt.Sprintf("%s.%d", t.taskID, t.runID)),
@@ -367,7 +385,7 @@ func (t *trial) addTask() error {
 	return t.db.AddTask(&model.Task{
 		TaskID:     t.taskID,
 		TaskType:   model.TaskTypeTrial,
-		StartTime:  t.jobSubmissionTime,
+		StartTime:  t.jobSubmissionTime, // TODO: Why is this the job submission time..?
 		JobID:      &t.jobID,
 		LogVersion: model.CurrentTaskLogVersion,
 	})
@@ -391,29 +409,9 @@ func (t *trial) buildTaskSpec(ctx *actor.Context) (tasks.TaskSpec, error) {
 		t.generatedKeys = &generatedKeys
 	}
 
-	if !t.idSet {
-		modelTrial := model.NewTrial(
-			t.jobID,
-			t.taskID,
-			t.searcher.Create.RequestID,
-			t.experimentID,
-			model.JSONObj(t.searcher.Create.Hparams),
-			t.warmStartCheckpoint,
-			int64(t.searcher.Create.TrialSeed))
-
-		if err := t.db.AddTrial(modelTrial); err != nil {
-			return tasks.TaskSpec{}, errors.Wrap(err, "failed to save trial to database")
-		}
-
-		t.id = modelTrial.ID
-		t.idSet = true
-		t.logCtx = logger.MergeContexts(t.logCtx, logger.Context{"trial-id": t.id})
-		ctx.AddLabel("trial-id", t.id)
-		t.rm.SetAllocationName(ctx, sproto.SetAllocationName{
-			Name:          fmt.Sprintf("Trial %d (Experiment %d)", t.id, t.experimentID),
-			AllocationRef: t.allocation,
-		})
+	if !t.trialCreationSent {
 		ctx.Tell(ctx.Self().Parent(), trialCreated{requestID: t.searcher.Create.RequestID})
+		t.trialCreationSent = true
 	}
 
 	if err := t.db.UpdateTrialRunID(t.id, t.runID); err != nil {

@@ -122,6 +122,8 @@ message Trial {
   uint64 total_checkpoint_size = 15;
   // The count of checkpoints.
   int32 checkpoint_count = 18;
+  // summary metrics
+  google.protobuf.Struct summary_metrics = 19;
 }
 
 // TrialProfilerMetricLabels are the labels for a single series, where a series

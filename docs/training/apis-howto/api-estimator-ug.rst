@@ -2,22 +2,26 @@
  Estimator API
 ###############
 
+.. warning::
+
+   ``EstimatorTrial`` is deprecated and will be removed in a future version. TensorFlow has advised
+   Estimator users to switch to Keras since TensorFlow 2.0 was released. Consequently, we recommend
+   users of EstimatorTrial to switch to the :class:`~determined.keras.TFKerasTrial` class.
+
+.. meta::
+   :description: Learn how to use the Estimator API to train an Estimator model in Determined. Steps include defining an optimizer and datasets, defining custom reducers, checkpointing, and callbacks.
+
 In this guide, you'll learn how to use the Estimator API.
 
 +-----------------------------------------------------------------------+
 | Visit the API reference                                               |
 +=======================================================================+
-| :doc:`/reference/reference-training/training/api-estimator-reference` |
+| :doc:`/reference/training/api-estimator-reference`                    |
 +-----------------------------------------------------------------------+
 
 This document guides you through training a Estimator model in Determined. You need to implement a
 trial class that inherits :class:`~determined.estimator.EstimatorTrial` and specify it as the
-entrypoint in the :doc:`experiment configuration
-</reference/reference-training/experiment-config-reference>`.
-
-To learn about this API, you can start by reading the trial definitions from the following examples:
-
--  :download:`MNIST example </examples/mnist_estimator.tgz>`
+entrypoint in the :doc:`experiment configuration </reference/training/experiment-config-reference>`.
 
 *******************************
  Define Optimizer and Datasets
@@ -28,7 +32,7 @@ To learn about this API, you can start by reading the trial definitions from the
    Before loading data, read this document :doc:`/training/load-model-data` to understand how to
    work with different sources of data.
 
-To use ``tf.estimator`` models with Determined, users need to wrap their optimizer and datasets
+To use ``tf.estimator`` models with Determined, you'll need to wrap your optimizer and datasets
 using :meth:`~determined.estimator.EstimatorTrialContext.wrap_optimizer` and
 :meth:`~determined.estimator.EstimatorTrialContext.wrap_dataset`. Note that the concrete context
 object where these functions will be found will be in
@@ -54,7 +58,7 @@ details.
 A checkpoint includes the model definition (Python source code), experiment configuration file,
 network architecture, and the values of the model's parameters (i.e., weights) and hyperparameters.
 When using a stateful optimizer during training, checkpoints will also include the state of the
-optimizer (i.e., learning rate). Users can also embed arbitrary metadata in checkpoints via the
+optimizer (i.e., learning rate). You can also embed arbitrary metadata in checkpoints via the
 :ref:`Python SDK <store-checkpoint-metadata>`.
 
 TensorFlow Estimator trials are checkpointed using the `SavedModel

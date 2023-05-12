@@ -89,6 +89,14 @@ def run_autotuning_experiment(
     return int(m.group(1))
 
 
+def archive_experiments(experiment_ids: List[int], name: Optional[str] = None) -> None:
+    body = bindings.v1ArchiveExperimentsRequest(experimentIds=experiment_ids)
+    if name is not None:
+        filters = bindings.v1BulkExperimentFilters(name=name)
+        body = bindings.v1ArchiveExperimentsRequest(experimentIds=[], filters=filters)
+    bindings.post_ArchiveExperiments(api_utils.determined_test_session(), body=body)
+
+
 def pause_experiment(experiment_id: int) -> None:
     command = ["det", "-m", conf.make_master_url(), "experiment", "pause", str(experiment_id)]
     subprocess.check_call(command)
