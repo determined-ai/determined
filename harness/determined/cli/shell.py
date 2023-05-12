@@ -20,6 +20,7 @@ from determined.common import api
 from determined.common.api import authentication, certs, bindings
 from determined.common.check import check_eq
 from determined.common.declarative_argparse import Arg, Cmd, Group
+import termcolor
 
 
 @authentication.required
@@ -48,6 +49,7 @@ def start_shell(args: Namespace) -> None:
         return
 
     session = cli.setup_session(args)
+    print(termcolor.colored(f"Shell {sid} is starting...", "green", attrs=["blink"]))
     api.wait_for_ntsc_state(
         session, api.NTSC_Kind.shell, sid, lambda s: s == bindings.taskv1State.RUNNING, timeout=300
     )

@@ -207,7 +207,9 @@ def parse_protobuf_timestamp(ts: str) -> datetime.datetime:
 T = TypeVar("T")
 
 
-def wait_for(predicate: Callable[[], Tuple[bool, T]], timeout: int) -> T:
+def wait_for(
+    predicate: Callable[[], Tuple[bool, T]], timeout: int = 60, interval: float = 0.1
+) -> T:
     """
     Wait for the predicate to return (Done, ReturnValue) while
     checking for a timeout. without preempting the predicate.
@@ -218,5 +220,5 @@ def wait_for(predicate: Callable[[], Tuple[bool, T]], timeout: int) -> T:
     while not done:
         if time.time() - start > timeout:
             raise TimeoutError("timed out waiting for predicate")
-        time.sleep(0.1)
+        time.sleep(interval)
     return rv
