@@ -856,7 +856,6 @@ func (rp *resourcePool) pruneTaskList(ctx *actor.Context) {
 	slotCount := rp.provisioner.CurrentSlotCount(ctx)
 	ctx.Log().WithError(err).WithField("slotCount", slotCount).Error("provisioner in error state")
 	var refsToRemove = []*actor.Ref{}
-	var groupsToNotify = map[*actor.Ref]bool{}
 	for it := rp.taskList.Iterator(); it.Next(); {
 		task := it.Value()
 		ref := task.AllocationRef
@@ -869,17 +868,10 @@ func (rp *resourcePool) pruneTaskList(ctx *actor.Context) {
 			continue
 		}
 		ctx.Log().WithError(err).Warnf("removing task %s from task list", task.AllocationID)
-		if ref != task.Group {
-			groupsToNotify[task.Group] = true
-		}
 		refsToRemove = append(refsToRemove, ref)
-	}
-	for ref := range groupsToNotify {
-		ctx.Tell(ref, sproto.InvalidResourcesRequestError{Cause: err})
 	}
 	for _, ref := range refsToRemove {
 		ctx.Tell(ref, sproto.InvalidResourcesRequestError{Cause: err})
-		rp.taskList.RemoveTaskByHandler(ref)
 	}
 	after := rp.taskList.Len()
 	ctx.Log().WithField("before", before).WithField("after", after).Warn("pruned task list")
