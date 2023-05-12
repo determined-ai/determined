@@ -3,11 +3,11 @@ package grpcutil
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"net/http"
 	"strings"
 	"time"
 
+	"github.com/golang-jwt/jwt/v4"
 	// TODO switch to google.golang.org/protobuf/proto/.
 	"github.com/golang/protobuf/proto" //nolint: staticcheck
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
@@ -158,7 +158,7 @@ func GetUser(ctx context.Context) (*model.User, *model.UserSession, error) {
 			return nil, nil, ErrPermissionDenied
 		}
 		return userModel, session, nil
-	case sql.ErrNoRows, db.ErrNotFound:
+	case sql.ErrNoRows, db.ErrNotFound, jwt.ErrTokenExpired:
 		return nil, nil, ErrInvalidCredentials
 	default:
 		return nil, nil, err

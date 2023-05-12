@@ -12,23 +12,17 @@ import { identity, noOp } from 'shared/utils/service';
 import { DeterminedInfo, Telemetry } from 'stores/determinedInfo';
 import * as Type from 'types';
 
-const originalFetch = window.fetch;
-window.fetch = function(resource, options) {
-  if (!options) {
-    options = {};
-  }
-  options.credentials = "include";
-  return originalFetch(resource, options);
-};
-
 const updatedApiConfigParams = (
   apiConfig?: Api.ConfigurationParameters,
 ): Api.ConfigurationParameters => {
-  return {
-    apiKey: `Bearer ${globalStorage.authToken}`,
+  const config: Api.ConfigurationParameters = {
     basePath: serverAddress(),
     ...apiConfig,
   };
+  if (globalStorage.authToken !== '') {
+    config.apiKey = `Bearer ${globalStorage.authToken}`;
+  }
+  return config;
 };
 
 const generateApiConfig = (apiConfig?: Api.ConfigurationParameters) => {
