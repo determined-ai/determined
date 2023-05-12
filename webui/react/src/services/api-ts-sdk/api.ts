@@ -514,25 +514,6 @@ export interface StreamResultOfV1MetricBatchesResponse {
 /**
  * 
  * @export
- * @interface StreamResultOfV1MetricNamesResponse
- */
-export interface StreamResultOfV1MetricNamesResponse {
-    /**
-     * 
-     * @type {V1MetricNamesResponse}
-     * @memberof StreamResultOfV1MetricNamesResponse
-     */
-    result?: V1MetricNamesResponse;
-    /**
-     * 
-     * @type {RuntimeStreamError}
-     * @memberof StreamResultOfV1MetricNamesResponse
-     */
-    error?: RuntimeStreamError;
-}
-/**
- * 
- * @export
  * @interface StreamResultOfV1TaskLogsFieldsResponse
  */
 export interface StreamResultOfV1TaskLogsFieldsResponse {
@@ -5264,31 +5245,6 @@ export interface V1MetricBatchesResponse {
      * @memberof V1MetricBatchesResponse
      */
     batches?: Array<number>;
-}
-/**
- * Response to MetricNamesRequest.
- * @export
- * @interface V1MetricNamesResponse
- */
-export interface V1MetricNamesResponse {
-    /**
-     * The name of the searcher metric.
-     * @type {string}
-     * @memberof V1MetricNamesResponse
-     */
-    searcherMetric?: string;
-    /**
-     * List of training metric names.
-     * @type {Array<string>}
-     * @memberof V1MetricNamesResponse
-     */
-    trainingMetrics?: Array<string>;
-    /**
-     * List of validation metric names.
-     * @type {Array<string>}
-     * @memberof V1MetricNamesResponse
-     */
-    validationMetrics?: Array<string>;
 }
 /**
  * 
@@ -17026,47 +16982,6 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
-         * @summary Get the set of metric names recorded for an experiment.
-         * @param {number} experimentId The id of the experiment.
-         * @param {number} [periodSeconds] Seconds to wait when polling for updates.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        metricNames(experimentId: number, periodSeconds?: number, options: any = {}): FetchArgs {
-            // verify required parameter 'experimentId' is not null or undefined
-            if (experimentId === null || experimentId === undefined) {
-                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling metricNames.');
-            }
-            const localVarPath = `/api/v1/experiments/{experimentId}/metrics-stream/metric-names`
-                .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
-            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
-            const localVarRequestOptions = { method: 'GET', ...options };
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-            
-            // authentication BearerToken required
-            if (configuration && configuration.apiKey) {
-                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
-                    ? configuration.apiKey("Authorization")
-                    : configuration.apiKey;
-                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-            }
-            
-            if (periodSeconds !== undefined) {
-                localVarQueryParameter['periodSeconds'] = periodSeconds
-            }
-            
-            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
-            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
-            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
-            
-            return {
-                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
          * @summary NotifyContainterRunning is used to notify the master that the container is running.  On HPC, the launcher will report a state of "Running" as soon as Slurm starts the job, but the container may be in the process of getting pulled down from the Internet, so the experiment is not really considered to be in a "Running" state until all the containers that are part of the experiment are running and not being pulled.
          * @param {string} allocationId The ID of the allocation.
          * @param {V1NotifyContainerRunningRequest} body
@@ -18250,26 +18165,6 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Get the set of metric names recorded for an experiment.
-         * @param {number} experimentId The id of the experiment.
-         * @param {number} [periodSeconds] Seconds to wait when polling for updates.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        metricNames(experimentId: number, periodSeconds?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1MetricNamesResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).metricNames(experimentId, periodSeconds, options);
-            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
-                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
-                    if (response.status >= 200 && response.status < 300) {
-                        return response.json();
-                    } else {
-                        throw response;
-                    }
-                });
-            };
-        },
-        /**
-         * 
          * @summary NotifyContainterRunning is used to notify the master that the container is running.  On HPC, the launcher will report a state of "Running" as soon as Slurm starts the job, but the container may be in the process of getting pulled down from the Internet, so the experiment is not really considered to be in a "Running" state until all the containers that are part of the experiment are running and not being pulled.
          * @param {string} allocationId The ID of the allocation.
          * @param {V1NotifyContainerRunningRequest} body
@@ -18845,17 +18740,6 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
-         * @summary Get the set of metric names recorded for an experiment.
-         * @param {number} experimentId The id of the experiment.
-         * @param {number} [periodSeconds] Seconds to wait when polling for updates.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        metricNames(experimentId: number, periodSeconds?: number, options?: any) {
-            return InternalApiFp(configuration).metricNames(experimentId, periodSeconds, options)(fetch, basePath);
-        },
-        /**
-         * 
          * @summary NotifyContainterRunning is used to notify the master that the container is running.  On HPC, the launcher will report a state of "Running" as soon as Slurm starts the job, but the container may be in the process of getting pulled down from the Internet, so the experiment is not really considered to be in a "Running" state until all the containers that are part of the experiment are running and not being pulled.
          * @param {string} allocationId The ID of the allocation.
          * @param {V1NotifyContainerRunningRequest} body
@@ -19352,19 +19236,6 @@ export class InternalApi extends BaseAPI {
      */
     public metricBatches(experimentId: number, metricName: string, metricType: V1MetricType, periodSeconds?: number, options?: any) {
         return InternalApiFp(this.configuration).metricBatches(experimentId, metricName, metricType, periodSeconds, options)(this.fetch, this.basePath)
-    }
-    
-    /**
-     * 
-     * @summary Get the set of metric names recorded for an experiment.
-     * @param {number} experimentId The id of the experiment.
-     * @param {number} [periodSeconds] Seconds to wait when polling for updates.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof InternalApi
-     */
-    public metricNames(experimentId: number, periodSeconds?: number, options?: any) {
-        return InternalApiFp(this.configuration).metricNames(experimentId, periodSeconds, options)(this.fetch, this.basePath)
     }
     
     /**

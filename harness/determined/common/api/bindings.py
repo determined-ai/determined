@@ -6620,48 +6620,6 @@ class v1MetricBatchesResponse:
             out["batches"] = self.batches
         return out
 
-class v1MetricNamesResponse:
-    searcherMetric: "typing.Optional[str]" = None
-    trainingMetrics: "typing.Optional[typing.Sequence[str]]" = None
-    validationMetrics: "typing.Optional[typing.Sequence[str]]" = None
-
-    def __init__(
-        self,
-        *,
-        searcherMetric: "typing.Union[str, None, Unset]" = _unset,
-        trainingMetrics: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
-        validationMetrics: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
-    ):
-        if not isinstance(searcherMetric, Unset):
-            self.searcherMetric = searcherMetric
-        if not isinstance(trainingMetrics, Unset):
-            self.trainingMetrics = trainingMetrics
-        if not isinstance(validationMetrics, Unset):
-            self.validationMetrics = validationMetrics
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1MetricNamesResponse":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-        }
-        if "searcherMetric" in obj:
-            kwargs["searcherMetric"] = obj["searcherMetric"]
-        if "trainingMetrics" in obj:
-            kwargs["trainingMetrics"] = obj["trainingMetrics"]
-        if "validationMetrics" in obj:
-            kwargs["validationMetrics"] = obj["validationMetrics"]
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-        }
-        if not omit_unset or "searcherMetric" in vars(self):
-            out["searcherMetric"] = self.searcherMetric
-        if not omit_unset or "trainingMetrics" in vars(self):
-            out["trainingMetrics"] = self.trainingMetrics
-        if not omit_unset or "validationMetrics" in vars(self):
-            out["validationMetrics"] = self.validationMetrics
-        return out
-
 class v1MetricType(enum.Enum):
     UNSPECIFIED = "METRIC_TYPE_UNSPECIFIED"
     TRAINING = "METRIC_TYPE_TRAINING"
@@ -16040,40 +15998,6 @@ def get_MetricBatches(
             raise APIHttpStreamError("get_MetricBatches", runtimeStreamError(message="ChunkedEncodingError"))
         return
     raise APIHttpError("get_MetricBatches", _resp)
-
-def get_MetricNames(
-    session: "api.Session",
-    *,
-    experimentId: int,
-    periodSeconds: "typing.Optional[int]" = None,
-) -> "typing.Iterable[v1MetricNamesResponse]":
-    _params = {
-        "periodSeconds": periodSeconds,
-    }
-    _resp = session._do_request(
-        method="GET",
-        path=f"/api/v1/experiments/{experimentId}/metrics-stream/metric-names",
-        params=_params,
-        json=None,
-        data=None,
-        headers=None,
-        timeout=None,
-        stream=True,
-    )
-    if _resp.status_code == 200:
-        try:
-            for _line in _resp.iter_lines(chunk_size=1024 * 1024):
-                _j = json.loads(_line)
-                if "error" in _j:
-                    raise APIHttpStreamError(
-                        "get_MetricNames",
-                        runtimeStreamError.from_json(_j["error"])
-                )
-                yield v1MetricNamesResponse.from_json(_j["result"])
-        except requests.exceptions.ChunkedEncodingError:
-            raise APIHttpStreamError("get_MetricNames", runtimeStreamError(message="ChunkedEncodingError"))
-        return
-    raise APIHttpError("get_MetricNames", _resp)
 
 def post_MoveExperiment(
     session: "api.Session",
