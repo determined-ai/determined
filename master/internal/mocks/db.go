@@ -963,6 +963,30 @@ func (_m *DB) GetExperimentStatus(experimentID int) (model.State, float64, error
 	return r0, r1, r2
 }
 
+// GetNonTerminalExperimentCount provides a mock function with given fields: experimentIDs
+func (_m *DB) GetNonTerminalExperimentCount(experimentIDs []int32) (int, error) {
+	ret := _m.Called(experimentIDs)
+
+	var r0 int
+	var r1 error
+	if rf, ok := ret.Get(0).(func([]int32) (int, error)); ok {
+		return rf(experimentIDs)
+	}
+	if rf, ok := ret.Get(0).(func([]int32) int); ok {
+		r0 = rf(experimentIDs)
+	} else {
+		r0 = ret.Get(0).(int)
+	}
+
+	if rf, ok := ret.Get(1).(func([]int32) error); ok {
+		r1 = rf(experimentIDs)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetOrCreateClusterID provides a mock function with given fields:
 func (_m *DB) GetOrCreateClusterID() (string, error) {
 	ret := _m.Called()

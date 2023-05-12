@@ -119,8 +119,8 @@ func (db *PgDB) GetExperimentStatus(experimentID int) (state model.State, progre
 // GetNonTerminalExperimentCount returns the number of non terminal experiments.
 func (db *PgDB) GetNonTerminalExperimentCount(experimentIDs []int32) (count int, err error) {
 	return Bun().NewSelect().Table("experiments").
-		Where("experiment_id IN (?)", bun.In(experimentIDs)).
-		Where("state NOT IN (?)", reflect.ValueOf(model.TerminalStates).MapKeys()).
+		Where("id IN (?)", bun.In(experimentIDs)).
+		Where("state NOT IN (?)", bun.In(model.StatesToStrings(model.TerminalStates))).
 		Count(context.TODO())
 }
 

@@ -1548,7 +1548,6 @@ func (a *apiServer) ExpMetricNames(req *apiv1.ExpMetricNamesRequest,
 		}
 
 		numNonTermialExperiments, err := a.m.db.GetNonTerminalExperimentCount(req.Ids)
-
 		if err != nil {
 			return errors.Wrap(err, "error looking up state of experiments")
 		}
