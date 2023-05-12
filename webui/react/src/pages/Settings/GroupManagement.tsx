@@ -84,7 +84,7 @@ const GroupActionDropdown = ({
   return (
     <div className={dropdownCss.base}>
       <Dropdown menu={DROPDOWN_MENU} placement="bottomRight" onClick={handleDropdown}>
-        <Button ghost icon={<Icon name="overflow-vertical" size="small" title="Action menu" />} />
+        <Button icon={<Icon name="overflow-vertical" size="small" title="Action menu" />} />
       </Dropdown>
       <EditGroupModal.Component group={group} users={users} onClose={onFinishEdit} />
       <DeleteGroupModal.Component group={group} onClose={fetchGroups} />

@@ -11,21 +11,17 @@ interface ButtonProps {
   children?: ReactNode;
   danger?: boolean;
   disabled?: boolean;
-  ghost?: boolean;
   htmlType?: 'button' | 'submit' | 'reset';
   icon?: ReactNode;
   loading?: boolean | { delay?: number };
   onClick?: (event: MouseEvent) => void;
-  shape?: 'circle' | 'default' | 'round';
   size?: 'large' | 'middle' | 'small';
-  type?: 'primary' | 'link' | 'text' | 'ghost' | 'default' | 'dashed';
+  type?: 'primary' | 'link' | 'text' | 'default' | 'dashed';
   tooltip?: string;
 }
 
 const Button: React.FC<ButtonProps> = ({
-  shape = 'default',
   size = 'middle',
-  type = 'default',
   tooltip = '',
   ...props
 }: ButtonProps) => {
@@ -35,10 +31,8 @@ const Button: React.FC<ButtonProps> = ({
       wrapper={(children) => <Tooltip content={tooltip}>{children}</Tooltip>}>
       <AntdButton
         className={css.base}
-        shape={shape}
         size={size}
         tabIndex={props.disabled ? -1 : 0}
-        type={type}
         {...props}
       />
     </ConditionalWrapper>

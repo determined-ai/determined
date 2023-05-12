@@ -158,7 +158,7 @@ const WorkspaceActionDropdown: React.FC<Props> = ({
   ) : (
     <div className={[css.base, className].join(' ')} title="Open actions menu">
       <Dropdown menu={menu} placement="bottomRight" onClick={onClick}>
-        <Button ghost icon={<Icon name={`overflow-${direction}`} title="Action menu" />} />
+        <Button icon={<Icon name={`overflow-${direction}`} title="Action menu" />} />
       </Dropdown>
       {contextHolders}
     </div>

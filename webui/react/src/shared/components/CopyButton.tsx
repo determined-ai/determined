@@ -25,7 +25,7 @@ const CopyButton: React.FC<Props> = ({ onCopy }: Props) => {
 
   return (
     <Tooltip content={text}>
-      <Button ghost icon={<CopyOutlined />} onClick={handleCopy} />
+      <Button icon={<CopyOutlined />} onClick={handleCopy} />
     </Tooltip>
   );
 };

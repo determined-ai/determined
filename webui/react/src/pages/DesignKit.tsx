@@ -15,7 +15,6 @@ import Empty from 'components/kit/Empty';
 import Facepile from 'components/kit/Facepile';
 import Form from 'components/kit/Form';
 import Icon, { IconNameArray, IconSizeArray } from 'components/kit/Icon';
-import IconicButton from 'components/kit/IconicButton';
 import Input from 'components/kit/Input';
 import InputNumber from 'components/kit/InputNumber';
 import InputSearch from 'components/kit/InputSearch';
@@ -167,7 +166,6 @@ const ButtonsSection: React.FC = () => {
           <Button>Default</Button>
           <Button danger>Danger</Button>
           <Button disabled>Disabled</Button>
-          <Button ghost>Ghost</Button>
           <Button loading>Loading</Button>
         </Space>
         <hr />
@@ -179,9 +177,6 @@ const ButtonsSection: React.FC = () => {
           </Button>
           <Button disabled type="primary">
             Disabled
-          </Button>
-          <Button ghost type="primary">
-            Ghost
           </Button>
           <Button loading type="primary">
             Loading
@@ -216,23 +211,6 @@ const ButtonsSection: React.FC = () => {
           </Button>
         </Space>
         <hr />
-        <strong>Ghost Button variations</strong>
-        <Space>
-          <Button type="ghost">Ghost</Button>
-          <Button danger type="ghost">
-            Danger
-          </Button>
-          <Button disabled type="ghost">
-            Disabled
-          </Button>
-          <Button ghost type="ghost">
-            Ghost
-          </Button>
-          <Button loading type="ghost">
-            Loading
-          </Button>
-        </Space>
-        <hr />
         <strong>Dashed Button variations</strong>
         <Space>
           <Button type="dashed">Dashed</Button>
@@ -242,19 +220,9 @@ const ButtonsSection: React.FC = () => {
           <Button disabled type="dashed">
             Disabled
           </Button>
-          <Button ghost type="dashed">
-            Ghost
-          </Button>
           <Button loading type="dashed">
             Loading
           </Button>
-        </Space>
-        <hr />
-        <strong>Shapes</strong>
-        <Space>
-          <Button shape="circle">Circle</Button>
-          <Button shape="default">Default</Button>
-          <Button shape="round">Round</Button>
         </Space>
         <hr />
         <strong>Sizes</strong>
@@ -266,20 +234,9 @@ const ButtonsSection: React.FC = () => {
         <hr />
         <strong>Default Button with icon</strong>
         <Space>
-          <Button icon={<PoweroffOutlined />} type="primary">
+          <Button icon={<PoweroffOutlined />}>
             ButtonWithIcon
           </Button>
-          <Button icon={<PoweroffOutlined />}>ButtonWithIcon</Button>
-          <Button disabled icon={<PoweroffOutlined />}>
-            ButtonWithIcon
-          </Button>
-        </Space>
-        <hr />
-        <strong>Large iconic buttons</strong>
-        <Space>
-          <IconicButton iconName="searcher-grid" text="Iconic button" type="primary" />
-          <IconicButton iconName="searcher-grid" text="Iconic button" />
-          <IconicButton disabled iconName="searcher-grid" text="Iconic button" />
         </Space>
       </AntDCard>
     </ComponentSection>

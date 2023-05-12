@@ -100,16 +100,16 @@ const UserActionDropdown = ({ fetchUsers, user, groups, userManagementEnabled }:
     userManagementEnabled && canModifyUsers
       ? rbacEnabled
         ? [
-            { key: MenuKey.Edit, label: 'Edit User' },
-            { key: MenuKey.Groups, label: 'Manage Groups' },
-            { key: MenuKey.Agent, label: 'Configure Agent' },
-            { key: MenuKey.State, label: `${user.isActive ? 'Deactivate' : 'Activate'}` },
-          ]
+          { key: MenuKey.Edit, label: 'Edit User' },
+          { key: MenuKey.Groups, label: 'Manage Groups' },
+          { key: MenuKey.Agent, label: 'Configure Agent' },
+          { key: MenuKey.State, label: `${user.isActive ? 'Deactivate' : 'Activate'}` },
+        ]
         : [
-            { key: MenuKey.Edit, label: 'Edit User' },
-            { key: MenuKey.Agent, label: 'Configure Agent' },
-            { key: MenuKey.State, label: `${user.isActive ? 'Deactivate' : 'Activate'}` },
-          ]
+          { key: MenuKey.Edit, label: 'Edit User' },
+          { key: MenuKey.Agent, label: 'Configure Agent' },
+          { key: MenuKey.State, label: `${user.isActive ? 'Deactivate' : 'Activate'}` },
+        ]
       : [{ key: MenuKey.View, label: 'View User' }];
 
   const handleDropdown = useCallback(
@@ -141,7 +141,7 @@ const UserActionDropdown = ({ fetchUsers, user, groups, userManagementEnabled }:
   return (
     <div className={dropdownCss.base}>
       <Dropdown menu={menuItems} placement="bottomRight" onClick={handleDropdown}>
-        <Button ghost icon={<Icon name="overflow-vertical" size="small" title="Action menu" />} />
+        <Button icon={<Icon name="overflow-vertical" size="small" title="Action menu" />} />
       </Dropdown>
       <ViewUserModal.Component user={user} viewOnly onClose={fetchUsers} />
       <EditUserModal.Component user={user} onClose={fetchUsers} />

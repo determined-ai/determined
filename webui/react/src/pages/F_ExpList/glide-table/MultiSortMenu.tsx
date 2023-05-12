@@ -122,9 +122,9 @@ export const sortMenuItemsForColumn = (
             s.column !== column.column
               ? s
               : {
-                  ...s,
-                  direction: option.value as DirectionType,
-                },
+                ...s,
+                direction: option.value as DirectionType,
+              },
           );
         } else {
           newSort = [{ column: column.column, direction: option.value as DirectionType }];
@@ -184,7 +184,6 @@ const MultiSortRow: React.FC<MultiSortRowProps> = ({ sort, columns, onChange, on
       <div>
         <Button
           icon={<Icon name="close" title="Remove sort" />}
-          shape="circle"
           size="small"
           type="text"
           onClick={onRemove}
