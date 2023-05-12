@@ -901,9 +901,9 @@ class RandomDSATSearchMethod(BaseDSATSearchMethod):
 
     def should_stop_lineage(self, trial: DSATTrial) -> bool:
         # General conditions
-        failed_on_min_mbs = trial.error and trial.mbs == trial.search_data.lo
+        failed_on_min_mbs = trial.error and trial.mbs <= trial.search_data.lo
         ran_largest_possible_mbs = (
-            trial.error_in_direct_history and trial.mbs == trial.search_data.hi
+            trial.error_in_direct_history and trial.mbs >= trial.search_data.hi
         )
 
         exceeded_trials_per_random_config_limit = (

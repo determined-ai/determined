@@ -47,11 +47,11 @@ DEFAULT_CUSTOM_DSAT_EXP_CONFIG_DICT = {
 
 
 MODEL_INFO_PROFILE_METRIC_FIXTURE = {
-    "num_params": 1,
-    "trainable_num_params": 1,
-    "activation_mem_per_gpu": 1,
+    "num_params": 60192808,
+    "trainable_num_params": 60192808,
+    "activation_mem_per_gpu": 1698283521,
     "rank": 0,
-    "gpu_mem": 32,
+    "gpu_mem": 15843721216,
 }
 
 
