@@ -1,6 +1,8 @@
 import copy
+import json
 import math
 import pathlib
+import shutil
 import tempfile
 from collections import deque
 from typing import Any, Deque, Dict, List, Optional, Sequence, Union
@@ -9,13 +11,8 @@ import pytest
 
 from determined import searcher
 from determined.common.api import bindings
-from determined.pytorch.dsat import (
-    DSATTrial,
-    DSATTrialTracker,
-    _defaults,
-    _dsat_search_method,
-    _utils,
-)
+from determined.integrations.huggingface import get_hf_args_with_overwrites
+from determined.pytorch.dsat import DSATTrial, DSATTrialTracker, _defaults, _utils
 from determined.pytorch.dsat._run_dsat import get_custom_dsat_exp_conf_from_args
 from determined.searcher import _search_method
 from tests.custom_search_mocks import MockMasterSearchRunner
@@ -26,6 +23,7 @@ BASE_EXPERIMENT_FIXTURE_PATH = (
     pathlib.Path(__file__).resolve().parent.parent.joinpath("fixtures/deepspeed_autotune")
 )
 MODEL_DIR = BASE_EXPERIMENT_FIXTURE_PATH.joinpath("example_experiment")
+DS_CONFIG_PATH = MODEL_DIR.joinpath("ds_config.json")
 CONFIG_PATH = MODEL_DIR.joinpath("deepspeed.yaml")
 DEFAULT_ARGS_DICT = {
     search_method_name: _utils.get_full_parser().parse_args(
@@ -64,8 +62,36 @@ DSATTRIAL_ARGS = {
 
 HPARAMS_FIXTURE = {
     "deepspeed_config": "ds_config.json",
-    _defaults.OVERWRITE_KEY: {"train_micro_batch_size_per_gpu": 1},
+    _defaults.OVERWRITE_KEY: {
+        "train_batch_size": 1,
+        "gradient_accumulation_steps": 1,
+        "train_micro_batch_size_per_gpu": 1,
+    },
 }
+
+HF_DS_CONFIG_PATH = BASE_EXPERIMENT_FIXTURE_PATH.joinpath("hf_integration_experiment").joinpath(
+    "ds_config.json"
+)
+# HF args without any training batch size args and no deepspeed flag.
+DEFAULT_HF_ARGS_WITHOUT_DEEPSPEED = """"
+--model_name_or_path gpt2 
+--dataset_name wikitext 
+--dataset_config_name wikitext-2-raw-v1 
+--do_train 
+--do_eval
+--max_steps 100
+--logging_strategy steps 
+--logging_steps 10 
+--output_dir /tmp/test-clm
+--eval_steps 10
+--evaluation_strategy steps
+--save_total_limit 3 
+--seed 1337
+--save_strategy steps
+--save_steps 20
+--per_device_eval_batch_size 8
+"""
+DEFAULT_HF_ARGS_WITHOUT_DEEPSPEED = DEFAULT_HF_ARGS_WITHOUT_DEEPSPEED.split()
 
 
 def _run_searcher(search_method_name: str, all_metrics):
@@ -93,7 +119,7 @@ def test_deepspeed_autotune_happy_path() -> None:
     """
     for search_method_name in _defaults.ALL_SEARCH_METHOD_CLASSES:
         # All of our search methods currently run all of the specified `max-trials` in the
-        # happy path.
+        # happy path
         exp_num_trials = _defaults.AUTOTUNING_ARG_DEFAULTS["max-trials"]
         model_info_profile_trial_metrics = [MODEL_INFO_PROFILE_METRIC_FIXTURE]
         successful_trial_metrics = [
@@ -879,6 +905,62 @@ class TestBinaryDSATSearchMethod:
                 curr_trial = search_method.trial_tracker.queue.popleft()
                 assert not search_method.trial_tracker.queue
                 assert curr_trial.lineage_root == first_trial
+
+
+@pytest.mark.timeout(5)
+class TestHFConfigOverwriting:
+    def test_overwritten_args(self):
+        """
+        Verify that `get_hf_args_with_overwrites` returns the expected args.
+        """
+        optional_arg_possibilities = [
+            [],
+            ["--per_device_train_batch_size", "8"],
+            ["--gradient_accumulation_steps", "4"],
+            ["--per_device_train_batch_size", "8", "--gradient_accumulation_steps", "4"],
+        ]
+        for optional_args in optional_arg_possibilities:
+            with tempfile.TemporaryDirectory() as d:
+                ds_config_path = pathlib.Path(d).joinpath("ds_config.json")
+                shutil.copyfile(HF_DS_CONFIG_PATH, ds_config_path)
+                args = (
+                    DEFAULT_HF_ARGS_WITHOUT_DEEPSPEED
+                    + ["--deepspeed", str(ds_config_path)]
+                    + optional_args
+                )
+                args = get_hf_args_with_overwrites(args=args, hparams=HPARAMS_FIXTURE)
+                hf_flag_to_ds_key = {
+                    "--per_device_train_batch_size": "train_micro_batch_size_per_gpu",
+                    "--gradient_accumulation_steps": "gradient_accumulation_steps",
+                }
+                for idx in range(len(args)):
+                    if args[idx] in hf_flag_to_ds_key:
+                        hf_flag = args[idx]
+                        ds_key = hf_flag_to_ds_key[hf_flag]
+                        expected_hf_value = HPARAMS_FIXTURE[_defaults.OVERWRITE_KEY][ds_key]
+                        actual_hf_value = HPARAMS_FIXTURE[_defaults.OVERWRITE_KEY][ds_key]
+                        assert actual_hf_value == expected_hf_value
+
+    def test_overwritten_config_file(self):
+        """
+        Verify that `get_hf_args_with_overwrites` overwrite the ds config file.
+        """
+        with tempfile.TemporaryDirectory() as d:
+            overwrite_dict = HPARAMS_FIXTURE[_defaults.OVERWRITE_KEY]
+            ds_config_path = pathlib.Path(d).joinpath("ds_config.json")
+            shutil.copyfile(HF_DS_CONFIG_PATH, ds_config_path)
+
+            # Verify that the original config values are different from those we are overwriting.
+            with open(ds_config_path, "r") as f:
+                original_ds_config = json.load(f)
+                for k, v in overwrite_dict.items():
+                    assert original_ds_config.get(k) != v
+            args = DEFAULT_HF_ARGS_WITHOUT_DEEPSPEED + ["--deepspeed", str(ds_config_path)]
+            _ = get_hf_args_with_overwrites(args=args, hparams=HPARAMS_FIXTURE)
+            with open(ds_config_path, "r") as f:
+                overwritten_ds_config = json.load(f)
+                for k, v in overwrite_dict.items():
+                    assert overwritten_ds_config.get(k) == v
 
 
 class MockMaster:
