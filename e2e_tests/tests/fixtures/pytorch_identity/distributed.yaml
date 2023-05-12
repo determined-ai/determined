@@ -1,4 +1,4 @@
-description: pytorch-identity
+name: pytorch-identity
 data:
   model_type: single_output
 entrypoint: model_def:IdentityPyTorchTrial

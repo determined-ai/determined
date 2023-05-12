@@ -10,7 +10,7 @@
 
    How It Works <architecture/index>
    Tutorials <tutorials/index>
-   quickstart-mdldev
+   Quickstart for Model Developers <tutorials/quickstart-mdldev>
    Examples <example-solutions/examples>
    Model Hub Library <model-hub-library/index>
 
@@ -51,12 +51,12 @@
    Overview <reference/overview>
    Python SDK <reference/python-sdk>
    REST API <reference/rest-api>
-   Training Reference <reference/reference-training/index>
-   Experiment Configuration Reference <reference/reference-training/experiment-config-reference>
-   Model Hub Reference <reference/reference-model-hub/index>
-   Deployment Reference <reference/reference-deploy/index>
-   Job Configuration Reference <reference/reference-interface/job-config-reference>
-   Custom Searcher Reference <reference/reference-searcher/custom-searcher-reference>
+   Training Reference <reference/training/index>
+   Experiment Configuration Reference <reference/training/experiment-config-reference>
+   Model Hub Reference <reference/model-hub/index>
+   Deployment Reference <reference/deploy/index>
+   Job Configuration Reference <reference/interface/job-config-reference>
+   Custom Searcher Reference <reference/searcher/custom-searcher-reference>
    CLI Reference <reference/cli-reference>
 
 .. toctree::
@@ -112,7 +112,7 @@ You can quickly train almost any deep learning model using Determined.
              </a>
          </div>
          <div class="tile-container">
-            <a class="tile" href="quickstart-mdldev.html">
+            <a class="tile" href="tutorials/quickstart-mdldev.html">
                 <h2 class="tile-title">Model Developer Quickstart</h2>
                 <p class="tile-description">Learn the basic steps needed to set up a Determined environment and train models.</p>
             </a>

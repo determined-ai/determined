@@ -5,7 +5,6 @@ import { useSearchParams } from 'react-router-dom';
 
 import { FilterFormStore } from 'components/FilterForm/components/FilterFormStore';
 import { FilterFormSet } from 'components/FilterForm/components/type';
-import Page from 'components/Page';
 import useResize from 'hooks/useResize';
 import { useSettings } from 'hooks/useSettings';
 import { getProjectColumns, searchExperiments } from 'services/api';
@@ -318,42 +317,38 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   }, []);
 
   return (
-    <Page
-      bodyNoPadding
-      containerRef={pageRef}
-      docTitle={project.id === 1 ? 'Uncategorized Experiments' : 'Project Details'}
-      id="projectDetails">
-      <>
-        <TableActionBar
-          excludedExperimentIds={excludedExperimentIds}
-          experiments={experiments}
-          filters={experimentFilters}
-          formStore={formStore}
-          handleUpdateExperimentList={handleUpdateExperimentList}
-          initialVisibleColumns={settings.columns}
-          isOpenFilter={isOpenFilter}
-          project={project}
-          projectColumns={projectColumns}
-          selectAll={selectAll}
-          selectedExperimentIds={selectedExperimentIds}
-          setIsOpenFilter={onIsOpenFilterChange}
-          setVisibleColumns={setVisibleColumns}
-          sorts={sorts}
-          total={total}
-          onAction={handleOnAction}
-          onSortChange={onSortChange}
-        />
-        {isLoading ? (
-          <Loading width={width} />
-        ) : experiments.length === 0 ? (
-          numFilters === 0 ? (
-            <NoExperiments />
-          ) : (
-            <NoMatches />
-          )
-        ) : error ? (
-          <Error />
+    <>
+      {isLoading ? (
+        <Loading width={width} />
+      ) : experiments.length === 0 ? (
+        numFilters === 0 ? (
+          <NoExperiments />
         ) : (
+          <NoMatches />
+        )
+      ) : error ? (
+        <Error />
+      ) : (
+        <>
+          <TableActionBar
+            excludedExperimentIds={excludedExperimentIds}
+            experiments={experiments}
+            filters={experimentFilters}
+            formStore={formStore}
+            handleUpdateExperimentList={handleUpdateExperimentList}
+            initialVisibleColumns={settings.columns}
+            isOpenFilter={isOpenFilter}
+            project={project}
+            projectColumns={projectColumns}
+            selectAll={selectAll}
+            selectedExperimentIds={selectedExperimentIds}
+            setIsOpenFilter={onIsOpenFilterChange}
+            setVisibleColumns={setVisibleColumns}
+            sorts={sorts}
+            total={total}
+            onAction={handleOnAction}
+            onSortChange={onSortChange}
+          />
           <GlideTable
             clearSelectionTrigger={clearSelectionTrigger}
             colorMap={colorMap}
@@ -363,7 +358,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
             formStore={formStore}
             handleScroll={handleScroll}
             handleUpdateExperimentList={handleUpdateExperimentList}
-            height={wholePageHeight - 140}
+            height={wholePageHeight - 150 - 140}
             page={page}
             project={project}
             projectColumns={projectColumns}
@@ -379,9 +374,9 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
             onIsOpenFilterChange={onIsOpenFilterChange}
             onSortChange={onSortChange}
           />
-        )}
-      </>
-    </Page>
+        </>
+      )}
+    </>
   );
 };
 

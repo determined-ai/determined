@@ -51,8 +51,8 @@ def make_interactive_task_url(
     currentSlotsExceeded: bool,
 ) -> str:
     wait_path = (
-        "/notebooks/{}/events".format(task_id)
-        if task_type == "notebook"
+        "/jupyter-lab/{}/events".format(task_id)
+        if task_type == "jupyter-lab"
         else "/tensorboard/{}/events?tail=1".format(task_id)
     )
     wait_path_url = service_address + wait_path

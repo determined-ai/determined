@@ -10,13 +10,13 @@ In this guide, you'll learn how to use the PyTorch Lightning API.
 +-------------------------------------------------------------------------------+
 | Visit the API reference                                                       |
 +===============================================================================+
-| :doc:`/reference/reference-training/training/api-pytorch-lightning-reference` |
+| :doc:`/reference/training/api-pytorch-lightning-reference`                    |
 +-------------------------------------------------------------------------------+
 
 This document guides you through training a PyTorch Lightning model in Determined. You need to
 implement a trial class that inherits :class:`~determined.pytorch.lightning.LightningAdapter` and
 specify it as the entrypoint in the :doc:`experiment configuration
-</reference/reference-training/experiment-config-reference>`.
+</reference/training/experiment-config-reference>`.
 
 PyTorch Lightning Adapter, defined here as ``LightningAdapter``, provides a quick way to train your
 PyTorch Lightning models with all the Determined features, such as mid-epoch preemption, easy

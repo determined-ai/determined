@@ -21,7 +21,8 @@ for all of your experiments.
 
 Each of these quickstart examples uses the same model code and example dataset, differing only in
 their configuration settings. For a list of all experiment configuration settings and more detailed
-information about each, see :doc:`/reference/reference-training/experiment-config-reference`.
+information about each, visit the :ref:`Experiment Configuration Reference
+<experiment-config-reference>`.
 
 ***************
  Prerequisites
@@ -59,10 +60,8 @@ Hardware
 Docker
 ======
 
-Install Docker to run containerized workloads. If you do not already have Docker installed, follow
-the :doc:`Installing Docker
-</cluster-setup-guide/deploy-cluster/sysadmin-deploy-on-prem/requirements>` instructions to install
-and run Docker on Linux or macOS.
+Install Docker to run containerized workloads. If you do not already have Docker installed, visit
+:ref:`Install Docker <install-docker>` to learn how to install and run Docker on Linux or macOS.
 
 ******************************
  Quickstart Training Examples
@@ -70,7 +69,7 @@ and run Docker on Linux or macOS.
 
 Download and extract the files used in this quickstart to a local directory:
 
-#. Download link: :download:`mnist_pytorch.tgz </examples/mnist_pytorch.tgz>`.
+#. Download link: :download:`mnist_pytorch.tgz <../examples/mnist_pytorch.tgz>`.
 
 #. Extract the configuration and model files:
 
@@ -343,9 +342,9 @@ This example uses a fixed batch size and searches on dropout size, filters, and 
 ************
 
 For detailed information on administrator tasks and how to install Determined on different
-platforms, see :doc:`/cluster-setup-guide/basic`.
+platforms, see :doc:`../cluster-setup-guide/basic`.
 
-Visit the :doc:`example-solutions/examples`, where you'll find machine learning models that have
+Visit the :doc:`../example-solutions/examples`, where you'll find machine learning models that have
 been converted to the Determined APIs. Each example includes a model definition and one or more
 experiment configuration files, and instructions on how to run the example.
 

@@ -7648,6 +7648,28 @@ class v1PatchProjectResponse:
         }
         return out
 
+class v1PatchTemplateConfigResponse:
+
+    def __init__(
+        self,
+        *,
+        template: "v1Template",
+    ):
+        self.template = template
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PatchTemplateConfigResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "template": v1Template.from_json(obj["template"]),
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "template": self.template.to_json(omit_unset),
+        }
+        return out
+
 class v1PatchTrialsCollectionRequest:
     filters: "typing.Optional[v1TrialFilters]" = None
     name: "typing.Optional[str]" = None
@@ -8424,6 +8446,28 @@ class v1PostSearcherOperationsRequest:
             out["searcherOperations"] = None if self.searcherOperations is None else [x.to_json(omit_unset) for x in self.searcherOperations]
         if not omit_unset or "triggeredByEvent" in vars(self):
             out["triggeredByEvent"] = None if self.triggeredByEvent is None else self.triggeredByEvent.to_json(omit_unset)
+        return out
+
+class v1PostTemplateResponse:
+
+    def __init__(
+        self,
+        *,
+        template: "v1Template",
+    ):
+        self.template = template
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PostTemplateResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "template": v1Template.from_json(obj["template"]),
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "template": self.template.to_json(omit_unset),
+        }
         return out
 
 class v1PostTrialProfilerMetricsBatchRequest:
@@ -11316,15 +11360,18 @@ class v1Template:
         *,
         config: "typing.Dict[str, typing.Any]",
         name: str,
+        workspaceId: int,
     ):
         self.config = config
         self.name = name
+        self.workspaceId = workspaceId
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Template":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "config": obj["config"],
             "name": obj["name"],
+            "workspaceId": obj["workspaceId"],
         }
         return cls(**kwargs)
 
@@ -11332,6 +11379,7 @@ class v1Template:
         out: "typing.Dict[str, typing.Any]" = {
             "config": self.config,
             "name": self.name,
+            "workspaceId": self.workspaceId,
         }
         return out
 
@@ -16187,6 +16235,27 @@ def patch_PatchProject(
         return v1PatchProjectResponse.from_json(_resp.json())
     raise APIHttpError("patch_PatchProject", _resp)
 
+def patch_PatchTemplateConfig(
+    session: "api.Session",
+    *,
+    body: "typing.Dict[str, typing.Any]",
+    templateName: str,
+) -> "v1PatchTemplateConfigResponse":
+    _params = None
+    _resp = session._do_request(
+        method="PATCH",
+        path=f"/api/v1/templates/{templateName}",
+        params=_params,
+        json=body,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1PatchTemplateConfigResponse.from_json(_resp.json())
+    raise APIHttpError("patch_PatchTemplateConfig", _resp)
+
 def patch_PatchTrialsCollection(
     session: "api.Session",
     *,
@@ -16433,6 +16502,27 @@ def post_PostSearcherOperations(
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_PostSearcherOperations", _resp)
+
+def post_PostTemplate(
+    session: "api.Session",
+    *,
+    body: "v1Template",
+    template_name: str,
+) -> "v1PostTemplateResponse":
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/templates/{template_name}",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1PostTemplateResponse.from_json(_resp.json())
+    raise APIHttpError("post_PostTemplate", _resp)
 
 def post_PostTrialProfilerMetricsBatch(
     session: "api.Session",

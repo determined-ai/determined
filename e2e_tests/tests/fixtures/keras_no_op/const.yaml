@@ -1,4 +1,4 @@
-description: noop-keras
+name: noop-keras
 data:
   model_type: single_output
 entrypoint: model_def:NoopKerasTrial

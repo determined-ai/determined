@@ -1,4 +1,4 @@
-description: dataset-experiment
+name: dataset-experiment
 hyperparameters:
   global_batch_size: 4
   dataset_size: 100

@@ -1,4 +1,4 @@
-description: dataset-experiment-distributed
+name: dataset-experiment-distributed
 hyperparameters:
   global_batch_size: 8
   dataset_size: 100
