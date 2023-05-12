@@ -1,5 +1,5 @@
 import { Alert } from 'antd';
-import Hermes from 'hermes-parallel-coordinates';
+import Hermes, { DimensionType } from 'hermes-parallel-coordinates';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import ParallelCoordinates from 'components/ParallelCoordinates';
@@ -172,13 +172,13 @@ const HpParallelCoordinates: React.FC<Props> = ({
           categories: hp.vals?.map((val) => (isPrimitive(val) ? val : JSON.stringify(val))) ?? [],
           key,
           label: key,
-          type: 'categorical',
+          type: DimensionType.Categorical,
         };
       } else if (hp.type === HyperparameterType.Log) {
-        return { key, label: key, logBase: hp.base, type: 'logarithmic' };
+        return { key, label: key, logBase: hp.base, type: DimensionType.Logarithmic };
       }
 
-      return { key, label: key, type: 'linear' };
+      return { key, label: key, type: DimensionType.Linear };
     });
 
     // Add metric as column to parcoords dimension list
@@ -190,12 +190,12 @@ const HpParallelCoordinates: React.FC<Props> = ({
               key,
               label: key,
               logBase: 10,
-              type: 'logarithmic',
+              type: DimensionType.Logarithmic,
             }
           : {
               key,
               label: key,
-              type: 'linear',
+              type: DimensionType.Linear,
             },
       );
     }
