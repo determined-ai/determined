@@ -1509,7 +1509,7 @@ func (a *apiServer) ExpMetricNames(req *apiv1.ExpMetricNamesRequest,
 
 					if seen := seenSearcher[searcherMetric]; !seen {
 						response.SearcherMetrics = append(response.SearcherMetrics, searcherMetric)
-						seenTrain[searcherMetric] = true
+						seenSearcher[searcherMetric] = true
 					}
 				}
 			}
