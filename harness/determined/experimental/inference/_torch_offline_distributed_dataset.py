@@ -81,6 +81,8 @@ class TorchDistributedDatasetProcessor:
                 self._skip = metadata["steps_completed"]
                 logging.info(f"Previous run completed {self._skip} steps")
 
+    # TODO: Switch to determined's dataloader class in data utils and add collate_fn as
+    #  well as worker start fn args
     def _create_dataloader(self) -> DataLoader:
         """
         Create sharded deterministic dataloader from dataset
