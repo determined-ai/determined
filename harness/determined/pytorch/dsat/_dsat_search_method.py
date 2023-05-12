@@ -665,7 +665,7 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
         logging.info("progress")
         self._searcher_state_tests(searcher_state, "progress")
 
-        progress = len(searcher_state.trials_closed) / len(searcher_state.trials_created)
+        progress = len(searcher_state.trials_closed) / self.trial_tracker.max_trials
         return progress
 
     def save_method_state(self, path: pathlib.Path) -> None:
