@@ -483,14 +483,14 @@ func (db *PgDB) updateTotalBatches(ctx context.Context, tx *sqlx.Tx, trialID int
 
 // AddTrialMetrics inserts a set of trial metrics to the database.
 func (db *PgDB) addTrialMetrics(
-	ctx context.Context, m *trialv1.TrialMetrics, pType model.MetricPartitionType,
+	ctx context.Context, m *trialv1.TrialMetrics, pType MetricPartitionType,
 	mType *string,
 ) (rollbacks int, err error) {
 	/*
 		TODO(hamid):
 		- MetricType could live in trialv1.TrialMetrics :thinking_face:
 	*/
-	isValidation := pType == model.ValidationMetric
+	isValidation := pType == ValidationMetric
 
 	metricsJSONPath := "avg_metrics"
 	metricsBody := map[string]interface{}{
@@ -517,7 +517,7 @@ func (db *PgDB) addTrialMetrics(
 
 		// CHECK: we skip rollbacks, summary metrics, and total batch updates for generic metrics.
 		var metricRowID int
-		if pType == model.GenericMetric {
+		if pType == GenericMetric {
 			if metricRowID, err = db.addRawMetrics(ctx, tx, &metricsBody, m.TrialRunId,
 				m.TrialId, m.StepsCompleted, pType, mType); err != nil {
 				return err
@@ -600,24 +600,6 @@ WHERE id = $1;
 		}
 		return nil
 	})
-}
-
-// AddTrainingMetrics [DEPRECATED] adds a completed step to the database with the given training
-// metrics. If these training metrics occur before any others, a rollback is assumed and later
-// training and validation metrics are cleaned up.
-func (db *PgDB) AddTrainingMetrics(ctx context.Context, m *trialv1.TrialMetrics) error {
-	_, err := db.addTrialMetrics(ctx, m, model.TrainingMetric, nil)
-	return err
-}
-
-// AddValidationMetrics [DEPRECATED] adds a completed validation to the database with the given
-// validation metrics. If these validation metrics occur before any others, a rollback
-// is assumed and later metrics are cleaned up from the database.
-func (db *PgDB) AddValidationMetrics(
-	ctx context.Context, m *trialv1.TrialMetrics,
-) error {
-	_, err := db.addTrialMetrics(ctx, m, model.ValidationMetric, nil)
-	return err
 }
 
 const (

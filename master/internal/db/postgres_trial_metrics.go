@@ -3,10 +3,10 @@ package db
 import (
 	"context"
 
-	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/proto/pkg/trialv1"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
+
+	"github.com/determined-ai/determined/proto/pkg/trialv1"
 )
 
 // MetricPartitionType denotes what type the metric is.
@@ -84,13 +84,31 @@ func customMetricTypeToPartitionType(mType string) MetricPartitionType {
 	// TODO(hamid): remove partition_type once we move away from pg10 and
 	// we can use DEFAULT partitioning.
 	switch mType {
-	case string(model.TrainingMetric): // FIXME: case sensitive.
-		return model.TrainingMetric
-	case string(model.ValidationMetric):
-		return model.ValidationMetric
+	case string(TrainingMetric): // FIXME: case sensitive.
+		return TrainingMetric
+	case string(ValidationMetric):
+		return ValidationMetric
 	default:
-		return model.GenericMetric
+		return GenericMetric
 	}
+}
+
+// AddTrainingMetrics [DEPRECATED] adds a completed step to the database with the given training
+// metrics. If these training metrics occur before any others, a rollback is assumed and later
+// training and validation metrics are cleaned up.
+func (db *PgDB) AddTrainingMetrics(ctx context.Context, m *trialv1.TrialMetrics) error {
+	_, err := db.addTrialMetrics(ctx, m, TrainingMetric, nil)
+	return err
+}
+
+// AddValidationMetrics [DEPRECATED] adds a completed validation to the database with the given
+// validation metrics. If these validation metrics occur before any others, a rollback
+// is assumed and later metrics are cleaned up from the database.
+func (db *PgDB) AddValidationMetrics(
+	ctx context.Context, m *trialv1.TrialMetrics,
+) error {
+	_, err := db.addTrialMetrics(ctx, m, ValidationMetric, nil)
+	return err
 }
 
 // AddTrialMetrics persists the given trial metrics to the database.
