@@ -131,13 +131,13 @@ func (p *Provisioner) SlotsPerInstance() int {
 }
 
 // CurrentSlotCount returns the number of Slots available in the cluster.
-func (p *Provisioner) CurrentSlotCount(ctx *actor.Context) int {
+func (p *Provisioner) CurrentSlotCount(ctx *actor.Context) (int, error) {
 	nodes, err := p.provider.list(ctx)
 	if err != nil {
 		ctx.Log().WithError(err).Error("cannot list instances for current slot count")
-		return 0
+		return 0, err
 	}
-	return p.SlotsPerInstance() * len(nodes)
+	return p.SlotsPerInstance() * len(nodes), nil
 }
 
 // InstanceType returns the instance type of the provider for the provisioner.

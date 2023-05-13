@@ -853,7 +853,10 @@ func (rp *resourcePool) pruneTaskList(ctx *actor.Context) {
 	}
 
 	before := rp.taskList.Len()
-	slotCount := rp.provisioner.CurrentSlotCount(ctx)
+	slotCount, err := rp.provisioner.CurrentSlotCount(ctx)
+	if err != nil {
+		return
+	}
 	ctx.Log().WithError(err).WithField("slotCount", slotCount).Error("provisioner in error state")
 	var refsToRemove = []*actor.Ref{}
 	for it := rp.taskList.Iterator(); it.Next(); {
