@@ -44,6 +44,19 @@ def unmarshal(
     return class_(**init_args)
 
 
+class Animator:
+    @staticmethod
+    def render_loading(cls: "Animator", step: int, message: str = "Loading"):
+        animation = "|/-\\"
+        sys.stdout.write("\r" + message + " " + animation[step % len(animation)])
+        sys.stdout.flush()
+
+    @staticmethod
+    def render_done(cls: "Animator", message: str = "Done"):
+        sys.stdout.write("\r" + message + " . Done")
+        sys.stdout.flush()
+
+
 def render_objects(
     generic: Any, values: Iterable[Any], default_value: str = "N/A", table_fmt: str = _FORMAT
 ) -> None:
