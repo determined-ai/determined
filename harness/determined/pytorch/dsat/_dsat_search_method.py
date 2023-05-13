@@ -9,7 +9,22 @@ import uuid
 from abc import abstractmethod
 from collections import deque
 from dataclasses import dataclass
-from typing import Any, Dict, Iterable, Iterator, List, Optional, Set, Tuple, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Deque,
+    Dict,
+    Iterable,
+    Iterator,
+    List,
+    Optional,
+    Set,
+    Tuple,
+    TypeVar,
+    Union,
+)
+
+# from typing_extensions import SupportsIndex
 
 import numpy as np
 
@@ -23,13 +38,16 @@ TODOs:
     * Make sure we don't draw the same config twice in random search.
     * Give control over random seeds and checkpoint rng states.
     * Allow users to configure concurrent trials, somehow.
-    * Move away from native DS AT autotuning config syntax, since we're not actually using it as
-    they do and there's no reason to constrict ourselves in that way.
-    * Clean up directory/import structure. Imports are onerously long now.
-    * Don't use stage 3 if stages 1 or 2 work
     * Make it easy for users to subclass the base searcher and use it with dsat.autotune? Not sure
     how we'd do that.
 """
+
+if TYPE_CHECKING:
+    from _typeshed import SupportsAllComparisons
+
+T = TypeVar("T", bound=SupportsAllComparisons)
+# class MetricType(Generic[T]):
+#     pass
 
 
 class DSATTrial:
@@ -59,16 +77,17 @@ class DSATTrial:
         self.searcher_metric_name = searcher_metric_name
 
         # Other attrs which are updated during training:
-        self.metric = {}
+
+        self.metric: Dict[str, Any] = {}
         self.error = False
         self.running = False
-        self.children = set()
+        self.children: Set["DSATTrial"] = set()
 
         # If a parent was specified, register the current Trial as the parent's child.
         if self.parent is not None:
             self.parent.children.add(self)
 
-        self.lineage_root = self if self.parent is None else self.parent.lineage_root
+        self.lineage_root: DSATTrial = self if self.parent is None else self.parent.lineage_root
 
         self.ds_config = _utils.get_ds_config_from_hparams(self.hparams, self.model_dir)
 
@@ -101,7 +120,7 @@ class DSATTrial:
     def error_in_direct_history(self) -> bool:
         if self._error_in_direct_history:
             return self._error_in_direct_history
-        trial = self
+        trial: Optional["DSATTrial"] = self
         while trial is not None:
             if trial.error:
                 return True
@@ -109,7 +128,7 @@ class DSATTrial:
         return False
 
     @property
-    def mbs_in_lineage(self) -> Set["DSATTrial"]:
+    def mbs_in_lineage(self) -> Set[int]:
         """
         Returns the set of all `train_micro_batch_size_per_gpu` (mbs) used in the Trial's lineage.
         """
@@ -118,15 +137,15 @@ class DSATTrial:
 
     @property
     def stage(self) -> int:
-        return self.ds_config.get("zero_optimization", {}).get("stage", 0)
+        return int(self.ds_config.get("zero_optimization", {}).get("stage", 0))
 
     @property
-    def fp16(self) -> int:
-        return self.ds_config.get("fp16", {}).get("enabled") or False
+    def fp16(self) -> bool:
+        return bool(self.ds_config.get("fp16", {}).get("enabled")) or False
 
     @property
     def mbs(self) -> int:
-        return self.ds_config["train_micro_batch_size_per_gpu"]
+        return self.ds_config.get("train_micro_batch_size_per_gpu", 1)
 
     @property
     def create_and_val_ops(self) -> List[searcher.Operation]:
@@ -145,7 +164,9 @@ class DSATTrial:
         return ops_list
 
     @property
-    def searcher_metric_val(self) -> Any:
+    def searcher_metric_val(self) -> Optional[Any]:
+        if self.searcher_metric_name is None:
+            return None
         return self.metric.get(self.searcher_metric_name)
 
     # TODO: More important properties, like train_batch_size, gas, etc.
@@ -168,7 +189,7 @@ class DSATTrialTracker:
         exp_config: Dict[str, Any],
     ) -> None:
         self.exp_config = exp_config
-        self.max_trials = args.max_trials
+        self.max_trials: int = args.max_trials
         self.max_concurrent_trials = args.max_concurrent_trials
         self.max_slots = args.max_slots
         self.model_dir = args.model_dir
@@ -183,14 +204,14 @@ class DSATTrialTracker:
 
         self.smaller_is_better = _utils.smaller_is_better(self.searcher_metric)
 
-        self.model_profile_info_trial = None
+        self.model_profile_info_trial: Optional["DSATTrial"] = None
         self.num_trials_since_best_result = 0
-        self.successful_stages = set()
-        self._all_trials_dict = {}
-        self.queue = deque()
+        self.successful_stages: Set[int] = set()
+        self._all_trials_dict: Dict[uuid.UUID, "DSATTrial"] = {}
+        self.queue: Deque["DSATTrial"] = deque()
 
-        self._mem_per_gpu_per_stage = None
-        self._approx_max_mbs_per_stage = None
+        self._mem_per_gpu_per_stage: Optional[Dict[int, int]] = None
+        self._approx_max_mbs_per_stage: Optional[Dict[int, int]] = None
 
     def __len__(self) -> int:
         return len(self._all_trials_dict)
@@ -198,7 +219,7 @@ class DSATTrialTracker:
     def __getitem__(self, request_id: uuid.UUID) -> DSATTrial:
         return self._all_trials_dict[request_id]
 
-    def __iter__(self) -> Iterator[DSATTrial]:
+    def __iter__(self) -> Iterator[Tuple[uuid.UUID, "DSATTrial"]]:
         return iter(self._all_trials_dict.items())
 
     def __contains__(self, item: Union[uuid.UUID, DSATTrial]) -> bool:
@@ -321,28 +342,28 @@ class DSATTrialTracker:
         assert (
             self.model_profile_info_trial is not None
         ), "The model profile info Trial must be run before calling this method."
-        return self.model_profile_info_trial.metric["gpu_mem"]
+        return self.model_profile_info_trial.metric.get("gpu_mem", 0)
 
     @property
     def num_params(self) -> int:
         assert (
             self.model_profile_info_trial is not None
         ), "The model profile info Trial must be run before calling this method."
-        return self.model_profile_info_trial.metric["num_params"]
+        return self.model_profile_info_trial.metric.get("num_params", 0)
 
     @property
     def trainable_num_params(self) -> int:
         assert (
             self.model_profile_info_trial is not None
         ), "The model profile info Trial must be run before calling this method."
-        return self.model_profile_info_trial.metric["trainable_num_params"]
+        return self.model_profile_info_trial.metric.get("trainable_num_params", 0)
 
     @property
     def activation_mem_per_gpu(self) -> int:
         assert (
             self.model_profile_info_trial is not None
         ), "The model profile info Trial must be run before calling this method."
-        return self.model_profile_info_trial.metric["activation_mem_per_gpu"]
+        return self.model_profile_info_trial.metric.get("activation_mem_per_gpu", 0)
 
     @property
     def mem_per_gpu_per_stage(self) -> Dict[int, int]:
@@ -386,7 +407,6 @@ class DSATTrialTracker:
     def approx_max_mbs_per_stage(self) -> Dict[int, int]:
         """
         Returns the approximate max train_micro_batch_size_per_gpu (mbs) per stage.
-
         """
         if self._approx_max_mbs_per_stage is None:
             self._approx_max_mbs_per_stage = {
@@ -395,7 +415,7 @@ class DSATTrialTracker:
             }
         return self._approx_max_mbs_per_stage
 
-    def _best_trial_fn(self, trials: Iterable[DSATTrial]) -> DSATTrial:
+    def _best_trial_fn(self, trials: Iterable["DSATTrial"]) -> Optional["DSATTrial"]:
         trials_with_searcher_metric = [
             trial
             for trial in trials
@@ -412,15 +432,17 @@ class DSATTrialTracker:
         return best_trial
 
     @property
-    def best_trials_by_stage(self) -> Dict[str, DSATTrial]:
-        best_trials_by_stage = {
-            stage: self._best_trial_fn(trial for _, trial in self if trial.stage == stage)
-            for stage in range(4)
-        }
-        return best_trials_by_stage
+    def best_trials_by_stage(self) -> Dict[int, "DSATTrial"]:
+        _best_trials_by_stage: Dict[int, "DSATTrial"] = {}
+        for stage in range(4):
+            trials_to_check = [trial for _, trial in self if trial.stage == stage]
+            best_trial = self._best_trial_fn(trials_to_check)
+            if best_trial is not None:
+                _best_trials_by_stage[stage] = best_trial
+        return _best_trials_by_stage
 
     @property
-    def best_trial(self) -> DSATTrial:
+    def best_trial(self) -> Optional["DSATTrial"]:
         best_trial = self._best_trial_fn(
             trial for trial in self.best_trials_by_stage.values() if trial is not None
         )

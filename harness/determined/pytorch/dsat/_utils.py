@@ -5,7 +5,7 @@ import logging
 import pathlib
 import random
 from contextlib import contextmanager
-from typing import Any, Dict, Generator, List, Optional, Union, cast
+from typing import Any, Dict, Generator, List, Optional, Tuple, Union
 
 import torch
 from ruamel import yaml
@@ -276,11 +276,11 @@ def report_json_results(
 def get_zero_stage_search_space(
     zero_stage: int,
 ) -> Dict[str, List[Union[bool, float]]]:
-    default_settings: dict = _defaults.DEFAULT_ZERO_SEARCH_SPACE
+    default_settings = _defaults.DEFAULT_ZERO_SEARCH_SPACE
     assert (
         zero_stage in default_settings
     ), f"Invalid zero_stage, must be one of {list(default_settings)}"
-    search_space: dict = default_settings[1]
+    search_space = default_settings[1]
     for stage in range(2, zero_stage + 1):
         search_space = {**search_space, **default_settings[stage]}
     return search_space
@@ -314,8 +314,8 @@ def get_batch_config_from_mbs_gas_and_slots(
     }
 
 
-def dict_raise_error_on_duplicate_keys(ordered_pairs: Dict[str, Any]) -> Dict[str, Any]:
-    """Reject duplicate keys."""
+def dict_raise_error_on_duplicate_keys(ordered_pairs: List[Tuple[str, Any]]) -> Dict[str, Any]:
+    """Reject duplicate keys from the ordered_pairs"""
     d = {k: v for (k, v) in ordered_pairs}
     if len(d) != len(ordered_pairs):
         counter = collections.Counter([pair[0] for pair in ordered_pairs])
@@ -325,15 +325,16 @@ def dict_raise_error_on_duplicate_keys(ordered_pairs: Dict[str, Any]) -> Dict[st
 
 
 def normalize_base_ds_config(
-    base_ds_config: Union[str, Dict], model_dir: pathlib.Path = CURR_DIR
+    base_ds_config: Union[str, Dict[str, Any]], model_dir: pathlib.Path = CURR_DIR
 ) -> Dict[str, Any]:
     if isinstance(base_ds_config, str):
         full_path = model_dir.joinpath(pathlib.Path(base_ds_config))
         with open(full_path, "r") as f:
-            base_ds_config = json.load(
+            ret_ds_config: Dict[str, Any] = json.load(
                 f,
                 object_pairs_hook=dict_raise_error_on_duplicate_keys,
             )
+        return ret_ds_config
     else:
         if not isinstance(base_ds_config, dict):
             raise TypeError("Expected string or dict for base_ds_config argument.")
@@ -362,12 +363,13 @@ def get_ds_config_from_hparams(
     base_config_file_name = hparams[config_key]
     base_ds_config = normalize_base_ds_config(base_config_file_name, model_dir=model_dir)
     overwrite_ds_config = hparams.get(overwrite_key, {})
-    ds_config = merge_dicts(cast(Dict[str, Any], base_ds_config), overwrite_ds_config)
+    # ds_config = merge_dicts(cast(Dict[str, Any], base_ds_config), overwrite_ds_config)
+    ds_config = merge_dicts(base_ds_config, overwrite_ds_config)
     return ds_config
 
 
 def overwrite_deepspeed_config(
-    base_ds_config: Union[str, Dict],
+    base_ds_config: Union[str, Dict[str, Any]],
     source_ds_dict: Dict[str, Any],
     model_dir: pathlib.Path = CURR_DIR,
 ) -> Dict[str, Any]:
@@ -383,7 +385,8 @@ def overwrite_deepspeed_config(
         The resulting dictionary when base_ds_config is overwritten with source_ds_dict.
     """
     normalized_base_ds_config = normalize_base_ds_config(base_ds_config, model_dir=model_dir)
-    return merge_dicts(cast(Dict[str, Any], normalized_base_ds_config), source_ds_dict)
+    # return merge_dicts(cast(Dict[str, Any], normalized_base_ds_config), source_ds_dict)
+    return merge_dicts(normalized_base_ds_config, source_ds_dict)
 
 
 def get_ds_config_path_from_args(args: List[str]) -> Optional[str]:
@@ -392,11 +395,12 @@ def get_ds_config_path_from_args(args: List[str]) -> Optional[str]:
             ds_config_idx = idx + 1
             ds_config_path = args[ds_config_idx]
             return ds_config_path
+    return None
 
 
 def replace_ds_config_file_using_overwrites(
     args: List[str], hparams: Dict[str, Any], overwrite_key: str = _defaults.OVERWRITE_KEY
-):
+) -> None:
     """
     Gets the deepspeed json config path from the list of HF args, overwrites its values using
     the provided overwrite values, and the re-writes the result to the original config path.
@@ -404,6 +408,8 @@ def replace_ds_config_file_using_overwrites(
     a consistent batch size configuration.
     """
     ds_config_path = get_ds_config_path_from_args(args)
+    if ds_config_path is None:
+        return
     with open(ds_config_path, "r") as f:
         ds_config_dict_with_overwrites = json.load(f)
         # If overwrites are provided, use them. The deepspeed configuration is assumed to have a
