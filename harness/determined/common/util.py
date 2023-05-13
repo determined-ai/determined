@@ -216,9 +216,10 @@ def wait_for(
     """
 
     start = time.time()
-    done, rv = predicate()
+    done = False
     while not done:
         if time.time() - start > timeout:
             raise TimeoutError("timed out waiting for predicate")
+        done, rv = predicate()
         time.sleep(interval)
     return rv

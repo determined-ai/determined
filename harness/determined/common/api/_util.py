@@ -1,8 +1,8 @@
 import enum
-from typing import Callable, Iterator, TypeVar, Union
+from typing import Callable, Iterator, TypeVar, Union, Tuple
 
 from determined.common.api import Session, bindings
-from determined.common import util
+from determined.common import util, api
 
 
 class PageOpts(str, enum.Enum):
@@ -79,3 +79,12 @@ def wait_for_ntsc_state(
         return predicate(last_state), last_state
 
     return util.wait_for(get_state, timeout)
+
+
+def task_is_ready(session: api.Session, task_id: str) -> Tuple[bool, str]:
+    task = bindings.get_GetTask(session, taskId=task_id).task
+    assert task is not None, "task must not be None"
+    if len(task.allocations) == 0:
+        return False, "task has no allocations"
+    is_ready = task.allocations[0].isReady
+    return is_ready, ""
