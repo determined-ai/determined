@@ -7,7 +7,7 @@ from termcolor import colored
 
 from determined import cli
 from determined.cli import command, render, task
-from determined.common import api, context
+from determined.common import api, context, util
 from determined.common.api import authentication, bindings, request
 from determined.common.check import check_eq
 from determined.common.declarative_argparse import Arg, Cmd, Group
@@ -46,22 +46,23 @@ def start_notebook(args: Namespace) -> None:
         bindings.v1LaunchWarning.CURRENT_SLOTS_EXCEEDED in resp.warnings
     )
 
-    with api.ws(args.master, "notebooks/{}/events".format(nb.id)) as ws:
-        for msg in ws:
-            if msg["service_ready_event"] and nb.serviceAddress and not args.no_browser:
-                url = api.browser_open(
-                    args.master,
-                    request.make_interactive_task_url(
-                        task_id=nb.id,
-                        service_address=nb.serviceAddress,
-                        description=nb.description,
-                        resource_pool=nb.resourcePool,
-                        task_type="jupyter-lab",
-                        currentSlotsExceeded=currentSlotsExceeded,
-                    ),
-                )
-                print(colored("Jupyter Notebook is running at: {}".format(url), "green"))
-            command.render_event_stream(msg)
+    print(f"launched notebook {nb.id}")
+    print("waiting for notebook to become ready...")
+    session = cli.setup_session(args)
+    util.wait_for(lambda: api.task_is_ready(session, nb.id), timeout=300, interval=1)
+    if nb.serviceAddress and not args.no_browser:
+        url = api.browser_open(
+            args.master,
+            request.make_interactive_task_url(
+                task_id=nb.id,
+                service_address=nb.serviceAddress,
+                description=nb.description,
+                resource_pool=nb.resourcePool,
+                task_type="jupyter-lab",
+                currentSlotsExceeded=currentSlotsExceeded,
+            ),
+        )
+        print(colored("Jupyter Notebook is running at: {}".format(url), "green"))
 
 
 @authentication.required
