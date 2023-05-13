@@ -50,19 +50,20 @@ def start_notebook(args: Namespace) -> None:
     print("waiting for notebook to become ready...")
     session = cli.setup_session(args)
     util.wait_for(lambda: api.task_is_ready(session, nb.id), timeout=300, interval=1)
-    if nb.serviceAddress and not args.no_browser:
-        url = api.browser_open(
-            args.master,
-            request.make_interactive_task_url(
-                task_id=nb.id,
-                service_address=nb.serviceAddress,
-                description=nb.description,
-                resource_pool=nb.resourcePool,
-                task_type="jupyter-lab",
-                currentSlotsExceeded=currentSlotsExceeded,
-            ),
-        )
-        print(colored("Jupyter Notebook is running at: {}".format(url), "green"))
+    if not nb.serviceAddress:
+        return
+    nb_path = request.make_interactive_task_url(
+        task_id=nb.id,
+        service_address=nb.serviceAddress,
+        description=nb.description,
+        resource_pool=nb.resourcePool,
+        task_type="jupyter-lab",
+        currentSlotsExceeded=currentSlotsExceeded,
+    )
+    url = api.make_url(args.master, nb_path)
+    if not args.no_browser:
+        api.browser_open(args.master, nb_path)
+    print(colored("Jupyter Notebook is running at: {}".format(url), "green"))
 
 
 @authentication.required
