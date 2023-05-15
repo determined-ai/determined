@@ -1445,7 +1445,6 @@ func (a *apiServer) ExpMetricNames(req *apiv1.ExpMetricNamesRequest,
 			timeSinceLastAuth = time.Now()
 		}
 		expIDs := make([]int, len(req.Ids))
-
 		for i, ID := range req.Ids {
 			expIDs[i] = int(ID)
 		}
@@ -1476,7 +1475,7 @@ func (a *apiServer) ExpMetricNames(req *apiv1.ExpMetricNamesRequest,
 			return err
 		}
 
-		numNonTermialExperiments, err := a.m.db.GetNonTerminalExperimentCount(req.Ids)
+		numNonTermialExperiments, err := db.GetNonTerminalExperimentCount(resp.Context(), req.Ids)
 		if err != nil {
 			return errors.Wrap(err, "error looking up state of experiments")
 		}
