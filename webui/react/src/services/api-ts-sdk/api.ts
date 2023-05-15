@@ -1071,19 +1071,19 @@ export interface V1Allocation {
      * @type {string}
      * @memberof V1Allocation
      */
-    taskId?: string;
+    taskId: string;
     /**
      * The current state of the allocation.
      * @type {Taskv1State}
      * @memberof V1Allocation
      */
-    state?: Taskv1State;
+    state: Taskv1State;
     /**
      * Whether the allocation is ready to access.
      * @type {boolean}
      * @memberof V1Allocation
      */
-    isReady?: boolean;
+    isReady: boolean;
     /**
      * Start timestamp.
      * @type {string}
@@ -1101,7 +1101,7 @@ export interface V1Allocation {
      * @type {string}
      * @memberof V1Allocation
      */
-    allocationId?: string;
+    allocationId: string;
 }
 /**
  * Arguments to an all gather.
@@ -3962,7 +3962,7 @@ export interface V1GetTaskResponse {
      * @type {V1Task}
      * @memberof V1GetTaskResponse
      */
-    task?: V1Task;
+    task: V1Task;
 }
 /**
  * Response to GetTasksRequest.
@@ -8728,19 +8728,19 @@ export interface V1Task {
      * @type {string}
      * @memberof V1Task
      */
-    taskId?: string;
+    taskId: string;
     /**
      * Type of Task.
      * @type {string}
      * @memberof V1Task
      */
-    taskType?: string;
+    taskType: string;
     /**
      * List of Allocations.
      * @type {Array<V1Allocation>}
      * @memberof V1Task
      */
-    allocations?: Array<V1Allocation>;
+    allocations: Array<V1Allocation>;
 }
 /**
  * Response to TaskLogsFieldsRequest.
