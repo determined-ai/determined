@@ -4,8 +4,8 @@ import type { TabsProps } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
-import BreadcrumbBar from 'components/BreadcrumbBar';
 import DynamicTabs from 'components/DynamicTabs';
+import ExperimentBreadcrumbBar from 'components/ExperimentBreadcrumbBar';
 import Icon from 'components/kit/Icon';
 import Tooltip from 'components/kit/Tooltip';
 import Page from 'components/Page';
@@ -168,7 +168,7 @@ const ProjectDetails: React.FC = () => {
       // for docTitle, when id is 1 that means Uncategorized from webui/react/src/routes/routes.ts
       docTitle={id === 1 ? 'Uncategorized Experiments' : 'Project Details'}
       headerComponent={
-        <BreadcrumbBar
+        <ExperimentBreadcrumbBar
           extra={
             <Space>
               {project.description && (

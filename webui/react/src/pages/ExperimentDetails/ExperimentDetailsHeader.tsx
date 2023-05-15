@@ -1,7 +1,7 @@
 import { Button, Space, Typography } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import BreadcrumbBar from 'components/BreadcrumbBar';
+import ExperimentBreadcrumbBar from 'components/ExperimentBreadcrumbBar';
 import ExperimentCreateModalComponent, {
   CreateExperimentType,
 } from 'components/ExperimentCreateModal';
@@ -465,7 +465,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
 
   return (
     <>
-      <BreadcrumbBar experiment={experiment} id={experiment.id} type="experiment" />
+      <ExperimentBreadcrumbBar experiment={experiment} id={experiment.id} type="experiment" />
       <PageHeaderFoldable
         foldableContent={<InfoBox rows={foldableRows} />}
         leftContent={

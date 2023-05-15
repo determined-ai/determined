@@ -1,6 +1,10 @@
 import { Breadcrumb as AntdBreadcrumb } from 'antd';
 import React, { ReactNode } from 'react';
 
+import BreadcrumbBar from 'components/BreadcrumbBar';
+
+export { BreadcrumbBar };
+
 interface BreadcrumbProps {
   children?: ReactNode;
   separator?: ReactNode;
