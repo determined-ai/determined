@@ -2,6 +2,7 @@ import { useObservable } from 'micro-observables';
 import React, { MutableRefObject } from 'react';
 import { Helmet } from 'react-helmet-async';
 
+import Breadcrumb from 'components/kit/Breadcrumb';
 import PageHeader from 'components/PageHeader';
 import PageNotFound from 'components/PageNotFound';
 import usePermissions from 'hooks/usePermissions';
@@ -18,6 +19,7 @@ export interface BreadCrumbRoute {
 
 export interface Props {
   bodyNoPadding?: boolean;
+  hideBreadcrumb?: boolean;
   breadcrumb?: BreadCrumbRoute[];
   children?: React.ReactNode;
   containerRef?: MutableRefObject<HTMLElement | null>;
@@ -57,6 +59,7 @@ const Page: React.FC<Props> = (props: Props) => {
   const classes = [css.base];
 
   const showHeader = !props.headerComponent && (!!props.breadcrumb || !!props.title);
+  const showPageBreadcrumb = !props.hideBreadcrumb && props.title;
 
   if (props.bodyNoPadding) classes.push(css.bodyNoPadding);
   if (props.stickyHeader) classes.push(css.stickyHeader);
@@ -80,14 +83,19 @@ const Page: React.FC<Props> = (props: Props) => {
         <PageNotFound /> // hide until permissions are loaded
       ) : (
         <article className={classes.join(' ')} id={props.id} ref={props.containerRef}>
+          {showPageBreadcrumb && (
+            <div className={css.breadcrumbBar}>
+              <Breadcrumb>
+                <Breadcrumb.Item>{props.title}</Breadcrumb.Item>
+              </Breadcrumb>
+            </div>
+          )}
           {props.headerComponent}
           {showHeader && (
             <PageHeader
               breadcrumb={props.breadcrumb}
               options={props.options}
               sticky={props.stickyHeader}
-              subTitle={props.subTitle}
-              title={props.title}
             />
           )}
           <div className={css.body}>

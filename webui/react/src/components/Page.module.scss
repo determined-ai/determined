@@ -35,6 +35,18 @@
       flex: 1 1 auto;
     }
   }
+  .breadcrumbBar {
+    align-items: center;
+    background-color: var(--theme-stage);
+    border-bottom: var(--theme-stroke-width) solid var(--theme-stage-border);
+    display: flex;
+    gap: 6px;
+    padding: 8px 16px;
+    position: sticky;
+    top: 0;
+    width: 100%;
+    z-index: 2;
+  }
 }
 
 @media only screen and (max-width: $breakpoint-mobile) {

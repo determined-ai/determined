@@ -15,7 +15,6 @@ export interface Props extends CommonProps {
   options?: React.ReactNode;
   sticky?: boolean;
   subTitle?: React.ReactNode;
-  title?: string;
 }
 
 const PageHeader: React.FC<Props> = (props: Props) => {
@@ -56,7 +55,6 @@ const PageHeader: React.FC<Props> = (props: Props) => {
       )}
       {showHeader && (
         <div className={css.header}>
-          <div className={css.title}>{props.title}</div>
           <div className={css.subTitle}>{props.subTitle}</div>
           <div className={css.options}>{props.options}</div>
         </div>
