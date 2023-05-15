@@ -5,9 +5,9 @@ from typing import Any, Callable, Dict, List, Sequence
 
 import termcolor
 
+from determined.cli import errors
 from determined.common import api, declarative_argparse, util
 from determined.common.api import authentication, bindings, certs
-from determined.cli import errors
 from determined.experimental import client
 
 from .errors import FeatureFlagDisabled

@@ -1,8 +1,8 @@
 import enum
-from typing import Callable, Iterator, TypeVar, Union, Tuple, Optional
+from typing import Callable, Iterator, Optional, Tuple, TypeVar, Union
 
+from determined.common import api, util
 from determined.common.api import Session, bindings
-from determined.common import util, api
 
 
 class PageOpts(str, enum.Enum):

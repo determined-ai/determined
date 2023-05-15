@@ -17,7 +17,7 @@ from termcolor import colored
 from determined import cli
 from determined.cli import command, task
 from determined.common import api
-from determined.common.api import authentication, certs, bindings
+from determined.common.api import authentication, bindings, certs
 from determined.common.check import check_eq
 from determined.common.declarative_argparse import Arg, Cmd, Group
 

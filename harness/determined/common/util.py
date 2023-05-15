@@ -6,16 +6,16 @@ import os
 import pathlib
 import platform
 import random
-import time
 import sys
+import time
 from typing import (
     IO,
     Any,
     Callable,
     Iterator,
     Optional,
-    Tuple,
     Sequence,
+    Tuple,
     TypeVar,
     Union,
     no_type_check,
