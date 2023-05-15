@@ -665,7 +665,7 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
         logging.info("progress")
         self._searcher_state_tests(searcher_state, "progress")
 
-        progress = len(searcher_state.trials_closed) / len(searcher_state.trials_created)
+        progress = len(searcher_state.trials_closed) / self.trial_tracker.max_trials
         return progress
 
     def save_method_state(self, path: pathlib.Path) -> None:
@@ -677,7 +677,11 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
             pickle.dump(self.rng, f)
         if self.trial_tracker.best_trial is not None:
             with path.joinpath("best_ds_config.json").open("w") as f:
-                json.dump(self.trial_tracker.best_trial.ds_config, f)
+                best_ds_metrics = copy.deepcopy(self.trial_tracker.best_trial.ds_config)
+                del best_ds_metrics["autotuning"]
+                json.dump(best_ds_metrics, f)
+            with path.joinpath("best_ds_metrics.json").open("w") as f:
+                json.dump(self.trial_tracker.best_trial.metric, f)
 
     def load_method_state(self, path: pathlib.Path) -> None:
         logging.info("Restoring searcher state from checkpoint.")
@@ -697,7 +701,11 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
             self.trial_tracker.model_profile_info_trial is not None
             and self.trial_tracker.model_profile_info_trial.error
         ):
-            logging.info("Shutting down: error in model profile info Trial.")
+            logging.info(
+                "Shutting down: error in model profile info Trial."
+                " You may need to specify a configuration which can successfully run with"
+                " `train_micro_batch_size_per_gpu = 1`."
+            )
             return True
         if self.early_stopping_triggered():
             logging.info("Shutting down: early stopping criteria met.")
@@ -901,9 +909,9 @@ class RandomDSATSearchMethod(BaseDSATSearchMethod):
 
     def should_stop_lineage(self, trial: DSATTrial) -> bool:
         # General conditions
-        failed_on_min_mbs = trial.error and trial.mbs == trial.search_data.lo
+        failed_on_min_mbs = trial.error and trial.mbs <= trial.search_data.lo
         ran_largest_possible_mbs = (
-            trial.error_in_direct_history and trial.mbs == trial.search_data.hi
+            trial.error_in_direct_history and trial.mbs >= trial.search_data.hi
         )
 
         exceeded_trials_per_random_config_limit = (
