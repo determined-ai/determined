@@ -118,8 +118,8 @@ const HpParallelCoordinates: React.FC<Props> = ({
         let isWithinFilter = false;
 
         list.forEach((filter: Hermes.Filter) => {
-          const min = Math.min(Number(filter.p0), Number(filter.p0));
-          const max = Math.max(Number(filter.p1), Number(filter.p1));
+          const min = Math.min(Number(filter.value0), Number(filter.value1));
+          const max = Math.max(Number(filter.value0), Number(filter.value1));
           if (value >= min && value <= max) {
             isWithinFilter = true;
           }
@@ -147,7 +147,10 @@ const HpParallelCoordinates: React.FC<Props> = ({
     () => ({
       filters: hermesCreatedFilters,
       hooks: {
-        onFilterChange: setHermesCreatedFilters,
+        onFilterChange: (filters: Hermes.Filters) => {
+          // TODO: references are not changing, will need to address this in hermes.
+          setHermesCreatedFilters({ ...filters });
+        },
         onReset: () => setHermesCreatedFilters({}),
       },
       style: {
