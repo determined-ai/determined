@@ -207,7 +207,8 @@ class DSATTrialTracker:
             return item in self._all_trials_dict.values()
         else:
             raise ValueError(
-                f"Expected a `uuid.UUID` or `DSATTrial` instance, instead received an object of type {type(item)}"
+                f"Expected a `uuid.UUID` or `DSATTrial` instance, instead received an object of"
+                f" type {type(item)}"
             )
 
     def create_trial(
@@ -750,7 +751,8 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
 
         assert (
             num_running_trials <= self.trial_tracker.max_concurrent_trials
-        ), f"running trials {num_running_trials}, limit {self.trial_tracker.max_concurrent_trials}, {running_trials}"
+        ), f"running trials {num_running_trials}, limit {self.trial_tracker.max_concurrent_trials}"
+        f", {running_trials}"
         if self.trial_tracker.max_slots is not None:
             assert (
                 total_slots <= self.trial_tracker.max_slots
@@ -848,9 +850,11 @@ class RandomDSATSearchMethod(BaseDSATSearchMethod):
 
     def get_trial_list_after_model_profile_info_run(self) -> List[DSATTrial]:
         new_trials = []
-        num_remaining_trials = self.trial_tracker.max_trials - 1
-        num_initial_lineages = num_remaining_trials // self.trials_per_random_config
-        for _ in range(num_initial_lineages):
+        concurrent_trials = self.args.max_concurrent_trials
+        if self.args.max_slots is not None:
+            concurrent_trials_from_slots = self.args.max_slots // self.trial_tracker.slots_per_trial
+            concurrent_trials = min(concurrent_trials, concurrent_trials_from_slots)
+        for _ in range(concurrent_trials):
             trial = self.get_random_trial()
             new_trials.append(trial)
         return new_trials
@@ -874,25 +878,13 @@ class RandomDSATSearchMethod(BaseDSATSearchMethod):
         if self.should_stop_lineage(trial=last_trial):
             return [self.get_random_trial()]
 
-        # Let the best Trial for this stage inform the next one, if it exists.
-        best_trial_for_stage = self.trial_tracker.best_trials_by_stage[last_trial.stage]
-        if best_trial_for_stage is not None and best_trial_for_stage != last_trial:
-            new_search_data = copy.deepcopy(best_trial_for_stage.search_data)
-            # Update the floor to one greater than the mbs used and raise the ceiling if the best
-            # trial just tested the soft ceiling.
-            new_search_data.lo = best_trial_for_stage.mbs + 1
-            new_search_data.hi = max(new_search_data.lo, new_search_data.hi)
-        else:
-            # Otherwise, start from the data from the last trial and double the ceiling, if it was
-            # just tested.
-            new_search_data = copy.deepcopy(last_trial.search_data)
-            new_search_data.lo = last_trial.mbs + 1
-            if new_search_data.lo > new_search_data.hi:
-                new_search_data.hi *= 2
+        new_search_data = copy.deepcopy(last_trial.search_data)
+        new_search_data.lo = last_trial.mbs + 1
+        # It is possible lo > hi in the case where initial soft ceiling computation was innaccurate
+        # in which case we double hi.
+        if new_search_data.lo > new_search_data.hi:
+            new_search_data.hi *= 2
 
-        # If a hard ceiling was established for this lineage, ensure it is enforced
-        if last_trial.error_in_direct_history:
-            new_search_data.hi = min(new_search_data.hi, last_trial.search_data.hi)
         assert new_search_data.hi >= new_search_data.lo  # TODO: Remove
 
         mbs = self.get_random_mbs_from_search_data(new_search_data)
@@ -910,9 +902,6 @@ class RandomDSATSearchMethod(BaseDSATSearchMethod):
     def should_stop_lineage(self, trial: DSATTrial) -> bool:
         # General conditions
         failed_on_min_mbs = trial.error and trial.mbs <= trial.search_data.lo
-        ran_largest_possible_mbs = (
-            trial.error_in_direct_history and trial.mbs >= trial.search_data.hi
-        )
 
         exceeded_trials_per_random_config_limit = (
             trial.num_completed_trials_in_lineage >= self.trials_per_random_config
@@ -933,7 +922,6 @@ class RandomDSATSearchMethod(BaseDSATSearchMethod):
 
         if (
             failed_on_min_mbs
-            or ran_largest_possible_mbs
             or exceeded_trials_per_random_config_limit
             or should_stop_this_stage_3_trial
             or other_configs_run_larger_batch_sizes
@@ -949,7 +937,6 @@ class RandomDSATSearchMethod(BaseDSATSearchMethod):
         results still somewhat focused near the midpoint.
         """
         mbs = search_data.lo + self.rng.binomial(search_data.hi - search_data.lo, 0.5)
-        assert search_data.lo <= mbs <= search_data.hi  # TODO: remove
         return mbs
 
     def get_random_hparams_and_search_data(
