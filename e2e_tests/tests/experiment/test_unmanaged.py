@@ -1,7 +1,10 @@
 import os
-import pytest
 import subprocess
+
+import pytest
+
 from tests import config as conf
+
 
 @pytest.mark.e2e_cpu
 def test_unmanaged() -> None:

@@ -2254,6 +2254,7 @@ func (a *apiServer) CreateTrial(
 	}
 
 	trialModel := model.NewTrial(
+		model.CompletedState,
 		model.NewJobID(),
 		taskID,
 		model.RequestID{},
@@ -2261,7 +2262,6 @@ func (a *apiServer) CreateTrial(
 		req.Hparams.AsMap(),
 		nil,
 		0)
-	trialModel.State = model.CompletedState
 
 	if err := a.m.db.AddTask(&model.Task{
 		TaskID:     trialModel.TaskID,

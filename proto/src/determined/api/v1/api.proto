@@ -684,8 +684,7 @@ service Determined {
   }
 
   // Create unmanaged trial.
-  rpc CreateTrial(CreateTrialRequest)
-      returns (CreateTrialResponse) {
+  rpc CreateTrial(CreateTrialRequest) returns (CreateTrialResponse) {
     option (google.api.http) = {
       post: "/api/v1/trials"
       body: "*"
