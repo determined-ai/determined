@@ -381,6 +381,25 @@ export interface RuntimeStreamError {
 /**
  * 
  * @export
+ * @interface StreamResultOfV1ExpMetricNamesResponse
+ */
+export interface StreamResultOfV1ExpMetricNamesResponse {
+    /**
+     * 
+     * @type {V1ExpMetricNamesResponse}
+     * @memberof StreamResultOfV1ExpMetricNamesResponse
+     */
+    result?: V1ExpMetricNamesResponse;
+    /**
+     * 
+     * @type {RuntimeStreamError}
+     * @memberof StreamResultOfV1ExpMetricNamesResponse
+     */
+    error?: RuntimeStreamError;
+}
+/**
+ * 
+ * @export
  * @interface StreamResultOfV1GetTrainingMetricsResponse
  */
 export interface StreamResultOfV1GetTrainingMetricsResponse {
@@ -489,25 +508,6 @@ export interface StreamResultOfV1MetricBatchesResponse {
      * 
      * @type {RuntimeStreamError}
      * @memberof StreamResultOfV1MetricBatchesResponse
-     */
-    error?: RuntimeStreamError;
-}
-/**
- * 
- * @export
- * @interface StreamResultOfV1MetricNamesResponse
- */
-export interface StreamResultOfV1MetricNamesResponse {
-    /**
-     * 
-     * @type {V1MetricNamesResponse}
-     * @memberof StreamResultOfV1MetricNamesResponse
-     */
-    result?: V1MetricNamesResponse;
-    /**
-     * 
-     * @type {RuntimeStreamError}
-     * @memberof StreamResultOfV1MetricNamesResponse
      */
     error?: RuntimeStreamError;
 }
@@ -2791,6 +2791,31 @@ export interface V1ExperimentSimulation {
      * @memberof V1ExperimentSimulation
      */
     trials?: Array<V1TrialSimulation>;
+}
+/**
+ * Response to ExpMetricNamesRequest.
+ * @export
+ * @interface V1ExpMetricNamesResponse
+ */
+export interface V1ExpMetricNamesResponse {
+    /**
+     * The names of the searcher metrics.
+     * @type {Array<string>}
+     * @memberof V1ExpMetricNamesResponse
+     */
+    searcherMetrics?: Array<string>;
+    /**
+     * List of training metric names.
+     * @type {Array<string>}
+     * @memberof V1ExpMetricNamesResponse
+     */
+    trainingMetrics?: Array<string>;
+    /**
+     * List of validation metric names.
+     * @type {Array<string>}
+     * @memberof V1ExpMetricNamesResponse
+     */
+    validationMetrics?: Array<string>;
 }
 /**
  * The failure type of a resource.   - FAILURE_TYPE_UNSPECIFIED: UNSPECIFIED denotes an error that is not defined below.  - FAILURE_TYPE_RESOURCES_FAILED: ResourcesFailed denotes that the container ran but failed with a non-zero exit code.  - FAILURE_TYPE_RESOURCES_ABORTED: ResourcesAborted denotes the container was canceled before it was started.  - FAILURE_TYPE_RESOURCES_MISSING: ResourcesMissing denotes the resources were missing when the master asked about it.  - FAILURE_TYPE_TASK_ABORTED: TaskAborted denotes that the task was canceled before it was started.  - FAILURE_TYPE_TASK_ERROR: TaskError denotes that the task failed without an associated exit code.  - FAILURE_TYPE_AGENT_FAILED: AgentFailed denotes that the agent failed while the container was running.  - FAILURE_TYPE_AGENT_ERROR: AgentError denotes that the agent failed to launch the container.  - FAILURE_TYPE_RESTORE_ERROR: RestoreError denotes a failure to restore a running allocation on master blip.  - FAILURE_TYPE_UNKNOWN_ERROR: UnknownError denotes an internal error that did not map to a know failure type.
@@ -5220,31 +5245,6 @@ export interface V1MetricBatchesResponse {
      * @memberof V1MetricBatchesResponse
      */
     batches?: Array<number>;
-}
-/**
- * Response to MetricNamesRequest.
- * @export
- * @interface V1MetricNamesResponse
- */
-export interface V1MetricNamesResponse {
-    /**
-     * The name of the searcher metric.
-     * @type {string}
-     * @memberof V1MetricNamesResponse
-     */
-    searcherMetric?: string;
-    /**
-     * List of training metric names.
-     * @type {Array<string>}
-     * @memberof V1MetricNamesResponse
-     */
-    trainingMetrics?: Array<string>;
-    /**
-     * List of validation metric names.
-     * @type {Array<string>}
-     * @memberof V1MetricNamesResponse
-     */
-    validationMetrics?: Array<string>;
 }
 /**
  * 
@@ -16416,6 +16416,46 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Get the set of metric names recorded for a list of experiments.
+         * @param {Array<number>} [ids] The ids for the experiments.
+         * @param {number} [periodSeconds] Seconds to wait when polling for updates.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        expMetricNames(ids?: Array<number>, periodSeconds?: number, options: any = {}): FetchArgs {
+            const localVarPath = `/api/v1/experiments/metrics-stream/metric-names`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            if (ids) {
+                localVarQueryParameter['ids'] = ids
+            }
+            
+            if (periodSeconds !== undefined) {
+                localVarQueryParameter['periodSeconds'] = periodSeconds
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get the best searcher validation for an experiment by the given metric.
          * @param {number} experimentId The ID of the experiment.
          * @param {*} [options] Override http request option.
@@ -16957,47 +16997,6 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             
             if (metricType !== undefined) {
                 localVarQueryParameter['metricType'] = metricType
-            }
-            
-            if (periodSeconds !== undefined) {
-                localVarQueryParameter['periodSeconds'] = periodSeconds
-            }
-            
-            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
-            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
-            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
-            
-            return {
-                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
-         * @summary Get the set of metric names recorded for an experiment.
-         * @param {number} experimentId The id of the experiment.
-         * @param {number} [periodSeconds] Seconds to wait when polling for updates.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        metricNames(experimentId: number, periodSeconds?: number, options: any = {}): FetchArgs {
-            // verify required parameter 'experimentId' is not null or undefined
-            if (experimentId === null || experimentId === undefined) {
-                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling metricNames.');
-            }
-            const localVarPath = `/api/v1/experiments/{experimentId}/metrics-stream/metric-names`
-                .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
-            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
-            const localVarRequestOptions = { method: 'GET', ...options };
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-            
-            // authentication BearerToken required
-            if (configuration && configuration.apiKey) {
-                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
-                    ? configuration.apiKey("Authorization")
-                    : configuration.apiKey;
-                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
             if (periodSeconds !== undefined) {
@@ -17914,6 +17913,26 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Get the set of metric names recorded for a list of experiments.
+         * @param {Array<number>} [ids] The ids for the experiments.
+         * @param {number} [periodSeconds] Seconds to wait when polling for updates.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        expMetricNames(ids?: Array<number>, periodSeconds?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1ExpMetricNamesResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).expMetricNames(ids, periodSeconds, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Get the best searcher validation for an experiment by the given metric.
          * @param {number} experimentId The ID of the experiment.
          * @param {*} [options] Override http request option.
@@ -18166,26 +18185,6 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         metricBatches(experimentId: number, metricName: string, metricType: V1MetricType, periodSeconds?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1MetricBatchesResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).metricBatches(experimentId, metricName, metricType, periodSeconds, options);
-            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
-                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
-                    if (response.status >= 200 && response.status < 300) {
-                        return response.json();
-                    } else {
-                        throw response;
-                    }
-                });
-            };
-        },
-        /**
-         * 
-         * @summary Get the set of metric names recorded for an experiment.
-         * @param {number} experimentId The id of the experiment.
-         * @param {number} [periodSeconds] Seconds to wait when polling for updates.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        metricNames(experimentId: number, periodSeconds?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1MetricNamesResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).metricNames(experimentId, periodSeconds, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -18615,6 +18614,17 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Get the set of metric names recorded for a list of experiments.
+         * @param {Array<number>} [ids] The ids for the experiments.
+         * @param {number} [periodSeconds] Seconds to wait when polling for updates.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        expMetricNames(ids?: Array<number>, periodSeconds?: number, options?: any) {
+            return InternalApiFp(configuration).expMetricNames(ids, periodSeconds, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Get the best searcher validation for an experiment by the given metric.
          * @param {number} experimentId The ID of the experiment.
          * @param {*} [options] Override http request option.
@@ -18759,17 +18769,6 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          */
         metricBatches(experimentId: number, metricName: string, metricType: V1MetricType, periodSeconds?: number, options?: any) {
             return InternalApiFp(configuration).metricBatches(experimentId, metricName, metricType, periodSeconds, options)(fetch, basePath);
-        },
-        /**
-         * 
-         * @summary Get the set of metric names recorded for an experiment.
-         * @param {number} experimentId The id of the experiment.
-         * @param {number} [periodSeconds] Seconds to wait when polling for updates.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        metricNames(experimentId: number, periodSeconds?: number, options?: any) {
-            return InternalApiFp(configuration).metricNames(experimentId, periodSeconds, options)(fetch, basePath);
         },
         /**
          * 
@@ -19087,6 +19086,19 @@ export class InternalApi extends BaseAPI {
     
     /**
      * 
+     * @summary Get the set of metric names recorded for a list of experiments.
+     * @param {Array<number>} [ids] The ids for the experiments.
+     * @param {number} [periodSeconds] Seconds to wait when polling for updates.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public expMetricNames(ids?: Array<number>, periodSeconds?: number, options?: any) {
+        return InternalApiFp(this.configuration).expMetricNames(ids, periodSeconds, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
      * @summary Get the best searcher validation for an experiment by the given metric.
      * @param {number} experimentId The ID of the experiment.
      * @param {*} [options] Override http request option.
@@ -19256,19 +19268,6 @@ export class InternalApi extends BaseAPI {
      */
     public metricBatches(experimentId: number, metricName: string, metricType: V1MetricType, periodSeconds?: number, options?: any) {
         return InternalApiFp(this.configuration).metricBatches(experimentId, metricName, metricType, periodSeconds, options)(this.fetch, this.basePath)
-    }
-    
-    /**
-     * 
-     * @summary Get the set of metric names recorded for an experiment.
-     * @param {number} experimentId The id of the experiment.
-     * @param {number} [periodSeconds] Seconds to wait when polling for updates.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof InternalApi
-     */
-    public metricNames(experimentId: number, periodSeconds?: number, options?: any) {
-        return InternalApiFp(this.configuration).metricNames(experimentId, periodSeconds, options)(this.fetch, this.basePath)
     }
     
     /**
