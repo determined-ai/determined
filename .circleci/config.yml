@@ -651,6 +651,7 @@ commands:
                 command: echo --agent-reattach-enabled true --agent-reconnect-attempts 24 --no-update-terminate-agents --notebook-timeout 1800 >> /tmp/det-deploy-extra-args
       - run:
           name: Deploy AWS cluster
+          no_output_timeout: 20m
           command: |
             echo "-----BEGIN ARGS-----"
             cat /tmp/det-deploy-extra-args

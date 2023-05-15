@@ -26,10 +26,10 @@ const { address, port } = devServer.httpServer.address();
 // start chrome playwright
 const browser = await chromium.launch();
 const page = await browser.newPage();
-await page.goto(`http://${address}:${port}${publicUrl}/design/`);
+await page.goto(`http://${address}:${port}${publicUrl}/design/?exclusive=true`);
 // take screenshots of each section
-const sections = await page.locator('article > article').all();
-if (sections.length === 0) {
+const links = await page.locator('nav ul a').all();
+if (links.length === 0) {
   console.error('WARNING: No sections found');
 }
 
@@ -37,14 +37,16 @@ for (const theme of THEMES) {
   const themePath = path.resolve(screenPath, theme);
   await fs.mkdir(themePath, { recursive: true });
   await page.emulateMedia({ colorScheme: theme });
-  for (const section of sections) {
-    const header = await section.locator('h3').innerText();
+  for (const link of links) {
+    await link.click();
+    const title = await link.innerText();
+    const section = page.locator('nav + article');
     // playwright hangs if height is a non-int
     const height = Math.ceil((await section.boundingBox()).height);
     await page.setViewportSize({ height, width: 1280 });
     await section.screenshot({
       animations: 'disabled',
-      path: path.resolve(themePath, `${header}.png`),
+      path: path.resolve(themePath, `${title}.png`),
     });
   }
 }

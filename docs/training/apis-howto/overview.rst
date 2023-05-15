@@ -15,8 +15,8 @@ guide contains a link to its corresponding API reference.
 
 The Core API is a low-level, flexible API that lets you train models in any deep learning framework.
 With the Core API, you can plug in your existing training code. You'll then use an :doc:`experiment
-configuration </reference/reference-training/experiment-config-reference>` to tell Determined how to
-train the model - e.g., multi-GPU, hyperparameter search, etc.
+configuration </reference/training/experiment-config-reference>` to tell Determined how to train the
+model - e.g., multi-GPU, hyperparameter search, etc.
 
 -  :doc:`/training/apis-howto/api-core-ug`
 
@@ -32,8 +32,8 @@ structured in this way, Determined is able to run the training loop and provide 
 and model management capabilities.
 
 Once you have converted your code, you can use an :doc:`experiment configuration
-</reference/reference-training/experiment-config-reference>` to tell Determined how to train the
-model - e.g., multi-GPU, hyperparameter search, etc.
+</reference/training/experiment-config-reference>` to tell Determined how to train the model - e.g.,
+multi-GPU, hyperparameter search, etc.
 
 -  :doc:`/training/apis-howto/api-pytorch-ug`
 -  :doc:`/training/apis-howto/api-pytorch-lightning-ug`

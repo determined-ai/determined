@@ -4,30 +4,30 @@
    Welcome <self>
 
 .. toctree::
-   :caption: Getting Started
+   :caption: Get Started
    :maxdepth: 2
    :hidden:
 
    How It Works <architecture/index>
    Tutorials <tutorials/index>
-   quickstart-mdldev
+   Quickstart for Model Developers <tutorials/quickstart-mdldev>
    Examples <example-solutions/examples>
    Model Hub Library <model-hub-library/index>
 
 .. toctree::
-   :caption: Set Up Determined
+   :caption: Set Up
    :hidden:
 
-   Set Up Guide <cluster-setup-guide/deploy-cluster/index>
-   Basic Setup <cluster-setup-guide/basic>
-   Security <cluster-setup-guide/security/overview>
-   User Accounts <cluster-setup-guide/users>
-   Workspaces and Projects <cluster-setup-guide/workspaces>
-   Logging and Elasticsearch <cluster-setup-guide/elasticsearch-logging-backend>
-   Cluster Usage History <cluster-setup-guide/historical-cluster-usage-data>
+   Basic Setup <setup-cluster/basic>
+   Setup Guides <setup-cluster/deploy-cluster/index>
+   Security <setup-cluster/security/overview>
+   User Accounts <setup-cluster/users>
+   Workspaces and Projects <setup-cluster/workspaces>
+   Logging and Elasticsearch <setup-cluster/elasticsearch-logging-backend>
+   Cluster Usage History <setup-cluster/historical-cluster-usage-data>
    Monitor Experiment Through Webhooks  <integrations/notification/index>
-   Upgrade <cluster-setup-guide/upgrade>
-   Troubleshooting <cluster-setup-guide/troubleshooting>
+   Upgrade <setup-cluster/upgrade>
+   Troubleshooting <setup-cluster/troubleshooting>
 
 .. toctree::
    :caption: Model Developer Guide
@@ -51,12 +51,12 @@
    Overview <reference/overview>
    Python SDK <reference/python-sdk>
    REST API <reference/rest-api>
-   Training Reference <reference/reference-training/index>
-   Experiment Configuration Reference <reference/reference-training/experiment-config-reference>
-   Model Hub Reference <reference/reference-model-hub/index>
-   Deployment Reference <reference/reference-deploy/index>
-   Job Configuration Reference <reference/reference-interface/job-config-reference>
-   Custom Searcher Reference <reference/reference-searcher/custom-searcher-reference>
+   Training Reference <reference/training/index>
+   Experiment Configuration Reference <reference/training/experiment-config-reference>
+   Model Hub Reference <reference/model-hub/index>
+   Deployment Reference <reference/deploy/index>
+   Job Configuration Reference <reference/interface/job-config-reference>
+   Custom Searcher Reference <reference/searcher/custom-searcher-reference>
    CLI Reference <reference/cli-reference>
 
 .. toctree::
@@ -106,13 +106,13 @@ You can quickly train almost any deep learning model using Determined.
              </a>
          </div>
          <div class="tile-container">
-             <a class="tile" href="cluster-setup-guide/deploy-cluster/index.html">
+             <a class="tile" href="setup-cluster/deploy-cluster/index.html">
                  <h2 class="tile-title">Set Up Determined</h2>
                  <p class="tile-description">Set up an on-premise or cloud-based cluster, including AWS, GCP, and Azure.</p>
              </a>
          </div>
          <div class="tile-container">
-            <a class="tile" href="quickstart-mdldev.html">
+            <a class="tile" href="tutorials/quickstart-mdldev.html">
                 <h2 class="tile-title">Model Developer Quickstart</h2>
                 <p class="tile-description">Learn the basic steps needed to set up a Determined environment and train models.</p>
             </a>

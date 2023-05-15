@@ -29,8 +29,7 @@ Our goal is to integrate the `PyTorch MNIST training example
 
 **Prerequisites**
 
--  :doc:`Installation Requirements
-   </cluster-setup-guide/deploy-cluster/sysadmin-deploy-on-prem/requirements>`
+-  :doc:`Installation Requirements </setup-cluster/deploy-cluster/on-prem/requirements>`
 
 ********************
  Download the Files
@@ -103,4 +102,4 @@ training the PyTorch MNIST example.
 
 In this article, we learned how to run an experiment on a local, single CPU or GPU. To learn how to
 change your configuration settings, including how to run a distributed training job on multiple
-GPUs, visit the :doc:`Quickstart for Model Developers </quickstart-mdldev>`.
+GPUs, visit the :ref:`Quickstart for Model Developers <qs-mdldev>`.

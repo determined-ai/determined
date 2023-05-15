@@ -1,6 +1,7 @@
 import sys
 import webbrowser
 from argparse import Namespace
+from getpass import getpass
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from typing import Any, Callable, List
 from urllib.parse import parse_qs, urlparse
@@ -101,12 +102,12 @@ def sso(parsed_args: Namespace) -> None:
     )
     token = None
     while not token:
-        user_input_url = input("\nlocalhost URL? ")
+        user_input_url = getpass(prompt="\n(hidden) localhost URL? ")
         try:
             token = parse_qs(urlparse(user_input_url).query)["token"][0]
             handle_token(parsed_args.master, token)
         except (KeyError, IndexError):
-            print("Could not extract token from localhost URL. {example_url}")
+            print(f"Could not extract token from localhost URL. {example_url}")
 
 
 def list_providers(parsed_args: Namespace) -> None:

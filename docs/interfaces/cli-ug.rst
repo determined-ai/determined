@@ -84,7 +84,7 @@ If you need to uninstall the Determined CLI, use the following command:
 
 .. code:: bash
 
-   pip uninstall determined-cli
+   pip uninstall determined
 
 This command uninstalls the ``determined`` library, including the Determined CLI, from your system.
 
@@ -95,9 +95,10 @@ To upgrade the Determined CLI to the latest version, use the following command:
 
 .. code:: bash
 
-   pip install --upgrade determined-cli
+   pip install --upgrade determined
 
-This command upgrades the Determined CLI to the latest available version.
+This command upgrades ``determined`` (along with the Determined CLI) to the latest available
+version.
 
 **************
  Getting Help
