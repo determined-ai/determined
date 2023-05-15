@@ -23,10 +23,7 @@ interface ButtonProps {
 }
 
 const Button: React.FC<ButtonProps> = forwardRef(
-  (
-    { size = 'middle', tooltip = '', ...props }: ButtonProps,
-    ref,
-  ) => {
+  ({ size = 'middle', tooltip = '', ...props }: ButtonProps, ref) => {
     return (
       <ConditionalWrapper
         condition={tooltip.length > 0}
