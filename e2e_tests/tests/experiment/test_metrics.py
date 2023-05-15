@@ -67,7 +67,7 @@ def test_streaming_metrics_api() -> None:
 def request_metric_names(experiment_id):  # type: ignore
     response = api.get(
         conf.make_master_url(),
-        "api/v1/experiments/{}/metrics-stream/metric-names".format(experiment_id),
+        "api/v1/experiments/metrics-stream/metric-names?ids={}".format(experiment_id),
         params={"period_seconds": 1},
     )
     results = [message["result"] for message in map(json.loads, response.text.splitlines())]
