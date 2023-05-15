@@ -1,4 +1,4 @@
-SELECT tasks.task_id, (SELECT coalesce(jsonb_agg(allo ORDER BY end_time DESC NULLS FIRST), '[]'::jsonb) FROM (
+SELECT tasks.task_id, tasks.task_type, (SELECT coalesce(jsonb_agg(allo ORDER BY end_time DESC NULLS FIRST), '[]'::jsonb) FROM (
   SELECT allocation_id, task_id, is_ready, start_time, end_time,
   (CASE WHEN state IN ('PENDING', 'ASSIGNED')
     THEN 'STATE_QUEUED'
