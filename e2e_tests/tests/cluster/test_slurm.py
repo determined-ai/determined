@@ -173,7 +173,7 @@ def test_cifar10_pytorch_distributed() -> None:
 # NB: The clusters casablanca-login and znode have one node (8-GPUs) being used in two partitions:
 #   1. defq_GPU_cancellable - partition for low priority and jobs are requeued if necessary
 #   2. defq_GPU_hipri - partition for high priority non-cancellable jobs
-@pytest.mark.e2e_slurm_preemption
+@pytest.mark.e2e_slurm_preemption_quarantine
 def test_slurm_preemption() -> None:
     # Launch the cifar10_pytorch_cancellable experiment requesting 8 GPUs on defq_GPU_cancellable
     # partition

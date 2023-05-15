@@ -52,6 +52,7 @@ _INTEG_MARKERS = {
     "nightly_quarantine",
     "distributed_quarantine",
     "det_deploy_local_quarantine",
+    "e2e_slurm_preemption_quarantine",
 }
 
 
