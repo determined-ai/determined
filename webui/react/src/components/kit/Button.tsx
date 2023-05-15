@@ -11,6 +11,7 @@ interface ButtonProps {
   children?: ReactNode;
   danger?: boolean;
   disabled?: boolean;
+  form?: string;
   htmlType?: 'button' | 'submit' | 'reset';
   icon?: ReactNode;
   loading?: boolean | { delay?: number };

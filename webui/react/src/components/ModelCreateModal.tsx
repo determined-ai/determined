@@ -114,13 +114,13 @@ const ModelCreateModal = ({ onClose, workspaceId }: Props): JSX.Element => {
 
   return (
     <Modal
-      okButtonProps={{
+      size="medium"
+      submit={{
         disabled: isWorkspace && disableWorkspaceModelCreation,
         form: FORM_ID,
-        htmlType: 'submit',
+        handler: onCreateModel,
+        text: 'Create',
       }}
-      size="medium"
-      submit={{ handler: onCreateModel, text: 'Create' }}
       title="Create a new model"
       onClose={onCloseModal}>
       <Form autoComplete="off" form={form} id={FORM_ID} layout="vertical">
