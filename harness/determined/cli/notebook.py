@@ -48,8 +48,7 @@ def start_notebook(args: Namespace) -> None:
 
     cli.wait_ntsc_ready(cli.setup_session(args), api.NTSC_Kind.notebook, nb.id)
 
-    if not nb.serviceAddress:
-        return
+    assert nb.serviceAddress is not None, "missing tensorboard serviceAddress"
     nb_path = request.make_interactive_task_url(
         task_id=nb.id,
         service_address=nb.serviceAddress,

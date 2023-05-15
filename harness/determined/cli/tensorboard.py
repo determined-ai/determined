@@ -43,8 +43,7 @@ def start_tensorboard(args: Namespace) -> None:
     )
     cli.wait_ntsc_ready(cli.setup_session(args), api.NTSC_Kind.tensorboard, tsb.id)
 
-    if not tsb.serviceAddress:
-        return
+    assert tsb.serviceAddress is not None, "missing tensorboard serviceAddress"
     nb_path = request.make_interactive_task_url(
         task_id=tsb.id,
         service_address=tsb.serviceAddress,
