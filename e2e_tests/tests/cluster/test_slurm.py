@@ -137,8 +137,8 @@ def test_docker_login() -> None:
 def test_master_host() -> None:
     # Creates an experiment normally, should error if the back communication channel is broken
     exp.run_failure_test(
-        conf.fixtures_path("metric_maker/const.yaml"),
-        conf.fixtures_path("metric_maker"),
+        conf.fixtures_path("no_op/single-one-short-step.yaml"),
+        conf.fixtures_path("no_op"),
         "Failed to download model definition from master.  This may be due to an address\n"
         + "resolution problem, a certificate problem, a firewall problem, or some other\n"
         + "networking error.",
