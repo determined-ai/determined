@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -917,8 +918,13 @@ func (p *pods) cleanUpPodHandler(ctx *actor.Context, podHandler *actor.Ref) erro
 func (p *pods) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
 	switch apiCtx.Request().Method {
 	case echo.GET:
-		summary := p.summarizeClusterByNodes(ctx)
-		ctx.Respond(apiCtx.JSON(http.StatusOK, summary))
+		summaries := p.summarizeClusterByNodes(ctx)
+		_, nodesToPools := p.getNodeResourcePoolMapping(summaries)
+		for nodeName, summary := range summaries {
+			summary.ResourcePool = "kuber" + strings.Join(nodesToPools[summary.ID], ",")
+			summaries[nodeName] = summary
+		}
+		ctx.Respond(apiCtx.JSON(http.StatusOK, summaries))
 	default:
 		ctx.Respond(echo.ErrMethodNotAllowed)
 	}
@@ -926,10 +932,11 @@ func (p *pods) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
 
 func (p *pods) handleGetAgentsRequest(ctx *actor.Context) {
 	nodeSummaries := p.summarizeClusterByNodes(ctx)
+	_, nodesToPools := p.getNodeResourcePoolMapping(nodeSummaries)
 
 	response := &apiv1.GetAgentsResponse{}
-
 	for _, summary := range nodeSummaries {
+		summary.ResourcePool = strings.Join(nodesToPools[summary.ID], ",")
 		response.Agents = append(response.Agents, summary.ToProto())
 	}
 	ctx.Respond(response)
@@ -955,9 +962,8 @@ func (p *pods) summarize(ctx *actor.Context) (map[string]model.AgentSummary, err
 	return p.summarizeCache.summary, p.summarizeCache.err
 }
 
-func (p *pods) computeSummary(ctx *actor.Context) (map[string]model.AgentSummary, error) {
-	nodeSummaries := p.summarizeClusterByNodes(ctx)
-
+// Get the mapping of many-to-many relationship between nodes and resource pools
+func (p *pods) getNodeResourcePoolMapping(nodeSummaries map[string]model.AgentSummary) (map[string][]*k8sV1.Node, map[string][]string) {
 	poolTaskContainerDefaults := extractTCDs(p.resourcePoolConfigs)
 
 	// Nvidia automatically taints nodes, so we should tolerate that when users don't customize
@@ -968,9 +974,9 @@ func (p *pods) computeSummary(ctx *actor.Context) (map[string]model.AgentSummary
 		Operator: k8sV1.TolerationOpEqual,
 	}}
 	cpuTolerations, gpuTolerations := extractTolerations(p.baseContainerDefaults)
-
-	// Build the many-to-many relationship between nodes and resource pools
 	poolsToNodes := make(map[string][]*k8sV1.Node, len(p.namespaceToPoolName))
+	nodesToPools := make(map[string][]string, len(p.namespaceToPoolName))
+
 	for _, node := range p.currentNodes {
 		_, slotType := extractSlotInfo(nodeSummaries[node.Name])
 
@@ -1004,6 +1010,15 @@ func (p *pods) computeSummary(ctx *actor.Context) (map[string]model.AgentSummary
 			}
 		}
 	}
+
+	return poolsToNodes, nodesToPools
+
+}
+func (p *pods) computeSummary(ctx *actor.Context) (map[string]model.AgentSummary, error) {
+	nodeSummaries := p.summarizeClusterByNodes(ctx)
+
+	// Build the many-to-many relationship between nodes and resource pools
+	poolsToNodes, _ := p.getNodeResourcePoolMapping(nodeSummaries)
 
 	// Build the set of summaries for each resource pool
 	containers := p.containersPerResourcePool()
@@ -1072,7 +1087,6 @@ func (p *pods) summarizeClusterByNodes(ctx *actor.Context) map[string]model.Agen
 	}
 
 	nodeToTasks, taskSlots := p.getNonDetSlots(p.slotType)
-
 	summary := make(map[string]model.AgentSummary, len(p.currentNodes))
 	for _, node := range p.currentNodes {
 		var numSlots int64
@@ -1156,7 +1170,7 @@ func (p *pods) summarizeClusterByNodes(ctx *actor.Context) map[string]model.Agen
 			RegisteredTime: node.ObjectMeta.CreationTimestamp.Time,
 			Slots:          slotsSummary,
 			NumContainers:  len(podByNode[node.Name]) + len(nodeToTasks[node.Name]),
-			ResourcePool:   "Kubernetees",
+			ResourcePool:   "",
 			Addresses:      addrs,
 		}
 	}
