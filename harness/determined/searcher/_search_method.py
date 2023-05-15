@@ -1,3 +1,4 @@
+import abc
 import dataclasses
 import json
 import pathlib
@@ -86,12 +87,12 @@ class ExitedReason(Enum):
         raise RuntimeError(f"Invalid exited reason: {bindings_exited_reason}")
 
 
-class Operation:
+class Operation(metaclass=abc.ABCMeta):
     """
     Abstract base class for all Operations
     """
 
-    @abstractmethod
+    @abc.abstractmethod
     def _to_searcher_operation(self) -> bindings.v1SearcherOperation:
         pass
 

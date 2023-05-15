@@ -1,10 +1,6 @@
-from determined.pytorch.dsat import _dsat_search_method
+from typing import Dict, List, Union
 
-ALL_SEARCH_METHOD_CLASSES = {
-    "random": _dsat_search_method.RandomDSATSearchMethod,
-    "binary": _dsat_search_method.BinarySearchDSATSearchMethod,
-    "_test": _dsat_search_method._TestDSATSearchMethod,
-}
+ALL_SEARCH_METHOD_NAMES = ["binary", "_test", "random"]
 
 MODEL_INFO_PROFILING_PATH = "model_info.json"
 AUTOTUNING_RESULTS_PATH = "autotuning_metric.json"
@@ -34,7 +30,7 @@ MODEL_INFO_PROFILE_DS_CONFIG = {
 
 
 # Using same defaults as DS. Written as a diff between successive stages for brevity.
-DEFAULT_ZERO_SEARCH_SPACE = {
+DEFAULT_ZERO_SEARCH_SPACE: Dict[int, Dict[str, List[Union[bool, float]]]] = {
     0: {},
     1: {"reduce_bucket_size": [5e7, 5e8, 1e9], "allgather_bucket_size": [5e7, 5e8, 1e9]},
     2: {

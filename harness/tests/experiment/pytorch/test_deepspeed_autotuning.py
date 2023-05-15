@@ -13,7 +13,7 @@ from determined import searcher
 from determined.common.api import bindings
 from determined.integrations.huggingface import get_hf_args_with_overwrites
 from determined.pytorch.dsat import DSATTrial, DSATTrialTracker, _defaults, _utils
-from determined.pytorch.dsat._run_dsat import get_custom_dsat_exp_conf_from_args
+from determined.pytorch.dsat._run_dsat import get_custom_dsat_exp_conf_from_args, get_search_method
 from determined.searcher import _search_method
 from tests.custom_search_mocks import MockMasterSearchRunner
 
@@ -29,7 +29,7 @@ DEFAULT_ARGS_DICT = {
     search_method_name: _utils.get_full_parser().parse_args(
         [search_method_name, str(CONFIG_PATH), str(MODEL_DIR)]
     )
-    for search_method_name in _defaults.ALL_SEARCH_METHOD_CLASSES
+    for search_method_name in _defaults.ALL_SEARCH_METHOD_NAMES
 }
 for default_args in DEFAULT_ARGS_DICT.values():
     default_args.experiment_id = 0
@@ -94,12 +94,15 @@ DEFAULT_HF_ARGS_WITHOUT_DEEPSPEED = """"
 DEFAULT_HF_ARGS_WITHOUT_DEEPSPEED = DEFAULT_HF_ARGS_WITHOUT_DEEPSPEED.split()
 
 
-def _run_searcher(search_method_name: str, all_metrics):
+def _run_searcher(
+    search_method_name: str, all_metrics: List[Dict[str, Any]]
+) -> MockMasterSearchRunner:
     """
     Run a mocked version of the Determined master with a deterministic series of
     returned metrics for a given Deepspeed Autotune Custom Search Method
     """
-    search_method = _defaults.ALL_SEARCH_METHOD_CLASSES[search_method_name]
+    # search_method = _defaults.ALL_SEARCH_METHOD_CLASSES[search_method_name]
+    search_method = get_search_method(search_method_name)
     default_args = DEFAULT_ARGS_DICT[search_method_name]
     default_exp_config = DEFAULT_CUSTOM_DSAT_EXP_CONFIG_DICT[search_method_name]
     with tempfile.TemporaryDirectory() as searcher_dir:
@@ -117,7 +120,7 @@ def test_deepspeed_autotune_happy_path() -> None:
     Simulate the Deepspeed Autotune Search Methods end to end and make sure
     nothing falls over
     """
-    for search_method_name in _defaults.ALL_SEARCH_METHOD_CLASSES:
+    for search_method_name in _defaults.ALL_SEARCH_METHOD_NAMES:
         # All of our search methods currently run all of the specified `max-trials` in the
         # happy path
         exp_num_trials = _defaults.AUTOTUNING_ARG_DEFAULTS["max-trials"]
@@ -142,7 +145,7 @@ def test_continuous_failures() -> None:
     Make sure that DSAT Search Methods can handle continuous failures. The experiment should be
     marked as failed.
     """
-    for search_method_name in _defaults.ALL_SEARCH_METHOD_CLASSES:
+    for search_method_name in _defaults.ALL_SEARCH_METHOD_NAMES:
         exp_num_trials = _defaults.AUTOTUNING_ARG_DEFAULTS["max-trials"]
         model_info_profile_trial_metrics = [MODEL_INFO_PROFILE_METRIC_FIXTURE]
         failed_trial_metrics = [{ERROR_METRIC_NAME: True} for _ in range(exp_num_trials - 1)]
@@ -160,7 +163,7 @@ def test_continuous_failures() -> None:
 @pytest.mark.timeout(5)
 def test_one_off_failure() -> None:
     """Make sure that DSAT Search Methods can properly handle a single failure"""
-    for search_method_name in _defaults.ALL_SEARCH_METHOD_CLASSES:
+    for search_method_name in _defaults.ALL_SEARCH_METHOD_NAMES:
         exp_num_trials = _defaults.AUTOTUNING_ARG_DEFAULTS["max-trials"]
         model_info_profile_trial_metrics = [MODEL_INFO_PROFILE_METRIC_FIXTURE]
         one_failed_trial_metrics = [{ERROR_METRIC_NAME: True}]
@@ -183,7 +186,7 @@ def test_one_off_failure() -> None:
 @pytest.mark.timeout(5)
 def test_model_profile_info_run_failure() -> None:
     """Test DSAT with a failed model profile info run."""
-    for search_method_name in _defaults.ALL_SEARCH_METHOD_CLASSES:
+    for search_method_name in _defaults.ALL_SEARCH_METHOD_NAMES:
         failed_model_profile_info_trial_metrics = [
             {ERROR_METRIC_NAME: True},
         ]
@@ -449,8 +452,10 @@ def search_state_and_method_builder(args):
     profile info run and a populated queue.
     """
     exp_config = get_custom_dsat_exp_conf_from_args(args)
-    search_method = _defaults.ALL_SEARCH_METHOD_CLASSES[args.search_method](
-        args=args, exp_config=exp_config
+    search_method = get_search_method(args.search_method)(
+        # search_method = _defaults.ALL_SEARCH_METHOD_CLASSES[args.search_method](
+        args=args,
+        exp_config=exp_config,
     )
     searcher_state = _search_method.SearcherState()
     search_method.initial_operations(searcher_state)
@@ -721,7 +726,7 @@ class TestRandomDSATSearchMethodShouldStopLineage:
     @pytest.mark.timeout(5)
     def test_stop_when_other_configs_run_larger_batches(
         self, default_random_state_and_search_method
-    ):
+    ) -> None:
         """
         Verify that we stop a lineage which cannot possibly run batches as large as other same-stage
         configs can run.
@@ -1047,7 +1052,7 @@ class MockMaster:
         if isinstance(op, searcher.ValidateAfter):
             metric = self.all_metrics[self.metric_index]
             self.metric_index += 1
-            if ERROR_METRIC_NAME in metric:
+            if isinstance(metric, dict) and ERROR_METRIC_NAME in metric:
                 trial_exited_early = bindings.v1TrialExitedEarly(
                     requestId=str(op.request_id),
                     exitedReason=bindings.v1TrialExitedEarlyExitedReason.UNSPECIFIED,
