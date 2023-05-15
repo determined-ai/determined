@@ -165,6 +165,7 @@ const MultiTrialDetailsHyperparameters: React.FC<Props> = ({
         selectedHParams={settings.filters.hParams}
         selectedMetric={settings.filters.metric}
         selectedScale={settings.filters.scale}
+        trial={trial}
       />
       <TrialDetailsHyperparameters pageRef={pageRef} trial={trial} />
     </Space>

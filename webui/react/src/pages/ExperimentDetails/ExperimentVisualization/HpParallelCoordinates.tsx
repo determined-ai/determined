@@ -27,6 +27,7 @@ import {
   MetricType,
   metricTypeParamMap,
   Scale,
+  TrialDetails,
 } from 'types';
 import { defaultNumericRange, getColorScale, getNumericRange, updateRange } from 'utils/chart';
 import handleError from 'utils/error';
@@ -47,6 +48,7 @@ interface Props {
   selectedHParams: string[];
   selectedMetric: Metric | null;
   selectedScale: Scale;
+  trial?: TrialDetails;
 }
 
 interface HpTrialData {
@@ -65,6 +67,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
   selectedHParams,
   selectedMetric,
   selectedScale,
+  trial,
 }: Props) => {
   const { ui } = useUI();
   const tooltipRef = useRef<HTMLDivElement>(null);
@@ -100,7 +103,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
   }, [experiment.config.searcher, selectedMetric]);
 
   const resetFilteredTrials = useCallback(() => {
-    // Skip if there aren't any chart data.
+    // Skip if there isn't any chart data.
     if (!chartData) return;
 
     // Initialize a new trial id filter map.
@@ -110,7 +113,6 @@ const HpParallelCoordinates: React.FC<Props> = ({
     }, {} as Record<number, boolean>);
 
     // Figure out which trials are filtered out based on user filters.
-
     Object.entries(hermesCreatedFilters).forEach(([key, list]) => {
       if (!chartData.data[key] || list.length === 0) return;
 
@@ -158,12 +160,30 @@ const HpParallelCoordinates: React.FC<Props> = ({
         data: {
           targetColorScale: colorScale.map((scale) => scale.color),
           targetDimensionKey: selectedMetric ? metricToStr(selectedMetric) : '',
+          series: trial?.id
+            ? new Array(chartData?.trialIds.length).fill(undefined).map((_, index) => {
+                return {
+                  strokeStyle:
+                    chartData?.trialIds.indexOf(trial.id) === index
+                      ? ui.theme.ixOnActive
+                      : ui.theme.ixOnInactive,
+                };
+              })
+            : undefined,
         },
         dimension: { label: { angle: Math.PI / 4, truncate: 24 } },
         padding: [4, 120, 4, 16],
       },
     }),
-    [colorScale, setHermesCreatedFilters, hermesCreatedFilters, selectedMetric],
+    [
+      hermesCreatedFilters,
+      colorScale,
+      selectedMetric,
+      trial?.id,
+      chartData?.trialIds,
+      ui.theme.ixOnActive,
+      ui.theme.ixOnInactive,
+    ],
   );
 
   const dimensions = useMemo(() => {
@@ -379,28 +399,30 @@ const HpParallelCoordinates: React.FC<Props> = ({
               dimensions={dimensions}
             />
           </div>
-          <div>
-            <TableBatch
-              actions={[
-                { label: Action.OpenTensorBoard, value: Action.OpenTensorBoard },
-                { label: Action.CompareTrials, value: Action.CompareTrials },
-              ]}
-              selectedRowCount={selectedRowKeys.length}
-              onAction={(action) => submitBatchAction(action as Action)}
-              onClear={clearSelected}
-            />
-            <HpTrialTable
-              colorScale={colorScale}
-              experimentId={experiment.id}
-              filteredTrialIdMap={filteredTrialIdMap}
-              handleTableRowSelect={handleTableRowSelect}
-              hyperparameters={hyperparameters}
-              metric={selectedMetric}
-              selectedRowKeys={selectedRowKeys}
-              selection={true}
-              trialHps={trialHps}
-            />
-          </div>
+          {!trial && (
+            <div>
+              <TableBatch
+                actions={[
+                  { label: Action.OpenTensorBoard, value: Action.OpenTensorBoard },
+                  { label: Action.CompareTrials, value: Action.CompareTrials },
+                ]}
+                selectedRowCount={selectedRowKeys.length}
+                onAction={(action) => submitBatchAction(action as Action)}
+                onClear={clearSelected}
+              />
+              <HpTrialTable
+                colorScale={colorScale}
+                experimentId={experiment.id}
+                filteredTrialIdMap={filteredTrialIdMap}
+                handleTableRowSelect={handleTableRowSelect}
+                hyperparameters={hyperparameters}
+                metric={selectedMetric}
+                selectedRowKeys={selectedRowKeys}
+                selection={true}
+                trialHps={trialHps}
+              />
+            </div>
+          )}
           <div className={css.tooltip} ref={tooltipRef}>
             <div className={css.box}>
               <div className={css.row}>
