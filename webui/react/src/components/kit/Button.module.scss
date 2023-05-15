@@ -1,3 +1,25 @@
-.base:global(.ant-btn-dangerous):global(.ant-btn-primary) {
-  background-color: var(--theme-status-critical);
+.base:global(.ant-btn-dangerous) {
+  &:global(.ant-btn-default) {
+    border-color: var(--theme-status-critical);
+    color: var(--theme-status-critical);
+  }
+  &:global(.ant-btn-primary) {
+    background-color: var(--theme-status-critical);
+  }
+  &:global(.ant-btn-text) {
+    color: var(--theme-status-critical);
+  }
+  &:global(.ant-btn-dashed) {
+    border-color: var(--theme-status-critical);
+    color: var(--theme-status-critical);
+  }
+}
+.base:global(.ant-btn[disabled].ant-btn-text:disabled) {
+  background-color: transparent;
+  border: none;
+
+  &:hover {
+    background-color: transparent;
+    border: none;
+  }
 }
