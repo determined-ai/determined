@@ -3072,20 +3072,20 @@ func (x *CreateExperimentResponse) GetWarnings() []LaunchWarning {
 	return nil
 }
 
-// Request for the set of metrics recorded by an experiment.
-type MetricNamesRequest struct {
+// Request for the set of metrics recorded by multiple experiments.
+type ExpMetricNamesRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// The id of the experiment.
-	ExperimentId int32 `protobuf:"varint,1,opt,name=experiment_id,json=experimentId,proto3" json:"experiment_id,omitempty"`
+	// The ids for the experiments.
+	Ids []int32 `protobuf:"varint,1,rep,packed,name=ids,proto3" json:"ids,omitempty"`
 	// Seconds to wait when polling for updates.
 	PeriodSeconds int32 `protobuf:"varint,2,opt,name=period_seconds,json=periodSeconds,proto3" json:"period_seconds,omitempty"`
 }
 
-func (x *MetricNamesRequest) Reset() {
-	*x = MetricNamesRequest{}
+func (x *ExpMetricNamesRequest) Reset() {
+	*x = ExpMetricNamesRequest{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_determined_api_v1_experiment_proto_msgTypes[49]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -3093,13 +3093,13 @@ func (x *MetricNamesRequest) Reset() {
 	}
 }
 
-func (x *MetricNamesRequest) String() string {
+func (x *ExpMetricNamesRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*MetricNamesRequest) ProtoMessage() {}
+func (*ExpMetricNamesRequest) ProtoMessage() {}
 
-func (x *MetricNamesRequest) ProtoReflect() protoreflect.Message {
+func (x *ExpMetricNamesRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_determined_api_v1_experiment_proto_msgTypes[49]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -3111,41 +3111,41 @@ func (x *MetricNamesRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use MetricNamesRequest.ProtoReflect.Descriptor instead.
-func (*MetricNamesRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use ExpMetricNamesRequest.ProtoReflect.Descriptor instead.
+func (*ExpMetricNamesRequest) Descriptor() ([]byte, []int) {
 	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{49}
 }
 
-func (x *MetricNamesRequest) GetExperimentId() int32 {
+func (x *ExpMetricNamesRequest) GetIds() []int32 {
 	if x != nil {
-		return x.ExperimentId
+		return x.Ids
 	}
-	return 0
+	return nil
 }
 
-func (x *MetricNamesRequest) GetPeriodSeconds() int32 {
+func (x *ExpMetricNamesRequest) GetPeriodSeconds() int32 {
 	if x != nil {
 		return x.PeriodSeconds
 	}
 	return 0
 }
 
-// Response to MetricNamesRequest.
-type MetricNamesResponse struct {
+// Response to ExpMetricNamesRequest.
+type ExpMetricNamesResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// The name of the searcher metric.
-	SearcherMetric string `protobuf:"bytes,1,opt,name=searcher_metric,json=searcherMetric,proto3" json:"searcher_metric,omitempty"`
+	// The names of the searcher metrics.
+	SearcherMetrics []string `protobuf:"bytes,1,rep,name=searcher_metrics,json=searcherMetrics,proto3" json:"searcher_metrics,omitempty"`
 	// List of training metric names.
 	TrainingMetrics []string `protobuf:"bytes,2,rep,name=training_metrics,json=trainingMetrics,proto3" json:"training_metrics,omitempty"`
 	// List of validation metric names.
 	ValidationMetrics []string `protobuf:"bytes,3,rep,name=validation_metrics,json=validationMetrics,proto3" json:"validation_metrics,omitempty"`
 }
 
-func (x *MetricNamesResponse) Reset() {
-	*x = MetricNamesResponse{}
+func (x *ExpMetricNamesResponse) Reset() {
+	*x = ExpMetricNamesResponse{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_determined_api_v1_experiment_proto_msgTypes[50]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -3153,13 +3153,13 @@ func (x *MetricNamesResponse) Reset() {
 	}
 }
 
-func (x *MetricNamesResponse) String() string {
+func (x *ExpMetricNamesResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*MetricNamesResponse) ProtoMessage() {}
+func (*ExpMetricNamesResponse) ProtoMessage() {}
 
-func (x *MetricNamesResponse) ProtoReflect() protoreflect.Message {
+func (x *ExpMetricNamesResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_determined_api_v1_experiment_proto_msgTypes[50]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -3171,26 +3171,26 @@ func (x *MetricNamesResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use MetricNamesResponse.ProtoReflect.Descriptor instead.
-func (*MetricNamesResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use ExpMetricNamesResponse.ProtoReflect.Descriptor instead.
+func (*ExpMetricNamesResponse) Descriptor() ([]byte, []int) {
 	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{50}
 }
 
-func (x *MetricNamesResponse) GetSearcherMetric() string {
+func (x *ExpMetricNamesResponse) GetSearcherMetrics() []string {
 	if x != nil {
-		return x.SearcherMetric
+		return x.SearcherMetrics
 	}
-	return ""
+	return nil
 }
 
-func (x *MetricNamesResponse) GetTrainingMetrics() []string {
+func (x *ExpMetricNamesResponse) GetTrainingMetrics() []string {
 	if x != nil {
 		return x.TrainingMetrics
 	}
 	return nil
 }
 
-func (x *MetricNamesResponse) GetValidationMetrics() []string {
+func (x *ExpMetricNamesResponse) GetValidationMetrics() []string {
 	if x != nil {
 		return x.ValidationMetrics
 	}
@@ -5172,19 +5172,17 @@ var file_determined_api_v1_experiment_proto_rawDesc = []byte{
 	0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x4c, 0x61, 0x75, 0x6e, 0x63, 0x68, 0x57, 0x61,
 	0x72, 0x6e, 0x69, 0x6e, 0x67, 0x52, 0x08, 0x77, 0x61, 0x72, 0x6e, 0x69, 0x6e, 0x67, 0x73, 0x3a,
 	0x1b, 0x92, 0x41, 0x18, 0x0a, 0x16, 0xd2, 0x01, 0x0a, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d,
-	0x65, 0x6e, 0x74, 0xd2, 0x01, 0x06, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x22, 0x75, 0x0a, 0x12,
-	0x4d, 0x65, 0x74, 0x72, 0x69, 0x63, 0x4e, 0x61, 0x6d, 0x65, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65,
-	0x73, 0x74, 0x12, 0x38, 0x0a, 0x0d, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74,
-	0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x42, 0x13, 0x92, 0x41, 0x10, 0xd2, 0x01,
-	0x0d, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x5f, 0x69, 0x64, 0x52, 0x0c,
-	0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x49, 0x64, 0x12, 0x25, 0x0a, 0x0e,
-	0x70, 0x65, 0x72, 0x69, 0x6f, 0x64, 0x5f, 0x73, 0x65, 0x63, 0x6f, 0x6e, 0x64, 0x73, 0x18, 0x02,
-	0x20, 0x01, 0x28, 0x05, 0x52, 0x0d, 0x70, 0x65, 0x72, 0x69, 0x6f, 0x64, 0x53, 0x65, 0x63, 0x6f,
-	0x6e, 0x64, 0x73, 0x22, 0x98, 0x01, 0x0a, 0x13, 0x4d, 0x65, 0x74, 0x72, 0x69, 0x63, 0x4e, 0x61,
-	0x6d, 0x65, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x27, 0x0a, 0x0f, 0x73,
-	0x65, 0x61, 0x72, 0x63, 0x68, 0x65, 0x72, 0x5f, 0x6d, 0x65, 0x74, 0x72, 0x69, 0x63, 0x18, 0x01,
-	0x20, 0x01, 0x28, 0x09, 0x52, 0x0e, 0x73, 0x65, 0x61, 0x72, 0x63, 0x68, 0x65, 0x72, 0x4d, 0x65,
-	0x74, 0x72, 0x69, 0x63, 0x12, 0x29, 0x0a, 0x10, 0x74, 0x72, 0x61, 0x69, 0x6e, 0x69, 0x6e, 0x67,
+	0x65, 0x6e, 0x74, 0xd2, 0x01, 0x06, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x22, 0x50, 0x0a, 0x15,
+	0x45, 0x78, 0x70, 0x4d, 0x65, 0x74, 0x72, 0x69, 0x63, 0x4e, 0x61, 0x6d, 0x65, 0x73, 0x52, 0x65,
+	0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x10, 0x0a, 0x03, 0x69, 0x64, 0x73, 0x18, 0x01, 0x20, 0x03,
+	0x28, 0x05, 0x52, 0x03, 0x69, 0x64, 0x73, 0x12, 0x25, 0x0a, 0x0e, 0x70, 0x65, 0x72, 0x69, 0x6f,
+	0x64, 0x5f, 0x73, 0x65, 0x63, 0x6f, 0x6e, 0x64, 0x73, 0x18, 0x02, 0x20, 0x01, 0x28, 0x05, 0x52,
+	0x0d, 0x70, 0x65, 0x72, 0x69, 0x6f, 0x64, 0x53, 0x65, 0x63, 0x6f, 0x6e, 0x64, 0x73, 0x22, 0x9d,
+	0x01, 0x0a, 0x16, 0x45, 0x78, 0x70, 0x4d, 0x65, 0x74, 0x72, 0x69, 0x63, 0x4e, 0x61, 0x6d, 0x65,
+	0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x29, 0x0a, 0x10, 0x73, 0x65, 0x61,
+	0x72, 0x63, 0x68, 0x65, 0x72, 0x5f, 0x6d, 0x65, 0x74, 0x72, 0x69, 0x63, 0x73, 0x18, 0x01, 0x20,
+	0x03, 0x28, 0x09, 0x52, 0x0f, 0x73, 0x65, 0x61, 0x72, 0x63, 0x68, 0x65, 0x72, 0x4d, 0x65, 0x74,
+	0x72, 0x69, 0x63, 0x73, 0x12, 0x29, 0x0a, 0x10, 0x74, 0x72, 0x61, 0x69, 0x6e, 0x69, 0x6e, 0x67,
 	0x5f, 0x6d, 0x65, 0x74, 0x72, 0x69, 0x63, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28, 0x09, 0x52, 0x0f,
 	0x74, 0x72, 0x61, 0x69, 0x6e, 0x69, 0x6e, 0x67, 0x4d, 0x65, 0x74, 0x72, 0x69, 0x63, 0x73, 0x12,
 	0x2d, 0x0a, 0x12, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x5f, 0x6d, 0x65,
@@ -5506,8 +5504,8 @@ var file_determined_api_v1_experiment_proto_goTypes = []interface{}{
 	(*GetExperimentValidationHistoryResponse)(nil),  // 49: determined.api.v1.GetExperimentValidationHistoryResponse
 	(*CreateExperimentRequest)(nil),                 // 50: determined.api.v1.CreateExperimentRequest
 	(*CreateExperimentResponse)(nil),                // 51: determined.api.v1.CreateExperimentResponse
-	(*MetricNamesRequest)(nil),                      // 52: determined.api.v1.MetricNamesRequest
-	(*MetricNamesResponse)(nil),                     // 53: determined.api.v1.MetricNamesResponse
+	(*ExpMetricNamesRequest)(nil),                   // 52: determined.api.v1.ExpMetricNamesRequest
+	(*ExpMetricNamesResponse)(nil),                  // 53: determined.api.v1.ExpMetricNamesResponse
 	(*MetricBatchesRequest)(nil),                    // 54: determined.api.v1.MetricBatchesRequest
 	(*MetricBatchesResponse)(nil),                   // 55: determined.api.v1.MetricBatchesResponse
 	(*TrialsSnapshotRequest)(nil),                   // 56: determined.api.v1.TrialsSnapshotRequest
@@ -6219,7 +6217,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[49].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*MetricNamesRequest); i {
+			switch v := v.(*ExpMetricNamesRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6231,7 +6229,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[50].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*MetricNamesResponse); i {
+			switch v := v.(*ExpMetricNamesResponse); i {
 			case 0:
 				return &v.state
 			case 1:

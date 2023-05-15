@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
-import { V1MetricNamesResponse } from 'services/api-ts-sdk';
+import { V1ExpMetricNamesResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
 import { alphaNumericSorter } from 'shared/utils/sort';
@@ -19,11 +19,11 @@ const useMetricNames = (experimentId?: number, errorHandler?: (e: unknown) => vo
     // We do not want to plot any x-axis metric values as y-axis data
     const xAxisMetrics = Object.values(XAxisDomain).map((v) => v.toLowerCase());
 
-    readStream<V1MetricNamesResponse>(
-      detApi.StreamingInternal.metricNames(experimentId, undefined, {
+    readStream<V1ExpMetricNamesResponse>(
+      detApi.StreamingInternal.expMetricNames([experimentId], undefined, {
         signal: canceler.signal,
       }),
-      (event: V1MetricNamesResponse) => {
+      (event: V1ExpMetricNamesResponse) => {
         if (!event) return;
         /*
          * The metrics endpoint can intermittently send empty lists,

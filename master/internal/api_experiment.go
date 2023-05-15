@@ -1405,40 +1405,54 @@ var (
 	recheckAuthPeriod          = 5 * time.Minute
 )
 
-func (a *apiServer) MetricNames(req *apiv1.MetricNamesRequest,
-	resp apiv1.Determined_MetricNamesServer,
+func (a *apiServer) ExpMetricNames(req *apiv1.ExpMetricNamesRequest,
+	resp apiv1.Determined_ExpMetricNamesServer,
 ) error {
-	experimentID := int(req.ExperimentId)
+	if len(req.Ids) == 0 {
+		return status.Error(codes.InvalidArgument, "must specify at least one experiment id")
+	}
+
 	period := time.Duration(req.PeriodSeconds) * time.Second
+
 	if period == 0 {
 		period = defaultMetricsStreamPeriod
 	}
 
+	seenSearcher := make(map[string]bool)
 	seenTrain := make(map[string]bool)
 	seenValid := make(map[string]bool)
 
 	var timeSinceLastAuth time.Time
-	var searcherMetric string
 	for {
+		var response apiv1.ExpMetricNamesResponse
 		if time.Now().Sub(timeSinceLastAuth) >= recheckAuthPeriod {
-			exp, _, err := a.getExperimentAndCheckCanDoActions(resp.Context(), experimentID,
-				exputil.AuthZProvider.Get().CanGetExperimentArtifacts)
-			if err != nil {
-				return err
-			}
+			for _, expID := range req.Ids {
+				exp, _, err := a.getExperimentAndCheckCanDoActions(resp.Context(), int(expID),
+					exputil.AuthZProvider.Get().CanGetExperimentArtifacts)
+				if err != nil {
+					return err
+				}
 
-			if timeSinceLastAuth == (time.Time{}) { // Initialzation.
-				searcherMetric = exp.Config.Searcher.Metric
+				if timeSinceLastAuth == (time.Time{}) { // Initialzation.
+					searcherMetric := exp.Config.Searcher.Metric
+
+					if seen := seenSearcher[searcherMetric]; !seen {
+						response.SearcherMetrics = append(response.SearcherMetrics, searcherMetric)
+						seenSearcher[searcherMetric] = true
+					}
+				}
 			}
 			timeSinceLastAuth = time.Now()
 		}
+		expIDs := make([]int, len(req.Ids))
+		for i, ID := range req.Ids {
+			expIDs[i] = int(ID)
+		}
 
-		var response apiv1.MetricNamesResponse
-		response.SearcherMetric = searcherMetric
-		newTrain, newValid, err := db.MetricNames(resp.Context(), experimentID)
+		newTrain, newValid, err := db.MetricNames(resp.Context(), expIDs)
 		if err != nil {
 			return errors.Wrapf(err,
-				"error fetching metric names for experiment: %d", experimentID)
+				"error fetching metric names for experiment: %d", req.Ids)
 		}
 
 		for _, name := range newTrain {
@@ -1461,11 +1475,12 @@ func (a *apiServer) MetricNames(req *apiv1.MetricNamesRequest,
 			return err
 		}
 
-		state, _, err := a.m.db.GetExperimentStatus(experimentID)
+		numNonTermialExperiments, err := db.GetNonTerminalExperimentCount(resp.Context(), req.Ids)
 		if err != nil {
-			return errors.Wrap(err, "error looking up experiment state")
+			return errors.Wrap(err, "error looking up state of experiments")
 		}
-		if model.TerminalStates[state] {
+
+		if numNonTermialExperiments == 0 {
 			return nil
 		}
 
