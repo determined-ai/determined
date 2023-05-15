@@ -59,7 +59,7 @@ const Page: React.FC<Props> = (props: Props) => {
   const classes = [css.base];
 
   const showHeader = !props.headerComponent && (!!props.breadcrumb || !!props.title);
-  const showPageBreadcrumb = !props.hideBreadcrumb && props.title;
+  const showPageBreadcrumb = !props.hideBreadcrumb && props.title && !props.headerComponent;
 
   if (props.bodyNoPadding) classes.push(css.bodyNoPadding);
   if (props.stickyHeader) classes.push(css.stickyHeader);
