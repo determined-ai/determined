@@ -73,7 +73,7 @@ def request_metric_names(experiment_id):  # type: ignore
     results = [message["result"] for message in map(json.loads, response.text.splitlines())]
 
     # First let's verify an empty response was sent back before any real work was done
-    if results[0]["searcherMetric"] != "validation_loss":
+    if results[0]["searcherMetrics"][0] != "validation_loss":
         return ("unexpected searcher metric in first response", results)
     if results[0]["trainingMetrics"] != []:
         return ("unexpected training metric in first response", results)
