@@ -359,6 +359,7 @@ func (s *SingularityClient) RunContainer(
 		fmt.Sprintf("SINGULARITYENV_CUDA_VISIBLE_DEVICES=%s", cudaVisibleDevicesVar),
 		fmt.Sprintf("APPTAINERENV_CUDA_VISIBLE_DEVICES=%s", cudaVisibleDevicesVar),
 	)
+	addEnvironmentValueIfSet([]string{"http_proxy", "https_proxy", "no_proxy"}, cmd)
 
 	// HACK(singularity): without this, --nv doesn't work right. If the singularity run command
 	// cannot find nvidia-smi, the --nv fails to make it available inside the container, e.g.,
@@ -401,6 +402,15 @@ func (s *SingularityClient) RunContainer(
 		},
 		ContainerWaiter: s.waitOnContainer(cproto.ID(id), cont, p),
 	}, nil
+}
+
+func addEnvironmentValueIfSet(variables []string, cmd *exec.Cmd) {
+	for _, variable := range variables {
+		setting := os.Getenv(variable)
+		if setting != "" {
+			cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", variable, setting))
+		}
+	}
 }
 
 // ReattachContainer implements container.ContainerRuntime.

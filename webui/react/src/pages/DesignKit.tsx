@@ -2,13 +2,14 @@ import { PoweroffOutlined } from '@ant-design/icons';
 import { Card as AntDCard, Space } from 'antd';
 import { SelectValue } from 'antd/es/select';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 import Accordion from 'components/kit/Accordion';
 import Breadcrumb from 'components/kit/Breadcrumb';
 import Button from 'components/kit/Button';
 import Card from 'components/kit/Card';
 import Checkbox from 'components/kit/Checkbox';
+import ClipboardButton from 'components/kit/ClipboardButton';
 import { Column, Columns } from 'components/kit/Columns';
 import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 import Empty from 'components/kit/Empty';
@@ -62,6 +63,7 @@ const ComponentTitles = {
   Cards: 'Cards',
   Charts: 'Charts',
   Checkboxes: 'Checkboxes',
+  ClipboardButton: 'ClipboardButton',
   Columns: 'Columns',
   Dropdown: 'Dropdown',
   Empty: 'Empty',
@@ -422,11 +424,7 @@ const SelectSection: React.FC = () => {
           width={999999}
         />
         <span>
-          Also see{' '}
-          <Link reloadDocument to={`#${ComponentTitles.Form}`}>
-            Form
-          </Link>{' '}
-          for form-specific variations
+          Also see <a href={`#${ComponentTitles.Form}`}>Form</a> for form-specific variations
         </span>
       </AntDCard>
     </ComponentSection>
@@ -695,6 +693,37 @@ const CheckboxesSection: React.FC = () => {
   );
 };
 
+const ClipboardButtonSection: React.FC = () => {
+  const defaultContent = 'This is the content to copy to clipboard.';
+  const [content, setContent] = useState(defaultContent);
+  const getContent = useCallback(() => content, [content]);
+  return (
+    <ComponentSection id="ClipboardButton" title="ClipboardButton">
+      <AntDCard>
+        <p>
+          ClipboardButton (<code>{'<ClipboardButton>'}</code> provides a special button for the
+          purpose of copying some text into the browser clipboard.
+          <br />
+          <b>Note:</b> This capability is only available on `https` and `localhost` hosts. `http`
+          protocol is purposefully blocked for&nbsp;
+          <a href="https://developer.mozilla.org/en-US/docs/Web/API/Clipboard">security reasons</a>.
+        </p>
+      </AntDCard>
+      <AntDCard title="Usage">
+        <Label>Copy Content</Label>
+        <Input value={content} onChange={(s) => setContent(String(s.target.value))} />
+        <hr />
+        <strong>Default Clipboard Button</strong>
+        <ClipboardButton getContent={getContent} />
+        <strong>Disabled Clipboard Button</strong>
+        <ClipboardButton disabled getContent={getContent} />
+        <strong>Custom Copied Message Clipboard Button</strong>
+        <ClipboardButton copiedMessage="Yay it's copied!" getContent={getContent} />
+      </AntDCard>
+    </ComponentSection>
+  );
+};
+
 const DropdownSection: React.FC = () => {
   const menu: MenuItem[] = [
     { key: 'start', label: 'Start' },
@@ -837,11 +866,7 @@ const InputNumberSection: React.FC = () => {
         <InputNumber disabled />
         <hr />
         <span>
-          Also see{' '}
-          <Link reloadDocument to={`#${ComponentTitles.Form}`}>
-            Form
-          </Link>{' '}
-          for form-specific variations
+          Also see <a href={`#${ComponentTitles.Form}`}>Form</a> for form-specific variations
         </span>
       </AntDCard>
     </ComponentSection>
@@ -897,11 +922,7 @@ const InputSection: React.FC = () => {
         <Input.Password disabled />
         <hr />
         <span>
-          Also see{' '}
-          <Link reloadDocument to={`#${ComponentTitles.Form}`}>
-            Form
-          </Link>{' '}
-          for form-specific variations
+          Also see <a href={`#${ComponentTitles.Form}`}>Form</a> for form-specific variations
         </span>
       </AntDCard>
     </ComponentSection>
@@ -1498,11 +1519,7 @@ const FormSection: React.FC = () => {
       <AntDCard title="Usage">
         <Form>
           <strong>
-            Form-specific{' '}
-            <Link reloadDocument to={`#${ComponentTitles.Input}`}>
-              Input
-            </Link>{' '}
-            variations
+            Form-specific <a href={ComponentTitles.Input}>Input</a> variations
           </strong>
           <br />
           <Form.Item label="Required input" name="required_input" required>
@@ -1519,11 +1536,7 @@ const FormSection: React.FC = () => {
           <hr />
           <br />
           <strong>
-            Form-specific{' '}
-            <Link reloadDocument to={`#${ComponentTitles.Input}`}>
-              TextArea
-            </Link>{' '}
-            variations
+            Form-specific <a href={ComponentTitles.Input}>TextArea</a> variations
           </strong>
           <br />
           <Form.Item label="Required TextArea" name="required_textarea" required>
@@ -1540,11 +1553,7 @@ const FormSection: React.FC = () => {
           <hr />
           <br />
           <strong>
-            Form-specific{' '}
-            <Link reloadDocument to={`#${ComponentTitles.Input}`}>
-              Password
-            </Link>{' '}
-            variations
+            Form-specific <a href={ComponentTitles.Input}>Password</a> variations
           </strong>
           <br />
           <Form.Item label="Required Password" name="required_label" required>
@@ -1561,11 +1570,7 @@ const FormSection: React.FC = () => {
           <hr />
           <br />
           <strong>
-            Form-specific{' '}
-            <Link reloadDocument to={`#${ComponentTitles.InputNumber}`}>
-              InputNumber
-            </Link>{' '}
-            variations
+            Form-specific <a href={ComponentTitles.Input}>InputNumber</a> variations
           </strong>
           <Form.Item label="Required InputNumber" name="number" required>
             <InputNumber />
@@ -1580,11 +1585,7 @@ const FormSection: React.FC = () => {
           <hr />
           <br />
           <strong>
-            Form-specific{' '}
-            <Link reloadDocument to={`#${ComponentTitles.Select}`}>
-              Select
-            </Link>{' '}
-            variations
+            Form-specific <a href={ComponentTitles.Select}>Select</a> variations
           </strong>
           <Form.Item initialValue={1} label="Required dropdown" name="required_dropdown" required>
             <Select
@@ -2325,6 +2326,7 @@ const Components = {
   Cards: <CardsSection />,
   Charts: <ChartsSection />,
   Checkboxes: <CheckboxesSection />,
+  ClipboardButton: <ClipboardButtonSection />,
   Columns: <ColumnsSection />,
   Dropdown: <DropdownSection />,
   Empty: <EmptySection />,
@@ -2350,6 +2352,9 @@ const Components = {
 
 const DesignKit: React.FC = () => {
   const { actions } = useUI();
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const isExclusiveMode = searchParams.get('exclusive') === 'true';
 
   useEffect(() => {
     actions.hideChrome();
@@ -2366,17 +2371,17 @@ const DesignKit: React.FC = () => {
           <ul>
             {componentOrder.map((componentId) => (
               <li key={componentId}>
-                <Link reloadDocument to={`#${componentId}`}>
-                  {ComponentTitles[componentId]}
-                </Link>
+                <a href={`#${componentId}`}>{ComponentTitles[componentId]}</a>
               </li>
             ))}
           </ul>
         </nav>
         <article>
-          {componentOrder.map((componentId) => (
-            <React.Fragment key={componentId}>{Components[componentId]}</React.Fragment>
-          ))}
+          {componentOrder
+            .filter((id) => !isExclusiveMode || !location.hash || id === location.hash.substring(1))
+            .map((componentId) => (
+              <React.Fragment key={componentId}>{Components[componentId]}</React.Fragment>
+            ))}
         </article>
       </div>
     </Page>

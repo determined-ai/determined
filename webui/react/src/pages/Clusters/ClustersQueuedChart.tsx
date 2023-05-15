@@ -1,7 +1,6 @@
 import { Radio } from 'antd';
 import React, { useMemo, useState } from 'react';
 
-import Page from 'components/Page';
 import Section from 'components/Section';
 import { V1RPQueueStat } from 'services/api-ts-sdk';
 import { DURATION_DAY } from 'shared/utils/datetime';
@@ -31,7 +30,7 @@ const ClustersQueuedChart: React.FC<Props> = ({ poolStats }: Props) => {
 
   if (!queuedStats) return <div />;
   return (
-    <Page bodyNoPadding>
+    <>
       <Section
         bodyBorder
         options={
@@ -51,7 +50,7 @@ const ClustersQueuedChart: React.FC<Props> = ({ poolStats }: Props) => {
           time={queuedStats.time}
         />
       </Section>
-    </Page>
+    </>
   );
 };
 

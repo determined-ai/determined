@@ -79,6 +79,7 @@ interface Props {
   project: Project;
   projectColumns: Loadable<ProjectColumn[]>;
   selectAll: boolean;
+  excludedExperimentIds?: Set<number>;
   selectedExperimentIds: number[];
   handleUpdateExperimentList: (action: BatchAction, successfulIds: number[]) => void;
   setVisibleColumns: (newColumns: string[]) => void;
@@ -87,6 +88,7 @@ interface Props {
 
 const TableActionBar: React.FC<Props> = ({
   experiments,
+  excludedExperimentIds,
   filters,
   onAction,
   onSortChange,
@@ -125,12 +127,16 @@ const TableActionBar: React.FC<Props> = ({
 
   const sendBatchActions = useCallback(
     async (action: BatchAction): Promise<BulkActionResult | void> => {
+      let requestFilters = selectAll ? filters : undefined;
+      if (excludedExperimentIds?.size) {
+        requestFilters = { ...filters, excludedExperimentIds: Array.from(excludedExperimentIds) };
+      }
       switch (action) {
         case ExperimentAction.OpenTensorBoard:
           return openCommandResponse(
             await openOrCreateTensorBoard({
               experimentIds: selectedExperimentIds,
-              filters: selectAll ? filters : undefined,
+              filters: requestFilters,
               workspaceId: project?.workspaceId,
             }),
           );
@@ -139,41 +145,48 @@ const TableActionBar: React.FC<Props> = ({
         case ExperimentAction.Activate:
           return await activateExperiments({
             experimentIds: selectedExperimentIds,
-            filters: selectAll ? filters : undefined,
+            filters: requestFilters,
           });
         case ExperimentAction.Archive:
           return await archiveExperiments({
             experimentIds: selectedExperimentIds,
-            filters: selectAll ? filters : undefined,
+            filters: requestFilters,
           });
         case ExperimentAction.Cancel:
           return await cancelExperiments({
             experimentIds: selectedExperimentIds,
-            filters: selectAll ? filters : undefined,
+            filters: requestFilters,
           });
         case ExperimentAction.Kill:
           return await killExperiments({
             experimentIds: selectedExperimentIds,
-            filters: selectAll ? filters : undefined,
+            filters: requestFilters,
           });
         case ExperimentAction.Pause:
           return await pauseExperiments({
             experimentIds: selectedExperimentIds,
-            filters: selectAll ? filters : undefined,
+            filters: requestFilters,
           });
         case ExperimentAction.Unarchive:
           return await unarchiveExperiments({
             experimentIds: selectedExperimentIds,
-            filters: selectAll ? filters : undefined,
+            filters: requestFilters,
           });
         case ExperimentAction.Delete:
           return await deleteExperiments({
             experimentIds: selectedExperimentIds,
-            filters: selectAll ? filters : undefined,
+            filters: requestFilters,
           });
       }
     },
-    [selectedExperimentIds, selectAll, filters, project?.workspaceId, ExperimentMoveModal],
+    [
+      selectedExperimentIds,
+      selectAll,
+      excludedExperimentIds,
+      filters,
+      project?.workspaceId,
+      ExperimentMoveModal,
+    ],
   );
 
   const handleSubmitMove = useCallback(
@@ -299,7 +312,7 @@ const TableActionBar: React.FC<Props> = ({
               Edit (
               {selectAll
                 ? Loadable.isLoaded(total)
-                  ? total.data.toLocaleString()
+                  ? (total.data - (excludedExperimentIds?.size ?? 0)).toLocaleString()
                   : 'All'
                 : selectedExperimentIds.length}
               )
@@ -310,11 +323,11 @@ const TableActionBar: React.FC<Props> = ({
       {batchAction && (
         <BatchActionConfirmModal.Component
           batchAction={batchAction}
-          selectAll={selectAll}
           onConfirm={() => submitBatchAction(batchAction)}
         />
       )}
       <ExperimentMoveModal.Component
+        excludedExperimentIds={excludedExperimentIds}
         experimentIds={selectedExperimentIds.filter(
           (id) =>
             canActionExperiment(ExperimentAction.Move, experimentMap[id]) &&

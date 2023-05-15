@@ -1,5 +1,5 @@
 import { Button as AntdButton } from 'antd';
-import React, { MouseEvent, ReactNode } from 'react';
+import React, { forwardRef, MouseEvent, ReactNode } from 'react';
 
 import { ConditionalWrapper } from 'components/ConditionalWrapper';
 import Tooltip from 'components/kit/Tooltip';
@@ -16,23 +16,31 @@ interface ButtonProps {
   icon?: ReactNode;
   loading?: boolean | { delay?: number };
   onClick?: (event: MouseEvent) => void;
+  ref?: React.Ref<HTMLElement>;
   size?: 'large' | 'middle' | 'small';
   type?: 'primary' | 'text' | 'default' | 'dashed';
   tooltip?: string;
 }
 
-const Button: React.FC<ButtonProps> = ({
-  size = 'middle',
-  tooltip = '',
-  ...props
-}: ButtonProps) => {
-  return (
-    <ConditionalWrapper
-      condition={tooltip.length > 0}
-      wrapper={(children) => <Tooltip content={tooltip}>{children}</Tooltip>}>
-      <AntdButton className={css.base} size={size} tabIndex={props.disabled ? -1 : 0} {...props} />
-    </ConditionalWrapper>
-  );
-};
+const Button: React.FC<ButtonProps> = forwardRef(
+  (
+    { size = 'middle', tooltip = '', ...props }: ButtonProps,
+    ref,
+  ) => {
+    return (
+      <ConditionalWrapper
+        condition={tooltip.length > 0}
+        wrapper={(children) => <Tooltip content={tooltip}>{children}</Tooltip>}>
+        <AntdButton
+          className={css.base}
+          ref={ref}
+          size={size}
+          tabIndex={props.disabled ? -1 : 0}
+          {...props}
+        />
+      </ConditionalWrapper>
+    );
+  },
+);
 
 export default Button;

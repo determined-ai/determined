@@ -17,7 +17,7 @@ num_trials = 1
 
 def shared_fs_config(num_trials: int) -> str:
     return f"""
-description: noop_random
+name: noop_random
 checkpoint_storage:
   type: shared_fs
   host_path: /tmp

@@ -56,7 +56,7 @@ def start_notebook(args: Namespace) -> None:
                         service_address=nb.serviceAddress,
                         description=nb.description,
                         resource_pool=nb.resourcePool,
-                        task_type="notebook",
+                        task_type="jupyter-lab",
                         currentSlotsExceeded=currentSlotsExceeded,
                     ),
                 )
@@ -77,7 +77,7 @@ def open_notebook(args: Namespace) -> None:
             service_address=resp["serviceAddress"],
             description=resp["description"],
             resource_pool=resp["resourcePool"],
-            task_type="notebook",
+            task_type="jupyter-lab",
             currentSlotsExceeded=False,
         ),
     )

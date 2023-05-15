@@ -23,6 +23,8 @@ import { ExperimentBase, TrialDetails } from 'types';
 import { downloadTrialLogs } from 'utils/browser';
 import handleError from 'utils/error';
 
+import ClipboardButton from '../../components/kit/ClipboardButton';
+
 import css from './TrialDetailsLogs.module.scss';
 
 export interface Props {
@@ -86,18 +88,22 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
   const handleDownloadLogs = useCallback(() => {
     if (!trial?.id) return;
 
+    const code =
+      `det -m ${serverAddress()} trial logs ${trial.id} > ` +
+      `experiment_${experiment.id}_trial_${trial.id}_logs.txt`;
     confirm({
       content: (
-        <div>
-          We recommend using the Determined CLI to download trial logs:
-          <code className="block">
-            det -m {serverAddress()} trial logs {trial.id} &gt; experiment_{experiment.id}_trial_
-            {trial.id}_logs.txt
-          </code>
+        <div className={css.downloadConfirm}>
+          <p>We recommend using the Determined CLI to download trial logs:</p>
+          <div className={css.code}>
+            <code className={css.codeSample}>{code}</code>
+            <ClipboardButton getContent={() => code} />
+          </div>
         </div>
       ),
       okText: 'Proceed to Download',
       onConfirm: handleDownloadConfirm,
+      size: 'medium',
       title: `Confirm Download for Trial ${trial.id} Logs`,
     });
   }, [confirm, experiment.id, handleDownloadConfirm, trial?.id]);

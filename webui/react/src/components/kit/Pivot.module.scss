@@ -13,7 +13,7 @@
     text-shadow: none;
   }
   &:global(.ant-tabs > .ant-tabs-content-holder > .ant-tabs-content) {
-    height: auto;
+    height: 100%;
   }
   &:global(.ant-tabs-top > .ant-tabs-nav::before),
   &:global(.ant-tabs-bottom > .ant-tabs-nav::before),

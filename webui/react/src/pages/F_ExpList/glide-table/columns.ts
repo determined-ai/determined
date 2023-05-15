@@ -303,7 +303,7 @@ export const getColumnDefs = ({
       contentAlign: 'left',
       copyData: String(rowSelection.hasIndex(idx)),
       data: {
-        checked: selectAll || rowSelection.hasIndex(idx),
+        checked: rowSelection.hasIndex(idx),
         kind: 'checkbox-cell',
       },
       kind: GridCellKind.Custom,

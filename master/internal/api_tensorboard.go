@@ -13,9 +13,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/determined-ai/determined/master/internal/api/apiutils"
-	"github.com/determined-ai/determined/master/internal/authz"
-
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -26,10 +23,13 @@ import (
 	k8sV1 "k8s.io/api/core/v1"
 
 	"github.com/determined-ai/determined/master/internal/api"
+	"github.com/determined-ai/determined/master/internal/api/apiutils"
+	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/command"
 	"github.com/determined-ai/determined/master/internal/db"
 	exputil "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
+	"github.com/determined-ai/determined/master/internal/rbac/audit"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/check"
@@ -123,7 +123,8 @@ func (a *apiServer) GetTensorboard(
 		return nil, err
 	}
 
-	if err = command.AuthZProvider.Get().CanGetTensorboard(
+	ctx = audit.SupplyEntityID(ctx, req.TensorboardId)
+	if err := command.AuthZProvider.Get().CanGetTensorboard(
 		ctx, *curUser, model.AccessScopeID(resp.Tensorboard.WorkspaceId),
 		resp.Tensorboard.ExperimentIds, resp.Tensorboard.TrialIds); err != nil {
 		return nil, authz.SubIfUnauthorized(err, errActorNotFound(addr))
@@ -151,6 +152,7 @@ func (a *apiServer) KillTensorboard(
 		return nil, err
 	}
 
+	ctx = audit.SupplyEntityID(ctx, req.TensorboardId)
 	err = command.AuthZProvider.Get().CanTerminateTensorboard(
 		ctx, *curUser, model.AccessScopeID(getResponse.Tensorboard.WorkspaceId))
 	if err != nil {
@@ -180,6 +182,7 @@ func (a *apiServer) SetTensorboardPriority(
 		return nil, err
 	}
 
+	ctx = audit.SupplyEntityID(ctx, req.TensorboardId)
 	err = command.AuthZProvider.Get().CanSetNSCsPriority(
 		ctx, *curUser, model.AccessScopeID(getResponse.Tensorboard.WorkspaceId), int(req.Priority))
 	if err != nil {
@@ -200,14 +203,6 @@ func (a *apiServer) LaunchTensorboard(
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	exps, err := a.getTensorBoardConfigsFromReq(ctx, a.m.db, req)
-	if err != nil {
-		return nil, err
-	}
-	if len(exps) == 0 {
-		return nil, status.Error(codes.InvalidArgument, "no experiments found")
-	}
-
 	spec, launchWarnings, err := a.getCommandLaunchParams(ctx, &protoCommandParams{
 		TemplateName: req.TemplateName,
 		Config:       req.Config,
@@ -223,8 +218,19 @@ func (a *apiServer) LaunchTensorboard(
 		spec.Metadata.WorkspaceID = model.AccessScopeID(req.WorkspaceId)
 	}
 	spec.TaskType = model.TaskTypeTensorboard
+	spec.Metadata.ExperimentIDs = req.ExperimentIds
+	spec.Metadata.TrialIDs = req.TrialIds
+
 	if err = a.isNTSCPermittedToLaunch(ctx, spec); err != nil {
 		return nil, err
+	}
+
+	exps, err := a.getTensorBoardConfigsFromReq(ctx, a.m.db, req)
+	if err != nil {
+		return nil, err
+	}
+	if len(exps) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "no experiments found")
 	}
 
 	spec.WatchProxyIdleTimeout = true
@@ -248,9 +254,6 @@ func (a *apiServer) LaunchTensorboard(
 		RawProxyPort:        port,
 		RawDefaultServiceID: ptrs.Ptr(true),
 	})
-
-	spec.Metadata.ExperimentIDs = req.ExperimentIds
-	spec.Metadata.TrialIDs = req.TrialIds
 
 	logDirs := make([]string, 0)
 	uniqMounts := map[string]model.BindMount{}
