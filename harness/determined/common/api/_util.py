@@ -1,5 +1,5 @@
 import enum
-from typing import Callable, Iterator, TypeVar, Union, Tuple
+from typing import Callable, Iterator, TypeVar, Union, Tuple, Optional
 
 from determined.common.api import Session, bindings
 from determined.common import util, api
@@ -81,10 +81,26 @@ def wait_for_ntsc_state(
     return util.wait_for(get_state, timeout)
 
 
-def task_is_ready(session: api.Session, task_id: str) -> Tuple[bool, str]:
-    task = bindings.get_GetTask(session, taskId=task_id).task
-    assert task is not None, "task must not be None"
-    if len(task.allocations) == 0:
-        return False, "task has no allocations"
-    is_ready = task.allocations[0].isReady
-    return is_ready, ""
+def task_is_ready(session: api.Session, task_id: str) -> Optional[str]:
+    def _task_is_done_loading() -> Tuple[bool, Optional[str]]:
+        task = bindings.get_GetTask(session, taskId=task_id).task
+        assert task is not None, "task must not be present."
+        if len(task.allocations) == 0:
+            return False, None
+
+        is_ready = task.allocations[0].isReady
+        if is_ready:
+            return True, None
+
+        # CHECK: if all of tasks allocations report a terminated state
+        # then we assume we're done
+        terminated = all(
+            [allocation.state == bindings.taskv1State.TERMINATED for allocation in task.allocations]
+        )
+        if terminated:
+            return True, "all allocations are terminated."
+
+        return False, ""
+
+    err_msg = util.wait_for(_task_is_done_loading, timeout=300, interval=1)
+    return err_msg

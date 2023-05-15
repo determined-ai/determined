@@ -6,8 +6,8 @@ from typing import Any, List
 from termcolor import colored
 
 from determined import cli
-from determined.cli import command, render, task
-from determined.common import api, context, util
+from determined.cli import command, render, task, errors
+from determined.common import api, context
 from determined.common.api import authentication, bindings, request
 from determined.common.check import check_eq
 from determined.common.declarative_argparse import Arg, Cmd, Group
@@ -49,7 +49,10 @@ def start_notebook(args: Namespace) -> None:
     print(f"launched notebook {nb.id}")
     print("waiting for notebook to become ready...")
     session = cli.setup_session(args)
-    util.wait_for(lambda: api.task_is_ready(session, nb.id), timeout=300, interval=1)
+    err_msg = api.task_is_ready(session, nb.id)
+    if err_msg:
+        raise errors.CliError(err_msg)
+
     if not nb.serviceAddress:
         return
     nb_path = request.make_interactive_task_url(
