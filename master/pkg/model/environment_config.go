@@ -193,8 +193,6 @@ func validatePodSpec(podSpec *k8sV1.Pod) []error {
 						"container TerminationMessagePolicy is not configurable"),
 					check.Match(string(container.ImagePullPolicy), "",
 						"container ImagePullPolicy is not configurable, set it in the experiment config"),
-					check.True(container.SecurityContext == nil,
-						"container SecurityContext is not configurable, set it in the experiment config"),
 				}
 				podSpecErrors = append(podSpecErrors, containerSpecErrors...)
 			}
