@@ -162,6 +162,7 @@ const ButtonsSection: React.FC = () => {
       </AntDCard>
       <AntDCard title="Usage">
         <strong>Default Button variations</strong>
+        Transparent background, solid border
         <Space>
           <Button>Default</Button>
           <Button danger>Danger</Button>
@@ -170,6 +171,7 @@ const ButtonsSection: React.FC = () => {
         </Space>
         <hr />
         <strong>Primary Button variations</strong>
+        Solid background, no border
         <Space>
           <Button type="primary">Primary</Button>
           <Button danger type="primary">
@@ -183,21 +185,8 @@ const ButtonsSection: React.FC = () => {
           </Button>
         </Space>
         <hr />
-        <strong>Link Button variations</strong>
-        <Space>
-          <Button type="link">Link</Button>
-          <Button danger type="link">
-            Danger
-          </Button>
-          <Button disabled type="link">
-            Disabled
-          </Button>
-          <Button loading type="link">
-            Loading
-          </Button>
-        </Space>
-        <hr />
         <strong>Text Button variations</strong>
+        Transparent background, no border
         <Space>
           <Button type="text">Text</Button>
           <Button danger type="text">
@@ -212,6 +201,7 @@ const ButtonsSection: React.FC = () => {
         </Space>
         <hr />
         <strong>Dashed Button variations</strong>
+        Transparent background, dashed border
         <Space>
           <Button type="dashed">Dashed</Button>
           <Button danger type="dashed">

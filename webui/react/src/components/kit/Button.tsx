@@ -17,7 +17,7 @@ interface ButtonProps {
   loading?: boolean | { delay?: number };
   onClick?: (event: MouseEvent) => void;
   size?: 'large' | 'middle' | 'small';
-  type?: 'primary' | 'link' | 'text' | 'default' | 'dashed';
+  type?: 'primary' | 'text' | 'default' | 'dashed';
   tooltip?: string;
 }
 
