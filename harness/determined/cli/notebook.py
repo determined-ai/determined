@@ -6,7 +6,7 @@ from typing import Any, List
 from termcolor import colored
 
 from determined import cli
-from determined.cli import command, render, task, errors
+from determined.cli import command, render, task
 from determined.common import api, context
 from determined.common.api import authentication, bindings, request
 from determined.common.check import check_eq
@@ -46,12 +46,7 @@ def start_notebook(args: Namespace) -> None:
         bindings.v1LaunchWarning.CURRENT_SLOTS_EXCEEDED in resp.warnings
     )
 
-    print(f"launched notebook {nb.id}")
-    print("waiting for notebook to become ready...")
-    session = cli.setup_session(args)
-    err_msg = api.task_is_ready(session, nb.id)
-    if err_msg:
-        raise errors.CliError(err_msg)
+    cli.wait_ntsc_ready(cli.setup_session(args), api.NTSC_Kind.notebook, nb.id)
 
     if not nb.serviceAddress:
         return

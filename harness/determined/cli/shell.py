@@ -16,7 +16,7 @@ from termcolor import colored
 
 from determined import cli
 from determined.cli import command, task
-from determined.common import api, util
+from determined.common import api
 from determined.common.api import authentication, certs, bindings
 from determined.common.check import check_eq
 from determined.common.declarative_argparse import Arg, Cmd, Group
@@ -47,10 +47,9 @@ def start_shell(args: Namespace) -> None:
         print(sid)
         return
 
-    print(f"launched shell {sid}")
-    print("waiting for shell to become ready...")
     session = cli.setup_session(args)
-    util.wait_for(lambda: api.task_is_ready(session, sid), timeout=300, interval=1)
+    cli.wait_ntsc_ready(cli.setup_session(args), api.NTSC_Kind.shell, sid)
+
     shell = bindings.get_GetShell(session, shellId=sid).shell
     _open_shell(
         args.master,

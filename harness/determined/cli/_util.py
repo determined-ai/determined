@@ -7,6 +7,7 @@ import termcolor
 
 from determined.common import api, declarative_argparse, util
 from determined.common.api import authentication, bindings, certs
+from determined.cli import errors
 from determined.experimental import client
 
 from .errors import FeatureFlagDisabled
@@ -118,3 +119,14 @@ def require_feature_flag(feature_flag: str, error_message: str) -> Callable[...,
 def print_warnings(warnings: Sequence[bindings.v1LaunchWarning]) -> None:
     for warning in warnings:
         print(termcolor.colored(api.WARNING_MESSAGE_MAP[warning], "yellow"), file=sys.stderr)
+
+
+def wait_ntsc_ready(session: api.Session, ntsc_type: api.NTSC_Kind, eid: str) -> None:
+    """
+    Use to wait for a notebook, tensorboard, or shell command to become ready.
+    """
+    name = ntsc_type.value
+    print(f"waiting for {name} {eid} to become ready...")
+    err_msg = api.task_is_ready(session, eid)
+    if err_msg:
+        raise errors.CliError(err_msg)
