@@ -100,16 +100,16 @@ const UserActionDropdown = ({ fetchUsers, user, groups, userManagementEnabled }:
     userManagementEnabled && canModifyUsers
       ? rbacEnabled
         ? [
-          { key: MenuKey.Edit, label: 'Edit User' },
-          { key: MenuKey.Groups, label: 'Manage Groups' },
-          { key: MenuKey.Agent, label: 'Configure Agent' },
-          { key: MenuKey.State, label: `${user.isActive ? 'Deactivate' : 'Activate'}` },
-        ]
+            { key: MenuKey.Edit, label: 'Edit User' },
+            { key: MenuKey.Groups, label: 'Manage Groups' },
+            { key: MenuKey.Agent, label: 'Configure Agent' },
+            { key: MenuKey.State, label: `${user.isActive ? 'Deactivate' : 'Activate'}` },
+          ]
         : [
-          { key: MenuKey.Edit, label: 'Edit User' },
-          { key: MenuKey.Agent, label: 'Configure Agent' },
-          { key: MenuKey.State, label: `${user.isActive ? 'Deactivate' : 'Activate'}` },
-        ]
+            { key: MenuKey.Edit, label: 'Edit User' },
+            { key: MenuKey.Agent, label: 'Configure Agent' },
+            { key: MenuKey.State, label: `${user.isActive ? 'Deactivate' : 'Activate'}` },
+          ]
       : [{ key: MenuKey.View, label: 'View User' }];
 
   const handleDropdown = useCallback(

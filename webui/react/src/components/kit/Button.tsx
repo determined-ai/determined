@@ -30,12 +30,7 @@ const Button: React.FC<ButtonProps> = ({
     <ConditionalWrapper
       condition={tooltip.length > 0}
       wrapper={(children) => <Tooltip content={tooltip}>{children}</Tooltip>}>
-      <AntdButton
-        className={css.base}
-        size={size}
-        tabIndex={props.disabled ? -1 : 0}
-        {...props}
-      />
+      <AntdButton className={css.base} size={size} tabIndex={props.disabled ? -1 : 0} {...props} />
     </ConditionalWrapper>
   );
 };

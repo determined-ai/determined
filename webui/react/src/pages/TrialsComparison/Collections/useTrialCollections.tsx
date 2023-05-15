@@ -303,27 +303,27 @@ export const useTrialCollections = (
     () =>
       collectionIsActive
         ? [
-          {
-            disabled: !userOwnsCollection,
-            key: MenuKey.RenameCollection,
-            label: MenuKey.RenameCollection,
-          },
-          {
-            disabled: !userOwnsCollection,
-            key: MenuKey.DeleteCollection,
-            label: MenuKey.DeleteCollection,
-          },
-          {
-            key: MenuKey.ClearFilters,
-            label: MenuKey.ClearFilters,
-          },
-        ]
+            {
+              disabled: !userOwnsCollection,
+              key: MenuKey.RenameCollection,
+              label: MenuKey.RenameCollection,
+            },
+            {
+              disabled: !userOwnsCollection,
+              key: MenuKey.DeleteCollection,
+              label: MenuKey.DeleteCollection,
+            },
+            {
+              key: MenuKey.ClearFilters,
+              label: MenuKey.ClearFilters,
+            },
+          ]
         : [
-          {
-            key: MenuKey.ClearFilters,
-            label: MenuKey.ClearFilters,
-          },
-        ],
+            {
+              key: MenuKey.ClearFilters,
+              label: MenuKey.ClearFilters,
+            },
+          ],
     [collectionIsActive, userOwnsCollection],
   );
 

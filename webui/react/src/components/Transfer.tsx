@@ -195,17 +195,13 @@ const Transfer: React.FC<Props> = ({
             width="100%">
             {renderHiddenRow}
           </List>
-          <Link onClick={() => moveToRight(filteredHiddenEntries)}>
-            Add All
-          </Link>
+          <Link onClick={() => moveToRight(filteredHiddenEntries)}>Add All</Link>
         </div>
         <div className={css.column}>
           <div className={css.targetTitleRow}>
             <h2>{targetListTitle}</h2>
             {!isEqual(defaultTargetEntries, targetEntries) && (
-              <Link onClick={resetEntries}>
-                Reset
-              </Link>
+              <Link onClick={resetEntries}>Reset</Link>
             )}
           </div>
           <List

@@ -153,11 +153,7 @@ const ModelCreateModal = ({ onClose, workspaceId }: Props): JSX.Element => {
         <Form.Item label="Description (optional)" name="modelDescription">
           <Input.TextArea />
         </Form.Item>
-        {!isDetailExpanded && (
-          <Link>
-            Add More Details...
-          </Link>
-        )}
+        {!isDetailExpanded && <Link onClick={onOpenDetails}>Add More Details...</Link>}
         {isDetailExpanded && (
           <>
             <div>
