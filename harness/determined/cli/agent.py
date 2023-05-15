@@ -46,8 +46,6 @@ def list_agents(args: argparse.Namespace) -> None:
         )
         for a in sorted(resp.agents or [], key=attrgetter("id"))
     ]
-    print('agents')
-    print(resp.agents[0].resourcePools)
 
     if args.json:
         determined.cli.render.print_json(agents)
@@ -65,7 +63,6 @@ def list_agents(args: argparse.Namespace) -> None:
         "Addresses",
     ]
     values = [a.values() for a in agents]
-    print(values)
     render.tabulate_or_csv(headers, values, args.csv)
 
 

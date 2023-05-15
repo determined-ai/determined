@@ -916,6 +916,7 @@ func (p *pods) cleanUpPodHandler(ctx *actor.Context, podHandler *actor.Ref) erro
 }
 
 func (p *pods) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
+	fmt.Println("in handle API request")
 	switch apiCtx.Request().Method {
 	case echo.GET:
 		summaries := p.summarizeClusterByNodes(ctx)
@@ -931,12 +932,13 @@ func (p *pods) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
 }
 
 func (p *pods) handleGetAgentsRequest(ctx *actor.Context) {
+	fmt.Println("in handle Get agents")
 	nodeSummaries := p.summarizeClusterByNodes(ctx)
 	_, nodesToPools := p.getNodeResourcePoolMapping(nodeSummaries)
 
 	response := &apiv1.GetAgentsResponse{}
 	for _, summary := range nodeSummaries {
-		summary.ResourcePool = strings.Join(nodesToPools[summary.ID], ",")
+		summary.ResourcePool = "kuber" + strings.Join(nodesToPools[summary.ID], ",")
 		response.Agents = append(response.Agents, summary.ToProto())
 	}
 	ctx.Respond(response)
