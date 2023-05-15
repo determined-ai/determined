@@ -1,5 +1,6 @@
 import React, { useCallback, useState } from 'react';
 
+import { useSetDynamicTabBar } from 'components/DynamicTabs';
 import { useModal } from 'components/kit/Modal';
 import Notes from 'components/kit/Notes';
 import ProjectNoteDeleteModalComponent from 'components/ProjectNoteDeleteModal';
@@ -51,6 +52,8 @@ const ProjectNotes: React.FC<Props> = ({ project, fetchProject }) => {
     },
     [ProjectNoteDeleteModal, project?.id],
   );
+
+  useSetDynamicTabBar(<></>);
 
   return (
     <>
