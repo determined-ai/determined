@@ -126,8 +126,8 @@ const ModelVersionDetails: React.FC = () => {
   );
 
   const saveNotes = useCallback(
-    async (notes: Note[]) => {
-      const editedNotes = notes[0].contents;
+    async (notes: Note) => {
+      const editedNotes = notes.contents;
       try {
         await patchModelVersion({
           body: { modelName: modelId, notes: editedNotes },
@@ -266,7 +266,8 @@ const ModelVersionDetails: React.FC = () => {
             <Notes
               disabled={modelVersion.model.archived || !canModifyModelVersion({ modelVersion })}
               disableTitle
-              notes={[{ contents: modelVersion.notes ?? '', name: 'Notes' }]}
+              multiple={false}
+              notes={{ contents: modelVersion.notes ?? '', name: 'Notes' }}
               onSave={saveNotes}
             />
           </div>

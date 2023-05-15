@@ -1,49 +1,45 @@
-import { useCallback } from 'react';
-
 import { Note } from 'types';
 
 import NoteCard from './NoteCard';
 import NoteCards from './NoteCards';
 
-export interface Props {
-  disabled?: boolean;
-  disableTitle?: boolean;
-  notes: Note[];
-  onDelete?: (pageNumber: number) => void;
-  onNewPage?: () => void; // onNewPage is the indicator for single or multiple notes.
-  onSave: (notes: Note[]) => Promise<void>;
-}
+export type Props =
+  | {
+      multiple: true;
+      disabled?: boolean;
+      disableTitle?: boolean;
+      notes: Note[];
+      onDelete?: (pageNumber: number) => void;
+      onNewPage: () => void;
+      onSave: (notes: Note[]) => Promise<void>;
+    }
+  | {
+      multiple: false;
+      disabled?: boolean;
+      disableTitle?: boolean;
+      notes: Note;
+      onSave: (notes: Note) => Promise<void>;
+    };
 
 const Notes: React.FC<Props> = ({
+  multiple,
   notes,
-  onNewPage,
   onSave,
-  onDelete,
   disabled = false,
   disableTitle,
+  ...props
 }: Props) => {
-  const onSaveNote = useCallback(
-    async (n: Note) => {
-      await onSave([n]);
-    },
-    [onSave],
-  );
-
-  return onNewPage ? (
+  return multiple ? (
     <NoteCards
       disabled={disabled}
       notes={notes}
-      onDelete={onDelete}
-      onNewPage={onNewPage}
+      onDelete={'onDelete' in props ? props.onDelete : undefined}
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      onNewPage={'onNewPage' in props ? props.onNewPage : () => {}}
       onSave={onSave}
     />
   ) : (
-    <NoteCard
-      disabled={disabled}
-      disableTitle={disableTitle}
-      note={notes[0]}
-      onSaveNote={onSaveNote}
-    />
+    <NoteCard disabled={disabled} disableTitle={disableTitle} note={notes} onSaveNote={onSave} />
   );
 };
 

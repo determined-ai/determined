@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react';
 
 import { useModal } from 'components/kit/Modal';
-import NoteCards from 'components/kit/NoteCards';
+import Notes from 'components/kit/Notes';
 import ProjectNoteDeleteModalComponent from 'components/ProjectNoteDeleteModal';
 import { addProjectNote, setProjectNotes } from 'services/api';
 import { Note, Project } from 'types';
@@ -54,8 +54,9 @@ const ProjectNotes: React.FC<Props> = ({ project, fetchProject }) => {
 
   return (
     <>
-      <NoteCards
+      <Notes
         disabled={project?.archived}
+        multiple={true}
         notes={project?.notes ?? []}
         onDelete={handleDeleteNote}
         onNewPage={handleNewNotesPage}

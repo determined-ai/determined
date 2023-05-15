@@ -318,8 +318,8 @@ const ModelDetails: React.FC = () => {
   );
 
   const saveNotes = useCallback(
-    async (notes: Note[]) => {
-      const editedNotes = notes[0].contents;
+    async (notes: Note) => {
+      const editedNotes = notes.contents;
       try {
         const modelName = model?.model.name;
         if (modelName) {
@@ -452,7 +452,8 @@ const ModelDetails: React.FC = () => {
         <Notes
           disabled={model.model.archived || !canModifyModel({ model: model.model })}
           disableTitle
-          notes={[{ contents: model.model.notes ?? '', name: 'Notes' }]}
+          multiple={false}
+          notes={{ contents: model.model.notes ?? '', name: 'Notes' }}
           onSave={saveNotes}
         />
         <MetadataCard

@@ -5,8 +5,8 @@ import { Note } from 'types';
 
 export const useNoteDemo = (): ((props?: Props) => JSX.Element) => {
   const [note, setNote] = useState<Note>({ contents: '', name: 'Untitled' });
-  const onSave = async (n: Note[]) => await setNote(n[0]);
-  return (props) => <Notes notes={[note]} onSave={onSave} {...props} />;
+  const onSave = async (n: Note) => await setNote(n);
+  return (props) => <Notes {...props} multiple={false} notes={note} onSave={onSave} />;
 };
 
 export const useNotesDemo = (): ((props?: Props) => JSX.Element) => {
@@ -15,6 +15,13 @@ export const useNotesDemo = (): ((props?: Props) => JSX.Element) => {
   const onNewPage = () => setNotes((n) => [...n, { contents: '', name: 'Untitled' }]);
   const onSave = async (n: Note[]) => await setNotes(n);
   return (props) => (
-    <Notes notes={notes} onDelete={onDelete} onNewPage={onNewPage} onSave={onSave} {...props} />
+    <Notes
+      {...props}
+      multiple={true}
+      notes={notes}
+      onDelete={onDelete}
+      onNewPage={onNewPage}
+      onSave={onSave}
+    />
   );
 };

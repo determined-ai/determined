@@ -76,8 +76,8 @@ const ExperimentMultiTrialTabs: React.FC<Props> = ({
   }, [basePath, navigate, tab, tabKey]);
 
   const handleNotesUpdate = useCallback(
-    async (notes: Note[]) => {
-      const editedNotes = notes[0].contents;
+    async (notes: Note) => {
+      const editedNotes = notes.contents;
       try {
         await patchExperiment({ body: { notes: editedNotes }, experimentId: experiment.id });
         await fetchExperimentDetails();
@@ -145,7 +145,8 @@ const ExperimentMultiTrialTabs: React.FC<Props> = ({
         <Notes
           disabled={!editableNotes}
           disableTitle
-          notes={[{ contents: experiment.notes ?? '', name: 'Notes' }]}
+          multiple={false}
+          notes={{ contents: experiment.notes ?? '', name: 'Notes' }}
           onSave={handleNotesUpdate}
         />
       ),
