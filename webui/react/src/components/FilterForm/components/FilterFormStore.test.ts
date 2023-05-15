@@ -135,7 +135,8 @@ describe('FilterFormStore', () => {
     });
 
     it('should initialize store with init data', () => {
-      const filterFormStore = new FilterFormStore(initData);
+      const filterFormStore = new FilterFormStore();
+      filterFormStore.init(initData);
       const jsonWithId = filterFormStore.formset.get();
       const jsonWithoutId = filterFormStore.jsonWithoutId.get();
 
@@ -144,7 +145,8 @@ describe('FilterFormStore', () => {
     });
 
     it('should deep clone init data to avoid unexpected data overwrite', () => {
-      const filterFormStore = new FilterFormStore(initData);
+      const filterFormStore = new FilterFormStore();
+      filterFormStore.init(initData);
       filterFormStore.addChild(ROOT_ID, FormKind.Field);
       const jsonWithId = filterFormStore.formset.get();
 
@@ -361,7 +363,8 @@ describe('FilterFormStore', () => {
         filterFormStore.removeChild(ROOT_ID);
         expect(filterFormStore.jsonWithoutId.get()).toStrictEqual(EMPTY_DATA);
 
-        const filterFormStoreWithInit = new FilterFormStore(initData);
+        const filterFormStoreWithInit = new FilterFormStore();
+        filterFormStoreWithInit.init(initData);
         filterFormStoreWithInit.removeChild(ROOT_ID);
         expect(filterFormStoreWithInit.jsonWithoutId.get()).toStrictEqual(EMPTY_DATA);
       });
@@ -377,7 +380,8 @@ describe('FilterFormStore', () => {
       });
 
       it('should `show archived` value remain the same after clear all', () => {
-        const filterFormStoreWithInit = new FilterFormStore(initData);
+        const filterFormStoreWithInit = new FilterFormStore();
+        filterFormStoreWithInit.init(initData);
         expect(filterFormStoreWithInit.formset.get().showArchived).toBeFalsy();
         filterFormStoreWithInit.setArchivedValue(true);
         expect(filterFormStoreWithInit.formset.get().showArchived).toBeTruthy();

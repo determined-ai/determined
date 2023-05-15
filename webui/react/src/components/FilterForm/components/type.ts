@@ -130,6 +130,8 @@ export const AvailableOperators = {
     Operator.GreaterEq,
     Operator.Less,
     Operator.LessEq,
+    Operator.IsEmpty,
+    Operator.NotEmpty,
   ],
   [V1ColumnType.DATE]: [
     // No Eq and NotEq for date because date should be used with range

@@ -2,7 +2,7 @@
   align-items: baseline;
   display: grid;
   gap: 8px;
-  grid-template-columns: 72px 7fr;
+  grid-template-columns: 72px 1fr;
   padding-bottom: 8px;
 
   &.baseRoot {
@@ -31,7 +31,7 @@
   align-items: center;
   color: var(--theme-stage-on);
   display: grid;
-  grid-template-columns: 7fr 32px 32px 32px;
+  grid-template-columns: 1fr 32px 32px 32px;
   justify-content: space-between;
   padding: 4px 0;
 }

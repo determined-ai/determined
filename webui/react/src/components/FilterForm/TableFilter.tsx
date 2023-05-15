@@ -33,8 +33,16 @@ const TableFilter = ({
     <div>
       <Popover
         content={
-          <FilterForm columns={columns} formStore={formStore} onHidePopOver={onHidePopOver} />
+          <div
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') {
+                onHidePopOver();
+              }
+            }}>
+            <FilterForm columns={columns} formStore={formStore} onHidePopOver={onHidePopOver} />
+          </div>
         }
+        destroyTooltipOnHide
         open={isOpenFilter}
         placement="bottomLeft"
         trigger="click"

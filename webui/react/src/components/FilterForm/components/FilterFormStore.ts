@@ -40,14 +40,10 @@ const getInitField = (): FormField => ({
 });
 
 export class FilterFormStore {
-  #formset: WritableObservable<FilterFormSet>;
-
-  constructor(data?: Readonly<FilterFormSet>) {
-    this.init(data);
-  }
+  #formset: WritableObservable<FilterFormSet> = observable(structuredClone(INIT_FORMSET));
 
   public init(data?: Readonly<FilterFormSet>): void {
-    this.#formset = observable<FilterFormSet>(structuredClone(data ? data : INIT_FORMSET));
+    this.#formset.update(() => structuredClone(data ? data : INIT_FORMSET));
   }
 
   public get formset(): Observable<Readonly<FilterFormSet>> {

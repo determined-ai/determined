@@ -335,7 +335,11 @@ export const GlideTable: React.FC<GlideTableProps> = ({
           icon: <FilterOutlined />,
           key: 'filter',
           label: 'Filter by this column',
-          onClick: filterMenuItemsForColumn,
+          onClick: () => {
+            setTimeout(() => {
+              filterMenuItemsForColumn();
+            }, 5);
+          },
         },
       ];
       const x = bounds.x;

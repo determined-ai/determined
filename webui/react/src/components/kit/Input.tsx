@@ -27,6 +27,7 @@ interface InputProps {
   ) => void;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onPressEnter?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+  onKeyDown?: (e: React.KeyboardEvent) => void;
   placeholder?: string;
   prefix?: ReactNode;
   size?: 'large' | 'middle' | 'small';

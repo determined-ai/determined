@@ -214,6 +214,7 @@ const FilterField = ({
               {(currentColumn?.type === V1ColumnType.TEXT ||
                 currentColumn?.type === V1ColumnType.UNSPECIFIED) && (
                 <Input
+                  autoFocus
                   disabled={
                     field.operator === Operator.IsEmpty || field.operator === Operator.NotEmpty
                   }
@@ -222,21 +223,29 @@ const FilterField = ({
                     const val = e.target.value || null; // when empty string, val is null
                     updateFieldValue(field.id, val, true);
                   }}
+                  onPressEnter={() => {
+                    formStore.addChild(parentId, FormKind.Field);
+                  }}
                 />
               )}
               {currentColumn?.type === V1ColumnType.NUMBER && (
                 <InputNumber
+                  autoFocus
                   className={css.fullWidth}
                   value={fieldValue != null ? Number(fieldValue) : undefined}
                   onChange={(val) => {
                     const value = val != null ? Number(val) : null;
                     updateFieldValue(field.id, value, true);
                   }}
+                  onPressEnter={() => {
+                    formStore.addChild(parentId, FormKind.Field);
+                  }}
                 />
               )}
               {currentColumn?.type === V1ColumnType.DATE && (
                 // timezone is UTC since DB uses UTC
                 <DatePicker
+                  autoFocus
                   value={dayjs(fieldValue).isValid() ? dayjs(fieldValue).utc() : null}
                   onChange={(value: DatePickerProps['value']) => {
                     const dateString = dayjs(value).utc().startOf('date').format();

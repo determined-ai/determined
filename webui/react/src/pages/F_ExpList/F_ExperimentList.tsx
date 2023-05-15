@@ -73,13 +73,9 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const filtersString: string = JSON.stringify(useObservable(formStore.jsonWithoutId));
   const rootFilterChildren = useObservable(formStore.formset).filterGroup.children;
 
-  const onIsOpenFilterChange = (newOpen: boolean) => {
+  const onIsOpenFilterChange = useCallback((newOpen: boolean) => {
     setIsOpenFilter(newOpen);
-    if (!newOpen) {
-      // when closed
-      updateSettings({ filterset: JSON.stringify(formStore.formset.get()) });
-    }
-  };
+  }, []);
 
   useEffect(() => {
     setSearchParams((params) => {
@@ -238,6 +234,13 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
       stopPolling();
     };
   }, [canceler, stopPolling]);
+
+  useEffect(() => {
+    return formStore.formset.subscribe((newFormatset) => {
+      resetPagination();
+      updateSettings({ filterset: JSON.stringify(newFormatset) });
+    });
+  }, [resetPagination, updateSettings]);
 
   const handleOnAction = useCallback(async () => {
     /*
