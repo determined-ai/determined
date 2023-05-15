@@ -35,8 +35,8 @@ def get_custom_dsat_exp_conf_from_args(
     }
     # Add all necessary autotuning keys from defaults and user-supplied args.
     autotuning_config = _defaults.AUTOTUNING_DICT
-    autotuning_config["start_profile_step"] = args.start_profile_step
-    autotuning_config["end_profile_step"] = args.end_profile_step
+    autotuning_config["autotuning"]["start_profile_step"] = args.start_profile_step
+    autotuning_config["autotuning"]["end_profile_step"] = args.end_profile_step
 
     exp_config["hyperparameters"] = merge_dicts(
         exp_config["hyperparameters"], {_defaults.OVERWRITE_KEY: autotuning_config}
