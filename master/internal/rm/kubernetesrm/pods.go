@@ -1156,7 +1156,7 @@ func (p *pods) summarizeClusterByNodes(ctx *actor.Context) map[string]model.Agen
 			RegisteredTime: node.ObjectMeta.CreationTimestamp.Time,
 			Slots:          slotsSummary,
 			NumContainers:  len(podByNode[node.Name]) + len(nodeToTasks[node.Name]),
-			ResourcePool:   "",
+			ResourcePool:   "Kubernetees",
 			Addresses:      addrs,
 		}
 	}

@@ -24,6 +24,7 @@ def local_id(address: str) -> str:
 
 @authentication.required
 def list_agents(args: argparse.Namespace) -> None:
+    print("list agents")
     resp = bindings.get_GetAgents(cli.setup_session(args))
 
     agents = [
@@ -45,6 +46,8 @@ def list_agents(args: argparse.Namespace) -> None:
         )
         for a in sorted(resp.agents or [], key=attrgetter("id"))
     ]
+    print('agents')
+    print(resp.agents[0].resourcePools)
 
     if args.json:
         determined.cli.render.print_json(agents)
@@ -62,7 +65,7 @@ def list_agents(args: argparse.Namespace) -> None:
         "Addresses",
     ]
     values = [a.values() for a in agents]
-
+    print(values)
     render.tabulate_or_csv(headers, values, args.csv)
 
 
