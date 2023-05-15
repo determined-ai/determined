@@ -1236,9 +1236,9 @@ class _PyTorchTrialController:
     def _load_state(self, state: Any) -> None:
         # Load our state from the checkpoint if we are continuing training after a pause or restart.
         # If the trial_id doesn't match our current trial id, we're continuing training a previous
-        # trial and the state in the checkpoint should be discarded.
-
+        # trial and should start from a fresh state.
         if state.get("trial_id") != self.trial_id:
+            self.state = _TrialState(trial_id=self.trial_id)
             return
 
         self.state = _TrialState(**state)
@@ -1254,6 +1254,7 @@ class _PyTorchTrialController:
 
     def _load_wlsq_state(self, state: Any) -> None:
         if state.get("trial_id") != self.trial_id:
+            self.state = _TrialState(trial_id=self.trial_id)
             return
 
         self.state = _TrialState(
