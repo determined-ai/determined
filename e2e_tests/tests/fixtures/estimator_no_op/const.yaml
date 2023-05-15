@@ -1,4 +1,4 @@
-description: estimator_no_op
+name: estimator_no_op
 hyperparameters:
   global_batch_size: 64
 searcher:

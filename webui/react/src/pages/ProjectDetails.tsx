@@ -164,45 +164,44 @@ const ProjectDetails: React.FC = () => {
   }
   return (
     <Page
-      bodyNoPadding
       containerRef={pageRef}
       // for docTitle, when id is 1 that means Uncategorized from webui/react/src/routes/routes.ts
       docTitle={id === 1 ? 'Uncategorized Experiments' : 'Project Details'}
-      id="projectDetails">
-      <BreadcrumbBar
-        extra={
-          <Space>
-            {project.description && (
-              <Tooltip content={project.description}>
-                <InfoCircleOutlined style={{ color: 'var(--theme-float-on)' }} />
-              </Tooltip>
-            )}
-            {id !== 1 && (
-              <ProjectActionDropdown
-                project={project}
-                showChildrenIfEmpty={false}
-                workspaceArchived={workspace?.archived}
-                onComplete={fetchProject}
-                onDelete={onProjectDelete}>
-                <div style={{ cursor: 'pointer' }}>
-                  <Icon name="arrow-down" size="tiny" title="Action menu" />
-                </div>
-              </ProjectActionDropdown>
-            )}
-          </Space>
-        }
-        id={project.id}
-        project={project}
-        type="project"
-      />
-      {/* TODO: Clean up once we standardize page layouts */}
-      <div style={{ height: '100%', padding: '16px 16px 0px 16px' }}>
-        <DynamicTabs
-          basePath={paths.projectDetailsBasePath(id)}
-          destroyInactiveTabPane
-          items={tabItems}
+      headerComponent={
+        <BreadcrumbBar
+          extra={
+            <Space>
+              {project.description && (
+                <Tooltip content={project.description}>
+                  <InfoCircleOutlined style={{ color: 'var(--theme-float-on)' }} />
+                </Tooltip>
+              )}
+              {id !== 1 && (
+                <ProjectActionDropdown
+                  project={project}
+                  showChildrenIfEmpty={false}
+                  workspaceArchived={workspace?.archived}
+                  onComplete={fetchProject}
+                  onDelete={onProjectDelete}>
+                  <div style={{ cursor: 'pointer' }}>
+                    <Icon name="arrow-down" size="tiny" title="Action menu" />
+                  </div>
+                </ProjectActionDropdown>
+              )}
+            </Space>
+          }
+          id={project.id}
+          project={project}
+          type="project"
         />
-      </div>
+      }
+      id="projectDetails"
+      noScroll>
+      <DynamicTabs
+        basePath={paths.projectDetailsBasePath(id)}
+        destroyInactiveTabPane
+        items={tabItems}
+      />
     </Page>
   );
 };

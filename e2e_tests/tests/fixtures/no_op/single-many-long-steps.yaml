@@ -1,4 +1,4 @@
-description: noop-single-many-long-steps
+name: noop-single-many-long-steps
 checkpoint_storage:
   type: shared_fs
   host_path: /tmp

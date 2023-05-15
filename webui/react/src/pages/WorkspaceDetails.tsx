@@ -32,7 +32,6 @@ import ModelRegistry from './ModelRegistry';
 import WorkspaceDetailsHeader from './WorkspaceDetails/WorkspaceDetailsHeader';
 import WorkspaceMembers from './WorkspaceDetails/WorkspaceMembers';
 import WorkspaceProjects from './WorkspaceDetails/WorkspaceProjects';
-import css from './WorkspaceDetails.module.scss';
 
 type Params = {
   tab: string;
@@ -266,7 +265,6 @@ const WorkspaceDetails: React.FC = () => {
 
   return (
     <Page
-      className={css.base}
       containerRef={pageRef}
       headerComponent={
         <WorkspaceDetailsHeader

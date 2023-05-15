@@ -126,15 +126,12 @@ visual-test-deps: node_modules/playwright-core/.local-browsers
 screenshots/HEAD: node_modules visual-test-deps
 	node scripts/designkit-screenshot.mjs HEAD
 
-# copying the scripts/fetch dependency from head should only be necessary until the pr is
-# merged. we can remove it afterwards.
 screenshots/MAIN: node_modules visual-test-deps
-	cp -r scripts new-scripts
 	cp -r node_modules/playwright-core/.local-browsers browsers
 	git checkout $(merge_base)
 	npm ci --no-audit
 	cp -r browsers node_modules/playwright-core/.local-browsers
-	node new-scripts/designkit-screenshot.mjs MAIN
+	node scripts/designkit-screenshot.mjs MAIN
 	git reset --hard HEAD
 	rm -rf new-scripts
 	git checkout -

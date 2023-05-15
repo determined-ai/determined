@@ -3,7 +3,6 @@ import { observable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
-import Page from 'components/Page';
 import useResize from 'hooks/useResize';
 import { useSettings } from 'hooks/useSettings';
 import { getProjectColumns, searchExperiments } from 'services/api';
@@ -289,39 +288,35 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   }, []);
 
   return (
-    <Page
-      bodyNoPadding
-      containerRef={pageRef}
-      docTitle={project.id === 1 ? 'Uncategorized Experiments' : 'Project Details'}
-      id="projectDetails">
-      <>
-        <TableActionBar
-          excludedExperimentIds={excludedExperimentIds}
-          experiments={experiments}
-          filters={experimentFilters}
-          handleUpdateExperimentList={handleUpdateExperimentList}
-          initialVisibleColumns={settings.columns}
-          project={project}
-          projectColumns={projectColumns}
-          selectAll={selectAll}
-          selectedExperimentIds={selectedExperimentIds}
-          setVisibleColumns={setVisibleColumns}
-          sorts={sorts}
-          total={total}
-          onAction={handleOnAction}
-          onSortChange={onSortChange}
-        />
-        {isLoading ? (
-          <Loading width={width} />
-        ) : experiments.length === 0 ? (
-          numFilters === 0 ? (
-            <NoExperiments />
-          ) : (
-            <NoMatches />
-          )
-        ) : error ? (
-          <Error />
+    <>
+      {isLoading ? (
+        <Loading width={width} />
+      ) : experiments.length === 0 ? (
+        numFilters === 0 ? (
+          <NoExperiments />
         ) : (
+          <NoMatches />
+        )
+      ) : error ? (
+        <Error />
+      ) : (
+        <>
+          <TableActionBar
+            excludedExperimentIds={excludedExperimentIds}
+            experiments={experiments}
+            filters={experimentFilters}
+            handleUpdateExperimentList={handleUpdateExperimentList}
+            initialVisibleColumns={settings.columns}
+            project={project}
+            projectColumns={projectColumns}
+            selectAll={selectAll}
+            selectedExperimentIds={selectedExperimentIds}
+            setVisibleColumns={setVisibleColumns}
+            sorts={sorts}
+            total={total}
+            onAction={handleOnAction}
+            onSortChange={onSortChange}
+          />
           <GlideTable
             clearSelectionTrigger={clearSelectionTrigger}
             colorMap={colorMap}
@@ -330,7 +325,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
             fetchExperiments={fetchExperiments}
             handleScroll={handleScroll}
             handleUpdateExperimentList={handleUpdateExperimentList}
-            height={wholePageHeight - 140}
+            height={wholePageHeight - 150 - 140}
             page={page}
             project={project}
             projectColumns={projectColumns}
@@ -345,9 +340,9 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
             sorts={sorts}
             onSortChange={onSortChange}
           />
-        )}
-      </>
-    </Page>
+        </>
+      )}
+    </>
   );
 };
 

@@ -1,12 +1,44 @@
-.breadcrumbBar {
+.base {
   align-items: center;
-  background-color: var(--theme-stage);
-  border-bottom: var(--theme-stroke-width) solid var(--theme-stage-border);
   display: flex;
-  gap: 6px;
-  padding: 8px 16px;
-  position: sticky;
-  top: 0;
+  flex-direction: column;
+  height: inherit;
+  justify-content: flex-start;
+  overflow: auto;
   width: 100%;
-  z-index: 2;
+
+  .body {
+    flex-shrink: 0;
+    height: max-content;
+    min-height: 0;
+    padding: 16px;
+    width: 100%;
+  }
+  &.bodyNoPadding {
+    .body {
+      padding: 0;
+      padding-bottom: 16px;
+    }
+  }
+  &.stickyHeader {
+    overflow: inherit;
+
+    .body {
+      overflow: auto;
+      padding-bottom: 0;
+    }
+  }
+  &.noScroll {
+    max-height: 100vh;
+
+    .body {
+      flex: 1 1 auto;
+    }
+  }
+}
+
+@media only screen and (max-width: $breakpoint-mobile) {
+  .base.noScroll {
+    max-height: inherit;
+  }
 }

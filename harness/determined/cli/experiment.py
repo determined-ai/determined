@@ -644,6 +644,7 @@ def download_model_def(args: Namespace) -> None:
         f.write(base64.b64decode(resp.b64Tgz))
 
 
+@authentication.required
 def download(args: Namespace) -> None:
     exp = client.ExperimentReference(args.experiment_id, cli.setup_session(args))
     checkpoints = exp.top_n_checkpoints(
@@ -1026,8 +1027,8 @@ main_cmd = Cmd(
             [
                 experiment_id_arg("experiment ID"),
                 cli.output_format_args["json"],
-            ]
-            + logs_args_description,
+                *logs_args_description,
+            ],
         ),
         Cmd(
             "download-model-def",
