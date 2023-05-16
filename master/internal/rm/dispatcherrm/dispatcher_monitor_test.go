@@ -239,7 +239,7 @@ func TestMonitorJobOperations(t *testing.T) {
 	job := getJob()
 
 	// Add the job to the monitored jobs.
-	jobWatcher.monitorJob(job.user, job.dispatcherID, job.payloadName)
+	jobWatcher.monitorJob(job.user, job.dispatcherID, job.payloadName, false)
 	// Wait for the job to be added to the monitored jobs with a timeout of 30 seconds.
 	timeout := time.Now().Add(30 * time.Second)
 	for !(jobWatcher.isJobBeingMonitored(job.dispatcherID)) {

@@ -1020,7 +1020,7 @@ func (m *dispatcherResourceManager) startLauncherJob(
 	// Pre-register dispatchID (which is now the AllocationID) with the job
 	// monitor such that notifyContainerRunning calls that might be delivered prior
 	// to the synchronous launch returning will be handled properly.
-	m.jobWatcher.monitorJob(impersonatedUser, dispatchID, payloadName)
+	m.jobWatcher.monitorJob(impersonatedUser, dispatchID, payloadName, true)
 
 	tempDispatchID, err := m.sendManifestToDispatcher(
 		ctx, manifest, impersonatedUser, string(msg.AllocationID))
@@ -1040,6 +1040,9 @@ func (m *dispatcherResourceManager) startLauncherJob(
 
 		sendResourceStateChangedErrorResponse(ctx, err, msg,
 			"unable to create the launcher job")
+	} else {
+		// Successful launch, clear launchInProgress status
+		m.jobWatcher.notifyJobLaunched(ctx, dispatchID)
 	}
 
 	if tempDispatchID != dispatchID {
@@ -1674,7 +1677,7 @@ func (m *dispatcherResourceManager) assignResources(
 			ctx.Log().Infof("Reconnecting ResourceID %s, DispatchID %s, ImpersontatedUser: %s",
 				rID, dispatchID, impersonatedUser)
 
-			m.jobWatcher.monitorJob(impersonatedUser, dispatchID, "")
+			m.jobWatcher.monitorJob(impersonatedUser, dispatchID, "", false)
 		}
 	} else {
 		ctx.Log().
