@@ -305,7 +305,7 @@ def get_metric_type(d: Dict[str, Any]) -> str:
             return TRAIN_AVG
         else:
             return TRAIN
-    return EVAL
+    return TRAIN
 
 
 def get_ds_config_path_from_args(args: List[str]) -> Optional[str]:

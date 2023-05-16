@@ -318,7 +318,7 @@ def get_batch_config_from_mbs_gas_and_slots(
 
 def dict_raise_error_on_duplicate_keys(ordered_pairs: List[Tuple[str, Any]]) -> Dict[str, Any]:
     """Reject duplicate keys from the ordered_pairs"""
-    d = {k: v for (k, v) in ordered_pairs}
+    d = dict(ordered_pairs)
     if len(d) != len(ordered_pairs):
         counter = collections.Counter([pair[0] for pair in ordered_pairs])
         keys = [key for key, value in counter.items() if value > 1]

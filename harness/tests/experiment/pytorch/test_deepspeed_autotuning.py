@@ -474,7 +474,7 @@ class TestDSATTrialTracker:
         Uses a series of successful trials where each trial is better than the previous one.
         """
         _, trial_tracker = basic_queue_and_trial_tracker
-        metrics = [n for n in range(len(trial_tracker) - 1)]
+        metrics = list(range(len(trial_tracker) - 1))
         if not trial_tracker.smaller_is_better:
             metrics = list(reversed(metrics))
         while trial_tracker.can_run_more_trials:
