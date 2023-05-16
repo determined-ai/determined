@@ -3,10 +3,10 @@ import React, { useState } from 'react';
 import Notes, { Props } from 'components/kit/Notes';
 import { Note } from 'types';
 
-export const useNoteDemo = (): ((props?: Props) => JSX.Element) => {
+export const useNoteDemo = (): ((props?: Omit<Props, 'multiple'>) => JSX.Element) => {
   const [note, setNote] = useState<Note>({ contents: '', name: 'Untitled' });
   const onSave = async (n: Note) => await setNote(n);
-  return (props) => <Notes {...props} multiple={false} notes={note} onSave={onSave} />;
+  return (props) => <Notes {...props} notes={note} onSave={onSave} />;
 };
 
 export const useNotesDemo = (): ((props?: Props) => JSX.Element) => {
@@ -17,7 +17,7 @@ export const useNotesDemo = (): ((props?: Props) => JSX.Element) => {
   return (props) => (
     <Notes
       {...props}
-      multiple={true}
+      multiple
       notes={notes}
       onDelete={onDelete}
       onNewPage={onNewPage}

@@ -266,7 +266,6 @@ const ModelVersionDetails: React.FC = () => {
             <Notes
               disabled={modelVersion.model.archived || !canModifyModelVersion({ modelVersion })}
               disableTitle
-              multiple={false}
               notes={{ contents: modelVersion.notes ?? '', name: 'Notes' }}
               onSave={saveNotes}
             />

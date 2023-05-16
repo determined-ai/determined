@@ -14,7 +14,7 @@ export type Props =
       onSave: (notes: Note[]) => Promise<void>;
     }
   | {
-      multiple: false;
+      multiple?: false;
       disabled?: boolean;
       disableTitle?: boolean;
       notes: Note;

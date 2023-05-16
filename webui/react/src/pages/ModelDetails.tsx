@@ -452,7 +452,6 @@ const ModelDetails: React.FC = () => {
         <Notes
           disabled={model.model.archived || !canModifyModel({ model: model.model })}
           disableTitle
-          multiple={false}
           notes={{ contents: model.model.notes ?? '', name: 'Notes' }}
           onSave={saveNotes}
         />

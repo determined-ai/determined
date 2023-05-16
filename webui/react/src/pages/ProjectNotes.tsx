@@ -59,7 +59,7 @@ const ProjectNotes: React.FC<Props> = ({ project, fetchProject }) => {
     <>
       <Notes
         disabled={project?.archived}
-        multiple={true}
+        multiple
         notes={project?.notes ?? []}
         onDelete={handleDeleteNote}
         onNewPage={handleNewNotesPage}

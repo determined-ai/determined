@@ -145,7 +145,6 @@ const ExperimentMultiTrialTabs: React.FC<Props> = ({
         <Notes
           disabled={!editableNotes}
           disableTitle
-          multiple={false}
           notes={{ contents: experiment.notes ?? '', name: 'Notes' }}
           onSave={handleNotesUpdate}
         />
