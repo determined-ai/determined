@@ -126,6 +126,8 @@ class Trial:
         self.id = trial_id
         self._session = session
 
+        self.hparams = None
+
     def logs(
         self,
         follow: bool = False,
@@ -353,6 +355,20 @@ class Trial:
     def __repr__(self) -> str:
         return "Trial(id={})".format(self.id)
 
+    def _get(self) -> bindings.trialv1Trial:
+        resp = bindings.get_GetTrial(session=self._session, trialId=self.id)
+        return resp.trial
+
+    def _hydrate(self, trial: bindings.trialv1Trial):
+        self.hparams = trial.hparams
+
+    def reload(self) -> None:
+        """
+        Explicit refresh of cached properties.
+        """
+        resp = self._get()
+        self._hydrate(resp)
+
     def stream_training_metrics(self) -> Iterable[TrainingMetrics]:
         """
         Streams training metrics for this trial sorted by
@@ -366,6 +382,12 @@ class Trial:
         trial_id, trial_run_id and steps_completed.
         """
         return _stream_validation_metrics(self._session, [self.id])
+
+    @classmethod
+    def _from_bindings(cls, trial: bindings.trialv1Trial, session: api.Session) -> "TrialReference":
+        trial_obj = cls(trial.id, session)
+        trial_obj._hydrate(trial)
+        return trial_obj
 
 
 # This is to shorten line lengths of the TrialSortBy definition.

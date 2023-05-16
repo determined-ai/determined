@@ -1,4 +1,3 @@
-import datetime
 import enum
 import json
 from typing import Any, Dict, Iterable, List, Optional
@@ -142,13 +141,6 @@ class Model:
     Arguments:
         model_id (int): The unique id of this model.
         name (string): The name of the model.
-        description (string, optional): The description of the model.
-        creation_time (datetime): The time the model was created.
-        last_updated_time (datetime): The time the model was most recently updated.
-        metadata (dict, optional): User-defined metadata associated with the checkpoint.
-        labels ([string]): User-defined text labels associated with the checkpoint.
-        username (string): The user who initially created this model.
-        archived (boolean): The status (archived or not) for this model.
     """
 
     def __init__(
@@ -156,26 +148,19 @@ class Model:
         session: api.Session,
         model_id: int,
         name: str,
-        description: str,
-        creation_time: datetime.datetime,
-        last_updated_time: datetime.datetime,
-        metadata: Dict[str, Any],
-        labels: List[str],
-        username: str,
-        archived: bool,
-        workspace_id: Optional[int] = None,
     ):
         self._session = session
         self.model_id = model_id
         self.name = name
-        self.description = description
-        self.creation_time = creation_time
-        self.last_updated_time = last_updated_time
-        self.metadata = metadata or {}
-        self.labels = labels
-        self.username = username
-        self.workspace_id = workspace_id
-        self.archived = archived
+
+        self.description = None
+        self.creation_time = None
+        self.last_updated_time = None
+        self.metadata = {}
+        self.labels = None
+        self.username = None
+        self.workspace_id = None
+        self.archived = None
 
     def get_version(self, version: int = -1) -> Optional[ModelVersion]:
         """
@@ -260,6 +245,7 @@ class Model:
         Arguments:
             metadata (dict): Dictionary of metadata to add to the model.
         """
+        self.reload()
         for key, val in metadata.items():
             self.metadata[key] = val
 
@@ -278,6 +264,8 @@ class Model:
             raise ValueError(
                 f"remove_metadata() requires a list of strings as input but got: {keys}"
             )
+
+        self.reload()
 
         for key in keys:
             if key in self.metadata:
@@ -305,11 +293,13 @@ class Model:
 
         req = bindings.v1PatchModel(labels=self.labels)
         bindings.patch_PatchModel(self._session, body=req, modelName=self.name)
+        self.reload()
 
     def set_description(self, description: str) -> None:
         self.description = description
         req = bindings.v1PatchModel(description=self.description)
         bindings.patch_PatchModel(self._session, body=req, modelName=self.name)
+        self.reload()
 
     def archive(self) -> None:
         """
@@ -317,6 +307,7 @@ class Model:
         """
         self.archived = True
         bindings.post_ArchiveModel(self._session, modelName=self.name)
+        self.reload()
 
     def unarchive(self) -> None:
         """
@@ -324,6 +315,7 @@ class Model:
         """
         self.archived = False
         bindings.post_UnarchiveModel(self._session, modelName=self.name)
+        self.reload()
 
     def delete(self) -> None:
         """
@@ -347,18 +339,32 @@ class Model:
             self.model_id, self.name, json.dumps(self.metadata)
         )
 
+    def _get(self) -> bindings.v1Model:
+        resp = bindings.get_GetModel(session=self._session, modelName=self.name)
+        return resp.model
+
+    def _hydrate(self, model: bindings.v1Model):
+        self.description = model.description or ""
+        self.creation_time = util.parse_protobuf_timestamp(model.creationTime)
+        self.last_updated_time = util.parse_protobuf_timestamp(model.lastUpdatedTime)
+        self.metadata = model.metadata or {}
+        self.labels = list(model.labels or [])
+        self.username = model.username or ""
+        self.workspace_id = model.workspaceId
+        self.archived = model.archived or False
+
+    def reload(self) -> None:
+        """
+        Explicit refresh of cached properties.
+        """
+        resp = self._get()
+        self._hydrate(resp)
+
     @classmethod
     def _from_bindings(cls, m: bindings.v1Model, session: api.Session) -> "Model":
-        return cls(
+        model_obj = cls(
             session,
             model_id=m.id,
             name=m.name,
-            description=m.description or "",
-            creation_time=util.parse_protobuf_timestamp(m.creationTime),
-            last_updated_time=util.parse_protobuf_timestamp(m.lastUpdatedTime),
-            metadata=m.metadata,
-            labels=list(m.labels or []),
-            username=m.username or "",
-            archived=m.archived or False,
-            workspace_id=m.workspaceId,
         )
+        model_obj._hydrate(m)

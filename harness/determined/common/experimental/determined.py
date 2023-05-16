@@ -189,27 +189,23 @@ class Determined:
             for w in resp.warnings:
                 logging.warning(api.WARNING_MESSAGE_MAP[w])
 
-        exp_id = resp.experiment.id
-        exp = experiment.Experiment(exp_id, self._session)
-
-        return exp
+        return experiment.Experiment._from_bindings(resp.experiment, self._session)
 
     def get_experiment(self, experiment_id: int) -> experiment.Experiment:
         """
         Get the :class:`~determined.experimental.Experiment` representing the
         experiment with the provided experiment ID.
         """
-        return experiment.Experiment(
-            experiment_id,
-            self._session,
-        )
+        resp = bindings.get_GetExperiment(session=self._session, experimentId=experiment_id)
+        return experiment.Experiment._from_bindings(resp.experiment, self._session)
 
     def get_trial(self, trial_id: int) -> trial.Trial:
         """
         Get the :class:`~determined.experimental.Trial` representing the
         trial with the provided trial ID.
         """
-        return trial.Trial(trial_id, self._session)
+        resp = bindings.get_GetTrial(session=self._session, trialId=trial_id)
+        return trial.Trial._from_bindings(resp.trial, self._session)
 
     def get_checkpoint(self, uuid: str) -> checkpoint.Checkpoint:
         """

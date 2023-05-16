@@ -1,7 +1,7 @@
 import enum
 import sys
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any, List, Optional
 
 from determined.common import api
 from determined.common.api import bindings
@@ -50,16 +50,33 @@ class Experiment:
         self._id = experiment_id
         self._session = session
 
+        # These properties may be mutable and will be set by _hydrate()
+        self.config = None
+        self.state = None
+
     @property
     def id(self) -> int:
         return self._id
 
-    def _get(self) -> bindings.v1Experiment:
+    def _get(self, session: api.Session = None) -> bindings.v1Experiment:
         """
         _get fetches the main GET experiment endpoint and parses the response.
         """
-        resp = bindings.get_GetExperiment(self._session, experimentId=self._id)
+        if session is None:
+            session = self._session
+        resp = bindings.get_GetExperiment(session, experimentId=self.id)
         return resp.experiment
+
+    def _hydrate(self, exp: bindings.v1Experiment):
+        self.config = exp.config
+        self.state = exp.state
+
+    def reload(self) -> None:
+        """
+        Explicit refresh of cached properties.
+        """
+        resp = self._get()
+        self._hydrate(resp)
 
     def activate(self) -> None:
         bindings.post_ActivateExperiment(self._session, id=self._id)
@@ -77,9 +94,6 @@ class Experiment:
         You must be authenticated as admin to delete an experiment.
         """
         bindings.delete_DeleteExperiment(self._session, experimentId=self._id)
-
-    def get_config(self) -> Dict[str, Any]:
-        return self._get().config
 
     def get_trials(
         self,
@@ -107,7 +121,9 @@ class Experiment:
 
         resps = api.read_paginated(get_with_offset)
 
-        return [trial.Trial(t.id, self._session) for r in resps for t in r.trials]
+        return [
+            trial.Trial._from_bindings(t, self._session) for r in resps for t in r.trials
+        ]
 
     def await_first_trial(self, interval: float = 0.1) -> trial.Trial:
         """
@@ -121,7 +137,7 @@ class Experiment:
                 sortBy=bindings.v1GetExperimentTrialsRequestSortBy.START_TIME,
             )
             if len(resp.trials) > 0:
-                return trial.Trial(resp.trials[0].id, self._session)
+                return trial.Trial._from_bindings(resp.trials[0], self._session)
             time.sleep(interval)
 
     def kill(self) -> None:
@@ -144,15 +160,15 @@ class Experiment:
 
         elapsed_time = 0.0
         while True:
-            exp = bindings.get_GetExperiment(self._session, experimentId=self._id).experiment
-            if exp.state in (
+            self.reload()
+            if self.state in (
                 bindings.experimentv1State.COMPLETED,
                 bindings.experimentv1State.CANCELED,
                 bindings.experimentv1State.DELETED,
                 bindings.experimentv1State.ERROR,
             ):
-                return ExperimentState(exp.state.value)
-            elif exp.state == bindings.experimentv1State.PAUSED:
+                return ExperimentState(self.state.value)
+            elif self.state == bindings.experimentv1State.PAUSED:
                 raise ValueError(
                     f"Experiment {self.id} is in paused state. Make sure the experiment is active."
                 )
@@ -284,3 +300,11 @@ class Experiment:
 
     def __repr__(self) -> str:
         return "Experiment(id={})".format(self.id)
+
+    @classmethod
+    def _from_bindings(
+        cls, exp: bindings.v1Experiment, session: api.Session
+    ) -> "ExperimentReference":
+        exp_cls = cls(session=session, experiment_id=exp.id)
+        exp_cls._hydrate(exp)
+        return exp_cls

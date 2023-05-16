@@ -91,24 +91,18 @@ class Checkpoint:
     def __init__(
         self,
         session: api.Session,
-        task_id: Optional[str],
-        allocation_id: Optional[str],
         uuid: str,
-        report_time: Optional[str],
-        resources: Dict[str, Any],
-        metadata: Dict[str, Any],
-        state: CheckpointState,
-        training: Optional[CheckpointTrainingMetadata] = None,
     ):
         self._session = session
-        self.task_id = task_id
-        self.allocation_id = allocation_id
         self.uuid = uuid
-        self.report_time = report_time
-        self.resources = resources
-        self.metadata = metadata
-        self.state = state
-        self.training = training
+
+        self.task_id = None
+        self.allocation_id = None
+        self.report_time = None
+        self.resources = None
+        self.metadata = None
+        self.state = None
+        self.training = None
 
     def _find_shared_fs_path(self, checkpoint_storage: Dict[str, Any]) -> pathlib.Path:
         """Attempt to find the path of the checkpoint if being configured to shared fs.
@@ -154,6 +148,7 @@ class Checkpoint:
             mode (DownloadMode, optional): Governs how a checkpoint is downloaded. Defaults to
                 ``AUTO``.
         """
+        self.reload()
         if (
             self.state != CheckpointState.COMPLETED
             and self.state != CheckpointState.PARTIALLY_DELETED
@@ -279,6 +274,7 @@ class Checkpoint:
         where you are accessing the checkpoint files directly (not via Checkpoint.download) you may
         use this method directly to obtain the latest metadata.
         """
+        self.reload()
         with open(path, "w") as f:
             json.dump(self.metadata, f, indent=2)
 
@@ -307,6 +303,7 @@ class Checkpoint:
         Arguments:
             metadata (dict): Dictionary of metadata to add to the checkpoint.
         """
+        self.reload()
         for key, val in metadata.items():
             self.metadata[key] = val
 
@@ -322,7 +319,7 @@ class Checkpoint:
         Arguments:
             keys (List[string]): Top-level keys to remove from the checkpoint metadata.
         """
-
+        self.reload()
         for key in keys:
             if key in self.metadata:
                 del self.metadata[key]
@@ -369,16 +366,31 @@ class Checkpoint:
         else:
             return f"Checkpoint(uuid={self.uuid}, task_id={self.task_id})"
 
+    def _get(self) -> bindings.v1Checkpoint:
+        resp = bindings.get_GetCheckpoint(session=self._session, checkpointUuid=self.uuid)
+        return resp.checkpoint
+
+    def _hydrate(self, ckpt: bindings.v1Checkpoint):
+        self.task_id = ckpt.taskId
+        self.allocation_id = ckpt.allocationId
+        self.report_time = ckpt.reportTime
+        self.resources = ckpt.resources
+        self.metadata = ckpt.metadata
+        self.state = CheckpointState(ckpt.state.value)
+        self.training = CheckpointTrainingMetadata._from_bindings(ckpt.training)
+
+    def reload(self) -> None:
+        """
+        Explicit refresh of cached properties.
+        """
+        resp = self._get()
+        self._hydrate(resp)
+
     @classmethod
     def _from_bindings(cls, ckpt: bindings.v1Checkpoint, session: api.Session) -> "Checkpoint":
-        return cls(
+        ckpt_obj = cls(
             session=session,
-            task_id=ckpt.taskId,
-            allocation_id=ckpt.allocationId,
             uuid=ckpt.uuid,
-            report_time=ckpt.reportTime,
-            resources=ckpt.resources,
-            metadata=ckpt.metadata,
-            state=CheckpointState(ckpt.state.value),
-            training=CheckpointTrainingMetadata._from_bindings(ckpt.training),
         )
+        ckpt_obj._hydrate(ckpt)
+        return ckpt_obj
