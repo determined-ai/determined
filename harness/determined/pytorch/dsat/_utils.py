@@ -1,5 +1,6 @@
 import argparse
 import collections
+import copy
 import json
 import logging
 import pathlib
@@ -7,6 +8,7 @@ import random
 from contextlib import contextmanager
 from typing import Any, Dict, Generator, List, Optional, Tuple, Union
 
+import filelock
 import torch
 from ruamel import yaml
 
@@ -421,3 +423,81 @@ def replace_ds_config_file_using_overwrites(
         # overwrite the original config
         with open(ds_config_path, "w") as f:
             json.dump(ds_config_dict_with_overwrites, f)
+
+
+def update_hf_args(args: List[str], ds_config_dict: Dict[str, Any]) -> List[str]:
+    """
+    Updates batch-size-related HF CLI args to be consistent with the values specified in the
+    provided DeepSpeed config dictionary.
+    """
+    hf_flag_to_ds_key = {
+        "--per_device_train_batch_size": "train_micro_batch_size_per_gpu",
+        "--gradient_accumulation_steps": "gradient_accumulation_steps",
+    }
+    # Overwrite CLI args
+    args = copy.deepcopy(args)
+    for idx in range(len(args)):
+        if args[idx] in hf_flag_to_ds_key:
+            ds_key = hf_flag_to_ds_key[args[idx]]
+            overwrite_value = str(ds_config_dict[ds_key])
+            if args[idx + 1] != overwrite_value:
+                logging.warning(
+                    f"Changing {args[idx]} from {args[idx +1]} to {overwrite_value} to match "
+                    " the deespspeed config values."
+                )
+                args[idx + 1] = overwrite_value
+            del hf_flag_to_ds_key[args[idx]]
+
+    # Any remaining keys in hf_flag_to_ds_key were not provided as args to the HF CLI entrypoint,
+    # but they must be added in explicitly, to avoid falling back to HF defaults.
+    for hf_flag, ds_key in hf_flag_to_ds_key.items():
+        hf_flag_value = str(ds_config_dict[ds_key])
+        args.extend([hf_flag, hf_flag_value])
+        logging.warning(
+            f"Adding {hf_flag} {hf_flag_value} to HF CLI args to reflect overwrite values."
+        )
+    return args
+
+
+def get_hf_args_with_overwrites(
+    args: List[str], hparams: Dict[str, Any], overwrite_key: str = _defaults.OVERWRITE_KEY
+) -> List[str]:
+    """
+    Helper function which modifies the HF CLI args (`--per_device_train_batch_size` and
+    `--gradient_accumulation_steps`) to reflect any batch-size related DeepSpeed parameters
+    present in `hparams[overwrite_key]` (`train_batch_size`, `train_micro_batch_size_per_gpu`, and
+    `gradient_accumulation_steps`). Assumes that each of these three keys are in
+    `hparams[overwrite_key]` and that they are consistent with each other. Primarily intended for
+    use with DeepSpeed Autotune, which populates `hparams[overwrite_key]` using values which
+    obey the above constraints.
+    """
+    if overwrite_key not in hparams:
+        logging.info(
+            f"{overwrite_key} key not found in hparams, `get_hf_args_with_overwrites` is a no-op"
+        )
+        return []
+
+    # Verify that the appropriate keys in the DS json file have `"auto"` values
+    ds_config_path = get_ds_config_path_from_args(args)
+
+    if ds_config_path is None:
+        logging.warning(
+            f"Could not determine ds_config_path in `get_hf_args_with_overwrites`. Args: {args}"
+        )
+        return []
+
+    with open(ds_config_path, "r") as f:
+        ds_config_dict = json.load(f)
+
+    # Then merge all overwrites into the ds_config
+    overwritten_ds_config_dict = merge_dicts(ds_config_dict, hparams[overwrite_key])
+
+    # We need to actually overwrite the ds json config file, due to how HF processes args.
+    # A file lock is required during both the writing and reading.
+    with filelock.FileLock(ds_config_path + ".lock"):
+        with open(ds_config_path, "w") as f:
+            json.dump(overwritten_ds_config_dict, f)
+        # Finally overwrite the CLI args
+        args = update_hf_args(args, overwritten_ds_config_dict)
+
+    return args

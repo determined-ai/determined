@@ -12,7 +12,6 @@ import pytest
 
 from determined import searcher
 from determined.common.api import bindings
-from determined.integrations.huggingface import get_hf_args_with_overwrites
 from determined.pytorch.dsat import (
     BaseDSATSearchMethod,
     BinarySearchDSATSearchMethod,
@@ -21,6 +20,7 @@ from determined.pytorch.dsat import (
     RandomDSATSearchMethod,
     _defaults,
     _utils,
+    get_hf_args_with_overwrites,
 )
 from determined.pytorch.dsat._run_dsat import (
     get_custom_dsat_exp_conf_from_args,
