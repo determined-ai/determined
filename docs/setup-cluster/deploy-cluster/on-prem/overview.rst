@@ -25,3 +25,4 @@ Determined by your preferred method.
    deploy
    linux-packages
    homebrew
+   wsl
