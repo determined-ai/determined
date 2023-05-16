@@ -158,8 +158,6 @@ const HpParallelCoordinates: React.FC<Props> = ({
       style: {
         axes: { label: { placement: 'after' } },
         data: {
-          targetColorScale: colorScale.map((scale) => scale.color),
-          targetDimensionKey: selectedMetric ? metricToStr(selectedMetric) : '',
           series: trial?.id
             ? new Array(chartData?.trialIds.length).fill(undefined).map((_, index) => {
                 return {
@@ -170,6 +168,8 @@ const HpParallelCoordinates: React.FC<Props> = ({
                 };
               })
             : undefined,
+          targetColorScale: colorScale.map((scale) => scale.color),
+          targetDimensionKey: selectedMetric ? metricToStr(selectedMetric) : '',
         },
         dimension: { label: { angle: Math.PI / 4, truncate: 24 } },
         padding: [4, 120, 4, 16],
