@@ -1,4 +1,7 @@
-import { V1ColumnType, V1LocationType, V1ProjectColumn } from 'services/api-ts-sdk';
+import * as t from 'io-ts';
+
+import { ioColumnType, ioLocationType } from 'ioTypes';
+import { V1ColumnType } from 'services/api-ts-sdk';
 import { ValueOf } from 'shared/types';
 import { RunState } from 'types';
 
@@ -10,16 +13,6 @@ export const FormKind = {
 export type FormKind = ValueOf<typeof FormKind>;
 
 export type FormFieldValue = string | number | null;
-
-export type FormField = {
-  readonly id: string;
-  readonly kind: typeof FormKind.Field;
-  columnName: V1ProjectColumn['column'];
-  location: V1LocationType;
-  type: V1ColumnType;
-  operator: Operator;
-  value: FormFieldValue;
-};
 
 export type FormGroup = {
   readonly id: string;
@@ -156,3 +149,44 @@ export const SEARCHER_TYPE = ['adaptive_asha', 'single', 'random'] as const;
 export const SpecialColumnNames = ['user', 'state', 'resourcePool', 'searcherType'] as const;
 
 export type SpecialColumnNames = (typeof SpecialColumnNames)[number];
+
+const IOOperator: t.Type<Operator> = t.keyof({
+  [Operator.Contains]: null,
+  [Operator.Eq]: null,
+  [Operator.Greater]: null,
+  [Operator.GreaterEq]: null,
+  [Operator.IsEmpty]: null,
+  [Operator.Less]: null,
+  [Operator.LessEq]: null,
+  [Operator.NotContains]: null,
+  [Operator.NotEmpty]: null,
+  [Operator.NotEq]: null,
+});
+
+const FormField = t.type({
+  columnName: t.string,
+  id: t.readonly(t.string),
+  kind: t.readonly(t.literal('field')),
+  location: ioLocationType,
+  operator: IOOperator,
+  type: ioColumnType,
+  value: t.union([t.string, t.number, t.null]),
+});
+
+export type FormField = t.TypeOf<typeof FormField>;
+
+const FormGroup: t.Type<FormGroup> = t.recursion('IOFormGroup', () =>
+  t.type({
+    children: t.array(t.union([FormField, FormGroup])),
+    conjunction: IOConjunction,
+    id: t.readonly(t.string),
+    kind: t.readonly(t.literal('group')),
+  }),
+);
+
+const IOConjunction = t.union([t.literal('and'), t.literal('or')]);
+
+export const IOFilterFormSet = t.type({
+  filterGroup: FormGroup,
+  showArchived: t.boolean,
+});

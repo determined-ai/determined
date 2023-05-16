@@ -207,13 +207,13 @@ export const ioTaskLogs = io.array(ioTaskLog);
 export type ioTypeTaskLog = io.TypeOf<typeof ioTaskLog>;
 export type ioTypeTaskLogs = io.TypeOf<typeof ioTaskLogs>;
 
-const ioLocationType = io.keyof({
+export const ioLocationType = io.keyof({
   [V1LocationType.EXPERIMENT]: null,
   [V1LocationType.HYPERPARAMETERS]: null,
   [V1LocationType.VALIDATIONS]: null,
   [V1LocationType.UNSPECIFIED]: null,
 });
-const ioColumnType = io.keyof({
+export const ioColumnType = io.keyof({
   [V1ColumnType.DATE]: null,
   [V1ColumnType.NUMBER]: null,
   [V1ColumnType.TEXT]: null,

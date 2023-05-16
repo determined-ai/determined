@@ -1,10 +1,11 @@
 import { Rectangle } from '@glideapps/glide-data-grid';
+import { isLeft } from 'fp-ts/lib/Either';
 import { observable, useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import { FilterFormStore } from 'components/FilterForm/components/FilterFormStore';
-import { FilterFormSet } from 'components/FilterForm/components/type';
+import { IOFilterFormSet } from 'components/FilterForm/components/type';
 import Empty from 'components/kit/Empty';
 import useResize from 'hooks/useResize';
 import { useSettings } from 'hooks/useSettings';
@@ -100,8 +101,15 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     let ignore = false;
 
     if (!ignore) {
-      const formSet: FilterFormSet = JSON.parse(settings.filterset);
-      formStore.init(formSet);
+      const formSetValidation = IOFilterFormSet.decode(JSON.parse(settings.filterset));
+      if (isLeft(formSetValidation)) {
+        handleError(formSetValidation.left, {
+          publicSubject: 'Unable to initialize filterset from settings',
+        });
+      } else {
+        const formset = formSetValidation.right;
+        formStore.init(formset);
+      }
     }
 
     return () => {
