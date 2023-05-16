@@ -7,10 +7,10 @@
 import logging
 import random
 
+import torch.distributed as dist
+
 import determined as det
 import determined.experimental.unmanaged
-
-import torch.distributed as dist
 
 config_text = """
 name: unmanaged-mode-stage-3
@@ -37,20 +37,24 @@ def main():
     distributed = det.core.DistributedContext.from_torch_distributed()
 
     unmanaged_info = det.experimental.unmanaged.create_unmanaged_cluster_info(
-        client, distributed=distributed, config_text=config_text)
+        client, distributed=distributed, config_text=config_text
+    )
 
     with det.experimental.unmanaged.init(
-        distributed=distributed,
-        unmanaged_info=unmanaged_info,
-        client=client) as core_context:
+        distributed=distributed, unmanaged_info=unmanaged_info, client=client
+    ) as core_context:
         size = dist.get_world_size()
         for i in range(100):
             if i % size == dist.get_rank():
                 core_context.train.report_training_metrics(
-                    steps_completed=i, metrics={"loss": random.random(), "rank": dist.get_rank() + 0.01})
+                    steps_completed=i,
+                    metrics={"loss": random.random(), "rank": dist.get_rank() + 0.01},
+                )
                 if (i + 1) % 10 == 0:
                     core_context.train.report_validation_metrics(
-                        steps_completed=i, metrics={"loss": random.random(), "rank": dist.get_rank() + 0.01})
+                        steps_completed=i,
+                        metrics={"loss": random.random(), "rank": dist.get_rank() + 0.01},
+                    )
 
             ckpt_metadata = {"steps_completed": i, f"rank_{dist.get_rank()}": "ok"}
             with core_context.checkpoint.store_path(ckpt_metadata, shard=True) as (path, uuid):
@@ -59,7 +63,10 @@ def main():
 
     if dist.get_rank() == 0:
         exp_id = unmanaged_info._trial_info.experiment_id
-        print("See the experiment at:", det.experimental.unmanaged.url_reverse_webui_exp_view(client, exp_id))
+        print(
+            "See the experiment at:",
+            det.experimental.unmanaged.url_reverse_webui_exp_view(client, exp_id),
+        )
 
 
 if __name__ == "__main__":

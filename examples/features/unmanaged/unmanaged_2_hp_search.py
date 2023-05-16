@@ -22,17 +22,20 @@ searcher:
 
 def runner(client: det.experimental.Determined, exp_id: int, hparams: dict = {}):
     unmanaged_info = det.experimental.unmanaged.create_unmanaged_trial_cluster_info(
-        client, config_text, exp_id, hparams=hparams)
+        client, config_text, exp_id, hparams=hparams
+    )
 
     with det.experimental.unmanaged.init(
-        unmanaged_info=unmanaged_info,
-        client=client) as core_context:
+        unmanaged_info=unmanaged_info, client=client
+    ) as core_context:
         for i in range(100):
             core_context.train.report_training_metrics(
-                steps_completed=i, metrics={"loss": random.random()})
+                steps_completed=i, metrics={"loss": random.random()}
+            )
             if (i + 1) % 10 == 0:
                 core_context.train.report_validation_metrics(
-                    steps_completed=i, metrics={"loss": random.random()})
+                    steps_completed=i, metrics={"loss": random.random()}
+                )
 
                 with core_context.checkpoint.store_path({"steps_completed": i}) as (path, uuid):
                     with (path / "state").open("w") as fout:
@@ -49,9 +52,12 @@ def main():
 
     # Grid search.
     for i in range(4):
-        runner(client, exp_id, {'i': i})
+        runner(client, exp_id, {"i": i})
 
-    print("See the experiment at:", det.experimental.unmanaged.url_reverse_webui_exp_view(client, exp_id))
+    print(
+        "See the experiment at:",
+        det.experimental.unmanaged.url_reverse_webui_exp_view(client, exp_id),
+    )
 
 
 if __name__ == "__main__":
