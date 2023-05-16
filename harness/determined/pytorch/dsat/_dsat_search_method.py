@@ -1122,12 +1122,14 @@ class ASHADSATSearchMethod(BaseDSATSearchMethod):
         super().__init__(*args, **kwargs)
 
         # TODO: Remove hard coding and use better names. These are from the paper.
-        self.R = self.args.R
-        self.r = self.args.r
-        self.s = self.args.s
-        self.eta = self.args.eta
-        self.max_rung = int(math.log(self.R / self.r, self.eta))
-        assert self.max_rung > 0
+        self.max_binary_search_trials = self.args.max_binary_search_trials
+        self.min_binary_search_trials = self.args.min_binary_search_trials
+        self.asha_early_stopping = self.args.asha_early_stopping
+        self.divisor = self.args.divisor
+        self.max_rung_ceiling = int(
+            math.log(self.max_binary_search_trials / self.min_binary_search_trials, self.divisor)
+        )
+        assert self.max_rung_ceiling > 0
         self.search_range_factor = self.args.search_range_factor
 
     def get_trials_after_validation_completed(
@@ -1193,7 +1195,7 @@ class ASHADSATSearchMethod(BaseDSATSearchMethod):
                 if root.search_data.curr_rung >= rung_idx
                 and self.lineage_completed_rung(root, rung_idx)
             ]
-            for rung_idx in range(self.max_rung)
+            for rung_idx in range(self.max_rung_ceiling)
         }
         return rungs
 
@@ -1223,7 +1225,7 @@ class ASHADSATSearchMethod(BaseDSATSearchMethod):
         return False
 
     def get_next_promotable_lineage(self) -> Optional[DSATTrial]:
-        for rung_idx in reversed(range(self.max_rung - 1)):
+        for rung_idx in reversed(range(self.max_rung_ceiling - 1)):
             next_promotable_trial = self.get_next_promotable_lineage_in_rung(rung_idx)
             if next_promotable_trial is not None:
                 return next_promotable_trial
@@ -1239,7 +1241,7 @@ class ASHADSATSearchMethod(BaseDSATSearchMethod):
         Returns the top 1 / eta fraction of lineages from the given rung, per the ASHA paper.
         """
         completed_lineages_in_rung = self.rungs[rung_idx]
-        k = len(completed_lineages_in_rung) // self.eta
+        k = len(completed_lineages_in_rung) // self.divisor
         if not k:
             return []
         best_trials = [self.get_best_trial_in_lineage(lin) for lin in completed_lineages_in_rung]
@@ -1290,7 +1292,9 @@ class ASHADSATSearchMethod(BaseDSATSearchMethod):
     def max_trials_for_rung_idx(self, rung_idx: int) -> int:
         if rung_idx == -1:
             return 0
-        max_resources = self.r * self.eta ** (self.s + rung_idx)
+        max_resources = self.min_binary_search_trials * self.divisor ** (
+            self.asha_early_stopping + rung_idx
+        )
         return max_resources
 
     def get_random_hparams_and_search_data(

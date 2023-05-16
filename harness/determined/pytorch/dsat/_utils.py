@@ -101,20 +101,20 @@ def get_full_parser() -> argparse.ArgumentParser:
     # TODO: just using the paper's notation now, but should make align with existing Determined.
     asha_subparser = subparsers.add_parser("asha", parents=[base_parser])
     asha_subparser.add_argument(
-        "--R",
-        default=10,
+        "--max-binary-search-trials",
+        default=_defaults.AUTOTUNING_ARG_DEFAULTS["max-binary-search-trials"],
     )
     asha_subparser.add_argument(
-        "--r",
-        default=3,
+        "--min-binary-search-trials",
+        default=_defaults.AUTOTUNING_ARG_DEFAULTS["min-binary-search-trials"],
     )
     asha_subparser.add_argument(
-        "--s",
-        default=0,
+        "--asha-early-stopping",
+        default=_defaults.AUTOTUNING_ARG_DEFAULTS["asha-early-stopping"],
     )
     asha_subparser.add_argument(
-        "--eta",
-        default=2,
+        "--divisor",
+        default=_defaults.AUTOTUNING_ARG_DEFAULTS["divisor"],
     )
     asha_subparser.add_argument(
         "-srf",

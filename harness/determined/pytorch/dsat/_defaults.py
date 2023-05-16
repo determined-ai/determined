@@ -61,6 +61,10 @@ AUTOTUNING_ARG_DEFAULTS = {
     "random-seed": 42,
     "run-full-experiment": False,
     "search-range-factor": 1.0,
+    "divisor": 2,
+    "min-binary-search-trials": 2,
+    "max-binary-search-trials": 16,
+    "asha-early-stopping": 0,
 }
 
 DEFAULT_SEARCH_RUNNER_CONFIG = {
