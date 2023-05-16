@@ -1058,7 +1058,7 @@ def default_asha_state_and_search_method():
 def long_large_max_resource_asha_state_and_search_method():
     args = copy.deepcopy(DEFAULT_ARGS_DICT["asha"])
     args.max_trials = 10**3
-    args.R = 10**3
+    args.max_binary_search_trials = 10**3
     searcher_state, search_method = search_state_and_method_builder(args)
     yield searcher_state, search_method
 
@@ -1070,7 +1070,7 @@ def long_large_min_resource_asha_state_and_search_method():
     """
     args = copy.deepcopy(DEFAULT_ARGS_DICT["asha"])
     args.max_trials = 10**3
-    args.r = 10**3
+    args.min_binary_search_trials = 10**3
     searcher_state, search_method = search_state_and_method_builder(args)
     yield searcher_state, search_method
 
@@ -1120,11 +1120,11 @@ class TestASHADSATSearchMethod:
     def test_get_top_lineages_in_rung(self, long_large_max_resource_asha_state_and_search_method):
         searcher_state, search_method = long_large_max_resource_asha_state_and_search_method
         search_method.trial_tracker.queue.clear()
-        metrics = list(range(10 * search_method.eta))
+        metrics = list(range(10 * search_method.divisor))
         for metric in metrics:
             hparams, search_data = search_method.get_random_hparams_and_search_data(1)
             trial = None
-            for idx in range(search_method.r):
+            for idx in range(search_method.min_binary_search_trials):
                 trial = search_method.trial_tracker.create_trial(
                     hparams=hparams, search_data=copy.deepcopy(search_data), parent_trial=trial
                 )
@@ -1138,7 +1138,7 @@ class TestASHADSATSearchMethod:
             assert not search_method.lineage_completed_rung(trial, 1)
 
         top_trials = search_method.get_top_lineages_in_rung(0)
-        assert len(top_trials) == len(search_method.rungs[0]) // search_method.eta
+        assert len(top_trials) == len(search_method.rungs[0]) // search_method.divisor
         if search_method.trial_tracker.smaller_is_better:
             expected_metrics = metrics[: len(top_trials)]
         else:
@@ -1154,10 +1154,10 @@ class TestASHADSATSearchMethod:
         searcher_state, search_method = long_large_max_resource_asha_state_and_search_method
         search_method.trial_tracker.queue.clear()
         # Complete enough trials so that some can be promoted.
-        for _ in range(search_method.eta):
+        for _ in range(search_method.divisor):
             hparams, search_data = search_method.get_random_hparams_and_search_data(1)
             trial = None
-            for trial_num in range(search_method.r):
+            for trial_num in range(search_method.min_binary_search_trials):
                 trial = search_method.trial_tracker.create_trial(
                     hparams=hparams, search_data=copy.deepcopy(search_data), parent_trial=trial
                 )
@@ -1175,7 +1175,7 @@ class TestASHADSATSearchMethod:
         search_method.promote_all_trials_in_lineage(next_promotable_lineage)
         next_trial = search_method.get_next_trial_in_lineage(next_promotable_lineage)
         assert next_trial.search_data.curr_rung == 1
-        assert len(next_trial.lineage_set) == search_method.r + 1
+        assert len(next_trial.lineage_set) == search_method.min_binary_search_trials + 1
 
     @pytest.mark.timeout(5)
     def test_lineage_continutation(self, long_large_max_resource_asha_state_and_search_method):
@@ -1190,7 +1190,7 @@ class TestASHADSATSearchMethod:
         )
         search_method.trial_tracker.queue_and_register_trial(first_trial)
         _ = search_method.trial_tracker.queue.popleft()
-        for trial_num in range(search_method.r):
+        for trial_num in range(search_method.min_binary_search_trials):
             assert curr_trial.search_data.curr_rung == 0
             assert curr_trial.lineage_root == first_trial
             assert curr_trial.num_completed_trials_in_lineage == trial_num
@@ -1217,12 +1217,12 @@ class TestASHADSATSearchMethod:
         good_metric, bad_metric = (
             (0.0, 1.0) if search_method.trial_tracker.smaller_is_better else (1.0, 0.0)
         )
-        # Fill two rungs with trials search_method.eta trials, so that there are enough to promote
-        # from the top rung.
-        for _ in range(search_method.eta):
+        # Fill two rungs with trials search_method.divisor trials, so that there are enough to
+        # promote from the top rung.
+        for _ in range(search_method.divisor):
             hparams, search_data = search_method.get_random_hparams_and_search_data(1)
             trial = None
-            for trial_num in range(search_method.r * search_method.eta):
+            for trial_num in range(search_method.min_binary_search_trials * search_method.divisor):
                 trial = search_method.trial_tracker.create_trial(
                     hparams=hparams, search_data=copy.deepcopy(search_data), parent_trial=trial
                 )
@@ -1239,7 +1239,7 @@ class TestASHADSATSearchMethod:
         # lineage above, so that it is promotable.
         hparams, search_data = search_method.get_random_hparams_and_search_data(1)
         trial = None
-        for trial_num in range(search_method.r):
+        for trial_num in range(search_method.min_binary_search_trials):
             trial = search_method.trial_tracker.create_trial(
                 hparams=hparams, search_data=copy.deepcopy(search_data), parent_trial=trial
             )
@@ -1252,8 +1252,8 @@ class TestASHADSATSearchMethod:
 
         # Verify the counting above and that the next promoted trial will come from the topmost
         # possible rung.
-        assert len(search_method.rungs[0]) == search_method.eta + 1
-        assert len(search_method.rungs[1]) == search_method.eta
+        assert len(search_method.rungs[0]) == search_method.divisor + 1
+        assert len(search_method.rungs[1]) == search_method.divisor
         assert search_method.get_next_promotable_lineage_in_rung(0) is not None
         assert search_method.get_next_promotable_lineage_in_rung(1) is not None
         assert search_method.get_next_promotable_lineage_in_rung(0).search_data.curr_rung == 0
@@ -1274,7 +1274,7 @@ class TestASHADSATSearchMethod:
         )
         search_method.trial_tracker.queue_and_register_trial(trial)
         _ = search_method.trial_tracker.queue.popleft()
-        for _ in range(search_method.R):
+        for _ in range(search_method.max_binary_search_trials):
             search_method.trial_tracker.update_trial_metric(
                 trial, {trial.searcher_metric_name: 0.0}
             )
@@ -1283,7 +1283,7 @@ class TestASHADSATSearchMethod:
             )
             search_method.trial_tracker.queue_and_register_trial(trial)
             _ = search_method.trial_tracker.queue.popleft()
-        assert search_method.lineage_completed_rung(trial, search_method.max_rung - 1)
+        assert search_method.lineage_completed_rung(trial, search_method.max_rung_ceiling - 1)
         assert search_method.get_next_promotable_lineage() is None
 
     @pytest.mark.timeout(5)
