@@ -32,7 +32,7 @@ from tests.custom_search_mocks import MockMaster, MockMasterSearchRunner
 ERROR_METRIC_NAME = "error"
 
 BASE_EXPERIMENT_FIXTURE_PATH = (
-    pathlib.Path(__file__).resolve().parent.parent.joinpath("fixtures/deepspeed_autotune")
+    pathlib.Path(__file__).resolve().parent.parent.parent.joinpath("fixtures/deepspeed_autotune")
 )
 MODEL_DIR = BASE_EXPERIMENT_FIXTURE_PATH.joinpath("example_experiment")
 DS_CONFIG_PATH = MODEL_DIR.joinpath("ds_config.json")
@@ -1105,7 +1105,7 @@ class TestHFConfigOverwriting:
                     assert overwritten_ds_config.get(k) == v
 
 
-class DSATMockMaster(MockMaster):
+class DSATMockMaster(MockMaster):  # type: ignore
     """
     Sends v1 metrics back to the Search Runner in the manner defined with the
     `all_metrics` list of dictionaries.
