@@ -421,6 +421,69 @@ func TestSummaryMetricsMigration(t *testing.T) {
 	}
 }
 
+func TestEpochMetricTypes(t *testing.T) {
+	ctx := context.Background()
+	require.NoError(t, etc.SetRootPath(RootFromDB))
+	db := MustResolveTestPostgres(t)
+	MustMigrateTestPostgres(t, db, MigrationsFromDB)
+
+	user := RequireMockUser(t, db)
+	exp := RequireMockExperiment(t, db, user)
+
+	cases := []struct {
+		epochValue any
+		err        error
+	}{
+		{float64(1.0), nil}, // Floats okay due to json numeric.
+		{float64(1.5), nil},
+		{nil, nil},
+		{math.Inf(1), fmt.Errorf("cannot add metric with non numeric 'epoch' value got Infinity")},
+		{math.Inf(-1), fmt.Errorf("cannot add metric with non numeric 'epoch' value got -Infinity")},
+		{math.NaN(), fmt.Errorf("cannot add metric with non numeric 'epoch' value got NaN")},
+		{int(1), nil},
+		{"Infinity", fmt.Errorf("cannot add metric with non numeric 'epoch' value got Infinity")},
+		{"-Infinity", fmt.Errorf("cannot add metric with non numeric 'epoch' value got -Infinity")},
+		{"NaN", fmt.Errorf("cannot add metric with non numeric 'epoch' value got NaN")},
+		{"x", fmt.Errorf("cannot add metric with non numeric 'epoch' value got x")},
+		{true, fmt.Errorf("cannot add metric with non numeric 'epoch' value got true")},
+		{false, fmt.Errorf("cannot add metric with non numeric 'epoch' value got false")},
+		{[]any{1}, fmt.Errorf("cannot add metric with non numeric 'epoch' value got [1]")},
+		{
+			map[string]any{"a": 1.0},
+			fmt.Errorf(`cannot add metric with non numeric 'epoch' value got map[a:1]`),
+		},
+	}
+	for _, c := range cases {
+		for _, reportTraining := range []bool{true, false} {
+			trial := RequireMockTrial(t, db, exp).ID
+			metrics, err := structpb.NewStruct(map[string]any{
+				"epoch": c.epochValue,
+			})
+			require.NoError(t, err)
+
+			if reportTraining {
+				require.Equal(t, c.err, db.AddTrainingMetrics(ctx, &trialv1.TrialMetrics{
+					TrialId:        int32(trial),
+					TrialRunId:     0,
+					StepsCompleted: 1,
+					Metrics: &commonv1.Metrics{
+						AvgMetrics: metrics,
+					},
+				}), "epochValue=%+v", c.epochValue)
+			} else {
+				require.Equal(t, c.err, db.AddValidationMetrics(ctx, &trialv1.TrialMetrics{
+					TrialId:        int32(trial),
+					TrialRunId:     0,
+					StepsCompleted: 1,
+					Metrics: &commonv1.Metrics{
+						AvgMetrics: metrics,
+					},
+				}), "epochValue=%+v", c.epochValue)
+			}
+		}
+	}
+}
+
 func getLatestValidation(ctx context.Context, t *testing.T, trialID int) (*int, *map[string]any) {
 	type trials struct {
 		bun.BaseModel `bun:"table:trials"`
