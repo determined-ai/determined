@@ -3,8 +3,9 @@ import json
 import os
 from typing import Dict
 
-from determined.experimental import client
 from ruamel import yaml
+
+from determined.experimental import client
 
 """Very simple wrapper script which writes the ds_config.json from the yaml file and then launches
 the experiment."""

@@ -26,11 +26,6 @@ import numpy as np
 import torch
 import transformers
 from datasets import load_dataset
-from determined.integrations.huggingface import (
-    DetCallback,
-    get_hf_args_with_overwrites,
-)
-from determined.pytorch import dsat
 from PIL import Image
 from torch.utils.tensorboard import SummaryWriter
 from torchvision.transforms import (
@@ -56,6 +51,7 @@ from transformers.trainer_utils import get_last_checkpoint
 from transformers.utils.versions import require_version
 
 import determined as det
+from determined.integrations.huggingface import DetCallback, get_hf_args_with_overwrites
 from determined.pytorch import dsat
 
 """ Fine-tuning a 🤗 Transformers model for image classification"""
