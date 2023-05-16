@@ -1105,7 +1105,7 @@ class TestHFConfigOverwriting:
                     assert overwritten_ds_config.get(k) == v
 
 
-class DSATMockMaster(MockMaster):  # type: ignore
+class DSATMockMaster(MockMaster):
     """
     Sends v1 metrics back to the Search Runner in the manner defined with the
     `all_metrics` list of dictionaries.
