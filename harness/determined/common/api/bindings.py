@@ -11136,33 +11136,45 @@ class v1SummarizeTrialResponse:
         return out
 
 class v1Task:
+    endTime: "typing.Optional[str]" = None
 
     def __init__(
         self,
         *,
         allocations: "typing.Sequence[v1Allocation]",
+        startTime: str,
         taskId: str,
         taskType: str,
+        endTime: "typing.Union[str, None, Unset]" = _unset,
     ):
         self.allocations = allocations
+        self.startTime = startTime
         self.taskId = taskId
         self.taskType = taskType
+        if not isinstance(endTime, Unset):
+            self.endTime = endTime
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Task":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "allocations": [v1Allocation.from_json(x) for x in obj["allocations"]],
+            "startTime": obj["startTime"],
             "taskId": obj["taskId"],
             "taskType": obj["taskType"],
         }
+        if "endTime" in obj:
+            kwargs["endTime"] = obj["endTime"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "allocations": [x.to_json(omit_unset) for x in self.allocations],
+            "startTime": self.startTime,
             "taskId": self.taskId,
             "taskType": self.taskType,
         }
+        if not omit_unset or "endTime" in vars(self):
+            out["endTime"] = self.endTime
         return out
 
 class v1TaskLogsFieldsResponse:

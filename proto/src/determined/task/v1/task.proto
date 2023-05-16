@@ -52,7 +52,9 @@ message Allocation {
 // Task is the model for a task in the database.
 message Task {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "task_id", "task_type", "allocations" ] }
+    json_schema: {
+      required: [ "task_id", "task_type", "allocations", "start_time" ]
+    }
   };
   // Unique ID of task.
   string task_id = 1;
@@ -60,6 +62,10 @@ message Task {
   string task_type = 2;
   // List of Allocations.
   repeated Allocation allocations = 4;
+  // Start timestamp.
+  google.protobuf.Timestamp start_time = 5;
+  // End timestamp if completed.
+  optional google.protobuf.Timestamp end_time = 6;
 }
 
 // Address represents an exposed port on a container.

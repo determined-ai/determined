@@ -8741,6 +8741,18 @@ export interface V1Task {
      * @memberof V1Task
      */
     allocations: Array<V1Allocation>;
+    /**
+     * Start timestamp.
+     * @type {Date}
+     * @memberof V1Task
+     */
+    startTime: Date;
+    /**
+     * End timestamp if completed.
+     * @type {Date}
+     * @memberof V1Task
+     */
+    endTime?: Date;
 }
 /**
  * Response to TaskLogsFieldsRequest.
