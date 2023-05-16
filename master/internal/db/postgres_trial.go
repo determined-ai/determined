@@ -507,7 +507,7 @@ func (db *PgDB) addTrialMetrics(
 	switch v := m.Metrics.AvgMetrics.Fields["epoch"].AsInterface().(type) {
 	case float64, nil:
 	default:
-		return nil, fmt.Errorf("cannot add metric with non numeric 'epoch' value got %v", v)
+		return rollbacks, fmt.Errorf("cannot add metric with non numeric 'epoch' value got %v", v)
 	}
 
 	return rollbacks, db.withTransaction("add training metrics", func(tx *sqlx.Tx) error {
