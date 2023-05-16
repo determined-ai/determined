@@ -15,15 +15,21 @@ import (
 
 	"golang.org/x/exp/slices"
 
+<<<<<<< HEAD
 	"github.com/ghodss/yaml"
 	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/pkg/archive"
+=======
+>>>>>>> 8e8ca3bbb (rebase)
 	"github.com/ghodss/yaml"
 	"github.com/labstack/echo/v4"
 	"github.com/uptrace/bun"
+
+	"github.com/determined-ai/determined/master/internal/authz"
+	"github.com/determined-ai/determined/master/pkg/archive"
 
 	"github.com/determined-ai/determined/master/internal/prom"
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -1410,7 +1416,8 @@ func (a *apiServer) populateTaskSpec(user *model.User, modelDef archive.Archive,
 }
 
 func (a *apiServer) resolveProjectID(reqProjectID int,
-	config expconf.ExperimentConfigV0) (int, error, error) {
+	config expconf.ExperimentConfigV0,
+) (int, error, error) {
 	var projectID int
 	var subsUnauthorizedError error
 	if reqProjectID < 1 {
@@ -1443,6 +1450,7 @@ func (a *apiServer) resolveProjectID(reqProjectID int,
 
 	return projectID, subsUnauthorizedError, nil
 }
+
 func (a *apiServer) CreateExperiment(
 	ctx context.Context, req *apiv1.CreateExperimentRequest,
 ) (*apiv1.CreateExperimentResponse, error) {
@@ -1555,7 +1563,6 @@ func (a *apiServer) CreateExperiment(
 		req.GitRemote, req.GitCommit, req.GitCommitter, commitDate,
 		int(project.Id),
 	)
-
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid experiment: %s", err)
 	}
