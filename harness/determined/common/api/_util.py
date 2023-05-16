@@ -82,6 +82,11 @@ def wait_for_ntsc_state(
 
 
 def task_is_ready(session: api.Session, task_id: str) -> Optional[str]:
+    """
+    wait until a task is ready
+    return: None if task is ready, otherwise return an error message
+    """
+
     def _task_is_done_loading() -> Tuple[bool, Optional[str]]:
         task = bindings.get_GetTask(session, taskId=task_id).task
         assert task is not None, "task must not be present."
