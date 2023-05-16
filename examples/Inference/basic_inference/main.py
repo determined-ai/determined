@@ -3,7 +3,7 @@ import torch
 import torchvision as tv
 import torchvision.transforms as transforms
 
-from _torch_offline_distributed_dataset import (
+from _torch_batch_process import (
     get_default_device,
     initialize_default_inference_context,
     TorchPerBatchProcessor,

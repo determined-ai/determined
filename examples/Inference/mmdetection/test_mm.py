@@ -3,7 +3,7 @@ import pathlib
 import torch
 from torch.profiler import ProfilerActivity
 
-from _torch_offline_distributed_dataset import (
+from _torch_batch_process import (
     TorchPerBatchProcessor,
     torch_batch_process,
     initialize_default_inference_context,

@@ -1,4 +1,4 @@
-from _torch_offline_distributed_dataset import (
+from _torch_batch_process import (
     TorchPerBatchProcessor,
     TorchDistributedDatasetProcessor,
     initialize_distributed_backend,
