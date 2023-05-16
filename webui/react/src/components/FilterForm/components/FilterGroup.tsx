@@ -47,11 +47,11 @@ const FilterGroup = ({
     accept: [FormKind.Group, FormKind.Field],
     canDrop(item, monitor) {
       const isOverCurrent = monitor.isOver({ shallow: true });
-      if (isOverCurrent) {
-        if (item.form.kind === FormKind.Group) {
-          return (
-            // cant self dnd
-            group.id !== item.form.id &&
+      return (
+        isOverCurrent &&
+        (item.form.kind !== FormKind.Group ||
+          // cant self dnd
+          (group.id !== item.form.id &&
             // cant dnd in self childrens group
             item.form.children.filter((c) => c.id === group.id).length === 0 &&
             // cant dnd with deeper than 2 level group
@@ -61,12 +61,8 @@ const FilterGroup = ({
             // 2 is the max depth
             (item.form.children.filter((c) => c.kind === FormKind.Group).length === 0 ? 0 : 1) +
               level <
-              2
-          );
-        }
-        return true;
-      }
-      return false;
+              2))
+      );
     },
     collect: (monitor) => ({
       canDrop: monitor.canDrop(),

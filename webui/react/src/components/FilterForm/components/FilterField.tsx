@@ -127,21 +127,17 @@ const FilterField = ({
     accept: [FormKind.Group, FormKind.Field],
     canDrop(item, monitor) {
       const isOverCurrent = monitor.isOver({ shallow: true });
-      if (isOverCurrent) {
-        if (item.form.kind === FormKind.Group) {
-          return (
-            // cant dnd with deeper than 2 level group
-            level < 2 &&
+      return (
+        isOverCurrent &&
+        (item.form.kind !== FormKind.Group ||
+          // cant dnd with deeper than 2 level group
+          (level < 2 &&
             // cant dnd if sum of source children of group type (0 if none, 1 if children exist)
             // and target item's level is over 3 for field
             (item.form.children.filter((c) => c.kind === FormKind.Group).length === 0 ? 0 : 1) +
               level <
-              3
-          );
-        }
-        return true;
-      }
-      return false;
+              3))
+      );
     },
     collect: (monitor) => ({
       canDrop: monitor.canDrop(),
@@ -223,9 +219,6 @@ const FilterField = ({
                     const val = e.target.value || null; // when empty string, val is null
                     updateFieldValue(field.id, val, true);
                   }}
-                  onPressEnter={() => {
-                    formStore.addChild(parentId, FormKind.Field);
-                  }}
                 />
               )}
               {currentColumn?.type === V1ColumnType.NUMBER && (
@@ -236,9 +229,6 @@ const FilterField = ({
                   onChange={(val) => {
                     const value = val != null ? Number(val) : null;
                     updateFieldValue(field.id, value, true);
-                  }}
-                  onPressEnter={() => {
-                    formStore.addChild(parentId, FormKind.Field);
                   }}
                 />
               )}

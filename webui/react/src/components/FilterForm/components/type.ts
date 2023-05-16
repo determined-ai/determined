@@ -166,7 +166,7 @@ const IOOperator: t.Type<Operator> = t.keyof({
 const FormField = t.type({
   columnName: t.string,
   id: t.readonly(t.string),
-  kind: t.readonly(t.literal('field')),
+  kind: t.readonly(t.literal(FormKind.Field)),
   location: ioLocationType,
   operator: IOOperator,
   type: ioColumnType,
@@ -175,18 +175,18 @@ const FormField = t.type({
 
 export type FormField = t.TypeOf<typeof FormField>;
 
-const FormGroup: t.Type<FormGroup> = t.recursion('IOFormGroup', () =>
+const IOFormGroup: t.Type<FormGroup> = t.recursion('IOFormGroup', () =>
   t.type({
-    children: t.array(t.union([FormField, FormGroup])),
+    children: t.array(t.union([FormField, IOFormGroup])),
     conjunction: IOConjunction,
     id: t.readonly(t.string),
-    kind: t.readonly(t.literal('group')),
+    kind: t.readonly(t.literal(FormKind.Group)),
   }),
 );
 
 const IOConjunction = t.union([t.literal('and'), t.literal('or')]);
 
 export const IOFilterFormSet = t.type({
-  filterGroup: FormGroup,
+  filterGroup: IOFormGroup,
   showArchived: t.boolean,
 });
