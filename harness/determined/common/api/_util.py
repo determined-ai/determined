@@ -97,13 +97,8 @@ def task_is_ready(session: api.Session, task_id: str) -> Optional[str]:
         if is_ready:
             return True, None
 
-        # CHECK: if all of tasks allocations report a terminated state
-        # then we assume we're done
-        terminated = all(
-            [allocation.state == bindings.taskv1State.TERMINATED for allocation in task.allocations]
-        )
-        if terminated:
-            return True, "all allocations are terminated."
+        if task.endTime is not None:
+            return True, "task has been terminated."
 
         return False, ""
 
