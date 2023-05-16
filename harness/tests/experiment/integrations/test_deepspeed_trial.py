@@ -16,7 +16,7 @@ from tests.experiment import utils  # noqa: I100
 from tests.experiment.fixtures import deepspeed_linear_model
 
 ds_config_path = str(
-    pathlib.Path(__file__).resolve().parent.parent.parent.joinpath("fixtures/ds_config.json")
+    pathlib.Path(__file__).resolve().parent.parent.joinpath("fixtures/ds_config.json")
 )
 deepspeed_config = json.load(
     open(ds_config_path, "r"),
@@ -656,7 +656,7 @@ def test_overwrite_deepspeed_config() -> None:
 
     # Test load base deepspeed config from json file.
     base_ds_config = str(
-        pathlib.Path(__file__).resolve().parent.parent.parent.joinpath("fixtures/ds_config.json")
+        pathlib.Path(__file__).resolve().parent.parent.joinpath("fixtures/ds_config.json")
     )
     result = _utils.overwrite_deepspeed_config(base_ds_config, source_ds_config)
     assert result == expected_config

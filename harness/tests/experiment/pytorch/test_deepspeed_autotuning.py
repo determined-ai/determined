@@ -32,7 +32,7 @@ from tests.custom_search_mocks import MockMaster, MockMasterSearchRunner
 ERROR_METRIC_NAME = "error"
 
 BASE_EXPERIMENT_FIXTURE_PATH = (
-    pathlib.Path(__file__).resolve().parent.parent.parent.joinpath("fixtures/deepspeed_autotune")
+    pathlib.Path(__file__).resolve().parent.parent.joinpath("fixtures/deepspeed_autotune")
 )
 MODEL_DIR = BASE_EXPERIMENT_FIXTURE_PATH.joinpath("example_experiment")
 DS_CONFIG_PATH = MODEL_DIR.joinpath("ds_config.json")
