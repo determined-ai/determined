@@ -1310,16 +1310,15 @@ class TestASHADSATSearchMethod:
         assert search_method.get_next_trial_in_lineage(trial) is None
 
     @pytest.mark.timeout(5)
-    def test_terminated_lineages_counted_complete(
+    def test_completed_binary_search_lineages_are_counted_complete(
         self, long_large_max_resource_asha_state_and_search_method
     ):
         """
-        Verify that lineages which have completed their binary search are counted as having
-        completed their current rung.
+        Verify that if a lineage successfully completes its binary search mid-rung, that lineage
+        is counted as having completed the rung.
         """
         searcher_state, search_method = long_large_max_resource_asha_state_and_search_method
         search_method.trial_tracker.queue.clear()
-        # Case 1: success with a trivial range.
         hparams, _ = search_method.get_random_hparams_and_search_data(1)
         search_data = ASHADSATSearchData(lo=1, hi=1, curr_rung=0)
         hparams = copy.deepcopy(hparams)
@@ -1337,7 +1336,17 @@ class TestASHADSATSearchMethod:
         assert search_method.lineage_completed_rung(
             successful_trial, successful_trial.search_data.curr_rung
         )
-        # Case 2: fail on minimal batch size.
+
+    @pytest.mark.timeout(5)
+    def test_failed_binary_search_lineages_are_counted_complete(
+        self, long_large_max_resource_asha_state_and_search_method
+    ):
+        """
+        Verify that if a lineage fails its binary search mid-rung by failing on the minimum
+        possible batch size, that lineage is counted as having completed the rung.
+        """
+        searcher_state, search_method = long_large_max_resource_asha_state_and_search_method
+        search_method.trial_tracker.queue.clear()
         hparams, _ = search_method.get_random_hparams_and_search_data(1)
         search_data = ASHADSATSearchData(lo=1, hi=2, curr_rung=0)
         hparams = copy.deepcopy(hparams)
