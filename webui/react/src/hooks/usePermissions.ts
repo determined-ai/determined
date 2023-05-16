@@ -101,7 +101,6 @@ const usePermissions = (): PermissionsHook => {
   const loadablePermissions = useObservable(permissionStore.permissions);
   const myAssignments = Loadable.getOrElse([], useObservable(permissionStore.myAssignments));
   const myRoles = Loadable.getOrElse([], useObservable(permissionStore.myRoles));
-  console.error([rbacEnabled, myAssignments, myRoles]);
 
   const rbacOpts = useMemo(
     () => ({
