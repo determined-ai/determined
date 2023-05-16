@@ -1881,6 +1881,74 @@ const ThemeSection: React.FC = () => {
         [themeStatus, backgrounds, stage, surface, float, overlay, brand, interactive],
         ['Status', 'Background', 'Stage', 'Surface', 'Float', 'Overlay', 'Brand', 'Interactive'],
       )}
+      <AntDCard title="Fonts">
+        <AntDCard title="Font Families">
+          <p style={{ fontFamily: 'var(--theme-font-family)', fontSize: '16px' }}>
+            For general UI --theme-font-family
+          </p>
+          <p style={{ fontFamily: 'var(--theme-font-family-code)', fontSize: '16px' }}>
+            For displaying code --theme-font-family-code
+          </p>
+        </AntDCard>
+        <AntDCard title="Font Sizing">
+          <div>
+            <div style={{ display: 'flex', flexDirection: 'column', marginBottom: '30px' }}>
+              <h3 style={{ marginBottom: '20px' }}>Header</h3>
+              <h3 style={{ fontSize: '28px', lineHeight: '36px', marginBottom: '5px' }}>
+                Model Registry - XL (f.s. 28px, line-height 36px)
+              </h3>
+              <h3 style={{ fontSize: '24px', lineHeight: '32px', marginBottom: '5px' }}>
+                Model Registry - L (f.s. 24px, line-height 32px)
+              </h3>
+              <h3 style={{ fontSize: '22px', lineHeight: '28px', marginBottom: '5px' }}>
+                Model Registry - default (f.s. 22px line-height 28px)
+              </h3>
+              <h3 style={{ fontSize: '18px', lineHeight: '23px', marginBottom: '5px' }}>
+                Model Registry - s (f.s. 18px line-height 23px)
+              </h3>
+              <h3 style={{ fontSize: '16px', lineHeight: '21px', marginBottom: '5px' }}>
+                Model Registry - xs (f.s. 16px line-height 21px)
+              </h3>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', marginBottom: '30px' }}>
+              <h3 style={{ marginBottom: '20px' }}>Multi Line</h3>
+              <h3 style={{ fontSize: '16px', lineHeight: '26px', marginBottom: '5px' }}>
+                Model Registry - XL (f.s. 16px line-height 26px)
+              </h3>
+              <h3 style={{ fontSize: '14px', lineHeight: '22px', marginBottom: '5px' }}>
+                Model Registry - L (f.s. 14px line-height 22px)
+              </h3>
+              <h3 style={{ fontSize: '12px', lineHeight: '20px', marginBottom: '5px' }}>
+                Model Registry - default (f.s. 12px line-height 20px)
+              </h3>
+              <h3 style={{ fontSize: '11px', lineHeight: '18px', marginBottom: '5px' }}>
+                Model Registry - s (f.s. 11px line-height 18px)
+              </h3>
+              <h3 style={{ fontSize: '10px', lineHeight: '16px', marginBottom: '5px' }}>
+                Model Registry - xs (f.s. 10px line-height 16px)
+              </h3>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', marginBottom: '30px' }}>
+              <h3 style={{ marginBottom: '20px' }}>Single Line</h3>
+              <h3 style={{ fontSize: '16px', lineHeight: '20px', marginBottom: '5px' }}>
+                Model Registry - XL (f.s. 16px line-height 20px)
+              </h3>
+              <h3 style={{ fontSize: '14px', lineHeight: '18px', marginBottom: '5px' }}>
+                Model Registry - L (f.s. 14px line-height 18px)
+              </h3>
+              <h3 style={{ fontSize: '12px', lineHeight: '16px', marginBottom: '5px' }}>
+                Model Registry - default (f.s. 12px line-height 16px)
+              </h3>
+              <h3 style={{ fontSize: '11px', lineHeight: '14px', marginBottom: '5px' }}>
+                Model Registry - s (f.s. 11px line-height 14px)
+              </h3>
+              <h3 style={{ fontSize: '10px', lineHeight: '12px', marginBottom: '5px' }}>
+                Model Registry - xs (f.s. 10px line-height 12px)
+              </h3>
+            </div>
+          </div>
+        </AntDCard>
+      </AntDCard>
     </ComponentSection>
   );
 };
