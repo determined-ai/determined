@@ -1,77 +1,94 @@
 .. _install-using-wsl:
 
-###############################################################
+################################################################
  Install Determined Using Windows Subsystem for Linux (Windows)
-###############################################################
+################################################################
 
-Determined can be installed and run on Windows Subsystem for Linux (WSL) using the Debian or RPM packages 
-published by Determined or using the Docker containers published by Determined with Docker Desktop.
-
-This guide will walk you through the steps to install Determined using the Debian or RPM packages and using
-Docker containers published by Determined with Docker Desktop.
-
-The goal will be a single machine installation of Determined with the master and agent running on the same 
-machine in WSL.
+This user guide provides step-by-step instructions for installing Determined on the Windows
+Subsystem for Linux (WSL). You have two options for installation: using the Debian or RPM packages
+provided by Determined, or using Docker containers published by Determined with Docker Desktop. In
+this user guide, we'll focus on achieving a single-machine installation of Determined, with both the
+master and agent running on the same machine within WSL.
 
 .. _wsl_requirements:
 
-*****************************************
-WSL Requirements
-*****************************************
+**************
+ Requirements
+**************
 
-- Windows 10 version 1903 or higher, though Windows 11 version 22H2 is recommended
-- WSL 2 `installed and enabled<https://learn.microsoft.com/en-us/windows/wsl/install>`_
-- `Windows Terminal<https://www.microsoft.com/store/productId/9N0DX20HK701>`_ is recommended
-- An Ubuntu or Red Hat Enterprise Linux-based WSL distribution installed from the Microsoft Store, such as:
-    - `Ubuntu 22.04 LTS<https://www.microsoft.com/store/productId/9PDXGNCFSCZV>`_
-    - `AlmaLinux 9<https://www.microsoft.com/store/productId/9P5RWLM70SN9>`_
-    - `Oracle Linux 9<https://www.microsoft.com/store/productId/9MXQ65HLMC27>`_
-    - `Pengwin Enterprise<https://www.microsoft.com/store/productId/9P70GX2HQNHN>`_
-- `systemd enabled<https://learn.microsoft.com/en-us/windows/wsl/wsl-config#systemd-support>`_ in the WSL distribution.
+**Minimum**
+
+-  Windows 10 version 1903, or later.
+
+-  WSL 2 `installed and enabled <https://learn.microsoft.com/en-us/windows/wsl/install>`_ on your
+   Windows machine.
+
+-  An Ubuntu or Red Hat Enterprise Linux-based WSL distribution installed from the Microsoft Store,
+   such as:
+
+      -  `Ubuntu 22.04 LTS <https://www.microsoft.com/store/productId/9PDXGNCFSCZV>`_
+      -  `AlmaLinux 9 <https://www.microsoft.com/store/productId/9P5RWLM70SN9>`_
+      -  `Oracle Linux 9 <https://www.microsoft.com/store/productId/9MXQ65HLMC27>`_
+      -  `Pengwin Enterprise <https://www.microsoft.com/store/productId/9P70GX2HQNHN>`_
+
+-  `systemd enabled <https://learn.microsoft.com/en-us/windows/wsl/wsl-config#systemd-support>`_
+   within your chosen WSL distribution.
+
+**Recommended**
+
+-  Windows 10 version 1903, or later. Recommended: Windows 11 version 22H2.
+-  `Windows Terminal <https://www.microsoft.com/store/productId/9N0DX20HK701>`_.
 
 .. _enable_systemd:
 
-To enable systemd in your WSL distribution
-==========================================
+Enable ``systemd``
+==================
 
-Add ``systemd=true`` to the ``[boot]`` section of ``/etc/wsl.conf`` in your WSL distribution:
+Edit the configuration file to enable ``systemd`` within your WSL distribution. To do this:
 
-.. code::
+-  Open a terminal window in your WSL distribution.
 
-    echo '[boot]' >> /etc/wsl.conf && echo 'systemd=true' >> /etc/wsl.conf
+-  Add ``systemd=true`` to the ``[boot]`` section of ``/etc/wsl.conf`` in your WSL distribution:
 
-Then restart your WSL distribution:
+   .. code::
 
-.. code::
+      echo '[boot]' >> /etc/wsl.conf && echo 'systemd=true' >> /etc/wsl.conf
 
-    wsl --shutdown <distribution name>
+-  Then restart your WSL distribution:
+
+   .. code::
+
+      wsl --shutdown <distribution name>
 
 .. _wsl_installation_using_packages:
 
-*****************************************
-Installation using Debian or RPM packages
-*****************************************
+**************************************
+ Install using Debian or RPM packages
+**************************************
+
+This section provides instructions for installing Determined on WSL using Debian or RPM packages.
 
 .. _packages_postgresql:
 
-PostgreSQL
-==========
-
-Determined uses a PostgreSQL database to store experiment and trial metadata.
-
 Install PostgreSQL using ``apt`` or ``yum``
--------------------------------------------
+===========================================
 
-#. Install PostgreSQL 10 or greater.
+Since Determined uses a PostgreSQL database to store experiment and trial metadata, start by
+installing PostgreSQL. You'll need PostgreSQL 10 or later.
 
-   On Debian distributions:
+   **Debian Distributions**
+
+   On Debian distributions, use the following command:
 
    .. code::
 
       sudo apt install postgresql
 
-   On Red Hat distributions, first configure the PostgreSQL yum repository as described `here
-   <https://www.postgresql.org/download/linux/redhat>`_ in order to then install version 10:
+   **Red Hat Distributions**
+
+   On Red Hat distributions, you'll need to configure the PostgreSQL yum repository as described in
+   the `Red Hat Linux documentation <https://www.postgresql.org/download/linux/redhat>`_. Then,
+   install version 10:
 
    .. code::
 
@@ -80,58 +97,65 @@ Install PostgreSQL using ``apt`` or ``yum``
       sudo systemctl start postgresql.service
       sudo systemctl enable postgresql.service
 
-#. The authentication methods enabled by default may vary depending on the provider of your
-   PostgreSQL distribution. Ensure that an appropriate authentication method is configured in
-   ``pg_hba.conf`` to enable the ``determined-master`` to connect to the database.
+The authentication methods enabled by default may vary depending on the provider of your PostgreSQL
+distribution. To enable the ``determined-master`` to connect to the database, ensure that an
+appropriate authentication method is configured in the ``pg_hba.conf`` file.
 
-   When configuring the database connection (:ref:`configure_the_cluster`):
+When configuring the database connection in :ref:`configure_the_cluster`, note the following:
 
-   -  If you specify the ``db.hostname`` property, a PostgreSQL ``host`` (TCP/IP) connection will be
-      required.
-   -  If you omit the ``db.hostname`` property, a PostgreSQL ``local`` (Unix-domain socket)
-      connection will be required.
+-  If you specify the ``db.hostname`` property, you must use a PostgreSQL ``host`` (TCP/IP)
+   connection.
+-  If you omit the ``db.hostname`` property, you must use a PostgreSQL ``local`` (Unix-domain
+   socket) connection.
 
-#. Finally, create a database for Determined's use and configure a system account that Determined
-   will use to connect to the database. For example, the following commands will create a database
-   named ``determined``, a user named ``determined`` with the password ``determined-password``, and
-   then will grant the user access to the database:
+Finally, create a database for Determined's use and configure a system account that Determined will
+use to connect to the database.
 
-   .. code::
+For example, executing the following commands will create a database named ``determined``, create a
+user named ``determined`` with the password ``determined-password``, and grant the user access to
+the database:
 
-      sudo -u postgres psql
-      postgres=# CREATE DATABASE determined;
-      postgres=# CREATE USER determined WITH ENCRYPTED PASSWORD 'determined-password';
-      postgres=# GRANT ALL PRIVILEGES ON DATABASE determined TO determined;
+.. code::
+
+   sudo -u postgres psql
+   postgres=# CREATE DATABASE determined;
+   postgres=# CREATE USER determined WITH ENCRYPTED PASSWORD 'determined-password';
+   postgres=# GRANT ALL PRIVILEGES ON DATABASE determined TO determined;
 
 .. _packages_determined:
 
-Determined Master and Agent
-===========================
+Install the Determined Master and Agent
+=======================================
 
-#. Go to `the webpage for the latest Determined release
-   <https://github.com/determined-ai/determined/releases/latest>`_.
+To find the latest release of Determined, visit the `Determined repo
+<https://github.com/determined-ai/determined/releases/latest>`_.
 
-#. Download the appropriate Debian or RPM package file, which will have the name
-   ``determined-master_VERSION_linux_amd64.[deb|rpm]`` (with ``VERSION`` replaced by an actual
-   version, such as |version|). The agent package is similarly named
-   ``determined-agent_VERSION_linux_amd64.[deb|rpm]``.
+Download the appropriate Debian or RPM package file, which will have the name
+``determined-master_VERSION_linux_amd64.[deb|rpm]`` (where ``VERSION`` is the actual version, e.g.,
+|version|). Similarly, the agent package is named
+``determined-agent_VERSION_linux_amd64.[deb|rpm]``.
 
-#. Install the master and agent package on one machine:
+Install the master and agent package on one machine.
 
-   On Debian distributions:
+   **Debian Distributions**
 
-      .. code::
+   On Debian distributions, use the following command:
 
-         sudo apt install <path to downloaded package>
+   .. code::
 
-   On Red Hat distributions:
+      sudo apt install <path to downloaded package>
 
-      .. code::
+   **Red Hat Distributions**
 
-         sudo rpm -i <path to downloaded package>
+   On Red Hat distributions, use the following command:
 
-   Before running the Determined agent, you will have to :ref:`install Docker <install-docker>` on
-   each agent machine.
+   .. code::
+
+      sudo rpm -i <path to downloaded package>
+
+Before running the Determined agent, :ref:`install Docker <install-docker>` on each agent machine.
+
+.. note::
 
    If you are not using Docker Desktop, you may disregard the prompt to use Docker Desktop and allow
    Docker to be installed within the WSL distribution.
@@ -141,157 +165,171 @@ Determined Master and Agent
 Configure and Start the Cluster
 ===============================
 
-#. Ensure that an instance of PostgreSQL is running and accessible from the machine where the master
-   will be run.
+.. important::
 
-#. Edit the :ref:`YAML configuration files <topic-guides_yaml>` at ``/etc/determined/master.yaml``
-   (for the master) and ``/etc/determined/agent.yaml`` (for the agent) as appropriate for your
-   setup. Ensure that the user, password, and database name correspond to your PostgreSQL
-   configuration.
+   Ensure that an instance of PostgreSQL is running and accessible from the machine where the
+   Determined master will run.
 
-   In ``/etc/determined/master.yaml``:
+To start the Determined master, you'll need to first edit the master and agent configuration files.
 
-   .. code::
+Edit the :ref:`YAML configuration files <topic-guides_yaml>` at ``/etc/determined/master.yaml`` (for
+the master) and ``/etc/determined/agent.yaml`` (for the agent) as appropriate for your setup.
 
-      db:
-        host: localhost
-        port: <PostgreSQL port, e.g., 5432 by default>
-        name: <Database name, e.g., determined>
-        user: <PostgreSQL user, e.g., postgres>
-        password: <Database password>
+.. important::
+
+   Ensure that the user, password, and database name correspond to your PostgreSQL configuration.
+
+In ``/etc/determined/master.yaml``:
+
+.. code::
+
+   db:
+     host: localhost
+     port: <PostgreSQL port, e.g., 5432 by default>
+     name: <Database name, e.g., determined>
+     user: <PostgreSQL user, e.g., postgres>
+     password: <Database password>
 
 In ``/etc/determined/agent.yaml``:
 
-    .. code::
+.. code::
 
-       master_host: localhost
-       master_port: <Master port, e.g., 8080 by default>
+   master_host: localhost
+   master_port: <Master port, e.g., 8080 by default>
 
-#. Start the master.
+Start the master by typing the following command:
 
-   .. code::
+.. code::
 
-      sudo systemctl start determined-master
+   sudo systemctl start determined-master
 
-   The master can also be run directly with the command ``determined-master``, which may be helpful
-   for experimenting with Determined (e.g., testing different configuration options quickly before
-   writing them to the configuration file).
+.. note::
 
-#. Optionally, configure the master to start on launching the WSL distro.
+   You can also run the master directly using the command ``determined-master``. This may be useful
+   when experimenting with Determined such as when you want to quickly test different configuration
+   options before writing them to the configuration file.
 
-   .. code::
+Optionally, you can configure the master to start upon launching the WSL distro by using the
+following command:
 
-      sudo systemctl enable determined-master
+.. code::
 
-#. Verify that the master started successfully by viewing the log.
+   sudo systemctl enable determined-master
 
-   .. code::
+Verify that the master started successfully by viewing the log.
 
-      journalctl -u determined-master
+.. code::
 
-   You should see logging indicating that the master can successfully connect to the database, and
-   the last line should indicate ``http server started`` on the configured WebUI port (8080 by
-   default). You can also validate that the WebUI is running by navigating to
-   ``http://<master>:8080`` with your web browser (or ``https://<master>:8443`` if TLS is enabled).
-   You should see ``No Agents`` on the right-hand side of the top navigation bar.
+   journalctl -u determined-master
 
-#. Start the agent on each agent machine.
+You should see logs indicating that the master can successfully connect to the database, and the
+last line should indicate ``http server started`` on the configured WebUI port (8080 by default).
+You can also validate that the WebUI is running by navigating to ``http://<master>:8080`` with your
+web browser (or ``https://<master>:8443`` if TLS is enabled). You should see ``No Agents`` on the
+right side of the top navigation bar.
 
-   .. code::
+Start the agent on each agent machine.
 
-      sudo systemctl start determined-agent
+.. code::
 
-   Similarly, the agent can be run with the command ``determined-agent``.
+   sudo systemctl start determined-agent
 
-#. Optionally, configure the agent to start on launching the WSL distro.
+Similarly, the agent can be run with the command ``determined-agent``.
 
-   .. code::
+Optionally, you can configure the agent to start upon launching the WSL distro by using the
+following command:
 
-      sudo systemctl enable determined-agent
+.. code::
 
-#. Verify that each agent started successfully by viewing the log.
+   sudo systemctl enable determined-agent
 
-   .. code::
+Verify that each agent started successfully by viewing the log.
 
-      journalctl -u determined-agent
+.. code::
 
-   You should see logging indicating that the agent started successfully, detected compute devices,
-   and connected to the master. On the Determined WebUI, you should now see slots available, both on
-   the right-hand side of the top navigation bar, and if you select the ``Cluster`` view in the
-   left-hand navigation panel.
+   journalctl -u determined-agent
 
-#. Launch the Determined WebUI from within WSL.
+You should see logging indicating that the agent started successfully, detected compute devices, and
+connected to the master. On the Determined WebUI, you should now see slots available, both on the
+right-hand side of the top navigation bar and if you select the ``Cluster`` view in the left-hand
+navigation panel.
 
-   .. code::
+Launch the Determined WebUI from within WSL.
 
-      powershell.exe /C start http://localhost:8080
+.. code::
 
-   This will open a browser window to the Determined WebUI.
+   powershell.exe /C start http://localhost:8080
+
+The Determined WebUI opens in your browser.
 
 .. _wsl_installation_using_docker_desktop:
 
-*********************************
-Installation using Docker Desktop
-*********************************
+******************************
+ Install using Docker Desktop
+******************************
 
-Determined can also be installed on WSL using Docker Desktop.
+This section provides instructions for installing Determined on WSL using Docker Desktop.
 
 .. _docker_desktop:
 
-Docker Desktop
-==============
+Install Docker Desktop
+======================
 
-#. Install `Docker Desktop on Windows<https://www.docker.com/products/docker-desktop/>`_. 
+Install `Docker Desktop on Windows <https://www.docker.com/products/docker-desktop/>`_.
 
-#. Ensure the Docker daemon is reachable from your WSL distribution. 
+Ensure the Docker daemon is reachable from your WSL distribution.
 
-    Open the ``Settings`` dialog from the Docker Desktop tray icon, and select ``Resources``. Under ``WSL Integration``
-    check ``Enable integration with my default WSL distro`` and enable integration for the WSL distribution where you
-    will be working with Determined.
+   Open the ``Settings`` dialog from the Docker Desktop tray icon, and select ``Resources``. Under
+   ``WSL Integration``, select ``Enable integration with my default WSL distro``, and enable
+   integration for the WSL distribution where you will be working with Determined.
 
 .. _docker_desktop_postgresql:
 
-PostgreSQL image
-================
+Pull the PostgreSQL Image
+=========================
 
-#. Pull the official Docker image for PostgreSQL. We recommend using the version listed below.
+Pull the official Docker image for PostgreSQL. We recommend using the version listed below.
 
-   .. code::
+.. code::
 
-      docker pull postgres:10
+   docker pull postgres:10
 
-   This image is not provided by Determined AI; please see `its Docker Hub page
-   <https://hub.docker.com/_/postgres>`_ for more information.
+This image is not provided by Determined AI. For more information, visit its `Docker Hub page
+<https://hub.docker.com/_/postgres>`_.
 
 .. _docker_desktop_determined:
 
-Determined AI image
-===================
+Pull the Determined AI Image
+============================
 
-#. Pull the Docker image for the master or agent on each machine where these services will run.
-   There is a single master container running in a Determined cluster, and typically there is one
-   agent container running on a given machine. A single machine can host both the master container
-   and an agent container. Run the commands below, replacing ``VERSION`` with a valid Determined
-   version, such as the current version, |version|:
+Pull the Docker image for the master or agent on each machine where these services will run. There
+is a single master container running in a Determined cluster and typically there is one agent
+container running on a given machine. A single machine can host both the master container and an
+agent container.
 
-   .. code::
+To run the commands below, replace ``VERSION`` with a valid Determined version, such as the current
+version, |version|:
 
-      docker pull determinedai/determined-master:VERSION
-      docker pull determinedai/determined-agent:VERSION
+.. code::
+
+   docker pull determinedai/determined-master:VERSION
+   docker pull determinedai/determined-agent:VERSION
 
 .. _docker_desktop_start_cluster:
 
 Start the Cluster
 =================
 
-The cluster can now be started, first by starting the database, then launching Determined master and agent containers.
+The cluster can now be started, first by starting the database, then by launching the Determined
+master and agent containers.
 
 .. _docker_desktop_start_postgresql:
 
-PostgreSQL
-==========
+Start the PostgreSQL Container
+==============================
 
-The following command starts the PostgreSQL container, replace ``<DB password>`` with the password you would like to use for the database:
+To start the PostgreSQL container, use the following command. Replace ``<DB password>`` with the
+password you would like to use for the database:
 
 .. code::
 
@@ -303,15 +341,15 @@ The following command starts the PostgreSQL container, replace ``<DB password>``
        -e POSTGRES_PASSWORD=<DB password> \
        postgres:10
 
-
 .. _docker_desktop_get_wsl_ip:
 
 Obtain the WSL IP address
 =========================
 
-In order for Determined to reach the PostgreSQL container, you will need to determine the IP address.
+To allow Determined to reach the PostgreSQL container, you will need to determine the IP address.
 
-Run the following command to determine the IP address of the WSL distribution and store it as an environment variable:
+Run the following command to determine the IP address of the WSL distribution and store it as an
+environment variable:
 
 .. code::
 
@@ -319,12 +357,14 @@ Run the following command to determine the IP address of the WSL distribution an
 
 .. _docker_desktop_start_determined_master:
 
-Determined Master
-=================
+Start the Determined Master
+===========================
 
-To start the master container, run the following command, replacing ``<DB password>`` with the password you used for the database:
+To start the master container, run the following command, replacing ``<DB password>`` with the
+database password:
 
-.. code::
+..
+   code:
 
    docker run \
        --name determined-master \
@@ -339,13 +379,13 @@ To start the master container, run the following command, replacing ``<DB passwo
 Optionally, you may now launch the Determined WebUI from within WSL:
 
 .. code::
-    
+
    powershell.exe /C start http://localhost:8080
 
 .. _docker_desktop_start_determined_agent:
 
-Determined Agent
-================
+Start the Determined Agent
+==========================
 
 To start the agent container, run the following command:
 
@@ -358,7 +398,8 @@ To start the agent container, run the following command:
        -e DET_MASTER_PORT=8080 \
        determinedai/determined-agent:VERSION
 
-Optionally, you may now launch the Determined WebUI from within WSL to verify the agent is running and connected:
+Optionally, you may now launch the Determined WebUI from within WSL to verify the agent is running
+and connected:
 
 .. code::
 
@@ -366,14 +407,14 @@ Optionally, you may now launch the Determined WebUI from within WSL to verify th
 
 Determined internally makes use of `Fluent Bit <https://fluentbit.io>`__. The agent uses the
 ``fluent/fluent-bit:1.9.3`` Docker image at runtime. It will attempt to pull the image
-automatically; if the agent machines in the cluster are not able to connect to Docker Hub, the image
-must be manually placed on them before Determined can run. In order to specify a different image to
-use for running Fluent Bit (generally to make use of a custom Docker registry---the image should not
-normally need to be changed otherwise), use the agent's ``--fluent-logging-image`` command-line
-option or ``fluent_logging_image`` config file option.
+automatically. If the agent machines in the cluster are not able to connect to Docker Hub, you must
+manually place the image onto the agent machines in the cluster before Determined can run. To
+specify a different image to use for running Fluent Bit (generally to make use of a custom Docker
+registry---the image should not normally need to be changed otherwise), use the agent's
+``--fluent-logging-image`` command-line option or ``fluent_logging_image`` config file option.
 
-The ``--gpus`` flag should be used to specify which GPUs the agent container will have access to;
-without it, the agent will not have access to any GPUs. For example:
+To ensure proper GPU access for the agent container, use the ``--gpus`` flag to specify the GPUs.
+Failure to include this flag will result in the agent not having access to any GPUs. For example:
 
 .. code::
 
@@ -384,16 +425,16 @@ without it, the agent will not have access to any GPUs. For example:
    # Use the GPUs with the given IDs or UUIDs.
    docker run --gpus '"device=1,3"' ...
 
-GPUs can also be disabled and enabled at runtime using the ``det slot disable`` and ``det slot
+You can also disable and enable GPUs at runtime using the ``det slot disable`` and ``det slot
 enable`` CLI commands, respectively.
 
 .. _docker_desktop_manage_cluster:
 
 Manage the Cluster
-====================
+==================
 
-By default, ``docker run`` will run in the foreground, so that a container can be stopped simply by
-pressing Control-C. If you wish to keep Determined running for the long term, consider running the
+By default, ``docker run`` runs in the foreground. You can stop a container simply by pressing
+**Control-C**. If you wish to keep Determined running for the long term, consider running the
 containers `detached <https://docs.docker.com/engine/reference/run/#detached--d>`_ and/or with
-`restart policies <https://docs.docker.com/config/containers/start-containers-automatically/>`_.
-Using :ref:`our deployment tool <install-using-deploy>` is also an option.
+`restart policies <https://docs.docker.com/config/containers/start-containers-automatically/>`_. You
+can also use the :ref:`deployment tool <install-using-deploy>`.
