@@ -44,18 +44,9 @@ import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin';
 import { V1LogLevel } from 'services/api-ts-sdk';
 import { mapV1LogsResponse } from 'services/decoder';
 import useUI from 'shared/contexts/stores/UI';
-// import {
-//   DarkLight,
-//   getCssVar,
-//   themeDarkDetermined,
-//   themeDarkHpe,
-//   themeLightDetermined,
-//   themeLightHpe,
-// } from 'shared/themes';
 import { ValueOf } from 'shared/types';
 import { noOp } from 'shared/utils/service';
 import { BrandingType } from 'stores/determinedInfo';
-// import { getStateColor, getStateColorCssVar, StateOfUnion } from 'themes';
 import { MetricType, User } from 'types';
 import { NotLoaded } from 'utils/loadable';
 import loremIpsum from 'utils/loremIpsum';
@@ -1860,11 +1851,17 @@ const ThemeSection: React.FC = () => {
       {colorArray.map((cName, idx) => (
         <div
           key={`${idx}-${name.toLowerCase()}`}
-          style={{ display: 'flex', justifyContent: 'space-between', width: '320px' }}>
-          <div
-            style={{ backgroundColor: `var(--theme-${cName})`, height: '20px', width: '20px' }}
-          />
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            marginBottom: '20px',
+            width: '320px',
+          }}>
           <span>{`--theme-${cName}`}</span>
+          <div
+            style={{ backgroundColor: `var(--theme-${cName})`, height: '40px', width: '100%' }}
+          />
         </div>
       ))}
     </AntDCard>
