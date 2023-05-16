@@ -629,8 +629,8 @@ def long_random_state_and_search_method() -> (
 ):
     """For long-running tests which need a longer max_trials."""
     args = copy.deepcopy(DEFAULT_ARGS_DICT["random"])
-    args.max_trials = 10**9
-    args.trials_per_random_config = 10**9
+    args.max_trials = 10**4
+    args.trials_per_random_config = 10**4
     searcher_state, search_method = search_state_and_method_builder(args)
     yield searcher_state, search_method
 
@@ -905,7 +905,7 @@ def long_binary_state_and_search_method() -> (
 ):
     """For long-running tests which need a longer max_trials."""
     args = copy.deepcopy(DEFAULT_ARGS_DICT["binary"])
-    args.max_trials = 10**9
+    args.max_trials = 10**4
     searcher_state, search_method = search_state_and_method_builder(args)
     yield searcher_state, search_method
 
@@ -1054,60 +1054,37 @@ def default_asha_state_and_search_method():
     yield searcher_state, search_method
 
 
+@pytest.fixture
+def long_large_max_resource_asha_state_and_search_method():
+    args = copy.deepcopy(DEFAULT_ARGS_DICT["asha"])
+    args.max_trials = 10**3
+    args.R = 10**3
+    searcher_state, search_method = search_state_and_method_builder(args)
+    yield searcher_state, search_method
+
+
+@pytest.fixture
+def long_large_min_resource_asha_state_and_search_method():
+    """
+    For long-running tests which need a longer max_trials and resources.
+    """
+    args = copy.deepcopy(DEFAULT_ARGS_DICT["asha"])
+    args.max_trials = 10**3
+    args.r = 10**3
+    searcher_state, search_method = search_state_and_method_builder(args)
+    yield searcher_state, search_method
+
+
 class TestASHADSATSearchMethod:
-    def test_binary_happy_path(self, long_binary_state_and_search_method):
-        """
-        Ensure that when the actual `train_micro_batch_size_per_gpu` lies between the
-        search bounds, this optimal value will be found.
-        """
-        searcher_state, search_method = long_binary_state_and_search_method
+    @pytest.mark.timeout(5)
+    def test_binary_happy_path(self, long_large_min_resource_asha_state_and_search_method):
+        searcher_state, search_method = long_large_min_resource_asha_state_and_search_method
         search_method.trial_tracker.queue.clear()
         # Test for that all stages successfully find all possible values in their search range:
-        for stage in range(4):
-            _, search_data = search_method.get_random_hparams_and_search_data(stage)
-            num_possible_mbs = search_data.hi - search_data.lo + 1
-            for target_mbs in range(search_data.lo, search_data.hi + 1):
-                search_method.trial_tracker.queue.clear()
-                hparams, search_data = search_method.get_random_hparams_and_search_data(stage)
-                first_trial = search_method.trial_tracker.create_trial(hparams, search_data)
-                search_method.trial_tracker.queue_and_register_trial(first_trial)
-                curr_trial = search_method.trial_tracker.queue.popleft()
-                for num_halvings in range(1, num_possible_mbs + 1):
-                    assert curr_trial.search_data.lo <= curr_trial.mbs <= curr_trial.search_data.hi
-                    if curr_trial.mbs >= target_mbs:
-                        search_method.on_trial_exited_early(
-                            searcher_state, curr_trial.request_id, searcher.ExitedReason.ERRORED
-                        )
-                        assert search_method.trial_tracker.queue
-                    else:
-                        search_method.on_validation_completed(
-                            searcher_state,
-                            curr_trial.request_id,
-                            {curr_trial.searcher_metric_name: 0.0},
-                            curr_trial.length,
-                        )
-                        assert search_method.trial_tracker.queue
-                    if curr_trial.mbs == target_mbs:
-                        break
-                    curr_trial = search_method.trial_tracker.queue.popleft()
-                    # queue should now be empty
-                    assert not search_method.trial_tracker.queue
-                    # Every trial should belong to the same lineage.
-                    assert curr_trial.lineage_root == first_trial
-                # Affirm that the solution was found as quickly as expected.
-                assert num_halvings <= int(math.log(num_possible_mbs, 2)) + 1
-
-    def test_binary_no_trials_can_run(self, long_binary_state_and_search_method):
-        """
-        Verify expected behavior if every trial fails to even run batch size one.
-        """
-        searcher_state, search_method = long_binary_state_and_search_method
-        search_method.trial_tracker.queue.clear()
-        # Test for that all stages successfully find all possible values in their search range:
-        for stage in range(4):
-            _, search_data = search_method.get_random_hparams_and_search_data(stage)
-            num_possible_mbs = search_data.hi - search_data.lo + 1
-            target_mbs = 0
+        stage = 1
+        _, search_data = search_method.get_random_hparams_and_search_data(stage)
+        num_possible_mbs = search_data.hi - search_data.lo + 1
+        for target_mbs in range(search_data.lo, search_data.hi + 1):
             search_method.trial_tracker.queue.clear()
             hparams, search_data = search_method.get_random_hparams_and_search_data(stage)
             first_trial = search_method.trial_tracker.create_trial(hparams, search_data)
@@ -1115,61 +1092,267 @@ class TestASHADSATSearchMethod:
             curr_trial = search_method.trial_tracker.queue.popleft()
             for num_halvings in range(1, num_possible_mbs + 1):
                 assert curr_trial.search_data.lo <= curr_trial.mbs <= curr_trial.search_data.hi
-                assert curr_trial.mbs > target_mbs
-                search_method.on_trial_exited_early(
-                    searcher_state, curr_trial.request_id, searcher.ExitedReason.ERRORED
-                )
-                assert search_method.trial_tracker.queue
-                if curr_trial.mbs == curr_trial.search_data.lo:
-                    # Next trial should start a new lineage in this case.
-                    next_lineage_trial = search_method.trial_tracker.queue.popleft()
-                    assert not search_method.trial_tracker.queue
-                    assert next_lineage_trial.lineage_root != first_trial
-                    assert num_halvings <= int(math.log(num_possible_mbs, 2)) + 1
-                    break
+                if curr_trial.mbs >= target_mbs:
+                    search_method.on_trial_exited_early(
+                        searcher_state, curr_trial.request_id, searcher.ExitedReason.ERRORED
+                    )
+                    assert search_method.trial_tracker.queue
                 else:
-                    curr_trial = search_method.trial_tracker.queue.popleft()
-                    assert not search_method.trial_tracker.queue
-                    assert curr_trial.lineage_root == first_trial
-
-    def test_binary_range_too_small(self, long_binary_state_and_search_method):
-        """
-        Ensure that if the actual optimal batch size is larger than the initial range (which
-        hopefully never happens, but is possible), then the largest batch size in the range is
-        returned.
-        """
-        searcher_state, search_method = long_binary_state_and_search_method
-        search_method.trial_tracker.queue.clear()
-        # test for that all stages successfully find all possible values in their search range:
-        for stage in range(4):
-            _, search_data = search_method.get_random_hparams_and_search_data(stage)
-            num_possible_mbs = search_data.hi - search_data.lo + 1
-            target_mbs = search_data.hi + 1
-            search_method.trial_tracker.queue.clear()
-            hparams, search_data = search_method.get_random_hparams_and_search_data(stage)
-            first_trial = search_method.trial_tracker.create_trial(hparams, search_data)
-            search_method.trial_tracker.queue_and_register_trial(first_trial)
-            curr_trial = search_method.trial_tracker.queue.popleft()
-            for num_halvings in range(1, num_possible_mbs + 1):
-                assert curr_trial.search_data.lo <= curr_trial.mbs <= curr_trial.search_data.hi
-                assert curr_trial.mbs < target_mbs
-                search_method.on_validation_completed(
-                    searcher_state,
-                    curr_trial.request_id,
-                    {curr_trial.searcher_metric_name: 0.0},
-                    curr_trial.length,
-                )
-                assert search_method.trial_tracker.queue
-                if curr_trial.mbs == search_data.hi:
-                    # Next trial should start a new lineage in this case.
-                    next_lineage_trial = search_method.trial_tracker.queue.popleft()
-                    assert not search_method.trial_tracker.queue
-                    assert next_lineage_trial.lineage_root != first_trial
+                    search_method.on_validation_completed(
+                        searcher_state,
+                        curr_trial.request_id,
+                        {curr_trial.searcher_metric_name: 0.0},
+                        curr_trial.length,
+                    )
+                    assert search_method.trial_tracker.queue
+                if curr_trial.mbs == target_mbs:
+                    # Affirm that the solution was found as quickly as expected.
                     assert num_halvings <= int(math.log(num_possible_mbs, 2)) + 1
                     break
                 curr_trial = search_method.trial_tracker.queue.popleft()
+                # queue should now be empty
                 assert not search_method.trial_tracker.queue
+                # Every trial should belong to the same lineage.
                 assert curr_trial.lineage_root == first_trial
+            assert curr_trial.mbs == target_mbs
+
+    @pytest.mark.timeout(5)
+    def test_get_top_lineages_in_rung(self, long_large_max_resource_asha_state_and_search_method):
+        searcher_state, search_method = long_large_max_resource_asha_state_and_search_method
+        search_method.trial_tracker.queue.clear()
+        metrics = list(range(10 * search_method.eta))
+        for metric in metrics:
+            hparams, search_data = search_method.get_random_hparams_and_search_data(1)
+            trial = None
+            for idx in range(search_method.r):
+                trial = search_method.trial_tracker.create_trial(
+                    hparams=hparams, search_data=copy.deepcopy(search_data), parent_trial=trial
+                )
+                assert trial.search_data.curr_rung == 0
+                search_method.trial_tracker.queue_and_register_trial(trial)
+                search_method.trial_tracker.update_trial_metric(
+                    trial, {trial.searcher_metric_name: metric}
+                )
+                assert len(trial.lineage_set) == idx + 1
+            assert search_method.lineage_completed_rung(trial, 0)
+            assert not search_method.lineage_completed_rung(trial, 1)
+
+        top_trials = search_method.get_top_lineages_in_rung(0)
+        assert len(top_trials) == len(search_method.rungs[0]) // search_method.eta
+        if search_method.trial_tracker.smaller_is_better:
+            expected_metrics = metrics[: len(top_trials)]
+        else:
+            expected_metrics = list(reversed(metrics[len(top_trials) :]))
+        actual_metrics = [
+            search_method.get_best_trial_in_lineage(t).metric[trial.searcher_metric_name]
+            for t in top_trials
+        ]
+        assert expected_metrics == actual_metrics
+
+    @pytest.mark.timeout(5)
+    def test_basic_promotion(self, long_large_max_resource_asha_state_and_search_method):
+        searcher_state, search_method = long_large_max_resource_asha_state_and_search_method
+        search_method.trial_tracker.queue.clear()
+        # Complete enough trials so that some can be promoted.
+        for _ in range(search_method.eta):
+            hparams, search_data = search_method.get_random_hparams_and_search_data(1)
+            trial = None
+            for trial_num in range(search_method.r):
+                trial = search_method.trial_tracker.create_trial(
+                    hparams=hparams, search_data=copy.deepcopy(search_data), parent_trial=trial
+                )
+                assert trial.search_data.curr_rung == 0
+                search_method.trial_tracker.queue_and_register_trial(trial)
+                search_method.trial_tracker.update_trial_metric(
+                    trial, {trial.searcher_metric_name: 0.0}
+                )
+                assert len(trial.lineage_set) == trial_num + 1
+            assert search_method.lineage_completed_rung(trial, 0)
+            assert not search_method.lineage_completed_rung(trial, 1)
+
+        next_promotable_lineage = search_method.get_next_promotable_lineage()
+        assert next_promotable_lineage is not None
+        search_method.promote_all_trials_in_lineage(next_promotable_lineage)
+        next_trial = search_method.get_next_trial_in_lineage(next_promotable_lineage)
+        assert next_trial.search_data.curr_rung == 1
+        assert len(next_trial.lineage_set) == search_method.r + 1
+
+    @pytest.mark.timeout(5)
+    def test_lineage_continutation(self, long_large_max_resource_asha_state_and_search_method):
+        """
+        Verify that we continue trials which have not yet completed their rung.
+        """
+        searcher_state, search_method = long_large_max_resource_asha_state_and_search_method
+        search_method.trial_tracker.queue.clear()
+        hparams, search_data = search_method.get_random_hparams_and_search_data(1)
+        first_trial = curr_trial = search_method.trial_tracker.create_trial(
+            hparams=hparams, search_data=copy.deepcopy(search_data), parent_trial=None
+        )
+        search_method.trial_tracker.queue_and_register_trial(first_trial)
+        _ = search_method.trial_tracker.queue.popleft()
+        for trial_num in range(search_method.r):
+            assert curr_trial.search_data.curr_rung == 0
+            assert curr_trial.lineage_root == first_trial
+            assert curr_trial.num_completed_trials_in_lineage == trial_num
+            assert not search_method.lineage_completed_rung(curr_trial, 0)
+            search_method.on_validation_completed(
+                searcher_state=searcher_state,
+                request_id=curr_trial.request_id,
+                metric={curr_trial.searcher_metric_name: 0.0},
+                train_length=curr_trial.length,
+            )
+            assert curr_trial.completed
+            curr_trial = search_method.trial_tracker.queue.popleft()
+
+        assert search_method.lineage_completed_rung(first_trial, 0)
+        assert curr_trial.lineage_root != first_trial
+
+    @pytest.mark.timeout(5)
+    def test_top_promotion(self, long_large_max_resource_asha_state_and_search_method):
+        """
+        Verify that if multiple lineages can be promoted, we promote from the higest-rung lineage
+        available.
+        """
+        searcher_state, search_method = long_large_max_resource_asha_state_and_search_method
+        good_metric, bad_metric = (
+            (0.0, 1.0) if search_method.trial_tracker.smaller_is_better else (1.0, 0.0)
+        )
+        # Fill two rungs with trials search_method.eta trials, so that there are enough to promote
+        # from the top rung.
+        for _ in range(search_method.eta):
+            hparams, search_data = search_method.get_random_hparams_and_search_data(1)
+            trial = None
+            for trial_num in range(search_method.r * search_method.eta):
+                trial = search_method.trial_tracker.create_trial(
+                    hparams=hparams, search_data=copy.deepcopy(search_data), parent_trial=trial
+                )
+                search_method.trial_tracker.queue_and_register_trial(trial)
+                _ = search_method.trial_tracker.queue.popleft()
+                search_method.trial_tracker.update_trial_metric(
+                    trial=trial,
+                    metric={trial.searcher_metric_name: bad_metric},
+                )
+            # Remember to promote the lineage up to the second rung.
+            search_method.promote_all_trials_in_lineage(trial)
+
+        # Submit another lineage which completes the lowest rung with better metrics than the
+        # lineage above, so that it is promotable.
+        hparams, search_data = search_method.get_random_hparams_and_search_data(1)
+        trial = None
+        for trial_num in range(search_method.r):
+            trial = search_method.trial_tracker.create_trial(
+                hparams=hparams, search_data=copy.deepcopy(search_data), parent_trial=trial
+            )
+            search_method.trial_tracker.queue_and_register_trial(trial)
+            _ = search_method.trial_tracker.queue.popleft()
+            search_method.trial_tracker.update_trial_metric(
+                trial=trial,
+                metric={trial.searcher_metric_name: good_metric},
+            )
+
+        # Verify the counting above and that the next promoted trial will come from the topmost
+        # possible rung.
+        assert len(search_method.rungs[0]) == search_method.eta + 1
+        assert len(search_method.rungs[1]) == search_method.eta
+        assert search_method.get_next_promotable_lineage_in_rung(0) is not None
+        assert search_method.get_next_promotable_lineage_in_rung(1) is not None
+        assert search_method.get_next_promotable_lineage_in_rung(0).search_data.curr_rung == 0
+        assert search_method.get_next_promotable_lineage_in_rung(1).search_data.curr_rung == 1
+        assert search_method.get_next_promotable_lineage().search_data.curr_rung == 1
+
+    @pytest.mark.timeout(5)
+    def test_max_resource_respected(self, long_large_max_resource_asha_state_and_search_method):
+        """
+        Verify that we respect the maximum resource per lineage.
+        """
+        # Create a lineage with the maximum resource per lineage
+        searcher_state, search_method = long_large_max_resource_asha_state_and_search_method
+        search_method.trial_tracker.queue.clear()
+        hparams, search_data = search_method.get_random_hparams_and_search_data(1)
+        trial = search_method.trial_tracker.create_trial(
+            hparams=hparams, search_data=copy.deepcopy(search_data), parent_trial=None
+        )
+        search_method.trial_tracker.queue_and_register_trial(trial)
+        _ = search_method.trial_tracker.queue.popleft()
+        for _ in range(search_method.R):
+            search_method.trial_tracker.update_trial_metric(
+                trial, {trial.searcher_metric_name: 0.0}
+            )
+            trial = search_method.trial_tracker.create_trial(
+                hparams=hparams, search_data=copy.deepcopy(search_data), parent_trial=trial
+            )
+            search_method.trial_tracker.queue_and_register_trial(trial)
+            _ = search_method.trial_tracker.queue.popleft()
+        assert search_method.lineage_completed_rung(trial, search_method.max_rung - 1)
+        assert search_method.get_next_promotable_lineage() is None
+
+    @pytest.mark.timeout(5)
+    def test_no_continuation_for_completed_lineages(
+        self, long_large_max_resource_asha_state_and_search_method
+    ):
+        """
+        Verify that lineages which have completed their binary search are not continued.
+        """
+        searcher_state, search_method = long_large_max_resource_asha_state_and_search_method
+        search_method.trial_tracker.queue.clear()
+        hparams, _ = search_method.get_random_hparams_and_search_data(1)
+        search_data = ASHADSATSearchData(lo=1, hi=1, curr_rung=0)
+        hparams = copy.deepcopy(hparams)
+        hparams[_defaults.OVERWRITE_KEY]["train_micro_batch_size_per_gpu"] = (
+            search_data.hi + search_data.lo
+        ) // 2
+        trial = search_method.trial_tracker.create_trial(
+            hparams=hparams, search_data=copy.deepcopy(search_data), parent_trial=None
+        )
+        search_method.trial_tracker.queue_and_register_trial(trial)
+        _ = search_method.trial_tracker.queue.popleft()
+        search_method.trial_tracker.update_trial_metric(trial, {trial.searcher_metric_name: 0.0})
+        assert search_method.get_next_trial_in_lineage(trial) is None
+
+    @pytest.mark.timeout(5)
+    def test_terminated_lineages_counted_complete(
+        self, long_large_max_resource_asha_state_and_search_method
+    ):
+        """
+        Verify that lineages which have completed their binary search are counted as having
+        completed their current rung.
+        """
+        searcher_state, search_method = long_large_max_resource_asha_state_and_search_method
+        search_method.trial_tracker.queue.clear()
+        # Case 1: success with a trivial range.
+        hparams, _ = search_method.get_random_hparams_and_search_data(1)
+        search_data = ASHADSATSearchData(lo=1, hi=1, curr_rung=0)
+        hparams = copy.deepcopy(hparams)
+        hparams[_defaults.OVERWRITE_KEY]["train_micro_batch_size_per_gpu"] = (
+            search_data.hi + search_data.lo
+        ) // 2
+        successful_trial = search_method.trial_tracker.create_trial(
+            hparams=hparams, search_data=copy.deepcopy(search_data), parent_trial=None
+        )
+        search_method.trial_tracker.queue_and_register_trial(successful_trial)
+        _ = search_method.trial_tracker.queue.popleft()
+        search_method.trial_tracker.update_trial_metric(
+            successful_trial, {successful_trial.searcher_metric_name: 0.0}
+        )
+        assert search_method.lineage_completed_rung(
+            successful_trial, successful_trial.search_data.curr_rung
+        )
+        # Case 2: fail on minimal batch size.
+        hparams, _ = search_method.get_random_hparams_and_search_data(1)
+        search_data = ASHADSATSearchData(lo=1, hi=2, curr_rung=0)
+        hparams = copy.deepcopy(hparams)
+        hparams[_defaults.OVERWRITE_KEY]["train_micro_batch_size_per_gpu"] = (
+            search_data.hi + search_data.lo
+        ) // 2
+        failed_trial = search_method.trial_tracker.create_trial(
+            hparams=hparams, search_data=copy.deepcopy(search_data), parent_trial=None
+        )
+        search_method.trial_tracker.queue_and_register_trial(failed_trial)
+        _ = search_method.trial_tracker.queue.popleft()
+        search_method.trial_tracker.report_trial_early_exit(failed_trial)
+        assert search_method.lineage_completed_rung(
+            failed_trial, failed_trial.search_data.curr_rung
+        )
 
 
 class TestHFConfigOverwriting:

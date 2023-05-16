@@ -120,6 +120,12 @@ def get_full_parser() -> argparse.ArgumentParser:
         "--eta",
         default=2,
     )
+    asha_subparser.add_argument(
+        "-srf",
+        "--search-range-factor",
+        type=float,
+        default=_defaults.AUTOTUNING_ARG_DEFAULTS["search-range-factor"],
+    )
 
     return parser
 
