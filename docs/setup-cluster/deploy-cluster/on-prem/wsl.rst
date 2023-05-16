@@ -249,7 +249,7 @@ Verify that each agent started successfully by viewing the log.
 
    journalctl -u determined-agent
 
-You should see logging indicating that the agent started successfully, detected compute devices, and
+You should see logs indicating that the agent started successfully, detected compute devices, and
 connected to the master. On the Determined WebUI, you should now see slots available, both on the
 right-hand side of the top navigation bar and if you select the ``Cluster`` view in the left-hand
 navigation panel.
@@ -343,7 +343,7 @@ password you would like to use for the database:
 
 .. _docker_desktop_get_wsl_ip:
 
-Obtain the WSL IP address
+Obtain the WSL IP Address
 =========================
 
 To allow Determined to reach the PostgreSQL container, you will need to determine the IP address.
