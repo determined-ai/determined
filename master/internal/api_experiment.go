@@ -21,6 +21,9 @@ import (
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/pkg/archive"
+	"github.com/ghodss/yaml"
+	"github.com/labstack/echo/v4"
+	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/internal/prom"
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -1561,7 +1564,7 @@ func (a *apiServer) CreateExperiment(
 		dbExp.Username = user.Username
 	}
 
-	if err = exputil.AuthZProvider.Get().CanCreateExperiment(ctx, *user, project, dbExp); err != nil {
+	if err = exputil.AuthZProvider.Get().CanCreateExperiment(ctx, *user, project); err != nil {
 		return nil, status.Errorf(codes.PermissionDenied, err.Error())
 	}
 
