@@ -79,6 +79,7 @@ const Wait: React.FC = () => {
           clearInterval(ival);
           window.location.assign(serverAddress(serviceAddr));
         }
+        // TODO: use task.endTime to determine if the task is terminated.
         setWaitStatus(lastRun);
       } catch (e) {
         handleTaskError(e as Error);
