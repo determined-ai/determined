@@ -235,6 +235,41 @@ const CodeEditor: React.FC<Props> = ({ files, onSelectFile, readonly, selectedFi
     viewMode === 'editor' ? css.editorMode : '',
   ];
 
+  let fileContent = <h5>Please, choose a file to preview.</h5>;
+  if (pageError) {
+    fileContent = (
+      <Message
+        style={{
+          justifyContent: 'center',
+          padding: '120px',
+        }}
+        title={pageError}
+        type={MessageType.Alert}
+      />
+    );
+  } else if (activeFile) {
+    fileContent =
+      editorMode === 'monaco' ? (
+        <MonacoEditor
+          height="100%"
+          language={getSyntaxHighlight()}
+          options={{
+            minimap: {
+              enabled: false,
+            },
+            occurrencesHighlight: false,
+            readOnly: readonly,
+            showFoldingControls: 'always',
+          }}
+          value={Loadable.getOrElse('', activeFile.content)}
+        />
+      ) : (
+        <Suspense fallback={<Spinner tip="Loading ipynb viewer..." />}>
+          <JupyterRenderer file={Loadable.getOrElse('', activeFile.content)} />
+        </Suspense>
+      );
+  }
+
   return (
     <div className={classes.join(' ')}>
       <div className={viewMode === 'editor' ? css.hideElement : undefined}>
@@ -288,38 +323,7 @@ const CodeEditor: React.FC<Props> = ({ files, onSelectFile, readonly, selectedFi
         bodyScroll
         className={pageError ? css.pageError : css.editor}
         maxHeight>
-        <Spinner spinning={activeFile?.content === NotLoaded}>
-          {pageError ? (
-            <Message
-              style={{
-                justifyContent: 'center',
-                padding: '120px',
-              }}
-              title={pageError}
-              type={MessageType.Alert}
-            />
-          ) : !activeFile ? (
-            <h5>Please, choose a file to preview.</h5>
-          ) : editorMode === 'monaco' ? (
-            <MonacoEditor
-              height="100%"
-              language={getSyntaxHighlight()}
-              options={{
-                minimap: {
-                  enabled: false,
-                },
-                occurrencesHighlight: false,
-                readOnly: readonly,
-                showFoldingControls: 'always',
-              }}
-              value={Loadable.getOrElse('', activeFile.content)}
-            />
-          ) : (
-            <Suspense fallback={<Spinner tip="Loading ipynb viewer..." />}>
-              <JupyterRenderer file={Loadable.getOrElse('', activeFile.content)} />
-            </Suspense>
-          )}
-        </Spinner>
+        <Spinner spinning={activeFile?.content === NotLoaded}>{fileContent}</Spinner>
       </Section>
     </div>
   );
