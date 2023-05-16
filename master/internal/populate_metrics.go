@@ -101,10 +101,7 @@ func reportNonTrivialMetrics(ctx context.Context, api *apiServer, trialID int32,
 			},
 		}
 
-		_, err := api.ReportTrialTrainingMetrics(ctx,
-			&apiv1.ReportTrialTrainingMetricsRequest{
-				TrainingMetrics: &trainingMetrics,
-			})
+		err := db.SingleDB().AddTrainingMetrics(ctx, &trainingMetrics)
 		if err != nil {
 			return err
 		}
@@ -136,10 +133,7 @@ func reportNonTrivialMetrics(ctx context.Context, api *apiServer, trialID int32,
 				AvgMetrics: validationAvgMetrics,
 			},
 		}
-		_, err = api.ReportTrialValidationMetrics(ctx,
-			&apiv1.ReportTrialValidationMetricsRequest{
-				ValidationMetrics: &validationMetrics,
-			})
+		err = db.SingleDB().AddValidationMetrics(ctx, &validationMetrics)
 
 		if err != nil {
 			return err
@@ -163,10 +157,7 @@ func reportTrivialMetrics(ctx context.Context, api *apiServer, trialID int32, ba
 		},
 	}
 
-	_, err := api.ReportTrialTrainingMetrics(ctx,
-		&apiv1.ReportTrialTrainingMetricsRequest{
-			TrainingMetrics: &trainingMetrics,
-		})
+	err := db.SingleDB().AddTrainingMetrics(ctx, &trainingMetrics)
 	if err != nil {
 		return err
 	}
@@ -179,10 +170,7 @@ func reportTrivialMetrics(ctx context.Context, api *apiServer, trialID int32, ba
 		},
 	}
 
-	_, err = api.ReportTrialValidationMetrics(ctx,
-		&apiv1.ReportTrialValidationMetricsRequest{
-			ValidationMetrics: &validationMetrics,
-		})
+	err = db.SingleDB().AddValidationMetrics(ctx, &validationMetrics)
 
 	if err != nil {
 		return err
