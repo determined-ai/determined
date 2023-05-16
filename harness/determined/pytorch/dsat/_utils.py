@@ -284,7 +284,6 @@ def get_zero_stage_search_space(
     ), f"Invalid zero_stage, must be one of {list(default_settings)}"
     search_space = default_settings[1]
     for stage in range(2, zero_stage + 1):
-        # search_space = {**search_space, **default_settings[stage]}
         search_space = merge_dicts(search_space, default_settings[stage])
     return search_space
 
@@ -366,7 +365,6 @@ def get_ds_config_from_hparams(
     base_config_file_name = hparams[config_key]
     base_ds_config = normalize_base_ds_config(base_config_file_name, model_dir=model_dir)
     overwrite_ds_config = hparams.get(overwrite_key, {})
-    # ds_config = merge_dicts(cast(Dict[str, Any], base_ds_config), overwrite_ds_config)
     ds_config = merge_dicts(base_ds_config, overwrite_ds_config)
     return ds_config
 
@@ -388,7 +386,6 @@ def overwrite_deepspeed_config(
         The resulting dictionary when base_ds_config is overwritten with source_ds_dict.
     """
     normalized_base_ds_config = normalize_base_ds_config(base_ds_config, model_dir=model_dir)
-    # return merge_dicts(cast(Dict[str, Any], normalized_base_ds_config), source_ds_dict)
     return merge_dicts(normalized_base_ds_config, source_ds_dict)
 
 

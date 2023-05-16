@@ -77,7 +77,6 @@ def main(core_context: det.core.Context) -> None:
 
     exp_config = get_custom_dsat_exp_conf_from_args(args)
 
-    # search_method_class = _defaults.ALL_SEARCH_METHOD_CLASSES[args.search_method]
     search_method_class = get_search_method_class(args.search_method)
     if search_method_class is None:
         return

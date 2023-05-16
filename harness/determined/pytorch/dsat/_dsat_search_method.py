@@ -13,7 +13,6 @@ from typing import Any, Deque, Dict, Iterable, Iterator, List, Optional, Set, Tu
 
 import numpy as np
 
-# from determined import searcher
 from determined.experimental.client import create_experiment
 from determined.pytorch.dsat import _defaults, _utils
 from determined.searcher import (
@@ -90,7 +89,6 @@ class DSATTrial:
         """Computes set of trials in lineage tree."""
         root = self.lineage_root
         trials_set = {root}
-        # children = {c for c in root.children}
         children = set(root.children)
         while children:
             random_child = children.pop()
@@ -332,8 +330,7 @@ class DSATTrialTracker:
         assert (
             self.model_profile_info_trial is not None
         ), "The model profile info Trial must be run before calling this method."
-        if isinstance(self.model_profile_info_trial.metric, float):
-            return 0
+        assert isinstance(self.model_profile_info_trial.metric, dict)
         return self.model_profile_info_trial.metric.get("gpu_mem", 0)
 
     @property
@@ -341,8 +338,7 @@ class DSATTrialTracker:
         assert (
             self.model_profile_info_trial is not None
         ), "The model profile info Trial must be run before calling this method."
-        if isinstance(self.model_profile_info_trial.metric, float):
-            return 0
+        assert isinstance(self.model_profile_info_trial.metric, dict)
         return self.model_profile_info_trial.metric.get("num_params", 0)
 
     @property
@@ -350,8 +346,7 @@ class DSATTrialTracker:
         assert (
             self.model_profile_info_trial is not None
         ), "The model profile info Trial must be run before calling this method."
-        if isinstance(self.model_profile_info_trial.metric, float):
-            return 0
+        assert isinstance(self.model_profile_info_trial.metric, dict)
         return self.model_profile_info_trial.metric.get("trainable_num_params", 0)
 
     @property
@@ -359,8 +354,7 @@ class DSATTrialTracker:
         assert (
             self.model_profile_info_trial is not None
         ), "The model profile info Trial must be run before calling this method."
-        if isinstance(self.model_profile_info_trial.metric, float):
-            return 0
+        assert isinstance(self.model_profile_info_trial.metric, dict)
         return self.model_profile_info_trial.metric.get("activation_mem_per_gpu", 0)
 
     @property
@@ -439,7 +433,6 @@ class DSATTrialTracker:
         for stage in range(4):
             trials_to_check = [trial for _, trial in self if trial.stage == stage]
             best_trial = self._best_trial_fn(trials_to_check)
-            # if best_trial is not None:
             _best_trials_by_stage[stage] = best_trial
         return _best_trials_by_stage
 
@@ -948,7 +941,6 @@ class RandomDSATSearchMethod(BaseDSATSearchMethod):
 
         return False
 
-    # def get_random_mbs_from_search_data(self, search_data: Dict[str, int]) -> int:
     def get_random_mbs_from_search_data(self, search_data: DSATSearchData) -> int:
         """
         Randomly choose a mbs given the `search_data` bounds. Random choice covers a larger search
@@ -959,9 +951,7 @@ class RandomDSATSearchMethod(BaseDSATSearchMethod):
         return mbs
 
     def get_random_hparams_and_search_data(
-        self,
-        zero_stage: int
-        # ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+        self, zero_stage: int
     ) -> Tuple[Dict[str, Any], DSATSearchData]:
         zero_optim_config = _utils.get_random_zero_optim_config(zero_stage)
         new_hparams = copy.deepcopy(self.trial_tracker.hparams)
