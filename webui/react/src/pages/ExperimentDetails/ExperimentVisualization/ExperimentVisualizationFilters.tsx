@@ -19,7 +19,7 @@ export interface VisualizationFilters {
   batchMargin: number;
   hParams: string[];
   maxTrial: number;
-  metric: Metric | null;
+  metric: Metric | undefined;
   scale: Scale;
   view: ViewType;
 }
@@ -164,7 +164,7 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
   const handleMetricChange = useCallback(
     (metric: Metric) => {
       dispatch({ type: ActionType.SetMetric, value: metric });
-      if (onMetricChange) onMetricChange(metric);
+      onMetricChange?.(metric);
     },
     [onMetricChange],
   );
@@ -183,7 +183,7 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
 
   const handleReset = useCallback(() => {
     dispatch({ type: ActionType.Set, value: filters });
-    if (onReset) onReset();
+    onReset?.();
   }, [filters, onReset]);
 
   // Pick the first valid option if the current local batch is invalid.
@@ -191,6 +191,13 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
     if (batches.includes(localFilters.batch) || batches.length === 0) return;
     dispatch({ type: ActionType.SetBatch, value: batches.first() });
   }, [batches, localFilters.batch]);
+
+  // Pick the first valid option if the current local metric is invalid.
+  useEffect(() => {
+    if ((localFilters.metric && metrics.includes(localFilters.metric)) || metrics.length === 0)
+      return;
+    dispatch({ type: ActionType.SetMetric, value: metrics.first() });
+  }, [localFilters.metric, metrics]);
 
   return (
     <>

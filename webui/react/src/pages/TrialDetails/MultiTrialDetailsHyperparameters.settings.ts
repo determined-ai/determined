@@ -1,4 +1,4 @@
-import { array, literal, nullType, number, string, type, union } from 'io-ts';
+import { array, literal, number, string, type, undefined as undefinedType, union } from 'io-ts';
 
 import { SettingsConfig } from 'hooks/useSettings';
 import {
@@ -20,7 +20,7 @@ const defaultFilters: VisualizationFilters = {
   batchMargin: DEFAULT_BATCH_MARGIN,
   hParams: [],
   maxTrial: DEFAULT_MAX_TRIALS,
-  metric: null,
+  metric: undefined,
   scale: Scale.Linear,
   view: ViewType.Grid,
 };
@@ -39,7 +39,7 @@ export const settingsConfigForExperimentHyperparameters = (
         hParams: array(string),
         maxTrial: number,
         metric: union([
-          nullType,
+          undefinedType,
           type({ name: string, type: union([literal('training'), literal('validation')]) }),
         ]),
         scale: union([literal('linear'), literal('log')]),

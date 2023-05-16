@@ -2,6 +2,7 @@ import { Alert } from 'antd';
 import Hermes, { DimensionType } from 'hermes-parallel-coordinates';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import Empty from 'components/kit/Empty';
 import ParallelCoordinates from 'components/ParallelCoordinates';
 import Section from 'components/Section';
 import TableBatch from 'components/Table/TableBatch';
@@ -10,7 +11,6 @@ import { openOrCreateTensorBoard } from 'services/api';
 import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
-import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner/Spinner';
 import useUI from 'shared/contexts/stores/UI';
 import { Primitive, Range } from 'shared/types';
@@ -46,7 +46,7 @@ interface Props {
   selectedBatch: number;
   selectedBatchMargin: number;
   selectedHParams: string[];
-  selectedMetric: Metric | null;
+  selectedMetric?: Metric;
   selectedScale: Scale;
   trial?: TrialDetails;
 }
@@ -373,10 +373,10 @@ const HpParallelCoordinates: React.FC<Props> = ({
   }, [selectedBatch, selectedBatchMargin, selectedHParams, selectedMetric]);
 
   if (pageError) {
-    return <Message title={pageError.message} />;
+    return <Empty description={pageError.message} />;
   } else if ((hasLoaded && !chartData) || !selectedMetric) {
     return isExperimentTerminal ? (
-      <Message title="No data to plot." type={MessageType.Empty} />
+      <Empty description="No data to plot." />
     ) : (
       <div className={css.waiting}>
         <Alert

@@ -39,7 +39,7 @@ interface Props {
   selectedBatch: number;
   selectedBatchMargin: number;
   selectedHParams: string[];
-  selectedMetric: Metric | null;
+  selectedMetric?: Metric;
   selectedScale: Scale;
   selectedView: ViewType;
 }
@@ -50,7 +50,7 @@ interface HpData {
   hpLabelValues: Record<string, number[]>;
   hpLabels: Record<string, string[]>;
   hpLogScales: Record<string, boolean>;
-  hpMetrics: Record<string, (number | null)[]>;
+  hpMetrics: Record<string, (number | undefined)[]>;
   hpValues: HpValue;
   metricRange: Range<number>;
   trialIds: number[];
@@ -220,7 +220,7 @@ const HpHeatMaps: React.FC<Props> = ({
 
     const canceler = new AbortController();
     const trialIds: number[] = [];
-    const hpMetricMap: Record<number, Record<string, number | null>> = {};
+    const hpMetricMap: Record<number, Record<string, number | undefined>> = {};
     const hpValueMap: Record<number, Record<string, Primitive>> = {};
     const hpLabelMap: Record<string, string[]> = {};
     const hpLabelValueMap: Record<string, number[]> = {};
@@ -241,7 +241,7 @@ const HpHeatMaps: React.FC<Props> = ({
         if (!event?.trials || !Array.isArray(event.trials)) return;
 
         const hpLogScaleMap: Record<string, boolean> = {};
-        const hpMetrics: Record<string, (number | null)[]> = {};
+        const hpMetrics: Record<string, (number | undefined)[]> = {};
         const hpValues: HpValue = {};
         const metricRange: Range<number> = [Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY];
 
@@ -258,7 +258,7 @@ const HpHeatMaps: React.FC<Props> = ({
            * TODO: filtering NaN, +/- Infinity for now, but handle it later with
            * dynamic min/max ranges via uPlot.Scales.
            */
-          const trialMetric = Number.isFinite(trial.metric) ? trial.metric : null;
+          const trialMetric = Number.isFinite(trial.metric) ? trial.metric : undefined;
 
           trialIds.push(trialId);
           hpMetricMap[trialId] = hpMetricMap[trialId] || {};
@@ -271,8 +271,10 @@ const HpHeatMaps: React.FC<Props> = ({
             });
           });
 
-          if (trialMetric !== null && trialMetric < metricRange[0]) metricRange[0] = trialMetric;
-          if (trialMetric !== null && trialMetric > metricRange[1]) metricRange[1] = trialMetric;
+          if (trialMetric !== undefined && trialMetric < metricRange[0])
+            metricRange[0] = trialMetric;
+          if (trialMetric !== undefined && trialMetric > metricRange[1])
+            metricRange[1] = trialMetric;
         });
 
         fullHParams.forEach((hParam1) => {

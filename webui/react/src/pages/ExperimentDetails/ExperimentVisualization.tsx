@@ -96,7 +96,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
     batchMargin: DEFAULT_BATCH_MARGIN,
     hParams: [],
     maxTrial: DEFAULT_MAX_TRIALS,
-    metric: null,
+    metric: undefined,
     scale: Scale.Linear,
     view: DEFAULT_VIEW,
   };
@@ -108,7 +108,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
     return type && TYPE_KEYS.includes(type) ? type : DEFAULT_TYPE_KEY;
   });
   const [filters, setFilters] = useState<VisualizationFilters>(initFilters);
-  const [activeMetric, setActiveMetric] = useState<Metric | null>(initFilters.metric);
+  const [activeMetric, setActiveMetric] = useState(initFilters.metric);
   const [hasSearcherMetric, setHasSearcherMetric] = useState<boolean>(false);
   const [batches, setBatches] = useState<number[]>();
   const [pageError, setPageError] = useState<PageError>();
