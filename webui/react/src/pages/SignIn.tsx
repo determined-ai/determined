@@ -39,7 +39,7 @@ const SignIn: React.FC = () => {
   const isAuthenticated = useObservable(authStore.isAuthenticated);
   const info = useObservable(determinedStore.info);
   const [canceler] = useState(new AbortController());
-  const { rbacEnabled } = Loadable.getOrElse(undefined, useObservable(determinedStore.info));
+  const { rbacEnabled } = useObservable(determinedStore.info);
 
   const queries = useMemo(() => new URLSearchParams(location.search), [location.search]);
   const ssoQueries = handleRelayState(queries);

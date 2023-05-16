@@ -122,7 +122,7 @@ const WorkspaceMembers: React.FC<Props> = ({
 
   const WorkspaceMemberAddModal = useModal(WorkspaceMemberAddModalComponent);
 
-  const { rbacEnabled } = Loadable.getOrElse(undefined, useObservable(determinedStore.info));
+  const { rbacEnabled } = useObservable(determinedStore.info);
 
   useEffect(() => {
     onFilterUpdate(settings.name);

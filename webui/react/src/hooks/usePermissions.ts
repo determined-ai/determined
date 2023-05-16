@@ -92,7 +92,7 @@ interface PermissionsHook {
 }
 
 const usePermissions = (): PermissionsHook => {
-  const { rbacEnabled } = Loadable.getOrElse(undefined, useObservable(determinedStore.info));
+  const { rbacEnabled } = useObservable(determinedStore.info);
   const loadableCurrentUser = useObservable(userStore.currentUser);
   const currentUser = Loadable.getOrElse(undefined, loadableCurrentUser);
 

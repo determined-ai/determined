@@ -94,7 +94,7 @@ const GroupActionDropdown = ({
 };
 
 const GroupManagement: React.FC = () => {
-  const { rbacEnabled } = Loadable.getOrElse(undefined, useObservable(determinedStore.info));
+  const { rbacEnabled } = useObservable(determinedStore.info);
   const [groups, setGroups] = useState<V1GroupSearchResult[]>([]);
   const [groupUsers, setGroupUsers] = useState<V1GroupDetails[]>([]);
   const [users, setUsers] = useState<DetailedUser[]>([]);

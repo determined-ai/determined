@@ -34,7 +34,7 @@ const Navigation: React.FC<Props> = ({ children }) => {
     );
   }, [clusterOverview, info]);
 
-  const { rbacEnabled } = Loadable.getOrElse(undefined, useObservable(determinedStore.info));
+  const { rbacEnabled } = useObservable(determinedStore.info);
 
   useEffect(() => {
     const shouldPoll = rbacEnabled && Loadable.isLoaded(loadableCurrentUser);

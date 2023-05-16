@@ -5,14 +5,11 @@ import { V1PermissionType } from 'services/api-ts-sdk/api';
 import { setup } from './usePermissions.common';
 
 vi.mock('stores/determinedInfo', async (importOriginal) => {
-  const loadable = await import('utils/loadable');
   const observable = await import('utils/observable');
   const store = {
-    info: observable.observable(
-      loadable.Loaded({
-        rbacEnabled: true,
-      }),
-    ),
+    info: observable.observable({
+      rbacEnabled: true,
+    }),
   };
   return {
     ...(await importOriginal<typeof import('stores/determinedInfo')>()),

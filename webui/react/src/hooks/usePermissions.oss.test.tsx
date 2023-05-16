@@ -3,14 +3,11 @@ import { screen } from '@testing-library/react';
 import { setup } from './usePermissions.common';
 
 vi.mock('stores/determinedInfo', async (importOriginal) => {
-  const loadable = await import('utils/loadable');
   const observable = await import('utils/observable');
   const store = {
-    info: observable.observable(
-      loadable.Loaded({
-        rbacEnabled: false,
-      }),
-    ),
+    info: observable.observable({
+      rbacEnabled: false,
+    }),
   };
   return {
     ...(await importOriginal<typeof import('stores/determinedInfo')>()),

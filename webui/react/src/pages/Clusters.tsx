@@ -30,7 +30,7 @@ type Params = {
 const DEFAULT_TAB_KEY = TabType.Overview;
 
 const Clusters: React.FC = () => {
-  const { rbacEnabled } = Loadable.getOrElse(undefined, useObservable(determinedStore.info));
+  const { rbacEnabled } = useObservable(determinedStore.info);
   const { canAdministrateUsers } = usePermissions();
   const { tab } = useParams<Params>();
   const basePath = paths.clusters();

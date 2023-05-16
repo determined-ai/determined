@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react';
+import { render, RenderResult } from '@testing-library/react';
 import React from 'react';
 
 import usePermissions from 'hooks/usePermissions';
@@ -60,7 +60,7 @@ const PermissionRenderer: React.FC<Props> = () => {
   );
 };
 
-export const setup = async (): React.FC => {
+export const setup = async (): Promise<RenderResult> => {
   return await render(
     <UIProvider>
       <PermissionRenderer workspaceId={1} />

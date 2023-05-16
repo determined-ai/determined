@@ -59,7 +59,7 @@ interface FormInputs {
 
 const CreateUserModalComponent: React.FC<Props> = ({ onClose, user, viewOnly }: Props) => {
   const [form] = Form.useForm<FormInputs>();
-  const { rbacEnabled } = Loadable.getOrElse(undefined, useObservable(determinedStore.info));
+  const { rbacEnabled } = useObservable(determinedStore.info);
   // Null means the roles have not yet loaded
   const [userRoles, setUserRoles] = useState<UserRole[] | null>(null);
   const { canAssignRoles, canModifyPermissions } = usePermissions();

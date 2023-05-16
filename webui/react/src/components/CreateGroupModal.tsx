@@ -50,7 +50,7 @@ interface Props {
 
 const CreateGroupModalComponent: React.FC<Props> = ({ onClose, users, group }: Props) => {
   const [form] = Form.useForm();
-  const { rbacEnabled } = Loadable.getOrElse(undefined, useObservable(determinedStore.info));
+  const { rbacEnabled } = useObservable(determinedStore.info);
   const { canModifyPermissions } = usePermissions();
   const [groupRoles, setGroupRoles] = useState<UserRole[]>([]);
   const [groupDetail, setGroupDetail] = useState<V1GroupDetails>();
