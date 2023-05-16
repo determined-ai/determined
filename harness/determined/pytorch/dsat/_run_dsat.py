@@ -6,15 +6,15 @@ import pickle
 from typing import Any, Dict, Type
 
 import determined as det
-from determined.searcher import RemoteSearchRunner
 from determined.pytorch.dsat import (
-    _defaults,
-    _utils,
     BaseDSATSearchMethod,
-    RandomDSATSearchMethod,
     BinarySearchDSATSearchMethod,
+    RandomDSATSearchMethod,
+    _defaults,
     _TestDSATSearchMethod,
+    _utils,
 )
+from determined.searcher import RemoteSearchRunner
 from determined.util import merge_dicts
 
 

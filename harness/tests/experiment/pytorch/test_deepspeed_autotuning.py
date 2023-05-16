@@ -14,20 +14,20 @@ from determined import searcher
 from determined.common.api import bindings
 from determined.integrations.huggingface import get_hf_args_with_overwrites
 from determined.pytorch.dsat import (
+    BaseDSATSearchMethod,
+    BinarySearchDSATSearchMethod,
     DSATTrial,
     DSATTrialTracker,
+    RandomDSATSearchMethod,
     _defaults,
     _utils,
-    BaseDSATSearchMethod,
-    RandomDSATSearchMethod,
-    BinarySearchDSATSearchMethod,
 )
 from determined.pytorch.dsat._run_dsat import (
     get_custom_dsat_exp_conf_from_args,
     get_search_method_class,
 )
 from determined.searcher._search_method import SearcherState
-from tests.custom_search_mocks import MockMasterSearchRunner, MockMaster
+from tests.custom_search_mocks import MockMaster, MockMasterSearchRunner
 
 ERROR_METRIC_NAME = "error"
 

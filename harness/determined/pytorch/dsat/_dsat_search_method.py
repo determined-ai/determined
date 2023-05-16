@@ -9,36 +9,23 @@ import uuid
 from abc import abstractmethod
 from collections import deque
 from dataclasses import dataclass
-from typing import (
-    Any,
-    Deque,
-    Dict,
-    Iterable,
-    Iterator,
-    List,
-    Optional,
-    Set,
-    Tuple,
-    Union,
-    cast,
-)
+from typing import Any, Deque, Dict, Iterable, Iterator, List, Optional, Set, Tuple, Union, cast
 
 import numpy as np
-
-from determined.searcher import (
-    Operation,
-    SearcherState,
-    ExitedReason,
-    Close,
-    SearchMethod,
-    Create,
-    ValidateAfter,
-    Shutdown,
-)
 
 # from determined import searcher
 from determined.experimental.client import create_experiment
 from determined.pytorch.dsat import _defaults, _utils
+from determined.searcher import (
+    Close,
+    Create,
+    ExitedReason,
+    Operation,
+    SearcherState,
+    SearchMethod,
+    Shutdown,
+    ValidateAfter,
+)
 from determined.util import merge_dicts
 
 """
