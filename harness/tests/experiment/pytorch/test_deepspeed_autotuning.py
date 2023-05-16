@@ -6,16 +6,24 @@ import pathlib
 import shutil
 import tempfile
 from collections import deque
-from typing import Any, Deque, Dict, List, Optional, Sequence, Tuple
+from typing import Any, Deque, Dict, Generator, List, Optional, Sequence, Tuple
 
 import pytest
 
 from determined import searcher
 from determined.common.api import bindings
 from determined.integrations.huggingface import get_hf_args_with_overwrites
-from determined.pytorch.dsat import DSATTrial, DSATTrialTracker, _defaults, _utils
+from determined.pytorch.dsat import (
+    DSATTrial,
+    DSATTrialTracker,
+    _defaults,
+    _utils,
+    BaseDSATSearchMethod,
+    RandomDSATSearchMethod,
+    BinarySearchDSATSearchMethod,
+)
 from determined.pytorch.dsat._run_dsat import get_custom_dsat_exp_conf_from_args, get_search_method
-from determined.searcher import _search_method
+from determined.searcher._search_method import SearcherState
 from tests.custom_search_mocks import MockMasterSearchRunner, MockMaster
 
 ERROR_METRIC_NAME = "error"
@@ -44,7 +52,6 @@ DEFAULT_CUSTOM_DSAT_EXP_CONFIG_DICT = {
     for search_method_name, default_args in DEFAULT_ARGS_DICT.items()
 }
 
-
 MODEL_INFO_PROFILE_METRIC_FIXTURE: Dict[str, Any] = {
     "num_params": 60192808,
     "trainable_num_params": 60192808,
@@ -53,7 +60,6 @@ MODEL_INFO_PROFILE_METRIC_FIXTURE: Dict[str, Any] = {
     "gpu_mem": 15843721216,
 }
 
-
 DSATTRIAL_ARGS = {
     "hparams": {"deepspeed_config": "ds_config.json"},
     "model_dir": BASE_EXPERIMENT_FIXTURE_PATH.joinpath("example_experiment"),
@@ -61,7 +67,7 @@ DSATTRIAL_ARGS = {
     "length": 5,
 }
 
-HPARAMS_FIXTURE = {
+HPARAMS_FIXTURE: Dict[str, Any] = {
     "deepspeed_config": "ds_config.json",
     _defaults.OVERWRITE_KEY: {
         "train_batch_size": 1,
@@ -124,8 +130,10 @@ def test_deepspeed_autotune_happy_path() -> None:
         # All of our search methods currently run all of the specified `max-trials` in the
         # happy path
         exp_num_trials = _defaults.AUTOTUNING_ARG_DEFAULTS["max-trials"]
-        model_info_profile_trial_metrics = [MODEL_INFO_PROFILE_METRIC_FIXTURE]
-        successful_trial_metrics = [
+        model_info_profile_trial_metrics: List[Dict[str, float]] = [
+            MODEL_INFO_PROFILE_METRIC_FIXTURE
+        ]
+        successful_trial_metrics: List[Dict[str, float]] = [
             {_defaults.AUTOTUNING_ARG_DEFAULTS["metric"]: 0.0} for _ in range(exp_num_trials - 1)
         ]
         all_metrics = model_info_profile_trial_metrics + successful_trial_metrics
@@ -293,36 +301,43 @@ def queue_and_trial_tracker_builder(
 
 
 @pytest.fixture
-def basic_queue_and_trial_tracker():
+def basic_queue_and_trial_tracker() -> (
+    Generator[Tuple[List[DSATTrial], DSATTrialTracker], Any, None]
+):
     yield queue_and_trial_tracker_builder(DEFAULT_ARGS_DICT["_test"])
 
 
 @pytest.fixture
-def max_concurrent_trials_queue_and_tracker():
+def max_concurrent_trials_queue_and_tracker() -> (
+    Generator[Tuple[List[DSATTrial], DSATTrialTracker], Any, None]
+):
     args = copy.deepcopy(DEFAULT_ARGS_DICT["_test"])
     args.max_concurrent_trials = 2
     yield queue_and_trial_tracker_builder(args)
 
 
 @pytest.fixture
-def max_slots_queue_and_trial_tracker():
+def max_slots_queue_and_trial_tracker() -> (
+    Generator[Tuple[List[DSATTrial], DSATTrialTracker], Any, None]
+):
     args = copy.deepcopy(DEFAULT_ARGS_DICT["_test"])
     args.max_slots = 4
     yield queue_and_trial_tracker_builder(args)
 
 
 @pytest.fixture
-def failed_model_profile_info_queue_and_trial_tracker():
+def failed_model_profile_info_queue_and_trial_tracker() -> Generator[DSATTrialTracker, Any, None]:
     exp_config = DEFAULT_CUSTOM_DSAT_EXP_CONFIG_DICT["_test"]
     trial_tracker = DSATTrialTracker(args=DEFAULT_ARGS_DICT["_test"], exp_config=exp_config)
     model_profile_info_trial = trial_tracker.create_model_profile_info_trial()
     trial_tracker.queue_and_register_trial(model_profile_info_trial)
+    assert trial_tracker.model_profile_info_trial
     trial_tracker.report_trial_early_exit(trial_tracker.model_profile_info_trial)
     yield trial_tracker
 
 
 @pytest.fixture
-def early_stopping_queue_and_trial_tracker():
+def early_stopping_queue_and_trial_tracker() -> DSATTrialTracker:
     """
     Returns a trial tracker whose early_stopping criteria should be triggered.
     """
@@ -331,6 +346,7 @@ def early_stopping_queue_and_trial_tracker():
     _, trial_tracker = queue_and_trial_tracker_builder(args)
     # One successful initial trial.
     trial = trial_tracker.queue.popleft()
+    assert trial.searcher_metric_name
     trial_tracker.update_trial_metric(trial, {trial.searcher_metric_name: 0.0})
     for _ in range(args.early_stopping):
         trial = trial_tracker.queue.popleft()
@@ -340,13 +356,17 @@ def early_stopping_queue_and_trial_tracker():
 
 class TestDSATTrialTracker:
     @pytest.mark.timeout(5)
-    def test_trial_registration(self, basic_queue_and_trial_tracker) -> None:
+    def test_trial_registration(
+        self, basic_queue_and_trial_tracker: Tuple[List[DSATTrial], DSATTrialTracker]
+    ) -> None:
         queued_trials, trial_tracker = basic_queue_and_trial_tracker
         for trial in queued_trials:
             assert trial.request_id in trial_tracker
 
     @pytest.mark.timeout(5)
-    def test_trial_queue_and_state_all_successes(self, basic_queue_and_trial_tracker) -> None:
+    def test_trial_queue_and_state_all_successes(
+        self, basic_queue_and_trial_tracker: Tuple[List[DSATTrial], DSATTrialTracker]
+    ) -> None:
         """
         Verify the expected trial tracker states are accurate when all trials succeed.
         """
@@ -365,6 +385,7 @@ class TestDSATTrialTracker:
             assert len(trial_tracker.queue) == num_trials_in_queue - 1
             assert trial_tracker.num_completed_trials == 1 + idx
             assert trial_tracker.num_running_trials == 1
+            assert popped_trial.searcher_metric_name
 
             trial_tracker.update_trial_metric(
                 popped_trial, {popped_trial.searcher_metric_name: 0.0}
@@ -378,7 +399,9 @@ class TestDSATTrialTracker:
         assert not trial_tracker.should_be_failure
 
     @pytest.mark.timeout(5)
-    def test_trial_queue_and_state_all_errors(self, basic_queue_and_trial_tracker) -> None:
+    def test_trial_queue_and_state_all_errors(
+        self, basic_queue_and_trial_tracker: Tuple[List[DSATTrial], DSATTrialTracker]
+    ) -> None:
         """
         Verify the expected trial tracker states are accurate when all trials fail.
         """
@@ -408,26 +431,32 @@ class TestDSATTrialTracker:
         assert trial_tracker.should_be_failure
 
     @pytest.mark.timeout(5)
-    def test_max_concurrent_trials(self, max_concurrent_trials_queue_and_tracker) -> None:
+    def test_max_concurrent_trials(
+        self, max_concurrent_trials_queue_and_tracker: Tuple[List[DSATTrial], DSATTrialTracker]
+    ) -> None:
         """
         Verify that `max_concurrent_trials` is respected.
         """
         _, trial_tracker = max_concurrent_trials_queue_and_tracker
         while trial_tracker.can_run_more_trials:
             popped_trial = trial_tracker.queue.popleft()
+            assert popped_trial.searcher_metric_name
             trial_tracker.update_trial_metric(
                 popped_trial, {popped_trial.searcher_metric_name: 0.0}
             )
             assert trial_tracker.num_running_trials <= trial_tracker.max_concurrent_trials
 
     @pytest.mark.timeout(5)
-    def test_max_slots(self, max_slots_queue_and_trial_tracker) -> None:
+    def test_max_slots(
+        self, max_slots_queue_and_trial_tracker: Tuple[List[DSATTrial], DSATTrialTracker]
+    ) -> None:
         """
         Verify that `max_slots` is respected.
         """
         _, trial_tracker = max_slots_queue_and_trial_tracker
         while trial_tracker.can_run_more_trials:
             popped_trial = trial_tracker.queue.popleft()
+            assert popped_trial.searcher_metric_name
             trial_tracker.update_trial_metric(
                 popped_trial, {popped_trial.searcher_metric_name: 0.0}
             )
@@ -437,7 +466,9 @@ class TestDSATTrialTracker:
             )
 
     @pytest.mark.timeout(5)
-    def test_best_metric_tracking(self, basic_queue_and_trial_tracker) -> None:
+    def test_best_metric_tracking(
+        self, basic_queue_and_trial_tracker: Tuple[List[DSATTrial], DSATTrialTracker]
+    ) -> None:
         """
         Uses a series of successful trials where each trial is better than the previous one.
         """
@@ -447,6 +478,7 @@ class TestDSATTrialTracker:
             metrics = list(reversed(metrics))
         while trial_tracker.can_run_more_trials:
             popped_trial = trial_tracker.queue.popleft()
+            assert popped_trial.searcher_metric_name
             trial_tracker.update_trial_metric(
                 popped_trial, {popped_trial.searcher_metric_name: metrics.pop()}
             )
@@ -454,19 +486,21 @@ class TestDSATTrialTracker:
             assert trial_tracker.best_trials_by_stage[popped_trial.stage] == popped_trial
 
 
-def search_state_and_method_builder(args):
+def search_state_and_method_builder(
+    args: argparse.Namespace,
+) -> Tuple[SearcherState, BaseDSATSearchMethod]:
     """
     Creates the appropriate `BaseDSATSearchMethod` superclass instance with a completed model
     profile info run and a populated queue.
     """
     exp_config = get_custom_dsat_exp_conf_from_args(args)
     search_method = get_search_method(args.search_method)(
-        # search_method = _defaults.ALL_SEARCH_METHOD_CLASSES[args.search_method](
         args=args,
         exp_config=exp_config,
     )
-    searcher_state = _search_method.SearcherState()
+    searcher_state = SearcherState()
     search_method.initial_operations(searcher_state)
+    assert search_method.trial_tracker.model_profile_info_trial
     search_method.on_validation_completed(
         searcher_state,
         search_method.trial_tracker.model_profile_info_trial.request_id,
@@ -477,7 +511,9 @@ def search_state_and_method_builder(args):
 
 
 @pytest.fixture
-def default_random_state_and_search_method():
+def default_random_state_and_search_method() -> (
+    Generator[Tuple[SearcherState, BaseDSATSearchMethod], Any, None]
+):
     searcher_state, search_method = search_state_and_method_builder(DEFAULT_ARGS_DICT["random"])
     yield searcher_state, search_method
 
@@ -488,7 +524,9 @@ class TestRandomDSATSearchMethodTrialCreation:
     """
 
     @pytest.mark.timeout(5)
-    def test_random_hparams_and_search_data(self, default_random_state_and_search_method) -> None:
+    def test_random_hparams_and_search_data(
+        self, default_random_state_and_search_method: Tuple[SearcherState, RandomDSATSearchMethod]
+    ) -> None:
         _, search_method = default_random_state_and_search_method
         for _ in range(100):
             for stage in range(4):
@@ -499,7 +537,7 @@ class TestRandomDSATSearchMethodTrialCreation:
 
     @pytest.mark.timeout(5)
     def test_random_hparams_and_search_data_after_best(
-        self, default_random_state_and_search_method
+        self, default_random_state_and_search_method: Tuple[SearcherState, RandomDSATSearchMethod]
     ) -> None:
         for _ in range(100):
             _, search_method = default_random_state_and_search_method
@@ -508,6 +546,7 @@ class TestRandomDSATSearchMethodTrialCreation:
                 trial = search_method.trial_tracker.create_trial(hparams, search_data)
                 search_method.trial_tracker.queue_and_register_trial(trial)
                 search_method.trial_tracker.queue.popleft()
+                assert trial.searcher_metric_name
                 search_method.trial_tracker.update_trial_metric(
                     trial, {trial.searcher_metric_name: 0.0}
                 )
@@ -516,7 +555,7 @@ class TestRandomDSATSearchMethodTrialCreation:
 
     @pytest.mark.timeout(5)
     def test_lineage_continuation_after_failures(
-        self, default_random_state_and_search_method
+        self, default_random_state_and_search_method: Tuple[SearcherState, RandomDSATSearchMethod]
     ) -> None:
         """
         Verifying that a lineage will be attempted for `trials_per_random_config` total attempts
@@ -544,7 +583,7 @@ class TestRandomDSATSearchMethodTrialCreation:
 
     @pytest.mark.timeout(5)
     def test_lineage_continuation_after_successes(
-        self, default_random_state_and_search_method
+        self, default_random_state_and_search_method: Tuple[SearcherState, RandomDSATSearchMethod]
     ) -> None:
         """
         Verifying that a lineage will be attempted for `trials_per_random_config` total attempts
@@ -561,6 +600,7 @@ class TestRandomDSATSearchMethodTrialCreation:
         # The next search_method.trials_per_random_config - 1 trials should have the
         # first trial as their parent.
         for idx in range(search_method.trials_per_random_config - 1):
+            assert next_trial.searcher_metric_name
             search_method.on_validation_completed(
                 searcher_state,
                 next_trial.request_id,
@@ -570,6 +610,8 @@ class TestRandomDSATSearchMethodTrialCreation:
             next_trial = search_method.choose_next_trial_from_queue()
             assert next_trial.lineage_root == first_trial
         # And the next trial should be from a new lineage.
+        assert next_trial.searcher_metric_name
+        idx = search_method.trials_per_random_config - 1
         search_method.on_validation_completed(
             searcher_state,
             next_trial.request_id,
@@ -581,7 +623,9 @@ class TestRandomDSATSearchMethodTrialCreation:
 
 
 @pytest.fixture
-def long_random_state_and_search_method():
+def long_random_state_and_search_method() -> (
+    Generator[Tuple[SearcherState, BaseDSATSearchMethod], Any, None]
+):
     """For long-running tests which need a longer max_trials."""
     args = copy.deepcopy(DEFAULT_ARGS_DICT["random"])
     args.max_trials = 10**9
@@ -592,7 +636,9 @@ def long_random_state_and_search_method():
 
 class TestRandomDSATSearchMethodSearch:
     @pytest.mark.timeout(5)
-    def test_search_happy_path(self, long_random_state_and_search_method) -> None:
+    def test_search_happy_path(
+        self, long_random_state_and_search_method: Tuple[SearcherState, RandomDSATSearchMethod]
+    ) -> None:
         """
         Ensure that when the actual `train_micro_batch_size_per_gpu` lies between the
         search bounds, this optimal value will be found.
@@ -611,6 +657,7 @@ class TestRandomDSATSearchMethodSearch:
                 search_method.trial_tracker.queue_and_register_trial(first_trial)
                 curr_trial = search_method.trial_tracker.queue.popleft()
                 for _ in range(num_possible_mbs):
+                    assert curr_trial.search_data and curr_trial.search_data
                     assert curr_trial.search_data.lo <= curr_trial.mbs <= curr_trial.search_data.hi
                     if curr_trial.mbs >= target_mbs:
                         search_method.on_trial_exited_early(
@@ -618,6 +665,7 @@ class TestRandomDSATSearchMethodSearch:
                         )
                         assert search_method.trial_tracker.queue
                     else:
+                        assert curr_trial.searcher_metric_name
                         search_method.on_validation_completed(
                             searcher_state,
                             curr_trial.request_id,
@@ -642,13 +690,13 @@ class TestRandomDSATSearchMethodShouldStopLineage:
 
     @pytest.mark.timeout(5)
     def test_trials_per_random_config_stopping(
-        self, default_random_state_and_search_method
+        self, default_random_state_and_search_method: Tuple[SearcherState, RandomDSATSearchMethod]
     ) -> None:
         """
         Test that we respect the trials_per_random_config bound.
         """
         assert True
-        searcher_state, search_method = default_random_state_and_search_method
+        _, search_method = default_random_state_and_search_method
         trial = None
         for stage in range(4):
             for _ in range(search_method.trials_per_random_config):
@@ -658,15 +706,17 @@ class TestRandomDSATSearchMethodShouldStopLineage:
                 )
                 search_method.trial_tracker.queue_and_register_trial(trial)
                 search_method.trial_tracker.report_trial_early_exit(trial)
-
+            assert trial
             assert search_method.should_stop_lineage(trial)
 
     @pytest.mark.timeout(5)
-    def test_stop_stage_3(self, default_random_state_and_search_method) -> None:
+    def test_stop_stage_3(
+        self, default_random_state_and_search_method: Tuple[SearcherState, RandomDSATSearchMethod]
+    ) -> None:
         """
         Verify that we stop a stage 3 lineage when a successful stage-1 or 2 trial has been found.
         """
-        searcher_state, search_method = default_random_state_and_search_method
+        _, search_method = default_random_state_and_search_method
         trial_dict_by_stage = {}
         for stage in (1, 2, 3):
             overwrites = {_defaults.OVERWRITE_KEY: {"zero_optimization": {"stage": stage}}}
@@ -686,7 +736,9 @@ class TestRandomDSATSearchMethodShouldStopLineage:
         assert search_method.should_stop_lineage(trial_dict_by_stage[3])
 
     @pytest.mark.timeout(5)
-    def test_stop_after_fail_on_min_mbs(self, default_random_state_and_search_method) -> None:
+    def test_stop_after_fail_on_min_mbs(
+        self, default_random_state_and_search_method: Tuple[SearcherState, RandomDSATSearchMethod]
+    ) -> None:
         """
         Verify that we stop a lineage after a trial erors out when attempting its minimum batch
         size.
@@ -702,7 +754,9 @@ class TestRandomDSATSearchMethodShouldStopLineage:
             assert search_method.should_stop_lineage(trial)
 
     @pytest.mark.timeout(5)
-    def test_stop_after_max_possible_mbs_run(self, default_random_state_and_search_method) -> None:
+    def test_stop_after_max_possible_mbs_run(
+        self, default_random_state_and_search_method: Tuple[SearcherState, RandomDSATSearchMethod]
+    ) -> None:
         """
         Verify that we stop a lineage after a trial has attempted its largest possible batch size
         once a hard ceiling has been established.
@@ -731,6 +785,7 @@ class TestRandomDSATSearchMethodShouldStopLineage:
                 if should_error_next_trial:
                     search_method.trial_tracker.report_trial_early_exit(next_trial)
                 else:
+                    assert next_trial.searcher_metric_name
                     search_method.trial_tracker.update_trial_metric(
                         next_trial, {next_trial.searcher_metric_name: 0.0}
                     )
@@ -739,7 +794,7 @@ class TestRandomDSATSearchMethodShouldStopLineage:
 
     @pytest.mark.timeout(5)
     def test_stop_when_other_configs_run_larger_batches(
-        self, default_random_state_and_search_method
+        self, default_random_state_and_search_method: Tuple[SearcherState, RandomDSATSearchMethod]
     ) -> None:
         """
         Verify that we stop a lineage which cannot possibly run batches as large as other same-stage
@@ -753,6 +808,7 @@ class TestRandomDSATSearchMethodShouldStopLineage:
             good_trial = search_method.trial_tracker.create_trial(good_hparams, search_data)
             search_method.trial_tracker.queue_and_register_trial(good_trial)
             search_method.trial_tracker.queue.popleft()
+            assert good_trial.searcher_metric_name
             search_method.trial_tracker.update_trial_metric(
                 good_trial, {good_trial.searcher_metric_name: 0.0}
             )
@@ -773,16 +829,19 @@ class TestRandomDSATSearchMethodChooseNextTrial:
     """
 
     @pytest.mark.timeout(5)
-    def test_pruning_stage_3_trials(self, default_random_state_and_search_method) -> None:
+    def test_pruning_stage_3_trials(
+        self, default_random_state_and_search_method: Tuple[SearcherState, RandomDSATSearchMethod]
+    ) -> None:
         """
         Test the pruning of stage 3 trials.
         """
-        searcher_state, search_method = default_random_state_and_search_method
+        _, search_method = default_random_state_and_search_method
         # Run a successful stage-1 trial.
         hparams, search_data = search_method.get_random_hparams_and_search_data(1)
         successful_trial = search_method.trial_tracker.create_trial(hparams, search_data)
         search_method.trial_tracker.queue_and_register_trial(successful_trial)
         search_method.trial_tracker.queue.popleft()
+        assert successful_trial.searcher_metric_name
         search_method.trial_tracker.update_trial_metric(
             successful_trial, {successful_trial.searcher_metric_name: 0.0}
         )
@@ -803,12 +862,14 @@ class TestRandomDSATSearchMethodChooseNextTrial:
             assert next_trial.stage != 3
 
     @pytest.mark.timeout(5)
-    def test_queue_pruning_small_mbs_trials(self, default_random_state_and_search_method) -> None:
+    def test_queue_pruning_small_mbs_trials(
+        self, default_random_state_and_search_method: Tuple[SearcherState, RandomDSATSearchMethod]
+    ) -> None:
         """
         Test the pruning of trials with smaller `train_micro_batch_size_per_gpu` than
         already-successfully-run trials of the same stage.
         """
-        searcher_state, search_method = default_random_state_and_search_method
+        _, search_method = default_random_state_and_search_method
         # Run successful train_micro_batch_size_per_gpu = 2 trials.
         for stage in reversed(range(4)):
             hparams, search_data = search_method.get_random_hparams_and_search_data(stage)
@@ -816,6 +877,7 @@ class TestRandomDSATSearchMethodChooseNextTrial:
             successful_trial = search_method.trial_tracker.create_trial(hparams, search_data)
             search_method.trial_tracker.queue_and_register_trial(successful_trial)
             search_method.trial_tracker.queue.popleft()
+            assert successful_trial.searcher_metric_name
             search_method.trial_tracker.update_trial_metric(
                 successful_trial, {successful_trial.searcher_metric_name: 0.0}
             )
@@ -836,7 +898,9 @@ class TestRandomDSATSearchMethodChooseNextTrial:
 
 
 @pytest.fixture
-def long_binary_state_and_search_method():
+def long_binary_state_and_search_method() -> (
+    Generator[Tuple[SearcherState, BaseDSATSearchMethod], Any, None]
+):
     """For long-running tests which need a longer max_trials."""
     args = copy.deepcopy(DEFAULT_ARGS_DICT["binary"])
     args.max_trials = 10**9
@@ -846,7 +910,10 @@ def long_binary_state_and_search_method():
 
 class TestBinaryDSATSearchMethod:
     @pytest.mark.timeout(5)
-    def test_binary_happy_path(self, long_binary_state_and_search_method) -> None:
+    def test_binary_happy_path(
+        self,
+        long_binary_state_and_search_method: Tuple[SearcherState, BinarySearchDSATSearchMethod],
+    ) -> None:
         """
         Ensure that when the actual `train_micro_batch_size_per_gpu` lies between the
         search bounds, this optimal value will be found.
@@ -864,6 +931,7 @@ class TestBinaryDSATSearchMethod:
                 search_method.trial_tracker.queue_and_register_trial(first_trial)
                 curr_trial = search_method.trial_tracker.queue.popleft()
                 for num_halvings in range(1, num_possible_mbs + 1):
+                    assert curr_trial.search_data
                     assert curr_trial.search_data.lo <= curr_trial.mbs <= curr_trial.search_data.hi
                     if curr_trial.mbs >= target_mbs:
                         search_method.on_trial_exited_early(
@@ -871,6 +939,7 @@ class TestBinaryDSATSearchMethod:
                         )
                         assert search_method.trial_tracker.queue
                     else:
+                        assert curr_trial.searcher_metric_name
                         search_method.on_validation_completed(
                             searcher_state,
                             curr_trial.request_id,
@@ -890,7 +959,10 @@ class TestBinaryDSATSearchMethod:
                 assert curr_trial.mbs == target_mbs
 
     @pytest.mark.timeout(5)
-    def test_binary_no_trials_can_run(self, long_binary_state_and_search_method) -> None:
+    def test_binary_no_trials_can_run(
+        self,
+        long_binary_state_and_search_method: Tuple[SearcherState, BinarySearchDSATSearchMethod],
+    ) -> None:
         """
         Verify expected behavior if every trial fails to even run batch size one.
         """
@@ -907,6 +979,7 @@ class TestBinaryDSATSearchMethod:
             search_method.trial_tracker.queue_and_register_trial(first_trial)
             curr_trial = search_method.trial_tracker.queue.popleft()
             for num_halvings in range(1, num_possible_mbs + 1):
+                assert curr_trial.search_data
                 assert curr_trial.search_data.lo <= curr_trial.mbs <= curr_trial.search_data.hi
                 assert curr_trial.mbs > target_mbs
                 search_method.on_trial_exited_early(
@@ -928,7 +1001,10 @@ class TestBinaryDSATSearchMethod:
                     assert curr_trial.lineage_root == first_trial
 
     @pytest.mark.timeout(5)
-    def test_binary_range_too_small(self, long_binary_state_and_search_method) -> None:
+    def test_binary_range_too_small(
+        self,
+        long_binary_state_and_search_method: Tuple[SearcherState, BinarySearchDSATSearchMethod],
+    ) -> None:
         """
         Ensure that if the actual optimal batch size is larger than the initial range (which
         hopefully never happens, but is possible), then the largest batch size in the range is
@@ -947,8 +1023,10 @@ class TestBinaryDSATSearchMethod:
             search_method.trial_tracker.queue_and_register_trial(first_trial)
             curr_trial = search_method.trial_tracker.queue.popleft()
             for num_halvings in range(1, num_possible_mbs + 1):
+                assert curr_trial.search_data
                 assert curr_trial.search_data.lo <= curr_trial.mbs <= curr_trial.search_data.hi
                 assert curr_trial.mbs < target_mbs
+                assert curr_trial.searcher_metric_name
                 search_method.on_validation_completed(
                     searcher_state,
                     curr_trial.request_id,
@@ -974,7 +1052,7 @@ class TestHFConfigOverwriting:
         """
         Verify that `get_hf_args_with_overwrites` returns the expected args.
         """
-        optional_arg_possibilities = [
+        optional_arg_possibilities: List[List[str]] = [
             [],
             ["--per_device_train_batch_size", "8"],
             ["--gradient_accumulation_steps", "4"],
