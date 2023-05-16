@@ -44,41 +44,38 @@ const ParallelCoordinates: React.FC<Props> = ({
 
     try {
       if (config) {
-        const newConfig = Hermes.deepMerge(
-          {
-            style: {
-              axes: {
-                label: {
-                  fillStyle: ui.theme.surfaceOn,
-                  strokeStyle: ui.theme.surfaceWeak,
-                },
-                labelActive: {
-                  fillStyle: ui.theme.surfaceOnStrong,
-                  strokeStyle: ui.theme.surfaceWeak,
-                },
-                labelHover: {
-                  fillStyle: ui.theme.surfaceOnStrong,
-                  strokeStyle: ui.theme.surfaceWeak,
-                },
+        const newConfig = Hermes.deepMerge(config, {
+          style: {
+            axes: {
+              label: {
+                fillStyle: ui.theme.surfaceOn,
+                strokeStyle: ui.theme.surfaceWeak,
               },
-              dimension: {
-                label: {
-                  fillStyle: ui.theme.surfaceOn,
-                  strokeStyle: ui.theme.surfaceWeak,
-                },
-                labelActive: {
-                  fillStyle: ui.theme.statusActive,
-                  strokeStyle: ui.theme.surfaceWeak,
-                },
-                labelHover: {
-                  fillStyle: ui.theme.statusActive,
-                  strokeStyle: ui.theme.surfaceWeak,
-                },
+              labelActive: {
+                fillStyle: ui.theme.surfaceOnStrong,
+                strokeStyle: ui.theme.surfaceWeak,
+              },
+              labelHover: {
+                fillStyle: ui.theme.surfaceOnStrong,
+                strokeStyle: ui.theme.surfaceWeak,
+              },
+            },
+            dimension: {
+              label: {
+                fillStyle: ui.theme.surfaceOn,
+                strokeStyle: ui.theme.surfaceWeak,
+              },
+              labelActive: {
+                fillStyle: ui.theme.statusActive,
+                strokeStyle: ui.theme.surfaceWeak,
+              },
+              labelHover: {
+                fillStyle: ui.theme.statusActive,
+                strokeStyle: ui.theme.surfaceWeak,
               },
             },
           },
-          config,
-        );
+        });
         chartRef.current?.setConfig(newConfig, false);
       }
     } catch (e) {

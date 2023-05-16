@@ -14,6 +14,7 @@ import { readStream } from 'services/utils';
 import Spinner from 'shared/components/Spinner/Spinner';
 import useUI from 'shared/contexts/stores/UI';
 import { Primitive, Range } from 'shared/types';
+import { rgba2str, str2rgba } from 'shared/utils/color';
 import { clone, flattenObject, isPrimitive } from 'shared/utils/data';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { numericSorter } from 'shared/utils/sort';
@@ -159,16 +160,14 @@ const HpParallelCoordinates: React.FC<Props> = ({
         axes: { label: { placement: 'after' } },
         data: {
           series: trial?.id
-            ? new Array(chartData?.trialIds.length).fill(undefined).map((_, index) => {
-                return {
-                  strokeStyle:
-                    chartData?.trialIds.indexOf(trial.id) === index
-                      ? ui.theme.ixOnActive
-                      : ui.theme.ixOnInactive,
-                };
-              })
+            ? new Array(chartData?.trialIds.length).fill(undefined).map((_, index) => ({
+                strokeStyle:
+                  chartData?.trialIds.indexOf(trial.id) === index
+                    ? ui.theme.ixOnActive
+                    : rgba2str({ ...str2rgba(ui.theme.ixOnInactive), a: 0.1 }),
+              }))
             : undefined,
-          targetColorScale: colorScale.map((scale) => scale.color),
+          targetColorScale: trial?.id ? undefined : colorScale.map((scale) => scale.color),
           targetDimensionKey: selectedMetric ? metricToStr(selectedMetric) : '',
         },
         dimension: { label: { angle: Math.PI / 4, truncate: 24 } },
@@ -374,7 +373,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
 
   if (pageError) {
     return <Empty description={pageError.message} />;
-  } else if ((hasLoaded && !chartData) || !selectedMetric) {
+  } else if (hasLoaded && !chartData) {
     return isExperimentTerminal ? (
       <Empty description="No data to plot." />
     ) : (
@@ -399,7 +398,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
               dimensions={dimensions}
             />
           </div>
-          {!trial && (
+          {!trial && !!selectedMetric && (
             <div>
               <TableBatch
                 actions={[
