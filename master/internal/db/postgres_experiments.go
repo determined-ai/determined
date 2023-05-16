@@ -419,7 +419,7 @@ func ExperimentBestSearcherValidation(ctx context.Context, id int) (float32, err
 SELECT (v.metrics->'validation_metrics'->>?)::float8 as metric
 FROM validations v, trials t
 WHERE v.trial_id = t.id
-  AND t.experiment_id = 1000
+  AND t.experiment_id = ?
 ORDER BY metric %s
 LIMIT 1`, metricOrdering), exp.Config.Searcher.Metric, id).Scan(ctx, &metric); err != nil {
 		return 0, MatchSentinelError(err)
