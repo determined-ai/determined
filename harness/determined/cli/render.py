@@ -44,15 +44,17 @@ def unmarshal(
     return class_(**init_args)
 
 
+# CHECK: do we want to add animation now that waiting for a task is
+# more quiet?
 class Animator:
     @staticmethod
-    def render_loading(cls: "Animator", step: int, message: str = "Loading"):
+    def render_loading(cls: "Animator", step: int, message: str = "Loading") -> None:
         animation = "|/-\\"
         sys.stdout.write("\r" + message + " " + animation[step % len(animation)])
         sys.stdout.flush()
 
     @staticmethod
-    def render_done(cls: "Animator", message: str = "Done"):
+    def render_done(cls: "Animator", message: str = "Done") -> None:
         sys.stdout.write("\r" + message + " . Done")
         sys.stdout.flush()
 

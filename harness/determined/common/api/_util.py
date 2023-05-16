@@ -74,7 +74,7 @@ def wait_for_ntsc_state(
 ) -> bindings.taskv1State:
     """wait for ntsc to reach a state that satisfies the predicate"""
 
-    def get_state():
+    def get_state() -> Tuple[bool, bindings.taskv1State]:
         last_state = get_ntsc_details(session, typ, ntsc_id).state
         return predicate(last_state), last_state
 

@@ -204,9 +204,6 @@ def parse_protobuf_timestamp(ts: str) -> datetime.datetime:
     return datetime.datetime.fromisoformat(ts)
 
 
-T = TypeVar("T")
-
-
 def wait_for(
     predicate: Callable[[], Tuple[bool, T]], timeout: int = 60, interval: float = 0.1
 ) -> T:
