@@ -1,6 +1,6 @@
 import { CheckOutlined } from '@ant-design/icons';
 import { Modal } from 'antd';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Button from 'components/kit/Button';
 import Dropdown from 'components/kit/Dropdown';
@@ -10,20 +10,18 @@ import Select, { Option, SelectValue } from 'components/kit/Select';
 import usePrevious from 'shared/hooks/usePrevious';
 import { Note } from 'types';
 
-import NotesCard from './NotesCard';
-import css from './PaginatedNotesCard.module.scss';
+import NoteCard from './NoteCard';
+import css from './NoteCards.module.scss';
 
 interface Props {
   disabled?: boolean;
   notes: Note[];
-  onDelete: (pageNumber: number) => void;
+  onDelete?: (pageNumber: number) => void;
   onNewPage: () => void;
   onSave: (notes: Note[]) => Promise<void>;
 }
 
-const DROPDOWN_MENU = [{ danger: true, key: 'delete', label: 'Delete...' }];
-
-const PaginatedNotesCard: React.FC<Props> = ({
+const NoteCards: React.FC<Props> = ({
   notes,
   onNewPage,
   onSave,
@@ -33,7 +31,6 @@ const PaginatedNotesCard: React.FC<Props> = ({
   const [currentPage, setCurrentPage] = useState(0);
   const [deleteTarget, setDeleteTarget] = useState(0);
   const [editedContents, setEditedContents] = useState(notes?.[currentPage]?.contents ?? '');
-  const [editedName, setEditedName] = useState(notes?.[currentPage]?.name ?? '');
   const [modal, contextHolder] = Modal.useModal();
   const [noteChangeSignal, setNoteChangeSignal] = useState(1);
   const fireNoteChangeSignal = useCallback(
@@ -42,6 +39,11 @@ const PaginatedNotesCard: React.FC<Props> = ({
   );
 
   const previousNumberOfNotes = usePrevious(notes.length, undefined);
+
+  const DROPDOWN_MENU = useMemo(
+    () => [{ danger: true, disabled: !onDelete, key: 'delete', label: 'Delete...' }],
+    [onDelete],
+  );
 
   const handleSwitchPage = useCallback(
     (pageNumber: number | SelectValue) => {
@@ -92,38 +94,16 @@ const PaginatedNotesCard: React.FC<Props> = ({
   }, [notes.length, onNewPage, handleSwitchPage]);
 
   const handleSave = useCallback(
-    async (editedNotes: string) => {
-      setEditedContents(editedNotes);
-      await onSave(
-        notes.map((note, idx) => {
-          if (idx === currentPage) {
-            return { contents: editedNotes, name: editedName } as Note;
-          }
-          return note;
-        }),
-      );
+    async (note: Note) => {
+      setEditedContents(note.contents);
+      await onSave(notes.map((n, idx) => (idx === currentPage ? note : n)));
     },
-    [currentPage, editedName, notes, onSave],
-  );
-
-  const handleSaveTitle = useCallback(
-    async (newName: string) => {
-      setEditedName(newName);
-      await onSave(
-        notes.map((note, idx) => {
-          if (idx === currentPage) {
-            return { contents: editedContents ?? note?.contents, name: newName } as Note;
-          }
-          return note;
-        }),
-      );
-    },
-    [currentPage, notes, onSave, editedContents],
+    [currentPage, notes, onSave],
   );
 
   const handleDeletePage = useCallback(
     (deletePageNumber: number) => {
-      onDelete(deletePageNumber);
+      onDelete?.(deletePageNumber);
       setDeleteTarget(deletePageNumber);
     },
     [onDelete, setDeleteTarget],
@@ -147,7 +127,6 @@ const PaginatedNotesCard: React.FC<Props> = ({
 
   useEffect(() => {
     setEditedContents((prev) => notes?.[currentPage]?.contents ?? prev);
-    setEditedName((prev) => notes?.[currentPage]?.name ?? prev);
   }, [currentPage, notes]);
 
   const handleDropdown = useCallback(
@@ -170,78 +149,81 @@ const PaginatedNotesCard: React.FC<Props> = ({
   }
 
   return (
-    <div className={css.base}>
-      {notes.length > 0 && (
-        <div className={css.sidebar}>
-          <ul className={css.listContainer} role="list">
-            {(notes as Note[]).map((note, idx) => (
-              <Dropdown
-                disabled={disabled}
-                isContextMenu
-                key={idx}
-                menu={DROPDOWN_MENU}
-                onClick={() => handleDropdown(idx)}>
-                <li
-                  className={css.listItem}
-                  style={{
-                    borderColor:
-                      idx === currentPage ? 'var(--theme-stage-border-strong)' : undefined,
-                  }}
-                  onClick={() => handleSwitchPage(idx)}>
+    <>
+      <div className={css.tabOptions}>
+        <Button type="text" onClick={onNewPage}>
+          + New Page
+        </Button>
+      </div>
+      <div className={css.base}>
+        {notes.length > 0 && (
+          <div className={css.sidebar}>
+            <ul className={css.listContainer} role="list">
+              {(notes as Note[]).map((note, idx) => (
+                <Dropdown
+                  disabled={disabled}
+                  isContextMenu
+                  key={idx}
+                  menu={DROPDOWN_MENU}
+                  onClick={() => handleDropdown(idx)}>
+                  <li
+                    className={css.listItem}
+                    style={{
+                      borderColor:
+                        idx === currentPage ? 'var(--theme-stage-border-strong)' : undefined,
+                    }}
+                    onClick={() => handleSwitchPage(idx)}>
+                    <span>{note.name}</span>
+                    {!disabled && (
+                      <Dropdown menu={DROPDOWN_MENU} onClick={() => handleDropdown(idx)}>
+                        <div className={css.action} onClick={(e) => e.stopPropagation()}>
+                          <Icon name="overflow-horizontal" title="Action menu" />
+                        </div>
+                      </Dropdown>
+                    )}
+                  </li>
+                </Dropdown>
+              ))}
+            </ul>
+          </div>
+        )}
+        <div className={css.pageSelectRow}>
+          <Select value={currentPage} onSelect={handleSwitchPage}>
+            {notes.map((note, idx) => {
+              return (
+                <Option key={idx} value={idx}>
+                  <CheckOutlined
+                    style={{
+                      marginRight: 8,
+                      visibility: idx === currentPage ? 'visible' : 'hidden',
+                    }}
+                  />
                   <span>{note.name}</span>
-                  {!disabled && (
-                    <Dropdown menu={DROPDOWN_MENU} onClick={() => handleDropdown(idx)}>
-                      <div className={css.action} onClick={(e) => e.stopPropagation()}>
-                        <Icon name="overflow-horizontal" title="Action menu" />
-                      </div>
-                    </Dropdown>
-                  )}
-                </li>
-              </Dropdown>
-            ))}
-          </ul>
+                </Option>
+              );
+            })}
+          </Select>
         </div>
-      )}
-      <div className={css.pageSelectRow}>
-        <Select value={currentPage} onSelect={handleSwitchPage}>
-          {notes.map((note, idx) => {
-            return (
-              <Option className={css.selectOption} key={idx} value={idx}>
-                <CheckOutlined
-                  className={css.currentPage}
-                  style={{
-                    marginRight: 8,
-                    visibility: idx === currentPage ? 'visible' : 'hidden',
-                  }}
-                />
-                <span>{note.name}</span>
-              </Option>
-            );
-          })}
-        </Select>
+        <div className={css.notesContainer}>
+          <NoteCard
+            disabled={disabled}
+            extra={
+              <Dropdown menu={DROPDOWN_MENU} onClick={() => handleDropdown(currentPage)}>
+                <div style={{ cursor: 'pointer' }}>
+                  <Icon name="overflow-horizontal" title="Action menu" />
+                </div>
+              </Dropdown>
+            }
+            note={notes?.[currentPage]}
+            noteChangeSignal={noteChangeSignal}
+            onChange={handleEditedNotes}
+            onSaveNote={handleSave}
+          />
+        </div>
+        {contextHolder}
       </div>
-      <div className={css.notesContainer}>
-        <NotesCard
-          disabled={disabled}
-          extra={
-            <Dropdown menu={DROPDOWN_MENU} onClick={() => handleDropdown(currentPage)}>
-              <div style={{ cursor: 'pointer' }}>
-                <Icon name="overflow-horizontal" title="Action menu" />
-              </div>
-            </Dropdown>
-          }
-          noteChangeSignal={noteChangeSignal}
-          notes={notes?.[currentPage]?.contents ?? ''}
-          style={{ border: 0 }}
-          title={notes?.[currentPage]?.name ?? ''}
-          onChange={handleEditedNotes}
-          onSave={handleSave}
-          onSaveTitle={handleSaveTitle}
-        />
-      </div>
-      {contextHolder}
-    </div>
+    </>
   );
 };
 
-export default PaginatedNotesCard;
+export default NoteCards;

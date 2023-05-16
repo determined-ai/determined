@@ -1,22 +1,9 @@
 .base {
   display: flex;
-  height: 100%;
-  overflow: auto;
 
   .pageSelectRow {
     background-color: var(--theme-colors-monochrome-17);
     display: none;
-
-    .pageSelect {
-      width: 100%;
-
-      & > div {
-        width: 100%;
-      }
-      .currentPage {
-        display: none;
-      }
-    }
   }
   .sidebar {
     flex-basis: 30%;
@@ -60,14 +47,16 @@
   }
   .notesContainer {
     display: flex;
-    flex-direction: column;
     flex-grow: 1;
-    height: 100%;
 
     & > * {
       flex-grow: 1;
     }
   }
+}
+.tabOptions {
+  display: flex;
+  justify-content: flex-end;
 }
 
 @media only screen and (max-width: $breakpoint-tablet) {

@@ -33,6 +33,7 @@ import Toggle from 'components/kit/Toggle';
 import Tooltip from 'components/kit/Tooltip';
 import Header from 'components/kit/Typography/Header';
 import Paragraph from 'components/kit/Typography/Paragraph';
+import { useNoteDemo, useNotesDemo } from 'components/kit/useNoteDemo';
 import UserAvatar from 'components/kit/UserAvatar';
 import { useTags } from 'components/kit/useTags';
 import Label from 'components/Label';
@@ -78,6 +79,7 @@ const ComponentTitles = {
   LogViewer: 'LogViewer',
   Modals: 'Modals',
   Nameplate: 'Nameplate',
+  Notes: 'Notes',
   Pagination: 'Pagination',
   Pivot: 'Pivot',
   Select: 'Select',
@@ -1204,6 +1206,26 @@ const FacepileSection: React.FC = () => {
           <li>Facepile with both name initials</li>
           <p>Check the Facepile above and select a user that would fit that case</p>
         </ul>
+      </AntDCard>
+    </ComponentSection>
+  );
+};
+
+const NotesSection: React.FC = () => {
+  return (
+    <ComponentSection id="Notes" title="Notes">
+      <AntDCard>
+        <p>
+          A <code>{'<Notes>'}</code> is used for taking notes. It can be single page note or multi
+          pages notes. Each page of note consists of a title and a sheet of note.
+        </p>
+      </AntDCard>
+      <AntDCard title="Usage">
+        <strong>Single page note</strong>
+        {useNoteDemo()()}
+        <hr />
+        <strong>Multi pages notes</strong>
+        {useNotesDemo()()}
       </AntDCard>
     </ComponentSection>
   );
@@ -2395,6 +2417,7 @@ const Components = {
   LogViewer: <LogViewerSection />,
   Modals: <ModalSection />,
   Nameplate: <NameplateSection />,
+  Notes: <NotesSection />,
   Pagination: <PaginationSection />,
   Pivot: <PivotSection />,
   Select: <SelectSection />,
