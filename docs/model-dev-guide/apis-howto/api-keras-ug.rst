@@ -28,7 +28,7 @@ To learn about this API, you can start by reading the trial definitions from the
 
 .. note::
 
-   Before loading data, visit :doc:`/training/load-model-data` to understand how to work with
+   Before loading data, visit :doc:`/model-dev-guide/load-model-data` to understand how to work with
    different sources of data.
 
 Loading data is done by defining :meth:`~determined.keras.TFKerasTrial.build_training_data_loader`

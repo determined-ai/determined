@@ -33,16 +33,16 @@
    :caption: Model Developer Guide
    :hidden:
 
-   Overview <training/index>
-   Distributed Training <training/dtrain-introduction>
-   Prepare Container Environment <training/setup-guide/overview>
-   Prepare Data <training/load-model-data>
-   Training API Guides <training/apis-howto/overview>
-   Hyperparameter Tuning <training/hyperparameter/overview>
-   Submit Experiment <training/submit-experiment>
-   How to Debug Models <training/debug-models>
-   Model Management <training/model-management/overview>
-   Best Practices <training/best-practices/overview>
+   Overview <model-dev-guide/index>
+   Distributed Training <model-dev-guide/dtrain-introduction>
+   Prepare Container Environment <model-dev-guide/prepare-container/overview>
+   Prepare Data <model-dev-guide/load-model-data>
+   Training API Guides <model-dev-guide/apis-howto/overview>
+   Hyperparameter Tuning <model-dev-guide/hyperparameter/overview>
+   Submit Experiment <model-dev-guide/submit-experiment>
+   How to Debug Models <model-dev-guide/debug-models>
+   Model Management <model-dev-guide/model-management/overview>
+   Best Practices <model-dev-guide/best-practices/overview>
 
 .. toctree::
    :caption: Reference

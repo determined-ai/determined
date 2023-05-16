@@ -8,7 +8,7 @@
 
 When a model is trained with Determined, checkpoints are automatically saved to external storage.
 These checkpoints can then be exported for use outside Determined. See
-:doc:`/training/model-management/checkpoints` for details.
+:doc:`/model-dev-guide/model-management/checkpoints` for details.
 
 *********************
  Archive Experiments
@@ -38,8 +38,9 @@ experiment, run:
  Manage Trained Models
 ***********************
 
-Determined includes a built-in :doc:`model registry </training/model-management/model-registry-org>`
-to manage trained models and their respective versions.
+Determined includes a built-in :doc:`model registry
+</model-dev-guide/model-management/model-registry-org>` to manage trained models and their
+respective versions.
 
 .. toctree::
    :maxdepth: 1
