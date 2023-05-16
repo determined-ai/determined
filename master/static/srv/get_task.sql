@@ -1,5 +1,7 @@
-SELECT tasks.task_id,
-  tasks.task_type,
+SELECT t.task_id,
+  t.task_type,
+  t.start_time,
+  t.end_time,
   (
     SELECT coalesce(
         jsonb_agg(
@@ -21,8 +23,8 @@ SELECT tasks.task_id,
             END
           ) AS state
         FROM allocations
-        WHERE allocations.task_id = tasks.task_id
+        WHERE allocations.task_id = t.task_id
       ) allo
   ) AS allocations
-FROM tasks
-WHERE tasks.task_id = $1;
+FROM tasks t
+WHERE t.task_id = $1;
