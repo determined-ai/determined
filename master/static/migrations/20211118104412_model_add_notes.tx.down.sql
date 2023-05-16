@@ -1,3 +1,1 @@
-ALTER TABLE public.models
-    DROP COLUMN notes;
-
+ALTER TABLE public.models DROP COLUMN notes;

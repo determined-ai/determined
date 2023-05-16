@@ -1,2 +1,1 @@
 DROP TABLE resourcemanagers_agent_agentstate;
-

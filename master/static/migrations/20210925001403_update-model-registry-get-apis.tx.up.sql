@@ -1,90 +1,46 @@
-ALTER TABLE public.models
-    ADD COLUMN id integer;
-
+ALTER TABLE public.models ADD COLUMN id integer;
 CREATE SEQUENCE public.models_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
+START WITH 1
+INCREMENT BY 1
+NO MINVALUE
+NO MAXVALUE
+CACHE 1;
 
-UPDATE
-    public.models
-SET
-    id = nextval('public.models_id_seq');
+UPDATE public.models SET id = nextval('public.models_id_seq');
+ALTER TABLE public.models ALTER COLUMN id SET NOT NULL;
+ALTER TABLE public.models ALTER COLUMN id SET DEFAULT nextval(
+    'public.models_id_seq'
+);
+ALTER TABLE public.models DROP CONSTRAINT models_pkey CASCADE;
+ALTER TABLE public.models ADD PRIMARY KEY (id);
+ALTER TABLE public.models ADD COLUMN labels text[];
+ALTER TABLE public.models ADD COLUMN readme text;
+ALTER TABLE public.models ADD COLUMN user_id integer;
+WITH det_id AS (SELECT id FROM public.users WHERE username LIKE 'determined')
 
-ALTER TABLE public.models
-    ALTER COLUMN id SET NOT NULL;
-
-ALTER TABLE public.models
-    ALTER COLUMN id SET DEFAULT nextval('public.models_id_seq');
-
-ALTER TABLE public.models
-    DROP CONSTRAINT models_pkey CASCADE;
-
-ALTER TABLE public.models
-    ADD PRIMARY KEY (id);
-
-ALTER TABLE public.models
-    ADD COLUMN labels text[];
-
-ALTER TABLE public.models
-    ADD COLUMN readme text;
-
-ALTER TABLE public.models
-    ADD COLUMN user_id integer;
-
-WITH det_id AS (
-    SELECT
-        id
-    FROM
-        public.users
-    WHERE
-        username LIKE 'determined')
-UPDATE
-    public.models
-SET
-    user_id = det_id.id
-FROM
-    det_id
-WHERE
-    user_id IS NULL;
-
-
+UPDATE public.models SET user_id = det_id.id
+FROM det_id
+WHERE user_id IS NULL;
 /* ALTER TABLE public.models ALTER COLUMN user_id SET NOT NULL; */
-ALTER TABLE public.models
-    ADD CONSTRAINT users_fk FOREIGN KEY (user_id) REFERENCES public.users (id);
+ALTER TABLE public.models ADD CONSTRAINT users_fk FOREIGN KEY (
+    user_id
+) REFERENCES public.users(id);
+ALTER TABLE public.models ADD COLUMN archived boolean DEFAULT false NOT NULL;
 
-ALTER TABLE public.models
-    ADD COLUMN archived boolean DEFAULT FALSE NOT NULL;
-
-ALTER TABLE public.model_versions
-    ADD COLUMN model_id INTEGER REFERENCES public.models (id);
-
+ALTER TABLE public.model_versions ADD COLUMN model_id integer REFERENCES public.models(
+    id
+);
 WITH id_name_map AS (
     SELECT
         m.id,
         m.name
-    FROM
-        public.models AS m)
-UPDATE
-    public.model_versions mv
-SET
-    model_id = id_name_map.id
-FROM
-    id_name_map
-WHERE
-    mv.model_name = id_name_map.name;
+    FROM public.models AS m
+)
 
-ALTER TABLE public.model_versions
-    ALTER COLUMN model_id SET NOT NULL;
-
-ALTER TABLE public.model_versions
-    DROP CONSTRAINT model_versions_pkey CASCADE;
-
-ALTER TABLE public.model_versions
-    ADD PRIMARY KEY (model_id, version);
-
-ALTER TABLE public.model_versions
-    DROP COLUMN model_name;
-
+UPDATE public.model_versions mv SET model_id = id_name_map.id
+FROM id_name_map
+WHERE mv.model_name = id_name_map.name;
+ALTER TABLE public.model_versions ALTER COLUMN model_id SET NOT NULL;
+ALTER TABLE public.model_versions DROP CONSTRAINT model_versions_pkey CASCADE;
+ALTER TABLE public.model_versions ADD PRIMARY KEY (model_id, version);
+ALTER TABLE public.model_versions DROP COLUMN model_name;

@@ -1,5 +1,2 @@
-UPDATE
-    public.models
-SET
-    name = REPLACE(name, '--', '/');
-
+UPDATE public.models
+SET name = REPLACE(name, '--', '/');

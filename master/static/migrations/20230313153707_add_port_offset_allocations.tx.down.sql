@@ -1,3 +1,2 @@
 ALTER TABLE allocations
-    DROP ports jsonb;
-
+DROP ports jsonb; 

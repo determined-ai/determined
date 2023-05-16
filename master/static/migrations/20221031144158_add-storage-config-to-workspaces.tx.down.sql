@@ -1,3 +1,2 @@
 ALTER TABLE workspaces
-    DROP COLUMN checkpoint_storage_config;
-
+DROP COLUMN checkpoint_storage_config;

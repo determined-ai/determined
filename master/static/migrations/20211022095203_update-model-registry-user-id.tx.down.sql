@@ -1,3 +1,1 @@
-ALTER TABLE public.models
-    ALTER COLUMN user_id DROP NOT NULL;
-
+ALTER TABLE public.models ALTER COLUMN user_id DROP NOT NULL;

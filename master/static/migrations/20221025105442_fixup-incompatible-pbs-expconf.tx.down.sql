@@ -1,5 +1,2 @@
-UPDATE
-    experiments
-SET
-    config = config # - '{pbs}';
-
+UPDATE experiments
+SET config = config #- '{pbs}';

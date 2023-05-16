@@ -1,3 +1,1 @@
-ALTER TABLE public.experiments
-    ADD COLUMN notes text;
-
+ALTER TABLE public.experiments ADD COLUMN notes text;

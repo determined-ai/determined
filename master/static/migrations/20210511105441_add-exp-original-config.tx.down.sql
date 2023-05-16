@@ -1,3 +1,1 @@
-ALTER TABLE public.experiments
-    DROP COLUMN original_config;
-
+ALTER TABLE public.experiments DROP COLUMN original_config;

@@ -1,5 +1,4 @@
 SELECT
     name,
     config
-FROM
-    templates
+FROM templates

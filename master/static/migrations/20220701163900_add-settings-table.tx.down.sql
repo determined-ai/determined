@@ -1,2 +1,1 @@
 DROP TABLE user_web_settings;
-

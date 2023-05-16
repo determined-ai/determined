@@ -10,4 +10,3 @@ CREATE TABLE resourcemanagers_agent_agentstate (
     slots jsonb,
     containers jsonb
 );
-

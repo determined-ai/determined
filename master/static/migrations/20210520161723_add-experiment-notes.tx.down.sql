@@ -1,3 +1,1 @@
-ALTER TABLE public.experiments
-    DROP COLUMN notes;
-
+ALTER TABLE public.experiments DROP COLUMN notes;

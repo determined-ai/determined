@@ -4,9 +4,9 @@ CREATE TYPE public.webhook_type AS ENUM (
 );
 
 CREATE TABLE webhooks (
-    id serial PRIMARY KEY,
-    url text NOT NULL,
-    webhook_type public.webhook_type NOT NULL
+    id SERIAL PRIMARY KEY,
+    url TEXT NOT NULL,
+    webhook_type public.WEBHOOK_TYPE NOT NULL
 );
 
 CREATE TYPE public.trigger_type AS ENUM (
@@ -15,16 +15,17 @@ CREATE TYPE public.trigger_type AS ENUM (
 );
 
 CREATE TABLE webhook_triggers (
-    id serial PRIMARY KEY,
-    trigger_type public.trigger_type NOT NULL,
-    condition jsonb NOT NULL,
-    webhook_id integer NOT NULL REFERENCES webhooks (id) ON DELETE CASCADE
+    id SERIAL PRIMARY KEY,
+    trigger_type public.TRIGGER_TYPE NOT NULL,
+    condition JSONB NOT NULL,
+    webhook_id INTEGER NOT NULL REFERENCES webhooks(id) ON DELETE CASCADE 
 );
 
 CREATE TABLE webhook_events (
-    id serial PRIMARY KEY,
-    trigger_id integer NOT NULL REFERENCES webhook_triggers (id) ON DELETE CASCADE,
-    attempts integer DEFAULT 0,
-    payload jsonb NOT NULL
+    id SERIAL PRIMARY KEY,
+    trigger_id INTEGER NOT NULL REFERENCES webhook_triggers(
+        id
+    ) ON DELETE CASCADE ,
+    attempts INTEGER DEFAULT 0,
+    payload JSONB NOT NULL
 );
-

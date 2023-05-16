@@ -11,23 +11,20 @@ CREATE TABLE public.jobs (
     job_type job_type NOT NULL
 );
 
+
 INSERT INTO jobs (
     SELECT
         'backfilled-' || id AS job_id,
         'EXPERIMENT' AS job_type
-    FROM
-        experiments);
+    FROM experiments
+);
 
 ALTER TABLE public.experiments
-    ADD COLUMN job_id text REFERENCES public.jobs (job_id);
+ADD COLUMN job_id text REFERENCES public.jobs(job_id);
 
-UPDATE
-    experiments
-SET
-    job_id = 'backfilled-' || id
-WHERE
-    job_id IS NULL;
+UPDATE experiments
+SET job_id = 'backfilled-' || id
+WHERE job_id IS NULL;
 
 ALTER TABLE public.experiments
-    ALTER COLUMN job_id SET NOT NULL;
-
+ALTER COLUMN job_id SET NOT NULL;

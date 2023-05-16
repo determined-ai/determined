@@ -1,10 +1,10 @@
 WITH const AS (
     SELECT
-        daterange($1::date, $2::date, '[]') AS period
+        daterange($1 :: date, $2 :: date, '[]') AS period
 ),
 days AS (
     SELECT
-        resource_aggregates.date::date AS period_start,
+        resource_aggregates.date :: date AS period_start,
         aggregation_type,
         resource_aggregates.aggregation_key,
         seconds
@@ -16,10 +16,10 @@ days AS (
         const.period @> resource_aggregates.date
 ),
 starts AS (
-    SELECT DISTINCT
-        (period_start) AS period_start
-FROM
-    days
+    SELECT
+        DISTINCT(period_start) AS period_start
+    FROM
+        days
 )
 SELECT
     to_char(period_start, 'YYYY-MM-DD') AS period_start,
@@ -32,7 +32,9 @@ SELECT
         WHERE
             aggregation_type = 'total'
             AND days.period_start = starts.period_start
-        LIMIT 1) AS seconds,
+        LIMIT
+            1
+    ) AS seconds,
     (
         SELECT
             jsonb_object_agg(aggregation_key, seconds)
@@ -40,7 +42,8 @@ SELECT
             days
         WHERE
             aggregation_type = 'username'
-            AND days.period_start = starts.period_start) AS by_username,
+            AND days.period_start = starts.period_start
+    ) AS by_username,
     (
         SELECT
             jsonb_object_agg(aggregation_key, seconds)
@@ -48,7 +51,8 @@ SELECT
             days
         WHERE
             aggregation_type = 'experiment_label'
-            AND days.period_start = starts.period_start) AS by_experiment_label,
+            AND days.period_start = starts.period_start
+    ) AS by_experiment_label,
     (
         SELECT
             jsonb_object_agg(aggregation_key, seconds)
@@ -56,7 +60,8 @@ SELECT
             days
         WHERE
             aggregation_type = 'resource_pool'
-            AND days.period_start = starts.period_start) AS by_resource_pool
+            AND days.period_start = starts.period_start
+    ) AS by_resource_pool
 FROM
     starts
 ORDER BY

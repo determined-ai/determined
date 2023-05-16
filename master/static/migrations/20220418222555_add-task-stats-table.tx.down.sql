@@ -1,2 +1,1 @@
 DROP TABLE public.task_stats;
-

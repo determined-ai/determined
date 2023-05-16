@@ -1,6 +1,4 @@
 SELECT
     name,
-    config::text
-FROM
-    templates;
-
+    config::TEXT
+FROM templates;

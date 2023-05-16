@@ -12,56 +12,49 @@ CREATE TABLE public.runs (
 );
 
 ALTER TABLE public.steps
-    ADD COLUMN total_records integer NOT NULL DEFAULT 0,
-    ADD COLUMN total_epochs real NOT NULL DEFAULT 0,
-    ADD COLUMN trial_run_id integer NOT NULL DEFAULT 0,
-    ADD COLUMN archived boolean NOT NULL DEFAULT FALSE,
-    DROP CONSTRAINT steps_trial_total_batches_unique,
-    ADD CONSTRAINT steps_trial_id_run_id_total_batches_unique UNIQUE (trial_id, trial_run_id, total_batches);
+ADD COLUMN total_records integer NOT NULL DEFAULT 0,
+ADD COLUMN total_epochs real NOT NULL DEFAULT 0,
+ADD COLUMN trial_run_id integer NOT NULL DEFAULT 0,
+ADD COLUMN archived boolean NOT NULL DEFAULT false,
+DROP CONSTRAINT steps_trial_total_batches_unique,
+ADD CONSTRAINT steps_trial_id_run_id_total_batches_unique UNIQUE (
+    trial_id, trial_run_id, total_batches
+);
 
-ALTER TABLE public.steps RENAME TO raw_steps;
+ALTER TABLE public.steps
+RENAME TO raw_steps;
 
 CREATE VIEW steps AS
-SELECT
-    *
-FROM
-    raw_steps
-WHERE
-    NOT archived;
+SELECT * FROM raw_steps WHERE NOT archived;
 
 ALTER TABLE public.validations
-    ADD COLUMN total_records integer NOT NULL DEFAULT 0,
-    ADD COLUMN total_epochs real NOT NULL DEFAULT 0,
-    ADD COLUMN trial_run_id integer NOT NULL DEFAULT 0,
-    ADD COLUMN archived boolean NOT NULL DEFAULT FALSE,
-    DROP CONSTRAINT validations_trial_total_batches_unique,
-    ADD CONSTRAINT validations_trial_id_run_id_total_batches_unique UNIQUE (trial_id, trial_run_id, total_batches);
+ADD COLUMN total_records integer NOT NULL DEFAULT 0,
+ADD COLUMN total_epochs real NOT NULL DEFAULT 0,
+ADD COLUMN trial_run_id integer NOT NULL DEFAULT 0,
+ADD COLUMN archived boolean NOT NULL DEFAULT false,
+DROP CONSTRAINT validations_trial_total_batches_unique,
+ADD CONSTRAINT validations_trial_id_run_id_total_batches_unique UNIQUE (
+    trial_id, trial_run_id, total_batches
+);
 
-ALTER TABLE public.validations RENAME TO raw_validations;
+ALTER TABLE public.validations
+RENAME TO raw_validations;
 
 CREATE VIEW validations AS
-SELECT
-    *
-FROM
-    raw_validations
-WHERE
-    NOT archived;
+SELECT * FROM raw_validations WHERE NOT archived;
 
 ALTER TABLE public.checkpoints
-    ADD COLUMN total_records integer NOT NULL DEFAULT 0,
-    ADD COLUMN total_epochs real NOT NULL DEFAULT 0,
-    ADD COLUMN trial_run_id integer NOT NULL DEFAULT 0,
-    ADD COLUMN archived boolean NOT NULL DEFAULT FALSE,
-    DROP CONSTRAINT checkpoints_trial_total_batches_unique,
-    ADD CONSTRAINT checkpoints_trial_id_run_id_total_batches_unique UNIQUE (trial_id, trial_run_id, total_batches);
+ADD COLUMN total_records integer NOT NULL DEFAULT 0,
+ADD COLUMN total_epochs real NOT NULL DEFAULT 0,
+ADD COLUMN trial_run_id integer NOT NULL DEFAULT 0,
+ADD COLUMN archived boolean NOT NULL DEFAULT false,
+DROP CONSTRAINT checkpoints_trial_total_batches_unique,
+ADD CONSTRAINT checkpoints_trial_id_run_id_total_batches_unique UNIQUE (
+    trial_id, trial_run_id, total_batches
+);
 
-ALTER TABLE public.checkpoints RENAME TO raw_checkpoints;
+ALTER TABLE public.checkpoints
+RENAME TO raw_checkpoints;
 
 CREATE VIEW checkpoints AS
-SELECT
-    *
-FROM
-    raw_checkpoints
-WHERE
-    NOT archived;
-
+SELECT * FROM raw_checkpoints WHERE NOT archived;

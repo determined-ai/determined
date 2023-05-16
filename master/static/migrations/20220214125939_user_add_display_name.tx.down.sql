@@ -1,3 +1,1 @@
-ALTER TABLE public.users
-    DROP COLUMN display_name;
-
+ALTER TABLE public.users DROP COLUMN display_name;

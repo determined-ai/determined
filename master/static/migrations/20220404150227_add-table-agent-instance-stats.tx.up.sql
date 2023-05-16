@@ -13,4 +13,3 @@ CREATE TABLE public.provisioner_instance_stats (
     start_time timestamptz NOT NULL,
     end_time timestamptz NULL
 );
-

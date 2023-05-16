@@ -1,3 +1,1 @@
-DELETE FROM GROUPS
-WHERE group_name LIKE '%DeterminedPersonalGroup';
-
+DELETE FROM groups WHERE group_name LIKE '%DeterminedPersonalGroup';

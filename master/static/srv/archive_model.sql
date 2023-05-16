@@ -1,10 +1,3 @@
-UPDATE
-    models
-SET
-    archived = TRUE,
-    last_updated_time = CURRENT_TIMESTAMP
-WHERE
-    name = $1
-RETURNING
-    id;
-
+UPDATE models SET archived = true, last_updated_time = current_timestamp
+WHERE name = $1
+RETURNING id;
