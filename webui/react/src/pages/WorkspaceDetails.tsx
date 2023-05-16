@@ -48,7 +48,7 @@ export const WorkspaceDetailsTab = {
 export type WorkspaceDetailsTab = ValueOf<typeof WorkspaceDetailsTab>;
 
 const WorkspaceDetails: React.FC = () => {
-  const { rbacEnabled } = useObservable(determinedStore.info);
+  const { rbacEnabled } = Loadable.getOrElse(undefined, useObservable(determinedStore.info));
 
   const loadableUsers = useObservable(userStore.getUsers());
   const users = Loadable.getOrElse([], loadableUsers);

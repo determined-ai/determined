@@ -92,7 +92,7 @@ interface PermissionsHook {
 }
 
 const usePermissions = (): PermissionsHook => {
-  const { rbacEnabled } = useObservable(determinedStore.info);
+  const { rbacEnabled } = Loadable.getOrElse(undefined, useObservable(determinedStore.info));
   const loadableCurrentUser = useObservable(userStore.currentUser);
   const currentUser = Loadable.getOrElse(undefined, loadableCurrentUser);
 
@@ -101,6 +101,7 @@ const usePermissions = (): PermissionsHook => {
   const loadablePermissions = useObservable(permissionStore.permissions);
   const myAssignments = Loadable.getOrElse([], useObservable(permissionStore.myAssignments));
   const myRoles = Loadable.getOrElse([], useObservable(permissionStore.myRoles));
+  console.error([rbacEnabled, myAssignments, myRoles]);
 
   const rbacOpts = useMemo(
     () => ({

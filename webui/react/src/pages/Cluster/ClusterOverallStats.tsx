@@ -29,7 +29,7 @@ export const ClusterOverallStats: React.FC = () => {
   const activeExperiments = useObservable(
     experimentStore.getExperimentsByParams(ACTIVE_EXPERIMENTS_PARAMS),
   );
-  const { rbacEnabled } = useObservable(determinedStore.info);
+  const { rbacEnabled } = Loadable.getOrElse(undefined, useObservable(determinedStore.info));
 
   const auxContainers = useMemo(() => {
     const tally = {

@@ -6,7 +6,7 @@ import determinedStore from 'stores/determinedInfo';
 import { useObservable } from 'utils/observable';
 
 const Default: React.FC = () => {
-  const { rbacEnabled } = useObservable(determinedStore.info);
+  const { rbacEnabled } = Loadable.getOrElse(undefined, useObservable(determinedStore.info));
 
   if (rbacEnabled) {
     return <Navigate to={rbacDefaultRoute.path} />;

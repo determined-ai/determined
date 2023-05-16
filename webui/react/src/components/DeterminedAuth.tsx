@@ -46,7 +46,7 @@ const buttonTheme = {
 
 const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
   const { actions: uiActions } = useUI();
-  const { rbacEnabled } = useObservable(determinedStore.info);
+  const { rbacEnabled } = Loadable.getOrElse(undefined, useObservable(determinedStore.info));
   const [isBadCredentials, setIsBadCredentials] = useState<boolean>(false);
   const [canSubmit, setCanSubmit] = useState<boolean>(!!storage.get(STORAGE_KEY_LAST_USERNAME));
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false);

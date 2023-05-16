@@ -30,7 +30,7 @@ const ManageGroupsModalComponent: React.FC<Props> = ({ user, groupOptions, userG
 
   const groupsValue = Form.useWatch(GROUPS_NAME, form);
 
-  const { rbacEnabled } = useObservable(determinedStore.info);
+  const { rbacEnabled } = Loadable.getOrElse(undefined, useObservable(determinedStore.info));
 
   useEffect(() => {
     if (userGroups) {

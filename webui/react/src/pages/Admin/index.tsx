@@ -34,7 +34,7 @@ const SettingsContent: React.FC = () => {
   const { tab } = useParams<Params>();
   const [tabKey, setTabKey] = useState<TabType>(tab || DEFAULT_TAB_KEY);
 
-  const { rbacEnabled } = useObservable(determinedStore.info);
+  const { rbacEnabled } = Loadable.getOrElse(undefined, useObservable(determinedStore.info));
   const { canAdministrateUsers } = usePermissions();
 
   const handleTabChange = useCallback(

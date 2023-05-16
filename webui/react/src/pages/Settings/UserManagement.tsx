@@ -78,7 +78,7 @@ const UserActionDropdown = ({ fetchUsers, user, groups, userManagementEnabled }:
   const [selectedUserGroups, setSelectedUserGroups] = useState<V1GroupSearchResult[]>();
 
   const { canModifyUsers } = usePermissions();
-  const { rbacEnabled } = useObservable(determinedStore.info);
+  const { rbacEnabled } = Loadable.getOrElse(undefined, useObservable(determinedStore.info));
 
   const onToggleActive = useCallback(async () => {
     try {
