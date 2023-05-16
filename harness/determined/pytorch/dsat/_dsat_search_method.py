@@ -713,12 +713,12 @@ class BaseDSATSearchMethod(SearchMethod):
         with path.joinpath(self._np_rand_ckpt_path).open("wb") as f:
             pickle.dump(self.rng, f)
         if self.trial_tracker.best_trial is not None:
-            with path.joinpath("best_ds_config.json").open("w") as f:
+            with path.joinpath("best_ds_config.json").open("w") as ds_config_f:
                 best_ds_metrics = copy.deepcopy(self.trial_tracker.best_trial.ds_config)
                 del best_ds_metrics["autotuning"]
-                json.dump(best_ds_metrics, f)
-            with path.joinpath("best_ds_metrics.json").open("w") as f:
-                json.dump(self.trial_tracker.best_trial.metric, f)
+                json.dump(best_ds_metrics, ds_config_f)
+            with path.joinpath("best_ds_metrics.json").open("w") as ds_metrics_f:
+                json.dump(self.trial_tracker.best_trial.metric, ds_metrics_f)
 
     def load_method_state(self, path: pathlib.Path) -> None:
         logging.info("Restoring searcher state from checkpoint.")
@@ -802,12 +802,6 @@ class BaseDSATSearchMethod(SearchMethod):
 class DSATSearchData:
     lo: int
     hi: int
-
-
-# @dataclass
-# class RandomDSATSearchData:
-#     lo: int
-#     hi: int
 
 
 class RandomDSATSearchMethod(BaseDSATSearchMethod):
@@ -907,19 +901,8 @@ class RandomDSATSearchMethod(BaseDSATSearchMethod):
         self,
         last_trial: DSATTrial,
     ) -> List[DSATTrial]:
-        # TODO: remove below print tests.
-        # logging.info("**************** BSZ History ****************")
-        # bsz_history = []
-        # print_trial = last_trial
-        # while print_trial is not None:
-        #     bsz = print_trial.ds_config["train_micro_batch_size_per_gpu"]
-        #     bsz_history.append(bsz)
-        #     print_trial = print_trial.parent
-        # logging.info(f"History (to-be-submitted last): {str(list(reversed(bsz_history)))}")
-        # logging.info("**************** BSZ History End ****************")
-
         # TODO: verify we are always quitting when no more non-trivial trials are possible.
-        if self.should_stop_lineage(trial=last_trial):
+        if self.should_stop_lineage(trial=last_trial) or last_trial.search_data is None:
             return [self.get_random_trial()]
 
         new_search_data = copy.deepcopy(last_trial.search_data)
@@ -945,7 +928,7 @@ class RandomDSATSearchMethod(BaseDSATSearchMethod):
 
     def should_stop_lineage(self, trial: DSATTrial) -> bool:
         # General conditions
-        failed_on_min_mbs = trial.error and trial.mbs <= trial.search_data.lo
+        failed_on_min_mbs = trial.error and trial.search_data and trial.mbs <= trial.search_data.lo
 
         exceeded_trials_per_random_config_limit = (
             trial.num_completed_trials_in_lineage >= self.trials_per_random_config
@@ -1040,12 +1023,6 @@ class RandomDSATSearchMethod(BaseDSATSearchMethod):
         return self.trial_tracker.num_trials_since_best_result >= self.early_stopping
 
 
-# @dataclass
-# class BinaryDSATSearchData:
-#     lo: int
-#     hi: int
-
-
 class BinarySearchDSATSearchMethod(BaseDSATSearchMethod):
     """
     Very basic binary search for randomly generated configs.
@@ -1130,9 +1107,7 @@ class BinarySearchDSATSearchMethod(BaseDSATSearchMethod):
         return [trial]
 
     def get_random_hparams_and_search_data(
-        self,
-        zero_stage: int
-        # ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+        self, zero_stage: int
     ) -> Tuple[Dict[str, Any], DSATSearchData]:
         zero_optim_config = _utils.get_random_zero_optim_config(zero_stage)
         new_hparams = copy.deepcopy(self.trial_tracker.hparams)
