@@ -1,4 +1,4 @@
-from typing import Any, TypeVar
+from typing import Any
 
 from determined.common.api import authentication
 from tests import config as conf
