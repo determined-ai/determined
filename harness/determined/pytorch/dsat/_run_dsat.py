@@ -18,7 +18,7 @@ from determined.pytorch.dsat import (
 from determined.util import merge_dicts
 
 
-def get_search_method(method_string: str) -> Type[BaseDSATSearchMethod]:
+def get_search_method_class(method_string: str) -> Type[BaseDSATSearchMethod]:
     if method_string == "binary":
         return BinarySearchDSATSearchMethod
     elif method_string == "_test":
@@ -78,7 +78,7 @@ def main(core_context: det.core.Context) -> None:
     exp_config = get_custom_dsat_exp_conf_from_args(args)
 
     # search_method_class = _defaults.ALL_SEARCH_METHOD_CLASSES[args.search_method]
-    search_method_class = get_search_method(args.search_method)
+    search_method_class = get_search_method_class(args.search_method)
     if search_method_class is None:
         return
     search_method = search_method_class(args=args, exp_config=exp_config)

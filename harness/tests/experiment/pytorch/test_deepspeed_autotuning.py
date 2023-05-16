@@ -6,7 +6,7 @@ import pathlib
 import shutil
 import tempfile
 from collections import deque
-from typing import Any, Deque, Dict, Generator, List, Optional, Sequence, Tuple
+from typing import Any, Deque, Dict, Generator, List, Mapping, Optional, Sequence, Tuple, cast
 
 import pytest
 
@@ -22,7 +22,10 @@ from determined.pytorch.dsat import (
     RandomDSATSearchMethod,
     BinarySearchDSATSearchMethod,
 )
-from determined.pytorch.dsat._run_dsat import get_custom_dsat_exp_conf_from_args, get_search_method
+from determined.pytorch.dsat._run_dsat import (
+    get_custom_dsat_exp_conf_from_args,
+    get_search_method_class,
+)
 from determined.searcher._search_method import SearcherState
 from tests.custom_search_mocks import MockMasterSearchRunner, MockMaster
 
@@ -60,7 +63,7 @@ MODEL_INFO_PROFILE_METRIC_FIXTURE: Dict[str, Any] = {
     "gpu_mem": 15843721216,
 }
 
-DSATTRIAL_ARGS = {
+DSATTRIAL_ARGS: Mapping[str, Any] = {
     "hparams": {"deepspeed_config": "ds_config.json"},
     "model_dir": BASE_EXPERIMENT_FIXTURE_PATH.joinpath("example_experiment"),
     "slots_per_trial": 2,
@@ -108,12 +111,12 @@ def _run_searcher(
     Run a mocked version of the Determined master with a deterministic series of
     returned metrics for a given Deepspeed Autotune Custom Search Method
     """
-    search_method = get_search_method(search_method_name)
+    search_method_class = get_search_method_class(search_method_name)
     default_args = DEFAULT_ARGS_DICT[search_method_name]
     default_exp_config = DEFAULT_CUSTOM_DSAT_EXP_CONFIG_DICT[search_method_name]
     with tempfile.TemporaryDirectory() as searcher_dir:
         searcher_path = pathlib.Path(searcher_dir)
-        search_method = search_method(args=default_args, exp_config=default_exp_config)
+        search_method = search_method_class(args=default_args, exp_config=default_exp_config)
         mock_master_obj = DSATMockMaster(all_metrics=all_metrics)
         search_runner = MockMasterSearchRunner(search_method, mock_master_obj, searcher_path)
         search_runner.run(exp_config={}, context_dir="", includes=None)
@@ -129,12 +132,11 @@ def test_deepspeed_autotune_happy_path() -> None:
     for search_method_name in _defaults.ALL_SEARCH_METHOD_NAMES:
         # All of our search methods currently run all of the specified `max-trials` in the
         # happy path
-        exp_num_trials = _defaults.AUTOTUNING_ARG_DEFAULTS["max-trials"]
-        model_info_profile_trial_metrics: List[Dict[str, float]] = [
-            MODEL_INFO_PROFILE_METRIC_FIXTURE
-        ]
-        successful_trial_metrics: List[Dict[str, float]] = [
-            {_defaults.AUTOTUNING_ARG_DEFAULTS["metric"]: 0.0} for _ in range(exp_num_trials - 1)
+        exp_num_trials = cast(int, _defaults.AUTOTUNING_ARG_DEFAULTS["max-trials"])
+        model_info_profile_trial_metrics: List[Dict[str, Any]] = [MODEL_INFO_PROFILE_METRIC_FIXTURE]
+        default_metric_name = str(_defaults.AUTOTUNING_ARG_DEFAULTS["metric"])
+        successful_trial_metrics: List[Dict[str, Any]] = [
+            {default_metric_name: 0.0} for _ in range(exp_num_trials - 1)
         ]
         all_metrics = model_info_profile_trial_metrics + successful_trial_metrics
         search_runner = _run_searcher(search_method_name, all_metrics)
@@ -154,7 +156,7 @@ def test_continuous_failures() -> None:
     marked as failed.
     """
     for search_method_name in _defaults.ALL_SEARCH_METHOD_NAMES:
-        exp_num_trials = _defaults.AUTOTUNING_ARG_DEFAULTS["max-trials"]
+        exp_num_trials = cast(int, _defaults.AUTOTUNING_ARG_DEFAULTS["max-trials"])
         model_info_profile_trial_metrics = [MODEL_INFO_PROFILE_METRIC_FIXTURE]
         failed_trial_metrics = [{ERROR_METRIC_NAME: True} for _ in range(exp_num_trials - 1)]
         all_metrics = model_info_profile_trial_metrics + failed_trial_metrics
@@ -172,12 +174,11 @@ def test_continuous_failures() -> None:
 def test_one_off_failure() -> None:
     """Make sure that DSAT Search Methods can properly handle a single failure"""
     for search_method_name in _defaults.ALL_SEARCH_METHOD_NAMES:
-        exp_num_trials = _defaults.AUTOTUNING_ARG_DEFAULTS["max-trials"]
+        exp_num_trials = cast(int, _defaults.AUTOTUNING_ARG_DEFAULTS["max-trials"])
         model_info_profile_trial_metrics = [MODEL_INFO_PROFILE_METRIC_FIXTURE]
-        one_failed_trial_metrics = [{ERROR_METRIC_NAME: True}]
-        successful_trial_metrics = [
-            {_defaults.AUTOTUNING_ARG_DEFAULTS["metric"]: 0.0} for _ in range(exp_num_trials - 2)
-        ]
+        one_failed_trial_metrics: List[Dict[str, Any]] = [{ERROR_METRIC_NAME: True}]
+        default_metric_name: str = str(_defaults.AUTOTUNING_ARG_DEFAULTS["metric"])
+        successful_trial_metrics = [{default_metric_name: 0.0} for _ in range(exp_num_trials - 2)]
         all_metrics = (
             model_info_profile_trial_metrics + one_failed_trial_metrics + successful_trial_metrics
         )
@@ -494,7 +495,7 @@ def search_state_and_method_builder(
     profile info run and a populated queue.
     """
     exp_config = get_custom_dsat_exp_conf_from_args(args)
-    search_method = get_search_method(args.search_method)(
+    search_method = get_search_method_class(args.search_method)(
         args=args,
         exp_config=exp_config,
     )
@@ -605,7 +606,7 @@ class TestRandomDSATSearchMethodTrialCreation:
                 searcher_state,
                 next_trial.request_id,
                 {next_trial.searcher_metric_name: metrics[idx]},
-                searcher.ExitedReason.ERRORED,
+                train_length=1,
             )
             next_trial = search_method.choose_next_trial_from_queue()
             assert next_trial.lineage_root == first_trial
@@ -616,7 +617,7 @@ class TestRandomDSATSearchMethodTrialCreation:
             searcher_state,
             next_trial.request_id,
             {next_trial.searcher_metric_name: metrics[idx]},
-            searcher.ExitedReason.ERRORED,
+            train_length=1,
         )
         next_trial = search_method.choose_next_trial_from_queue()
         assert next_trial.lineage_root != first_trial
@@ -717,11 +718,12 @@ class TestRandomDSATSearchMethodShouldStopLineage:
         Verify that we stop a stage 3 lineage when a successful stage-1 or 2 trial has been found.
         """
         _, search_method = default_random_state_and_search_method
-        trial_dict_by_stage = {}
+        trial_dict_by_stage: Dict[int, DSATTrial] = {}
         for stage in (1, 2, 3):
             overwrites = {_defaults.OVERWRITE_KEY: {"zero_optimization": {"stage": stage}}}
             hparams = {**HPARAMS_FIXTURE, **overwrites}
             trial_dict_by_stage[stage] = search_method.trial_tracker.create_trial(hparams)
+        assert trial_dict_by_stage[3].searcher_metric_name
         search_method.trial_tracker.update_trial_metric(
             trial_dict_by_stage[3], {trial_dict_by_stage[3].searcher_metric_name: 0}
         )
@@ -1103,7 +1105,7 @@ class TestHFConfigOverwriting:
                     assert overwritten_ds_config.get(k) == v
 
 
-class DSATMockMaster(MockMaster):  # type: ignore
+class DSATMockMaster(MockMaster):
     """
     Sends v1 metrics back to the Search Runner in the manner defined with the
     `all_metrics` list of dictionaries.
