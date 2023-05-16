@@ -116,6 +116,12 @@ def get_full_parser() -> argparse.ArgumentParser:
         "--eta",
         default=2,
     )
+    asha_subparser.add_argument(
+        "-srf",
+        "--search-range-factor",
+        type=float,
+        default=_defaults.AUTOTUNING_ARG_DEFAULTS["search-range-factor"],
+    )
 
     return parser
 
@@ -127,7 +133,9 @@ def smaller_is_better(metric: str) -> bool:
         return False
     else:
         raise ValueError(
-            f"metric must be one of {_defaults.SMALLER_IS_BETTER_METRICS + _defaults.LARGER_IS_BETTER_METRICS}, not {metric}"
+            "metric must be one of "
+            f"{_defaults.SMALLER_IS_BETTER_METRICS + _defaults.LARGER_IS_BETTER_METRICS}, "
+            f"not {metric}"
         )
 
 
@@ -137,9 +145,10 @@ def get_search_runner_config_from_args(args: argparse.Namespace) -> Dict[str, An
         return submitted_search_runner_config
 
     submitted_exp_config_dict = get_dict_from_yaml_or_json_path(args.config_path)
-    assert (
-        "deepspeed_config" in submitted_exp_config_dict["hyperparameters"]
-    ), "DS AT requires a `hyperparameters.deepspeed_config` key which points to the deepspeed config json file"
+    assert "deepspeed_config" in submitted_exp_config_dict["hyperparameters"], (
+        "DS AT requires a `hyperparameters.deepspeed_config` key which points to the ds config"
+        " json file"
+    )
 
     # Also sanity check that if a --deepspeed_config (or in the case of HF
     # --deepspeed) arg is passed in, both configs match. Probably some gotchas here because
@@ -156,7 +165,7 @@ def get_search_runner_config_from_args(args: argparse.Namespace) -> Dict[str, An
         split_entrypoint = split_entrypoint.split(" ")
     else:
         raise ValueError(
-            f"Expected a string or list for an entrypoint, but received {type(submitted_entrypoint)}"
+            f"Expected a str or list for an entrypoint, but received {type(submitted_entrypoint)}"
         )
 
     split_entrypoint = [s.strip() for s in split_entrypoint if s.strip()]
@@ -191,7 +200,8 @@ def get_dict_from_yaml_or_json_path(
     path: str, convert_json_keys_to_int: bool = True
 ) -> Dict[Any, Any]:
     """
-    Load a json or yaml file as a dict. Optionally convert all json dict keys to ints, where possible.
+    Load a json or yaml file as a dict. Optionally convert all json dict keys to ints,
+    where possible.
     """
     p = pathlib.Path(path)
     if p.suffix == ".json":
