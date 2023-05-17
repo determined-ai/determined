@@ -1,0 +1,93 @@
+/* stylelint-disable custom-property-pattern */
+
+:root {
+  /* font-size */
+  --header-size-XL: 28px;
+
+  /* line-height */
+  --header-ln-XL: 36px;
+
+  /* font-size */
+  --header-size-L: 24px;
+
+  /* line-height */
+  --header-ln-L: 32px;
+
+  /* font-size */
+  --header-size-default: 22px;
+
+  /* line-height */
+  --header-ln-default: 28px;
+
+  /* font-size */
+  --header-size-S: 18px;
+
+  /* line-height */
+  --header-ln-S: 23px;
+
+  /* font-size */
+  --header-size-XS: 16px;
+
+  /* line-height */
+  --header-ln-XS: 21px;
+
+  /* font-size */
+  --multi-line-size-XL: 16px;
+
+  /* line-height */
+  --multi-line-ln-XL: 26px;
+
+  /* font-size */
+  --multi-line-size-L: 14px;
+
+  /* line-height */
+  --multi-line-ln-L: 22px;
+
+  /* font-size */
+  --multi-line-size-default: 12px;
+
+  /* line-height */
+  --multi-line-ln-default: 20px;
+
+  /* font-size */
+  --multi-line-size-S: 11px;
+
+  /* line-height */
+  --multi-line-ln-S: 18px;
+
+  /* font-size */
+  --multi-line-size-XS: 10px;
+
+  /* line-height */
+  --multi-line-ln-XS: 16px;
+
+  /* font-size */
+  --single-line-size-XL: 16px;
+
+  /* line-height */
+  --single-line-ln-XL: 20px;
+
+  /* font-size */
+  --single-line-size-L: 14px;
+
+  /* line-height */
+  --single-line-ln-L: 18px;
+
+  /* font-size */
+  --single-line-size-default: 12px;
+
+  /* line-height */
+  --single-line-ln-default: 16px;
+
+  /* font-size */
+  --single-line-size-S: 11px;
+
+  /* line-height */
+  --single-line-ln-S: 14px;
+
+  /* font-size */
+  --single-line-size-XS: 10px;
+
+  /* line-height */
+  --single-line-ln-XS: 12px;
+}
