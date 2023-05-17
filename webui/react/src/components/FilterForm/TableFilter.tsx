@@ -20,6 +20,7 @@ const TableFilter = ({
   setIsOpenFilter,
 }: Props): JSX.Element => {
   const columns: V1ProjectColumn[] = Loadable.getOrElse([], loadableColumns);
+  const fieldCount = formStore.fieldCount;
 
   const onIsOpenFilterChange = (newOpen: boolean) => {
     setIsOpenFilter(newOpen);
@@ -47,7 +48,9 @@ const TableFilter = ({
         placement="bottomLeft"
         trigger="click"
         onOpenChange={onIsOpenFilterChange}>
-        <Button icon={<FilterOutlined />}>Filter</Button>
+        <Button icon={<FilterOutlined />}>
+          Filter{fieldCount > 0 && <span>({fieldCount})</span>}
+        </Button>
       </Popover>
     </div>
   );

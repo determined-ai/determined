@@ -132,6 +132,8 @@ describe('FilterFormStore', () => {
         },
         showArchived: false,
       });
+
+      expect(filterFormStore.fieldCount).toBe(0);
     });
 
     it('should initialize store with init data', () => {
@@ -142,6 +144,7 @@ describe('FilterFormStore', () => {
 
       expect(jsonWithId).toStrictEqual(initData);
       expect(jsonWithoutId).toStrictEqual(JSON.parse(JSON.stringify(initData, jsonReplacer)));
+      expect(filterFormStore.fieldCount).toBe(6);
     });
 
     it('should deep clone init data to avoid unexpected data overwrite', () => {
@@ -156,6 +159,13 @@ describe('FilterFormStore', () => {
 
   describe('Data Interaction', () => {
     describe('Basic Field and Group Interaction', () => {
+      it('should sweep invalid groups and conditions', () => {
+        const filterFormStore = new FilterFormStore();
+        filterFormStore.init(initData);
+        filterFormStore.sweep();
+        expect(filterFormStore.fieldCount).toBe(1);
+      });
+
       it('should add new fields', () => {
         const filterFormStore = new FilterFormStore();
         filterFormStore.addChild(ROOT_ID, FormKind.Field);

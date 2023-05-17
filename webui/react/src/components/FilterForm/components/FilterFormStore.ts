@@ -60,6 +60,45 @@ export class FilterFormStore {
     });
   }
 
+  public get fieldCount(): number {
+    const countFields = (form: FormGroup): number => {
+      let count = 0;
+      for (const child of form.children) {
+        count += child.kind === FormKind.Group ? countFields(child) : 1;
+      }
+      return count;
+    };
+    return countFields(this.#formset.get().filterGroup);
+  }
+
+  #isValid(form: FormGroup | FormField): boolean {
+    if (form.kind === FormKind.Field) {
+      return (
+        form.operator === Operator.IsEmpty ||
+        form.operator === Operator.NotEmpty ||
+        form.value != null
+      );
+    } else {
+      return form.children.length > 0;
+    }
+  }
+
+  // remove invalid groups and conditions
+  public sweep(): void {
+    const sweepUnused = (form: FormGroup): FormGroup => {
+      const children = form.children.filter(this.#isValid); // remove unused groups and conditions
+      for (let child of children) {
+        if (child.kind === FormKind.Group) {
+          child = sweepUnused(child); // recursively remove groups and conditions
+        }
+      }
+      form.children = children.filter(this.#isValid); // double check for groups
+      return form;
+    };
+    const group = sweepUnused(this.#formset.get().filterGroup);
+    this.#formset.update((prev) => ({ ...prev, group }));
+  }
+
   #getFormById(filterGroup: FormGroup, id: string): FormField | FormGroup | undefined {
     const traverse = (form: FormGroup | FormField): FormGroup | FormField | undefined => {
       if (form.id === id) {

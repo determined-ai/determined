@@ -76,6 +76,9 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
 
   const onIsOpenFilterChange = useCallback((newOpen: boolean) => {
     setIsOpenFilter(newOpen);
+    if (!newOpen) {
+      setTimeout(() => formStore.sweep(), 500);
+    }
   }, []);
 
   useEffect(() => {
@@ -245,10 +248,12 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
 
   useEffect(() => {
     return formStore.formset.subscribe((newFormatset) => {
-      resetPagination();
+      if (isOpenFilter) {
+        resetPagination();
+      }
       updateSettings({ filterset: JSON.stringify(newFormatset) });
     });
-  }, [resetPagination, updateSettings]);
+  }, [isOpenFilter, resetPagination, updateSettings]);
 
   const handleOnAction = useCallback(async () => {
     /*
