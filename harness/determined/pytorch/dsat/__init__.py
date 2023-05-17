@@ -24,5 +24,6 @@ __all__ = [
     "DSATModelProfileInfoTrial",
     "RandomDSATSearchMethod",
     "BinarySearchDSATSearchMethod",
+    "ASHADSATSearchMethod",
     "_TestDSATSearchMethod",
 ]
