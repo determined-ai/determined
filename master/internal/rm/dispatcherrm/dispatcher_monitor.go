@@ -676,15 +676,19 @@ func (m *launcherMonitor) updateJobStatus(ctx *actor.Context, job *launcherJob) 
 
 	// Dispatch was not found.
 	if !ok {
+		missingDispatchMsg := "The job was canceled"
 		if job.jobWasTerminated {
-			ctx.Log().WithField("dispatch-id", dispatchID).Infof("The job was canceled")
-
-			ctx.Tell(ctx.Self(), DispatchExited{
-				DispatchID: dispatchID,
-				ExitCode:   -1,
-				Message:    "Job was canceled",
-			})
+			ctx.Log().WithField("dispatch-id", dispatchID).Info(missingDispatchMsg)
+		} else {
+			missingDispatchMsg = "The job was lost"
+			ctx.Log().WithField("dispatch-id", dispatchID).Error(missingDispatchMsg)
 		}
+
+		ctx.Tell(ctx.Self(), DispatchExited{
+			DispatchID: dispatchID,
+			ExitCode:   -1,
+			Message:    missingDispatchMsg,
+		})
 
 		return true
 	}
