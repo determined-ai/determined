@@ -12,7 +12,6 @@ interface InputNumberProps {
   precision?: number;
   step?: number;
   value?: number;
-  autoFocus?: boolean;
 }
 
 const InputNumber: React.FC<InputNumberProps> = (props: InputNumberProps) => {

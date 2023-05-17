@@ -169,6 +169,7 @@ const FilterField = ({
       <div className={css.fieldCard} ref={preview}>
         <>
           <Select
+            autoFocus
             dropdownMatchSelectWidth={250}
             options={columns.map((col) => ({
               label: col.displayName || col.column,
@@ -213,7 +214,6 @@ const FilterField = ({
               {(currentColumn?.type === V1ColumnType.TEXT ||
                 currentColumn?.type === V1ColumnType.UNSPECIFIED) && (
                 <Input
-                  autoFocus
                   disabled={
                     field.operator === Operator.IsEmpty || field.operator === Operator.NotEmpty
                   }
@@ -226,7 +226,6 @@ const FilterField = ({
               )}
               {currentColumn?.type === V1ColumnType.NUMBER && (
                 <InputNumber
-                  autoFocus
                   className={css.fullWidth}
                   value={fieldValue != null ? Number(fieldValue) : undefined}
                   onChange={(val) => {
@@ -238,7 +237,6 @@ const FilterField = ({
               {currentColumn?.type === V1ColumnType.DATE && (
                 // timezone is UTC since DB uses UTC
                 <DatePicker
-                  autoFocus
                   value={dayjs(fieldValue).isValid() ? dayjs(fieldValue).utc() : null}
                   onChange={(value: DatePickerProps['value']) => {
                     const dateString = dayjs(value).utc().startOf('date').format();

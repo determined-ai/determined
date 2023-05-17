@@ -60,18 +60,31 @@ export class FilterFormStore {
     });
   }
 
+  public get sweepedJsonStringWithoutId(): Observable<string> {
+    const replacer = (key: string, value: unknown): unknown => {
+      return key === 'id' ? undefined : value;
+    };
+    return this.#formset.select((formset) => {
+      const sweepedForm = this.#sweepInvalid(structuredClone(formset.filterGroup));
+      const newFormSet: FilterFormSetWithoutId = JSON.parse(
+        JSON.stringify({ ...formset, filterGroup: sweepedForm }, replacer),
+      );
+      return JSON.stringify(newFormSet);
+    });
+  }
+
   public get fieldCount(): Observable<number> {
-    const countFields = (form: FormGroup): number => {
+    const countFields = (form: Readonly<FormGroup>): number => {
       let count = 0;
       for (const child of form.children) {
         count += child.kind === FormKind.Group ? countFields(child) : 1;
       }
       return count;
     };
-    return this.#formset.select(({ filterGroup }) => countFields(filterGroup));
+    return this.#formset.select((formset) => countFields(formset.filterGroup));
   }
 
-  #isValid(form: FormGroup | FormField): boolean {
+  #isValid(form: Readonly<FormGroup | FormField>): boolean {
     if (form.kind === FormKind.Field) {
       return (
         form.operator === Operator.IsEmpty ||
@@ -84,19 +97,28 @@ export class FilterFormStore {
   }
 
   // remove invalid groups and conditions
-  public sweep(): void {
-    const sweepUnused = (form: FormGroup): FormGroup => {
+  #sweepInvalid = (form: FormGroup): Readonly<FormGroup> => {
+    const sweepRecur = (form: FormGroup): Readonly<FormGroup> => {
       const children = form.children.filter(this.#isValid); // remove unused groups and conditions
       for (let child of children) {
         if (child.kind === FormKind.Group) {
-          child = sweepUnused(child); // recursively remove groups and conditions
+          child = sweepRecur(child); // recursively remove groups and conditions
         }
       }
       form.children = children.filter(this.#isValid); // double check for groups
       return form;
     };
-    const group = sweepUnused(this.#formset.get().filterGroup);
-    this.#formset.update((prev) => ({ ...prev, group }));
+
+    // clone form to avoid reference change
+    return sweepRecur(structuredClone(form));
+  };
+
+  // remove invalid groups and conditions and then store sweeped data in #formset
+  public sweep(): void {
+    this.#formset.update((prev) => {
+      const filterGroup = this.#sweepInvalid(prev.filterGroup);
+      return { ...prev, filterGroup };
+    });
   }
 
   #getFormById(filterGroup: FormGroup, id: string): FormField | FormGroup | undefined {

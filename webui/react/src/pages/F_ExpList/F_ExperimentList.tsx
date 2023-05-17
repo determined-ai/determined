@@ -71,7 +71,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const [total, setTotal] = useState<Loadable<number>>(NotLoaded);
   const [projectColumns, setProjectColumns] = useState<Loadable<ProjectColumn[]>>(NotLoaded);
   const [isOpenFilter, setIsOpenFilter] = useState<boolean>(false);
-  const filtersString: string = JSON.stringify(useObservable(formStore.jsonWithoutId));
+  const filtersString = useObservable(formStore.sweepedJsonStringWithoutId);
   const rootFilterChildren = useObservable(formStore.formset).filterGroup.children;
 
   const onIsOpenFilterChange = useCallback((newOpen: boolean) => {
@@ -239,13 +239,11 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   }, [canceler, stopPolling]);
 
   useEffect(() => {
-    return formStore.formset.subscribe((newFormatset) => {
-      if (isOpenFilter) {
-        resetPagination();
-      }
-      updateSettings({ filterset: JSON.stringify(newFormatset) });
+    return formStore.sweepedJsonStringWithoutId.subscribe(() => {
+      resetPagination();
+      updateSettings({ filterset: JSON.stringify(formStore.formset.get()) });
     });
-  }, [isOpenFilter, resetPagination, updateSettings]);
+  }, [resetPagination, updateSettings]);
 
   const handleOnAction = useCallback(async () => {
     /*
