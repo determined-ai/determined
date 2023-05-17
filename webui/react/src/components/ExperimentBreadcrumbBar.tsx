@@ -9,7 +9,6 @@ import { isEqual } from 'shared/utils/data';
 import { ExperimentBase, Project, TrialDetails, Workspace } from 'types';
 import handleError from 'utils/error';
 
-import css from './BreadcrumbBar.module.scss';
 import DynamicIcon from './DynamicIcon';
 import Link from './Link';
 
@@ -155,9 +154,7 @@ const ExperimentBreadcrumbBar: React.FC<Props> = ({
               </Link>
             </Breadcrumb.Item>
             <Breadcrumb.Item>
-              <Link
-                className={css.link}
-                path={project ? paths.workspaceDetails(project.workspaceId) : undefined}>
+              <Link path={project ? paths.workspaceDetails(project.workspaceId) : undefined}>
                 {workspace?.name ?? '...'}
                 {workspace?.archived && <Icon name="archive" showTooltip title="Archived" />}
               </Link>
@@ -166,9 +163,7 @@ const ExperimentBreadcrumbBar: React.FC<Props> = ({
           </>
         )}
         <Breadcrumb.Item>
-          <Link
-            className={css.link}
-            path={experiment ? paths.projectDetails(experiment.projectId) : undefined}>
+          <Link path={experiment ? paths.projectDetails(experiment.projectId) : undefined}>
             {projectName}
             {project?.archived && <Icon name="archive" showTooltip title="Archived" />}
           </Link>
@@ -177,9 +172,7 @@ const ExperimentBreadcrumbBar: React.FC<Props> = ({
           <>
             <Breadcrumb.Separator />
             <Breadcrumb.Item>
-              <Link
-                className={css.link}
-                path={trial ? paths.experimentDetails(trial.experimentId) : undefined}>
+              <Link path={trial ? paths.experimentDetails(trial.experimentId) : undefined}>
                 {experiment?.name ?? '...'}
                 {experiment?.archived && <Icon name="archive" showTooltip title="Archived" />}
               </Link>
