@@ -500,16 +500,10 @@ def get_hf_args_with_overwrites(
         logging.info(
             f"{overwrite_key} key not found in hparams, `get_hf_args_with_overwrites` is a no-op"
         )
-        return []
+        return args
 
-    # Verify that the appropriate keys in the DS json file have `"auto"` values
     ds_config_path = get_ds_config_path_from_args(args)
-
-    if ds_config_path is None:
-        logging.warning(
-            f"Could not determine ds_config_path in `get_hf_args_with_overwrites`. Args: {args}"
-        )
-        return []
+    assert ds_config_path is not None, "--deepspeed flag not found in HuggingFace args!"
 
     with open(ds_config_path, "r") as f:
         ds_config_dict = json.load(f)
