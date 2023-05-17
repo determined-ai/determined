@@ -1790,7 +1790,7 @@ jobs:
       - setup-docker-env:
           image: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.21.2
           image-name: test_container
-          extras-requires: "torch==1.9.0 torchvision==0.10.0 pytorch_lightning==1.5.9 mypy pytest coverage"
+          extras-requires: "pytorch_lightning==1.5.10 torchmetrics==0.5.1 torchvision==0.10.0 mypy pytest coverage"
       - run: mkdir -p $HOME/.local/bin
       - install-codecov
       - run: echo 'export PATH=$PATH:$HOME/.local/bin' >> $BASH_ENV
