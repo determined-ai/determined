@@ -13,18 +13,9 @@ from typing import Any, Deque, Dict, Iterable, Iterator, List, Optional, Set, Tu
 
 import numpy as np
 
+from determined import searcher
 from determined.experimental.client import create_experiment
 from determined.pytorch.dsat import _defaults, _utils
-from determined.searcher import (
-    Close,
-    Create,
-    ExitedReason,
-    Operation,
-    SearcherState,
-    SearchMethod,
-    Shutdown,
-    ValidateAfter,
-)
 from determined.util import merge_dicts
 
 """
@@ -141,17 +132,17 @@ class DSATTrial:
         return self.ds_config["train_micro_batch_size_per_gpu"]
 
     @property
-    def create_and_val_ops(self) -> List[Operation]:
+    def create_and_val_ops(self) -> List[searcher.Operation]:
         """
-        Returns a list with the Create and ValidateAfter operations needed to initiate and run
-        the specified Trial.
+        Returns a list with the searcher.Create and searcher.ValidateAfter operations
+        needed to initiate and run the specified Trial.
         """
-        create_op = Create(
+        create_op = searcher.Create(
             request_id=self.request_id,
             hparams=self.hparams,
             checkpoint=None,
         )
-        validate_after_op = ValidateAfter(request_id=self.request_id, length=self.length)
+        validate_after_op = searcher.ValidateAfter(request_id=self.request_id, length=self.length)
         ops_list = [create_op, validate_after_op]
 
         return ops_list
@@ -512,7 +503,7 @@ class DSATTrialTracker:
         return True
 
 
-class BaseDSATSearchMethod(SearchMethod):
+class BaseDSATSearchMethod(searcher.SearchMethod):
     """
     Base class for all DS AT searchers. Written so that only the `get_new_searcher_ops_list` method
     needs to be written overwritten when subclassing (at a minimum).
@@ -533,7 +524,7 @@ class BaseDSATSearchMethod(SearchMethod):
     @abstractmethod
     def get_trials_after_validation_completed(
         self,
-        searcher_state: SearcherState,
+        searcher_state: searcher.SearcherState,
         last_trial: DSATTrial,
         metric: Union[float, Dict[str, Any]],
     ) -> Iterable[DSATTrial]:
@@ -546,9 +537,9 @@ class BaseDSATSearchMethod(SearchMethod):
     @abstractmethod
     def get_trials_after_early_exit(
         self,
-        searcher_state: SearcherState,
+        searcher_state: searcher.SearcherState,
         last_trial: DSATTrial,
-        exited_reason: ExitedReason,
+        exited_reason: searcher.ExitedReason,
     ) -> Iterable[DSATTrial]:
         """
         All returned `DSATTrial`s will be `append`-ed to `self.trial_tracker.queue` in the order
@@ -565,7 +556,9 @@ class BaseDSATSearchMethod(SearchMethod):
         next_trial = self.trial_tracker.queue.popleft()
         return next_trial
 
-    def initial_operations(self, searcher_state: SearcherState) -> List[Operation]:
+    def initial_operations(
+        self, searcher_state: searcher.SearcherState
+    ) -> List[searcher.Operation]:
         """
         Submits the model info profiling run in order to collect model and resources info to
         inform the search.
@@ -581,8 +574,8 @@ class BaseDSATSearchMethod(SearchMethod):
         return ops
 
     def on_trial_created(
-        self, searcher_state: SearcherState, request_id: uuid.UUID
-    ) -> List[Operation]:
+        self, searcher_state: searcher.SearcherState, request_id: uuid.UUID
+    ) -> List[searcher.Operation]:
         # TODO: Remove print tests.
         logging.info("on trial created")
         self._searcher_state_tests(searcher_state, "trial created")
@@ -591,11 +584,11 @@ class BaseDSATSearchMethod(SearchMethod):
 
     def on_validation_completed(
         self,
-        searcher_state: SearcherState,
+        searcher_state: searcher.SearcherState,
         request_id: uuid.UUID,
         metric: Union[float, Dict[str, Any]],
         train_length: int,
-    ) -> List[Operation]:
+    ) -> List[searcher.Operation]:
         last_trial = self.trial_tracker[request_id]
         self.trial_tracker.update_trial_metric(trial=last_trial, metric=metric)
 
@@ -623,14 +616,14 @@ class BaseDSATSearchMethod(SearchMethod):
         self._searcher_state_tests(searcher_state, "val completed")
 
         # All DS AT Trials should be closed after validation.
-        return [Close(request_id)]
+        return [searcher.Close(request_id)]
 
     def on_trial_exited_early(
         self,
-        searcher_state: SearcherState,
+        searcher_state: searcher.SearcherState,
         request_id: uuid.UUID,
-        exited_reason: ExitedReason,
-    ) -> List["Operation"]:
+        exited_reason: searcher.ExitedReason,
+    ) -> List["searcher.Operation"]:
         last_trial = self.trial_tracker[request_id]
         self.trial_tracker.report_trial_early_exit(last_trial)
 
@@ -638,14 +631,14 @@ class BaseDSATSearchMethod(SearchMethod):
         logging.info(f"Calling on_trial_exited_early for {request_id}")
         self._searcher_state_tests(searcher_state, "exited early")
 
-        new_ops_list: List["Operation"] = []
-        if exited_reason != ExitedReason.ERRORED:
+        new_ops_list: List["searcher.Operation"] = []
+        if exited_reason != searcher.ExitedReason.ERRORED:
             # In case of INVALID_HP or USER_CANCELED, shut down the searcher.
             logging.info(
                 f"Shutting down: unexpected early exit due to {exited_reason}"
                 f"\nLast trial: {last_trial}, request_id: {request_id}"
             )
-            new_ops_list.append(Shutdown(failure=self.trial_tracker.should_be_failure))
+            new_ops_list.append(searcher.Shutdown(failure=self.trial_tracker.should_be_failure))
         if not self.trial_tracker.max_trials_queued and not self.should_shutdown():
             # ERRORED Trials generally corresponds to OOMs, after which we may want to submit
             # follow-on Trials.
@@ -661,15 +654,15 @@ class BaseDSATSearchMethod(SearchMethod):
         return new_ops_list
 
     def on_trial_closed(
-        self, searcher_state: SearcherState, request_id: uuid.UUID
-    ) -> List[Operation]:
+        self, searcher_state: searcher.SearcherState, request_id: uuid.UUID
+    ) -> List[searcher.Operation]:
         last_trial = self.trial_tracker[request_id]
 
         # TODO: Remove print tests.
         logging.info(f"Calling on_trial_closed for {request_id}")
         logging.info(f"metrics for closed trial {last_trial.metric}")
 
-        new_ops_list: List[Operation] = []
+        new_ops_list: List[searcher.Operation] = []
         if self.should_shutdown():
             if self.trial_tracker.best_trial is not None and self.args.run_full_experiment:
                 submitted_config = _utils.get_dict_from_yaml_or_json_path(self.args.config_path)
@@ -683,7 +676,7 @@ class BaseDSATSearchMethod(SearchMethod):
                 # and also some "optimal config" label somewhere.
                 create_experiment(optimal_config, self.args.model_dir, self.args.include)
 
-            new_ops_list.append(Shutdown(failure=self.trial_tracker.should_be_failure))
+            new_ops_list.append(searcher.Shutdown(failure=self.trial_tracker.should_be_failure))
         else:
             while self.trial_tracker.can_run_more_trials:
                 next_trial = self.choose_next_trial_from_queue()
@@ -694,7 +687,7 @@ class BaseDSATSearchMethod(SearchMethod):
 
         return new_ops_list
 
-    def progress(self, searcher_state: SearcherState) -> float:
+    def progress(self, searcher_state: searcher.SearcherState) -> float:
         # TODO: Remove print tests.
         logging.info("progress")
         self._searcher_state_tests(searcher_state, "progress")
@@ -757,7 +750,7 @@ class BaseDSATSearchMethod(SearchMethod):
 
     def _searcher_state_tests(
         self,
-        searcher_state: SearcherState,
+        searcher_state: searcher.SearcherState,
         text: str,
     ) -> None:
         # for testing, delete later
@@ -815,7 +808,7 @@ class RandomDSATSearchMethod(BaseDSATSearchMethod):
 
     def get_trials_after_validation_completed(
         self,
-        searcher_state: SearcherState,
+        searcher_state: searcher.SearcherState,
         last_trial: DSATTrial,
         metric: Optional[Union[float, Dict[str, Any]]] = None,
     ) -> List[DSATTrial]:
@@ -829,9 +822,9 @@ class RandomDSATSearchMethod(BaseDSATSearchMethod):
 
     def get_trials_after_early_exit(
         self,
-        searcher_state: SearcherState,
+        searcher_state: searcher.SearcherState,
         last_trial: DSATTrial,
-        exited_reason: ExitedReason,
+        exited_reason: searcher.ExitedReason,
     ) -> List[DSATTrial]:
         # TODO: delete print test
         logging.info("Calling get_trials_after_early_exit")
@@ -1032,7 +1025,7 @@ class BinarySearchDSATSearchMethod(BaseDSATSearchMethod):
 
     def get_trials_after_validation_completed(
         self,
-        searcher_state: SearcherState,
+        searcher_state: searcher.SearcherState,
         last_trial: DSATTrial,
         metric: Optional[Union[float, Dict[str, Any]]] = None,
     ) -> List[DSATTrial]:
@@ -1046,9 +1039,9 @@ class BinarySearchDSATSearchMethod(BaseDSATSearchMethod):
 
     def get_trials_after_early_exit(
         self,
-        searcher_state: SearcherState,
+        searcher_state: searcher.SearcherState,
         last_trial: DSATTrial,
-        exited_reason: ExitedReason,
+        exited_reason: searcher.ExitedReason,
     ) -> List[DSATTrial]:
         # TODO: delete print test
         logging.info("Calling get_trials_after_early_exit")
@@ -1363,7 +1356,7 @@ class _TestDSATSearchMethod(BaseDSATSearchMethod):
 
     def get_trials_after_validation_completed(
         self,
-        searcher_state: SearcherState,
+        searcher_state: searcher.SearcherState,
         last_trial: DSATTrial,
         metric: Optional[Union[float, Dict[str, Any]]] = None,
     ) -> List[DSATTrial]:
@@ -1394,8 +1387,8 @@ class _TestDSATSearchMethod(BaseDSATSearchMethod):
 
     def get_trials_after_early_exit(
         self,
-        searcher_state: SearcherState,
+        searcher_state: searcher.SearcherState,
         last_trial: DSATTrial,
-        exited_reason: ExitedReason,
+        exited_reason: searcher.ExitedReason,
     ) -> List[DSATTrial]:
         return []
