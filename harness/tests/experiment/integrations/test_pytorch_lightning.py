@@ -7,9 +7,9 @@ import typing
 from typing import Any, Dict
 
 import pytest
+import torch
 
 import determined as det
-import torch
 from determined import gpu, pytorch
 from determined.pytorch import lightning
 from tests.experiment import utils  # noqa: I100
