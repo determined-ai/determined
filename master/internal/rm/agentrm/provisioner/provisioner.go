@@ -43,7 +43,7 @@ type Provisioner struct {
 	provider         provider
 	scaleDecider     *scaleDecider
 	telemetryLimiter *rate.Limiter
-	errInfo          *errInfo.ErrorTimeoutRetry
+	launchErr        *errInfo.ErrorTimeoutRetry
 }
 
 type provider interface {
@@ -93,7 +93,7 @@ func New(
 			db,
 		),
 		telemetryLimiter: rate.NewLimiter(rate.Every(telemetryCooldown), 1),
-		errInfo:          errInfo.NewErrorTimeoutRetry(launchErrorTimeout, config.LaunchErrorRetries),
+		launchErr:        errInfo.NewErrorTimeoutRetry(launchErrorTimeout, config.LaunchErrorRetries),
 	}, nil
 }
 
@@ -186,17 +186,17 @@ func (p *Provisioner) provision(ctx *actor.Context) {
 }
 
 func (p *Provisioner) launch(ctx *actor.Context, numToLaunch int) error {
-	if err := p.errInfo.GetError(); err != nil {
+	if err := p.launchErr.GetError(); err != nil {
 		return err
 	}
-	p.errInfo.SetError(p.provider.launch(ctx, numToLaunch))
-	return p.errInfo.GetError()
+	p.launchErr.SetError(p.provider.launch(ctx, numToLaunch))
+	return p.launchErr.GetError()
 }
 
-// GetError returns the last error encountered by the provisioner.
-func (p *Provisioner) GetError() error {
+// GetLaunchError returns the current launch error sent from the provider.
+func (p *Provisioner) GetLaunchError() error {
 	if p == nil {
 		return nil
 	}
-	return p.errInfo.GetError()
+	return p.launchErr.GetError()
 }
