@@ -1136,7 +1136,7 @@ class ASHADSATSearchMethod(BaseDSATSearchMethod):
 
     def get_trials_after_validation_completed(
         self,
-        searcher_state: searcher.SearcherState,
+        searcher_state: SearcherState,
         last_trial: DSATTrial,
         metric: Optional[Union[float, Dict[str, Any]]] = None,
     ) -> List[DSATTrial]:
@@ -1148,9 +1148,9 @@ class ASHADSATSearchMethod(BaseDSATSearchMethod):
 
     def get_trials_after_early_exit(
         self,
-        searcher_state: searcher.SearcherState,
+        searcher_state: SearcherState,
         last_trial: DSATTrial,
-        exited_reason: searcher.ExitedReason,
+        exited_reason: ExitedReason,
     ) -> List[DSATTrial]:
         # TODO: delete print test
         logging.info("Calling get_trials_after_early_exit")
