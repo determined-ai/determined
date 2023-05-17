@@ -131,7 +131,14 @@ class DSATTrial:
 
     @property
     def mbs(self) -> int:
-        return self.ds_config.get("train_micro_batch_size_per_gpu", 1)
+        assert "train_micro_batch_size_per_gpu" in self.ds_config, (
+            "The DSATTrial must be provided with a `ds_config` that contains the"
+            " key `train_micro_batch_size_per_gpu`"
+        )
+        assert isinstance(
+            self.ds_config["train_micro_batch_size_per_gpu"], int
+        ), "The DSATTrial must be provided an `int` value for `train_micro_batch_size_per_gpu`"
+        return self.ds_config["train_micro_batch_size_per_gpu"]
 
     @property
     def create_and_val_ops(self) -> List[Operation]:
@@ -322,40 +329,50 @@ class DSATTrialTracker:
         trial.error = True
         trial.running = False
 
+    def _fetch_model_profile_info_data(self, param_name: str) -> int:
+        assert (
+            self.model_profile_info_trial is not None
+        ), f"The `DSATModelProfileInfoTrial` must be run before requesting its `{param_name}`"
+        assert isinstance(
+            self.model_profile_info_trial.metric, dict
+        ), "The `DSATModelProfileInfoTrial` must be provided with a metric dictionary"
+        assert param_name in self.model_profile_info_trial.metric, (
+            "The `DSATModelProfileInfoTrial` must be provided with a metric dict that contains the"
+            f" key `{param_name}`"
+        )
+        assert isinstance(
+            self.model_profile_info_trial.metric[param_name], int
+        ), f"The `DSATModelProfileInfoTrial` must be provided an `int` value for `{param_name}`"
+        return int(self.model_profile_info_trial.metric[param_name])
+
     @property
     def gpu_mem(self) -> int:
         """
-        Returns the available GPU memory in bytes.
+        Returns the available GPU memory in bytes according to the `DSATModelProfileInfoTrial`
         """
-        assert (
-            self.model_profile_info_trial is not None
-        ), "The model profile info Trial must be run before calling this method."
-        assert isinstance(self.model_profile_info_trial.metric, dict)
-        return self.model_profile_info_trial.metric.get("gpu_mem", 0)
+        return self._fetch_model_profile_info_data("gpu_mem")
 
     @property
     def num_params(self) -> int:
-        assert (
-            self.model_profile_info_trial is not None
-        ), "The model profile info Trial must be run before calling this method."
-        assert isinstance(self.model_profile_info_trial.metric, dict)
-        return self.model_profile_info_trial.metric.get("num_params", 0)
+        """
+        Returns the number of params according to the `DSATModelProfileInfoTrial`
+        """
+        return self._fetch_model_profile_info_data("num_params")
 
     @property
     def trainable_num_params(self) -> int:
-        assert (
-            self.model_profile_info_trial is not None
-        ), "The model profile info Trial must be run before calling this method."
-        assert isinstance(self.model_profile_info_trial.metric, dict)
-        return self.model_profile_info_trial.metric.get("trainable_num_params", 0)
+        """
+        Returns the number of trainable params according to the `DSATModelProfileInfoTrial`
+        """
+        return self._fetch_model_profile_info_data("trainable_num_params")
 
     @property
     def activation_mem_per_gpu(self) -> int:
-        assert (
-            self.model_profile_info_trial is not None
-        ), "The model profile info Trial must be run before calling this method."
-        assert isinstance(self.model_profile_info_trial.metric, dict)
-        return self.model_profile_info_trial.metric.get("activation_mem_per_gpu", 0)
+        """
+        Returns the amount of activation memory per gpu in bytes according to
+        the `DSATModelProfileInfoTrial`
+        """
+        return self._fetch_model_profile_info_data("activation_mem_per_gpu")
 
     @property
     def mem_per_gpu_per_stage(self) -> Dict[int, int]:
@@ -907,6 +924,9 @@ class RandomDSATSearchMethod(BaseDSATSearchMethod):
         return [trial]
 
     def should_stop_lineage(self, trial: DSATTrial) -> bool:
+        # TODO: This breaks the tests but perhaps it's how we should be doing this?
+        # assert trial.search_data, "Attempted to check `should_stop_lineage` on a `DSATTrial`" \
+        #     " that has no `search_data"
         # General conditions
         failed_on_min_mbs = trial.error and trial.search_data and trial.mbs <= trial.search_data.lo
 

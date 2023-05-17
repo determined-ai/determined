@@ -33,7 +33,9 @@ class DetCallback(TrainerCallback):  # type: ignore
         self.updating_searcher = False
 
         cluster_info = det.get_cluster_info()
-        assert cluster_info
+        assert (
+            cluster_info
+        ), "Could not find `cluster_info`! The HF Callback must be run on a Determined Cluster!"
         searcher_config = cluster_info.trial._config["searcher"]
         self.searcher_metric = searcher_config["metric"]
         # Custom searchers have a different config structure which need to be handled differently
