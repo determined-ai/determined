@@ -114,10 +114,13 @@ const FilterField = ({
     }
   };
 
-  const [, drag, preview] = useDrag<{ form: FormField; index: number }, unknown, unknown>(() => ({
-    item: { form: field, index },
-    type: FormKind.Field,
-  }));
+  const [, drag, preview] = useDrag<{ form: FormField; index: number }, unknown, unknown>(
+    () => ({
+      item: { form: field, index },
+      type: FormKind.Field,
+    }),
+    [field],
+  );
 
   const [{ isOverCurrent, canDrop }, drop] = useDrop<
     { form: FormGroup | FormField; index: number },

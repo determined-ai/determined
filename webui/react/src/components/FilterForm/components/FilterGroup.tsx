@@ -34,10 +34,13 @@ const FilterGroup = ({
   columns,
 }: Props): JSX.Element => {
   const scrollBottomRef = useRef<HTMLDivElement>(null);
-  const [, drag, preview] = useDrag<{ form: FormGroup; index: number }, unknown, unknown>(() => ({
-    item: { form: group, index },
-    type: FormKind.Group,
-  }));
+  const [, drag, preview] = useDrag<{ form: FormGroup; index: number }, unknown, unknown>(
+    () => ({
+      item: { form: group, index },
+      type: FormKind.Group,
+    }),
+    [group],
+  );
 
   const [{ isOverCurrent, canDrop }, drop] = useDrop<
     { form: FormGroup | FormField; index: number },
