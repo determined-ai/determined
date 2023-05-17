@@ -1,5 +1,6 @@
 import abc
 import logging
+import math
 import json
 import os
 import pathlib
@@ -15,6 +16,7 @@ import determined as det
 from determined import core
 from determined.common import set_logger
 from determined.pytorch import DataLoader
+from determined.tensorboard.util import get_rank_aware_path
 
 set_logger(False)
 
@@ -119,6 +121,7 @@ def torch_batch_process(
     dataloader_num_workers: int = 2,
     dataloader_collate_fn: Callable = None,
     dataloader_worker_init_fn: Callable = None,
+    dataloader_drop_last=False,
 ):
     dataset_len = len(dataset)
 
@@ -126,8 +129,8 @@ def torch_batch_process(
     slots_per_node = len(info.slot_ids)
     num_nodes = len(info.container_addrs)
     total_worker = num_nodes * slots_per_node
-    # container_rank is cross rank
-    rank = info.container_rank
+    # Get global rank
+    rank = core_context.distributed.get_rank()
     latest_checkpoint = info.latest_checkpoint
     skip = 0
 
@@ -148,10 +151,8 @@ def torch_batch_process(
         num_workers=dataloader_num_workers,
         collate_fn=dataloader_collate_fn,
         worker_init_fn=dataloader_worker_init_fn,
-        drop_last=False,
+        drop_last=dataloader_drop_last,
     ).get_data_loader(repeat=False, skip=skip, num_replicas=total_worker, rank=rank)
-
-    batch_idx = 0
 
     # Create dummy searcher op to report progress to master
     dummy_searcher_op = None
@@ -159,20 +160,29 @@ def torch_batch_process(
     if rank == 0:
         dummy_searcher_op = core.DummySearcherOperation(1, True)
 
-    for idx, X in enumerate(dataloader):
-        batch_idx = idx + skip
-        logging.info(f"Currently processing batch {batch_idx}")
-        per_batch_processor.process_batch(
-            batch=X,
-            additional_info=TorchPerBatchProcessInfo(
-                batch_idx=batch_idx + skip, worker_rank=rank, default_device=default_device
-            ),
-        )
+    dataloader_iterator = iter(dataloader)
 
-        if (idx + 1) % checkpoint_interval == 0:
+    # Enumerate over dataloader directly may cause some workers to iterate for 1 more time
+    # than others when drop_last = False. If those workers synchronize on the last batch_idx,
+    # they would hang forever as other workers never hit that last batch_idx.
+    # To avoid the issue, we calculate and take the ceiling of the iteration count to ensure
+    # all workers iterate for the same number of times.
+    times_iterate = math.ceil(dataset_len / batch_size / total_worker)
+    for batch_idx in range(skip, times_iterate):
+        logging.info(f"Currently processing batch {batch_idx}")
+        X = next(dataloader_iterator, None)
+        if X is not None:
+            per_batch_processor.process_batch(
+                batch=X,
+                additional_info=TorchPerBatchProcessInfo(
+                    batch_idx=batch_idx + skip, worker_rank=rank, default_device=default_device
+                ),
+            )
+
+        if (batch_idx + 1) % checkpoint_interval == 0:
             _synchronize_and_checkpoint(core_context, batch_idx, rank)
             # Report progress can only be done accurately with synchronization
-
+            core_context._tensorboard_manager.sync(mangler=get_rank_aware_path)
             if rank == 0:
                 _report_progress_to_master(
                     dummy_searcher_op, batch_idx, total_worker, batch_size, dataset_len
@@ -186,6 +196,7 @@ def torch_batch_process(
             return
 
     _synchronize_and_checkpoint(core_context, batch_idx, rank)
+    core_context._tensorboard_manager.sync(mangler=get_rank_aware_path)
 
     if rank == 0:
         # Report to master the run has completed

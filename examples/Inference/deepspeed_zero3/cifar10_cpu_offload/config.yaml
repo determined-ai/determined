@@ -1,0 +1,19 @@
+environment:
+  environment_variables:
+    - NCCL_DEBUG=INFO
+    # You may need to modify this to match your network configuration.
+    - NCCL_SOCKET_IFNAME=ens,eth,ib
+    - CUDA_LAUNCH_BLOCKING=1
+  image:
+    gpu: determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-deepspeed-0.7.0-gpu-0.20.1
+    cpu: determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-deepspeed-0.7.0-gpu-0.20.1
+resources:
+  slots_per_trial: 2
+records_per_epoch: 5000
+searcher:
+  name: single
+  metric: accuracy
+  smaller_is_better: false
+  max_length:
+    epochs: 1
+entrypoint: python3 -m determined.launch.torch_distributed python3 test_ds.py
