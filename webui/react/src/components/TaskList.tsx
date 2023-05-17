@@ -14,7 +14,6 @@ import JupyterLabButton from 'components/JupyterLabButton';
 import Button from 'components/kit/Button';
 import Icon from 'components/kit/Icon';
 import Link from 'components/Link';
-import Page from 'components/Page';
 import InteractiveTable, {
   ColumnDef,
   InteractiveTableSettings,
@@ -82,7 +81,6 @@ type TensorBoardSourceType = ValueOf<typeof TensorBoardSourceType>;
 
 interface Props {
   workspace?: Workspace;
-  hideBreadcrumb?: boolean;
 }
 
 interface TensorBoardSource {
@@ -99,7 +97,7 @@ interface SourceInfo {
 
 const filterKeys: Array<keyof Settings> = ['search', 'state', 'type', 'user', 'workspace'];
 
-const TaskList: React.FC<Props> = ({ workspace, hideBreadcrumb = false }: Props) => {
+const TaskList: React.FC<Props> = ({ workspace }: Props) => {
   const currentUser = Loadable.getOrElse(undefined, useObservable(userStore.currentUser));
   const users = Loadable.getOrElse([], useObservable(userStore.getUsers()));
   const workspaces = Loadable.getOrElse([], useObservable(workspaceStore.workspaces));
@@ -597,11 +595,8 @@ const TaskList: React.FC<Props> = ({ workspace, hideBreadcrumb = false }: Props)
   );
 
   return (
-    <Page
-      containerRef={pageRef}
-      hideBreadcrumb={hideBreadcrumb}
-      id="tasks"
-      options={
+    <>
+      <div className={css.options}>
         <Space>
           {filterCount > 0 && (
             <FilterCounter activeFilterCount={filterCount} onReset={resetFilters} />
@@ -611,8 +606,7 @@ const TaskList: React.FC<Props> = ({ workspace, hideBreadcrumb = false }: Props)
             workspace={workspace}
           />
         </Space>
-      }
-      title="Tasks">
+      </div>
       <div className={css.base}>
         <TableBatch
           actions={[{ disabled: !hasKillable, label: Action.Kill, value: Action.Kill }]}
@@ -672,7 +666,7 @@ const TaskList: React.FC<Props> = ({ workspace, hideBreadcrumb = false }: Props)
           </Grid>
         </div>
       </Modal>
-    </Page>
+    </>
   );
 };
 

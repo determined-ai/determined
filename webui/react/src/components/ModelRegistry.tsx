@@ -22,7 +22,6 @@ import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
 import ModelCreateModal from 'components/ModelCreateModal';
 import ModelMoveModal from 'components/ModelMoveModal';
-import Page from 'components/Page';
 import InteractiveTable, {
   ColumnDef,
   InteractiveTableSettings,
@@ -69,7 +68,6 @@ const filterKeys: Array<keyof Settings> = ['tags', 'name', 'users', 'description
 
 interface Props {
   workspace?: Workspace;
-  hideBreadcrumb?: boolean;
 }
 
 const MenuKey = {
@@ -78,7 +76,7 @@ const MenuKey = {
   SwitchArchived: 'switch-archived',
 } as const;
 
-const ModelRegistry: React.FC<Props> = ({ workspace, hideBreadcrumb }: Props) => {
+const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
   const canceler = useRef(new AbortController());
   const users = Loadable.getOrElse([], useObservable(userStore.getUsers()));
   const [models, setModels] = useState<ModelItem[]>([]);
@@ -681,11 +679,8 @@ const ModelRegistry: React.FC<Props> = ({ workspace, hideBreadcrumb }: Props) =>
   );
 
   return (
-    <Page
-      containerRef={pageRef}
-      hideBreadcrumb={hideBreadcrumb}
-      id="models"
-      options={
+    <>
+      <div className={css.options}>
         <Space>
           <Toggle checked={settings.archived} label="Show Archived" onChange={switchShowArchived} />
           {filterCount > 0 && (
@@ -703,8 +698,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace, hideBreadcrumb }: Props) =>
             </Tooltip>
           )}
         </Space>
-      }
-      title="Model Registry">
+      </div>
       {models.length === 0 && !isLoading && filterCount === 0 ? (
         <Empty
           description={
@@ -744,7 +738,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace, hideBreadcrumb }: Props) =>
       <modelCreateModal.Component workspaceId={workspace?.id} />
       {model && <deleteModelModal.Component model={model} />}
       {model && <modelMoveModal.Component model={model} />}
-    </Page>
+    </>
   );
 };
 

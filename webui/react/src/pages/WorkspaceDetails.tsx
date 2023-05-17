@@ -28,7 +28,8 @@ import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 
-import ModelRegistry from './ModelRegistry';
+import ModelRegistry from '../components/ModelRegistry';
+
 import WorkspaceDetailsHeader from './WorkspaceDetails/WorkspaceDetailsHeader';
 import WorkspaceMembers from './WorkspaceDetails/WorkspaceMembers';
 import WorkspaceProjects from './WorkspaceDetails/WorkspaceProjects';
@@ -169,7 +170,7 @@ const WorkspaceDetails: React.FC = () => {
         label: 'Projects',
       },
       {
-        children: <TaskList hideBreadcrumb={true} workspace={workspace} />,
+        children: <TaskList workspace={workspace} />,
         key: WorkspaceDetailsTab.Tasks,
         label: 'Tasks',
       },
@@ -197,7 +198,7 @@ const WorkspaceDetails: React.FC = () => {
 
     if (canViewModelRegistry({ workspace })) {
       items.push({
-        children: <ModelRegistry hideBreadcrumb={true} workspace={workspace} />,
+        children: <ModelRegistry workspace={workspace} />,
         key: WorkspaceDetailsTab.ModelRegistry,
         label: 'Model Registry',
       });

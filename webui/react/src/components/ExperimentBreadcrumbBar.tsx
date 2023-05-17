@@ -16,7 +16,6 @@ import Link from './Link';
 interface Props {
   experiment?: ExperimentBase;
   extra?: React.ReactNode;
-  hideBreadcrumb?: boolean;
   id: number;
   project?: Project;
   trial?: TrialDetails;

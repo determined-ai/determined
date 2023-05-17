@@ -19,7 +19,6 @@ export interface BreadCrumbRoute {
 
 export interface Props {
   bodyNoPadding?: boolean;
-  hideBreadcrumb?: boolean;
   breadcrumb?: BreadCrumbRoute[];
   children?: React.ReactNode;
   containerRef?: MutableRefObject<HTMLElement | null>;
@@ -58,8 +57,8 @@ const Page: React.FC<Props> = (props: Props) => {
 
   const classes = [css.base];
 
-  const showHeader = !props.headerComponent && (!!props.breadcrumb || !!props.title);
-  const showPageTitleBreadcrumb = !props.hideBreadcrumb && props.title && !props.headerComponent;
+  const showHeader = !props.headerComponent && !!props.breadcrumb;
+  const showPageTitleBreadcrumb = props.title && !props.headerComponent;
 
   if (props.bodyNoPadding) classes.push(css.bodyNoPadding);
   if (props.stickyHeader) classes.push(css.stickyHeader);
