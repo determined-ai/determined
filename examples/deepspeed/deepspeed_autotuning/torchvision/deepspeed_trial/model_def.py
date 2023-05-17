@@ -1,4 +1,3 @@
-import logging
 from typing import Any, Dict
 
 import torch
@@ -13,6 +12,12 @@ from determined.pytorch.deepspeed import DeepSpeedTrial, DeepSpeedTrialContext
 
 
 class RandImageNetDataset(Dataset):
+    """
+    A fake, ImageNet-like dataset which only actually contains `num_actual_datapoints` independent
+    datapoints, but pretends to have the number reported in `__len__`. Used for speed and
+    simplicity. Replace with your own ImageNet-like dataset as desired.
+    """
+
     def __init__(self, num_actual_datapoints: int = 128) -> None:
         self.num_actual_datapoints = num_actual_datapoints
         self.imgs = torch.randn(self.num_actual_datapoints, 3, 224, 224)
@@ -27,37 +32,16 @@ class RandImageNetDataset(Dataset):
         return img, label
 
 
-class MinimalModel(nn.Module):
-    def __init__(self, dim: int, layers: int) -> None:
-        super().__init__()
-        self.dim = dim
-        layers = [nn.Linear(dim, dim, bias=False) for _ in range(layers)]
-
-    def forward(self, inputs: torch.Tensor) -> torch.Tensor:
-        outputs = inputs
-        for layer in self.model:
-            outputs = layer(outputs)
-        return outputs
-
-
 class TorchvisionTrial(DeepSpeedTrial):
     def __init__(self, context: DeepSpeedTrialContext) -> None:
         self.context = context
-        self.args = AttrDict(self.context.get_hparams())
-        model_dict = {
-            "resnet152": models.resnet152,
-            "wide_resnet101_2": models.wide_resnet101_2,
-            "vgg19": models.vgg19,
-            "regnet_x_32gf": models.regnet_x_32gf,
-        }
+        self.hparams = AttrDict(self.context.get_hparams())
 
-        model = model_dict[self.args.model_name]()
+        model = getattr(models, self.hparams.model_name)()
         parameters = filter(lambda p: p.requires_grad, model.parameters())
-        logging.info(f"Seeing args:{self.args}")
 
-        ds_config = dsat.get_ds_config_from_hparams(self.args)
-        logging.info(f"Using ds_config: {ds_config}")
-        model_engine, optimizer, __, __ = deepspeed.initialize(
+        ds_config = dsat.get_ds_config_from_hparams(self.hparams)
+        model_engine, _, _, _ = deepspeed.initialize(
             model=model, model_parameters=parameters, config=ds_config
         )
 
@@ -78,10 +62,6 @@ class TorchvisionTrial(DeepSpeedTrial):
         return {"train_loss": loss.item()}
 
     def evaluate_batch(self, iter_dataloader, batch_idx) -> Dict[str, Any]:
-        """
-        Calculate validation metrics for a batch and return them as a dictionary.
-        This method is not necessary if the user defines evaluate_full_dataset().
-        """
         inputs, labels = self.context.to_device(next(iter_dataloader))
         if self.fp16:
             inputs = inputs.half()
