@@ -5,6 +5,7 @@ import useMetricNames from 'hooks/useMetricNames';
 import { useSettings } from 'hooks/useSettings';
 import { ExperimentVisualizationType } from 'pages/ExperimentDetails/ExperimentVisualization';
 import ExperimentVisualizationFilters, {
+  ViewType,
   VisualizationFilters,
 } from 'pages/ExperimentDetails/ExperimentVisualization/ExperimentVisualizationFilters';
 import HpParallelCoordinates from 'pages/ExperimentDetails/ExperimentVisualization/HpParallelCoordinates';
@@ -47,7 +48,7 @@ const MultiTrialDetailsHyperparameters: React.FC<Props> = ({
   );
 
   const settingsConfig = useMemo(
-    () => settingsConfigForExperimentHyperparameters(experiment.id),
+    () => settingsConfigForExperimentHyperparameters(experiment.id, fullHParams.current),
     [experiment.id],
   );
 
@@ -55,6 +56,26 @@ const MultiTrialDetailsHyperparameters: React.FC<Props> = ({
     useSettings<ExperimentHyperparametersSettings>(settingsConfig);
 
   const [batches, setBatches] = useState<number[]>();
+
+  const filters = useMemo(
+    () => ({
+      batch: settings.batch,
+      batchMargin: settings.batchMargin,
+      hParams: settings.hParams,
+      maxTrial: settings.maxTrial,
+      metric: settings.metric,
+      scale: settings.scale,
+      view: ViewType.Grid,
+    }),
+    [
+      settings.batch,
+      settings.batchMargin,
+      settings.hParams,
+      settings.maxTrial,
+      settings.metric,
+      settings.scale,
+    ],
+  );
 
   // Stream available metrics.
   const metrics = useMetricNames(experiment.id, handleError);
@@ -68,11 +89,11 @@ const MultiTrialDetailsHyperparameters: React.FC<Props> = ({
 
   // Stream available batches.
   useEffect(() => {
-    if (!isSupported || !settings.filters.metric) return;
+    if (!isSupported || !settings.metric) return;
 
     const canceler = new AbortController();
     const metricTypeParam =
-      settings.filters.metric.type === MetricType.Training
+      settings.metric.type === MetricType.Training
         ? 'METRIC_TYPE_TRAINING'
         : 'METRIC_TYPE_VALIDATION';
     const batchesMap: Record<number, number> = {};
@@ -80,7 +101,7 @@ const MultiTrialDetailsHyperparameters: React.FC<Props> = ({
     readStream<V1MetricBatchesResponse>(
       detApi.StreamingInternal.metricBatches(
         experiment.id,
-        settings.filters.metric.name,
+        settings.metric.name,
         metricTypeParam,
         undefined,
         { signal: canceler.signal },
@@ -95,13 +116,13 @@ const MultiTrialDetailsHyperparameters: React.FC<Props> = ({
     );
 
     return () => canceler.abort();
-  }, [experiment.id, isSupported, settings.filters.metric]);
+  }, [experiment.id, isSupported, settings.metric]);
 
   // Set the default filter batch.
   useEffect(() => {
-    if (!batches || batches.length === 0 || settings.filters.batch !== 0) return;
-    updateSettings({ filters: { ...settings.filters, batch: batches.first() } });
-  }, [batches, settings.filters, updateSettings]);
+    if (!batches || batches.length === 0 || settings.batch !== 0) return;
+    updateSettings({ batch: batches.first() });
+  }, [batches, settings.batch, updateSettings]);
 
   const handleFiltersChange = useCallback(
     (filters: VisualizationFilters) => {
@@ -116,27 +137,25 @@ const MultiTrialDetailsHyperparameters: React.FC<Props> = ({
 
   const handleMetricChange = useCallback(
     (metric: Metric) => {
-      updateSettings({ filters: { ...settings.filters, metric } });
+      updateSettings({ metric });
     },
-    [settings.filters, updateSettings],
+    [updateSettings],
   );
 
   useEffect(() => {
-    if (settings.filters.metric !== null) return;
+    if (settings.metric !== undefined) return;
     const activeMetricFound = metrics.find(
       (metric) =>
         metric.type === MetricType.Validation && metric.name === experiment.config.searcher.metric,
     );
-    updateSettings({
-      filters: { ...settings.filters, metric: activeMetricFound ?? metrics.first() },
-    });
-  }, [experiment.config.searcher.metric, metrics, settings.filters, updateSettings]);
+    updateSettings({ metric: activeMetricFound ?? metrics.first() });
+  }, [experiment.config.searcher.metric, metrics, settings.metric, updateSettings]);
 
   const visualizationFilters = useMemo(() => {
     return (
       <ExperimentVisualizationFilters
         batches={batches || []}
-        filters={settings.filters}
+        filters={filters}
         fullHParams={fullHParams.current}
         metrics={metrics}
         type={ExperimentVisualizationType.HpParallelCoordinates}
@@ -145,14 +164,7 @@ const MultiTrialDetailsHyperparameters: React.FC<Props> = ({
         onReset={handleFiltersReset}
       />
     );
-  }, [
-    batches,
-    handleFiltersChange,
-    handleFiltersReset,
-    handleMetricChange,
-    metrics,
-    settings.filters,
-  ]);
+  }, [batches, handleFiltersChange, handleFiltersReset, handleMetricChange, metrics, filters]);
 
   return (
     <Space direction="vertical">
@@ -160,11 +172,11 @@ const MultiTrialDetailsHyperparameters: React.FC<Props> = ({
         experiment={experiment}
         filters={visualizationFilters}
         fullHParams={fullHParams.current}
-        selectedBatch={settings.filters.batch}
-        selectedBatchMargin={settings.filters.batchMargin}
-        selectedHParams={settings.filters.hParams}
-        selectedMetric={settings.filters.metric}
-        selectedScale={settings.filters.scale}
+        selectedBatch={settings.batch}
+        selectedBatchMargin={settings.batchMargin}
+        selectedHParams={settings.hParams}
+        selectedMetric={settings.metric}
+        selectedScale={settings.scale}
         trial={trial}
       />
       <TrialDetailsHyperparameters pageRef={pageRef} trial={trial} />

@@ -1,50 +1,61 @@
-import { array, literal, number, string, type, undefined as undefinedType, union } from 'io-ts';
+import { array, keyof, number, string, type, undefined as undefinedType, union } from 'io-ts';
 
 import { SettingsConfig } from 'hooks/useSettings';
-import {
-  ViewType,
-  VisualizationFilters,
-} from 'pages/ExperimentDetails/ExperimentVisualization/ExperimentVisualizationFilters';
-import { Scale } from 'types';
+import { Metric, Scale } from 'types';
 
 const DEFAULT_BATCH = 0;
 const DEFAULT_BATCH_MARGIN = 10;
 const DEFAULT_MAX_TRIALS = 100;
 
 export interface ExperimentHyperparametersSettings {
-  filters: VisualizationFilters;
+  batch: number;
+  batchMargin: number;
+  hParams: string[];
+  maxTrial: number;
+  metric?: Metric;
+  scale: Scale;
 }
-
-const defaultFilters: VisualizationFilters = {
-  batch: DEFAULT_BATCH,
-  batchMargin: DEFAULT_BATCH_MARGIN,
-  hParams: [],
-  maxTrial: DEFAULT_MAX_TRIALS,
-  metric: undefined,
-  scale: Scale.Linear,
-  view: ViewType.Grid,
-};
 
 export const settingsConfigForExperimentHyperparameters = (
   id: number,
+  hParams: string[],
 ): SettingsConfig<ExperimentHyperparametersSettings> => ({
   settings: {
-    filters: {
-      defaultValue: defaultFilters,
+    batch: {
+      defaultValue: DEFAULT_BATCH,
+      storageKey: 'batch',
+      type: number,
+    },
+    batchMargin: {
+      defaultValue: DEFAULT_BATCH_MARGIN,
+      storageKey: 'batchMargin',
+      type: number,
+    },
+    hParams: {
+      defaultValue: hParams,
       skipUrlEncoding: true,
-      storageKey: 'filters',
-      type: type({
-        batch: number,
-        batchMargin: number,
-        hParams: array(string),
-        maxTrial: number,
-        metric: union([
-          undefinedType,
-          type({ name: string, type: union([literal('training'), literal('validation')]) }),
-        ]),
-        scale: union([literal('linear'), literal('log')]),
-        view: union([literal('grid'), literal('list')]),
-      }),
+      storageKey: 'hParams',
+      type: array(string),
+    },
+    maxTrial: {
+      defaultValue: DEFAULT_MAX_TRIALS,
+      storageKey: 'maxTrial',
+      type: number,
+    },
+    metric: {
+      defaultValue: undefined,
+      skipUrlEncoding: true,
+      storageKey: 'metric',
+      type: union([
+        undefinedType,
+        type({ name: string, type: keyof({ training: null, validation: null }) }),
+      ]),
+    },
+    scale: {
+      defaultValue: Scale.Linear,
+      storageKey: 'scale',
+      type: keyof({ linear: null, log: null }),
+      // See https://github.com/gcanti/io-ts/blob/master/index.md#union-of-string-literals
     },
   },
   storagePath: `experiment-hyperparameters-${id}`,

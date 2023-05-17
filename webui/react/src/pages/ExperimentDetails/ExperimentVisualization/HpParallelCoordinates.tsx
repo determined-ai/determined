@@ -161,13 +161,14 @@ const HpParallelCoordinates: React.FC<Props> = ({
         data: {
           series: trial?.id
             ? new Array(chartData?.trialIds.length).fill(undefined).map((_, index) => ({
+                lineWidth: chartData?.trialIds.indexOf(trial.id) === index ? 3 : 1,
                 strokeStyle:
                   chartData?.trialIds.indexOf(trial.id) === index
                     ? ui.theme.ixOnActive
-                    : rgba2str({ ...str2rgba(ui.theme.ixOnInactive), a: 0.1 }),
+                    : rgba2str({ ...str2rgba(ui.theme.ixOn), a: 0.1 }),
               }))
             : undefined,
-          targetColorScale: trial?.id ? undefined : colorScale.map((scale) => scale.color),
+          targetColorScale: colorScale.map((scale) => scale.color),
           targetDimensionKey: selectedMetric ? metricToStr(selectedMetric) : '',
         },
         dimension: { label: { angle: Math.PI / 4, truncate: 24 } },
@@ -181,7 +182,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
       trial?.id,
       chartData?.trialIds,
       ui.theme.ixOnActive,
-      ui.theme.ixOnInactive,
+      ui.theme.ixOn,
     ],
   );
 
