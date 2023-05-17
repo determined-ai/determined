@@ -38,10 +38,7 @@ func (m *Map[K, V]) Put(key K, val V) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	var e *list.Element
-	var ok bool
-
-	if e, ok = m.mp[key]; ok {
+	if e, ok := m.mp[key]; ok {
 		// Replace existing key's value with the new value.
 		e.Value = mapElement[K, V]{key: key, value: val}
 		return
