@@ -215,22 +215,44 @@ func (a *apiServer) getProjectColumnsByID(
 	}
 
 	// Get metrics columns
+	metricNames, err := a.getProjectmetricsNames(ctx, curUser, p)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, mn := range metricNames {
+		columns = append(columns, &projectv1.ProjectColumn{
+			Column:   fmt.Sprintf("validation.%s", mn),
+			Location: projectv1.LocationType_LOCATION_TYPE_VALIDATIONS,
+			Type:     projectv1.ColumnType_COLUMN_TYPE_NUMBER,
+		})
+	}
+
+	return &apiv1.GetProjectColumnsResponse{
+		Columns: columns,
+	}, nil
+}
+
+func (a *apiServer) getProjectmetricsNames(
+	ctx context.Context, curUser model.User, project *projectv1.Project,
+) ([]string, error) {
 	metricNames := []struct {
 		Vname       []string
 		WorkspaceID int
 	}{}
+
 	metricQuery := db.Bun().
 		NewSelect().
 		TableExpr("exp_metrics_name").
 		TableExpr("LATERAL json_array_elements_text(vname) AS vnames").
 		ColumnExpr("array_to_json(array_agg(DISTINCT vnames)) AS vname").
-		ColumnExpr("?::int as workspace_id", p.WorkspaceId).
-		Where("project_id = ?", id)
+		ColumnExpr("?::int as workspace_id", project.WorkspaceId).
+		Where("project_id = ?", project.Id).Limit(1)
 
-	metricQuery, err = exputil.AuthZProvider.Get().FilterExperimentsQuery(
+	metricQuery, err := exputil.AuthZProvider.Get().FilterExperimentsQuery(
 		ctx,
 		curUser,
-		p,
+		project,
 		metricQuery,
 		[]rbacv1.PermissionType{rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_ARTIFACTS},
 	)
@@ -242,19 +264,13 @@ func (a *apiServer) getProjectColumnsByID(
 	if err != nil {
 		return nil, err
 	}
-	for _, mn := range metricNames {
-		for _, mnv := range mn.Vname {
-			columns = append(columns, &projectv1.ProjectColumn{
-				Column:   fmt.Sprintf("validation.%s", mnv),
-				Location: projectv1.LocationType_LOCATION_TYPE_VALIDATIONS,
-				Type:     projectv1.ColumnType_COLUMN_TYPE_NUMBER,
-			})
+	var names []string
+	for _, n := range metricNames {
+		for _, m := range n.Vname {
+			names = append(names, m)
 		}
 	}
-
-	return &apiv1.GetProjectColumnsResponse{
-		Columns: columns,
-	}, nil
+	return names, nil
 }
 
 func (a *apiServer) getProjectAndCheckCanDoActions(
@@ -314,6 +330,94 @@ func (a *apiServer) GetProjectColumns(
 	}
 
 	return a.getProjectColumnsByID(ctx, req.Id, *curUser)
+}
+
+func (a *apiServer) GetProjectMetricsRange(
+	ctx context.Context, req *apiv1.GetProjectMetricsRangeRequest,
+) (*apiv1.GetProjectMetricsRangeResponse, error) {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	p, err := a.GetProjectByID(ctx, req.Id, *curUser)
+	if err != nil {
+		return nil, err
+	}
+	metricsRange, err := a.getProjectMetricsRange(ctx, *curUser, p)
+	if err != nil {
+		return nil, err
+	}
+
+	var ranges []*projectv1.MetricsRange
+	for mn, mr := range metricsRange {
+		ranges = append(ranges, &projectv1.MetricsRange{
+			MetricsName: fmt.Sprintf("validation.%s", mn),
+			Range:       mr,
+		})
+	}
+
+	return &apiv1.GetProjectMetricsRangeResponse{Ranges: ranges}, nil
+}
+
+func (a *apiServer) getProjectMetricsRange(
+	ctx context.Context, curUser model.User, project *projectv1.Project,
+) (map[string]([]float64), error) {
+	metricNames, err := a.getProjectmetricsNames(ctx, curUser, project)
+	if err != nil {
+		return nil, err
+	}
+	query := db.Bun().NewSelect().Table("trials").Table("experiments").
+		ColumnExpr("summary_metrics->'validation_metrics' AS summary_metrics").
+		Where("project_id = ?", project.Id).
+		Where("experiments.best_trial_id = trials.id")
+
+	var res []struct {
+		SummaryMetrics *map[string]struct {
+			Sum   float64
+			Count *int32
+		}
+	}
+
+	if err = query.Scan(ctx, &res); err != nil {
+		return nil, err
+	}
+	metricsValues := make(map[string]([]float64))
+	for _, name := range metricNames {
+		metricsValues[name] = []float64{}
+	}
+	for _, r := range res {
+		if r.SummaryMetrics != nil {
+			for metricsName, value := range *r.SummaryMetrics {
+				if value.Count == nil {
+					continue
+				}
+				metricsValue := value.Sum
+				if values, ok := metricsValues[metricsName]; ok {
+					switch {
+					case len(values) == 0:
+						metricsValues[metricsName] = []float64{metricsValue}
+
+					case len(values) == 1:
+						if values[0] <= metricsValue {
+							metricsValues[metricsName] = []float64{values[0], metricsValue}
+						} else {
+							metricsValues[metricsName] = []float64{metricsValue, values[0]}
+						}
+
+					default:
+						if metricsValue < values[0] {
+							metricsValues[metricsName] = []float64{metricsValue, values[1]}
+						}
+						if metricsValue > values[1] {
+							metricsValues[metricsName] = []float64{values[0], metricsValue}
+						}
+					}
+				}
+			}
+		}
+	}
+	return metricsValues, nil
 }
 
 func (a *apiServer) PostProject(
