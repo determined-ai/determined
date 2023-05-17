@@ -1867,9 +1867,9 @@ const ThemeSection: React.FC = () => {
   return (
     <ComponentSection id="Theme" title="Theme">
       <AntDCard>
-        <p>
+        <Paragraph>
           We have a variety of colors that are available for use with the components in the UI Kit.
-        </p>
+        </Paragraph>
       </AntDCard>
       {iterateOverThemes(
         [themeStatus, backgrounds, stage, surface, float, overlay, brand, interactive],
@@ -1877,12 +1877,12 @@ const ThemeSection: React.FC = () => {
       )}
       <AntDCard title="Fonts">
         <AntDCard title="Font Families">
-          <p style={{ fontFamily: `${ThemeFont.UI}`, fontSize: '16px' }}>
+          <Paragraph style={{ fontFamily: `${ThemeFont.UI}`, fontSize: '16px' }}>
             For general UI --theme-font-family
-          </p>
-          <p style={{ fontFamily: `${ThemeFont.Code}`, fontSize: '16px' }}>
+          </Paragraph>
+          <Paragraph style={{ fontFamily: `${ThemeFont.Code}`, fontSize: '16px' }}>
             For displaying code --theme-font-family-code
-          </p>
+          </Paragraph>
         </AntDCard>
         <AntDCard title="Font Sizing">
           <div>
@@ -1906,39 +1906,39 @@ const ThemeSection: React.FC = () => {
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', marginBottom: '30px' }}>
               <Header style={{ marginBottom: '20px' }}>Multi Line</Header>
-              <p className={css.multiLineXL} style={{ marginBottom: '5px' }}>
+              <Paragraph className={css.multiLineXL} style={{ marginBottom: '5px' }}>
                 Model Registry - XL (f.s. 16px line-height 26px)
-              </p>
-              <p className={css.multiLineL} style={{ marginBottom: '5px' }}>
+              </Paragraph>
+              <Paragraph className={css.multiLineL} style={{ marginBottom: '5px' }}>
                 Model Registry - L (f.s. 14px line-height 22px)
-              </p>
-              <p className={css.multiLineDefault} style={{ marginBottom: '5px' }}>
+              </Paragraph>
+              <Paragraph className={css.multiLineDefault} style={{ marginBottom: '5px' }}>
                 Model Registry - default (f.s. 12px line-height 20px)
-              </p>
-              <p className={css.multiLineS} style={{ marginBottom: '5px' }}>
+              </Paragraph>
+              <Paragraph className={css.multiLineS} style={{ marginBottom: '5px' }}>
                 Model Registry - s (f.s. 11px line-height 18px)
-              </p>
-              <p className={css.multiLineXS} style={{ marginBottom: '5px' }}>
+              </Paragraph>
+              <Paragraph className={css.multiLineXS} style={{ marginBottom: '5px' }}>
                 Model Registry - xs (f.s. 10px line-height 16px)
-              </p>
+              </Paragraph>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', marginBottom: '30px' }}>
               <Header style={{ marginBottom: '20px' }}>Single Line</Header>
-              <p className={css.singleLineXL} style={{ marginBottom: '5px' }}>
+              <Paragraph className={css.singleLineXL} style={{ marginBottom: '5px' }}>
                 Model Registry - XL (f.s. 16px line-height 20px)
-              </p>
-              <p className={css.singleLineL} style={{ marginBottom: '5px' }}>
+              </Paragraph>
+              <Paragraph className={css.singleLineL} style={{ marginBottom: '5px' }}>
                 Model Registry - L (f.s. 14px line-height 18px)
-              </p>
-              <p className={css.singleLineDefault} style={{ marginBottom: '5px' }}>
+              </Paragraph>
+              <Paragraph className={css.singleLineDefault} style={{ marginBottom: '5px' }}>
                 Model Registry - default (f.s. 12px line-height 16px)
-              </p>
-              <p className={css.singleLineS} style={{ marginBottom: '5px' }}>
+              </Paragraph>
+              <Paragraph className={css.singleLineS} style={{ marginBottom: '5px' }}>
                 Model Registry - s (f.s. 11px line-height 14px)
-              </p>
-              <p className={css.singleLineXS} style={{ marginBottom: '5px' }}>
+              </Paragraph>
+              <Paragraph className={css.singleLineXS} style={{ marginBottom: '5px' }}>
                 Model Registry - xs (f.s. 10px line-height 12px)
-              </p>
+              </Paragraph>
             </div>
           </div>
         </AntDCard>
