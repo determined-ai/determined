@@ -27,7 +27,10 @@ DEFAULT_BATCH_SIZE = 1
 
 @dataclass
 class TorchBatchInitInfo:
-    worker_rank: int
+    rank: int
+    local_rank: int
+    size: int
+    num_agents: int
     default_device: torch.device
     tensorboard_path: str
 
@@ -76,7 +79,7 @@ class TorchBatchProcessor(metaclass=abc.ABCMeta):
     """
 
     @abc.abstractmethod
-    def __init__(self, core_context: core.Context, init_info: TorchBatchInitInfo) -> None:
+    def __init__(self, init_info: TorchBatchInitInfo) -> None:
         pass
 
     @abc.abstractmethod
@@ -191,9 +194,11 @@ def torch_batch_process(
         skip = 0
 
         per_batch_processor = batch_processor_cls(
-            core_context=core_context,
             init_info=TorchBatchInitInfo(
-                worker_rank=rank,
+                rank=rank,
+                local_rank=core_context.distributed.get_local_rank(),
+                size=core_context.distributed.get_size(),
+                num_agents=core_context.distributed.get_num_agents(),
                 default_device=get_default_device(core_context),
                 tensorboard_path=core_context.train.get_tensorboard_path(),
             ),

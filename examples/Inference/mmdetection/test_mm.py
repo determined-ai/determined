@@ -17,18 +17,18 @@ from mmdet.apis import init_detector, inference_detector
 
 
 class MyProcessor(TorchPerBatchProcessor):
-    def __init__(self, core_context, init_info):
+    def __init__(self, init_info):
         # mmdetection's init_detector already set model to eval and set device
         config_file = "/mmdetection/configs/faster_rcnn/faster_rcnn_r50_caffe_fpn_1x_coco.py"
         cfg = mmcv.Config.fromfile(config_file)
-        model = init_detector(cfg, device=str(get_default_device(core_context)))
+        model = init_detector(cfg, device=init_info.default_device)
         self.model = model
         self.torch_profiler = torch.profiler.profile(
             activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA],
             schedule=torch.profiler.schedule(wait=1, warmup=1, active=2, repeat=2),
             on_trace_ready=torch.profiler.tensorboard_trace_handler(init_info.tensorboard_path),
         )
-        self.worker_rank = init_info.worker_rank
+        self.worker_rank = init_info.rank
 
     def process_batch(self, batch, batch_idx) -> None:
         for img_path in batch:

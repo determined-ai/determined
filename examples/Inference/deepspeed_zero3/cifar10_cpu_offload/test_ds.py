@@ -69,7 +69,7 @@ ds_config = {
 
 
 class MyProcessor(batch.TorchBatchProcessor):
-    def __init__(self, core_context, init_info):
+    def __init__(self, init_info):
         device = init_info.default_device
         tensorboard_path = init_info.tensorboard_path
 
@@ -86,7 +86,7 @@ class MyProcessor(batch.TorchBatchProcessor):
             schedule=torch.profiler.schedule(wait=1, warmup=1, active=2, repeat=2),
             on_trace_ready=torch.profiler.tensorboard_trace_handler(tensorboard_path),
         )
-        self.worker_rank = init_info.worker_rank
+        self.worker_rank = init_info.rank
 
     def process_batch(self, batch, batch_idx) -> None:
         model_input = batch[0]
