@@ -280,6 +280,7 @@ def create_stack(
         StackName=stack_name,
         TemplateBody=template_body,
         Parameters=parameters,
+        TimeoutInMinutes=30,
         Capabilities=["CAPABILITY_IAM"],
         Tags=tags,
     )
