@@ -10,7 +10,7 @@ resources:
 searcher:
   name: single
   metric: loss
-  max_length: 1000
+  max_length: 100
 hyperparameters:
   model_name: resnet152
   # NOTE: dsat expects the yaml config to reference the DS json config path as in the below.
