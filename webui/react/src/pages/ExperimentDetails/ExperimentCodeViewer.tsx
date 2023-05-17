@@ -1,5 +1,5 @@
 import yaml from 'js-yaml';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 import Icon from 'components/kit/Icon';
 import { paths } from 'routes/utils';
@@ -48,7 +48,7 @@ const ExperimentCodeViewer: React.FC<Props> = ({
     return yaml.dump({ environment: restEnvironment, ...restConfig });
   }, [experiment.configRaw]);
 
-  useMemo(async () => {
+  useEffect(() => {
     const convertV1FileNodeToTreeNode = (node: V1FileNode): TreeNode => ({
       children: node.files?.map((n) => convertV1FileNodeToTreeNode(n)) ?? [],
       content: NotLoaded,
@@ -59,8 +59,10 @@ const ExperimentCodeViewer: React.FC<Props> = ({
       title: node.name,
     });
 
-    const fileTree = await getExperimentFileTree({ experimentId: experiment.id });
-    setExpFiles(Loaded(fileTree.map<TreeNode>(convertV1FileNodeToTreeNode)));
+    (async () => {
+      const fileTree = await getExperimentFileTree({ experimentId: experiment.id });
+      setExpFiles(Loaded(fileTree.map<TreeNode>(convertV1FileNodeToTreeNode)));
+    })();
   }, [experiment.id]);
 
   const fileOpts = [
