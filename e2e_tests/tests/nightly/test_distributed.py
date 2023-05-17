@@ -368,7 +368,7 @@ def test_hf_trainer_deepspeed_autotuning() -> None:
     with tempfile.NamedTemporaryFile() as tf:
         with open(tf.name, "w") as f:
             yaml.dump(config, f)
-        experiment_id = exp.run_basic_autotuning_test(
+        _ = exp.run_basic_autotuning_test(
             tf.name,
             conf.deepspeed_autotuning_examples_path(test_dir),
             1,

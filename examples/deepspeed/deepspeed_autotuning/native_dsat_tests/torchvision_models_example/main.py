@@ -6,8 +6,6 @@ import pathlib
 import shutil
 from typing import Any, Dict, Optional
 
-import deepspeed
-import determined as det
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -16,6 +14,9 @@ import utils
 from attrdict import AttrDict
 from torch.utils.data import Dataset
 from torchvision import models
+
+import deepspeed
+import determined as det
 
 
 class RandImageNetDataset(Dataset):

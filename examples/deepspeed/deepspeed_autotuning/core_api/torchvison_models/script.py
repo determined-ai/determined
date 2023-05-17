@@ -1,14 +1,15 @@
 import logging
 from typing import Any, Dict
 
-import deepspeed
-import determined as det
 import torch
 import torch.nn as nn
 from attrdict import AttrDict
-from determined.pytorch import dsat
 from torch.utils.data import Dataset
 from torchvision import models
+
+import deepspeed
+import determined as det
+from determined.pytorch import dsat
 
 
 class RandImageNetDataset(Dataset):

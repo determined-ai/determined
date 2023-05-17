@@ -11,11 +11,8 @@ from torch.nn import Conv2d, CrossEntropyLoss, Linear, MaxPool2d, Module
 
 import deepspeed
 from determined.pytorch import DataLoader
+from determined.pytorch.deepspeed import DeepSpeedTrial, DeepSpeedTrialContext
 from determined.pytorch.dsat import overwrite_deepspeed_config
-from determined.pytorch.deepspeed import (
-    DeepSpeedTrial,
-    DeepSpeedTrialContext,
-)
 
 
 class Net(Module):

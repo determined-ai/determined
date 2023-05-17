@@ -1,3 +1,4 @@
+import abc
 import logging
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Union
@@ -8,7 +9,23 @@ from determined.common.api import bindings
 from determined.experimental import client
 
 
-class SimulateMaster:
+class MockMaster(metaclass=abc.ABCMeta):
+    @abc.abstractmethod
+    def handle_post_operations(
+        self, event: bindings.v1SearcherEvent, operations: List[searcher.Operation]
+    ) -> None:
+        pass
+
+    @abc.abstractmethod
+    def handle_get_events(self) -> Optional[Sequence[bindings.v1SearcherEvent]]:
+        return []
+
+    @abc.abstractmethod
+    def add_event(self, event_obj: bindings.v1SearcherEvent) -> None:
+        pass
+
+
+class SimulateMaster(MockMaster):
     def __init__(self, metric: Union[float, Dict[str, Any]]) -> None:
         self.events_queue: List[bindings.v1SearcherEvent] = []  # store event and
         self.events_count = 0
@@ -32,6 +49,9 @@ class SimulateMaster:
     def _process_operations(self, operations: List[searcher.Operation]) -> None:
         for op in operations:
             self._append_events_for_op(op)  # validate_after returns two events.
+
+    def add_event(self, event_obj: bindings.v1SearcherEvent) -> None:
+        self.events_queue.append(event_obj)
 
     def handle_get_events(self) -> Optional[Sequence[bindings.v1SearcherEvent]]:
         return self.events_queue
@@ -85,14 +105,14 @@ class MockMasterSearchRunner(searcher.LocalSearchRunner):
     def __init__(
         self,
         search_method: searcher.SearchMethod,
-        mock_master_object: SimulateMaster,
+        mock_master_object: MockMaster,
         searcher_dir: Optional[Path] = None,
     ):
         super(MockMasterSearchRunner, self).__init__(search_method, searcher_dir)
         self.mock_master_obj = mock_master_object
         initial_ops = bindings.v1InitialOperations()
         event_obj = bindings.v1SearcherEvent(id=1, initialOperations=initial_ops)
-        mock_master_object.events_queue.append(event_obj)
+        self.mock_master_obj.add_event(event_obj)
 
     def post_operations(
         self,

@@ -1,27 +1,23 @@
-import copy
 import json
 import logging
 import os
 from typing import Any, Dict, List, Optional, Tuple
 
-import filelock
 from transformers import TrainerCallback, TrainerControl, TrainerState, TrainingArguments
 from transformers.trainer_utils import get_last_checkpoint
 
 import determined as det
-from determined.pytorch import dsat
-from determined.util import merge_dicts
 
 logging.basicConfig(level=logging.INFO)
 
 
-class DetCallback(TrainerCallback):
+class DetCallback(TrainerCallback):  # type: ignore
     def __init__(
         self,
         core_context: det.core.Context,
         args: TrainingArguments,
-        filter_metrics: List[str] = None,
-        user_data: Dict = None,
+        filter_metrics: Optional[List[str]] = None,
+        user_data: Optional[Dict[str, Any]] = None,
     ) -> None:
         super().__init__()
 
@@ -36,7 +32,9 @@ class DetCallback(TrainerCallback):
         self.current_op = next(self.searcher_ops)
         self.updating_searcher = False
 
-        searcher_config = det.get_cluster_info().trial._config["searcher"]
+        cluster_info = det.get_cluster_info()
+        assert cluster_info
+        searcher_config = cluster_info.trial._config["searcher"]
         self.searcher_metric = searcher_config["metric"]
         # Custom searchers have a different config structure which need to be handled differently
         if searcher_config["name"] == "custom":
@@ -52,9 +50,12 @@ class DetCallback(TrainerCallback):
         args: TrainingArguments,
         state: TrainerState,
         control: TrainerControl,
-        logs=None,
-        **kwargs,
-    ):
+        logs: Optional[Dict[str, Any]] = None,
+        **kwargs: Any,
+    ) -> None:
+        if logs is None:
+            logging.warning("on_log called with empty logs")
+            return
         metrics, metric_type = self._get_metrics(logs)
         print(f"on_log metrics, global_step {state.global_step}", metrics)
         if metric_type == TRAIN:
@@ -94,7 +95,7 @@ class DetCallback(TrainerCallback):
         if self.updating_searcher is False and self.core_context.preempt.should_preempt():
             control.should_save = True
 
-    def _get_metrics(self, logs: Dict) -> Tuple[Dict, str]:
+    def _get_metrics(self, logs: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
         metrics = logs
         metric_type = get_metric_type(logs)
         if self.filter_metrics:
@@ -110,8 +111,8 @@ class DetCallback(TrainerCallback):
         args: TrainingArguments,
         state: TrainerState,
         control: TrainerControl,
-        **kwargs,
-    ):
+        **kwargs: Any,
+    ) -> None:
         info = det.get_cluster_info()
         assert info
 
@@ -139,7 +140,8 @@ class DetCallback(TrainerCallback):
     def _on_save_user_data(self, save_path: str) -> None:
         """
         User-defined saving of objects from self.checkpoint_metadata under save_path.
-        After objects are saved, Determined handles uploading and downloading objects to/from selected storage.
+        After objects are saved, Determined handles uploading and downloading objects
+        to/from selected storage.
         """
         with open(os.path.join(save_path, "my_data.json"), "w") as f:
             json.dump(self.user_data, f)
@@ -171,8 +173,8 @@ class DetCallback(TrainerCallback):
         args: TrainingArguments,
         state: TrainerState,
         control: TrainerControl,
-        **kwargs,
-    ):
+        **kwargs: Any,
+    ) -> None:
         # state.epoch is not None only during training.
         if state.epoch and self.searcher_unit == "batches":
             if state.is_world_process_zero:
@@ -190,8 +192,8 @@ class DetCallback(TrainerCallback):
         args: TrainingArguments,
         state: TrainerState,
         control: TrainerControl,
-        **kwargs,
-    ):
+        **kwargs: Any,
+    ) -> None:
         # state.epoch is not None only during training.
         if state.epoch and self.searcher_unit == "epochs":
             if state.is_world_process_zero:
@@ -212,16 +214,18 @@ class DetCallback(TrainerCallback):
         if state.is_world_process_zero:
             if self.last_metrics is None:
                 logging.warning(
-                    "No training or evaluation metrics has been recorded. Please check your settings for "
-                    "training metrics (--logging_strategy and --logging_steps) or "
+                    "No training or evaluation metrics has been recorded. Please "
+                    "check your settings for training metrics "
+                    "(--logging_strategy and --logging_steps) or "
                     "evaluation metrics (--evaluation_strategy and --eval_steps). "
                     "Reporting trainer_state.best_metric to the searcher."
                 )
                 searcher_metric = state.best_metric
             elif self.searcher_metric not in self.last_metrics:
                 logging.warning(
-                    f"Searcher metric {self.searcher_metric} from the yaml config file does not match any "
-                    f"of the recorded metrics in {self.last_metrics}. "
+                    f"Searcher metric {self.searcher_metric} from the yaml config file does "
+                    "not match any of the recorded metrics "
+                    f"in {self.last_metrics}. "
                     "Reporting trainer_state.best_metric to the searcher."
                 )
                 searcher_metric = state.best_metric
@@ -287,8 +291,8 @@ TRAIN_AVG = "train_"
 TRAIN = "train_progress"
 
 
-def get_metric_type(d):
-    for k, v in d.items():
+def get_metric_type(d: Dict[str, Any]) -> str:
+    for k, _ in d.items():
         if k.startswith(EVAL):
             return EVAL
         elif k.startswith(TEST):
@@ -297,6 +301,7 @@ def get_metric_type(d):
             return TRAIN_AVG
         else:
             return TRAIN
+    return TRAIN
 
 
 def get_ds_config_path_from_args(args: List[str]) -> Optional[str]:
@@ -305,75 +310,4 @@ def get_ds_config_path_from_args(args: List[str]) -> Optional[str]:
             ds_config_idx = idx + 1
             ds_config_path = args[ds_config_idx]
             return ds_config_path
-
-
-def update_hf_args(args: List[str], ds_config_dict: Dict[str, Any]) -> List[str]:
-    """
-    Updates batch-size-related HF CLI args to be consistent with the values specified in the
-    provided DeepSpeed config dictionary.
-    """
-    hf_flag_to_ds_key = {
-        "--per_device_train_batch_size": "train_micro_batch_size_per_gpu",
-        "--gradient_accumulation_steps": "gradient_accumulation_steps",
-    }
-    # Overwrite CLI args
-    args = copy.deepcopy(args)
-    for idx in range(len(args)):
-        if args[idx] in hf_flag_to_ds_key:
-            ds_key = hf_flag_to_ds_key[args[idx]]
-            overwrite_value = str(ds_config_dict[ds_key])
-            if args[idx + 1] != overwrite_value:
-                logging.warning(
-                    f"Changing {args[idx]} from {args[idx +1]} to {overwrite_value} to match "
-                    " the deespspeed config values."
-                )
-                args[idx + 1] = overwrite_value
-            del hf_flag_to_ds_key[args[idx]]
-
-    # Any remaining keys in hf_flag_to_ds_key were not provided as args to the HF CLI entrypoint,
-    # but they must be added in explicitly, to avoid falling back to HF defaults.
-    for hf_flag, ds_key in hf_flag_to_ds_key.items():
-        hf_flag_value = str(ds_config_dict[ds_key])
-        args.extend([hf_flag, hf_flag_value])
-        logging.warning(
-            f"Adding {hf_flag} {hf_flag_value} to HF CLI args to reflect overwrite values."
-        )
-    return args
-
-
-def get_hf_args_with_overwrites(
-    args: List[str], hparams: Dict[str, Any], overwrite_key: str = dsat._defaults.OVERWRITE_KEY
-) -> List[str]:
-    """
-    Helper function which modifies the HF CLI args (`--per_device_train_batch_size` and
-    `--gradient_accumulation_steps`) to reflect any batch-size related DeepSpeed parameters
-    present in `hparams[overwrite_key]` (`train_batch_size`, `train_micro_batch_size_per_gpu`, and
-    `gradient_accumulation_steps`). Assumes that each of these three keys are in
-    `hparams[overwrite_key]` and that they are consistent with each other. Primarily intended for
-    use with DeepSpeed Autotune, which populates `hparams[overwrite_key]` using values which
-    obey the above constraints.
-    """
-    if overwrite_key not in hparams:
-        logging.info(
-            f"{overwrite_key} key not found in hparams, `get_hf_args_with_overwrites` is a no-op"
-        )
-        return
-
-    # Verify that the appropriate keys in the DS json file have `"auto"` values
-    ds_config_path = get_ds_config_path_from_args(args)
-
-    with open(ds_config_path, "r") as f:
-        ds_config_dict = json.load(f)
-
-    # Then merge all overwrites into the ds_config
-    overwritten_ds_config_dict = merge_dicts(ds_config_dict, hparams[overwrite_key])
-
-    # We need to actually overwrite the ds json config file, due to how HF processes args.
-    # A file lock is required during both the writing and reading.
-    with filelock.FileLock(ds_config_path + ".lock"):
-        with open(ds_config_path, "w") as f:
-            json.dump(overwritten_ds_config_dict, f)
-        # Finally overwrite the CLI args
-        args = update_hf_args(args, overwritten_ds_config_dict)
-
-    return args
+    return None

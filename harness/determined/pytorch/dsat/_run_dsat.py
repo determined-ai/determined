@@ -3,16 +3,32 @@ import logging
 import os
 import pathlib
 import pickle
+from typing import Any, Dict, Type
 
 import determined as det
-from determined import searcher
-from determined.pytorch.dsat import _defaults, _dsat_search_method, _utils
+from determined.pytorch.dsat import (
+    BaseDSATSearchMethod,
+    BinarySearchDSATSearchMethod,
+    RandomDSATSearchMethod,
+    _defaults,
+    _TestDSATSearchMethod,
+    _utils,
+)
+from determined.searcher import RemoteSearchRunner
 from determined.util import merge_dicts
+
+
+def get_search_method_class(method_string: str) -> Type[BaseDSATSearchMethod]:
+    if method_string == "binary":
+        return BinarySearchDSATSearchMethod
+    elif method_string == "_test":
+        return _TestDSATSearchMethod
+    return RandomDSATSearchMethod
 
 
 def get_custom_dsat_exp_conf_from_args(
     args: argparse.Namespace,
-) -> _dsat_search_method.BaseDSATSearchMethod:
+) -> Dict[str, Any]:
     """
     Helper function which alters the user-submitted configuration and args into a configuration
     for the DS AT custom searchers.
@@ -54,14 +70,19 @@ def main(core_context: det.core.Context) -> None:
     args.config_path = os.path.basename(args.config_path)
     args.model_dir = os.path.basename(args.model_dir)
     args.include = [os.path.basename(p) for p in args.include] if args.include is not None else []
-    args.experiment_id = det.get_cluster_info()._trial_info.experiment_id
+    cluster_info = det.get_cluster_info()
+    if cluster_info is None or cluster_info._trial_info is None:
+        return
+    args.experiment_id = cluster_info._trial_info.experiment_id
 
     exp_config = get_custom_dsat_exp_conf_from_args(args)
 
-    search_method_class = _defaults.ALL_SEARCH_METHOD_CLASSES[args.search_method]
+    search_method_class = get_search_method_class(args.search_method)
+    if search_method_class is None:
+        return
     search_method = search_method_class(args=args, exp_config=exp_config)
 
-    search_runner = searcher.RemoteSearchRunner(search_method, context=core_context)
+    search_runner = RemoteSearchRunner(search_method, context=core_context)
 
     search_runner.run(exp_config=exp_config, model_dir=args.model_dir, includes=args.include)
 

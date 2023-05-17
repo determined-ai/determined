@@ -799,7 +799,7 @@ def run_basic_autotuning_test(
     # Wait for the Autotuning Custom Searcher Experiment ("Client Experiment") to finish
     wait_for_experiment_state(
         client_exp_id,
-        experimentv1State.COMPLETED if not expect_client_failed else experimentv1State.ERRORED,
+        experimentv1State.COMPLETED if not expect_client_failed else experimentv1State.ERROR,
         max_wait_secs=max_wait_secs,
     )
     assert num_active_trials(orchestrator_exp_id) == 0
@@ -809,7 +809,7 @@ def run_basic_autotuning_test(
     return client_exp_id
 
 
-def fetch_autotuning_client_experiment(exp_id: int) -> subprocess.CompletedProcess:
+def fetch_autotuning_client_experiment(exp_id: int) -> int:
     command = ["det", "-m", conf.make_master_url(), "experiment", "logs", str(exp_id)]
     env = os.environ.copy()
     env["DET_DEBUG"] = "true"

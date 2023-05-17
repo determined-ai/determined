@@ -1,18 +1,22 @@
 import argparse
 import collections
+import copy
 import json
 import logging
 import pathlib
 import random
 from contextlib import contextmanager
-from typing import Any, Dict, Generator, List, Optional, Union, cast
+from typing import Any, Dict, Generator, List, Optional, Tuple, Union
 
+import filelock
 import torch
 from ruamel import yaml
 
 import determined as det
 from determined.pytorch.dsat import _defaults
 from determined.util import merge_dicts
+
+CURR_DIR = pathlib.Path(".")
 
 
 def get_base_parser() -> argparse.ArgumentParser:
@@ -106,9 +110,26 @@ def smaller_is_better(metric: str) -> bool:
     elif metric in _defaults.LARGER_IS_BETTER_METRICS:
         return False
     else:
+        valid_metrics = _defaults.SMALLER_IS_BETTER_METRICS + _defaults.LARGER_IS_BETTER_METRICS
+        raise ValueError(f"metric must be one of {valid_metrics}, not {metric}")
+
+
+def get_split_entrypoint(submitted_entrypoint: Union[List[str], str]) -> List[str]:
+    # The entrypoint may be a string or list of strings. Strip all white space from each entry and
+    # convert to a list, in either case.
+    if isinstance(submitted_entrypoint, str):
+        split_entrypoint = submitted_entrypoint.split(" ")
+    elif isinstance(submitted_entrypoint, list):
+        # Join and re-split to remove any possile white space.
+        # submitted_entrypoint: List[str]
+        str_entrypoint: str = " ".join(submitted_entrypoint)
+        split_entrypoint = str_entrypoint.split(" ")
+    else:
         raise ValueError(
-            f"metric must be one of {_defaults.SMALLER_IS_BETTER_METRICS + _defaults.LARGER_IS_BETTER_METRICS}, not {metric}"
+            f"Expected a string or list for an entrypoint, but received "
+            f"{type(submitted_entrypoint)}"
         )
+    return [s.strip() for s in split_entrypoint if s.strip()]
 
 
 def get_search_runner_config_from_args(args: argparse.Namespace) -> Dict[str, Any]:
@@ -117,29 +138,18 @@ def get_search_runner_config_from_args(args: argparse.Namespace) -> Dict[str, An
         return submitted_search_runner_config
 
     submitted_exp_config_dict = get_dict_from_yaml_or_json_path(args.config_path)
-    assert (
-        "deepspeed_config" in submitted_exp_config_dict["hyperparameters"]
-    ), "DS AT requires a `hyperparameters.deepspeed_config` key which points to the deepspeed config json file"
+    assert "deepspeed_config" in submitted_exp_config_dict["hyperparameters"], (
+        "DS AT requires a `hyperparameters.deepspeed_config` key which points "
+        "to the deepspeed config json file"
+    )
 
     # Also sanity check that if a --deepspeed_config (or in the case of HF
     # --deepspeed) arg is passed in, both configs match. Probably some gotchas here because
     # --deepspeed is also a boolean arg for vanilla deepspeed.
     possible_config_flags = ("--deepspeed", "--deepspeed_config")
-    submitted_entrypoint = submitted_exp_config_dict["entrypoint"]
-    # The entrypoint may be a string or list of strings. Strip all white space from each entry and
-    # convert to a list, in either case.
-    if isinstance(submitted_entrypoint, str):
-        split_entrypoint = submitted_entrypoint.split(" ")
-    elif isinstance(submitted_entrypoint, list):
-        # Join and re-split to remove any possile white space.
-        split_entrypoint = " ".join(submitted_entrypoint)
-        split_entrypoint = split_entrypoint.split(" ")
-    else:
-        raise ValueError(
-            f"Expected a string or list for an entrypoint, but received {type(submitted_entrypoint)}"
-        )
 
-    split_entrypoint = [s.strip() for s in split_entrypoint if s.strip()]
+    submitted_entrypoint: Union[List[str], str] = submitted_exp_config_dict["entrypoint"]
+    split_entrypoint = get_split_entrypoint(submitted_entrypoint)
 
     for idx in range(len(split_entrypoint) - 1):
         curr_arg, next_arg = split_entrypoint[idx : idx + 2]
@@ -171,7 +181,8 @@ def get_dict_from_yaml_or_json_path(
     path: str, convert_json_keys_to_int: bool = True
 ) -> Dict[Any, Any]:
     """
-    Load a json or yaml file as a dict. Optionally convert all json dict keys to ints, where possible.
+    Load a json or yaml file as a dict. Optionally convert all json dict keys to
+    ints, where possible.
     """
     p = pathlib.Path(path)
     if p.suffix == ".json":
@@ -190,6 +201,7 @@ def get_dict_from_yaml_or_json_path(
             return json_dict
         except Exception as e:
             logging.info(f"Exception {e} raised when loading {path} with json. Attempting yaml.")
+            return {}
     else:
         with open(p, "r") as f:
             yaml_dict: Dict[Any, Any] = yaml.YAML(typ="safe").load(f)
@@ -266,13 +278,15 @@ def report_json_results(
 def get_zero_stage_search_space(
     zero_stage: int,
 ) -> Dict[str, List[Union[bool, float]]]:
-    default_settings: dict = _defaults.DEFAULT_ZERO_SEARCH_SPACE
+    default_settings: Dict[
+        int, Dict[str, List[Union[bool, float]]]
+    ] = _defaults.DEFAULT_ZERO_SEARCH_SPACE
     assert (
         zero_stage in default_settings
     ), f"Invalid zero_stage, must be one of {list(default_settings)}"
-    search_space: dict = default_settings[1]
+    search_space = default_settings[1]
     for stage in range(2, zero_stage + 1):
-        search_space = {**search_space, **default_settings[stage]}
+        search_space = merge_dicts(search_space, default_settings[stage])
     return search_space
 
 
@@ -304,9 +318,9 @@ def get_batch_config_from_mbs_gas_and_slots(
     }
 
 
-def dict_raise_error_on_duplicate_keys(ordered_pairs):
-    """Reject duplicate keys."""
-    d = dict((k, v) for k, v in ordered_pairs)
+def dict_raise_error_on_duplicate_keys(ordered_pairs: List[Tuple[str, Any]]) -> Dict[str, Any]:
+    """Reject duplicate keys from the ordered_pairs"""
+    d = dict(ordered_pairs)
     if len(d) != len(ordered_pairs):
         counter = collections.Counter([pair[0] for pair in ordered_pairs])
         keys = [key for key, value in counter.items() if value > 1]
@@ -315,15 +329,16 @@ def dict_raise_error_on_duplicate_keys(ordered_pairs):
 
 
 def normalize_base_ds_config(
-    base_ds_config: Union[str, Dict], model_dir: pathlib.Path = pathlib.Path(".")
+    base_ds_config: Union[str, Dict[str, Any]], model_dir: pathlib.Path = CURR_DIR
 ) -> Dict[str, Any]:
     if isinstance(base_ds_config, str):
         full_path = model_dir.joinpath(pathlib.Path(base_ds_config))
         with open(full_path, "r") as f:
-            base_ds_config = json.load(
+            ret_ds_config: Dict[str, Any] = json.load(
                 f,
                 object_pairs_hook=dict_raise_error_on_duplicate_keys,
             )
+        return ret_ds_config
     else:
         if not isinstance(base_ds_config, dict):
             raise TypeError("Expected string or dict for base_ds_config argument.")
@@ -332,7 +347,7 @@ def normalize_base_ds_config(
 
 def get_ds_config_from_hparams(
     hparams: Dict[str, Any],
-    model_dir: Union[pathlib.Path, str] = pathlib.Path("."),
+    model_dir: Union[pathlib.Path, str] = CURR_DIR,
     config_key: str = _defaults.CONFIG_KEY,
     overwrite_key: str = _defaults.OVERWRITE_KEY,
 ) -> Dict[str, Any]:
@@ -352,14 +367,14 @@ def get_ds_config_from_hparams(
     base_config_file_name = hparams[config_key]
     base_ds_config = normalize_base_ds_config(base_config_file_name, model_dir=model_dir)
     overwrite_ds_config = hparams.get(overwrite_key, {})
-    ds_config = merge_dicts(cast(Dict[str, Any], base_ds_config), overwrite_ds_config)
+    ds_config = merge_dicts(base_ds_config, overwrite_ds_config)
     return ds_config
 
 
 def overwrite_deepspeed_config(
-    base_ds_config: Union[str, Dict],
+    base_ds_config: Union[str, Dict[str, Any]],
     source_ds_dict: Dict[str, Any],
-    model_dir: pathlib.Path = pathlib.Path("."),
+    model_dir: pathlib.Path = CURR_DIR,
 ) -> Dict[str, Any]:
     """Overwrite a base_ds_config with values from a source_ds_dict.
     You can use source_ds_dict to overwrite leaf nodes of the base_ds_config.
@@ -373,7 +388,7 @@ def overwrite_deepspeed_config(
         The resulting dictionary when base_ds_config is overwritten with source_ds_dict.
     """
     normalized_base_ds_config = normalize_base_ds_config(base_ds_config, model_dir=model_dir)
-    return merge_dicts(cast(Dict[str, Any], normalized_base_ds_config), source_ds_dict)
+    return merge_dicts(normalized_base_ds_config, source_ds_dict)
 
 
 def get_ds_config_path_from_args(args: List[str]) -> Optional[str]:
@@ -382,11 +397,12 @@ def get_ds_config_path_from_args(args: List[str]) -> Optional[str]:
             ds_config_idx = idx + 1
             ds_config_path = args[ds_config_idx]
             return ds_config_path
+    return None
 
 
 def replace_ds_config_file_using_overwrites(
     args: List[str], hparams: Dict[str, Any], overwrite_key: str = _defaults.OVERWRITE_KEY
-):
+) -> None:
     """
     Gets the deepspeed json config path from the list of HF args, overwrites its values using
     the provided overwrite values, and the re-writes the result to the original config path.
@@ -394,6 +410,8 @@ def replace_ds_config_file_using_overwrites(
     a consistent batch size configuration.
     """
     ds_config_path = get_ds_config_path_from_args(args)
+    if ds_config_path is None:
+        return
     with open(ds_config_path, "r") as f:
         ds_config_dict_with_overwrites = json.load(f)
         # If overwrites are provided, use them. The deepspeed configuration is assumed to have a
@@ -405,3 +423,81 @@ def replace_ds_config_file_using_overwrites(
         # overwrite the original config
         with open(ds_config_path, "w") as f:
             json.dump(ds_config_dict_with_overwrites, f)
+
+
+def update_hf_args(args: List[str], ds_config_dict: Dict[str, Any]) -> List[str]:
+    """
+    Updates batch-size-related HF CLI args to be consistent with the values specified in the
+    provided DeepSpeed config dictionary.
+    """
+    hf_flag_to_ds_key = {
+        "--per_device_train_batch_size": "train_micro_batch_size_per_gpu",
+        "--gradient_accumulation_steps": "gradient_accumulation_steps",
+    }
+    # Overwrite CLI args
+    args = copy.deepcopy(args)
+    for idx in range(len(args)):
+        if args[idx] in hf_flag_to_ds_key:
+            ds_key = hf_flag_to_ds_key[args[idx]]
+            overwrite_value = str(ds_config_dict[ds_key])
+            if args[idx + 1] != overwrite_value:
+                logging.warning(
+                    f"Changing {args[idx]} from {args[idx +1]} to {overwrite_value} to match "
+                    " the deespspeed config values."
+                )
+                args[idx + 1] = overwrite_value
+            del hf_flag_to_ds_key[args[idx]]
+
+    # Any remaining keys in hf_flag_to_ds_key were not provided as args to the HF CLI entrypoint,
+    # but they must be added in explicitly, to avoid falling back to HF defaults.
+    for hf_flag, ds_key in hf_flag_to_ds_key.items():
+        hf_flag_value = str(ds_config_dict[ds_key])
+        args.extend([hf_flag, hf_flag_value])
+        logging.warning(
+            f"Adding {hf_flag} {hf_flag_value} to HF CLI args to reflect overwrite values."
+        )
+    return args
+
+
+def get_hf_args_with_overwrites(
+    args: List[str], hparams: Dict[str, Any], overwrite_key: str = _defaults.OVERWRITE_KEY
+) -> List[str]:
+    """
+    Helper function which modifies the HF CLI args (`--per_device_train_batch_size` and
+    `--gradient_accumulation_steps`) to reflect any batch-size related DeepSpeed parameters
+    present in `hparams[overwrite_key]` (`train_batch_size`, `train_micro_batch_size_per_gpu`, and
+    `gradient_accumulation_steps`). Assumes that each of these three keys are in
+    `hparams[overwrite_key]` and that they are consistent with each other. Primarily intended for
+    use with DeepSpeed Autotune, which populates `hparams[overwrite_key]` using values which
+    obey the above constraints.
+    """
+    if overwrite_key not in hparams:
+        logging.info(
+            f"{overwrite_key} key not found in hparams, `get_hf_args_with_overwrites` is a no-op"
+        )
+        return []
+
+    # Verify that the appropriate keys in the DS json file have `"auto"` values
+    ds_config_path = get_ds_config_path_from_args(args)
+
+    if ds_config_path is None:
+        logging.warning(
+            f"Could not determine ds_config_path in `get_hf_args_with_overwrites`. Args: {args}"
+        )
+        return []
+
+    with open(ds_config_path, "r") as f:
+        ds_config_dict = json.load(f)
+
+    # Then merge all overwrites into the ds_config
+    overwritten_ds_config_dict = merge_dicts(ds_config_dict, hparams[overwrite_key])
+
+    # We need to actually overwrite the ds json config file, due to how HF processes args.
+    # A file lock is required during both the writing and reading.
+    with filelock.FileLock(ds_config_path + ".lock"):
+        with open(ds_config_path, "w") as f:
+            json.dump(overwritten_ds_config_dict, f)
+        # Finally overwrite the CLI args
+        args = update_hf_args(args, overwritten_ds_config_dict)
+
+    return args
