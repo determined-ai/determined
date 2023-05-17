@@ -4,6 +4,8 @@ import math
 import json
 import os
 import pathlib
+import warnings
+
 from dataclasses import dataclass
 
 import torch
@@ -140,10 +142,31 @@ def _validate_dataloader_kwargs(
             )
 
 
+def _validate_iterate_length(iterate_length: Optional[int], times_iterate: int):
+    if iterate_length is None:
+        return times_iterate
+
+    if iterate_length <= 0:
+        warnings.warn(
+            f"iterate_length {iterate_length} is not valid. "
+            f"Ignoring this argument and iterate over entire dataset once"
+        )
+        return times_iterate
+
+    if iterate_length > times_iterate:
+        warnings.warn(
+            f"iterate_length {iterate_length} exceeds sharded dataset length. "
+            f"Ignoring this argument and iterate over entire dataset once"
+        )
+        return times_iterate
+    return iterate_length
+
+
 def torch_batch_process(
     batch_processor_cls: Type[TorchBatchProcessor],
     dataset: Dataset,
     batch_size: Optional[int] = None,
+    iterate_length: Optional[int] = None,
     checkpoint_interval: int = 5,
     dataloader_kwargs: Dict[str, Any] = {},
 ):
@@ -201,8 +224,10 @@ def torch_batch_process(
         # they would hang forever as other workers never hit that last batch_idx.
         # To avoid the issue, we calculate and take the ceiling of the iteration count to ensure
         # all workers iterate for the same number of times.
-        times_iterate = math.ceil(dataset_len / batch_size / total_worker)
-        for batch_idx in range(skip, times_iterate):
+        max_batch = math.ceil(dataset_len / batch_size / total_worker)
+        iterate_length = _validate_iterate_length(iterate_length, max_batch)
+
+        for batch_idx in range(skip, iterate_length):
             logging.info(f"Currently processing batch {batch_idx}")
             X = next(dataloader_iterator, None)
             if X is not None:
