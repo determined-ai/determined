@@ -29,8 +29,8 @@ entrypoint in the :doc:`experiment configuration </reference/training/experiment
 
 .. note::
 
-   Before loading data, read this document :doc:`/training/load-model-data` to understand how to
-   work with different sources of data.
+   Before loading data, read this document :doc:`/model-dev-guide/load-model-data` to understand how
+   to work with different sources of data.
 
 To use ``tf.estimator`` models with Determined, you'll need to wrap your optimizer and datasets
 using :meth:`~determined.estimator.EstimatorTrialContext.wrap_optimizer` and

@@ -17,15 +17,20 @@ jobs:
       contents: read
       pull-requests: write
     steps:
-      - uses: pplanel/hash-calculator-action@v1.3.1
+      - name: Get hash for branch
         id: hash
-        with:
-          input: ${{ github.ref }}
-          method: MD5
+        env:
+          # not just pointless indirection; this mitigates script injections
+          # https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#good-practices-for-mitigating-script-injection-attacks
+          BRANCH: ${{ github.event.pull_request.head.ref }}
+        run: |
+          echo "branch: $BRANCH"
+          SUM="$(echo -n "$BRANCH" | md5sum)" && echo $SUM
+          echo "SUM=${SUM}" >> $GITHUB_OUTPUT
       - uses: peter-evans/create-or-update-comment@v3
         with:
           token: ${{ secrets.DETERMINED_TOKEN }}
           issue-number: ${{ github.event.number }}
           body: |
             Docsite preview being generated for this PR.
-            You can (eventually) find the generated docsite [here](https://determined-ai-docs.s3.us-west-2.amazonaws.com/${{ steps.hash.outputs.digest }}/index.html).
+            You can (eventually) find the generated docsite [here](https://determined-ai-docs.s3.us-west-2.amazonaws.com/previews/${{ steps.hash.outputs.SUM }}/index.html).
