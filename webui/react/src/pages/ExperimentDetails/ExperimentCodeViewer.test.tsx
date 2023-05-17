@@ -10,8 +10,9 @@ import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import authStore from 'stores/auth';
 import userStore from 'stores/users';
 import { DetailedUser } from 'types';
+import { generateExperiment } from 'utils/task';
 
-import CodeViewer, { Props } from './CodeViewer';
+import CodeViewer, { Props } from './ExperimentCodeViewer';
 
 const CURRENT_USER: DetailedUser = { id: 1, isActive: true, isAdmin: false, username: 'bunny' };
 
@@ -91,7 +92,19 @@ vi.mock('hooks/useSettings', async (importOriginal) => {
 });
 
 global.URL.createObjectURL = vi.fn();
-const experimentIdMock = 123;
+const experimentMock = {
+  ...generateExperiment(),
+  configRaw: {
+    environment: { registry_auth: '', restEnvironment: {} },
+  },
+  id: 123,
+  originalConfig: 'abc',
+  parentArchived: false,
+  projectName: 'a',
+  projectOwnerId: 1,
+  workspaceId: 1,
+  workspaceName: 'b',
+};
 const user = userEvent.setup();
 
 const Container: React.FC<Props> = (props) => {
@@ -103,14 +116,12 @@ const Container: React.FC<Props> = (props) => {
 
   return (
     <SettingsProvider>
-      <CodeViewer experimentId={props.experimentId} submittedConfig={props.submittedConfig} />
+      <CodeViewer experiment={props.experiment} />
     </SettingsProvider>
   );
 };
 
-const setup = (
-  props: Props = { experimentId: experimentIdMock, submittedConfig: hashedFileMock },
-) => {
+const setup = (props: Props = { experiment: experimentMock }) => {
   render(
     <BrowserRouter>
       <UIProvider>
