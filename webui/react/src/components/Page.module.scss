@@ -1,5 +1,4 @@
 .base {
-  align-items: center;
   display: flex;
   flex-direction: column;
   height: inherit;
@@ -7,7 +6,11 @@
   overflow: auto;
   width: 100%;
 
+  .breadcrumb {
+    padding: 16px;
+  }
   .body {
+    align-items: center;
     flex-shrink: 0;
     height: max-content;
     min-height: 0;

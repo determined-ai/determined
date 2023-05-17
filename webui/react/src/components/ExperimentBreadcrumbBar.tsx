@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 
-import Breadcrumb, { BreadcrumbBar } from 'components/kit/Breadcrumb';
+import Breadcrumb from 'components/kit/Breadcrumb';
 import Icon from 'components/kit/Icon';
 import { paths } from 'routes/utils';
 import { getExperimentDetails, getProject, getTrialDetails, getWorkspace } from 'services/api';
@@ -10,6 +10,7 @@ import { ExperimentBase, Project, TrialDetails, Workspace } from 'types';
 import handleError from 'utils/error';
 
 import DynamicIcon from './DynamicIcon';
+import css from './ExperimentBreadcrumbBar.module.css';
 import Link from './Link';
 
 interface Props {
@@ -140,7 +141,7 @@ const ExperimentBreadcrumbBar: React.FC<Props> = ({
   const projectName = project?.id === 1 ? 'Uncategorized Experiments' : project?.name ?? '...';
 
   return (
-    <BreadcrumbBar>
+    <div className={css.base}>
       <Breadcrumb separator="">
         {experiment?.projectId !== 1 && !project?.immutable && (
           <>
@@ -187,7 +188,7 @@ const ExperimentBreadcrumbBar: React.FC<Props> = ({
         )}
       </Breadcrumb>
       {extra}
-    </BreadcrumbBar>
+    </div>
   );
 };
 

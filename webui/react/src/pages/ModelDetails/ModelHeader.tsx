@@ -4,7 +4,7 @@ import React, { useCallback, useMemo } from 'react';
 
 import DeleteModelModal from 'components/DeleteModelModal';
 import InfoBox, { InfoRow } from 'components/InfoBox';
-import Breadcrumb, { BreadcrumbBar } from 'components/kit/Breadcrumb';
+import Breadcrumb from 'components/kit/Breadcrumb';
 import Button from 'components/kit/Button';
 import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 import Icon from 'components/kit/Icon';
@@ -151,7 +151,7 @@ const ModelHeader: React.FC<Props> = ({
 
   return (
     <header className={css.base}>
-      <BreadcrumbBar>
+      <div className={css.breadcrumb}>
         <Breadcrumb separator="">
           <Breadcrumb.Item>
             <Link path={paths.modelList()}>
@@ -186,7 +186,7 @@ const ModelHeader: React.FC<Props> = ({
             {model.name} ({model.id})
           </Breadcrumb.Item>
         </Breadcrumb>
-      </BreadcrumbBar>
+      </div>
       {model.archived && (
         <Alert
           message="This model has been archived and is now read-only."
