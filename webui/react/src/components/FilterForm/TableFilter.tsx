@@ -1,5 +1,6 @@
 import { FilterOutlined } from '@ant-design/icons';
 import { Button, Popover } from 'antd';
+import { useObservable } from 'micro-observables';
 
 import FilterForm from 'components/FilterForm/components/FilterForm';
 import { FilterFormStore } from 'components/FilterForm/components/FilterFormStore';
@@ -20,7 +21,7 @@ const TableFilter = ({
   setIsOpenFilter,
 }: Props): JSX.Element => {
   const columns: V1ProjectColumn[] = Loadable.getOrElse([], loadableColumns);
-  const fieldCount = formStore.fieldCount;
+  const fieldCount = useObservable(formStore.fieldCount);
 
   const onIsOpenFilterChange = (newOpen: boolean) => {
     setIsOpenFilter(newOpen);

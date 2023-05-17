@@ -133,7 +133,7 @@ describe('FilterFormStore', () => {
         showArchived: false,
       });
 
-      expect(filterFormStore.fieldCount).toBe(0);
+      expect(filterFormStore.fieldCount.get()).toBe(0);
     });
 
     it('should initialize store with init data', () => {
@@ -144,7 +144,7 @@ describe('FilterFormStore', () => {
 
       expect(jsonWithId).toStrictEqual(initData);
       expect(jsonWithoutId).toStrictEqual(JSON.parse(JSON.stringify(initData, jsonReplacer)));
-      expect(filterFormStore.fieldCount).toBe(6);
+      expect(filterFormStore.fieldCount.get()).toBe(6);
     });
 
     it('should deep clone init data to avoid unexpected data overwrite', () => {
@@ -163,7 +163,7 @@ describe('FilterFormStore', () => {
         const filterFormStore = new FilterFormStore();
         filterFormStore.init(initData);
         filterFormStore.sweep();
-        expect(filterFormStore.fieldCount).toBe(1);
+        expect(filterFormStore.fieldCount.get()).toBe(1);
       });
 
       it('should add new fields', () => {

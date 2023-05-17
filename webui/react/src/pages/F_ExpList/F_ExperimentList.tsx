@@ -77,7 +77,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const onIsOpenFilterChange = useCallback((newOpen: boolean) => {
     setIsOpenFilter(newOpen);
     if (!newOpen) {
-      setTimeout(() => formStore.sweep(), 500);
+      formStore.sweep();
     }
   }, []);
 
@@ -101,23 +101,15 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   useEffect(() => {
     // useSettings load the default value first, and then load the data from DB
     // use this useEffect to re-init the correct useSettings value when settings.filterset is changed
-    let ignore = false;
-
-    if (!ignore) {
-      const formSetValidation = IOFilterFormSet.decode(JSON.parse(settings.filterset));
-      if (isLeft(formSetValidation)) {
-        handleError(formSetValidation.left, {
-          publicSubject: 'Unable to initialize filterset from settings',
-        });
-      } else {
-        const formset = formSetValidation.right;
-        formStore.init(formset);
-      }
+    const formSetValidation = IOFilterFormSet.decode(JSON.parse(settings.filterset));
+    if (isLeft(formSetValidation)) {
+      handleError(formSetValidation.left, {
+        publicSubject: 'Unable to initialize filterset from settings',
+      });
+    } else {
+      const formset = formSetValidation.right;
+      formStore.init(formset);
     }
-
-    return () => {
-      ignore = true;
-    };
   }, [settings.filterset]);
 
   const [selectedExperimentIds, setSelectedExperimentIds] = useState<number[]>([]);

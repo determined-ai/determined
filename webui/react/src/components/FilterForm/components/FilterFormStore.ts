@@ -60,7 +60,7 @@ export class FilterFormStore {
     });
   }
 
-  public get fieldCount(): number {
+  public get fieldCount(): Observable<number> {
     const countFields = (form: FormGroup): number => {
       let count = 0;
       for (const child of form.children) {
@@ -68,7 +68,7 @@ export class FilterFormStore {
       }
       return count;
     };
-    return countFields(this.#formset.get().filterGroup);
+    return this.#formset.select(({ filterGroup }) => countFields(filterGroup));
   }
 
   #isValid(form: FormGroup | FormField): boolean {
