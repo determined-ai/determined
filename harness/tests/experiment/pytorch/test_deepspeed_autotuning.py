@@ -23,7 +23,7 @@ from determined.pytorch.dsat import (
     _utils,
     get_hf_args_with_overwrites,
 )
-from determined.pytorch.dsat._dsat_search_method import ASHADSATSearchData
+from determined.pytorch.dsat._dsat_search_method import ASHADSATSearchData, DSATSearchData
 from determined.pytorch.dsat._run_dsat import (
     get_custom_dsat_exp_conf_from_args,
     get_search_method_class,
@@ -724,7 +724,9 @@ class TestRandomDSATSearchMethodShouldStopLineage:
         for stage in (1, 2, 3):
             overwrites = {_defaults.OVERWRITE_KEY: {"zero_optimization": {"stage": stage}}}
             hparams = {**HPARAMS_FIXTURE, **overwrites}
-            trial_dict_by_stage[stage] = search_method.trial_tracker.create_trial(hparams)
+            trial_dict_by_stage[stage] = search_method.trial_tracker.create_trial(
+                hparams, search_data=DSATSearchData(lo=1, hi=1)
+            )
         assert trial_dict_by_stage[3].searcher_metric_name
         search_method.trial_tracker.update_trial_metric(
             trial_dict_by_stage[3], {trial_dict_by_stage[3].searcher_metric_name: 0}
