@@ -12,6 +12,7 @@ import (
 
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
+	"github.com/uptrace/bun"
 
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
@@ -229,16 +230,17 @@ func newExperiment(
 }
 
 func newUnmanagedExperiment(
+	ctx context.Context,
+	idb bun.IDB,
 	m *Master,
 	expModel *model.Experiment,
 	activeConfig expconf.ExperimentConfig,
 	taskSpec *tasks.TaskSpec,
 ) (*experiment, []command.LaunchWarning, error) {
-	// TODO(DET-9477): Experiment state management.
-	expModel.State = model.CompletedState
+	expModel.State = model.PausedState
 	expModel.Unmanaged = true
 
-	if err := m.db.AddExperiment(expModel, activeConfig); err != nil {
+	if err := db.AddExperimentTx(ctx, idb, expModel, activeConfig, true); err != nil {
 		return nil, nil, err
 	}
 	telemetry.ReportExperimentCreated(m.system, expModel.ID, activeConfig)

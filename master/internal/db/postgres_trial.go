@@ -20,8 +20,6 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
 )
 
-// TODO: rename raw_steps.
-
 // AddTrial adds the trial to the database and sets its ID.
 func AddTrial(ctx context.Context, trial *model.Trial, taskID model.TaskID) error {
 	if trial.ID != 0 {
@@ -42,6 +40,30 @@ func AddTrial(ctx context.Context, trial *model.Trial, taskID model.TaskID) erro
 	})
 	if err != nil {
 		return fmt.Errorf("inserting trial %v: %w", trial, err)
+	}
+
+	return nil
+}
+
+// UpsertTrialByExternalIDTx UPSERTs the trial with respect to the external_trial_id.
+func UpsertTrialByExternalIDTx(
+	ctx context.Context, tx bun.Tx, trial *model.Trial, taskID model.TaskID,
+) error {
+	if trial.ID != 0 {
+		return errors.Errorf("error adding a trial with non-zero id %v", trial.ID)
+	}
+
+	if _, err := tx.NewInsert().Model(trial).
+		On("CONFLICT (experiment_id, external_trial_id) DO UPDATE").
+		Set("hparams = EXCLUDED.hparams").
+		Returning("id").Exec(ctx); err != nil {
+		return fmt.Errorf("upserting trial model: %w", err)
+	}
+
+	trialTaskID := &model.TrialTaskID{TrialID: trial.ID, TaskID: taskID}
+	if _, err := tx.NewInsert().Model(trialTaskID).
+		On("CONFLICT (trial_id, task_id) DO NOTHING").Exec(ctx); err != nil {
+		return fmt.Errorf("upserting trial task id relationship: %w", err)
 	}
 
 	return nil
@@ -217,7 +239,7 @@ func (db *PgDB) calculateFullTrialSummaryMetrics(
 	partition := customMetricGroupToPartitionType(metricGroup)
 	jsonPath := model.TrialMetricsJSONPath(partition == ValidationMetric)
 	//nolint: execinquery
-	rows, err := tx.QueryContext(ctx, db.queries.getOrLoad("calculate-full-trial-summary-metrics"),
+	rows, err := tx.QueryContext(ctx, db.queries.GetOrLoad("calculate-full-trial-summary-metrics"),
 		trialID, jsonPath, partition, metricGroup)
 	if err != nil {
 		return nil, errors.Wrapf(err, "getting full compute trial %d summary metrics", trialID)

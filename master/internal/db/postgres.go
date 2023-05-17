@@ -170,7 +170,7 @@ func PaginateBunUnsafe(
 type PgDB struct {
 	tokenKeys *model.AuthTokenKeypair
 	sql       *sqlx.DB
-	queries   *staticQueryMap
+	queries   *StaticQueryMap
 	url       string
 }
 
@@ -180,7 +180,7 @@ func ConnectPostgres(url string) (*PgDB, error) {
 	for {
 		sql, err := sqlx.Connect("pgx", url)
 		if err == nil {
-			db := &PgDB{sql: sql, queries: &staticQueryMap{queries: make(map[string]string)}, url: url}
+			db := &PgDB{sql: sql, queries: &StaticQueryMap{}, url: url}
 			initTheOneBun(db)
 			return db, nil
 		}
@@ -368,7 +368,7 @@ func (db *PgDB) queryRowsWithParser(
 // with supplied params.
 func (db *PgDB) Query(queryName string, v interface{}, params ...interface{}) error {
 	parser := func(rows *sqlx.Rows, val interface{}) error { return rows.StructScan(val) }
-	return db.queryRowsWithParser(db.queries.getOrLoad(queryName), parser, v, params...)
+	return db.queryRowsWithParser(db.queries.GetOrLoad(queryName), parser, v, params...)
 }
 
 // QueryF returns the result of the formatted query. Any placeholder parameters are replaced
@@ -377,7 +377,7 @@ func (db *PgDB) QueryF(
 	queryName string, args []interface{}, v interface{}, params ...interface{},
 ) error {
 	parser := func(rows *sqlx.Rows, val interface{}) error { return rows.StructScan(val) }
-	query := db.queries.getOrLoad(queryName)
+	query := db.queries.GetOrLoad(queryName)
 	if len(args) > 0 {
 		query = fmt.Sprintf(query, args...)
 	}
@@ -387,7 +387,7 @@ func (db *PgDB) QueryF(
 // RawQuery returns the result of the query as a raw byte string. Any placeholder parameters are
 // replaced with supplied params.
 func (db *PgDB) RawQuery(queryName string, params ...interface{}) ([]byte, error) {
-	return db.rawQuery(db.queries.getOrLoad(queryName), params...)
+	return db.rawQuery(db.queries.GetOrLoad(queryName), params...)
 }
 
 // withTransaction executes a function with a transaction.

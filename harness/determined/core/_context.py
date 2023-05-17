@@ -4,6 +4,7 @@ import signal
 import sys
 import threading
 import traceback
+import types
 from typing import Any, Dict, Optional, Union
 
 import appdirs
@@ -41,28 +42,58 @@ class Context:
         preempt: Optional[core.PreemptContext] = None,
         train: Optional[core.TrainContext] = None,
         searcher: Optional[core.SearcherContext] = None,
+        info: Optional[det.ClusterInfo] = None,
         _tensorboard_manager: Optional[tensorboard.TensorboardManager] = None,
+        _heartbeat: Optional[core._Heartbeat] = None,
+        _log_shipper: Optional[core._LogShipper] = None,
     ) -> None:
         self.checkpoint = checkpoint
         self.distributed = distributed or core.DummyDistributedContext()
         self.preempt = preempt or core.DummyPreemptContext(self.distributed)
         self.train = train or core.DummyTrainContext()
         self.searcher = searcher or core.DummySearcherContext(self.distributed)
+        self.info = info
         self._tensorboard_manager = _tensorboard_manager
+        self._heartbeat = _heartbeat
+        self._log_shipper = _log_shipper
 
-    def __enter__(self) -> "Context":
+    def start(self) -> None:
         self.preempt.start()
         if self._tensorboard_manager is not None:
             self._tensorboard_manager.start()
+        if self._heartbeat is not None:
+            self._heartbeat.start()
+        if self._log_shipper is not None:
+            self._log_shipper.start()
+
+    def __enter__(self) -> "Context":
+        self.start()
         return self
 
-    def __exit__(self, typ: type, value: Exception, tb: Any) -> None:
+    def close(
+        self,
+        exc_type: Optional[type] = None,
+        exc_val: Optional[BaseException] = None,
+        exc_tb: Optional[types.TracebackType] = None,
+    ) -> None:
         self.preempt.close()
         self.distributed.close()
         if self._tensorboard_manager is not None:
             self._tensorboard_manager.close()
+        if self._heartbeat is not None:
+            self._heartbeat.close(exc_type, exc_val, exc_tb)
+        if self._log_shipper is not None:
+            self._log_shipper.close(exc_type, exc_val, exc_tb)
+
+    def __exit__(
+        self,
+        exc_type: Optional[type],
+        exc_val: Optional[BaseException],
+        exc_tb: Optional[types.TracebackType],
+    ) -> None:
+        self.close(exc_type, exc_val, exc_tb)
         # Detect some specific exceptions that are part of the user-facing API.
-        if isinstance(value, det.InvalidHP):
+        if isinstance(exc_val, det.InvalidHP):
             self.train.report_early_exit(core.EarlyExitReason.INVALID_HP)
             logger.info("InvalidHP detected during Trial init, converting InvalidHP to exit(0)")
             exit(0)
@@ -102,7 +133,7 @@ def _get_storage_manager(
                 "Cannot configure a shared_fs checkpoint storage with a "
                 "dictionary. Use a string or a configuration file."
             )
-        return det.common.storage.build(checkpoint_storage, container_path=None)
+        return storage.build(checkpoint_storage, container_path=None)
     raise TypeError("checkpoint_storage must be a string, dictionary, or None")
 
 

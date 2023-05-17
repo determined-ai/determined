@@ -56,6 +56,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/task/tasklogger"
 	"github.com/determined-ai/determined/master/internal/task/taskmodel"
 	"github.com/determined-ai/determined/master/internal/telemetry"
+	"github.com/determined-ai/determined/master/internal/trials"
 	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/internal/webhooks"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -822,7 +823,7 @@ func updateClusterHeartbeat(ctx context.Context, db *db.PgDB) {
 func (m *Master) postTaskLogs(c echo.Context) (interface{}, error) {
 	var logs []*model.TaskLog
 	if err := json.NewDecoder(c.Request().Body).Decode(&logs); err != nil {
-		return "", err
+		return "", fmt.Errorf("decoding task logs: %w", err)
 	}
 	if err := m.taskLogBackend.AddTaskLogs(logs); err != nil {
 		return "", errors.Wrap(err, "receiving task logs")
@@ -1044,6 +1045,7 @@ func (m *Master) Run(ctx context.Context) error {
 	// This ensures that in the scenario where a cluster fails all open allocations are
 	// set to the last cluster heartbeat when the cluster was running.
 	go updateClusterHeartbeat(ctx, m.db)
+	go trials.MarkLostTrialsWorker(ctx)
 
 	// Docs and WebUI.
 	webuiRoot := filepath.Join(m.config.Root, "webui")

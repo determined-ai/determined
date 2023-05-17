@@ -79,6 +79,7 @@ per-file-ignores =
   determined/keras/_tf_keras_trial.py:I2041
   determined/launch/deepspeed.py:I2041
   determined/launch/horovod.py:I2041
+  determined/lightning/experimental.py:I2041
   determined/profiler.py:I2041
   determined/pytorch/_data.py:I2041
   determined/pytorch/_pytorch_context.py:I2041
@@ -103,6 +104,7 @@ per-file-ignores =
   determined/tensorboard/metric_writers/tensorflow.py:I2041
   determined/tensorboard/s3.py:I2041
   determined/transformers/_hf_callback.py:I2041
+  determined/transformers/experimental.py:I2041
   determined/workload.py:I2041
   tests/checkpoints/test_checkpoint.py:I2041
   tests/cli/filetree.py:I2041

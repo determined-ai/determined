@@ -8149,6 +8149,58 @@ class v1PatchTemplateConfigResponse(Printable):
         }
         return out
 
+class v1PatchTrialRequest(Printable):
+    state: "typing.Optional[trialv1State]" = None
+
+    def __init__(
+        self,
+        *,
+        trialId: int,
+        state: "typing.Union[trialv1State, None, Unset]" = _unset,
+    ):
+        self.trialId = trialId
+        if not isinstance(state, Unset):
+            self.state = state
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PatchTrialRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "trialId": obj["trialId"],
+        }
+        if "state" in obj:
+            kwargs["state"] = trialv1State(obj["state"]) if obj["state"] is not None else None
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "trialId": self.trialId,
+        }
+        if not omit_unset or "state" in vars(self):
+            out["state"] = None if self.state is None else self.state.value
+        return out
+
+class v1PatchTrialResponse(Printable):
+
+    def __init__(
+        self,
+        *,
+        trial: "trialv1Trial",
+    ):
+        self.trial = trial
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PatchTrialResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "trial": trialv1Trial.from_json(obj["trial"]),
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "trial": self.trial.to_json(omit_unset),
+        }
+        return out
+
 class v1PatchUser(Printable):
     active: "typing.Optional[bool]" = None
     admin: "typing.Optional[bool]" = None
@@ -9403,6 +9455,32 @@ class v1ProxyPortConfig(Printable):
             out["unauthenticated"] = self.unauthenticated
         return out
 
+class v1PutExperimentResponse(Printable):
+
+    def __init__(
+        self,
+        *,
+        config: "typing.Dict[str, typing.Any]",
+        experiment: "v1Experiment",
+    ):
+        self.config = config
+        self.experiment = experiment
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PutExperimentResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "config": obj["config"],
+            "experiment": v1Experiment.from_json(obj["experiment"]),
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "config": self.config,
+            "experiment": self.experiment.to_json(omit_unset),
+        }
+        return out
+
 class v1PutProjectNotesRequest(Printable):
 
     def __init__(
@@ -9475,6 +9553,62 @@ class v1PutTemplateResponse(Printable):
         }
         if not omit_unset or "template" in vars(self):
             out["template"] = None if self.template is None else self.template.to_json(omit_unset)
+        return out
+
+class v1PutTrialRequest(Printable):
+    createTrialRequest: "typing.Optional[v1CreateTrialRequest]" = None
+    externalTrialId: "typing.Optional[str]" = None
+
+    def __init__(
+        self,
+        *,
+        createTrialRequest: "typing.Union[v1CreateTrialRequest, None, Unset]" = _unset,
+        externalTrialId: "typing.Union[str, None, Unset]" = _unset,
+    ):
+        if not isinstance(createTrialRequest, Unset):
+            self.createTrialRequest = createTrialRequest
+        if not isinstance(externalTrialId, Unset):
+            self.externalTrialId = externalTrialId
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PutTrialRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "createTrialRequest" in obj:
+            kwargs["createTrialRequest"] = v1CreateTrialRequest.from_json(obj["createTrialRequest"]) if obj["createTrialRequest"] is not None else None
+        if "externalTrialId" in obj:
+            kwargs["externalTrialId"] = obj["externalTrialId"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "createTrialRequest" in vars(self):
+            out["createTrialRequest"] = None if self.createTrialRequest is None else self.createTrialRequest.to_json(omit_unset)
+        if not omit_unset or "externalTrialId" in vars(self):
+            out["externalTrialId"] = self.externalTrialId
+        return out
+
+class v1PutTrialResponse(Printable):
+
+    def __init__(
+        self,
+        *,
+        trial: "trialv1Trial",
+    ):
+        self.trial = trial
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PutTrialResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "trial": trialv1Trial.from_json(obj["trial"]),
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "trial": self.trial.to_json(omit_unset),
+        }
         return out
 
 class v1QueueControl(Printable):
@@ -11625,6 +11759,70 @@ class v1Slot(Printable):
             out["enabled"] = self.enabled
         if not omit_unset or "id" in vars(self):
             out["id"] = self.id
+        return out
+
+class v1StartTrialRequest(Printable):
+    resume: "typing.Optional[bool]" = None
+
+    def __init__(
+        self,
+        *,
+        trialId: int,
+        resume: "typing.Union[bool, None, Unset]" = _unset,
+    ):
+        self.trialId = trialId
+        if not isinstance(resume, Unset):
+            self.resume = resume
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1StartTrialRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "trialId": obj["trialId"],
+        }
+        if "resume" in obj:
+            kwargs["resume"] = obj["resume"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "trialId": self.trialId,
+        }
+        if not omit_unset or "resume" in vars(self):
+            out["resume"] = self.resume
+        return out
+
+class v1StartTrialResponse(Printable):
+    latestCheckpoint: "typing.Optional[str]" = None
+
+    def __init__(
+        self,
+        *,
+        stepsCompleted: int,
+        trialRunId: int,
+        latestCheckpoint: "typing.Union[str, None, Unset]" = _unset,
+    ):
+        self.stepsCompleted = stepsCompleted
+        self.trialRunId = trialRunId
+        if not isinstance(latestCheckpoint, Unset):
+            self.latestCheckpoint = latestCheckpoint
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1StartTrialResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "stepsCompleted": obj["stepsCompleted"],
+            "trialRunId": obj["trialRunId"],
+        }
+        if "latestCheckpoint" in obj:
+            kwargs["latestCheckpoint"] = obj["latestCheckpoint"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "stepsCompleted": self.stepsCompleted,
+            "trialRunId": self.trialRunId,
+        }
+        if not omit_unset or "latestCheckpoint" in vars(self):
+            out["latestCheckpoint"] = self.latestCheckpoint
         return out
 
 class v1Task(Printable):
@@ -16783,6 +16981,27 @@ def patch_PatchTemplateConfig(
         return v1PatchTemplateConfigResponse.from_json(_resp.json())
     raise APIHttpError("patch_PatchTemplateConfig", _resp)
 
+def patch_PatchTrial(
+    session: "api.Session",
+    *,
+    body: "v1PatchTrialRequest",
+    trialId: int,
+) -> "v1PatchTrialResponse":
+    _params = None
+    _resp = session._do_request(
+        method="PATCH",
+        path=f"/api/v1/trials/{trialId}",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1PatchTrialResponse.from_json(_resp.json())
+    raise APIHttpError("patch_PatchTrial", _resp)
+
 def patch_PatchUser(
     session: "api.Session",
     *,
@@ -17192,6 +17411,27 @@ def post_PreviewHPSearch(
         return v1PreviewHPSearchResponse.from_json(_resp.json())
     raise APIHttpError("post_PreviewHPSearch", _resp)
 
+def put_PutExperiment(
+    session: "api.Session",
+    *,
+    body: "v1CreateExperimentRequest",
+    externalExperimentId: str,
+) -> "v1PutExperimentResponse":
+    _params = None
+    _resp = session._do_request(
+        method="PUT",
+        path=f"/api/v1/experiments/by-external-id/{externalExperimentId}",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1PutExperimentResponse.from_json(_resp.json())
+    raise APIHttpError("put_PutExperiment", _resp)
+
 def put_PutProjectNotes(
     session: "api.Session",
     *,
@@ -17233,6 +17473,26 @@ def put_PutTemplate(
     if _resp.status_code == 200:
         return v1PutTemplateResponse.from_json(_resp.json())
     raise APIHttpError("put_PutTemplate", _resp)
+
+def put_PutTrial(
+    session: "api.Session",
+    *,
+    body: "v1PutTrialRequest",
+) -> "v1PutTrialResponse":
+    _params = None
+    _resp = session._do_request(
+        method="PUT",
+        path="/api/v1/trials",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1PutTrialResponse.from_json(_resp.json())
+    raise APIHttpError("put_PutTrial", _resp)
 
 def post_RemoveAssignments(
     session: "api.Session",
@@ -17621,6 +17881,27 @@ def post_SetUserPassword(
     if _resp.status_code == 200:
         return v1SetUserPasswordResponse.from_json(_resp.json())
     raise APIHttpError("post_SetUserPassword", _resp)
+
+def post_StartTrial(
+    session: "api.Session",
+    *,
+    body: "v1StartTrialRequest",
+    trialId: int,
+) -> "v1StartTrialResponse":
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/trials/{trialId}/start",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1StartTrialResponse.from_json(_resp.json())
+    raise APIHttpError("post_StartTrial", _resp)
 
 def get_TaskLogs(
     session: "api.Session",
