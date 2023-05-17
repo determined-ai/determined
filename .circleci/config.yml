@@ -183,7 +183,7 @@ commands:
               echo "github-only change detected, halting job now"
               circleci-agent step halt
             else
-              echo "detected non-github-only changes: $DIFF_DIRS"
+              echo "detected changes outside of .github: $DIFF_DIRS"
             fi
 
   set-slack-user-id:
