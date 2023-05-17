@@ -31,7 +31,7 @@
   },
   "wall_clock_breakdown": false,
   "zero_optimization": {
-    "stage": 0,
+    "stage": 1,
     "allgather_partitions": true,
     "reduce_scatter": true,
     "allgather_bucket_size": 50000000,
