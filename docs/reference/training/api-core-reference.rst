@@ -7,11 +7,11 @@
 .. meta::
    :description: Familiarize yourself with the det.core API by visiting this reference page on the determined.core.init module, its configuration parameters, classes, methods, and practical examples.
 
-+-----------------------------------------------+
-| User Guide                                    |
-+===============================================+
-| :doc:`/training/apis-howto/api-core-ug`       |
-+-----------------------------------------------+
++------------------------------------------------------+
+| User Guide                                           |
++======================================================+
+| :doc:`/model-dev-guide/apis-howto/api-core-ug`       |
++------------------------------------------------------+
 
 **************************
  ``determined.core.init``
