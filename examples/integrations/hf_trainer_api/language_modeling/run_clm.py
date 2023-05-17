@@ -55,8 +55,9 @@ from transformers.utils import check_min_version, send_example_telemetry
 from transformers.utils.versions import require_version
 
 import determined as det
-from determined.integrations.huggingface import DetCallback, get_hf_args_with_overwrites
+from determined.integrations.huggingface import DetCallback
 from determined.pytorch import dsat
+from determined.pytorch.dsat import get_hf_args_with_overwrites
 
 # Will error if the minimal version of Transformers is not installed. Remove at your own risks.
 check_min_version("4.28.0")
