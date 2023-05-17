@@ -606,11 +606,11 @@ func (a *apiServer) GetExperiments(
 				ELSE e.config->'labels' END
 			))`, strings.Join(req.Labels, ",")) // Trying bun.In doesn't work.
 	}
-	if req.Archived != nil && req.ProjectId == 0 {
+	if req.Archived != nil {
 		query = query.Where("e.archived = ?", req.Archived.Value)
-		if !req.Archived.Value {
-			query = query.Where("w.archived= ?", false)
-			query = query.Where("p.archived= ?", false)
+		if req.ProjectId == 0 && !req.Archived.Value {
+			query = query.Where("w.archived= ?", req.Archived.Value)
+			query = query.Where("p.archived= ?", req.Archived.Value)
 		}
 	}
 	if len(req.States) > 0 {

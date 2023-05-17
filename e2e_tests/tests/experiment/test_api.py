@@ -96,32 +96,39 @@ def test_archived_proj_exp_list() -> None:
     archived_exp.append(experiments[2])
     archived_exp.append(experiments[4])
 
-    # test2: GetExperiments shouldn't return experiements from archived projects when archived flag is False
+    # test2: GetExperiments shouldn't return experiements from archived projects when
+    # archived flag is False
     r2 = bindings.get_GetExperiments(session, archived=False)
     for e in r2.experiments:
         assert e.id not in archived_exp
-
-    # test3: GetExperiments should return both archived and unarchived experiments within an archived project
-    r3 = bindings.get_GetExperiments(session, archived=False, projectId=projects[1])
-    r3_correct_exp = [experiments[2], experiments[3]]
-    assert len(r3.experiments) == len(r3_correct_exp)
-    for e in r3.experiments:
-        assert e.id in r3_correct_exp
 
     bindings.post_ArchiveWorkspace(session, id=workspaces[1].id)
 
     archived_exp.append(experiments[7])
 
-    # test4: GetExperiments shouldn't return experiements from archived workspaces when archived flag is False
-    r4 = bindings.get_GetExperiments(session, archived=False)
-    for e in r4.experiments:
+    # test3: GetExperiments shouldn't return experiements from archived workspaces when
+    # archived flag is False
+    r3 = bindings.get_GetExperiments(session, archived=False)
+    for e in r3.experiments:
         assert e.id not in archived_exp
 
-    # test5: GetExperiments should return both archived and unarchived experiments when archived flag is unspecified
+    # test4: GetExperiments should return only unarchived experiments within an
+    # archived project when archived flag is false
+    r4 = bindings.get_GetExperiments(session, archived=False, projectId=projects[2])
+    r4_correct_exp = [experiments[4]]
+    assert len(r4.experiments) == len(r4_correct_exp)
+    for e in r4.experiments:
+        assert e.id in r4_correct_exp
+
+    # test5: GetExperiments should return both archived and unarchived experiments when
+    # archived flag is unspecified
     r5 = bindings.get_GetExperiments(session)
-    assert len(r5.experiments) == len(experiments)
+    returned_e_id = []
     for e in r5.experiments:
-        assert e.id in experiments
+        returned_e_id.append(e.id)
+
+    for e_id in experiments:
+        assert e_id in returned_e_id
 
     for w in workspaces:
         bindings.delete_DeleteWorkspace(session, id=w.id)
