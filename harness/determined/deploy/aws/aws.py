@@ -1,6 +1,7 @@
 import sys
+import threading
 import time
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import boto3
 import tqdm
@@ -20,6 +21,23 @@ DELETE_MASTER_IGNORE_ERRORS = (
 
 class NoStackOutputError(Exception):
     pass
+
+
+def run_with_periodic_output(f: Callable[[], Any], output: str) -> None:
+    done = threading.Event()
+
+    def print_something() -> None:
+        while not done.wait(60):
+            print(output)
+
+    print_thread = threading.Thread(target=print_something, daemon=True)
+    print_thread.start()
+
+    try:
+        f()
+    finally:
+        done.set()
+        print_thread.join()
 
 
 def get_user(boto3_session: boto3.session.Session) -> str:
@@ -150,7 +168,11 @@ def delete_stack(stack_name: str, boto3_session: boto3.session.Session) -> None:
     else:
         print(f"False. {stack_name} does not exist")
     cfn.delete_stack(StackName=stack_name)
-    delete_waiter.wait(StackName=stack_name, WaiterConfig={"Delay": 10})
+
+    run_with_periodic_output(
+        lambda: delete_waiter.wait(StackName=stack_name, WaiterConfig={"Delay": 10}),
+        "Still waiting for stack...",
+    )
 
 
 def update_stack(
@@ -262,7 +284,10 @@ def create_stack(
         Tags=tags,
     )
 
-    create_waiter.wait(StackName=stack_name, WaiterConfig={"Delay": 10})
+    run_with_periodic_output(
+        lambda: create_waiter.wait(StackName=stack_name, WaiterConfig={"Delay": 10}),
+        "Still waiting for stack...",
+    )
 
 
 def list_stacks(boto3_session: boto3.session.Session) -> List[Dict[str, Any]]:

@@ -2,13 +2,15 @@ import { PoweroffOutlined } from '@ant-design/icons';
 import { Card as AntDCard, Space } from 'antd';
 import { SelectValue } from 'antd/es/select';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 import Accordion from 'components/kit/Accordion';
 import Breadcrumb from 'components/kit/Breadcrumb';
 import Button from 'components/kit/Button';
 import Card from 'components/kit/Card';
 import Checkbox from 'components/kit/Checkbox';
+import ClipboardButton from 'components/kit/ClipboardButton';
+import CodeEditor from 'components/kit/CodeEditor';
 import { Column, Columns } from 'components/kit/Columns';
 import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 import Empty from 'components/kit/Empty';
@@ -32,6 +34,7 @@ import Toggle from 'components/kit/Toggle';
 import Tooltip from 'components/kit/Tooltip';
 import Header from 'components/kit/Typography/Header';
 import Paragraph from 'components/kit/Typography/Paragraph';
+import { useNoteDemo, useNotesDemo } from 'components/kit/useNoteDemo';
 import UserAvatar from 'components/kit/UserAvatar';
 import { useTags } from 'components/kit/useTags';
 import Label from 'components/Label';
@@ -49,7 +52,7 @@ import { noOp } from 'shared/utils/service';
 import { BrandingType } from 'stores/determinedInfo';
 import { MetricType, User } from 'types';
 import { ThemeFont } from 'utils/fonts';
-import { NotLoaded } from 'utils/loadable';
+import { Loaded, NotLoaded } from 'utils/loadable';
 import loremIpsum from 'utils/loremIpsum';
 import {
   Background,
@@ -74,6 +77,8 @@ const ComponentTitles = {
   Cards: 'Cards',
   Charts: 'Charts',
   Checkboxes: 'Checkboxes',
+  ClipboardButton: 'ClipboardButton',
+  CodeEditor: 'CodeEditor',
   Columns: 'Columns',
   Dropdown: 'Dropdown',
   Empty: 'Empty',
@@ -87,6 +92,7 @@ const ComponentTitles = {
   LogViewer: 'LogViewer',
   Modals: 'Modals',
   Nameplate: 'Nameplate',
+  Notes: 'Notes',
   Pagination: 'Pagination',
   Pivot: 'Pivot',
   Select: 'Select',
@@ -489,11 +495,7 @@ const SelectSection: React.FC = () => {
           width={999999}
         />
         <span>
-          Also see{' '}
-          <Link reloadDocument to={`#${ComponentTitles.Form}`}>
-            Form
-          </Link>{' '}
-          for form-specific variations
+          Also see <a href={`#${ComponentTitles.Form}`}>Form</a> for form-specific variations
         </span>
       </AntDCard>
     </ComponentSection>
@@ -762,6 +764,37 @@ const CheckboxesSection: React.FC = () => {
   );
 };
 
+const ClipboardButtonSection: React.FC = () => {
+  const defaultContent = 'This is the content to copy to clipboard.';
+  const [content, setContent] = useState(defaultContent);
+  const getContent = useCallback(() => content, [content]);
+  return (
+    <ComponentSection id="ClipboardButton" title="ClipboardButton">
+      <AntDCard>
+        <p>
+          ClipboardButton (<code>{'<ClipboardButton>'}</code> provides a special button for the
+          purpose of copying some text into the browser clipboard.
+          <br />
+          <b>Note:</b> This capability is only available on `https` and `localhost` hosts. `http`
+          protocol is purposefully blocked for&nbsp;
+          <a href="https://developer.mozilla.org/en-US/docs/Web/API/Clipboard">security reasons</a>.
+        </p>
+      </AntDCard>
+      <AntDCard title="Usage">
+        <Label>Copy Content</Label>
+        <Input value={content} onChange={(s) => setContent(String(s.target.value))} />
+        <hr />
+        <strong>Default Clipboard Button</strong>
+        <ClipboardButton getContent={getContent} />
+        <strong>Disabled Clipboard Button</strong>
+        <ClipboardButton disabled getContent={getContent} />
+        <strong>Custom Copied Message Clipboard Button</strong>
+        <ClipboardButton copiedMessage="Yay it's copied!" getContent={getContent} />
+      </AntDCard>
+    </ComponentSection>
+  );
+};
+
 const DropdownSection: React.FC = () => {
   const menu: MenuItem[] = [
     { key: 'start', label: 'Start' },
@@ -810,6 +843,68 @@ const DropdownSection: React.FC = () => {
             <Button>Disabled Options</Button>
           </Dropdown>
         </Space>
+      </AntDCard>
+    </ComponentSection>
+  );
+};
+
+const CodeEditorSection: React.FC = () => {
+  return (
+    <ComponentSection id="CodeEditor" title="CodeEditor">
+      <AntDCard>
+        <p>
+          The Code Editor (<code>{'<CodeEditor>'}</code>) shows Python and YAML files with syntax
+          highlighting. If multiple files are sent, the component shows a file tree browser.
+        </p>
+        <ul>
+          <li>Use the readonly attribute to make code viewable but not editable.</li>
+        </ul>
+      </AntDCard>
+      <AntDCard title="Usage">
+        <strong>Editable Python file</strong>
+        <CodeEditor
+          files={[
+            {
+              content: Loaded('import math\nprint(math.pi)\n\n'),
+              key: 'test.py',
+              title: 'test.py',
+            },
+          ]}
+        />
+        <strong>Read-only YAML file</strong>
+        <CodeEditor
+          files={[
+            {
+              content: Loaded(
+                'name: Unicode Test 日本😃\ndata:\n  url: https://example.tar.gz\nhyperparameters:\n  learning_rate: 1.0\n  global_batch_size: 64\n  n_filters1: 32\n  n_filters2: 64\n  dropout1: 0.25\n  dropout2: 0.5\nsearcher:\n  name: single\n  metric: validation_loss\n  max_length:\n      batches: 937 #60,000 training images with batch size 64\n  smaller_is_better: true\nentrypoint: model_def:MNistTrial\nresources:\n  slots_per_trial: 2',
+              ),
+              key: 'test1.yaml',
+              title: 'test1.yaml',
+            },
+          ]}
+          readonly={true}
+        />
+        <strong>Multiple files, one not finished loading.</strong>
+        <CodeEditor
+          files={[
+            {
+              content: Loaded(
+                'hyperparameters:\n  learning_rate: 1.0\n  global_batch_size: 512\n  n_filters1: 32\n  n_filters2: 64\n  dropout1: 0.25\n  dropout2: 0.5',
+              ),
+              isLeaf: true,
+              key: 'one.yaml',
+              title: 'one.yaml',
+            },
+            {
+              content: Loaded('searcher:\n  name: single\n  metric: validation_loss\n'),
+              isLeaf: true,
+              key: 'two.yaml',
+              title: 'two.yaml',
+            },
+            { content: NotLoaded, isLeaf: true, key: 'unloaded.yaml', title: 'unloaded.yaml' },
+          ]}
+          readonly={true}
+        />
       </AntDCard>
     </ComponentSection>
   );
@@ -904,11 +999,7 @@ const InputNumberSection: React.FC = () => {
         <InputNumber disabled />
         <hr />
         <span>
-          Also see{' '}
-          <Link reloadDocument to={`#${ComponentTitles.Form}`}>
-            Form
-          </Link>{' '}
-          for form-specific variations
+          Also see <a href={`#${ComponentTitles.Form}`}>Form</a> for form-specific variations
         </span>
       </AntDCard>
     </ComponentSection>
@@ -964,11 +1055,7 @@ const InputSection: React.FC = () => {
         <Input.Password disabled />
         <hr />
         <span>
-          Also see{' '}
-          <Link reloadDocument to={`#${ComponentTitles.Form}`}>
-            Form
-          </Link>{' '}
-          for form-specific variations
+          Also see <a href={`#${ComponentTitles.Form}`}>Form</a> for form-specific variations
         </span>
       </AntDCard>
     </ComponentSection>
@@ -1195,6 +1282,26 @@ const FacepileSection: React.FC = () => {
           <li>Facepile with both name initials</li>
           <p>Check the Facepile above and select a user that would fit that case</p>
         </ul>
+      </AntDCard>
+    </ComponentSection>
+  );
+};
+
+const NotesSection: React.FC = () => {
+  return (
+    <ComponentSection id="Notes" title="Notes">
+      <AntDCard>
+        <p>
+          A <code>{'<Notes>'}</code> is used for taking notes. It can be single page note or multi
+          pages notes. Each page of note consists of a title and a sheet of note.
+        </p>
+      </AntDCard>
+      <AntDCard title="Usage">
+        <strong>Single page note</strong>
+        {useNoteDemo()()}
+        <hr />
+        <strong>Multi pages notes</strong>
+        {useNotesDemo()()}
       </AntDCard>
     </ComponentSection>
   );
@@ -1565,11 +1672,7 @@ const FormSection: React.FC = () => {
       <AntDCard title="Usage">
         <Form>
           <strong>
-            Form-specific{' '}
-            <Link reloadDocument to={`#${ComponentTitles.Input}`}>
-              Input
-            </Link>{' '}
-            variations
+            Form-specific <a href={ComponentTitles.Input}>Input</a> variations
           </strong>
           <br />
           <Form.Item label="Required input" name="required_input" required>
@@ -1586,11 +1689,7 @@ const FormSection: React.FC = () => {
           <hr />
           <br />
           <strong>
-            Form-specific{' '}
-            <Link reloadDocument to={`#${ComponentTitles.Input}`}>
-              TextArea
-            </Link>{' '}
-            variations
+            Form-specific <a href={ComponentTitles.Input}>TextArea</a> variations
           </strong>
           <br />
           <Form.Item label="Required TextArea" name="required_textarea" required>
@@ -1607,11 +1706,7 @@ const FormSection: React.FC = () => {
           <hr />
           <br />
           <strong>
-            Form-specific{' '}
-            <Link reloadDocument to={`#${ComponentTitles.Input}`}>
-              Password
-            </Link>{' '}
-            variations
+            Form-specific <a href={ComponentTitles.Input}>Password</a> variations
           </strong>
           <br />
           <Form.Item label="Required Password" name="required_label" required>
@@ -1628,11 +1723,7 @@ const FormSection: React.FC = () => {
           <hr />
           <br />
           <strong>
-            Form-specific{' '}
-            <Link reloadDocument to={`#${ComponentTitles.InputNumber}`}>
-              InputNumber
-            </Link>{' '}
-            variations
+            Form-specific <a href={ComponentTitles.Input}>InputNumber</a> variations
           </strong>
           <Form.Item label="Required InputNumber" name="number" required>
             <InputNumber />
@@ -1647,11 +1738,7 @@ const FormSection: React.FC = () => {
           <hr />
           <br />
           <strong>
-            Form-specific{' '}
-            <Link reloadDocument to={`#${ComponentTitles.Select}`}>
-              Select
-            </Link>{' '}
-            variations
+            Form-specific <a href={ComponentTitles.Select}>Select</a> variations
           </strong>
           <Form.Item initialValue={1} label="Required dropdown" name="required_dropdown" required>
             <Select
@@ -2506,6 +2593,8 @@ const Components = {
   Cards: <CardsSection />,
   Charts: <ChartsSection />,
   Checkboxes: <CheckboxesSection />,
+  ClipboardButton: <ClipboardButtonSection />,
+  CodeEditor: <CodeEditorSection />,
   Columns: <ColumnsSection />,
   Dropdown: <DropdownSection />,
   Empty: <EmptySection />,
@@ -2519,6 +2608,7 @@ const Components = {
   LogViewer: <LogViewerSection />,
   Modals: <ModalSection />,
   Nameplate: <NameplateSection />,
+  Notes: <NotesSection />,
   Pagination: <PaginationSection />,
   Pivot: <PivotSection />,
   Select: <SelectSection />,
@@ -2532,6 +2622,9 @@ const Components = {
 
 const DesignKit: React.FC = () => {
   const { actions } = useUI();
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const isExclusiveMode = searchParams.get('exclusive') === 'true';
 
   useEffect(() => {
     actions.hideChrome();
@@ -2548,17 +2641,17 @@ const DesignKit: React.FC = () => {
           <ul>
             {componentOrder.map((componentId) => (
               <li key={componentId}>
-                <Link reloadDocument to={`#${componentId}`}>
-                  {ComponentTitles[componentId]}
-                </Link>
+                <a href={`#${componentId}`}>{ComponentTitles[componentId]}</a>
               </li>
             ))}
           </ul>
         </nav>
         <article>
-          {componentOrder.map((componentId) => (
-            <React.Fragment key={componentId}>{Components[componentId]}</React.Fragment>
-          ))}
+          {componentOrder
+            .filter((id) => !isExclusiveMode || !location.hash || id === location.hash.substring(1))
+            .map((componentId) => (
+              <React.Fragment key={componentId}>{Components[componentId]}</React.Fragment>
+            ))}
         </article>
       </div>
     </Page>

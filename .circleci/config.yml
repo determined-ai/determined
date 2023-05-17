@@ -50,7 +50,7 @@ parameters:
     default: v1dev23
   gke-version:
     type: string
-    default: "1.23.16"
+    default: "1.25.8"
   master-build-resource-class:
     type: string
     default: xlarge
@@ -276,15 +276,22 @@ commands:
     steps:
       - attach_workspace:
           at: .
+      - run:
+          name: Write cache suffix
+          command: |
+            echo '<<pipeline.parameters.cache-buster>>' > /tmp/react-get-deps.cachekey
+            cat webui/react/package-lock.json >> /tmp/react-get-deps.cachekey
+            echo $HOME >> /tmp/react-get-deps.cachekey
+            cat /tmp/react-get-deps.cachekey
       - restore_cache:
           keys:
-            - det-react-deps-<<pipeline.parameters.cache-buster>>-{{ checksum  "webui/react/package-lock.json" }}
+            - det-react-deps-{{ checksum "/tmp/react-get-deps.cachekey" }}
       - run:
           name: Get React dependencies
           command: |
             make -C webui/react node_modules/done.stamp
       - save_cache:
-          key: det-react-deps-<<pipeline.parameters.cache-buster>>-{{ checksum  "webui/react/package-lock.json" }}
+          key: det-react-deps-{{ checksum "/tmp/react-get-deps.cachekey" }}
           paths:
             - "webui/react/node_modules"
 
@@ -457,7 +464,7 @@ commands:
         type: string
         default: ""
     steps:
-      - run: docker run -v <<parameters.bind-mount>>:/mnt/project --gpus=all -it -d --name <<parameters.image-name>> --workdir /mnt/project <<parameters.image>>
+      - run: docker run -v <<parameters.bind-mount>>:/mnt/project --gpus=all -it -d --name <<parameters.image-name>> --workdir /mnt/project <<parameters.image>> /bin/bash
       - run:
           name: Install <<parameters.extras-requires>>
           command: |
@@ -651,6 +658,7 @@ commands:
                 command: echo --agent-reattach-enabled true --agent-reconnect-attempts 24 --no-update-terminate-agents --notebook-timeout 1800 >> /tmp/det-deploy-extra-args
       - run:
           name: Deploy AWS cluster
+          no_output_timeout: 20m
           command: |
             echo "-----BEGIN ARGS-----"
             cat /tmp/det-deploy-extra-args
@@ -1347,7 +1355,7 @@ jobs:
       - checkout
       - setup-python-venv:
           install-python: false
-          extras-requires: "twine"
+          extras-requires: "build twine"
           executor: <<pipeline.parameters.docker-image>>
       - run: make -C <<parameters.path>> build
       - run: make -C <<parameters.path>> publish
@@ -1487,6 +1495,17 @@ jobs:
           path: webui/react/coverage/junit.xml
       - store_artifacts:
           path: webui/react/coverage
+
+  test-unit-react-quarantined:
+    docker:
+      - image: cimg/node:18.16.0
+        environment:
+          CI: "true"
+    steps:
+      - checkout-with-sm
+      - skip-if-docs-only
+      - react-get-deps
+      - run: make -C webui/react test-ci-flaky
 
   test-unit-react-screenshot:
     docker:
@@ -1789,6 +1808,29 @@ jobs:
           root: .
           paths:
             - test-unit-harness-gpu-lightning-pycov
+
+  test-unit-harness-gpu-deepspeed:
+    machine:
+      image: <<pipeline.parameters.gpu-machine-image>>
+    resource_class: gpu.nvidia.small
+    steps:
+      - checkout
+      - skip-if-docs-only
+      - skip-if-webui-only
+      - setup-docker-env:
+          image: determinedai/environments:cuda-11.3-pytorch-1.10-deepspeed-0.8.3-gpu-0.22.1
+          image-name: test_container
+          extras-requires: "mypy pytest coverage"
+      - run: mkdir -p $HOME/.local/bin
+      - install-codecov
+      - run: echo 'export PATH=$PATH:$HOME/.local/bin' >> $BASH_ENV
+      - run: docker exec -e COVERAGE_FILE=/mnt/project/test-unit-harness-gpu-deepspeed-pycov test_container make -C harness test-gpu-deepspeed
+      - run: docker exec test_container coverage xml -i --data-file=./test-unit-harness-gpu-deepspeed-pycov
+      - run: codecov -v -t $CODECOV_TOKEN -F harness
+      - persist_to_workspace:
+          root: .
+          paths:
+            - test-unit-harness-gpu-deepspeed-pycov
 
   test-unit-harness-tf2:
     docker:
@@ -2419,6 +2461,7 @@ workflows:
           requires:
             - build-docs
           context: aws
+          filters: *any-upstream
 
   test-cli:
     jobs:
@@ -2438,6 +2481,7 @@ workflows:
       - test-unit-harness-cpu
       - test-unit-harness-gpu
       - test-unit-harness-gpu-lightning
+      - test-unit-harness-gpu-deepspeed
       - test-unit-harness-tf2
       - test-unit-model-hub
       - test-unit-storage:
@@ -2817,6 +2861,8 @@ workflows:
               parallelism: [2]
               mark: ["det_deploy_local"]
               det-version: [$CIRCLE_SHA1]
+
+      - test-unit-react-quarantined
 
   test-e2e-longrunning:
     jobs:

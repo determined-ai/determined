@@ -220,6 +220,56 @@ export const Jobv1Type = {
 } as const
 export type Jobv1Type = ValueOf<typeof Jobv1Type>
 /**
+ * Nested object for checkpoint_storage field patch.
+ * @export
+ * @interface PatchExperimentPatchCheckpointStorage
+ */
+export interface PatchExperimentPatchCheckpointStorage {
+    /**
+     * Experiment config checkpoint_storage.save_experiment_best.
+     * @type {number}
+     * @memberof PatchExperimentPatchCheckpointStorage
+     */
+    saveExperimentBest?: number;
+    /**
+     * Experiment config checkpoint_storage.save_trial_best.
+     * @type {number}
+     * @memberof PatchExperimentPatchCheckpointStorage
+     */
+    saveTrialBest?: number;
+    /**
+     * Experiment config checkpoint_storage.save_trial_latest.
+     * @type {number}
+     * @memberof PatchExperimentPatchCheckpointStorage
+     */
+    saveTrialLatest?: number;
+}
+/**
+ * Nested object for resources field patch.
+ * @export
+ * @interface PatchExperimentPatchResources
+ */
+export interface PatchExperimentPatchResources {
+    /**
+     * Experiment config resources.max_slots.
+     * @type {number}
+     * @memberof PatchExperimentPatchResources
+     */
+    maxSlots?: number;
+    /**
+     * Experiment config resources.weight.
+     * @type {number}
+     * @memberof PatchExperimentPatchResources
+     */
+    weight?: number;
+    /**
+     * Experiment config resources.priority.
+     * @type {number}
+     * @memberof PatchExperimentPatchResources
+     */
+    priority?: number;
+}
+/**
  * https://developers.google.com/protocol-buffers/docs/reference/java/com/google/protobuf/Any
  * @export
  * @interface ProtobufAny
@@ -327,6 +377,25 @@ export interface RuntimeStreamError {
      * @memberof RuntimeStreamError
      */
     details?: Array<ProtobufAny>;
+}
+/**
+ * 
+ * @export
+ * @interface StreamResultOfV1ExpMetricNamesResponse
+ */
+export interface StreamResultOfV1ExpMetricNamesResponse {
+    /**
+     * 
+     * @type {V1ExpMetricNamesResponse}
+     * @memberof StreamResultOfV1ExpMetricNamesResponse
+     */
+    result?: V1ExpMetricNamesResponse;
+    /**
+     * 
+     * @type {RuntimeStreamError}
+     * @memberof StreamResultOfV1ExpMetricNamesResponse
+     */
+    error?: RuntimeStreamError;
 }
 /**
  * 
@@ -439,25 +508,6 @@ export interface StreamResultOfV1MetricBatchesResponse {
      * 
      * @type {RuntimeStreamError}
      * @memberof StreamResultOfV1MetricBatchesResponse
-     */
-    error?: RuntimeStreamError;
-}
-/**
- * 
- * @export
- * @interface StreamResultOfV1MetricNamesResponse
- */
-export interface StreamResultOfV1MetricNamesResponse {
-    /**
-     * 
-     * @type {V1MetricNamesResponse}
-     * @memberof StreamResultOfV1MetricNamesResponse
-     */
-    result?: V1MetricNamesResponse;
-    /**
-     * 
-     * @type {RuntimeStreamError}
-     * @memberof StreamResultOfV1MetricNamesResponse
      */
     error?: RuntimeStreamError;
 }
@@ -1536,6 +1586,12 @@ export interface V1BulkExperimentFilters {
      * @memberof V1BulkExperimentFilters
      */
     projectId?: number;
+    /**
+     * Experiment ids to exclude when filters are used.
+     * @type {Array<number>}
+     * @memberof V1BulkExperimentFilters
+     */
+    excludedExperimentIds?: Array<number>;
 }
 /**
  * Response to CancelExperimentRequest.
@@ -2735,6 +2791,31 @@ export interface V1ExperimentSimulation {
      * @memberof V1ExperimentSimulation
      */
     trials?: Array<V1TrialSimulation>;
+}
+/**
+ * Response to ExpMetricNamesRequest.
+ * @export
+ * @interface V1ExpMetricNamesResponse
+ */
+export interface V1ExpMetricNamesResponse {
+    /**
+     * The names of the searcher metrics.
+     * @type {Array<string>}
+     * @memberof V1ExpMetricNamesResponse
+     */
+    searcherMetrics?: Array<string>;
+    /**
+     * List of training metric names.
+     * @type {Array<string>}
+     * @memberof V1ExpMetricNamesResponse
+     */
+    trainingMetrics?: Array<string>;
+    /**
+     * List of validation metric names.
+     * @type {Array<string>}
+     * @memberof V1ExpMetricNamesResponse
+     */
+    validationMetrics?: Array<string>;
 }
 /**
  * The failure type of a resource.   - FAILURE_TYPE_UNSPECIFIED: UNSPECIFIED denotes an error that is not defined below.  - FAILURE_TYPE_RESOURCES_FAILED: ResourcesFailed denotes that the container ran but failed with a non-zero exit code.  - FAILURE_TYPE_RESOURCES_ABORTED: ResourcesAborted denotes the container was canceled before it was started.  - FAILURE_TYPE_RESOURCES_MISSING: ResourcesMissing denotes the resources were missing when the master asked about it.  - FAILURE_TYPE_TASK_ABORTED: TaskAborted denotes that the task was canceled before it was started.  - FAILURE_TYPE_TASK_ERROR: TaskError denotes that the task failed without an associated exit code.  - FAILURE_TYPE_AGENT_FAILED: AgentFailed denotes that the agent failed while the container was running.  - FAILURE_TYPE_AGENT_ERROR: AgentError denotes that the agent failed to launch the container.  - FAILURE_TYPE_RESTORE_ERROR: RestoreError denotes a failure to restore a running allocation on master blip.  - FAILURE_TYPE_UNKNOWN_ERROR: UnknownError denotes an internal error that did not map to a know failure type.
@@ -5166,31 +5247,6 @@ export interface V1MetricBatchesResponse {
     batches?: Array<number>;
 }
 /**
- * Response to MetricNamesRequest.
- * @export
- * @interface V1MetricNamesResponse
- */
-export interface V1MetricNamesResponse {
-    /**
-     * The name of the searcher metric.
-     * @type {string}
-     * @memberof V1MetricNamesResponse
-     */
-    searcherMetric?: string;
-    /**
-     * List of training metric names.
-     * @type {Array<string>}
-     * @memberof V1MetricNamesResponse
-     */
-    trainingMetrics?: Array<string>;
-    /**
-     * List of validation metric names.
-     * @type {Array<string>}
-     * @memberof V1MetricNamesResponse
-     */
-    validationMetrics?: Array<string>;
-}
-/**
  * 
  * @export
  * @interface V1Metrics
@@ -5830,6 +5886,18 @@ export interface V1PatchExperiment {
      * @memberof V1PatchExperiment
      */
     notes?: string;
+    /**
+     * Experiment config resources.
+     * @type {PatchExperimentPatchResources}
+     * @memberof V1PatchExperiment
+     */
+    resources?: PatchExperimentPatchResources;
+    /**
+     * Experiment config checkpoint_storage.
+     * @type {PatchExperimentPatchCheckpointStorage}
+     * @memberof V1PatchExperiment
+     */
+    checkpointStorage?: PatchExperimentPatchCheckpointStorage;
 }
 /**
  * Response to PatchExperimentRequest.
@@ -5993,6 +6061,19 @@ export interface V1PatchProjectResponse {
      * @memberof V1PatchProjectResponse
      */
     project: V1Project;
+}
+/**
+ * Response to PatchTemplateConfigRequest.
+ * @export
+ * @interface V1PatchTemplateConfigResponse
+ */
+export interface V1PatchTemplateConfigResponse {
+    /**
+     * The updated template.
+     * @type {V1Template}
+     * @memberof V1PatchTemplateConfigResponse
+     */
+    template: V1Template;
 }
 /**
  * Request message to PatchTrialsCollection.
@@ -6531,6 +6612,19 @@ export interface V1PostSearcherOperationsRequest {
  * @interface V1PostSearcherOperationsResponse
  */
 export interface V1PostSearcherOperationsResponse {
+}
+/**
+ * Response to PostTemplateRequest.
+ * @export
+ * @interface V1PostTemplateResponse
+ */
+export interface V1PostTemplateResponse {
+    /**
+     * The created template.
+     * @type {V1Template}
+     * @memberof V1PostTemplateResponse
+     */
+    template: V1Template;
 }
 /**
  * Create a batch of trial profiler metrics.
@@ -8788,6 +8882,12 @@ export interface V1Template {
      * @memberof V1Template
      */
     config: any;
+    /**
+     * The id of the workspace associated with this model.
+     * @type {number}
+     * @memberof V1Template
+     */
+    workspaceId: number;
 }
 /**
  * Tensorboard is a tensorboard instance in a containerized environment.
@@ -16316,6 +16416,46 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Get the set of metric names recorded for a list of experiments.
+         * @param {Array<number>} [ids] The ids for the experiments.
+         * @param {number} [periodSeconds] Seconds to wait when polling for updates.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        expMetricNames(ids?: Array<number>, periodSeconds?: number, options: any = {}): FetchArgs {
+            const localVarPath = `/api/v1/experiments/metrics-stream/metric-names`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            if (ids) {
+                localVarQueryParameter['ids'] = ids
+            }
+            
+            if (periodSeconds !== undefined) {
+                localVarQueryParameter['periodSeconds'] = periodSeconds
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get the best searcher validation for an experiment by the given metric.
          * @param {number} experimentId The ID of the experiment.
          * @param {*} [options] Override http request option.
@@ -16857,47 +16997,6 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             
             if (metricType !== undefined) {
                 localVarQueryParameter['metricType'] = metricType
-            }
-            
-            if (periodSeconds !== undefined) {
-                localVarQueryParameter['periodSeconds'] = periodSeconds
-            }
-            
-            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
-            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
-            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
-            
-            return {
-                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
-         * @summary Get the set of metric names recorded for an experiment.
-         * @param {number} experimentId The id of the experiment.
-         * @param {number} [periodSeconds] Seconds to wait when polling for updates.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        metricNames(experimentId: number, periodSeconds?: number, options: any = {}): FetchArgs {
-            // verify required parameter 'experimentId' is not null or undefined
-            if (experimentId === null || experimentId === undefined) {
-                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling metricNames.');
-            }
-            const localVarPath = `/api/v1/experiments/{experimentId}/metrics-stream/metric-names`
-                .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
-            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
-            const localVarRequestOptions = { method: 'GET', ...options };
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-            
-            // authentication BearerToken required
-            if (configuration && configuration.apiKey) {
-                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
-                    ? configuration.apiKey("Authorization")
-                    : configuration.apiKey;
-                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
             if (periodSeconds !== undefined) {
@@ -17814,6 +17913,26 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Get the set of metric names recorded for a list of experiments.
+         * @param {Array<number>} [ids] The ids for the experiments.
+         * @param {number} [periodSeconds] Seconds to wait when polling for updates.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        expMetricNames(ids?: Array<number>, periodSeconds?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1ExpMetricNamesResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).expMetricNames(ids, periodSeconds, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Get the best searcher validation for an experiment by the given metric.
          * @param {number} experimentId The ID of the experiment.
          * @param {*} [options] Override http request option.
@@ -18066,26 +18185,6 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         metricBatches(experimentId: number, metricName: string, metricType: V1MetricType, periodSeconds?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1MetricBatchesResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).metricBatches(experimentId, metricName, metricType, periodSeconds, options);
-            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
-                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
-                    if (response.status >= 200 && response.status < 300) {
-                        return response.json();
-                    } else {
-                        throw response;
-                    }
-                });
-            };
-        },
-        /**
-         * 
-         * @summary Get the set of metric names recorded for an experiment.
-         * @param {number} experimentId The id of the experiment.
-         * @param {number} [periodSeconds] Seconds to wait when polling for updates.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        metricNames(experimentId: number, periodSeconds?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1MetricNamesResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).metricNames(experimentId, periodSeconds, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -18515,6 +18614,17 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Get the set of metric names recorded for a list of experiments.
+         * @param {Array<number>} [ids] The ids for the experiments.
+         * @param {number} [periodSeconds] Seconds to wait when polling for updates.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        expMetricNames(ids?: Array<number>, periodSeconds?: number, options?: any) {
+            return InternalApiFp(configuration).expMetricNames(ids, periodSeconds, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Get the best searcher validation for an experiment by the given metric.
          * @param {number} experimentId The ID of the experiment.
          * @param {*} [options] Override http request option.
@@ -18659,17 +18769,6 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          */
         metricBatches(experimentId: number, metricName: string, metricType: V1MetricType, periodSeconds?: number, options?: any) {
             return InternalApiFp(configuration).metricBatches(experimentId, metricName, metricType, periodSeconds, options)(fetch, basePath);
-        },
-        /**
-         * 
-         * @summary Get the set of metric names recorded for an experiment.
-         * @param {number} experimentId The id of the experiment.
-         * @param {number} [periodSeconds] Seconds to wait when polling for updates.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        metricNames(experimentId: number, periodSeconds?: number, options?: any) {
-            return InternalApiFp(configuration).metricNames(experimentId, periodSeconds, options)(fetch, basePath);
         },
         /**
          * 
@@ -18987,6 +19086,19 @@ export class InternalApi extends BaseAPI {
     
     /**
      * 
+     * @summary Get the set of metric names recorded for a list of experiments.
+     * @param {Array<number>} [ids] The ids for the experiments.
+     * @param {number} [periodSeconds] Seconds to wait when polling for updates.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public expMetricNames(ids?: Array<number>, periodSeconds?: number, options?: any) {
+        return InternalApiFp(this.configuration).expMetricNames(ids, periodSeconds, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
      * @summary Get the best searcher validation for an experiment by the given metric.
      * @param {number} experimentId The ID of the experiment.
      * @param {*} [options] Override http request option.
@@ -19156,19 +19268,6 @@ export class InternalApi extends BaseAPI {
      */
     public metricBatches(experimentId: number, metricName: string, metricType: V1MetricType, periodSeconds?: number, options?: any) {
         return InternalApiFp(this.configuration).metricBatches(experimentId, metricName, metricType, periodSeconds, options)(this.fetch, this.basePath)
-    }
-    
-    /**
-     * 
-     * @summary Get the set of metric names recorded for an experiment.
-     * @param {number} experimentId The id of the experiment.
-     * @param {number} [periodSeconds] Seconds to wait when polling for updates.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof InternalApi
-     */
-    public metricNames(experimentId: number, periodSeconds?: number, options?: any) {
-        return InternalApiFp(this.configuration).metricNames(experimentId, periodSeconds, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -24428,7 +24527,95 @@ export const TemplatesApiFetchParamCreator = function (configuration?: Configura
         },
         /**
          * 
-         * @summary Update or create (upsert) the requested template.
+         * @summary Patch template config.
+         * @param {string} templateName The name of the template.
+         * @param {any} body The template value.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchTemplateConfig(templateName: string, body: any, options: any = {}): FetchArgs {
+            // verify required parameter 'templateName' is not null or undefined
+            if (templateName === null || templateName === undefined) {
+                throw new RequiredError('templateName','Required parameter templateName was null or undefined when calling patchTemplateConfig.');
+            }
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling patchTemplateConfig.');
+            }
+            const localVarPath = `/api/v1/templates/{templateName}`
+                .replace(`{${"templateName"}}`, encodeURIComponent(String(templateName)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'PATCH', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Post a new template.
+         * @param {string} templateName The name of the template.
+         * @param {V1Template} body The template to put.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postTemplate(templateName: string, body: V1Template, options: any = {}): FetchArgs {
+            // verify required parameter 'templateName' is not null or undefined
+            if (templateName === null || templateName === undefined) {
+                throw new RequiredError('templateName','Required parameter templateName was null or undefined when calling postTemplate.');
+            }
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling postTemplate.');
+            }
+            const localVarPath = `/api/v1/templates/{templateName}`
+                .replace(`{${"templateName"}}`, encodeURIComponent(String(templateName)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary DEPRECATED: Update or create (upsert) the requested template.
          * @param {string} templateName The name of the template.
          * @param {V1Template} body The template to put.
          * @param {*} [options] Override http request option.
@@ -24542,7 +24729,47 @@ export const TemplatesApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Update or create (upsert) the requested template.
+         * @summary Patch template config.
+         * @param {string} templateName The name of the template.
+         * @param {any} body The template value.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchTemplateConfig(templateName: string, body: any, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchTemplateConfigResponse> {
+            const localVarFetchArgs = TemplatesApiFetchParamCreator(configuration).patchTemplateConfig(templateName, body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Post a new template.
+         * @param {string} templateName The name of the template.
+         * @param {V1Template} body The template to put.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postTemplate(templateName: string, body: V1Template, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostTemplateResponse> {
+            const localVarFetchArgs = TemplatesApiFetchParamCreator(configuration).postTemplate(templateName, body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary DEPRECATED: Update or create (upsert) the requested template.
          * @param {string} templateName The name of the template.
          * @param {V1Template} body The template to put.
          * @param {*} [options] Override http request option.
@@ -24605,7 +24832,29 @@ export const TemplatesApiFactory = function (configuration?: Configuration, fetc
         },
         /**
          * 
-         * @summary Update or create (upsert) the requested template.
+         * @summary Patch template config.
+         * @param {string} templateName The name of the template.
+         * @param {any} body The template value.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchTemplateConfig(templateName: string, body: any, options?: any) {
+            return TemplatesApiFp(configuration).patchTemplateConfig(templateName, body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Post a new template.
+         * @param {string} templateName The name of the template.
+         * @param {V1Template} body The template to put.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postTemplate(templateName: string, body: V1Template, options?: any) {
+            return TemplatesApiFp(configuration).postTemplate(templateName, body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary DEPRECATED: Update or create (upsert) the requested template.
          * @param {string} templateName The name of the template.
          * @param {V1Template} body The template to put.
          * @param {*} [options] Override http request option.
@@ -24666,7 +24915,33 @@ export class TemplatesApi extends BaseAPI {
     
     /**
      * 
-     * @summary Update or create (upsert) the requested template.
+     * @summary Patch template config.
+     * @param {string} templateName The name of the template.
+     * @param {any} body The template value.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TemplatesApi
+     */
+    public patchTemplateConfig(templateName: string, body: any, options?: any) {
+        return TemplatesApiFp(this.configuration).patchTemplateConfig(templateName, body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Post a new template.
+     * @param {string} templateName The name of the template.
+     * @param {V1Template} body The template to put.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TemplatesApi
+     */
+    public postTemplate(templateName: string, body: V1Template, options?: any) {
+        return TemplatesApiFp(this.configuration).postTemplate(templateName, body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary DEPRECATED: Update or create (upsert) the requested template.
      * @param {string} templateName The name of the template.
      * @param {V1Template} body The template to put.
      * @param {*} [options] Override http request option.

@@ -1,0 +1,7 @@
+.base {
+  min-height: 300px;
+
+  :global(.ant-card-head-title) {
+    margin-right: 8px;
+  }
+}

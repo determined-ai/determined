@@ -669,11 +669,11 @@ func TestLegacyExperiments(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	t.Run("MetricNames", func(t *testing.T) {
-		req := &apiv1.MetricNamesRequest{
-			ExperimentId: prse.CompletedPBTExpID,
+	t.Run("ExpMetricNames", func(t *testing.T) {
+		req := &apiv1.ExpMetricNamesRequest{
+			Ids: []int32{prse.CompletedPBTExpID},
 		}
-		err = api.MetricNames(req, &mockStream[*apiv1.MetricNamesResponse]{ctx: ctx})
+		err = api.ExpMetricNames(req, &mockStream[*apiv1.ExpMetricNamesResponse]{ctx: ctx})
 		require.NoError(t, err)
 	})
 
@@ -1066,9 +1066,9 @@ func TestAuthZGetExperimentAndCanDoActions(t *testing.T) {
 			return err
 		}},
 		{"CanGetExperimentArtifacts", func(id int) error {
-			return api.MetricNames(&apiv1.MetricNamesRequest{
-				ExperimentId: int32(id),
-			}, &mockStream[*apiv1.MetricNamesResponse]{ctx: ctx})
+			return api.ExpMetricNames(&apiv1.ExpMetricNamesRequest{
+				Ids: []int32{int32(id)},
+			}, &mockStream[*apiv1.ExpMetricNamesResponse]{ctx: ctx})
 		}},
 		{"CanGetExperimentArtifacts", func(id int) error {
 			return api.MetricBatches(&apiv1.MetricBatchesRequest{

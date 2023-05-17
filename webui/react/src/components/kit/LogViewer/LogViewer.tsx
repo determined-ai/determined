@@ -24,10 +24,10 @@ import Spinner from 'shared/components/Spinner';
 import { RecordKey, ValueOf } from 'shared/types';
 import { clone } from 'shared/utils/data';
 import { formatDatetime } from 'shared/utils/datetime';
-import { copyToClipboard } from 'shared/utils/dom';
 import { dateTimeStringSorter, numericSorter } from 'shared/utils/sort';
 import { Log, LogLevel } from 'types';
-import { notification } from 'utils/dialogApi';
+
+import ClipboardButton from '../ClipboardButton';
 
 import css from './LogViewer.module.scss';
 import LogViewerEntry, { DATETIME_FORMAT, ICON_WIDTH, MAX_DATETIME_LENGTH } from './LogViewerEntry';
@@ -331,24 +331,13 @@ const LogViewer: React.FC<Props> = ({
     }
   }, [fetchDirection, logs.length]);
 
-  const handleCopyToClipboard = useCallback(async () => {
-    const content = logs
-      .map((log) => `${formatClipboardHeader(log)}${log.message || ''}`)
-      .join('\n');
+  const clipboardCopiedMessage = useMemo(() => {
+    const linesLabel = logs.length === 1 ? 'entry' : 'entries';
+    return `Copied ${logs.length} ${linesLabel}!`;
+  }, [logs]);
 
-    try {
-      await copyToClipboard(content);
-      const linesLabel = logs.length === 1 ? 'entry' : 'entries';
-      notification.open({
-        description: `${logs.length} ${linesLabel} copied to the clipboard.`,
-        message: 'Available logs Copied',
-      });
-    } catch (e) {
-      notification.warning({
-        description: (e as Error)?.message,
-        message: 'Unable to Copy to Clipboard',
-      });
-    }
+  const getClipboardContent = useCallback(() => {
+    return logs.map((log) => `${formatClipboardHeader(log)}${log.message || ''}`).join('\n');
   }, [logs]);
 
   const handleFullScreen = useCallback(() => {
@@ -516,12 +505,7 @@ const LogViewer: React.FC<Props> = ({
   const logViewerOptions = (
     <div className={css.options}>
       <Space>
-        <Button
-          aria-label="Copy to Clipboard"
-          disabled={logs.length === 0}
-          icon={<Icon name="clipboard" showTooltip title="Copy to Clipboard" />}
-          onClick={handleCopyToClipboard}
-        />
+        <ClipboardButton copiedMessage={clipboardCopiedMessage} getContent={getClipboardContent} />
         <Button
           aria-label="Toggle Fullscreen Mode"
           icon={<Icon name="fullscreen" showTooltip title="Toggle Fullscreen Mode" />}
@@ -572,7 +556,7 @@ const LogViewer: React.FC<Props> = ({
         <div className={css.container}>
           <div className={css.logs} ref={logsRef}>
             <VariableSizeList
-              height={pageSize.height - 240}
+              height={pageSize.height - 200}
               itemCount={logs.length}
               itemData={logs}
               itemSize={getItemHeight}

@@ -10,6 +10,7 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/templatev1"
 )
@@ -49,9 +50,70 @@ func (a *apiServer) PutTemplate(
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid config provided: %s", err.Error())
 	}
+	if req.Template.WorkspaceId != 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "setting workspace_id is not supported.")
+	}
 	err = a.m.db.QueryProto("put_template", req.Template, req.Template.Name, config)
 	return &apiv1.PutTemplateResponse{Template: req.Template},
 		errors.Wrapf(err, "error putting template")
+}
+
+func (a *apiServer) PostTemplate(
+	ctx context.Context, req *apiv1.PostTemplateRequest,
+) (*apiv1.PostTemplateResponse, error) {
+	config, err := protojson.Marshal(req.Template.Config)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid config provided: %s", err.Error())
+	}
+	workspaceID := model.DefaultWorkspaceID
+	if req.Template.WorkspaceId != 0 {
+		workspaceID = int(req.Template.WorkspaceId)
+	}
+	notFoundErr := status.Errorf(codes.NotFound, "workspace (%d) not found", workspaceID)
+	var exists bool
+	err = db.Bun().NewSelect().ColumnExpr("1").Table("workspaces").
+		Where("id = ?", workspaceID).
+		Where("archived = false").
+		Limit(1).
+		Scan(ctx, &exists)
+	if err != nil {
+		return nil, errors.Wrapf(err, "error checking workspace %d", workspaceID)
+	}
+	if !exists {
+		return nil, notFoundErr
+	}
+
+	res := apiv1.PostTemplateResponse{Template: &templatev1.Template{}}
+	switch err := a.m.db.QueryProto(
+		"insert_template", res.Template, req.Template.Name, config, workspaceID,
+	); err {
+	case nil:
+		return &res, nil
+	default:
+		return nil, status.Errorf(codes.Internal, "error posting template %s to db: %s",
+			req.Template.Name, err.Error())
+	}
+}
+
+func (a *apiServer) PatchTemplateConfig(
+	ctx context.Context, req *apiv1.PatchTemplateConfigRequest,
+) (*apiv1.PatchTemplateConfigResponse, error) {
+	config, err := protojson.Marshal(req.Config)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid config provided: %s", err.Error())
+	}
+	template := templatev1.Template{}
+	switch err := a.m.db.QueryProto(
+		"update_template", &template, req.TemplateName, config,
+	); err {
+	case nil:
+		return &apiv1.PatchTemplateConfigResponse{Template: &template}, nil
+	case db.ErrNotFound:
+		return nil, status.Errorf(
+			codes.NotFound, "error updating template %s to db: %s", req.TemplateName, err.Error())
+	default:
+		return nil, status.Errorf(codes.Internal, "failed to update template: %s", err.Error())
+	}
 }
 
 func (a *apiServer) DeleteTemplate(

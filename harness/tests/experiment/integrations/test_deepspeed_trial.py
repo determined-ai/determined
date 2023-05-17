@@ -36,6 +36,7 @@ def manual_init_distributed() -> Iterator[None]:
 
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="no gpu available")
+@pytest.mark.deepspeed
 @pytest.mark.gpu
 class TestDeepSpeedTrial:
     def setup_method(self) -> None:
@@ -87,7 +88,7 @@ class TestDeepSpeedTrial:
             for metrics in validation_metrics:
                 assert "loss" in metrics
 
-        with pytest.raises(AssertionError, match=r"Torch distributed not initialized. .*"):
+        with pytest.raises(AssertionError, match=r"Distributed backend is not initialized. .*"):
             _ = utils.make_trial_controller_from_trial_implementation(
                 trial_class=deepspeed_linear_model.LinearDeepSpeedTrial,
                 hparams=updated_hparams,
@@ -640,6 +641,7 @@ class TestDeepSpeedTrial:
         }
 
 
+@pytest.mark.deepspeed
 def test_overwrite_deepspeed_config() -> None:
     base_ds_config = deepspeed_config
     source_ds_config = {

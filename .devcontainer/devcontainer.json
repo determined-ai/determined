@@ -9,7 +9,7 @@
 		"ghcr.io/devcontainers/features/python:1": {},
 		"ghcr.io/devcontainers/features/node:1": {
 			"nodeGypDependencies": true,
-			"version": "19.7.0"
+			"version": "18.16.0"
 		}
 	},
 
@@ -36,6 +36,16 @@
 			"type": "volume",
 			"source": "dev-home",
 			"target": "/home"
+		},
+		{
+			"type": "bind",
+			"source": "${localEnv:HOME}/.ssh",
+			"target": "/home/vscode/.ssh"
+		},
+		{
+			"type": "bind",
+			"source": "${localEnv:HOME}/.gitconfig",
+			"target": "/home/vscode/.gitconfig"
 		},
 		{
 			"type": "volume",
