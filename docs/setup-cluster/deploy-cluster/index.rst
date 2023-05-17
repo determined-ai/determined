@@ -13,6 +13,7 @@ To set up Determined, start by following the cluster deployment guide for your e
 | -  :doc:`on-prem/deploy`                               |
 | -  :doc:`on-prem/docker`                               |
 | -  :doc:`on-prem/homebrew`                             |
+| -  :doc:`on-prem/wsl`                                  |
 +--------------------------------------------------------+
 | :doc:`aws/overview`                                    |
 +--------------------------------------------------------+
