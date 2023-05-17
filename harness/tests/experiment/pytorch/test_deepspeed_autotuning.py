@@ -1093,7 +1093,7 @@ class TestBinaryDSATSearchMethod:
 
 @pytest.fixture
 def default_asha_state_and_search_method() -> (
-    Generator[Tuple[SearcherState, BaseDSATSearchMethod], Any, None]
+    Generator[Tuple[searcher.SearcherState, BaseDSATSearchMethod], Any, None]
 ):
     searcher_state, search_method = search_state_and_method_builder(DEFAULT_ARGS_DICT["asha"])
     yield searcher_state, search_method
@@ -1101,7 +1101,7 @@ def default_asha_state_and_search_method() -> (
 
 @pytest.fixture
 def long_asha_state_and_search_method() -> (
-    Generator[Tuple[SearcherState, BaseDSATSearchMethod], Any, None]
+    Generator[Tuple[searcher.SearcherState, BaseDSATSearchMethod], Any, None]
 ):
     args = copy.deepcopy(DEFAULT_ARGS_DICT["asha"])
     args.max_trials = 10**3
@@ -1112,7 +1112,7 @@ def long_asha_state_and_search_method() -> (
 
 @pytest.fixture
 def long_large_min_resource_asha_state_and_search_method() -> (
-    Generator[Tuple[SearcherState, BaseDSATSearchMethod], Any, None]
+    Generator[Tuple[searcher.SearcherState, BaseDSATSearchMethod], Any, None]
 ):
     """
     For long-running tests which need a longer max_trials and resources.
@@ -1129,7 +1129,7 @@ class TestASHADSATSearchMethod:
     def test_binary_happy_path(
         self,
         long_large_min_resource_asha_state_and_search_method: Tuple[
-            SearcherState, BinarySearchDSATSearchMethod
+            searcher.SearcherState, BinarySearchDSATSearchMethod
         ],
     ) -> None:
         searcher_state, search_method = long_large_min_resource_asha_state_and_search_method
@@ -1174,7 +1174,7 @@ class TestASHADSATSearchMethod:
 
     @pytest.mark.timeout(5)
     def test_get_top_lineages_in_rung(
-        self, long_asha_state_and_search_method: Tuple[SearcherState, ASHADSATSearchMethod]
+        self, long_asha_state_and_search_method: Tuple[searcher.SearcherState, ASHADSATSearchMethod]
     ) -> None:
         searcher_state, search_method = long_asha_state_and_search_method
         search_method.trial_tracker.queue.clear()
@@ -1216,7 +1216,7 @@ class TestASHADSATSearchMethod:
 
     @pytest.mark.timeout(5)
     def test_basic_promotion(
-        self, long_asha_state_and_search_method: Tuple[SearcherState, ASHADSATSearchMethod]
+        self, long_asha_state_and_search_method: Tuple[searcher.SearcherState, ASHADSATSearchMethod]
     ) -> None:
         searcher_state, search_method = long_asha_state_and_search_method
         search_method.trial_tracker.queue.clear()
@@ -1253,7 +1253,7 @@ class TestASHADSATSearchMethod:
 
     @pytest.mark.timeout(5)
     def test_lineage_continutation(
-        self, long_asha_state_and_search_method: Tuple[SearcherState, ASHADSATSearchMethod]
+        self, long_asha_state_and_search_method: Tuple[searcher.SearcherState, ASHADSATSearchMethod]
     ) -> None:
         """
         Verify that we continue trials which have not yet completed their rung.
@@ -1287,7 +1287,7 @@ class TestASHADSATSearchMethod:
 
     @pytest.mark.timeout(5)
     def test_top_promotion(
-        self, long_asha_state_and_search_method: Tuple[SearcherState, ASHADSATSearchMethod]
+        self, long_asha_state_and_search_method: Tuple[searcher.SearcherState, ASHADSATSearchMethod]
     ) -> None:
         """
         Verify that if multiple lineages can be promoted, we promote from the higest-rung lineage
@@ -1360,7 +1360,7 @@ class TestASHADSATSearchMethod:
 
     @pytest.mark.timeout(5)
     def test_max_resource_respected(
-        self, long_asha_state_and_search_method: Tuple[SearcherState, ASHADSATSearchMethod]
+        self, long_asha_state_and_search_method: Tuple[searcher.SearcherState, ASHADSATSearchMethod]
     ) -> None:
         """
         Verify that we respect the maximum resource per lineage.
@@ -1393,7 +1393,7 @@ class TestASHADSATSearchMethod:
 
     @pytest.mark.timeout(5)
     def test_no_continuation_for_completed_lineages(
-        self, long_asha_state_and_search_method: Tuple[SearcherState, ASHADSATSearchMethod]
+        self, long_asha_state_and_search_method: Tuple[searcher.SearcherState, ASHADSATSearchMethod]
     ) -> None:
         """
         Verify that lineages which have completed their binary search are not continued.
@@ -1417,7 +1417,7 @@ class TestASHADSATSearchMethod:
 
     @pytest.mark.timeout(5)
     def test_completed_binary_search_lineages_are_counted_complete(
-        self, long_asha_state_and_search_method: Tuple[SearcherState, ASHADSATSearchMethod]
+        self, long_asha_state_and_search_method: Tuple[searcher.SearcherState, ASHADSATSearchMethod]
     ) -> None:
         """
         Verify that if a lineage successfully completes its binary search mid-rung, that lineage
@@ -1449,7 +1449,7 @@ class TestASHADSATSearchMethod:
 
     @pytest.mark.timeout(5)
     def test_failed_binary_search_lineages_are_counted_complete(
-        self, long_asha_state_and_search_method: Tuple[SearcherState, ASHADSATSearchMethod]
+        self, long_asha_state_and_search_method: Tuple[searcher.SearcherState, ASHADSATSearchMethod]
     ) -> None:
         """
         Verify that if a lineage fails its binary search mid-rung by failing on the minimum
