@@ -48,13 +48,13 @@ import { ValueOf } from 'shared/types';
 import { noOp } from 'shared/utils/service';
 import { BrandingType } from 'stores/determinedInfo';
 import { MetricType, User } from 'types';
+import { ThemeFont } from 'utils/fonts';
 import { NotLoaded } from 'utils/loadable';
 import loremIpsum from 'utils/loremIpsum';
 import {
-  Backgrounds,
+  Background,
   Brand,
   Float,
-  Fonts,
   Interactive,
   Overlay,
   Stage,
@@ -1748,7 +1748,7 @@ const TypographySection: React.FC = () => {
 
 const ThemeSection: React.FC = () => {
   const themeStatus = Object.values(Status);
-  const backgrounds = Object.values(Backgrounds);
+  const backgrounds = Object.values(Background);
   const stage = Object.values(Stage);
   const surface = Object.values(Surface);
   const float = Object.values(Float);
@@ -1790,68 +1790,68 @@ const ThemeSection: React.FC = () => {
       )}
       <AntDCard title="Fonts">
         <AntDCard title="Font Families">
-          <p style={{ fontFamily: `${Fonts.UI}`, fontSize: '16px' }}>
+          <p style={{ fontFamily: `${ThemeFont.UI}`, fontSize: '16px' }}>
             For general UI --theme-font-family
           </p>
-          <p style={{ fontFamily: `${Fonts.Code}`, fontSize: '16px' }}>
+          <p style={{ fontFamily: `${ThemeFont.Code}`, fontSize: '16px' }}>
             For displaying code --theme-font-family-code
           </p>
         </AntDCard>
         <AntDCard title="Font Sizing">
           <div>
             <div style={{ display: 'flex', flexDirection: 'column', marginBottom: '30px' }}>
-              <h4 style={{ marginBottom: '20px' }}>Header</h4>
-              <h4 className={css.headerXL} style={{ marginBottom: '5px' }}>
+              <Header style={{ marginBottom: '20px' }}>Header</Header>
+              <Header className={css.headerXL} style={{ marginBottom: '5px' }}>
                 Model Registry - XL (f.s. 28px, line-height 36px)
-              </h4>
-              <h4 className={css.headerL} style={{ marginBottom: '5px' }}>
+              </Header>
+              <Header className={css.headerL} style={{ marginBottom: '5px' }}>
                 Model Registry - L (f.s. 24px, line-height 32px)
-              </h4>
-              <h4 className={css.headerDefault} style={{ marginBottom: '5px' }}>
+              </Header>
+              <Header className={css.headerDefault} style={{ marginBottom: '5px' }}>
                 Model Registry - default (f.s. 22px line-height 28px)
-              </h4>
-              <h4 className={css.headerS} style={{ marginBottom: '5px' }}>
+              </Header>
+              <Header className={css.headerS} style={{ marginBottom: '5px' }}>
                 Model Registry - s (f.s. 18px line-height 23px)
-              </h4>
-              <h4 className={css.headerXS} style={{ marginBottom: '5px' }}>
+              </Header>
+              <Header className={css.headerXS} style={{ marginBottom: '5px' }}>
                 Model Registry - xs (f.s. 16px line-height 21px)
-              </h4>
+              </Header>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', marginBottom: '30px' }}>
-              <h4 style={{ marginBottom: '20px' }}>Multi Line</h4>
-              <h4 className={css.multiLineXL} style={{ marginBottom: '5px' }}>
+              <Header style={{ marginBottom: '20px' }}>Multi Line</Header>
+              <p className={css.multiLineXL} style={{ marginBottom: '5px' }}>
                 Model Registry - XL (f.s. 16px line-height 26px)
-              </h4>
-              <h4 className={css.multiLineL} style={{ marginBottom: '5px' }}>
+              </p>
+              <p className={css.multiLineL} style={{ marginBottom: '5px' }}>
                 Model Registry - L (f.s. 14px line-height 22px)
-              </h4>
-              <h4 className={css.multiLineDefault} style={{ marginBottom: '5px' }}>
+              </p>
+              <p className={css.multiLineDefault} style={{ marginBottom: '5px' }}>
                 Model Registry - default (f.s. 12px line-height 20px)
-              </h4>
-              <h4 className={css.multiLineS} style={{ marginBottom: '5px' }}>
+              </p>
+              <p className={css.multiLineS} style={{ marginBottom: '5px' }}>
                 Model Registry - s (f.s. 11px line-height 18px)
-              </h4>
-              <h4 className={css.multiLineXS} style={{ marginBottom: '5px' }}>
+              </p>
+              <p className={css.multiLineXS} style={{ marginBottom: '5px' }}>
                 Model Registry - xs (f.s. 10px line-height 16px)
-              </h4>
+              </p>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', marginBottom: '30px' }}>
-              <h4 style={{ marginBottom: '20px' }}>Single Line</h4>
-              <h4 className={css.singleLineXL} style={{ marginBottom: '5px' }}>
+              <Header style={{ marginBottom: '20px' }}>Single Line</Header>
+              <p className={css.singleLineXL} style={{ marginBottom: '5px' }}>
                 Model Registry - XL (f.s. 16px line-height 20px)
-              </h4>
-              <h4 className={css.singleLineL} style={{ marginBottom: '5px' }}>
+              </p>
+              <p className={css.singleLineL} style={{ marginBottom: '5px' }}>
                 Model Registry - L (f.s. 14px line-height 18px)
-              </h4>
-              <h4 className={css.singleLineDefault} style={{ marginBottom: '5px' }}>
+              </p>
+              <p className={css.singleLineDefault} style={{ marginBottom: '5px' }}>
                 Model Registry - default (f.s. 12px line-height 16px)
-              </h4>
-              <h4 className={css.singleLineS} style={{ marginBottom: '5px' }}>
+              </p>
+              <p className={css.singleLineS} style={{ marginBottom: '5px' }}>
                 Model Registry - s (f.s. 11px line-height 14px)
-              </h4>
-              <h4 className={css.singleLineXS} style={{ marginBottom: '5px' }}>
+              </p>
+              <p className={css.singleLineXS} style={{ marginBottom: '5px' }}>
                 Model Registry - xs (f.s. 10px line-height 12px)
-              </h4>
+              </p>
             </div>
           </div>
         </AntDCard>
