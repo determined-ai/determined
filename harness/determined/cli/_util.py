@@ -5,7 +5,7 @@ from typing import Any, Callable, Dict, List, Sequence
 
 import termcolor
 
-from determined.cli import errors
+from determined.cli import errors, render
 from determined.common import api, declarative_argparse, util
 from determined.common.api import authentication, bindings, certs
 from determined.experimental import client
@@ -126,7 +126,9 @@ def wait_ntsc_ready(session: api.Session, ntsc_type: api.NTSC_Kind, eid: str) ->
     Use to wait for a notebook, tensorboard, or shell command to become ready.
     """
     name = ntsc_type.value
-    print(f"waiting for {name} {eid} to become ready...")
-    err_msg = api.task_is_ready(session, eid)
+    print(f"Waiting for {name} {eid} to become ready...")
+    loading_animator = render.Animator("Waiting")
+    err_msg = api.task_is_ready(session, eid, loading_animator.next)
+    loading_animator.clear()
     if err_msg:
         raise errors.CliError(err_msg)

@@ -44,18 +44,33 @@ def unmarshal(
     return class_(**init_args)
 
 
-# CHECK: do we want to add animation now that waiting for a task is
-# more quiet?
 class Animator:
+    """
+    Animator is a simple class for rendering a loading animation in the terminal.
+    Use to communicate progress to the user when a call may take a while.
+    """
+
+    def __init__(self, message: str = "Loading") -> None:
+        self.message = message
+        self.step = 0
+
+    def next(self) -> None:
+        self.render_frame(self.step, self.message)
+        self.step += 1
+
     @staticmethod
-    def render_loading(cls: "Animator", step: int, message: str = "Loading") -> None:
+    def render_frame(step: int, message: str) -> None:
         animation = "|/-\\"
         sys.stdout.write("\r" + message + " " + animation[step % len(animation)])
         sys.stdout.flush()
 
+    def reset(self) -> None:
+        self.clear()
+        self.step = 0
+
     @staticmethod
-    def render_done(cls: "Animator", message: str = "Done") -> None:
-        sys.stdout.write("\r" + message + " . Done")
+    def clear(message: str = "Loading done.") -> None:
+        sys.stdout.write("\r" + message + "\n")
         sys.stdout.flush()
 
 

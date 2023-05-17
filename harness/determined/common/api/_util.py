@@ -4,6 +4,8 @@ from typing import Callable, Iterator, Optional, Tuple, TypeVar, Union
 from determined.common import api, util
 from determined.common.api import Session, bindings
 
+# from determined.cli.render import Animator
+
 
 class PageOpts(str, enum.Enum):
     single = "1"
@@ -81,7 +83,9 @@ def wait_for_ntsc_state(
     return util.wait_for(get_state, timeout)
 
 
-def task_is_ready(session: api.Session, task_id: str) -> Optional[str]:
+def task_is_ready(
+    session: api.Session, task_id: str, progress_report: Optional[Callable] = None
+) -> Optional[str]:
     """
     wait until a task is ready
     return: None if task is ready, otherwise return an error message
@@ -89,6 +93,8 @@ def task_is_ready(session: api.Session, task_id: str) -> Optional[str]:
 
     def _task_is_done_loading() -> Tuple[bool, Optional[str]]:
         task = bindings.get_GetTask(session, taskId=task_id).task
+        if progress_report:
+            progress_report()
         assert task is not None, "task must not be present."
         if len(task.allocations) == 0:
             return False, None
