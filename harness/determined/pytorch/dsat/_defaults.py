@@ -58,7 +58,7 @@ AUTOTUNING_ARG_DEFAULTS = {
     "search-range-factor": 1.0,
     "divisor": 2,
     "min-binary-search-trials": 2,
-    "max-binary-search-trials": 16,
+    "max-rungs": 5,
     "asha-early-stopping": 0,
 }
 

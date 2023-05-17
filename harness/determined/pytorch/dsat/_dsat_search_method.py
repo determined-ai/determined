@@ -2,7 +2,6 @@ import argparse
 import copy
 import json
 import logging
-import math
 import pathlib
 import pickle
 import random
@@ -1129,16 +1128,10 @@ class ASHADSATSearchMethod(BaseDSATSearchMethod):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-        # TODO: Remove hard coding and use better names. These are from the paper.
-        self.max_binary_search_trials = self.args.max_binary_search_trials
+        self.divisor = self.args.divisor
+        self.max_rungs = self.args.max_rungs
         self.min_binary_search_trials = self.args.min_binary_search_trials
         self.asha_early_stopping = self.args.asha_early_stopping
-        self.divisor = self.args.divisor
-        self.max_rung_ceiling = int(
-            math.log(self.max_binary_search_trials / self.min_binary_search_trials, self.divisor)
-        )
-        assert self.max_rung_ceiling > 0
         self.search_range_factor = self.args.search_range_factor
 
     def get_trials_after_validation_completed(
@@ -1204,7 +1197,7 @@ class ASHADSATSearchMethod(BaseDSATSearchMethod):
                 if root.search_data.curr_rung >= rung_idx
                 and self.lineage_completed_rung(root, rung_idx)
             ]
-            for rung_idx in range(self.max_rung_ceiling)
+            for rung_idx in range(self.max_rungs)
         }
         return rungs
 
@@ -1234,7 +1227,8 @@ class ASHADSATSearchMethod(BaseDSATSearchMethod):
         return False
 
     def get_next_promotable_lineage(self) -> Optional[DSATTrial]:
-        for rung_idx in reversed(range(self.max_rung_ceiling - 1)):
+        # Cannot promote from the top rung (rung_idx == self.max_rung - 1)
+        for rung_idx in reversed(range(self.max_rungs - 1)):
             next_promotable_trial = self.get_next_promotable_lineage_in_rung(rung_idx)
             if next_promotable_trial is not None:
                 return next_promotable_trial
@@ -1253,7 +1247,11 @@ class ASHADSATSearchMethod(BaseDSATSearchMethod):
         k = len(completed_lineages_in_rung) // self.divisor
         if not k:
             return []
-        best_trials = [self.get_best_trial_in_lineage(lin) for lin in completed_lineages_in_rung]
+        best_trials = [
+            self.get_best_trial_in_lineage(lin)
+            for lin in completed_lineages_in_rung
+            if self.get_best_trial_in_lineage(lin) is not None
+        ]
         reverse = not self.trial_tracker.smaller_is_better
         best_trials.sort(key=lambda t: t.searcher_metric_val, reverse=reverse)
         return best_trials[:k]

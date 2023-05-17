@@ -102,11 +102,10 @@ def get_full_parser() -> argparse.ArgumentParser:
         default=_defaults.AUTOTUNING_ARG_DEFAULTS["search-range-factor"],
     )
 
-    # TODO: just using the paper's notation now, but should make align with existing Determined.
     asha_subparser = subparsers.add_parser("asha", parents=[base_parser])
     asha_subparser.add_argument(
-        "--max-binary-search-trials",
-        default=_defaults.AUTOTUNING_ARG_DEFAULTS["max-binary-search-trials"],
+        "--max-rungs",
+        default=_defaults.AUTOTUNING_ARG_DEFAULTS["max-rungs"],
     )
     asha_subparser.add_argument(
         "--min-binary-search-trials",
