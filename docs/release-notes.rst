@@ -10,6 +10,18 @@
  Version 0.22
 **************
 
+Version 0.22.1
+==============
+
+**Release Date:** May 17, 2023
+
+**Bug Fixes**
+
+-  Fix a critical regression in 0.22.0 that could lead to database deadlocks and incorrect
+   experiment progress info when restarting trials after failure. Specifically, this problem may
+   occur when the ``max_restarts`` experiment configuration option is set to a value greater than
+   zero (default: 5). We advise all users running 0.22.0 to upgrade as soon as possible.
+
 Version 0.22.0
 ==============
 
