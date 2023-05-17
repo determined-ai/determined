@@ -472,15 +472,16 @@ func (db *PgDB) updateTotalBatches(ctx context.Context, tx *sqlx.Tx, trialID int
 		FROM (
 			SELECT max(q.total_batches) AS new_max_total_batches_processed
 			FROM (
-			SELECT coalesce(max(s.total_batches), 0) AS total_batches
-			FROM steps s
-			WHERE s.trial_id = $1
-			UNION ALL
-			SELECT coalesce(max(v.total_batches), 0) AS total_batches
-			FROM validations v
-			WHERE v.trial_id = $1
-		) q
-		) AS sub;
+				SELECT coalesce(max(s.total_batches), 0) AS total_batches
+				FROM steps s
+				WHERE s.trial_id = $1
+				UNION ALL
+				SELECT coalesce(max(v.total_batches), 0) AS total_batches
+				FROM validations v
+				WHERE v.trial_id = $1
+			) q
+		) AS sub
+		WHERE id = $1;
 		`, trialID); err != nil {
 		return errors.Wrap(err, "error computing total_batches")
 	}
@@ -944,7 +945,7 @@ WITH const AS (
 UPDATE trials t
 SET best_validation_id = (SELECT bv.id FROM best_validation bv),
 searcher_metric_value = (SELECT bv.searcher_metric_value FROM best_validation bv),
-searcher_metric_value_signed = 
+searcher_metric_value_signed =
 (SELECT bv.searcher_metric_value * const.sign FROM best_validation bv, const)
 WHERE t.id = $1;
 `, trialID, trialRunID, stepsCompleted)
