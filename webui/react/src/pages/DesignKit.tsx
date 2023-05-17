@@ -50,121 +50,22 @@ import { BrandingType } from 'stores/determinedInfo';
 import { MetricType, User } from 'types';
 import { NotLoaded } from 'utils/loadable';
 import loremIpsum from 'utils/loremIpsum';
+import {
+  Backgrounds,
+  Brand,
+  Float,
+  Fonts,
+  Interactive,
+  Overlay,
+  Stage,
+  Status,
+  Surface,
+} from 'utils/themes';
 
 import useConfirm, { voidPromiseFn } from '../components/kit/useConfirm';
 
 import css from './DesignKit.module.scss';
 import { CheckpointsDict } from './TrialDetails/F_TrialDetailsOverview';
-
-const themeStatus = [
-  'status-active',
-  'status-active-strong',
-  'status-active-weak',
-  'status-active-on',
-  'status-active-on-strong',
-  'status-active-on-weak',
-  'status-critical',
-  'status-critical-strong',
-  'status-critical-weak',
-  'status-critical-on',
-  'status-critical-on-strong',
-  'status-critical-on-weak',
-  'status-inactive',
-  'status-inactive-strong',
-  'status-inactive-weak',
-  'status-inactive-on',
-  'status-inactive-on-strong',
-  'status-inactive-on-weak',
-  'status-pending',
-  'status-pending-strong',
-  'status-pending-weak',
-  'status-pending-on',
-  'status-pending-on-strong',
-  'status-pending-on-weak',
-  'status-potential',
-  'status-success',
-  'status-success-strong',
-  'status-success-weak',
-  'status-success-on',
-  'status-success-on-strong',
-  'status-success-on-weak',
-  'status-warning',
-  'status-warning-strong',
-  'status-warning-weak',
-  'status-warning-on',
-  'status-warning-on-strong',
-  'status-warning-on-weak',
-];
-
-const backgrounds = [
-  'background',
-  'background-strong',
-  'background-weak',
-  'background-on',
-  'background-on-strong',
-  'background-on-weak',
-  'background-border',
-  'background-border-strong',
-  'background-border-weak',
-];
-
-const stage = [
-  'stage',
-  'stage-strong',
-  'stage-weak',
-  'stage-on',
-  'stage-on-strong',
-  'stage-on-weak',
-  'stage-border',
-  'stage-border-strong',
-  'stage-border-weak',
-];
-
-const surface = [
-  'surface',
-  'surface-strong',
-  'surface-weak',
-  'surface-on',
-  'surface-on-strong',
-  'surface-on-weak',
-  'surface-border',
-  'surface-border-strong',
-  'surface-border-weak',
-];
-
-const float = [
-  'float',
-  'float-strong',
-  'float-weak',
-  'float-on',
-  'float-on-strong',
-  'float-on-weak',
-  'float-border',
-  'float-border-strong',
-  'float-border-weak',
-];
-
-const overlay = ['overlay', 'overlay-strong', 'overlay-weak'];
-
-const brand = ['brand', 'brand-strong', 'brand-weak'];
-
-const interactive = [
-  'ix',
-  'ix-strong',
-  'ix-weak',
-  'ix-active',
-  'ix-inactive',
-  'ix-on',
-  'ix-on-strong',
-  'ix-on-weak',
-  'ix-on-active',
-  'ix-on-inactive',
-  'ix-border',
-  'ix-border-strong',
-  'ix-border-weak',
-  'ix-border-active',
-  'ix-border-inactive',
-];
 
 const ComponentTitles = {
   Accordion: 'Accordion',
@@ -1846,6 +1747,15 @@ const TypographySection: React.FC = () => {
 };
 
 const ThemeSection: React.FC = () => {
+  const themeStatus = Object.values(Status);
+  const backgrounds = Object.values(Backgrounds);
+  const stage = Object.values(Stage);
+  const surface = Object.values(Surface);
+  const float = Object.values(Float);
+  const overlay = Object.values(Overlay);
+  const brand = Object.values(Brand);
+  const interactive = Object.values(Interactive);
+
   const renderColorComponent = (colorArray: string[], name: string) => (
     <AntDCard title={`${name} Colors`}>
       {colorArray.map((cName, idx) => (
@@ -1872,7 +1782,9 @@ const ThemeSection: React.FC = () => {
   return (
     <ComponentSection id="Theme" title="Theme">
       <AntDCard>
-        <p>Here are a quick demo of the current theme (colors, fonts, etc)</p>
+        <p>
+          We have a variety of colors that are available for use with the components in the UI Kit.
+        </p>
       </AntDCard>
       {iterateOverThemes(
         [themeStatus, backgrounds, stage, surface, float, overlay, brand, interactive],
@@ -1880,10 +1792,10 @@ const ThemeSection: React.FC = () => {
       )}
       <AntDCard title="Fonts">
         <AntDCard title="Font Families">
-          <p style={{ fontFamily: 'var(--theme-font-family)', fontSize: '16px' }}>
+          <p style={{ fontFamily: `${Fonts.UI}`, fontSize: '16px' }}>
             For general UI --theme-font-family
           </p>
-          <p style={{ fontFamily: 'var(--theme-font-family-code)', fontSize: '16px' }}>
+          <p style={{ fontFamily: `${Fonts.Code}`, fontSize: '16px' }}>
             For displaying code --theme-font-family-code
           </p>
         </AntDCard>
