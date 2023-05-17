@@ -171,6 +171,21 @@ commands:
               circleci-agent step halt
             fi
 
+  skip-if-github-only:
+    steps:
+      - run: git fetch upstream
+      - run:
+          name: check for github-only changes
+          command: |
+            MERGE_BASE="$(git merge-base upstream/main HEAD)"
+            DIFF_DIRS="$(git diff-tree --no-commit-id --name-only "$MERGE_BASE" HEAD)"
+            if [ "$DIFF_DIRS" = ".github" ] ; then
+              echo "github-only change detected, halting job now"
+              circleci-agent step halt
+            else
+              echo "detected changes outside of .github: $DIFF_DIRS"
+            fi
+
   set-slack-user-id:
     steps:
       - run:
@@ -1194,6 +1209,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-github-only
       - skip-if-webui-only
       - reinstall-go
       - attach_workspace:
@@ -1226,6 +1242,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-github-only
       - skip-if-webui-only
       - attach_workspace:
           at: .
@@ -1366,6 +1383,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-github-only
       - setup-python-venv:
           install-python: false
           extra-requirements-file: "bindings/requirements.txt"
@@ -1381,6 +1399,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-github-only
       - skip-if-webui-only
       - setup-python-venv:
           install-python: false
@@ -1408,6 +1427,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-github-only
       - skip-if-webui-only
       - attach_workspace:
           at: .
@@ -1432,6 +1452,7 @@ jobs:
     steps:
       - checkout-with-sm
       - skip-if-docs-only
+      - skip-if-github-only
       - react-get-deps
       - run: make -C webui/react check
 
@@ -1446,6 +1467,7 @@ jobs:
     steps:
       - checkout-with-sm
       - skip-if-docs-only
+      - skip-if-github-only
       - react-get-deps
       - run: |
           if <<parameters.dev-mode>>; then
@@ -1465,6 +1487,7 @@ jobs:
     steps:
       - checkout-with-sm
       - skip-if-docs-only
+      - skip-if-github-only
       - run: apt-get update && apt-get -y install make
       - react-get-deps
       - run: npx playwright install --with-deps && npx playwright install chrome
@@ -1486,6 +1509,7 @@ jobs:
     steps:
       - checkout-with-sm
       - skip-if-docs-only
+      - skip-if-github-only
       - react-get-deps
       - run: make -C webui/react test-ci
       - codecov/upload:
@@ -1504,6 +1528,7 @@ jobs:
     steps:
       - checkout-with-sm
       - skip-if-docs-only
+      - skip-if-github-only
       - react-get-deps
       - run: make -C webui/react test-ci-flaky
 
@@ -1516,6 +1541,7 @@ jobs:
     steps:
       - checkout-with-sm
       - skip-if-docs-only
+      - skip-if-github-only
       - run:
           command: |
             MERGE_BASE="$(git merge-base upstream/main HEAD)"
@@ -1563,6 +1589,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-github-only
       - skip-if-webui-only
       - reinstall-go
       - go-get-deps
@@ -1580,6 +1607,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-github-only
       - skip-if-webui-only
       - reinstall-go
       - go-get-deps
@@ -1615,6 +1643,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-github-only
       - skip-if-webui-only
       - reinstall-go
       - go-get-deps
@@ -1636,6 +1665,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-github-only
       - skip-if-webui-only
       - attach_workspace:
           at: .
@@ -1658,6 +1688,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-github-only
       - skip-if-webui-only
       - attach_workspace:
           at: .
@@ -1679,6 +1710,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-github-only
       - skip-if-webui-only
       - attach_workspace:
           at: .
@@ -1723,6 +1755,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-github-only
       - skip-if-webui-only
       - setup-python-venv:
           install-python: false
@@ -1747,6 +1780,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-github-only
       - skip-if-webui-only
       - install-codecov
       - setup-python-venv:
@@ -1770,6 +1804,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-github-only
       - skip-if-webui-only
       - setup-docker-env:
           image: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.21.2
@@ -1793,6 +1828,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-github-only
       - skip-if-webui-only
       - setup-docker-env:
           image: determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.5-tf-2.4-gpu-0.18.5
@@ -1816,6 +1852,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-github-only
       - skip-if-webui-only
       - setup-docker-env:
           image: determinedai/environments:cuda-11.3-pytorch-1.10-deepspeed-0.8.3-gpu-0.22.1
@@ -1838,6 +1875,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-github-only
       - skip-if-webui-only
       - install-codecov
       - setup-python-venv:
@@ -1860,6 +1898,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-github-only
       - skip-if-webui-only
       - install-codecov
       - setup-python-venv:
@@ -1882,6 +1921,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-github-only
       - skip-if-webui-only
       - install-codecov
       - setup-python-venv:
@@ -1905,6 +1945,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-github-only
       - skip-if-webui-only
       - setup-python-venv:
           install-python: false
@@ -1929,6 +1970,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-github-only
       - skip-if-webui-only
       - setup-python-venv:
           install-python: false
@@ -2008,6 +2050,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-github-only
       - skip-if-webui-only
       - attach_workspace:
           at: .
@@ -2140,6 +2183,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-github-only
       - skip-if-webui-only
       - set-slack-user-id
       - setup-python-venv:
@@ -2241,6 +2285,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-github-only
       - skip-if-webui-only
       - set-slack-user-id
       - setup-python-venv:
@@ -2306,6 +2351,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-github-only
       - skip-if-webui-only
       - attach_workspace:
           at: .
@@ -2340,6 +2386,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-github-only
       - skip-if-webui-only
       - attach_workspace:
           at: .
@@ -2384,6 +2431,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-github-only
       - skip-if-webui-only
       - set-slack-user-id
       - setup-python-venv:
