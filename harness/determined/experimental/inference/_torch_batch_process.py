@@ -10,7 +10,7 @@ import torch
 import torch.distributed as dist
 
 from torch.utils.data import Dataset
-from typing import Callable, Optional, Type
+from typing import Any, Dict, Optional, Type
 
 import determined as det
 from determined import core
@@ -19,6 +19,8 @@ from determined.pytorch import DataLoader
 from determined.tensorboard.util import get_rank_aware_path
 
 set_logger(False)
+
+DEFAULT_BATCH_SIZE = 1
 
 
 @dataclass
@@ -116,17 +118,44 @@ def _report_progress_to_master(
     searcher_op.report_progress(completion_rate)
 
 
+def _validate_dataloader_kwargs(
+    dataloader_kwargs: Dict[str, Any], batch_size: Optional[int]
+) -> None:
+    if "shuffle" in dataloader_kwargs:
+        if dataloader_kwargs["shuffle"]:
+            raise Exception("'shuffle' must be false for accurate sharding and checkpointing")
+    if "sampler" in dataloader_kwargs:
+        raise Exception(
+            "Please remove 'sampler' arg as we will initialize a sampler automatically."
+        )
+    if "batch_sampler" in dataloader_kwargs:
+        raise Exception(
+            "Please remove 'batch_sampler' arg as we will initialize "
+            "a batch_sampler automatically."
+        )
+    if batch_size is not None:
+        if "batch_size" in dataloader_kwargs:
+            raise Exception(
+                "batch_size is passed into torch_batch_process " "and dataloader_kwargs"
+            )
+
+
 def torch_batch_process(
     batch_processor_cls: Type[TorchBatchProcessor],
     dataset: Dataset,
-    batch_size: int = 64,
+    batch_size: Optional[int] = None,
     checkpoint_interval: int = 5,
-    dataloader_num_workers: int = 2,
-    dataloader_collate_fn: Callable = None,
-    dataloader_worker_init_fn: Callable = None,
-    dataloader_drop_last=False,
+    dataloader_kwargs: Dict[str, Any] = {},
 ):
     with initialize_default_inference_context() as core_context:
+        _validate_dataloader_kwargs(dataloader_kwargs, batch_size)
+        if batch_size is None:
+            if "batch_size" in dataloader_kwargs:
+                # remove batch_size from dataloader_kwargs
+                # and assign to batch_size
+                batch_size = dataloader_kwargs.pop("batch_size")
+            else:
+                batch_size = DEFAULT_BATCH_SIZE
         dataset_len = len(dataset)
 
         info = det.get_cluster_info()
@@ -156,13 +185,7 @@ def torch_batch_process(
                 logging.info(f"Previous run completed {skip} steps")
 
         dataloader = DataLoader(
-            dataset=dataset,
-            batch_size=batch_size,
-            shuffle=False,
-            num_workers=dataloader_num_workers,
-            collate_fn=dataloader_collate_fn,
-            worker_init_fn=dataloader_worker_init_fn,
-            drop_last=dataloader_drop_last,
+            dataset=dataset, batch_size=batch_size, shuffle=False, **dataloader_kwargs
         ).get_data_loader(repeat=False, skip=skip, num_replicas=total_worker, rank=rank)
 
         # Create dummy searcher op to report progress to master
