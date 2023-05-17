@@ -170,6 +170,7 @@ const ButtonsSection: React.FC = () => {
           <Button danger>Danger</Button>
           <Button disabled>Disabled</Button>
           <Button loading>Loading</Button>
+          <Button selected>Selected</Button>
         </Space>
         <hr />
         <strong>Primary Button variations</strong>
@@ -215,6 +216,9 @@ const ButtonsSection: React.FC = () => {
           <Button loading type="dashed">
             Loading
           </Button>
+          <Button selected type="dashed">
+            Selected
+          </Button>
         </Space>
         <hr />
         <strong>Sizes</strong>
@@ -227,6 +231,13 @@ const ButtonsSection: React.FC = () => {
         <strong>Default Button with icon</strong>
         <Space>
           <Button icon={<PoweroffOutlined />}>ButtonWithIcon</Button>
+        </Space>
+        <hr />
+        <strong>Button with icon and text displayed in a column</strong>
+        <Space>
+          <Button column icon={<PoweroffOutlined />}>
+            ColumnButtonWithIcon
+          </Button>
         </Space>
       </AntDCard>
     </ComponentSection>

@@ -14,9 +14,11 @@ interface ButtonProps {
   form?: string;
   htmlType?: 'button' | 'submit' | 'reset';
   icon?: ReactNode;
+  column?: boolean;
   loading?: boolean | { delay?: number };
   onClick?: (event: MouseEvent) => void;
   ref?: React.Ref<HTMLElement>;
+  selected?: boolean;
   size?: 'large' | 'middle' | 'small';
   type?: 'primary' | 'text' | 'default' | 'dashed';
   tooltip?: string;
@@ -24,12 +26,15 @@ interface ButtonProps {
 
 const Button: React.FC<ButtonProps> = forwardRef(
   ({ size = 'middle', tooltip = '', ...props }: ButtonProps, ref) => {
+    const classes = [css.base];
+    if (props.selected) classes.push(css.selected);
+    if (props.column) classes.push(css.column);
     return (
       <ConditionalWrapper
         condition={tooltip.length > 0}
         wrapper={(children) => <Tooltip content={tooltip}>{children}</Tooltip>}>
         <AntdButton
-          className={css.base}
+          className={classes.join(' ')}
           ref={ref}
           size={size}
           tabIndex={props.disabled ? -1 : 0}

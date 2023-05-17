@@ -65,17 +65,10 @@
       .searcherGroup {
         display: flex;
         gap: 8px;
+        height: 80px;
 
-        :global(.ant-radio-button-wrapper) {
-          height: 100%;
-          padding: 16px;
-          padding-bottom: 12px;
-
-          .searcherButton {
-            align-items: center;
-            display: flex;
-            flex-direction: column;
-          }
+        > * {
+          flex-grow: 1;
         }
       }
       .hyperparameterContainer {

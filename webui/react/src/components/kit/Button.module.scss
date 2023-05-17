@@ -23,3 +23,28 @@
     border: none;
   }
 }
+.selected {
+  &:global(.ant-btn-default) {
+    border-color: #177ddc;
+    color: #177ddc;
+  }
+  &:global(.ant-btn-dashed) {
+    border-color: #177ddc;
+    color: #177ddc;
+  }
+}
+.column {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  height: 100%;
+  justify-content: center;
+
+  &:global(.ant-btn:not(.ant-btn-sm)) {
+    padding: 8px;
+  }
+  &:global(.ant-btn > .anticon + span) {
+    margin-inline-start: 0;
+  }
+}
