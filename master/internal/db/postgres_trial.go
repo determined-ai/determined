@@ -489,7 +489,7 @@ func (db *PgDB) updateTotalBatches(ctx context.Context, tx *sqlx.Tx, trialID int
 }
 
 func (db *PgDB) addTrialMetricsTx(
-	ctx context.Context, m *trialv1.TrialMetrics, isValidation bool, tx *sqlx.Tx,
+	ctx context.Context, tx *sqlx.Tx, m *trialv1.TrialMetrics, isValidation bool,
 ) (rollbacks map[string]int, err error) {
 	rollbacks = make(map[string]int)
 	trialMetricTables := []string{"raw_steps", "raw_validations"}
@@ -636,7 +636,7 @@ func (db *PgDB) addTrialMetrics(
 ) (rollbacks map[string]int, err error) {
 	rollbacks = make(map[string]int)
 	return rollbacks, db.withTransaction("add training metrics", func(tx *sqlx.Tx) error {
-		rollbacks, err = db.addTrialMetricsTx(ctx, m, isValidation, tx)
+		rollbacks, err = db.addTrialMetricsTx(ctx, tx, m, isValidation)
 		return err
 	})
 }

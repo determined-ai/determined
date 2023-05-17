@@ -844,7 +844,7 @@ func TestBatchesProcessed(t *testing.T) {
 	require.Equal(t, 2, archivedValidations, "trial id %d", tr.ID)
 }
 
-func printPotentialLocks(t *testing.T, ctx context.Context, db *PgDB) {
+func printPotentialLocks(ctx context.Context, db *PgDB, t *testing.T) {
 	query := `
 	SELECT 
     a.datname,
@@ -915,28 +915,27 @@ func TestConcurrentMetricUpdate(t *testing.T) {
 
 	writeToTrial := func(tr *model.Trial, tx *sqlx.Tx) {
 		coinFlip := func() bool {
+			//nolint:gosec // Weak RNG doesn't matter here.
 			return rand.Intn(2) == 0
 		}
 
-		trialRunId := 0
 		batchNum++
 		metrics, err := structpb.NewStruct(map[string]any{"loss": 10})
 		require.NoError(t, err)
 		trialMetrics := &trialv1.TrialMetrics{
 			TrialId:        int32(tr.ID),
-			TrialRunId:     int32(trialRunId),
 			StepsCompleted: int32(batchNum),
 			Metrics:        &commonv1.Metrics{AvgMetrics: metrics},
 		}
 		if coinFlip() {
-			db.updateTotalBatches(ctx, tx, tr.ID)
+			require.NoError(t, db.updateTotalBatches(ctx, tx, tr.ID))
 		}
 		if coinFlip() {
-			_, err = db.addTrialMetricsTx(ctx, trialMetrics, coinFlip(), tx)
+			_, err = db.addTrialMetricsTx(ctx, tx, trialMetrics, coinFlip())
 			require.NoError(t, err)
 		}
 		if coinFlip() {
-			db.updateTotalBatches(ctx, tx, tr.ID)
+			require.NoError(t, db.updateTotalBatches(ctx, tx, tr.ID))
 		}
 	}
 
@@ -963,7 +962,7 @@ func TestConcurrentMetricUpdate(t *testing.T) {
 	go func() {
 		for {
 			time.Sleep(5 * time.Second)
-			printPotentialLocks(t, ctx, db)
+			printPotentialLocks(ctx, db, t)
 		}
 	}()
 
