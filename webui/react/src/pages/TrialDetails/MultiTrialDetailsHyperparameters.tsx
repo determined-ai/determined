@@ -17,7 +17,6 @@ import {
   ExperimentBase,
   ExperimentSearcherName,
   HyperparameterType,
-  Metric,
   MetricType,
   TrialDetails,
 } from 'types';
@@ -57,7 +56,7 @@ const MultiTrialDetailsHyperparameters: React.FC<Props> = ({
 
   const [batches, setBatches] = useState<number[]>();
 
-  const filters = useMemo(
+  const filters: VisualizationFilters = useMemo(
     () => ({
       batch: settings.batch,
       batchMargin: settings.batchMargin,
@@ -65,7 +64,7 @@ const MultiTrialDetailsHyperparameters: React.FC<Props> = ({
       maxTrial: settings.maxTrial,
       metric: settings.metric,
       scale: settings.scale,
-      view: ViewType.Grid,
+      view: ViewType.Grid, // View is required in the type but not used in parallel coordinates
     }),
     [
       settings.batch,
@@ -126,7 +125,8 @@ const MultiTrialDetailsHyperparameters: React.FC<Props> = ({
 
   const handleFiltersChange = useCallback(
     (filters: VisualizationFilters) => {
-      updateSettings({ filters });
+      const { metric, batch, batchMargin, hParams, maxTrial, scale } = filters;
+      updateSettings({ batch, batchMargin, hParams, maxTrial, metric, scale });
     },
     [updateSettings],
   );
@@ -134,13 +134,6 @@ const MultiTrialDetailsHyperparameters: React.FC<Props> = ({
   const handleFiltersReset = useCallback(() => {
     resetSettings(['filters']);
   }, [resetSettings]);
-
-  const handleMetricChange = useCallback(
-    (metric: Metric) => {
-      updateSettings({ metric });
-    },
-    [updateSettings],
-  );
 
   useEffect(() => {
     if (settings.metric !== undefined) return;
@@ -160,11 +153,10 @@ const MultiTrialDetailsHyperparameters: React.FC<Props> = ({
         metrics={metrics}
         type={ExperimentVisualizationType.HpParallelCoordinates}
         onChange={handleFiltersChange}
-        onMetricChange={handleMetricChange}
         onReset={handleFiltersReset}
       />
     );
-  }, [batches, handleFiltersChange, handleFiltersReset, handleMetricChange, metrics, filters]);
+  }, [batches, handleFiltersChange, handleFiltersReset, metrics, filters]);
 
   return (
     <Space direction="vertical">

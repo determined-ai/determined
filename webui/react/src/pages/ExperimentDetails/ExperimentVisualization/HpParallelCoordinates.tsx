@@ -397,6 +397,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
               config={config}
               data={chartData?.data ?? {}}
               dimensions={dimensions}
+              disableInteraction={!!trial}
             />
           </div>
           {!trial && !!selectedMetric && (

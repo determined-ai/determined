@@ -9,6 +9,7 @@ import RadioGroup from 'components/RadioGroup';
 import ScaleSelect from 'components/ScaleSelect';
 import { ValueOf } from 'shared/types';
 import { Metric, Scale } from 'types';
+import { metricToKey } from 'utils/metric';
 
 import { ExperimentVisualizationType } from '../ExperimentVisualization';
 
@@ -194,7 +195,11 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
 
   // Pick the first valid option if the current local metric is invalid.
   useEffect(() => {
-    if ((localFilters.metric && metrics.includes(localFilters.metric)) || metrics.length === 0)
+    const newMetric = localFilters.metric;
+    if (
+      (!!newMetric && metrics.some((metric) => metricToKey(metric) === metricToKey(newMetric))) ||
+      metrics.length === 0
+    )
       return;
     dispatch({ type: ActionType.SetMetric, value: metrics.first() });
   }, [localFilters.metric, metrics]);
@@ -254,7 +259,7 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
           label="Metric"
           metrics={metrics}
           multiple={false}
-          value={localFilters.metric || undefined}
+          value={localFilters.metric}
           width={250}
           onChange={handleMetricChange}
         />

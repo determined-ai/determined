@@ -9,6 +9,7 @@ interface Props {
   config?: Hermes.RecursivePartial<Hermes.Config>;
   data: Hermes.Data;
   dimensions: Hermes.Dimension[];
+  disableInteraction?: boolean;
   height?: number;
 }
 
@@ -16,6 +17,7 @@ const ParallelCoordinates: React.FC<Props> = ({
   config,
   data,
   dimensions,
+  disableInteraction = false,
   height = 450,
 }: Props) => {
   const chartRef = useRef<Hermes>();
@@ -26,12 +28,13 @@ const ParallelCoordinates: React.FC<Props> = ({
     if (!containerRef.current) return;
 
     chartRef.current = new Hermes(containerRef.current);
+    if (disableInteraction) chartRef.current?.disable();
 
     return () => {
       chartRef.current?.destroy();
       chartRef.current = undefined;
     };
-  }, [dimensions]);
+  }, [dimensions, disableInteraction]);
 
   useEffect(() => {
     let redraw = true;
@@ -93,10 +96,12 @@ const ParallelCoordinates: React.FC<Props> = ({
 
   return (
     <div className={css.base}>
-      <div className={css.note}>
-        Click and drag along the axes to create filters. Click on existing filters to remove them.
-        Double click to reset.
-      </div>
+      {!disableInteraction && (
+        <div className={css.note}>
+          Click and drag along the axes to create filters. Click on existing filters to remove them.
+          Double click to reset.
+        </div>
+      )}
       <div ref={containerRef} style={{ height: `${height}px` }} />
     </div>
   );

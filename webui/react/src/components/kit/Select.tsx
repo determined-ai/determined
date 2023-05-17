@@ -9,7 +9,7 @@ import css from './Select.module.scss';
 
 const { OptGroup, Option } = AntdSelect;
 
-export { Option, SelectValue };
+export { Option, OptGroup, SelectValue };
 
 type Options = DefaultOptionType | DefaultOptionType[];
 export interface SelectProps<T extends SelectValue = SelectValue> {
