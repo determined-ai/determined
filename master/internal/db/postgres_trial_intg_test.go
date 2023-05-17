@@ -8,13 +8,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"math/rand"
 	"os"
 	"sort"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	"github.com/uptrace/bun"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -839,4 +842,130 @@ func TestBatchesProcessed(t *testing.T) {
 		Where("trial_id = ?", tr.ID).Where("archived = true").Count(ctx)
 	require.NoError(t, err)
 	require.Equal(t, 2, archivedValidations, "trial id %d", tr.ID)
+}
+
+func printPotentialLocks(t *testing.T, ctx context.Context, db *PgDB) {
+	query := `
+	SELECT 
+    a.datname,
+    l.relation::regclass,
+    a.query,
+    a.query_start,
+    age(now(), a.query_start) AS "age", 
+    a.pid 
+FROM 
+    pg_stat_activity a
+JOIN 
+    pg_locks l ON l.pid = a.pid
+WHERE 
+    a.state = 'active' AND l.granted = false;
+	`
+
+	rows, err := db.sql.DB.QueryContext(ctx, query)
+	require.NoError(t, err)
+	defer rows.Close()
+	for rows.Next() {
+		var (
+			datname    string
+			relation   *string
+			query      string
+			queryStart time.Time
+			age        string
+			pid        int
+		)
+		require.NoError(t, rows.Scan(&datname, &relation, &query, &queryStart, &age, &pid))
+		t.Logf("query: %s, age: %s", query, age)
+	}
+	require.NoError(t, rows.Err())
+}
+
+func TestConcurrentMetricUpdate(t *testing.T) {
+	ctx := context.Background()
+	require.NoError(t, etc.SetRootPath(RootFromDB))
+	db := MustResolveTestPostgres(t)
+	MustMigrateTestPostgres(t, db, MigrationsFromDB)
+
+	createTrial := func() *model.Trial {
+		exp, activeConfig := model.ExperimentModel()
+		require.NoError(t, db.AddExperiment(exp, activeConfig))
+		task := RequireMockTask(t, db, exp.OwnerID)
+		tr := model.Trial{
+			TaskID:       task.TaskID,
+			JobID:        exp.JobID,
+			ExperimentID: exp.ID,
+			State:        model.ActiveState,
+			StartTime:    time.Now(),
+		}
+		require.NoError(t, db.AddTrial(&tr))
+		a := &model.Allocation{
+			AllocationID: model.AllocationID(fmt.Sprintf("%s-%d", tr.TaskID, 0)),
+			TaskID:       tr.TaskID,
+			StartTime:    ptrs.Ptr(time.Now()),
+		}
+		err := db.AddAllocation(a)
+		require.NoError(t, err, "failed to add allocation")
+
+		dbTr, err := db.TrialByID(tr.ID)
+		require.NoError(t, err)
+		require.Equal(t, 0, dbTr.TotalBatches)
+		return &tr
+	}
+
+	batchNum := 0
+
+	writeToTrial := func(tr *model.Trial, tx *sqlx.Tx) {
+		coinFlip := func() bool {
+			return rand.Intn(2) == 0
+		}
+
+		trialRunId := 0
+		batchNum++
+		metrics, err := structpb.NewStruct(map[string]any{"loss": 10})
+		require.NoError(t, err)
+		trialMetrics := &trialv1.TrialMetrics{
+			TrialId:        int32(tr.ID),
+			TrialRunId:     int32(trialRunId),
+			StepsCompleted: int32(batchNum),
+			Metrics:        &commonv1.Metrics{AvgMetrics: metrics},
+		}
+		if coinFlip() {
+			db.updateTotalBatches(ctx, tx, tr.ID)
+		}
+		if coinFlip() {
+			_, err = db.addTrialMetricsTx(ctx, trialMetrics, coinFlip(), tx)
+			require.NoError(t, err)
+		}
+		if coinFlip() {
+			db.updateTotalBatches(ctx, tx, tr.ID)
+		}
+	}
+
+	var wg sync.WaitGroup
+	writes := 5
+	trials := 10
+	wg.Add(trials)
+
+	for i := 0; i < trials; i++ {
+		go func() {
+			defer wg.Done()
+			tr := createTrial()
+			err := db.withTransaction(fmt.Sprintf("writing to trial %d", tr.ID), func(tx *sqlx.Tx) error {
+				for j := 0; j < writes; j++ {
+					writeToTrial(tr, tx)
+					t.Logf("wrote to trial %d", tr.ID)
+				}
+				return nil
+			})
+			require.NoError(t, err)
+		}()
+	}
+
+	go func() {
+		for {
+			time.Sleep(5 * time.Second)
+			printPotentialLocks(t, ctx, db)
+		}
+	}()
+
+	wg.Wait()
 }
