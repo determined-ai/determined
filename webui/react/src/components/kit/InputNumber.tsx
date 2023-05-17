@@ -1,5 +1,5 @@
 import { InputNumber as AntdInputNumber } from 'antd';
-import React, { forwardRef } from 'react';
+import React from 'react';
 
 interface InputNumberProps {
   className?: string;
@@ -8,19 +8,14 @@ interface InputNumberProps {
   max?: number;
   min?: number;
   onChange?: (value: number | string | null) => void;
-  onKeyDown?: (e: React.KeyboardEvent) => void;
-  onPressEnter?: React.KeyboardEventHandler<HTMLInputElement>;
   placeholder?: string;
   precision?: number;
   step?: number;
   value?: number;
   autoFocus?: boolean;
-  ref?: React.Ref<HTMLInputElement>;
 }
 
-const InputNumber: React.FC<InputNumberProps> = forwardRef(
-  (props: InputNumberProps, ref?: React.Ref<HTMLInputElement>) => {
-    return <AntdInputNumber {...props} ref={ref} />;
-  },
-);
+const InputNumber: React.FC<InputNumberProps> = (props: InputNumberProps) => {
+  return <AntdInputNumber {...props} />;
+};
 export default InputNumber;

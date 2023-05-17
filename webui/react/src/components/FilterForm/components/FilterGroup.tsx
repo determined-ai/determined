@@ -131,19 +131,15 @@ const FilterGroup = ({
       )}
       <div className={`${css.groupCard} ${css[`level${level}`]}`} ref={preview}>
         <div className={css.header}>
-          <div>
-            {level > 0 && (
-              <>
+          {level > 0 && (
+            <>
+              <div>
                 {group.conjunction === Conjunction.And ? (
                   <div>All of the following are true...</div>
                 ) : (
                   <div>Any of the following are true...</div>
                 )}
-              </>
-            )}
-          </div>
-          {level > 0 && (
-            <>
+              </div>
               <Dropdown
                 disabled={group.children.length > ITEM_LIMIT}
                 menu={menuItems}
