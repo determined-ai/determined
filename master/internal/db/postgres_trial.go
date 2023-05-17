@@ -488,9 +488,8 @@ func (db *PgDB) updateTotalBatches(ctx context.Context, tx *sqlx.Tx, trialID int
 	return nil
 }
 
-// AddTrialMetrics inserts a set of trial metrics to the database.
-func (db *PgDB) addTrialMetrics(
-	ctx context.Context, m *trialv1.TrialMetrics, isValidation bool,
+func (db *PgDB) addTrialMetricsTx(
+	ctx context.Context, m *trialv1.TrialMetrics, isValidation bool, tx *sqlx.Tx,
 ) (rollbacks map[string]int, err error) {
 	rollbacks = make(map[string]int)
 	trialMetricTables := []string{"raw_steps", "raw_validations"}
@@ -514,7 +513,8 @@ func (db *PgDB) addTrialMetrics(
 		return nil, fmt.Errorf("cannot add metric with non numeric 'epoch' value got %v", v)
 	}
 
-	return rollbacks, db.withTransaction("add training metrics", func(tx *sqlx.Tx) error {
+	// TODO(hamid): deindent. this is here to reduce merge conflicts.
+	run := func(tx *sqlx.Tx) error {
 		if err := checkTrialRunID(ctx, tx, m.TrialId, m.TrialRunId); err != nil {
 			return err
 		}
@@ -625,6 +625,19 @@ WHERE id = $1;
 			}
 		}
 		return nil
+	}
+
+	return rollbacks, run(tx)
+}
+
+// addTrialMetrics inserts a set of trial metrics to the database.
+func (db *PgDB) addTrialMetrics(
+	ctx context.Context, m *trialv1.TrialMetrics, isValidation bool,
+) (rollbacks map[string]int, err error) {
+	rollbacks = make(map[string]int)
+	return rollbacks, db.withTransaction("add training metrics", func(tx *sqlx.Tx) error {
+		rollbacks, err = db.addTrialMetricsTx(ctx, m, isValidation, tx)
+		return err
 	})
 }
 
