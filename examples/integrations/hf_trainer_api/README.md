@@ -7,7 +7,9 @@ The main callback is located in `determined.integrations.huggingface` and the as
 in model code as in:
 
 ```
-    det_callback = DetCallback(training_args, filter_metrics=["loss", "accuracy"], tokenizer=feature_extractor)
+    det_callback = DetCallback(training_args,
+                               filter_metrics=["loss", "accuracy"],
+                               tokenizer=feature_extractor)
     trainer.add_callback(det_callback)
 ```
 
@@ -57,7 +59,7 @@ In order to run the classification script, `cd` into `image_classification/` and
 to use the `const.yaml` config
 
 ```
-det experiment create const.yaml . --include ../det_callback.py
+det experiment create const.yaml .
 ```
 
 The language modeling script is run similarly: `cd` instead into `language_modeling/` before entering
@@ -67,21 +69,19 @@ Other configurations can be run by specifying the appropriate configuration file
 of `const.yaml`. For instance, to use DeepSpeed, run
 
 ```
-det experiment create deepspeed.yaml . --include ../det_callback.py
+det experiment create deepspeed.yaml .
 ```
 
 The deepspeed configuration can be changed by altering the `hyperparameters.deepspeed_config` entry
-of the `deepspeed.yaml` config, as well as the corresponding line in the `entrypoing`. The default
+of the `deepspeed.yaml` config, as well as the corresponding line in the `entrypoint`. The default
 configuration is `ds_configs/ds_config_stage_1.json`.
 
 One can also use Determined's DeepSpeed Autotune functionality to autotmatically optimize the
-DeepSpeed settings. From either subdirectory, run the following script:
+DeepSpeed settings. From either subdirectory, DeepSpeed parameters can be tuned to maximize the
+model FLOPs via the ASHA algorithm by run the following script, for instance:
 
 ```
-python3 -m determined.pytorch.dsat deepspeed.yaml .
+python3 -m determined.pytorch.dsat asha deepspeed.yaml .
 ```
 
-## Results
-
-Training the image classification model with the hyperparameter settings in `const.yaml` should yield
-a validation accuracy of ~96% after 3 epochs.
+See (#TODO: link docs here) for more on the available DeepSpeed Autotuning options.
