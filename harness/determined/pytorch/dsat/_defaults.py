@@ -1,6 +1,6 @@
 from typing import Dict, List, Union
 
-ALL_SEARCH_METHOD_NAMES = ["binary", "_test", "random"]
+ALL_SEARCH_METHOD_NAMES = ["binary", "_test", "asha", "random"]
 
 MODEL_INFO_PROFILING_PATH = "model_info.json"
 AUTOTUNING_RESULTS_PATH = "autotuning_metric.json"

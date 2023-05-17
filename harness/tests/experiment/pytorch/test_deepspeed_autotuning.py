@@ -13,6 +13,7 @@ import pytest
 from determined import searcher
 from determined.common.api import bindings
 from determined.pytorch.dsat import (
+    ASHADSATSearchMethod,
     BaseDSATSearchMethod,
     BinarySearchDSATSearchMethod,
     DSATTrial,
@@ -22,6 +23,7 @@ from determined.pytorch.dsat import (
     _utils,
     get_hf_args_with_overwrites,
 )
+from determined.pytorch.dsat._dsat_search_method import ASHADSATSearchData
 from determined.pytorch.dsat._run_dsat import (
     get_custom_dsat_exp_conf_from_args,
     get_search_method_class,
@@ -1049,13 +1051,17 @@ class TestBinaryDSATSearchMethod:
 
 
 @pytest.fixture
-def default_asha_state_and_search_method():
+def default_asha_state_and_search_method() -> (
+    Generator[Tuple[SearcherState, BaseDSATSearchMethod], Any, None]
+):
     searcher_state, search_method = search_state_and_method_builder(DEFAULT_ARGS_DICT["asha"])
     yield searcher_state, search_method
 
 
 @pytest.fixture
-def long_asha_state_and_search_method():
+def long_asha_state_and_search_method() -> (
+    Generator[Tuple[SearcherState, BaseDSATSearchMethod], Any, None]
+):
     args = copy.deepcopy(DEFAULT_ARGS_DICT["asha"])
     args.max_trials = 10**3
     args.max_rungs = 8
@@ -1064,7 +1070,9 @@ def long_asha_state_and_search_method():
 
 
 @pytest.fixture
-def long_large_min_resource_asha_state_and_search_method():
+def long_large_min_resource_asha_state_and_search_method() -> (
+    Generator[Tuple[SearcherState, BaseDSATSearchMethod], Any, None]
+):
     """
     For long-running tests which need a longer max_trials and resources.
     """
@@ -1077,7 +1085,12 @@ def long_large_min_resource_asha_state_and_search_method():
 
 class TestASHADSATSearchMethod:
     @pytest.mark.timeout(5)
-    def test_binary_happy_path(self, long_large_min_resource_asha_state_and_search_method) -> None:
+    def test_binary_happy_path(
+        self,
+        long_large_min_resource_asha_state_and_search_method: Tuple[
+            SearcherState, BinarySearchDSATSearchMethod
+        ],
+    ) -> None:
         searcher_state, search_method = long_large_min_resource_asha_state_and_search_method
         search_method.trial_tracker.queue.clear()
         # Test for that all stages successfully find all possible values in their search range:
@@ -1091,6 +1104,7 @@ class TestASHADSATSearchMethod:
             search_method.trial_tracker.queue_and_register_trial(first_trial)
             curr_trial = search_method.trial_tracker.queue.popleft()
             for num_halvings in range(1, num_possible_mbs + 1):
+                assert curr_trial.search_data is not None
                 assert curr_trial.search_data.lo <= curr_trial.mbs <= curr_trial.search_data.hi
                 if curr_trial.mbs > target_mbs:
                     search_method.on_trial_exited_early(
@@ -1098,6 +1112,7 @@ class TestASHADSATSearchMethod:
                     )
                     assert search_method.trial_tracker.queue
                 else:
+                    assert curr_trial.searcher_metric_name is not None
                     search_method.on_validation_completed(
                         searcher_state,
                         curr_trial.request_id,
@@ -1117,7 +1132,9 @@ class TestASHADSATSearchMethod:
             assert curr_trial.mbs == target_mbs
 
     @pytest.mark.timeout(5)
-    def test_get_top_lineages_in_rung(self, long_asha_state_and_search_method) -> None:
+    def test_get_top_lineages_in_rung(
+        self, long_asha_state_and_search_method: Tuple[SearcherState, ASHADSATSearchMethod]
+    ) -> None:
         searcher_state, search_method = long_asha_state_and_search_method
         search_method.trial_tracker.queue.clear()
         metrics = list(range(10 * search_method.divisor))
@@ -1128,12 +1145,15 @@ class TestASHADSATSearchMethod:
                 trial = search_method.trial_tracker.create_trial(
                     hparams=hparams, search_data=copy.deepcopy(search_data), parent_trial=trial
                 )
+                assert isinstance(trial.search_data, ASHADSATSearchData)
                 assert trial.search_data.curr_rung == 0
+                assert trial.searcher_metric_name is not None
                 search_method.trial_tracker.queue_and_register_trial(trial)
                 search_method.trial_tracker.update_trial_metric(
                     trial, {trial.searcher_metric_name: metric}
                 )
                 assert len(trial.lineage_set) == idx + 1
+            assert trial is not None
             assert search_method.lineage_completed_rung(trial, 0)
             assert not search_method.lineage_completed_rung(trial, 1)
 
@@ -1143,14 +1163,20 @@ class TestASHADSATSearchMethod:
             expected_metrics = metrics[: len(top_trials)]
         else:
             expected_metrics = list(reversed(metrics[len(top_trials) :]))
-        actual_metrics = [
-            search_method.get_best_trial_in_lineage(t).metric[trial.searcher_metric_name]
-            for t in top_trials
-        ]
+        assert trial is not None
+        assert trial.searcher_metric_name is not None
+        actual_metrics = []
+        for t in top_trials:
+            best_trial_in_lineage = search_method.get_best_trial_in_lineage(t)
+            assert best_trial_in_lineage is not None
+            assert isinstance(best_trial_in_lineage.metric, dict)
+            actual_metrics.append(best_trial_in_lineage.metric[trial.searcher_metric_name])
         assert expected_metrics == actual_metrics
 
     @pytest.mark.timeout(5)
-    def test_basic_promotion(self, long_asha_state_and_search_method) -> None:
+    def test_basic_promotion(
+        self, long_asha_state_and_search_method: Tuple[SearcherState, ASHADSATSearchMethod]
+    ) -> None:
         searcher_state, search_method = long_asha_state_and_search_method
         search_method.trial_tracker.queue.clear()
         # Complete enough trials so that some can be promoted.
@@ -1161,12 +1187,16 @@ class TestASHADSATSearchMethod:
                 trial = search_method.trial_tracker.create_trial(
                     hparams=hparams, search_data=copy.deepcopy(search_data), parent_trial=trial
                 )
+                assert trial.search_data is not None
+                assert isinstance(trial.search_data, ASHADSATSearchData)
                 assert trial.search_data.curr_rung == 0
                 search_method.trial_tracker.queue_and_register_trial(trial)
+                assert trial.searcher_metric_name is not None
                 search_method.trial_tracker.update_trial_metric(
                     trial, {trial.searcher_metric_name: 0.0}
                 )
                 assert len(trial.lineage_set) == trial_num + 1
+            assert trial is not None
             assert search_method.lineage_completed_rung(trial, 0)
             assert not search_method.lineage_completed_rung(trial, 1)
 
@@ -1174,11 +1204,16 @@ class TestASHADSATSearchMethod:
         assert next_promotable_lineage is not None
         search_method.promote_all_trials_in_lineage(next_promotable_lineage)
         next_trial = search_method.get_next_trial_in_lineage(next_promotable_lineage)
+        assert next_trial is not None
+        assert next_trial.search_data is not None
+        assert isinstance(next_trial.search_data, ASHADSATSearchData)
         assert next_trial.search_data.curr_rung == 1
         assert len(next_trial.lineage_set) == search_method.min_binary_search_trials + 1
 
     @pytest.mark.timeout(5)
-    def test_lineage_continutation(self, long_asha_state_and_search_method) -> None:
+    def test_lineage_continutation(
+        self, long_asha_state_and_search_method: Tuple[SearcherState, ASHADSATSearchMethod]
+    ) -> None:
         """
         Verify that we continue trials which have not yet completed their rung.
         """
@@ -1191,10 +1226,12 @@ class TestASHADSATSearchMethod:
         search_method.trial_tracker.queue_and_register_trial(first_trial)
         _ = search_method.trial_tracker.queue.popleft()
         for trial_num in range(search_method.min_binary_search_trials):
+            assert isinstance(curr_trial.search_data, ASHADSATSearchData)
             assert curr_trial.search_data.curr_rung == 0
             assert curr_trial.lineage_root == first_trial
             assert curr_trial.num_completed_trials_in_lineage == trial_num
             assert not search_method.lineage_completed_rung(curr_trial, 0)
+            assert curr_trial.searcher_metric_name is not None
             search_method.on_validation_completed(
                 searcher_state=searcher_state,
                 request_id=curr_trial.request_id,
@@ -1208,7 +1245,9 @@ class TestASHADSATSearchMethod:
         assert curr_trial.lineage_root != first_trial
 
     @pytest.mark.timeout(5)
-    def test_top_promotion(self, long_asha_state_and_search_method) -> None:
+    def test_top_promotion(
+        self, long_asha_state_and_search_method: Tuple[SearcherState, ASHADSATSearchMethod]
+    ) -> None:
         """
         Verify that if multiple lineages can be promoted, we promote from the higest-rung lineage
         available.
@@ -1228,11 +1267,13 @@ class TestASHADSATSearchMethod:
                 )
                 search_method.trial_tracker.queue_and_register_trial(trial)
                 _ = search_method.trial_tracker.queue.popleft()
+                assert trial.searcher_metric_name is not None
                 search_method.trial_tracker.update_trial_metric(
                     trial=trial,
                     metric={trial.searcher_metric_name: bad_metric},
                 )
             # Remember to promote the lineage up to the second rung.
+            assert trial is not None
             search_method.promote_all_trials_in_lineage(trial)
 
         # Submit another lineage which completes the lowest rung with better metrics than the
@@ -1245,6 +1286,7 @@ class TestASHADSATSearchMethod:
             )
             search_method.trial_tracker.queue_and_register_trial(trial)
             _ = search_method.trial_tracker.queue.popleft()
+            assert trial.searcher_metric_name is not None
             search_method.trial_tracker.update_trial_metric(
                 trial=trial,
                 metric={trial.searcher_metric_name: good_metric},
@@ -1254,14 +1296,31 @@ class TestASHADSATSearchMethod:
         # possible rung.
         assert len(search_method.rungs[0]) == search_method.divisor + 1
         assert len(search_method.rungs[1]) == search_method.divisor
-        assert search_method.get_next_promotable_lineage_in_rung(0) is not None
-        assert search_method.get_next_promotable_lineage_in_rung(1) is not None
-        assert search_method.get_next_promotable_lineage_in_rung(0).search_data.curr_rung == 0
-        assert search_method.get_next_promotable_lineage_in_rung(1).search_data.curr_rung == 1
-        assert search_method.get_next_promotable_lineage().search_data.curr_rung == 1
+
+        next_lineage_rung_0 = search_method.get_next_promotable_lineage_in_rung(0)
+        assert next_lineage_rung_0 is not None
+        assert next_lineage_rung_0.search_data is not None
+        assert isinstance(next_lineage_rung_0.search_data, ASHADSATSearchData)
+
+        next_lineage_rung_1 = search_method.get_next_promotable_lineage_in_rung(1)
+        assert next_lineage_rung_1 is not None
+        assert next_lineage_rung_1.search_data is not None
+        assert isinstance(next_lineage_rung_1.search_data, ASHADSATSearchData)
+
+        assert next_lineage_rung_0.search_data.curr_rung == 0
+        assert next_lineage_rung_1.search_data.curr_rung == 1
+
+        next_promotable_lineage = search_method.get_next_promotable_lineage()
+        assert next_promotable_lineage is not None
+        assert next_promotable_lineage.search_data is not None
+        assert isinstance(next_promotable_lineage.search_data, ASHADSATSearchData)
+
+        assert next_promotable_lineage.search_data.curr_rung == 1
 
     @pytest.mark.timeout(5)
-    def test_max_resource_respected(self, long_asha_state_and_search_method) -> None:
+    def test_max_resource_respected(
+        self, long_asha_state_and_search_method: Tuple[SearcherState, ASHADSATSearchMethod]
+    ) -> None:
         """
         Verify that we respect the maximum resource per lineage.
         """
@@ -1279,6 +1338,7 @@ class TestASHADSATSearchMethod:
             * search_method.divisor ** (search_method.max_rungs - 1)
         )
         for _ in range(max_binary_search_trials):
+            assert trial.searcher_metric_name is not None
             search_method.trial_tracker.update_trial_metric(
                 trial, {trial.searcher_metric_name: 0.0}
             )
@@ -1292,7 +1352,7 @@ class TestASHADSATSearchMethod:
 
     @pytest.mark.timeout(5)
     def test_no_continuation_for_completed_lineages(
-        self, long_asha_state_and_search_method
+        self, long_asha_state_and_search_method: Tuple[SearcherState, ASHADSATSearchMethod]
     ) -> None:
         """
         Verify that lineages which have completed their binary search are not continued.
@@ -1310,12 +1370,13 @@ class TestASHADSATSearchMethod:
         )
         search_method.trial_tracker.queue_and_register_trial(trial)
         _ = search_method.trial_tracker.queue.popleft()
+        assert trial.searcher_metric_name is not None
         search_method.trial_tracker.update_trial_metric(trial, {trial.searcher_metric_name: 0.0})
         assert search_method.get_next_trial_in_lineage(trial) is None
 
     @pytest.mark.timeout(5)
     def test_completed_binary_search_lineages_are_counted_complete(
-        self, long_asha_state_and_search_method
+        self, long_asha_state_and_search_method: Tuple[SearcherState, ASHADSATSearchMethod]
     ) -> None:
         """
         Verify that if a lineage successfully completes its binary search mid-rung, that lineage
@@ -1334,6 +1395,9 @@ class TestASHADSATSearchMethod:
         )
         search_method.trial_tracker.queue_and_register_trial(successful_trial)
         _ = search_method.trial_tracker.queue.popleft()
+        assert successful_trial.searcher_metric_name is not None
+        assert successful_trial.search_data is not None
+        assert isinstance(successful_trial.search_data, ASHADSATSearchData)
         search_method.trial_tracker.update_trial_metric(
             successful_trial, {successful_trial.searcher_metric_name: 0.0}
         )
@@ -1344,7 +1408,7 @@ class TestASHADSATSearchMethod:
 
     @pytest.mark.timeout(5)
     def test_failed_binary_search_lineages_are_counted_complete(
-        self, long_asha_state_and_search_method
+        self, long_asha_state_and_search_method: Tuple[SearcherState, ASHADSATSearchMethod]
     ) -> None:
         """
         Verify that if a lineage fails its binary search mid-rung by failing on the minimum
@@ -1364,6 +1428,7 @@ class TestASHADSATSearchMethod:
         search_method.trial_tracker.queue_and_register_trial(failed_trial)
         _ = search_method.trial_tracker.queue.popleft()
         search_method.trial_tracker.report_trial_early_exit(failed_trial)
+        assert isinstance(failed_trial.search_data, ASHADSATSearchData)
         assert search_method.lineage_completed_rung(
             failed_trial, failed_trial.search_data.curr_rung
         )

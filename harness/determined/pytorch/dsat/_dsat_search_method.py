@@ -7,7 +7,7 @@ import pickle
 import random
 import uuid
 from abc import abstractmethod
-from collections import deque
+from collections import defaultdict, deque
 from dataclasses import dataclass
 from typing import Any, Deque, Dict, Iterable, Iterator, List, Optional, Set, Tuple, Union, cast
 
@@ -1113,11 +1113,10 @@ class BinarySearchDSATSearchMethod(BaseDSATSearchMethod):
         return random_trial
 
 
-@dataclass
-class ASHADSATSearchData:
-    lo: int
-    hi: int
-    curr_rung: int
+class ASHADSATSearchData(DSATSearchData):
+    def __init__(self, curr_rung: int, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.curr_rung = curr_rung
 
 
 class ASHADSATSearchMethod(BaseDSATSearchMethod):
@@ -1126,7 +1125,7 @@ class ASHADSATSearchMethod(BaseDSATSearchMethod):
     resource.
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.divisor = self.args.divisor
         self.max_rungs = self.args.max_rungs
@@ -1160,6 +1159,9 @@ class ASHADSATSearchMethod(BaseDSATSearchMethod):
 
     def get_next_trial(self, last_trial: DSATTrial) -> DSATTrial:
         next_trial = None
+        assert last_trial.search_data is not None and isinstance(
+            last_trial.search_data, ASHADSATSearchData
+        )
         if not self.lineage_completed_rung(last_trial, last_trial.search_data.curr_rung):
             next_trial = self.get_next_trial_in_lineage(last_trial)
         if next_trial is None:
@@ -1186,19 +1188,18 @@ class ASHADSATSearchMethod(BaseDSATSearchMethod):
         return new_trials
 
     @property
-    def rungs(self) -> Dict[int, List[uuid.UUID]]:
+    def rungs(self) -> Dict[int, List[DSATTrial]]:
         """
         A dictionary of lists of lineage roots which have completed the specified rung.
         """
-        rungs = {
-            rung_idx: [
-                root
-                for root in self.get_all_lineage_roots()
-                if root.search_data.curr_rung >= rung_idx
-                and self.lineage_completed_rung(root, rung_idx)
-            ]
-            for rung_idx in range(self.max_rungs)
-        }
+        rungs = defaultdict(list)
+        for root in self.get_all_lineage_roots():
+            assert isinstance(root.search_data, ASHADSATSearchData)
+            rung_idx = 0
+            while self.lineage_completed_rung(root, rung_idx):
+                rungs[rung_idx].append(root)
+                rung_idx += 1
+
         return rungs
 
     def get_all_lineage_roots(self) -> List[DSATTrial]:

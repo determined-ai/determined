@@ -7,6 +7,7 @@ from typing import Any, Dict, Type
 
 import determined as det
 from determined.pytorch.dsat import (
+    ASHADSATSearchMethod,
     BaseDSATSearchMethod,
     BinarySearchDSATSearchMethod,
     RandomDSATSearchMethod,
@@ -19,11 +20,17 @@ from determined.util import merge_dicts
 
 
 def get_search_method_class(method_string: str) -> Type[BaseDSATSearchMethod]:
-    if method_string == "binary":
-        return BinarySearchDSATSearchMethod
-    elif method_string == "_test":
-        return _TestDSATSearchMethod
-    return RandomDSATSearchMethod
+    string_to_class_map = {
+        "binary": BinarySearchDSATSearchMethod,
+        "random": RandomDSATSearchMethod,
+        "asha": ASHADSATSearchMethod,
+        "_test": _TestDSATSearchMethod,
+    }
+    if method_string not in string_to_class_map:
+        raise ValueError(
+            f"`method_string` must be one of {list(string_to_class_map)}, not {method_string}"
+        )
+    return string_to_class_map[method_string]
 
 
 def get_custom_dsat_exp_conf_from_args(
