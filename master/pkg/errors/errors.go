@@ -35,7 +35,6 @@ func (e *ErrorTimeoutRetry) GetError() error {
 	defer e.mu.RUnlock()
 
 	if time.Now().After(e.time.Add(e.timeout)) {
-		e = nil
 		return nil
 	}
 	if e.retries < e.maxRetries {
@@ -58,7 +57,7 @@ func (e *ErrorTimeoutRetry) SetError(err error) {
 		e.timeout <= 0 ||
 		now.After(e.time.Add(e.timeout)) {
 		e.retries = 0
-	} else {
+	} else if e.err != nil {
 		e.retries++
 	}
 	e.err = err
