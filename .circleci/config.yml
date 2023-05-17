@@ -276,15 +276,22 @@ commands:
     steps:
       - attach_workspace:
           at: .
+      - run:
+          name: Write cache suffix
+          command: |
+            echo '<<pipeline.parameters.cache-buster>>' > /tmp/react-get-deps.cachekey
+            cat webui/react/package-lock.json >> /tmp/react-get-deps.cachekey
+            echo $HOME >> /tmp/react-get-deps.cachekey
+            cat /tmp/react-get-deps.cachekey
       - restore_cache:
           keys:
-            - det-react-deps-<<pipeline.parameters.cache-buster>>-{{ checksum  "webui/react/package-lock.json" }}
+            - det-react-deps-{{ checksum "/tmp/react-get-deps.cachekey" }}
       - run:
           name: Get React dependencies
           command: |
             make -C webui/react node_modules/done.stamp
       - save_cache:
-          key: det-react-deps-<<pipeline.parameters.cache-buster>>-{{ checksum  "webui/react/package-lock.json" }}
+          key: det-react-deps-{{ checksum "/tmp/react-get-deps.cachekey" }}
           paths:
             - "webui/react/node_modules"
 
