@@ -71,15 +71,14 @@ def main(core_context: det.core.Context) -> None:
     args.model_dir = os.path.basename(args.model_dir)
     args.include = [os.path.basename(p) for p in args.include] if args.include is not None else []
     cluster_info = det.get_cluster_info()
-    if cluster_info is None or cluster_info._trial_info is None:
-        return
+    assert (
+        cluster_info and cluster_info._trial_info
+    ), "Could not find `cluster_info`! The DSAT module must be run on a Determined Cluster!"
     args.experiment_id = cluster_info._trial_info.experiment_id
 
     exp_config = get_custom_dsat_exp_conf_from_args(args)
 
     search_method_class = get_search_method_class(args.search_method)
-    if search_method_class is None:
-        return
     search_method = search_method_class(args=args, exp_config=exp_config)
 
     search_runner = RemoteSearchRunner(search_method, context=core_context)
