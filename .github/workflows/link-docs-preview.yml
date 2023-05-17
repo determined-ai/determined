@@ -28,4 +28,4 @@ jobs:
           issue-number: ${{ github.event.number }}
           body: |
             Docsite preview being generated for this PR.
-            You can (eventually) find the generated docsite [here](https://determined-ai-docs.s3.us-west-2.amazonaws.com/${{ steps.hash.outputs.digest }}/index.html).
+            You can (eventually) find the generated docsite [here](https://determined-ai-docs.s3.us-west-2.amazonaws.com/previews/${{ steps.hash.outputs.digest }}/index.html).
