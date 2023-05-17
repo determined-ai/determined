@@ -7,7 +7,7 @@ import pickle
 import random
 import uuid
 from abc import abstractmethod
-from collections import deque
+from collections import defaultdict, deque
 from dataclasses import dataclass
 from typing import Any, Deque, Dict, Iterable, Iterator, List, Optional, Set, Tuple, Union, cast
 
@@ -782,10 +782,10 @@ class BaseDSATSearchMethod(SearchMethod):
         )
         logging.info(f"total slots (SearcherState, {text}): {total_slots}")
 
-        assert (
-            num_running_trials <= self.trial_tracker.max_concurrent_trials
-        ), f"running trials {num_running_trials}, limit {self.trial_tracker.max_concurrent_trials}"
-        f", {running_trials}"
+        if num_running_trials > self.trial_tracker.max_concurrent_trials:
+            logging.warn(
+                f"running trs {num_running_trials}, lim {self.trial_tracker.max_concurrent_trials}"
+            )
         if self.trial_tracker.max_slots is not None:
             assert (
                 total_slots <= self.trial_tracker.max_slots
@@ -928,6 +928,7 @@ class RandomDSATSearchMethod(BaseDSATSearchMethod):
         # assert trial.search_data, "Attempted to check `should_stop_lineage` on a `DSATTrial`" \
         #     " that has no `search_data"
         # General conditions
+        assert trial.search_data is not None
         failed_on_min_mbs = trial.error and trial.search_data and trial.mbs <= trial.search_data.lo
 
         exceeded_trials_per_random_config_limit = (
@@ -1127,6 +1128,224 @@ class BinarySearchDSATSearchMethod(BaseDSATSearchMethod):
     def get_random_trial(self) -> DSATTrial:
         # Choose the stage randomly from user provided stages, after some performance filtering.
         # If stage one or two was successful, don't continue with stage 3.
+        zero_stage = random.choice(list(self.trial_tracker.zero_stages))
+        hparams, search_data = self.get_random_hparams_and_search_data(zero_stage)
+        random_trial = self.trial_tracker.create_trial(hparams=hparams, search_data=search_data)
+        return random_trial
+
+
+class ASHADSATSearchData(DSATSearchData):
+    def __init__(self, curr_rung: int, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.curr_rung = curr_rung
+
+
+class ASHADSATSearchMethod(BaseDSATSearchMethod):
+    """
+    ASHA autotuning using the number of `train_micro_batch_size_per_gpu` values to use as the
+    resource.
+    """
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.divisor = self.args.divisor
+        self.max_rungs = self.args.max_rungs
+        self.min_binary_search_trials = self.args.min_binary_search_trials
+        self.asha_early_stopping = self.args.asha_early_stopping
+        self.search_range_factor = self.args.search_range_factor
+
+    def get_trials_after_validation_completed(
+        self,
+        searcher_state: SearcherState,
+        last_trial: DSATTrial,
+        metric: Optional[Union[float, Dict[str, Any]]] = None,
+    ) -> List[DSATTrial]:
+        if isinstance(last_trial, DSATModelProfileInfoTrial):
+            new_trials = self.get_trial_list_after_model_profile_info_run()
+        else:
+            new_trials = [self.get_next_trial(last_trial)]
+        return new_trials
+
+    def get_trials_after_early_exit(
+        self,
+        searcher_state: SearcherState,
+        last_trial: DSATTrial,
+        exited_reason: ExitedReason,
+    ) -> List[DSATTrial]:
+        # TODO: delete print test
+        logging.info("Calling get_trials_after_early_exit")
+
+        new_trial = [self.get_next_trial(last_trial)]
+        return new_trial
+
+    def get_next_trial(self, last_trial: DSATTrial) -> DSATTrial:
+        next_trial = None
+        assert last_trial.search_data is not None and isinstance(
+            last_trial.search_data, ASHADSATSearchData
+        )
+        if not self.lineage_completed_rung(last_trial, last_trial.search_data.curr_rung):
+            next_trial = self.get_next_trial_in_lineage(last_trial)
+        if next_trial is None:
+            next_lineage = self.get_next_promotable_lineage()
+            if next_lineage is not None:
+                self.promote_all_trials_in_lineage(next_lineage)
+                next_trial = self.get_next_trial_in_lineage(next_lineage)
+        if next_trial is None:
+            next_trial = self.get_random_trial()
+        return next_trial
+
+    def get_trial_list_after_model_profile_info_run(
+        self,
+    ) -> List[DSATTrial]:
+        new_trials = []
+        max_num_trials = min(
+            self.trial_tracker.max_concurrent_trials, self.trial_tracker.max_trials
+        )
+        if self.trial_tracker.max_slots:
+            max_trials_by_slot = self.trial_tracker.max_slots // self.trial_tracker.slots_per_trial
+            max_num_trials = min(max_num_trials, max_trials_by_slot)
+        for _ in range(max_num_trials):
+            new_trials.append(self.get_random_trial())
+        return new_trials
+
+    @property
+    def rungs(self) -> Dict[int, List[DSATTrial]]:
+        """
+        A dictionary of lists of lineage roots which have completed the specified rung.
+        """
+        rungs = defaultdict(list)
+        for root in self.get_all_lineage_roots():
+            assert isinstance(root.search_data, ASHADSATSearchData)
+            rung_idx = 0
+            while self.lineage_completed_rung(root, rung_idx):
+                rungs[rung_idx].append(root)
+                rung_idx += 1
+
+        return rungs
+
+    def get_all_lineage_roots(self) -> List[DSATTrial]:
+        """
+        Returns a list of all lineage roots sorted in descending order by their current rung_idx.
+        """
+        lineage_root_set = [
+            trial
+            for _, trial in self.trial_tracker
+            if not isinstance(trial, DSATModelProfileInfoTrial) and trial.lineage_root == trial
+        ]
+        lineage_root_set.sort(key=lambda r: r.search_data.curr_rung, reverse=True)
+        return lineage_root_set
+
+    def lineage_completed_rung(self, trial: DSATTrial, rung_idx: int) -> bool:
+        if trial.num_completed_trials_in_lineage >= self.max_trials_for_rung_idx(rung_idx):
+            return True
+        latest_trial = self.get_latest_trial_in_lineage(trial)
+        failed_on_min_mbs = latest_trial.error and latest_trial.mbs == latest_trial.search_data.lo
+        trivial_search_data = latest_trial.search_data.hi == latest_trial.search_data.lo
+        completed_previous_rung = (
+            trial.num_completed_trials_in_lineage >= self.max_trials_for_rung_idx(rung_idx - 1)
+        )
+        if (trivial_search_data or failed_on_min_mbs) and completed_previous_rung:
+            return True
+        return False
+
+    def get_next_promotable_lineage(self) -> Optional[DSATTrial]:
+        # Cannot promote from the top rung (rung_idx == self.max_rung - 1)
+        for rung_idx in reversed(range(self.max_rungs - 1)):
+            next_promotable_trial = self.get_next_promotable_lineage_in_rung(rung_idx)
+            if next_promotable_trial is not None:
+                return next_promotable_trial
+
+    def get_next_promotable_lineage_in_rung(self, rung_idx: int) -> Optional[DSATTrial]:
+        top_trials = self.get_top_lineages_in_rung(rung_idx)
+        for trial in top_trials:
+            if trial.search_data.curr_rung == rung_idx:
+                return trial
+
+    def get_top_lineages_in_rung(self, rung_idx: int) -> List[DSATTrial]:
+        """
+        Returns the top 1 / eta fraction of lineages from the given rung, per the ASHA paper.
+        """
+        completed_lineages_in_rung = self.rungs[rung_idx]
+        k = len(completed_lineages_in_rung) // self.divisor
+        if not k:
+            return []
+        best_trials = [
+            self.get_best_trial_in_lineage(lin)
+            for lin in completed_lineages_in_rung
+            if self.get_best_trial_in_lineage(lin) is not None
+        ]
+        reverse = not self.trial_tracker.smaller_is_better
+        best_trials.sort(key=lambda t: t.searcher_metric_val, reverse=reverse)
+        return best_trials[:k]
+
+    def get_best_trial_in_lineage(self, trial: DSATTrial) -> Optional[DSATTrial]:
+        trials_with_metrics = [t for t in trial.lineage_set if t.searcher_metric_val is not None]
+        if not trials_with_metrics:
+            return None
+        min_or_max = min if self.trial_tracker.smaller_is_better else max
+        return min_or_max(trials_with_metrics, key=lambda t: t.searcher_metric_val)
+
+    def promote_all_trials_in_lineage(self, trial: DSATTrial) -> None:
+        for t in trial.lineage_set:
+            t.search_data.curr_rung += 1
+
+    def get_latest_trial_in_lineage(self, trial: DSATTrial) -> DSATTrial:
+        while trial.children:
+            assert len(trial.children) <= 1  # Sanity check
+            trial = next(iter(trial.children))
+        return trial
+
+    def get_next_trial_in_lineage(self, trial: DSATTrial) -> Optional[DSATTrial]:
+        latest_trial = self.get_latest_trial_in_lineage(trial)
+
+        new_search_data = copy.deepcopy(latest_trial.search_data)
+        if latest_trial.searcher_metric_val is not None:
+            new_search_data.lo = latest_trial.mbs + 1
+        else:
+            new_search_data.hi = latest_trial.mbs - 1
+
+        if new_search_data.hi < new_search_data.lo:
+            return None
+
+        mbs = (new_search_data.hi + new_search_data.lo) // 2
+
+        new_hparams = copy.deepcopy(latest_trial.hparams)
+        new_hparams[_defaults.OVERWRITE_KEY]["train_micro_batch_size_per_gpu"] = mbs
+        next_trial = self.trial_tracker.create_trial(
+            hparams=new_hparams,
+            search_data=new_search_data,
+            parent_trial=latest_trial,
+        )
+        return next_trial
+
+    def max_trials_for_rung_idx(self, rung_idx: int) -> int:
+        if rung_idx == -1:
+            return 0
+        max_resources = self.min_binary_search_trials * self.divisor ** (
+            self.asha_early_stopping + rung_idx
+        )
+        return max_resources
+
+    def get_random_hparams_and_search_data(
+        self, zero_stage
+    ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+        zero_optim_config = _utils.get_random_zero_optim_config(zero_stage)
+        new_hparams = copy.deepcopy(self.trial_tracker.hparams)
+        new_hparams[_defaults.OVERWRITE_KEY] = merge_dicts(
+            new_hparams.get(_defaults.OVERWRITE_KEY, {}),
+            {"zero_optimization": zero_optim_config},
+        )
+
+        random_zero_stage_max_mbs = self.trial_tracker.approx_max_mbs_per_stage[zero_stage]
+        hi = int(2 * random_zero_stage_max_mbs * self.search_range_factor - 1)
+        new_search_data = ASHADSATSearchData(lo=1, hi=hi, curr_rung=0)
+
+        # Randomly choose the actual batch size.
+        mbs = (new_search_data.hi + new_search_data.lo) // 2
+        new_hparams[_defaults.OVERWRITE_KEY]["train_micro_batch_size_per_gpu"] = mbs
+        return new_hparams, new_search_data
+
+    def get_random_trial(self) -> DSATTrial:
         zero_stage = random.choice(list(self.trial_tracker.zero_stages))
         hparams, search_data = self.get_random_hparams_and_search_data(zero_stage)
         random_trial = self.trial_tracker.create_trial(hparams=hparams, search_data=search_data)

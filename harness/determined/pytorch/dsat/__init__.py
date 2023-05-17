@@ -13,6 +13,7 @@ from determined.pytorch.dsat._dsat_search_method import (
     DSATModelProfileInfoTrial,
     RandomDSATSearchMethod,
     BinarySearchDSATSearchMethod,
+    ASHADSATSearchMethod,
     _TestDSATSearchMethod,
 )
 
@@ -23,5 +24,6 @@ __all__ = [
     "DSATModelProfileInfoTrial",
     "RandomDSATSearchMethod",
     "BinarySearchDSATSearchMethod",
+    "ASHADSATSearchMethod",
     "_TestDSATSearchMethod",
 ]

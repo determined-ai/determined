@@ -20,6 +20,7 @@ CURR_DIR = pathlib.Path(".")
 
 
 def get_base_parser() -> argparse.ArgumentParser:
+    # TODO: better args everyhwere, namely shorter flags and abbrevs
     base_parser = argparse.ArgumentParser(add_help=False)
     base_parser.add_argument("config_path")
     base_parser.add_argument("model_dir")
@@ -95,6 +96,30 @@ def get_full_parser() -> argparse.ArgumentParser:
 
     binary_subparser = subparsers.add_parser("binary", parents=[base_parser])
     binary_subparser.add_argument(
+        "-srf",
+        "--search-range-factor",
+        type=float,
+        default=_defaults.AUTOTUNING_ARG_DEFAULTS["search-range-factor"],
+    )
+
+    asha_subparser = subparsers.add_parser("asha", parents=[base_parser])
+    asha_subparser.add_argument(
+        "--max-rungs",
+        default=_defaults.AUTOTUNING_ARG_DEFAULTS["max-rungs"],
+    )
+    asha_subparser.add_argument(
+        "--min-binary-search-trials",
+        default=_defaults.AUTOTUNING_ARG_DEFAULTS["min-binary-search-trials"],
+    )
+    asha_subparser.add_argument(
+        "--asha-early-stopping",
+        default=_defaults.AUTOTUNING_ARG_DEFAULTS["asha-early-stopping"],
+    )
+    asha_subparser.add_argument(
+        "--divisor",
+        default=_defaults.AUTOTUNING_ARG_DEFAULTS["divisor"],
+    )
+    asha_subparser.add_argument(
         "-srf",
         "--search-range-factor",
         type=float,

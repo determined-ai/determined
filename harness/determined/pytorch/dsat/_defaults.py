@@ -1,6 +1,6 @@
 from typing import Dict, List, Union
 
-ALL_SEARCH_METHOD_NAMES = ["binary", "_test", "random"]
+ALL_SEARCH_METHOD_NAMES = ["binary", "_test", "asha", "random"]
 
 MODEL_INFO_PROFILING_PATH = "model_info.json"
 AUTOTUNING_RESULTS_PATH = "autotuning_metric.json"
@@ -56,6 +56,10 @@ AUTOTUNING_ARG_DEFAULTS = {
     "random-seed": 42,
     "run-full-experiment": False,
     "search-range-factor": 1.0,
+    "divisor": 2,
+    "min-binary-search-trials": 2,
+    "max-rungs": 5,
+    "asha-early-stopping": 0,
 }
 
 DEFAULT_SEARCH_RUNNER_CONFIG = {
