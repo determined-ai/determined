@@ -1009,6 +1009,7 @@ func (p *pods) getNodeResourcePoolMapping(nodeSummaries map[string]model.AgentSu
 			// If all of a node's taints are tolerated by a pool, that node belongs to the pool.
 			if allTaintsTolerated(node.Spec.Taints, poolTolerations) {
 				poolsToNodes[poolName] = append(poolsToNodes[poolName], node)
+				nodesToPools[node.Name] = append(nodesToPools[node.Name], poolName)
 			}
 		}
 	}
