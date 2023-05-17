@@ -10,7 +10,7 @@ import torch
 import torch.distributed as dist
 
 from torch.utils.data import Dataset
-from typing import Callable, Optional
+from typing import Callable, Optional, Type
 
 import determined as det
 from determined import core
@@ -22,10 +22,10 @@ set_logger(False)
 
 
 @dataclass
-class TorchPerBatchProcessInfo:
-    batch_idx: int
+class TorchBatchInitInfo:
     worker_rank: int
     default_device: torch.device
+    tensorboard_path: str
 
 
 def get_default_device(core_context) -> torch.device:
@@ -64,7 +64,7 @@ def initialize_default_inference_context() -> core.Context:
     )
 
 
-class TorchPerBatchProcessor(metaclass=abc.ABCMeta):
+class TorchBatchProcessor(metaclass=abc.ABCMeta):
     """
     User can initialize necessary resources in the init function, such as
     - model for prediction
@@ -72,7 +72,11 @@ class TorchPerBatchProcessor(metaclass=abc.ABCMeta):
     """
 
     @abc.abstractmethod
-    def process_batch(self, batch, additional_info: TorchPerBatchProcessInfo) -> None:
+    def __init__(self, core_context: core.Context, init_info: TorchBatchInitInfo) -> None:
+        pass
+
+    @abc.abstractmethod
+    def process_batch(self, batch, batch_idx) -> None:
         pass
 
 
@@ -113,8 +117,7 @@ def _report_progress_to_master(
 
 
 def torch_batch_process(
-    core_context: core.Context,
-    per_batch_processor: TorchPerBatchProcessor,
+    batch_processor_cls: Type[TorchBatchProcessor],
     dataset: Dataset,
     batch_size: int = 64,
     checkpoint_interval: int = 5,
@@ -123,82 +126,85 @@ def torch_batch_process(
     dataloader_worker_init_fn: Callable = None,
     dataloader_drop_last=False,
 ):
-    dataset_len = len(dataset)
+    with initialize_default_inference_context() as core_context:
+        dataset_len = len(dataset)
 
-    info = det.get_cluster_info()
-    slots_per_node = len(info.slot_ids)
-    num_nodes = len(info.container_addrs)
-    total_worker = num_nodes * slots_per_node
-    # Get global rank
-    rank = core_context.distributed.get_rank()
-    latest_checkpoint = info.latest_checkpoint
-    skip = 0
+        info = det.get_cluster_info()
+        slots_per_node = len(info.slot_ids)
+        num_nodes = len(info.container_addrs)
+        total_worker = num_nodes * slots_per_node
+        # Get global rank
+        rank = core_context.distributed.get_rank()
+        latest_checkpoint = info.latest_checkpoint
+        skip = 0
 
-    default_device = get_default_device(core_context)
+        per_batch_processor = batch_processor_cls(
+            core_context=core_context,
+            init_info=TorchBatchInitInfo(
+                worker_rank=rank,
+                default_device=get_default_device(core_context),
+                tensorboard_path=core_context.train.get_tensorboard_path(),
+            ),
+        )
 
-    # Check if previous checkpoint exists
-    if latest_checkpoint is not None:
-        logging.info("Checkpoint is not none")
-        with core_context.checkpoint.restore_path(latest_checkpoint) as path:
-            metadata = _load_state(path)
-            skip = metadata["steps_completed"]
-            logging.info(f"Previous run completed {skip} steps")
+        # Check if previous checkpoint exists
+        if latest_checkpoint is not None:
+            logging.info("Checkpoint is not none")
+            with core_context.checkpoint.restore_path(latest_checkpoint) as path:
+                metadata = _load_state(path)
+                skip = metadata["steps_completed"]
+                logging.info(f"Previous run completed {skip} steps")
 
-    dataloader = DataLoader(
-        dataset=dataset,
-        batch_size=batch_size,
-        shuffle=False,
-        num_workers=dataloader_num_workers,
-        collate_fn=dataloader_collate_fn,
-        worker_init_fn=dataloader_worker_init_fn,
-        drop_last=dataloader_drop_last,
-    ).get_data_loader(repeat=False, skip=skip, num_replicas=total_worker, rank=rank)
+        dataloader = DataLoader(
+            dataset=dataset,
+            batch_size=batch_size,
+            shuffle=False,
+            num_workers=dataloader_num_workers,
+            collate_fn=dataloader_collate_fn,
+            worker_init_fn=dataloader_worker_init_fn,
+            drop_last=dataloader_drop_last,
+        ).get_data_loader(repeat=False, skip=skip, num_replicas=total_worker, rank=rank)
 
-    # Create dummy searcher op to report progress to master
-    dummy_searcher_op = None
-    # Initialize dummy searcher for progress report
-    if rank == 0:
-        dummy_searcher_op = core.DummySearcherOperation(1, True)
+        # Create dummy searcher op to report progress to master
+        dummy_searcher_op = None
+        # Initialize dummy searcher for progress report
+        if rank == 0:
+            dummy_searcher_op = core.DummySearcherOperation(1, True)
 
-    dataloader_iterator = iter(dataloader)
+        dataloader_iterator = iter(dataloader)
 
-    # Enumerate over dataloader directly may cause some workers to iterate for 1 more time
-    # than others when drop_last = False. If those workers synchronize on the last batch_idx,
-    # they would hang forever as other workers never hit that last batch_idx.
-    # To avoid the issue, we calculate and take the ceiling of the iteration count to ensure
-    # all workers iterate for the same number of times.
-    times_iterate = math.ceil(dataset_len / batch_size / total_worker)
-    for batch_idx in range(skip, times_iterate):
-        logging.info(f"Currently processing batch {batch_idx}")
-        X = next(dataloader_iterator, None)
-        if X is not None:
-            per_batch_processor.process_batch(
-                batch=X,
-                additional_info=TorchPerBatchProcessInfo(
-                    batch_idx=batch_idx + skip, worker_rank=rank, default_device=default_device
-                ),
-            )
+        # Enumerate over dataloader directly may cause some workers to iterate for 1 more time
+        # than others when drop_last = False. If those workers synchronize on the last batch_idx,
+        # they would hang forever as other workers never hit that last batch_idx.
+        # To avoid the issue, we calculate and take the ceiling of the iteration count to ensure
+        # all workers iterate for the same number of times.
+        times_iterate = math.ceil(dataset_len / batch_size / total_worker)
+        for batch_idx in range(skip, times_iterate):
+            logging.info(f"Currently processing batch {batch_idx}")
+            X = next(dataloader_iterator, None)
+            if X is not None:
+                per_batch_processor.process_batch(batch=X, batch_idx=batch_idx)
 
-        if (batch_idx + 1) % checkpoint_interval == 0:
-            _synchronize_and_checkpoint(core_context, batch_idx, rank)
-            # Report progress can only be done accurately with synchronization
-            core_context._tensorboard_manager.sync(mangler=get_rank_aware_path)
-            if rank == 0:
-                _report_progress_to_master(
-                    dummy_searcher_op, batch_idx, total_worker, batch_size, dataset_len
-                )
+            if (batch_idx + 1) % checkpoint_interval == 0:
+                _synchronize_and_checkpoint(core_context, batch_idx, rank)
+                # Report progress can only be done accurately with synchronization
+                core_context._tensorboard_manager.sync(mangler=get_rank_aware_path)
+                if rank == 0:
+                    _report_progress_to_master(
+                        dummy_searcher_op, batch_idx, total_worker, batch_size, dataset_len
+                    )
 
-        # If preempt mode is set to WorkerAskMaster, checking should preempt is cheap
-        # Calling preempt without synchronization means workers can be on different
-        # batch idx when preempted. It is ok since when we resume, we will resume from
-        # last checkpoint idx
-        if core_context.preempt.should_preempt():
-            return
+            # If preempt mode is set to WorkerAskMaster, checking should preempt is cheap
+            # Calling preempt without synchronization means workers can be on different
+            # batch idx when preempted. It is ok since when we resume, we will resume from
+            # last checkpoint idx
+            if core_context.preempt.should_preempt():
+                return
 
-    _synchronize_and_checkpoint(core_context, batch_idx, rank)
-    core_context._tensorboard_manager.sync(mangler=get_rank_aware_path)
+        _synchronize_and_checkpoint(core_context, batch_idx, rank)
+        core_context._tensorboard_manager.sync(mangler=get_rank_aware_path)
 
-    if rank == 0:
-        # Report to master the run has completed
-        # Metrics reported does not matter
-        dummy_searcher_op.report_completed(1)
+        if rank == 0:
+            # Report to master the run has completed
+            # Metrics reported does not matter
+            dummy_searcher_op.report_completed(1)

@@ -1,7 +1,7 @@
-name: det_inference_demo
+name: test_new_api_basic
 entrypoint: >-
    python3 -m determined.launch.torch_distributed
-   python3 main.py
+   python3 basic_inference.py
 
 # NEW: configure multiple slots per trial.
 resources:
@@ -13,3 +13,6 @@ searcher:
    max_length: 100
 
 max_restarts: 0
+bind_mounts:
+  - host_path: /tmp
+    container_path: /data

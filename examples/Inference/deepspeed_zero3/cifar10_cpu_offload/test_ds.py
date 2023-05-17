@@ -1,5 +1,9 @@
 import pathlib
 
+import filelock
+
+import os
+
 import deepspeed
 import torch
 import torchvision as tv
@@ -64,17 +68,27 @@ ds_config = {
 }
 
 
-class MyProcessor(batch.TorchPerBatchProcessor):
-    def __init__(self, model, device, tensorboard_path):
-        self.model = model
+class MyProcessor(batch.TorchBatchProcessor):
+    def __init__(self, core_context, init_info):
+        device = init_info.default_device
+        tensorboard_path = init_info.tensorboard_path
+
+        with deepspeed.zero.Init():
+            model = get_model()
+            model.to(device)
+            model.eval()
+        model_engine = deepspeed.initialize(model=model, config=ds_config)[0]
+        model_engine.module.eval()
+        self.model = model_engine.module
         self.device = device
         self.profiler = torch.profiler.profile(
             activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA],
             schedule=torch.profiler.schedule(wait=1, warmup=1, active=2, repeat=2),
             on_trace_ready=torch.profiler.tensorboard_trace_handler(tensorboard_path),
         )
+        self.worker_rank = init_info.worker_rank
 
-    def process_batch(self, batch, additional_info) -> None:
+    def process_batch(self, batch, batch_idx) -> None:
         model_input = batch[0]
         model_input = model_input.to(self.device)
         model_input = model_input.half()
@@ -83,7 +97,7 @@ class MyProcessor(batch.TorchPerBatchProcessor):
                 pred = self.model(model_input)
                 p.step()
 
-        file_name = f"prediction_output_{additional_info.batch_idx}_{additional_info.worker_rank}"
+        file_name = f"prediction_output_{batch_idx}_{self.worker_rank}"
         file_path = pathlib.PosixPath(
             "/run/determined/workdir/shared_fs/new_runner_inference_out", file_name
         )
@@ -91,37 +105,18 @@ class MyProcessor(batch.TorchPerBatchProcessor):
         torch.save(output, file_path)
 
 
-def main(core_context):
-    deepspeed.init_distributed()
-    device = batch.get_default_device(core_context)
-    print(f"Device is {device}")
-    with deepspeed.zero.Init():
-        model = get_model()
-        model.to(device)
-        model.eval()
-    model_engine = deepspeed.initialize(model=model, config=ds_config)[0]
-    model_engine.module.eval()
-    model = model_engine.module
-
+def main():
     transform = transforms.Compose(
         [transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
     )
-    inference_data = tv.datasets.CIFAR10(
-        root=".\\data", train=False, download=True, transform=transform
-    )
 
-    batch.torch_batch_process(
-        core_context,
-        MyProcessor(
-            model, batch.get_default_device(core_context), core_context.train.get_tensorboard_path()
-        ),
-        inference_data,
-        batch_size=64,
-        dataloader_drop_last=True,
-    )
+    with filelock.FileLock(os.path.join("/tmp", "inference.lock")):
+        inference_data = tv.datasets.CIFAR10(
+            root="/data", train=False, download=True, transform=transform
+        )
+
+    batch.torch_batch_process(MyProcessor, inference_data, batch_size=64, dataloader_drop_last=True)
 
 
 if __name__ == "__main__":
-    distributed = det.core.DistributedContext.from_torch_distributed()
-    with det.core.init(distributed=distributed) as core_context:
-        main(core_context)
+    main()

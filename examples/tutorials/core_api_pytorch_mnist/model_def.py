@@ -1,7 +1,7 @@
 # The starting script. This script is the same as PyTorch's official
 # MNIST example[1].
 #
-# [1] github.com/pytorch/examples/blob/main/mnist/main.py
+# [1] github.com/pytorch/examples/blob/main/mnist/basic_inference.py
 
 from __future__ import print_function
 
