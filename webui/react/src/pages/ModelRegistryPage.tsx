@@ -1,8 +1,7 @@
 import React, { useRef } from 'react';
 
+import ModelRegistry from 'components/ModelRegistry';
 import Page from 'components/Page';
-
-import ModelRegistry from '../components/ModelRegistry';
 
 const ModelRegistryPage: React.FC = () => {
   const pageRef = useRef<HTMLElement>(null);

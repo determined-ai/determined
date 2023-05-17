@@ -1,8 +1,7 @@
 import React, { useRef } from 'react';
 
 import Page from 'components/Page';
-
-import TaskList from './TaskList';
+import TaskList from 'components/TaskList';
 
 const TaskListPage: React.FC = () => {
   const pageRef = useRef<HTMLElement>(null);
