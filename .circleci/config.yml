@@ -1348,7 +1348,7 @@ jobs:
       - checkout
       - setup-python-venv:
           install-python: false
-          extras-requires: "twine"
+          extras-requires: "build twine"
           executor: <<pipeline.parameters.docker-image>>
       - run: make -C <<parameters.path>> build
       - run: make -C <<parameters.path>> publish
