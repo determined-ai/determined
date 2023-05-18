@@ -312,5 +312,5 @@ def main(
 
             traceback.print_exc(file=sys.stderr)
 
-        print(colored("Interrupting...\n", "red"), file=sys.stderr)
+        print(colored("\nInterrupting...\n", "red"), file=sys.stderr)
         exit(3)
