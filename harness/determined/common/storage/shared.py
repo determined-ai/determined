@@ -1,4 +1,5 @@
 import contextlib
+import glob
 import logging
 import os
 import pathlib
@@ -169,7 +170,7 @@ class SharedFSStorageManager(storage.StorageManager):
             raise errors.CheckpointNotFound(f"Did not find checkpoint {src} in shared_fs storage")
         yield pathlib.Path(storage_dir)
 
-    def delete(self, tgt: str) -> None:
+    def delete(self, tgt: str, globs: List[str]) -> Dict[str, int]:
         """
         Delete the stored data from persistent storage.
         """
@@ -177,10 +178,58 @@ class SharedFSStorageManager(storage.StorageManager):
 
         if not os.path.exists(storage_dir):
             logging.info(f"Storage directory does not exist: {storage_dir}")
-            return
+            return {}
         if not os.path.isdir(storage_dir):
             raise errors.CheckpointNotFound(f"Storage path is not a directory: {storage_dir}")
-        util.rmtree_nfs_safe(storage_dir, ignore_errors=False)
+
+        to_delete_paths = {}
+        for file_glob in globs:
+            print(f"{storage_dir}/{file_glob}")
+            for path in glob.glob(f"{storage_dir}/{file_glob}", recursive=True):
+                to_delete_paths[path] = True
+
+        print("DELETE PATHS", to_delete_paths, globs)  # This is actually correct.
+        # Can this fail us if we remove a parent directory and then a child one???
+        # Probaly -- maybe split into files then directories for saftey.
+        # Reverse is more efficient though.
+        for to_delete_path in to_delete_paths:
+            if os.path.isfile(to_delete_path):
+                os.remove(to_delete_path)  # OS SAFE?
+            elif os.path.isdir(to_delete_path):
+                util.rmtree_nfs_safe(to_delete_path, ignore_errors=False)
+
+        print("Resources hmmm", storage_dir)
+        resources = self._list_directory(storage_dir)
+        print("What is resources?", resources)
+
+        # TODO we upload this "metadata.json" file in checkpoints sometimes AFTER
+        # we calculate resources so resources won't contain it.
+        # This actually might be an issue if we sometimes have it in resources?
+        # todo this might be an issue.
+        if "metadata.json" in resources:
+            del resources["metadata.json"]
+
+        if len(resources) == 0:
+            util.rmtree_nfs_safe(storage_dir, ignore_errors=False)
+        return resources
+
+    '''
+    def delete_by_glob(self, storage_id: str, file_glob: str) -> Dict[str, int]:
+        """
+        Delete files by glob and returns "Resources" after deletion happens.
+        """
+        storage_dir = os.path.join(self._base_path, storage_id)
+
+        if file_glob != "":
+            # TODO we want recursive=True
+                print("!", path)
+                # TODO is islink a worry here?
+
+        resources = self._list_directory(storage_dir)
+        if len(resources) == 0:
+            self.delete(storage_id)
+        return resources
+    '''
 
     def upload(
         self, src: Union[str, os.PathLike], dst: str, paths: Optional[storage.Paths] = None

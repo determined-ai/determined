@@ -1559,6 +1559,30 @@ service Determined {
     };
   }
 
+  // Remove files from checkpoints.
+  rpc CheckpointsRemoveFiles(CheckpointsRemoveFilesRequest)
+      returns (CheckpointsRemoveFilesResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/checkpoints/rm"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Checkpoints"
+    };
+  }
+
+  // Update checkpoints. Won't modify checkpoint files.
+  rpc PatchCheckpoints(PatchCheckpointsRequest)
+      returns (PatchCheckpointsResponse) {
+    option (google.api.http) = {
+      patch: "/api/v1/checkpoints"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+
   // Delete Checkpoints.
   rpc DeleteCheckpoints(DeleteCheckpointsRequest)
       returns (DeleteCheckpointsResponse) {

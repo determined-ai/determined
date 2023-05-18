@@ -33,6 +33,35 @@ message PostCheckpointMetadataResponse {
   determined.checkpoint.v1.Checkpoint checkpoint = 1;
 }
 
+// Request to delete files matching globs in checkpoints.
+message CheckpointsRemoveFilesRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "checkpoint_uuids", "checkpoint_globs" ] }
+  };
+  // The list of checkpoint_uuids for the requested checkpoints.
+  repeated string checkpoint_uuids = 1;
+  // The list of checkpoint_globs for the requested checkpoints.
+  // If a value is set to the empty string the checkpoint will only
+  // have its metadata refreshed.
+  repeated string checkpoint_globs = 2;
+}
+
+// Response to CheckpointRemoveFilesRequest.
+message CheckpointsRemoveFilesResponse {}
+
+// Request to patch database info about a checkpoint.
+message PatchCheckpointsRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "checkpoints" ] }
+  };
+
+  // List of checkpoints to patch.
+  repeated determined.checkpoint.v1.PatchCheckpoint checkpoints = 1;
+}
+
+// Intentionally don't send the updated response for performance reasons.
+message PatchCheckpointsResponse {}
+
 // Request to Delete the list of checkpoints
 message DeleteCheckpointsRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {

@@ -2,7 +2,7 @@ import logging
 import os
 import tempfile
 import warnings
-from typing import Optional, Union
+from typing import Dict, List, Optional, Union
 
 from determined.common import storage, util
 
@@ -61,6 +61,7 @@ class HDFSStorageManager(storage.CloudStorageManager):
         self.client.download(src, dst, overwrite=True)
 
     @util.preserve_random_state
-    def delete(self, tgt: str) -> None:
+    def delete(self, tgt: str, globs: List[str]) -> Dict[str, int]:
         logging.info(f"Deleting {tgt} from HDFS")
         self.client.delete(tgt, recursive=True)
+        return {}  # TODO might be hard

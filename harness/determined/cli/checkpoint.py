@@ -123,7 +123,28 @@ def delete_checkpoints(args: Namespace) -> None:
         bindings.delete_DeleteCheckpoints(cli.setup_session(args), body=delete_body)
         print("Deletion of checkpoints {} is in progress".format(args.checkpoints_uuids))
     else:
-        print("Aborting deletion of checkpoints.")
+        print("Stopping deletion of checkpoints.")
+
+
+@authentication.required
+def checkpoints_file_rm(args: Namespace) -> None:
+    if (
+        args.yes
+        or len(args.glob) == 0
+        or render.yes_or_no(
+            "All files matching specified globs will be deleted in all checkpoints provided\n"
+            "in checkpoint storage. Do you still want to proceed?"
+        )
+    ):
+        c_uuids = args.checkpoints_uuids.split(",")
+        remove_body = bindings.v1CheckpointsRemoveFilesRequest(
+            checkpointGlobs=args.glob,
+            checkpointUuids=c_uuids,
+        )
+        bindings.post_CheckpointsRemoveFiles(cli.setup_session(args), body=remove_body)
+        print(f"Removal of files from checkpoints {args.checkpoints_uuids} is in progress")
+    else:
+        print("Stopping removal of files from checkpoints.")
 
 
 main_cmd = Cmd(
@@ -176,6 +197,31 @@ main_cmd = Cmd(
             "delete checkpoints",
             [
                 Arg("checkpoints_uuids", help="comma-separated list of checkpoints to delete"),
+                Arg(
+                    "--yes",
+                    action="store_true",
+                    default=False,
+                    help="automatically answer yes to prompts",
+                ),
+            ],
+        ),
+        Cmd(
+            "rm",
+            checkpoints_file_rm,
+            "remove files from checkpoints",
+            [
+                Arg(
+                    "checkpoints_uuids",
+                    help="comma-separated list of checkpoints to remove files from",
+                ),
+                Arg(
+                    "--glob",
+                    action="append",
+                    default=[],
+                    help="glob to specify which files will be deleted, if unspecified no files "
+                    + "will be deleted and checkpoint resources will "
+                    + "be read from storage and refreshed",
+                ),
                 Arg(
                     "--yes",
                     action="store_true",
