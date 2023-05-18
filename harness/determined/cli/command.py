@@ -356,6 +356,20 @@ def parse_config(
     return config
 
 
+def print_task_logs(args: Namespace, task_id: str, follow: bool = True) -> None:
+    try:
+        logs = api.task_logs(cli.setup_session(args), task_id, follow=follow)
+        api.pprint_logs(logs)
+    finally:
+        print(
+            colored(
+                "Task log stream ended. To reopen log stream, run: "
+                "det task logs -f {}".format(task_id),
+                "green",
+            )
+        )
+
+
 def launch_command(
     master: str,
     endpoint: str,
