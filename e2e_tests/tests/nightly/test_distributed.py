@@ -6,6 +6,7 @@ import warnings
 import pytest
 import yaml
 
+from determined.pytorch import dsat
 from tests import config as conf
 from tests import experiment as exp
 
@@ -361,8 +362,8 @@ def test_textual_inversion_stable_diffusion_generate() -> None:
 @pytest.mark.distributed
 @pytest.mark.gpu_required
 @pytest.mark.deepspeed
-@pytest.mark.parametrize("search_method_name", ["PT", "TF2"])
-def test_hf_trainer_deepspeed_autotuning(search_method_name) -> None:
+@pytest.mark.parametrize("search_method_name", dsat._defaults.ALL_SEARCH_METHOD_NAMES)
+def test_hf_trainer_image_classification_deepspeed_autotuning(search_method_name: str) -> None:
     test_dir = "hf_trainer_api/image_classification"
     config_path = conf.integrations_examples_path(f"{test_dir}/deepspeed.yaml")
     config = conf.load_config(config_path)
@@ -372,6 +373,63 @@ def test_hf_trainer_deepspeed_autotuning(search_method_name) -> None:
         _ = exp.run_basic_autotuning_test(
             tf.name,
             conf.integrations_examples_path(test_dir),
+            1,
+            search_method_name=search_method_name,
+        )
+
+
+@pytest.mark.distributed
+@pytest.mark.gpu_required
+@pytest.mark.deepspeed
+@pytest.mark.parametrize("search_method_name", dsat._defaults.ALL_SEARCH_METHOD_NAMES)
+def test_hf_trainer_language_modeling_deepspeed_autotuning(search_method_name: str) -> None:
+    test_dir = "hf_trainer_api/language_modeling"
+    config_path = conf.integrations_examples_path(f"{test_dir}/deepspeed.yaml")
+    config = conf.load_config(config_path)
+    with tempfile.NamedTemporaryFile() as tf:
+        with open(tf.name, "w") as f:
+            yaml.dump(config, f)
+        _ = exp.run_basic_autotuning_test(
+            tf.name,
+            conf.integrations_examples_path(test_dir),
+            1,
+            search_method_name=search_method_name,
+        )
+
+
+@pytest.mark.distributed
+@pytest.mark.gpu_required
+@pytest.mark.deepspeed
+@pytest.mark.parametrize("search_method_name", dsat._defaults.ALL_SEARCH_METHOD_NAMES)
+def test_torchvision_core_api_deepspeed_autotuning(search_method_name: str) -> None:
+    test_dir = "torchvision/core_api"
+    config_path = conf.deepspeed_autotune_examples_path(f"{test_dir}/deepspeed.yaml")
+    config = conf.load_config(config_path)
+    with tempfile.NamedTemporaryFile() as tf:
+        with open(tf.name, "w") as f:
+            yaml.dump(config, f)
+        _ = exp.run_basic_autotuning_test(
+            tf.name,
+            conf.deepspeed_autotune_examples_path(test_dir),
+            1,
+            search_method_name=search_method_name,
+        )
+
+
+@pytest.mark.distributed
+@pytest.mark.gpu_required
+@pytest.mark.deepspeed
+@pytest.mark.parametrize("search_method_name", dsat._defaults.ALL_SEARCH_METHOD_NAMES)
+def test_torchvision_deepspeed_trial_deepspeed_autotuning(search_method_name: str) -> None:
+    test_dir = "torchvision/deepspeed_trial"
+    config_path = conf.deepspeed_autotune_examples_path(f"{test_dir}/deepspeed.yaml")
+    config = conf.load_config(config_path)
+    with tempfile.NamedTemporaryFile() as tf:
+        with open(tf.name, "w") as f:
+            yaml.dump(config, f)
+        _ = exp.run_basic_autotuning_test(
+            tf.name,
+            conf.deepspeed_autotune_examples_path(test_dir),
             1,
             search_method_name=search_method_name,
         )
