@@ -5,7 +5,7 @@ from pathlib import Path
 from termcolor import colored
 
 from determined import cli
-from determined.cli import command, task
+from determined.cli import command, render, task
 from determined.common import api, context
 from determined.common.api import authentication, bindings, request
 from determined.common.check import check_eq
@@ -31,6 +31,8 @@ def start_tensorboard(args: Namespace) -> None:
 
     resp = bindings.post_LaunchTensorboard(cli.setup_session(args), body=body)
     tsb = resp.tensorboard
+
+    render.report_job_launched("tensorboard", tsb.id)
 
     if args.detach:
         print(resp.tensorboard.id)

@@ -6,7 +6,7 @@ from typing import Any, List
 from termcolor import colored
 
 from determined import cli
-from determined.cli import command, task
+from determined.cli import command, render, task
 from determined.common import api
 from determined.common.api import authentication
 from determined.common.declarative_argparse import Arg, Cmd, Group
@@ -25,6 +25,8 @@ def run_command(args: Namespace) -> None:
         includes=args.include,
         workspace_id=workspace_id,
     )["command"]
+
+    render.report_job_launched("command", resp["id"])
 
     if args.detach:
         print(resp["id"])

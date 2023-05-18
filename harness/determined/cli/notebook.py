@@ -30,6 +30,8 @@ def start_notebook(args: Namespace) -> None:
     )
     resp = bindings.post_LaunchNotebook(cli.setup_session(args), body=body)
 
+    render.report_job_launched("notebook", resp.notebook.id)
+
     if args.preview:
         print(render.format_object_as_yaml(resp.config))
         return

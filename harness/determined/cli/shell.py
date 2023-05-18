@@ -15,7 +15,7 @@ import appdirs
 from termcolor import colored
 
 from determined import cli
-from determined.cli import command, task
+from determined.cli import command, render, task
 from determined.common import api
 from determined.common.api import authentication, bindings, certs
 from determined.common.check import check_eq
@@ -42,6 +42,8 @@ def start_shell(args: Namespace) -> None:
     )["shell"]
 
     sid = resp["id"]
+
+    render.report_job_launched("shell", sid)
 
     if args.detach:
         print(sid)

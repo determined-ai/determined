@@ -9,6 +9,7 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence, Union
 
 import dateutil.parser
 import tabulate
+import termcolor
 
 from determined.common import util, yaml
 
@@ -61,7 +62,7 @@ class Animator:
     @staticmethod
     def render_frame(step: int, message: str) -> None:
         animation = "|/-\\"
-        sys.stdout.write("\r" + message + " " + animation[step % len(animation)])
+        sys.stdout.write("\r" + message + " " + animation[step % len(animation)] + " ")
         sys.stdout.flush()
 
     def reset(self) -> None:
@@ -192,3 +193,8 @@ def print_json(data: Union[str, Any]) -> None:
         print(formatted_json)
     except json.decoder.JSONDecodeError:
         print(data)
+
+
+def report_job_launched(_type: str, _id: str) -> None:
+    msg = f"Launched {_type} (id: {_id})."
+    print(termcolor.colored(msg, "green"))
