@@ -9,7 +9,6 @@ from determined.pytorch.dsat import _defaults, _utils
 
 
 def parse_args() -> argparse.Namespace:
-    # TODO: Allow for additional includes args to be specified, as in the CLI.
     parser = _utils.get_full_parser()
     args = parser.parse_args()
 
@@ -26,7 +25,6 @@ def run_autotuning(args: argparse.Namespace) -> None:
     # config yaml file is added as an include and is reimported by the SearchRunner later.
 
     config = _utils.get_search_runner_config_from_args(args)
-    # TODO: early sanity check the submitted config.
 
     # Create empty tempdir as the model_dir and upload everything else as an includes in order to
     # preserve the top-level model_dir structure inside the SearchRunner's container.
