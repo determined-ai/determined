@@ -46,6 +46,7 @@ def unmarshal(
 
 
 class Animator:
+    MAX_LINE_LENGTH = 80
     """
     Animator is a simple class for rendering a loading animation in the terminal.
     Use to communicate progress to the user when a call may take a while.
@@ -71,6 +72,7 @@ class Animator:
 
     @staticmethod
     def clear(message: str = "Loading done.") -> None:
+        sys.stdout.write("\r" + " " * Animator.MAX_LINE_LENGTH + "\r")
         sys.stdout.write("\r" + message + "\n")
         sys.stdout.flush()
 
