@@ -177,7 +177,7 @@ For an introduction to using the training API, please visit the Training APIs se
 
    -  -  DeepSpeed (PyTorch)
       -  ImageNet (Generated)
-      -  :download:`gpt_neox.tgz </examples/torchvision.tgz>`
+      -  :download:`torchvision.tgz </examples/torchvision.tgz>`
 
 ************************
  HP Search Benchmarking
