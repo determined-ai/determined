@@ -43,7 +43,7 @@ interface Props {
   onLink?: () => void;
   onVisibleChange?: (visible: boolean) => void;
   settings?: ExperimentListSettings;
-  updateSettings?: UpdateSettings;
+  updateSettings?: UpdateSettings<ExperimentListSettings>;
   workspaceId?: number;
   handleUpdateExperimentList?: (action: BatchAction, successfulIds: number[]) => void;
 }

@@ -2,10 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import Icon from 'components/kit/Icon';
 import Section from 'components/Section';
-import InteractiveTable, {
-  ColumnDef,
-  InteractiveTableSettings,
-} from 'components/Table/InteractiveTable';
+import InteractiveTable, { ColumnDef } from 'components/Table/InteractiveTable';
 import SkeletonTable from 'components/Table/SkeletonTable';
 import {
   checkmarkRenderer,
@@ -349,7 +346,7 @@ const JobQueue: React.FC<Props> = ({ selectedRp, jobState }) => {
     <div className={css.base} id="jobs">
       <Section hideTitle={!!selectedRp} title={tableTitle}>
         {settings ? (
-          <InteractiveTable
+          <InteractiveTable<Job, Settings>
             columns={columns}
             containerRef={pageRef}
             dataSource={jobs}
@@ -364,7 +361,7 @@ const JobQueue: React.FC<Props> = ({ selectedRp, jobState }) => {
             rowClassName={defaultRowClassName({ clickable: false })}
             rowKey="jobId"
             scroll={{ x: 1000 }}
-            settings={settings as InteractiveTableSettings}
+            settings={settings}
             showSorterTooltip={false}
             size="small"
             updateSettings={updateSettings}

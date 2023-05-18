@@ -78,7 +78,7 @@ export type ColumnDefs<ColumnName extends string, RecordType> = Record<
   ColumnDef<RecordType>
 >;
 
-interface InteractiveTableProps<RecordType> extends TableProps<RecordType> {
+interface InteractiveTableProps<RecordType, Settings> extends TableProps<RecordType> {
   ContextMenu?: React.FC<ContextMenuProps<RecordType>>;
   areRowsSelected?: boolean;
   columns: ColumnDef<RecordType>[];
@@ -86,8 +86,8 @@ interface InteractiveTableProps<RecordType> extends TableProps<RecordType> {
   defaultColumns?: string[];
   interactiveColumns?: boolean;
   numOfPinned?: number;
-  settings: InteractiveTableSettings;
-  updateSettings: UpdateSettings;
+  settings: Settings;
+  updateSettings: UpdateSettings<Settings>;
 }
 
 type DragState = 'draggingRight' | 'draggingLeft' | 'notDragging';
@@ -347,7 +347,10 @@ const HeaderCell = ({
   return tableCell;
 };
 
-const InteractiveTable = <T extends object>({
+const InteractiveTable = <
+  T extends object,
+  S extends InteractiveTableSettings = InteractiveTableSettings,
+>({
   loading,
   scroll,
   dataSource,
@@ -362,7 +365,7 @@ const InteractiveTable = <T extends object>({
   defaultColumns,
   rowKey,
   ...props
-}: InteractiveTableProps<T>): JSX.Element => {
+}: InteractiveTableProps<T, S>): JSX.Element => {
   const columnDefs: ColumnDefs<string, T> = useMemo(
     () => columns.reduce((memo, column) => ({ ...memo, [column.dataIndex]: column }), {}),
     [columns],
@@ -431,7 +434,7 @@ const InteractiveTable = <T extends object>({
       if (Array.isArray(tableSorter)) return;
 
       const newSettings: Partial<InteractiveTableSettings> = {
-        tableLimit: tablePagination.pageSize,
+        tableLimit: tablePagination.pageSize ?? 0,
         tableOffset: ((tablePagination.current ?? 1) - 1) * (tablePagination.pageSize ?? 0),
       };
 
@@ -443,7 +446,7 @@ const InteractiveTable = <T extends object>({
 
       if (isEqual(newSettings, settings)) return;
 
-      updateSettings(newSettings);
+      updateSettings(newSettings as Partial<S>);
     },
     [settings, updateSettings, columnDefs, settingsColumns],
   );
@@ -458,7 +461,7 @@ const InteractiveTable = <T extends object>({
       const width = reorderedWidths.splice(fromIndex, 1)[0];
       reorderedColumns.splice(toIndex, 0, col);
       reorderedWidths.splice(toIndex, 0, width);
-      updateSettings({ columns: reorderedColumns, columnWidths: reorderedWidths });
+      updateSettings({ columns: reorderedColumns, columnWidths: reorderedWidths } as Partial<S>);
       setWidthData({ ...widthData, widths: reorderedWidths });
     },
     [settingsColumns, settings.columnWidths, widthData, updateSettings],
@@ -534,7 +537,7 @@ const InteractiveTable = <T extends object>({
   const handleResizeStop = useCallback(() => {
     setIsResizing(false);
 
-    updateSettings({ columnWidths: widthData.widths.map(Math.round) });
+    updateSettings({ columnWidths: widthData.widths.map(Math.round) } as Partial<S>);
   }, [updateSettings, widthData]);
 
   const onHeaderCell = useCallback(

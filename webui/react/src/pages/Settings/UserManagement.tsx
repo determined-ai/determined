@@ -11,10 +11,7 @@ import { useModal } from 'components/kit/Modal';
 import ManageGroupsModalComponent from 'components/ManageGroupsModal';
 import Page from 'components/Page';
 import Section from 'components/Section';
-import InteractiveTable, {
-  InteractiveTableSettings,
-  onRightClickableCell,
-} from 'components/Table/InteractiveTable';
+import InteractiveTable, { onRightClickableCell } from 'components/Table/InteractiveTable';
 import SkeletonTable from 'components/Table/SkeletonTable';
 import {
   checkmarkRenderer,
@@ -25,7 +22,7 @@ import {
 import TableFilterSearch from 'components/Table/TableFilterSearch';
 import UserBadge from 'components/UserBadge';
 import usePermissions from 'hooks/usePermissions';
-import { UpdateSettings, useSettings } from 'hooks/useSettings';
+import { useSettings } from 'hooks/useSettings';
 import { getGroups, patchUser } from 'services/api';
 import { V1GetUsersRequestSortBy, V1GroupSearchResult } from 'services/api-ts-sdk';
 import { GetUsersParams } from 'services/types';
@@ -308,7 +305,7 @@ const UserManagement: React.FC = () => {
 
   const table = useMemo(() => {
     return settings ? (
-      <InteractiveTable
+      <InteractiveTable<DetailedUser, UserManagementSettings>
         columns={columns}
         containerRef={pageRef}
         dataSource={users}
@@ -323,16 +320,14 @@ const UserManagement: React.FC = () => {
         )}
         rowClassName={defaultRowClassName({ clickable: false })}
         rowKey="id"
-        settings={
-          {
-            ...settings,
-            columns: DEFAULT_COLUMNS,
-            columnWidths: DEFAULT_COLUMNS.map((col: UserColumnName) => DEFAULT_COLUMN_WIDTHS[col]),
-          } as InteractiveTableSettings
-        }
+        settings={{
+          ...settings,
+          columns: DEFAULT_COLUMNS,
+          columnWidths: DEFAULT_COLUMNS.map((col: UserColumnName) => DEFAULT_COLUMN_WIDTHS[col]),
+        }}
         showSorterTooltip={false}
         size="small"
-        updateSettings={updateSettings as UpdateSettings}
+        updateSettings={updateSettings}
       />
     ) : (
       <SkeletonTable columns={columns.length} />
