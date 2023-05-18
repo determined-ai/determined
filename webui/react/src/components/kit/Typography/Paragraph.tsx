@@ -1,11 +1,11 @@
 import React from 'react';
 
-import { ThemeFont, TypographySizes } from 'utils/fonts';
+import { ThemeFont, TypographySize } from 'utils/fonts';
 
 import css from './index.module.scss';
 
 interface Props {
-  size?: TypographySizes;
+  size?: TypographySize;
   type?: 'single line' | 'multi line';
   font?: 'code' | 'ui';
 }
@@ -21,10 +21,10 @@ const Paragraph: React.FC<React.PropsWithChildren<Props>> = ({
 
     const lineType = type.replace(' line', '');
 
-    if (size === TypographySizes.XL) return css[`${lineType}LineXL`];
-    if (size === TypographySizes.L) return css[`${lineType}LineL`];
-    if (size === TypographySizes.default) return css[`${lineType}LineDefault`];
-    if (size === TypographySizes.S) return css[`${lineType}LineS`];
+    if (size === TypographySize.XL) return css[`${lineType}LineXL`];
+    if (size === TypographySize.L) return css[`${lineType}LineL`];
+    if (size === TypographySize.default) return css[`${lineType}LineDefault`];
+    if (size === TypographySize.S) return css[`${lineType}LineS`];
 
     return css[`${lineType}LineXS`];
   };

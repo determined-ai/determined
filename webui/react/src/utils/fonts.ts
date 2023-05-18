@@ -5,7 +5,7 @@ export const ThemeFont = {
   UI: 'var(--theme-font-family)',
 } as const;
 
-export const TypographySizes = {
+export const TypographySize = {
   default: 'default',
   L: 'L',
   S: 'S',
@@ -13,4 +13,4 @@ export const TypographySizes = {
   XS: 'XS',
 } as const;
 
-export type TypographySizes = ValueOf<typeof TypographySizes>;
+export type TypographySize = ValueOf<typeof TypographySize>;

@@ -52,9 +52,6 @@ import { ValueOf } from 'shared/types';
 import { noOp } from 'shared/utils/service';
 import { BrandingType } from 'stores/determinedInfo';
 import { MetricType, User } from 'types';
-import { TypographySizes } from 'utils/fonts';
-import { Loaded, NotLoaded } from 'utils/loadable';
-import loremIpsum from 'utils/loremIpsum';
 import {
   Background,
   Brand,
@@ -64,7 +61,10 @@ import {
   Stage,
   Status,
   Surface,
-} from 'utils/themes';
+} from 'utils/colors';
+import { TypographySize } from 'utils/fonts';
+import { Loaded, NotLoaded } from 'utils/loadable';
+import loremIpsum from 'utils/loremIpsum';
 
 import useConfirm, { voidPromiseFn } from '../components/kit/useConfirm';
 
@@ -80,6 +80,7 @@ const ComponentTitles = {
   Checkboxes: 'Checkboxes',
   ClipboardButton: 'ClipboardButton',
   CodeEditor: 'CodeEditor',
+  Color: 'Color',
   Columns: 'Columns',
   Dropdown: 'Dropdown',
   Empty: 'Empty',
@@ -98,7 +99,6 @@ const ComponentTitles = {
   Pivot: 'Pivot',
   Select: 'Select',
   Tags: 'Tags',
-  Theme: 'Theme',
   Toggle: 'Toggle',
   Tooltips: 'Tooltips',
   Typography: 'Typography',
@@ -1830,11 +1830,75 @@ const TypographySection: React.FC = () => {
           <Paragraph>this is a paragraph!</Paragraph>
         </Space>
       </AntDCard>
+      <AntDCard title="Fonts">
+        <AntDCard title="Font Families">
+          <Paragraph>For general UI --theme-font-family</Paragraph>
+          <Paragraph font="code">For displaying code --theme-font-family-code</Paragraph>
+        </AntDCard>
+        <AntDCard title="Font Sizing">
+          <div>
+            <div style={{ display: 'flex', flexDirection: 'column', marginBottom: '30px' }}>
+              <Header>Header</Header>
+              <Header size={TypographySize.XL}>
+                Model Registry - XL (f.s. 28px, line-height 36px)
+              </Header>
+              <Header size={TypographySize.L}>
+                Model Registry - L (f.s. 24px, line-height 32px)
+              </Header>
+              <Header size={TypographySize.default}>
+                Model Registry - default (f.s. 22px line-height 28px)
+              </Header>
+              <Header size={TypographySize.S}>
+                Model Registry - s (f.s. 18px line-height 23px)
+              </Header>
+              <Header size={TypographySize.XS}>
+                Model Registry - xs (f.s. 16px line-height 21px)
+              </Header>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', marginBottom: '30px' }}>
+              <Header>Multi Line</Header>
+              <Paragraph size={TypographySize.XL} type="multi line">
+                Model Registry - XL (f.s. 16px line-height 26px)
+              </Paragraph>
+              <Paragraph size={TypographySize.L} type="multi line">
+                Model Registry - L (f.s. 14px line-height 22px)
+              </Paragraph>
+              <Paragraph size={TypographySize.default} type="multi line">
+                Model Registry - default (f.s. 12px line-height 20px)
+              </Paragraph>
+              <Paragraph size={TypographySize.S} type="multi line">
+                Model Registry - s (f.s. 11px line-height 18px)
+              </Paragraph>
+              <Paragraph size={TypographySize.XS} type="multi line">
+                Model Registry - xs (f.s. 10px line-height 16px)
+              </Paragraph>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', marginBottom: '30px' }}>
+              <Header>Single Line</Header>
+              <Paragraph size={TypographySize.XL}>
+                Model Registry - XL (f.s. 16px line-height 20px)
+              </Paragraph>
+              <Paragraph size={TypographySize.L}>
+                Model Registry - L (f.s. 14px line-height 18px)
+              </Paragraph>
+              <Paragraph size={TypographySize.default}>
+                Model Registry - default (f.s. 12px line-height 16px)
+              </Paragraph>
+              <Paragraph size={TypographySize.S}>
+                Model Registry - s (f.s. 11px line-height 14px)
+              </Paragraph>
+              <Paragraph size={TypographySize.XS}>
+                Model Registry - xs (f.s. 10px line-height 12px)
+              </Paragraph>
+            </div>
+          </div>
+        </AntDCard>
+      </AntDCard>
     </ComponentSection>
   );
 };
 
-const ThemeSection: React.FC = () => {
+const ColorSection: React.FC = () => {
   const themeStatus = Object.values(Status);
   const backgrounds = Object.values(Background);
   const stage = Object.values(Stage);
@@ -1872,7 +1936,7 @@ const ThemeSection: React.FC = () => {
     themes.map((theme, idx) => renderColorComponent(theme, names[idx]));
 
   return (
-    <ComponentSection id="Theme" title="Theme">
+    <ComponentSection id="Color" title="Color">
       <AntDCard>
         <Paragraph>
           We have a variety of colors that are available for use with the components in the UI Kit.
@@ -1882,70 +1946,6 @@ const ThemeSection: React.FC = () => {
         [themeStatus, backgrounds, stage, surface, float, overlay, brand, interactive],
         ['Status', 'Background', 'Stage', 'Surface', 'Float', 'Overlay', 'Brand', 'Interactive'],
       )}
-      <AntDCard title="Fonts">
-        <AntDCard title="Font Families">
-          <Paragraph>For general UI --theme-font-family</Paragraph>
-          <Paragraph font="code">For displaying code --theme-font-family-code</Paragraph>
-        </AntDCard>
-        <AntDCard title="Font Sizing">
-          <div>
-            <div style={{ display: 'flex', flexDirection: 'column', marginBottom: '30px' }}>
-              <Header>Header</Header>
-              <Header size={TypographySizes.XL}>
-                Model Registry - XL (f.s. 28px, line-height 36px)
-              </Header>
-              <Header size={TypographySizes.L}>
-                Model Registry - L (f.s. 24px, line-height 32px)
-              </Header>
-              <Header size={TypographySizes.default}>
-                Model Registry - default (f.s. 22px line-height 28px)
-              </Header>
-              <Header size={TypographySizes.S}>
-                Model Registry - s (f.s. 18px line-height 23px)
-              </Header>
-              <Header size={TypographySizes.XS}>
-                Model Registry - xs (f.s. 16px line-height 21px)
-              </Header>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', marginBottom: '30px' }}>
-              <Header>Multi Line</Header>
-              <Paragraph size={TypographySizes.XL} type="multi line">
-                Model Registry - XL (f.s. 16px line-height 26px)
-              </Paragraph>
-              <Paragraph size={TypographySizes.L} type="multi line">
-                Model Registry - L (f.s. 14px line-height 22px)
-              </Paragraph>
-              <Paragraph size={TypographySizes.default} type="multi line">
-                Model Registry - default (f.s. 12px line-height 20px)
-              </Paragraph>
-              <Paragraph size={TypographySizes.S} type="multi line">
-                Model Registry - s (f.s. 11px line-height 18px)
-              </Paragraph>
-              <Paragraph size={TypographySizes.XS} type="multi line">
-                Model Registry - xs (f.s. 10px line-height 16px)
-              </Paragraph>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', marginBottom: '30px' }}>
-              <Header>Single Line</Header>
-              <Paragraph size={TypographySizes.XL}>
-                Model Registry - XL (f.s. 16px line-height 20px)
-              </Paragraph>
-              <Paragraph size={TypographySizes.L}>
-                Model Registry - L (f.s. 14px line-height 18px)
-              </Paragraph>
-              <Paragraph size={TypographySizes.default}>
-                Model Registry - default (f.s. 12px line-height 16px)
-              </Paragraph>
-              <Paragraph size={TypographySizes.S}>
-                Model Registry - s (f.s. 11px line-height 14px)
-              </Paragraph>
-              <Paragraph size={TypographySizes.XS}>
-                Model Registry - xs (f.s. 10px line-height 12px)
-              </Paragraph>
-            </div>
-          </div>
-        </AntDCard>
-      </AntDCard>
     </ComponentSection>
   );
 };
@@ -2598,6 +2598,7 @@ const Components = {
   Checkboxes: <CheckboxesSection />,
   ClipboardButton: <ClipboardButtonSection />,
   CodeEditor: <CodeEditorSection />,
+  Color: <ColorSection />,
   Columns: <ColumnsSection />,
   Dropdown: <DropdownSection />,
   Empty: <EmptySection />,
@@ -2616,7 +2617,6 @@ const Components = {
   Pivot: <PivotSection />,
   Select: <SelectSection />,
   Tags: <TagsSection />,
-  Theme: <ThemeSection />,
   Toggle: <ToggleSection />,
   Tooltips: <TooltipsSection />,
   Typography: <TypographySection />,
