@@ -157,8 +157,6 @@ class DSATTrial:
             return float(val)
         return val
 
-    # TODO: More important properties, like train_batch_size, gas, etc.
-
 
 class DSATModelProfileInfoTrial(DSATTrial):
     """
@@ -595,7 +593,6 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
         last_trial = self.trial_tracker[request_id]
         self.trial_tracker.update_trial_metric(trial=last_trial, metric=metric)
 
-        # TODO: remove some of these info logs. Some are just for testing.
         if isinstance(last_trial, DSATModelProfileInfoTrial):
             logging.info(
                 f"Approx. max mbs per stage: {self.trial_tracker.approx_max_mbs_per_stage}"
@@ -651,12 +648,6 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
     def on_trial_closed(
         self, searcher_state: searcher.SearcherState, request_id: uuid.UUID
     ) -> List[searcher.Operation]:
-        last_trial = self.trial_tracker[request_id]
-
-        # TODO: Remove print tests.
-        logging.info(f"Calling on_trial_closed for {request_id}")
-        logging.info(f"metrics for closed trial {last_trial.metric}")
-
         new_ops_list: List[searcher.Operation] = []
         if self.should_shutdown():
             if self.trial_tracker.best_trial is not None and self.args.run_full_experiment:
@@ -667,8 +658,6 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
                 # Delete the keys which enforce autotuning code paths
                 del optimal_config["hyperparameters"][_defaults.OVERWRITE_KEY]["autotuning"]
                 del optimal_config["hyperparameters"][_defaults.USE_DSAT_MODE_KEY]
-                # TODO: add searcher exp_id to the config so the user knows where this came from
-                # and also some "optimal config" label somewhere.
                 create_experiment(optimal_config, self.args.model_dir, self.args.include)
 
             new_ops_list.append(searcher.Shutdown(failure=self.trial_tracker.should_be_failure))
@@ -786,8 +775,6 @@ class RandomDSATSearchMethod(BaseDSATSearchMethod):
         last_trial: DSATTrial,
         exited_reason: searcher.ExitedReason,
     ) -> List[DSATTrial]:
-        # TODO: delete print test
-        logging.info("Calling get_trials_after_early_exit")
         new_trials = []
 
         if self.should_stop_lineage(last_trial):
@@ -877,9 +864,6 @@ class RandomDSATSearchMethod(BaseDSATSearchMethod):
         return [trial]
 
     def should_stop_lineage(self, trial: DSATTrial) -> bool:
-        # TODO: This breaks the tests but perhaps it's how we should be doing this?
-        # assert trial.search_data, "Attempted to check `should_stop_lineage` on a `DSATTrial`" \
-        #     " that has no `search_data"
         # General conditions
         assert trial.search_data is not None
         failed_on_min_mbs = trial.error and trial.search_data and trial.mbs <= trial.search_data.lo
@@ -1013,8 +997,6 @@ class BinarySearchDSATSearchMethod(BaseDSATSearchMethod):
         last_trial: DSATTrial,
         exited_reason: searcher.ExitedReason,
     ) -> List[DSATTrial]:
-        # TODO: delete print test
-        logging.info("Calling get_trials_after_early_exit")
         new_trials = []
         if last_trial.search_data is None:
             return [self.get_random_trial()]
@@ -1152,9 +1134,6 @@ class ASHADSATSearchMethod(BaseDSATSearchMethod):
         last_trial: DSATTrial,
         exited_reason: searcher.ExitedReason,
     ) -> List[DSATTrial]:
-        # TODO: delete print test
-        logging.info("Calling get_trials_after_early_exit")
-
         new_trial = [self.get_next_trial(last_trial)]
         return new_trial
 
