@@ -504,9 +504,15 @@ class DSATTrialTracker:
 
 
 class BaseDSATSearchMethod(searcher.SearchMethod):
-    """
-    Base class for all DS AT searchers. Written so that only the `get_new_searcher_ops_list` method
-    needs to be written overwritten when subclassing (at a minimum).
+    """Base class for all Determined AI DeepSpeed Autotune searchers.
+
+    Contains two abstract methods: `get_trials_after_validation_completed` and
+    `get_trials_after_early_exit` which return iterables of `DSATTrial` after their respective
+    events occur. The `early_stopping_triggered` and `choose_next_trial_from_queue` methods are also
+    provided with the intention of overwriting for further fine-grained control. The base class
+    ensures that global constraints such as `max_trials`, `max_concurrent_trials`, and `max_slots`
+    are respected by all subclasses.  The `trial_tracker` attribute (a `DSATTrialTracker` instance)
+    is the stateful object which tracks results and the queued Trials.
     """
 
     def __init__(self, args: argparse.Namespace, exp_config: Dict[str, Any]) -> None:
@@ -790,15 +796,25 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
 
 @dataclass
 class DSATSearchData:
+    """Basic binary-search type data used to guide DS AT."""
+
     lo: int
     hi: int
 
 
 class RandomDSATSearchMethod(BaseDSATSearchMethod):
     """
-    Semi-random search through parameters space. Attaches search_data of the form
-    {"lo": lo,  "hi": hi} which defines the inclusive bounds on the train_micro_batch_size_per_gpu
-    that can be selected for the trial.
+    Implements a random search through DeepSpeed configuration space with an approximate binary
+    search on batch sizes.  Utilizes aggressive early stopping based on the results of other Trials
+    and heuristics based on domain knowledge of DeepSpeed. Uses two search-specific arguments:
+
+        Args:
+            trials_per_random_config:
+                the maximum number of Trials which will be used to optimize each randomly-generated
+                configuration
+            early_stopping:
+                the maximum number of Trials to run without improving results after a best-found
+                configuration has been established
     """
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
@@ -1015,8 +1031,18 @@ class RandomDSATSearchMethod(BaseDSATSearchMethod):
 
 
 class BinarySearchDSATSearchMethod(BaseDSATSearchMethod):
-    """
-    Very basic binary search for randomly generated configs.
+    """Basic binary search over randomly generated configurations.
+
+    Randomly generates as many DeepSpeed configurations as can be concurrently tested, per the
+    CLI arguments, and performs a binary search over batch size. Each such lineage runs to
+    completion or until the `max_trials` limit is hit. Lineages whose binary search ends before
+    `max_trials` is hit are replaced with newly generated random configurations. One search-specific
+    argument:
+        Args:
+            search_range_factor:
+                adjusts the initial binary search range by raising the ceiling by a factor of
+                `search_range_factor`
+
     """
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
@@ -1134,9 +1160,26 @@ class ASHADSATSearchData(DSATSearchData):
 
 
 class ASHADSATSearchMethod(BaseDSATSearchMethod):
-    """
-    ASHA autotuning using the number of `train_micro_batch_size_per_gpu` values to use as the
-    resource.
+    """Asynchronous Successive Halving Algorithm (ASHA)
+
+    Adaptive search through randomly-generated DeepSpeed configurations which tunes the batch size
+    through a binary search and uses the number of Trials in this search as the finite-resource of
+    ASHA. Search-specific arguments:
+
+        Args:
+            asha_early_stopping:
+                ASHA early stopping parameter (`s` in arxiv:1810.05934)
+            max_rungs:
+                Maximum number of rungs
+            min_binary_search_trials:
+                Minimum number of binary search Trials to run per random configuration
+            divisor:
+                ASHA divisor parameter (`eta` in arxiv:1810.05934), controlling the growth in
+                resources and population thinning across rungs
+            search_range_factor:
+                adjusts the initial binary search range by raising the ceiling by a factor of
+                `search_range_factor`
+
     """
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
@@ -1366,9 +1409,9 @@ class ASHADSATSearchMethod(BaseDSATSearchMethod):
 
 
 class _TestDSATSearchMethod(BaseDSATSearchMethod):
-    """
-    Dumb searcher which just submits Trials with linearly increasing batch sizes, from 2 up to
-    max_trials
+    """Searcher for basic testing purposes.
+
+    Submits Trials with linearly increasing batch sizes, from 2 up to max_trials
     """
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
