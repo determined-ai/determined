@@ -32,8 +32,8 @@ import Pivot from 'components/kit/Pivot';
 import Select, { Option } from 'components/kit/Select';
 import Toggle from 'components/kit/Toggle';
 import Tooltip from 'components/kit/Tooltip';
-import Header from 'components/kit/Typography/Header';
-import Paragraph from 'components/kit/Typography/Paragraph';
+import Header, { HeaderSizes } from 'components/kit/Typography/Header';
+import Paragraph, { ParagraphSizes } from 'components/kit/Typography/Paragraph';
 import { useNoteDemo, useNotesDemo } from 'components/kit/useNoteDemo';
 import UserAvatar from 'components/kit/UserAvatar';
 import { useTags } from 'components/kit/useTags';
@@ -51,7 +51,6 @@ import { ValueOf } from 'shared/types';
 import { noOp } from 'shared/utils/service';
 import { BrandingType } from 'stores/determinedInfo';
 import { MetricType, User } from 'types';
-import { ThemeFont } from 'utils/fonts';
 import { Loaded, NotLoaded } from 'utils/loadable';
 import loremIpsum from 'utils/loremIpsum';
 import {
@@ -1877,66 +1876,58 @@ const ThemeSection: React.FC = () => {
       )}
       <AntDCard title="Fonts">
         <AntDCard title="Font Families">
-          <Paragraph style={{ fontFamily: `${ThemeFont.UI}`, fontSize: '16px' }}>
-            For general UI --theme-font-family
-          </Paragraph>
-          <Paragraph style={{ fontFamily: `${ThemeFont.Code}`, fontSize: '16px' }}>
-            For displaying code --theme-font-family-code
-          </Paragraph>
+          <Paragraph>For general UI --theme-font-family</Paragraph>
+          <Paragraph font="code">For displaying code --theme-font-family-code</Paragraph>
         </AntDCard>
         <AntDCard title="Font Sizing">
           <div>
             <div style={{ display: 'flex', flexDirection: 'column', marginBottom: '30px' }}>
-              <Header style={{ marginBottom: '20px' }}>Header</Header>
-              <Header className={css.headerXL} style={{ marginBottom: '5px' }}>
+              <Header>Header</Header>
+              <Header size={HeaderSizes.XL}>
                 Model Registry - XL (f.s. 28px, line-height 36px)
               </Header>
-              <Header className={css.headerL} style={{ marginBottom: '5px' }}>
-                Model Registry - L (f.s. 24px, line-height 32px)
-              </Header>
-              <Header className={css.headerDefault} style={{ marginBottom: '5px' }}>
+              <Header size={HeaderSizes.L}>Model Registry - L (f.s. 24px, line-height 32px)</Header>
+              <Header size={HeaderSizes.default}>
                 Model Registry - default (f.s. 22px line-height 28px)
               </Header>
-              <Header className={css.headerS} style={{ marginBottom: '5px' }}>
-                Model Registry - s (f.s. 18px line-height 23px)
-              </Header>
-              <Header className={css.headerXS} style={{ marginBottom: '5px' }}>
+              <Header size={HeaderSizes.S}>Model Registry - s (f.s. 18px line-height 23px)</Header>
+              <Header size={HeaderSizes.XS}>
                 Model Registry - xs (f.s. 16px line-height 21px)
               </Header>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', marginBottom: '30px' }}>
-              <Header style={{ marginBottom: '20px' }}>Multi Line</Header>
-              <Paragraph className={css.multiLineXL} style={{ marginBottom: '5px' }}>
+              <Header>Multi Line</Header>
+              <Paragraph size={ParagraphSizes.XL} type="multi line">
                 Model Registry - XL (f.s. 16px line-height 26px)
               </Paragraph>
-              <Paragraph className={css.multiLineL} style={{ marginBottom: '5px' }}>
+              <Paragraph size={ParagraphSizes.L} type="multi line">
                 Model Registry - L (f.s. 14px line-height 22px)
               </Paragraph>
-              <Paragraph className={css.multiLineDefault} style={{ marginBottom: '5px' }}>
+              <Paragraph size={ParagraphSizes.default} type="multi line">
                 Model Registry - default (f.s. 12px line-height 20px)
               </Paragraph>
-              <Paragraph className={css.multiLineS} style={{ marginBottom: '5px' }}>
+              <Paragraph size={ParagraphSizes.S} type="multi line">
                 Model Registry - s (f.s. 11px line-height 18px)
               </Paragraph>
-              <Paragraph className={css.multiLineXS} style={{ marginBottom: '5px' }}>
+              <Paragraph size={ParagraphSizes.XS} type="multi line">
                 Model Registry - xs (f.s. 10px line-height 16px)
               </Paragraph>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', marginBottom: '30px' }}>
-              <Header style={{ marginBottom: '20px' }}>Single Line</Header>
-              <Paragraph className={css.singleLineXL} style={{ marginBottom: '5px' }}>
+              <Header>Single Line</Header>
+              <Paragraph size={ParagraphSizes.XL}>
                 Model Registry - XL (f.s. 16px line-height 20px)
               </Paragraph>
-              <Paragraph className={css.singleLineL} style={{ marginBottom: '5px' }}>
+              <Paragraph size={ParagraphSizes.L}>
                 Model Registry - L (f.s. 14px line-height 18px)
               </Paragraph>
-              <Paragraph className={css.singleLineDefault} style={{ marginBottom: '5px' }}>
+              <Paragraph size={ParagraphSizes.default}>
                 Model Registry - default (f.s. 12px line-height 16px)
               </Paragraph>
-              <Paragraph className={css.singleLineS} style={{ marginBottom: '5px' }}>
+              <Paragraph size={ParagraphSizes.S}>
                 Model Registry - s (f.s. 11px line-height 14px)
               </Paragraph>
-              <Paragraph className={css.singleLineXS} style={{ marginBottom: '5px' }}>
+              <Paragraph size={ParagraphSizes.XS}>
                 Model Registry - xs (f.s. 10px line-height 12px)
               </Paragraph>
             </div>

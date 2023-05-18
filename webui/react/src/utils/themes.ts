@@ -1,3 +1,5 @@
+import { ValueOf } from 'shared/types';
+
 export const Status = {
   Active: 'var(--theme-status-active)',
   ActiveOn: 'var(--theme-status-active-on)',
@@ -36,7 +38,7 @@ export const Status = {
   WarningOnWeak: 'var(--theme-status-warning-on-weak)',
   WarningStrong: 'var(--theme-status-warning-strong)',
   WarningWeak: 'var(--theme-status-warning-weak)',
-};
+} as const;
 
 export const Background = {
   Background: 'var(--theme-background)',
@@ -48,7 +50,7 @@ export const Background = {
   BackgroundOnWeak: 'var(--theme-background-on-weak)',
   BackgroundStrong: 'var(--theme-background-strong)',
   BackgroundWeak: 'var(--theme-background-weak)',
-};
+} as const;
 
 export const Stage = {
   Stage: 'var(--theme-stage)',
@@ -60,7 +62,7 @@ export const Stage = {
   StageOnWeak: 'var(--theme-stage-on-weak)',
   StageStrong: 'var(--theme-stage-strong)',
   StageWeak: 'var(--theme-stage-weak)',
-};
+} as const;
 
 export const Surface = {
   Surface: 'var(--theme-surface)',
@@ -72,7 +74,7 @@ export const Surface = {
   SurfaceOnWeak: 'var(--theme-surface-on-weak)',
   SurfaceStrong: 'var(--theme-surface-strong)',
   SurfaceWeak: 'var(--theme-surface-weak)',
-};
+} as const;
 
 export const Float = {
   Float: 'var(--theme-float)',
@@ -84,19 +86,19 @@ export const Float = {
   FloatOnWeak: 'var(--theme-float-on-weak)',
   FloatStrong: 'var(--theme-float-strong)',
   FloatWeak: 'var(--theme-float-weak)',
-};
+} as const;
 
 export const Overlay = {
   Overlay: 'var(--theme-overlay)',
   OverlayStrong: 'var(--theme-overlay-strong)',
   OverlayWeak: 'var(--theme-overlay-weak)',
-};
+} as const;
 
 export const Brand = {
   Brand: 'var(--theme-brand)',
   BrandStrong: 'var(--theme-brand-strong)',
   BrandWeak: 'var(--theme-brand-weak)',
-};
+} as const;
 
 export const Interactive = {
   Interactive: 'var(--theme-ix)',
@@ -114,4 +116,13 @@ export const Interactive = {
   InteractiveOnWeak: 'var(--theme-ix-on-weak)',
   InteractiveStrong: 'var(--theme-ix-strong)',
   InteractiveWeak: 'var(--theme-ix-weak)',
-};
+} as const;
+
+export type Status = ValueOf<typeof Status>;
+export type Background = ValueOf<typeof Background>;
+export type Stage = ValueOf<typeof Stage>;
+export type Surface = ValueOf<typeof Surface>;
+export type Float = ValueOf<typeof Float>;
+export type Overlay = ValueOf<typeof Overlay>;
+export type Brand = ValueOf<typeof Brand>;
+export type Interactive = ValueOf<typeof Interactive>;

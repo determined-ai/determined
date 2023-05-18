@@ -1,7 +1,9 @@
+import { ValueOf } from 'shared/types';
+
 export const ThemeFont = {
   Code: 'var(--theme-font-family-code)',
   UI: 'var(--theme-font-family)',
-};
+} as const;
 
 export const Header = {
   FontSizeDefault: '--header-size-default',
@@ -14,7 +16,7 @@ export const Header = {
   LineHeightS: '--header-ln-S',
   LineHeightXL: '--header-ln-XL',
   LineHeightXS: '--header-ln-XS',
-};
+} as const;
 
 export const MultiLine = {
   FontSizeDefault: '--multi-line-size-default',
@@ -27,7 +29,7 @@ export const MultiLine = {
   LineHeightS: '--multi-line-ln-S',
   LineHeightXL: '--multi-line-ln-XL',
   LineHeightXS: '--multi-line-ln-XS',
-};
+} as const;
 
 export const SingleLine = {
   FontSizeDefault: '--single-line-size-default',
@@ -40,4 +42,9 @@ export const SingleLine = {
   LineHeightS: '--single-line-ln-S',
   LineHeightXL: '--single-line-ln-XL',
   LineHeightXS: '--single-line-ln-XS',
-};
+} as const;
+
+export type ThemeFont = ValueOf<typeof ThemeFont>;
+export type Header = ValueOf<typeof Header>;
+export type MultiLine = ValueOf<typeof MultiLine>;
+export type SingleLine = ValueOf<typeof SingleLine>;
