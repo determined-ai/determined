@@ -65,8 +65,9 @@ def initialize_distributed_backend() -> Optional[core.DistributedContext]:
 
 def initialize_default_inference_context() -> core.Context:
     distributed_context = initialize_distributed_backend()
-    # Setting preempt mode to WorkerAskMaster makes the call non-blocking
-    # We are also ok if workers are preempted at different batch idx
+    # Use WorkerAskChief mode to ensure synchronize correctly across worker
+    # Using WorkerAskMaster mode could lead to some workers exiting when others
+    # are waiting for synchronization.
     return det.core.init(
         distributed=distributed_context, preempt_mode=core.PreemptMode.WorkersAskChief
     )
