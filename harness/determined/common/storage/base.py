@@ -3,7 +3,7 @@ import contextlib
 import os
 import pathlib
 import urllib
-from typing import Any, Callable, Dict, Iterator, Optional, Set, Union
+from typing import Any, Callable, Dict, Iterator, List, Optional, Set, Union
 
 from determined.common import storage
 
@@ -130,7 +130,7 @@ class StorageManager(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def delete(self, tgt: str) -> None:
+    def delete(self, tgt: str, globs: List[str]) -> Dict[str, int]:
         """
         Delete the stored data from persistent storage.
         """
