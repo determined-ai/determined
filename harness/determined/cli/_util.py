@@ -126,7 +126,7 @@ def wait_ntsc_ready(session: api.Session, ntsc_type: api.NTSC_Kind, eid: str) ->
     Use to wait for a notebook, tensorboard, or shell command to become ready.
     """
     name = ntsc_type.value
-    print(f"Waiting for {name} {eid} to become ready...")
+    print(f"Waiting for {name} (id: {eid}) to become ready...")
     loading_animator = render.Animator("Waiting")
     err_msg = api.task_is_ready(session, eid, loading_animator.next)
     loading_animator.clear()
