@@ -8,8 +8,8 @@ import MetricSelect from 'components/MetricSelect';
 import RadioGroup from 'components/RadioGroup';
 import ScaleSelect from 'components/ScaleSelect';
 import { ValueOf } from 'shared/types';
+import { isEqual } from 'shared/utils/data';
 import { Metric, Scale } from 'types';
-import { metricToKey } from 'utils/metric';
 
 import { ExperimentVisualizationType } from '../ExperimentVisualization';
 
@@ -20,9 +20,9 @@ export interface VisualizationFilters {
   batchMargin: number;
   hParams: string[];
   maxTrial: number;
-  metric: Metric | undefined;
+  metric?: Metric;
   scale: Scale;
-  view: ViewType;
+  view?: ViewType;
 }
 
 export const FilterError = {
@@ -189,7 +189,7 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
 
   // Pick the first valid option if the current local batch is invalid.
   useEffect(() => {
-    if (batches.includes(localFilters.batch) || batches.length === 0) return;
+    if (batches.length === 0 || batches.includes(localFilters.batch)) return;
     dispatch({ type: ActionType.SetBatch, value: batches.first() });
   }, [batches, localFilters.batch]);
 
@@ -197,8 +197,8 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
   useEffect(() => {
     const newMetric = localFilters.metric;
     if (
-      (!!newMetric && metrics.some((metric) => metricToKey(metric) === metricToKey(newMetric))) ||
-      metrics.length === 0
+      metrics.length === 0 ||
+      (!!newMetric && metrics.some((metric) => isEqual(metric, newMetric)))
     )
       return;
     dispatch({ type: ActionType.SetMetric, value: metrics.first() });
@@ -272,7 +272,7 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
             { icon: 'grid', id: ViewType.Grid, label: 'Table View' },
             { icon: 'list', id: ViewType.List, label: 'Wrapped View' },
           ]}
-          value={localFilters.view}
+          value={localFilters.view ?? ViewType.Grid}
           onChange={handleViewChange}
         />
       )}

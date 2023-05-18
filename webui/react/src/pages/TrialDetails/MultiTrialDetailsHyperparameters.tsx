@@ -5,7 +5,6 @@ import useMetricNames from 'hooks/useMetricNames';
 import { useSettings } from 'hooks/useSettings';
 import { ExperimentVisualizationType } from 'pages/ExperimentDetails/ExperimentVisualization';
 import ExperimentVisualizationFilters, {
-  ViewType,
   VisualizationFilters,
 } from 'pages/ExperimentDetails/ExperimentVisualization/ExperimentVisualizationFilters';
 import HpParallelCoordinates from 'pages/ExperimentDetails/ExperimentVisualization/HpParallelCoordinates';
@@ -30,7 +29,7 @@ import TrialDetailsHyperparameters from './TrialDetailsHyperparameters';
 
 export interface Props {
   experiment: ExperimentBase;
-  pageRef: React.RefObject<HTMLElement>;
+  pageRef: React.RefObject<HTMLElement>; // TODO: This can be removed if TrialDetailsHyperparameters is refactored to use Glide
   trial: TrialDetails;
 }
 
@@ -64,7 +63,6 @@ const MultiTrialDetailsHyperparameters: React.FC<Props> = ({
       maxTrial: settings.maxTrial,
       metric: settings.metric,
       scale: settings.scale,
-      view: ViewType.Grid, // View is required in the type but not used in parallel coordinates
     }),
     [
       settings.batch,
@@ -132,9 +130,10 @@ const MultiTrialDetailsHyperparameters: React.FC<Props> = ({
   );
 
   const handleFiltersReset = useCallback(() => {
-    resetSettings(['filters']);
+    resetSettings();
   }, [resetSettings]);
 
+  // Set a default metric of interest filter.
   useEffect(() => {
     if (settings.metric !== undefined) return;
     const activeMetricFound = metrics.find(
@@ -163,13 +162,13 @@ const MultiTrialDetailsHyperparameters: React.FC<Props> = ({
       <HpParallelCoordinates
         experiment={experiment}
         filters={visualizationFilters}
+        focusedTrial={trial}
         fullHParams={fullHParams.current}
         selectedBatch={settings.batch}
         selectedBatchMargin={settings.batchMargin}
         selectedHParams={settings.hParams}
         selectedMetric={settings.metric}
         selectedScale={settings.scale}
-        trial={trial}
       />
       <TrialDetailsHyperparameters pageRef={pageRef} trial={trial} />
     </Space>

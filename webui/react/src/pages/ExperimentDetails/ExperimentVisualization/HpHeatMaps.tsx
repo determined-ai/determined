@@ -16,7 +16,7 @@ import { readStream } from 'services/utils';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner/Spinner';
 import useUI from 'shared/contexts/stores/UI';
-import { Primitive, Range, ValueOf } from 'shared/types';
+import { Primitive, Range } from 'shared/types';
 import { rgba2str, str2rgba } from 'shared/utils/color';
 import { clone, flattenObject, isBoolean, isObject, isString } from 'shared/utils/data';
 import {
@@ -30,6 +30,7 @@ import {
 import { getColorScale } from 'utils/chart';
 import { metricToStr } from 'utils/metric';
 
+import { ViewType } from './ExperimentVisualizationFilters';
 import css from './HpHeatMaps.module.scss';
 
 interface Props {
@@ -41,7 +42,7 @@ interface Props {
   selectedHParams: string[];
   selectedMetric?: Metric;
   selectedScale: Scale;
-  selectedView: ViewType;
+  selectedView?: ViewType;
 }
 
 type HpValue = Record<string, (number | string)[]>;
@@ -55,13 +56,6 @@ interface HpData {
   metricRange: Range<number>;
   trialIds: number[];
 }
-
-const ViewType = {
-  Grid: 'grid',
-  List: 'list',
-} as const;
-
-type ViewType = ValueOf<typeof ViewType>;
 
 const generateHpKey = (hParam1: string, hParam2: string): string => {
   return `${hParam1}:${hParam2}`;
@@ -80,7 +74,7 @@ const HpHeatMaps: React.FC<Props> = ({
   selectedBatchMargin,
   selectedHParams,
   selectedMetric,
-  selectedView,
+  selectedView = ViewType.Grid,
   selectedScale,
 }: Props) => {
   const { ui } = useUI();

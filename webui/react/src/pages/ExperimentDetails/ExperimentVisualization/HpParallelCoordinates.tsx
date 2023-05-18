@@ -49,7 +49,7 @@ interface Props {
   selectedHParams: string[];
   selectedMetric?: Metric;
   selectedScale: Scale;
-  trial?: TrialDetails;
+  focusedTrial?: TrialDetails;
 }
 
 interface HpTrialData {
@@ -68,7 +68,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
   selectedHParams,
   selectedMetric,
   selectedScale,
-  trial,
+  focusedTrial,
 }: Props) => {
   const { ui } = useUI();
   const tooltipRef = useRef<HTMLDivElement>(null);
@@ -159,11 +159,11 @@ const HpParallelCoordinates: React.FC<Props> = ({
       style: {
         axes: { label: { placement: 'after' } },
         data: {
-          series: trial?.id
+          series: focusedTrial?.id
             ? new Array(chartData?.trialIds.length).fill(undefined).map((_, index) => ({
-                lineWidth: chartData?.trialIds.indexOf(trial.id) === index ? 3 : 1,
+                lineWidth: chartData?.trialIds.indexOf(focusedTrial.id) === index ? 3 : 1,
                 strokeStyle:
-                  chartData?.trialIds.indexOf(trial.id) === index
+                  chartData?.trialIds.indexOf(focusedTrial.id) === index
                     ? ui.theme.ixOnActive
                     : rgba2str({ ...str2rgba(ui.theme.ixOn), a: 0.1 }),
               }))
@@ -179,7 +179,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
       hermesCreatedFilters,
       colorScale,
       selectedMetric,
-      trial?.id,
+      focusedTrial?.id,
       chartData?.trialIds,
       ui.theme.ixOnActive,
       ui.theme.ixOn,
@@ -397,10 +397,10 @@ const HpParallelCoordinates: React.FC<Props> = ({
               config={config}
               data={chartData?.data ?? {}}
               dimensions={dimensions}
-              disableInteraction={!!trial}
+              disableInteraction={!!focusedTrial}
             />
           </div>
-          {!trial && !!selectedMetric && (
+          {!focusedTrial && !!selectedMetric && (
             <div>
               <TableBatch
                 actions={[
