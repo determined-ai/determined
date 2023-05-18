@@ -931,7 +931,7 @@ func TestConcurrentMetricUpdate(t *testing.T) {
 			require.NoError(t, db.updateTotalBatches(ctx, tx, tr.ID))
 		}
 		if coinFlip() {
-			_, err = db.addTrialMetricsTx(ctx, tx, trialMetrics, coinFlip())
+			_, err = db._addTrialMetricsTx(ctx, tx, trialMetrics, coinFlip())
 			require.NoError(t, err)
 		}
 		if coinFlip() {

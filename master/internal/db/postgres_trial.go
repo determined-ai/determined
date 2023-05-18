@@ -488,7 +488,7 @@ func (db *PgDB) updateTotalBatches(ctx context.Context, tx *sqlx.Tx, trialID int
 	return nil
 }
 
-func (db *PgDB) addTrialMetricsTx(
+func (db *PgDB) _addTrialMetricsTx(
 	ctx context.Context, tx *sqlx.Tx, m *trialv1.TrialMetrics, isValidation bool,
 ) (rollbacks map[string]int, err error) {
 	rollbacks = make(map[string]int)
@@ -505,12 +505,6 @@ func (db *PgDB) addTrialMetricsTx(
 		metricsBody = map[string]interface{}{
 			"validation_metrics": m.Metrics.AvgMetrics,
 		}
-	}
-
-	switch v := m.Metrics.AvgMetrics.Fields["epoch"].AsInterface().(type) {
-	case float64, nil:
-	default:
-		return nil, fmt.Errorf("cannot add metric with non numeric 'epoch' value got %v", v)
 	}
 
 	// TODO(hamid): deindent. this is here to reduce merge conflicts.
@@ -634,9 +628,14 @@ WHERE id = $1;
 func (db *PgDB) addTrialMetrics(
 	ctx context.Context, m *trialv1.TrialMetrics, isValidation bool,
 ) (rollbacks map[string]int, err error) {
+	switch v := m.Metrics.AvgMetrics.Fields["epoch"].AsInterface().(type) {
+	case float64, nil:
+	default:
+		return nil, fmt.Errorf("cannot add metric with non numeric 'epoch' value got %v", v)
+	}
 	rollbacks = make(map[string]int)
 	return rollbacks, db.withTransaction("add training metrics", func(tx *sqlx.Tx) error {
-		rollbacks, err = db.addTrialMetricsTx(ctx, tx, m, isValidation)
+		rollbacks, err = db._addTrialMetricsTx(ctx, tx, m, isValidation)
 		return err
 	})
 }
