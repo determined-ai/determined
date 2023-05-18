@@ -281,9 +281,6 @@ class DSATTrialTracker:
 
     def enforce_consistent_batch_config(self, hparams: Dict[str, Any]) -> None:
         """Enforces a consistent batch size configuration by altering `hparams` in-place."""
-        # TODO: Talk to Liam about this, because this function adjusts `train_batch_size`, whereas
-        # he probably wants this to be the only constant, in order to hold training dynamics fixed.
-        # We are optimizing different things.
         ds_config = _utils.get_ds_config_from_hparams(hparams, self.model_dir)
         batch_size_config = _utils.get_batch_config_from_mbs_gas_and_slots(
             ds_config, slots=self.slots_per_trial
