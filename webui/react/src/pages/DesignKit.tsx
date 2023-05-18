@@ -33,8 +33,8 @@ import Pivot from 'components/kit/Pivot';
 import Select, { Option } from 'components/kit/Select';
 import Toggle from 'components/kit/Toggle';
 import Tooltip from 'components/kit/Tooltip';
-import Header, { HeaderSizes } from 'components/kit/Typography/Header';
-import Paragraph, { ParagraphSizes } from 'components/kit/Typography/Paragraph';
+import Header from 'components/kit/Typography/Header';
+import Paragraph from 'components/kit/Typography/Paragraph';
 import { useNoteDemo, useNotesDemo } from 'components/kit/useNoteDemo';
 import UserAvatar from 'components/kit/UserAvatar';
 import { useTags } from 'components/kit/useTags';
@@ -52,6 +52,7 @@ import { ValueOf } from 'shared/types';
 import { noOp } from 'shared/utils/service';
 import { BrandingType } from 'stores/determinedInfo';
 import { MetricType, User } from 'types';
+import { TypographySizes } from 'utils/fonts';
 import { Loaded, NotLoaded } from 'utils/loadable';
 import loremIpsum from 'utils/loremIpsum';
 import {
@@ -1890,51 +1891,55 @@ const ThemeSection: React.FC = () => {
           <div>
             <div style={{ display: 'flex', flexDirection: 'column', marginBottom: '30px' }}>
               <Header>Header</Header>
-              <Header size={HeaderSizes.XL}>
+              <Header size={TypographySizes.XL}>
                 Model Registry - XL (f.s. 28px, line-height 36px)
               </Header>
-              <Header size={HeaderSizes.L}>Model Registry - L (f.s. 24px, line-height 32px)</Header>
-              <Header size={HeaderSizes.default}>
+              <Header size={TypographySizes.L}>
+                Model Registry - L (f.s. 24px, line-height 32px)
+              </Header>
+              <Header size={TypographySizes.default}>
                 Model Registry - default (f.s. 22px line-height 28px)
               </Header>
-              <Header size={HeaderSizes.S}>Model Registry - s (f.s. 18px line-height 23px)</Header>
-              <Header size={HeaderSizes.XS}>
+              <Header size={TypographySizes.S}>
+                Model Registry - s (f.s. 18px line-height 23px)
+              </Header>
+              <Header size={TypographySizes.XS}>
                 Model Registry - xs (f.s. 16px line-height 21px)
               </Header>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', marginBottom: '30px' }}>
               <Header>Multi Line</Header>
-              <Paragraph size={ParagraphSizes.XL} type="multi line">
+              <Paragraph size={TypographySizes.XL} type="multi line">
                 Model Registry - XL (f.s. 16px line-height 26px)
               </Paragraph>
-              <Paragraph size={ParagraphSizes.L} type="multi line">
+              <Paragraph size={TypographySizes.L} type="multi line">
                 Model Registry - L (f.s. 14px line-height 22px)
               </Paragraph>
-              <Paragraph size={ParagraphSizes.default} type="multi line">
+              <Paragraph size={TypographySizes.default} type="multi line">
                 Model Registry - default (f.s. 12px line-height 20px)
               </Paragraph>
-              <Paragraph size={ParagraphSizes.S} type="multi line">
+              <Paragraph size={TypographySizes.S} type="multi line">
                 Model Registry - s (f.s. 11px line-height 18px)
               </Paragraph>
-              <Paragraph size={ParagraphSizes.XS} type="multi line">
+              <Paragraph size={TypographySizes.XS} type="multi line">
                 Model Registry - xs (f.s. 10px line-height 16px)
               </Paragraph>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', marginBottom: '30px' }}>
               <Header>Single Line</Header>
-              <Paragraph size={ParagraphSizes.XL}>
+              <Paragraph size={TypographySizes.XL}>
                 Model Registry - XL (f.s. 16px line-height 20px)
               </Paragraph>
-              <Paragraph size={ParagraphSizes.L}>
+              <Paragraph size={TypographySizes.L}>
                 Model Registry - L (f.s. 14px line-height 18px)
               </Paragraph>
-              <Paragraph size={ParagraphSizes.default}>
+              <Paragraph size={TypographySizes.default}>
                 Model Registry - default (f.s. 12px line-height 16px)
               </Paragraph>
-              <Paragraph size={ParagraphSizes.S}>
+              <Paragraph size={TypographySizes.S}>
                 Model Registry - s (f.s. 11px line-height 14px)
               </Paragraph>
-              <Paragraph size={ParagraphSizes.XS}>
+              <Paragraph size={TypographySizes.XS}>
                 Model Registry - xs (f.s. 10px line-height 12px)
               </Paragraph>
             </div>

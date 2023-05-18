@@ -5,6 +5,16 @@ export const ThemeFont = {
   UI: 'var(--theme-font-family)',
 } as const;
 
+export const TypographySizes = {
+  default: 'default',
+  L: 'L',
+  S: 'S',
+  XL: 'XL',
+  XS: 'XS',
+} as const;
+
+export type TypographySizes = ValueOf<typeof TypographySizes>;
+
 export const Header = {
   FontSizeDefault: '--header-size-default',
   FontSizeL: '--header-size-L',
