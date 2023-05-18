@@ -21,16 +21,15 @@ from determined.util import merge_dicts
 """
 TODOs:
     * Make sure we don't draw the same config twice in random search.
-    * Give control over random seeds and checkpoint rng states.
-    * Allow users to configure concurrent trials, somehow.
-    * Make it easy for users to subclass the base searcher and use it with dsat.autotune? Not sure
-    how we'd do that.
 """
 
 
 class DSATTrial:
-    """
-    Helper class for tracking the results and properties of individual Trials.
+    """Encapsulation of DeepSpeed Autotune Trials.
+
+    Simple objects for handling all pertinent information and results for every created Trial.
+    Contains basic lineage tracking in which each `DSATTrial` instance holds direct references to
+    its immediate parent and children, along with various helper properties.
     """
 
     def __init__(
@@ -168,8 +167,13 @@ class DSATModelProfileInfoTrial(DSATTrial):
 
 
 class DSATTrialTracker:
-    """
-    Class for organizing DSATTrial instances and retrieving pertinent info.
+    """Primary stateful object for tracking DeepSpeed Autotune Experiments.
+
+    Holds references to all genereated `DSATTrial` instances, as well as the
+    `DSATModelProfileInfoTrial` and handles queueing through its `queue` attribute.
+    Class for organizing DSATTrial instances and retrieving pertinent info. Provides helper
+    functions for generating the appropriate `DSATModelProfileInfoTrial` and `DSATTrial` instances
+    with consistent batch sizes and configurations in line with CLI arguments.
     """
 
     def __init__(
