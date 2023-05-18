@@ -26,11 +26,11 @@ def run_command(args: Namespace) -> None:
         workspace_id=workspace_id,
     )["command"]
 
-    render.report_job_launched("command", resp["id"])
-
     if args.detach:
         print(resp["id"])
         return
+
+    render.report_job_launched("command", resp["id"])
 
     try:
         logs = api.task_logs(cli.setup_session(args), resp["id"], follow=True)

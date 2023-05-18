@@ -32,11 +32,11 @@ def start_tensorboard(args: Namespace) -> None:
     resp = bindings.post_LaunchTensorboard(cli.setup_session(args), body=body)
     tsb = resp.tensorboard
 
-    render.report_job_launched("tensorboard", tsb.id)
-
     if args.detach:
         print(resp.tensorboard.id)
         return
+
+    render.report_job_launched("tensorboard", tsb.id)
 
     if resp.warnings:
         cli.print_warnings(resp.warnings)

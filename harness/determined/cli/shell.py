@@ -43,11 +43,11 @@ def start_shell(args: Namespace) -> None:
 
     sid = resp["id"]
 
-    render.report_job_launched("shell", sid)
-
     if args.detach:
         print(sid)
         return
+
+    render.report_job_launched("shell", sid)
 
     session = cli.setup_session(args)
     cli.wait_ntsc_ready(cli.setup_session(args), api.NTSC_Kind.shell, sid)
