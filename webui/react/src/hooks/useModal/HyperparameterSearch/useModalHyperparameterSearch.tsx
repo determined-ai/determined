@@ -100,7 +100,7 @@ const useModalHyperparameterSearch = ({
   const [modalError, setModalError] = useState<string>();
   const [searcher, setSearcher] = useState(
     Object.values(SEARCH_METHODS).find((searcher) => searcher.name === experiment.searcherType) ??
-    SEARCH_METHODS.ASHA,
+      SEARCH_METHODS.ASHA,
   );
   const canceler = useRef<AbortController>(new AbortController());
   const resourcePools = Loadable.getOrElse([], useObservable(clusterStore.resourcePools));
@@ -353,11 +353,16 @@ const useModalHyperparameterSearch = ({
     validateForm();
   }, [validateForm]);
 
-  const handleSelectSearcher = useCallback((searcherName: string) => {
-    const searcher = Object.values(SEARCH_METHODS).find((searcher) => searcher.name === searcherName) ?? SEARCH_METHODS.ASHA;
-    setSearcher(searcher);
-    form.setFieldValue('searcher', searcher);
-  }, [form]);
+  const handleSelectSearcher = useCallback(
+    (searcherName: string) => {
+      const searcher =
+        Object.values(SEARCH_METHODS).find((searcher) => searcher.name === searcherName) ??
+        SEARCH_METHODS.ASHA;
+      setSearcher(searcher);
+      form.setFieldValue('searcher', searcher);
+    },
+    [form],
+  );
 
   const hyperparameterPage = useMemo((): React.ReactNode => {
     // We always render the form regardless of mode to provide a reference to it.
