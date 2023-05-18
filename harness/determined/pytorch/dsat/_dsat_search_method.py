@@ -21,16 +21,15 @@ from determined.util import merge_dicts
 """
 TODOs:
     * Make sure we don't draw the same config twice in random search.
-    * Give control over random seeds and checkpoint rng states.
-    * Allow users to configure concurrent trials, somehow.
-    * Make it easy for users to subclass the base searcher and use it with dsat.autotune? Not sure
-    how we'd do that.
 """
 
 
 class DSATTrial:
-    """
-    Helper class for tracking the results and properties of individual Trials.
+    """Encapsulation of DeepSpeed Autotune Trials.
+
+    Simple objects for handling all pertinent information and results for every created Trial.
+    Contains basic lineage tracking in which each `DSATTrial` instance holds direct references to
+    its immediate parent and children, along with various helper properties.
     """
 
     def __init__(
@@ -158,8 +157,6 @@ class DSATTrial:
             return float(val)
         return val
 
-    # TODO: More important properties, like train_batch_size, gas, etc.
-
 
 class DSATModelProfileInfoTrial(DSATTrial):
     """
@@ -168,8 +165,13 @@ class DSATModelProfileInfoTrial(DSATTrial):
 
 
 class DSATTrialTracker:
-    """
-    Class for organizing DSATTrial instances and retrieving pertinent info.
+    """Primary stateful object for tracking DeepSpeed Autotune Experiments.
+
+    Holds references to all genereated `DSATTrial` instances, as well as the
+    `DSATModelProfileInfoTrial` and handles queueing through its `queue` attribute.
+    Class for organizing DSATTrial instances and retrieving pertinent info. Provides helper
+    functions for generating the appropriate `DSATModelProfileInfoTrial` and `DSATTrial` instances
+    with consistent batch sizes and configurations in line with CLI arguments.
     """
 
     def __init__(
@@ -281,9 +283,6 @@ class DSATTrialTracker:
 
     def enforce_consistent_batch_config(self, hparams: Dict[str, Any]) -> None:
         """Enforces a consistent batch size configuration by altering `hparams` in-place."""
-        # TODO: Talk to Liam about this, because this function adjusts `train_batch_size`, whereas
-        # he probably wants this to be the only constant, in order to hold training dynamics fixed.
-        # We are optimizing different things.
         ds_config = _utils.get_ds_config_from_hparams(hparams, self.model_dir)
         batch_size_config = _utils.get_batch_config_from_mbs_gas_and_slots(
             ds_config, slots=self.slots_per_trial
@@ -507,9 +506,15 @@ class DSATTrialTracker:
 
 
 class BaseDSATSearchMethod(searcher.SearchMethod):
-    """
-    Base class for all DS AT searchers. Written so that only the `get_new_searcher_ops_list` method
-    needs to be written overwritten when subclassing (at a minimum).
+    """Base class for all Determined AI DeepSpeed Autotune searchers.
+
+    Contains two abstract methods: `get_trials_after_validation_completed` and
+    `get_trials_after_early_exit` which return iterables of `DSATTrial` after their respective
+    events occur. The `early_stopping_triggered` and `choose_next_trial_from_queue` methods are also
+    provided with the intention of overwriting for further fine-grained control. The base class
+    ensures that global constraints such as `max_trials`, `max_concurrent_trials`, and `max_slots`
+    are respected by all subclasses.  The `trial_tracker` attribute (a `DSATTrialTracker` instance)
+    is the stateful object which tracks results and the queued Trials.
     """
 
     def __init__(self, args: argparse.Namespace, exp_config: Dict[str, Any]) -> None:
@@ -566,9 +571,6 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
         Submits the model info profiling run in order to collect model and resources info to
         inform the search.
         """
-        # TODO: Remove print tests.
-        logging.info("Initial operations")
-        self._searcher_state_tests(searcher_state, "inital ops")
 
         model_profile_info_trial = self.trial_tracker.create_model_profile_info_trial()
         self.trial_tracker.queue_and_register_trial(model_profile_info_trial)
@@ -579,10 +581,6 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
     def on_trial_created(
         self, searcher_state: searcher.SearcherState, request_id: uuid.UUID
     ) -> List[searcher.Operation]:
-        # TODO: Remove print tests.
-        logging.info("on trial created")
-        self._searcher_state_tests(searcher_state, "trial created")
-
         return []
 
     def on_validation_completed(
@@ -595,7 +593,6 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
         last_trial = self.trial_tracker[request_id]
         self.trial_tracker.update_trial_metric(trial=last_trial, metric=metric)
 
-        # TODO: remove some of these info logs. Some are just for testing.
         if isinstance(last_trial, DSATModelProfileInfoTrial):
             logging.info(
                 f"Approx. max mbs per stage: {self.trial_tracker.approx_max_mbs_per_stage}"
@@ -614,10 +611,6 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
             for trial in new_trials:
                 self.trial_tracker.queue_and_register_trial(trial)
 
-        # TODO: Remove print tests.
-        logging.info(f"Calling on_validation_completed for {request_id}")
-        self._searcher_state_tests(searcher_state, "val completed")
-
         # All DS AT Trials should be closed after validation.
         return [searcher.Close(request_id)]
 
@@ -629,10 +622,6 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
     ) -> List["searcher.Operation"]:
         last_trial = self.trial_tracker[request_id]
         self.trial_tracker.report_trial_early_exit(last_trial)
-
-        # TODO: Remove print tests.
-        logging.info(f"Calling on_trial_exited_early for {request_id}")
-        self._searcher_state_tests(searcher_state, "exited early")
 
         new_ops_list: List["searcher.Operation"] = []
         if exited_reason != searcher.ExitedReason.ERRORED:
@@ -659,12 +648,6 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
     def on_trial_closed(
         self, searcher_state: searcher.SearcherState, request_id: uuid.UUID
     ) -> List[searcher.Operation]:
-        last_trial = self.trial_tracker[request_id]
-
-        # TODO: Remove print tests.
-        logging.info(f"Calling on_trial_closed for {request_id}")
-        logging.info(f"metrics for closed trial {last_trial.metric}")
-
         new_ops_list: List[searcher.Operation] = []
         if self.should_shutdown():
             if self.trial_tracker.best_trial is not None and self.args.run_full_experiment:
@@ -675,8 +658,6 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
                 # Delete the keys which enforce autotuning code paths
                 del optimal_config["hyperparameters"][_defaults.OVERWRITE_KEY]["autotuning"]
                 del optimal_config["hyperparameters"][_defaults.USE_DSAT_MODE_KEY]
-                # TODO: add searcher exp_id to the config so the user knows where this came from
-                # and also some "optimal config" label somewhere.
                 create_experiment(optimal_config, self.args.model_dir, self.args.include)
 
             new_ops_list.append(searcher.Shutdown(failure=self.trial_tracker.should_be_failure))
@@ -686,15 +667,9 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
                 next_trial.running = True
                 new_ops_list.extend(next_trial.create_and_val_ops)
 
-        self._searcher_state_tests(searcher_state, "trial closed")
-
         return new_ops_list
 
     def progress(self, searcher_state: searcher.SearcherState) -> float:
-        # TODO: Remove print tests.
-        logging.info("progress")
-        self._searcher_state_tests(searcher_state, "progress")
-
         progress = len(searcher_state.trials_closed) / self.trial_tracker.max_trials
         return progress
 
@@ -751,57 +726,28 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
         """
         return False
 
-    def _searcher_state_tests(
-        self,
-        searcher_state: searcher.SearcherState,
-        text: str,
-    ) -> None:
-        # for testing, delete later
-
-        running_trials = searcher_state.trials_created - searcher_state.trials_closed
-        num_running_trials = len(running_trials)
-        trials_created = len(searcher_state.trials_created)
-        trials_created_in_tracker = len(self.trial_tracker)
-        total_trials_remaining = self.trial_tracker.max_trials - trials_created
-
-        concurrent_trials_available = self.trial_tracker.max_concurrent_trials - num_running_trials
-        total_slots = self.trial_tracker.slots_per_trial * num_running_trials
-        logging.info(f"running trials (SearcherState, {text}): {num_running_trials}")
-        logging.info(f"trials created (SearcherState, {text}): {trials_created}")
-        logging.info(
-            f"trials created in tracker (SearcherState, {text}): {trials_created_in_tracker}"
-        )
-        logging.info(f"trials closed (SearcherState, {text}): {len(searcher_state.trials_closed)}")
-        logging.info(f"trials remaining (SearcherState, {text}): {total_trials_remaining}")
-        logging.info(
-            f"Concurrent trials remaining (SearcherState, {text}): {concurrent_trials_available}"
-        )
-        logging.info(f"total slots (SearcherState, {text}): {total_slots}")
-
-        if num_running_trials > self.trial_tracker.max_concurrent_trials:
-            logging.warn(
-                f"running trs {num_running_trials}, lim {self.trial_tracker.max_concurrent_trials}"
-            )
-        if self.trial_tracker.max_slots is not None:
-            assert (
-                total_slots <= self.trial_tracker.max_slots
-            ), f"total slots {total_slots}, limit {self.trial_tracker.max_slots}, {running_trials}"
-        assert (
-            len(searcher_state.trials_created) <= self.trial_tracker.max_trials
-        ), f"total trials {trials_created}, limit {self.trial_tracker.max_trials}, {running_trials}"
-
 
 @dataclass
 class DSATSearchData:
+    """Basic binary-search type data used to guide DS AT."""
+
     lo: int
     hi: int
 
 
 class RandomDSATSearchMethod(BaseDSATSearchMethod):
     """
-    Semi-random search through parameters space. Attaches search_data of the form
-    {"lo": lo,  "hi": hi} which defines the inclusive bounds on the train_micro_batch_size_per_gpu
-    that can be selected for the trial.
+    Implements a random search through DeepSpeed configuration space with an approximate binary
+    search on batch sizes.  Utilizes aggressive early stopping based on the results of other Trials
+    and heuristics based on domain knowledge of DeepSpeed. Uses two search-specific arguments:
+
+        Args:
+            trials_per_random_config:
+                the maximum number of Trials which will be used to optimize each randomly-generated
+                configuration
+            early_stopping:
+                the maximum number of Trials to run without improving results after a best-found
+                configuration has been established
     """
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
@@ -829,8 +775,6 @@ class RandomDSATSearchMethod(BaseDSATSearchMethod):
         last_trial: DSATTrial,
         exited_reason: searcher.ExitedReason,
     ) -> List[DSATTrial]:
-        # TODO: delete print test
-        logging.info("Calling get_trials_after_early_exit")
         new_trials = []
 
         if self.should_stop_lineage(last_trial):
@@ -920,9 +864,6 @@ class RandomDSATSearchMethod(BaseDSATSearchMethod):
         return [trial]
 
     def should_stop_lineage(self, trial: DSATTrial) -> bool:
-        # TODO: This breaks the tests but perhaps it's how we should be doing this?
-        # assert trial.search_data, "Attempted to check `should_stop_lineage` on a `DSATTrial`" \
-        #     " that has no `search_data"
         # General conditions
         assert trial.search_data is not None
         failed_on_min_mbs = trial.error and trial.search_data and trial.mbs <= trial.search_data.lo
@@ -1018,8 +959,18 @@ class RandomDSATSearchMethod(BaseDSATSearchMethod):
 
 
 class BinarySearchDSATSearchMethod(BaseDSATSearchMethod):
-    """
-    Very basic binary search for randomly generated configs.
+    """Basic binary search over randomly generated configurations.
+
+    Randomly generates as many DeepSpeed configurations as can be concurrently tested, per the
+    CLI arguments, and performs a binary search over batch size. Each such lineage runs to
+    completion or until the `max_trials` limit is hit. Lineages whose binary search ends before
+    `max_trials` is hit are replaced with newly generated random configurations. One search-specific
+    argument:
+        Args:
+            search_range_factor:
+                adjusts the initial binary search range by raising the ceiling by a factor of
+                `search_range_factor`
+
     """
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
@@ -1046,8 +997,6 @@ class BinarySearchDSATSearchMethod(BaseDSATSearchMethod):
         last_trial: DSATTrial,
         exited_reason: searcher.ExitedReason,
     ) -> List[DSATTrial]:
-        # TODO: delete print test
-        logging.info("Calling get_trials_after_early_exit")
         new_trials = []
         if last_trial.search_data is None:
             return [self.get_random_trial()]
@@ -1137,9 +1086,26 @@ class ASHADSATSearchData(DSATSearchData):
 
 
 class ASHADSATSearchMethod(BaseDSATSearchMethod):
-    """
-    ASHA autotuning using the number of `train_micro_batch_size_per_gpu` values to use as the
-    resource.
+    """Asynchronous Successive Halving Algorithm (ASHA)
+
+    Adaptive search through randomly-generated DeepSpeed configurations which tunes the batch size
+    through a binary search and uses the number of Trials in this search as the finite-resource of
+    ASHA. Search-specific arguments:
+
+        Args:
+            asha_early_stopping:
+                ASHA early stopping parameter (`s` in arxiv:1810.05934)
+            max_rungs:
+                Maximum number of rungs
+            min_binary_search_trials:
+                Minimum number of binary search Trials to run per random configuration
+            divisor:
+                ASHA divisor parameter (`eta` in arxiv:1810.05934), controlling the growth in
+                resources and population thinning across rungs
+            search_range_factor:
+                adjusts the initial binary search range by raising the ceiling by a factor of
+                `search_range_factor`
+
     """
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
@@ -1168,9 +1134,6 @@ class ASHADSATSearchMethod(BaseDSATSearchMethod):
         last_trial: DSATTrial,
         exited_reason: searcher.ExitedReason,
     ) -> List[DSATTrial]:
-        # TODO: delete print test
-        logging.info("Calling get_trials_after_early_exit")
-
         new_trial = [self.get_next_trial(last_trial)]
         return new_trial
 
@@ -1369,9 +1332,9 @@ class ASHADSATSearchMethod(BaseDSATSearchMethod):
 
 
 class _TestDSATSearchMethod(BaseDSATSearchMethod):
-    """
-    Dumb searcher which just submits Trials with linearly increasing batch sizes, from 2 up to
-    max_trials
+    """Searcher for basic testing purposes.
+
+    Submits Trials with linearly increasing batch sizes, from 2 up to max_trials
     """
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
