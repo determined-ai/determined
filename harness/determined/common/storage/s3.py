@@ -2,7 +2,7 @@ import logging
 import os
 import re
 import tempfile
-from typing import Optional, Union
+from typing import Dict, List, Optional, Union
 
 import requests
 
@@ -149,7 +149,7 @@ class S3StorageManager(storage.CloudStorageManager):
             raise errors.CheckpointNotFound(f"Did not find {prefix} in S3")
 
     @util.preserve_random_state
-    def delete(self, tgt: str) -> None:
+    def delete(self, tgt: str, globs: List[str]) -> Dict[str, int]:
         prefix = self.get_storage_prefix(tgt)
         logging.info(f"Deleting {prefix} from S3")
 
@@ -159,3 +159,4 @@ class S3StorageManager(storage.CloudStorageManager):
         for chunk in util.chunks(objects, 1000):
             logging.debug(f"Deleting {len(chunk)} objects from S3")
             self.bucket.delete_objects(Delete={"Objects": chunk})
+        return {}  # TODO -- () might be easier than expected but not sure...

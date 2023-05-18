@@ -216,6 +216,193 @@ func (x *PostCheckpointMetadataResponse) GetCheckpoint() *checkpointv1.Checkpoin
 	return nil
 }
 
+// Request to delete files matching globs in checkpoints.
+type CheckpointsRemoveFilesRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// The list of checkpoint_uuids for the requested checkpoints.
+	CheckpointUuids []string `protobuf:"bytes,1,rep,name=checkpoint_uuids,json=checkpointUuids,proto3" json:"checkpoint_uuids,omitempty"`
+	// The list of checkpoint_globs for the requested checkpoints.
+	// If a value is set to the empty string the checkpoint will only
+	// have its metadata refreshed.
+	CheckpointGlobs []string `protobuf:"bytes,2,rep,name=checkpoint_globs,json=checkpointGlobs,proto3" json:"checkpoint_globs,omitempty"`
+}
+
+func (x *CheckpointsRemoveFilesRequest) Reset() {
+	*x = CheckpointsRemoveFilesRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_determined_api_v1_checkpoint_proto_msgTypes[4]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *CheckpointsRemoveFilesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CheckpointsRemoveFilesRequest) ProtoMessage() {}
+
+func (x *CheckpointsRemoveFilesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_determined_api_v1_checkpoint_proto_msgTypes[4]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CheckpointsRemoveFilesRequest.ProtoReflect.Descriptor instead.
+func (*CheckpointsRemoveFilesRequest) Descriptor() ([]byte, []int) {
+	return file_determined_api_v1_checkpoint_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *CheckpointsRemoveFilesRequest) GetCheckpointUuids() []string {
+	if x != nil {
+		return x.CheckpointUuids
+	}
+	return nil
+}
+
+func (x *CheckpointsRemoveFilesRequest) GetCheckpointGlobs() []string {
+	if x != nil {
+		return x.CheckpointGlobs
+	}
+	return nil
+}
+
+// Response to CheckpointRemoveFilesRequest.
+type CheckpointsRemoveFilesResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *CheckpointsRemoveFilesResponse) Reset() {
+	*x = CheckpointsRemoveFilesResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_determined_api_v1_checkpoint_proto_msgTypes[5]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *CheckpointsRemoveFilesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CheckpointsRemoveFilesResponse) ProtoMessage() {}
+
+func (x *CheckpointsRemoveFilesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_determined_api_v1_checkpoint_proto_msgTypes[5]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CheckpointsRemoveFilesResponse.ProtoReflect.Descriptor instead.
+func (*CheckpointsRemoveFilesResponse) Descriptor() ([]byte, []int) {
+	return file_determined_api_v1_checkpoint_proto_rawDescGZIP(), []int{5}
+}
+
+// Request to patch database info about a checkpoint.
+type PatchCheckpointsRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// List of checkpoints to patch.
+	Checkpoints []*checkpointv1.PatchCheckpoint `protobuf:"bytes,1,rep,name=checkpoints,proto3" json:"checkpoints,omitempty"`
+}
+
+func (x *PatchCheckpointsRequest) Reset() {
+	*x = PatchCheckpointsRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_determined_api_v1_checkpoint_proto_msgTypes[6]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *PatchCheckpointsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PatchCheckpointsRequest) ProtoMessage() {}
+
+func (x *PatchCheckpointsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_determined_api_v1_checkpoint_proto_msgTypes[6]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PatchCheckpointsRequest.ProtoReflect.Descriptor instead.
+func (*PatchCheckpointsRequest) Descriptor() ([]byte, []int) {
+	return file_determined_api_v1_checkpoint_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *PatchCheckpointsRequest) GetCheckpoints() []*checkpointv1.PatchCheckpoint {
+	if x != nil {
+		return x.Checkpoints
+	}
+	return nil
+}
+
+// Intentionally don't send the updated response for performance reasons.
+type PatchCheckpointsResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *PatchCheckpointsResponse) Reset() {
+	*x = PatchCheckpointsResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_determined_api_v1_checkpoint_proto_msgTypes[7]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *PatchCheckpointsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PatchCheckpointsResponse) ProtoMessage() {}
+
+func (x *PatchCheckpointsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_determined_api_v1_checkpoint_proto_msgTypes[7]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PatchCheckpointsResponse.ProtoReflect.Descriptor instead.
+func (*PatchCheckpointsResponse) Descriptor() ([]byte, []int) {
+	return file_determined_api_v1_checkpoint_proto_rawDescGZIP(), []int{7}
+}
+
 // Request to Delete the list of checkpoints
 type DeleteCheckpointsRequest struct {
 	state         protoimpl.MessageState
@@ -229,7 +416,7 @@ type DeleteCheckpointsRequest struct {
 func (x *DeleteCheckpointsRequest) Reset() {
 	*x = DeleteCheckpointsRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_checkpoint_proto_msgTypes[4]
+		mi := &file_determined_api_v1_checkpoint_proto_msgTypes[8]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -242,7 +429,7 @@ func (x *DeleteCheckpointsRequest) String() string {
 func (*DeleteCheckpointsRequest) ProtoMessage() {}
 
 func (x *DeleteCheckpointsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_checkpoint_proto_msgTypes[4]
+	mi := &file_determined_api_v1_checkpoint_proto_msgTypes[8]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -255,7 +442,7 @@ func (x *DeleteCheckpointsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteCheckpointsRequest.ProtoReflect.Descriptor instead.
 func (*DeleteCheckpointsRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_checkpoint_proto_rawDescGZIP(), []int{4}
+	return file_determined_api_v1_checkpoint_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *DeleteCheckpointsRequest) GetCheckpointUuids() []string {
@@ -275,7 +462,7 @@ type DeleteCheckpointsResponse struct {
 func (x *DeleteCheckpointsResponse) Reset() {
 	*x = DeleteCheckpointsResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_checkpoint_proto_msgTypes[5]
+		mi := &file_determined_api_v1_checkpoint_proto_msgTypes[9]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -288,7 +475,7 @@ func (x *DeleteCheckpointsResponse) String() string {
 func (*DeleteCheckpointsResponse) ProtoMessage() {}
 
 func (x *DeleteCheckpointsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_checkpoint_proto_msgTypes[5]
+	mi := &file_determined_api_v1_checkpoint_proto_msgTypes[9]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -301,7 +488,7 @@ func (x *DeleteCheckpointsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteCheckpointsResponse.ProtoReflect.Descriptor instead.
 func (*DeleteCheckpointsResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_checkpoint_proto_rawDescGZIP(), []int{5}
+	return file_determined_api_v1_checkpoint_proto_rawDescGZIP(), []int{9}
 }
 
 var File_determined_api_v1_checkpoint_proto protoreflect.FileDescriptor
@@ -340,7 +527,29 @@ var file_determined_api_v1_checkpoint_proto_rawDesc = []byte{
 	0x0b, 0x32, 0x24, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x63,
 	0x68, 0x65, 0x63, 0x6b, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x2e, 0x76, 0x31, 0x2e, 0x43, 0x68, 0x65,
 	0x63, 0x6b, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x52, 0x0a, 0x63, 0x68, 0x65, 0x63, 0x6b, 0x70, 0x6f,
-	0x69, 0x6e, 0x74, 0x22, 0x5f, 0x0a, 0x18, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x43, 0x68, 0x65,
+	0x69, 0x6e, 0x74, 0x22, 0xa2, 0x01, 0x0a, 0x1d, 0x43, 0x68, 0x65, 0x63, 0x6b, 0x70, 0x6f, 0x69,
+	0x6e, 0x74, 0x73, 0x52, 0x65, 0x6d, 0x6f, 0x76, 0x65, 0x46, 0x69, 0x6c, 0x65, 0x73, 0x52, 0x65,
+	0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x29, 0x0a, 0x10, 0x63, 0x68, 0x65, 0x63, 0x6b, 0x70, 0x6f,
+	0x69, 0x6e, 0x74, 0x5f, 0x75, 0x75, 0x69, 0x64, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x09, 0x52,
+	0x0f, 0x63, 0x68, 0x65, 0x63, 0x6b, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x55, 0x75, 0x69, 0x64, 0x73,
+	0x12, 0x29, 0x0a, 0x10, 0x63, 0x68, 0x65, 0x63, 0x6b, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x5f, 0x67,
+	0x6c, 0x6f, 0x62, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28, 0x09, 0x52, 0x0f, 0x63, 0x68, 0x65, 0x63,
+	0x6b, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x47, 0x6c, 0x6f, 0x62, 0x73, 0x3a, 0x2b, 0x92, 0x41, 0x28,
+	0x0a, 0x26, 0xd2, 0x01, 0x10, 0x63, 0x68, 0x65, 0x63, 0x6b, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x5f,
+	0x75, 0x75, 0x69, 0x64, 0x73, 0xd2, 0x01, 0x10, 0x63, 0x68, 0x65, 0x63, 0x6b, 0x70, 0x6f, 0x69,
+	0x6e, 0x74, 0x5f, 0x67, 0x6c, 0x6f, 0x62, 0x73, 0x22, 0x20, 0x0a, 0x1e, 0x43, 0x68, 0x65, 0x63,
+	0x6b, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x73, 0x52, 0x65, 0x6d, 0x6f, 0x76, 0x65, 0x46, 0x69, 0x6c,
+	0x65, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x7b, 0x0a, 0x17, 0x50, 0x61,
+	0x74, 0x63, 0x68, 0x43, 0x68, 0x65, 0x63, 0x6b, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x73, 0x52, 0x65,
+	0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x4b, 0x0a, 0x0b, 0x63, 0x68, 0x65, 0x63, 0x6b, 0x70, 0x6f,
+	0x69, 0x6e, 0x74, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x29, 0x2e, 0x64, 0x65, 0x74,
+	0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x63, 0x68, 0x65, 0x63, 0x6b, 0x70, 0x6f, 0x69,
+	0x6e, 0x74, 0x2e, 0x76, 0x31, 0x2e, 0x50, 0x61, 0x74, 0x63, 0x68, 0x43, 0x68, 0x65, 0x63, 0x6b,
+	0x70, 0x6f, 0x69, 0x6e, 0x74, 0x52, 0x0b, 0x63, 0x68, 0x65, 0x63, 0x6b, 0x70, 0x6f, 0x69, 0x6e,
+	0x74, 0x73, 0x3a, 0x13, 0x92, 0x41, 0x10, 0x0a, 0x0e, 0xd2, 0x01, 0x0b, 0x63, 0x68, 0x65, 0x63,
+	0x6b, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x73, 0x22, 0x1a, 0x0a, 0x18, 0x50, 0x61, 0x74, 0x63, 0x68,
+	0x43, 0x68, 0x65, 0x63, 0x6b, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f,
+	0x6e, 0x73, 0x65, 0x22, 0x5f, 0x0a, 0x18, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x43, 0x68, 0x65,
 	0x63, 0x6b, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12,
 	0x29, 0x0a, 0x10, 0x63, 0x68, 0x65, 0x63, 0x6b, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x5f, 0x75, 0x75,
 	0x69, 0x64, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x09, 0x52, 0x0f, 0x63, 0x68, 0x65, 0x63, 0x6b,
@@ -366,25 +575,31 @@ func file_determined_api_v1_checkpoint_proto_rawDescGZIP() []byte {
 	return file_determined_api_v1_checkpoint_proto_rawDescData
 }
 
-var file_determined_api_v1_checkpoint_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_determined_api_v1_checkpoint_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
 var file_determined_api_v1_checkpoint_proto_goTypes = []interface{}{
 	(*GetCheckpointRequest)(nil),           // 0: determined.api.v1.GetCheckpointRequest
 	(*GetCheckpointResponse)(nil),          // 1: determined.api.v1.GetCheckpointResponse
 	(*PostCheckpointMetadataRequest)(nil),  // 2: determined.api.v1.PostCheckpointMetadataRequest
 	(*PostCheckpointMetadataResponse)(nil), // 3: determined.api.v1.PostCheckpointMetadataResponse
-	(*DeleteCheckpointsRequest)(nil),       // 4: determined.api.v1.DeleteCheckpointsRequest
-	(*DeleteCheckpointsResponse)(nil),      // 5: determined.api.v1.DeleteCheckpointsResponse
-	(*checkpointv1.Checkpoint)(nil),        // 6: determined.checkpoint.v1.Checkpoint
+	(*CheckpointsRemoveFilesRequest)(nil),  // 4: determined.api.v1.CheckpointsRemoveFilesRequest
+	(*CheckpointsRemoveFilesResponse)(nil), // 5: determined.api.v1.CheckpointsRemoveFilesResponse
+	(*PatchCheckpointsRequest)(nil),        // 6: determined.api.v1.PatchCheckpointsRequest
+	(*PatchCheckpointsResponse)(nil),       // 7: determined.api.v1.PatchCheckpointsResponse
+	(*DeleteCheckpointsRequest)(nil),       // 8: determined.api.v1.DeleteCheckpointsRequest
+	(*DeleteCheckpointsResponse)(nil),      // 9: determined.api.v1.DeleteCheckpointsResponse
+	(*checkpointv1.Checkpoint)(nil),        // 10: determined.checkpoint.v1.Checkpoint
+	(*checkpointv1.PatchCheckpoint)(nil),   // 11: determined.checkpoint.v1.PatchCheckpoint
 }
 var file_determined_api_v1_checkpoint_proto_depIdxs = []int32{
-	6, // 0: determined.api.v1.GetCheckpointResponse.checkpoint:type_name -> determined.checkpoint.v1.Checkpoint
-	6, // 1: determined.api.v1.PostCheckpointMetadataRequest.checkpoint:type_name -> determined.checkpoint.v1.Checkpoint
-	6, // 2: determined.api.v1.PostCheckpointMetadataResponse.checkpoint:type_name -> determined.checkpoint.v1.Checkpoint
-	3, // [3:3] is the sub-list for method output_type
-	3, // [3:3] is the sub-list for method input_type
-	3, // [3:3] is the sub-list for extension type_name
-	3, // [3:3] is the sub-list for extension extendee
-	0, // [0:3] is the sub-list for field type_name
+	10, // 0: determined.api.v1.GetCheckpointResponse.checkpoint:type_name -> determined.checkpoint.v1.Checkpoint
+	10, // 1: determined.api.v1.PostCheckpointMetadataRequest.checkpoint:type_name -> determined.checkpoint.v1.Checkpoint
+	10, // 2: determined.api.v1.PostCheckpointMetadataResponse.checkpoint:type_name -> determined.checkpoint.v1.Checkpoint
+	11, // 3: determined.api.v1.PatchCheckpointsRequest.checkpoints:type_name -> determined.checkpoint.v1.PatchCheckpoint
+	4,  // [4:4] is the sub-list for method output_type
+	4,  // [4:4] is the sub-list for method input_type
+	4,  // [4:4] is the sub-list for extension type_name
+	4,  // [4:4] is the sub-list for extension extendee
+	0,  // [0:4] is the sub-list for field type_name
 }
 
 func init() { file_determined_api_v1_checkpoint_proto_init() }
@@ -442,7 +657,7 @@ func file_determined_api_v1_checkpoint_proto_init() {
 			}
 		}
 		file_determined_api_v1_checkpoint_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DeleteCheckpointsRequest); i {
+			switch v := v.(*CheckpointsRemoveFilesRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -454,6 +669,54 @@ func file_determined_api_v1_checkpoint_proto_init() {
 			}
 		}
 		file_determined_api_v1_checkpoint_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*CheckpointsRemoveFilesResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_determined_api_v1_checkpoint_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*PatchCheckpointsRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_determined_api_v1_checkpoint_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*PatchCheckpointsResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_determined_api_v1_checkpoint_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*DeleteCheckpointsRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_determined_api_v1_checkpoint_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*DeleteCheckpointsResponse); i {
 			case 0:
 				return &v.state
@@ -472,7 +735,7 @@ func file_determined_api_v1_checkpoint_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_determined_api_v1_checkpoint_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   6,
+			NumMessages:   10,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

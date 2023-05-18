@@ -4,6 +4,7 @@ import (
 	"archive/tar"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/docker/docker/api/types/mount"
 
@@ -19,9 +20,12 @@ import (
 type GCCkptSpec struct {
 	Base TaskSpec
 
-	ExperimentID       int
-	LegacyConfig       expconf.LegacyConfig
-	ToDelete           string
+	ExperimentID int
+	LegacyConfig expconf.LegacyConfig
+	ToDelete     string
+	// If len(CheckpointGlobs) == 0 then we won't delete any checkpoint files
+	// and just refresh the state of the checkpoint.
+	CheckpointGlobs    []string
 	DeleteTensorboards bool
 }
 
@@ -61,12 +65,15 @@ func (g GCCkptSpec) ToTaskSpec() TaskSpec {
 					0o600,
 					tar.TypeReg,
 				),
+				// TODO: Do we use this file? I don't think so???
+				// If we do we need to update add glob
 				g.Base.AgentUserGroup.OwnedArchiveItem(
 					"checkpoint_gc/checkpoints_to_delete.json",
-					[]byte(jsonify(g.ToDelete)),
+					[]byte(jsonify(g.ToDelete)), // does marshal work as expected?
 					0o600,
 					tar.TypeReg,
 				),
+				// END TODO
 				g.Base.AgentUserGroup.OwnedArchiveItem(
 					filepath.Join("checkpoint_gc", etc.GCCheckpointsEntrypointResource),
 					etc.MustStaticFile(etc.GCCheckpointsEntrypointResource),
@@ -87,9 +94,9 @@ func (g GCCkptSpec) ToTaskSpec() TaskSpec {
 		"--storage-config",
 		"/run/determined/checkpoint_gc/storage_config.json",
 	}
-	if g.ToDelete != "" {
-		res.Entrypoint = append(res.Entrypoint, "--delete")
-		res.Entrypoint = append(res.Entrypoint, g.ToDelete)
+	if len(g.ToDelete) > 0 {
+		res.Entrypoint = append(res.Entrypoint, "--delete", g.ToDelete)
+		res.Entrypoint = append(res.Entrypoint, "--globs", strings.Join(g.CheckpointGlobs, ","))
 	}
 	if g.DeleteTensorboards {
 		res.Entrypoint = append(res.Entrypoint, "--delete-tensorboards")

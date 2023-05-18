@@ -1,7 +1,7 @@
 import logging
 import os
 import tempfile
-from typing import Optional, Union, no_type_check
+from typing import Dict, List, Optional, Union, no_type_check
 
 import requests.exceptions
 import urllib3.exceptions
@@ -139,10 +139,11 @@ class GCSStorageManager(storage.CloudStorageManager):
             raise errors.CheckpointNotFound(f"Did not find checkpoint {path} in GCS")
 
     @util.preserve_random_state
-    def delete(self, storage_id: str) -> None:
+    def delete(self, storage_id: str, globs: List[str]) -> Dict[str, int]:
         prefix = self.get_storage_prefix(storage_id)
         logging.info(f"Deleting checkpoint {prefix} from GCS")
 
         for blob in self.bucket.list_blobs(prefix=prefix):
             logging.debug(f"Deleting {blob.name} from GCS")
             blob.delete()
+        return {}  # TODO might be easier

@@ -45,6 +45,7 @@ class CheckpointState(enum.Enum):
     COMPLETED = bindings.checkpointv1State.COMPLETED.value
     ERROR = bindings.checkpointv1State.ERROR.value
     DELETED = bindings.checkpointv1State.DELETED.value
+    PARTIALLY_DELETED = bindings.checkpointv1State.PARTIALLY_DELETED.value
 
 
 @dataclasses.dataclass
@@ -334,6 +335,29 @@ class Checkpoint:
         delete_body = bindings.v1DeleteCheckpointsRequest(checkpointUuids=[self.uuid])
         bindings.delete_DeleteCheckpoints(self._session, body=delete_body)
         logging.info(f"Deletion of checkpoint {self.uuid} is in progress.")
+
+    def remove_files(self, globs: List[str]) -> None:
+        """
+        Removes any files from the checkpoint in checkpoint storage that match one or more of
+        the provided ``globs``. The checkpoint resources and state will be updated in master
+        asynchronously to reflect checkpoint storage. If ``globs`` is the empty list then no
+        files will be deleted and the resources and state will only be refreshed in master.
+
+        Arguments:
+            globs (List[string]): Globs to match checkpoint files against.
+        """
+        remove_body = bindings.v1CheckpointsRemoveFilesRequest(
+            checkpointGlobs=globs,
+            checkpointUuids=[self.uuid],
+        )
+        bindings.post_CheckpointsRemoveFiles(self._session, body=remove_body)
+
+        # TODO do we need a way for multiple uuids to be specified?
+        # Could really just call bindings if you really need that...
+        if len(globs) == 0:
+            logging.info(f"Refresh of checkpoint {self.uuid} is in progress.")
+        else:
+            logging.info(f"Partial deletion of checkpoint {self.uuid} is in progress.")
 
     def __repr__(self) -> str:
         if self.training is not None:

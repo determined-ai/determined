@@ -1,7 +1,7 @@
 import logging
 import os
 import tempfile
-from typing import Optional, Union
+from typing import Dict, List, Optional, Union
 
 from determined import errors
 from determined.common import storage, util
@@ -91,9 +91,10 @@ class AzureStorageManager(storage.CloudStorageManager):
             raise errors.CheckpointNotFound(f"Did not find checkpoint {src} in Azure Blob Storage")
 
     @util.preserve_random_state
-    def delete(self, tgt: str) -> None:
+    def delete(self, tgt: str, globs: List[str]) -> Dict[str, int]:
         storage_prefix = tgt
         logging.info(f"Deleting {tgt} from Azure Blob Storage")
 
         files = self.client.list_files(self.container, file_prefix=storage_prefix)
         self.client.delete_files(self.container, files)
+        return {}  # TODO
