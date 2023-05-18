@@ -30,7 +30,7 @@ interface UserSettingUpdate extends UpdateUserSettingParams {
   userId: number;
 }
 
-export type UpdateSettings = (updates: Settings) => void;
+export type UpdateSettings<T> = (newSettings: Partial<T>) => void;
 export type ResetSettings = (settings?: string[]) => void;
 type SettingsRecord<T> = { [K in keyof T]: T[K] };
 
@@ -39,7 +39,7 @@ export type UseSettingsReturn<T> = {
   isLoading: boolean;
   resetSettings: ResetSettings;
   settings: T;
-  updateSettings: UpdateSettings;
+  updateSettings: UpdateSettings<T>;
 };
 
 const settingsToQuery = <T>(config: SettingsConfig<T>, settings: Settings) => {
