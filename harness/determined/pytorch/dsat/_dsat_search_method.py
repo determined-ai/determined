@@ -573,9 +573,6 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
         Submits the model info profiling run in order to collect model and resources info to
         inform the search.
         """
-        # TODO: Remove print tests.
-        logging.info("Initial operations")
-        self._searcher_state_tests(searcher_state, "inital ops")
 
         model_profile_info_trial = self.trial_tracker.create_model_profile_info_trial()
         self.trial_tracker.queue_and_register_trial(model_profile_info_trial)
@@ -586,10 +583,6 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
     def on_trial_created(
         self, searcher_state: searcher.SearcherState, request_id: uuid.UUID
     ) -> List[searcher.Operation]:
-        # TODO: Remove print tests.
-        logging.info("on trial created")
-        self._searcher_state_tests(searcher_state, "trial created")
-
         return []
 
     def on_validation_completed(
@@ -621,10 +614,6 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
             for trial in new_trials:
                 self.trial_tracker.queue_and_register_trial(trial)
 
-        # TODO: Remove print tests.
-        logging.info(f"Calling on_validation_completed for {request_id}")
-        self._searcher_state_tests(searcher_state, "val completed")
-
         # All DS AT Trials should be closed after validation.
         return [searcher.Close(request_id)]
 
@@ -636,10 +625,6 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
     ) -> List["searcher.Operation"]:
         last_trial = self.trial_tracker[request_id]
         self.trial_tracker.report_trial_early_exit(last_trial)
-
-        # TODO: Remove print tests.
-        logging.info(f"Calling on_trial_exited_early for {request_id}")
-        self._searcher_state_tests(searcher_state, "exited early")
 
         new_ops_list: List["searcher.Operation"] = []
         if exited_reason != searcher.ExitedReason.ERRORED:
@@ -693,15 +678,9 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
                 next_trial.running = True
                 new_ops_list.extend(next_trial.create_and_val_ops)
 
-        self._searcher_state_tests(searcher_state, "trial closed")
-
         return new_ops_list
 
     def progress(self, searcher_state: searcher.SearcherState) -> float:
-        # TODO: Remove print tests.
-        logging.info("progress")
-        self._searcher_state_tests(searcher_state, "progress")
-
         progress = len(searcher_state.trials_closed) / self.trial_tracker.max_trials
         return progress
 
@@ -757,45 +736,6 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
         Overwrite to implement search-method-specific early-stopping logic.
         """
         return False
-
-    def _searcher_state_tests(
-        self,
-        searcher_state: searcher.SearcherState,
-        text: str,
-    ) -> None:
-        # for testing, delete later
-
-        running_trials = searcher_state.trials_created - searcher_state.trials_closed
-        num_running_trials = len(running_trials)
-        trials_created = len(searcher_state.trials_created)
-        trials_created_in_tracker = len(self.trial_tracker)
-        total_trials_remaining = self.trial_tracker.max_trials - trials_created
-
-        concurrent_trials_available = self.trial_tracker.max_concurrent_trials - num_running_trials
-        total_slots = self.trial_tracker.slots_per_trial * num_running_trials
-        logging.info(f"running trials (SearcherState, {text}): {num_running_trials}")
-        logging.info(f"trials created (SearcherState, {text}): {trials_created}")
-        logging.info(
-            f"trials created in tracker (SearcherState, {text}): {trials_created_in_tracker}"
-        )
-        logging.info(f"trials closed (SearcherState, {text}): {len(searcher_state.trials_closed)}")
-        logging.info(f"trials remaining (SearcherState, {text}): {total_trials_remaining}")
-        logging.info(
-            f"Concurrent trials remaining (SearcherState, {text}): {concurrent_trials_available}"
-        )
-        logging.info(f"total slots (SearcherState, {text}): {total_slots}")
-
-        if num_running_trials > self.trial_tracker.max_concurrent_trials:
-            logging.warn(
-                f"running trs {num_running_trials}, lim {self.trial_tracker.max_concurrent_trials}"
-            )
-        if self.trial_tracker.max_slots is not None:
-            assert (
-                total_slots <= self.trial_tracker.max_slots
-            ), f"total slots {total_slots}, limit {self.trial_tracker.max_slots}, {running_trials}"
-        assert (
-            len(searcher_state.trials_created) <= self.trial_tracker.max_trials
-        ), f"total trials {trials_created}, limit {self.trial_tracker.max_trials}, {running_trials}"
 
 
 @dataclass
