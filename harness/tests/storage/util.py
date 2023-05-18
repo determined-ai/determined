@@ -219,10 +219,7 @@ def run_storage_lifecycle_test(
         finally:
             shutil.rmtree(path, ignore_errors=True)
 
-
-def run_partial_delete_test(
-    manager: storage.StorageManager,
-) -> None:
+    # Partial delete test.
     cases = [
         (["empty_dir/*", "subdir/*"], {"empty_dir/": 0, "subdir/": 0, "root.txt": 9}),
         (
@@ -246,11 +243,8 @@ def run_partial_delete_test(
         finally:
             shutil.rmtree(path, ignore_errors=True)
 
-        resources = manager.delete(storage_id, c[0])
-        print("C", c, "ACTUAL", resources)  # TODO remove
-        assert resources == c[1]
+        assert manager.delete(storage_id, c[0]) == c[1]
 
-        # path = pathlib.Path(f"/tmp/storage_lifecycle_test-{storage_id}")
         try:
             manager.download(storage_id, path)
             validate_checkpoint(path, {k: v for k, v in EXPECTED_FILES.items() if k in c[1]})

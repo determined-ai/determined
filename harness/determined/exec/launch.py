@@ -104,11 +104,6 @@ if __name__ == "__main__":
         + json.dumps(mask_config_dict(info.trial._config))
     )
 
-    storage.validate_config(
-        experiment_config.get_checkpoint_storage(),
-        container_path=constants.SHARED_FS_CONTAINER_PATH,
-    )
-
     # Perform validations
     try:
         logging.info("Validating checkpoint storage ...")

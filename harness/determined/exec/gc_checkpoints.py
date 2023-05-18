@@ -158,10 +158,7 @@ def main(argv: List[str]) -> None:
     if args.delete != "":
         storage_ids = args.delete.split(",")
 
-    args.globs = args.globs.strip()
-    globs = []
-    if args.globs != "":
-        globs = args.globs.split(",")
+    globs = args.globs.strip().split(",")
 
     storage_ids_to_resources = delete_checkpoints(manager, storage_ids, globs, dry_run=args.dry_run)
     patch_checkpoints(storage_ids_to_resources)

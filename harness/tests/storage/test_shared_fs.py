@@ -58,10 +58,6 @@ def test_checkpoint_lifecycle(caplog: Any, manager: storage.SharedFSStorageManag
     util.run_storage_lifecycle_test(manager, post_delete_cb, caplog)
 
 
-def test_checkpoint_partial_delete(manager: storage.SharedFSStorageManager) -> None:
-    util.run_partial_delete_test(manager)
-
-
 def test_validate(manager: storage.SharedFSStorageManager) -> None:
     assert len(os.listdir(manager._base_path)) == 0
     storage.validate_manager(manager)

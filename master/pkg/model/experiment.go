@@ -70,7 +70,7 @@ const (
 	DeleteFailedState State = "DELETE_FAILED"
 	// DeletedState constant.
 	DeletedState State = "DELETED"
-	// PartiallyDeleteState constant.
+	// PartiallyDeletedState constant.
 	PartiallyDeletedState State = "PARTIALLY_DELETED"
 
 	// TrialWorkloadSequencerType constant.

@@ -144,6 +144,16 @@ func getExperimentSizeFromUUID(ctx context.Context, t *testing.T, uuid string) i
 	return out.CheckpointSize
 }
 
+func TestCheckpointRemoveFilesPrefix(t *testing.T) {
+	api, _, ctx := setupAPITest(t, nil)
+	_, err := api.CheckpointsRemoveFiles(ctx, &apiv1.CheckpointsRemoveFilesRequest{
+		CheckpointUuids: []string{uuid.New().String()},
+		CheckpointGlobs: []string{"../../**"},
+	})
+	require.Equal(t,
+		status.Errorf(codes.InvalidArgument, "glob '../../**' cannot contain '..'"), err)
+}
+
 func TestPatchCheckpoint(t *testing.T) {
 	api, curUser, ctx := setupAPITest(t, nil)
 
@@ -156,7 +166,6 @@ func TestPatchCheckpoint(t *testing.T) {
 		createVersionOneCheckpoint(ctx, t, api, curUser, startingResources),
 		createVersionTwoCheckpoint(ctx, t, api, curUser, startingResources),
 	} {
-
 		// Don't send an update.
 		_, err := api.PatchCheckpoints(ctx, &apiv1.PatchCheckpointsRequest{
 			Checkpoints: []*checkpointv1.PatchCheckpoint{
@@ -205,6 +214,7 @@ func TestPatchCheckpoint(t *testing.T) {
 				},
 			},
 		})
+		require.NoError(t, err)
 		actualSize, actualResources, actualState = getCheckpointSizeResourcesState(ctx, t, uuid)
 		require.Equal(t, 1, actualSize)
 		require.Equal(t, resources, actualResources)
@@ -223,6 +233,7 @@ func TestPatchCheckpoint(t *testing.T) {
 				},
 			},
 		})
+		require.NoError(t, err)
 		actualSize, actualResources, actualState = getCheckpointSizeResourcesState(ctx, t, uuid)
 		require.Equal(t, 1, actualSize) // Size and resources don't get cleared.
 		require.Equal(t, resources, actualResources)
