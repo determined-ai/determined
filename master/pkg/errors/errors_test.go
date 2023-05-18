@@ -1,7 +1,6 @@
 package errors
 
 import (
-	"errors"
 	"fmt"
 	"testing"
 	"time"
@@ -10,7 +9,7 @@ import (
 )
 
 func TestErrorTimeoutRetry(t *testing.T) {
-	testErr := errors.New("test error")
+	testErr := fmt.Errorf("test error")
 	errInfo := NewErrorTimeoutRetry(30*time.Second, 3)
 	assert.Equal(t, errInfo.GetError(), nil)
 
@@ -46,6 +45,14 @@ func TestErrorTimeoutRetry(t *testing.T) {
 
 	errInfo.time = time.Now().Add(-48 * time.Hour)
 	assert.Equal(t, errInfo.GetError(), nil)
+
+	for i := 0; i < 3; i++ {
+		errInfo.SetError(fmt.Errorf("tmp after set error %d", i))
+		assert.Equal(t, errInfo.GetError(), nil)
+	}
+
+	errInfo.SetError(testErr)
+	assert.Equal(t, errInfo.GetError(), testErr)
 }
 
 func TestErrorNoTimeoutNoRetry(t *testing.T) {
