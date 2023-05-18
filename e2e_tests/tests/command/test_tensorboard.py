@@ -75,6 +75,7 @@ def test_start_tensorboard_for_shared_fs_experiment(tmp_path: Path) -> None:
 
     command = ["tensorboard", "start", str(experiment_id), "--no-browser"]
     with cmd.interactive_command(*command) as tensorboard:
+        assert tensorboard.task_id is not None
         err = api.task_is_ready(determined_test_session(), tensorboard.task_id)
         assert err is None, err
 
