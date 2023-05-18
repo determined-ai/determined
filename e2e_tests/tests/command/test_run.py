@@ -631,4 +631,4 @@ def test_log_argument(task_type: str) -> None:
     cmd: List[str] = ["det", "-m", conf.make_master_url(), task_type, "logs", taskid]
     p = subprocess.run(cmd, stderr=subprocess.PIPE, check=False)
     assert p.stderr is not None
-    assert expected in p.stderr.decode("utf8")
+    assert expected in p.stderr.decode("utf8"), p.stderr.decode("utf8")
