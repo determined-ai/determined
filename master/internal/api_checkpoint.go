@@ -94,12 +94,13 @@ func (m *Master) canDoActionOnCheckpointThroughModel(
 			return err
 		}
 		if err := modelauth.AuthZProvider.Get().CanGetModel(
-			ctx, curUser, model, model.WorkspaceId); err != nil {
-			return authz.SubIfUnauthorized(err, errCheckpointNotFound(ckptID))
+			ctx, curUser, model, model.WorkspaceId); err == nil {
+			return nil
 		}
 	}
-	return status.Error(codes.PermissionDenied,
-		fmt.Sprintf("cannot access checkpoint: %s", ckptID))
+	// we get to this return when there are no models belonging
+	// to a workspace where user has permissions.
+	return authz.SubIfUnauthorized(err, errCheckpointNotFound(ckptID))
 }
 
 func (a *apiServer) GetCheckpoint(

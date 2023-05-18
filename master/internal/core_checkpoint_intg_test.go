@@ -269,16 +269,22 @@ func TestAuthZCheckpointsEcho(t *testing.T) {
 
 	authZExp.On("CanGetExperiment", mock.Anything, curUser,
 		mock.Anything).Return(authz2.PermissionDeniedError{}).Once()
+	authZExp.On("CanGetModel", mock.Anything, curUser,
+		mock.Anything).Return(authz2.PermissionDeniedError{}).Once()
 	require.Equal(t, echo.NewHTTPError(http.StatusNotFound,
 		fmt.Sprintf("checkpoint not found: %s", checkpointUUID)), api.m.getCheckpoint(ctx))
 
 	expectedErr := fmt.Errorf("canGetExperimentError")
 	authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
 		Return(expectedErr).Once()
+	authZExp.On("CanGetModel", mock.Anything, curUser,
+		mock.Anything).Return(authz2.PermissionDeniedError{}).Once()
 	require.Equal(t, expectedErr, api.m.getCheckpoint(ctx))
 
 	expectedErr = echo.NewHTTPError(http.StatusForbidden, "canGetArtifactsError")
 	authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).Return(nil).Once()
+	authZExp.On("CanGetModel", mock.Anything, curUser,
+		mock.Anything).Return(authz2.PermissionDeniedError{}).Once()
 	authZExp.On("CanGetExperimentArtifacts", mock.Anything, curUser, mock.Anything).
 		Return(fmt.Errorf("canGetArtifactsError")).Once()
 	require.Equal(t, expectedErr, api.m.getCheckpoint(ctx))
