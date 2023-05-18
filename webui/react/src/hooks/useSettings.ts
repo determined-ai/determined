@@ -285,15 +285,15 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
   );
 
   const updateSettings = useCallback(
-    (updates: Settings) => {
-      stateOb.update((s) =>
-        s.set(
+    (updates: Partial<Settings>) => {
+      stateOb.update((s) => {
+        const oldSettings = s.get(config.storagePath) ?? {};
+        const newSettings = { ...s.get(config.storagePath), ...updates };
+        return s.set(
           config.storagePath,
-          isEqual(s.get(config.storagePath), updates)
-            ? s.get(config.storagePath) ?? {}
-            : { ...s.get(config.storagePath), ...updates },
-        ),
-      );
+          isEqual(oldSettings, newSettings) ? oldSettings : newSettings,
+        );
+      });
     },
     [config, stateOb],
   );
