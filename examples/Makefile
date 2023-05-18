@@ -10,6 +10,9 @@ NLP_EXAMPLES_DIRS := $(patsubst nlp/%/., build/%.tgz, $(NLP_EXAMPLES))
 DEEPSPEED_EXAMPLES := $(wildcard deepspeed/*/.)
 DEEPSPEED_EXAMPLES_DIRS := $(patsubst deepspeed/%/., build/%.tgz, $(DEEPSPEED_EXAMPLES))
 
+DEEPSPEED_AUTOTUNE_EXAMPLES := $(wildcard deepspeed_autotune/*/.)
+DEEPSPEED_AUTOTUNE_EXAMPLES_DIRS := $(patsubst deepspeed_autotune/%/., build/%.tgz, $(DEEPSPEED_AUTOTUNE_EXAMPLES))
+
 HPSEARCH_EXAMPLES := $(wildcard hp_search_benchmarks/*/.)
 HPSEARCH_EXAMPLES_DIRS := $(patsubst hp_search_benchmarks/%/., build/%.tgz, $(HPSEARCH_EXAMPLES))
 
