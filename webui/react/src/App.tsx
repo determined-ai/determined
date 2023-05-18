@@ -60,8 +60,14 @@ const AppView: React.FC = () => {
 
   useEffect(() => (isAuthenticated ? userStore.fetchCurrentUser() : undefined), [isAuthenticated]);
   useEffect(() => (isAuthenticated ? clusterStore.startPolling() : undefined), [isAuthenticated]);
-  useEffect(() => (isAuthenticated ? userStore.startPolling() : undefined), [isAuthenticated]);
-  useEffect(() => (isAuthenticated ? workspaceStore.startPolling() : undefined), [isAuthenticated]);
+  useEffect(
+    () => (isAuthenticated ? userStore.startPolling({ delay: 60_000 }) : undefined),
+    [isAuthenticated],
+  );
+  useEffect(
+    () => (isAuthenticated ? workspaceStore.startPolling({ delay: 60_000 }) : undefined),
+    [isAuthenticated],
+  );
   useEffect(() => determinedStore.startPolling({ delay: 600_000 }), []);
 
   useEffect(() => {
