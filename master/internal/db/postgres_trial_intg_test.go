@@ -846,7 +846,7 @@ func TestBatchesProcessed(t *testing.T) {
 
 func printPotentialLocks(ctx context.Context, db *PgDB, t *testing.T) {
 	query := `
-	SELECT 
+SELECT 
     a.datname,
     l.relation::regclass,
     a.query,
@@ -918,6 +918,7 @@ func TestConcurrentMetricUpdate(t *testing.T) {
 			//nolint:gosec // Weak RNG doesn't matter here.
 			return rand.Intn(2) == 0
 		}
+		t.Logf("writing to trial %d", tr.ID)
 
 		batchNum++
 		metrics, err := structpb.NewStruct(map[string]any{"loss": 10})
@@ -939,10 +940,11 @@ func TestConcurrentMetricUpdate(t *testing.T) {
 		}
 	}
 
-	var wg sync.WaitGroup
 	writes := 5
 	trials := 10
+	var wg sync.WaitGroup
 	wg.Add(trials)
+	wg_status_ch := make(chan struct{})
 
 	for i := 0; i < trials; i++ {
 		go func() {
@@ -951,7 +953,6 @@ func TestConcurrentMetricUpdate(t *testing.T) {
 			err := db.withTransaction(fmt.Sprintf("writing to trial %d", tr.ID), func(tx *sqlx.Tx) error {
 				for j := 0; j < writes; j++ {
 					writeToTrial(tr, tx)
-					t.Logf("wrote to trial %d", tr.ID)
 				}
 				return nil
 			})
@@ -963,8 +964,15 @@ func TestConcurrentMetricUpdate(t *testing.T) {
 		for {
 			time.Sleep(5 * time.Second)
 			printPotentialLocks(ctx, db, t)
+			select {
+			case <-wg_status_ch:
+				return
+			case <-time.After(time.Second):
+				continue
+			}
 		}
 	}()
 
 	wg.Wait()
+	close(wg_status_ch)
 }
