@@ -1830,69 +1830,65 @@ const TypographySection: React.FC = () => {
           <Paragraph>this is a paragraph!</Paragraph>
         </Space>
       </AntDCard>
-      <AntDCard title="Fonts">
-        <AntDCard title="Font Families">
-          <Paragraph>For general UI --theme-font-family</Paragraph>
-          <Paragraph font="code">For displaying code --theme-font-family-code</Paragraph>
-        </AntDCard>
-        <AntDCard title="Font Sizing">
-          <div>
-            <div style={{ display: 'flex', flexDirection: 'column', marginBottom: '30px' }}>
-              <Header>Header</Header>
-              <Header size={TypographySize.XL}>
-                Model Registry - XL (f.s. 28px, line-height 36px)
-              </Header>
-              <Header size={TypographySize.L}>
-                Model Registry - L (f.s. 24px, line-height 32px)
-              </Header>
-              <Header size={TypographySize.default}>
-                Model Registry - default (f.s. 22px line-height 28px)
-              </Header>
-              <Header size={TypographySize.S}>
-                Model Registry - s (f.s. 18px line-height 23px)
-              </Header>
-              <Header size={TypographySize.XS}>
-                Model Registry - xs (f.s. 16px line-height 21px)
-              </Header>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', marginBottom: '30px' }}>
-              <Header>Multi Line</Header>
-              <Paragraph size={TypographySize.XL} type="multi line">
-                Model Registry - XL (f.s. 16px line-height 26px)
-              </Paragraph>
-              <Paragraph size={TypographySize.L} type="multi line">
-                Model Registry - L (f.s. 14px line-height 22px)
-              </Paragraph>
-              <Paragraph size={TypographySize.default} type="multi line">
-                Model Registry - default (f.s. 12px line-height 20px)
-              </Paragraph>
-              <Paragraph size={TypographySize.S} type="multi line">
-                Model Registry - s (f.s. 11px line-height 18px)
-              </Paragraph>
-              <Paragraph size={TypographySize.XS} type="multi line">
-                Model Registry - xs (f.s. 10px line-height 16px)
-              </Paragraph>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', marginBottom: '30px' }}>
-              <Header>Single Line</Header>
-              <Paragraph size={TypographySize.XL}>
-                Model Registry - XL (f.s. 16px line-height 20px)
-              </Paragraph>
-              <Paragraph size={TypographySize.L}>
-                Model Registry - L (f.s. 14px line-height 18px)
-              </Paragraph>
-              <Paragraph size={TypographySize.default}>
-                Model Registry - default (f.s. 12px line-height 16px)
-              </Paragraph>
-              <Paragraph size={TypographySize.S}>
-                Model Registry - s (f.s. 11px line-height 14px)
-              </Paragraph>
-              <Paragraph size={TypographySize.XS}>
-                Model Registry - xs (f.s. 10px line-height 12px)
-              </Paragraph>
-            </div>
+      <AntDCard title="Font Families">
+        <Paragraph>For general UI --theme-font-family</Paragraph>
+        <Paragraph font="code">For displaying code --theme-font-family-code</Paragraph>
+      </AntDCard>
+      <AntDCard title="Font Sizing">
+        <div>
+          <div style={{ display: 'flex', flexDirection: 'column', marginBottom: '30px' }}>
+            <Header>Header</Header>
+            <Header size={TypographySize.XL}>
+              Model Registry - XL (f.s. 28px, line-height 36px)
+            </Header>
+            <Header size={TypographySize.L}>
+              Model Registry - L (f.s. 24px, line-height 32px)
+            </Header>
+            <Header size={TypographySize.default}>
+              Model Registry - default (f.s. 22px line-height 28px)
+            </Header>
+            <Header size={TypographySize.S}>Model Registry - s (f.s. 18px line-height 23px)</Header>
+            <Header size={TypographySize.XS}>
+              Model Registry - xs (f.s. 16px line-height 21px)
+            </Header>
           </div>
-        </AntDCard>
+          <div style={{ display: 'flex', flexDirection: 'column', marginBottom: '30px' }}>
+            <Header>Multi Line</Header>
+            <Paragraph size={TypographySize.XL} type="multi line">
+              Model Registry - XL (f.s. 16px line-height 26px)
+            </Paragraph>
+            <Paragraph size={TypographySize.L} type="multi line">
+              Model Registry - L (f.s. 14px line-height 22px)
+            </Paragraph>
+            <Paragraph size={TypographySize.default} type="multi line">
+              Model Registry - default (f.s. 12px line-height 20px)
+            </Paragraph>
+            <Paragraph size={TypographySize.S} type="multi line">
+              Model Registry - s (f.s. 11px line-height 18px)
+            </Paragraph>
+            <Paragraph size={TypographySize.XS} type="multi line">
+              Model Registry - xs (f.s. 10px line-height 16px)
+            </Paragraph>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', marginBottom: '30px' }}>
+            <Header>Single Line</Header>
+            <Paragraph size={TypographySize.XL}>
+              Model Registry - XL (f.s. 16px line-height 20px)
+            </Paragraph>
+            <Paragraph size={TypographySize.L}>
+              Model Registry - L (f.s. 14px line-height 18px)
+            </Paragraph>
+            <Paragraph size={TypographySize.default}>
+              Model Registry - default (f.s. 12px line-height 16px)
+            </Paragraph>
+            <Paragraph size={TypographySize.S}>
+              Model Registry - s (f.s. 11px line-height 14px)
+            </Paragraph>
+            <Paragraph size={TypographySize.XS}>
+              Model Registry - xs (f.s. 10px line-height 12px)
+            </Paragraph>
+          </div>
+        </div>
       </AntDCard>
     </ComponentSection>
   );
