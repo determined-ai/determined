@@ -195,7 +195,6 @@ func (a *apiServer) PatchCheckpoints(
 	ctx context.Context,
 	req *apiv1.PatchCheckpointsRequest,
 ) (*apiv1.PatchCheckpointsResponse, error) {
-	fmt.Println("PATCH checkpoints", req.Checkpoints)
 	var uuidStrings []string
 	for _, c := range req.Checkpoints {
 		uuidStrings = append(uuidStrings, c.Uuid)
@@ -225,7 +224,6 @@ func (a *apiServer) PatchCheckpoints(
 		var updatedCheckpointSizes []uuid.UUID
 		for i, c := range req.Checkpoints {
 			if c.Resources != nil {
-				fmt.Println("uuid / resources", c.Uuid, c.Resources.Resources)
 				size := int64(0)
 				for _, v := range c.Resources.Resources {
 					size += v
@@ -284,7 +282,6 @@ func (a *apiServer) CheckpointsRemoveFiles(
 	ctx context.Context,
 	req *apiv1.CheckpointsRemoveFilesRequest,
 ) (*apiv1.CheckpointsRemoveFilesResponse, error) {
-	fmt.Printf("REQ %+v\n", req)
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
@@ -296,22 +293,17 @@ func (a *apiServer) CheckpointsRemoveFiles(
 		return nil, status.Errorf(codes.InvalidArgument, "converting checkpoint: %s", cErr)
 	}
 
-	// TODO don't allow GLOB!!! .. !! .. !!
-	// Like actually "../**" -- maybe same as s3 validation but test this
-	/*
-		// TODO validate globs here!
-		uuidToGlob := make(map[uuid.UUID]string)
-		for i := 0; i < len(checkpointsToDelete); i++ {
-			uuidToGlob[checkpointsToDelete[i]] = req.CheckpointGlobs[i]
+	for _, g := range req.CheckpointGlobs {
+		if strings.Contains(g, "..") {
+			return nil, status.Errorf(codes.InvalidArgument, "glob '%s' cannot contain '..'", g)
 		}
-	*/
+	}
 
 	exps, groupCUUIDsByEIDs, err := a.checkpointsRBACEditCheck(ctx, checkpointsToDelete)
 	if err != nil {
 		return nil, err
 	}
 
-	// TODO is this okay to just block model registry from partial deletes?
 	registeredCheckpointUUIDs, err := a.m.db.GetRegisteredCheckpoints(checkpointsToDelete)
 	if err != nil {
 		return nil, err

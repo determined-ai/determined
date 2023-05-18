@@ -674,7 +674,6 @@ class CheckpointContext:
         """
         Delete a checkpoint from the storage backend.
         """
-        # TODO do we want a partial delete???.
         self._storage_manager.delete(storage_id, ["**/*"])
 
     def _write_metadata_file(self, ckpt_dir: str, metadata: Dict[str, Any]) -> None:
