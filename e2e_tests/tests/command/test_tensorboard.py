@@ -11,7 +11,6 @@ from tests import experiment as exp
 from tests.api_utils import determined_test_session
 from tests.filetree import FileTree
 
-SERVICE_READY = "Loading done."
 num_trials = 1
 
 
@@ -100,11 +99,9 @@ def test_start_tensorboard_for_s3_experiment(
 
     command = ["tensorboard", "start", str(experiment_id), "--no-browser"]
     with cmd.interactive_command(*command) as tensorboard:
-        for line in tensorboard.stdout:
-            if SERVICE_READY in line:
-                break
-        else:
-            raise AssertionError(f"Did not find {SERVICE_READY} in output")
+        assert tensorboard.task_id is not None
+        err = api.task_is_ready(determined_test_session(), tensorboard.task_id)
+        assert err is None, err
 
 
 @pytest.mark.slow
@@ -151,11 +148,9 @@ def test_start_tensorboard_for_multi_experiment(tmp_path: Path, secrets: Dict[st
     ]
 
     with cmd.interactive_command(*command) as tensorboard:
-        for line in tensorboard.stdout:
-            if SERVICE_READY in line:
-                break
-        else:
-            raise AssertionError(f"Did not find {SERVICE_READY} in output")
+        assert tensorboard.task_id is not None
+        err = api.task_is_ready(determined_test_session(), tensorboard.task_id)
+        assert err is None, err
 
 
 @pytest.mark.e2e_cpu
