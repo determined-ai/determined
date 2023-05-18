@@ -45,6 +45,7 @@ type DispatcherResourceManagerConfig struct {
 	Path                 string `json:"path"`
 	LdLibraryPath        string `json:"ld_library_path"`
 	LauncherJvmArgs      string `json:"launcher_jvm_args"`
+	SudoAuthorized       string `json:"sudo_authorized"`
 	// Configuration parameters handled by DispatchRM within master
 	TresSupported              bool    `json:"tres_supported"`
 	GresSupported              bool    `json:"gres_supported"`
