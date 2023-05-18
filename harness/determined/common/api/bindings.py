@@ -2998,6 +2998,7 @@ class v1Experiment:
     checkpointSize: "typing.Optional[str]" = None
     description: "typing.Optional[str]" = None
     displayName: "typing.Optional[str]" = None
+    duration: "typing.Optional[int]" = None
     endTime: "typing.Optional[str]" = None
     forkedFrom: "typing.Optional[int]" = None
     labels: "typing.Optional[typing.Sequence[str]]" = None
@@ -3034,6 +3035,7 @@ class v1Experiment:
         checkpointSize: "typing.Union[str, None, Unset]" = _unset,
         description: "typing.Union[str, None, Unset]" = _unset,
         displayName: "typing.Union[str, None, Unset]" = _unset,
+        duration: "typing.Union[int, None, Unset]" = _unset,
         endTime: "typing.Union[str, None, Unset]" = _unset,
         forkedFrom: "typing.Union[int, None, Unset]" = _unset,
         labels: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
@@ -3073,6 +3075,8 @@ class v1Experiment:
             self.description = description
         if not isinstance(displayName, Unset):
             self.displayName = displayName
+        if not isinstance(duration, Unset):
+            self.duration = duration
         if not isinstance(endTime, Unset):
             self.endTime = endTime
         if not isinstance(forkedFrom, Unset):
@@ -3129,6 +3133,8 @@ class v1Experiment:
             kwargs["description"] = obj["description"]
         if "displayName" in obj:
             kwargs["displayName"] = obj["displayName"]
+        if "duration" in obj:
+            kwargs["duration"] = obj["duration"]
         if "endTime" in obj:
             kwargs["endTime"] = obj["endTime"]
         if "forkedFrom" in obj:
@@ -3185,6 +3191,8 @@ class v1Experiment:
             out["description"] = self.description
         if not omit_unset or "displayName" in vars(self):
             out["displayName"] = self.displayName
+        if not omit_unset or "duration" in vars(self):
+            out["duration"] = self.duration
         if not omit_unset or "endTime" in vars(self):
             out["endTime"] = self.endTime
         if not omit_unset or "forkedFrom" in vars(self):
