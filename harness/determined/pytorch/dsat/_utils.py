@@ -22,43 +22,35 @@ CURR_DIR = pathlib.Path(".")
 def get_base_parser() -> argparse.ArgumentParser:
     # TODO: better args everyhwere, namely shorter flags and abbrevs
     base_parser = argparse.ArgumentParser(add_help=False)
-    base_parser.add_argument("config_path")
-    base_parser.add_argument("model_dir")
-    base_parser.add_argument("-i", "--include", type=str, nargs="+")
+    base_parser.add_argument("config_path", help="experiment config file (.yaml)")
+    base_parser.add_argument("model_dir", help="file or directory containing model definition")
+    base_parser.add_argument(
+        "-i",
+        "--include",
+        type=str,
+        nargs="+",
+        help="additional files to copy into the task container",
+    )
 
     base_parser.add_argument(
-        "-mt", "--max-trials", type=int, default=_defaults.AUTOTUNING_ARG_DEFAULTS["max-trials"]
+        "-mt",
+        "--max-trials",
+        type=int,
+        default=_defaults.AUTOTUNING_ARG_DEFAULTS["max-trials"],
+        help="Maximum number of Trials to run, including the model profile info Trial",
     )
-    base_parser.add_argument("-ms", "--max-slots", type=int)
+    base_parser.add_argument(
+        "-ms",
+        "--max-slots",
+        type=int,
+        help="Maximum number of slots to use concurrently across Trials",
+    )
     base_parser.add_argument(
         "-mct",
         "--max-concurrent-trials",
         type=int,
         default=_defaults.AUTOTUNING_ARG_DEFAULTS["max-concurrent-trials"],
-    )
-    base_parser.add_argument("-sc", "--search-runner-config", type=str)
-    base_parser.add_argument("-msrr", "--max-search-runner-restarts", type=int)
-    base_parser.add_argument(
-        "-z",
-        "--zero-stages",
-        type=int,
-        nargs="+",
-        default=_defaults.AUTOTUNING_ARG_DEFAULTS["zero-stages"],
-        choices=list(range(4)),
-    )
-
-    # DS-specific args.
-    base_parser.add_argument(
-        "-sps",
-        "--start_profile-step",
-        type=int,
-        default=_defaults.AUTOTUNING_ARG_DEFAULTS["start-profile-step"],
-    )
-    base_parser.add_argument(
-        "-eps",
-        "--end-profile-step",
-        type=int,
-        default=_defaults.AUTOTUNING_ARG_DEFAULTS["end-profile-step"],
+        help="Maximum number of Trials to run concurrently",
     )
     base_parser.add_argument(
         "-m",
@@ -67,19 +59,48 @@ def get_base_parser() -> argparse.ArgumentParser:
         default=_defaults.AUTOTUNING_ARG_DEFAULTS["metric"],
         choices=_defaults.SMALLER_IS_BETTER_METRICS + _defaults.LARGER_IS_BETTER_METRICS,
     )
+    base_parser.add_argument("--run-full-experiment", action="store_true")
+    base_parser.add_argument(
+        "-z",
+        "--zero-stages",
+        type=int,
+        nargs="+",
+        default=_defaults.AUTOTUNING_ARG_DEFAULTS["zero-stages"],
+        choices=list(range(4)),
+        help="Space-separated list of zero stages to search over",
+    )
+    base_parser.add_argument(
+        "--start_profile-step",
+        type=int,
+        default=_defaults.AUTOTUNING_ARG_DEFAULTS["start-profile-step"],
+        help="Step on which to start profiling",
+    )
+    base_parser.add_argument(
+        "--end-profile-step",
+        type=int,
+        default=_defaults.AUTOTUNING_ARG_DEFAULTS["end-profile-step"],
+        help="Step on which to stop profiling",
+    )
     base_parser.add_argument(
         "-r",
         "--random_seed",
         type=int,
         default=_defaults.AUTOTUNING_ARG_DEFAULTS["random-seed"],
     )
-    base_parser.add_argument("--run-full-experiment", action="store_true")
+    base_parser.add_argument(
+        "--search-runner-config",
+        type=str,
+        help="Path to an alternative search runner configuration file. For advanced use cases",
+    )
+    base_parser.add_argument(
+        "--max-search-runner-restarts", type=int, default=5, help="Maximum search runner restarts"
+    )
 
     return base_parser
 
 
 def get_full_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(prog="Determined AI DeepSpeed Autotune")
     subparsers = parser.add_subparsers(required=True, dest="search_method")
     base_parser = get_base_parser()
 
@@ -87,19 +108,23 @@ def get_full_parser() -> argparse.ArgumentParser:
 
     random_subparser = subparsers.add_parser("random", parents=[base_parser])
     random_subparser.add_argument(
-        "-trc",
         "--trials-per-random-config",
         type=int,
         default=_defaults.AUTOTUNING_ARG_DEFAULTS["trials-per-random-config"],
+        help="Maximum number of Trials to run per random config",
     )
-    random_subparser.add_argument("-es", "--early-stopping", type=int)
+    random_subparser.add_argument(
+        "--early-stopping",
+        type=int,
+        help="Terminates the search if a new best config not found in last `early-stopping` Trials",
+    )
 
     binary_subparser = subparsers.add_parser("binary", parents=[base_parser])
     binary_subparser.add_argument(
-        "-srf",
         "--search-range-factor",
         type=float,
         default=_defaults.AUTOTUNING_ARG_DEFAULTS["search-range-factor"],
+        help="Expands the initial search range by a factor `search-range-factor`",
     )
 
     asha_subparser = subparsers.add_parser("asha", parents=[base_parser])
@@ -120,7 +145,6 @@ def get_full_parser() -> argparse.ArgumentParser:
         default=_defaults.AUTOTUNING_ARG_DEFAULTS["divisor"],
     )
     asha_subparser.add_argument(
-        "-srf",
         "--search-range-factor",
         type=float,
         default=_defaults.AUTOTUNING_ARG_DEFAULTS["search-range-factor"],
