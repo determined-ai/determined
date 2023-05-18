@@ -741,13 +741,13 @@ class RandomDSATSearchMethod(BaseDSATSearchMethod):
     search on batch sizes.  Utilizes aggressive early stopping based on the results of other Trials
     and heuristics based on domain knowledge of DeepSpeed. Uses two search-specific arguments:
 
-        Args:
-            trials_per_random_config:
-                the maximum number of Trials which will be used to optimize each randomly-generated
-                configuration
-            early_stopping:
-                the maximum number of Trials to run without improving results after a best-found
-                configuration has been established
+    Args:
+        trials_per_random_config:
+            the maximum number of Trials which will be used to optimize each randomly-generated
+            configuration
+        early_stopping:
+            the maximum number of Trials to run without improving results after a best-found
+            configuration has been established
     """
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
@@ -966,11 +966,11 @@ class BinarySearchDSATSearchMethod(BaseDSATSearchMethod):
     completion or until the `max_trials` limit is hit. Lineages whose binary search ends before
     `max_trials` is hit are replaced with newly generated random configurations. One search-specific
     argument:
-        Args:
-            search_range_factor:
-                adjusts the initial binary search range by raising the ceiling by a factor of
-                `search_range_factor`
 
+    Args:
+        search_range_factor:
+            adjusts the initial binary search range by raising the ceiling by a factor of
+            `search_range_factor`
     """
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
@@ -1092,20 +1092,19 @@ class ASHADSATSearchMethod(BaseDSATSearchMethod):
     through a binary search and uses the number of Trials in this search as the finite-resource of
     ASHA. Search-specific arguments:
 
-        Args:
-            asha_early_stopping:
-                ASHA early stopping parameter (`s` in arxiv:1810.05934)
-            max_rungs:
-                Maximum number of rungs
-            min_binary_search_trials:
-                Minimum number of binary search Trials to run per random configuration
-            divisor:
-                ASHA divisor parameter (`eta` in arxiv:1810.05934), controlling the growth in
-                resources and population thinning across rungs
-            search_range_factor:
-                adjusts the initial binary search range by raising the ceiling by a factor of
-                `search_range_factor`
-
+    Args:
+        asha_early_stopping:
+            ASHA early stopping parameter (`s` in arxiv:1810.05934)
+        max_rungs:
+            Maximum number of rungs
+        min_binary_search_trials:
+            Minimum number of binary search Trials to run per random configuration
+        divisor:
+            ASHA divisor parameter (`eta` in arxiv:1810.05934), controlling the growth in
+            resources and population thinning across rungs
+        search_range_factor:
+            adjusts the initial binary search range by raising the ceiling by a factor of
+            `search_range_factor`
     """
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
