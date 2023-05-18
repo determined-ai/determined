@@ -361,15 +361,17 @@ def test_textual_inversion_stable_diffusion_generate() -> None:
 @pytest.mark.distributed
 @pytest.mark.gpu_required
 @pytest.mark.deepspeed
-def test_hf_trainer_deepspeed_autotuning() -> None:
+@pytest.mark.parametrize("search_method_name", ["PT", "TF2"])
+def test_hf_trainer_deepspeed_autotuning(search_method_name) -> None:
     test_dir = "hf_trainer_api/image_classification"
-    config_path = conf.deepspeed_autotuning_examples_path(f"{test_dir}/deepspeed.yaml")
+    config_path = conf.integrations_examples_path(f"{test_dir}/deepspeed.yaml")
     config = conf.load_config(config_path)
     with tempfile.NamedTemporaryFile() as tf:
         with open(tf.name, "w") as f:
             yaml.dump(config, f)
         _ = exp.run_basic_autotuning_test(
             tf.name,
-            conf.deepspeed_autotuning_examples_path(test_dir),
+            conf.integrations_examples_path(test_dir),
             1,
+            search_method_name=search_method_name,
         )
