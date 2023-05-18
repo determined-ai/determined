@@ -23,6 +23,7 @@ from determined.tensorboard.util import get_rank_aware_path
 set_logger(False)
 
 DEFAULT_BATCH_SIZE = 1
+DEFAULT_CHECK_PREEMPT_INTERVAL = 100
 
 
 @dataclass
@@ -35,7 +36,7 @@ class TorchBatchInitInfo:
     tensorboard_path: str
 
 
-def get_default_device(core_context) -> torch.device:
+def get_default_device(core_context: core.Context) -> torch.device:
     local_rank = core_context.distributed.local_rank
     local_num_gpu = torch.cuda.device_count()
     if local_rank >= local_num_gpu:
@@ -106,7 +107,6 @@ def _synchronize_and_checkpoint(core_context: core.Context, batch_idx: int, rank
             "steps_completed": batch_idx + 1,
         }
         with core_context.checkpoint.store_path(checkpoint_metadata) as (path, uuid):
-            print(uuid)
             with open(os.path.join(path, "batch_completed.json"), "w") as file_obj:
                 json.dump({"batch_completed": min_batch_index}, file_obj)
     else:
@@ -173,14 +173,13 @@ def torch_batch_process(
     batch_size: Optional[int] = None,
     iterate_length: Optional[int] = None,
     checkpoint_interval: int = 5,
-    check_preempt_interval: Optional[int] = None,
     dataloader_kwargs: Dict[str, Any] = {},
 ):
     with initialize_default_inference_context() as core_context:
         _validate_dataloader_kwargs(dataloader_kwargs, batch_size)
 
-        if check_preempt_interval is None:
-            check_preempt_interval = checkpoint_interval
+        # This is to guarantee we check preempt at least every DEFAULT_CHECK_PREEMPT_INTERVAL
+        check_preempt_interval = min(checkpoint_interval, DEFAULT_CHECK_PREEMPT_INTERVAL)
 
         if batch_size is None:
             if "batch_size" in dataloader_kwargs:
@@ -239,6 +238,8 @@ def torch_batch_process(
         max_batch = math.ceil(dataset_len / batch_size / total_worker)
         iterate_length = _validate_iterate_length(iterate_length, max_batch)
 
+        last_checkpoint_idx = -1
+
         for batch_idx in range(skip, iterate_length):
             logging.info(f"Currently processing batch {batch_idx}")
             X = next(dataloader_iterator, None)
@@ -247,6 +248,7 @@ def torch_batch_process(
 
             if (batch_idx + 1) % checkpoint_interval == 0:
                 _synchronize_and_checkpoint(core_context, batch_idx, rank)
+                last_checkpoint_idx = batch_idx
                 # Report progress can only be done accurately with synchronization
                 core_context._tensorboard_manager.sync(mangler=get_rank_aware_path)
                 if rank == 0:
@@ -256,7 +258,8 @@ def torch_batch_process(
 
             if (batch_idx + 1) % check_preempt_interval == 0:
                 if core_context.preempt.should_preempt():
-                    _synchronize_and_checkpoint(core_context, batch_idx, rank)
+                    if last_checkpoint_idx != batch_idx:
+                        _synchronize_and_checkpoint(core_context, batch_idx, rank)
                     return
 
         _synchronize_and_checkpoint(core_context, batch_idx, rank)
