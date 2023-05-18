@@ -38,6 +38,18 @@ official_examples = [
         "features/custom_reducers_mnist_pytorch",
         "features/custom_reducers_mnist_pytorch/const.yaml",
     ),
+    (
+        "deepspeed/deepspeed_autotune/torchvision/core_api",
+        "deepspeed/deepspeed_autotune/torchvision/core_api/deepspeed.yaml",
+    ),
+    (
+        "deepspeed/deepspeed_autotune/torchvision/deepspeed_trial",
+        "deepspeed/deepspeed_autotune/torchvision/deepspeed_trial/deepspeed.yaml",
+    ),
+    (
+        "deepspeed/deepspeed_autotune/torchvision/core_api",
+        "deepspeed/deepspeed_autotune/torchvision/core_api/deepspeed.yaml",
+    ),
 ]
 
 
