@@ -457,9 +457,10 @@ type Trial struct {
 	JobID JobID
 }
 
-// NewTrial creates a new trial in the active state.  Note that the trial ID
+// NewTrial creates a new trial in the specified state.  Note that the trial ID
 // will not be set.
 func NewTrial(
+	state State,
 	jobID JobID,
 	taskID TaskID,
 	requestID RequestID,
@@ -476,7 +477,7 @@ func NewTrial(
 		TaskID:                taskID,
 		RequestID:             &requestID,
 		ExperimentID:          experimentID,
-		State:                 ActiveState,
+		State:                 state,
 		StartTime:             time.Now().UTC(),
 		HParams:               hparams,
 		WarmStartCheckpointID: warmStartCheckpointID,
