@@ -80,7 +80,7 @@ func echoGetExperimentAndCheckCanDoActions(ctx context.Context, c echo.Context, 
 	expID int, actions ...func(context.Context, model.User, *model.Experiment) error,
 ) (*model.Experiment, model.User, error) {
 	user := c.(*detContext.DetContext).MustGetUser()
-	e, err := m.db.ExperimentByID(expID)
+	e, err := db.ExperimentByID(ctx, expID)
 
 	expNotFound := echo.NewHTTPError(http.StatusNotFound, "experiment not found: %d", expID)
 	if errors.Is(err, db.ErrNotFound) {

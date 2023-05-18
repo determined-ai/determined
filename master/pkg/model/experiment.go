@@ -323,7 +323,7 @@ type Experiment struct {
 	OriginalConfig string               `db:"original_config"`
 
 	// The model definition is stored as a .tar.gz file (raw bytes).
-	ModelDefinitionBytes []byte     `db:"model_definition"`
+	ModelDefinitionBytes []byte     `db:"model_definition" bun:"model_definition"`
 	StartTime            time.Time  `db:"start_time"`
 	EndTime              *time.Time `db:"end_time"`
 	ParentID             *int       `db:"parent_id"`

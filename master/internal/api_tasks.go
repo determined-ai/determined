@@ -40,7 +40,7 @@ var (
 )
 
 func expFromTaskID(
-	m *Master, taskID model.TaskID,
+	ctx context.Context, taskID model.TaskID,
 ) (isExperiment bool, exp *model.Experiment, err error) {
 	expID, err := experimentIDFromTrialTaskID(taskID)
 	if errors.Is(err, errIsNotTrialTaskID) {
@@ -49,7 +49,7 @@ func expFromTaskID(
 		return false, nil, err
 	}
 
-	exp, err = m.db.ExperimentByID(expID)
+	exp, err = db.ExperimentByID(ctx, expID)
 	if err != nil {
 		return false, nil, err
 	}
@@ -89,7 +89,7 @@ func (a *apiServer) canDoActionsOnTask(
 
 	switch t.TaskType {
 	case model.TaskTypeTrial:
-		isExp, exp, err := expFromTaskID(a.m, taskID)
+		isExp, exp, err := expFromTaskID(ctx, taskID)
 		if !isExp {
 			return fmt.Errorf("error we failed to look up an experiment "+
 				"from taskID %s when we think it is a trial task", taskID)
@@ -130,7 +130,7 @@ func (a *apiServer) canEditAllocation(ctx context.Context, allocationID string) 
 
 	taskID := model.AllocationID(allocationID).ToTaskID()
 	errAllocationNotFound := status.Errorf(codes.NotFound, "allocation not found: %s", allocationID)
-	isExp, exp, err := expFromTaskID(a.m, taskID)
+	isExp, exp, err := expFromTaskID(ctx, taskID)
 	if err != nil {
 		return err
 	}
@@ -379,7 +379,7 @@ func (a *apiServer) GetTasks(
 
 	pbAllocationIDToSummary := make(map[string]*taskv1.AllocationSummary)
 	for allocationID, allocationSummary := range summary {
-		isExp, exp, err := expFromTaskID(a.m, allocationSummary.TaskID)
+		isExp, exp, err := expFromTaskID(ctx, allocationSummary.TaskID)
 		if err != nil {
 			return nil, err
 		}

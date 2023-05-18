@@ -804,7 +804,7 @@ func createTestExpWithProjectID(
 	require.NoError(t, api.m.db.AddExperiment(exp, activeConfig))
 
 	// Get experiment as our API mostly will to make it easier to mock.
-	exp, err := api.m.db.ExperimentByID(exp.ID)
+	exp, err := db.ExperimentByID(context.TODO(), exp.ID)
 	require.NoError(t, err)
 	return exp
 }

@@ -163,30 +163,7 @@ func (a *apiServer) getExperimentAndCheckCanDoActions(
 	expID int,
 	actions ...func(context.Context, model.User, *model.Experiment) error,
 ) (*model.Experiment, model.User, error) {
-	curUser, _, err := grpcutil.GetUser(ctx)
-	if err != nil {
-		return nil, model.User{}, err
-	}
-
-	e, err := a.m.db.ExperimentByID(expID)
-
-	expNotFound := status.Errorf(codes.NotFound, "experiment not found: %d", expID)
-	if errors.Is(err, db.ErrNotFound) {
-		return nil, model.User{}, expNotFound
-	} else if err != nil {
-		return nil, model.User{}, err
-	}
-
-	if err = exputil.AuthZProvider.Get().CanGetExperiment(ctx, *curUser, e); err != nil {
-		return nil, model.User{}, authz.SubIfUnauthorized(err, expNotFound)
-	}
-
-	for _, action := range actions {
-		if err = action(ctx, *curUser, e); err != nil {
-			return nil, model.User{}, status.Errorf(codes.PermissionDenied, err.Error())
-		}
-	}
-	return e, *curUser, nil
+	return exputil.GetExperimentAndCheckCanDoActions(ctx, expID, actions...)
 }
 
 func (a *apiServer) GetSearcherEvents(
@@ -1886,9 +1863,9 @@ func (a *apiServer) GetBestSearcherValidationMetric(
 		return nil, err
 	}
 
-	metric, err := a.m.db.ExperimentBestSearcherValidation(int(req.ExperimentId))
+	metric, err := db.ExperimentBestSearcherValidation(ctx, int(req.ExperimentId))
 	switch {
-	case errors.Cause(err) == db.ErrNotFound:
+	case errors.Is(err, db.ErrNotFound):
 		return nil, status.Errorf(codes.NotFound, "no validations for experiment")
 	case err != nil:
 		return nil, err
