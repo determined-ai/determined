@@ -164,9 +164,9 @@ For an introduction to using the training API, please visit the Training APIs se
       -  CIFAR-10
       -  :download:`cifar10_cpu_offloading.tgz </examples/cifar10_cpu_offloading.tgz>`
 
-***********
+********************
  DeepSpeed Autotune
-***********
+********************
 
 .. list-table::
    :header-rows: 1
@@ -176,7 +176,7 @@ For an introduction to using the training API, please visit the Training APIs se
       -  Filename
 
    -  -  DeepSpeed (PyTorch)
-      -  ImageNet (Generated) 
+      -  ImageNet (Generated)
       -  :download:`gpt_neox.tgz </examples/torchvision.tgz>`
 
 ************************
