@@ -4,6 +4,7 @@ import { SelectValue } from 'antd/es/select';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
+import Grid from 'components/Grid';
 import Accordion from 'components/kit/Accordion';
 import Breadcrumb from 'components/kit/Breadcrumb';
 import Button from 'components/kit/Button';
@@ -1844,20 +1845,26 @@ const ThemeSection: React.FC = () => {
 
   const renderColorComponent = (colorArray: string[], name: string) => (
     <AntDCard title={`${name} Colors`}>
-      {colorArray.map((cName, idx) => (
-        <div
-          key={`${idx}-${name.toLowerCase()}`}
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-            marginBottom: '20px',
-            width: '320px',
-          }}>
-          <span>{cName.replace(/(var\(|\))/g, '')}</span>
-          <div style={{ backgroundColor: cName, height: '40px', width: '100%' }} />
-        </div>
-      ))}
+      <Grid>
+        {colorArray.map((cName, idx) => (
+          <div
+            key={`${idx}-${name.toLowerCase()}`}
+            style={{
+              marginBottom: '20px',
+              width: '250px',
+            }}>
+            <span>{cName.replace(/(var\(|\))/g, '')}</span>
+            <div
+              style={{
+                backgroundColor: cName,
+                border: '2px solid #ffb12d',
+                height: '40px',
+                width: '100%',
+              }}
+            />
+          </div>
+        ))}
+      </Grid>
     </AntDCard>
   );
   const iterateOverThemes = (themes: Array<string[]>, names: string[]) =>
