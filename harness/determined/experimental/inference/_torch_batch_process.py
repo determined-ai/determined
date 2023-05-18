@@ -67,7 +67,7 @@ def initialize_default_inference_context() -> core.Context:
     # Setting preempt mode to WorkerAskMaster makes the call non-blocking
     # We are also ok if workers are preempted at different batch idx
     return det.core.init(
-        distributed=distributed_context, preempt_mode=core.PreemptMode.WorkersAskMaster
+        distributed=distributed_context, preempt_mode=core.PreemptMode.WorkersAskChief
     )
 
 
@@ -99,16 +99,18 @@ def _synchronize_and_checkpoint(core_context: core.Context, batch_idx: int, rank
     Synchronize the workers and create checkpoint to record steps completed
     """
     if rank == 0:
-        # Simply need to gather, no need to pass information around
-        core_context.distributed.gather(None)
+        batch_indices = core_context.distributed.gather(batch_idx)
+        min_batch_index = min(batch_indices)
+
         checkpoint_metadata = {
             "steps_completed": batch_idx + 1,
         }
         with core_context.checkpoint.store_path(checkpoint_metadata) as (path, uuid):
+            print(uuid)
             with open(os.path.join(path, "batch_completed.json"), "w") as file_obj:
-                json.dump({"batch_completed": batch_idx}, file_obj)
+                json.dump({"batch_completed": min_batch_index}, file_obj)
     else:
-        core_context.distributed.gather(None)
+        core_context.distributed.gather(batch_idx)
 
 
 def _report_progress_to_master(
@@ -171,10 +173,15 @@ def torch_batch_process(
     batch_size: Optional[int] = None,
     iterate_length: Optional[int] = None,
     checkpoint_interval: int = 5,
+    check_preempt_interval: Optional[int] = None,
     dataloader_kwargs: Dict[str, Any] = {},
 ):
     with initialize_default_inference_context() as core_context:
         _validate_dataloader_kwargs(dataloader_kwargs, batch_size)
+
+        if check_preempt_interval is None:
+            check_preempt_interval = checkpoint_interval
+
         if batch_size is None:
             if "batch_size" in dataloader_kwargs:
                 # remove batch_size from dataloader_kwargs
@@ -247,12 +254,10 @@ def torch_batch_process(
                         dummy_searcher_op, batch_idx, total_worker, batch_size, dataset_len
                     )
 
-            # If preempt mode is set to WorkerAskMaster, checking should preempt is cheap
-            # Calling preempt without synchronization means workers can be on different
-            # batch idx when preempted. It is ok since when we resume, we will resume from
-            # last checkpoint idx
-            if core_context.preempt.should_preempt():
-                return
+            if (batch_idx + 1) % check_preempt_interval == 0:
+                if core_context.preempt.should_preempt():
+                    _synchronize_and_checkpoint(core_context, batch_idx, rank)
+                    return
 
         _synchronize_and_checkpoint(core_context, batch_idx, rank)
         core_context._tensorboard_manager.sync(mangler=get_rank_aware_path)
