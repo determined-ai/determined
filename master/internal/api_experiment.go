@@ -2030,6 +2030,7 @@ func sortExperiments(sortString *string, experimentQuery *bun.SelectQuery) error
 		"id":              "id",
 		"description":     "description",
 		"name":            "name",
+		"searcherType":    "searcher_type",
 		"startTime":       "e.start_time",
 		"endTime":         "e.end_time",
 		"state":           "e.state",
