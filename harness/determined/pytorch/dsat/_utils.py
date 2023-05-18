@@ -120,34 +120,42 @@ def get_full_parser() -> argparse.ArgumentParser:
     )
 
     binary_subparser = subparsers.add_parser("binary", parents=[base_parser])
+    search_range_factor_help = (
+        "Expands the initial search range by a factor of `search-range-factor`"
+    )
     binary_subparser.add_argument(
         "--search-range-factor",
         type=float,
         default=_defaults.AUTOTUNING_ARG_DEFAULTS["search-range-factor"],
-        help="Expands the initial search range by a factor `search-range-factor`",
+        help=search_range_factor_help,
     )
 
     asha_subparser = subparsers.add_parser("asha", parents=[base_parser])
     asha_subparser.add_argument(
         "--max-rungs",
         default=_defaults.AUTOTUNING_ARG_DEFAULTS["max-rungs"],
+        help="Maximum rungs to use in the ASHA algorithm",
     )
     asha_subparser.add_argument(
         "--min-binary-search-trials",
         default=_defaults.AUTOTUNING_ARG_DEFAULTS["min-binary-search-trials"],
+        help="Minimum number of binary search Trials to run per random configuration",
     )
     asha_subparser.add_argument(
         "--asha-early-stopping",
         default=_defaults.AUTOTUNING_ARG_DEFAULTS["asha-early-stopping"],
+        help="ASHA early stopping parameter (`s` in arxiv:1810.05934)",
     )
     asha_subparser.add_argument(
         "--divisor",
         default=_defaults.AUTOTUNING_ARG_DEFAULTS["divisor"],
+        help="ASHA divisor parameter (`eta` in arxiv:1810.05934)",
     )
     asha_subparser.add_argument(
         "--search-range-factor",
         type=float,
         default=_defaults.AUTOTUNING_ARG_DEFAULTS["search-range-factor"],
+        help=search_range_factor_help,
     )
 
     return parser
