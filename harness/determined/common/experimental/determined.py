@@ -55,33 +55,6 @@ class Determined:
         else:
             self._token = None
 
-    def _from_bindings(self, raw: bindings.v1User) -> user.User:
-        assert raw.id is not None
-        if raw.agentUserGroup is not None:
-            return user.User(
-                user_id=raw.id,
-                username=raw.username,
-                admin=raw.admin,
-                remote=raw.remote,
-                session=self._session,
-                active=raw.active,
-                display_name=raw.displayName,
-                agent_uid=raw.agentUserGroup.agentUid,
-                agent_gid=raw.agentUserGroup.agentGid,
-                agent_user=raw.agentUserGroup.agentUser,
-                agent_group=raw.agentUserGroup.agentGroup,
-            )
-        else:
-            return user.User(
-                user_id=raw.id,
-                username=raw.username,
-                admin=raw.admin,
-                remote=raw.remote,
-                session=self._session,
-                active=raw.active,
-                display_name=raw.displayName,
-            )
-
     def create_user(
         self, username: str, admin: bool, password: Optional[str], remote: bool = False
     ) -> user.User:
@@ -92,20 +65,20 @@ class Determined:
         req = bindings.v1PostUserRequest(password=hashedPassword, user=create_user, isHashed=True)
         resp = bindings.post_PostUser(self._session, body=req)
         assert resp.user is not None
-        return self._from_bindings(resp.user)
+        return user.User._from_bindings(resp.user, self._session)
 
     def get_user_by_id(self, user_id: int) -> user.User:
         resp = bindings.get_GetUser(session=self._session, userId=user_id)
         assert user_id is not None
-        return self._from_bindings(resp.user)
+        return user.User._from_bindings(resp.user, self._session)
 
     def get_user_by_name(self, user_name: str) -> user.User:
         resp = bindings.get_GetUserByUsername(session=self._session, username=user_name)
-        return self._from_bindings(resp.user)
+        return user.User._from_bindings(resp.user, self._session)
 
     def whoami(self) -> user.User:
         resp = bindings.get_GetMe(self._session)
-        return self._from_bindings(resp.user)
+        return user.User._from_bindings(resp.user, self._session)
 
     def get_session_username(self) -> str:
         auth = self._session._auth
@@ -131,7 +104,7 @@ class Determined:
         if users_bindings is None:
             return users
         for user_b in users_bindings:
-            user_obj = self._from_bindings(user_b)
+            user_obj = user.User._from_bindings(user_b)
             users.append(user_obj)
         return users
 

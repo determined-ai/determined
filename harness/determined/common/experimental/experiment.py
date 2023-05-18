@@ -303,8 +303,8 @@ class Experiment:
 
     @classmethod
     def _from_bindings(
-        cls, exp: bindings.v1Experiment, session: api.Session
+        cls, exp_bindings: bindings.v1Experiment, session: api.Session
     ) -> "ExperimentReference":
-        exp_cls = cls(session=session, experiment_id=exp.id)
-        exp_cls._hydrate(exp)
-        return exp_cls
+        exp = cls(session=session, experiment_id=exp_bindings.id)
+        exp._hydrate(exp_bindings)
+        return exp

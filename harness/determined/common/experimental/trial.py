@@ -385,9 +385,9 @@ class Trial:
 
     @classmethod
     def _from_bindings(cls, trial: bindings.trialv1Trial, session: api.Session) -> "TrialReference":
-        trial_obj = cls(trial.id, session)
-        trial_obj._hydrate(trial)
-        return trial_obj
+        trial_bindings = cls(trial.id, session)
+        trial_bindings._hydrate(trial)
+        return trial_bindings
 
 
 # This is to shorten line lengths of the TrialSortBy definition.
