@@ -1304,7 +1304,7 @@ class TestASHADSATSearchMethod:
         for _ in range(search_method.divisor):
             hparams, search_data = search_method.get_random_hparams_and_search_data(1)
             trial = None
-            for trial_num in range(search_method.min_binary_search_trials * search_method.divisor):
+            for _ in range(search_method.min_binary_search_trials * search_method.divisor):
                 trial = search_method.trial_tracker.create_trial(
                     hparams=hparams, search_data=copy.deepcopy(search_data), parent_trial=trial
                 )
@@ -1323,7 +1323,7 @@ class TestASHADSATSearchMethod:
         # lineage above, so that it is promotable.
         hparams, search_data = search_method.get_random_hparams_and_search_data(1)
         trial = None
-        for trial_num in range(search_method.min_binary_search_trials):
+        for _ in range(search_method.min_binary_search_trials):
             trial = search_method.trial_tracker.create_trial(
                 hparams=hparams, search_data=copy.deepcopy(search_data), parent_trial=trial
             )
