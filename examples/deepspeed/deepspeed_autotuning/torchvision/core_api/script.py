@@ -1,9 +1,11 @@
 import logging
-from typing import Any, Dict
+import uuid
+from typing import Any, Optional, Tuple
 
+import attrdict
+import numpy as np
 import torch
 import torch.nn as nn
-from attrdict import AttrDict
 from torch.utils.data import Dataset
 from torchvision import models
 
@@ -27,7 +29,7 @@ class RandImageNetDataset(Dataset):
     def __len__(self) -> int:
         return 10**6
 
-    def __getitem__(self, idx: int) -> torch.Tensor:
+    def __getitem__(self, idx: int) -> Tuple[torch.Tensor, torch.Tensor]:
         img = self.imgs[idx % self.num_actual_datapoints]
         label = self.labels[idx % self.num_actual_datapoints]
         return img, label
@@ -35,10 +37,10 @@ class RandImageNetDataset(Dataset):
 
 def main(
     core_context: det.core.Context,
-    hparams: Dict[str, Any],
+    hparams: attrdict.AttrDict,
+    latest_checkpoint: Optional[uuid.UUID],
 ) -> None:
     is_chief = core_context.distributed.rank == 0
-    hparams = AttrDict(hparams)
     ds_config = dsat.get_ds_config_from_hparams(hparams)
     deepspeed.init_distributed()
 
@@ -52,43 +54,70 @@ def main(
         training_data=trainset,
         config=ds_config,
     )
+    # Restore from latest checkpoint, if any.
+    if latest_checkpoint is not None:
+        with core_context.checkpoint.restore_path(storage_id=latest_checkpoint) as path:
+            model_engine.load_checkpoint(path)
 
     fp16 = model_engine.fp16_enabled()
     criterion = nn.CrossEntropyLoss()
 
     steps_completed = 0
+    local_loss_bucket = []
     for op in core_context.searcher.operations():
         while steps_completed < op.length:
             for data in trainloader:
                 with dsat.dsat_reporting_context(core_context, op):
-                    inputs, labels = data[0].to(model_engine.local_rank), data[1].to(
+                    inputs, labels = data
+                    inputs, labels = inputs.to(model_engine.local_rank), labels.to(
                         model_engine.local_rank
                     )
                     if fp16:
                         inputs = inputs.half()
                     outputs = model_engine(inputs)
                     loss = criterion(outputs, labels)
+                    local_loss_bucket.append(loss.item())
                     model_engine.backward(loss)
                     model_engine.step()
-                    steps_completed += 1
-                    if is_chief:
-                        metrics_dict = {"loss": loss.item()}
-                        core_context.train.report_validation_metrics(
-                            steps_completed=steps_completed, metrics=metrics_dict
-                        )
+
+                # Only increment `steps_completed` when an actual optimizer step is taken,
+                # accounting for the gradient accumulation rate.
                 if model_engine.is_gradient_accumulation_boundary():
+                    steps_completed += 1
+                    # Metrics reporting.
+                    if not steps_completed % hparams.metric_reporting_rate:
+                        mean_local_loss = np.array(local_loss_bucket).mean()
+                        local_loss_bucket = []
+                        gathered_losses = core_context.distributed.gather(mean_local_loss)
+                        if is_chief:
+                            mean_global_loss = np.array(gathered_losses).mean()
+                            metrics_dict = {"loss": mean_global_loss}
+                            core_context.train.report_training_metrics(
+                                steps_completed=steps_completed, metrics=metrics_dict
+                            )
+                    # Checkpointing.
+                    if not steps_completed % hparams.checkpoint_rate:
+                        metadata = {"steps_completed": steps_completed}
+                        with core_context.checkpoint.store_path(metadata=metadata, shard=True) as (
+                            path,
+                            _,
+                        ):
+                            model_engine.save_checkpoint(path)
+                        # Preemption after checkpointing.
+                        if core_context.preempt.should_preempt():
+                            return
+                    # Completion.
                     if steps_completed == op.length:
-                        break
-                if core_context.preempt.should_preempt():
-                    return
-        if is_chief:
-            op.report_completed(loss.item())
+                        if is_chief:
+                            op.report_completed(mean_global_loss)
+                        return
 
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format=det.LOG_FORMAT)
     info = det.get_cluster_info()
-    hparams = info.trial.hparams
+    latest_checkpoint = info.latest_checkpoint
+    hparams = attrdict.AttrDict(info.trial.hparams)
     distributed = det.core.DistributedContext.from_deepspeed()
     with det.core.init(distributed=distributed) as core_context:
-        main(core_context, hparams)
+        main(core_context, hparams, latest_checkpoint)
