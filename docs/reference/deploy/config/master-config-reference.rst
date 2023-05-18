@@ -231,41 +231,41 @@ behavior specified here. For more on scheduling behavior in Determined, see :ref
 ``type``
 ^^^^^^^^
 
-The scheduling policy to use when allocating resources between different tasks (experiments,
-Notebooks, etc.). Defaults to ``fair_share``.
+   The scheduling policy to use when allocating resources between different tasks (experiments,
+   Notebooks, etc.). Defaults to ``fair_share``.
 
--  ``fair_share``: Tasks receive a proportional amount of the available resources depending on the
-   resource they require and their weight.
+   -  ``fair_share``: Tasks receive a proportional amount of the available resources depending on
+      the resource they require and their weight.
 
--  ``round_robin``: Tasks are scheduled in the order in which they arrive at the cluster.
+   -  ``round_robin``: Tasks are scheduled in the order in which they arrive at the cluster.
 
--  ``priority``: Tasks are scheduled based on their priority, which can range from the values 1 to
-   99 inclusive. Lower priority numbers indicate higher-priority tasks. A lower-priority task will
-   never be scheduled while a higher-priority task is pending. Zero-slot tasks (e.g., CPU-only
-   Notebooks, TensorBoards) are prioritized separately from tasks requiring slots (e.g., experiments
-   running on GPUs). Task priority can be assigned using the ``resources.priority`` field. If a task
-   does not specify a priority it is assigned the ``default_priority``.
+   -  ``priority``: Tasks are scheduled based on their priority, which can range from the values 1
+      to 99 inclusive. Lower priority numbers indicate higher-priority tasks. A lower-priority task
+      will never be scheduled while a higher-priority task is pending. Zero-slot tasks (e.g.,
+      CPU-only Notebooks, TensorBoards) are prioritized separately from tasks requiring slots (e.g.,
+      experiments running on GPUs). Task priority can be assigned using the ``resources.priority``
+      field. If a task does not specify a priority it is assigned the ``default_priority``.
 
-   -  ``preemption``: Specifies whether lower-priority tasks should be preempted to schedule higher
-      priority tasks. Tasks are preempted in order of lowest priority first.
-   -  ``default_priority``: The priority that is assigned to tasks that do not specify a priority.
-      Can be configured to 1 to 99 inclusively. Defaults to ``42``.
+      -  ``preemption``: Specifies whether lower-priority tasks should be preempted to schedule
+         higher priority tasks. Tasks are preempted in order of lowest priority first.
+      -  ``default_priority``: The priority that is assigned to tasks that do not specify a
+         priority. Can be configured to 1 to 99 inclusively. Defaults to ``42``.
 
 ``fitting_policy``
 ^^^^^^^^^^^^^^^^^^
 
-The scheduling policy to use when assigning tasks to agents in the cluster. Defaults to ``best``.
+   The scheduling policy to use when assigning tasks to agents in the cluster. Defaults to ``best``.
 
--  ``best``: The best-fit policy ensures that tasks will be preferentially "packed" together on the
-   smallest number of agents.
--  ``worst``: The worst-fit policy ensures that tasks will be placed on under-utilized agents.
+   -  ``best``: The best-fit policy ensures that tasks will be preferentially "packed" together on
+      the smallest number of agents.
+   -  ``worst``: The worst-fit policy ensures that tasks will be placed on under-utilized agents.
 
 ``allow_heterogeneous_fits``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Fit distributed jobs onto agents of different sizes. When enabled, we still prefer to fit jobs on
-same sized nodes but will fallback to allow heterogeneous fits. Sizes should be powers of two for
-the fitting algorithm to work.
+   Fit distributed jobs onto agents of different sizes. When enabled, we still prefer to fit jobs on
+   same sized nodes but will fallback to allow heterogeneous fits. Sizes should be powers of two for
+   the fitting algorithm to work.
 
 ``default_aux_resource_pool``
 -----------------------------
@@ -322,13 +322,14 @@ Resource type used for compute tasks. Defaults to ``cuda``.
 ``slot_type: cuda``
 ^^^^^^^^^^^^^^^^^^^
 
-One NVIDIA GPU will be requested per compute slot. Prior to 0.17.6, this option was called ``gpu``.
+   One NVIDIA GPU will be requested per compute slot. Prior to 0.17.6, this option was called
+   ``gpu``.
 
 ``slot_type: cpu``
 ^^^^^^^^^^^^^^^^^^
 
-CPU resources will be requested for each compute slot. ``slot_resource_requests.cpu`` option is
-required to specify the specific amount of the resources.
+   CPU resources will be requested for each compute slot. ``slot_resource_requests.cpu`` option is
+   required to specify the specific amount of the resources.
 
 ``slot_resource_requests``
 --------------------------
@@ -338,7 +339,7 @@ Supports customizing the resource requests made when scheduling Kubernetes pods.
 ``cpu``
 ^^^^^^^
 
-The number of Kubernetes CPUs to request per compute slot.
+   The number of Kubernetes CPUs to request per compute slot.
 
 ``master_service_name``
 -----------------------
@@ -353,14 +354,14 @@ Options for configuring how Fluent Bit sidecars are run.
 ``image``
 ^^^^^^^^^
 
-The Fluent Bit image to use. Defaults to ``fluent/fluent-bit:1.9.3``.
+   The Fluent Bit image to use. Defaults to ``fluent/fluent-bit:1.9.3``.
 
 ``uid``/``gid``
 ^^^^^^^^^^^^^^^
 
-The UID and GID to run the Fluent Bit sidecar as. If these are not specified, the container will run
-as root when the associated task container is running as root and as a default non-root user
-otherwise.
+   The UID and GID to run the Fluent Bit sidecar as. If these are not specified, the container will
+   run as root when the associated task container is running as root and as a default non-root user
+   otherwise.
 
 .. _cluster-configuration-slurm:
 
@@ -402,12 +403,15 @@ Security-related configuration settings for communicating with the Launcher.
 ``tls``
 ^^^^^^^
 
-TLS-related configuration settings.
+   TLS-related configuration settings.
 
--  ``enabled``: Enable TLS.
--  ``skip_verify``: Skip server certificate verification.
--  ``certificate``: Path to a file containing the cluster's TLS certificate. Only needed if the
-   certificate is not signed by a well-known CA; cannot be specified if ``skip_verify`` is enabled.
+   -  ``enabled``: Enable TLS.
+
+   -  ``skip_verify``: Skip server certificate verification.
+
+   -  ``certificate``: Path to a file containing the cluster's TLS certificate. Only needed if the
+      certificate is not signed by a well-known CA; cannot be specified if ``skip_verify`` is
+      enabled.
 
 ``container_run_type``
 ----------------------
@@ -437,20 +441,20 @@ for example when operating with ``gres_supported: false``, then this result may 
 ``slot_type: cuda``
 ^^^^^^^^^^^^^^^^^^^
 
-One NVIDIA GPU will be requested per compute slot. Partitions will be represented as a resource pool
-with slot type ``cuda`` which can be overridden using ``partition_overrides``.
+   One NVIDIA GPU will be requested per compute slot. Partitions will be represented as a resource
+   pool with slot type ``cuda`` which can be overridden using ``partition_overrides``.
 
 ``slot_type: rocm``
 ^^^^^^^^^^^^^^^^^^^
 
-One AMD GPU will be requested per compute slot. Partitions will be represented as a resource pool
-with slot type ``rocm`` which can be overridden using ``partition_overrides``.
+   One AMD GPU will be requested per compute slot. Partitions will be represented as a resource pool
+   with slot type ``rocm`` which can be overridden using ``partition_overrides``.
 
 ``slot_type: cpu``
 ^^^^^^^^^^^^^^^^^^
 
-CPU resources will be requested for each compute slot. Partitions will be represented as a resource
-pool with slot type ``cpu``. One node will be allocated per slot.
+   CPU resources will be requested for each compute slot. Partitions will be represented as a
+   resource pool with slot type ``cpu``. One node will be allocated per slot.
 
 ``rendezvous_network_interface``
 --------------------------------
@@ -558,54 +562,55 @@ resulting from this partition. Partition names are treated as case-insensitive.
 ``description``
 ^^^^^^^^^^^^^^^
 
-Description of the resource pool
+   Description of the resource pool
 
 ``rendezvous_network_interface``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Interface used to bootstrap communication between distributed jobs
+   Interface used to bootstrap communication between distributed jobs
 
 ``proxy_network_interface``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Interface used to proxy the master for services running on compute nodes
+   Interface used to proxy the master for services running on compute nodes
 
 ``slot_type``
 ^^^^^^^^^^^^^
 
-The resource type used for tasks
+   The resource type used for tasks
 
 ``task_container_defaults``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-See :ref:`top-level setting <master-task-container-defaults>`.
+   See :ref:`top-level setting <master-task-container-defaults>`.
 
-Each ``partition_overrides`` entry may specify a ``task_container_defaults`` that applies additional
-defaults on top of the :ref:`top-level task_container_defaults <master-task-container-defaults>` for
-all tasks launched on that partition. When applying the defaults, individual fields override prior
-values, and list fields are appended. If the partition is referenced in a custom HPC resource pool,
-an additional ``task_container_defaults`` may be applied by the resource pool.
+   Each ``partition_overrides`` entry may specify a ``task_container_defaults`` that applies
+   additional defaults on top of the :ref:`top-level task_container_defaults
+   <master-task-container-defaults>` for all tasks launched on that partition. When applying the
+   defaults, individual fields override prior values, and list fields are appended. If the partition
+   is referenced in a custom HPC resource pool, an additional ``task_container_defaults`` may be
+   applied by the resource pool.
 
-.. code::
+   .. code::
 
-   partition_overrides:
-      mlde_cuda:
-         description: Partition for CUDA jobs (tesla cards only)
-         slot_type: cuda
-         task_container_defaults:
-            dtrain_network_interface: hsn0,hsn1,hsn2,hsn3
-            slurm:
-               sbatch_args:
-                  - --cpus-per-gpu=16
-                  - --mem-per-gpu=65536
-               gpu_type: tesla
-      mlde_cpu:
-         description: Generic CPU job partition (limited to node001)
-         slot_type: cpu
-         task_container_defaults:
-            slurm:
-               sbatch_args:
-                     --nodelist=node001
+      partition_overrides:
+         mlde_cuda:
+            description: Partition for CUDA jobs (tesla cards only)
+            slot_type: cuda
+            task_container_defaults:
+               dtrain_network_interface: hsn0,hsn1,hsn2,hsn3
+               slurm:
+                  sbatch_args:
+                     - --cpus-per-gpu=16
+                     - --mem-per-gpu=65536
+                  gpu_type: tesla
+         mlde_cpu:
+            description: Generic CPU job partition (limited to node001)
+            slot_type: cpu
+            task_container_defaults:
+               slurm:
+                  sbatch_args:
+                        --nodelist=node001
 
 ``default_aux_resource_pool``
 -----------------------------
@@ -629,29 +634,29 @@ are:
 ``project``
 ^^^^^^^^^^^
 
-Use the project name of the experiment (this is the default, if no project nothing is passed to
-workload manager).
+   Use the project name of the experiment (this is the default, if no project nothing is passed to
+   workload manager).
 
 ``workspace``
 ^^^^^^^^^^^^^
 
-Use the workspace name of the project (if no workspace, nothing is passed to workload manager).
+   Use the workspace name of the project (if no workspace, nothing is passed to workload manager).
 
 ``label`` [:``prefix``]
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-Use the value from the experiment configuration tags list (if no matching tags, nothing is passed to
-workload manager).
+   Use the value from the experiment configuration tags list (if no matching tags, nothing is passed
+   to workload manager).
 
-If a tag in the list begins with the specified ``prefix``, remove the prefix and use the remainder
-as the value for the WCKey/Project. If multiple tag values begin with ``prefix``, the remainders are
-concatenated with a comma (,) separator for Slurm or underscore (_) for PBS.
+   If a tag in the list begins with the specified ``prefix``, remove the prefix and use the
+   remainder as the value for the WCKey/Project. If multiple tag values begin with ``prefix``, the
+   remainders are concatenated with a comma (,) separator for Slurm or underscore (_) for PBS.
 
-If a ``prefix`` is not specified or empty, all tags will be matched (and therefore concatenated).
+   If a ``prefix`` is not specified or empty, all tags will be matched (and therefore concatenated).
 
-Workload managers do not generally support multiple WCKey/Project values so it is recommended that
-``prefix`` is configured to match a single label to enable use of the workload manager reporting
-tools that summarize usage by each WCKey/Project value.
+   Workload managers do not generally support multiple WCKey/Project values so it is recommended
+   that ``prefix`` is configured to match a single label to enable use of the workload manager
+   reporting tools that summarize usage by each WCKey/Project value.
 
 .. _cluster-resource-pools:
 
@@ -722,28 +727,28 @@ Notebooks, etc.). Defaults to ``fair_share``.
 ``fair_share``
 ^^^^^^^^^^^^^^
 
-Tasks receive a proportional amount of the available resources depending on the resource they
-require and their weight.
+   Tasks receive a proportional amount of the available resources depending on the resource they
+   require and their weight.
 
 ``round_robin``
 ^^^^^^^^^^^^^^^
 
-Tasks are scheduled in the order in which they arrive at the cluster.
+   Tasks are scheduled in the order in which they arrive at the cluster.
 
 ``priority``
 ^^^^^^^^^^^^
 
-Tasks are scheduled based on their priority, which can range from the values 1 to 99 inclusive.
-Lower priority numbers indicate higher-priority tasks. A lower-priority task will never be scheduled
-while a higher-priority task is pending. Zero-slot tasks (e.g., CPU-only Notebooks, TensorBoards)
-are prioritized separately from tasks requiring slots (e.g., experiments running on GPUs). Task
-priority can be assigned using the ``resources.priority`` field. If a task does not specify a
-priority it is assigned the ``default_priority``.
+   Tasks are scheduled based on their priority, which can range from the values 1 to 99 inclusive.
+   Lower priority numbers indicate higher-priority tasks. A lower-priority task will never be
+   scheduled while a higher-priority task is pending. Zero-slot tasks (e.g., CPU-only Notebooks,
+   TensorBoards) are prioritized separately from tasks requiring slots (e.g., experiments running on
+   GPUs). Task priority can be assigned using the ``resources.priority`` field. If a task does not
+   specify a priority it is assigned the ``default_priority``.
 
--  ``preemption``: Specifies whether lower-priority tasks should be preempted to schedule higher
-   priority tasks. Tasks are preempted in order of lowest priority first.
--  ``default_priority``: The priority that is assigned to tasks that do not specify a priority. Can
-   be configured to 1 to 99 inclusively. Defaults to ``42``.
+   -  ``preemption``: Specifies whether lower-priority tasks should be preempted to schedule higher
+      priority tasks. Tasks are preempted in order of lowest priority first.
+   -  ``default_priority``: The priority that is assigned to tasks that do not specify a priority.
+      Can be configured to 1 to 99 inclusively. Defaults to ``42``.
 
 ``fitting_policy``
 ------------------
@@ -753,13 +758,13 @@ The scheduling policy to use when assigning tasks to agents in the cluster. Defa
 ``best``
 ^^^^^^^^
 
-The best-fit policy ensures that tasks will be preferentially "packed" together on the smallest
-number of agents.
+   The best-fit policy ensures that tasks will be preferentially "packed" together on the smallest
+   number of agents.
 
 ``worst``
 ^^^^^^^^^
 
-The worst-fit policy ensures that tasks will be placed on under-utilized agents.
+   The worst-fit policy ensures that tasks will be placed on under-utilized agents.
 
 ``provider``
 ============
@@ -859,112 +864,113 @@ Required. Specifies running dynamic agents on AWS.
 ``region``
 ^^^^^^^^^^
 
-The region of the AWS resources used by Determined. We advise setting this region to be the same
-region as the Determined master for better network performance. Defaults to the same region as the
-master.
+   The region of the AWS resources used by Determined. We advise setting this region to be the same
+   region as the Determined master for better network performance. Defaults to the same region as
+   the master.
 
 ``root_volume_size``
 ^^^^^^^^^^^^^^^^^^^^
 
-Size of the root volume of the Determined agent in GB. We recommend at least 100GB. Defaults to
-``200``.
+   Size of the root volume of the Determined agent in GB. We recommend at least 100GB. Defaults to
+   ``200``.
 
 ``image_id``
 ^^^^^^^^^^^^
 
-Optional. The AMI ID of the Determined agent. Defaults to the latest GCP agent image.
+   Optional. The AMI ID of the Determined agent. Defaults to the latest GCP agent image.
 
 ``tag_key``
 ^^^^^^^^^^^
 
-Key for tagging the Determined agent instances. Defaults to ``managed-by``.
+   Key for tagging the Determined agent instances. Defaults to ``managed-by``.
 
 ``tag_value``
 ^^^^^^^^^^^^^
 
-Value for tagging the Determined agent instances. Defaults to the master instance ID if the master
-is on EC2, otherwise ``determined-ai-determined``.
+   Value for tagging the Determined agent instances. Defaults to the master instance ID if the
+   master is on EC2, otherwise ``determined-ai-determined``.
 
 ``custom_tags``
 ^^^^^^^^^^^^^^^
 
-List of arbitrary user-defined tags that are added to the Determined agent instances and do not
-affect how Determined works. Each tag must specify ``key`` and ``value`` fields. Defaults to the
-empty list.
+   List of arbitrary user-defined tags that are added to the Determined agent instances and do not
+   affect how Determined works. Each tag must specify ``key`` and ``value`` fields. Defaults to the
+   empty list.
 
--  ``key``: Key of custom tag.
--  ``value``: value of custom tag.
+   -  ``key``: Key of custom tag.
+   -  ``value``: value of custom tag.
 
 ``instance_name``
 ^^^^^^^^^^^^^^^^^
 
-Name to set for the Determined agent instances. Defaults to ``determined-ai-agent``.
+   Name to set for the Determined agent instances. Defaults to ``determined-ai-agent``.
 
 ``ssh_key_name``
 ^^^^^^^^^^^^^^^^
 
-Required. The name of the SSH key registered with AWS for SSH key access to the agent instances.
+   Required. The name of the SSH key registered with AWS for SSH key access to the agent instances.
 
 ``iam_instance_profile_arn``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The Amazon Resource Name (ARN) of the IAM instance profile to attach to the agent instances.
+   The Amazon Resource Name (ARN) of the IAM instance profile to attach to the agent instances.
 
 ``network_interface``
 ^^^^^^^^^^^^^^^^^^^^^
 
-Network interface to set for the Determined agent instances.
+   Network interface to set for the Determined agent instances.
 
--  ``public_ip``: Whether to use public IP addresses for the Determined agents. See
-   :ref:`aws-network-requirements` for instructions on whether a public IP should be used. Defaults
-   to ``true``.
+   -  ``public_ip``: Whether to use public IP addresses for the Determined agents. See
+      :ref:`aws-network-requirements` for instructions on whether a public IP should be used.
+      Defaults to ``true``.
 
--  ``security_group_id``: The ID of the security group that will be used to run the Determined
-   agents. This should be the security group you identified or created in
-   :ref:`aws-network-requirements`. Defaults to the default security group of the specified VPC.
+   -  ``security_group_id``: The ID of the security group that will be used to run the Determined
+      agents. This should be the security group you identified or created in
+      :ref:`aws-network-requirements`. Defaults to the default security group of the specified VPC.
 
--  ``subnet_id``: The ID of the subnet to run the Determined agents in. Defaults to the default
-   subnet of the default VPC.
+   -  ``subnet_id``: The ID of the subnet to run the Determined agents in. Defaults to the default
+      subnet of the default VPC.
 
 ``instance_type``
 ^^^^^^^^^^^^^^^^^
 
-AWS instance type to use for dynamic agents. If ``instance_slots`` is not specified, for GPU
-instances this must be one of the following: ``g4dn.xlarge``, ``g4dn.2xlarge``, ``g4dn.4xlarge``,
-``g4dn.8xlarge``, ``g4dn.16xlarge``, ``g4dn.12xlarge``, ``g4dn.metal``, ``g5.xlarge``,
-``g5.2xlarge``, ``g5.4xlarge``, ``g5.8xlarge``, ``g5.12xlarge``, ``g5.16xlarge``, ``g5.24xlarge``,
-``g5.48large``, ``p3.2xlarge``, ``p3.8xlarge``, ``p3.16xlarge``, ``p3dn.24xlarge``, or
-``p4d.24xlarge``. For CPU instances, most general purpose instance types are allowed (``t2``,
-``t3``, ``c4``, ``c5``, ``m4``, ``m5`` and variants). Defaults to ``g4dn.metal``.
+   AWS instance type to use for dynamic agents. If ``instance_slots`` is not specified, for GPU
+   instances this must be one of the following: ``g4dn.xlarge``, ``g4dn.2xlarge``, ``g4dn.4xlarge``,
+   ``g4dn.8xlarge``, ``g4dn.16xlarge``, ``g4dn.12xlarge``, ``g4dn.metal``, ``g5.xlarge``,
+   ``g5.2xlarge``, ``g5.4xlarge``, ``g5.8xlarge``, ``g5.12xlarge``, ``g5.16xlarge``,
+   ``g5.24xlarge``, ``g5.48large``, ``p3.2xlarge``, ``p3.8xlarge``, ``p3.16xlarge``,
+   ``p3dn.24xlarge``, or ``p4d.24xlarge``. For CPU instances, most general purpose instance types
+   are allowed (``t2``, ``t3``, ``c4``, ``c5``, ``m4``, ``m5`` and variants). Defaults to
+   ``g4dn.metal``.
 
 ``instance_slots``
 ^^^^^^^^^^^^^^^^^^
 
-The optional number of GPUs for the AWS instance type. This is used in conjunction with the
-``instance_type`` in order to specify types that are not listed in the ``instance_type`` list above.
-Note that some GPUs may not be supported. **WARNING**: *be sure to specify the correct number of
-GPUs to ensure that provisioner launches the correct number of instances.*
+   The optional number of GPUs for the AWS instance type. This is used in conjunction with the
+   ``instance_type`` in order to specify types that are not listed in the ``instance_type`` list
+   above. Note that some GPUs may not be supported. **WARNING**: *be sure to specify the correct
+   number of GPUs to ensure that provisioner launches the correct number of instances.*
 
 ``cpu_slots_allowed``
 ^^^^^^^^^^^^^^^^^^^^^
 
-Whether to allow slots on the CPU instance types. When ``true``, and if the instance type doesn't
-have any GPUs, each instance will provide a single CPU-based compute slot; if it has any GPUs,
-they'll be used for compute slots instead. Defaults to ``false``.
+   Whether to allow slots on the CPU instance types. When ``true``, and if the instance type doesn't
+   have any GPUs, each instance will provide a single CPU-based compute slot; if it has any GPUs,
+   they'll be used for compute slots instead. Defaults to ``false``.
 
 ``spot``
 ^^^^^^^^
 
-Whether to use spot instances. Defaults to ``false``. See :ref:`aws-spot` for more details.
+   Whether to use spot instances. Defaults to ``false``. See :ref:`aws-spot` for more details.
 
 ``spot_max_price``
 ^^^^^^^^^^^^^^^^^^
 
-Optional. Indicates the maximum price per hour that you are willing to pay for a spot instance. The
-market price for a spot instance varies based on supply and demand. If the market price exceeds the
-``spot_max_price``, Determined will not launch instances. This field must be a string and must not
-include a currency sign. For example, $2.50 should be represented as ``"2.50"``. Defaults to the
-on-demand price for the given instance type.
+   Optional. Indicates the maximum price per hour that you are willing to pay for a spot instance.
+   The market price for a spot instance varies based on supply and demand. If the market price
+   exceeds the ``spot_max_price``, Determined will not launch instances. This field must be a string
+   and must not include a currency sign. For example, $2.50 should be represented as ``"2.50"``.
+   Defaults to the on-demand price for the given instance type.
 
 ``type: gcp``
 -------------
@@ -974,119 +980,120 @@ Required. Specifies running dynamic agents on GCP.
 ``base_config``
 ^^^^^^^^^^^^^^^
 
-Instance resource base configuration that will be merged with the fields below to construct GCP
-inserting instance request. See `REST Resource: instances
-<https://cloud.google.com/compute/docs/reference/rest/v1/instances/insert>`__ for details.
+   Instance resource base configuration that will be merged with the fields below to construct GCP
+   inserting instance request. See `REST Resource: instances
+   <https://cloud.google.com/compute/docs/reference/rest/v1/instances/insert>`__ for details.
 
 ``project``
 ^^^^^^^^^^^
 
-The project ID of the GCP resources used by Determined. Defaults to the project of the master.
+   The project ID of the GCP resources used by Determined. Defaults to the project of the master.
 
 ``zone``
 ^^^^^^^^
 
-The zone of the GCP resources used by Determined. Defaults to the zone of the master.
+   The zone of the GCP resources used by Determined. Defaults to the zone of the master.
 
 ``boot_disk_size``
 ^^^^^^^^^^^^^^^^^^
 
-Size of the root volume of the Determined agent in GB. We recommend at least 100GB. Defaults to
-``200``.
+   Size of the root volume of the Determined agent in GB. We recommend at least 100GB. Defaults to
+   ``200``.
 
 ``boot_disk_source_image``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Optional. The boot disk source image of the Determined agent that was shared with you. To use a
-specific version of the Determined agent image from a specific project, it should be set in the
-format: ``projects/<project-id>/global/images/<image-id>``. Defaults to the latest GCP agent image.
+   Optional. The boot disk source image of the Determined agent that was shared with you. To use a
+   specific version of the Determined agent image from a specific project, it should be set in the
+   format: ``projects/<project-id>/global/images/<image-id>``. Defaults to the latest GCP agent
+   image.
 
 ``label_key``
 ^^^^^^^^^^^^^
 
-Key for labeling the Determined agent instances. Defaults to ``managed-by``.
+   Key for labeling the Determined agent instances. Defaults to ``managed-by``.
 
 ``label_value``
 ^^^^^^^^^^^^^^^
 
-Value for labeling the Determined agent instances. Defaults to the master instance name if the
-master is on GCP, otherwise ``determined-ai-determined``.
+   Value for labeling the Determined agent instances. Defaults to the master instance name if the
+   master is on GCP, otherwise ``determined-ai-determined``.
 
 ``name_prefix``
 ^^^^^^^^^^^^^^^
 
-Name prefix to set for the Determined agent instances. The names of the Determined agent instances
-are a concatenation of the name prefix and a pet name. Defaults to the master instance name if the
-master is on GCP otherwise ``determined-ai-determined``.
+   Name prefix to set for the Determined agent instances. The names of the Determined agent
+   instances are a concatenation of the name prefix and a pet name. Defaults to the master instance
+   name if the master is on GCP otherwise ``determined-ai-determined``.
 
 ``network_interface``
 ^^^^^^^^^^^^^^^^^^^^^
 
-Required. Network configuration for the Determined agent instances. See the :ref:`gcp-api-access`
-section for the suggested configuration.
+   Required. Network configuration for the Determined agent instances. See the :ref:`gcp-api-access`
+   section for the suggested configuration.
 
--  ``network``: Required. Network resource for the Determined agent instances. The network
-   configuration should specify the project ID of the network. It should be set in the format:
-   ``projects/<project>/global/networks/<network>``.
+   -  ``network``: Required. Network resource for the Determined agent instances. The network
+      configuration should specify the project ID of the network. It should be set in the format:
+      ``projects/<project>/global/networks/<network>``.
 
--  ``subnetwork``: Required. Subnetwork resource for the Determined agent instances. The subnet
-   configuration should specify the project ID and the region of the subnetwork. It should be set in
-   the format: ``projects/<project>/regions/<region>/subnetworks/<subnetwork>``.
+   -  ``subnetwork``: Required. Subnetwork resource for the Determined agent instances. The subnet
+      configuration should specify the project ID and the region of the subnetwork. It should be set
+      in the format: ``projects/<project>/regions/<region>/subnetworks/<subnetwork>``.
 
--  ``external_ip``: Whether to use external IP addresses for the Determined agent instances. See
-   :ref:`gcp-network-requirements` for instructions on whether an external IP should be set.
-   Defaults to ``false``.
+   -  ``external_ip``: Whether to use external IP addresses for the Determined agent instances. See
+      :ref:`gcp-network-requirements` for instructions on whether an external IP should be set.
+      Defaults to ``false``.
 
 ``network_tags``
 ^^^^^^^^^^^^^^^^
 
-An array of network tags to set firewalls for the Determined agent instances. This is the one you
-identified or created in :ref:`firewall-rules`. Defaults to be an empty array.
+   An array of network tags to set firewalls for the Determined agent instances. This is the one you
+   identified or created in :ref:`firewall-rules`. Defaults to be an empty array.
 
 ``service_account``
 ^^^^^^^^^^^^^^^^^^^
 
-Service account for the Determined agent instances. See the :ref:`gcp-api-access` section for
-suggested configuration.
+   Service account for the Determined agent instances. See the :ref:`gcp-api-access` section for
+   suggested configuration.
 
--  ``email``: Email of the service account for the Determined agent instances. Defaults to the empty
-   string.
+   -  ``email``: Email of the service account for the Determined agent instances. Defaults to the
+      empty string.
 
--  ``scopes``: List of scopes authorized for the Determined agent instances. As suggested in
-   :ref:`gcp-api-access`, we recommend you set the scopes to
-   ``["https://www.googleapis.com/auth/cloud-platform"]``. Defaults to
-   ``["https://www.googleapis.com/auth/cloud-platform"]``.
+   -  ``scopes``: List of scopes authorized for the Determined agent instances. As suggested in
+      :ref:`gcp-api-access`, we recommend you set the scopes to
+      ``["https://www.googleapis.com/auth/cloud-platform"]``. Defaults to
+      ``["https://www.googleapis.com/auth/cloud-platform"]``.
 
 ``instance_type``
 ^^^^^^^^^^^^^^^^^
 
-Type of instance for the Determined agents.
+   Type of instance for the Determined agents.
 
--  ``machine_type``: Type of machine for the Determined agents. Defaults to ``n1-standard-32``.
--  ``gpu_type``: Type of GPU for the Determined agents. Set it to be an empty string to not use any
-   GPUs. Defaults to ``nvidia-tesla-t4``.
--  ``gpu_num``: Number of GPUs for the Determined agents. Defaults to 4.
--  ``preemptible``: Whether to use preemptible dynamic agent instances. Defaults to ``false``.
+   -  ``machine_type``: Type of machine for the Determined agents. Defaults to ``n1-standard-32``.
+   -  ``gpu_type``: Type of GPU for the Determined agents. Set it to be an empty string to not use
+      any GPUs. Defaults to ``nvidia-tesla-t4``.
+   -  ``gpu_num``: Number of GPUs for the Determined agents. Defaults to 4.
+   -  ``preemptible``: Whether to use preemptible dynamic agent instances. Defaults to ``false``.
 
 ``cpu_slots_allowed``
 ^^^^^^^^^^^^^^^^^^^^^
 
-Whether to allow slots on the CPU instance types. When ``true``, and if the instance type doesn't
-have any GPUs, each instance will provide a single CPU-based compute slot; if it has any GPUs,
-they'll be used for compute slots instead. Defaults to ``false``.
+   Whether to allow slots on the CPU instance types. When ``true``, and if the instance type doesn't
+   have any GPUs, each instance will provide a single CPU-based compute slot; if it has any GPUs,
+   they'll be used for compute slots instead. Defaults to ``false``.
 
 ``operation_timeout_period``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Default value is ``5m``.
+   Default value is ``5m``.
 
-The amount of time that a GCP operation can be tracked before timing out. The timeout period is
-specified using a string that consists of a sequence of decimal numbers, each with optional
-fraction, followed by a unit suffix. Valid time units are "s" for seconds, "m" for minutes, and "h"
-for hours.
+   The amount of time that a GCP operation can be tracked before timing out. The timeout period is
+   specified using a string that consists of a sequence of decimal numbers, each with optional
+   fraction, followed by a unit suffix. Valid time units are "s" for seconds, "m" for minutes, and
+   "h" for hours.
 
-For example, you could set the timeout period to 30 seconds by using "30s", or to 1 minute and 30
-seconds by using "1m30s".
+   For example, you could set the timeout period to 30 seconds by using "30s", or to 1 minute and 30
+   seconds by using "1m30s".
 
 ``type: hpc``
 -------------
@@ -1101,30 +1108,31 @@ those partitions/queues.
 ``partition``
 ^^^^^^^^^^^^^
 
-The target HPC partition where jobs will be launched when using this resource pool. Add
-``task_container_defaults`` to provide a resource pool with additional default options. The
-``task_container_defaults`` from the resource pool are applied after any ``task_container_defaults``
-from ``partition_overrides``. When applying the defaults, individual fields override prior values,
-and list fields are appended. This can be used to create a resource pool with homogeneous resources
-when the underlying partition or queue does not. Consider the following:
+   The target HPC partition where jobs will be launched when using this resource pool. Add
+   ``task_container_defaults`` to provide a resource pool with additional default options. The
+   ``task_container_defaults`` from the resource pool are applied after any
+   ``task_container_defaults`` from ``partition_overrides``. When applying the defaults, individual
+   fields override prior values, and list fields are appended. This can be used to create a resource
+   pool with homogeneous resources when the underlying partition or queue does not. Consider the
+   following:
 
-.. code::
+   .. code::
 
-   resource_pools:
-     - pool_name: defq_GPU_tesla
-       description: Lands jobs on defq_GPU with tesla GPU selected, XL675d systems
-       task_container_defaults:
-         slurm:
-           gpu_type: tesla
-           sbatch_options:
-             - -CXL675d
-       provider:
-         type: hpc
-         partition: defq_GPU
+      resource_pools:
+      - pool_name: defq_GPU_tesla
+         description: Lands jobs on defq_GPU with tesla GPU selected, XL675d systems
+         task_container_defaults:
+            slurm:
+            gpu_type: tesla
+            sbatch_options:
+               - -CXL675d
+         provider:
+            type: hpc
+            partition: defq_GPU
 
-In this example, jobs submitted to the resource pool named ``defq_GPU_tesla`` will be executed in
-the HPC partition named ``defq_GPU`` with the ``gpu_type`` property set, and Slurm constraint
-associated with the feature ``XL675d`` used to identify the model type of the compute node.
+   In this example, jobs submitted to the resource pool named ``defq_GPU_tesla`` will be executed in
+   the HPC partition named ``defq_GPU`` with the ``gpu_type`` property set, and Slurm constraint
+   associated with the feature ``XL675d`` used to identify the model type of the compute node.
 
 ************************
  ``checkpoint_storage``
@@ -1472,29 +1480,30 @@ Security-related configuration settings.
 ``username``
 ^^^^^^^^^^^^
 
-Username to use when accessing the cluster.
+   Username to use when accessing the cluster.
 
 ``password``
 ^^^^^^^^^^^^
 
-Password to use when accessing the cluster.
+   Password to use when accessing the cluster.
 
 ``tls``
 ^^^^^^^
 
-TLS-related configuration settings.
+   TLS-related configuration settings.
 
--  ``enabled``: Enable TLS.
+   -  ``enabled``: Enable TLS.
 
--  ``skip_verify``: Skip server certificate verification.
+   -  ``skip_verify``: Skip server certificate verification.
 
--  ``certificate``: Path to a file containing the cluster's TLS certificate. Only needed if the
-   certificate is not signed by a well-known CA; cannot be specified if ``skip_verify`` is enabled.
+   -  ``certificate``: Path to a file containing the cluster's TLS certificate. Only needed if the
+      certificate is not signed by a well-known CA; cannot be specified if ``skip_verify`` is
+      enabled.
 
--  ``additional_fluent_outputs``: An optional configuration string containing additional Fluent
-      Bit outputs for advanced users to specify logging integrations. See the `Fluent Bit
-      documentation <https://docs.fluentbit.io/manual/pipeline/outputs>`__ for the format and
-      supported logging outputs.
+   -  ``additional_fluent_outputs``: An optional configuration string containing additional Fluent
+         Bit outputs for advanced users to specify logging integrations. See the `Fluent Bit
+         documentation <https://docs.fluentbit.io/manual/pipeline/outputs>`__ for the format and
+         supported logging outputs.
 
 **********
  ``scim``
