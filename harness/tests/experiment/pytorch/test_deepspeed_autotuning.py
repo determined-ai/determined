@@ -296,6 +296,8 @@ def queue_and_trial_tracker_builder(
     for idx in range(trial_tracker.max_trials - 1):
         overwrites = {_defaults.OVERWRITE_KEY: {"zero_optimization": {"stage": 1 + (idx % 3)}}}
         hparams = {**HPARAMS_FIXTURE, **overwrites}
+        # Add an arbitrary hp to avoid the non-duplicate hparams check in `queue_and_register_trial`
+        hparams["_arbitrary"] = idx
         trial = trial_tracker.create_trial(hparams)
         queued_trials.append(trial)
         trial_tracker.queue_and_register_trial(trial)

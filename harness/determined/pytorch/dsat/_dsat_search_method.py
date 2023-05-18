@@ -278,6 +278,10 @@ class DSATTrialTracker:
         Helper function which both adds the `trial` to the queue and the internal dictionary
         tracking all trials.
         """
+        # Verify that the given trial was not previously run.
+        for request_id, other_trial in self:
+            if trial.hparams == other_trial.hparams:
+                logging.warning(f"Skipping attempt to queue Trial identical to {request_id}")
         self._all_trials_dict[trial.request_id] = trial
         self.queue.append(trial)
 
