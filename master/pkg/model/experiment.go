@@ -335,6 +335,7 @@ type Experiment struct {
 	OwnerID              *UserID    `db:"owner_id"`
 	Username             string     `db:"username"`
 	ProjectID            int        `db:"project_id"`
+	Unmanaged            bool       `db:"unmanaged"`
 }
 
 // ExperimentFromProto converts a experimentv1.Experiment to a model.Experiment.
@@ -379,6 +380,7 @@ func ExperimentFromProto(e *experimentv1.Experiment) (*Experiment, error) {
 		OwnerID:   uid,
 		Username:  e.Username,
 		ProjectID: int(e.ProjectId),
+		Unmanaged: e.Unmanaged,
 	}, nil
 }
 
@@ -571,7 +573,7 @@ type CheckpointV2 struct {
 	ID            int                    `db:"id" bun:"id,pk,autoincrement"`
 	UUID          uuid.UUID              `db:"uuid"`
 	TaskID        TaskID                 `db:"task_id"`
-	AllocationID  AllocationID           `db:"allocation_id"`
+	AllocationID  *AllocationID          `db:"allocation_id"`
 	ReportTime    time.Time              `db:"report_time"`
 	State         State                  `db:"state"`
 	Resources     map[string]int64       `db:"resources"`

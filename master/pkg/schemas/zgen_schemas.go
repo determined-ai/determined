@@ -675,7 +675,6 @@ var (
     "additionalProperties": false,
     "eventuallyRequired": [
         "checkpoint_storage",
-        "entrypoint",
         "name",
         "hyperparameters",
         "reproducibility",

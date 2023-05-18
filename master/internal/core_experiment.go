@@ -319,6 +319,9 @@ func (m *Master) parseCreateExperiment(req *apiv1.CreateExperimentRequest, user 
 	taskSpec := *m.taskSpec
 	taskSpec.TaskContainerDefaults = taskContainerDefaults
 	taskSpec.TaskContainerDefaults.MergeIntoExpConfig(&config)
+	if defaulted.RawEntrypoint == nil && (req.Unmanaged == nil || !*req.Unmanaged) {
+		return nil, config, nil, nil, errors.New("managed experiments require entrypoint")
+	}
 
 	project, err := getCreateExperimentsProject(m, req, user, defaulted)
 	if err != nil {
