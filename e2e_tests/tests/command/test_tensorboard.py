@@ -4,14 +4,14 @@ from typing import Dict, Optional
 
 import pytest
 
-from determined.common import yaml
+from determined.common import yaml, api
 from tests import command as cmd
 from tests import config as conf
 from tests import experiment as exp
+from tests.api_utils import determined_test_session
 from tests.filetree import FileTree
 
-AWAITING_METRICS = "TensorBoard is awaiting metrics"
-SERVICE_READY = "TensorBoard is running at: http"
+SERVICE_READY = "Loading done."
 num_trials = 1
 
 
@@ -75,13 +75,8 @@ def test_start_tensorboard_for_shared_fs_experiment(tmp_path: Path) -> None:
 
     command = ["tensorboard", "start", str(experiment_id), "--no-browser"]
     with cmd.interactive_command(*command) as tensorboard:
-        for line in tensorboard.stdout:
-            if SERVICE_READY in line:
-                break
-            if AWAITING_METRICS in line:
-                raise AssertionError("Tensorboard did not find metrics")
-        else:
-            raise AssertionError(f"Did not find {SERVICE_READY} in output")
+        err = api.task_is_ready(determined_test_session(), tensorboard.task_id)
+        assert err is None, err
 
 
 @pytest.mark.slow
