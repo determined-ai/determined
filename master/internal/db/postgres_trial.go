@@ -635,15 +635,10 @@ func (db *PgDB) addTrialMetrics(
 	ctx context.Context, m *trialv1.TrialMetrics, isValidation bool,
 ) (rollbacks map[string]int, err error) {
 	rollbacks = make(map[string]int)
-	metricType := "training"
-	if isValidation {
-		metricType = "validation"
-	}
-	return rollbacks, db.withTransaction(fmt.Sprintf("add %s metrics", metricType),
-		func(tx *sqlx.Tx) error {
-			rollbacks, err = db.addTrialMetricsTx(ctx, tx, m, isValidation)
-			return err
-		})
+	return rollbacks, db.withTransaction("add training metrics", func(tx *sqlx.Tx) error {
+		rollbacks, err = db.addTrialMetricsTx(ctx, tx, m, isValidation)
+		return err
+	})
 }
 
 // AddTrainingMetrics adds a completed step to the database with the given training metrics.
