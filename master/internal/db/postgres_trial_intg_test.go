@@ -844,41 +844,6 @@ func TestBatchesProcessed(t *testing.T) {
 	require.Equal(t, 2, archivedValidations, "trial id %d", tr.ID)
 }
 
-func printPotentialLocks(ctx context.Context, db *PgDB, t *testing.T) {
-	query := `
-SELECT 
-    a.datname,
-    l.relation::regclass,
-    a.query,
-    a.query_start,
-    age(now(), a.query_start) AS "age", 
-    a.pid 
-FROM 
-    pg_stat_activity a
-JOIN 
-    pg_locks l ON l.pid = a.pid
-WHERE 
-    a.state = 'active' AND l.granted = false;
-	`
-
-	rows, err := db.sql.DB.QueryContext(ctx, query)
-	require.NoError(t, err)
-	defer rows.Close()
-	for rows.Next() {
-		var (
-			datname    string
-			relation   *string
-			query      string
-			queryStart time.Time
-			age        string
-			pid        int
-		)
-		require.NoError(t, rows.Scan(&datname, &relation, &query, &queryStart, &age, &pid))
-		t.Logf("query: %s, age: %s", query, age)
-	}
-	require.NoError(t, rows.Err())
-}
-
 func TestConcurrentMetricUpdate(t *testing.T) {
 	ctx := context.Background()
 	require.NoError(t, etc.SetRootPath(RootFromDB))
@@ -944,13 +909,12 @@ func TestConcurrentMetricUpdate(t *testing.T) {
 	trials := 10
 	var wg sync.WaitGroup
 	wg.Add(trials)
-	wg_status_ch := make(chan struct{})
 
 	for i := 0; i < trials; i++ {
 		go func() {
 			defer wg.Done()
 			tr := createTrial()
-			err := db.withTransaction(fmt.Sprintf("writing to trial %d", tr.ID), func(tx *sqlx.Tx) error {
+			err := db.withTransaction(fmt.Sprintf("trial %d", tr.ID), func(tx *sqlx.Tx) error {
 				for j := 0; j < writes; j++ {
 					writeToTrial(tr, tx)
 				}
@@ -960,19 +924,5 @@ func TestConcurrentMetricUpdate(t *testing.T) {
 		}()
 	}
 
-	go func() {
-		for {
-			time.Sleep(5 * time.Second)
-			printPotentialLocks(ctx, db, t)
-			select {
-			case <-wg_status_ch:
-				return
-			case <-time.After(time.Second):
-				continue
-			}
-		}
-	}()
-
 	wg.Wait()
-	close(wg_status_ch)
 }
