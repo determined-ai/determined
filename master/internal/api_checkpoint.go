@@ -76,25 +76,30 @@ func (m *Master) canDoActionOnCheckpoint(
 }
 
 func (m *Master) canDoActionOnCheckpointThroughModel(
-	ctx context.Context, curUser model.User, id uuid.UUID,
+	ctx context.Context, curUser model.User, ckptID string,
 ) error {
-	modelIDs, err := db.GetModelIDsAssociatedWithCheckpoint(ctx, id)
+	ckptUUID, err := uuid.Parse(ckptID)
 	if err != nil {
 		return err
 	}
-	for _, id := range modelIDs {
+
+	modelIDs, err := db.GetModelIDsAssociatedWithCheckpoint(ctx, ckptUUID)
+	if err != nil {
+		return err
+	}
+	for _, modelID := range modelIDs {
 		model := &modelv1.Model{}
-		err = m.db.QueryProto("get_model_by_id", model, id)
+		err = m.db.QueryProto("get_model_by_id", model, modelID)
 		if !errors.Is(err, db.ErrNotFound) {
 			return err
 		}
 		if err := modelauth.AuthZProvider.Get().CanGetModel(
 			ctx, curUser, model, model.WorkspaceId); err != nil {
-			return authz.SubIfUnauthorized(err, nil)
+			return authz.SubIfUnauthorized(err, errCheckpointNotFound(ckptID))
 		}
 	}
 	return status.Error(codes.PermissionDenied,
-		fmt.Sprintf("cannot access checkpoint: %s", id.String()))
+		fmt.Sprintf("cannot access checkpoint: %s", ckptID))
 }
 
 func (a *apiServer) GetCheckpoint(
@@ -108,13 +113,9 @@ func (a *apiServer) GetCheckpoint(
 		expauth.AuthZProvider.Get().CanGetExperimentArtifacts)
 
 	if errE != nil {
-		ckptUUID, err := uuid.Parse(req.CheckpointUuid)
-		if err != nil {
-			return nil, err
-		}
-		errM := a.m.canDoActionOnCheckpointThroughModel(ctx, *curUser, ckptUUID)
+		errM := a.m.canDoActionOnCheckpointThroughModel(ctx, *curUser, req.CheckpointUuid)
 		if errM != nil {
-			return nil, errE
+			return nil, errM
 		}
 	}
 

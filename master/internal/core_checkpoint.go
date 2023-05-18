@@ -160,19 +160,24 @@ func (m *Master) getCheckpoint(c echo.Context) error {
 	}
 
 	curUser := c.(*detContext.DetContext).MustGetUser()
-	if err := m.canDoActionOnCheckpoint(c.Request().Context(), curUser, args.CheckpointUUID,
-		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
-		s, ok := status.FromError(err)
-		if !ok {
-			return err
-		}
-		switch s.Code() {
-		case codes.NotFound:
-			return echo.NewHTTPError(http.StatusNotFound, s.Message())
-		case codes.PermissionDenied:
-			return echo.NewHTTPError(http.StatusForbidden, s.Message())
-		default:
-			return fmt.Errorf(s.Message())
+	errE := m.canDoActionOnCheckpoint(c.Request().Context(), curUser, args.CheckpointUUID,
+		expauth.AuthZProvider.Get().CanGetExperimentArtifacts)
+
+	if errE != nil {
+		errM := m.canDoActionOnCheckpointThroughModel(c.Request().Context(), curUser, args.CheckpointUUID)
+		if errM != nil {
+			s, ok := status.FromError(errM)
+			if !ok {
+				return errM
+			}
+			switch s.Code() {
+			case codes.NotFound:
+				return echo.NewHTTPError(http.StatusNotFound, s.Message())
+			case codes.PermissionDenied:
+				return echo.NewHTTPError(http.StatusForbidden, s.Message())
+			default:
+				return fmt.Errorf(s.Message())
+			}
 		}
 	}
 
