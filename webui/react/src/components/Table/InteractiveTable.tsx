@@ -196,7 +196,7 @@ const Row = <T extends object>({
         <tr
           className={classes.join(' ')}
           {...props}
-          style={isPinned ? { position: 'sticky', top: 60 * index, zIndex: 10 } : undefined}>
+          style={isPinned ? { position: 'sticky', top: 48 * index, zIndex: 10 } : undefined}>
           {children}
         </tr>
       </ContextMenu>
