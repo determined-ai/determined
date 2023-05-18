@@ -54,13 +54,16 @@ def create_experiment(
 
 
 def maybe_run_autotuning_experiment(
-    config_file: str, model_def_file: str, create_args: Optional[List[str]] = None
+    config_file: str,
+    model_def_file: str,
+    create_args: Optional[List[str]] = None,
+    search_method_name: str = "_test",
 ) -> subprocess.CompletedProcess:
     command = [
         "python3",
         "-m",
         "determined.pytorch.dsat",
-        "_test",
+        search_method_name,
         config_file,
         model_def_file,
     ]
@@ -78,9 +81,14 @@ def maybe_run_autotuning_experiment(
 
 
 def run_autotuning_experiment(
-    config_file: str, model_def_file: str, create_args: Optional[List[str]] = None
+    config_file: str,
+    model_def_file: str,
+    create_args: Optional[List[str]] = None,
+    search_method_name: str = "_test",
 ) -> int:
-    completed_process = maybe_run_autotuning_experiment(config_file, model_def_file, create_args)
+    completed_process = maybe_run_autotuning_experiment(
+        config_file, model_def_file, create_args, search_method_name
+    )
     assert completed_process.returncode == 0, "\nstdout:\n{} \nstderr:\n{}".format(
         completed_process.stdout, completed_process.stderr
     )
@@ -778,9 +786,12 @@ def run_basic_autotuning_test(
     expect_checkpoints: bool = True,
     priority: int = -1,
     expect_client_failed: bool = False,
+    search_method_name: str = "_test",
 ) -> int:
     assert os.path.isdir(model_def_file)
-    orchestrator_exp_id = run_autotuning_experiment(config_file, model_def_file, create_args)
+    orchestrator_exp_id = run_autotuning_experiment(
+        config_file, model_def_file, create_args, search_method_name
+    )
     if priority != -1:
         set_priority(experiment_id=orchestrator_exp_id, priority=priority)
 

@@ -1,6 +1,4 @@
-name: torchvision_models_dsat
-workspace: DS_AT_PROTOTYPING
-project: torchvision_models
+name: torchvision dsat deepspeed_trial
 max_restarts: 0
 environment:
   image:
@@ -8,17 +6,14 @@ environment:
     cpu: determinedai/environments:cuda-11.3-pytorch-1.10-deepspeed-0.8.3-gpu-0.21.2
 resources:
   slots_per_trial: 2
-  # max_slots: 8
-  shm_size: 17179869184 # 16 GiB. Was hitting "Unexpected bus error encountered in worker. This might be caused by insufficient shared memory (shm)." on Grenoble.
-  # resource_pool: young # Grenoble specific; remove later.
+  shm_size: 4294967296 # 4 GiB.
 searcher:
   name: single
-  max_length: 1000
   metric: val_loss
-  smaller_is_better: False
+  max_length: 100
 hyperparameters:
   model_name: resnet152
-  # NOTE: dsat code expects usual DS config dict to appear as in the below.
+  # NOTE: dsat expects the yaml config to reference the DS json config path as in the below.
   deepspeed_config: ds_config.json
 entrypoint:
   - python3
