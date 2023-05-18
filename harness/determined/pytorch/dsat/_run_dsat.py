@@ -6,6 +6,7 @@ import pickle
 from typing import Any, Dict, Type
 
 import determined as det
+from determined import searcher
 from determined.pytorch.dsat import (
     ASHADSATSearchMethod,
     BaseDSATSearchMethod,
@@ -15,7 +16,6 @@ from determined.pytorch.dsat import (
     _TestDSATSearchMethod,
     _utils,
 )
-from determined.searcher import RemoteSearchRunner
 from determined.util import merge_dicts
 
 
@@ -88,7 +88,7 @@ def main(core_context: det.core.Context) -> None:
     search_method_class = get_search_method_class(args.search_method)
     search_method = search_method_class(args=args, exp_config=exp_config)
 
-    search_runner = RemoteSearchRunner(search_method, context=core_context)
+    search_runner = searcher.RemoteSearchRunner(search_method, context=core_context)
 
     search_runner.run(exp_config=exp_config, model_dir=args.model_dir, includes=args.include)
 

@@ -28,7 +28,6 @@ from determined.pytorch.dsat._run_dsat import (
     get_custom_dsat_exp_conf_from_args,
     get_search_method_class,
 )
-from determined.searcher._search_method import SearcherState
 from tests.custom_search_mocks import MockMaster, MockMasterSearchRunner
 
 ERROR_METRIC_NAME = "error"
@@ -491,7 +490,7 @@ class TestDSATTrialTracker:
 
 def search_state_and_method_builder(
     args: argparse.Namespace,
-) -> Tuple[SearcherState, BaseDSATSearchMethod]:
+) -> Tuple[searcher.SearcherState, BaseDSATSearchMethod]:
     """
     Creates the appropriate `BaseDSATSearchMethod` superclass instance with a completed model
     profile info run and a populated queue.
@@ -501,7 +500,7 @@ def search_state_and_method_builder(
         args=args,
         exp_config=exp_config,
     )
-    searcher_state = SearcherState()
+    searcher_state = searcher.SearcherState()
     search_method.initial_operations(searcher_state)
     assert search_method.trial_tracker.model_profile_info_trial
     search_method.on_validation_completed(
@@ -515,7 +514,7 @@ def search_state_and_method_builder(
 
 @pytest.fixture
 def default_random_state_and_search_method() -> (
-    Generator[Tuple[SearcherState, BaseDSATSearchMethod], Any, None]
+    Generator[Tuple[searcher.SearcherState, BaseDSATSearchMethod], Any, None]
 ):
     searcher_state, search_method = search_state_and_method_builder(DEFAULT_ARGS_DICT["random"])
     yield searcher_state, search_method
@@ -528,7 +527,10 @@ class TestRandomDSATSearchMethodTrialCreation:
 
     @pytest.mark.timeout(5)
     def test_random_hparams_and_search_data(
-        self, default_random_state_and_search_method: Tuple[SearcherState, RandomDSATSearchMethod]
+        self,
+        default_random_state_and_search_method: Tuple[
+            searcher.SearcherState, RandomDSATSearchMethod
+        ],
     ) -> None:
         _, search_method = default_random_state_and_search_method
         for _ in range(100):
@@ -540,7 +542,10 @@ class TestRandomDSATSearchMethodTrialCreation:
 
     @pytest.mark.timeout(5)
     def test_random_hparams_and_search_data_after_best(
-        self, default_random_state_and_search_method: Tuple[SearcherState, RandomDSATSearchMethod]
+        self,
+        default_random_state_and_search_method: Tuple[
+            searcher.SearcherState, RandomDSATSearchMethod
+        ],
     ) -> None:
         for _ in range(100):
             _, search_method = default_random_state_and_search_method
@@ -558,7 +563,10 @@ class TestRandomDSATSearchMethodTrialCreation:
 
     @pytest.mark.timeout(5)
     def test_lineage_continuation_after_failures(
-        self, default_random_state_and_search_method: Tuple[SearcherState, RandomDSATSearchMethod]
+        self,
+        default_random_state_and_search_method: Tuple[
+            searcher.SearcherState, RandomDSATSearchMethod
+        ],
     ) -> None:
         """
         Verifying that a lineage will be attempted for `trials_per_random_config` total attempts
@@ -586,7 +594,10 @@ class TestRandomDSATSearchMethodTrialCreation:
 
     @pytest.mark.timeout(5)
     def test_lineage_continuation_after_successes(
-        self, default_random_state_and_search_method: Tuple[SearcherState, RandomDSATSearchMethod]
+        self,
+        default_random_state_and_search_method: Tuple[
+            searcher.SearcherState, RandomDSATSearchMethod
+        ],
     ) -> None:
         """
         Verifying that a lineage will be attempted for `trials_per_random_config` total attempts
@@ -627,7 +638,7 @@ class TestRandomDSATSearchMethodTrialCreation:
 
 @pytest.fixture
 def long_random_state_and_search_method() -> (
-    Generator[Tuple[SearcherState, BaseDSATSearchMethod], Any, None]
+    Generator[Tuple[searcher.SearcherState, BaseDSATSearchMethod], Any, None]
 ):
     """For long-running tests which need a longer max_trials."""
     args = copy.deepcopy(DEFAULT_ARGS_DICT["random"])
@@ -640,7 +651,8 @@ def long_random_state_and_search_method() -> (
 class TestRandomDSATSearchMethodSearch:
     @pytest.mark.timeout(5)
     def test_search_happy_path(
-        self, long_random_state_and_search_method: Tuple[SearcherState, RandomDSATSearchMethod]
+        self,
+        long_random_state_and_search_method: Tuple[searcher.SearcherState, RandomDSATSearchMethod],
     ) -> None:
         """
         Ensure that when the actual `train_micro_batch_size_per_gpu` lies between the
@@ -693,7 +705,10 @@ class TestRandomDSATSearchMethodShouldStopLineage:
 
     @pytest.mark.timeout(5)
     def test_trials_per_random_config_stopping(
-        self, default_random_state_and_search_method: Tuple[SearcherState, RandomDSATSearchMethod]
+        self,
+        default_random_state_and_search_method: Tuple[
+            searcher.SearcherState, RandomDSATSearchMethod
+        ],
     ) -> None:
         """
         Test that we respect the trials_per_random_config bound.
@@ -714,7 +729,10 @@ class TestRandomDSATSearchMethodShouldStopLineage:
 
     @pytest.mark.timeout(5)
     def test_stop_stage_3(
-        self, default_random_state_and_search_method: Tuple[SearcherState, RandomDSATSearchMethod]
+        self,
+        default_random_state_and_search_method: Tuple[
+            searcher.SearcherState, RandomDSATSearchMethod
+        ],
     ) -> None:
         """
         Verify that we stop a stage 3 lineage when a successful stage-1 or 2 trial has been found.
@@ -743,7 +761,10 @@ class TestRandomDSATSearchMethodShouldStopLineage:
 
     @pytest.mark.timeout(5)
     def test_stop_after_fail_on_min_mbs(
-        self, default_random_state_and_search_method: Tuple[SearcherState, RandomDSATSearchMethod]
+        self,
+        default_random_state_and_search_method: Tuple[
+            searcher.SearcherState, RandomDSATSearchMethod
+        ],
     ) -> None:
         """
         Verify that we stop a lineage after a trial erors out when attempting its minimum batch
@@ -761,7 +782,10 @@ class TestRandomDSATSearchMethodShouldStopLineage:
 
     @pytest.mark.timeout(5)
     def test_stop_after_max_possible_mbs_run(
-        self, default_random_state_and_search_method: Tuple[SearcherState, RandomDSATSearchMethod]
+        self,
+        default_random_state_and_search_method: Tuple[
+            searcher.SearcherState, RandomDSATSearchMethod
+        ],
     ) -> None:
         """
         Verify that we stop a lineage after a trial has attempted its largest possible batch size
@@ -800,7 +824,10 @@ class TestRandomDSATSearchMethodShouldStopLineage:
 
     @pytest.mark.timeout(5)
     def test_stop_when_other_configs_run_larger_batches(
-        self, default_random_state_and_search_method: Tuple[SearcherState, RandomDSATSearchMethod]
+        self,
+        default_random_state_and_search_method: Tuple[
+            searcher.SearcherState, RandomDSATSearchMethod
+        ],
     ) -> None:
         """
         Verify that we stop a lineage which cannot possibly run batches as large as other same-stage
@@ -836,7 +863,10 @@ class TestRandomDSATSearchMethodChooseNextTrial:
 
     @pytest.mark.timeout(5)
     def test_pruning_stage_3_trials(
-        self, default_random_state_and_search_method: Tuple[SearcherState, RandomDSATSearchMethod]
+        self,
+        default_random_state_and_search_method: Tuple[
+            searcher.SearcherState, RandomDSATSearchMethod
+        ],
     ) -> None:
         """
         Test the pruning of stage 3 trials.
@@ -869,7 +899,10 @@ class TestRandomDSATSearchMethodChooseNextTrial:
 
     @pytest.mark.timeout(5)
     def test_queue_pruning_small_mbs_trials(
-        self, default_random_state_and_search_method: Tuple[SearcherState, RandomDSATSearchMethod]
+        self,
+        default_random_state_and_search_method: Tuple[
+            searcher.SearcherState, RandomDSATSearchMethod
+        ],
     ) -> None:
         """
         Test the pruning of trials with smaller `train_micro_batch_size_per_gpu` than
@@ -905,7 +938,7 @@ class TestRandomDSATSearchMethodChooseNextTrial:
 
 @pytest.fixture
 def long_binary_state_and_search_method() -> (
-    Generator[Tuple[SearcherState, BaseDSATSearchMethod], Any, None]
+    Generator[Tuple[searcher.SearcherState, BaseDSATSearchMethod], Any, None]
 ):
     """For long-running tests which need a longer max_trials."""
     args = copy.deepcopy(DEFAULT_ARGS_DICT["binary"])
@@ -918,7 +951,9 @@ class TestBinaryDSATSearchMethod:
     @pytest.mark.timeout(5)
     def test_binary_happy_path(
         self,
-        long_binary_state_and_search_method: Tuple[SearcherState, BinarySearchDSATSearchMethod],
+        long_binary_state_and_search_method: Tuple[
+            searcher.SearcherState, BinarySearchDSATSearchMethod
+        ],
     ) -> None:
         """
         Ensure that when the actual `train_micro_batch_size_per_gpu` lies between the
@@ -967,7 +1002,9 @@ class TestBinaryDSATSearchMethod:
     @pytest.mark.timeout(5)
     def test_binary_no_trials_can_run(
         self,
-        long_binary_state_and_search_method: Tuple[SearcherState, BinarySearchDSATSearchMethod],
+        long_binary_state_and_search_method: Tuple[
+            searcher.SearcherState, BinarySearchDSATSearchMethod
+        ],
     ) -> None:
         """
         Verify expected behavior if every trial fails to even run batch size one.
@@ -1009,7 +1046,9 @@ class TestBinaryDSATSearchMethod:
     @pytest.mark.timeout(5)
     def test_binary_range_too_small(
         self,
-        long_binary_state_and_search_method: Tuple[SearcherState, BinarySearchDSATSearchMethod],
+        long_binary_state_and_search_method: Tuple[
+            searcher.SearcherState, BinarySearchDSATSearchMethod
+        ],
     ) -> None:
         """
         Ensure that if the actual optimal batch size is larger than the initial range (which
@@ -1054,7 +1093,7 @@ class TestBinaryDSATSearchMethod:
 
 @pytest.fixture
 def default_asha_state_and_search_method() -> (
-    Generator[Tuple[SearcherState, BaseDSATSearchMethod], Any, None]
+    Generator[Tuple[searcher.SearcherState, BaseDSATSearchMethod], Any, None]
 ):
     searcher_state, search_method = search_state_and_method_builder(DEFAULT_ARGS_DICT["asha"])
     yield searcher_state, search_method
@@ -1062,7 +1101,7 @@ def default_asha_state_and_search_method() -> (
 
 @pytest.fixture
 def long_asha_state_and_search_method() -> (
-    Generator[Tuple[SearcherState, BaseDSATSearchMethod], Any, None]
+    Generator[Tuple[searcher.SearcherState, BaseDSATSearchMethod], Any, None]
 ):
     args = copy.deepcopy(DEFAULT_ARGS_DICT["asha"])
     args.max_trials = 10**3
@@ -1073,7 +1112,7 @@ def long_asha_state_and_search_method() -> (
 
 @pytest.fixture
 def long_large_min_resource_asha_state_and_search_method() -> (
-    Generator[Tuple[SearcherState, BaseDSATSearchMethod], Any, None]
+    Generator[Tuple[searcher.SearcherState, BaseDSATSearchMethod], Any, None]
 ):
     """
     For long-running tests which need a longer max_trials and resources.
@@ -1090,7 +1129,7 @@ class TestASHADSATSearchMethod:
     def test_binary_happy_path(
         self,
         long_large_min_resource_asha_state_and_search_method: Tuple[
-            SearcherState, BinarySearchDSATSearchMethod
+            searcher.SearcherState, BinarySearchDSATSearchMethod
         ],
     ) -> None:
         searcher_state, search_method = long_large_min_resource_asha_state_and_search_method
@@ -1135,7 +1174,7 @@ class TestASHADSATSearchMethod:
 
     @pytest.mark.timeout(5)
     def test_get_top_lineages_in_rung(
-        self, long_asha_state_and_search_method: Tuple[SearcherState, ASHADSATSearchMethod]
+        self, long_asha_state_and_search_method: Tuple[searcher.SearcherState, ASHADSATSearchMethod]
     ) -> None:
         searcher_state, search_method = long_asha_state_and_search_method
         search_method.trial_tracker.queue.clear()
@@ -1177,7 +1216,7 @@ class TestASHADSATSearchMethod:
 
     @pytest.mark.timeout(5)
     def test_basic_promotion(
-        self, long_asha_state_and_search_method: Tuple[SearcherState, ASHADSATSearchMethod]
+        self, long_asha_state_and_search_method: Tuple[searcher.SearcherState, ASHADSATSearchMethod]
     ) -> None:
         searcher_state, search_method = long_asha_state_and_search_method
         search_method.trial_tracker.queue.clear()
@@ -1214,7 +1253,7 @@ class TestASHADSATSearchMethod:
 
     @pytest.mark.timeout(5)
     def test_lineage_continutation(
-        self, long_asha_state_and_search_method: Tuple[SearcherState, ASHADSATSearchMethod]
+        self, long_asha_state_and_search_method: Tuple[searcher.SearcherState, ASHADSATSearchMethod]
     ) -> None:
         """
         Verify that we continue trials which have not yet completed their rung.
@@ -1248,7 +1287,7 @@ class TestASHADSATSearchMethod:
 
     @pytest.mark.timeout(5)
     def test_top_promotion(
-        self, long_asha_state_and_search_method: Tuple[SearcherState, ASHADSATSearchMethod]
+        self, long_asha_state_and_search_method: Tuple[searcher.SearcherState, ASHADSATSearchMethod]
     ) -> None:
         """
         Verify that if multiple lineages can be promoted, we promote from the higest-rung lineage
@@ -1321,7 +1360,7 @@ class TestASHADSATSearchMethod:
 
     @pytest.mark.timeout(5)
     def test_max_resource_respected(
-        self, long_asha_state_and_search_method: Tuple[SearcherState, ASHADSATSearchMethod]
+        self, long_asha_state_and_search_method: Tuple[searcher.SearcherState, ASHADSATSearchMethod]
     ) -> None:
         """
         Verify that we respect the maximum resource per lineage.
@@ -1354,7 +1393,7 @@ class TestASHADSATSearchMethod:
 
     @pytest.mark.timeout(5)
     def test_no_continuation_for_completed_lineages(
-        self, long_asha_state_and_search_method: Tuple[SearcherState, ASHADSATSearchMethod]
+        self, long_asha_state_and_search_method: Tuple[searcher.SearcherState, ASHADSATSearchMethod]
     ) -> None:
         """
         Verify that lineages which have completed their binary search are not continued.
@@ -1378,7 +1417,7 @@ class TestASHADSATSearchMethod:
 
     @pytest.mark.timeout(5)
     def test_completed_binary_search_lineages_are_counted_complete(
-        self, long_asha_state_and_search_method: Tuple[SearcherState, ASHADSATSearchMethod]
+        self, long_asha_state_and_search_method: Tuple[searcher.SearcherState, ASHADSATSearchMethod]
     ) -> None:
         """
         Verify that if a lineage successfully completes its binary search mid-rung, that lineage
@@ -1410,7 +1449,7 @@ class TestASHADSATSearchMethod:
 
     @pytest.mark.timeout(5)
     def test_failed_binary_search_lineages_are_counted_complete(
-        self, long_asha_state_and_search_method: Tuple[SearcherState, ASHADSATSearchMethod]
+        self, long_asha_state_and_search_method: Tuple[searcher.SearcherState, ASHADSATSearchMethod]
     ) -> None:
         """
         Verify that if a lineage fails its binary search mid-rung by failing on the minimum
