@@ -106,7 +106,6 @@ type (
 		db                  *db.PgDB
 		rm                  rm.ResourceManager
 		searcher            *searcher.Searcher
-		queue               *searcher.SearcherEventQueue
 		warmStartCheckpoint *model.Checkpoint
 
 		taskSpec *tasks.TaskSpec
