@@ -330,7 +330,7 @@ const WorkspaceList: React.FC = () => {
     <Page
       breadcrumb={[
         {
-          breadcrumbName: 'Workspace',
+          breadcrumbName: 'Workspaces',
           path: paths.workspaceList(),
         },
       ]}

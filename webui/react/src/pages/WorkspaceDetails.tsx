@@ -30,7 +30,6 @@ import { useObservable } from 'utils/observable';
 
 import ModelRegistry from '../components/ModelRegistry';
 
-import WorkspaceDetailsHeader from './WorkspaceDetails/WorkspaceDetailsHeader';
 import WorkspaceMembers from './WorkspaceDetails/WorkspaceMembers';
 import WorkspaceProjects from './WorkspaceDetails/WorkspaceProjects';
 
@@ -266,15 +265,14 @@ const WorkspaceDetails: React.FC = () => {
 
   return (
     <Page
+    breadcrumb={[{
+      breadcrumbName: "Workspaces",
+      path: paths.workspaceList()
+    },{
+      breadcrumbName: workspace.name,
+      path: paths.workspaceDetails(id)
+    }]}
       containerRef={pageRef}
-      headerComponent={
-        <WorkspaceDetailsHeader
-          addableUsersAndGroups={addableUsersAndGroups}
-          fetchWorkspace={fetchAll}
-          rolesAssignableToScope={rolesAssignableToScope}
-          workspace={workspace}
-        />
-      }
       id="workspaceDetails"
       key={workspaceId}>
       <Pivot

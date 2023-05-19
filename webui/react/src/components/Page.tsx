@@ -82,13 +82,11 @@ const Page: React.FC<Props> = (props: Props) => {
       ) : (
         <article className={classes.join(' ')} id={props.id} ref={props.containerRef}>
           {props.headerComponent}
-          {showHeader && (
             <PageHeader
               breadcrumb={props.breadcrumb}
               options={props.options}
               sticky={props.stickyHeader}
             />
-          )}
           <div className={css.body}>
             <Spinner spinning={!!props.loading}>{props.children}</Spinner>
           </div>
