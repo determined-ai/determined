@@ -105,7 +105,7 @@ const FilterGroup = ({
     const items: MenuProps['items'] = [
       { key: FormKind.Field, label: <div>Add condition</div> },
       {
-        disabled: !(0 <= level && level <= 1),
+        disabled: level > 1,
         key: FormKind.Group,
         label: <div>Add condition group</div>,
       },

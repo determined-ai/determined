@@ -331,7 +331,6 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         ...sortMenuItemsForColumn(column, sorts, onSortChange),
         { type: 'divider' },
         {
-          disabled: false,
           icon: <FilterOutlined />,
           key: 'filter',
           label: 'Filter by this column',

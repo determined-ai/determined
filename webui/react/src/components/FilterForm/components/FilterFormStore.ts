@@ -50,17 +50,7 @@ export class FilterFormStore {
     return this.#formset.readOnly();
   }
 
-  public get jsonWithoutId(): Observable<Readonly<FilterFormSetWithoutId>> {
-    const replacer = (key: string, value: unknown): unknown => {
-      return key === 'id' ? undefined : value;
-    };
-    return this.#formset.select((formset) => {
-      const newFormSet: FilterFormSetWithoutId = JSON.parse(JSON.stringify(formset, replacer));
-      return newFormSet;
-    });
-  }
-
-  public get sweepedJsonStringWithoutId(): Observable<string> {
+  public get asJsonString(): Observable<string> {
     const replacer = (key: string, value: unknown): unknown => {
       return key === 'id' ? undefined : value;
     };
