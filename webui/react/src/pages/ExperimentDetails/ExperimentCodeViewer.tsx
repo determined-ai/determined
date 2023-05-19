@@ -10,6 +10,8 @@ import { RawJson } from 'shared/types';
 import { ExperimentBase, TreeNode } from 'types';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 
+import css from './ExperimentCodeViewer.module.scss';
+
 const CodeEditor = React.lazy(() => import('components/kit/CodeEditor'));
 
 const configIcon = <Icon name="settings" title="settings" />;
@@ -92,7 +94,7 @@ const ExperimentCodeViewer: React.FC<Props> = ({
   return (
     <React.Suspense fallback={<Spinner tip="Loading code viewer..." />}>
       <Spinner spinning={expFiles === NotLoaded} tip="Loading file tree...">
-        <div style={{ height: 'calc(100vh - 180px)' }}>
+        <div className={css.codeContainer}>
           <CodeEditor
             files={fileOpts}
             readonly={true}
