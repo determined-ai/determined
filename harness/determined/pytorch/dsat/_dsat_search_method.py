@@ -293,10 +293,10 @@ class DSATTrialTracker:
     def enforce_consistent_batch_config(self, hparams: Dict[str, Any]) -> None:
         """Enforces a consistent batch size configuration by altering `hparams` in-place."""
         try:
-            ds_config = _utils.get_ds_config_from_hparams(self.hparams, self.model_dir)
+            ds_config = _utils.get_ds_config_from_hparams(hparams, self.model_dir)
         except FileNotFoundError:
             # In case the DS json config was added as an `--include` arg.
-            ds_config = _utils.get_ds_config_from_hparams(self.hparams)
+            ds_config = _utils.get_ds_config_from_hparams(hparams)
         batch_size_config = _utils.get_batch_config_from_mbs_gas_and_slots(
             ds_config, slots=self.slots_per_trial
         )
