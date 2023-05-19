@@ -83,7 +83,15 @@ const Clusters: React.FC = () => {
   }, [canAdministrateUsers, rbacEnabled]);
 
   return (
-    <Page id="cluster" title={`Cluster ${clusterStatus ? `- ${clusterStatus}` : ''}`}>
+    <Page
+      breadcrumb={[
+        {
+          breadcrumbName: 'Cluster',
+          path: paths.clusters(),
+        },
+      ]}
+      id="cluster"
+      title={`Cluster ${clusterStatus ? `- ${clusterStatus}` : ''}`}>
       <Pivot defaultActiveKey={tabKey} items={tabItems} onChange={handleTabChange} />
     </Page>
   );

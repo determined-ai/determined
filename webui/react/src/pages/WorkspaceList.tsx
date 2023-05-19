@@ -328,6 +328,12 @@ const WorkspaceList: React.FC = () => {
 
   return (
     <Page
+      breadcrumb={[
+        {
+          breadcrumbName: 'Workspace',
+          path: paths.workspaceList(),
+        },
+      ]}
       containerRef={pageRef}
       id="workspaces"
       options={

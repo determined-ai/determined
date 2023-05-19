@@ -10,7 +10,7 @@ import Link from '../Link';
 import css from './PageHeader.module.scss';
 
 export interface Props extends CommonProps {
-  breadcrumb?: BreadCrumbRoute[];
+  breadcrumb: BreadCrumbRoute[];
   docTitle?: string;
   options?: React.ReactNode;
   sticky?: boolean;
