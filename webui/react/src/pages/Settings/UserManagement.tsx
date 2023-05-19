@@ -24,7 +24,6 @@ import {
 } from 'components/Table/Table';
 import TableFilterSearch from 'components/Table/TableFilterSearch';
 import UserBadge from 'components/UserBadge';
-import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { getGroups, patchUser } from 'services/api';
@@ -79,7 +78,7 @@ const UserActionDropdown = ({ fetchUsers, user, groups, userManagementEnabled }:
   const [selectedUserGroups, setSelectedUserGroups] = useState<V1GroupSearchResult[]>();
 
   const { canModifyUsers } = usePermissions();
-  const rbacEnabled = useFeature().isOn('rbac');
+  const { rbacEnabled } = useObservable(determinedStore.info);
 
   const onToggleActive = useCallback(async () => {
     try {
@@ -177,7 +176,7 @@ const UserManagement: React.FC = () => {
   );
   const canceler = useRef(new AbortController());
 
-  const rbacEnabled = useFeature().isOn('rbac');
+  const { rbacEnabled } = useObservable(determinedStore.info);
   const { canModifyUsers } = usePermissions();
   const info = useObservable(determinedStore.info);
 

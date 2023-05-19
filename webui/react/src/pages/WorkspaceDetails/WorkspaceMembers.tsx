@@ -14,12 +14,13 @@ import TableFilterSearch from 'components/Table/TableFilterSearch';
 import UserBadge from 'components/UserBadge';
 import WorkspaceMemberAddModalComponent from 'components/WorkspaceMemberAddModal';
 import WorkspaceMemberRemoveComponent from 'components/WorkspaceMemberRemoveModal';
-import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { V1Group, V1Role, V1RoleWithAssignments } from 'services/api-ts-sdk';
 import { alphaNumericSorter } from 'shared/utils/sort';
+import determinedStore from 'stores/determinedInfo';
 import { User, UserOrGroup, UserOrGroupWithRoleInfo, Workspace } from 'types';
+import { useObservable } from 'utils/observable';
 import { getUserOrGroupWithRoleInfo, isUserWithRoleInfo } from 'utils/user';
 
 import RoleRenderer from './RoleRenderer';
@@ -121,7 +122,7 @@ const WorkspaceMembers: React.FC<Props> = ({
 
   const WorkspaceMemberAddModal = useModal(WorkspaceMemberAddModalComponent);
 
-  const rbacEnabled = useFeature().isOn('rbac');
+  const { rbacEnabled } = useObservable(determinedStore.info);
 
   useEffect(() => {
     onFilterUpdate(settings.name);
