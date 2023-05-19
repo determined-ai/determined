@@ -66,7 +66,12 @@ class DSATTrial:
 
         self.lineage_root: DSATTrial = self if self.parent is None else self.parent.lineage_root
 
-        self.ds_config = _utils.get_ds_config_from_hparams(self.hparams, self.model_dir)
+        # The DS config json file may either be in the specified model directory or in the base of
+        # the workdir, if it was added as an `--include` arg.
+        try:
+            self.ds_config = _utils.get_ds_config_from_hparams(self.hparams, self.model_dir)
+        except FileNotFoundError:
+            self.ds_config = _utils.get_ds_config_from_hparams(self.hparams)
 
         self._error_in_direct_history = False
 
@@ -287,7 +292,11 @@ class DSATTrialTracker:
 
     def enforce_consistent_batch_config(self, hparams: Dict[str, Any]) -> None:
         """Enforces a consistent batch size configuration by altering `hparams` in-place."""
-        ds_config = _utils.get_ds_config_from_hparams(hparams, self.model_dir)
+        try:
+            ds_config = _utils.get_ds_config_from_hparams(self.hparams, self.model_dir)
+        except FileNotFoundError:
+            # In case the DS json config was added as an `--include` arg.
+            ds_config = _utils.get_ds_config_from_hparams(self.hparams)
         batch_size_config = _utils.get_batch_config_from_mbs_gas_and_slots(
             ds_config, slots=self.slots_per_trial
         )

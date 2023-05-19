@@ -383,8 +383,8 @@ def get_ds_config_from_hparams(
     Args:
         hparams (Dict):
             Hyperparameters dictionary
-        model_dir (pathlib.Path):
-            Base path for the Experiment Model
+        base_dir (pathlib.Path):
+            Base directory reltative to which hparams.deepspeed_config is defined
     Returns:
         The Deepspeed Configuration for this experiment following the overwriting rules
     """
