@@ -349,6 +349,7 @@ func TestGetExperiments(t *testing.T) {
 		State:          experimentv1.State_STATE_PAUSED,
 		StartTime:      timestamppb.New(startTime),
 		EndTime:        timestamppb.New(endTime),
+		Duration:       ptrs.Ptr(60),
 		Archived:       false,
 		NumTrials:      3,
 		DisplayName:    "admin",
