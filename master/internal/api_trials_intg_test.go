@@ -389,13 +389,7 @@ func TestNonNumericEpochMetric(t *testing.T) {
 			},
 		},
 	})
-	require.NoError(t, err)
-
-	_, err = api.CompareTrials(ctx, &apiv1.CompareTrialsRequest{
-		TrialIds:    []int32{int32(trial.ID)},
-		MetricNames: maps.Keys(expectedMetricsMap),
-	})
-	require.ErrorContains(t, err, "metric 'epoch' has nonnumeric value reported value='x'")
+	require.Equal(t, fmt.Errorf("cannot add metric with non numeric 'epoch' value got x"), err)
 }
 
 func TestTrialsNonNumericMetrics(t *testing.T) {

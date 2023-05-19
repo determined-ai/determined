@@ -40,6 +40,7 @@ const getStorageLocation = (
   let location = '';
   switch (config.checkpointStorage?.type) {
     case CheckpointStorageType.AWS:
+    case CheckpointStorageType.S3:
       location = `s3://${config.checkpointStorage.bucket || ''}`;
       break;
     case CheckpointStorageType.GCS:
@@ -53,6 +54,15 @@ const getStorageLocation = (
       } else if (hostPath) {
         location = `file://${hostPath}`;
       }
+      break;
+    case CheckpointStorageType.AZURE:
+      // type from api doesn't have azure-specific props
+      break;
+    case CheckpointStorageType.HDFS:
+      // type from api doesn't have hadoop-specific props
+      break;
+    case undefined:
+      // shouldn't happen?
       break;
   }
   return `${location}/${checkpoint.uuid}`;

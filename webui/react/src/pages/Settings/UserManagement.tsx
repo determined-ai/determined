@@ -11,10 +11,7 @@ import { useModal } from 'components/kit/Modal';
 import ManageGroupsModalComponent from 'components/ManageGroupsModal';
 import Page from 'components/Page';
 import Section from 'components/Section';
-import InteractiveTable, {
-  InteractiveTableSettings,
-  onRightClickableCell,
-} from 'components/Table/InteractiveTable';
+import InteractiveTable, { onRightClickableCell } from 'components/Table/InteractiveTable';
 import SkeletonTable from 'components/Table/SkeletonTable';
 import {
   checkmarkRenderer,
@@ -24,9 +21,8 @@ import {
 } from 'components/Table/Table';
 import TableFilterSearch from 'components/Table/TableFilterSearch';
 import UserBadge from 'components/UserBadge';
-import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
-import { UpdateSettings, useSettings } from 'hooks/useSettings';
+import { useSettings } from 'hooks/useSettings';
 import { getGroups, patchUser } from 'services/api';
 import { V1GetUsersRequestSortBy, V1GroupSearchResult } from 'services/api-ts-sdk';
 import { GetUsersParams } from 'services/types';
@@ -79,7 +75,7 @@ const UserActionDropdown = ({ fetchUsers, user, groups, userManagementEnabled }:
   const [selectedUserGroups, setSelectedUserGroups] = useState<V1GroupSearchResult[]>();
 
   const { canModifyUsers } = usePermissions();
-  const rbacEnabled = useFeature().isOn('rbac');
+  const { rbacEnabled } = useObservable(determinedStore.info);
 
   const onToggleActive = useCallback(async () => {
     try {
@@ -141,7 +137,7 @@ const UserActionDropdown = ({ fetchUsers, user, groups, userManagementEnabled }:
   return (
     <div className={dropdownCss.base}>
       <Dropdown menu={menuItems} placement="bottomRight" onClick={handleDropdown}>
-        <Button ghost icon={<Icon name="overflow-vertical" size="small" title="Action menu" />} />
+        <Button icon={<Icon name="overflow-vertical" size="small" title="Action menu" />} />
       </Dropdown>
       <ViewUserModal.Component user={user} viewOnly onClose={fetchUsers} />
       <EditUserModal.Component user={user} onClose={fetchUsers} />
@@ -177,7 +173,7 @@ const UserManagement: React.FC = () => {
   );
   const canceler = useRef(new AbortController());
 
-  const rbacEnabled = useFeature().isOn('rbac');
+  const { rbacEnabled } = useObservable(determinedStore.info);
   const { canModifyUsers } = usePermissions();
   const info = useObservable(determinedStore.info);
 
@@ -309,7 +305,7 @@ const UserManagement: React.FC = () => {
 
   const table = useMemo(() => {
     return settings ? (
-      <InteractiveTable
+      <InteractiveTable<DetailedUser, UserManagementSettings>
         columns={columns}
         containerRef={pageRef}
         dataSource={users}
@@ -324,16 +320,14 @@ const UserManagement: React.FC = () => {
         )}
         rowClassName={defaultRowClassName({ clickable: false })}
         rowKey="id"
-        settings={
-          {
-            ...settings,
-            columns: DEFAULT_COLUMNS,
-            columnWidths: DEFAULT_COLUMNS.map((col: UserColumnName) => DEFAULT_COLUMN_WIDTHS[col]),
-          } as InteractiveTableSettings
-        }
+        settings={{
+          ...settings,
+          columns: DEFAULT_COLUMNS,
+          columnWidths: DEFAULT_COLUMNS.map((col: UserColumnName) => DEFAULT_COLUMN_WIDTHS[col]),
+        }}
         showSorterTooltip={false}
         size="small"
-        updateSettings={updateSettings as UpdateSettings}
+        updateSettings={updateSettings}
       />
     ) : (
       <SkeletonTable columns={columns.length} />

@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react';
 
-import useFeature from 'hooks/useFeature';
 import Spinner from 'shared/components/Spinner/Spinner';
 import useUI from 'shared/contexts/stores/UI';
 import clusterStore from 'stores/cluster';
@@ -35,18 +34,12 @@ const Navigation: React.FC<Props> = ({ children }) => {
     );
   }, [clusterOverview, info]);
 
-  const rbacEnabled = useFeature().isOn('rbac'),
-    mockAllPermission = useFeature().isOn('mock_permissions_all'),
-    mockReadPermission = useFeature().isOn('mock_permissions_read');
+  const { rbacEnabled } = useObservable(determinedStore.info);
 
   useEffect(() => {
-    const shouldPoll =
-      rbacEnabled &&
-      !mockAllPermission &&
-      !mockReadPermission &&
-      Loadable.isLoaded(loadableCurrentUser);
+    const shouldPoll = rbacEnabled && Loadable.isLoaded(loadableCurrentUser);
     return permissionStore.startPolling({ condition: shouldPoll, delay: 120_000 });
-  }, [loadableCurrentUser, mockAllPermission, mockReadPermission, rbacEnabled]);
+  }, [loadableCurrentUser, rbacEnabled]);
 
   return (
     <Spinner spinning={ui.showSpinner}>

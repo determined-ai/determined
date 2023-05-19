@@ -6,7 +6,6 @@ import Form from 'components/kit/Form';
 import Icon from 'components/kit/Icon';
 import Input from 'components/kit/Input';
 import Link from 'components/Link';
-import useFeature from 'hooks/useFeature';
 import { paths } from 'routes/utils';
 import { login } from 'services/api';
 import { updateDetApi } from 'services/apiConfig';
@@ -15,9 +14,11 @@ import useUI from 'shared/contexts/stores/UI';
 import { ErrorType } from 'shared/utils/error';
 import { StorageManager } from 'shared/utils/storage';
 import authStore from 'stores/auth';
+import determinedStore from 'stores/determinedInfo';
 import permissionStore from 'stores/permissions';
 import userStore from 'stores/users';
 import handleError from 'utils/error';
+import { useObservable } from 'utils/observable';
 
 import css from './DeterminedAuth.module.scss';
 
@@ -45,7 +46,7 @@ const buttonTheme = {
 
 const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
   const { actions: uiActions } = useUI();
-  const rbacEnabled = useFeature().isOn('rbac');
+  const { rbacEnabled } = useObservable(determinedStore.info);
   const [isBadCredentials, setIsBadCredentials] = useState<boolean>(false);
   const [canSubmit, setCanSubmit] = useState<boolean>(!!storage.get(STORAGE_KEY_LAST_USERNAME));
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false);

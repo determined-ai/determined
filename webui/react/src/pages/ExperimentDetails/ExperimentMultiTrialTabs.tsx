@@ -1,10 +1,13 @@
 import type { TabsProps } from 'antd';
+import { string } from 'io-ts';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import Notes from 'components/kit/Notes';
 import Pivot from 'components/kit/Pivot';
 import usePermissions from 'hooks/usePermissions';
+import { SettingsConfig, useSettings } from 'hooks/useSettings';
+import ExperimentCodeViewer from 'pages/ExperimentDetails/ExperimentCodeViewer';
 import ExperimentTrials from 'pages/ExperimentDetails/ExperimentTrials';
 import { paths } from 'routes/utils';
 import { patchExperiment } from 'services/api';
@@ -15,8 +18,6 @@ import { ExperimentBase, Note } from 'types';
 import handleError from 'utils/error';
 
 import { ExperimentVisualizationType } from './ExperimentVisualization';
-
-const CodeViewer = React.lazy(() => import('./CodeViewer/CodeViewer'));
 
 const TabType = {
   Code: 'code',
@@ -55,6 +56,26 @@ const ExperimentMultiTrialTabs: React.FC<Props> = ({
   const [tabKey, setTabKey] = useState(defaultTabKey);
 
   const basePath = paths.experimentDetails(experiment.id);
+
+  const configForExperiment = (experimentId: number): SettingsConfig<{ filePath: string }> => ({
+    settings: {
+      filePath: {
+        defaultValue: '',
+        storageKey: 'filePath',
+        type: string,
+      },
+    },
+    storagePath: `selected-file-${experimentId}`,
+  });
+  const { settings, updateSettings } = useSettings<{ filePath: string }>(
+    configForExperiment(experiment.id),
+  );
+  const handleSelectFile = useCallback(
+    (filePath: string) => {
+      updateSettings({ filePath });
+    },
+    [updateSettings],
+  );
 
   const handleTabChange = useCallback(
     (key: string) => {
@@ -127,13 +148,11 @@ const ExperimentMultiTrialTabs: React.FC<Props> = ({
     if (showExperimentArtifacts) {
       items.push({
         children: (
-          <React.Suspense fallback={<Spinner tip="Loading code viewer..." />}>
-            <CodeViewer
-              experimentId={experiment.id}
-              runtimeConfig={experiment.configRaw}
-              submittedConfig={experiment.originalConfig}
-            />
-          </React.Suspense>
+          <ExperimentCodeViewer
+            experiment={experiment}
+            selectedFilePath={settings.filePath}
+            onSelectFile={handleSelectFile}
+          />
         ),
         key: TabType.Code,
         label: 'Code',
@@ -158,7 +177,9 @@ const ExperimentMultiTrialTabs: React.FC<Props> = ({
     editableNotes,
     experiment,
     handleNotesUpdate,
+    handleSelectFile,
     pageRef,
+    settings.filePath,
     showExperimentArtifacts,
     viz,
   ]);

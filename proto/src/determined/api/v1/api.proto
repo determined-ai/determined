@@ -683,6 +683,17 @@ service Determined {
     };
   }
 
+  // Create unmanaged trial.
+  rpc CreateTrial(CreateTrialRequest) returns (CreateTrialResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/trials"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: [ "Internal" ]
+    };
+  }
+
   // Get a single trial.
   rpc GetTrial(GetTrialRequest) returns (GetTrialResponse) {
     option (google.api.http) = {

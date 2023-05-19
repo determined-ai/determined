@@ -428,14 +428,6 @@ def is_terminal_state(state: experimentv1State) -> bool:
     )
 
 
-def trial_metrics(trial_id: int) -> Dict[str, Any]:
-    certs.cli_cert = certs.default_load(conf.make_master_url())
-    authentication.cli_auth = authentication.Authentication(conf.make_master_url())
-    r = api.get(conf.make_master_url(), "trials/{}/metrics".format(trial_id))
-    json = r.json()  # type: Dict[str, Any]
-    return json
-
-
 def num_trials(experiment_id: int) -> int:
     return len(experiment_trials(experiment_id))
 
@@ -527,28 +519,6 @@ def assert_patterns_in_trial_logs(trial_id: int, patterns: List[str]) -> None:
     raise ValueError(
         f'the following patterns:\n  "{text}"\nwere not found in the trial logs:\n\n{"".join(logs)}'
     )
-
-
-def assert_equivalent_trials(A: int, B: int, validation_metrics: List[str]) -> None:
-    full_trial_metrics1 = trial_metrics(A)
-    full_trial_metrics2 = trial_metrics(B)
-
-    assert len(full_trial_metrics1["workloads"]) == len(full_trial_metrics2["workloads"])
-    for step1, step2 in zip(full_trial_metrics1["workloads"], full_trial_metrics2["workloads"]):
-        metric1 = step1["metrics"]["batch_metrics"]
-        metric2 = step2["metrics"]["batch_metrics"]
-        for batch1, batch2 in zip(metric1, metric2):
-            assert len(batch1) == len(batch2) == 2
-            assert batch1["loss"] == pytest.approx(batch2["loss"])
-
-        if step1["validation"] is not None or step2["validation"] is not None:
-            assert step1["validation"] is not None
-            assert step2["validation"] is not None
-
-            for metric in validation_metrics:
-                val1 = step1.get("validation").get("metrics").get("validation_metrics").get(metric)
-                val2 = step2.get("validation").get("metrics").get("validation_metrics").get(metric)
-                assert val1 == pytest.approx(val2)
 
 
 def assert_performed_initial_validation(exp_id: int) -> None:

@@ -1,13 +1,5 @@
 import { InfoCircleOutlined } from '@ant-design/icons';
-import {
-  Alert,
-  Select as AntdSelect,
-  ModalFuncProps,
-  Radio,
-  RadioChangeEvent,
-  Space,
-  Typography,
-} from 'antd';
+import { Alert, Select as AntdSelect, ModalFuncProps, Radio, Space, Typography } from 'antd';
 import { RefSelectProps } from 'antd/lib/select';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -361,13 +353,16 @@ const useModalHyperparameterSearch = ({
     validateForm();
   }, [validateForm]);
 
-  const handleSelectSearcher = useCallback((e: RadioChangeEvent) => {
-    const value = e.target.value;
-    setSearcher(
-      Object.values(SEARCH_METHODS).find((searcher) => searcher.name === value) ??
-        SEARCH_METHODS.ASHA,
-    );
-  }, []);
+  const handleSelectSearcher = useCallback(
+    (searcherName: string) => {
+      const searcher =
+        Object.values(SEARCH_METHODS).find((searcher) => searcher.name === searcherName) ??
+        SEARCH_METHODS.ASHA;
+      setSearcher(searcher);
+      form.setFieldValue('searcher', searcher);
+    },
+    [form],
+  );
 
   const hyperparameterPage = useMemo((): React.ReactNode => {
     // We always render the form regardless of mode to provide a reference to it.
@@ -438,17 +433,16 @@ const useModalHyperparameterSearch = ({
             </div>
           }
           name="searcher">
-          <Radio.Group
-            className={css.searcherGroup}
-            optionType="button"
-            onChange={handleSelectSearcher}>
-            {Object.values(SEARCH_METHODS).map((searcher) => (
-              <Radio.Button key={searcher.name} value={searcher.name}>
-                <div className={css.searcherButton}>
-                  {searcher.icon}
-                  <p>{searcher.displayName}</p>
-                </div>
-              </Radio.Button>
+          <Radio.Group className={css.searcherGroup} optionType="button">
+            {Object.values(SEARCH_METHODS).map((searcherOption) => (
+              <Button
+                column
+                icon={searcherOption.icon}
+                key={searcherOption.name}
+                selected={searcher.name === searcherOption.name}
+                onClick={() => handleSelectSearcher(searcherOption.name)}>
+                {searcherOption.displayName}
+              </Button>
             ))}
           </Radio.Group>
         </Form.Item>

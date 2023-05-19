@@ -468,28 +468,25 @@ func (db *PgDB) updateLatestValidationID(ctx context.Context, tx *sqlx.Tx, trial
 // updateTotalBatches update precomputed total_batches based on existing steps and validations.
 func (db *PgDB) updateTotalBatches(ctx context.Context, tx *sqlx.Tx, trialID int) error {
 	if _, err := tx.ExecContext(ctx, `
-		UPDATE trials
+		UPDATE trials t
 		SET total_batches = latest.total_batches_processed
 		FROM (
 				SELECT max(m.total_batches) AS total_batches_processed
 				FROM metrics m
 				WHERE m.trial_id = $1 AND m.archived = false
-			) AS latest;
+			) AS latest
+		WHERE t.id = $1 -- CHECK
 		`, trialID); err != nil {
 		return errors.Wrap(err, "error computing total_batches")
 	}
 	return nil
 }
 
-// AddTrialMetrics inserts a set of trial metrics to the database.
-func (db *PgDB) addTrialMetrics(
-	ctx context.Context, m *trialv1.TrialMetrics, pType MetricPartitionType,
+func (db *PgDB) _addTrialMetricsTx(
+	ctx context.Context, tx *sqlx.Tx, m *trialv1.TrialMetrics, pType MetricPartitionType,
 	mType *string,
 ) (rollbacks int, err error) {
-	/*
-		TODO(hamid):
-		- MetricType could live in trialv1.TrialMetrics :thinking_face:
-	*/
+
 	isValidation := pType == ValidationMetric
 
 	metricsJSONPath := "avg_metrics"
@@ -504,13 +501,8 @@ func (db *PgDB) addTrialMetrics(
 		}
 	}
 
-	switch v := m.Metrics.AvgMetrics.Fields["epoch"].AsInterface().(type) {
-	case float64, nil:
-	default:
-		return rollbacks, fmt.Errorf("cannot add metric with non numeric 'epoch' value got %v", v)
-	}
-
-	return rollbacks, db.withTransaction("add training metrics", func(tx *sqlx.Tx) error {
+	// TODO(hamid): deindent. this is here to reduce merge conflicts.
+	run := func(tx *sqlx.Tx) error {
 		if err := checkTrialRunID(ctx, tx, m.TrialId, m.TrialRunId); err != nil {
 			return err
 		}
@@ -590,6 +582,24 @@ WHERE id = $1;
 			}
 		}
 		return nil
+	}
+
+	return rollbacks, run(tx)
+}
+
+// addTrialMetrics inserts a set of trial metrics to the database.
+func (db *PgDB) addTrialMetrics(
+	ctx context.Context, m *trialv1.TrialMetrics, pType MetricPartitionType,
+	mType *string,
+) (rollbacks int, err error) {
+	switch v := m.Metrics.AvgMetrics.Fields["epoch"].AsInterface().(type) {
+	case float64, nil:
+	default:
+		return 0, fmt.Errorf("cannot add metric with non numeric 'epoch' value got %v", v)
+	}
+	return rollbacks, db.withTransaction("add training metrics", func(tx *sqlx.Tx) error {
+		rollbacks, err = db._addTrialMetricsTx(ctx, tx, m, pType, mType)
+		return err
 	})
 }
 
@@ -900,7 +910,7 @@ WITH const AS (
 UPDATE trials t
 SET best_validation_id = (SELECT bv.id FROM best_validation bv),
 searcher_metric_value = (SELECT bv.searcher_metric_value FROM best_validation bv),
-searcher_metric_value_signed = 
+searcher_metric_value_signed =
 (SELECT bv.searcher_metric_value * const.sign FROM best_validation bv, const)
 WHERE t.id = $1;
 `, trialID, trialRunID, stepsCompleted)

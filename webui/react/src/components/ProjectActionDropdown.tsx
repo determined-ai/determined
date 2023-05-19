@@ -165,7 +165,7 @@ const ProjectActionDropdown: React.FC<Props> = ({
   ) : (
     <div className={[css.base, className].join(' ')} title="Open actions menu">
       <Dropdown disabled={menu?.length === 0} menu={menu} placement="bottomRight" onClick={onClick}>
-        <Button ghost icon={<Icon name={`overflow-${direction}`} title="Action menu" />} />
+        <Button icon={<Icon name={`overflow-${direction}`} title="Action menu" />} />
       </Dropdown>
       {contextHolders}
     </div>

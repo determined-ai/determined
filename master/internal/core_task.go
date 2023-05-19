@@ -18,7 +18,7 @@ func (m *Master) getTasks(c echo.Context) (interface{}, error) {
 	curUser := c.(*context.DetContext).MustGetUser()
 	ctx := c.Request().Context()
 	for allocationID, allocationSummary := range summary {
-		isExp, exp, err := expFromTaskID(m, allocationSummary.TaskID)
+		isExp, exp, err := expFromTaskID(ctx, allocationSummary.TaskID)
 		if err != nil {
 			return nil, err
 		}

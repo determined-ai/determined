@@ -25,7 +25,6 @@ import ModelMoveModal from 'components/ModelMoveModal';
 import Page from 'components/Page';
 import InteractiveTable, {
   ColumnDef,
-  InteractiveTableSettings,
   onRightClickableCell,
 } from 'components/Table/InteractiveTable';
 import {
@@ -40,7 +39,7 @@ import TableFilterDropdown from 'components/Table/TableFilterDropdown';
 import TableFilterSearch from 'components/Table/TableFilterSearch';
 import WorkspaceFilter from 'components/WorkspaceFilter';
 import usePermissions from 'hooks/usePermissions';
-import { UpdateSettings, useSettings } from 'hooks/useSettings';
+import { useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { archiveModel, getModelLabels, getModels, patchModel, unarchiveModel } from 'services/api';
 import { V1GetModelsRequestSortBy } from 'services/api-ts-sdk';
@@ -300,7 +299,8 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
     (workspaces: string[]) => {
       updateSettings({
         row: undefined,
-        workspace: workspaces.length !== 0 ? workspaces : undefined,
+        workspace:
+          workspaces.length !== 0 ? workspaces.map((workspace) => Number(workspace)) : undefined,
       });
     },
     [updateSettings],
@@ -717,7 +717,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
           title="No Models Registered"
         />
       ) : (
-        <InteractiveTable
+        <InteractiveTable<ModelItem, Settings>
           columns={columns}
           containerRef={pageRef}
           ContextMenu={ModelActionDropdown}
@@ -732,10 +732,10 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
           )}
           rowClassName={defaultRowClassName({ clickable: false })}
           rowKey="name"
-          settings={settings as InteractiveTableSettings}
+          settings={settings}
           showSorterTooltip={false}
           size="small"
-          updateSettings={updateSettings as UpdateSettings}
+          updateSettings={updateSettings}
           onChange={handleTableChange}
         />
       )}

@@ -365,7 +365,7 @@ func (a *apiServer) LaunchTensorboard(
 	// Get the most recent experiment config as raw json and add it to the container. This
 	// is used for automatically configuring checkpoint storage, registry auth, etc.
 	mostRecentExpID := exps[len(exps)-1].ExperimentID
-	exp, err := a.m.db.ExperimentByID(int(mostRecentExpID))
+	exp, err := db.ExperimentByID(ctx, int(mostRecentExpID))
 	if err != nil {
 		return nil, errors.Wrapf(err, "error loading experiment: %d", mostRecentExpID)
 	}

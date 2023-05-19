@@ -43,7 +43,7 @@ interface Props {
   onLink?: () => void;
   onVisibleChange?: (visible: boolean) => void;
   settings?: ExperimentListSettings;
-  updateSettings?: UpdateSettings;
+  updateSettings?: UpdateSettings<ExperimentListSettings>;
   workspaceId?: number;
   handleUpdateExperimentList?: (action: BatchAction, successfulIds: number[]) => void;
 }
@@ -255,7 +255,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
     return (
       (children as JSX.Element) ?? (
         <div className={css.base} title="No actions available">
-          <Button disabled ghost type="text">
+          <Button disabled type="text">
             <Icon name="overflow-vertical" title="Disabled action menu" />
           </Button>
         </div>
@@ -289,7 +289,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
   ) : (
     <div className={css.base} title="Open actions menu">
       <Dropdown menu={dropdownMenu} placement="bottomRight" onClick={handleDropdown}>
-        <Button ghost icon={<Icon name="overflow-vertical" size="small" title="Action menu" />} />
+        <Button icon={<Icon name="overflow-vertical" size="small" title="Action menu" />} />
       </Dropdown>
       {shared}
     </div>
