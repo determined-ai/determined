@@ -383,6 +383,7 @@ const checkpointStateMap = {
   [Sdk.Checkpointv1State.COMPLETED]: types.CheckpointState.Completed,
   [Sdk.Checkpointv1State.ERROR]: types.CheckpointState.Error,
   [Sdk.Checkpointv1State.DELETED]: types.CheckpointState.Deleted,
+  [Sdk.Checkpointv1State.PARTIALLY_DELETED]: types.CheckpointState.PartiallyDeleted,
 };
 
 const experimentStateMap = {

@@ -344,6 +344,7 @@ export const CheckpointState = {
   Active: 'ACTIVE',
   Completed: 'COMPLETED',
   Deleted: 'DELETED',
+  PartiallyDeleted: 'PARTIALLY_DELETED',
   Error: 'ERROR',
   Unspecified: 'UNSPECIFIED',
 } as const;
