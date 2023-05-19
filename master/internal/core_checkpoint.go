@@ -161,13 +161,10 @@ func (m *Master) getCheckpoint(c echo.Context) error {
 	curUser := c.(*detContext.DetContext).MustGetUser()
 	errE := m.canDoActionOnCheckpoint(c.Request().Context(), curUser, args.CheckpointUUID,
 		expauth.AuthZProvider.Get().CanGetExperimentArtifacts)
-	fmt.Println("errE")
 	if errE != nil {
 		errM := m.canDoActionOnCheckpointThroughModel(c.Request().Context(), curUser, args.CheckpointUUID)
 		if errM != nil {
-			fmt.Println("errM is not nil")
-			fmt.Println(errM.Error())
-			s, ok := status.FromError(errM)
+			s, ok := status.FromError(errE)
 			if !ok {
 				return errE
 			}
@@ -182,7 +179,6 @@ func (m *Master) getCheckpoint(c echo.Context) error {
 
 		}
 	}
-	fmt.Println("not returned")
 	c.Response().Header().Set(echo.HeaderContentType, mimeType)
 	return m.getCheckpointImpl(c.Request().Context(), id, mimeType, c.Response())
 }

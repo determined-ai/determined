@@ -13,7 +13,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"runtime/debug"
 	"strings"
 	"testing"
 	"time"
@@ -318,26 +317,25 @@ func TestAuthZCheckpointsEcho(t *testing.T) {
 	addMockCheckpointDB(t, api.m.db, checkpointUUID)
 	registerCheckpointAsModelVersion(t, api.m.db, checkpointUUID)
 
-	fmt.Println("start")
 	authZExp.On("CanGetExperiment", mock.Anything, curUser,
 		mock.Anything).Return(authz2.PermissionDeniedError{}).Once()
 	authZModel.On("CanGetModel", mock.Anything, mock.Anything,
-		mock.Anything, mock.Anything).Run(func(args mock.Arguments) { debug.PrintStack() }).Return(authz2.PermissionDeniedError{}).Once()
+		mock.Anything, mock.Anything).Return(authz2.PermissionDeniedError{}).Once()
 	require.Equal(t, echo.NewHTTPError(http.StatusNotFound,
 		fmt.Sprintf("checkpoint not found: %s", checkpointUUID)), api.m.getCheckpoint(ctx))
-	fmt.Println("end")
 
+	// need to make the model auth fail too for actual to be the expected
 	expectedErr := fmt.Errorf("canGetExperimentError")
 	authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
 		Return(expectedErr).Once()
-	authZModel.On("CanGetModel", mock.Anything, curUser,
-		mock.Anything, mock.Anything).Return(authz2.PermissionDeniedError{})
+	authZModel.On("CanGetModel", mock.Anything, mock.Anything,
+		mock.Anything, mock.Anything).Return(authz2.PermissionDeniedError{}).Once()
 	require.Equal(t, expectedErr, api.m.getCheckpoint(ctx))
 
 	expectedErr = echo.NewHTTPError(http.StatusForbidden, "canGetArtifactsError")
 	authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).Return(nil).Once()
-	authZModel.On("CanGetModel", mock.Anything, curUser,
-		mock.Anything, mock.Anything).Return(nil)
+	authZModel.On("CanGetModel", mock.Anything, mock.Anything,
+		mock.Anything, mock.Anything).Return(authz2.PermissionDeniedError{}).Once()
 	authZExp.On("CanGetExperimentArtifacts", mock.Anything, curUser, mock.Anything).
 		Return(fmt.Errorf("canGetArtifactsError")).Once()
 	require.Equal(t, expectedErr, api.m.getCheckpoint(ctx))
