@@ -42,10 +42,7 @@ func (e *ErrorTimeoutRetry) GetError() error {
 }
 
 func (e *ErrorTimeoutRetry) getError(t time.Time) error {
-	if e.isExpired(t) {
-		return nil
-	}
-	if e.retries < e.maxRetries {
+	if e.retries < e.maxRetries || e.isExpired(t) {
 		return nil
 	}
 	return e.err
@@ -60,17 +57,16 @@ func (e *ErrorTimeoutRetry) SetError(err error) error {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 
-	return e.setError(err)
+	return e.setError(time.Now(), err)
 }
 
-func (e *ErrorTimeoutRetry) setError(err error) error {
-	now := time.Now()
-	if err == nil || e.isExpired(now) {
+func (e *ErrorTimeoutRetry) setError(t time.Time, err error) error {
+	if err == nil || e.isExpired(t) {
 		e.retries = 0
 	} else if e.err != nil {
 		e.retries++
 	}
 	e.err = err
-	e.time = now
-	return e.getError(now)
+	e.time = t
+	return e.getError(t)
 }
