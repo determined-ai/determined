@@ -4,6 +4,7 @@ package determined.task.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/taskv1";
 
 import "google/protobuf/timestamp.proto";
+import "protoc-gen-swagger/options/annotations.proto";
 import "determined/device/v1/device.proto";
 
 // The current state of the task.
@@ -29,6 +30,11 @@ enum State {
 
 // Allocation tracks a specific instance of a Task.
 message Allocation {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: {
+      required: [ "task_id", "state", "is_ready", "allocation_id" ]
+    }
+  };
   // Unique ID of task associated with the allocation.
   string task_id = 1;
   // The current state of the allocation.
@@ -45,12 +51,21 @@ message Allocation {
 
 // Task is the model for a task in the database.
 message Task {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: {
+      required: [ "task_id", "task_type", "allocations", "start_time" ]
+    }
+  };
   // Unique ID of task.
   string task_id = 1;
   // Type of Task.
   string task_type = 2;
   // List of Allocations.
   repeated Allocation allocations = 4;
+  // Start timestamp.
+  google.protobuf.Timestamp start_time = 5;
+  // End timestamp if completed.
+  optional google.protobuf.Timestamp end_time = 6;
 }
 
 // Address represents an exposed port on a container.
