@@ -469,13 +469,13 @@ func (db *PgDB) updateLatestValidationID(ctx context.Context, tx *sqlx.Tx, trial
 func (db *PgDB) updateTotalBatches(ctx context.Context, tx *sqlx.Tx, trialID int) error {
 	if _, err := tx.ExecContext(ctx, `
 		UPDATE trials t
-		SET total_batches = latest.total_batches_processed
+		SET total_batches = COALESCE(latest.total_batches_processed, 0)
 		FROM (
 				SELECT max(m.total_batches) AS total_batches_processed
 				FROM metrics m
 				WHERE m.trial_id = $1 AND m.archived = false
 			) AS latest
-		WHERE t.id = $1 -- CHECK
+		WHERE t.id = $1
 		`, trialID); err != nil {
 		return errors.Wrap(err, "error computing total_batches")
 	}
