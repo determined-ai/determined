@@ -23,6 +23,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 
 import { FilterFormStore, ROOT_ID } from 'components/FilterForm/components/FilterFormStore';
 import {
@@ -314,7 +315,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
           index: formStore.formset.get().filterGroup.children.length,
           item: {
             columnName: column.column,
-            id: crypto.randomUUID(),
+            id: uuidv4(),
             kind: FormKind.Field,
             location: column.location,
             operator: isSpecialColumn ? Operator.Eq : AvailableOperators[column.type][0],

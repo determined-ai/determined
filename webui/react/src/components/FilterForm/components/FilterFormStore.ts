@@ -1,4 +1,5 @@
 import { observable, Observable, WritableObservable } from 'micro-observables';
+import { v4 as uuidv4 } from 'uuid';
 
 import {
   AvailableOperators,
@@ -25,13 +26,13 @@ export const INIT_FORMSET: Readonly<FilterFormSet> = {
 const getInitGroup = (): FormGroup => ({
   children: [],
   conjunction: Conjunction.And,
-  id: crypto.randomUUID(),
+  id: uuidv4(),
   kind: FormKind.Group,
 });
 
 const getInitField = (): FormField => ({
   columnName: 'name',
-  id: crypto.randomUUID(),
+  id: uuidv4(),
   kind: FormKind.Field,
   location: V1LocationType.EXPERIMENT,
   operator: AvailableOperators[V1ColumnType.TEXT][0],
