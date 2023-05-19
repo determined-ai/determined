@@ -92,12 +92,14 @@ const ExperimentCodeViewer: React.FC<Props> = ({
   return (
     <React.Suspense fallback={<Spinner tip="Loading code viewer..." />}>
       <Spinner spinning={expFiles === NotLoaded} tip="Loading file tree...">
-        <CodeEditor
-          files={fileOpts}
-          readonly={true}
-          selectedFilePath={selectedFilePath}
-          onSelectFile={onSelectFile}
-        />
+        <div style={{ height: 'calc(100vh - 180px)' }}>
+          <CodeEditor
+            files={fileOpts}
+            readonly={true}
+            selectedFilePath={selectedFilePath}
+            onSelectFile={onSelectFile}
+          />
+        </div>
       </Spinner>
     </React.Suspense>
   );
