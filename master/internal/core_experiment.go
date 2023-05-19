@@ -80,7 +80,7 @@ func echoGetExperimentAndCheckCanDoActions(ctx context.Context, c echo.Context, 
 	expID int, actions ...func(context.Context, model.User, *model.Experiment) error,
 ) (*model.Experiment, model.User, error) {
 	user := c.(*detContext.DetContext).MustGetUser()
-	e, err := m.db.ExperimentByID(expID)
+	e, err := db.ExperimentByID(ctx, expID)
 
 	expNotFound := echo.NewHTTPError(http.StatusNotFound, "experiment not found: %d", expID)
 	if errors.Is(err, db.ErrNotFound) {
@@ -319,6 +319,9 @@ func (m *Master) parseCreateExperiment(req *apiv1.CreateExperimentRequest, user 
 	taskSpec := *m.taskSpec
 	taskSpec.TaskContainerDefaults = taskContainerDefaults
 	taskSpec.TaskContainerDefaults.MergeIntoExpConfig(&config)
+	if defaulted.RawEntrypoint == nil && (req.Unmanaged == nil || !*req.Unmanaged) {
+		return nil, config, nil, nil, errors.New("managed experiments require entrypoint")
+	}
 
 	project, err := getCreateExperimentsProject(m, req, user, defaulted)
 	if err != nil {

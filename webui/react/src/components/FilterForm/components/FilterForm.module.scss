@@ -1,0 +1,28 @@
+.base {
+  max-width: 680px;
+  min-width: 680px;
+}
+.header {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+  padding-bottom: 8px;
+}
+.filter {
+  max-height: 300px;
+  overflow-y: scroll;
+  padding-right: 16px;
+}
+.buttonContainer {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+
+  .addButtonContainer {
+    align-items: center;
+    display: flex;
+    gap: 4px;
+    justify-content: space-between;
+  }
+}

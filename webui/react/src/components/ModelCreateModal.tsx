@@ -114,13 +114,13 @@ const ModelCreateModal = ({ onClose, workspaceId }: Props): JSX.Element => {
 
   return (
     <Modal
-      okButtonProps={{
+      size="medium"
+      submit={{
         disabled: isWorkspace && disableWorkspaceModelCreation,
         form: FORM_ID,
-        htmlType: 'submit',
+        handler: onCreateModel,
+        text: 'Create',
       }}
-      size="medium"
-      submit={{ handler: onCreateModel, text: 'Create' }}
       title="Create a new model"
       onClose={onCloseModal}>
       <Form autoComplete="off" form={form} id={FORM_ID} layout="vertical">
@@ -153,11 +153,7 @@ const ModelCreateModal = ({ onClose, workspaceId }: Props): JSX.Element => {
         <Form.Item label="Description (optional)" name="modelDescription">
           <Input.TextArea />
         </Form.Item>
-        {!isDetailExpanded && (
-          <Button type="link" onClick={onOpenDetails}>
-            Add More Details...
-          </Button>
-        )}
+        {!isDetailExpanded && <Link onClick={onOpenDetails}>Add More Details...</Link>}
         {isDetailExpanded && (
           <>
             <div>

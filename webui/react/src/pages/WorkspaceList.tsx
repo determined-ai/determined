@@ -24,7 +24,7 @@ import {
 } from 'components/Table/Table';
 import WorkspaceCreateModalComponent from 'components/WorkspaceCreateModal';
 import usePermissions from 'hooks/usePermissions';
-import { UpdateSettings, useSettings } from 'hooks/useSettings';
+import { useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { getWorkspaces } from 'services/api';
 import { V1GetWorkspacesRequestSortBy } from 'services/api-ts-sdk';
@@ -135,11 +135,11 @@ const WorkspaceList: React.FC = () => {
         updateSettings({ user: undefined });
         break;
       case WhoseWorkspaces.Mine:
-        updateSettings({ user: currentUser ? [currentUser.id] : undefined });
+        updateSettings({ user: currentUser ? [currentUser.id.toString()] : undefined });
         break;
       case WhoseWorkspaces.Others:
         updateSettings({
-          user: users.filter((u) => u.id !== currentUser?.id).map((u) => u.id),
+          user: users.filter((u) => u.id !== currentUser?.id).map((u) => u.id.toString()),
         });
         break;
     }
@@ -280,7 +280,7 @@ const WorkspaceList: React.FC = () => {
         );
       case GridListView.List:
         return (
-          <InteractiveTable
+          <InteractiveTable<Workspace, WorkspaceListSettings>
             columns={columns}
             containerRef={pageRef}
             ContextMenu={actionDropdown}
@@ -296,7 +296,7 @@ const WorkspaceList: React.FC = () => {
             rowKey="id"
             settings={settings}
             size="small"
-            updateSettings={updateSettings as UpdateSettings}
+            updateSettings={updateSettings}
           />
         );
     }

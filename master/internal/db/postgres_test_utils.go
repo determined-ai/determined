@@ -303,7 +303,7 @@ func MockModelCheckpoint(
 	ckpt := model.CheckpointV2{
 		UUID:         ckptUUID,
 		TaskID:       tr.TaskID,
-		AllocationID: a.AllocationID,
+		AllocationID: &a.AllocationID,
 		ReportTime:   time.Now().UTC(),
 		State:        model.CompletedState,
 		Resources: map[string]int64{

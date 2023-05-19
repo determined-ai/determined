@@ -137,7 +137,6 @@ const Tags: React.FC<Props> = ({ compact, disabled = false, ghost, tags, onActio
                 ref={editInputRef}
                 size="small"
                 style={{ width: inputWidth }}
-                width={inputWidth}
                 onBlur={(e) => handleInputConfirm(e, tag, index)}
                 onPressEnter={(e) => handleInputConfirm(e, tag, index)}
               />

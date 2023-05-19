@@ -2098,6 +2098,7 @@ class v1CreateExperimentRequest:
     parentId: "typing.Optional[int]" = None
     projectId: "typing.Optional[int]" = None
     template: "typing.Optional[str]" = None
+    unmanaged: "typing.Optional[bool]" = None
     validateOnly: "typing.Optional[bool]" = None
 
     def __init__(
@@ -2113,6 +2114,7 @@ class v1CreateExperimentRequest:
         parentId: "typing.Union[int, None, Unset]" = _unset,
         projectId: "typing.Union[int, None, Unset]" = _unset,
         template: "typing.Union[str, None, Unset]" = _unset,
+        unmanaged: "typing.Union[bool, None, Unset]" = _unset,
         validateOnly: "typing.Union[bool, None, Unset]" = _unset,
     ):
         if not isinstance(activate, Unset):
@@ -2135,6 +2137,8 @@ class v1CreateExperimentRequest:
             self.projectId = projectId
         if not isinstance(template, Unset):
             self.template = template
+        if not isinstance(unmanaged, Unset):
+            self.unmanaged = unmanaged
         if not isinstance(validateOnly, Unset):
             self.validateOnly = validateOnly
 
@@ -2162,6 +2166,8 @@ class v1CreateExperimentRequest:
             kwargs["projectId"] = obj["projectId"]
         if "template" in obj:
             kwargs["template"] = obj["template"]
+        if "unmanaged" in obj:
+            kwargs["unmanaged"] = obj["unmanaged"]
         if "validateOnly" in obj:
             kwargs["validateOnly"] = obj["validateOnly"]
         return cls(**kwargs)
@@ -2189,6 +2195,8 @@ class v1CreateExperimentRequest:
             out["projectId"] = self.projectId
         if not omit_unset or "template" in vars(self):
             out["template"] = self.template
+        if not omit_unset or "unmanaged" in vars(self):
+            out["unmanaged"] = self.unmanaged
         if not omit_unset or "validateOnly" in vars(self):
             out["validateOnly"] = self.validateOnly
         return out
@@ -2311,6 +2319,70 @@ class v1CreateTrialOperation:
             out["hyperparams"] = self.hyperparams
         if not omit_unset or "requestId" in vars(self):
             out["requestId"] = self.requestId
+        return out
+
+class v1CreateTrialRequest:
+    experimentId: "typing.Optional[int]" = None
+    hparams: "typing.Optional[typing.Dict[str, typing.Any]]" = None
+    unmanaged: "typing.Optional[bool]" = None
+
+    def __init__(
+        self,
+        *,
+        experimentId: "typing.Union[int, None, Unset]" = _unset,
+        hparams: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
+        unmanaged: "typing.Union[bool, None, Unset]" = _unset,
+    ):
+        if not isinstance(experimentId, Unset):
+            self.experimentId = experimentId
+        if not isinstance(hparams, Unset):
+            self.hparams = hparams
+        if not isinstance(unmanaged, Unset):
+            self.unmanaged = unmanaged
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1CreateTrialRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "experimentId" in obj:
+            kwargs["experimentId"] = obj["experimentId"]
+        if "hparams" in obj:
+            kwargs["hparams"] = obj["hparams"]
+        if "unmanaged" in obj:
+            kwargs["unmanaged"] = obj["unmanaged"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "experimentId" in vars(self):
+            out["experimentId"] = self.experimentId
+        if not omit_unset or "hparams" in vars(self):
+            out["hparams"] = self.hparams
+        if not omit_unset or "unmanaged" in vars(self):
+            out["unmanaged"] = self.unmanaged
+        return out
+
+class v1CreateTrialResponse:
+
+    def __init__(
+        self,
+        *,
+        trial: "trialv1Trial",
+    ):
+        self.trial = trial
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1CreateTrialResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "trial": trialv1Trial.from_json(obj["trial"]),
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "trial": self.trial.to_json(omit_unset),
+        }
         return out
 
 class v1CreateTrialsCollectionRequest:
@@ -2923,6 +2995,7 @@ class v1Experiment:
     projectName: "typing.Optional[str]" = None
     resourcePool: "typing.Optional[str]" = None
     trialIds: "typing.Optional[typing.Sequence[int]]" = None
+    unmanaged: "typing.Optional[bool]" = None
     userId: "typing.Optional[int]" = None
     workspaceId: "typing.Optional[int]" = None
     workspaceName: "typing.Optional[str]" = None
@@ -2958,6 +3031,7 @@ class v1Experiment:
         projectName: "typing.Union[str, None, Unset]" = _unset,
         resourcePool: "typing.Union[str, None, Unset]" = _unset,
         trialIds: "typing.Union[typing.Sequence[int], None, Unset]" = _unset,
+        unmanaged: "typing.Union[bool, None, Unset]" = _unset,
         userId: "typing.Union[int, None, Unset]" = _unset,
         workspaceId: "typing.Union[int, None, Unset]" = _unset,
         workspaceName: "typing.Union[str, None, Unset]" = _unset,
@@ -3005,6 +3079,8 @@ class v1Experiment:
             self.resourcePool = resourcePool
         if not isinstance(trialIds, Unset):
             self.trialIds = trialIds
+        if not isinstance(unmanaged, Unset):
+            self.unmanaged = unmanaged
         if not isinstance(userId, Unset):
             self.userId = userId
         if not isinstance(workspaceId, Unset):
@@ -3059,6 +3135,8 @@ class v1Experiment:
             kwargs["resourcePool"] = obj["resourcePool"]
         if "trialIds" in obj:
             kwargs["trialIds"] = obj["trialIds"]
+        if "unmanaged" in obj:
+            kwargs["unmanaged"] = obj["unmanaged"]
         if "userId" in obj:
             kwargs["userId"] = obj["userId"]
         if "workspaceId" in obj:
@@ -3113,6 +3191,8 @@ class v1Experiment:
             out["resourcePool"] = self.resourcePool
         if not omit_unset or "trialIds" in vars(self):
             out["trialIds"] = self.trialIds
+        if not omit_unset or "unmanaged" in vars(self):
+            out["unmanaged"] = self.unmanaged
         if not omit_unset or "userId" in vars(self):
             out["userId"] = self.userId
         if not omit_unset or "workspaceId" in vars(self):
@@ -13574,6 +13654,26 @@ def post_CreateGroup(
     if _resp.status_code == 200:
         return v1CreateGroupResponse.from_json(_resp.json())
     raise APIHttpError("post_CreateGroup", _resp)
+
+def post_CreateTrial(
+    session: "api.Session",
+    *,
+    body: "v1CreateTrialRequest",
+) -> "v1CreateTrialResponse":
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/trials",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1CreateTrialResponse.from_json(_resp.json())
+    raise APIHttpError("post_CreateTrial", _resp)
 
 def post_CreateTrialsCollection(
     session: "api.Session",

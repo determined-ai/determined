@@ -55,7 +55,7 @@ message Checkpoint {
   // ID of the task which generated this checkpoint.
   string task_id = 1;
   // ID of the allocation which generated this checkpoint.
-  string allocation_id = 2;
+  optional string allocation_id = 2;
   // UUID of the checkpoint.
   string uuid = 3;
   // Timestamp when the checkpoint was reported.

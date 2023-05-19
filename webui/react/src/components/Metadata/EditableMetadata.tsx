@@ -1,8 +1,8 @@
 import React, { useCallback, useMemo } from 'react';
 
 import InfoBox, { InfoRow } from 'components/InfoBox';
-import Button from 'components/kit/Button';
 import Form from 'components/kit/Form';
+import Link from 'components/Link';
 import { Metadata } from 'types';
 
 import css from './EditableMetadata.module.scss';
@@ -74,9 +74,7 @@ const EditableMetadata: React.FC<Props> = ({ metadata = {}, editing, updateMetad
                     onDelete={fields.length > 1 ? () => remove(field.name) : undefined}
                   />
                 ))}
-                <Button type="link" onClick={() => add({ key: '', value: '' })}>
-                  {ADD_ROW_TEXT}
-                </Button>
+                <Link onClick={() => add({ key: '', value: '' })}>{ADD_ROW_TEXT}</Link>
               </>
             )}
           </Form.List>
