@@ -1855,19 +1855,48 @@ const TypographySection: React.FC = () => {
           <div style={{ display: 'flex', flexDirection: 'column', marginBottom: '30px' }}>
             <Header>Multi Line</Header>
             <Paragraph size={TypographySize.XL} type="multi line">
-              Model Registry - XL (f.s. 16px line-height 26px)
+              Lorem ipsum dolor sit amet consectetur, adipisicing elit. Ut suscipit itaque debitis
+              amet, eligendi possimus assumenda eos, iusto ea labore, officia aspernatur optio. In
+              necessitatibus porro ut vero commodi neque. Lorem ipsum dolor sit amet consectetur
+              adipisicing elit. Voluptatibus, omnis quo dolorem magnam dolores necessitatibus iure
+              illo incidunt maiores voluptas odit eligendi dignissimos facilis vel veniam id.
+              Obcaecati, cum eos. - XL (f.s. 16px line-height 26px)
             </Paragraph>
+            <br />
             <Paragraph size={TypographySize.L} type="multi line">
-              Model Registry - L (f.s. 14px line-height 22px)
+              Lorem ipsum dolor sit amet consectetur, adipisicing elit. Ut suscipit itaque debitis
+              amet, eligendi possimus assumenda eos, iusto ea labore, officia aspernatur optio. In
+              necessitatibus porro ut vero commodi neque. Lorem ipsum dolor sit amet consectetur
+              adipisicing elit. Voluptatibus, omnis quo dolorem magnam dolores necessitatibus iure
+              illo incidunt maiores voluptas odit eligendi dignissimos facilis vel veniam id.
+              Obcaecati, cum eos. - L (f.s. 14px line-height 22px)
             </Paragraph>
+            <br />
             <Paragraph size={TypographySize.default} type="multi line">
-              Model Registry - default (f.s. 12px line-height 20px)
+              Lorem ipsum dolor sit amet consectetur, adipisicing elit. Ut suscipit itaque debitis
+              amet, eligendi possimus assumenda eos, iusto ea labore, officia aspernatur optio. In
+              necessitatibus porro ut vero commodi neque. Lorem ipsum dolor sit amet consectetur
+              adipisicing elit. Voluptatibus, omnis quo dolorem magnam dolores necessitatibus iure
+              illo incidunt maiores voluptas odit eligendi dignissimos facilis vel veniam id.
+              Obcaecati, cum eos. - default (f.s. 12px line-height 20px)
             </Paragraph>
+            <br />
             <Paragraph size={TypographySize.S} type="multi line">
-              Model Registry - s (f.s. 11px line-height 18px)
+              Lorem ipsum dolor sit amet consectetur, adipisicing elit. Ut suscipit itaque debitis
+              amet, eligendi possimus assumenda eos, iusto ea labore, officia aspernatur optio. In
+              necessitatibus porro ut vero commodi neque. Lorem ipsum dolor sit amet consectetur
+              adipisicing elit. Voluptatibus, omnis quo dolorem magnam dolores necessitatibus iure
+              illo incidunt maiores voluptas odit eligendi dignissimos facilis vel veniam id.
+              Obcaecati, cum eos. - s (f.s. 11px line-height 18px)
             </Paragraph>
+            <br />
             <Paragraph size={TypographySize.XS} type="multi line">
-              Model Registry - xs (f.s. 10px line-height 16px)
+              Lorem ipsum dolor sit amet consectetur, adipisicing elit. Ut suscipit itaque debitis
+              amet, eligendi possimus assumenda eos, iusto ea labore, officia aspernatur optio. In
+              necessitatibus porro ut vero commodi neque. Lorem ipsum dolor sit amet consectetur
+              adipisicing elit. Voluptatibus, omnis quo dolorem magnam dolores necessitatibus iure
+              illo incidunt maiores voluptas odit eligendi dignissimos facilis vel veniam id.
+              Obcaecati, cum eos. - xs (f.s. 10px line-height 16px)
             </Paragraph>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', marginBottom: '30px' }}>
@@ -1918,7 +1947,8 @@ const ColorSection: React.FC = () => {
             <div
               style={{
                 backgroundColor: cName,
-                border: '2px solid #ffb12d',
+                border: 'var(--theme-stroke-width) solid var(--theme-stage-on-strong)',
+                borderRadius: 'var(--theme-border-radius)',
                 height: '40px',
                 width: '100%',
               }}
