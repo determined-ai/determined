@@ -14,22 +14,18 @@ func TestErrorTimeoutRetry(t *testing.T) {
 	assert.Equal(t, errInfo.GetError(), nil)
 
 	for i := 0; i < 3; i++ {
-		errInfo.SetError(fmt.Errorf("tmp error %d", i))
-		assert.Equal(t, errInfo.GetError(), nil)
+		assert.Equal(t, errInfo.SetError(fmt.Errorf("tmp error %d", i)), nil)
 	}
 
-	errInfo.SetError(testErr)
-	assert.Equal(t, errInfo.GetError(), testErr)
+	assert.Equal(t, errInfo.SetError(testErr), testErr)
 
-	errInfo.SetError(nil)
+	_ = errInfo.SetError(nil)
 
 	for i := 0; i < 3; i++ {
-		errInfo.SetError(fmt.Errorf("tmp after set error %d", i))
-		assert.Equal(t, errInfo.GetError(), nil)
+		assert.Equal(t, errInfo.SetError(fmt.Errorf("tmp after set error %d", i)), nil)
 	}
 
-	errInfo.SetError(testErr)
-	assert.Equal(t, errInfo.GetError(), testErr)
+	assert.Equal(t, errInfo.SetError(testErr), testErr)
 
 	errInfo.time = time.Now().Add(time.Second)
 	assert.Equal(t, errInfo.GetError(), testErr)
@@ -47,11 +43,10 @@ func TestErrorTimeoutRetry(t *testing.T) {
 	assert.Equal(t, errInfo.GetError(), nil)
 
 	for i := 0; i < 3; i++ {
-		errInfo.SetError(fmt.Errorf("tmp after set error %d", i))
-		assert.Equal(t, errInfo.GetError(), nil)
+		assert.Equal(t, errInfo.SetError(fmt.Errorf("tmp after timeout error %d", i)), nil)
 	}
 
-	errInfo.SetError(testErr)
+	_ = errInfo.SetError(testErr)
 	assert.Equal(t, errInfo.GetError(), testErr)
 }
 
@@ -60,8 +55,7 @@ func TestErrorNoTimeoutNoRetry(t *testing.T) {
 	assert.Equal(t, errInfo.GetError(), nil)
 
 	for i := 0; i < 100; i++ {
-		errInfo.SetError(fmt.Errorf("tmp error %d", i))
-		assert.Equal(t, errInfo.GetError(), nil)
+		assert.Equal(t, errInfo.SetError(fmt.Errorf("tmp error %d", i)), nil)
 	}
 
 	errInfo.time = time.Now().Add(-60 * time.Second)
