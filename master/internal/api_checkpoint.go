@@ -87,20 +87,34 @@ func (m *Master) canDoActionOnCheckpointThroughModel(
 	if err != nil {
 		return err
 	}
+	if len(modelIDs) == 0 {
+		// if length of model ids is zero then permission denied
+		// so return checkpoitn not found.
+		fmt.Println("number of model IDS is zero")
+		return errCheckpointNotFound(ckptID)
+	}
+
+	fmt.Println("before for loop")
+	var errCanGetModel error
 	for _, modelID := range modelIDs {
 		model := &modelv1.Model{}
 		err = m.db.QueryProto("get_model_by_id", model, modelID)
-		if !errors.Is(err, db.ErrNotFound) {
+		if err != nil {
 			return err
 		}
-		if err := modelauth.AuthZProvider.Get().CanGetModel(
+		fmt.Println(" through model CanGetModel")
+		if errCanGetModel = modelauth.AuthZProvider.Get().CanGetModel(
 			ctx, curUser, model, model.WorkspaceId); err == nil {
+			fmt.Println("errCanGetModel is nil")
 			return nil
 		}
 	}
 	// we get to this return when there are no models belonging
 	// to a workspace where user has permissions.
-	return authz.SubIfUnauthorized(err, errCheckpointNotFound(ckptID))
+	fmt.Println("get here at the end model registry")
+	fmt.Println("errCanGetModel")
+	fmt.Println(errCanGetModel.Error())
+	return authz.SubIfUnauthorized(errCanGetModel, errCheckpointNotFound(ckptID))
 }
 
 func (a *apiServer) GetCheckpoint(

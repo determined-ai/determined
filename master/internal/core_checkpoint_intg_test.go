@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"runtime/debug"
 	"strings"
 	"testing"
 	"time"
@@ -33,6 +34,9 @@ import (
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
+	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
+	"github.com/determined-ai/determined/proto/pkg/modelv1"
+
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
@@ -249,8 +253,54 @@ func TestGetCheckpointEchoExpErr(t *testing.T) {
 	}
 }
 
+// TODO: nikita make this a utility and use it everywhere in intg tests etc.
+func registerCheckpointAsModelVersion(t *testing.T, pgDB *db.PgDB, ckptID uuid.UUID) {
+	require.NoError(t, etc.SetRootPath(db.RootFromDB))
+	var retCkpt checkpointv1.Checkpoint
+	err := pgDB.QueryProto("get_checkpoint", &retCkpt, ckptID.String())
+	require.NoError(t, err)
+	user := db.RequireMockUser(t, pgDB)
+	// Insert a model.
+	now := time.Now()
+	mdl := model.Model{
+		Name:            uuid.NewString(),
+		Description:     "some important model",
+		CreationTime:    now,
+		LastUpdatedTime: now,
+		Labels:          []string{"some other label"},
+		Username:        user.Username,
+		WorkspaceID:     1,
+	}
+	var pmdl modelv1.Model
+	var emptyMetadata = []byte(`{}`)
+	mdlNotes := "some notes"
+	err = pgDB.QueryProto(
+		"insert_model", &pmdl, mdl.Name, mdl.Description, emptyMetadata,
+		strings.Join(mdl.Labels, ","), mdlNotes, user.ID, mdl.WorkspaceID,
+	)
+	require.NoError(t, err)
+
+	// Register checkpoint as a model version.
+	expected := &modelv1.ModelVersion{
+		Model:      &pmdl,
+		Checkpoint: &retCkpt,
+		Name:       "some name",
+		Comment:    "empty",
+		Username:   user.Username,
+		Labels:     []string{"some label"},
+		Notes:      "some notes",
+	}
+	var mv modelv1.ModelVersion
+	err = pgDB.QueryProto(
+		"insert_model_version", &mv, pmdl.Id, ckptID, expected.Name, expected.Comment,
+		emptyMetadata, strings.Join(expected.Labels, ","), expected.Notes, user.ID,
+	)
+	require.NoError(t, err)
+}
+
 func TestAuthZCheckpointsEcho(t *testing.T) {
 	api, authZExp, _, curUser, _ := setupExpAuthTest(t, nil)
+	authZModel := getMockModelAuth()
 	ctx := newTestEchoContext(curUser)
 
 	checkpointUUID := uuid.New()
@@ -266,25 +316,28 @@ func TestAuthZCheckpointsEcho(t *testing.T) {
 		fmt.Sprintf("checkpoint not found: %s", checkpointUUID)), api.m.getCheckpoint(ctx))
 
 	addMockCheckpointDB(t, api.m.db, checkpointUUID)
+	registerCheckpointAsModelVersion(t, api.m.db, checkpointUUID)
 
+	fmt.Println("start")
 	authZExp.On("CanGetExperiment", mock.Anything, curUser,
 		mock.Anything).Return(authz2.PermissionDeniedError{}).Once()
-	authZExp.On("CanGetModel", mock.Anything, curUser,
-		mock.Anything).Return(authz2.PermissionDeniedError{}).Once()
+	authZModel.On("CanGetModel", mock.Anything, mock.Anything,
+		mock.Anything, mock.Anything).Run(func(args mock.Arguments) { debug.PrintStack() }).Return(authz2.PermissionDeniedError{}).Once()
 	require.Equal(t, echo.NewHTTPError(http.StatusNotFound,
 		fmt.Sprintf("checkpoint not found: %s", checkpointUUID)), api.m.getCheckpoint(ctx))
+	fmt.Println("end")
 
 	expectedErr := fmt.Errorf("canGetExperimentError")
 	authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
 		Return(expectedErr).Once()
-	authZExp.On("CanGetModel", mock.Anything, curUser,
-		mock.Anything).Return(authz2.PermissionDeniedError{}).Once()
+	authZModel.On("CanGetModel", mock.Anything, curUser,
+		mock.Anything, mock.Anything).Return(authz2.PermissionDeniedError{})
 	require.Equal(t, expectedErr, api.m.getCheckpoint(ctx))
 
 	expectedErr = echo.NewHTTPError(http.StatusForbidden, "canGetArtifactsError")
 	authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).Return(nil).Once()
-	authZExp.On("CanGetModel", mock.Anything, curUser,
-		mock.Anything).Return(authz2.PermissionDeniedError{}).Once()
+	authZModel.On("CanGetModel", mock.Anything, curUser,
+		mock.Anything, mock.Anything).Return(nil)
 	authZExp.On("CanGetExperimentArtifacts", mock.Anything, curUser, mock.Anything).
 		Return(fmt.Errorf("canGetArtifactsError")).Once()
 	require.Equal(t, expectedErr, api.m.getCheckpoint(ctx))

@@ -8,13 +8,12 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/determined-ai/determined/master/pkg/checkpoints"
+	"github.com/determined-ai/determined/master/pkg/checkpoints/archive"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-
-	"github.com/determined-ai/determined/master/pkg/checkpoints"
-	"github.com/determined-ai/determined/master/pkg/checkpoints/archive"
 
 	"github.com/determined-ai/determined/master/internal/api"
 	detContext "github.com/determined-ai/determined/master/internal/context"
@@ -162,13 +161,15 @@ func (m *Master) getCheckpoint(c echo.Context) error {
 	curUser := c.(*detContext.DetContext).MustGetUser()
 	errE := m.canDoActionOnCheckpoint(c.Request().Context(), curUser, args.CheckpointUUID,
 		expauth.AuthZProvider.Get().CanGetExperimentArtifacts)
-
+	fmt.Println("errE")
 	if errE != nil {
 		errM := m.canDoActionOnCheckpointThroughModel(c.Request().Context(), curUser, args.CheckpointUUID)
 		if errM != nil {
+			fmt.Println("errM is not nil")
+			fmt.Println(errM.Error())
 			s, ok := status.FromError(errM)
 			if !ok {
-				return errM
+				return errE
 			}
 			switch s.Code() {
 			case codes.NotFound:
@@ -178,9 +179,10 @@ func (m *Master) getCheckpoint(c echo.Context) error {
 			default:
 				return fmt.Errorf(s.Message())
 			}
+
 		}
 	}
-
+	fmt.Println("not returned")
 	c.Response().Header().Set(echo.HeaderContentType, mimeType)
 	return m.getCheckpointImpl(c.Request().Context(), id, mimeType, c.Response())
 }
