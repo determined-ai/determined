@@ -24,6 +24,8 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
 )
 
+const trainingToValidationRatio = 10
+
 func makeMetrics() *structpb.Struct {
 	return &structpb.Struct{
 		Fields: map[string]*structpb.Value{
@@ -133,7 +135,9 @@ func reportNonTrivialMetrics(ctx context.Context, api *apiServer, trialID int32,
 				AvgMetrics: validationAvgMetrics,
 			},
 		}
-		err = db.SingleDB().AddValidationMetrics(ctx, &validationMetrics)
+		if b%trainingToValidationRatio == 0 {
+			err = db.SingleDB().AddValidationMetrics(ctx, &validationMetrics)
+		}
 
 		if err != nil {
 			return err
@@ -170,7 +174,9 @@ func reportTrivialMetrics(ctx context.Context, api *apiServer, trialID int32, ba
 		},
 	}
 
-	err = db.SingleDB().AddValidationMetrics(ctx, &validationMetrics)
+	if batches%trainingToValidationRatio == 0 {
+		err = db.SingleDB().AddValidationMetrics(ctx, &validationMetrics)
+	}
 
 	if err != nil {
 		return err
