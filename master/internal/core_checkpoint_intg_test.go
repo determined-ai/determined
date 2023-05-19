@@ -271,7 +271,7 @@ func registerCheckpointAsModelVersion(t *testing.T, pgDB *db.PgDB, ckptID uuid.U
 		WorkspaceID:     1,
 	}
 	var pmdl modelv1.Model
-	var emptyMetadata = []byte(`{}`)
+	emptyMetadata := []byte(`{}`)
 	mdlNotes := "some notes"
 	err = pgDB.QueryProto(
 		"insert_model", &pmdl, mdl.Name, mdl.Description, emptyMetadata,

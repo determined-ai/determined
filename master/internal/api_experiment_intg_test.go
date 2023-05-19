@@ -31,8 +31,8 @@ import (
 	authz2 "github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/db"
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
-	modelauth "github.com/determined-ai/determined/master/internal/model"
 	"github.com/determined-ai/determined/master/internal/mocks"
+	modelauth "github.com/determined-ai/determined/master/internal/model"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
@@ -67,8 +67,10 @@ func expNotFoundErr(expID int) error {
 	return status.Errorf(codes.NotFound, "experiment not found: %d", expID)
 }
 
-var authZExp *mocks.ExperimentAuthZ
-var authzModel *mocks.ModelAuthZ
+var (
+	authZExp   *mocks.ExperimentAuthZ
+	authzModel *mocks.ModelAuthZ
+)
 
 // pgdb can be nil to use the singleton database for testing.
 func setupExpAuthTest(t *testing.T, pgdb *db.PgDB) (
@@ -82,7 +84,7 @@ func setupExpAuthTest(t *testing.T, pgdb *db.PgDB) (
 	return api, authZExp, projectAuthZ, user, ctx
 }
 
-func getMockModelAuth() *mocks.ModelAuthZ{
+func getMockModelAuth() *mocks.ModelAuthZ {
 	if authzModel == nil {
 		authzModel = &mocks.ModelAuthZ{}
 		modelauth.AuthZProvider.Register("mock", authzModel)

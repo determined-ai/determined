@@ -104,7 +104,6 @@ func (m *Master) canDoActionOnCheckpointThroughModel(
 			ctx, curUser, model, model.WorkspaceId); errCanGetModel == nil {
 			return nil
 		}
-
 	}
 	// we get to this return when there are no models belonging
 	// to a workspace where user has permissions.
@@ -124,7 +123,7 @@ func (a *apiServer) GetCheckpoint(
 	if errE != nil {
 		errM := a.m.canDoActionOnCheckpointThroughModel(ctx, *curUser, req.CheckpointUuid)
 		if errM != nil {
-			return nil, errM
+			return nil, errE
 		}
 	}
 

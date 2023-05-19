@@ -87,6 +87,7 @@ func createVersionTwoCheckpoint(
 
 func TestCheckpointAuthZ(t *testing.T) {
 	api, authZExp, _, curUser, ctx := setupExpAuthTest(t, nil)
+	authZModel := getMockModelAuth()
 
 	cases := []struct {
 		DenyFuncName            string
@@ -140,11 +141,15 @@ func TestCheckpointAuthZ(t *testing.T) {
 			expectedErr := fmt.Errorf("canGetExperimentError")
 			authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
 				Return(expectedErr).Once()
+			authZModel.On("CanGetModel", mock.Anything, mock.Anything,
+				mock.Anything, mock.Anything).Return(authz2.PermissionDeniedError{}).Once()
 			require.Equal(t, expectedErr, curCase.IDToReqCall(checkpointID))
 
 			expectedErr = status.Error(codes.PermissionDenied, curCase.DenyFuncName+"Error")
 			authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
 				Return(nil).Once()
+			authZModel.On("CanGetModel", mock.Anything, mock.Anything,
+				mock.Anything, mock.Anything).Return(authz2.PermissionDeniedError{}).Once()
 			authZExp.On(curCase.DenyFuncName, mock.Anything, curUser, mock.Anything).
 				Return(fmt.Errorf(curCase.DenyFuncName + "Error")).Once()
 			require.Equal(t, expectedErr, curCase.IDToReqCall(checkpointID))

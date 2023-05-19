@@ -8,12 +8,13 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/determined-ai/determined/master/pkg/checkpoints"
-	"github.com/determined-ai/determined/master/pkg/checkpoints/archive"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/determined-ai/determined/master/pkg/checkpoints"
+	"github.com/determined-ai/determined/master/pkg/checkpoints/archive"
 
 	"github.com/determined-ai/determined/master/internal/api"
 	detContext "github.com/determined-ai/determined/master/internal/context"
@@ -176,7 +177,6 @@ func (m *Master) getCheckpoint(c echo.Context) error {
 			default:
 				return fmt.Errorf(s.Message())
 			}
-
 		}
 	}
 	c.Response().Header().Set(echo.HeaderContentType, mimeType)
