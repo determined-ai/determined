@@ -376,7 +376,7 @@ def get_ds_config_from_hparams(
     hparams: Dict[str, Any],
     base_dir: Union[pathlib.Path, str] = CURR_DIR,
 ) -> Dict[str, Any]:
-    """Fetch and recursively merge the deepspeed config from the experiment config
+    """Gets the DS config dictionary after merging with overwrite values.
 
     Follows the rules as described here:
     https://docs.determined.ai/latest/training/apis-howto/deepspeed/deepspeed.html#configuration
