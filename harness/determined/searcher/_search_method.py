@@ -70,6 +70,15 @@ class SearcherState:
 
 
 class ExitedReason(Enum):
+    """
+    The reason why a trial exitted early
+
+    Can be one of:
+    `ERRORED`: The Trial encountered an exception
+    `USER_CANCELLED`: The Trial was manually closed by the user
+    `INVALID_HP`: The hyperparameters the trial was created with were invalid
+    """
+
     ERRORED = "ERRORED"
     USER_CANCELED = "USER_CANCELED"
     INVALID_HP = "INVALID_HP"
@@ -121,7 +130,7 @@ class ValidateAfter(Operation):
 
 class Close(Operation):
     """
-    Operation closing the specified trial
+    Operation for closing the specified trial
     """
 
     def __init__(self, request_id: uuid.UUID):
@@ -135,6 +144,10 @@ class Close(Operation):
 
 
 class Progress(Operation):
+    """
+    Operation for signalling the relative progress of the hyperparameter search from 0.0 to 1.0
+    """
+
     def __init__(self, progress: float):
         super().__init__()
         self.progress = progress
@@ -147,7 +160,7 @@ class Progress(Operation):
 
 class Shutdown(Operation):
     """
-    Operation shutting the experiment down
+    Operation for shutting the experiment down
     """
 
     def __init__(self, cancel: bool = False, failure: bool = False) -> None:
@@ -163,7 +176,7 @@ class Shutdown(Operation):
 
 class Create(Operation):
     """
-    Operation creating a trial with a specified combination of hyperparameter values
+    Operation for creating a trial with a specified combination of hyperparameter values
     """
 
     def __init__(

@@ -30,6 +30,11 @@ To run the custom hyperparameter tuning algorithm, you can use:
 -  :class:`~determined.searcher.LocalSearchRunner` to run on your machine,
 -  :class:`~determined.searcher.RemoteSearchRunner` to run on a Determined cluster.
 
+.. note::
+
+   Using :class:`~determined.searcher.RemoteSearchRunner` will create two experiments, with one
+   orchestrating the hyperparameter search of the other.
+
 Both search runners execute the custom hyperparameter tuning algorithm and start a multi-trial
 experiment on a Determined cluster.
 
