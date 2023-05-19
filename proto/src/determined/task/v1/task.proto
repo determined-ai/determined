@@ -27,6 +27,24 @@ enum State {
   STATE_QUEUED = 8;
 }
 
+// Type of the task
+enum TaskType {
+  // The task type is unknown
+  TASK_TYPE_UNSPECIFIED = 0;
+  // "TRIAL" job type for the enum public.job_type in Postgres.
+  TASK_TYPE_TRIAL = 1;
+  // "NOTEBOOK" job type for the enum public.job_type in Postgres.
+  TASK_TYPE_NOTEBOOK = 2;
+  // "SHELL" job type for the enum public.job_type in Postgres.
+  TASK_TYPE_SHELL = 3;
+  // "COMMAND" job type for the enum public.job_type in Postgres.
+  TASK_TYPE_COMMAND = 4;
+  // "TENSORBOARD" task type for the enum.task_type in Postgres.
+  TASK_TYPE_TENSORBOARD = 5;
+  // "CHECKPOINT_GC" job type for the enum public.job_type in Postgres.
+  TASK_TYPE_CHECKPOINT_GC = 6;
+}
+
 // Allocation tracks a specific instance of a Task.
 message Allocation {
   // Unique ID of task associated with the allocation.
@@ -48,7 +66,7 @@ message Task {
   // Unique ID of task.
   string task_id = 1;
   // Type of Task.
-  string task_type = 2;
+  TaskType task_type = 2;
   // List of Allocations.
   repeated Allocation allocations = 4;
 }

@@ -11158,14 +11158,14 @@ class v1SummarizeTrialResponse:
 class v1Task:
     allocations: "typing.Optional[typing.Sequence[v1Allocation]]" = None
     taskId: "typing.Optional[str]" = None
-    taskType: "typing.Optional[str]" = None
+    taskType: "typing.Optional[v1TaskType]" = None
 
     def __init__(
         self,
         *,
         allocations: "typing.Union[typing.Sequence[v1Allocation], None, Unset]" = _unset,
         taskId: "typing.Union[str, None, Unset]" = _unset,
-        taskType: "typing.Union[str, None, Unset]" = _unset,
+        taskType: "typing.Union[v1TaskType, None, Unset]" = _unset,
     ):
         if not isinstance(allocations, Unset):
             self.allocations = allocations
@@ -11183,7 +11183,7 @@ class v1Task:
         if "taskId" in obj:
             kwargs["taskId"] = obj["taskId"]
         if "taskType" in obj:
-            kwargs["taskType"] = obj["taskType"]
+            kwargs["taskType"] = v1TaskType(obj["taskType"]) if obj["taskType"] is not None else None
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -11194,7 +11194,7 @@ class v1Task:
         if not omit_unset or "taskId" in vars(self):
             out["taskId"] = self.taskId
         if not omit_unset or "taskType" in vars(self):
-            out["taskType"] = self.taskType
+            out["taskType"] = None if self.taskType is None else self.taskType.value
         return out
 
 class v1TaskLogsFieldsResponse:
@@ -11352,6 +11352,15 @@ class v1TaskLogsResponse:
         if not omit_unset or "stdtype" in vars(self):
             out["stdtype"] = self.stdtype
         return out
+
+class v1TaskType(enum.Enum):
+    UNSPECIFIED = "TASK_TYPE_UNSPECIFIED"
+    TRIAL = "TASK_TYPE_TRIAL"
+    NOTEBOOK = "TASK_TYPE_NOTEBOOK"
+    SHELL = "TASK_TYPE_SHELL"
+    COMMAND = "TASK_TYPE_COMMAND"
+    TENSORBOARD = "TASK_TYPE_TENSORBOARD"
+    CHECKPOINT_GC = "TASK_TYPE_CHECKPOINT_GC"
 
 class v1Template:
 
