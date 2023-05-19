@@ -3,7 +3,7 @@ import { FixedSizeGrid, GridChildComponentProps } from 'react-window';
 import uPlot, { AlignedData, Plugin } from 'uplot';
 
 import { XAxisDomain, XAxisFilter } from 'components/kit/LineChart/XAxisFilter';
-import { getCssVar, getTimeTickValues, glasbeyColor } from 'components/kit/util';
+import { getCssVar, getTimeTickValues, glasbeyColor } from 'components/kit/utils/func';
 import ScaleSelect from 'components/ScaleSelect';
 import { SyncProvider } from 'components/UPlot/SyncProvider';
 import { UPlotPoint } from 'components/UPlot/types';

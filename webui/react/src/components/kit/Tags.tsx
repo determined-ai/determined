@@ -4,7 +4,8 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import Input, { InputRef } from 'components/kit/Input';
 import Tooltip from 'components/kit/Tooltip';
-import { alphaNumericSorter, toHtmlId, truncate, ValueOf } from 'components/kit/util';
+import { alphaNumericSorter, toHtmlId, truncate } from 'components/kit/utils/func';
+import { ValueOf } from 'components/kit/utils/type';
 import Link from 'components/Link';
 
 import css from './Tags.module.scss';

@@ -1,6 +1,8 @@
 import ansiConverter from 'ansi-to-html';
 import dayjs from 'dayjs';
 
+type NullOrUndefined<T = undefined> = T | null | undefined;
+
 const GLASBEY = [
   [0, 155, 222],
   [87, 43, 255],
@@ -159,12 +161,6 @@ const GLASBEY = [
   [52, 120, 119],
   [142, 190, 88],
 ];
-
-export type Primitive = boolean | number | string;
-export type RecordKey = string | number | symbol;
-type NullOrUndefined<T = undefined> = T | null | undefined;
-
-export type ValueOf<T> = T[keyof T];
 
 const isBigInt = (data: unknown): data is bigint => typeof data === 'bigint';
 const isBoolean = (data: unknown): data is boolean => typeof data === 'boolean';

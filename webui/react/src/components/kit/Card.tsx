@@ -3,7 +3,7 @@ import React, { Children, CSSProperties } from 'react';
 import { ConditionalWrapper } from 'components/ConditionalWrapper';
 import Grid, { GridMode } from 'components/Grid';
 import Icon from 'components/kit/Icon';
-import { isNumber } from 'components/kit/util';
+import { isNumber } from 'components/kit/utils/func';
 import Link from 'components/Link';
 
 import Button from './Button';

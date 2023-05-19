@@ -18,9 +18,8 @@ import {
   dateTimeStringSorter,
   formatDatetime,
   numericSorter,
-  RecordKey,
-  ValueOf,
-} from 'components/kit/util';
+} from 'components/kit/utils/func';
+import { RecordKey, ValueOf } from 'components/kit/utils/type';
 import Link from 'components/Link';
 import Section from 'components/Section';
 import useGetCharMeasureInContainer from 'hooks/useGetCharMeasureInContainer';
