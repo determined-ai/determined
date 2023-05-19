@@ -433,10 +433,10 @@ const InteractiveTable = <
     ): void => {
       if (Array.isArray(tableSorter)) return;
 
-      const newSettings: Partial<InteractiveTableSettings> = {
-        tableLimit: tablePagination.pageSize ?? 0,
-        tableOffset: ((tablePagination.current ?? 1) - 1) * (tablePagination.pageSize ?? 0),
-      };
+      const newSettings: Partial<S> = {};
+      newSettings.tableLimit = tablePagination.pageSize ?? 0;
+      newSettings.tableOffset =
+        ((tablePagination.current ?? 1) - 1) * (tablePagination.pageSize ?? 0);
 
       const { columnKey, order } = tableSorter;
       if (columnKey && settingsColumns.find((col) => columnDefs[col]?.key === columnKey)) {
@@ -446,7 +446,7 @@ const InteractiveTable = <
 
       if (isEqual(newSettings, settings)) return;
 
-      updateSettings(newSettings as Partial<S>);
+      updateSettings(newSettings);
     },
     [settings, updateSettings, columnDefs, settingsColumns],
   );
@@ -461,7 +461,12 @@ const InteractiveTable = <
       const width = reorderedWidths.splice(fromIndex, 1)[0];
       reorderedColumns.splice(toIndex, 0, col);
       reorderedWidths.splice(toIndex, 0, width);
-      updateSettings({ columns: reorderedColumns, columnWidths: reorderedWidths } as Partial<S>);
+
+      const newSettings: Partial<S> = {};
+      newSettings.columns = reorderedColumns;
+      newSettings.columnWidths = reorderedWidths;
+
+      updateSettings(newSettings);
       setWidthData({ ...widthData, widths: reorderedWidths });
     },
     [settingsColumns, settings.columnWidths, widthData, updateSettings],
@@ -537,7 +542,9 @@ const InteractiveTable = <
   const handleResizeStop = useCallback(() => {
     setIsResizing(false);
 
-    updateSettings({ columnWidths: widthData.widths.map(Math.round) } as Partial<S>);
+    const newSettings: Partial<S> = {};
+    newSettings.columnWidths = widthData.widths.map(Math.round);
+    updateSettings(newSettings);
   }, [updateSettings, widthData]);
 
   const onHeaderCell = useCallback(
