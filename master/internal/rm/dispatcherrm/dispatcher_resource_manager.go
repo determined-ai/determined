@@ -1043,19 +1043,19 @@ func (m *dispatcherResourceManager) startLauncherJob(
 	} else {
 		// Successful launch, clear launchInProgress status
 		m.jobWatcher.notifyJobLaunched(ctx, dispatchID)
-	}
 
-	if tempDispatchID != dispatchID {
-		incompMsg := "HPC Launcher version is below the minimum required. " +
-			"Update to version 3.2.9 or greater."
-		ctx.Log().WithField("allocation-id", msg.AllocationID).
-			WithField("description", msg.Spec.Description).
-			Errorf("Launcher did not honor DispatchID assignment of %s.  "+
-				incompMsg, dispatchID)
-		ctx.Tell(req.AllocationRef, sproto.ContainerLog{
-			AuxMessage: &incompMsg,
-			Level:      ptrs.Ptr("ERROR"),
-		})
+		if tempDispatchID != dispatchID {
+			incompMsg := "HPC Launcher version is below the minimum required. " +
+				"Update to version 3.2.9 or greater."
+			ctx.Log().WithField("allocation-id", msg.AllocationID).
+				WithField("description", msg.Spec.Description).
+				Errorf("Launcher did not honor DispatchID assignment of %s.  "+
+					incompMsg, dispatchID)
+			ctx.Tell(req.AllocationRef, sproto.ContainerLog{
+				AuxMessage: &incompMsg,
+				Level:      ptrs.Ptr("ERROR"),
+			})
+		}
 	}
 }
 
