@@ -46,11 +46,11 @@ const MultiTrialDetailsHyperparameters: React.FC<Props> = ({
   );
 
   const settingsConfig = useMemo(
-    () => settingsConfigForExperimentHyperparameters(experiment.id, fullHParams.current),
-    [experiment.id],
+    () => settingsConfigForExperimentHyperparameters(experiment.id, trial.id, fullHParams.current),
+    [experiment.id, trial.id],
   );
 
-  const { settings, updateSettings, resetSettings } =
+  const { settings, updateSettings, resetSettings, activeSettings } =
     useSettings<ExperimentHyperparametersSettings>(settingsConfig);
 
   const [batches, setBatches] = useState<number[]>();
@@ -117,9 +117,21 @@ const MultiTrialDetailsHyperparameters: React.FC<Props> = ({
 
   // Set the default filter batch.
   useEffect(() => {
-    if (!batches || batches.length === 0 || settings.batch !== 0) return;
-    updateSettings({ batch: batches.first() });
-  }, [batches, settings.batch, updateSettings]);
+    if (!batches || batches.length === 0 || activeSettings(['batch']).includes('batch')) return;
+    const bestValidationBatch = trial.bestValidationMetric?.totalBatches;
+    updateSettings({
+      batch:
+        bestValidationBatch && batches.includes(bestValidationBatch)
+          ? bestValidationBatch
+          : batches.first(),
+    });
+  }, [
+    activeSettings,
+    batches,
+    settings.batch,
+    trial.bestValidationMetric?.totalBatches,
+    updateSettings,
+  ]);
 
   const handleFiltersChange = useCallback(
     (filters: VisualizationFilters) => {

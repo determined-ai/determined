@@ -204,6 +204,12 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
     dispatch({ type: ActionType.SetMetric, value: metrics.first() });
   }, [localFilters.metric, metrics]);
 
+  useEffect(() => {
+    if (isEqual(filters, localFilters)) return;
+    dispatch({ type: ActionType.Set, value: filters });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters]);
+
   return (
     <>
       {showMaxTrials && (

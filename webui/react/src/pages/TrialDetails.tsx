@@ -226,6 +226,7 @@ const TrialDetailsComp: React.FC = () => {
         <Spinner spinning={isFetching}>
           <Pivot
             activeKey={tabKey}
+            destroyInactiveTabPane
             items={tabItems}
             tabBarExtraContent={
               <RoutePagination

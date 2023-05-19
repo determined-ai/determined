@@ -17,7 +17,8 @@ export interface ExperimentHyperparametersSettings {
 }
 
 export const settingsConfigForExperimentHyperparameters = (
-  id: number,
+  experimentId: number,
+  trialId: number,
   hParams: string[],
 ): SettingsConfig<ExperimentHyperparametersSettings> => ({
   settings: {
@@ -58,5 +59,5 @@ export const settingsConfigForExperimentHyperparameters = (
       // See https://github.com/gcanti/io-ts/blob/master/index.md#union-of-string-literals
     },
   },
-  storagePath: `experiment-hyperparameters-${id}`,
+  storagePath: `experiment-hyperparameters-${experimentId}-${trialId}`,
 });
