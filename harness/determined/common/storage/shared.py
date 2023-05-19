@@ -187,6 +187,8 @@ class SharedFSStorageManager(storage.StorageManager):
             print(f"{storage_dir}/{file_glob}")
             for path in glob.glob(f"{storage_dir}/{file_glob}", recursive=True):
                 to_delete_paths[path] = True
+        # TODO early optimize -- TODO do files first so we don't remove a file then try to delete.
+        # TODO deny non empty globs...
 
         print("DELETE PATHS", to_delete_paths, globs)  # This is actually correct.
         # Can this fail us if we remove a parent directory and then a child one???

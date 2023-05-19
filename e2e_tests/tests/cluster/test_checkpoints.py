@@ -409,6 +409,7 @@ def test_checkpoint_partial_delete() -> None:
     exp_id = exp.run_basic_test_with_temp_config(
         config, model_def_path=conf.fixtures_path("no_op"), expected_trials=1
     )
+    wait_for_gc_to_finish(exp_id)
 
     test_session = api_utils.determined_test_session()
     checkpoints = bindings.get_GetExperimentCheckpoints(
