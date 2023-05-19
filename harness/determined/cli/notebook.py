@@ -63,7 +63,6 @@ def start_notebook(args: Namespace) -> None:
     if not args.no_browser:
         api.browser_open(args.master, nb_path)
     print(colored("Jupyter Notebook is running at: {}".format(url), "green"))
-    command.print_task_logs(args, nb.id)
 
 
 @authentication.required

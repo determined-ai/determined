@@ -3,8 +3,11 @@ from functools import partial
 from pathlib import Path
 from typing import Any, List
 
+from termcolor import colored
+
 from determined import cli
 from determined.cli import command, render, task
+from determined.common import api
 from determined.common.api import authentication
 from determined.common.declarative_argparse import Arg, Cmd, Group
 
@@ -29,7 +32,17 @@ def run_command(args: Namespace) -> None:
 
     render.report_job_launched("command", resp["id"])
 
-    command.print_task_logs(args, resp["id"])
+    try:
+        logs = api.task_logs(cli.setup_session(args), resp["id"], follow=True)
+        api.pprint_logs(logs)
+    finally:
+        print(
+            colored(
+                "Task log stream ended. To reopen log stream, run: "
+                "det task logs -f {}".format(resp["id"]),
+                "green",
+            )
+        )
 
 
 # fmt: off

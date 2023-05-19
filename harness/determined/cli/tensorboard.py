@@ -58,7 +58,6 @@ def start_tensorboard(args: Namespace) -> None:
     if not args.no_browser:
         api.browser_open(args.master, nb_path)
     print(colored("Tensorboard is running at: {}".format(url), "green"))
-    command.print_task_logs(args, tsb.id)
 
 
 @authentication.required
