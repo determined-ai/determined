@@ -515,18 +515,8 @@ func (db *PgDB) addTrialMetrics(
 			return err
 		}
 
-		// CHECK: we skip rollbacks, summary metrics, and total batch updates for generic metrics.
-		var metricRowID int
-		if pType == GenericMetric {
-			if metricRowID, err = db.addRawMetrics(ctx, tx, &metricsBody, m.TrialRunId,
-				m.TrialId, m.StepsCompleted, pType, mType); err != nil {
-				return err
-			}
-			return nil
-		}
-
 		if rollbacks, err = rollbackMetrics(ctx, tx, m.TrialRunId, m.TrialId, m.StepsCompleted,
-			isValidation); err != nil {
+			pType); err != nil {
 			return err
 		}
 		var summaryMetrics model.JSONObj
@@ -537,8 +527,9 @@ func (db *PgDB) addTrialMetrics(
 			return fmt.Errorf("error getting summary metrics from trials: %w", err)
 		}
 
-		if metricRowID, err = db.addRawMetrics(ctx, tx, &metricsBody, m.TrialRunId,
-			m.TrialId, m.StepsCompleted, pType, mType); err != nil {
+		metricRowID, err := db.addRawMetrics(ctx, tx, &metricsBody, m.TrialRunId,
+			m.TrialId, m.StepsCompleted, pType, mType)
+		if err != nil {
 			return err
 		}
 

@@ -26,13 +26,8 @@ const (
 rollbackMetrics ensures old training and validation metrics from a previous run id are archived.
 */
 func rollbackMetrics(ctx context.Context, tx *sqlx.Tx, runID, trialID,
-	lastProcessedBatch int32, isValidation bool,
+	lastProcessedBatch int32, pType MetricPartitionType,
 ) (int, error) {
-	pType := TrainingMetric
-	if isValidation {
-		pType = ValidationMetric
-	}
-
 	res, err := tx.ExecContext(ctx, `
 UPDATE metrics SET archived = true
 WHERE trial_id = $1
