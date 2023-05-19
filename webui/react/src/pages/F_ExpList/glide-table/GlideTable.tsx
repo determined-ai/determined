@@ -59,6 +59,7 @@ import {
 import { TableContextMenu, TableContextMenuProps } from './contextMenu';
 import { customRenderers } from './custom-renderers';
 import { LinkCell } from './custom-renderers/cells/linkCell';
+import css from './GlideTable.module.scss';
 import { TableActionMenu, TableActionMenuProps } from './menu';
 import { Sort, sortMenuItemsForColumn } from './MultiSortMenu';
 import { BatchAction } from './TableActionBar';
@@ -617,34 +618,36 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         closeTooltip();
       }}>
       {tooltip}
-      <DataEditor
-        columns={columns}
-        customRenderers={customRenderers}
-        freezeColumns={STATIC_COLUMNS.length}
-        getCellContent={getCellContent}
-        // `getCellsForSelection` is required for double click column resize to content.
-        getCellsForSelection
-        getRowThemeOverride={getRowThemeOverride}
-        gridSelection={selection}
-        headerHeight={36}
-        headerIcons={headerIcons}
-        height={height}
-        ref={gridRef}
-        rowHeight={40}
-        rows={data.length}
-        smoothScrollX
-        smoothScrollY
-        theme={theme}
-        verticalBorder={verticalBorder}
-        width="100%"
-        onCellClicked={onCellClicked}
-        onCellContextMenu={onCellContextMenu}
-        onColumnMoved={onColumnMoved}
-        onColumnResize={onColumnResize}
-        onHeaderClicked={onHeaderClicked}
-        onItemHovered={onItemHovered}
-        onVisibleRegionChanged={handleScroll}
-      />
+      <div className={css.base}>
+        <DataEditor
+          columns={columns}
+          customRenderers={customRenderers}
+          freezeColumns={STATIC_COLUMNS.length}
+          getCellContent={getCellContent}
+          // `getCellsForSelection` is required for double click column resize to content.
+          getCellsForSelection
+          getRowThemeOverride={getRowThemeOverride}
+          gridSelection={selection}
+          headerHeight={36}
+          headerIcons={headerIcons}
+          height={height}
+          ref={gridRef}
+          rowHeight={40}
+          rows={data.length}
+          smoothScrollX
+          smoothScrollY
+          theme={theme}
+          verticalBorder={verticalBorder}
+          width="100%"
+          onCellClicked={onCellClicked}
+          onCellContextMenu={onCellContextMenu}
+          onColumnMoved={onColumnMoved}
+          onColumnResize={onColumnResize}
+          onHeaderClicked={onHeaderClicked}
+          onItemHovered={onItemHovered}
+          onVisibleRegionChanged={handleScroll}
+        />
+      </div>
       <TableActionMenu {...menuProps} open={menuIsOpen} />
       {contextMenuProps && (
         <TableContextMenu

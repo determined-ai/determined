@@ -55,18 +55,18 @@ export const getTimeInEnglish = (d: Date): string => {
  */
 export const getTheme = (appTheme: Theme): DataEditorProps['theme'] => {
   return {
-    accentLight: appTheme.stageStrong,
+    accentLight: appTheme.surfaceStrong,
     bgBubble: appTheme.ixStrong,
     bgCell: appTheme.stage,
-    bgHeader: appTheme.stage,
-    bgHeaderHovered: appTheme.stageStrong,
-    borderColor: appTheme.background,
+    bgHeader: appTheme.surface,
+    bgHeaderHovered: appTheme.surfaceStrong,
+    borderColor: appTheme.ixBorder,
     fontFamily: appTheme.fontFamily,
-    headerBottomBorderColor: appTheme.background,
+    headerBottomBorderColor: appTheme.ixBorder,
     headerFontStyle: 'normal 12px',
     linkColor: appTheme.statusActive,
-    textBubble: appTheme.stageBorderStrong,
-    textDark: appTheme.stageOnWeak,
-    textHeader: appTheme.stageOnWeak,
+    textBubble: appTheme.surfaceBorderStrong,
+    textDark: appTheme.surfaceOnWeak,
+    textHeader: appTheme.surfaceOnWeak,
   };
 };
