@@ -526,10 +526,12 @@ func (rp *resourcePool) Receive(ctx *actor.Context) error {
 		})
 
 	case schedulerTick:
-		if err := rp.provisioner.GetLaunchError(); err != rp.provisionerError {
-			rp.provisionerError = err
-			if err != nil {
-				rp.reschedule = true
+		if rp.provisioner != nil {
+			if err := rp.provisioner.GetLaunchError(); err != rp.provisionerError {
+				rp.provisionerError = err
+				if err != nil {
+					rp.reschedule = true
+				}
 			}
 		}
 		if rp.reschedule {
@@ -844,6 +846,9 @@ func (rp *resourcePool) refreshAgentStateCacheFor(ctx *actor.Context, agents []*
 }
 
 func (rp *resourcePool) pruneTaskList(ctx *actor.Context) {
+	if rp.provisioner == nil {
+		return
+	}
 	provisionerErr := rp.provisioner.GetLaunchError()
 	if provisionerErr == nil {
 		return

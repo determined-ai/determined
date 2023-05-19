@@ -189,14 +189,10 @@ func (p *Provisioner) launch(ctx *actor.Context, numToLaunch int) error {
 	if err := p.launchErr.GetError(); err != nil {
 		return err
 	}
-	p.launchErr.SetError(p.provider.launch(ctx, numToLaunch))
-	return p.launchErr.GetError()
+	return p.launchErr.SetError(p.provider.launch(ctx, numToLaunch))
 }
 
 // GetLaunchError returns the current launch error sent from the provider.
 func (p *Provisioner) GetLaunchError() error {
-	if p == nil {
-		return nil
-	}
 	return p.launchErr.GetError()
 }

@@ -75,10 +75,6 @@ func newMockEnvironment(t *testing.T, setup *mockConfig) (*mockEnvironment, *Pro
 		telemetryLimiter: rate.NewLimiter(rate.Every(telemetryCooldown), 1),
 		launchErr:        errInfo.NewErrorTimeoutRetry(launchErrorTimeout, setup.LaunchErrorRetries),
 	}
-	if setup.LaunchErrorTimeout != nil {
-		timeout := time.Duration(*setup.LaunchErrorTimeout)
-		p.launchErr = errInfo.NewErrorTimeoutRetry(timeout, setup.LaunchErrorRetries)
-	}
 	provisioner, created := system.ActorOf(actor.Addr("provisioner"), p)
 	assert.Assert(t, created)
 

@@ -26,15 +26,19 @@ func NewErrorTimeoutRetry(timeout time.Duration, maxRetries int) *ErrorTimeoutRe
 	}
 }
 
+func (e *ErrorTimeoutRetry) isExpired(t time.Time) bool {
+	return t.After(e.time.Add(e.timeout))
+}
+
 // GetError returns an error after max retries has been met and we are within the timeout duration.
 func (e *ErrorTimeoutRetry) GetError() error {
-	if e == nil {
+	if e == nil || e.timeout <= 0 {
 		return nil
 	}
 	e.mu.RLock()
 	defer e.mu.RUnlock()
 
-	if time.Now().After(e.time.Add(e.timeout)) {
+	if e.isExpired(time.Now()) {
 		return nil
 	}
 	if e.retries < e.maxRetries {
@@ -44,22 +48,22 @@ func (e *ErrorTimeoutRetry) GetError() error {
 }
 
 // SetError increments or resets the number of retries if the last error was within the timeout
-// duration or the current error is nil.
-func (e *ErrorTimeoutRetry) SetError(err error) {
+// duration or the current error is nil. Returns the error provided by GetError.
+func (e *ErrorTimeoutRetry) SetError(err error) error {
 	if e == nil {
 		panic("cannot set error on nil ErrorTimeoutRetry")
 	}
 	e.mu.Lock()
-	defer e.mu.Unlock()
 
 	now := time.Now()
-	if err == nil ||
-		e.timeout <= 0 ||
-		now.After(e.time.Add(e.timeout)) {
+	if err == nil || e.timeout <= 0 || e.isExpired(now) {
 		e.retries = 0
 	} else if e.err != nil {
 		e.retries++
 	}
 	e.err = err
 	e.time = now
+
+	e.mu.Unlock()
+	return e.GetError()
 }

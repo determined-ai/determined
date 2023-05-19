@@ -1054,10 +1054,6 @@ func (a *Allocation) markResourcesStarted(ctx *actor.Context) {
 
 // markResourcesReleased persists completion information.
 func (a *Allocation) markResourcesReleased(ctx *actor.Context) {
-	if a.model.StartTime == nil {
-		return
-	}
-	a.model.EndTime = ptrs.Ptr(time.Now().UTC())
 	if err := a.db.DeleteAllocationSession(a.model.AllocationID); err != nil {
 		ctx.Log().WithError(err).Error("error deleting allocation session")
 	}
