@@ -134,9 +134,8 @@ const MultiTrialDetailsHyperparameters: React.FC<Props> = ({
   ]);
 
   const handleFiltersChange = useCallback(
-    (filters: VisualizationFilters) => {
-      const { metric, batch, batchMargin, hParams, maxTrial, scale } = filters;
-      updateSettings({ batch, batchMargin, hParams, maxTrial, metric, scale });
+    (filters: Partial<VisualizationFilters>) => {
+      updateSettings(filters);
     },
     [updateSettings],
   );
