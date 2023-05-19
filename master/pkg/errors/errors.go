@@ -27,22 +27,22 @@ func NewErrorTimeoutRetry(timeout time.Duration, maxRetries int) *ErrorTimeoutRe
 }
 
 func (e *ErrorTimeoutRetry) isExpired(t time.Time) bool {
-	return t.After(e.time.Add(e.timeout))
+	return e.timeout <= 0 || t.After(e.time.Add(e.timeout))
 }
 
 // GetError returns an error after max retries has been met and we are within the timeout duration.
 func (e *ErrorTimeoutRetry) GetError() error {
-	if e == nil || e.timeout <= 0 {
+	if e == nil {
 		return nil
 	}
 	e.mu.RLock()
 	defer e.mu.RUnlock()
 
-	return e.getError()
+	return e.getError(time.Now())
 }
 
-func (e *ErrorTimeoutRetry) getError() error {
-	if e.isExpired(time.Now()) {
+func (e *ErrorTimeoutRetry) getError(t time.Time) error {
+	if e.isExpired(t) {
 		return nil
 	}
 	if e.retries < e.maxRetries {
@@ -60,17 +60,17 @@ func (e *ErrorTimeoutRetry) SetError(err error) error {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 
-	e.setError(err)
-	return e.GetError()
+	return e.setError(err)
 }
 
-func (e *ErrorTimeoutRetry) setError(err error) {
+func (e *ErrorTimeoutRetry) setError(err error) error {
 	now := time.Now()
-	if err == nil || e.timeout <= 0 || e.isExpired(now) {
+	if err == nil || e.isExpired(now) {
 		e.retries = 0
 	} else if e.err != nil {
 		e.retries++
 	}
 	e.err = err
 	e.time = now
+	return e.getError(now)
 }
