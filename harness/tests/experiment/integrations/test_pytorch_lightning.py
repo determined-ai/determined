@@ -77,7 +77,7 @@ class TestLightningAdapter:
             max_batches=2,
             min_validation_batches=1,
             checkpoint_dir=str(tmp_path),
-            tensorboard_path=tensorboard_path
+            tensorboard_path=tensorboard_path,
         )
         trial_controller.run()
 
@@ -88,7 +88,6 @@ class TestLightningAdapter:
                     assert self.last_lr > self.read_lr_value()
                 else:
                     assert self.last_lr == self.read_lr_value()
-
 
         tensorboard_path = tmp_path.joinpath("tensorboard")
 
@@ -102,7 +101,7 @@ class TestLightningAdapter:
             trial_seed=self.trial_seed,
             max_batches=2,
             min_validation_batches=1,
-            tensorboard_path=tensorboard_path
+            tensorboard_path=tensorboard_path,
         )
         trial_controller.run()
 
@@ -129,7 +128,7 @@ class TestLightningAdapter:
             min_validation_batches=steps[0],
             min_checkpoint_batches=steps[0],
             checkpoint_dir=checkpoint_dir,
-            tensorboard_path=tensorboard_path
+            tensorboard_path=tensorboard_path,
         )
 
         trial_controller_A.run()
@@ -177,7 +176,7 @@ class TestLightningAdapter:
             min_validation_batches=steps[0] + steps[1],
             min_checkpoint_batches=sys.maxsize,
             checkpoint_dir=checkpoint_dir,
-            tensorboard_path=tensorboard_path
+            tensorboard_path=tensorboard_path,
         )
         trial_controller_B.run()
 
@@ -367,7 +366,9 @@ def create_trial_and_trial_controller(
         trial_seed = random.randint(0, 1 << 31)
 
     checkpoint_dir = checkpoint_dir or "/tmp"
-    with det.core._dummy_init(checkpoint_storage=checkpoint_dir, tensorboard_path=tensorboard_path) as core_context:
+    with det.core._dummy_init(
+        checkpoint_storage=checkpoint_dir, tensorboard_path=tensorboard_path
+    ) as core_context:
         core_context.train._trial_id = "1"
         distributed_backend = det._DistributedBackend()
         if expose_gpus:
