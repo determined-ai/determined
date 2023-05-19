@@ -144,7 +144,7 @@ func getExperimentSizeFromUUID(ctx context.Context, t *testing.T, uuid string) i
 	return out.CheckpointSize
 }
 
-func TestCheckpointRemoveFilesPrefix(t *testing.T) {
+func TestCheckpointRemoveFilesPrefixAndEmpty(t *testing.T) {
 	api, _, ctx := setupAPITest(t, nil)
 	_, err := api.CheckpointsRemoveFiles(ctx, &apiv1.CheckpointsRemoveFilesRequest{
 		CheckpointUuids: []string{uuid.New().String()},
@@ -152,6 +152,13 @@ func TestCheckpointRemoveFilesPrefix(t *testing.T) {
 	})
 	require.Equal(t,
 		status.Errorf(codes.InvalidArgument, "glob '../../**' cannot contain '..'"), err)
+
+	_, err = api.CheckpointsRemoveFiles(ctx, &apiv1.CheckpointsRemoveFilesRequest{
+		CheckpointUuids: []string{uuid.New().String()},
+		CheckpointGlobs: []string{"o", ""},
+	})
+	require.Equal(t,
+		status.Errorf(codes.InvalidArgument, "cannot have empty string glob"), err)
 }
 
 func TestPatchCheckpoint(t *testing.T) {

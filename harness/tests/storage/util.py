@@ -251,6 +251,11 @@ def run_storage_lifecycle_test(
         finally:
             shutil.rmtree(path, ignore_errors=True)
 
+    # TODO add a case for metadata.json since this behaviour is kinda weird right now.
+    # not sure exactly ideal. Ideally just assume it is okay if it has it or not.
+    # Honestly this might be better for the backend to ignore when updating.
+    # Say we just remove it from the path and remove it from this?
+
 
 def run_tensorboard_fetcher_test(
     local_sync_dir: str,

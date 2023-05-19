@@ -294,6 +294,11 @@ func (a *apiServer) CheckpointsRemoveFiles(
 	}
 
 	for _, g := range req.CheckpointGlobs {
+		if len(g) == 0 {
+			// Avoid weirdness where someone passes in "" then we concat {uuid}/{glob}
+			// and we unexpectedly delete the whole checkpoint folder.
+			return nil, status.Errorf(codes.InvalidArgument, "cannot have empty string glob")
+		}
 		if strings.Contains(g, "..") {
 			return nil, status.Errorf(codes.InvalidArgument, "glob '%s' cannot contain '..'", g)
 		}
@@ -355,7 +360,7 @@ func (a *apiServer) DeleteCheckpoints(
 ) (*apiv1.DeleteCheckpointsResponse, error) {
 	if _, err := a.CheckpointsRemoveFiles(ctx, &apiv1.CheckpointsRemoveFilesRequest{
 		CheckpointUuids: req.CheckpointUuids,
-		CheckpointGlobs: []string{"**/*"},
+		CheckpointGlobs: []string{fullDeleteGlob},
 	}); err != nil {
 		return nil, err
 	}
