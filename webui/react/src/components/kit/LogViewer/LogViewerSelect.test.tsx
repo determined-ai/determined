@@ -2,7 +2,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
 
-import { generateAlphaNumeric, generateUUID } from 'shared/utils/string';
+import { generateAlphaNumeric, generateUUID } from 'components/kit/util';
 import { LogLevelFromApi } from 'types';
 
 import LogViewerSelect, { ARIA_LABEL_RESET, Filters, LABELS } from './LogViewerSelect';

@@ -4,10 +4,8 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import Input, { InputRef } from 'components/kit/Input';
 import Tooltip from 'components/kit/Tooltip';
+import { alphaNumericSorter, toHtmlId, truncate, ValueOf } from 'components/kit/util';
 import Link from 'components/Link';
-import { ValueOf } from 'shared/types';
-import { alphaNumericSorter } from 'shared/utils/sort';
-import { toHtmlId, truncate } from 'shared/utils/string';
 
 import css from './Tags.module.scss';
 export const TagAction = {

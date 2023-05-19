@@ -6,7 +6,7 @@ import { throttle } from 'throttle-debounce';
 import Button from 'components/kit/Button';
 import Input from 'components/kit/Input';
 import Select, { Option } from 'components/kit/Select';
-import { alphaNumericSorter } from 'shared/utils/sort';
+import { alphaNumericSorter } from 'components/kit/util';
 import { LogLevelFromApi } from 'types';
 
 interface Props {

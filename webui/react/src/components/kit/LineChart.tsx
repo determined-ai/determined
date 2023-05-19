@@ -3,6 +3,7 @@ import { FixedSizeGrid, GridChildComponentProps } from 'react-window';
 import uPlot, { AlignedData, Plugin } from 'uplot';
 
 import { XAxisDomain, XAxisFilter } from 'components/kit/LineChart/XAxisFilter';
+import { getCssVar, getTimeTickValues, glasbeyColor } from 'components/kit/util';
 import ScaleSelect from 'components/ScaleSelect';
 import { SyncProvider } from 'components/UPlot/SyncProvider';
 import { UPlotPoint } from 'components/UPlot/types';
@@ -11,10 +12,7 @@ import { closestPointPlugin } from 'components/UPlot/UPlotChart/closestPointPlug
 import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin';
 import useResize from 'hooks/useResize';
 import Spinner from 'shared/components/Spinner/Spinner';
-import { getCssVar } from 'shared/themes';
-import { glasbeyColor } from 'shared/utils/color';
 import { MetricType, Scale } from 'types';
-import { getTimeTickValues } from 'utils/chart';
 import { Loadable } from 'utils/loadable';
 
 import css from './LineChart.module.scss';

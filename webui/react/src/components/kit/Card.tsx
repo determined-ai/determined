@@ -3,8 +3,8 @@ import React, { Children, CSSProperties } from 'react';
 import { ConditionalWrapper } from 'components/ConditionalWrapper';
 import Grid, { GridMode } from 'components/Grid';
 import Icon from 'components/kit/Icon';
+import { isNumber } from 'components/kit/util';
 import Link from 'components/Link';
-import { isNumber } from 'shared/utils/data';
 
 import Button from './Button';
 import css from './Card.module.scss';
