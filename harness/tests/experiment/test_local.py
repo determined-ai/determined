@@ -33,7 +33,6 @@ def test_test_one_batch(monkeypatch: monkeypatch.MonkeyPatch, tmp_path: pathlib.
                     "dataloader_type": "determined",
                 },
                 "searcher": {"metric": "loss"},
-                "checkpoint_storage": {"type": "shared_fs", "host_path": str(tmp_path)},
             },
         )
 
