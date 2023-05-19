@@ -366,13 +366,11 @@ export const useTrialCollections = (
             ]}
           </Select>
           <Button
-            ghost={!hasUnsavedFilters}
             icon={<Icon name="settings" showTooltip title="View Active Filters" />}
             onClick={viewFilters}
           />
           <Button
             disabled={!userOwnsCollection || !collectionIsActive}
-            ghost={!hasUnsavedFilters}
             icon={
               <Icon
                 name="checkmark"
@@ -384,7 +382,6 @@ export const useTrialCollections = (
           />
           <Button
             disabled={!collectionIsActive}
-            ghost={!hasUnsavedFilters}
             icon={
               <Icon
                 name="reset"
@@ -395,7 +392,7 @@ export const useTrialCollections = (
             onClick={resetFiltersToCollection}
           />
           <Dropdown menu={menu} onClick={handleDropdown}>
-            <Button ghost icon={<Icon name="overflow-vertical" title="Action menu" />} />
+            <Button icon={<Icon name="overflow-vertical" title="Action menu" />} />
           </Dropdown>
           {viewFiltersContextHolder}
           {collectionContextHolder}

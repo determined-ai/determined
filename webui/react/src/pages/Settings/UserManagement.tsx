@@ -141,7 +141,7 @@ const UserActionDropdown = ({ fetchUsers, user, groups, userManagementEnabled }:
   return (
     <div className={dropdownCss.base}>
       <Dropdown menu={menuItems} placement="bottomRight" onClick={handleDropdown}>
-        <Button ghost icon={<Icon name="overflow-vertical" size="small" title="Action menu" />} />
+        <Button icon={<Icon name="overflow-vertical" size="small" title="Action menu" />} />
       </Dropdown>
       <ViewUserModal.Component user={user} viewOnly onClose={fetchUsers} />
       <EditUserModal.Component user={user} onClose={fetchUsers} />

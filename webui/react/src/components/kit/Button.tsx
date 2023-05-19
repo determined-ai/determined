@@ -11,34 +11,33 @@ interface ButtonProps {
   children?: ReactNode;
   danger?: boolean;
   disabled?: boolean;
-  ghost?: boolean;
+  form?: string;
   htmlType?: 'button' | 'submit' | 'reset';
   icon?: ReactNode;
+  column?: boolean;
   loading?: boolean | { delay?: number };
   onClick?: (event: MouseEvent) => void;
   ref?: React.Ref<HTMLElement>;
-  shape?: 'circle' | 'default' | 'round';
+  selected?: boolean;
   size?: 'large' | 'middle' | 'small';
-  type?: 'primary' | 'link' | 'text' | 'ghost' | 'default' | 'dashed';
+  type?: 'primary' | 'text' | 'default' | 'dashed';
   tooltip?: string;
 }
 
 const Button: React.FC<ButtonProps> = forwardRef(
-  (
-    { shape = 'default', size = 'middle', type = 'default', tooltip = '', ...props }: ButtonProps,
-    ref,
-  ) => {
+  ({ size = 'middle', tooltip = '', ...props }: ButtonProps, ref) => {
+    const classes = [css.base];
+    if (props.selected) classes.push(css.selected);
+    if (props.column) classes.push(css.column);
     return (
       <ConditionalWrapper
         condition={tooltip.length > 0}
         wrapper={(children) => <Tooltip content={tooltip}>{children}</Tooltip>}>
         <AntdButton
-          className={css.base}
+          className={classes.join(' ')}
           ref={ref}
-          shape={shape}
           size={size}
           tabIndex={props.disabled ? -1 : 0}
-          type={type}
           {...props}
         />
       </ConditionalWrapper>
