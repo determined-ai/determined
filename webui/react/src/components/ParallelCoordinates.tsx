@@ -26,15 +26,17 @@ const ParallelCoordinates: React.FC<Props> = ({
 
   useEffect(() => {
     if (!containerRef.current) return;
-
     chartRef.current = new Hermes(containerRef.current);
-    if (disableInteraction) chartRef.current?.disable();
 
     return () => {
       chartRef.current?.destroy();
       chartRef.current = undefined;
     };
-  }, [dimensions, disableInteraction]);
+  }, []);
+
+  useEffect(() => {
+    if (disableInteraction) chartRef.current?.disable();
+  }, [disableInteraction]);
 
   useEffect(() => {
     let redraw = true;
