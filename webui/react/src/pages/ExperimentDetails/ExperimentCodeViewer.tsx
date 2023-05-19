@@ -8,7 +8,10 @@ import { V1FileNode } from 'services/api-ts-sdk';
 import Spinner from 'shared/components/Spinner/Spinner';
 import { RawJson } from 'shared/types';
 import { ExperimentBase, TreeNode } from 'types';
+import { isSingleTrialExperiment } from 'utils/experiment';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
+
+import css from './ExperimentCodeViewer.module.scss';
 
 const CodeEditor = React.lazy(() => import('components/kit/CodeEditor'));
 
@@ -89,15 +92,22 @@ const ExperimentCodeViewer: React.FC<Props> = ({
     ...Loadable.getOrElse([], expFiles),
   ].filter((valid) => !!valid) as TreeNode[];
 
+  const cssClasses = [
+    css.codeContainer,
+    isSingleTrialExperiment(experiment) || css.multitrialContainer,
+  ];
+
   return (
     <React.Suspense fallback={<Spinner tip="Loading code viewer..." />}>
       <Spinner spinning={expFiles === NotLoaded} tip="Loading file tree...">
-        <CodeEditor
-          files={fileOpts}
-          readonly={true}
-          selectedFilePath={selectedFilePath}
-          onSelectFile={onSelectFile}
-        />
+        <div className={cssClasses.join(' ')}>
+          <CodeEditor
+            files={fileOpts}
+            readonly={true}
+            selectedFilePath={selectedFilePath}
+            onSelectFile={onSelectFile}
+          />
+        </div>
       </Spinner>
     </React.Suspense>
   );
