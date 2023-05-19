@@ -157,12 +157,18 @@ const UserManagement: React.FC = () => {
 
   const loadableUsers = useObservable(userStore.getUsers());
   const users = Loadable.getOrElse([], loadableUsers);
-  const canceler = useRef(new AbortController());
+
+  const filteredUsers = settings.name
+    ? users.filter((user) => {
+        return (user.displayName || user.username).includes(settings.name ?? '');
+      })
+    : users;
 
   const { rbacEnabled } = useObservable(determinedStore.info);
   const { canModifyUsers } = usePermissions();
   const info = useObservable(determinedStore.info);
 
+  const canceler = useRef(new AbortController());
   const fetchUsers = useCallback((): void => {
     if (!settings) return;
 
@@ -313,7 +319,7 @@ const UserManagement: React.FC = () => {
       <InteractiveTable<DetailedUser, UserManagementSettings>
         columns={columns}
         containerRef={pageRef}
-        dataSource={users}
+        dataSource={filteredUsers}
         interactiveColumns={false}
         loading={Loadable.isLoading(loadableUsers)}
         rowClassName={defaultRowClassName({ clickable: false })}
@@ -330,7 +336,7 @@ const UserManagement: React.FC = () => {
     ) : (
       <SkeletonTable columns={columns.length} />
     );
-  }, [users, loadableUsers, settings, columns, updateSettings]);
+  }, [filteredUsers, loadableUsers, settings, columns, updateSettings]);
 
   return (
     <Page bodyNoPadding containerRef={pageRef}>
