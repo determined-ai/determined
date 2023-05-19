@@ -20,6 +20,8 @@ export const commandToEventUrl = (command: Command | CommandTask): string => {
     case CommandType.TensorBoard:
       path = `/tensorboard/${command.id}/events?tail=1`;
       break;
+    default:
+      break;
   }
   if (path) path = serverAddress() + path;
   return path;
