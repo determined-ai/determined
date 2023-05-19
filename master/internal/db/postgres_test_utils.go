@@ -36,7 +36,7 @@ import (
 
 const (
 	// RootFromDB returns the relative path from db to root.
-	RootFromDB = "../../static/srv"
+	RootFromDB = "../../master/static/srv"
 	// MigrationsFromDB returns the relative path to migrations folder.
 	MigrationsFromDB      = "file://../../static/migrations"
 	defaultSearcherMetric = "okness"
