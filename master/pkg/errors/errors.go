@@ -38,6 +38,10 @@ func (e *ErrorTimeoutRetry) GetError() error {
 	e.mu.RLock()
 	defer e.mu.RUnlock()
 
+	return e.getError()
+}
+
+func (e *ErrorTimeoutRetry) getError() error {
 	if e.isExpired(time.Now()) {
 		return nil
 	}
@@ -54,7 +58,13 @@ func (e *ErrorTimeoutRetry) SetError(err error) error {
 		panic("cannot set error on nil ErrorTimeoutRetry")
 	}
 	e.mu.Lock()
+	defer e.mu.Unlock()
 
+	e.setError(err)
+	return e.GetError()
+}
+
+func (e *ErrorTimeoutRetry) setError(err error) {
 	now := time.Now()
 	if err == nil || e.timeout <= 0 || e.isExpired(now) {
 		e.retries = 0
@@ -63,7 +73,4 @@ func (e *ErrorTimeoutRetry) SetError(err error) error {
 	}
 	e.err = err
 	e.time = now
-
-	e.mu.Unlock()
-	return e.GetError()
 }

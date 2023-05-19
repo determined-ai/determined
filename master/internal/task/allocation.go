@@ -1057,6 +1057,7 @@ func (a *Allocation) markResourcesReleased(ctx *actor.Context) {
 	if err := a.db.DeleteAllocationSession(a.model.AllocationID); err != nil {
 		ctx.Log().WithError(err).Error("error deleting allocation session")
 	}
+	a.model.EndTime = ptrs.Ptr(time.Now().UTC())
 	if err := a.db.CompleteAllocation(&a.model); err != nil {
 		ctx.Log().WithError(err).Error("failed to mark allocation completed")
 	}
