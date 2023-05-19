@@ -182,27 +182,28 @@ class SharedFSStorageManager(storage.StorageManager):
         if not os.path.isdir(storage_dir):
             raise errors.CheckpointNotFound(f"Storage path is not a directory: {storage_dir}")
 
-        to_delete_paths = {}
+        # Optimize for the common case here. No need to iterate through files.
+        if "**/*" in globs:
+            util.rmtree_nfs_safe(storage_dir, ignore_errors=False)
+            return {}
+
+        to_delete_dirs = {}
+        to_delete_files = {}
         for file_glob in globs:
-            print(f"{storage_dir}/{file_glob}")
             for path in glob.glob(f"{storage_dir}/{file_glob}", recursive=True):
-                to_delete_paths[path] = True
-        # TODO early optimize -- TODO do files first so we don't remove a file then try to delete.
-        # TODO deny non empty globs...
+                if os.path.isfile(path):
+                    to_delete_files[path] = True
+                elif os.path.isdir(path):
+                    to_delete_dirs[path] = True
+                # TODO should we delete system links too?
 
-        print("DELETE PATHS", to_delete_paths, globs)  # This is actually correct.
-        # Can this fail us if we remove a parent directory and then a child one???
-        # Probaly -- maybe split into files then directories for saftey.
-        # Reverse is more efficient though.
-        for to_delete_path in to_delete_paths:
-            if os.path.isfile(to_delete_path):
-                os.remove(to_delete_path)  # OS SAFE?
-            elif os.path.isdir(to_delete_path):
-                util.rmtree_nfs_safe(to_delete_path, ignore_errors=False)
+        # Delete files first then delete paths.
+        for path in to_delete_files:
+            os.remove(path)  # TODO do we need an os.remove safe here?
+        for path in to_delete_dirs:
+            util.rmtree_nfs_safe(path, ignore_errors=False)
 
-        print("Resources hmmm", storage_dir)
         resources = self._list_directory(storage_dir)
-        print("What is resources?", resources)
 
         # TODO we upload this "metadata.json" file in checkpoints sometimes AFTER
         # we calculate resources so resources won't contain it.
