@@ -15,7 +15,7 @@ import UserBadge from 'components/UserBadge';
 import WorkspaceMemberAddModalComponent from 'components/WorkspaceMemberAddModal';
 import WorkspaceMemberRemoveComponent from 'components/WorkspaceMemberRemoveModal';
 import usePermissions from 'hooks/usePermissions';
-import { UpdateSettings, useSettings } from 'hooks/useSettings';
+import { useSettings } from 'hooks/useSettings';
 import { V1Group, V1Role, V1RoleWithAssignments } from 'services/api-ts-sdk';
 import { alphaNumericSorter } from 'shared/utils/sort';
 import determinedStore from 'stores/determinedInfo';
@@ -251,7 +251,7 @@ const WorkspaceMembers: React.FC<Props> = ({
         </Space>
       </div>
       {settings ? (
-        <InteractiveTable
+        <InteractiveTable<UserOrGroupWithRoleInfo, WorkspaceMembersSettings>
           columns={columns}
           containerRef={pageRef}
           dataSource={userOrGroupWithRoles}
@@ -263,7 +263,7 @@ const WorkspaceMembers: React.FC<Props> = ({
           settings={settings}
           showSorterTooltip={false}
           size="small"
-          updateSettings={updateSettings as UpdateSettings}
+          updateSettings={updateSettings}
         />
       ) : (
         <SkeletonTable columns={columns.length} />

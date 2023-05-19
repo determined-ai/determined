@@ -10,14 +10,11 @@ import { useModal } from 'components/kit/Modal';
 import Nameplate from 'components/kit/Nameplate';
 import Page from 'components/Page';
 import Section from 'components/Section';
-import InteractiveTable, {
-  InteractiveTableSettings,
-  onRightClickableCell,
-} from 'components/Table/InteractiveTable';
+import InteractiveTable, { onRightClickableCell } from 'components/Table/InteractiveTable';
 import SkeletonTable from 'components/Table/SkeletonTable';
 import { defaultRowClassName, getFullPaginationConfig } from 'components/Table/Table';
 import usePermissions from 'hooks/usePermissions';
-import { UpdateSettings, useSettings } from 'hooks/useSettings';
+import { useSettings } from 'hooks/useSettings';
 import { getGroup, getGroups, getUsers, updateGroup } from 'services/api';
 import { V1GroupDetails, V1GroupSearchResult, V1User } from 'services/api-ts-sdk';
 import dropdownCss from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
@@ -31,10 +28,7 @@ import handleError from 'utils/error';
 import { useObservable } from 'utils/observable';
 
 import css from './GroupManagement.module.scss';
-import settingsConfig, {
-  DEFAULT_COLUMN_WIDTHS,
-  GroupManagementSettings,
-} from './GroupManagement.settings';
+import settingsConfig, { DEFAULT_COLUMN_WIDTHS } from './GroupManagement.settings';
 
 interface DropdownProps {
   expanded: boolean;
@@ -104,7 +98,7 @@ const GroupManagement: React.FC = () => {
   const pageRef = useRef<HTMLElement>(null);
   const canceler = useRef(new AbortController());
 
-  const { settings, updateSettings } = useSettings<GroupManagementSettings>(settingsConfig);
+  const { settings, updateSettings } = useSettings(settingsConfig);
 
   const { canModifyGroups, canViewGroups } = usePermissions();
 
@@ -289,7 +283,7 @@ const GroupManagement: React.FC = () => {
 
   const table = useMemo(() => {
     return settings ? (
-      <InteractiveTable
+      <InteractiveTable<V1GroupSearchResult>
         columns={columns}
         containerRef={pageRef}
         dataSource={groups}
@@ -304,10 +298,10 @@ const GroupManagement: React.FC = () => {
         )}
         rowClassName={defaultRowClassName({ clickable: false })}
         rowKey={(r) => r.group.groupId || 0}
-        settings={settings as InteractiveTableSettings}
+        settings={settings}
         showSorterTooltip={false}
         size="small"
-        updateSettings={updateSettings as UpdateSettings}
+        updateSettings={updateSettings}
       />
     ) : (
       <SkeletonTable columns={columns.length} />
