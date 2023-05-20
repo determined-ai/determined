@@ -6,16 +6,14 @@ import os
 import pathlib
 import warnings
 
-from dataclasses import dataclass
-
 import torch
 import torch.distributed as dist
 
 from torch.utils.data import Dataset
-from typing import Any, Dict, Optional, Type
+from typing import Any, Dict, Optional, Set, Type
 
 import determined as det
-from determined import core
+from determined import core, pytorch
 from determined.common import set_logger
 from determined.pytorch import DataLoader
 from determined.tensorboard.util import get_rank_aware_path
@@ -26,14 +24,62 @@ DEFAULT_BATCH_SIZE = 1
 DEFAULT_CHECK_PREEMPT_INTERVAL = 100
 
 
-@dataclass
-class TorchBatchInitInfo:
-    rank: int
-    local_rank: int
-    size: int
-    num_agents: int
-    default_device: torch.device
-    tensorboard_path: str
+class TorchBatchProcessorContext:
+    def __init__(self, core_context: core.Context):
+        self._distributed = core_context.distributed
+        self._device = get_default_device(core_context)
+        self._tensorboard_path = core_context.train.get_tensorboard_path()
+        self._stop_requested = False
+
+    def to_device(self, data, warned_types: Optional[Set[Type]] = None) -> pytorch.TorchData:
+        """Map generated data to the device allocated by the Determined cluster.
+
+        All the data in the data loader and the models are automatically moved to the
+        allocated device. This method aims at providing a function for the data generated
+        on the fly.
+        """
+        return pytorch.to_device(data, self.device, warned_types)
+
+    def get_tensorboard_path(self) -> pathlib.Path:
+        """
+        Tensorboard files should be written to the path returned to be shown properly in the UI.
+        For example, the path should be passed to PyTorch profiler as shown below:
+
+        torch.profiler.profile(
+            activities=...,
+            schedule=...,
+            on_trace_ready=torch.profiler.tensorboard_trace_handler(<tensorboard_path>),
+        )
+
+        """
+        return self._tensorboard_path
+
+    def get_device(self):
+        """
+        Get default device associated with this worker
+        """
+        return self._device
+
+    def get_distributed_context(self):
+        return self._distributed
+
+    def set_stop_requested(self, stop_requested: bool) -> None:
+        """
+        Set a flag to request a trial stoppage. When this flag is set to True,
+        we finish the step, checkpoint, then exit.
+        """
+        if not isinstance(stop_requested, bool):
+            raise AssertionError("stop_requested must be a boolean")
+
+        if stop_requested:
+            logging.info(
+                "A run stoppage has requested. The run will be stopped "
+                "at the end of the current step."
+            )
+        self._stop_requested = stop_requested
+
+    def get_stop_requested(self) -> bool:
+        return self._stop_requested
 
 
 def get_default_device(core_context: core.Context) -> torch.device:
@@ -81,7 +127,7 @@ class TorchBatchProcessor(metaclass=abc.ABCMeta):
     """
 
     @abc.abstractmethod
-    def __init__(self, init_info: TorchBatchInitInfo) -> None:
+    def __init__(self, context: TorchBatchProcessorContext) -> None:
         pass
 
     @abc.abstractmethod
@@ -179,9 +225,6 @@ def torch_batch_process(
     with initialize_default_inference_context() as core_context:
         _validate_dataloader_kwargs(dataloader_kwargs, batch_size)
 
-        # This is to guarantee we check preempt at least every DEFAULT_CHECK_PREEMPT_INTERVAL
-        check_preempt_interval = min(checkpoint_interval, DEFAULT_CHECK_PREEMPT_INTERVAL)
-
         if batch_size is None:
             if "batch_size" in dataloader_kwargs:
                 # remove batch_size from dataloader_kwargs
@@ -200,15 +243,10 @@ def torch_batch_process(
         latest_checkpoint = info.latest_checkpoint
         skip = 0
 
+        batch_processor_context = TorchBatchProcessorContext(core_context)
+
         per_batch_processor = batch_processor_cls(
-            init_info=TorchBatchInitInfo(
-                rank=rank,
-                local_rank=core_context.distributed.get_local_rank(),
-                size=core_context.distributed.get_size(),
-                num_agents=core_context.distributed.get_num_agents(),
-                default_device=get_default_device(core_context),
-                tensorboard_path=core_context.train.get_tensorboard_path(),
-            ),
+            context=batch_processor_context,
         )
 
         # Check if previous checkpoint exists
@@ -239,8 +277,6 @@ def torch_batch_process(
         max_batch = math.ceil(dataset_len / batch_size / total_worker)
         iterate_length = _validate_iterate_length(iterate_length, max_batch)
 
-        last_checkpoint_idx = -1
-
         for batch_idx in range(skip, iterate_length):
             logging.info(f"Currently processing batch {batch_idx}")
             X = next(dataloader_iterator, None)
@@ -249,18 +285,18 @@ def torch_batch_process(
 
             if (batch_idx + 1) % checkpoint_interval == 0:
                 _synchronize_and_checkpoint(core_context, batch_idx, rank)
-                last_checkpoint_idx = batch_idx
+
                 # Report progress can only be done accurately with synchronization
                 core_context._tensorboard_manager.sync(mangler=get_rank_aware_path)
                 if rank == 0:
                     _report_progress_to_master(
                         dummy_searcher_op, batch_idx, total_worker, batch_size, dataset_len
                     )
-
-            if (batch_idx + 1) % check_preempt_interval == 0:
-                if core_context.preempt.should_preempt():
-                    if last_checkpoint_idx != batch_idx:
-                        _synchronize_and_checkpoint(core_context, batch_idx, rank)
+                # Check preemption
+                if (
+                    batch_processor_context.get_stop_requested()
+                    or core_context.preempt.should_preempt()
+                ):
                     return
 
         _synchronize_and_checkpoint(core_context, batch_idx, rank)

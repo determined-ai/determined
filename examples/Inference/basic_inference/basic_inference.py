@@ -20,21 +20,22 @@ from model import get_model
 
 
 class MyProcessor(TorchBatchProcessor):
-    def __init__(self, init_info):
+    def __init__(self, context):
         self.model = get_model()
-        self.device = init_info.default_device
+        self.device = context.get_device()
         self.model.eval()
         self.model.to(self.device)
         self.profiler = torch.profiler.profile(
             activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA],
             schedule=torch.profiler.schedule(wait=1, warmup=1, active=2, repeat=2),
-            on_trace_ready=torch.profiler.tensorboard_trace_handler(init_info.tensorboard_path),
+            on_trace_ready=torch.profiler.tensorboard_trace_handler(context.get_tensorboard_path()),
         )
-        self.worker_rank = init_info.rank
+        self.worker_rank = context.get_distributed_context().get_rank()
 
     def process_batch(self, batch, batch_idx) -> None:
         model_input = batch[0]
         model_input = model_input.to(self.device)
+
         with torch.no_grad():
             with self.profiler as p:
                 pred = self.model(model_input)
