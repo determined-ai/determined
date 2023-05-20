@@ -16,7 +16,7 @@ STATE_FILE = "state"
 @dataclasses.dataclass
 class SearcherState:
     """
-    Mutable Searcher state.
+    Custom Searcher State.
 
     Search runners maintain this state that can be used by a ``SearchMethod``
     to inform event handling. In other words, this state can be taken into account
@@ -73,10 +73,11 @@ class ExitedReason(Enum):
     """
     The reason why a trial exitted early
 
-    Can be one of:
-    `ERRORED`: The Trial encountered an exception
-    `USER_CANCELLED`: The Trial was manually closed by the user
-    `INVALID_HP`: The hyperparameters the trial was created with were invalid
+    Currently, we support the following reasons:
+
+    - `ERRORED`: The Trial encountered an exception
+    - `USER_CANCELLED`: The Trial was manually closed by the user
+    - `INVALID_HP`: The hyperparameters the trial was created with were invalid
     """
 
     ERRORED = "ERRORED"
@@ -145,7 +146,7 @@ class Close(Operation):
 
 class Progress(Operation):
     """
-    Operation for signalling the relative progress of the hyperparameter search from 0.0 to 1.0
+    Operation for signalling the relative progress of the hyperparameter search between 0 and 1
     """
 
     def __init__(self, progress: float):
@@ -203,8 +204,21 @@ class SearchMethod:
     The implementation of a custom hyperparameter tuning algorithm.
 
     To implement your specific hyperparameter tuning approach, subclass ``SearchMethod``
-    overriding the event handler methods. Each event handler, except ``progress`` returns a list of
-    operations (``List[Operation]``) that will be submitted to master for processing.
+    overriding the event handler methods.
+
+    Each event handler, except :meth:`progress() <determined.searcher.SearchMethod.progress>`
+    returns a list of operations (``List[Operation]``) that will be submitted to master for
+    processing.
+
+    Currently, we support the following :class:`~Operation`:
+
+    - :class:`~Create` - starts a new trial with a unique trial id and a set of hyperparameter
+      values.
+    - :class:`~ValidateAfter` - sets number of steps (i.e., batches or epochs) after which a
+      validation is run for a trial with a given id.
+    - :class:`~Progress` - updates the progress of the multi-trial experiment to the master.
+    - :class:`~Close` - closes a trial with a given id.
+    - :class:`~Shutdown` - closes the experiment.
 
     .. note::
 
@@ -214,16 +228,13 @@ class SearchMethod:
     @abstractmethod
     def initial_operations(self, searcher_state: SearcherState) -> List[Operation]:
         """
-        Returns a set of initial operations that the searcher will perform.
+        Returns a list of initial operations that the custom hyperparameter search should
+        perform. This is called by Custom Search :class:`determined.searcher.SearchRunner`
+        to initialize the trials
 
-        Currently, we support the following operations:
+        Args:
+            searcher_state(:class:`~SearcherState`): Read-only current searcher state
 
-        - Create - starts a new trial with a unique trial id and a set of hyperparameter
-          values,
-        - ValidateAfter - sets number of steps (i.e., batches or epochs) after which a validation
-          is run for a trial with a given id,
-        - Close - closes a trial with a given id,
-        - Shutdown - closes the experiment.
         """
         pass
 

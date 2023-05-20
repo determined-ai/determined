@@ -94,9 +94,9 @@ look like the following ``run_local_searcher.py``:
 
 To start the custom search method locally, you can use the following CLI command:
 
-.. code:: python
+.. code:: bash
 
-   python run_local_searcher.py
+   $ python run_local_searcher.py
 
 ****************************************
  Run Hyperparameter Search on a Cluster
@@ -128,9 +128,9 @@ A script to run your custom search method on a Determined cluster may look like 
 To start the custom search method on a cluster, you need to submit it to the master as a
 single-trial experiment. To this end, you can use the following CLI command:
 
-.. code:: python
+.. code:: bash
 
-   det e create searcher_config.yaml context_dir
+   $ det e create searcher_config.yaml context_dir
 
 The custom search method runs on a Determined cluster as a single trial experiment. Configuration
 for the search method experiment is specified in the ``searcher_config.yaml`` and may look like
