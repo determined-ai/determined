@@ -69,9 +69,9 @@ ds_config = {
 
 
 class MyProcessor(batch.TorchBatchProcessor):
-    def __init__(self, init_info):
-        device = init_info.default_device
-        tensorboard_path = init_info.tensorboard_path
+    def __init__(self, context):
+        device = context.get_device()
+        tensorboard_path = context.get_tensorboard_path()
 
         with deepspeed.zero.Init():
             model = get_model()
@@ -86,7 +86,7 @@ class MyProcessor(batch.TorchBatchProcessor):
             schedule=torch.profiler.schedule(wait=1, warmup=1, active=2, repeat=2),
             on_trace_ready=torch.profiler.tensorboard_trace_handler(tensorboard_path),
         )
-        self.worker_rank = init_info.rank
+        self.worker_rank = context.get_distributed_context().get_rank()
 
     def process_batch(self, batch, batch_idx) -> None:
         model_input = batch[0]
@@ -115,7 +115,9 @@ def main():
             root="/data", train=False, download=True, transform=transform
         )
 
-    batch.torch_batch_process(MyProcessor, inference_data, batch_size=64, dataloader_drop_last=True)
+    batch.torch_batch_process(
+        MyProcessor, inference_data, batch_size=64, dataloader_kwargs={"drop_last": True}
+    )
 
 
 if __name__ == "__main__":
