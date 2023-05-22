@@ -32,6 +32,7 @@ export interface SelectProps<T extends SelectValue = SelectValue> {
   options?: AntdSelectProps['options'];
   placeholder?: string;
   ref?: React.Ref<RefSelectProps>;
+  dropdownMatchSelectWidth?: boolean | number;
   searchable?: boolean;
   value?: T;
   width?: React.CSSProperties['width'];
@@ -63,6 +64,7 @@ const Select: React.FC<React.PropsWithChildren<SelectProps>> = forwardRef(functi
     disabled,
     disableTags = false,
     searchable = true,
+    dropdownMatchSelectWidth = true,
     filterOption,
     label,
     loading,
@@ -112,7 +114,7 @@ const Select: React.FC<React.PropsWithChildren<SelectProps>> = forwardRef(functi
       {label && <Label type={LabelTypes.TextOnly}>{label}</Label>}
       <AntdSelect
         disabled={disabled || loading}
-        dropdownMatchSelectWidth
+        dropdownMatchSelectWidth={dropdownMatchSelectWidth}
         filterOption={filterOption ?? (searchable ? handleFilter : true)}
         maxTagCount={maxTagCount}
         maxTagPlaceholder={maxTagPlaceholder}

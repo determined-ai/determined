@@ -1,15 +1,17 @@
 import type { TabsProps } from 'antd';
+import { string } from 'io-ts';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import Button from 'components/kit/Button';
+import Notes from 'components/kit/Notes';
 import Pivot from 'components/kit/Pivot';
-import NotesCard from 'components/NotesCard';
 import TrialLogPreview from 'components/TrialLogPreview';
 import { terminalRunStates } from 'constants/states';
 import useFeature from 'hooks/useFeature';
 import useModalHyperparameterSearch from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
 import usePermissions from 'hooks/usePermissions';
+import { SettingsConfig, useSettings } from 'hooks/useSettings';
 import F_TrialDetailsOverview from 'pages/TrialDetails/F_TrialDetailsOverview';
 import { paths } from 'routes/utils';
 import { getExpTrials, getTrialDetails, patchExperiment } from 'services/api';
@@ -19,7 +21,7 @@ import usePolling from 'shared/hooks/usePolling';
 import usePrevious from 'shared/hooks/usePrevious';
 import { ValueOf } from 'shared/types';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
-import { ExperimentBase, TrialDetails, TrialItem } from 'types';
+import { ExperimentBase, Note, TrialDetails, TrialItem } from 'types';
 import handleError from 'utils/error';
 
 import TrialDetailsHyperparameters from '../TrialDetails/TrialDetailsHyperparameters';
@@ -28,8 +30,7 @@ import TrialDetailsOverview from '../TrialDetails/TrialDetailsOverview';
 import TrialDetailsProfiles from '../TrialDetails/TrialDetailsProfiles';
 
 import ExperimentCheckpoints from './ExperimentCheckpoints';
-
-const CodeViewer = React.lazy(() => import('./CodeViewer/CodeViewer'));
+import ExperimentCodeViewer from './ExperimentCodeViewer';
 
 const TabType = {
   Checkpoints: 'checkpoints',
@@ -84,6 +85,26 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
   const waitingForTrials = !trialId && !wontHaveTrials;
 
   const basePath = paths.experimentDetails(experiment.id);
+
+  const configForExperiment = (experimentId: number): SettingsConfig<{ filePath: string }> => ({
+    settings: {
+      filePath: {
+        defaultValue: '',
+        storageKey: 'filePath',
+        type: string,
+      },
+    },
+    storagePath: `selected-file-${experimentId}`,
+  });
+  const { settings, updateSettings } = useSettings<{ filePath: string }>(
+    configForExperiment(experiment.id),
+  );
+  const handleSelectFile = useCallback(
+    (filePath: string) => {
+      updateSettings({ filePath });
+    },
+    [updateSettings],
+  );
 
   const fetchFirstTrialId = useCallback(async () => {
     try {
@@ -182,7 +203,8 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
   }, [fetchTrialDetails, prevTrialId, trialId]);
 
   const handleNotesUpdate = useCallback(
-    async (editedNotes: string) => {
+    async (notes: Note) => {
+      const editedNotes = notes.contents;
       try {
         await patchExperiment({ body: { notes: editedNotes }, experimentId: experiment.id });
         await fetchExperimentDetails();
@@ -244,13 +266,11 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
       });
       items.push({
         children: (
-          <React.Suspense fallback={<Spinner tip="Loading code viewer..." />}>
-            <CodeViewer
-              experimentId={experiment.id}
-              runtimeConfig={experiment.configRaw}
-              submittedConfig={experiment.originalConfig}
-            />
-          </React.Suspense>
+          <ExperimentCodeViewer
+            experiment={experiment}
+            selectedFilePath={settings.filePath}
+            onSelectFile={handleSelectFile}
+          />
         ),
         key: TabType.Code,
         label: 'Code',
@@ -259,10 +279,10 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
 
     items.push({
       children: (
-        <NotesCard
+        <Notes
           disabled={!editableNotes}
-          notes={experiment.notes ?? ''}
-          style={{ border: 0 }}
+          disableTitle
+          notes={{ contents: experiment.notes ?? '', name: 'Notes' }}
           onSave={handleNotesUpdate}
         />
       ),
@@ -295,7 +315,9 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
     editableNotes,
     experiment,
     handleNotesUpdate,
+    handleSelectFile,
     pageRef,
+    settings.filePath,
     showExperimentArtifacts,
     trialDetails,
     waitingForTrials,

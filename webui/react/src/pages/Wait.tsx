@@ -28,14 +28,13 @@ const Wait: React.FC = () => {
   const [searchParams] = useSearchParams();
   const { taskType } = useParams<Params>();
   const [waitStatus, setWaitStatus] = useState<WaitStatus>();
-  const eventUrl = searchParams.get('eventUrl');
   const serviceAddr = searchParams.get('serviceAddr');
 
   const capitalizedTaskType = capitalize(taskType ?? '');
   const isLoading = !waitStatus || !terminalCommandStates.has(waitStatus.state);
 
   let message = `Waiting for ${capitalizedTaskType} ...`;
-  if (!eventUrl || !serviceAddr) {
+  if (!serviceAddr) {
     message = 'Missing required parameters.';
   } else if (waitStatus && terminalCommandStates.has(waitStatus.state)) {
     message = `${capitalizedTaskType} has been terminated.`;
@@ -62,7 +61,7 @@ const Wait: React.FC = () => {
   };
 
   useEffect(() => {
-    if (!eventUrl || !serviceAddr) return;
+    if (!serviceAddr) return;
     const taskId = (serviceAddr.match(/[0-f-]+/) || ' ')[0];
     const ival = setInterval(async () => {
       try {
@@ -80,12 +79,13 @@ const Wait: React.FC = () => {
           clearInterval(ival);
           window.location.assign(serverAddress(serviceAddr));
         }
+        // TODO: use task.endTime to determine if the task is terminated.
         setWaitStatus(lastRun);
       } catch (e) {
         handleTaskError(e as Error);
       }
     }, 1000);
-  }, [eventUrl, serviceAddr]);
+  }, [serviceAddr]);
 
   return (
     <PageMessage title={capitalizedTaskType}>

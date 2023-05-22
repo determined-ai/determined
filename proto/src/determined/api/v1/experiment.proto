@@ -510,6 +510,8 @@ message CreateExperimentRequest {
   optional string git_committer = 10;
   // Git commit date at submission time.
   google.protobuf.Timestamp git_commit_date = 11;
+  // Unmanaged experiments are detached.
+  optional bool unmanaged = 40;
 }
 
 // Response to CreateExperimentRequest.
@@ -525,22 +527,18 @@ message CreateExperimentResponse {
   repeated LaunchWarning warnings = 3;
 }
 
-// Request for the set of metrics recorded by an experiment.
-message MetricNamesRequest {
-  // The id of the experiment.
-  int32 experiment_id = 1
-      [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
-        required:
-          ["experiment_id"];
-      }];
+// Request for the set of metrics recorded by multiple experiments.
+message ExpMetricNamesRequest {
+  // The ids for the experiments.
+  repeated int32 ids = 1;
   // Seconds to wait when polling for updates.
   int32 period_seconds = 2;
 }
 
-// Response to MetricNamesRequest.
-message MetricNamesResponse {
-  // The name of the searcher metric.
-  string searcher_metric = 1;
+// Response to ExpMetricNamesRequest.
+message ExpMetricNamesResponse {
+  // The names of the searcher metrics.
+  repeated string searcher_metrics = 1;
   // List of training metric names.
   repeated string training_metrics = 2;
   // List of validation metric names.

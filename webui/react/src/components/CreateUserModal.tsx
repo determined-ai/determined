@@ -7,7 +7,6 @@ import Input from 'components/kit/Input';
 import { Modal } from 'components/kit/Modal';
 import Link from 'components/Link';
 import useAuthCheck from 'hooks/useAuthCheck';
-import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import {
@@ -19,6 +18,7 @@ import {
 } from 'services/api';
 import Spinner from 'shared/components/Spinner';
 import { ErrorType } from 'shared/utils/error';
+import determinedStore from 'stores/determinedInfo';
 import roleStore from 'stores/roles';
 import userStore from 'stores/users';
 import { DetailedUser, UserRole } from 'types';
@@ -59,7 +59,7 @@ interface FormInputs {
 
 const CreateUserModalComponent: React.FC<Props> = ({ onClose, user, viewOnly }: Props) => {
   const [form] = Form.useForm<FormInputs>();
-  const rbacEnabled = useFeature().isOn('rbac');
+  const { rbacEnabled } = useObservable(determinedStore.info);
   // Null means the roles have not yet loaded
   const [userRoles, setUserRoles] = useState<UserRole[] | null>(null);
   const { canAssignRoles, canModifyPermissions } = usePermissions();

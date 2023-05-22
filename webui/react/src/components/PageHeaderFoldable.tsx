@@ -81,7 +81,6 @@ const PageHeaderFoldable: React.FC<Props> = ({ foldableContent, leftContent, opt
               <div className={css.optionsMainButton} key={option.key}>
                 <Button
                   disabled={option.disabled || !option.onClick}
-                  ghost
                   icon={option?.icon}
                   key={option.key}
                   loading={option.isLoading}
@@ -94,7 +93,7 @@ const PageHeaderFoldable: React.FC<Props> = ({ foldableContent, leftContent, opt
           {menu.length !== 0 && (
             <Dropdown menu={menu} placement="bottomRight" onClick={handleDropdown}>
               <div className={dropdownClasses.join(' ')}>
-                <Button ghost icon={<Icon name="overflow-vertical" title="Action menu" />} />
+                <Button icon={<Icon name="overflow-vertical" title="Action menu" />} />
               </div>
             </Dropdown>
           )}

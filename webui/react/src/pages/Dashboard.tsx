@@ -32,6 +32,7 @@ import usePolling from 'shared/hooks/usePolling';
 import { ErrorType } from 'shared/utils/error';
 import { dateTimeStringSorter } from 'shared/utils/sort';
 import userStore from 'stores/users';
+import workspaceStore from 'stores/workspaces';
 import { CommandTask, DetailedUser, ExperimentItem, Project } from 'types';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
@@ -52,6 +53,7 @@ const Dashboard: React.FC = () => {
   const [submissionsLoading, setSubmissionsLoading] = useState<boolean>(true);
   const [projectsLoading, setProjectsLoading] = useState<boolean>(true);
   const currentUser = Loadable.getOrElse(undefined, useObservable(userStore.currentUser));
+  const workspaces = Loadable.getOrElse([], useObservable(workspaceStore.workspaces));
   const { canCreateNSC } = usePermissions();
   type Submission = ExperimentItem & CommandTask;
 
@@ -239,7 +241,19 @@ const Dashboard: React.FC = () => {
               {
                 dataIndex: 'projectId',
                 render: (projectId, row) => {
-                  if (row.workspaceId && row.projectId !== 1) {
+                  if (row.workspaceId && !row.projectId) {
+                    // Tasks
+                    return (
+                      <Breadcrumb>
+                        <Breadcrumb.Item>
+                          <Link path={paths.workspaceDetails(row.workspaceId)}>
+                            {workspaces.find((w) => w.id === row.workspaceId)?.name ||
+                              String(row.workspaceId)}
+                          </Link>
+                        </Breadcrumb.Item>
+                      </Breadcrumb>
+                    );
+                  } else if (row.workspaceId && row.projectId !== 1) {
                     return (
                       <Breadcrumb>
                         <Breadcrumb.Item>

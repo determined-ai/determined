@@ -133,7 +133,7 @@ func TestCheckpointMetadata(t *testing.T) {
 			ckpt := model.CheckpointV2{
 				UUID:         ckptUUID,
 				TaskID:       tr.TaskID,
-				AllocationID: a.AllocationID,
+				AllocationID: &a.AllocationID,
 				ReportTime:   time.Now().UTC(),
 				State:        model.CompletedState,
 				Resources: map[string]int64{
@@ -176,7 +176,7 @@ func TestCheckpointMetadata(t *testing.T) {
 			) {
 				conv := protoconverter.ProtoConverter{}
 				require.Equal(t, expected.TaskID, model.TaskID(actual.TaskId))
-				require.Equal(t, expected.AllocationID, model.AllocationID(actual.AllocationId))
+				require.Equal(t, *expected.AllocationID, model.AllocationID(*actual.AllocationId))
 				require.NoError(t, conv.Error())
 				require.Equal(t, expected.UUID, conv.ToUUID(actual.Uuid))
 				require.Equal(t, expected.ReportTime.Truncate(time.Millisecond),
@@ -226,7 +226,7 @@ func TestMetricNames(t *testing.T) {
 	db := MustResolveTestPostgres(t)
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 
-	actualTrain, actualVal, err := MetricNames(ctx, -1)
+	actualTrain, actualVal, err := MetricNames(ctx, []int{-1})
 	require.NoError(t, err)
 	require.Len(t, actualTrain, 0)
 	require.Len(t, actualVal, 0)
@@ -239,7 +239,7 @@ func TestMetricNames(t *testing.T) {
 	trial2 := RequireMockTrial(t, db, exp).ID
 	addMetrics(ctx, t, db, trial2, `[{"b":1}, {"d":2}]`, `[{"f":"test"}]`, false)
 
-	actualTrain, actualVal, err = MetricNames(ctx, exp.ID)
+	actualTrain, actualVal, err = MetricNames(ctx, []int{exp.ID})
 	require.NoError(t, err)
 	require.Equal(t, []string{"a", "b", "d"}, actualTrain)
 	require.Equal(t, []string{"b", "c", "f"}, actualVal)
@@ -247,7 +247,7 @@ func TestMetricNames(t *testing.T) {
 	addMetricCustomTime(ctx, t, trial2, time.Now())
 	runSummaryMigration(t)
 
-	actualTrain, actualVal, err = MetricNames(ctx, exp.ID)
+	actualTrain, actualVal, err = MetricNames(ctx, []int{exp.ID})
 	require.NoError(t, err)
 	require.Equal(t, []string{"a", "b", "d"}, actualTrain)
 	require.Equal(t, []string{"b", "c", "f", "val_loss"}, actualVal)

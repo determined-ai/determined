@@ -1,3 +1,6 @@
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const path = require('path');
+
 module.exports = {
   env: {
     browser: true,
@@ -16,6 +19,19 @@ module.exports = {
     Atomics: 'readonly',
     SharedArrayBuffer: 'readonly',
   },
+  overrides: [
+    {
+      files: ['**/*.ts', '**/*.tsx'],
+      parserOptions: {
+        project: true,
+        tsconfigRootDir: path.resolve(__dirname, '../../../'),
+      },
+      rules: {
+        '@typescript-eslint/switch-exhaustiveness-check': 'error',
+        'no-fallthrough': 'off',
+      },
+    },
+  ],
   parser: '@typescript-eslint/parser',
   parserOptions: {
     ecmaFeatures: { jsx: true },

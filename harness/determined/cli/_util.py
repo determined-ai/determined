@@ -5,6 +5,7 @@ from typing import Any, Callable, Dict, List, Sequence
 
 import termcolor
 
+from determined.cli import errors, render
 from determined.common import api, declarative_argparse, util
 from determined.common.api import authentication, bindings, certs
 from determined.experimental import client
@@ -118,3 +119,16 @@ def require_feature_flag(feature_flag: str, error_message: str) -> Callable[...,
 def print_warnings(warnings: Sequence[bindings.v1LaunchWarning]) -> None:
     for warning in warnings:
         print(termcolor.colored(api.WARNING_MESSAGE_MAP[warning], "yellow"), file=sys.stderr)
+
+
+def wait_ntsc_ready(session: api.Session, ntsc_type: api.NTSC_Kind, eid: str) -> None:
+    """
+    Use to wait for a notebook, tensorboard, or shell command to become ready.
+    """
+    name = ntsc_type.value
+    loading_animator = render.Animator(f"Waiting for {name} to become ready")
+    err_msg = api.task_is_ready(session, eid, loading_animator.next)
+    msg = f"{name} (id: {eid}) is ready." if not err_msg else f"Waiting stopped: {err_msg}"
+    loading_animator.clear(msg)
+    if err_msg:
+        raise errors.CliError(err_msg)

@@ -7,7 +7,6 @@ import Form from 'components/kit/Form';
 import Input from 'components/kit/Input';
 import { Modal } from 'components/kit/Modal';
 import Link from 'components/Link';
-import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import {
@@ -22,6 +21,7 @@ import { V1GroupDetails, V1GroupSearchResult } from 'services/api-ts-sdk';
 import Spinner from 'shared/components/Spinner';
 import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
+import determinedStore from 'stores/determinedInfo';
 import roleStore from 'stores/roles';
 import { DetailedUser, UserRole } from 'types';
 import { message } from 'utils/dialogApi';
@@ -50,7 +50,7 @@ interface Props {
 
 const CreateGroupModalComponent: React.FC<Props> = ({ onClose, users, group }: Props) => {
   const [form] = Form.useForm();
-  const rbacEnabled = useFeature().isOn('rbac');
+  const { rbacEnabled } = useObservable(determinedStore.info);
   const { canModifyPermissions } = usePermissions();
   const [groupRoles, setGroupRoles] = useState<UserRole[]>([]);
   const [groupDetail, setGroupDetail] = useState<V1GroupDetails>();

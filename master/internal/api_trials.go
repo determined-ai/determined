@@ -67,7 +67,7 @@ func (a *apiServer) canGetTrialsExperimentAndCheckCanDoAction(ctx context.Contex
 	}
 
 	trialNotFound := status.Errorf(codes.NotFound, "trial %d not found", trialID)
-	exp, err := a.m.db.ExperimentByTrialID(trialID)
+	exp, err := db.ExperimentByTrialID(ctx, trialID)
 	if errors.Is(err, db.ErrNotFound) {
 		return trialNotFound
 	} else if err != nil {
@@ -674,7 +674,7 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 	}
 
 	if len(metricNames) > 0 && len(metricIds) > 0 {
-		return nil, fmt.Errorf(`error fetching time series of metrics cannot specify 
+		return nil, fmt.Errorf(`error fetching time series of metrics cannot specify
 		both metric ids and metric names`)
 	}
 
@@ -1449,7 +1449,7 @@ func checkpointV2FromProtoWithDefaults(p *checkpointv1.Checkpoint) (*model.Check
 	c := &model.CheckpointV2{
 		UUID:         conv.ToUUID(p.Uuid),
 		TaskID:       model.TaskID(p.TaskId),
-		AllocationID: model.AllocationID(p.AllocationId),
+		AllocationID: model.NewAllocationID(p.AllocationId),
 		ReportTime:   p.ReportTime.AsTime(),
 		State:        conv.ToCheckpointState(p.State),
 		Resources:    p.Resources,

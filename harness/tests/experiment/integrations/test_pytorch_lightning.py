@@ -7,6 +7,7 @@ import typing
 from typing import Any, Dict
 
 import pytest
+import torch
 
 import determined as det
 from determined import gpu, pytorch
@@ -203,7 +204,7 @@ class TestLightningAdapter:
             min_validation_batches=steps[0],
             min_checkpoint_batches=steps[0],
             checkpoint_dir=checkpoint_dir,
-            expose_gpus=True,
+            expose_gpus=expose_gpus,
         )
 
         trial_controller_A.run()
@@ -228,6 +229,7 @@ class TestLightningAdapter:
 
         assert len(os.listdir(checkpoint_dir)) == 2, "trial did not create a checkpoint"
 
+    @pytest.mark.skipif(not torch.cuda.is_available(), reason="no gpu available")
     @pytest.mark.gpu
     @pytest.mark.parametrize("api_style", ["apex", "auto"])
     def test_pl_const_with_amp(self, api_style: str, tmp_path: pathlib.Path) -> None:
@@ -260,6 +262,7 @@ class TestLightningAdapter:
             steps=(1, 1),
         )
 
+    @pytest.mark.skipif(not torch.cuda.is_available(), reason="no gpu available")
     @pytest.mark.gpu
     def test_pl_mnist_gan(self, tmp_path: pathlib.Path) -> None:
         checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
@@ -288,6 +291,7 @@ class TestLightningAdapter:
             steps=(1, 1),
         )
 
+    @pytest.mark.skipif(not torch.cuda.is_available(), reason="no gpu available")
     @pytest.mark.gpu
     def test_pl_mnist(self, tmp_path: pathlib.Path) -> None:
         checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
@@ -326,7 +330,7 @@ def create_trial_and_trial_controller(
     checkpoint_dir: typing.Optional[str] = None,
     latest_checkpoint: typing.Optional[str] = None,
     steps_completed: int = 0,
-    expose_gpus: bool = False,
+    expose_gpus: bool = True,
     max_batches: int = 100,
     min_checkpoint_batches: int = sys.maxsize,
     min_validation_batches: int = sys.maxsize,

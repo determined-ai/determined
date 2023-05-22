@@ -381,6 +381,25 @@ export interface RuntimeStreamError {
 /**
  * 
  * @export
+ * @interface StreamResultOfV1ExpMetricNamesResponse
+ */
+export interface StreamResultOfV1ExpMetricNamesResponse {
+    /**
+     * 
+     * @type {V1ExpMetricNamesResponse}
+     * @memberof StreamResultOfV1ExpMetricNamesResponse
+     */
+    result?: V1ExpMetricNamesResponse;
+    /**
+     * 
+     * @type {RuntimeStreamError}
+     * @memberof StreamResultOfV1ExpMetricNamesResponse
+     */
+    error?: RuntimeStreamError;
+}
+/**
+ * 
+ * @export
  * @interface StreamResultOfV1GetTrainingMetricsResponse
  */
 export interface StreamResultOfV1GetTrainingMetricsResponse {
@@ -489,25 +508,6 @@ export interface StreamResultOfV1MetricBatchesResponse {
      * 
      * @type {RuntimeStreamError}
      * @memberof StreamResultOfV1MetricBatchesResponse
-     */
-    error?: RuntimeStreamError;
-}
-/**
- * 
- * @export
- * @interface StreamResultOfV1MetricNamesResponse
- */
-export interface StreamResultOfV1MetricNamesResponse {
-    /**
-     * 
-     * @type {V1MetricNamesResponse}
-     * @memberof StreamResultOfV1MetricNamesResponse
-     */
-    result?: V1MetricNamesResponse;
-    /**
-     * 
-     * @type {RuntimeStreamError}
-     * @memberof StreamResultOfV1MetricNamesResponse
      */
     error?: RuntimeStreamError;
 }
@@ -1071,19 +1071,19 @@ export interface V1Allocation {
      * @type {string}
      * @memberof V1Allocation
      */
-    taskId?: string;
+    taskId: string;
     /**
      * The current state of the allocation.
      * @type {Taskv1State}
      * @memberof V1Allocation
      */
-    state?: Taskv1State;
+    state: Taskv1State;
     /**
      * Whether the allocation is ready to access.
      * @type {boolean}
      * @memberof V1Allocation
      */
-    isReady?: boolean;
+    isReady: boolean;
     /**
      * Start timestamp.
      * @type {string}
@@ -1101,7 +1101,7 @@ export interface V1Allocation {
      * @type {string}
      * @memberof V1Allocation
      */
-    allocationId?: string;
+    allocationId: string;
 }
 /**
  * Arguments to an all gather.
@@ -2063,6 +2063,12 @@ export interface V1CreateExperimentRequest {
      * @memberof V1CreateExperimentRequest
      */
     gitCommitDate?: Date;
+    /**
+     * Unmanaged experiments are detached.
+     * @type {boolean}
+     * @memberof V1CreateExperimentRequest
+     */
+    unmanaged?: boolean;
 }
 /**
  * Response to CreateExperimentRequest.
@@ -2139,6 +2145,44 @@ export interface V1CreateTrialOperation {
      * @memberof V1CreateTrialOperation
      */
     hyperparams?: string;
+}
+/**
+ * Create a trial.
+ * @export
+ * @interface V1CreateTrialRequest
+ */
+export interface V1CreateTrialRequest {
+    /**
+     * The id of the parent experiment.
+     * @type {number}
+     * @memberof V1CreateTrialRequest
+     */
+    experimentId?: number;
+    /**
+     * Trial hyperparameters.
+     * @type {any}
+     * @memberof V1CreateTrialRequest
+     */
+    hparams?: any;
+    /**
+     * Currently only unmanaged trials are supported, must be true.
+     * @type {boolean}
+     * @memberof V1CreateTrialRequest
+     */
+    unmanaged?: boolean;
+}
+/**
+ * Response to CreateTrialRequest.
+ * @export
+ * @interface V1CreateTrialResponse
+ */
+export interface V1CreateTrialResponse {
+    /**
+     * The requested trial.
+     * @type {Trialv1Trial}
+     * @memberof V1CreateTrialResponse
+     */
+    trial: Trialv1Trial;
 }
 /**
  * Request body for CeateTrials request which includes TrialFilters.
@@ -2734,6 +2778,12 @@ export interface V1Experiment {
      * @memberof V1Experiment
      */
     bestTrialId?: number;
+    /**
+     * Unmanaged experiments are detached.
+     * @type {boolean}
+     * @memberof V1Experiment
+     */
+    unmanaged?: boolean;
 }
 /**
  * Message for results of individual experiments in a multi-experiment action.
@@ -2791,6 +2841,31 @@ export interface V1ExperimentSimulation {
      * @memberof V1ExperimentSimulation
      */
     trials?: Array<V1TrialSimulation>;
+}
+/**
+ * Response to ExpMetricNamesRequest.
+ * @export
+ * @interface V1ExpMetricNamesResponse
+ */
+export interface V1ExpMetricNamesResponse {
+    /**
+     * The names of the searcher metrics.
+     * @type {Array<string>}
+     * @memberof V1ExpMetricNamesResponse
+     */
+    searcherMetrics?: Array<string>;
+    /**
+     * List of training metric names.
+     * @type {Array<string>}
+     * @memberof V1ExpMetricNamesResponse
+     */
+    trainingMetrics?: Array<string>;
+    /**
+     * List of validation metric names.
+     * @type {Array<string>}
+     * @memberof V1ExpMetricNamesResponse
+     */
+    validationMetrics?: Array<string>;
 }
 /**
  * The failure type of a resource.   - FAILURE_TYPE_UNSPECIFIED: UNSPECIFIED denotes an error that is not defined below.  - FAILURE_TYPE_RESOURCES_FAILED: ResourcesFailed denotes that the container ran but failed with a non-zero exit code.  - FAILURE_TYPE_RESOURCES_ABORTED: ResourcesAborted denotes the container was canceled before it was started.  - FAILURE_TYPE_RESOURCES_MISSING: ResourcesMissing denotes the resources were missing when the master asked about it.  - FAILURE_TYPE_TASK_ABORTED: TaskAborted denotes that the task was canceled before it was started.  - FAILURE_TYPE_TASK_ERROR: TaskError denotes that the task failed without an associated exit code.  - FAILURE_TYPE_AGENT_FAILED: AgentFailed denotes that the agent failed while the container was running.  - FAILURE_TYPE_AGENT_ERROR: AgentError denotes that the agent failed to launch the container.  - FAILURE_TYPE_RESTORE_ERROR: RestoreError denotes a failure to restore a running allocation on master blip.  - FAILURE_TYPE_UNKNOWN_ERROR: UnknownError denotes an internal error that did not map to a know failure type.
@@ -3937,7 +4012,7 @@ export interface V1GetTaskResponse {
      * @type {V1Task}
      * @memberof V1GetTaskResponse
      */
-    task?: V1Task;
+    task: V1Task;
 }
 /**
  * Response to GetTasksRequest.
@@ -5220,31 +5295,6 @@ export interface V1MetricBatchesResponse {
      * @memberof V1MetricBatchesResponse
      */
     batches?: Array<number>;
-}
-/**
- * Response to MetricNamesRequest.
- * @export
- * @interface V1MetricNamesResponse
- */
-export interface V1MetricNamesResponse {
-    /**
-     * The name of the searcher metric.
-     * @type {string}
-     * @memberof V1MetricNamesResponse
-     */
-    searcherMetric?: string;
-    /**
-     * List of training metric names.
-     * @type {Array<string>}
-     * @memberof V1MetricNamesResponse
-     */
-    trainingMetrics?: Array<string>;
-    /**
-     * List of validation metric names.
-     * @type {Array<string>}
-     * @memberof V1MetricNamesResponse
-     */
-    validationMetrics?: Array<string>;
 }
 /**
  * 
@@ -8728,19 +8778,31 @@ export interface V1Task {
      * @type {string}
      * @memberof V1Task
      */
-    taskId?: string;
+    taskId: string;
     /**
      * Type of Task.
      * @type {string}
      * @memberof V1Task
      */
-    taskType?: string;
+    taskType: string;
     /**
      * List of Allocations.
      * @type {Array<V1Allocation>}
      * @memberof V1Task
      */
-    allocations?: Array<V1Allocation>;
+    allocations: Array<V1Allocation>;
+    /**
+     * Start timestamp.
+     * @type {Date}
+     * @memberof V1Task
+     */
+    startTime: Date;
+    /**
+     * End timestamp if completed.
+     * @type {Date}
+     * @memberof V1Task
+     */
+    endTime?: Date;
 }
 /**
  * Response to TaskLogsFieldsRequest.
@@ -16380,6 +16442,44 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Create unmanaged trial.
+         * @param {V1CreateTrialRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createTrial(body: V1CreateTrialRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling createTrial.');
+            }
+            const localVarPath = `/api/v1/trials`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Remove a group.
          * @param {number} groupId The id of the group that should be deleted.
          * @param {*} [options] Override http request option.
@@ -16403,6 +16503,46 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                     ? configuration.apiKey("Authorization")
                     : configuration.apiKey;
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Get the set of metric names recorded for a list of experiments.
+         * @param {Array<number>} [ids] The ids for the experiments.
+         * @param {number} [periodSeconds] Seconds to wait when polling for updates.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        expMetricNames(ids?: Array<number>, periodSeconds?: number, options: any = {}): FetchArgs {
+            const localVarPath = `/api/v1/experiments/metrics-stream/metric-names`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            if (ids) {
+                localVarQueryParameter['ids'] = ids
+            }
+            
+            if (periodSeconds !== undefined) {
+                localVarQueryParameter['periodSeconds'] = periodSeconds
             }
             
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
@@ -16957,47 +17097,6 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             
             if (metricType !== undefined) {
                 localVarQueryParameter['metricType'] = metricType
-            }
-            
-            if (periodSeconds !== undefined) {
-                localVarQueryParameter['periodSeconds'] = periodSeconds
-            }
-            
-            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
-            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
-            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
-            
-            return {
-                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
-         * @summary Get the set of metric names recorded for an experiment.
-         * @param {number} experimentId The id of the experiment.
-         * @param {number} [periodSeconds] Seconds to wait when polling for updates.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        metricNames(experimentId: number, periodSeconds?: number, options: any = {}): FetchArgs {
-            // verify required parameter 'experimentId' is not null or undefined
-            if (experimentId === null || experimentId === undefined) {
-                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling metricNames.');
-            }
-            const localVarPath = `/api/v1/experiments/{experimentId}/metrics-stream/metric-names`
-                .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
-            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
-            const localVarRequestOptions = { method: 'GET', ...options };
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-            
-            // authentication BearerToken required
-            if (configuration && configuration.apiKey) {
-                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
-                    ? configuration.apiKey("Authorization")
-                    : configuration.apiKey;
-                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
             if (periodSeconds !== undefined) {
@@ -17895,6 +17994,25 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Create unmanaged trial.
+         * @param {V1CreateTrialRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createTrial(body: V1CreateTrialRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CreateTrialResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).createTrial(body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Remove a group.
          * @param {number} groupId The id of the group that should be deleted.
          * @param {*} [options] Override http request option.
@@ -17902,6 +18020,26 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         deleteGroup(groupId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteGroupResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).deleteGroup(groupId, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Get the set of metric names recorded for a list of experiments.
+         * @param {Array<number>} [ids] The ids for the experiments.
+         * @param {number} [periodSeconds] Seconds to wait when polling for updates.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        expMetricNames(ids?: Array<number>, periodSeconds?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1ExpMetricNamesResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).expMetricNames(ids, periodSeconds, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -18166,26 +18304,6 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         metricBatches(experimentId: number, metricName: string, metricType: V1MetricType, periodSeconds?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1MetricBatchesResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).metricBatches(experimentId, metricName, metricType, periodSeconds, options);
-            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
-                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
-                    if (response.status >= 200 && response.status < 300) {
-                        return response.json();
-                    } else {
-                        throw response;
-                    }
-                });
-            };
-        },
-        /**
-         * 
-         * @summary Get the set of metric names recorded for an experiment.
-         * @param {number} experimentId The id of the experiment.
-         * @param {number} [periodSeconds] Seconds to wait when polling for updates.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        metricNames(experimentId: number, periodSeconds?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1MetricNamesResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).metricNames(experimentId, periodSeconds, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -18605,6 +18723,16 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Create unmanaged trial.
+         * @param {V1CreateTrialRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createTrial(body: V1CreateTrialRequest, options?: any) {
+            return InternalApiFp(configuration).createTrial(body, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Remove a group.
          * @param {number} groupId The id of the group that should be deleted.
          * @param {*} [options] Override http request option.
@@ -18612,6 +18740,17 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          */
         deleteGroup(groupId: number, options?: any) {
             return InternalApiFp(configuration).deleteGroup(groupId, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Get the set of metric names recorded for a list of experiments.
+         * @param {Array<number>} [ids] The ids for the experiments.
+         * @param {number} [periodSeconds] Seconds to wait when polling for updates.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        expMetricNames(ids?: Array<number>, periodSeconds?: number, options?: any) {
+            return InternalApiFp(configuration).expMetricNames(ids, periodSeconds, options)(fetch, basePath);
         },
         /**
          * 
@@ -18759,17 +18898,6 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          */
         metricBatches(experimentId: number, metricName: string, metricType: V1MetricType, periodSeconds?: number, options?: any) {
             return InternalApiFp(configuration).metricBatches(experimentId, metricName, metricType, periodSeconds, options)(fetch, basePath);
-        },
-        /**
-         * 
-         * @summary Get the set of metric names recorded for an experiment.
-         * @param {number} experimentId The id of the experiment.
-         * @param {number} [periodSeconds] Seconds to wait when polling for updates.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        metricNames(experimentId: number, periodSeconds?: number, options?: any) {
-            return InternalApiFp(configuration).metricNames(experimentId, periodSeconds, options)(fetch, basePath);
         },
         /**
          * 
@@ -19075,6 +19203,18 @@ export class InternalApi extends BaseAPI {
     
     /**
      * 
+     * @summary Create unmanaged trial.
+     * @param {V1CreateTrialRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public createTrial(body: V1CreateTrialRequest, options?: any) {
+        return InternalApiFp(this.configuration).createTrial(body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
      * @summary Remove a group.
      * @param {number} groupId The id of the group that should be deleted.
      * @param {*} [options] Override http request option.
@@ -19083,6 +19223,19 @@ export class InternalApi extends BaseAPI {
      */
     public deleteGroup(groupId: number, options?: any) {
         return InternalApiFp(this.configuration).deleteGroup(groupId, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Get the set of metric names recorded for a list of experiments.
+     * @param {Array<number>} [ids] The ids for the experiments.
+     * @param {number} [periodSeconds] Seconds to wait when polling for updates.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public expMetricNames(ids?: Array<number>, periodSeconds?: number, options?: any) {
+        return InternalApiFp(this.configuration).expMetricNames(ids, periodSeconds, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -19256,19 +19409,6 @@ export class InternalApi extends BaseAPI {
      */
     public metricBatches(experimentId: number, metricName: string, metricType: V1MetricType, periodSeconds?: number, options?: any) {
         return InternalApiFp(this.configuration).metricBatches(experimentId, metricName, metricType, periodSeconds, options)(this.fetch, this.basePath)
-    }
-    
-    /**
-     * 
-     * @summary Get the set of metric names recorded for an experiment.
-     * @param {number} experimentId The id of the experiment.
-     * @param {number} [periodSeconds] Seconds to wait when polling for updates.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof InternalApi
-     */
-    public metricNames(experimentId: number, periodSeconds?: number, options?: any) {
-        return InternalApiFp(this.configuration).metricNames(experimentId, periodSeconds, options)(this.fetch, this.basePath)
     }
     
     /**

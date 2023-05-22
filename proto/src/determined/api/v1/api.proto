@@ -683,6 +683,17 @@ service Determined {
     };
   }
 
+  // Create unmanaged trial.
+  rpc CreateTrial(CreateTrialRequest) returns (CreateTrialResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/trials"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: [ "Internal" ]
+    };
+  }
+
   // Get a single trial.
   rpc GetTrial(GetTrialRequest) returns (GetTrialResponse) {
     option (google.api.http) = {
@@ -1583,10 +1594,11 @@ service Determined {
     };
   }
 
-  // Get the set of metric names recorded for an experiment.
-  rpc MetricNames(MetricNamesRequest) returns (stream MetricNamesResponse) {
+  // Get the set of metric names recorded for a list of experiments.
+  rpc ExpMetricNames(ExpMetricNamesRequest)
+      returns (stream ExpMetricNamesResponse) {
     option (google.api.http) = {
-      get: "/api/v1/experiments/{experiment_id}/metrics-stream/metric-names"
+      get: "/api/v1/experiments/metrics-stream/metric-names"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Internal"

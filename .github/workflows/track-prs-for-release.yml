@@ -1,0 +1,33 @@
+---
+name: "Track PRs for release"
+
+on:  # yamllint disable-line rule:truthy
+  pull_request_target:
+    types:
+      - closed
+
+jobs:
+  add_merged_pr_to_release_project:
+    if: github.base_ref == 'main' && github.event.pull_request.merged
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          ref: ${{ github.base_ref }}
+      - name: Generate token
+        id: generate_token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        with:
+          app_id: ${{ secrets.RELEASE_APP_ID }}
+          private_key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+      - name: Add PR to release project
+        env:
+          # Since we want to access org-level projects, the normal GITHUB_TOKEN
+          # won't work -- it only has access to this repository.
+          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
+          PR_NUM: ${{ github.event.number }}
+          PR_REPO: ${{ github.event.repository.name }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+        run: tools/scripts/add-pr-to-release-project.sh

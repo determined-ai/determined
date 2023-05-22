@@ -21,7 +21,9 @@ CONFIG_DESC = """
 Additional configuration arguments for setting up a command.
 Arguments should be specified as `key=value`. Nested configuration
 keys can be specified by dot notation, e.g., `resources.slots=4`.
-List values can be specified by comma-separated values.
+List values can be specified by comma-separated values. More
+complex configuration values can be specified using JSON, e.g.,
+`bind_mounts=[{host_path: "/tmp", container_path: "/tmp"}]`.
 """
 
 CONTEXT_DESC = """
@@ -298,13 +300,20 @@ def parse_config_overrides(config: Dict[str, Any], overrides: Iterable[str]) -> 
 
         key, value = config_arg.split("=", maxsplit=1)  # type: Tuple[str, Any]
 
+        # Complex objects may contain commas but are not intended to be split
+        # on commas and have their parts parsed separately.
+        if value.startswith(("[", "{")):
+            value = yaml.load(value)
+            # Certain configurations keys are expected to have list values.
+            # Convert a single value to a singleton list if needed.
+            if key in _CONFIG_PATHS_COERCE_TO_LIST and value.startswith("{"):
+                value = [value]
         # Separate values if a comma exists. Use yaml.load() to cast
         # the value(s) to the type YAML would use, e.g., "4" -> 4.
-        if "," in value:
+        elif "," in value:
             value = [yaml.load(v) for v in value.split(",")]
         else:
             value = yaml.load(value)
-
             # Certain configurations keys are expected to have list values.
             # Convert a single value to a singleton list if needed.
             if key in _CONFIG_PATHS_COERCE_TO_LIST:
@@ -389,28 +398,3 @@ def launch_command(
         endpoint,
         body,
     ).json()
-
-
-def render_event_stream(event: Any) -> None:
-    description = event["description"]
-    if event["scheduled_event"] is not None:
-        print(
-            colored("Scheduling {} (id: {})...".format(description, event["parent_id"]), "yellow")
-        )
-    elif event["assigned_event"] is not None:
-        print(colored("{} was assigned to an agent...".format(description), "green"))
-    elif event["resources_started_event"] is not None:
-        print(colored("Resources for {} has started...".format(description), "green"))
-    elif event["service_ready_event"] is not None:
-        pass  # Ignore this message.
-    elif event["terminate_request_event"] is not None:
-        print(colored("{} was requested to terminate...".format(description), "red"))
-    elif event["exited_event"] is not None:
-        # TODO: Non-success exit statuses should be red
-        stat = event["exited_event"]
-        print(colored("{} was terminated: {}".format(description, stat), "green"))
-        pass
-    elif event["log_event"] is not None:
-        print(event["log_event"], flush=True)
-    else:
-        raise ValueError("unexpected event: {}".format(event))

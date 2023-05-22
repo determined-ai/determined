@@ -65,15 +65,12 @@ func (e *ExperimentConfigV0) SetDescription(val *string) {
 	e.RawDescription = val
 }
 
-func (e ExperimentConfigV0) Entrypoint() EntrypointV0 {
-	if e.RawEntrypoint == nil {
-		panic("You must call WithDefaults on ExperimentConfigV0 before .Entrypoint")
-	}
-	return *e.RawEntrypoint
+func (e ExperimentConfigV0) Entrypoint() *EntrypointV0 {
+	return e.RawEntrypoint
 }
 
-func (e *ExperimentConfigV0) SetEntrypoint(val EntrypointV0) {
-	e.RawEntrypoint = &val
+func (e *ExperimentConfigV0) SetEntrypoint(val *EntrypointV0) {
+	e.RawEntrypoint = val
 }
 
 func (e ExperimentConfigV0) Environment() EnvironmentConfigV0 {

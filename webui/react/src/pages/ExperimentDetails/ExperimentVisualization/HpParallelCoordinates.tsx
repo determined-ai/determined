@@ -1,5 +1,5 @@
-import Hermes, { DimensionType } from '@determined-ai/hermes-parallel-coordinates';
 import { Alert } from 'antd';
+import Hermes, { DimensionType } from 'hermes-parallel-coordinates';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import ParallelCoordinates from 'components/ParallelCoordinates';
@@ -56,17 +56,6 @@ interface HpTrialData {
   trialIds: number[];
 }
 
-export interface HermesInternalFilter {
-  p0: number;
-  p1: number;
-  value0: Primitive;
-  value1: Primitive;
-}
-
-export interface HermesInternalFilters {
-  [key: string]: HermesInternalFilter[];
-}
-
 const HpParallelCoordinates: React.FC<Props> = ({
   experiment,
   filters,
@@ -88,7 +77,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
   const [filteredTrialIdMap, setFilteredTrialIdMap] = useState<Record<number, boolean>>();
   const [selectedRowKeys, setSelectedRowKeys] = useState<number[]>([]);
   const [showCompareTrials, setShowCompareTrials] = useState(false);
-  const [hermesCreatedFilters, setHermesCreatedFilters] = useState<HermesInternalFilters>({});
+  const [hermesCreatedFilters, setHermesCreatedFilters] = useState<Hermes.Filters>({});
 
   const hyperparameters = useMemo(() => {
     return fullHParams.reduce((acc, key) => {
@@ -128,7 +117,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
       chartData.data[key].forEach((value, index) => {
         let isWithinFilter = false;
 
-        list.forEach((filter: HermesInternalFilter) => {
+        list.forEach((filter: Hermes.Filter) => {
           const min = Math.min(Number(filter.value0), Number(filter.value1));
           const max = Math.max(Number(filter.value0), Number(filter.value1));
           if (value >= min && value <= max) {
@@ -158,16 +147,17 @@ const HpParallelCoordinates: React.FC<Props> = ({
     () => ({
       filters: hermesCreatedFilters,
       hooks: {
-        onFilterChange: setHermesCreatedFilters,
+        onFilterChange: (filters: Hermes.Filters) => {
+          // TODO: references are not changing, will need to address this in hermes.
+          setHermesCreatedFilters({ ...filters });
+        },
         onReset: () => setHermesCreatedFilters({}),
       },
       style: {
         axes: { label: { placement: 'after' } },
         data: {
-          colorScale: {
-            colors: colorScale.map((scale) => scale.color),
-            dimensionKey: selectedMetric ? metricToStr(selectedMetric) : '',
-          },
+          targetColorScale: colorScale.map((scale) => scale.color),
+          targetDimensionKey: selectedMetric ? metricToStr(selectedMetric) : '',
         },
         dimension: { label: { angle: Math.PI / 4, truncate: 24 } },
         padding: [4, 120, 4, 16],
