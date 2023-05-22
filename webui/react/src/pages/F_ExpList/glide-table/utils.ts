@@ -64,7 +64,7 @@ export const getTheme = (appTheme: Theme): DataEditorProps['theme'] => {
     fontFamily: appTheme.fontFamily,
     headerBottomBorderColor: appTheme.ixBorder,
     headerFontStyle: 'normal 12px',
-    linkColor: appTheme.statusActive,
+    linkColor: appTheme.surfaceOn,
     textBubble: appTheme.surfaceBorderStrong,
     textDark: appTheme.surfaceOnWeak,
     textHeader: appTheme.surfaceOnWeak,
