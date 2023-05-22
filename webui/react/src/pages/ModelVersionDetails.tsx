@@ -323,7 +323,6 @@ const ModelVersionDetails: React.FC = () => {
         <ModelVersionHeader
           fetchModelVersion={fetchModelVersion}
           modelVersion={modelVersion}
-          workspace={workspace}
           onUpdateTags={saveVersionTags}
         />
       }
