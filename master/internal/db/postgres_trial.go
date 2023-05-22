@@ -597,7 +597,7 @@ func (db *PgDB) addTrialMetrics(
 	default:
 		return 0, fmt.Errorf("cannot add metric with non numeric 'epoch' value got %v", v)
 	}
-	return rollbacks, db.withTransaction("add training metrics", func(tx *sqlx.Tx) error {
+	return rollbacks, db.withTransaction("add trial metrics", func(tx *sqlx.Tx) error {
 		rollbacks, err = db._addTrialMetricsTx(ctx, tx, m, pType, mType)
 		return err
 	})
