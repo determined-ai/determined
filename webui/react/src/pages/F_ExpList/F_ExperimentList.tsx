@@ -23,6 +23,7 @@ import {
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 
+import css from './F_ExperimentList.module.scss';
 import { F_ExperimentListSettings, settingsConfigForProject } from './F_ExperimentList.settings';
 import { Error, Loading, NoExperiments } from './glide-table/exceptions';
 import GlideTable, { SCROLL_SET_COUNT_NEEDED } from './glide-table/GlideTable';
@@ -42,6 +43,7 @@ const formStore = new FilterFormStore();
 export const PAGE_SIZE = 100;
 
 const F_ExperimentList: React.FC<Props> = ({ project }) => {
+  const contentRef = useRef<HTMLDivElement>(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const settingsConfig = useMemo(() => settingsConfigForProject(project.id), [project.id]);
 
@@ -125,7 +127,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const colorMap = useGlasbey(selectedExperimentIds);
   const pageRef = useRef<HTMLElement>(null);
   const { width } = useResize(pageRef);
-  const { height: wholePageHeight } = useResize();
+  const { height: contentHeight } = useResize(contentRef);
   const [scrollPositionSetCount] = useState(observable(0));
 
   const handleScroll = useCallback(
@@ -350,18 +352,18 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         onAction={handleOnAction}
         onSortChange={onSortChange}
       />
-      {isLoading ? (
-        <Loading width={width} />
-      ) : experiments.length === 0 ? (
-        numFilters === 0 ? (
-          <NoExperiments />
+      <div className={css.content} ref={contentRef}>
+        {isLoading ? (
+          <Loading width={width} />
+        ) : experiments.length === 0 ? (
+          numFilters === 0 ? (
+            <NoExperiments />
+          ) : (
+            <Empty description="No results matching your filters" icon="search" />
+          )
+        ) : error ? (
+          <Error />
         ) : (
-          <Empty description="No results matching your filters" icon="search" />
-        )
-      ) : error ? (
-        <Error />
-      ) : (
-        <>
           <GlideTable
             clearSelectionTrigger={clearSelectionTrigger}
             colorMap={colorMap}
@@ -371,7 +373,8 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
             formStore={formStore}
             handleScroll={handleScroll}
             handleUpdateExperimentList={handleUpdateExperimentList}
-            height={wholePageHeight - 150}
+            // 2px subtraction needed to slight glide table measurement being off.
+            height={contentHeight - 2}
             page={page}
             project={project}
             projectColumns={projectColumns}
@@ -387,8 +390,8 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
             onIsOpenFilterChange={onIsOpenFilterChange}
             onSortChange={onSortChange}
           />
-        </>
-      )}
+        )}
+      </div>
     </>
   );
 };
