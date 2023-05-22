@@ -106,7 +106,7 @@ named ``ds_config.json``, the hyperparameter section of the Determined experimen
      ...
 
 If you want to overwrite some values in an existing DeepSpeed configuration file, use
-:meth:`~determined.pytorch.dsat.overwrite_deepspeed_config` and an experiment configuration similar
+:meth:`~determined.pytorch.deepspeed.overwrite_deepspeed_config` and an experiment configuration similar
 to:
 
 .. code:: yaml
