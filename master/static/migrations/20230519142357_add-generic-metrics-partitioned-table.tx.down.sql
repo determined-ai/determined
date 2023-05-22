@@ -18,3 +18,6 @@ ALTER TABLE raw_steps
 ALTER COLUMN id
 SET DEFAULT nextval('raw_steps_id_seq');
 DROP SEQUENCE IF EXISTS metrics_id_seq;
+-- drop missing foreign key constraint on raw_validations
+ALTER TABLE raw_validations
+DROP CONSTRAINT IF EXISTS raw_validations_trial_id_fkey;
