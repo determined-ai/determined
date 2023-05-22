@@ -105,6 +105,9 @@ def run_api_server(
             n_calls = 2
             sample_experiment = sample_get_experiment()
 
+            # Update experiment ID to match expected for this test.
+            sample_experiment.experiment.id = 2
+
             with lock:
                 state[key] = state.get(key, 0) + 1
                 if state[key] <= n_calls:
@@ -130,7 +133,10 @@ def run_api_server(
                 if state[key] <= fail_for:
                     self.send_error(504)
                     return {}
-            return sample_get_experiment().to_json()
+            sample_experiment = sample_get_experiment()
+            # Update experiment ID to match expected for this test.
+            sample_experiment.experiment.id = 1
+            return sample_experiment.to_json()
 
         def do_core(self, fn: Optional[Callable[..., Dict[str, Any]]]) -> None:
             if fn is None:
