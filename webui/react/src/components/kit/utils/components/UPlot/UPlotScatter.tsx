@@ -1,7 +1,7 @@
 import React, { useMemo, useRef } from 'react';
 import uPlot from 'uplot';
 
-import { Scale } from 'components/kit/utils/type';
+import { Scale } from 'components/kit/utils/types';
 import { Range } from 'shared/types';
 
 import { FacetedData, UPlotData } from './types';

@@ -35,6 +35,7 @@ import Header from 'components/kit/Typography/Header';
 import Paragraph from 'components/kit/Typography/Paragraph';
 import UserAvatar from 'components/kit/UserAvatar';
 import { useTags } from 'components/kit/useTags';
+import { CheckpointsDict } from 'components/kit/utils/types';
 import Label from 'components/Label';
 import Logo from 'components/Logo';
 import Page from 'components/Page';
@@ -55,7 +56,6 @@ import loremIpsum from 'utils/loremIpsum';
 import useConfirm, { voidPromiseFn } from '../components/kit/useConfirm';
 
 import css from './DesignKit.module.scss';
-import { CheckpointsDict } from './TrialDetails/F_TrialDetailsOverview';
 
 const ComponentTitles = {
   Accordion: 'Accordion',

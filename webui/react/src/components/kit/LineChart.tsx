@@ -10,8 +10,8 @@ import { UPlotPoint } from 'components/kit/utils/components/UPlot/types';
 import UPlotChart, { Options } from 'components/kit/utils/components/UPlot/UPlotChart';
 import { closestPointPlugin } from 'components/kit/utils/components/UPlot/UPlotChart/closestPointPlugin';
 import { tooltipsPlugin } from 'components/kit/utils/components/UPlot/UPlotChart/tooltipsPlugin';
-import { getCssVar, getTimeTickValues, glasbeyColor } from 'components/kit/utils/func';
-import useResize from 'hooks/useResize';
+import { getCssVar, getTimeTickValues, glasbeyColor } from 'components/kit/utils/functions';
+import useResize from 'components/kit/utils/hooks/useResize';
 import { MetricType, Scale } from 'types';
 import { Loadable } from 'utils/loadable';
 

@@ -5,9 +5,9 @@ import { throttle } from 'throttle-debounce';
 import uPlot, { AlignedData } from 'uplot';
 
 import Spinner from 'components/kit/utils/components/Spinner';
-import useResize from 'hooks/useResize';
+import usePrevious from 'components/kit/utils/hooks/usePrevious';
+import useResize from 'components/kit/utils/hooks/useResize';
 import useUI from 'shared/contexts/stores/UI';
-import usePrevious from 'shared/hooks/usePrevious';
 import { DarkLight } from 'shared/themes';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import handleError from 'utils/error';

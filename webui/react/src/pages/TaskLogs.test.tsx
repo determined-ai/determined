@@ -1,14 +1,13 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { generateAlphaNumeric } from 'components/kit/utils/func';
+import * as src from 'components/kit/LogViewer/LogViewer';
+import { generateAlphaNumeric } from 'components/kit/utils/functions';
 import { flakyIt } from 'quarantineTests';
 import { FetchArgs } from 'services/api-ts-sdk';
 import { mapV1LogsResponse } from 'services/decoder';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import { LogLevelFromApi } from 'types';
-
-import * as src from './LogViewer';
 
 interface TestLog {
   id: number | string;
@@ -137,17 +136,17 @@ const findTimeLogIndex = (logs: TestLog[], timeString: string): number => {
   return logs.findIndex((log) => log.message.includes(timestamp));
 };
 
-vi.mock('hooks/useResize', () => ({
+vi.mock('components/kit/utils/hooks/useResize', () => ({
   __esModule: true,
   default: () => ({ height: 1824, width: 1280, x: 0, y: 0 }),
 }));
 
-vi.mock('hooks/useGetCharMeasureInContainer', () => ({
+vi.mock('components/kit/utils/hooks/useGetCharMeasureInContainer', () => ({
   __esModule: true,
   default: () => ({ height: 18, width: 7 }),
 }));
 
-vi.mock('services/utils', () => ({
+vi.mock('components/kit/utils/services', () => ({
   __esModule: true,
   readStream: ({ options }: FetchArgs, onEvent: (event: unknown) => void): void => {
     // Default mocking options.

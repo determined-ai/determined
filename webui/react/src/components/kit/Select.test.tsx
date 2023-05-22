@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
 
-import { generateAlphaNumeric } from 'components/kit/utils/func';
+import { generateAlphaNumeric } from 'components/kit/utils/functions';
 
 import Select, { Option } from './Select';
 

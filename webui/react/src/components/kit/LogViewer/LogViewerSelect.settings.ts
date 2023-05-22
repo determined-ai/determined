@@ -1,6 +1,6 @@
 import { array, literal, number, string, undefined as undefinedType, union } from 'io-ts';
 
-import { SettingsConfig } from 'hooks/useSettings';
+import { SettingsConfig } from 'components/kit/utils/types';
 import { LogLevelFromApi } from 'types';
 
 export interface Settings {

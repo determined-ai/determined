@@ -4,7 +4,7 @@ import Icon from 'components/kit/Icon';
 import { ConditionalWrapper } from 'components/kit/utils/components/ConditionalWrapper';
 import Grid, { GridMode } from 'components/kit/utils/components/Grid';
 import Link from 'components/kit/utils/components/Link';
-import { isNumber } from 'components/kit/utils/func';
+import { isNumber } from 'components/kit/utils/functions';
 
 import Button from './Button';
 import css from './Card.module.scss';

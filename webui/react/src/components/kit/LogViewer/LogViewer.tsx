@@ -22,12 +22,11 @@ import {
   dateTimeStringSorter,
   formatDatetime,
   numericSorter,
-} from 'components/kit/utils/func';
-import { RecordKey, ValueOf } from 'components/kit/utils/type';
-import useGetCharMeasureInContainer from 'hooks/useGetCharMeasureInContainer';
-import useResize from 'hooks/useResize';
-import { FetchArgs } from 'services/api-ts-sdk';
-import { readStream } from 'services/utils';
+} from 'components/kit/utils/functions';
+import useGetCharMeasureInContainer from 'components/kit/utils/hooks/useGetCharMeasureInContainer';
+import useResize from 'components/kit/utils/hooks/useResize';
+import { readStream } from 'components/kit/utils/services';
+import { FetchArgs, RecordKey, ValueOf } from 'components/kit/utils/types';
 import { Log, LogLevel } from 'types';
 
 import ClipboardButton from '../ClipboardButton';

@@ -169,6 +169,9 @@ const isBoolean = (data: unknown): data is boolean => typeof data === 'boolean';
 const isMap = (data: unknown): data is Map<unknown, unknown> => data instanceof Map;
 const isNullOrUndefined = (data: unknown): data is null | undefined => data == null;
 export const isNumber = (data: unknown): data is number => typeof data === 'number';
+export const isObject = (data: unknown): boolean => {
+  return typeof data === 'object' && !Array.isArray(data) && !isSet(data) && data !== null;
+};
 const isPrimitive = (data: unknown): boolean =>
   isBigInt(data) ||
   isBoolean(data) ||
