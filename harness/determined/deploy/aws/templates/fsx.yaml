@@ -594,7 +594,6 @@ Resources:
       Engine: aurora-postgresql
       EngineMode: serverless
       DatabaseName: determined
-      DBClusterParameterGroupName: 'default.aurora-postgresql10'
       DBSubnetGroupName: !Ref DatabaseSubnetGroup
       MasterUsername: postgres
       MasterUserPassword: !Ref DBPassword
@@ -605,7 +604,7 @@ Resources:
         - !GetAtt DatabaseSecurityGroup.GroupId
       ScalingConfiguration:
         AutoPause: false
-        MinCapacity: 8
+        MinCapacity: 2
         MaxCapacity: 32
 
   FSx:

@@ -448,7 +448,6 @@ Resources:
       Engine: aurora-postgresql
       EngineMode: serverless
       DatabaseName: determined
-      DBClusterParameterGroupName: 'default.aurora-postgresql10'
       MasterUsername: postgres
       MasterUserPassword: !Ref DBPassword
       Tags:
@@ -457,10 +456,9 @@ Resources:
       VpcSecurityGroupIds:
         - !GetAtt DatabaseSecurityGroup.GroupId
       ScalingConfiguration:
-        AutoPause: true
-        SecondsUntilAutoPause: 3600
+        AutoPause: false
         MinCapacity: 2
-        MaxCapacity: 8
+        MaxCapacity: 32
 
   RetainedLogGroup:
     Type: AWS::Logs::LogGroup

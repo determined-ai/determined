@@ -7,11 +7,12 @@ import os
 import re
 import sys
 import time
-from typing import Pattern, Optional
+from typing import Optional, Pattern
+
+from requests.exceptions import RequestException
 
 from determined.common import api
 from determined.common.api import certs
-from requests.exceptions import RequestException
 
 BACKOFF_SECONDS = 5
 

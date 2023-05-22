@@ -32,8 +32,6 @@ type DB interface {
 	CheckTrialExists(id int) (bool, error)
 	TrialExperimentAndRequestID(id int) (int, model.RequestID, error)
 	AddExperiment(experiment *model.Experiment, activeConfig expconf.ExperimentConfig) error
-	ExperimentByID(id int) (*model.Experiment, error)
-	ExperimentByTrialID(trialID int) (*model.Experiment, error)
 	ExperimentIDByTrialID(trialID int) (int, error)
 	NonTerminalExperiments() ([]*model.Experiment, error)
 	TerminateExperimentInRestart(id int, state model.State) error
@@ -113,7 +111,6 @@ type DB interface {
 		endTime time.Time, err error)
 	TopTrialsByTrainingLength(experimentID int, maxTrials int, metric string,
 		smallerIsBetter bool) (trials []int32, err error)
-	ExperimentBestSearcherValidation(id int) (float32, error)
 	StartAllocationSession(allocationID model.AllocationID, owner *model.User) (string, error)
 	DeleteAllocationSession(allocationID model.AllocationID) error
 	UpdateAllocationState(allocation model.Allocation) error

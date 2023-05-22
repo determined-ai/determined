@@ -1,8 +1,10 @@
 import enum
-import time
-from typing import Callable, Iterator, Optional, TypeVar, Union
+from typing import Callable, Iterator, Optional, Tuple, TypeVar, Union
 
+from determined.common import api, util
 from determined.common.api import Session, bindings
+
+# from determined.cli.render import Animator
 
 
 class PageOpts(str, enum.Enum):
@@ -71,14 +73,40 @@ def wait_for_ntsc_state(
     ntsc_id: str,
     predicate: Callable[[bindings.taskv1State], bool],
     timeout: int = 10,  # seconds
-) -> Optional[bindings.taskv1State]:
+) -> bindings.taskv1State:
     """wait for ntsc to reach a state that satisfies the predicate"""
-    start = time.time()
-    last_state = None
-    while True:
-        if time.time() - start > timeout:
-            raise Exception(f"timed out waiting for state predicate to pass. reached {last_state}")
+
+    def get_state() -> Tuple[bool, bindings.taskv1State]:
         last_state = get_ntsc_details(session, typ, ntsc_id).state
-        if predicate(last_state):
-            return last_state
-        time.sleep(0.5)
+        return predicate(last_state), last_state
+
+    return util.wait_for(get_state, timeout)
+
+
+def task_is_ready(
+    session: api.Session, task_id: str, progress_report: Optional[Callable] = None
+) -> Optional[str]:
+    """
+    wait until a task is ready
+    return: None if task is ready, otherwise return an error message
+    """
+
+    def _task_is_done_loading() -> Tuple[bool, Optional[str]]:
+        task = bindings.get_GetTask(session, taskId=task_id).task
+        if progress_report:
+            progress_report()
+        assert task is not None, "task must not be present."
+        if len(task.allocations) == 0:
+            return False, None
+
+        is_ready = task.allocations[0].isReady
+        if is_ready:
+            return True, None
+
+        if task.endTime is not None:
+            return True, "task has been terminated."
+
+        return False, ""
+
+    err_msg = util.wait_for(_task_is_done_loading, timeout=300, interval=1)
+    return err_msg

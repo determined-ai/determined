@@ -8,13 +8,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"math/rand"
 	"os"
 	"sort"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	"github.com/uptrace/bun"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -649,7 +652,7 @@ func TestAddValidationMetricsDupeCheckpoints(t *testing.T) {
 	require.NoError(t, AddCheckpointMetadata(ctx, &model.CheckpointV2{
 		UUID:         uuid.New(),
 		TaskID:       task.TaskID,
-		AllocationID: a.AllocationID,
+		AllocationID: &a.AllocationID,
 		ReportTime:   time.Now(),
 		State:        model.ActiveState,
 		Metadata:     map[string]any{"steps_completed": 50},
@@ -691,7 +694,7 @@ func TestAddValidationMetricsDupeCheckpoints(t *testing.T) {
 	require.NoError(t, AddCheckpointMetadata(ctx, &model.CheckpointV2{
 		UUID:         checkpoint2UUID,
 		TaskID:       task.TaskID,
-		AllocationID: a.AllocationID,
+		AllocationID: &a.AllocationID,
 		ReportTime:   time.Now(),
 		State:        model.ActiveState,
 		Metadata:     map[string]any{"steps_completed": 400},
@@ -781,7 +784,7 @@ func TestBatchesProcessed(t *testing.T) {
 			require.NoError(t, AddCheckpointMetadata(ctx, &model.CheckpointV2{
 				UUID:         uuid.New(),
 				TaskID:       task.TaskID,
-				AllocationID: a.AllocationID,
+				AllocationID: &a.AllocationID,
 				ReportTime:   time.Now(),
 				State:        model.CompletedState,
 				Metadata:     map[string]any{"steps_completed": batches},
@@ -839,4 +842,87 @@ func TestBatchesProcessed(t *testing.T) {
 		Where("trial_id = ?", tr.ID).Where("archived = true").Count(ctx)
 	require.NoError(t, err)
 	require.Equal(t, 2, archivedValidations, "trial id %d", tr.ID)
+}
+
+func TestConcurrentMetricUpdate(t *testing.T) {
+	ctx := context.Background()
+	require.NoError(t, etc.SetRootPath(RootFromDB))
+	db := MustResolveTestPostgres(t)
+	MustMigrateTestPostgres(t, db, MigrationsFromDB)
+
+	createTrial := func() *model.Trial {
+		exp, activeConfig := model.ExperimentModel()
+		require.NoError(t, db.AddExperiment(exp, activeConfig))
+		task := RequireMockTask(t, db, exp.OwnerID)
+		tr := model.Trial{
+			TaskID:       task.TaskID,
+			JobID:        exp.JobID,
+			ExperimentID: exp.ID,
+			State:        model.ActiveState,
+			StartTime:    time.Now(),
+		}
+		require.NoError(t, db.AddTrial(&tr))
+		a := &model.Allocation{
+			AllocationID: model.AllocationID(fmt.Sprintf("%s-%d", tr.TaskID, 0)),
+			TaskID:       tr.TaskID,
+			StartTime:    ptrs.Ptr(time.Now()),
+		}
+		err := db.AddAllocation(a)
+		require.NoError(t, err, "failed to add allocation")
+
+		dbTr, err := db.TrialByID(tr.ID)
+		require.NoError(t, err)
+		require.Equal(t, 0, dbTr.TotalBatches)
+		return &tr
+	}
+
+	batchNum := 0
+
+	writeToTrial := func(tr *model.Trial, tx *sqlx.Tx) {
+		coinFlip := func() bool {
+			//nolint:gosec // Weak RNG doesn't matter here.
+			return rand.Intn(2) == 0
+		}
+		t.Logf("writing to trial %d", tr.ID)
+
+		batchNum++
+		metrics, err := structpb.NewStruct(map[string]any{"loss": 10})
+		require.NoError(t, err)
+		trialMetrics := &trialv1.TrialMetrics{
+			TrialId:        int32(tr.ID),
+			StepsCompleted: int32(batchNum),
+			Metrics:        &commonv1.Metrics{AvgMetrics: metrics},
+		}
+		if coinFlip() {
+			require.NoError(t, db.updateTotalBatches(ctx, tx, tr.ID))
+		}
+		if coinFlip() {
+			_, err = db._addTrialMetricsTx(ctx, tx, trialMetrics, coinFlip())
+			require.NoError(t, err)
+		}
+		if coinFlip() {
+			require.NoError(t, db.updateTotalBatches(ctx, tx, tr.ID))
+		}
+	}
+
+	writes := 5
+	trials := 10
+	var wg sync.WaitGroup
+	wg.Add(trials)
+
+	for i := 0; i < trials; i++ {
+		go func() {
+			defer wg.Done()
+			tr := createTrial()
+			err := db.withTransaction(fmt.Sprintf("trial %d", tr.ID), func(tx *sqlx.Tx) error {
+				for j := 0; j < writes; j++ {
+					writeToTrial(tr, tx)
+				}
+				return nil
+			})
+			require.NoError(t, err)
+		}()
+	}
+
+	wg.Wait()
 }

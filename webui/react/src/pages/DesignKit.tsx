@@ -17,7 +17,6 @@ import Empty from 'components/kit/Empty';
 import Facepile from 'components/kit/Facepile';
 import Form from 'components/kit/Form';
 import Icon, { IconNameArray, IconSizeArray } from 'components/kit/Icon';
-import IconicButton from 'components/kit/IconicButton';
 import Input from 'components/kit/Input';
 import InputNumber from 'components/kit/InputNumber';
 import InputSearch from 'components/kit/InputSearch';
@@ -169,15 +168,17 @@ const ButtonsSection: React.FC = () => {
       </AntDCard>
       <AntDCard title="Usage">
         <strong>Default Button variations</strong>
+        Transparent background, solid border
         <Space>
           <Button>Default</Button>
           <Button danger>Danger</Button>
           <Button disabled>Disabled</Button>
-          <Button ghost>Ghost</Button>
           <Button loading>Loading</Button>
+          <Button selected>Selected</Button>
         </Space>
         <hr />
         <strong>Primary Button variations</strong>
+        Solid background, no border
         <Space>
           <Button type="primary">Primary</Button>
           <Button danger type="primary">
@@ -186,29 +187,13 @@ const ButtonsSection: React.FC = () => {
           <Button disabled type="primary">
             Disabled
           </Button>
-          <Button ghost type="primary">
-            Ghost
-          </Button>
           <Button loading type="primary">
             Loading
           </Button>
         </Space>
         <hr />
-        <strong>Link Button variations</strong>
-        <Space>
-          <Button type="link">Link</Button>
-          <Button danger type="link">
-            Danger
-          </Button>
-          <Button disabled type="link">
-            Disabled
-          </Button>
-          <Button loading type="link">
-            Loading
-          </Button>
-        </Space>
-        <hr />
         <strong>Text Button variations</strong>
+        Transparent background, no border
         <Space>
           <Button type="text">Text</Button>
           <Button danger type="text">
@@ -222,24 +207,8 @@ const ButtonsSection: React.FC = () => {
           </Button>
         </Space>
         <hr />
-        <strong>Ghost Button variations</strong>
-        <Space>
-          <Button type="ghost">Ghost</Button>
-          <Button danger type="ghost">
-            Danger
-          </Button>
-          <Button disabled type="ghost">
-            Disabled
-          </Button>
-          <Button ghost type="ghost">
-            Ghost
-          </Button>
-          <Button loading type="ghost">
-            Loading
-          </Button>
-        </Space>
-        <hr />
         <strong>Dashed Button variations</strong>
+        Transparent background, dashed border
         <Space>
           <Button type="dashed">Dashed</Button>
           <Button danger type="dashed">
@@ -248,19 +217,12 @@ const ButtonsSection: React.FC = () => {
           <Button disabled type="dashed">
             Disabled
           </Button>
-          <Button ghost type="dashed">
-            Ghost
-          </Button>
           <Button loading type="dashed">
             Loading
           </Button>
-        </Space>
-        <hr />
-        <strong>Shapes</strong>
-        <Space>
-          <Button shape="circle">Circle</Button>
-          <Button shape="default">Default</Button>
-          <Button shape="round">Round</Button>
+          <Button selected type="dashed">
+            Selected
+          </Button>
         </Space>
         <hr />
         <strong>Sizes</strong>
@@ -272,20 +234,14 @@ const ButtonsSection: React.FC = () => {
         <hr />
         <strong>Default Button with icon</strong>
         <Space>
-          <Button icon={<PoweroffOutlined />} type="primary">
-            ButtonWithIcon
-          </Button>
           <Button icon={<PoweroffOutlined />}>ButtonWithIcon</Button>
-          <Button disabled icon={<PoweroffOutlined />}>
-            ButtonWithIcon
-          </Button>
         </Space>
         <hr />
-        <strong>Large iconic buttons</strong>
+        <strong>Button with icon and text displayed in a column</strong>
         <Space>
-          <IconicButton iconName="searcher-grid" text="Iconic button" type="primary" />
-          <IconicButton iconName="searcher-grid" text="Iconic button" />
-          <IconicButton disabled iconName="searcher-grid" text="Iconic button" />
+          <Button column icon={<PoweroffOutlined />}>
+            ColumnButtonWithIcon
+          </Button>
         </Space>
       </AntDCard>
     </ComponentSection>

@@ -30,7 +30,7 @@ interface UserSettingUpdate extends UpdateUserSettingParams {
   userId: number;
 }
 
-export type UpdateSettings = (updates: Settings) => void;
+export type UpdateSettings<T> = (newSettings: Partial<T>) => void;
 export type ResetSettings = (settings?: string[]) => void;
 type SettingsRecord<T> = { [K in keyof T]: T[K] };
 
@@ -39,7 +39,7 @@ export type UseSettingsReturn<T> = {
   isLoading: boolean;
   resetSettings: ResetSettings;
   settings: T;
-  updateSettings: UpdateSettings;
+  updateSettings: UpdateSettings<T>;
 };
 
 const settingsToQuery = <T>(config: SettingsConfig<T>, settings: Settings) => {
@@ -285,15 +285,15 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
   );
 
   const updateSettings = useCallback(
-    (updates: Settings) => {
-      stateOb.update((s) =>
-        s.set(
+    (updates: Partial<Settings>) => {
+      stateOb.update((s) => {
+        const oldSettings = s.get(config.storagePath) ?? {};
+        const newSettings = { ...s.get(config.storagePath), ...updates };
+        return s.set(
           config.storagePath,
-          isEqual(s.get(config.storagePath), updates)
-            ? s.get(config.storagePath) ?? {}
-            : { ...s.get(config.storagePath), ...updates },
-        ),
-      );
+          isEqual(oldSettings, newSettings) ? oldSettings : newSettings,
+        );
+      });
     },
     [config, stateOb],
   );

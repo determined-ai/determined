@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import Icon from 'components/kit/Icon';
 import Section from 'components/Section';
-import InteractiveTable, { InteractiveTableSettings } from 'components/Table/InteractiveTable';
+import InteractiveTable, { ColumnDef } from 'components/Table/InteractiveTable';
 import SkeletonTable from 'components/Table/SkeletonTable';
 import {
   checkmarkRenderer,
@@ -216,11 +216,12 @@ const JobQueue: React.FC<Props> = ({ selectedRp, jobState }) => {
 
   const columns = useMemo(() => {
     return defaultColumns
-      .map((col) => {
+      .map<ColumnDef<Job>>((col) => {
         switch (col.key) {
           case 'actions':
-            col.render = (_, record) => {
-              return (
+            return {
+              ...col,
+              render: (_, record) => (
                 <div>
                   <ActionDropdown<JobAction>
                     actionOrder={[
@@ -241,64 +242,75 @@ const JobQueue: React.FC<Props> = ({ selectedRp, jobState }) => {
                     onTrigger={dropDownOnTrigger(record)}
                   />
                 </div>
-              );
+              ),
             };
-            break;
           case SCHEDULING_VAL_KEY: {
-            if (!settingsColumns) break;
+            if (!settingsColumns) return col;
 
             switch (selectedRp.schedulerType) {
               case Api.V1SchedulerType.SLURM:
-                col.title = 'Partition';
-                col.dataIndex = 'resourcePool';
-                break;
+                return {
+                  ...col,
+                  dataIndex: 'resourcePool',
+                  title: 'Partition',
+                };
               case Api.V1SchedulerType.PBS:
-                col.title = 'Queue';
-                col.dataIndex = 'resourcePool';
-                break;
+                return {
+                  ...col,
+                  dataIndex: 'resourcePool',
+                  title: 'Queue',
+                };
               case Api.V1SchedulerType.PRIORITY:
               case Api.V1SchedulerType.KUBERNETES:
-                col.title = 'Priority';
-                col.dataIndex = 'priority';
-                break;
+                return {
+                  ...col,
+                  dataIndex: 'priority',
+                  title: 'Priority',
+                };
               case Api.V1SchedulerType.FAIRSHARE:
-                col.title = 'Weight';
-                col.dataIndex = 'weight';
-                col.align = 'right';
-                break;
+                return {
+                  ...col,
+                  align: 'right',
+                  dataIndex: 'weight',
+                  title: 'Weight',
+                };
+              case Api.V1SchedulerType.UNSPECIFIED:
+              case Api.V1SchedulerType.ROUNDROBIN:
+                return col;
             }
-            break;
           }
           case 'jobsAhead':
             if (!isJobOrderAvailable) {
-              col.sorter = undefined;
-              col.title = 'Preemptible';
-              col.render = (_: unknown, record) => {
-                return (
+              return {
+                ...col,
+                render: (_, record) => (
                   <div className={`${css.centerVertically} ${css.centerHorizontally}`}>
                     {checkmarkRenderer(record.isPreemptible)}
                   </div>
-                );
+                ),
+                title: 'Preemptible',
               };
             } else {
-              col.sorter = (a: Job, b: Job): number =>
-                numericSorter(a.summary.jobsAhead, b.summary.jobsAhead);
-              col.title = '#';
-              col.render = (_: unknown, record) => {
-                return (
+              return {
+                ...col,
+                render: (_: unknown, record) => (
                   <div className={css.centerVertically}>
                     {record.summary.jobsAhead}
                     {!record.isPreemptible && <Icon name="lock" title="Not Preemptible" />}
                   </div>
-                );
+                ),
+                sorter: (a, b) => numericSorter(a.summary.jobsAhead, b.summary.jobsAhead),
+                title: '#',
               };
             }
-            break;
           case 'user':
-            col.render = (_, r) => userRenderer(users.find((u) => u.id === r.userId));
-            break;
+            return {
+              ...col,
+              render: (_, r) => userRenderer(users.find((u) => u.id === r.userId)),
+            };
+          default:
+            return col;
         }
-        return col;
       })
       .map((column) => {
         column.sortOrder = null;
@@ -334,7 +346,7 @@ const JobQueue: React.FC<Props> = ({ selectedRp, jobState }) => {
     <div className={css.base} id="jobs">
       <Section hideTitle={!!selectedRp} title={tableTitle}>
         {settings ? (
-          <InteractiveTable
+          <InteractiveTable<Job, Settings>
             columns={columns}
             containerRef={pageRef}
             dataSource={jobs}
@@ -349,7 +361,7 @@ const JobQueue: React.FC<Props> = ({ selectedRp, jobState }) => {
             rowClassName={defaultRowClassName({ clickable: false })}
             rowKey="jobId"
             scroll={{ x: 1000 }}
-            settings={settings as InteractiveTableSettings}
+            settings={settings}
             showSorterTooltip={false}
             size="small"
             updateSettings={updateSettings}

@@ -510,6 +510,8 @@ message CreateExperimentRequest {
   optional string git_committer = 10;
   // Git commit date at submission time.
   google.protobuf.Timestamp git_commit_date = 11;
+  // Unmanaged experiments are detached.
+  optional bool unmanaged = 40;
 }
 
 // Response to CreateExperimentRequest.

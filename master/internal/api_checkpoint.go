@@ -61,7 +61,7 @@ func (m *Master) canDoActionOnCheckpoint(
 	if checkpoint.CheckpointTrainingMetadata.ExperimentID == 0 {
 		return nil // TODO(nick) add authz for other task types.
 	}
-	exp, err := m.db.ExperimentByID(checkpoint.CheckpointTrainingMetadata.ExperimentID)
+	exp, err := db.ExperimentByID(ctx, checkpoint.CheckpointTrainingMetadata.ExperimentID)
 	if err != nil {
 		return err
 	}
@@ -195,7 +195,7 @@ func (a *apiServer) DeleteCheckpoints(
 	// that the user has permission to view and edit.
 	exps := make([]*model.Experiment, len(groupCUUIDsByEIDs))
 	for i, expIDcUUIDs := range groupCUUIDsByEIDs {
-		exp, err := a.m.db.ExperimentByID(expIDcUUIDs.ExperimentID)
+		exp, err := db.ExperimentByID(ctx, expIDcUUIDs.ExperimentID)
 		if err != nil {
 			return nil, err
 		}

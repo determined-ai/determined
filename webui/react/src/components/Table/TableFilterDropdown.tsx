@@ -170,7 +170,6 @@ const TableFilterDropdown: React.FC<Props> = ({
           aria-label={ARIA_LABEL_RESET}
           disabled={Object.keys(selectedMap).length === 0}
           size="small"
-          type="link"
           onClick={handleReset}>
           Reset
         </Button>
