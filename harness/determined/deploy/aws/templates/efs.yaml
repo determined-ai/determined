@@ -588,7 +588,6 @@ Resources:
       Engine: aurora-postgresql
       EngineMode: serverless
       DatabaseName: determined
-      DBClusterParameterGroupName: 'default.aurora-postgresql10'
       DBSubnetGroupName: !Ref DatabaseSubnetGroup
       MasterUsername: postgres
       MasterUserPassword: !Ref DBPassword
