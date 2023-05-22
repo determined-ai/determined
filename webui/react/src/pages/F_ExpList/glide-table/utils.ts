@@ -55,7 +55,7 @@ export const getTimeInEnglish = (d: Date): string => {
  */
 export const getTheme = (appTheme: Theme): DataEditorProps['theme'] => {
   return {
-    accentLight: appTheme.surfaceStrong,
+    accentLight: appTheme.stageStrong,
     bgBubble: appTheme.ixStrong,
     bgCell: appTheme.stage,
     bgHeader: appTheme.surface,
