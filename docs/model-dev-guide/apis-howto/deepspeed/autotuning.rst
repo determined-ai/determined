@@ -119,7 +119,7 @@ Example code:
 
    for op in core_context.searcher.operations():
       for data in trainloader:
-          with dsat.dsat_reporting_context(core_context, op): # <-- The only dsat-specific line! 
+          with dsat.dsat_reporting_context(core_context, op): # <-- The only dsat-specific code! 
               inputs, labels = data
               inputs, labels = inputs.to(model_engine.local_rank), labels.to(
                   model_engine.local_rank
@@ -132,11 +132,43 @@ Example code:
               model_engine.step()
 
 where ``core_context`` is the ``determined.core.Context`` instance which was initialized with
-``determined.core.init``
+``determined.core.init``. The context manager requires access to both ``core_context`` and the
+current ``determined.core.SearchOperation`` instnace (``op``) in order to appropriately report
+results.
 
 
 HuggingFace Trainer
 ===================
+
+DeepSpeed Autotune can also be used with the HuggingFace (HF) Trainer and Determined AI's
+`DetCallback` callback object.
+
+As in the above cases, a ``deepspeed_config`` field  specifying
+the relative path to the DS ``json`` config file must again be added to the
+``hyperparameters`` section of the experiment configuration. Reporting results back to the
+Determined master now requires both using the `dsat.dsat_reporting_context`` context manager and 
+the `DetCallback` callback object listed above.  Additionally, because ``dsat`` performs a search
+over different batch sizes and HuggingFace expects parameters to be specified through command-line
+arguments, an additional helper is needed to create consistent HuggingFace arguments:
+``dsat.get_hf_args_with_overwrites``.
+
+The key pieces of relevant code from a HuggingFace Trainer script are below.
+.. code:: python
+
+  from determined.integrations.huggingface import DetCallback
+  from determined.pytorch import dsat
+  from transformers import HfArgumentParser,Trainer, TrainingArguments,
+
+  parser = HfArgumentParser(TrainingArguments)
+  args = sys.argv[1:]
+  args = dsat.get_hf_args_with_overwrites(args, hparams)
+  training_args = parser.parse_args_into_dataclasses(args, look_for_args_file=False)
+
+  det_callback = DetCallback(core_context, ...)
+  trainer = Trainer(model=model, args=training_args, ...)
+  with dsat.dsat_reporting_context(core_context, op=det_callback.current_op):
+      train_result = trainer.train(resume_from_checkpoint=checkpoint)
+
 
 Advanced Options
 ================
