@@ -63,24 +63,6 @@ class TorchBatchProcessorContext:
     def get_distributed_context(self):
         return self._distributed
 
-    def set_stop_requested(self, stop_requested: bool) -> None:
-        """
-        Set a flag to request a trial stoppage. When this flag is set to True,
-        we finish the step, checkpoint, then exit.
-        """
-        if not isinstance(stop_requested, bool):
-            raise AssertionError("stop_requested must be a boolean")
-
-        if stop_requested:
-            logging.info(
-                "A run stoppage has requested. The run will be stopped "
-                "at the end of the current step."
-            )
-        self._stop_requested = stop_requested
-
-    def get_stop_requested(self) -> bool:
-        return self._stop_requested
-
 
 def get_default_device(core_context: core.Context) -> torch.device:
     local_rank = core_context.distributed.local_rank
@@ -293,10 +275,7 @@ def torch_batch_process(
                         dummy_searcher_op, batch_idx, total_worker, batch_size, dataset_len
                     )
                 # Check preemption
-                if (
-                    batch_processor_context.get_stop_requested()
-                    or core_context.preempt.should_preempt()
-                ):
+                if core_context.preempt.should_preempt():
                     return
 
         _synchronize_and_checkpoint(core_context, batch_idx, rank)
