@@ -255,7 +255,7 @@ const WorkspaceList: React.FC = () => {
       onVisibleChange?: (visible: boolean) => void;
       record: Workspace;
     }) => (
-      <WorkspaceActionDropdown workspace={record} onComplete={fetchWorkspaces}>
+      <WorkspaceActionDropdown isContextMenu workspace={record} onComplete={fetchWorkspaces}>
         {children}
       </WorkspaceActionDropdown>
     ),
