@@ -320,6 +320,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
 
   const onHeaderClicked: DataEditorProps['onHeaderClicked'] = React.useCallback(
     (col: number, args: HeaderClickedEventArgs) => {
+      args.preventDefault();
       const columnId = columnIds[col];
       const { bounds } = args;
       const x = bounds.x;
@@ -348,8 +349,10 @@ export const GlideTable: React.FC<GlideTableProps> = ({
               },
             },
           ];
-          setMenuProps((prev) => ({ ...prev, items, title: 'Selection menu', x, y }));
-          setMenuIsOpen(true);
+          setTimeout(() => {
+            setMenuProps((prev) => ({ ...prev, items, title: 'Selection menu', x, y }));
+            setMenuIsOpen(true);
+          });
         } else {
           deselectAllRows();
         }

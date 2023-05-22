@@ -12,8 +12,8 @@ export interface MenuDivider {
 export interface MenuOption {
   danger?: boolean;
   disabled?: boolean;
-  key: string;
-  label: React.ReactNode;
+  key: number | string;
+  label?: React.ReactNode;
   icon?: React.ReactNode;
 }
 
@@ -23,7 +23,7 @@ export interface MenuOptionGroup {
   type: 'group';
 }
 
-export type MenuItem = MenuDivider | MenuOption | MenuOptionGroup;
+export type MenuItem = MenuDivider | MenuOption | MenuOptionGroup | null;
 
 export type Placement = 'bottomLeft' | 'bottomRight';
 

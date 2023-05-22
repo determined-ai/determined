@@ -1,7 +1,8 @@
-import { Menu, MenuProps } from 'antd';
+import { MenuProps } from 'antd';
+import { ItemType } from 'antd/es/menu/hooks/useItems';
 import React, { MutableRefObject, useEffect, useRef } from 'react';
 
-import useResize from 'hooks/useResize';
+import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 
 // eslint-disable-next-line
 function useOutsideClickHandler(ref: MutableRefObject<any>, handler: () => void) {
@@ -15,10 +16,10 @@ function useOutsideClickHandler(ref: MutableRefObject<any>, handler: () => void)
       }
     }
     // Bind the event listener
-    document.addEventListener('mouseup', handleClickOutside);
+    document.addEventListener('mousedown', handleClickOutside);
     return () => {
       // Unbind the event listener on clean up
-      document.removeEventListener('mouseup', handleClickOutside);
+      document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [ref, handler]);
 }
@@ -29,6 +30,8 @@ export interface TableActionMenuProps extends MenuProps {
   open: boolean;
   handleClose: () => void;
 }
+const isMenuItem = (val: ItemType): val is MenuItem =>
+  val === null || !!val?.key || ('type' in val && val.type === 'divider');
 
 export const TableActionMenu: React.FC<TableActionMenuProps> = ({
   x,
@@ -37,24 +40,18 @@ export const TableActionMenu: React.FC<TableActionMenuProps> = ({
   handleClose,
   items,
 }) => {
-  const menuWidth = 220;
-  const containerRef = useRef(null);
-  useOutsideClickHandler(containerRef, handleClose);
-  const { width } = useResize();
-
+  const divRef = useRef<HTMLDivElement | null>(null);
+  useOutsideClickHandler(divRef, handleClose);
   return (
-    <div
-      ref={containerRef}
-      style={{
-        border: 'solid 1px gray',
-        display: !open ? 'none' : undefined,
-        left: width - x < menuWidth ? width - menuWidth : x,
-        position: 'fixed',
-        top: y,
-        width: menuWidth,
-        zIndex: 100,
-      }}>
-      <Menu items={items} selectable={false} />
-    </div>
+    <Dropdown menu={items?.filter(isMenuItem)} open={open} placement="bottomLeft">
+      <div
+        ref={divRef}
+        style={{
+          left: x,
+          position: 'fixed',
+          top: y,
+        }}
+      />
+    </Dropdown>
   );
 };

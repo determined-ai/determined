@@ -4,7 +4,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import InfoBox, { InfoRow } from 'components/InfoBox';
 import Button from 'components/kit/Button';
 import ClipboardButton from 'components/kit/ClipboardButton';
-import Dropdown, { MenuItem, MenuOption } from 'components/kit/Dropdown';
+import Dropdown, { MenuOption } from 'components/kit/Dropdown';
 import Icon from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
 import Tags, { tagsActionHelper } from 'components/kit/Tags';
@@ -129,7 +129,7 @@ with det.import_from_path(path + "/code"):
   }, [modelVersion]);
 
   const menu = useMemo(() => {
-    const items: MenuItem[] = [
+    const items: MenuOption[] = [
       {
         key: MenuKey.DownloadModel,
         label: MenuKey.DownloadModel,
@@ -155,7 +155,7 @@ with det.import_from_path(path + "/code"):
   }, [canDeleteModelVersion, canModifyModelVersion, modelVersion]);
 
   const handleDropdown = useCallback(
-    (key: string) => {
+    (key: string | number) => {
       switch (key) {
         case MenuKey.DeregisterVersion:
           modelVersionDeleteModal.open();
@@ -185,18 +185,15 @@ with det.import_from_path(path + "/code"):
             </h1>
           </div>
           <div className={css.buttons}>
-            {menu.slice(0, 2).map((item) => {
-              const option = item as MenuOption;
-              return (
-                <Button
-                  danger={option.danger}
-                  disabled={option.disabled}
-                  key={option.key}
-                  onClick={() => handleDropdown(option.key)}>
-                  {option.label}
-                </Button>
-              );
-            })}
+            {menu.slice(0, 2).map((item) => (
+              <Button
+                danger={item.danger}
+                disabled={item.disabled}
+                key={item.key}
+                onClick={() => handleDropdown(item.key)}>
+                {item.label}
+              </Button>
+            ))}
             <Dropdown menu={menu.slice(2)} onClick={handleDropdown}>
               <Button
                 icon={<Icon name="overflow-horizontal" size="small" title="Action menu" />}
