@@ -456,10 +456,9 @@ Resources:
       VpcSecurityGroupIds:
         - !GetAtt DatabaseSecurityGroup.GroupId
       ScalingConfiguration:
-        AutoPause: true
-        SecondsUntilAutoPause: 36000
+        AutoPause: false
         MinCapacity: 2
-        MaxCapacity: 8
+        MaxCapacity: 32
 
   RetainedLogGroup:
     Type: AWS::Logs::LogGroup
