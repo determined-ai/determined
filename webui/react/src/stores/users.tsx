@@ -32,8 +32,8 @@ class UserStore extends PollingStore {
 
   public getUsers() {
     return this.#userIds.select((loadable) => {
-      const userIds = Loadable.getOrElse(undefined, loadable);
-      if (!userIds) return NotLoaded;
+      const userIds = Loadable.getOrElse([], loadable);
+      if (userIds.length === 0) return NotLoaded;
 
       const users = userIds
         .map((id) => this.#usersById.get().get(id))

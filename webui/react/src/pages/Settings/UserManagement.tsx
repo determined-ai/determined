@@ -160,7 +160,7 @@ const UserManagement: React.FC = () => {
 
   const filteredUsers = settings.name
     ? users.filter((user) => {
-        return (user.displayName || user.username).includes(settings.name ?? '');
+        return settings.name && (user.displayName || user.username).includes(settings.name);
       })
     : users;
 
