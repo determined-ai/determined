@@ -179,12 +179,12 @@ const ProjectDetails: React.FC = () => {
   return (
     <Page
       breadcrumb={pageBreadcrumb}
-      id="projectDetails"
-      menuItems={menu}
-      noScroll
       containerRef={pageRef}
       // for docTitle, when id is 1 that means Uncategorized from webui/react/src/routes/routes.ts
       docTitle={id === 1 ? 'Uncategorized Experiments' : 'Project Details'}
+      id="projectDetails"
+      menuItems={menu}
+      noScroll
       onClickMenu={onClick}>
       <DynamicTabs
         basePath={paths.projectDetailsBasePath(id)}

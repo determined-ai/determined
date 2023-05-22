@@ -74,7 +74,7 @@ export const useWorkspaceActionMenu: (props: WorkspaceMenuPropsIn) => WorkspaceM
         .then(() => onComplete?.())
         .catch((e) => handleError(e, { publicSubject: 'Unable to archive workspace.' }));
     }
-  }, [onComplete, workspace?.archived, workspace?.id, workspace]);
+  }, [onComplete, workspace]);
 
   const handlePinClick = useCallback(() => {
     if (!workspace) return;
