@@ -115,6 +115,7 @@ def _test_master_restart_reattach_recover_experiment(
 
 @pytest.mark.managed_devcluster
 @pytest.mark.parametrize("wait_for_amnesia", [True, False])
+# TODO CAROLINA
 def test_master_restart_error_missing_docker_container(
     managed_cluster_restarts: ManagedCluster,
     wait_for_amnesia: bool,
@@ -147,7 +148,7 @@ def test_master_restart_error_missing_docker_container(
 
         expected_message = (
             (
-                "allocation failed due to agent failure: agent failed while the "
+                "allocation terminated due to agent failure: agent failed while the "
                 + "container was running: agent closed with allocated containers"
             )
             if wait_for_amnesia
