@@ -118,6 +118,9 @@ common_log_options: List[Any] = [
         help="follow the logs of a running task, similar to tail -f",
     ),
     Group(
+        cli.output_format_args["json"],
+    ),
+    Group(
         Arg(
             "--head",
             type=int,
@@ -211,7 +214,6 @@ args_description: List[Any] = [
                 "fetch task logs",
                 [
                     Arg("task_id", help="task ID"),
-                    cli.output_format_args["json"],
                     *common_log_options,
                 ],
             ),
