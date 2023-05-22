@@ -9,7 +9,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"net/http/pprof"
@@ -645,7 +644,7 @@ func (m *Master) startServers(ctx context.Context, cert *tls.Certificate) error 
 
 			if agentRM.ClientCA != "" {
 				clientCAs = x509.NewCertPool()
-				clientRootCA, iErr := ioutil.ReadFile(agentRM.ClientCA)
+				clientRootCA, iErr := os.ReadFile(agentRM.ClientCA)
 				if iErr != nil {
 					return errors.Wrap(err, "failed to read agent CA file")
 				}

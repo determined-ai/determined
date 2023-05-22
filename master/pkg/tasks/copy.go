@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"encoding/pem"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -49,7 +48,7 @@ func harnessArchive(harnessPath string, aug *model.AgentUserGroup) cproto.RunArc
 			panic(errors.Wrapf(err, "error retrieving stats for harness file: %s", path))
 		}
 		var content []byte
-		content, err = ioutil.ReadFile(path) // #nosec: G304
+		content, err = os.ReadFile(path) // #nosec: G304
 		if err != nil {
 			panic(errors.Wrapf(err, "error reading harness file: %s", path))
 		}
