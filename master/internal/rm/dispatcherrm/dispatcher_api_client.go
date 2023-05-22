@@ -3,6 +3,7 @@ package dispatcherrm
 import (
 	"context"
 	"crypto/tls"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
@@ -289,4 +290,34 @@ func createHpcQueueManifest() launcher.Manifest {
 	manifest.SetPayloads([]launcher.Payload{*payload})
 
 	return manifest
+}
+
+// If we have a BadRequest/InternalServerError with a details
+// message in the response body, return it after appling our
+// filterOutSuperfluousMessages cleanup method; otherwise return an
+// empty string ("").
+func extractDetailsFromResponse(resp *http.Response, err error) string {
+	if resp == nil {
+		return err.Error()
+	}
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+		openAPIErr, ok := err.(launcher.GenericOpenAPIError)
+		if !ok {
+			return err.Error()
+		}
+		// Unmarshal the error body into a struct to access detail.
+		var errorBody struct {
+			Detail string `json:"detail"`
+		}
+		if parseErr := json.Unmarshal(openAPIErr.Body(), &errorBody); parseErr != nil {
+			return err.Error()
+		}
+
+		messages := filterOutSuperfluousMessages([]string{errorBody.Detail})
+		if len(messages) > 0 {
+			return strings.Join(messages, "\n")
+		}
+		return errorBody.Detail
+	}
+	return err.Error()
 }
