@@ -179,6 +179,14 @@ For an introduction to using the training API, please visit the Training APIs se
       -  ImageNet (Generated)
       -  :download:`torchvision.tgz </examples/torchvision.tgz>`
 
+   -  -  HuggingFace (DeepSpeed/PyTorch)
+      -  Beans (HuggingFace)
+      -  :download:`image_classification.tgz </examples/image_classification.tgz>`
+
+   -  -  HuggingFace (DeepSpeed/PyTorch)
+      -  WikiText (HuggingFace)
+      -  :download:`language_modeling.tgz </examples/language_modeling.tgz>`
+
 ************************
  HP Search Benchmarking
 ************************

@@ -51,7 +51,7 @@ Tutorial <model-hub-transformers-tutorial>` to learn how to customize or build a
 The following HuggingFace **transformers** features are currently not supported:
 
 -  TensorFlow version of transformers
--  Support for deepspeed and fairscale
+-  Support for fairscale
 -  Running on TPUs
 
 .. toctree::
