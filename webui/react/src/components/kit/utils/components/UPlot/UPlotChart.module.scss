@@ -1,0 +1,28 @@
+.base {
+  background-color: var(--theme-stage);
+  margin-bottom: 10px;
+  margin-top: 10px;
+  position: relative;
+}
+.base.dark {
+  :global(.u-select) {
+    background-color: rgba(255 255 255 / 10%);
+  }
+}
+.chartEmpty {
+  align-items: center;
+  display: flex;
+  height: 100%;
+  justify-content: center;
+}
+.download {
+  border: 0;
+  cursor: pointer;
+  position: absolute;
+  right: 0;
+  top: -10px;
+  z-index: 10;
+}
+.invisibleLink {
+  display: none;
+}

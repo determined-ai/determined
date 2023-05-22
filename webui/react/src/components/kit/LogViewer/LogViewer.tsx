@@ -13,6 +13,10 @@ import { throttle } from 'throttle-debounce';
 
 import Button from 'components/kit/Button';
 import Icon from 'components/kit/Icon';
+import Link from 'components/kit/utils/components/Link';
+import Message, { MessageType } from 'components/kit/utils/components/Message';
+import Section from 'components/kit/utils/components/Section';
+import Spinner from 'components/kit/utils/components/Spinner';
 import {
   clone,
   dateTimeStringSorter,
@@ -20,14 +24,10 @@ import {
   numericSorter,
 } from 'components/kit/utils/func';
 import { RecordKey, ValueOf } from 'components/kit/utils/type';
-import Link from 'components/Link';
-import Section from 'components/Section';
 import useGetCharMeasureInContainer from 'hooks/useGetCharMeasureInContainer';
 import useResize from 'hooks/useResize';
 import { FetchArgs } from 'services/api-ts-sdk';
 import { readStream } from 'services/utils';
-import Message, { MessageType } from 'shared/components/Message';
-import Spinner from 'shared/components/Spinner';
 import { Log, LogLevel } from 'types';
 
 import ClipboardButton from '../ClipboardButton';

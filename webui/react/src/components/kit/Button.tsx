@@ -1,8 +1,8 @@
 import { Button as AntdButton } from 'antd';
 import React, { forwardRef, MouseEvent, ReactNode } from 'react';
 
-import { ConditionalWrapper } from 'components/ConditionalWrapper';
 import Tooltip from 'components/kit/Tooltip';
+import { ConditionalWrapper } from 'components/kit/utils/components/ConditionalWrapper';
 
 import css from './Button.module.scss';
 

@@ -11,8 +11,8 @@ import React, {
 
 import Button from 'components/kit/Button';
 import Icon, { IconName } from 'components/kit/Icon';
-import Link from 'components/Link';
-import Spinner from 'shared/components/Spinner';
+import Link from 'components/kit/utils/components/Link';
+import Spinner from 'components/kit/utils/components/Spinner';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import handleError from 'utils/error';
 

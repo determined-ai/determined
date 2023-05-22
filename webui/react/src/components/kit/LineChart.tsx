@@ -3,15 +3,15 @@ import { FixedSizeGrid, GridChildComponentProps } from 'react-window';
 import uPlot, { AlignedData, Plugin } from 'uplot';
 
 import { XAxisDomain, XAxisFilter } from 'components/kit/LineChart/XAxisFilter';
+import ScaleSelect from 'components/kit/utils/components/ScaleSelect';
+import Spinner from 'components/kit/utils/components/Spinner/Spinner';
+import { SyncProvider } from 'components/kit/utils/components/UPlot/SyncProvider';
+import { UPlotPoint } from 'components/kit/utils/components/UPlot/types';
+import UPlotChart, { Options } from 'components/kit/utils/components/UPlot/UPlotChart';
+import { closestPointPlugin } from 'components/kit/utils/components/UPlot/UPlotChart/closestPointPlugin';
+import { tooltipsPlugin } from 'components/kit/utils/components/UPlot/UPlotChart/tooltipsPlugin';
 import { getCssVar, getTimeTickValues, glasbeyColor } from 'components/kit/utils/func';
-import ScaleSelect from 'components/ScaleSelect';
-import { SyncProvider } from 'components/UPlot/SyncProvider';
-import { UPlotPoint } from 'components/UPlot/types';
-import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
-import { closestPointPlugin } from 'components/UPlot/UPlotChart/closestPointPlugin';
-import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin';
 import useResize from 'hooks/useResize';
-import Spinner from 'shared/components/Spinner/Spinner';
 import { MetricType, Scale } from 'types';
 import { Loadable } from 'utils/loadable';
 
