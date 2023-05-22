@@ -55,7 +55,7 @@ func (db *PgDB) ProjectExperiments(id int) (experiments []*model.Experiment, err
 	rows, err := db.sql.Queryx(`
 SELECT e.id, state, config, model_definition, start_time, end_time, archived,
 	   git_remote, git_commit, git_committer, git_commit_date, owner_id, notes,
-		 job_id, u.username as username, project_id
+		 job_id, u.username as username, project_id, unmanaged
 FROM experiments e
 JOIN users u ON (e.owner_id = u.id)
 WHERE e.project_id = $1`, id)
@@ -403,8 +403,8 @@ type MetricMeasurements struct {
 }
 
 // ExperimentBestSearcherValidation returns the best searcher validation for an experiment.
-func (db *PgDB) ExperimentBestSearcherValidation(id int) (float32, error) {
-	exp, err := db.ExperimentByID(id)
+func ExperimentBestSearcherValidation(ctx context.Context, id int) (float32, error) {
+	exp, err := ExperimentByID(ctx, id)
 	if err != nil {
 		return 0, errors.Wrap(err, "failed to get experiment config")
 	}
@@ -415,17 +415,14 @@ func (db *PgDB) ExperimentBestSearcherValidation(id int) (float32, error) {
 	}
 
 	var metric float32
-	switch err := db.sql.QueryRowx(fmt.Sprintf(`
-SELECT (v.metrics->'validation_metrics'->>$2)::float8
+	if err := Bun().NewRaw(fmt.Sprintf(`
+SELECT (v.metrics->'validation_metrics'->>?)::float8 as metric
 FROM validations v, trials t
 WHERE v.trial_id = t.id
-  AND t.experiment_id = $1
-ORDER BY (v.metrics->'validation_metrics'->>$2)::float8 %s
-LIMIT 1`, metricOrdering), id, exp.Config.Searcher.Metric).Scan(&metric); {
-	case errors.Is(err, sql.ErrNoRows):
-		return 0, ErrNotFound
-	case err != nil:
-		return 0, errors.Wrap(err, "querying best experiment validation")
+  AND t.experiment_id = ?
+ORDER BY metric %s
+LIMIT 1`, metricOrdering), exp.Config.Searcher.Metric, id).Scan(ctx, &metric); err != nil {
+		return 0, MatchSentinelError(err)
 	}
 	return metric, nil
 }
@@ -516,10 +513,10 @@ func (db *PgDB) AddExperiment(
 	err = tx.NewRaw(`INSERT INTO experiments
 	(state, config, model_definition, start_time, end_time, archived, parent_id, progress,
 	 git_remote, git_commit, git_committer, git_commit_date,
-	 owner_id, original_config, notes, job_id, project_id)
+	 owner_id, original_config, notes, job_id, project_id, unmanaged)
 	VALUES (?, ?, ?, ?, ?, ?, ?, 0,
 		    ?, ?, ?, ?,
-	        ?, ?, ?, ?, ?)
+	        ?, ?, ?, ?, ?, ?)
 	RETURNING id`,
 		experiment.State,
 		string(activeConfigStr),
@@ -536,7 +533,8 @@ func (db *PgDB) AddExperiment(
 		experiment.OriginalConfig,
 		experiment.Notes,
 		experiment.JobID,
-		experiment.ProjectID).Scan(ctx, &experiment.ID)
+		experiment.ProjectID,
+		experiment.Unmanaged).Scan(ctx, &experiment.ID)
 	if err != nil {
 		return errors.Wrapf(err, "error inserting experiment %v", experiment)
 	}
@@ -622,17 +620,17 @@ func AddProjectHyperparameters(
 }
 
 // ExperimentByID looks up an experiment by ID in a database, returning an error if none exists.
-func (db *PgDB) ExperimentByID(id int) (*model.Experiment, error) {
+func ExperimentByID(ctx context.Context, expID int) (*model.Experiment, error) {
 	var experiment model.Experiment
 
-	if err := db.query(`
+	if err := Bun().NewRaw(`
 SELECT e.id, state, config, model_definition, start_time, end_time, archived,
 	   git_remote, git_commit, git_committer, git_commit_date, owner_id, notes,
-		 job_id, u.username as username, project_id
+		 job_id, u.username as username, project_id, unmanaged
 FROM experiments e
 JOIN users u ON (e.owner_id = u.id)
-WHERE e.id = $1`, &experiment, id); err != nil {
-		return nil, err
+WHERE e.id = ?`, expID).Scan(ctx, &experiment); err != nil {
+		return nil, MatchSentinelError(err)
 	}
 
 	return &experiment, nil
@@ -640,18 +638,18 @@ WHERE e.id = $1`, &experiment, id); err != nil {
 
 // ExperimentByTrialID looks up an experiment by a given trialID, returning an error
 // if none exists.
-func (db *PgDB) ExperimentByTrialID(trialID int) (*model.Experiment, error) {
+func ExperimentByTrialID(ctx context.Context, trialID int) (*model.Experiment, error) {
 	var experiment model.Experiment
 
-	if err := db.query(`
+	if err := Bun().NewRaw(`
 SELECT e.id, e.state, e.config, e.model_definition, e.start_time, e.end_time, e.archived,
        e.git_remote, e.git_commit, e.git_committer, e.git_commit_date, e.owner_id, e.notes,
-       e.job_id, u.username as username, e.project_id
+       e.job_id, u.username as username, e.project_id, unmanaged
 FROM experiments e
 JOIN trials t ON e.id = t.experiment_id
 JOIN users u ON (e.owner_id = u.id)
-WHERE t.id = $1`, &experiment, trialID); err != nil {
-		return nil, err
+WHERE t.id = ?`, trialID).Scan(ctx, &experiment); err != nil {
+		return nil, MatchSentinelError(err)
 	}
 
 	return &experiment, nil
@@ -664,14 +662,14 @@ func ExperimentByTaskID(
 ) (*model.Experiment, error) {
 	var experiment model.Experiment
 	if err := Bun().NewRaw(`
-SELECT e.id, e.state, e.config, e.model_definition AS model_definition_bytes, e.start_time,
+SELECT e.id, e.state, e.config, e.model_definition, e.start_time,
        e.end_time, e.archived, e.git_remote, e.git_commit, e.git_committer, e.git_commit_date,
-       e.owner_id, e.notes, e.job_id, u.username as username, e.project_id
+       e.owner_id, e.notes, e.job_id, u.username as username, e.project_id, e.unmanaged
 FROM experiments e
 JOIN trials t ON e.id = t.experiment_id
 JOIN users u ON e.owner_id = u.id
 WHERE t.task_id = ?`, taskID).Scan(ctx, &experiment); err != nil {
-		return nil, err
+		return nil, MatchSentinelError(err)
 	}
 
 	return &experiment, nil
@@ -712,7 +710,7 @@ func (db *PgDB) NonTerminalExperiments() ([]*model.Experiment, error) {
 	rows, err := db.sql.Queryx(`
 SELECT e.id, state, config, model_definition, start_time, end_time, archived,
        git_remote, git_commit, git_committer, git_commit_date, owner_id, job_id,
-       u.username as username, project_id
+       u.username as username, project_id, unmanaged
 FROM experiments e
 JOIN users u ON e.owner_id = u.id
 WHERE state IN (

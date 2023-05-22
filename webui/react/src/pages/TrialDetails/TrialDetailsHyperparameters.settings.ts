@@ -12,7 +12,7 @@ export const DEFAULT_COLUMN_WIDTHS: Record<HyperparameterColumnName, number> = {
   value: 150,
 };
 
-export interface Settings extends Omit<InteractiveTableSettings, 'tableLimit' | 'tableOffset'> {
+export interface Settings extends InteractiveTableSettings {
   columns: HyperparameterColumnName[];
 }
 
@@ -42,6 +42,16 @@ export const configForTrial = (id: number): SettingsConfig<Settings> => ({
       skipUrlEncoding: true,
       storageKey: 'sortKey',
       type: union([undefinedType, union([boolean, number, string])]),
+    },
+    tableLimit: {
+      defaultValue: 0,
+      storageKey: 'tableLimit',
+      type: number,
+    },
+    tableOffset: {
+      defaultValue: 0,
+      storageKey: 'tableOffset',
+      type: number,
     },
   },
   storagePath: `trial-${id}-hyperparameters`,

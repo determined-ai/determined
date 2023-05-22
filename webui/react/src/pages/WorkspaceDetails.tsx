@@ -6,7 +6,6 @@ import Pivot from 'components/kit/Pivot';
 import Page from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
 import TaskList from 'components/TaskList';
-import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import {
@@ -22,6 +21,7 @@ import usePolling from 'shared/hooks/usePolling';
 import { ValueOf } from 'shared/types';
 import { isEqual } from 'shared/utils/data';
 import { isNotFound } from 'shared/utils/service';
+import determinedStore from 'stores/determinedInfo';
 import userStore from 'stores/users';
 import { User, Workspace } from 'types';
 import handleError from 'utils/error';
@@ -48,7 +48,7 @@ export const WorkspaceDetailsTab = {
 export type WorkspaceDetailsTab = ValueOf<typeof WorkspaceDetailsTab>;
 
 const WorkspaceDetails: React.FC = () => {
-  const rbacEnabled = useFeature().isOn('rbac');
+  const { rbacEnabled } = useObservable(determinedStore.info);
 
   const loadableUsers = useObservable(userStore.getUsers());
   const users = Loadable.getOrElse([], loadableUsers);

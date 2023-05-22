@@ -184,7 +184,6 @@ const MultiSortRow: React.FC<MultiSortRowProps> = ({ sort, columns, onChange, on
       <div>
         <Button
           icon={<Icon name="close" title="Remove sort" />}
-          shape="circle"
           size="small"
           type="text"
           onClick={onRemove}

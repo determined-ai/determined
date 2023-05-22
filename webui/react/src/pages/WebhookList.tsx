@@ -9,16 +9,13 @@ import Empty from 'components/kit/Empty';
 import Icon from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
 import Page from 'components/Page';
-import InteractiveTable, {
-  ColumnDef,
-  InteractiveTableSettings,
-} from 'components/Table/InteractiveTable';
+import InteractiveTable, { ColumnDef } from 'components/Table/InteractiveTable';
 import SkeletonTable from 'components/Table/SkeletonTable';
 import { defaultRowClassName, getFullPaginationConfig } from 'components/Table/Table';
 import WebhookCreateModalComponent from 'components/WebhookCreateModal';
 import WebhookDeleteModalComponent from 'components/WebhookDeleteModal';
 import usePermissions from 'hooks/usePermissions';
-import { UpdateSettings, useSettings } from 'hooks/useSettings';
+import { useSettings } from 'hooks/useSettings';
 import { getWebhooks, testWebhook } from 'services/api';
 import { V1Trigger, V1TriggerType } from 'services/api-ts-sdk/api';
 import usePolling from 'shared/hooks/usePolling';
@@ -208,7 +205,7 @@ const WebhooksView: React.FC = () => {
           title="No Webhooks Registered"
         />
       ) : settings ? (
-        <InteractiveTable
+        <InteractiveTable<Webhook, Settings>
           columns={columns}
           containerRef={pageRef}
           dataSource={webhooks}
@@ -222,10 +219,10 @@ const WebhooksView: React.FC = () => {
           )}
           rowClassName={defaultRowClassName({ clickable: false })}
           rowKey="id"
-          settings={settings as InteractiveTableSettings}
+          settings={settings}
           showSorterTooltip={false}
           size="small"
-          updateSettings={updateSettings as UpdateSettings}
+          updateSettings={updateSettings}
           onChange={handleTableChange}
         />
       ) : (

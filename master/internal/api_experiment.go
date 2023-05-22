@@ -163,30 +163,7 @@ func (a *apiServer) getExperimentAndCheckCanDoActions(
 	expID int,
 	actions ...func(context.Context, model.User, *model.Experiment) error,
 ) (*model.Experiment, model.User, error) {
-	curUser, _, err := grpcutil.GetUser(ctx)
-	if err != nil {
-		return nil, model.User{}, err
-	}
-
-	e, err := a.m.db.ExperimentByID(expID)
-
-	expNotFound := status.Errorf(codes.NotFound, "experiment not found: %d", expID)
-	if errors.Is(err, db.ErrNotFound) {
-		return nil, model.User{}, expNotFound
-	} else if err != nil {
-		return nil, model.User{}, err
-	}
-
-	if err = exputil.AuthZProvider.Get().CanGetExperiment(ctx, *curUser, e); err != nil {
-		return nil, model.User{}, authz.SubIfUnauthorized(err, expNotFound)
-	}
-
-	for _, action := range actions {
-		if err = action(ctx, *curUser, e); err != nil {
-			return nil, model.User{}, status.Errorf(codes.PermissionDenied, err.Error())
-		}
-	}
-	return e, *curUser, nil
+	return exputil.GetExperimentAndCheckCanDoActions(ctx, expID, actions...)
 }
 
 func (a *apiServer) GetSearcherEvents(
@@ -1368,6 +1345,22 @@ func (a *apiServer) CreateExperiment(
 			Experiment: &experimentv1.Experiment{},
 		}, nil
 	}
+
+	if req.Unmanaged != nil && *req.Unmanaged {
+		e, _, err := newUnmanagedExperiment(a.m, dbExp, activeConfig, taskSpec)
+		if err != nil {
+			return nil, err
+		}
+
+		protoExp, err := a.getExperiment(ctx, *user, e.ID)
+		if err != nil {
+			return nil, err
+		}
+		return &apiv1.CreateExperimentResponse{
+			Experiment: protoExp,
+			Config:     protoutils.ToStruct(activeConfig),
+		}, nil
+	}
 	// Check user has permission for what they are trying to do
 	// before actually saving the experiment.
 	if req.Activate {
@@ -1433,7 +1426,7 @@ func (a *apiServer) ExpMetricNames(req *apiv1.ExpMetricNamesRequest,
 					return err
 				}
 
-				if timeSinceLastAuth == (time.Time{}) { // Initialzation.
+				if timeSinceLastAuth == (time.Time{}) { // Initialization.
 					searcherMetric := exp.Config.Searcher.Metric
 
 					if seen := seenSearcher[searcherMetric]; !seen {
@@ -1886,9 +1879,9 @@ func (a *apiServer) GetBestSearcherValidationMetric(
 		return nil, err
 	}
 
-	metric, err := a.m.db.ExperimentBestSearcherValidation(int(req.ExperimentId))
+	metric, err := db.ExperimentBestSearcherValidation(ctx, int(req.ExperimentId))
 	switch {
-	case errors.Cause(err) == db.ErrNotFound:
+	case errors.Is(err, db.ErrNotFound):
 		return nil, status.Errorf(codes.NotFound, "no validations for experiment")
 	case err != nil:
 		return nil, err
@@ -2235,6 +2228,65 @@ func (a *apiServer) SearchExperiments(
 			resp.Experiments,
 			&apiv1.SearchExperimentExperiment{Experiment: experiment, BestTrial: trial},
 		)
+	}
+
+	return resp, nil
+}
+
+func (a *apiServer) CreateTrial(
+	ctx context.Context, req *apiv1.CreateTrialRequest,
+) (*apiv1.CreateTrialResponse, error) {
+	if req.Unmanaged != true {
+		return nil, errors.New("only unmanaged trials are supported")
+	}
+
+	exp, _, err := a.getExperimentAndCheckCanDoActions(ctx, int(req.ExperimentId),
+		exputil.AuthZProvider.Get().CanEditExperiment)
+	if err != nil {
+		return nil, err
+	}
+
+	// HACK: needed for ``experimentIDFromTrialTaskID``.
+	taskID := model.TaskID(fmt.Sprintf("%d.%s", exp.ID, model.NewTaskID()))
+
+	if !exp.Unmanaged {
+		return nil, errors.New("trials can only be created on unmanaged experiments")
+	}
+
+	trialModel := model.NewTrial(
+		model.CompletedState,
+		model.NewJobID(),
+		taskID,
+		model.RequestID{},
+		exp.ID,
+		req.Hparams.AsMap(),
+		nil,
+		0)
+
+	if err := a.m.db.AddTask(&model.Task{
+		TaskID:     trialModel.TaskID,
+		TaskType:   model.TaskTypeTrial,
+		StartTime:  time.Now(),
+		JobID:      nil,
+		LogVersion: model.CurrentTaskLogVersion,
+	}); err != nil {
+		return nil, err
+	}
+
+	if err := a.m.db.AddTrial(trialModel); err != nil {
+		return nil, err
+	}
+
+	resp := &apiv1.CreateTrialResponse{Trial: &trialv1.Trial{}}
+
+	if err := a.m.db.QueryProtof(
+		"proto_get_trials_plus",
+		[]any{"($1::int, $2::int)"},
+		resp.Trial,
+		trialModel.ID,
+		1,
+	); err != nil {
+		return nil, errors.Wrapf(err, "failed to get trial %d", trialModel.ID)
 	}
 
 	return resp, nil

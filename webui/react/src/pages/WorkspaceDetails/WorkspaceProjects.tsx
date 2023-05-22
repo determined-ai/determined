@@ -26,7 +26,7 @@ import {
   userRenderer,
 } from 'components/Table/Table';
 import usePermissions from 'hooks/usePermissions';
-import { UpdateSettings, useSettings } from 'hooks/useSettings';
+import { useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { getWorkspaceProjects, patchProject } from 'services/api';
 import { V1GetWorkspaceProjectsRequestSortBy } from 'services/api-ts-sdk';
@@ -148,11 +148,11 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
         updateSettings({ user: undefined });
         break;
       case WhoseProjects.Mine:
-        updateSettings({ user: currentUser ? [currentUser.id] : undefined });
+        updateSettings({ user: currentUser ? [currentUser.id.toString()] : undefined });
         break;
       case WhoseProjects.Others:
         updateSettings({
-          user: users.filter((u) => u.id !== currentUser?.id).map((u) => u.id),
+          user: users.filter((u) => u.id !== currentUser?.id).map((u) => u.id.toString()),
         });
         break;
     }
@@ -347,7 +347,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
         );
       case GridListView.List:
         return (
-          <InteractiveTable
+          <InteractiveTable<Project, WorkspaceDetailsSettings>
             columns={columns}
             containerRef={pageRef}
             ContextMenu={actionDropdown}
@@ -363,7 +363,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
             rowKey="id"
             settings={settings}
             size="small"
-            updateSettings={updateSettings as UpdateSettings}
+            updateSettings={updateSettings}
           />
         );
     }

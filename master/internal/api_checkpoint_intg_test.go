@@ -70,7 +70,7 @@ func createVersionTwoCheckpoint(
 		ID:           0,
 		UUID:         uuid.New(),
 		TaskID:       trial.TaskID,
-		AllocationID: aID,
+		AllocationID: &aID,
 		ReportTime:   time.Now(),
 		State:        model.ActiveState,
 		Resources:    nil,

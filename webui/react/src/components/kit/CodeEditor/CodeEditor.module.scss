@@ -11,10 +11,6 @@
     height: 100%;
     padding: 0.5em;
 
-    span {
-      white-space: nowrap;
-    }
-
     @media screen and (max-width: 1024px) {
       border-right: none;
       grid-column: 1 / 3;

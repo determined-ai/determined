@@ -5,7 +5,7 @@ from pathlib import Path
 from termcolor import colored
 
 from determined import cli
-from determined.cli import command, task
+from determined.cli import command, render, task
 from determined.common import api, context
 from determined.common.api import authentication, bindings, request
 from determined.common.check import check_eq
@@ -30,45 +30,34 @@ def start_tensorboard(args: Namespace) -> None:
     )
 
     resp = bindings.post_LaunchTensorboard(cli.setup_session(args), body=body)
+    tsb = resp.tensorboard
 
     if args.detach:
         print(resp.tensorboard.id)
         return
+
+    render.report_job_launched("tensorboard", tsb.id)
 
     if resp.warnings:
         cli.print_warnings(resp.warnings)
     currentSlotsExceeded = (resp.warnings is not None) and (
         bindings.v1LaunchWarning.CURRENT_SLOTS_EXCEEDED in resp.warnings
     )
-    url = "tensorboard/{}/events".format(resp.tensorboard.id)
-    with api.ws(args.master, url) as ws:
-        for msg in ws:
-            if msg["log_event"] is not None:
-                # TensorBoard will print a url by default. The URL is incorrect since
-                # TensorBoard is not aware of the master proxy address it is assigned.
-                if "http" in msg["log_event"]:
-                    continue
+    cli.wait_ntsc_ready(cli.setup_session(args), api.NTSC_Kind.tensorboard, tsb.id)
 
-            if msg["service_ready_event"] and resp.tensorboard.serviceAddress is not None:
-                if args.no_browser:
-                    url = api.make_url(args.master, resp.tensorboard.serviceAddress)
-                else:
-                    url = api.browser_open(
-                        args.master,
-                        request.make_interactive_task_url(
-                            task_id=resp.tensorboard.id,
-                            service_address=resp.tensorboard.serviceAddress,
-                            resource_pool=resp.tensorboard.resourcePool,
-                            description=resp.tensorboard.description,
-                            task_type="tensorboard",
-                            currentSlotsExceeded=currentSlotsExceeded,
-                        ),
-                    )
-
-                print(colored("TensorBoard is running at: {}".format(url), "green"))
-                command.render_event_stream(msg)
-                break
-            command.render_event_stream(msg)
+    assert tsb.serviceAddress is not None, "missing tensorboard serviceAddress"
+    nb_path = request.make_interactive_task_url(
+        task_id=tsb.id,
+        service_address=tsb.serviceAddress,
+        description=tsb.description,
+        resource_pool=tsb.resourcePool,
+        task_type="tensorboard",
+        currentSlotsExceeded=currentSlotsExceeded,
+    )
+    url = api.make_url(args.master, nb_path)
+    if not args.no_browser:
+        api.browser_open(args.master, nb_path)
+    print(colored("Tensorboard is running at: {}".format(url), "green"))
 
 
 @authentication.required

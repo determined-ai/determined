@@ -20,7 +20,7 @@ allocs_in_range AS (
         (
             SELECT
                 *,
-                tstzrange(start_time, end_time) AS range
+                tstzrange(start_time, greatest(start_time, end_time)) AS range
             FROM
                 allocations
             WHERE

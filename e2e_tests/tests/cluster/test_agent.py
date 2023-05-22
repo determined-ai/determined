@@ -5,6 +5,7 @@ import pytest
 
 import determined
 from determined.common import api
+from determined.common.api import authentication, certs
 from tests import config as conf
 
 from .managed_cluster import ManagedCluster
@@ -14,12 +15,15 @@ from .managed_cluster import ManagedCluster
 # writing, since older agent versions don't report their versions.
 @pytest.mark.e2e_cpu
 def test_agent_version() -> None:
+    # TODO: refactor tests to not use cli singleton auth.
+    certs.cli_cert = certs.default_load(conf.make_master_url())
+    authentication.cli_auth = authentication.Authentication(conf.make_master_url())
     # DET_AGENT_VERSION is available and specifies the agent version in cross-version tests; for
     # other tests, this evaluates to the current version.
     target_version = os.environ.get("DET_AGENT_VERSION") or determined.__version__
-    agents = api.get(conf.make_master_url(), "agents").json()
 
-    assert all(agent["version"] == target_version for agent in agents.values())
+    agents = api.get(conf.make_master_url(), "api/v1/agents").json()["agents"]
+    assert all(agent["version"] == target_version for agent in agents)
 
 
 @pytest.mark.e2e_cpu_agent_connection_loss

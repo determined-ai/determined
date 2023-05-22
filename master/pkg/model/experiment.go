@@ -323,7 +323,7 @@ type Experiment struct {
 	OriginalConfig string               `db:"original_config"`
 
 	// The model definition is stored as a .tar.gz file (raw bytes).
-	ModelDefinitionBytes []byte     `db:"model_definition"`
+	ModelDefinitionBytes []byte     `db:"model_definition" bun:"model_definition"`
 	StartTime            time.Time  `db:"start_time"`
 	EndTime              *time.Time `db:"end_time"`
 	ParentID             *int       `db:"parent_id"`
@@ -335,6 +335,7 @@ type Experiment struct {
 	OwnerID              *UserID    `db:"owner_id"`
 	Username             string     `db:"username"`
 	ProjectID            int        `db:"project_id"`
+	Unmanaged            bool       `db:"unmanaged"`
 }
 
 // ExperimentFromProto converts a experimentv1.Experiment to a model.Experiment.
@@ -379,6 +380,7 @@ func ExperimentFromProto(e *experimentv1.Experiment) (*Experiment, error) {
 		OwnerID:   uid,
 		Username:  e.Username,
 		ProjectID: int(e.ProjectId),
+		Unmanaged: e.Unmanaged,
 	}, nil
 }
 
@@ -457,9 +459,10 @@ type Trial struct {
 	JobID JobID
 }
 
-// NewTrial creates a new trial in the active state.  Note that the trial ID
+// NewTrial creates a new trial in the specified state.  Note that the trial ID
 // will not be set.
 func NewTrial(
+	state State,
 	jobID JobID,
 	taskID TaskID,
 	requestID RequestID,
@@ -476,7 +479,7 @@ func NewTrial(
 		TaskID:                taskID,
 		RequestID:             &requestID,
 		ExperimentID:          experimentID,
-		State:                 ActiveState,
+		State:                 state,
 		StartTime:             time.Now().UTC(),
 		HParams:               hparams,
 		WarmStartCheckpointID: warmStartCheckpointID,
@@ -570,7 +573,7 @@ type CheckpointV2 struct {
 	ID            int                    `db:"id" bun:"id,pk,autoincrement"`
 	UUID          uuid.UUID              `db:"uuid"`
 	TaskID        TaskID                 `db:"task_id"`
-	AllocationID  AllocationID           `db:"allocation_id"`
+	AllocationID  *AllocationID          `db:"allocation_id"`
 	ReportTime    time.Time              `db:"report_time"`
 	State         State                  `db:"state"`
 	Resources     map[string]int64       `db:"resources"`

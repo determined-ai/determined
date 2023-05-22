@@ -3,6 +3,8 @@ import React, { useCallback, useMemo, useState } from 'react';
 
 import BatchActionConfirmModalComponent from 'components/BatchActionConfirmModal';
 import ExperimentMoveModalComponent from 'components/ExperimentMoveModal';
+import { FilterFormStore } from 'components/FilterForm/components/FilterFormStore';
+import TableFilter from 'components/FilterForm/TableFilter';
 import Button from 'components/kit/Button';
 import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 import Icon, { IconName } from 'components/kit/Icon';
@@ -84,6 +86,9 @@ interface Props {
   handleUpdateExperimentList: (action: BatchAction, successfulIds: number[]) => void;
   setVisibleColumns: (newColumns: string[]) => void;
   total: Loadable<number>;
+  formStore: FilterFormStore;
+  setIsOpenFilter: (value: boolean) => void;
+  isOpenFilter: boolean;
 }
 
 const TableActionBar: React.FC<Props> = ({
@@ -101,6 +106,9 @@ const TableActionBar: React.FC<Props> = ({
   total,
   initialVisibleColumns,
   setVisibleColumns,
+  formStore,
+  setIsOpenFilter,
+  isOpenFilter,
 }) => {
   const permissions = usePermissions();
   const [batchAction, setBatchAction] = useState<BatchAction>();
@@ -300,6 +308,12 @@ const TableActionBar: React.FC<Props> = ({
   return (
     <>
       <Space className={css.base}>
+        <TableFilter
+          formStore={formStore}
+          isOpenFilter={isOpenFilter}
+          loadableColumns={projectColumns}
+          setIsOpenFilter={setIsOpenFilter}
+        />
         <MultiSortMenu columns={projectColumns} sorts={sorts} onChange={onSortChange} />
         <ColumnPickerMenu
           initialVisibleColumns={initialVisibleColumns}
