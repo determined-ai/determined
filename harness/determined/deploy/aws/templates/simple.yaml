@@ -458,7 +458,7 @@ Resources:
         - !GetAtt DatabaseSecurityGroup.GroupId
       ScalingConfiguration:
         AutoPause: true
-        SecondsUntilAutoPause: 3600
+        SecondsUntilAutoPause: 36000
         MinCapacity: 2
         MaxCapacity: 8
 
