@@ -50,28 +50,9 @@ WHERE NOT EXISTS (
 );
 ALTER TABLE raw_validations
 ADD FOREIGN KEY (trial_id) REFERENCES trials (id);
+
 CREATE TYPE metric_partition_type AS ENUM ('VALIDATION', 'TRAINING', 'GENERIC');
-ALTER TABLE raw_validations
-ADD COLUMN partition_type metric_partition_type NOT NULL DEFAULT 'VALIDATION';
-ALTER TABLE raw_steps
-ADD COLUMN partition_type metric_partition_type NOT NULL DEFAULT 'TRAINING';
-ALTER TABLE raw_validations
-ADD COLUMN custom_type text;
-ALTER TABLE raw_steps
-ADD COLUMN custom_type text;
-CREATE TABLE generic_metrics (
-    trial_id integer NOT NULL,
-    end_time timestamp with time zone,
-    metrics jsonb,
-    total_batches integer NOT NULL DEFAULT 0,
-    trial_run_id integer NOT NULL DEFAULT 0,
-    archived boolean NOT NULL DEFAULT false,
-    id integer NOT NULL,
-    partition_type metric_partition_type NOT NULL DEFAULT 'GENERIC',
-    custom_type text,
-    FOREIGN KEY (trial_id) REFERENCES trials (id)
-);
--- start with max of existing ids in raw_steps and raw_validations. find it using select on both tables
+
 CREATE SEQUENCE metrics_id_seq;
 SELECT setval(
     'metrics_id_seq',
@@ -93,14 +74,40 @@ SELECT setval(
     ) + 1,
     true
 );
+
+-- reshape raw_validations
+ALTER TABLE raw_validations
+ADD COLUMN partition_type metric_partition_type NOT NULL DEFAULT 'VALIDATION';
+ALTER TABLE raw_validations
+ADD COLUMN custom_type text;
 ALTER TABLE raw_validations
 ALTER COLUMN id DROP IDENTITY;
 ALTER TABLE raw_validations
 ALTER COLUMN id
 SET DEFAULT nextval('metrics_id_seq');
+
+-- reshape raw_steps
+ALTER TABLE raw_steps
+ADD COLUMN partition_type metric_partition_type NOT NULL DEFAULT 'TRAINING';
+ALTER TABLE raw_steps
+ADD COLUMN custom_type text;
 ALTER TABLE raw_steps
 ALTER COLUMN id
 SET DEFAULT nextval('metrics_id_seq');
+
+CREATE TABLE generic_metrics (
+    trial_id integer NOT NULL,
+    end_time timestamp with time zone,
+    metrics jsonb,
+    total_batches integer NOT NULL DEFAULT 0,
+    trial_run_id integer NOT NULL DEFAULT 0,
+    archived boolean NOT NULL DEFAULT false,
+    id integer NOT NULL,
+    partition_type metric_partition_type NOT NULL DEFAULT 'GENERIC',
+    custom_type text,
+    FOREIGN KEY (trial_id) REFERENCES trials (id)
+);
+
 CREATE TABLE metrics (
     trial_id integer NOT NULL,
     end_time timestamp with time zone,
@@ -110,8 +117,9 @@ CREATE TABLE metrics (
     archived boolean NOT NULL DEFAULT false,
     id integer NOT NULL DEFAULT nextval('metrics_id_seq'),
     custom_type text,
-    partition_type metric_partition_type NOT NULL DEFAULT 'GENERIC' -- CONSTRAINT metrics_trial_id_fkey FOREIGN KEY (trial_id) REFERENCES trials(id). Not supported
+    partition_type metric_partition_type NOT NULL DEFAULT 'GENERIC'
 ) PARTITION BY LIST (partition_type);
+
 ALTER TABLE metrics ATTACH PARTITION generic_metrics FOR
 VALUES IN ('GENERIC');
 ALTER TABLE metrics ATTACH PARTITION raw_validations FOR
