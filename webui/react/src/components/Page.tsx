@@ -2,6 +2,7 @@ import { useObservable } from 'micro-observables';
 import React, { MutableRefObject } from 'react';
 import { Helmet } from 'react-helmet-async';
 
+import { MenuItem } from 'components/kit/Dropdown';
 import PageHeader from 'components/PageHeader';
 import PageNotFound from 'components/PageNotFound';
 import usePermissions from 'hooks/usePermissions';
@@ -28,10 +29,12 @@ export interface Props {
   loading?: boolean;
   noScroll?: boolean;
   notFound?: boolean;
+  onClickMenu?: (key: string) => void;
   options?: React.ReactNode;
   stickyHeader?: boolean;
   subTitle?: React.ReactNode;
   title?: string;
+  menuItems?: MenuItem[];
 }
 
 const getFullDocTitle = (branding: string, title?: string, clusterName?: string) => {
@@ -80,8 +83,10 @@ const Page: React.FC<Props> = (props: Props) => {
         <article className={classes.join(' ')} id={props.id} ref={props.containerRef}>
           <PageHeader
             breadcrumb={props.breadcrumb}
+            menuItems={props.menuItems}
             options={props.options}
             sticky={props.stickyHeader}
+            onClickMenu={props.onClickMenu}
           />
           {props.headerComponent}
           <div className={css.body}>

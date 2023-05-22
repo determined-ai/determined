@@ -5,6 +5,7 @@ import { useParams } from 'react-router-dom';
 import DynamicTabs from 'components/DynamicTabs';
 import Page, { BreadCrumbRoute } from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
+import { useProjectActionMenu } from 'components/ProjectActionDropdown';
 import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
@@ -14,8 +15,12 @@ import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner';
 import usePolling from 'shared/hooks/usePolling';
 import { isEqual } from 'shared/utils/data';
+import { routeToReactUrl } from 'shared/utils/routes';
 import { isNotFound } from 'shared/utils/service';
-import { Project } from 'types';
+import workspaceStore from 'stores/workspaces';
+import { Project, Workspace } from 'types';
+import { Loadable } from 'utils/loadable';
+import { useObservable } from 'utils/observable';
 
 import ExperimentList from './ExperimentList';
 import F_ExperimentList from './F_ExpList/F_ExperimentList';
@@ -39,15 +44,9 @@ const ProjectDetails: React.FC = () => {
   const [canceler] = useState(new AbortController());
   const pageRef = useRef<HTMLElement>(null);
 
-  const id = Number(projectId ?? '1');
+  const workspaces = Loadable.getOrElse([], useObservable(workspaceStore.workspaces));
 
-  const postActivity = useCallback(() => {
-    postUserActivity({
-      activityType: V1ActivityType.GET,
-      entityId: id,
-      entityType: V1EntityType.PROJECT,
-    });
-  }, [id]);
+  const id = Number(projectId ?? '1');
 
   const fetchProject = useCallback(async () => {
     try {
@@ -61,6 +60,27 @@ const ProjectDetails: React.FC = () => {
       if (!pageError) setPageError(e as Error);
     }
   }, [canceler.signal, id, pageError]);
+
+  const onProjectDelete = useCallback(() => {
+    if (project) routeToReactUrl(paths.workspaceDetails(project.workspaceId));
+  }, [project]);
+
+  const workspace = workspaces.find((ws: Workspace) => ws.id === project?.workspaceId);
+
+  const postActivity = useCallback(() => {
+    postUserActivity({
+      activityType: V1ActivityType.GET,
+      entityId: id,
+      entityType: V1EntityType.PROJECT,
+    });
+  }, [id]);
+
+  const { contextHolders, menu, onClick } = useProjectActionMenu({
+    onComplete: fetchProject,
+    onDelete: onProjectDelete,
+    project,
+    workspaceArchived: workspace?.archived,
+  });
 
   const tabItems: TabsProps['items'] = useMemo(() => {
     if (!project) {
@@ -159,16 +179,19 @@ const ProjectDetails: React.FC = () => {
   return (
     <Page
       breadcrumb={pageBreadcrumb}
+      id="projectDetails"
+      menuItems={menu}
+      noScroll
       containerRef={pageRef}
       // for docTitle, when id is 1 that means Uncategorized from webui/react/src/routes/routes.ts
       docTitle={id === 1 ? 'Uncategorized Experiments' : 'Project Details'}
-      id="projectDetails"
-      noScroll>
+      onClickMenu={onClick}>
       <DynamicTabs
         basePath={paths.projectDetailsBasePath(id)}
         destroyInactiveTabPane
         items={tabItems}
       />
+      {contextHolders}
     </Page>
   );
 };

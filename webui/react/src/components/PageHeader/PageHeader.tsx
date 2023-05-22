@@ -1,6 +1,8 @@
 import React, { useMemo } from 'react';
 
 import Breadcrumb from 'components/kit/Breadcrumb';
+import Dropdown, { MenuItem } from 'components/kit/Dropdown';
+import Icon from 'components/kit/Icon';
 import Tooltip from 'components/kit/Tooltip';
 import { BreadCrumbRoute } from 'components/Page';
 import { CommonProps } from 'shared/types';
@@ -12,6 +14,8 @@ import css from './PageHeader.module.scss';
 export interface Props extends CommonProps {
   breadcrumb: BreadCrumbRoute[];
   docTitle?: string;
+  menuItems?: MenuItem[];
+  onClickMenu?: (key: string) => void;
   options?: React.ReactNode;
   sticky?: boolean;
   subTitle?: React.ReactNode;
@@ -29,7 +33,16 @@ const PageHeader: React.FC<Props> = (props: Props) => {
     return routes.map((route) => {
       const last = routes.indexOf(route) === routes.length - 1;
       return last ? (
-        <Breadcrumb.Item>{route.breadcrumbName}</Breadcrumb.Item>
+        <Breadcrumb.Item>
+          {route.breadcrumbName}
+          {props.menuItems && (
+            <Dropdown menu={props.menuItems} onClick={props.onClickMenu}>
+              <div style={{ cursor: 'pointer' }}>
+                <Icon name="arrow-down" size="tiny" title="Action menu" />
+              </div>
+            </Dropdown>
+          )}
+        </Breadcrumb.Item>
       ) : (
         <Breadcrumb.Item>
           <Link path={route.path}>
@@ -44,7 +57,7 @@ const PageHeader: React.FC<Props> = (props: Props) => {
         </Breadcrumb.Item>
       );
     });
-  }, [props.breadcrumb]);
+  }, [props.breadcrumb, props.menuItems, props.onClickMenu]);
 
   return (
     <div className={classes.join(' ')}>

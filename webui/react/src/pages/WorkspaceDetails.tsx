@@ -32,6 +32,7 @@ import ModelRegistry from '../components/ModelRegistry';
 
 import WorkspaceMembers from './WorkspaceDetails/WorkspaceMembers';
 import WorkspaceProjects from './WorkspaceDetails/WorkspaceProjects';
+import { useWorkspaceActionMenu } from './WorkspaceList/WorkspaceActionDropdown';
 
 type Params = {
   tab: string;
@@ -157,6 +158,11 @@ const WorkspaceDetails: React.FC = () => {
     [addableGroups, addableUsers],
   );
 
+  const { contextHolders, menu, onClick } = useWorkspaceActionMenu({
+    onComplete: fetchWorkspace,
+    workspace,
+  });
+
   const tabItems: TabsProps['items'] = useMemo(() => {
     if (!workspace) {
       return [];
@@ -277,13 +283,16 @@ const WorkspaceDetails: React.FC = () => {
       ]}
       containerRef={pageRef}
       id="workspaceDetails"
-      key={workspaceId}>
+      key={workspaceId}
+      menuItems={menu}
+      onClickMenu={onClick}>
       <Pivot
         activeKey={tabKey}
         destroyInactiveTabPane
         items={tabItems}
         onChange={handleTabChange}
       />
+      {contextHolders}
     </Page>
   );
 };
