@@ -77,7 +77,7 @@ const TableFilterRange: React.FC<Props> = ({
         />
       </div>
       <div className={css.footer}>
-        <Button aria-label="Reset Search" size="small" type="link" onClick={handleReset}>
+        <Button aria-label="Reset Search" size="small" onClick={handleReset}>
           Reset
         </Button>
         <Button aria-label="Apply Search" size="small" type="primary" onClick={handleSearch}>

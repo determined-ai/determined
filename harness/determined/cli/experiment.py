@@ -684,7 +684,7 @@ def list_experiments(args: Namespace) -> None:
         return bindings.get_GetExperiments(
             session,
             offset=offset,
-            archived=False if args.all else None,
+            archived=None if args.all else False,
             limit=args.limit,
             users=None if args.all else [authentication.must_cli_auth().get_session_user()],
         )

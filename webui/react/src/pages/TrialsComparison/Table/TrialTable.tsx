@@ -19,7 +19,7 @@ import {
 import TableFilterMultiSearch from 'components/Table/TableFilterMultiSearch';
 import TableFilterRank from 'components/Table/TableFilterRank';
 import { Highlights } from 'hooks/useHighlight';
-import { UpdateSettings, UseSettingsReturn } from 'hooks/useSettings';
+import { UseSettingsReturn } from 'hooks/useSettings';
 import { TrialsWithMetadata } from 'pages/TrialsComparison/Trials/data';
 import { paths } from 'routes/utils';
 import { Trialv1State, V1AugmentedTrial } from 'services/api-ts-sdk';
@@ -576,7 +576,7 @@ const TrialTable: React.FC<Props> = ({
           settings={settings}
           showSorterTooltip={false}
           size="small"
-          updateSettings={updateSettings as UpdateSettings}
+          updateSettings={updateSettings}
           onRow={highlights.onRow}
         />
       ) : (

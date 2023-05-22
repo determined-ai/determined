@@ -8,11 +8,11 @@
    Estimator users to switch to Keras since TensorFlow 2.0 was released. Consequently, we recommend
    users of EstimatorTrial to switch to the :class:`~determined.keras.TFKerasTrial` class.
 
-+----------------------------------------------+
-| User Guide                                   |
-+==============================================+
-| :doc:`/training/apis-howto/api-estimator-ug` |
-+----------------------------------------------+
++-----------------------------------------------------+
+| User Guide                                          |
++=====================================================+
+| :doc:`/model-dev-guide/apis-howto/api-estimator-ug` |
++-----------------------------------------------------+
 
 *****************************************
  ``determined.estimator.EstimatorTrial``

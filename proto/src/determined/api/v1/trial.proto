@@ -1006,3 +1006,22 @@ message GetValidationMetricsResponse {
   // Metric response.
   repeated determined.trial.v1.MetricsReport metrics = 1;
 }
+
+// Create a trial.
+message CreateTrialRequest {
+  // The id of the parent experiment.
+  int32 experiment_id = 2;
+  // Trial hyperparameters.
+  google.protobuf.Struct hparams = 6;
+  // Currently only unmanaged trials are supported, must be true.
+  bool unmanaged = 40;
+}
+
+// Response to CreateTrialRequest.
+message CreateTrialResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "trial" ] }
+  };
+  // The requested trial.
+  determined.trial.v1.Trial trial = 1;
+}

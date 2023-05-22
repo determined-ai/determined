@@ -1,6 +1,4 @@
-import { SmileOutlined } from '@ant-design/icons';
 import { Menu, MenuProps } from 'antd';
-import { ItemType } from 'antd/es/menu/hooks/useItems';
 import React, { MutableRefObject, useEffect, useRef } from 'react';
 
 import useResize from 'hooks/useResize';
@@ -39,7 +37,7 @@ export const TableActionMenu: React.FC<TableActionMenuProps> = ({
   handleClose,
   items,
 }) => {
-  const menuWidth = 200;
+  const menuWidth = 220;
   const containerRef = useRef(null);
   useOutsideClickHandler(containerRef, handleClose);
   const { width } = useResize();
@@ -48,7 +46,7 @@ export const TableActionMenu: React.FC<TableActionMenuProps> = ({
     <div
       ref={containerRef}
       style={{
-        border: 'solid 1px gold',
+        border: 'solid 1px gray',
         display: !open ? 'none' : undefined,
         left: width - x < menuWidth ? width - menuWidth : x,
         position: 'fixed',
@@ -59,18 +57,3 @@ export const TableActionMenu: React.FC<TableActionMenuProps> = ({
     </div>
   );
 };
-
-export const placeholderMenuItems: ItemType[] = [
-  {
-    disabled: false,
-    icon: <SmileOutlined />,
-    key: '1',
-    label: 'Menu Placeholder',
-  },
-  {
-    disabled: false,
-    icon: <SmileOutlined />,
-    key: '2',
-    label: 'Other Menu Thing',
-  },
-];

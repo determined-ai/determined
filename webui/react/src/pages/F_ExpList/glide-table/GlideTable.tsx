@@ -1,3 +1,4 @@
+import { FilterOutlined } from '@ant-design/icons';
 import DataEditor, {
   CellClickedEventArgs,
   CompactSelection,
@@ -23,6 +24,13 @@ import React, {
   useState,
 } from 'react';
 
+import { FilterFormStore, ROOT_ID } from 'components/FilterForm/components/FilterFormStore';
+import {
+  AvailableOperators,
+  FormKind,
+  Operator,
+  SpecialColumnNames,
+} from 'components/FilterForm/components/type';
 import { handlePath } from 'routes/utils';
 import { V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
 import useUI from 'shared/contexts/stores/UI';
@@ -50,7 +58,7 @@ import {
 import { TableContextMenu, TableContextMenuProps } from './contextMenu';
 import { customRenderers } from './custom-renderers';
 import { LinkCell } from './custom-renderers/cells/linkCell';
-import { placeholderMenuItems, TableActionMenu, TableActionMenuProps } from './menu';
+import { TableActionMenu, TableActionMenuProps } from './menu';
 import { Sort, sortMenuItemsForColumn } from './MultiSortMenu';
 import { BatchAction } from './TableActionBar';
 import { useTableTooltip } from './tooltip';
@@ -78,6 +86,8 @@ export interface GlideTableProps {
   handleUpdateExperimentList: (action: BatchAction, successfulIds: number[]) => void;
   sorts: Sort[];
   onSortChange: (sorts: Sort[]) => void;
+  formStore: FilterFormStore;
+  onIsOpenFilterChange: (value: boolean) => void;
 }
 
 /**
@@ -118,6 +128,8 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   onSortChange,
   sorts,
   projectColumns,
+  formStore,
+  onIsOpenFilterChange,
 }) => {
   const gridRef = useRef<DataEditorRef>(null);
 
@@ -294,11 +306,40 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         return;
       }
 
+      const filterMenuItemsForColumn = () => {
+        const isSpecialColumn = (SpecialColumnNames as ReadonlyArray<string>).includes(
+          column.column,
+        );
+        formStore.addChild(ROOT_ID, FormKind.Field, {
+          index: formStore.formset.get().filterGroup.children.length,
+          item: {
+            columnName: column.column,
+            id: crypto.randomUUID(),
+            kind: FormKind.Field,
+            location: column.location,
+            operator: isSpecialColumn ? Operator.Eq : AvailableOperators[column.type][0],
+            type: column.type,
+            value: null,
+          },
+        });
+        onIsOpenFilterChange(true);
+        setMenuIsOpen(false);
+      };
+
       const { bounds } = args;
       const items: MenuProps['items'] = [
-        ...placeholderMenuItems,
-        { type: 'divider' },
         ...sortMenuItemsForColumn(column, sorts, onSortChange),
+        { type: 'divider' },
+        {
+          icon: <FilterOutlined />,
+          key: 'filter',
+          label: 'Filter by this column',
+          onClick: () => {
+            setTimeout(() => {
+              filterMenuItemsForColumn();
+            }, 5);
+          },
+        },
       ];
       const x = bounds.x;
       const y = bounds.y + bounds.height;
@@ -306,16 +347,18 @@ export const GlideTable: React.FC<GlideTableProps> = ({
       setMenuIsOpen(true);
     },
     [
-      data,
-      selection,
       columnIds,
-      deselectAllRows,
-      excludedExperimentIds,
-      onSortChange,
       projectColumns,
       sorts,
-      selectAllRows,
+      onSortChange,
       selectAll,
+      excludedExperimentIds.size,
+      selectAllRows,
+      deselectAllRows,
+      selection.rows.length,
+      data.length,
+      formStore,
+      onIsOpenFilterChange,
     ],
   );
 

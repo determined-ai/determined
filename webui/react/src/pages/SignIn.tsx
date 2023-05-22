@@ -12,7 +12,6 @@ import Page from 'components/Page';
 import PageMessage from 'components/PageMessage';
 import { handleRelayState, samlUrl } from 'ee/SamlAuth';
 import useAuthCheck from 'hooks/useAuthCheck';
-import useFeature from 'hooks/useFeature';
 import { defaultRoute, rbacDefaultRoute } from 'routes';
 import { routeAll } from 'routes/utils';
 import LogoGoogle from 'shared/assets/images/logo-sso-google-white.svg';
@@ -40,7 +39,7 @@ const SignIn: React.FC = () => {
   const isAuthenticated = useObservable(authStore.isAuthenticated);
   const info = useObservable(determinedStore.info);
   const [canceler] = useState(new AbortController());
-  const rbacEnabled = useFeature().isOn('rbac');
+  const { rbacEnabled } = useObservable(determinedStore.info);
 
   const queries = useMemo(() => new URLSearchParams(location.search), [location.search]);
   const ssoQueries = handleRelayState(queries);

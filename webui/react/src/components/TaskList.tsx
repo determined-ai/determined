@@ -14,10 +14,7 @@ import JupyterLabButton from 'components/JupyterLabButton';
 import Button from 'components/kit/Button';
 import Icon from 'components/kit/Icon';
 import Link from 'components/Link';
-import InteractiveTable, {
-  ColumnDef,
-  InteractiveTableSettings,
-} from 'components/Table/InteractiveTable';
+import InteractiveTable, { ColumnDef } from 'components/Table/InteractiveTable';
 import {
   defaultRowClassName,
   getFullPaginationConfig,
@@ -42,7 +39,7 @@ import settingsConfig, {
 } from 'components/TaskList.settings';
 import { commandTypeToLabel } from 'constants/states';
 import usePermissions from 'hooks/usePermissions';
-import { UpdateSettings, useSettings } from 'hooks/useSettings';
+import { useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { getCommands, getJupyterLabs, getShells, getTensorBoards, killTask } from 'services/api';
 import usePolling from 'shared/hooks/usePolling';
@@ -614,7 +611,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
           onAction={handleBatchAction}
           onClear={clearSelected}
         />
-        <InteractiveTable
+        <InteractiveTable<CommandTask, Settings>
           columns={columns}
           containerRef={pageRef}
           ContextMenu={TaskActionDropdownCM}
@@ -635,10 +632,10 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
             preserveSelectedRowKeys: true,
             selectedRowKeys: settings.row ?? [],
           }}
-          settings={settings as InteractiveTableSettings}
+          settings={settings}
           showSorterTooltip={false}
           size="small"
-          updateSettings={updateSettings as UpdateSettings}
+          updateSettings={updateSettings}
           onChange={handleTableChange}
         />
       </div>

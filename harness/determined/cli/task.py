@@ -95,7 +95,7 @@ def logs(args: Namespace) -> None:
             timestamp_before=args.timestamp_before,
             timestamp_after=args.timestamp_after,
         )
-        if args.json:
+        if "json" in args and args.json:
             for log in logs:
                 render.print_json(log.to_json())
         else:

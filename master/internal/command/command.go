@@ -265,8 +265,6 @@ func (c *command) Receive(ctx *actor.Context) error {
 			}
 		}
 
-		c.eventStream, _ = ctx.ActorOf("events", newEventManager(c.Config.Description))
-
 		var eventStreamConfig *sproto.EventStreamConfig
 		if c.eventStream != nil {
 			eventStreamConfig = &sproto.EventStreamConfig{

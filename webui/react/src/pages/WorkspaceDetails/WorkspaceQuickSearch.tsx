@@ -144,7 +144,6 @@ const WorkspaceQuickSearch: React.FC<Props> = ({ children }: Props) => {
             placeholder="Search workspace or project"
             prefix={<Icon name="search" title="Search" />}
             value={searchText}
-            width={'100%'}
             onChange={onChange}
           />
         }

@@ -9,30 +9,25 @@ import Icon from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
 import Nameplate from 'components/kit/Nameplate';
 import Section from 'components/Section';
-import InteractiveTable, {
-  InteractiveTableSettings,
-  onRightClickableCell,
-} from 'components/Table/InteractiveTable';
+import InteractiveTable, { onRightClickableCell } from 'components/Table/InteractiveTable';
 import SkeletonTable from 'components/Table/SkeletonTable';
 import { defaultRowClassName, getFullPaginationConfig } from 'components/Table/Table';
-import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
-import { UpdateSettings, useSettings } from 'hooks/useSettings';
+import { useSettings } from 'hooks/useSettings';
 import { getGroup, getGroups, getUsers, updateGroup } from 'services/api';
 import { V1GroupDetails, V1GroupSearchResult, V1User } from 'services/api-ts-sdk';
 import dropdownCss from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
 import { clone, isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
+import determinedStore from 'stores/determinedInfo';
 import roleStore from 'stores/roles';
 import { DetailedUser } from 'types';
 import { message } from 'utils/dialogApi';
 import handleError from 'utils/error';
+import { useObservable } from 'utils/observable';
 
 import css from './GroupManagement.module.scss';
-import settingsConfig, {
-  DEFAULT_COLUMN_WIDTHS,
-  GroupManagementSettings,
-} from './GroupManagement.settings';
+import settingsConfig, { DEFAULT_COLUMN_WIDTHS } from './GroupManagement.settings';
 
 interface DropdownProps {
   expanded: boolean;
@@ -83,7 +78,7 @@ const GroupActionDropdown = ({
   return (
     <div className={dropdownCss.base}>
       <Dropdown menu={DROPDOWN_MENU} placement="bottomRight" onClick={handleDropdown}>
-        <Button ghost icon={<Icon name="overflow-vertical" size="small" title="Action menu" />} />
+        <Button icon={<Icon name="overflow-vertical" size="small" title="Action menu" />} />
       </Dropdown>
       <EditGroupModal.Component group={group} users={users} onClose={onFinishEdit} />
       <DeleteGroupModal.Component group={group} onClose={fetchGroups} />
@@ -92,7 +87,7 @@ const GroupActionDropdown = ({
 };
 
 const GroupManagement: React.FC = () => {
-  const rbacEnabled = useFeature().isOn('rbac');
+  const { rbacEnabled } = useObservable(determinedStore.info);
   const [groups, setGroups] = useState<V1GroupSearchResult[]>([]);
   const [groupUsers, setGroupUsers] = useState<V1GroupDetails[]>([]);
   const [users, setUsers] = useState<DetailedUser[]>([]);
@@ -102,7 +97,7 @@ const GroupManagement: React.FC = () => {
   const pageRef = useRef<HTMLElement>(null);
   const canceler = useRef(new AbortController());
 
-  const { settings, updateSettings } = useSettings<GroupManagementSettings>(settingsConfig);
+  const { settings, updateSettings } = useSettings(settingsConfig);
 
   const { canModifyGroups, canViewGroups } = usePermissions();
 
@@ -287,7 +282,7 @@ const GroupManagement: React.FC = () => {
 
   const table = useMemo(() => {
     return settings ? (
-      <InteractiveTable
+      <InteractiveTable<V1GroupSearchResult>
         columns={columns}
         containerRef={pageRef}
         dataSource={groups}
@@ -302,10 +297,10 @@ const GroupManagement: React.FC = () => {
         )}
         rowClassName={defaultRowClassName({ clickable: false })}
         rowKey={(r) => r.group.groupId || 0}
-        settings={settings as InteractiveTableSettings}
+        settings={settings}
         showSorterTooltip={false}
         size="small"
-        updateSettings={updateSettings as UpdateSettings}
+        updateSettings={updateSettings}
       />
     ) : (
       <SkeletonTable columns={columns.length} />

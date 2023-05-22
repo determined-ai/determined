@@ -8,7 +8,7 @@ import HumanReadableNumber from 'components/HumanReadableNumber';
 import Dropdown from 'components/kit/Dropdown';
 import Link from 'components/Link';
 import Section from 'components/Section';
-import InteractiveTable, { InteractiveTableSettings } from 'components/Table/InteractiveTable';
+import InteractiveTable from 'components/Table/InteractiveTable';
 import { Renderer } from 'components/Table/Table';
 import { defaultRowClassName, getFullPaginationConfig } from 'components/Table/Table';
 import TableBatch from 'components/Table/TableBatch';
@@ -16,7 +16,7 @@ import TableFilterDropdown from 'components/Table/TableFilterDropdown';
 import { terminalRunStates } from 'constants/states';
 import useModalHyperparameterSearch from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
 import usePermissions from 'hooks/usePermissions';
-import { UpdateSettings, useSettings } from 'hooks/useSettings';
+import { useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { getExpTrials, openOrCreateTensorBoard } from 'services/api';
 import { Experimentv1State, V1GetExperimentTrialsRequestSortBy } from 'services/api-ts-sdk';
@@ -433,7 +433,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
           onAction={(action) => submitBatchAction(action as Action)}
           onClear={clearSelected}
         />
-        <InteractiveTable
+        <InteractiveTable<TrialItem, Settings>
           columns={columns}
           containerRef={pageRef}
           ContextMenu={TrialActionDropdown}
@@ -453,10 +453,10 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
             preserveSelectedRowKeys: true,
             selectedRowKeys: settings.row ?? [],
           }}
-          settings={settings as InteractiveTableSettings}
+          settings={settings}
           showSorterTooltip={false}
           size="small"
-          updateSettings={updateSettings as UpdateSettings}
+          updateSettings={updateSettings}
           onChange={handleTableChange}
         />
       </Section>
