@@ -1,0 +1,147 @@
+{
+  "experiment": {
+    "id": 21,
+    "description": "",
+    "labels": [],
+    "startTime": "2022-08-22T17:15:15.517766Z",
+    "endTime": "2022-11-07T18:51:29.316499Z",
+    "state": "STATE_COMPLETED",
+    "archived": false,
+    "numTrials": 0,
+    "trialIds": [],
+    "displayName": "",
+    "userId": 2,
+    "username": "determined",
+    "resourcePool": "pool_prio",
+    "searcherType": "single",
+    "name": "gan_mnist_pytorch_const",
+    "notes": "",
+    "jobId": "6fa9bdfc-bd21-4ef1-8769-bc58e0312be7",
+    "forkedFrom": null,
+    "progress": 0,
+    "projectId": 1,
+    "projectName": "Uncategorized",
+    "workspaceId": 1,
+    "workspaceName": "Uncategorized",
+    "parentArchived": false,
+    "config": {
+      "bind_mounts": [],
+      "checkpoint_policy": "best",
+      "checkpoint_storage": {
+        "host_path": "/tmp/determined-cp",
+        "propagation": "rprivate",
+        "save_experiment_best": 0,
+        "save_trial_best": 1,
+        "save_trial_latest": 1,
+        "storage_path": null,
+        "type": "shared_fs"
+      },
+      "data": {
+        "url": "https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz"
+      },
+      "debug": false,
+      "description": null,
+      "entrypoint": "model_def:GANTrial",
+      "environment": {
+        "add_capabilities": [],
+        "drop_capabilities": [],
+        "environment_variables": {
+          "cpu": [],
+          "cuda": [],
+          "rocm": []
+        },
+        "force_pull_image": false,
+        "image": {
+          "cpu": "determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-9119094",
+          "cuda": "determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-9119094",
+          "rocm": "determinedai/environments:rocm-4.2-pytorch-1.9-tf-2.5-rocm-9119094"
+        },
+        "pod_spec": null,
+        "ports": {},
+        "registry_auth": null
+      },
+      "hyperparameters": {
+        "b1": {
+          "type": "const",
+          "val": 0.5
+        },
+        "b2": {
+          "type": "const",
+          "val": 0.999
+        },
+        "global_batch_size": {
+          "type": "const",
+          "val": 32
+        },
+        "latent_dim": {
+          "type": "const",
+          "val": 100
+        },
+        "lr": {
+          "type": "const",
+          "val": 0.0002
+        }
+      },
+      "labels": [],
+      "max_restarts": 5,
+      "min_checkpoint_period": {
+        "batches": 0
+      },
+      "min_validation_period": {
+        "batches": 0
+      },
+      "name": "gan_mnist_pytorch_const",
+      "optimizations": {
+        "aggregation_frequency": 1,
+        "auto_tune_tensor_fusion": false,
+        "average_aggregated_gradients": true,
+        "average_training_metrics": true,
+        "grad_updates_size_file": null,
+        "gradient_compression": false,
+        "mixed_precision": "O0",
+        "tensor_fusion_cycle_time": 5,
+        "tensor_fusion_threshold": 64
+      },
+      "pbs": {},
+      "perform_initial_validation": false,
+      "profiling": {
+        "begin_on_batch": 0,
+        "enabled": false,
+        "end_after_batch": null,
+        "sync_timings": true
+      },
+      "project": "",
+      "records_per_epoch": 0,
+      "reproducibility": {
+        "experiment_seed": 1661188515
+      },
+      "resources": {
+        "agent_label": "",
+        "devices": [],
+        "max_slots": null,
+        "native_parallel": false,
+        "priority": null,
+        "resource_pool": "pool_prio",
+        "shm_size": null,
+        "slots_per_trial": 1,
+        "weight": 1
+      },
+      "scheduling_unit": 100,
+      "searcher": {
+        "max_length": {
+          "batches": 40000
+        },
+        "metric": "loss",
+        "name": "single",
+        "smaller_is_better": true,
+        "source_checkpoint_uuid": null,
+        "source_trial_id": null
+      },
+      "slurm": {},
+      "workspace": ""
+    },
+    "originalConfig": "data: {url: https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz}\nentrypoint: model_def:GANTrial\nhyperparameters: {b1: 0.5, b2: 0.999, global_batch_size: 32, latent_dim: 100, lr: 0.0002}\nname: gan_mnist_pytorch_const\nsearcher:\n  max_length: {batches: 40000}\n  metric: loss\n  name: single\n  smaller_is_better: true\n",
+    "projectOwnerId": 1
+  },
+  "jobSummary": null
+}
