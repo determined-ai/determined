@@ -1086,7 +1086,7 @@ class TestPyTorchTrial:
         )
 
     @pytest.mark.gpu
-    @pytest.mark.pytorch
+    @pytest.mark.cpu
     def test_rng_restore(self, tmp_path: pathlib.Path):
         checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
         tensorboard_path = tmp_path.joinpath("tensorboard")

@@ -24,7 +24,7 @@ check: check-gen
 
 .PHONY: test-cpu
 test-cpu:
-	coverage run -m pytest -v --runslow --durations=0 -m "not gpu" tests
+	coverage run -m pytest -v --runslow --durations=0 -m "not gpu or cpu" tests
 
 .PHONY: test-gpu
 test-gpu:
