@@ -18,7 +18,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
-	"github.com/pkg/errors"
 	"github.com/uptrace/bun"
 	"google.golang.org/protobuf/types/known/structpb"
 	"gopkg.in/yaml.v3" // Can't use ghodss/yaml since NaNs error.
@@ -717,7 +716,7 @@ func TestAddValidationMetricsDupeCheckpoints(t *testing.T) {
 	require.Equal(t, 1.5, checkpoints[1].Training.ValidationMetrics.AvgMetrics.AsMap()["loss"])
 }
 
-func TestBatchesProcessed(t *testing.T) {
+func TestBatchesProcessedNRollbacks(t *testing.T) {
 	ctx := context.Background()
 	require.NoError(t, etc.SetRootPath(RootFromDB))
 	db := MustResolveTestPostgres(t)
@@ -764,13 +763,11 @@ func TestBatchesProcessed(t *testing.T) {
 		}
 		t.Logf("Adding %s metrics: %v", typ, trialMetrics)
 		switch typ {
-		case "training":
-			// require.NoError(t, db.AddTrainingMetrics(ctx, trialMetrics))
+		case model.TrainingMetricType.ToString():
 			rollbacksCnts, err := db.addTrialMetrics(ctx, trialMetrics, TrainingMetric, nil)
 			require.NoError(t, err)
 			require.Equal(t, int(expectedRollbacks), rollbacksCnts)
-		case "validation":
-			// require.NoError(t, db.AddValidationMetrics(ctx, trialMetrics))
+		case model.ValidationMetricType.ToString():
 			rollbacksCnts, err := db.addTrialMetrics(ctx, trialMetrics, ValidationMetric, nil)
 			require.NoError(t, err)
 			require.Equal(t, int(expectedRollbacks), rollbacksCnts)
@@ -783,9 +780,10 @@ func TestBatchesProcessed(t *testing.T) {
 				State:        model.CompletedState,
 				Metadata:     map[string]any{"steps_completed": batches},
 			}))
-
 		default:
-			return errors.Errorf("unknown type %s", typ)
+			rollbacksCnts, err := db.addTrialMetrics(ctx, trialMetrics, GenericMetric, &typ)
+			require.NoError(t, err)
+			require.Equal(t, int(expectedRollbacks), rollbacksCnts)
 		}
 
 		dbTr, err = db.TrialByID(tr.ID)
@@ -813,11 +811,16 @@ func TestBatchesProcessed(t *testing.T) {
 		{"training", 2, 27, 27, 2},   // triggers rollback via training.
 		{"checkpoint", 2, 30, 27, 0}, // we do NOT account for steps_completed here.
 		{"checkpoint", 3, 25, 27, 0}, // do NOT account for steps_completed here.
+		{"validation", 3, 27, 27, 0},
+		{"generic-golabi", 3, 27, 27, 0},
+		{"generic-golabi", 3, 29, 29, 0}, // will get rolled back.
+		{"inference", 3, 28, 29, 0},      // will get rolled back.
+		{"inference", 4, 28, 28, 2},
 	}
 	for _, c := range cases {
 		require.NoError(t, testMetricReporting(
 			c.typ, c.trialRunID, c.batches, c.expectedBatches, c.rollbacks,
-		))
+		), c)
 	}
 
 	// check rollbacks happened as expected.
@@ -830,6 +833,10 @@ func TestBatchesProcessed(t *testing.T) {
 		Where("trial_id = ?", tr.ID).Where("archived = true").Count(ctx)
 	require.NoError(t, err)
 	require.Equal(t, 2, archivedValidations, "trial id %d", tr.ID)
+
+	returnedMetrics, err := GetMetrics(ctx, tr.ID, 0, 10, "generic-golabi")
+	require.NoError(t, err)
+	require.Equal(t, 1, len(returnedMetrics))
 }
 
 func TestGenericMetricsIO(t *testing.T) {
