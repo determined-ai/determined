@@ -8,7 +8,6 @@ import Dropdown from 'components/kit/Dropdown';
 import Icon from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
 import Nameplate from 'components/kit/Nameplate';
-import Page from 'components/Page';
 import Section from 'components/Section';
 import InteractiveTable, {
   InteractiveTableSettings,

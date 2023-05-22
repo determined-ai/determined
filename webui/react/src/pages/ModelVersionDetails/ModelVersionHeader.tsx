@@ -1,9 +1,7 @@
-import { LeftOutlined } from '@ant-design/icons';
 import { Modal, Space, Typography } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import InfoBox, { InfoRow } from 'components/InfoBox';
-import Breadcrumb from 'components/kit/Breadcrumb';
 import Button from 'components/kit/Button';
 import ClipboardButton from 'components/kit/ClipboardButton';
 import Dropdown, { MenuItem, MenuOption } from 'components/kit/Dropdown';
@@ -11,18 +9,15 @@ import Icon from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
 import Tags, { tagsActionHelper } from 'components/kit/Tags';
 import Avatar from 'components/kit/UserAvatar';
-import Link from 'components/Link';
 import ModelDownloadModal from 'components/ModelDownloadModal';
 import ModelVersionDeleteModal from 'components/ModelVersionDeleteModal';
 import ModelVersionEditModal from 'components/ModelVersionEditModal';
 import TimeAgo from 'components/TimeAgo';
 import usePermissions from 'hooks/usePermissions';
-import { WorkspaceDetailsTab } from 'pages/WorkspaceDetails';
-import { paths } from 'routes/utils';
 import Spinner from 'shared/components/Spinner';
 import { formatDatetime } from 'shared/utils/datetime';
 import userStore from 'stores/users';
-import { ModelVersion, Workspace } from 'types';
+import { ModelVersion } from 'types';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 import { getDisplayName } from 'utils/user';
@@ -33,7 +28,6 @@ interface Props {
   modelVersion: ModelVersion;
   fetchModelVersion: () => Promise<void>;
   onUpdateTags: (newTags: string[]) => Promise<void>;
-  workspace: Workspace;
 }
 
 const MenuKey = {
@@ -45,7 +39,6 @@ const MenuKey = {
 
 const ModelVersionHeader: React.FC<Props> = ({
   modelVersion,
-  workspace,
   onUpdateTags,
   fetchModelVersion,
 }: Props) => {
