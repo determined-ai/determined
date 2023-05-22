@@ -486,7 +486,6 @@ func (db *PgDB) _addTrialMetricsTx(
 	ctx context.Context, tx *sqlx.Tx, m *trialv1.TrialMetrics, pType MetricPartitionType,
 	mType *string,
 ) (rollbacks int, err error) {
-
 	isValidation := pType == ValidationMetric
 
 	metricsJSONPath := "avg_metrics"
@@ -597,10 +596,11 @@ func (db *PgDB) addTrialMetrics(
 	default:
 		return 0, fmt.Errorf("cannot add metric with non numeric 'epoch' value got %v", v)
 	}
-	return rollbacks, db.withTransaction("add trial metrics", func(tx *sqlx.Tx) error {
-		rollbacks, err = db._addTrialMetricsTx(ctx, tx, m, pType, mType)
-		return err
-	})
+	return rollbacks, db.withTransaction(fmt.Sprintf("add trial metrics %s", pType),
+		func(tx *sqlx.Tx) error {
+			rollbacks, err = db._addTrialMetricsTx(ctx, tx, m, pType, mType)
+			return err
+		})
 }
 
 const (

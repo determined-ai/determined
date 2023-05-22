@@ -941,6 +941,7 @@ func TestConcurrentMetricUpdate(t *testing.T) {
 		}
 		if coinFlip() {
 			partitionTypes := []MetricPartitionType{ValidationMetric, TrainingMetric}
+			//nolint:gosec // Weak RNG doesn't matter here.
 			partitionType := partitionTypes[rand.Intn(len(partitionTypes))]
 			_, err = db._addTrialMetricsTx(ctx, tx, trialMetrics, partitionType, nil)
 			require.NoError(t, err)

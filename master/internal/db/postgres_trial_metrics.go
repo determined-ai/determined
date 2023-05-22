@@ -60,13 +60,14 @@ func (db *PgDB) addRawMetrics(ctx context.Context, tx *sqlx.Tx, metricsBody *map
 	pType MetricPartitionType, mType *string,
 ) (int, error) {
 	var metricRowID int
+	//nolint:execinquery // we want to get the id.
 	if err := tx.QueryRowContext(ctx, `
 INSERT INTO metrics
 	(trial_id, trial_run_id, end_time, metrics, total_batches, partition_type, custom_type)
 VALUES
 	($1, $2, now(), $3, $4, $5, $6)
 RETURNING id`,
-		trialID, runID, *metricsBody, lastProcessedBatch, pType, mType, // CHECK: are nulls handled?
+		trialID, runID, *metricsBody, lastProcessedBatch, pType, mType,
 	).Scan(&metricRowID); err != nil {
 		return metricRowID, errors.Wrap(err, "inserting metrics")
 	}
@@ -110,7 +111,9 @@ func (db *PgDB) AddTrialMetrics(
 	ctx context.Context, m *trialv1.TrialMetrics, mType string,
 ) error {
 	pType := customMetricTypeToPartitionType(mType)
-	_, err := db.addTrialMetrics(ctx, m, pType, &mType) // avoid adding values for validation and training?
+	// DISCUSS: should we avoid persisting type values for legacy metrics?
+	// or add them to be more consistent.
+	_, err := db.addTrialMetrics(ctx, m, pType, &mType)
 	return err
 }
 
