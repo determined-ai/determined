@@ -1,6 +1,6 @@
 /*
  starting state:
- 
+
  determined> \d raw_steps;
  +---------------+--------------------------+---------------------------------------------------------+
  | Column        | Type                     | Modifiers                                               |
@@ -18,7 +18,7 @@
  "steps_archived" btree (archived)
  Foreign-key constraints:
  "steps_trial_id_fkey" FOREIGN KEY (trial_id) REFERENCES trials(id)
- 
+
  determined> \d raw_validations;
  +---------------+--------------------------+--------------------------------------------+
  | Column        | Type                     | Modifiers                                  |
@@ -44,12 +44,12 @@
 -- fix missing foreign key constraint on raw_validations
 DELETE FROM raw_validations
 WHERE NOT EXISTS (
-        SELECT 1
-        FROM trials
-        WHERE trials.id = raw_validations.trial_id
-    );
+    SELECT 1
+    FROM trials
+    WHERE trials.id = raw_validations.trial_id
+);
 ALTER TABLE raw_validations
-ADD FOREIGN KEY (trial_id) REFERENCES trials(id);
+ADD FOREIGN KEY (trial_id) REFERENCES trials (id);
 CREATE TYPE metric_partition_type AS ENUM ('VALIDATION', 'TRAINING', 'GENERIC');
 ALTER TABLE raw_validations
 ADD COLUMN partition_type metric_partition_type NOT NULL DEFAULT 'VALIDATION';
@@ -69,30 +69,30 @@ CREATE TABLE generic_metrics (
     id integer NOT NULL,
     partition_type metric_partition_type NOT NULL DEFAULT 'GENERIC',
     custom_type text,
-    FOREIGN KEY (trial_id) REFERENCES trials(id)
+    FOREIGN KEY (trial_id) REFERENCES trials (id)
 );
 -- start with max of existing ids in raw_steps and raw_validations. find it using select on both tables
 CREATE SEQUENCE metrics_id_seq;
 SELECT setval(
-        'metrics_id_seq',
-        GREATEST(
-            COALESCE(
-                (
-                    SELECT MAX(id)
-                    FROM raw_steps
-                ),
-                0
+    'metrics_id_seq',
+    greatest(
+        coalesce(
+            (
+                SELECT max(id)
+                FROM raw_steps
             ),
-            COALESCE(
-                (
-                    SELECT MAX(id)
-                    FROM raw_validations
-                ),
-                0
-            )
-        ) + 1,
-        true
-    );
+            0
+        ),
+        coalesce(
+            (
+                SELECT max(id)
+                FROM raw_validations
+            ),
+            0
+        )
+    ) + 1,
+    true
+);
 ALTER TABLE raw_validations
 ALTER COLUMN id DROP IDENTITY;
 ALTER TABLE raw_validations
@@ -108,7 +108,7 @@ CREATE TABLE metrics (
     total_batches integer NOT NULL DEFAULT 0,
     trial_run_id integer NOT NULL DEFAULT 0,
     archived boolean NOT NULL DEFAULT false,
-    id integer NOT NULL default nextval('metrics_id_seq'),
+    id integer NOT NULL DEFAULT nextval('metrics_id_seq'),
     custom_type text,
     partition_type metric_partition_type NOT NULL DEFAULT 'GENERIC' -- CONSTRAINT metrics_trial_id_fkey FOREIGN KEY (trial_id) REFERENCES trials(id). Not supported
 ) PARTITION BY LIST (partition_type);
