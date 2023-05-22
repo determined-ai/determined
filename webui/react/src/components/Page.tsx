@@ -2,7 +2,6 @@ import { useObservable } from 'micro-observables';
 import React, { MutableRefObject } from 'react';
 import { Helmet } from 'react-helmet-async';
 
-import Breadcrumb from 'components/kit/Breadcrumb';
 import PageHeader from 'components/PageHeader';
 import PageNotFound from 'components/PageNotFound';
 import usePermissions from 'hooks/usePermissions';
@@ -84,7 +83,7 @@ const Page: React.FC<Props> = (props: Props) => {
             options={props.options}
             sticky={props.stickyHeader}
           />
-                    {props.headerComponent}
+          {props.headerComponent}
           <div className={css.body}>
             <Spinner spinning={!!props.loading}>{props.children}</Spinner>
           </div>

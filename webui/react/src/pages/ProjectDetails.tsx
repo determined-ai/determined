@@ -1,29 +1,21 @@
-import { InfoCircleOutlined } from '@ant-design/icons';
-import { Space } from 'antd';
 import type { TabsProps } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
 import DynamicTabs from 'components/DynamicTabs';
-import ExperimentBar from 'components/ExperimentBar';
-import Icon from 'components/kit/Icon';
-import Tooltip from 'components/kit/Tooltip';
 import Page, { BreadCrumbRoute } from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
-import ProjectActionDropdown from 'components/ProjectActionDropdown';
 import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
-import { getProject, getWorkspace, postUserActivity } from 'services/api';
+import { getProject, postUserActivity } from 'services/api';
 import { V1ActivityType, V1EntityType } from 'services/api-ts-sdk';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner';
 import usePolling from 'shared/hooks/usePolling';
-import { isEqual, isNumber } from 'shared/utils/data';
-import { routeToReactUrl } from 'shared/utils/routes';
+import { isEqual } from 'shared/utils/data';
 import { isNotFound } from 'shared/utils/service';
-import { Project, Workspace } from 'types';
-import handleError from 'utils/error';
+import { Project } from 'types';
 
 import ExperimentList from './ExperimentList';
 import F_ExperimentList from './F_ExpList/F_ExperimentList';
@@ -47,8 +39,6 @@ const ProjectDetails: React.FC = () => {
   const [canceler] = useState(new AbortController());
   const pageRef = useRef<HTMLElement>(null);
 
-  const [workspace, setWorkspace] = useState<Workspace>();
-
   const id = Number(projectId ?? '1');
 
   const postActivity = useCallback(() => {
@@ -58,17 +48,6 @@ const ProjectDetails: React.FC = () => {
       entityType: V1EntityType.PROJECT,
     });
   }, [id]);
-
-  const fetchWorkspace = useCallback(async () => {
-    const workspaceId = project?.workspaceId;
-    if (!isNumber(workspaceId)) return;
-    try {
-      const response = await getWorkspace({ id: workspaceId });
-      setWorkspace(response);
-    } catch (e) {
-      handleError(e, { publicSubject: 'Unable to fetch workspace.' });
-    }
-  }, [project?.workspaceId]);
 
   const fetchProject = useCallback(async () => {
     try {
@@ -137,15 +116,10 @@ const ProjectDetails: React.FC = () => {
   }, [fetchProject, id, project, trialsComparisonEnabled, projectId, f_explist]);
 
   usePolling(fetchProject, { rerunOnNewFn: true });
-  usePolling(fetchWorkspace, { rerunOnNewFn: true });
 
   useEffect(() => {
     postActivity();
   }, [postActivity]);
-
-  const onProjectDelete = useCallback(() => {
-    if (project) routeToReactUrl(paths.workspaceDetails(project.workspaceId));
-  }, [project]);
 
   if (isNaN(id)) {
     return <Message title={`Invalid Project ID ${projectId}`} />;
@@ -163,56 +137,31 @@ const ProjectDetails: React.FC = () => {
     return <Spinner spinning tip={id === 1 ? 'Loading...' : `Loading project ${id} details...`} />;
   }
 
-  const pageBreadcrumb: BreadCrumbRoute[] = project.workspaceId !== 1 ? [
-    {
-      breadcrumbName: project.workspaceName,
-      path: paths.workspaceDetails(project.workspaceId)
-    },
+  const pageBreadcrumb: BreadCrumbRoute[] =
+    project.workspaceId !== 1
+      ? [
+          {
+            breadcrumbName: project.workspaceName,
+            path: paths.workspaceDetails(project.workspaceId),
+          },
 
-    {
-      breadcrumbName: project.name,
-      path: paths.projectDetails(project.id)
-    }
-  ] : [
-    {
-      breadcrumbName: "Uncategorized Experiments",
-      path: paths.workspaceDetails(project.workspaceId)
-    },
-  ]
+          {
+            breadcrumbName: project.name,
+            path: paths.projectDetails(project.id),
+          },
+        ]
+      : [
+          {
+            breadcrumbName: 'Uncategorized Experiments',
+            path: paths.workspaceDetails(project.workspaceId),
+          },
+        ];
   return (
     <Page
-      containerRef={pageRef}
       breadcrumb={pageBreadcrumb}
+      containerRef={pageRef}
       // for docTitle, when id is 1 that means Uncategorized from webui/react/src/routes/routes.ts
       docTitle={id === 1 ? 'Uncategorized Experiments' : 'Project Details'}
-      headerComponent={
-        <ExperimentBar
-          extra={
-            <Space>
-              {project.description && (
-                <Tooltip content={project.description}>
-                  <InfoCircleOutlined style={{ color: 'var(--theme-float-on)' }} />
-                </Tooltip>
-              )}
-              {id !== 1 && (
-                <ProjectActionDropdown
-                  project={project}
-                  showChildrenIfEmpty={false}
-                  workspaceArchived={workspace?.archived}
-                  onComplete={fetchProject}
-                  onDelete={onProjectDelete}>
-                  <div style={{ cursor: 'pointer' }}>
-                    <Icon name="arrow-down" size="tiny" title="Action menu" />
-                  </div>
-                </ProjectActionDropdown>
-              )}
-            </Space>
-          }
-          id={project.id}
-          project={project}
-          type="project"
-        />
-      }
       id="projectDetails"
       noScroll>
       <DynamicTabs

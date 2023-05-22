@@ -7,6 +7,7 @@ import ExperimentDetailsHeader from 'pages/ExperimentDetails/ExperimentDetailsHe
 import ExperimentMultiTrialTabs from 'pages/ExperimentDetails/ExperimentMultiTrialTabs';
 import ExperimentSingleTrialTabs from 'pages/ExperimentDetails/ExperimentSingleTrialTabs';
 import { TrialInfoBoxMultiTrial } from 'pages/TrialDetails/TrialInfoBox';
+import { paths } from 'routes/utils';
 import { getExperimentDetails } from 'services/api';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner/Spinner';
@@ -14,10 +15,9 @@ import usePolling from 'shared/hooks/usePolling';
 import { isEqual } from 'shared/utils/data';
 import { isNotFound } from 'shared/utils/service';
 import { isAborted } from 'shared/utils/service';
+import workspaceStore from 'stores/workspaces';
 import { ExperimentBase, TrialItem, Workspace } from 'types';
 import { isSingleTrialExperiment } from 'utils/experiment';
-import { paths } from 'routes/utils';
-import workspaceStore from 'stores/workspaces';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 
@@ -86,29 +86,33 @@ const ExperimentDetails: React.FC = () => {
   } else if (!pageError && (!experiment || isSingleTrial === undefined)) {
     return <Spinner tip={`Loading experiment ${experimentId} details...`} />;
   }
-  
+
   const workspaceName = workspaces.find((ws: Workspace) => ws.id === experiment?.workspaceId)?.name;
 
   const pageBreadcrumb: BreadCrumbRoute[] = [
     {
-      breadcrumbName: (workspaceName  && experiment?.workspaceId !== 1) ? workspaceName : "Uncategorized Experiments" ,
-      path: paths.workspaceDetails(experiment?.workspaceId ?? 1)
+      breadcrumbName:
+        workspaceName && experiment?.workspaceId !== 1
+          ? workspaceName
+          : 'Uncategorized Experiments',
+      path: paths.workspaceDetails(experiment?.workspaceId ?? 1),
     },
   ];
 
-  if (experiment?.projectName && experiment?.projectId && experiment?.projectId !== 1) pageBreadcrumb.push({
-    breadcrumbName: experiment?.projectName ?? '',
-    path: paths.projectDetails(experiment?.projectId)
-  });
+  if (experiment?.projectName && experiment?.projectId && experiment?.projectId !== 1)
+    pageBreadcrumb.push({
+      breadcrumbName: experiment?.projectName ?? '',
+      path: paths.projectDetails(experiment?.projectId),
+    });
 
   pageBreadcrumb.push({
     breadcrumbName: experiment?.name ?? '',
-    path: paths.experimentDetails(id)
+    path: paths.experimentDetails(id),
   });
 
   return (
     <Page
-    breadcrumb={pageBreadcrumb}
+      breadcrumb={pageBreadcrumb}
       containerRef={pageRef}
       headerComponent={
         experiment && (

@@ -3,7 +3,6 @@ import { FilterValue, SorterResult, TablePaginationConfig } from 'antd/lib/table
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
-import { paths } from 'routes/utils';
 import Input from 'components/kit/Input';
 import { useModal } from 'components/kit/Modal';
 import Tags, { tagsActionHelper } from 'components/kit/Tags';
@@ -27,6 +26,7 @@ import {
 } from 'components/Table/Table';
 import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
+import { paths } from 'routes/utils';
 import {
   archiveModel,
   getModelDetails,
@@ -47,7 +47,7 @@ import { Metadata, ModelVersion, ModelVersions } from 'types';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
-import { WorkspaceDetailsTab } from './WorkspaceDetails';
+
 import settingsConfig, {
   DEFAULT_COLUMN_WIDTHS,
   isOfSortKey,
@@ -56,6 +56,7 @@ import settingsConfig, {
 import ModelHeader from './ModelDetails/ModelHeader';
 import ModelVersionActionDropdown from './ModelDetails/ModelVersionActionDropdown';
 import css from './ModelDetails.module.scss';
+import { WorkspaceDetailsTab } from './WorkspaceDetails';
 
 type Params = {
   modelId: string;
@@ -404,24 +405,25 @@ const ModelDetails: React.FC = () => {
   }
 
   const pageBreadcrumb: BreadCrumbRoute[] = [];
-  if (workspace){
-      pageBreadcrumb.push(
-        {
-          breadcrumbName: workspace.id !== 1 ? workspace.name: 'Uncategorized Experiments',
-          path: paths.workspaceDetails(workspace.id)
-        }, 
-        {
-          breadcrumbName: "Model Registry",
-          path: workspace.id == 1 ?  paths.modelList() : paths.workspaceDetails(workspace.id, WorkspaceDetailsTab.ModelRegistry)
-        }
-      )
-    }
+  if (workspace) {
     pageBreadcrumb.push(
       {
-        breadcrumbName: model.model.name,
-        path: paths.modelDetails(model.model.name)
-      }
-    )
+        breadcrumbName: workspace.id !== 1 ? workspace.name : 'Uncategorized Experiments',
+        path: paths.workspaceDetails(workspace.id),
+      },
+      {
+        breadcrumbName: 'Model Registry',
+        path:
+          workspace.id === 1
+            ? paths.modelList()
+            : paths.workspaceDetails(workspace.id, WorkspaceDetailsTab.ModelRegistry),
+      },
+    );
+  }
+  pageBreadcrumb.push({
+    breadcrumbName: model.model.name,
+    path: paths.modelDetails(model.model.name),
+  });
 
   return (
     <Page

@@ -4,7 +4,6 @@ import { useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
-import { WorkspaceDetailsTab } from './WorkspaceDetails';
 import InfoBox from 'components/InfoBox';
 import Breadcrumb from 'components/kit/Breadcrumb';
 import Pivot from 'components/kit/Pivot';
@@ -32,6 +31,7 @@ import { checkpointSize } from 'utils/workload';
 
 import ModelVersionHeader from './ModelVersionDetails/ModelVersionHeader';
 import css from './ModelVersionDetails.module.scss';
+import { WorkspaceDetailsTab } from './WorkspaceDetails';
 
 const TabType = {
   Model: 'model',
@@ -298,20 +298,20 @@ const ModelVersionDetails: React.FC = () => {
   const pageBreadcrumb: BreadCrumbRoute[] = [
     {
       breadcrumbName: workspace.name,
-      path: workspace.id === 1 ? paths.projectDetails(1) : paths.workspaceDetails(workspace.id)
+      path: workspace.id === 1 ? paths.projectDetails(1) : paths.workspaceDetails(workspace.id),
     },
     {
-      breadcrumbName: "Model Registry",
-      path:paths.workspaceDetails(workspace.id, WorkspaceDetailsTab.ModelRegistry)
+      breadcrumbName: 'Model Registry',
+      path: paths.workspaceDetails(workspace.id, WorkspaceDetailsTab.ModelRegistry),
     },
     {
       breadcrumbName: `${modelVersion.model.name} (${modelId})`,
-      path: paths.modelDetails(String(modelVersion.model.id))
+      path: paths.modelDetails(String(modelVersion.model.id)),
     },
     {
       breadcrumbName: `Version ${modelVersion.version}`,
-      path: paths.modelDetails(String(modelVersion.model.id))
-    }
+      path: paths.modelDetails(String(modelVersion.model.id)),
+    },
   ];
 
   return (

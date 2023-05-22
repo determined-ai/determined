@@ -5,10 +5,9 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 import Json from 'components/Json';
 import Empty from 'components/kit/Empty';
-import Icon from 'components/kit/Icon';
 import Pivot from 'components/kit/Pivot';
 import Page from 'components/Page';
-import { PoolLogo, RenderAllocationBarResourcePool } from 'components/ResourcePoolCard';
+import { RenderAllocationBarResourcePool } from 'components/ResourcePoolCard';
 import Section from 'components/Section';
 import { V1SchedulerTypeToLabel } from 'constants/states';
 import { paths } from 'routes/utils';
@@ -178,10 +177,15 @@ const ResourcepoolDetailInner: React.FC = () => {
 
   return (
     <Page
-    breadcrumb={[
-      {breadcrumbName: "Cluster", path:paths.clusters()},
-      {breadcrumbName: `${pool.name} (${V1SchedulerTypeToLabel[pool.schedulerType]}) ${usage ? `- ${floatToPercent(usage)}` : ''}`, path:""}
-    ]}
+      breadcrumb={[
+        { breadcrumbName: 'Cluster', path: paths.clusters() },
+        {
+          breadcrumbName: `${pool.name} (${V1SchedulerTypeToLabel[pool.schedulerType]}) ${
+            usage ? `- ${floatToPercent(usage)}` : ''
+          }`,
+          path: '',
+        },
+      ]}
       title={
         tabKey === TabType.Active || tabKey === TabType.Queued
           ? 'Job Queue by Resource Pool'

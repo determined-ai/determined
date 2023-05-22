@@ -265,13 +265,16 @@ const WorkspaceDetails: React.FC = () => {
 
   return (
     <Page
-    breadcrumb={[{
-      breadcrumbName: "Workspaces",
-      path: paths.workspaceList()
-    },{
-      breadcrumbName: id !== 1 ? workspace.name : "Uncategorized Experiments",
-      path: paths.workspaceDetails(id)
-    }]}
+      breadcrumb={[
+        {
+          breadcrumbName: 'Workspaces',
+          path: paths.workspaceList(),
+        },
+        {
+          breadcrumbName: id !== 1 ? workspace.name : 'Uncategorized Experiments',
+          path: paths.workspaceDetails(id),
+        },
+      ]}
       containerRef={pageRef}
       id="workspaceDetails"
       key={workspaceId}>
