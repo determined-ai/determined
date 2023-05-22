@@ -24,6 +24,7 @@ import {
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 
+import ComparisonView from './ComparisonView';
 import css from './F_ExperimentList.module.scss';
 import { F_ExperimentListSettings, settingsConfigForProject } from './F_ExperimentList.settings';
 import { Error, Loading, NoExperiments } from './glide-table/exceptions';
@@ -76,6 +77,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const [isOpenFilter, setIsOpenFilter] = useState<boolean>(false);
   const filtersString = useObservable(formStore.asJsonString);
   const rootFilterChildren = useObservable(formStore.formset).filterGroup.children;
+  const [comparisonViewOpen, setComparisonViewOpen] = useState(false);
 
   const onIsOpenFilterChange = useCallback((newOpen: boolean) => {
     setIsOpenFilter(newOpen);
@@ -332,6 +334,10 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     };
   }, []);
 
+  const handleToggleComparisonView = useCallback(() => {
+    setComparisonViewOpen((prev) => !prev);
+  }, []);
+
   return (
     <>
       <TableActionBar
@@ -349,6 +355,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         setIsOpenFilter={onIsOpenFilterChange}
         setVisibleColumns={setVisibleColumns}
         sorts={sorts}
+        toggleComparisonView={handleToggleComparisonView}
         total={total}
         onAction={handleOnAction}
         onSortChange={onSortChange}
@@ -365,32 +372,34 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         ) : error ? (
           <Error />
         ) : (
-          <GlideTable
-            clearSelectionTrigger={clearSelectionTrigger}
-            colorMap={colorMap}
-            data={experiments}
-            dataTotal={Loadable.getOrElse(0, total)}
-            excludedExperimentIds={excludedExperimentIds}
-            formStore={formStore}
-            handleScroll={handleScroll}
-            handleUpdateExperimentList={handleUpdateExperimentList}
-            height={height - 2 * parseInt(getCssVar('--theme-stroke-width'))}
-            page={page}
-            project={project}
-            projectColumns={projectColumns}
-            scrollPositionSetCount={scrollPositionSetCount}
-            selectAll={selectAll}
-            selectedExperimentIds={selectedExperimentIds}
-            setExcludedExperimentIds={setExcludedExperimentIds}
-            setSelectAll={setSelectAll}
-            setSelectedExperimentIds={setSelectedExperimentIds}
-            setSortableColumnIds={setVisibleColumns}
-            sortableColumnIds={settings.columns}
-            sorts={sorts}
-            onContextMenuComplete={onContextMenuComplete}
-            onIsOpenFilterChange={onIsOpenFilterChange}
-            onSortChange={onSortChange}
-          />
+          <ComparisonView open={comparisonViewOpen}>
+            <GlideTable
+              clearSelectionTrigger={clearSelectionTrigger}
+              colorMap={colorMap}
+              data={experiments}
+              dataTotal={Loadable.getOrElse(0, total)}
+              excludedExperimentIds={excludedExperimentIds}
+              formStore={formStore}
+              handleScroll={handleScroll}
+              handleUpdateExperimentList={handleUpdateExperimentList}
+              height={height - 2 * parseInt(getCssVar('--theme-stroke-width'))}
+              page={page}
+              project={project}
+              projectColumns={projectColumns}
+              scrollPositionSetCount={scrollPositionSetCount}
+              selectAll={selectAll}
+              selectedExperimentIds={selectedExperimentIds}
+              setExcludedExperimentIds={setExcludedExperimentIds}
+              setSelectAll={setSelectAll}
+              setSelectedExperimentIds={setSelectedExperimentIds}
+              setSortableColumnIds={setVisibleColumns}
+              sortableColumnIds={settings.columns}
+              sorts={sorts}
+              onContextMenuComplete={onContextMenuComplete}
+              onIsOpenFilterChange={onIsOpenFilterChange}
+              onSortChange={onSortChange}
+            />
+          </ComparisonView>
         )}
       </div>
     </>
