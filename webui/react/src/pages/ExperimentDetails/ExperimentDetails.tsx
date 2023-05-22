@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
-import Page from 'components/Page';
+import Page, { BreadCrumbRoute } from 'components/Page';
 import { terminalRunStates } from 'constants/states';
 import ExperimentDetailsHeader from 'pages/ExperimentDetails/ExperimentDetailsHeader';
 import ExperimentMultiTrialTabs from 'pages/ExperimentDetails/ExperimentMultiTrialTabs';
@@ -14,8 +14,12 @@ import usePolling from 'shared/hooks/usePolling';
 import { isEqual } from 'shared/utils/data';
 import { isNotFound } from 'shared/utils/service';
 import { isAborted } from 'shared/utils/service';
-import { ExperimentBase, TrialItem } from 'types';
+import { ExperimentBase, TrialItem, Workspace } from 'types';
 import { isSingleTrialExperiment } from 'utils/experiment';
+import { paths } from 'routes/utils';
+import workspaceStore from 'stores/workspaces';
+import { Loadable } from 'utils/loadable';
+import { useObservable } from 'utils/observable';
 
 type Params = {
   experimentId: string;
@@ -32,7 +36,7 @@ const ExperimentDetails: React.FC = () => {
   const [isSingleTrial, setIsSingleTrial] = useState<boolean>();
   const pageRef = useRef<HTMLElement>(null);
   const canceler = useRef<AbortController>();
-
+  const workspaces = Loadable.getOrElse([], useObservable(workspaceStore.workspaces));
   const id = parseInt(experimentId ?? '');
 
   const fetchExperimentDetails = useCallback(async () => {
@@ -82,9 +86,29 @@ const ExperimentDetails: React.FC = () => {
   } else if (!pageError && (!experiment || isSingleTrial === undefined)) {
     return <Spinner tip={`Loading experiment ${experimentId} details...`} />;
   }
+  
+  const workspaceName = workspaces.find((ws: Workspace) => ws.id === experiment?.workspaceId)?.name;
+
+  const pageBreadcrumb: BreadCrumbRoute[] = [
+    {
+      breadcrumbName: (workspaceName  && experiment?.workspaceId !== 1) ? workspaceName : "Uncategorized Experiments" ,
+      path: paths.workspaceDetails(experiment?.workspaceId ?? 1)
+    },
+  ];
+
+  if (experiment?.projectName && experiment?.projectId && experiment?.projectId !== 1) pageBreadcrumb.push({
+    breadcrumbName: experiment?.projectName ?? '',
+    path: paths.projectDetails(experiment?.projectId)
+  });
+
+  pageBreadcrumb.push({
+    breadcrumbName: experiment?.name ?? '',
+    path: paths.experimentDetails(id)
+  });
 
   return (
     <Page
+    breadcrumb={pageBreadcrumb}
       containerRef={pageRef}
       headerComponent={
         experiment && (

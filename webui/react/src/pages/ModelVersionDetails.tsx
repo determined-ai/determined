@@ -4,13 +4,14 @@ import { useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
+import { WorkspaceDetailsTab } from './WorkspaceDetails';
 import InfoBox from 'components/InfoBox';
 import Breadcrumb from 'components/kit/Breadcrumb';
 import Pivot from 'components/kit/Pivot';
 import Link from 'components/Link';
 import MetadataCard from 'components/Metadata/MetadataCard';
 import NotesCard from 'components/NotesCard';
-import Page from 'components/Page';
+import Page, { BreadCrumbRoute } from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
@@ -294,10 +295,29 @@ const ModelVersionDetails: React.FC = () => {
   } else if (!modelVersion || !workspace || rbacLoading) {
     return <Spinner spinning tip={`Loading model ${modelId} version ${versionNum} details...`} />;
   }
+  const pageBreadcrumb: BreadCrumbRoute[] = [
+    {
+      breadcrumbName: workspace.name,
+      path: workspace.id === 1 ? paths.projectDetails(1) : paths.workspaceDetails(workspace.id)
+    },
+    {
+      breadcrumbName: "Model Registry",
+      path:paths.workspaceDetails(workspace.id, WorkspaceDetailsTab.ModelRegistry)
+    },
+    {
+      breadcrumbName: `${modelVersion.model.name} (${modelId})`,
+      path: paths.modelDetails(String(modelVersion.model.id))
+    },
+    {
+      breadcrumbName: `Version ${modelVersion.version}`,
+      path: paths.modelDetails(String(modelVersion.model.id))
+    }
+  ];
 
   return (
     <Page
       bodyNoPadding
+      breadcrumb={pageBreadcrumb}
       docTitle="Model Version Details"
       headerComponent={
         <ModelVersionHeader

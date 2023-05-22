@@ -3,6 +3,7 @@ import { FilterValue, SorterResult, TablePaginationConfig } from 'antd/lib/table
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
+import { paths } from 'routes/utils';
 import Input from 'components/kit/Input';
 import { useModal } from 'components/kit/Modal';
 import Tags, { tagsActionHelper } from 'components/kit/Tags';
@@ -10,7 +11,7 @@ import MetadataCard from 'components/Metadata/MetadataCard';
 import ModelDownloadModal from 'components/ModelDownloadModal';
 import ModelVersionDeleteModal from 'components/ModelVersionDeleteModal';
 import NotesCard from 'components/NotesCard';
-import Page from 'components/Page';
+import Page, { BreadCrumbRoute } from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
 import InteractiveTable, {
   ColumnDef,
@@ -46,7 +47,7 @@ import { Metadata, ModelVersion, ModelVersions } from 'types';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
-
+import { WorkspaceDetailsTab } from './WorkspaceDetails';
 import settingsConfig, {
   DEFAULT_COLUMN_WIDTHS,
   isOfSortKey,
@@ -402,8 +403,29 @@ const ModelDetails: React.FC = () => {
     return <Spinner spinning tip={`Loading model ${modelId} details...`} />;
   }
 
+  const pageBreadcrumb: BreadCrumbRoute[] = [];
+  if (workspace){
+      pageBreadcrumb.push(
+        {
+          breadcrumbName: workspace.id !== 1 ? workspace.name: 'Uncategorized Experiments',
+          path: paths.workspaceDetails(workspace.id)
+        }, 
+        {
+          breadcrumbName: "Model Registry",
+          path: workspace.id == 1 ?  paths.modelList() : paths.workspaceDetails(workspace.id, WorkspaceDetailsTab.ModelRegistry)
+        }
+      )
+    }
+    pageBreadcrumb.push(
+      {
+        breadcrumbName: model.model.name,
+        path: paths.modelDetails(model.model.name)
+      }
+    )
+
   return (
     <Page
+      breadcrumb={pageBreadcrumb}
       containerRef={pageRef}
       docTitle="Model Details"
       headerComponent={

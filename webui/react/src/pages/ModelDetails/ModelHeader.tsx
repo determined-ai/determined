@@ -151,42 +151,6 @@ const ModelHeader: React.FC<Props> = ({
 
   return (
     <header className={css.base}>
-      <div className={css.breadcrumb}>
-        <Breadcrumb separator="">
-          <Breadcrumb.Item>
-            <Link path={paths.modelList()}>
-              <LeftOutlined className={css.leftIcon} />
-            </Link>
-          </Breadcrumb.Item>
-          {workspace && (
-            <Breadcrumb.Item>
-              <Link
-                path={
-                  workspace.id === 1
-                    ? paths.projectDetails(1)
-                    : paths.workspaceDetails(workspace.id)
-                }>
-                {workspace.name}
-              </Link>
-            </Breadcrumb.Item>
-          )}
-          <Breadcrumb.Separator />
-          <Breadcrumb.Item>
-            <Link
-              path={
-                workspace?.id
-                  ? paths.workspaceDetails(workspace.id, WorkspaceDetailsTab.ModelRegistry)
-                  : paths.modelList()
-              }>
-              Model Registry
-            </Link>
-          </Breadcrumb.Item>
-          <Breadcrumb.Separator />
-          <Breadcrumb.Item>
-            {model.name} ({model.id})
-          </Breadcrumb.Item>
-        </Breadcrumb>
-      </div>
       {model.archived && (
         <Alert
           message="This model has been archived and is now read-only."

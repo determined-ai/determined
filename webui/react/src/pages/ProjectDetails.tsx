@@ -5,10 +5,10 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom';
 
 import DynamicTabs from 'components/DynamicTabs';
-import ExperimentBreadcrumbBar from 'components/ExperimentBreadcrumbBar';
+import ExperimentBar from 'components/ExperimentBar';
 import Icon from 'components/kit/Icon';
 import Tooltip from 'components/kit/Tooltip';
-import Page from 'components/Page';
+import Page, { BreadCrumbRoute } from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
 import ProjectActionDropdown from 'components/ProjectActionDropdown';
 import useFeature from 'hooks/useFeature';
@@ -162,13 +162,31 @@ const ProjectDetails: React.FC = () => {
   } else if (!project) {
     return <Spinner spinning tip={id === 1 ? 'Loading...' : `Loading project ${id} details...`} />;
   }
+
+  const pageBreadcrumb: BreadCrumbRoute[] = project.workspaceId !== 1 ? [
+    {
+      breadcrumbName: project.workspaceName,
+      path: paths.workspaceDetails(project.workspaceId)
+    },
+
+    {
+      breadcrumbName: project.name,
+      path: paths.projectDetails(project.id)
+    }
+  ] : [
+    {
+      breadcrumbName: "Uncategorized Experiments",
+      path: paths.workspaceDetails(project.workspaceId)
+    },
+  ]
   return (
     <Page
       containerRef={pageRef}
+      breadcrumb={pageBreadcrumb}
       // for docTitle, when id is 1 that means Uncategorized from webui/react/src/routes/routes.ts
       docTitle={id === 1 ? 'Uncategorized Experiments' : 'Project Details'}
       headerComponent={
-        <ExperimentBreadcrumbBar
+        <ExperimentBar
           extra={
             <Space>
               {project.description && (

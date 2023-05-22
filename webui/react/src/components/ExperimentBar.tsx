@@ -10,7 +10,7 @@ import { ExperimentBase, Project, TrialDetails, Workspace } from 'types';
 import handleError from 'utils/error';
 
 import DynamicIcon from './DynamicIcon';
-import css from './ExperimentBreadcrumbBar.module.css';
+import css from './ExperimentBar.module.css';
 import Link from './Link';
 
 interface Props {
@@ -23,7 +23,7 @@ interface Props {
   workspace?: Workspace;
 }
 
-const ExperimentBreadcrumbBar: React.FC<Props> = ({
+const ExperimentBar: React.FC<Props> = ({
   id,
   type,
   workspace: workspaceIn,
@@ -138,7 +138,7 @@ const ExperimentBreadcrumbBar: React.FC<Props> = ({
   }, [stopPolling]);
 
   const projectName = project?.id === 1 ? 'Uncategorized Experiments' : project?.name ?? '...';
-
+  
   return (
     <div className={css.base}>
       <Breadcrumb separator="">
@@ -191,4 +191,4 @@ const ExperimentBreadcrumbBar: React.FC<Props> = ({
   );
 };
 
-export default ExperimentBreadcrumbBar;
+export default ExperimentBar;

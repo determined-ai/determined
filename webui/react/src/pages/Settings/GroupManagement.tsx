@@ -314,7 +314,7 @@ const GroupManagement: React.FC = () => {
   }, [groups, isLoading, settings, columns, total, updateSettings, expandedUserRender, onExpand]);
 
   return (
-    <Page bodyNoPadding containerRef={pageRef}>
+    <>
       <Section
         options={
           <Space>
@@ -327,7 +327,7 @@ const GroupManagement: React.FC = () => {
         {canViewGroups && <div className={css.usersTable}>{table}</div>}
       </Section>
       <CreateGroupModal.Component users={users} onClose={fetchGroups} />
-    </Page>
+    </>
   );
 };
 

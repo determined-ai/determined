@@ -269,7 +269,7 @@ const WorkspaceDetails: React.FC = () => {
       breadcrumbName: "Workspaces",
       path: paths.workspaceList()
     },{
-      breadcrumbName: workspace.name,
+      breadcrumbName: id !== 1 ? workspace.name : "Uncategorized Experiments",
       path: paths.workspaceDetails(id)
     }]}
       containerRef={pageRef}

@@ -132,7 +132,7 @@ const ResourcepoolDetailInner: React.FC = () => {
     delete mainSection.details;
     delete mainSection.stats;
     return (
-      <Page bodyNoPadding>
+      <>
         <Json alternateBackground json={mainSection} translateLabel={camelCaseToSentence} />
         {Object.keys(details).map((key) => (
           <Fragment key={key}>
@@ -141,7 +141,7 @@ const ResourcepoolDetailInner: React.FC = () => {
             <Json alternateBackground json={details[key]} translateLabel={camelCaseToSentence} />
           </Fragment>
         ))}
-      </Page>
+      </>
     );
   }, [pool]);
 
@@ -178,25 +178,16 @@ const ResourcepoolDetailInner: React.FC = () => {
 
   return (
     <Page
+    breadcrumb={[
+      {breadcrumbName: "Cluster", path:paths.clusters()},
+      {breadcrumbName: `${pool.name} (${V1SchedulerTypeToLabel[pool.schedulerType]}) ${usage ? `- ${floatToPercent(usage)}` : ''}`, path:""}
+    ]}
       title={
         tabKey === TabType.Active || tabKey === TabType.Queued
           ? 'Job Queue by Resource Pool'
           : undefined
       }>
       <div className={css.poolDetailPage}>
-        <Section>
-          <div className={css.nav} onClick={() => navigate(paths.clusters(), { replace: true })}>
-            <Icon name="arrow-left" showTooltip size="tiny" title="Back to cluster" />
-            <div className={css.icon}>
-              <PoolLogo type={pool.type} />
-            </div>
-            <div>
-              {`${pool.name} (${V1SchedulerTypeToLabel[pool.schedulerType]}) ${
-                usage ? `- ${floatToPercent(usage)}` : ''
-              } `}
-            </div>
-          </div>
-        </Section>
         <Section>
           <RenderAllocationBarResourcePool
             poolStats={poolStats}

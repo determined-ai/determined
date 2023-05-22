@@ -340,7 +340,7 @@ const UserManagement: React.FC = () => {
     );
   }, [users, loadableUsers, settings, columns, pagination, updateSettings]);
   return (
-    <Page bodyNoPadding containerRef={pageRef}>
+    <>
       <Section
         className={css.usersTable}
         options={
@@ -358,7 +358,7 @@ const UserManagement: React.FC = () => {
         {table}
       </Section>
       <CreateUserModal.Component onClose={fetchUsers} />
-    </Page>
+      </>
   );
 };
 

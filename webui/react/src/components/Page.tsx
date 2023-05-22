@@ -57,8 +57,6 @@ const Page: React.FC<Props> = (props: Props) => {
 
   const classes = [css.base];
 
-  const showHeader = !props.headerComponent && !!props.breadcrumb;
-
   if (props.bodyNoPadding) classes.push(css.bodyNoPadding);
   if (props.stickyHeader) classes.push(css.stickyHeader);
   if (props.noScroll) classes.push(css.noScroll);
@@ -81,12 +79,12 @@ const Page: React.FC<Props> = (props: Props) => {
         <PageNotFound /> // hide until permissions are loaded
       ) : (
         <article className={classes.join(' ')} id={props.id} ref={props.containerRef}>
-          {props.headerComponent}
-            <PageHeader
-              breadcrumb={props.breadcrumb}
-              options={props.options}
-              sticky={props.stickyHeader}
-            />
+          <PageHeader
+            breadcrumb={props.breadcrumb}
+            options={props.options}
+            sticky={props.stickyHeader}
+          />
+                    {props.headerComponent}
           <div className={css.body}>
             <Spinner spinning={!!props.loading}>{props.children}</Spinner>
           </div>
