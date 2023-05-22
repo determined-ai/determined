@@ -1,9 +1,12 @@
 import { DownloadOutlined, FileOutlined } from '@ant-design/icons';
+import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
+import { python } from '@codemirror/lang-python';
+import { languages } from '@codemirror/language-data';
+import CodeMirror from '@uiw/react-codemirror';
 import { Tree } from 'antd';
 import React, { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 
 import Tooltip from 'components/kit/Tooltip';
-import MonacoEditor from 'components/MonacoEditor';
 import Section from 'components/Section';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner';
@@ -220,14 +223,6 @@ const CodeEditor: React.FC<Props> = ({ files, onSelectFile, readonly, selectedFi
     }, 2000);
   }, [activeFile]);
 
-  const getSyntaxHighlight = useCallback(() => {
-    if (String(activeFile?.key).includes('.py')) return 'python';
-
-    if (String(activeFile?.key).includes('.md')) return 'markdown';
-
-    return 'yaml';
-  }, [activeFile]);
-
   const classes = [
     css.fileTree,
     css.codeEditorBase,
@@ -250,17 +245,10 @@ const CodeEditor: React.FC<Props> = ({ files, onSelectFile, readonly, selectedFi
   } else if (activeFile) {
     fileContent =
       editorMode === 'monaco' ? (
-        <MonacoEditor
+        <CodeMirror
+          extensions={[python(), markdown({ base: markdownLanguage, codeLanguages: languages })]}
           height="100%"
-          language={getSyntaxHighlight()}
-          options={{
-            minimap: {
-              enabled: false,
-            },
-            occurrencesHighlight: false,
-            readOnly: readonly,
-            showFoldingControls: 'always',
-          }}
+          theme="dark"
           value={Loadable.getOrElse('', activeFile.content)}
         />
       ) : (
