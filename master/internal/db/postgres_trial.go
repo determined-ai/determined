@@ -524,7 +524,8 @@ func (db *PgDB) _addTrialMetricsTx(
 			return err
 		}
 
-		if rollbacks > 0 {
+		switch {
+		case rollbacks != 0:
 			if err := db.updateTotalBatches(ctx, tx, int(m.TrialId)); err != nil {
 				return errors.Wrap(err, "rollback")
 			}
@@ -537,7 +538,14 @@ func (db *PgDB) _addTrialMetricsTx(
 			if err := db.fullTrialSummaryMetricsRecompute(ctx, tx, int(m.TrialId)); err != nil {
 				return errors.Wrap(err, "error on rollback compute of summary metrics")
 			}
-		} else { // no rollbacks.
+		case pType == GenericMetric:
+			if _, err := tx.ExecContext(ctx, `
+	UPDATE trials SET total_batches = GREATEST(total_batches, $2)
+	WHERE id = $1;
+	`, m.TrialId, m.StepsCompleted); err != nil {
+				return errors.Wrap(err, "updating trial total batches")
+			}
+		default: // no rollbacks happened.
 			if _, ok := summaryMetrics[metricsJSONPath]; !ok {
 				summaryMetrics[metricsJSONPath] = map[string]any{}
 			}
