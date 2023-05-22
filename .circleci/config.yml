@@ -1918,6 +1918,7 @@ jobs:
   test-unit-model-hub:
     docker:
       - image: <<pipeline.parameters.docker-image>>
+    resource_class: medium+
     steps:
       - checkout
       - skip-if-docs-only
@@ -1967,6 +1968,7 @@ jobs:
   test-examples:
     docker:
       - image: <<pipeline.parameters.docker-image>>
+    resource_class: medium+
     steps:
       - checkout
       - skip-if-docs-only
