@@ -86,8 +86,7 @@ const Admin: React.FC = () => (
       },
     ]}
     id="admin"
-    stickyHeader
-    title="Admin Settings">
+    stickyHeader>
     <SettingsContent />
   </Page>
 );
