@@ -181,12 +181,21 @@ class SharedFSStorageManager(storage.StorageManager):
             return {}
         if not os.path.isdir(storage_dir):
             raise errors.CheckpointNotFound(f"Storage path is not a directory: {storage_dir}")
-
+    
+        
+        
+        
+        
+        
+        
         # Optimize for the common case here. No need to iterate through files.
         if "**/*" in globs:
             util.rmtree_nfs_safe(storage_dir, ignore_errors=False)
             return {}
 
+        # TODO check if it is a directory then delete it.
+        # Then check if it is a file then delete it.
+        
         to_delete_dirs = {}
         to_delete_files = {}
         for file_glob in globs:
@@ -216,23 +225,6 @@ class SharedFSStorageManager(storage.StorageManager):
             util.rmtree_nfs_safe(storage_dir, ignore_errors=False)
         return resources
 
-    '''
-    def delete_by_glob(self, storage_id: str, file_glob: str) -> Dict[str, int]:
-        """
-        Delete files by glob and returns "Resources" after deletion happens.
-        """
-        storage_dir = os.path.join(self._base_path, storage_id)
-
-        if file_glob != "":
-            # TODO we want recursive=True
-                print("!", path)
-                # TODO is islink a worry here?
-
-        resources = self._list_directory(storage_dir)
-        if len(resources) == 0:
-            self.delete(storage_id)
-        return resources
-    '''
 
     def upload(
         self, src: Union[str, os.PathLike], dst: str, paths: Optional[storage.Paths] = None
