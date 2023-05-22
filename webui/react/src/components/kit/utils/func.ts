@@ -1,5 +1,7 @@
 import ansiConverter from 'ansi-to-html';
 import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+dayjs.extend(utc);
 
 type NullOrUndefined<T = undefined> = T | null | undefined;
 
