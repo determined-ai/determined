@@ -421,7 +421,7 @@ const ModelDetails: React.FC = () => {
     );
   }
   pageBreadcrumb.push({
-    breadcrumbName: model.model.name,
+    breadcrumbName: `${model.model.name} (${model.model.id})`,
     path: paths.modelDetails(model.model.name),
   });
 
