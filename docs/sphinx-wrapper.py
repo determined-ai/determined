@@ -6,10 +6,9 @@
 #
 import os
 import re
-import sys
 import subprocess
+import sys
 import tempfile
-
 from typing import List
 
 # "sphinx-build -W" does not seem to stop on the following warning:

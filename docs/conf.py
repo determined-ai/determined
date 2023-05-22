@@ -3,8 +3,8 @@ This file is the configuration file for the Sphinx documentation builder.
 See the documentation: http://www.sphinx-doc.org/en/master/config
 """
 
-import os
 import json
+import os
 import pathlib
 import sys
 
