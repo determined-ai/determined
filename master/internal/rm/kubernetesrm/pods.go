@@ -25,7 +25,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
-	"github.com/determined-ai/determined/master/pkg/actor/api"
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/device"
@@ -188,8 +187,6 @@ func Initialize(
 	check.Panic(check.True(ok, "pods address already taken"))
 	s.Ask(podsActor, actor.Ping{}).Get()
 
-	// We re-use the agents endpoint for the default resource manager.
-	e.Any("/agents", api.Route(s, podsActor))
 	return podsActor
 }
 
