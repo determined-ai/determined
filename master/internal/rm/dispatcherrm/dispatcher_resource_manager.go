@@ -1119,8 +1119,7 @@ func (m *dispatcherResourceManager) startLauncherJob(
 
 		m.jobWatcher.removeJob(dispatchID)
 
-		sendResourceStateChangedErrorResponse(ctx, err, msg,
-			"unable to create the launcher job")
+		sendResourceStateChangedErrorResponse(ctx, err, msg, "")
 	} else {
 		// Successful launch, clear launchInProgress status
 		m.jobWatcher.notifyJobLaunched(ctx, dispatchID)
@@ -1647,6 +1646,10 @@ func (m *dispatcherResourceManager) sendManifestToDispatcher(
 	if err != nil {
 		dispatcherErrors.WithLabelValues("launch").Inc()
 		if response != nil {
+			// If we have a real error body, return the details message
+			if details := extractDetailsFromResponse(response, err); len(details) > 0 {
+				return "", errors.New(details)
+			}
 			return "", errors.Wrapf(err, m.apiClient.handleLauncherError(
 				response, "Job launch failed", err))
 		}
