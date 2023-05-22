@@ -1,4 +1,4 @@
-import { array, number, string, undefined as undefinedType, union } from 'io-ts';
+import { array, boolean, number, string, undefined as undefinedType, union } from 'io-ts';
 
 import { InteractiveTableSettings } from 'components/Table/InteractiveTable';
 import { MINIMUM_PAGE_SIZE } from 'components/Table/Table';
@@ -15,9 +15,9 @@ export const DEFAULT_COLUMN_WIDTHS: Record<UserColumnName, number> = {
   users: 40,
 };
 
-export type GroupManagementSettings = Omit<InteractiveTableSettings, 'sortDesc'>;
+export type GroupManagementSettings = InteractiveTableSettings;
 
-const config: SettingsConfig<GroupManagementSettings> = {
+const config: SettingsConfig<InteractiveTableSettings> = {
   settings: {
     columns: {
       defaultValue: DEFAULT_COLUMNS,
@@ -35,6 +35,11 @@ const config: SettingsConfig<GroupManagementSettings> = {
       skipUrlEncoding: true,
       storageKey: 'row',
       type: union([undefinedType, union([array(string), array(number)])]),
+    },
+    sortDesc: {
+      defaultValue: false,
+      storageKey: 'sortDesc',
+      type: boolean,
     },
     tableLimit: {
       defaultValue: MINIMUM_PAGE_SIZE,

@@ -1071,19 +1071,19 @@ export interface V1Allocation {
      * @type {string}
      * @memberof V1Allocation
      */
-    taskId?: string;
+    taskId: string;
     /**
      * The current state of the allocation.
      * @type {Taskv1State}
      * @memberof V1Allocation
      */
-    state?: Taskv1State;
+    state: Taskv1State;
     /**
      * Whether the allocation is ready to access.
      * @type {boolean}
      * @memberof V1Allocation
      */
-    isReady?: boolean;
+    isReady: boolean;
     /**
      * Start timestamp.
      * @type {string}
@@ -1101,7 +1101,7 @@ export interface V1Allocation {
      * @type {string}
      * @memberof V1Allocation
      */
-    allocationId?: string;
+    allocationId: string;
 }
 /**
  * Arguments to an all gather.
@@ -2063,6 +2063,12 @@ export interface V1CreateExperimentRequest {
      * @memberof V1CreateExperimentRequest
      */
     gitCommitDate?: Date;
+    /**
+     * Unmanaged experiments are detached.
+     * @type {boolean}
+     * @memberof V1CreateExperimentRequest
+     */
+    unmanaged?: boolean;
 }
 /**
  * Response to CreateExperimentRequest.
@@ -2139,6 +2145,44 @@ export interface V1CreateTrialOperation {
      * @memberof V1CreateTrialOperation
      */
     hyperparams?: string;
+}
+/**
+ * Create a trial.
+ * @export
+ * @interface V1CreateTrialRequest
+ */
+export interface V1CreateTrialRequest {
+    /**
+     * The id of the parent experiment.
+     * @type {number}
+     * @memberof V1CreateTrialRequest
+     */
+    experimentId?: number;
+    /**
+     * Trial hyperparameters.
+     * @type {any}
+     * @memberof V1CreateTrialRequest
+     */
+    hparams?: any;
+    /**
+     * Currently only unmanaged trials are supported, must be true.
+     * @type {boolean}
+     * @memberof V1CreateTrialRequest
+     */
+    unmanaged?: boolean;
+}
+/**
+ * Response to CreateTrialRequest.
+ * @export
+ * @interface V1CreateTrialResponse
+ */
+export interface V1CreateTrialResponse {
+    /**
+     * The requested trial.
+     * @type {Trialv1Trial}
+     * @memberof V1CreateTrialResponse
+     */
+    trial: Trialv1Trial;
 }
 /**
  * Request body for CeateTrials request which includes TrialFilters.
@@ -2734,6 +2778,12 @@ export interface V1Experiment {
      * @memberof V1Experiment
      */
     bestTrialId?: number;
+    /**
+     * Unmanaged experiments are detached.
+     * @type {boolean}
+     * @memberof V1Experiment
+     */
+    unmanaged?: boolean;
 }
 /**
  * Message for results of individual experiments in a multi-experiment action.
@@ -3962,7 +4012,7 @@ export interface V1GetTaskResponse {
      * @type {V1Task}
      * @memberof V1GetTaskResponse
      */
-    task?: V1Task;
+    task: V1Task;
 }
 /**
  * Response to GetTasksRequest.
@@ -8728,19 +8778,31 @@ export interface V1Task {
      * @type {string}
      * @memberof V1Task
      */
-    taskId?: string;
+    taskId: string;
     /**
      * Type of Task.
      * @type {string}
      * @memberof V1Task
      */
-    taskType?: string;
+    taskType: string;
     /**
      * List of Allocations.
      * @type {Array<V1Allocation>}
      * @memberof V1Task
      */
-    allocations?: Array<V1Allocation>;
+    allocations: Array<V1Allocation>;
+    /**
+     * Start timestamp.
+     * @type {Date}
+     * @memberof V1Task
+     */
+    startTime: Date;
+    /**
+     * End timestamp if completed.
+     * @type {Date}
+     * @memberof V1Task
+     */
+    endTime?: Date;
 }
 /**
  * Response to TaskLogsFieldsRequest.
@@ -16380,6 +16442,44 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Create unmanaged trial.
+         * @param {V1CreateTrialRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createTrial(body: V1CreateTrialRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling createTrial.');
+            }
+            const localVarPath = `/api/v1/trials`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Remove a group.
          * @param {number} groupId The id of the group that should be deleted.
          * @param {*} [options] Override http request option.
@@ -17894,6 +17994,25 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Create unmanaged trial.
+         * @param {V1CreateTrialRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createTrial(body: V1CreateTrialRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CreateTrialResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).createTrial(body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Remove a group.
          * @param {number} groupId The id of the group that should be deleted.
          * @param {*} [options] Override http request option.
@@ -18604,6 +18723,16 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Create unmanaged trial.
+         * @param {V1CreateTrialRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createTrial(body: V1CreateTrialRequest, options?: any) {
+            return InternalApiFp(configuration).createTrial(body, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Remove a group.
          * @param {number} groupId The id of the group that should be deleted.
          * @param {*} [options] Override http request option.
@@ -19070,6 +19199,18 @@ export class InternalApi extends BaseAPI {
      */
     public createGroup(body: V1CreateGroupRequest, options?: any) {
         return InternalApiFp(this.configuration).createGroup(body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Create unmanaged trial.
+     * @param {V1CreateTrialRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public createTrial(body: V1CreateTrialRequest, options?: any) {
+        return InternalApiFp(this.configuration).createTrial(body, options)(this.fetch, this.basePath)
     }
     
     /**

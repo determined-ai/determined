@@ -94,7 +94,7 @@ const ProjectDetails: React.FC = () => {
           <div className={css.tabPane}>
             <div className={css.base}>
               {f_explist ? (
-                <F_ExperimentList project={project} />
+                <F_ExperimentList key={projectId} project={project} />
               ) : (
                 <ExperimentList project={project} />
               )}

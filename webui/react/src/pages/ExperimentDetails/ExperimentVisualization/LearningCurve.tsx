@@ -46,7 +46,7 @@ interface Props {
   filters?: React.ReactNode;
   fullHParams: string[];
   selectedMaxTrial: number;
-  selectedMetric: Metric | null;
+  selectedMetric?: Metric;
   selectedScale: Scale;
 }
 

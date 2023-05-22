@@ -19,7 +19,6 @@ import Toggle from 'components/kit/Toggle';
 import Link from 'components/Link';
 import InteractiveTable, {
   ColumnDef,
-  InteractiveTableSettings,
   onRightClickableCell,
 } from 'components/Table/InteractiveTable';
 import {
@@ -39,7 +38,7 @@ import TableFilterDropdown from 'components/Table/TableFilterDropdown';
 import TableFilterSearch from 'components/Table/TableFilterSearch';
 import useExperimentTags from 'hooks/useExperimentTags';
 import usePermissions from 'hooks/usePermissions';
-import { UpdateSettings, useSettings } from 'hooks/useSettings';
+import { useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import {
   activateExperiment,
@@ -915,7 +914,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         onAction={handleBatchAction}
         onClear={clearSelected}
       />
-      <InteractiveTable
+      <InteractiveTable<ExperimentItem, ExperimentListSettings>
         areRowsSelected={!!settings.row}
         columns={columns}
         containerRef={pageRef}
@@ -938,10 +937,10 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
           selectedRowKeys: settings.row ?? [],
         }}
         scroll={{ y: `calc(100vh - ${availableBatchActions.length === 0 ? '230' : '280'}px)` }}
-        settings={settings as InteractiveTableSettings}
+        settings={settings}
         showSorterTooltip={false}
         size="small"
-        updateSettings={updateSettings as UpdateSettings}
+        updateSettings={updateSettings}
       />
       {batchAction && (
         <BatchActionConfirmModal.Component

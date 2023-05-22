@@ -9,6 +9,7 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence, Union
 
 import dateutil.parser
 import tabulate
+import termcolor
 
 from determined.common import util, yaml
 
@@ -42,6 +43,38 @@ def unmarshal(
         transform = transforms.get(arg, lambda x: x)
         init_args[arg] = transform(data[arg])
     return class_(**init_args)
+
+
+class Animator:
+    MAX_LINE_LENGTH = 80
+    """
+    Animator is a simple class for rendering a loading animation in the terminal.
+    Use to communicate progress to the user when a call may take a while.
+    """
+
+    def __init__(self, message: str = "Loading") -> None:
+        self.message = message
+        self.step = 0
+
+    def next(self) -> None:
+        self.render_frame(self.step, self.message)
+        self.step += 1
+
+    @staticmethod
+    def render_frame(step: int, message: str) -> None:
+        animation = "|/-\\"
+        sys.stdout.write("\r" + message + " " + animation[step % len(animation)] + " ")
+        sys.stdout.flush()
+
+    def reset(self) -> None:
+        self.clear()
+        self.step = 0
+
+    @staticmethod
+    def clear(message: str = "Loading done.") -> None:
+        sys.stdout.write("\r" + " " * Animator.MAX_LINE_LENGTH + "\r")
+        sys.stdout.write("\r" + message + "\n")
+        sys.stdout.flush()
 
 
 def render_objects(
@@ -162,3 +195,8 @@ def print_json(data: Union[str, Any]) -> None:
         print(formatted_json)
     except json.decoder.JSONDecodeError:
         print(data)
+
+
+def report_job_launched(_type: str, _id: str) -> None:
+    msg = f"Launched {_type} (id: {_id})."
+    print(termcolor.colored(msg, "green"))

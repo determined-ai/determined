@@ -1,7 +1,8 @@
-from dataclasses import dataclass, field
 import json
 import sys
 import typing
+from dataclasses import dataclass, field
+
 import typing_extensions
 
 

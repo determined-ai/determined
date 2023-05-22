@@ -17,7 +17,7 @@ import TableBatch from 'components/Table/TableBatch';
 import TableFilterDropdown from 'components/Table/TableFilterDropdown';
 import useModalCheckpointDelete from 'hooks/useModal/Checkpoint/useModalCheckpointDelete';
 import useModalCheckpointRegister from 'hooks/useModal/Checkpoint/useModalCheckpointRegister';
-import { UpdateSettings, useSettings } from 'hooks/useSettings';
+import { useSettings } from 'hooks/useSettings';
 import { getExperimentCheckpoints } from 'services/api';
 import { Checkpointv1State, V1GetExperimentCheckpointsRequestSortBy } from 'services/api-ts-sdk';
 import { encodeCheckpointState } from 'services/decoder';
@@ -320,7 +320,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
           onClear={clearSelected}
         />
         {settings ? (
-          <InteractiveTable
+          <InteractiveTable<CoreApiGenericCheckpoint, Settings>
             columns={columns}
             containerRef={pageRef}
             ContextMenu={CheckpointActionDropdown}
@@ -343,7 +343,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
             settings={settings}
             showSorterTooltip={false}
             size="small"
-            updateSettings={updateSettings as UpdateSettings}
+            updateSettings={updateSettings}
           />
         ) : (
           <SkeletonTable columns={columns.length} />

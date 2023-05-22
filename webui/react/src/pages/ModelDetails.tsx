@@ -12,10 +12,7 @@ import ModelDownloadModal from 'components/ModelDownloadModal';
 import ModelVersionDeleteModal from 'components/ModelVersionDeleteModal';
 import Page from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
-import InteractiveTable, {
-  ColumnDef,
-  InteractiveTableSettings,
-} from 'components/Table/InteractiveTable';
+import InteractiveTable, { ColumnDef } from 'components/Table/InteractiveTable';
 import {
   defaultRowClassName,
   getFullPaginationConfig,
@@ -25,7 +22,7 @@ import {
   userRenderer,
 } from 'components/Table/Table';
 import usePermissions from 'hooks/usePermissions';
-import { UpdateSettings, useSettings } from 'hooks/useSettings';
+import { useSettings } from 'hooks/useSettings';
 import {
   archiveModel,
   getModelDetails,
@@ -427,7 +424,7 @@ const ModelDetails: React.FC = () => {
             </p>
           </div>
         ) : (
-          <InteractiveTable
+          <InteractiveTable<ModelVersion, Settings>
             columns={columns}
             containerRef={pageRef}
             ContextMenu={actionDropdown}
@@ -442,10 +439,10 @@ const ModelDetails: React.FC = () => {
             )}
             rowClassName={defaultRowClassName({ clickable: false })}
             rowKey="version"
-            settings={settings as InteractiveTableSettings}
+            settings={settings}
             showSorterTooltip={false}
             size="small"
-            updateSettings={updateSettings as UpdateSettings}
+            updateSettings={updateSettings}
             onChange={handleTableChange}
           />
         )}

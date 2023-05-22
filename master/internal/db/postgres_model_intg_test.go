@@ -74,7 +74,7 @@ func TestModels(t *testing.T) {
 			ckpt := &model.CheckpointV2{
 				UUID:         uuid.New(),
 				TaskID:       tr.TaskID,
-				AllocationID: a.AllocationID,
+				AllocationID: &a.AllocationID,
 				ReportTime:   time.Now().UTC(),
 				State:        model.CompletedState,
 				Resources: map[string]int64{

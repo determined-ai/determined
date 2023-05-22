@@ -10,6 +10,7 @@ import (
 	"github.com/uptrace/bun"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/logv1"
 	"github.com/determined-ai/determined/proto/pkg/taskv1"
@@ -79,6 +80,14 @@ type Task struct {
 // TaskID.allocation_number, maybe with some other metadata if different types of
 // allocations run.
 type AllocationID string
+
+// NewAllocationID casts string ptr to AllocationID ptr.
+func NewAllocationID(in *string) *AllocationID {
+	if in == nil {
+		return nil
+	}
+	return ptrs.Ptr(AllocationID(*in))
+}
 
 func (a AllocationID) String() string {
 	return string(a)

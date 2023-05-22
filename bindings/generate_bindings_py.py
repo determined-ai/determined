@@ -1,6 +1,7 @@
 import os
-import swagger_parser
 import typing
+
+import swagger_parser
 from typing_extensions import assert_never
 
 SWAGGER = "proto/build/swagger/determined/api/v1/api.swagger.json"
