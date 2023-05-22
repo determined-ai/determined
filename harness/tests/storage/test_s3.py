@@ -91,7 +91,7 @@ def test_storage_prefix_normalization(
 
 
 @pytest.mark.cloud
-@pytest.mark.parametrize("prefix", [None]) # TODO #[None, "my/test/prefix"])
+@pytest.mark.parametrize("prefix", [None, "my/test/prefix"])
 def test_live_s3_lifecycle(require_secrets: bool, tmp_path: Path, prefix: Optional[str]) -> None:
     live_manager = get_live_manager(require_secrets, tmp_path, prefix)
 

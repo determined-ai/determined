@@ -201,7 +201,6 @@ class StorageManager(metaclass=abc.ABCMeta):
                     elif os.path.isdir(path):
                         to_delete_dirs[path] = True
 
-            print("DELETING", to_delete_dirs, to_delete_files)
             for path in to_delete_files:
                 os.remove(path)
             for path in to_delete_dirs:
@@ -209,8 +208,6 @@ class StorageManager(metaclass=abc.ABCMeta):
 
             prefixed_resources = StorageManager._list_directory(temp_dir)
             for file_path in list(file_paths_to_sizes):
-                #prefixed_file_path = f"{prefix}/{file_path}"
-                #print("PREFIXED FILE PATH", prefixed_file_path, "\nprefixed_resources", prefixed_resources)
                 if file_path not in prefixed_resources:
                     del file_paths_to_sizes[file_path]
         finally:

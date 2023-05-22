@@ -160,23 +160,16 @@ class S3StorageManager(storage.CloudStorageManager):
         resources = {}
         if "**/*" not in globs: # Partial delete case.
             prefixed_resources = self._apply_globs_to_resources(objects, prefix, globs)
-
-            # TODO: How does the base path get deleted????
             for obj in list(objects):
-                if obj not in prefixed_resources:
-                    del objects[obj]
-                else:
-                    # str(pathlib.Path(obj).relative_to(pathlib.Path(prefix)))
-                    # pathlib kinda sucks since it will strip / and we can't use isdir...
+                if obj in prefixed_resources:
                     resources[obj.replace(f"{prefix}/", "")] = objects[obj]
+                    del objects[obj]
 
-        delete_objects = [] # TODO list comphresion
-        for o in objects:
-            delete_objects.append({"Key": o})
-        
         # S3 delete_objects has a limit of 1000 objects.
-        for chunk in util.chunks(delete_objects, 1000):
+        for chunk in util.chunks([{"Key": o} for o in objects], 1000):
             logging.debug(f"Deleting {len(chunk)} objects from S3")
             self.bucket.delete_objects(Delete={"Objects": chunk})
 
+        if "metadata.json" in resources:
+            del resources["metadata.json"]
         return resources
