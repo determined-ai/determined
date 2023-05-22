@@ -3,6 +3,8 @@ import os
 import re
 import tempfile
 from typing import Dict, List, Optional, Union
+import fnmatch
+import pathlib
 
 import requests
 
@@ -153,10 +155,28 @@ class S3StorageManager(storage.CloudStorageManager):
         prefix = self.get_storage_prefix(tgt)
         logging.info(f"Deleting {prefix} from S3")
 
-        objects = [{"Key": obj.key} for obj in self.bucket.objects.filter(Prefix=prefix)]
+        objects = {obj.key: obj.size for obj in self.bucket.objects.filter(Prefix=prefix)}
 
+        resources = {}
+        if "**/*" not in globs: # Partial delete case.
+            prefixed_resources = self._apply_globs_to_resources(objects, prefix, globs)
+
+            # TODO: How does the base path get deleted????
+            for obj in list(objects):
+                if obj not in prefixed_resources:
+                    del objects[obj]
+                else:
+                    # str(pathlib.Path(obj).relative_to(pathlib.Path(prefix)))
+                    # pathlib kinda sucks since it will strip / and we can't use isdir...
+                    resources[obj.replace(f"{prefix}/", "")] = objects[obj]
+
+        delete_objects = [] # TODO list comphresion
+        for o in objects:
+            delete_objects.append({"Key": o})
+        
         # S3 delete_objects has a limit of 1000 objects.
-        for chunk in util.chunks(objects, 1000):
+        for chunk in util.chunks(delete_objects, 1000):
             logging.debug(f"Deleting {len(chunk)} objects from S3")
             self.bucket.delete_objects(Delete={"Objects": chunk})
-        return {}  # TODO -- () might be easier than expected but not sure...
+
+        return resources
