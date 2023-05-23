@@ -73,7 +73,7 @@ class ExitedReason(Enum):
     """
     The reason why a trial exited early
 
-    Currently, we support the following reasons:
+    The following reasons are supported:
 
     - `ERRORED`: The Trial encountered an exception
     - `USER_CANCELLED`: The Trial was manually closed by the user
@@ -229,7 +229,7 @@ class SearchMethod:
     def initial_operations(self, searcher_state: SearcherState) -> List[Operation]:
         """
         Returns a list of initial operations that the custom hyperparameter search should
-        perform. This is called by Custom Search :class:`~SearchRunner`
+        perform. This is called by the Custom Searcher :class:`~SearchRunner`
         to initialize the trials
 
         Example:
@@ -314,10 +314,7 @@ class SearchMethod:
                 metric: Any,
                 train_length: int
             ) -> List[Operation]:
-                MAX_TRAIN_LENGTH = 10  # Best defined in __init__
-                if not searcher_state.experiment_completed \\
-                        and not searcher_state.experiment_failed \\
-                        and train_length < MAX_TRAIN_LENGTH:
+                if train_length < self.max_train_length:
                     return [
                         searcher.ValidateAfter(
                             request_id=request_id,
@@ -353,8 +350,7 @@ class SearchMethod:
             def on_trial_closed(
                 self, searcher_state: SearcherState, request_id: uuid.UUID
             ) -> List[Operation]:
-                MAX_NUM_TRIALS = 200  # Best defined in __init__
-                if searcher_state.trials_created < MAX_NUM_TRIALS:
+                if searcher_state.trials_created < self.max_num_trials:
                     hparams = {
                         # ...
                     }
@@ -365,8 +361,8 @@ class SearchMethod:
                             checkpoint=None,
                         )
                     ]
-                if searcher_state.trials_closed >= MAX_NUM_TRIALS:
-                    return [searcher.Shutdown(failure=searcher_state.experiment_failed)]
+                if searcher_state.trials_closed >= self.max_num_trials:
+                    return [searcher.Shutdown()]
                 return []
 
         Args:
@@ -389,9 +385,7 @@ class SearchMethod:
         .. code:: python
 
             def progress(self, searcher_state: SearcherState) -> float:
-                MAX_NUM_TRIALS = 200  # Best defined in __init__
-                assert(MAX_NUM_TRIALS != 0)
-                return searcher_state.trials_closed / float(MAX_NUM_TRIALS)
+                return searcher_state.trials_closed / float(self.max_num_trials)
 
         Args:
             searcher_state (SearcherState): Read-only current searcher state
@@ -421,12 +415,11 @@ class SearchMethod:
                 request_id: uuid.UUID,
                 exited_reason: ExitedReason,
             ) -> List[Operation]:
-                MAX_FAILURES = 10  # Best defined in __init__
                 if exited_reason == searcher.ExitedReason.USER_CANCELED:
                     return [searcher.Shutdown(cancel=True)]
                 if exited_reason == searcher.ExitedReason.INVALID_HP:
                     return [searcher.Shutdown(failure=True)]
-                if searcher_state.failures >= MAX_FAILURES:
+                if searcher_state.failures >= self.max_failures:
                     return [searcher.Shutdown(failure=True)]
                 return []
 
