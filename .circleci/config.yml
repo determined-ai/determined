@@ -478,8 +478,19 @@ commands:
       extras-requires:
         type: string
         default: ""
+      gpus:
+        type: boolean
+        default: true
     steps:
-      - run: docker run -v <<parameters.bind-mount>>:/mnt/project --gpus=all -it -d --name <<parameters.image-name>> --workdir /mnt/project <<parameters.image>> /bin/bash
+      - when:
+          condition: <<parameters.gpus>>
+          steps:
+            - run: docker run -v <<parameters.bind-mount>>:/mnt/project --gpus=all -it -d --name <<parameters.image-name>> --workdir /mnt/project <<parameters.image>> /bin/bash
+      - when:
+          condition:
+            not: <<parameters.gpus>>
+          steps:
+            - run: docker run -v <<parameters.bind-mount>>:/mnt/project -it -d --name <<parameters.image-name>> --workdir /mnt/project <<parameters.image>> /bin/bash
       - run:
           name: Install <<parameters.extras-requires>>
           command: |
@@ -1786,7 +1797,7 @@ jobs:
       - setup-python-venv:
           install-python: false
           determined: true
-          extras-requires: "tensorflow==2.11.0 torch==1.9.0 torchvision==0.10.0"
+          extras-requires: "tensorflow==2.12.0 torch==1.9.0 torchvision==0.10.0"
           extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
           executor: <<pipeline.parameters.docker-image>>
       - run: COVERAGE_FILE=$PWD/test-unit-harness-cpu-pycov make -C harness test-cpu
@@ -1810,10 +1821,11 @@ jobs:
           image: determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-6eceaca
           image-name: test_container
           extras-requires: "mypy pytest coverage"
+          gpus: false
       - run: mkdir -p $HOME/.local/bin
       - install-codecov
       - run: echo 'export PATH=$PATH:$HOME/.local/bin' >> $BASH_ENV
-      - run: docker exec -e COVERAGE_FILE=/mnt/project/test-unit-harness-gpu-pycov test_container make -C harness test-cpu-tf1
+      - run: docker exec -e COVERAGE_FILE=/mnt/project/test-unit-harness-cpu-tf1-pycov test_container make -C harness test-cpu-tf1
       - run: docker exec test_container coverage xml -i --data-file=./test-unit-harness-cpu-tf1-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
       - persist_to_workspace:
