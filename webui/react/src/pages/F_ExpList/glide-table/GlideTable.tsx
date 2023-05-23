@@ -71,7 +71,7 @@ export interface GlideTableProps {
   colorMap: MapOfIdsToColors;
   excludedExperimentIds: Set<number>;
   data: Loadable<ExperimentWithTrial>[];
-  fetchExperiments: () => Promise<void>;
+  dataTotal: number;
   handleScroll?: (r: Rectangle) => void;
   height: number;
   scrollPositionSetCount: WritableObservable<number>;
@@ -90,6 +90,7 @@ export interface GlideTableProps {
   onSortChange: (sorts: Sort[]) => void;
   formStore: FilterFormStore;
   onIsOpenFilterChange: (value: boolean) => void;
+  onContextMenuComplete?: () => void;
 }
 
 /**
@@ -111,7 +112,7 @@ const isLinkCell = (cell: GridCell): cell is LinkCell => {
 
 export const GlideTable: React.FC<GlideTableProps> = ({
   data,
-  fetchExperiments,
+  dataTotal = 0,
   excludedExperimentIds,
   clearSelectionTrigger,
   setSelectedExperimentIds,
@@ -132,6 +133,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   projectColumns,
   formStore,
   onIsOpenFilterChange,
+  onContextMenuComplete,
 }) => {
   const gridRef = useRef<DataEditorRef>(null);
 
@@ -154,12 +156,16 @@ export const GlideTable: React.FC<GlideTableProps> = ({
     y: 0,
   });
 
+  const handleContextMenuComplete = useCallback(() => {
+    onContextMenuComplete?.();
+  }, [onContextMenuComplete]);
+
   const [contextMenuOpen] = useState(observable(false));
   const contextMenuIsOpen = useObservable(contextMenuOpen);
 
   const [contextMenuProps, setContextMenuProps] = useState<null | Omit<
     TableContextMenuProps,
-    'open' | 'fetchExperiments' | 'handleUpdateExperimentList'
+    'open' | 'handleUpdateExperimentList'
   >>(null);
 
   const {
@@ -633,7 +639,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
           height={height}
           ref={gridRef}
           rowHeight={40}
-          rows={data.length}
+          rows={dataTotal}
           smoothScrollX
           smoothScrollY
           theme={theme}
@@ -652,9 +658,9 @@ export const GlideTable: React.FC<GlideTableProps> = ({
       {contextMenuProps && (
         <TableContextMenu
           {...contextMenuProps}
-          fetchExperiments={fetchExperiments}
           handleUpdateExperimentList={handleUpdateExperimentList}
           open={contextMenuIsOpen}
+          onComplete={handleContextMenuComplete}
         />
       )}
     </div>
