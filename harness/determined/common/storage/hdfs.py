@@ -64,4 +64,4 @@ class HDFSStorageManager(storage.CloudStorageManager):
     def delete(self, tgt: str, globs: List[str]) -> Dict[str, int]:
         logging.info(f"Deleting {tgt} from HDFS")
         self.client.delete(tgt, recursive=True)
-        return {}  # TODO might be hard
+        return {}

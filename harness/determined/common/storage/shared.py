@@ -199,16 +199,12 @@ class SharedFSStorageManager(storage.StorageManager):
 
         # Delete files first then delete paths.
         for path in to_delete_files:
-            os.remove(path)  # TODO do we need an os.remove safe here?
+            os.remove(path)
         for path in to_delete_dirs:
             util.rmtree_nfs_safe(path, ignore_errors=False)
 
         resources = self._list_directory(storage_dir)
 
-        # TODO we upload this "metadata.json" file in checkpoints sometimes AFTER
-        # we calculate resources so resources won't contain it.
-        # This actually might be an issue if we sometimes have it in resources?
-        # todo this might be an issue.
         if "metadata.json" in resources:
             del resources["metadata.json"]
 
