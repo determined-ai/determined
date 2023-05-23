@@ -51,7 +51,6 @@ class TorchBatchProcessorContext(pytorch._PyTorchReducerContext):
             schedule=...,
             on_trace_ready=torch.profiler.tensorboard_trace_handler(<tensorboard_path>),
         )
-
         """
         return self._tensorboard_path
 
@@ -284,17 +283,19 @@ def torch_batch_process(
         # Reduce metrics (blocking as reduce across slots is needed
         # Report reduced metrics to master
         reducables = [wrapped for wrapped in batch_processor_context._wrapped_reducers]
-        gatherables = [wrapped.per_slot_reduce() for wrapped in reducables]
-        if rank == 0:
-            gathered = core_context.distributed.gather(gatherables)
-            metrics = batch_processor_context.run_cross_slot_reduction(reducables, gathered)
-            core_context.train.report_validation_metrics(
-                steps_completed=batch_idx,
-                metrics=metrics,
-            )
-        else:
-            # Other ranks sent metrics to chief
-            core_context.distributed.gather(gatherables)
+        # If user have set metric reducers
+        if len(reducables) > 0:
+            gatherables = [wrapped.per_slot_reduce() for wrapped in reducables]
+            if rank == 0:
+                gathered = core_context.distributed.gather(gatherables)
+                metrics = batch_processor_context.run_cross_slot_reduction(reducables, gathered)
+                core_context.train.report_validation_metrics(
+                    steps_completed=batch_idx,
+                    metrics=metrics,
+                )
+            else:
+                # Other ranks sent metrics to chief
+                core_context.distributed.gather(gatherables)
 
         # Finish any tensorboard uploads remaining
         core_context._tensorboard_manager.sync(mangler=get_rank_aware_path)
