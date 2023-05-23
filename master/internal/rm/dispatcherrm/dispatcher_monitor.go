@@ -12,7 +12,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"sync"
 	"sync/atomic"
 	"time"
 
@@ -21,6 +20,7 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/mathx"
+	"github.com/determined-ai/determined/master/pkg/syncx/mapx"
 
 	launcher "github.hpe.com/hpe/hpc-ard-launcher-go/launcher"
 )
@@ -65,33 +65,39 @@ type launcherJob struct {
 	payloadName            string
 	lastJobStatusCheckTime time.Time
 	totalContainers        int
-	runningContainers      map[int]containerInfo
+	runningContainers      mapx.Map[int, containerInfo]
 	jobWasTerminated       bool
 	launchInProgress       bool // Launch proceeding concurrent with monitoring
 }
 
 // launcherMonitor describes the monitoring of jobs created by the launcher.
 type launcherMonitor struct {
-	monitoredJobs         map[string]*launcherJob
-	jobsToRemove          map[string]bool
+	monitoredJobs         mapx.Map[string, *launcherJob]
+	jobsToRemove          mapx.Map[string, struct{}]
 	apiClient             *launcherAPIClient
-	newLauncherJob        chan launcherJob
-	removeLauncherJob     chan launcherJob
-	checkLauncherJob      chan launcherJob
+	newLauncherJob        chan *launcherJob
+	removeLauncherJob     chan *launcherJob
+	checkLauncherJob      chan *launcherJob
 	schedulerTick         *time.Ticker
-	mu                    sync.RWMutex
 	processingWatchedJobs atomic.Bool
 	rm                    *dispatcherResourceManager
 }
 
+// dispatchLastJobStatusCheckTime is used to sort the dispatches by the time
+// that the job status was last checked.
+type dispatchLastJobStatusCheckTime struct {
+	dispatchID             string
+	lastJobStatusCheckTime time.Time
+}
+
 func newDispatchWatcher(apiClient *launcherAPIClient) *launcherMonitor {
 	return &launcherMonitor{
-		monitoredJobs:     map[string]*launcherJob{},
-		jobsToRemove:      map[string]bool{},
+		monitoredJobs:     mapx.New[string, *launcherJob](),
+		jobsToRemove:      mapx.New[string, struct{}](),
 		apiClient:         apiClient,
-		newLauncherJob:    make(chan launcherJob),
-		removeLauncherJob: make(chan launcherJob),
-		checkLauncherJob:  make(chan launcherJob),
+		newLauncherJob:    make(chan *launcherJob),
+		removeLauncherJob: make(chan *launcherJob),
+		checkLauncherJob:  make(chan *launcherJob),
 		// Poll job status this often
 		schedulerTick: time.NewTicker(pollLoopInterval),
 	}
@@ -103,13 +109,13 @@ func newDispatchWatcher(apiClient *launcherAPIClient) *launcherMonitor {
 // launcher has initiated the launch and the dispatchID will be valid for status checks.
 func (m *launcherMonitor) monitorJob(
 	user string, dispatchID string, payloadName string, launchPending bool) {
-	m.newLauncherJob <- launcherJob{
+	m.newLauncherJob <- &launcherJob{
 		user:                   user,
 		dispatcherID:           dispatchID,
 		payloadName:            payloadName,
 		lastJobStatusCheckTime: time.Now(),
 		totalContainers:        0,
-		runningContainers:      make(map[int]containerInfo),
+		runningContainers:      mapx.New[int, containerInfo](),
 		jobWasTerminated:       false,
 		launchInProgress:       launchPending,
 	}
@@ -122,10 +128,7 @@ func (m *launcherMonitor) notifyJobLaunched(
 	ctx *actor.Context,
 	dispatchID string,
 ) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	if job, ok := m.monitoredJobs[dispatchID]; ok {
+	if job, ok := m.monitoredJobs.Load(dispatchID); ok {
 		job.launchInProgress = false
 		return
 	}
@@ -135,7 +138,7 @@ func (m *launcherMonitor) notifyJobLaunched(
 
 // removeJob removes the specified job from the collection of jobs whose status is monitored.
 func (m *launcherMonitor) removeJob(dispatchID string) {
-	m.removeLauncherJob <- launcherJob{
+	m.removeLauncherJob <- &launcherJob{
 		dispatcherID: dispatchID,
 	}
 }
@@ -143,7 +146,7 @@ func (m *launcherMonitor) removeJob(dispatchID string) {
 // checkJob checks the status of the specified job from the collection of jobs whose status is
 // being monitored.
 func (m *launcherMonitor) checkJob(dispatchID string) {
-	m.checkLauncherJob <- launcherJob{
+	m.checkLauncherJob <- &launcherJob{
 		dispatcherID: dispatchID,
 	}
 }
@@ -161,7 +164,7 @@ func (m *launcherMonitor) watch(ctx *actor.Context) {
 		case msg := <-m.newLauncherJob:
 			ctx.Log().Infof("Starting monitoring of %s", msg.dispatcherID)
 			// Add job to collection of those being monitored.
-			m.addJobToMonitoredJobs(&msg)
+			m.addJobToMonitoredJobs(msg)
 
 		case msg := <-m.removeLauncherJob:
 			// Don't think the "removeLauncherJob" message is ever sent, but
@@ -277,34 +280,46 @@ func (m *launcherMonitor) notifyContainerRunning(
 	numPeers int32,
 	nodeName string,
 ) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	job, ok := m.monitoredJobs[dispatchID]
+	job, ok := m.monitoredJobs.Load(dispatchID)
 
 	if !ok {
 		ctx.Log().Errorf("Could not find dispatchID %s in the monitored jobs", dispatchID)
 		return
 	}
 
+	// The "notifyContainerRunning()" function is called from a message handler,
+	// so we do not expect there to be two instances of the function running
+	// concurrently and trying to set these variables at the same time. Even if
+	// there was, both instances would be setting the variables to the exact
+	// same values.
 	job.launchInProgress = false
 	job.totalContainers = int(numPeers)
 
-	switch existingEntry, ok := job.runningContainers[int(rank)]; {
+	switch existingEntry, ok := job.runningContainers.Load(int(rank)); {
 	case !ok:
-		job.runningContainers[int(rank)] = containerInfo{nodeName: nodeName}
+		job.runningContainers.Store(int(rank), containerInfo{nodeName: nodeName})
 
+		startedMsg := fmt.Sprintf("%d out of %d containers running on nodes %s",
+			job.runningContainers.Len(),
+			job.totalContainers,
+			getNodesThatAreRunningContainer(job))
+
+		// Show message in the experiment log.
 		if job.totalContainers > 1 {
-			startedMsg := fmt.Sprintf("%d out of %d containers running on nodes %s",
-				len(job.runningContainers),
-				job.totalContainers,
-				getNodesThatAreRunningContainer(job))
-
 			ctx.Tell(ctx.Self(), dispatchExpLogMessage{
 				DispatchID: dispatchID,
 				Message:    startedMsg,
 			})
 		}
+
+		// Show message in the master log. Comes in very handy during triaging
+		// to know not only how many containers are running, but also which
+		// nodes they are running on. Sometimes jobs will fail on certain nodes,
+		// due to differences in configuration on those nodes, and it helps to
+		// be able to quickly find out which nodes the job was running on so we
+		// can check the configuration on those nodes.
+		ctx.Log().WithField("dispatch-id", dispatchID).
+			Info(startedMsg)
 
 	// Rank already existed in the map. This is not expected, as each container
 	// should only send the notification that it's running only once.
@@ -339,13 +354,15 @@ func (m *launcherMonitor) notifyContainerRunning(
 func getNodesThatAreRunningContainer(job *launcherJob) string {
 	var sb strings.Builder
 
-	for _, v := range job.runningContainers {
-		if sb.Len() > 0 {
-			sb.WriteString(",")
-		}
+	job.runningContainers.WithLock(func(inmap map[int]containerInfo) {
+		for _, v := range inmap {
+			if sb.Len() > 0 {
+				sb.WriteString(",")
+			}
 
-		sb.WriteString(v.nodeName)
-	}
+			sb.WriteString(v.nodeName)
+		}
+	})
 
 	return sb.String()
 }
@@ -355,7 +372,7 @@ func getNodesThatAreRunningContainer(job *launcherJob) string {
 func (m *launcherMonitor) allContainersRunning(job *launcherJob) bool {
 	// Since each container has a unique ID, the number of running containers
 	// is the number of unique IDs in the "runningContainers" map.
-	numContainersRunning := len(job.runningContainers)
+	numContainersRunning := job.runningContainers.Len()
 
 	// Initially "numContainersRunning" and "job.totalContainers" will be
 	// zero, until we receive our first notification from one of the
@@ -374,20 +391,9 @@ func (m *launcherMonitor) allContainersRunning(job *launcherJob) bool {
 // Returns true if the job with the given dispatch ID is being monitored by
 // the job watcher; false otherwise.
 func (m *launcherMonitor) isJobBeingMonitored(dispatchID string) bool {
-	// Obtain a read lock, so that "processedWatchedJobs()" doesn't manipulate
-	// the "monitoredJobs" list while we're iterating through it. Because it's
-	// a read lock, another thread will still be able to come in here and
-	// iterate the "monitoredJobs" list.
-	m.mu.RLock()
-	defer m.mu.RUnlock()
+	_, ok := m.monitoredJobs.Load(dispatchID)
 
-	for _, job := range m.monitoredJobs {
-		if job.dispatcherID == dispatchID {
-			return true
-		}
-	}
-
-	return false
+	return ok
 }
 
 // processWatchedJobs is called periodically to poll for the completion status
@@ -403,7 +409,7 @@ func (m *launcherMonitor) processWatchedJobs(
 
 	qStats := m.queuesFromCluster(ctx)
 
-	sortedDispatchIDs := m.getDispatchIDsSortedByLastJobStatusCheckTime(m.monitoredJobs, ctx)
+	sortedDispatchIDs := m.getDispatchIDsSortedByLastJobStatusCheckTime()
 
 	// Loop through the jobs in the monitoredJobs map and update status accordingly
 	for _, dispatchID := range sortedDispatchIDs {
@@ -418,6 +424,7 @@ func (m *launcherMonitor) processWatchedJobs(
 		}
 
 		if m.obtainJobStateFromWlmQueueDetails(dispatchID, qStats, ctx, job) {
+			m.updateLastJobStatusCheckTime(dispatchID)
 			continue // An optimization to avoid per-job use of updateJobStatus (below)
 		}
 
@@ -440,7 +447,7 @@ func (m *launcherMonitor) obtainJobStateFromWlmQueueDetails(
 	dispatchID string, qStats map[string]map[string]string,
 	ctx *actor.Context, job *launcherJob,
 ) bool {
-	hpcJobID, _ := m.rm.getHpcJobIDFromDispatchID(dispatchID)
+	hpcJobID, _ := m.rm.dispatchIDToHPCJobID.Load(dispatchID)
 	nativeState := qStats[hpcJobID]["state"]
 	ctx.Log().WithField("dispatch-id", dispatchID).
 		WithField("hpc-job-id", hpcJobID).
@@ -460,7 +467,7 @@ func (m *launcherMonitor) obtainJobStateFromWlmQueueDetails(
 // queuesFromCluster fetches the latest job queue information from the cluster.
 func (m *launcherMonitor) queuesFromCluster(ctx *actor.Context) map[string]map[string]string {
 	result := map[string]map[string]string{}
-	if len(m.monitoredJobs) == 0 {
+	if m.monitoredJobs.Len() == 0 {
 		return result // Nothing to get of interest in this case
 	}
 	ctx.Log().Debugf("Fetching HPC queue state")
@@ -509,47 +516,27 @@ func (m *launcherMonitor) queuesFromCluster(ctx *actor.Context) map[string]map[s
 }
 
 func (m *launcherMonitor) addJobToMonitoredJobs(job *launcherJob) {
-	// Obtain a read/write lock.
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	m.monitoredJobs[job.dispatcherID] = job
+	m.monitoredJobs.Store(job.dispatcherID, job)
 }
 
 func (m *launcherMonitor) markJobForRemoval(dispatchID string) {
-	// Obtain a read/write lock.
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	m.jobsToRemove[dispatchID] = true
+	m.jobsToRemove.Store(dispatchID, struct{}{})
 }
 
 func (m *launcherMonitor) getJobByDispatchID(dispatchID string) (*launcherJob, bool) {
-	// Obtain a read lock.
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-
-	job, ok := m.monitoredJobs[dispatchID]
+	job, ok := m.monitoredJobs.Load(dispatchID)
 
 	return job, ok
 }
 
 func (m *launcherMonitor) isJobBeingRemoved(dispatchID string) bool {
-	// Obtain a read lock.
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-
-	_, ok := m.jobsToRemove[dispatchID]
+	_, ok := m.jobsToRemove.Load(dispatchID)
 
 	return ok
 }
 
 func (m *launcherMonitor) markJobAsTerminated(ctx *actor.Context, dispatchID string) {
-	// Obtain a read/write lock.
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	job, ok := m.monitoredJobs[dispatchID]
+	job, ok := m.monitoredJobs.Load(dispatchID)
 
 	if ok {
 		job.jobWasTerminated = true
@@ -561,59 +548,63 @@ func (m *launcherMonitor) markJobAsTerminated(ctx *actor.Context, dispatchID str
 }
 
 func (m *launcherMonitor) removeJobFromMonitoredList(dispatchID string, ctx *actor.Context) {
-	// Obtain a read/write lock.
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
 	ctx.Log().Infof("Stopping monitoring of %s", dispatchID)
-	delete(m.monitoredJobs, dispatchID)
-	delete(m.jobsToRemove, dispatchID)
+	m.monitoredJobs.Delete(dispatchID)
+	m.jobsToRemove.Delete(dispatchID)
 }
 
 func (m *launcherMonitor) updateLastJobStatusCheckTime(dispatchID string) {
-	// Obtain a read/write lock.
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	if job, ok := m.monitoredJobs[dispatchID]; ok {
-		job.lastJobStatusCheckTime = time.Now()
-	}
+	m.monitoredJobs.WithLock(func(inmap map[string]*launcherJob) {
+		if job, ok := inmap[dispatchID]; ok {
+			job.lastJobStatusCheckTime = time.Now()
+		}
+	})
 }
 
 func (m *launcherMonitor) clearJobsToRemoveMap() {
-	// Obtain a read/write lock.
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	if len(m.jobsToRemove) > 0 {
-		m.jobsToRemove = map[string]bool{}
-	}
+	m.jobsToRemove.WithLock(func(inmap map[string]struct{}) {
+		for k := range inmap {
+			delete(inmap, k)
+		}
+	})
 }
 
 // Returns an array of dispatch IDs sorted by the time that the last
 // status check was made to the launcher.
-func (m *launcherMonitor) getDispatchIDsSortedByLastJobStatusCheckTime(
-	monitoredJobs map[string]*launcherJob,
-	ctx *actor.Context,
-) []string {
-	// Obtain a read lock.
-	m.mu.RLock()
-	defer m.mu.RUnlock()
+func (m *launcherMonitor) getDispatchIDsSortedByLastJobStatusCheckTime() []string {
+	var dispatches []dispatchLastJobStatusCheckTime
 
-	dispatchIDs := make([]string, 0, len(monitoredJobs))
+	// With the lock held, copy the dispatch ID and the last job status check
+	// time into an array.
+	m.monitoredJobs.WithLock(func(inmap map[string]*launcherJob) {
+		dispatches = make([]dispatchLastJobStatusCheckTime, 0, len(inmap))
 
-	// Get the keys to the monitored jobs map. The key is the dispatch IDs.
-	for key := range monitoredJobs {
-		dispatchIDs = append(dispatchIDs, key)
-	}
+		for k, v := range inmap {
+			dispatchWithTime := dispatchLastJobStatusCheckTime{
+				dispatchID:             k,
+				lastJobStatusCheckTime: v.lastJobStatusCheckTime,
+			}
 
-	// Sort by the time we last asked the launcher for job status.
-	sort.SliceStable(dispatchIDs, func(i, j int) bool {
-		a := monitoredJobs[dispatchIDs[i]].lastJobStatusCheckTime
-		b := monitoredJobs[dispatchIDs[j]].lastJobStatusCheckTime
+			dispatches = append(dispatches, dispatchWithTime)
+		}
+	})
+
+	// With the lock no longer held, sort by the last job status check time.
+	sort.SliceStable(dispatches, func(i, j int) bool {
+		a := dispatches[i].lastJobStatusCheckTime
+		b := dispatches[j].lastJobStatusCheckTime
 
 		return a.Before(b)
 	})
+
+	// Create an array to store only the dispatch IDs.
+	dispatchIDs := make([]string, len(dispatches))
+
+	// Copy the dispatch IDs into an array that is sorted by the last job
+	// status check time.
+	for i, dispatch := range dispatches {
+		dispatchIDs[i] = dispatch.dispatchID
+	}
 
 	return dispatchIDs
 }

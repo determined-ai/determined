@@ -10,6 +10,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/syncx/mapx"
 )
 
 func String(v string) *string { return &v }
@@ -148,26 +149,26 @@ func Test_allContainersRunning(t *testing.T) {
 
 	ctx := getMockActorCtx()
 	jobWatcher := getJobWatcher()
-	job := getJob()
+	job := getJob("11ae54526b544bcd-8607d5744a7b1439", time.Now())
 
 	// Add the job to the monitored jobs.
-	jobWatcher.monitoredJobs[job.dispatcherID] = &job
+	jobWatcher.monitoredJobs.Store(job.dispatcherID, job)
 
 	// Since there have not been any "NotifyContainerRunning" messages sent
 	// for this job, then we do not expect all containers to be running.
-	assert.Equal(t, jobWatcher.allContainersRunning(jobWatcher.monitoredJobs[job.dispatcherID]), false)
+	assert.Equal(t, jobWatcher.allContainersRunning(job), false)
 
 	// The job watcher receives a "NotifyContainerRunning" message from the
 	// first container.
 	jobWatcher.notifyContainerRunning(ctx, job.dispatcherID, 0, numPeers, "node001")
 
-	assert.Equal(t, jobWatcher.allContainersRunning(jobWatcher.monitoredJobs[job.dispatcherID]), false)
+	assert.Equal(t, jobWatcher.allContainersRunning(job), false)
 
 	// The job watcher receives a "NotifyContainerRunning" message from the
 	// second container.
 	jobWatcher.notifyContainerRunning(ctx, job.dispatcherID, 1, numPeers, "node002")
 
-	assert.Equal(t, jobWatcher.allContainersRunning(jobWatcher.monitoredJobs[job.dispatcherID]), false)
+	assert.Equal(t, jobWatcher.allContainersRunning(job), false)
 
 	// The job watcher receives a "NotifyContainerRunning" message from the
 	// third container.
@@ -175,7 +176,21 @@ func Test_allContainersRunning(t *testing.T) {
 
 	// The job watcher has received "NotifyContainerRunning" messages from all
 	// 3 containers, so "allContainersRunning()" should now return true.
-	assert.Equal(t, jobWatcher.allContainersRunning(jobWatcher.monitoredJobs[job.dispatcherID]), true)
+	assert.Equal(t, jobWatcher.allContainersRunning(job), true)
+}
+
+// Verifies that "isJobBeingMonitored()" returns true when the job is being
+// monitored; false otherwise.
+func Test_isJobBeingMonitored(t *testing.T) {
+	dispatchID := "11ae54526b544bcd-8607d5744a7b1439"
+
+	jobWatcher := getJobWatcher()
+	job := getJob(dispatchID, time.Now())
+
+	jobWatcher.addJobToMonitoredJobs(job)
+
+	assert.Equal(t, false, jobWatcher.isJobBeingMonitored("some-fake-dispatch-id"))
+	assert.Equal(t, true, jobWatcher.isJobBeingMonitored(dispatchID))
 }
 
 func getMockActorCtx() *actor.Context {
@@ -209,21 +224,20 @@ func getJobWatcher() *launcherMonitor {
 }
 
 // getJob creates a test job instance of type launcherJob.
-func getJob() launcherJob {
+func getJob(dispatchID string, lastJobStatusCheckTime time.Time) *launcherJob {
 	user := "joeschmoe"
-	dispatchID := "11ae54526b544bcd-8607d5744a7b1439"
 	payloadName := "myPayload"
 
 	job := launcherJob{
 		user:                   user,
 		dispatcherID:           dispatchID,
 		payloadName:            payloadName,
-		lastJobStatusCheckTime: time.Now(),
+		lastJobStatusCheckTime: lastJobStatusCheckTime,
 		totalContainers:        0,
-		runningContainers:      make(map[int]containerInfo),
+		runningContainers:      mapx.New[int, containerInfo](),
 	}
 
-	return job
+	return &job
 }
 
 // Test to check that major events in the dispatcher_monitor life cycle.
@@ -236,7 +250,7 @@ func TestMonitorJobOperations(t *testing.T) {
 	jobWatcher := getJobWatcher()
 	ctx := getMockActorCtx()
 	go jobWatcher.watch(ctx)
-	job := getJob()
+	job := getJob("11ae54526b544bcd-8607d5744a7b1439", time.Now())
 
 	// Add the job to the monitored jobs.
 	jobWatcher.monitorJob(job.user, job.dispatcherID, job.payloadName, false)
@@ -264,4 +278,46 @@ func TestMonitorJobOperations(t *testing.T) {
 	// Check that job is not being monitored.
 	assert.Equal(t, jobWatcher.isJobBeingMonitored(job.dispatcherID), false,
 		"Failed to remove the job from the monitoring queue.")
+}
+
+// Verifies that "getDispatchIDsSortedByLastJobStatusCheckTime()" returns an
+// array of dispatch IDs, sorted by the time that the jobs status was last
+// checked.
+func Test_getDispatchIDsSortedByLastJobStatusCheckTime(t *testing.T) {
+	jobWatcher := getJobWatcher()
+
+	dispatchID1 := "1"
+	dispatchID2 := "2"
+	dispatchID3 := "3"
+	dispatchID4 := "4"
+	dispatchID5 := "5"
+
+	// Create the jobs, each with a different last job status check time.
+	job1 := getJob(dispatchID1, time.Now().Add(time.Second*10))
+	job2 := getJob(dispatchID2, time.Now().Add(time.Second*20))
+	job3 := getJob(dispatchID3, time.Now().Add(time.Second*30))
+	job4 := getJob(dispatchID4, time.Now().Add(time.Second*40))
+	job5 := getJob(dispatchID5, time.Now().Add(time.Second*50))
+
+	// Store the jobs in the map in random order.
+	jobWatcher.monitoredJobs.Store(job2.dispatcherID, job2)
+	jobWatcher.monitoredJobs.Store(job4.dispatcherID, job4)
+	jobWatcher.monitoredJobs.Store(job3.dispatcherID, job3)
+	jobWatcher.monitoredJobs.Store(job1.dispatcherID, job1)
+	jobWatcher.monitoredJobs.Store(job5.dispatcherID, job5)
+
+	// Get the dispatch IDs of the jobs in the "monitoredJobs" map, sorted by
+	// the last job status check time, which in our case, was the time we
+	// created the job.
+	sortedDispatchIDs := jobWatcher.getDispatchIDsSortedByLastJobStatusCheckTime()
+
+	// Verify that we got back the same number of dispatch IDs.
+	assert.Equal(t, len(sortedDispatchIDs), 5)
+
+	// Verify that the dispatch IDs are, in fact, sorted by timestamp.
+	assert.Equal(t, sortedDispatchIDs[0], dispatchID1)
+	assert.Equal(t, sortedDispatchIDs[1], dispatchID2)
+	assert.Equal(t, sortedDispatchIDs[2], dispatchID3)
+	assert.Equal(t, sortedDispatchIDs[3], dispatchID4)
+	assert.Equal(t, sortedDispatchIDs[4], dispatchID5)
 }
