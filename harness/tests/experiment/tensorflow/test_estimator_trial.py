@@ -2,7 +2,6 @@
 import os
 import tempfile
 import pathlib
-import shutil
 from typing import Any, Dict, Optional, List
 
 import pytest
@@ -341,7 +340,7 @@ def test_checkpoint_loading(ckpt_ver):
     estm = estimator.load_estimator_from_checkpoint_path(checkpoint_dir)
     assert isinstance(estm, tracking.AutoTrackable), type(estm)
 
-def test_rng_restore(tmp_path: pathlib.Path):
+def test_rng_restore():
 
     def make_checkpoint() -> workload.Stream:
         trainer = utils.TrainAndValidate()
@@ -377,8 +376,6 @@ def test_rng_restore(tmp_path: pathlib.Path):
 
     # copy checkpoint
     checkpoint_dir= trial_A_controller.estimator_dir
-    shutil.copytree(checkpoint_dir, tmp_path, dirs_exist_ok=True)
-
 
     trial_B_controller = utils.make_trial_controller_from_trial_implementation(
         trial_class=trial_class,
@@ -394,7 +391,7 @@ def test_rng_restore(tmp_path: pathlib.Path):
         trial_class=trial_class,
         hparams=hparams,
         workloads=make_workloads_with_metrics(trial_C_metrics),
-        latest_checkpoint=str(tmp_path),
+        latest_checkpoint=str(checkpoint_dir),
         steps_completed=1
     )
 
