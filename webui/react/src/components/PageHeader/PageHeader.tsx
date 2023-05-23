@@ -47,13 +47,11 @@ const PageHeader: React.FC<Props> = (props: Props) => {
             {props.menuItems && (
               <Column>
                 <Dropdown menu={props.menuItems} onClick={props.onClickMenu}>
-                  <div className={css.options}>
-                    <Button
-                      icon={<Icon name="arrow-down" size="tiny" title="Action menu" />}
-                      size="small"
-                      type="text"
-                    />
-                  </div>
+                  <Button
+                    icon={<Icon name="arrow-down" size="tiny" title="Action menu" />}
+                    size="small"
+                    type="text"
+                  />
                 </Dropdown>
               </Column>
             )}
