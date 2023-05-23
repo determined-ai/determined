@@ -107,6 +107,8 @@ CREATE TABLE generic_metrics (
     custom_type text,
     FOREIGN KEY (trial_id) REFERENCES trials (id)
 );
+CREATE UNIQUE INDEX generic_metrics_trial_id_total_batches_run_id_unique
+ON generic_metrics (trial_id, total_batches, trial_run_id);
 
 CREATE TABLE metrics (
     trial_id integer NOT NULL,

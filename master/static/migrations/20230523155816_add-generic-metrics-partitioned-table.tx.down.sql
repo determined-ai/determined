@@ -3,7 +3,8 @@ ALTER TABLE metrics DETACH PARTITION raw_validations;
 ALTER TABLE metrics DETACH PARTITION generic_metrics;
 
 DROP TABLE metrics;
-DROP TABLE generic_metrics;
+DROP TABLE generic_metrics CASCADE;
+
 
 ALTER TABLE raw_steps DROP COLUMN IF EXISTS partition_type;
 ALTER TABLE raw_steps DROP COLUMN IF EXISTS custom_type;
