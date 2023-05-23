@@ -169,6 +169,8 @@ with det.import_from_path(path + "/code"):
         case MenuKey.UseInNotebook:
           setShowUseInNotebook(true);
           break;
+        default:
+          return;
       }
     },
     [modelDownloadModal, modelVersionEditModal, modelVersionDeleteModal],
