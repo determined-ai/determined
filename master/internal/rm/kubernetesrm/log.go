@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/docker/docker/pkg/stdcopy"
+	"github.com/sirupsen/logrus"
 
 	"github.com/pkg/errors"
 
@@ -13,26 +14,20 @@ import (
 	typedV1 "k8s.io/client-go/kubernetes/typed/core/v1"
 
 	"github.com/determined-ai/determined/master/internal/sproto"
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
-type (
-	streamLogs struct{}
-)
-
 type podLogStreamer struct {
-	podHandler *actor.Ref
-	logReader  io.ReadCloser
-
-	ctx *actor.Context
+	syslog    *logrus.Entry
+	logReader io.ReadCloser
+	callback  func(log sproto.ContainerLog)
 }
 
 func newPodLogStreamer(
 	podInterface typedV1.PodInterface,
 	podName string,
-	podHandler *actor.Ref,
+	callback func(log sproto.ContainerLog),
 ) (*podLogStreamer, error) {
 	logs := podInterface.GetLogs(podName, &k8sV1.PodLogOptions{
 		Follow:     true,
@@ -45,30 +40,16 @@ func newPodLogStreamer(
 		return nil, errors.Wrapf(err, "failed to initialize log stream for pod: %s", podName)
 	}
 
-	return &podLogStreamer{logReader: logReader, podHandler: podHandler}, nil
-}
-
-func (p *podLogStreamer) Receive(ctx *actor.Context) error {
-	switch msg := ctx.Message().(type) {
-	case actor.PreStart:
-		ctx.Tell(ctx.Self(), streamLogs{})
-
-	case streamLogs:
-		p.receiveStreamLogs(ctx)
-
-	case actor.PostStop:
-
-	default:
-		ctx.Log().Errorf("unexpected message: %T", msg)
-		return actor.ErrUnexpectedMessage(ctx)
-	}
-
-	return nil
+	return &podLogStreamer{
+		syslog:    logrus.WithField("podName", podName),
+		logReader: logReader,
+		callback:  callback,
+	}, nil
 }
 
 // Write implements the io.Writer interface.
 func (p *podLogStreamer) Write(log []byte) (n int, err error) {
-	p.ctx.Tell(p.podHandler, sproto.ContainerLog{
+	p.callback(sproto.ContainerLog{
 		Timestamp: time.Now().UTC(),
 		RunMessage: &aproto.RunMessage{
 			Value:   string(log),
@@ -78,13 +59,12 @@ func (p *podLogStreamer) Write(log []byte) (n int, err error) {
 	return len(log), nil
 }
 
-func (p *podLogStreamer) receiveStreamLogs(ctx *actor.Context) {
-	p.ctx = ctx
-	_, err := io.Copy(p, p.logReader)
-	if err != nil {
-		ctx.Log().WithError(err).Debug("error reading logs")
-		ctx.Self().Stop()
-		return
+func (p *podLogStreamer) receiveStreamLogs() {
+	for {
+		_, err := io.Copy(p, p.logReader)
+		if err != nil {
+			p.syslog.WithError(err).Debug("error reading logs")
+			return
+		}
 	}
-	ctx.Tell(ctx.Self(), streamLogs{})
 }

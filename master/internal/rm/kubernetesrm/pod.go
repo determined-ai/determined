@@ -161,12 +161,9 @@ func (p *pod) Receive(ctx *actor.Context) error {
 		ctx.AddLabels(p.logCtx)
 		if p.restore {
 			if p.container.State == cproto.Running && !p.testLogStreamer {
-				logStreamer, err := newPodLogStreamer(p.podInterface, p.podName, ctx.Self())
+				err := p.startPodLogStreamer(ctx)
 				if err != nil {
 					return err
-				}
-				if _, ok := ctx.ActorOf(fmt.Sprintf("%s-logs", p.podName), logStreamer); !ok {
-					return errors.Errorf("log streamer already exists")
 				}
 			}
 		} else {
@@ -234,6 +231,17 @@ func (p *pod) Receive(ctx *actor.Context) error {
 	return nil
 }
 
+func (p *pod) startPodLogStreamer(ctx *actor.Context) error {
+	logStreamer, err := newPodLogStreamer(p.podInterface, p.podName, func(log sproto.ContainerLog) {
+		p.receiveContainerLog(ctx, log)
+	})
+	if err != nil {
+		return err
+	}
+	go logStreamer.receiveStreamLogs()
+	return nil
+}
+
 func (p *pod) createPodSpecAndSubmit(ctx *actor.Context) error {
 	if err := p.createPodSpec(ctx, p.scheduler); err != nil {
 		return err
@@ -290,12 +298,9 @@ func (p *pod) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) er
 		// testLogStreamer is a testing flag only set in the pod_tests.
 		// This allows us to bypass the need for a log streamer or REST server.
 		if !p.testLogStreamer {
-			logStreamer, err := newPodLogStreamer(p.podInterface, p.podName, ctx.Self())
+			err := p.startPodLogStreamer(ctx)
 			if err != nil {
 				return err
-			}
-			if _, ok := ctx.ActorOf(fmt.Sprintf("%s-logs", p.podName), logStreamer); !ok {
-				return errors.Errorf("log streamer already exists")
 			}
 		}
 
