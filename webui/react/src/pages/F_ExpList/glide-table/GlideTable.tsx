@@ -327,35 +327,45 @@ export const GlideTable: React.FC<GlideTableProps> = ({
       const y = bounds.y + bounds.height;
 
       if (columnId === 'selected') {
-        if ((selectAll && excludedExperimentIds.size) || selection.rows.length !== data.length) {
-          const items: ItemType[] = [
-            ...[5, 10, 25, 50].map((n) => ({
-              key: `select-${n}`,
-              label: `Select ${n}`,
-              onClick: () => {
-                setSelection((s) => ({
-                  ...s,
-                  rows: CompactSelection.fromSingleSelection([0, n]),
-                }));
-                setMenuIsOpen(false);
-              },
-            })),
-            {
-              key: 'select-all',
-              label: 'Select all',
-              onClick: () => {
-                selectAllRows();
-                setMenuIsOpen(false);
-              },
+        const items: ItemType[] = [
+          ...[5, 10, 25, 50].map((n) => ({
+            key: `select-${n}`,
+            label: `Select ${n}`,
+            onClick: () => {
+              setSelection((s) => ({
+                ...s,
+                rows: CompactSelection.fromSingleSelection([0, n]),
+              }));
+              if (gridRef.current) {
+                // scroll first row into view for feedback
+                gridRef.current.scrollTo(0, 0);
+              }
+              setMenuIsOpen(false);
             },
-          ];
-          setTimeout(() => {
-            setMenuProps((prev) => ({ ...prev, items, title: 'Selection menu', x, y }));
-            setMenuIsOpen(true);
-          });
-        } else {
-          deselectAllRows();
-        }
+          })),
+          {
+            disabled: selectAll && excludedExperimentIds.size === 0,
+            key: 'select-all',
+            label: 'Select all',
+            onClick: () => {
+              selectAllRows();
+              setMenuIsOpen(false);
+            },
+          },
+          {
+            disabled: selection.rows.length === 0,
+            key: 'select-none',
+            label: 'Select none',
+            onClick: () => {
+              deselectAllRows();
+              setMenuIsOpen(false);
+            },
+          },
+        ];
+        setTimeout(() => {
+          setMenuProps((prev) => ({ ...prev, items, title: 'Selection menu', x, y }));
+          setMenuIsOpen(true);
+        });
         return;
       }
       const column = Loadable.getOrElse([], projectColumns).find((c) => c.column === columnId);
@@ -435,25 +445,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
       setMenuProps((prev) => ({ ...prev, items, title: `${columnId} menu`, x, y }));
       setMenuIsOpen(true);
     },
-    [
-      columnIds,
-      projectColumns,
-      sorts,
-      onSortChange,
-      staticColumns,
-      pinnedColumnsCount,
-      selectAll,
-      excludedExperimentIds.size,
-      selectAllRows,
-      deselectAllRows,
-      selection.rows.length,
-      data.length,
-      formStore,
-      onIsOpenFilterChange,
-      sortableColumnIds,
-      setSortableColumnIds,
-      setPinnedColumnsCount,
-    ],
+    [columnIds, projectColumns, sorts, onSortChange, staticColumns, pinnedColumnsCount, selectAll, excludedExperimentIds.size, selectAllRows, deselectAllRows, selection.rows.length, formStore, gridRef, onIsOpenFilterChange, sortableColumnIds, setSortableColumnIds, setPinnedColumnsCount],
   );
 
   const getCellContent: DataEditorProps['getCellContent'] = React.useCallback(
