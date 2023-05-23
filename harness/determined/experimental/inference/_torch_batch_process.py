@@ -24,8 +24,9 @@ DEFAULT_BATCH_SIZE = 1
 DEFAULT_CHECK_PREEMPT_INTERVAL = 100
 
 
-class TorchBatchProcessorContext:
+class TorchBatchProcessorContext(pytorch._PyTorchReducerContext):
     def __init__(self, core_context: core.Context):
+        super().__init__()
         self._distributed = core_context.distributed
         self._device = get_default_device(core_context)
         self._tensorboard_path = core_context.train.get_tensorboard_path()
@@ -279,6 +280,23 @@ def torch_batch_process(
                     return
 
         _synchronize_and_checkpoint(core_context, batch_idx, rank)
+
+        # Reduce metrics (blocking as reduce across slots is needed
+        # Report reduced metrics to master
+        reducables = [wrapped for wrapped in batch_processor_context._wrapped_reducers]
+        gatherables = [wrapped.per_slot_reduce() for wrapped in reducables]
+        if rank == 0:
+            gathered = core_context.distributed.gather(gatherables)
+            metrics = batch_processor_context.run_cross_slot_reduction(reducables, gathered)
+            core_context.train.report_validation_metrics(
+                steps_completed=batch_idx,
+                metrics=metrics,
+            )
+        else:
+            # Other ranks sent metrics to chief
+            core_context.distributed.gather(gatherables)
+
+        # Finish any tensorboard uploads remaining
         core_context._tensorboard_manager.sync(mangler=get_rank_aware_path)
 
         if rank == 0:
