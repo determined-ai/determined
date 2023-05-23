@@ -1,8 +1,8 @@
 .. _deepspeed-autotuning:
 
-####################
- DeepSpeed Autotune
-####################
+################################
+ DeepSpeed Autotune: User Guide
+################################
 
 .. meta::
    :description: This user guide demonstrates how to optimize DeepSpeed parameter in order to take full advantage of the user's hardware and model.
@@ -10,9 +10,9 @@
 Getting the most out of DeepSpeed (DS) requires aligning the many DS parameters with the specific
 properties of your hardware and model. Determined AI's DeepSpeed Autotune (``dsat``) helps to
 optimize these settings through an easy-to-use API with very few changes required in user-code, as
-we describe in the remainder of this user guide. ``dsat`` can be used with any of
+we describe in the remainder of this user guide. ``dsat`` can be used with
 :class:`~determined.pytorch.deepspeed.DeepSpeedTrial`, :ref:`Core API <core-getting-started>`, and
-HuggingFace Trainer.
+`HuggingFace Trainer <https://huggingface.co/docs/transformers/main_classes/trainer>`__.
 
 **************
  How it Works
@@ -22,9 +22,10 @@ You do not need to create a special configuration file to use ``dsat``. Assuming
 code which already functions, autotuning is as easy as inserting one or two helper functions into
 your code and modifying the launch command.
 
-For instance, to run ``dsat`` using the ``asha`` algorithm (see
-:ref:`topic-guides_hp-tuning-det_adaptive-asha`) with an existing ``single`` trial DeepSpeed
-configuation file ``deepspeed.yaml``, you would replace the usual experiment launching command
+For instance, let us imagine that your present directory contains DeepSpeed code and a corresponding
+``single`` trial experiment configuration file ``deepspeed.yaml``. Then, after inserting a line or
+two of ``dsat``-specific code per the instructions in the following sections, launching the ``dsat``
+experiments is as easy as replacing the usual experiment-launching command
 
 .. code::
 
@@ -36,12 +37,16 @@ with
 
    python3 -m determined.pytorch.dsat asha deepspeed.yaml .
 
-Determined's DeepSpeed Autotune provides three search methods:
+The above uses Determined AI's DeepSpeed Autotune with the ``asha`` algorithm, one of three
+available search methods:
 
 -  ``asha``: Adaptively searches over randomly selected DeepSpeed configurations, allocating more
-      compute resources to well-performing configurations.
+   compute resources to well-performing configurations. See :ref:`this introduction to ASHA
+   <topic-guides_hp-tuning-det_adaptive-asha>` for more details.
+
 -  ``binary``: Performs a simple binary search over the batch size for randomly-generated DS
    configurations.
+
 -  ``random``: Conducts a search over random DeepSpeed configurations with an aggressive
    early-stopping criteria based on domain-knowledge of DeepSpeed and the search history.
 
@@ -53,29 +58,29 @@ which starts up two separate experiments:
 -  ``custom`` Experiment: This experiment contains the trials referenced above whose results are
    reported back to the search runner.
 
-The ``custom`` experiment instead holds the visualization and summary tables which outline the
-results for every trial. Initially, a one-step profiling trial is created to gather information
-regarding the model and computational resources. The search runner experiment takes this initial
-profiling information and creates a series of trials to search for the DS settings which optimize
-``FLOPS_per_gpu``, ``throughput`` (samples/second), or latency timing information. The search is
-informed both by the initial profiling trial and the results of each subsequent trial, all of whose
-results are fed back to the search runner.
+Initially, a one-step profiling trial is created to gather information regarding the model and
+computational resources. The search runner experiment takes this initial profiling information and
+creates a series of trials to search for the DS settings which optimize ``FLOPS_per_gpu``,
+``throughput`` (samples/second), or latency timing information. The results of all such trials can
+be viewed in the ``custom`` experiment above. The search is informed both by the initial profiling
+trial and the results of each subsequent trial, all of whose results are fed back to the search
+runner.
 
 *******************
  User Code Changes
 *******************
 
-To use dsat with :class:`~determined.pytorch.deepspeed.DeepSpeedTrial`, Core API, and HuggingFace
-Trainer, specific changes must be made to your user code. In the following sections, we will
-describe these changes in detail for each use case.
+To use ``dsat`` with :class:`~determined.pytorch.deepspeed.DeepSpeedTrial`, Core API, and
+HuggingFace Trainer, specific changes must be made to your user code. In the following sections, we
+will describe these changes in detail for each use case.
 
 .. _using_deepspeed_trial:
 
 DeepSpeedTrial
 ==============
 
-Determined's DeepSpeed Autotune works by inserting DS configuration options to the
-``overwrite_deepspeed_args`` field of the ``hyperparameters`` dictionary, which is seen by each
+Determined's DeepSpeed Autotune works by inserting DS configuration options into the
+``overwrite_deepspeed_args`` field of the ``hyperparameters`` dictionary which is seen by each
 trial. To take advantage of ``dsat``, you simply need to incorporate these overwrite values into
 your original configuration.
 
@@ -85,10 +90,10 @@ your original configuration.
 
 To facilitate this process, you must add a ``deepspeed_config`` field under the ``hyperparameters``
 section of your experiment. This field specifies the relative path to the DS ``json`` configuration
-file (written following the `DS documentation here <https://www.deepspeed.ai/docs/config-json/>`_),
-informing ``dsat`` about your default settings. For example, if your default DeepSpeed configuration
-is stored in ``ds_config.json`` at the top-level of your model directory, your ``hyperparameters``
-section should include:
+file (written following the `DS documentation here <https://www.deepspeed.ai/docs/config-json/>`_)
+and is how ``dsat`` is informed of your default settings. For example, if your default DeepSpeed
+configuration is stored in ``ds_config.json`` at the top-level of your model directory, your
+``hyperparameters`` section should include:
 
 .. code:: yaml
 
@@ -110,8 +115,8 @@ configuration to deepspeed.initialize as usual:
      def __init__(self, context: DeepSpeedTrialContext) -> None:
          self.hparams = self.context.get_hparams()
          config = dsat.get_ds_config_from_hparams(self.hparams)
-         model = #...
-         model_parameters= #...
+         model = ...
+         model_parameters= ...
 
          model_engine, optimizer, train_loader, lr_scheduler = deepspeed.initialize(
              model=model, model_parameters=model_parameters, config=config
@@ -120,7 +125,7 @@ configuration to deepspeed.initialize as usual:
 Using Determined's DeepSpeed Autotune with a :class:`~determined.pytorch.deepspeed.DeepSpeedTrial`
 instance requires no further changes to your user code.
 
-A full example which uses DeepSpeed Autotune with ``DeepSpeedTrial`` can be found in the
+Examples which use DeepSpeed Autotune with HuggingFace Trainer can be found in the
 ``examples/deepspeed_autotune/torchvision/deepspeed_trial`` `subdirectory within the Determined
 GitHub Repo
 <https://github.com/determined-ai/determined/tree/master/examples/deepspeed_autotune/torchvision/deepspeed_trial>`__
@@ -134,7 +139,7 @@ following the steps in the :ref:`using_deepspeed_trial` section above.
 
 The ``forward``, ``backward``, and ``step`` methods of the ``DeepSpeedEngine`` class need to be
 wrapped in the :func:`~determined.pytorch.dsat.dsat_reporting_context` context manager. This
-addition ehnsures that the autotuning metrics from each trial are captured and reported back to the
+addition ensures that the autotuning metrics from each trial are captured and reported back to the
 Determined master.
 
 Here is an example sketch of ``dsat`` code with Core API:
@@ -150,7 +155,7 @@ Here is an example sketch of ``dsat`` code with Core API:
               model_engine.step()
 
 In this code snippet, ``core_context`` is the :class:`~determined.core.Context` instance which was
-initialized with ``determined.core.init``. The context manager requires access to both
+initialized with :func:`determined.core.init`. The context manager requires access to both
 ``core_context`` and the current :class:`~determined.core.SearcherOperation` instance (``op``) to
 appropriately report results.
 
@@ -171,11 +176,12 @@ Similar to the previous case, you need to add a ``deepspeed_config`` field to th
 the DS ``json`` config file.
 
 Reporting results back to the Determined master requires both the ``dsat.dsat_reporting_context``
-context manager and the ``DetCallback`` callback object mentioned previously.
+context manager and ``DetCallback``.
 
 Furthermore, since ``dsat`` performs a search over different batch sizes and HuggingFace expects
 parameters to be specified as command-line arguments, an additional helper function,
-:func:`~dsat.get_hf_args_with_overwrites``, is needed to create consistent HuggingFace arguments.
+:func:`~determined.pytorch.dsat.get_hf_args_with_overwrites`, is needed to create consistent
+HuggingFace arguments.
 
 Here is an example code snippet from a HuggingFace Trainer script that contains key pieces of
 relevant code:
@@ -229,10 +235,6 @@ General Options
 
 The following options are available for every search method.
 
-By default, ``dsat`` launches 50 Trials and runs up to 16 concurrently. These values can be changed
-via the ``--max-trials`` and ``--max-concurrent-trials`` flags. There is also an option to limit the
-number of Trials by specifying ``--max-slots``. Other notable flags include:
-
 -  ``--max-trials``: The maximum total number of trials to run. Default: ``50``.
 
 -  ``--max-concurrent-trials``: The maximum total number of trials that can run concurrently.
@@ -259,7 +261,7 @@ number of Trials by specifying ``--max-slots``. Other notable flags include:
 The ``asha`` search algorithm randomly generates various DeepSpeed configurations and attempts to
 tune the batch size for each such configuration through a binary search. ``asha`` adaptively
 allocates resources to explore each configuration (providing more resources to promising lineages)
-where the resource is the number of steps (i.e., launched trials) taken in each binary search.
+where the resource is the number of steps taken in each binary search (i.e., the number of trials). 
 
 ``asha`` can be configured with the following flags:
 
@@ -280,7 +282,7 @@ where the resource is the number of steps (i.e., launched trials) taken in each 
 ``binary`` Options
 ==================
 
-The ``binary`` search algorithm performs a straightforward search over the the batch size for a
+The ``binary`` search algorithm performs a straightforward search over the batch size for a
 collection of randomly-drawn DS configurations. A single option is available for this search:
 ``--search_range_factor``, which plays precisely the same role as in the :ref:`asha-options` section
 above.
@@ -299,28 +301,3 @@ semi-random search over the batch size.
 -  ``--early-stopping``: If provided, the experiment will terminate if a new best-configuration has
    not been found in the last ``early-stopping`` trials. Default: ``None``, corresponding to no such
    early stopping.
-
-***************
- Final Details
-***************
-
-The logs of the ``single`` search runner experiment will contain information regarding the size of
-the model, the GPU memory available, the activation memory required per example, and an approximate
-computation of the maximum batch size per zero stage (which is used to guide the starting point for
-all autotuning searches). When a best-performing DS configuration is found, the corresponding
-``json`` configuration file will be written to the search runner's checkpoint directory, along with
-a file detailing the configuration's corresponding metrics.
-
-The logs of the single search runner experiment contain information regarding the model size,
-available GPU memory, activation memory required per example, and an approximate computation of the
-maximum batch size per zero stage. This information guides the starting point for all autotuning
-searches. When a best-performing DeepSpeed (DS) configuration is found, the corresponding json
-configuration file is written to the search runner's checkpoint directory along with a file that
-details the configuration's corresponding metrics.
-
-The custom experiment holds the visualization and summary tables outlining the results for every
-Trial. Initially, a one-step profiling Trial is created to gather initial profiling information
-about the model and available hardware. The orchestrator experiment then takes the initial profiling
-information and creates a series of Trials to search for the most optimal hyperparameters for the
-experiment. These Trials are submitted with each reporting metrics back such as FLOPS_per_gpu,
-throughput (samples/second), and latency timing information.
