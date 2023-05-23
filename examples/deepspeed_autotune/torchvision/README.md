@@ -40,7 +40,7 @@ following section.
 There are three available search methods for DeepSpeed Autotune:
 
 - `asha`: uses the [ASHA](https://docs.determined.ai/latest/training/hyperparameter/search-methods/hp-adaptive-asha.html#id1)
-  algorithm to adaptively search over randomly selected DeepSpeed configurations, using the number of
+  algorithm to adaptively search over randomly selected DeepSpeed configurations
 - `binary`: tunes the optimal batch size for a handful of randomly generated DeepSpeed configurations
   via binary search.
 - `random`: performs a search over randomly generated DeepSpeed configurations which implements

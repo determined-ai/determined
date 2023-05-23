@@ -9,7 +9,7 @@ environment:
     gpu: determinedai/environments:cuda-11.3-pytorch-1.10-deepspeed-0.8.3-gpu-0.21.2
     cpu: determinedai/environments:cuda-11.3-pytorch-1.10-deepspeed-0.8.3-gpu-0.21.2
 resources:
-  slots_per_trial: 2
+  slots_per_trial: 8
 searcher:
   name: single
   max_length:
@@ -39,6 +39,4 @@ entrypoint: >-
   --save_strategy steps
   --save_steps 20
   --deepspeed ds_configs/ds_config_stage_1.json
-  --cache_dir ./garrettgoon/cache_dir
-# TODO: Delete the cache_dir field; just using them for fast testing.
 max_restarts: 0
