@@ -51,7 +51,10 @@ const AppView: React.FC = () => {
   const checkAuth = useAuthCheck();
 
   useEffect(() => {
-    if (isServerReachable) checkAuth();
+    const checkAuthAsync = async (): Promise<void> => {
+      if (isServerReachable) await checkAuth();
+    };
+    checkAuthAsync();
   }, [checkAuth, isServerReachable]);
 
   useKeyTracker();

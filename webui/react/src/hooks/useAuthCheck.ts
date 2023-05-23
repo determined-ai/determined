@@ -4,6 +4,7 @@ import { useSearchParams } from 'react-router-dom';
 
 import { globalStorage } from 'globalStorage';
 import { routeAll } from 'routes/utils';
+import { paths } from 'routes/utils';
 import { getCurrentUser } from 'services/api';
 import { updateDetApi } from 'services/apiConfig';
 import authStore, { AUTH_COOKIE_KEY } from 'stores/auth';
@@ -11,7 +12,7 @@ import determinedStore from 'stores/determinedInfo';
 import { getCookie } from 'utils/browser';
 import { isAuthFailure } from 'utils/service';
 
-const useAuthCheck = (): (() => void) => {
+const useAuthCheck = (): (() => Promise<boolean>) => {
   const info = useObservable(determinedStore.info);
   const [searchParams] = useSearchParams();
 
@@ -21,12 +22,18 @@ const useAuthCheck = (): (() => void) => {
   }, []);
 
   const redirectToExternalSignin = useCallback(() => {
-    const redirect = encodeURIComponent(window.location.href);
+    let redirect = '';
+    const path = window.location.pathname;
+    if (path.includes(paths.login()) || path.includes(paths.logout())) {
+      redirect = window.location.origin;
+    } else {
+      redirect = encodeURIComponent(window.location.href);
+    }
     const authUrl = `${info.externalLoginUri}?redirect=${redirect}`;
     routeAll(authUrl);
   }, [info.externalLoginUri]);
 
-  const checkAuth = useCallback(async (): Promise<void> => {
+  const checkAuth = useCallback(async (): Promise<boolean> => {
     /*
      * Check for the auth token from the following sources:
      *   1 - query param jwt from external authentication.
@@ -58,14 +65,15 @@ const useAuthCheck = (): (() => void) => {
         if (isAuthFailure(e)) {
           authStore.setAuth({ isAuthenticated: false });
           redirectToExternalSignin();
+          return false;
         }
-        return;
       }
       authStore.setAuth({ isAuthenticated: true });
       authStore.setAuthChecked();
     } else {
       authStore.setAuthChecked();
     }
+    return true;
   }, [info.externalLoginUri, searchParams, redirectToExternalSignin, updateBearerToken]);
 
   return checkAuth;

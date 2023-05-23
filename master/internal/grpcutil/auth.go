@@ -152,17 +152,18 @@ func GetUser(ctx context.Context) (*model.User, *model.UserSession, error) {
 	var session *model.UserSession
 	var err error
 	userModel, session, err = user.UserByToken(token, &extConfig)
-	switch err {
-	case nil:
-		if !userModel.Active {
-			return nil, nil, ErrPermissionDenied
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) || errors.Is(err, db.ErrNotFound) || errors.Is(err, jwt.ErrTokenExpired) {
+			return nil, nil, ErrInvalidCredentials
+		} else {
+			return nil, nil, err
 		}
-		return userModel, session, nil
-	case sql.ErrNoRows, db.ErrNotFound, jwt.ErrTokenExpired:
-		return nil, nil, ErrInvalidCredentials
-	default:
-		return nil, nil, err
 	}
+
+	if !userModel.Active {
+		return nil, nil, ErrPermissionDenied
+	}
+	return userModel, session, nil
 }
 
 // GetUserExternalToken returns the external token for the currently logged in user.
