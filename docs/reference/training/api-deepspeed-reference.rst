@@ -29,9 +29,9 @@
    :inherited-members:
    :show-inheritance:
 
-********************************************************
+*************************************************************
  ``determined.pytorch.deepspeed.overwrite_deepspeed_config``
-********************************************************
+*************************************************************
 
 .. autofunction:: determined.pytorch.deepspeed.overwrite_deepspeed_config
 
