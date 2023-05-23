@@ -96,7 +96,6 @@ type Master struct {
 	echo   *echo.Echo
 	db     *db.PgDB
 	rm     rm.ResourceManager
-	proxy  *actor.Ref
 
 	trialLogBackend TrialLogBackend
 	taskLogBackend  TaskLogBackend
@@ -920,11 +919,8 @@ func (m *Master) Run(ctx context.Context) error {
 	user.InitService(m.db, m.system, &m.config.InternalConfig.ExternalSessions)
 	userService := user.GetService()
 
-	m.proxy, _ = m.system.ActorOf(actor.Addr("proxy"), &proxy.Proxy{
-		HTTPAuth: processProxyAuthentication,
-	})
-
 	allocationmap.InitAllocationMap()
+	proxy.InitProxy(processProxyAuthentication)
 	portregistry.InitPortRegistry()
 	m.system.MustActorOf(actor.Addr("allocation-aggregator"), &allocationAggregator{db: m.db})
 
@@ -1170,8 +1166,8 @@ func (m *Master) Run(ctx context.Context) error {
 			api.Route(m.getPrometheusTargets))
 	}
 
-	handler := m.system.AskAt(actor.Addr("proxy"), proxy.NewProxyHandler{ServiceID: "service"})
-	m.echo.Any("/proxy/:service/*", handler.Get().(echo.HandlerFunc))
+	handler := proxy.NewProxyHandler("service")
+	m.echo.Any("/proxy/:service/*", handler)
 
 	// Catch-all for requests not matched by any above handler
 	// echo does not set the response error on the context if no handler is matched
