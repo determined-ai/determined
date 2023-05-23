@@ -62,7 +62,7 @@ class DetEnum(enum.Enum):
         return f"{self.value[skip:]}"
     @classmethod
     def prefix(cls) -> str:
-        prefix = os.path.commonprefix([e.value for e in cls])
+        prefix: str = os.path.commonprefix([e.value for e in cls])
         return prefix if prefix.endswith("_") else ""
 
 
