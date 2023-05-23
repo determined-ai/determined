@@ -68,6 +68,7 @@ interface FullConfigProps {
   currentWorkspace?: Workspace;
   form: FormInstance;
   onChange?: (config: string) => void;
+  originWorkspace?: Workspace;
   workspaces: Workspace[];
 }
 
@@ -88,6 +89,7 @@ const JupyterLabModalComponent: React.FC<Props> = ({ workspace }: Props) => {
   const workspaces = Loadable.getOrElse([], useObservable(workspaceStore.workspaces)).filter(
     (workspace) => canCreateWorkspaceNSC({ workspace }),
   );
+  const [currentWorkspace, setCurrentWorkspace] = useState<Workspace | undefined>(workspace);
 
   const simpleWorkspaceId = Form.useWatch('workspaceId', form);
   const fullWorkspaceId = Form.useWatch('workspaceId', fullConfigForm);
@@ -194,16 +196,18 @@ const JupyterLabModalComponent: React.FC<Props> = ({ workspace }: Props) => {
         <JupyterLabFullConfig
           config={config}
           configError={configError}
-          currentWorkspace={workspace}
+          currentWorkspace={currentWorkspace}
           form={fullConfigForm}
+          originWorkspace={workspace}
           workspaces={workspaces}
           onChange={handleConfigChange}
         />
       ) : (
         <JupyterLabForm
-          currentWorkspace={workspace}
           defaults={defaults}
           form={form}
+          originWorkspace={workspace}
+          setWorkspace={setCurrentWorkspace}
           workspaces={workspaces}
         />
       )}
@@ -223,6 +227,7 @@ const JupyterLabFullConfig: React.FC<FullConfigProps> = ({
   configError,
   currentWorkspace,
   form,
+  originWorkspace,
   onChange,
   workspaces,
 }: FullConfigProps) => {
@@ -265,7 +270,7 @@ const JupyterLabFullConfig: React.FC<FullConfigProps> = ({
           label="Workspace"
           name="workspaceId"
           rules={[{ message: 'Workspace is required', required: true, type: 'number' }]}>
-          <Select allowClear disabled={!!currentWorkspace} placeholder="Workspace (required)">
+          <Select allowClear disabled={!!originWorkspace} placeholder="Workspace (required)">
             {workspaces.map((workspace: Workspace) => (
               <Option key={workspace.id} value={workspace.id}>
                 {workspace.name}
@@ -307,11 +312,12 @@ const JupyterLabFullConfig: React.FC<FullConfigProps> = ({
 };
 
 const JupyterLabForm: React.FC<{
-  currentWorkspace?: Workspace;
+  originWorkspace?: Workspace;
   defaults: JupyterLabOptions;
   form: FormInstance<JupyterLabOptions>;
+  setWorkspace: (arg0: Workspace) => void;
   workspaces: Workspace[];
-}> = ({ currentWorkspace, form, defaults, workspaces }) => {
+}> = ({ form, defaults, originWorkspace, setWorkspace, workspaces }) => {
   const [templates, setTemplates] = useState<Template[]>([]);
 
   const resourcePools = Loadable.getOrElse([], useObservable(clusterStore.resourcePools));
@@ -368,19 +374,28 @@ const JupyterLabForm: React.FC<{
   }, [resourcePools, form]);
 
   useEffect(() => {
-    if (currentWorkspace) {
-      form.setFieldValue('workspaceId', currentWorkspace.id);
+    if (originWorkspace) {
+      form.setFieldValue('workspaceId', originWorkspace.id);
     }
-  }, [currentWorkspace, form]);
+  }, [originWorkspace, form]);
+
+  const onSelectWorkspace = (workspaceId: number) => {
+    const selected = workspaces.find((w) => w.id === workspaceId);
+    if (selected) setWorkspace(selected);
+  };
 
   return (
     <Form form={form}>
       <Form.Item
-        initialValue={currentWorkspace?.id}
+        initialValue={originWorkspace?.id}
         label="Workspace"
         name="workspaceId"
         rules={[{ message: 'Workspace is required', required: true, type: 'number' }]}>
-        <Select allowClear disabled={!!currentWorkspace} placeholder="Workspace (required)">
+        <Select
+          allowClear
+          disabled={!!originWorkspace}
+          placeholder="Workspace (required)"
+          onChange={onSelectWorkspace}>
           {workspaces.map((workspace: Workspace) => (
             <Option key={workspace.id} value={workspace.id}>
               {workspace.name}
