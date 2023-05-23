@@ -549,9 +549,9 @@ export const GlideTable: React.FC<GlideTableProps> = ({
     [sortableColumnIds, setSortableColumnIds],
   );
 
-  const columns: DataEditorProps['columns'] = useMemo(
-    () =>
-      columnIds.map((columnName) => {
+  const columns: DataEditorProps['columns'] = useMemo(() => {
+    const gridColumns = columnIds
+      .map((columnName) => {
         if (columnName in columnDefs) return columnDefs[columnName];
         if (!Loadable.isLoaded(projectColumnsMap)) return;
         const currentColumn = projectColumnsMap.data[columnName];
@@ -601,9 +601,10 @@ export const GlideTable: React.FC<GlideTableProps> = ({
             );
         }
         return columnDefs[currentColumn.column];
-      }) as GridColumn[],
-    [columnIds, columnDefs, projectColumnsMap, columnWidths],
-  );
+      })
+      .flatMap((col) => (col ? [col] : []));
+    return gridColumns;
+  }, [columnIds, columnDefs, projectColumnsMap, columnWidths]);
 
   const verticalBorder: DataEditorProps['verticalBorder'] = useCallback(
     (col: number) => columnIds[col - 1] === STATIC_COLUMNS.last(),
