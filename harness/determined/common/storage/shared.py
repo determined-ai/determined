@@ -191,11 +191,10 @@ class SharedFSStorageManager(storage.StorageManager):
         to_delete_files = {}
         for file_glob in globs:
             for path in glob.glob(f"{storage_dir}/{file_glob}", recursive=True):
-                if os.path.isfile(path):
+                if os.path.isfile(path) or os.path.islink(path):
                     to_delete_files[path] = True
                 elif os.path.isdir(path):
                     to_delete_dirs[path] = True
-                # TODO should we delete system links too?
 
         # Delete files first then delete paths.
         for path in to_delete_files:

@@ -4,8 +4,8 @@ import copy
 import glob
 import os
 import pathlib
+import tempfile
 import urllib
-import uuid
 from typing import Any, Callable, Dict, Iterator, List, Optional, Set, Union
 
 from determined import util
@@ -182,11 +182,10 @@ class StorageManager(metaclass=abc.ABCMeta):
         file_paths_to_sizes = copy.deepcopy(file_paths_to_sizes)
 
         # Create dummy file system.
-        temp_dir = pathlib.Path("/tmp").joinpath(str(uuid.uuid4()))
-        temp_dir.mkdir()
+        temp_dir = tempfile.mkdtemp()
         try:
             for f in file_paths_to_sizes:
-                path = temp_dir.joinpath(f)
+                path = pathlib.Path(temp_dir).joinpath(f)
                 path.parent.mkdir(parents=True, exist_ok=True)
                 if f.endswith("/"):  # path.is_dir() will return false always.
                     path.mkdir(exist_ok=True)
@@ -198,7 +197,9 @@ class StorageManager(metaclass=abc.ABCMeta):
             to_delete_dirs = {}
             to_delete_files = {}
             for g in globs:
-                for path_str in glob.glob(f"{temp_dir.joinpath(prefix)}/{g}", recursive=True):
+                for path_str in glob.glob(
+                    f"{pathlib.Path(temp_dir).joinpath(prefix)}/{g}", recursive=True
+                ):
                     if os.path.isfile(path_str):
                         to_delete_files[path_str] = True
                     elif os.path.isdir(path_str):

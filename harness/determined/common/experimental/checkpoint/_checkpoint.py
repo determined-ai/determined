@@ -154,9 +154,12 @@ class Checkpoint:
             mode (DownloadMode, optional): Governs how a checkpoint is downloaded. Defaults to
                 ``AUTO``.
         """
-        if self.state != CheckpointState.COMPLETED:
+        if (
+            self.state != CheckpointState.COMPLETED
+            and self.state != CheckpointState.PARTIALLY_DELETED
+        ):
             raise errors.CheckpointStateException(
-                "Only COMPLETED checkpoints can be downloaded. "
+                "Only COMPLETED or PARTIALLY_DELETED checkpoints can be downloaded. "
                 f"Checkpoint state: {self.state.value}"
             )
         if path is not None:
