@@ -28,7 +28,7 @@ test-cpu:
 
 .PHONY: test-cpu-tf1
 test-cpu-tf1:
-    coverage run -m pytest -v --runslow --durations=0 -m "tf1_cpu" tests/experiment
+	coverage run -m pytest -v --runslow --durations=0 -m "tf1_cpu" tests/experiment
 
 .PHONY: test-gpu
 test-gpu:
