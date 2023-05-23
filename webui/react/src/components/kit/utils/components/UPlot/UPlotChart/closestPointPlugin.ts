@@ -1,10 +1,8 @@
 import { throttle } from 'throttle-debounce';
 import uPlot, { Plugin } from 'uplot';
 
+import { distance, findInsertionIndex, isEqual } from 'components/kit/utils/functions';
 import { CheckpointsDict } from 'components/kit/utils/types';
-import { findInsertionIndex } from 'shared/utils/array';
-import { isEqual } from 'shared/utils/data';
-import { distance } from 'utils/chart';
 
 import css from './closestPointPlugin.module.scss';
 

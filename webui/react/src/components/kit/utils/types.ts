@@ -2,6 +2,8 @@ import * as t from 'io-ts';
 
 export type Primitive = boolean | number | string;
 export type RecordKey = string | number | symbol;
+export type NullOrUndefined<T = undefined> = T | null | undefined;
+export type Range<T = Primitive> = [T, T];
 
 export type ValueOf<T> = T[keyof T];
 
@@ -56,4 +58,19 @@ export interface FetchArgs {
   url: string;
   // eslint-disable-next-line
   options: any;
+}
+
+/**
+ * DarkLight is a resolved form of `Mode` where we figure out
+ * what `Mode.System` should ultimate resolve to (`Dark` vs `Light).
+ */
+export const DarkLight = {
+  Dark: 'dark',
+  Light: 'light',
+} as const;
+
+export type DarkLight = ValueOf<typeof DarkLight>;
+export interface ClassNameProp {
+  /** classname to be applied to the base element */
+  className?: string;
 }

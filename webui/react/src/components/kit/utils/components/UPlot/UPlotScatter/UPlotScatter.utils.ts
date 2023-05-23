@@ -1,8 +1,7 @@
 import uPlot from 'uplot';
 
-import { Scale } from 'components/kit/utils/types';
-import { Range } from 'shared/types';
-import { rgba2str, rgbaFromGradient, str2rgba } from 'shared/utils/color';
+import { rgba2str, rgbaFromGradient, str2rgba } from 'components/kit/utils/functions';
+import { Range, Scale } from 'components/kit/utils/types';
 
 import { UPlotAxisSplits, UPlotData } from '../types';
 

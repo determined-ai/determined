@@ -3,7 +3,7 @@ import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 dayjs.extend(utc);
 
-type NullOrUndefined<T = undefined> = T | null | undefined;
+import { NullOrUndefined } from 'components/kit/utils/types';
 
 const GLASBEY = [
   [0, 155, 222],
@@ -180,7 +180,7 @@ const isPrimitive = (data: unknown): boolean =>
   isString(data) ||
   isSymbol(data);
 const isSet = (data: unknown): data is Set<unknown> => data instanceof Set;
-const isString = (data: unknown): data is string => typeof data === 'string';
+export const isString = (data: unknown): data is string => typeof data === 'string';
 const isSymbol = (data: unknown): data is symbol => typeof data === 'symbol';
 
 /*
@@ -362,4 +362,212 @@ export const glasbeyColor = (sequence: number): string => {
 
 export const getTimeTickValues: uPlot.Axis.Values = (_self, rawValue) => {
   return rawValue.map((val) => dayjs.unix(val).format('hh:mm:ss.SSS').slice(0, -2));
+};
+
+const DEFAULT_PRECISION = 6;
+export const humanReadableNumber = (num: number, precision = DEFAULT_PRECISION): string => {
+  const stringNum = num.toString();
+  let content: string = stringNum;
+
+  if (isNaN(num)) {
+    content = 'NaN';
+  } else if (!Number.isFinite(num)) {
+    content = `${num < 0 ? '-' : ''}Infinity`;
+  } else if (!Number.isInteger(num)) {
+    content = num.toFixed(Math.max(precision, 0));
+
+    const absoluteNum = Math.abs(num);
+    if (absoluteNum < 0.01 || absoluteNum > 999) {
+      content = num.toExponential(Math.max(precision, 0));
+    }
+  }
+
+  return content;
+};
+
+export const isEqual = (a: unknown, b: unknown): boolean => {
+  if (isMap(a) && isMap(b)) {
+    return JSON.stringify(Array.from(a)) === JSON.stringify(Array.from(b));
+  }
+  if (isSymbol(a) && isSymbol(b)) return a.toString() === b.toString();
+  if (isObject(a) && isObject(b)) return JSON.stringify(a) === JSON.stringify(b);
+  if (isSet(a) && isSet(b)) {
+    if (a.size !== b.size) return false;
+    for (const elem of a.values()) {
+      if (!b.has(elem)) {
+        return false;
+      }
+    }
+    return true;
+  }
+  if (Array.isArray(a) && Array.isArray(b))
+    return a.length === b.length && a.every((x, i) => isEqual(x, b[i]));
+  return a === b;
+};
+
+// credits: https://gist.github.com/Izhaki/834a9d37d1ad34c6179b6a16e670b526
+export const findInsertionIndex = (
+  sortedArray: number[],
+  value: number,
+  compareFn: (a: number, b: number) => number = (a, b) => a - b,
+): number => {
+  // empty array
+  if (sortedArray.length === 0) return 0;
+
+  // value beyond current sortedArray range
+  if (compareFn(value, sortedArray[sortedArray.length - 1]) >= 0) return sortedArray.length;
+
+  const getMidPoint = (start: number, end: number): number => Math.floor((end - start) / 2) + start;
+
+  let iEnd = sortedArray.length - 1;
+  let iStart = 0;
+
+  let iMiddle = getMidPoint(iStart, iEnd);
+
+  // binary search
+  while (iStart < iEnd) {
+    const comparison = compareFn(value, sortedArray[iMiddle]);
+
+    // found match
+    if (comparison === 0) return iMiddle;
+
+    if (comparison < 0) {
+      // target is lower in array, move the index halfway down
+      iEnd = iMiddle;
+    } else {
+      // target is higher in array, move the index halfway up
+      iStart = iMiddle + 1;
+    }
+    iMiddle = getMidPoint(iStart, iEnd);
+  }
+
+  return iMiddle;
+};
+
+export function distance(x0: number, y0: number, x1: number, y1: number): number {
+  return Math.sqrt((x1 - x0) ** 2 + (y1 - y0) ** 2);
+}
+
+/*
+ * h - hue between 0 and 360
+ * s - saturation between 0.0 and 1.0
+ * l - lightness between 0.0 and 1.0
+ */
+interface HslColor {
+  h: number;
+  l: number;
+  s: number;
+}
+
+/*
+ * r - red between 0 and 255
+ * g - green between 0 and 255
+ * b - blue between 0 and 255
+ * a - alpha between 0.0 and 1.0
+ */
+interface RgbaColor {
+  a?: number;
+  b: number;
+  g: number;
+  r: number;
+}
+const hexRegex = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i;
+const rgbaRegex = /^rgba?\(\s*?(\d+)\s*?,\s*?(\d+)\s*?,\s*?(\d+)\s*?(,\s*?([\d.]+)\s*?)?\)$/i;
+
+export const rgba2str = (rgba: RgbaColor): string => {
+  if (rgba.a != null) {
+    return `rgba(${rgba.r}, ${rgba.g}, ${rgba.b}, ${rgba.a})`;
+  }
+  return `rgb(${rgba.r}, ${rgba.g}, ${rgba.b})`;
+};
+
+export const rgbaFromGradient = (
+  rgba0: RgbaColor,
+  rgba1: RgbaColor,
+  percent: number,
+): RgbaColor => {
+  const r = Math.round((rgba1.r - rgba0.r) * percent + rgba0.r);
+  const g = Math.round((rgba1.g - rgba0.g) * percent + rgba0.g);
+  const b = Math.round((rgba1.b - rgba0.b) * percent + rgba0.b);
+
+  if (rgba0.a != null && rgba1.a != null) {
+    const a = (rgba1.a - rgba0.a) * percent + rgba0.a;
+    return { a, b, g, r };
+  }
+
+  return { b, g, r };
+};
+
+export const hex2rgb = (hex: string): RgbaColor => {
+  const rgb = { b: 0, g: 0, r: 0 };
+  const result = hexRegex.exec(hex);
+
+  if (result && result.length > 3) {
+    rgb.r = parseInt(result[1], 16);
+    rgb.g = parseInt(result[2], 16);
+    rgb.b = parseInt(result[3], 16);
+  }
+
+  return rgb;
+};
+
+export const str2rgba = (str: string): RgbaColor => {
+  if (hexRegex.test(str)) return hex2rgb(str);
+
+  const regex = rgbaRegex;
+  const result = regex.exec(str);
+  if (result && result.length > 3) {
+    const rgba = { a: 1.0, b: 0, g: 0, r: 0 };
+    rgba.r = parseInt(result[1]);
+    rgba.g = parseInt(result[2]);
+    rgba.b = parseInt(result[3]);
+    if (result.length > 5 && result[5] != null) rgba.a = parseFloat(result[5]);
+    return rgba;
+  }
+
+  return { a: 0.0, b: 0, g: 0, r: 0 };
+};
+
+export const hex2hsl = (hex: string): HslColor => {
+  return rgba2hsl(hex2rgb(hex));
+};
+
+export const rgba2hsl = (rgba: RgbaColor): HslColor => {
+  const r = rgba.r / 255;
+  const g = rgba.g / 255;
+  const b = rgba.b / 255;
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const avg = (max + min) / 2;
+  const hsl: HslColor = { h: Math.round(Math.random() * 6), l: 0.5, s: 0.5 };
+
+  hsl.h = hsl.s = hsl.l = avg;
+
+  if (max === min) {
+    hsl.h = hsl.s = 0; // achromatic
+  } else {
+    const d = max - min;
+    hsl.s = hsl.l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r:
+        hsl.h = (g - b) / d + (g < b ? 6 : 0);
+        break;
+      case g:
+        hsl.h = (b - r) / d + 2;
+        break;
+      case b:
+        hsl.h = (r - g) / d + 4;
+        break;
+    }
+  }
+
+  hsl.h = Math.round((360 * hsl.h) / 6);
+  hsl.s = Math.round(hsl.s * 100);
+  hsl.l = Math.round(hsl.l * 100);
+
+  return hsl;
+};
+
+export const hsl2str = (hsl: HslColor): string => {
+  return `hsl(${hsl.h}, ${hsl.s}%, ${hsl.l}%)`;
 };

@@ -1,8 +1,7 @@
 import { useCallback, useMemo, useRef } from 'react';
 import uPlot, { Plugin } from 'uplot';
 
-import { humanReadableNumber } from 'shared/utils/number';
-import { generateAlphaNumeric } from 'shared/utils/string';
+import { generateAlphaNumeric, humanReadableNumber } from 'components/kit/utils/functions';
 
 import { UPlotData } from '../types';
 
