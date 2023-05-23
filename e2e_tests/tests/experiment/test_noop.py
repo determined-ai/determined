@@ -3,7 +3,6 @@ import os
 import shutil
 import tempfile
 import time
-from typing import Union
 
 import pytest
 
