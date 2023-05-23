@@ -25,9 +25,9 @@ The Checkpoint Export API is a subset of the features found in the
  Querying Checkpoints
 **********************
 
-The :class:`~determined.experimental.client.ExperimentReference` class is a reference to an
+The :class:`~determined.experimental.client.Experiment` class is a reference to an
 experiment. The reference contains the
-:meth:`~determined.experimental.client.ExperimentReference.top_checkpoint` method. Without
+:meth:`~determined.experimental.client.Experiment.top_checkpoint` method. Without
 arguments, the method will check the experiment configuration searcher field for the ``metric`` and
 ``smaller_is_better`` values. These values are used to sort the experiment's checkpoints by
 validation performance. The searcher settings in the following snippet from an experiment
@@ -62,7 +62,7 @@ or descending order with respect to the specified metric.
    )
 
 You may also query multiple checkpoints at the same time using the
-:meth:`~determined.experimental.client.ExperimentReference.top_n_checkpoints` method. Only the
+:meth:`~determined.experimental.client.Experiment.top_n_checkpoints` method. Only the
 single best checkpoint from each trial is considered; out of those, the checkpoints with the best
 validation metric values are returned in sorted order, with the best one first. For example, the
 following snippet returns the top five checkpoints from distinct trials of a specified experiment.
@@ -75,11 +75,11 @@ following snippet returns the top five checkpoints from distinct trials of a spe
 
 This method also accepts ``sort_by`` and ``smaller_is_better`` arguments.
 
-:class:`~determined.experimental.client.TrialReference` is used for fine-grained control over
+:class:`~determined.experimental.client.Trial` is used for fine-grained control over
 checkpoint selection within a trial. It contains a
-:meth:`~determined.experimental.client.TrialReference.top_checkpoint` method, which mirrors
-:meth:`~determined.experimental.client.ExperimentReference.top_checkpoint` for an experiment. It
-also contains :meth:`~determined.experimental.client.TrialReference.select_checkpoint`, which offers
+:meth:`~determined.experimental.client.Trial.top_checkpoint` method, which mirrors
+:meth:`~determined.experimental.client.Experiment.top_checkpoint` for an experiment. It
+also contains :meth:`~determined.experimental.client.Trial.select_checkpoint`, which offers
 three ways to query checkpoints:
 
 #. ``best``: Returns the best checkpoint based on validation metrics as discussed above. When using
@@ -287,7 +287,7 @@ checkpoint.
               |                                      | }
 
 The ``det trial download`` command downloads checkpoints for a specified trial. Similar to the
-:class:`~determined.experimental.client.TrialReference` API, the ``det trial download`` command
+:class:`~determined.experimental.client.Trial` API, the ``det trial download`` command
 accepts ``--best``, ``--latest``, and ``--uuid`` options.
 
 .. code::
@@ -328,7 +328,7 @@ The ``--latest`` and ``--uuid`` options are used as follows:
    det trial download <trial_id> --uuid <uuid-for-checkpoint>
 
 Finally, the ``det experiment download`` command provides a similar experience to using the
-:class:`Python SDK <determined.experimental.client.ExperimentReference>`.
+:class:`Python SDK <determined.experimental.client.Experiment>`.
 
 .. code:: bash
 

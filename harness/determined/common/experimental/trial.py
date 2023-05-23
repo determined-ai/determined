@@ -113,9 +113,9 @@ class ValidationMetrics:
         )
 
 
-class TrialReference:
+class Trial:
     """
-    A TrialReference object is usually obtained from
+    A Trial object is usually obtained from
     ``determined.experimental.client.get_trial()``.
 
     Trial reference class used for querying relevant

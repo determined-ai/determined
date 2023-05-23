@@ -79,7 +79,7 @@ class TrialController(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def from_trial(
         cls: Type["TrialController"],
-        trial_inst: "det.Trial",
+        trial_inst: "det.LegacyTrial",
         context: det.TrialContext,
         env: det.EnvContext,
         workloads: Optional[workload.Stream] = None,

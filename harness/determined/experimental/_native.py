@@ -29,7 +29,7 @@ def _make_test_workloads(config: det.ExperimentConfig) -> workload.Stream:
 
 
 def test_one_batch(
-    trial_class: Type[det.Trial],
+    trial_class: Type[det.LegacyTrial],
     config: Optional[Dict[str, Any]] = None,
 ) -> Any:
     # Override the scheduling_unit value to 1.

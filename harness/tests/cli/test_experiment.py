@@ -78,9 +78,7 @@ def test_wait_waits_until_longrunning_experiment_is_complete(
         args = CliArgs(master=master_url, experiment_id=experiment_id_longrunning)
         determined.cli.experiment.wait(args)
 
-        fetched_experiment = client.ExperimentReference(
-            experiment_id_longrunning, api_server_session
-        )._get()
+        fetched_experiment = client.Experiment(experiment_id_longrunning, api_server_session)._get()
 
     assert fetched_experiment.state == bindings.experimentv1State.COMPLETED
 

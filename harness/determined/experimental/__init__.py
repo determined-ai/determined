@@ -1,11 +1,11 @@
 from determined.common.experimental import (
     Checkpoint,
     Determined,
-    ExperimentReference,
+    Experiment,
     Model,
     ModelOrderBy,
     ModelSortBy,
-    TrialReference,
+    Trial,
     TrialOrderBy,
     TrialSortBy,
 )

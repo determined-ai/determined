@@ -240,7 +240,7 @@ def _load_trial_for_checkpoint_export(
     trial_cls_spec: str,
     config: Dict[str, Any],
     hparams: Dict[str, Any],
-) -> Tuple[Type[det.Trial], det.TrialContext]:
+) -> Tuple[Type[det.LegacyTrial], det.TrialContext]:
     with _local_execution_manager(context_dir):
         trial_class = load.trial_class_from_entrypoint(trial_cls_spec)
         core_context, env = _make_local_execution_env(

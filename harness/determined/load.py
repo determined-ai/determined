@@ -6,7 +6,7 @@ from typing import Type, cast
 import determined as det
 
 
-def trial_class_from_entrypoint(entrypoint_spec: str) -> Type[det.Trial]:
+def trial_class_from_entrypoint(entrypoint_spec: str) -> Type[det.LegacyTrial]:
     """
     Load and initialize a Trial class from an entrypoint specification.
 
@@ -55,11 +55,13 @@ def trial_class_from_entrypoint(entrypoint_spec: str) -> Type[det.Trial]:
             obj = getattr(obj, attr)
 
     assert isinstance(obj, type), f"entrypoint ({entrypoint_spec}) is not a class"
-    assert issubclass(obj, det.Trial), f"entrypoint ({entrypoint_spec}) is not a det.Trial subclass"
-    return cast(Type[det.Trial], obj)
+    assert issubclass(
+        obj, det.LegacyTrial
+    ), f"entrypoint ({entrypoint_spec}) is not a det.Trial subclass"
+    return cast(Type[det.LegacyTrial], obj)
 
 
-def get_trial_controller_class(trial_class: Type[det.Trial]) -> Type[det.TrialController]:
+def get_trial_controller_class(trial_class: Type[det.LegacyTrial]) -> Type[det.TrialController]:
     # Validate the Trial class
     controller_class = trial_class.trial_controller_class
     if controller_class is None:
