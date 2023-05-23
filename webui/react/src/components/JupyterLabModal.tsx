@@ -69,7 +69,7 @@ interface FullConfigProps {
   form: FormInstance;
   lockedWorkspace: boolean;
   onChange?: (config: string) => void;
-  setWorkspace: (arg0: Workspace) => void;
+  setWorkspace: (arg0: Workspace | undefined) => void;
   workspaces: Workspace[];
 }
 
@@ -94,9 +94,9 @@ const JupyterLabModalComponent: React.FC<Props> = ({ workspace }: Props) => {
 
   const validateFullConfigForm = useCallback(() => {
     const fields = fullConfigForm.getFieldsError();
-    const hasError = fields.some((f) => f.errors.length);
+    const hasError = fields.some((f) => f.errors.length) || !currentWorkspace;
     setFullConfigFormInvalid(hasError);
-  }, [fullConfigForm]);
+  }, [currentWorkspace, fullConfigForm]);
 
   const { settings: defaults, updateSettings: updateDefaults } =
     useSettings<JupyterLabOptions>(settingsConfig);
@@ -260,14 +260,12 @@ const JupyterLabFullConfig: React.FC<FullConfigProps> = ({
   }, [config]);
 
   useEffect(() => {
-    if (currentWorkspace) {
-      form.setFieldValue('workspaceId', currentWorkspace?.id);
-    }
+    form.setFieldValue('workspaceId', currentWorkspace?.id);
   }, [currentWorkspace, form]);
 
-  const onSelectWorkspace = (workspaceId: number) => {
-    const selected = workspaces.find((w) => w.id === workspaceId);
-    if (selected) setWorkspace(selected);
+  const onSelectWorkspace = (workspaceId?: number) => {
+    const selected = workspaces.find((w) => workspaceId && w.id === workspaceId);
+    setWorkspace(selected);
   };
 
   return (
@@ -328,7 +326,7 @@ const JupyterLabForm: React.FC<{
   defaults: JupyterLabOptions;
   form: FormInstance<JupyterLabOptions>;
   lockedWorkspace: boolean;
-  setWorkspace: (arg0: Workspace) => void;
+  setWorkspace: (arg0: Workspace | undefined) => void;
   workspaces: Workspace[];
 }> = ({ form, currentWorkspace, defaults, lockedWorkspace, setWorkspace, workspaces }) => {
   const [templates, setTemplates] = useState<Template[]>([]);
@@ -387,14 +385,12 @@ const JupyterLabForm: React.FC<{
   }, [resourcePools, form]);
 
   useEffect(() => {
-    if (currentWorkspace) {
-      form.setFieldValue('workspaceId', currentWorkspace.id);
-    }
+    form.setFieldValue('workspaceId', currentWorkspace?.id);
   }, [currentWorkspace, form]);
 
-  const onSelectWorkspace = (workspaceId: number) => {
-    const selected = workspaces.find((w) => w.id === workspaceId);
-    if (selected) setWorkspace(selected);
+  const onSelectWorkspace = (workspaceId?: number) => {
+    const selected = workspaces.find((w) => workspaceId && w.id === workspaceId);
+    setWorkspace(selected);
   };
 
   return (
