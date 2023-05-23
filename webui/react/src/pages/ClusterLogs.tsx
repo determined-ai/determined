@@ -5,6 +5,7 @@ import LogViewer, {
   FetchDirection,
   FetchType,
 } from 'components/kit/LogViewer/LogViewer';
+import { serverAddress } from 'routes/utils';
 import { detApi } from 'services/apiConfig';
 import { jsonToClusterLog } from 'services/decoder';
 import { isNumber } from 'shared/utils/data';
@@ -35,7 +36,7 @@ const ClusterLogs: React.FC = () => {
 
   return (
     <div className={css.base}>
-      <LogViewer decoder={jsonToClusterLog} sortKey="id" onFetch={handleFetch} />
+      <LogViewer decoder={jsonToClusterLog} serverAddress={serverAddress} sortKey="id" onFetch={handleFetch} />
     </div>
   );
 };

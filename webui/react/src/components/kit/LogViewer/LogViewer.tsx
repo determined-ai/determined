@@ -40,6 +40,7 @@ export interface Props {
   initialLogs?: unknown[];
   onDownload?: () => void;
   onFetch?: (config: FetchConfig, type: FetchType) => FetchArgs;
+  serverAddress: (path: string) => string;
   sortKey?: keyof Log;
   title?: React.ReactNode;
 }
@@ -108,19 +109,20 @@ const formatClipboardHeader = (log: Log): string => {
 
 const logSorter =
   (key: keyof Log) =>
-  (a: Log, b: Log): number => {
-    const aValue = a[key];
-    const bValue = b[key];
-    if (key === 'id') return numericSorter(aValue as number, bValue as number);
-    if (key === 'time') return dateTimeStringSorter(aValue as string, bValue as string);
-    return 0;
-  };
+    (a: Log, b: Log): number => {
+      const aValue = a[key];
+      const bValue = b[key];
+      if (key === 'id') return numericSorter(aValue as number, bValue as number);
+      if (key === 'time') return dateTimeStringSorter(aValue as string, bValue as string);
+      return 0;
+    };
 
 const LogViewer: React.FC<Props> = ({
   decoder,
   initialLogs,
   onDownload,
   onFetch,
+  serverAddress,
   sortKey = 'time',
   handleCloseLogs,
   ...props
@@ -201,7 +203,7 @@ const LogViewer: React.FC<Props> = ({
       setIsFetching(true);
       local.current.isFetching = true;
 
-      await readStream(onFetch({ limit: PAGE_LIMIT, ...config } as FetchConfig, type), (event) => {
+      await readStream(serverAddress, onFetch({ limit: PAGE_LIMIT, ...config } as FetchConfig, type), (event) => {
         const logEntry = decoder(event);
         fetchDirection === FetchDirection.Older ? buffer.unshift(logEntry) : buffer.push(logEntry);
       });
@@ -211,7 +213,7 @@ const LogViewer: React.FC<Props> = ({
 
       return processLogs(buffer);
     },
-    [decoder, fetchDirection, onFetch, processLogs],
+    [decoder, fetchDirection, onFetch, processLogs, serverAddress],
   );
 
   const handleItemsRendered = useCallback(
@@ -397,6 +399,7 @@ const LogViewer: React.FC<Props> = ({
 
     if (fetchDirection === FetchDirection.Older && onFetch) {
       readStream(
+        serverAddress,
         onFetch({ canceler, fetchDirection, limit: PAGE_LIMIT }, FetchType.Stream),
         (event) => {
           buffer.push(decoder(event));
@@ -409,7 +412,7 @@ const LogViewer: React.FC<Props> = ({
       canceler.abort();
       throttledProcessBuffer.cancel();
     };
-  }, [addLogs, decoder, fetchDirection, onFetch, processLogs]);
+  }, [addLogs, decoder, fetchDirection, serverAddress, onFetch, processLogs]);
 
   // Re-fetch logs when fetch callback changes.
   useEffect(() => {

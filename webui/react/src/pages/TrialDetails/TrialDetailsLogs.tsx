@@ -185,6 +185,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
       <Spinner conditionalRender spinning={!trial}>
         <LogViewer
           decoder={mapV1LogsResponse}
+          serverAddress={serverAddress}
           title={logFilters}
           onDownload={handleDownloadLogs}
           onFetch={handleFetch}

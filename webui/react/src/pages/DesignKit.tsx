@@ -43,6 +43,7 @@ import ResponsiveTable from 'components/Table/ResponsiveTable';
 import ThemeToggle from 'components/ThemeToggle';
 import { drawPointsPlugin } from 'components/UPlot/UPlotChart/drawPointsPlugin';
 import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin';
+import { serverAddress } from 'routes/utils';
 import { V1LogLevel } from 'services/api-ts-sdk';
 import { mapV1LogsResponse } from 'services/decoder';
 import useUI from 'shared/contexts/stores/UI';
@@ -1544,7 +1545,7 @@ const LogViewerSection: React.FC = () => {
       <AntDCard title="Usage">
         <strong>LogViewer default</strong>
         <div style={{ height: '300px' }}>
-          <LogViewer decoder={mapV1LogsResponse} initialLogs={sampleLogs} sortKey="id" />
+          <LogViewer decoder={mapV1LogsResponse} initialLogs={sampleLogs} serverAddress={serverAddress} sortKey="id" />
         </div>
         <strong>Considerations</strong>
         <ul>

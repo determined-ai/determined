@@ -1,11 +1,11 @@
 import { isObject } from 'components/kit/utils/functions';
 import { FetchArgs } from 'components/kit/utils/types';
-import { serverAddress } from 'routes/utils';
 import { DetError } from 'shared/utils/error';
 import { processApiError } from 'shared/utils/service';
 import handleError from 'utils/error';
 
 export const readStream = async <T = unknown>(
+  serverAddress: (path: string) => string,
   fetchArgs: FetchArgs,
   onEvent?: (event: T) => void,
   onError?: (e?: Error) => void,
