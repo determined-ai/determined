@@ -3,8 +3,6 @@ import os
 import re
 import tempfile
 from typing import Dict, List, Optional, Union
-import fnmatch
-import pathlib
 
 import requests
 
@@ -158,7 +156,7 @@ class S3StorageManager(storage.CloudStorageManager):
         objects = {obj.key: obj.size for obj in self.bucket.objects.filter(Prefix=prefix)}
 
         resources = {}
-        if "**/*" not in globs: # Partial delete case.
+        if "**/*" not in globs:  # Partial delete case.
             prefixed_resources = self._apply_globs_to_resources(objects, prefix, globs)
             for obj in list(objects):
                 if obj in prefixed_resources:

@@ -1,15 +1,15 @@
 import abc
 import contextlib
 import copy
+import glob
 import os
 import pathlib
 import urllib
 import uuid
-import glob
 from typing import Any, Callable, Dict, Iterator, List, Optional, Set, Union
 
-from determined.common import storage
 from determined import util
+from determined.common import storage
 
 # Paths should be a set of paths relative to the checkpoint root that indicate what paths
 # should be uploaded. A directory should always appear in Paths if any subpath under that directory
@@ -21,6 +21,7 @@ Paths = Set[str]
 # path should be downloaded. For every path selected, all parent directories are also
 # selected (even if the selector returns False for them).
 Selector = Callable[[str], bool]
+
 
 class StorageManager(metaclass=abc.ABCMeta):
     """
@@ -168,14 +169,16 @@ class StorageManager(metaclass=abc.ABCMeta):
 
     @staticmethod
     def _apply_globs_to_resources(
-            file_paths_to_sizes: Dict[str, int], prefix: str, globs: List[str],
+        file_paths_to_sizes: Dict[str, int],
+        prefix: str,
+        globs: List[str],
     ) -> Dict[str, int]:
-        '''
+        """
         Returns remaining resources after glob has been applied. This is mostly a hack to
         handle weird differences between glob.glob, fmatch.match, and pathlib.match.
         We create a checkpoint path with empty files to all be able to use glob.glob across
         all storage backends.
-        '''
+        """
         file_paths_to_sizes = copy.deepcopy(file_paths_to_sizes)
 
         # Create dummy file system.
@@ -185,7 +188,7 @@ class StorageManager(metaclass=abc.ABCMeta):
             for f in file_paths_to_sizes:
                 path = temp_dir.joinpath(f)
                 path.parent.mkdir(parents=True, exist_ok=True)
-                if f.endswith("/"): # path.is_dir() will return false always.
+                if f.endswith("/"):  # path.is_dir() will return false always.
                     path.mkdir(exist_ok=True)
                 else:
                     path.touch()
@@ -195,16 +198,16 @@ class StorageManager(metaclass=abc.ABCMeta):
             to_delete_dirs = {}
             to_delete_files = {}
             for g in globs:
-                for path in glob.glob(f"{temp_dir.joinpath(prefix)}/{g}", recursive=True):
-                    if os.path.isfile(path):
-                        to_delete_files[path] = True
-                    elif os.path.isdir(path):
-                        to_delete_dirs[path] = True
+                for path_str in glob.glob(f"{temp_dir.joinpath(prefix)}/{g}", recursive=True):
+                    if os.path.isfile(path_str):
+                        to_delete_files[path_str] = True
+                    elif os.path.isdir(path_str):
+                        to_delete_dirs[path_str] = True
 
-            for path in to_delete_files:
-                os.remove(path)
-            for path in to_delete_dirs:
-                util.rmtree_nfs_safe(path, ignore_errors=False)
+            for path_str in to_delete_files:
+                os.remove(path_str)
+            for path_str in to_delete_dirs:
+                util.rmtree_nfs_safe(path_str, ignore_errors=False)
 
             prefixed_resources = StorageManager._list_directory(temp_dir)
             for file_path in list(file_paths_to_sizes):
@@ -239,4 +242,3 @@ def from_string(shortcut: str) -> StorageManager:
             f'Could not understand storage manager scheme "{p.scheme}". Use "gs", "s3", "file", '
             "or omit it."
         )
-
