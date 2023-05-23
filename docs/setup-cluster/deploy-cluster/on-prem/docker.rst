@@ -144,20 +144,20 @@ To start an agent container with environment variables instead of a configuratio
        -e DET_MASTER_PORT=8080 \
        determinedai/determined-agent:VERSION
 
-**Agents and Master on Different Machines**
+.. note::
 
-If your agents and master are on different machines, the Determined master hostname or IP address
-should be set to a value that allows your agent machines to connect to the master machine.
+   **Agents and Master on Different Machines**: If your agents and master are on different machines,
+   the Determined master hostname or IP address should be set to a value that allows your agent
+   machines to connect to the master machine.
 
-**Agents and Master on the Same Machine**
-
-If your agents and master are on the same machine, using ``127.0.0.1`` typically will not work
-unless both the master and agent containers were started with ``--network host``. If the ``--network
-host`` option is used, you must also configure workload containers to use ``host`` network mode, as
-described :ref:`below <network-host>`. Alternatively, if the master machine has a static IP address
-from your router, you can use that. They key is ensuring that the master machine can be reliably
-addressed from both inside and outside of Docker containers (because the Fluent Bit container will
-always use host networking).
+   **Agents and Master on the Same Machine**: If your agents and master are on the same machine,
+   using ``127.0.0.1`` typically will not work unless both the master and agent containers were
+   started with ``--network host``. If the ``--network host`` option is used, you must also
+   configure workload containers to use ``host`` network mode, as described :ref:`below
+   <network-host>`. Alternatively, if the master machine has a static IP address from your router,
+   you can use that. They key is ensuring that the master machine can be reliably addressed from
+   both inside and outside of Docker containers (because the Fluent Bit container will always use
+   host networking).
 
 Determined uses `Fluent Bit <https://fluentbit.io>`__ internally. The agent uses the
 ``fluent/fluent-bit:1.9.3`` Docker image at runtime and will attempt to pull this image

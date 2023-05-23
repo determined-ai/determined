@@ -152,29 +152,27 @@ Install the Determined Master and Agent
  Configure and Start the Cluster
 *********************************
 
-.. important::
-
-   Ensure that an instance of PostgreSQL is running and accessible from the machine where the
+#. Ensure that an instance of PostgreSQL is running and accessible from the machine where the
    Determined master will run.
 
--  Edit the :ref:`YAML configuration files <topic-guides_yaml>` at ``/etc/determined/master.yaml``
+#. Edit the :ref:`YAML configuration files <topic-guides_yaml>` at ``/etc/determined/master.yaml``
    (for the master) and ``/etc/determined/agent.yaml`` (for each agent) as appropriate for your
    setup.
 
-.. important::
+   .. important::
 
-   Ensure that the user, password, and database name correspond to your PostgreSQL configuration.
+      Ensure that the user, password, and database name correspond to your PostgreSQL configuration.
 
-.. code::
+   .. code::
 
-   db:
-     host: <PostgreSQL server IP or hostname, e.g., 127.0.0.1 if running on the master>
-     port: <PostgreSQL port, e.g., 5432 by default>
-     name: <Database name, e.g., determined>
-     user: <PostgreSQL user, e.g., postgres>
-     password: <Database password>
+      db:
+        host: <PostgreSQL server IP or hostname, e.g., 127.0.0.1 if running on the master>
+        port: <PostgreSQL port, e.g., 5432 by default>
+        name: <Database name, e.g., determined>
+        user: <PostgreSQL user, e.g., postgres>
+        password: <Database password>
 
--  Start the master by typing the following command:
+#. Start the master by typing the following command:
 
    .. code::
 
@@ -186,13 +184,13 @@ Install the Determined Master and Agent
       useful when experimenting with Determined such as when you want to quickly test different
       configuration options before writing them to the configuration file.
 
--  Optionally, configure the master to start on boot.
+#. Optionally, configure the master to start on boot.
 
    .. code::
 
       sudo systemctl enable determined-master
 
--  Verify that the master started successfully by viewing the log.
+#. Verify that the master started successfully by viewing the log.
 
    .. code::
 
@@ -204,7 +202,7 @@ Install the Determined Master and Agent
    your web browser (or ``https://<master>:8443`` if TLS is enabled). You should see ``No Agents``
    on the right-hand side of the top navigation bar.
 
--  Start the agent on each agent machine.
+#. Start the agent on each agent machine.
 
    .. code::
 
@@ -212,13 +210,13 @@ Install the Determined Master and Agent
 
    Similarly, the agent can be run with the command ``determined-agent``.
 
--  Optionally, configure the agent to start on boot.
+#. Optionally, configure the agent to start on boot.
 
    .. code::
 
       sudo systemctl enable determined-agent
 
--  Verify that each agent started successfully by viewing the log.
+#. Verify that each agent started successfully by viewing the log.
 
    .. code::
 
