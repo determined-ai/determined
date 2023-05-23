@@ -70,14 +70,19 @@ def test_completed_experiment_and_checkpoint_apis(client: _client.Determined) ->
     # Adding checkpoint metadata.
     ckpt.add_metadata({"newkey": "newvalue"})
     # Cache should be updated.
+    assert ckpt.metadata
     assert ckpt.metadata["newkey"] == "newvalue"
     # Database should be updated.
-    assert client.get_checkpoint(ckpt.uuid).metadata["newkey"] == "newvalue"
+    ckpt = client.get_checkpoint(ckpt.uuid)
+    assert ckpt.metadata
+    assert ckpt.metadata["newkey"] == "newvalue"
 
     # Removing checkpoint metadata
     ckpt.remove_metadata(["newkey"])
     assert "newkey" not in ckpt.metadata
-    assert "newkey" not in client.get_checkpoint(ckpt.uuid).metadata
+    ckpt = client.get_checkpoint(ckpt.uuid)
+    assert ckpt.metadata
+    assert "newkey" not in ckpt.metadata
 
 
 @pytest.mark.e2e_cpu
@@ -114,7 +119,10 @@ def test_checkpoint_apis(client: _client.Determined) -> None:
     checkpoints = trial.get_checkpoints(
         sort_by=_client.CheckpointSortBy.STATE, order_by=_client.CheckpointOrderBy.ASC
     )
-    states = [checkpoint.state.value for checkpoint in checkpoints]
+    states = []
+    for checkpoint in checkpoints:
+        assert checkpoint.state
+        states.append(checkpoint.state.value)
     assert all(x <= y for x, y in zip(states, states[1:]))
 
     # Validate UUID sorting.
@@ -128,7 +136,10 @@ def test_checkpoint_apis(client: _client.Determined) -> None:
     checkpoints = trial.get_checkpoints(
         sort_by=_client.CheckpointSortBy.BATCH_NUMBER, order_by=_client.CheckpointOrderBy.DESC
     )
-    batch_numbers = [checkpoint.metadata["steps_completed"] for checkpoint in checkpoints]
+    batch_numbers = []
+    for checkpoint in checkpoints:
+        assert checkpoint.metadata
+        batch_numbers.append(checkpoint.metadata["steps_completed"])
     assert all(x >= y for x, y in zip(batch_numbers, batch_numbers[1:]))
 
     # Validate metric sorting.
@@ -311,6 +322,7 @@ def test_models(client: _client.Determined) -> None:
 
         # avoid false-positives due to caching on the model object itself
         model = client.get_model(model_name)
+        assert model.labels
         assert set(model.labels) == set(labels)
         assert model.metadata == {"a": 1, "b": 2, "c": 3}, model.metadata
         assert model.description == "modeldescr", model.description
