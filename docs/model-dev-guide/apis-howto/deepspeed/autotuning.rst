@@ -235,19 +235,19 @@ General Options
 
 The following options are available for every search method.
 
--  ``--max-trials``: The maximum total number of trials to run. Default: ``50``.
+-  ``--max-trials``: The maximum number of trials to run. Default: ``50``.
 
--  ``--max-concurrent-trials``: The maximum total number of trials that can run concurrently.
-   Default: ``16``.
+-  ``--max-concurrent-trials``: The maximum number of trials that can run concurrently. Default:
+   ``16``.
 
--  ``--max-slots``: The maximum total number of slots that can run concurrently. Defaults to
-   ``None``, i.e., there is no limit by default.
+-  ``--max-slots``: The maximum number of slots that can be used concurrently. Defaults to ``None``,
+   i.e., there is no limit by default.
 
--  ``--metric``: specifies the metric to be optimized. Defaults to ``FLOPS-per-gpu``. Other
-   available options are ``throughput``, ``forward``, ``backward``, and ``latency``.
+-  ``--metric``: The metric to be optimized. Defaults to ``FLOPS-per-gpu``. Other available options
+   are ``throughput``, ``forward``, ``backward``, and ``latency``.
 
--  ``--run-full-experiment``: When this flag is specified, after every ``dsat`` Trial has completed,
-   a single-Trial experiment will be launched using the specifications in the ``deepspeed.yaml``
+-  ``--run-full-experiment``: If specified, after the ``dsat`` experiment has completed, a
+   ``single`` experiment will be launched using the specifications in the ``deepspeed.yaml``
    overwritten with the best-found DS configuration parameters.
 
 -  ``--zero-stages``: This flag allows the user to limit the search to a subset of the stages by
@@ -261,7 +261,7 @@ The following options are available for every search method.
 The ``asha`` search algorithm randomly generates various DeepSpeed configurations and attempts to
 tune the batch size for each such configuration through a binary search. ``asha`` adaptively
 allocates resources to explore each configuration (providing more resources to promising lineages)
-where the resource is the number of steps taken in each binary search (i.e., the number of trials). 
+where the resource is the number of steps taken in each binary search (i.e., the number of trials).
 
 ``asha`` can be configured with the following flags:
 
