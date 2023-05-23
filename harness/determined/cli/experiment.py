@@ -673,8 +673,7 @@ def kill_experiment(args: Namespace) -> None:
 @authentication.required
 def wait(args: Namespace) -> None:
     sess = cli.setup_session(args)
-    resp = bindings.get_GetExperiment(session=sess, experimentId=args.experiment_id)
-    exp = client.Experiment._from_bindings(resp.experiment, sess)
+    exp = client.Experiment(args.experiment_id, sess)
     state = exp.wait(interval=args.polling_interval)
     if state != client.ExperimentState.COMPLETED:
         sys.exit(1)

@@ -1,4 +1,6 @@
 import dataclasses
+import json
+import pathlib
 import unittest.mock
 
 import pytest
@@ -90,14 +92,14 @@ def test_wait_returns_error_code_when_experiment_errors(
 ) -> None:
     auth_mock.return_value = mock_det_auth()
 
-    exp = api_server.sample_get_experiment().experiment
+    with open(pathlib.Path(__file__).parent.parent / "fixtures" / "experiment_flaky.json") as f:
+        exp = bindings.v1GetExperimentResponse.from_json(json.load(f))
     args = CliArgs(master="http://localhost:8888", experiment_id=1)
-
-    exp.state = bindings.experimentv1State.ERROR
+    exp.experiment.state = bindings.experimentv1State.ERROR
     requests_mock.get(
         f"/api/v1/experiments/{args.experiment_id}",
         status_code=200,
-        json={"experiment": exp.to_json()},
+        json=exp.to_json(),
     )
     with pytest.raises(SystemExit) as e:
         determined.cli.experiment.wait(args)
