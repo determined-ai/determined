@@ -968,10 +968,13 @@ func (a *Allocation) terminated(ctx *actor.Context, reason string) {
 	if a.exitErr != nil {
 		level = ptrs.Ptr(model.LogLevelError)
 	}
-	defer a.sendTaskLog(ctx, a.enrichLog(model.TaskLog{
-		Level: level,
-		Log:   fmt.Sprintf("%s was terminated: %s", a.req.Name, exitReason),
-	}))
+	defer func() {
+		a.sendTaskLog(ctx, a.enrichLog(model.TaskLog{
+			Level: level,
+			Log:   fmt.Sprintf("%s was terminated: %s", a.req.Name, exitReason),
+		}))
+	}()
+
 	if err := a.purgeRestorableResources(ctx); err != nil {
 		ctx.Log().WithError(err).Error("failed to purge restorable resources")
 	}

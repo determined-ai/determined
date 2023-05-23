@@ -147,12 +147,12 @@ def test_master_restart_error_missing_docker_container(
 
         expected_message = (
             (
-                "allocation terminated after agent failed while the "
+                "allocation failed due to agent failure: agent failed while the "
                 + "container was running: agent closed with allocated containers"
             )
             if wait_for_amnesia
             else (
-                "allocation terminated after RM failed "
+                "allocation failed due to restore error: RM failed "
                 + "to restore the allocation: container is gone on reattachment"
             )
         )
