@@ -71,7 +71,7 @@ class SearcherState:
 
 class ExitedReason(Enum):
     """
-    The reason why a trial exitted early
+    The reason why a trial exited early
 
     Currently, we support the following reasons:
 
@@ -229,12 +229,34 @@ class SearchMethod:
     def initial_operations(self, searcher_state: SearcherState) -> List[Operation]:
         """
         Returns a list of initial operations that the custom hyperparameter search should
-        perform. This is called by Custom Search :class:`determined.searcher.SearchRunner`
+        perform. This is called by Custom Search :class:`~SearchRunner`
         to initialize the trials
+
+        Example:
+
+        .. code:: python
+
+            def initial_operations(self, _: searcher.SearcherState) -> List[searcher.Operation]:
+                ops: List[searcher.Operation] = []
+                N = 100
+                hparams = {
+                    # ...
+                }
+                for _ in range(0, N):
+                    create = searcher.Create(
+                        request_id=uuid.uuid4(),
+                        hparams=hparams,
+                        checkpoint=None,
+                    )
+                    ops.append(create)
+                return ops
 
         Args:
             searcher_state(:class:`~SearcherState`): Read-only current searcher state
 
+        Returns:
+            List[Operation]: Initial list of :class:`~Operation` to start the Hyperparameter
+            search
         """
         pass
 
@@ -245,6 +267,30 @@ class SearchMethod:
         """
         Informs the searcher that a trial has been created
         as a result of Create operation.
+
+        Example:
+
+        .. code:: python
+
+            def on_trial_created(
+                self, _: SearcherState, request_id: uuid.UUID
+            ) -> List[Operation]:
+                return [
+                    searcher.ValidateAfter(
+                        request_id=request_id,
+                        length=1,  # Run for one unit of time (epoch, etc.)
+                    )
+                ]
+
+        In this example, we are choosing to deterministically train for one unit of time
+
+        Args:
+            searcher_state(:class:`~SearcherState`): Read-only current searcher state
+            request_id (uuid.UUID): Request UUID of the Trial that was created
+
+        Returns:
+            List[Operation]: List of :class:`~Operation` to run upon creation of the given
+            trial
         """
         pass
 
@@ -253,9 +299,43 @@ class SearchMethod:
         self, searcher_state: SearcherState, request_id: uuid.UUID, metric: Any, train_length: int
     ) -> List[Operation]:
         """
-        Informs the searcher that the validation workload
-        initiated by the same searcher has completed after training for ``train_length`` units.
-        It returns any new operations as a result of this workload completing.
+        Informs the searcher that the validation workload has completed after training for
+        ``train_length`` units. It returns any new operations as a result of this workload
+        completing
+
+        Example:
+
+        .. code:: python
+
+            def on_validation_completed(
+                self,
+                searcher_state: SearcherState,
+                request_id: uuid.UUID,
+                metric: Any,
+                train_length: int
+            ) -> List[Operation]:
+                MAX_TRAIN_LENGTH = 10  # Best defined in __init__
+                if not searcher_state.experiment_completed \\
+                        and not searcher_state.experiment_failed \\
+                        and train_length < MAX_TRAIN_LENGTH:
+                    return [
+                        searcher.ValidateAfter(
+                            request_id=request_id,
+                            length=train_length + 1,  # Run an additional unit of time
+                        )
+                    ]
+                return [searcher.Close(request_id=request_id)]
+
+        Args:
+            searcher_state (SearcherState): Read-only current searcher state
+            request_id (uuid.UUID): Request UUID of the Trial that was trained
+            metric (Any): Metric data returned by the trial
+            train_length (int): The cumulative units of time that that trial has finished
+                training for (epochs, etc.)
+
+        Returns:
+            List[Operation]: List of :class:`~Operation` to run upon completion of training for
+            the given trial
         """
         pass
 
@@ -264,8 +344,38 @@ class SearchMethod:
         self, searcher_state: SearcherState, request_id: uuid.UUID
     ) -> List[Operation]:
         """
-        Informs the searcher that a trial has been closed as a result of a Close
-        operation.
+        Informs the searcher that a trial has been closed as a result of a :class:`~Close`
+
+        Example:
+
+        .. code:: python
+
+            def on_trial_closed(
+                self, searcher_state: SearcherState, request_id: uuid.UUID
+            ) -> List[Operation]:
+                MAX_NUM_TRIALS = 200  # Best defined in __init__
+                if searcher_state.trials_created < MAX_NUM_TRIALS:
+                    hparams = {
+                        # ...
+                    }
+                    return [
+                        searcher.Create(
+                            request_id=uuid.uuid4(),
+                            hparams=hparams,
+                            checkpoint=None,
+                        )
+                    ]
+                if searcher_state.trials_closed >= MAX_NUM_TRIALS:
+                    return [searcher.Shutdown(failure=searcher_state.experiment_failed)]
+                return []
+
+        Args:
+            searcher_state (SearcherState): Read-only current searcher state
+            request_id (uuid.UUID): Request UUID of the Trial that was closed
+
+        Returns:
+            List[Operation]: List of :class:`~Operation` to run after closing the given
+            trial
         """
         pass
 
@@ -273,6 +383,21 @@ class SearchMethod:
     def progress(self, searcher_state: SearcherState) -> float:
         """
         Returns experiment progress as a float between 0 and 1.
+
+        Example:
+
+        .. code:: python
+
+            def progress(self, searcher_state: SearcherState) -> float:
+                MAX_NUM_TRIALS = 200  # Best defined in __init__
+                assert(MAX_NUM_TRIALS != 0)
+                return searcher_state.trials_closed / float(MAX_NUM_TRIALS)
+
+        Args:
+            searcher_state (SearcherState): Read-only current searcher state
+
+        Returns:
+            float: Experiment progress as a float between 0 and 1.
         """
         pass
 
@@ -285,6 +410,39 @@ class SearchMethod:
     ) -> List[Operation]:
         """
         Informs the searcher that a trial has exited earlier than expected.
+
+        Example:
+
+        .. code:: python
+
+            def on_trial_exited_early(
+                self,
+                searcher_state: SearcherState,
+                request_id: uuid.UUID,
+                exited_reason: ExitedReason,
+            ) -> List[Operation]:
+                MAX_FAILURES = 10  # Best defined in __init__
+                if exited_reason == searcher.ExitedReason.USER_CANCELED:
+                    return [searcher.Shutdown(cancel=True)]
+                if exited_reason == searcher.ExitedReason.INVALID_HP:
+                    return [searcher.Shutdown(failure=True)]
+                if searcher_state.failures >= MAX_FAILURES:
+                    return [searcher.Shutdown(failure=True)]
+                return []
+
+        .. note::
+
+            The trial has already been internally closed when this callback is run.
+            You do not need to explicitly issue a :class:`~Close` operation
+
+        Args:
+            searcher_state (SearcherState): Read-only current searcher state
+            request_id (uuid.UUID): Request UUID of the Trial that exited early
+            exited_reason (ExitedReason): The reason that the trial exited early
+
+        Returns:
+            List[Operation]: List of :class:`~Operation` to run in response to the given
+            trial exiting early
         """
         pass
 
