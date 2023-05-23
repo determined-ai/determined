@@ -12,6 +12,7 @@ import { useSettings } from 'hooks/useSettings';
 import { getProjectColumns, searchExperiments } from 'services/api';
 import { V1BulkExperimentFilters } from 'services/api-ts-sdk';
 import usePolling from 'shared/hooks/usePolling';
+import { getCssVar } from 'shared/themes';
 import {
   ExperimentAction,
   ExperimentItem,
@@ -22,8 +23,6 @@ import {
 } from 'types';
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
-
-import { getCssVar } from '../../shared/themes';
 
 import css from './F_ExperimentList.module.scss';
 import { F_ExperimentListSettings, settingsConfigForProject } from './F_ExperimentList.settings';
@@ -127,9 +126,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const [canceler] = useState(new AbortController());
 
   const colorMap = useGlasbey(selectedExperimentIds);
-  const pageRef = useRef<HTMLElement>(null);
-  const { width } = useResize(pageRef);
-  const { height: contentHeight } = useResize(contentRef);
+  const { height, width } = useResize(contentRef);
   const [scrollPositionSetCount] = useState(observable(0));
 
   const handleScroll = useCallback(
@@ -375,7 +372,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
             formStore={formStore}
             handleScroll={handleScroll}
             handleUpdateExperimentList={handleUpdateExperimentList}
-            height={contentHeight - 2 * parseInt(getCssVar('--theme-stroke-width'))}
+            height={height - 2 * parseInt(getCssVar('--theme-stroke-width'))}
             page={page}
             project={project}
             projectColumns={projectColumns}
