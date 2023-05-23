@@ -95,6 +95,18 @@ class AzureStorageManager(storage.CloudStorageManager):
         storage_prefix = tgt
         logging.info(f"Deleting {tgt} from Azure Blob Storage")
 
-        files = self.client.list_files(self.container, file_prefix=storage_prefix)
-        self.client.delete_files(self.container, files)
-        return {}  # TODO
+        objects = self.client.list_files(self.container, file_prefix=storage_prefix)
+
+        resources = {}
+        if "**/*" not in globs: # Partial delete case.
+            prefixed_resources = self._apply_globs_to_resources(objects, storage_prefix, globs)
+            for obj in list(objects):
+                if obj in prefixed_resources:
+                    resources[obj.replace(f"{storage_prefix}/", "")] = objects[obj]
+                    del objects[obj]
+
+        self.client.delete_files(self.container, list(objects))
+
+        if "metadata.json" in resources:
+            del resources["metadata.json"]
+        return resources
