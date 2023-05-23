@@ -284,7 +284,7 @@ const WorkspaceDetails: React.FC = () => {
       containerRef={pageRef}
       id="workspaceDetails"
       key={workspaceId}
-      menuItems={menu}
+      menuItems={menu.length > 0 ? menu : undefined}
       onClickMenu={onClick}>
       <Pivot
         activeKey={tabKey}

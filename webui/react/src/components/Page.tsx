@@ -32,7 +32,6 @@ export interface Props {
   onClickMenu?: (key: string) => void;
   options?: React.ReactNode;
   stickyHeader?: boolean;
-  subTitle?: React.ReactNode;
   title?: string;
   menuItems?: MenuItem[];
 }

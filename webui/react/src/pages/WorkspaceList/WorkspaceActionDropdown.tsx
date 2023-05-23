@@ -118,7 +118,7 @@ export const useWorkspaceActionMenu: (props: WorkspaceMenuPropsIn) => WorkspaceM
 
   const menuItems: MenuItem[] = [];
 
-  if (workspace) {
+  if (workspace && !workspace.immutable) {
     menuItems.push({
       key: MenuKey.SwitchPin,
       label: workspace.pinned ? 'Unpin from sidebar' : 'Pin to sidebar',

@@ -98,7 +98,7 @@ export const useProjectActionMenu: (props: ProjectMenuPropsIn) => ProjectMenuPro
   } as const;
 
   const items: MenuItem[] = [];
-  if (project) {
+  if (project && !project.immutable) {
     if (
       canModifyProjects({ project, workspace: { id: project.workspaceId } }) &&
       !project.archived

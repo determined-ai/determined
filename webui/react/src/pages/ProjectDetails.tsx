@@ -183,7 +183,7 @@ const ProjectDetails: React.FC = () => {
       // for docTitle, when id is 1 that means Uncategorized from webui/react/src/routes/routes.ts
       docTitle={id === 1 ? 'Uncategorized Experiments' : 'Project Details'}
       id="projectDetails"
-      menuItems={menu}
+      menuItems={menu.length > 0 ? menu : undefined}
       noScroll
       onClickMenu={onClick}>
       <DynamicTabs
