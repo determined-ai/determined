@@ -1,7 +1,7 @@
 # type: ignore
 import os
 from pathlib import Path
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Dict, Optional, List
 
 import pytest
 import tensorflow as tf
@@ -509,3 +509,75 @@ def test_surface_native_error():
     )
     with pytest.raises(ValueError, match="incompatible"):
         controller.run()
+
+@pytest.mark.tensorflow
+def test_rng_restore(tmp_path: Path):
+
+    checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
+    latest_checkpoint = None
+    steps_completed = 0
+
+    def make_checkpoint() -> workload.Stream:
+        trainer = utils.TrainAndValidate()
+
+        yield from trainer.send(steps=1, validation_freq=1, scheduling_unit=1)
+
+        interceptor = workload.WorkloadResponseInterceptor()
+        yield from interceptor.send(workload.checkpoint_workload())
+        nonlocal latest_checkpoint, steps_completed
+        latest_checkpoint = interceptor.metrics_result()["uuid"]
+        steps_completed = trainer.get_steps_completed()
+
+    def make_workloads_with_metrics(metrics_storage: List) -> workload.Stream:
+        trainer = utils.TrainAndValidate()
+
+        yield from trainer.send(steps=5, validation_freq=1, scheduling_unit=1)
+        _, validation_metrics = trainer.result()
+
+        metrics_storage += validation_metrics
+
+    config_base = utils.load_config(utils.fixtures_path("keras_no_op/const.yaml"))
+    hparams = config_base["hyperparameters"]
+
+    example_path = utils.fixtures_path("keras_no_op/model_def.py")
+    trial_class = utils.import_class_from_module("NoopKerasTrial", example_path)
+    trial_class._searcher_metric = "validation_error"
+
+    trial_B_metrics = []
+    trial_C_metrics = []
+
+    trial_A_controller = utils.make_trial_controller_from_trial_implementation(
+        trial_class=trial_class,
+        hparams=hparams,
+        workloads=make_checkpoint(),
+        checkpoint_dir=checkpoint_dir,
+        trial_seed=325
+    )
+
+    trial_A_controller.run()
+
+
+    trial_B_controller = utils.make_trial_controller_from_trial_implementation(
+        trial_class=trial_class,
+        hparams=hparams,
+        workloads=make_workloads_with_metrics(trial_B_metrics),
+        checkpoint_dir=checkpoint_dir,
+        latest_checkpoint=latest_checkpoint,
+        steps_completed=steps_completed
+    )
+
+    trial_B_controller.run()
+
+    trial_C_controller = utils.make_trial_controller_from_trial_implementation(
+        trial_class=trial_class,
+        hparams=hparams,
+        workloads=make_workloads_with_metrics(trial_C_metrics),
+        checkpoint_dir=checkpoint_dir,
+        latest_checkpoint=latest_checkpoint,
+        steps_completed=steps_completed
+    )
+
+    trial_C_controller.run()
+
+    assert len(trial_B_metrics) == len(trial_C_metrics) == 5
+    assert trial_B_metrics == trial_C_metrics
