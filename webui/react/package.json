@@ -39,7 +39,7 @@
     "events": "^3.3.0",
     "fp-ts": "^2.13.1",
     "fuse.js": "^6.6.2",
-    "hermes-parallel-coordinates": "^0.6.6",
+    "hermes-parallel-coordinates": "^0.6.7",
     "humanize-duration": "^3.28.0",
     "immutable": "^4.3.0",
     "io-ts": "^2.2.20",
@@ -68,7 +68,8 @@
     "smoothscroll-polyfill": "^0.4.4",
     "sprintf-js": "^1.1.2",
     "throttle-debounce": "^5.0.0",
-    "uplot": "^1.6.18"
+    "uplot": "^1.6.18",
+    "uuid": "^9.0.0"
   },
   "browserslist": {
     "production": [
@@ -104,6 +105,7 @@
     "@types/smoothscroll-polyfill": "^0.3.1",
     "@types/sprintf-js": "^1.1.2",
     "@types/throttle-debounce": "^5.0.0",
+    "@types/uuid": "^9.0.1",
     "@typescript-eslint/eslint-plugin": "^5.55.0",
     "@typescript-eslint/parser": "^5.55.0",
     "@vitejs/plugin-react-swc": "^3.3.1",

@@ -23,6 +23,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 
 import { FilterFormStore, ROOT_ID } from 'components/FilterForm/components/FilterFormStore';
 import {
@@ -314,7 +315,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
           index: formStore.formset.get().filterGroup.children.length,
           item: {
             columnName: column.column,
-            id: crypto.randomUUID(),
+            id: uuidv4(),
             kind: FormKind.Field,
             location: column.location,
             operator: isSpecialColumn ? Operator.Eq : AvailableOperators[column.type][0],
@@ -548,9 +549,9 @@ export const GlideTable: React.FC<GlideTableProps> = ({
     [sortableColumnIds, setSortableColumnIds],
   );
 
-  const columns: DataEditorProps['columns'] = useMemo(
-    () =>
-      columnIds.map((columnName) => {
+  const columns: DataEditorProps['columns'] = useMemo(() => {
+    const gridColumns = columnIds
+      .map((columnName) => {
         if (columnName in columnDefs) return columnDefs[columnName];
         if (!Loadable.isLoaded(projectColumnsMap)) return;
         const currentColumn = projectColumnsMap.data[columnName];
@@ -600,9 +601,10 @@ export const GlideTable: React.FC<GlideTableProps> = ({
             );
         }
         return columnDefs[currentColumn.column];
-      }) as GridColumn[],
-    [columnIds, columnDefs, projectColumnsMap, columnWidths],
-  );
+      })
+      .flatMap((col) => (col ? [col] : []));
+    return gridColumns;
+  }, [columnIds, columnDefs, projectColumnsMap, columnWidths]);
 
   const verticalBorder: DataEditorProps['verticalBorder'] = useCallback(
     (col: number) => columnIds[col - 1] === STATIC_COLUMNS.last(),

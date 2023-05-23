@@ -4,7 +4,8 @@ interface to build a basic MNIST network. LightningAdapter utilizes the provided
 LightningModule with Determined's PyTorch control loop.
 """
 
-import gan
+import mnist
+
 from determined.pytorch import DataLoader, PyTorchTrialContext
 from determined.pytorch.lightning import LightningAdapter
 
@@ -12,11 +13,11 @@ from determined.pytorch.lightning import LightningAdapter
 class GANTrial(LightningAdapter):
     def __init__(self, context: PyTorchTrialContext) -> None:
         data_dir = f"/tmp/data-rank{context.distributed.get_rank()}"
-        self.dm = gan.MNISTDataModule(
+        self.dm = mnist.MNISTDataModule(
             context.get_data_config()["url"], data_dir, batch_size=context.get_per_slot_batch_size()
         )
         channels, width, height = self.dm.size()
-        lm = gan.GAN(
+        lm = mnist.GAN(
             channels,
             width,
             height,

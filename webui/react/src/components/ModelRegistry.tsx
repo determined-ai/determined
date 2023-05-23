@@ -22,7 +22,6 @@ import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
 import ModelCreateModal from 'components/ModelCreateModal';
 import ModelMoveModal from 'components/ModelMoveModal';
-import Page from 'components/Page';
 import InteractiveTable, {
   ColumnDef,
   onRightClickableCell,
@@ -680,10 +679,8 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
   );
 
   return (
-    <Page
-      containerRef={pageRef}
-      id="models"
-      options={
+    <>
+      <div className={css.options}>
         <Space>
           <Toggle checked={settings.archived} label="Show Archived" onChange={switchShowArchived} />
           {filterCount > 0 && (
@@ -701,8 +698,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
             </Tooltip>
           )}
         </Space>
-      }
-      title="Model Registry">
+      </div>
       {models.length === 0 && !isLoading && filterCount === 0 ? (
         <Empty
           description={
@@ -742,7 +738,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
       <modelCreateModal.Component workspaceId={workspace?.id} />
       {model && <deleteModelModal.Component model={model} />}
       {model && <modelMoveModal.Component model={model} />}
-    </Page>
+    </>
   );
 };
 

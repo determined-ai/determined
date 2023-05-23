@@ -16,6 +16,7 @@ import WebhookCreateModalComponent from 'components/WebhookCreateModal';
 import WebhookDeleteModalComponent from 'components/WebhookDeleteModal';
 import usePermissions from 'hooks/usePermissions';
 import { useSettings } from 'hooks/useSettings';
+import { paths } from 'routes/utils';
 import { getWebhooks, testWebhook } from 'services/api';
 import { V1Trigger, V1TriggerType } from 'services/api-ts-sdk/api';
 import usePolling from 'shared/hooks/usePolling';
@@ -190,6 +191,12 @@ const WebhooksView: React.FC = () => {
 
   return (
     <Page
+      breadcrumb={[
+        {
+          breadcrumbName: 'Webhooks',
+          path: paths.webhooks(),
+        },
+      ]}
       containerRef={pageRef}
       id="webhooks"
       options={

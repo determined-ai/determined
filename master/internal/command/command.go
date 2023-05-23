@@ -210,10 +210,9 @@ func tryRestoreCommandsByType(
 
 // command is executed in a containerized environment on a Determined cluster.
 type command struct {
-	db          *db.PgDB
-	rm          rm.ResourceManager
-	eventStream *actor.Ref
-	taskLogger  *task.Logger
+	db         *db.PgDB
+	rm         rm.ResourceManager
+	taskLogger *task.Logger
 
 	tasks.GenericCommandSpec
 
@@ -265,15 +264,6 @@ func (c *command) Receive(ctx *actor.Context) error {
 			}
 		}
 
-		c.eventStream, _ = ctx.ActorOf("events", newEventManager(c.Config.Description))
-
-		var eventStreamConfig *sproto.EventStreamConfig
-		if c.eventStream != nil {
-			eventStreamConfig = &sproto.EventStreamConfig{
-				To: c.eventStream,
-			}
-		}
-
 		var idleWatcherConfig *sproto.IdleTimeoutConfig
 		if c.Config.IdleTimeout != nil && (c.WatchProxyIdleTimeout || c.WatchRunnerIdleTimeout) {
 			idleWatcherConfig = &sproto.IdleTimeoutConfig{
@@ -301,10 +291,9 @@ func (c *command) Receive(ctx *actor.Context) error {
 				SingleAgent: true,
 			},
 
-			StreamEvents: eventStreamConfig,
-			ProxyPorts:   sproto.NewProxyPortConfig(c.GenericCommandSpec.ProxyPorts(), c.taskID),
-			IdleTimeout:  idleWatcherConfig,
-			Restore:      c.restored,
+			ProxyPorts:  sproto.NewProxyPortConfig(c.GenericCommandSpec.ProxyPorts(), c.taskID),
+			IdleTimeout: idleWatcherConfig,
+			Restore:     c.restored,
 		}, c.db, c.rm, c.taskLogger)
 		c.allocation, _ = ctx.ActorOf(c.allocationID, allocation)
 

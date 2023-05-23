@@ -14,7 +14,6 @@ import TrialDetailsHyperparameters from 'pages/TrialDetails/TrialDetailsHyperpar
 import TrialDetailsLogs from 'pages/TrialDetails/TrialDetailsLogs';
 import TrialDetailsOverview from 'pages/TrialDetails/TrialDetailsOverview';
 import TrialDetailsProfiles from 'pages/TrialDetails/TrialDetailsProfiles';
-import TrialRangeHyperparameters from 'pages/TrialDetails/TrialRangeHyperparameters';
 import { paths } from 'routes/utils';
 import { getExperimentDetails, getTrialDetails } from 'services/api';
 import Message, { MessageType } from 'shared/components/Message';
@@ -23,9 +22,14 @@ import usePolling from 'shared/hooks/usePolling';
 import { ApiState, ValueOf } from 'shared/types';
 import { ErrorType } from 'shared/utils/error';
 import { isAborted, isNotFound } from 'shared/utils/service';
-import { ExperimentBase, TrialDetails } from 'types';
+import workspaceStore from 'stores/workspaces';
+import { ExperimentBase, TrialDetails, Workspace } from 'types';
 import handleError from 'utils/error';
 import { isSingleTrialExperiment } from 'utils/experiment';
+import { Loadable } from 'utils/loadable';
+import { useObservable } from 'utils/observable';
+
+import MultiTrialDetailsHyperparameters from './TrialDetails/MultiTrialDetailsHyperparameters';
 
 const TabType = {
   Hyperparameters: 'hyperparameters',
@@ -61,7 +65,7 @@ const TrialDetailsComp: React.FC = () => {
   });
   const pageRef = useRef<HTMLElement>(null);
   const chartFlagOn = useFeature().isOn('chart');
-
+  const workspaces = Loadable.getOrElse([], useObservable(workspaceStore.workspaces));
   const basePath = paths.trialDetails(trialId, experimentId);
   const trial = trialDetails.data;
 
@@ -143,7 +147,11 @@ const TrialDetailsComp: React.FC = () => {
         children: isSingleTrialExperiment(experiment) ? (
           <TrialDetailsHyperparameters pageRef={pageRef} trial={trial} />
         ) : (
-          <TrialRangeHyperparameters experiment={experiment} trial={trial} />
+          <MultiTrialDetailsHyperparameters
+            experiment={experiment}
+            pageRef={pageRef}
+            trial={trial}
+          />
         ),
         key: TabType.Hyperparameters,
         label: 'Hyperparameters',
@@ -201,8 +209,27 @@ const TrialDetailsComp: React.FC = () => {
     return <Spinner tip={`Fetching ${trial ? 'experiment' : 'trial'} information...`} />;
   }
 
+  const workspaceName = workspaces.find((ws: Workspace) => ws.id === experiment?.workspaceId)?.name;
+
   return (
     <Page
+      breadcrumb={[
+        {
+          breadcrumbName:
+            workspaceName && experiment?.workspaceId !== 1
+              ? workspaceName
+              : 'Uncategorized Experiments',
+          path: paths.workspaceDetails(experiment?.workspaceId ?? 1),
+        },
+        {
+          breadcrumbName: experiment?.name ?? '',
+          path: paths.experimentDetails(experiment.id),
+        },
+        {
+          breadcrumbName: String(trial.id),
+          path: paths.trialDetails(trial.id),
+        },
+      ]}
       containerRef={pageRef}
       headerComponent={
         <TrialDetailsHeader
@@ -221,6 +248,7 @@ const TrialDetailsComp: React.FC = () => {
         <Spinner spinning={isFetching}>
           <Pivot
             activeKey={tabKey}
+            destroyInactiveTabPane
             items={tabItems}
             tabBarExtraContent={
               <RoutePagination

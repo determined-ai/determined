@@ -8,7 +8,6 @@ import (
 	"crypto/rand"
 	"database/sql"
 	"fmt"
-	"io/ioutil"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -246,7 +245,7 @@ func RequireMockExperiment(t *testing.T, db *PgDB, user model.User) *model.Exper
 func ReadTestModelDefiniton(t *testing.T, folderPath string) []byte {
 	path, err := filepath.Abs(folderPath)
 	require.NoError(t, err)
-	files, err := ioutil.ReadDir(path)
+	files, err := os.ReadDir(path)
 	require.NoError(t, err)
 	var arcs []archive.Item
 	for _, file := range files {
@@ -255,9 +254,11 @@ func ReadTestModelDefiniton(t *testing.T, folderPath string) []byte {
 		}
 		name := file.Name()
 		var bytes []byte
-		bytes, err = ioutil.ReadFile(filepath.Join(path, name)) //nolint: gosec
+		bytes, err = os.ReadFile(filepath.Join(path, name)) //nolint: gosec
 		require.NoError(t, err)
-		arcs = append(arcs, archive.UserItem(name, bytes, tar.TypeReg, byte(file.Mode()), 0, 0))
+		info, err := file.Info()
+		require.NoError(t, err)
+		arcs = append(arcs, archive.UserItem(name, bytes, tar.TypeReg, byte(info.Mode()), 0, 0))
 	}
 	targz, err := archive.ToTarGz(archive.Archive(arcs))
 	require.NoError(t, err)

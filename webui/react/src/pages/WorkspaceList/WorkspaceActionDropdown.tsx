@@ -25,7 +25,7 @@ interface Props {
 interface WorkspaceMenuPropsIn {
   onComplete?: () => void;
   returnIndexOnDelete?: boolean;
-  workspace: Workspace;
+  workspace?: Workspace;
 }
 
 interface WorkspaceMenuPropsOut {
@@ -45,12 +45,16 @@ export const useWorkspaceActionMenu: (props: WorkspaceMenuPropsIn) => WorkspaceM
   const contextHolders = useMemo(() => {
     return (
       <>
-        <WorkspaceDeleteModal.Component
-          returnIndexOnDelete={returnIndexOnDelete}
-          workspace={workspace}
-          onClose={onComplete}
-        />
-        <WorkspaceEditModal.Component workspaceId={workspace.id} onClose={onComplete} />
+        {workspace && (
+          <>
+            <WorkspaceDeleteModal.Component
+              returnIndexOnDelete={returnIndexOnDelete}
+              workspace={workspace}
+              onClose={onComplete}
+            />
+            <WorkspaceEditModal.Component workspaceId={workspace.id} onClose={onComplete} />
+          </>
+        )}
       </>
     );
   }, [WorkspaceDeleteModal, WorkspaceEditModal, onComplete, workspace, returnIndexOnDelete]);
@@ -58,6 +62,7 @@ export const useWorkspaceActionMenu: (props: WorkspaceMenuPropsIn) => WorkspaceM
   const { canDeleteWorkspace, canModifyWorkspace } = usePermissions();
 
   const handleArchiveClick = useCallback(() => {
+    if (!workspace) return;
     if (workspace.archived) {
       workspaceStore
         .unarchiveWorkspace(workspace.id)
@@ -69,9 +74,11 @@ export const useWorkspaceActionMenu: (props: WorkspaceMenuPropsIn) => WorkspaceM
         .then(() => onComplete?.())
         .catch((e) => handleError(e, { publicSubject: 'Unable to archive workspace.' }));
     }
-  }, [onComplete, workspace.archived, workspace.id]);
+  }, [onComplete, workspace]);
 
   const handlePinClick = useCallback(() => {
+    if (!workspace) return;
+
     if (workspace.pinned) {
       workspaceStore
         .unpinWorkspace(workspace.id)
@@ -83,7 +90,7 @@ export const useWorkspaceActionMenu: (props: WorkspaceMenuPropsIn) => WorkspaceM
         .then(() => onComplete?.())
         .catch((e) => handleError(e, { publicSubject: 'Unable to pin workspace.' }));
     }
-  }, [onComplete, workspace.id, workspace.pinned]);
+  }, [onComplete, workspace]);
 
   const MenuKey = {
     Delete: 'delete',
@@ -109,25 +116,27 @@ export const useWorkspaceActionMenu: (props: WorkspaceMenuPropsIn) => WorkspaceM
     }
   };
 
-  const menuItems: MenuItem[] = [
-    {
+  const menuItems: MenuItem[] = [];
+
+  if (workspace && !workspace.immutable) {
+    menuItems.push({
       key: MenuKey.SwitchPin,
       label: workspace.pinned ? 'Unpin from sidebar' : 'Pin to sidebar',
-    },
-  ];
-
-  if (canModifyWorkspace({ workspace })) {
-    if (!workspace.archived) {
-      menuItems.push({ key: MenuKey.Edit, label: 'Edit...' });
-    }
-    menuItems.push({
-      key: MenuKey.SwitchArchived,
-      label: workspace.archived ? 'Unarchive' : 'Archive',
     });
-  }
-  if (canDeleteWorkspace({ workspace }) && workspace.numExperiments === 0) {
-    menuItems.push({ type: 'divider' });
-    menuItems.push({ danger: true, key: MenuKey.Delete, label: 'Delete...' });
+
+    if (canModifyWorkspace({ workspace })) {
+      if (!workspace.archived) {
+        menuItems.push({ key: MenuKey.Edit, label: 'Edit...' });
+      }
+      menuItems.push({
+        key: MenuKey.SwitchArchived,
+        label: workspace.archived ? 'Unarchive' : 'Archive',
+      });
+    }
+    if (canDeleteWorkspace({ workspace }) && workspace.numExperiments === 0) {
+      menuItems.push({ type: 'divider' });
+      menuItems.push({ danger: true, key: MenuKey.Delete, label: 'Delete...' });
+    }
   }
 
   return { contextHolders, menu: menuItems, onClick: handleDropdown };

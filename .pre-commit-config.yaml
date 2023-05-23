@@ -50,7 +50,6 @@ repos:
         require_serial: true
         language: python
 
-
   - repo: https://github.com/adrienverge/yamllint.git
     rev: v1.28.0
     hooks:
@@ -79,8 +78,15 @@ repos:
     rev: 3.9.2
     hooks:
       - id: flake8
-        exclude: ^(?!harness/).*|(harness/tests/experiment/fixtures/ancient-checkpoints/).*
-
+        files: ^(harness|e2e_tests)/.*
+        exclude: ^harness/tests/experiment/fixtures/ancient-checkpoints/.*
+  - repo: https://github.com/pycqa/isort
+    # Note: this should be kept in sync with the version in `requirements.txt`.
+    rev: 5.11.5
+    hooks:
+      - id: isort
+        name: isort (python)
+        exclude: ^examples/deepspeed/.*
 
   # - repo: https://github.com/jumanjihouse/pre-commit-hooks
   #   rev: 3.0.0

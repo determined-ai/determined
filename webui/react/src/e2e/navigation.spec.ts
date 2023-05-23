@@ -77,7 +77,7 @@ test.describe('Navigation', () => {
 
     await test.step('Navigate to Settings', async () => {
       await page.getByRole('navigation').getByText(USERNAME).click();
-      await page.getByRole('link', { name: 'Settings' }).click();
+      await page.getByRole('link', { exact: true, name: 'Settings' }).click();
       const expectedURL = /settings\/account/;
       await page.waitForURL(expectedURL);
       await expect.soft(page).toHaveTitle('Settings - Determined');

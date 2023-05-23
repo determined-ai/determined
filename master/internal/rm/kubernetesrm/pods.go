@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
 	"net/http"
+	"os"
 	"path/filepath"
 	"strconv"
 	"sync"
@@ -25,7 +25,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
-	"github.com/determined-ai/determined/master/pkg/actor/api"
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/device"
@@ -188,8 +187,6 @@ func Initialize(
 	check.Panic(check.True(ok, "pods address already taken"))
 	s.Ask(podsActor, actor.Ping{}).Get()
 
-	// We re-use the agents endpoint for the default resource manager.
-	e.Any("/agents", api.Route(s, podsActor))
 	return podsActor
 }
 
@@ -321,7 +318,7 @@ func readClientConfig(credsDir string) (*rest.Config, error) {
 	// create such a directory, with server, token, and ca.crt files.
 
 	//nolint:gosec // Yes, we intend to read from this file specified in the config.
-	server, err := ioutil.ReadFile(filepath.Join(credsDir, "server"))
+	server, err := os.ReadFile(filepath.Join(credsDir, "server"))
 	if err != nil {
 		return nil, err
 	}
@@ -330,7 +327,7 @@ func readClientConfig(credsDir string) (*rest.Config, error) {
 
 	tokenFile := filepath.Join(credsDir, "token")
 	//nolint:gosec // Yes, we intend to read from this file specified in the config.
-	token, err := ioutil.ReadFile(tokenFile)
+	token, err := os.ReadFile(tokenFile)
 	if err != nil {
 		return nil, err
 	}

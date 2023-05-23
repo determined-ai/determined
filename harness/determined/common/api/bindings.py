@@ -924,69 +924,53 @@ class v1AggregateQueueStats:
         return out
 
 class v1Allocation:
-    allocationId: "typing.Optional[str]" = None
     endTime: "typing.Optional[str]" = None
-    isReady: "typing.Optional[bool]" = None
     startTime: "typing.Optional[str]" = None
-    state: "typing.Optional[taskv1State]" = None
-    taskId: "typing.Optional[str]" = None
 
     def __init__(
         self,
         *,
-        allocationId: "typing.Union[str, None, Unset]" = _unset,
+        allocationId: str,
+        isReady: bool,
+        state: "taskv1State",
+        taskId: str,
         endTime: "typing.Union[str, None, Unset]" = _unset,
-        isReady: "typing.Union[bool, None, Unset]" = _unset,
         startTime: "typing.Union[str, None, Unset]" = _unset,
-        state: "typing.Union[taskv1State, None, Unset]" = _unset,
-        taskId: "typing.Union[str, None, Unset]" = _unset,
     ):
-        if not isinstance(allocationId, Unset):
-            self.allocationId = allocationId
+        self.allocationId = allocationId
+        self.isReady = isReady
+        self.state = state
+        self.taskId = taskId
         if not isinstance(endTime, Unset):
             self.endTime = endTime
-        if not isinstance(isReady, Unset):
-            self.isReady = isReady
         if not isinstance(startTime, Unset):
             self.startTime = startTime
-        if not isinstance(state, Unset):
-            self.state = state
-        if not isinstance(taskId, Unset):
-            self.taskId = taskId
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Allocation":
         kwargs: "typing.Dict[str, typing.Any]" = {
+            "allocationId": obj["allocationId"],
+            "isReady": obj["isReady"],
+            "state": taskv1State(obj["state"]),
+            "taskId": obj["taskId"],
         }
-        if "allocationId" in obj:
-            kwargs["allocationId"] = obj["allocationId"]
         if "endTime" in obj:
             kwargs["endTime"] = obj["endTime"]
-        if "isReady" in obj:
-            kwargs["isReady"] = obj["isReady"]
         if "startTime" in obj:
             kwargs["startTime"] = obj["startTime"]
-        if "state" in obj:
-            kwargs["state"] = taskv1State(obj["state"]) if obj["state"] is not None else None
-        if "taskId" in obj:
-            kwargs["taskId"] = obj["taskId"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
+            "allocationId": self.allocationId,
+            "isReady": self.isReady,
+            "state": self.state.value,
+            "taskId": self.taskId,
         }
-        if not omit_unset or "allocationId" in vars(self):
-            out["allocationId"] = self.allocationId
         if not omit_unset or "endTime" in vars(self):
             out["endTime"] = self.endTime
-        if not omit_unset or "isReady" in vars(self):
-            out["isReady"] = self.isReady
         if not omit_unset or "startTime" in vars(self):
             out["startTime"] = self.startTime
-        if not omit_unset or "state" in vars(self):
-            out["state"] = None if self.state is None else self.state.value
-        if not omit_unset or "taskId" in vars(self):
-            out["taskId"] = self.taskId
         return out
 
 class v1AllocationAllGatherRequest:
@@ -4892,29 +4876,25 @@ class v1GetSlotsResponse:
         return out
 
 class v1GetTaskResponse:
-    task: "typing.Optional[v1Task]" = None
 
     def __init__(
         self,
         *,
-        task: "typing.Union[v1Task, None, Unset]" = _unset,
+        task: "v1Task",
     ):
-        if not isinstance(task, Unset):
-            self.task = task
+        self.task = task
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetTaskResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
+            "task": v1Task.from_json(obj["task"]),
         }
-        if "task" in obj:
-            kwargs["task"] = v1Task.from_json(obj["task"]) if obj["task"] is not None else None
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
+            "task": self.task.to_json(omit_unset),
         }
-        if not omit_unset or "task" in vars(self):
-            out["task"] = None if self.task is None else self.task.to_json(omit_unset)
         return out
 
 class v1GetTasksResponse:
@@ -11262,45 +11242,45 @@ class v1SummarizeTrialResponse:
         return out
 
 class v1Task:
-    allocations: "typing.Optional[typing.Sequence[v1Allocation]]" = None
-    taskId: "typing.Optional[str]" = None
-    taskType: "typing.Optional[str]" = None
+    endTime: "typing.Optional[str]" = None
 
     def __init__(
         self,
         *,
-        allocations: "typing.Union[typing.Sequence[v1Allocation], None, Unset]" = _unset,
-        taskId: "typing.Union[str, None, Unset]" = _unset,
-        taskType: "typing.Union[str, None, Unset]" = _unset,
+        allocations: "typing.Sequence[v1Allocation]",
+        startTime: str,
+        taskId: str,
+        taskType: str,
+        endTime: "typing.Union[str, None, Unset]" = _unset,
     ):
-        if not isinstance(allocations, Unset):
-            self.allocations = allocations
-        if not isinstance(taskId, Unset):
-            self.taskId = taskId
-        if not isinstance(taskType, Unset):
-            self.taskType = taskType
+        self.allocations = allocations
+        self.startTime = startTime
+        self.taskId = taskId
+        self.taskType = taskType
+        if not isinstance(endTime, Unset):
+            self.endTime = endTime
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Task":
         kwargs: "typing.Dict[str, typing.Any]" = {
+            "allocations": [v1Allocation.from_json(x) for x in obj["allocations"]],
+            "startTime": obj["startTime"],
+            "taskId": obj["taskId"],
+            "taskType": obj["taskType"],
         }
-        if "allocations" in obj:
-            kwargs["allocations"] = [v1Allocation.from_json(x) for x in obj["allocations"]] if obj["allocations"] is not None else None
-        if "taskId" in obj:
-            kwargs["taskId"] = obj["taskId"]
-        if "taskType" in obj:
-            kwargs["taskType"] = obj["taskType"]
+        if "endTime" in obj:
+            kwargs["endTime"] = obj["endTime"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
+            "allocations": [x.to_json(omit_unset) for x in self.allocations],
+            "startTime": self.startTime,
+            "taskId": self.taskId,
+            "taskType": self.taskType,
         }
-        if not omit_unset or "allocations" in vars(self):
-            out["allocations"] = None if self.allocations is None else [x.to_json(omit_unset) for x in self.allocations]
-        if not omit_unset or "taskId" in vars(self):
-            out["taskId"] = self.taskId
-        if not omit_unset or "taskType" in vars(self):
-            out["taskType"] = self.taskType
+        if not omit_unset or "endTime" in vars(self):
+            out["endTime"] = self.endTime
         return out
 
 class v1TaskLogsFieldsResponse:

@@ -605,7 +605,6 @@ Resources:
       Engine: aurora-postgresql
       EngineMode: serverless
       DatabaseName: determined
-      DBClusterParameterGroupName: 'default.aurora-postgresql10'
       DBSubnetGroupName: !Ref DatabaseSubnetGroup
       MasterUsername: postgres
       MasterUserPassword: !Ref DBPassword
@@ -615,10 +614,9 @@ Resources:
       VpcSecurityGroupIds:
         - !GetAtt DatabaseSecurityGroup.GroupId
       ScalingConfiguration:
-        AutoPause: true
-        SecondsUntilAutoPause: 3600
+        AutoPause: false
         MinCapacity: 2
-        MaxCapacity: 8
+        MaxCapacity: 32
 
   LogGroup:
     Type: AWS::Logs::LogGroup

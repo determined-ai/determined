@@ -585,6 +585,10 @@ func (a *apiServer) GetExperiments(
 	}
 	if req.Archived != nil {
 		query = query.Where("e.archived = ?", req.Archived.Value)
+		if req.ProjectId == 0 && !req.Archived.Value {
+			query = query.Where("w.archived= ?", req.Archived.Value)
+			query = query.Where("p.archived= ?", req.Archived.Value)
+		}
 	}
 	if len(req.States) > 0 {
 		var allStates []string
@@ -2122,6 +2126,11 @@ func (a *apiServer) SearchExperiments(
 		}
 		experimentQuery = experimentQuery.WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
 			_, err = efr.toSQL(q)
+			return q
+		}).WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
+			if !efr.ShowArchived {
+				return q.Where(`e.archived = false`)
+			}
 			return q
 		})
 		if err != nil {

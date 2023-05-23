@@ -2,6 +2,7 @@ import { useObservable } from 'micro-observables';
 import React, { MutableRefObject } from 'react';
 import { Helmet } from 'react-helmet-async';
 
+import { MenuItem } from 'components/kit/Dropdown';
 import PageHeader from 'components/PageHeader';
 import PageNotFound from 'components/PageNotFound';
 import usePermissions from 'hooks/usePermissions';
@@ -18,7 +19,7 @@ export interface BreadCrumbRoute {
 
 export interface Props {
   bodyNoPadding?: boolean;
-  breadcrumb?: BreadCrumbRoute[];
+  breadcrumb: BreadCrumbRoute[];
   children?: React.ReactNode;
   containerRef?: MutableRefObject<HTMLElement | null>;
   docTitle?: string;
@@ -28,10 +29,11 @@ export interface Props {
   loading?: boolean;
   noScroll?: boolean;
   notFound?: boolean;
+  onClickMenu?: (key: string) => void;
   options?: React.ReactNode;
   stickyHeader?: boolean;
-  subTitle?: React.ReactNode;
   title?: string;
+  menuItems?: MenuItem[];
 }
 
 const getFullDocTitle = (branding: string, title?: string, clusterName?: string) => {
@@ -56,8 +58,6 @@ const Page: React.FC<Props> = (props: Props) => {
 
   const classes = [css.base];
 
-  const showHeader = !props.headerComponent && (!!props.breadcrumb || !!props.title);
-
   if (props.bodyNoPadding) classes.push(css.bodyNoPadding);
   if (props.stickyHeader) classes.push(css.stickyHeader);
   if (props.noScroll) classes.push(css.noScroll);
@@ -80,16 +80,14 @@ const Page: React.FC<Props> = (props: Props) => {
         <PageNotFound /> // hide until permissions are loaded
       ) : (
         <article className={classes.join(' ')} id={props.id} ref={props.containerRef}>
+          <PageHeader
+            breadcrumb={props.breadcrumb}
+            menuItems={props.menuItems}
+            options={props.options}
+            sticky={props.stickyHeader}
+            onClickMenu={props.onClickMenu}
+          />
           {props.headerComponent}
-          {showHeader && (
-            <PageHeader
-              breadcrumb={props.breadcrumb}
-              options={props.options}
-              sticky={props.stickyHeader}
-              subTitle={props.subTitle}
-              title={props.title}
-            />
-          )}
           <div className={css.body}>
             <Spinner spinning={!!props.loading}>{props.children}</Spinner>
           </div>

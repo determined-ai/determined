@@ -5,10 +5,9 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 import Json from 'components/Json';
 import Empty from 'components/kit/Empty';
-import Icon from 'components/kit/Icon';
 import Pivot from 'components/kit/Pivot';
 import Page from 'components/Page';
-import { PoolLogo, RenderAllocationBarResourcePool } from 'components/ResourcePoolCard';
+import { RenderAllocationBarResourcePool } from 'components/ResourcePoolCard';
 import Section from 'components/Section';
 import { V1SchedulerTypeToLabel } from 'constants/states';
 import { paths } from 'routes/utils';
@@ -132,7 +131,7 @@ const ResourcepoolDetailInner: React.FC = () => {
     delete mainSection.details;
     delete mainSection.stats;
     return (
-      <Page bodyNoPadding>
+      <>
         <Json alternateBackground json={mainSection} translateLabel={camelCaseToSentence} />
         {Object.keys(details).map((key) => (
           <Fragment key={key}>
@@ -141,7 +140,7 @@ const ResourcepoolDetailInner: React.FC = () => {
             <Json alternateBackground json={details[key]} translateLabel={camelCaseToSentence} />
           </Fragment>
         ))}
-      </Page>
+      </>
     );
   }, [pool]);
 
@@ -178,25 +177,21 @@ const ResourcepoolDetailInner: React.FC = () => {
 
   return (
     <Page
+      breadcrumb={[
+        { breadcrumbName: 'Cluster', path: paths.clusters() },
+        {
+          breadcrumbName: `${pool.name} (${V1SchedulerTypeToLabel[pool.schedulerType]}) ${
+            usage ? `- ${floatToPercent(usage)}` : ''
+          }`,
+          path: '',
+        },
+      ]}
       title={
         tabKey === TabType.Active || tabKey === TabType.Queued
           ? 'Job Queue by Resource Pool'
           : undefined
       }>
       <div className={css.poolDetailPage}>
-        <Section>
-          <div className={css.nav} onClick={() => navigate(paths.cluster(), { replace: true })}>
-            <Icon name="arrow-left" showTooltip size="tiny" title="Back to cluster" />
-            <div className={css.icon}>
-              <PoolLogo type={pool.type} />
-            </div>
-            <div>
-              {`${pool.name} (${V1SchedulerTypeToLabel[pool.schedulerType]}) ${
-                usage ? `- ${floatToPercent(usage)}` : ''
-              } `}
-            </div>
-          </div>
-        </Section>
         <Section>
           <RenderAllocationBarResourcePool
             poolStats={poolStats}
