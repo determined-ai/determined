@@ -1389,7 +1389,7 @@ func (a *apiServer) ReportTrialTrainingMetrics(
 ) (*apiv1.ReportTrialTrainingMetricsResponse, error) {
 	_, err := a.ReportTrialMetrics(ctx, &apiv1.ReportTrialMetricsRequest{
 		Metrics: req.TrainingMetrics,
-		Type:    "training",
+		Type:    model.TrainingMetricType.ToString(),
 	})
 	return &apiv1.ReportTrialTrainingMetricsResponse{}, err
 }
@@ -1399,7 +1399,7 @@ func (a *apiServer) ReportTrialValidationMetrics(
 ) (*apiv1.ReportTrialValidationMetricsResponse, error) {
 	_, err := a.ReportTrialMetrics(ctx, &apiv1.ReportTrialMetricsRequest{
 		Metrics: req.ValidationMetrics,
-		Type:    "validation",
+		Type:    model.ValidationMetricType.ToString(),
 	})
 	return &apiv1.ReportTrialValidationMetricsResponse{}, err
 }

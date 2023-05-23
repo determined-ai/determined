@@ -10,7 +10,8 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
 )
 
-// MetricPartitionType denotes what type the metric is.
+// MetricPartitionType denotes what type the metric is. This is planned to be deprecated
+// once we upgrade to pg11 and can use DEFAULT partitioning.
 type MetricPartitionType string
 
 const (
@@ -111,8 +112,6 @@ func (db *PgDB) AddTrialMetrics(
 	ctx context.Context, m *trialv1.TrialMetrics, mType string,
 ) error {
 	pType := customMetricTypeToPartitionType(mType)
-	// DISCUSS: should we avoid persisting type values for legacy metrics?
-	// or add them to be more consistent.
 	_, err := db.addTrialMetrics(ctx, m, pType, &mType)
 	return err
 }
@@ -122,7 +121,6 @@ func GetMetrics(ctx context.Context, trialID, afterBatches, limit int,
 	mType string,
 ) ([]*trialv1.MetricsReport, error) {
 	var res []*trialv1.MetricsReport
-	// TODO view on top of metrics table?
 	pType := customMetricTypeToPartitionType(mType)
 	query := Bun().NewSelect().Table("metrics").
 		Column("trial_id", "metrics", "total_batches", "archived", "id", "trial_run_id").
@@ -135,7 +133,6 @@ func GetMetrics(ctx context.Context, trialID, afterBatches, limit int,
 	if pType == GenericMetric {
 		// Going off of our current schema were looking for custom types in our legacy
 		// metrics tables is pointless.
-		// CHECK: this should be saving us something?
 		query.Where("custom_type = ?", &mType)
 	}
 
