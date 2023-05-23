@@ -23,6 +23,8 @@ import {
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 
+import { getCssVar } from '../../shared/themes';
+
 import css from './F_ExperimentList.module.scss';
 import { F_ExperimentListSettings, settingsConfigForProject } from './F_ExperimentList.settings';
 import { Error, Loading, NoExperiments } from './glide-table/exceptions';
@@ -373,8 +375,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
             formStore={formStore}
             handleScroll={handleScroll}
             handleUpdateExperimentList={handleUpdateExperimentList}
-            // 2px subtraction needed to slight glide table measurement being off.
-            height={contentHeight - 2}
+            height={contentHeight - 2 * parseInt(getCssVar('--theme-stroke-width'))}
             page={page}
             project={project}
             projectColumns={projectColumns}
