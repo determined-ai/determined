@@ -89,15 +89,15 @@ class ModelVersion:
 
     @classmethod
     def _from_bindings(
-        cls, model_bindings: bindings.v1ModelVersion, session: api.Session
+        cls, version_bindings: bindings.v1ModelVersion, session: api.Session
     ) -> "ModelVersion":
-        model = cls(
+        version = cls(
             session,
-            model_version=model_bindings.version,
-            model_name=model_bindings.model.name,
+            model_version=version_bindings.version,
+            model_name=version_bindings.model.name,
         )
-        model._hydrate(model_bindings)
-        return model
+        version._hydrate(version_bindings)
+        return version
 
 
 class ModelSortBy(enum.Enum):
@@ -368,11 +368,11 @@ class Model:
         self._hydrate(resp)
 
     @classmethod
-    def _from_bindings(cls, m: bindings.v1Model, session: api.Session) -> "Model":
-        model_obj = cls(
+    def _from_bindings(cls, model_bindings: bindings.v1Model, session: api.Session) -> "Model":
+        model = cls(
             session,
-            model_id=m.id,
-            name=m.name,
+            model_id=model_bindings.id,
+            name=model_bindings.name,
         )
-        model_obj._hydrate(m)
-        return model_obj
+        model._hydrate(model_bindings)
+        return model

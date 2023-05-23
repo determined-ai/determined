@@ -384,10 +384,12 @@ class Trial:
         return _stream_validation_metrics(self._session, [self.id])
 
     @classmethod
-    def _from_bindings(cls, trial: bindings.trialv1Trial, session: api.Session) -> "TrialReference":
-        trial_bindings = cls(trial.id, session)
-        trial_bindings._hydrate(trial)
-        return trial_bindings
+    def _from_bindings(
+        cls, trial_bindings: bindings.trialv1Trial, session: api.Session
+    ) -> "TrialReference":
+        trial = cls(trial_bindings.id, session)
+        trial._hydrate(trial_bindings)
+        return trial
 
 
 # This is to shorten line lengths of the TrialSortBy definition.

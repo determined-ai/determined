@@ -391,10 +391,12 @@ class Checkpoint:
         self._hydrate(resp)
 
     @classmethod
-    def _from_bindings(cls, ckpt: bindings.v1Checkpoint, session: api.Session) -> "Checkpoint":
-        ckpt_obj = cls(
+    def _from_bindings(
+        cls, ckpt_bindings: bindings.v1Checkpoint, session: api.Session
+    ) -> "Checkpoint":
+        ckpt = cls(
             session=session,
-            uuid=ckpt.uuid,
+            uuid=ckpt_bindings.uuid,
         )
-        ckpt_obj._hydrate(ckpt)
-        return ckpt_obj
+        ckpt._hydrate(ckpt_bindings)
+        return ckpt
