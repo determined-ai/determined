@@ -1903,7 +1903,7 @@ const ColorSection: React.FC = () => {
             <div
               style={{
                 backgroundColor: cName,
-                border: 'var(--theme-stroke-width) solid var(--theme-stage-on-strong)',
+                border: 'var(--theme-stroke-width) solid var(--theme-surface-border)',
                 borderRadius: 'var(--theme-border-radius)',
                 height: '40px',
                 width: '100%',
