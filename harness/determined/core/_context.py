@@ -11,7 +11,7 @@ import appdirs
 import determined as det
 from determined import core, tensorboard
 from determined.common import api, constants, storage, util
-from determined.common.api import certs
+from determined.common.api import bindings, certs
 
 logger = logging.getLogger("determined.core")
 
@@ -211,7 +211,7 @@ def init(
 
     storage_manager = _get_storage_manager(checkpoint_storage)
 
-    if info.task_type == "TRIAL":
+    if info.task_type == str(bindings.v1TaskType.TRIAL.value):
         # Prepare the tensorboard hooks.
         tensorboard_manager = tensorboard.build(
             info.cluster_id,

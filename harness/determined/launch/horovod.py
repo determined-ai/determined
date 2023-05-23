@@ -15,7 +15,7 @@ from typing import List, Tuple
 import determined as det
 from determined import horovod, util
 from determined.common import api
-from determined.common.api import certs
+from determined.common.api import bindings, certs
 from determined.constants import DTRAIN_SSH_PORT
 
 
@@ -93,7 +93,9 @@ def main(hvd_args: List[str], script: List[str], autohorovod: bool) -> int:
 
     info = det.get_cluster_info()
     assert info is not None, "must be run on-cluster"
-    assert info.task_type == "TRIAL", f'must be run with task_type="TRIAL", not "{info.task_type}"'
+    assert info.task_type == str(
+        bindings.v1TaskType.TRIAL.value
+    ), f'must be run with task_type="{bindings.v1TaskType.TRIAL.value}", not "{info.task_type}"'
 
     # When --autohorovod was set, detect single-slot and zero-slot trials.
     if autohorovod and len(info.container_addrs) == 1 and len(info.slot_ids) <= 1:

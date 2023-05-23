@@ -144,7 +144,7 @@ func remakeCommandsByType(
 		Relation("Task.Job").
 		Where("allocation.end_time IS NULL").
 		Where("allocation.state != ?", model.AllocationStateTerminated).
-		Where("task.task_type = ?", taskType).
+		Where("task.task_type = ?", taskType[10:]).
 		Scan(context.TODO())
 	if err != nil {
 		ctx.Log().WithError(err).Warnf("failed to restore task type %s", taskType)

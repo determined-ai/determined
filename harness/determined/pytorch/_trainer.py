@@ -10,6 +10,7 @@ import torch.distributed as dist
 
 import determined as det
 from determined import core, gpu, horovod, profiler, pytorch
+from determined.common.api import bindings
 from determined.horovod import hvd
 
 
@@ -29,7 +30,9 @@ class Trainer:
         self._distributed_backend = det._DistributedBackend()
         self._det_profiler = None  # type: Optional[profiler.ProfilerAgent]
         self._info = det.get_cluster_info()
-        self._local_training = self._info is None or self._info.task_type != "TRIAL"
+        self._local_training = self._info is None or self._info.task_type != str(
+            bindings.v1TaskType.TRIAL.value
+        )
 
     def configure_profiler(
         self, sync_timings: bool, enabled: bool, begin_on_batch: int, end_after_batch: int
@@ -244,7 +247,9 @@ def init(
             training. This value is configured here because it is used in context.wrap_optimizer.
     """
     cluster_info = det.get_cluster_info()
-    local_training = cluster_info is None or cluster_info.task_type != "TRIAL"
+    local_training = cluster_info is None or cluster_info.task_type != str(
+        bindings.v1TaskType.TRIAL.value
+    )
 
     # Pre-execute steps: initialize distributed backend and random seeds.
     distributed_context = distributed

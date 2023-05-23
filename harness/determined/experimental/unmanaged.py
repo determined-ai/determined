@@ -123,7 +123,7 @@ def build_unmanaged_trial_cluster_info(
         task_id=task_id,
         allocation_id=task_id,  # TODO(ilia): when does this matter?
         session_token=token,
-        task_type="TRIAL",
+        task_type=str(bindings.v1TaskType.TRIAL.value),
         trial_info=det.TrialInfo(
             trial_id=trial_id,
             experiment_id=exp_id,
@@ -185,7 +185,7 @@ def init(
 
     storage_manager = _get_storage_manager(checkpoint_storage)
 
-    if info.task_type == "TRIAL":
+    if info.task_type == str(bindings.v1TaskType.TRIAL.value):
         # Prepare the tensorboard hooks.
         tensorboard_manager = tensorboard.build(
             info.cluster_id,

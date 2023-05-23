@@ -3,6 +3,7 @@ import os
 from typing import Any, Dict, Iterable, List, Optional, Union
 
 from determined import gpu
+from determined.common.api import bindings
 
 DEFAULT_RENDEZVOUS_INFO_PATH = "/run/determined/info/rendezvous.json"
 DEFAULT_TRIAL_INFO_PATH = "/run/determined/info/trial.json"
@@ -314,7 +315,7 @@ class ClusterInfo:
         Since non-trial-type tasks cannot currently save checkpoints, ``.latest_checkpoint`` is
         currently always None for non-trial-type tasks.
         """
-        if self.task_type != "TRIAL":
+        if self.task_type != str(bindings.v1TaskType.TRIAL.value):
             return None
         return self._latest_checkpoint
 
@@ -326,7 +327,7 @@ class ClusterInfo:
         Since other types of configuration files don't allow a ``data`` field, accessing
         ``user_data`` from non-trial-type tasks will always return an empty dictionary.
         """
-        if self.task_type != "TRIAL":
+        if self.task_type != str(bindings.v1TaskType.TRIAL.value):
             return {}
         return self.trial._config.get("data", {})
 
@@ -337,10 +338,10 @@ class ClusterInfo:
 
         Attempting to read ``.trial`` in a non-trial task type will raise a RuntimeError.
         """
-        if self.task_type != "TRIAL":
+        if self.task_type != str(bindings.v1TaskType.TRIAL.value):
             raise RuntimeError(
-                f'you cannot use the .trial property when .task_type ("{self.task_type}") != '
-                '"TRIAL"'
+                f'you cannot use the .trial property when .task_type ("{self.task_type}") !='
+                + f'"{bindings.v1TaskType.TRIAL.value}"'
             )
         assert self._trial_info is not None
         return self._trial_info
@@ -348,7 +349,7 @@ class ClusterInfo:
     @property
     def container_addrs(self) -> List[str]:
         """A list of addresses for all containers in the allocation, ordered by rank."""
-        if self.task_type != "TRIAL":
+        if self.task_type != str(bindings.v1TaskType.TRIAL.value):
             # Presently, only trials are allowed to use the rendezvous API.
             # But also, only trials are scheduled across multiple nodes, so we can cheat here.
             return ["127.0.0.1"]
@@ -358,7 +359,7 @@ class ClusterInfo:
     @property
     def container_slot_counts(self) -> List[int]:
         """A list of slots for all containers in the allocation, ordered by rank."""
-        if self.task_type != "TRIAL":
+        if self.task_type != str(bindings.v1TaskType.TRIAL.value):
             # Presently, only trials are allowed to use the rendezvous API.
             # But also, only trials are scheduled across multiple nodes, so we can cheat here.
             return [len(self.slot_ids)]
@@ -373,7 +374,7 @@ class ClusterInfo:
         When using a distributed training framework, the framework may choose a different rank for
         this container.
         """
-        if self.task_type != "TRIAL":
+        if self.task_type != str(bindings.v1TaskType.TRIAL.value):
             # Presently, only trials are allowed to use the rendezvous API.
             # But also, only trials are scheduled across multiple nodes, so we can cheat here.
             return 0

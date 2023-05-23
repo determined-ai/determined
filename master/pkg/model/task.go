@@ -33,17 +33,17 @@ func (a TaskID) String() string {
 
 const (
 	// TaskTypeTrial is the "TRIAL" job type for the enum public.job_type in Postgres.
-	TaskTypeTrial TaskType = "TRIAL"
+	TaskTypeTrial TaskType = "TASK_TYPE_TRIAL"
 	// TaskTypeNotebook is the "NOTEBOOK" job type for the enum public.job_type in Postgres.
-	TaskTypeNotebook TaskType = "NOTEBOOK"
+	TaskTypeNotebook TaskType = "TASK_TYPE_NOTEBOOK"
 	// TaskTypeShell is the "SHELL" job type for the enum public.job_type in Postgres.
-	TaskTypeShell TaskType = "SHELL"
+	TaskTypeShell TaskType = "TASK_TYPE_SHELL"
 	// TaskTypeCommand is the "COMMAND" job type for the enum public.job_type in Postgres.
-	TaskTypeCommand TaskType = "COMMAND"
+	TaskTypeCommand TaskType = "TASK_TYPE_COMMAND"
 	// TaskTypeTensorboard is the "TENSORBOARD" task type for the enum.task_type in Postgres.
-	TaskTypeTensorboard TaskType = "TENSORBOARD"
+	TaskTypeTensorboard TaskType = "TASK_TYPE_TENSORBOARD"
 	// TaskTypeCheckpointGC is the "CHECKPOINT_GC" job type for the enum public.job_type in Postgres.
-	TaskTypeCheckpointGC TaskType = "CHECKPOINT_GC"
+	TaskTypeCheckpointGC TaskType = "TASK_TYPE_CHECKPOINT_GC"
 )
 
 // TaskLogVersion is the version for our log-storing scheme. Useful because changing designs
