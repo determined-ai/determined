@@ -60,6 +60,12 @@ func (g GCCkptSpec) ToTaskSpec() TaskSpec {
 			archive.Archive{
 				g.Base.AgentUserGroup.OwnedArchiveItem("checkpoint_gc", nil, 0o700, tar.TypeDir),
 				g.Base.AgentUserGroup.OwnedArchiveItem(
+					"checkpoint_gc/storage_config.json",
+					[]byte(jsonify(g.LegacyConfig.CheckpointStorage)),
+					0o600,
+					tar.TypeReg,
+				),
+				g.Base.AgentUserGroup.OwnedArchiveItem(
 					filepath.Join("checkpoint_gc", etc.GCCheckpointsEntrypointResource),
 					etc.MustStaticFile(etc.GCCheckpointsEntrypointResource),
 					0o700,
