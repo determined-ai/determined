@@ -112,7 +112,8 @@ install and configure the Determined master:
    | ``group_name``             | local account and group and update these values to enable      |
    |                            | running from another account. This account must have access to |
    |                            | the Slurm/PBS command line to discover partitions and          |
-   |                            | summarize cluster usage.                                       |
+   |                            | summarize cluster usage. See                                   |
+   |                            | :ref:`hpc-security-considerations`.                            |
    +----------------------------+----------------------------------------------------------------+
    | ``path``                   | If any of the launcher dependencies are not on the default     |
    |                            | path, you can override the default by updating this value.     |
