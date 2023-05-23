@@ -1099,6 +1099,11 @@ const ListsSection: React.FC = () => {
 };
 
 const BreadcrumbsSection: React.FC = () => {
+  const menuItems: MenuItem[] = [
+    { key: 'Action 1', label: 'Action 1' },
+    { key: 'Action 2', label: 'Action 2' },
+  ];
+
   return (
     <ComponentSection id="Breadcrumbs" title="Breadcrumbs">
       <AntDCard>
@@ -1129,6 +1134,11 @@ const BreadcrumbsSection: React.FC = () => {
           <Breadcrumb.Item>Level 0</Breadcrumb.Item>
           <Breadcrumb.Item>Level 1</Breadcrumb.Item>
           <Breadcrumb.Item>Level 2</Breadcrumb.Item>
+        </Breadcrumb>
+        <strong>Breadcrumb with actions</strong>
+        <Breadcrumb menuItems={menuItems}>
+          <Breadcrumb.Item>Level 0</Breadcrumb.Item>
+          <Breadcrumb.Item>Level 1</Breadcrumb.Item>
         </Breadcrumb>
       </AntDCard>
     </ComponentSection>
@@ -2616,7 +2626,7 @@ const DesignKit: React.FC = () => {
   }, [actions]);
 
   return (
-    <Page bodyNoPadding docTitle="Design Kit">
+    <Page bodyNoPadding breadcrumb={[]} docTitle="Design Kit">
       <div className={css.base}>
         <nav>
           <Link reloadDocument to={'/'}>

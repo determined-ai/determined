@@ -10,7 +10,7 @@ import Tags, { tagsActionHelper } from 'components/kit/Tags';
 import MetadataCard from 'components/Metadata/MetadataCard';
 import ModelDownloadModal from 'components/ModelDownloadModal';
 import ModelVersionDeleteModal from 'components/ModelVersionDeleteModal';
-import Page from 'components/Page';
+import Page, { BreadCrumbRoute } from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
 import InteractiveTable, { ColumnDef } from 'components/Table/InteractiveTable';
 import {
@@ -23,6 +23,7 @@ import {
 } from 'components/Table/Table';
 import usePermissions from 'hooks/usePermissions';
 import { useSettings } from 'hooks/useSettings';
+import { paths } from 'routes/utils';
 import {
   archiveModel,
   getModelDetails,
@@ -52,6 +53,7 @@ import settingsConfig, {
 import ModelHeader from './ModelDetails/ModelHeader';
 import ModelVersionActionDropdown from './ModelDetails/ModelVersionActionDropdown';
 import css from './ModelDetails.module.scss';
+import { WorkspaceDetailsTab } from './WorkspaceDetails';
 
 type Params = {
   modelId: string;
@@ -400,8 +402,30 @@ const ModelDetails: React.FC = () => {
     return <Spinner spinning tip={`Loading model ${modelId} details...`} />;
   }
 
+  const pageBreadcrumb: BreadCrumbRoute[] = [];
+  if (workspace) {
+    pageBreadcrumb.push(
+      {
+        breadcrumbName: workspace.id !== 1 ? workspace.name : 'Uncategorized Experiments',
+        path: paths.workspaceDetails(workspace.id),
+      },
+      {
+        breadcrumbName: 'Model Registry',
+        path:
+          workspace.id === 1
+            ? paths.modelList()
+            : paths.workspaceDetails(workspace.id, WorkspaceDetailsTab.ModelRegistry),
+      },
+    );
+  }
+  pageBreadcrumb.push({
+    breadcrumbName: `${model.model.name} (${model.model.id})`,
+    path: paths.modelDetails(model.model.name),
+  });
+
   return (
     <Page
+      breadcrumb={pageBreadcrumb}
       containerRef={pageRef}
       docTitle="Model Details"
       headerComponent={

@@ -10,7 +10,6 @@ import Dropdown from 'components/kit/Dropdown';
 import Icon from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
 import ManageGroupsModalComponent from 'components/ManageGroupsModal';
-import Page from 'components/Page';
 import Section from 'components/Section';
 import InteractiveTable, { onRightClickableCell } from 'components/Table/InteractiveTable';
 import SkeletonTable from 'components/Table/SkeletonTable';
@@ -339,7 +338,7 @@ const UserManagement: React.FC = () => {
   }, [filteredUsers, loadableUsers, settings, columns, updateSettings]);
 
   return (
-    <Page bodyNoPadding containerRef={pageRef}>
+    <>
       <Section
         className={css.usersTable}
         options={
@@ -357,7 +356,7 @@ const UserManagement: React.FC = () => {
         {table}
       </Section>
       <CreateUserModal.Component onClose={fetchUsers} />
-    </Page>
+    </>
   );
 };
 

@@ -71,9 +71,6 @@ export const paths = {
   admin: (tab = ''): string => {
     return `/admin/${tab}`;
   },
-  cluster: (): string => {
-    return '/clusters';
-  },
   clusterLogs: (): string => {
     return '/logs';
   },

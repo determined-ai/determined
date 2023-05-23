@@ -7,7 +7,7 @@ import Card from 'components/kit/Card';
 import Empty from 'components/kit/Empty';
 import Icon from 'components/kit/Icon';
 import Link from 'components/Link';
-import Page from 'components/Page';
+import Page, { BreadCrumbRoute } from 'components/Page';
 import ProjectCard from 'components/ProjectCard';
 import Section from 'components/Section';
 import ResponsiveTable from 'components/Table/ResponsiveTable';
@@ -172,16 +172,23 @@ const Dashboard: React.FC = () => {
     };
   }, [canceler, stopPolling]);
 
+  const pageBreadCrumb: BreadCrumbRoute[] = [{ breadcrumbName: 'Home', path: paths.dashboard() }];
   if (projectsLoading && submissionsLoading) {
     return (
-      <Page options={<JupyterLabButton enabled={canCreateNSC} />} title="Home">
+      <Page
+        breadcrumb={pageBreadCrumb}
+        options={<JupyterLabButton enabled={canCreateNSC} />}
+        title="Home">
         <Spinner center />
       </Page>
     );
   }
 
   return (
-    <Page options={<JupyterLabButton enabled={canCreateNSC} />} title="Home">
+    <Page
+      breadcrumb={pageBreadCrumb}
+      options={<JupyterLabButton enabled={canCreateNSC} />}
+      title="Home">
       {projectsLoading ? (
         <Section>
           <Spinner center />
