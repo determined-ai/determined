@@ -14,6 +14,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
 
+	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -238,7 +239,7 @@ func ActivateExperiments(ctx context.Context, system *actor.System,
 		for _, originalID := range experimentIds {
 			if !slices.Contains(expIDs, originalID) {
 				results = append(results, ExperimentActionResult{
-					Error: status.Errorf(codes.NotFound, "experiment not found: %d", originalID),
+					Error: api.NotFoundErrs("experiment", fmt.Sprint(originalID), true),
 					ID:    originalID,
 				})
 			}
@@ -269,7 +270,7 @@ func CancelExperiments(ctx context.Context, system *actor.System,
 		for _, originalID := range experimentIds {
 			if !slices.Contains(expIDs, originalID) {
 				results = append(results, ExperimentActionResult{
-					Error: status.Errorf(codes.NotFound, "experiment not found: %d", originalID),
+					Error: api.NotFoundErrs("experiment", fmt.Sprint(originalID), true),
 					ID:    originalID,
 				})
 			}
@@ -313,7 +314,7 @@ func KillExperiments(ctx context.Context, system *actor.System,
 		for _, originalID := range experimentIds {
 			if !slices.Contains(expIDs, originalID) {
 				results = append(results, ExperimentActionResult{
-					Error: status.Errorf(codes.NotFound, "experiment not found: %d", originalID),
+					Error: api.NotFoundErrs("experiment", fmt.Sprint(originalID), true),
 					ID:    originalID,
 				})
 			}
@@ -355,7 +356,7 @@ func PauseExperiments(ctx context.Context, system *actor.System,
 		for _, originalID := range experimentIds {
 			if !slices.Contains(expIDs, originalID) {
 				results = append(results, ExperimentActionResult{
-					Error: status.Errorf(codes.NotFound, "experiment not found: %d", originalID),
+					Error: api.NotFoundErrs("experiment", fmt.Sprint(originalID), true),
 					ID:    originalID,
 				})
 			}
@@ -430,9 +431,8 @@ func DeleteExperiments(ctx context.Context, system *actor.System,
 		for _, originalID := range experimentIds {
 			if !slices.Contains(visibleIDs, originalID) {
 				results = append(results, ExperimentActionResult{
-					Error: status.Errorf(codes.NotFound, "experiment not found or no delete permission: %d",
-						originalID),
-					ID: originalID,
+					Error: api.NotFoundErrs("experiment", fmt.Sprint(originalID), true),
+					ID:    originalID,
 				})
 			}
 		}
@@ -523,7 +523,7 @@ func ArchiveExperiments(ctx context.Context, system *actor.System,
 		for _, originalID := range experimentIds {
 			if !slices.Contains(visibleIDs, originalID) {
 				results = append(results, ExperimentActionResult{
-					Error: status.Errorf(codes.NotFound, "experiment not found: %d", originalID),
+					Error: api.NotFoundErrs("experiment", fmt.Sprint(originalID), true),
 					ID:    originalID,
 				})
 			}
@@ -614,7 +614,7 @@ func UnarchiveExperiments(ctx context.Context, system *actor.System,
 		for _, originalID := range experimentIds {
 			if !slices.Contains(visibleIDs, originalID) {
 				results = append(results, ExperimentActionResult{
-					Error: status.Errorf(codes.NotFound, "experiment not found: %d", originalID),
+					Error: api.NotFoundErrs("experiment", fmt.Sprint(originalID), true),
 					ID:    originalID,
 				})
 			}
@@ -700,7 +700,7 @@ func MoveExperiments(ctx context.Context, system *actor.System,
 		for _, originalID := range experimentIds {
 			if !slices.Contains(visibleIDs, originalID) {
 				results = append(results, ExperimentActionResult{
-					Error: status.Errorf(codes.NotFound, "experiment not found: %d", originalID),
+					Error: api.NotFoundErrs("experiment", fmt.Sprint(originalID), true),
 					ID:    originalID,
 				})
 			}

@@ -25,6 +25,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	apiPkg "github.com/determined-ai/determined/master/internal/api"
 	authz2 "github.com/determined-ai/determined/master/internal/authz"
 	detContext "github.com/determined-ai/determined/master/internal/context"
 	"github.com/determined-ai/determined/master/internal/db"
@@ -238,9 +239,8 @@ func TestGetCheckpointEchoExpErr(t *testing.T) {
 
 	for _, curCase := range cases {
 		// Checkpoint not found
-		require.Equal(t,
-			echo.NewHTTPError(http.StatusNotFound,
-				"checkpoint not found: 7e0bad2c-b3f6-4988-916c-eb3081b19db0"),
+		require.Equal(t, echo.NewHTTPError(http.StatusNotFound,
+			"checkpoint 7e0bad2c-b3f6-4988-916c-eb3081b19db0 not found"),
 			curCase.IDToReqCall("7e0bad2c-b3f6-4988-916c-eb3081b19db0"))
 
 		// Invalid checkpoint UUID
@@ -311,18 +311,19 @@ func TestAuthZCheckpointsEcho(t *testing.T) {
 	ctx.SetParamValues(checkpointID)
 
 	// Not found same as permission denied.
-	require.Equal(t, echo.NewHTTPError(http.StatusNotFound,
-		fmt.Sprintf("checkpoint not found: %s", checkpointUUID)), api.m.getCheckpoint(ctx))
+	require.Equal(t, apiPkg.NotFoundErrs("checkpoint", fmt.Sprint(checkpointUUID), false),
+		api.m.getCheckpoint(ctx))
 
 	addMockCheckpointDB(t, api.m.db, checkpointUUID)
 	registerCheckpointAsModelVersion(t, api.m.db, checkpointUUID)
 
 	authZExp.On("CanGetExperiment", mock.Anything, curUser,
 		mock.Anything).Return(authz2.PermissionDeniedError{}).Once()
+
 	authZModel.On("CanGetModel", mock.Anything, mock.Anything,
 		mock.Anything, mock.Anything).Return(authz2.PermissionDeniedError{}).Once()
-	require.Equal(t, echo.NewHTTPError(http.StatusNotFound,
-		fmt.Sprintf("checkpoint not found: %s", checkpointUUID)), api.m.getCheckpoint(ctx))
+	require.Equal(t, apiPkg.NotFoundErrs("checkpoint", fmt.Sprint(checkpointUUID), false),
+		api.m.getCheckpoint(ctx))
 
 	// need to make the model auth fail too for actual to be the expected
 	expectedErr := fmt.Errorf("canGetExperimentError")

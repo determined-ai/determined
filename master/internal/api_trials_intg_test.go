@@ -18,6 +18,7 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/structpb"
 
+	apiPkg "github.com/determined-ai/determined/master/internal/api"
 	authz2 "github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -26,10 +27,6 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/db"
 )
-
-func errTrialNotFound(id int) error {
-	return status.Errorf(codes.NotFound, "trial %d not found", id)
-}
 
 func createTestTrial(
 	t *testing.T, api *apiServer, curUser model.User,
@@ -618,12 +615,12 @@ func TestTrialAuthZ(t *testing.T) {
 	}
 
 	for _, curCase := range cases {
-		require.ErrorIs(t, curCase.IDToReqCall(-999), errTrialNotFound(-999))
-
+		require.ErrorIs(t, curCase.IDToReqCall(-999), apiPkg.NotFoundErrs("trial", "-999", true))
 		// Can't view trials experiment gives same error.
 		authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
 			Return(authz2.PermissionDeniedError{}).Once()
-		require.ErrorIs(t, curCase.IDToReqCall(trial.ID), errTrialNotFound(trial.ID))
+		require.ErrorIs(t, curCase.IDToReqCall(trial.ID),
+			apiPkg.NotFoundErrs("trial", fmt.Sprint(trial.ID), true))
 
 		// Experiment view error returns error unmodified.
 		expectedErr := fmt.Errorf("canGetTrialError")
