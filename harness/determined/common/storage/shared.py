@@ -187,9 +187,6 @@ class SharedFSStorageManager(storage.StorageManager):
             util.rmtree_nfs_safe(storage_dir, ignore_errors=False)
             return {}
         
-        # TODO check if it is a directory then delete it.
-        # Then check if it is a file then delete it.
-        
         to_delete_dirs = {}
         to_delete_files = {}
         for file_glob in globs:
