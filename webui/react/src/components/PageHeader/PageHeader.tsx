@@ -1,10 +1,7 @@
 import React, { useMemo } from 'react';
 
 import Breadcrumb from 'components/kit/Breadcrumb';
-import Button from 'components/kit/Button';
-import { Column, Columns } from 'components/kit/Columns';
-import Dropdown, { MenuItem } from 'components/kit/Dropdown';
-import Icon from 'components/kit/Icon';
+import { MenuItem } from 'components/kit/Dropdown';
 import Tooltip from 'components/kit/Tooltip';
 import { BreadCrumbRoute } from 'components/Page';
 import { CommonProps } from 'shared/types';
@@ -39,25 +36,7 @@ const PageHeader: React.FC<Props> = (props: Props) => {
   const breadcrumbItems = useMemo(() => {
     const routes = props.breadcrumb ?? [];
     return routes.map((route) => {
-      const last = routes.indexOf(route) === routes.length - 1;
-      return last ? (
-        <Breadcrumb.Item key={route.breadcrumbName}>
-          <Columns>
-            <Column>{route.breadcrumbName}</Column>
-            {props.menuItems && (
-              <Column>
-                <Dropdown menu={props.menuItems} onClick={props.onClickMenu}>
-                  <Button
-                    icon={<Icon name="arrow-down" size="tiny" title="Action menu" />}
-                    size="small"
-                    type="text"
-                  />
-                </Dropdown>
-              </Column>
-            )}
-          </Columns>
-        </Breadcrumb.Item>
-      ) : (
+      return (
         <Breadcrumb.Item key={route.breadcrumbName}>
           <Link path={route.path}>
             {route.breadcrumbTooltip ? (
@@ -71,15 +50,15 @@ const PageHeader: React.FC<Props> = (props: Props) => {
         </Breadcrumb.Item>
       );
     });
-  }, [props.breadcrumb, props.menuItems, props.onClickMenu]);
+  }, [props.breadcrumb]);
 
   return (
     <>
       {showPageHeader && (
         <div className={classes.join(' ')}>
-          <div className={css.breadcrumbs}>
-            <Breadcrumb>{breadcrumbItems}</Breadcrumb>
-          </div>
+          <Breadcrumb menuItems={props.menuItems} onClickMenu={props.onClickMenu}>
+            {breadcrumbItems}
+          </Breadcrumb>
           {showHeader && (
             <div className={css.header}>
               <div className={css.options}>{props.options}</div>

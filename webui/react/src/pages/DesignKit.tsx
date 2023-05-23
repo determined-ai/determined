@@ -1123,23 +1123,9 @@ const BreadcrumbsSection: React.FC = () => {
           <Breadcrumb.Item>Level 2</Breadcrumb.Item>
         </Breadcrumb>
         <strong>Breadcrumb with actions</strong>
-        <Breadcrumb>
+        <Breadcrumb menuItems={menuItems}>
           <Breadcrumb.Item>Level 0</Breadcrumb.Item>
           <Breadcrumb.Item>Level 1</Breadcrumb.Item>
-          <Columns>
-            <Column>
-              <Breadcrumb.Item>Level 2</Breadcrumb.Item>
-            </Column>
-            <Column>
-              <Dropdown menu={menuItems}>
-                <Button
-                  icon={<Icon name="arrow-down" size="tiny" title="Action menu" />}
-                  size="small"
-                  type="text"
-                />
-              </Dropdown>
-            </Column>
-          </Columns>
         </Breadcrumb>
       </AntDCard>
     </ComponentSection>
