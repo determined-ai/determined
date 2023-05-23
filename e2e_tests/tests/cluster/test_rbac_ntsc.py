@@ -210,22 +210,6 @@ def only_tensorboard_can_launch(
         launch_ntsc(session, workspace, typ, exp_id)
 
 
-def wait_service_ready(typ: NTSC_Kind, task_id: str) -> None:
-    """wait for a determiend service to send service_ready_event"""
-    configure_token_store(ADMIN_CREDENTIALS)
-    master = conf.make_master_url()
-    # DET-2573
-    path = (
-        f"{typ.value}s/{task_id}/events"
-        if typ != NTSC_Kind.tensorboard
-        else f"{typ.value}/{task_id}/events"
-    )
-    with api.ws(master, path) as ws:
-        for msg in ws:
-            if msg["service_ready_event"]:
-                return
-
-
 @pytest.mark.e2e_cpu_rbac
 @pytest.mark.skipif(rbac_disabled(), reason="ee rbac is required for this test")
 def test_ntsc_iface_access() -> None:
@@ -431,7 +415,8 @@ def test_ntsc_proxy() -> None:
             )
             deets = get_ntsc_details(determined_test_session(creds[0]), typ, created_id)
             assert deets.state == bindings.taskv1State.RUNNING, f"{typ} should be running"
-            wait_service_ready(typ, created_id)
+            err = api.task_is_ready(determined_test_session(ADMIN_CREDENTIALS), created_id)
+            assert err is None, f"{typ} should be ready {err}"
             assert (
                 get_proxy(creds[0], created_id) is None
             ), f"user 0 should be able to access {typ} through proxy"
