@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"fmt"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -229,24 +228,23 @@ func New(
 // allocation ID. The "stopLauncherJob()" function will add the allocation ID
 // to the list upon entry and remove it from the list upon exit.
 type dispatcherResourceManager struct {
-	db                        *db.PgDB
-	wlmType                   wlmType
-	rmConfig                  *config.DispatcherResourceManagerConfig
-	poolConfig                []config.ResourcePoolConfig
-	apiClient                 *launcherAPIClient
-	reqList                   *tasklist.TaskList
-	groups                    map[*actor.Ref]*tasklist.Group
-	masterTLSConfig           model.TLSClientConfig
-	loggingConfig             model.LoggingConfig
-	jobWatcher                *launcherMonitor
-	hpcDetailsCache           *hpcResourceDetailsCache
-	poolProviderMap           map[string][]string
-	dispatchIDToHPCJobID      map[string]string
-	scheduledLaunches         mapx.Map[model.AllocationID, struct{}]
-	inflightCancelations      mapx.Map[model.AllocationID, struct{}]
-	dispatchIDToHPCJobIDMutex sync.RWMutex
-	dbState                   dispatcherState
-	jobCancelQueue            *orderedmapx.Map[string, *actor.Context]
+	db                   *db.PgDB
+	wlmType              wlmType
+	rmConfig             *config.DispatcherResourceManagerConfig
+	poolConfig           []config.ResourcePoolConfig
+	apiClient            *launcherAPIClient
+	reqList              *tasklist.TaskList
+	groups               map[*actor.Ref]*tasklist.Group
+	masterTLSConfig      model.TLSClientConfig
+	loggingConfig        model.LoggingConfig
+	jobWatcher           *launcherMonitor
+	hpcDetailsCache      *hpcResourceDetailsCache
+	poolProviderMap      map[string][]string
+	dispatchIDToHPCJobID mapx.Map[string, string]
+	scheduledLaunches    mapx.Map[model.AllocationID, struct{}]
+	inflightCancelations mapx.Map[model.AllocationID, struct{}]
+	dbState              dispatcherState
+	jobCancelQueue       *orderedmapx.Map[string, *actor.Context]
 }
 
 func newDispatcherResourceManager(
@@ -282,7 +280,7 @@ func newDispatcherResourceManager(
 		hpcDetailsCache:      newHpcResourceDetailsCache(rmConfig, apiClient),
 		poolConfig:           poolConfig,
 		poolProviderMap:      makeProvidedPoolsMap(poolConfig),
-		dispatchIDToHPCJobID: make(map[string]string),
+		dispatchIDToHPCJobID: mapx.New[string, string](),
 		scheduledLaunches:    mapx.New[model.AllocationID, struct{}](),
 		inflightCancelations: mapx.New[model.AllocationID, struct{}](),
 		dbState:              *dbState,
@@ -756,13 +754,13 @@ func (m *dispatcherResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 			return nil
 		}
 
-		_, exist := m.getHpcJobIDFromDispatchID(msg.DispatchID)
+		_, exist := m.dispatchIDToHPCJobID.Load(msg.DispatchID)
 		if !exist && msg.HPCJobID != "" {
 			hpcJobIDMsg := "HPC Job ID: " + msg.HPCJobID
 			ctx.Tell(task.AllocationRef, sproto.ContainerLog{
 				AuxMessage: &hpcJobIDMsg,
 			})
-			m.addDispatchIDToHpcJobIDMap(msg.DispatchID, msg.HPCJobID)
+			m.dispatchIDToHPCJobID.Store(msg.DispatchID, msg.HPCJobID)
 
 			log.WithField("hpc-job-id", msg.HPCJobID).
 				Debug("Received HPC job ID for job.")
@@ -929,7 +927,7 @@ func (m *dispatcherResourceManager) dispatchExited(
 	}
 
 	// Remove the dispatch from mapping tables.
-	m.removeDispatchIDFromHpcJobIDMap(msg.DispatchID)
+	m.dispatchIDToHPCJobID.Delete(msg.DispatchID)
 }
 
 // Common method for sending a terminate request, and appropriately clean up a dispatch.
@@ -1184,7 +1182,7 @@ func (m *dispatcherResourceManager) stopLauncherJob(ctx *actor.Context) {
 		impersonatedUser := dispatch.ImpersonatedUser
 
 		// Get the HPC job ID, if it's available, to include in the log message.
-		hpcJobID, _ := m.getHpcJobIDFromDispatchID(dispatchID)
+		hpcJobID, _ := m.dispatchIDToHPCJobID.Load(dispatchID)
 
 		ctx.Log().WithField("dispatch-id", dispatchID).
 			WithField("allocation-id", msg.AllocationID).
@@ -1237,42 +1235,6 @@ func (m *dispatcherResourceManager) getAllocationIDFromDispatchID(
 	dispatchID string,
 ) (model.AllocationID, bool) {
 	return model.AllocationID(dispatchID), true
-}
-
-// Adds the mapping of dispatch ID to HPC job ID.
-func (m *dispatcherResourceManager) addDispatchIDToHpcJobIDMap(
-	dispatchID string,
-	hpcJobID string,
-) {
-	// Read/Write lock blocks other readers and writers.
-	m.dispatchIDToHPCJobIDMutex.Lock()
-	defer m.dispatchIDToHPCJobIDMutex.Unlock()
-
-	m.dispatchIDToHPCJobID[dispatchID] = hpcJobID
-}
-
-// Removes the mapping from dispatch ID to allocaiton ID.
-func (m *dispatcherResourceManager) removeDispatchIDFromHpcJobIDMap(
-	dispatchID string,
-) {
-	// Read/Write lock blocks other readers and writers.
-	m.dispatchIDToHPCJobIDMutex.Lock()
-	defer m.dispatchIDToHPCJobIDMutex.Unlock()
-
-	delete(m.dispatchIDToHPCJobID, dispatchID)
-}
-
-// Gets the HPC job ID for the specified dispatch ID.
-func (m *dispatcherResourceManager) getHpcJobIDFromDispatchID(
-	dispatchID string,
-) (string, bool) {
-	// Read lock allows multiple readers, but block writers.
-	m.dispatchIDToHPCJobIDMutex.RLock()
-	defer m.dispatchIDToHPCJobIDMutex.RUnlock()
-
-	hpcJobID, ok := m.dispatchIDToHPCJobID[dispatchID]
-
-	return hpcJobID, ok
 }
 
 // Log the failure, and send a ResourcesStateChanged describing the failure.
