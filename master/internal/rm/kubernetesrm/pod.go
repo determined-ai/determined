@@ -195,9 +195,6 @@ func (p *pod) Receive(ctx *actor.Context) error {
 		ctx.Log().Info("interrupting pod to change positions")
 		p.taskActor.System().Tell(p.taskActor, sproto.ReleaseResources{})
 
-	case sproto.ContainerLog:
-		p.receiveContainerLog(ctx, msg)
-
 	case KillTaskPod:
 		ctx.Log().Info("received request to stop pod")
 		p.deleteKubernetesResources(ctx)
