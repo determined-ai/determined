@@ -5,10 +5,12 @@ import json
 import os
 import pathlib
 import warnings
+import uuid
 
 import torch
 import torch.distributed as dist
 
+from torch import nn
 from torch.utils.data import Dataset
 from typing import Any, Dict, Optional, Set, Type
 
@@ -16,7 +18,6 @@ import determined as det
 from determined import core, pytorch
 from determined.common import set_logger
 from determined.pytorch import DataLoader
-from determined.tensorboard.util import get_rank_aware_path
 
 set_logger(False)
 
@@ -25,12 +26,12 @@ DEFAULT_CHECK_PREEMPT_INTERVAL = 100
 
 
 class TorchBatchProcessorContext(pytorch._PyTorchReducerContext):
-    def __init__(self, core_context: core.Context):
+    def __init__(self, core_context: core.Context, storage_path: str):
         super().__init__()
-        self._distributed = core_context.distributed
+        self._core_context = core_context
         self._device = get_default_device(core_context)
         self._tensorboard_path = core_context.train.get_tensorboard_path()
-        self._stop_requested = False
+        self._storage_path = storage_path
 
     def to_device(self, data, warned_types: Optional[Set[Type]] = None) -> pytorch.TorchData:
         """Map generated data to the device allocated by the Determined cluster.
@@ -61,7 +62,15 @@ class TorchBatchProcessorContext(pytorch._PyTorchReducerContext):
         return self._device
 
     def get_distributed_context(self):
-        return self._distributed
+        return self._core_context.distributed
+
+    def prepare_model_for_inference(self, model: nn.Module) -> nn.Module:
+        model.eval()
+        model.to(self._device)
+        return model
+
+    def get_storage_path(self):
+        return self._core_context.checkpoint._storage_manager.store_path(self._storage_path)
 
 
 def get_default_device(core_context: core.Context) -> torch.device:
@@ -116,6 +125,20 @@ class TorchBatchProcessor(metaclass=abc.ABCMeta):
     def process_batch(self, batch, batch_idx) -> None:
         pass
 
+    def run_before_checkpoint(self) -> None:
+        """
+        Overwrite this function to run certain logic before checkpointing
+        This function will be called right before each checkpoint.
+        """
+        pass
+
+    def clean_up(self) -> None:
+        """
+        This function will be called right before exiting after completing iteration
+        over dataset
+        """
+        pass
+
 
 def _load_state(checkpoint_directory):
     checkpoint_directory = pathlib.Path(checkpoint_directory)
@@ -124,7 +147,9 @@ def _load_state(checkpoint_directory):
         return metadata
 
 
-def _synchronize_and_checkpoint(core_context: core.Context, batch_idx: int, rank: int):
+def _synchronize_and_checkpoint(
+    core_context: core.Context, batch_idx: int, rank: int, default_output_uuid: str
+):
     """
     Synchronize the workers and create checkpoint to record steps completed
     """
@@ -134,6 +159,7 @@ def _synchronize_and_checkpoint(core_context: core.Context, batch_idx: int, rank
 
         checkpoint_metadata = {
             "steps_completed": batch_idx + 1,
+            "default_output_uuid": default_output_uuid,
         }
         with core_context.checkpoint.store_path(checkpoint_metadata) as (path, uuid):
             with open(os.path.join(path, "batch_completed.json"), "w") as file_obj:
@@ -225,11 +251,12 @@ def torch_batch_process(
         latest_checkpoint = info.latest_checkpoint
         skip = 0
 
-        batch_processor_context = TorchBatchProcessorContext(core_context)
-
-        per_batch_processor = batch_processor_cls(
-            context=batch_processor_context,
-        )
+        # synchronize default output uuid
+        if rank == 0:
+            default_output_uuid = str(uuid.uuid4())
+            core_context.distributed.broadcast(default_output_uuid)
+        else:
+            default_output_uuid = core_context.distributed.broadcast(None)
 
         # Check if previous checkpoint exists
         if latest_checkpoint is not None:
@@ -238,6 +265,16 @@ def torch_batch_process(
                 metadata = _load_state(path)
                 skip = metadata["steps_completed"]
                 logging.info(f"Previous run completed {skip} steps")
+                default_output_uuid = metadata["default_output_uuid"]
+                print(default_output_uuid)
+
+        output_uuid_with_rank = default_output_uuid + f"/rank_{rank}"
+
+        batch_processor_context = TorchBatchProcessorContext(core_context, output_uuid_with_rank)
+
+        per_batch_processor = batch_processor_cls(
+            context=batch_processor_context,
+        )
 
         dataloader = DataLoader(
             dataset=dataset, batch_size=batch_size, shuffle=False, **dataloader_kwargs
@@ -266,10 +303,11 @@ def torch_batch_process(
                 per_batch_processor.process_batch(batch=X, batch_idx=batch_idx)
 
             if (batch_idx + 1) % checkpoint_interval == 0:
-                _synchronize_and_checkpoint(core_context, batch_idx, rank)
+                per_batch_processor.run_before_checkpoint()
+                _synchronize_and_checkpoint(core_context, batch_idx, rank, default_output_uuid)
 
                 # Report progress can only be done accurately with synchronization
-                core_context._tensorboard_manager.sync(mangler=get_rank_aware_path)
+                core_context._tensorboard_manager.sync()
                 if rank == 0:
                     _report_progress_to_master(
                         dummy_searcher_op, batch_idx, total_worker, batch_size, dataset_len
@@ -278,13 +316,14 @@ def torch_batch_process(
                 if core_context.preempt.should_preempt():
                     return
 
-        _synchronize_and_checkpoint(core_context, batch_idx, rank)
+        per_batch_processor.run_before_checkpoint()
+        _synchronize_and_checkpoint(core_context, batch_idx, rank, default_output_uuid)
 
-        # Reduce metrics (blocking as reduce across slots is needed
-        # Report reduced metrics to master
         reducables = [wrapped for wrapped in batch_processor_context._wrapped_reducers]
-        # If user have set metric reducers
+        # If the user has set metric reducers
         if len(reducables) > 0:
+            # Reduce metrics (blocking as reduce across slots is needed)
+            # Report reduced metrics to master
             gatherables = [wrapped.per_slot_reduce() for wrapped in reducables]
             if rank == 0:
                 gathered = core_context.distributed.gather(gatherables)
@@ -298,7 +337,9 @@ def torch_batch_process(
                 core_context.distributed.gather(gatherables)
 
         # Finish any tensorboard uploads remaining
-        core_context._tensorboard_manager.sync(mangler=get_rank_aware_path)
+        core_context._tensorboard_manager.sync()
+
+        per_batch_processor.clean_up()
 
         if rank == 0:
             # Report to master the run has completed
