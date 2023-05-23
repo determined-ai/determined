@@ -409,7 +409,6 @@ def test_checkpoint_partial_delete() -> None:
     exp_id = exp.run_basic_test_with_temp_config(
         config, model_def_path=conf.fixtures_path("no_op"), expected_trials=1
     )
-    wait_for_gc_to_finish(exp_id)
 
     test_session = api_utils.determined_test_session()
     checkpoints = bindings.get_GetExperimentCheckpoints(
@@ -461,7 +460,7 @@ def test_checkpoint_partial_delete() -> None:
 
     # Unchanged and empty glob causes checkpoint state says the same.
     remove_body = bindings.v1CheckpointsRemoveFilesRequest(
-        checkpointGlobs=[""],
+        checkpointGlobs=[],
         checkpointUuids=[completed_checkpoints[0].uuid],
     )
     bindings.post_CheckpointsRemoveFiles(test_session, body=remove_body)
@@ -487,7 +486,7 @@ def test_checkpoint_partial_delete() -> None:
             new_resources[file_name] = size
 
     remove_body = bindings.v1CheckpointsRemoveFilesRequest(
-        checkpointGlobs=[""],
+        checkpointGlobs=[],
         checkpointUuids=[completed_checkpoints[0].uuid],
     )
     bindings.post_CheckpointsRemoveFiles(test_session, body=remove_body)

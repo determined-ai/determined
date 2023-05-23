@@ -98,7 +98,7 @@ class AzureStorageManager(storage.CloudStorageManager):
         objects = self.client.list_files(self.container, file_prefix=storage_prefix)
 
         resources = {}
-        if "**/*" not in globs: # Partial delete case.
+        if "**/*" not in globs:  # Partial delete case.
             prefixed_resources = self._apply_globs_to_resources(objects, storage_prefix, globs)
             for obj in list(objects):
                 if obj in prefixed_resources:

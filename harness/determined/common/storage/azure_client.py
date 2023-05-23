@@ -1,6 +1,6 @@
 import logging
 from pathlib import Path
-from typing import List, Optional, Union, Dict
+from typing import Dict, List, Optional, Union
 
 from determined.common import util
 
@@ -75,8 +75,9 @@ class AzureStorageClient(object):
         Lists all files if file_prefix is None.
         """
         container = self.client.get_container_client(container_name)
-        #files = [blob["name"] for blob in container.list_blobs(name_starts_with=file_prefix)]
+        # files = [blob["name"] for blob in container.list_blobs(name_starts_with=file_prefix)]
         files = {
-            blob["name"]: blob["size"] for blob in container.list_blobs(name_starts_with=file_prefix)
+            blob["name"]: blob["size"]
+            for blob in container.list_blobs(name_starts_with=file_prefix)
         }
         return files

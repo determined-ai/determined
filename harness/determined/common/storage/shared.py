@@ -186,7 +186,7 @@ class SharedFSStorageManager(storage.StorageManager):
         if "**/*" in globs:
             util.rmtree_nfs_safe(storage_dir, ignore_errors=False)
             return {}
-        
+
         to_delete_dirs = {}
         to_delete_files = {}
         for file_glob in globs:
@@ -215,7 +215,6 @@ class SharedFSStorageManager(storage.StorageManager):
         if len(resources) == 0:
             util.rmtree_nfs_safe(storage_dir, ignore_errors=False)
         return resources
-
 
     def upload(
         self, src: Union[str, os.PathLike], dst: str, paths: Optional[storage.Paths] = None
