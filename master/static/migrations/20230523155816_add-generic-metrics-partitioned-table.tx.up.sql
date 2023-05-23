@@ -102,13 +102,16 @@ CREATE TABLE generic_metrics (
     total_batches integer NOT NULL DEFAULT 0,
     trial_run_id integer NOT NULL DEFAULT 0,
     archived boolean NOT NULL DEFAULT false,
-    id integer NOT NULL,
+    id integer NOT NULL DEFAULT nextval('metrics_id_seq'),
     partition_type metric_partition_type NOT NULL DEFAULT 'GENERIC',
     custom_type text,
     FOREIGN KEY (trial_id) REFERENCES trials (id)
 );
 CREATE UNIQUE INDEX generic_metrics_trial_id_total_batches_run_id_unique
 ON generic_metrics (trial_id, total_batches, trial_run_id);
+CREATE INDEX generic_metrics_archived
+ON generic_metrics (archived);
+
 
 CREATE TABLE metrics (
     trial_id integer NOT NULL,
