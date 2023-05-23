@@ -58,13 +58,12 @@ which starts up two separate experiments:
 -  ``custom`` Experiment: This experiment contains the trials referenced above whose results are
    reported back to the search runner.
 
-Initially, a one-step profiling trial is created to gather information regarding the model and
-computational resources. The search runner experiment takes this initial profiling information and
-creates a series of trials to search for the DS settings which optimize ``FLOPS_per_gpu``,
-``throughput`` (samples/second), or latency timing information. The results of all such trials can
-be viewed in the ``custom`` experiment above. The search is informed both by the initial profiling
-trial and the results of each subsequent trial, all of whose results are fed back to the search
-runner.
+Initially, a profiling trial is created to gather information regarding the model and computational
+resources. The search runner experiment takes this initial profiling information and creates a
+series of trials to search for the DS settings which optimize ``FLOPS_per_gpu``, ``throughput``
+(samples/second), or latency timing information. The results of all such trials can be viewed in the
+``custom`` experiment above. The search is informed both by the initial profiling trial and the
+results of each subsequent trial, all of whose results are fed back to the search runner.
 
 *******************
  User Code Changes
@@ -79,7 +78,7 @@ will describe these changes in detail for each use case.
 DeepSpeedTrial
 ==============
 
-Determined's DeepSpeed Autotune works by inserting DS configuration options into the
+Determined's DeepSpeed Autotune works by inserting DeepSpeed configuration options into the
 ``overwrite_deepspeed_args`` field of the ``hyperparameters`` dictionary which is seen by each
 trial. To take advantage of ``dsat``, you simply need to incorporate these overwrite values into
 your original configuration.
@@ -90,10 +89,10 @@ your original configuration.
 
 To facilitate this process, you must add a ``deepspeed_config`` field under the ``hyperparameters``
 section of your experiment. This field specifies the relative path to the DS ``json`` configuration
-file (written following the `DS documentation here <https://www.deepspeed.ai/docs/config-json/>`_)
-and is how ``dsat`` is informed of your default settings. For example, if your default DeepSpeed
-configuration is stored in ``ds_config.json`` at the top-level of your model directory, your
-``hyperparameters`` section should include:
+file (written following the `DeepSpeed documentation here
+<https://www.deepspeed.ai/docs/config-json/>`_) and is how ``dsat`` is informed of your default
+settings. For example, if your default DeepSpeed configuration is stored in ``ds_config.json`` at
+the top-level of your model directory, your ``hyperparameters`` section should include:
 
 .. code:: yaml
 
@@ -125,11 +124,10 @@ configuration to deepspeed.initialize as usual:
 Using Determined's DeepSpeed Autotune with a :class:`~determined.pytorch.deepspeed.DeepSpeedTrial`
 instance requires no further changes to your user code.
 
-Examples which use DeepSpeed Autotune with HuggingFace Trainer can be found in the
-``examples/deepspeed_autotune/torchvision/deepspeed_trial`` `subdirectory within the Determined
+A full example which uses DeepSpeed Autotune with ``DeepSpeedTrial`` can be found in the `Determined
 GitHub Repo
 <https://github.com/determined-ai/determined/tree/master/examples/deepspeed_autotune/torchvision/deepspeed_trial>`__
-.
+under ``examples/deepspeed_autotune/torchvision/deepspeed_trial`` .
 
 Core API
 ========
@@ -157,12 +155,13 @@ Here is an example sketch of ``dsat`` code with Core API:
 In this code snippet, ``core_context`` is the :class:`~determined.core.Context` instance which was
 initialized with :func:`determined.core.init`. The context manager requires access to both
 ``core_context`` and the current :class:`~determined.core.SearcherOperation` instance (``op``) to
-appropriately report results.
+appropriately report results. Outside of a ``dsat`` context, ``dsat_reporting_context`` is a no-op,
+so there is no need to remove the context manager after the ``dsat`` trials have completed.
 
-A full example which uses DeepSpeed Autotune with Core API can be found in the
-``examples/deepspeed_autotune/torchvision/core_api`` `subdirectory within the Determined GitHub Repo
+A full example which uses DeepSpeed Autotune with Core API can be found in the `Determined GitHub
+Repo
 <https://github.com/determined-ai/determined/tree/master/examples/deepspeed_autotune/torchvision/core_api>`__
-.
+under ``examples/deepspeed_autotune/torchvision/core_api``.
 
 HuggingFace Trainer
 ===================
@@ -212,9 +211,9 @@ relevant code:
    -  The entire ``train`` method of the HuggingFace trainer is now wrapped in the
       ``dsat_reporting_context`` context manager.
 
-A full example which uses DeepSpeed Autotune with HuggingFace Trainer can be found in the
-``examples/hf_trainer_api`` `subdirectory within the Determined GitHub Repo
-<https://github.com/determined-ai/determined/tree/master/examples/hf_trainer_api>`__ .
+Examples which use DeepSpeed Autotune with HuggingFace Trainer can be found in the `Determined
+GitHub Repo <https://github.com/determined-ai/determined/tree/master/examples/hf_trainer_api>`__
+under ``examples/hf_trainer_api``.
 
 ******************
  Advanced Options
