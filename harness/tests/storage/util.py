@@ -237,27 +237,19 @@ def run_storage_lifecycle_test(
     for c in cases:
         storage_id = str(uuid.uuid4())
         path = pathlib.Path(f"/tmp/storage_lifecycle_test-{storage_id}")
+        create_checkpoint(path)
         try:
-            create_checkpoint(path)
             manager.upload(path, storage_id)
         finally:
             shutil.rmtree(path, ignore_errors=True)
 
-        # TODO undo...
-        res = manager.delete(storage_id, c[0])
-        print("GLOBS", c[0], "\nRES:", res, "\nc[1]", c[1])
-        assert res == c[1]
+        assert manager.delete(storage_id, c[0]) == c[1]
 
+        manager.download(storage_id, path)
         try:
-            manager.download(storage_id, path)
             validate_checkpoint(path, {k: v for k, v in EXPECTED_FILES.items() if k in c[1]})
         finally:
             shutil.rmtree(path, ignore_errors=True)
-
-    # TODO add a case for metadata.json since this behaviour is kinda weird right now.
-    # not sure exactly ideal. Ideally just assume it is okay if it has it or not.
-    # Honestly this might be better for the backend to ignore when updating.
-    # Say we just remove it from the path and remove it from this?
 
 
 def run_tensorboard_fetcher_test(

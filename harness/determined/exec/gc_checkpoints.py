@@ -17,7 +17,6 @@ from determined.common.api import bindings, certs
 
 
 def patch_checkpoints(storage_ids_to_resources: Dict[str, Dict[str, int]]) -> None:
-    # TODO is this right?
     info = det.ClusterInfo._from_file()
     if info is None:
         info = det.ClusterInfo._from_env()

@@ -352,8 +352,6 @@ class Checkpoint:
         )
         bindings.post_CheckpointsRemoveFiles(self._session, body=remove_body)
 
-        # TODO do we need a way for multiple uuids to be specified?
-        # Could really just call bindings if you really need that...
         if len(globs) == 0:
             logging.info(f"Refresh of checkpoint {self.uuid} is in progress.")
         else:
