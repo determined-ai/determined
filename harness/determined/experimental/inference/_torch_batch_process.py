@@ -12,7 +12,7 @@ import torch.distributed as dist
 
 from torch import nn
 from torch.utils.data import Dataset
-from typing import Any, Dict, Optional, Set, Type
+from typing import Any, Dict, Iterator, Optional, Set, Type
 
 import determined as det
 from determined import core, pytorch
@@ -22,7 +22,6 @@ from determined.pytorch import DataLoader
 set_logger(False)
 
 DEFAULT_BATCH_SIZE = 1
-DEFAULT_CHECK_PREEMPT_INTERVAL = 100
 
 
 class TorchBatchProcessorContext(pytorch._PyTorchReducerContext):
@@ -69,7 +68,10 @@ class TorchBatchProcessorContext(pytorch._PyTorchReducerContext):
         model.to(self._device)
         return model
 
-    def get_storage_path(self):
+    def get_default_storage_path(self) -> Iterator[pathlib.Path]:
+        """
+        Should use with "with" syntax
+        """
         return self._core_context.checkpoint._storage_manager.store_path(self._storage_path)
 
 
