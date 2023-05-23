@@ -14,14 +14,13 @@ we describe in the remainder of this user guide. ``dsat`` can be used with any o
 :class:`~determined.pytorch.deepspeed.DeepSpeedTrial`, :ref:`Core API <core-getting-started>`, and
 HuggingFace Trainer.
 
-
 **************
- How it works
+ How it Works
 **************
 
 You do not need to create a special configuration file to use ``dsat``. Assuming you have DeepSpeed
 code which already functions, autotuning is as easy as inserting one or two helper functions into
-your code and modifying the command to launch the ``dsat`` experiments.
+your code and modifying the launch command.
 
 For instance, to run ``dsat`` using the ``asha`` algorithm (see
 :ref:`topic-guides_hp-tuning-det_adaptive-asha`) with an existing ``single`` trial DeepSpeed
@@ -121,6 +120,12 @@ configuration to deepspeed.initialize as usual:
 Using Determined's DeepSpeed Autotune with a :class:`~determined.pytorch.deepspeed.DeepSpeedTrial`
 instance requires no further changes to your user code.
 
+A full example which uses DeepSpeed Autotune with ``DeepSpeedTrial`` can be found in the
+``examples/deepspeed_autotune/torchvision/deepspeed_trial`` `subdirectory within the Determined
+GitHub Repo
+<https://github.com/determined-ai/determined/tree/master/examples/deepspeed_autotune/torchvision/deepspeed_trial>`__
+.
+
 Core API
 ========
 
@@ -148,6 +153,11 @@ In this code snippet, ``core_context`` is the :class:`~determined.core.Context` 
 initialized with ``determined.core.init``. The context manager requires access to both
 ``core_context`` and the current :class:`~determined.core.SearcherOperation` instance (``op``) to
 appropriately report results.
+
+A full example which uses DeepSpeed Autotune with Core API can be found in the
+``examples/deepspeed_autotune/torchvision/core_api`` `subdirectory within the Determined GitHub Repo
+<https://github.com/determined-ai/determined/tree/master/examples/deepspeed_autotune/torchvision/core_api>`__
+.
 
 HuggingFace Trainer
 ===================
@@ -195,6 +205,10 @@ relevant code:
 
    -  The entire ``train`` method of the HuggingFace trainer is now wrapped in the
       ``dsat_reporting_context`` context manager.
+
+A full example which uses DeepSpeed Autotune with HuggingFace Trainer can be found in the
+``examples/hf_trainer_api`` `subdirectory within the Determined GitHub Repo
+<https://github.com/determined-ai/determined/tree/master/examples/hf_trainer_api>`__ .
 
 ******************
  Advanced Options
