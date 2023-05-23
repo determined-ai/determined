@@ -512,6 +512,7 @@ def test_surface_native_error():
 
 
 @pytest.mark.tensorflow
+@pytest.mark.tf1_cpu
 def test_rng_restore(tmp_path: Path):
     checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
     latest_checkpoint = None

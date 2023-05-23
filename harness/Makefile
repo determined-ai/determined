@@ -26,6 +26,10 @@ check: check-gen
 test-cpu:
 	coverage run -m pytest -v --runslow --durations=0 -m "not gpu or cpu" tests
 
+.PHONY: test-cpu-tf1
+test-cpu-tf1:
+    coverage run -m pytest -v --runslow --durations=0 -m "tf1_cpu" tests/experiment
+
 .PHONY: test-gpu
 test-gpu:
 	# Since integration tests are image-specific, they must be excluded and run separately
