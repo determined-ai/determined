@@ -18,11 +18,6 @@ from determined.experimental.client import create_experiment
 from determined.pytorch.dsat import _defaults, _utils
 from determined.util import merge_dicts
 
-"""
-TODOs:
-    * Make sure we don't draw the same config twice in random search.
-"""
-
 
 class DSATTrial:
     """Encapsulation of DeepSpeed Autotune Trials.
