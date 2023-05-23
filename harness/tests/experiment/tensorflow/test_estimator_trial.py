@@ -1,8 +1,8 @@
 # type: ignore
 import os
-import tempfile
 import pathlib
-from typing import Any, Dict, Optional, List
+import tempfile
+from typing import Any, Dict, List, Optional
 
 import pytest
 import tensorflow as tf
@@ -340,8 +340,8 @@ def test_checkpoint_loading(ckpt_ver):
     estm = estimator.load_estimator_from_checkpoint_path(checkpoint_dir)
     assert isinstance(estm, tracking.AutoTrackable), type(estm)
 
-def test_rng_restore():
 
+def test_rng_restore():
     def make_checkpoint() -> workload.Stream:
         trainer = utils.TrainAndValidate()
 
@@ -366,23 +366,20 @@ def test_rng_restore():
     trial_C_metrics = []
 
     trial_A_controller = utils.make_trial_controller_from_trial_implementation(
-        trial_class=trial_class,
-        hparams=hparams,
-        workloads=make_checkpoint(),
-        trial_seed=325
+        trial_class=trial_class, hparams=hparams, workloads=make_checkpoint(), trial_seed=325
     )
 
     trial_A_controller.run()
 
     # copy checkpoint
-    checkpoint_dir= trial_A_controller.estimator_dir
+    checkpoint_dir = trial_A_controller.estimator_dir
 
     trial_B_controller = utils.make_trial_controller_from_trial_implementation(
         trial_class=trial_class,
         hparams=hparams,
         workloads=make_workloads_with_metrics(trial_B_metrics),
         latest_checkpoint=str(checkpoint_dir),
-        steps_completed=1
+        steps_completed=1,
     )
 
     trial_B_controller.run()
@@ -392,7 +389,7 @@ def test_rng_restore():
         hparams=hparams,
         workloads=make_workloads_with_metrics(trial_C_metrics),
         latest_checkpoint=str(checkpoint_dir),
-        steps_completed=1
+        steps_completed=1,
     )
 
     trial_C_controller.run()

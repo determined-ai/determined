@@ -1,7 +1,7 @@
 # type: ignore
 import os
 from pathlib import Path
-from typing import Any, Callable, Dict, Optional, List
+from typing import Any, Callable, Dict, List, Optional
 
 import pytest
 import tensorflow as tf
@@ -510,9 +510,9 @@ def test_surface_native_error():
     with pytest.raises(ValueError, match="incompatible"):
         controller.run()
 
+
 @pytest.mark.tensorflow
 def test_rng_restore(tmp_path: Path):
-
     checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
     latest_checkpoint = None
     steps_completed = 0
@@ -551,11 +551,10 @@ def test_rng_restore(tmp_path: Path):
         hparams=hparams,
         workloads=make_checkpoint(),
         checkpoint_dir=checkpoint_dir,
-        trial_seed=325
+        trial_seed=325,
     )
 
     trial_A_controller.run()
-
 
     trial_B_controller = utils.make_trial_controller_from_trial_implementation(
         trial_class=trial_class,
@@ -563,7 +562,7 @@ def test_rng_restore(tmp_path: Path):
         workloads=make_workloads_with_metrics(trial_B_metrics),
         checkpoint_dir=checkpoint_dir,
         latest_checkpoint=latest_checkpoint,
-        steps_completed=steps_completed
+        steps_completed=steps_completed,
     )
 
     trial_B_controller.run()
@@ -574,7 +573,7 @@ def test_rng_restore(tmp_path: Path):
         workloads=make_workloads_with_metrics(trial_C_metrics),
         checkpoint_dir=checkpoint_dir,
         latest_checkpoint=latest_checkpoint,
-        steps_completed=steps_completed
+        steps_completed=steps_completed,
     )
 
     trial_C_controller.run()
