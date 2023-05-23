@@ -20,7 +20,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/rm/rmerrors"
-	"github.com/determined-ai/determined/master/internal/task"
+	"github.com/determined-ai/determined/master/internal/task/tasklogger"
 	"github.com/determined-ai/determined/master/internal/user"
 
 	"github.com/determined-ai/determined/master/internal/db"
@@ -102,7 +102,7 @@ type (
 
 		*model.Experiment
 		activeConfig        expconf.ExperimentConfig
-		taskLogger          *task.Logger
+		taskLogger          *tasklogger.Logger
 		db                  *db.PgDB
 		rm                  rm.ResourceManager
 		searcher            *searcher.Searcher
@@ -117,6 +117,14 @@ type (
 		logCtx logger.Context
 	}
 )
+
+//  -------------------------- <- experiment.Kill() <- trial exit, do some searcher stuff, launch new trial
+//    ------ ------ <- trial.Kill(), <- allocation exit
+//     ---    --- <- alloc.ServiceInAllocationIsReady(), <- container state change
+
+// /api/v1/allocation/:id/ready
+// go to allocation, ask for container addresses, if they exist, go to proxy service, use address to request proxy
+// on restore, iterate allocations, regather addresses, restore proxies
 
 // Create a new experiment object from the given model experiment object, along with its searcher
 // and log. If the input object has no ID set, also create a new experiment in the database and set

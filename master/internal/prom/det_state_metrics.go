@@ -7,7 +7,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 
 	"github.com/determined-ai/determined/master/internal/sproto"
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/model"
 
@@ -27,7 +26,7 @@ Exposes mapping of allocation ID to container ID`,
 		Name:      "allocation_id_task_id_task_actor",
 		Help: `
 Exposes mapping of allocation ID to task ID and actor`,
-	}, []string{"allocation_id", "task_id", "task_actor", "job_id"})
+	}, []string{"allocation_id", "task_id", "job_id"})
 
 	containerIDToRuntimeID = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Subsystem: "det",
@@ -94,13 +93,8 @@ func AssociateAllocationContainer(aID model.AllocationID, cID cproto.ID) {
 }
 
 // AssociateAllocationTask associates an allocation ID with its task/job info.
-func AssociateAllocationTask(aID model.AllocationID,
-	tID model.TaskID,
-	taskActor actor.Address,
-	jID model.JobID,
-) {
-	allocationIDToTask.WithLabelValues(aID.String(), tID.String(), taskActor.String(),
-		jID.String()).Inc()
+func AssociateAllocationTask(aID model.AllocationID, tID model.TaskID, jID model.JobID) {
+	allocationIDToTask.WithLabelValues(aID.String(), tID.String(), jID.String()).Inc()
 }
 
 // AssociateJobExperiment associates a job ID with experiment info.
@@ -128,11 +122,8 @@ func DisassociateJobExperiment(jID model.JobID, eID string, labels expconf.Label
 }
 
 // DisassociateAllocationTask disassociates an allocation ID with its task info.
-func DisassociateAllocationTask(aID model.AllocationID, tID model.TaskID, taskActor actor.Address,
-	jID model.JobID,
-) {
-	allocationIDToTask.WithLabelValues(aID.String(), tID.String(), taskActor.String(),
-		jID.String()).Dec()
+func DisassociateAllocationTask(aID model.AllocationID, tID model.TaskID, jID model.JobID) {
+	allocationIDToTask.WithLabelValues(aID.String(), tID.String(), jID.String()).Dec()
 }
 
 // AssociateContainerRuntimeID associates a Determined container ID with the runtime container ID.

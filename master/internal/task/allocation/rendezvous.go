@@ -1,18 +1,18 @@
-package task
+package allocation
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"time"
 
-	"github.com/determined-ai/determined/master/pkg/actor/actors"
+	"github.com/determined-ai/determined/master/pkg/syncx/waitgroupx"
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 
 	apiutils "github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/sproto"
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
@@ -63,58 +63,60 @@ type (
 
 	// rendezvous encapsulates the rendezvous state of a trial.
 	rendezvous struct {
-		allocationID      model.AllocationID
+		wg waitgroupx.Group
+
 		watchers          map[sproto.ResourcesID]chan<- RendezvousInfoOrError
 		resources         resourcesList
-		lastWatchTime     time.Time
 		allReadySucceeded bool
 	}
 )
 
 // newRendezvous returns a new rendezvous component.
-func newRendezvous(
-	ctx *actor.Context,
-	allocationID model.AllocationID,
-	rs resourcesList,
-) *rendezvous {
-	if ctx != nil {
-		actors.NotifyAfter(ctx, rendezvousTimeoutDuration, rendezvousTimeout{
-			AllocationID: allocationID,
-		})
+func newRendezvous(rs resourcesList, timeout func(err error)) *rendezvous {
+	r := &rendezvous{
+		wg:        waitgroupx.WithContext(context.Background()),
+		resources: rs,
+		watchers:  map[sproto.ResourcesID]chan<- RendezvousInfoOrError{},
 	}
 
-	return &rendezvous{
-		allocationID: allocationID,
-		resources:    rs,
-		watchers:     map[sproto.ResourcesID]chan<- RendezvousInfoOrError{},
-	}
+	r.wg.Go(func(ctx context.Context) {
+		t := time.NewTimer(preemptionTimeoutDuration)
+		defer t.Stop()
+
+		select {
+		case <-t.C:
+			timeout(ErrPreemptionTimeoutExceeded)
+		case <-ctx.Done():
+		}
+	})
+
+	return r
 }
 
-func (r *rendezvous) watch(msg WatchRendezvousInfo) (RendezvousWatcher, error) {
-	if _, ok := r.resources[msg.ResourcesID]; !ok {
-		err := ErrStaleResources{ID: msg.ResourcesID}
+func (r *rendezvous) watch(id sproto.ResourcesID) (RendezvousWatcher, error) {
+	if _, ok := r.resources[id]; !ok {
+		err := ErrStaleResources{ID: id}
 		return RendezvousWatcher{}, apiutils.AsValidationError(err.Error())
-	} else if _, ok := r.watchers[msg.ResourcesID]; ok {
+	} else if _, ok := r.watchers[id]; ok {
 		return RendezvousWatcher{}, apiutils.AsValidationError(
-			"resources already rendezvoused: %s", msg.ResourcesID,
+			"resources already rendezvoused: %s", id,
 		)
 	}
 
 	// Channel is size 1 since rendezvous info will only ever be sent once.
 	w := make(chan RendezvousInfoOrError, 1)
-	r.watchers[msg.ResourcesID] = w
-	r.lastWatchTime = time.Now()
+	r.watchers[id] = w
 	if r.ready() {
 		r.push()
 	}
 	return RendezvousWatcher{C: w}, nil
 }
 
-func (r *rendezvous) unwatch(msg UnwatchRendezvousInfo) {
-	if r == nil {
+func (r *rendezvous) unwatch(id sproto.ResourcesID) {
+	if r == nil { // TODO(mar): nil checks.
 		return
 	}
-	delete(r.watchers, msg.ResourcesID)
+	delete(r.watchers, id)
 }
 
 func (r *rendezvous) try() bool {
@@ -145,6 +147,8 @@ func (r *rendezvous) ready() bool {
 	allWaiting := len(r.watchers) == len(r.resources)
 
 	r.allReadySucceeded = !anyExited && allAddressesArrived && allWaiting
+	r.wg.Cancel()
+
 	return r.allReadySucceeded
 }
 
@@ -171,25 +175,6 @@ func (r rendezvous) push() bool {
 	return true
 }
 
-// checkTimeout checks if the task should timeout waiting for rendezvous.
-func (r *rendezvous) checkTimeout(msg rendezvousTimeout) error {
-	if r == nil || r.allReadySucceeded {
-		return nil
-	}
-
-	exceededTimeout := time.Now().After(r.lastWatchTime.Add(rendezvousTimeoutDuration))
-	if r.allocationID == msg.AllocationID && exceededTimeout {
-		return ErrTimeoutExceeded{
-			Message: "some containers are taking a long time to " +
-				"connect to master; when running on kubernetes this may happen " +
-				"because only some of the pods have been scheduled; it is possible " +
-				"that some pods will never be scheduled without adding compute " +
-				"resources or pausing / killing other experiments in the cluster",
-		}
-	}
-	return nil
-}
-
 // close closes rendezvous by letting still active watchers know they were terminated.
 func (r *rendezvous) close() {
 	if r == nil {
@@ -201,6 +186,8 @@ func (r *rendezvous) close() {
 		close(w)
 		delete(r.watchers, cID)
 	}
+
+	r.wg.Close()
 }
 
 type cAddress struct {

@@ -8,6 +8,8 @@ import (
 	"golang.org/x/exp/slices"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/logger"
 
@@ -21,7 +23,8 @@ import (
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/rm/rmerrors"
 	"github.com/determined-ai/determined/master/internal/sproto"
-	"github.com/determined-ai/determined/master/internal/task"
+	"github.com/determined-ai/determined/master/internal/task/allocation"
+	"github.com/determined-ai/determined/master/internal/task/tasklogger"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
@@ -60,7 +63,7 @@ func createGenericCommandActor(
 	ctx *actor.Context,
 	db *db.PgDB,
 	rm rm.ResourceManager,
-	taskLogger *task.Logger,
+	taskLogger *tasklogger.Logger,
 	taskID model.TaskID,
 	taskType model.TaskType,
 	jobID model.JobID,
@@ -103,7 +106,7 @@ func commandFromSnapshot(
 	ctx *actor.Context,
 	db *db.PgDB,
 	rm rm.ResourceManager,
-	taskLogger *task.Logger,
+	taskLogger *tasklogger.Logger,
 	snapshot *CommandSnapshot,
 ) *command {
 	taskID := snapshot.TaskID
@@ -138,7 +141,7 @@ func remakeCommandsByType(
 	ctx *actor.Context,
 	pgDB *db.PgDB,
 	rm rm.ResourceManager,
-	taskLogger *task.Logger,
+	taskLogger *tasklogger.Logger,
 	taskType model.TaskType,
 ) ([]*command, error) {
 	snapshots := []CommandSnapshot{}
@@ -172,7 +175,7 @@ func restoreCommandsByType(
 	ctx *actor.Context,
 	pgDB *db.PgDB,
 	rm rm.ResourceManager,
-	taskLogger *task.Logger,
+	taskLogger *tasklogger.Logger,
 	taskType model.TaskType,
 ) error {
 	commands, err := remakeCommandsByType(ctx, pgDB, rm, taskLogger, taskType)
@@ -197,7 +200,7 @@ func tryRestoreCommandsByType(
 	ctx *actor.Context,
 	pgDB *db.PgDB,
 	rm rm.ResourceManager,
-	taskLogger *task.Logger,
+	taskLogger *tasklogger.Logger,
 	taskType model.TaskType,
 ) {
 	if rm.IsReattachEnabled(ctx) {
@@ -213,7 +216,7 @@ type command struct {
 	db          *db.PgDB
 	rm          rm.ResourceManager
 	eventStream *actor.Ref
-	taskLogger  *task.Logger
+	taskLogger  *tasklogger.Logger
 
 	tasks.GenericCommandSpec
 
@@ -223,9 +226,9 @@ type command struct {
 	jobType        model.JobType
 	jobID          model.JobID
 	allocationID   model.AllocationID
-	allocation     *actor.Ref
-	lastState      task.AllocationState
-	exitStatus     *task.AllocationExited
+	allocation     *allocation.AllocationHandle
+	lastState      allocation.AllocationState
+	exitStatus     *allocation.AllocationExited
 	restored       bool
 
 	logCtx logger.Context
@@ -281,18 +284,16 @@ func (c *command) Receive(ctx *actor.Context) error {
 				UseProxyState:   c.WatchProxyIdleTimeout,
 				UseRunnerState:  c.WatchRunnerIdleTimeout,
 				TimeoutDuration: time.Duration(*c.Config.IdleTimeout),
-				Debug:           c.Config.Debug,
 			}
 		}
 
-		allocation := task.NewAllocation(c.logCtx, sproto.AllocateRequest{
+		alloc, err := allocation.Start(context.TODO(), logrus.Fields(c.logCtx), sproto.AllocateRequest{
 			AllocationID:      c.allocationID,
 			TaskID:            c.taskID,
 			JobID:             c.jobID,
 			JobSubmissionTime: c.registeredTime,
 			IsUserVisible:     true,
 			Name:              c.Config.Description,
-			AllocationRef:     ctx.Self(),
 			Group:             ctx.Self(),
 
 			SlotsNeeded:  c.Config.Resources.Slots,
@@ -305,15 +306,24 @@ func (c *command) Receive(ctx *actor.Context) error {
 			ProxyPorts:   sproto.NewProxyPortConfig(c.GenericCommandSpec.ProxyPorts(), c.taskID),
 			IdleTimeout:  idleWatcherConfig,
 			Restore:      c.restored,
-		}, c.db, c.rm, c.taskLogger)
-		c.allocation, _ = ctx.ActorOf(c.allocationID, allocation)
+		}, c.rm, c.taskLogger, func() (tasks.TaskSpec, error) {
+			return c.ToTaskSpec(c.GenericCommandSpec.Keys), nil
+		})
+		if err != nil {
+			ctx.Log().WithError(err).Error("could not start allocation")
+			return err
+		}
+		c.allocation = alloc
+
+		go func() {
+			ctx.Tell(ctx.Self(), alloc.Wait())
+		}()
 
 		ctx.Self().System().TellAt(sproto.JobsActorAddr, sproto.RegisterJob{
 			JobID:    c.jobID,
 			JobActor: ctx.Self(),
 		})
 
-		ctx.Ask(c.allocation, actor.Ping{}).Get()
 		if err := c.persist(); err != nil {
 			ctx.Log().WithError(err).Warnf("command persist failure")
 		}
@@ -335,25 +345,8 @@ func (c *command) Receive(ctx *actor.Context) error {
 		}
 	case actor.ChildStopped:
 	case actor.ChildFailed:
-		if msg.Child.Address().Local() == c.allocationID.String() && c.exitStatus == nil {
-			c.exitStatus = &task.AllocationExited{
-				FinalState: task.AllocationState{State: model.AllocationStateTerminated},
-				Err:        errors.New("command allocation actor failed"),
-			}
-			if err := c.db.CompleteTask(c.taskID, time.Now().UTC()); err != nil {
-				ctx.Log().WithError(err).Error("marking task complete")
-			}
-		}
-	case task.BuildTaskSpec:
-		if ctx.ExpectingResponse() {
-			ctx.Respond(c.ToTaskSpec(c.GenericCommandSpec.Keys))
-			// Evict the context from memory after starting the command as it is no longer needed. We
-			// evict as soon as possible to prevent the master from hitting an OOM.
-			// TODO: Consider not storing the userFiles in memory at all.
-			c.UserFiles = nil
-			c.AdditionalFiles = nil
-		}
-	case *task.AllocationExited:
+		// We have no children post allocation actor refactor.
+	case *allocation.AllocationExited:
 		c.exitStatus = msg
 		if err := c.db.CompleteTask(c.taskID, time.Now().UTC()); err != nil {
 			ctx.Log().WithError(err).Error("marking task complete")
@@ -378,12 +371,12 @@ func (c *command) Receive(ctx *actor.Context) error {
 		})
 	case *apiv1.IdleNotebookRequest:
 		if !msg.Idle {
-			ctx.Tell(c.allocation, task.IdleWatcherNoteActivity{LastActivity: time.Now()})
+			c.allocation.IdleWatcherNoteActivity(time.Now())
 		}
 		ctx.Respond(&apiv1.IdleNotebookResponse{})
 	case *apiv1.KillNotebookRequest:
 		// TODO(Brad): Do the same thing to allocations that we are doing to RMs.
-		ctx.Tell(c.allocation, sproto.AllocationSignalWithReason{
+		c.allocation.HandleSignal(sproto.AllocationSignalWithReason{
 			AllocationSignal:    sproto.KillAllocation,
 			InformationalReason: "user requested kill",
 		})
@@ -406,7 +399,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 		})
 
 	case *apiv1.KillCommandRequest:
-		ctx.Tell(c.allocation, sproto.AllocationSignalWithReason{
+		c.allocation.HandleSignal(sproto.AllocationSignalWithReason{
 			AllocationSignal:    sproto.KillAllocation,
 			InformationalReason: "user requested kill",
 		})
@@ -430,7 +423,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 		})
 
 	case *apiv1.KillShellRequest:
-		ctx.Tell(c.allocation, sproto.AllocationSignalWithReason{
+		c.allocation.HandleSignal(sproto.AllocationSignalWithReason{
 			AllocationSignal:    sproto.KillAllocation,
 			InformationalReason: "user requested kill",
 		})
@@ -454,7 +447,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 		})
 
 	case *apiv1.KillTensorboardRequest:
-		ctx.Tell(c.allocation, sproto.AllocationSignalWithReason{
+		c.allocation.HandleSignal(sproto.AllocationSignalWithReason{
 			AllocationSignal:    sproto.KillAllocation,
 			InformationalReason: "user requested kill",
 		})
@@ -470,7 +463,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 
 	case *apiv1.DeleteWorkspaceRequest:
 		if c.Metadata.WorkspaceID == model.AccessScopeID(msg.Id) {
-			ctx.Tell(c.allocation, sproto.AllocationSignalWithReason{
+			c.allocation.HandleSignal(sproto.AllocationSignalWithReason{
 				AllocationSignal:    sproto.KillAllocation,
 				InformationalReason: "user requested workspace delete",
 			})
@@ -649,20 +642,11 @@ func (c *command) toTensorboard(ctx *actor.Context) *tensorboardv1.Tensorboard {
 // we don't ask for a refresh because it won't respond. Otherwise, ask with a timeout
 // since there is another ask in the opposite direction, and even though it's probably
 // 1 in a million runs, we don't want to deadlock.
-func (c *command) refreshAllocationState(ctx *actor.Context) task.AllocationState {
+func (c *command) refreshAllocationState(ctx *actor.Context) allocation.AllocationState {
 	if c.exitStatus != nil {
 		return c.exitStatus.FinalState
 	}
-
-	resp, ok := ctx.Ask(c.allocation, task.AllocationState{}).GetOrTimeout(5 * time.Second)
-	state, sOk := resp.(task.AllocationState)
-	if !(ok && sOk) {
-		ctx.Log().WithField("resp", resp).Warnf("getting allocation state")
-	} else {
-		c.lastState = state
-	}
-
-	return c.lastState
+	return c.allocation.State()
 }
 
 func toProto(as []cproto.Address) []*structpb.Struct {
@@ -710,4 +694,14 @@ func (c *command) persist() error {
 		On("CONFLICT (task_id) DO UPDATE").
 		Exec(context.TODO())
 	return err
+}
+
+func (c *command) buildTaskSpec() *tasks.TaskSpec {
+	resp := c.ToTaskSpec(c.GenericCommandSpec.Keys)
+	// Evict the context from memory after starting the command as it is no longer needed. We
+	// evict as soon as possible to prevent the master from hitting an OOM.
+	// TODO: Consider not storing the userFiles in memory at all.
+	c.UserFiles = nil
+	c.AdditionalFiles = nil
+	return &resp
 }

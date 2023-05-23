@@ -14,6 +14,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/determined-ai/determined/master/internal/task/allocation"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
 	ws "github.com/determined-ai/determined/master/pkg/actor/api"
@@ -22,7 +23,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/proto/pkg/agentv1"
 	proto "github.com/determined-ai/determined/proto/pkg/apiv1"
 )
@@ -71,6 +71,8 @@ type (
 		opts *aproto.MasterSetAgentOptions
 
 		agentState *agentState
+
+		containerWatchers map[cproto.ID]*sproto.Watcher[sproto.ResourcesStateChanged]
 	}
 
 	reconnectTimeout struct{}
@@ -235,6 +237,9 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 			WithField("slots", len(msg.StartContainer.Container.Devices))
 		log.Infof("starting container")
 
+		w := sproto.NewWatcher[sproto.ResourcesStateChanged]()
+		a.containerWatchers[msg.Container.ID] = w
+
 		wsm := ws.WriteMessage{Message: aproto.AgentMessage{StartContainer: &msg.StartContainer}}
 		if err := ctx.Ask(a.socket, wsm).Error(); err != nil {
 			// TODO(DET-5862): After push arch, return and handle this error when starting allocations.
@@ -245,6 +250,8 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 		if err := a.agentState.startContainer(ctx, msg); err != nil {
 			log.WithError(err).Error("failed to update agent state")
 		}
+		ctx.Respond(w)
+
 	case aproto.MasterMessage:
 		a.handleIncomingWSMessage(ctx, msg)
 	case *proto.GetAgentRequest:
@@ -294,8 +301,14 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 		})
 		// Kill both slotted and zero-slot tasks, unless draining.
 		if !msg.Drain {
-			for cid := range a.agentState.containerAllocation {
-				ctx.Tell(a.agentState.containerAllocation[cid], sproto.AllocationSignalWithReason{
+			for _, allocID := range a.agentState.containerAllocation {
+				alloc, err := allocation.GetAllocation(allocID)
+				if err != nil {
+					ctx.Log().WithError(err).Warn("could not kill allocation on disabled agent")
+					continue
+				}
+
+				alloc.HandleSignal(sproto.AllocationSignalWithReason{
 					AllocationSignal:    sproto.KillAllocation,
 					InformationalReason: "agent disabled",
 				})
@@ -488,7 +501,7 @@ func (a *agent) handleIncomingWSMessage(ctx *actor.Context, msg aproto.MasterMes
 	case msg.ContainerStateChanged != nil:
 		a.containerStateChanged(ctx, *msg.ContainerStateChanged)
 	case msg.ContainerLog != nil:
-		ref, ok := a.agentState.containerAllocation[msg.ContainerLog.ContainerID]
+		allocID, ok := a.agentState.containerAllocation[msg.ContainerLog.ContainerID]
 		if !ok {
 			containerID := msg.ContainerLog.ContainerID
 			log.WithField("container-id", containerID).Warnf(
@@ -496,7 +509,16 @@ func (a *agent) handleIncomingWSMessage(ctx *actor.Context, msg aproto.MasterMes
 					"container %s, message: %v", containerID, msg.ContainerLog)
 			return
 		}
-		ctx.Tell(ref, sproto.ContainerLog{
+
+		alloc, err := allocation.GetAllocation(allocID)
+		if err != nil {
+			containerID := msg.ContainerLog.ContainerID
+			log.WithField("container-id", containerID).Warnf(
+				"received ContainerLog from container with missing allocation: "+
+					"container %s, message: %v", containerID, msg.ContainerLog)
+		}
+
+		alloc.SendContainerLog(sproto.ContainerLog{
 			ContainerID: msg.ContainerLog.ContainerID,
 			Level:       msg.ContainerLog.Level,
 			Timestamp:   msg.ContainerLog.Timestamp,
@@ -542,18 +564,13 @@ func (a *agent) agentStarted(ctx *actor.Context, agentStarted *aproto.AgentStart
 }
 
 func (a *agent) containerStateChanged(ctx *actor.Context, sc aproto.ContainerStateChanged) {
-	taskActor, ok := a.agentState.containerAllocation[sc.Container.ID]
-
+	w, ok := a.containerWatchers[sc.Container.ID]
 	if !ok {
-		// We may receieve late terminations when reconnected agent is cleaning up
-		// terminated containers.
 		if sc.Container.State != cproto.Terminated {
-			containerID := sc.Container.ID
-			ctx.Log().WithField("container-id", containerID).Warnf(
-				"received ContainerStateChanged from container not allocated to agent: "+
-					"container %s, message: %v", containerID, sc)
+			ctx.Log().WithField("container-id", sc.Container.ID).Warnf(
+				"received ContainerStateChanged from container without a watcher: "+
+					"container %s, message: %v", sc.Container.ID, sc)
 		}
-		return
 	}
 
 	switch sc.Container.State {
@@ -568,7 +585,7 @@ func (a *agent) containerStateChanged(ctx *actor.Context, sc aproto.ContainerSta
 		delete(a.agentState.containerAllocation, sc.Container.ID)
 	}
 
-	ctx.Tell(taskActor, sproto.FromContainerStateChanged(sc))
+	w.Send(sproto.FromContainerStateChanged(sc))
 	a.agentState.containerStateChanged(ctx, sc)
 }
 
@@ -675,35 +692,30 @@ func (a *agent) clearNonReattachedContainers(
 	recovered map[cproto.ID]aproto.ContainerReattachAck,
 	explicitlyDoomed map[cproto.ID]aproto.ContainerReattachAck,
 ) error {
-	for cid, allocation := range a.agentState.containerAllocation {
-		if _, ok := recovered[cid]; ok {
+	for cID, allocID := range a.agentState.containerAllocation {
+		if _, ok := recovered[cID]; ok {
 			continue
 		}
 
 		var containerState *cproto.Container
-		resp := ctx.Ask(allocation, sproto.GetResourcesContainerState{
-			ResourcesID: sproto.ResourcesID(cid),
-		})
-		switch {
-		case resp.Error() != nil:
-			// This error can occur when the allocation knowns about our container
-			// but has the ResourcesWithState.Container field nil. We can instead
-			// get the containerState from our agentState and send that.
-			containerState = a.agentState.containerState[cid]
-
-			ctx.Log().Warnf(
-				"allocation GetTaskContainerState id: %s, got error: %s", cid, resp.Error())
-		case resp.Get() == nil:
-			ctx.Log().Warnf("allocation GetTaskContainerState id: %s, is nil", cid)
-		default:
-			containerState = ptrs.Ptr(resp.Get().(cproto.Container))
+		alloc, err := allocation.GetAllocation(allocID)
+		if err != nil {
+			ctx.Log().Warnf("allocation GetTaskContainerState id: %s, is missing", cID)
+			containerState = a.agentState.containerState[cID]
+		} else {
+			containerState, err = alloc.GetResourcesContainerState(sproto.ResourcesID(cID))
+			if err != nil {
+				ctx.Log().Warnf(
+					"allocation GetTaskContainerState id: %s, got error: %s", cID, err)
+				containerState = a.agentState.containerState[cID]
+			}
 		}
 
 		if containerState != nil {
 			containerState.State = cproto.Terminated
 
 			var stopped aproto.ContainerStopped
-			ack, ok := explicitlyDoomed[cid]
+			ack, ok := explicitlyDoomed[cID]
 			if ok {
 				stopped = aproto.ContainerStopped{Failure: ack.Failure}
 			} else {

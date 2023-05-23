@@ -30,11 +30,6 @@ type (
 		Level *string
 	}
 
-	// GetResourcesContainerState requests cproto.Container state for a given clump of resources.
-	// If the resources aren't a container, this request returns a failure.
-	GetResourcesContainerState struct {
-		ResourcesID ResourcesID
-	}
 	// UpdatePodStatus notifies the resource manager of job state changes.
 	UpdatePodStatus struct {
 		ContainerID string

@@ -21,7 +21,7 @@ import (
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/sproto"
-	"github.com/determined-ai/determined/master/internal/task"
+	"github.com/determined-ai/determined/master/internal/task/allocation"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/taskv1"
@@ -38,6 +38,22 @@ var (
 	taskLogsBatchMissWaitTime   = time.Second
 	taskLogsFieldsBatchWaitTime = 5 * time.Second
 )
+
+// TaskLogBackend is an interface task log backends, such as elastic or postgres,
+// must support to provide the features surfaced in our API.
+type TaskLogBackend interface {
+	TaskLogs(
+		taskID model.TaskID, limit int, filters []api.Filter, order apiv1.OrderBy, state interface{},
+	) ([]*model.TaskLog, interface{}, error)
+	AddTaskLogs([]*model.TaskLog) error
+	TaskLogsCount(taskID model.TaskID, filters []api.Filter) (int, error)
+	TaskLogsFields(taskID model.TaskID) (*apiv1.TaskLogsFieldsResponse, error)
+	DeleteTaskLogs(taskIDs []model.TaskID) error
+	// MaxTerminationDelay is the max delay before a consumer can be sure all logs have been
+	// recevied. A better interface may be an interface for streaming, rather than helper
+	// interfaces to aid streaming, but it's not bad enough to motivate changing it.
+	MaxTerminationDelay() time.Duration
+}
 
 func expFromTaskID(
 	m *Master, taskID model.TaskID,
@@ -161,18 +177,14 @@ func (a *apiServer) AllocationReady(
 		return nil, err
 	}
 
-	resp, err := a.m.rm.GetAllocationHandler(
-		a.m.system,
-		sproto.GetAllocationHandler{ID: model.AllocationID(req.AllocationId)},
-	)
+	id := model.AllocationID(req.AllocationId)
+	alloc, err := allocation.GetRestoredAllocation(ctx, id)
 	if err != nil {
 		return nil, err
 	}
-	if err := a.waitForAllocationToBeRestored(ctx, resp); err != nil {
-		return nil, err
-	}
 
-	if err := a.ask(resp.Address(), task.AllocationReady{}, nil); err != nil {
+	err = alloc.SetReady()
+	if err != nil {
 		return nil, err
 	}
 	return &apiv1.AllocationReadyResponse{}, nil
@@ -185,18 +197,14 @@ func (a *apiServer) AllocationWaiting(
 		return nil, err
 	}
 
-	resp, err := a.m.rm.GetAllocationHandler(
-		a.m.system,
-		sproto.GetAllocationHandler{ID: model.AllocationID(req.AllocationId)},
-	)
+	id := model.AllocationID(req.AllocationId)
+	alloc, err := allocation.GetRestoredAllocation(ctx, id)
 	if err != nil {
 		return nil, err
 	}
-	if err := a.waitForAllocationToBeRestored(ctx, resp); err != nil {
-		return nil, err
-	}
 
-	if err := a.ask(resp.Address(), task.AllocationWaiting{}, nil); err != nil {
+	err = alloc.SetWaiting()
+	if err != nil {
 		return nil, err
 	}
 	return &apiv1.AllocationWaitingResponse{}, nil
@@ -212,14 +220,9 @@ func (a *apiServer) AllocationAllGather(
 		return nil, err
 	}
 
-	handler, err := a.m.rm.GetAllocationHandler(
-		a.m.system,
-		sproto.GetAllocationHandler{ID: model.AllocationID(req.AllocationId)},
-	)
+	id := model.AllocationID(req.AllocationId)
+	alloc, err := allocation.GetRestoredAllocation(ctx, id)
 	if err != nil {
-		return nil, err
-	}
-	if err := a.waitForAllocationToBeRestored(ctx, handler); err != nil {
 		return nil, err
 	}
 
@@ -228,15 +231,12 @@ func (a *apiServer) AllocationAllGather(
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	var w task.AllGatherWatcher
-	if err = a.ask(handler.Address(), task.WatchAllGather{
+	w := alloc.WatchAllGather(allocation.WatchAllGather{
 		WatcherID: wID,
 		NumPeers:  int(req.NumPeers),
 		Data:      req.Data,
-	}, &w); err != nil {
-		return nil, err
-	}
-	defer a.m.system.TellAt(handler.Address(), task.UnwatchAllGather{WatcherID: wID})
+	})
+	defer alloc.UnwatchAllGather(allocation.UnwatchAllGather{WatcherID: wID})
 
 	select {
 	case rsp := <-w.C:
@@ -259,20 +259,14 @@ func (a *apiServer) PostAllocationProxyAddress(
 		return nil, err
 	}
 
-	handler, err := a.m.rm.GetAllocationHandler(
-		a.m.system,
-		sproto.GetAllocationHandler{ID: model.AllocationID(req.AllocationId)},
-	)
+	id := model.AllocationID(req.AllocationId)
+	alloc, err := allocation.GetRestoredAllocation(ctx, id)
 	if err != nil {
 		return nil, err
 	}
-	if err := a.waitForAllocationToBeRestored(ctx, handler); err != nil {
-		return nil, err
-	}
 
-	if err := a.ask(handler.Address(), task.SetAllocationProxyAddress{
-		ProxyAddress: req.ProxyAddress,
-	}, nil); err != nil {
+	err = alloc.SetProxyAddress(req.ProxyAddress)
+	if err != nil {
 		return nil, err
 	}
 	return &apiv1.PostAllocationProxyAddressResponse{}, nil

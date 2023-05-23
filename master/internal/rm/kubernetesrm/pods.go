@@ -120,7 +120,6 @@ type SummarizeResources struct {
 type reattachAllocationPods struct {
 	numPods      int
 	allocationID model.AllocationID
-	taskActor    *actor.Ref
 	slots        int
 	logContext   logger.Context
 }
@@ -128,6 +127,7 @@ type reattachAllocationPods struct {
 type reattachPodResponse struct {
 	containerID string
 	started     *sproto.ResourcesStarted
+	watcher     *sproto.Watcher[sproto.ResourcesStateChanged]
 }
 
 // Initialize creates a new global pods actor.
@@ -221,9 +221,11 @@ func (p *pods) Receive(ctx *actor.Context) error {
 	case actor.PostStop:
 
 	case StartTaskPod:
-		if err := p.receiveStartTaskPod(ctx, msg); err != nil {
+		w, err := p.receiveStartTaskPod(ctx, msg)
+		if err != nil {
 			return err
 		}
+		ctx.Respond(w)
 
 	case podStatusUpdate:
 		p.receivePodStatusUpdate(ctx, msg)
@@ -472,7 +474,7 @@ func (p *pods) reattachAllocationPods(ctx *actor.Context, msg reattachAllocation
 
 	var restoreResponses []reattachPodResponse
 	for i, containerID := range containerIDs {
-		resp, err := p.reattachPod(ctx, msg.taskActor, resourcePool, containerID,
+		resp, err := p.reattachPod(ctx, msg.allocationID, resourcePool, containerID,
 			k8sPods[i], ports[i], msg.slots, msg.logContext)
 		if err != nil {
 			p.deleteKubernetesResources(ctx, pods, configMaps)
@@ -489,7 +491,7 @@ func (p *pods) reattachAllocationPods(ctx *actor.Context, msg reattachAllocation
 
 func (p *pods) reattachPod(
 	ctx *actor.Context,
-	taskActor *actor.Ref,
+	allocationID model.AllocationID,
 	resourcePool string,
 	containerID string,
 	pod *k8sV1.Pod,
@@ -498,7 +500,7 @@ func (p *pods) reattachPod(
 	logContext logger.Context,
 ) (reattachPodResponse, error) {
 	startMsg := StartTaskPod{
-		TaskActor: taskActor,
+		AllocationID: allocationID,
 		Spec: tasks.TaskSpec{
 			ContainerID: containerID,
 		},
@@ -507,8 +509,10 @@ func (p *pods) reattachPod(
 		LogContext:   logContext,
 	}
 
+	w := sproto.NewWatcher[sproto.ResourcesStateChanged]()
 	newPodHandler := newPod(
 		startMsg,
+		w,
 		p.cluster,
 		startMsg.Spec.ClusterID,
 		p.clientSet,
@@ -574,9 +578,10 @@ func (p *pods) reattachPod(
 	if err != nil {
 		return reattachPodResponse{}, errors.Wrap(err, "error getting pod status update in restore")
 	}
+	// TODO(mar): This is subtle, events sent to us through parent on watcher just created.
 	ctx.Tell(ctx.Self(), podStatusUpdate{updatedPod: updated})
 
-	return reattachPodResponse{containerID: containerID, started: started}, nil
+	return reattachPodResponse{containerID: containerID, started: started, watcher: w}, nil
 }
 
 func (p *pods) deleteKubernetesResources(
@@ -711,9 +716,14 @@ func (p *pods) startResourceRequestQueue(ctx *actor.Context) {
 	)
 }
 
-func (p *pods) receiveStartTaskPod(ctx *actor.Context, msg StartTaskPod) error {
+func (p *pods) receiveStartTaskPod(ctx *actor.Context, msg StartTaskPod) (
+	*sproto.Watcher[sproto.ResourcesStateChanged],
+	error,
+) {
+	w := sproto.NewWatcher[sproto.ResourcesStateChanged]()
 	newPodHandler := newPod(
 		msg,
+		w,
 		p.cluster,
 		msg.Spec.ClusterID,
 		p.clientSet,
@@ -734,14 +744,15 @@ func (p *pods) receiveStartTaskPod(ctx *actor.Context, msg StartTaskPod) error {
 	)
 	ref, ok := ctx.ActorOf(fmt.Sprintf("pod-%s", msg.Spec.ContainerID), newPodHandler)
 	if !ok {
-		return errors.Errorf("pod actor %s already exists", ref.Address().String())
+		return nil, errors.Errorf("pod actor %s already exists", ref.Address().String())
 	}
 
 	ctx.Log().WithField("pod", newPodHandler.podName).WithField(
 		"handler", ref.Address()).Infof("registering pod handler")
 
+	// TODO(mar): why would we ever error after starting the pod?
 	if _, alreadyExists := p.podNameToPodHandler[newPodHandler.podName]; alreadyExists {
-		return errors.Errorf(
+		return nil, errors.Errorf(
 			"attempting to register same pod name: %s multiple times", newPodHandler.podName)
 	}
 
@@ -755,7 +766,7 @@ func (p *pods) receiveStartTaskPod(ctx *actor.Context, msg StartTaskPod) error {
 		containerID: msg.Spec.ContainerID,
 	}
 
-	return nil
+	return w, nil
 }
 
 func (p *pods) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) {

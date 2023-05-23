@@ -1,0 +1,9 @@
+
+
+/
+    /experiments
+        /:id (experiment actor)
+            /:request_id (trial actor)
+                /:run_id (allocation actor)
+
+

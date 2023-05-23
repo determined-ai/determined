@@ -23,7 +23,7 @@ type ResourceManager interface {
 		sproto.GetAllocationSummaries,
 	) (map[model.AllocationID]sproto.AllocationSummary, error)
 	SetAllocationName(actor.Messenger, sproto.SetAllocationName)
-	Allocate(actor.Messenger, sproto.AllocateRequest) error
+	Allocate(actor.Messenger, sproto.AllocateRequest) *sproto.Watcher[sproto.AllocateResponse]
 	Release(actor.Messenger, sproto.ResourcesReleased)
 	ValidateCommandResources(
 		actor.Messenger,

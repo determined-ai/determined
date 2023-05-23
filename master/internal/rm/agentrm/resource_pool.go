@@ -19,6 +19,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/determined-ai/determined/master/internal/task/allocation"
 	"github.com/determined-ai/determined/master/internal/task/taskmodel"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
@@ -107,10 +108,10 @@ func (rp *resourcePool) setupProvisioner(ctx *actor.Context) error {
 	return nil
 }
 
-func (rp *resourcePool) allocateRequest(ctx *actor.Context, msg sproto.AllocateRequest) {
-	rp.notifyOnStop(ctx, msg.AllocationRef, sproto.ResourcesReleased{
-		AllocationRef: msg.AllocationRef,
-	})
+func (rp *resourcePool) allocateRequest(
+	ctx *actor.Context,
+	msg sproto.AllocateRequest,
+) *sproto.Watcher[sproto.AllocateResponse] {
 	log := ctx.Log().
 		WithField("allocation-id", msg.AllocationID).
 		WithField("restoring", msg.Restore)
@@ -118,9 +119,7 @@ func (rp *resourcePool) allocateRequest(ctx *actor.Context, msg sproto.AllocateR
 	if len(msg.AllocationID) == 0 {
 		msg.AllocationID = model.AllocationID(uuid.New().String())
 	}
-	if msg.Group == nil {
-		msg.Group = msg.AllocationRef
-	}
+
 	rp.getOrCreateGroup(ctx, msg.Group)
 	if len(msg.Name) == 0 {
 		msg.Name = "Unnamed Task"
@@ -128,7 +127,7 @@ func (rp *resourcePool) allocateRequest(ctx *actor.Context, msg sproto.AllocateR
 
 	log.Infof(
 		"resources are requested by %s (Allocation ID: %s)",
-		msg.AllocationRef.Address(), msg.AllocationID,
+		msg.Name, msg.AllocationID,
 	)
 	if msg.IsUserVisible {
 		if _, ok := rp.queuePositions[msg.JobID]; !ok {
@@ -141,29 +140,31 @@ func (rp *resourcePool) allocateRequest(ctx *actor.Context, msg sproto.AllocateR
 		rp.IDToGroupActor[msg.JobID] = msg.Group
 	}
 
+	w := sproto.NewWatcher[sproto.AllocateResponse]()
+	rp.taskList.AddTask(&msg, w)
+
 	if msg.Restore {
-		err := rp.restoreResources(ctx, &msg)
+		allocated, err := rp.restoreResources(ctx, &msg)
 		if err != nil {
 			log.WithError(err).Error("error restoring resources")
-
-			// Clear out the state / close and terminate the allocation.
-			rf := sproto.ResourcesFailure{
+			rp.taskList.ResourcesFailure(msg.AllocationID, &sproto.ResourcesFailure{
 				FailureType: sproto.RestoreError,
 				ErrMsg:      err.Error(),
 				ExitCode:    nil,
-			}
-			ctx.Tell(msg.AllocationRef, rf)
-
-			return
+			})
+			return w
 		}
+
+		rp.taskList.AddAllocation(msg.AllocationID, allocated)
+		return w
 	}
 
-	rp.taskList.AddTask(&msg)
+	return w
 }
 
 func (rp *resourcePool) restoreResources(
 	ctx *actor.Context, req *sproto.AllocateRequest,
-) error {
+) (*sproto.ResourcesAllocated, error) {
 	rp.agentStatesCache = rp.fetchAgentStates(ctx)
 	defer func() {
 		rp.agentStatesCache = nil
@@ -177,11 +178,11 @@ func (rp *resourcePool) restoreResources(
 		Where("resources_with_state.allocation_id = ?", allocationID).
 		Scan(context.TODO())
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if len(containerSnapshots) == 0 {
-		return errors.New("0 container snapshots")
+		return nil, errors.New("0 container snapshots")
 	}
 
 	resources := sproto.ResourceList{}
@@ -195,7 +196,7 @@ func (rp *resourcePool) restoreResources(
 	for _, cs := range containerSnapshots {
 		agentState, ok := agentStateMap[cs.AgentID]
 		if !ok {
-			return errors.New(fmt.Sprintf("can't find restorable agent %s", cs.AgentID))
+			return nil, errors.New(fmt.Sprintf("can't find restorable agent %s", cs.AgentID))
 		}
 
 		cr := containerResources{
@@ -216,15 +217,11 @@ func (rp *resourcePool) restoreResources(
 		Recovered:    true,
 	}
 
-	rp.taskList.AddTask(req)
-	rp.taskList.AddAllocation(req.AllocationRef, &allocated)
-	ctx.Tell(req.AllocationRef, allocated.Clone())
-
-	return nil
+	return &allocated, nil
 }
 
 func (rp *resourcePool) receiveSetTaskName(ctx *actor.Context, msg sproto.SetAllocationName) {
-	if task, found := rp.taskList.TaskByHandler(msg.AllocationRef); found {
+	if task, found := rp.taskList.TaskByID(msg.AllocationID); found {
 		task.Name = msg.Name
 	}
 }
@@ -317,8 +314,7 @@ func (rp *resourcePool) allocateResources(ctx *actor.Context, req *sproto.Alloca
 		Resources:         sprotoResources,
 		JobSubmissionTime: req.JobSubmissionTime,
 	}
-	rp.taskList.AddAllocation(req.AllocationRef, &allocated)
-	ctx.Tell(req.AllocationRef, allocated)
+	rp.taskList.AddAllocation(req.AllocationID, &allocated)
 
 	// Refresh state for the updated agents.
 	allocatedAgents := make([]*actor.Ref, 0, len(resources))
@@ -328,27 +324,33 @@ func (rp *resourcePool) allocateResources(ctx *actor.Context, req *sproto.Alloca
 
 	rp.refreshAgentStateCacheFor(ctx, allocatedAgents)
 
-	ctx.Log().Infof("allocated resources to %s", req.AllocationRef.Address())
+	ctx.Log().Infof("allocated resources to %s", req.Name)
 
 	return true
 }
 
-func (rp *resourcePool) releaseResource(ctx *actor.Context, handler *actor.Ref) {
-	ctx.Log().Infof("releasing resources taken by %s", handler.Address())
-	handler.System().Tell(handler, sproto.ReleaseResources{ResourcePool: rp.config.PoolName})
+func (rp *resourcePool) releaseResource(ctx *actor.Context, allocationID model.AllocationID) {
+	ctx.Log().Infof("releasing resources taken by %s", allocationID)
+	alloc, err := allocation.GetAllocation(allocationID)
+	if err != nil {
+		ctx.Log().WithError(err).Error("releasing resources")
+		return
+	}
+
+	alloc.ReleaseResources(false)
 }
 
 func (rp *resourcePool) resourcesReleased(
 	ctx *actor.Context,
 	msg sproto.ResourcesReleased,
 ) {
-	switch a := rp.taskList.Allocation(msg.AllocationRef); {
+	switch a := rp.taskList.Allocation(msg.AllocationID); {
 	case a == nil:
-		rp.taskList.RemoveTaskByHandler(msg.AllocationRef)
+		rp.taskList.RemoveTask(msg.AllocationID)
 	case msg.ResourcesID != nil:
 		ctx.Log().Infof(
 			"resources %v are released for %s",
-			*msg.ResourcesID, msg.AllocationRef.Address())
+			*msg.ResourcesID, msg.AllocationID)
 		for rID, r := range a.Resources {
 			if r.Summary().ResourcesID != *msg.ResourcesID {
 				continue
@@ -360,12 +362,12 @@ func (rp *resourcePool) resourcesReleased(
 			break
 		}
 	default:
-		ctx.Log().Infof("all resources are released for %s", msg.AllocationRef.Address())
+		ctx.Log().Infof("all resources are released for %s", msg.AllocationID)
 		for _, r := range a.Resources {
 			typed := r.(*containerResources)
 			ctx.Tell(typed.agent.Handler, deallocateContainer{containerID: typed.containerID})
 		}
-		rp.taskList.RemoveTaskByHandler(msg.AllocationRef)
+		rp.taskList.RemoveTask(msg.AllocationID)
 	}
 }
 
@@ -461,10 +463,6 @@ func (rp *resourcePool) Receive(ctx *actor.Context) error {
 		sproto.RecoverJobPosition,
 		sproto.DeleteJob:
 		return rp.receiveJobQueueMsg(ctx)
-
-	case sproto.GetAllocationHandler:
-		reschedule = false
-		ctx.Respond(rp.taskList.TaskHandler(msg.ID))
 
 	case sproto.GetAllocationSummary:
 		reschedule = false

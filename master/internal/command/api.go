@@ -5,7 +5,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/rm"
-	"github.com/determined-ai/determined/master/internal/task"
+	"github.com/determined-ai/determined/master/internal/task/tasklogger"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/api"
 )
@@ -27,7 +27,7 @@ func RegisterAPIHandler(
 	echo *echo.Echo,
 	db *db.PgDB,
 	rm rm.ResourceManager,
-	taskLogger *task.Logger,
+	taskLogger *tasklogger.Logger,
 	middleware ...echo.MiddlewareFunc,
 ) {
 	commandManagerRef, _ := system.ActorOf(

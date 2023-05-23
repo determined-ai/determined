@@ -9,6 +9,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/soheilhy/cmux"
 
+	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/model"
 
 	"github.com/pkg/errors"
@@ -172,6 +173,7 @@ func (a *agents) createAgentActor(
 		agentReconnectWait:    time.Duration(rpConfig.AgentReconnectWait),
 		opts:                  opts,
 		agentState:            restoredAgentState,
+		containerWatchers:     make(map[cproto.ID]*sproto.Watcher[sproto.ResourcesStateChanged]),
 	})
 	if !ok {
 		return nil, errors.Errorf("agent already connected: %s", id)

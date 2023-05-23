@@ -42,8 +42,8 @@ func (c containerResources) Summary() sproto.ResourcesSummary {
 
 // StartContainer notifies the agent to start a container.
 func (c containerResources) Start(
-	ctx *actor.Context, logCtx logger.Context, spec tasks.TaskSpec, rri sproto.ResourcesRuntimeInfo,
-) error {
+	ctx actor.Messenger, logCtx logger.Context, spec tasks.TaskSpec, rri sproto.ResourcesRuntimeInfo,
+) (*sproto.Watcher[sproto.ResourcesStateChanged], error) {
 	handler := c.agent.Handler
 	spec.ContainerID = string(c.containerID)
 	spec.ResourcesID = string(c.containerID)
@@ -59,23 +59,31 @@ func (c containerResources) Start(
 	spec.UseHostMode = rri.IsMultiAgent
 	spec.Devices = c.devices
 
-	return ctx.Ask(handler, sproto.StartTaskContainer{
-		TaskActor: c.req.AllocationRef,
+	resp := ctx.Ask(handler, sproto.StartTaskContainer{
+		AllocationID: c.req.AllocationID,
 		StartContainer: aproto.StartContainer{
 			Container: cproto.Container{
 				ID:          c.containerID,
 				State:       cproto.Assigned,
 				Devices:     c.devices,
-				Description: c.req.AllocationRef.Address().String(),
+				Description: c.req.Name,
 			},
 			Spec: spec.ToDockerSpec(),
 		},
 		LogContext: logCtx,
-	}).Error()
+	})
+	switch {
+	case resp.Error() != nil:
+		return nil, resp.Error()
+	case resp.Get() != nil:
+		return resp.Get().(*sproto.Watcher[sproto.ResourcesStateChanged]), nil
+	default:
+		panic("impossible")
+	}
 }
 
 // Kill notifies the agent to kill the container.
-func (c containerResources) Kill(ctx *actor.Context, logCtx logger.Context) {
+func (c containerResources) Kill(ctx actor.Messenger, logCtx logger.Context) {
 	ctx.Tell(c.agent.Handler, sproto.KillTaskContainer{
 		ContainerID: c.containerID,
 		LogContext:  logCtx,

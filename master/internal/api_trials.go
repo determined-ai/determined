@@ -25,7 +25,7 @@ import (
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/sproto"
-	"github.com/determined-ai/determined/master/internal/task"
+	"github.com/determined-ai/determined/master/internal/task/allocation"
 	"github.com/determined-ai/determined/master/internal/trials"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -1130,21 +1130,6 @@ func (a *apiServer) PostTrialProfilerMetricsBatch(
 	return &apiv1.PostTrialProfilerMetricsBatchResponse{}, errs.ErrorOrNil()
 }
 
-func (a *apiServer) waitForAllocationToBeRestored(ctx context.Context, handler *actor.Ref) error {
-	for i := 0; i < 60; i++ {
-		var restoring bool
-		if err := a.ask(handler.Address(), task.IsAllocationRestoring{}, &restoring); err != nil {
-			return errors.Wrap(err, "failed to ask allocation actor about restoring status")
-		}
-		if !restoring {
-			return nil
-		}
-
-		time.Sleep(time.Second)
-	}
-	return fmt.Errorf("allocation stuck restoring after one minute of retrying")
-}
-
 func (a *apiServer) AllocationPreemptionSignal(
 	ctx context.Context,
 	req *apiv1.AllocationPreemptionSignalRequest,
@@ -1153,26 +1138,18 @@ func (a *apiServer) AllocationPreemptionSignal(
 		return nil, err
 	}
 
-	allocationID := model.AllocationID(req.AllocationId)
-	handler, err := a.m.rm.GetAllocationHandler(
-		a.m.system,
-		sproto.GetAllocationHandler{ID: allocationID},
-	)
+	id := model.AllocationID(req.AllocationId)
+	alloc, err := allocation.GetRestoredAllocation(ctx, id)
 	if err != nil {
 		return nil, err
 	}
-	if err := a.waitForAllocationToBeRestored(ctx, handler); err != nil {
-		return nil, err
-	}
 
-	id := uuid.New()
-	var w task.PreemptionWatcher
-	if err := a.ask(handler.Address(), task.WatchPreemption{
-		ID: id, AllocationID: allocationID,
-	}, &w); err != nil {
+	wID := uuid.New()
+	w, err := alloc.WatchPreemption(wID)
+	if err != nil {
 		return nil, err
 	}
-	defer a.m.system.TellAt(handler.Address(), task.UnwatchPreemption{ID: id})
+	defer alloc.UnwatchPreemption(wID)
 
 	ctx, cancel := context.WithTimeout(ctx, time.Duration(req.TimeoutSeconds)*time.Second)
 	defer cancel()
@@ -1191,21 +1168,13 @@ func (a *apiServer) AckAllocationPreemptionSignal(
 		return nil, err
 	}
 
-	allocationID := model.AllocationID(req.AllocationId)
-	handler, err := a.m.rm.GetAllocationHandler(
-		a.m.system,
-		sproto.GetAllocationHandler{ID: allocationID},
-	)
+	id := model.AllocationID(req.AllocationId)
+	alloc, err := allocation.GetRestoredAllocation(ctx, id)
 	if err != nil {
 		return nil, err
 	}
-	if err := a.waitForAllocationToBeRestored(ctx, handler); err != nil {
-		return nil, err
-	}
 
-	if err := a.ask(handler.Address(), task.AckPreemption{
-		AllocationID: allocationID,
-	}, nil); err != nil {
+	if err := alloc.AckPreemption(); err != nil {
 		return nil, err
 	}
 	return &apiv1.AckAllocationPreemptionSignalResponse{}, nil
@@ -1258,25 +1227,15 @@ func (a *apiServer) MarkAllocationResourcesDaemon(
 	if err := a.canEditAllocation(ctx, req.AllocationId); err != nil {
 		return nil, err
 	}
-	allocationID := model.AllocationID(req.AllocationId)
 
-	handler, err := a.m.rm.GetAllocationHandler(
-		a.m.system,
-		sproto.GetAllocationHandler{ID: allocationID},
-	)
+	id := model.AllocationID(req.AllocationId)
+	alloc, err := allocation.GetRestoredAllocation(ctx, id)
 	if err != nil {
 		return nil, err
 	}
-	if err := a.waitForAllocationToBeRestored(ctx, handler); err != nil {
-		return nil, err
-	}
 
-	if err := a.ask(handler.Address(), task.MarkResourcesDaemon{
-		AllocationID: allocationID,
-		ResourcesID:  sproto.ResourcesID(req.ResourcesId),
-	}, nil); err != nil {
-		return nil, err
-	}
+	rID := sproto.ResourcesID(req.ResourcesId)
+	alloc.MarkResourcesDaemon(rID)
 	return &apiv1.MarkAllocationResourcesDaemonResponse{}, nil
 }
 
@@ -1471,29 +1430,18 @@ func (a *apiServer) AllocationRendezvousInfo(
 		return nil, err
 	}
 
-	allocationID := model.AllocationID(req.AllocationId)
-	resourcesID := sproto.ResourcesID(req.ResourcesId)
-	handler, err := a.m.rm.GetAllocationHandler(
-		a.m.system,
-		sproto.GetAllocationHandler{ID: allocationID},
-	)
+	id := model.AllocationID(req.AllocationId)
+	alloc, err := allocation.GetRestoredAllocation(ctx, id)
 	if err != nil {
 		return nil, err
 	}
-	if err := a.waitForAllocationToBeRestored(ctx, handler); err != nil {
-		return nil, err
-	}
 
-	var w task.RendezvousWatcher
-	if err = a.ask(handler.Address(), task.WatchRendezvousInfo{
-		ResourcesID: resourcesID,
-	}, &w); err != nil {
+	rID := sproto.ResourcesID(req.ResourcesId)
+	w, err := alloc.WatchRendezvousInfo(rID)
+	if err != nil {
 		return nil, err
 	}
-	defer a.m.system.TellAt(
-		handler.Address(), task.UnwatchRendezvousInfo{
-			ResourcesID: resourcesID,
-		})
+	defer alloc.UnwatchRendezvousInfo(rID)
 
 	select {
 	case rsp := <-w.C:

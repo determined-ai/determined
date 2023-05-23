@@ -1,4 +1,4 @@
-package rm
+package internal
 
 import (
 	"crypto/tls"
@@ -7,6 +7,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/rm/agentrm"
 	"github.com/determined-ai/determined/master/internal/rm/kubernetesrm"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -14,8 +15,8 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
-// New sets up the actor and endpoints for resource managers.
-func New(
+// NewRM sets up the actor and endpoints for resource managers.
+func NewRM(
 	system *actor.System,
 	db *db.PgDB,
 	echo *echo.Echo,
@@ -23,7 +24,7 @@ func New(
 	taskContainerDefaults *model.TaskContainerDefaultsConfig,
 	opts *aproto.MasterSetAgentOptions,
 	cert *tls.Certificate,
-) ResourceManager {
+) rm.ResourceManager {
 	switch {
 	case config.ResourceManager.AgentRM != nil:
 		return agentrm.New(system, db, echo, config, opts, cert)

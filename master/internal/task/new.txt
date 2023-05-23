@@ -1,0 +1,17 @@
+
+
+trial/command/checkpoint gc actor -> create allocation actor, hands it sproto.AllocateRequest
+
+allocation actor requests resources (allocate req) -> rm
+
+rm -> resources (sproto.ResourceList) to allocation actor
+
+allocation actor wants to start resources, needs task spec
+
+allocation actor asks parent for task spec -> trial/command/checkpoint gc..
+                                           <- parent sends task spec back
+
+allocation actor starts resources (res.Start(ctx, taskSpec, rri))
+    res.Start actually talks to agent actor
+
+

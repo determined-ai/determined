@@ -35,8 +35,8 @@ type (
 		State         SchedulingState
 		Name          string
 		// Allocation actor
-		AllocationRef *actor.Ref
-		Group         *actor.Ref
+		Group          *actor.Ref
+		RegisteredTime time.Time
 
 		// Resource configuration.
 		SlotsNeeded         int
@@ -60,7 +60,6 @@ type (
 		UseProxyState   bool
 		UseRunnerState  bool
 		TimeoutDuration time.Duration
-		Debug           bool
 	}
 
 	// ProxyPortConfig configures a proxy the allocation should start.
@@ -78,8 +77,10 @@ type (
 
 	// ResourcesReleased notifies resource providers to return resources from a task.
 	ResourcesReleased struct {
-		AllocationRef *actor.Ref
-		ResourcesID   *ResourcesID
+		// TODO(mar): break
+		AllocationID model.AllocationID
+
+		ResourcesID *ResourcesID
 	}
 	// GetAllocationHandler returns a ref to the handler for the specified task.
 	GetAllocationHandler struct{ ID model.AllocationID }
@@ -102,8 +103,8 @@ type (
 	}
 	// SetAllocationName sets the name of the task.
 	SetAllocationName struct {
-		Name          string
-		AllocationRef *actor.Ref
+		Name         string
+		AllocationID model.AllocationID
 	}
 
 	// ValidateCommandResourcesRequest is a message asking resource manager whether the given
@@ -223,7 +224,6 @@ type (
 
 	// ReleaseResources notifies the task actor to release resources.
 	ReleaseResources struct {
-		ResourcePool string
 		// If specified as true (default false), Requestor wants to force
 		// a preemption attempt instead of an immediate kill.
 		ForcePreemption bool
@@ -329,8 +329,8 @@ func (s ResourcesSummary) Slots() int {
 // to start tasks on assigned resources.
 type Resources interface {
 	Summary() ResourcesSummary
-	Start(*actor.Context, logger.Context, tasks.TaskSpec, ResourcesRuntimeInfo) error
-	Kill(*actor.Context, logger.Context)
+	Start(actor.Messenger, logger.Context, tasks.TaskSpec, ResourcesRuntimeInfo) (*Watcher[ResourcesStateChanged], error)
+	Kill(actor.Messenger, logger.Context)
 }
 
 // Event is the union of all event types during the parent lifecycle.
@@ -361,7 +361,7 @@ type Event struct {
 }
 
 // ToTaskLog converts an event to a task log.
-func (ev *Event) ToTaskLog() model.TaskLog {
+func (ev *Event) ToTaskLog() *model.TaskLog {
 	description := ev.Description
 	var message string
 	switch {
@@ -395,7 +395,7 @@ func (ev *Event) ToTaskLog() model.TaskLog {
 	if ev.Level != nil {
 		level = ev.Level
 	}
-	return model.TaskLog{
+	return &model.TaskLog{
 		Level:       level,
 		ContainerID: &ev.ContainerID,
 		Timestamp:   &ev.Time,

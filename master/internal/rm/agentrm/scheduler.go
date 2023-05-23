@@ -5,7 +5,6 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/sproto"
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
@@ -16,7 +15,7 @@ import (
 // and etc,. Schedule should avoid unnecessary shuffling tasks on agents to avoid
 // the overhead of restarting a preempted task.
 type Scheduler interface {
-	Schedule(rp *resourcePool) ([]*sproto.AllocateRequest, []*actor.Ref)
+	Schedule(rp *resourcePool) ([]*sproto.AllocateRequest, []model.AllocationID)
 	JobQInfo(rp *resourcePool) map[model.JobID]*sproto.RMJobInfo
 }
 

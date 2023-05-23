@@ -165,6 +165,7 @@ func (r ResourcesStopped) String() string {
 }
 
 // ResourcesFailure contains information about restored resources' failure.
+// TODO(mar): can these failure types just be sentinel errors.
 type ResourcesFailure struct {
 	FailureType FailureType
 	ErrMsg      string

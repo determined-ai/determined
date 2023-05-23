@@ -9,7 +9,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/rm"
-	"github.com/determined-ai/determined/master/internal/task"
+	"github.com/determined-ai/determined/master/internal/task/tasklogger"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/tasks"
@@ -20,7 +20,7 @@ import (
 type notebookManager struct {
 	db         *db.PgDB
 	rm         rm.ResourceManager
-	taskLogger *task.Logger
+	taskLogger *tasklogger.Logger
 }
 
 func (n *notebookManager) Receive(ctx *actor.Context) error {

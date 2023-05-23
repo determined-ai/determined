@@ -113,8 +113,21 @@ func (r *ResourceManager) ValidateCommandResources(
 }
 
 // Allocate allocates some resources.
-func (r *ResourceManager) Allocate(ctx actor.Messenger, msg sproto.AllocateRequest) error {
-	return r.Ask(ctx, msg, nil)
+func (r *ResourceManager) Allocate(
+	ctx actor.Messenger,
+	msg sproto.AllocateRequest,
+) *sproto.Watcher[sproto.AllocateResponse] {
+	var res *sproto.Watcher[sproto.AllocateResponse]
+
+	err := r.Ask(ctx, msg, &res)
+	if err != nil {
+		res.Send(sproto.AllocateResponse{Error: &sproto.ResourcesFailure{
+			FailureType: sproto.UnknownError,
+			ErrMsg:      err.Error(),
+		}})
+	}
+
+	return res
 }
 
 // Release releases some resources.

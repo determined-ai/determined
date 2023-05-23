@@ -8,9 +8,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/determined-ai/determined/master/internal/prom"
 	"github.com/determined-ai/determined/master/internal/rm"
-	"github.com/determined-ai/determined/master/internal/task"
+	"github.com/determined-ai/determined/master/internal/task/allocation"
+	"github.com/determined-ai/determined/master/internal/task/tasklogger"
 
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
 	"github.com/determined-ai/determined/master/pkg/logger"
@@ -58,7 +61,7 @@ type trial struct {
 	trialCreationSent bool
 
 	// System dependencies.
-	taskLogger *task.Logger
+	taskLogger *tasklogger.Logger
 	db         db.DB
 	rm         rm.ResourceManager
 
@@ -87,6 +90,9 @@ type trial struct {
 	logCtx logger.Context
 }
 
+// expid.requestid.runid
+// 1.uuid.1, 1.uuid.2
+
 // newTrial creates a trial which will try to schedule itself after it receives its first workload.
 func newTrial(
 	logCtx logger.Context,
@@ -96,7 +102,7 @@ func newTrial(
 	experimentID int,
 	initialState model.State,
 	searcher trialSearcherState,
-	taskLogger *task.Logger,
+	taskLogger *tasklogger.Logger,
 	rm rm.ResourceManager,
 	db db.DB,
 	config expconf.ExperimentConfig,
@@ -171,13 +177,13 @@ func (t *trial) Receive(ctx *actor.Context) error {
 		return nil
 	case actor.ChildStopped:
 		if t.allocation != nil && t.runID == mustParseTrialRunID(msg.Child) {
-			return t.allocationExited(ctx, &task.AllocationExited{
+			return t.allocationExited(ctx, &allocation.AllocationExited{
 				Err: errors.New("trial allocation exited without reporting"),
 			})
 		}
 	case actor.ChildFailed:
 		if t.allocation != nil && t.runID == mustParseTrialRunID(msg.Child) {
-			return t.allocationExited(ctx, &task.AllocationExited{
+			return t.allocationExited(ctx, &allocation.AllocationExited{
 				Err: errors.Wrapf(msg.Error, "trial allocation failed"),
 			})
 		}
@@ -205,17 +211,11 @@ func (t *trial) Receive(ctx *actor.Context) error {
 		if t.allocation != nil {
 			ctx.Tell(t.allocation, msg)
 		}
-	case task.BuildTaskSpec:
-		if spec, err := t.buildTaskSpec(ctx); err != nil {
-			ctx.Respond(err)
-		} else {
-			ctx.Respond(spec)
-		}
 	case userInitiatedEarlyExit:
 		if err := t.handleUserInitiatedStops(ctx, msg); err != nil {
 			ctx.Respond(err)
 		}
-	case *task.AllocationExited:
+	case *allocation.AllocationExited:
 		if t.allocation != nil && t.runID == mustParseTrialRunID(ctx.Sender()) {
 			return t.allocationExited(ctx, msg)
 		}
@@ -227,13 +227,13 @@ func (t *trial) Receive(ctx *actor.Context) error {
 		}); err != nil {
 			ctx.Log().WithError(err).Warn("dropping container log")
 		} else {
-			t.taskLogger.Insert(ctx, log)
+			t.taskLogger.Insert(&log)
 		}
 	case model.TaskLog:
 		if log, err := t.enrichTaskLog(msg); err != nil {
 			ctx.Log().WithError(err).Warn("dropping trial log")
 		} else {
-			t.taskLogger.Insert(ctx, log)
+			t.taskLogger.Insert(&log)
 		}
 
 	default:
@@ -281,7 +281,7 @@ func (t *trial) recover() error {
 }
 
 // To change in testing.
-var taskAllocator = task.NewAllocation
+var taskAllocator = allocation.Start
 
 // maybeAllocateTask checks if the trial should allocate state and allocates it if so.
 func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
@@ -305,7 +305,6 @@ func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
 			JobSubmissionTime: t.jobSubmissionTime,
 			IsUserVisible:     true,
 			Name:              name,
-			AllocationRef:     ctx.Self(),
 			Group:             ctx.Self().Parent(),
 			SlotsNeeded:       t.config.Resources().SlotsPerTrial(),
 			ResourcePool:      t.config.Resources().ResourcePool(),
@@ -321,9 +320,16 @@ func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
 		ctx.Log().
 			WithField("allocation-id", ar.AllocationID).
 			Infof("starting restored trial allocation")
-		t.allocation, _ = ctx.ActorOf(t.runID, taskAllocator(
-			t.logCtx, ar, t.db, t.rm, t.taskLogger,
-		))
+
+		handle, err := allocation.Start(context.TODO(), logrus.Fields(t.logCtx), ar, t.rm, t.taskLogger, func() (tasks.TaskSpec, error) {
+			return t.buildTaskSpec(ctx)
+		})
+		if err != nil {
+			/// error
+		}
+		go func() {
+			ctx.Tell(ctx.Self(), handle.Wait())
+		}()
 		return nil
 	}
 
@@ -338,7 +344,6 @@ func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
 		JobSubmissionTime: t.jobSubmissionTime,
 		IsUserVisible:     true,
 		Name:              name,
-		AllocationRef:     ctx.Self(),
 		Group:             ctx.Self().Parent(),
 
 		SlotsNeeded:  t.config.Resources().SlotsPerTrial(),
@@ -356,8 +361,16 @@ func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
 		Debugf("starting new trial allocation")
 
 	prom.AssociateJobExperiment(t.jobID, strconv.Itoa(t.experimentID), t.config.Labels())
-	t.allocation, _ = ctx.ActorOf(t.runID, taskAllocator(t.logCtx, ar, t.db, t.rm, t.taskLogger))
-	ctx.Ask(t.allocation, actor.Ping{}).Get()
+
+	handle, err := allocation.Start(context.TODO(), logrus.Fields(t.logCtx), ar, t.rm, t.taskLogger, func() (tasks.TaskSpec, error) {
+		return t.buildTaskSpec(ctx)
+	})
+	if err != nil {
+		/// error
+	}
+	go func() {
+		ctx.Tell(ctx.Self(), handle.Wait())
+	}()
 
 	return nil
 }
@@ -398,7 +411,7 @@ func (t *trial) buildTaskSpec(ctx *actor.Context) (tasks.TaskSpec, error) {
 	// we send it a cancellation. If this is the first allocation, it will also prevent us from
 	// adding a trial when we are not active, which breaks some other invariants.
 	if t.state != model.ActiveState {
-		return tasks.TaskSpec{}, task.ErrAlreadyCancelled{}
+		return tasks.TaskSpec{}, allocation.ErrAlreadyCancelled{}
 	}
 
 	if t.generatedKeys == nil {
@@ -444,7 +457,7 @@ func (t *trial) buildTaskSpec(ctx *actor.Context) (tasks.TaskSpec, error) {
 }
 
 // allocationExited cleans up after an allocation exit and exits permanently or reallocates.
-func (t *trial) allocationExited(ctx *actor.Context, exit *task.AllocationExited) error {
+func (t *trial) allocationExited(ctx *actor.Context, exit *allocation.AllocationExited) error {
 	if err := t.allocation.AwaitTermination(); err != nil {
 		ctx.Log().WithError(err).Error("trial allocation failed")
 	}

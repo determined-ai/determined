@@ -1,4 +1,4 @@
-package task
+package allocation
 
 import (
 	"time"
@@ -6,12 +6,9 @@ import (
 	"github.com/google/uuid"
 	"google.golang.org/protobuf/types/known/structpb"
 
-	"github.com/determined-ai/determined/master/pkg/actor/actors"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 
 	"github.com/pkg/errors"
-
-	"github.com/determined-ai/determined/master/pkg/actor"
 )
 
 var (
@@ -64,15 +61,20 @@ type (
 	}
 )
 
-func newAllGather(ctx *actor.Context) *allGather {
-	id := uuid.New()
-	if ctx != nil {
-		actors.NotifyAfter(ctx, DefaultAllGatherTimeout, allGatherTimeout{id: id})
-	}
-	return &allGather{
-		id:       id,
+func newAllGather(deadlineExceeded func(err error)) *allGather {
+	g := &allGather{
+		id:       uuid.New(),
 		watchers: map[uuid.UUID]chan AllGatherInfoOrError{},
 	}
+
+	go func() {
+		time.Sleep(DefaultAllGatherTimeout)
+		if !g.alreadyDone {
+			deadlineExceeded(ErrAllGatherTimeoutExceeded)
+		}
+	}()
+
+	return g
 }
 
 func (g *allGather) watch(msg WatchAllGather) AllGatherWatcher {
@@ -97,16 +99,6 @@ func (g *allGather) unwatch(msg UnwatchAllGather) {
 	delete(g.watchers, msg.WatcherID)
 }
 
-func (g *allGather) checkTimeout(msg allGatherTimeout) error {
-	if g.alreadyDone {
-		return nil
-	}
-	if g.id == msg.id {
-		return ErrTimeoutExceeded{Message: AllGatherTimeoutMessage}
-	}
-	return nil
-}
-
 // done returns true if and only if all peers are connected.
 func (g *allGather) done() bool {
 	if g == nil {
@@ -123,7 +115,7 @@ func (g *allGather) done() bool {
 
 // push gathers up the external addresses for the exposed ports and sends them to all the
 // containers in the trial.
-func (g allGather) push() bool {
+func (g *allGather) push() bool {
 	if !g.done() {
 		return false
 	}

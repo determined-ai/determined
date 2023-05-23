@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/determined-ai/determined/master/internal/config"
+	"github.com/determined-ai/determined/master/internal/task/allocation"
 
 	"github.com/pkg/errors"
 
@@ -43,13 +44,14 @@ type podSubmissionInfo struct {
 // Determined task. The lifecycle of the pod is managed based on
 // the status of the specified set of containers.
 type pod struct {
-	cluster    *actor.Ref
-	clusterID  string
-	taskActor  *actor.Ref
-	clientSet  *k8sClient.Clientset
-	namespace  string
-	masterIP   string
-	masterPort int32
+	watcher      *sproto.Watcher[sproto.ResourcesStateChanged]
+	cluster      *actor.Ref
+	clusterID    string
+	allocationID model.AllocationID
+	clientSet    *k8sClient.Clientset
+	namespace    string
+	masterIP     string
+	masterPort   int32
 	// submissionInfo will be nil when the pod is restored.
 	// These fields can not be relied on after a pod is submitted.
 	submissionInfo           *podSubmissionInfo
@@ -93,6 +95,7 @@ type podNodeInfo struct {
 
 func newPod(
 	msg StartTaskPod,
+	w *sproto.Watcher[sproto.ResourcesStateChanged],
 	cluster *actor.Ref,
 	clusterID string,
 	clientSet *k8sClient.Clientset,
@@ -114,7 +117,7 @@ func newPod(
 	podContainer := cproto.Container{
 		ID:          cproto.ID(msg.Spec.ContainerID),
 		State:       cproto.Assigned,
-		Description: msg.TaskActor.Address().String(),
+		Description: msg.Name,
 	}
 	uniqueName := configureUniqueName(msg.Spec, msg.Rank)
 
@@ -123,12 +126,13 @@ func newPod(
 	containerNames := set.FromSlice([]string{model.DeterminedK8ContainerName})
 
 	return &pod{
+		watcher: w,
 		submissionInfo: &podSubmissionInfo{
 			taskSpec: msg.Spec,
 		},
 		cluster:                  cluster,
 		clusterID:                clusterID,
-		taskActor:                msg.TaskActor,
+		allocationID:             msg.AllocationID,
 		clientSet:                clientSet,
 		namespace:                namespace,
 		masterIP:                 masterIP,
@@ -188,15 +192,30 @@ func (p *pod) Receive(ctx *actor.Context) error {
 
 	case PreemptTaskPod:
 		ctx.Log().Info("received preemption command")
-		p.taskActor.System().Tell(p.taskActor, sproto.ReleaseResources{})
+		alloc, err := allocation.GetAllocation(p.allocationID)
+		if err != nil {
+			ctx.Log().WithError(err).Warn("could not preempt task pod")
+			return nil
+		}
+		alloc.ReleaseResources(false)
 
 	case ChangePriority:
 		ctx.Log().Info("interrupting pod to change priorities")
-		p.taskActor.System().Tell(p.taskActor, sproto.ReleaseResources{})
+		alloc, err := allocation.GetAllocation(p.allocationID)
+		if err != nil {
+			ctx.Log().WithError(err).Warn("could not change pod priority, this is really bad, because the alloc possibly needs to clean up and it is gone")
+			return nil
+		}
+		alloc.ReleaseResources(false)
 
 	case ChangePosition:
 		ctx.Log().Info("interrupting pod to change positions")
-		p.taskActor.System().Tell(p.taskActor, sproto.ReleaseResources{})
+		alloc, err := allocation.GetAllocation(p.allocationID)
+		if err != nil {
+			ctx.Log().WithError(err).Warn("could not change pod position, this is really bad, because the alloc possibly needs to clean up and it is gone")
+			return nil
+		}
+		alloc.ReleaseResources(false)
 
 	case sproto.ContainerLog:
 		p.receiveContainerLog(ctx, msg)
@@ -391,7 +410,7 @@ func (p *pod) finalizeTaskState(ctx *actor.Context) {
 }
 
 func (p *pod) informTaskResourcesState(ctx *actor.Context) {
-	ctx.Tell(p.taskActor, sproto.ResourcesStateChanged{
+	p.watcher.Send(sproto.ResourcesStateChanged{
 		ResourcesID:    sproto.FromContainerID(p.container.ID),
 		ResourcesState: sproto.FromContainerState(p.container.State),
 		Container:      p.container.DeepCopy(),
@@ -402,7 +421,7 @@ func (p *pod) informTaskResourcesStarted(
 	ctx *actor.Context,
 	rs sproto.ResourcesStarted,
 ) {
-	ctx.Tell(p.taskActor, sproto.ResourcesStateChanged{
+	p.watcher.Send(sproto.ResourcesStateChanged{
 		ResourcesID:      sproto.FromContainerID(p.container.ID),
 		ResourcesState:   sproto.FromContainerState(p.container.State),
 		ResourcesStarted: &rs,
@@ -414,7 +433,7 @@ func (p *pod) informTaskResourcesStopped(
 	ctx *actor.Context,
 	rs sproto.ResourcesStopped,
 ) {
-	ctx.Tell(p.taskActor, sproto.ResourcesStateChanged{
+	p.watcher.Send(sproto.ResourcesStateChanged{
 		ResourcesID:      sproto.FromContainerID(p.container.ID),
 		ResourcesState:   sproto.FromContainerState(p.container.State),
 		ResourcesStopped: &rs,
@@ -424,7 +443,12 @@ func (p *pod) informTaskResourcesStopped(
 
 func (p *pod) receiveContainerLog(ctx *actor.Context, msg sproto.ContainerLog) {
 	msg.ContainerID = p.container.ID
-	ctx.Tell(p.taskActor, msg)
+	alloc, err := allocation.GetAllocation(p.allocationID)
+	if err != nil {
+		ctx.Log().WithError(err).Error("could not route container log")
+	}
+	// TODO(mar): This really shouldn't go through the allocation.
+	alloc.SendContainerLog(msg)
 }
 
 func (p *pod) insertLog(ctx *actor.Context, timestamp time.Time, msg string) {

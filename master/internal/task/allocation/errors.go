@@ -1,21 +1,36 @@
-package task
+package allocation
 
 import (
 	"fmt"
+
+	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
-// ErrTimeoutExceeded is return, with a bit of detail, when a timeout is exceeded.
-type ErrTimeoutExceeded struct {
-	Message string
-}
+var errUserRequestedStop = errors.New("user requested stop")
 
-func (e ErrTimeoutExceeded) Error() string {
-	return fmt.Sprintf("timeout exceeded: %s", e.Message)
-}
+// ErrPreemptionTimeoutExceeded is return, with a bit of detail, when a timeout is exceeded.
+var ErrPreemptionTimeoutExceeded = fmt.Errorf("preemption did not complete in %s", preemptionTimeoutDuration)
+
+var ErrRendezvousBadRequest = fmt.Errorf("a rendezvous request was made out of order, " +
+	"e.g., unwatch called before watch")
+
+var ErrRendezvousTimeoutExceeded = errors.New("some containers are taking a long time to " +
+	"connect to master; when running on kubernetes this may happen " +
+	"because only some of the pods have been scheduled; it is possible " +
+	"that some pods will never be scheduled without adding compute " +
+	"resources or pausing / killing other experiments in the cluster")
+
+var ErrAllGatherTimeoutExceeded = errors.New("some ranks are taking a long time to connect to master" +
+	"during all gather; when running on kubernetes this may happen " +
+	"because only some of the pods have been scheduled; it is possible " +
+	"that some pods will never be scheduled without adding compute " +
+	"resources or pausing / killing other experiments in the cluster")
+
+var ErrAllocationNotFound = errors.New("no such allocation in the system")
 
 // ErrNoAllocation is returned an operation is tried without a requested allocation.
 type ErrNoAllocation struct {
@@ -86,6 +101,7 @@ func (e ErrBehaviorDisabled) Error() string {
 }
 
 // ErrBehaviorUnsupported is returned an operation is tried without the behavior being supported.
+// TODO(mar): all these messages are garbage.
 type ErrBehaviorUnsupported struct {
 	Behavior string
 }

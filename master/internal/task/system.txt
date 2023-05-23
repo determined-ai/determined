@@ -1,0 +1,54 @@
+/agentRM 
+    /agentRM/default 
+        /agentRM/default/notify-stop-02ef8e18-7982-4812-a26a-8bbbc97838c3 
+        /agentRM/default/notify-stop-03560321-d5fe-4f19-b431-92c7e90d512c 
+        /agentRM/default/notify-stop-2c426fce-624f-4783-ab59-15f487822f18 
+        /agentRM/default/notify-stop-2d4fad32-d6ca-444a-a1d2-eddd9ee19da8 
+        /agentRM/default/notify-stop-474e4807-14c0-48a2-9f5f-4095066ba235 
+        /agentRM/default/notify-stop-5808567f-5215-44fa-b4da-817fde7f253b 
+        /agentRM/default/notify-stop-7601852b-b092-4acc-a818-a99bc2b672b1 
+        /agentRM/default/notify-stop-78f9796a-b6f0-4af4-9f4a-94b6e10158ab 
+        /agentRM/default/notify-stop-9d33b3a8-0615-43ba-94d1-c19c763e751f 
+        /agentRM/default/notify-stop-a4211dd8-0e9c-439d-b033-dbbc3031d70c 
+        /agentRM/default/notify-stop-b72da7d4-5e7b-4af5-91d3-7186a822f5bd 
+        /agentRM/default/notify-stop-c08469af-38ab-457d-b489-e41443796533 
+        /agentRM/default/notify-stop-db0e033d-1fa4-4c32-ba29-2ea67cf1daf9 
+        /agentRM/default/notify-stop-e5db8373-57c9-4d22-b389-c1992d8be238 
+/agents 
+    /agents/Bradleys-MBP.attlocal.net 
+        /agents/Bradleys-MBP.attlocal.net/slots 
+        /agents/Bradleys-MBP.attlocal.net/websocket-46ee7f84-3709-4077-8814-eef94b4aeef3 
+/allocation-aggregator 
+/commands 
+    /commands/11268c91-02b3-46f7-a0da-bd8e8f9a916c 
+        /commands/11268c91-02b3-46f7-a0da-bd8e8f9a916c/11268c91-02b3-46f7-a0da-bd8e8f9a916c.1 
+        /commands/11268c91-02b3-46f7-a0da-bd8e8f9a916c/events 
+/experiments 
+    /experiments/8 
+        /experiments/8/0c9264a1-352a-4d6d-9495-bb0d23c55dda 
+            /experiments/8/0c9264a1-352a-4d6d-9495-bb0d23c55dda/1 
+    /experiments/9 
+        /experiments/9/c0e9faf9-2391-4158-82c7-ae9ba7fda1af 
+            /experiments/9/c0e9faf9-2391-4158-82c7-ae9ba7fda1af/1 
+/jobs 
+/notebooks 
+    /notebooks/b8b58d93-89e5-4fd8-9f49-aa0549a45587 
+        /notebooks/b8b58d93-89e5-4fd8-9f49-aa0549a45587/b8b58d93-89e5-4fd8-9f49-aa0549a45587.1 
+        /notebooks/b8b58d93-89e5-4fd8-9f49-aa0549a45587/events 
+    /notebooks/eaedbe9e-bf62-4f1d-b378-e8edc42d778b 
+        /notebooks/eaedbe9e-bf62-4f1d-b378-e8edc42d778b/eaedbe9e-bf62-4f1d-b378-e8edc42d778b.1 
+        /notebooks/eaedbe9e-bf62-4f1d-b378-e8edc42d778b/events 
+/notify-timer-0fe8abbd-91cf-41a8-be9a-3602739b6bcc 
+/notify-timer-639afa6c-388a-4e0a-9901-c3b7cf3206d6 
+/notify-timer-c73c54c9-7628-4fda-8fe3-1ee1f2996f89 
+/notify-timer-eea0a739-c797-481a-bc0b-14d2c4f593b2 
+/proxy 
+/shells 
+    /shells/33b08f55-4fdb-49c6-9a3f-16d37ebaf956 
+        /shells/33b08f55-4fdb-49c6-9a3f-16d37ebaf956/33b08f55-4fdb-49c6-9a3f-16d37ebaf956.1 
+        /shells/33b08f55-4fdb-49c6-9a3f-16d37ebaf956/events 
+/taskLogger 
+/tensorboard 
+    /tensorboard/a912bdb7-1e24-4610-ae4c-0bf71daa48fb 
+        /tensorboard/a912bdb7-1e24-4610-ae4c-0bf71daa48fb/a912bdb7-1e24-4610-ae4c-0bf71daa48fb.1 
+        /tensorboard/a912bdb7-1e24-4610-ae4c-0bf71daa48fb/events 

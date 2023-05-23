@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -18,7 +19,8 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/sproto"
-	"github.com/determined-ai/determined/master/internal/task"
+	"github.com/determined-ai/determined/master/internal/task/allocation"
+	"github.com/determined-ai/determined/master/internal/task/tasklogger"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/protoutils/protoconverter"
 	"github.com/determined-ai/determined/master/pkg/tasks"
@@ -36,13 +38,13 @@ type checkpointGCTask struct {
 
 	allocation *actor.Ref
 	// TODO (DET-789): Set up proper log handling for checkpoint GC.
-	taskLogger *task.Logger
+	taskLogger *tasklogger.Logger
 
 	logCtx logger.Context
 }
 
 func newCheckpointGCTask(
-	rm rm.ResourceManager, db *db.PgDB, taskLogger *task.Logger, taskID model.TaskID,
+	rm rm.ResourceManager, db *db.PgDB, taskLogger *tasklogger.Logger, taskID model.TaskID,
 	jobID model.JobID, jobSubmissionTime time.Time, taskSpec tasks.TaskSpec, expID int,
 	legacyConfig expconf.LegacyConfig, toDeleteCheckpoints []uuid.UUID, deleteTensorboards bool,
 	agentUserGroup *model.AgentUserGroup, owner *model.User, logCtx logger.Context,
@@ -103,20 +105,24 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 			return fmt.Errorf("resolving resource pool: %w", err)
 		}
 
-		allocation := task.NewAllocation(t.logCtx, sproto.AllocateRequest{
+		alloc, err := allocation.Start(context.TODO(), logrus.Fields(t.logCtx), sproto.AllocateRequest{
+			AllocationID:      t.allocationID,
 			TaskID:            t.taskID,
 			JobID:             t.jobID,
 			JobSubmissionTime: t.jobSubmissionTime,
-			AllocationID:      t.allocationID,
 			Name:              fmt.Sprintf("Checkpoint GC (Experiment %d)", t.ExperimentID),
 			FittingRequirements: sproto.FittingRequirements{
 				SingleAgent: true,
 			},
-			AllocationRef: ctx.Self(),
-			ResourcePool:  rp,
-		}, t.db, t.rm, t.taskLogger)
+			ResourcePool: rp,
+			Group:        ctx.Self(),
+		}, t.rm, t.taskLogger, func() (tasks.TaskSpec, error) {
+			return t.ToTaskSpec(), nil
+		})
 
-		t.allocation, _ = ctx.ActorOf(t.allocationID, allocation)
+		go func() {
+			ctx.Tell(ctx.Self(), alloc.Wait())
+		}()
 
 		// t.Base is just a shallow copy of the m.taskSpec on the master, so
 		// use caution when mutating it.
@@ -127,11 +133,7 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 		if err != nil {
 			return fmt.Errorf("creating task container defaults: %v", err)
 		}
-	case task.BuildTaskSpec:
-		if ctx.ExpectingResponse() {
-			ctx.Respond(t.ToTaskSpec())
-		}
-	case *task.AllocationExited:
+	case *allocation.AllocationExited:
 		if msg.Err != nil {
 			ctx.Log().WithError(msg.Err).Error("wasn't able to delete checkpoints from checkpoint storage")
 			t.completeTask(ctx)

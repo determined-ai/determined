@@ -39,6 +39,11 @@ type ResourceManager struct {
 	*actorrm.ResourceManager
 }
 
+// Allocate2 implements rm.ResourceManager
+func (ResourceManager) Allocate2(sproto.AllocateRequest) error {
+	panic("unimplemented")
+}
+
 // New returns a new ResourceManager, which communicates with
 // and submits work to a Kubernetes apiserver.
 func New(
