@@ -126,7 +126,7 @@ class Trial:
         self.id = trial_id
         self._session = session
 
-        self.hparams = None
+        self.hparams = None  # type: Optional[Dict[str, Any]]
 
     def logs(
         self,
@@ -359,7 +359,7 @@ class Trial:
         resp = bindings.get_GetTrial(session=self._session, trialId=self.id)
         return resp.trial
 
-    def _hydrate(self, trial: bindings.trialv1Trial):
+    def _hydrate(self, trial: bindings.trialv1Trial) -> None:
         self.hparams = trial.hparams
 
     def reload(self) -> None:

@@ -104,7 +104,7 @@ class Determined:
         if users_bindings is None:
             return users
         for user_b in users_bindings:
-            user_obj = user.User._from_bindings(user_b)
+            user_obj = user.User._from_bindings(user_b, self._session)
             users.append(user_obj)
         return users
 

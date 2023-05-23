@@ -1,3 +1,4 @@
+import datetime
 import enum
 import json
 from typing import Any, Dict, Iterable, List, Optional
@@ -16,26 +17,20 @@ class ModelVersion:
     def __init__(
         self,
         session: api.Session,
-        model_version_id: int,  # unique DB id
-        checkpoint: checkpoint.Checkpoint,
-        metadata: Dict[str, Any],
-        name: str,
-        comment: str,
-        notes: str,
-        model_id: int,
+        model_version: int,
         model_name: str,
-        model_version: int,  # sequential
     ):
         self._session = session
-        self.checkpoint = checkpoint
-        self.metadata = metadata
-        self.name = name
-        self.comment = comment
-        self.notes = notes
-        self.model_id = model_id
         self.model_name = model_name
-        self.model_version_id = model_version_id
         self.model_version = model_version
+
+        self.checkpoint = None  # type: Optional[checkpoint.Checkpoint]
+        self.metadata = None  # type: Optional[Dict[str, Any]]
+        self.name = None  # type: Optional[str]
+        self.comment = None  # type: Optional[str]
+        self.notes = None  # type: Optional[str]
+        self.model_id = None  # type: Optional[int]
+        self.model_version_id = None  # type: Optional[int]
 
     def set_name(self, name: str) -> None:
         """
@@ -44,12 +39,11 @@ class ModelVersion:
         Arguments:
             name (string): New name for model version
         """
-
-        self.name = name
         req = bindings.v1PatchModelVersion(name=name)
         bindings.patch_PatchModelVersion(
             self._session, body=req, modelName=self.model_name, modelVersionNum=self.model_version
         )
+        self.reload()
 
     def set_notes(self, notes: str) -> None:
         """
@@ -58,12 +52,11 @@ class ModelVersion:
         Arguments:
             notes (string): Replaces notes for model version in registry
         """
-
-        self.notes = notes
         req = bindings.v1PatchModelVersion(notes=notes)
         bindings.patch_PatchModelVersion(
             self._session, body=req, modelName=self.model_name, modelVersionNum=self.model_version
         )
+        self.reload()
 
     def delete(self) -> None:
         """
@@ -73,20 +66,38 @@ class ModelVersion:
             self._session, modelName=self.model_name, modelVersionNum=self.model_version
         )
 
-    @classmethod
-    def _from_bindings(cls, m: bindings.v1ModelVersion, session: api.Session) -> "ModelVersion":
-        return cls(
-            session,
-            model_version_id=m.id,
-            checkpoint=checkpoint.Checkpoint._from_bindings(m.checkpoint, session),
-            metadata=m.metadata or {},
-            name=m.name or "",
-            comment=m.comment or "",
-            notes=m.notes or "",
-            model_id=m.model.id,
-            model_name=m.model.name,
-            model_version=m.version,
+    def _get(self) -> bindings.v1ModelVersion:
+        return bindings.get_GetModelVersion(
+            session=self._session, modelName=self.model_name, modelVersionNum=self.model_version
+        ).modelVersion
+
+    def _hydrate(self, model_version: bindings.v1ModelVersion) -> None:
+        self.checkpoint = checkpoint.Checkpoint._from_bindings(
+            model_version.checkpoint, self._session
         )
+        self.metadata = model_version.metadata or {}
+        self.name = model_version.name or ""
+        self.comment = model_version.comment or ""
+        self.notes = model_version.notes or ""
+        self.model_id = model_version.model.id
+        self.model_version_id = model_version.id
+        self.model_version = model_version.version
+
+    def reload(self) -> None:
+        resp = self._get()
+        self._hydrate(resp)
+
+    @classmethod
+    def _from_bindings(
+        cls, model_bindings: bindings.v1ModelVersion, session: api.Session
+    ) -> "ModelVersion":
+        model = cls(
+            session,
+            model_version=model_bindings.version,
+            model_name=model_bindings.model.name,
+        )
+        model._hydrate(model_bindings)
+        return model
 
 
 class ModelSortBy(enum.Enum):
@@ -153,14 +164,14 @@ class Model:
         self.model_id = model_id
         self.name = name
 
-        self.description = None
-        self.creation_time = None
-        self.last_updated_time = None
-        self.metadata = {}
-        self.labels = None
-        self.username = None
-        self.workspace_id = None
-        self.archived = None
+        self.description = None  # type: Optional[str]
+        self.creation_time = None  # type: Optional[datetime.datetime]
+        self.last_updated_time = None  # type: Optional[datetime.datetime]
+        self.metadata = None  # type: Optional[Dict[str, Any]]
+        self.labels = None  # type: Optional[List[str]]
+        self.username = None  # type: Optional[str]
+        self.workspace_id = None  # type: Optional[int]
+        self.archived = None  # type: Optional[bool]
 
     def get_version(self, version: int = -1) -> Optional[ModelVersion]:
         """
@@ -246,6 +257,7 @@ class Model:
             metadata (dict): Dictionary of metadata to add to the model.
         """
         self.reload()
+        assert self.metadata
         for key, val in metadata.items():
             self.metadata[key] = val
 
@@ -266,7 +278,7 @@ class Model:
             )
 
         self.reload()
-
+        assert self.metadata
         for key in keys:
             if key in self.metadata:
                 del self.metadata[key]
@@ -289,15 +301,12 @@ class Model:
         if not isinstance(labels, Iterable):
             raise ValueError(f"set_labels() requires a list of strings as input but got: {labels}")
 
-        self.labels = list(labels)
-
-        req = bindings.v1PatchModel(labels=self.labels)
+        req = bindings.v1PatchModel(labels=list(labels))
         bindings.patch_PatchModel(self._session, body=req, modelName=self.name)
         self.reload()
 
     def set_description(self, description: str) -> None:
-        self.description = description
-        req = bindings.v1PatchModel(description=self.description)
+        req = bindings.v1PatchModel(description=description)
         bindings.patch_PatchModel(self._session, body=req, modelName=self.name)
         self.reload()
 
@@ -305,7 +314,6 @@ class Model:
         """
         Sets the model's state to archived
         """
-        self.archived = True
         bindings.post_ArchiveModel(self._session, modelName=self.name)
         self.reload()
 
@@ -313,7 +321,6 @@ class Model:
         """
         Removes the model's archived state
         """
-        self.archived = False
         bindings.post_UnarchiveModel(self._session, modelName=self.name)
         self.reload()
 
@@ -343,7 +350,7 @@ class Model:
         resp = bindings.get_GetModel(session=self._session, modelName=self.name)
         return resp.model
 
-    def _hydrate(self, model: bindings.v1Model):
+    def _hydrate(self, model: bindings.v1Model) -> None:
         self.description = model.description or ""
         self.creation_time = util.parse_protobuf_timestamp(model.creationTime)
         self.last_updated_time = util.parse_protobuf_timestamp(model.lastUpdatedTime)
@@ -368,3 +375,4 @@ class Model:
             name=m.name,
         )
         model_obj._hydrate(m)
+        return model_obj

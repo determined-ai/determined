@@ -1,7 +1,7 @@
 import enum
 import sys
 import time
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 from determined.common import api
 from determined.common.api import bindings
@@ -51,14 +51,14 @@ class Experiment:
         self._session = session
 
         # These properties may be mutable and will be set by _hydrate()
-        self.config = None
+        self.config: Optional[Dict[str, Any]] = None
         self.state = None
 
     @property
     def id(self) -> int:
         return self._id
 
-    def _get(self, session: api.Session = None) -> bindings.v1Experiment:
+    def _get(self, session: Optional[api.Session] = None) -> bindings.v1Experiment:
         """
         _get fetches the main GET experiment endpoint and parses the response.
         """
@@ -67,7 +67,7 @@ class Experiment:
         resp = bindings.get_GetExperiment(session, experimentId=self.id)
         return resp.experiment
 
-    def _hydrate(self, exp: bindings.v1Experiment):
+    def _hydrate(self, exp: bindings.v1Experiment) -> None:
         self.config = exp.config
         self.state = exp.state
 

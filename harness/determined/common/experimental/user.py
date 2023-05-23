@@ -9,17 +9,17 @@ class User:
         self.user_id = user_id
         self._session = session
 
-        self.username = None
-        self.admin = None
-        self.active = None
-        self.remote = None
-        self.agent_uid = None
-        self.agent_gid = None
-        self.agent_user = None
-        self.agent_group = None
-        self.display_name = None
+        self.username = None  # type: Optional[str]
+        self.admin = None  # type: Optional[bool]
+        self.active = None  # type: Optional[bool]
+        self.remote = None  # type: Optional[bool]
+        self.agent_uid = None  # type: Optional[int]
+        self.agent_gid = None  # type: Optional[int]
+        self.agent_user = None  # type: Optional[str]
+        self.agent_group = None  # type: Optional[str]
+        self.display_name = None  # type: Optional[str]
 
-    def _get(self):
+    def _get(self) -> bindings.v1User:
         return bindings.get_GetUser(session=self._session, userId=self.user_id).user
 
     def _hydrate(self, user: bindings.v1User) -> None:
@@ -83,6 +83,7 @@ class User:
 
     @classmethod
     def _from_bindings(cls, user_bindings: bindings.v1User, session: api.Session) -> "User":
+        assert user_bindings.id
         user = cls(session=session, user_id=user_bindings.id)
         user._hydrate(user_bindings)
         return user

@@ -29,6 +29,7 @@ def render_model(model: Model) -> None:
 
 
 def render_model_version(model_version: ModelVersion) -> None:
+    assert model_version.checkpoint
     checkpoint = model_version.checkpoint
     headers = [
         "Version #",
@@ -43,7 +44,7 @@ def render_model_version(model_version: ModelVersion) -> None:
         [
             model_version.model_version,
             checkpoint.training.trial_id if checkpoint.training else None,
-            checkpoint.metadata["steps_completed"],
+            checkpoint.metadata["steps_completed"] if checkpoint.metadata else None,
             checkpoint.uuid,
             (
                 json.dumps(checkpoint.training.validation_metrics, indent=2)
@@ -116,21 +117,25 @@ def list_versions(args: Namespace) -> None:
             "Metadata",
         ]
 
-        values = [
-            [
-                version.model_version,
-                version.checkpoint.training.trial_id if version.checkpoint.training else None,
-                version.checkpoint.metadata["steps_completed"],
-                version.checkpoint.uuid,
-                (
-                    json.dumps(version.checkpoint.training.validation_metrics, indent=2)
-                    if version.checkpoint.training
-                    else ""
-                ),
-                json.dumps(version.checkpoint.metadata, indent=2),
-            ]
-            for version in model.get_versions()
-        ]
+        values = []
+        for version in model.get_versions():
+            assert version.checkpoint
+            values.append(
+                [
+                    version.model_version,
+                    version.checkpoint.training.trial_id if version.checkpoint.training else None,
+                    version.checkpoint.metadata["steps_completed"]
+                    if version.checkpoint.metadata
+                    else None,
+                    version.checkpoint.uuid,
+                    (
+                        json.dumps(version.checkpoint.training.validation_metrics, indent=2)
+                        if version.checkpoint.training
+                        else ""
+                    ),
+                    json.dumps(version.checkpoint.metadata, indent=2),
+                ]
+            )
 
         render.tabulate_or_csv(headers, values, False)
 

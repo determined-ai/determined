@@ -96,13 +96,13 @@ class Checkpoint:
         self._session = session
         self.uuid = uuid
 
-        self.task_id = None
-        self.allocation_id = None
-        self.report_time = None
-        self.resources = None
-        self.metadata = None
-        self.state = None
-        self.training = None
+        self.task_id = None  # type: Optional[str]
+        self.allocation_id = None  # type: Optional[str]
+        self.report_time = None  # type: Optional[str]
+        self.resources = None  # type: Optional[Dict[str, Any]]
+        self.metadata = None  # type: Optional[Dict[str, Any]]
+        self.state = None  # type: Optional[CheckpointState]
+        self.training = None  # type: Optional[CheckpointTrainingMetadata]
 
     def _find_shared_fs_path(self, checkpoint_storage: Dict[str, Any]) -> pathlib.Path:
         """Attempt to find the path of the checkpoint if being configured to shared fs.
@@ -149,6 +149,7 @@ class Checkpoint:
                 ``AUTO``.
         """
         self.reload()
+        assert self.state
         if (
             self.state != CheckpointState.COMPLETED
             and self.state != CheckpointState.PARTIALLY_DELETED
@@ -279,6 +280,7 @@ class Checkpoint:
             json.dump(self.metadata, f, indent=2)
 
     def _push_metadata(self) -> None:
+        assert self.metadata
         # TODO: in a future version of this REST API, an entire, well-formed Checkpoint object.
         req = bindings.v1PostCheckpointMetadataRequest(
             checkpoint=bindings.v1Checkpoint(
@@ -304,6 +306,7 @@ class Checkpoint:
             metadata (dict): Dictionary of metadata to add to the checkpoint.
         """
         self.reload()
+        assert self.metadata
         for key, val in metadata.items():
             self.metadata[key] = val
 
@@ -320,6 +323,7 @@ class Checkpoint:
             keys (List[string]): Top-level keys to remove from the checkpoint metadata.
         """
         self.reload()
+        assert self.metadata
         for key in keys:
             if key in self.metadata:
                 del self.metadata[key]
@@ -370,7 +374,7 @@ class Checkpoint:
         resp = bindings.get_GetCheckpoint(session=self._session, checkpointUuid=self.uuid)
         return resp.checkpoint
 
-    def _hydrate(self, ckpt: bindings.v1Checkpoint):
+    def _hydrate(self, ckpt: bindings.v1Checkpoint) -> None:
         self.task_id = ckpt.taskId
         self.allocation_id = ckpt.allocationId
         self.report_time = ckpt.reportTime

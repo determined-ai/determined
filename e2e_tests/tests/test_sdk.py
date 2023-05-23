@@ -257,7 +257,7 @@ def test_experiment_manipulation(client: _client.Determined) -> None:
     exp.cancel()
     assert exp.wait() == _client.ExperimentState.CANCELED
 
-    assert isinstance(exp.get_config(), dict)
+    assert isinstance(exp.config, dict)
 
     # Delete this experiment, but continue the test while it's deleting.
     exp.delete()
