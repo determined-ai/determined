@@ -93,7 +93,7 @@ type mockPodInterface struct {
 	pods map[string]*k8sV1.Pod
 	// Simulates latency of the real k8 API server.
 	operationalDelay time.Duration
-	logMessage       string
+	logMessage       *string
 	mux              sync.Mutex
 }
 
@@ -214,12 +214,12 @@ func (m *mockPodInterface) ProxyGet(
 }
 
 type mockRoundTripInterface struct {
-	message string
+	message *string
 }
 
 func (m *mockRoundTripInterface) RoundTrip(req *http.Request) (*http.Response, error) {
 	return &http.Response{
 		StatusCode: http.StatusOK,
-		Body:       io.NopCloser(strings.NewReader(m.message)),
+		Body:       io.NopCloser(strings.NewReader(*m.message)),
 	}, nil
 }

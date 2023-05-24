@@ -660,7 +660,7 @@ func TestReceiveContainerLog(t *testing.T) {
 	system, newPod, ref, podMap, _ := createPodWithMockQueue()
 	newPod.restore = true
 	newPod.container.State = cproto.Running
-	newPod.podInterface = &mockPodInterface{logMessage: mockLogMessage}
+	newPod.podInterface = &mockPodInterface{logMessage: &mockLogMessage}
 	podMap["task"].Purge()
 	assert.Equal(t, podMap["task"].GetLength(), 0)
 	system.Ask(ref, actor.PreStart{})
@@ -673,6 +673,59 @@ func TestReceiveContainerLog(t *testing.T) {
 	}
 
 	containerMsg, ok := message.(sproto.ContainerLog)
+	if !ok {
+		t.Errorf("expected sproto.ContainerLog but received %s", reflect.TypeOf(message))
+	}
+	assert.Equal(t, containerMsg.RunMessage.Value, mockLogMessage)
+
+	// reset state to starting
+	newPod.container.State = cproto.Starting
+	mockLogMessage = "new mock log message"
+
+	typeMeta := metaV1.TypeMeta{Kind: "running log test"}
+	objectMeta := metaV1.ObjectMeta{
+		Name: "test meta",
+	}
+	containerStatuses := []k8sV1.ContainerStatus{
+		{
+			Name:  "sample-container",
+			State: k8sV1.ContainerState{Running: &k8sV1.ContainerStateRunning{}},
+		},
+	}
+	status := k8sV1.PodStatus{
+		Phase:             k8sV1.PodRunning,
+		ContainerStatuses: containerStatuses,
+	}
+	pod := k8sV1.Pod{
+		TypeMeta:   typeMeta,
+		ObjectMeta: objectMeta,
+		Status:     status,
+	}
+	newPod.containerNames = set.FromSlice([]string{
+		"sample-container",
+	})
+	statusUpdate := podStatusUpdate{updatedPod: &pod}
+
+	system.Ask(ref, statusUpdate)
+	time.Sleep(time.Second)
+	assert.Equal(t, podMap["task"].GetLength(), 2)
+	assert.Equal(t, newPod.container.State, cproto.Running)
+
+	message, err = podMap["task"].Pop()
+	if err != nil {
+		t.Errorf("Unable to pop message from task receiver queue")
+	}
+	resourceMsg, ok := message.(sproto.ResourcesStateChanged)
+	if !ok {
+		t.Errorf("expected sproto.ResourcesStateChanged but received %s", reflect.TypeOf(message))
+	}
+	assert.Equal(t, resourceMsg.Container.State, cproto.Running)
+
+	message, err = podMap["task"].Pop()
+	if err != nil {
+		t.Errorf("Unable to pop message from task receiver queue")
+	}
+	containerMsg, ok = message.(sproto.ContainerLog)
 	if !ok {
 		t.Errorf("expected sproto.ContainerLog but received %s", reflect.TypeOf(message))
 	}
