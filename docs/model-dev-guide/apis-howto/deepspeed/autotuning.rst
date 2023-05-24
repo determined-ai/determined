@@ -5,7 +5,7 @@
 ################################
 
 .. meta::
-   :description: This user guide demonstrates how to optimize DeepSpeed parameter in order to take full advantage of the user's hardware and model.
+   :description: This user guide demonstrates how to optimize DeepSpeed parameters in order to take full advantage of the user's hardware and model.
 
 Getting the most out of DeepSpeed (DS) requires aligning the many DS parameters with the specific
 properties of your hardware and model. Determined AI's DeepSpeed Autotune (``dsat``) helps to
@@ -22,9 +22,9 @@ You do not need to create a special configuration file to use ``dsat``. Assuming
 code which already functions, autotuning is as easy as inserting one or two helper functions into
 your code and modifying the launch command.
 
-For instance, let's say your directory contains DeepSpeed code and a corresponding
-``single`` trial experiment configuration file ``deepspeed.yaml``. Then, after inserting a line or
-two of ``dsat``-specific code per the instructions in the following sections, launching the ``dsat``
+For instance, let's say your directory contains DeepSpeed code and a corresponding ``single`` trial
+experiment configuration file ``deepspeed.yaml``. Then, after inserting a line or two of
+``dsat``-specific code per the instructions in the following sections, launching the ``dsat``
 experiments is as easy as replacing the usual experiment-launching command:
 
 .. code::
@@ -71,7 +71,7 @@ results of each subsequent trial, all of whose results are fed back to the searc
 
 To use ``dsat`` with :class:`~determined.pytorch.deepspeed.DeepSpeedTrial`, Core API, and
 HuggingFace Trainer, specific changes must be made to your user code. In the following sections, we
-will describe specific use cases and the changes needed for each. 
+will describe specific use cases and the changes needed for each.
 
 .. _using_deepspeed_trial:
 
@@ -124,8 +124,8 @@ configuration to deepspeed.initialize as usual:
 Using Determined's DeepSpeed Autotune with a :class:`~determined.pytorch.deepspeed.DeepSpeedTrial`
 instance requires no further changes to your user code.
 
-For a complete example of how to use DeepSpeed Autotune with ``DeepSpeedTrial``, visit the `Determined
-GitHub Repo
+For a complete example of how to use DeepSpeed Autotune with ``DeepSpeedTrial``, visit the
+`Determined GitHub Repo
 <https://github.com/determined-ai/determined/tree/master/examples/deepspeed_autotune/torchvision/deepspeed_trial>`__
 and navigate to ``examples/deepspeed_autotune/torchvision/deepspeed_trial`` .
 
@@ -158,9 +158,8 @@ initialized with :func:`determined.core.init`. The context manager requires acce
 appropriately report results. Outside of a ``dsat`` context, ``dsat_reporting_context`` is a no-op,
 so there is no need to remove the context manager after the ``dsat`` trials have completed.
 
-
-For a complete example of how to use DeepSpeed Autotune with Core API, visit the `Determined
-GitHub Repo
+For a complete example of how to use DeepSpeed Autotune with Core API, visit the `Determined GitHub
+Repo
 <https://github.com/determined-ai/determined/tree/master/examples/deepspeed_autotune/torchvision/core_api>`__
 and navigate to ``examples/deepspeed_autotune/torchvision/core_api`` .
 
@@ -212,9 +211,9 @@ relevant code:
    -  The entire ``train`` method of the HuggingFace trainer is wrapped in the
       ``dsat_reporting_context`` context manager.
 
-To find examples that use DeepSpeed Autotune with HuggingFace Trainer, visit the `Determined
-GitHub Repo <https://github.com/determined-ai/determined/tree/master/examples/hf_trainer_api>`__
-and navigate to ``examples/hf_trainer_api``.
+To find examples that use DeepSpeed Autotune with HuggingFace Trainer, visit the `Determined GitHub
+Repo <https://github.com/determined-ai/determined/tree/master/examples/hf_trainer_api>`__ and
+navigate to ``examples/hf_trainer_api``.
 
 ******************
  Advanced Options
@@ -261,9 +260,9 @@ The following options are available for every search method.
 ================
 
 The ``asha`` search algorithm randomly generates various DeepSpeed configurations and attempts to
-tune the batch size for each configuration through a binary search. ``asha`` adaptively
-allocates resources to explore each configuration (providing more resources to promising lineages)
-where the resource is the number of steps taken in each binary search (i.e., the number of trials).
+tune the batch size for each configuration through a binary search. ``asha`` adaptively allocates
+resources to explore each configuration (providing more resources to promising lineages) where the
+resource is the number of steps taken in each binary search (i.e., the number of trials).
 
 ``asha`` can be configured with the following flags:
 
