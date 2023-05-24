@@ -6,7 +6,7 @@ import tensorflow as tf
 from _pytest import monkeypatch
 
 import determined as det
-from determined import estimator, experimental, keras
+from determined import estimator, experimental, keras, pytorch
 from tests.experiment.fixtures import pytorch_onevar_model
 
 
