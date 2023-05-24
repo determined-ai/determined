@@ -109,13 +109,13 @@ const formatClipboardHeader = (log: Log): string => {
 
 const logSorter =
   (key: keyof Log) =>
-    (a: Log, b: Log): number => {
-      const aValue = a[key];
-      const bValue = b[key];
-      if (key === 'id') return numericSorter(aValue as number, bValue as number);
-      if (key === 'time') return dateTimeStringSorter(aValue as string, bValue as string);
-      return 0;
-    };
+  (a: Log, b: Log): number => {
+    const aValue = a[key];
+    const bValue = b[key];
+    if (key === 'id') return numericSorter(aValue as number, bValue as number);
+    if (key === 'time') return dateTimeStringSorter(aValue as string, bValue as string);
+    return 0;
+  };
 
 const LogViewer: React.FC<Props> = ({
   decoder,
@@ -203,10 +203,16 @@ const LogViewer: React.FC<Props> = ({
       setIsFetching(true);
       local.current.isFetching = true;
 
-      await readStream(serverAddress, onFetch({ limit: PAGE_LIMIT, ...config } as FetchConfig, type), (event) => {
-        const logEntry = decoder(event);
-        fetchDirection === FetchDirection.Older ? buffer.unshift(logEntry) : buffer.push(logEntry);
-      });
+      await readStream(
+        serverAddress,
+        onFetch({ limit: PAGE_LIMIT, ...config } as FetchConfig, type),
+        (event) => {
+          const logEntry = decoder(event);
+          fetchDirection === FetchDirection.Older
+            ? buffer.unshift(logEntry)
+            : buffer.push(logEntry);
+        },
+      );
 
       setIsFetching(false);
       local.current.isFetching = false;
