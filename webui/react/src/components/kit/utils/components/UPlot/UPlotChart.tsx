@@ -27,7 +27,7 @@ interface Props {
   isLoading?: boolean;
   options?: Partial<Options>;
   style?: React.CSSProperties;
-  handleError: (e: unknown, options?: object) => void;
+  handleError?: (e: unknown, options?: object) => void;
 }
 
 const SCROLL_THROTTLE_TIME = 500;
@@ -174,7 +174,7 @@ const UPlotChart: React.FC<Props> = ({
       } catch (e) {
         chartRef.current?.destroy();
         chartRef.current = undefined;
-        handleError(e, {
+        handleError?.(e, {
           level: ErrorLevel.Error,
           publicMessage: 'Unable to Load data for chart',
           publicSubject: 'Bad Data',
@@ -188,7 +188,7 @@ const UPlotChart: React.FC<Props> = ({
       } catch (e) {
         chartRef.current?.destroy();
         chartRef.current = undefined;
-        handleError(e, {
+        handleError?.(e, {
           level: ErrorLevel.Error,
           publicMessage: 'Unable to Load data for chart',
           publicSubject: 'Bad Data',

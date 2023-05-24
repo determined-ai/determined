@@ -355,6 +355,7 @@ const LearningCurve: React.FC<Props> = ({
             {chartComponent ? (
               <LineChart
                 focusedSeries={highlightedTrialId && trialIds.indexOf(highlightedTrialId)}
+                handleError={handleError}
                 scale={selectedScale}
                 series={v2ChartData}
                 xLabel="Batches Processed"

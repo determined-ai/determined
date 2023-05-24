@@ -1,7 +1,5 @@
 import React, { PropsWithChildren, ReactNode, useState } from 'react';
 
-import handleError from 'utils/error';
-
 import { Modal, ModalSize, useModal } from './Modal';
 
 export interface ConfirmModalProps {
@@ -13,6 +11,7 @@ export interface ConfirmModalProps {
   okText?: string;
   onClose?: () => void;
   onConfirm: () => Promise<void>;
+  onError: (e: unknown, options?: object) => void;
 }
 
 export const DEFAULT_CONFIRM_TITLE = 'Confirm Action';
@@ -28,6 +27,7 @@ const ConfirmModal = ({
   okText,
   onClose,
   onConfirm,
+  onError,
 }: ConfirmModalProps) => {
   return (
     <Modal
@@ -37,7 +37,7 @@ const ConfirmModal = ({
       icon="warning-large"
       size={size}
       submit={{
-        handleError,
+        handleError: onError,
         handler: onConfirm,
         text: okText ?? DEFAULT_CONFIRM_LABEL,
       }}
@@ -51,8 +51,8 @@ const ConfirmModal = ({
 type ConfirmModalModifier = (args: ConfirmModalProps) => void;
 
 /* eslint-disable @typescript-eslint/no-empty-function */
-export const voidFn = (): void => {};
-export const voidPromiseFn = async (): Promise<void> => {};
+export const voidFn = (): void => { };
+export const voidPromiseFn = async (): Promise<void> => { };
 const ConfirmationContext = React.createContext<ConfirmModalModifier | null>(null);
 
 export const ConfirmationProvider: React.FC<PropsWithChildren> = ({ children }) => {
@@ -68,8 +68,19 @@ export const ConfirmationProvider: React.FC<PropsWithChildren> = ({ children }) 
     title,
     onClose = voidFn,
     onConfirm = voidPromiseFn,
+    onError = voidFn,
   }: ConfirmModalProps) => {
-    setModalProps({ cancelText, content, danger, okText, onClose, onConfirm, size, title });
+    setModalProps({
+      cancelText,
+      content,
+      danger,
+      okText,
+      onClose,
+      onConfirm,
+      onError,
+      size,
+      title,
+    });
     Modal.open();
   };
 
@@ -84,7 +95,7 @@ export const ConfirmationProvider: React.FC<PropsWithChildren> = ({ children }) 
         /* eslint-disable-next-line react-hooks/exhaustive-deps */
         [children],
       )}
-      <Modal.Component {...modalProps} onConfirm={modalProps?.onConfirm ?? voidPromiseFn} />
+      <Modal.Component {...modalProps} onConfirm={modalProps?.onConfirm ?? voidPromiseFn} onError={modalProps?.onError ?? voidFn} />
     </>
   );
 };

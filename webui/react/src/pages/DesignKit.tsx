@@ -1,6 +1,7 @@
 import { PoweroffOutlined } from '@ant-design/icons';
 import { Card as AntDCard, Space } from 'antd';
 import { SelectValue } from 'antd/es/select';
+import UserAvatar from 'components/kit/UserAvatar';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
@@ -33,7 +34,6 @@ import Toggle from 'components/kit/Toggle';
 import Tooltip from 'components/kit/Tooltip';
 import Header from 'components/kit/Typography/Header';
 import Paragraph from 'components/kit/Typography/Paragraph';
-import UserAvatar from 'components/kit/UserAvatar';
 import { useTags } from 'components/kit/useTags';
 import Label from 'components/Label';
 import Logo from 'components/Logo';
@@ -61,6 +61,7 @@ import css from './DesignKit.module.scss';
 
 const ComponentTitles = {
   Accordion: 'Accordion',
+  Avatar: 'Avatar',
   Breadcrumbs: 'Breadcrumbs',
   Buttons: 'Buttons',
   Cards: 'Cards',
@@ -87,7 +88,6 @@ const ComponentTitles = {
   Toggle: 'Toggle',
   Tooltips: 'Tooltips',
   Typography: 'Typography',
-  UserAvatar: 'UserAvatar',
 } as const;
 
 type ComponentNames = ValueOf<typeof ComponentTitles>;
@@ -614,7 +614,13 @@ const ChartsSection: React.FC = () => {
           <Button onClick={randomizeLineData}>Randomize line data</Button>
           <Button onClick={streamLineData}>Stream line data</Button>
         </div>
-        <LineChart height={250} series={[line1, line2]} showLegend={true} title="Sample" />
+        <LineChart
+          handleError={handleError}
+          height={250}
+          series={[line1, line2]}
+          showLegend={true}
+          title="Sample"
+        />
       </AntDCard>
       <AntDCard title="Focus series">
         <p>Highlight a specific metric in the chart.</p>
@@ -622,14 +628,32 @@ const ChartsSection: React.FC = () => {
           <Button onClick={randomizeLineData}>Randomize line data</Button>
           <Button onClick={streamLineData}>Stream line data</Button>
         </div>
-        <LineChart focusedSeries={1} height={250} series={[line1, line2]} title="Sample" />
+        <LineChart
+          focusedSeries={1}
+          handleError={handleError}
+          height={250}
+          series={[line1, line2]}
+          title="Sample"
+        />
       </AntDCard>
       <AntDCard title="States without data">
         <strong>Loading</strong>
-        <LineChart height={250} series={NotLoaded} showLegend={true} title="Loading state" />
+        <LineChart
+          handleError={handleError}
+          height={250}
+          series={NotLoaded}
+          showLegend={true}
+          title="Loading state"
+        />
         <hr />
         <strong>Empty</strong>
-        <LineChart height={250} series={[]} showLegend={true} title="Empty state" />
+        <LineChart
+          handleError={handleError}
+          height={250}
+          series={[]}
+          showLegend={true}
+          title="Empty state"
+        />
       </AntDCard>
       <AntDCard title="Chart Grid">
         <p>
@@ -670,6 +694,7 @@ const ChartsSection: React.FC = () => {
               xLabel: xAxis,
             },
           ],
+          handleError,
           onXAxisChange: setXAxis,
           xAxis: xAxis,
         })}
@@ -677,6 +702,7 @@ const ChartsSection: React.FC = () => {
         <strong>Loading</strong>
         {createChartGrid({
           chartsProps: NotLoaded,
+          handleError,
           onXAxisChange: setXAxis,
           xAxis: xAxis,
         })}
@@ -684,6 +710,7 @@ const ChartsSection: React.FC = () => {
         <strong>Empty</strong>
         {createChartGrid({
           chartsProps: [],
+          handleError,
           onXAxisChange: setXAxis,
           xAxis: xAxis,
         })}
@@ -2184,8 +2211,15 @@ const ModalSection: React.FC = () => {
 
   const confirm = useConfirm();
   const config = { content: text, title: text };
-  const confirmDefault = () => confirm({ ...config, onConfirm: voidPromiseFn });
-  const confirmDangerous = () => confirm({ ...config, danger: true, onConfirm: voidPromiseFn });
+  const confirmDefault = () =>
+    confirm({ ...config, onConfirm: voidPromiseFn, onError: handleError });
+  const confirmDangerous = () =>
+    confirm({
+      ...config,
+      danger: true,
+      onConfirm: voidPromiseFn,
+      onError: handleError,
+    });
 
   return (
     <ComponentSection id="Modals" title="Modals">

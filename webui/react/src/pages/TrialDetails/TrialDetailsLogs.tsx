@@ -103,6 +103,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
       ),
       okText: 'Proceed to Download',
       onConfirm: handleDownloadConfirm,
+      onError: handleError,
       size: 'medium',
       title: `Confirm Download for Trial ${trial.id} Logs`,
     });
