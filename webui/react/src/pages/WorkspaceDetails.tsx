@@ -20,7 +20,7 @@ import userStore from 'stores/users';
 import workspaceStore from 'stores/workspaces';
 import { User } from 'types';
 import handleError from 'utils/error';
-import { Loadable, NotLoaded } from 'utils/loadable';
+import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 
 import ModelRegistry from '../components/ModelRegistry';
@@ -243,7 +243,7 @@ const WorkspaceDetails: React.FC = () => {
     tab && setTabKey(tab as WorkspaceDetailsTab);
   }, [workspaceId, navigate, tab]);
 
-  if (loadableWorkspace === NotLoaded || Loadable.isLoading(loadableUsers)) {
+  if (Loadable.isLoading(loadableWorkspace) || Loadable.isLoading(loadableUsers)) {
     return <Spinner spinning tip={`Loading workspace ${workspaceId} details...`} />;
   } else if (isNaN(id)) {
     return <Message title={`Invalid Workspace ID ${workspaceId}`} />;
