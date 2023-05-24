@@ -1,22 +1,15 @@
-import filelock
-
+import os
 import pathlib
 
-import os
-
+import filelock
 import torch
-
-from torch.profiler import ProfilerActivity
 
 import torchvision as tv
 import torchvision.transforms as transforms
 
-from _torch_batch_process import (
-    TorchBatchProcessor,
-    torch_batch_process,
-)
-
+from determined.experimental.inference import TorchBatchProcessor, torch_batch_process
 from model import get_model
+from torch.profiler import ProfilerActivity
 
 
 class MyProcessor(TorchBatchProcessor):
