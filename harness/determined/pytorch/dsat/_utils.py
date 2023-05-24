@@ -430,8 +430,9 @@ def update_hf_args(args: List[str], ds_config_dict: Dict[str, Any]) -> List[str]
         if args[idx] in hf_flag_to_ds_key:
             ds_key = hf_flag_to_ds_key[args[idx]]
             overwrite_value = ds_config_dict[ds_key]
-            # Check int, protects against using "auto" in CLI arg.
-            if isinstance(overwrite_value, int):
+            # Need to avoid copying possible "auto" value from json config to HF CLI.
+            is_auto = isinstance(overwrite_value, str) and overwrite_value.strip() == "auto"
+            if not is_auto:
                 overwrite_value_str = str(overwrite_value)
                 if args[idx + 1] != overwrite_value_str:
                     logging.warning(
@@ -444,11 +445,14 @@ def update_hf_args(args: List[str], ds_config_dict: Dict[str, Any]) -> List[str]
     # Any remaining keys in hf_flag_to_ds_key were not provided as args to the HF CLI entrypoint,
     # but they must be added in explicitly, to avoid falling back to HF defaults.
     for hf_flag, ds_key in hf_flag_to_ds_key.items():
-        hf_flag_value = str(ds_config_dict[ds_key])
-        args.extend([hf_flag, hf_flag_value])
-        logging.warning(
-            f"Adding {hf_flag} {hf_flag_value} to HF CLI args to reflect overwrite values."
-        )
+        hf_flag_value = ds_config_dict[ds_key]
+        is_auto = isinstance(hf_flag_value, str) and hf_flag_value.strip() == "auto"
+        if not is_auto:
+            hf_flag_value_str = str(hf_flag_value)
+            args.extend([hf_flag, hf_flag_value_str])
+            logging.warning(
+                f"Adding {hf_flag} {hf_flag_value_str} to HF CLI args to reflect overwrite values."
+            )
     return args
 
 
