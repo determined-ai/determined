@@ -87,7 +87,7 @@ const JupyterLabModalComponent: React.FC<Props> = ({ workspace }: Props) => {
   const [form] = Form.useForm<JupyterLabOptions>();
   const [fullConfigForm] = Form.useForm();
   const { canCreateWorkspaceNSC } = usePermissions();
-  const workspaces = Loadable.getOrElse([], useObservable(workspaceStore.workspaces)).filter(
+  const workspaces = Loadable.getOrElse([], useObservable(workspaceStore.mutables)).filter(
     (workspace) => canCreateWorkspaceNSC({ workspace }),
   );
   const [currentWorkspace, setCurrentWorkspace] = useState<Workspace | undefined>(workspace);

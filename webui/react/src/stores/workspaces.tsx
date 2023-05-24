@@ -11,6 +11,7 @@ import {
 } from 'services/api';
 import { V1PostWorkspaceRequest } from 'services/api-ts-sdk';
 import { GetWorkspacesParams } from 'services/types';
+import { alphaNumericSorter } from 'shared/utils/sort';
 import { Workspace } from 'types';
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
@@ -34,13 +35,25 @@ class WorkspaceStore extends PollingStore {
     });
   });
 
-  public getWorkspace(id?: number): Observable<Loadable<Workspace>> {
-    return this.workspaces.select((loadable) => {
-      return Loadable.quickMatch(loadable, NotLoaded, (workspaces) => {
-        const workspace = workspaces.find((workspace) => workspace.id === id);
-        return workspace ? Loaded(workspace) : NotLoaded;
-      });
+  public readonly mutables = this.#loadableWorkspaces.select((loadable) => {
+    return Loadable.quickMatch(loadable, NotLoaded, (workspaces) => {
+      return Loaded(
+        workspaces
+          .filter((workspace) => !workspace.immutable)
+          .sort((a, b) => alphaNumericSorter(a.name, b.name)),
+      );
     });
+  });
+
+  public getWorkspace(id: Loadable<number>): Observable<Loadable<Workspace | null>> {
+    return this.workspaces.select((loadable) =>
+      Loadable.quickMatch(id, NotLoaded, (wid) =>
+        Loadable.quickMatch(loadable, NotLoaded, (workspaces) => {
+          const workspace = workspaces.find((workspace) => workspace.id === wid);
+          return workspace ? Loaded(workspace) : Loaded(null);
+        }),
+      ),
+    );
   }
 
   public archiveWorkspace(id: number): Promise<void> {

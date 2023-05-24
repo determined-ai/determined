@@ -26,7 +26,7 @@ import { humanReadableBytes } from 'shared/utils/string';
 import workspaceStore from 'stores/workspaces';
 import { Metadata, ModelVersion, Note } from 'types';
 import handleError from 'utils/error';
-import { Loadable } from 'utils/loadable';
+import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { checkpointSize } from 'utils/workload';
 
 import ModelVersionHeader from './ModelVersionDetails/ModelVersionHeader';
@@ -52,7 +52,11 @@ const ModelVersionDetails: React.FC = () => {
   const { modelId: modelID, versionNum: versionNUM, tab } = useParams<Params>();
   const workspace = Loadable.getOrElse(
     undefined,
-    useObservable(workspaceStore.getWorkspace(modelVersion?.model.workspaceId)),
+    useObservable(
+      workspaceStore.getWorkspace(
+        modelVersion ? Loaded(modelVersion.model.workspaceId) : NotLoaded,
+      ),
+    ),
   );
   const [pageError, setPageError] = useState<Error>();
   const navigate = useNavigate();
