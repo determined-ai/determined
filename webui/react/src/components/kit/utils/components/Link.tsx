@@ -1,10 +1,12 @@
 import React, { CSSProperties, MouseEvent, useCallback } from 'react';
 
 import Button from 'components/kit/Button';
+import { AnyMouseEventHandler } from 'components/kit/utils/types';
 import { handlePath, linkPath } from 'routes/utils';
-import { AnyMouseEventHandler, windowOpenFeatures } from 'shared/utils/routes';
 
 import css from './Link.module.scss';
+
+const windowOpenFeatures = ['noopener', 'noreferrer'];
 
 export interface Props {
   children?: React.ReactNode;

@@ -102,3 +102,6 @@ export const ErrorType = {
 } as const;
 
 export type ErrorType = ValueOf<typeof ErrorType>;
+
+export type AnyMouseEvent = MouseEvent | React.MouseEvent;
+export type AnyMouseEventHandler = (event: AnyMouseEvent) => void;
