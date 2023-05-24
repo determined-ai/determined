@@ -386,7 +386,7 @@ func (rp *resourcePool) getOrCreateGroup(
 
 	rp.groups[handler] = g
 	if ctx != nil && handler != nil { // ctx is nil only for testing purposes.
-		actors.NotifyOnStop(ctx, handler, tasklist.GroupActorStopped{})
+		actors.NotifyOnStop(ctx, handler, tasklist.GroupActorStopped{Ref: handler})
 	}
 	return g
 }
