@@ -477,15 +477,15 @@ def get_hf_args_with_overwrites(args: List[str], hparams: Dict[str, Any]) -> Lis
     ds_config_path = get_hf_ds_config_path_from_args(args)
     assert ds_config_path is not None, "--deepspeed flag not found in HuggingFace args!"
 
-    with open(ds_config_path, "r") as f:
-        ds_config_dict = json.load(f)
-
-    # Then merge all overwrites into the ds_config
-    overwritten_ds_config_dict = merge_dicts(ds_config_dict, hparams[_defaults.OVERWRITE_KEY])
-
-    # We need to actually overwrite the ds json config file, due to how HF processes args.
     # A file lock is required during both the writing and reading.
     with filelock.FileLock(ds_config_path + ".lock"):
+        with open(ds_config_path, "r") as f:
+            ds_config_dict = json.load(f)
+
+        # Then merge all overwrites into the ds_config
+        overwritten_ds_config_dict = merge_dicts(ds_config_dict, hparams[_defaults.OVERWRITE_KEY])
+
+        # We need to actually overwrite the ds json config file, due to how HF processes args.
         with open(ds_config_path, "w") as f:
             json.dump(overwritten_ds_config_dict, f)
         # Finally overwrite the CLI args
