@@ -15,30 +15,22 @@ Version 0.22.2
 
 **Release Date:** May 24, 2023
 
-**Bug Fixes**
-
--  CLI: ``det e list`` and ``det e list -a`` behaviors were erroneously switched.
-      -  Earlier, ``det e list`` was showing both archived and unarchived experiments, and ``det e
-         list -a`` was showing only unarchived experiments. This has now been fixed - ``det e list``
-         will show only unarchived experiments and ``det e list -a`` will show both archived and
-         unarchived experiments.
-
-**Deprecated Features**
-
--  CLI: ``det template set <name> <config>`` has been deprecated.
-
 **Improvements**
 
 -  Cluster: Slurm/PBS requires HPC Launcher 3.2.9.
 
    -  The HPC Launcher includes new support to enable improved scalablity. When used with Slurm or
-      PBS, the launcher must version 3.2.9 or greater.
+      PBS, the launcher must be version 3.2.9 or greater.
 
 -  Bind mounts for notebooks (and other commands) can be configured with ``--config``. For example
-   usage, see the section for `--config` in `det command run --help`.
+   usage, see the section for ``--config`` in ``det command run --help``.
 
--  Trials: Reporting a training or validation metric with 'epoch' set to a non-numeric value will
+-  Trials: Reporting a training or validation metric with the epoch set to a non-numeric value will
    now return an error.
+
+**Deprecated Features**
+
+-  CLI: ``det template set <name> <config>`` has been deprecated.
 
 **Removed Features**
 
@@ -46,6 +38,14 @@ Version 0.22.2
    been removed.
 -  API: Legacy APIs for experiment creation and updates, which were deprecated in 0.19.10, have now
    been removed.
+
+**Bug Fixes**
+
+-  CLI: ``det e list`` and ``det e list -a`` behaviors were erroneously switched.
+      -  Earlier, ``det e list`` was showing both archived and unarchived experiments, and ``det e
+         list -a`` was showing only unarchived experiments. This has now been fixed --- ``det e
+         list`` will show only unarchived experiments and ``det e list -a`` will show both archived
+         and unarchived experiments.
 
 Version 0.22.1
 ==============
