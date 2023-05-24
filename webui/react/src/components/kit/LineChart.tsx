@@ -13,6 +13,7 @@ import { tooltipsPlugin } from 'components/kit/utils/components/UPlot/UPlotChart
 import { getCssVar, getTimeTickValues, glasbeyColor } from 'components/kit/utils/functions';
 import useResize from 'components/kit/utils/hooks/useResize';
 import { MetricType, Scale } from 'types';
+import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 
 import css from './LineChart.module.scss';
@@ -236,6 +237,7 @@ export const LineChart: React.FC<LineChartProps> = ({
         allowDownload={hasPopulatedSeries}
         data={chartData}
         experimentId={experimentId}
+        handleError={handleError}
         isLoading={isLoading}
         options={chartOptions}
       />

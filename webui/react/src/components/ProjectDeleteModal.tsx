@@ -44,6 +44,7 @@ const ProjectDeleteModalComponent: React.FC<Props> = ({ onClose, project, onDele
       size="small"
       submit={{
         disabled: projectNameValue !== project.name,
+        handleError,
         handler: handleSubmit,
         text: 'Delete Project',
       }}

@@ -120,7 +120,7 @@ const ModelCreateModal = ({ onClose, workspaceId }: Props): JSX.Element => {
         htmlType: 'submit',
       }}
       size="medium"
-      submit={{ handler: onCreateModel, text: 'Create' }}
+      submit={{ handleError, handler: onCreateModel, text: 'Create' }}
       title="Create a new model"
       onClose={onCloseModal}>
       <Form autoComplete="off" form={form} id={FORM_ID} layout="vertical">

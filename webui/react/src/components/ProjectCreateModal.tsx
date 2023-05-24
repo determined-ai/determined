@@ -65,6 +65,7 @@ const ProjectCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }: 
       size="small"
       submit={{
         disabled: !projectName,
+        handleError,
         handler: handleSubmit,
         text: 'Create Project',
       }}

@@ -8,9 +8,8 @@ import Spinner from 'components/kit/utils/components/Spinner';
 import usePrevious from 'components/kit/utils/hooks/usePrevious';
 import useResize from 'components/kit/utils/hooks/useResize';
 import { DarkLight } from 'components/kit/utils/types';
+import { ErrorLevel, ErrorType } from 'components/kit/utils/types';
 import useUI from 'shared/contexts/stores/UI';
-import { ErrorLevel, ErrorType } from 'shared/utils/error';
-import handleError from 'utils/error';
 
 import { useChartSync } from './SyncProvider';
 import { FacetedData } from './types';
@@ -28,6 +27,7 @@ interface Props {
   isLoading?: boolean;
   options?: Partial<Options>;
   style?: React.CSSProperties;
+  handleError: (e: unknown, options?: object) => void;
 }
 
 const SCROLL_THROTTLE_TIME = 500;
@@ -86,6 +86,7 @@ const UPlotChart: React.FC<Props> = ({
   isLoading,
   options,
   style,
+  handleError,
   experimentId,
 }: Props) => {
   const chartRef = useRef<uPlot>();
@@ -196,7 +197,7 @@ const UPlotChart: React.FC<Props> = ({
         });
       }
     }
-  }, [data, hasData, extendedOptions, previousOptions, chartType]);
+  }, [data, hasData, extendedOptions, previousOptions, handleError, chartType]);
 
   useEffect(() => {
     extendedOptions.series.forEach((ser, i) => {

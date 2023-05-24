@@ -185,6 +185,7 @@ const JupyterLabModalComponent: React.FC<Props> = ({ workspace }: Props) => {
       size={showFullConfig ? 'large' : 'small'}
       submit={{
         disabled: showFullConfig ? fullConfigFormInvalid : !simpleWorkspaceId,
+        handleError,
         handler: handleSubmit,
         text: 'Launch',
       }}

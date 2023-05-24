@@ -17,6 +17,7 @@ import { detApi } from 'services/apiConfig';
 import { mapV1LogsResponse } from 'services/decoder';
 import { readStream } from 'services/utils';
 import { CommandType } from 'types';
+import handleError from 'utils/error';
 
 import css from './TaskLogs.module.scss';
 
@@ -159,6 +160,7 @@ const TaskLogs: React.FC<Props> = ({ taskId, taskType, onCloseLogs, headerCompon
         handleCloseLogs={onCloseLogs}
         serverAddress={serverAddress}
         title={logFilters}
+        onError={handleError}
         onFetch={handleFetch}
       />
     </Page>

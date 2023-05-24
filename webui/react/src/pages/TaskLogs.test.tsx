@@ -9,6 +9,7 @@ import { mapV1LogsResponse } from 'services/decoder';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import { generateAlphaNumeric } from 'shared/utils/string';
 import { LogLevelFromApi } from 'types';
+import handleError from 'utils/error';
 
 interface TestLog {
   id: number | string;
@@ -99,38 +100,38 @@ const mockOnFetch =
       streamingRounds?: number;
     } = {},
   ) =>
-    (config: src.FetchConfig, type: src.FetchType): FetchArgs => {
-      const options = {
-        existingLogs: mockOptions.existingLogs,
-        follow: false,
-        limit: config.limit,
-        logsReference: mockOptions.logsReference,
-        orderBy: 'ORDER_BY_UNSPECIFIED',
-        signal: mockOptions.canceler?.signal,
-        skipStreaming: mockOptions.skipStreaming,
-        streamingRounds: mockOptions.streamingRounds,
-        timestampAfter: '',
-        timestampBefore: '',
-      };
-
-      if (type === src.FetchType.Initial) {
-        options.orderBy =
-          config.fetchDirection === src.FetchDirection.Older ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC';
-      } else if (type === src.FetchType.Newer) {
-        options.orderBy = 'ORDER_BY_ASC';
-        if (config.offsetLog?.time) options.timestampAfter = config.offsetLog.time;
-      } else if (type === src.FetchType.Older) {
-        options.orderBy = 'ORDER_BY_DESC';
-        if (config.offsetLog?.time) options.timestampBefore = config.offsetLog.time;
-      } else if (type === src.FetchType.Stream) {
-        options.follow = true;
-        options.limit = 0;
-        options.orderBy = 'ORDER_BY_ASC';
-        options.timestampAfter = new Date(NOW).toISOString();
-      }
-
-      return { options, url: 'byTime' };
+  (config: src.FetchConfig, type: src.FetchType): FetchArgs => {
+    const options = {
+      existingLogs: mockOptions.existingLogs,
+      follow: false,
+      limit: config.limit,
+      logsReference: mockOptions.logsReference,
+      orderBy: 'ORDER_BY_UNSPECIFIED',
+      signal: mockOptions.canceler?.signal,
+      skipStreaming: mockOptions.skipStreaming,
+      streamingRounds: mockOptions.streamingRounds,
+      timestampAfter: '',
+      timestampBefore: '',
     };
+
+    if (type === src.FetchType.Initial) {
+      options.orderBy =
+        config.fetchDirection === src.FetchDirection.Older ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC';
+    } else if (type === src.FetchType.Newer) {
+      options.orderBy = 'ORDER_BY_ASC';
+      if (config.offsetLog?.time) options.timestampAfter = config.offsetLog.time;
+    } else if (type === src.FetchType.Older) {
+      options.orderBy = 'ORDER_BY_DESC';
+      if (config.offsetLog?.time) options.timestampBefore = config.offsetLog.time;
+    } else if (type === src.FetchType.Stream) {
+      options.follow = true;
+      options.limit = 0;
+      options.orderBy = 'ORDER_BY_ASC';
+      options.timestampAfter = new Date(NOW).toISOString();
+    }
+
+    return { options, url: 'byTime' };
+  };
 
 const findTimeLogIndex = (logs: TestLog[], timeString: string): number => {
   const timestamp = new Date(timeString).getTime().toString();
@@ -149,9 +150,10 @@ vi.mock('components/kit/utils/hooks/useGetCharMeasureInContainer', () => ({
 
 vi.mock('components/kit/utils/services', () => ({
   __esModule: true,
-  readStream: (
+  readLogStream: (
     serverAddress: (path: string) => string,
     { options }: FetchArgs,
+    onError: (e: unknown, options?: object) => void,
     onEvent: (event: unknown) => void,
   ): void => {
     // Default mocking options.
@@ -208,7 +210,7 @@ describe('LogViewer', () => {
       const initialLogs = generateLogs(VISIBLE_LINES + 100);
       const firstLog = initialLogs[0];
       const lastLog = initialLogs[initialLogs.length - 1];
-      setup({ decoder, initialLogs, serverAddress });
+      setup({ decoder, initialLogs, onError: handleError, serverAddress });
 
       /*
        * The react-window should only display the 1st `VISIBILE_LINES` log entrys
@@ -229,7 +231,7 @@ describe('LogViewer', () => {
     });
 
     it('should hide scrolling buttons when log content is empty', async () => {
-      setup({ decoder, initialLogs: [], serverAddress });
+      setup({ decoder, initialLogs: [], onError: handleError, serverAddress });
 
       await waitFor(() => {
         expect(
@@ -246,7 +248,7 @@ describe('LogViewer', () => {
     });
 
     it('should not show log close button by default', async () => {
-      setup({ decoder, serverAddress });
+      setup({ decoder, onError: handleError, serverAddress });
 
       await waitFor(() => {
         expect(screen.queryByLabelText('Close Logs')).not.toBeInTheDocument();
@@ -257,7 +259,7 @@ describe('LogViewer', () => {
       const handleCloseLogs = () => {
         return;
       };
-      setup({ decoder, handleCloseLogs, serverAddress });
+      setup({ decoder, handleCloseLogs, onError: handleError, serverAddress });
 
       await waitFor(() => {
         expect(screen.queryByLabelText('Close Logs')).toBeInTheDocument();
@@ -289,7 +291,7 @@ describe('LogViewer', () => {
     flakyIt(
       'should render logs with streaming',
       async () => {
-        setup({ decoder, onFetch, serverAddress });
+        setup({ decoder, onError: handleError, onFetch, serverAddress });
 
         await waitFor(
           () => {
@@ -304,7 +306,7 @@ describe('LogViewer', () => {
     );
 
     it('should show oldest logs', async () => {
-      setup({ decoder, onFetch, serverAddress });
+      setup({ decoder, onError: handleError, onFetch, serverAddress });
 
       await waitFor(() => {
         const lastLog = logsReference[logsReference.length - 1];
@@ -328,7 +330,7 @@ describe('LogViewer', () => {
     });
 
     it('should show newest logs when enabling tailing', async () => {
-      setup({ decoder, onFetch, serverAddress });
+      setup({ decoder, onError: handleError, onFetch, serverAddress });
 
       const scrollToOldestButton = screen.getByLabelText(src.ARIA_LABEL_SCROLL_TO_OLDEST, {
         selector: 'button',

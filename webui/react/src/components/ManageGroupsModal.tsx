@@ -79,6 +79,7 @@ const ManageGroupsModalComponent: React.FC<Props> = ({ user, groupOptions, userG
       size="small"
       submit={{
         disabled: !groupsValue?.length,
+        handleError,
         handler: handleSubmit,
         text: 'Save',
       }}

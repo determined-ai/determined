@@ -41,6 +41,7 @@ const ProjectNoteDeleteModalComponent: React.FC<Props> = ({
       danger
       size="small"
       submit={{
+        handleError,
         handler: handleSubmit,
         text: 'Delete Page',
       }}

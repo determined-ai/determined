@@ -51,6 +51,7 @@ import { ValueOf } from 'shared/types';
 import { noOp } from 'shared/utils/service';
 import { BrandingType } from 'stores/determinedInfo';
 import { MetricType, User } from 'types';
+import handleError from 'utils/error';
 import { NotLoaded } from 'utils/loadable';
 import loremIpsum from 'utils/loremIpsum';
 
@@ -1550,6 +1551,7 @@ const LogViewerSection: React.FC = () => {
             initialLogs={sampleLogs}
             serverAddress={serverAddress}
             sortKey="id"
+            onError={handleError}
           />
         </div>
         <strong>Considerations</strong>
@@ -2096,6 +2098,7 @@ const FormModalComponent: React.FC<{ value: string; fail?: boolean }> = ({ value
     <Modal
       cancel
       submit={{
+        handleError,
         handler: () => handleSubmit(fail),
         text: 'Submit',
       }}
@@ -2151,6 +2154,7 @@ const ValidationModalComponent: React.FC<{ value: string }> = ({ value }) => {
       cancel
       submit={{
         disabled: !alias,
+        handleError,
         handler: handleSubmit,
         text: 'Submit',
       }}

@@ -25,7 +25,7 @@ import {
 } from 'components/kit/utils/functions';
 import useGetCharMeasureInContainer from 'components/kit/utils/hooks/useGetCharMeasureInContainer';
 import useResize from 'components/kit/utils/hooks/useResize';
-import { readStream } from 'components/kit/utils/services';
+import { readLogStream } from 'components/kit/utils/services';
 import { FetchArgs, RecordKey, ValueOf } from 'components/kit/utils/types';
 import { Log, LogLevel } from 'types';
 
@@ -40,6 +40,7 @@ export interface Props {
   initialLogs?: unknown[];
   onDownload?: () => void;
   onFetch?: (config: FetchConfig, type: FetchType) => FetchArgs;
+  onError: (e: unknown, options?: object) => void;
   serverAddress: (path: string) => string;
   sortKey?: keyof Log;
   title?: React.ReactNode;
@@ -122,6 +123,7 @@ const LogViewer: React.FC<Props> = ({
   initialLogs,
   onDownload,
   onFetch,
+  onError,
   serverAddress,
   sortKey = 'time',
   handleCloseLogs,
@@ -203,9 +205,10 @@ const LogViewer: React.FC<Props> = ({
       setIsFetching(true);
       local.current.isFetching = true;
 
-      await readStream(
+      await readLogStream(
         serverAddress,
         onFetch({ limit: PAGE_LIMIT, ...config } as FetchConfig, type),
+        onError,
         (event) => {
           const logEntry = decoder(event);
           fetchDirection === FetchDirection.Older
@@ -219,7 +222,7 @@ const LogViewer: React.FC<Props> = ({
 
       return processLogs(buffer);
     },
-    [decoder, fetchDirection, onFetch, processLogs, serverAddress],
+    [decoder, fetchDirection, onFetch, onError, processLogs, serverAddress],
   );
 
   const handleItemsRendered = useCallback(
@@ -404,9 +407,10 @@ const LogViewer: React.FC<Props> = ({
     const throttledProcessBuffer = throttle(THROTTLE_TIME, processBuffer);
 
     if (fetchDirection === FetchDirection.Older && onFetch) {
-      readStream(
+      readLogStream(
         serverAddress,
         onFetch({ canceler, fetchDirection, limit: PAGE_LIMIT }, FetchType.Stream),
+        onError,
         (event) => {
           buffer.push(decoder(event));
           throttledProcessBuffer();
@@ -418,7 +422,7 @@ const LogViewer: React.FC<Props> = ({
       canceler.abort();
       throttledProcessBuffer.cancel();
     };
-  }, [addLogs, decoder, fetchDirection, serverAddress, onFetch, processLogs]);
+  }, [addLogs, decoder, fetchDirection, onError, serverAddress, onFetch, processLogs]);
 
   // Re-fetch logs when fetch callback changes.
   useEffect(() => {

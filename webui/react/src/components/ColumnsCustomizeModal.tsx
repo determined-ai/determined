@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react';
 
 import { Modal } from 'components/kit/Modal';
 import Transfer from 'components/Transfer';
+import handleError from 'utils/error';
 
 interface Props {
   columns: string[];
@@ -26,6 +27,7 @@ const ColumnsCustomizeModalComponent: React.FC<Props> = ({
       cancel
       size="medium"
       submit={{
+        handleError,
         handler: async () => {
           return await onSave?.(visibleColumns);
         },

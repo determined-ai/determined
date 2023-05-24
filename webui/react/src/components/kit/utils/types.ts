@@ -74,3 +74,31 @@ export interface ClassNameProp {
   /** classname to be applied to the base element */
   className?: string;
 }
+
+export const ErrorLevel = {
+  Error: 'error',
+  Fatal: 'fatal',
+  Warn: 'warning',
+} as const;
+
+export type ErrorLevel = ValueOf<typeof ErrorLevel>;
+
+export const ErrorType = {
+  // unexpected response structure.
+  Api: 'api',
+
+  // the issue is caused by unexpected/invalid user input.
+  ApiBadResponse: 'apiBadResponse',
+
+  // third-party api
+  Assert: 'assert',
+
+  // internal apis and server errors.
+  Auth: 'auth',
+  Input: 'input',
+  Server: 'server',
+  Ui: 'ui',
+  Unknown: 'unknown', // assertion failure.
+} as const;
+
+export type ErrorType = ValueOf<typeof ErrorType>;

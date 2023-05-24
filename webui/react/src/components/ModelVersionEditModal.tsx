@@ -50,7 +50,7 @@ const ModelVersionEditModal = ({ modelVersion, fetchModelVersion }: Props): JSX.
     <Modal
       okButtonProps={{ form: FORM_ID, htmlType: 'submit' }}
       size="small"
-      submit={{ handler: handleOk, text: 'Save' }}
+      submit={{ handleError, handler: handleOk, text: 'Save' }}
       title="Edit Model Version"
       onClose={handleClose}>
       <Form autoComplete="off" form={form} id={FORM_ID} layout="vertical">

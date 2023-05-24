@@ -1,14 +1,11 @@
 import { isObject } from 'components/kit/utils/functions';
 import { FetchArgs } from 'components/kit/utils/types';
-import { DetError } from 'shared/utils/error';
-import { processApiError } from 'shared/utils/service';
-import handleError from 'utils/error';
 
-export const readStream = async <T = unknown>(
+export const readLogStream = async <T = unknown>(
   serverAddress: (path: string) => string,
   fetchArgs: FetchArgs,
+  onError: (e: unknown, options?: object) => void,
   onEvent?: (event: T) => void,
-  onError?: (e?: Error) => void,
 ): Promise<unknown> => {
   try {
     const options = isObject(fetchArgs.options) ? fetchArgs.options : {};
@@ -24,11 +21,11 @@ export const readStream = async <T = unknown>(
     if (!response.ok) {
       const body = await response.json();
       const e = new Error(body?.error?.message);
-      onError?.(e);
+      onError(e);
       return;
     }
 
-    if (!response.body) throw new DetError(`Unable to fetch stream from ${fetchArgs.url}.`);
+    if (!response.body) return onError(`Unable to fetch stream from ${fetchArgs.url}.`);
 
     const decoder = new TextDecoder();
     const reader = response.body.getReader();
@@ -45,13 +42,13 @@ export const readStream = async <T = unknown>(
       signal.addEventListener('abort', abortHandler);
     }
 
-    const handleStreamError = (e: unknown) => handleError(e, { silent: true });
+    const handleStreamError = (e: Error) => onError(e);
     const handleStreamLine = (line: string) => {
       if (isCancelled) return;
       try {
         const ndjson = JSON.parse(line);
         if (ndjson.error) {
-          onError?.(ndjson.error);
+          onError(ndjson.error);
         } else {
           onEvent?.(ndjson.result);
         }
@@ -88,6 +85,6 @@ export const readStream = async <T = unknown>(
 
     return reader.read().then(handleStreamRead).catch(handleStreamError);
   } catch (e) {
-    handleError(await processApiError(fetchArgs.url, e));
+    onError(e);
   }
 };

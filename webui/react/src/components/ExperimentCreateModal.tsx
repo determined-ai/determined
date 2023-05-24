@@ -353,6 +353,7 @@ const ExperimentCreateModalComponent = ({
       size={modalState.isAdvancedMode ? (isFork ? 'medium' : 'large') : 'small'}
       submit={{
         disabled,
+        handleError,
         handler: handleSubmit,
         text: type,
       }}

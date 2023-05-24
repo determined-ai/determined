@@ -30,7 +30,11 @@ const DeleteModelModal = ({ model }: Props): JSX.Element => {
     <Modal
       danger
       size="small"
-      submit={{ handler: handleOk, text: 'Delete Model' }}
+      submit={{
+        handleError,
+        handler: handleOk,
+        text: 'Delete Model',
+      }}
       title="Confirm Delete Model">
       <div>
         Are you sure you want to delete this model &quot;{model?.name}&quot; and all of its versions

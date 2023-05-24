@@ -1,5 +1,7 @@
 import React, { PropsWithChildren, ReactNode, useState } from 'react';
 
+import handleError from 'utils/error';
+
 import { Modal, ModalSize, useModal } from './Modal';
 
 export interface ConfirmModalProps {
@@ -35,6 +37,7 @@ const ConfirmModal = ({
       icon="warning-large"
       size={size}
       submit={{
+        handleError,
         handler: onConfirm,
         text: okText ?? DEFAULT_CONFIRM_LABEL,
       }}

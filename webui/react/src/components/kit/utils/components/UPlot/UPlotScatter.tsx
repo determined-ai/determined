@@ -2,6 +2,7 @@ import React, { useMemo, useRef } from 'react';
 import uPlot from 'uplot';
 
 import { Range, Scale } from 'components/kit/utils/types';
+import handleError from 'utils/error';
 
 import { FacetedData, UPlotData } from './types';
 import UPlotChart, { Options } from './UPlotChart';
@@ -219,7 +220,7 @@ const UPlotScatter: React.FC<Props> = ({
 
   return (
     <div className={css.base}>
-      <UPlotChart data={data} options={chartOptions} />
+      <UPlotChart data={data} handleError={handleError} options={chartOptions} />
     </div>
   );
 };

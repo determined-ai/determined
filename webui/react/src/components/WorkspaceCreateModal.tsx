@@ -292,6 +292,7 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
       cancel
       size="medium"
       submit={{
+        handleError,
         handler: handleSubmit,
         text: 'Save Workspace',
       }}

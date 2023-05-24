@@ -9,6 +9,7 @@ import { serverAddress } from 'routes/utils';
 import { detApi } from 'services/apiConfig';
 import { jsonToClusterLog } from 'services/decoder';
 import { isNumber } from 'shared/utils/data';
+import handleError from 'utils/error';
 
 import css from './ClusterLogs.module.scss';
 
@@ -40,6 +41,7 @@ const ClusterLogs: React.FC = () => {
         decoder={jsonToClusterLog}
         serverAddress={serverAddress}
         sortKey="id"
+        onError={handleError}
         onFetch={handleFetch}
       />
     </div>

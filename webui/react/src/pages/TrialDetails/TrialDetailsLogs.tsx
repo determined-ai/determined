@@ -188,6 +188,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
           serverAddress={serverAddress}
           title={logFilters}
           onDownload={handleDownloadLogs}
+          onError={handleError}
           onFetch={handleFetch}
         />
       </Spinner>
