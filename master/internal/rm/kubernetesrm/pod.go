@@ -74,7 +74,6 @@ type pod struct {
 	container        cproto.Container
 	ports            []int
 	resourcesDeleted bool
-	testLogStreamer  bool
 	containerNames   set.Set[string]
 
 	logCtx logger.Context
@@ -160,7 +159,7 @@ func (p *pod) Receive(ctx *actor.Context) error {
 	case actor.PreStart:
 		ctx.AddLabels(p.logCtx)
 		if p.restore {
-			if p.container.State == cproto.Running && !p.testLogStreamer {
+			if p.container.State == cproto.Running {
 				err := p.startPodLogStreamer(ctx)
 				if err != nil {
 					return err
@@ -292,13 +291,9 @@ func (p *pod) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) er
 	case cproto.Running:
 		ctx.Log().Infof("transitioning pod state from %s to %s", p.container.State, containerState)
 		p.container = p.container.Transition(cproto.Running)
-		// testLogStreamer is a testing flag only set in the pod_tests.
-		// This allows us to bypass the need for a log streamer or REST server.
-		if !p.testLogStreamer {
-			err := p.startPodLogStreamer(ctx)
-			if err != nil {
-				return err
-			}
+		err := p.startPodLogStreamer(ctx)
+		if err != nil {
+			return err
 		}
 
 		p.informTaskResourcesStarted(ctx, getResourcesStartedForPod(p.pod, p.ports))

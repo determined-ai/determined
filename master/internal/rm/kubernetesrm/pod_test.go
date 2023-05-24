@@ -73,7 +73,7 @@ func createPod(
 	namespace := "test_namespace"
 	masterIP := "0.0.0.0"
 	var masterPort int32 = 32
-	podInterface := clientSet.CoreV1().Pods(namespace)
+	podInterface := &mockPodInterface{pods: make(map[string]*k8sV1.Pod)}
 	configMapInterface := clientSet.CoreV1().ConfigMaps(namespace)
 	resourceRequestQueue := resourceHandler
 	leaveKubernetesResources := false
@@ -523,7 +523,6 @@ func TestMultipleContainersRunning(t *testing.T) {
 	t.Logf("Testing two pods and one doesn't have running state")
 	system, newPod, ref, podMap, _ := createPodWithMockQueue()
 	newPod.container.State = cproto.Starting
-	newPod.testLogStreamer = true
 
 	podMap["task"].Purge()
 	assert.Equal(t, podMap["task"].GetLength(), 0)
@@ -569,7 +568,6 @@ func TestMultipleContainersRunning(t *testing.T) {
 	// Multiple containers, all in running state, results in a running state.
 	t.Logf("Testing two pods with running states")
 	system, newPod, ref, podMap, _ = createPodWithMockQueue()
-	newPod.testLogStreamer = true
 
 	podMap["task"].Purge()
 	assert.Equal(t, podMap["task"].GetLength(), 0)
@@ -658,19 +656,12 @@ func TestReceiveContainerLog(t *testing.T) {
 	setupEntrypoint(t)
 	defer cleanup(t)
 
-	system, _, ref, podMap, _ := createPodWithMockQueue()
+	system, newPod, ref, podMap, _ := createPodWithMockQueue()
+	newPod.restore = true
+	newPod.container.State = cproto.Running
 	podMap["task"].Purge()
 	assert.Equal(t, podMap["task"].GetLength(), 0)
-
-	rightNow := time.Now()
-	correctMsg := "This is a mock message."
-
-	newEvent := sproto.ContainerLog{
-		Timestamp:  rightNow,
-		AuxMessage: &correctMsg,
-	}
-
-	system.Ask(ref, newEvent)
+	system.Ask(ref, actor.PreStart{})
 	time.Sleep(time.Second)
 
 	assert.Equal(t, podMap["task"].GetLength(), 1)
@@ -683,7 +674,7 @@ func TestReceiveContainerLog(t *testing.T) {
 	if !ok {
 		t.Errorf("expected sproto.ContainerLog but received %s", reflect.TypeOf(message))
 	}
-	assert.Equal(t, *containerMsg.AuxMessage, correctMsg)
+	assert.Equal(t, containerMsg.RunMessage.Value, mockLogMessage)
 }
 
 func TestKillTaskPod(t *testing.T) {

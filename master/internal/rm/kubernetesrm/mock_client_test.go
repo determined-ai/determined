@@ -2,6 +2,10 @@ package kubernetesrm
 
 import (
 	"context"
+	"io"
+	"net/http"
+	"net/url"
+	"strings"
 	"sync"
 	"time"
 
@@ -14,6 +18,8 @@ import (
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/rest"
 )
+
+var mockLogMessage = "This is a mock log message."
 
 type mockConfigMapInterface struct {
 	configMaps map[string]*k8sV1.ConfigMap
@@ -196,11 +202,26 @@ func (m *mockPodInterface) Evict(ctx context.Context, eviction *v1beta1.Eviction
 }
 
 func (m *mockPodInterface) GetLogs(name string, opts *k8sV1.PodLogOptions) *rest.Request {
-	panic("implement me")
+	url, err := url.Parse("http://example-url:8080")
+	if err != nil {
+		panic(err)
+	}
+	return rest.NewRequestWithClient(url, "/log-test-example", rest.ClientContentConfig{}, &http.Client{
+		Transport: &mockRoundTripInterface{},
+	})
 }
 
 func (m *mockPodInterface) ProxyGet(
 	string, string, string, string, map[string]string,
 ) rest.ResponseWrapper {
 	panic("implement me")
+}
+
+type mockRoundTripInterface struct{}
+
+func (m *mockRoundTripInterface) RoundTrip(req *http.Request) (*http.Response, error) {
+	return &http.Response{
+		StatusCode: http.StatusOK,
+		Body:       io.NopCloser(strings.NewReader(mockLogMessage)),
+	}, nil
 }
