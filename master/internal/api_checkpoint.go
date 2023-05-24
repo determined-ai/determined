@@ -11,7 +11,6 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
-	"golang.org/x/exp/maps"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -240,34 +239,17 @@ func (a *apiServer) PatchCheckpoints(
 					v2Update = v2Update.Set("state = ?", model.DeletedState)
 				} else { // Partial delete case.
 					v1Update = v1Update.
+						Set(`state =
+							(CASE WHEN ? @> resources AND resources @> ? THEN state ELSE ? END)`,
+							c.Resources.Resources, c.Resources.Resources, model.PartiallyDeletedState).
 						Set("resources = ?", c.Resources.Resources).
 						Set("size = ?", size)
 					v2Update = v2Update.
+						Set(`state =
+							(CASE WHEN ? @> resources AND resources @> ? THEN state ELSE ? END)`,
+							c.Resources.Resources, c.Resources.Resources, model.PartiallyDeletedState).
 						Set("resources = ?", c.Resources.Resources).
 						Set("size = ?", size)
-
-					oldResources := struct {
-						bun.BaseModel `bun:"table:checkpoints_view"`
-						Resources     map[string]int64
-					}{}
-					if err := tx.NewSelect().Model(&oldResources).
-						Where("uuid = ?", c.Uuid).
-						Scan(ctx); err != nil {
-						return err
-					}
-
-					// Add metadata.json to oldResources if it is missing for backwards compatibility.
-					_, alreadyHasMetadata := oldResources.Resources["metadata.json"]
-					metadataValue, provided := c.Resources.Resources["metadata.json"]
-					if !alreadyHasMetadata && provided {
-						oldResources.Resources["metadata.json"] = metadataValue
-					}
-
-					// Only set state to partially deleted if files changed.
-					if !maps.Equal(oldResources.Resources, c.Resources.Resources) {
-						v1Update = v1Update.Set("state = ?", model.PartiallyDeletedState)
-						v2Update = v2Update.Set("state = ?", model.PartiallyDeletedState)
-					}
 				}
 
 				if _, err := v1Update.Exec(ctx); err != nil {

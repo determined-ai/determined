@@ -107,4 +107,6 @@ class AzureStorageManager(storage.CloudStorageManager):
 
         self.client.delete_files(self.container, list(objects))
 
+        if "metadata.json" in resources:
+            del resources["metadata.json"]
         return resources

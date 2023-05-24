@@ -262,9 +262,10 @@ class CheckpointContext:
             f"(metadata={metadata})"
         )
         storage_id = str(uuid.uuid4())
-        # Write metadata first so we get it in resources.
-        self._write_metadata_file(ckpt_dir, metadata or {})
         resources = self._storage_manager._list_directory(ckpt_dir)
+
+        # Add metadata pre-upload but without counting it among resources.
+        self._write_metadata_file(ckpt_dir, metadata or {})
 
         paths = None
         if selector is not None:
@@ -320,6 +321,9 @@ class CheckpointContext:
             resources = self._storage_manager._list_directory(ckpt_dir)
             if selector is not None:
                 resources = {key: resources[key] for key in resources if selector(key)}
+
+            # Metadata.json is a special file that is created and uploaded separately.
+            resources.pop("metadata.json", None)
         else:
             resources = {}
 
@@ -334,7 +338,9 @@ class CheckpointContext:
         if self._dist.rank == metadata_upload_rank:
             assert ckpt_dir
             self._write_metadata_file(ckpt_dir, all_metadata)
-            resources["metadata.json"] = os.path.getsize(os.path.join(ckpt_dir, "metadata.json"))
+            # Include metadata in resources of the metadata uploading rank.
+            # Set value to 0 since it is not used anywhere.
+            resources["metadata.json"] = 0
 
         if want_upload:
             assert ckpt_dir
@@ -507,8 +513,8 @@ class CheckpointContext:
         storage_id = str(uuid.uuid4())
         with self._storage_manager.store_path(storage_id) as path:
             yield path, storage_id
-            self._write_metadata_file(os.fspath(path), metadata or {})
             resources = self._storage_manager._list_directory(path)
+            self._write_metadata_file(os.fspath(path), metadata or {})
 
         self._report_checkpoint(storage_id, resources, metadata)
 
@@ -534,8 +540,9 @@ class CheckpointContext:
             all_metadata = self._merge_metadata(metadata)
 
             if self._dist.rank == 0:
-                self._write_metadata_file(os.fspath(path), all_metadata)
                 resources = self._storage_manager._list_directory(ckpt_dir)
+
+                self._write_metadata_file(os.fspath(path), all_metadata)
                 self._report_checkpoint(storage_id, resources, all_metadata)
 
             return
@@ -552,6 +559,7 @@ class CheckpointContext:
         if want_upload:
             assert ckpt_dir
             resources = self._storage_manager._list_directory(ckpt_dir)
+            resources.pop("metadata.json", None)
         else:
             resources = {}
 
