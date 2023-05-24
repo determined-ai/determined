@@ -27,10 +27,6 @@ func TestQueue(t *testing.T) {
 	require.Equal(t, 2, q.Get())
 	require.Equal(t, 0, q.Len())
 
-	_, ok := q.TryGet()
-	require.False(t, ok)
-	require.Equal(t, 0, q.Len())
-
 	done := make(chan struct{})
 	go func() {
 		require.Equal(t, 3, q.Get())

@@ -45,21 +45,6 @@ func (q *Queue[T]) Get() T {
 	return res
 }
 
-// TryGet removes and returns an element from the queue. If the queue is empty, then TryGet will
-// return false.
-func (q *Queue[T]) TryGet() (T, bool) {
-	q.mu.Lock()
-	defer q.mu.Unlock()
-
-	if q.empty() {
-		var t T
-		return t, false
-	}
-	res := q.elems[0]
-	q.elems = q.elems[1:]
-	return res, true
-}
-
 // Len returns the number of elements in the queue.
 func (q *Queue[T]) Len() int {
 	q.mu.Lock()
@@ -70,8 +55,4 @@ func (q *Queue[T]) Len() int {
 
 func (q *Queue[T]) empty() bool {
 	return len(q.elems) == 0
-}
-
-func (q *Queue[T]) full() bool {
-	return q.maxSize > 0 && len(q.elems) == q.maxSize
 }
