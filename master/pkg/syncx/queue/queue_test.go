@@ -6,8 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/determined-ai/determined/master/pkg/syncx/queue"
 	"github.com/stretchr/testify/require"
+
+	"github.com/determined-ai/determined/master/pkg/syncx/queue"
 )
 
 func TestQueue(t *testing.T) {
