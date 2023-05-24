@@ -44,11 +44,12 @@ import {
 import { Loadable } from 'utils/loadable';
 import { openCommandResponse } from 'utils/wait';
 
-import { ExpListView } from '../F_ExperimentList.settings';
+import { ExpListView, RowHeight } from '../F_ExperimentList.settings';
 
 import ColumnPickerMenu from './ColumnPickerMenu';
 import MultiSortMenu, { Sort } from './MultiSortMenu';
 import css from './TableActionBar.module.scss';
+import { TableSettingsMenu } from './TableSettingsMenu';
 
 const batchActions = [
   ExperimentAction.OpenTensorBoard,
@@ -97,6 +98,8 @@ interface Props {
   isOpenFilter: boolean;
   expListView: ExpListView;
   setExpListView: (view: ExpListView) => void;
+  rowHeight: RowHeight;
+  onRowHeightChange: (r: RowHeight) => void;
 }
 
 const TableActionBar: React.FC<Props> = ({
@@ -120,6 +123,8 @@ const TableActionBar: React.FC<Props> = ({
   expListView,
   setExpListView,
   toggleComparisonView,
+  rowHeight,
+  onRowHeightChange,
 }) => {
   const permissions = usePermissions();
   const [batchAction, setBatchAction] = useState<BatchAction>();
@@ -350,6 +355,7 @@ const TableActionBar: React.FC<Props> = ({
             projectColumns={projectColumns}
             setVisibleColumns={setVisibleColumns}
           />
+          <TableSettingsMenu rowHeight={rowHeight} onRowHeightChange={onRowHeightChange} />
           {(selectAll || selectedExperimentIds.length > 0) && (
             <Dropdown menu={editMenuItems} onClick={handleAction}>
               <Button icon={<Icon name="pencil" title="Edit" />}>

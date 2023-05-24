@@ -44,6 +44,7 @@ import { Loadable } from 'utils/loadable';
 import { observable, useObservable, WritableObservable } from 'utils/observable';
 
 import { PAGE_SIZE } from '../F_ExperimentList';
+import { RowHeight } from '../F_ExperimentList.settings';
 import { MapOfIdsToColors } from '../useGlasbey';
 
 import {
@@ -80,6 +81,7 @@ export interface GlideTableProps {
   page: number;
   project?: Project;
   projectColumns: Loadable<ProjectColumn[]>;
+  rowHeight: RowHeight;
   selectedExperimentIds: number[];
   setExcludedExperimentIds: Dispatch<SetStateAction<Set<number>>>;
   setSelectedExperimentIds: Dispatch<SetStateAction<number[]>>;
@@ -110,6 +112,12 @@ const isLinkCell = (cell: GridCell): cell is LinkCell => {
   return !!(cell as LinkCell).data?.link?.href;
 };
 
+const rowHeightMap = {
+  [RowHeight.COMFY]: 48,
+  [RowHeight.DEFAULT]: 40,
+  [RowHeight.COMPACT]: 32,
+};
+
 export const GlideTable: React.FC<GlideTableProps> = ({
   data,
   dataTotal,
@@ -120,6 +128,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   setSortableColumnIds,
   colorMap,
   height,
+  rowHeight,
   selectAll,
   setSelectAll,
   setExcludedExperimentIds,
@@ -638,7 +647,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
           headerIcons={headerIcons}
           height={height}
           ref={gridRef}
-          rowHeight={40}
+          rowHeight={rowHeightMap[rowHeight]}
           rows={dataTotal}
           smoothScrollX
           smoothScrollY

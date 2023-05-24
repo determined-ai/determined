@@ -33,6 +33,7 @@ import {
   ExpListView,
   F_ExperimentListGlobalSettings,
   F_ExperimentListSettings,
+  RowHeight,
   settingsConfigForProject,
   settingsConfigGlobal,
 } from './F_ExperimentList.settings';
@@ -351,6 +352,13 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     [updateSettings],
   );
 
+  const onRowHeightChange = useCallback(
+    (newRowHeight: RowHeight) => {
+      updateSettings({ rowHeight: newRowHeight });
+    },
+    [updateSettings],
+  );
+
   useEffect(() => {
     const handleEsc = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
@@ -415,6 +423,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         isOpenFilter={isOpenFilter}
         project={project}
         projectColumns={projectColumns}
+        rowHeight={settings.rowHeight}
         selectAll={selectAll}
         selectedExperimentIds={selectedExperimentIds}
         setExpListView={updateExpListView}
@@ -424,6 +433,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         toggleComparisonView={handleToggleComparisonView}
         total={total}
         onAction={handleOnAction}
+        onRowHeightChange={onRowHeightChange}
         onSortChange={onSortChange}
       />
       <div className={css.content} ref={contentRef}>
@@ -463,6 +473,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                 page={page}
                 project={project}
                 projectColumns={projectColumns}
+                rowHeight={settings.rowHeight}
                 scrollPositionSetCount={scrollPositionSetCount}
                 selectAll={selectAll}
                 selectedExperimentIds={selectedExperimentIds}
