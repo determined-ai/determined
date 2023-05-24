@@ -50,7 +50,6 @@ def patch_checkpoints(storage_ids_to_resources: Dict[str, Dict[str, int]]) -> No
     )
 
 
-# Maybe globs should be optional?
 def delete_checkpoints(
     manager: storage.StorageManager, to_delete: List[str], globs: List[str], dry_run: bool
 ) -> Dict[str, Dict[str, int]]:
@@ -116,15 +115,15 @@ def main(argv: List[str]) -> None:
     )
     parser.add_argument(
         "--delete",
-        type=str,
-        default=os.getenv("DET_DELETE", ""),
-        help="comma-separated list of checkpoints to delete",
+        type=json_file_arg,
+        default=os.getenv("DET_DELETE", []),
+        help="Checkpoints to delete (JSON-formatted file)",
     )
     parser.add_argument(
         "--globs",
-        type=str,
-        default=os.getenv("DET_GLOB", ""),
-        help="comma-separated list of globs to delete from list of checkpoints",
+        type=json_file_arg,
+        default=os.getenv("DET_GLOB", []),
+        help="Glob list to match against checkpoint list (JSON-formatted file)",
     )
     parser.add_argument(
         "--delete-tensorboards",
@@ -150,16 +149,16 @@ def main(argv: List[str]) -> None:
     storage_config = args.storage_config
     logging.info("Using checkpoint storage: {}".format(storage_config))
 
+    storage_ids = [s.strip() for s in args.delete]
+    globs = [s.strip() for s in args.globs]
+
     manager = storage.build(storage_config, container_path=constants.SHARED_FS_CONTAINER_PATH)
 
-    args.delete = args.delete.strip()
-    storage_ids = []
-    if args.delete != "":
-        storage_ids = args.delete.split(",")
-
-    globs = args.globs.strip().split(",") if args.globs.strip() != "" else ""
-    storage_ids_to_resources = delete_checkpoints(manager, storage_ids, globs, dry_run=args.dry_run)
-    patch_checkpoints(storage_ids_to_resources)
+    if len(storage_ids) > 0:
+        storage_ids_to_resources = delete_checkpoints(
+            manager, storage_ids, globs, dry_run=args.dry_run
+        )
+        patch_checkpoints(storage_ids_to_resources)
 
     if args.delete_tensorboards:
         tb_manager = tensorboard.build(
