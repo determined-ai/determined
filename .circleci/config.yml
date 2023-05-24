@@ -2631,22 +2631,6 @@ workflows:
             - package-and-push-system-local
 
       - test-e2e:
-          name: test-e2e-tf2
-          requires:
-            - build-go
-          parallelism: 1
-          tf2: true
-          mark: "tensorflow2_cpu"
-
-      - test-e2e:
-          name: test-e2e-tf1
-          requires:
-            - build-go
-          parallelism: 1
-          tf1: true
-          mark: "tensorflow1_cpu"
-
-      - test-e2e:
           name: test-e2e-cpu
           requires:
             - build-go
