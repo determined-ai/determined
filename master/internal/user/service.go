@@ -133,7 +133,7 @@ func (s *Service) extractToken(r *http.Request) (string, error) {
 			return "", echo.ErrUnauthorized
 		}
 		return strings.TrimPrefix(authRaw, "Bearer "), nil
-	} else if cookie, err := r.Cookie("jwt"); err == nil {
+	} else if cookie, err := r.Cookie("det_jwt"); err == nil {
 		return cookie.Value, nil
 	} else if cookie, err := r.Cookie("auth"); err == nil {
 		return cookie.Value, nil
