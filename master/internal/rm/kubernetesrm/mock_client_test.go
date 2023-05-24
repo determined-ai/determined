@@ -202,13 +202,10 @@ func (m *mockPodInterface) Evict(ctx context.Context, eviction *v1beta1.Eviction
 }
 
 func (m *mockPodInterface) GetLogs(name string, opts *k8sV1.PodLogOptions) *rest.Request {
-	url, err := url.Parse("http://example-url:8080")
-	if err != nil {
-		panic(err)
-	}
-	return rest.NewRequestWithClient(url, "/log-test-example", rest.ClientContentConfig{}, &http.Client{
-		Transport: &mockRoundTripInterface{},
-	})
+	return rest.NewRequestWithClient(&url.URL{}, "", rest.ClientContentConfig{},
+		&http.Client{
+			Transport: &mockRoundTripInterface{},
+		})
 }
 
 func (m *mockPodInterface) ProxyGet(

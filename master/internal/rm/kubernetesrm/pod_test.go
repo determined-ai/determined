@@ -590,7 +590,7 @@ func TestMultipleContainersRunning(t *testing.T) {
 	system.Ask(ref, statusUpdate)
 	time.Sleep(time.Second)
 
-	assert.Equal(t, podMap["task"].GetLength(), 1)
+	assert.Equal(t, podMap["task"].GetLength(), 2)
 	message, err := podMap["task"].Pop()
 	if err != nil {
 		t.Errorf("Unable to pop message from task receiver queue")
@@ -598,10 +598,19 @@ func TestMultipleContainersRunning(t *testing.T) {
 
 	containerMsg, ok := message.(sproto.ResourcesStateChanged)
 	if !ok {
-		t.Errorf("expected sproto.ContainerLog but received %s", reflect.TypeOf(message))
+		t.Errorf("expected sproto.ResourcesStateChanged but received %s", reflect.TypeOf(message))
 	}
 	if containerMsg.ResourcesStarted == nil {
 		t.Errorf("container started message not present")
+	}
+
+	message, err = podMap["task"].Pop()
+	if err != nil {
+		t.Errorf("Unable to pop message from task receiver queue")
+	}
+	_, ok = message.(sproto.ContainerLog)
+	if !ok {
+		t.Errorf("expected sproto.ContainerLog but received %s", reflect.TypeOf(message))
 	}
 }
 
