@@ -112,7 +112,7 @@ const isLinkCell = (cell: GridCell): cell is LinkCell => {
 
 export const GlideTable: React.FC<GlideTableProps> = ({
   data,
-  dataTotal = 0,
+  dataTotal,
   excludedExperimentIds,
   clearSelectionTrigger,
   setSelectedExperimentIds,
