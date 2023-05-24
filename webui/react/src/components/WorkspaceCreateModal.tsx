@@ -78,8 +78,7 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
   const workspace = Loadable.getOrElse(undefined, loadableWorkspace);
   useEffect(() => {
     initFields(workspace || undefined);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [workspaceId, initFields]);
+  }, [workspace, initFields]);
 
   const [canModifyAUG, canModifyCPS] = useMemo(() => {
     const workspace = workspaceId ? { id: workspaceId } : undefined;

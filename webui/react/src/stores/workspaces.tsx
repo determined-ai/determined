@@ -11,6 +11,7 @@ import {
 } from 'services/api';
 import { V1PostWorkspaceRequest } from 'services/api-ts-sdk';
 import { GetWorkspacesParams } from 'services/types';
+import { isEqual } from 'shared/utils/data';
 import { alphaNumericSorter } from 'shared/utils/sort';
 import { Workspace } from 'types';
 import handleError from 'utils/error';
@@ -134,7 +135,20 @@ class WorkspaceStore extends PollingStore {
         .then((response) => {
           // Prevents unnecessary re-renders.
           if (!force && this.#loadableWorkspaces.get() !== NotLoaded) return;
-          this.#loadableWorkspaces.set(Loaded(response.workspaces));
+
+          const currentWorkspaces = Loadable.getOrElse([], this.#loadableWorkspaces.get());
+          let workspacesChanged = currentWorkspaces.length === response.workspaces.length;
+          if (!workspacesChanged) {
+            response.workspaces.forEach((wspace, idx) => {
+              if (!isEqual(wspace, currentWorkspaces[idx])) {
+                workspacesChanged = true;
+              }
+            });
+          }
+
+          if (workspacesChanged) {
+            this.#loadableWorkspaces.set(Loaded(response.workspaces));
+          }
         })
         .catch(handleError);
     }
