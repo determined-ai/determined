@@ -274,13 +274,13 @@ export const GlideTable: React.FC<GlideTableProps> = ({
 
   const previousData = usePrevious(data, undefined);
   useEffect(() => {
-    if (previousData && data.length > previousData.length) {
+    if (selectAll && previousData && data.length > previousData.length) {
       setSelection(({ columns, rows }: GridSelection) => ({
         columns,
         rows: rows.add([previousData.length, data.length]),
       }));
     }
-  }, [data, previousData]);
+  }, [data, previousData, selectAll]);
 
   const onHeaderClicked: DataEditorProps['onHeaderClicked'] = React.useCallback(
     (col: number, args: HeaderClickedEventArgs) => {
