@@ -27,7 +27,6 @@ class ChiefPauseOnTerminateRunHook(estimator.RunHook):
 
     def on_trial_close(self) -> None:
         if self.ctx.distributed.get_rank() == 0:
-            time.sleep(15)
             print("rank 0 has completed on_trial_close")
 
 
