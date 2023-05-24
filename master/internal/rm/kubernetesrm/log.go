@@ -34,17 +34,16 @@ func newPodLogStreamer(
 		Timestamps: false,
 		Container:  model.DeterminedK8ContainerName,
 	})
-
 	logReader, err := logs.Stream(context.TODO())
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to initialize log stream for pod: %s", podName)
 	}
+	syslog := logrus.WithField("podName", podName)
 
-	return &podLogStreamer{
-		syslog:    logrus.WithField("podName", podName),
-		logReader: logReader,
-		callback:  callback,
-	}, nil
+	p := &podLogStreamer{syslog, logReader, callback}
+	go p.receiveStreamLogs()
+
+	return p, nil
 }
 
 // Write implements the io.Writer interface.

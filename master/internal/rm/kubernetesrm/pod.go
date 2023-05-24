@@ -228,14 +228,10 @@ func (p *pod) Receive(ctx *actor.Context) error {
 }
 
 func (p *pod) startPodLogStreamer(ctx *actor.Context) error {
-	logStreamer, err := newPodLogStreamer(p.podInterface, p.podName, func(log sproto.ContainerLog) {
+	_, err := newPodLogStreamer(p.podInterface, p.podName, func(log sproto.ContainerLog) {
 		p.receiveContainerLog(ctx, log)
 	})
-	if err != nil {
-		return err
-	}
-	go logStreamer.receiveStreamLogs()
-	return nil
+	return err
 }
 
 func (p *pod) createPodSpecAndSubmit(ctx *actor.Context) error {
