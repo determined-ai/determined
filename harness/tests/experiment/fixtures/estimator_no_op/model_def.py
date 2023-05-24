@@ -4,7 +4,6 @@ allowed to finish its post-terminate callback.
 """
 
 import random
-import time
 from typing import List
 
 import numpy as np
