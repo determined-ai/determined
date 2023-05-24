@@ -208,9 +208,6 @@ class SharedFSStorageManager(storage.StorageManager):
 
         resources = self._list_directory(storage_dir)
 
-        if "metadata.json" in resources:
-            del resources["metadata.json"]
-
         if len(resources) == 0:
             util.rmtree_nfs_safe(storage_dir, ignore_errors=False)
         return resources

@@ -168,6 +168,4 @@ class S3StorageManager(storage.CloudStorageManager):
             logging.debug(f"Deleting {len(chunk)} objects from S3")
             self.bucket.delete_objects(Delete={"Objects": chunk})
 
-        if "metadata.json" in resources:
-            del resources["metadata.json"]
         return resources
