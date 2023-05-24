@@ -1,7 +1,7 @@
 import { ModalFuncProps } from 'antd/es/modal/Modal';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import MonacoEditor from 'components/MonacoEditor';
+import CodeMirrorEditor from 'components/CodeMirrorEditor';
 import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';
 import { hasObjectKeys, isObject, isString } from 'shared/utils/data';
 
@@ -52,15 +52,9 @@ const useModalViewFilters = (): ModalHooks => {
 
     return (
       <div className={css.base}>
-        <MonacoEditor
-          height="40vh"
-          language="yaml"
-          options={{
-            cursorStyle: undefined,
-            minimap: { enabled: false },
-            occurrencesHighlight: false,
-            readOnly: true,
-          }}
+        <CodeMirrorEditor
+          height="100%"
+          syntax="yaml"
           value={[sorterText, filtersText].join('\n\n')}
         />
       </div>

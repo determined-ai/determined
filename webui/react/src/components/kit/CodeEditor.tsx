@@ -1,11 +1,8 @@
 import { DownloadOutlined, FileOutlined } from '@ant-design/icons';
-import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
-import { python } from '@codemirror/lang-python';
-import { languages } from '@codemirror/language-data';
-import CodeMirror from '@uiw/react-codemirror';
 import { Tree } from 'antd';
 import React, { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 
+import CodeMirrorEditor from 'components/CodeMirrorEditor';
 import Tooltip from 'components/kit/Tooltip';
 import Section from 'components/Section';
 import Message, { MessageType } from 'shared/components/Message';
@@ -113,7 +110,7 @@ const CodeEditor: React.FC<Props> = ({ files, onSelectFile, readonly, selectedFi
   const viewMode = useMemo(() => (files.length === 1 ? 'editor' : 'split'), [files.length]);
   const editorMode = useMemo(() => {
     const isIpybnFile = /\.ipynb$/i.test(String(activeFile?.key || ''));
-    return isIpybnFile ? 'ipynb' : 'monaco';
+    return isIpybnFile ? 'ipynb' : 'codemirror';
   }, [activeFile]);
 
   const fetchFile = useCallback(async (fileInfo: TreeNode) => {
@@ -230,6 +227,14 @@ const CodeEditor: React.FC<Props> = ({ files, onSelectFile, readonly, selectedFi
     viewMode === 'editor' ? css.editorMode : '',
   ];
 
+  const getSyntaxHighlight = useCallback(() => {
+    if (String(activeFile?.key).includes('.py')) return 'python';
+
+    if (String(activeFile?.key).includes('.md')) return 'markdown';
+
+    return 'yaml';
+  }, [activeFile]);
+
   let fileContent = <h5>Please, choose a file to preview.</h5>;
   if (pageError) {
     fileContent = (
@@ -244,11 +249,11 @@ const CodeEditor: React.FC<Props> = ({ files, onSelectFile, readonly, selectedFi
     );
   } else if (activeFile) {
     fileContent =
-      editorMode === 'monaco' ? (
-        <CodeMirror
-          extensions={[python(), markdown({ base: markdownLanguage, codeLanguages: languages })]}
+      editorMode === 'codemirror' ? (
+        <CodeMirrorEditor
           height="100%"
-          theme="dark"
+          readOnly
+          syntax={getSyntaxHighlight()}
           value={Loadable.getOrElse('', activeFile.content)}
         />
       ) : (
