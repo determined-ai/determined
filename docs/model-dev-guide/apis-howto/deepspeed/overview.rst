@@ -32,7 +32,7 @@ Determined DeepSpeed documentation:
    :class:`~determined.pytorch.deepspeed.DeepSpeedTrial`.
 
 -  :ref:`DeepSpeed Autotune: User Guide <deepspeed-autotuning>` demonstrates how to use DeepSpeed
-   Autotune to take full advantage of the user's hardware and model.
+   Autotune to take full advantage of your hardware and model.
 
 -  :ref:`API Reference <deepspeed-reference>` lays out the classes and methods related to DeepSpeed
    support including the full API specification for
