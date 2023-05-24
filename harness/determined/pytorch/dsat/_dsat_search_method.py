@@ -1209,17 +1209,23 @@ class ASHADSATSearchMethod(BaseDSATSearchMethod):
         return lineage_root_set
 
     def lineage_completed_rung(self, trial: DSATTrial, rung_idx: int) -> bool:
+        assert trial.search_data
+        assert isinstance(trial.search_data, ASHADSATSearchData)
+        if trial.search_data.curr_rung > rung_idx:
+            return True
         if trial.num_completed_trials_in_lineage >= self.max_trials_for_rung_idx(rung_idx):
             return True
-        latest_trial = self.get_latest_trial_in_lineage(trial)
-        assert latest_trial.search_data
-        failed_on_min_mbs = latest_trial.error and latest_trial.mbs == latest_trial.search_data.lo
-        trivial_search_data = latest_trial.search_data.hi == latest_trial.search_data.lo
-        completed_previous_rung = (
-            trial.num_completed_trials_in_lineage >= self.max_trials_for_rung_idx(rung_idx - 1)
-        )
-        if (trivial_search_data or failed_on_min_mbs) and completed_previous_rung:
-            return True
+        # Also need to cover the cases where a binary search stopped before using all available
+        # resources (trials) in its current rung. Only need to check for curr_rung = rung_idx.
+        if trial.search_data.curr_rung == rung_idx:
+            latest_trial = self.get_latest_trial_in_lineage(trial)
+            assert latest_trial.search_data
+            failed_on_min_mbs = (
+                latest_trial.error and latest_trial.mbs == latest_trial.search_data.lo
+            )
+            trivial_search_data = latest_trial.search_data.hi == latest_trial.search_data.lo
+            if trivial_search_data or failed_on_min_mbs:
+                return True
         return False
 
     def get_next_promotable_lineage(self) -> Optional[DSATTrial]:
