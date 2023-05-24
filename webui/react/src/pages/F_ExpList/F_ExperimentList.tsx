@@ -30,6 +30,8 @@ import { EMPTY_SORT, Sort, validSort, ValidSort } from './glide-table/MultiSortM
 import TableActionBar, { BatchAction } from './glide-table/TableActionBar';
 import { useGlasbey } from './useGlasbey';
 
+export type ExpListView = 'scroll' | 'paged'
+
 interface Props {
   project: Project;
 }
@@ -119,6 +121,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const [selectAll, setSelectAll] = useState(false);
   const [clearSelectionTrigger, setClearSelectionTrigger] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [expListView, setExpListView] = useState<ExpListView>('scroll');
   const [error] = useState(false);
   const [canceler] = useState(new AbortController());
 
@@ -349,6 +352,8 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         total={total}
         onAction={handleOnAction}
         onSortChange={onSortChange}
+        expListView={expListView}
+        setExpListView={setExpListView}
       />
       {isLoading ? (
         <Loading width={width} />

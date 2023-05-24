@@ -1,4 +1,4 @@
-import { Space } from 'antd';
+import { Radio, Space } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import BatchActionConfirmModalComponent from 'components/BatchActionConfirmModal';
@@ -44,6 +44,8 @@ import { openCommandResponse } from 'utils/wait';
 import ColumnPickerMenu from './ColumnPickerMenu';
 import MultiSortMenu, { Sort } from './MultiSortMenu';
 import css from './TableActionBar.module.scss';
+import RadioGroup from 'components/RadioGroup';
+import {ExpListView} from '../F_ExperimentList'
 
 const batchActions = [
   ExperimentAction.OpenTensorBoard,
@@ -71,6 +73,7 @@ const actionIcons: Record<BatchAction, IconName> = {
   [ExperimentAction.Delete]: 'error',
 } as const;
 
+
 interface Props {
   experiments: Loadable<ExperimentWithTrial>[];
   filters: V1BulkExperimentFilters;
@@ -89,6 +92,8 @@ interface Props {
   formStore: FilterFormStore;
   setIsOpenFilter: (value: boolean) => void;
   isOpenFilter: boolean;
+  expListView: string;
+  setExpListView: React.Dispatch<React.SetStateAction<ExpListView>>;
 }
 
 const TableActionBar: React.FC<Props> = ({
@@ -109,6 +114,8 @@ const TableActionBar: React.FC<Props> = ({
   formStore,
   setIsOpenFilter,
   isOpenFilter,
+  expListView,
+  setExpListView
 }) => {
   const permissions = usePermissions();
   const [batchAction, setBatchAction] = useState<BatchAction>();
@@ -333,6 +340,16 @@ const TableActionBar: React.FC<Props> = ({
             </Button>
           </Dropdown>
         )}
+        <RadioGroup
+          iconOnly
+          className={css.pageToggle}
+          options={[
+            { icon: 'grid', id: 'scroll', label: 'Scroll View' },
+            { icon: 'list', id: 'paged', label: 'Paged View' },
+          ]}
+          value={expListView}
+          onChange={(id) => setExpListView(id as ExpListView)}
+      />
       </Space>
       {batchAction && (
         <BatchActionConfirmModal.Component
