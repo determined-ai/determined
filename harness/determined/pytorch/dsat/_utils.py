@@ -429,14 +429,17 @@ def update_hf_args(args: List[str], ds_config_dict: Dict[str, Any]) -> List[str]
     for idx in range(len(args)):
         if args[idx] in hf_flag_to_ds_key:
             ds_key = hf_flag_to_ds_key[args[idx]]
-            overwrite_value = str(ds_config_dict[ds_key])
-            if args[idx + 1] != overwrite_value:
-                logging.warning(
-                    f"Changing {args[idx]} from {args[idx +1]} to {overwrite_value} to match "
-                    " the deespspeed config values."
-                )
-                args[idx + 1] = overwrite_value
-            del hf_flag_to_ds_key[args[idx]]
+            overwrite_value = ds_config_dict[ds_key]
+            # Check int, protects against using "auto" in CLI arg.
+            if isinstance(overwrite_value, int):
+                overwrite_value_str = str(overwrite_value)
+                if args[idx + 1] != overwrite_value_str:
+                    logging.warning(
+                        f"Changing {args[idx]} from {args[idx +1]} to {overwrite_value_str}"
+                        " to match the deespspeed config values."
+                    )
+                    args[idx + 1] = overwrite_value_str
+                del hf_flag_to_ds_key[args[idx]]
 
     # Any remaining keys in hf_flag_to_ds_key were not provided as args to the HF CLI entrypoint,
     # but they must be added in explicitly, to avoid falling back to HF defaults.
