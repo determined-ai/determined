@@ -39,8 +39,6 @@ import (
 var singularityWrapperEntrypoint = path.Join(tasks.RunDir, tasks.SingularityEntrypointWrapperScript)
 
 const (
-	// TODO(DET-9111): Parameterize this by agent ID.
-	agentTmp         = "/tmp/determined/agent"
 	hostNetworking   = "host"
 	bridgeNetworking = "bridge"
 	envFileName      = "envfile"
@@ -63,10 +61,16 @@ type SingularityClient struct {
 	mu         sync.Mutex
 	wg         waitgroupx.Group
 	containers map[cproto.ID]*SingularityContainer
+	agentTmp   string
 }
 
 // New returns a new singularity client, which launches and tracks containers.
-func New(opts options.SingularityOptions) (*SingularityClient, error) {
+func New(opts options.SingularityOptions, agentID string) (*SingularityClient, error) {
+	agentTmp, err := cruntimes.BaseTempDirName(agentID)
+	if err != nil {
+		return nil, fmt.Errorf("unable to compose agentTmp directory path: %w", err)
+	}
+
 	if err := os.RemoveAll(agentTmp); err != nil {
 		return nil, fmt.Errorf("removing agent tmp from previous runs: %w", err)
 	}
@@ -80,6 +84,7 @@ func New(opts options.SingularityOptions) (*SingularityClient, error) {
 		opts:       opts,
 		wg:         waitgroupx.WithContext(context.Background()),
 		containers: make(map[cproto.ID]*SingularityContainer),
+		agentTmp:   agentTmp,
 	}, nil
 }
 
@@ -91,19 +96,10 @@ func (s *SingularityClient) Close() error {
 	// Since we launch procs with exec.CommandContext under s.wg's context, this cleans them up.
 	s.wg.Close()
 
-	if err := os.RemoveAll(agentTmp); err != nil {
+	if err := os.RemoveAll(s.agentTmp); err != nil {
 		return fmt.Errorf("cleaning up agent tmp: %w", err)
 	}
 	return nil
-}
-
-func getPullCommand(req docker.PullImage, image string) (string, []string) {
-	args := []string{"pull"}
-	if req.ForcePull {
-		args = append(args, "--force")
-	}
-	args = append(args, image)
-	return "singularity", args
 }
 
 // PullImage implements container.ContainerRuntime.
@@ -112,7 +108,8 @@ func (s *SingularityClient) PullImage(
 	req docker.PullImage,
 	p events.Publisher[docker.Event],
 ) (err error) {
-	return cruntimes.PullImage(ctx, req, p, &s.wg, s.log, getPullCommand)
+	// Singularity pull outputs a file, so skip it
+	return nil
 }
 
 // CreateContainer implements container.ContainerRuntime.
@@ -166,7 +163,7 @@ func (s *SingularityClient) RunContainer(
 		)
 	}
 
-	tmpdir, err := os.MkdirTemp(agentTmp, fmt.Sprintf("*-%s", id))
+	tmpdir, err := os.MkdirTemp(s.agentTmp, fmt.Sprintf("*-%s", id))
 	if err != nil {
 		return nil, fmt.Errorf("making tmp dir for archives: %w", err)
 	}

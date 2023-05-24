@@ -8,6 +8,7 @@ import (
 	"io/fs"
 	"net/url"
 	"os/exec"
+	"os/user"
 	"path"
 	"path/filepath"
 	"regexp"
@@ -26,6 +27,18 @@ import (
 )
 
 var logLevel = regexp.MustCompile("(?P<level>INFO|WARN|ERROR|FATAL):    (?P<log>.*)")
+
+// BaseTempDirName returns a per-user directory name that is unique
+// for the use and specified id (agentID), but consistently named
+// between agent runs to enable cleanup of earlier tmp files.
+func BaseTempDirName(id string) (string, error) {
+	user, err := user.Current()
+	if err != nil {
+		return "", fmt.Errorf("unable to get username: %w", err)
+	}
+
+	return fmt.Sprintf("/tmp/determined-%s-%s", user.Username, id), nil
+}
 
 // ShipContainerCommandLogs forwards the given output stream to the specified publisher.
 // It is used to reveal the result of container command lines, e.g. podman pull...
