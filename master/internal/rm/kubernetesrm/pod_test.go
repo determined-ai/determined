@@ -73,7 +73,7 @@ func createPod(
 	namespace := "test_namespace"
 	masterIP := "0.0.0.0"
 	var masterPort int32 = 32
-	podInterface := &mockPodInterface{pods: make(map[string]*k8sV1.Pod)}
+	podInterface := &mockPodInterface{}
 	configMapInterface := clientSet.CoreV1().ConfigMaps(namespace)
 	resourceRequestQueue := resourceHandler
 	leaveKubernetesResources := false
@@ -590,7 +590,7 @@ func TestMultipleContainersRunning(t *testing.T) {
 	system.Ask(ref, statusUpdate)
 	time.Sleep(time.Second)
 
-	assert.Equal(t, podMap["task"].GetLength(), 2)
+	assert.Equal(t, podMap["task"].GetLength(), 1)
 	message, err := podMap["task"].Pop()
 	if err != nil {
 		t.Errorf("Unable to pop message from task receiver queue")
@@ -602,15 +602,6 @@ func TestMultipleContainersRunning(t *testing.T) {
 	}
 	if containerMsg.ResourcesStarted == nil {
 		t.Errorf("container started message not present")
-	}
-
-	message, err = podMap["task"].Pop()
-	if err != nil {
-		t.Errorf("Unable to pop message from task receiver queue")
-	}
-	_, ok = message.(sproto.ContainerLog)
-	if !ok {
-		t.Errorf("expected sproto.ContainerLog but received %s", reflect.TypeOf(message))
 	}
 }
 
@@ -665,9 +656,11 @@ func TestReceiveContainerLog(t *testing.T) {
 	setupEntrypoint(t)
 	defer cleanup(t)
 
+	mockLogMessage := "mock log message"
 	system, newPod, ref, podMap, _ := createPodWithMockQueue()
 	newPod.restore = true
 	newPod.container.State = cproto.Running
+	newPod.podInterface = &mockPodInterface{logMessage: mockLogMessage}
 	podMap["task"].Purge()
 	assert.Equal(t, podMap["task"].GetLength(), 0)
 	system.Ask(ref, actor.PreStart{})

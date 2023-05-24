@@ -19,8 +19,6 @@ import (
 	"k8s.io/client-go/rest"
 )
 
-var mockLogMessage = "This is a mock log message."
-
 type mockConfigMapInterface struct {
 	configMaps map[string]*k8sV1.ConfigMap
 	mux        sync.Mutex
@@ -95,6 +93,7 @@ type mockPodInterface struct {
 	pods map[string]*k8sV1.Pod
 	// Simulates latency of the real k8 API server.
 	operationalDelay time.Duration
+	logMessage       string
 	mux              sync.Mutex
 }
 
@@ -204,7 +203,7 @@ func (m *mockPodInterface) Evict(ctx context.Context, eviction *v1beta1.Eviction
 func (m *mockPodInterface) GetLogs(name string, opts *k8sV1.PodLogOptions) *rest.Request {
 	return rest.NewRequestWithClient(&url.URL{}, "", rest.ClientContentConfig{},
 		&http.Client{
-			Transport: &mockRoundTripInterface{},
+			Transport: &mockRoundTripInterface{message: m.logMessage},
 		})
 }
 
@@ -214,11 +213,13 @@ func (m *mockPodInterface) ProxyGet(
 	panic("implement me")
 }
 
-type mockRoundTripInterface struct{}
+type mockRoundTripInterface struct {
+	message string
+}
 
 func (m *mockRoundTripInterface) RoundTrip(req *http.Request) (*http.Response, error) {
 	return &http.Response{
 		StatusCode: http.StatusOK,
-		Body:       io.NopCloser(strings.NewReader(mockLogMessage)),
+		Body:       io.NopCloser(strings.NewReader(m.message)),
 	}, nil
 }
