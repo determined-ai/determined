@@ -1223,7 +1223,7 @@ class TestASHADSATSearchMethod:
         searcher_state, search_method = long_asha_state_and_search_method
         search_method.trial_tracker.queue.clear()
         # Complete enough trials so that some can be promoted.
-        for _ in range(search_method.divisor):
+        for _ in range(search_method.divisor ** (search_method.asha_early_stopping + 1)):
             hparams, search_data = search_method.get_random_hparams_and_search_data(1)
             trial = None
             for trial_num in range(search_method.min_binary_search_trials):
