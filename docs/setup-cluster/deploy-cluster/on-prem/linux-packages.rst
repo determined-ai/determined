@@ -91,11 +91,12 @@ Install PostgreSQL using ``apt`` or ``yum``
    PostgreSQL distribution. To enable the ``determined-master`` to connect to the database, ensure
    that an appropriate authentication method is configured in the ``pg_hba.conf`` file.
 
-   When configuring the database connection in :ref:`configure_the_cluster`, note the following:
+   When configuring the database connection as described in :ref:`configure_the_cluster`, note the
+   following:
 
    -  If you specify the ``db.hostname`` property, you must use a PostgreSQL ``host`` (TCP/IP)
       connection.
-   -  If you omit the ``db.hostname`` property, you must use a PostgreSQL ``local`` (Unix-domain
+   -  If you omit the ``db.hostname`` property, you must use a PostgreSQL ``local`` (Unix domain
       socket) connection.
 
 #. Finally, create a database for Determined's use and configure a system account that Determined
@@ -181,7 +182,7 @@ Install the Determined Master and Agent
    .. note::
 
       You can also run the master directly using the command ``determined-master``. This may be
-      useful when experimenting with Determined such as when you want to quickly test different
+      useful when experimenting with Determined, such as when you want to quickly test different
       configuration options before writing them to the configuration file.
 
 #. Optionally, configure the master to start on boot.

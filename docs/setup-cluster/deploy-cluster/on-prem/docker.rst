@@ -155,18 +155,18 @@ To start an agent container with environment variables instead of a configuratio
    started with ``--network host``. If the ``--network host`` option is used, you must also
    configure workload containers to use ``host`` network mode, as described :ref:`below
    <network-host>`. Alternatively, if the master machine has a static IP address from your router,
-   you can use that. They key is ensuring that the master machine can be reliably addressed from
-   both inside and outside of Docker containers (because the Fluent Bit container will always use
-   host networking).
+   you can use that. The key is ensuring that the master machine can be reliably addressed from both
+   inside and outside of Docker containers (because the Fluent Bit container will always use host
+   networking).
 
 Determined uses `Fluent Bit <https://fluentbit.io>`__ internally. The agent uses the
 ``fluent/fluent-bit:1.9.3`` Docker image at runtime and will attempt to pull this image
 automatically. If the agent machines in the cluster cannot connect to Docker Hub, you'll need to
 manually load this image onto them before Determined can run.
 
-To use a different image for running Fluent Bit--generally to leverage a custom Docker registry, as
-the image doesn't usually require changing otherwise--you can use the agent's
-``--fluent-logging-image`` command-line option or the ``fluent_logging_image`` config file option.
+To use a different image for running Fluent Bit---generally to leverage a custom Docker registry, as
+the image doesn't usually require changing otherwise---you can use the agent's
+``--fluent-logging-image`` command-line option or ``fluent_logging_image`` config file option.
 
 The ``--gpus`` flag should be used to specify which GPUs the agent container will have access to;
 without it, the agent will not have access to any GPUs. For example:
@@ -210,8 +210,8 @@ See `Docker's documentation <https://docs.docker.com/network/host/>`_ for more d
    Even if you run the agents in a named Docker network (e.g. ``--network my-named-network``), the
    workloads launched by the agent will execute in a different Docker network. This difference in
    networks will affect address resolution if you attempt to set the master hostname as the master's
-   container name, because the workload containers will not be in the correct Docker network to
-   reach the master using that name.
+   container name, because the workload containers will not be able to reach the master using that
+   name.
 
 ********************
  Manage the Cluster
