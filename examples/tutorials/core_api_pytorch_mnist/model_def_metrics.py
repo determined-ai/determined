@@ -16,6 +16,7 @@ from torchvision import datasets, transforms
 # NEW: Import Determined.
 import determined as det
 
+
 class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
@@ -41,6 +42,7 @@ class Net(nn.Module):
         output = F.log_softmax(x, dim=1)
         return output
 
+
 # NEW: Modify function header to include core_context for metric
 # reporting.
 def train(args, model, device, train_loader, optimizer, epoch_idx, core_context):
@@ -57,7 +59,6 @@ def train(args, model, device, train_loader, optimizer, epoch_idx, core_context)
         # starting from the first batch.
         batches_completed = batch_idx + 1
         if batches_completed % args.log_interval == 0:
-
             print(
                 "Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}".format(
                     epoch_idx,
@@ -68,14 +69,14 @@ def train(args, model, device, train_loader, optimizer, epoch_idx, core_context)
                 )
             )
             # Docs snippet start: report training metrics
-            # NEW: Report epoch-based training metrics to Determined
+            # NEW: Report training metrics to Determined
             # master via core_context.
             # Index by (batch_idx + 1) * (epoch-1) * len(train_loader)
             # to continuously plot loss on one graph for consecutive
             # epochs.
             core_context.train.report_training_metrics(
                 steps_completed=batches_completed + epoch_idx * len(train_loader),
-                metrics={"train_loss": loss.item()}
+                metrics={"train_loss": loss.item()},
             )
             # Docs snippet end: report training metrics
             if args.dry_run:
@@ -102,21 +103,19 @@ def test(args, model, device, test_loader, epoch, core_context, steps_completed)
 
     print(
         "\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n".format(
-            test_loss,
-            correct,
-            len(test_loader.dataset),
-            100.0 * correct / len(test_loader.dataset)
+            test_loss, correct, len(test_loader.dataset), 100.0 * correct / len(test_loader.dataset)
         )
     )
     # Docs snippet end: include args
     # Docs snippet start: report validation metrics
-    # NEW: Report epoch_based validation metrics to Determined master
+    # NEW: Report validation metrics to Determined master
     # via core_context.
     core_context.train.report_validation_metrics(
         steps_completed=steps_completed,
         metrics={"test_loss": test_loss},
     )
     # Docs snippet end: report validation metrics
+
 
 def main(core_context):
     # Training settings
@@ -203,7 +202,7 @@ def main(core_context):
         [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))]
     )
 
-    # NEW: change dataset1 to train_dataset and dataset_2 to test_dataset 
+    # NEW: change dataset1 to train_dataset and dataset_2 to test_dataset
     train_dataset = datasets.MNIST("../data", train=True, download=True, transform=transform)
     test_dataset = datasets.MNIST("../data", train=False, transform=transform)
     train_loader = torch.utils.data.DataLoader(train_dataset, **train_kwargs)
@@ -214,7 +213,6 @@ def main(core_context):
 
     scheduler = StepLR(optimizer, step_size=1, gamma=args.gamma)
     for epoch_idx in range(0, args.epochs):
-
         # Docs snippet start: calculate steps completed
         # NEW: Calculate steps_completed for plotting test metrics.
         steps_completed = epoch_idx * len(train_loader)
@@ -244,10 +242,8 @@ def main(core_context):
 
 # Docs snippet start: modify main loop core context
 if __name__ == "__main__":
-
     # NEW: Establish new determined.core.Context and pass to main
     # function.
     with det.core.init() as core_context:
         main(core_context=core_context)
 # Docs snippet end: modify main loop core content
-

@@ -76,7 +76,7 @@ CD into the directory and run this command:
    from the logs of the first trial as it progresses.
 
 Open the Determined WebUI by navigating to the master URL. One way to do this is to navigate to
-``http://localhost:8080/``, accept the default determined username, leave the password empty, and
+``http://localhost:8080/``, accept the default Determined username, leave the password empty, and
 click **Sign In**.
 
 .. note::
@@ -129,7 +129,7 @@ Step 2.2: Modify the Train Method
 
 Use ``core_context.train`` to report training and validation metrics.
 
-Modify the train() method by adding ``core_context.train.report_training_metrics()``:
+#. Begin by importing the ``determined`` module:
 
 .. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_metrics.py
    :language: python
@@ -251,8 +251,8 @@ If checkpoint exists, load it and assign it to model state prior to resuming tra
 To enable continuing the trial after the experiment completes, save the trial ID. One way to do this
 is to load the checkpoint and save the checkpoint in a file in the checkpoint directory.
 
-Open the `checkpoint.pt` file in binary mode and compare `ckpt_trial_id` with the current
-`trial_id`:
+Open the ``checkpoint.pt`` file in binary mode and compare ``ckpt_trial_id`` with the current
+``trial_id``:
 
 .. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_checkpoints.py
    :language: python
@@ -260,7 +260,7 @@ Open the `checkpoint.pt` file in binary mode and compare `ckpt_trial_id` with th
    :end-before: # Docs snippet end: compare checkpoint and current trial IDs
    :dedent:
 
-Save the checkpoint in the `checkpoint.pt` file:
+Save the checkpoint in the ``checkpoint.pt`` file:
 
 .. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_checkpoints.py
    :language: python
