@@ -39,7 +39,7 @@ class TorchBatchProcessorContext(pytorch._PyTorchReducerContext):
         allocated device. This method aims at providing a function for the data generated
         on the fly.
         """
-        return pytorch.to_device(data, self.device, warned_types)
+        return pytorch.to_device(data, self._device, warned_types)
 
     def get_tensorboard_path(self) -> pathlib.Path:
         """
@@ -224,6 +224,28 @@ def _validate_iterate_length(iterate_length: Optional[int], times_iterate: int):
     return iterate_length
 
 
+def _get_storage_information(checkpoint_config, default_uuid_path, core_context) -> str:
+    storage_type = checkpoint_config["type"]
+
+    if storage_type == "s3":
+        bucket = checkpoint_config["bucket"]
+        return f"s3://{bucket}/{default_uuid_path}"
+    # TODO test
+    elif storage_type == "gcs":
+        bucket = checkpoint_config["bucket"]
+        return f"gs://{bucket}/{default_uuid_path}"
+    # TODO test
+    elif storage_type == "azure":
+        container = checkpoint_config["container"]
+        return f"Azure container: {container} Directory:{default_uuid_path}"
+    # TODO test
+    elif storage_type == "shared_fs":
+        base_path = core_context.checkpoint._storage_manager._base_path
+        return f"{base_path}/{default_uuid_path}"
+    else:
+        raise NotImplementedError(f"Storage type {storage_type} support is not implemented")
+
+
 def torch_batch_process(
     batch_processor_cls: Type[TorchBatchProcessor],
     dataset: Dataset,
@@ -245,6 +267,8 @@ def torch_batch_process(
         dataset_len = len(dataset)
 
         info = det.get_cluster_info()
+        print("checkpoint storage")
+        print(info.trial._config["checkpoint_storage"])
         slots_per_node = len(info.slot_ids)
         num_nodes = len(info.container_addrs)
         total_worker = num_nodes * slots_per_node
@@ -319,7 +343,7 @@ def torch_batch_process(
                     return
 
         per_batch_processor.run_before_checkpoint()
-        _synchronize_and_checkpoint(core_context, batch_idx, rank, default_output_uuid)
+        _synchronize_and_checkpoint(core_context, iterate_length, rank, default_output_uuid)
 
         reducables = [wrapped for wrapped in batch_processor_context._wrapped_reducers]
         # If the user has set metric reducers
@@ -342,6 +366,10 @@ def torch_batch_process(
         core_context._tensorboard_manager.sync()
 
         per_batch_processor.clean_up()
+        default_storage_path = _get_storage_information(
+            info.trial._config["checkpoint_storage"], default_output_uuid, core_context
+        )
+        logging.info(f"Default files storage path info: {default_storage_path}")
 
         if rank == 0:
             # Report to master the run has completed

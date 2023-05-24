@@ -21,32 +21,30 @@ from model import get_model
 
 class MyProcessor(TorchBatchProcessor):
     def __init__(self, context):
-        self.model = get_model()
-        self.device = context.get_device()
-        self.model.eval()
-        self.model.to(self.device)
+        self.context = context
+        self.model = context.prepare_model_for_inference(get_model())
+
         self.profiler = torch.profiler.profile(
             activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA],
             schedule=torch.profiler.schedule(wait=1, warmup=1, active=2, repeat=2),
             on_trace_ready=torch.profiler.tensorboard_trace_handler(context.get_tensorboard_path()),
         )
-        self.worker_rank = context.get_distributed_context().get_rank()
 
     def process_batch(self, batch, batch_idx) -> None:
         model_input = batch[0]
-        model_input = model_input.to(self.device)
+        model_input = self.context.to_device(model_input)
 
         with torch.no_grad():
             with self.profiler as p:
                 pred = self.model(model_input)
                 p.step()
 
-        file_name = f"prediction_output_{batch_idx}_{self.worker_rank}"
-        file_path = pathlib.PosixPath(
-            "/run/determined/workdir/shared_fs/new_runner_inference_out", file_name
-        )
-        output = {"predictions": pred, "input": batch}
-        torch.save(output, file_path)
+        file_name = f"prediction_output_{batch_idx}"
+        with self.context.get_default_storage_path() as path:
+            file_path = pathlib.PosixPath(path, file_name)
+            print("file path is " + str(file_path))
+            output = {"predictions": pred, "input": batch}
+            torch.save(output, file_path)
 
 
 if __name__ == "__main__":
