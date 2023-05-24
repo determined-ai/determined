@@ -22,16 +22,16 @@ You do not need to create a special configuration file to use ``dsat``. Assuming
 code which already functions, autotuning is as easy as inserting one or two helper functions into
 your code and modifying the launch command.
 
-For instance, let us imagine that your present directory contains DeepSpeed code and a corresponding
+For instance, let's say your directory contains DeepSpeed code and a corresponding
 ``single`` trial experiment configuration file ``deepspeed.yaml``. Then, after inserting a line or
 two of ``dsat``-specific code per the instructions in the following sections, launching the ``dsat``
-experiments is as easy as replacing the usual experiment-launching command
+experiments is as easy as replacing the usual experiment-launching command:
 
 .. code::
 
    det experiment create deepspeed.yaml .
 
-with
+with:
 
 .. code::
 
@@ -71,7 +71,7 @@ results of each subsequent trial, all of whose results are fed back to the searc
 
 To use ``dsat`` with :class:`~determined.pytorch.deepspeed.DeepSpeedTrial`, Core API, and
 HuggingFace Trainer, specific changes must be made to your user code. In the following sections, we
-will describe these changes in detail for each use case.
+will describe specific use cases and the changes needed for each. 
 
 .. _using_deepspeed_trial:
 
@@ -80,12 +80,12 @@ DeepSpeedTrial
 
 Determined's DeepSpeed Autotune works by inserting DeepSpeed configuration options into the
 ``overwrite_deepspeed_args`` field of the ``hyperparameters`` dictionary which is seen by each
-trial. To take advantage of ``dsat``, you simply need to incorporate these overwrite values into
+trial. To take advantage of ``dsat``, you simply need to incorporate these "overwrite" values into
 your original configuration.
 
 .. note::
 
-   For more information about ``DeepSpeedTrial`` see :ref:`deepspeed-api`
+   For more information about ``DeepSpeedTrial``, see :ref:`deepspeed-api`.
 
 To facilitate this process, you must add a ``deepspeed_config`` field under the ``hyperparameters``
 section of your experiment. This field specifies the relative path to the DS ``json`` configuration
@@ -124,10 +124,10 @@ configuration to deepspeed.initialize as usual:
 Using Determined's DeepSpeed Autotune with a :class:`~determined.pytorch.deepspeed.DeepSpeedTrial`
 instance requires no further changes to your user code.
 
-A full example which uses DeepSpeed Autotune with ``DeepSpeedTrial`` can be found in the `Determined
+For a complete example of how to use DeepSpeed Autotune with ``DeepSpeedTrial``, visit the `Determined
 GitHub Repo
 <https://github.com/determined-ai/determined/tree/master/examples/deepspeed_autotune/torchvision/deepspeed_trial>`__
-under ``examples/deepspeed_autotune/torchvision/deepspeed_trial`` .
+and navigate to ``examples/deepspeed_autotune/torchvision/deepspeed_trial`` .
 
 Core API
 ========
@@ -158,10 +158,11 @@ initialized with :func:`determined.core.init`. The context manager requires acce
 appropriately report results. Outside of a ``dsat`` context, ``dsat_reporting_context`` is a no-op,
 so there is no need to remove the context manager after the ``dsat`` trials have completed.
 
-A full example which uses DeepSpeed Autotune with Core API can be found in the `Determined GitHub
-Repo
+
+For a complete example of how to use DeepSpeed Autotune with Core API, visit the `Determined
+GitHub Repo
 <https://github.com/determined-ai/determined/tree/master/examples/deepspeed_autotune/torchvision/core_api>`__
-under ``examples/deepspeed_autotune/torchvision/core_api``.
+and navigate to ``examples/deepspeed_autotune/torchvision/core_api`` .
 
 HuggingFace Trainer
 ===================
@@ -170,7 +171,7 @@ You can also use Determined's DeepSpeed Autotune with the HuggingFace (HF) Train
 :class:`~determined.integrations.huggingface.DetCallback` callback object to optimize your DeepSpeed
 parameters.
 
-Similar to the previous case, you need to add a ``deepspeed_config`` field to the
+Similar to the previous case (Core API), you need to add a ``deepspeed_config`` field to the
 ``hyperparameters`` section of your experiment configuration file, specifying the relative path to
 the DS ``json`` config file.
 
@@ -208,26 +209,28 @@ relevant code:
       :class:`~determined.core.SearcherOperation` as the ``DetCallback`` instance through its
       ``op=det_callback.current_op`` argument.
 
-   -  The entire ``train`` method of the HuggingFace trainer is now wrapped in the
+   -  The entire ``train`` method of the HuggingFace trainer is wrapped in the
       ``dsat_reporting_context`` context manager.
 
-Examples which use DeepSpeed Autotune with HuggingFace Trainer can be found in the `Determined
+To find examples that use DeepSpeed Autotune with HuggingFace Trainer, visit the `Determined
 GitHub Repo <https://github.com/determined-ai/determined/tree/master/examples/hf_trainer_api>`__
-under ``examples/hf_trainer_api``.
+and navigate to ``examples/hf_trainer_api``.
 
 ******************
  Advanced Options
 ******************
 
 The command-line entrypoint to ``dsat`` has various available options, some of them
-search-algorithm-specific. All available options for any given search method can be found as in
+search-algorithm-specific. All available options for any given search method can be found through
+the command:
 
 .. code::
 
    python3 -m determined.pytorch.dsat asha --help
 
-Below, we highlight particularly important flags and describe the search algorithms in some more
-detail.
+and similar for the ``binary`` and ``random`` search methods.
+
+Flags that are particularly important are detailed below.
 
 General Options
 ===============
@@ -258,7 +261,7 @@ The following options are available for every search method.
 ================
 
 The ``asha`` search algorithm randomly generates various DeepSpeed configurations and attempts to
-tune the batch size for each such configuration through a binary search. ``asha`` adaptively
+tune the batch size for each configuration through a binary search. ``asha`` adaptively
 allocates resources to explore each configuration (providing more resources to promising lineages)
 where the resource is the number of steps taken in each binary search (i.e., the number of trials).
 
@@ -271,7 +274,7 @@ where the resource is the number of steps taken in each binary search (i.e., the
    ``r`` parameter in `the ASHA paper <https://arxiv.org/abs/1810.05934>`_. Default: ``2``.
 
 -  ``--divisor``: Factor controlling the increased computational allotment across rungs, and the
-   decrease in thier population size. The ``eta`` parameter in `the ASHA paper
+   decrease in their population size. The ``eta`` parameter in `the ASHA paper
    <https://arxiv.org/abs/1810.05934>`_. Default: ``2``.
 
 -  ``--search_range_factor``: The inclusive, initial ``hi`` bound on the binary search is set by an
