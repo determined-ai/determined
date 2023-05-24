@@ -191,6 +191,10 @@ class SharedFSStorageManager(storage.StorageManager):
         to_delete_files = {}
         for file_glob in globs:
             for path in glob.glob(f"{storage_dir}/{file_glob}", recursive=True):
+                if os.path.commonpath([storage_dir, os.path.normpath(path)]) != storage_dir:
+                    logging.warning(f"tried to delete path outside checkpoint dir {path}")
+                    continue
+
                 if os.path.isfile(path) or os.path.islink(path):
                     to_delete_files[path] = True
                 elif os.path.isdir(path):

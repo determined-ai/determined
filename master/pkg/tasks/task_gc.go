@@ -2,6 +2,7 @@ package tasks
 
 import (
 	"archive/tar"
+	"fmt"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -55,13 +56,33 @@ func (g GCCkptSpec) ToTaskSpec() TaskSpec {
 
 	res.WorkDir = DefaultWorkDir
 
+	globs := g.CheckpointGlobs
+	if globs == nil { // This matters for JSON parsing as [] vs None.
+		globs = []string{}
+	}
+
+	storageConfigPath := "checkpoint_gc/storage_config.json"
+	checkpointsToDeletePath := "checkpoint_gc/checkpoints_to_delete.json"
+	checkpointsGlobsPath := "checkpoint_gc/checkpoints_globs.json"
 	res.ExtraArchives = []cproto.RunArchive{
 		wrapArchive(
 			archive.Archive{
 				g.Base.AgentUserGroup.OwnedArchiveItem("checkpoint_gc", nil, 0o700, tar.TypeDir),
 				g.Base.AgentUserGroup.OwnedArchiveItem(
-					"checkpoint_gc/storage_config.json",
+					storageConfigPath,
 					[]byte(jsonify(g.LegacyConfig.CheckpointStorage)),
+					0o600,
+					tar.TypeReg,
+				),
+				g.Base.AgentUserGroup.OwnedArchiveItem(
+					checkpointsToDeletePath,
+					[]byte(jsonify(strings.Split(g.ToDelete, ","))),
+					0o600,
+					tar.TypeReg,
+				),
+				g.Base.AgentUserGroup.OwnedArchiveItem(
+					checkpointsGlobsPath,
+					[]byte(jsonify(globs)),
 					0o600,
 					tar.TypeReg,
 				),
@@ -78,16 +99,15 @@ func (g GCCkptSpec) ToTaskSpec() TaskSpec {
 
 	res.Description = "gc"
 
+	// We pass storage-config / delete / globs through a JSON file instead of a JSON string
+	// to avoid reaching any OS limitations on sizes of CLI arguments.
 	res.Entrypoint = []string{
 		filepath.Join("/run/determined/checkpoint_gc", etc.GCCheckpointsEntrypointResource),
 		"--experiment-id",
 		strconv.Itoa(g.ExperimentID),
-		"--storage-config",
-		"/run/determined/checkpoint_gc/storage_config.json",
-	}
-	if len(g.ToDelete) > 0 {
-		res.Entrypoint = append(res.Entrypoint, "--delete", g.ToDelete)
-		res.Entrypoint = append(res.Entrypoint, "--globs", strings.Join(g.CheckpointGlobs, ","))
+		"--storage-config", fmt.Sprintf("/run/determined/%s", storageConfigPath),
+		"--delete", fmt.Sprintf("/run/determined/%s", checkpointsToDeletePath),
+		"--globs", fmt.Sprintf("/run/determined/%s", checkpointsGlobsPath),
 	}
 	if g.DeleteTensorboards {
 		res.Entrypoint = append(res.Entrypoint, "--delete-tensorboards")
