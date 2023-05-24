@@ -31,7 +31,7 @@ const Breadcrumb: Breadcrumb = (props: BreadcrumbProps) => {
     <div className={css.base}>
       <Columns page>
         <Column>
-          <AntdBreadcrumb {...props} />
+          <AntdBreadcrumb separator={props.separator}>{props.children}</AntdBreadcrumb>
         </Column>
         {props.menuItems && (
           <Column align="left">
