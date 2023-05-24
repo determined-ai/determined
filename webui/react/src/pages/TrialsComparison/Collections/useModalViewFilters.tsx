@@ -54,6 +54,7 @@ const useModalViewFilters = (): ModalHooks => {
       <div className={css.base}>
         <CodeMirrorEditor
           height="100%"
+          readOnly
           syntax="yaml"
           value={[sorterText, filtersText].join('\n\n')}
         />

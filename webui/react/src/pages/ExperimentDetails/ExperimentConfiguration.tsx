@@ -37,7 +37,7 @@ const ExperimentConfiguration: React.FC<Props> = ({ experiment }: Props) => {
             <Spinner tip="Loading text editor..." />
           </div>
         }>
-        <CodeMirrorEditor height="100%" syntax="yaml" value={yaml.dump(publicConfig)} />
+        <CodeMirrorEditor height="100%" readOnly syntax="yaml" value={yaml.dump(publicConfig)} />
       </React.Suspense>
     </Section>
   );

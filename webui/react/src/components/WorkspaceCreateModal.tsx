@@ -180,7 +180,7 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
                       },
                     },
                   ]}>
-                  <CodeMirrorEditor height="16vh" syntax="yaml" value="" />
+                  <CodeMirrorEditor height="16vh" readOnly={!canModifyCPS} syntax="yaml" value="" />
                 </Form.Item>
               </React.Suspense>
             )}

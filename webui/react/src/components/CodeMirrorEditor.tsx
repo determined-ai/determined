@@ -1,8 +1,5 @@
 import { langs } from '@uiw/codemirror-extensions-langs';
 import ReactCodeMirror, { ReactCodeMirrorProps } from '@uiw/react-codemirror';
-// import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
-// import { python } from '@codemirror/lang-python';
-// import { languages } from '@codemirror/language-data';
 import React from 'react';
 
 import useUI from 'shared/contexts/stores/UI';

@@ -252,7 +252,7 @@ const CodeEditor: React.FC<Props> = ({ files, onSelectFile, readonly, selectedFi
       editorMode === 'codemirror' ? (
         <CodeMirrorEditor
           height="100%"
-          readOnly
+          readOnly={readonly}
           syntax={getSyntaxHighlight()}
           value={Loadable.getOrElse('', activeFile.content)}
         />
