@@ -4,12 +4,16 @@
  Install Determined Using Linux Packages
 #########################################
 
+This user guide provides step-by-step instructions for installing Determined using Linux packages.
+
 Determined releases Debian and RPM packages for installing the Determined master and agent as
 systemd services on machines running Linux.
 
-We support installing the Determined master and agent using Debian packages on Ubuntu 16.04 or
-18.04, or using RPM packages on Red Hat 7-based Linux distributions (e.g., Red Hat Enterprise Linux,
-CentOS, Oracle Linux, and Scientific Linux).
+You have two options for installing the Determined master and agent:
+
+-  Using Debian packages on Ubuntu 16.04 or 18.04, or
+-  Using Red Hat 7-based Linux distributions (e.g., Red Hat Enterprise Linux, CentOS, Oracle Linux,
+   and Scientific Linux).
 
 *******************
  Preliminary Setup
@@ -21,8 +25,10 @@ PostgreSQL
 Determined uses a PostgreSQL database to store experiment and trial metadata. You may either use a
 Docker container or your Linux distribution's package and service.
 
-If you are using an existing PostgreSQL installation, we recommend confirming that
-``max_connections`` is at least 96, which is sufficient for Determined.
+.. note::
+
+   If you are using an existing PostgreSQL installation, we recommend confirming that
+   ``max_connections`` is at least 96, which is sufficient for Determined.
 
 Run PostgreSQL in Docker
 ------------------------
@@ -60,14 +66,19 @@ Install PostgreSQL using ``apt`` or ``yum``
 
 #. Install PostgreSQL 10 or greater.
 
-   On Debian distributions:
+   **Debian Distributions**
+
+   On Debian distributions, use the following command:
 
    .. code::
 
       sudo apt install postgresql-10
 
-   On Red Hat distributions, first configure the PostgreSQL yum repository as described `here
-   <https://www.postgresql.org/download/linux/redhat>`_ in order to then install version 10:
+   **Red Hat Distributions**
+
+   On Red Hat distributions, you'll need to configure the PostgreSQL yum repository as described in
+   the `Red Hat Linux documentation <https://www.postgresql.org/download/linux/redhat>`_. Then,
+   install version 10:
 
    .. code::
 
@@ -77,20 +88,23 @@ Install PostgreSQL using ``apt`` or ``yum``
       sudo systemctl enable postgresql.service
 
 #. The authentication methods enabled by default may vary depending on the provider of your
-   PostgreSQL distribution. Ensure that an appropriate authentication method is configured in
-   ``pg_hba.conf`` to enable the ``determined-master`` to connect to the database.
+   PostgreSQL distribution. To enable the ``determined-master`` to connect to the database, ensure
+   that an appropriate authentication method is configured in the ``pg_hba.conf`` file.
 
-   When configuring the database connection (:ref:`configure_the_cluster`):
+   When configuring the database connection as described in :ref:`configure_the_cluster`, note the
+   following:
 
-   -  If you specify the ``db.hostname`` property, a PostgreSQL ``host`` (TCP/IP) connection will be
-      required.
-   -  If you omit the ``db.hostname`` property, a PostgreSQL ``local`` (Unix-domain socket)
-      connection will be required.
+   -  If you specify the ``db.hostname`` property, you must use a PostgreSQL ``host`` (TCP/IP)
+      connection.
+   -  If you omit the ``db.hostname`` property, you must use a PostgreSQL ``local`` (Unix domain
+      socket) connection.
 
 #. Finally, create a database for Determined's use and configure a system account that Determined
-   will use to connect to the database. For example, the following commands will create a database
-   named ``determined``, a user named ``determined`` with the password ``determined-password``, and
-   then will grant the user access to the database:
+   will use to connect to the database.
+
+   For example, executing the following commands will create a database named ``determined``, create
+   a user named ``determined`` with the password ``determined-password``, and grant the user access
+   to the database:
 
    .. code::
 
@@ -99,34 +113,38 @@ Install PostgreSQL using ``apt`` or ``yum``
       postgres=# CREATE USER determined WITH ENCRYPTED PASSWORD 'determined-password';
       postgres=# GRANT ALL PRIVILEGES ON DATABASE determined TO determined;
 
-Master and Agent
-================
+Install the Determined Master and Agent
+=======================================
 
-#. Go to `the webpage for the latest Determined release
+#. Find the latest release of Determined by visiting the `Determined repo
    <https://github.com/determined-ai/determined/releases/latest>`_.
 
 #. Download the appropriate Debian or RPM package file, which will have the name
-   ``determined-master_VERSION_linux_amd64.[deb|rpm]`` (with ``VERSION`` replaced by an actual
-   version, such as |version|). The agent package is similarly named
+   ``determined-master_VERSION_linux_amd64.[deb|rpm]`` (where ``VERSION`` is the actual version,
+   e.g., |version|). Similarly, the agent package is named
    ``determined-agent_VERSION_linux_amd64.[deb|rpm]``.
 
 #. Install the master package on one machine in your cluster, and the agent package on each agent
    machine.
 
-   On Debian distributions:
+   **Debian Distributions**
+
+   On Debian distributions, use the following command:
 
       .. code::
 
          sudo apt install <path to downloaded package>
 
-   On Red Hat distributions:
+   **Red Hat Distributions**
+
+   On Red Hat distributions, use the following command:
 
       .. code::
 
          sudo rpm -i <path to downloaded package>
 
-   Before running the Determined agent, you will have to :ref:`install Docker <install-docker>` on
-   each agent machine and, if the machine has GPUs, ensure that the :ref:`NVIDIA Container Toolkit
+   Before running the Determined agent, :ref:`install Docker <install-docker>` on each agent
+   machine. If the machine has GPUs, ensure that the :ref:`NVIDIA Container Toolkit
    <validate-nvidia-container-toolkit>` is working as expected.
 
 .. _configure_the_cluster:
@@ -135,13 +153,16 @@ Master and Agent
  Configure and Start the Cluster
 *********************************
 
-#. Ensure that an instance of PostgreSQL is running and accessible from the machine where the master
-   will be run.
+#. Ensure that an instance of PostgreSQL is running and accessible from the machine where the
+   Determined master will run.
 
 #. Edit the :ref:`YAML configuration files <topic-guides_yaml>` at ``/etc/determined/master.yaml``
    (for the master) and ``/etc/determined/agent.yaml`` (for each agent) as appropriate for your
-   setup. Ensure that the user, password, and database name correspond to your PostgreSQL
-   configuration.
+   setup.
+
+   .. important::
+
+      Ensure that the user, password, and database name correspond to your PostgreSQL configuration.
 
    .. code::
 
@@ -152,15 +173,17 @@ Master and Agent
         user: <PostgreSQL user, e.g., postgres>
         password: <Database password>
 
-#. Start the master.
+#. Start the master by typing the following command:
 
    .. code::
 
       sudo systemctl start determined-master
 
-   The master can also be run directly with the command ``determined-master``, which may be helpful
-   for experimenting with Determined (e.g., testing different configuration options quickly before
-   writing them to the configuration file).
+   .. note::
+
+      You can also run the master directly using the command ``determined-master``. This may be
+      useful when experimenting with Determined, such as when you want to quickly test different
+      configuration options before writing them to the configuration file.
 
 #. Optionally, configure the master to start on boot.
 
@@ -174,11 +197,11 @@ Master and Agent
 
       journalctl -u determined-master
 
-   You should see logging indicating that the master can successfully connect to the database, and
-   the last line should indicate ``http server started`` on the configured WebUI port (8080 by
-   default). You can also validate that the WebUI is running by navigating to
-   ``http://<master>:8080`` with your web browser (or ``https://<master>:8443`` if TLS is enabled).
-   You should see ``No Agents`` on the right-hand side of the top navigation bar.
+   You should see logs indicating that the master can successfully connect to the database, and the
+   last line should indicate ``http server started`` on the configured WebUI port (8080 by default).
+   You can also validate that the WebUI is running by navigating to ``http://<master>:8080`` with
+   your web browser (or ``https://<master>:8443`` if TLS is enabled). You should see ``No Agents``
+   on the right-hand side of the top navigation bar.
 
 #. Start the agent on each agent machine.
 
@@ -200,9 +223,9 @@ Master and Agent
 
       journalctl -u determined-agent
 
-   You should see logging indicating that the agent started successfully, detected compute devices,
-   and connected to the master. On the Determined WebUI, you should now see slots available, both on
-   the right-hand side of the top navigation bar, and if you select the ``Cluster`` view in the
+   You should see logs indicating that the agent started successfully, detected compute devices, and
+   connected to the master. On the Determined WebUI, you should now see slots available, both on the
+   right-hand side of the top navigation bar, and if you select the ``Cluster`` view in the
    left-hand navigation panel.
 
 .. _socket-activation:

@@ -1,6 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
 
-import BreadcrumbBar from 'components/BreadcrumbBar';
 import ExperimentCreateModalComponent, {
   CreateExperimentType,
 } from 'components/ExperimentCreateModal';
@@ -118,7 +117,6 @@ const TrialDetailsHeader: React.FC<Props> = ({ experiment, fetchTrialDetails, tr
 
   return (
     <>
-      <BreadcrumbBar experiment={experiment} id={trial.id} trial={trial} type="trial" />
       <PageHeaderFoldable
         leftContent={<TrialHeaderLeft experiment={experiment} trial={trial} />}
         options={headerOptions}

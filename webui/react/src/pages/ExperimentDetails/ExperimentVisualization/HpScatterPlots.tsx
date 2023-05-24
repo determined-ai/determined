@@ -28,7 +28,7 @@ interface Props {
   selectedBatch: number;
   selectedBatchMargin: number;
   selectedHParams: string[];
-  selectedMetric: Metric | null;
+  selectedMetric?: Metric;
   selectedScale: Scale;
 }
 
@@ -36,7 +36,7 @@ interface HpMetricData {
   hpLabels: Record<string, string[]>;
   hpLogScales: Record<string, boolean>;
   hpValues: Record<string, number[]>;
-  metricValues: Record<string, (number | null)[]>;
+  metricValues: Record<string, (number | undefined)[]>;
   trialIds: number[];
 }
 
@@ -137,7 +137,10 @@ const ScatterPlots: React.FC<Props> = ({
 
     const canceler = new AbortController();
     const trialIds: number[] = [];
-    const hpTrialMap: Record<string, Record<number, { hp: Primitive; metric: number | null }>> = {};
+    const hpTrialMap: Record<
+      string,
+      Record<number, { hp: Primitive; metric: number | undefined }>
+    > = {};
 
     setHasLoaded(false);
 
@@ -154,7 +157,7 @@ const ScatterPlots: React.FC<Props> = ({
       (event) => {
         if (!event?.trials || !Array.isArray(event.trials)) return;
 
-        const hpMetricMap: Record<string, (number | null)[]> = {};
+        const hpMetricMap: Record<string, (number | undefined)[]> = {};
         const hpValueMap: Record<string, number[]> = {};
         const hpLabelMap: Record<string, string[]> = {};
         const hpLogScaleMap: Record<string, boolean> = {};
@@ -169,7 +172,7 @@ const ScatterPlots: React.FC<Props> = ({
              * TODO: filtering NaN, +/- Infinity for now, but handle it later with
              * dynamic min/max ranges via uPlot.Scales.
              */
-            const trialMetric = Number.isFinite(trial.metric) ? trial.metric : null;
+            const trialMetric = Number.isFinite(trial.metric) ? trial.metric : undefined;
             hpTrialMap[hParam] = hpTrialMap[hParam] || {};
             hpTrialMap[hParam][trialId] = hpTrialMap[hParam][trialId] || {};
             hpTrialMap[hParam][trialId] = {

@@ -28,10 +28,11 @@ import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 
-import ModelRegistry from './ModelRegistry';
-import WorkspaceDetailsHeader from './WorkspaceDetails/WorkspaceDetailsHeader';
+import ModelRegistry from '../components/ModelRegistry';
+
 import WorkspaceMembers from './WorkspaceDetails/WorkspaceMembers';
 import WorkspaceProjects from './WorkspaceDetails/WorkspaceProjects';
+import { useWorkspaceActionMenu } from './WorkspaceList/WorkspaceActionDropdown';
 
 type Params = {
   tab: string;
@@ -157,6 +158,11 @@ const WorkspaceDetails: React.FC = () => {
     [addableGroups, addableUsers],
   );
 
+  const { contextHolders, menu, onClick } = useWorkspaceActionMenu({
+    onComplete: fetchWorkspace,
+    workspace,
+  });
+
   const tabItems: TabsProps['items'] = useMemo(() => {
     if (!workspace) {
       return [];
@@ -265,23 +271,28 @@ const WorkspaceDetails: React.FC = () => {
 
   return (
     <Page
+      breadcrumb={[
+        {
+          breadcrumbName: 'Workspaces',
+          path: paths.workspaceList(),
+        },
+        {
+          breadcrumbName: id !== 1 ? workspace.name : 'Uncategorized Experiments',
+          path: paths.workspaceDetails(id),
+        },
+      ]}
       containerRef={pageRef}
-      headerComponent={
-        <WorkspaceDetailsHeader
-          addableUsersAndGroups={addableUsersAndGroups}
-          fetchWorkspace={fetchAll}
-          rolesAssignableToScope={rolesAssignableToScope}
-          workspace={workspace}
-        />
-      }
       id="workspaceDetails"
-      key={workspaceId}>
+      key={workspaceId}
+      menuItems={menu.length > 0 ? menu : undefined}
+      onClickMenu={onClick}>
       <Pivot
         activeKey={tabKey}
         destroyInactiveTabPane
         items={tabItems}
         onChange={handleTabChange}
       />
+      {contextHolders}
     </Page>
   );
 };

@@ -4,6 +4,7 @@ import { SelectValue } from 'antd/es/select';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
+import Grid from 'components/Grid';
 import Accordion from 'components/kit/Accordion';
 import Breadcrumb from 'components/kit/Breadcrumb';
 import Button from 'components/kit/Button';
@@ -50,6 +51,17 @@ import { ValueOf } from 'shared/types';
 import { noOp } from 'shared/utils/service';
 import { BrandingType } from 'stores/determinedInfo';
 import { MetricType, User } from 'types';
+import {
+  Background,
+  Brand,
+  Float,
+  Interactive,
+  Overlay,
+  Stage,
+  Status,
+  Surface,
+} from 'utils/colors';
+import { TypographySize } from 'utils/fonts';
 import { Loaded, NotLoaded } from 'utils/loadable';
 import loremIpsum from 'utils/loremIpsum';
 
@@ -67,6 +79,7 @@ const ComponentTitles = {
   Checkboxes: 'Checkboxes',
   ClipboardButton: 'ClipboardButton',
   CodeEditor: 'CodeEditor',
+  Color: 'Color',
   Columns: 'Columns',
   Dropdown: 'Dropdown',
   Empty: 'Empty',
@@ -1086,6 +1099,11 @@ const ListsSection: React.FC = () => {
 };
 
 const BreadcrumbsSection: React.FC = () => {
+  const menuItems: MenuItem[] = [
+    { key: 'Action 1', label: 'Action 1' },
+    { key: 'Action 2', label: 'Action 2' },
+  ];
+
   return (
     <ComponentSection id="Breadcrumbs" title="Breadcrumbs">
       <AntDCard>
@@ -1116,6 +1134,11 @@ const BreadcrumbsSection: React.FC = () => {
           <Breadcrumb.Item>Level 0</Breadcrumb.Item>
           <Breadcrumb.Item>Level 1</Breadcrumb.Item>
           <Breadcrumb.Item>Level 2</Breadcrumb.Item>
+        </Breadcrumb>
+        <strong>Breadcrumb with actions</strong>
+        <Breadcrumb menuItems={menuItems}>
+          <Breadcrumb.Item>Level 0</Breadcrumb.Item>
+          <Breadcrumb.Item>Level 1</Breadcrumb.Item>
         </Breadcrumb>
       </AntDCard>
     </ComponentSection>
@@ -1773,6 +1796,148 @@ const TypographySection: React.FC = () => {
           <Paragraph>this is a paragraph!</Paragraph>
         </Space>
       </AntDCard>
+      <AntDCard title="Font Families">
+        <Paragraph>For general UI --theme-font-family</Paragraph>
+        <Paragraph font="code">For displaying code --theme-font-family-code</Paragraph>
+      </AntDCard>
+      <AntDCard title="Font Sizing">
+        <div>
+          <div style={{ display: 'flex', flexDirection: 'column', marginBottom: '30px' }}>
+            <Header>Header</Header>
+            <Header size={TypographySize.XL}>
+              Model Registry - XL (f.s. 28px, line-height 36px)
+            </Header>
+            <Header size={TypographySize.L}>
+              Model Registry - L (f.s. 24px, line-height 32px)
+            </Header>
+            <Header size={TypographySize.default}>
+              Model Registry - default (f.s. 22px line-height 28px)
+            </Header>
+            <Header size={TypographySize.S}>Model Registry - s (f.s. 18px line-height 23px)</Header>
+            <Header size={TypographySize.XS}>
+              Model Registry - xs (f.s. 16px line-height 21px)
+            </Header>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', marginBottom: '30px' }}>
+            <Header>Multi Line</Header>
+            <Paragraph size={TypographySize.XL} type="multi line">
+              Lorem ipsum dolor sit amet consectetur, adipisicing elit. Ut suscipit itaque debitis
+              amet, eligendi possimus assumenda eos, iusto ea labore, officia aspernatur optio. In
+              necessitatibus porro ut vero commodi neque. Lorem ipsum dolor sit amet consectetur
+              adipisicing elit. Voluptatibus, omnis quo dolorem magnam dolores necessitatibus iure
+              illo incidunt maiores voluptas odit eligendi dignissimos facilis vel veniam id.
+              Obcaecati, cum eos. - XL (f.s. 16px line-height 26px)
+            </Paragraph>
+            <br />
+            <Paragraph size={TypographySize.L} type="multi line">
+              Lorem ipsum dolor sit amet consectetur, adipisicing elit. Ut suscipit itaque debitis
+              amet, eligendi possimus assumenda eos, iusto ea labore, officia aspernatur optio. In
+              necessitatibus porro ut vero commodi neque. Lorem ipsum dolor sit amet consectetur
+              adipisicing elit. Voluptatibus, omnis quo dolorem magnam dolores necessitatibus iure
+              illo incidunt maiores voluptas odit eligendi dignissimos facilis vel veniam id.
+              Obcaecati, cum eos. - L (f.s. 14px line-height 22px)
+            </Paragraph>
+            <br />
+            <Paragraph size={TypographySize.default} type="multi line">
+              Lorem ipsum dolor sit amet consectetur, adipisicing elit. Ut suscipit itaque debitis
+              amet, eligendi possimus assumenda eos, iusto ea labore, officia aspernatur optio. In
+              necessitatibus porro ut vero commodi neque. Lorem ipsum dolor sit amet consectetur
+              adipisicing elit. Voluptatibus, omnis quo dolorem magnam dolores necessitatibus iure
+              illo incidunt maiores voluptas odit eligendi dignissimos facilis vel veniam id.
+              Obcaecati, cum eos. - default (f.s. 12px line-height 20px)
+            </Paragraph>
+            <br />
+            <Paragraph size={TypographySize.S} type="multi line">
+              Lorem ipsum dolor sit amet consectetur, adipisicing elit. Ut suscipit itaque debitis
+              amet, eligendi possimus assumenda eos, iusto ea labore, officia aspernatur optio. In
+              necessitatibus porro ut vero commodi neque. Lorem ipsum dolor sit amet consectetur
+              adipisicing elit. Voluptatibus, omnis quo dolorem magnam dolores necessitatibus iure
+              illo incidunt maiores voluptas odit eligendi dignissimos facilis vel veniam id.
+              Obcaecati, cum eos. - s (f.s. 11px line-height 18px)
+            </Paragraph>
+            <br />
+            <Paragraph size={TypographySize.XS} type="multi line">
+              Lorem ipsum dolor sit amet consectetur, adipisicing elit. Ut suscipit itaque debitis
+              amet, eligendi possimus assumenda eos, iusto ea labore, officia aspernatur optio. In
+              necessitatibus porro ut vero commodi neque. Lorem ipsum dolor sit amet consectetur
+              adipisicing elit. Voluptatibus, omnis quo dolorem magnam dolores necessitatibus iure
+              illo incidunt maiores voluptas odit eligendi dignissimos facilis vel veniam id.
+              Obcaecati, cum eos. - xs (f.s. 10px line-height 16px)
+            </Paragraph>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', marginBottom: '30px' }}>
+            <Header>Single Line</Header>
+            <Paragraph size={TypographySize.XL}>
+              Model Registry - XL (f.s. 16px line-height 20px)
+            </Paragraph>
+            <Paragraph size={TypographySize.L}>
+              Model Registry - L (f.s. 14px line-height 18px)
+            </Paragraph>
+            <Paragraph size={TypographySize.default}>
+              Model Registry - default (f.s. 12px line-height 16px)
+            </Paragraph>
+            <Paragraph size={TypographySize.S}>
+              Model Registry - s (f.s. 11px line-height 14px)
+            </Paragraph>
+            <Paragraph size={TypographySize.XS}>
+              Model Registry - xs (f.s. 10px line-height 12px)
+            </Paragraph>
+          </div>
+        </div>
+      </AntDCard>
+    </ComponentSection>
+  );
+};
+
+const ColorSection: React.FC = () => {
+  const themeStatus = Object.values(Status);
+  const backgrounds = Object.values(Background);
+  const stage = Object.values(Stage);
+  const surface = Object.values(Surface);
+  const float = Object.values(Float);
+  const overlay = Object.values(Overlay);
+  const brand = Object.values(Brand);
+  const interactive = Object.values(Interactive);
+
+  const renderColorComponent = (colorArray: string[], name: string) => (
+    <AntDCard title={`${name} Colors`}>
+      <Grid>
+        {colorArray.map((cName, idx) => (
+          <div
+            key={`${idx}-${name.toLowerCase()}`}
+            style={{
+              marginBottom: '20px',
+              width: '250px',
+            }}>
+            <span>{cName.replace(/(var\(|\))/g, '')}</span>
+            <div
+              style={{
+                backgroundColor: cName,
+                border: 'var(--theme-stroke-width) solid var(--theme-surface-border)',
+                borderRadius: 'var(--theme-border-radius)',
+                height: '40px',
+                width: '100%',
+              }}
+            />
+          </div>
+        ))}
+      </Grid>
+    </AntDCard>
+  );
+  const iterateOverThemes = (themes: Array<string[]>, names: string[]) =>
+    themes.map((theme, idx) => renderColorComponent(theme, names[idx]));
+
+  return (
+    <ComponentSection id="Color" title="Color">
+      <AntDCard>
+        <Paragraph>
+          We have a variety of colors that are available for use with the components in the UI Kit.
+        </Paragraph>
+      </AntDCard>
+      {iterateOverThemes(
+        [themeStatus, backgrounds, stage, surface, float, overlay, brand, interactive],
+        ['Status', 'Background', 'Stage', 'Surface', 'Float', 'Overlay', 'Brand', 'Interactive'],
+      )}
     </ComponentSection>
   );
 };
@@ -2425,6 +2590,7 @@ const Components = {
   Checkboxes: <CheckboxesSection />,
   ClipboardButton: <ClipboardButtonSection />,
   CodeEditor: <CodeEditorSection />,
+  Color: <ColorSection />,
   Columns: <ColumnsSection />,
   Dropdown: <DropdownSection />,
   Empty: <EmptySection />,
@@ -2460,7 +2626,7 @@ const DesignKit: React.FC = () => {
   }, [actions]);
 
   return (
-    <Page bodyNoPadding docTitle="Design Kit">
+    <Page bodyNoPadding breadcrumb={[]} docTitle="Design Kit">
       <div className={css.base}>
         <nav>
           <Link reloadDocument to={'/'}>

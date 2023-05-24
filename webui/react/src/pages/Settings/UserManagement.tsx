@@ -1,4 +1,5 @@
 import { Space } from 'antd';
+import { SortOrder } from 'antd/es/table/interface';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -9,14 +10,12 @@ import Dropdown from 'components/kit/Dropdown';
 import Icon from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
 import ManageGroupsModalComponent from 'components/ManageGroupsModal';
-import Page from 'components/Page';
 import Section from 'components/Section';
 import InteractiveTable, { onRightClickableCell } from 'components/Table/InteractiveTable';
 import SkeletonTable from 'components/Table/SkeletonTable';
 import {
   checkmarkRenderer,
   defaultRowClassName,
-  getFullPaginationConfig,
   relativeTimeRenderer,
 } from 'components/Table/Table';
 import TableFilterSearch from 'components/Table/TableFilterSearch';
@@ -25,10 +24,11 @@ import usePermissions from 'hooks/usePermissions';
 import { useSettings } from 'hooks/useSettings';
 import { getGroups, patchUser } from 'services/api';
 import { V1GetUsersRequestSortBy, V1GroupSearchResult } from 'services/api-ts-sdk';
-import { GetUsersParams } from 'services/types';
 import dropdownCss from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
 import { isEqual } from 'shared/utils/data';
+import { ErrorType } from 'shared/utils/error';
 import { validateDetApiEnum } from 'shared/utils/service';
+import { alphaNumericSorter, booleanSorter, numericSorter } from 'shared/utils/sort';
 import determinedStore from 'stores/determinedInfo';
 import roleStore from 'stores/roles';
 import userStore from 'stores/users';
@@ -37,8 +37,6 @@ import { message } from 'utils/dialogApi';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
-
-import { ErrorType } from '../../shared/utils/error';
 
 import css from './UserManagement.module.scss';
 import settingsConfig, {
@@ -155,33 +153,26 @@ const UserManagement: React.FC = () => {
   const [groups, setGroups] = useState<V1GroupSearchResult[]>([]);
   const pageRef = useRef<HTMLElement>(null);
   const { settings, updateSettings } = useSettings<UserManagementSettings>(settingsConfig);
-  const params: GetUsersParams = useMemo(
-    () => ({
-      limit: settings.tableLimit,
-      name: settings.name,
-      offset: settings.tableOffset,
-      orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
-      sortBy: validateDetApiEnum(V1GetUsersRequestSortBy, settings.sortKey),
-    }),
-    [settings],
-  );
-  const loadableUsers = useObservable(userStore.getUsers(params));
+
+  const loadableUsers = useObservable(userStore.getUsers());
   const users = Loadable.getOrElse([], loadableUsers);
-  const pagination = Loadable.getOrElse(
-    undefined,
-    useObservable(userStore.getUsersPagination(params)),
-  );
-  const canceler = useRef(new AbortController());
+
+  const filteredUsers = settings.name
+    ? users.filter((user) => {
+        return settings.name && (user.displayName || user.username).includes(settings.name);
+      })
+    : users;
 
   const { rbacEnabled } = useObservable(determinedStore.info);
   const { canModifyUsers } = usePermissions();
   const info = useObservable(determinedStore.info);
 
+  const canceler = useRef(new AbortController());
   const fetchUsers = useCallback((): void => {
     if (!settings) return;
 
-    userStore.fetchUsers(params, canceler.current.signal);
-  }, [params, settings]);
+    userStore.fetchUsers(canceler.current.signal);
+  }, [settings]);
 
   const fetchGroups = useCallback(async (): Promise<void> => {
     try {
@@ -200,10 +191,6 @@ const UserManagement: React.FC = () => {
     const currentCanceler = canceler.current;
     return () => currentCanceler.abort();
   }, []);
-
-  useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
 
   useEffect(() => {
     fetchGroups();
@@ -249,9 +236,16 @@ const UserManagement: React.FC = () => {
         />
       );
     };
+    const defaultSortKey: V1GetUsersRequestSortBy = validateDetApiEnum(
+      V1GetUsersRequestSortBy,
+      settings.sortKey,
+    );
+    const defaultSortOrder: SortOrder = settings.sortDesc ? 'descend' : 'ascend';
     const columns = [
       {
         dataIndex: 'displayName',
+        defaultSortOrder:
+          defaultSortKey === V1GetUsersRequestSortBy.NAME ? defaultSortOrder : undefined,
         defaultWidth: DEFAULT_COLUMN_WIDTHS['displayName'],
         filterDropdown: nameFilterSearch,
         filterIcon: filterIcon,
@@ -259,34 +253,42 @@ const UserManagement: React.FC = () => {
         key: V1GetUsersRequestSortBy.NAME,
         onCell: onRightClickableCell,
         render: (_: string, r: DetailedUser) => <UserBadge user={r} />,
-        sorter: true,
+        sorter: (a: DetailedUser, b: DetailedUser) => {
+          return alphaNumericSorter(a.displayName || a.username, b.displayName || b.username);
+        },
         title: 'Name',
       },
       {
         dataIndex: 'isActive',
+        defaultSortOrder:
+          defaultSortKey === V1GetUsersRequestSortBy.ACTIVE ? defaultSortOrder : undefined,
         defaultWidth: DEFAULT_COLUMN_WIDTHS['isActive'],
         key: V1GetUsersRequestSortBy.ACTIVE,
         onCell: onRightClickableCell,
         render: checkmarkRenderer,
-        sorter: true,
+        sorter: (a: DetailedUser, b: DetailedUser) => booleanSorter(a.isActive, b.isActive),
         title: 'Active',
       },
       {
         dataIndex: 'isAdmin',
+        defaultSortOrder:
+          defaultSortKey === V1GetUsersRequestSortBy.ADMIN ? defaultSortOrder : undefined,
         defaultWidth: DEFAULT_COLUMN_WIDTHS['isAdmin'],
         key: V1GetUsersRequestSortBy.ADMIN,
         onCell: onRightClickableCell,
         render: checkmarkRenderer,
-        sorter: true,
+        sorter: (a: DetailedUser, b: DetailedUser) => booleanSorter(a.isAdmin, b.isAdmin),
         title: 'Admin',
       },
       {
         dataIndex: 'modifiedAt',
+        defaultSortOrder:
+          defaultSortKey === V1GetUsersRequestSortBy.MODIFIEDTIME ? defaultSortOrder : undefined,
         defaultWidth: DEFAULT_COLUMN_WIDTHS['modifiedAt'],
         key: V1GetUsersRequestSortBy.MODIFIEDTIME,
         onCell: onRightClickableCell,
         render: (value: number): React.ReactNode => relativeTimeRenderer(new Date(value)),
-        sorter: true,
+        sorter: (a: DetailedUser, b: DetailedUser) => numericSorter(a.modifiedAt, b.modifiedAt),
         title: 'Modified Time',
       },
       {
@@ -301,23 +303,24 @@ const UserManagement: React.FC = () => {
       },
     ];
     return rbacEnabled ? columns.filter((c) => c.dataIndex !== 'isAdmin') : columns;
-  }, [fetchUsers, filterIcon, groups, info.userManagementEnabled, nameFilterSearch, rbacEnabled]);
+  }, [
+    fetchUsers,
+    filterIcon,
+    groups,
+    info.userManagementEnabled,
+    nameFilterSearch,
+    rbacEnabled,
+    settings,
+  ]);
 
   const table = useMemo(() => {
     return settings ? (
       <InteractiveTable<DetailedUser, UserManagementSettings>
         columns={columns}
         containerRef={pageRef}
-        dataSource={users}
+        dataSource={filteredUsers}
         interactiveColumns={false}
         loading={Loadable.isLoading(loadableUsers)}
-        pagination={getFullPaginationConfig(
-          {
-            limit: settings.tableLimit,
-            offset: settings.tableOffset,
-          },
-          pagination?.total ?? 0,
-        )}
         rowClassName={defaultRowClassName({ clickable: false })}
         rowKey="id"
         settings={{
@@ -332,9 +335,10 @@ const UserManagement: React.FC = () => {
     ) : (
       <SkeletonTable columns={columns.length} />
     );
-  }, [users, loadableUsers, settings, columns, pagination, updateSettings]);
+  }, [filteredUsers, loadableUsers, settings, columns, updateSettings]);
+
   return (
-    <Page bodyNoPadding containerRef={pageRef}>
+    <>
       <Section
         className={css.usersTable}
         options={
@@ -352,7 +356,7 @@ const UserManagement: React.FC = () => {
         {table}
       </Section>
       <CreateUserModal.Component onClose={fetchUsers} />
-    </Page>
+    </>
   );
 };
 

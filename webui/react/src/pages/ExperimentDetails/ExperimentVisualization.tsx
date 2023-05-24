@@ -96,7 +96,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
     batchMargin: DEFAULT_BATCH_MARGIN,
     hParams: [],
     maxTrial: DEFAULT_MAX_TRIALS,
-    metric: null,
+    metric: undefined,
     scale: Scale.Linear,
     view: DEFAULT_VIEW,
   };
@@ -108,7 +108,6 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
     return type && TYPE_KEYS.includes(type) ? type : DEFAULT_TYPE_KEY;
   });
   const [filters, setFilters] = useState<VisualizationFilters>(initFilters);
-  const [activeMetric, setActiveMetric] = useState<Metric | null>(initFilters.metric);
   const [hasSearcherMetric, setHasSearcherMetric] = useState<boolean>(false);
   const [batches, setBatches] = useState<number[]>();
   const [pageError, setPageError] = useState<PageError>();
@@ -133,9 +132,12 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
   }, [batches, experiment, metrics]);
 
   const handleFiltersChange = useCallback(
-    (filters: VisualizationFilters) => {
-      setFilters(filters);
-      storage.set(STORAGE_FILTERS_KEY, filters);
+    (newFilters: Partial<VisualizationFilters>) => {
+      setFilters((prevFilters) => {
+        const result = { ...prevFilters, ...newFilters };
+        storage.set(STORAGE_FILTERS_KEY, result);
+        return result;
+      });
     },
     [storage],
   );
@@ -143,10 +145,6 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
   const handleFiltersReset = useCallback(() => {
     storage.remove(STORAGE_FILTERS_KEY);
   }, [storage]);
-
-  const handleMetricChange = useCallback((metric: Metric) => {
-    setActiveMetric(metric);
-  }, []);
 
   useEffect(() => {
     if (!hasSearcherMetric) {
@@ -157,20 +155,18 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
       );
       if (activeMetricFound) {
         setHasSearcherMetric(true);
-        setActiveMetric(searcherMetric.current);
         handleFiltersChange({
           ...filters,
           metric: searcherMetric.current,
         });
-      } else if (metrics.length > 0 && !activeMetric) {
-        setActiveMetric(metrics[0]);
+      } else if (metrics.length > 0 && !filters.metric) {
         handleFiltersChange({
           ...filters,
           metric: metrics[0],
         });
       }
     }
-  }, [hasSearcherMetric, setActiveMetric, handleFiltersChange, filters, metrics, activeMetric]);
+  }, [hasSearcherMetric, handleFiltersChange, filters, metrics]);
 
   const handleTabChange = useCallback(
     (type: string) => {
@@ -189,19 +185,10 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
         metrics={metrics}
         type={typeKey}
         onChange={handleFiltersChange}
-        onMetricChange={handleMetricChange}
         onReset={handleFiltersReset}
       />
     );
-  }, [
-    batches,
-    filters,
-    handleFiltersChange,
-    handleFiltersReset,
-    handleMetricChange,
-    metrics,
-    typeKey,
-  ]);
+  }, [batches, filters, handleFiltersChange, handleFiltersReset, metrics, typeKey]);
 
   const tabItems: TabsProps['items'] = useMemo(() => {
     /**
@@ -216,7 +203,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
             filters={visualizationFilters}
             fullHParams={fullHParams.current}
             selectedMaxTrial={filters.maxTrial}
-            selectedMetric={activeMetric}
+            selectedMetric={filters.metric}
             selectedScale={filters.scale}
           />
         ),
@@ -235,7 +222,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
               selectedBatch={filters.batch}
               selectedBatchMargin={filters.batchMargin}
               selectedHParams={filters.hParams}
-              selectedMetric={activeMetric}
+              selectedMetric={filters.metric}
               selectedScale={filters.scale}
             />
           ),
@@ -251,7 +238,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
               selectedBatch={filters.batch}
               selectedBatchMargin={filters.batchMargin}
               selectedHParams={filters.hParams}
-              selectedMetric={activeMetric}
+              selectedMetric={filters.metric}
               selectedScale={filters.scale}
             />
           ),
@@ -267,7 +254,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
               selectedBatch={filters.batch}
               selectedBatchMargin={filters.batchMargin}
               selectedHParams={filters.hParams}
-              selectedMetric={activeMetric}
+              selectedMetric={filters.metric}
               selectedScale={filters.scale}
               selectedView={filters.view}
             />
@@ -284,7 +271,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
     filters.batchMargin,
     filters.hParams,
     filters.maxTrial,
-    activeMetric,
+    filters.metric,
     filters.scale,
     filters.view,
     visualizationFilters,
@@ -301,17 +288,19 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
 
   // Stream available batches.
   useEffect(() => {
-    if (!isSupported || ui.isPageHidden || !activeMetric) return;
+    if (!isSupported || ui.isPageHidden || !filters.metric) return;
 
     const canceler = new AbortController();
     const metricTypeParam =
-      activeMetric.type === MetricType.Training ? 'METRIC_TYPE_TRAINING' : 'METRIC_TYPE_VALIDATION';
+      filters.metric.type === MetricType.Training
+        ? 'METRIC_TYPE_TRAINING'
+        : 'METRIC_TYPE_VALIDATION';
     const batchesMap: Record<number, number> = {};
 
     readStream<V1MetricBatchesResponse>(
       detApi.StreamingInternal.metricBatches(
         experiment.id,
-        activeMetric.name,
+        filters.metric.name,
         metricTypeParam,
         undefined,
         { signal: canceler.signal },
@@ -326,7 +315,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
     );
 
     return () => canceler.abort();
-  }, [activeMetric, experiment.id, filters.batch, isSupported, ui.isPageHidden]);
+  }, [filters.metric, experiment.id, filters.batch, isSupported, ui.isPageHidden]);
 
   // Set the default filter batch.
   useEffect(() => {

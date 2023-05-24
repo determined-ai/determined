@@ -3,7 +3,7 @@
 package etc
 
 import (
-	"io/ioutil"
+	"os"
 	"path/filepath"
 
 	"github.com/pkg/errors"
@@ -80,7 +80,7 @@ func MustStaticFile(name string) []byte {
 		),
 	)
 
-	bytes, err := ioutil.ReadFile(path) // #nosec G304
+	bytes, err := os.ReadFile(path) // #nosec G304
 	check.Panic(errors.Wrapf(err, "unable to find static file: %s", name))
 	return bytes
 }

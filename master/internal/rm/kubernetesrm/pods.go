@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
 	"net/http"
+	"os"
 	"path/filepath"
 	"strconv"
 	"sync"
@@ -318,7 +318,7 @@ func readClientConfig(credsDir string) (*rest.Config, error) {
 	// create such a directory, with server, token, and ca.crt files.
 
 	//nolint:gosec // Yes, we intend to read from this file specified in the config.
-	server, err := ioutil.ReadFile(filepath.Join(credsDir, "server"))
+	server, err := os.ReadFile(filepath.Join(credsDir, "server"))
 	if err != nil {
 		return nil, err
 	}
@@ -327,7 +327,7 @@ func readClientConfig(credsDir string) (*rest.Config, error) {
 
 	tokenFile := filepath.Join(credsDir, "token")
 	//nolint:gosec // Yes, we intend to read from this file specified in the config.
-	token, err := ioutil.ReadFile(tokenFile)
+	token, err := os.ReadFile(tokenFile)
 	if err != nil {
 		return nil, err
 	}

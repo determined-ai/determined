@@ -27,7 +27,7 @@ def get_master(args: Namespace) -> None:
 
 def format_log_entry(log: bindings.v1LogEntry) -> str:
     """Format v1LogEntry for printing."""
-    log_level = str(log.level.value)[len("LOG_LEVEL_") :] if log.level else ""
+    log_level = log.level if log.level else ""
     return f"{log.timestamp} [{log_level}]: {log.message}"
 
 

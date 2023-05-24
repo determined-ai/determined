@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"reflect"
 	"time"
 
@@ -545,7 +544,7 @@ func logstashIndexFromTimestamp(time *time.Time) string {
 
 func checkResponse(res *esapi.Response) error {
 	if res.StatusCode > 299 || res.StatusCode < 200 {
-		b, err := ioutil.ReadAll(res.Body)
+		b, err := io.ReadAll(res.Body)
 		if err != nil {
 			return fmt.Errorf("failed to read response body with code %d", res.StatusCode)
 		}

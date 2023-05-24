@@ -1,7 +1,7 @@
 package internal
 
 import (
-	"io/ioutil"
+	"io"
 
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
@@ -13,7 +13,7 @@ import (
 )
 
 func (m *Master) getSearcherPreview(c echo.Context) (interface{}, error) {
-	bytes, err := ioutil.ReadAll(c.Request().Body)
+	bytes, err := io.ReadAll(c.Request().Body)
 	if err != nil {
 		return nil, err
 	}

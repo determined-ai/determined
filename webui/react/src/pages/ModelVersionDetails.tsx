@@ -10,7 +10,7 @@ import Notes from 'components/kit/Notes';
 import Pivot from 'components/kit/Pivot';
 import Link from 'components/Link';
 import MetadataCard from 'components/Metadata/MetadataCard';
-import Page from 'components/Page';
+import Page, { BreadCrumbRoute } from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
@@ -31,6 +31,7 @@ import { checkpointSize } from 'utils/workload';
 
 import ModelVersionHeader from './ModelVersionDetails/ModelVersionHeader';
 import css from './ModelVersionDetails.module.scss';
+import { WorkspaceDetailsTab } from './WorkspaceDetails';
 
 const TabType = {
   Model: 'model',
@@ -296,16 +297,34 @@ const ModelVersionDetails: React.FC = () => {
   } else if (!modelVersion || !workspace || rbacLoading) {
     return <Spinner spinning tip={`Loading model ${modelId} version ${versionNum} details...`} />;
   }
+  const pageBreadcrumb: BreadCrumbRoute[] = [
+    {
+      breadcrumbName: workspace.name,
+      path: workspace.id === 1 ? paths.projectDetails(1) : paths.workspaceDetails(workspace.id),
+    },
+    {
+      breadcrumbName: 'Model Registry',
+      path: paths.workspaceDetails(workspace.id, WorkspaceDetailsTab.ModelRegistry),
+    },
+    {
+      breadcrumbName: `${modelVersion.model.name} (${modelId})`,
+      path: paths.modelDetails(String(modelVersion.model.id)),
+    },
+    {
+      breadcrumbName: `Version ${modelVersion.version}`,
+      path: paths.modelDetails(String(modelVersion.model.id)),
+    },
+  ];
 
   return (
     <Page
       bodyNoPadding
+      breadcrumb={pageBreadcrumb}
       docTitle="Model Version Details"
       headerComponent={
         <ModelVersionHeader
           fetchModelVersion={fetchModelVersion}
           modelVersion={modelVersion}
-          workspace={workspace}
           onUpdateTags={saveVersionTags}
         />
       }

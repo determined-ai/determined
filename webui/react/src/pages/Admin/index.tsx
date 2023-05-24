@@ -79,7 +79,15 @@ const SettingsContent: React.FC = () => {
 };
 
 const Admin: React.FC = () => (
-  <Page id="admin" stickyHeader title="Admin Settings">
+  <Page
+    breadcrumb={[
+      {
+        breadcrumbName: 'Admin Settings',
+        path: paths.admin(),
+      },
+    ]}
+    id="admin"
+    stickyHeader>
     <SettingsContent />
   </Page>
 );

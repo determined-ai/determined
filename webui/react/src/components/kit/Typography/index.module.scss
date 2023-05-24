@@ -1,7 +1,69 @@
+@import '../../../globalCssVar.css';
+
 .header {
   color: var(--theme-colors-monochrome-3);
   font-size: 16px;
   font-weight: 400;
   font-weight: 500;
   line-height: 32px;
+}
+.headerXL {
+  font-size: var(--header-size-xl);
+  line-height: var(--header-ln-xl);
+}
+.headerL {
+  font-size: var(--header-size-l);
+  line-height: var(--header-ln-l);
+}
+.headerDefault {
+  font-size: var(--header-size-default);
+  line-height: var(--header-ln-default);
+}
+.headerS {
+  font-size: var(--header-size-s);
+  line-height: var(--header-ln-s);
+}
+.headerXS {
+  font-size: var(--header-size-xs);
+  line-height: var(--header-ln-xs);
+}
+.multiLineXL {
+  font-size: var(--multi-line-size-xl);
+  line-height: var(--multi-line-ln-xl);
+}
+.multiLineL {
+  font-size: var(--multi-line-size-l);
+  line-height: var(--multi-line-ln-l);
+}
+.multiLineDefault {
+  font-size: var(--multi-line-size-default);
+  line-height: var(--multi-line-ln-default);
+}
+.multiLineS {
+  font-size: var(--single-line-size-s);
+  line-height: var(--single-line-ln-s);
+}
+.multiLineXS {
+  font-size: var(--single-line-size-xs);
+  line-height: var(--single-line-ln-xs);
+}
+.singleLineXL {
+  font-size: var(--single-line-size-xl);
+  line-height: var(--single-line-ln-xl);
+}
+.singleLineL {
+  font-size: var(--single-line-size-l);
+  line-height: var(--single-line-ln-l);
+}
+.singleLineDefault {
+  font-size: var(--single-line-size-default);
+  line-height: var(--single-line-ln-default);
+}
+.singleLineS {
+  font-size: var(--single-line-size-s);
+  line-height: var(--single-line-ln-s);
+}
+.singleLineXS {
+  font-size: var(--single-line-size-xs);
+  line-height: var(--single-line-ln-xs);
 }

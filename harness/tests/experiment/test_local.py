@@ -1,14 +1,22 @@
 import pathlib
+import typing
 
 import pytest
 import tensorflow as tf
+from _pytest import monkeypatch
 
 import determined as det
 from determined import estimator, experimental, keras
+from tests.experiment.fixtures import pytorch_onevar_model
 
 
-def test_test_one_batch() -> None:
-    from tests.experiment.fixtures import pytorch_onevar_model
+def test_test_one_batch(monkeypatch: monkeypatch.MonkeyPatch, tmp_path: pathlib.Path) -> None:
+    def mock_get_tensorboard_path(dummy: typing.Dict[str, typing.Any]) -> pathlib.Path:
+        return tmp_path.joinpath("tensorboard")
+
+    monkeypatch.setattr(
+        pytorch.PyTorchTrialContext, "get_tensorboard_path", mock_get_tensorboard_path
+    )
 
     with det._local_execution_manager(pathlib.Path(pytorch_onevar_model.__file__).parent):
         experimental.test_one_batch(

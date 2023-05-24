@@ -2,6 +2,7 @@
 import enum
 import json
 import math
+import os
 import typing
 
 import requests
@@ -55,11 +56,22 @@ class APIHttpStreamError(APIHttpError):
         return self.message
 
 
-class GetMasterResponseProduct(enum.Enum):
+class DetEnum(enum.Enum):
+    def __str__(self) -> str:
+        skip = len(self.prefix())
+        return f"{self.value[skip:]}"
+    @classmethod
+    def prefix(cls) -> str:
+        prefix: str = os.path.commonprefix([e.value for e in cls])
+        return prefix if prefix.endswith("_") else ""
+
+
+
+class GetMasterResponseProduct(DetEnum):
     UNSPECIFIED = "PRODUCT_UNSPECIFIED"
     COMMUNITY = "PRODUCT_COMMUNITY"
 
-class GetTrialWorkloadsRequestFilterOption(enum.Enum):
+class GetTrialWorkloadsRequestFilterOption(DetEnum):
     UNSPECIFIED = "FILTER_OPTION_UNSPECIFIED"
     CHECKPOINT = "FILTER_OPTION_CHECKPOINT"
     VALIDATION = "FILTER_OPTION_VALIDATION"
@@ -209,13 +221,13 @@ class TrialFiltersRankWithinExp:
             out["sorter"] = None if self.sorter is None else self.sorter.to_json(omit_unset)
         return out
 
-class TrialProfilerMetricLabelsProfilerMetricType(enum.Enum):
+class TrialProfilerMetricLabelsProfilerMetricType(DetEnum):
     UNSPECIFIED = "PROFILER_METRIC_TYPE_UNSPECIFIED"
     SYSTEM = "PROFILER_METRIC_TYPE_SYSTEM"
     TIMING = "PROFILER_METRIC_TYPE_TIMING"
     MISC = "PROFILER_METRIC_TYPE_MISC"
 
-class TrialSorterNamespace(enum.Enum):
+class TrialSorterNamespace(DetEnum):
     UNSPECIFIED = "NAMESPACE_UNSPECIFIED"
     HPARAMS = "NAMESPACE_HPARAMS"
     TRAINING_METRICS = "NAMESPACE_TRAINING_METRICS"
@@ -247,14 +259,14 @@ class UpdateTrialTagsRequestIds:
             out["ids"] = self.ids
         return out
 
-class checkpointv1State(enum.Enum):
+class checkpointv1State(DetEnum):
     UNSPECIFIED = "STATE_UNSPECIFIED"
     ACTIVE = "STATE_ACTIVE"
     COMPLETED = "STATE_COMPLETED"
     ERROR = "STATE_ERROR"
     DELETED = "STATE_DELETED"
 
-class containerv1State(enum.Enum):
+class containerv1State(DetEnum):
     UNSPECIFIED = "STATE_UNSPECIFIED"
     ASSIGNED = "STATE_ASSIGNED"
     PULLING = "STATE_PULLING"
@@ -262,13 +274,13 @@ class containerv1State(enum.Enum):
     RUNNING = "STATE_RUNNING"
     TERMINATED = "STATE_TERMINATED"
 
-class devicev1Type(enum.Enum):
+class devicev1Type(DetEnum):
     UNSPECIFIED = "TYPE_UNSPECIFIED"
     CPU = "TYPE_CPU"
     CUDA = "TYPE_CUDA"
     ROCM = "TYPE_ROCM"
 
-class experimentv1State(enum.Enum):
+class experimentv1State(DetEnum):
     UNSPECIFIED = "STATE_UNSPECIFIED"
     ACTIVE = "STATE_ACTIVE"
     PAUSED = "STATE_PAUSED"
@@ -287,13 +299,13 @@ class experimentv1State(enum.Enum):
     STARTING = "STATE_STARTING"
     RUNNING = "STATE_RUNNING"
 
-class jobv1State(enum.Enum):
+class jobv1State(DetEnum):
     UNSPECIFIED = "STATE_UNSPECIFIED"
     QUEUED = "STATE_QUEUED"
     SCHEDULED = "STATE_SCHEDULED"
     SCHEDULED_BACKFILLED = "STATE_SCHEDULED_BACKFILLED"
 
-class jobv1Type(enum.Enum):
+class jobv1Type(DetEnum):
     UNSPECIFIED = "TYPE_UNSPECIFIED"
     EXPERIMENT = "TYPE_EXPERIMENT"
     NOTEBOOK = "TYPE_NOTEBOOK"
@@ -336,7 +348,7 @@ class protobufAny:
             out["value"] = self.value
         return out
 
-class protobufNullValue(enum.Enum):
+class protobufNullValue(DetEnum):
     NULL_VALUE = "NULL_VALUE"
 
 class runtimeError:
@@ -447,7 +459,7 @@ class runtimeStreamError:
             out["message"] = self.message
         return out
 
-class taskv1State(enum.Enum):
+class taskv1State(DetEnum):
     UNSPECIFIED = "STATE_UNSPECIFIED"
     PULLING = "STATE_PULLING"
     STARTING = "STATE_STARTING"
@@ -457,7 +469,7 @@ class taskv1State(enum.Enum):
     WAITING = "STATE_WAITING"
     QUEUED = "STATE_QUEUED"
 
-class trialv1State(enum.Enum):
+class trialv1State(DetEnum):
     UNSPECIFIED = "STATE_UNSPECIFIED"
     ACTIVE = "STATE_ACTIVE"
     PAUSED = "STATE_PAUSED"
@@ -677,7 +689,7 @@ class v1ActivateExperimentsResponse:
         }
         return out
 
-class v1ActivityType(enum.Enum):
+class v1ActivityType(DetEnum):
     UNSPECIFIED = "ACTIVITY_TYPE_UNSPECIFIED"
     GET = "ACTIVITY_TYPE_GET"
 
@@ -1875,7 +1887,7 @@ class v1ColumnFilter:
             out["name"] = self.name
         return out
 
-class v1ColumnType(enum.Enum):
+class v1ColumnType(DetEnum):
     UNSPECIFIED = "COLUMN_TYPE_UNSPECIFIED"
     TEXT = "COLUMN_TYPE_TEXT"
     NUMBER = "COLUMN_TYPE_NUMBER"
@@ -2933,7 +2945,7 @@ class v1EnableSlotResponse:
             out["slot"] = None if self.slot is None else self.slot.to_json(omit_unset)
         return out
 
-class v1EntityType(enum.Enum):
+class v1EntityType(DetEnum):
     UNSPECIFIED = "ENTITY_TYPE_UNSPECIFIED"
     PROJECT = "ENTITY_TYPE_PROJECT"
 
@@ -3291,7 +3303,7 @@ class v1ExperimentSimulation:
             out["trials"] = None if self.trials is None else [x.to_json(omit_unset) for x in self.trials]
         return out
 
-class v1FailureType(enum.Enum):
+class v1FailureType(DetEnum):
     UNSPECIFIED = "FAILURE_TYPE_UNSPECIFIED"
     RESOURCES_FAILED = "FAILURE_TYPE_RESOURCES_FAILED"
     RESOURCES_ABORTED = "FAILURE_TYPE_RESOURCES_ABORTED"
@@ -3423,7 +3435,7 @@ class v1FileNode:
             out["path"] = self.path
         return out
 
-class v1FittingPolicy(enum.Enum):
+class v1FittingPolicy(DetEnum):
     UNSPECIFIED = "FITTING_POLICY_UNSPECIFIED"
     BEST = "FITTING_POLICY_BEST"
     WORST = "FITTING_POLICY_WORST"
@@ -3487,7 +3499,7 @@ class v1GetAgentResponse:
         }
         return out
 
-class v1GetAgentsRequestSortBy(enum.Enum):
+class v1GetAgentsRequestSortBy(DetEnum):
     UNSPECIFIED = "SORT_BY_UNSPECIFIED"
     ID = "SORT_BY_ID"
     TIME = "SORT_BY_TIME"
@@ -3596,7 +3608,7 @@ class v1GetCommandResponse:
         }
         return out
 
-class v1GetCommandsRequestSortBy(enum.Enum):
+class v1GetCommandsRequestSortBy(DetEnum):
     UNSPECIFIED = "SORT_BY_UNSPECIFIED"
     ID = "SORT_BY_ID"
     DESCRIPTION = "SORT_BY_DESCRIPTION"
@@ -3667,7 +3679,7 @@ class v1GetCurrentTrialSearcherOperationResponse:
             out["op"] = None if self.op is None else self.op.to_json(omit_unset)
         return out
 
-class v1GetExperimentCheckpointsRequestSortBy(enum.Enum):
+class v1GetExperimentCheckpointsRequestSortBy(DetEnum):
     UNSPECIFIED = "SORT_BY_UNSPECIFIED"
     UUID = "SORT_BY_UUID"
     TRIAL_ID = "SORT_BY_TRIAL_ID"
@@ -3758,7 +3770,7 @@ class v1GetExperimentResponse:
             out["jobSummary"] = None if self.jobSummary is None else self.jobSummary.to_json(omit_unset)
         return out
 
-class v1GetExperimentTrialsRequestSortBy(enum.Enum):
+class v1GetExperimentTrialsRequestSortBy(DetEnum):
     UNSPECIFIED = "SORT_BY_UNSPECIFIED"
     ID = "SORT_BY_ID"
     START_TIME = "SORT_BY_START_TIME"
@@ -3823,7 +3835,7 @@ class v1GetExperimentValidationHistoryResponse:
             out["validationHistory"] = None if self.validationHistory is None else [x.to_json(omit_unset) for x in self.validationHistory]
         return out
 
-class v1GetExperimentsRequestSortBy(enum.Enum):
+class v1GetExperimentsRequestSortBy(DetEnum):
     UNSPECIFIED = "SORT_BY_UNSPECIFIED"
     ID = "SORT_BY_ID"
     DESCRIPTION = "SORT_BY_DESCRIPTION"
@@ -4371,7 +4383,7 @@ class v1GetModelVersionResponse:
         }
         return out
 
-class v1GetModelVersionsRequestSortBy(enum.Enum):
+class v1GetModelVersionsRequestSortBy(DetEnum):
     UNSPECIFIED = "SORT_BY_UNSPECIFIED"
     VERSION = "SORT_BY_VERSION"
     CREATION_TIME = "SORT_BY_CREATION_TIME"
@@ -4406,7 +4418,7 @@ class v1GetModelVersionsResponse:
         }
         return out
 
-class v1GetModelsRequestSortBy(enum.Enum):
+class v1GetModelsRequestSortBy(DetEnum):
     UNSPECIFIED = "SORT_BY_UNSPECIFIED"
     NAME = "SORT_BY_NAME"
     DESCRIPTION = "SORT_BY_DESCRIPTION"
@@ -4467,7 +4479,7 @@ class v1GetNotebookResponse:
         }
         return out
 
-class v1GetNotebooksRequestSortBy(enum.Enum):
+class v1GetNotebooksRequestSortBy(DetEnum):
     UNSPECIFIED = "SORT_BY_UNSPECIFIED"
     ID = "SORT_BY_ID"
     DESCRIPTION = "SORT_BY_DESCRIPTION"
@@ -4786,7 +4798,7 @@ class v1GetShellResponse:
         }
         return out
 
-class v1GetShellsRequestSortBy(enum.Enum):
+class v1GetShellsRequestSortBy(DetEnum):
     UNSPECIFIED = "SORT_BY_UNSPECIFIED"
     ID = "SORT_BY_ID"
     DESCRIPTION = "SORT_BY_DESCRIPTION"
@@ -4975,7 +4987,7 @@ class v1GetTemplateResponse:
         }
         return out
 
-class v1GetTemplatesRequestSortBy(enum.Enum):
+class v1GetTemplatesRequestSortBy(DetEnum):
     UNSPECIFIED = "SORT_BY_UNSPECIFIED"
     NAME = "SORT_BY_NAME"
 
@@ -5031,7 +5043,7 @@ class v1GetTensorboardResponse:
         }
         return out
 
-class v1GetTensorboardsRequestSortBy(enum.Enum):
+class v1GetTensorboardsRequestSortBy(DetEnum):
     UNSPECIFIED = "SORT_BY_UNSPECIFIED"
     ID = "SORT_BY_ID"
     DESCRIPTION = "SORT_BY_DESCRIPTION"
@@ -5090,7 +5102,7 @@ class v1GetTrainingMetricsResponse:
         }
         return out
 
-class v1GetTrialCheckpointsRequestSortBy(enum.Enum):
+class v1GetTrialCheckpointsRequestSortBy(DetEnum):
     UNSPECIFIED = "SORT_BY_UNSPECIFIED"
     UUID = "SORT_BY_UUID"
     BATCH_NUMBER = "SORT_BY_BATCH_NUMBER"
@@ -5307,7 +5319,7 @@ class v1GetUserSettingResponse:
         }
         return out
 
-class v1GetUsersRequestSortBy(enum.Enum):
+class v1GetUsersRequestSortBy(DetEnum):
     UNSPECIFIED = "SORT_BY_UNSPECIFIED"
     DISPLAY_NAME = "SORT_BY_DISPLAY_NAME"
     USER_NAME = "SORT_BY_USER_NAME"
@@ -5394,7 +5406,7 @@ class v1GetWebhooksResponse:
         }
         return out
 
-class v1GetWorkspaceProjectsRequestSortBy(enum.Enum):
+class v1GetWorkspaceProjectsRequestSortBy(DetEnum):
     UNSPECIFIED = "SORT_BY_UNSPECIFIED"
     CREATION_TIME = "SORT_BY_CREATION_TIME"
     LAST_EXPERIMENT_START_TIME = "SORT_BY_LAST_EXPERIMENT_START_TIME"
@@ -5450,7 +5462,7 @@ class v1GetWorkspaceResponse:
         }
         return out
 
-class v1GetWorkspacesRequestSortBy(enum.Enum):
+class v1GetWorkspacesRequestSortBy(DetEnum):
     UNSPECIFIED = "SORT_BY_UNSPECIFIED"
     ID = "SORT_BY_ID"
     NAME = "SORT_BY_NAME"
@@ -6433,7 +6445,7 @@ class v1LaunchTensorboardResponse:
             out["warnings"] = None if self.warnings is None else [x.value for x in self.warnings]
         return out
 
-class v1LaunchWarning(enum.Enum):
+class v1LaunchWarning(DetEnum):
     UNSPECIFIED = "LAUNCH_WARNING_UNSPECIFIED"
     CURRENT_SLOTS_EXCEEDED = "LAUNCH_WARNING_CURRENT_SLOTS_EXCEEDED"
 
@@ -6493,7 +6505,7 @@ class v1ListRolesResponse:
         }
         return out
 
-class v1LocationType(enum.Enum):
+class v1LocationType(DetEnum):
     UNSPECIFIED = "LOCATION_TYPE_UNSPECIFIED"
     EXPERIMENT = "LOCATION_TYPE_EXPERIMENT"
     HYPERPARAMETERS = "LOCATION_TYPE_HYPERPARAMETERS"
@@ -6533,7 +6545,7 @@ class v1LogEntry:
         }
         return out
 
-class v1LogLevel(enum.Enum):
+class v1LogLevel(DetEnum):
     UNSPECIFIED = "LOG_LEVEL_UNSPECIFIED"
     TRACE = "LOG_LEVEL_TRACE"
     DEBUG = "LOG_LEVEL_DEBUG"
@@ -6680,7 +6692,7 @@ class v1MetricBatchesResponse:
             out["batches"] = self.batches
         return out
 
-class v1MetricType(enum.Enum):
+class v1MetricType(DetEnum):
     UNSPECIFIED = "METRIC_TYPE_UNSPECIFIED"
     TRAINING = "METRIC_TYPE_TRAINING"
     VALIDATION = "METRIC_TYPE_VALIDATION"
@@ -7309,7 +7321,7 @@ class v1NotifyContainerRunningResponse:
         }
         return out
 
-class v1OrderBy(enum.Enum):
+class v1OrderBy(DetEnum):
     UNSPECIFIED = "ORDER_BY_UNSPECIFIED"
     ASC = "ORDER_BY_ASC"
     DESC = "ORDER_BY_DESC"
@@ -8060,7 +8072,7 @@ class v1Permission:
             out["scopeTypeMask"] = None if self.scopeTypeMask is None else self.scopeTypeMask.to_json(omit_unset)
         return out
 
-class v1PermissionType(enum.Enum):
+class v1PermissionType(DetEnum):
     UNSPECIFIED = "PERMISSION_TYPE_UNSPECIFIED"
     ADMINISTRATE_USER = "PERMISSION_TYPE_ADMINISTRATE_USER"
     CREATE_EXPERIMENT = "PERMISSION_TYPE_CREATE_EXPERIMENT"
@@ -9396,7 +9408,7 @@ class v1ResourceAllocationAggregatedResponse:
         }
         return out
 
-class v1ResourceAllocationAggregationPeriod(enum.Enum):
+class v1ResourceAllocationAggregationPeriod(DetEnum):
     UNSPECIFIED = "RESOURCE_ALLOCATION_AGGREGATION_PERIOD_UNSPECIFIED"
     DAILY = "RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY"
     MONTHLY = "RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY"
@@ -9967,7 +9979,7 @@ class v1ResourcePoolPrioritySchedulerDetail:
             out["k8Priorities"] = None if self.k8Priorities is None else [x.to_json(omit_unset) for x in self.k8Priorities]
         return out
 
-class v1ResourcePoolType(enum.Enum):
+class v1ResourcePoolType(DetEnum):
     UNSPECIFIED = "RESOURCE_POOL_TYPE_UNSPECIFIED"
     AWS = "RESOURCE_POOL_TYPE_AWS"
     GCP = "RESOURCE_POOL_TYPE_GCP"
@@ -10348,7 +10360,7 @@ class v1RunnableOperation:
             out["type"] = None if self.type is None else self.type.value
         return out
 
-class v1RunnableType(enum.Enum):
+class v1RunnableType(DetEnum):
     UNSPECIFIED = "RUNNABLE_TYPE_UNSPECIFIED"
     TRAIN = "RUNNABLE_TYPE_TRAIN"
     VALIDATE = "RUNNABLE_TYPE_VALIDATE"
@@ -10379,12 +10391,12 @@ class v1SSOProvider:
         }
         return out
 
-class v1Scale(enum.Enum):
+class v1Scale(DetEnum):
     UNSPECIFIED = "SCALE_UNSPECIFIED"
     LINEAR = "SCALE_LINEAR"
     LOG = "SCALE_LOG"
 
-class v1SchedulerType(enum.Enum):
+class v1SchedulerType(DetEnum):
     UNSPECIFIED = "SCHEDULER_TYPE_UNSPECIFIED"
     PRIORITY = "SCHEDULER_TYPE_PRIORITY"
     FAIR_SHARE = "SCHEDULER_TYPE_FAIR_SHARE"
@@ -11687,7 +11699,7 @@ class v1TrialEarlyExit:
         }
         return out
 
-class v1TrialEarlyExitExitedReason(enum.Enum):
+class v1TrialEarlyExitExitedReason(DetEnum):
     UNSPECIFIED = "EXITED_REASON_UNSPECIFIED"
     INVALID_HP = "EXITED_REASON_INVALID_HP"
     INIT_INVALID_HP = "EXITED_REASON_INIT_INVALID_HP"
@@ -11718,7 +11730,7 @@ class v1TrialExitedEarly:
         }
         return out
 
-class v1TrialExitedEarlyExitedReason(enum.Enum):
+class v1TrialExitedEarlyExitedReason(DetEnum):
     UNSPECIFIED = "EXITED_REASON_UNSPECIFIED"
     INVALID_HP = "EXITED_REASON_INVALID_HP"
     USER_REQUESTED_STOP = "EXITED_REASON_USER_REQUESTED_STOP"
@@ -12538,7 +12550,7 @@ class v1Trigger:
             out["webhookId"] = self.webhookId
         return out
 
-class v1TriggerType(enum.Enum):
+class v1TriggerType(DetEnum):
     UNSPECIFIED = "TRIGGER_TYPE_UNSPECIFIED"
     EXPERIMENT_STATE_CHANGE = "TRIGGER_TYPE_EXPERIMENT_STATE_CHANGE"
     METRIC_THRESHOLD_EXCEEDED = "TRIGGER_TYPE_METRIC_THRESHOLD_EXCEEDED"
@@ -13019,7 +13031,7 @@ class v1Webhook:
             out["triggers"] = None if self.triggers is None else [x.to_json(omit_unset) for x in self.triggers]
         return out
 
-class v1WebhookType(enum.Enum):
+class v1WebhookType(DetEnum):
     UNSPECIFIED = "WEBHOOK_TYPE_UNSPECIFIED"
     DEFAULT = "WEBHOOK_TYPE_DEFAULT"
     SLACK = "WEBHOOK_TYPE_SLACK"
@@ -13152,7 +13164,7 @@ class v1Workspace:
             out["pinnedAt"] = self.pinnedAt
         return out
 
-class v1WorkspaceState(enum.Enum):
+class v1WorkspaceState(DetEnum):
     UNSPECIFIED = "WORKSPACE_STATE_UNSPECIFIED"
     DELETING = "WORKSPACE_STATE_DELETING"
     DELETE_FAILED = "WORKSPACE_STATE_DELETE_FAILED"

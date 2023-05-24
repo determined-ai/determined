@@ -165,10 +165,8 @@ Before running the Determined agent, :ref:`install Docker <install-docker>` on e
 Configure and Start the Cluster
 ===============================
 
-.. important::
-
-   Ensure that an instance of PostgreSQL is running and accessible from the machine where the
-   Determined master will run.
+Ensure that an instance of PostgreSQL is running and accessible from the machine where the
+Determined master will run.
 
 To start the Determined master, you'll need to first edit the master and agent configuration files.
 

@@ -12,7 +12,7 @@ from termcolor import colored
 from determined import cli
 from determined.cli import render
 from determined.cli.master import format_log_entry
-from determined.common import api, constants
+from determined.common import api
 from determined.common.api import authentication, bindings
 from determined.common.declarative_argparse import Arg, ArgsDescription, Cmd, Group
 from determined.common.experimental import Determined
@@ -28,10 +28,6 @@ def _workload_container_unpack(
     return result
 
 
-def _format_state(state: Union[bindings.checkpointv1State, bindings.experimentv1State]) -> str:
-    return str(state.value).replace("STATE_", "")
-
-
 def _format_validation(validation: Optional[bindings.v1MetricsWorkload]) -> Optional[str]:
     if not validation:
         return None
@@ -43,14 +39,16 @@ def _format_checkpoint(checkpoint: Optional[bindings.v1CheckpointWorkload]) -> L
     if not checkpoint:
         return [None, None, None]
 
-    state = _format_state(checkpoint.state)
-    if state in (constants.COMPLETED, constants.DELETED):
+    if checkpoint.state in (
+        bindings.checkpointv1State.COMPLETED,
+        bindings.checkpointv1State.DELETED,
+    ):
         return [
-            state,
+            checkpoint.state,
             checkpoint.uuid,
             json.dumps(checkpoint.metadata, indent=4),
         ]
-    elif state in (constants.ACTIVE, constants.ERROR):
+    elif checkpoint.state in (bindings.checkpointv1State.ACTIVE, bindings.checkpointv1State.ERROR):
         return [checkpoint.state, None, json.dumps(checkpoint.metadata, indent=4)]
     else:
         raise AssertionError("Invalid checkpoint state: {}".format(checkpoint.state))

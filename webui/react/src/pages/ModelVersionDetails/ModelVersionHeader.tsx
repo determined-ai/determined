@@ -1,9 +1,7 @@
-import { LeftOutlined } from '@ant-design/icons';
 import { Modal, Space, Typography } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import InfoBox, { InfoRow } from 'components/InfoBox';
-import Breadcrumb from 'components/kit/Breadcrumb';
 import Button from 'components/kit/Button';
 import ClipboardButton from 'components/kit/ClipboardButton';
 import Dropdown, { MenuItem, MenuOption } from 'components/kit/Dropdown';
@@ -11,18 +9,15 @@ import Icon from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
 import Tags, { tagsActionHelper } from 'components/kit/Tags';
 import Avatar from 'components/kit/UserAvatar';
-import Link from 'components/Link';
 import ModelDownloadModal from 'components/ModelDownloadModal';
 import ModelVersionDeleteModal from 'components/ModelVersionDeleteModal';
 import ModelVersionEditModal from 'components/ModelVersionEditModal';
 import TimeAgo from 'components/TimeAgo';
 import usePermissions from 'hooks/usePermissions';
-import { WorkspaceDetailsTab } from 'pages/WorkspaceDetails';
-import { paths } from 'routes/utils';
 import Spinner from 'shared/components/Spinner';
 import { formatDatetime } from 'shared/utils/datetime';
 import userStore from 'stores/users';
-import { ModelVersion, Workspace } from 'types';
+import { ModelVersion } from 'types';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 import { getDisplayName } from 'utils/user';
@@ -33,7 +28,6 @@ interface Props {
   modelVersion: ModelVersion;
   fetchModelVersion: () => Promise<void>;
   onUpdateTags: (newTags: string[]) => Promise<void>;
-  workspace: Workspace;
 }
 
 const MenuKey = {
@@ -45,7 +39,6 @@ const MenuKey = {
 
 const ModelVersionHeader: React.FC<Props> = ({
   modelVersion,
-  workspace,
   onUpdateTags,
   fetchModelVersion,
 }: Props) => {
@@ -183,37 +176,6 @@ with det.import_from_path(path + "/code"):
 
   return (
     <header className={css.base}>
-      <div className={css.breadcrumbs}>
-        <Breadcrumb separator="">
-          <Breadcrumb.Item>
-            <Link path={paths.modelDetails(String(modelVersion.model.id))}>
-              <LeftOutlined style={{ marginRight: 10 }} />
-            </Link>
-          </Breadcrumb.Item>
-          <Breadcrumb.Item>
-            <Link
-              path={
-                workspace.id === 1 ? paths.projectDetails(1) : paths.workspaceDetails(workspace.id)
-              }>
-              {workspace.name}
-            </Link>
-          </Breadcrumb.Item>
-          <Breadcrumb.Separator />
-          <Breadcrumb.Item>
-            <Link path={paths.workspaceDetails(workspace.id, WorkspaceDetailsTab.ModelRegistry)}>
-              Model Registry
-            </Link>
-          </Breadcrumb.Item>
-          <Breadcrumb.Separator />
-          <Breadcrumb.Item>
-            <Link path={paths.modelDetails(String(modelVersion.model.id))}>
-              {modelVersion.model.name} ({modelVersion.model.id})
-            </Link>
-          </Breadcrumb.Item>
-          <Breadcrumb.Separator />
-          <Breadcrumb.Item>Version {modelVersion.version}</Breadcrumb.Item>
-        </Breadcrumb>
-      </div>
       <div className={css.headerContent}>
         <div className={css.mainRow}>
           <div className={css.title}>

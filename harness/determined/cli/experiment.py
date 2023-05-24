@@ -377,7 +377,7 @@ def describe(args: Namespace) -> None:
     values: List[List] = [
         [
             exp.id,
-            exp.state.value.replace("STATE_", ""),
+            exp.state,
             render.format_percent(exp.progress),
             render.format_time(exp.startTime),
             render.format_time(exp.endTime),

@@ -1,0 +1,179 @@
+#!/usr/bin/env python3
+
+# ==== PR merged
+# - if label, do cherry-pick
+# - if no label, add tracking issue to next release as "Needs testing"
+
+# ==== PR labeled
+# - if open, add PR to current release as "Fix (open)"
+# - if closed, remove from next release, do cherry-pick
+
+# ==== PR unlabeled
+# - if open, remove from current release as "Fix (open)"
+# - if closed, ???
+
+# ==== cherry-pick conflict resolved
+# - confirm cherry-pick was actually done
+# - remove PR from current release as "Fix (conflict)"
+# - add tracking issue to current release as "Needs testing"
+
+# ==== cherry-pick (internal)
+# - run Git to get branches and cherry-pick
+# - if success, push branches, add tracking issue to current release as "Needs testing"
+# - if fail, notify and add PR to current release as "Fix (conflict)"
+
+import argparse
+import os
+import re
+import subprocess
+import sys
+from typing import Callable, Optional
+
+import gql
+
+TEST = os.environ.get("RELEASE_TEST") == "1"
+
+
+ORG = "determined-ai"
+ISSUES_REPO = "release-party-issues-test" if TEST else "release-party-issues"
+
+CHERRY_PICK_LABEL = "to-cherry-pick"
+
+NEEDS_TESTING_STATUS = "Needs testing"
+FIX_OPEN_STATUS = "Fix (open)"
+FIX_CONFLICT_STATUS = "Fix (conflict)"
+
+
+def make_issue_for_pr(issue_repo_id: str, pr_id: str) -> str:
+    pr_info = gql.get_pr_info(id=pr_id)["node"]
+    pr_repo = pr_info["repository"]["name"]
+    pr_num = pr_info["number"]
+    pr_title = pr_info["title"]
+    pr_url = pr_info["url"]
+    title = f"Test {pr_repo}#{pr_num} ({pr_title})"
+    print(f"Creating tracking issue '{title}'")
+    return gql.create_issue(repo=issue_repo_id, title=title, body=pr_url)["createIssue"]["issue"][
+        "id"
+    ]
+
+
+def add_item_to_project(project_id: str, item_id: str, status: str) -> None:
+    status_info = gql.get_status_field_info(project=project_id)["node"]["field"]
+    status_field_id = status_info["id"]
+    status_value_id = next(v["id"] for v in status_info["options"] if v["name"] == status)
+    item_id = gql.add_item_to_project(project=project_id, item=item_id)["addProjectV2ItemById"][
+        "item"
+    ]["id"]
+    gql.set_project_item_status(
+        project=project_id, item=item_id, field=status_field_id, value=status_value_id
+    )
+
+
+def add_tracking_issue_to_project(project_id: str, pr_id: str, status: str) -> None:
+    issue_repo_id = gql.get_repo_id(owner=ORG, name=ISSUES_REPO)["repository"]["id"]
+    issue_id = make_issue_for_pr(issue_repo_id, pr_id)
+    add_item_to_project(project_id, issue_id, status)
+
+
+def find_project(owner: str, query: str, filt: Callable[[dict], bool]) -> dict:
+    all_projects = gql.search_projects(owner=owner, q=query)["organization"]["projectsV2"]["nodes"]
+    return next(p for p in all_projects if filt(p))
+
+
+def next_project_id() -> str:
+    return find_project(
+        ORG, "Next release", lambda p: p["title"] == "TEST Next release" if TEST else "Next release"
+    )["id"]
+
+
+def current_project_id() -> str:
+    return find_project(
+        ORG,
+        "Current release",
+        lambda p: p["title"].startswith("TEST Current release" if TEST else "Current release"),
+    )["id"]
+
+
+def cherry_pick_pr(pr_id: str) -> None:
+    commit = gql.get_pr_merge_commit(id=pr_id)["node"]["mergeCommit"]["oid"]
+    print(f"Cherry-picking {commit}")
+
+    try:
+        # TODO Actually run Git to do the cherry-pick.
+        status = NEEDS_TESTING_STATUS
+    except subprocess.CalledProcessError:
+        # TODO Notify a human.
+        status = FIX_CONFLICT_STATUS
+
+    add_tracking_issue_to_project(current_project_id(), pr_id, status)
+
+
+class Actions:
+    @staticmethod
+    def pr_merged(pr_id: str):
+        title = gql.get_pr_title(id=pr_id)["node"]["title"]
+        if re.match("(feat|fix):", title) is not None:
+            print("Adding feat/fix PR")
+        elif re.match("[a-z]+:", title) is not None:
+            print("Skipping non-feat/fix PR")
+            return
+        else:
+            print("Adding PR of unknown type")
+
+        pr_labels = gql.get_pr_labels(id=pr_id)["node"]["labels"]["nodes"]
+        print("Labels of merged PR:", [label["name"] for label in pr_labels])
+        if any(label["name"] == CHERRY_PICK_LABEL for label in pr_labels):
+            print("Cherry-picking labeled merged PR")
+            cherry_pick_pr(pr_id)
+        else:
+            print("Adding merged PR to next release project")
+            add_tracking_issue_to_project(next_project_id(), pr_id, NEEDS_TESTING_STATUS)
+
+    @staticmethod
+    def pr_labeled(pr_id: str, label: str):
+        if label != CHERRY_PICK_LABEL:
+            return
+
+        state = gql.get_pr_state(id=pr_id)["node"]["state"]
+        if state == "OPEN":
+            print("Adding labeled open PR to current release project")
+            add_item_to_project(current_project_id(), pr_id, FIX_OPEN_STATUS)
+        elif state == "MERGED":
+            # TODO Maybe delete the tracking issue in the next release that was
+            # created when this merged without a label.
+            print("Cherry-picking labeled merged PR")
+            cherry_pick_pr(pr_id)
+        elif state == "CLOSED":
+            print("Ignoring label addition to closed PR")
+
+    @staticmethod
+    def pr_unlabeled(pr_id: str, label: str):
+        if label != CHERRY_PICK_LABEL:
+            return
+
+        state = gql.get_pr_state(id=pr_id)["node"]["state"]
+        if state == "OPEN":
+            print("Removing unlabeled open PR from current release project")
+            gql.delete_project_item(project=current_project_id(), item=pr_id)
+        else:
+            print(f"Ignoring label removal from {state.lower()} PR")
+
+    @staticmethod
+    def cherry_pick_conflict_resolved(pr_id: str):
+        # TODO Use Git to confirm the cherry-pick was done.
+        project_id = current_project_id()
+        gql.delete_project_item(project=project_id, item=pr_id)
+        add_tracking_issue_to_project(project_id, pr_id, NEEDS_TESTING_STATUS)
+
+
+def main(args):
+    if not args:
+        print("Must provide an action!")
+        return 1
+
+    action = args.pop(0).replace("-", "_")
+    return getattr(Actions, action)(*args)
+
+
+if __name__ == "__main__":
+    exit(main(sys.argv[1:]))

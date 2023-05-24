@@ -33,7 +33,6 @@ function useOutsideClickHandler(ref: MutableRefObject<any>, handler: (event: Eve
 }
 
 export interface TableContextMenuProps extends MenuProps {
-  fetchExperiments: () => Promise<void>;
   handleUpdateExperimentList: (action: BatchAction, successfulIds: number[]) => void;
   open: boolean;
   experiment: ProjectExperiment;
@@ -41,25 +40,26 @@ export interface TableContextMenuProps extends MenuProps {
   link?: string;
   x: number;
   y: number;
+  onComplete?: () => void;
 }
 
 export const TableContextMenu: React.FC<TableContextMenuProps> = ({
   experiment,
-  fetchExperiments,
   handleUpdateExperimentList,
   handleClose,
   open,
   link,
   x,
   y,
+  onComplete,
 }) => {
   const containerRef = useRef(null);
   useOutsideClickHandler(containerRef, handleClose);
 
-  const onComplete = useCallback(async () => {
-    await fetchExperiments();
+  const handleComplete = useCallback(() => {
+    onComplete?.();
     handleClose();
-  }, [fetchExperiments, handleClose]);
+  }, [handleClose, onComplete]);
 
   return (
     <div
@@ -75,7 +75,7 @@ export const TableContextMenu: React.FC<TableContextMenuProps> = ({
         handleUpdateExperimentList={handleUpdateExperimentList}
         link={link}
         makeOpen={open}
-        onComplete={onComplete}
+        onComplete={handleComplete}
         onLink={handleClose}
         onVisibleChange={() => handleClose()}>
         <div />
