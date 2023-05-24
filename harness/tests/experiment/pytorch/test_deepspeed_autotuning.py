@@ -1509,7 +1509,7 @@ class TestHFConfigOverwriting:
                         hf_flag = args[idx]
                         ds_key = hf_flag_to_ds_key[hf_flag]
                         expected_hf_value = HPARAMS_FIXTURE[_defaults.OVERWRITE_KEY][ds_key]
-                        actual_hf_value = HPARAMS_FIXTURE[_defaults.OVERWRITE_KEY][ds_key]
+                        actual_hf_value = int(args[idx + 1])
                         assert actual_hf_value == expected_hf_value
 
     @pytest.mark.timeout(5)
@@ -1533,6 +1533,43 @@ class TestHFConfigOverwriting:
                 overwritten_ds_config = json.load(f)
                 for k, v in overwrite_dict.items():
                     assert overwritten_ds_config.get(k) == v
+
+    @pytest.mark.timeout(5)
+    def test_no_auto_in_cli_args(self) -> None:
+        """
+        Verify that if the user has an "overwrite_deepspeed_args" key in their hparam dict, but the
+        ds config json still has "auto" for batch size arguments, these "auto" settings are not
+        propagated as CLI args.  Needed for cases where the user wants to overwrite some json
+        fields via the yaml config, but still wants to configure the batch size through HF CLI
+        entrypoint flags.
+        """
+        optional_arg_possibilities: List[List[str]] = [
+            [],
+            ["--per_device_train_batch_size", "8"],
+            ["--gradient_accumulation_steps", "4"],
+            ["--per_device_train_batch_size", "8", "--gradient_accumulation_steps", "4"],
+        ]
+        for optional_args in optional_arg_possibilities:
+            with tempfile.TemporaryDirectory() as d:
+                ds_config_path = pathlib.Path(d).joinpath("ds_config.json")
+                shutil.copyfile(HF_DS_CONFIG_PATH, ds_config_path)
+                args = (
+                    DEFAULT_HF_ARGS_WITHOUT_DEEPSPEED
+                    + ["--deepspeed", str(ds_config_path)]
+                    + optional_args
+                )
+                hparams = copy.deepcopy(HPARAMS_FIXTURE)
+                # Make the overwrite section non-trivial, but also independent of batch-size args.
+                hparams[_defaults.OVERWRITE_KEY] = {"arbitrary": 0}
+                args = get_hf_args_with_overwrites(args=args, hparams=hparams)
+                hf_flag_to_ds_key = {
+                    "--per_device_train_batch_size": "train_micro_batch_size_per_gpu",
+                    "--gradient_accumulation_steps": "gradient_accumulation_steps",
+                }
+                for idx in range(len(args)):
+                    if args[idx] in hf_flag_to_ds_key:
+                        actual_hf_value = args[idx + 1]
+                        assert actual_hf_value != "auto"
 
 
 class DSATMockMaster(MockMaster):
