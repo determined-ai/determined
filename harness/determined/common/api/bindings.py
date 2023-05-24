@@ -9340,6 +9340,32 @@ class v1RendezvousInfo:
         }
         return out
 
+class v1ReportTrialMetricsRequest:
+
+    def __init__(
+        self,
+        *,
+        metrics: "v1TrialMetrics",
+        type: str,
+    ):
+        self.metrics = metrics
+        self.type = type
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1ReportTrialMetricsRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "metrics": v1TrialMetrics.from_json(obj["metrics"]),
+            "type": obj["type"],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "metrics": self.metrics.to_json(omit_unset),
+            "type": self.type,
+        }
+        return out
+
 class v1ResourceAllocationAggregatedEntry:
 
     def __init__(
@@ -16879,6 +16905,27 @@ def post_ReportCheckpoint(
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_ReportCheckpoint", _resp)
+
+def post_ReportTrialMetrics(
+    session: "api.Session",
+    *,
+    body: "v1ReportTrialMetricsRequest",
+    metrics_trialId: int,
+) -> None:
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/trials/{metrics_trialId}/metrics",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("post_ReportTrialMetrics", _resp)
 
 def post_ReportTrialProgress(
     session: "api.Session",

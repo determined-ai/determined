@@ -1028,6 +1028,17 @@ service Determined {
       tags: "Internal"
     };
   }
+  // Record metrics for specified trial.
+  rpc ReportTrialMetrics(ReportTrialMetricsRequest)
+      returns (ReportTrialMetricsResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/trials/{metrics.trial_id}/metrics"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
   // Record training metrics for specified training.
   rpc ReportTrialTrainingMetrics(ReportTrialTrainingMetricsRequest)
       returns (ReportTrialTrainingMetricsResponse) {
@@ -1038,6 +1049,7 @@ service Determined {
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Internal"
     };
+    option deprecated = true;
   }
   // Record validation metrics.
   rpc ReportTrialValidationMetrics(ReportTrialValidationMetricsRequest)
@@ -1049,6 +1061,7 @@ service Determined {
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Internal"
     };
+    option deprecated = true;
   }
   // Record a checkpoint.
   rpc ReportCheckpoint(ReportCheckpointRequest)
