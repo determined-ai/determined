@@ -45,15 +45,16 @@ class WorkspaceStore extends PollingStore {
     });
   });
 
-  public getWorkspace(id: Loadable<number>): Observable<Loadable<Workspace | null>> {
-    return this.workspaces.select((loadable) =>
-      Loadable.quickMatch(id, NotLoaded, (wid) =>
+  public getWorkspace(id: number | Loadable<number>): Observable<Loadable<Workspace | null>> {
+    return this.workspaces.select((loadable) => {
+      const loadableID = Loadable.isLoadable(id) ? id : Loaded(id);
+      return Loadable.quickMatch(loadableID, NotLoaded, (wid) =>
         Loadable.quickMatch(loadable, NotLoaded, (workspaces) => {
           const workspace = workspaces.find((workspace) => workspace.id === wid);
           return workspace ? Loaded(workspace) : Loaded(null);
         }),
-      ),
-    );
+      );
+    });
   }
 
   public archiveWorkspace(id: number): Promise<void> {

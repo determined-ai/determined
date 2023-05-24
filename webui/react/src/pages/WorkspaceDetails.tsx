@@ -20,7 +20,7 @@ import userStore from 'stores/users';
 import workspaceStore from 'stores/workspaces';
 import { User } from 'types';
 import handleError from 'utils/error';
-import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
+import { Loadable, NotLoaded } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 
 import ModelRegistry from '../components/ModelRegistry';
@@ -72,7 +72,7 @@ const WorkspaceDetails: React.FC = () => {
   const navigate = useNavigate();
   const { canViewWorkspace, canViewModelRegistry, loading: rbacLoading } = usePermissions();
 
-  const loadableWorkspace = useObservable(workspaceStore.getWorkspace(Loaded(id)));
+  const loadableWorkspace = useObservable(workspaceStore.getWorkspace(id));
   const workspace = Loadable.getOrElse(undefined, loadableWorkspace);
 
   const fetchGroups = useCallback(async (): Promise<void> => {

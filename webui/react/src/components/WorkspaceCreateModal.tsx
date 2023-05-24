@@ -16,7 +16,7 @@ import { routeToReactUrl } from 'shared/utils/routes';
 import workspaceStore from 'stores/workspaces';
 import { Workspace } from 'types';
 import handleError from 'utils/error';
-import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
+import { Loadable, NotLoaded } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 
 const FORM_ID = 'new-workspace-form';
@@ -74,7 +74,7 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
     [form],
   );
 
-  const loadableWorkspace = useObservable(workspaceStore.getWorkspace(Loaded(workspaceId || 0)));
+  const loadableWorkspace = useObservable(workspaceStore.getWorkspace(workspaceId || 0));
   const workspace = Loadable.getOrElse(undefined, loadableWorkspace);
   useEffect(() => {
     initFields(workspace || undefined);
