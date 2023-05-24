@@ -158,6 +158,4 @@ class GCSStorageManager(storage.CloudStorageManager):
             logging.debug(f"Deleting {blob_name} from GCS")
             blob_name_to_blob[blob_name].delete()
 
-        if "metadata.json" in resources:
-            del resources["metadata.json"]
         return resources

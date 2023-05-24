@@ -248,6 +248,53 @@ func TestPatchCheckpoint(t *testing.T) {
 		require.Equal(t, 0, getTrialSizeFromUUID(ctx, t, uuid))
 		require.Equal(t, 0, getExperimentSizeFromUUID(ctx, t, uuid))
 	}
+
+	// Test metadata.json special handling.
+	startingResources = map[string]int64{
+		"test": 1,
+	}
+	for _, uuid := range []string{
+		createVersionOneCheckpoint(ctx, t, api, curUser, startingResources),
+		createVersionTwoCheckpoint(ctx, t, api, curUser, startingResources),
+	} {
+		// Sending extra metadata.json is fine.
+		_, err := api.PatchCheckpoints(ctx, &apiv1.PatchCheckpointsRequest{
+			Checkpoints: []*checkpointv1.PatchCheckpoint{
+				{
+					Uuid: uuid,
+					Resources: &checkpointv1.PatchCheckpoint_OptionalResources{
+						Resources: map[string]int64{"test": 1, "metadata.json": 2},
+					},
+				},
+			},
+		})
+		require.NoError(t, err)
+		actualSize, actualResources, actualState := getCheckpointSizeResourcesState(ctx, t, uuid)
+		require.Equal(t, 3, actualSize)
+		require.Equal(t, map[string]int64{"test": 1, "metadata.json": 2}, actualResources)
+		require.Equal(t, model.ActiveState, actualState)
+		require.Equal(t, 3, getTrialSizeFromUUID(ctx, t, uuid))
+		require.Equal(t, 3, getExperimentSizeFromUUID(ctx, t, uuid))
+
+		// Now that we have it not sending it causes partial deletion.
+		_, err = api.PatchCheckpoints(ctx, &apiv1.PatchCheckpointsRequest{
+			Checkpoints: []*checkpointv1.PatchCheckpoint{
+				{
+					Uuid: uuid,
+					Resources: &checkpointv1.PatchCheckpoint_OptionalResources{
+						Resources: map[string]int64{"test": 1},
+					},
+				},
+			},
+		})
+		require.NoError(t, err)
+		actualSize, actualResources, actualState = getCheckpointSizeResourcesState(ctx, t, uuid)
+		require.Equal(t, 1, actualSize)
+		require.Equal(t, map[string]int64{"test": 1}, actualResources)
+		require.Equal(t, model.PartiallyDeletedState, actualState)
+		require.Equal(t, 1, getTrialSizeFromUUID(ctx, t, uuid))
+		require.Equal(t, 1, getExperimentSizeFromUUID(ctx, t, uuid))
+	}
 }
 
 func TestCheckpointAuthZ(t *testing.T) {
