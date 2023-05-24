@@ -1,7 +1,6 @@
 import { PoweroffOutlined } from '@ant-design/icons';
 import { Card as AntDCard, Space } from 'antd';
 import { SelectValue } from 'antd/es/select';
-import UserAvatar from 'components/kit/UserAvatar';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
@@ -34,6 +33,7 @@ import Toggle from 'components/kit/Toggle';
 import Tooltip from 'components/kit/Tooltip';
 import Header from 'components/kit/Typography/Header';
 import Paragraph from 'components/kit/Typography/Paragraph';
+import UserAvatar from 'components/kit/UserAvatar';
 import { useTags } from 'components/kit/useTags';
 import Label from 'components/Label';
 import Logo from 'components/Logo';
@@ -61,7 +61,6 @@ import css from './DesignKit.module.scss';
 
 const ComponentTitles = {
   Accordion: 'Accordion',
-  Avatar: 'Avatar',
   Breadcrumbs: 'Breadcrumbs',
   Buttons: 'Buttons',
   Cards: 'Cards',
@@ -88,6 +87,7 @@ const ComponentTitles = {
   Toggle: 'Toggle',
   Tooltips: 'Tooltips',
   Typography: 'Typography',
+  UserAvatar: 'UserAvatar',
 } as const;
 
 type ComponentNames = ValueOf<typeof ComponentTitles>;
