@@ -57,7 +57,6 @@ from transformers.utils.versions import require_version
 import determined as det
 from determined.integrations.huggingface import DetCallback
 from determined.pytorch import dsat
-from determined.pytorch.dsat import get_hf_args_with_overwrites
 
 # Will error if the minimal version of Transformers is not installed. Remove at your own risks.
 check_min_version("4.28.0")
@@ -284,7 +283,7 @@ def parse_input_arguments(
         args = sys.argv[1:]
         args.extend(dict2args(training_arguments))
         if any("--deepspeed" == arg.strip() for arg in args):
-            args = get_hf_args_with_overwrites(args, hparams)
+            args = dsat.get_hf_args_with_overwrites(args, hparams)
         model_args, data_args, training_args = parser.parse_args_into_dataclasses(
             args, look_for_args_file=False
         )

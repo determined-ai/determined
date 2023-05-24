@@ -35,20 +35,20 @@ def get_base_parser() -> argparse.ArgumentParser:
         "--max-trials",
         type=int,
         default=_defaults.AUTOTUNING_ARG_DEFAULTS["max-trials"],
-        help="Maximum number of Trials to run, including the model profile info Trial",
+        help="Maximum number of trials to run, including the model profile info trial",
     )
     base_parser.add_argument(
         "-ms",
         "--max-slots",
         type=int,
-        help="Maximum number of slots to use concurrently across Trials",
+        help="Maximum number of slots to use concurrently",
     )
     base_parser.add_argument(
         "-mct",
         "--max-concurrent-trials",
         type=int,
         default=_defaults.AUTOTUNING_ARG_DEFAULTS["max-concurrent-trials"],
-        help="Maximum number of Trials to run concurrently",
+        help="Maximum number of trials to run concurrently",
     )
     base_parser.add_argument(
         "-m",
@@ -57,7 +57,11 @@ def get_base_parser() -> argparse.ArgumentParser:
         default=_defaults.AUTOTUNING_ARG_DEFAULTS["metric"],
         choices=_defaults.SMALLER_IS_BETTER_METRICS + _defaults.LARGER_IS_BETTER_METRICS,
     )
-    base_parser.add_argument("--run-full-experiment", action="store_true")
+    base_parser.add_argument(
+        "--run-full-experiment",
+        action="store_true",
+        help="Run full-length experiment using best-found configuration after dsat completes",
+    )
     base_parser.add_argument(
         "-z",
         "--zero-stages",
@@ -84,6 +88,7 @@ def get_base_parser() -> argparse.ArgumentParser:
         "--random_seed",
         type=int,
         default=_defaults.AUTOTUNING_ARG_DEFAULTS["random-seed"],
+        help="Sets all random seeds",
     )
     base_parser.add_argument(
         "--search-runner-config",
@@ -109,12 +114,12 @@ def get_full_parser() -> argparse.ArgumentParser:
         "--trials-per-random-config",
         type=int,
         default=_defaults.AUTOTUNING_ARG_DEFAULTS["trials-per-random-config"],
-        help="Maximum number of Trials to run per random config",
+        help="Maximum number of trials to run per random config",
     )
     random_subparser.add_argument(
         "--early-stopping",
         type=int,
-        help="Terminates the search if a new best config not found in last `early-stopping` Trials",
+        help="Terminates the search if a new best config not found in last `early-stopping` trials",
     )
 
     binary_subparser = subparsers.add_parser("binary", parents=[base_parser])
@@ -137,7 +142,7 @@ def get_full_parser() -> argparse.ArgumentParser:
     asha_subparser.add_argument(
         "--min-binary-search-trials",
         default=_defaults.AUTOTUNING_ARG_DEFAULTS["min-binary-search-trials"],
-        help="Minimum number of binary search Trials to run per random configuration",
+        help="Minimum number of binary search trials to run per random configuration",
     )
     asha_subparser.add_argument(
         "--asha-early-stopping",

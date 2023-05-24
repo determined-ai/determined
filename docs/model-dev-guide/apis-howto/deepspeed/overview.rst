@@ -43,3 +43,4 @@ Determined DeepSpeed documentation:
    deepspeed
    advanced
    pytorch2deepspeed
+   autotuning
