@@ -2,8 +2,7 @@ import pathlib
 
 import mmcv
 import torch
-
-from mmdet.apis import init_detector, inference_detector
+from mmdet.apis import inference_detector, init_detector
 from open_image_dataset import OpenImageDataset
 from torch.profiler import ProfilerActivity
 

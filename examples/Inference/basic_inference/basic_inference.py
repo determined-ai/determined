@@ -3,10 +3,8 @@ import pathlib
 
 import filelock
 import torch
-
 import torchvision as tv
 import torchvision.transforms as transforms
-
 from model import get_model
 from torch.profiler import ProfilerActivity
 
