@@ -49,43 +49,24 @@ export const getTimeInEnglish = (d: Date): string => {
     : `${durationInEnglish(delta, options)} ago`;
 };
 
+/**
+ * Glide Table Theme Reference
+ * https://github.com/glideapps/glide-data-grid/blob/main/packages/core/API.md#theme
+ */
 export const getTheme = (appTheme: Theme): DataEditorProps['theme'] => {
   return {
-    accentLight: appTheme.stage,
+    accentLight: appTheme.stageStrong,
     bgBubble: appTheme.ixStrong,
-    bgCell: appTheme.stageWeak,
+    bgCell: appTheme.stage,
     bgHeader: appTheme.surface,
     bgHeaderHovered: appTheme.surfaceStrong,
-    borderColor: appTheme.stageBorderStrong,
+    borderColor: appTheme.ixBorder,
     fontFamily: appTheme.fontFamily,
-    headerBottomBorderColor: appTheme.stageStrong,
+    headerBottomBorderColor: appTheme.ixBorder,
     headerFontStyle: 'normal 12px',
-    // horizontalBorderColor: appTheme.stageStrong,
-    linkColor: appTheme.statusActive,
-    textBubble: appTheme.stageBorderStrong,
-    textDark: appTheme.stageOnWeak,
-    textHeader: appTheme.stageOnWeak,
-    // bgBubble: '#F5F5F5',
-    // accentColor: '',
-    // accentFg: '',
-    // bgHeaderHasFocus: '',
-    // textLight: '',
-    // bgCellMedium: '',
-    // bgIconHeader: '',
-    // fgIconHeader: '',
-    // bgBubbleSelected: '',
-    // textMedium: '',
-    // bgSearchResult: '',
-    // cellHorizontalPadding: 0,
-    // textHeaderSelected: '',
-    // cellVerticalPadding: 0,
-    // drilldownBorder: '',
-    // editorFontSize: '',
-    // textGroupHeader: '',
-    // baseFontStyle: '',
-    // headerIconSize: 0,
-    // horizontalBorderColor: '',
-    // lineHeight: 0,
-    // linkColor: '',
+    linkColor: appTheme.surfaceOn,
+    textBubble: appTheme.surfaceBorderStrong,
+    textDark: appTheme.surfaceOnWeak,
+    textHeader: appTheme.surfaceOnWeak,
   };
 };
