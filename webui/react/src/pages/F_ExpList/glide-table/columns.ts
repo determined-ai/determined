@@ -218,7 +218,6 @@ export const getColumnDefs = ({
       kind: GridCellKind.Custom,
       readonly: true,
     }),
-    themeOverride: { horizontalBorderColor: '#225588' },
     title: 'Name',
     tooltip: () => undefined,
     width: columnWidths.name,
@@ -382,11 +381,10 @@ export const getColumnDefs = ({
     },
     title: 'User',
     tooltip: (record: ExperimentWithTrial) => {
-      const displayName = Loadable.match(users, {
+      return Loadable.match(users, {
         Loaded: (users) => getDisplayName(users?.find((u) => u.id === record.experiment.userId)),
         NotLoaded: () => undefined,
       });
-      return displayName;
     },
     width: columnWidths.user,
   },

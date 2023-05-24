@@ -1,10 +1,11 @@
-from dataclasses import dataclass, field
 import os
 import re
-from shutil import copy, rmtree
-import swagger_parser
 import typing
-from typing_extensions import assert_never, Literal
+from dataclasses import dataclass, field
+from shutil import copy, rmtree
+
+import swagger_parser
+from typing_extensions import Literal, assert_never
 
 DIRNAME = os.path.dirname(__file__)
 SWAGGER = "proto/build/swagger/determined/api/v1/api.swagger.json"

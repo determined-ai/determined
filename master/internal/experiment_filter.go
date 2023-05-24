@@ -311,9 +311,6 @@ func (e experimentFilterRoot) toSQL(q *bun.SelectQuery) (*bun.SelectQuery, error
 	if err != nil {
 		return nil, err
 	}
-	if !e.ShowArchived {
-		q.Where(`e.archived = false`)
-	}
 	return q, nil
 }
 
@@ -346,10 +343,10 @@ func (e experimentFilter) toSQL(q *bun.SelectQuery,
 			var queryString string
 			switch *e.Operator {
 			case contains:
-				queryString = "? LIKE ?"
+				queryString = "? ILIKE ?"
 				queryArgs = append(queryArgs, bun.Safe(col), fmt.Sprintf("%%%s%%", *e.Value))
 			case doesNotContain:
-				queryString = "? NOT LIKE ?"
+				queryString = "? NOT ILIKE ?"
 				queryArgs = append(queryArgs, bun.Safe(col), fmt.Sprintf("%%%s%%", *e.Value))
 			case empty, notEmpty:
 				queryString = "? ?"

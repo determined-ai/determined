@@ -1,6 +1,9 @@
+import { DataNode } from 'antd/lib/tree';
+
 import * as Api from 'services/api-ts-sdk';
 import { V1AgentUserGroup, V1Group, V1LaunchWarning, V1Trigger } from 'services/api-ts-sdk';
 import { Primitive, RawJson, RecordKey, ValueOf } from 'shared/types';
+import { Loadable } from 'utils/loadable';
 
 interface WithPagination {
   pagination: Api.V1Pagination; // probably should use this or Pagination
@@ -923,3 +926,19 @@ export type UserWithRoleInfo = {
 };
 
 export type UserOrGroupWithRoleInfo = UserWithRoleInfo | GroupWithRoleInfo;
+
+export interface TreeNode extends DataNode {
+  /**
+   * DataNode is the interface antd works with. DateNode properties we are interested in:
+   *
+   * key: we use V1FileNode.path
+   * title: name of node
+   * icon: custom Icon component
+   */
+  children?: TreeNode[];
+  content: Loadable<string>;
+  download?: string;
+  get?: (path: string) => Promise<string>;
+  isConfig?: boolean;
+  isLeaf?: boolean;
+}

@@ -2,6 +2,7 @@ import json
 import sys
 import time
 from typing import List
+
 import requests
 
 
@@ -50,7 +51,6 @@ def getMasterAddress(
     service_port: str,
     token: str,
 ) -> str:
-
     target_service = f"determined-master-service-{service_name}"
 
     if node_port != "true":

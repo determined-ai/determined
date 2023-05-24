@@ -4,11 +4,11 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 import Pivot from 'components/kit/Pivot';
 import Page from 'components/Page';
-import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { ValueOf } from 'shared/types';
 import clusterStore from 'stores/cluster';
+import determinedStore from 'stores/determinedInfo';
 import { useObservable } from 'utils/observable';
 
 import ClusterHistoricalUsage from './Cluster/ClusterHistoricalUsage';
@@ -30,7 +30,7 @@ type Params = {
 const DEFAULT_TAB_KEY = TabType.Overview;
 
 const Clusters: React.FC = () => {
-  const rbacEnabled = useFeature().isOn('rbac');
+  const { rbacEnabled } = useObservable(determinedStore.info);
   const { canAdministrateUsers } = usePermissions();
   const { tab } = useParams<Params>();
   const basePath = paths.clusters();
@@ -83,7 +83,15 @@ const Clusters: React.FC = () => {
   }, [canAdministrateUsers, rbacEnabled]);
 
   return (
-    <Page id="cluster" title={`Cluster ${clusterStatus ? `- ${clusterStatus}` : ''}`}>
+    <Page
+      breadcrumb={[
+        {
+          breadcrumbName: 'Cluster',
+          path: paths.clusters(),
+        },
+      ]}
+      id="cluster"
+      title={`Cluster ${clusterStatus ? `- ${clusterStatus}` : ''}`}>
       <Pivot defaultActiveKey={tabKey} items={tabItems} onChange={handleTabChange} />
     </Page>
   );

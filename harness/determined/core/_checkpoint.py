@@ -179,7 +179,7 @@ class CheckpointContext:
         storage_manager: storage.StorageManager,
         session: api.Session,
         task_id: str,
-        allocation_id: str,
+        allocation_id: Optional[str],
         tbd_sync_mode: core.TensorboardMode,
         tensorboard_manager: tensorboard.TensorboardManager,
     ) -> None:

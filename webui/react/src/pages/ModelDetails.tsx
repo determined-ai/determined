@@ -5,17 +5,14 @@ import { useParams } from 'react-router-dom';
 
 import Input from 'components/kit/Input';
 import { useModal } from 'components/kit/Modal';
+import Notes from 'components/kit/Notes';
 import Tags, { tagsActionHelper } from 'components/kit/Tags';
 import MetadataCard from 'components/Metadata/MetadataCard';
 import ModelDownloadModal from 'components/ModelDownloadModal';
 import ModelVersionDeleteModal from 'components/ModelVersionDeleteModal';
-import NotesCard from 'components/NotesCard';
-import Page from 'components/Page';
+import Page, { BreadCrumbRoute } from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
-import InteractiveTable, {
-  ColumnDef,
-  InteractiveTableSettings,
-} from 'components/Table/InteractiveTable';
+import InteractiveTable, { ColumnDef } from 'components/Table/InteractiveTable';
 import {
   defaultRowClassName,
   getFullPaginationConfig,
@@ -25,7 +22,8 @@ import {
   userRenderer,
 } from 'components/Table/Table';
 import usePermissions from 'hooks/usePermissions';
-import { UpdateSettings, useSettings } from 'hooks/useSettings';
+import { useSettings } from 'hooks/useSettings';
+import { paths } from 'routes/utils';
 import {
   archiveModel,
   getModelDetails,
@@ -42,7 +40,7 @@ import { ErrorType } from 'shared/utils/error';
 import { isAborted, isNotFound, validateDetApiEnum } from 'shared/utils/service';
 import userStore from 'stores/users';
 import workspaceStore from 'stores/workspaces';
-import { Metadata, ModelVersion, ModelVersions } from 'types';
+import { Metadata, ModelVersion, ModelVersions, Note } from 'types';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
@@ -55,6 +53,7 @@ import settingsConfig, {
 import ModelHeader from './ModelDetails/ModelHeader';
 import ModelVersionActionDropdown from './ModelDetails/ModelVersionActionDropdown';
 import css from './ModelDetails.module.scss';
+import { WorkspaceDetailsTab } from './WorkspaceDetails';
 
 type Params = {
   modelId: string;
@@ -318,7 +317,8 @@ const ModelDetails: React.FC = () => {
   );
 
   const saveNotes = useCallback(
-    async (editedNotes: string) => {
+    async (notes: Note) => {
+      const editedNotes = notes.contents;
       try {
         const modelName = model?.model.name;
         if (modelName) {
@@ -402,8 +402,30 @@ const ModelDetails: React.FC = () => {
     return <Spinner spinning tip={`Loading model ${modelId} details...`} />;
   }
 
+  const pageBreadcrumb: BreadCrumbRoute[] = [];
+  if (workspace) {
+    pageBreadcrumb.push(
+      {
+        breadcrumbName: workspace.id !== 1 ? workspace.name : 'Uncategorized Experiments',
+        path: paths.workspaceDetails(workspace.id),
+      },
+      {
+        breadcrumbName: 'Model Registry',
+        path:
+          workspace.id === 1
+            ? paths.modelList()
+            : paths.workspaceDetails(workspace.id, WorkspaceDetailsTab.ModelRegistry),
+      },
+    );
+  }
+  pageBreadcrumb.push({
+    breadcrumbName: `${model.model.name} (${model.model.id})`,
+    path: paths.modelDetails(model.model.name),
+  });
+
   return (
     <Page
+      breadcrumb={pageBreadcrumb}
       containerRef={pageRef}
       docTitle="Model Details"
       headerComponent={
@@ -426,7 +448,7 @@ const ModelDetails: React.FC = () => {
             </p>
           </div>
         ) : (
-          <InteractiveTable
+          <InteractiveTable<ModelVersion, Settings>
             columns={columns}
             containerRef={pageRef}
             ContextMenu={actionDropdown}
@@ -441,16 +463,17 @@ const ModelDetails: React.FC = () => {
             )}
             rowClassName={defaultRowClassName({ clickable: false })}
             rowKey="version"
-            settings={settings as InteractiveTableSettings}
+            settings={settings}
             showSorterTooltip={false}
             size="small"
-            updateSettings={updateSettings as UpdateSettings}
+            updateSettings={updateSettings}
             onChange={handleTableChange}
           />
         )}
-        <NotesCard
+        <Notes
           disabled={model.model.archived || !canModifyModel({ model: model.model })}
-          notes={model.model.notes ?? ''}
+          disableTitle
+          notes={{ contents: model.model.notes ?? '', name: 'Notes' }}
           onSave={saveNotes}
         />
         <MetadataCard

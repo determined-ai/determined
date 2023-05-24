@@ -8,13 +8,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"math/rand"
 	"os"
 	"sort"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	"github.com/uptrace/bun"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -421,6 +424,69 @@ func TestSummaryMetricsMigration(t *testing.T) {
 	}
 }
 
+func TestEpochMetricTypes(t *testing.T) {
+	ctx := context.Background()
+	require.NoError(t, etc.SetRootPath(RootFromDB))
+	db := MustResolveTestPostgres(t)
+	MustMigrateTestPostgres(t, db, MigrationsFromDB)
+
+	user := RequireMockUser(t, db)
+	exp := RequireMockExperiment(t, db, user)
+
+	cases := []struct {
+		epochValue any
+		err        error
+	}{
+		{float64(1.0), nil}, // Floats okay due to json numeric.
+		{float64(1.5), nil},
+		{nil, nil},
+		{math.Inf(1), fmt.Errorf("cannot add metric with non numeric 'epoch' value got Infinity")},
+		{math.Inf(-1), fmt.Errorf("cannot add metric with non numeric 'epoch' value got -Infinity")},
+		{math.NaN(), fmt.Errorf("cannot add metric with non numeric 'epoch' value got NaN")},
+		{int(1), nil},
+		{"Infinity", fmt.Errorf("cannot add metric with non numeric 'epoch' value got Infinity")},
+		{"-Infinity", fmt.Errorf("cannot add metric with non numeric 'epoch' value got -Infinity")},
+		{"NaN", fmt.Errorf("cannot add metric with non numeric 'epoch' value got NaN")},
+		{"x", fmt.Errorf("cannot add metric with non numeric 'epoch' value got x")},
+		{true, fmt.Errorf("cannot add metric with non numeric 'epoch' value got true")},
+		{false, fmt.Errorf("cannot add metric with non numeric 'epoch' value got false")},
+		{[]any{1}, fmt.Errorf("cannot add metric with non numeric 'epoch' value got [1]")},
+		{
+			map[string]any{"a": 1.0},
+			fmt.Errorf(`cannot add metric with non numeric 'epoch' value got map[a:1]`),
+		},
+	}
+	for _, c := range cases {
+		for _, reportTraining := range []bool{true, false} {
+			trial := RequireMockTrial(t, db, exp).ID
+			metrics, err := structpb.NewStruct(map[string]any{
+				"epoch": c.epochValue,
+			})
+			require.NoError(t, err)
+
+			if reportTraining {
+				require.Equal(t, c.err, db.AddTrainingMetrics(ctx, &trialv1.TrialMetrics{
+					TrialId:        int32(trial),
+					TrialRunId:     0,
+					StepsCompleted: 1,
+					Metrics: &commonv1.Metrics{
+						AvgMetrics: metrics,
+					},
+				}), "epochValue=%+v", c.epochValue)
+			} else {
+				require.Equal(t, c.err, db.AddValidationMetrics(ctx, &trialv1.TrialMetrics{
+					TrialId:        int32(trial),
+					TrialRunId:     0,
+					StepsCompleted: 1,
+					Metrics: &commonv1.Metrics{
+						AvgMetrics: metrics,
+					},
+				}), "epochValue=%+v", c.epochValue)
+			}
+		}
+	}
+}
+
 func getLatestValidation(ctx context.Context, t *testing.T, trialID int) (*int, *map[string]any) {
 	type trials struct {
 		bun.BaseModel `bun:"table:trials"`
@@ -586,7 +652,7 @@ func TestAddValidationMetricsDupeCheckpoints(t *testing.T) {
 	require.NoError(t, AddCheckpointMetadata(ctx, &model.CheckpointV2{
 		UUID:         uuid.New(),
 		TaskID:       task.TaskID,
-		AllocationID: a.AllocationID,
+		AllocationID: &a.AllocationID,
 		ReportTime:   time.Now(),
 		State:        model.ActiveState,
 		Metadata:     map[string]any{"steps_completed": 50},
@@ -628,7 +694,7 @@ func TestAddValidationMetricsDupeCheckpoints(t *testing.T) {
 	require.NoError(t, AddCheckpointMetadata(ctx, &model.CheckpointV2{
 		UUID:         checkpoint2UUID,
 		TaskID:       task.TaskID,
-		AllocationID: a.AllocationID,
+		AllocationID: &a.AllocationID,
 		ReportTime:   time.Now(),
 		State:        model.ActiveState,
 		Metadata:     map[string]any{"steps_completed": 400},
@@ -718,7 +784,7 @@ func TestBatchesProcessed(t *testing.T) {
 			require.NoError(t, AddCheckpointMetadata(ctx, &model.CheckpointV2{
 				UUID:         uuid.New(),
 				TaskID:       task.TaskID,
-				AllocationID: a.AllocationID,
+				AllocationID: &a.AllocationID,
 				ReportTime:   time.Now(),
 				State:        model.CompletedState,
 				Metadata:     map[string]any{"steps_completed": batches},
@@ -776,4 +842,87 @@ func TestBatchesProcessed(t *testing.T) {
 		Where("trial_id = ?", tr.ID).Where("archived = true").Count(ctx)
 	require.NoError(t, err)
 	require.Equal(t, 2, archivedValidations, "trial id %d", tr.ID)
+}
+
+func TestConcurrentMetricUpdate(t *testing.T) {
+	ctx := context.Background()
+	require.NoError(t, etc.SetRootPath(RootFromDB))
+	db := MustResolveTestPostgres(t)
+	MustMigrateTestPostgres(t, db, MigrationsFromDB)
+
+	createTrial := func() *model.Trial {
+		exp, activeConfig := model.ExperimentModel()
+		require.NoError(t, db.AddExperiment(exp, activeConfig))
+		task := RequireMockTask(t, db, exp.OwnerID)
+		tr := model.Trial{
+			TaskID:       task.TaskID,
+			JobID:        exp.JobID,
+			ExperimentID: exp.ID,
+			State:        model.ActiveState,
+			StartTime:    time.Now(),
+		}
+		require.NoError(t, db.AddTrial(&tr))
+		a := &model.Allocation{
+			AllocationID: model.AllocationID(fmt.Sprintf("%s-%d", tr.TaskID, 0)),
+			TaskID:       tr.TaskID,
+			StartTime:    ptrs.Ptr(time.Now()),
+		}
+		err := db.AddAllocation(a)
+		require.NoError(t, err, "failed to add allocation")
+
+		dbTr, err := db.TrialByID(tr.ID)
+		require.NoError(t, err)
+		require.Equal(t, 0, dbTr.TotalBatches)
+		return &tr
+	}
+
+	batchNum := 0
+
+	writeToTrial := func(tr *model.Trial, tx *sqlx.Tx) {
+		coinFlip := func() bool {
+			//nolint:gosec // Weak RNG doesn't matter here.
+			return rand.Intn(2) == 0
+		}
+		t.Logf("writing to trial %d", tr.ID)
+
+		batchNum++
+		metrics, err := structpb.NewStruct(map[string]any{"loss": 10})
+		require.NoError(t, err)
+		trialMetrics := &trialv1.TrialMetrics{
+			TrialId:        int32(tr.ID),
+			StepsCompleted: int32(batchNum),
+			Metrics:        &commonv1.Metrics{AvgMetrics: metrics},
+		}
+		if coinFlip() {
+			require.NoError(t, db.updateTotalBatches(ctx, tx, tr.ID))
+		}
+		if coinFlip() {
+			_, err = db._addTrialMetricsTx(ctx, tx, trialMetrics, coinFlip())
+			require.NoError(t, err)
+		}
+		if coinFlip() {
+			require.NoError(t, db.updateTotalBatches(ctx, tx, tr.ID))
+		}
+	}
+
+	writes := 5
+	trials := 10
+	var wg sync.WaitGroup
+	wg.Add(trials)
+
+	for i := 0; i < trials; i++ {
+		go func() {
+			defer wg.Done()
+			tr := createTrial()
+			err := db.withTransaction(fmt.Sprintf("trial %d", tr.ID), func(tx *sqlx.Tx) error {
+				for j := 0; j < writes; j++ {
+					writeToTrial(tr, tx)
+				}
+				return nil
+			})
+			require.NoError(t, err)
+		}()
+	}
+
+	wg.Wait()
 }

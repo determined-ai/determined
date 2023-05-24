@@ -1,13 +1,18 @@
 import { Rectangle } from '@glideapps/glide-data-grid';
-import { observable } from 'micro-observables';
+import { isLeft } from 'fp-ts/lib/Either';
+import { observable, useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
+import { FilterFormStore } from 'components/FilterForm/components/FilterFormStore';
+import { IOFilterFormSet } from 'components/FilterForm/components/type';
+import Empty from 'components/kit/Empty';
 import useResize from 'hooks/useResize';
 import { useSettings } from 'hooks/useSettings';
 import { getProjectColumns, searchExperiments } from 'services/api';
 import { V1BulkExperimentFilters } from 'services/api-ts-sdk';
 import usePolling from 'shared/hooks/usePolling';
+import { getCssVar } from 'shared/themes';
 import {
   ExperimentAction,
   ExperimentItem,
@@ -19,8 +24,9 @@ import {
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 
+import css from './F_ExperimentList.module.scss';
 import { F_ExperimentListSettings, settingsConfigForProject } from './F_ExperimentList.settings';
-import { Error, Loading, NoExperiments, NoMatches } from './glide-table/exceptions';
+import { Error, Loading, NoExperiments } from './glide-table/exceptions';
 import GlideTable, { SCROLL_SET_COUNT_NEEDED } from './glide-table/GlideTable';
 import { EMPTY_SORT, Sort, validSort, ValidSort } from './glide-table/MultiSortMenu';
 import TableActionBar, { BatchAction } from './glide-table/TableActionBar';
@@ -33,8 +39,12 @@ interface Props {
 const makeSortString = (sorts: ValidSort[]): string =>
   sorts.map((s) => `${s.column}=${s.direction}`).join(',');
 
+const formStore = new FilterFormStore();
+
 export const PAGE_SIZE = 100;
+
 const F_ExperimentList: React.FC<Props> = ({ project }) => {
+  const contentRef = useRef<HTMLDivElement>(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const settingsConfig = useMemo(() => settingsConfigForProject(project.id), [project.id]);
 
@@ -63,6 +73,16 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   );
   const [total, setTotal] = useState<Loadable<number>>(NotLoaded);
   const [projectColumns, setProjectColumns] = useState<Loadable<ProjectColumn[]>>(NotLoaded);
+  const [isOpenFilter, setIsOpenFilter] = useState<boolean>(false);
+  const filtersString = useObservable(formStore.asJsonString);
+  const rootFilterChildren = useObservable(formStore.formset).filterGroup.children;
+
+  const onIsOpenFilterChange = useCallback((newOpen: boolean) => {
+    setIsOpenFilter(newOpen);
+    if (!newOpen) {
+      formStore.sweep();
+    }
+  }, []);
 
   useEffect(() => {
     setSearchParams((params) => {
@@ -81,6 +101,20 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, sortString]);
 
+  useEffect(() => {
+    // useSettings load the default value first, and then load the data from DB
+    // use this useEffect to re-init the correct useSettings value when settings.filterset is changed
+    const formSetValidation = IOFilterFormSet.decode(JSON.parse(settings.filterset));
+    if (isLeft(formSetValidation)) {
+      handleError(formSetValidation.left, {
+        publicSubject: 'Unable to initialize filterset from settings',
+      });
+    } else {
+      const formset = formSetValidation.right;
+      formStore.init(formset);
+    }
+  }, [settings.filterset]);
+
   const [selectedExperimentIds, setSelectedExperimentIds] = useState<number[]>([]);
   const [excludedExperimentIds, setExcludedExperimentIds] = useState<Set<number>>(
     new Set<number>(),
@@ -92,9 +126,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const [canceler] = useState(new AbortController());
 
   const colorMap = useGlasbey(selectedExperimentIds);
-  const pageRef = useRef<HTMLElement>(null);
-  const { width } = useResize(pageRef);
-  const { height: wholePageHeight } = useResize();
+  const { height, width } = useResize(contentRef);
   const [scrollPositionSetCount] = useState(observable(0));
 
   const handleScroll = useCallback(
@@ -114,8 +146,11 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   }, [project.id]);
 
   const numFilters = useMemo(
-    () => Object.values(experimentFilters).filter((x) => x !== undefined).length - 1,
-    [experimentFilters],
+    () =>
+      Object.values(experimentFilters).filter((x) => x !== undefined).length -
+      1 +
+      rootFilterChildren.length,
+    [experimentFilters, rootFilterChildren.length],
   );
 
   const resetPagination = useCallback(() => {
@@ -143,6 +178,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
       const response = await searchExperiments(
         {
           ...experimentFilters,
+          filter: filtersString,
           limit: 2 * PAGE_SIZE,
           offset: tableOffset,
           sort: sortString || undefined,
@@ -173,9 +209,11 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [page, experimentFilters, canceler.signal, sortString]);
+  }, [page, experimentFilters, canceler.signal, filtersString, sortString]);
 
   const { stopPolling } = usePolling(fetchExperiments, { rerunOnNewFn: true });
+
+  const onContextMenuComplete = useCallback(fetchExperiments, [fetchExperiments]);
 
   // TODO: poll?
   useEffect(() => {
@@ -202,6 +240,13 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
       stopPolling();
     };
   }, [canceler, stopPolling]);
+
+  useEffect(() => {
+    return formStore.asJsonString.subscribe(() => {
+      resetPagination();
+      updateSettings({ filterset: JSON.stringify(formStore.formset.get()) });
+    });
+  }, [resetPagination, updateSettings]);
 
   const handleOnAction = useCallback(async () => {
     /*
@@ -289,43 +334,47 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
 
   return (
     <>
-      {isLoading ? (
-        <Loading width={width} />
-      ) : experiments.length === 0 ? (
-        numFilters === 0 ? (
-          <NoExperiments />
+      <TableActionBar
+        excludedExperimentIds={excludedExperimentIds}
+        experiments={experiments}
+        filters={experimentFilters}
+        formStore={formStore}
+        handleUpdateExperimentList={handleUpdateExperimentList}
+        initialVisibleColumns={settings.columns}
+        isOpenFilter={isOpenFilter}
+        project={project}
+        projectColumns={projectColumns}
+        selectAll={selectAll}
+        selectedExperimentIds={selectedExperimentIds}
+        setIsOpenFilter={onIsOpenFilterChange}
+        setVisibleColumns={setVisibleColumns}
+        sorts={sorts}
+        total={total}
+        onAction={handleOnAction}
+        onSortChange={onSortChange}
+      />
+      <div className={css.content} ref={contentRef}>
+        {isLoading ? (
+          <Loading width={width} />
+        ) : experiments.length === 0 ? (
+          numFilters === 0 ? (
+            <NoExperiments />
+          ) : (
+            <Empty description="No results matching your filters" icon="search" />
+          )
+        ) : error ? (
+          <Error />
         ) : (
-          <NoMatches />
-        )
-      ) : error ? (
-        <Error />
-      ) : (
-        <>
-          <TableActionBar
-            excludedExperimentIds={excludedExperimentIds}
-            experiments={experiments}
-            filters={experimentFilters}
-            handleUpdateExperimentList={handleUpdateExperimentList}
-            initialVisibleColumns={settings.columns}
-            project={project}
-            projectColumns={projectColumns}
-            selectAll={selectAll}
-            selectedExperimentIds={selectedExperimentIds}
-            setVisibleColumns={setVisibleColumns}
-            sorts={sorts}
-            total={total}
-            onAction={handleOnAction}
-            onSortChange={onSortChange}
-          />
           <GlideTable
             clearSelectionTrigger={clearSelectionTrigger}
             colorMap={colorMap}
             data={experiments}
+            dataTotal={Loadable.getOrElse(0, total)}
             excludedExperimentIds={excludedExperimentIds}
-            fetchExperiments={fetchExperiments}
+            formStore={formStore}
             handleScroll={handleScroll}
             handleUpdateExperimentList={handleUpdateExperimentList}
-            height={wholePageHeight - 150 - 140}
+            height={height - 2 * parseInt(getCssVar('--theme-stroke-width'))}
             page={page}
             project={project}
             projectColumns={projectColumns}
@@ -338,10 +387,12 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
             setSortableColumnIds={setVisibleColumns}
             sortableColumnIds={settings.columns}
             sorts={sorts}
+            onContextMenuComplete={onContextMenuComplete}
+            onIsOpenFilterChange={onIsOpenFilterChange}
             onSortChange={onSortChange}
           />
-        </>
-      )}
+        )}
+      </div>
     </>
   );
 };

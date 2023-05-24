@@ -157,7 +157,7 @@ const NavigationSideBar: React.FC = () => {
       ...dashboardTopNav.concat(topNav),
       { icon: 'model', label: 'Model Registry', path: paths.modelList() },
       { icon: 'tasks', label: 'Tasks', path: paths.taskList() },
-      { icon: 'cluster', label: 'Cluster', path: paths.cluster() },
+      { icon: 'cluster', label: 'Cluster', path: paths.clusters() },
     ];
     if (canEditWebhooks) {
       topItems.splice(topItems.length - 1, 0, {

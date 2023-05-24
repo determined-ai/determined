@@ -4,9 +4,9 @@
  Install Determined
 ####################
 
-This document describes how to deploy a Determined cluster on Google Cloud Platform (GCP). The ``det
-deploy`` tool makes it easy to create and deploy these resources in GCP. The ``det deploy`` tool
-uses `Terraform <https://learn.hashicorp.com/terraform/getting-started/install.html>`__ to
+This user guide describes how to deploy a Determined cluster on Google Cloud Platform (GCP). The
+``det deploy`` tool makes it easy to create and deploy these resources in GCP. The ``det deploy``
+tool uses `Terraform <https://learn.hashicorp.com/terraform/getting-started/install.html>`__ to
 automatically deploy and configure a Determined cluster in GCP. Alternatively, if you already have a
 process for setting up infrastructure with Terraform, you can use our `Terraform modules
 <https://github.com/determined-ai/determined/tree/master/harness/determined/deploy/gcp/terraform>`__

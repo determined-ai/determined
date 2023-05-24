@@ -12,14 +12,6 @@ from determined.experimental import client as _client
 from tests import config as conf
 
 
-@pytest.fixture(scope="session")
-def client() -> _client.Determined:
-    """
-    Reduce logins by having one session-level fixture do the login.
-    """
-    return _client.Determined(conf.make_master_url())
-
-
 @pytest.mark.e2e_cpu
 def test_completed_experiment_and_checkpoint_apis(client: _client.Determined) -> None:
     with open(conf.fixtures_path("no_op/single-one-short-step.yaml")) as f:

@@ -78,8 +78,9 @@ failure or completion is detected by Determined.
 
 #. The ownership of the files is transferred to the launching user (``sudo chown``).
 
-#. A setuid image is executed to impersonate the launching user, which in turn executes the
-   sbatch/qsub command to submit the job.
+#. The batch script is submitted for execution on behalf of the user (``sudo sbatch``, ``sudo
+   qsub``). See :ref:`hpc-security-considerations` for the details of how ``sudo`` is configured and
+   used with the launcher.
 
 #. Upon being scheduled by the workload manager, the batch script is executed and tasks are launched on the allocated compute nodes.
       #. One Determined environment image is started per node (``srun``, ``pbs_tmrsh``) using the

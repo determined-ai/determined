@@ -228,7 +228,7 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 		}
 		allocationmap.UnregisterAllocation(a.model.AllocationID)
 	case sproto.ContainerLog:
-		a.sendEvent(ctx, msg.ToEvent())
+		a.sendTaskLog(ctx, msg.ToTaskLog())
 
 	// These messages allow users (and sometimes an orchestrator, such as HP search)
 	// to interact with the allocation. The usually trace back to API calls.
@@ -241,7 +241,9 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 		if err := a.db.UpdateAllocationState(a.model); err != nil {
 			a.Error(ctx, err)
 		}
-		a.sendEvent(ctx, sproto.Event{ServiceReadyEvent: ptrs.Ptr(true)})
+		a.sendTaskLog(ctx, a.enrichLog(model.TaskLog{
+			Log: fmt.Sprintf("Service of %s is available", a.req.Name),
+		}))
 	case AllocationWaiting:
 		a.setMostProgressedModelState(model.AllocationStateWaiting)
 		if err := a.db.UpdateAllocationState(a.model); err != nil {
@@ -393,7 +395,9 @@ func (a *Allocation) RequestResources(ctx *actor.Context) error {
 	if err := a.rm.Allocate(ctx, a.req); err != nil {
 		return errors.Wrap(err, "failed to request allocation")
 	}
-	a.sendEvent(ctx, sproto.Event{ScheduledEvent: &a.model.AllocationID})
+	a.sendTaskLog(ctx, a.enrichLog(model.TaskLog{
+		Log: fmt.Sprintf("Scheduling %s (id: %s)", a.req.Name, ctx.Self().Parent().Address().Local()),
+	}))
 	return nil
 }
 
@@ -417,7 +421,9 @@ func (a *Allocation) Cleanup(ctx *actor.Context) {
 			ctx.Log().WithError(err).Error("failed to purge restorable resources")
 		}
 
-		a.sendEvent(ctx, sproto.Event{ExitedEvent: ptrs.Ptr("allocation did not exit correctly")})
+		a.sendTaskLog(ctx, a.enrichLog(model.TaskLog{
+			Log: fmt.Sprintf("%s was terminated: %s", a.req.Name, "allocation did not exit correctly"),
+		}))
 		a.rm.Release(ctx, sproto.ResourcesReleased{AllocationRef: ctx.Self()})
 	}
 }
@@ -627,10 +633,11 @@ func (a *Allocation) ResourcesStateChanged(
 			a.registerProxies(ctx, msg.ResourcesStarted.Addresses)
 		}
 
-		a.sendEvent(ctx, sproto.Event{
-			ContainerID:           coalesceString(msg.ContainerIDStr(), ""),
-			ResourcesStartedEvent: msg.ResourcesStarted,
-		})
+		containerID := coalesceString(msg.ContainerIDStr(), "")
+		a.sendTaskLog(ctx, a.enrichLog(model.TaskLog{
+			ContainerID: &containerID,
+			Log:         fmt.Sprintf("Resources for %s have started", a.req.Name),
+		}))
 
 		prom.AssociateAllocationTask(a.req.AllocationID,
 			a.req.TaskID,
@@ -961,7 +968,13 @@ func (a *Allocation) terminated(ctx *actor.Context, reason string) {
 	if a.exitErr != nil {
 		level = ptrs.Ptr(model.LogLevelError)
 	}
-	defer a.sendEvent(ctx, sproto.Event{Level: level, ExitedEvent: &exitReason})
+	defer func() {
+		a.sendTaskLog(ctx, a.enrichLog(model.TaskLog{
+			Level: level,
+			Log:   fmt.Sprintf("%s was terminated: %s", a.req.Name, exitReason),
+		}))
+	}()
+
 	if err := a.purgeRestorableResources(ctx); err != nil {
 		ctx.Log().WithError(err).Error("failed to purge restorable resources")
 	}
@@ -1041,7 +1054,15 @@ func (a *Allocation) terminated(ctx *actor.Context, reason string) {
 // markResourcesStarted persists start information.
 func (a *Allocation) markResourcesStarted(ctx *actor.Context) {
 	a.model.StartTime = ptrs.Ptr(time.Now().UTC().Truncate(time.Millisecond))
-	a.sendEvent(ctx, sproto.Event{AssignedEvent: &sproto.AllocatedEvent{Recovered: a.restored}})
+	if a.restored {
+		a.sendTaskLog(ctx, a.enrichLog(model.TaskLog{
+			Log: fmt.Sprintf("%s was recovered on an agent", a.req.Name),
+		}))
+	} else {
+		a.sendTaskLog(ctx, a.enrichLog(model.TaskLog{
+			Log: fmt.Sprintf("%s was assigned to an agent", a.req.Name),
+		}))
+	}
 	if err := a.db.UpdateAllocationStartTime(a.model); err != nil {
 		ctx.Log().
 			WithError(err).
@@ -1100,24 +1121,6 @@ func (a *Allocation) enrichLog(log model.TaskLog) model.TaskLog {
 
 func (a *Allocation) sendTaskLog(ctx *actor.Context, log model.TaskLog) {
 	a.logger.Insert(ctx, a.enrichLog(log))
-}
-
-func (a *Allocation) sendEvent(ctx *actor.Context, ev sproto.Event) {
-	ev = a.enrichEvent(ctx, ev)
-	a.sendTaskLog(ctx, ev.ToTaskLog())
-	if a.req.StreamEvents != nil {
-		ctx.Tell(a.req.StreamEvents.To, ev)
-	}
-}
-
-func (a *Allocation) enrichEvent(ctx *actor.Context, ev sproto.Event) sproto.Event {
-	ev.ParentID = ctx.Self().Parent().Address().Local()
-	ev.Description = a.req.Name
-	ev.IsReady = coalesceBool(a.model.IsReady, false)
-	if ev.Time.IsZero() {
-		ev.Time = time.Now().UTC()
-	}
-	return ev
 }
 
 // State returns a deepcopy of our state.

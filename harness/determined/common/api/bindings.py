@@ -2,6 +2,7 @@
 import enum
 import json
 import math
+import os
 import typing
 
 import requests
@@ -55,11 +56,22 @@ class APIHttpStreamError(APIHttpError):
         return self.message
 
 
-class GetMasterResponseProduct(enum.Enum):
+class DetEnum(enum.Enum):
+    def __str__(self) -> str:
+        skip = len(self.prefix())
+        return f"{self.value[skip:]}"
+    @classmethod
+    def prefix(cls) -> str:
+        prefix: str = os.path.commonprefix([e.value for e in cls])
+        return prefix if prefix.endswith("_") else ""
+
+
+
+class GetMasterResponseProduct(DetEnum):
     UNSPECIFIED = "PRODUCT_UNSPECIFIED"
     COMMUNITY = "PRODUCT_COMMUNITY"
 
-class GetTrialWorkloadsRequestFilterOption(enum.Enum):
+class GetTrialWorkloadsRequestFilterOption(DetEnum):
     UNSPECIFIED = "FILTER_OPTION_UNSPECIFIED"
     CHECKPOINT = "FILTER_OPTION_CHECKPOINT"
     VALIDATION = "FILTER_OPTION_VALIDATION"
@@ -209,13 +221,13 @@ class TrialFiltersRankWithinExp:
             out["sorter"] = None if self.sorter is None else self.sorter.to_json(omit_unset)
         return out
 
-class TrialProfilerMetricLabelsProfilerMetricType(enum.Enum):
+class TrialProfilerMetricLabelsProfilerMetricType(DetEnum):
     UNSPECIFIED = "PROFILER_METRIC_TYPE_UNSPECIFIED"
     SYSTEM = "PROFILER_METRIC_TYPE_SYSTEM"
     TIMING = "PROFILER_METRIC_TYPE_TIMING"
     MISC = "PROFILER_METRIC_TYPE_MISC"
 
-class TrialSorterNamespace(enum.Enum):
+class TrialSorterNamespace(DetEnum):
     UNSPECIFIED = "NAMESPACE_UNSPECIFIED"
     HPARAMS = "NAMESPACE_HPARAMS"
     TRAINING_METRICS = "NAMESPACE_TRAINING_METRICS"
@@ -247,14 +259,14 @@ class UpdateTrialTagsRequestIds:
             out["ids"] = self.ids
         return out
 
-class checkpointv1State(enum.Enum):
+class checkpointv1State(DetEnum):
     UNSPECIFIED = "STATE_UNSPECIFIED"
     ACTIVE = "STATE_ACTIVE"
     COMPLETED = "STATE_COMPLETED"
     ERROR = "STATE_ERROR"
     DELETED = "STATE_DELETED"
 
-class containerv1State(enum.Enum):
+class containerv1State(DetEnum):
     UNSPECIFIED = "STATE_UNSPECIFIED"
     ASSIGNED = "STATE_ASSIGNED"
     PULLING = "STATE_PULLING"
@@ -262,13 +274,13 @@ class containerv1State(enum.Enum):
     RUNNING = "STATE_RUNNING"
     TERMINATED = "STATE_TERMINATED"
 
-class devicev1Type(enum.Enum):
+class devicev1Type(DetEnum):
     UNSPECIFIED = "TYPE_UNSPECIFIED"
     CPU = "TYPE_CPU"
     CUDA = "TYPE_CUDA"
     ROCM = "TYPE_ROCM"
 
-class experimentv1State(enum.Enum):
+class experimentv1State(DetEnum):
     UNSPECIFIED = "STATE_UNSPECIFIED"
     ACTIVE = "STATE_ACTIVE"
     PAUSED = "STATE_PAUSED"
@@ -287,13 +299,13 @@ class experimentv1State(enum.Enum):
     STARTING = "STATE_STARTING"
     RUNNING = "STATE_RUNNING"
 
-class jobv1State(enum.Enum):
+class jobv1State(DetEnum):
     UNSPECIFIED = "STATE_UNSPECIFIED"
     QUEUED = "STATE_QUEUED"
     SCHEDULED = "STATE_SCHEDULED"
     SCHEDULED_BACKFILLED = "STATE_SCHEDULED_BACKFILLED"
 
-class jobv1Type(enum.Enum):
+class jobv1Type(DetEnum):
     UNSPECIFIED = "TYPE_UNSPECIFIED"
     EXPERIMENT = "TYPE_EXPERIMENT"
     NOTEBOOK = "TYPE_NOTEBOOK"
@@ -336,7 +348,7 @@ class protobufAny:
             out["value"] = self.value
         return out
 
-class protobufNullValue(enum.Enum):
+class protobufNullValue(DetEnum):
     NULL_VALUE = "NULL_VALUE"
 
 class runtimeError:
@@ -447,7 +459,7 @@ class runtimeStreamError:
             out["message"] = self.message
         return out
 
-class taskv1State(enum.Enum):
+class taskv1State(DetEnum):
     UNSPECIFIED = "STATE_UNSPECIFIED"
     PULLING = "STATE_PULLING"
     STARTING = "STATE_STARTING"
@@ -457,7 +469,7 @@ class taskv1State(enum.Enum):
     WAITING = "STATE_WAITING"
     QUEUED = "STATE_QUEUED"
 
-class trialv1State(enum.Enum):
+class trialv1State(DetEnum):
     UNSPECIFIED = "STATE_UNSPECIFIED"
     ACTIVE = "STATE_ACTIVE"
     PAUSED = "STATE_PAUSED"
@@ -677,7 +689,7 @@ class v1ActivateExperimentsResponse:
         }
         return out
 
-class v1ActivityType(enum.Enum):
+class v1ActivityType(DetEnum):
     UNSPECIFIED = "ACTIVITY_TYPE_UNSPECIFIED"
     GET = "ACTIVITY_TYPE_GET"
 
@@ -924,69 +936,53 @@ class v1AggregateQueueStats:
         return out
 
 class v1Allocation:
-    allocationId: "typing.Optional[str]" = None
     endTime: "typing.Optional[str]" = None
-    isReady: "typing.Optional[bool]" = None
     startTime: "typing.Optional[str]" = None
-    state: "typing.Optional[taskv1State]" = None
-    taskId: "typing.Optional[str]" = None
 
     def __init__(
         self,
         *,
-        allocationId: "typing.Union[str, None, Unset]" = _unset,
+        allocationId: str,
+        isReady: bool,
+        state: "taskv1State",
+        taskId: str,
         endTime: "typing.Union[str, None, Unset]" = _unset,
-        isReady: "typing.Union[bool, None, Unset]" = _unset,
         startTime: "typing.Union[str, None, Unset]" = _unset,
-        state: "typing.Union[taskv1State, None, Unset]" = _unset,
-        taskId: "typing.Union[str, None, Unset]" = _unset,
     ):
-        if not isinstance(allocationId, Unset):
-            self.allocationId = allocationId
+        self.allocationId = allocationId
+        self.isReady = isReady
+        self.state = state
+        self.taskId = taskId
         if not isinstance(endTime, Unset):
             self.endTime = endTime
-        if not isinstance(isReady, Unset):
-            self.isReady = isReady
         if not isinstance(startTime, Unset):
             self.startTime = startTime
-        if not isinstance(state, Unset):
-            self.state = state
-        if not isinstance(taskId, Unset):
-            self.taskId = taskId
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Allocation":
         kwargs: "typing.Dict[str, typing.Any]" = {
+            "allocationId": obj["allocationId"],
+            "isReady": obj["isReady"],
+            "state": taskv1State(obj["state"]),
+            "taskId": obj["taskId"],
         }
-        if "allocationId" in obj:
-            kwargs["allocationId"] = obj["allocationId"]
         if "endTime" in obj:
             kwargs["endTime"] = obj["endTime"]
-        if "isReady" in obj:
-            kwargs["isReady"] = obj["isReady"]
         if "startTime" in obj:
             kwargs["startTime"] = obj["startTime"]
-        if "state" in obj:
-            kwargs["state"] = taskv1State(obj["state"]) if obj["state"] is not None else None
-        if "taskId" in obj:
-            kwargs["taskId"] = obj["taskId"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
+            "allocationId": self.allocationId,
+            "isReady": self.isReady,
+            "state": self.state.value,
+            "taskId": self.taskId,
         }
-        if not omit_unset or "allocationId" in vars(self):
-            out["allocationId"] = self.allocationId
         if not omit_unset or "endTime" in vars(self):
             out["endTime"] = self.endTime
-        if not omit_unset or "isReady" in vars(self):
-            out["isReady"] = self.isReady
         if not omit_unset or "startTime" in vars(self):
             out["startTime"] = self.startTime
-        if not omit_unset or "state" in vars(self):
-            out["state"] = None if self.state is None else self.state.value
-        if not omit_unset or "taskId" in vars(self):
-            out["taskId"] = self.taskId
         return out
 
 class v1AllocationAllGatherRequest:
@@ -1891,7 +1887,7 @@ class v1ColumnFilter:
             out["name"] = self.name
         return out
 
-class v1ColumnType(enum.Enum):
+class v1ColumnType(DetEnum):
     UNSPECIFIED = "COLUMN_TYPE_UNSPECIFIED"
     TEXT = "COLUMN_TYPE_TEXT"
     NUMBER = "COLUMN_TYPE_NUMBER"
@@ -2114,6 +2110,7 @@ class v1CreateExperimentRequest:
     parentId: "typing.Optional[int]" = None
     projectId: "typing.Optional[int]" = None
     template: "typing.Optional[str]" = None
+    unmanaged: "typing.Optional[bool]" = None
     validateOnly: "typing.Optional[bool]" = None
 
     def __init__(
@@ -2129,6 +2126,7 @@ class v1CreateExperimentRequest:
         parentId: "typing.Union[int, None, Unset]" = _unset,
         projectId: "typing.Union[int, None, Unset]" = _unset,
         template: "typing.Union[str, None, Unset]" = _unset,
+        unmanaged: "typing.Union[bool, None, Unset]" = _unset,
         validateOnly: "typing.Union[bool, None, Unset]" = _unset,
     ):
         if not isinstance(activate, Unset):
@@ -2151,6 +2149,8 @@ class v1CreateExperimentRequest:
             self.projectId = projectId
         if not isinstance(template, Unset):
             self.template = template
+        if not isinstance(unmanaged, Unset):
+            self.unmanaged = unmanaged
         if not isinstance(validateOnly, Unset):
             self.validateOnly = validateOnly
 
@@ -2178,6 +2178,8 @@ class v1CreateExperimentRequest:
             kwargs["projectId"] = obj["projectId"]
         if "template" in obj:
             kwargs["template"] = obj["template"]
+        if "unmanaged" in obj:
+            kwargs["unmanaged"] = obj["unmanaged"]
         if "validateOnly" in obj:
             kwargs["validateOnly"] = obj["validateOnly"]
         return cls(**kwargs)
@@ -2205,6 +2207,8 @@ class v1CreateExperimentRequest:
             out["projectId"] = self.projectId
         if not omit_unset or "template" in vars(self):
             out["template"] = self.template
+        if not omit_unset or "unmanaged" in vars(self):
+            out["unmanaged"] = self.unmanaged
         if not omit_unset or "validateOnly" in vars(self):
             out["validateOnly"] = self.validateOnly
         return out
@@ -2327,6 +2331,70 @@ class v1CreateTrialOperation:
             out["hyperparams"] = self.hyperparams
         if not omit_unset or "requestId" in vars(self):
             out["requestId"] = self.requestId
+        return out
+
+class v1CreateTrialRequest:
+    experimentId: "typing.Optional[int]" = None
+    hparams: "typing.Optional[typing.Dict[str, typing.Any]]" = None
+    unmanaged: "typing.Optional[bool]" = None
+
+    def __init__(
+        self,
+        *,
+        experimentId: "typing.Union[int, None, Unset]" = _unset,
+        hparams: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
+        unmanaged: "typing.Union[bool, None, Unset]" = _unset,
+    ):
+        if not isinstance(experimentId, Unset):
+            self.experimentId = experimentId
+        if not isinstance(hparams, Unset):
+            self.hparams = hparams
+        if not isinstance(unmanaged, Unset):
+            self.unmanaged = unmanaged
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1CreateTrialRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "experimentId" in obj:
+            kwargs["experimentId"] = obj["experimentId"]
+        if "hparams" in obj:
+            kwargs["hparams"] = obj["hparams"]
+        if "unmanaged" in obj:
+            kwargs["unmanaged"] = obj["unmanaged"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "experimentId" in vars(self):
+            out["experimentId"] = self.experimentId
+        if not omit_unset or "hparams" in vars(self):
+            out["hparams"] = self.hparams
+        if not omit_unset or "unmanaged" in vars(self):
+            out["unmanaged"] = self.unmanaged
+        return out
+
+class v1CreateTrialResponse:
+
+    def __init__(
+        self,
+        *,
+        trial: "trialv1Trial",
+    ):
+        self.trial = trial
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1CreateTrialResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "trial": trialv1Trial.from_json(obj["trial"]),
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "trial": self.trial.to_json(omit_unset),
+        }
         return out
 
 class v1CreateTrialsCollectionRequest:
@@ -2877,7 +2945,7 @@ class v1EnableSlotResponse:
             out["slot"] = None if self.slot is None else self.slot.to_json(omit_unset)
         return out
 
-class v1EntityType(enum.Enum):
+class v1EntityType(DetEnum):
     UNSPECIFIED = "ENTITY_TYPE_UNSPECIFIED"
     PROJECT = "ENTITY_TYPE_PROJECT"
 
@@ -2939,6 +3007,7 @@ class v1Experiment:
     projectName: "typing.Optional[str]" = None
     resourcePool: "typing.Optional[str]" = None
     trialIds: "typing.Optional[typing.Sequence[int]]" = None
+    unmanaged: "typing.Optional[bool]" = None
     userId: "typing.Optional[int]" = None
     workspaceId: "typing.Optional[int]" = None
     workspaceName: "typing.Optional[str]" = None
@@ -2974,6 +3043,7 @@ class v1Experiment:
         projectName: "typing.Union[str, None, Unset]" = _unset,
         resourcePool: "typing.Union[str, None, Unset]" = _unset,
         trialIds: "typing.Union[typing.Sequence[int], None, Unset]" = _unset,
+        unmanaged: "typing.Union[bool, None, Unset]" = _unset,
         userId: "typing.Union[int, None, Unset]" = _unset,
         workspaceId: "typing.Union[int, None, Unset]" = _unset,
         workspaceName: "typing.Union[str, None, Unset]" = _unset,
@@ -3021,6 +3091,8 @@ class v1Experiment:
             self.resourcePool = resourcePool
         if not isinstance(trialIds, Unset):
             self.trialIds = trialIds
+        if not isinstance(unmanaged, Unset):
+            self.unmanaged = unmanaged
         if not isinstance(userId, Unset):
             self.userId = userId
         if not isinstance(workspaceId, Unset):
@@ -3075,6 +3147,8 @@ class v1Experiment:
             kwargs["resourcePool"] = obj["resourcePool"]
         if "trialIds" in obj:
             kwargs["trialIds"] = obj["trialIds"]
+        if "unmanaged" in obj:
+            kwargs["unmanaged"] = obj["unmanaged"]
         if "userId" in obj:
             kwargs["userId"] = obj["userId"]
         if "workspaceId" in obj:
@@ -3129,6 +3203,8 @@ class v1Experiment:
             out["resourcePool"] = self.resourcePool
         if not omit_unset or "trialIds" in vars(self):
             out["trialIds"] = self.trialIds
+        if not omit_unset or "unmanaged" in vars(self):
+            out["unmanaged"] = self.unmanaged
         if not omit_unset or "userId" in vars(self):
             out["userId"] = self.userId
         if not omit_unset or "workspaceId" in vars(self):
@@ -3227,7 +3303,7 @@ class v1ExperimentSimulation:
             out["trials"] = None if self.trials is None else [x.to_json(omit_unset) for x in self.trials]
         return out
 
-class v1FailureType(enum.Enum):
+class v1FailureType(DetEnum):
     UNSPECIFIED = "FAILURE_TYPE_UNSPECIFIED"
     RESOURCES_FAILED = "FAILURE_TYPE_RESOURCES_FAILED"
     RESOURCES_ABORTED = "FAILURE_TYPE_RESOURCES_ABORTED"
@@ -3359,7 +3435,7 @@ class v1FileNode:
             out["path"] = self.path
         return out
 
-class v1FittingPolicy(enum.Enum):
+class v1FittingPolicy(DetEnum):
     UNSPECIFIED = "FITTING_POLICY_UNSPECIFIED"
     BEST = "FITTING_POLICY_BEST"
     WORST = "FITTING_POLICY_WORST"
@@ -3423,7 +3499,7 @@ class v1GetAgentResponse:
         }
         return out
 
-class v1GetAgentsRequestSortBy(enum.Enum):
+class v1GetAgentsRequestSortBy(DetEnum):
     UNSPECIFIED = "SORT_BY_UNSPECIFIED"
     ID = "SORT_BY_ID"
     TIME = "SORT_BY_TIME"
@@ -3532,7 +3608,7 @@ class v1GetCommandResponse:
         }
         return out
 
-class v1GetCommandsRequestSortBy(enum.Enum):
+class v1GetCommandsRequestSortBy(DetEnum):
     UNSPECIFIED = "SORT_BY_UNSPECIFIED"
     ID = "SORT_BY_ID"
     DESCRIPTION = "SORT_BY_DESCRIPTION"
@@ -3603,7 +3679,7 @@ class v1GetCurrentTrialSearcherOperationResponse:
             out["op"] = None if self.op is None else self.op.to_json(omit_unset)
         return out
 
-class v1GetExperimentCheckpointsRequestSortBy(enum.Enum):
+class v1GetExperimentCheckpointsRequestSortBy(DetEnum):
     UNSPECIFIED = "SORT_BY_UNSPECIFIED"
     UUID = "SORT_BY_UUID"
     TRIAL_ID = "SORT_BY_TRIAL_ID"
@@ -3694,7 +3770,7 @@ class v1GetExperimentResponse:
             out["jobSummary"] = None if self.jobSummary is None else self.jobSummary.to_json(omit_unset)
         return out
 
-class v1GetExperimentTrialsRequestSortBy(enum.Enum):
+class v1GetExperimentTrialsRequestSortBy(DetEnum):
     UNSPECIFIED = "SORT_BY_UNSPECIFIED"
     ID = "SORT_BY_ID"
     START_TIME = "SORT_BY_START_TIME"
@@ -3759,7 +3835,7 @@ class v1GetExperimentValidationHistoryResponse:
             out["validationHistory"] = None if self.validationHistory is None else [x.to_json(omit_unset) for x in self.validationHistory]
         return out
 
-class v1GetExperimentsRequestSortBy(enum.Enum):
+class v1GetExperimentsRequestSortBy(DetEnum):
     UNSPECIFIED = "SORT_BY_UNSPECIFIED"
     ID = "SORT_BY_ID"
     DESCRIPTION = "SORT_BY_DESCRIPTION"
@@ -4307,7 +4383,7 @@ class v1GetModelVersionResponse:
         }
         return out
 
-class v1GetModelVersionsRequestSortBy(enum.Enum):
+class v1GetModelVersionsRequestSortBy(DetEnum):
     UNSPECIFIED = "SORT_BY_UNSPECIFIED"
     VERSION = "SORT_BY_VERSION"
     CREATION_TIME = "SORT_BY_CREATION_TIME"
@@ -4342,7 +4418,7 @@ class v1GetModelVersionsResponse:
         }
         return out
 
-class v1GetModelsRequestSortBy(enum.Enum):
+class v1GetModelsRequestSortBy(DetEnum):
     UNSPECIFIED = "SORT_BY_UNSPECIFIED"
     NAME = "SORT_BY_NAME"
     DESCRIPTION = "SORT_BY_DESCRIPTION"
@@ -4403,7 +4479,7 @@ class v1GetNotebookResponse:
         }
         return out
 
-class v1GetNotebooksRequestSortBy(enum.Enum):
+class v1GetNotebooksRequestSortBy(DetEnum):
     UNSPECIFIED = "SORT_BY_UNSPECIFIED"
     ID = "SORT_BY_ID"
     DESCRIPTION = "SORT_BY_DESCRIPTION"
@@ -4722,7 +4798,7 @@ class v1GetShellResponse:
         }
         return out
 
-class v1GetShellsRequestSortBy(enum.Enum):
+class v1GetShellsRequestSortBy(DetEnum):
     UNSPECIFIED = "SORT_BY_UNSPECIFIED"
     ID = "SORT_BY_ID"
     DESCRIPTION = "SORT_BY_DESCRIPTION"
@@ -4812,29 +4888,25 @@ class v1GetSlotsResponse:
         return out
 
 class v1GetTaskResponse:
-    task: "typing.Optional[v1Task]" = None
 
     def __init__(
         self,
         *,
-        task: "typing.Union[v1Task, None, Unset]" = _unset,
+        task: "v1Task",
     ):
-        if not isinstance(task, Unset):
-            self.task = task
+        self.task = task
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetTaskResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
+            "task": v1Task.from_json(obj["task"]),
         }
-        if "task" in obj:
-            kwargs["task"] = v1Task.from_json(obj["task"]) if obj["task"] is not None else None
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
+            "task": self.task.to_json(omit_unset),
         }
-        if not omit_unset or "task" in vars(self):
-            out["task"] = None if self.task is None else self.task.to_json(omit_unset)
         return out
 
 class v1GetTasksResponse:
@@ -4915,7 +4987,7 @@ class v1GetTemplateResponse:
         }
         return out
 
-class v1GetTemplatesRequestSortBy(enum.Enum):
+class v1GetTemplatesRequestSortBy(DetEnum):
     UNSPECIFIED = "SORT_BY_UNSPECIFIED"
     NAME = "SORT_BY_NAME"
 
@@ -4971,7 +5043,7 @@ class v1GetTensorboardResponse:
         }
         return out
 
-class v1GetTensorboardsRequestSortBy(enum.Enum):
+class v1GetTensorboardsRequestSortBy(DetEnum):
     UNSPECIFIED = "SORT_BY_UNSPECIFIED"
     ID = "SORT_BY_ID"
     DESCRIPTION = "SORT_BY_DESCRIPTION"
@@ -5030,7 +5102,7 @@ class v1GetTrainingMetricsResponse:
         }
         return out
 
-class v1GetTrialCheckpointsRequestSortBy(enum.Enum):
+class v1GetTrialCheckpointsRequestSortBy(DetEnum):
     UNSPECIFIED = "SORT_BY_UNSPECIFIED"
     UUID = "SORT_BY_UUID"
     BATCH_NUMBER = "SORT_BY_BATCH_NUMBER"
@@ -5247,7 +5319,7 @@ class v1GetUserSettingResponse:
         }
         return out
 
-class v1GetUsersRequestSortBy(enum.Enum):
+class v1GetUsersRequestSortBy(DetEnum):
     UNSPECIFIED = "SORT_BY_UNSPECIFIED"
     DISPLAY_NAME = "SORT_BY_DISPLAY_NAME"
     USER_NAME = "SORT_BY_USER_NAME"
@@ -5334,7 +5406,7 @@ class v1GetWebhooksResponse:
         }
         return out
 
-class v1GetWorkspaceProjectsRequestSortBy(enum.Enum):
+class v1GetWorkspaceProjectsRequestSortBy(DetEnum):
     UNSPECIFIED = "SORT_BY_UNSPECIFIED"
     CREATION_TIME = "SORT_BY_CREATION_TIME"
     LAST_EXPERIMENT_START_TIME = "SORT_BY_LAST_EXPERIMENT_START_TIME"
@@ -5390,7 +5462,7 @@ class v1GetWorkspaceResponse:
         }
         return out
 
-class v1GetWorkspacesRequestSortBy(enum.Enum):
+class v1GetWorkspacesRequestSortBy(DetEnum):
     UNSPECIFIED = "SORT_BY_UNSPECIFIED"
     ID = "SORT_BY_ID"
     NAME = "SORT_BY_NAME"
@@ -6373,7 +6445,7 @@ class v1LaunchTensorboardResponse:
             out["warnings"] = None if self.warnings is None else [x.value for x in self.warnings]
         return out
 
-class v1LaunchWarning(enum.Enum):
+class v1LaunchWarning(DetEnum):
     UNSPECIFIED = "LAUNCH_WARNING_UNSPECIFIED"
     CURRENT_SLOTS_EXCEEDED = "LAUNCH_WARNING_CURRENT_SLOTS_EXCEEDED"
 
@@ -6433,7 +6505,7 @@ class v1ListRolesResponse:
         }
         return out
 
-class v1LocationType(enum.Enum):
+class v1LocationType(DetEnum):
     UNSPECIFIED = "LOCATION_TYPE_UNSPECIFIED"
     EXPERIMENT = "LOCATION_TYPE_EXPERIMENT"
     HYPERPARAMETERS = "LOCATION_TYPE_HYPERPARAMETERS"
@@ -6473,7 +6545,7 @@ class v1LogEntry:
         }
         return out
 
-class v1LogLevel(enum.Enum):
+class v1LogLevel(DetEnum):
     UNSPECIFIED = "LOG_LEVEL_UNSPECIFIED"
     TRACE = "LOG_LEVEL_TRACE"
     DEBUG = "LOG_LEVEL_DEBUG"
@@ -6620,7 +6692,7 @@ class v1MetricBatchesResponse:
             out["batches"] = self.batches
         return out
 
-class v1MetricType(enum.Enum):
+class v1MetricType(DetEnum):
     UNSPECIFIED = "METRIC_TYPE_UNSPECIFIED"
     TRAINING = "METRIC_TYPE_TRAINING"
     VALIDATION = "METRIC_TYPE_VALIDATION"
@@ -7249,7 +7321,7 @@ class v1NotifyContainerRunningResponse:
         }
         return out
 
-class v1OrderBy(enum.Enum):
+class v1OrderBy(DetEnum):
     UNSPECIFIED = "ORDER_BY_UNSPECIFIED"
     ASC = "ORDER_BY_ASC"
     DESC = "ORDER_BY_DESC"
@@ -8000,7 +8072,7 @@ class v1Permission:
             out["scopeTypeMask"] = None if self.scopeTypeMask is None else self.scopeTypeMask.to_json(omit_unset)
         return out
 
-class v1PermissionType(enum.Enum):
+class v1PermissionType(DetEnum):
     UNSPECIFIED = "PERMISSION_TYPE_UNSPECIFIED"
     ADMINISTRATE_USER = "PERMISSION_TYPE_ADMINISTRATE_USER"
     CREATE_EXPERIMENT = "PERMISSION_TYPE_CREATE_EXPERIMENT"
@@ -9336,7 +9408,7 @@ class v1ResourceAllocationAggregatedResponse:
         }
         return out
 
-class v1ResourceAllocationAggregationPeriod(enum.Enum):
+class v1ResourceAllocationAggregationPeriod(DetEnum):
     UNSPECIFIED = "RESOURCE_ALLOCATION_AGGREGATION_PERIOD_UNSPECIFIED"
     DAILY = "RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY"
     MONTHLY = "RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY"
@@ -9907,7 +9979,7 @@ class v1ResourcePoolPrioritySchedulerDetail:
             out["k8Priorities"] = None if self.k8Priorities is None else [x.to_json(omit_unset) for x in self.k8Priorities]
         return out
 
-class v1ResourcePoolType(enum.Enum):
+class v1ResourcePoolType(DetEnum):
     UNSPECIFIED = "RESOURCE_POOL_TYPE_UNSPECIFIED"
     AWS = "RESOURCE_POOL_TYPE_AWS"
     GCP = "RESOURCE_POOL_TYPE_GCP"
@@ -10288,7 +10360,7 @@ class v1RunnableOperation:
             out["type"] = None if self.type is None else self.type.value
         return out
 
-class v1RunnableType(enum.Enum):
+class v1RunnableType(DetEnum):
     UNSPECIFIED = "RUNNABLE_TYPE_UNSPECIFIED"
     TRAIN = "RUNNABLE_TYPE_TRAIN"
     VALIDATE = "RUNNABLE_TYPE_VALIDATE"
@@ -10319,12 +10391,12 @@ class v1SSOProvider:
         }
         return out
 
-class v1Scale(enum.Enum):
+class v1Scale(DetEnum):
     UNSPECIFIED = "SCALE_UNSPECIFIED"
     LINEAR = "SCALE_LINEAR"
     LOG = "SCALE_LOG"
 
-class v1SchedulerType(enum.Enum):
+class v1SchedulerType(DetEnum):
     UNSPECIFIED = "SCHEDULER_TYPE_UNSPECIFIED"
     PRIORITY = "SCHEDULER_TYPE_PRIORITY"
     FAIR_SHARE = "SCHEDULER_TYPE_FAIR_SHARE"
@@ -11156,45 +11228,45 @@ class v1SummarizeTrialResponse:
         return out
 
 class v1Task:
-    allocations: "typing.Optional[typing.Sequence[v1Allocation]]" = None
-    taskId: "typing.Optional[str]" = None
-    taskType: "typing.Optional[str]" = None
+    endTime: "typing.Optional[str]" = None
 
     def __init__(
         self,
         *,
-        allocations: "typing.Union[typing.Sequence[v1Allocation], None, Unset]" = _unset,
-        taskId: "typing.Union[str, None, Unset]" = _unset,
-        taskType: "typing.Union[str, None, Unset]" = _unset,
+        allocations: "typing.Sequence[v1Allocation]",
+        startTime: str,
+        taskId: str,
+        taskType: str,
+        endTime: "typing.Union[str, None, Unset]" = _unset,
     ):
-        if not isinstance(allocations, Unset):
-            self.allocations = allocations
-        if not isinstance(taskId, Unset):
-            self.taskId = taskId
-        if not isinstance(taskType, Unset):
-            self.taskType = taskType
+        self.allocations = allocations
+        self.startTime = startTime
+        self.taskId = taskId
+        self.taskType = taskType
+        if not isinstance(endTime, Unset):
+            self.endTime = endTime
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Task":
         kwargs: "typing.Dict[str, typing.Any]" = {
+            "allocations": [v1Allocation.from_json(x) for x in obj["allocations"]],
+            "startTime": obj["startTime"],
+            "taskId": obj["taskId"],
+            "taskType": obj["taskType"],
         }
-        if "allocations" in obj:
-            kwargs["allocations"] = [v1Allocation.from_json(x) for x in obj["allocations"]] if obj["allocations"] is not None else None
-        if "taskId" in obj:
-            kwargs["taskId"] = obj["taskId"]
-        if "taskType" in obj:
-            kwargs["taskType"] = obj["taskType"]
+        if "endTime" in obj:
+            kwargs["endTime"] = obj["endTime"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
+            "allocations": [x.to_json(omit_unset) for x in self.allocations],
+            "startTime": self.startTime,
+            "taskId": self.taskId,
+            "taskType": self.taskType,
         }
-        if not omit_unset or "allocations" in vars(self):
-            out["allocations"] = None if self.allocations is None else [x.to_json(omit_unset) for x in self.allocations]
-        if not omit_unset or "taskId" in vars(self):
-            out["taskId"] = self.taskId
-        if not omit_unset or "taskType" in vars(self):
-            out["taskType"] = self.taskType
+        if not omit_unset or "endTime" in vars(self):
+            out["endTime"] = self.endTime
         return out
 
 class v1TaskLogsFieldsResponse:
@@ -11627,7 +11699,7 @@ class v1TrialEarlyExit:
         }
         return out
 
-class v1TrialEarlyExitExitedReason(enum.Enum):
+class v1TrialEarlyExitExitedReason(DetEnum):
     UNSPECIFIED = "EXITED_REASON_UNSPECIFIED"
     INVALID_HP = "EXITED_REASON_INVALID_HP"
     INIT_INVALID_HP = "EXITED_REASON_INIT_INVALID_HP"
@@ -11658,7 +11730,7 @@ class v1TrialExitedEarly:
         }
         return out
 
-class v1TrialExitedEarlyExitedReason(enum.Enum):
+class v1TrialExitedEarlyExitedReason(DetEnum):
     UNSPECIFIED = "EXITED_REASON_UNSPECIFIED"
     INVALID_HP = "EXITED_REASON_INVALID_HP"
     USER_REQUESTED_STOP = "EXITED_REASON_USER_REQUESTED_STOP"
@@ -12478,7 +12550,7 @@ class v1Trigger:
             out["webhookId"] = self.webhookId
         return out
 
-class v1TriggerType(enum.Enum):
+class v1TriggerType(DetEnum):
     UNSPECIFIED = "TRIGGER_TYPE_UNSPECIFIED"
     EXPERIMENT_STATE_CHANGE = "TRIGGER_TYPE_EXPERIMENT_STATE_CHANGE"
     METRIC_THRESHOLD_EXCEEDED = "TRIGGER_TYPE_METRIC_THRESHOLD_EXCEEDED"
@@ -12959,7 +13031,7 @@ class v1Webhook:
             out["triggers"] = None if self.triggers is None else [x.to_json(omit_unset) for x in self.triggers]
         return out
 
-class v1WebhookType(enum.Enum):
+class v1WebhookType(DetEnum):
     UNSPECIFIED = "WEBHOOK_TYPE_UNSPECIFIED"
     DEFAULT = "WEBHOOK_TYPE_DEFAULT"
     SLACK = "WEBHOOK_TYPE_SLACK"
@@ -13092,7 +13164,7 @@ class v1Workspace:
             out["pinnedAt"] = self.pinnedAt
         return out
 
-class v1WorkspaceState(enum.Enum):
+class v1WorkspaceState(DetEnum):
     UNSPECIFIED = "WORKSPACE_STATE_UNSPECIFIED"
     DELETING = "WORKSPACE_STATE_DELETING"
     DELETE_FAILED = "WORKSPACE_STATE_DELETE_FAILED"
@@ -13594,6 +13666,26 @@ def post_CreateGroup(
     if _resp.status_code == 200:
         return v1CreateGroupResponse.from_json(_resp.json())
     raise APIHttpError("post_CreateGroup", _resp)
+
+def post_CreateTrial(
+    session: "api.Session",
+    *,
+    body: "v1CreateTrialRequest",
+) -> "v1CreateTrialResponse":
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/trials",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1CreateTrialResponse.from_json(_resp.json())
+    raise APIHttpError("post_CreateTrial", _resp)
 
 def post_CreateTrialsCollection(
     session: "api.Session",

@@ -472,24 +472,24 @@ func (db *PgDB) updateTotalBatches(ctx context.Context, tx *sqlx.Tx, trialID int
 		FROM (
 			SELECT max(q.total_batches) AS new_max_total_batches_processed
 			FROM (
-			SELECT coalesce(max(s.total_batches), 0) AS total_batches
-			FROM steps s
-			WHERE s.trial_id = $1
-			UNION ALL
-			SELECT coalesce(max(v.total_batches), 0) AS total_batches
-			FROM validations v
-			WHERE v.trial_id = $1
-		) q
-		) AS sub;
+				SELECT coalesce(max(s.total_batches), 0) AS total_batches
+				FROM steps s
+				WHERE s.trial_id = $1
+				UNION ALL
+				SELECT coalesce(max(v.total_batches), 0) AS total_batches
+				FROM validations v
+				WHERE v.trial_id = $1
+			) q
+		) AS sub
+		WHERE id = $1;
 		`, trialID); err != nil {
 		return errors.Wrap(err, "error computing total_batches")
 	}
 	return nil
 }
 
-// AddTrialMetrics inserts a set of trial metrics to the database.
-func (db *PgDB) addTrialMetrics(
-	ctx context.Context, m *trialv1.TrialMetrics, isValidation bool,
+func (db *PgDB) _addTrialMetricsTx(
+	ctx context.Context, tx *sqlx.Tx, m *trialv1.TrialMetrics, isValidation bool,
 ) (rollbacks map[string]int, err error) {
 	rollbacks = make(map[string]int)
 	trialMetricTables := []string{"raw_steps", "raw_validations"}
@@ -506,7 +506,9 @@ func (db *PgDB) addTrialMetrics(
 			"validation_metrics": m.Metrics.AvgMetrics,
 		}
 	}
-	return rollbacks, db.withTransaction("add training metrics", func(tx *sqlx.Tx) error {
+
+	// TODO(hamid): deindent. this is here to reduce merge conflicts.
+	run := func(tx *sqlx.Tx) error {
 		if err := checkTrialRunID(ctx, tx, m.TrialId, m.TrialRunId); err != nil {
 			return err
 		}
@@ -617,6 +619,23 @@ WHERE id = $1;
 			}
 		}
 		return nil
+	}
+
+	return rollbacks, run(tx)
+}
+
+// addTrialMetrics inserts a set of trial metrics to the database.
+func (db *PgDB) addTrialMetrics(
+	ctx context.Context, m *trialv1.TrialMetrics, isValidation bool,
+) (rollbacks map[string]int, err error) {
+	switch v := m.Metrics.AvgMetrics.Fields["epoch"].AsInterface().(type) {
+	case float64, nil:
+	default:
+		return nil, fmt.Errorf("cannot add metric with non numeric 'epoch' value got %v", v)
+	}
+	return rollbacks, db.withTransaction("add training metrics", func(tx *sqlx.Tx) error {
+		rollbacks, err = db._addTrialMetricsTx(ctx, tx, m, isValidation)
+		return err
 	})
 }
 
@@ -944,7 +963,7 @@ WITH const AS (
 UPDATE trials t
 SET best_validation_id = (SELECT bv.id FROM best_validation bv),
 searcher_metric_value = (SELECT bv.searcher_metric_value FROM best_validation bv),
-searcher_metric_value_signed = 
+searcher_metric_value_signed =
 (SELECT bv.searcher_metric_value * const.sign FROM best_validation bv, const)
 WHERE t.id = $1;
 `, trialID, trialRunID, stepsCompleted)

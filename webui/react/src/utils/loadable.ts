@@ -7,8 +7,6 @@ export type Loadable<T> =
       _tag: 'NotLoaded';
     };
 
-const exhaustive = (v: never): never => v;
-
 const Loaded = <T>(data: T): Loadable<T> => ({ _tag: 'Loaded', data });
 const NotLoaded: Loadable<never> = { _tag: 'NotLoaded' };
 
@@ -24,8 +22,6 @@ const map = <T, U>(l: Loadable<T>, fn: (_: T) => U): Loadable<U> => {
       return Loaded(fn(l.data));
     case 'NotLoaded':
       return NotLoaded;
-    default:
-      return exhaustive(l);
   }
 };
 
@@ -55,8 +51,6 @@ const forEach = <T, U>(l: Loadable<T>, fn: (_: T) => U): void => {
     }
     case 'NotLoaded':
       return;
-    default:
-      exhaustive(l);
   }
 };
 
@@ -70,8 +64,6 @@ const getOrElse = <T>(def: T, l: Loadable<T>): T => {
       return l.data;
     case 'NotLoaded':
       return def;
-    default:
-      return exhaustive(l);
   }
 };
 
@@ -98,8 +90,6 @@ const match = <T, U>(l: Loadable<T>, cases: MatchArgs<T, U>): U => {
       return 'Loaded' in cases ? cases.Loaded(l.data) : cases._();
     case 'NotLoaded':
       return 'NotLoaded' in cases ? cases.NotLoaded() : cases._();
-    default:
-      return exhaustive(l);
   }
 };
 
@@ -110,8 +100,6 @@ const quickMatch = <T, U>(l: Loadable<T>, def: U, f: (data: T) => U): U => {
       return f(l.data);
     case 'NotLoaded':
       return def;
-    default:
-      return exhaustive(l);
   }
 };
 
@@ -159,8 +147,6 @@ const waitFor = <T>(l: Loadable<T>): T => {
       return l.data;
     case 'NotLoaded':
       throw Promise.resolve(undefined);
-    default:
-      return exhaustive(l);
   }
 };
 

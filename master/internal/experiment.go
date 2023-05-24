@@ -106,7 +106,6 @@ type (
 		db                  *db.PgDB
 		rm                  rm.ResourceManager
 		searcher            *searcher.Searcher
-		queue               *searcher.SearcherEventQueue
 		warmStartCheckpoint *model.Checkpoint
 
 		taskSpec *tasks.TaskSpec
@@ -200,6 +199,27 @@ func newExperiment(
 			"experiment-id": expModel.ID,
 		},
 	}, launchWarnings, nil
+}
+
+func newUnmanagedExperiment(
+	m *Master,
+	expModel *model.Experiment,
+	activeConfig expconf.ExperimentConfig,
+	taskSpec *tasks.TaskSpec,
+) (*experiment, []command.LaunchWarning, error) {
+	// TODO(DET-9477): Experiment state management.
+	expModel.State = model.CompletedState
+	expModel.Unmanaged = true
+
+	if err := m.db.AddExperiment(expModel, activeConfig); err != nil {
+		return nil, nil, err
+	}
+	telemetry.ReportExperimentCreated(m.system, expModel.ID, activeConfig)
+
+	// Will only have the model, nothing required for the experiment actor.
+	return &experiment{
+		Experiment: expModel,
+	}, nil, nil
 }
 
 func (e *experiment) Receive(ctx *actor.Context) error {

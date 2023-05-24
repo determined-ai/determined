@@ -5,9 +5,9 @@ from typing import Any, List
 
 from termcolor import colored
 
-from determined.cli import login_sdk_client
+from determined.cli import login_sdk_client, setup_session
 from determined.common import api
-from determined.common.api import authentication, certs
+from determined.common.api import authentication, bindings, certs
 from determined.common.declarative_argparse import Arg, Cmd
 from determined.experimental import client
 
@@ -27,11 +27,28 @@ FullUser = namedtuple(
         "agent_group",
     ],
 )
+FullUserNoAdmin = namedtuple(
+    "FullUserNoAdmin",
+    [
+        "user_id",
+        "username",
+        "active",
+        "remote",
+        "agent_uid",
+        "agent_gid",
+        "agent_user",
+        "agent_group",
+    ],
+)
 
 
 @login_sdk_client
 def list_users(args: Namespace) -> None:
-    render.render_objects(FullUser, client.list_users())
+    resp = bindings.get_GetMaster(setup_session(args))
+    if resp.to_json().get("rbacEnabled"):
+        render.render_objects(FullUserNoAdmin, client.list_users())
+    else:
+        render.render_objects(FullUser, client.list_users())
 
 
 @login_sdk_client

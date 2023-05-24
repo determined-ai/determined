@@ -6,7 +6,6 @@ import Pivot from 'components/kit/Pivot';
 import Page from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
 import TaskList from 'components/TaskList';
-import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import {
@@ -22,16 +21,18 @@ import usePolling from 'shared/hooks/usePolling';
 import { ValueOf } from 'shared/types';
 import { isEqual } from 'shared/utils/data';
 import { isNotFound } from 'shared/utils/service';
+import determinedStore from 'stores/determinedInfo';
 import userStore from 'stores/users';
 import { User, Workspace } from 'types';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 
-import ModelRegistry from './ModelRegistry';
-import WorkspaceDetailsHeader from './WorkspaceDetails/WorkspaceDetailsHeader';
+import ModelRegistry from '../components/ModelRegistry';
+
 import WorkspaceMembers from './WorkspaceDetails/WorkspaceMembers';
 import WorkspaceProjects from './WorkspaceDetails/WorkspaceProjects';
+import { useWorkspaceActionMenu } from './WorkspaceList/WorkspaceActionDropdown';
 
 type Params = {
   tab: string;
@@ -48,7 +49,7 @@ export const WorkspaceDetailsTab = {
 export type WorkspaceDetailsTab = ValueOf<typeof WorkspaceDetailsTab>;
 
 const WorkspaceDetails: React.FC = () => {
-  const rbacEnabled = useFeature().isOn('rbac');
+  const { rbacEnabled } = useObservable(determinedStore.info);
 
   const loadableUsers = useObservable(userStore.getUsers());
   const users = Loadable.getOrElse([], loadableUsers);
@@ -156,6 +157,11 @@ const WorkspaceDetails: React.FC = () => {
     () => [...addableGroups, ...addableUsers],
     [addableGroups, addableUsers],
   );
+
+  const { contextHolders, menu, onClick } = useWorkspaceActionMenu({
+    onComplete: fetchWorkspace,
+    workspace,
+  });
 
   const tabItems: TabsProps['items'] = useMemo(() => {
     if (!workspace) {
@@ -265,23 +271,28 @@ const WorkspaceDetails: React.FC = () => {
 
   return (
     <Page
+      breadcrumb={[
+        {
+          breadcrumbName: 'Workspaces',
+          path: paths.workspaceList(),
+        },
+        {
+          breadcrumbName: id !== 1 ? workspace.name : 'Uncategorized Experiments',
+          path: paths.workspaceDetails(id),
+        },
+      ]}
       containerRef={pageRef}
-      headerComponent={
-        <WorkspaceDetailsHeader
-          addableUsersAndGroups={addableUsersAndGroups}
-          fetchWorkspace={fetchAll}
-          rolesAssignableToScope={rolesAssignableToScope}
-          workspace={workspace}
-        />
-      }
       id="workspaceDetails"
-      key={workspaceId}>
+      key={workspaceId}
+      menuItems={menu.length > 0 ? menu : undefined}
+      onClickMenu={onClick}>
       <Pivot
         activeKey={tabKey}
         destroyInactiveTabPane
         items={tabItems}
         onChange={handleTabChange}
       />
+      {contextHolders}
     </Page>
   );
 };

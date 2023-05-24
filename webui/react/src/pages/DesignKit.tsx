@@ -4,19 +4,20 @@ import { SelectValue } from 'antd/es/select';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
+import Grid from 'components/Grid';
 import Accordion from 'components/kit/Accordion';
 import Breadcrumb from 'components/kit/Breadcrumb';
 import Button from 'components/kit/Button';
 import Card from 'components/kit/Card';
 import Checkbox from 'components/kit/Checkbox';
 import ClipboardButton from 'components/kit/ClipboardButton';
+import CodeEditor from 'components/kit/CodeEditor';
 import { Column, Columns } from 'components/kit/Columns';
 import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 import Empty from 'components/kit/Empty';
 import Facepile from 'components/kit/Facepile';
 import Form from 'components/kit/Form';
 import Icon, { IconNameArray, IconSizeArray } from 'components/kit/Icon';
-import IconicButton from 'components/kit/IconicButton';
 import Input from 'components/kit/Input';
 import InputNumber from 'components/kit/InputNumber';
 import InputSearch from 'components/kit/InputSearch';
@@ -33,6 +34,7 @@ import Toggle from 'components/kit/Toggle';
 import Tooltip from 'components/kit/Tooltip';
 import Header from 'components/kit/Typography/Header';
 import Paragraph from 'components/kit/Typography/Paragraph';
+import { useNoteDemo, useNotesDemo } from 'components/kit/useNoteDemo';
 import UserAvatar from 'components/kit/UserAvatar';
 import { useTags } from 'components/kit/useTags';
 import Label from 'components/Label';
@@ -51,8 +53,19 @@ import { ValueOf } from 'shared/types';
 import { noOp } from 'shared/utils/service';
 import { BrandingType } from 'stores/determinedInfo';
 import { MetricType, User } from 'types';
+import {
+  Background,
+  Brand,
+  Float,
+  Interactive,
+  Overlay,
+  Stage,
+  Status,
+  Surface,
+} from 'utils/colors';
 import handleError from 'utils/error';
-import { NotLoaded } from 'utils/loadable';
+import { TypographySize } from 'utils/fonts';
+import { Loaded, NotLoaded } from 'utils/loadable';
 import loremIpsum from 'utils/loremIpsum';
 
 import useConfirm, { voidPromiseFn } from '../components/kit/useConfirm';
@@ -67,6 +80,8 @@ const ComponentTitles = {
   Charts: 'Charts',
   Checkboxes: 'Checkboxes',
   ClipboardButton: 'ClipboardButton',
+  CodeEditor: 'CodeEditor',
+  Color: 'Color',
   Columns: 'Columns',
   Dropdown: 'Dropdown',
   Empty: 'Empty',
@@ -80,6 +95,7 @@ const ComponentTitles = {
   LogViewer: 'LogViewer',
   Modals: 'Modals',
   Nameplate: 'Nameplate',
+  Notes: 'Notes',
   Pagination: 'Pagination',
   Pivot: 'Pivot',
   Select: 'Select',
@@ -167,15 +183,17 @@ const ButtonsSection: React.FC = () => {
       </AntDCard>
       <AntDCard title="Usage">
         <strong>Default Button variations</strong>
+        Transparent background, solid border
         <Space>
           <Button>Default</Button>
           <Button danger>Danger</Button>
           <Button disabled>Disabled</Button>
-          <Button ghost>Ghost</Button>
           <Button loading>Loading</Button>
+          <Button selected>Selected</Button>
         </Space>
         <hr />
         <strong>Primary Button variations</strong>
+        Solid background, no border
         <Space>
           <Button type="primary">Primary</Button>
           <Button danger type="primary">
@@ -184,29 +202,13 @@ const ButtonsSection: React.FC = () => {
           <Button disabled type="primary">
             Disabled
           </Button>
-          <Button ghost type="primary">
-            Ghost
-          </Button>
           <Button loading type="primary">
             Loading
           </Button>
         </Space>
         <hr />
-        <strong>Link Button variations</strong>
-        <Space>
-          <Button type="link">Link</Button>
-          <Button danger type="link">
-            Danger
-          </Button>
-          <Button disabled type="link">
-            Disabled
-          </Button>
-          <Button loading type="link">
-            Loading
-          </Button>
-        </Space>
-        <hr />
         <strong>Text Button variations</strong>
+        Transparent background, no border
         <Space>
           <Button type="text">Text</Button>
           <Button danger type="text">
@@ -220,24 +222,8 @@ const ButtonsSection: React.FC = () => {
           </Button>
         </Space>
         <hr />
-        <strong>Ghost Button variations</strong>
-        <Space>
-          <Button type="ghost">Ghost</Button>
-          <Button danger type="ghost">
-            Danger
-          </Button>
-          <Button disabled type="ghost">
-            Disabled
-          </Button>
-          <Button ghost type="ghost">
-            Ghost
-          </Button>
-          <Button loading type="ghost">
-            Loading
-          </Button>
-        </Space>
-        <hr />
         <strong>Dashed Button variations</strong>
+        Transparent background, dashed border
         <Space>
           <Button type="dashed">Dashed</Button>
           <Button danger type="dashed">
@@ -246,19 +232,12 @@ const ButtonsSection: React.FC = () => {
           <Button disabled type="dashed">
             Disabled
           </Button>
-          <Button ghost type="dashed">
-            Ghost
-          </Button>
           <Button loading type="dashed">
             Loading
           </Button>
-        </Space>
-        <hr />
-        <strong>Shapes</strong>
-        <Space>
-          <Button shape="circle">Circle</Button>
-          <Button shape="default">Default</Button>
-          <Button shape="round">Round</Button>
+          <Button selected type="dashed">
+            Selected
+          </Button>
         </Space>
         <hr />
         <strong>Sizes</strong>
@@ -270,20 +249,14 @@ const ButtonsSection: React.FC = () => {
         <hr />
         <strong>Default Button with icon</strong>
         <Space>
-          <Button icon={<PoweroffOutlined />} type="primary">
-            ButtonWithIcon
-          </Button>
           <Button icon={<PoweroffOutlined />}>ButtonWithIcon</Button>
-          <Button disabled icon={<PoweroffOutlined />}>
-            ButtonWithIcon
-          </Button>
         </Space>
         <hr />
-        <strong>Large iconic buttons</strong>
+        <strong>Button with icon and text displayed in a column</strong>
         <Space>
-          <IconicButton iconName="searcher-grid" text="Iconic button" type="primary" />
-          <IconicButton iconName="searcher-grid" text="Iconic button" />
-          <IconicButton disabled iconName="searcher-grid" text="Iconic button" />
+          <Button column icon={<PoweroffOutlined />}>
+            ColumnButtonWithIcon
+          </Button>
         </Space>
       </AntDCard>
     </ComponentSection>
@@ -861,6 +834,68 @@ const DropdownSection: React.FC = () => {
   );
 };
 
+const CodeEditorSection: React.FC = () => {
+  return (
+    <ComponentSection id="CodeEditor" title="CodeEditor">
+      <AntDCard>
+        <p>
+          The Code Editor (<code>{'<CodeEditor>'}</code>) shows Python and YAML files with syntax
+          highlighting. If multiple files are sent, the component shows a file tree browser.
+        </p>
+        <ul>
+          <li>Use the readonly attribute to make code viewable but not editable.</li>
+        </ul>
+      </AntDCard>
+      <AntDCard title="Usage">
+        <strong>Editable Python file</strong>
+        <CodeEditor
+          files={[
+            {
+              content: Loaded('import math\nprint(math.pi)\n\n'),
+              key: 'test.py',
+              title: 'test.py',
+            },
+          ]}
+        />
+        <strong>Read-only YAML file</strong>
+        <CodeEditor
+          files={[
+            {
+              content: Loaded(
+                'name: Unicode Test 日本😃\ndata:\n  url: https://example.tar.gz\nhyperparameters:\n  learning_rate: 1.0\n  global_batch_size: 64\n  n_filters1: 32\n  n_filters2: 64\n  dropout1: 0.25\n  dropout2: 0.5\nsearcher:\n  name: single\n  metric: validation_loss\n  max_length:\n      batches: 937 #60,000 training images with batch size 64\n  smaller_is_better: true\nentrypoint: model_def:MNistTrial\nresources:\n  slots_per_trial: 2',
+              ),
+              key: 'test1.yaml',
+              title: 'test1.yaml',
+            },
+          ]}
+          readonly={true}
+        />
+        <strong>Multiple files, one not finished loading.</strong>
+        <CodeEditor
+          files={[
+            {
+              content: Loaded(
+                'hyperparameters:\n  learning_rate: 1.0\n  global_batch_size: 512\n  n_filters1: 32\n  n_filters2: 64\n  dropout1: 0.25\n  dropout2: 0.5',
+              ),
+              isLeaf: true,
+              key: 'one.yaml',
+              title: 'one.yaml',
+            },
+            {
+              content: Loaded('searcher:\n  name: single\n  metric: validation_loss\n'),
+              isLeaf: true,
+              key: 'two.yaml',
+              title: 'two.yaml',
+            },
+            { content: NotLoaded, isLeaf: true, key: 'unloaded.yaml', title: 'unloaded.yaml' },
+          ]}
+          readonly={true}
+        />
+      </AntDCard>
+    </ComponentSection>
+  );
+};
+
 const InputSearchSection: React.FC = () => {
   return (
     <ComponentSection id="InputSearch" title="InputSearch">
@@ -1093,6 +1128,11 @@ const ListsSection: React.FC = () => {
 };
 
 const BreadcrumbsSection: React.FC = () => {
+  const menuItems: MenuItem[] = [
+    { key: 'Action 1', label: 'Action 1' },
+    { key: 'Action 2', label: 'Action 2' },
+  ];
+
   return (
     <ComponentSection id="Breadcrumbs" title="Breadcrumbs">
       <AntDCard>
@@ -1123,6 +1163,11 @@ const BreadcrumbsSection: React.FC = () => {
           <Breadcrumb.Item>Level 0</Breadcrumb.Item>
           <Breadcrumb.Item>Level 1</Breadcrumb.Item>
           <Breadcrumb.Item>Level 2</Breadcrumb.Item>
+        </Breadcrumb>
+        <strong>Breadcrumb with actions</strong>
+        <Breadcrumb menuItems={menuItems}>
+          <Breadcrumb.Item>Level 0</Breadcrumb.Item>
+          <Breadcrumb.Item>Level 1</Breadcrumb.Item>
         </Breadcrumb>
       </AntDCard>
     </ComponentSection>
@@ -1233,6 +1278,26 @@ const FacepileSection: React.FC = () => {
           <li>Facepile with both name initials</li>
           <p>Check the Facepile above and select a user that would fit that case</p>
         </ul>
+      </AntDCard>
+    </ComponentSection>
+  );
+};
+
+const NotesSection: React.FC = () => {
+  return (
+    <ComponentSection id="Notes" title="Notes">
+      <AntDCard>
+        <p>
+          A <code>{'<Notes>'}</code> is used for taking notes. It can be single page note or multi
+          pages notes. Each page of note consists of a title and a sheet of note.
+        </p>
+      </AntDCard>
+      <AntDCard title="Usage">
+        <strong>Single page note</strong>
+        {useNoteDemo()()}
+        <hr />
+        <strong>Multi pages notes</strong>
+        {useNotesDemo()()}
       </AntDCard>
     </ComponentSection>
   );
@@ -1766,6 +1831,148 @@ const TypographySection: React.FC = () => {
           <Paragraph>this is a paragraph!</Paragraph>
         </Space>
       </AntDCard>
+      <AntDCard title="Font Families">
+        <Paragraph>For general UI --theme-font-family</Paragraph>
+        <Paragraph font="code">For displaying code --theme-font-family-code</Paragraph>
+      </AntDCard>
+      <AntDCard title="Font Sizing">
+        <div>
+          <div style={{ display: 'flex', flexDirection: 'column', marginBottom: '30px' }}>
+            <Header>Header</Header>
+            <Header size={TypographySize.XL}>
+              Model Registry - XL (f.s. 28px, line-height 36px)
+            </Header>
+            <Header size={TypographySize.L}>
+              Model Registry - L (f.s. 24px, line-height 32px)
+            </Header>
+            <Header size={TypographySize.default}>
+              Model Registry - default (f.s. 22px line-height 28px)
+            </Header>
+            <Header size={TypographySize.S}>Model Registry - s (f.s. 18px line-height 23px)</Header>
+            <Header size={TypographySize.XS}>
+              Model Registry - xs (f.s. 16px line-height 21px)
+            </Header>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', marginBottom: '30px' }}>
+            <Header>Multi Line</Header>
+            <Paragraph size={TypographySize.XL} type="multi line">
+              Lorem ipsum dolor sit amet consectetur, adipisicing elit. Ut suscipit itaque debitis
+              amet, eligendi possimus assumenda eos, iusto ea labore, officia aspernatur optio. In
+              necessitatibus porro ut vero commodi neque. Lorem ipsum dolor sit amet consectetur
+              adipisicing elit. Voluptatibus, omnis quo dolorem magnam dolores necessitatibus iure
+              illo incidunt maiores voluptas odit eligendi dignissimos facilis vel veniam id.
+              Obcaecati, cum eos. - XL (f.s. 16px line-height 26px)
+            </Paragraph>
+            <br />
+            <Paragraph size={TypographySize.L} type="multi line">
+              Lorem ipsum dolor sit amet consectetur, adipisicing elit. Ut suscipit itaque debitis
+              amet, eligendi possimus assumenda eos, iusto ea labore, officia aspernatur optio. In
+              necessitatibus porro ut vero commodi neque. Lorem ipsum dolor sit amet consectetur
+              adipisicing elit. Voluptatibus, omnis quo dolorem magnam dolores necessitatibus iure
+              illo incidunt maiores voluptas odit eligendi dignissimos facilis vel veniam id.
+              Obcaecati, cum eos. - L (f.s. 14px line-height 22px)
+            </Paragraph>
+            <br />
+            <Paragraph size={TypographySize.default} type="multi line">
+              Lorem ipsum dolor sit amet consectetur, adipisicing elit. Ut suscipit itaque debitis
+              amet, eligendi possimus assumenda eos, iusto ea labore, officia aspernatur optio. In
+              necessitatibus porro ut vero commodi neque. Lorem ipsum dolor sit amet consectetur
+              adipisicing elit. Voluptatibus, omnis quo dolorem magnam dolores necessitatibus iure
+              illo incidunt maiores voluptas odit eligendi dignissimos facilis vel veniam id.
+              Obcaecati, cum eos. - default (f.s. 12px line-height 20px)
+            </Paragraph>
+            <br />
+            <Paragraph size={TypographySize.S} type="multi line">
+              Lorem ipsum dolor sit amet consectetur, adipisicing elit. Ut suscipit itaque debitis
+              amet, eligendi possimus assumenda eos, iusto ea labore, officia aspernatur optio. In
+              necessitatibus porro ut vero commodi neque. Lorem ipsum dolor sit amet consectetur
+              adipisicing elit. Voluptatibus, omnis quo dolorem magnam dolores necessitatibus iure
+              illo incidunt maiores voluptas odit eligendi dignissimos facilis vel veniam id.
+              Obcaecati, cum eos. - s (f.s. 11px line-height 18px)
+            </Paragraph>
+            <br />
+            <Paragraph size={TypographySize.XS} type="multi line">
+              Lorem ipsum dolor sit amet consectetur, adipisicing elit. Ut suscipit itaque debitis
+              amet, eligendi possimus assumenda eos, iusto ea labore, officia aspernatur optio. In
+              necessitatibus porro ut vero commodi neque. Lorem ipsum dolor sit amet consectetur
+              adipisicing elit. Voluptatibus, omnis quo dolorem magnam dolores necessitatibus iure
+              illo incidunt maiores voluptas odit eligendi dignissimos facilis vel veniam id.
+              Obcaecati, cum eos. - xs (f.s. 10px line-height 16px)
+            </Paragraph>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', marginBottom: '30px' }}>
+            <Header>Single Line</Header>
+            <Paragraph size={TypographySize.XL}>
+              Model Registry - XL (f.s. 16px line-height 20px)
+            </Paragraph>
+            <Paragraph size={TypographySize.L}>
+              Model Registry - L (f.s. 14px line-height 18px)
+            </Paragraph>
+            <Paragraph size={TypographySize.default}>
+              Model Registry - default (f.s. 12px line-height 16px)
+            </Paragraph>
+            <Paragraph size={TypographySize.S}>
+              Model Registry - s (f.s. 11px line-height 14px)
+            </Paragraph>
+            <Paragraph size={TypographySize.XS}>
+              Model Registry - xs (f.s. 10px line-height 12px)
+            </Paragraph>
+          </div>
+        </div>
+      </AntDCard>
+    </ComponentSection>
+  );
+};
+
+const ColorSection: React.FC = () => {
+  const themeStatus = Object.values(Status);
+  const backgrounds = Object.values(Background);
+  const stage = Object.values(Stage);
+  const surface = Object.values(Surface);
+  const float = Object.values(Float);
+  const overlay = Object.values(Overlay);
+  const brand = Object.values(Brand);
+  const interactive = Object.values(Interactive);
+
+  const renderColorComponent = (colorArray: string[], name: string) => (
+    <AntDCard title={`${name} Colors`}>
+      <Grid>
+        {colorArray.map((cName, idx) => (
+          <div
+            key={`${idx}-${name.toLowerCase()}`}
+            style={{
+              marginBottom: '20px',
+              width: '250px',
+            }}>
+            <span>{cName.replace(/(var\(|\))/g, '')}</span>
+            <div
+              style={{
+                backgroundColor: cName,
+                border: 'var(--theme-stroke-width) solid var(--theme-surface-border)',
+                borderRadius: 'var(--theme-border-radius)',
+                height: '40px',
+                width: '100%',
+              }}
+            />
+          </div>
+        ))}
+      </Grid>
+    </AntDCard>
+  );
+  const iterateOverThemes = (themes: Array<string[]>, names: string[]) =>
+    themes.map((theme, idx) => renderColorComponent(theme, names[idx]));
+
+  return (
+    <ComponentSection id="Color" title="Color">
+      <AntDCard>
+        <Paragraph>
+          We have a variety of colors that are available for use with the components in the UI Kit.
+        </Paragraph>
+      </AntDCard>
+      {iterateOverThemes(
+        [themeStatus, backgrounds, stage, surface, float, overlay, brand, interactive],
+        ['Status', 'Background', 'Stage', 'Surface', 'Float', 'Overlay', 'Brand', 'Interactive'],
+      )}
     </ComponentSection>
   );
 };
@@ -2426,6 +2633,8 @@ const Components = {
   Charts: <ChartsSection />,
   Checkboxes: <CheckboxesSection />,
   ClipboardButton: <ClipboardButtonSection />,
+  CodeEditor: <CodeEditorSection />,
+  Color: <ColorSection />,
   Columns: <ColumnsSection />,
   Dropdown: <DropdownSection />,
   Empty: <EmptySection />,
@@ -2439,6 +2648,7 @@ const Components = {
   LogViewer: <LogViewerSection />,
   Modals: <ModalSection />,
   Nameplate: <NameplateSection />,
+  Notes: <NotesSection />,
   Pagination: <PaginationSection />,
   Pivot: <PivotSection />,
   Select: <SelectSection />,
@@ -2460,7 +2670,7 @@ const DesignKit: React.FC = () => {
   }, [actions]);
 
   return (
-    <Page bodyNoPadding docTitle="Design Kit">
+    <Page bodyNoPadding breadcrumb={[]} docTitle="Design Kit">
       <div className={css.base}>
         <nav>
           <Link reloadDocument to={'/'}>

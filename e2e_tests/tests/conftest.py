@@ -10,6 +10,7 @@ from _pytest.config.argparsing import Parser
 from _pytest.fixtures import SubRequest
 from botocore import exceptions as boto_exc
 
+from determined.experimental import client as _client
 from tests import config
 from tests.experiment import profile_test
 from tests.nightly.compute_stats import compare_stats
@@ -226,3 +227,11 @@ def collect_trial_profiles(record_property: Callable[[str, object], None]) -> Ca
     """
 
     return profile_test(record_property=record_property)
+
+
+@pytest.fixture(scope="session")
+def client() -> _client.Determined:
+    """
+    Reduce logins by having one session-level fixture do the login.
+    """
+    return _client.Determined(config.make_master_url())

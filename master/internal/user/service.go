@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"regexp"
 	"strings"
@@ -236,7 +236,7 @@ func (s *Service) postLogin(c echo.Context) (interface{}, error) {
 		}
 	)
 
-	body, err := ioutil.ReadAll(c.Request().Body)
+	body, err := io.ReadAll(c.Request().Body)
 	if err != nil {
 		return nil, err
 	}
@@ -347,7 +347,7 @@ func (s *Service) patchUser(c echo.Context) (interface{}, error) {
 		}
 	)
 
-	body, err := ioutil.ReadAll(c.Request().Body)
+	body, err := io.ReadAll(c.Request().Body)
 	if err != nil {
 		return nil, err
 	}
@@ -446,7 +446,7 @@ func (s *Service) patchUsername(c echo.Context) (interface{}, error) {
 		}
 	)
 
-	body, err := ioutil.ReadAll(c.Request().Body)
+	body, err := io.ReadAll(c.Request().Body)
 	if err != nil {
 		return nil, err
 	}
@@ -523,7 +523,7 @@ func (s *Service) postUser(c echo.Context) (interface{}, error) {
 		}
 	)
 
-	body, err := ioutil.ReadAll(c.Request().Body)
+	body, err := io.ReadAll(c.Request().Body)
 	if err != nil {
 		return nil, err
 	}

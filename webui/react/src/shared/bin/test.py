@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
+import argparse
+import pathlib
 import subprocess
 import typing as t
-import pathlib
-import argparse
 
 parser = argparse.ArgumentParser()
 

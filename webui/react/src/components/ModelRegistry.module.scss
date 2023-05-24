@@ -1,0 +1,33 @@
+.tagsRenderer {
+  :global([aria-label='new-tag-trigger']) {
+    display: none !important;
+  }
+  &:hover {
+    :global([aria-label='new-tag-trigger']) {
+      display: inherit !important;
+    }
+  }
+}
+.descriptionRenderer {
+  border: 1px solid transparent !important; // TODO: remove !important
+
+  &:focus,
+  &:hover {
+    border: 1px solid var(--theme-status-active) !important;
+  }
+}
+.centerVertically {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+}
+.centerHorizontally {
+  display: flex;
+  justify-content: center;
+}
+.options {
+  display: flex;
+  flex-grow: 1;
+  justify-content: flex-end;
+  padding-bottom: 16px;
+}

@@ -7,6 +7,7 @@ import typing
 from typing import Any, Dict
 
 import pytest
+import torch
 
 import determined as det
 from determined import gpu, pytorch
@@ -67,6 +68,8 @@ class TestLightningAdapter:
             def check_lr_value(self, batch_idx: int):
                 assert self.last_lr > self.read_lr_value()
 
+        tensorboard_path = tmp_path.joinpath("tensorboard")
+
         trial, trial_controller = create_trial_and_trial_controller(
             trial_class=OneVarLAFreq1,
             hparams=self.hparams,
@@ -74,16 +77,19 @@ class TestLightningAdapter:
             max_batches=2,
             min_validation_batches=1,
             checkpoint_dir=str(tmp_path),
+            tensorboard_path=tensorboard_path,
         )
         trial_controller.run()
 
-    def test_lr_scheduler_frequency(self) -> None:
+    def test_lr_scheduler_frequency(self, tmp_path: pathlib.Path) -> None:
         class OneVarLAFreq2(la_model.OneVarTrialLRScheduler):
             def check_lr_value(self, batch_idx: int):
                 if batch_idx % 2 == 0:
                     assert self.last_lr > self.read_lr_value()
                 else:
                     assert self.last_lr == self.read_lr_value()
+
+        tensorboard_path = tmp_path.joinpath("tensorboard")
 
         updated_params = {
             **self.hparams,
@@ -95,6 +101,7 @@ class TestLightningAdapter:
             trial_seed=self.trial_seed,
             max_batches=2,
             min_validation_batches=1,
+            tensorboard_path=tensorboard_path,
         )
         trial_controller.run()
 
@@ -108,6 +115,7 @@ class TestLightningAdapter:
         typing.Sequence[typing.Dict[str, typing.Any]], typing.Sequence[typing.Dict[str, typing.Any]]
     ]:
         checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
+        tensorboard_path = tmp_path.joinpath("tensorboard")
         training_metrics = {"A": [], "B": []}
         validation_metrics = {"A": [], "B": []}
 
@@ -120,6 +128,7 @@ class TestLightningAdapter:
             min_validation_batches=steps[0],
             min_checkpoint_batches=steps[0],
             checkpoint_dir=checkpoint_dir,
+            tensorboard_path=tensorboard_path,
         )
 
         trial_controller_A.run()
@@ -144,6 +153,7 @@ class TestLightningAdapter:
             min_validation_batches=steps[1],
             min_checkpoint_batches=sys.maxsize,
             checkpoint_dir=checkpoint_dir,
+            tensorboard_path=tensorboard_path,
             latest_checkpoint=checkpoint_callback.uuids[0],
             steps_completed=trial_controller_A.state.batches_trained,
         )
@@ -166,6 +176,7 @@ class TestLightningAdapter:
             min_validation_batches=steps[0] + steps[1],
             min_checkpoint_batches=sys.maxsize,
             checkpoint_dir=checkpoint_dir,
+            tensorboard_path=tensorboard_path,
         )
         trial_controller_B.run()
 
@@ -192,6 +203,7 @@ class TestLightningAdapter:
         steps: typing.Tuple[int, int] = (1, 1),
     ) -> None:
         checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
+        tensorboard_path = tmp_path.joinpath("tensorboard")
 
         # Trial A: train 100 batches and checkpoint
         trial_A, trial_controller_A = create_trial_and_trial_controller(
@@ -203,7 +215,8 @@ class TestLightningAdapter:
             min_validation_batches=steps[0],
             min_checkpoint_batches=steps[0],
             checkpoint_dir=checkpoint_dir,
-            expose_gpus=True,
+            tensorboard_path=tensorboard_path,
+            expose_gpus=expose_gpus,
         )
 
         trial_controller_A.run()
@@ -220,6 +233,7 @@ class TestLightningAdapter:
             min_validation_batches=steps[1],
             min_checkpoint_batches=sys.maxsize,
             checkpoint_dir=checkpoint_dir,
+            tensorboard_path=tensorboard_path,
             latest_checkpoint=os.listdir(checkpoint_dir)[0],
             steps_completed=trial_controller_A.state.batches_trained,
             expose_gpus=True,
@@ -228,6 +242,7 @@ class TestLightningAdapter:
 
         assert len(os.listdir(checkpoint_dir)) == 2, "trial did not create a checkpoint"
 
+    @pytest.mark.skipif(not torch.cuda.is_available(), reason="no gpu available")
     @pytest.mark.gpu
     @pytest.mark.parametrize("api_style", ["apex", "auto"])
     def test_pl_const_with_amp(self, api_style: str, tmp_path: pathlib.Path) -> None:
@@ -260,6 +275,7 @@ class TestLightningAdapter:
             steps=(1, 1),
         )
 
+    @pytest.mark.skipif(not torch.cuda.is_available(), reason="no gpu available")
     @pytest.mark.gpu
     def test_pl_mnist_gan(self, tmp_path: pathlib.Path) -> None:
         checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
@@ -288,6 +304,7 @@ class TestLightningAdapter:
             steps=(1, 1),
         )
 
+    @pytest.mark.skipif(not torch.cuda.is_available(), reason="no gpu available")
     @pytest.mark.gpu
     def test_pl_mnist(self, tmp_path: pathlib.Path) -> None:
         checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
@@ -324,9 +341,10 @@ def create_trial_and_trial_controller(
     trial_seed: int = None,
     exp_config: typing.Optional[typing.Dict] = None,
     checkpoint_dir: typing.Optional[str] = None,
+    tensorboard_path: typing.Optional[pathlib.Path] = None,
     latest_checkpoint: typing.Optional[str] = None,
     steps_completed: int = 0,
-    expose_gpus: bool = False,
+    expose_gpus: bool = True,
     max_batches: int = 100,
     min_checkpoint_batches: int = sys.maxsize,
     min_validation_batches: int = sys.maxsize,
@@ -348,7 +366,9 @@ def create_trial_and_trial_controller(
         trial_seed = random.randint(0, 1 << 31)
 
     checkpoint_dir = checkpoint_dir or "/tmp"
-    with det.core._dummy_init(checkpoint_storage=checkpoint_dir) as core_context:
+    with det.core._dummy_init(
+        checkpoint_storage=checkpoint_dir, tensorboard_path=tensorboard_path
+    ) as core_context:
         core_context.train._trial_id = "1"
         distributed_backend = det._DistributedBackend()
         if expose_gpus:
