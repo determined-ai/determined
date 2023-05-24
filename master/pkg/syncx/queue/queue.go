@@ -4,40 +4,18 @@ import (
 	"sync"
 )
 
-// Opt is a functional option for Queue.
-type Opt[T any] (func(*Queue[T]))
-
-// WithMaxSize sets the maximum size of the queue. If the queue is full, then Put will block until
-// space is available.
-func WithMaxSize[T any](maxSize int) Opt[T] {
-	return func(q *Queue[T]) {
-		q.maxSize = maxSize
-		q.elems = make([]T, 0, maxSize)
-	}
-}
-
 // Queue is a thread-safe queue.
 type Queue[T any] struct {
 	maxSize int // 0 means no limit
-	mu      *sync.Mutex
-	putCond *sync.Cond // used to wait for space in the queue
-	getCond *sync.Cond // used to wait for elements in the queue
+	mu      sync.Mutex
+	cond    *sync.Cond // used to wait for elements in the queue
 	elems   []T
 }
 
 // New creates a new queue.
-func New[T any](opts ...Opt[T]) *Queue[T] {
-	var mu sync.Mutex
-	q := &Queue[T]{
-		mu:      &mu,
-		putCond: sync.NewCond(&mu),
-		getCond: sync.NewCond(&mu),
-		elems:   make([]T, 0),
-	}
-
-	for _, opt := range opts {
-		opt(q)
-	}
+func New[T any]() *Queue[T] {
+	q := &Queue[T]{elems: make([]T, 0)}
+	q.cond = sync.NewCond(&q.mu)
 	return q
 }
 
@@ -47,11 +25,8 @@ func (q *Queue[T]) Put(t T) {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 
-	for q.full() {
-		q.putCond.Wait()
-	}
 	if q.empty() {
-		q.getCond.Broadcast()
+		q.cond.Broadcast()
 	}
 	q.elems = append(q.elems, t)
 }
@@ -63,10 +38,7 @@ func (q *Queue[T]) Get() T {
 	defer q.mu.Unlock()
 
 	for q.empty() {
-		q.getCond.Wait()
-	}
-	if q.full() {
-		q.putCond.Broadcast()
+		q.cond.Wait()
 	}
 	res := q.elems[0]
 	q.elems = q.elems[1:]
@@ -83,9 +55,6 @@ func (q *Queue[T]) TryGet() (T, bool) {
 		var t T
 		return t, false
 	}
-	if q.full() {
-		q.putCond.Broadcast()
-	}
 	res := q.elems[0]
 	q.elems = q.elems[1:]
 	return res, true
@@ -99,7 +68,7 @@ func (q *Queue[T]) Len() int {
 	return len(q.elems)
 }
 
-func (q Queue[T]) empty() bool {
+func (q *Queue[T]) empty() bool {
 	return len(q.elems) == 0
 }
 
