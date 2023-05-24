@@ -39,7 +39,7 @@ interface Props {
   isContextMenu?: boolean;
   link?: string;
   makeOpen?: boolean;
-  onComplete?: (action?: Action) => Promise<void>;
+  onComplete?: (action?: Action) => void | Promise<void>;
   onLink?: () => void;
   onVisibleChange?: (visible: boolean) => void;
   settings?: ExperimentListSettings;

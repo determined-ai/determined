@@ -213,6 +213,8 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
 
   const { stopPolling } = usePolling(fetchExperiments, { rerunOnNewFn: true });
 
+  const onContextMenuComplete = useCallback(fetchExperiments, [fetchExperiments]);
+
   // TODO: poll?
   useEffect(() => {
     let mounted = true;
@@ -367,8 +369,8 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
             clearSelectionTrigger={clearSelectionTrigger}
             colorMap={colorMap}
             data={experiments}
+            dataTotal={Loadable.getOrElse(0, total)}
             excludedExperimentIds={excludedExperimentIds}
-            fetchExperiments={fetchExperiments}
             formStore={formStore}
             handleScroll={handleScroll}
             handleUpdateExperimentList={handleUpdateExperimentList}
@@ -385,6 +387,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
             setSortableColumnIds={setVisibleColumns}
             sortableColumnIds={settings.columns}
             sorts={sorts}
+            onContextMenuComplete={onContextMenuComplete}
             onIsOpenFilterChange={onIsOpenFilterChange}
             onSortChange={onSortChange}
           />
