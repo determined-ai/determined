@@ -19,7 +19,7 @@ def render_experiments(args: Namespace, experiments: Sequence[bindings.v1Experim
             e.username,
             e.name,
             e.forkedFrom,
-            e.state.value.replace("STATE_", ""),
+            e.state,
             render.format_percent(e.progress),
             render.format_time(e.startTime),
             render.format_time(e.endTime),
