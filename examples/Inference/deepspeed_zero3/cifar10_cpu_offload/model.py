@@ -1,5 +1,5 @@
-from torch.nn import Conv2d, CrossEntropyLoss, Linear, MaxPool2d, Module
 import torch.nn.functional as F
+from torch.nn import Conv2d, CrossEntropyLoss, Linear, MaxPool2d, Module
 
 
 class Net(Module):

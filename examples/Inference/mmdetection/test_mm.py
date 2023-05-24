@@ -1,17 +1,13 @@
 import pathlib
 
+import mmcv
 import torch
+
+from mmdet.apis import init_detector, inference_detector
+from open_image_dataset import OpenImageDataset
 from torch.profiler import ProfilerActivity
 
-from _torch_batch_process import (
-    TorchBatchProcessor,
-    torch_batch_process,
-)
-
-from open_image_dataset import OpenImageDataset
-
-import mmcv
-from mmdet.apis import init_detector, inference_detector
+from determined.experimental.inference import TorchBatchProcessor, torch_batch_process
 
 
 class MyProcessor(TorchBatchProcessor):

@@ -3,16 +3,18 @@ import pathlib
 import filelock
 
 import os
+import pathlib
 
 import deepspeed
+import filelock
 import torch
 import torchvision as tv
 import torchvision.transforms as transforms
-from torch.profiler import ProfilerActivity
 
-import _torch_batch_process as batch
+from determined.experimental.inference import TorchBatchProcessor, torch_batch_process
 
 from model import get_model
+from torch.profiler import ProfilerActivity
 
 dtype = torch.float16
 
@@ -67,7 +69,7 @@ ds_config = {
 }
 
 
-class MyProcessor(batch.TorchBatchProcessor):
+class MyProcessor(TorchBatchProcessor):
     def __init__(self, context):
         device = context.get_device()
         tensorboard_path = context.get_tensorboard_path()
@@ -114,7 +116,7 @@ def main():
             root="/data", train=False, download=True, transform=transform
         )
 
-    batch.torch_batch_process(
+    torch_batch_process(
         MyProcessor, inference_data, batch_size=64, dataloader_kwargs={"drop_last": True}
     )
 

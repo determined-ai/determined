@@ -7,9 +7,10 @@ import torch
 import torchvision as tv
 import torchvision.transforms as transforms
 
-from determined.experimental.inference import TorchBatchProcessor, torch_batch_process
 from model import get_model
 from torch.profiler import ProfilerActivity
+
+from determined.experimental.inference import TorchBatchProcessor, torch_batch_process
 
 
 class MyProcessor(TorchBatchProcessor):
