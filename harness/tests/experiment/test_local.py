@@ -5,14 +5,12 @@ import tensorflow as tf
 
 import determined as det
 from determined import estimator, experimental, keras
-from tests.experiment.fixtures import (
-    estimator_linear_model,
-    pytorch_onevar_model,
-    tf_keras_one_var_model,
-)
 
 
 def test_test_one_batch() -> None:
+
+    from tests.experiment.fixtures import pytorch_onevar_model
+
     with det._local_execution_manager(pathlib.Path(pytorch_onevar_model.__file__).parent):
         experimental.test_one_batch(
             trial_class=pytorch_onevar_model.OneVarTrial,
@@ -29,6 +27,9 @@ def test_test_one_batch() -> None:
 
 
 def test_estimator_from_config() -> None:
+
+    from tests.experiment.fixtures import estimator_linear_model
+
     config = {"hyperparameters": {"global_batch_size": 4, "learning_rate": 0.001}}
     context = estimator.EstimatorTrialContext.from_config(config)
     trial = estimator_linear_model.LinearEstimator(context)
@@ -45,6 +46,9 @@ def test_estimator_from_config() -> None:
 
 
 def test_keras_from_config() -> None:
+
+    from tests.experiment.fixtures import tf_keras_one_var_model
+
     data_len = 10
     lr = 0.001
     config = {

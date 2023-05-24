@@ -11,9 +11,6 @@ import determined as det
 from determined import keras, workload
 from tests.experiment import utils  # noqa: I100
 from tests.experiment.fixtures import (  # noqa: I100
-    ancient_keras_ckpt,
-    tf_keras_one_var_model,
-    tf_keras_runtime_error,
     tf_keras_xor_model,
 )
 
@@ -89,6 +86,9 @@ class TestKerasTrial:
     # The following unit tests are run with a specific trial implementation.
 
     def test_require_global_batch_size(self) -> None:
+
+        from tests.experiment.fixtures import tf_keras_one_var_model
+
         utils.ensure_requires_global_batch_size(tf_keras_one_var_model.OneVarTrial, self.hparams)
 
     def test_xor_training_with_metrics(self) -> None:
@@ -112,6 +112,9 @@ class TestKerasTrial:
 
     @pytest.mark.parametrize("test_checkpointing", [False, True])
     def test_one_var_training(self, test_checkpointing, tmp_path):
+
+        from tests.experiment.fixtures import tf_keras_one_var_model
+
         checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
         latest_checkpoint = None
         steps_completed = 0
@@ -311,6 +314,9 @@ class TestKerasTrial:
         controller.run()
 
     def test_callbacks(self):
+
+        from tests.experiment.fixtures import tf_keras_one_var_model
+
         def make_workloads() -> workload.Stream:
             trainer = utils.TrainAndValidate()
 
@@ -341,6 +347,9 @@ class TestKerasTrial:
 
     @pytest.mark.parametrize("ckpt_ver", ["0.12.3", "0.13.7", "0.13.8"])
     def test_ancient_checkpoints(self, ckpt_ver):
+
+        from tests.experiment.fixtures import ancient_keras_ckpt
+
         checkpoint_dir = Path(utils.fixtures_path("ancient-checkpoints"))
         latest_checkpoint = f"{ckpt_ver}-keras"
 
@@ -495,6 +504,9 @@ def test_checkpoint_loading(ckpt_ver):
 
 
 def test_surface_native_error():
+
+    from tests.experiment.fixtures import tf_keras_runtime_error
+
     def make_workloads() -> workload.Stream:
         trainer = utils.TrainAndValidate()
 
