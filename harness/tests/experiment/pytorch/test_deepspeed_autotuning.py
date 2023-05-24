@@ -1509,7 +1509,7 @@ class TestHFConfigOverwriting:
                         hf_flag = args[idx]
                         ds_key = hf_flag_to_ds_key[hf_flag]
                         expected_hf_value = HPARAMS_FIXTURE[_defaults.OVERWRITE_KEY][ds_key]
-                        actual_hf_value = HPARAMS_FIXTURE[_defaults.OVERWRITE_KEY][ds_key]
+                        actual_hf_value = int(args[idx + 1])
                         assert actual_hf_value == expected_hf_value
 
     @pytest.mark.timeout(5)
