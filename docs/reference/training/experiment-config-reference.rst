@@ -486,10 +486,10 @@ Checkpoints of an existing experiment can be garbage collected by changing the G
  Storage Type
 **************
 
-Determined currently supports several kinds of checkpoint storage, ``gcs``, ``hdfs``, ``s3``,
-``azure``, and ``shared_fs``, identified by the ``type`` subfield. Additional fields may also be
-required, depending on the type of checkpoint storage in use. For example, to store checkpoints on
-Google Cloud Storage:
+Determined currently supports several kinds of checkpoint storage, ``gcs``, ``s3``, ``azure``, and
+``shared_fs``, identified by the ``type`` subfield. Additional fields may also be required,
+depending on the type of checkpoint storage in use. For example, to store checkpoints on Google
+Cloud Storage:
 
 .. code:: yaml
 
@@ -522,33 +522,6 @@ Required. The GCS bucket name to use.
 
 Optional. The optional path prefix to use. Must not contain ``..``. Note: Prefix is normalized,
 e.g., ``/pre/.//fix`` -> ``/pre/fix``
-
-HDFS
-====
-
-If ``type: hdfs`` is specified, checkpoints will be stored in HDFS using the `WebHDFS
-<http://hadoop.apache.org/docs/current/hadoop-project-dist/hadoop-hdfs/WebHDFS.html>`__ API for
-reading and writing checkpoint resources.
-
-``hdfs_url``
-------------
-
-Required. Hostname or IP address of HDFS namenode, prefixed with protocol, followed by WebHDFS port
-on namenode. Multiple namenodes are allowed as a semicolon-separated list (e.g.,
-``"http://namenode1:50070;http://namenode2:50070"``).
-
-``hdfs_path``
--------------
-
-Required. The prefix path where all checkpoints will be written to and read from. The resources of
-each checkpoint will be saved in a subdirectory of ``hdfs_path``, where the subdirectory name is the
-checkpoint's UUID.
-
-``user``
---------
-
-Optional. The user name to use for all read and write requests. If not specified, this defaults to
-the user of the trial runner container.
 
 Amazon S3
 =========

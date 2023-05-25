@@ -333,15 +333,6 @@ func (a *apiServer) LaunchTensorboard(
 				logBasePath = fmt.Sprintf("gs://%s", c.Bucket())
 			}
 
-		case expconf.HDFSConfig:
-			logBasePath = "hdfs://" + c.Path()
-
-			// The credentials files for HDFS exist on agent machines and are
-			// bind mounted into the container.
-			for _, mount := range exp.Config.BindMounts {
-				uniqMounts[mount.ContainerPath()] = model.ToModelBindMount(mount)
-			}
-
 		default:
 			return nil, status.Errorf(codes.Internal,
 				"unknown storage backend for experiment: %T", c)
