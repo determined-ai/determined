@@ -12,8 +12,7 @@ import { closestPointPlugin } from 'components/kit/utils/components/UPlot/UPlotC
 import { tooltipsPlugin } from 'components/kit/utils/components/UPlot/UPlotChart/tooltipsPlugin';
 import { getCssVar, getTimeTickValues, glasbeyColor } from 'components/kit/utils/functions';
 import useResize from 'components/kit/utils/hooks/useResize';
-import { ErrorHandler } from 'components/kit/utils/types';
-import { MetricType, Scale } from 'types';
+import { ErrorHandler, MetricType, Scale } from 'components/kit/utils/types';
 import { Loadable } from 'utils/loadable';
 
 import css from './LineChart.module.scss';

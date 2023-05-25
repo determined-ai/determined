@@ -7,7 +7,7 @@ import Button from 'components/kit/Button';
 import Input from 'components/kit/Input';
 import Select, { Option } from 'components/kit/Select';
 import { alphaNumericSorter } from 'components/kit/utils/functions';
-import { LogLevelFromApi } from 'types';
+import { LogLevelFromApi } from 'components/kit/utils/types';
 
 interface Props {
   onChange?: (filters: Filters) => void;

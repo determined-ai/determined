@@ -1,4 +1,7 @@
+import { DataNode } from 'antd/lib/tree';
 import * as t from 'io-ts';
+
+import { Loadable } from 'utils/loadable';
 
 export type Primitive = boolean | number | string;
 export type RecordKey = string | number | symbol;
@@ -107,3 +110,73 @@ export type AnyMouseEvent = MouseEvent | React.MouseEvent;
 export type AnyMouseEventHandler = (event: AnyMouseEvent) => void;
 
 export type ErrorHandler = (e: unknown, options?: object) => void;
+
+export interface TreeNode extends DataNode {
+  /**
+   * DataNode is the interface antd works with. DateNode properties we are interested in:
+   *
+   * key: we use V1FileNode.path
+   * title: name of node
+   * icon: custom Icon component
+   */
+  children?: TreeNode[];
+  content: Loadable<string>;
+  download?: string;
+  get?: (path: string) => Promise<string>;
+  isConfig?: boolean;
+  isLeaf?: boolean;
+}
+
+export const MetricType = {
+  Training: 'training',
+  Validation: 'validation',
+} as const;
+
+export type MetricType = ValueOf<typeof MetricType>;
+
+export interface Note {
+  contents: string;
+  name: string;
+}
+
+export interface User {
+  displayName?: string;
+  id: number;
+  modifiedAt?: number;
+  username: string;
+}
+
+export const LogLevel = {
+  Critical: 'critical',
+  Debug: 'debug',
+  Error: 'error',
+  Info: 'info',
+  None: 'none',
+  Trace: 'trace',
+  Warning: 'warning',
+} as const;
+
+export type LogLevel = ValueOf<typeof LogLevel>;
+
+// Disable `sort-keys` to sort LogLevel by higher severity levels
+export const LogLevelFromApi = {
+  Critical: 'LOG_LEVEL_CRITICAL',
+  Error: 'LOG_LEVEL_ERROR',
+  Warning: 'LOG_LEVEL_WARNING',
+  // eslint-disable-next-line sort-keys-fix/sort-keys-fix
+  Info: 'LOG_LEVEL_INFO',
+  // eslint-disable-next-line sort-keys-fix/sort-keys-fix
+  Debug: 'LOG_LEVEL_DEBUG',
+  Trace: 'LOG_LEVEL_TRACE',
+  Unspecified: 'LOG_LEVEL_UNSPECIFIED',
+} as const;
+
+export type LogLevelFromApi = ValueOf<typeof LogLevelFromApi>;
+
+export interface Log {
+  id: number | string;
+  level?: LogLevel;
+  message: string;
+  meta?: string;
+  time: string;
+}

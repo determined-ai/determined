@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 import { ChartGrid, GroupProps } from 'components/kit/LineChart';
-import { Scale } from 'types';
+import { Scale } from 'components/kit/utils/types';
 
 export const useChartGrid = (): ((
   props: Omit<GroupProps, 'scale' | 'setScale'>,

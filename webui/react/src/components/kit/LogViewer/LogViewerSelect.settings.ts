@@ -1,7 +1,6 @@
 import { array, literal, number, string, undefined as undefinedType, union } from 'io-ts';
 
-import { SettingsConfig } from 'components/kit/utils/types';
-import { LogLevelFromApi } from 'types';
+import { LogLevelFromApi, SettingsConfig } from 'components/kit/utils/types';
 
 export interface Settings {
   agentId?: string[];

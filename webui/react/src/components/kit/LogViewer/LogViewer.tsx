@@ -28,7 +28,7 @@ import useResize from 'components/kit/utils/hooks/useResize';
 import { readLogStream } from 'components/kit/utils/services';
 import { FetchArgs, RecordKey, ValueOf } from 'components/kit/utils/types';
 import { ErrorHandler } from 'components/kit/utils/types';
-import { Log, LogLevel } from 'types';
+import { Log, LogLevel } from 'components/kit/utils/types';
 
 import ClipboardButton from '../ClipboardButton';
 
