@@ -218,8 +218,12 @@ type mockRoundTripInterface struct {
 }
 
 func (m *mockRoundTripInterface) RoundTrip(req *http.Request) (*http.Response, error) {
+	var msg string
+	if m.message != nil {
+		msg = *m.message
+	}
 	return &http.Response{
 		StatusCode: http.StatusOK,
-		Body:       io.NopCloser(strings.NewReader(*m.message)),
+		Body:       io.NopCloser(strings.NewReader(msg)),
 	}, nil
 }
