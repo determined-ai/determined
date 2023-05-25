@@ -85,7 +85,7 @@ class Checkpoint:
     This class provides helper functionality for downloading checkpoints to
     local storage and loading checkpoints into memory.
 
-    The :class:`~determined.experimental.TrialReference` class contains methods
+    The :class:`~determined.experimental.Trial` class contains methods
     that return instances of this class.
     """
 
