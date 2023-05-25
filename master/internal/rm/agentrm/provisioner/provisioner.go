@@ -43,7 +43,7 @@ type Provisioner struct {
 	provider         provider
 	scaleDecider     *scaleDecider
 	telemetryLimiter *rate.Limiter
-	launchErr        *errInfo.ErrorTimeoutRetry
+	launchErr        *errInfo.StickyError
 }
 
 type provider interface {
@@ -93,7 +93,7 @@ func New(
 			db,
 		),
 		telemetryLimiter: rate.NewLimiter(rate.Every(telemetryCooldown), 1),
-		launchErr:        errInfo.NewErrorTimeoutRetry(launchErrorTimeout, config.LaunchErrorRetries),
+		launchErr:        errInfo.NewStickyError(launchErrorTimeout, config.LaunchErrorRetries),
 	}, nil
 }
 
@@ -186,13 +186,13 @@ func (p *Provisioner) provision(ctx *actor.Context) {
 }
 
 func (p *Provisioner) launch(ctx *actor.Context, numToLaunch int) error {
-	if err := p.launchErr.GetError(); err != nil {
+	if err := p.launchErr.Error(); err != nil {
 		return err
 	}
 	return p.launchErr.SetError(p.provider.launch(ctx, numToLaunch))
 }
 
-// GetLaunchError returns the current launch error sent from the provider.
-func (p *Provisioner) GetLaunchError() error {
-	return p.launchErr.GetError()
+// LaunchError returns the current launch error sent from the provider.
+func (p *Provisioner) LaunchError() error {
+	return p.launchErr.Error()
 }

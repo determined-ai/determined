@@ -527,7 +527,7 @@ func (rp *resourcePool) Receive(ctx *actor.Context) error {
 
 	case schedulerTick:
 		if rp.provisioner != nil {
-			if err := rp.provisioner.GetLaunchError(); err != rp.provisionerError {
+			if err := rp.provisioner.LaunchError(); err != rp.provisionerError {
 				rp.provisionerError = err
 				if err != nil {
 					rp.reschedule = true
@@ -846,11 +846,7 @@ func (rp *resourcePool) refreshAgentStateCacheFor(ctx *actor.Context, agents []*
 }
 
 func (rp *resourcePool) pruneTaskList(ctx *actor.Context) {
-	if rp.provisioner == nil {
-		return
-	}
-	provisionerErr := rp.provisioner.GetLaunchError()
-	if provisionerErr == nil {
+	if rp.provisioner == nil || rp.provisionerError == nil {
 		return
 	}
 
@@ -861,11 +857,11 @@ func (rp *resourcePool) pruneTaskList(ctx *actor.Context) {
 	}
 
 	ctx.Log().
-		WithError(provisionerErr).
+		WithError(rp.provisionerError).
 		WithField("slotCount", slotCount).
 		Error("provisioner in error state")
 
-	var refsToRemove = []*actor.Ref{}
+	var refsToRemove []*actor.Ref
 	for it := rp.taskList.Iterator(); it.Next(); {
 		task := it.Value()
 		ref := task.AllocationRef
@@ -877,11 +873,11 @@ func (rp *resourcePool) pruneTaskList(ctx *actor.Context) {
 			ctx.Log().Debugf("task %s can be scheduled with number of available slots", task.AllocationID)
 			continue
 		}
-		ctx.Log().WithError(provisionerErr).Warnf("removing task %s from task list", task.AllocationID)
+		ctx.Log().WithError(rp.provisionerError).Warnf("removing task %s from task list", task.AllocationID)
 		refsToRemove = append(refsToRemove, ref)
 	}
 	for _, ref := range refsToRemove {
-		ctx.Tell(ref, sproto.InvalidResourcesRequestError{Cause: provisionerErr})
+		ctx.Tell(ref, sproto.InvalidResourcesRequestError{Cause: rp.provisionerError})
 	}
 	after := rp.taskList.Len()
 	ctx.Log().WithField("before", before).WithField("after", after).Warn("pruned task list")

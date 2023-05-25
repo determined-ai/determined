@@ -5,9 +5,9 @@ import (
 	"time"
 )
 
-// ErrorTimeoutRetry is a helper struct that can be used to retry an error for a given number of
+// StickyError is a helper struct that can be used to retry an error for a given number of
 // retries and timeout.
-type ErrorTimeoutRetry struct {
+type StickyError struct {
 	timeout    time.Duration
 	maxRetries int
 
@@ -18,30 +18,30 @@ type ErrorTimeoutRetry struct {
 	retries int
 }
 
-// NewErrorTimeoutRetry returns a new ErrorTimeoutRetry.
-func NewErrorTimeoutRetry(timeout time.Duration, maxRetries int) *ErrorTimeoutRetry {
-	return &ErrorTimeoutRetry{
+// NewStickyError returns a new ErrorTimeoutRetry.
+func NewStickyError(timeout time.Duration, maxRetries int) *StickyError {
+	return &StickyError{
 		timeout:    timeout,
 		maxRetries: maxRetries,
 	}
 }
 
-func (e *ErrorTimeoutRetry) isExpired(t time.Time) bool {
+func (e *StickyError) isExpired(t time.Time) bool {
 	return e.timeout <= 0 || t.After(e.time.Add(e.timeout))
 }
 
-// GetError returns an error after max retries has been met and we are within the timeout duration.
-func (e *ErrorTimeoutRetry) GetError() error {
+// Error returns an error after max retries has been met and we are within the timeout duration.
+func (e *StickyError) Error() error {
 	if e == nil {
 		return nil
 	}
 	e.mu.RLock()
 	defer e.mu.RUnlock()
 
-	return e.getError(time.Now())
+	return e.error(time.Now())
 }
 
-func (e *ErrorTimeoutRetry) getError(t time.Time) error {
+func (e *StickyError) error(t time.Time) error {
 	if e.retries < e.maxRetries || e.isExpired(t) {
 		return nil
 	}
@@ -50,7 +50,7 @@ func (e *ErrorTimeoutRetry) getError(t time.Time) error {
 
 // SetError increments or resets the number of retries if the last error was within the timeout
 // duration or the current error is nil. Returns the error provided by GetError.
-func (e *ErrorTimeoutRetry) SetError(err error) error {
+func (e *StickyError) SetError(err error) error {
 	if e == nil {
 		panic("cannot set error on nil ErrorTimeoutRetry")
 	}
@@ -60,7 +60,7 @@ func (e *ErrorTimeoutRetry) SetError(err error) error {
 	return e.setError(time.Now(), err)
 }
 
-func (e *ErrorTimeoutRetry) setError(t time.Time, err error) error {
+func (e *StickyError) setError(t time.Time, err error) error {
 	if err == nil || e.isExpired(t) {
 		e.retries = 0
 	} else if e.err != nil {
@@ -68,5 +68,5 @@ func (e *ErrorTimeoutRetry) setError(t time.Time, err error) error {
 	}
 	e.err = err
 	e.time = t
-	return e.getError(t)
+	return e.error(t)
 }

@@ -73,7 +73,7 @@ func newMockEnvironment(t *testing.T, setup *mockConfig) (*mockEnvironment, *Pro
 			nil,
 		),
 		telemetryLimiter: rate.NewLimiter(rate.Every(telemetryCooldown), 1),
-		launchErr:        errInfo.NewErrorTimeoutRetry(launchErrorTimeout, setup.LaunchErrorRetries),
+		launchErr:        errInfo.NewStickyError(launchErrorTimeout, setup.LaunchErrorRetries),
 	}
 	provisioner, created := system.ActorOf(actor.Addr("provisioner"), p)
 	assert.Assert(t, created)
@@ -427,7 +427,7 @@ func TestProvisionerLaunchFailure(t *testing.T) {
 
 	mock.system.Ask(mock.provisioner, sproto.ScalingInfo{DesiredNewInstances: 4}).Get()
 	mock.system.Ask(mock.provisioner, provisionerTick{}).Get()
-	assert.Error(t, provisioner.GetLaunchError(), "failed to launch", "expected error")
+	assert.Error(t, provisioner.LaunchError(), "failed to launch", "expected error")
 }
 
 func TestProvisionerLaunchOneAtATime(t *testing.T) {
@@ -446,7 +446,7 @@ func TestProvisionerLaunchOneAtATime(t *testing.T) {
 
 	mock.system.Ask(mock.provisioner, sproto.ScalingInfo{DesiredNewInstances: 4}).Get()
 	mock.system.Ask(mock.provisioner, provisionerTick{}).Get()
-	err := provisioner.GetLaunchError()
+	err := provisioner.LaunchError()
 	assert.NilError(t, err, "received error %t", err)
 
 	setup.Config.MaxInstances = 3
@@ -455,7 +455,7 @@ func TestProvisionerLaunchOneAtATime(t *testing.T) {
 	mock.system.Ask(mock.provisioner, provisionerTick{}).Get()
 	mock.system.Ask(mock.provisioner, provisionerTick{}).Get()
 	mock.system.Ask(mock.provisioner, provisionerTick{}).Get()
-	err = provisioner.GetLaunchError()
+	err = provisioner.LaunchError()
 	assert.NilError(t, err, "received error %t", err)
 }
 
@@ -478,5 +478,5 @@ func TestProvisionerLaunchOneAtATimeFail(t *testing.T) {
 	for i := 0; i <= 4; i++ {
 		mock.system.Ask(mock.provisioner, provisionerTick{}).Get()
 	}
-	assert.Error(t, provisioner.GetLaunchError(), "failed to launch", "expected error")
+	assert.Error(t, provisioner.LaunchError(), "failed to launch", "expected error")
 }
