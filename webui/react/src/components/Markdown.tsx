@@ -62,7 +62,12 @@ const Markdown: React.FC<Props> = ({
                 </div>
               }>
               <CodeMirrorEditor
-                height={`${resize.height - 420}`}
+                basicSetup={{
+                  autocompletion: false,
+                  foldGutter: false,
+                  highlightActiveLineGutter: false,
+                }}
+                height={`${resize.height - 420}px`}
                 syntax="markdown"
                 value={markdown}
                 width="100%"
