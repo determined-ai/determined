@@ -161,9 +161,7 @@ def test_sampler(shuffle: bool, skip: int, rank_size: Tuple[int, int]) -> None:
 @pytest.mark.parametrize("rank_size", [(0, 1), (0, 3), (1, 3), (2, 3)])
 @pytest.mark.parametrize("skip", [0, 50, 350])
 @pytest.mark.parametrize("shuffle", [False, True])
-def test_enqueuer_threading(
-    shuffle: bool, skip: int, rank_size: Tuple[int, int], workers: int
-) -> None:
+def test_enqueuer(shuffle: bool, skip: int, rank_size: Tuple[int, int], workers: int) -> None:
     epoch_len = 100
     rank, size = rank_size
 
@@ -187,7 +185,8 @@ def test_enqueuer_threading(
         assert list(enqueuer.data()) == list(sampler.yield_epoch()), "third epoch was wrong"
 
 
-def test_enqueuer_multiprocessing() -> None:
+@pytest.mark.parametrize("workers", [1, 5])
+def test_enqueuer_multiprocessing(workers: int) -> None:
     """Same enqueuer test as above, but with multiprocessing enabled.
 
     A single, arbitrary set of parameters from the above test is chosen in order to exercise the
@@ -196,7 +195,6 @@ def test_enqueuer_multiprocessing() -> None:
     choice of threading/multiprocessing and the examples loaded by the enqueuer.
     """
     epoch_len = 100
-    workers = 5
     rank, size = (1, 3)
     skip = 50
     shuffle = True
