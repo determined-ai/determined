@@ -63,6 +63,7 @@ const SplitPane: React.FC<Props> = ({ children, initialWidth, onChange, open = t
   }, [isDragging]);
 
   useEffect(() => {
+    if (!isDragging) return;
     const c = () => {
       // Turn off dragging flag when user mouse is up
       setIsDragging(false);
@@ -73,7 +74,7 @@ const SplitPane: React.FC<Props> = ({ children, initialWidth, onChange, open = t
 
     return () => document.removeEventListener('mouseup', c);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [width, isDragging]);
 
   const handleClassnames = [css.handle];
   const rightClassnames = [css.rightBox];
