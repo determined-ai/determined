@@ -157,10 +157,10 @@ class Determined:
         config: Union[str, pathlib.Path, Dict],
         model_dir: Union[str, pathlib.Path],
         includes: Optional[Iterable[Union[str, pathlib.Path]]] = None,
-    ) -> experiment.ExperimentReference:
+    ) -> experiment.Experiment:
         """
         Create an experiment with config parameters and model directory. The function
-        returns :class:`~determined.experimental.ExperimentReference` of the experiment.
+        returns :class:`~determined.experimental.Experiment` of the experiment.
 
         Arguments:
             config(string, pathlib.Path, dictionary): experiment config filename (.yaml)
@@ -207,26 +207,26 @@ class Determined:
                 logging.warning(api.WARNING_MESSAGE_MAP[w])
 
         exp_id = resp.experiment.id
-        exp = experiment.ExperimentReference(exp_id, self._session)
+        exp = experiment.Experiment(exp_id, self._session)
 
         return exp
 
-    def get_experiment(self, experiment_id: int) -> experiment.ExperimentReference:
+    def get_experiment(self, experiment_id: int) -> experiment.Experiment:
         """
-        Get the :class:`~determined.experimental.ExperimentReference` representing the
+        Get the :class:`~determined.experimental.Experiment` representing the
         experiment with the provided experiment ID.
         """
-        return experiment.ExperimentReference(
+        return experiment.Experiment(
             experiment_id,
             self._session,
         )
 
-    def get_trial(self, trial_id: int) -> trial.TrialReference:
+    def get_trial(self, trial_id: int) -> trial.Trial:
         """
-        Get the :class:`~determined.experimental.TrialReference` representing the
+        Get the :class:`~determined.experimental.Trial` representing the
         trial with the provided trial ID.
         """
-        return trial.TrialReference(trial_id, self._session)
+        return trial.Trial(trial_id, self._session)
 
     def get_checkpoint(self, uuid: str) -> checkpoint.Checkpoint:
         """

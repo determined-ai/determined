@@ -176,7 +176,7 @@ class _TrialState:
 class _PyTorchTrialController:
     def __init__(
         self,
-        trial_inst: det.Trial,
+        trial_inst: det.LegacyTrial,
         context: pytorch.PyTorchTrialContext,
         checkpoint_period: TrainUnit,
         validation_period: TrainUnit,
@@ -1382,7 +1382,7 @@ class _PyTorchTrialController:
                     metadata[newkey] = metadata.pop(key)
 
 
-class PyTorchTrial(det.Trial):
+class PyTorchTrial(det.LegacyTrial):
     """
     PyTorch trials are created by subclassing this abstract class.
 
