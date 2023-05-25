@@ -27,13 +27,13 @@ def _experiment_task_id(exp_id: int) -> str:
     return task_id
 
 
-def _probe_tunnel(proc: "subprocess.Popen[str]") -> None:
+def _probe_tunnel(proc: "subprocess.Popen[str]", port=8265) -> None:
     max_tunnel_time = 300
     start = time.time()
     ctr = 0
     while time.time() - start < max_tunnel_time:
         try:
-            r = requests.get("http://localhost:8265", timeout=5)
+            r = requests.get(f"http://localhost:{port}", timeout=5)
             if r.status_code == 200:
                 break
         except requests.exceptions.ConnectionError:
@@ -150,8 +150,8 @@ def _kill_all_ray_experiments() -> None:
 @pytest.mark.e2e_cpu
 @pytest.mark.timeout(600)
 def test_experiment_proxy_ray_publish() -> None:
-    subprocess.run(["netstat", "-lpn"])
-    subprocess.run(["ps", "aux"])
+    #subprocess.run(["netstat", "-lpn"])
+    #subprocess.run(["ps", "aux"])
     exp_path = conf.EXAMPLES_PATH / "features" / "ports"
     proc = subprocess.Popen(
         [
