@@ -1414,6 +1414,51 @@ class TestASHADSATSearchMethod:
         assert next_promoted_trial.metric[next_promoted_trial.searcher_metric_name] == best_metric
 
     @pytest.mark.timeout(5)
+    def test_get_best_trial_in_lineage(
+        self,
+        default_asha_state_and_search_method: Tuple[searcher.SearcherState, ASHADSATSearchMethod],
+    ) -> None:
+        """
+        Test the `get_best_trial_in_lineage` method and verify that it respects the `max_rung_idx`
+        arg appropriately.
+        """
+        searcher_state, search_method = default_asha_state_and_search_method
+        search_method.trial_tracker.queue.clear()
+        hparams, search_data = search_method.get_random_hparams_and_search_data(1)
+        trial = None
+        # Let the metric improve with each rung.
+        for rung_idx in range(search_method.max_rungs):
+            while (
+                not trial
+                or trial.num_completed_trials_in_lineage
+                < search_method.max_trials_for_rung_idx(rung_idx)
+            ):
+                metric = (
+                    -1 * rung_idx if search_method.trial_tracker.smaller_is_better else rung_idx
+                )
+                search_data = copy.deepcopy(search_data)
+                search_data.curr_rung = rung_idx
+                trial = search_method.trial_tracker.create_trial(
+                    hparams=hparams, search_data=search_data, parent_trial=trial
+                )
+                assert trial.searcher_metric_name
+                search_method.trial_tracker.update_trial_metric(
+                    trial, {trial.searcher_metric_name: metric}
+                )
+        for rung_idx in range(search_method.max_rungs):
+            assert trial
+            best_trial = search_method.get_best_trial_in_lineage(trial, max_rung_idx=rung_idx)
+            assert best_trial
+            assert best_trial.metric
+            assert isinstance(best_trial.metric, dict)
+            assert best_trial.searcher_metric_name
+            best_trial_metric = best_trial.metric[best_trial.searcher_metric_name]
+            expected_metric = (
+                -1 * rung_idx if search_method.trial_tracker.smaller_is_better else rung_idx
+            )
+            assert best_trial_metric == expected_metric
+
+    @pytest.mark.timeout(5)
     def test_get_top_lineages_in_rung(
         self, long_asha_state_and_search_method: Tuple[searcher.SearcherState, ASHADSATSearchMethod]
     ) -> None:
