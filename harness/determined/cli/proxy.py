@@ -203,7 +203,6 @@ def _http_tunnel_listener(
             c1.join()
             c2.join()
 
-    print("SPAWNING TCP SERVER: ", tunnel.local_addr, tunnel.local_port)
     return socketserver.ThreadingTCPServer((tunnel.local_addr, tunnel.local_port), TunnelHandler)
 
 

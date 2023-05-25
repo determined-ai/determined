@@ -2068,9 +2068,6 @@ jobs:
           name: Get master dependencies
           command: make -C master get-deps
 
-      - run:
-          command: sudo apt-get install -y net-tools
-
       - install-devcluster
       - unless:
           condition: <<parameters.managed-devcluster>>

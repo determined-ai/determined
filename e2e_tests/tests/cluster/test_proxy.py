@@ -97,7 +97,6 @@ def test_experiment_proxy_ray_tunnel() -> None:
             ],
             text=True,
         )
-        print("TUNNEL PID: ", proc.pid)
 
         try:
             _probe_tunnel(proc)
@@ -150,8 +149,6 @@ def _kill_all_ray_experiments() -> None:
 @pytest.mark.e2e_cpu
 @pytest.mark.timeout(600)
 def test_experiment_proxy_ray_publish() -> None:
-    #subprocess.run(["netstat", "-lpn"])
-    #subprocess.run(["ps", "aux"])
     exp_path = conf.EXAMPLES_PATH / "features" / "ports"
     proc = subprocess.Popen(
         [
