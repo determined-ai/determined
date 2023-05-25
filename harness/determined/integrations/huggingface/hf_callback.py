@@ -59,7 +59,7 @@ class DetCallback(TrainerCallback):  # type: ignore
             logging.warning("on_log called with empty logs")
             return
         metrics, metric_type = self._get_metrics(logs)
-        print(f"on_log metrics, global_step {state.global_step}", metrics)
+        logging.debug(f"on_log metrics, global_step {state.global_step}", metrics)
         if metric_type == TRAIN:
             # Prevents reporting metrics for the same step twice. This happens after
             # training is completed and average training metrics are reported with
