@@ -29,10 +29,16 @@ MODEL_INFO_PROFILE_DS_CONFIG = {
 }
 
 
-# Using same defaults as DS. Written as a diff between successive stages for brevity.
+# Using similar. Written as a diff between successive stages for brevity.
+reduce_bucket_size_defaults = [n * 10**m for n in (1, 5) for m in range(6, 10)]
+allgather_bucket_size_defaults = [n * 10**m for n in (1, 5) for m in range(6, 10)]
+
 DEFAULT_ZERO_SEARCH_SPACE: Dict[int, Dict[str, List[Union[bool, float]]]] = {
     0: {},
-    1: {"reduce_bucket_size": [5e7, 5e8, 1e9], "allgather_bucket_size": [5e7, 5e8, 1e9]},
+    1: {
+        "reduce_bucket_size": reduce_bucket_size_defaults,
+        "allgather_bucket_size": allgather_bucket_size_defaults,
+    },
     2: {
         "overlap_comm": [True, False],
         "reduce_scatter": [True, False],
@@ -49,7 +55,7 @@ AUTOTUNING_ARG_DEFAULTS = {
     "max-trials": 50,
     "max-concurrent-trials": 16,
     "zero-stages": [1, 2, 3],
-    "trials-per-random-config": 3,
+    "trials-per-random-config": 5,
     "start-profile-step": 3,
     "end-profile-step": 5,
     "metric": "FLOPS_per_gpu",

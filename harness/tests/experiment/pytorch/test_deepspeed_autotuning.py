@@ -598,6 +598,12 @@ class TestRandomDSATSearchMethodTrialCreation:
                 searcher_state, next_trial.request_id, searcher.ExitedReason.ERRORED
             )
             next_trial = search_method.choose_next_trial_from_queue()
+            # Force the search data to be non-trivial, so that we avoid exiting due to a trivial
+            # search range.
+            assert next_trial.search_data
+            next_trial.search_data.lo = 1
+            next_trial.search_data.hi = 10
+            next_trial.ds_config["train_micro_batch_size_per_gpu"] = 5
             assert next_trial.lineage_root == first_trial
         # And the next trial should be from a new lineage.
         search_method.on_trial_exited_early(
@@ -1299,7 +1305,7 @@ class TestASHADSATSearchMethod:
         """
         Simulate running a full experiment with all successful trials, each worse than the last,
         and verify the expected end state, which is that trials in the higher rungs should have
-        better metrics than those which were never promoted out of lower rungs.
+        better metrics than those which were never promoted out of the rungs.
         """
         searcher_state, search_method = long_asha_state_and_search_method
         assert isinstance(search_method, ASHADSATSearchMethod)
