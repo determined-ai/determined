@@ -40,6 +40,8 @@ SKIP_DEVCLUSTER_STAGE=0
 # Variables that can be set before invoking the script (to change the default)
 DEFAULTIMAGE=${DEFAULTIMAGE-}
 SLOTTYPE=
+# If empty use resource_manager: slurm|pbs, otherwise agent
+DETERMINED_AGENT=
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -79,6 +81,10 @@ while [[ $# -gt 0 ]]; do
             PULL_AUTH=1
             shift
             ;;
+        -A)
+            DETERMINED_AGENT=1
+            shift
+            ;;
         -c)
             DEFAULTIMAGE=$2
             shift 2
@@ -105,6 +111,7 @@ while [[ $# -gt 0 ]]; do
             echo "  --cpu  Force slot_type to cpu instead of the default (cuda)."
             echo "  -u     Use provided {username} to lookup the per-user port number."
             echo "  -a     Attempt to retrieve the .launcher.token - you must have sudo root on the cluster."
+            echo "  -A     Use agents instead of launcher to access HPC resources."
             echo "  -s     Do not launch the devcluster. The devcluster will need to be launched and managed separately. "
             echo "         For example, e2e_slurm_restart tests manage their own instance of devcluster."
             echo
@@ -613,7 +620,20 @@ sleep 3
 # Manually apply those into a temp file.
 TEMPYAML=/tmp/devcluster-$CLUSTER.yaml
 rm -f $TEMPYAML
+
+if [[ -n $DETERMINED_AGENT ]]; then
+    # Clear custom resource pools as they they prevent the
+    # default resource pool from being created and cause the agentRM to fail.
+    unset OPT_RESOURCEPOOLS
+fi
 envsubst <tools/devcluster-slurm.yaml >$TEMPYAML
+if [[ -n $DETERMINED_AGENT ]]; then
+    # When deploying with the determined agent, remove the resource_manager section
+    # that would otherwise be used.   This then defaults to the agent rm and
+    # the master waits for agents to connect and provide resources.
+    sed -i -e '/resource_manager/,/resource_manager_end/d' $TEMPYAML
+fi
+
 echo "INFO: Generated devcluster file: $TEMPYAML"
 if [ $SKIP_DEVCLUSTER_STAGE -eq 0 ]; then
     devcluster -c $TEMPYAML --oneshot
