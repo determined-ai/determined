@@ -183,7 +183,7 @@ def test_experiment_proxy_ray_publish() -> None:
 
         try:
             exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.RUNNING)
-            _probe_tunnel(proc)
+            _probe_tunnel(proc, port=8267)
             _ray_job_submit(exp_path, port=8267)
         finally:
             sess = api_utils.determined_test_session()
