@@ -27,7 +27,7 @@ def _experiment_task_id(exp_id: int) -> str:
     return task_id
 
 
-def _probe_tunnel(proc: "subprocess.Popen[str]", port=8265) -> None:
+def _probe_tunnel(proc: "subprocess.Popen[str]", port: int = 8265) -> None:
     max_tunnel_time = 300
     start = time.time()
     ctr = 0
@@ -52,7 +52,7 @@ def _probe_tunnel(proc: "subprocess.Popen[str]", port=8265) -> None:
     print(f"Tunnel probe done after {ctr} ticks.")
 
 
-def _ray_job_submit(exp_path: pathlib.Path, port=8265) -> None:
+def _ray_job_submit(exp_path: pathlib.Path, port: int = 8265) -> None:
     env = os.environ.copy()
     env["RAY_ADDRESS"] = f"http://localhost:{port}"
     subprocess.run(
