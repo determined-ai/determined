@@ -6,6 +6,7 @@ import ExperimentMoveModalComponent from 'components/ExperimentMoveModal';
 import { FilterFormStore } from 'components/FilterForm/components/FilterFormStore';
 import TableFilter from 'components/FilterForm/TableFilter';
 import Button from 'components/kit/Button';
+import { Column, Columns } from 'components/kit/Columns';
 import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 import Icon, { IconName } from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
@@ -314,43 +315,50 @@ const TableActionBar: React.FC<Props> = ({
 
   return (
     <>
-      <Space className={css.base}>
-        <TableFilter
-          formStore={formStore}
-          isOpenFilter={isOpenFilter}
-          loadableColumns={projectColumns}
-          setIsOpenFilter={setIsOpenFilter}
-        />
-        <MultiSortMenu columns={projectColumns} sorts={sorts} onChange={onSortChange} />
-        <ColumnPickerMenu
-          initialVisibleColumns={initialVisibleColumns}
-          projectColumns={projectColumns}
-          setVisibleColumns={setVisibleColumns}
-        />
-        {(selectAll || selectedExperimentIds.length > 0) && (
-          <Dropdown menu={editMenuItems} onClick={handleAction}>
-            <Button icon={<Icon name="pencil" title="Edit" />}>
-              Edit (
-              {selectAll
-                ? Loadable.isLoaded(total)
-                  ? (total.data - (excludedExperimentIds?.size ?? 0)).toLocaleString()
-                  : 'All'
-                : selectedExperimentIds.length}
-              )
-            </Button>
-          </Dropdown>
-        )}
-        <RadioGroup
-          className={css.pageToggle}
-          iconOnly
-          options={[
-            { icon: 'grid', id: 'scroll', label: 'Scroll View' },
-            { icon: 'list', id: 'paged', label: 'Paged View' },
-          ]}
-          value={expListView}
-          onChange={(id) => setExpListView(id as ExpListView)}
-        />
-      </Space>
+      <Columns>
+        <Column>
+          <Space className={css.base}>
+            <TableFilter
+              formStore={formStore}
+              isOpenFilter={isOpenFilter}
+              loadableColumns={projectColumns}
+              setIsOpenFilter={setIsOpenFilter}
+            />
+            <MultiSortMenu columns={projectColumns} sorts={sorts} onChange={onSortChange} />
+            <ColumnPickerMenu
+              initialVisibleColumns={initialVisibleColumns}
+              projectColumns={projectColumns}
+              setVisibleColumns={setVisibleColumns}
+            />
+            {(selectAll || selectedExperimentIds.length > 0) && (
+              <Dropdown menu={editMenuItems} onClick={handleAction}>
+                <Button icon={<Icon name="pencil" title="Edit" />}>
+                  Edit (
+                  {selectAll
+                    ? Loadable.isLoaded(total)
+                      ? (total.data - (excludedExperimentIds?.size ?? 0)).toLocaleString()
+                      : 'All'
+                    : selectedExperimentIds.length}
+                  )
+                </Button>
+              </Dropdown>
+            )}
+          </Space>
+        </Column>
+        <Column align="right">
+          <Space>
+            <RadioGroup
+              iconOnly
+              options={[
+                { icon: 'grid', id: 'scroll', label: 'Scroll View' },
+                { icon: 'list', id: 'paged', label: 'Paged View' },
+              ]}
+              value={expListView}
+              onChange={(id) => setExpListView(id as ExpListView)}
+            />
+          </Space>
+        </Column>
+      </Columns>
       {batchAction && (
         <BatchActionConfirmModal.Component
           batchAction={batchAction}

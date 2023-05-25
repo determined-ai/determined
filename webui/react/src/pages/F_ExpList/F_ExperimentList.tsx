@@ -1,5 +1,5 @@
 import { Rectangle } from '@glideapps/glide-data-grid';
-import { Pagination } from 'antd';
+import { Space } from 'antd';
 import { isLeft } from 'fp-ts/lib/Either';
 import { observable, useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -7,7 +7,9 @@ import { useSearchParams } from 'react-router-dom';
 
 import { FilterFormStore } from 'components/FilterForm/components/FilterFormStore';
 import { IOFilterFormSet } from 'components/FilterForm/components/type';
+import { Column, Columns } from 'components/kit/Columns';
 import Empty from 'components/kit/Empty';
+import Pagination from 'components/kit/Pagination';
 import useResize from 'hooks/useResize';
 import { useSettings } from 'hooks/useSettings';
 import { getProjectColumns, searchExperiments } from 'services/api';
@@ -58,7 +60,10 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const { settings, updateSettings } = useSettings<F_ExperimentListSettings>(settingsConfig);
   const { settings: globalSettings, updateSettings: updateGlobalSettings } =
     useSettings<F_ExperimentListGlobalSettings>(settingsConfigGlobal);
-  const startPage = globalSettings.expListView === 'scroll' ? 0 : 1;
+  const startPage = useMemo(
+    () => (globalSettings.expListView === 'scroll' ? 0 : 1),
+    [globalSettings.expListView],
+  );
   const [page, setPage] = useState(() =>
     isFinite(Number(searchParams.get('page')))
       ? Math.max(Number(searchParams.get('page')), startPage)
@@ -80,7 +85,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   });
   const [sortString, setSortString] = useState<string>('');
   const [experiments, setExperiments] = useState<Loadable<ExperimentWithTrial>[]>(
-    Array((page + 1) * PAGE_SIZE).fill(NotLoaded),
+    Array(page * PAGE_SIZE).fill(NotLoaded),
   );
   const [total, setTotal] = useState<Loadable<number>>(NotLoaded);
   const [projectColumns, setProjectColumns] = useState<Loadable<ProjectColumn[]>>(NotLoaded);
@@ -165,9 +170,9 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
 
   const resetPagination = useCallback(() => {
     setIsLoading(true);
-    setPage(1);
+    setPage(startPage);
     setExperiments([]);
-  }, []);
+  }, [startPage]);
 
   const onSortChange = useCallback(
     (sorts: Sort[]) => {
@@ -183,6 +188,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
 
   const fetchExperiments = useCallback(async (): Promise<void> => {
     try {
+      // Use -1.5 because paged view starts page at 1.
       const tableOffset = Math.max((page - 1.5) * PAGE_SIZE, 0);
       const pagedView = globalSettings.expListView === 'paged';
 
@@ -365,9 +371,9 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   );
 
   const onPageChange = useCallback(
-    (p: number, ps: number) => {
-      updateSettings({ pageLimit: ps });
-      setPage(p);
+    (cPage: number, cPageSize: number) => {
+      updateSettings({ pageLimit: cPageSize });
+      setPage(cPage);
     },
     [updateSettings],
   );
@@ -407,7 +413,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         ) : error ? (
           <Error />
         ) : (
-          <>
+          <Space direction="vertical" style={{ width: '100%' }}>
             <GlideTable
               clearSelectionTrigger={clearSelectionTrigger}
               colorMap={colorMap}
@@ -443,16 +449,19 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
               onSortChange={onSortChange}
             />
             {globalSettings.expListView === 'paged' && (
-              <Pagination
-                current={page}
-                pageSize={settings.pageLimit}
-                pageSizeOptions={[20, 40, 80]}
-                style={{ float: 'right', marginTop: 8 }}
-                total={Loadable.isLoaded(total) ? total.data : undefined}
-                onChange={onPageChange}
-              />
+              <Columns>
+                <Column align="right">
+                  <Pagination
+                    current={page}
+                    pageSize={settings.pageLimit}
+                    pageSizeOptions={[20, 40, 80]}
+                    total={Loadable.getOrElse(0, total)}
+                    onChange={onPageChange}
+                  />
+                </Column>
+              </Columns>
             )}
-          </>
+          </Space>
         )}
       </div>
     </>

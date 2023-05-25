@@ -1,5 +1,4 @@
 import * as t from 'io-ts';
-import { literal, union } from 'io-ts';
 
 import { INIT_FORMSET } from 'components/FilterForm/components/FilterFormStore';
 import { SettingsConfig } from 'hooks/useSettings';
@@ -46,7 +45,7 @@ export const settingsConfigGlobal: SettingsConfig<F_ExperimentListGlobalSettings
       defaultValue: 'scroll',
       skipUrlEncoding: true,
       storageKey: 'expListView',
-      type: union([literal('scroll'), literal('paged')]),
+      type: t.union([t.literal('scroll'), t.literal('paged')]),
     },
   },
   storagePath: 'f_project-details-global',
