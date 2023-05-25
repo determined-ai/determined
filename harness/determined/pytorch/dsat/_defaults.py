@@ -63,7 +63,7 @@ AUTOTUNING_ARG_DEFAULTS = {
     "run-full-experiment": False,
     "search-range-factor": 1.0,
     "divisor": 2,
-    "min-binary-search-trials": 2,
+    "min-binary-search-trials": 3,
     "max-rungs": 5,
     "asha-early-stopping": 0,
 }
