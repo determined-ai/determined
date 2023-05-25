@@ -501,47 +501,47 @@ func (db *PgDB) _addTrialMetricsTx(
 	}
 
 	if err := checkTrialRunID(ctx, tx, m.TrialId, m.TrialRunId); err != nil {
-		return err
+		return rollbacks, err
 	}
 
 	if rollbacks, err = rollbackMetrics(ctx, tx, m.TrialRunId, m.TrialId, m.StepsCompleted,
 		pType); err != nil {
-		return err
+		return rollbacks, err
 	}
 	var summaryMetrics model.JSONObj
 	err = tx.QueryRowContext(ctx, `
 		SELECT summary_metrics FROM trials WHERE id = $1 FOR UPDATE;
 	`, m.TrialId).Scan(&summaryMetrics)
 	if err != nil {
-		return fmt.Errorf("error getting summary metrics from trials: %w", err)
+		return rollbacks, fmt.Errorf("error getting summary metrics from trials: %w", err)
 	}
 
 	metricRowID, err := db.addRawMetrics(ctx, tx, &metricsBody, m.TrialRunId,
 		m.TrialId, m.StepsCompleted, pType, mType)
 	if err != nil {
-		return err
+		return rollbacks, err
 	}
 
 	switch {
 	case rollbacks != 0:
 		if err := db.updateTotalBatches(ctx, tx, int(m.TrialId)); err != nil {
-			return errors.Wrap(err, "rollback")
+			return rollbacks, errors.Wrap(err, "rollback")
 		}
 
 		if err := db.updateLatestValidationID(ctx, tx, int(m.TrialId)); err != nil {
-			return fmt.Errorf(
+			return rollbacks, fmt.Errorf(
 				"rollback updating latest validation ID for trial %d: %w", m.TrialId, err)
 		}
 
 		if err := db.fullTrialSummaryMetricsRecompute(ctx, tx, int(m.TrialId)); err != nil {
-			return errors.Wrap(err, "error on rollback compute of summary metrics")
+			return rollbacks, errors.Wrap(err, "error on rollback compute of summary metrics")
 		}
 	case pType == GenericMetric:
 		if _, err := tx.ExecContext(ctx, `
 	UPDATE trials SET total_batches = GREATEST(total_batches, $2)
 	WHERE id = $1;
 	`, m.TrialId, m.StepsCompleted); err != nil {
-			return errors.Wrap(err, "updating trial total batches")
+			return rollbacks, errors.Wrap(err, "updating trial total batches")
 		}
 	default: // no rollbacks happened.
 		if _, ok := summaryMetrics[metricsJSONPath]; !ok {
@@ -560,7 +560,7 @@ func (db *PgDB) _addTrialMetricsTx(
 		FROM experiments
 		JOIN trials t ON t.experiment_id = experiments.id
 		WHERE t.id = $1`, int(m.TrialId)).Scan(&searcherMetric); err != nil {
-				return fmt.Errorf("getting trial's searcher metric: %w", err)
+				return rollbacks, fmt.Errorf("getting trial's searcher metric: %w", err)
 			}
 			if searcherMetric != nil &&
 				m.Metrics.AvgMetrics.Fields[*searcherMetric].AsInterface() != nil {
@@ -574,7 +574,7 @@ summary_metrics = $3, summary_metrics_timestamp = NOW(),
 latest_validation_id = coalesce($4, latest_validation_id)
 WHERE id = $1;
 `, m.TrialId, m.StepsCompleted, summaryMetrics, latestValidationID); err != nil {
-			return errors.Wrap(err, "updating trial total batches")
+			return rollbacks, errors.Wrap(err, "updating trial total batches")
 		}
 	}
 
@@ -583,10 +583,10 @@ WHERE id = $1;
 			tx, int(m.TrialId),
 			int(m.TrialRunId),
 			int(m.StepsCompleted)); err != nil {
-			return errors.Wrap(err, "updating trial best validation")
+			return rollbacks, errors.Wrap(err, "updating trial best validation")
 		}
 	}
-	return nil
+	return rollbacks, nil
 }
 
 // addTrialMetrics inserts a set of trial metrics to the database.
