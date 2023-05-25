@@ -1,4 +1,4 @@
-import { RefObject, useEffect, useState } from 'react';
+import { RefObject, useLayoutEffect, useState } from 'react';
 
 interface ResizeInfo {
   height: number;
@@ -19,7 +19,7 @@ export const DEFAULT_RESIZE_THROTTLE_TIME = 500;
 const useResize = (ref?: RefObject<HTMLElement>): ResizeInfo => {
   const [resizeInfo, setResizeInfo] = useState<ResizeInfo>(defaultResizeInfo);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     let element = document.body;
     if (ref) {
       if (ref.current) element = ref.current;
