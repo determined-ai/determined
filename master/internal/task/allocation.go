@@ -1031,10 +1031,9 @@ func (a *Allocation) terminated(ctx *actor.Context, reason string) {
 			exit.Err = err
 			return
 		}
+	case len(a.resources) == 0:
+		return
 	default:
-		if len(a.resources) == 0 {
-			return
-		}
 		// If we ever exit without a reason and we have no exited resources, something has gone
 		// wrong.
 		panic("allocation exited early without a valid reason")
@@ -1056,6 +1055,9 @@ func (a *Allocation) markResourcesStarted(ctx *actor.Context) {
 func (a *Allocation) markResourcesReleased(ctx *actor.Context) {
 	if err := a.db.DeleteAllocationSession(a.model.AllocationID); err != nil {
 		ctx.Log().WithError(err).Error("error deleting allocation session")
+	}
+	if a.model.StartTime == nil {
+		return
 	}
 	a.model.EndTime = ptrs.Ptr(time.Now().UTC())
 	if err := a.db.CompleteAllocation(&a.model); err != nil {
