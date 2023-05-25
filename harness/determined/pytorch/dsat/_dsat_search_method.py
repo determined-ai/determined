@@ -923,9 +923,20 @@ class RandomDSATSearchMethod(BaseDSATSearchMethod):
 
         if best_trial_for_stage is not None and best_trial_for_stage.search_data is not None:
             new_search_data = copy.deepcopy(best_trial_for_stage.search_data)
-            # Update the floor to one greater than the mbs used and raise the ceiling.
+            # Update the floor to one greater than the mbs used and raise the ceiling to be
+            # the maximum between the largest mbs trial of this stage which was successful, the
+            # best trial's ceiling, and twice as large as the floor.
             new_search_data.lo = best_trial_for_stage.mbs + 1
-            new_search_data.hi = max(2 * best_trial_for_stage.mbs, new_search_data.hi)
+            largest_successful_batch_size_for_stage = max(
+                t.mbs
+                for t in self.trial_tracker.completed_trials
+                if t.stage == best_trial_for_stage.stage
+                and isinstance(t.metric, dict)
+                and t.metric.get(self.trial_tracker.searcher_metric) is not None
+            )
+            new_search_data.hi = max(
+                largest_successful_batch_size_for_stage, new_search_data.hi, 2 * new_search_data.lo
+            )
         # Otherwise choose the corresponding search data based on approximate computations
         else:
             random_zero_stage_max_mbs = self.trial_tracker.approx_max_mbs_per_stage[zero_stage]
