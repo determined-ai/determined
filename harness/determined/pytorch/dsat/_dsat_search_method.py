@@ -904,7 +904,7 @@ class RandomDSATSearchMethod(BaseDSATSearchMethod):
         volume than simply choosing the midpoint. Draws from a binomial distribution, to keep the
         results still somewhat focused near the midpoint.
         """
-        mbs = search_data.lo + self.rng.binomial(search_data.hi - search_data.lo, 0.5)
+        mbs: int = search_data.lo + self.rng.binomial(search_data.hi - search_data.lo, 0.5)
         return mbs
 
     def get_random_hparams_and_search_data(
