@@ -1,0 +1,40 @@
+.base {
+  display: flex;
+  overflow: hidden;
+
+  .leftBox {
+    /* Use box-sizing so that element's outerwidth will match width property */
+    box-sizing: border-box;
+    flex: 0 0 auto;
+    width: 100%;
+  }
+  .rightBox {
+    /* Use box-sizing so that element's outerwidth will match width property */
+    box-sizing: border-box;
+    flex: 0 0 auto;
+    width: 0;
+
+    &.open {
+      width: 100%;
+    }
+  }
+  .handle {
+    cursor: col-resize;
+    display: none;
+    flex: 0 0 auto;
+    padding: 0;
+    width: 17px;
+
+    &.open {
+      display: block;
+    }
+  }
+  .handle::before {
+    background: var(--theme-stage-on);
+    content: '';
+    display: block;
+    height: 100%;
+    margin: 0 auto;
+    width: var(--theme-stroke-width);
+  }
+}
