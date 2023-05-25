@@ -29,14 +29,14 @@ export function isUserWithRoleInfo(
   return 'userId' in userOrGroup;
 }
 
-export function getName(userOrGroup: Readonly<UserOrGroup>): string {
+export function getName(userOrGroup: UserOrGroup): string {
   if (isUser(userOrGroup)) {
     return getDisplayName(userOrGroup);
   }
   return userOrGroup?.name ?? '';
 }
 
-export const getIdFromUserOrGroup = (userOrGroup: Readonly<UserOrGroup>): number => {
+export const getIdFromUserOrGroup = (userOrGroup: UserOrGroup): number => {
   if (isUser(userOrGroup)) {
     const user = userOrGroup;
     return user.id;

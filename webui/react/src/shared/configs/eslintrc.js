@@ -87,7 +87,7 @@ module.exports = {
     'jsdoc/empty-tags': 1,
     'jsdoc/implements-on-classes': 1,
     'jsdoc/multiline-blocks': 1,
-    'jsdoc/newline-after-description': 1,
+    'jsdoc/newline-after-description': 'off',
     'jsdoc/no-multi-asterisks': 1,
     'jsdoc/require-returns-check': 1,
     'jsdoc/require-yields-check': 1,
