@@ -1,5 +1,6 @@
 # type: ignore
 import os
+import random
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
@@ -562,6 +563,13 @@ def test_rng_restore(tmp_path: Path):
 
     trial_A_controller.run()
 
+    # reset random seed after checkpointing
+    other_random_seed = random.randint(0, 1 << 31)
+    while other_random_seed == 325:
+        other_random_seed = random.randint(0, 1 << 31)
+
+    trial_A_controller._set_random_seeds(other_random_seed)
+
     trial_B_controller = utils.make_trial_controller_from_trial_implementation(
         trial_class=trial_class,
         hparams=hparams,
@@ -572,6 +580,13 @@ def test_rng_restore(tmp_path: Path):
     )
 
     trial_B_controller.run()
+
+    # reset random seed before rerun
+    third_random_seed = random.randint(0, 1 << 31)
+    while third_random_seed == 325:
+        third_random_seed = random.randint(0, 1 << 31)
+
+    trial_B_controller._set_random_seeds(third_random_seed)
 
     trial_C_controller = utils.make_trial_controller_from_trial_implementation(
         trial_class=trial_class,

@@ -2,6 +2,7 @@
 import os
 import pathlib
 import tempfile
+import random
 from typing import Any, Dict, List, Optional
 
 import pytest
@@ -375,6 +376,13 @@ def test_rng_restore():
     # copy checkpoint
     checkpoint_dir = trial_A_controller.estimator_dir
 
+    # reset random seed after checkpointing
+    other_random_seed = random.randint(0, 1 << 31)
+    while other_random_seed == 325:
+        other_random_seed = random.randint(0, 1 << 31)
+
+    trial_A_controller.set_random_seed(other_random_seed)
+
     trial_B_controller = utils.make_trial_controller_from_trial_implementation(
         trial_class=trial_class,
         hparams=hparams,
@@ -384,6 +392,13 @@ def test_rng_restore():
     )
 
     trial_B_controller.run()
+
+    # reset random seed before rerun
+    third_random_seed = random.randint(0, 1 << 31)
+    while third_random_seed == 325:
+        third_random_seed = random.randint(0, 1 << 31)
+
+    trial_B_controller.set_random_seed(third_random_seed)
 
     trial_C_controller = utils.make_trial_controller_from_trial_implementation(
         trial_class=trial_class,

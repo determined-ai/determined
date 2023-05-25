@@ -1215,6 +1215,13 @@ class TestPyTorchTrial:
 
         trial_controller_A.run()
 
+        # reset random seed before rerun
+        other_random_seed = random.randint(0, 1 << 31)
+        while other_random_seed == self.trial_seed:
+            other_random_seed = random.randint(0, 1 << 31)
+
+        trial_controller_A._set_random_seeds(other_random_seed)
+
         checkpoints = trial_A.checkpoint_callback.uuids
 
         assert len(checkpoints) == 5, "trial did not create all checkpoints"
