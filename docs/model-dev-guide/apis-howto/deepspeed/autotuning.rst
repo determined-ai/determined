@@ -236,7 +236,7 @@ General Options
 
 The following options are available for every search method.
 
--  ``--max-trials``: The maximum number of trials to run. Default: ``50``.
+-  ``--max-trials``: The maximum number of trials to run. Default: ``64``.
 
 -  ``--max-concurrent-trials``: The maximum number of trials that can run concurrently. Default:
    ``16``.
@@ -270,7 +270,7 @@ resource is the number of steps taken in each binary search (i.e., the number of
    allow for longer binary searches. Default: ``5``.
 
 -  ``--min-binary-search-trials``: The minimum number of trials to use for each binary search. The
-   ``r`` parameter in `the ASHA paper <https://arxiv.org/abs/1810.05934>`_. Default: ``2``.
+   ``r`` parameter in `the ASHA paper <https://arxiv.org/abs/1810.05934>`_. Default: ``3``.
 
 -  ``--divisor``: Factor controlling the increased computational allotment across rungs, and the
    decrease in their population size. The ``eta`` parameter in `the ASHA paper
@@ -297,7 +297,7 @@ semi-random search over the batch size.
 ``random`` can be configured with the following flags:
 
 -  ``--trials_per_random_config``: The maximum batch size configuration which will tested for a
-   given DS configuration. Default: ``3``.
+   given DS configuration. Default: ``5``.
 
 -  ``--early-stopping``: If provided, the experiment will terminate if a new best-configuration has
    not been found in the last ``early-stopping`` trials. Default: ``None``, corresponding to no such
