@@ -1471,7 +1471,8 @@ class TestASHADSATSearchMethod:
         searcher_state, search_method = long_asha_state_and_search_method
         search_method.trial_tracker.queue.clear()
         # Complete enough trials so that some can be promoted.
-        for _ in range(search_method.divisor ** (search_method.asha_early_stopping + 1)):
+
+        for _ in range(search_method.max_trials_for_rung_idx(1)):
             hparams, search_data = search_method.get_random_hparams_and_search_data(1)
             trial = None
             for trial_num in range(search_method.min_binary_search_trials):
@@ -1582,28 +1583,27 @@ class TestASHADSATSearchMethod:
                 trial=trial,
                 metric={trial.searcher_metric_name: good_metric},
             )
-
         # Verify the counting above and that the next promoted trial will come from the topmost
         # possible rung.
         assert len(search_method.rungs[0]) == search_method.divisor + 1
         assert len(search_method.rungs[1]) == search_method.divisor
 
         next_lineage_rung_0 = search_method.get_next_promotable_lineage_in_rung(0)
-        assert next_lineage_rung_0 is not None
-        assert next_lineage_rung_0.search_data is not None
+        assert next_lineage_rung_0
+        assert next_lineage_rung_0.search_data
         assert isinstance(next_lineage_rung_0.search_data, ASHADSATSearchData)
 
         next_lineage_rung_1 = search_method.get_next_promotable_lineage_in_rung(1)
-        assert next_lineage_rung_1 is not None
-        assert next_lineage_rung_1.search_data is not None
+        assert next_lineage_rung_1
+        assert next_lineage_rung_1.search_data
         assert isinstance(next_lineage_rung_1.search_data, ASHADSATSearchData)
 
         assert next_lineage_rung_0.search_data.curr_rung == 0
         assert next_lineage_rung_1.search_data.curr_rung == 1
 
         next_promotable_lineage = search_method.get_next_promotable_lineage()
-        assert next_promotable_lineage is not None
-        assert next_promotable_lineage.search_data is not None
+        assert next_promotable_lineage
+        assert next_promotable_lineage.search_data
         assert isinstance(next_promotable_lineage.search_data, ASHADSATSearchData)
 
         assert next_promotable_lineage.search_data.curr_rung == 1
@@ -1741,13 +1741,13 @@ class TestASHADSATSearchMethod:
         hparams, search_data = search_method.get_random_hparams_and_search_data(1)
         trial = None
         assert isinstance(search_method, ASHADSATSearchMethod)
-        for num_trials in range(
-            1,
-            1
-            + search_method.divisor
-            ** (search_method.asha_early_stopping + search_method.max_rungs - 1),
-        ):
+        num_trials_to_fill_all_rungs = search_method.max_trials_for_rung_idx(
+            search_method.max_rungs - 1
+        )
+        for num_trials in range(1, 1 + num_trials_to_fill_all_rungs):
             hparams = copy.deepcopy(hparams)
+            # Add arbitrary hp to avoid non-duplicate hparams check in `queue_and_register_trial`
+            hparams["_arbitrary"] = num_trials
             search_data = copy.deepcopy(search_data)
             trial = search_method.trial_tracker.create_trial(
                 hparams, search_data, parent_trial=trial
