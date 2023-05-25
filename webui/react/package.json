@@ -31,6 +31,10 @@
     "analyze": "source-map-explorer --no-border-checks 'build/assets/*.js'"
   },
   "dependencies": {
+    "@codemirror/lang-markdown": "^6.1.1",
+    "@codemirror/lang-python": "^6.1.2",
+    "@codemirror/language-data": "^6.3.1",
+    "@codemirror/legacy-modes": "^6.3.2",
     "@glideapps/glide-data-grid": "^5.2.1",
     "@uiw/codemirror-extensions-langs": "^4.20.2",
     "@uiw/react-codemirror": "^4.20.2",
