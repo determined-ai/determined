@@ -2143,6 +2143,8 @@ func (a *apiServer) SearchExperiments(
 		if err != nil {
 			return nil, err
 		}
+	} else {
+		experimentQuery.OrderExpr("id ASC")
 	}
 
 	resp.Pagination, err = runPagedBunExperimentsQuery(
