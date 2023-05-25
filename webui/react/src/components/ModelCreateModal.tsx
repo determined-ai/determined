@@ -42,7 +42,7 @@ interface Props {
 const ModelCreateModal = ({ onClose, workspaceId }: Props): JSX.Element => {
   const { canCreateModelWorkspace } = usePermissions();
   const [isDetailExpanded, setIsDetailExpanded] = useState<boolean>(false);
-  const loadableWorkspaces = useObservable(workspaceStore.mutables);
+  const loadableWorkspaces = useObservable(workspaceStore.workspaces);
   const isWorkspace = workspaceId !== undefined;
   const workspaces = Loadable.match(loadableWorkspaces, {
     Loaded: (ws) => ws.filter(({ id }) => canCreateModelWorkspace({ workspaceId: id })),
