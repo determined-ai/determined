@@ -1,14 +1,14 @@
 import { EditOutlined } from '@ant-design/icons';
 import { Card, Space } from 'antd';
+import Markdown from 'components/kit/utils/components/Markdown';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { unstable_useBlocker as useBlocker } from 'react-router-dom';
 
 import Button from 'components/kit/Button';
 import Input from 'components/kit/Input';
 import Tooltip from 'components/kit/Tooltip';
+import Spinner from 'components/kit/utils/components/Spinner/Spinner';
 import { ErrorHandler, ErrorType } from 'components/kit/utils/types';
-import Markdown from 'components/Markdown';
-import Spinner from 'shared/components/Spinner/Spinner';
 import { Note } from 'types';
 
 import css from './NoteCard.module.scss';

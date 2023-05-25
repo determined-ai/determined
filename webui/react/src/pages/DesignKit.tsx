@@ -37,6 +37,7 @@ import Header from 'components/kit/Typography/Header';
 import Paragraph from 'components/kit/Typography/Paragraph';
 import UserAvatar from 'components/kit/UserAvatar';
 import { useTags } from 'components/kit/useTags';
+import { TypographySize } from 'components/kit/utils/fonts';
 import Label from 'components/Label';
 import Logo from 'components/Logo';
 import Page from 'components/Page';
@@ -65,7 +66,6 @@ import {
   Surface,
 } from 'utils/colors';
 import handleError from 'utils/error';
-import { TypographySize } from 'utils/fonts';
 import { Loaded, NotLoaded } from 'utils/loadable';
 import loremIpsum from 'utils/loremIpsum';
 

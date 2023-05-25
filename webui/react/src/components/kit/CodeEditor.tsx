@@ -1,14 +1,14 @@
 import { DownloadOutlined, FileOutlined } from '@ant-design/icons';
 import { Tree } from 'antd';
+import MonacoEditor from 'components/kit/utils/components/MonacoEditor';
 import React, { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { ErrorHandler } from 'components/kit//utils/types';
 import Tooltip from 'components/kit/Tooltip';
+import Message, { MessageType } from 'components/kit/utils/components/Message';
+import Section from 'components/kit/utils/components/Section';
+import Spinner from 'components/kit/utils/components/Spinner';
 import { ErrorType, ValueOf } from 'components/kit/utils/types';
-import MonacoEditor from 'components/MonacoEditor';
-import Section from 'components/Section';
-import Message, { MessageType } from 'shared/components/Message';
-import Spinner from 'shared/components/Spinner';
 import { TreeNode } from 'types';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 

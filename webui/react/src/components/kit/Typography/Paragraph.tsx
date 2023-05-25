@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { ThemeFont, TypographySize } from 'utils/fonts';
+import { ThemeFont, TypographySize } from 'components/kit/utils/fonts';
 
 import css from './index.module.scss';
 
