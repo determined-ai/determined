@@ -20,7 +20,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/rm/rmerrors"
-	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/internal/user"
 
 	"github.com/determined-ai/determined/master/internal/db"
@@ -102,7 +101,6 @@ type (
 
 		*model.Experiment
 		activeConfig        expconf.ExperimentConfig
-		taskLogger          *task.Logger
 		db                  *db.PgDB
 		rm                  rm.ResourceManager
 		searcher            *searcher.Searcher
@@ -180,7 +178,6 @@ func newExperiment(
 	return &experiment{
 		Experiment:          expModel,
 		activeConfig:        activeConfig,
-		taskLogger:          m.taskLogger,
 		db:                  m.db,
 		rm:                  m.rm,
 		searcher:            search,
@@ -438,7 +435,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		if len(checkpoints) > 0 {
 			taskID := model.TaskID(fmt.Sprintf("%d.%s", e.ID, uuid.New()))
 			ckptGCTask := newCheckpointGCTask(
-				e.rm, e.db, e.taskLogger, taskID, e.JobID, e.StartTime, taskSpec, e.Experiment.ID,
+				e.rm, e.db, taskID, e.JobID, e.StartTime, taskSpec, e.Experiment.ID,
 				e.activeConfig.AsLegacy(), checkpoints, []string{fullDeleteGlob},
 				false, taskSpec.AgentUserGroup, taskSpec.Owner, e.logCtx,
 			)
@@ -667,7 +664,7 @@ func (e *experiment) processOperations(
 			e.TrialSearcherState[op.RequestID] = state
 			ctx.ActorOf(op.RequestID, newTrial(
 				e.logCtx, trialTaskID(e.ID, op.RequestID), e.JobID, e.StartTime, e.ID, e.State,
-				state, e.taskLogger, e.rm, e.db, config, checkpoint, e.taskSpec, false,
+				state, e.rm, e.db, config, checkpoint, e.taskSpec, false,
 			))
 		case searcher.ValidateAfter:
 			state := e.TrialSearcherState[op.RequestID]

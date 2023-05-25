@@ -78,8 +78,8 @@ func (c ContainerLog) String() string {
 }
 
 // ToTaskLog converts a container log to a task log.
-func (c ContainerLog) ToTaskLog() model.TaskLog {
-	return model.TaskLog{
+func (c ContainerLog) ToTaskLog() *model.TaskLog {
+	return &model.TaskLog{
 		ContainerID: ptrs.Ptr(c.ContainerID.String()),
 		Level:       c.Level,
 		Timestamp:   ptrs.Ptr(c.Timestamp.UTC()),
