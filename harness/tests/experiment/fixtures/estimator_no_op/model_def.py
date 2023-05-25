@@ -20,15 +20,6 @@ def np_rand_reducer(batch_metrics: List):
     return np.random.random()
 
 
-class ChiefPauseOnTerminateRunHook(estimator.RunHook):
-    def __init__(self, ctx):
-        self.ctx = ctx
-
-    def on_trial_close(self) -> None:
-        if self.ctx.distributed.get_rank() == 0:
-            print("rank 0 has completed on_trial_close")
-
-
 class NoopEstimator(estimator.EstimatorTrial):
     def __init__(self, context: estimator.EstimatorTrialContext) -> None:
         self.context = context
@@ -69,7 +60,7 @@ class NoopEstimator(estimator.EstimatorTrial):
             ds = tf.data.Dataset.range(100).batch(self.context.get_per_slot_batch_size())
             return self.context.wrap_dataset(ds)
 
-        return tf.estimator.TrainSpec(fn, hooks=[ChiefPauseOnTerminateRunHook(self.context)])
+        return tf.estimator.TrainSpec(fn)
 
     def build_validation_spec(self) -> tf.estimator.EvalSpec:
         def fn():
