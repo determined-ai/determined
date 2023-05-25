@@ -25,6 +25,7 @@ import {
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 
+import css from './F_ExperimentList.module.scss';
 import {
   ExpListView,
   F_ExperimentListGlobalSettings,
@@ -32,7 +33,6 @@ import {
   settingsConfigForProject,
   settingsConfigGlobal,
 } from './F_ExperimentList.settings';
-import css from './F_ExperimentList.module.scss';
 import { Error, Loading, NoExperiments } from './glide-table/exceptions';
 import GlideTable, { SCROLL_SET_COUNT_NEEDED } from './glide-table/GlideTable';
 import { EMPTY_SORT, Sort, validSort, ValidSort } from './glide-table/MultiSortMenu';
@@ -58,10 +58,11 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const { settings, updateSettings } = useSettings<F_ExperimentListSettings>(settingsConfig);
   const { settings: globalSettings, updateSettings: updateGlobalSettings } =
     useSettings<F_ExperimentListGlobalSettings>(settingsConfigGlobal);
+  const startPage = globalSettings.expListView === 'scroll' ? 0 : 1;
   const [page, setPage] = useState(() =>
     isFinite(Number(searchParams.get('page')))
-      ? Math.max(Number(searchParams.get('page')) - 1, 0)
-      : 1,
+      ? Math.max(Number(searchParams.get('page')), startPage)
+      : startPage,
   );
   const [sorts, setSorts] = useState<Sort[]>(() => {
     const sortString = searchParams.get('sort') || '';
@@ -142,7 +143,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const handleScroll = useCallback(
     ({ y, height }: Rectangle) => {
       if (scrollPositionSetCount.get() < SCROLL_SET_COUNT_NEEDED) return;
-      setPage(Math.floor((y + height) / PAGE_SIZE) + 1);
+      setPage(Math.floor((y + height) / PAGE_SIZE));
     },
     [scrollPositionSetCount],
   );
@@ -406,44 +407,54 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         ) : error ? (
           <Error />
         ) : (
-          <><GlideTable
-            clearSelectionTrigger={clearSelectionTrigger}
-            colorMap={colorMap}
-            data={experiments}
-            dataTotal={Loadable.getOrElse(0, total)}
-            excludedExperimentIds={excludedExperimentIds}
-            formStore={formStore}
-            handleScroll={globalSettings.expListView === 'scroll' ? handleScroll : undefined}
-            handleUpdateExperimentList={handleUpdateExperimentList}
-            height={height - 2 * parseInt(getCssVar('--theme-stroke-width'))}
-            page={page}
-            project={project}
-            projectColumns={projectColumns}
-            scrollPositionSetCount={scrollPositionSetCount}
-            selectAll={selectAll}
-            selectedExperimentIds={selectedExperimentIds}
-            setExcludedExperimentIds={setExcludedExperimentIds}
-            setSelectAll={setSelectAll}
-            setSelectedExperimentIds={setSelectedExperimentIds}
-            setSortableColumnIds={setVisibleColumns}
-            sortableColumnIds={settings.columns}
-            sorts={sorts}
-            onContextMenuComplete={onContextMenuComplete}
-            onIsOpenFilterChange={onIsOpenFilterChange}
-            onSortChange={onSortChange}
-          />
-          {globalSettings.expListView === 'paged' && (
-            <Pagination
-              current={page}
-              pageSize={settings.pageLimit}
-              pageSizeOptions={[20, 40, 80]}
-              style={{ float: 'right', marginTop: 8 }}
-              total={Loadable.isLoaded(total) ? total.data : undefined}
-              onChange={onPageChange}
+          <>
+            <GlideTable
+              clearSelectionTrigger={clearSelectionTrigger}
+              colorMap={colorMap}
+              data={experiments}
+              dataTotal={
+                globalSettings.expListView === 'scroll'
+                  ? Loadable.getOrElse(0, total)
+                  : experiments.length
+              }
+              excludedExperimentIds={excludedExperimentIds}
+              formStore={formStore}
+              handleScroll={globalSettings.expListView === 'scroll' ? handleScroll : undefined}
+              handleUpdateExperimentList={handleUpdateExperimentList}
+              height={
+                height -
+                2 * parseInt(getCssVar('--theme-stroke-width')) -
+                (globalSettings.expListView === 'paged' ? 40 : 0)
+              }
+              page={page}
+              project={project}
+              projectColumns={projectColumns}
+              scrollPositionSetCount={scrollPositionSetCount}
+              selectAll={selectAll}
+              selectedExperimentIds={selectedExperimentIds}
+              setExcludedExperimentIds={setExcludedExperimentIds}
+              setSelectAll={setSelectAll}
+              setSelectedExperimentIds={setSelectedExperimentIds}
+              setSortableColumnIds={setVisibleColumns}
+              sortableColumnIds={settings.columns}
+              sorts={sorts}
+              onContextMenuComplete={onContextMenuComplete}
+              onIsOpenFilterChange={onIsOpenFilterChange}
+              onSortChange={onSortChange}
             />
-          )}
-        </>
-      )}</div>
+            {globalSettings.expListView === 'paged' && (
+              <Pagination
+                current={page}
+                pageSize={settings.pageLimit}
+                pageSizeOptions={[20, 40, 80]}
+                style={{ float: 'right', marginTop: 8 }}
+                total={Loadable.isLoaded(total) ? total.data : undefined}
+                onChange={onPageChange}
+              />
+            )}
+          </>
+        )}
+      </div>
     </>
   );
 };
