@@ -498,7 +498,7 @@ The master allocates cluster resources (*slots*) among the active experiments us
 fair-share scheduling policy. This policy aims for fair distribution of resources, taking into
 account each experiment's request. More specifically, slots are divided among the active experiments
 according to the demand of each experiment, where *demand* is the number of desired concurrent
-tasks.
+slots.
 
 For example, in an eight-GPU cluster running two experiments with demands of 10 and 30 respectively,
 the fair-share scheduler allocates one slot to the first experiment while the second experiment
