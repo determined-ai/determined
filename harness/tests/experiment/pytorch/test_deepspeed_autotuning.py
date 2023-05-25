@@ -1585,6 +1585,12 @@ class TestASHADSATSearchMethod:
             )
             assert curr_trial.completed
             curr_trial = search_method.trial_tracker.queue.popleft()
+            # Force the search data to be non-trivial, so that we avoid exiting due to a trivial
+            # search range.
+            assert curr_trial.search_data
+            curr_trial.search_data.lo = 1
+            curr_trial.search_data.hi = 10
+            curr_trial.ds_config["train_micro_batch_size_per_gpu"] = 5
 
         assert search_method.lineage_completed_rung(first_trial, 0)
         assert curr_trial.lineage_root != first_trial
