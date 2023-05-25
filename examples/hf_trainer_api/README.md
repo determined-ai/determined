@@ -80,7 +80,7 @@ configuration is `ds_configs/ds_config_stage_1.json`.
 
 One can also use Determined's DeepSpeed Autotune functionality to autotmatically optimize the
 DeepSpeed settings. From either subdirectory, DeepSpeed parameters can be tuned to maximize the
-model FLOPs via the ASHA algorithm by run the following script, for instance:
+model FLOPs via the ASHA algorithm by running the following script, for instance:
 
 ```
 python3 -m determined.pytorch.dsat asha deepspeed.yaml .

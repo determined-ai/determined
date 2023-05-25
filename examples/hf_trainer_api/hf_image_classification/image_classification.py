@@ -242,11 +242,11 @@ def main(det_callback, tb_callback, model_args, data_args, training_args):
     transformers.utils.logging.enable_explicit_format()
 
     # Log on each process the small summary:
-    logger.warning(
+    logger.info(
         f"Process rank: {training_args.local_rank}, device: {training_args.device}, n_gpu: {training_args.n_gpu}"
         + f"distributed training: {bool(training_args.local_rank != -1)}, 16-bits training: {training_args.fp16}"
     )
-    logger.warning(f"Training/evaluation parameters {training_args}")
+    logger.info(f"Training/evaluation parameters {training_args}")
 
     # Detecting last checkpoint.
     last_checkpoint = None
@@ -456,9 +456,9 @@ if __name__ == "__main__":
     info = det.get_cluster_info()
     assert info
     hparams = info.trial.hparams
-    model_args, data_args, training_args = parse_input_arguments(hparams)
     # Turn the deepspeed training arguments, if any, into a dict and overwrite any args generated
     # by the searcher
+    model_args, data_args, training_args = parse_input_arguments(hparams)
 
     if training_args.deepspeed:
         distributed = det.core.DistributedContext.from_deepspeed()
