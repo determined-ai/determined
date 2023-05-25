@@ -10,7 +10,6 @@ import os
 import pathlib
 
 import filelock
-
 # Docs snippet start: import torch distrib
 # NEW: Import torch distributed libraries.
 import torch
