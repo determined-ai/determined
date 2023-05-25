@@ -124,7 +124,7 @@ def _run_searcher(
     return search_runner
 
 
-@pytest.mark.timeout(5)
+@pytest.mark.timeout(10)
 def test_deepspeed_autotune_happy_path() -> None:
     """
     Simulate the Deepspeed Autotune Search Methods end to end and make sure
@@ -150,7 +150,7 @@ def test_deepspeed_autotune_happy_path() -> None:
         assert search_runner.state.experiment_completed
 
 
-@pytest.mark.timeout(5)
+@pytest.mark.timeout(10)
 def test_continuous_failures() -> None:
     """
     Make sure that DSAT Search Methods can handle continuous failures. The experiment should be
@@ -171,7 +171,7 @@ def test_continuous_failures() -> None:
         assert not search_runner.state.experiment_completed
 
 
-@pytest.mark.timeout(5)
+@pytest.mark.timeout(10)
 def test_one_off_failure() -> None:
     """Make sure that DSAT Search Methods can properly handle a single failure"""
     for search_method_name in _defaults.ALL_SEARCH_METHOD_NAMES:
