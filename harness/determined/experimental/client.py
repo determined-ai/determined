@@ -56,18 +56,15 @@ from determined.common.experimental.checkpoint import (  # noqa: F401
     DownloadMode,
 )
 from determined.common.experimental.determined import Determined
-from determined.common.experimental.experiment import (  # noqa: F401
-    Experiment,
-    ExperimentState,
-)
+from determined.common.experimental.experiment import Experiment, ExperimentState  # noqa: F401
 from determined.common.experimental.model import Model, ModelOrderBy, ModelSortBy
 from determined.common.experimental.oauth2_scim_client import Oauth2ScimClient
 from determined.common.experimental.trial import (  # noqa: F401
     CheckpointOrderBy,
     CheckpointSortBy,
     TrainingMetrics,
-    TrialOrderBy,
     Trial,
+    TrialOrderBy,
     TrialSortBy,
     ValidationMetrics,
 )

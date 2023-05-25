@@ -506,12 +506,12 @@ Version 0.19.7
    Hugging Face's Diffusers.
 
 -  Python SDK now supports reading logs from trials, via the new
-   :meth:`~determined.experimental.client.Trial.logs` method. Additionally, the Python SDK
-   also supports a new blocking call on an experiment to get the first trial created for an
-   experiment via the
-   :meth:`~determined.experimental.client.ExperimentReference.await_first_trial()` method. Users who
-   have been writing automation around the ``det e create --follow-first-trial`` CLI command may now
-   use the Python SDK instead, by combining ``.await_first_trial()`` and ``.logs()``.
+   :meth:`~determined.experimental.client.Trial.logs` method. Additionally, the Python SDK also
+   supports a new blocking call on an experiment to get the first trial created for an experiment
+   via the :meth:`~determined.experimental.client.ExperimentReference.await_first_trial()` method.
+   Users who have been writing automation around the ``det e create --follow-first-trial`` CLI
+   command may now use the Python SDK instead, by combining ``.await_first_trial()`` and
+   ``.logs()``.
 
 -  RBAC: the enterprise edition of Determined (`HPE Machine Learning Development Environment
    <https://www.hpe.com/us/en/solutions/artificial-intelligence/machine-learning-development-environment.html>`_)
@@ -3411,9 +3411,8 @@ Version 0.12.3
 -  Add support for locally testing experiments via ``det e create --local``.
 
 -  Add :class:`determined.experimental.Determined` class for accessing
-   :class:`~determined.experimental.ExperimentReference`,
-   :class:`~determined.experimental.Trial`, and
-   :class:`~determined.experimental.Checkpoint` objects.
+   :class:`~determined.experimental.ExperimentReference`, :class:`~determined.experimental.Trial`,
+   and :class:`~determined.experimental.Checkpoint` objects.
 
 -  TensorBoard logs now appear under the ``storage_path`` for ``shared_fs`` checkpoint
    configurations.
