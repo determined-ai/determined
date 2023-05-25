@@ -1494,11 +1494,11 @@ class TestASHADSATSearchMethod:
 
         next_promotable_lineage = search_method.get_next_promotable_lineage()
         assert next_promotable_lineage is not None
-        search_method.promote_all_trials_in_lineage(next_promotable_lineage)
         next_trial = search_method.get_next_trial_in_lineage(next_promotable_lineage)
         assert next_trial is not None
         assert next_trial.search_data is not None
         assert isinstance(next_trial.search_data, ASHADSATSearchData)
+        next_trial.search_data.curr_rung += 1
         assert next_trial.search_data.curr_rung == 1
         assert len(next_trial.lineage_set) == search_method.min_binary_search_trials + 1
 
@@ -1545,15 +1545,29 @@ class TestASHADSATSearchMethod:
         available.
         """
         searcher_state, search_method = long_asha_state_and_search_method
+        search_method.trial_tracker.queue.clear()
         good_metric, bad_metric = (
             (0.0, 1.0) if search_method.trial_tracker.smaller_is_better else (1.0, 0.0)
         )
         # Fill two rungs with trials search_method.divisor trials, so that there are enough to
         # promote from the top rung.
-        for _ in range(search_method.divisor):
-            hparams, search_data = search_method.get_random_hparams_and_search_data(1)
+
+        # Create several lineages which complete rung_idx = 1:
+        max_trials_for_rung_one = search_method.max_trials_for_rung_idx(1)
+        hparams, search_data = search_method.get_random_hparams_and_search_data(1)
+        # Create an arbitrary counter to differentiate hparams and avoid the duplicate check in
+        # `queue_and_register_trial`.
+        arbitrary = 0
+        # Add `divisor` such lineages, so that one can be promoted.
+        for lineage_number in range(1, 1 + search_method.divisor):
             trial = None
-            for _ in range(search_method.min_binary_search_trials * search_method.divisor):
+            while (
+                search_method.trial_tracker.num_completed_trials
+                < lineage_number * max_trials_for_rung_one + 1
+            ):
+                hparams = copy.deepcopy(hparams)
+                hparams["_arbitrary"] = arbitrary
+                arbitrary += 1
                 trial = search_method.trial_tracker.create_trial(
                     hparams=hparams, search_data=copy.deepcopy(search_data), parent_trial=trial
                 )
@@ -1564,15 +1578,27 @@ class TestASHADSATSearchMethod:
                     trial=trial,
                     metric={trial.searcher_metric_name: bad_metric},
                 )
-            # Remember to promote the lineage up to the second rung.
-            assert trial is not None
-            search_method.promote_all_trials_in_lineage(trial)
+            # Promote as appropriate
+            assert trial
+            assert trial.search_data
+            assert isinstance(trial.search_data, ASHADSATSearchData)
+            if trial.num_completed_trials_in_lineage > search_method.max_trials_for_rung_idx(0):
+                trial.search_data.curr_rung = 1
+
+        # Check that we have populated the rungs as expected:
+        assert all(search_method.rungs[idx] for idx in range(2))
+        assert not any(search_method.rungs[idx] for idx in range(2, search_method.max_rungs - 1))
+        assert search_method.get_next_promotable_lineage()
+        assert search_method.get_next_promotable_lineage_in_rung(1)
+        assert not search_method.get_next_promotable_lineage_in_rung(0)
 
         # Submit another lineage which completes the lowest rung with better metrics than the
         # lineage above, so that it is promotable.
-        hparams, search_data = search_method.get_random_hparams_and_search_data(1)
         trial = None
-        for _ in range(search_method.min_binary_search_trials):
+        for _ in range(search_method.max_trials_for_rung_idx(0)):
+            hparams = copy.deepcopy(hparams)
+            hparams["_arbitrary"] = arbitrary
+            arbitrary += 1
             trial = search_method.trial_tracker.create_trial(
                 hparams=hparams, search_data=copy.deepcopy(search_data), parent_trial=trial
             )
@@ -1652,12 +1678,11 @@ class TestASHADSATSearchMethod:
         search_method.trial_tracker.queue.clear()
         hparams, _ = search_method.get_random_hparams_and_search_data(1)
         search_data = ASHADSATSearchData(lo=1, hi=1, curr_rung=0)
-        hparams = copy.deepcopy(hparams)
         hparams[_defaults.OVERWRITE_KEY]["train_micro_batch_size_per_gpu"] = (
             search_data.hi + search_data.lo
         ) // 2
         trial = search_method.trial_tracker.create_trial(
-            hparams=hparams, search_data=copy.deepcopy(search_data), parent_trial=None
+            hparams=hparams, search_data=search_data, parent_trial=None
         )
         search_method.trial_tracker.queue_and_register_trial(trial)
         _ = search_method.trial_tracker.queue.popleft()
@@ -1677,12 +1702,11 @@ class TestASHADSATSearchMethod:
         search_method.trial_tracker.queue.clear()
         hparams, _ = search_method.get_random_hparams_and_search_data(1)
         search_data = ASHADSATSearchData(lo=1, hi=1, curr_rung=0)
-        hparams = copy.deepcopy(hparams)
         hparams[_defaults.OVERWRITE_KEY]["train_micro_batch_size_per_gpu"] = (
             search_data.hi + search_data.lo
         ) // 2
         successful_trial = search_method.trial_tracker.create_trial(
-            hparams=hparams, search_data=copy.deepcopy(search_data), parent_trial=None
+            hparams=hparams, search_data=search_data, parent_trial=None
         )
         search_method.trial_tracker.queue_and_register_trial(successful_trial)
         _ = search_method.trial_tracker.queue.popleft()
@@ -1709,12 +1733,11 @@ class TestASHADSATSearchMethod:
         search_method.trial_tracker.queue.clear()
         hparams, _ = search_method.get_random_hparams_and_search_data(1)
         search_data = ASHADSATSearchData(lo=1, hi=2, curr_rung=0)
-        hparams = copy.deepcopy(hparams)
         hparams[_defaults.OVERWRITE_KEY]["train_micro_batch_size_per_gpu"] = (
             search_data.hi + search_data.lo
         ) // 2
         failed_trial = search_method.trial_tracker.create_trial(
-            hparams=hparams, search_data=copy.deepcopy(search_data), parent_trial=None
+            hparams=hparams, search_data=search_data, parent_trial=None
         )
         search_method.trial_tracker.queue_and_register_trial(failed_trial)
         _ = search_method.trial_tracker.queue.popleft()
@@ -1764,11 +1787,12 @@ class TestASHADSATSearchMethod:
                 assert not search_method.lineage_completed_rung(trial, trial.search_data.curr_rung)
             else:
                 old_rung = trial.search_data.curr_rung
-                search_method.promote_all_trials_in_lineage(trial)
+                assert trial.search_data
+                assert isinstance(trial.search_data, ASHADSATSearchData)
+                trial.search_data.curr_rung += 1
                 for t in trial.lineage_set:
                     assert t.search_data is not None
                     assert isinstance(t.search_data, ASHADSATSearchData)
-                    assert t.search_data.curr_rung == old_rung + 1
                 for rung_idx in range(0, old_rung + 1):
                     assert search_method.lineage_completed_rung(trial, rung_idx)
                 assert not search_method.lineage_completed_rung(trial, old_rung + 1)
