@@ -14,9 +14,10 @@ interface TableSettingsMenuProps {
 
 /* eslint-disable react/jsx-key  */
 const rowHeightCopy: Record<RowHeight, [string, React.ReactNode]> = {
-  [RowHeight.COMFY]: ['Comfy', <ComfyHeight />],
+  [RowHeight.SHORT]: ['Short', <CompactHeight />],
   [RowHeight.DEFAULT]: ['Default', <DefaultHeight />],
-  [RowHeight.COMPACT]: ['Compact', <CompactHeight />],
+  [RowHeight.TALL]: ['Tall', <ComfyHeight />],
+  [RowHeight.EXTRATALL]: ['Extra Tall', <ComfyHeight />],
 };
 /* eslint-enable react/jsx-key  */
 

@@ -112,10 +112,11 @@ const isLinkCell = (cell: GridCell): cell is LinkCell => {
   return !!(cell as LinkCell).data?.link?.href;
 };
 
-const rowHeightMap = {
-  [RowHeight.COMFY]: 48,
-  [RowHeight.DEFAULT]: 40,
-  [RowHeight.COMPACT]: 32,
+const rowHeightMap: Record<RowHeight, number> = {
+  [RowHeight.EXTRATALL]: 44,
+  [RowHeight.TALL]: 40,
+  [RowHeight.DEFAULT]: 36,
+  [RowHeight.SHORT]: 32,
 };
 
 export const GlideTable: React.FC<GlideTableProps> = ({
