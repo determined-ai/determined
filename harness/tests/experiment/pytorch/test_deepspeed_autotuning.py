@@ -1384,6 +1384,59 @@ class TestASHADSATSearchMethod:
         assert next_promoted_trial.metric[next_promoted_trial.searcher_metric_name] == best_metric
 
     @pytest.mark.timeout(5)
+    def test_choose_next_trial_from_queue(
+        self,
+        default_asha_state_and_search_method: Tuple[searcher.SearcherState, ASHADSATSearchMethod],
+    ) -> None:
+        """
+        Verify that the `choose_next_trial_from_queue` method both chooses a trial with the largest
+        curr_rung value and from all such choices choose the trial with the longest lineage
+        """
+        searcher_state, search_method = default_asha_state_and_search_method
+        search_method.trial_tracker.queue.clear()
+        hparams, search_data = search_method.get_random_hparams_and_search_data(1)
+        # Create an arbitrary counter to differentiate hparams and avoid the duplicate check in
+        # `queue_and_register_trial`.
+        arbitrary = 0
+
+        # Create a curr_rung = 0 lineage
+        trial = None
+        hparams = copy.deepcopy(hparams)
+        hparams["_arbitrary"] = arbitrary
+        arbitrary += 1
+        trial = search_method.trial_tracker.create_trial(
+            hparams=hparams, search_data=copy.deepcopy(search_data), parent_trial=trial
+        )
+        search_method.trial_tracker.queue_and_register_trial(trial)
+        assert trial.searcher_metric_name
+        search_method.trial_tracker.update_trial_metric(trial, {trial.searcher_metric_name: 0.0})
+
+        # Create several curr_rung = 1 lineages of varying lengths
+        for num_in_lineage in range(1, 3):
+            trial = None
+            for _ in range(num_in_lineage):
+                hparams = copy.deepcopy(hparams)
+                hparams["_arbitrary"] = arbitrary
+                arbitrary += 1
+                search_data = copy.deepcopy(search_data)
+                search_data.curr_rung = 1
+                trial = search_method.trial_tracker.create_trial(
+                    hparams=hparams, search_data=search_data, parent_trial=trial
+                )
+                search_method.trial_tracker.queue_and_register_trial(trial)
+                assert trial.searcher_metric_name
+                search_method.trial_tracker.update_trial_metric(
+                    trial, {trial.searcher_metric_name: 0.0}
+                )
+
+        # Get the next trial:
+        next_trial = search_method.choose_next_trial_from_queue()
+        assert next_trial.search_data
+        assert isinstance(next_trial.search_data, ASHADSATSearchData)
+        assert next_trial.search_data.curr_rung == 1
+        assert next_trial.num_completed_trials_in_lineage == num_in_lineage
+
+    @pytest.mark.timeout(5)
     def test_get_best_trial_in_lineage(
         self,
         default_asha_state_and_search_method: Tuple[searcher.SearcherState, ASHADSATSearchMethod],

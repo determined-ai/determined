@@ -1153,15 +1153,31 @@ class ASHADSATSearchMethod(BaseDSATSearchMethod):
         Schedule the trial with the largest `search_data.curr_rung` value.
         """
 
-        def key(trial: DSATTrial) -> int:
+        def curr_rung_key(trial: DSATTrial) -> int:
             assert trial.search_data
             assert isinstance(trial.search_data, ASHADSATSearchData)
             return trial.search_data.curr_rung
 
-        highest_rung_trial = max(self.trial_tracker.queue, key=key)
-        self.trial_tracker.queue.remove(highest_rung_trial)
+        highest_rung_trial = max(self.trial_tracker.queue, key=curr_rung_key)
+        # If there are multiple such trials, choose the one with the longest lineage so that
+        # trials are promoted more quickly.
+        assert highest_rung_trial.search_data
+        assert isinstance(highest_rung_trial.search_data, ASHADSATSearchData)
+        highest_curr_rung = highest_rung_trial.search_data.curr_rung
+        all_highest_curr_rung_trials_in_queue = [
+            t
+            for t in self.trial_tracker.queue
+            if t.search_data
+            and isinstance(t.search_data, ASHADSATSearchData)
+            and t.search_data.curr_rung == highest_curr_rung
+        ]
 
-        return highest_rung_trial
+        next_trial = max(
+            all_highest_curr_rung_trials_in_queue, key=lambda t: t.num_completed_trials_in_lineage
+        )
+        self.trial_tracker.queue.remove(next_trial)
+
+        return next_trial
 
     def get_next_trial(self, last_trial: DSATTrial) -> DSATTrial:
         next_trial = None
