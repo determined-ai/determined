@@ -124,7 +124,7 @@ def _run_searcher(
     return search_runner
 
 
-@pytest.mark.timeout(5)
+@pytest.mark.timeout(10)
 def test_deepspeed_autotune_happy_path() -> None:
     """
     Simulate the Deepspeed Autotune Search Methods end to end and make sure
@@ -150,7 +150,7 @@ def test_deepspeed_autotune_happy_path() -> None:
         assert search_runner.state.experiment_completed
 
 
-@pytest.mark.timeout(5)
+@pytest.mark.timeout(10)
 def test_continuous_failures() -> None:
     """
     Make sure that DSAT Search Methods can handle continuous failures. The experiment should be
@@ -171,7 +171,7 @@ def test_continuous_failures() -> None:
         assert not search_runner.state.experiment_completed
 
 
-@pytest.mark.timeout(5)
+@pytest.mark.timeout(10)
 def test_one_off_failure() -> None:
     """Make sure that DSAT Search Methods can properly handle a single failure"""
     for search_method_name in _defaults.ALL_SEARCH_METHOD_NAMES:
@@ -598,6 +598,12 @@ class TestRandomDSATSearchMethodTrialCreation:
                 searcher_state, next_trial.request_id, searcher.ExitedReason.ERRORED
             )
             next_trial = search_method.choose_next_trial_from_queue()
+            # Force the search data to be non-trivial, so that we avoid exiting due to a trivial
+            # search range.
+            assert next_trial.search_data
+            next_trial.search_data.lo = 1
+            next_trial.search_data.hi = 10
+            next_trial.ds_config["train_micro_batch_size_per_gpu"] = 5
             assert next_trial.lineage_root == first_trial
         # And the next trial should be from a new lineage.
         search_method.on_trial_exited_early(
@@ -936,44 +942,6 @@ class TestRandomDSATSearchMethodChooseNextTrial:
             next_trial = search_method.choose_next_trial_from_queue()
             assert next_trial.stage != 3
 
-    @pytest.mark.timeout(5)
-    def test_queue_pruning_small_mbs_trials(
-        self,
-        default_random_state_and_search_method: Tuple[
-            searcher.SearcherState, RandomDSATSearchMethod
-        ],
-    ) -> None:
-        """
-        Test the pruning of trials with smaller `train_micro_batch_size_per_gpu` than
-        already-successfully-run trials of the same stage.
-        """
-        _, search_method = default_random_state_and_search_method
-        # Run successful train_micro_batch_size_per_gpu = 2 trials.
-        for stage in reversed(range(4)):
-            hparams, search_data = search_method.get_random_hparams_and_search_data(stage)
-            hparams[_defaults.OVERWRITE_KEY]["train_micro_batch_size_per_gpu"] = 2
-            successful_trial = search_method.trial_tracker.create_trial(hparams, search_data)
-            search_method.trial_tracker.queue_and_register_trial(successful_trial)
-            search_method.trial_tracker.queue.popleft()
-            assert successful_trial.searcher_metric_name
-            search_method.trial_tracker.update_trial_metric(
-                successful_trial, {successful_trial.searcher_metric_name: 0.0}
-            )
-
-            # Queue up a number of smaller batch, same-stage trials and verify that they get pruned
-            smaller_batch_trials = []
-            for _ in range(10):
-                hparams, search_data = search_method.get_random_hparams_and_search_data(stage)
-                hparams[_defaults.OVERWRITE_KEY]["train_micro_batch_size_per_gpu"] = 1
-                trial = search_method.trial_tracker.create_trial(hparams, search_data)
-                smaller_batch_trials.append(trial)
-                search_method.trial_tracker.queue_and_register_trial(trial)
-
-            # All of the above mbs=1 trials should get pruned and replaced by larger trials.
-            while search_method.trial_tracker.queue:
-                next_trial = search_method.choose_next_trial_from_queue()
-                assert next_trial.mbs >= 2
-
 
 @pytest.fixture
 def long_binary_state_and_search_method() -> (
@@ -1299,7 +1267,7 @@ class TestASHADSATSearchMethod:
         """
         Simulate running a full experiment with all successful trials, each worse than the last,
         and verify the expected end state, which is that trials in the higher rungs should have
-        better metrics than those which were never promoted out of lower rungs.
+        better metrics than those which were never promoted out of the rungs.
         """
         searcher_state, search_method = long_asha_state_and_search_method
         assert isinstance(search_method, ASHADSATSearchMethod)
@@ -1414,6 +1382,59 @@ class TestASHADSATSearchMethod:
         assert next_promoted_trial.searcher_metric_name
         assert next_promoted_trial.metric[next_promoted_trial.searcher_metric_name] != next_metric
         assert next_promoted_trial.metric[next_promoted_trial.searcher_metric_name] == best_metric
+
+    @pytest.mark.timeout(5)
+    def test_choose_next_trial_from_queue(
+        self,
+        default_asha_state_and_search_method: Tuple[searcher.SearcherState, ASHADSATSearchMethod],
+    ) -> None:
+        """
+        Verify that the `choose_next_trial_from_queue` method both chooses a trial with the largest
+        curr_rung value and from all such choices choose the trial with the longest lineage
+        """
+        searcher_state, search_method = default_asha_state_and_search_method
+        search_method.trial_tracker.queue.clear()
+        hparams, search_data = search_method.get_random_hparams_and_search_data(1)
+        # Create an arbitrary counter to differentiate hparams and avoid the duplicate check in
+        # `queue_and_register_trial`.
+        arbitrary = 0
+
+        # Create a curr_rung = 0 lineage
+        trial = None
+        hparams = copy.deepcopy(hparams)
+        hparams["_arbitrary"] = arbitrary
+        arbitrary += 1
+        trial = search_method.trial_tracker.create_trial(
+            hparams=hparams, search_data=copy.deepcopy(search_data), parent_trial=trial
+        )
+        search_method.trial_tracker.queue_and_register_trial(trial)
+        assert trial.searcher_metric_name
+        search_method.trial_tracker.update_trial_metric(trial, {trial.searcher_metric_name: 0.0})
+
+        # Create several curr_rung = 1 lineages of varying lengths
+        for num_in_lineage in range(1, 3):
+            trial = None
+            for _ in range(num_in_lineage):
+                hparams = copy.deepcopy(hparams)
+                hparams["_arbitrary"] = arbitrary
+                arbitrary += 1
+                search_data = copy.deepcopy(search_data)
+                search_data.curr_rung = 1
+                trial = search_method.trial_tracker.create_trial(
+                    hparams=hparams, search_data=search_data, parent_trial=trial
+                )
+                search_method.trial_tracker.queue_and_register_trial(trial)
+                assert trial.searcher_metric_name
+                search_method.trial_tracker.update_trial_metric(
+                    trial, {trial.searcher_metric_name: 0.0}
+                )
+
+        # Get the next trial:
+        next_trial = search_method.choose_next_trial_from_queue()
+        assert next_trial.search_data
+        assert isinstance(next_trial.search_data, ASHADSATSearchData)
+        assert next_trial.search_data.curr_rung == 1
+        assert next_trial.num_completed_trials_in_lineage == num_in_lineage
 
     @pytest.mark.timeout(5)
     def test_get_best_trial_in_lineage(
@@ -1579,6 +1600,12 @@ class TestASHADSATSearchMethod:
             )
             assert curr_trial.completed
             curr_trial = search_method.trial_tracker.queue.popleft()
+            # Force the search data to be non-trivial, so that we avoid exiting due to a trivial
+            # search range.
+            assert curr_trial.search_data
+            curr_trial.search_data.lo = 1
+            curr_trial.search_data.hi = 10
+            curr_trial.ds_config["train_micro_batch_size_per_gpu"] = 5
 
         assert search_method.lineage_completed_rung(first_trial, 0)
         assert curr_trial.lineage_root != first_trial

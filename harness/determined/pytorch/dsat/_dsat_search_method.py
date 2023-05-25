@@ -815,19 +815,8 @@ class RandomDSATSearchMethod(BaseDSATSearchMethod):
         be run.
         """
 
-        def should_discard(trial: DSATTrial) -> bool:
-            if trial is None:
-                return False
-            larger_mbs_successfully_run = any(
-                other_trial.mbs > trial.mbs
-                for _, other_trial in self.trial_tracker
-                if other_trial.searcher_metric_val is not None and other_trial.stage == trial.stage
-            )
-            should_discard = larger_mbs_successfully_run or self.should_stop_lineage(trial)
-            return should_discard
-
         next_trial = self.trial_tracker.queue.popleft()
-        while should_discard(next_trial):
+        while self.should_stop_lineage(next_trial):
             self.trial_tracker.queue_and_register_trial(self.get_random_trial())
             next_trial = self.trial_tracker.queue.popleft()
 
@@ -915,7 +904,7 @@ class RandomDSATSearchMethod(BaseDSATSearchMethod):
         volume than simply choosing the midpoint. Draws from a binomial distribution, to keep the
         results still somewhat focused near the midpoint.
         """
-        mbs = search_data.lo + self.rng.binomial(search_data.hi - search_data.lo, 0.5)
+        mbs: int = search_data.lo + self.rng.binomial(search_data.hi - search_data.lo, 0.5)
         return mbs
 
     def get_random_hparams_and_search_data(
@@ -934,13 +923,24 @@ class RandomDSATSearchMethod(BaseDSATSearchMethod):
 
         if best_trial_for_stage is not None and best_trial_for_stage.search_data is not None:
             new_search_data = copy.deepcopy(best_trial_for_stage.search_data)
-            # Update the floor to one greater than the mbs used and raise the ceiling.
+            # Update the floor to one greater than the mbs used and raise the ceiling to be
+            # the maximum between the largest mbs trial of this stage which was successful, the
+            # best trial's ceiling, and twice as large as the floor.
             new_search_data.lo = best_trial_for_stage.mbs + 1
-            new_search_data.hi = max(2 * best_trial_for_stage.mbs, new_search_data.hi)
+            largest_successful_batch_size_for_stage = max(
+                t.mbs
+                for t in self.trial_tracker.completed_trials
+                if t.stage == best_trial_for_stage.stage
+                and isinstance(t.metric, dict)
+                and t.metric.get(self.trial_tracker.searcher_metric) is not None
+            )
+            new_search_data.hi = max(
+                largest_successful_batch_size_for_stage, new_search_data.hi, 2 * new_search_data.lo
+            )
         # Otherwise choose the corresponding search data based on approximate computations
         else:
             random_zero_stage_max_mbs = self.trial_tracker.approx_max_mbs_per_stage[zero_stage]
-            new_search_data = DSATSearchData(lo=1, hi=2 * random_zero_stage_max_mbs - 1)
+            new_search_data = DSATSearchData(lo=1, hi=random_zero_stage_max_mbs)
 
         # Randomly choose the actual batch size.
         mbs = self.get_random_mbs_from_search_data(new_search_data)
@@ -1071,9 +1071,11 @@ class BinarySearchDSATSearchMethod(BaseDSATSearchMethod):
 
         random_zero_stage_max_mbs = self.trial_tracker.approx_max_mbs_per_stage[zero_stage]
 
-        # The default `search_range_factor = 1.` value makes the initial midpoint coincide with
+        # The default `search_range_factor = 1.` value makes the ceiling coincide with
         # the predicted max mbs, but we give the user a handle to alter this range as needed.
-        hi = int(self.search_range_factor * (2 * random_zero_stage_max_mbs - 1))
+        lo = 1
+        hi = int(self.search_range_factor * random_zero_stage_max_mbs)
+        hi = max(hi, lo)
         new_search_data = DSATSearchData(lo=1, hi=hi)
 
         mbs = (new_search_data.hi + new_search_data.lo) // 2
@@ -1151,15 +1153,31 @@ class ASHADSATSearchMethod(BaseDSATSearchMethod):
         Schedule the trial with the largest `search_data.curr_rung` value.
         """
 
-        def key(trial: DSATTrial) -> int:
+        def curr_rung_key(trial: DSATTrial) -> int:
             assert trial.search_data
             assert isinstance(trial.search_data, ASHADSATSearchData)
             return trial.search_data.curr_rung
 
-        highest_rung_trial = max(self.trial_tracker.queue, key=key)
-        self.trial_tracker.queue.remove(highest_rung_trial)
+        highest_rung_trial = max(self.trial_tracker.queue, key=curr_rung_key)
+        # If there are multiple such trials, choose the one with the longest lineage so that
+        # trials are promoted more quickly.
+        assert highest_rung_trial.search_data
+        assert isinstance(highest_rung_trial.search_data, ASHADSATSearchData)
+        highest_curr_rung = highest_rung_trial.search_data.curr_rung
+        all_highest_curr_rung_trials_in_queue = [
+            t
+            for t in self.trial_tracker.queue
+            if t.search_data
+            and isinstance(t.search_data, ASHADSATSearchData)
+            and t.search_data.curr_rung == highest_curr_rung
+        ]
 
-        return highest_rung_trial
+        next_trial = max(
+            all_highest_curr_rung_trials_in_queue, key=lambda t: t.num_completed_trials_in_lineage
+        )
+        self.trial_tracker.queue.remove(next_trial)
+
+        return next_trial
 
     def get_next_trial(self, last_trial: DSATTrial) -> DSATTrial:
         next_trial = None
@@ -1354,7 +1372,9 @@ class ASHADSATSearchMethod(BaseDSATSearchMethod):
         )
 
         random_zero_stage_max_mbs = self.trial_tracker.approx_max_mbs_per_stage[zero_stage]
-        hi = int(2 * random_zero_stage_max_mbs * self.search_range_factor - 1)
+        lo = 1
+        hi = int(random_zero_stage_max_mbs * self.search_range_factor)
+        hi = max(hi, lo)
         new_search_data = ASHADSATSearchData(lo=1, hi=hi, curr_rung=0)
 
         # Randomly choose the actual batch size.
