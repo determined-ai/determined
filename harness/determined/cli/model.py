@@ -28,9 +28,7 @@ def render_model(model: Model) -> None:
     render.tabulate_or_csv(headers, [values], False)
 
 
-def render_model_version(model_version: ModelVersion) -> None:
-    assert model_version.checkpoint
-    checkpoint = model_version.checkpoint
+def render_model_versions(model_versions: List[ModelVersion]) -> None:
     headers = [
         "Version #",
         "Trial ID",
@@ -40,20 +38,24 @@ def render_model_version(model_version: ModelVersion) -> None:
         "Metadata",
     ]
 
-    values = [
-        [
-            model_version.model_version,
-            checkpoint.training.trial_id if checkpoint.training else None,
-            checkpoint.metadata["steps_completed"] if checkpoint.metadata else None,
-            checkpoint.uuid,
-            (
-                json.dumps(checkpoint.training.validation_metrics, indent=2)
-                if checkpoint.training
-                else ""
-            ),
-            json.dumps(checkpoint.metadata, indent=2),
-        ]
-    ]
+    values = []
+    for model_version in model_versions:
+        assert model_version.checkpoint
+        checkpoint = model_version.checkpoint
+        values.append(
+            [
+                model_version.model_version,
+                checkpoint.training.trial_id if checkpoint.training else None,
+                checkpoint.metadata["steps_completed"] if checkpoint.metadata else None,
+                checkpoint.uuid,
+                (
+                    json.dumps(checkpoint.training.validation_metrics, indent=2)
+                    if checkpoint.training
+                    else ""
+                ),
+                json.dumps(checkpoint.metadata, indent=2),
+            ]
+        )
 
     render.tabulate_or_csv(headers, values, False)
 
@@ -107,37 +109,7 @@ def list_versions(args: Namespace) -> None:
     else:
         render_model(model)
         print("\n")
-
-        headers = [
-            "Version #",
-            "Trial ID",
-            "Batch #",
-            "Checkpoint UUID",
-            "Validation Metrics",
-            "Metadata",
-        ]
-
-        values = []
-        for version in model.get_versions():
-            assert version.checkpoint
-            values.append(
-                [
-                    version.model_version,
-                    version.checkpoint.training.trial_id if version.checkpoint.training else None,
-                    version.checkpoint.metadata["steps_completed"]
-                    if version.checkpoint.metadata
-                    else None,
-                    version.checkpoint.uuid,
-                    (
-                        json.dumps(version.checkpoint.training.validation_metrics, indent=2)
-                        if version.checkpoint.training
-                        else ""
-                    ),
-                    json.dumps(version.checkpoint.metadata, indent=2),
-                ]
-            )
-
-        render.tabulate_or_csv(headers, values, False)
+        render_model_versions(model.get_versions())
 
 
 def create(args: Namespace) -> None:
@@ -166,7 +138,7 @@ def describe(args: Namespace) -> None:
         render_model(model)
         if model_version is not None:
             print("\n")
-            render_model_version(model_version)
+            render_model_versions([model_version])
 
 
 @authentication.required
@@ -184,7 +156,7 @@ def register_version(args: Namespace) -> None:
         model_version = model.register_version(args.uuid)
         render_model(model)
         print("\n")
-        render_model_version(model_version)
+        render_model_versions([model_version])
 
 
 args_description = [
