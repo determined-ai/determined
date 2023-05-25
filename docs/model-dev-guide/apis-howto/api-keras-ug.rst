@@ -49,8 +49,10 @@ one of the following data types:
 
 If using ``tf.data.Dataset``, users are required to wrap both their training and validation dataset
 using :meth:`self.context.wrap_dataset <determined.keras.TFKerasTrialContext.wrap_dataset>`. This
-wrapper is used to shard the dataset for :ref:`multi-gpu-training`. For optimal performance, users
-should wrap a dataset immediately after creating it.
+wrapper is used to shard the dataset for distributed training. For optimal performance, users should
+wrap a dataset immediately after creating it.
+
+.. include:: ../../_shared/note-dtrain-learn-more.txt
 
 ******************
  Define the Model
