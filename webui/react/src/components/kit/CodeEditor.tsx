@@ -22,7 +22,7 @@ import './CodeEditor/index.scss';
 
 export type Props = {
   files: TreeNode[];
-  onError: ErrorHandler
+  onError: ErrorHandler;
   onSelectFile?: (arg0: string) => void;
   readonly?: boolean;
   selectedFilePath?: string;
@@ -102,7 +102,13 @@ const isConfig = (key: unknown): key is Config =>
  * selectedFilePath: gives path to the file to set as activeFile;
  */
 
-const CodeEditor: React.FC<Props> = ({ files, onSelectFile, readonly, onError, selectedFilePath }) => {
+const CodeEditor: React.FC<Props> = ({
+  files,
+  onSelectFile,
+  readonly,
+  onError,
+  selectedFilePath,
+}) => {
   const [pageError, setPageError] = useState<PageError>(PageError.None);
   const sortedFiles = useMemo(() => [...files].sort(sortTree), [files]);
   const [activeFile, setActiveFile] = useState<TreeNode | null>(sortedFiles[0] || null);
@@ -113,49 +119,52 @@ const CodeEditor: React.FC<Props> = ({ files, onSelectFile, readonly, onError, s
     return isIpybnFile ? 'ipynb' : 'monaco';
   }, [activeFile]);
 
-  const fetchFile = useCallback(async (fileInfo: TreeNode) => {
-    if (!fileInfo) return;
-    setPageError(PageError.None);
+  const fetchFile = useCallback(
+    async (fileInfo: TreeNode) => {
+      if (!fileInfo) return;
+      setPageError(PageError.None);
 
-    if (isConfig(fileInfo.key) || fileInfo.content !== NotLoaded) {
-      setActiveFile(fileInfo);
-      return;
-    }
+      if (isConfig(fileInfo.key) || fileInfo.content !== NotLoaded) {
+        setActiveFile(fileInfo);
+        return;
+      }
 
-    let file,
-      content: Loadable<string> = NotLoaded;
-    try {
-      file = await fileInfo.get?.(String(fileInfo.key));
-    } catch (error) {
-      onError(error, {
-        publicMessage: 'Failed to load selected file.',
-        publicSubject: 'Unable to fetch the selected file.',
-        silent: false,
-        type: ErrorType.Api,
-      });
-      setPageError(PageError.Fetch);
-    }
-    if (!file) {
-      setActiveFile({
-        ...fileInfo,
-        content: NotLoaded,
-      });
-      return;
-    }
+      let file,
+        content: Loadable<string> = NotLoaded;
+      try {
+        file = await fileInfo.get?.(String(fileInfo.key));
+      } catch (error) {
+        onError(error, {
+          publicMessage: 'Failed to load selected file.',
+          publicSubject: 'Unable to fetch the selected file.',
+          silent: false,
+          type: ErrorType.Api,
+        });
+        setPageError(PageError.Fetch);
+      }
+      if (!file) {
+        setActiveFile({
+          ...fileInfo,
+          content: NotLoaded,
+        });
+        return;
+      }
 
-    try {
-      const text = decodeURIComponent(escape(window.atob(file)));
+      try {
+        const text = decodeURIComponent(escape(window.atob(file)));
 
-      if (!text) setPageError(PageError.Empty); // Emmits a "Empty file" error message
-      content = Loaded(text);
-      setActiveFile({
-        ...fileInfo,
-        content,
-      });
-    } catch {
-      setPageError(PageError.Decode);
-    }
-  }, [onError]);
+        if (!text) setPageError(PageError.Empty); // Emmits a "Empty file" error message
+        content = Loaded(text);
+        setActiveFile({
+          ...fileInfo,
+          content,
+        });
+      } catch {
+        setPageError(PageError.Decode);
+      }
+    },
+    [onError],
+  );
 
   useEffect(() => {
     if (selectedFilePath && activeFile?.key !== selectedFilePath) {

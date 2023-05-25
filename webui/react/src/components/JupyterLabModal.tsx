@@ -179,9 +179,9 @@ const JupyterLabModalComponent: React.FC<Props> = ({ workspace }: Props) => {
       footerLink={
         showFullConfig
           ? {
-            text: 'Read about JupyterLab settings',
-            url: '/docs/reference/api/command-notebook-config.html',
-          }
+              text: 'Read about JupyterLab settings',
+              url: '/docs/reference/api/command-notebook-config.html',
+            }
           : undefined
       }
       size={showFullConfig ? 'large' : 'small'}

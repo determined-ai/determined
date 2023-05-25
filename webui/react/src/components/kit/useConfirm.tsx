@@ -53,8 +53,8 @@ const ConfirmModal = ({
 type ConfirmModalModifier = (args: ConfirmModalProps) => void;
 
 /* eslint-disable @typescript-eslint/no-empty-function */
-export const voidFn = (): void => { };
-export const voidPromiseFn = async (): Promise<void> => { };
+export const voidFn = (): void => {};
+export const voidPromiseFn = async (): Promise<void> => {};
 const ConfirmationContext = React.createContext<ConfirmModalModifier | null>(null);
 
 export const ConfirmationProvider: React.FC<PropsWithChildren> = ({ children }) => {
@@ -97,7 +97,11 @@ export const ConfirmationProvider: React.FC<PropsWithChildren> = ({ children }) 
         /* eslint-disable-next-line react-hooks/exhaustive-deps */
         [children],
       )}
-      <Modal.Component {...modalProps} onConfirm={modalProps?.onConfirm ?? voidPromiseFn} onError={modalProps?.onError ?? voidFn} />
+      <Modal.Component
+        {...modalProps}
+        onConfirm={modalProps?.onConfirm ?? voidPromiseFn}
+        onError={modalProps?.onError ?? voidFn}
+      />
     </>
   );
 };
