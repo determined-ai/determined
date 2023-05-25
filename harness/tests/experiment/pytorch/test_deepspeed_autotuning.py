@@ -1342,6 +1342,78 @@ class TestASHADSATSearchMethod:
                     )
 
     @pytest.mark.timeout(5)
+    def test_promotion_respects_rung_idx(
+        self, long_asha_state_and_search_method: Tuple[searcher.SearcherState, ASHADSATSearchMethod]
+    ) -> None:
+        """
+        Test that promotion from a given rung_idx only accounts for the results of each lineage with
+        curr_rung <= rung_idx.
+        """
+        searcher_state, search_method = long_asha_state_and_search_method
+        search_method.trial_tracker.queue.clear()
+        # Create three lineages which complete the first rung with three different metrics
+        metrics = list(range(search_method.divisor))
+        # Order so that the worst lineage is last:
+        if not search_method.trial_tracker.smaller_is_better:
+            metrics = metrics[::-1]
+        for metric in metrics:
+            hparams, search_data = search_method.get_random_hparams_and_search_data(1)
+            trial = None
+            for idx in range(search_method.max_trials_for_rung_idx(0)):
+                trial = search_method.trial_tracker.create_trial(
+                    hparams=hparams, search_data=copy.deepcopy(search_data), parent_trial=trial
+                )
+                assert isinstance(trial.search_data, ASHADSATSearchData)
+                assert trial.search_data.curr_rung == 0
+                assert trial.searcher_metric_name is not None
+                search_method.trial_tracker.queue_and_register_trial(trial)
+                search_method.trial_tracker.update_trial_metric(
+                    trial, {trial.searcher_metric_name: metric}
+                )
+                assert len(trial.lineage_set) == idx + 1
+            assert trial is not None
+            assert search_method.lineage_completed_rung(trial, 0)
+            assert not search_method.lineage_completed_rung(trial, 1)
+        assert search_method.get_next_promotable_lineage()
+
+        # Take the worst lineage in rung zero, promote it, and complete its next rung with better
+        # metrics than any seen in rung zero.
+        assert trial
+        best_metric = (
+            min(metrics) if search_method.trial_tracker.smaller_is_better else max(metrics)
+        )
+        next_metric = (
+            best_metric - 1 if search_method.trial_tracker.smaller_is_better else best_metric + 1
+        )
+        while trial.num_completed_trials_in_lineage < search_method.max_trials_for_rung_idx(1):
+            search_data = copy.deepcopy(search_data)
+            search_data.curr_rung = 1
+            trial = search_method.trial_tracker.create_trial(
+                hparams=hparams, search_data=search_data, parent_trial=trial
+            )
+            assert isinstance(trial.search_data, ASHADSATSearchData)
+            assert trial.searcher_metric_name is not None
+            search_method.trial_tracker.queue_and_register_trial(trial)
+            search_method.trial_tracker.update_trial_metric(
+                trial, {trial.searcher_metric_name: next_metric}
+            )
+        # Next promotable trial should be from the lowest rung.
+        assert (
+            search_method.get_next_promotable_lineage()
+            == search_method.get_next_promotable_lineage_in_rung(0)
+        )
+
+        # And the promoted trial should not take the improved performance of the previously-worst
+        # rung_idx = 0 lineage into account.
+        next_promoted_trial = search_method.get_next_promotable_lineage_in_rung(0)
+        assert next_promoted_trial
+        assert next_promoted_trial.metric
+        assert isinstance(next_promoted_trial.metric, dict)
+        assert next_promoted_trial.searcher_metric_name
+        assert next_promoted_trial.metric[next_promoted_trial.searcher_metric_name] != next_metric
+        assert next_promoted_trial.metric[next_promoted_trial.searcher_metric_name] == best_metric
+
+    @pytest.mark.timeout(5)
     def test_get_top_lineages_in_rung(
         self, long_asha_state_and_search_method: Tuple[searcher.SearcherState, ASHADSATSearchMethod]
     ) -> None:
