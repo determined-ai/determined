@@ -1,6 +1,7 @@
 import os
 from typing import Any, Dict
 
+import deepspeed
 import filelock
 import torch
 import torch.nn.functional as F
@@ -9,7 +10,6 @@ import torchvision.transforms as transforms
 from attrdict import AttrDict
 from torch.nn import Conv2d, CrossEntropyLoss, Linear, MaxPool2d, Module
 
-import deepspeed
 from determined.pytorch import DataLoader
 from determined.pytorch.deepspeed import (
     DeepSpeedTrial,

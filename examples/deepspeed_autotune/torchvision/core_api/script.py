@@ -3,13 +3,13 @@ import uuid
 from typing import Any, Optional, Tuple
 
 import attrdict
+import deepspeed
 import numpy as np
 import torch
 import torch.nn as nn
 from torch.utils.data import Dataset
 from torchvision import models
 
-import deepspeed
 import determined as det
 from determined.pytorch import dsat
 
