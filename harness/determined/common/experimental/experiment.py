@@ -32,9 +32,9 @@ class ExperimentState(enum.Enum):
         return bindings.experimentv1State(self.value)
 
 
-class ExperimentReference:
+class Experiment:
     """
-    An ExperimentReference object is usually obtained from
+    An Experiment object is usually obtained from
     ``determined.experimental.client.create_experiment()``
     or ``determined.experimental.client.get_experiment()``.
 
@@ -85,9 +85,9 @@ class ExperimentReference:
         self,
         sort_by: trial.TrialSortBy = trial.TrialSortBy.ID,
         order_by: trial.TrialOrderBy = trial.TrialOrderBy.ASCENDING,
-    ) -> List[trial.TrialReference]:
+    ) -> List[trial.Trial]:
         """
-        Get the list of :class:`~determined.experimental.TrialReference` instances
+        Get the list of :class:`~determined.experimental.Trial` instances
         representing trials for an experiment.
 
         Arguments:
@@ -107,9 +107,9 @@ class ExperimentReference:
 
         resps = api.read_paginated(get_with_offset)
 
-        return [trial.TrialReference(t.id, self._session) for r in resps for t in r.trials]
+        return [trial.Trial(t.id, self._session) for r in resps for t in r.trials]
 
-    def await_first_trial(self, interval: float = 0.1) -> trial.TrialReference:
+    def await_first_trial(self, interval: float = 0.1) -> trial.Trial:
         """
         Wait for the first trial to be started for this experiment.
         """
@@ -121,7 +121,7 @@ class ExperimentReference:
                 sortBy=bindings.v1GetExperimentTrialsRequestSortBy.START_TIME,
             )
             if len(resp.trials) > 0:
-                return trial.TrialReference(resp.trials[0].id, self._session)
+                return trial.Trial(resp.trials[0].id, self._session)
             time.sleep(interval)
 
     def kill(self) -> None:

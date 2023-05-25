@@ -224,7 +224,7 @@ def test_checkpoint_apis(client: _client.Determined) -> None:
         time.sleep(0.1)
 
 
-def _make_live_experiment(client: _client.Determined) -> _client.ExperimentReference:
+def _make_live_experiment(client: _client.Determined) -> _client.Experiment:
     # Create an experiment that takes a long time to run
     with open(conf.fixtures_path("no_op/single-very-many-long-steps.yaml")) as f:
         config = yaml.safe_load(f)

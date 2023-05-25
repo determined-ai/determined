@@ -267,7 +267,7 @@ class TFKerasTrialController(det.TrialController):
     @classmethod
     def from_trial(
         cls: Type["TFKerasTrialController"],
-        trial_inst: det.Trial,
+        trial_inst: det.LegacyTrial,
         context: det.TrialContext,
         env: det.EnvContext,
         workloads: Optional[workload.Stream] = None,
@@ -970,7 +970,7 @@ class TFKerasTrialController(det.TrialController):
             enqueuer.stop()
 
 
-class TFKerasTrial(det.Trial):
+class TFKerasTrial(det.LegacyTrial):
     """
     To implement a new ``tf.keras`` trial, subclass this class and
     implement the abstract methods described below (:meth:`build_model`,
