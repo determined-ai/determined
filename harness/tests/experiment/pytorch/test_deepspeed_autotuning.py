@@ -1180,7 +1180,7 @@ def long_asha_state_and_search_method() -> (
     Generator[Tuple[searcher.SearcherState, BaseDSATSearchMethod], Any, None]
 ):
     args = copy.deepcopy(DEFAULT_ARGS_DICT["asha"])
-    args.max_trials = 10**3
+    args.max_trials = 500
     args.max_rungs = 8
     searcher_state, search_method = search_state_and_method_builder(args)
     yield searcher_state, search_method
@@ -1289,19 +1289,19 @@ class TestASHADSATSearchMethod:
             trial.searcher_metric_name: metric_val
         }
 
-    @pytest.mark.timeout(5)
+    @pytest.mark.timeout(10)
     def test_full_experiment_reverse_ordered_results(
         self,
-        default_asha_state_and_search_method: Tuple[
+        long_asha_state_and_search_method: Tuple[
             searcher.SearcherState, BinarySearchDSATSearchMethod
         ],
     ) -> None:
         """
         Simulate running a full experiment with all successful trials, each worse than the last,
         and verify the expected end state, which is that trials in the higher rungs should have
-        better metrics than those in the lower rungs.
+        better metrics than those which were never promoted out of the rungs.
         """
-        searcher_state, search_method = default_asha_state_and_search_method
+        searcher_state, search_method = long_asha_state_and_search_method
         assert isinstance(search_method, ASHADSATSearchMethod)
         metrics = [m for m in range(search_method.trial_tracker.max_trials - 1)]
         if not search_method.trial_tracker.smaller_is_better:
@@ -1320,26 +1320,28 @@ class TestASHADSATSearchMethod:
             lower_rung_trials = search_method.rungs[rung_idx]
             higher_rung_trials = search_method.rungs[rung_idx + 1]
             if higher_rung_trials:
-                lower_rung_results: List[int] = []
-                for t in lower_rung_trials:
-                    best_trial_in_lineage = search_method.get_best_trial_in_lineage(t)
-                    assert best_trial_in_lineage is not None
-                    assert best_trial_in_lineage.metric is not None
-                    assert best_trial_in_lineage.searcher_metric_name is not None
-                    assert isinstance(best_trial_in_lineage.metric, dict)
-                    lower_rung_results.append(
-                        best_trial_in_lineage.metric[best_trial_in_lineage.searcher_metric_name]
-                    )
-                higher_rung_results: List[int] = []
-                for t in higher_rung_trials:
-                    best_trial_in_lineage = search_method.get_best_trial_in_lineage(t)
-                    assert best_trial_in_lineage is not None
-                    assert best_trial_in_lineage.metric is not None
-                    assert best_trial_in_lineage.searcher_metric_name is not None
-                    assert isinstance(best_trial_in_lineage.metric, dict)
-                    higher_rung_results.append(
-                        best_trial_in_lineage.metric[best_trial_in_lineage.searcher_metric_name]
-                    )
+                non_promoted_lower_rung_trials = [
+                    lo
+                    for lo in lower_rung_trials
+                    if not any(lo in hi.lineage_set for hi in higher_rung_trials)
+                ]
+                # Every best-metric result in this set should be worse than every best-metric result
+                # in higher_rung_trials
+                for lo in non_promoted_lower_rung_trials:
+                    best_lo_trial = search_method.get_best_trial_in_lineage(lo, rung_idx)
+                    assert best_lo_trial
+                    assert best_lo_trial.metric
+                    assert isinstance(best_lo_trial.metric, dict)
+                    assert best_lo_trial.searcher_metric_name
+                    best_lo_metric = best_lo_trial.metric[best_lo_trial.searcher_metric_name]
+                    for hi in higher_rung_trials:
+                        best_hi_trial = search_method.get_best_trial_in_lineage(hi, rung_idx + 1)
+                        assert best_hi_trial
+                        assert best_hi_trial.metric
+                        assert isinstance(best_hi_trial.metric, dict)
+                        assert best_hi_trial.searcher_metric_name
+                        best_hi_metric = best_hi_trial.metric[best_lo_trial.searcher_metric_name]
+                        assert best_lo_metric < best_hi_metric
 
     @pytest.mark.timeout(5)
     def test_promotion_respects_rung_idx(
