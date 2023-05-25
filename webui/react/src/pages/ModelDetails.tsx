@@ -10,7 +10,7 @@ import Tags, { tagsActionHelper } from 'components/kit/Tags';
 import MetadataCard from 'components/Metadata/MetadataCard';
 import ModelDownloadModal from 'components/ModelDownloadModal';
 import ModelVersionDeleteModal from 'components/ModelVersionDeleteModal';
-import Page from 'components/Page';
+import Page, { BreadCrumbRoute } from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
 import InteractiveTable, { ColumnDef } from 'components/Table/InteractiveTable';
 import {
@@ -23,6 +23,7 @@ import {
 } from 'components/Table/Table';
 import usePermissions from 'hooks/usePermissions';
 import { useSettings } from 'hooks/useSettings';
+import { paths } from 'routes/utils';
 import {
   archiveModel,
   getModelDetails,
@@ -41,7 +42,7 @@ import userStore from 'stores/users';
 import workspaceStore from 'stores/workspaces';
 import { Metadata, ModelVersion, ModelVersions, Note } from 'types';
 import handleError from 'utils/error';
-import { Loadable } from 'utils/loadable';
+import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 
 import settingsConfig, {
@@ -52,6 +53,7 @@ import settingsConfig, {
 import ModelHeader from './ModelDetails/ModelHeader';
 import ModelVersionActionDropdown from './ModelDetails/ModelVersionActionDropdown';
 import css from './ModelDetails.module.scss';
+import { WorkspaceDetailsTab } from './WorkspaceDetails';
 
 type Params = {
   modelId: string;
@@ -69,7 +71,7 @@ const ModelDetails: React.FC = () => {
   const workspaces = useObservable(workspaceStore.workspaces);
   const workspace = Loadable.getOrElse(
     undefined,
-    useObservable(workspaceStore.getWorkspace(model?.model.workspaceId)),
+    useObservable(workspaceStore.getWorkspace(model ? Loaded(model.model.workspaceId) : NotLoaded)),
   );
 
   const { canModifyModel, canModifyModelVersion, loading: rbacLoading } = usePermissions();
@@ -400,15 +402,37 @@ const ModelDetails: React.FC = () => {
     return <Spinner spinning tip={`Loading model ${modelId} details...`} />;
   }
 
+  const pageBreadcrumb: BreadCrumbRoute[] = [];
+  if (workspace) {
+    pageBreadcrumb.push(
+      {
+        breadcrumbName: workspace.id !== 1 ? workspace.name : 'Uncategorized Experiments',
+        path: paths.workspaceDetails(workspace.id),
+      },
+      {
+        breadcrumbName: 'Model Registry',
+        path:
+          workspace.id === 1
+            ? paths.modelList()
+            : paths.workspaceDetails(workspace.id, WorkspaceDetailsTab.ModelRegistry),
+      },
+    );
+  }
+  pageBreadcrumb.push({
+    breadcrumbName: `${model.model.name} (${model.model.id})`,
+    path: paths.modelDetails(model.model.name),
+  });
+
   return (
     <Page
+      breadcrumb={pageBreadcrumb}
       containerRef={pageRef}
       docTitle="Model Details"
       headerComponent={
         <ModelHeader
           fetchModel={fetchModel}
           model={model.model}
-          workspace={workspace}
+          workspace={workspace || undefined}
           onSwitchArchive={switchArchive}
           onUpdateTags={saveModelTags}
         />

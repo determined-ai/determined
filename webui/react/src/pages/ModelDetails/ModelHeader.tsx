@@ -1,23 +1,18 @@
-import { LeftOutlined } from '@ant-design/icons';
 import { Alert, Space, Typography } from 'antd';
 import React, { useCallback, useMemo } from 'react';
 
 import DeleteModelModal from 'components/DeleteModelModal';
 import InfoBox, { InfoRow } from 'components/InfoBox';
-import Breadcrumb from 'components/kit/Breadcrumb';
 import Button from 'components/kit/Button';
 import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 import Icon from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
 import Tags, { tagsActionHelper } from 'components/kit/Tags';
 import Avatar from 'components/kit/UserAvatar';
-import Link from 'components/Link';
 import ModelEditModal from 'components/ModelEditModal';
 import ModelMoveModal from 'components/ModelMoveModal';
 import TimeAgo from 'components/TimeAgo';
 import usePermissions from 'hooks/usePermissions';
-import { WorkspaceDetailsTab } from 'pages/WorkspaceDetails';
-import { paths } from 'routes/utils';
 import Spinner from 'shared/components/Spinner';
 import { formatDatetime } from 'shared/utils/datetime';
 import userStore from 'stores/users';
@@ -45,7 +40,6 @@ const MenuKey = {
 
 const ModelHeader: React.FC<Props> = ({
   model,
-  workspace,
   fetchModel,
   onSwitchArchive,
   onUpdateTags,
@@ -151,42 +145,6 @@ const ModelHeader: React.FC<Props> = ({
 
   return (
     <header className={css.base}>
-      <div className={css.breadcrumbs}>
-        <Breadcrumb separator="">
-          <Breadcrumb.Item>
-            <Link path={paths.modelList()}>
-              <LeftOutlined className={css.leftIcon} />
-            </Link>
-          </Breadcrumb.Item>
-          {workspace && (
-            <Breadcrumb.Item>
-              <Link
-                path={
-                  workspace.id === 1
-                    ? paths.projectDetails(1)
-                    : paths.workspaceDetails(workspace.id)
-                }>
-                {workspace.name}
-              </Link>
-            </Breadcrumb.Item>
-          )}
-          <Breadcrumb.Separator />
-          <Breadcrumb.Item>
-            <Link
-              path={
-                workspace?.id
-                  ? paths.workspaceDetails(workspace.id, WorkspaceDetailsTab.ModelRegistry)
-                  : paths.modelList()
-              }>
-              Model Registry
-            </Link>
-          </Breadcrumb.Item>
-          <Breadcrumb.Separator />
-          <Breadcrumb.Item>
-            {model.name} ({model.id})
-          </Breadcrumb.Item>
-        </Breadcrumb>
-      </div>
       {model.archived && (
         <Alert
           message="This model has been archived and is now read-only."

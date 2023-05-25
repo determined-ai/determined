@@ -1,7 +1,6 @@
 package sproto
 
 import (
-	"fmt"
 	"strconv"
 	"time"
 
@@ -14,7 +13,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/taskv1"
@@ -44,11 +42,10 @@ type (
 		FittingRequirements FittingRequirements
 
 		// Behavioral configuration.
-		Preemptible  bool
-		IdleTimeout  *IdleTimeoutConfig
-		ProxyPorts   []*ProxyPortConfig
-		StreamEvents *EventStreamConfig
-		Restore      bool
+		Preemptible bool
+		IdleTimeout *IdleTimeoutConfig
+		ProxyPorts  []*ProxyPortConfig
+		Restore     bool
 
 		// Logging context of the allocation actor.
 		LogContext logger.Context
@@ -69,11 +66,6 @@ type (
 		Port            int    `json:"port"`
 		ProxyTCP        bool   `json:"proxy_tcp"`
 		Unauthenticated bool   `json:"unauthenticated"`
-	}
-
-	// EventStreamConfig configures an event stream.
-	EventStreamConfig struct {
-		To *actor.Ref
 	}
 
 	// ResourcesReleased notifies resource providers to return resources from a task.
@@ -333,76 +325,6 @@ type Resources interface {
 	Kill(*actor.Context, logger.Context)
 }
 
-// Event is the union of all event types during the parent lifecycle.
-type Event struct {
-	ParentID    string    `json:"parent_id"`
-	ID          string    `json:"id"`
-	Seq         int       `json:"seq"`
-	Time        time.Time `json:"time"`
-	Description string    `json:"description"`
-	IsReady     bool      `json:"is_ready"`
-	ContainerID string    `json:"container_id"`
-	Level       *string   `json:"level"`
-
-	ScheduledEvent *model.AllocationID `json:"scheduled_event"`
-	// AssignedEvent is triggered when the parent was assigned to an agent.
-	AssignedEvent *AllocatedEvent `json:"assigned_event"`
-	// ResourcesStartedEvent is triggered when the resources started on an agent.
-	ResourcesStartedEvent *ResourcesStarted `json:"resources_started_event"`
-	// ServiceReadyEvent is triggered when the service running in the container is ready to serve.
-	ServiceReadyEvent *bool `json:"service_ready_event"`
-	// TerminateRequestEvent is triggered when the scheduler has requested the container to
-	// terminate.
-	TerminateRequestEvent *ReleaseResources `json:"terminate_request_event"`
-	// ExitedEvent is triggered when the command has terminated.
-	ExitedEvent *string `json:"exited_event"`
-	// LogEvent is triggered when a new log message is available.
-	LogEvent *string `json:"log_event"`
-}
-
-// ToTaskLog converts an event to a task log.
-func (ev *Event) ToTaskLog() model.TaskLog {
-	description := ev.Description
-	var message string
-	switch {
-	case ev.ScheduledEvent != nil:
-		message = fmt.Sprintf("Scheduling %s (id: %s)", description, ev.ParentID)
-	case ev.ResourcesStartedEvent != nil:
-		message = fmt.Sprintf("Resources for %s have started", description)
-	case ev.TerminateRequestEvent != nil:
-		message = fmt.Sprintf("%s was requested to terminate", description)
-	case ev.ExitedEvent != nil:
-		message = fmt.Sprintf("%s was terminated: %s", description, *ev.ExitedEvent)
-	case ev.LogEvent != nil:
-		message = fmt.Sprintf(*ev.LogEvent)
-	case ev.ServiceReadyEvent != nil:
-		message = fmt.Sprintf("Service of %s is available", description)
-	case ev.AssignedEvent != nil:
-		if ev.AssignedEvent.Recovered {
-			message = fmt.Sprintf("%s was recovered on an agent", description)
-		} else {
-			message = fmt.Sprintf("%s was assigned to an agent", description)
-		}
-	default:
-		// The client could rely on logEntry IDs and since some of these events aren't actually log
-		// events we'd need to notify of them about these non existing logs either by adding a new
-		// attribute to our response or a sentient log entry or we could keep it simple and normalize
-		// command events as log struct by setting a special message.
-		message = ""
-	}
-
-	level := ptrs.Ptr(model.LogLevelInfo)
-	if ev.Level != nil {
-		level = ev.Level
-	}
-	return model.TaskLog{
-		Level:       level,
-		ContainerID: &ev.ContainerID,
-		Timestamp:   &ev.Time,
-		Log:         message,
-	}
-}
-
 // ResourceList is a wrapper for a list of resources.
 type ResourceList map[ResourcesID]Resources
 
@@ -423,9 +345,4 @@ func NewProxyPortConfig(input expconf.ProxyPortsConfig, taskID model.TaskID) []*
 	}
 
 	return out
-}
-
-// AllocatedEvent is sent the allocation's resources are granted.
-type AllocatedEvent struct {
-	Recovered bool
 }

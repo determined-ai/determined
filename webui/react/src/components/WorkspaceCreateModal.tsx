@@ -1,6 +1,6 @@
 import { Divider, Switch } from 'antd';
 import yaml from 'js-yaml';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 
 import Form from 'components/kit/Form';
 import Input from 'components/kit/Input';
@@ -8,7 +8,7 @@ import InputNumber from 'components/kit/InputNumber';
 import { Modal } from 'components/kit/Modal';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
-import { getWorkspace, patchWorkspace } from 'services/api';
+import { patchWorkspace } from 'services/api';
 import { V1AgentUserGroup } from 'services/api-ts-sdk';
 import Spinner from 'shared/components/Spinner';
 import { DetError, ErrorLevel, ErrorType } from 'shared/utils/error';
@@ -16,6 +16,8 @@ import { routeToReactUrl } from 'shared/utils/routes';
 import workspaceStore from 'stores/workspaces';
 import { Workspace } from 'types';
 import handleError from 'utils/error';
+import { Loadable, NotLoaded } from 'utils/loadable';
+import { useObservable } from 'utils/observable';
 
 const FORM_ID = 'new-workspace-form';
 
@@ -46,20 +48,6 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
   const useAgentGroup = Form.useWatch('useAgentGroup', form);
   const useCheckpointStorage = Form.useWatch('useCheckpointStorage', form);
 
-  const [canceler] = useState(new AbortController());
-  const [workspace, setWorkspace] = useState<Workspace>();
-
-  const fetchWorkspace = useCallback(async () => {
-    if (workspaceId) {
-      try {
-        const response = await getWorkspace({ id: workspaceId }, { signal: canceler.signal });
-        setWorkspace(response);
-      } catch (e) {
-        handleError(e);
-      }
-    }
-  }, [workspaceId, canceler.signal]);
-
   const initFields = useCallback(
     (ws?: Workspace) => {
       if (ws) {
@@ -86,23 +74,22 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
     [form],
   );
 
+  const loadableWorkspace = useObservable(workspaceStore.getWorkspace(workspaceId || 0));
+  const workspace = Loadable.getOrElse(undefined, loadableWorkspace);
   useEffect(() => {
-    initFields(workspace);
+    initFields(workspace || undefined);
   }, [workspace, initFields]);
 
-  useEffect(() => {
-    fetchWorkspace();
-  }, [workspaceId, fetchWorkspace]);
-
   const [canModifyAUG, canModifyCPS] = useMemo(() => {
+    const workspace = workspaceId ? { id: workspaceId } : undefined;
     return [
       canModifyWorkspaceAgentUserGroup({ workspace }),
       canModifyWorkspaceCheckpointStorage({ workspace }),
     ];
-  }, [canModifyWorkspaceAgentUserGroup, canModifyWorkspaceCheckpointStorage, workspace]);
+  }, [canModifyWorkspaceAgentUserGroup, canModifyWorkspaceCheckpointStorage, workspaceId]);
 
   const modalContent = useMemo(() => {
-    if (workspaceId && !workspace) return <Spinner />;
+    if (workspaceId && loadableWorkspace === NotLoaded) return <Spinner />;
     return (
       <Form autoComplete="off" form={form} id={FORM_ID} labelCol={{ span: 10 }} layout="vertical">
         <Form.Item
@@ -213,7 +200,7 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
     useAgentUser,
     useAgentGroup,
     useCheckpointStorage,
-    workspace,
+    loadableWorkspace,
     workspaceId,
     canModifyAUG,
     canModifyCPS,
@@ -258,8 +245,8 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
         }
 
         if (workspaceId) {
-          const response = await patchWorkspace({ id: workspaceId, ...body });
-          setWorkspace(response);
+          await patchWorkspace({ id: workspaceId, ...body });
+          workspaceStore.fetch(undefined, true);
         } else {
           const response = await workspaceStore.createWorkspace(body);
           routeToReactUrl(paths.workspaceDetails(response.id));
@@ -297,7 +284,7 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
       }}
       title={`${workspaceId ? 'Edit' : 'New'} Workspace`}
       onClose={() => {
-        initFields(workspace);
+        initFields(undefined);
         onClose?.();
       }}>
       {modalContent}

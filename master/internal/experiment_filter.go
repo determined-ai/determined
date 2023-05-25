@@ -311,9 +311,6 @@ func (e experimentFilterRoot) toSQL(q *bun.SelectQuery) (*bun.SelectQuery, error
 	if err != nil {
 		return nil, err
 	}
-	if !e.ShowArchived {
-		q.Where(`e.archived = false`)
-	}
 	return q, nil
 }
 

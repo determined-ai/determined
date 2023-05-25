@@ -480,13 +480,23 @@ node status commands (``squeue``, ``sinfo``, ``pbsnodes``, ``qstat`` ) to discov
 display cluster usage.
 
 When changing this value, ownership of the ``job_storage_root`` directory tree must be updated
-accordingly, and the ``determined-master`` service must be restarted.
+accordingly, and the ``determined-master`` service must be restarted. See ``job_storage_root`` for
+an example command to update the directory tree ownership.
 
 ``group_name``
 --------------
 
 The group that the Launcher will belong to. It should be a group that is not shared with other
 non-privileged users.
+
+``sudo_authorized``
+-------------------
+
+A comma-separated list of user/group specifications identifying users for which the launcher can
+submit/control Slurm/PBS jobs using ``sudo``. This value will be added to the ``sudo`` configuration
+created by the launcher. The default is ``ALL``. The specification ``!root`` is automatically
+appended to this list to prevent privilege elevation. See the ``sudoers(5)`` definition of
+``Runas_List`` for the full syntax of this value. See :ref:`sudo_configuration` for details.
 
 ``singularity_image_root``
 --------------------------

@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -338,7 +337,7 @@ func (tc SchemaTestCase) CheckRoundTrip(t *testing.T) {
 
 func RunCasesFile(t *testing.T, path string, displayPath string) {
 	// Ignore the security error about including files as variables; this is just a test.
-	byts, err := ioutil.ReadFile(path) //nolint: gosec
+	byts, err := os.ReadFile(path) //nolint: gosec
 	assert.NilError(t, err)
 
 	jbyts, err := schemas.JSONFromYaml(byts)

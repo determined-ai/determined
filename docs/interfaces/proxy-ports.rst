@@ -62,4 +62,4 @@ password. To use it,
 
 .. code:: bash
 
-   det -m determined.cli.tunnel --listener 8265 $DET_MASTER $TASK_ID:8265
+   python -m determined.cli.tunnel --listener 8265 $DET_MASTER $TASK_ID:8265

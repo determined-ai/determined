@@ -24,7 +24,7 @@ executors:
 parameters:
   det-version:
     type: string
-    default: 0.22.2-dev0
+    default: 0.22.3-dev0
   docker-image:
     type: string
     default: determinedai/cimg-base:latest
@@ -1918,6 +1918,7 @@ jobs:
   test-unit-model-hub:
     docker:
       - image: <<pipeline.parameters.docker-image>>
+    resource_class: medium+
     steps:
       - checkout
       - skip-if-docs-only
@@ -1967,6 +1968,7 @@ jobs:
   test-examples:
     docker:
       - image: <<pipeline.parameters.docker-image>>
+    resource_class: medium+
     steps:
       - checkout
       - skip-if-docs-only

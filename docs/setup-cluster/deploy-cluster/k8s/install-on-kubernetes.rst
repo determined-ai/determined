@@ -10,8 +10,8 @@
 | :doc:`/reference/deploy/config/helm-config-reference`           |
 +-----------------------------------------------------------------+
 
-This document describes how to install Determined on `Kubernetes <https://kubernetes.io/>`__. using
-the :download:`Determined Helm Chart </helm/determined-latest.tgz>`.
+This user guide describes how to install Determined on `Kubernetes <https://kubernetes.io/>`__.
+using the :download:`Determined Helm Chart </helm/determined-latest.tgz>`.
 
 When the Determined Helm chart is installed, the following entities will be created:
 

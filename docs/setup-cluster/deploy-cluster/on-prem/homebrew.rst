@@ -4,6 +4,8 @@
  Install Determined Using Homebrew (macOS)
 ###########################################
 
+This user guide provides step-by-step instructions for installing Determined using Homebrew.
+
 Determined publishes a Homebrew tap for installing the Determined master and agent as Homebrew
 services on macOS, for both Apple silicon and Intel hardware.
 

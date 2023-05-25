@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/user"
 	"path"
@@ -249,7 +248,7 @@ func FromTarGz(zippedTarfile []byte) (Archive, error) {
 
 		if header.Typeflag == tar.TypeReg {
 			var err error
-			item.Content, err = ioutil.ReadAll(tarReader)
+			item.Content, err = io.ReadAll(tarReader)
 			if err != nil {
 				return nil, err
 			}

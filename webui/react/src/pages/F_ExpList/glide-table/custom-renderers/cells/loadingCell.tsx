@@ -47,8 +47,8 @@ const renderer: CustomRenderer<LoadingCell> = {
     const percent = step / MAX_STEPS;
     const inc = (2 * percent) % 1;
     const factor = percent >= 0.5 ? 1.0 : 0.0;
-    const rgba0 = str2rgba(appTheme.stage);
-    const rgba1 = str2rgba(appTheme.stageStrong);
+    const rgba0 = str2rgba(appTheme.ixBorder);
+    const rgba1 = str2rgba(appTheme.ixBorderStrong);
     const color0 = rgba2str(rgbaFromGradient(rgba0, rgba1, Math.abs(factor - inc)));
     const color1 = rgba2str(rgbaFromGradient(rgba0, rgba1, factor));
     const color2 = rgba2str(rgbaFromGradient(rgba0, rgba1, 1 - Math.abs(factor - inc)));

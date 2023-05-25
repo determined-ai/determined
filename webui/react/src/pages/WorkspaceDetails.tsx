@@ -8,30 +8,26 @@ import PageNotFound from 'components/PageNotFound';
 import TaskList from 'components/TaskList';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
-import {
-  getGroups,
-  getWorkspace,
-  getWorkspaceMembers,
-  searchRolesAssignableToScope,
-} from 'services/api';
+import { getGroups, getWorkspaceMembers, searchRolesAssignableToScope } from 'services/api';
 import { V1Group, V1GroupSearchResult, V1Role, V1RoleWithAssignments } from 'services/api-ts-sdk';
-import Message, { MessageType } from 'shared/components/Message';
+import Message from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner';
 import usePolling from 'shared/hooks/usePolling';
 import { ValueOf } from 'shared/types';
 import { isEqual } from 'shared/utils/data';
-import { isNotFound } from 'shared/utils/service';
 import determinedStore from 'stores/determinedInfo';
 import userStore from 'stores/users';
-import { User, Workspace } from 'types';
+import workspaceStore from 'stores/workspaces';
+import { User } from 'types';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 
-import ModelRegistry from './ModelRegistry';
-import WorkspaceDetailsHeader from './WorkspaceDetails/WorkspaceDetailsHeader';
+import ModelRegistry from '../components/ModelRegistry';
+
 import WorkspaceMembers from './WorkspaceDetails/WorkspaceMembers';
 import WorkspaceProjects from './WorkspaceDetails/WorkspaceProjects';
+import { useWorkspaceActionMenu } from './WorkspaceList/WorkspaceActionDropdown';
 
 type Params = {
   tab: string;
@@ -53,7 +49,6 @@ const WorkspaceDetails: React.FC = () => {
   const loadableUsers = useObservable(userStore.getUsers());
   const users = Loadable.getOrElse([], loadableUsers);
   const { tab, workspaceId: workspaceID } = useParams<Params>();
-  const [workspace, setWorkspace] = useState<Workspace | undefined>();
   const [groups, setGroups] = useState<V1GroupSearchResult[]>();
   const [usersAssignedDirectly, setUsersAssignedDirectly] = useState<User[]>([]);
   const [groupsAssignedDirectly, setGroupsAssignedDirectly] = useState<V1Group[]>([]);
@@ -67,7 +62,6 @@ const WorkspaceDetails: React.FC = () => {
   /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
   const [nameFilter, setNameFilter] = useState<string>();
   const [workspaceAssignments, setWorkspaceAssignments] = useState<V1RoleWithAssignments[]>([]);
-  const [pageError, setPageError] = useState<Error>();
   const [canceler] = useState(new AbortController());
   const [tabKey, setTabKey] = useState<WorkspaceDetailsTab>(
     (tab as WorkspaceDetailsTab) || WorkspaceDetailsTab.Projects,
@@ -78,14 +72,8 @@ const WorkspaceDetails: React.FC = () => {
   const navigate = useNavigate();
   const { canViewWorkspace, canViewModelRegistry, loading: rbacLoading } = usePermissions();
 
-  const fetchWorkspace = useCallback(async () => {
-    try {
-      const response = await getWorkspace({ id }, { signal: canceler.signal });
-      setWorkspace(response);
-    } catch (e) {
-      if (!pageError) setPageError(e as Error);
-    }
-  }, [canceler.signal, id, pageError]);
+  const loadableWorkspace = useObservable(workspaceStore.getWorkspace(id));
+  const workspace = Loadable.getOrElse(undefined, loadableWorkspace);
 
   const fetchGroups = useCallback(async (): Promise<void> => {
     try {
@@ -157,6 +145,11 @@ const WorkspaceDetails: React.FC = () => {
     [addableGroups, addableUsers],
   );
 
+  const { contextHolders, menu, onClick } = useWorkspaceActionMenu({
+    onComplete: () => workspaceStore.fetch(undefined, true),
+    workspace: workspace || undefined,
+  });
+
   const tabItems: TabsProps['items'] = useMemo(() => {
     if (!workspace) {
       return [];
@@ -221,14 +214,12 @@ const WorkspaceDetails: React.FC = () => {
   const fetchAll = useCallback(async () => {
     if (!canViewWorkspaceFlag) return;
     await Promise.allSettled([
-      fetchWorkspace(),
       fetchGroups(),
       fetchGroupsAndUsersAssignedToWorkspace(),
       fetchRolesAssignableToScope(),
     ]);
   }, [
     canViewWorkspaceFlag,
-    fetchWorkspace,
     fetchGroups,
     fetchGroupsAndUsersAssignedToWorkspace,
     fetchRolesAssignableToScope,
@@ -252,36 +243,42 @@ const WorkspaceDetails: React.FC = () => {
     tab && setTabKey(tab as WorkspaceDetailsTab);
   }, [workspaceId, navigate, tab]);
 
-  if (!workspace || Loadable.isLoading(loadableUsers)) {
+  if (Loadable.isLoading(loadableWorkspace) || Loadable.isLoading(loadableUsers)) {
     return <Spinner spinning tip={`Loading workspace ${workspaceId} details...`} />;
   } else if (isNaN(id)) {
     return <Message title={`Invalid Workspace ID ${workspaceId}`} />;
-  } else if (pageError && !isNotFound(pageError)) {
-    const message = `Unable to fetch Workspace ${workspaceId}`;
-    return <Message title={message} type={MessageType.Warning} />;
-  } else if ((!rbacLoading && !canViewWorkspaceFlag) || (pageError && isNotFound(pageError))) {
+  } else if ((!rbacLoading && !canViewWorkspaceFlag) || workspace === null) {
     return <PageNotFound />;
+  }
+
+  const breadcrumb = [
+    {
+      breadcrumbName: 'Workspaces',
+      path: paths.workspaceList(),
+    },
+  ];
+  if (workspace) {
+    breadcrumb.push({
+      breadcrumbName: id !== 1 ? workspace.name : 'Uncategorized Experiments',
+      path: paths.workspaceDetails(id),
+    });
   }
 
   return (
     <Page
+      breadcrumb={breadcrumb}
       containerRef={pageRef}
-      headerComponent={
-        <WorkspaceDetailsHeader
-          addableUsersAndGroups={addableUsersAndGroups}
-          fetchWorkspace={fetchAll}
-          rolesAssignableToScope={rolesAssignableToScope}
-          workspace={workspace}
-        />
-      }
       id="workspaceDetails"
-      key={workspaceId}>
+      key={workspaceId}
+      menuItems={menu.length > 0 ? menu : undefined}
+      onClickMenu={onClick}>
       <Pivot
         activeKey={tabKey}
         destroyInactiveTabPane
         items={tabItems}
         onChange={handleTabChange}
       />
+      {contextHolders}
     </Page>
   );
 };

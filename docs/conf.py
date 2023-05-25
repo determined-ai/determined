@@ -3,10 +3,11 @@ This file is the configuration file for the Sphinx documentation builder.
 See the documentation: http://www.sphinx-doc.org/en/master/config
 """
 
-import os
 import json
+import os
 import pathlib
 import sys
+import time
 
 # Doc Path
 # If extensions (or modules to document with autodoc) are in another directory,
@@ -16,7 +17,7 @@ sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 
 project = "Determined"
 html_title = "Determined AI Documentation"
-copyright = "2023, Determined AI"
+copyright = time.strftime("%Y, Determined AI")
 author = "hello@determined.ai"
 version = pathlib.Path(__file__).parents[1].joinpath("VERSION").read_text().strip()
 release = version

@@ -7,7 +7,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"sync"
 	"time"
@@ -227,7 +227,7 @@ func generateWebhookRequest(
 func generateSignedPayload(req *http.Request, t int64, key []byte) string {
 	body := req.GetBody
 	bodyCopy, _ := body()
-	buf, _ := ioutil.ReadAll(bodyCopy)
+	buf, _ := io.ReadAll(bodyCopy)
 	message := []byte(fmt.Sprintf(`%v,%s`, t, buf))
 	mac := hmac.New(sha256.New, key)
 	mac.Write(message)
