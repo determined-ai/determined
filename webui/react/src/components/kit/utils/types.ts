@@ -105,3 +105,5 @@ export type ErrorType = ValueOf<typeof ErrorType>;
 
 export type AnyMouseEvent = MouseEvent | React.MouseEvent;
 export type AnyMouseEventHandler = (event: AnyMouseEvent) => void;
+
+export type ErrorHandler = (e: unknown, options?: object) => void;

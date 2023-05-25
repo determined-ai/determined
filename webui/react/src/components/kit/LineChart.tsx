@@ -12,6 +12,7 @@ import { closestPointPlugin } from 'components/kit/utils/components/UPlot/UPlotC
 import { tooltipsPlugin } from 'components/kit/utils/components/UPlot/UPlotChart/tooltipsPlugin';
 import { getCssVar, getTimeTickValues, glasbeyColor } from 'components/kit/utils/functions';
 import useResize from 'components/kit/utils/hooks/useResize';
+import { ErrorHandler } from 'components/kit/utils/types';
 import { MetricType, Scale } from 'types';
 import { Loadable } from 'utils/loadable';
 
@@ -69,7 +70,7 @@ interface ChartProps {
 
 interface LineChartProps extends Omit<ChartProps, 'series'> {
   series: Serie[] | Loadable<Serie[]>;
-  handleError: (e: unknown, options?: object) => void;
+  handleError: ErrorHandler;
 }
 
 export const LineChart: React.FC<LineChartProps> = ({
@@ -108,8 +109,8 @@ export const LineChart: React.FC<LineChartProps> = ({
         (s.metricType === MetricType.Training
           ? '[T] '
           : s.metricType === MetricType.Validation
-          ? '[V] '
-          : '') + (s.name || `Series ${idx + 1}`),
+            ? '[V] '
+            : '') + (s.name || `Series ${idx + 1}`),
     );
   }, [series]);
 
@@ -138,9 +139,9 @@ export const LineChart: React.FC<LineChartProps> = ({
   const xTickValues: uPlot.Axis.Values | undefined = useMemo(
     () =>
       xAxis === XAxisDomain.Time &&
-      chartData.length > 0 &&
-      chartData[0].length > 0 &&
-      chartData[0][chartData[0].length - 1] - chartData[0][0] < 43200 // 12 hours
+        chartData.length > 0 &&
+        chartData[0].length > 0 &&
+        chartData[0][chartData[0].length - 1] - chartData[0][0] < 43200 // 12 hours
         ? getTimeTickValues
         : undefined,
     [chartData, xAxis],
@@ -278,7 +279,7 @@ export interface GroupProps {
   scale: Scale;
   setScale: React.Dispatch<React.SetStateAction<Scale>>;
   xAxis: XAxisDomain;
-  handleError: (e: unknown, options?: object) => void;
+  handleError: ErrorHandler;
 }
 
 /**
@@ -291,7 +292,7 @@ const VirtualChartRenderer: React.FC<
     columnCount: number;
     scale: Scale;
     xAxis: XAxisDomain;
-    handleError: (e: unknown, options?: object) => void;
+    handleError: ErrorHandler;
   }>
 > = ({ columnIndex, rowIndex, style, data }) => {
   const { chartsProps, columnCount, scale, xAxis, handleError } = data;

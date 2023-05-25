@@ -27,6 +27,7 @@ import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
 import LogViewer from 'components/kit/LogViewer/LogViewer';
 import { Modal, useModal } from 'components/kit/Modal';
 import Nameplate from 'components/kit/Nameplate';
+import Notes, { Props as NotesProps } from 'components/kit/Notes';
 import Pagination from 'components/kit/Pagination';
 import Pivot from 'components/kit/Pivot';
 import Select, { Option } from 'components/kit/Select';
@@ -34,7 +35,6 @@ import Toggle from 'components/kit/Toggle';
 import Tooltip from 'components/kit/Tooltip';
 import Header from 'components/kit/Typography/Header';
 import Paragraph from 'components/kit/Typography/Paragraph';
-import { useNoteDemo, useNotesDemo } from 'components/kit/useNoteDemo';
 import UserAvatar from 'components/kit/UserAvatar';
 import { useTags } from 'components/kit/useTags';
 import Label from 'components/Label';
@@ -52,6 +52,7 @@ import useUI from 'shared/contexts/stores/UI';
 import { ValueOf } from 'shared/types';
 import { noOp } from 'shared/utils/service';
 import { BrandingType } from 'stores/determinedInfo';
+import { Note } from 'types';
 import { MetricType, User } from 'types';
 import {
   Background,
@@ -856,6 +857,7 @@ const CodeEditorSection: React.FC = () => {
               title: 'test.py',
             },
           ]}
+          onError={handleError}
         />
         <strong>Read-only YAML file</strong>
         <CodeEditor
@@ -869,6 +871,7 @@ const CodeEditorSection: React.FC = () => {
             },
           ]}
           readonly={true}
+          onError={handleError}
         />
         <strong>Multiple files, one not finished loading.</strong>
         <CodeEditor
@@ -890,6 +893,7 @@ const CodeEditorSection: React.FC = () => {
             { content: NotLoaded, isLeaf: true, key: 'unloaded.yaml', title: 'unloaded.yaml' },
           ]}
           readonly={true}
+          onError={handleError}
         />
       </AntDCard>
     </ComponentSection>
@@ -1280,6 +1284,30 @@ const FacepileSection: React.FC = () => {
         </ul>
       </AntDCard>
     </ComponentSection>
+  );
+};
+
+const useNoteDemo = (): ((props?: Omit<NotesProps, 'multiple'>) => JSX.Element) => {
+  const [note, setNote] = useState<Note>({ contents: '', name: 'Untitled' });
+  const onSave = async (n: Note) => await setNote(n);
+  return (props) => <Notes onError={handleError} {...props} notes={note} onSave={onSave} />;
+};
+
+const useNotesDemo = (): ((props?: NotesProps) => JSX.Element) => {
+  const [notes, setNotes] = useState<Note[]>([]);
+  const onDelete = (p: number) => setNotes((n) => n.filter((_, idx) => idx !== p));
+  const onNewPage = () => setNotes((n) => [...n, { contents: '', name: 'Untitled' }]);
+  const onSave = async (n: Note[]) => await setNotes(n);
+  return (props) => (
+    <Notes
+      {...props}
+      multiple
+      notes={notes}
+      onDelete={onDelete}
+      onError={handleError}
+      onNewPage={onNewPage}
+      onSave={onSave}
+    />
   );
 };
 

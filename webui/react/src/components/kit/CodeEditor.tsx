@@ -2,15 +2,14 @@ import { DownloadOutlined, FileOutlined } from '@ant-design/icons';
 import { Tree } from 'antd';
 import React, { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 
+import { ErrorHandler } from 'components/kit//utils/types';
 import Tooltip from 'components/kit/Tooltip';
+import { ErrorType, ValueOf } from 'components/kit/utils/types';
 import MonacoEditor from 'components/MonacoEditor';
 import Section from 'components/Section';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner';
-import { ValueOf } from 'shared/types';
-import { ErrorType } from 'shared/utils/error';
 import { TreeNode } from 'types';
-import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 
 const JupyterRenderer = lazy(() => import('./CodeEditor/IpynbRenderer'));
@@ -23,6 +22,7 @@ import './CodeEditor/index.scss';
 
 export type Props = {
   files: TreeNode[];
+  onError: ErrorHandler
   onSelectFile?: (arg0: string) => void;
   readonly?: boolean;
   selectedFilePath?: string;
@@ -102,7 +102,7 @@ const isConfig = (key: unknown): key is Config =>
  * selectedFilePath: gives path to the file to set as activeFile;
  */
 
-const CodeEditor: React.FC<Props> = ({ files, onSelectFile, readonly, selectedFilePath }) => {
+const CodeEditor: React.FC<Props> = ({ files, onSelectFile, readonly, onError, selectedFilePath }) => {
   const [pageError, setPageError] = useState<PageError>(PageError.None);
   const sortedFiles = useMemo(() => [...files].sort(sortTree), [files]);
   const [activeFile, setActiveFile] = useState<TreeNode | null>(sortedFiles[0] || null);
@@ -127,7 +127,7 @@ const CodeEditor: React.FC<Props> = ({ files, onSelectFile, readonly, selectedFi
     try {
       file = await fileInfo.get?.(String(fileInfo.key));
     } catch (error) {
-      handleError(error, {
+      onError(error, {
         publicMessage: 'Failed to load selected file.',
         publicSubject: 'Unable to fetch the selected file.',
         silent: false,
@@ -155,7 +155,7 @@ const CodeEditor: React.FC<Props> = ({ files, onSelectFile, readonly, selectedFi
     } catch {
       setPageError(PageError.Decode);
     }
-  }, []);
+  }, [onError]);
 
   useEffect(() => {
     if (selectedFilePath && activeFile?.key !== selectedFilePath) {
@@ -265,7 +265,7 @@ const CodeEditor: React.FC<Props> = ({ files, onSelectFile, readonly, selectedFi
         />
       ) : (
         <Suspense fallback={<Spinner tip="Loading ipynb viewer..." />}>
-          <JupyterRenderer file={Loadable.getOrElse('', activeFile.content)} />
+          <JupyterRenderer file={Loadable.getOrElse('', activeFile.content)} onError={onError} />
         </Suspense>
       );
   }

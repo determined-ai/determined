@@ -13,6 +13,7 @@ import Button from 'components/kit/Button';
 import Icon, { IconName } from 'components/kit/Icon';
 import Link from 'components/kit/utils/components/Link';
 import Spinner from 'components/kit/utils/components/Spinner';
+import { ErrorHandler } from 'components/kit/utils/types';
 import { ErrorLevel, ErrorType } from 'components/kit/utils/types';
 
 import css from './Modal.module.scss';
@@ -41,7 +42,7 @@ export interface ModalSubmitParams {
   text: string;
   handler: () => Promise<void>;
   onComplete?: () => Promise<void>;
-  handleError: (e: unknown, options?: object) => void;
+  handleError: ErrorHandler;
   form?: string;
 }
 

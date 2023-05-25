@@ -474,6 +474,7 @@ const ModelDetails: React.FC = () => {
           disabled={model.model.archived || !canModifyModel({ model: model.model })}
           disableTitle
           notes={{ contents: model.model.notes ?? '', name: 'Notes' }}
+          onError={handleError}
           onSave={saveNotes}
         />
         <MetadataCard

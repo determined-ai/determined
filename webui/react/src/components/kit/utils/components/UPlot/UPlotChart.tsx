@@ -8,7 +8,7 @@ import Spinner from 'components/kit/utils/components/Spinner';
 import usePrevious from 'components/kit/utils/hooks/usePrevious';
 import useResize from 'components/kit/utils/hooks/useResize';
 import { DarkLight } from 'components/kit/utils/types';
-import { ErrorLevel, ErrorType } from 'components/kit/utils/types';
+import { ErrorHandler, ErrorLevel, ErrorType } from 'components/kit/utils/types';
 import useUI from 'shared/contexts/stores/UI';
 
 import { useChartSync } from './SyncProvider';
@@ -27,7 +27,7 @@ interface Props {
   isLoading?: boolean;
   options?: Partial<Options>;
   style?: React.CSSProperties;
-  handleError?: (e: unknown, options?: object) => void;
+  handleError?: ErrorHandler;
 }
 
 const SCROLL_THROTTLE_TIME = 500;

@@ -8,6 +8,7 @@ import { V1FileNode } from 'services/api-ts-sdk';
 import Spinner from 'shared/components/Spinner/Spinner';
 import { RawJson } from 'shared/types';
 import { ExperimentBase, TreeNode } from 'types';
+import handleError from 'utils/error';
 import { isSingleTrialExperiment } from 'utils/experiment';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 
@@ -71,23 +72,23 @@ const ExperimentCodeViewer: React.FC<Props> = ({
   const fileOpts = [
     submittedConfig
       ? {
-          content: Loaded(submittedConfig),
-          download: `${experiment.id}_submitted_configuration.yaml`,
-          icon: configIcon,
-          isLeaf: true,
-          key: 'Submitted Configuration',
-          title: 'Submitted Configuration',
-        }
+        content: Loaded(submittedConfig),
+        download: `${experiment.id}_submitted_configuration.yaml`,
+        icon: configIcon,
+        isLeaf: true,
+        key: 'Submitted Configuration',
+        title: 'Submitted Configuration',
+      }
       : null,
     runtimeConfig
       ? {
-          content: Loaded(runtimeConfig),
-          download: `${experiment.id}_runtime_configuration.yaml`,
-          icon: configIcon,
-          isLeaf: true,
-          key: 'Runtime Configuration',
-          title: 'Runtime Configuration',
-        }
+        content: Loaded(runtimeConfig),
+        download: `${experiment.id}_runtime_configuration.yaml`,
+        icon: configIcon,
+        isLeaf: true,
+        key: 'Runtime Configuration',
+        title: 'Runtime Configuration',
+      }
       : null,
     ...Loadable.getOrElse([], expFiles),
   ].filter((valid) => !!valid) as TreeNode[];
@@ -105,6 +106,7 @@ const ExperimentCodeViewer: React.FC<Props> = ({
             files={fileOpts}
             readonly={true}
             selectedFilePath={selectedFilePath}
+            onError={handleError}
             onSelectFile={onSelectFile}
           />
         </div>

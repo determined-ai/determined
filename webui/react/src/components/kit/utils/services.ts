@@ -1,10 +1,10 @@
 import { isObject } from 'components/kit/utils/functions';
-import { FetchArgs } from 'components/kit/utils/types';
+import { ErrorHandler, FetchArgs } from 'components/kit/utils/types';
 
 export const readLogStream = async <T = unknown>(
   serverAddress: (path: string) => string,
   fetchArgs: FetchArgs,
-  onError: (e: unknown, options?: object) => void,
+  onError: ErrorHandler,
   onEvent?: (event: T) => void,
 ): Promise<unknown> => {
   try {

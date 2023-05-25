@@ -1,5 +1,7 @@
 import React, { PropsWithChildren, ReactNode, useState } from 'react';
 
+import { ErrorHandler } from 'components/kit/utils/types';
+
 import { Modal, ModalSize, useModal } from './Modal';
 
 export interface ConfirmModalProps {
@@ -11,7 +13,7 @@ export interface ConfirmModalProps {
   okText?: string;
   onClose?: () => void;
   onConfirm: () => Promise<void>;
-  onError: (e: unknown, options?: object) => void;
+  onError: ErrorHandler;
 }
 
 export const DEFAULT_CONFIRM_TITLE = 'Confirm Action';

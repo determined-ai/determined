@@ -6,11 +6,10 @@ import { unstable_useBlocker as useBlocker } from 'react-router-dom';
 import Button from 'components/kit/Button';
 import Input from 'components/kit/Input';
 import Tooltip from 'components/kit/Tooltip';
+import { ErrorHandler, ErrorType } from 'components/kit/utils/types';
 import Markdown from 'components/Markdown';
 import Spinner from 'shared/components/Spinner/Spinner';
-import { ErrorType } from 'shared/utils/error';
 import { Note } from 'types';
-import handleError from 'utils/error';
 
 import css from './NoteCard.module.scss';
 
@@ -21,6 +20,7 @@ interface Props {
   noteChangeSignal?: number;
   note: Note;
   onChange?: (editedNotes: string) => void;
+  onError: ErrorHandler;
   onSaveNote: (notes: Note) => Promise<void>;
 }
 
@@ -30,6 +30,7 @@ const NoteCard: React.FC<Props> = ({
   note,
   extra,
   onChange,
+  onError,
   onSaveNote,
   noteChangeSignal,
 }: Props) => {
@@ -99,14 +100,14 @@ const NoteCard: React.FC<Props> = ({
       await onSave?.(editedNotes.trim());
       setIsEditing(false);
     } catch (e) {
-      handleError(e, {
+      onError(e, {
         publicSubject: 'Unable to update notes.',
         silent: true,
         type: ErrorType.Api,
       });
     }
     setIsLoading(false);
-  }, [editedNotes, onSave]);
+  }, [editedNotes, onSave, onError]);
 
   const handleEditedNotes = useCallback(
     (newNotes: string) => {

@@ -27,6 +27,7 @@ import useGetCharMeasureInContainer from 'components/kit/utils/hooks/useGetCharM
 import useResize from 'components/kit/utils/hooks/useResize';
 import { readLogStream } from 'components/kit/utils/services';
 import { FetchArgs, RecordKey, ValueOf } from 'components/kit/utils/types';
+import { ErrorHandler } from 'components/kit/utils/types';
 import { Log, LogLevel } from 'types';
 
 import ClipboardButton from '../ClipboardButton';
@@ -40,7 +41,7 @@ export interface Props {
   initialLogs?: unknown[];
   onDownload?: () => void;
   onFetch?: (config: FetchConfig, type: FetchType) => FetchArgs;
-  onError: (e: unknown, options?: object) => void;
+  onError: ErrorHandler;
   serverAddress: (path: string) => string;
   sortKey?: keyof Log;
   title?: React.ReactNode;
@@ -110,13 +111,13 @@ const formatClipboardHeader = (log: Log): string => {
 
 const logSorter =
   (key: keyof Log) =>
-  (a: Log, b: Log): number => {
-    const aValue = a[key];
-    const bValue = b[key];
-    if (key === 'id') return numericSorter(aValue as number, bValue as number);
-    if (key === 'time') return dateTimeStringSorter(aValue as string, bValue as string);
-    return 0;
-  };
+    (a: Log, b: Log): number => {
+      const aValue = a[key];
+      const bValue = b[key];
+      if (key === 'id') return numericSorter(aValue as number, bValue as number);
+      if (key === 'time') return dateTimeStringSorter(aValue as string, bValue as string);
+      return 0;
+    };
 
 const LogViewer: React.FC<Props> = ({
   decoder,
