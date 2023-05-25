@@ -278,10 +278,12 @@ class DSATTrialTracker:
         Helper function which both adds the `trial` to the queue and the internal dictionary
         tracking all trials.
         """
-        # Verify that the given trial was not previously run.
-        for request_id, other_trial in self:
+        # Verify that the given trial was not previously completed.
+        for other_trial in self.completed_trials:
             if trial.hparams == other_trial.hparams:
-                logging.warning(f"Skipping attempt to queue Trial identical to {request_id}")
+                logging.warning(
+                    f"Skipping attempt to queue Trial identical to {other_trial.request_id}"
+                )
         self._all_trials_dict[trial.request_id] = trial
         self.queue.append(trial)
 
@@ -1144,6 +1146,21 @@ class ASHADSATSearchMethod(BaseDSATSearchMethod):
         new_trial = [self.get_next_trial(last_trial)]
         return new_trial
 
+    def choose_next_trial_from_queue(self) -> DSATTrial:
+        """
+        Schedule the trial with the largest `search_data.curr_rung` value.
+        """
+
+        def key(trial: DSATTrial) -> int:
+            assert trial.search_data
+            assert isinstance(trial.search_data, ASHADSATSearchData)
+            return trial.search_data.curr_rung
+
+        highest_rung_trial = max(self.trial_tracker.queue, key=key)
+        self.trial_tracker.queue.remove(highest_rung_trial)
+
+        return highest_rung_trial
+
     def get_next_trial(self, last_trial: DSATTrial) -> DSATTrial:
         next_trial = None
         assert last_trial.search_data is not None and isinstance(
@@ -1154,8 +1171,12 @@ class ASHADSATSearchMethod(BaseDSATSearchMethod):
         if next_trial is None:
             next_lineage = self.get_next_promotable_lineage()
             if next_lineage is not None:
-                self.promote_all_trials_in_lineage(next_lineage)
                 next_trial = self.get_next_trial_in_lineage(next_lineage)
+                if next_trial is not None:
+                    assert next_trial.search_data
+                    assert isinstance(next_trial.search_data, ASHADSATSearchData)
+                    # Promote to next rung
+                    next_trial.search_data.curr_rung += 1
         if next_trial is None:
             next_trial = self.get_random_trial()
         return next_trial
@@ -1177,10 +1198,11 @@ class ASHADSATSearchMethod(BaseDSATSearchMethod):
     @property
     def rungs(self) -> Dict[int, List[DSATTrial]]:
         """
-        A dictionary of lists of lineage roots which have completed the specified rung.
+        A dictionary of lists of the latest trials in each lineage which have completed the
+        specified rung.
         """
         rungs = defaultdict(list)
-        for root in self.get_all_lineage_roots():
+        for root in self.get_all_latest_trials_in_lineages():
             assert isinstance(root.search_data, ASHADSATSearchData)
             rung_idx = 0
             while self.lineage_completed_rung(root, rung_idx):
@@ -1188,38 +1210,39 @@ class ASHADSATSearchMethod(BaseDSATSearchMethod):
                 rung_idx += 1
         return rungs
 
-    def get_all_lineage_roots(self) -> List[DSATTrial]:
+    def get_all_latest_trials_in_lineages(self) -> List[DSATTrial]:
         """
-        Returns a list of all lineage roots sorted in descending order by their current rung_idx.
+        Returns a list of the latest trials in each lineage.
         """
         lineage_root_set = [
             trial
             for _, trial in self.trial_tracker
             if not isinstance(trial, DSATModelProfileInfoTrial)
-            and trial.lineage_root == trial
+            and self.get_latest_trial_in_lineage(trial) == trial
             and trial.search_data is not None
             and isinstance(trial.search_data, ASHADSATSearchData)
         ]
-        lineage_root_set.sort(
-            key=lambda r: r.search_data is not None
-            and isinstance(r.search_data, ASHADSATSearchData)
-            and r.search_data.curr_rung,
-            reverse=True,
-        )
         return lineage_root_set
 
     def lineage_completed_rung(self, trial: DSATTrial, rung_idx: int) -> bool:
-        if trial.num_completed_trials_in_lineage >= self.max_trials_for_rung_idx(rung_idx):
-            return True
+        assert trial.search_data
+        assert isinstance(trial.search_data, ASHADSATSearchData)
         latest_trial = self.get_latest_trial_in_lineage(trial)
         assert latest_trial.search_data
-        failed_on_min_mbs = latest_trial.error and latest_trial.mbs == latest_trial.search_data.lo
-        trivial_search_data = latest_trial.search_data.hi == latest_trial.search_data.lo
-        completed_previous_rung = (
-            trial.num_completed_trials_in_lineage >= self.max_trials_for_rung_idx(rung_idx - 1)
-        )
-        if (trivial_search_data or failed_on_min_mbs) and completed_previous_rung:
+        assert isinstance(latest_trial.search_data, ASHADSATSearchData)
+        if latest_trial.search_data.curr_rung > rung_idx:
             return True
+        if trial.num_completed_trials_in_lineage >= self.max_trials_for_rung_idx(rung_idx):
+            return True
+        # Also need to cover the cases where a binary search stopped before using all available
+        # resources (trials) in its current rung. Only need to check for curr_rung = rung_idx.
+        if latest_trial.search_data.curr_rung == rung_idx:
+            failed_on_min_mbs = (
+                latest_trial.error and latest_trial.mbs == latest_trial.search_data.lo
+            )
+            trivial_search_data = latest_trial.search_data.hi == latest_trial.search_data.lo
+            if trivial_search_data or failed_on_min_mbs:
+                return True
         return False
 
     def get_next_promotable_lineage(self) -> Optional[DSATTrial]:
@@ -1231,18 +1254,23 @@ class ASHADSATSearchMethod(BaseDSATSearchMethod):
         return None
 
     def get_next_promotable_lineage_in_rung(self, rung_idx: int) -> Optional[DSATTrial]:
+        """
+        Returns the latest trial in the next promotable lineage in the given rung.
+        """
         top_trials = self.get_top_lineages_in_rung(rung_idx)
         for trial in top_trials:
-            if (
-                isinstance(trial.search_data, ASHADSATSearchData)
-                and trial.search_data.curr_rung == rung_idx
-            ):
-                return trial
+            latest_trial = self.get_latest_trial_in_lineage(trial)
+            assert latest_trial.search_data
+            assert isinstance(latest_trial.search_data, ASHADSATSearchData)
+            already_promoted = latest_trial.search_data.curr_rung > rung_idx
+            if not already_promoted:
+                return self.get_latest_trial_in_lineage(trial)
         return None
 
     def get_top_lineages_in_rung(self, rung_idx: int) -> List[DSATTrial]:
         """
-        Returns the top 1 / eta fraction of lineages from the given rung, per the ASHA paper.
+        Returns the best trial in each of the top 1 / divisor fraction of lineages from the given
+        rung, per the ASHA paper.
         """
         completed_lineages_in_rung = self.rungs[rung_idx]
         k = len(completed_lineages_in_rung) // self.divisor
@@ -1250,7 +1278,7 @@ class ASHADSATSearchMethod(BaseDSATSearchMethod):
             return []
         best_trials: List[DSATTrial] = []
         for lin in completed_lineages_in_rung:
-            best_trial = self.get_best_trial_in_lineage(lin)
+            best_trial = self.get_best_trial_in_lineage(lin, max_rung_idx=rung_idx)
             if best_trial is not None:
                 best_trials.append(best_trial)
         reverse = not self.trial_tracker.smaller_is_better
@@ -1260,8 +1288,18 @@ class ASHADSATSearchMethod(BaseDSATSearchMethod):
         )
         return best_trials[:k]
 
-    def get_best_trial_in_lineage(self, trial: DSATTrial) -> Optional[DSATTrial]:
+    def get_best_trial_in_lineage(
+        self, trial: DSATTrial, max_rung_idx: Optional[int] = None
+    ) -> Optional[DSATTrial]:
         trials_with_metrics = [t for t in trial.lineage_set if t.searcher_metric_val is not None]
+        if max_rung_idx is not None:
+            filtered_trials_with_metrics: List[DSATTrial] = []
+            for t in trials_with_metrics:
+                assert t.search_data
+                assert isinstance(t.search_data, ASHADSATSearchData)
+                if t.search_data.curr_rung <= max_rung_idx:
+                    filtered_trials_with_metrics.append(t)
+            trials_with_metrics = filtered_trials_with_metrics
         if not trials_with_metrics:
             return None
         min_or_max = min if self.trial_tracker.smaller_is_better else max
@@ -1269,11 +1307,6 @@ class ASHADSATSearchMethod(BaseDSATSearchMethod):
             trials_with_metrics,
             key=lambda t: t.searcher_metric_val is not None and t.searcher_metric_val,
         )
-
-    def promote_all_trials_in_lineage(self, trial: DSATTrial) -> None:
-        for t in trial.lineage_set:
-            if isinstance(t.search_data, ASHADSATSearchData):
-                t.search_data.curr_rung += 1
 
     def get_latest_trial_in_lineage(self, trial: DSATTrial) -> DSATTrial:
         while trial.children:
@@ -1305,12 +1338,10 @@ class ASHADSATSearchMethod(BaseDSATSearchMethod):
         return next_trial
 
     def max_trials_for_rung_idx(self, rung_idx: int) -> int:
-        if rung_idx == -1:
-            return 0
-        max_resources: int = self.min_binary_search_trials * self.divisor ** (
+        max_trials: int = self.min_binary_search_trials * self.divisor ** (
             self.asha_early_stopping + rung_idx
         )
-        return max_resources
+        return max_trials
 
     def get_random_hparams_and_search_data(
         self, zero_stage: int
