@@ -107,6 +107,21 @@ export class RequiredError extends Error {
 
 
 /**
+ * Sorts options for checkpoints by the given field.   - SORT_BY_UNSPECIFIED: Returns checkpoints in an unsorted list.  - SORT_BY_UUID: Returns checkpoints sorted by UUID.  - SORT_BY_TRIAL_ID: Returns checkpoints sorted by trial id.  - SORT_BY_BATCH_NUMBER: Returns checkpoints sorted by batch number.  - SORT_BY_END_TIME: Returns checkpoints sorted by end time.  - SORT_BY_STATE: Returns checkpoints sorted by state.  - SORT_BY_SEARCHER_METRIC: Returns checkpoints sorted by the experiment's `searcher.metric` configuration setting.
+ * @export
+ * @enum {string}
+ */
+export const Checkpointv1SortBy = {
+    UNSPECIFIED: 'SORT_BY_UNSPECIFIED',
+    UUID: 'SORT_BY_UUID',
+    TRIALID: 'SORT_BY_TRIAL_ID',
+    BATCHNUMBER: 'SORT_BY_BATCH_NUMBER',
+    ENDTIME: 'SORT_BY_END_TIME',
+    STATE: 'SORT_BY_STATE',
+    SEARCHERMETRIC: 'SORT_BY_SEARCHER_METRIC',
+} as const
+export type Checkpointv1SortBy = ValueOf<typeof Checkpointv1SortBy>
+/**
  * The current state of the checkpoint.   - STATE_UNSPECIFIED: The state of the checkpoint is unknown.  - STATE_ACTIVE: The checkpoint is in an active state.  - STATE_COMPLETED: The checkpoint is persisted to checkpoint storage.  - STATE_ERROR: The checkpoint errored.  - STATE_DELETED: The checkpoint has been deleted.  - STATE_PARTIALLY_DELETED: The checkpoint has been partially deleted.
  * @export
  * @enum {string}
@@ -850,7 +865,7 @@ export interface Trialv1Trial {
     searcherMetricValue?: number;
 }
 /**
- * 
+ *
  * @export
  * @interface V1AcceleratorData
  */
@@ -3044,7 +3059,7 @@ export interface V1GetAgentsResponse {
     pagination?: V1Pagination;
 }
 /**
- * 
+ *
  * @export
  * @interface V1GetAllocationResponse
  */
@@ -3176,21 +3191,6 @@ export interface V1GetCurrentTrialSearcherOperationResponse {
      */
     completed?: boolean;
 }
-/**
- * Sorts checkpoints by the given field.   - SORT_BY_UNSPECIFIED: Returns checkpoints in an unsorted list.  - SORT_BY_UUID: Returns checkpoints sorted by UUID.  - SORT_BY_TRIAL_ID: Returns checkpoints sorted by trial id.  - SORT_BY_BATCH_NUMBER: Returns checkpoints sorted by batch number.  - SORT_BY_END_TIME: Returns checkpoints sorted by end time.  - SORT_BY_STATE: Returns checkpoints sorted by state.  - SORT_BY_SEARCHER_METRIC: Returns checkpoints sorted by the experiment's `searcher.metric` configuration setting.
- * @export
- * @enum {string}
- */
-export const V1GetExperimentCheckpointsRequestSortBy = {
-    UNSPECIFIED: 'SORT_BY_UNSPECIFIED',
-    UUID: 'SORT_BY_UUID',
-    TRIALID: 'SORT_BY_TRIAL_ID',
-    BATCHNUMBER: 'SORT_BY_BATCH_NUMBER',
-    ENDTIME: 'SORT_BY_END_TIME',
-    STATE: 'SORT_BY_STATE',
-    SEARCHERMETRIC: 'SORT_BY_SEARCHER_METRIC',
-} as const
-export type V1GetExperimentCheckpointsRequestSortBy = ValueOf<typeof V1GetExperimentCheckpointsRequestSortBy>
 /**
  * Response to GetExperimentCheckpointsRequest.
  * @export
@@ -4062,7 +4062,7 @@ export interface V1GetSlotsResponse {
     slots?: Array<V1Slot>;
 }
 /**
- * 
+ *
  * @export
  * @interface V1GetTaskAcceleratorDataResponse
  */
@@ -4226,19 +4226,6 @@ export interface V1GetTrainingMetricsResponse {
     metrics: Array<V1MetricsReport>;
 }
 /**
- * Sorts checkpoints by the given field.   - SORT_BY_UNSPECIFIED: Returns checkpoints in an unsorted list.  - SORT_BY_UUID: Returns checkpoints sorted by UUID.  - SORT_BY_BATCH_NUMBER: Returns checkpoints sorted by batch number.  - SORT_BY_END_TIME: Returns checkpoints sorted by end time.  - SORT_BY_STATE: Returns checkpoints sorted by state.
- * @export
- * @enum {string}
- */
-export const V1GetTrialCheckpointsRequestSortBy = {
-    UNSPECIFIED: 'SORT_BY_UNSPECIFIED',
-    UUID: 'SORT_BY_UUID',
-    BATCHNUMBER: 'SORT_BY_BATCH_NUMBER',
-    ENDTIME: 'SORT_BY_END_TIME',
-    STATE: 'SORT_BY_STATE',
-} as const
-export type V1GetTrialCheckpointsRequestSortBy = ValueOf<typeof V1GetTrialCheckpointsRequestSortBy>
-/**
  * Response to GetTrialCheckpointsRequest.
  * @export
  * @interface V1GetTrialCheckpointsResponse
@@ -4271,7 +4258,7 @@ export interface V1GetTrialMetricsByCheckpointResponse {
     metrics: Array<V1MetricsReport>;
 }
 /**
- * 
+ *
  * @export
  * @interface V1GetTrialMetricsByModelVersionResponse
  */
@@ -6841,7 +6828,7 @@ export interface V1PostAllocationAcceleratorDataRequest {
     acceleratorData: V1AcceleratorData;
 }
 /**
- * 
+ *
  * @export
  * @interface V1PostAllocationAcceleratorDataResponse
  */
@@ -13489,7 +13476,8 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * 
          * @summary Get a list of checkpoints for an experiment.
          * @param {number} id The experiment id.
-         * @param {V1GetExperimentCheckpointsRequestSortBy} [sortBy] Sort checkpoints by the given field.   - SORT_BY_UNSPECIFIED: Returns checkpoints in an unsorted list.  - SORT_BY_UUID: Returns checkpoints sorted by UUID.  - SORT_BY_TRIAL_ID: Returns checkpoints sorted by trial id.  - SORT_BY_BATCH_NUMBER: Returns checkpoints sorted by batch number.  - SORT_BY_END_TIME: Returns checkpoints sorted by end time.  - SORT_BY_STATE: Returns checkpoints sorted by state.  - SORT_BY_SEARCHER_METRIC: Returns checkpoints sorted by the experiment's `searcher.metric` configuration setting.
+         * @param {Checkpointv1SortBy} [sortByAttr] Sort by preset checkpoint attribute.   - SORT_BY_UNSPECIFIED: Returns checkpoints in an unsorted list.  - SORT_BY_UUID: Returns checkpoints sorted by UUID.  - SORT_BY_TRIAL_ID: Returns checkpoints sorted by trial id.  - SORT_BY_BATCH_NUMBER: Returns checkpoints sorted by batch number.  - SORT_BY_END_TIME: Returns checkpoints sorted by end time.  - SORT_BY_STATE: Returns checkpoints sorted by state.  - SORT_BY_SEARCHER_METRIC: Returns checkpoints sorted by the experiment's `searcher.metric` configuration setting.
+         * @param {string} [sortByMetric] Sort by custom validation metric name.
          * @param {V1OrderBy} [orderBy] Order checkpoints in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of checkpoints before returning results. Negative values denote number of checkpoints to skip from the end before returning results.
          * @param {number} [limit] Limit the number of checkpoints. A value of 0 denotes no limit.
@@ -13497,7 +13485,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getExperimentCheckpoints(id: number, sortBy?: V1GetExperimentCheckpointsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, states?: Array<Checkpointv1State>, options: any = {}): FetchArgs {
+        getExperimentCheckpoints(id: number, sortByAttr?: Checkpointv1SortBy, sortByMetric?: string, orderBy?: V1OrderBy, offset?: number, limit?: number, states?: Array<Checkpointv1State>, options: any = {}): FetchArgs {
             // verify required parameter 'id' is not null or undefined
             if (id === null || id === undefined) {
                 throw new RequiredError('id','Required parameter id was null or undefined when calling getExperimentCheckpoints.');
@@ -13517,8 +13505,12 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            if (sortBy !== undefined) {
-                localVarQueryParameter['sortBy'] = sortBy
+            if (sortByAttr !== undefined) {
+                localVarQueryParameter['sortByAttr'] = sortByAttr
+            }
+
+            if (sortByMetric !== undefined) {
+                localVarQueryParameter['sortByMetric'] = sortByMetric
             }
             
             if (orderBy !== undefined) {
@@ -13995,7 +13987,8 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * 
          * @summary Get a list of checkpoints for a trial.
          * @param {number} id The trial id.
-         * @param {V1GetTrialCheckpointsRequestSortBy} [sortBy] Sort checkpoints by the given field.   - SORT_BY_UNSPECIFIED: Returns checkpoints in an unsorted list.  - SORT_BY_UUID: Returns checkpoints sorted by UUID.  - SORT_BY_BATCH_NUMBER: Returns checkpoints sorted by batch number.  - SORT_BY_END_TIME: Returns checkpoints sorted by end time.  - SORT_BY_STATE: Returns checkpoints sorted by state.
+         * @param {Checkpointv1SortBy} [sortByAttr] Sort by preset checkpoint attribute.   - SORT_BY_UNSPECIFIED: Returns checkpoints in an unsorted list.  - SORT_BY_UUID: Returns checkpoints sorted by UUID.  - SORT_BY_TRIAL_ID: Returns checkpoints sorted by trial id.  - SORT_BY_BATCH_NUMBER: Returns checkpoints sorted by batch number.  - SORT_BY_END_TIME: Returns checkpoints sorted by end time.  - SORT_BY_STATE: Returns checkpoints sorted by state.  - SORT_BY_SEARCHER_METRIC: Returns checkpoints sorted by the experiment's `searcher.metric` configuration setting.
+         * @param {string} [sortByMetric] Sort by custom validation metric name.
          * @param {V1OrderBy} [orderBy] Order checkpoints in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of checkpoints before returning results. Negative values denote number of checkpoints to skip from the end before returning results.
          * @param {number} [limit] Limit the number of checkpoints. A value of 0 denotes no limit.
@@ -14003,7 +13996,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTrialCheckpoints(id: number, sortBy?: V1GetTrialCheckpointsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, states?: Array<Checkpointv1State>, options: any = {}): FetchArgs {
+        getTrialCheckpoints(id: number, sortByAttr?: Checkpointv1SortBy, sortByMetric?: string, orderBy?: V1OrderBy, offset?: number, limit?: number, states?: Array<Checkpointv1State>, options: any = {}): FetchArgs {
             // verify required parameter 'id' is not null or undefined
             if (id === null || id === undefined) {
                 throw new RequiredError('id','Required parameter id was null or undefined when calling getTrialCheckpoints.');
@@ -14023,8 +14016,12 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            if (sortBy !== undefined) {
-                localVarQueryParameter['sortBy'] = sortBy
+            if (sortByAttr !== undefined) {
+                localVarQueryParameter['sortByAttr'] = sortByAttr
+            }
+
+            if (sortByMetric !== undefined) {
+                localVarQueryParameter['sortByMetric'] = sortByMetric
             }
             
             if (orderBy !== undefined) {
@@ -14935,7 +14932,8 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
          * 
          * @summary Get a list of checkpoints for an experiment.
          * @param {number} id The experiment id.
-         * @param {V1GetExperimentCheckpointsRequestSortBy} [sortBy] Sort checkpoints by the given field.   - SORT_BY_UNSPECIFIED: Returns checkpoints in an unsorted list.  - SORT_BY_UUID: Returns checkpoints sorted by UUID.  - SORT_BY_TRIAL_ID: Returns checkpoints sorted by trial id.  - SORT_BY_BATCH_NUMBER: Returns checkpoints sorted by batch number.  - SORT_BY_END_TIME: Returns checkpoints sorted by end time.  - SORT_BY_STATE: Returns checkpoints sorted by state.  - SORT_BY_SEARCHER_METRIC: Returns checkpoints sorted by the experiment's `searcher.metric` configuration setting.
+         * @param {Checkpointv1SortBy} [sortByAttr] Sort by preset checkpoint attribute.   - SORT_BY_UNSPECIFIED: Returns checkpoints in an unsorted list.  - SORT_BY_UUID: Returns checkpoints sorted by UUID.  - SORT_BY_TRIAL_ID: Returns checkpoints sorted by trial id.  - SORT_BY_BATCH_NUMBER: Returns checkpoints sorted by batch number.  - SORT_BY_END_TIME: Returns checkpoints sorted by end time.  - SORT_BY_STATE: Returns checkpoints sorted by state.  - SORT_BY_SEARCHER_METRIC: Returns checkpoints sorted by the experiment's `searcher.metric` configuration setting.
+         * @param {string} [sortByMetric] Sort by custom validation metric name.
          * @param {V1OrderBy} [orderBy] Order checkpoints in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of checkpoints before returning results. Negative values denote number of checkpoints to skip from the end before returning results.
          * @param {number} [limit] Limit the number of checkpoints. A value of 0 denotes no limit.
@@ -14943,8 +14941,8 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getExperimentCheckpoints(id: number, sortBy?: V1GetExperimentCheckpointsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, states?: Array<Checkpointv1State>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetExperimentCheckpointsResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getExperimentCheckpoints(id, sortBy, orderBy, offset, limit, states, options);
+        getExperimentCheckpoints(id: number, sortByAttr?: Checkpointv1SortBy, sortByMetric?: string, orderBy?: V1OrderBy, offset?: number, limit?: number, states?: Array<Checkpointv1State>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetExperimentCheckpointsResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getExperimentCheckpoints(id, sortByAttr, sortByMetric, orderBy, offset, limit, states, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -15154,7 +15152,8 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
          * 
          * @summary Get a list of checkpoints for a trial.
          * @param {number} id The trial id.
-         * @param {V1GetTrialCheckpointsRequestSortBy} [sortBy] Sort checkpoints by the given field.   - SORT_BY_UNSPECIFIED: Returns checkpoints in an unsorted list.  - SORT_BY_UUID: Returns checkpoints sorted by UUID.  - SORT_BY_BATCH_NUMBER: Returns checkpoints sorted by batch number.  - SORT_BY_END_TIME: Returns checkpoints sorted by end time.  - SORT_BY_STATE: Returns checkpoints sorted by state.
+         * @param {Checkpointv1SortBy} [sortByAttr] Sort by preset checkpoint attribute.   - SORT_BY_UNSPECIFIED: Returns checkpoints in an unsorted list.  - SORT_BY_UUID: Returns checkpoints sorted by UUID.  - SORT_BY_TRIAL_ID: Returns checkpoints sorted by trial id.  - SORT_BY_BATCH_NUMBER: Returns checkpoints sorted by batch number.  - SORT_BY_END_TIME: Returns checkpoints sorted by end time.  - SORT_BY_STATE: Returns checkpoints sorted by state.  - SORT_BY_SEARCHER_METRIC: Returns checkpoints sorted by the experiment's `searcher.metric` configuration setting.
+         * @param {string} [sortByMetric] Sort by custom validation metric name.
          * @param {V1OrderBy} [orderBy] Order checkpoints in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of checkpoints before returning results. Negative values denote number of checkpoints to skip from the end before returning results.
          * @param {number} [limit] Limit the number of checkpoints. A value of 0 denotes no limit.
@@ -15162,8 +15161,8 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTrialCheckpoints(id: number, sortBy?: V1GetTrialCheckpointsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, states?: Array<Checkpointv1State>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTrialCheckpointsResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getTrialCheckpoints(id, sortBy, orderBy, offset, limit, states, options);
+        getTrialCheckpoints(id: number, sortByAttr?: Checkpointv1SortBy, sortByMetric?: string, orderBy?: V1OrderBy, offset?: number, limit?: number, states?: Array<Checkpointv1State>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTrialCheckpointsResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getTrialCheckpoints(id, sortByAttr, sortByMetric, orderBy, offset, limit, states, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -15614,7 +15613,8 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * 
          * @summary Get a list of checkpoints for an experiment.
          * @param {number} id The experiment id.
-         * @param {V1GetExperimentCheckpointsRequestSortBy} [sortBy] Sort checkpoints by the given field.   - SORT_BY_UNSPECIFIED: Returns checkpoints in an unsorted list.  - SORT_BY_UUID: Returns checkpoints sorted by UUID.  - SORT_BY_TRIAL_ID: Returns checkpoints sorted by trial id.  - SORT_BY_BATCH_NUMBER: Returns checkpoints sorted by batch number.  - SORT_BY_END_TIME: Returns checkpoints sorted by end time.  - SORT_BY_STATE: Returns checkpoints sorted by state.  - SORT_BY_SEARCHER_METRIC: Returns checkpoints sorted by the experiment's `searcher.metric` configuration setting.
+         * @param {Checkpointv1SortBy} [sortByAttr] Sort by preset checkpoint attribute.   - SORT_BY_UNSPECIFIED: Returns checkpoints in an unsorted list.  - SORT_BY_UUID: Returns checkpoints sorted by UUID.  - SORT_BY_TRIAL_ID: Returns checkpoints sorted by trial id.  - SORT_BY_BATCH_NUMBER: Returns checkpoints sorted by batch number.  - SORT_BY_END_TIME: Returns checkpoints sorted by end time.  - SORT_BY_STATE: Returns checkpoints sorted by state.  - SORT_BY_SEARCHER_METRIC: Returns checkpoints sorted by the experiment's `searcher.metric` configuration setting.
+         * @param {string} [sortByMetric] Sort by custom validation metric name.
          * @param {V1OrderBy} [orderBy] Order checkpoints in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of checkpoints before returning results. Negative values denote number of checkpoints to skip from the end before returning results.
          * @param {number} [limit] Limit the number of checkpoints. A value of 0 denotes no limit.
@@ -15622,8 +15622,8 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getExperimentCheckpoints(id: number, sortBy?: V1GetExperimentCheckpointsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, states?: Array<Checkpointv1State>, options?: any) {
-            return ExperimentsApiFp(configuration).getExperimentCheckpoints(id, sortBy, orderBy, offset, limit, states, options)(fetch, basePath);
+        getExperimentCheckpoints(id: number, sortByAttr?: Checkpointv1SortBy, sortByMetric?: string, orderBy?: V1OrderBy, offset?: number, limit?: number, states?: Array<Checkpointv1State>, options?: any) {
+            return ExperimentsApiFp(configuration).getExperimentCheckpoints(id, sortByAttr, sortByMetric, orderBy, offset, limit, states, options)(fetch, basePath);
         },
         /**
          * 
@@ -15743,7 +15743,8 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * 
          * @summary Get a list of checkpoints for a trial.
          * @param {number} id The trial id.
-         * @param {V1GetTrialCheckpointsRequestSortBy} [sortBy] Sort checkpoints by the given field.   - SORT_BY_UNSPECIFIED: Returns checkpoints in an unsorted list.  - SORT_BY_UUID: Returns checkpoints sorted by UUID.  - SORT_BY_BATCH_NUMBER: Returns checkpoints sorted by batch number.  - SORT_BY_END_TIME: Returns checkpoints sorted by end time.  - SORT_BY_STATE: Returns checkpoints sorted by state.
+         * @param {Checkpointv1SortBy} [sortByAttr] Sort by preset checkpoint attribute.   - SORT_BY_UNSPECIFIED: Returns checkpoints in an unsorted list.  - SORT_BY_UUID: Returns checkpoints sorted by UUID.  - SORT_BY_TRIAL_ID: Returns checkpoints sorted by trial id.  - SORT_BY_BATCH_NUMBER: Returns checkpoints sorted by batch number.  - SORT_BY_END_TIME: Returns checkpoints sorted by end time.  - SORT_BY_STATE: Returns checkpoints sorted by state.  - SORT_BY_SEARCHER_METRIC: Returns checkpoints sorted by the experiment's `searcher.metric` configuration setting.
+         * @param {string} [sortByMetric] Sort by custom validation metric name.
          * @param {V1OrderBy} [orderBy] Order checkpoints in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of checkpoints before returning results. Negative values denote number of checkpoints to skip from the end before returning results.
          * @param {number} [limit] Limit the number of checkpoints. A value of 0 denotes no limit.
@@ -15751,8 +15752,8 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTrialCheckpoints(id: number, sortBy?: V1GetTrialCheckpointsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, states?: Array<Checkpointv1State>, options?: any) {
-            return ExperimentsApiFp(configuration).getTrialCheckpoints(id, sortBy, orderBy, offset, limit, states, options)(fetch, basePath);
+        getTrialCheckpoints(id: number, sortByAttr?: Checkpointv1SortBy, sortByMetric?: string, orderBy?: V1OrderBy, offset?: number, limit?: number, states?: Array<Checkpointv1State>, options?: any) {
+            return ExperimentsApiFp(configuration).getTrialCheckpoints(id, sortByAttr, sortByMetric, orderBy, offset, limit, states, options)(fetch, basePath);
         },
         /**
          * 
@@ -16080,7 +16081,8 @@ export class ExperimentsApi extends BaseAPI {
      * 
      * @summary Get a list of checkpoints for an experiment.
      * @param {number} id The experiment id.
-     * @param {V1GetExperimentCheckpointsRequestSortBy} [sortBy] Sort checkpoints by the given field.   - SORT_BY_UNSPECIFIED: Returns checkpoints in an unsorted list.  - SORT_BY_UUID: Returns checkpoints sorted by UUID.  - SORT_BY_TRIAL_ID: Returns checkpoints sorted by trial id.  - SORT_BY_BATCH_NUMBER: Returns checkpoints sorted by batch number.  - SORT_BY_END_TIME: Returns checkpoints sorted by end time.  - SORT_BY_STATE: Returns checkpoints sorted by state.  - SORT_BY_SEARCHER_METRIC: Returns checkpoints sorted by the experiment's `searcher.metric` configuration setting.
+     * @param {Checkpointv1SortBy} [sortByAttr] Sort by preset checkpoint attribute.   - SORT_BY_UNSPECIFIED: Returns checkpoints in an unsorted list.  - SORT_BY_UUID: Returns checkpoints sorted by UUID.  - SORT_BY_TRIAL_ID: Returns checkpoints sorted by trial id.  - SORT_BY_BATCH_NUMBER: Returns checkpoints sorted by batch number.  - SORT_BY_END_TIME: Returns checkpoints sorted by end time.  - SORT_BY_STATE: Returns checkpoints sorted by state.  - SORT_BY_SEARCHER_METRIC: Returns checkpoints sorted by the experiment's `searcher.metric` configuration setting.
+     * @param {string} [sortByMetric] Sort by custom validation metric name.
      * @param {V1OrderBy} [orderBy] Order checkpoints in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
      * @param {number} [offset] Skip the number of checkpoints before returning results. Negative values denote number of checkpoints to skip from the end before returning results.
      * @param {number} [limit] Limit the number of checkpoints. A value of 0 denotes no limit.
@@ -16089,8 +16091,8 @@ export class ExperimentsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public getExperimentCheckpoints(id: number, sortBy?: V1GetExperimentCheckpointsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, states?: Array<Checkpointv1State>, options?: any) {
-        return ExperimentsApiFp(this.configuration).getExperimentCheckpoints(id, sortBy, orderBy, offset, limit, states, options)(this.fetch, this.basePath)
+    public getExperimentCheckpoints(id: number, sortByAttr?: Checkpointv1SortBy, sortByMetric?: string, orderBy?: V1OrderBy, offset?: number, limit?: number, states?: Array<Checkpointv1State>, options?: any) {
+        return ExperimentsApiFp(this.configuration).getExperimentCheckpoints(id, sortByAttr, sortByMetric, orderBy, offset, limit, states, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -16229,7 +16231,8 @@ export class ExperimentsApi extends BaseAPI {
      * 
      * @summary Get a list of checkpoints for a trial.
      * @param {number} id The trial id.
-     * @param {V1GetTrialCheckpointsRequestSortBy} [sortBy] Sort checkpoints by the given field.   - SORT_BY_UNSPECIFIED: Returns checkpoints in an unsorted list.  - SORT_BY_UUID: Returns checkpoints sorted by UUID.  - SORT_BY_BATCH_NUMBER: Returns checkpoints sorted by batch number.  - SORT_BY_END_TIME: Returns checkpoints sorted by end time.  - SORT_BY_STATE: Returns checkpoints sorted by state.
+     * @param {Checkpointv1SortBy} [sortByAttr] Sort by preset checkpoint attribute.   - SORT_BY_UNSPECIFIED: Returns checkpoints in an unsorted list.  - SORT_BY_UUID: Returns checkpoints sorted by UUID.  - SORT_BY_TRIAL_ID: Returns checkpoints sorted by trial id.  - SORT_BY_BATCH_NUMBER: Returns checkpoints sorted by batch number.  - SORT_BY_END_TIME: Returns checkpoints sorted by end time.  - SORT_BY_STATE: Returns checkpoints sorted by state.  - SORT_BY_SEARCHER_METRIC: Returns checkpoints sorted by the experiment's `searcher.metric` configuration setting.
+     * @param {string} [sortByMetric] Sort by custom validation metric name.
      * @param {V1OrderBy} [orderBy] Order checkpoints in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
      * @param {number} [offset] Skip the number of checkpoints before returning results. Negative values denote number of checkpoints to skip from the end before returning results.
      * @param {number} [limit] Limit the number of checkpoints. A value of 0 denotes no limit.
@@ -16238,8 +16241,8 @@ export class ExperimentsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public getTrialCheckpoints(id: number, sortBy?: V1GetTrialCheckpointsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, states?: Array<Checkpointv1State>, options?: any) {
-        return ExperimentsApiFp(this.configuration).getTrialCheckpoints(id, sortBy, orderBy, offset, limit, states, options)(this.fetch, this.basePath)
+    public getTrialCheckpoints(id: number, sortByAttr?: Checkpointv1SortBy, sortByMetric?: string, orderBy?: V1OrderBy, offset?: number, limit?: number, states?: Array<Checkpointv1State>, options?: any) {
+        return ExperimentsApiFp(this.configuration).getTrialCheckpoints(id, sortByAttr, sortByMetric, orderBy, offset, limit, states, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -17029,14 +17032,14 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
             objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
-            
+
             return {
                 url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
         /**
-         * 
+         *
          * @summary Get details about an Allocation.
          * @param {string} allocationId The id of the allocation.
          * @param {*} [options] Override http request option.
@@ -17053,7 +17056,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
-            
+
             // authentication BearerToken required
             if (configuration && configuration.apiKey) {
                 const localVarApiKeyValue = typeof configuration.apiKey === 'function'
@@ -17061,7 +17064,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                     : configuration.apiKey;
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
-            
+
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
             objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
@@ -17469,18 +17472,18 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             if (unbound !== undefined) {
                 localVarQueryParameter['unbound'] = unbound
             }
-            
+
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
             objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
-            
+
             return {
                 url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
         /**
-         * 
+         *
          * @summary GetTaskAcceleratorData gets the accelerator data for each allocation associated with a task.
          * @param {string} taskId The id of the task.
          * @param {*} [options] Override http request option.
@@ -17497,7 +17500,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
-            
+
             // authentication BearerToken required
             if (configuration && configuration.apiKey) {
                 const localVarApiKeyValue = typeof configuration.apiKey === 'function'
@@ -17505,7 +17508,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                     : configuration.apiKey;
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
-            
+
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
             objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
@@ -17573,7 +17576,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             if (metricGroup !== undefined) {
                 localVarQueryParameter['metricGroup'] = metricGroup
             }
-            
+
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
             objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
@@ -17625,7 +17628,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             if (metricGroup !== undefined) {
                 localVarQueryParameter['metricGroup'] = metricGroup
             }
-            
+
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
             objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
@@ -18089,7 +18092,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             };
         },
         /**
-         * 
+         *
          * @summary Patch (an unmanaged) trial.
          * @param {number} trialId Trial id.
          * @param {V1PatchTrialRequest} body
@@ -18111,7 +18114,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             const localVarRequestOptions = { method: 'PATCH', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
-            
+
             // authentication BearerToken required
             if (configuration && configuration.apiKey) {
                 const localVarApiKeyValue = typeof configuration.apiKey === 'function'
@@ -18119,21 +18122,21 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                     : configuration.apiKey;
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
-            
+
             localVarHeaderParameter['Content-Type'] = 'application/json';
-            
+
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
             objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
-            
+
             return {
                 url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
         /**
-         * 
+         *
          * @summary PostAllocationAcceleratorData sets the accelerator for a given allocation.
          * @param {string} allocationId The id of the allocation.
          * @param {V1PostAllocationAcceleratorDataRequest} body
@@ -18155,7 +18158,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
-            
+
             // authentication BearerToken required
             if (configuration && configuration.apiKey) {
                 const localVarApiKeyValue = typeof configuration.apiKey === 'function'
@@ -18163,14 +18166,14 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                     : configuration.apiKey;
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
-            
+
             localVarHeaderParameter['Content-Type'] = 'application/json';
-            
+
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
             objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
-            
+
             return {
                 url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
@@ -18289,21 +18292,21 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                     : configuration.apiKey;
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
-            
+
             localVarHeaderParameter['Content-Type'] = 'application/json';
-            
+
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
             objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
-            
+
             return {
                 url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
         /**
-         * 
+         *
          * @summary Put an experiment by external id.
          * @param {string} externalExperimentId External experiment id.
          * @param {V1CreateExperimentRequest} body CreateExperimentRequest payload.
@@ -18325,7 +18328,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             const localVarRequestOptions = { method: 'PUT', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
-            
+
             // authentication BearerToken required
             if (configuration && configuration.apiKey) {
                 const localVarApiKeyValue = typeof configuration.apiKey === 'function'
@@ -18333,21 +18336,21 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                     : configuration.apiKey;
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
-            
+
             localVarHeaderParameter['Content-Type'] = 'application/json';
-            
+
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
             objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
-            
+
             return {
                 url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
         /**
-         * 
+         *
          * @summary Put a trial.
          * @param {V1PutTrialRequest} body
          * @param {*} [options] Override http request option.
@@ -18363,7 +18366,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             const localVarRequestOptions = { method: 'PUT', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
-            
+
             // authentication BearerToken required
             if (configuration && configuration.apiKey) {
                 const localVarApiKeyValue = typeof configuration.apiKey === 'function'
@@ -18371,14 +18374,14 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                     : configuration.apiKey;
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
-            
+
             localVarHeaderParameter['Content-Type'] = 'application/json';
-            
+
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
             objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
-            
+
             return {
                 url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
@@ -18729,14 +18732,14 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
             objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
-            
+
             return {
                 url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
         /**
-         * 
+         *
          * @summary Start (an unmanaged) trial.
          * @param {number} trialId Trial id.
          * @param {V1StartTrialRequest} body
@@ -18758,7 +18761,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
-            
+
             // authentication BearerToken required
             if (configuration && configuration.apiKey) {
                 const localVarApiKeyValue = typeof configuration.apiKey === 'function'
@@ -18766,14 +18769,14 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                     : configuration.apiKey;
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
-            
+
             localVarHeaderParameter['Content-Type'] = 'application/json';
-            
+
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
             objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
-            
+
             return {
                 url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
@@ -19345,7 +19348,7 @@ export const InternalApiFp = function (configuration?: Configuration) {
             };
         },
         /**
-         * 
+         *
          * @summary Get details about an Allocation.
          * @param {string} allocationId The id of the allocation.
          * @param {*} [options] Override http request option.
@@ -19583,7 +19586,7 @@ export const InternalApiFp = function (configuration?: Configuration) {
             };
         },
         /**
-         * 
+         *
          * @summary Get telemetry information.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -19837,7 +19840,7 @@ export const InternalApiFp = function (configuration?: Configuration) {
             };
         },
         /**
-         * 
+         *
          * @summary Patch (an unmanaged) trial.
          * @param {number} trialId Trial id.
          * @param {V1PatchTrialRequest} body
@@ -19857,7 +19860,7 @@ export const InternalApiFp = function (configuration?: Configuration) {
             };
         },
         /**
-         * 
+         *
          * @summary PostAllocationAcceleratorData sets the accelerator for a given allocation.
          * @param {string} allocationId The id of the allocation.
          * @param {V1PostAllocationAcceleratorDataRequest} body
@@ -19956,7 +19959,7 @@ export const InternalApiFp = function (configuration?: Configuration) {
             };
         },
         /**
-         * 
+         *
          * @summary Put a trial.
          * @param {V1PutTrialRequest} body
          * @param {*} [options] Override http request option.
@@ -19975,7 +19978,7 @@ export const InternalApiFp = function (configuration?: Configuration) {
             };
         },
         /**
-         * 
+         *
          * @summary Record a checkpoint.
          * @param {V1Checkpoint} body The training metrics to persist.
          * @param {*} [options] Override http request option.
@@ -20136,7 +20139,7 @@ export const InternalApiFp = function (configuration?: Configuration) {
             };
         },
         /**
-         * 
+         *
          * @summary Start (an unmanaged) trial.
          * @param {number} trialId Trial id.
          * @param {V1StartTrialRequest} body
@@ -20436,7 +20439,7 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
             return InternalApiFp(configuration).getAllocation(allocationId, options)(fetch, basePath);
         },
         /**
-         * 
+         *
          * @summary Get the best searcher validation for an experiment by the given metric.
          * @param {number} experimentId The ID of the experiment.
          * @param {*} [options] Override http request option.
@@ -20556,7 +20559,7 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
             return InternalApiFp(configuration).getTaskAcceleratorData(taskId, options)(fetch, basePath);
         },
         /**
-         * 
+         *
          * @summary Get telemetry information.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -20713,7 +20716,7 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
             return InternalApiFp(configuration).patchTrial(trialId, body, options)(fetch, basePath);
         },
         /**
-         * 
+         *
          * @summary PostAllocationAcceleratorData sets the accelerator for a given allocation.
          * @param {string} allocationId The id of the allocation.
          * @param {V1PostAllocationAcceleratorDataRequest} body
@@ -20724,7 +20727,7 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
             return InternalApiFp(configuration).postAllocationAcceleratorData(allocationId, body, options)(fetch, basePath);
         },
         /**
-         * 
+         *
          * @summary PostAllocationProxyAddress sets the proxy address to use when proxying to services provided by an allocation. Upon receipt, the master will also register any proxies specified by the task.
          * @param {string} allocationId The id of the allocation.
          * @param {V1PostAllocationProxyAddressRequest} body
@@ -20767,7 +20770,7 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
             return InternalApiFp(configuration).putExperiment(externalExperimentId, body, options)(fetch, basePath);
         },
         /**
-         * 
+         *
          * @summary Put a trial.
          * @param {V1PutTrialRequest} body
          * @param {*} [options] Override http request option.
@@ -20777,7 +20780,7 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
             return InternalApiFp(configuration).putTrial(body, options)(fetch, basePath);
         },
         /**
-         * 
+         *
          * @summary Record a checkpoint.
          * @param {V1Checkpoint} body The training metrics to persist.
          * @param {*} [options] Override http request option.
@@ -20877,7 +20880,7 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
             return InternalApiFp(configuration).startTrial(trialId, body, options)(fetch, basePath);
         },
         /**
-         * 
+         *
          * @summary Get a sample of the metrics over time for a sample of the trials.
          * @param {number} experimentId The id of the experiment.
          * @param {string} metricName A metric name.
@@ -21131,7 +21134,7 @@ export class InternalApi extends BaseAPI {
     }
     
     /**
-     * 
+     *
      * @summary Get details about an Allocation.
      * @param {string} allocationId The id of the allocation.
      * @param {*} [options] Override http request option.
@@ -21141,7 +21144,7 @@ export class InternalApi extends BaseAPI {
     public getAllocation(allocationId: string, options?: any) {
         return InternalApiFp(this.configuration).getAllocation(allocationId, options)(this.fetch, this.basePath)
     }
-    
+
     /**
      * 
      * @summary Get the best searcher validation for an experiment by the given metric.
@@ -21273,7 +21276,7 @@ export class InternalApi extends BaseAPI {
     }
     
     /**
-     * 
+     *
      * @summary GetTaskAcceleratorData gets the accelerator data for each allocation associated with a task.
      * @param {string} taskId The id of the task.
      * @param {*} [options] Override http request option.
@@ -21283,7 +21286,7 @@ export class InternalApi extends BaseAPI {
     public getTaskAcceleratorData(taskId: string, options?: any) {
         return InternalApiFp(this.configuration).getTaskAcceleratorData(taskId, options)(this.fetch, this.basePath)
     }
-    
+
     /**
      * 
      * @summary Get telemetry information.
@@ -21455,7 +21458,7 @@ export class InternalApi extends BaseAPI {
     }
     
     /**
-     * 
+     *
      * @summary Patch (an unmanaged) trial.
      * @param {number} trialId Trial id.
      * @param {V1PatchTrialRequest} body
@@ -21466,9 +21469,9 @@ export class InternalApi extends BaseAPI {
     public patchTrial(trialId: number, body: V1PatchTrialRequest, options?: any) {
         return InternalApiFp(this.configuration).patchTrial(trialId, body, options)(this.fetch, this.basePath)
     }
-    
+
     /**
-     * 
+     *
      * @summary PostAllocationAcceleratorData sets the accelerator for a given allocation.
      * @param {string} allocationId The id of the allocation.
      * @param {V1PostAllocationAcceleratorDataRequest} body
@@ -21479,7 +21482,7 @@ export class InternalApi extends BaseAPI {
     public postAllocationAcceleratorData(allocationId: string, body: V1PostAllocationAcceleratorDataRequest, options?: any) {
         return InternalApiFp(this.configuration).postAllocationAcceleratorData(allocationId, body, options)(this.fetch, this.basePath)
     }
-    
+
     /**
      * 
      * @summary PostAllocationProxyAddress sets the proxy address to use when proxying to services provided by an allocation. Upon receipt, the master will also register any proxies specified by the task.
@@ -21519,7 +21522,7 @@ export class InternalApi extends BaseAPI {
     }
     
     /**
-     * 
+     *
      * @summary Put an experiment by external id.
      * @param {string} externalExperimentId External experiment id.
      * @param {V1CreateExperimentRequest} body CreateExperimentRequest payload.
@@ -21530,9 +21533,9 @@ export class InternalApi extends BaseAPI {
     public putExperiment(externalExperimentId: string, body: V1CreateExperimentRequest, options?: any) {
         return InternalApiFp(this.configuration).putExperiment(externalExperimentId, body, options)(this.fetch, this.basePath)
     }
-    
+
     /**
-     * 
+     *
      * @summary Put a trial.
      * @param {V1PutTrialRequest} body
      * @param {*} [options] Override http request option.
@@ -21542,7 +21545,7 @@ export class InternalApi extends BaseAPI {
     public putTrial(body: V1PutTrialRequest, options?: any) {
         return InternalApiFp(this.configuration).putTrial(body, options)(this.fetch, this.basePath)
     }
-    
+
     /**
      * 
      * @summary Record a checkpoint.
@@ -21649,7 +21652,7 @@ export class InternalApi extends BaseAPI {
     }
     
     /**
-     * 
+     *
      * @summary Start (an unmanaged) trial.
      * @param {number} trialId Trial id.
      * @param {V1StartTrialRequest} body
@@ -21660,7 +21663,7 @@ export class InternalApi extends BaseAPI {
     public startTrial(trialId: number, body: V1StartTrialRequest, options?: any) {
         return InternalApiFp(this.configuration).startTrial(trialId, body, options)(this.fetch, this.basePath)
     }
-    
+
     /**
      * 
      * @summary Get a sample of the metrics over time for a sample of the trials.
@@ -30335,7 +30338,7 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
             if (nameCaseSensitive !== undefined) {
                 localVarQueryParameter['nameCaseSensitive'] = nameCaseSensitive
             }
-            
+
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
             objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };

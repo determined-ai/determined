@@ -1,7 +1,7 @@
 import base64
 import math
 import os
-from typing import Callable
+from typing import Callable, Union
 from unittest import mock
 
 import pytest
@@ -10,7 +10,7 @@ import responses
 
 from determined.common import api
 from determined.common.api import bindings
-from determined.common.experimental import experiment
+from determined.common.experimental import checkpoint, experiment
 from tests.fixtures import api_responses
 
 _MASTER = "http://localhost:8080"
@@ -229,3 +229,45 @@ def test_download_code_writes_output_to_file(
     with open(output_file, "rb") as f:
         file_content = f.read()
         assert file_content == b"b64TgzResponse"
+
+
+@mock.patch("determined.common.api.bindings.get_GetExperimentCheckpoints")
+@pytest.mark.parametrize(
+    "sort_by", [checkpoint.CheckpointSortBy.SEARCHER_METRIC, "val_metric_name"]
+)
+def test_list_checkpoints_calls_bindings_with_params(
+    mock_bindings: mock.MagicMock,
+    make_expref: Callable[[int], experiment.Experiment],
+    sort_by: Union[checkpoint.CheckpointSortBy, str],
+) -> None:
+    expref = make_expref(1)
+    ckpt_resp = api_responses.sample_get_experiment_checkpoints()
+    mock_bindings.side_effect = api_responses.iter_pages(
+        pageable_resp=ckpt_resp,
+        pageable_attribute="checkpoints",
+    )
+
+    expref.list_checkpoints(sort_by=sort_by, order_by=checkpoint.CheckpointOrderBy.ASC, limit=5)
+
+    _, call_kwargs = mock_bindings.call_args_list[0]
+
+    assert call_kwargs["orderBy"] == checkpoint.CheckpointOrderBy.ASC._to_bindings()
+    assert call_kwargs["limit"] == 5
+
+    if isinstance(sort_by, checkpoint.CheckpointSortBy):
+        assert call_kwargs["sortByAttr"] == sort_by._to_bindings()
+    else:
+        assert call_kwargs["sortByMetric"] == sort_by if isinstance(sort_by, str) else None
+
+
+def test_list_checkpoints_errors_on_invalid_argument_set(
+    make_expref: Callable[[int], experiment.Experiment],
+) -> None:
+    expref = make_expref(1)
+
+    # Expect exception if only one of sort_by and order_by is set.
+    with pytest.raises(AssertionError):
+        expref.list_checkpoints(sort_by=None, order_by=checkpoint.CheckpointOrderBy.ASC, limit=5)
+
+    with pytest.raises(AssertionError):
+        expref.list_checkpoints(sort_by=checkpoint.CheckpointSortBy.UUID, order_by=None, limit=5)

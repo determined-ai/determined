@@ -52,6 +52,8 @@ from typing import Any, Callable, Dict, Iterable, Iterator, List, Optional, Sequ
 from determined.common.api import Session  # noqa: F401
 from determined.common.experimental.checkpoint import (  # noqa: F401
     Checkpoint,
+    CheckpointOrderBy,
+    CheckpointSortBy,
     CheckpointState,
     DownloadMode,
 )
@@ -61,8 +63,6 @@ from determined.common.experimental.metrics import TrainingMetrics, TrialMetrics
 from determined.common.experimental.model import Model, ModelOrderBy, ModelSortBy
 from determined.common.experimental.oauth2_scim_client import Oauth2ScimClient
 from determined.common.experimental.trial import (  # noqa: F401
-    CheckpointOrderBy,
-    CheckpointSortBy,
     Trial,
     TrialOrderBy,
     TrialSortBy,

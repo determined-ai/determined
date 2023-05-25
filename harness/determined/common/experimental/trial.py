@@ -20,36 +20,6 @@ class LogLevel(enum.Enum):
         return bindings.v1LogLevel(self.value)
 
 
-_csb = bindings.v1GetTrialCheckpointsRequestSortBy
-
-
-class CheckpointSortBy(enum.Enum):
-    """
-    Specifies the field to sort a list of checkpoints on.
-    """
-
-    END_TIME = _csb.END_TIME.value
-    STATE = _csb.STATE.value
-    UUID = _csb.UUID.value
-    BATCH_NUMBER = _csb.BATCH_NUMBER.value
-
-    def _to_bindings(self) -> bindings.v1GetTrialCheckpointsRequestSortBy:
-        return _csb(self.value)
-
-
-class CheckpointOrderBy(enum.Enum):
-    """
-    Specifies whether a sorted list of checkpoints should be in ascending or
-    descending order.
-    """
-
-    ASC = bindings.v1OrderBy.ASC.value
-    DESC = bindings.v1OrderBy.DESC.value
-
-    def _to_bindings(self) -> bindings.v1OrderBy:
-        return bindings.v1OrderBy(self.value)
-
-
 class TrialState(enum.Enum):
     # UNSPECIFIED is internal to the bound API and is not be exposed to the front end
     ACTIVE = bindings.trialv1State.ACTIVE.value
@@ -209,6 +179,57 @@ class Trial:
     def kill(self) -> None:
         bindings.post_KillTrial(self._session, id=self.id)
 
+    def list_checkpoints(
+        self,
+        sort_by: Optional[Union[str, checkpoint.CheckpointSortBy]] = None,
+        order_by: Optional[checkpoint.CheckpointOrderBy] = None,
+        limit: Optional[int] = None,
+    ) -> List[checkpoint.Checkpoint]:
+        """Returns an iterator of sorted :class:`~determined.experimental.Checkpoint` instances.
+
+        Requires either both `sort_by` and `order_by` to be defined, or neither. If neither are
+        specified, will default to sorting by the experiment's configured searcher metric, and
+        ordering by `smaller_is_better`.
+
+        Only checkpoints in a ``COMPLETED`` state with a matching ``COMPLETED`` validation
+        are considered.
+
+        Arguments:
+            sort_by: (Optional) Parameter to sort checkpoints by. Accepts either
+                ``checkpoint.CheckpointSortBy`` or a string representing a validation metric name.
+            order_by: (Optional) Order of sorted checkpoints (ascending or descending).
+            limit: (Optional) Maximum number of results to return. Defaults to no maximum.
+
+        Returns:
+            A list of sorted and ordered checkpoints.
+        """
+        if (sort_by is None) != (order_by is None):
+            raise AssertionError("sort_by and order_by must be either both set, or neither.")
+
+        if sort_by and not isinstance(sort_by, (checkpoint.CheckpointSortBy, str)):
+            raise ValueError("sort_by must be of type CheckpointSortBy or str")
+
+        def get_trial_checkpoints(offset: int) -> bindings.v1GetTrialCheckpointsResponse:
+            return bindings.get_GetTrialCheckpoints(
+                self._session,
+                id=self.id,
+                orderBy=order_by._to_bindings() if order_by else None,
+                sortByAttr=sort_by._to_bindings()
+                if isinstance(sort_by, checkpoint.CheckpointSortBy)
+                else None,
+                sortByMetric=sort_by if isinstance(sort_by, str) else None,
+                offset=offset,
+                limit=limit,
+            )
+
+        resps = api.read_paginated(get_trial_checkpoints)
+
+        return [
+            checkpoint.Checkpoint._from_bindings(c, self._session)
+            for r in resps
+            for c in r.checkpoints
+        ]
+
     def top_checkpoint(
         self,
         sort_by: Optional[str] = None,
@@ -230,9 +251,29 @@ class Trial:
                 this parameter is ignored. By default, the value of ``smaller_is_better``
                 from the experiment's configuration is used.
         """
-        return self.select_checkpoint(
-            best=True, sort_by=sort_by, smaller_is_better=smaller_is_better
+        warnings.warn(
+            "Trial.top_checkpoint() has been deprecated and will be removed in a future "
+            "version."
+            "Please call Trial.list_checkpoints(...,limit=1) instead.",
+            FutureWarning,
+            stacklevel=2,
         )
+        order_by = None
+        if sort_by:
+            order_by = (
+                checkpoint.CheckpointOrderBy.ASC
+                if smaller_is_better
+                else checkpoint.CheckpointOrderBy.DESC
+            )
+
+        checkpoints = self.list_checkpoints(
+            sort_by=sort_by,
+            order_by=order_by,
+            limit=1,
+        )
+        if not checkpoints:
+            raise ValueError("No checkpoints found for criteria.")
+        return checkpoints[0]
 
     def select_checkpoint(
         self,
@@ -270,6 +311,13 @@ class Trial:
                 this parameter is ignored. By default, the value of ``smaller_is_better``
                 from the experiment's configuration is used.
         """
+        warnings.warn(
+            "Trial.select_checkpoint() has been deprecated and will be removed in a future "
+            "version."
+            "Please call Trial.list_checkpoints() instead.",
+            FutureWarning,
+            stacklevel=2,
+        )
         if sum([int(latest), int(best), int(uuid is not None)]) != 1:
             raise AssertionError("Exactly one of latest, best, or uuid must be set")
 
@@ -287,13 +335,17 @@ class Trial:
 
         order_by = None
         if latest:
-            sort_by = CheckpointSortBy.BATCH_NUMBER  # type: ignore
-            order_by = CheckpointOrderBy.DESC
+            sort_by = checkpoint.CheckpointSortBy.BATCH_NUMBER  # type: ignore
+            order_by = checkpoint.CheckpointOrderBy.DESC
 
         if sort_by:
-            order_by = CheckpointOrderBy.ASC if smaller_is_better else CheckpointOrderBy.DESC
+            order_by = (
+                checkpoint.CheckpointOrderBy.ASC
+                if smaller_is_better
+                else checkpoint.CheckpointOrderBy.DESC
+            )
 
-        checkpoints = self.get_checkpoints(sort_by=sort_by, order_by=order_by)
+        checkpoints = self.list_checkpoints(sort_by=sort_by, order_by=order_by, limit=1)
 
         if not checkpoints:
             raise ValueError("No checkpoints found for criteria.")
@@ -301,8 +353,8 @@ class Trial:
 
     def get_checkpoints(
         self,
-        sort_by: Optional[Union[str, CheckpointSortBy]] = None,
-        order_by: Optional[CheckpointOrderBy] = None,
+        sort_by: Optional[Union[str, checkpoint.CheckpointSortBy]] = None,
+        order_by: Optional[checkpoint.CheckpointOrderBy] = None,
     ) -> List[checkpoint.Checkpoint]:
         """
         Return a list of :class:`~determined.experimental.Checkpoint` instances for the current
@@ -317,6 +369,14 @@ class Trial:
                 ascending or descending order.
         """
 
+        warnings.warn(
+            "Trial.get_checkpoints() has been deprecated and will be removed in a future "
+            "version."
+            "Please call Experiment.list_checkpoints() instead.",
+            FutureWarning,
+            stacklevel=2,
+        )
+
         if (sort_by is None) != (order_by is None):
             raise AssertionError("sort_by and order_by must be set together")
 
@@ -325,7 +385,9 @@ class Trial:
                 self._session,
                 id=self.id,
                 orderBy=order_by._to_bindings() if order_by else None,
-                sortBy=sort_by._to_bindings() if isinstance(sort_by, CheckpointSortBy) else None,
+                sortByAttr=sort_by._to_bindings()
+                if isinstance(sort_by, checkpoint.CheckpointSortBy)
+                else None,
                 offset=offset,
             )
 
@@ -338,7 +400,7 @@ class Trial:
         ]
 
         # If sort_by was a defined field, we already sorted and ordered.
-        if isinstance(sort_by, CheckpointSortBy) or not checkpoints:
+        if isinstance(sort_by, checkpoint.CheckpointSortBy) or not checkpoints:
             return checkpoints
 
         # If sort not specified, sort and order default to searcher configs.
@@ -353,11 +415,15 @@ class Trial:
                 )
             sort_by = searcher_metric
             smaller_is_better = config.get("searcher", {}).get("smaller_is_better", True)
-            order_by = CheckpointOrderBy.ASC if smaller_is_better else CheckpointOrderBy.DESC
+            order_by = (
+                checkpoint.CheckpointOrderBy.ASC
+                if smaller_is_better
+                else checkpoint.CheckpointOrderBy.DESC
+            )
 
         assert sort_by is not None and order_by is not None, "sort_by and order_by not defined."
 
-        reverse = order_by == CheckpointOrderBy.DESC
+        reverse = order_by == checkpoint.CheckpointOrderBy.DESC
 
         def key(ckpt: checkpoint.Checkpoint) -> Any:
             training = ckpt.training
@@ -486,6 +552,28 @@ def _stream_validation_metrics(
     for i in bindings.get_GetValidationMetrics(session, trialIds=trial_ids):
         for m in i.metrics:
             yield metrics.ValidationMetrics._from_bindings(m)
+
+
+class TrialReference(Trial):
+    """A legacy class representing an Trial object.
+
+    This class was renamed to :class:`~determined.experimental.Trial` and will be removed
+    in a future release.
+    """
+
+    def __init__(
+        self,
+        trial_id: int,
+        session: api.Session,
+    ):
+        warnings.warn(
+            "'TrialReference' was renamed to 'Trial' and will be removed in a future "
+            "release. Please consider replacing any code references to 'TrialReference' "
+            "with 'Trial'.",
+            FutureWarning,
+            stacklevel=2,
+        )
+        Trial.__init__(self, trial_id=trial_id, session=session)
 
 
 class TrialReference(Trial):
