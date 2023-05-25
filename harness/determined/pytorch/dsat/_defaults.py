@@ -52,7 +52,7 @@ DEFAULT_ZERO_SEARCH_SPACE: Dict[int, Dict[str, List[Union[bool, float]]]] = {
 AUTOTUNING_DICT = {"autotuning": {"enabled": True}}
 
 AUTOTUNING_ARG_DEFAULTS = {
-    "max-trials": 50,
+    "max-trials": 64,
     "max-concurrent-trials": 16,
     "zero-stages": [1, 2, 3],
     "trials-per-random-config": 5,
