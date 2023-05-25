@@ -525,6 +525,7 @@ export interface ExperimentItem {
   config: ExperimentConfig;
   configRaw: RawJson; // Readonly unparsed config object.
   description?: string;
+  duration?: number;
   endTime?: string;
   forkedFrom?: number;
   hyperparameters: HyperparametersFlattened; // Nested HP keys are flattened, eg) foo.bar

@@ -86,6 +86,7 @@ func expColumnNameToSQL(columnName string) (string, error) {
 		"description":     "e.config->>'description'",
 		"name":            "e.config->>'name'",
 		"tags":            "e.config->>'labels'",
+		"searcherType":    "e.config->'searcher'->>'name'",
 		"startTime":       "e.start_time",
 		"endTime":         "e.end_time",
 		"duration":        "extract(seconds FROM coalesce(e.end_time, now()) - e.start_time)",

@@ -2784,6 +2784,12 @@ export interface V1Experiment {
      * @memberof V1Experiment
      */
     unmanaged?: boolean;
+    /**
+     * Time in seconds which experiment ran or has been running.
+     * @type {number}
+     * @memberof V1Experiment
+     */
+    duration?: number;
 }
 /**
  * Message for results of individual experiments in a multi-experiment action.

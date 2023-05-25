@@ -349,6 +349,7 @@ func TestGetExperiments(t *testing.T) {
 		State:          experimentv1.State_STATE_PAUSED,
 		StartTime:      timestamppb.New(startTime),
 		EndTime:        timestamppb.New(endTime),
+		Duration:       ptrs.Ptr(int32(60)),
 		Archived:       false,
 		NumTrials:      3,
 		DisplayName:    "admin",
@@ -390,6 +391,7 @@ func TestGetExperiments(t *testing.T) {
 	require.NoError(t, api.m.db.AddExperiment(exp1, activeConfig1))
 	exp1Expected := &experimentv1.Experiment{
 		StartTime:      timestamppb.New(secondStartTime),
+		Duration:       ptrs.Ptr(int32(0)),
 		Id:             int32(exp1.ID),
 		Description:    *activeConfig1.RawDescription,
 		Labels:         []string{"l0"},
