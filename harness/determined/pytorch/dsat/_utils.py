@@ -103,13 +103,23 @@ def get_base_parser() -> argparse.ArgumentParser:
 
 
 def get_full_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="Determined AI DeepSpeed Autotune")
+    parser = argparse.ArgumentParser(
+        prog="Determined AI DeepSpeed Autotune",
+    )
     subparsers = parser.add_subparsers(required=True, dest="search_method")
     base_parser = get_base_parser()
 
-    subparsers.add_parser("_test", parents=[base_parser])
+    subparsers.add_parser(
+        "_test",
+        parents=[base_parser],
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
 
-    random_subparser = subparsers.add_parser("random", parents=[base_parser])
+    random_subparser = subparsers.add_parser(
+        "random",
+        parents=[base_parser],
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
     random_subparser.add_argument(
         "--trials-per-random-config",
         type=int,
@@ -122,7 +132,11 @@ def get_full_parser() -> argparse.ArgumentParser:
         help="Terminates the search if a new best config not found in last `early-stopping` trials",
     )
 
-    binary_subparser = subparsers.add_parser("binary", parents=[base_parser])
+    binary_subparser = subparsers.add_parser(
+        "binary",
+        parents=[base_parser],
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
     search_range_factor_help = (
         "Expands the initial search range by a factor of `search-range-factor`"
     )
@@ -133,7 +147,11 @@ def get_full_parser() -> argparse.ArgumentParser:
         help=search_range_factor_help,
     )
 
-    asha_subparser = subparsers.add_parser("asha", parents=[base_parser])
+    asha_subparser = subparsers.add_parser(
+        "asha",
+        parents=[base_parser],
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
     asha_subparser.add_argument(
         "--max-rungs",
         default=_defaults.AUTOTUNING_ARG_DEFAULTS["max-rungs"],
