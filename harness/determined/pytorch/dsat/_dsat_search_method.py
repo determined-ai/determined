@@ -1183,7 +1183,8 @@ class ASHADSATSearchMethod(BaseDSATSearchMethod):
     @property
     def rungs(self) -> Dict[int, List[DSATTrial]]:
         """
-        A dictionary of lists of lineage roots which have completed the specified rung.
+        A dictionary of lists of the latest trials in each lineage which have completed the
+        specified rung.
         """
         rungs = defaultdict(list)
         for root in self.get_all_latest_trials_in_lineages():
@@ -1196,7 +1197,7 @@ class ASHADSATSearchMethod(BaseDSATSearchMethod):
 
     def get_all_latest_trials_in_lineages(self) -> List[DSATTrial]:
         """
-        Returns a list of all lineage roots.
+        Returns a list of the latest trials in each lineage.
         """
         lineage_root_set = [
             trial
