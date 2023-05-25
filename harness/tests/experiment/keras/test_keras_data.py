@@ -189,10 +189,11 @@ def test_enqueuer(shuffle: bool, skip: int, rank_size: Tuple[int, int], workers:
 def test_enqueuer_multiprocessing(workers: int) -> None:
     """Same enqueuer test as above, but with multiprocessing enabled.
 
-    A single, arbitrary set of parameters from the above test is chosen in order to exercise the
-    keras.enqueuer._MultiprocessingEnqueuer. In this test, multiprocessing is slow on macOS, so
-    we're minimizing the number of times we execute it assuming there's no interaction between the
-    choice of threading/multiprocessing and the examples loaded by the enqueuer.
+    An arbitrary set of (rank_size, skip, shuffle) parameters from the above test is chosen in
+    order to exercise the keras.enqueuer._MultiprocessingEnqueuer (with two choices for `workers`
+    for extra safety). In this test, multiprocessing is slow on macOS, so we're minimizing the
+    number of times we execute it assuming there's no interaction between the choice of
+    threading/multiprocessing and the examples loaded by the enqueuer.
     """
     epoch_len = 100
     rank, size = (1, 3)
