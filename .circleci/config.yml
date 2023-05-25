@@ -1136,8 +1136,6 @@ jobs:
           root: .
           paths:
             - examples/build
-            - cli/dist
-            - common/dist
             - harness/dist
             - model_hub/dist
             - docs/build
@@ -1764,10 +1762,7 @@ jobs:
           extras-requires: "torch==1.9.0"
           extra-requirements-file: "requirements.txt"
           executor: <<pipeline.parameters.docker-image>>
-      - run: make -C cli check
-      - run: make -C common check
       - run: make -C harness check
-      - run: make -C deploy check
       - run: make -C model_hub check
       - run: make -C e2e_tests check
       - run: make -C examples check
@@ -3389,7 +3384,7 @@ workflows:
           name: publish-python-package-rc
           matrix:
             parameters:
-              path: ["harness", "common", "cli", "deploy", "model_hub"]
+              path: ["harness", "model_hub"]
           context: determined-production
           filters: *rc-filters
           requires:
@@ -3406,7 +3401,7 @@ workflows:
           name: publish-python-package-release
           matrix:
             parameters:
-              path: ["harness", "common", "cli", "deploy", "model_hub"]
+              path: ["harness", "model_hub"]
           context: determined-production
           filters: *release-filters
           requires:
