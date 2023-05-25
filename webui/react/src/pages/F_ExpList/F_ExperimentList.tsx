@@ -77,7 +77,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const [isOpenFilter, setIsOpenFilter] = useState<boolean>(false);
   const filtersString = useObservable(formStore.asJsonString);
   const rootFilterChildren = useObservable(formStore.formset).filterGroup.children;
-  const [comparisonViewOpen, setComparisonViewOpen] = useState(false);
 
   const onIsOpenFilterChange = useCallback((newOpen: boolean) => {
     setIsOpenFilter(newOpen);
@@ -335,8 +334,23 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   }, []);
 
   const handleToggleComparisonView = useCallback(() => {
-    setComparisonViewOpen((prev) => !prev);
-  }, []);
+    updateSettings({ compare: !settings.compare });
+  }, [settings.compare, updateSettings]);
+
+  const handleCompareWidthChange = useCallback(
+    (width: number) => {
+      updateSettings({ compareWidth: width });
+    },
+    [updateSettings],
+  );
+
+  const selectedExperiments: ExperimentWithTrial[] = useMemo(() => {
+    if (selectedExperimentIds.length === 0) return [];
+    const selectedIdSet = new Set(selectedExperimentIds);
+    return Loadable.filterNotLoaded(experiments, (experiment) =>
+      selectedIdSet.has(experiment.experiment.id),
+    );
+  }, [experiments, selectedExperimentIds]);
 
   return (
     <>
@@ -372,7 +386,11 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         ) : error ? (
           <Error />
         ) : (
-          <ComparisonView open={comparisonViewOpen}>
+          <ComparisonView
+          initialWidth={settings.compareWidth}
+          open={settings.compare}
+          selectedExperiments={selectedExperiments}
+          onWidthChange={handleCompareWidthChange}>
             <GlideTable
               clearSelectionTrigger={clearSelectionTrigger}
               colorMap={colorMap}
