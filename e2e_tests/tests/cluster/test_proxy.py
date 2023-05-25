@@ -97,12 +97,13 @@ def test_experiment_proxy_ray_tunnel() -> None:
             ],
             text=True,
         )
+        print("TUNNEL PID: ", proc.pid)
 
         try:
             _probe_tunnel(proc)
             _ray_job_submit(exp_path)
         finally:
-            proc.kill()
+            proc.terminate()
             proc.wait(10)
     finally:
         sess = api_utils.determined_test_session()
@@ -149,6 +150,8 @@ def _kill_all_ray_experiments() -> None:
 @pytest.mark.e2e_cpu
 @pytest.mark.timeout(600)
 def test_experiment_proxy_ray_publish() -> None:
+    subprocess.run(["netstat", "-lpn"])
+    subprocess.run(["ps", "aux"])
     exp_path = conf.EXAMPLES_PATH / "features" / "ports"
     proc = subprocess.Popen(
         [
@@ -186,5 +189,5 @@ def test_experiment_proxy_ray_publish() -> None:
             sess = api_utils.determined_test_session()
             bindings.post_KillExperiment(sess, id=exp_id)
     finally:
-        proc.kill()
+        proc.terminate()
         proc.wait(10)
