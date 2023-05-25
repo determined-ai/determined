@@ -1262,7 +1262,7 @@ class ASHADSATSearchMethod(BaseDSATSearchMethod):
             return []
         best_trials: List[DSATTrial] = []
         for lin in completed_lineages_in_rung:
-            best_trial = self.get_best_trial_in_lineage(lin)
+            best_trial = self.get_best_trial_in_lineage(lin, max_rung_idx=rung_idx)
             if best_trial is not None:
                 best_trials.append(best_trial)
         reverse = not self.trial_tracker.smaller_is_better
@@ -1272,8 +1272,18 @@ class ASHADSATSearchMethod(BaseDSATSearchMethod):
         )
         return best_trials[:k]
 
-    def get_best_trial_in_lineage(self, trial: DSATTrial) -> Optional[DSATTrial]:
+    def get_best_trial_in_lineage(
+        self, trial: DSATTrial, max_rung_idx: Optional[int] = None
+    ) -> Optional[DSATTrial]:
         trials_with_metrics = [t for t in trial.lineage_set if t.searcher_metric_val is not None]
+        if max_rung_idx is not None:
+            filtered_trials_with_metrics: List[DSATTrial] = []
+            for t in trials_with_metrics:
+                assert t.search_data
+                assert isinstance(t.search_data, ASHADSATSearchData)
+                if t.search_data.curr_rung <= max_rung_idx:
+                    filtered_trials_with_metrics.append(t)
+            trials_with_metrics = filtered_trials_with_metrics
         if not trials_with_metrics:
             return None
         min_or_max = min if self.trial_tracker.smaller_is_better else max
