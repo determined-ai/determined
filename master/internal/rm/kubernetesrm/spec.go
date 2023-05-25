@@ -501,7 +501,7 @@ func (p *pod) createPodSpec(scheduler string) error {
 		Env:             envVars,
 		Image:           env.Image().For(deviceType),
 		ImagePullPolicy: configureImagePullPolicy(env),
-		SecurityContext: configureSecurityContext(spec.AgentUserGroup),
+		SecurityContext: configureSecurityContextWithPrivilege(spec.AgentUserGroup),
 		Resources:       p.configureResourcesRequirements(),
 		VolumeMounts:    volumeMounts,
 		WorkingDir:      spec.WorkDir,
@@ -555,6 +555,15 @@ func configureSecurityContext(agentUserGroup *model.AgentUserGroup) *k8sV1.Secur
 	}
 
 	return nil
+}
+
+func configureSecurityContextWithPrivilege(
+	agentUserGroup *model.AgentUserGroup,
+) *k8sV1.SecurityContext {
+	securityContext := configureSecurityContext(agentUserGroup)
+	privileged := true
+	securityContext.Privileged = &privileged
+	return securityContext
 }
 
 func configureImagePullPolicy(environment expconf.EnvironmentConfig) k8sV1.PullPolicy {
