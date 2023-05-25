@@ -500,7 +500,7 @@ class EstimatorTrialController(det.TrialController):
     @classmethod
     def from_trial(
         cls: Type["EstimatorTrialController"],
-        trial_inst: det.Trial,
+        trial_inst: det.LegacyTrial,
         context: det.TrialContext,
         env: det.EnvContext,
         *args: Any,
@@ -814,7 +814,7 @@ class EstimatorTrialController(det.TrialController):
         return metrics
 
 
-class EstimatorTrial(det.Trial):
+class EstimatorTrial(det.LegacyTrial):
     """
     By default, experiments run with TensorFlow 1.x. To configure your trial to
     use TensorFlow 2.x, set a TF 2.x image in the experiment configuration
