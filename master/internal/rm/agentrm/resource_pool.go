@@ -873,7 +873,7 @@ func (rp *resourcePool) pruneTaskList(ctx *actor.Context) {
 			ctx.Log().Debugf("task %s can be scheduled with number of available slots", task.AllocationID)
 			continue
 		}
-		ctx.Log().WithError(rp.provisionerError).Warnf("removing task %s from task list", task.AllocationID)
+		ctx.Log().WithError(rp.provisionerError).Warnf("removing task %s from list", task.AllocationID)
 		refsToRemove = append(refsToRemove, ref)
 	}
 	for _, ref := range refsToRemove {
