@@ -881,8 +881,11 @@ WHERE id = :id`
 	return db.namedExecOne(query, experiment)
 }
 
-// DeleteExperiments deletes one or more experiments.
+// DeleteExperiments deletes zero or more experiments.
 func (db *PgDB) DeleteExperiments(ctx context.Context, ids []int) error {
+	if len(ids) == 0 {
+		return nil
+	}
 	tx, err := Bun().BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -1048,6 +1051,9 @@ WHERE trials.experiment_id = $1
 func (db *PgDB) ExperimentsTrialAndTaskIDs(ctx context.Context, idb bun.IDB, expIDs []int) ([]int,
 	[]model.TaskID, error,
 ) {
+	if len(expIDs) == 0 {
+		return nil, nil, nil
+	}
 	var trialIDRows []struct {
 		ID     int          `db:"id"`
 		TaskID model.TaskID `db:"task_id"`
