@@ -89,7 +89,7 @@ const isConfig = (key: unknown): key is Config =>
 /**
  * A component responsible to enable the user to view the code for a experiment.
  *
- * It renders a file tree and a selected file in the MonacoEditor
+ * It renders a file tree and a selected file in the CodeMirror editor.
  *
  * Props:
  *
