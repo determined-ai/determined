@@ -2137,4 +2137,59 @@ service Determined {
       tags: [ "Experiments", "Internal" ]
     };
   }
+
+  // Bind resource pool to workspace
+  rpc BindRPToWorkspace(BindRPToWorkspaceRequest)
+      returns (BindRPToWorkspaceResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/resource-pools/workspace-bind"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+
+  // Unbind resource pool to workspace
+  rpc UnbindRPToWorkspace(UnbindRPToWorkspaceRequest)
+      returns (UnbindRPToWorkspaceResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/resource-pools/workspace-unbind"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+
+  // List all resource pools bound to a specific workspace
+  rpc ListRPsBoundToWorkspace(ListRPsBoundToWorkspaceRequest)
+      returns (ListRPsBoundToWorkspaceResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/workspaces/{workspace_id}/resource-pools"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: [ "Workspaces", "Internal" ]
+    };
+  }
+
+  // List all workspaces bound to a specific resource pool
+  rpc ListWorkspacesBoundToRP(ListWorkspacesBoundToRPRequest)
+      returns (ListWorkspacesBoundToRPResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/resource-pools/{resource_pool}/workspaces"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+
+  // List all workspaces to resource pool bindings
+  rpc ListWorkspaceRPBindings(ListWorkspaceRPBindingsRequest)
+      returns (ListWorkspaceRPBindingsResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/resource-pools/all-bindings"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
 }
