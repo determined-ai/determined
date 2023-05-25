@@ -815,19 +815,8 @@ class RandomDSATSearchMethod(BaseDSATSearchMethod):
         be run.
         """
 
-        def should_discard(trial: DSATTrial) -> bool:
-            if trial is None:
-                return False
-            larger_mbs_successfully_run = any(
-                other_trial.mbs > trial.mbs
-                for _, other_trial in self.trial_tracker
-                if other_trial.searcher_metric_val is not None and other_trial.stage == trial.stage
-            )
-            should_discard = larger_mbs_successfully_run or self.should_stop_lineage(trial)
-            return should_discard
-
         next_trial = self.trial_tracker.queue.popleft()
-        while should_discard(next_trial):
+        while self.should_stop_lineage(next_trial):
             self.trial_tracker.queue_and_register_trial(self.get_random_trial())
             next_trial = self.trial_tracker.queue.popleft()
 

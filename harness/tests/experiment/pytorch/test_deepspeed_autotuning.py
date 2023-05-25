@@ -942,44 +942,6 @@ class TestRandomDSATSearchMethodChooseNextTrial:
             next_trial = search_method.choose_next_trial_from_queue()
             assert next_trial.stage != 3
 
-    @pytest.mark.timeout(5)
-    def test_queue_pruning_small_mbs_trials(
-        self,
-        default_random_state_and_search_method: Tuple[
-            searcher.SearcherState, RandomDSATSearchMethod
-        ],
-    ) -> None:
-        """
-        Test the pruning of trials with smaller `train_micro_batch_size_per_gpu` than
-        already-successfully-run trials of the same stage.
-        """
-        _, search_method = default_random_state_and_search_method
-        # Run successful train_micro_batch_size_per_gpu = 2 trials.
-        for stage in reversed(range(4)):
-            hparams, search_data = search_method.get_random_hparams_and_search_data(stage)
-            hparams[_defaults.OVERWRITE_KEY]["train_micro_batch_size_per_gpu"] = 2
-            successful_trial = search_method.trial_tracker.create_trial(hparams, search_data)
-            search_method.trial_tracker.queue_and_register_trial(successful_trial)
-            search_method.trial_tracker.queue.popleft()
-            assert successful_trial.searcher_metric_name
-            search_method.trial_tracker.update_trial_metric(
-                successful_trial, {successful_trial.searcher_metric_name: 0.0}
-            )
-
-            # Queue up a number of smaller batch, same-stage trials and verify that they get pruned
-            smaller_batch_trials = []
-            for _ in range(10):
-                hparams, search_data = search_method.get_random_hparams_and_search_data(stage)
-                hparams[_defaults.OVERWRITE_KEY]["train_micro_batch_size_per_gpu"] = 1
-                trial = search_method.trial_tracker.create_trial(hparams, search_data)
-                smaller_batch_trials.append(trial)
-                search_method.trial_tracker.queue_and_register_trial(trial)
-
-            # All of the above mbs=1 trials should get pruned and replaced by larger trials.
-            while search_method.trial_tracker.queue:
-                next_trial = search_method.choose_next_trial_from_queue()
-                assert next_trial.mbs >= 2
-
 
 @pytest.fixture
 def long_binary_state_and_search_method() -> (
