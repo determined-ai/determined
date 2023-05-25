@@ -1,4 +1,5 @@
 import { Rectangle } from '@glideapps/glide-data-grid';
+import { Pagination } from 'antd';
 import { isLeft } from 'fp-ts/lib/Either';
 import { observable, useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -23,14 +24,18 @@ import {
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 
-import { F_ExperimentListSettings, settingsConfigForProject } from './F_ExperimentList.settings';
+import {
+  ExpListView,
+  F_ExperimentListGlobalSettings,
+  F_ExperimentListSettings,
+  settingsConfigForProject,
+  settingsConfigGlobal,
+} from './F_ExperimentList.settings';
 import { Error, Loading, NoExperiments } from './glide-table/exceptions';
 import GlideTable, { SCROLL_SET_COUNT_NEEDED } from './glide-table/GlideTable';
 import { EMPTY_SORT, Sort, validSort, ValidSort } from './glide-table/MultiSortMenu';
 import TableActionBar, { BatchAction } from './glide-table/TableActionBar';
 import { useGlasbey } from './useGlasbey';
-
-export type ExpListView = 'scroll' | 'paged'
 
 interface Props {
   project: Project;
@@ -48,9 +53,12 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const settingsConfig = useMemo(() => settingsConfigForProject(project.id), [project.id]);
 
   const { settings, updateSettings } = useSettings<F_ExperimentListSettings>(settingsConfig);
-
+  const { settings: globalSettings, updateSettings: updateGlobalSettings } =
+    useSettings<F_ExperimentListGlobalSettings>(settingsConfigGlobal);
   const [page, setPage] = useState(() =>
-    isFinite(Number(searchParams.get('page'))) ? Number(searchParams.get('page')) : 0,
+    isFinite(Number(searchParams.get('page')))
+      ? Math.max(Number(searchParams.get('page')) - 1, 0)
+      : 1,
   );
   const [sorts, setSorts] = useState<Sort[]>(() => {
     const sortString = searchParams.get('sort') || '';
@@ -68,7 +76,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   });
   const [sortString, setSortString] = useState<string>('');
   const [experiments, setExperiments] = useState<Loadable<ExperimentWithTrial>[]>(
-    Array(page * PAGE_SIZE).fill(NotLoaded),
+    Array((page + 1) * PAGE_SIZE).fill(NotLoaded),
   );
   const [total, setTotal] = useState<Loadable<number>>(NotLoaded);
   const [projectColumns, setProjectColumns] = useState<Loadable<ProjectColumn[]>>(NotLoaded);
@@ -121,7 +129,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const [selectAll, setSelectAll] = useState(false);
   const [clearSelectionTrigger, setClearSelectionTrigger] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
-  const [expListView, setExpListView] = useState<ExpListView>('scroll');
   const [error] = useState(false);
   const [canceler] = useState(new AbortController());
 
@@ -134,8 +141,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const handleScroll = useCallback(
     ({ y, height }: Rectangle) => {
       if (scrollPositionSetCount.get() < SCROLL_SET_COUNT_NEEDED) return;
-      const page = Math.floor((y + height) / PAGE_SIZE);
-      setPage(page);
+      setPage(Math.floor((y + height) / PAGE_SIZE) + 1);
     },
     [scrollPositionSetCount],
   );
@@ -157,7 +163,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
 
   const resetPagination = useCallback(() => {
     setIsLoading(true);
-    setPage(0);
+    setPage(1);
     setExperiments([]);
   }, []);
 
@@ -175,20 +181,24 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
 
   const fetchExperiments = useCallback(async (): Promise<void> => {
     try {
-      const tableOffset = Math.max((page - 0.5) * PAGE_SIZE, 0);
+      const tableOffset = Math.max((page - 1.5) * PAGE_SIZE, 0);
+      const pagedView = globalSettings.expListView === 'paged';
 
       const response = await searchExperiments(
         {
           ...experimentFilters,
           filter: filtersString,
-          limit: 2 * PAGE_SIZE,
-          offset: tableOffset,
+          limit: pagedView ? settings.pageLimit : 2 * PAGE_SIZE,
+          offset: pagedView ? Math.max(page - 1, 0) * settings.pageLimit : tableOffset,
           sort: sortString || undefined,
         },
         { signal: canceler.signal },
       );
 
       setExperiments((prevExperiments) => {
+        if (pagedView) {
+          return response.experiments.map((e) => Loaded(e));
+        }
         const experimentBeforeCurrentPage = [
           ...prevExperiments.slice(0, tableOffset),
           ...Array(Math.max(0, tableOffset - prevExperiments.length)).fill(NotLoaded),
@@ -211,7 +221,15 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [page, experimentFilters, canceler.signal, filtersString, sortString]);
+  }, [
+    page,
+    experimentFilters,
+    canceler.signal,
+    filtersString,
+    sortString,
+    globalSettings,
+    settings.pageLimit,
+  ]);
 
   const { stopPolling } = usePolling(fetchExperiments, { rerunOnNewFn: true });
 
@@ -332,11 +350,30 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     };
   }, []);
 
+  const updateExpListView = useCallback(
+    (view: ExpListView) => {
+      if (view === 'paged') {
+        setPage(Math.max(Math.round(((page - 1) * PAGE_SIZE) / settings.pageLimit), 1));
+      }
+      updateGlobalSettings({ expListView: view });
+    },
+    [updateGlobalSettings, settings.pageLimit, page],
+  );
+
+  const onPageChange = useCallback(
+    (p: number, ps: number) => {
+      updateSettings({ pageLimit: ps });
+      setPage(p);
+    },
+    [updateSettings],
+  );
+
   return (
     <>
       <TableActionBar
         excludedExperimentIds={excludedExperimentIds}
         experiments={experiments}
+        expListView={globalSettings.expListView}
         filters={experimentFilters}
         formStore={formStore}
         handleUpdateExperimentList={handleUpdateExperimentList}
@@ -346,14 +383,13 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         projectColumns={projectColumns}
         selectAll={selectAll}
         selectedExperimentIds={selectedExperimentIds}
+        setExpListView={updateExpListView}
         setIsOpenFilter={onIsOpenFilterChange}
         setVisibleColumns={setVisibleColumns}
         sorts={sorts}
         total={total}
         onAction={handleOnAction}
         onSortChange={onSortChange}
-        expListView={expListView}
-        setExpListView={setExpListView}
       />
       {isLoading ? (
         <Loading width={width} />
@@ -374,9 +410,9 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
             excludedExperimentIds={excludedExperimentIds}
             fetchExperiments={fetchExperiments}
             formStore={formStore}
-            handleScroll={handleScroll}
+            handleScroll={globalSettings.expListView === 'scroll' ? handleScroll : undefined}
             handleUpdateExperimentList={handleUpdateExperimentList}
-            height={wholePageHeight - 150}
+            height={wholePageHeight - (globalSettings.expListView === 'scroll' ? 160 : 200)}
             page={page}
             project={project}
             projectColumns={projectColumns}
@@ -392,6 +428,16 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
             onIsOpenFilterChange={onIsOpenFilterChange}
             onSortChange={onSortChange}
           />
+          {globalSettings.expListView === 'paged' && (
+            <Pagination
+              current={page}
+              pageSize={settings.pageLimit}
+              pageSizeOptions={[20, 40, 80]}
+              style={{ float: 'right', marginTop: 8 }}
+              total={Loadable.isLoaded(total) ? total.data : undefined}
+              onChange={onPageChange}
+            />
+          )}
         </>
       )}
     </>

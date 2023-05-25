@@ -1,4 +1,4 @@
-import { Radio, Space } from 'antd';
+import { Space } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import BatchActionConfirmModalComponent from 'components/BatchActionConfirmModal';
@@ -9,6 +9,7 @@ import Button from 'components/kit/Button';
 import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 import Icon, { IconName } from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
+import RadioGroup from 'components/RadioGroup';
 import usePermissions from 'hooks/usePermissions';
 import {
   activateExperiments,
@@ -41,11 +42,11 @@ import {
 import { Loadable } from 'utils/loadable';
 import { openCommandResponse } from 'utils/wait';
 
+import { ExpListView } from '../F_ExperimentList.settings';
+
 import ColumnPickerMenu from './ColumnPickerMenu';
 import MultiSortMenu, { Sort } from './MultiSortMenu';
 import css from './TableActionBar.module.scss';
-import RadioGroup from 'components/RadioGroup';
-import {ExpListView} from '../F_ExperimentList'
 
 const batchActions = [
   ExperimentAction.OpenTensorBoard,
@@ -73,7 +74,6 @@ const actionIcons: Record<BatchAction, IconName> = {
   [ExperimentAction.Delete]: 'error',
 } as const;
 
-
 interface Props {
   experiments: Loadable<ExperimentWithTrial>[];
   filters: V1BulkExperimentFilters;
@@ -92,8 +92,8 @@ interface Props {
   formStore: FilterFormStore;
   setIsOpenFilter: (value: boolean) => void;
   isOpenFilter: boolean;
-  expListView: string;
-  setExpListView: React.Dispatch<React.SetStateAction<ExpListView>>;
+  expListView: ExpListView;
+  setExpListView: (view: ExpListView) => void;
 }
 
 const TableActionBar: React.FC<Props> = ({
@@ -115,7 +115,7 @@ const TableActionBar: React.FC<Props> = ({
   setIsOpenFilter,
   isOpenFilter,
   expListView,
-  setExpListView
+  setExpListView,
 }) => {
   const permissions = usePermissions();
   const [batchAction, setBatchAction] = useState<BatchAction>();
@@ -341,15 +341,15 @@ const TableActionBar: React.FC<Props> = ({
           </Dropdown>
         )}
         <RadioGroup
-          iconOnly
           className={css.pageToggle}
+          iconOnly
           options={[
             { icon: 'grid', id: 'scroll', label: 'Scroll View' },
             { icon: 'list', id: 'paged', label: 'Paged View' },
           ]}
           value={expListView}
           onChange={(id) => setExpListView(id as ExpListView)}
-      />
+        />
       </Space>
       {batchAction && (
         <BatchActionConfirmModal.Component
