@@ -227,7 +227,7 @@ def assert_equivalent_metrics(metrics_A: Dict[str, Any], metrics_B: Dict[str, An
 
 
 def make_trial_controller_from_trial_implementation(
-    trial_class: Type[det.Trial],
+    trial_class: Type[det.LegacyTrial],
     hparams: Dict,
     workloads: Optional[workload.Stream] = None,
     scheduling_unit: int = 1,
@@ -427,7 +427,7 @@ def list_all_files(directory: str) -> List[str]:
 
 
 def ensure_requires_global_batch_size(
-    trial_class: Type[det.Trial],
+    trial_class: Type[det.LegacyTrial],
     hparams: Dict[str, Any],
 ) -> None:
     bad_hparams = dict(hparams)

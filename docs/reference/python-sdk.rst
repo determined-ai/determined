@@ -33,9 +33,9 @@ The next step is to call create_experiment():
    exp = client.create_experiment(config="my_config.yaml", model_dir=".")
    print(f"started experiment {exp.id}")
 
-The returned object will be an ``ExperimentReference`` object, which has methods for controlling the
-lifetime of the experiment running on the cluster. In this example, we will just wait for the
-experiment to complete.
+The returned object will be an ``Experiment`` object, which has methods for controlling the lifetime
+of the experiment running on the cluster. In this example, we will just wait for the experiment to
+complete.
 
 .. code:: python
 
@@ -76,10 +76,10 @@ Now that the experiment has completed, you can grab the top-performing checkpoin
    :members:
    :member-order: bysource
 
-``ExperimentReference``
-=======================
+``Experiment``
+==============
 
-.. autoclass:: determined.experimental.client.ExperimentReference
+.. autoclass:: determined.experimental.client.Experiment
    :members:
    :member-order: bysource
 
@@ -118,10 +118,10 @@ Now that the experiment has completed, you can grab the top-performing checkpoin
    :members:
    :member-order: bysource
 
-``TrialReference``
-==================
+``Trial``
+=========
 
-.. autoclass:: determined.experimental.client.TrialReference
+.. autoclass:: determined.experimental.client.Trial
    :members:
    :member-order: bysource
 
