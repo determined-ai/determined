@@ -6,23 +6,21 @@
     /* Use box-sizing so that element's outerwidth will match width property */
     box-sizing: border-box;
     flex: 0 0 auto;
-    width: 100%;
   }
   .rightBox {
     /* Use box-sizing so that element's outerwidth will match width property */
     box-sizing: border-box;
-    flex: 0 0 auto;
-    width: 0;
+    flex: 0 1 auto;
+    width: 200px;
 
     &.open {
-      width: 100%;
+      flex: 1 1 auto;
     }
   }
   .handle {
     cursor: col-resize;
     display: none;
     flex: 0 0 auto;
-    padding: 0;
     width: 17px;
 
     &.open {
@@ -30,7 +28,7 @@
     }
   }
   .handle::before {
-    background: var(--theme-stage-on);
+    background: var(--theme-stage-border);
     content: '';
     display: block;
     height: 100%;

@@ -36,14 +36,22 @@ const SplitPane: React.FC<Props> = ({ children, initialWidth, onChange, open = t
       // Get offset
       const containerOffsetLeft = container.current.getBoundingClientRect().left;
 
+      const containerTotalWidth = container.current.offsetWidth;
+
       // Get x-coordinate of pointer relative to container
       const pointerRelativeXpos = e.clientX - containerOffsetLeft;
 
       // Arbitrary minimum width set on box A, otherwise its inner content will collapse to width of 0
       const boxAminWidth = 200;
 
+      // Arbitrary minimum width set on box B, otherwise its inner content will collapse to width of 0
+      const boxBminWidth = 200;
+
       // * 8px is the left/right spacing between .handle and its inner pseudo-element
-      const newWidth = Math.max(boxAminWidth, pointerRelativeXpos - 8);
+      const newWidth = Math.min(
+        Math.max(boxAminWidth, pointerRelativeXpos - 8),
+        containerTotalWidth - boxBminWidth,
+      );
 
       // Resize box A
       setWidth(newWidth);
