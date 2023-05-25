@@ -52,20 +52,11 @@ class Experiment:
 
         # These properties may be mutable and will be set by _hydrate()
         self.config: Optional[Dict[str, Any]] = None
-        self.state = None
+        self.state: Optional[bindings.experimentv1State] = None
 
     @property
     def id(self) -> int:
         return self._id
-
-    def _get(self, session: Optional[api.Session] = None) -> bindings.v1Experiment:
-        """
-        _get fetches the main GET experiment endpoint and parses the response.
-        """
-        if session is None:
-            session = self._session
-        resp = bindings.get_GetExperiment(session, experimentId=self.id)
-        return resp.experiment
 
     def _hydrate(self, exp: bindings.v1Experiment) -> None:
         self.config = exp.config
@@ -75,7 +66,7 @@ class Experiment:
         """
         Explicit refresh of cached properties.
         """
-        resp = self._get()
+        resp = bindings.get_GetExperiment(self._session, experimentId=self.id).experiment
         self._hydrate(resp)
 
     def activate(self) -> None:
@@ -155,9 +146,8 @@ class Experiment:
 
         Arguments:
             interval (int, optional): An interval time in seconds before checking
-                next experiement state.
+                next experiment state.
         """
-
         elapsed_time = 0.0
         while True:
             self.reload()

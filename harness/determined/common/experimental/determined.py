@@ -3,6 +3,8 @@ import pathlib
 import warnings
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Union
 
+import urllib3
+
 import determined as det
 from determined.common import api, context, util, yaml
 from determined.common.api import authentication, bindings, certs
