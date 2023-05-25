@@ -1299,7 +1299,7 @@ class TestASHADSATSearchMethod:
         """
         Simulate running a full experiment with all successful trials, each worse than the last,
         and verify the expected end state, which is that trials in the higher rungs should have
-        better metrics than those which were never promoted out of the rungs.
+        better metrics than those which were never promoted out of lower rungs.
         """
         searcher_state, search_method = long_asha_state_and_search_method
         assert isinstance(search_method, ASHADSATSearchMethod)
