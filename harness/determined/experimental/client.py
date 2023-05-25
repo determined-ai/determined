@@ -23,7 +23,7 @@ The next step is to call :func:`~determined.experimental.client.create_experimen
    exp = client.create_experiment(config="my_config.yaml", model_dir=".")
    print(f"started experiment {exp.id}")
 
-The returned object will be an :class:`~determined.experimental.client.ExperimentReference`
+The returned object will be an :class:`~determined.experimental.client.Experiment`
 which has methods for controlling the lifetime of the experiment running on the cluster.
 In this example, we will just wait for the experiment to complete.
 
@@ -56,18 +56,15 @@ from determined.common.experimental.checkpoint import (  # noqa: F401
     DownloadMode,
 )
 from determined.common.experimental.determined import Determined
-from determined.common.experimental.experiment import (  # noqa: F401
-    ExperimentReference,
-    ExperimentState,
-)
+from determined.common.experimental.experiment import Experiment, ExperimentState  # noqa: F401
 from determined.common.experimental.model import Model, ModelOrderBy, ModelSortBy
 from determined.common.experimental.oauth2_scim_client import Oauth2ScimClient
 from determined.common.experimental.trial import (  # noqa: F401
     CheckpointOrderBy,
     CheckpointSortBy,
     TrainingMetrics,
+    Trial,
     TrialOrderBy,
-    TrialReference,
     TrialSortBy,
     ValidationMetrics,
 )
@@ -151,10 +148,10 @@ def create_experiment(
     config: Union[str, pathlib.Path, Dict],
     model_dir: str,
     includes: Optional[Iterable[Union[str, pathlib.Path]]] = None,
-) -> ExperimentReference:
+) -> Experiment:
     """
     Creates an experiment with config parameters and model directory. The function
-    returns an :class:`~determined.experimental.client.ExperimentReference` of the experiment.
+    returns an :class:`~determined.experimental.client.Experiment` of the experiment.
 
     Arguments:
         config (str, pathlib.Path, dictionary): Experiment config filename (.yaml)
@@ -168,9 +165,9 @@ def create_experiment(
 
 
 @_require_singleton
-def get_experiment(experiment_id: int) -> ExperimentReference:
+def get_experiment(experiment_id: int) -> Experiment:
     """
-    Get the :class:`~determined.experimental.client.ExperimentReference` representing the
+    Get the :class:`~determined.experimental.client.Experiment` representing the
     experiment with the provided experiment ID.
 
     Arguments:
@@ -269,9 +266,9 @@ def list_users() -> Sequence[User]:
 
 
 @_require_singleton
-def get_trial(trial_id: int) -> TrialReference:
+def get_trial(trial_id: int) -> Trial:
     """
-    Get the :class:`~determined.experimental.client.TrialReference` representing the
+    Get the :class:`~determined.experimental.client.Trial` representing the
     trial with the provided trial ID.
 
     Arguments:
