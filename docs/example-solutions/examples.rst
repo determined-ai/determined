@@ -181,11 +181,11 @@ For an introduction to using the training API, please visit the Training APIs se
 
    -  -  HuggingFace (DeepSpeed/PyTorch)
       -  Beans (HuggingFace)
-      -  :download:`image_classification.tgz </examples/image_classification.tgz>`
+      -  :download:`hf_image_classification.tgz </examples/hf_image_classification.tgz>`
 
    -  -  HuggingFace (DeepSpeed/PyTorch)
       -  WikiText (HuggingFace)
-      -  :download:`language_modeling.tgz </examples/language_modeling.tgz>`
+      -  :download:`hf_language_modeling.tgz </examples/hf_language_modeling.tgz>`
 
 ************************
  HP Search Benchmarking

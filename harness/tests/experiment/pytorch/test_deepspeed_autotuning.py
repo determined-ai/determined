@@ -1303,7 +1303,7 @@ class TestASHADSATSearchMethod:
         """
         searcher_state, search_method = long_asha_state_and_search_method
         assert isinstance(search_method, ASHADSATSearchMethod)
-        metrics = [m for m in range(search_method.trial_tracker.max_trials - 1)]
+        metrics = list(range(search_method.trial_tracker.max_trials - 1))
         if not search_method.trial_tracker.smaller_is_better:
             metrics = metrics[::-1]
         for metric in metrics:
