@@ -1312,12 +1312,10 @@ class ASHADSATSearchMethod(BaseDSATSearchMethod):
         return next_trial
 
     def max_trials_for_rung_idx(self, rung_idx: int) -> int:
-        if rung_idx == -1:
-            return 0
-        max_resources: int = self.min_binary_search_trials * self.divisor ** (
+        max_trials: int = self.min_binary_search_trials * self.divisor ** (
             self.asha_early_stopping + rung_idx
         )
-        return max_resources
+        return max_trials
 
     def get_random_hparams_and_search_data(
         self, zero_stage: int
