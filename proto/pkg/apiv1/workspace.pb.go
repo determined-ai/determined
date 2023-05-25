@@ -1274,6 +1274,122 @@ func (*UnpinWorkspaceResponse) Descriptor() ([]byte, []int) {
 	return file_determined_api_v1_workspace_proto_rawDescGZIP(), []int{19}
 }
 
+// List the resource pools bound to a workspace.
+type ListRPsBoundToWorkspaceRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// Workspace ID.
+	WorkspaceId int32 `protobuf:"varint,1,opt,name=workspace_id,json=workspaceId,proto3" json:"workspace_id,omitempty"`
+	// The offset to use with pagination
+	Offset int32 `protobuf:"varint,2,opt,name=offset,proto3" json:"offset,omitempty"`
+	// The maximum number of results to return
+	Limit int32 `protobuf:"varint,3,opt,name=limit,proto3" json:"limit,omitempty"`
+}
+
+func (x *ListRPsBoundToWorkspaceRequest) Reset() {
+	*x = ListRPsBoundToWorkspaceRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_determined_api_v1_workspace_proto_msgTypes[20]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ListRPsBoundToWorkspaceRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListRPsBoundToWorkspaceRequest) ProtoMessage() {}
+
+func (x *ListRPsBoundToWorkspaceRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_determined_api_v1_workspace_proto_msgTypes[20]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListRPsBoundToWorkspaceRequest.ProtoReflect.Descriptor instead.
+func (*ListRPsBoundToWorkspaceRequest) Descriptor() ([]byte, []int) {
+	return file_determined_api_v1_workspace_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *ListRPsBoundToWorkspaceRequest) GetWorkspaceId() int32 {
+	if x != nil {
+		return x.WorkspaceId
+	}
+	return 0
+}
+
+func (x *ListRPsBoundToWorkspaceRequest) GetOffset() int32 {
+	if x != nil {
+		return x.Offset
+	}
+	return 0
+}
+
+func (x *ListRPsBoundToWorkspaceRequest) GetLimit() int32 {
+	if x != nil {
+		return x.Limit
+	}
+	return 0
+}
+
+// Response to ListWorkspaceRPsRequest.
+type ListRPsBoundToWorkspaceResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// List of resource pools bound to the workspace.
+	ResourcePools []string `protobuf:"bytes,1,rep,name=resource_pools,json=resourcePools,proto3" json:"resource_pools,omitempty"`
+}
+
+func (x *ListRPsBoundToWorkspaceResponse) Reset() {
+	*x = ListRPsBoundToWorkspaceResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_determined_api_v1_workspace_proto_msgTypes[21]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ListRPsBoundToWorkspaceResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListRPsBoundToWorkspaceResponse) ProtoMessage() {}
+
+func (x *ListRPsBoundToWorkspaceResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_determined_api_v1_workspace_proto_msgTypes[21]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListRPsBoundToWorkspaceResponse.ProtoReflect.Descriptor instead.
+func (*ListRPsBoundToWorkspaceResponse) Descriptor() ([]byte, []int) {
+	return file_determined_api_v1_workspace_proto_rawDescGZIP(), []int{21}
+}
+
+func (x *ListRPsBoundToWorkspaceResponse) GetResourcePools() []string {
+	if x != nil {
+		return x.ResourcePools
+	}
+	return nil
+}
+
 var File_determined_api_v1_workspace_proto protoreflect.FileDescriptor
 
 var file_determined_api_v1_workspace_proto_rawDesc = []byte{
@@ -1459,10 +1575,23 @@ var file_determined_api_v1_workspace_proto_rawDesc = []byte{
 	0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x02, 0x69, 0x64, 0x3a, 0x0a, 0x92, 0x41, 0x07, 0x0a,
 	0x05, 0xd2, 0x01, 0x02, 0x69, 0x64, 0x22, 0x18, 0x0a, 0x16, 0x55, 0x6e, 0x70, 0x69, 0x6e, 0x57,
 	0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
-	0x42, 0x35, 0x5a, 0x33, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x64,
-	0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2d, 0x61, 0x69, 0x2f, 0x64, 0x65, 0x74,
-	0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x70, 0x6b,
-	0x67, 0x2f, 0x61, 0x70, 0x69, 0x76, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x22, 0x80, 0x01, 0x0a, 0x1e, 0x4c, 0x69, 0x73, 0x74, 0x52, 0x50, 0x73, 0x42, 0x6f, 0x75, 0x6e,
+	0x64, 0x54, 0x6f, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x52, 0x65, 0x71, 0x75,
+	0x65, 0x73, 0x74, 0x12, 0x21, 0x0a, 0x0c, 0x77, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65,
+	0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x0b, 0x77, 0x6f, 0x72, 0x6b, 0x73,
+	0x70, 0x61, 0x63, 0x65, 0x49, 0x64, 0x12, 0x16, 0x0a, 0x06, 0x6f, 0x66, 0x66, 0x73, 0x65, 0x74,
+	0x18, 0x02, 0x20, 0x01, 0x28, 0x05, 0x52, 0x06, 0x6f, 0x66, 0x66, 0x73, 0x65, 0x74, 0x12, 0x14,
+	0x0a, 0x05, 0x6c, 0x69, 0x6d, 0x69, 0x74, 0x18, 0x03, 0x20, 0x01, 0x28, 0x05, 0x52, 0x05, 0x6c,
+	0x69, 0x6d, 0x69, 0x74, 0x3a, 0x0d, 0x92, 0x41, 0x0a, 0x0a, 0x08, 0xd2, 0x01, 0x05, 0x6c, 0x69,
+	0x6d, 0x69, 0x74, 0x22, 0x48, 0x0a, 0x1f, 0x4c, 0x69, 0x73, 0x74, 0x52, 0x50, 0x73, 0x42, 0x6f,
+	0x75, 0x6e, 0x64, 0x54, 0x6f, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x52, 0x65,
+	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x25, 0x0a, 0x0e, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72,
+	0x63, 0x65, 0x5f, 0x70, 0x6f, 0x6f, 0x6c, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x09, 0x52, 0x0d,
+	0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x50, 0x6f, 0x6f, 0x6c, 0x73, 0x42, 0x35, 0x5a,
+	0x33, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x64, 0x65, 0x74, 0x65,
+	0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2d, 0x61, 0x69, 0x2f, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d,
+	0x69, 0x6e, 0x65, 0x64, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x70, 0x6b, 0x67, 0x2f, 0x61,
+	0x70, 0x69, 0x76, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -1478,7 +1607,7 @@ func file_determined_api_v1_workspace_proto_rawDescGZIP() []byte {
 }
 
 var file_determined_api_v1_workspace_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_determined_api_v1_workspace_proto_msgTypes = make([]protoimpl.MessageInfo, 20)
+var file_determined_api_v1_workspace_proto_msgTypes = make([]protoimpl.MessageInfo, 22)
 var file_determined_api_v1_workspace_proto_goTypes = []interface{}{
 	(GetWorkspaceProjectsRequest_SortBy)(0), // 0: determined.api.v1.GetWorkspaceProjectsRequest.SortBy
 	(GetWorkspacesRequest_SortBy)(0),        // 1: determined.api.v1.GetWorkspacesRequest.SortBy
@@ -1502,33 +1631,35 @@ var file_determined_api_v1_workspace_proto_goTypes = []interface{}{
 	(*PinWorkspaceResponse)(nil),            // 19: determined.api.v1.PinWorkspaceResponse
 	(*UnpinWorkspaceRequest)(nil),           // 20: determined.api.v1.UnpinWorkspaceRequest
 	(*UnpinWorkspaceResponse)(nil),          // 21: determined.api.v1.UnpinWorkspaceResponse
-	(*workspacev1.Workspace)(nil),           // 22: determined.workspace.v1.Workspace
-	(OrderBy)(0),                            // 23: determined.api.v1.OrderBy
-	(*wrappers.BoolValue)(nil),              // 24: google.protobuf.BoolValue
-	(*projectv1.Project)(nil),               // 25: determined.project.v1.Project
-	(*Pagination)(nil),                      // 26: determined.api.v1.Pagination
-	(*userv1.AgentUserGroup)(nil),           // 27: determined.user.v1.AgentUserGroup
-	(*_struct.Struct)(nil),                  // 28: google.protobuf.Struct
-	(*workspacev1.PatchWorkspace)(nil),      // 29: determined.workspace.v1.PatchWorkspace
+	(*ListRPsBoundToWorkspaceRequest)(nil),  // 22: determined.api.v1.ListRPsBoundToWorkspaceRequest
+	(*ListRPsBoundToWorkspaceResponse)(nil), // 23: determined.api.v1.ListRPsBoundToWorkspaceResponse
+	(*workspacev1.Workspace)(nil),           // 24: determined.workspace.v1.Workspace
+	(OrderBy)(0),                            // 25: determined.api.v1.OrderBy
+	(*wrappers.BoolValue)(nil),              // 26: google.protobuf.BoolValue
+	(*projectv1.Project)(nil),               // 27: determined.project.v1.Project
+	(*Pagination)(nil),                      // 28: determined.api.v1.Pagination
+	(*userv1.AgentUserGroup)(nil),           // 29: determined.user.v1.AgentUserGroup
+	(*_struct.Struct)(nil),                  // 30: google.protobuf.Struct
+	(*workspacev1.PatchWorkspace)(nil),      // 31: determined.workspace.v1.PatchWorkspace
 }
 var file_determined_api_v1_workspace_proto_depIdxs = []int32{
-	22, // 0: determined.api.v1.GetWorkspaceResponse.workspace:type_name -> determined.workspace.v1.Workspace
+	24, // 0: determined.api.v1.GetWorkspaceResponse.workspace:type_name -> determined.workspace.v1.Workspace
 	0,  // 1: determined.api.v1.GetWorkspaceProjectsRequest.sort_by:type_name -> determined.api.v1.GetWorkspaceProjectsRequest.SortBy
-	23, // 2: determined.api.v1.GetWorkspaceProjectsRequest.order_by:type_name -> determined.api.v1.OrderBy
-	24, // 3: determined.api.v1.GetWorkspaceProjectsRequest.archived:type_name -> google.protobuf.BoolValue
-	25, // 4: determined.api.v1.GetWorkspaceProjectsResponse.projects:type_name -> determined.project.v1.Project
-	26, // 5: determined.api.v1.GetWorkspaceProjectsResponse.pagination:type_name -> determined.api.v1.Pagination
+	25, // 2: determined.api.v1.GetWorkspaceProjectsRequest.order_by:type_name -> determined.api.v1.OrderBy
+	26, // 3: determined.api.v1.GetWorkspaceProjectsRequest.archived:type_name -> google.protobuf.BoolValue
+	27, // 4: determined.api.v1.GetWorkspaceProjectsResponse.projects:type_name -> determined.project.v1.Project
+	28, // 5: determined.api.v1.GetWorkspaceProjectsResponse.pagination:type_name -> determined.api.v1.Pagination
 	1,  // 6: determined.api.v1.GetWorkspacesRequest.sort_by:type_name -> determined.api.v1.GetWorkspacesRequest.SortBy
-	23, // 7: determined.api.v1.GetWorkspacesRequest.order_by:type_name -> determined.api.v1.OrderBy
-	24, // 8: determined.api.v1.GetWorkspacesRequest.archived:type_name -> google.protobuf.BoolValue
-	24, // 9: determined.api.v1.GetWorkspacesRequest.pinned:type_name -> google.protobuf.BoolValue
-	22, // 10: determined.api.v1.GetWorkspacesResponse.workspaces:type_name -> determined.workspace.v1.Workspace
-	26, // 11: determined.api.v1.GetWorkspacesResponse.pagination:type_name -> determined.api.v1.Pagination
-	27, // 12: determined.api.v1.PostWorkspaceRequest.agent_user_group:type_name -> determined.user.v1.AgentUserGroup
-	28, // 13: determined.api.v1.PostWorkspaceRequest.checkpoint_storage_config:type_name -> google.protobuf.Struct
-	22, // 14: determined.api.v1.PostWorkspaceResponse.workspace:type_name -> determined.workspace.v1.Workspace
-	29, // 15: determined.api.v1.PatchWorkspaceRequest.workspace:type_name -> determined.workspace.v1.PatchWorkspace
-	22, // 16: determined.api.v1.PatchWorkspaceResponse.workspace:type_name -> determined.workspace.v1.Workspace
+	25, // 7: determined.api.v1.GetWorkspacesRequest.order_by:type_name -> determined.api.v1.OrderBy
+	26, // 8: determined.api.v1.GetWorkspacesRequest.archived:type_name -> google.protobuf.BoolValue
+	26, // 9: determined.api.v1.GetWorkspacesRequest.pinned:type_name -> google.protobuf.BoolValue
+	24, // 10: determined.api.v1.GetWorkspacesResponse.workspaces:type_name -> determined.workspace.v1.Workspace
+	28, // 11: determined.api.v1.GetWorkspacesResponse.pagination:type_name -> determined.api.v1.Pagination
+	29, // 12: determined.api.v1.PostWorkspaceRequest.agent_user_group:type_name -> determined.user.v1.AgentUserGroup
+	30, // 13: determined.api.v1.PostWorkspaceRequest.checkpoint_storage_config:type_name -> google.protobuf.Struct
+	24, // 14: determined.api.v1.PostWorkspaceResponse.workspace:type_name -> determined.workspace.v1.Workspace
+	31, // 15: determined.api.v1.PatchWorkspaceRequest.workspace:type_name -> determined.workspace.v1.PatchWorkspace
+	24, // 16: determined.api.v1.PatchWorkspaceResponse.workspace:type_name -> determined.workspace.v1.Workspace
 	17, // [17:17] is the sub-list for method output_type
 	17, // [17:17] is the sub-list for method input_type
 	17, // [17:17] is the sub-list for extension type_name
@@ -1783,6 +1914,30 @@ func file_determined_api_v1_workspace_proto_init() {
 				return nil
 			}
 		}
+		file_determined_api_v1_workspace_proto_msgTypes[20].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ListRPsBoundToWorkspaceRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_determined_api_v1_workspace_proto_msgTypes[21].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ListRPsBoundToWorkspaceResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	file_determined_api_v1_workspace_proto_msgTypes[6].OneofWrappers = []interface{}{}
 	type x struct{}
@@ -1791,7 +1946,7 @@ func file_determined_api_v1_workspace_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_determined_api_v1_workspace_proto_rawDesc,
 			NumEnums:      2,
-			NumMessages:   20,
+			NumMessages:   22,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
