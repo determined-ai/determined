@@ -2626,7 +2626,7 @@ const DesignKit: React.FC = () => {
   }, [actions]);
 
   return (
-    <Page bodyNoPadding breadcrumb={[]} docTitle="Design Kit">
+    <Page bodyNoPadding breadcrumb={[]} docTitle="Design Kit" noScroll>
       <div className={css.base}>
         <nav>
           <Link reloadDocument to={'/'}>
