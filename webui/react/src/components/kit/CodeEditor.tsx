@@ -5,11 +5,11 @@ import React, { lazy, Suspense, useCallback, useEffect, useMemo, useState } from
 import { ErrorHandler } from 'components/kit//utils/types';
 import Tooltip from 'components/kit/Tooltip';
 import Message, { MessageType } from 'components/kit/utils/components/Message';
-import MonacoEditor from 'components/kit/utils/components/MonacoEditor';
 import Section from 'components/kit/utils/components/Section';
 import Spinner from 'components/kit/utils/components/Spinner';
 import { ErrorType, ValueOf } from 'components/kit/utils/types';
 import { TreeNode } from 'components/kit/utils/types';
+import MonacoEditor from 'components/MonacoEditor';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 
 const JupyterRenderer = lazy(() => import('./CodeEditor/IpynbRenderer'));
