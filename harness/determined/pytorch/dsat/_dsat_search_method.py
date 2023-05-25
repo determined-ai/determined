@@ -1146,6 +1146,21 @@ class ASHADSATSearchMethod(BaseDSATSearchMethod):
         new_trial = [self.get_next_trial(last_trial)]
         return new_trial
 
+    def choose_next_trial_from_queue(self) -> DSATTrial:
+        """
+        Schedule the trial with the largest `search_data.curr_rung` value.
+        """
+
+        def key(trial: DSATTrial) -> int:
+            assert trial.search_data
+            assert isinstance(trial.search_data, ASHADSATSearchData)
+            return trial.search_data.curr_rung
+
+        highest_rung_trial = max(self.trial_tracker.queue, key=key)
+        self.trial_tracker.queue.remove(highest_rung_trial)
+
+        return highest_rung_trial
+
     def get_next_trial(self, last_trial: DSATTrial) -> DSATTrial:
         next_trial = None
         assert last_trial.search_data is not None and isinstance(
