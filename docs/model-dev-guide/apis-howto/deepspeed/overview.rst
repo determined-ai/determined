@@ -43,7 +43,7 @@ Determined DeepSpeed documentation:
    :maxdepth: 1
    :hidden:
 
-   deepspeed
+   API Usage Guide <deepspeed>
+   Autotuning <autotuning>
    advanced
    pytorch2deepspeed
-   autotuning
