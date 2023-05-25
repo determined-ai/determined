@@ -8,7 +8,6 @@ import Dropdown from 'components/kit/Dropdown';
 import Icon from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
 import Nameplate from 'components/kit/Nameplate';
-import Page from 'components/Page';
 import Section from 'components/Section';
 import InteractiveTable, { onRightClickableCell } from 'components/Table/InteractiveTable';
 import SkeletonTable from 'components/Table/SkeletonTable';
@@ -309,7 +308,7 @@ const GroupManagement: React.FC = () => {
   }, [groups, isLoading, settings, columns, total, updateSettings, expandedUserRender, onExpand]);
 
   return (
-    <Page bodyNoPadding containerRef={pageRef}>
+    <>
       <Section
         options={
           <Space>
@@ -322,7 +321,7 @@ const GroupManagement: React.FC = () => {
         {canViewGroups && <div className={css.usersTable}>{table}</div>}
       </Section>
       <CreateGroupModal.Component users={users} onClose={fetchGroups} />
-    </Page>
+    </>
   );
 };
 

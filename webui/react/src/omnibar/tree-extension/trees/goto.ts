@@ -9,7 +9,7 @@ import { openCommand } from 'utils/wait';
 const locations: TreeNode[] = [
   {
     aliases: ['agents', 'resourcePools'],
-    onAction: visitAction(paths.cluster()),
+    onAction: visitAction(paths.clusters()),
     title: 'cluster',
   },
   {

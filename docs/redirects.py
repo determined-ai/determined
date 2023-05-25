@@ -202,14 +202,15 @@ if __name__ == "__main__":
     published = set(json.loads(atext))
 
     if sys.argv[1] == "redirect":
-        if len(sys.argv) == 4:
+        if len(sys.argv) != 4:
             print(__doc__, file=sys.stderr)
             exit(1)
 
-        print(f"redirecting {src} to {dst}", file=sys.stderr)
-
         src = sys.argv[2]
         dst = sys.argv[3]
+
+        print(f"redirecting {src} to {dst}", file=sys.stderr)
+
         links = rename_one(links, published, src, dst)
         write_json(dict(l.to_sphinx() for l in links), REDIRECTS)
 

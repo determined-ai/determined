@@ -52,7 +52,8 @@ To install Determined on the HPC cluster, ensure that the
    :hidden:
 
    slurm-requirements
+   hpc-launching-architecture
+   hpc-security-considerations
    install-on-slurm
    singularity
-   hpc-launching-architecture
    slurm-known-issues

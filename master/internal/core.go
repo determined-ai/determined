@@ -291,6 +291,7 @@ type AllocationMetadata struct {
 	StartTime        time.Time
 	EndTime          time.Time
 	ImagepullingTime float64
+	GPUHours         float64
 }
 
 // canGetUsageDetails checks if the user has permission to get cluster usage details.
@@ -352,7 +353,7 @@ func (m *Master) getResourceAllocations(c echo.Context) error {
 		ColumnExpr("t.task_type").
 		ColumnExpr("t.job_id").
 		TableExpr("tasks t").
-		Where("tstzrange(start_time - interval '1 minute', greatest(start_time, end_time)) && tstzrange(? :: timestamptz, ? :: timestamptz)", start, end)
+		Where("tstzrange(start_time - interval '1 minute', greatest(start_time, coalesce(end_time, now()))) && tstzrange(? :: timestamptz, ? :: timestamptz)", start, end)
 
 	// Get allocation info for allocations in time range
 	allocationsInRange := db.Bun().NewSelect().
@@ -361,8 +362,9 @@ func (m *Master) getResourceAllocations(c echo.Context) error {
 		ColumnExpr("a.start_time").
 		ColumnExpr("a.end_time").
 		ColumnExpr("a.slots").
+		ColumnExpr("CASE WHEN a.start_time is NULL THEN 0.0 ELSE extract(epoch FROM (LEAST(GREATEST(coalesce(a.end_time, now()), a.start_time), ? :: timestamptz) - GREATEST(a.start_time, ? :: timestamptz))) * a.slots END AS gpu_seconds", end, start).
 		TableExpr("allocations a").
-		Where("tstzrange(start_time - interval '1 minute', greatest(start_time, end_time)) && tstzrange(? :: timestamptz, ? :: timestamptz)", start, end)
+		Where("tstzrange(start_time - interval '1 microsecond', greatest(start_time, coalesce(end_time, now()))) && tstzrange(? :: timestamptz, ? :: timestamptz)", start, end)
 
 	// Get task owner names
 	taskOwners := db.Bun().NewSelect().
@@ -375,7 +377,7 @@ func (m *Master) getResourceAllocations(c echo.Context) error {
 	// Get imagepull times for tasks within time range
 	imagePullTimes := db.Bun().NewSelect().
 		ColumnExpr("a.allocation_id").
-		ColumnExpr("SUM(EXTRACT(EPOCH FROM (ts.end_time - ts.start_time))) imagepulling_time").
+		ColumnExpr("SUM(EXTRACT(EPOCH FROM (greatest(coalesce(ts.end_time, now()), ts.start_time) - ts.start_time))) imagepulling_time").
 		TableExpr("allocations_in_range a").
 		Join("INNER JOIN task_stats ts ON a.allocation_id = ts.allocation_id").
 		Where("ts.event_type = 'IMAGEPULL'").
@@ -402,6 +404,7 @@ func (m *Master) getResourceAllocations(c echo.Context) error {
 		ColumnExpr("a.start_time").
 		ColumnExpr("a.end_time").
 		ColumnExpr("ip.imagepulling_time").
+		ColumnExpr("a.gpu_seconds / 3600.0 AS gpu_hours").
 		With("tasks_in_range", tasksInRange).
 		With("allocations_in_range", allocationsInRange).
 		With("task_owners", taskOwners).
@@ -432,6 +435,7 @@ func (m *Master) getResourceAllocations(c echo.Context) error {
 		"start_time",
 		"end_time",
 		"imagepulling_time",
+		"gpu_hours",
 	}
 
 	formatTimestamp := func(t time.Time) string {
@@ -469,6 +473,7 @@ func (m *Master) getResourceAllocations(c echo.Context) error {
 			formatTimestamp(allocationMetadata.StartTime),
 			formatTimestamp(allocationMetadata.EndTime),
 			formatDuration(allocationMetadata.ImagepullingTime),
+			formatDuration(allocationMetadata.GPUHours),
 		}
 		if err := csvWriter.Write(fields); err != nil {
 			return err

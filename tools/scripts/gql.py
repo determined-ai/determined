@@ -182,7 +182,7 @@ get_pr_info = GraphQLQuery(
     """
 query($id: ID!) {
   node(id: $id) {
-   ... on PullRequest {
+    ... on PullRequest {
       number
       title
       url
@@ -199,11 +199,24 @@ query($id: ID!) {
 )
 
 
+get_pr_title = GraphQLQuery(
+    """
+query($id: ID!) {
+  node(id: $id) {
+    ... on PullRequest {
+      title
+    }
+  }
+}
+"""
+)
+
+
 get_pr_state = GraphQLQuery(
     """
 query($id: ID!) {
   node(id: $id) {
-   ... on PullRequest {
+    ... on PullRequest {
       state
     }
   }
@@ -216,7 +229,7 @@ delete_project_item = GraphQLQuery(
     """
 mutation($project: ID!, $item: ID!) {
   deleteProjectV2Item(input: {projectId: $project, itemId: $item}) {
-   deletedItemId
+    deletedItemId
   }
 }
 """

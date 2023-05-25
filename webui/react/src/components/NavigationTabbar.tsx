@@ -179,7 +179,12 @@ const NavigationTabbar: React.FC = () => {
         <ToolbarItem icon="experiment" label="Uncategorized" path={paths.uncategorized()} />
         <ToolbarItem icon="model" label="Model Registry" path={paths.modelList()} />
         <ToolbarItem icon="tasks" label="Tasks" path={paths.taskList()} />
-        <ToolbarItem icon="cluster" label="Cluster" path={paths.cluster()} status={clusterStatus} />
+        <ToolbarItem
+          icon="cluster"
+          label="Cluster"
+          path={paths.clusters()}
+          status={clusterStatus}
+        />
         <ToolbarItem icon="workspaces" label="Workspaces" onClick={handleWorkspacesOpen} />
         <ToolbarItem icon="overflow-vertical" label="Overflow Menu" onClick={handleOverflowOpen} />
       </div>

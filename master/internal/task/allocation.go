@@ -1054,9 +1054,15 @@ func (a *Allocation) terminated(ctx *actor.Context, reason string) {
 // markResourcesStarted persists start information.
 func (a *Allocation) markResourcesStarted(ctx *actor.Context) {
 	a.model.StartTime = ptrs.Ptr(time.Now().UTC().Truncate(time.Millisecond))
-	a.sendTaskLog(ctx, a.enrichLog(model.TaskLog{
-		Log: fmt.Sprintf("%s was recovered on an agent", a.req.Name),
-	}))
+	if a.restored {
+		a.sendTaskLog(ctx, a.enrichLog(model.TaskLog{
+			Log: fmt.Sprintf("%s was recovered on an agent", a.req.Name),
+		}))
+	} else {
+		a.sendTaskLog(ctx, a.enrichLog(model.TaskLog{
+			Log: fmt.Sprintf("%s was assigned to an agent", a.req.Name),
+		}))
+	}
 	if err := a.db.UpdateAllocationStartTime(a.model); err != nil {
 		ctx.Log().
 			WithError(err).

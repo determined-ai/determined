@@ -82,7 +82,7 @@ const TrialsComparison: React.FC<Props> = ({ projectId, workspaceId }) => {
   const handleTrialFocus = useMemo(() => debounce(1000, highlights.focus), [highlights.focus]);
 
   return (
-    <Page containerRef={containerRef}>
+    <Page breadcrumb={[]} containerRef={containerRef}>
       <div className={css.base}>
         <Section bodyBorder bodyScroll>
           <div className={css.container}>

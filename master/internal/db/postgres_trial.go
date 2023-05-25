@@ -468,20 +468,14 @@ func (db *PgDB) updateLatestValidationID(ctx context.Context, tx *sqlx.Tx, trial
 // updateTotalBatches update precomputed total_batches based on existing steps and validations.
 func (db *PgDB) updateTotalBatches(ctx context.Context, tx *sqlx.Tx, trialID int) error {
 	if _, err := tx.ExecContext(ctx, `
-		UPDATE trials SET total_batches = sub.new_max_total_batches_processed
+		UPDATE trials t
+		SET total_batches = COALESCE(latest.total_batches_processed, 0)
 		FROM (
-			SELECT max(q.total_batches) AS new_max_total_batches_processed
-			FROM (
-				SELECT coalesce(max(s.total_batches), 0) AS total_batches
-				FROM steps s
-				WHERE s.trial_id = $1
-				UNION ALL
-				SELECT coalesce(max(v.total_batches), 0) AS total_batches
-				FROM validations v
-				WHERE v.trial_id = $1
-			) q
-		) AS sub
-		WHERE id = $1;
+				SELECT max(m.total_batches) AS total_batches_processed
+				FROM metrics m
+				WHERE m.trial_id = $1 AND m.archived = false
+			) AS latest
+		WHERE t.id = $1
 		`, trialID); err != nil {
 		return errors.Wrap(err, "error computing total_batches")
 	}
@@ -489,21 +483,20 @@ func (db *PgDB) updateTotalBatches(ctx context.Context, tx *sqlx.Tx, trialID int
 }
 
 func (db *PgDB) _addTrialMetricsTx(
-	ctx context.Context, tx *sqlx.Tx, m *trialv1.TrialMetrics, isValidation bool,
-) (rollbacks map[string]int, err error) {
-	rollbacks = make(map[string]int)
-	trialMetricTables := []string{"raw_steps", "raw_validations"}
-	targetTable := "raw_steps"
+	ctx context.Context, tx *sqlx.Tx, m *trialv1.TrialMetrics, pType MetricPartitionType,
+	mType *string,
+) (rollbacks int, err error) {
+	isValidation := pType == ValidationMetric
+
 	metricsJSONPath := "avg_metrics"
 	metricsBody := map[string]interface{}{
-		"avg_metrics":   m.Metrics.AvgMetrics,
+		metricsJSONPath: m.Metrics.AvgMetrics,
 		"batch_metrics": m.Metrics.BatchMetrics,
 	}
 	if isValidation {
 		metricsJSONPath = "validation_metrics"
-		targetTable = "raw_validations"
 		metricsBody = map[string]interface{}{
-			"validation_metrics": m.Metrics.AvgMetrics,
+			metricsJSONPath: m.Metrics.AvgMetrics,
 		}
 	}
 
@@ -513,56 +506,26 @@ func (db *PgDB) _addTrialMetricsTx(
 			return err
 		}
 
-		rollbackHappened := false
-		for _, table := range trialMetricTables {
-			comparator := ">"
-			if table == targetTable {
-				// we mark metrics reported in the same table with the same batch number
-				// as the metric being added as `archived`.
-				comparator = ">="
-			}
-			res, err := tx.ExecContext(ctx, fmt.Sprintf(`
-UPDATE %s SET archived = true
-WHERE trial_id = $1
-  AND archived = false
-  AND trial_run_id < $2
-  AND total_batches %s $3;
-	`, table, comparator), m.TrialId, m.TrialRunId, m.StepsCompleted)
-			if err != nil {
-				return errors.Wrap(err, "archiving metrics")
-			}
-			affectedRows, err := res.RowsAffected()
-			if err != nil {
-				return errors.Wrap(err, "checking for metric rollbacks")
-			}
-			rollbacks[table] = int(affectedRows)
-			if affectedRows > 0 {
-				rollbackHappened = true
-			}
+		if rollbacks, err = rollbackMetrics(ctx, tx, m.TrialRunId, m.TrialId, m.StepsCompleted,
+			pType); err != nil {
+			return err
 		}
-
 		var summaryMetrics model.JSONObj
-		err := tx.QueryRowContext(ctx, `
+		err = tx.QueryRowContext(ctx, `
 		SELECT summary_metrics FROM trials WHERE id = $1 FOR UPDATE;
 	`, m.TrialId).Scan(&summaryMetrics)
 		if err != nil {
 			return fmt.Errorf("error getting summary metrics from trials: %w", err)
 		}
 
-		var metricRowID int
-		if err := tx.QueryRowContext(ctx, fmt.Sprintf(`
-INSERT INTO %s
-	(trial_id, trial_run_id, end_time, metrics, total_batches)
-VALUES
-	($1, $2, now(), $3, $4)
-RETURNING id
-`, targetTable),
-			int(m.TrialId), int(m.TrialRunId), metricsBody, int(m.StepsCompleted),
-		).Scan(&metricRowID); err != nil {
-			return errors.Wrap(err, fmt.Sprintf("inserting metrics into %s", targetTable))
+		metricRowID, err := db.addRawMetrics(ctx, tx, &metricsBody, m.TrialRunId,
+			m.TrialId, m.StepsCompleted, pType, mType)
+		if err != nil {
+			return err
 		}
 
-		if rollbackHappened {
+		switch {
+		case rollbacks != 0:
 			if err := db.updateTotalBatches(ctx, tx, int(m.TrialId)); err != nil {
 				return errors.Wrap(err, "rollback")
 			}
@@ -575,7 +538,14 @@ RETURNING id
 			if err := db.fullTrialSummaryMetricsRecompute(ctx, tx, int(m.TrialId)); err != nil {
 				return errors.Wrap(err, "error on rollback compute of summary metrics")
 			}
-		} else {
+		case pType == GenericMetric:
+			if _, err := tx.ExecContext(ctx, `
+	UPDATE trials SET total_batches = GREATEST(total_batches, $2)
+	WHERE id = $1;
+	`, m.TrialId, m.StepsCompleted); err != nil {
+				return errors.Wrap(err, "updating trial total batches")
+			}
+		default: // no rollbacks happened.
 			if _, ok := summaryMetrics[metricsJSONPath]; !ok {
 				summaryMetrics[metricsJSONPath] = map[string]any{}
 			}
@@ -626,35 +596,19 @@ WHERE id = $1;
 
 // addTrialMetrics inserts a set of trial metrics to the database.
 func (db *PgDB) addTrialMetrics(
-	ctx context.Context, m *trialv1.TrialMetrics, isValidation bool,
-) (rollbacks map[string]int, err error) {
+	ctx context.Context, m *trialv1.TrialMetrics, pType MetricPartitionType,
+	mType *string,
+) (rollbacks int, err error) {
 	switch v := m.Metrics.AvgMetrics.Fields["epoch"].AsInterface().(type) {
 	case float64, nil:
 	default:
-		return nil, fmt.Errorf("cannot add metric with non numeric 'epoch' value got %v", v)
+		return 0, fmt.Errorf("cannot add metric with non numeric 'epoch' value got %v", v)
 	}
-	return rollbacks, db.withTransaction("add training metrics", func(tx *sqlx.Tx) error {
-		rollbacks, err = db._addTrialMetricsTx(ctx, tx, m, isValidation)
-		return err
-	})
-}
-
-// AddTrainingMetrics adds a completed step to the database with the given training metrics.
-// If these training metrics occur before any others, a rollback is assumed and later
-// training and validation metrics are cleaned up.
-func (db *PgDB) AddTrainingMetrics(ctx context.Context, m *trialv1.TrialMetrics) error {
-	_, err := db.addTrialMetrics(ctx, m, false)
-	return err
-}
-
-// AddValidationMetrics adds a completed validation to the database with the given
-// validation metrics. If these validation metrics occur before any others, a rollback
-// is assumed and later metrics are cleaned up from the database.
-func (db *PgDB) AddValidationMetrics(
-	ctx context.Context, m *trialv1.TrialMetrics,
-) error {
-	_, err := db.addTrialMetrics(ctx, m, true)
-	return err
+	return rollbacks, db.withTransaction(fmt.Sprintf("add trial metrics %s", pType),
+		func(tx *sqlx.Tx) error {
+			rollbacks, err = db._addTrialMetricsTx(ctx, tx, m, pType, mType)
+			return err
+		})
 }
 
 const (
@@ -855,6 +809,7 @@ WHERE id = $1
 // returning nil if none exists.
 func (db *PgDB) ValidationByTotalBatches(trialID, totalBatches int) (*model.TrialMetrics, error) {
 	var validation model.TrialMetrics
+	// TODO: update to go through `metrics`.
 	if err := db.query(`
 SELECT id, trial_id, total_batches, end_time, metrics
 FROM validations

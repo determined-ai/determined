@@ -382,28 +382,6 @@ checkpoints.
               |                                      |     }
               |                                      | }
 
-****************************************
- Loading a Checkpoint From a Local Path
-****************************************
-
-:class:`~determined.experimental.client.Checkpoint` contains a static method,
-:meth:`~determined.experimental.client.Checkpoint.load_from_path`, that loads a checkpoint from a
-path on the local file system.
-
-Suppose a checkpoint is downloaded using a command like this:
-
-.. code:: bash
-
-   det trial download <trial_id> --best --output-dir local_checkpoint
-
-The checkpoint can then be loaded in Python with this code:
-
-.. code:: python
-
-   from determined.experimental import client
-
-   model = client.Checkpoint.load_from_path("local_checkpoint")
-
 ************
  Next Steps
 ************

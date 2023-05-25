@@ -14,7 +14,6 @@ import JupyterLabButton from 'components/JupyterLabButton';
 import Button from 'components/kit/Button';
 import Icon from 'components/kit/Icon';
 import Link from 'components/Link';
-import Page from 'components/Page';
 import InteractiveTable, { ColumnDef } from 'components/Table/InteractiveTable';
 import {
   defaultRowClassName,
@@ -593,10 +592,8 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
   );
 
   return (
-    <Page
-      containerRef={pageRef}
-      id="tasks"
-      options={
+    <>
+      <div className={css.options}>
         <Space>
           {filterCount > 0 && (
             <FilterCounter activeFilterCount={filterCount} onReset={resetFilters} />
@@ -606,8 +603,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
             workspace={workspace}
           />
         </Space>
-      }
-      title="Tasks">
+      </div>
       <div className={css.base}>
         <TableBatch
           actions={[{ disabled: !hasKillable, label: Action.Kill, value: Action.Kill }]}
@@ -667,7 +663,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
           </Grid>
         </div>
       </Modal>
-    </Page>
+    </>
   );
 };
 
