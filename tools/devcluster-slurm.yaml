@@ -114,6 +114,10 @@ $OPT_PARTITIONOVERRIDES
         #     provider:
         #       type: hpc
         #       partition: defq_GPU
+
+        # resource_manager_end
+
+
         # This is important: we have to use the symbolic links in the
         # tools/build directory to run properly.
         root: tools/build
