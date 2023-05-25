@@ -52,9 +52,9 @@ def _probe_tunnel(proc: "subprocess.Popen[str]") -> None:
     print(f"Tunnel probe done after {ctr} ticks.")
 
 
-def _ray_job_submit(exp_path: pathlib.Path) -> None:
+def _ray_job_submit(exp_path: pathlib.Path, port=8265) -> None:
     env = os.environ.copy()
-    env["RAY_ADDRESS"] = "http://localhost:8265"
+    env["RAY_ADDRESS"] = f"http://localhost:{port}"
     subprocess.run(
         [
             "ray",
@@ -168,7 +168,7 @@ def test_experiment_proxy_ray_publish() -> None:
             "resources.slots=1",
             "-f",
             "-p",
-            "8265",
+            "8267:8265",
         ],
         stdout=subprocess.PIPE,
         text=True,
@@ -184,7 +184,7 @@ def test_experiment_proxy_ray_publish() -> None:
         try:
             exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.RUNNING)
             _probe_tunnel(proc)
-            _ray_job_submit(exp_path)
+            _ray_job_submit(exp_path, port=8267)
         finally:
             sess = api_utils.determined_test_session()
             bindings.post_KillExperiment(sess, id=exp_id)
