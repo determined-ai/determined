@@ -364,17 +364,20 @@ def torch_batch_process(
             # Checkpoint and check preemption
             if (batch_idx + 1) % checkpoint_interval == 0:
                 logging.info(f"Completed steps:  {steps_completed} and checkpointing")
+
                 per_batch_processor.on_checkpoint_start()
+                core_context._tensorboard_manager.sync()
                 _synchronize_and_checkpoint(
                     core_context, steps_completed, rank, default_output_uuid
                 )
                 last_checkpoint_idx = batch_idx
+
                 # Report progress can only be done accurately with synchronization
-                core_context._tensorboard_manager.sync()
                 if rank == 0:
                     _report_progress_to_master(
                         dummy_searcher_op, batch_idx, total_worker, batch_size, dataset_len
                     )
+
                 # Check preemption
                 if core_context.preempt.should_preempt():
                     # Finish reducing metrics and report to not lose state before preempting
