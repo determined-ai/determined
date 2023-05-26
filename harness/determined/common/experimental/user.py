@@ -40,29 +40,29 @@ class User:
 
     def rename(self, new_username: str) -> None:
         patch_user = bindings.v1PatchUser(username=new_username)
-        resp = bindings.patch_PatchUser(self._session, body=patch_user, userId=self.user_id)
-        self._hydrate(resp.user)
+        bindings.patch_PatchUser(self._session, body=patch_user, userId=self.user_id)
+        self.reload()
 
     def activate(self) -> None:
         patch_user = bindings.v1PatchUser(active=True)
-        resp = bindings.patch_PatchUser(self._session, body=patch_user, userId=self.user_id)
-        self._hydrate(resp.user)
+        bindings.patch_PatchUser(self._session, body=patch_user, userId=self.user_id)
+        self.reload()
 
     def deactivate(self) -> None:
         patch_user = bindings.v1PatchUser(active=False)
-        resp = bindings.patch_PatchUser(self._session, body=patch_user, userId=self.user_id)
-        self._hydrate(resp.user)
+        bindings.patch_PatchUser(self._session, body=patch_user, userId=self.user_id)
+        self.reload()
 
     def change_display_name(self, display_name: str) -> None:
         patch_user = bindings.v1PatchUser(displayName=display_name)
-        resp = bindings.patch_PatchUser(self._session, body=patch_user, userId=self.user_id)
-        self._hydrate(resp.user)
+        bindings.patch_PatchUser(self._session, body=patch_user, userId=self.user_id)
+        self.reload()
 
     def change_password(self, new_password: str) -> None:
         new_password = api.salt_and_hash(new_password)
         patch_user = bindings.v1PatchUser(password=new_password, isHashed=True)
-        resp = bindings.patch_PatchUser(self._session, body=patch_user, userId=self.user_id)
-        self._hydrate(resp.user)
+        bindings.patch_PatchUser(self._session, body=patch_user, userId=self.user_id)
+        self.reload()
 
     def link_with_agent(
         self,
@@ -78,8 +78,8 @@ class User:
             agentUser=agent_user,
         )
         patch_user = bindings.v1PatchUser(agentUserGroup=v1agent_user_group)
-        resp = bindings.patch_PatchUser(self._session, body=patch_user, userId=self.user_id)
-        self._hydrate(resp.user)
+        bindings.patch_PatchUser(self._session, body=patch_user, userId=self.user_id)
+        self.reload()
 
     @classmethod
     def _from_bindings(cls, user_bindings: bindings.v1User, session: api.Session) -> "User":
