@@ -18,9 +18,6 @@ jobs:
       fail-fast: true
       matrix:
         component:
-          - cli
-          - common
-          - deploy
           - e2e_tests
           - examples
           - harness

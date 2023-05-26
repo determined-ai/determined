@@ -90,7 +90,7 @@ const trialContinueConfig = (
   };
 };
 
-const MonacoEditor = React.lazy(() => import('components/MonacoEditor'));
+const CodeMirrorEditor = React.lazy(() => import('components/CodeMirrorEditor'));
 
 const DEFAULT_MODAL_STATE = {
   config: {},
@@ -365,8 +365,9 @@ const ExperimentCreateModalComponent = ({
         )}
         {modalState.isAdvancedMode && (
           <React.Suspense fallback={<Spinner tip="Loading text editor..." />}>
-            <MonacoEditor
+            <CodeMirrorEditor
               height="40vh"
+              syntax="yaml"
               value={modalState.configString}
               onChange={handleEditorChange}
             />

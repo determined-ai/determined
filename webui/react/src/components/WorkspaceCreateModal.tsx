@@ -38,7 +38,7 @@ interface Props {
   workspaceId?: number;
 }
 
-const MonacoEditor = React.lazy(() => import('components/MonacoEditor'));
+const CodeMirrorEditor = React.lazy(() => import('components/CodeMirrorEditor'));
 
 const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }: Props = {}) => {
   const { canModifyWorkspaceAgentUserGroup, canModifyWorkspaceCheckpointStorage } =
@@ -180,14 +180,7 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
                       },
                     },
                   ]}>
-                  <MonacoEditor
-                    height="16vh"
-                    options={{
-                      readOnly: !canModifyCPS,
-                      wordWrap: 'on',
-                      wrappingIndent: 'indent',
-                    }}
-                  />
+                  <CodeMirrorEditor height="16vh" readOnly={!canModifyCPS} syntax="yaml" value="" />
                 </Form.Item>
               </React.Suspense>
             )}
