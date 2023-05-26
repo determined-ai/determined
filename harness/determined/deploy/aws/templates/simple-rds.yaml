@@ -3,12 +3,38 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: Determined Template
 Mappings:
   RegionMap:
-    us-gov-east-1:
-      Master: ami-01d71f6009765d511
-      Agent: ami-0b71e56244b8ac1cb
-    us-gov-west-1:
-      Master: ami-0b64b04df085adbf1
-      Agent: ami-0d26002529bfac823
+    ap-northeast-1:
+      Master: ami-00910ef9457f0df47
+      Agent: ami-0d1f4953a665df453
+    # TODO(DET-4258) Uncomment these when we fully support all P3 regions.
+    # ap-northeast-2:
+    #   Master: ami-035e3e44dc41db6a2
+    #   Agent: ami-019ca93bfb157bc91
+    # ap-southeast-1:
+    #   Master: ami-0fd1ee6c8b656f020
+    #   Agent: ami-040f0a455fb446aa7
+    # ap-southeast-2:
+    #   Master: ami-0b62ecd3babd1c548
+    #   Agent: ami-0485594a8551c03b1
+    eu-central-1:
+      Master: ami-0abbe417ed83c0b29
+      Agent: ami-0e8881dae5c06fd24
+    eu-west-1:
+      Master: ami-0e3f7dd2dc743e48a
+      Agent: ami-01cfb074c5c8a551f
+    # eu-west-2:
+    #   Master: ami-0d78429fb6af30994
+    #   Agent: ami-025f0f49e7cc01e82
+    us-east-1:
+      Master: ami-0172070f66a8ebe63
+      Agent: ami-00664190dab9da6bd
+    us-east-2:
+      Master: ami-0bafa3699418551cd
+      Agent: ami-058ac473ddc822489
+    us-west-2:
+      Master: ami-0ceeab680f529cc36
+      Agent: ami-0f095c663126efe04
+
 Parameters:
   Keypair:
     Type: AWS::EC2::KeyPair::KeyName
@@ -26,8 +52,8 @@ Parameters:
 
   ComputeAgentInstanceType:
     Type: String
-    Description: Instance Type of agents in the compute resource pool
-    Default: g4dn.xlarge
+    Description: Instance Type of Agents in the compute resource pool
+    Default: g4dn.metal
 
   InboundCIDRRange:
     Type: String
@@ -76,7 +102,7 @@ Parameters:
 
   MaxAuxContainersPerAgent:
     Type: Number
-    Description: Maximum number of CPU containers to keep running on agents in the CPU resource pool
+    Description: Maximum number of CPU containers to launch on agents in the default auxiliary resource pool.
     Default: 100
 
   MaxIdleAgentPeriod:
@@ -141,6 +167,26 @@ Parameters:
     Description: Whether preemption is enabled (only supported for priority scheduler).
     Default: false
 
+  AgentReattachEnabled:
+    Type: String
+    Description: Whether master & agent try to recover running containers after a restart.
+    Default: false
+
+  AgentReconnectAttempts:
+    Type: Number
+    Description: Max attempts an agent has to reconnect
+    Default: 5
+
+  AgentReconnectBackoff:
+    Type: Number
+    Description: Time between reconnect attempts, with the exception of the first.
+    Default: 5
+
+  AgentConfigFileContents:
+    Type: String
+    Description: Contents of the agent config file
+    Default: ''
+
   CpuEnvImage:
     Type: String
     Description: Docker image for CPU tasks
@@ -170,7 +216,7 @@ Parameters:
     Type: String
     Description: Master config template
     Default:
-  ### INJECT CODE: MasterConfigTemplate
+### INJECT CODE: MasterConfigTemplate
       |
       checkpoint_storage:
         type: s3
@@ -241,7 +287,7 @@ Parameters:
       {{ if ne .notebook_timeout 0.0 }}
       notebook_timeout: {{ .notebook_timeout }}
       {{ end }}
-  ### END INJECT CODE
+### END INJECT CODE
 
 Conditions:
   RetainLogGroup: !Equals [!Ref RetainLogGroup, true]
@@ -399,30 +445,19 @@ Resources:
 
   Database:
     Type: AWS::RDS::DBInstance
-    Properties:
-      DBClusterIdentifier:
-        Ref: DatabaseCluster
-      DBInstanceClass: db.t3.medium
-      Engine: aurora-postgresql
-      StorageEncrypted: true
-
-  DatabaseCluster:
-    Type: AWS::RDS::DBCluster
     DeletionPolicy: Delete
     Properties:
-      Engine: aurora-postgresql
-      EngineMode: provisioned
-      DatabaseName: determined
-      DBClusterParameterGroupName: 'default.aurora-postgresql11'
+      DBInstanceClass: db.m7g.large
+      Engine: postgres
       MasterUsername: postgres
       MasterUserPassword: !Ref DBPassword
       Tags:
         - Key: user
           Value: !Ref AWS::StackName
-      VpcSecurityGroupIds:
+      VPCSecurityGroups:
         - !GetAtt DatabaseSecurityGroup.GroupId
-      Port: 5432
-      StorageEncrypted: true
+      AllocatedStorage: 20
+      StorageType: gp2
 
   RetainedLogGroup:
     Type: AWS::Logs::LogGroup
@@ -454,8 +489,8 @@ Resources:
               - logs:PutLogEvents
               - logs:DescribeLogStreams
             Resource:
-              - !Sub arn:aws-us-gov:logs:*:*:log-group:/${LogGroupPrefix}/${AWS::StackName},
-              - !Sub arn:aws-us-gov:logs:*:*:log-group:/${LogGroupPrefix}/${AWS::StackName}:log-stream:*
+              - !Sub arn:aws:logs:*:*:log-group:/${LogGroupPrefix}/${AWS::StackName},
+              - !Sub arn:aws:logs:*:*:log-group:/${LogGroupPrefix}/${AWS::StackName}:log-stream:*
 
   MetricPolicy:
     Type: AWS::IAM::Policy
@@ -631,8 +666,7 @@ Resources:
             db:
               password: "${DBPassword}"
               host: "${Database.Endpoint.Address}"
-              name: determined
-              ssl_root_cert: /etc/determined/db_ssl_root_cert.pem
+              name: postgres
 
             enable_cors: ${EnableCORS}
 
@@ -646,8 +680,10 @@ Resources:
                 aux_pool:
                   max_aux_containers_per_agent: ${MaxAuxContainersPerAgent}
                   instance_type: ${AuxAgentInstanceType}
+                  agent_reattach_enabled: ${AgentReattachEnabled}
                 compute_pool:
                   instance_type: ${ComputeAgentInstanceType}
+                  agent_reattach_enabled: ${AgentReattachEnabled}
               aws:
                 master_cert_name: ${MasterCertName}
                 iam_instance_profile_arn: ${AgentInstanceProfile.Arn}
@@ -672,6 +708,8 @@ Resources:
                 ssh_key_name: ${Keypair}
                 tag_key: det-${AWS::StackName}
                 tag_value: det-agent-${AWS::StackName}
+                agent_reconnect_attempts: ${AgentReconnectAttempts}
+                agent_reconnect_backoff: ${AgentReconnectBackoff}
                 agent_config_file_contents: ${AgentConfigFileContents}
                 startup_script: |
                   if [ ! -z "${DockerUser}" ] && [ ! -z ${DockerPass} ]; then
@@ -700,7 +738,7 @@ Resources:
             apt-get update
             apt-get install -y docker-ce docker-ce-cli containerd.io
 
-            curl -fsSL https://s3.us-gov-west-1.amazonaws.com/rds-downloads/rds-combined-ca-us-gov-bundle.pem > \
+            curl -fsSL https://www.amazontrust.com/repository/AmazonRootCA1.pem > \
               /usr/local/determined/etc/db_ssl_root_cert.pem
 
             if [ ! -z "${DockerUser}" ] && [ ! -z ${DockerPass} ]; then
@@ -793,7 +831,7 @@ Outputs:
 
   LogGroup:
     Description: The Log Group for Determined Logs
-    Value: !Sub $252F${LogGroupPrefix}$252F${AWS::StackName}
+    Value: !Sub /${LogGroupPrefix}/${AWS::StackName}
 
   Region:
     Description: The AWS Region the stack is deployed in
