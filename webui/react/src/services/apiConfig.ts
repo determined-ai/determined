@@ -15,11 +15,14 @@ import * as Type from 'types';
 const updatedApiConfigParams = (
   apiConfig?: Api.ConfigurationParameters,
 ): Api.ConfigurationParameters => {
-  return {
-    apiKey: `Bearer ${globalStorage.authToken}`,
+  const config: Api.ConfigurationParameters = {
     basePath: serverAddress(),
     ...apiConfig,
   };
+  if (globalStorage.authToken !== '') {
+    config.apiKey = `Bearer ${globalStorage.authToken}`;
+  }
+  return config;
 };
 
 const generateApiConfig = (apiConfig?: Api.ConfigurationParameters) => {
