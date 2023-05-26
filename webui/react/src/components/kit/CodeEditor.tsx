@@ -2,8 +2,8 @@ import { DownloadOutlined, FileOutlined } from '@ant-design/icons';
 import { Tree } from 'antd';
 import React, { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 
-import CodeMirrorEditor from 'components/CodeMirrorEditor';
 import Tooltip from 'components/kit/Tooltip';
+import CodeMirrorEditor from 'components/kit/utils/components/CodeMirrorEditor';
 import Message, { MessageType } from 'components/kit/utils/components/Message';
 import Section from 'components/kit/utils/components/Section';
 import Spinner from 'components/kit/utils/components/Spinner';

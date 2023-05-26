@@ -71,7 +71,7 @@ vi.mock('services/api', () => ({
   getUserSetting: () => Promise.resolve({ settings: [] }),
 }));
 
-vi.mock('components/CodeMirrorEditor', () => ({
+vi.mock('components/kit/utils/components/CodeMirrorEditor', () => ({
   __esModule: true,
   default: () => <></>,
 }));
