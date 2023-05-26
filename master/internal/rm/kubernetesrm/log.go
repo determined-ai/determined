@@ -59,11 +59,8 @@ func (p *podLogStreamer) Write(log []byte) (n int, err error) {
 }
 
 func (p *podLogStreamer) receiveStreamLogs() {
-	for {
-		_, err := io.Copy(p, p.logReader)
-		if err != nil {
-			p.syslog.WithError(err).Debug("error reading logs")
-			return
-		}
+	_, err := io.Copy(p, p.logReader)
+	if err != nil {
+		p.syslog.WithError(err).Debug("error reading logs")
 	}
 }
