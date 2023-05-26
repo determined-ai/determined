@@ -364,7 +364,7 @@ def test_textual_inversion_stable_diffusion_generate() -> None:
 @pytest.mark.deepspeed
 @pytest.mark.parametrize("search_method_name", dsat._defaults.ALL_SEARCH_METHOD_NAMES)
 def test_hf_trainer_image_classification_deepspeed_autotuning(search_method_name: str) -> None:
-    test_dir = "hf_trainer_api/image_classification"
+    test_dir = "hf_trainer_api/hf_image_classification"
     config_path = conf.integrations_examples_path(f"{test_dir}/deepspeed.yaml")
     config = conf.load_config(config_path)
     with tempfile.NamedTemporaryFile() as tf:
@@ -383,7 +383,7 @@ def test_hf_trainer_image_classification_deepspeed_autotuning(search_method_name
 @pytest.mark.deepspeed
 @pytest.mark.parametrize("search_method_name", dsat._defaults.ALL_SEARCH_METHOD_NAMES)
 def test_hf_trainer_language_modeling_deepspeed_autotuning(search_method_name: str) -> None:
-    test_dir = "hf_trainer_api/language_modeling"
+    test_dir = "hf_trainer_api/hf_language_modeling"
     config_path = conf.integrations_examples_path(f"{test_dir}/deepspeed.yaml")
     config = conf.load_config(config_path)
     with tempfile.NamedTemporaryFile() as tf:

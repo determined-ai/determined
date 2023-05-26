@@ -15,12 +15,12 @@ in model code as in:
 
 The subdirectories contain two examples adapted from the official Hugging Face training scripts:
 
-- `image_classification/`: contains the [HF image classification trainer script](https://github.com/huggingface/transformers/tree/main/examples/pytorch/image-classification).
-- `language_modeling/`: contains the [HF causal language modeling trainer](https://github.com/huggingface/transformers/tree/main/examples/pytorch/language-modeling).
+- `hf_image_classification/`: contains the [HF image classification trainer script](https://github.com/huggingface/transformers/tree/main/examples/pytorch/image-classification).
+- `hf_language_modeling/`: contains the [HF causal language modeling trainer](https://github.com/huggingface/transformers/tree/main/examples/pytorch/language-modeling).
 
 ## Script Files
 
-In both `image_classification/image_classification.py` and `language_modeling/run_clm.py`, one can
+In both `hf_image_classification/image_classification.py` and `hf_language_modeling/run_clm.py`, one can
 find the training scripts which load a model from the HF Model Hub, configure the Trainer, and the
 Determined callback.
 
@@ -55,7 +55,7 @@ while the language modeling example uses [the wikitext dataset](https://huggingf
 If you have not yet installed Determined, installation instructions can be found
 under `docs/install-admin.html` or at https://docs.determined.ai/latest/index.html
 
-In order to run the classification script, `cd` into `image_classification/` and run the following
+In order to run the classification script, `cd` into `hf_image_classification/` and run the following
 to use the `const.yaml` config
 
 ```
