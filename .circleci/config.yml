@@ -1792,6 +1792,33 @@ jobs:
           paths:
             - test-unit-harness-cpu-pycov
 
+  danh-custom-runner-test:
+    # machine:
+    #   image: <<pipeline.parameters.gpu-machine-image>>
+    docker:
+      - image: cimg/base:2021.11
+    resource_class: determined-ai/container-runner-gpu
+    steps:
+      - checkout
+      - run: echo 'custom runner here'
+      # - skip-if-docs-only
+      # - skip-if-github-only
+      # - skip-if-webui-only
+      # - setup-docker-env:
+      #     image: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.21.2
+      #     image-name: test_container
+      #     extras-requires: "mypy pytest coverage"
+      # - run: mkdir -p $HOME/.local/bin
+      # - install-codecov
+      # - run: echo 'export PATH=$PATH:$HOME/.local/bin' >> $BASH_ENV
+      # - run: docker exec -e COVERAGE_FILE=/mnt/project/test-unit-harness-gpu-pycov test_container make -C harness test-gpu
+      # - run: docker exec test_container coverage xml -i --data-file=./test-unit-harness-gpu-pycov
+      # - run: codecov -v -t $CODECOV_TOKEN -F harness
+      # - persist_to_workspace:
+      #     root: .
+      #     paths:
+      #       - test-unit-harness-gpu-pycov
+
   test-unit-harness-gpu:
     machine:
       image: <<pipeline.parameters.gpu-machine-image>>
@@ -2479,6 +2506,10 @@ jobs:
           channel: <<parameters.slack-channel>>
 
 workflows:
+  danh-test-workflow:
+    jobs:
+      - danh-custom-runner-test
+
   lint:
     jobs:
       - build-proto
