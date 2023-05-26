@@ -302,10 +302,7 @@ class DeepSpeedTrialController(det.TrialController):
         if self._dsat_mode:
             ops = self.context._core.searcher.operations()
             op = next(ops)
-            # TODO: remove `while True` in favor of exact number of steps which should run.
-            # TODO: also assuming here that op.length is always the number of *steps* to train for
-            # and never epochs or other units. Double check.
-            while True:
+            for _ in range(op.length):
                 with dsat.dsat_reporting_context(core_context=self.context._core, op=op):
                     _ = self._train_for_step(
                         step_id=self.steps_completed + 1,
