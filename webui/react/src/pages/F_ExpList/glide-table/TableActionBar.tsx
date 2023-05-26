@@ -347,10 +347,8 @@ const TableActionBar: React.FC<Props> = ({
         </Space>
       </Column>
       <Column align="right">
-        {!!toggleComparisonView && <Button onClick={toggleComparisonView}>Compare</Button>}
-      </Column>
-      <Column align="right">
         <Space>
+          {!!toggleComparisonView && <Button onClick={toggleComparisonView}>Compare</Button>}
           <RadioGroup
             iconOnly
             options={[

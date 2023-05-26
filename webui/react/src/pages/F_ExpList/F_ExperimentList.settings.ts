@@ -1,4 +1,4 @@
-import { array, boolean, number, string } from 'io-ts';
+import { array, boolean, literal, number, string, union } from 'io-ts';
 
 import { INIT_FORMSET } from 'components/FilterForm/components/FilterFormStore';
 import { SettingsConfig } from 'hooks/useSettings';
@@ -42,7 +42,7 @@ export const settingsConfigForProject = (id: number): SettingsConfig<F_Experimen
       defaultValue: 20,
       skipUrlEncoding: true,
       storageKey: 'pageLimit',
-      type: t.number,
+      type: number,
     },
   },
   storagePath: `f_project-details-${id}`,
@@ -58,7 +58,7 @@ export const settingsConfigGlobal: SettingsConfig<F_ExperimentListGlobalSettings
       defaultValue: 'scroll',
       skipUrlEncoding: true,
       storageKey: 'expListView',
-      type: t.union([t.literal('scroll'), t.literal('paged')]),
+      type: union([literal('scroll'), literal('paged')]),
     },
   },
   storagePath: 'f_project-details-global',
