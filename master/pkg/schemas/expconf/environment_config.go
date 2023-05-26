@@ -23,8 +23,9 @@ func (p PodSpec) Copy() PodSpec {
 }
 
 // Merge implements the schemas.Mergable psuedointerface using Kubernetes strategic merging.
-//nolint:lll
 // https://github.com/kubernetes/community/blob/master/contributors/devel/sig-api-machinery/strategic-merge-patch.md
+//
+//nolint:lll
 func (p PodSpec) Merge(other PodSpec) PodSpec {
 	pBytes, err := json.Marshal(p)
 	if err != nil {

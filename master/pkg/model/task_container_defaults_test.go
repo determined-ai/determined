@@ -4,11 +4,12 @@ package model
 import (
 	"testing"
 
-	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/docker/docker/api/types"
 	"github.com/go-test/deep"
 	"github.com/stretchr/testify/require"
 	k8sV1 "k8s.io/api/core/v1"
+
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
