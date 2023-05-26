@@ -257,7 +257,7 @@ class Model:
             metadata (dict): Dictionary of metadata to add to the model.
         """
         self.reload()
-        assert self.metadata
+        assert self.metadata is not None
         for key, val in metadata.items():
             self.metadata[key] = val
 
@@ -278,7 +278,7 @@ class Model:
             )
 
         self.reload()
-        assert self.metadata
+        assert self.metadata is not None
         for key in keys:
             if key in self.metadata:
                 del self.metadata[key]
