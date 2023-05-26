@@ -20,6 +20,13 @@ func (a *MiscAuthZBasic) CanUpdateAgents(
 	return nil, nil
 }
 
+// CanGetSensitiveAgentInfo returns nil and nil error.
+func (a *MiscAuthZBasic) CanGetSensitiveAgentInfo(
+	ctx context.Context, curUrser *model.User,
+) (permErr error, err error) {
+	return nil, nil
+}
+
 // CanGetMasterLogs returns nil and nil error.
 func (a *MiscAuthZBasic) CanGetMasterLogs(
 	ctx context.Context, curUser *model.User,
