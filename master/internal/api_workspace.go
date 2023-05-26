@@ -612,3 +612,9 @@ func (a *apiServer) UnpinWorkspace(
 	return &apiv1.UnpinWorkspaceResponse{},
 		errors.Wrapf(err, "error un-pinning workspace (%d)", req.Id)
 }
+
+func (a *apiServer) ListRPsBoundToWorkspace(
+	ctx context.Context, request *apiv1.ListRPsBoundToWorkspaceRequest,
+) (*apiv1.ListRPsBoundToWorkspaceResponse, error) {
+	return nil, nil
+}
