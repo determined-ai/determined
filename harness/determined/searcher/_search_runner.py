@@ -196,10 +196,14 @@ class SearchRunner:
             searcherOperations=[op._to_searcher_operation() for op in operations],
             triggeredByEvent=event,
         )
-        # TODO: Remove this temporary hack in favor of an actual solution around the issue described
-        # in https://determined-ai.slack.com/archives/C04645NHSP6/p1680201334658789
-        # Also verify that this is actually catching the error.
-        # Remove print tests.
+
+        # This try/except is intended to catch a specific error which occurs for DeepSpeed Autotune.
+        # DeepSpeed makes an explicit `exit()` call internally when autotuning flags are enabled in
+        # the DS config. When we also post a `Close` operation, there is a resulting race condition
+        # and intermittently the process and its corresponding agent die before the `Close`
+        # operation reaches the agent, resulting in a `APIException` with a `failed to post
+        # operations: rpc error: code = NotFound desc = actor /experiments/xxx could not be found`
+        # message. This try/except allows the experiment to continue uninterrupted in such cases.
         try:
             bindings.post_PostSearcherOperations(
                 session,
