@@ -1216,9 +1216,7 @@ class TestPyTorchTrial:
         trial_controller_A.run()
 
         # reset random seed before rerun
-        other_random_seed = random.randint(0, 1 << 31)
-        while other_random_seed == self.trial_seed:
-            other_random_seed = random.randint(0, 1 << 31)
+        other_random_seed = random.randint(0,10)
 
         trial_controller_A._set_random_seeds(other_random_seed)
 

@@ -564,9 +564,7 @@ def test_rng_restore(tmp_path: Path):
     trial_A_controller.run()
 
     # reset random seed after checkpointing
-    other_random_seed = random.randint(0, 1 << 31)
-    while other_random_seed == 325:
-        other_random_seed = random.randint(0, 1 << 31)
+    other_random_seed = random.randint(0, 10)
 
     trial_A_controller._set_random_seeds(other_random_seed)
 
@@ -582,9 +580,7 @@ def test_rng_restore(tmp_path: Path):
     trial_B_controller.run()
 
     # reset random seed before rerun
-    third_random_seed = random.randint(0, 1 << 31)
-    while third_random_seed == 325:
-        third_random_seed = random.randint(0, 1 << 31)
+    third_random_seed = random.randint(11,20)
 
     trial_B_controller._set_random_seeds(third_random_seed)
 
