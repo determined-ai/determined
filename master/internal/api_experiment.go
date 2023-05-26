@@ -2055,6 +2055,7 @@ func sortExperiments(sortString *string, experimentQuery *bun.SelectQuery) error
 		"desc": "DESC NULLS LAST",
 	}
 	sortParams := strings.Split(*sortString, ",")
+	hasIdSort := false
 	for _, sortParam := range sortParams {
 		paramDetail := strings.Split(sortParam, "=")
 		if len(paramDetail) != 2 {
@@ -2078,9 +2079,13 @@ func sortExperiments(sortString *string, experimentQuery *bun.SelectQuery) error
 			if _, ok := orderColMap[paramDetail[0]]; !ok {
 				return status.Errorf(codes.InvalidArgument, "invalid sort col: %s", paramDetail[0])
 			}
+			hasIdSort = hasIdSort || paramDetail[0] == "id"
 			experimentQuery.OrderExpr(
 				fmt.Sprintf("%s %s", orderColMap[paramDetail[0]], sortDirection))
 		}
+	}
+	if !hasIdSort {
+		experimentQuery.OrderExpr("id ASC")
 	}
 	return nil
 }
