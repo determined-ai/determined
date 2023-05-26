@@ -6,11 +6,11 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/docker/docker/pkg/stdcopy"
 
 	"github.com/pkg/errors"
 
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/aproto"
