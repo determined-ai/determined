@@ -73,6 +73,10 @@ def _install_stacktrace_on_sigusr1() -> None:
     if not hasattr(signal, "SIGUSR1"):
         return
 
+    # Signal handlers can only be registered on main threads.
+    if threading.current_thread() is threading.main_thread():
+        return
+
     old_handler = None
 
     def stacktrace_on_sigusr1(signum: Any, frame: Any) -> None:
@@ -82,9 +86,7 @@ def _install_stacktrace_on_sigusr1() -> None:
         if callable(old_handler):
             old_handler(signum, frame)
 
-    # Signal handlers can only be registered on main threads.
-    if threading.current_thread() is threading.main_thread():
-        old_handler = signal.signal(signal.SIGUSR1, stacktrace_on_sigusr1)
+    old_handler = signal.signal(signal.SIGUSR1, stacktrace_on_sigusr1)
 
 
 def _get_storage_manager(
