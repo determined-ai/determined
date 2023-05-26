@@ -392,7 +392,7 @@ class DSATTrialTracker:
             # Gradients must be converted to fp32 to update master weights, so they eventually
             # require the same memory regardless of whether mixed-precision is used.
             gradients_mem = self.trainable_num_params * 4
-            # optimizer_mem assumes Adam, following DS. TODO: don't assume this.
+            # optimizer_mem assumes Adam, following DS. TODO: don't assume this (MLG-584).
             master_params_mem = 4 if fp16 else 0
             momentum_mem = variance_mem = 4
             optimizer_mem = self.trainable_num_params * (
@@ -837,7 +837,6 @@ class RandomDSATSearchMethod(BaseDSATSearchMethod):
         self,
         last_trial: DSATTrial,
     ) -> List[DSATTrial]:
-        # TODO: verify we are always quitting when no more non-trivial trials are possible.
         if self.should_stop_lineage(trial=last_trial) or last_trial.search_data is None:
             return [self.get_random_trial()]
 
@@ -848,10 +847,7 @@ class RandomDSATSearchMethod(BaseDSATSearchMethod):
         if new_search_data.lo > new_search_data.hi:
             new_search_data.hi *= 2
 
-        assert new_search_data.hi >= new_search_data.lo  # TODO: Remove
-
         mbs = self.get_random_mbs_from_search_data(new_search_data)
-        # TODO: Check we haven't run this experiment before.
 
         new_hparams = copy.deepcopy(last_trial.hparams)
         new_hparams[_defaults.OVERWRITE_KEY]["train_micro_batch_size_per_gpu"] = mbs
