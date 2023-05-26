@@ -580,7 +580,7 @@ def test_rng_restore(tmp_path: Path):
     trial_B_controller.run()
 
     # reset random seed before rerun
-    third_random_seed = random.randint(11,20)
+    third_random_seed = random.randint(11, 20)
 
     trial_B_controller._set_random_seeds(third_random_seed)
 
