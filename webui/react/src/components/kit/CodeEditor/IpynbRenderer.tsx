@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { ErrorHandler, ErrorType } from 'components/kit/utils/types';
 import NotebookJS from 'notebook';
 
-import 'vendor/monokai.css';
+import 'components/kit/utils/monokai.css';
 
 interface Props {
   file: string;
