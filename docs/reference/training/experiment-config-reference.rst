@@ -312,6 +312,8 @@ Optional. Specifies the minimum frequency at which validation should be run for 
 Optional. Instructs Determined to perform an initial validation before any training begins, for each
 trial. This can be useful to determine a baseline when fine-tuning a model on a new dataset.
 
+.. _experiment-config-checkpoint-policy:
+
 *******************
  Checkpoint Policy
 *******************

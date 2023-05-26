@@ -2998,6 +2998,7 @@ class v1Experiment:
     checkpointSize: "typing.Optional[str]" = None
     description: "typing.Optional[str]" = None
     displayName: "typing.Optional[str]" = None
+    duration: "typing.Optional[int]" = None
     endTime: "typing.Optional[str]" = None
     forkedFrom: "typing.Optional[int]" = None
     labels: "typing.Optional[typing.Sequence[str]]" = None
@@ -3034,6 +3035,7 @@ class v1Experiment:
         checkpointSize: "typing.Union[str, None, Unset]" = _unset,
         description: "typing.Union[str, None, Unset]" = _unset,
         displayName: "typing.Union[str, None, Unset]" = _unset,
+        duration: "typing.Union[int, None, Unset]" = _unset,
         endTime: "typing.Union[str, None, Unset]" = _unset,
         forkedFrom: "typing.Union[int, None, Unset]" = _unset,
         labels: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
@@ -3073,6 +3075,8 @@ class v1Experiment:
             self.description = description
         if not isinstance(displayName, Unset):
             self.displayName = displayName
+        if not isinstance(duration, Unset):
+            self.duration = duration
         if not isinstance(endTime, Unset):
             self.endTime = endTime
         if not isinstance(forkedFrom, Unset):
@@ -3129,6 +3133,8 @@ class v1Experiment:
             kwargs["description"] = obj["description"]
         if "displayName" in obj:
             kwargs["displayName"] = obj["displayName"]
+        if "duration" in obj:
+            kwargs["duration"] = obj["duration"]
         if "endTime" in obj:
             kwargs["endTime"] = obj["endTime"]
         if "forkedFrom" in obj:
@@ -3185,6 +3191,8 @@ class v1Experiment:
             out["description"] = self.description
         if not omit_unset or "displayName" in vars(self):
             out["displayName"] = self.displayName
+        if not omit_unset or "duration" in vars(self):
+            out["duration"] = self.duration
         if not omit_unset or "endTime" in vars(self):
             out["endTime"] = self.endTime
         if not omit_unset or "forkedFrom" in vars(self):
@@ -9337,6 +9345,32 @@ class v1RendezvousInfo:
             "addresses": self.addresses,
             "rank": self.rank,
             "slots": self.slots,
+        }
+        return out
+
+class v1ReportTrialMetricsRequest:
+
+    def __init__(
+        self,
+        *,
+        metrics: "v1TrialMetrics",
+        type: str,
+    ):
+        self.metrics = metrics
+        self.type = type
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1ReportTrialMetricsRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "metrics": v1TrialMetrics.from_json(obj["metrics"]),
+            "type": obj["type"],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "metrics": self.metrics.to_json(omit_unset),
+            "type": self.type,
         }
         return out
 
@@ -16879,6 +16913,27 @@ def post_ReportCheckpoint(
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_ReportCheckpoint", _resp)
+
+def post_ReportTrialMetrics(
+    session: "api.Session",
+    *,
+    body: "v1ReportTrialMetricsRequest",
+    metrics_trialId: int,
+) -> None:
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/trials/{metrics_trialId}/metrics",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("post_ReportTrialMetrics", _resp)
 
 def post_ReportTrialProgress(
     session: "api.Session",

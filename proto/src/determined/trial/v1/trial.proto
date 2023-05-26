@@ -194,25 +194,6 @@ message TrialEarlyExit {
   ExitedReason reason = 1;
 }
 
-// Metrics from the trial some duration of training.
-message TrialMetrics {
-  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: {
-      required: [ "trial_id", "trial_run_id", "steps_completed", "metrics" ]
-    }
-  };
-  // The trial associated with these metrics.
-  int32 trial_id = 1;
-  // The trial run associated with these metrics.
-  int32 trial_run_id = 2;
-  // The number of batches trained on when these metrics were reported.
-  int32 steps_completed = 3;  // TODO: rename to batches. batches_trained?
-  // The metrics for this bit of training, including:
-  // - avg_metrics: metrics reduced over the reporting period).
-  // - batch_metrics: (optional) per-batch metrics.
-  determined.common.v1.Metrics metrics = 9;
-}
-
 // The rendezvous info for the trial to rendezvous with sibling containers.
 message RendezvousInfo {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
@@ -233,6 +214,25 @@ message TrialRunnerMetadata {
   };
   // The state of the trial runner.
   string state = 1;
+}
+
+// Metrics from the trial some duration of training.
+message TrialMetrics {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: {
+      required: [ "trial_id", "trial_run_id", "steps_completed", "metrics" ]
+    }
+  };
+  // The trial associated with these metrics.
+  int32 trial_id = 1;
+  // The trial run associated with these metrics.
+  int32 trial_run_id = 2;
+  // The number of batches trained on when these metrics were reported.
+  int32 steps_completed = 3;
+  // The metrics for this bit of training, including:
+  // - avg_metrics: metrics reduced over the reporting period).
+  // - batch_metrics: (optional) per-batch metrics.
+  determined.common.v1.Metrics metrics = 9;
 }
 
 // Metrics report.
@@ -256,7 +256,7 @@ message MetricsReport {
   google.protobuf.Timestamp end_time = 2;
   // Struct of the reported metrics.
   google.protobuf.Struct metrics = 3;
-  // Steps completed in the report.
+  // batches completed in the report.
   int32 total_batches = 4;
   // If metric is archived.
   bool archived = 5;

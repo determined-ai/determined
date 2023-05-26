@@ -18,8 +18,8 @@ import { isEqual } from 'shared/utils/data';
 import { routeToReactUrl } from 'shared/utils/routes';
 import { isNotFound } from 'shared/utils/service';
 import workspaceStore from 'stores/workspaces';
-import { Project, Workspace } from 'types';
-import { Loadable } from 'utils/loadable';
+import { Project } from 'types';
+import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 
 import ExperimentList from './ExperimentList';
@@ -44,8 +44,6 @@ const ProjectDetails: React.FC = () => {
   const [canceler] = useState(new AbortController());
   const pageRef = useRef<HTMLElement>(null);
 
-  const workspaces = Loadable.getOrElse([], useObservable(workspaceStore.workspaces));
-
   const id = Number(projectId ?? '1');
 
   const fetchProject = useCallback(async () => {
@@ -65,7 +63,10 @@ const ProjectDetails: React.FC = () => {
     if (project) routeToReactUrl(paths.workspaceDetails(project.workspaceId));
   }, [project]);
 
-  const workspace = workspaces.find((ws: Workspace) => ws.id === project?.workspaceId);
+  const workspace = Loadable.getOrElse(
+    undefined,
+    useObservable(workspaceStore.getWorkspace(project ? Loaded(project.workspaceId) : NotLoaded)),
+  );
 
   const postActivity = useCallback(() => {
     postUserActivity({

@@ -6,6 +6,7 @@ import ExperimentMoveModalComponent from 'components/ExperimentMoveModal';
 import { FilterFormStore } from 'components/FilterForm/components/FilterFormStore';
 import TableFilter from 'components/FilterForm/TableFilter';
 import Button from 'components/kit/Button';
+import { Column, Columns } from 'components/kit/Columns';
 import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 import Icon, { IconName } from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
@@ -85,6 +86,7 @@ interface Props {
   selectedExperimentIds: number[];
   handleUpdateExperimentList: (action: BatchAction, successfulIds: number[]) => void;
   setVisibleColumns: (newColumns: string[]) => void;
+  toggleComparisonView?: () => void;
   total: Loadable<number>;
   formStore: FilterFormStore;
   setIsOpenFilter: (value: boolean) => void;
@@ -109,6 +111,7 @@ const TableActionBar: React.FC<Props> = ({
   formStore,
   setIsOpenFilter,
   isOpenFilter,
+  toggleComparisonView,
 }) => {
   const permissions = usePermissions();
   const [batchAction, setBatchAction] = useState<BatchAction>();
@@ -306,34 +309,39 @@ const TableActionBar: React.FC<Props> = ({
   const handleAction = useCallback((key: string) => handleBatchAction(key), [handleBatchAction]);
 
   return (
-    <>
-      <Space className={css.base}>
-        <TableFilter
-          formStore={formStore}
-          isOpenFilter={isOpenFilter}
-          loadableColumns={projectColumns}
-          setIsOpenFilter={setIsOpenFilter}
-        />
-        <MultiSortMenu columns={projectColumns} sorts={sorts} onChange={onSortChange} />
-        <ColumnPickerMenu
-          initialVisibleColumns={initialVisibleColumns}
-          projectColumns={projectColumns}
-          setVisibleColumns={setVisibleColumns}
-        />
-        {(selectAll || selectedExperimentIds.length > 0) && (
-          <Dropdown menu={editMenuItems} onClick={handleAction}>
-            <Button icon={<Icon name="pencil" title="Edit" />}>
-              Edit (
-              {selectAll
-                ? Loadable.isLoaded(total)
-                  ? (total.data - (excludedExperimentIds?.size ?? 0)).toLocaleString()
-                  : 'All'
-                : selectedExperimentIds.length}
-              )
-            </Button>
-          </Dropdown>
-        )}
-      </Space>
+    <Columns>
+      <Column>
+        <Space className={css.base}>
+          <TableFilter
+            formStore={formStore}
+            isOpenFilter={isOpenFilter}
+            loadableColumns={projectColumns}
+            setIsOpenFilter={setIsOpenFilter}
+          />
+          <MultiSortMenu columns={projectColumns} sorts={sorts} onChange={onSortChange} />
+          <ColumnPickerMenu
+            initialVisibleColumns={initialVisibleColumns}
+            projectColumns={projectColumns}
+            setVisibleColumns={setVisibleColumns}
+          />
+          {(selectAll || selectedExperimentIds.length > 0) && (
+            <Dropdown menu={editMenuItems} onClick={handleAction}>
+              <Button icon={<Icon name="pencil" title="Edit" />}>
+                Edit (
+                {selectAll
+                  ? Loadable.isLoaded(total)
+                    ? (total.data - (excludedExperimentIds?.size ?? 0)).toLocaleString()
+                    : 'All'
+                  : selectedExperimentIds.length}
+                )
+              </Button>
+            </Dropdown>
+          )}
+        </Space>
+      </Column>
+      <Column align="right">
+        {!!toggleComparisonView && <Button onClick={toggleComparisonView}>Compare</Button>}
+      </Column>
       {batchAction && (
         <BatchActionConfirmModal.Component
           batchAction={batchAction}
@@ -352,7 +360,7 @@ const TableActionBar: React.FC<Props> = ({
         sourceWorkspaceId={project.workspaceId}
         onSubmit={handleSubmitMove}
       />
-    </>
+    </Columns>
   );
 };
 

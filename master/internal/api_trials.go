@@ -862,7 +862,8 @@ func (a *apiServer) GetTrainingMetrics(
 	sendFunc := func(m []*trialv1.MetricsReport) error {
 		return resp.Send(&apiv1.GetTrainingMetricsResponse{Metrics: m})
 	}
-	if err := a.streamMetrics(resp.Context(), req.TrialIds, sendFunc, "steps"); err != nil {
+	if err := a.streamMetrics(resp.Context(), req.TrialIds, sendFunc,
+		model.TrainingMetricType.ToString()); err != nil {
 		return err
 	}
 
@@ -875,7 +876,8 @@ func (a *apiServer) GetValidationMetrics(
 	sendFunc := func(m []*trialv1.MetricsReport) error {
 		return resp.Send(&apiv1.GetValidationMetricsResponse{Metrics: m})
 	}
-	if err := a.streamMetrics(resp.Context(), req.TrialIds, sendFunc, "validations"); err != nil {
+	if err := a.streamMetrics(resp.Context(), req.TrialIds, sendFunc,
+		model.ValidationMetricType.ToString()); err != nil {
 		return err
 	}
 
@@ -883,7 +885,7 @@ func (a *apiServer) GetValidationMetrics(
 }
 
 func (a *apiServer) streamMetrics(ctx context.Context,
-	trialIDs []int32, sendFunc func(m []*trialv1.MetricsReport) error, table string,
+	trialIDs []int32, sendFunc func(m []*trialv1.MetricsReport) error, metricType string,
 ) error {
 	if len(trialIDs) == 0 {
 		return status.Error(codes.InvalidArgument, "must specify at least one trialId")
@@ -908,18 +910,10 @@ func (a *apiServer) streamMetrics(ctx context.Context,
 	trialIDIndex := 0
 	key := -1
 	for {
-		var res []*trialv1.MetricsReport
-		if err := db.Bun().NewSelect().Table(table).
-			Column("trial_id", "metrics", "total_batches", "archived", "id", "trial_run_id").
-			ColumnExpr("proto_time(end_time) AS end_time").
-			Where("trial_id = ?", trialIDs[trialIDIndex]).
-			Where("total_batches > ?", key).
-			Order("trial_id", "trial_run_id", "total_batches").
-			Limit(size).
-			Scan(ctx, &res); err != nil {
+		res, err := db.GetMetrics(ctx, int(trialIDs[trialIDIndex]), key, size, metricType)
+		if err != nil {
 			return err
 		}
-
 		if len(res) > 0 {
 			for i := 0; i < len(res); i++ {
 				// TODO we are giving too precise timestamps for our Python parsing code somehow.
@@ -1377,30 +1371,37 @@ func (a *apiServer) ReportTrialProgress(
 	return &apiv1.ReportTrialProgressResponse{}, nil
 }
 
-func (a *apiServer) ReportTrialTrainingMetrics(
-	ctx context.Context, req *apiv1.ReportTrialTrainingMetricsRequest,
-) (*apiv1.ReportTrialTrainingMetricsResponse, error) {
-	if err := a.canGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.TrainingMetrics.TrialId),
+func (a *apiServer) ReportTrialMetrics(
+	ctx context.Context, req *apiv1.ReportTrialMetricsRequest,
+) (*apiv1.ReportTrialMetricsResponse, error) {
+	if err := a.canGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.Metrics.TrialId),
 		expauth.AuthZProvider.Get().CanEditExperiment); err != nil {
 		return nil, err
 	}
-	if err := a.m.db.AddTrainingMetrics(ctx, req.TrainingMetrics); err != nil {
+	if err := a.m.db.AddTrialMetrics(ctx, req.Metrics, req.Type); err != nil {
 		return nil, err
 	}
-	return &apiv1.ReportTrialTrainingMetricsResponse{}, nil
+	return &apiv1.ReportTrialMetricsResponse{}, nil
+}
+
+func (a *apiServer) ReportTrialTrainingMetrics(
+	ctx context.Context, req *apiv1.ReportTrialTrainingMetricsRequest,
+) (*apiv1.ReportTrialTrainingMetricsResponse, error) {
+	_, err := a.ReportTrialMetrics(ctx, &apiv1.ReportTrialMetricsRequest{
+		Metrics: req.TrainingMetrics,
+		Type:    model.TrainingMetricType.ToString(),
+	})
+	return &apiv1.ReportTrialTrainingMetricsResponse{}, err
 }
 
 func (a *apiServer) ReportTrialValidationMetrics(
 	ctx context.Context, req *apiv1.ReportTrialValidationMetricsRequest,
 ) (*apiv1.ReportTrialValidationMetricsResponse, error) {
-	if err := a.canGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.ValidationMetrics.TrialId),
-		expauth.AuthZProvider.Get().CanEditExperiment); err != nil {
-		return nil, err
-	}
-	if err := a.m.db.AddValidationMetrics(ctx, req.ValidationMetrics); err != nil {
-		return nil, err
-	}
-	return &apiv1.ReportTrialValidationMetricsResponse{}, nil
+	_, err := a.ReportTrialMetrics(ctx, &apiv1.ReportTrialMetricsRequest{
+		Metrics: req.ValidationMetrics,
+		Type:    model.ValidationMetricType.ToString(),
+	})
+	return &apiv1.ReportTrialValidationMetricsResponse{}, err
 }
 
 func (a *apiServer) ReportCheckpoint(

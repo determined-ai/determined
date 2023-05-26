@@ -2,14 +2,14 @@ import { DownloadOutlined, FileOutlined } from '@ant-design/icons';
 import { Tree } from 'antd';
 import React, { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 
-import { ErrorHandler } from 'components/kit//utils/types';
+import CodeMirrorEditor from 'components/CodeMirrorEditor';
 import Tooltip from 'components/kit/Tooltip';
 import Message, { MessageType } from 'components/kit/utils/components/Message';
 import Section from 'components/kit/utils/components/Section';
 import Spinner from 'components/kit/utils/components/Spinner';
+import { ErrorHandler } from 'components/kit/utils/types';
 import { ErrorType, ValueOf } from 'components/kit/utils/types';
 import { TreeNode } from 'components/kit/utils/types';
-import MonacoEditor from 'components/MonacoEditor';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 
 const JupyterRenderer = lazy(() => import('./CodeEditor/IpynbRenderer'));
@@ -89,7 +89,7 @@ const isConfig = (key: unknown): key is Config =>
 /**
  * A component responsible to enable the user to view the code for a experiment.
  *
- * It renders a file tree and a selected file in the MonacoEditor
+ * It renders a file tree and a selected file in the CodeMirror editor.
  *
  * Props:
  *
@@ -116,7 +116,7 @@ const CodeEditor: React.FC<Props> = ({
   const viewMode = useMemo(() => (files.length === 1 ? 'editor' : 'split'), [files.length]);
   const editorMode = useMemo(() => {
     const isIpybnFile = /\.ipynb$/i.test(String(activeFile?.key || ''));
-    return isIpybnFile ? 'ipynb' : 'monaco';
+    return isIpybnFile ? 'ipynb' : 'codemirror';
   }, [activeFile]);
 
   const fetchFile = useCallback(
@@ -229,6 +229,13 @@ const CodeEditor: React.FC<Props> = ({
     }, 2000);
   }, [activeFile]);
 
+  const classes = [
+    css.fileTree,
+    css.codeEditorBase,
+    pageError ? css.noEditor : '',
+    viewMode === 'editor' ? css.editorMode : '',
+  ];
+
   const getSyntaxHighlight = useCallback(() => {
     if (String(activeFile?.key).includes('.py')) return 'python';
 
@@ -236,13 +243,6 @@ const CodeEditor: React.FC<Props> = ({
 
     return 'yaml';
   }, [activeFile]);
-
-  const classes = [
-    css.fileTree,
-    css.codeEditorBase,
-    pageError ? css.noEditor : '',
-    viewMode === 'editor' ? css.editorMode : '',
-  ];
 
   let fileContent = <h5>Please, choose a file to preview.</h5>;
   if (pageError) {
@@ -258,18 +258,11 @@ const CodeEditor: React.FC<Props> = ({
     );
   } else if (activeFile) {
     fileContent =
-      editorMode === 'monaco' ? (
-        <MonacoEditor
+      editorMode === 'codemirror' ? (
+        <CodeMirrorEditor
           height="100%"
-          language={getSyntaxHighlight()}
-          options={{
-            minimap: {
-              enabled: false,
-            },
-            occurrencesHighlight: false,
-            readOnly: readonly,
-            showFoldingControls: 'always',
-          }}
+          readOnly={readonly}
+          syntax={getSyntaxHighlight()}
           value={Loadable.getOrElse('', activeFile.content)}
         />
       ) : (

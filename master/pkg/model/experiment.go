@@ -808,15 +808,20 @@ func (t TrialProfilerMetricsBatchBatch) ForEach(f func(interface{}) error) error
 	return nil
 }
 
-// MetricType denotes what type of step (training / validation) a metric is from.
-type MetricType int
+// LegacyMetricType denotes what custom type the metric is.
+type LegacyMetricType string
 
 const (
-	// TrainingMetric designates metrics from training steps.
-	TrainingMetric MetricType = iota
-	// ValidationMetric designates metrics from validation steps.
-	ValidationMetric MetricType = iota
+	// ValidationMetricType designates metrics from validation runs.
+	ValidationMetricType LegacyMetricType = "validation"
+	// TrainingMetricType designates metrics from training runs.
+	TrainingMetricType LegacyMetricType = "training"
 )
+
+// ToString returns the string representation of the metric type.
+func (t LegacyMetricType) ToString() string {
+	return string(t)
+}
 
 // ExitedReason defines why a workload exited early.
 type ExitedReason string

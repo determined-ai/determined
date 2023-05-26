@@ -77,7 +77,7 @@ interface Props {
   workspace?: Workspace;
 }
 
-const MonacoEditor = React.lazy(() => import('components/MonacoEditor'));
+const CodeMirrorEditor = React.lazy(() => import('components/CodeMirrorEditor'));
 
 const JupyterLabModalComponent: React.FC<Props> = ({ workspace }: Props) => {
   const [showFullConfig, setShowFullConfig] = useState(false);
@@ -308,13 +308,7 @@ const JupyterLabFullConfig: React.FC<FullConfigProps> = ({
               },
             },
           ]}>
-          <MonacoEditor
-            height="40vh"
-            options={{
-              wordWrap: 'on',
-              wrappingIndent: 'indent',
-            }}
-          />
+          <CodeMirrorEditor height="40vh" syntax="yaml" value="" />
         </Form.Item>
       </React.Suspense>
       {configError && <Alert message={configError} type="error" />}

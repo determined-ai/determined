@@ -71,7 +71,7 @@ vi.mock('services/api', () => ({
   getUserSetting: () => Promise.resolve({ settings: [] }),
 }));
 
-vi.mock('components/MonacoEditor', () => ({
+vi.mock('components/CodeMirrorEditor', () => ({
   __esModule: true,
   default: () => <></>,
 }));

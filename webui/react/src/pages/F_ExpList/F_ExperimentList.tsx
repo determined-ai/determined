@@ -24,6 +24,7 @@ import {
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 
+import ComparisonView from './ComparisonView';
 import css from './F_ExperimentList.module.scss';
 import { F_ExperimentListSettings, settingsConfigForProject } from './F_ExperimentList.settings';
 import { Error, Loading, NoExperiments } from './glide-table/exceptions';
@@ -332,6 +333,25 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     };
   }, []);
 
+  const handleToggleComparisonView = useCallback(() => {
+    updateSettings({ compare: !settings.compare });
+  }, [settings.compare, updateSettings]);
+
+  const handleCompareWidthChange = useCallback(
+    (width: number) => {
+      updateSettings({ compareWidth: width });
+    },
+    [updateSettings],
+  );
+
+  const selectedExperiments: ExperimentWithTrial[] = useMemo(() => {
+    if (selectedExperimentIds.length === 0) return [];
+    const selectedIdSet = new Set(selectedExperimentIds);
+    return Loadable.filterNotLoaded(experiments, (experiment) =>
+      selectedIdSet.has(experiment.experiment.id),
+    );
+  }, [experiments, selectedExperimentIds]);
+
   return (
     <>
       <TableActionBar
@@ -349,6 +369,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         setIsOpenFilter={onIsOpenFilterChange}
         setVisibleColumns={setVisibleColumns}
         sorts={sorts}
+        toggleComparisonView={handleToggleComparisonView}
         total={total}
         onAction={handleOnAction}
         onSortChange={onSortChange}
@@ -365,32 +386,38 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         ) : error ? (
           <Error />
         ) : (
-          <GlideTable
-            clearSelectionTrigger={clearSelectionTrigger}
-            colorMap={colorMap}
-            data={experiments}
-            dataTotal={Loadable.getOrElse(0, total)}
-            excludedExperimentIds={excludedExperimentIds}
-            formStore={formStore}
-            handleScroll={handleScroll}
-            handleUpdateExperimentList={handleUpdateExperimentList}
-            height={height - 2 * parseInt(getCssVar('--theme-stroke-width'))}
-            page={page}
-            project={project}
-            projectColumns={projectColumns}
-            scrollPositionSetCount={scrollPositionSetCount}
-            selectAll={selectAll}
-            selectedExperimentIds={selectedExperimentIds}
-            setExcludedExperimentIds={setExcludedExperimentIds}
-            setSelectAll={setSelectAll}
-            setSelectedExperimentIds={setSelectedExperimentIds}
-            setSortableColumnIds={setVisibleColumns}
-            sortableColumnIds={settings.columns}
-            sorts={sorts}
-            onContextMenuComplete={onContextMenuComplete}
-            onIsOpenFilterChange={onIsOpenFilterChange}
-            onSortChange={onSortChange}
-          />
+          <ComparisonView
+            initialWidth={settings.compareWidth}
+            open={settings.compare}
+            selectedExperiments={selectedExperiments}
+            onWidthChange={handleCompareWidthChange}>
+            <GlideTable
+              clearSelectionTrigger={clearSelectionTrigger}
+              colorMap={colorMap}
+              data={experiments}
+              dataTotal={Loadable.getOrElse(0, total)}
+              excludedExperimentIds={excludedExperimentIds}
+              formStore={formStore}
+              handleScroll={handleScroll}
+              handleUpdateExperimentList={handleUpdateExperimentList}
+              height={height - 2 * parseInt(getCssVar('--theme-stroke-width'))}
+              page={page}
+              project={project}
+              projectColumns={projectColumns}
+              scrollPositionSetCount={scrollPositionSetCount}
+              selectAll={selectAll}
+              selectedExperimentIds={selectedExperimentIds}
+              setExcludedExperimentIds={setExcludedExperimentIds}
+              setSelectAll={setSelectAll}
+              setSelectedExperimentIds={setSelectedExperimentIds}
+              setSortableColumnIds={setVisibleColumns}
+              sortableColumnIds={settings.columns}
+              sorts={sorts}
+              onContextMenuComplete={onContextMenuComplete}
+              onIsOpenFilterChange={onIsOpenFilterChange}
+              onSortChange={onSortChange}
+            />
+          </ComparisonView>
         )}
       </div>
     </>

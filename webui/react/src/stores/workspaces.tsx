@@ -11,6 +11,8 @@ import {
 } from 'services/api';
 import { V1PostWorkspaceRequest } from 'services/api-ts-sdk';
 import { GetWorkspacesParams } from 'services/types';
+import { isEqual } from 'shared/utils/data';
+import { alphaNumericSorter } from 'shared/utils/sort';
 import { Workspace } from 'types';
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
@@ -34,12 +36,25 @@ class WorkspaceStore extends PollingStore {
     });
   });
 
-  public getWorkspace(id?: number): Observable<Loadable<Workspace>> {
+  public readonly mutables = this.#loadableWorkspaces.select((loadable) => {
+    return Loadable.quickMatch(loadable, NotLoaded, (workspaces) => {
+      return Loaded(
+        workspaces
+          .filter((workspace) => !workspace.immutable)
+          .sort((a, b) => alphaNumericSorter(a.name, b.name)),
+      );
+    });
+  });
+
+  public getWorkspace(id: number | Loadable<number>): Observable<Loadable<Workspace | null>> {
     return this.workspaces.select((loadable) => {
-      return Loadable.quickMatch(loadable, NotLoaded, (workspaces) => {
-        const workspace = workspaces.find((workspace) => workspace.id === id);
-        return workspace ? Loaded(workspace) : NotLoaded;
-      });
+      const loadableID = Loadable.isLoadable(id) ? id : Loaded(id);
+      return Loadable.quickMatch(loadableID, NotLoaded, (wid) =>
+        Loadable.quickMatch(loadable, NotLoaded, (workspaces) => {
+          const workspace = workspaces.find((workspace) => workspace.id === wid);
+          return workspace ? Loaded(workspace) : Loaded(null);
+        }),
+      );
     });
   }
 
@@ -120,7 +135,20 @@ class WorkspaceStore extends PollingStore {
         .then((response) => {
           // Prevents unnecessary re-renders.
           if (!force && this.#loadableWorkspaces.get() !== NotLoaded) return;
-          this.#loadableWorkspaces.set(Loaded(response.workspaces));
+
+          const currentWorkspaces = Loadable.getOrElse([], this.#loadableWorkspaces.get());
+          let workspacesChanged = currentWorkspaces.length === response.workspaces.length;
+          if (!workspacesChanged) {
+            response.workspaces.forEach((wspace, idx) => {
+              if (!isEqual(wspace, currentWorkspaces[idx])) {
+                workspacesChanged = true;
+              }
+            });
+          }
+
+          if (workspacesChanged) {
+            this.#loadableWorkspaces.set(Loaded(response.workspaces));
+          }
         })
         .catch(handleError);
     }

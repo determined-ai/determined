@@ -42,7 +42,7 @@ import userStore from 'stores/users';
 import workspaceStore from 'stores/workspaces';
 import { Metadata, ModelVersion, ModelVersions, Note } from 'types';
 import handleError from 'utils/error';
-import { Loadable } from 'utils/loadable';
+import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 
 import settingsConfig, {
@@ -71,7 +71,7 @@ const ModelDetails: React.FC = () => {
   const workspaces = useObservable(workspaceStore.workspaces);
   const workspace = Loadable.getOrElse(
     undefined,
-    useObservable(workspaceStore.getWorkspace(model?.model.workspaceId)),
+    useObservable(workspaceStore.getWorkspace(model ? Loaded(model.model.workspaceId) : NotLoaded)),
   );
 
   const { canModifyModel, canModifyModelVersion, loading: rbacLoading } = usePermissions();
@@ -432,7 +432,7 @@ const ModelDetails: React.FC = () => {
         <ModelHeader
           fetchModel={fetchModel}
           model={model.model}
-          workspace={workspace}
+          workspace={workspace || undefined}
           onSwitchArchive={switchArchive}
           onUpdateTags={saveModelTags}
         />

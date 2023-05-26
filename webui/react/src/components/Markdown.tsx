@@ -8,7 +8,7 @@ import Spinner from 'shared/components/Spinner/Spinner';
 
 import css from './Markdown.module.scss';
 
-const MonacoEditor = React.lazy(() => import('components/MonacoEditor'));
+const CodeMirrorEditor = React.lazy(() => import('components/CodeMirrorEditor'));
 
 interface Props {
   disabled?: boolean;
@@ -61,20 +61,15 @@ const Markdown: React.FC<Props> = ({
                   <Spinner tip="Loading text editor..." />
                 </div>
               }>
-              <MonacoEditor
-                defaultValue={markdown}
-                height={resize.height - 420}
-                language="markdown"
-                options={{
-                  folding: false,
-                  hideCursorInOverviewRuler: true,
-                  lineDecorationsWidth: 8,
-                  lineNumbersMinChars: 4,
-                  occurrencesHighlight: false,
-                  quickSuggestions: false,
-                  renderLineHighlight: 'none',
-                  wordWrap: 'on',
+              <CodeMirrorEditor
+                basicSetup={{
+                  autocompletion: false,
+                  foldGutter: false,
+                  highlightActiveLineGutter: false,
                 }}
+                height={`${resize.height - 420}px`}
+                syntax="markdown"
+                value={markdown}
                 width="100%"
                 onChange={onChange}
               />
