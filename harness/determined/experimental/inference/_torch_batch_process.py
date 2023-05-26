@@ -128,14 +128,14 @@ class TorchBatchProcessor(metaclass=abc.ABCMeta):
     def process_batch(self, batch, batch_idx) -> None:
         pass
 
-    def run_before_checkpoint(self) -> None:
+    def on_checkpoint_start(self) -> None:
         """
         Overwrite this function to run certain logic before checkpointing
         This function will be called right before each checkpoint.
         """
         pass
 
-    def clean_up(self) -> None:
+    def on_finish(self) -> None:
         """
         This function will be called right before exiting after completing iteration
         over dataset
@@ -270,7 +270,7 @@ def torch_batch_process(
     batch_processor_cls: Type[TorchBatchProcessor],
     dataset: Dataset,
     batch_size: Optional[int] = None,
-    iterate_length: Optional[int] = None,
+    max_batches: Optional[int] = None,
     checkpoint_interval: int = 5,
     dataloader_kwargs: Dict[str, Any] = {},
 ):
@@ -279,6 +279,9 @@ def torch_batch_process(
         (1) Set up necessary variables to run batch processing
         """
 
+        # Validate argument inputs
+        if checkpoint_interval <= 0:
+            raise ValueError("checkpoint_interval should be a positive integer")
         _validate_dataloader_kwargs(dataloader_kwargs, batch_size)
 
         if batch_size is None:
@@ -341,8 +344,8 @@ def torch_batch_process(
         # they would hang forever as other workers never hit that last batch_idx.
         # To avoid the issue, we calculate and take the ceiling of the iteration count to ensure
         # all workers iterate for the same number of times.
-        max_batch = math.ceil(dataset_len / batch_size / total_worker)
-        iterate_length = _validate_iterate_length(iterate_length, max_batch)
+        dist_dataset_batch_count = math.ceil(dataset_len / batch_size / total_worker)
+        iterate_length = _validate_iterate_length(max_batches, dist_dataset_batch_count)
 
         last_checkpoint_idx = 0
         batch_idx = skip
@@ -361,7 +364,7 @@ def torch_batch_process(
             # Checkpoint and check preemption
             if (batch_idx + 1) % checkpoint_interval == 0:
                 logging.info(f"Completed steps:  {steps_completed} and checkpointing")
-                per_batch_processor.run_before_checkpoint()
+                per_batch_processor.on_checkpoint_start()
                 _synchronize_and_checkpoint(
                     core_context, steps_completed, rank, default_output_uuid
                 )
@@ -382,7 +385,7 @@ def torch_batch_process(
         (3) Finish up after batch processing
         """
         if batch_idx > last_checkpoint_idx:
-            per_batch_processor.run_before_checkpoint()
+            per_batch_processor.on_checkpoint_start()
             logging.info(f"Completed steps:  {steps_completed} and checkpointing")
             _synchronize_and_checkpoint(core_context, iterate_length, rank, default_output_uuid)
 
@@ -390,7 +393,7 @@ def torch_batch_process(
         # Finish any tensorboard uploads remaining
         core_context._tensorboard_manager.sync()
 
-        per_batch_processor.clean_up()
+        per_batch_processor.on_finish()
 
         # If user has used default storage, print out the default storage path
         if rank == 0 and batch_processor_context._use_default_storage:
