@@ -4,7 +4,9 @@ import { useSearchParams } from 'react-router-dom';
 
 import { globalStorage } from 'globalStorage';
 import { routeAll } from 'routes/utils';
+import { getCurrentUser } from 'services/api';
 import { updateDetApi } from 'services/apiConfig';
+import { isAuthFailure } from 'shared/utils/service';
 import authStore, { AUTH_COOKIE_KEY } from 'stores/auth';
 import determinedStore from 'stores/determinedInfo';
 import { getCookie } from 'utils/browser';
@@ -24,7 +26,7 @@ const useAuthCheck = (): (() => void) => {
     routeAll(authUrl);
   }, [info.externalLoginUri]);
 
-  const checkAuth = useCallback((): void => {
+  const checkAuth = useCallback(async (): Promise<void> => {
     /*
      * Check for the auth token from the following sources:
      *   1 - query param jwt from external authentication.
@@ -50,7 +52,17 @@ const useAuthCheck = (): (() => void) => {
         authStore.setAuthChecked();
       });
     } else if (info.externalLoginUri) {
-      redirectToExternalSignin();
+      try {
+        await getCurrentUser({});
+      } catch (e) {
+        if (isAuthFailure(e)) {
+          authStore.setAuth({ isAuthenticated: false });
+          redirectToExternalSignin();
+        }
+        return;
+      }
+      authStore.setAuth({ isAuthenticated: true });
+      authStore.setAuthChecked();
     } else {
       authStore.setAuthChecked();
     }

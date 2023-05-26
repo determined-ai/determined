@@ -461,6 +461,7 @@ func getExperimentColumns(q *bun.SelectQuery) *bun.SelectQuery {
 		ColumnExpr("e.config->>'labels' AS labels").
 		ColumnExpr("proto_time(e.start_time) AS start_time").
 		ColumnExpr("proto_time(e.end_time) AS end_time").
+		ColumnExpr("extract(seconds FROM coalesce(e.end_time, now()) - e.start_time)::int AS duration").
 		ColumnExpr(exputil.ProtoStateDBCaseString(experimentv1.State_value, "e.state", "state",
 			"STATE_")).
 		Column("e.archived").
@@ -2030,6 +2031,7 @@ func sortExperiments(sortString *string, experimentQuery *bun.SelectQuery) error
 		"id":              "id",
 		"description":     "description",
 		"name":            "name",
+		"searcherType":    "searcher_type",
 		"startTime":       "e.start_time",
 		"endTime":         "e.end_time",
 		"state":           "e.state",
@@ -2041,6 +2043,7 @@ func sortExperiments(sortString *string, experimentQuery *bun.SelectQuery) error
 		"projectId":       "project_id",
 		"checkpointSize":  "checkpoint_size",
 		"checkpointCount": "checkpoint_count",
+		"duration":        "duration",
 		"searcherMetricsVal": `(
 			SELECT
 				searcher_metric_value

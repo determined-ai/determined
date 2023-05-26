@@ -89,6 +89,7 @@ interface Props {
   selectedExperimentIds: number[];
   handleUpdateExperimentList: (action: BatchAction, successfulIds: number[]) => void;
   setVisibleColumns: (newColumns: string[]) => void;
+  toggleComparisonView?: () => void;
   total: Loadable<number>;
   formStore: FilterFormStore;
   setIsOpenFilter: (value: boolean) => void;
@@ -117,6 +118,7 @@ const TableActionBar: React.FC<Props> = ({
   isOpenFilter,
   expListView,
   setExpListView,
+  toggleComparisonView,
 }) => {
   const permissions = usePermissions();
   const [batchAction, setBatchAction] = useState<BatchAction>();
@@ -314,51 +316,52 @@ const TableActionBar: React.FC<Props> = ({
   const handleAction = useCallback((key: string) => handleBatchAction(key), [handleBatchAction]);
 
   return (
-    <>
-      <Columns>
-        <Column>
-          <Space className={css.base}>
-            <TableFilter
-              formStore={formStore}
-              isOpenFilter={isOpenFilter}
-              loadableColumns={projectColumns}
-              setIsOpenFilter={setIsOpenFilter}
-            />
-            <MultiSortMenu columns={projectColumns} sorts={sorts} onChange={onSortChange} />
-            <ColumnPickerMenu
-              initialVisibleColumns={initialVisibleColumns}
-              projectColumns={projectColumns}
-              setVisibleColumns={setVisibleColumns}
-            />
-            {(selectAll || selectedExperimentIds.length > 0) && (
-              <Dropdown menu={editMenuItems} onClick={handleAction}>
-                <Button icon={<Icon name="pencil" title="Edit" />}>
-                  Edit (
-                  {selectAll
-                    ? Loadable.isLoaded(total)
-                      ? (total.data - (excludedExperimentIds?.size ?? 0)).toLocaleString()
-                      : 'All'
-                    : selectedExperimentIds.length}
-                  )
-                </Button>
-              </Dropdown>
-            )}
-          </Space>
-        </Column>
-        <Column align="right">
-          <Space>
-            <RadioGroup
-              iconOnly
-              options={[
-                { icon: 'grid', id: 'scroll', label: 'Scroll View' },
-                { icon: 'list', id: 'paged', label: 'Paged View' },
-              ]}
-              value={expListView}
-              onChange={(id) => setExpListView(id as ExpListView)}
-            />
-          </Space>
-        </Column>
-      </Columns>
+    <Columns>
+      <Column>
+        <Space className={css.base}>
+          <TableFilter
+            formStore={formStore}
+            isOpenFilter={isOpenFilter}
+            loadableColumns={projectColumns}
+            setIsOpenFilter={setIsOpenFilter}
+          />
+          <MultiSortMenu columns={projectColumns} sorts={sorts} onChange={onSortChange} />
+          <ColumnPickerMenu
+            initialVisibleColumns={initialVisibleColumns}
+            projectColumns={projectColumns}
+            setVisibleColumns={setVisibleColumns}
+          />
+          {(selectAll || selectedExperimentIds.length > 0) && (
+            <Dropdown menu={editMenuItems} onClick={handleAction}>
+              <Button icon={<Icon name="pencil" title="Edit" />}>
+                Edit (
+                {selectAll
+                  ? Loadable.isLoaded(total)
+                    ? (total.data - (excludedExperimentIds?.size ?? 0)).toLocaleString()
+                    : 'All'
+                  : selectedExperimentIds.length}
+                )
+              </Button>
+            </Dropdown>
+          )}
+        </Space>
+      </Column>
+      <Column align="right">
+        {!!toggleComparisonView && <Button onClick={toggleComparisonView}>Compare</Button>}
+      </Column>
+      <Column align="right">
+        <Space>
+          <RadioGroup
+            iconOnly
+            options={[
+              { icon: 'grid', id: 'scroll', label: 'Scroll View' },
+              { icon: 'list', id: 'paged', label: 'Paged View' },
+            ]}
+            value={expListView}
+            onChange={(id) => setExpListView(id as ExpListView)}
+          />
+        </Space>
+      </Column>
       {batchAction && (
         <BatchActionConfirmModal.Component
           batchAction={batchAction}
@@ -377,7 +380,7 @@ const TableActionBar: React.FC<Props> = ({
         sourceWorkspaceId={project.workspaceId}
         onSubmit={handleSubmitMove}
       />
-    </>
+    </Columns>
   );
 };
 

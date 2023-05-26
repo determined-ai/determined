@@ -484,6 +484,7 @@ export const mapV1Experiment = (
     config: ioToExperimentConfig(ioConfig),
     configRaw: data.config,
     description: data.description,
+    duration: data.duration,
     endTime: data.endTime as unknown as string,
     forkedFrom: data.forkedFrom,
     hyperparameters,

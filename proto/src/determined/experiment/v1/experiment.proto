@@ -147,6 +147,8 @@ message Experiment {
   optional int32 best_trial_id = 32;
   // Unmanaged experiments are detached.
   bool unmanaged = 40;
+  // Time in seconds which experiment ran or has been running.
+  optional int32 duration = 41;
 }
 
 // PatchExperiment is a partial update to an experiment with only id required.

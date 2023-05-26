@@ -1,7 +1,7 @@
 # type: ignore
 import os
 from pathlib import Path
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 import pytest
 import tensorflow as tf
@@ -10,12 +10,7 @@ from packaging import version
 import determined as det
 from determined import keras, workload
 from tests.experiment import utils  # noqa: I100
-from tests.experiment.fixtures import (  # noqa: I100
-    ancient_keras_ckpt,
-    tf_keras_one_var_model,
-    tf_keras_runtime_error,
-    tf_keras_xor_model,
-)
+from tests.experiment.fixtures import tf_keras_xor_model  # noqa: I100
 
 
 def test_executing_eagerly():
@@ -89,6 +84,8 @@ class TestKerasTrial:
     # The following unit tests are run with a specific trial implementation.
 
     def test_require_global_batch_size(self) -> None:
+        from tests.experiment.fixtures import tf_keras_one_var_model
+
         utils.ensure_requires_global_batch_size(tf_keras_one_var_model.OneVarTrial, self.hparams)
 
     def test_xor_training_with_metrics(self) -> None:
@@ -112,6 +109,8 @@ class TestKerasTrial:
 
     @pytest.mark.parametrize("test_checkpointing", [False, True])
     def test_one_var_training(self, test_checkpointing, tmp_path):
+        from tests.experiment.fixtures import tf_keras_one_var_model
+
         checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
         latest_checkpoint = None
         steps_completed = 0
@@ -311,6 +310,8 @@ class TestKerasTrial:
         controller.run()
 
     def test_callbacks(self):
+        from tests.experiment.fixtures import tf_keras_one_var_model
+
         def make_workloads() -> workload.Stream:
             trainer = utils.TrainAndValidate()
 
@@ -341,6 +342,8 @@ class TestKerasTrial:
 
     @pytest.mark.parametrize("ckpt_ver", ["0.12.3", "0.13.7", "0.13.8"])
     def test_ancient_checkpoints(self, ckpt_ver):
+        from tests.experiment.fixtures import ancient_keras_ckpt
+
         checkpoint_dir = Path(utils.fixtures_path("ancient-checkpoints"))
         latest_checkpoint = f"{ckpt_ver}-keras"
 
@@ -495,6 +498,8 @@ def test_checkpoint_loading(ckpt_ver):
 
 
 def test_surface_native_error():
+    from tests.experiment.fixtures import tf_keras_runtime_error
+
     def make_workloads() -> workload.Stream:
         trainer = utils.TrainAndValidate()
 
@@ -509,3 +514,81 @@ def test_surface_native_error():
     )
     with pytest.raises(ValueError, match="incompatible"):
         controller.run()
+
+
+@pytest.mark.tensorflow
+@pytest.mark.tf1_cpu
+def test_rng_restore(tmp_path: Path):
+    checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
+    latest_checkpoint = None
+    steps_completed = 0
+
+    def make_checkpoint() -> workload.Stream:
+        trainer = utils.TrainAndValidate()
+
+        yield from trainer.send(steps=1, validation_freq=1, scheduling_unit=1)
+
+        interceptor = workload.WorkloadResponseInterceptor()
+        yield from interceptor.send(workload.checkpoint_workload())
+        nonlocal latest_checkpoint, steps_completed
+        latest_checkpoint = interceptor.metrics_result()["uuid"]
+        steps_completed = trainer.get_steps_completed()
+
+    def make_workloads_with_metrics(metrics_storage: List) -> workload.Stream:
+        trainer = utils.TrainAndValidate()
+
+        yield from trainer.send(steps=5, validation_freq=1, scheduling_unit=1)
+        _, validation_metrics = trainer.result()
+
+        metrics_storage += validation_metrics
+
+    config_base = utils.load_config(utils.fixtures_path("keras_no_op/const.yaml"))
+    hparams = config_base["hyperparameters"]
+
+    example_path = utils.fixtures_path("keras_no_op/model_def.py")
+    trial_class = utils.import_class_from_module("NoopKerasTrial", example_path)
+    trial_class._searcher_metric = "validation_error"
+
+    trial_B_metrics = []
+    trial_C_metrics = []
+
+    trial_A_controller = utils.make_trial_controller_from_trial_implementation(
+        trial_class=trial_class,
+        hparams=hparams,
+        workloads=make_checkpoint(),
+        checkpoint_dir=checkpoint_dir,
+        trial_seed=325,
+    )
+
+    trial_A_controller.run()
+
+    # reset random seed after checkpointing
+    trial_A_controller._set_random_seeds(0)
+
+    trial_B_controller = utils.make_trial_controller_from_trial_implementation(
+        trial_class=trial_class,
+        hparams=hparams,
+        workloads=make_workloads_with_metrics(trial_B_metrics),
+        checkpoint_dir=checkpoint_dir,
+        latest_checkpoint=latest_checkpoint,
+        steps_completed=steps_completed,
+    )
+
+    trial_B_controller.run()
+
+    # reset random seed before rerun
+    trial_B_controller._set_random_seeds(1)
+
+    trial_C_controller = utils.make_trial_controller_from_trial_implementation(
+        trial_class=trial_class,
+        hparams=hparams,
+        workloads=make_workloads_with_metrics(trial_C_metrics),
+        checkpoint_dir=checkpoint_dir,
+        latest_checkpoint=latest_checkpoint,
+        steps_completed=steps_completed,
+    )
+
+    trial_C_controller.run()
+
+    assert len(trial_B_metrics) == len(trial_C_metrics) == 5
+    assert trial_B_metrics == trial_C_metrics
