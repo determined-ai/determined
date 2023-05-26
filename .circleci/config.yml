@@ -1796,7 +1796,8 @@ jobs:
     # machine:
     #   image: <<pipeline.parameters.gpu-machine-image>>
     docker:
-      - image: cimg/base:2021.11
+      # - image: cimg/base:2021.11
+      - image: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.21.2
     resource_class: determined-ai/container-runner-gpu
     steps:
       - checkout
