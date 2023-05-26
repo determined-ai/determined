@@ -2,37 +2,29 @@
   display: flex;
   overflow: hidden;
 
-  .leftBox {
-    /* Use box-sizing so that element's outerwidth will match width property */
-    box-sizing: border-box;
+  & > * {
     flex: 0 0 auto;
   }
   .rightBox {
-    /* Use box-sizing so that element's outerwidth will match width property */
-    box-sizing: border-box;
-    flex: 0 1 auto;
+    display: none;
+    flex: 1 1 auto;
     width: 200px;
-
-    &.open {
-      flex: 1 1 auto;
-    }
   }
   .handle {
     cursor: col-resize;
     display: none;
-    flex: 0 0 auto;
     width: 17px;
 
-    &.open {
+    &::before {
+      background: var(--theme-stage-border);
+      content: '';
       display: block;
+      height: 100%;
+      margin: 0 auto;
+      width: var(--theme-stroke-width);
     }
   }
-  .handle::before {
-    background: var(--theme-stage-border);
-    content: '';
+  &.open > * {
     display: block;
-    height: 100%;
-    margin: 0 auto;
-    width: var(--theme-stroke-width);
   }
 }
