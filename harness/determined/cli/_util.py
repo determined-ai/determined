@@ -4,6 +4,7 @@ import sys
 from typing import Any, Callable, Dict, List, Sequence
 
 import termcolor
+import urllib3
 
 from determined.cli import errors, render
 from determined.common import api, declarative_argparse, util
