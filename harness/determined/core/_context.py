@@ -2,6 +2,7 @@ import logging
 import pathlib
 import signal
 import sys
+import threading
 import traceback
 from typing import Any, Dict, Optional, Union
 
@@ -81,7 +82,9 @@ def _install_stacktrace_on_sigusr1() -> None:
         if callable(old_handler):
             old_handler(signum, frame)
 
-    old_handler = signal.signal(signal.SIGUSR1, stacktrace_on_sigusr1)
+    # Signal handlers can only be registered on main threads.
+    if threading.current_thread() is threading.main_thread():
+        old_handler = signal.signal(signal.SIGUSR1, stacktrace_on_sigusr1)
 
 
 def _get_storage_manager(
