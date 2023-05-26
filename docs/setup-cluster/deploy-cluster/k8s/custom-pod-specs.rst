@@ -188,6 +188,9 @@ When a custom pod spec is provided for a task, it will merge with the default po
 ``resourcePools.task_container_defaults`` is not specified) according to Kubernetes `strategic merge
 patch
 <https://kubernetes.io/docs/tasks/manage-kubernetes-objects/update-api-object-kubectl-patch/#use-a-strategic-merge-patch-to-update-a-deployment>`__.
+Determined does not support setting the strategic merge patch strategy, so the section titled "Use
+strategic merge patch to update a Deployment using the retainKeys strategy" in the linked Kubernetes
+docs will not work.
 
 Some fields in pod specs are merged by values of items in lists. Volumes for example are merged by
 volume name. If for some reason you would want to remove a volume mount specific in the default task
