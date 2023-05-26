@@ -3,6 +3,7 @@ import pathlib
 import traceback
 from datetime import datetime
 
+import deepspeed
 import megatron.training as megatron_train
 import megatron.utils as megatron_utils
 import torch
@@ -18,7 +19,6 @@ from megatron import mpu
 from megatron.checkpointing import load_checkpoint, save_checkpoint
 from megatron.data.data_utils import build_datasets_from_neox_args
 
-import deepspeed
 from determined import LOG_FORMAT, InvalidHP
 from determined.pytorch import DataLoader
 from determined.pytorch.deepspeed import DeepSpeedTrial, DeepSpeedTrialContext, ModelParallelUnit
