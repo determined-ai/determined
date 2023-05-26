@@ -2625,6 +2625,15 @@ const DesignKit: React.FC = () => {
     actions.hideChrome();
   }, [actions]);
 
+  useEffect(() => {
+    // move to the specified anchor tag in the url after refreshing page
+    if (window.location.hash) {
+      const hashSave = window.location.hash;
+      window.location.hash = ''; // clear hash first
+      window.location.hash = hashSave; // set hash again
+    }
+  }, []);
+
   return (
     <Page bodyNoPadding breadcrumb={[]} docTitle="Design Kit">
       <div className={css.base}>
