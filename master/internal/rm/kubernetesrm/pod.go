@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/determined-ai/determined/master/internal/config"
+	"github.com/docker/docker/pkg/stdcopy"
 
 	"github.com/pkg/errors"
 
@@ -228,8 +229,14 @@ func (p *pod) Receive(ctx *actor.Context) error {
 }
 
 func (p *pod) startPodLogStreamer(ctx *actor.Context) error {
-	_, err := newPodLogStreamer(p.podInterface, p.podName, func(log sproto.ContainerLog) {
-		p.receiveContainerLog(ctx, log)
+	_, err := newPodLogStreamer(p.podInterface, p.podName, func(log []byte) {
+		p.receiveContainerLog(ctx, sproto.ContainerLog{
+			Timestamp: time.Now().UTC(),
+			RunMessage: &aproto.RunMessage{
+				Value:   string(log),
+				StdType: stdcopy.Stdout,
+			},
+		})
 	})
 	return err
 }

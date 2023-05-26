@@ -3,9 +3,7 @@ package kubernetesrm
 import (
 	"context"
 	"io"
-	"time"
 
-	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/sirupsen/logrus"
 
 	"github.com/pkg/errors"
@@ -13,21 +11,19 @@ import (
 	k8sV1 "k8s.io/api/core/v1"
 	typedV1 "k8s.io/client-go/kubernetes/typed/core/v1"
 
-	"github.com/determined-ai/determined/master/internal/sproto"
-	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 type podLogStreamer struct {
 	syslog    *logrus.Entry
 	logReader io.ReadCloser
-	callback  func(log sproto.ContainerLog)
+	callback  func(log []byte)
 }
 
 func newPodLogStreamer(
 	podInterface typedV1.PodInterface,
 	podName string,
-	callback func(log sproto.ContainerLog),
+	callback func(log []byte),
 ) (*podLogStreamer, error) {
 	logs := podInterface.GetLogs(podName, &k8sV1.PodLogOptions{
 		Follow:     true,
@@ -48,13 +44,7 @@ func newPodLogStreamer(
 
 // Write implements the io.Writer interface.
 func (p *podLogStreamer) Write(log []byte) (n int, err error) {
-	p.callback(sproto.ContainerLog{
-		Timestamp: time.Now().UTC(),
-		RunMessage: &aproto.RunMessage{
-			Value:   string(log),
-			StdType: stdcopy.Stdout,
-		},
-	})
+	p.callback(log)
 	return len(log), nil
 }
 
