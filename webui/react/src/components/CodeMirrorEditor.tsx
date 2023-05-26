@@ -1,7 +1,6 @@
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
 import { python } from '@codemirror/lang-python';
 import { StreamLanguage } from '@codemirror/language';
-import { languages } from '@codemirror/language-data';
 import { yaml } from '@codemirror/legacy-modes/mode/yaml';
 import ReactCodeMirror, { ReactCodeMirrorProps } from '@uiw/react-codemirror';
 import React from 'react';
@@ -14,7 +13,7 @@ interface Props extends ReactCodeMirrorProps {
 }
 
 const langs = {
-  markdown: () => markdown({ base: markdownLanguage, codeLanguages: languages }),
+  markdown: () => markdown({ base: markdownLanguage }),
   python,
   yaml: () => StreamLanguage.define(yaml),
 };
