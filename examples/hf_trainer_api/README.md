@@ -3,7 +3,7 @@
 The examples in this directory demonstrate how to use Determined callback with Hugging Face Trainer API to
 enable Determined's distributed training, fault tolerance, checkpointing and metrics reporting.
 
-The main callback is located in `determined.integrations.huggingface` and the associated `DetCallback` object is used
+The main callback is located in `determined.transformers` and the associated `DetCallback` object is used
 in model code as in:
 
 ```

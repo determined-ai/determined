@@ -307,7 +307,6 @@ class DeepSpeedTrialController(det.TrialController):
             # and never epochs or other units. Double check.
             while True:
                 with dsat.dsat_reporting_context(core_context=self.context._core, op=op):
-                    # TODO: verify we're using `step_id` as intended.
                     _ = self._train_for_step(
                         step_id=self.steps_completed + 1,
                         num_batches=1,

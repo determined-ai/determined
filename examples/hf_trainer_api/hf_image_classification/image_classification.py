@@ -51,8 +51,8 @@ from transformers.trainer_utils import get_last_checkpoint
 from transformers.utils.versions import require_version
 
 import determined as det
-from determined.integrations.huggingface import DetCallback
 from determined.pytorch import dsat
+from determined.transformers import DetCallback
 
 """ Fine-tuning a 🤗 Transformers model for image classification"""
 

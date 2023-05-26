@@ -80,7 +80,7 @@ def main(core_context: det.core.Context) -> None:
     cluster_info = det.get_cluster_info()
     assert (
         cluster_info and cluster_info._trial_info
-    ), "Could not find `cluster_info`! The DSAT module must be run on a Determined Cluster!"
+    ), "Could not find `cluster_info`, the DSAT module must be run on a Determined Cluster"
     args.experiment_id = cluster_info._trial_info.experiment_id
 
     exp_config = get_custom_dsat_exp_conf_from_args(args)

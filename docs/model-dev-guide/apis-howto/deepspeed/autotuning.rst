@@ -167,8 +167,7 @@ HuggingFace Trainer
 ===================
 
 You can also use Determined's DeepSpeed Autotune with the HuggingFace (HF) Trainer and Determined's
-:class:`~determined.integrations.huggingface.DetCallback` callback object to optimize your DeepSpeed
-parameters.
+:class:`~determined.transformers.DetCallback` callback object to optimize your DeepSpeed parameters.
 
 Similar to the previous case (Core API), you need to add a ``deepspeed_config`` field to the
 ``hyperparameters`` section of your experiment configuration file, specifying the relative path to
@@ -187,7 +186,7 @@ relevant code:
 
 .. code:: python
 
-   from determined.integrations.huggingface import DetCallback
+   from determined.transformers import DetCallback
    from determined.pytorch import dsat
    from transformers import HfArgumentParser,Trainer, TrainingArguments,
 
