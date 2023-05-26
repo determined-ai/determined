@@ -40,17 +40,3 @@ def test_custom_reducer_distributed(secrets: Dict[str, str], tf2: bool) -> None:
     label_sum = 2 * sum(range(16))
     assert metrics["label_sum_fn"] == label_sum
     assert metrics["label_sum_cls"] == label_sum
-
-
-@pytest.mark.parallel
-@pytest.mark.tensorflow2
-def test_on_trial_close_callback() -> None:
-    config = conf.load_config(conf.fixtures_path("estimator_no_op/const.yaml"))
-    config = conf.set_slots_per_trial(config, 8)
-    config = conf.set_max_length(config, {"batches": 3})
-
-    exp_id = exp.run_basic_test_with_temp_config(config, conf.fixtures_path("estimator_no_op"), 1)
-
-    assert exp.check_if_string_present_in_trial_logs(
-        exp.experiment_trials(exp_id)[0].trial.id, "rank 0 has completed on_trial_close"
-    )

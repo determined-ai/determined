@@ -23,6 +23,8 @@ class NoopPyTorchTrial(pytorch.PyTorchTrial):
     def __init__(self, context: pytorch.PyTorchTrialContext):
         self.context = context
         self.dataset_len = context.get_hparam("dataset_len")
+        self.metrics_callback = MetricsCallback()
+        self.checkpoint_callback = CheckpointCallback()
 
         model = nn.Linear(1, 1, False)
         model.weight.data.fill_(0)
@@ -74,3 +76,22 @@ class NoopPyTorchTrial(pytorch.PyTorchTrial):
         return pytorch.DataLoader(
             OnesDataset(self.dataset_len), batch_size=self.context.get_per_slot_batch_size()
         )
+
+    def build_callbacks(self) -> Dict[str, pytorch.PyTorchCallback]:
+        return {"metrics": self.metrics_callback, "checkpoint": self.checkpoint_callback}
+
+
+class MetricsCallback(pytorch.PyTorchCallback):
+    def __init__(self):
+        self.validation_metrics = []
+
+    def on_validation_end(self, metrics: Dict[str, Any]) -> None:
+        self.validation_metrics.append(metrics)
+
+
+class CheckpointCallback(pytorch.PyTorchCallback):
+    def __init__(self):
+        self.uuids = []
+
+    def on_checkpoint_upload_end(self, uuid: str) -> None:
+        self.uuids.append(uuid)
