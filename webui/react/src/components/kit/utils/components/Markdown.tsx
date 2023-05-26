@@ -8,7 +8,9 @@ import useResize from 'components/kit/utils/hooks/useResize';
 
 import css from './Markdown.module.scss';
 
-const CodeMirrorEditor = React.lazy(() => import('components/kit/utils/components/CodeMirrorEditor'));
+const CodeMirrorEditor = React.lazy(
+  () => import('components/kit/utils/components/CodeMirrorEditor'),
+);
 
 interface Props {
   disabled?: boolean;
