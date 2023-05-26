@@ -62,7 +62,6 @@ class User:
         new_password = api.salt_and_hash(new_password)
         patch_user = bindings.v1PatchUser(password=new_password, isHashed=True)
         bindings.patch_PatchUser(self._session, body=patch_user, userId=self.user_id)
-        self.reload()
 
     def link_with_agent(
         self,

@@ -12,6 +12,22 @@ class ModelVersion:
     """
     A ModelVersion object includes a Checkpoint,
     and can be fetched using ``model.get_version()``.
+
+    Attributes:
+        session: HTTP request session.
+        model_version: Model version number.
+        model_name: Name of the parent model.
+        checkpoint: (Mutable) Checkpoint associated with this model version.
+        metadata: (Mutable) Metadata of this model version.
+        name: (Mutable) Human-friendly name of this model version.
+        model_id: (Mutable) Database ID of the parent model.
+        model_version_id: (Mutable) Database ID of this model version.
+
+    Note:
+        All attributes are cached by default.
+
+        Mutable properties may be changed by methods that update these values either automatically
+        (eg. `set_name`, `set_notes`) or explicitly with `reload()`.
     """
 
     def __init__(

@@ -40,6 +40,18 @@ class Experiment:
 
     Helper class that supports querying the set of checkpoints associated with an
     experiment.
+
+    Attributes:
+        id: ID of experiment object in database.
+        session: HTTP request session.
+        config: (Mutable) Experiment config for the experiment.
+        state: (Mutable) State of the experiment.
+
+    Note:
+        All attributes are cached by default.
+
+        The `config` and `state` attributes are mutable and may be changed by methods that update
+        these values, either automatically (eg. `wait()`) or explicitly with `reload()`.
     """
 
     def __init__(
