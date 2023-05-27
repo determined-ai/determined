@@ -2150,8 +2150,8 @@ service Determined {
   }
 
   // Unbind resource pool to workspace
-  rpc UnbindRPToWorkspace(UnbindRPToWorkspaceRequest)
-      returns (UnbindRPToWorkspaceResponse) {
+  rpc UnbindRPFromWorkspace(UnbindRPFromWorkspaceRequest)
+      returns (UnbindRPFromWorkspaceResponse) {
     option (google.api.http) = {
       get: "/api/v1/resource-pools/workspace-unbind"
     };

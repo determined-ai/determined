@@ -42,7 +42,7 @@ message BindRPToWorkspaceRequest {
 message BindRPToWorkspaceResponse {}
 
 // Unbind a resource pool to workspaces.
-message UnbindRPToWorkspaceRequest {
+message UnbindRPFromWorkspaceRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "resource_pool" ] }
   };
@@ -54,7 +54,7 @@ message UnbindRPToWorkspaceRequest {
 }
 
 // Unbind a resource pool to workspaces response.
-message UnbindRPToWorkspaceResponse {}
+message UnbindRPFromWorkspaceResponse {}
 
 // List all the workspace RP bindings.
 message ListWorkspaceRPBindingsRequest {
