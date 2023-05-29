@@ -8,7 +8,7 @@ environment:
   image:
     gpu: determinedai/environments:cuda-11.3-pytorch-1.10-deepspeed-0.8.3-gpu-0.22.1
 resources:
-  slots_per_trial: 8
+  slots_per_trial: 2
 searcher:
   name: single
   max_length:
