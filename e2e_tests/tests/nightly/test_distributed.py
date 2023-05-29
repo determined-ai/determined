@@ -362,15 +362,15 @@ def test_textual_inversion_stable_diffusion_generate() -> None:
 @pytest.mark.gpu_required
 @pytest.mark.deepspeed
 def test_hf_trainer_image_classification_deepspeed_autotuning() -> None:
-    test_dir = "hf_trainer_api/hf_image_classification"
-    config_path = conf.integrations_examples_path(f"{test_dir}/deepspeed.yaml")
+    test_dir = "hf_image_classification"
+    config_path = conf.hf_trainer_examples_path(f"{test_dir}/deepspeed.yaml")
     config = conf.load_config(config_path)
     with tempfile.NamedTemporaryFile() as tf:
         with open(tf.name, "w") as f:
             yaml.dump(config, f)
         _ = exp.run_basic_autotuning_test(
             tf.name,
-            conf.integrations_examples_path(test_dir),
+            conf.hf_trainer_examples_path(test_dir),
             1,
             search_method_name="asha",
         )
@@ -380,15 +380,15 @@ def test_hf_trainer_image_classification_deepspeed_autotuning() -> None:
 @pytest.mark.gpu_required
 @pytest.mark.deepspeed
 def test_hf_trainer_language_modeling_deepspeed_autotuning() -> None:
-    test_dir = "hf_trainer_api/hf_language_modeling"
-    config_path = conf.integrations_examples_path(f"{test_dir}/deepspeed.yaml")
+    test_dir = "hf_language_modeling"
+    config_path = conf.hf_trainer_examples_path(f"{test_dir}/deepspeed.yaml")
     config = conf.load_config(config_path)
     with tempfile.NamedTemporaryFile() as tf:
         with open(tf.name, "w") as f:
             yaml.dump(config, f)
         _ = exp.run_basic_autotuning_test(
             tf.name,
-            conf.integrations_examples_path(test_dir),
+            conf.hf_trainer_examples_path(test_dir),
             1,
             search_method_name="binary",
         )
