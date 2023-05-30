@@ -640,7 +640,7 @@ commands:
         default: false
       deployment-type:
         type: string
-        default: simple
+        default: simple-rds
     steps:
       - run:
           name: Initialize extra arguments
@@ -739,7 +739,7 @@ commands:
         type: string
       deployment-type:
         type: string
-        default: simple
+        default: simple-rds
     steps:
       - set-cluster-id:
           cluster-id: <<parameters.cluster-id>>
