@@ -281,7 +281,6 @@ const CodeEditor: React.FC<Props> = ({
         <ReactCodeMirror
           basicSetup={getSyntaxHighlight() === 'markdown' ? MARKDOWN_CONFIG : undefined}
           extensions={[langs[getSyntaxHighlight()]()]}
-          height={height || '100%'}
           readOnly={readonly}
           theme={ui.darkLight === DarkLight.Dark ? 'dark' : 'light'}
           value={Loadable.getOrElse('', activeFile.content)}
