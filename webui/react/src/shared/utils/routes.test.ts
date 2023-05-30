@@ -119,8 +119,19 @@ describe('Routes Utilities', () => {
   });
 
   describe('openBlank', () => {
+    let originalWindowOpen: (
+      url?: string | URL,
+      target?: string,
+      features?: string,
+    ) => WindowProxy | null;
+
     beforeEach(() => {
+      originalWindowOpen = window.open;
       window.open = vi.fn();
+    });
+
+    afterEach(() => {
+      window.open = originalWindowOpen;
     });
 
     it('should direct to https://localhost:3000', () => {
