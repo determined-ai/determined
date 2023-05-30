@@ -1,12 +1,19 @@
 import { DownloadOutlined, FileOutlined } from '@ant-design/icons';
 import { Tree } from 'antd';
+import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
+import { python } from '@codemirror/lang-python';
+import { StreamLanguage } from '@codemirror/language';
+import { yaml } from '@codemirror/legacy-modes/mode/yaml';
 import React, { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
+import ReactCodeMirror from '@uiw/react-codemirror';
 
 import CodeMirrorEditor from 'components/CodeMirrorEditor';
 import Tooltip from 'components/kit/Tooltip';
 import Section from 'components/Section';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner';
+import useUI from 'shared/contexts/stores/UI';
+import { DarkLight } from 'shared/themes';
 import { ValueOf } from 'shared/types';
 import { ErrorType } from 'shared/utils/error';
 import { TreeNode } from 'types';
@@ -23,6 +30,8 @@ import './CodeEditor/index.scss';
 
 export type Props = {
   files: TreeNode[];
+  height?: string;
+  onChange?: (arg0: string) => void; // only use in single-file editing
   onSelectFile?: (arg0: string) => void;
   readonly?: boolean;
   selectedFilePath?: string;
@@ -86,6 +95,12 @@ const descForConfig = {
 const isConfig = (key: unknown): key is Config =>
   key === Config.Submitted || key === Config.Runtime;
 
+const langs = {
+  markdown: () => markdown({ base: markdownLanguage }),
+  python,
+  yaml: () => StreamLanguage.define(yaml),
+};
+
 /**
  * A component responsible to enable the user to view the code for a experiment.
  *
@@ -102,10 +117,11 @@ const isConfig = (key: unknown): key is Config =>
  * selectedFilePath: gives path to the file to set as activeFile;
  */
 
-const CodeEditor: React.FC<Props> = ({ files, onSelectFile, readonly, selectedFilePath }) => {
+const CodeEditor: React.FC<Props> = ({ files, height, onChange, onSelectFile, readonly, selectedFilePath }) => {
   const [pageError, setPageError] = useState<PageError>(PageError.None);
   const sortedFiles = useMemo(() => [...files].sort(sortTree), [files]);
   const [activeFile, setActiveFile] = useState<TreeNode | null>(sortedFiles[0] || null);
+  const { ui } = useUI();
 
   const viewMode = useMemo(() => (files.length === 1 ? 'editor' : 'split'), [files.length]);
   const editorMode = useMemo(() => {
@@ -250,11 +266,12 @@ const CodeEditor: React.FC<Props> = ({ files, onSelectFile, readonly, selectedFi
   } else if (activeFile) {
     fileContent =
       editorMode === 'codemirror' ? (
-        <CodeMirrorEditor
-          height="100%"
+        <ReactCodeMirror
+          extensions={[langs[getSyntaxHighlight()]()]}
           readOnly={readonly}
-          syntax={getSyntaxHighlight()}
+          theme={ui.darkLight === DarkLight.Dark ? 'dark' : 'light'}
           value={Loadable.getOrElse('', activeFile.content)}
+          onChange={onChange}
         />
       ) : (
         <Suspense fallback={<Spinner tip="Loading ipynb viewer..." />}>
@@ -264,7 +281,7 @@ const CodeEditor: React.FC<Props> = ({ files, onSelectFile, readonly, selectedFi
   }
 
   return (
-    <div className={classes.join(' ')}>
+    <div className={classes.join(' ')} style={{height}}>
       <div className={viewMode === 'editor' ? css.hideElement : undefined}>
         <DirectoryTree
           className={css.fileTree}
@@ -275,7 +292,7 @@ const CodeEditor: React.FC<Props> = ({ files, onSelectFile, readonly, selectedFi
           onSelect={handleSelectFile}
         />
       </div>
-      {!!activeFile?.key && (
+      {!!activeFile?.title && (
         <div className={css.fileDir}>
           <div className={css.fileInfo}>
             <div className={css.buttonContainer}>
