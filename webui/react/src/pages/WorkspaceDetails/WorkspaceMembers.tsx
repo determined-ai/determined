@@ -153,7 +153,7 @@ const WorkspaceMembers: React.FC<Props> = ({
 
   const tableSearchIcon = useCallback(() => <Icon name="search" size="tiny" title="Search" />, []);
 
-  const generateTableKey = useCallback((record: UserOrGroupWithRoleInfo) => {
+  const generateTableKey = useCallback((record: Readonly<UserOrGroupWithRoleInfo>) => {
     const roleId = record.roleAssignment.role.roleId;
     return isUserWithRoleInfo(record)
       ? `user-${record.userId}-${roleId}`
@@ -161,7 +161,7 @@ const WorkspaceMembers: React.FC<Props> = ({
   }, []);
 
   const columns = useMemo(() => {
-    const nameRenderer = (value: string, record: UserOrGroupWithRoleInfo) => {
+    const nameRenderer = (value: string, record: Readonly<UserOrGroupWithRoleInfo>) => {
       if (isUserWithRoleInfo(record)) {
         const member: User = {
           displayName: record.displayName,
@@ -206,7 +206,7 @@ const WorkspaceMembers: React.FC<Props> = ({
         isFiltered: (settings: unknown) => !!(settings as WorkspaceMembersSettings)?.name,
         key: 'name',
         render: nameRenderer,
-        sorter: (a: UserOrGroupWithRoleInfo, b: UserOrGroupWithRoleInfo) => {
+        sorter: (a: Readonly<UserOrGroupWithRoleInfo>, b: Readonly<UserOrGroupWithRoleInfo>) => {
           const aName = isUserWithRoleInfo(a) ? a.displayName || a.username : a.groupName ?? '';
           const bName = isUserWithRoleInfo(b) ? b.displayName || b.username : b.groupName ?? '';
           return alphaNumericSorter(aName, bName);

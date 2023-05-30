@@ -19,24 +19,24 @@ export function getDisplayName(
   return user?.displayName || user?.username || 'Unavailable';
 }
 
-export function isUser(userOrGroup: Readonly<UserOrGroup>): userOrGroup is User {
+export function isUser(userOrGroup: Readonly<UserOrGroup>): userOrGroup is Readonly<User> {
   return 'username' in userOrGroup || 'displayName' in userOrGroup;
 }
 
 export function isUserWithRoleInfo(
   userOrGroup: Readonly<UserOrGroupWithRoleInfo>,
-): userOrGroup is UserWithRoleInfo {
+): userOrGroup is Readonly<UserWithRoleInfo> {
   return 'userId' in userOrGroup;
 }
 
-export function getName(userOrGroup: UserOrGroup): string {
+export function getName(userOrGroup: Readonly<UserOrGroup>): string {
   if (isUser(userOrGroup)) {
     return getDisplayName(userOrGroup);
   }
   return userOrGroup?.name ?? '';
 }
 
-export const getIdFromUserOrGroup = (userOrGroup: UserOrGroup): number => {
+export const getIdFromUserOrGroup = (userOrGroup: Readonly<UserOrGroup>): number => {
   if (isUser(userOrGroup)) {
     const user = userOrGroup;
     return user.id;
