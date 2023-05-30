@@ -1,3 +1,5 @@
+.. _core-getting-started:
+
 #####################
  Core API User Guide
 #####################

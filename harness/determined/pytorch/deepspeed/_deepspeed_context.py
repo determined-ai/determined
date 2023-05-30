@@ -11,18 +11,7 @@ from deepspeed.runtime import config_utils
 import determined as det
 from determined import profiler, pytorch
 from determined.pytorch import deepspeed as det_ds
-
-
-def merge_dicts(base_dict: Dict[str, Any], source_dict: Dict[str, Any]) -> Dict[str, Any]:
-    for key, value in source_dict.items():
-        if key in base_dict:
-            if isinstance(value, dict):
-                base_dict[key] = merge_dicts(base_dict[key], value)
-            else:
-                base_dict[key] = value
-        else:
-            base_dict[key] = value
-    return base_dict
+from determined.util import merge_dicts
 
 
 def overwrite_deepspeed_config(

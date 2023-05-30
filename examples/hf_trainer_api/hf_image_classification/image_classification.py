@@ -19,14 +19,13 @@ import os
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional
+from typing import Any, Dict, Optional, Tuple
 
 import datasets
 import numpy as np
 import torch
 import transformers
 from datasets import load_dataset
-from det_callback import DetCallback
 from PIL import Image
 from torch.utils.tensorboard import SummaryWriter
 from torchvision.transforms import (
@@ -52,6 +51,8 @@ from transformers.trainer_utils import get_last_checkpoint
 from transformers.utils.versions import require_version
 
 import determined as det
+from determined.pytorch import dsat
+from determined.transformers import DetCallback
 
 """ Fine-tuning a 🤗 Transformers model for image classification"""
 
@@ -197,8 +198,10 @@ def dict2args(hparams):
     return out
 
 
-def parse_input_arguments(train_hps):
-    train_hps = train_hps["training_arguments"] if "training_arguments" in train_hps else {}
+def parse_input_arguments(
+    hparams: Dict[str, Any]
+) -> Tuple[ModelArguments, DataTrainingArguments, TrainingArguments]:
+    training_arguments = hparams.get("training_arguments", {})
     # See all possible arguments in src/transformers/training_args.py
     # or by passing the --help flag to this script.
     # We now keep distinct sets of args, for a cleaner separation of concerns.
@@ -209,13 +212,17 @@ def parse_input_arguments(train_hps):
     if len(sys.argv) == 2 and sys.argv[1].endswith(".json"):
         args_fname = os.path.abspath(sys.argv[1])
         args = json.loads(Path(args_fname).read_text())
-        args = args.update(train_hps)
+        args = args.update(training_arguments)
         model_args, data_args, training_args = parser.parse_dict(args)
     # 2. If your arguments are in a sys.argv:
     else:
         args = sys.argv[1:]
-        args.extend(dict2args(train_hps))
-        model_args, data_args, training_args = parser.parse_args_into_dataclasses(args)
+        args.extend(dict2args(training_arguments))
+        if any("--deepspeed" == arg.strip() for arg in args):
+            args = dsat.get_hf_args_with_overwrites(args, hparams)
+        model_args, data_args, training_args = parser.parse_args_into_dataclasses(
+            args, look_for_args_file=False
+        )
 
     return model_args, data_args, training_args
 
@@ -235,7 +242,7 @@ def main(det_callback, tb_callback, model_args, data_args, training_args):
     transformers.utils.logging.enable_explicit_format()
 
     # Log on each process the small summary:
-    logger.warning(
+    logger.info(
         f"Process rank: {training_args.local_rank}, device: {training_args.device}, n_gpu: {training_args.n_gpu}"
         + f"distributed training: {bool(training_args.local_rank != -1)}, 16-bits training: {training_args.fp16}"
     )
@@ -416,7 +423,9 @@ def main(det_callback, tb_callback, model_args, data_args, training_args):
             checkpoint = training_args.resume_from_checkpoint
         elif last_checkpoint is not None:
             checkpoint = last_checkpoint
-        train_result = trainer.train(resume_from_checkpoint=checkpoint)
+
+        with dsat.dsat_reporting_context(core_context, op=det_callback.current_op):
+            train_result = trainer.train(resume_from_checkpoint=checkpoint)
         trainer.save_model()
         trainer.log_metrics("train", train_result.metrics)
         trainer.save_metrics("train", train_result.metrics)
@@ -446,6 +455,8 @@ if __name__ == "__main__":
     info = det.get_cluster_info()
     assert info
     hparams = info.trial.hparams
+    # Turn the deepspeed training arguments, if any, into a dict and overwrite any args generated
+    # by the searcher
     model_args, data_args, training_args = parse_input_arguments(hparams)
 
     if training_args.deepspeed:

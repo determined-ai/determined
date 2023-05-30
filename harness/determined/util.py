@@ -1,5 +1,6 @@
 import collections
 import contextlib
+import copy
 import datetime
 import enum
 import errno
@@ -134,6 +135,20 @@ def _dict_to_list(dict_of_lists: Dict[str, List]) -> List[Dict[str, Any]]:
             output_list[i][k] = dict_of_lists[k][i]
 
     return output_list
+
+
+def merge_dicts(base_dict: Dict[Any, Any], source_dict: Dict[Any, Any]) -> Dict[Any, Any]:
+    """
+    Recursively replace and merge values from source_dict into base_dict. Returns a new
+    dictionary, leaving both inputs unmodified.
+    """
+    merged_dict = copy.deepcopy(base_dict)
+    for key, value in source_dict.items():
+        if key in base_dict and isinstance(value, dict):
+            merged_dict[key] = merge_dicts(base_dict[key], value)
+        else:
+            merged_dict[key] = value
+    return merged_dict
 
 
 def validate_batch_metrics(batch_metrics: List[Dict[str, Any]]) -> None:
