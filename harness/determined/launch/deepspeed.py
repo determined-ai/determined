@@ -21,7 +21,7 @@ import determined as det
 import determined.common
 from determined import constants, util
 from determined.common import api
-from determined.common.api import bindings, certs
+from determined.common.api import certs
 
 hostfile_path = None
 deepspeed_version = version.parse(deepspeed.__version__)
@@ -193,9 +193,7 @@ def check_deepspeed_version(multi_machine: bool) -> None:
 def main(script: List[str]) -> int:
     info = det.get_cluster_info()
     assert info is not None, "must be run on-cluster"
-    assert info.task_type == str(
-        bindings.v1TaskType.TRIAL.value
-    ), f'must be run with task_type="{bindings.v1TaskType.TRIAL.value}", not "{info.task_type}"'
+    assert info.task_type == "TRIAL", f'must be run with task_type="TRIAL", not "{info.task_type}"'
     experiment_config = det.ExperimentConfig(info.trial._config)
     determined.common.set_logger(experiment_config.debug_enabled())
 

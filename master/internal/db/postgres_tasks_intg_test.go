@@ -277,9 +277,7 @@ func TestExhaustiveEnums(t *testing.T) {
 		gb, err := json.Marshal(c.goMembers)
 		require.NoError(t, err)
 
-		if c.goType != "TaskType" {
-			// Gives pretty diff.
-			require.JSONEq(t, string(pb), string(gb))
-		}
+		// Gives pretty diff.
+		require.JSONEq(t, string(pb), string(gb))
 	}
 }

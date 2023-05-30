@@ -7,7 +7,7 @@ from typing import Iterator, Optional, Type
 
 import determined as det
 from determined import core, horovod, load
-from determined.common.api import analytics, bindings, certs
+from determined.common.api import analytics, certs
 
 
 @contextlib.contextmanager
@@ -24,9 +24,7 @@ def maybe_periodic_stacktraces(debug_enabled: bool) -> Iterator[None]:
 def main(train_entrypoint: str) -> int:
     info = det.get_cluster_info()
     assert info is not None, "must be run on-cluster"
-    assert info.task_type == str(
-        bindings.v1TaskType.TRIAL.value
-    ), f'must be run with task_type="{bindings.v1TaskType.TRIAL.value}", not "{info.task_type}"'
+    assert info.task_type == "TRIAL", f'must be run with task_type="TRIAL", not "{info.task_type}"'
 
     # TODO: refactor profiling to to not use the cli_cert.
     certs.cli_cert = certs.default_load(info.master_url)

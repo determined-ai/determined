@@ -5,7 +5,6 @@ import sys
 from typing import Callable, Dict, Iterator, List
 
 import determined as det
-from determined.common.api import bindings
 from tests.experiment import utils
 
 
@@ -37,7 +36,7 @@ def make_mock_cluster_info(
         task_id="taskId",
         allocation_id="allocationId",
         session_token="sessionToken",
-        task_type=str(bindings.v1TaskType.TRIAL.value),
+        task_type="TRIAL",
         rendezvous_info=rendezvous_info_mock,
         trial_info=trial_info_mock,
     )

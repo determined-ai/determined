@@ -32,17 +32,17 @@ enum State {
 enum TaskType {
   // The task type is unknown
   TASK_TYPE_UNSPECIFIED = 0;
-  // "TRIAL" job type for the enum public.job_type in Postgres.
+  // "TRIAL" task type for the enum public.task_type in Postgres.
   TASK_TYPE_TRIAL = 1;
-  // "NOTEBOOK" job type for the enum public.job_type in Postgres.
+  // "NOTEBOOK" task type for the enum public.task_type in Postgres.
   TASK_TYPE_NOTEBOOK = 2;
-  // "SHELL" job type for the enum public.job_type in Postgres.
+  // "SHELL" task type for the enum public.task_type in Postgres.
   TASK_TYPE_SHELL = 3;
-  // "COMMAND" job type for the enum public.job_type in Postgres.
+  // "COMMAND" task type for the enum public.task_type in Postgres.
   TASK_TYPE_COMMAND = 4;
-  // "TENSORBOARD" task type for the enum.task_type in Postgres.
+  // "TENSORBOARD" task type for the enum public.task_type in Postgres.
   TASK_TYPE_TENSORBOARD = 5;
-  // "CHECKPOINT_GC" job type for the enum public.job_type in Postgres.
+  // "CHECKPOINT_GC" task type for the enum public.task_type in Postgres.
   TASK_TYPE_CHECKPOINT_GC = 6;
 }
 

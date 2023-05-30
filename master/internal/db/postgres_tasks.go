@@ -51,13 +51,13 @@ EXISTS(
 
 // AddTask UPSERT's the existence of a task.
 func (db *PgDB) AddTask(t *model.Task) error {
-	if _, err := db.sql.Exec(`
+	if _, err := db.sql.NamedExec(`
 INSERT INTO tasks (task_id, task_type, start_time, job_id, log_version)
-VALUES ($1, $2::task_type, $3, $4, $5)
+VALUES (:task_id, :task_type, :start_time, :job_id, :log_version)
 ON CONFLICT (task_id) DO UPDATE SET
 task_type=EXCLUDED.task_type, start_time=EXCLUDED.start_time,
 job_id=EXCLUDED.job_id, log_version=EXCLUDED.log_version
-`, t.TaskID, t.TaskType[10:], t.StartTime, t.JobID, t.LogVersion); err != nil {
+`, t); err != nil {
 		return errors.Wrap(err, "adding task")
 	}
 	return nil
@@ -67,14 +67,9 @@ job_id=EXCLUDED.job_id, log_version=EXCLUDED.log_version
 func (db *PgDB) TaskByID(tID model.TaskID) (*model.Task, error) {
 	var t model.Task
 	if err := db.query(`
-SELECT t.task_id,
-CONCAT('TASK_TYPE_',t.task_type) as task_type,
-t.start_time,
-t.end_time,
-t.job_id,
-t.log_version
-FROM tasks t
-WHERE t.task_id = $1
+SELECT *
+FROM tasks
+WHERE task_id = $1
 `, &t, tID); err != nil {
 		return nil, errors.Wrap(err, "querying task")
 	}

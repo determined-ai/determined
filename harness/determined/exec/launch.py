@@ -11,7 +11,6 @@ from typing import Dict
 import determined as det
 import determined.common
 from determined.common import api, constants, storage
-from determined.common.api import bindings
 from determined.exec import prep_container
 
 
@@ -89,9 +88,7 @@ def mask_config_dict(d: Dict) -> Dict:
 if __name__ == "__main__":
     info = det.get_cluster_info()
     assert info is not None, "must be run on-cluster"
-    assert info.task_type == str(
-        bindings.v1TaskType.TRIAL.value
-    ), f'must be run with task_type="{bindings.v1TaskType.TRIAL.value}", not "{info.task_type}"'
+    assert info.task_type == "TRIAL", f'must be run with task_type="TRIAL", not "{info.task_type}"'
 
     # Hack: get the resources id from the environment.
     resources_id = os.environ.get("DET_RESOURCES_ID")

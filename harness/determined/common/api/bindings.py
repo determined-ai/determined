@@ -11564,7 +11564,7 @@ class v1TaskLogsResponse:
             out["stdtype"] = self.stdtype
         return out
 
-class v1TaskType(enum.Enum):
+class v1TaskType(DetEnum):
     UNSPECIFIED = "TASK_TYPE_UNSPECIFIED"
     TRIAL = "TASK_TYPE_TRIAL"
     NOTEBOOK = "TASK_TYPE_NOTEBOOK"

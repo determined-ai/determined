@@ -9038,7 +9038,7 @@ export interface V1TaskLogsResponse {
     stdtype?: string;
 }
 /**
- * - TASK_TYPE_UNSPECIFIED: The task type is unknown  - TASK_TYPE_TRIAL: "TRIAL" job type for the enum public.job_type in Postgres.  - TASK_TYPE_NOTEBOOK: "NOTEBOOK" job type for the enum public.job_type in Postgres.  - TASK_TYPE_SHELL: "SHELL" job type for the enum public.job_type in Postgres.  - TASK_TYPE_COMMAND: "COMMAND" job type for the enum public.job_type in Postgres.  - TASK_TYPE_TENSORBOARD: "TENSORBOARD" task type for the enum.task_type in Postgres.  - TASK_TYPE_CHECKPOINT_GC: "CHECKPOINT_GC" job type for the enum public.job_type in Postgres.
+ * - TASK_TYPE_UNSPECIFIED: The task type is unknown  - TASK_TYPE_TRIAL: "TRIAL" task type for the enum public.task_type in Postgres.  - TASK_TYPE_NOTEBOOK: "NOTEBOOK" task type for the enum public.task_type in Postgres.  - TASK_TYPE_SHELL: "SHELL" task type for the enum public.task_type in Postgres.  - TASK_TYPE_COMMAND: "COMMAND" task type for the enum public.task_type in Postgres.  - TASK_TYPE_TENSORBOARD: "TENSORBOARD" task type for the enum public.task_type in Postgres.  - TASK_TYPE_CHECKPOINT_GC: "CHECKPOINT_GC" task type for the enum public.task_type in Postgres.
  * @export
  * @enum {string}
  */

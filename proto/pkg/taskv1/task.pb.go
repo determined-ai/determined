@@ -101,17 +101,17 @@ type TaskType int32
 const (
 	// The task type is unknown
 	TaskType_TASK_TYPE_UNSPECIFIED TaskType = 0
-	// "TRIAL" job type for the enum public.job_type in Postgres.
+	// "TRIAL" task type for the enum public.task_type in Postgres.
 	TaskType_TASK_TYPE_TRIAL TaskType = 1
-	// "NOTEBOOK" job type for the enum public.job_type in Postgres.
+	// "NOTEBOOK" task type for the enum public.task_type in Postgres.
 	TaskType_TASK_TYPE_NOTEBOOK TaskType = 2
-	// "SHELL" job type for the enum public.job_type in Postgres.
+	// "SHELL" task type for the enum public.task_type in Postgres.
 	TaskType_TASK_TYPE_SHELL TaskType = 3
-	// "COMMAND" job type for the enum public.job_type in Postgres.
+	// "COMMAND" task type for the enum public.task_type in Postgres.
 	TaskType_TASK_TYPE_COMMAND TaskType = 4
-	// "TENSORBOARD" task type for the enum.task_type in Postgres.
+	// "TENSORBOARD" task type for the enum public.task_type in Postgres.
 	TaskType_TASK_TYPE_TENSORBOARD TaskType = 5
-	// "CHECKPOINT_GC" job type for the enum public.job_type in Postgres.
+	// "CHECKPOINT_GC" task type for the enum public.task_type in Postgres.
 	TaskType_TASK_TYPE_CHECKPOINT_GC TaskType = 6
 )
 
