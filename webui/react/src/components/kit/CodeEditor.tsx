@@ -139,7 +139,15 @@ const CodeEditor: React.FC<Props> = ({
   const editorMode = useMemo(() => {
     const isIpybnFile = /\.ipynb$/i.test(String(activeFile?.key || ''));
     return isIpybnFile ? 'ipynb' : 'codemirror';
-  }, [activeFile]);
+  }, [activeFile?.key]);
+
+  const syntax = useMemo(() => {
+    if (String(activeFile?.key).includes('.py')) return 'python';
+
+    if (String(activeFile?.key).includes('.md')) return 'markdown';
+
+    return 'yaml';
+  }, [activeFile?.key]);
 
   const fetchFile = useCallback(async (fileInfo: TreeNode) => {
     if (!fileInfo) return;
@@ -260,14 +268,6 @@ const CodeEditor: React.FC<Props> = ({
     height !== '100%' ? css.noBorder : '',
   ];
 
-  const getSyntaxHighlight = useCallback(() => {
-    if (String(activeFile?.key).includes('.py')) return 'python';
-
-    if (String(activeFile?.key).includes('.md')) return 'markdown';
-
-    return 'yaml';
-  }, [activeFile]);
-
   let fileContent = <h5>Please, choose a file to preview.</h5>;
   if (pageError) {
     fileContent = (
@@ -284,8 +284,8 @@ const CodeEditor: React.FC<Props> = ({
     fileContent =
       editorMode === 'codemirror' ? (
         <ReactCodeMirror
-          basicSetup={getSyntaxHighlight() === 'markdown' ? MARKDOWN_CONFIG : undefined}
-          extensions={[langs[getSyntaxHighlight()]()]}
+          basicSetup={syntax === 'markdown' ? MARKDOWN_CONFIG : undefined}
+          extensions={[langs[syntax]()]}
           height={height}
           readOnly={readonly}
           theme={ui.darkLight === DarkLight.Dark ? 'dark' : 'light'}

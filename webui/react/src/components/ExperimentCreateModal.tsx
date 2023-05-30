@@ -369,7 +369,6 @@ const ExperimentCreateModalComponent = ({
             <CodeEditor
               files={[{ content: Loaded(modalState.configString), key: 'config.yaml' }]}
               height="40vh"
-              readonly={false}
               onChange={handleEditorChange}
             />
           </React.Suspense>
