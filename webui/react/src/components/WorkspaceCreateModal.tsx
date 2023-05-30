@@ -180,7 +180,11 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
                       },
                     },
                   ]}>
-                  <CodeEditor height="16vh" files={[{ content: Loaded(''), key: 'config.yaml' }]} readOnly={!canModifyCPS} />
+                  <CodeEditor
+                    files={[{ content: Loaded(''), key: 'config.yaml' }]}
+                    height="16vh"
+                    readonly={!canModifyCPS}
+                  />
                 </Form.Item>
               </React.Suspense>
             )}

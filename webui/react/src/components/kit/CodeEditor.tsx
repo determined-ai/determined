@@ -1,13 +1,12 @@
 import { DownloadOutlined, FileOutlined } from '@ant-design/icons';
-import { Tree } from 'antd';
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
 import { python } from '@codemirror/lang-python';
 import { StreamLanguage } from '@codemirror/language';
 import { yaml } from '@codemirror/legacy-modes/mode/yaml';
-import React, { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import ReactCodeMirror from '@uiw/react-codemirror';
+import { Tree } from 'antd';
+import React, { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 
-import CodeMirrorEditor from 'components/CodeMirrorEditor';
 import Tooltip from 'components/kit/Tooltip';
 import Section from 'components/Section';
 import Message, { MessageType } from 'shared/components/Message';
@@ -27,6 +26,12 @@ const { DirectoryTree } = Tree;
 import css from './CodeEditor/CodeEditor.module.scss';
 
 import './CodeEditor/index.scss';
+
+const MARKDOWN_CONFIG = {
+  autocompletion: false,
+  foldGutter: false,
+  highlightActiveLineGutter: false,
+};
 
 export type Props = {
   files: TreeNode[];
@@ -117,7 +122,14 @@ const langs = {
  * selectedFilePath: gives path to the file to set as activeFile;
  */
 
-const CodeEditor: React.FC<Props> = ({ files, height, onChange, onSelectFile, readonly, selectedFilePath }) => {
+const CodeEditor: React.FC<Props> = ({
+  files,
+  height,
+  onChange,
+  onSelectFile,
+  readonly,
+  selectedFilePath,
+}) => {
   const [pageError, setPageError] = useState<PageError>(PageError.None);
   const sortedFiles = useMemo(() => [...files].sort(sortTree), [files]);
   const [activeFile, setActiveFile] = useState<TreeNode | null>(sortedFiles[0] || null);
@@ -267,7 +279,9 @@ const CodeEditor: React.FC<Props> = ({ files, height, onChange, onSelectFile, re
     fileContent =
       editorMode === 'codemirror' ? (
         <ReactCodeMirror
+          basicSetup={getSyntaxHighlight() === 'markdown' ? MARKDOWN_CONFIG : undefined}
           extensions={[langs[getSyntaxHighlight()]()]}
+          height={height || '100%'}
           readOnly={readonly}
           theme={ui.darkLight === DarkLight.Dark ? 'dark' : 'light'}
           value={Loadable.getOrElse('', activeFile.content)}
@@ -281,7 +295,7 @@ const CodeEditor: React.FC<Props> = ({ files, height, onChange, onSelectFile, re
   }
 
   return (
-    <div className={classes.join(' ')} style={{height}}>
+    <div className={classes.join(' ')} style={{ height }}>
       <div className={viewMode === 'editor' ? css.hideElement : undefined}>
         <DirectoryTree
           className={css.fileTree}
