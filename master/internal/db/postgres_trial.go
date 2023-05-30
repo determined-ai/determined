@@ -160,7 +160,32 @@ WHERE id = $1`, id, restartCount); err != nil {
 }
 
 // fullTrialSummaryMetricsRecompute recomputes all summary metrics for a given trial.
-func (db *PgDB) fullTrialSummaryMetricsRecompute(
+func (db *PgDB) fullTrialSummaryMetricsRecompute(ctx context.Context, tx *sqlx.Tx, trialID int) error {
+	trainSummary, err := db.calculateFullTrialSummaryMetrics(ctx, tx, trialID, "avg_metrics", "steps")
+	if err != nil {
+		return fmt.Errorf("rollback computing training summary metrics: %w", err)
+	}
+	valSummary, err := db.calculateFullTrialSummaryMetrics(ctx, tx, trialID, "validation_metrics", "validations")
+	if err != nil {
+		return fmt.Errorf("rollback computing validation summary metrics: %w", err)
+	}
+
+	updatedSummaryMetrics := model.JSONObj{}
+	if len(trainSummary) > 0 {
+		updatedSummaryMetrics["avg_metrics"] = trainSummary
+	}
+	if len(valSummary) > 0 {
+		updatedSummaryMetrics["validation_metrics"] = valSummary
+	}
+
+	if _, err := tx.ExecContext(ctx, `UPDATE trials SET summary_metrics = $1,
+	summary_metrics_timestamp = NOW() WHERE id = $2`, updatedSummaryMetrics, trialID); err != nil {
+		return fmt.Errorf("rollback updating trial summary metrics: %w", err)
+	}
+	return nil
+}
+
+func (db *PgDB) calculateFullTrialSummaryMetrics(
 	ctx context.Context, tx *sqlx.Tx, trialID int, jsonPath, table string,
 ) (model.JSONObj, error) {
 	rows, err := tx.QueryContext(ctx, strings.ReplaceAll(`
@@ -393,30 +418,9 @@ func (db *PgDB) _addTrialMetricsTx(
 				"rollback updating latest validation ID for trial %d: %w", m.TrialId, err)
 		}
 
-		trainSummary, err := db.fullTrialSummaryMetricsRecompute(ctx, tx, int(m.TrialId),
-			"avg_metrics", "steps")
-		if err != nil {
-			return rollbacks, fmt.Errorf("rollback computing training summary metrics: %w", err)
+		if err := db.fullTrialSummaryMetricsRecompute(ctx, tx, int(m.TrialId)); err != nil {
+			return rollbacks, errors.Wrap(err, "error on rollback compute of summary metrics")
 		}
-		valSummary, err := db.fullTrialSummaryMetricsRecompute(ctx, tx, int(m.TrialId),
-			"validation_metrics", "validations")
-		if err != nil {
-			return rollbacks, fmt.Errorf("rollback computing validation summary metrics: %w", err)
-		}
-
-		updatedSummaryMetrics := model.JSONObj{}
-		if len(trainSummary) > 0 {
-			updatedSummaryMetrics["avg_metrics"] = trainSummary
-		}
-		if len(valSummary) > 0 {
-			updatedSummaryMetrics["validation_metrics"] = valSummary
-		}
-
-		if _, err := tx.ExecContext(ctx, `UPDATE trials SET summary_metrics = $1,
-	summary_metrics_timestamp = NOW() WHERE id = $2`, updatedSummaryMetrics, m.TrialId); err != nil {
-			return rollbacks, fmt.Errorf("rollback updating trial summary metrics: %w", err)
-		}
-
 	case pType == GenericMetric:
 		if _, err := tx.ExecContext(ctx, `
 	UPDATE trials SET total_batches = GREATEST(total_batches, $2)
