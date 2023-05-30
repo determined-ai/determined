@@ -100,7 +100,7 @@ def validate_manager(manager: StorageManager) -> None:
             if f.read() != storage_id:
                 raise ValueError("Unable to properly load from storage")
 
-    manager.delete(storage_id)
+    manager.delete(storage_id, ["**/*"])
 
 
 def validate_config(config: Dict[str, Any], container_path: Optional[str]) -> None:

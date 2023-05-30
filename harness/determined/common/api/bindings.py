@@ -77,6 +77,32 @@ class GetTrialWorkloadsRequestFilterOption(DetEnum):
     VALIDATION = "FILTER_OPTION_VALIDATION"
     CHECKPOINT_OR_VALIDATION = "FILTER_OPTION_CHECKPOINT_OR_VALIDATION"
 
+class PatchCheckpointOptionalResources:
+    resources: "typing.Optional[typing.Dict[str, str]]" = None
+
+    def __init__(
+        self,
+        *,
+        resources: "typing.Union[typing.Dict[str, str], None, Unset]" = _unset,
+    ):
+        if not isinstance(resources, Unset):
+            self.resources = resources
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "PatchCheckpointOptionalResources":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "resources" in obj:
+            kwargs["resources"] = obj["resources"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "resources" in vars(self):
+            out["resources"] = self.resources
+        return out
+
 class PatchExperimentPatchCheckpointStorage:
     saveExperimentBest: "typing.Optional[int]" = None
     saveTrialBest: "typing.Optional[int]" = None
@@ -265,6 +291,7 @@ class checkpointv1State(DetEnum):
     COMPLETED = "STATE_COMPLETED"
     ERROR = "STATE_ERROR"
     DELETED = "STATE_DELETED"
+    PARTIALLY_DELETED = "STATE_PARTIALLY_DELETED"
 
 class containerv1State(DetEnum):
     UNSPECIFIED = "STATE_UNSPECIFIED"
@@ -1825,6 +1852,32 @@ class v1CheckpointWorkload:
             out["resources"] = self.resources
         if not omit_unset or "uuid" in vars(self):
             out["uuid"] = self.uuid
+        return out
+
+class v1CheckpointsRemoveFilesRequest:
+
+    def __init__(
+        self,
+        *,
+        checkpointGlobs: "typing.Sequence[str]",
+        checkpointUuids: "typing.Sequence[str]",
+    ):
+        self.checkpointGlobs = checkpointGlobs
+        self.checkpointUuids = checkpointUuids
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1CheckpointsRemoveFilesRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "checkpointGlobs": obj["checkpointGlobs"],
+            "checkpointUuids": obj["checkpointUuids"],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "checkpointGlobs": self.checkpointGlobs,
+            "checkpointUuids": self.checkpointUuids,
+        }
         return out
 
 class v1CloseTrialOperation:
@@ -7390,6 +7443,58 @@ class v1Pagination:
             out["startIndex"] = self.startIndex
         if not omit_unset or "total" in vars(self):
             out["total"] = self.total
+        return out
+
+class v1PatchCheckpoint:
+    resources: "typing.Optional[PatchCheckpointOptionalResources]" = None
+
+    def __init__(
+        self,
+        *,
+        uuid: str,
+        resources: "typing.Union[PatchCheckpointOptionalResources, None, Unset]" = _unset,
+    ):
+        self.uuid = uuid
+        if not isinstance(resources, Unset):
+            self.resources = resources
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PatchCheckpoint":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "uuid": obj["uuid"],
+        }
+        if "resources" in obj:
+            kwargs["resources"] = PatchCheckpointOptionalResources.from_json(obj["resources"]) if obj["resources"] is not None else None
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "uuid": self.uuid,
+        }
+        if not omit_unset or "resources" in vars(self):
+            out["resources"] = None if self.resources is None else self.resources.to_json(omit_unset)
+        return out
+
+class v1PatchCheckpointsRequest:
+
+    def __init__(
+        self,
+        *,
+        checkpoints: "typing.Sequence[v1PatchCheckpoint]",
+    ):
+        self.checkpoints = checkpoints
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PatchCheckpointsRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "checkpoints": [v1PatchCheckpoint.from_json(x) for x in obj["checkpoints"]],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "checkpoints": [x.to_json(omit_unset) for x in self.checkpoints],
+        }
         return out
 
 class v1PatchExperiment:
@@ -13574,6 +13679,26 @@ def post_CancelExperiments(
         return v1CancelExperimentsResponse.from_json(_resp.json())
     raise APIHttpError("post_CancelExperiments", _resp)
 
+def post_CheckpointsRemoveFiles(
+    session: "api.Session",
+    *,
+    body: "v1CheckpointsRemoveFilesRequest",
+) -> None:
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/checkpoints/rm",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("post_CheckpointsRemoveFiles", _resp)
+
 def get_CompareTrials(
     session: "api.Session",
     *,
@@ -16276,6 +16401,26 @@ def post_NotifyContainerRunning(
     if _resp.status_code == 200:
         return v1NotifyContainerRunningResponse.from_json(_resp.json())
     raise APIHttpError("post_NotifyContainerRunning", _resp)
+
+def patch_PatchCheckpoints(
+    session: "api.Session",
+    *,
+    body: "v1PatchCheckpointsRequest",
+) -> None:
+    _params = None
+    _resp = session._do_request(
+        method="PATCH",
+        path="/api/v1/checkpoints",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("patch_PatchCheckpoints", _resp)
 
 def patch_PatchExperiment(
     session: "api.Session",

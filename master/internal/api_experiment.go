@@ -402,8 +402,9 @@ func (a *apiServer) deleteExperiments(exps []*model.Experiment, userModel *model
 				jobSubmissionTime := exp.StartTime
 				taskID := model.NewTaskID()
 				ckptGCTask := newCheckpointGCTask(
-					a.m.rm, a.m.db, a.m.taskLogger, taskID, exp.JobID, jobSubmissionTime, taskSpec, exp.ID,
-					exp.Config, checkpoints, true, agentUserGroup, userModel, nil,
+					a.m.rm, a.m.db, a.m.taskLogger, taskID, exp.JobID, jobSubmissionTime, taskSpec,
+					exp.ID, exp.Config, checkpoints, []string{fullDeleteGlob},
+					true, agentUserGroup, userModel, nil,
 				)
 				if gcErr := a.m.system.MustActorOf(addr, ckptGCTask).AwaitTermination(); gcErr != nil {
 					logrus.WithError(gcErr).Errorf("failed to gc checkpoints for experiment")
@@ -1201,8 +1202,8 @@ func (a *apiServer) PatchExperiment(
 			taskID := model.NewTaskID()
 			ckptGCTask := newCheckpointGCTask(
 				a.m.rm, a.m.db, a.m.taskLogger, taskID, modelExp.JobID, modelExp.StartTime,
-				taskSpec, modelExp.ID,
-				modelExp.Config, checkpoints, true, agentUserGroup, user, nil,
+				taskSpec, modelExp.ID, modelExp.Config,
+				checkpoints, []string{fullDeleteGlob}, true, agentUserGroup, user, nil,
 			)
 			a.m.system.ActorOf(actor.Addr(fmt.Sprintf("patch-checkpoint-gc-%s", uuid.New().String())),
 				ckptGCTask)

@@ -45,6 +45,7 @@ const stateColorMapping = {
   [RunState.StoppingCompleted]: 'success',
   [RunState.StoppingError]: 'critical',
   [RunState.StoppingKilled]: 'killed',
+  [CheckpointState.PartiallyDeleted]: 'warning',
   [RunState.Unspecified]: 'inactive',
   [RunState.Queued]: 'warning',
   [RunState.Pulling]: 'pending',

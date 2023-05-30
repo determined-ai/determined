@@ -103,14 +103,14 @@ def run_storage_lifecycle_test(
         with manager.restore_path(storage_id) as path:
             validate_checkpoint(path, EXPECTED_FILES)
         # Delete.
-        manager.delete(storage_id)
+        manager.delete(storage_id, ["**/*"])
         # Ensure it is gone.
         with pytest.raises(errors.CheckpointNotFound):
             with manager.restore_path(storage_id) as path:
                 pass
 
         # Ensure second delete does not puke.
-        manager.delete(storage_id)
+        manager.delete(storage_id, ["**/*"])
 
         # Allow for backend-specific inspection.
         if post_delete_cb is not None:
@@ -135,7 +135,7 @@ def run_storage_lifecycle_test(
             validate_checkpoint(path, EXPECTED_FILES)
         finally:
             shutil.rmtree(path, ignore_errors=True)
-        manager.delete(storage_id)
+        manager.delete(storage_id, ["**/*"])
         with pytest.raises(errors.CheckpointNotFound):
             manager.download(storage_id, path)
         if post_delete_cb is not None:
@@ -180,7 +180,7 @@ def run_storage_lifecycle_test(
         try:
             manager.download(storage_id, path, selector=selector)
             validate_checkpoint(path, expected_files_subset)
-            manager.delete(storage_id)
+            manager.delete(storage_id, ["**/*"])
             with pytest.raises(errors.CheckpointNotFound):
                 manager.download(storage_id, path)
             if post_delete_cb is not None:
@@ -211,11 +211,43 @@ def run_storage_lifecycle_test(
         try:
             manager.download(storage_id, path)
             validate_checkpoint(path, expected_files_subset)
-            manager.delete(storage_id)
+            manager.delete(storage_id, ["**/*"])
             with pytest.raises(errors.CheckpointNotFound):
                 manager.download(storage_id, path)
             if post_delete_cb is not None:
                 post_delete_cb(storage_id)
+        finally:
+            shutil.rmtree(path, ignore_errors=True)
+
+    # Partial delete test.
+    cases = [
+        (["empty_dir/*", "subdir/*"], {"empty_dir/": 0, "subdir/": 0, "root.txt": 9}),
+        (
+            ["empty_dir"],
+            {"root.txt": 9, "subdir/": 0, "subdir/file1.txt": 13, "subdir/file2.txt": 13},
+        ),
+        (["subdir"], {"root.txt": 9, "empty_dir/": 0}),
+        (["**/*.txt"], {"empty_dir/": 0, "subdir/": 0}),
+        (
+            ["**.txt"],
+            {"empty_dir/": 0, "subdir/": 0, "subdir/file1.txt": 13, "subdir/file2.txt": 13},
+        ),
+    ]
+
+    for c in cases:
+        storage_id = str(uuid.uuid4())
+        path = pathlib.Path(f"/tmp/storage_lifecycle_test-{storage_id}")
+        create_checkpoint(path)
+        try:
+            manager.upload(path, storage_id)
+        finally:
+            shutil.rmtree(path, ignore_errors=True)
+
+        assert manager.delete(storage_id, c[0]) == c[1]
+
+        manager.download(storage_id, path)
+        try:
+            validate_checkpoint(path, {k: v for k, v in EXPECTED_FILES.items() if k in c[1]})
         finally:
             shutil.rmtree(path, ignore_errors=True)
 
