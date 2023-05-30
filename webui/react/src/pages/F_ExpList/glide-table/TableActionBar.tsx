@@ -48,8 +48,8 @@ import { ExpListView, RowHeight } from '../F_ExperimentList.settings';
 
 import ColumnPickerMenu from './ColumnPickerMenu';
 import MultiSortMenu, { Sort } from './MultiSortMenu';
+import { RowHeightMenu } from './RowHeightMenu';
 import css from './TableActionBar.module.scss';
-import { TableSettingsMenu } from './TableSettingsMenu';
 
 const batchActions = [
   ExperimentAction.OpenTensorBoard,
@@ -355,7 +355,6 @@ const TableActionBar: React.FC<Props> = ({
             projectColumns={projectColumns}
             setVisibleColumns={setVisibleColumns}
           />
-          <TableSettingsMenu rowHeight={rowHeight} onRowHeightChange={onRowHeightChange} />
           {(selectAll || selectedExperimentIds.length > 0) && (
             <Dropdown menu={editMenuItems} onClick={handleAction}>
               <Button icon={<Icon name="pencil" title="Edit" />}>
@@ -372,7 +371,9 @@ const TableActionBar: React.FC<Props> = ({
         </Space>
       </Column>
       <Column align="right">
-        <Space>
+        <Columns>
+          {!!toggleComparisonView && <Button onClick={toggleComparisonView}>Compare</Button>}
+          <RowHeightMenu rowHeight={rowHeight} onRowHeightChange={onRowHeightChange} />
           <Dropdown content={settingContent}>
             <Tooltip content="Table Settings">
               <Button>
@@ -380,8 +381,7 @@ const TableActionBar: React.FC<Props> = ({
               </Button>
             </Tooltip>
           </Dropdown>
-          {!!toggleComparisonView && <Button onClick={toggleComparisonView}>Compare</Button>}
-        </Space>
+        </Columns>
       </Column>
       {batchAction && (
         <BatchActionConfirmModal.Component
