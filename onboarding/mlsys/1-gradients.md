@@ -3,11 +3,11 @@
 Machine learning is all about getting computers to solve math problems for you.
 
 Specifically, it's about solving math problems like, "For a given mathematical
-model, what weights in the model would cause the model to calculate the most
-accurate predictions for a set of inputs?"
+model, what model weights would cause the model to calculate the most accurate
+predictions for a set of inputs?"
 
-You're going to write code to solve this exact problem for one particularly
-simple model.
+In this exercise, you'll write code to solve this exact problem and for one
+particularly simple model.
 
 Afterward, you will understand basic concepts like what a gradient is and how
 gradient descent works to train models.  You will also understand how many
@@ -19,8 +19,8 @@ averaging gradients together during gradient descent.
 
 Our model is going to be a simple linear model: `ypred = m*x` (`pred` is
 short for "predicted"). In statistics they would say there is no bias term, or
-in algebra they would there's no constant term.  Just a straight line through
-the origin.
+in algebra they would say there's no constant term.  Just a straight line
+through the origin.
 
 ## The Data Set
 
@@ -78,7 +78,7 @@ predicts the (constant) values in our dataset.
 
 ### Q2:
 
-Can `loss_point` or `loss_mse` ever be negative?  Why or why not, and does the
+Can `loss_point` or `loss_mse` ever be negative?  Why or why not, and does this
 make logical sense to you?
 
 ### Q3:
@@ -102,8 +102,8 @@ Also calculate the total `loss_mse` for the whole dataset:
 ### Q4:
 
 Write a function for calculating the total `loss_mse`, which takes as input
-the current model weight `m` and a list `(x, ytrue)` data points, and returns
-the floating-point `loss_mse`.
+the current model weight `m` and a list of data points `[(x, ytrue), ...]`, and
+returns the floating-point `loss_mse`.
 
 Make sure it agrees with your answer to Q3.
 
@@ -244,7 +244,7 @@ mfinal = train_loop(m=0, lr=0.000000001, dataset=dataset, iterations=4)
 print(mfinal)
 ```
 
-Explain in words what is happening.
+Describe what is happening.
 
 ### Q8
 
@@ -256,7 +256,7 @@ mfinal = train_loop(m=0, lr=10, dataset=dataset, iterations=4)
 print(mfinal)
 ```
 
-Explain in words what is happening.
+Describe what is happening.
 
 ## Noise in Training
 
@@ -304,7 +304,7 @@ model to converge to 1?  Are there values which are somewhere in between?
 In real life, all datasets have noise.  If you calculate the gradient for every
 record and step the model on each data point's gradient, that noise can cause
 you to take a lot of wrong steps, causing training to either take longer to
-converge or not to converge at all.
+converge or not converge at all.
 
 One common way to deal with this noise is to process multiple data points at
 once.  Calculate each gradient, then average them, to smooth out the noise in
@@ -358,16 +358,15 @@ assert round(mfinal, 5) == 0.26228, mfinal
 
 ## Averaging Gradients Together Means Faster Training
 
-Here is the central idea of this lesson: **when you average gradients from
-multiple data points, you get less noisy gradients, which lets you train
-faster**.  Less noisy gradients means you have higher confidence that the step
-you take after calculating the gradient is in the correct direction.  Higher
-confidence in the gradient direction means you can take bigger steps (by
-increasing your learning rate).  A higher learning rate means your model
-converges faster.
+The central idea of this lesson is: **when you average gradients from multiple
+data points, you get less noisy gradients, which lets you train faster**.  Less
+noisy gradients means you have higher confidence that the step you take after
+calculating the gradient is in the correct direction.  Higher confidence in the
+gradient direction means you can take bigger steps (by increasing your learning
+rate).  A higher learning rate means your model converges faster.
 
-This is really important.  This is foundational to understanding and supporting
-our product offering.
+This is really important.  Gradient averaging is foundational to understanding
+and supporting our product offering.
 
 The general rule of thumb for Stochastic Gradient Descent (basically the
 algorithm you just implemented) is that you can scale up your learning rate
@@ -383,14 +382,14 @@ various intermediate values used in training.
 Suppose you have a model that takes days or weeks to train on a single GPU, and
 you'd like to throw more hardware at it and get it to train faster.
 
-Any time you train a single model on multiple accelerators, that's called
+Any time you train a single model on multiple accelerators, it's called
 Distributed Training (or "dtrain", in internal company slang).
 
 There are a few kinds of dtrain, but we'll focus on data-parallel dtrain,
 because it's more common, and also it's a straightforward application of
 averaging gradients together, like we've been doing.
 
-The basic strategy of data-parallel d-train is you have one worker per
+The basic strategy of data-parallel dtrain is you have one worker per
 accelerator.  Each worker keeps its own replica of the model.  Every batch,
 each worker pulls a batch out of its unique shard of the total dataset.  Each
 worker calculates gradients for its batch.  Then all workers communicate their
