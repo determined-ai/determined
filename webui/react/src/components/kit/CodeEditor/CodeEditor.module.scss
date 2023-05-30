@@ -68,7 +68,11 @@
   .editor {
     border: solid var(--theme-stroke-width) var(--theme-stage-border);
     grid-column: 2 / 3;
-    min-height: 100px;
+    min-height: 250px;
+
+    &.noBorder {
+      border: none;
+    }
 
     @media screen and (max-width: 1024px) {
       grid-column: 1 / 3;

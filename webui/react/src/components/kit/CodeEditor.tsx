@@ -124,7 +124,7 @@ const langs = {
 
 const CodeEditor: React.FC<Props> = ({
   files,
-  height,
+  height = '100%',
   onChange,
   onSelectFile,
   readonly,
@@ -255,6 +255,11 @@ const CodeEditor: React.FC<Props> = ({
     viewMode === 'editor' ? css.editorMode : '',
   ];
 
+  const sectionClasses = [
+    pageError ? css.pageError : css.editor,
+    height !== '100%' ? css.noBorder : '',
+  ];
+
   const getSyntaxHighlight = useCallback(() => {
     if (String(activeFile?.key).includes('.py')) return 'python';
 
@@ -281,6 +286,7 @@ const CodeEditor: React.FC<Props> = ({
         <ReactCodeMirror
           basicSetup={getSyntaxHighlight() === 'markdown' ? MARKDOWN_CONFIG : undefined}
           extensions={[langs[getSyntaxHighlight()]()]}
+          height={height}
           readOnly={readonly}
           theme={ui.darkLight === DarkLight.Dark ? 'dark' : 'light'}
           value={Loadable.getOrElse('', activeFile.content)}
@@ -343,8 +349,8 @@ const CodeEditor: React.FC<Props> = ({
       )}
       <Section
         bodyNoPadding
-        bodyScroll
-        className={pageError ? css.pageError : css.editor}
+        bodyScroll={height === '100%'}
+        className={sectionClasses.join(' ')}
         maxHeight>
         <Spinner spinning={activeFile?.content === NotLoaded}>{fileContent}</Spinner>
       </Section>
