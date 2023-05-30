@@ -1163,7 +1163,7 @@ those partitions/queues.
 Specifies where model checkpoints will be stored. This can be overridden on a per-experiment basis
 in the :ref:`experiment-configuration`. A checkpoint contains the architecture and weights of the
 model being trained. Determined currently supports several kinds of checkpoint storage, ``gcs``,
-``hdfs``, ``s3``, ``azure``, and ``shared_fs``, identified by the ``type`` subfield.
+``s3``, ``azure``, and ``shared_fs``, identified by the ``type`` subfield.
 
 ``type: gcs``
 =============
@@ -1191,33 +1191,6 @@ The GCS bucket name to use.
 
 The optional path prefix to use. Must not contain ``..``. Note: Prefix is normalized, e.g.,
 ``/pre/.//fix`` -> ``/pre/fix``
-
-``type: hdfs``
-==============
-
-Checkpoints are stored in HDFS using the `WebHDFS
-<http://hadoop.apache.org/docs/current/hadoop-project-dist/hadoop-hdfs/WebHDFS.html>`__ API for
-reading and writing checkpoint resources.
-
-``hdfs_url``
-------------
-
-Hostname or IP address of HDFS namenode, prefixed with protocol, followed by WebHDFS port on
-namenode. Multiple namenodes are allowed as a semicolon-separated list (e.g.,
-``"http://namenode1:50070;http://namenode2:50070"``).
-
-``hdfs_path``
--------------
-
-The prefix path where all checkpoints will be written to and read from. The resources of each
-checkpoint will be saved in a subdirectory of ``hdfs_path``, where the subdirectory name is the
-checkpoint's UUID.
-
-``user``
---------
-
-An optional string value that indicates the user to use for all read and write requests. If left
-unspecified, the default user of the trial runner container will be used.
 
 ``type: s3``
 ============

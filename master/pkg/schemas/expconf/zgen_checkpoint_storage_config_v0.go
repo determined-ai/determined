@@ -45,9 +45,6 @@ func (c CheckpointStorageConfigV0) GetUnionMember() interface{} {
 	if c.RawSharedFSConfig != nil {
 		return *c.RawSharedFSConfig
 	}
-	if c.RawHDFSConfig != nil {
-		return *c.RawHDFSConfig
-	}
 	if c.RawS3Config != nil {
 		return *c.RawS3Config
 	}
