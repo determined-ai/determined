@@ -164,22 +164,22 @@ func (db *PgDB) fullTrialSummaryMetricsRecompute(
 	ctx context.Context, tx *sqlx.Tx, trialID int,
 ) error {
 	trainSummary, err := db.calculateFullTrialSummaryMetrics(
-		ctx, tx, trialID, "avg_metrics", TrainingMetric)
+		ctx, tx, trialID, model.TrialMetricsJsonPath(false), TrainingMetric)
 	if err != nil {
 		return fmt.Errorf("rollback computing training summary metrics: %w", err)
 	}
 	valSummary, err := db.calculateFullTrialSummaryMetrics(
-		ctx, tx, trialID, "validation_metrics", ValidationMetric)
+		ctx, tx, trialID, model.TrialMetricsJsonPath(true), ValidationMetric)
 	if err != nil {
 		return fmt.Errorf("rollback computing validation summary metrics: %w", err)
 	}
 
 	updatedSummaryMetrics := model.JSONObj{}
 	if len(trainSummary) > 0 {
-		updatedSummaryMetrics["avg_metrics"] = trainSummary
+		updatedSummaryMetrics[model.TrialMetricsJsonPath(false)] = trainSummary
 	}
 	if len(valSummary) > 0 {
-		updatedSummaryMetrics["validation_metrics"] = valSummary
+		updatedSummaryMetrics[model.TrialMetricsJsonPath(true)] = valSummary
 	}
 
 	if _, err := tx.ExecContext(ctx, `UPDATE trials SET summary_metrics = $1,
@@ -259,13 +259,12 @@ func (db *PgDB) _addTrialMetricsTx(
 ) (rollbacks int, err error) {
 	isValidation := pType == ValidationMetric
 
-	metricsJSONPath := "avg_metrics"
+	metricsJSONPath := model.TrialMetricsJsonPath(isValidation)
 	metricsBody := map[string]interface{}{
 		metricsJSONPath: m.Metrics.AvgMetrics,
 		"batch_metrics": m.Metrics.BatchMetrics,
 	}
 	if isValidation {
-		metricsJSONPath = "validation_metrics"
 		metricsBody = map[string]interface{}{
 			metricsJSONPath: m.Metrics.AvgMetrics,
 		}

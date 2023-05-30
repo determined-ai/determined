@@ -917,7 +917,8 @@ func TestGenericMetricsIO(t *testing.T) {
 	require.EqualValues(t, trialRunID, metricReports[0].TrialRunId)
 	require.EqualValues(t, batches, metricReports[0].TotalBatches)
 	require.EqualValues(t, tr.ID, metricReports[0].TrialId)
-	require.Equal(t, metrics, metricReports[0].Metrics.Fields["avg_metrics"].GetStructValue())
+	require.Equal(t, metrics, metricReports[0].Metrics.
+		Fields[model.TrialMetricsJsonPath(false)].GetStructValue())
 }
 
 func TestConcurrentMetricUpdate(t *testing.T) {

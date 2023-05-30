@@ -501,6 +501,14 @@ type TrialMetrics struct {
 	Metrics      JSONObj    `db:"metrics" json:"metrics"`
 }
 
+// TrialMetricsJsonPath returns the legacy JSON path to the metrics field in the trial metrics table.
+func TrialMetricsJsonPath(isValidation bool) string {
+	if isValidation {
+		return "validation_metrics"
+	}
+	return "avg_metrics"
+}
+
 // Represent order of active states (Queued -> Pulling -> Starting -> Running).
 var experimentStateIndex = map[experimentv1.State]int{
 	experimentv1.State_STATE_UNSPECIFIED:        0,

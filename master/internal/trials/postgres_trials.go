@@ -328,13 +328,12 @@ func MetricsTimeSeries(trialID int32, startTime time.Time,
 	timeSeriesFilter *commonv1.PolymorphicFilter, metricType string) (
 	metricMeasurements []db.MetricMeasurements, err error,
 ) {
-	var metricsObjectName, tableName, queryColumn, orderColumn string
+	var tableName, queryColumn, orderColumn string
+	metricsObjectName := model.TrialMetricsJsonPath(model.TrainingMetricType == model.ValidationMetricType)
 	switch metricType {
 	case model.TrainingMetricType.ToString():
-		metricsObjectName = "avg_metrics"
 		tableName = "steps"
 	case model.ValidationMetricType.ToString():
-		metricsObjectName = "validation_metrics"
 		tableName = "validations"
 	default:
 		panic(fmt.Sprintf("Unsupported metric type %v", metricType))
