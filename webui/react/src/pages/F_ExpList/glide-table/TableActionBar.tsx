@@ -363,6 +363,9 @@ const TableActionBar: React.FC<Props> = ({
               </Button>
             </Dropdown>
           )}
+          <span className={css.expNum}>
+            {experiments.length.toLocaleString()} experiment{experiments.length > 1 && 's'}
+          </span>
         </Space>
       </Column>
       <Column align="right">
