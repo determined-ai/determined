@@ -2160,6 +2160,17 @@ service Determined {
     };
   }
 
+  // Overwrite resource pool - workspace bindings
+  rpc OverwriteRPWorkspaceBindings(OverwriteRPWorkspaceBindingsRequest)
+      returns (OverwriteRPWorkspaceBindingsResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/resource-pools/overwrite-bindings"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+
   // List all resource pools bound to a specific workspace
   rpc ListRPsBoundToWorkspace(ListRPsBoundToWorkspaceRequest)
       returns (ListRPsBoundToWorkspaceResponse) {
@@ -2183,8 +2194,8 @@ service Determined {
   }
 
   // List all workspaces to resource pool bindings
-  rpc ListWorkspaceRPBindings(ListWorkspaceRPBindingsRequest)
-      returns (ListWorkspaceRPBindingsResponse) {
+  rpc ListRPWorkspaceBindings(ListRPWorkspaceBindingsRequest)
+      returns (ListRPWorkspaceBindingsResponse) {
     option (google.api.http) = {
       get: "/api/v1/resource-pools/all-bindings"
     };

@@ -16,8 +16,15 @@ func (a *apiServer) GetResourcePools(
 	return resp, a.paginate(&resp.Pagination, &resp.ResourcePools, req.Offset, req.Limit)
 }
 
-func (a *apiServer) BindRPToWorkspace(ctx context.Context, req *apiv1.BindRPToWorkspaceRequest) (
-	*apiv1.BindRPToWorkspaceResponse, error) {
+func (a *apiServer) BindRPToWorkspace(
+	ctx context.Context, req *apiv1.BindRPToWorkspaceRequest,
+) (*apiv1.BindRPToWorkspaceResponse, error) {
+	return nil, nil
+}
+
+func (a *apiServer) OverwriteRPWorkspaceBindings(
+	ctx context.Context, req *apiv1.OverwriteRPWorkspaceBindingsRequest,
+) (*apiv1.OverwriteRPWorkspaceBindingsResponse, error) {
 	return nil, nil
 }
 
@@ -33,8 +40,8 @@ func (a *apiServer) ListWorkspacesBoundToRP(
 	return nil, nil
 }
 
-func (a *apiServer) ListWorkspaceRPBindings(
-	ctx context.Context, req *apiv1.ListWorkspaceRPBindingsRequest,
-) (*apiv1.ListWorkspaceRPBindingsResponse, error) {
+func (a *apiServer) ListRPWorkspaceBindings(
+	ctx context.Context, req *apiv1.ListRPWorkspaceBindingsRequest,
+) (*apiv1.ListRPWorkspaceBindingsResponse, error) {
 	return nil, nil
 }

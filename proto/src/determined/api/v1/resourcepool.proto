@@ -56,8 +56,23 @@ message UnbindRPFromWorkspaceRequest {
 // Unbind a resource pool to workspaces response.
 message UnbindRPFromWorkspaceResponse {}
 
+// Overwrite and replace the workspaces bound to an RP request.
+message OverwriteRPWorkspaceBindingsRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "resource_pool" ] }
+  };
+
+  // The resource pool name.
+  string resource_pool = 1;
+  // The new workspace IDs to bind to the resource_pool.
+  repeated int32 workspace_ids = 2;
+}
+
+// Overwrite and replace the workspaces bound to an RP response.
+message OverwriteRPWorkspaceBindingsResponse {}
+
 // List all the workspace RP bindings.
-message ListWorkspaceRPBindingsRequest {
+message ListRPWorkspaceBindingsRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "limit" ] }
   };
@@ -69,7 +84,7 @@ message ListWorkspaceRPBindingsRequest {
 }
 
 // Reponse to ListWorkspaceRPBindingsRequest.
-message ListWorkspaceRPBindingsResponse {
+message ListRPWorkspaceBindingsResponse {
   // Pool with bindings object.
   repeated determined.resourcepool.v1.PoolWithBindings pool_with_bindings = 1;
 }
