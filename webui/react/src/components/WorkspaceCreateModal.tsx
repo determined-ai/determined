@@ -16,7 +16,7 @@ import { routeToReactUrl } from 'shared/utils/routes';
 import workspaceStore from 'stores/workspaces';
 import { Workspace } from 'types';
 import handleError from 'utils/error';
-import { Loadable, NotLoaded } from 'utils/loadable';
+import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 
 const FORM_ID = 'new-workspace-form';
@@ -38,7 +38,7 @@ interface Props {
   workspaceId?: number;
 }
 
-const CodeMirrorEditor = React.lazy(() => import('components/CodeMirrorEditor'));
+const CodeEditor = React.lazy(() => import('components/kit/CodeEditor'));
 
 const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }: Props = {}) => {
   const { canModifyWorkspaceAgentUserGroup, canModifyWorkspaceCheckpointStorage } =
@@ -180,7 +180,11 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
                       },
                     },
                   ]}>
-                  <CodeMirrorEditor height="16vh" readOnly={!canModifyCPS} syntax="yaml" value="" />
+                  <CodeEditor
+                    files={[{ content: Loaded(''), key: 'config.yaml' }]}
+                    height="16vh"
+                    readonly={!canModifyCPS}
+                  />
                 </Form.Item>
               </React.Suspense>
             )}
