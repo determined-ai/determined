@@ -37,7 +37,7 @@ class MyProcessor(TorchBatchProcessor):
 
         self.last_index = batch_idx
 
-    def run_before_checkpoint(self):
+    def on_checkpoint_start(self):
         if len(self.output) == 0:
             return
         file_name = f"prediction_output_{self.last_index}"
