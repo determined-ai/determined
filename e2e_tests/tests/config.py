@@ -92,10 +92,6 @@ def custom_search_method_examples_path(path: str) -> str:
     return os.path.join(os.path.dirname(__file__), "../../examples/custom_search_method", path)
 
 
-def integrations_examples_path(path: str) -> str:
-    return os.path.join(os.path.dirname(__file__), "../../examples/integrations", path)
-
-
 def hf_trainer_examples_path(path: str) -> str:
     return os.path.join(os.path.dirname(__file__), "../../examples/hf_trainer_api", path)
 

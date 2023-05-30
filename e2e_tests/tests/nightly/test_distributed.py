@@ -207,11 +207,9 @@ def test_byol_pytorch_distributed() -> None:
 @pytest.mark.distributed
 @pytest.mark.gpu_required
 def test_hf_trainer_api_integration() -> None:
-    config = conf.load_config(conf.integrations_examples_path("hf_trainer_api/distributed.yaml"))
-
-    exp.run_basic_test_with_temp_config(
-        config, conf.integrations_examples_path("hf_trainer_api"), 1
-    )
+    test_dir = "hf_image_classification"
+    config = conf.load_config(conf.hf_trainer_examples_path(f"{test_dir}/distributed.yaml"))
+    exp.run_basic_test_with_temp_config(config, conf.hf_trainer_examples_path(test_dir), 1)
 
 
 @pytest.mark.deepspeed
