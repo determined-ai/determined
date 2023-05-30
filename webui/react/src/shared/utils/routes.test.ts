@@ -1,4 +1,4 @@
-import { Router } from '@remix-run/router';
+import { Router as RemixRouter } from '@remix-run/router';
 import React from 'react';
 
 import router from 'router';
@@ -318,10 +318,15 @@ describe('Routes Utilities', () => {
   });
 
   describe('routeToReactUrl', () => {
-    let instance: Router;
+    let instance: RemixRouter;
+
     beforeEach(() => {
       instance = router.getRouter();
       vi.spyOn(instance, 'navigate');
+    });
+
+    afterEach(() => {
+      vi.clearAllMocks();
     });
 
     it('should route to react URL', () => {
