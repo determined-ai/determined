@@ -160,12 +160,16 @@ WHERE id = $1`, id, restartCount); err != nil {
 }
 
 // fullTrialSummaryMetricsRecompute recomputes all summary metrics for a given trial.
-func (db *PgDB) fullTrialSummaryMetricsRecompute(ctx context.Context, tx *sqlx.Tx, trialID int) error {
-	trainSummary, err := db.calculateFullTrialSummaryMetrics(ctx, tx, trialID, "avg_metrics", "steps")
+func (db *PgDB) fullTrialSummaryMetricsRecompute(
+	ctx context.Context, tx *sqlx.Tx, trialID int,
+) error {
+	trainSummary, err := db.calculateFullTrialSummaryMetrics(
+		ctx, tx, trialID, "avg_metrics", TrainingMetric)
 	if err != nil {
 		return fmt.Errorf("rollback computing training summary metrics: %w", err)
 	}
-	valSummary, err := db.calculateFullTrialSummaryMetrics(ctx, tx, trialID, "validation_metrics", "validations")
+	valSummary, err := db.calculateFullTrialSummaryMetrics(
+		ctx, tx, trialID, "validation_metrics", ValidationMetric)
 	if err != nil {
 		return fmt.Errorf("rollback computing validation summary metrics: %w", err)
 	}
@@ -186,9 +190,10 @@ func (db *PgDB) fullTrialSummaryMetricsRecompute(ctx context.Context, tx *sqlx.T
 }
 
 func (db *PgDB) calculateFullTrialSummaryMetrics(
-	ctx context.Context, tx *sqlx.Tx, trialID int, jsonPath, table string,
+	ctx context.Context, tx *sqlx.Tx, trialID int, jsonPath string, partition MetricPartitionType,
 ) (model.JSONObj, error) {
-	rows, err := tx.QueryContext(ctx, strings.ReplaceAll(`
+	//nolint: execinquery
+	rows, err := tx.QueryContext(ctx, `
 -- Returns pairs of metric names and trial_ids and if they are numeric or not.
 WITH trial_metrics as (
 SELECT
@@ -224,11 +229,11 @@ FROM (
 	FROM (
 		SELECT DISTINCT
 		jsonb_object_keys(s.metrics->$2) as name
-		FROM $TABLE s
-		WHERE s.trial_id = $1
-	) names, $TABLE
+		FROM metrics s
+		WHERE s.trial_id = $1 AND partition_type = $3 AND not archived
+	) names, metrics
 	JOIN trials ON trial_id = trials.id
-	WHERE trials.id = $1
+	WHERE trials.id = $1 AND metrics.partition_type = $3 AND not metrics.archived
 	GROUP BY name, metric_type, trial_id
 ) typed
 where metric_type IS NOT NULL
@@ -248,13 +253,13 @@ SELECT
 	name,
 	ntm.trial_id,
 	count(1) as count_agg,
-	sum(($TABLE.metrics->$2->>name)::double precision) as sum_agg,
-	min(($TABLE.metrics->$2->>name)::double precision) as min_agg,
-	max(($TABLE.metrics->$2->>name)::double precision) as max_agg,
+	sum((metrics.metrics->$2->>name)::double precision) as sum_agg,
+	min((metrics.metrics->$2->>name)::double precision) as min_agg,
+	max((metrics.metrics->$2->>name)::double precision) as max_agg,
 	'number' as metric_type
-FROM numeric_trial_metrics ntm INNER JOIN $TABLE
-ON $TABLE.trial_id=ntm.trial_id
-WHERE $TABLE.metrics->$2->name IS NOT NULL
+FROM numeric_trial_metrics ntm INNER JOIN metrics
+ON metrics.trial_id=ntm.trial_id
+WHERE metrics.metrics->$2->name IS NOT NULL AND metrics.partition_type = $3 AND not metrics.archived
 GROUP BY 1, 2
 UNION
 SELECT
@@ -281,9 +286,9 @@ latest_training as (
 		  PARTITION BY s.trial_id
 		  ORDER BY s.end_time DESC
 		) as rank
-	  FROM $TABLE s
+	  FROM metrics s
 	  JOIN trials ON s.trial_id = trials.id
-	  WHERE s.trial_id = $1
+	  WHERE s.trial_id = $1 AND partition_type = $3 AND not archived
 	) s, jsonb_each(s.metrics->$2) unpacked
   WHERE s.rank = 1
 ),
@@ -308,7 +313,7 @@ FROM latest_training lt FULL OUTER JOIN trial_metric_aggs tma ON
     'last', latest_value,
     'type', metric_type
 ) FROM combined_latest_agg;
-`, "$TABLE", table), trialID, jsonPath)
+`, trialID, jsonPath, partition)
 	if err != nil {
 		return nil, errors.Wrapf(err, "getting full compute trial %d summary metrics", trialID)
 	}
