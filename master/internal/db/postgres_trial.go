@@ -276,7 +276,7 @@ WHERE metric_type != 'number'
 -- Gets the last reported metric for each trial. Note if we report
 -- {"a": 1} and {"b": 1} we consider {"b": 1} to be the last reported
 -- metric and "a"'s last will be NULL.
-latest_training as (
+latest_metrics as (
   SELECT s.trial_id,
 	unpacked.key as name,
 	unpacked.value as latest_value
@@ -292,7 +292,7 @@ latest_training as (
 	) s, jsonb_each(s.metrics->$2) unpacked
   WHERE s.rank = 1
 ),
--- Adds the last reported metric to training the aggregation.
+-- Adds the last reported metric to the aggregation.
 combined_latest_agg as (SELECT
 	coalesce(lt.trial_id, tma.trial_id) as trial_id,
 	coalesce(lt.name, tma.name) as name,
@@ -302,7 +302,7 @@ combined_latest_agg as (SELECT
 	tma.max_agg,
 	lt.latest_value,
 	tma.metric_type
-FROM latest_training lt FULL OUTER JOIN trial_metric_aggs tma ON
+FROM latest_metrics lt FULL OUTER JOIN trial_metric_aggs tma ON
 	lt.trial_id = tma.trial_id AND lt.name = tma.name
 ) SELECT name, jsonb_build_object(
     'count', count_agg,
