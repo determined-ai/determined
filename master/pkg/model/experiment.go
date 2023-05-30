@@ -501,12 +501,26 @@ type TrialMetrics struct {
 	Metrics      JSONObj    `db:"metrics" json:"metrics"`
 }
 
-// TrialMetricsJsonPath returns the legacy JSON path to the metrics field in the trial metrics table.
+// TrialMetricsJsonPath returns the legacy JSON path to the metrics field in the metrics table.
 func TrialMetricsJsonPath(isValidation bool) string {
 	if isValidation {
 		return "validation_metrics"
 	}
+	// DISCUSS: avg_metrics is a reasonable key for TrialMetrics.AvgMetrics
 	return "avg_metrics"
+}
+
+// TrialSummaryMetricsJsonPath returns the JSON path to the trials metric summary.
+func TrialSummaryMetricsJsonPath(metricType string) string {
+	switch metricType {
+	case ValidationMetricType.ToString():
+		return "validation_metrics"
+	case TrainingMetricType.ToString():
+		// DISCUSS: in og summary metrics we opted to put training summary metrics under avg_metrics.
+		return "avg_metrics"
+	default:
+		return "generic_metrics"
+	}
 }
 
 // Represent order of active states (Queued -> Pulling -> Starting -> Running).

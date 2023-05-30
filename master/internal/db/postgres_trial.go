@@ -164,22 +164,32 @@ func (db *PgDB) fullTrialSummaryMetricsRecompute(
 	ctx context.Context, tx *sqlx.Tx, trialID int,
 ) error {
 	trainSummary, err := db.calculateFullTrialSummaryMetrics(
-		ctx, tx, trialID, model.TrialMetricsJsonPath(false), TrainingMetric)
+		ctx, tx, trialID, TrainingMetric)
 	if err != nil {
 		return fmt.Errorf("rollback computing training summary metrics: %w", err)
 	}
 	valSummary, err := db.calculateFullTrialSummaryMetrics(
-		ctx, tx, trialID, model.TrialMetricsJsonPath(true), ValidationMetric)
+		ctx, tx, trialID, ValidationMetric)
+	if err != nil {
+		return fmt.Errorf("rollback computing validation summary metrics: %w", err)
+	}
+	genericSummary, err := db.calculateFullTrialSummaryMetrics(
+		ctx, tx, trialID, GenericMetric)
 	if err != nil {
 		return fmt.Errorf("rollback computing validation summary metrics: %w", err)
 	}
 
 	updatedSummaryMetrics := model.JSONObj{}
 	if len(trainSummary) > 0 {
-		updatedSummaryMetrics[model.TrialMetricsJsonPath(false)] = trainSummary
+		key := model.TrialSummaryMetricsJsonPath(model.TrainingMetricType.ToString())
+		updatedSummaryMetrics[key] = trainSummary
 	}
 	if len(valSummary) > 0 {
-		updatedSummaryMetrics[model.TrialMetricsJsonPath(true)] = valSummary
+		key := model.TrialSummaryMetricsJsonPath(model.ValidationMetricType.ToString())
+		updatedSummaryMetrics[key] = valSummary
+	}
+	if len(genericSummary) > 0 {
+		updatedSummaryMetrics["generic_metrics"] = genericSummary
 	}
 
 	if _, err := tx.ExecContext(ctx, `UPDATE trials SET summary_metrics = $1,
@@ -190,8 +200,9 @@ func (db *PgDB) fullTrialSummaryMetricsRecompute(
 }
 
 func (db *PgDB) calculateFullTrialSummaryMetrics(
-	ctx context.Context, tx *sqlx.Tx, trialID int, jsonPath string, partition MetricPartitionType,
+	ctx context.Context, tx *sqlx.Tx, trialID int, partition MetricPartitionType,
 ) (model.JSONObj, error) {
+	jsonPath := model.TrialMetricsJsonPath(partition == ValidationMetric)
 	//nolint: execinquery
 	rows, err := tx.QueryContext(ctx, db.queries.getOrLoad("calculate-full-trial-summary-metrics"),
 		trialID, jsonPath, partition)
@@ -265,6 +276,7 @@ func (db *PgDB) _addTrialMetricsTx(
 		"batch_metrics": m.Metrics.BatchMetrics,
 	}
 	if isValidation {
+		// CHECK: or delete batch_metrics.
 		metricsBody = map[string]interface{}{
 			metricsJSONPath: m.Metrics.AvgMetrics,
 		}
