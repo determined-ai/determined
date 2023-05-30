@@ -1775,17 +1775,23 @@ export const launchTensorBoard: DetApi<
 
 export const getJobQueue: DetApi<
   Service.GetJobQParams,
-  Api.V1GetJobsResponse,
+  Api.V1GetJobsV2Response,
   Service.GetJobsResponse
 > = {
   name: 'getJobQ',
   postProcess: (response) => {
-    response.jobs = response.jobs.filter((job) => !!job.summary);
+    const internalResponse: Service.GetJobsResponse = {
+      jobs: [],
+      pagination: response.pagination,
+    };
+    internalResponse.jobs = response.jobs
+      .map((jobPack) => (jobPack.full || jobPack.limited) as Type.Job)
+      .filter((job) => !!job.summary);
     // we don't work with jobs without a summary in the ui yet
-    return response as Service.GetJobsResponse;
+    return internalResponse;
   },
   request: (params: Service.GetJobQParams) =>
-    detApi.Internal.getJobs(
+    detApi.Internal.getJobsV2(
       params.offset,
       params.limit,
       params.resourcePool,

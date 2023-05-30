@@ -1,4 +1,5 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { OMITTED_STR } from 'constants/access-control';
+import { V1SchedulerTypeToLabel } from 'constants/states';
 
 import Icon from 'components/kit/Icon';
 import Section from 'components/Section';
@@ -10,9 +11,9 @@ import {
   getFullPaginationConfig,
   userRenderer,
 } from 'components/Table/Table';
-import { V1SchedulerTypeToLabel } from 'constants/states';
 import { useSettings } from 'hooks/useSettings';
 import { columns as defaultColumns, SCHEDULING_VAL_KEY } from 'pages/JobQueue/JobQueue.table';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { paths } from 'routes/utils';
 import { cancelExperiment, getJobQ, getJobQStats, killExperiment, killTask } from 'services/api';
 import * as Api from 'services/api-ts-sdk';
@@ -135,6 +136,7 @@ const JobQueue: React.FC<Props> = ({ selectedRp, jobState }) => {
 
   const dropDownOnTrigger = useCallback(
     (job: Job) => {
+      if (!('entityId' in job)) return {};
       const triggers: Triggers<JobAction> = {};
       const commandType = jobTypeToCommandType(job.type);
 
@@ -221,28 +223,31 @@ const JobQueue: React.FC<Props> = ({ selectedRp, jobState }) => {
           case 'actions':
             return {
               ...col,
-              render: (_, record) => (
-                <div>
-                  <ActionDropdown<JobAction>
-                    actionOrder={[
-                      JobAction.ManageJob,
-                      JobAction.MoveToTop,
-                      JobAction.ViewLog,
-                      JobAction.Cancel,
-                      JobAction.Kill,
-                    ]}
-                    confirmations={{
-                      [JobAction.Cancel]: { cancelText: 'Abort', onError: handleError },
-                      [JobAction.Kill]: { danger: true, onError: handleError },
-                      [JobAction.MoveToTop]: { onError: handleError },
-                    }}
-                    id={record.name}
-                    kind="job"
-                    onError={handleError}
-                    onTrigger={dropDownOnTrigger(record)}
-                  />
-                </div>
-              ),
+              render: (_, record) => {
+                if (!('entityId' in record)) return;
+                return (
+                  <div>
+                    <ActionDropdown<JobAction>
+                      actionOrder={[
+                        JobAction.ManageJob,
+                        JobAction.MoveToTop,
+                        JobAction.ViewLog,
+                        JobAction.Cancel,
+                        JobAction.Kill,
+                      ]}
+                      confirmations={{
+                        [JobAction.Cancel]: { cancelText: 'Abort', onError: handleError },
+                        [JobAction.Kill]: { danger: true, onError: handleError },
+                        [JobAction.MoveToTop]: { onError: handleError },
+                      }}
+                      id={record.name}
+                      kind="job"
+                      onError={handleError}
+                      onTrigger={dropDownOnTrigger(record)}
+                    />
+                  </div>
+                );
+              },
             };
           case SCHEDULING_VAL_KEY: {
             if (!settingsColumns) return col;
@@ -306,7 +311,13 @@ const JobQueue: React.FC<Props> = ({ selectedRp, jobState }) => {
           case 'user':
             return {
               ...col,
-              render: (_, r) => userRenderer(users.find((u) => u.id === r.userId)),
+              render: (_, r) => {
+                if ('userId' in r) {
+                  return userRenderer(users.find((u) => u.id === r.userId));
+                } else {
+                  return OMITTED_STR;
+                }
+              },
             };
           default:
             return col;

@@ -3,7 +3,7 @@ import { updateJobQueue } from 'services/api';
 import * as Api from 'services/api-ts-sdk';
 import { DetError, DetErrorOptions, ErrorType, wrapPublicMessage } from 'shared/utils/error';
 import { capitalize } from 'shared/utils/string';
-import { CommandType, Job, JobType, ResourcePool } from 'types';
+import { CommandType, Job, JobType, LimitedJob, ResourcePool } from 'types';
 import handleError from 'utils/error';
 
 // This marks scheduler types that do not support fine-grain control of
@@ -21,6 +21,12 @@ export const jobTypeIconName = (jobType: JobType): IconName => {
 
 export const jobTypeLabel = (jobType: JobType): string => {
   return capitalize(jobTypeIconName(jobType));
+};
+
+export const isLimitedJob = (job: Job): job is LimitedJob => {
+  // CHECK: when typeguarding using this the ts engine can't figure out that the remaining type
+  // on Job would be FullJob.
+  return 'entityId' in job;
 };
 
 // translate JobType to CommandType

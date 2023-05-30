@@ -6,6 +6,7 @@ import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
 import { ColumnDef } from 'components/Table/InteractiveTable';
 import { relativeTimeRenderer } from 'components/Table/Table';
+import { OMITTED_STR } from 'constants/access-control';
 import { paths } from 'routes/utils';
 import { getJupyterLabs, getTensorBoards } from 'services/api';
 import { floatToPercent, truncate } from 'shared/utils/string';
@@ -43,6 +44,7 @@ const routeToTask = async (taskId: string, jobType: JobType): Promise<void> => {
 };
 
 const linkToEntityPage = (job: Job, label: ReactNode): ReactNode => {
+  if (!('entityId' in job)) return label;
   switch (job.type) {
     case JobType.EXPERIMENT:
       return <Link path={paths.experimentDetails(job.entityId)}>{label}</Link>;
@@ -101,6 +103,7 @@ export const columns: ColumnDef<Job>[] = [
     key: 'name',
     render: (_: unknown, record: Job): ReactNode => {
       let label: ReactNode = null;
+      if (!('name' in record)) return OMITTED_STR;
       switch (record.type) {
         case JobType.EXPERIMENT:
           label = (
@@ -134,8 +137,13 @@ export const columns: ColumnDef<Job>[] = [
     dataIndex: 'submissionTime',
     defaultWidth: DEFAULT_COLUMN_WIDTHS['submissionTime'],
     key: 'submitted',
-    render: (_: unknown, record: Job): ReactNode =>
-      record.submissionTime && relativeTimeRenderer(record.submissionTime),
+    render: (_: unknown, record: Job): ReactNode => {
+      if ('submissionTime' in record) {
+        return record.submissionTime && relativeTimeRenderer(record.submissionTime);
+      } else {
+        return OMITTED_STR;
+      }
+    },
     title: 'Submitted',
   },
   {
