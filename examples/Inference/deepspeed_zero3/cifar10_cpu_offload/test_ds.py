@@ -1,7 +1,6 @@
 import os
 import pathlib
 
-import deepspeed
 import filelock
 import torch
 import torchvision as tv
@@ -9,6 +8,7 @@ import torchvision.transforms as transforms
 from model import get_model
 from torch.profiler import ProfilerActivity
 
+import deepspeed
 from determined.experimental.inference import TorchBatchProcessor, torch_batch_process
 
 dtype = torch.float16

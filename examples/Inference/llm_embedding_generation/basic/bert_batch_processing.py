@@ -1,16 +1,14 @@
-import pathlib
-
 import os
-
-import torch
-from transformers import BertTokenizer, BertModel
-from torch.profiler import ProfilerActivity
-
-from datasets import load_dataset
-from determined.experimental.inference import TorchBatchProcessor, torch_batch_process
-
+import pathlib
 import uuid
+
 import pinecone
+import torch
+from datasets import load_dataset
+from torch.profiler import ProfilerActivity
+from transformers import BertModel, BertTokenizer
+
+from determined.experimental.inference import TorchBatchProcessor, torch_batch_process
 
 PINCONE_ENV = "<PINECONE_ENV>"
 API_KEY = "<API_KEY>"
