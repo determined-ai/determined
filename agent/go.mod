@@ -162,6 +162,7 @@ require (
 	k8s.io/apimachinery v0.20.14 // indirect
 	k8s.io/client-go v0.20.14 // indirect
 	k8s.io/klog/v2 v2.30.0 // indirect
+	k8s.io/kube-openapi v0.0.0-20211115234752-e816edb12b65 // indirect
 	k8s.io/utils v0.0.0-20210930125809-cb0fa318a74b // indirect
 	mellium.im/sasl v0.3.1 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.1.2 // indirect
