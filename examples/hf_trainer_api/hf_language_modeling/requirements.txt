@@ -1,0 +1,12 @@
+setuptools==59.5.0
+accelerate>=0.12.0
+torch>=1.5.0
+transformers>=4.28.1,<4.29.0
+tokenizers>=0.13.3
+datasets
+evaluate
+numpy
+rouge_score
+fire
+sentencepiece
+scikit-learn

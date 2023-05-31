@@ -402,8 +402,9 @@ func (a *apiServer) deleteExperiments(exps []*model.Experiment, userModel *model
 				jobSubmissionTime := exp.StartTime
 				taskID := model.NewTaskID()
 				ckptGCTask := newCheckpointGCTask(
-					a.m.rm, a.m.db, a.m.taskLogger, taskID, exp.JobID, jobSubmissionTime, taskSpec, exp.ID,
-					exp.Config, checkpoints, true, agentUserGroup, userModel, nil,
+					a.m.rm, a.m.db, a.m.taskLogger, taskID, exp.JobID, jobSubmissionTime, taskSpec,
+					exp.ID, exp.Config, checkpoints, []string{fullDeleteGlob},
+					true, agentUserGroup, userModel, nil,
 				)
 				if gcErr := a.m.system.MustActorOf(addr, ckptGCTask).AwaitTermination(); gcErr != nil {
 					logrus.WithError(gcErr).Errorf("failed to gc checkpoints for experiment")
@@ -1201,8 +1202,8 @@ func (a *apiServer) PatchExperiment(
 			taskID := model.NewTaskID()
 			ckptGCTask := newCheckpointGCTask(
 				a.m.rm, a.m.db, a.m.taskLogger, taskID, modelExp.JobID, modelExp.StartTime,
-				taskSpec, modelExp.ID,
-				modelExp.Config, checkpoints, true, agentUserGroup, user, nil,
+				taskSpec, modelExp.ID, modelExp.Config,
+				checkpoints, []string{fullDeleteGlob}, true, agentUserGroup, user, nil,
 			)
 			a.m.system.ActorOf(actor.Addr(fmt.Sprintf("patch-checkpoint-gc-%s", uuid.New().String())),
 				ckptGCTask)
@@ -2058,6 +2059,7 @@ func sortExperiments(sortString *string, experimentQuery *bun.SelectQuery) error
 		"desc": "DESC NULLS LAST",
 	}
 	sortParams := strings.Split(*sortString, ",")
+	hasIDSort := false
 	for _, sortParam := range sortParams {
 		paramDetail := strings.Split(sortParam, "=")
 		if len(paramDetail) != 2 {
@@ -2081,9 +2083,13 @@ func sortExperiments(sortString *string, experimentQuery *bun.SelectQuery) error
 			if _, ok := orderColMap[paramDetail[0]]; !ok {
 				return status.Errorf(codes.InvalidArgument, "invalid sort col: %s", paramDetail[0])
 			}
+			hasIDSort = hasIDSort || paramDetail[0] == "id"
 			experimentQuery.OrderExpr(
 				fmt.Sprintf("%s %s", orderColMap[paramDetail[0]], sortDirection))
 		}
+	}
+	if !hasIDSort {
+		experimentQuery.OrderExpr("id ASC")
 	}
 	return nil
 }
@@ -2146,6 +2152,8 @@ func (a *apiServer) SearchExperiments(
 		if err != nil {
 			return nil, err
 		}
+	} else {
+		experimentQuery.OrderExpr("id ASC")
 	}
 
 	resp.Pagination, err = runPagedBunExperimentsQuery(

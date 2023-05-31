@@ -5,10 +5,11 @@ import React, { useMemo } from 'react';
 import Pivot from 'components/kit/Pivot';
 import useResize from 'hooks/useResize';
 import Spinner from 'shared/components/Spinner/Spinner';
+import { Loaded } from 'utils/loadable';
 
 import css from './Markdown.module.scss';
 
-const CodeMirrorEditor = React.lazy(() => import('components/CodeMirrorEditor'));
+const CodeEditor = React.lazy(() => import('components/kit/CodeEditor'));
 
 interface Props {
   disabled?: boolean;
@@ -61,16 +62,9 @@ const Markdown: React.FC<Props> = ({
                   <Spinner tip="Loading text editor..." />
                 </div>
               }>
-              <CodeMirrorEditor
-                basicSetup={{
-                  autocompletion: false,
-                  foldGutter: false,
-                  highlightActiveLineGutter: false,
-                }}
+              <CodeEditor
+                files={[{ content: Loaded(markdown), key: 'input.md' }]}
                 height={`${resize.height - 420}px`}
-                syntax="markdown"
-                value={markdown}
-                width="100%"
                 onChange={onChange}
               />
             </React.Suspense>

@@ -2,6 +2,7 @@ import logging
 from typing import Any, Dict, Iterator, Optional, Tuple, Union, cast
 
 import data
+import deepspeed
 import torch
 import torch.nn as nn
 import torch.utils.data
@@ -9,7 +10,6 @@ import torchvision
 from attrdict import AttrDict
 from gan_model import Discriminator, Generator, weights_init
 
-import deepspeed
 from determined.pytorch import DataLoader, TorchData
 from determined.pytorch.deepspeed import (
     DeepSpeedTrial,

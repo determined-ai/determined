@@ -18,6 +18,7 @@ import { ExperimentBase, TrialHyperparameters, TrialItem } from 'types';
 import handleError, { handleWarning } from 'utils/error';
 import { trialHParamsToExperimentHParams } from 'utils/experiment';
 import { upgradeConfig } from 'utils/experiment';
+import { Loaded } from 'utils/loadable';
 
 export const FULL_CONFIG_BUTTON_TEXT = 'Show Full Config';
 export const SIMPLE_CONFIG_BUTTON_TEXT = 'Show Simple Config';
@@ -90,7 +91,7 @@ const trialContinueConfig = (
   };
 };
 
-const CodeMirrorEditor = React.lazy(() => import('components/CodeMirrorEditor'));
+const CodeEditor = React.lazy(() => import('components/kit/CodeEditor'));
 
 const DEFAULT_MODAL_STATE = {
   config: {},
@@ -366,10 +367,9 @@ const ExperimentCreateModalComponent = ({
         )}
         {modalState.isAdvancedMode && (
           <React.Suspense fallback={<Spinner tip="Loading text editor..." />}>
-            <CodeMirrorEditor
+            <CodeEditor
+              files={[{ content: Loaded(modalState.configString), key: 'config.yaml' }]}
               height="40vh"
-              syntax="yaml"
-              value={modalState.configString}
               onChange={handleEditorChange}
             />
           </React.Suspense>

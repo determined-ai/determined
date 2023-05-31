@@ -31,6 +31,9 @@ Determined DeepSpeed documentation:
    :class:`~determined.pytorch.PyTorchTrial` to
    :class:`~determined.pytorch.deepspeed.DeepSpeedTrial`.
 
+-  :ref:`DeepSpeed Autotune: User Guide <deepspeed-autotuning>` demonstrates how to use DeepSpeed
+   Autotune to take full advantage of your hardware and model.
+
 -  :ref:`API Reference <deepspeed-reference>` lays out the classes and methods related to DeepSpeed
    support including the full API specification for
    :class:`~determined.pytorch.deepspeed.DeepSpeedTrial` and
@@ -40,6 +43,7 @@ Determined DeepSpeed documentation:
    :maxdepth: 1
    :hidden:
 
-   deepspeed
+   API Usage Guide <deepspeed>
+   Autotuning <autotuning>
    advanced
    pytorch2deepspeed

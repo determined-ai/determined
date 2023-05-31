@@ -18,7 +18,7 @@ import workspaceStore from 'stores/workspaces';
 import { Template, Workspace } from 'types';
 import handleError from 'utils/error';
 import { JupyterLabOptions, launchJupyterLab, previewJupyterLab } from 'utils/jupyter';
-import { Loadable } from 'utils/loadable';
+import { Loadable, Loaded } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 
 const { Option } = Select;
@@ -77,7 +77,7 @@ interface Props {
   workspace?: Workspace;
 }
 
-const CodeMirrorEditor = React.lazy(() => import('components/CodeMirrorEditor'));
+const CodeEditor = React.lazy(() => import('components/kit/CodeEditor'));
 
 const JupyterLabModalComponent: React.FC<Props> = ({ workspace }: Props) => {
   const [showFullConfig, setShowFullConfig] = useState(false);
@@ -308,7 +308,7 @@ const JupyterLabFullConfig: React.FC<FullConfigProps> = ({
               },
             },
           ]}>
-          <CodeMirrorEditor height="40vh" syntax="yaml" value="" />
+          <CodeEditor files={[{ content: Loaded(''), key: 'config.yaml' }]} height="40vh" />
         </Form.Item>
       </React.Suspense>
       {configError && <Alert message={configError} type="error" />}

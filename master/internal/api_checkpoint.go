@@ -10,6 +10,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"github.com/uptrace/bun"
+	"golang.org/x/exp/maps"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -76,25 +78,38 @@ func (m *Master) canDoActionOnCheckpoint(
 }
 
 func (m *Master) canDoActionOnCheckpointThroughModel(
-	ctx context.Context, curUser model.User, id uuid.UUID,
+	ctx context.Context, curUser model.User, ckptID string,
 ) error {
-	modelIDs, err := db.GetModelIDsAssociatedWithCheckpoint(ctx, id)
+	ckptUUID, err := uuid.Parse(ckptID)
 	if err != nil {
 		return err
 	}
-	for _, id := range modelIDs {
+
+	modelIDs, err := db.GetModelIDsAssociatedWithCheckpoint(ctx, ckptUUID)
+	if err != nil {
+		return err
+	}
+	if len(modelIDs) == 0 {
+		// if length of model ids is zero then permission denied
+		// so return checkpoitn not found.
+		return errCheckpointNotFound(ckptID)
+	}
+
+	var errCanGetModel error
+	for _, modelID := range modelIDs {
 		model := &modelv1.Model{}
-		err = m.db.QueryProto("get_model_by_id", model, id)
-		if !errors.Is(err, db.ErrNotFound) {
+		err = m.db.QueryProto("get_model_by_id", model, modelID)
+		if err != nil {
 			return err
 		}
-		if err := modelauth.AuthZProvider.Get().CanGetModel(
-			ctx, curUser, model, model.WorkspaceId); err != nil {
-			return authz.SubIfUnauthorized(err, nil)
+		if errCanGetModel = modelauth.AuthZProvider.Get().CanGetModel(
+			ctx, curUser, model, model.WorkspaceId); errCanGetModel == nil {
+			return nil
 		}
 	}
-	return status.Error(codes.PermissionDenied,
-		fmt.Sprintf("cannot access checkpoint: %s", id.String()))
+	// we get to this return when there are no models belonging
+	// to a workspace where user has permissions.
+	return authz.SubIfUnauthorized(errCanGetModel, errCheckpointNotFound(ckptID))
 }
 
 func (a *apiServer) GetCheckpoint(
@@ -108,11 +123,7 @@ func (a *apiServer) GetCheckpoint(
 		expauth.AuthZProvider.Get().CanGetExperimentArtifacts)
 
 	if errE != nil {
-		ckptUUID, err := uuid.Parse(req.CheckpointUuid)
-		if err != nil {
-			return nil, err
-		}
-		errM := a.m.canDoActionOnCheckpointThroughModel(ctx, *curUser, ckptUUID)
+		errM := a.m.canDoActionOnCheckpointThroughModel(ctx, *curUser, req.CheckpointUuid)
 		if errM != nil {
 			return nil, errE
 		}
@@ -130,54 +141,23 @@ func (a *apiServer) GetCheckpoint(
 	return resp, nil
 }
 
-func (a *apiServer) DeleteCheckpoints(
-	ctx context.Context,
-	req *apiv1.DeleteCheckpointsRequest,
-) (*apiv1.DeleteCheckpointsResponse, error) {
+func (a *apiServer) checkpointsRBACEditCheck(
+	ctx context.Context, uuids []uuid.UUID,
+) ([]*model.Experiment, []*db.ExperimentCheckpointGrouping, error) {
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	conv := &protoconverter.ProtoConverter{}
-	checkpointsToDelete := conv.ToUUIDList(req.CheckpointUuids)
-	if cErr := conv.Error(); cErr != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "converting checkpoint: %s", cErr)
-	}
-
-	registeredCheckpointUUIDs, err := a.m.db.GetRegisteredCheckpoints(checkpointsToDelete)
+	groupCUUIDsByEIDs, err := a.m.db.GroupCheckpointUUIDsByExperimentID(uuids)
 	if err != nil {
-		return nil, err
-	}
-
-	if len(registeredCheckpointUUIDs) > 0 {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"this subset of checkpoints provided are in the model registry and cannot be deleted: %v.",
-			registeredCheckpointUUIDs)
-	}
-
-	addr := actor.Addr(fmt.Sprintf("checkpoints-gc-%s", uuid.New().String()))
-
-	taskSpec := *a.m.taskSpec
-
-	jobID := model.NewJobID()
-	if err = a.m.db.AddJob(&model.Job{
-		JobID:   jobID,
-		JobType: model.JobTypeCheckpointGC,
-		OwnerID: &curUser.ID,
-	}); err != nil {
-		return nil, fmt.Errorf("persisting new job: %w", err)
-	}
-
-	groupCUUIDsByEIDs, err := a.m.db.GroupCheckpointUUIDsByExperimentID(checkpointsToDelete)
-	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	// Get checkpoints IDs not associated to any experiments.
 	checkpointsRequested := make(map[string]bool)
-	for _, c := range req.CheckpointUuids {
-		checkpointsRequested[c] = false
+	for _, c := range uuids {
+		checkpointsRequested[c.String()] = false
 	}
 	for _, expIDcUUIDs := range groupCUUIDsByEIDs {
 		for _, c := range strings.Split(expIDcUUIDs.CheckpointUUIDSStr, ",") {
@@ -197,7 +177,7 @@ func (a *apiServer) DeleteCheckpoints(
 	for i, expIDcUUIDs := range groupCUUIDsByEIDs {
 		exp, err := db.ExperimentByID(ctx, expIDcUUIDs.ExperimentID)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		err = expauth.AuthZProvider.Get().CanGetExperiment(ctx, *curUser, exp)
 		if authz.IsPermissionDenied(err) {
@@ -205,16 +185,178 @@ func (a *apiServer) DeleteCheckpoints(
 				strings.Split(expIDcUUIDs.CheckpointUUIDSStr, ",")...)
 			continue
 		} else if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		if err = expauth.AuthZProvider.Get().CanEditExperiment(ctx, *curUser, exp); err != nil {
-			return nil, status.Error(codes.PermissionDenied, err.Error())
+			return nil, nil, status.Error(codes.PermissionDenied, err.Error())
 		}
 
 		exps[i] = exp
 	}
+
 	if len(notFoundCheckpoints) > 0 {
-		return nil, errCheckpointsNotFound(notFoundCheckpoints)
+		return nil, nil, errCheckpointsNotFound(notFoundCheckpoints)
+	}
+
+	return exps, groupCUUIDsByEIDs, nil
+}
+
+func (a *apiServer) PatchCheckpoints(
+	ctx context.Context,
+	req *apiv1.PatchCheckpointsRequest,
+) (*apiv1.PatchCheckpointsResponse, error) {
+	var uuidStrings []string
+	for _, c := range req.Checkpoints {
+		uuidStrings = append(uuidStrings, c.Uuid)
+	}
+
+	conv := &protoconverter.ProtoConverter{}
+	uuids := conv.ToUUIDList(uuidStrings)
+	if cErr := conv.Error(); cErr != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "converting checkpoint: %s", cErr)
+	}
+
+	if _, _, err := a.checkpointsRBACEditCheck(ctx, uuids); err != nil {
+		return nil, err
+	}
+
+	registeredCheckpointUUIDs, err := a.m.db.GetRegisteredCheckpoints(uuids)
+	if err != nil {
+		return nil, err
+	}
+	if len(registeredCheckpointUUIDs) > 0 {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"this subset of checkpoints provided are in the model registry and cannot be deleted: %v.",
+			registeredCheckpointUUIDs)
+	}
+
+	err = db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		var updatedCheckpointSizes []uuid.UUID
+		for i, c := range req.Checkpoints {
+			if c.Resources != nil {
+				size := int64(0)
+				for _, v := range c.Resources.Resources {
+					size += v
+				}
+
+				v1Update := tx.NewUpdate().Model(&model.CheckpointV1{}).
+					Where("uuid = ?", c.Uuid)
+				v2Update := tx.NewUpdate().Model(&model.CheckpointV2{}).
+					Where("uuid = ?", c.Uuid)
+
+				if len(c.Resources.Resources) == 0 { // Full delete case.
+					v1Update = v1Update.Set("state = ?", model.DeletedState)
+					v2Update = v2Update.Set("state = ?", model.DeletedState)
+				} else { // Partial delete case.
+					v1Update = v1Update.
+						Set("resources = ?", c.Resources.Resources).
+						Set("size = ?", size)
+					v2Update = v2Update.
+						Set("resources = ?", c.Resources.Resources).
+						Set("size = ?", size)
+
+					oldResources := struct {
+						bun.BaseModel `bun:"table:checkpoints_view"`
+						Resources     map[string]int64
+					}{}
+					if err := tx.NewSelect().Model(&oldResources).
+						Where("uuid = ?", c.Uuid).
+						Scan(ctx); err != nil {
+						return err
+					}
+
+					// Add metadata.json to oldResources if it is missing for backwards compatibility.
+					_, alreadyHasMetadata := oldResources.Resources["metadata.json"]
+					metadataValue, provided := c.Resources.Resources["metadata.json"]
+					if !alreadyHasMetadata && provided {
+						oldResources.Resources["metadata.json"] = metadataValue
+					}
+
+					// Only set state to partially deleted if files changed.
+					if !maps.Equal(oldResources.Resources, c.Resources.Resources) {
+						v1Update = v1Update.Set("state = ?", model.PartiallyDeletedState)
+						v2Update = v2Update.Set("state = ?", model.PartiallyDeletedState)
+					}
+				}
+
+				if _, err := v1Update.Exec(ctx); err != nil {
+					return fmt.Errorf("deleting checkpoints from raw_checkpoints: %w", err)
+				}
+
+				if _, err := v2Update.Exec(ctx); err != nil {
+					return fmt.Errorf("deleting checkpoints from checkpoints_v2: %w", err)
+				}
+
+				updatedCheckpointSizes = append(updatedCheckpointSizes, uuids[i])
+			}
+		}
+
+		if len(updatedCheckpointSizes) > 0 {
+			if err := db.UpdateCheckpointSizeTx(ctx, tx, updatedCheckpointSizes); err != nil {
+				return fmt.Errorf("updating checkpoint size: %w", err)
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error patching checkpoints: %w", err)
+	}
+
+	return &apiv1.PatchCheckpointsResponse{}, nil
+}
+
+func (a *apiServer) CheckpointsRemoveFiles(
+	ctx context.Context,
+	req *apiv1.CheckpointsRemoveFilesRequest,
+) (*apiv1.CheckpointsRemoveFilesResponse, error) {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	conv := &protoconverter.ProtoConverter{}
+	checkpointsToDelete := conv.ToUUIDList(req.CheckpointUuids)
+	if cErr := conv.Error(); cErr != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "converting checkpoint: %s", cErr)
+	}
+
+	for _, g := range req.CheckpointGlobs {
+		if len(g) == 0 {
+			// Avoid weirdness where someone passes in "" then we concat {uuid}/{glob}
+			// and we unexpectedly delete the whole checkpoint folder.
+			return nil, status.Errorf(codes.InvalidArgument, "cannot have empty string glob")
+		}
+		if strings.Contains(g, "..") {
+			return nil, status.Errorf(codes.InvalidArgument, "glob '%s' cannot contain '..'", g)
+		}
+	}
+
+	exps, groupCUUIDsByEIDs, err := a.checkpointsRBACEditCheck(ctx, checkpointsToDelete)
+	if err != nil {
+		return nil, err
+	}
+
+	registeredCheckpointUUIDs, err := a.m.db.GetRegisteredCheckpoints(checkpointsToDelete)
+	if err != nil {
+		return nil, err
+	}
+	if len(registeredCheckpointUUIDs) > 0 {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"this subset of checkpoints provided are in the model registry and cannot be deleted: %v.",
+			registeredCheckpointUUIDs)
+	}
+
+	addr := actor.Addr(fmt.Sprintf("checkpoints-gc-%s", uuid.New().String()))
+
+	taskSpec := *a.m.taskSpec
+
+	jobID := model.NewJobID()
+	if err = a.m.db.AddJob(&model.Job{
+		JobID:   jobID,
+		JobType: model.JobTypeCheckpointGC,
+		OwnerID: &curUser.ID,
+	}); err != nil {
+		return nil, fmt.Errorf("persisting new job: %w", err)
 	}
 
 	// Submit checkpoint GC tasks for all checkpoints.
@@ -228,11 +370,26 @@ func (a *apiServer) DeleteCheckpoints(
 		taskID := model.NewTaskID()
 		conv := &protoconverter.ProtoConverter{}
 		checkpointUUIDs := conv.ToUUIDList(strings.Split(expIDcUUIDs.CheckpointUUIDSStr, ","))
+
 		ckptGCTask := newCheckpointGCTask(
 			a.m.rm, a.m.db, a.m.taskLogger, taskID, jobID, jobSubmissionTime, taskSpec, exps[i].ID,
-			exps[i].Config, checkpointUUIDs, false, agentUserGroup, curUser, nil,
+			exps[i].Config, checkpointUUIDs, req.CheckpointGlobs, false, agentUserGroup, curUser, nil,
 		)
 		a.m.system.MustActorOf(addr, ckptGCTask)
+	}
+
+	return &apiv1.CheckpointsRemoveFilesResponse{}, nil
+}
+
+func (a *apiServer) DeleteCheckpoints(
+	ctx context.Context,
+	req *apiv1.DeleteCheckpointsRequest,
+) (*apiv1.DeleteCheckpointsResponse, error) {
+	if _, err := a.CheckpointsRemoveFiles(ctx, &apiv1.CheckpointsRemoveFilesRequest{
+		CheckpointUuids: req.CheckpointUuids,
+		CheckpointGlobs: []string{fullDeleteGlob},
+	}); err != nil {
+		return nil, err
 	}
 
 	return &apiv1.DeleteCheckpointsResponse{}, nil

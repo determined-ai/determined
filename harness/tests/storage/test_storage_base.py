@@ -139,11 +139,3 @@ def test_shared_fs_shortcut_dict() -> None:
     shortcut = {"type": "shared_fs", "base_path": "test_base_path"}
     with pytest.raises(ValueError):
         _ = core._context._get_storage_manager(checkpoint_storage=shortcut)
-
-
-def test_hdfs_shortcut_dict() -> None:
-    shortcut = {"type": "hdfs", "hdfs_url": "test_hdfs_url", "hdfs_path": "test_hdfs_path"}
-    with mock.patch("determined.common.storage.HDFSStorageManager.from_config") as mocked:
-        _ = core._context._get_storage_manager(checkpoint_storage=shortcut)
-    shortcut.pop("type")
-    mocked.assert_called_once_with(shortcut, None)

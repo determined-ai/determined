@@ -133,6 +133,7 @@ export const checkpointStateToLabel: { [key in CheckpointState]: string } = {
   [CheckpointState.Completed]: 'Completed',
   [CheckpointState.Error]: 'Error',
   [CheckpointState.Deleted]: 'Deleted',
+  [CheckpointState.PartiallyDeleted]: 'Partially Deleted',
   [CheckpointState.Unspecified]: 'Unspecified',
 };
 

@@ -239,9 +239,11 @@ Parameters:
         password: "{{ .db.password }}"
         host: "{{ .db.host }}"
         port: 5432
-        name: determined
+        name: "{{ .db.name }}"
+        {{- if .db.ssl_root_cert }}
         ssl_mode: verify-ca
-        ssl_root_cert: /etc/determined/db_ssl_root_cert.pem
+        ssl_root_cert: "{{ .db.ssl_root_cert }}"
+        {{- end }}
 
       enable_cors: {{ .enable_cors }}
 
@@ -820,6 +822,8 @@ Resources:
             db:
               password: "${DBPassword}"
               host: "${Database.Endpoint.Address}"
+              name: determined
+              ssl_root_cert: /etc/determined/db_ssl_root_cert.pem
 
             enable_cors: ${EnableCORS}
 

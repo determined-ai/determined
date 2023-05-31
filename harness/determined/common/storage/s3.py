@@ -2,7 +2,7 @@ import logging
 import os
 import re
 import tempfile
-from typing import Optional, Union
+from typing import Dict, List, Optional, Union
 
 import requests
 
@@ -149,13 +149,23 @@ class S3StorageManager(storage.CloudStorageManager):
             raise errors.CheckpointNotFound(f"Did not find {prefix} in S3")
 
     @util.preserve_random_state
-    def delete(self, tgt: str) -> None:
+    def delete(self, tgt: str, globs: List[str]) -> Dict[str, int]:
         prefix = self.get_storage_prefix(tgt)
         logging.info(f"Deleting {prefix} from S3")
 
-        objects = [{"Key": obj.key} for obj in self.bucket.objects.filter(Prefix=prefix)]
+        objects = {obj.key: obj.size for obj in self.bucket.objects.filter(Prefix=prefix)}
+
+        resources = {}
+        if "**/*" not in globs:  # Partial delete case.
+            prefixed_resources = self._apply_globs_to_resources(objects, prefix, globs)
+            for obj in list(objects):
+                if obj in prefixed_resources:
+                    resources[obj.replace(f"{prefix}/", "")] = objects[obj]
+                    del objects[obj]
 
         # S3 delete_objects has a limit of 1000 objects.
-        for chunk in util.chunks(objects, 1000):
+        for chunk in util.chunks([{"Key": o} for o in objects], 1000):
             logging.debug(f"Deleting {len(chunk)} objects from S3")
             self.bucket.delete_objects(Delete={"Objects": chunk})
+
+        return resources

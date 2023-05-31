@@ -1,15 +1,19 @@
 import { DownloadOutlined, FileOutlined } from '@ant-design/icons';
+import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
+import { python } from '@codemirror/lang-python';
+import { StreamLanguage } from '@codemirror/language';
+import { yaml } from '@codemirror/legacy-modes/mode/yaml';
+import ReactCodeMirror from '@uiw/react-codemirror';
 import { Tree } from 'antd';
 import React, { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 
 import Tooltip from 'components/kit/Tooltip';
-import CodeMirrorEditor from 'components/kit/utils/components/CodeMirrorEditor';
 import Message, { MessageType } from 'components/kit/utils/components/Message';
 import Section from 'components/kit/utils/components/Section';
 import Spinner from 'components/kit/utils/components/Spinner';
 import { ErrorHandler } from 'components/kit/utils/types';
-import { ErrorType, ValueOf } from 'components/kit/utils/types';
-import { TreeNode } from 'components/kit/utils/types';
+import { DarkLight, ErrorType, TreeNode, ValueOf } from 'components/kit/utils/types';
+import useUI from 'shared/contexts/stores/UI';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 
 const JupyterRenderer = lazy(() => import('./CodeEditor/IpynbRenderer'));
@@ -20,9 +24,17 @@ import css from './CodeEditor/CodeEditor.module.scss';
 
 import './CodeEditor/index.scss';
 
+const MARKDOWN_CONFIG = {
+  autocompletion: false,
+  foldGutter: false,
+  highlightActiveLineGutter: false,
+};
+
 export type Props = {
   files: TreeNode[];
   onError: ErrorHandler;
+  height?: string;
+  onChange?: (arg0: string) => void; // only use in single-file editing
   onSelectFile?: (arg0: string) => void;
   readonly?: boolean;
   selectedFilePath?: string;
@@ -86,6 +98,12 @@ const descForConfig = {
 const isConfig = (key: unknown): key is Config =>
   key === Config.Submitted || key === Config.Runtime;
 
+const langs = {
+  markdown: () => markdown({ base: markdownLanguage }),
+  python,
+  yaml: () => StreamLanguage.define(yaml),
+};
+
 /**
  * A component responsible to enable the user to view the code for a experiment.
  *
@@ -104,20 +122,31 @@ const isConfig = (key: unknown): key is Config =>
 
 const CodeEditor: React.FC<Props> = ({
   files,
+  onError,
+  height = '100%',
+  onChange,
   onSelectFile,
   readonly,
-  onError,
   selectedFilePath,
 }) => {
   const [pageError, setPageError] = useState<PageError>(PageError.None);
   const sortedFiles = useMemo(() => [...files].sort(sortTree), [files]);
   const [activeFile, setActiveFile] = useState<TreeNode | null>(sortedFiles[0] || null);
+  const { ui } = useUI();
 
   const viewMode = useMemo(() => (files.length === 1 ? 'editor' : 'split'), [files.length]);
   const editorMode = useMemo(() => {
     const isIpybnFile = /\.ipynb$/i.test(String(activeFile?.key || ''));
     return isIpybnFile ? 'ipynb' : 'codemirror';
-  }, [activeFile]);
+  }, [activeFile?.key]);
+
+  const syntax = useMemo(() => {
+    if (String(activeFile?.key).includes('.py')) return 'python';
+
+    if (String(activeFile?.key).includes('.md')) return 'markdown';
+
+    return 'yaml';
+  }, [activeFile?.key]);
 
   const fetchFile = useCallback(
     async (fileInfo: TreeNode) => {
@@ -236,13 +265,10 @@ const CodeEditor: React.FC<Props> = ({
     viewMode === 'editor' ? css.editorMode : '',
   ];
 
-  const getSyntaxHighlight = useCallback(() => {
-    if (String(activeFile?.key).includes('.py')) return 'python';
-
-    if (String(activeFile?.key).includes('.md')) return 'markdown';
-
-    return 'yaml';
-  }, [activeFile]);
+  const sectionClasses = [
+    pageError ? css.pageError : css.editor,
+    height !== '100%' ? css.noBorder : '',
+  ];
 
   let fileContent = <h5>Please, choose a file to preview.</h5>;
   if (pageError) {
@@ -259,11 +285,14 @@ const CodeEditor: React.FC<Props> = ({
   } else if (activeFile) {
     fileContent =
       editorMode === 'codemirror' ? (
-        <CodeMirrorEditor
-          height="100%"
+        <ReactCodeMirror
+          basicSetup={syntax === 'markdown' ? MARKDOWN_CONFIG : undefined}
+          extensions={[langs[syntax]()]}
+          height={height}
           readOnly={readonly}
-          syntax={getSyntaxHighlight()}
+          theme={ui.darkLight === DarkLight.Dark ? 'dark' : 'light'}
           value={Loadable.getOrElse('', activeFile.content)}
+          onChange={onChange}
         />
       ) : (
         <Suspense fallback={<Spinner tip="Loading ipynb viewer..." />}>
@@ -273,7 +302,7 @@ const CodeEditor: React.FC<Props> = ({
   }
 
   return (
-    <div className={classes.join(' ')}>
+    <div className={classes.join(' ')} style={{ height }}>
       <div className={viewMode === 'editor' ? css.hideElement : undefined}>
         <DirectoryTree
           className={css.fileTree}
@@ -284,7 +313,7 @@ const CodeEditor: React.FC<Props> = ({
           onSelect={handleSelectFile}
         />
       </div>
-      {!!activeFile?.key && (
+      {!!activeFile?.title && (
         <div className={css.fileDir}>
           <div className={css.fileInfo}>
             <div className={css.buttonContainer}>
@@ -322,8 +351,8 @@ const CodeEditor: React.FC<Props> = ({
       )}
       <Section
         bodyNoPadding
-        bodyScroll
-        className={pageError ? css.pageError : css.editor}
+        bodyScroll={height === '100%'}
+        className={sectionClasses.join(' ')}
         maxHeight>
         <Spinner spinning={activeFile?.content === NotLoaded}>{fileContent}</Spinner>
       </Section>

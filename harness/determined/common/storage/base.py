@@ -1,10 +1,14 @@
 import abc
 import contextlib
+import copy
+import glob
 import os
 import pathlib
+import tempfile
 import urllib
-from typing import Any, Callable, Dict, Iterator, Optional, Set, Union
+from typing import Any, Callable, Dict, Iterator, List, Optional, Set, Union
 
+from determined import util
 from determined.common import storage
 
 # Paths should be a set of paths relative to the checkpoint root that indicate what paths
@@ -130,7 +134,7 @@ class StorageManager(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def delete(self, tgt: str) -> None:
+    def delete(self, tgt: str, globs: List[str]) -> Dict[str, int]:
         """
         Delete the stored data from persistent storage.
         """
@@ -162,6 +166,58 @@ class StorageManager(metaclass=abc.ABCMeta):
                 result[rel_path] = os.path.getsize(abs_path)
 
         return result
+
+    @staticmethod
+    def _apply_globs_to_resources(
+        file_paths_to_sizes: Dict[str, int],
+        prefix: str,
+        globs: List[str],
+    ) -> Dict[str, int]:
+        """
+        Returns remaining resources after glob has been applied. This is mostly a hack to
+        handle weird differences between glob.glob, fmatch.match, and pathlib.match.
+        We create a checkpoint path with empty files to all be able to use glob.glob across
+        all storage backends.
+        """
+        file_paths_to_sizes = copy.deepcopy(file_paths_to_sizes)
+
+        # Create dummy file system.
+        temp_dir = tempfile.mkdtemp()
+        try:
+            for f in file_paths_to_sizes:
+                path = pathlib.Path(temp_dir).joinpath(f)
+                path.parent.mkdir(parents=True, exist_ok=True)
+                if f.endswith("/"):  # path.is_dir() will return false always.
+                    path.mkdir(exist_ok=True)
+                else:
+                    path.touch()
+
+            # Do deletion so we propogate deletion,
+            # for example deleting `subdir` deletes `sub/text1.txt`.
+            to_delete_dirs = {}
+            to_delete_files = {}
+            for g in globs:
+                for path_str in glob.glob(
+                    f"{pathlib.Path(temp_dir).joinpath(prefix)}/{g}", recursive=True
+                ):
+                    if os.path.isfile(path_str):
+                        to_delete_files[path_str] = True
+                    elif os.path.isdir(path_str):
+                        to_delete_dirs[path_str] = True
+
+            for path_str in to_delete_files:
+                os.remove(path_str)
+            for path_str in to_delete_dirs:
+                util.rmtree_nfs_safe(path_str, ignore_errors=False)
+
+            prefixed_resources = StorageManager._list_directory(temp_dir)
+            for file_path in list(file_paths_to_sizes):
+                if file_path not in prefixed_resources:
+                    del file_paths_to_sizes[file_path]
+        finally:
+            util.rmtree_nfs_safe(temp_dir, ignore_errors=True)
+
+        return file_paths_to_sizes
 
 
 def from_string(shortcut: str) -> StorageManager:

@@ -175,12 +175,11 @@ func (c *awsCluster) list(ctx *actor.Context) ([]*model.Instance, error) {
 func (c *awsCluster) launch(
 	ctx *actor.Context,
 	instanceNum int,
-) {
+) error {
 	if c.SpotEnabled {
-		c.launchSpot(ctx, instanceNum)
-	} else {
-		c.launchOnDemand(ctx, instanceNum)
+		return c.launchSpot(ctx, instanceNum)
 	}
+	return c.launchOnDemand(ctx, instanceNum)
 }
 
 func (c *awsCluster) terminate(ctx *actor.Context, instanceIDs []string) {
@@ -211,14 +210,14 @@ func (c *awsCluster) listOnDemand(ctx *actor.Context) ([]*model.Instance, error)
 	return res, nil
 }
 
-func (c *awsCluster) launchOnDemand(ctx *actor.Context, instanceNum int) {
+func (c *awsCluster) launchOnDemand(ctx *actor.Context, instanceNum int) error {
 	if instanceNum <= 0 {
-		return
+		return nil
 	}
 	instances, err := c.launchInstances(instanceNum, false)
 	if err != nil {
 		ctx.Log().WithError(err).Error("cannot launch EC2 instances")
-		return
+		return err
 	}
 	launched := c.newInstances(instances.Instances)
 	ctx.Log().Infof(
@@ -227,6 +226,7 @@ func (c *awsCluster) launchOnDemand(ctx *actor.Context, instanceNum int) {
 		instanceNum,
 		model.FmtInstances(launched),
 	)
+	return nil
 }
 
 func (c *awsCluster) terminateOnDemand(ctx *actor.Context, instanceIDs []*string) {
