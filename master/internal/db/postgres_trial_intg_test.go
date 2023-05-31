@@ -897,7 +897,7 @@ func TestGenericMetricsIO(t *testing.T) {
 	err = db.AddAllocation(a)
 	require.NoError(t, err, "failed to add allocation")
 
-	metrics, err := structpb.NewStruct(map[string]any{"loss": 10})
+	metrics, err := structpb.NewStruct(map[string]any{"aloss": 10})
 	require.NoError(t, err)
 
 	trialRunID := 1
@@ -909,7 +909,6 @@ func TestGenericMetricsIO(t *testing.T) {
 		StepsCompleted: int32(batches),
 		Metrics:        &commonv1.Metrics{AvgMetrics: metrics},
 	}
-
 	err = db.AddTrialMetrics(ctx, trialMetrics, "inference")
 	require.NoError(t, err)
 
@@ -921,6 +920,50 @@ func TestGenericMetricsIO(t *testing.T) {
 	require.EqualValues(t, tr.ID, metricReports[0].TrialId)
 	require.Equal(t, metrics, metricReports[0].Metrics.
 		Fields[model.TrialMetricsJsonPath(false)].GetStructValue())
+
+	// test generic metrics summary metric write and read.
+	metrics2, err := structpb.NewStruct(map[string]any{"aloss": 20, "bloss": 30})
+	require.NoError(t, err)
+	trialMetrics2 := trialMetrics
+	trialMetrics2.StepsCompleted = int32(batches * 2)
+	trialMetrics2.Metrics = &commonv1.Metrics{AvgMetrics: metrics2}
+	err = db.AddTrialMetrics(ctx, trialMetrics, "inference")
+	require.NoError(t, err)
+
+	query := fmt.Sprintf(`SELECT name,
+summary_metrics->'%[1]s'->name->>'max' AS max,
+summary_metrics->'%[1]s'->name->>'min' AS min,
+summary_metrics->'%[1]s'->name->>'sum' AS sum,
+summary_metrics->'%[1]s'->name->>'last' AS last,
+summary_metrics->'%[1]s'->name->>'count' AS count,
+summary_metrics->'%[1]s'->name->>'type' AS type
+FROM trials
+CROSS JOIN jsonb_object_keys(summary_metrics->'%[1]s') AS name
+WHERE id = ?
+ORDER BY name ASC`, model.TrialSummaryMetricsJsonPath("inference"))
+
+	summaryRows := []*summaryMetrics{}
+	err = Bun().NewRaw(query, tr.ID).Scan(ctx, &summaryRows)
+	require.NoError(t, err)
+	require.Equal(t, 2, len(summaryRows), summaryRows)
+	require.Equal(t, *summaryRows[0], summaryMetrics{
+		Name:  "aloss",
+		Max:   20,
+		Min:   10,
+		Sum:   30,
+		Last:  "20",
+		Count: 2,
+		Type:  "number",
+	})
+	require.Equal(t, *summaryRows[1], summaryMetrics{
+		Name:  "bloss",
+		Max:   30,
+		Min:   30,
+		Sum:   30,
+		Last:  "30",
+		Count: 1,
+		Type:  "number",
+	})
 }
 
 func TestConcurrentMetricUpdate(t *testing.T) {
