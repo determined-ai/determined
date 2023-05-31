@@ -6,7 +6,6 @@ import (
 
 // Queue is a thread-safe queue.
 type Queue[T any] struct {
-	maxSize int // 0 means no limit
 	mu      sync.Mutex
 	cond    *sync.Cond // used to wait for elements in the queue
 	elems   []T
