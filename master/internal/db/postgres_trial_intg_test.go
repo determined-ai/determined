@@ -791,11 +791,13 @@ func TestBatchesProcessedNRollbacks(t *testing.T) {
 		t.Logf("Adding %s metrics: %v", typ, trialMetrics)
 		switch typ {
 		case model.TrainingMetricType.ToString():
-			rollbacksCnts, err := db.addTrialMetrics(ctx, trialMetrics, TrainingMetric, nil)
+			rollbacksCnts, err := db.addTrialMetrics(ctx, trialMetrics,
+				TrainingMetric, model.TrainingMetricType.ToString())
 			require.NoError(t, err)
 			require.Equal(t, int(expectedRollbacks), rollbacksCnts)
 		case model.ValidationMetricType.ToString():
-			rollbacksCnts, err := db.addTrialMetrics(ctx, trialMetrics, ValidationMetric, nil)
+			rollbacksCnts, err := db.addTrialMetrics(ctx, trialMetrics,
+				ValidationMetric, model.ValidationMetricType.ToString())
 			require.NoError(t, err)
 			require.Equal(t, int(expectedRollbacks), rollbacksCnts)
 		case "checkpoint":
@@ -808,7 +810,7 @@ func TestBatchesProcessedNRollbacks(t *testing.T) {
 				Metadata:     map[string]any{"steps_completed": batches},
 			}))
 		default:
-			rollbacksCnts, err := db.addTrialMetrics(ctx, trialMetrics, GenericMetric, &typ)
+			rollbacksCnts, err := db.addTrialMetrics(ctx, trialMetrics, GenericMetric, typ)
 			require.NoError(t, err)
 			require.Equal(t, int(expectedRollbacks), rollbacksCnts)
 		}
@@ -978,7 +980,7 @@ func TestConcurrentMetricUpdate(t *testing.T) {
 			partitionTypes := []MetricPartitionType{ValidationMetric, TrainingMetric}
 			//nolint:gosec // Weak RNG doesn't matter here.
 			partitionType := partitionTypes[rand.Intn(len(partitionTypes))]
-			_, err = db._addTrialMetricsTx(ctx, tx, trialMetrics, partitionType, nil)
+			_, err = db._addTrialMetricsTx(ctx, tx, trialMetrics, partitionType, "intg-test")
 			require.NoError(t, err)
 		}
 		if coinFlip() {

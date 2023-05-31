@@ -58,8 +58,14 @@ WHERE trial_id = $1
 
 func (db *PgDB) addRawMetrics(ctx context.Context, tx *sqlx.Tx, metricsBody *map[string]interface{},
 	runID, trialID, lastProcessedBatch int32,
-	pType MetricPartitionType, mType *string,
+	pType MetricPartitionType, mType string,
 ) (int, error) {
+	// only persist custom_type if it can be custom.
+	var metricType *string
+	if pType == GenericMetric {
+		metricType = &mType
+	}
+
 	var metricRowID int
 	//nolint:execinquery // we want to get the id.
 	if err := tx.QueryRowContext(ctx, `
@@ -68,7 +74,7 @@ INSERT INTO metrics
 VALUES
 	($1, $2, now(), $3, $4, $5, $6)
 RETURNING id`,
-		trialID, runID, *metricsBody, lastProcessedBatch, pType, mType,
+		trialID, runID, *metricsBody, lastProcessedBatch, pType, metricType,
 	).Scan(&metricRowID); err != nil {
 		return metricRowID, errors.Wrap(err, "inserting metrics")
 	}
@@ -93,7 +99,7 @@ func customMetricTypeToPartitionType(mType string) MetricPartitionType {
 // metrics. If these training metrics occur before any others, a rollback is assumed and later
 // training and validation metrics are cleaned up.
 func (db *PgDB) AddTrainingMetrics(ctx context.Context, m *trialv1.TrialMetrics) error {
-	_, err := db.addTrialMetrics(ctx, m, TrainingMetric, nil)
+	_, err := db.addTrialMetrics(ctx, m, TrainingMetric, model.TrainingMetricType.ToString())
 	return err
 }
 
@@ -103,7 +109,7 @@ func (db *PgDB) AddTrainingMetrics(ctx context.Context, m *trialv1.TrialMetrics)
 func (db *PgDB) AddValidationMetrics(
 	ctx context.Context, m *trialv1.TrialMetrics,
 ) error {
-	_, err := db.addTrialMetrics(ctx, m, ValidationMetric, nil)
+	_, err := db.addTrialMetrics(ctx, m, ValidationMetric, model.ValidationMetricType.ToString())
 	return err
 }
 
@@ -112,7 +118,7 @@ func (db *PgDB) AddTrialMetrics(
 	ctx context.Context, m *trialv1.TrialMetrics, mType string,
 ) error {
 	pType := customMetricTypeToPartitionType(mType)
-	_, err := db.addTrialMetrics(ctx, m, pType, &mType)
+	_, err := db.addTrialMetrics(ctx, m, pType, mType)
 	return err
 }
 
