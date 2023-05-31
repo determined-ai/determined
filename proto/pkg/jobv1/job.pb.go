@@ -535,7 +535,7 @@ type RBACJob struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// TODO rename. this is wierd.
+	// job represent one of the possible representations of a job.
 	//
 	// Types that are assignable to Job:
 	//

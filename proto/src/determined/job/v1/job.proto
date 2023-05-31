@@ -143,7 +143,7 @@ message Job {
 // RBACJob is a job that can have either a limited or a full
 // representation of a job.
 message RBACJob {
-  // TODO rename. this is wierd.
+  // job represent one of the possible representations of a job.
   oneof job {
     // Full representation.
     Job full = 1;
