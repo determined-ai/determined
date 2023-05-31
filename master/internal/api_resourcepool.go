@@ -2,11 +2,13 @@ package internal
 
 import (
 	"context"
+
+	"github.com/pkg/errors"
+
 	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	workspaceauth "github.com/determined-ai/determined/master/internal/workspace"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
-	"github.com/pkg/errors"
 )
 
 func (a *apiServer) GetResourcePools(
@@ -40,12 +42,14 @@ func (a *apiServer) UnbindRPFromWorkspace(
 	}
 	// Check permissions for all workspaces. Return err if any workspace doesn't have permissions.
 	// No partial unbinding.
-	for _, workspaceId := range req.WorkspaceIds {
+	for _, workspaceID := range req.WorkspaceIds {
 		if err = workspaceauth.AuthZProvider.Get().CanUnBindRPWorkspace(ctx, *curUser,
-			workspaceId); err != nil {
+			workspaceID); err != nil {
 			return nil, authz.SubIfUnauthorized(err,
-				errors.Errorf("current user %q doesn't have permissions to unbind resource pool %q from workspace with id %q.",
-					curUser.Username, req.ResourcePoolName, workspaceId))
+				errors.Errorf(
+					`current user %q doesn't have permissions to unbind
+					 resource pool %q from workspace with id %q.`,
+					curUser.Username, req.ResourcePoolName, workspaceID))
 		}
 	}
 
