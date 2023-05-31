@@ -319,7 +319,6 @@ def gen_class(klass: swagger_parser.Class) -> Code:
         out += [f'        if not omit_unset or "{k}" in vars(self):']
         out += [f'            out["{k}"] = {parsed}']
     out += ["        return out"]
-    out += [""]
 
     return "\n".join(out)
 
