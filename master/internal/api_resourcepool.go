@@ -42,18 +42,15 @@ func (a *apiServer) UnbindRPFromWorkspace(
 	}
 	// Check permissions for all workspaces. Return err if any workspace doesn't have permissions.
 	// No partial unbinding.
-	for _, workspaceID := range req.WorkspaceIds {
-		if err = workspaceauth.AuthZProvider.Get().CanUnBindRPWorkspace(ctx, *curUser,
-			workspaceID); err != nil {
-			return nil, authz.SubIfUnauthorized(err,
-				errors.Errorf(
-					`current user %q doesn't have permissions to unbind
-					 resource pool %q from workspace with id %q.`,
-					curUser.Username, req.ResourcePoolName, workspaceID))
-		}
+	if err = workspaceauth.AuthZProvider.Get().CanUnBindRPWorkspace(ctx, *curUser,
+		req.WorkspaceIds); err != nil {
+		return nil, authz.SubIfUnauthorized(err,
+			errors.Errorf(
+				`current user %q doesn't have permissions to modify resource pool bindings.`,
+				curUser.Username))
 	}
 
-	err = a.m.db.RemoveRPWorkspaceBindings(req.WorkspaceIds, req.ResourcePoolName)
+	err = a.m.db.RemoveRPWorkspaceBindings(ctx, req.WorkspaceIds, req.ResourcePoolName)
 	if err != nil {
 		return nil, err
 	}

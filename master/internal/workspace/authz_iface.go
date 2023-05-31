@@ -18,12 +18,12 @@ type WorkspaceAuthZ interface {
 
 	// POST /api/v1/resource-pools/workspace-bind
 	CanBindRPWorkspace(
-		ctx context.Context, curUser model.User, workspaceID int32,
+		ctx context.Context, curUser model.User, workspaceIDs []int32,
 	) error
 
 	// POST /api/v1/resource-pools/workspace-unbind
 	CanUnBindRPWorkspace(
-		ctx context.Context, curUser model.User, workspaceID int32,
+		ctx context.Context, curUser model.User, workspaceIDs []int32,
 	) error
 
 	// GET /api/v1/workspaces/:workspace_id/projects

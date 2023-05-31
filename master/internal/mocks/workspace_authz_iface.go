@@ -33,13 +33,13 @@ func (_m *WorkspaceAuthZ) CanArchiveWorkspace(ctx context.Context, curUser model
 	return r0
 }
 
-// CanBindRPWorkspace provides a mock function with given fields: ctx, curUser, workspaceID
-func (_m *WorkspaceAuthZ) CanBindRPWorkspace(ctx context.Context, curUser model.User, workspaceID int32) error {
-	ret := _m.Called(ctx, curUser, workspaceID)
+// CanBindRPWorkspace provides a mock function with given fields: ctx, curUser, workspaceIDs
+func (_m *WorkspaceAuthZ) CanBindRPWorkspace(ctx context.Context, curUser model.User, workspaceIDs []int32) error {
+	ret := _m.Called(ctx, curUser, workspaceIDs)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, model.User, int32) error); ok {
-		r0 = rf(ctx, curUser, workspaceID)
+	if rf, ok := ret.Get(0).(func(context.Context, model.User, []int32) error); ok {
+		r0 = rf(ctx, curUser, workspaceIDs)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -173,13 +173,13 @@ func (_m *WorkspaceAuthZ) CanSetWorkspacesName(ctx context.Context, curUser mode
 	return r0
 }
 
-// CanUnBindRPWorkspace provides a mock function with given fields: ctx, curUser, workspaceID
-func (_m *WorkspaceAuthZ) CanUnBindRPWorkspace(ctx context.Context, curUser model.User, workspaceID int32) error {
-	ret := _m.Called(ctx, curUser, workspaceID)
+// CanUnBindRPWorkspace provides a mock function with given fields: ctx, curUser, workspaceIDs
+func (_m *WorkspaceAuthZ) CanUnBindRPWorkspace(ctx context.Context, curUser model.User, workspaceIDs []int32) error {
+	ret := _m.Called(ctx, curUser, workspaceIDs)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, model.User, int32) error); ok {
-		r0 = rf(ctx, curUser, workspaceID)
+	if rf, ok := ret.Get(0).(func(context.Context, model.User, []int32) error); ok {
+		r0 = rf(ctx, curUser, workspaceIDs)
 	} else {
 		r0 = ret.Error(0)
 	}
