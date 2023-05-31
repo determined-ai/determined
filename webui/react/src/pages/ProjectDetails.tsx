@@ -174,7 +174,7 @@ const ProjectDetails: React.FC = () => {
       : [
           {
             breadcrumbName: 'Uncategorized Experiments',
-            path: paths.workspaceDetails(project.workspaceId),
+            path: paths.projectDetails(project.id),
           },
         ];
   return (
