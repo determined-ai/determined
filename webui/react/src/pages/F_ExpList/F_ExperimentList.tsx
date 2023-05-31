@@ -364,11 +364,11 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const updateExpListView = useCallback(
     (view: ExpListView) => {
       if (view === 'paged') {
-        setPage(Math.max(Math.round(((page - 1) * PAGE_SIZE) / settings.pageLimit), 1));
+        setPage((p) => Math.max(Math.round((p * PAGE_SIZE) / settings.pageLimit), 1));
       }
       updateGlobalSettings({ expListView: view });
     },
-    [updateGlobalSettings, settings.pageLimit, page],
+    [updateGlobalSettings, settings.pageLimit],
   );
 
   const onPageChange = useCallback(
