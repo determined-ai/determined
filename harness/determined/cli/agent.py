@@ -56,7 +56,7 @@ def list_agents(args: argparse.Namespace) -> None:
         "Registered Time",
         "Slots",
         "Containers",
-        "Resource Pool", # empty string for kubernetees
+        "Resource Pool",  # empty string for kubernetees
         "Enabled",
         "Draining",
         "Addresses",

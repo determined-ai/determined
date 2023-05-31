@@ -915,7 +915,6 @@ func (p *pods) cleanUpPodHandler(ctx *actor.Context, podHandler *actor.Ref) erro
 }
 
 func (p *pods) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
-	fmt.Println("in handle API request")
 	switch apiCtx.Request().Method {
 	case echo.GET:
 		summaries := p.summarizeClusterByNodes(ctx)
@@ -962,8 +961,9 @@ func (p *pods) summarize(ctx *actor.Context) (map[string]model.AgentSummary, err
 	return p.summarizeCache.summary, p.summarizeCache.err
 }
 
-// Get the mapping of many-to-many relationship between nodes and resource pools
-func (p *pods) getNodeResourcePoolMapping(nodeSummaries map[string]model.AgentSummary) (map[string][]*k8sV1.Node, map[string][]string) {
+// Get the mapping of many-to-many relationship between nodes and resource pools.
+func (p *pods) getNodeResourcePoolMapping(nodeSummaries map[string]model.AgentSummary) (
+	map[string][]*k8sV1.Node, map[string][]string) {
 	poolTaskContainerDefaults := extractTCDs(p.resourcePoolConfigs)
 
 	// Nvidia automatically taints nodes, so we should tolerate that when users don't customize
@@ -1013,7 +1013,6 @@ func (p *pods) getNodeResourcePoolMapping(nodeSummaries map[string]model.AgentSu
 	}
 
 	return poolsToNodes, nodesToPools
-
 }
 func (p *pods) computeSummary(ctx *actor.Context) (map[string]model.AgentSummary, error) {
 	nodeSummaries := p.summarizeClusterByNodes(ctx)

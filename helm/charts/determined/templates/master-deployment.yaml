@@ -34,8 +34,6 @@ spec:
         {{- if .Values.detVersion -}}
           {{ $tag = .Values.detVersion }}
         {{- end -}}
-        command: ["sleep"]
-        args: ["9999m"]
         image: {{ .Values.imageRegistry }}/{{ $image }}:{{ $tag }}
         imagePullPolicy: "Always"
         {{- if .Values.enterpriseEdition }}
