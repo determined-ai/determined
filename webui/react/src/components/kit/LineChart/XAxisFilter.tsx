@@ -1,7 +1,7 @@
 import React from 'react';
 
+import { ValueOf } from 'components/kit/internal/types';
 import Select, { Option, SelectValue } from 'components/kit/Select';
-import { ValueOf } from 'components/kit/utils/types';
 
 export const XAxisDomain = {
   Batches: 'Batches',

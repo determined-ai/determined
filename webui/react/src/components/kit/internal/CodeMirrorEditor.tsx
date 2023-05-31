@@ -5,7 +5,7 @@ import { yaml } from '@codemirror/legacy-modes/mode/yaml';
 import ReactCodeMirror, { ReactCodeMirrorProps } from '@uiw/react-codemirror';
 import React from 'react';
 
-import { DarkLight } from 'components/kit/utils/types';
+import { DarkLight } from 'components/kit/internal/types';
 import useUI from 'shared/contexts/stores/UI';
 
 interface Props extends ReactCodeMirrorProps {

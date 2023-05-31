@@ -3,10 +3,10 @@ import { Tag } from 'antd';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import Input, { InputRef } from 'components/kit/Input';
+import { alphaNumericSorter, toHtmlId, truncate } from 'components/kit/internal/functions';
+import Link from 'components/kit/internal/Link';
+import { ValueOf } from 'components/kit/internal/types';
 import Tooltip from 'components/kit/Tooltip';
-import Link from 'components/kit/utils/components/Link';
-import { alphaNumericSorter, toHtmlId, truncate } from 'components/kit/utils/functions';
-import { ValueOf } from 'components/kit/utils/types';
 
 import css from './Tags.module.scss';
 export const TagAction = {

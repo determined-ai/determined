@@ -3,7 +3,7 @@ import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 dayjs.extend(utc);
 
-import { NullOrUndefined } from 'components/kit/utils/types';
+import { NullOrUndefined } from 'components/kit/internal/types';
 
 const GLASBEY = [
   [0, 155, 222],

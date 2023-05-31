@@ -1,7 +1,7 @@
 import uPlot, { Plugin } from 'uplot';
 
-import { isNumber } from 'components/kit/utils/functions';
-import { CheckpointsDict } from 'components/kit/utils/types';
+import { isNumber } from 'components/kit/internal/functions';
+import { CheckpointsDict } from 'components/kit/internal/types';
 
 const NUM_POINTS = 4;
 const OUTER_RADIUS = 5;

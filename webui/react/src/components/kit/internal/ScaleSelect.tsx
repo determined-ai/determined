@@ -1,8 +1,8 @@
 import React from 'react';
 
+import { capitalize } from 'components/kit/internal/functions';
+import { Scale } from 'components/kit/internal/types';
 import Select, { Option, SelectValue } from 'components/kit/Select';
-import { capitalize } from 'components/kit/utils/functions';
-import { Scale } from 'components/kit/utils/types';
 
 interface Props {
   onChange: (value: Scale) => void;

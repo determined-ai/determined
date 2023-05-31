@@ -1,8 +1,8 @@
 import { DataNode } from 'antd/lib/tree';
 import * as t from 'io-ts';
 
-import { isObject, isString } from 'components/kit/utils/functions';
-import rootLogger, { LoggerInterface } from 'components/kit/utils/Logger';
+import { isObject, isString } from 'components/kit/internal/functions';
+import rootLogger, { LoggerInterface } from 'components/kit/internal/Logger';
 import { Loadable } from 'utils/loadable';
 
 export type Primitive = boolean | number | string;

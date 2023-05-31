@@ -138,17 +138,17 @@ const findTimeLogIndex = (logs: TestLog[], timeString: string): number => {
   return logs.findIndex((log) => log.message.includes(timestamp));
 };
 
-vi.mock('components/kit/utils/hooks/useResize', () => ({
+vi.mock('components/kit/internal/useResize', () => ({
   __esModule: true,
   default: () => ({ height: 1824, width: 1280, x: 0, y: 0 }),
 }));
 
-vi.mock('components/kit/utils/hooks/useGetCharMeasureInContainer', () => ({
+vi.mock('components/kit/internal/useGetCharMeasureInContainer', () => ({
   __esModule: true,
   default: () => ({ height: 18, width: 7 }),
 }));
 
-vi.mock('components/kit/utils/services', () => ({
+vi.mock('components/kit/internal/services', () => ({
   __esModule: true,
   readLogStream: (
     serverAddress: (path: string) => string,

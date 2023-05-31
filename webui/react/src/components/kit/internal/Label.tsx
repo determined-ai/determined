@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { ValueOf } from 'components/kit/utils/types';
+import { ValueOf } from 'components/kit/internal/types';
 
 import css from './Label.module.scss';
 

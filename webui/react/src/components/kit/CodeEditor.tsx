@@ -7,12 +7,12 @@ import ReactCodeMirror from '@uiw/react-codemirror';
 import { Tree } from 'antd';
 import React, { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 
+import Message, { MessageType } from 'components/kit/internal/Message';
+import Section from 'components/kit/internal/Section';
+import Spinner from 'components/kit/internal/Spinner';
+import { ErrorHandler } from 'components/kit/internal/types';
+import { DarkLight, ErrorType, TreeNode, ValueOf } from 'components/kit/internal/types';
 import Tooltip from 'components/kit/Tooltip';
-import Message, { MessageType } from 'components/kit/utils/components/Message';
-import Section from 'components/kit/utils/components/Section';
-import Spinner from 'components/kit/utils/components/Spinner';
-import { ErrorHandler } from 'components/kit/utils/types';
-import { DarkLight, ErrorType, TreeNode, ValueOf } from 'components/kit/utils/types';
 import useUI from 'shared/contexts/stores/UI';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 

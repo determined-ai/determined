@@ -1,7 +1,7 @@
 import React from 'react';
 
-import Avatar, { Props as AvatarProps } from 'components/kit/utils/components/Avatar';
-import { User } from 'components/kit/utils/types';
+import Avatar, { Props as AvatarProps } from 'components/kit/internal/Avatar';
+import { User } from 'components/kit/internal/types';
 import useUI from 'shared/contexts/stores/UI';
 import { getDisplayName } from 'utils/user';
 

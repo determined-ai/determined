@@ -2,7 +2,7 @@ import { waitFor } from '@testing-library/dom';
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { User } from 'components/kit/utils/types';
+import { User } from 'components/kit/internal/types';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 
 import UserAvatar, { Props } from './UserAvatar';

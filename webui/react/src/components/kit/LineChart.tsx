@@ -2,17 +2,17 @@ import React, { useMemo, useRef } from 'react';
 import { FixedSizeGrid, GridChildComponentProps } from 'react-window';
 import uPlot, { AlignedData, Plugin } from 'uplot';
 
+import { getCssVar, getTimeTickValues, glasbeyColor } from 'components/kit/internal/functions';
+import ScaleSelect from 'components/kit/internal/ScaleSelect';
+import Spinner from 'components/kit/internal/Spinner/Spinner';
+import { ErrorHandler, MetricType, Scale } from 'components/kit/internal/types';
+import { SyncProvider } from 'components/kit/internal/UPlot/SyncProvider';
+import { UPlotPoint } from 'components/kit/internal/UPlot/types';
+import UPlotChart, { Options } from 'components/kit/internal/UPlot/UPlotChart';
+import { closestPointPlugin } from 'components/kit/internal/UPlot/UPlotChart/closestPointPlugin';
+import { tooltipsPlugin } from 'components/kit/internal/UPlot/UPlotChart/tooltipsPlugin';
+import useResize from 'components/kit/internal/useResize';
 import { XAxisDomain, XAxisFilter } from 'components/kit/LineChart/XAxisFilter';
-import ScaleSelect from 'components/kit/utils/components/ScaleSelect';
-import Spinner from 'components/kit/utils/components/Spinner/Spinner';
-import { SyncProvider } from 'components/kit/utils/components/UPlot/SyncProvider';
-import { UPlotPoint } from 'components/kit/utils/components/UPlot/types';
-import UPlotChart, { Options } from 'components/kit/utils/components/UPlot/UPlotChart';
-import { closestPointPlugin } from 'components/kit/utils/components/UPlot/UPlotChart/closestPointPlugin';
-import { tooltipsPlugin } from 'components/kit/utils/components/UPlot/UPlotChart/tooltipsPlugin';
-import { getCssVar, getTimeTickValues, glasbeyColor } from 'components/kit/utils/functions';
-import useResize from 'components/kit/utils/hooks/useResize';
-import { ErrorHandler, MetricType, Scale } from 'components/kit/utils/types';
 import { Loadable } from 'utils/loadable';
 
 import css from './LineChart.module.scss';

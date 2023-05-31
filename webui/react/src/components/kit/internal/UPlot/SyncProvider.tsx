@@ -2,7 +2,7 @@ import { observable } from 'micro-observables';
 import React, { createContext, useContext, useMemo } from 'react';
 import uPlot, { AlignedData } from 'uplot';
 
-import { generateUUID } from 'components/kit/utils/functions';
+import { generateUUID } from 'components/kit/internal/functions';
 
 type Bounds = {
   dataBounds: {

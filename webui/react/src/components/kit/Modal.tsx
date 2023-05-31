@@ -11,10 +11,10 @@ import React, {
 
 import Button from 'components/kit/Button';
 import Icon, { IconName } from 'components/kit/Icon';
-import Link from 'components/kit/utils/components/Link';
-import Spinner from 'components/kit/utils/components/Spinner';
-import { ErrorHandler } from 'components/kit/utils/types';
-import { ErrorLevel, ErrorType } from 'components/kit/utils/types';
+import Link from 'components/kit/internal/Link';
+import Spinner from 'components/kit/internal/Spinner';
+import { ErrorHandler } from 'components/kit/internal/types';
+import { ErrorLevel, ErrorType } from 'components/kit/internal/types';
 
 import css from './Modal.module.scss';
 

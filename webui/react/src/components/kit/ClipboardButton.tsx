@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Icon from 'components/kit/Icon';
-import { notification } from 'components/kit/utils/dialogApi';
-import { copyToClipboard } from 'components/kit/utils/functions';
+import { notification } from 'components/kit/internal/dialogApi';
+import { copyToClipboard } from 'components/kit/internal/functions';
 
 import Button from './Button';
 import Tooltip, { Placement } from './Tooltip';

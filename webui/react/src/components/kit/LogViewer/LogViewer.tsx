@@ -13,22 +13,22 @@ import { throttle } from 'throttle-debounce';
 
 import Button from 'components/kit/Button';
 import Icon from 'components/kit/Icon';
-import Link from 'components/kit/utils/components/Link';
-import Message, { MessageType } from 'components/kit/utils/components/Message';
-import Section from 'components/kit/utils/components/Section';
-import Spinner from 'components/kit/utils/components/Spinner';
 import {
   clone,
   dateTimeStringSorter,
   formatDatetime,
   numericSorter,
-} from 'components/kit/utils/functions';
-import useGetCharMeasureInContainer from 'components/kit/utils/hooks/useGetCharMeasureInContainer';
-import useResize from 'components/kit/utils/hooks/useResize';
-import { readLogStream } from 'components/kit/utils/services';
-import { FetchArgs, RecordKey, ValueOf } from 'components/kit/utils/types';
-import { ErrorHandler } from 'components/kit/utils/types';
-import { Log, LogLevel } from 'components/kit/utils/types';
+} from 'components/kit/internal/functions';
+import Link from 'components/kit/internal/Link';
+import Message, { MessageType } from 'components/kit/internal/Message';
+import Section from 'components/kit/internal/Section';
+import { readLogStream } from 'components/kit/internal/services';
+import Spinner from 'components/kit/internal/Spinner';
+import { FetchArgs, RecordKey, ValueOf } from 'components/kit/internal/types';
+import { ErrorHandler } from 'components/kit/internal/types';
+import { Log, LogLevel } from 'components/kit/internal/types';
+import useGetCharMeasureInContainer from 'components/kit/internal/useGetCharMeasureInContainer';
+import useResize from 'components/kit/internal/useResize';
 
 import ClipboardButton from '../ClipboardButton';
 

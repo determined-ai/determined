@@ -1,4 +1,4 @@
-import { ValueOf } from 'components/kit/utils/types';
+import { ValueOf } from 'components/kit/internal/types';
 
 export const ThemeFont = {
   Code: 'var(--theme-font-family-code)',

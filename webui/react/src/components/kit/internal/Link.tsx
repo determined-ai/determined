@@ -1,7 +1,7 @@
 import React, { CSSProperties, MouseEvent, useCallback } from 'react';
 
 import Button from 'components/kit/Button';
-import { AnyMouseEventHandler } from 'components/kit/utils/types';
+import { AnyMouseEventHandler } from 'components/kit/internal/types';
 import { handlePath, linkPath } from 'routes/utils';
 
 import css from './Link.module.scss';

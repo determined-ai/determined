@@ -1,9 +1,9 @@
 import React from 'react';
 
 import Icon from 'components/kit/Icon';
+import { ansiToHtml, capitalize } from 'components/kit/internal/functions';
+import { LogLevel } from 'components/kit/internal/types';
 import Tooltip from 'components/kit/Tooltip';
-import { ansiToHtml, capitalize } from 'components/kit/utils/functions';
-import { LogLevel } from 'components/kit/utils/types';
 
 import css from './LogViewerEntry.module.scss';
 

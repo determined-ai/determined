@@ -2,15 +2,13 @@ import type { TabsProps } from 'antd';
 import { default as MarkdownViewer } from 'markdown-to-jsx';
 import React, { useMemo } from 'react';
 
+import Spinner from 'components/kit/internal/Spinner/Spinner';
+import useResize from 'components/kit/internal/useResize';
 import Pivot from 'components/kit/Pivot';
-import Spinner from 'components/kit/utils/components/Spinner/Spinner';
-import useResize from 'components/kit/utils/hooks/useResize';
 
 import css from './Markdown.module.scss';
 
-const CodeMirrorEditor = React.lazy(
-  () => import('components/kit/utils/components/CodeMirrorEditor'),
-);
+const CodeMirrorEditor = React.lazy(() => import('components/kit/internal/CodeMirrorEditor'));
 
 interface Props {
   disabled?: boolean;
