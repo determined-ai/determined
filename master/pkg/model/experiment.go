@@ -838,18 +838,15 @@ func (t TrialProfilerMetricsBatchBatch) ForEach(f func(interface{}) error) error
 	return nil
 }
 
-// LegacyMetricType denotes what custom type the metric is.
-type LegacyMetricType string
-
 const (
 	// ValidationMetricType designates metrics from validation runs.
-	ValidationMetricType LegacyMetricType = "validation"
+	ValidationMetricType MetricType = "validation"
 	// TrainingMetricType designates metrics from training runs.
-	TrainingMetricType LegacyMetricType = "training"
+	TrainingMetricType MetricType = "training"
 )
 
 // ToString returns the string representation of the metric type.
-func (t LegacyMetricType) ToString() string {
+func (t MetricType) ToString() string {
 	return string(t)
 }
 
