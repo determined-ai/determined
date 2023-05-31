@@ -15,6 +15,8 @@ import (
 const (
 	// DefaultWorkspaceID is a special, always-existing, workspace titled "Uncategorized".
 	DefaultWorkspaceID = 1
+	// DefaultProjectID is the default project ID for the default workspace.
+	DefaultProjectID = 1
 )
 
 // Workspace is the bun model of a workspace.

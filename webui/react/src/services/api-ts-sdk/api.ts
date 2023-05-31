@@ -3494,6 +3494,25 @@ export interface V1GetJobsResponse {
     jobs: Array<V1Job>;
 }
 /**
+ * Response to GetJobsV2Request.
+ * @export
+ * @interface V1GetJobsV2Response
+ */
+export interface V1GetJobsV2Response {
+    /**
+     * Pagination information of the full dataset.
+     * @type {V1Pagination}
+     * @memberof V1GetJobsV2Response
+     */
+    pagination: V1Pagination;
+    /**
+     * List of the requested jobs.
+     * @type {Array<V1RBACJob>}
+     * @memberof V1GetJobsV2Response
+     */
+    jobs: Array<V1RBACJob>;
+}
+/**
  * Response to GetMasterRequest.
  * @export
  * @interface V1GetMasterConfigResponse
@@ -4736,6 +4755,12 @@ export interface V1Job {
      * @memberof V1Job
      */
     progress?: number;
+    /**
+     * Job's workspace id.
+     * @type {number}
+     * @memberof V1Job
+     */
+    workspaceId: number;
 }
 /**
  * Job summary.
@@ -5143,6 +5168,79 @@ export const V1LaunchWarning = {
     CURRENTSLOTSEXCEEDED: 'LAUNCH_WARNING_CURRENT_SLOTS_EXCEEDED',
 } as const
 export type V1LaunchWarning = ValueOf<typeof V1LaunchWarning>
+/**
+ * LimitedJob is a Job with omitted fields.
+ * @export
+ * @interface V1LimitedJob
+ */
+export interface V1LimitedJob {
+    /**
+     * Job summary.
+     * @type {V1JobSummary}
+     * @memberof V1LimitedJob
+     */
+    summary?: V1JobSummary;
+    /**
+     * Job type.
+     * @type {Jobv1Type}
+     * @memberof V1LimitedJob
+     */
+    type: Jobv1Type;
+    /**
+     * Associated resource pool.
+     * @type {string}
+     * @memberof V1LimitedJob
+     */
+    resourcePool: string;
+    /**
+     * Whether the job is preemptible.
+     * @type {boolean}
+     * @memberof V1LimitedJob
+     */
+    isPreemptible: boolean;
+    /**
+     * The job priority in priority scheduler.
+     * @type {number}
+     * @memberof V1LimitedJob
+     */
+    priority?: number;
+    /**
+     * The job weight in fairshare scheduler.
+     * @type {number}
+     * @memberof V1LimitedJob
+     */
+    weight?: number;
+    /**
+     * Job type.
+     * @type {string}
+     * @memberof V1LimitedJob
+     */
+    jobId: string;
+    /**
+     * Number of requested slots.
+     * @type {number}
+     * @memberof V1LimitedJob
+     */
+    requestedSlots: number;
+    /**
+     * Number of allocated slots.
+     * @type {number}
+     * @memberof V1LimitedJob
+     */
+    allocatedSlots: number;
+    /**
+     * Job's progress from 0 to 1.
+     * @type {number}
+     * @memberof V1LimitedJob
+     */
+    progress?: number;
+    /**
+     * Job's workspace id.
+     * @type {number}
+     * @memberof V1LimitedJob
+     */
+    workspaceId: number;
+}
 /**
  * ListRolesRequest is the body of the request for the call to search for a role.
  * @export
@@ -7276,6 +7374,25 @@ export interface V1QueueStats {
      * @memberof V1QueueStats
      */
     scheduledCount: number;
+}
+/**
+ * RBACJob is a job that can have either a limited or a full representation of a job.
+ * @export
+ * @interface V1RBACJob
+ */
+export interface V1RBACJob {
+    /**
+     * Full representation.
+     * @type {V1Job}
+     * @memberof V1RBACJob
+     */
+    full?: V1Job;
+    /**
+     * Limited representation for lower access levels.
+     * @type {V1LimitedJob}
+     * @memberof V1RBACJob
+     */
+    limited?: V1LimitedJob;
 }
 /**
  * RemoveAssignmentsRequest is the body of the request for the call to remove a user or group from a role.
@@ -16982,6 +17099,61 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Get a list of jobs in queue.
+         * @param {number} [offset] Pagination offset.
+         * @param {number} [limit] Pagination limit.
+         * @param {string} [resourcePool] The target resource-pool for agent resource manager.
+         * @param {V1OrderBy} [orderBy] Order results in either ascending or descending order by the number of jobs ahead.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+         * @param {Array<Jobv1State>} [states] Filter to jobs with states among those given.   - STATE_UNSPECIFIED: Unspecified state.  - STATE_QUEUED: Job is queued and waiting to be schedlued.  - STATE_SCHEDULED: Job is scheduled.  - STATE_SCHEDULED_BACKFILLED: Job is scheduled as a backfill.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getJobsV2(offset?: number, limit?: number, resourcePool?: string, orderBy?: V1OrderBy, states?: Array<Jobv1State>, options: any = {}): FetchArgs {
+            const localVarPath = `/api/v1/v2rc/job-queues`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            if (offset !== undefined) {
+                localVarQueryParameter['offset'] = offset
+            }
+            
+            if (limit !== undefined) {
+                localVarQueryParameter['limit'] = limit
+            }
+            
+            if (resourcePool !== undefined) {
+                localVarQueryParameter['resourcePool'] = resourcePool
+            }
+            
+            if (orderBy !== undefined) {
+                localVarQueryParameter['orderBy'] = orderBy
+            }
+            
+            if (states) {
+                localVarQueryParameter['states'] = states
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get a list of columns for experiment list table.
          * @param {number} id The id of the project.
          * @param {*} [options] Override http request option.
@@ -18442,6 +18614,29 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Get a list of jobs in queue.
+         * @param {number} [offset] Pagination offset.
+         * @param {number} [limit] Pagination limit.
+         * @param {string} [resourcePool] The target resource-pool for agent resource manager.
+         * @param {V1OrderBy} [orderBy] Order results in either ascending or descending order by the number of jobs ahead.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+         * @param {Array<Jobv1State>} [states] Filter to jobs with states among those given.   - STATE_UNSPECIFIED: Unspecified state.  - STATE_QUEUED: Job is queued and waiting to be schedlued.  - STATE_SCHEDULED: Job is scheduled.  - STATE_SCHEDULED_BACKFILLED: Job is scheduled as a backfill.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getJobsV2(offset?: number, limit?: number, resourcePool?: string, orderBy?: V1OrderBy, states?: Array<Jobv1State>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetJobsV2Response> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getJobsV2(offset, limit, resourcePool, orderBy, states, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Get a list of columns for experiment list table.
          * @param {number} id The id of the project.
          * @param {*} [options] Override http request option.
@@ -19129,6 +19324,20 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Get a list of jobs in queue.
+         * @param {number} [offset] Pagination offset.
+         * @param {number} [limit] Pagination limit.
+         * @param {string} [resourcePool] The target resource-pool for agent resource manager.
+         * @param {V1OrderBy} [orderBy] Order results in either ascending or descending order by the number of jobs ahead.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+         * @param {Array<Jobv1State>} [states] Filter to jobs with states among those given.   - STATE_UNSPECIFIED: Unspecified state.  - STATE_QUEUED: Job is queued and waiting to be schedlued.  - STATE_SCHEDULED: Job is scheduled.  - STATE_SCHEDULED_BACKFILLED: Job is scheduled as a backfill.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getJobsV2(offset?: number, limit?: number, resourcePool?: string, orderBy?: V1OrderBy, states?: Array<Jobv1State>, options?: any) {
+            return InternalApiFp(configuration).getJobsV2(offset, limit, resourcePool, orderBy, states, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Get a list of columns for experiment list table.
          * @param {number} id The id of the project.
          * @param {*} [options] Override http request option.
@@ -19644,6 +19853,22 @@ export class InternalApi extends BaseAPI {
      */
     public getJobs(offset?: number, limit?: number, resourcePool?: string, orderBy?: V1OrderBy, states?: Array<Jobv1State>, options?: any) {
         return InternalApiFp(this.configuration).getJobs(offset, limit, resourcePool, orderBy, states, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Get a list of jobs in queue.
+     * @param {number} [offset] Pagination offset.
+     * @param {number} [limit] Pagination limit.
+     * @param {string} [resourcePool] The target resource-pool for agent resource manager.
+     * @param {V1OrderBy} [orderBy] Order results in either ascending or descending order by the number of jobs ahead.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+     * @param {Array<Jobv1State>} [states] Filter to jobs with states among those given.   - STATE_UNSPECIFIED: Unspecified state.  - STATE_QUEUED: Job is queued and waiting to be schedlued.  - STATE_SCHEDULED: Job is scheduled.  - STATE_SCHEDULED_BACKFILLED: Job is scheduled as a backfill.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public getJobsV2(offset?: number, limit?: number, resourcePool?: string, orderBy?: V1OrderBy, states?: Array<Jobv1State>, options?: any) {
+        return InternalApiFp(this.configuration).getJobsV2(offset, limit, resourcePool, orderBy, states, options)(this.fetch, this.basePath)
     }
     
     /**

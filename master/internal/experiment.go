@@ -27,6 +27,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/telemetry"
 	"github.com/determined-ai/determined/master/internal/webhooks"
+	"github.com/determined-ai/determined/master/internal/workspace"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/command"
 	"github.com/determined-ai/determined/master/pkg/logger"
@@ -378,7 +379,12 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			ctx.Respond(err)
 		}
 	case sproto.GetJob:
-		ctx.Respond(e.toV1Job())
+		j, err := e.toV1Job()
+		if err != nil {
+			ctx.Respond(err)
+		} else {
+			ctx.Respond(j)
+		}
 
 	case sproto.SetResourcePool:
 		if err := e.setRP(ctx, msg); err != nil {
@@ -939,7 +945,12 @@ func (e *experiment) setRP(ctx *actor.Context, msg sproto.SetResourcePool) error
 	return nil
 }
 
-func (e *experiment) toV1Job() *jobv1.Job {
+func (e *experiment) toV1Job() (*jobv1.Job, error) {
+	workspace, err := workspace.WorkspaceByProjectID(context.TODO(), e.ProjectID)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to get workspace id for exp '%d'", e.ID)
+	}
+
 	j := jobv1.Job{
 		JobId:          e.JobID.String(),
 		EntityId:       fmt.Sprint(e.ID),
@@ -949,6 +960,7 @@ func (e *experiment) toV1Job() *jobv1.Job {
 		UserId:         int32(*e.OwnerID),
 		Progress:       float32(e.searcher.Progress()),
 		Name:           e.activeConfig.Name().String(),
+		WorkspaceId:    int32(workspace.ID),
 	}
 
 	j.IsPreemptible = config.ReadRMPreemptionStatus(j.ResourcePool)
@@ -957,5 +969,5 @@ func (e *experiment) toV1Job() *jobv1.Job {
 
 	j.ResourcePool = e.activeConfig.Resources().ResourcePool()
 
-	return &j
+	return &j, nil
 }
