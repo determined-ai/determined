@@ -268,6 +268,8 @@ const CodeEditor: React.FC<Props> = ({
     height !== '100%' ? css.noBorder : '',
   ];
 
+  const treeClasses = [css.fileTree, viewMode === 'editor' ? css.hideElement : ''];
+
   let fileContent = <h5>Please, choose a file to preview.</h5>;
   if (pageError) {
     fileContent = (
@@ -301,16 +303,14 @@ const CodeEditor: React.FC<Props> = ({
 
   return (
     <div className={classes.join(' ')} style={{ height }}>
-      <div className={viewMode === 'editor' ? css.hideElement : undefined}>
-        <DirectoryTree
-          className={css.fileTree}
-          data-testid="fileTree"
-          defaultExpandAll
-          defaultSelectedKeys={[selectedFilePath || sortedFiles[0]?.key]}
-          treeData={sortedFiles}
-          onSelect={handleSelectFile}
-        />
-      </div>
+      <DirectoryTree
+        className={treeClasses.join(' ')}
+        data-testid="fileTree"
+        defaultExpandAll
+        defaultSelectedKeys={[selectedFilePath || sortedFiles[0]?.key]}
+        treeData={sortedFiles}
+        onSelect={handleSelectFile}
+      />
       {!!activeFile?.title && (
         <div className={css.fileDir}>
           <div className={css.fileInfo}>
