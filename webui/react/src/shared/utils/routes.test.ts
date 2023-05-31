@@ -119,11 +119,7 @@ describe('Routes Utilities', () => {
   });
 
   describe('openBlank', () => {
-    let originalWindowOpen: (
-      url?: string | URL,
-      target?: string,
-      features?: string,
-    ) => WindowProxy | null;
+    let originalWindowOpen: typeof window.open;
 
     beforeEach(() => {
       originalWindowOpen = window.open;
@@ -322,7 +318,7 @@ describe('Routes Utilities', () => {
 
     beforeEach(() => {
       instance = router.getRouter();
-      vi.spyOn(instance, 'navigate');
+      vi.spyOn<RemixRouter, 'navigate'>(instance, 'navigate');
     });
 
     afterEach(() => {
