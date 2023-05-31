@@ -1,4 +1,4 @@
-import { Space } from 'antd';
+import { Space, Switch } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import BatchActionConfirmModalComponent from 'components/BatchActionConfirmModal';
@@ -10,7 +10,6 @@ import { Column, Columns } from 'components/kit/Columns';
 import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 import Icon, { IconName } from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
-import RadioGroup from 'components/RadioGroup';
 import usePermissions from 'hooks/usePermissions';
 import {
   activateExperiments,
@@ -315,6 +314,24 @@ const TableActionBar: React.FC<Props> = ({
 
   const handleAction = useCallback((key: string) => handleBatchAction(key), [handleBatchAction]);
 
+  const settingContent = useMemo(
+    () => (
+      <div className={css.settingContent}>
+        <div className={css.title}>Data</div>
+        <div className={css.row}>
+          <Icon name="list" title="scroll" />
+          <span>Infinite Scroll</span>
+          <Switch
+            checked={expListView === 'scroll'}
+            size="small"
+            onChange={(c: boolean) => setExpListView(c ? 'scroll' : 'paged')}
+          />
+        </div>
+      </div>
+    ),
+    [expListView, setExpListView],
+  );
+
   return (
     <Columns>
       <Column>
@@ -348,16 +365,12 @@ const TableActionBar: React.FC<Props> = ({
       </Column>
       <Column align="right">
         <Space>
+          <Dropdown content={settingContent}>
+            <Button>
+              <Icon name="overflow-horizontal" title="menu" />
+            </Button>
+          </Dropdown>
           {!!toggleComparisonView && <Button onClick={toggleComparisonView}>Compare</Button>}
-          <RadioGroup
-            iconOnly
-            options={[
-              { icon: 'grid', id: 'scroll', label: 'Scroll View' },
-              { icon: 'list', id: 'paged', label: 'Paged View' },
-            ]}
-            value={expListView}
-            onChange={(id) => setExpListView(id as ExpListView)}
-          />
         </Space>
       </Column>
       {batchAction && (
