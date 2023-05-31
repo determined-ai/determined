@@ -29,13 +29,12 @@ After initialization is completed, distributed training in Determined follows a 
  Reduce Computation and Communication Overhead
 ***********************************************
 
-Of the steps involved in the distributed training loop in Determined, which are described above,
-step 1 and step 2 introduce the majority of the computational overhead. To reduce computational
-overhead, it's recommended that users maximize the utilization of their GPU. This is typically done
-by using the largest batch size that fits into memory. When performing distributed training, to
-reduce the computational overhead it's recommended to set the ``global_batch_size`` to the ``largest
-batch size that fits into a single GPU`` * ``number of slots``. This is commonly referred to as
-*weak scaling*.
+Of the steps involved in the distributed training loop, step 1 and step 2 introduce the majority of
+the computational overhead. To reduce computational overhead, it's recommended that users maximize
+the utilization of their GPU. This is typically done by using the largest batch size that fits into
+memory. When performing distributed training, to reduce the computational overhead it's recommended
+to set the ``global_batch_size`` to the largest batch size that fits into a single GPU multiplied
+times the number of slots. This is commonly referred to as *weak scaling*.
 
 Step 3 of the distributed training loop in Determined introduces the majority of the communication
 overhead. Because deep learning models typically perform dense updates, where every model parameter
@@ -47,17 +46,18 @@ Determined optimizes the communication in step 3 by using an efficient form of r
 which minimizes the amount of communication necessary for all the workers to communicate their
 updates. Determined also reduces the communication overhead by overlapping computation (step 1 &
 step 2) and communication (step 3) by communicating updates for deeper layers concurrently with
-computing updates for the shallower layers. The :ref:`multi-gpu-training` document covers additional
-optimizations available in Determined for reducing the communication overhead.
+computing updates for the shallower layers. Visit
+:ref:`multi-gpu-training-implement-adv-optimizations` for additional optimizations available in
+Determined for reducing the communication overhead.
 
 *************************************************
  How to Train Effectively with Large Batch Sizes
 *************************************************
 
 To improve the performance of distributed training, we recommend using the largest possible
-``global_batch_size``, setting it to be ``largest batch size that fits into a single GPU`` *
-``number of slots``. However, training with a large ``global_batch_size`` can have adverse effects
-on the convergence (accuracy) of the model. At Determined AI we have found several effective
+``global_batch_size``, setting it to be largest batch size that fits into a single GPU multiplied
+times the number of slots. However, training with a large ``global_batch_size`` can have adverse
+effects on the convergence (accuracy) of the model. At Determined AI we have found several effective
 techniques for training with large batch sizes:
 
 -  Starting with the ``original learning rate`` used for a single GPU and gradually increasing it to

@@ -50,8 +50,8 @@ shared by the agent machines. If your cluster has multiple common network interf
 the fastest one in :ref:`cluster-configuration` under
 ``task_container_defaults.dtrain_network_interface``.
 
-Reduce computational overhead by setting the ``global_batch_size`` to the ``largest batch size that
-fits into a single GPU`` * ``number of slots``.
+Reduce computational overhead by setting the ``global_batch_size`` to the largest batch size that
+fits into a single GPU multiplied times the number of slots.
 
 When the ``slots_per_trial`` field is set, the per-slot (i.e., per-GPU) batch size is set to
 ``global_batch_size // slots_per_trial``. The per-slot and global batch sizes should be accessed via
@@ -88,6 +88,8 @@ For improved performance, *weak-scaling* is recommended. That is, increasing you
 Adjusting ``global_batch_size`` can affect your model convergence, which can affect your training
 and/or testing accuracy. You may need to adjust model hyperparameters like the learning rate and/or
 use a different optimizer when training with larger batch sizes.
+
+.. _multi-gpu-training-implement-adv-optimizations:
 
 Advanced Optimizations
 ======================
@@ -190,10 +192,9 @@ distributed training:
 
 .. warning::
 
-   If the scheduling constraints for multi-machine distributed training described above are not
-   satisfied, distributed training jobs are not scheduled and wait indefinitely. For example, if
-   every agent in the cluster has eight GPUs, a job with ``slots_per_trial`` set to ``12`` is never
-   scheduled.
+   If these scheduling constraints for multi-machine distributed training are not satisfied,
+   distributed training jobs are not scheduled and wait indefinitely. For example, if every agent in
+   the cluster has eight GPUs, a job with ``slots_per_trial`` set to ``12`` is never scheduled.
 
    If a multi-GPU experiment does not become active after a minute or so, please confirm that
    ``slots_per_trial`` is set so that it can be scheduled within these constraints. The CLI command
@@ -251,7 +252,7 @@ specify the name of the desired template.
 Here is an example demonstrating how an experiment configuration can be split into a reusable
 template and a simplified configuration.
 
-Consider the experiment configuration below:
+Consider the following experiment configuration:
 
 .. code:: yaml
 
@@ -292,7 +293,7 @@ like the following:
      secret_key: my-secret-key
      bucket: my-bucket-name
 
-Then the experiment configuration for this experiment can be written as below:
+Then the experiment configuration for this experiment can be written using the following code:
 
 .. code:: yaml
 

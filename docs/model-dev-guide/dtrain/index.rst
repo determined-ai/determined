@@ -17,7 +17,7 @@ following topics:
 -  Debugging performance bottlenecks
 -  Optimizing training
 
-Visit :ref:`Implementing Distributed Training <multi-gpu-training-implement>`, to discover how to
+Visit :ref:`Implementing Distributed Training <multi-gpu-training-implement>` to discover how to
 implement distributed training, including the following:
 
 -  Connectivity considerations for multi-machine training
