@@ -48,6 +48,7 @@ func (l *Logger) run() {
 	defer l.flush(pending)
 
 	t := time.NewTicker(FlushInterval)
+	defer t.Stop()
 	for {
 		var flush bool
 		select {
