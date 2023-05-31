@@ -368,15 +368,21 @@ func (a *apiServer) getProjectMetricsRange(
 		return nil, err
 	}
 	query := db.Bun().NewSelect().Table("trials").Table("experiments").
-		ColumnExpr("summary_metrics->'validation_metrics' AS summary_metrics").
+		ColumnExpr("summary_metrics -> 'validation_metrics' AS validation_metrics").
+		ColumnExpr(`CASE WHEN searcher_metric_value_signed = searcher_metric_value 
+		THEN true ELSE false END AS smaller_is_better`).
 		Where("project_id = ?", project.Id).
 		Where("experiments.best_trial_id = trials.id")
 
+	type metrics struct {
+		Min   float64
+		Max   float64
+		Count *int32
+	}
+
 	var res []struct {
-		SummaryMetrics *map[string]struct {
-			Sum   float64
-			Count *int32
-		}
+		SmallerIsBetter   bool
+		ValidationMetrics *map[string]metrics
 	}
 
 	if err = query.Scan(ctx, &res); err != nil {
@@ -387,12 +393,15 @@ func (a *apiServer) getProjectMetricsRange(
 		metricsValues[name] = []float64{}
 	}
 	for _, r := range res {
-		if r.SummaryMetrics != nil {
-			for metricsName, value := range *r.SummaryMetrics {
+		if r.ValidationMetrics != nil {
+			for metricsName, value := range *r.ValidationMetrics {
 				if value.Count == nil {
 					continue
 				}
-				metricsValue := value.Sum
+				metricsValue := value.Min
+				if !r.SmallerIsBetter {
+					metricsValue = value.Max
+				}
 				if values, ok := metricsValues[metricsName]; ok {
 					switch {
 					case len(values) == 0:
