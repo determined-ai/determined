@@ -1,5 +1,5 @@
 import contextlib
-from typing import Generator, List, Optional, Sequence, Set, Tuple
+from typing import Generator, List, Optional, Sequence, Tuple
 
 import pytest
 
@@ -7,10 +7,24 @@ import tests.config as conf
 from determined import cli
 from determined.common import api
 from determined.common.api import Session, authentication, bindings, errors
-from determined.common.api._util import AnyNTSC, NTSC_Kind, get_ntsc_details, wait_for_ntsc_state
+from determined.common.api._util import (
+    NTSC_Kind,
+    all_ntsc,
+    get_ntsc_details,
+    proxied_ntsc,
+    wait_for_ntsc_state,
+)
 from tests import experiment as exp
 from tests import utils
-from tests.api_utils import configure_token_store, create_test_user, determined_test_session
+from tests.api_utils import (
+    configure_token_store,
+    create_test_user,
+    determined_test_session,
+    kill_ntsc,
+    launch_ntsc,
+    list_ntsc,
+    set_prio_ntsc,
+)
 from tests.cluster.test_rbac import create_workspaces_with_users, rbac_disabled
 from tests.cluster.test_workspace_org import setup_workspaces
 
@@ -101,98 +115,7 @@ def test_notebook() -> None:
                 assert len(json_out) == 1
 
 
-all_ntsc: Set[NTSC_Kind] = {
-    NTSC_Kind.notebook,
-    NTSC_Kind.shell,
-    NTSC_Kind.command,
-    NTSC_Kind.tensorboard,
-}
-proxied_ntsc: Set[NTSC_Kind] = {NTSC_Kind.notebook, NTSC_Kind.tensorboard}
 tensorboard_wait_time = 300
-
-
-def launch_ntsc(
-    session: Session, workspace_id: int, typ: NTSC_Kind, exp_id: Optional[int] = None
-) -> str:
-    if typ == NTSC_Kind.notebook:
-        return bindings.post_LaunchNotebook(
-            session, body=bindings.v1LaunchNotebookRequest(workspaceId=workspace_id)
-        ).notebook.id
-    elif typ == NTSC_Kind.tensorboard:
-        experiment_ids = [exp_id] if exp_id else []
-        return bindings.post_LaunchTensorboard(
-            session,
-            body=bindings.v1LaunchTensorboardRequest(
-                workspaceId=workspace_id, experimentIds=experiment_ids
-            ),
-        ).tensorboard.id
-    elif typ == NTSC_Kind.shell:
-        return bindings.post_LaunchShell(
-            session, body=bindings.v1LaunchShellRequest(workspaceId=workspace_id)
-        ).shell.id
-    elif typ == NTSC_Kind.command:
-        return bindings.post_LaunchCommand(
-            session,
-            body=bindings.v1LaunchCommandRequest(
-                workspaceId=workspace_id,
-                config={
-                    "entrypoint": ["sleep", "100"],
-                },
-            ),
-        ).command.id
-    else:
-        raise ValueError("unknown type")
-
-
-def kill_ntsc(session: Session, typ: NTSC_Kind, ntsc_id: str) -> None:
-    if typ == NTSC_Kind.notebook:
-        bindings.post_KillNotebook(session, notebookId=ntsc_id)
-    elif typ == NTSC_Kind.tensorboard:
-        bindings.post_KillTensorboard(session, tensorboardId=ntsc_id)
-    elif typ == NTSC_Kind.shell:
-        bindings.post_KillShell(session, shellId=ntsc_id)
-    elif typ == NTSC_Kind.command:
-        bindings.post_KillCommand(session, commandId=ntsc_id)
-    else:
-        raise ValueError("unknown type")
-
-
-def set_prio_ntsc(session: Session, typ: NTSC_Kind, ntsc_id: str, prio: int) -> None:
-    if typ == NTSC_Kind.notebook:
-        bindings.post_SetNotebookPriority(
-            session, notebookId=ntsc_id, body=bindings.v1SetNotebookPriorityRequest(priority=prio)
-        )
-    elif typ == NTSC_Kind.tensorboard:
-        bindings.post_SetTensorboardPriority(
-            session,
-            tensorboardId=ntsc_id,
-            body=bindings.v1SetTensorboardPriorityRequest(priority=prio),
-        )
-    elif typ == NTSC_Kind.shell:
-        bindings.post_SetShellPriority(
-            session, shellId=ntsc_id, body=bindings.v1SetShellPriorityRequest(priority=prio)
-        )
-    elif typ == NTSC_Kind.command:
-        bindings.post_SetCommandPriority(
-            session, commandId=ntsc_id, body=bindings.v1SetCommandPriorityRequest(priority=prio)
-        )
-    else:
-        raise ValueError("unknown type")
-
-
-def list_ntsc(
-    session: Session, typ: NTSC_Kind, workspace_id: Optional[int] = None
-) -> Sequence[AnyNTSC]:
-    if typ == NTSC_Kind.notebook:
-        return bindings.get_GetNotebooks(session, workspaceId=workspace_id).notebooks
-    elif typ == NTSC_Kind.tensorboard:
-        return bindings.get_GetTensorboards(session, workspaceId=workspace_id).tensorboards
-    elif typ == NTSC_Kind.shell:
-        return bindings.get_GetShells(session, workspaceId=workspace_id).shells
-    elif typ == NTSC_Kind.command:
-        return bindings.get_GetCommands(session, workspaceId=workspace_id).commands
-    else:
-        raise ValueError("unknown type")
 
 
 def only_tensorboard_can_launch(
