@@ -181,11 +181,11 @@ func (db *PgDB) fullTrialSummaryMetricsRecompute(
 
 	updatedSummaryMetrics := model.JSONObj{}
 	if len(trainSummary) > 0 {
-		key := model.TrialSummaryMetricsJsonPath(model.TrainingMetricType.ToString())
+		key := model.TrialSummaryMetricsJSONPath(model.TrainingMetricType.ToString())
 		updatedSummaryMetrics[key] = trainSummary
 	}
 	if len(valSummary) > 0 {
-		key := model.TrialSummaryMetricsJsonPath(model.ValidationMetricType.ToString())
+		key := model.TrialSummaryMetricsJSONPath(model.ValidationMetricType.ToString())
 		updatedSummaryMetrics[key] = valSummary
 	}
 	if len(genericSummary) > 0 {
@@ -202,7 +202,7 @@ func (db *PgDB) fullTrialSummaryMetricsRecompute(
 func (db *PgDB) calculateFullTrialSummaryMetrics(
 	ctx context.Context, tx *sqlx.Tx, trialID int, partition MetricPartitionType,
 ) (model.JSONObj, error) {
-	jsonPath := model.TrialMetricsJsonPath(partition == ValidationMetric)
+	jsonPath := model.TrialMetricsJSONPath(partition == ValidationMetric)
 	//nolint: execinquery
 	rows, err := tx.QueryContext(ctx, db.queries.getOrLoad("calculate-full-trial-summary-metrics"),
 		trialID, jsonPath, partition)
@@ -271,8 +271,8 @@ func (db *PgDB) _addTrialMetricsTx(
 	isValidation := pType == ValidationMetric
 
 	// DISCUSS: these two don't need to be coupled.
-	metricsJSONPath := model.TrialMetricsJsonPath(isValidation)
-	summaryMetricsJSONPath := model.TrialSummaryMetricsJsonPath(mType)
+	metricsJSONPath := model.TrialMetricsJSONPath(isValidation)
+	summaryMetricsJSONPath := model.TrialSummaryMetricsJSONPath(mType)
 	metricsBody := map[string]interface{}{
 		metricsJSONPath: m.Metrics.AvgMetrics,
 		"batch_metrics": m.Metrics.BatchMetrics,

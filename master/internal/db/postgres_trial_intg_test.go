@@ -919,7 +919,7 @@ func TestGenericMetricsIO(t *testing.T) {
 	require.EqualValues(t, batches, metricReports[0].TotalBatches)
 	require.EqualValues(t, tr.ID, metricReports[0].TrialId)
 	require.Equal(t, metrics, metricReports[0].Metrics.
-		Fields[model.TrialMetricsJsonPath(false)].GetStructValue())
+		Fields[model.TrialMetricsJSONPath(false)].GetStructValue())
 
 	// test generic metrics summary metric write and read.
 	metrics2, err := structpb.NewStruct(map[string]any{"aloss": 20, "bloss": 30})
@@ -940,7 +940,7 @@ summary_metrics->'%[1]s'->name->>'type' AS type
 FROM trials
 CROSS JOIN jsonb_object_keys(summary_metrics->'%[1]s') AS name
 WHERE id = ?
-ORDER BY name ASC`, model.TrialSummaryMetricsJsonPath("inference"))
+ORDER BY name ASC`, model.TrialSummaryMetricsJSONPath("inference"))
 
 	summaryRows := []*summaryMetrics{}
 	err = Bun().NewRaw(query, tr.ID).Scan(ctx, &summaryRows)

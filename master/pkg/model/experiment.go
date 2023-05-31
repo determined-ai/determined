@@ -75,6 +75,11 @@ const (
 
 	// TrialWorkloadSequencerType constant.
 	TrialWorkloadSequencerType WorkloadSequencerType = "TRIAL_WORKLOAD_SEQUENCER"
+
+	// Legacy json path for validation metrics.
+	legacyValidationMetricsPath = "validation_metrics"
+	// Legacy json path for training metrics.
+	legacyTrainingMetricsPath = "avg_metrics"
 )
 
 // StateFromProto maps experimentv1.State to State.
@@ -501,23 +506,24 @@ type TrialMetrics struct {
 	Metrics      JSONObj    `db:"metrics" json:"metrics"`
 }
 
-// TrialMetricsJsonPath returns the legacy JSON path to the metrics field in the metrics table.
-func TrialMetricsJsonPath(isValidation bool) string {
+// TrialMetricsJSONPath returns the legacy JSON path to the metrics field in the metrics table.
+func TrialMetricsJSONPath(isValidation bool) string {
 	if isValidation {
-		return "validation_metrics"
+		// DISCUSS: avg_metrics is a reasonable key for TrialMetrics.AvgMetrics
+		// where did validation_metrics come from?
+		return legacyValidationMetricsPath
 	}
-	// DISCUSS: avg_metrics is a reasonable key for TrialMetrics.AvgMetrics
-	return "avg_metrics"
+	return legacyTrainingMetricsPath
 }
 
-// TrialSummaryMetricsJsonPath returns the JSON path to the trials metric summary.
-func TrialSummaryMetricsJsonPath(metricType string) string {
+// TrialSummaryMetricsJSONPath returns the JSON path to the trials metric summary.
+func TrialSummaryMetricsJSONPath(metricType string) string {
 	switch metricType {
 	case ValidationMetricType.ToString():
-		return "validation_metrics"
+		return legacyValidationMetricsPath
 	case TrainingMetricType.ToString():
 		// DISCUSS: in og summary metrics we opted to put training summary metrics under avg_metrics.
-		return "avg_metrics"
+		return legacyTrainingMetricsPath
 	default:
 		return "generic_metrics"
 	}

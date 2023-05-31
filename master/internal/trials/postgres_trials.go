@@ -329,7 +329,8 @@ func MetricsTimeSeries(trialID int32, startTime time.Time,
 	metricMeasurements []db.MetricMeasurements, err error,
 ) {
 	var tableName, queryColumn, orderColumn string
-	metricsObjectName := model.TrialMetricsJsonPath(metricType == model.ValidationMetricType.ToString())
+	metricsObjectName := model.TrialMetricsJSONPath(
+		metricType == model.ValidationMetricType.ToString())
 	switch metricType {
 	case model.TrainingMetricType.ToString():
 		tableName = "steps"
