@@ -27,7 +27,7 @@ import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import ComparisonView from './ComparisonView';
 import css from './F_ExperimentList.module.scss';
 import { F_ExperimentListSettings, settingsConfigForProject } from './F_ExperimentList.settings';
-import { Error, Loading, NoExperiments } from './glide-table/exceptions';
+import { Error, NoExperiments } from './glide-table/exceptions';
 import GlideTable, { SCROLL_SET_COUNT_NEEDED } from './glide-table/GlideTable';
 import { EMPTY_SORT, Sort, validSort, ValidSort } from './glide-table/MultiSortMenu';
 import TableActionBar, { BatchAction } from './glide-table/TableActionBar';
@@ -127,7 +127,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const [canceler] = useState(new AbortController());
 
   const colorMap = useGlasbey(selectedExperimentIds);
-  const { height, width } = useResize(contentRef);
+  const { height } = useResize(contentRef);
   const [scrollPositionSetCount] = useState(observable(0));
 
   const handleScroll = useCallback(
@@ -375,9 +375,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         onSortChange={onSortChange}
       />
       <div className={css.content} ref={contentRef}>
-        {isLoading ? (
-          <Loading width={width} />
-        ) : experiments.length === 0 ? (
+        {!isLoading && experiments.length === 0 ? (
           numFilters === 0 ? (
             <NoExperiments />
           ) : (
@@ -394,7 +392,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
             <GlideTable
               clearSelectionTrigger={clearSelectionTrigger}
               colorMap={colorMap}
-              data={experiments}
+              data={isLoading ? [NotLoaded] : experiments}
               dataTotal={Loadable.getOrElse(0, total)}
               excludedExperimentIds={excludedExperimentIds}
               formStore={formStore}
