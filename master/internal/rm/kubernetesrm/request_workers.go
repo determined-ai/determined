@@ -2,8 +2,9 @@ package kubernetesrm
 
 import (
 	"context"
+	"fmt"
 
-	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/sirupsen/logrus"
 
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	typedV1 "k8s.io/client-go/kubernetes/typed/core/v1"
@@ -12,61 +13,72 @@ import (
 type requestProcessingWorker struct {
 	podInterfaces       map[string]typedV1.PodInterface
 	configMapInterfaces map[string]typedV1.ConfigMapInterface
+	syslog              *logrus.Entry
 }
 
-func (r *requestProcessingWorker) Receive(ctx *actor.Context) error {
-	switch msg := ctx.Message().(type) {
-	case actor.PreStart:
-		ctx.Tell(ctx.Self().Parent(), workerAvailable{})
-	case actor.PostStop:
-		// This should not happen since the request worker actors would not stop during
-		// the master is running.
+type readyCallbackFunc func(h errorCallbackFunc)
 
-	case createKubernetesResources:
-		r.receiveCreateKubernetesResources(ctx, msg)
-		ctx.Tell(ctx.Self().Parent(), workerAvailable{msg.handler})
-
-	case deleteKubernetesResources:
-		r.receiveDeleteKubernetesResources(ctx, msg)
-		ctx.Tell(ctx.Self().Parent(), workerAvailable{})
-
-	default:
-		ctx.Log().Errorf("unexpected message %T", msg)
-		return actor.ErrUnexpectedMessage(ctx)
+func startRequestProcessingWorker(
+	podInterfaces map[string]typedV1.PodInterface,
+	configMapInterfaces map[string]typedV1.ConfigMapInterface,
+	id string,
+	in <-chan interface{},
+	ready readyCallbackFunc,
+) *requestProcessingWorker {
+	syslog := logrus.New().WithField("component", "kubernetesrm-worker").WithField("id", id)
+	r := &requestProcessingWorker{
+		podInterfaces:       podInterfaces,
+		configMapInterfaces: configMapInterfaces,
+		syslog:              syslog,
 	}
-	return nil
+	go r.receive(in, ready)
+	return r
+}
+
+func (r *requestProcessingWorker) receive(in <-chan interface{}, ready readyCallbackFunc) {
+	go ready(nil)
+	for msg := range in {
+		switch msg := msg.(type) {
+		case createKubernetesResources:
+			r.receiveCreateKubernetesResources(msg)
+			go ready(msg.errorHandler)
+		case deleteKubernetesResources:
+			r.receiveDeleteKubernetesResources(msg)
+			go ready(nil)
+		default:
+			errStr := fmt.Sprintf("unexpected message %T", msg)
+			r.syslog.Error(errStr)
+			panic(errStr)
+		}
+	}
 }
 
 func (r *requestProcessingWorker) receiveCreateKubernetesResources(
-	ctx *actor.Context,
 	msg createKubernetesResources,
 ) {
+	r.syslog.Debugf("creating configMap with spec %v", msg.configMapSpec)
 	configMap, err := r.configMapInterfaces[msg.podSpec.Namespace].Create(
 		context.TODO(), msg.configMapSpec, metaV1.CreateOptions{})
 	if err != nil {
-		ctx.Log().WithField("handler", msg.handler.Address()).WithError(err).Errorf(
-			"error creating configMap %s", msg.configMapSpec.Name)
-		ctx.Tell(msg.handler, resourceCreationFailed{err: err})
+		r.syslog.WithError(err).Errorf("error creating configMap %s", msg.configMapSpec.Name)
+		go msg.errorHandler(resourceCreationFailed{err})
 		return
 	}
-	ctx.Log().WithField("handler", msg.handler.Address()).Infof(
-		"created configMap %s", configMap.Name)
+	r.syslog.Infof("created configMap %s", configMap.Name)
 
-	ctx.Log().Debugf("launching pod with spec %v", msg.podSpec)
+	r.syslog.Debugf("launching pod with spec %v", msg.podSpec)
 	pod, err := r.podInterfaces[msg.podSpec.Namespace].Create(
 		context.TODO(), msg.podSpec, metaV1.CreateOptions{},
 	)
 	if err != nil {
-		ctx.Log().WithField("handler", msg.handler.Address()).WithError(err).Errorf(
-			"error creating pod %s", msg.podSpec.Name)
-		ctx.Tell(msg.handler, resourceCreationFailed{err: err})
+		r.syslog.WithError(err).Errorf("error creating pod %s", msg.podSpec.Name)
+		go msg.errorHandler(resourceCreationFailed{err})
 		return
 	}
-	ctx.Log().WithField("handler", msg.handler.Address()).Infof("created pod %s", pod.Name)
+	r.syslog.Infof("created pod %s", pod.Name)
 }
 
 func (r *requestProcessingWorker) receiveDeleteKubernetesResources(
-	ctx *actor.Context,
 	msg deleteKubernetesResources,
 ) {
 	var gracePeriod int64 = deletionGracePeriod
@@ -78,11 +90,9 @@ func (r *requestProcessingWorker) receiveDeleteKubernetesResources(
 		err = r.podInterfaces[msg.namespace].Delete(
 			context.TODO(), msg.podName, metaV1.DeleteOptions{GracePeriodSeconds: &gracePeriod})
 		if err != nil {
-			ctx.Log().WithField("handler", msg.handler.Address()).WithError(err).Errorf(
-				"failed to delete pod %s", msg.podName)
+			r.syslog.WithError(err).Errorf("failed to delete pod %s", msg.podName)
 		} else {
-			ctx.Log().WithField("handler", msg.handler.Address()).Infof(
-				"deleted pod %s", msg.podName)
+			r.syslog.Infof("deleted pod %s", msg.podName)
 		}
 	}
 
@@ -91,18 +101,16 @@ func (r *requestProcessingWorker) receiveDeleteKubernetesResources(
 			context.TODO(), msg.configMapName,
 			metaV1.DeleteOptions{GracePeriodSeconds: &gracePeriod})
 		if errDeletingConfigMap != nil {
-			ctx.Log().WithField("handler", msg.handler.Address()).WithError(err).Errorf(
-				"failed to delete configMap %s", msg.configMapName)
+			r.syslog.WithError(err).Errorf("failed to delete configMap %s", msg.configMapName)
 			err = errDeletingConfigMap
 		} else {
-			ctx.Log().WithField("handler", msg.handler.Address()).Infof(
-				"deleted configMap %s", msg.configMapName)
+			r.syslog.Infof("deleted configMap %s", msg.configMapName)
 		}
 	}
 
-	// It is possible that the actor that sent the message is no longer around (if sent from
-	// actor.PostStop). However this should have no impact on correctness.
+	// It is possible that the creator of the message is no longer around.
+	// However this should have no impact on correctness.
 	if err != nil {
-		ctx.Tell(msg.handler, resourceDeletionFailed{err: err})
+		go msg.errorHandler(resourceDeletionFailed{err})
 	}
 }
