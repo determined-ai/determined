@@ -467,6 +467,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
               <GlideTable
                 clearSelectionTrigger={clearSelectionTrigger}
                 colorMap={colorMap}
+                comparisonViewOpen={settings.compare}
                 data={experimentsIfLoaded}
                 dataTotal={
                   globalSettings.expListView === 'scroll'

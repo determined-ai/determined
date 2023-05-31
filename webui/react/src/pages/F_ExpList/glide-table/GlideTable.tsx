@@ -73,6 +73,7 @@ import { getTheme } from './utils';
 export interface GlideTableProps {
   clearSelectionTrigger?: number;
   colorMap: MapOfIdsToColors;
+  comparisonViewOpen?: boolean;
   excludedExperimentIds: Set<number>;
   data: Loadable<ExperimentWithTrial>[];
   dataTotal: number;
@@ -147,6 +148,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   formStore,
   onIsOpenFilterChange,
   onContextMenuComplete,
+  comparisonViewOpen = false,
 }) => {
   const gridRef = useRef<DataEditorRef>(null);
   const [hoveredRow, setHoveredRow] = useState<number>();
@@ -189,7 +191,10 @@ export const GlideTable: React.FC<GlideTableProps> = ({
 
   const users = useObservable(usersStore.getUsers());
 
-  const columnIds = useMemo(() => [...STATIC_COLUMNS, ...sortableColumnIds], [sortableColumnIds]);
+  const columnIds = useMemo(
+    () => (comparisonViewOpen ? [...STATIC_COLUMNS] : [...STATIC_COLUMNS, ...sortableColumnIds]),
+    [comparisonViewOpen, sortableColumnIds],
+  );
 
   const [selection, setSelection] = React.useState<GridSelection>({
     columns: CompactSelection.empty(),
