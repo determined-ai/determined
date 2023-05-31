@@ -1,6 +1,8 @@
 import { DataNode } from 'antd/lib/tree';
 import * as t from 'io-ts';
 
+import { isObject, isString } from 'components/kit/utils/functions';
+import rootLogger, { LoggerInterface } from 'components/kit/utils/Logger';
 import { Loadable } from 'utils/loadable';
 
 export type Primitive = boolean | number | string;
@@ -109,7 +111,81 @@ export type ErrorType = ValueOf<typeof ErrorType>;
 export type AnyMouseEvent = MouseEvent | React.MouseEvent;
 export type AnyMouseEventHandler = (event: AnyMouseEvent) => void;
 
-export type ErrorHandler = (e: unknown, options?: object) => void;
+export const ERROR_NAMESPACE = 'EH';
+
+export const isError = (error: unknown): error is Error => {
+  return error instanceof Error;
+};
+const DEFAULT_LOGGER = rootLogger.extend(ERROR_NAMESPACE);
+
+export const DEFAULT_ERROR_MESSAGE = 'Unknown error encountered.';
+const defaultErrOptions: DetErrorOptions = {
+  isUserTriggered: false,
+  level: ErrorLevel.Error,
+  logger: DEFAULT_LOGGER,
+  silent: false,
+  type: ErrorType.Unknown,
+};
+
+export interface DetErrorOptions {
+  id?: string; // slug unique to each place in the codebase that we will use this.
+  isUserTriggered?: boolean; // whether the error was triggered by an active interaction.
+  level?: ErrorLevel;
+  logger?: LoggerInterface;
+  payload?: unknown;
+  publicMessage?: string;
+  publicSubject?: string;
+  silent?: boolean;
+  type?: ErrorType;
+}
+
+export class DetError extends Error implements DetErrorOptions {
+  id?: string;
+  isUserTriggered: boolean;
+  level: ErrorLevel;
+  logger: LoggerInterface; // CHECK: do we want this attached to DetError?
+  payload?: unknown;
+  publicMessage?: string;
+  publicSubject?: string;
+  silent: boolean;
+  type: ErrorType;
+  isHandled: boolean;
+  /** the wrapped error if one was provided. */
+  sourceErr: unknown;
+
+  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+  constructor(e?: any, options: DetErrorOptions = {}) {
+    const defaultMessage = isError(e) ? e.message : isString(e) ? e : DEFAULT_ERROR_MESSAGE;
+    const message = options.publicSubject || options.publicMessage || defaultMessage;
+    super(message);
+
+    const eOpts: Partial<DetErrorOptions> = {};
+    if (isObject(e)) {
+      if ('id' in e && e.id != null) eOpts.id = e.id;
+      if ('isUserTriggered' in e && e.isUserTriggered != null)
+        eOpts.isUserTriggered = e.isUserTriggered;
+      if ('level' in e && e.level != null) eOpts.level = e.level;
+      if ('logger' in e && e.logger != null) eOpts.logger = e.logger;
+      if ('payload' in e && e.payload != null) eOpts.payload = e.payload;
+      if ('publicMessage' in e && e.publicMessage != null) eOpts.publicMessage = e.publicMessage;
+      if ('silent' in e && e.silent != null) eOpts.silent = e.silent;
+      if ('type' in e && e.type != null) eOpts.type = e.type;
+    }
+
+    this.loadOptions({ ...defaultErrOptions, ...eOpts, ...options });
+    this.isHandled = false;
+    this.sourceErr = e;
+  }
+
+  loadOptions(options: DetErrorOptions): void {
+    Object.assign(this, options);
+  }
+}
+
+export type ErrorHandler = (
+  error: DetError | unknown,
+  options?: DetErrorOptions,
+) => DetError | void;
 
 export interface TreeNode extends DataNode {
   /**
