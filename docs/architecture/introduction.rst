@@ -195,7 +195,7 @@ following benefits:
 |                                                | development iteration time. Determined uses synchronous,  |
 |                                                | data-parallel distributed training, with key performance  |
 |                                                | optimizations over other available options. See           |
-|                                                | :doc:`/model-dev-guide/dtrain-introduction`.              |
+|                                                | :doc:`/model-dev-guide/dtrain/dtrain-introduction`.       |
 +------------------------------------------------+-----------------------------------------------------------+
 | Experiment collaboration                       | Automatically track your experiment configuration and     |
 |                                                | environment to facilitate reproducibility and             |

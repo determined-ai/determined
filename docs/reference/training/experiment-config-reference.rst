@@ -648,6 +648,8 @@ current value of a hyperparameter named ``learning_rate`` by calling
    with :func:`context.get_per_slot_batch_size() <determined.TrialContext.get_per_slot_batch_size>`
    and :func:`context.get_global_batch_size() <determined.TrialContext.get_global_batch_size>`.
 
+.. include:: ../../_shared/note-dtrain-learn-more.txt
+
 The hyperparameter space is defined by a dictionary. Each key in the dictionary is the name of a
 hyperparameter; the associated value defines the range of the hyperparameter. If the value is a
 scalar, the hyperparameter is a constant; otherwise, the value should be a nested map. Here is an
@@ -1323,7 +1325,7 @@ experiment.
 ``aggregation_frequency``
 =========================
 
-Optional. Specifies after how many batches gradients are exchanged during :ref:`multi-gpu-training`.
+Optional. Specifies after how many batches gradients are exchanged during distributed training.
 Defaults to ``1``.
 
 ``average_aggregated_gradients``
@@ -1343,28 +1345,28 @@ currently supported for ``PyTorchTrial`` and ``TFKerasTrial`` instances. Default
 ``gradient_compression``
 ========================
 
-Optional. Whether to compress gradients when they are exchanged during :ref:`multi-gpu-training`.
+Optional. Whether to compress gradients when they are exchanged during distributed training.
 Compression may alter gradient values to achieve better space reduction. Defaults to ``false``.
 
 ``mixed_precision``
 ===================
 
-Optional. Whether to use mixed precision training with PyTorch during :ref:`multi-gpu-training`.
-Setting ``O1`` enables mixed precision and loss scaling. Defaults to ``O0`` which disables mixed
-precision training. This configuration setting is deprecated; users are advised to call
+Optional. Whether to use mixed precision training with PyTorch during distributed training. Setting
+``O1`` enables mixed precision and loss scaling. Defaults to ``O0`` which disables mixed precision
+training. This configuration setting is deprecated; users are advised to call
 :meth:`context.configure_apex_amp <determined.pytorch.PyTorchTrialContext>` in the constructor of
 their trial class instead.
 
 ``tensor_fusion_threshold``
 ===========================
 
-Optional. The threshold in MB for batching together gradients that are exchanged during
-:ref:`multi-gpu-training`. Defaults to ``64``.
+Optional. The threshold in MB for batching together gradients that are exchanged during distributed
+training. Defaults to ``64``.
 
 ``tensor_fusion_cycle_time``
 ============================
 
-Optional. The delay (in milliseconds) between each tensor fusion during :ref:`multi-gpu-training`.
+Optional. The delay (in milliseconds) between each tensor fusion during distributed training.
 Defaults to ``5``.
 
 ``auto_tune_tensor_fusion``
