@@ -228,7 +228,7 @@ const TrialDetailsComp: React.FC = () => {
           path: paths.experimentDetails(experiment.id),
         },
         {
-          breadcrumbName: String(trial.id),
+          breadcrumbName: `Trial ${trial.id}`,
           path: paths.trialDetails(trial.id),
         },
       ]}

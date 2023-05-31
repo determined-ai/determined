@@ -302,13 +302,21 @@ const ModelVersionDetails: React.FC = () => {
     return <Spinner spinning tip={`Loading model ${modelId} version ${versionNum} details...`} />;
   }
   const pageBreadcrumb: BreadCrumbRoute[] = [
-    {
-      breadcrumbName: workspace.name,
-      path: workspace.id === 1 ? paths.projectDetails(1) : paths.workspaceDetails(workspace.id),
-    },
+    workspace.id === 1
+      ? {
+          breadcrumbName: 'Uncategorized Experiments',
+          path: paths.projectDetails(1),
+        }
+      : {
+          breadcrumbName: workspace.name,
+          path: paths.workspaceDetails(workspace.id),
+        },
     {
       breadcrumbName: 'Model Registry',
-      path: paths.workspaceDetails(workspace.id, WorkspaceDetailsTab.ModelRegistry),
+      path:
+        workspace.id === 1
+          ? paths.modelList()
+          : paths.workspaceDetails(workspace.id, WorkspaceDetailsTab.ModelRegistry),
     },
     {
       breadcrumbName: `${modelVersion.model.name} (${modelId})`,
@@ -316,7 +324,7 @@ const ModelVersionDetails: React.FC = () => {
     },
     {
       breadcrumbName: `Version ${modelVersion.version}`,
-      path: paths.modelDetails(String(modelVersion.model.id)),
+      path: paths.modelVersionDetails(String(modelVersion.model.id), String(modelVersion.version)),
     },
   ];
 
