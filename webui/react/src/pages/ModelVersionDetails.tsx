@@ -298,11 +298,12 @@ const ModelVersionDetails: React.FC = () => {
     return <Message title={message} type={MessageType.Warning} />;
   } else if (pageError && isNotFound(pageError)) {
     return <PageNotFound />;
-  } else if (!modelVersion || !workspace || rbacLoading) {
+  } else if (!modelVersion || rbacLoading) {
     return <Spinner spinning tip={`Loading model ${modelId} version ${versionNum} details...`} />;
   }
+  const isUncategorized = !workspace?.id || workspace.id === 1;
   const pageBreadcrumb: BreadCrumbRoute[] = [
-    workspace.id === 1
+    isUncategorized
       ? {
           breadcrumbName: 'Uncategorized Experiments',
           path: paths.projectDetails(1),
@@ -313,10 +314,9 @@ const ModelVersionDetails: React.FC = () => {
         },
     {
       breadcrumbName: 'Model Registry',
-      path:
-        workspace.id === 1
-          ? paths.modelList()
-          : paths.workspaceDetails(workspace.id, WorkspaceDetailsTab.ModelRegistry),
+      path: isUncategorized
+        ? paths.modelList()
+        : paths.workspaceDetails(workspace.id, WorkspaceDetailsTab.ModelRegistry),
     },
     {
       breadcrumbName: `${modelVersion.model.name} (${modelId})`,
