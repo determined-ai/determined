@@ -66,47 +66,51 @@ const summarizedMetricToSeries = (
   return trialData;
 };
 export const useTrialMetrics = (
-  trial: TrialDetails | undefined,
+  trials: (TrialDetails | undefined)[],
 ): {
-  data: Record<string, Serie> | undefined;
+  data: Record<number, Record<string, Serie>> | undefined;
   metrics: Metric[];
   scale: Scale;
   setScale: React.Dispatch<React.SetStateAction<Scale>>;
 } => {
-  const trialTerminated = terminalRunStates.has(trial?.state ?? RunState.Active);
-
+  const trialTerminated = trials?.every((trial) =>
+    terminalRunStates.has(trial?.state ?? RunState.Active),
+  );
   const handleMetricNamesError = useCallback(
     (e: unknown) => {
       handleError(e, {
-        publicMessage: `Failed to load metric names for trial ${trial?.id}.`,
+        publicMessage: `Failed to load metric names for trials ${trials?.map((t) => `[${t?.id}]`)}.`,
         publicSubject: 'Experiment metric name stream failed.',
         type: ErrorType.Api,
       });
     },
-    [trial?.id],
+    [trials],
   );
 
-  const metrics = useMetricNames(trial?.experimentId, handleMetricNamesError);
-  const [data, setData] = useState<Record<MetricName, Serie>>();
+  const metrics = useMetricNames(
+    trials?.map((t) => t?.experimentId || 0).filter((i) => i > 0),
+    handleMetricNamesError,
+  );
+  const [data, setData] = useState<Record<number, Record<string, Serie>>>();
   const [scale, setScale] = useState<Scale>(Scale.Linear);
 
   const fetchTrialSummary = useCallback(async () => {
-    if (trial?.id) {
+    if (trials.length > 0) {
       const response = await timeSeries({
         maxDatapoints: screen.width > 1600 ? 1500 : 1000,
         metricNames: metrics,
         scale: scale,
         startBatches: 0,
-        trialIds: [trial?.id],
+        trialIds: trials?.map((t) => t?.id || 0).filter((i) => i > 0),
       });
-
-      setData((prev) => {
-        if (isEqual(prev, response)) return prev;
-        const trialData = summarizedMetricToSeries(response[0]?.metrics, metrics);
-        return trialData;
+      const newData: Record<number, Record<string, Serie>> = {};
+      response.forEach((r) => {
+        const trialData = summarizedMetricToSeries(r?.metrics, metrics);
+        newData[r.id] = trialData;
       });
+      setData((prev) => (isEqual(prev, newData) ? prev : newData));
     }
-  }, [metrics, trial?.id, scale]);
+  }, [metrics, trials, scale]);
 
   const fetchAll = useCallback(async () => {
     await Promise.allSettled([fetchTrialSummary()]);
