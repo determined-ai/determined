@@ -405,10 +405,15 @@ const ModelDetails: React.FC = () => {
   const pageBreadcrumb: BreadCrumbRoute[] = [];
   if (workspace) {
     pageBreadcrumb.push(
-      {
-        breadcrumbName: workspace.id !== 1 ? workspace.name : 'Uncategorized Experiments',
-        path: paths.workspaceDetails(workspace.id),
-      },
+      workspace.id === 1
+        ? {
+            breadcrumbName: 'Uncategorized Experiments',
+            path: paths.projectDetails(1),
+          }
+        : {
+            breadcrumbName: workspace.name,
+            path: paths.workspaceDetails(workspace.id),
+          },
       {
         breadcrumbName: 'Model Registry',
         path:
@@ -420,7 +425,7 @@ const ModelDetails: React.FC = () => {
   }
   pageBreadcrumb.push({
     breadcrumbName: `${model.model.name} (${model.model.id})`,
-    path: paths.modelDetails(model.model.name),
+    path: paths.modelDetails(model.model.id.toString()),
   });
 
   return (
