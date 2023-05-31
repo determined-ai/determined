@@ -4625,6 +4625,32 @@ class v1GetProjectColumnsResponse:
         }
         return out
 
+class v1GetProjectMetricsRangeResponse:
+    ranges: "typing.Optional[typing.Sequence[v1MetricsRange]]" = None
+
+    def __init__(
+        self,
+        *,
+        ranges: "typing.Union[typing.Sequence[v1MetricsRange], None, Unset]" = _unset,
+    ):
+        if not isinstance(ranges, Unset):
+            self.ranges = ranges
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetProjectMetricsRangeResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "ranges" in obj:
+            kwargs["ranges"] = [v1MetricsRange.from_json(x) for x in obj["ranges"]] if obj["ranges"] is not None else None
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "ranges" in vars(self):
+            out["ranges"] = None if self.ranges is None else [x.to_json(omit_unset) for x in self.ranges]
+        return out
+
 class v1GetProjectResponse:
 
     def __init__(
@@ -6786,6 +6812,32 @@ class v1Metrics:
         }
         if not omit_unset or "batchMetrics" in vars(self):
             out["batchMetrics"] = self.batchMetrics
+        return out
+
+class v1MetricsRange:
+
+    def __init__(
+        self,
+        *,
+        metricsName: str,
+        range: "typing.Sequence[float]",
+    ):
+        self.metricsName = metricsName
+        self.range = range
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1MetricsRange":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "metricsName": obj["metricsName"],
+            "range": [float(x) for x in obj["range"]],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "metricsName": self.metricsName,
+            "range": [dump_float(x) for x in self.range],
+        }
         return out
 
 class v1MetricsReport:
@@ -15069,6 +15121,26 @@ def get_GetProjectColumns(
     if _resp.status_code == 200:
         return v1GetProjectColumnsResponse.from_json(_resp.json())
     raise APIHttpError("get_GetProjectColumns", _resp)
+
+def get_GetProjectMetricsRange(
+    session: "api.Session",
+    *,
+    id: int,
+) -> "v1GetProjectMetricsRangeResponse":
+    _params = None
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/projects/{id}/experiments/metric-ranges",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1GetProjectMetricsRangeResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetProjectMetricsRange", _resp)
 
 def get_GetProjectsByUserActivity(
     session: "api.Session",
