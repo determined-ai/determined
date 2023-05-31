@@ -15,16 +15,14 @@ import (
 )
 
 type podLogStreamer struct {
-	syslog    *logrus.Entry
-	logReader io.ReadCloser
-	callback  func(log []byte)
+	callback func(log []byte)
 }
 
-func newPodLogStreamer(
+func startPodLogStreamer(
 	podInterface typedV1.PodInterface,
 	podName string,
 	callback func(log []byte),
-) (*podLogStreamer, error) {
+) error {
 	logs := podInterface.GetLogs(podName, &k8sV1.PodLogOptions{
 		Follow:     true,
 		Timestamps: false,
@@ -32,11 +30,14 @@ func newPodLogStreamer(
 	})
 	logReader, err := logs.Stream(context.TODO())
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to initialize log stream for pod: %s", podName)
+		return errors.Wrapf(err, "failed to initialize log stream for pod: %s", podName)
 	}
 	syslog := logrus.WithField("podName", podName)
+	logger := &podLogStreamer{callback}
 
-	return &podLogStreamer{syslog, logReader, callback}, nil
+	go logger.receiveStreamLogs(syslog, logReader)
+
+	return nil
 }
 
 // Write implements the io.Writer interface.
@@ -45,9 +46,12 @@ func (p *podLogStreamer) Write(log []byte) (n int, err error) {
 	return len(log), nil
 }
 
-func (p *podLogStreamer) receiveStreamLogs() {
-	_, err := io.Copy(p, p.logReader)
+func (p *podLogStreamer) receiveStreamLogs(
+	syslog *logrus.Entry,
+	logReader io.ReadCloser,
+) {
+	_, err := io.Copy(p, logReader)
 	if err != nil {
-		p.syslog.WithError(err).Debug("error reading logs")
+		syslog.WithError(err).Debug("error reading logs")
 	}
 }
