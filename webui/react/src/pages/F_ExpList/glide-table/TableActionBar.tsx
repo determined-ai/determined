@@ -372,7 +372,6 @@ const TableActionBar: React.FC<Props> = ({
       </Column>
       <Column align="right">
         <Columns>
-          {!!toggleComparisonView && <Button onClick={toggleComparisonView}>Compare</Button>}
           <RowHeightMenu rowHeight={rowHeight} onRowHeightChange={onRowHeightChange} />
           <Dropdown content={settingContent}>
             <Tooltip content="Table Settings">
@@ -381,6 +380,7 @@ const TableActionBar: React.FC<Props> = ({
               </Button>
             </Tooltip>
           </Dropdown>
+          {!!toggleComparisonView && <Button onClick={toggleComparisonView}>Compare</Button>}
         </Columns>
       </Column>
       {batchAction && (
