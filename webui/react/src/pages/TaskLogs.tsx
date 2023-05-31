@@ -15,7 +15,7 @@ import { paths } from 'routes/utils';
 import { detApi } from 'services/apiConfig';
 import { mapV1LogsResponse } from 'services/decoder';
 import { readStream } from 'services/utils';
-import { CommandType } from 'types';
+import { CommandTask, CommandType } from 'types';
 
 import css from './TaskLogs.module.scss';
 
@@ -148,7 +148,13 @@ const TaskLogs: React.FC<Props> = ({ taskId, taskType, onCloseLogs, headerCompon
       bodyNoPadding
       breadcrumb={[
         { breadcrumbName: 'Tasks', path: paths.taskList() },
-        { breadcrumbName: `${taskTypeLabel} ${taskId.substring(0, 8)}`, path: '#' },
+        {
+          breadcrumbName: `${taskTypeLabel} ${taskId.substring(0, 8)}`,
+          path: paths.taskLogs({
+            id: taskId,
+            type: taskType,
+          } as CommandTask),
+        },
       ]}
       headerComponent={headerComponent}
       id="task-logs"

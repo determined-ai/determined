@@ -320,11 +320,14 @@ const ModelVersionDetails: React.FC = () => {
     },
     {
       breadcrumbName: `${modelVersion.model.name} (${modelId})`,
-      path: paths.modelDetails(String(modelVersion.model.id)),
+      path: paths.modelDetails(modelVersion.model.id.toString()),
     },
     {
       breadcrumbName: `Version ${modelVersion.version}`,
-      path: paths.modelVersionDetails(String(modelVersion.model.id), String(modelVersion.version)),
+      path: paths.modelVersionDetails(
+        modelVersion.model.id.toString(),
+        modelVersion.version.toString(),
+      ),
     },
   ];
 
