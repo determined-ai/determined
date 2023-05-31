@@ -30,10 +30,8 @@ export const getTimeInEnglish = (d: Date): string => {
   const options = {
     conjunction: ' ',
     delimiter: ' ',
-    language: 'shortEn',
     largest: 1,
     serialComma: false,
-    spacer: ' ',
   };
 
   const now = Date.now();
