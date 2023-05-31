@@ -188,16 +188,10 @@ func setup(t *testing.T) (*actor.System, *mocks.DB, model.RequestID, *trial, *ac
 	rmActor := actors.MockActor{Responses: map[string]*actors.MockResponse{}}
 	rmImpl := actorrm.Wrap(system.MustActorOf(actor.Addr("rm"), &rmActor))
 
-	// mock logger.
-	loggerImpl := actors.MockActor{Responses: map[string]*actors.MockResponse{}}
-	loggerActor := system.MustActorOf(actor.Addr("logger"), &loggerImpl)
-	logger := task.NewCustomLogger(loggerActor)
-
 	// mock allocation
 	allocImpl := actors.MockActor{Responses: map[string]*actors.MockResponse{}}
 	taskAllocator = func(
 		logCtx detLogger.Context, req sproto.AllocateRequest, db db.DB, rm rm.ResourceManager,
-		l *task.Logger,
 	) actor.Actor {
 		return &allocImpl
 	}
@@ -219,7 +213,6 @@ func setup(t *testing.T) (*actor.System, *mocks.DB, model.RequestID, *trial, *ac
 		1,
 		model.PausedState,
 		trialSearcherState{Create: searcher.Create{RequestID: rID}, Complete: true},
-		logger,
 		rmImpl,
 		db,
 		schemas.WithDefaults(expconf.ExperimentConfig{

@@ -34,8 +34,6 @@ type checkpointGCTask struct {
 	jobSubmissionTime time.Time
 
 	allocation *actor.Ref
-	// TODO (DET-789): Set up proper log handling for checkpoint GC.
-	taskLogger *task.Logger
 
 	logCtx logger.Context
 }
@@ -43,7 +41,7 @@ type checkpointGCTask struct {
 const fullDeleteGlob = "**/*"
 
 func newCheckpointGCTask(
-	rm rm.ResourceManager, db *db.PgDB, taskLogger *task.Logger, taskID model.TaskID,
+	rm rm.ResourceManager, db *db.PgDB, taskID model.TaskID,
 	jobID model.JobID, jobSubmissionTime time.Time, taskSpec tasks.TaskSpec, expID int,
 	legacyConfig expconf.LegacyConfig, toDeleteCheckpoints []uuid.UUID, checkpointGlobs []string,
 	deleteTensorboards bool,
@@ -70,8 +68,7 @@ func newCheckpointGCTask(
 		db: db,
 		rm: rm,
 
-		taskLogger: taskLogger,
-		logCtx:     logCtx,
+		logCtx: logCtx,
 	}
 }
 
@@ -117,7 +114,7 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 			},
 			AllocationRef: ctx.Self(),
 			ResourcePool:  rp,
-		}, t.db, t.rm, t.taskLogger)
+		}, t.db, t.rm)
 
 		t.allocation, _ = ctx.ActorOf(t.allocationID, allocation)
 

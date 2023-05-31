@@ -278,6 +278,22 @@ func (a *apiServer) PostAllocationProxyAddress(
 	return &apiv1.PostAllocationProxyAddressResponse{}, nil
 }
 
+// TaskLogBackend is an interface task log backends, such as elastic or postgres,
+// must support to provide the features surfaced in our API.
+type TaskLogBackend interface {
+	TaskLogs(
+		taskID model.TaskID, limit int, filters []api.Filter, order apiv1.OrderBy, state interface{},
+	) ([]*model.TaskLog, interface{}, error)
+	AddTaskLogs([]*model.TaskLog) error
+	TaskLogsCount(taskID model.TaskID, filters []api.Filter) (int, error)
+	TaskLogsFields(taskID model.TaskID) (*apiv1.TaskLogsFieldsResponse, error)
+	DeleteTaskLogs(taskIDs []model.TaskID) error
+	// MaxTerminationDelay is the max delay before a consumer can be sure all logs have been
+	// recevied. A better interface may be an interface for streaming, rather than helper
+	// interfaces to aid streaming, but it's not bad enough to motivate changing it.
+	MaxTerminationDelay() time.Duration
+}
+
 func (a *apiServer) TaskLogs(
 	req *apiv1.TaskLogsRequest, resp apiv1.Determined_TaskLogsServer,
 ) error {

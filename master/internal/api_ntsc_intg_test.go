@@ -20,7 +20,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/command"
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/mocks"
-	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -45,7 +44,6 @@ func setupNTSCAuthzTest(t *testing.T) (
 		nil,
 		master.db,
 		master.rm,
-		&task.Logger{},
 	)
 	authZNSC = &mocks.NSCAuthZ{}
 	command.AuthZProvider.RegisterOverride("mock", authZNSC)

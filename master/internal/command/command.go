@@ -60,7 +60,6 @@ func createGenericCommandActor(
 	ctx *actor.Context,
 	db *db.PgDB,
 	rm rm.ResourceManager,
-	taskLogger *task.Logger,
 	taskID model.TaskID,
 	taskType model.TaskType,
 	jobID model.JobID,
@@ -69,9 +68,8 @@ func createGenericCommandActor(
 ) error {
 	spec.TaskType = taskType
 	cmd := &command{
-		db:         db,
-		rm:         rm,
-		taskLogger: taskLogger,
+		db: db,
+		rm: rm,
 
 		GenericCommandSpec: spec,
 
@@ -103,7 +101,6 @@ func commandFromSnapshot(
 	ctx *actor.Context,
 	db *db.PgDB,
 	rm rm.ResourceManager,
-	taskLogger *task.Logger,
 	snapshot *CommandSnapshot,
 ) *command {
 	taskID := snapshot.TaskID
@@ -112,7 +109,6 @@ func commandFromSnapshot(
 	cmd := &command{
 		db:             db,
 		rm:             rm,
-		taskLogger:     taskLogger,
 		registeredTime: snapshot.RegisteredTime,
 
 		GenericCommandSpec: snapshot.GenericCommandSpec,
@@ -138,7 +134,6 @@ func remakeCommandsByType(
 	ctx *actor.Context,
 	pgDB *db.PgDB,
 	rm rm.ResourceManager,
-	taskLogger *task.Logger,
 	taskType model.TaskType,
 ) ([]*command, error) {
 	snapshots := []CommandSnapshot{}
@@ -160,7 +155,7 @@ func remakeCommandsByType(
 	for i := range snapshots {
 		if rm.IsReattachEnabledForRP(ctx,
 			snapshots[i].GenericCommandSpec.Config.Resources.ResourcePool) {
-			cmd := commandFromSnapshot(ctx, pgDB, rm, taskLogger, &snapshots[i])
+			cmd := commandFromSnapshot(ctx, pgDB, rm, &snapshots[i])
 			results = append(results, cmd)
 		}
 	}
@@ -172,10 +167,9 @@ func restoreCommandsByType(
 	ctx *actor.Context,
 	pgDB *db.PgDB,
 	rm rm.ResourceManager,
-	taskLogger *task.Logger,
 	taskType model.TaskType,
 ) error {
-	commands, err := remakeCommandsByType(ctx, pgDB, rm, taskLogger, taskType)
+	commands, err := remakeCommandsByType(ctx, pgDB, rm, taskType)
 	if err != nil {
 		return err
 	}
@@ -197,11 +191,10 @@ func tryRestoreCommandsByType(
 	ctx *actor.Context,
 	pgDB *db.PgDB,
 	rm rm.ResourceManager,
-	taskLogger *task.Logger,
 	taskType model.TaskType,
 ) {
 	if rm.IsReattachEnabled(ctx) {
-		err := restoreCommandsByType(ctx, pgDB, rm, taskLogger, taskType)
+		err := restoreCommandsByType(ctx, pgDB, rm, taskType)
 		if err != nil {
 			ctx.Log().WithError(err).Warnf("failed to restoreCommandsByType: %s", taskType)
 		}
@@ -210,9 +203,8 @@ func tryRestoreCommandsByType(
 
 // command is executed in a containerized environment on a Determined cluster.
 type command struct {
-	db         *db.PgDB
-	rm         rm.ResourceManager
-	taskLogger *task.Logger
+	db *db.PgDB
+	rm rm.ResourceManager
 
 	tasks.GenericCommandSpec
 
@@ -294,7 +286,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 			ProxyPorts:  sproto.NewProxyPortConfig(c.GenericCommandSpec.ProxyPorts(), c.taskID),
 			IdleTimeout: idleWatcherConfig,
 			Restore:     c.restored,
-		}, c.db, c.rm, c.taskLogger)
+		}, c.db, c.rm)
 		c.allocation, _ = ctx.ActorOf(c.allocationID, allocation)
 
 		ctx.Self().System().TellAt(sproto.JobsActorAddr, sproto.RegisterJob{
