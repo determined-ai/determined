@@ -14865,7 +14865,7 @@ def get_GetJobsV2(
     }
     _resp = session._do_request(
         method="GET",
-        path="/api/v1/v2rc/job-queues",
+        path="/api/v1/job-queues-v2",
         params=_params,
         json=None,
         data=None,

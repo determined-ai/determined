@@ -1089,9 +1089,9 @@ service Determined {
 
   // Get a list of jobs in queue.
   rpc GetJobsV2(GetJobsV2Request) returns (GetJobsV2Response) {
-    // TODO: v2rc should be moved to a v2 service.
     option (google.api.http) = {
-      get: "/api/v1/v2rc/job-queues"
+      // candidate for moving to /api/v2 service.
+      get: "/api/v1/job-queues-v2"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Internal"

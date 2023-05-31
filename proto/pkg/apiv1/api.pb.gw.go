@@ -17936,7 +17936,7 @@ var (
 
 	pattern_Determined_GetJobs_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "v1", "job-queues"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Determined_GetJobsV2_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "v1", "v2rc", "job-queues"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Determined_GetJobsV2_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "v1", "job-queues-v2"}, "", runtime.AssumeColonVerbOpt(true)))
 
 	pattern_Determined_GetJobQueueStats_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "v1", "job-queues", "stats"}, "", runtime.AssumeColonVerbOpt(true)))
 

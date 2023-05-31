@@ -17109,7 +17109,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @throws {RequiredError}
          */
         getJobsV2(offset?: number, limit?: number, resourcePool?: string, orderBy?: V1OrderBy, states?: Array<Jobv1State>, options: any = {}): FetchArgs {
-            const localVarPath = `/api/v1/v2rc/job-queues`;
+            const localVarPath = `/api/v1/job-queues-v2`;
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;

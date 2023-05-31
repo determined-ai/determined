@@ -25,6 +25,7 @@ func obfuscateJob(job *jobv1.Job) jobv1.LimitedJob {
 		RequestedSlots: job.RequestedSlots,
 		AllocatedSlots: job.AllocatedSlots,
 		Progress:       job.Progress,
+		WorkspaceId:    job.WorkspaceId,
 	}
 }
 

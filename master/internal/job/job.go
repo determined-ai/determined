@@ -39,11 +39,14 @@ func (j *Jobs) parseV1JobMsgs(
 		if val == nil {
 			continue
 		}
-		typed, ok := val.(*jobv1.Job)
-		if !ok {
+		switch typed := val.(type) {
+		case error:
+			return nil, typed
+		case *jobv1.Job:
+			jobs[model.JobID(typed.JobId)] = typed
+		default:
 			return nil, fmt.Errorf("unexpected response type: %T", val)
 		}
-		jobs[model.JobID(typed.JobId)] = typed
 	}
 	return jobs, nil
 }
@@ -143,6 +146,17 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 		delete(j.actorByID, msg.JobID)
 
 	case *apiv1.GetJobsRequest:
+		jobs, err := j.getJobs(
+			ctx,
+			msg.ResourcePool,
+			msg.OrderBy == apiv1.OrderBy_ORDER_BY_DESC,
+			msg.States)
+		if err != nil {
+			ctx.Respond(err)
+			return nil
+		}
+		ctx.Respond(jobs)
+	case *apiv1.GetJobsV2Request:
 		jobs, err := j.getJobs(
 			ctx,
 			msg.ResourcePool,
