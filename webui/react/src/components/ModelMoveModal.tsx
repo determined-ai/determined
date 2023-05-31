@@ -32,7 +32,10 @@ const ModelMoveModal = ({ model }: Props): JSX.Element => {
     try {
       await moveModel({ destinationWorkspaceId: values.workspaceId, modelName: model.name });
       const workspaceName = workspaces.find((ws) => ws.id === values.workspaceId)?.name;
-      const path = paths.workspaceDetails(values.workspaceId, WorkspaceDetailsTab.ModelRegistry);
+      const path =
+        values.workspaceId === 1
+          ? paths.modelList()
+          : paths.workspaceDetails(values.workspaceId, WorkspaceDetailsTab.ModelRegistry);
       notification.success({
         description: (
           <div>
