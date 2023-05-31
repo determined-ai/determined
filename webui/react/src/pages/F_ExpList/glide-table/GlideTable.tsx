@@ -130,7 +130,6 @@ const rowHeightMap: Record<RowHeight, number> = {
 export const GlideTable: React.FC<GlideTableProps> = ({
   data,
   dataTotal,
-  excludedExperimentIds,
   clearSelectionTrigger,
   setSelectedExperimentIds,
   sortableColumnIds,
@@ -172,13 +171,14 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   });
 
   const [menuIsOpen, setMenuIsOpen] = useState(false);
-  const handleMenuClose = useCallback(() => {
-    setMenuIsOpen(false);
-  }, []);
   const [menuProps, setMenuProps] = useState<Omit<TableActionMenuProps, 'open'>>({
-    handleClose: handleMenuClose,
-    x: 0,
-    y: 0,
+    bounds: {
+      height: 0,
+      width: 0,
+      x: 0,
+      y: 0,
+    },
+    handleClose: () => setMenuIsOpen(false),
   });
 
   const handleContextMenuComplete = useCallback(() => {
@@ -319,18 +319,24 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   }, [data, previousData, selectAll]);
 
   const onHeaderClicked: DataEditorProps['onHeaderClicked'] = React.useCallback(
-    (col: number, args: HeaderClickedEventArgs) => {
-      args.preventDefault();
+    (col: number, { bounds }: HeaderClickedEventArgs) => {
       const columnId = columnIds[col];
-      const { bounds } = args;
-      const x = bounds.x;
-      const y = bounds.y + bounds.height;
 
       if (columnId === 'selected') {
         const items: ItemType[] = [
-          ...[5, 10, 25, 50].map((n) => ({
+          selection.rows.length > 0
+            ? {
+                key: 'select-none',
+                label: 'Clear selection',
+                onClick: () => {
+                  deselectAllRows();
+                  setMenuIsOpen(false);
+                },
+              }
+            : null,
+          ...[5, 10, 25].map((n) => ({
             key: `select-${n}`,
-            label: `Select ${n}`,
+            label: `Select first ${n}`,
             onClick: () => {
               setSelection((s) => ({
                 ...s,
@@ -344,7 +350,6 @@ export const GlideTable: React.FC<GlideTableProps> = ({
             },
           })),
           {
-            disabled: selectAll && excludedExperimentIds.size === 0,
             key: 'select-all',
             label: 'Select all',
             onClick: () => {
@@ -352,20 +357,9 @@ export const GlideTable: React.FC<GlideTableProps> = ({
               setMenuIsOpen(false);
             },
           },
-          {
-            disabled: selection.rows.length === 0,
-            key: 'select-none',
-            label: 'Select none',
-            onClick: () => {
-              deselectAllRows();
-              setMenuIsOpen(false);
-            },
-          },
         ];
-        setTimeout(() => {
-          setMenuProps((prev) => ({ ...prev, items, title: 'Selection menu', x, y }));
-          setMenuIsOpen(true);
-        });
+        setMenuProps((prev) => ({ ...prev, bounds, items, title: 'Selection menu' }));
+        setMenuIsOpen(true);
         return;
       }
       const column = Loadable.getOrElse([], projectColumns).find((c) => c.column === columnId);
@@ -442,10 +436,10 @@ export const GlideTable: React.FC<GlideTableProps> = ({
               },
             },
       ];
-      setMenuProps((prev) => ({ ...prev, items, title: `${columnId} menu`, x, y }));
+      setMenuProps((prev) => ({ ...prev, bounds, items, title: `${columnId} menu` }));
       setMenuIsOpen(true);
     },
-    [columnIds, projectColumns, sorts, onSortChange, staticColumns, pinnedColumnsCount, selectAll, excludedExperimentIds.size, selectAllRows, deselectAllRows, selection.rows.length, formStore, gridRef, onIsOpenFilterChange, sortableColumnIds, setSortableColumnIds, setPinnedColumnsCount],
+    [columnIds, projectColumns, sorts, onSortChange, staticColumns, pinnedColumnsCount, selectAllRows, deselectAllRows, selection.rows.length, formStore, gridRef, onIsOpenFilterChange, sortableColumnIds, setSortableColumnIds, setPinnedColumnsCount],
   );
 
   const getCellContent: DataEditorProps['getCellContent'] = React.useCallback(

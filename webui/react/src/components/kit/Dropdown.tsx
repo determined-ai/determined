@@ -35,6 +35,7 @@ interface BaseProps {
   isContextMenu?: boolean;
   menu?: MenuItem[];
   open?: boolean;
+  overlayStyle?: React.CSSProperties;
   placement?: Placement;
   onClick?: (key: string, e: DropdownEvent) => void | Promise<void>;
 }
@@ -62,6 +63,7 @@ const Dropdown: React.FC<PropsWithChildren<Props>> = ({
   isContextMenu,
   menu = [],
   open,
+  overlayStyle,
   placement = 'bottomLeft',
   onClick,
   selectable,
@@ -88,6 +90,7 @@ const Dropdown: React.FC<PropsWithChildren<Props>> = ({
       className={css.base}
       content={content}
       open={open}
+      overlayStyle={overlayStyle}
       placement={placement}
       showArrow={false}
       trigger="click">
@@ -99,6 +102,7 @@ const Dropdown: React.FC<PropsWithChildren<Props>> = ({
       disabled={disabled}
       menu={antdMenu}
       open={open}
+      overlayStyle={overlayStyle}
       placement={placement}
       trigger={[isContextMenu ? 'contextMenu' : 'click']}>
       {children}

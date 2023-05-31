@@ -1,3 +1,4 @@
+import { Rectangle } from '@glideapps/glide-data-grid';
 import { MenuProps } from 'antd';
 import { ItemType } from 'antd/es/menu/hooks/useItems';
 import React, { MutableRefObject, useEffect, useRef } from 'react';
@@ -25,8 +26,7 @@ function useOutsideClickHandler(ref: MutableRefObject<any>, handler: () => void)
 }
 
 export interface TableActionMenuProps extends MenuProps {
-  x: number;
-  y: number;
+  bounds: Rectangle;
   open: boolean;
   handleClose: () => void;
 }
@@ -34,8 +34,7 @@ const isMenuItem = (val: ItemType): val is MenuItem =>
   val === null || !!val?.key || ('type' in val && val.type === 'divider');
 
 export const TableActionMenu: React.FC<TableActionMenuProps> = ({
-  x,
-  y,
+  bounds,
   open,
   handleClose,
   items,
@@ -43,14 +42,24 @@ export const TableActionMenu: React.FC<TableActionMenuProps> = ({
   const divRef = useRef<HTMLDivElement | null>(null);
   useOutsideClickHandler(divRef, handleClose);
   return (
-    <Dropdown menu={items?.filter(isMenuItem)} open={open} placement="bottomLeft">
+    <Dropdown
+      menu={items?.filter(isMenuItem)}
+      open={open}
+      overlayStyle={{ minWidth: 'auto' }}
+      placement="bottomLeft">
       <div
         ref={divRef}
-        style={{
-          left: x,
-          position: 'fixed',
-          top: y,
-        }}
+        style={
+          open
+            ? {
+                height: bounds.height,
+                left: bounds.x,
+                position: 'fixed',
+                top: bounds.y,
+                width: bounds.width,
+              }
+            : {}
+        }
       />
     </Dropdown>
   );
