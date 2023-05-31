@@ -79,7 +79,9 @@ export const useTrialMetrics = (
   const handleMetricNamesError = useCallback(
     (e: unknown) => {
       handleError(e, {
-        publicMessage: `Failed to load metric names for trials ${trials?.map((t) => `[${t?.id}]`)}.`,
+        publicMessage: `Failed to load metric names for trials ${trials?.map(
+          (t) => `[${t?.id}]`,
+        )}.`,
         publicSubject: 'Experiment metric name stream failed.',
         type: ErrorType.Api,
       });
