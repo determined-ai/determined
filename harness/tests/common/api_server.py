@@ -29,7 +29,7 @@ DEFAULT_TOKEN = "token1"
 FIXTURES_DIR = Path(__file__).parent.parent / "fixtures"
 
 
-def sample_get_experiment(**kwargs) -> bindings.v1GetExperimentResponse:
+def sample_get_experiment(**kwargs: Any) -> bindings.v1GetExperimentResponse:
     """Get an experiment from a fixture and optionally override some fields.
 
     Load a sample experiment from a fixture.  It's assumed that generally a caller cares only that
