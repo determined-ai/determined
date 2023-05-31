@@ -53,7 +53,7 @@ The MSE definition is just like it sounds: the mean of the squares of the
 errors between each ground truth `ytrue` and the corresponding model prediction
 `ypred`.  So for `N` data points, we can say:
 
-    loss_mse = ( (ytrue0 - ypred0)**2 + ... + (ytrueN - ypredN)**2 ) / N
+    loss_mse = ( (ytrue1 - ypred1)**2 + ... + (ytrueN - ypredN)**2 ) / N
 
 It should be clear from the above formula that the number of data points in the
 MSE loss calculation `N` is just a constant divisor that applies to each term.
@@ -156,7 +156,7 @@ And since our total `loss_mse` is just the sum of several `loss_point` values,
 we know from calculus that the derivative of the total `loss_mse` is the sum
 of the per-point derivatives:
 
-    dloss_mse/dm = - 2 * ( x0*(ytrue0 - m*x0) + ... + xN*(ytrueN - m*xN) ) / N
+    dloss_mse/dm = - 2 * ( x1*(ytrue1 - m*x1) + ... + xN*(ytrueN - m*xN) ) / N
 
 ### Q5:
 
@@ -326,7 +326,7 @@ Let `m=2` and fill the following table of per-data-point gradients:
 
 Then, with `m=2`, fill the following table of `batch_size=2` batch gradients:
 
-| `(x0, ytrue0)` | `(x1, ytrue1)` | `grad_multi` |
+| `(x1, ytrue1)` | `(x2, ytrue2)` | `grad_multi` |
 | -------------- | -------------- | ------------ |
 |     (1, 0)     |     (2, 1)     |              |
 |     (3, 1)     |    (4, 6.25)   |              |
