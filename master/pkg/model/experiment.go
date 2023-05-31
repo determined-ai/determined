@@ -517,11 +517,11 @@ func TrialMetricsJSONPath(isValidation bool) string {
 }
 
 // TrialSummaryMetricsJSONPath returns the JSON path to the trials metric summary.
-func TrialSummaryMetricsJSONPath(metricType string) string {
+func TrialSummaryMetricsJSONPath(metricType MetricType) string {
 	switch metricType {
-	case ValidationMetricType.ToString():
+	case ValidationMetricType:
 		return legacyValidationMetricsPath
-	case TrainingMetricType.ToString():
+	case TrainingMetricType:
 		// DISCUSS: in og summary metrics we opted to put training summary metrics under avg_metrics.
 		return legacyTrainingMetricsPath
 	default:

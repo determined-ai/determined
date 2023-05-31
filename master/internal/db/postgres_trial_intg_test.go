@@ -792,12 +792,12 @@ func TestBatchesProcessedNRollbacks(t *testing.T) {
 		switch typ {
 		case model.TrainingMetricType.ToString():
 			rollbacksCnts, err := db.addTrialMetrics(ctx, trialMetrics,
-				TrainingMetric, model.TrainingMetricType.ToString())
+				TrainingMetric, model.TrainingMetricType)
 			require.NoError(t, err)
 			require.Equal(t, int(expectedRollbacks), rollbacksCnts)
 		case model.ValidationMetricType.ToString():
 			rollbacksCnts, err := db.addTrialMetrics(ctx, trialMetrics,
-				ValidationMetric, model.ValidationMetricType.ToString())
+				ValidationMetric, model.ValidationMetricType)
 			require.NoError(t, err)
 			require.Equal(t, int(expectedRollbacks), rollbacksCnts)
 		case "checkpoint":
@@ -810,7 +810,9 @@ func TestBatchesProcessedNRollbacks(t *testing.T) {
 				Metadata:     map[string]any{"steps_completed": batches},
 			}))
 		default:
-			rollbacksCnts, err := db.addTrialMetrics(ctx, trialMetrics, GenericMetric, typ)
+			rollbacksCnts, err := db.addTrialMetrics(
+				ctx, trialMetrics, GenericMetric, model.MetricType(typ),
+			)
 			require.NoError(t, err)
 			require.Equal(t, int(expectedRollbacks), rollbacksCnts)
 		}

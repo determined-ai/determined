@@ -325,19 +325,19 @@ func MetricsTimeSeries(trialID int32, startTime time.Time,
 	metricNames []string,
 	startBatches int, endBatches int, xAxisMetricLabels []string,
 	maxDatapoints int, timeSeriesColumn string,
-	timeSeriesFilter *commonv1.PolymorphicFilter, metricType string) (
+	timeSeriesFilter *commonv1.PolymorphicFilter, metricType model.MetricType) (
 	metricMeasurements []db.MetricMeasurements, err error,
 ) {
 	var tableName, queryColumn, orderColumn string
 	metricsObjectName := model.TrialMetricsJSONPath(
-		metricType == model.ValidationMetricType.ToString())
+		metricType == model.ValidationMetricType)
 	switch metricType {
-	case model.TrainingMetricType.ToString():
+	case model.TrainingMetricType:
 		tableName = "steps"
-	case model.ValidationMetricType.ToString():
+	case model.ValidationMetricType:
 		tableName = "validations"
 	default:
-		panic(fmt.Sprintf("Unsupported metric type %v", metricType))
+		panic(fmt.Sprintf("Unsupported metric type %s", metricType))
 	}
 
 	// The data for batches and column are stored under different column names

@@ -58,10 +58,10 @@ WHERE trial_id = $1
 
 func (db *PgDB) addRawMetrics(ctx context.Context, tx *sqlx.Tx, metricsBody *map[string]interface{},
 	runID, trialID, lastProcessedBatch int32,
-	pType MetricPartitionType, mType string,
+	pType MetricPartitionType, mType model.MetricType,
 ) (int, error) {
 	// only persist custom_type if it can be custom.
-	var metricType *string
+	var metricType *model.MetricType
 	if pType == GenericMetric {
 		metricType = &mType
 	}
@@ -82,13 +82,13 @@ RETURNING id`,
 	return metricRowID, nil
 }
 
-func customMetricTypeToPartitionType(mType string) MetricPartitionType {
+func customMetricTypeToPartitionType(mType model.MetricType) MetricPartitionType {
 	// TODO(hamid): remove partition_type once we move away from pg10 and
 	// we can use DEFAULT partitioning.
 	switch mType {
-	case model.TrainingMetricType.ToString():
+	case model.TrainingMetricType:
 		return TrainingMetric
-	case model.ValidationMetricType.ToString():
+	case model.ValidationMetricType:
 		return ValidationMetric
 	default:
 		return GenericMetric
@@ -99,7 +99,7 @@ func customMetricTypeToPartitionType(mType string) MetricPartitionType {
 // metrics. If these training metrics occur before any others, a rollback is assumed and later
 // training and validation metrics are cleaned up.
 func (db *PgDB) AddTrainingMetrics(ctx context.Context, m *trialv1.TrialMetrics) error {
-	_, err := db.addTrialMetrics(ctx, m, TrainingMetric, model.TrainingMetricType.ToString())
+	_, err := db.addTrialMetrics(ctx, m, TrainingMetric, model.TrainingMetricType)
 	return err
 }
 
@@ -109,13 +109,13 @@ func (db *PgDB) AddTrainingMetrics(ctx context.Context, m *trialv1.TrialMetrics)
 func (db *PgDB) AddValidationMetrics(
 	ctx context.Context, m *trialv1.TrialMetrics,
 ) error {
-	_, err := db.addTrialMetrics(ctx, m, ValidationMetric, model.ValidationMetricType.ToString())
+	_, err := db.addTrialMetrics(ctx, m, ValidationMetric, model.ValidationMetricType)
 	return err
 }
 
 // AddTrialMetrics persists the given trial metrics to the database.
 func (db *PgDB) AddTrialMetrics(
-	ctx context.Context, m *trialv1.TrialMetrics, mType string,
+	ctx context.Context, m *trialv1.TrialMetrics, mType model.MetricType,
 ) error {
 	pType := customMetricTypeToPartitionType(mType)
 	_, err := db.addTrialMetrics(ctx, m, pType, mType)
@@ -124,7 +124,7 @@ func (db *PgDB) AddTrialMetrics(
 
 // GetMetrics returns a subset metrics of the requested type for the given trial ID.
 func GetMetrics(ctx context.Context, trialID, afterBatches, limit int,
-	mType string,
+	mType model.MetricType,
 ) ([]*trialv1.MetricsReport, error) {
 	var res []*trialv1.MetricsReport
 	pType := customMetricTypeToPartitionType(mType)
@@ -139,7 +139,7 @@ func GetMetrics(ctx context.Context, trialID, afterBatches, limit int,
 	if pType == GenericMetric {
 		// Going off of our current schema were looking for custom types in our legacy
 		// metrics tables is pointless.
-		query.Where("custom_type = ?", &mType)
+		query.Where("custom_type = ?", mType)
 	}
 
 	err := query.

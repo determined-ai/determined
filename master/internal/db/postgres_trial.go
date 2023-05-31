@@ -181,11 +181,11 @@ func (db *PgDB) fullTrialSummaryMetricsRecompute(
 
 	updatedSummaryMetrics := model.JSONObj{}
 	if len(trainSummary) > 0 {
-		key := model.TrialSummaryMetricsJSONPath(model.TrainingMetricType.ToString())
+		key := model.TrialSummaryMetricsJSONPath(model.TrainingMetricType)
 		updatedSummaryMetrics[key] = trainSummary
 	}
 	if len(valSummary) > 0 {
-		key := model.TrialSummaryMetricsJSONPath(model.ValidationMetricType.ToString())
+		key := model.TrialSummaryMetricsJSONPath(model.ValidationMetricType)
 		updatedSummaryMetrics[key] = valSummary
 	}
 	if len(genericSummary) > 0 {
@@ -266,7 +266,7 @@ func (db *PgDB) updateTotalBatches(ctx context.Context, tx *sqlx.Tx, trialID int
 
 func (db *PgDB) _addTrialMetricsTx(
 	ctx context.Context, tx *sqlx.Tx, m *trialv1.TrialMetrics, pType MetricPartitionType,
-	mType string,
+	mType model.MetricType,
 ) (rollbacks int, err error) {
 	isValidation := pType == ValidationMetric
 
@@ -369,7 +369,7 @@ WHERE id = $1;
 // addTrialMetrics inserts a set of trial metrics to the database.
 func (db *PgDB) addTrialMetrics(
 	ctx context.Context, m *trialv1.TrialMetrics, pType MetricPartitionType,
-	mType string,
+	mType model.MetricType,
 ) (rollbacks int, err error) {
 	switch v := m.Metrics.AvgMetrics.Fields["epoch"].AsInterface().(type) {
 	case float64, nil:
