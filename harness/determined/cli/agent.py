@@ -24,7 +24,6 @@ def local_id(address: str) -> str:
 
 @authentication.required
 def list_agents(args: argparse.Namespace) -> None:
-    print("list agents")
     resp = bindings.get_GetAgents(cli.setup_session(args))
 
     agents = [

@@ -8,7 +8,6 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
 
@@ -922,7 +921,7 @@ func (p *pods) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
 		summaries := p.summarizeClusterByNodes(ctx)
 		_, nodesToPools := p.getNodeResourcePoolMapping(summaries)
 		for nodeName, summary := range summaries {
-			summary.ResourcePool = "kuber" + strings.Join(nodesToPools[summary.ID], ",")
+			summary.ResourcePool = nodesToPools[summary.ID]
 			summaries[nodeName] = summary
 		}
 		ctx.Respond(apiCtx.JSON(http.StatusOK, summaries))
@@ -932,13 +931,12 @@ func (p *pods) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
 }
 
 func (p *pods) handleGetAgentsRequest(ctx *actor.Context) {
-	fmt.Println("in handle Get agents")
 	nodeSummaries := p.summarizeClusterByNodes(ctx)
 	_, nodesToPools := p.getNodeResourcePoolMapping(nodeSummaries)
 
 	response := &apiv1.GetAgentsResponse{}
 	for _, summary := range nodeSummaries {
-		summary.ResourcePool = "kuber" + strings.Join(nodesToPools[summary.ID], ",")
+		summary.ResourcePool = nodesToPools[summary.ID]
 		response.Agents = append(response.Agents, summary.ToProto())
 	}
 	ctx.Respond(response)
@@ -1062,7 +1060,7 @@ func (p *pods) computeSummary(ctx *actor.Context) (map[string]model.AgentSummary
 			ID:             poolName,
 			RegisteredTime: p.cluster.RegisteredTime(),
 			NumContainers:  numContainersInPool,
-			ResourcePool:   poolName,
+			ResourcePool:   []string{poolName},
 			Slots:          slots,
 		}
 	}
@@ -1173,7 +1171,7 @@ func (p *pods) summarizeClusterByNodes(ctx *actor.Context) map[string]model.Agen
 			RegisteredTime: node.ObjectMeta.CreationTimestamp.Time,
 			Slots:          slotsSummary,
 			NumContainers:  len(podByNode[node.Name]) + len(nodeToTasks[node.Name]),
-			ResourcePool:   "",
+			ResourcePool:   []string{""},
 			Addresses:      addrs,
 		}
 	}

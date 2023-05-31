@@ -2,9 +2,6 @@
 __pycache__/
 *.py[cod]
 
-# devcluster
-determined/master/internal/.devcluster.yaml
-
 # Distribution / packaging
 .Python
 env/
