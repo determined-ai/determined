@@ -184,6 +184,7 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
                     files={[{ content: Loaded(''), key: 'config.yaml' }]}
                     height="16vh"
                     readonly={!canModifyCPS}
+                    onError={handleError}
                   />
                 </Form.Item>
               </React.Suspense>

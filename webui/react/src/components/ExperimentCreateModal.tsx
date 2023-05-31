@@ -371,6 +371,7 @@ const ExperimentCreateModalComponent = ({
               files={[{ content: Loaded(modalState.configString), key: 'config.yaml' }]}
               height="40vh"
               onChange={handleEditorChange}
+              onError={handleError}
             />
           </React.Suspense>
         )}
