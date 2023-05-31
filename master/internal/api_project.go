@@ -344,15 +344,21 @@ func (a *apiServer) GetProjectMetricsRange(
 	if err != nil {
 		return nil, err
 	}
-	metricsRange, err := a.getProjectMetricsRange(ctx, *curUser, p)
+	valMetricsRange, traMetricsRange, err := a.getProjectMetricsRange(ctx, *curUser, p)
 	if err != nil {
 		return nil, err
 	}
 
 	var ranges []*projectv1.MetricsRange
-	for mn, mr := range metricsRange {
+	for mn, mr := range valMetricsRange {
 		ranges = append(ranges, &projectv1.MetricsRange{
 			MetricsName: fmt.Sprintf("validation.%s", mn),
+			Range:       mr,
+		})
+	}
+	for mn, mr := range traMetricsRange {
+		ranges = append(ranges, &projectv1.MetricsRange{
+			MetricsName: fmt.Sprintf("training.%s", mn),
 			Range:       mr,
 		})
 	}
@@ -360,15 +366,36 @@ func (a *apiServer) GetProjectMetricsRange(
 	return &apiv1.GetProjectMetricsRangeResponse{Ranges: ranges}, nil
 }
 
+func calculateMetricsRange(
+	metricsValues map[string]([]float64), metricsName string, metricsValue float64) {
+	if values, ok := metricsValues[metricsName]; !ok {
+		metricsValues[metricsName] = []float64{metricsValue}
+	} else {
+		switch {
+		case len(values) == 1:
+			if values[0] <= metricsValue {
+				metricsValues[metricsName] = []float64{values[0], metricsValue}
+			} else {
+				metricsValues[metricsName] = []float64{metricsValue, values[0]}
+			}
+
+		default:
+			if metricsValue < values[0] {
+				metricsValues[metricsName] = []float64{metricsValue, values[1]}
+			}
+			if metricsValue > values[1] {
+				metricsValues[metricsName] = []float64{values[0], metricsValue}
+			}
+		}
+	}
+}
+
 func (a *apiServer) getProjectMetricsRange(
 	ctx context.Context, curUser model.User, project *projectv1.Project,
-) (map[string]([]float64), error) {
-	metricNames, err := a.getProjectmetricsNames(ctx, curUser, project)
-	if err != nil {
-		return nil, err
-	}
+) (map[string]([]float64), map[string]([]float64), error) {
 	query := db.Bun().NewSelect().Table("trials").Table("experiments").
 		ColumnExpr("summary_metrics -> 'validation_metrics' AS validation_metrics").
+		ColumnExpr("summary_metrics -> 'avg_metrics' AS avg_metrics").
 		ColumnExpr(`CASE WHEN searcher_metric_value_signed = searcher_metric_value 
 		THEN true ELSE false END AS smaller_is_better`).
 		Where("project_id = ?", project.Id).
@@ -383,15 +410,14 @@ func (a *apiServer) getProjectMetricsRange(
 	var res []struct {
 		SmallerIsBetter   bool
 		ValidationMetrics *map[string]metrics
+		AvgMetrics        *map[string]metrics
 	}
 
-	if err = query.Scan(ctx, &res); err != nil {
-		return nil, err
+	if err := query.Scan(ctx, &res); err != nil {
+		return nil, nil, err
 	}
-	metricsValues := make(map[string]([]float64))
-	for _, name := range metricNames {
-		metricsValues[name] = []float64{}
-	}
+	valMetricsValues := make(map[string]([]float64))
+	traMetricsValues := make(map[string]([]float64))
 	for _, r := range res {
 		if r.ValidationMetrics != nil {
 			for metricsName, value := range *r.ValidationMetrics {
@@ -402,31 +428,23 @@ func (a *apiServer) getProjectMetricsRange(
 				if !r.SmallerIsBetter {
 					metricsValue = value.Max
 				}
-				if values, ok := metricsValues[metricsName]; ok {
-					switch {
-					case len(values) == 0:
-						metricsValues[metricsName] = []float64{metricsValue}
-
-					case len(values) == 1:
-						if values[0] <= metricsValue {
-							metricsValues[metricsName] = []float64{values[0], metricsValue}
-						} else {
-							metricsValues[metricsName] = []float64{metricsValue, values[0]}
-						}
-
-					default:
-						if metricsValue < values[0] {
-							metricsValues[metricsName] = []float64{metricsValue, values[1]}
-						}
-						if metricsValue > values[1] {
-							metricsValues[metricsName] = []float64{values[0], metricsValue}
-						}
-					}
+				calculateMetricsRange(valMetricsValues, metricsName, metricsValue)
+			}
+		}
+		if r.AvgMetrics != nil {
+			for metricsName, value := range *r.AvgMetrics {
+				if value.Count == nil {
+					continue
 				}
+				metricsValue := value.Min
+				if !r.SmallerIsBetter {
+					metricsValue = value.Max
+				}
+				calculateMetricsRange(traMetricsValues, metricsName, metricsValue)
 			}
 		}
 	}
-	return metricsValues, nil
+	return valMetricsValues, traMetricsValues, nil
 }
 
 func (a *apiServer) PostProject(
