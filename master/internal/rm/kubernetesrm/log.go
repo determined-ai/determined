@@ -36,10 +36,7 @@ func newPodLogStreamer(
 	}
 	syslog := logrus.WithField("podName", podName)
 
-	p := &podLogStreamer{syslog, logReader, callback}
-	go p.receiveStreamLogs()
-
-	return p, nil
+	return &podLogStreamer{syslog, logReader, callback}, nil
 }
 
 // Write implements the io.Writer interface.
