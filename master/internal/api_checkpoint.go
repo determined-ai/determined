@@ -78,25 +78,38 @@ func (m *Master) canDoActionOnCheckpoint(
 }
 
 func (m *Master) canDoActionOnCheckpointThroughModel(
-	ctx context.Context, curUser model.User, id uuid.UUID,
+	ctx context.Context, curUser model.User, ckptID string,
 ) error {
-	modelIDs, err := db.GetModelIDsAssociatedWithCheckpoint(ctx, id)
+	ckptUUID, err := uuid.Parse(ckptID)
 	if err != nil {
 		return err
 	}
-	for _, id := range modelIDs {
+
+	modelIDs, err := db.GetModelIDsAssociatedWithCheckpoint(ctx, ckptUUID)
+	if err != nil {
+		return err
+	}
+	if len(modelIDs) == 0 {
+		// if length of model ids is zero then permission denied
+		// so return checkpoitn not found.
+		return errCheckpointNotFound(ckptID)
+	}
+
+	var errCanGetModel error
+	for _, modelID := range modelIDs {
 		model := &modelv1.Model{}
-		err = m.db.QueryProto("get_model_by_id", model, id)
-		if !errors.Is(err, db.ErrNotFound) {
+		err = m.db.QueryProto("get_model_by_id", model, modelID)
+		if err != nil {
 			return err
 		}
-		if err := modelauth.AuthZProvider.Get().CanGetModel(
-			ctx, curUser, model, model.WorkspaceId); err != nil {
-			return authz.SubIfUnauthorized(err, nil)
+		if errCanGetModel = modelauth.AuthZProvider.Get().CanGetModel(
+			ctx, curUser, model, model.WorkspaceId); errCanGetModel == nil {
+			return nil
 		}
 	}
-	return status.Error(codes.PermissionDenied,
-		fmt.Sprintf("cannot access checkpoint: %s", id.String()))
+	// we get to this return when there are no models belonging
+	// to a workspace where user has permissions.
+	return authz.SubIfUnauthorized(errCanGetModel, errCheckpointNotFound(ckptID))
 }
 
 func (a *apiServer) GetCheckpoint(
@@ -110,11 +123,7 @@ func (a *apiServer) GetCheckpoint(
 		expauth.AuthZProvider.Get().CanGetExperimentArtifacts)
 
 	if errE != nil {
-		ckptUUID, err := uuid.Parse(req.CheckpointUuid)
-		if err != nil {
-			return nil, err
-		}
-		errM := a.m.canDoActionOnCheckpointThroughModel(ctx, *curUser, ckptUUID)
+		errM := a.m.canDoActionOnCheckpointThroughModel(ctx, *curUser, req.CheckpointUuid)
 		if errM != nil {
 			return nil, errE
 		}
