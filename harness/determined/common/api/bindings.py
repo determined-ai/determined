@@ -13747,18 +13747,12 @@ def post_AssignRoles(
         return
     raise APIHttpError("post_AssignRoles", _resp)
 
-def get_BindRPToWorkspace(
+def post_BindRPToWorkspace(
     session: "api.Session",
-    *,
-    resourcePool: "typing.Optional[str]" = None,
-    workspaceIds: "typing.Optional[typing.Sequence[int]]" = None,
 ) -> None:
-    _params = {
-        "resourcePool": resourcePool,
-        "workspaceIds": workspaceIds,
-    }
+    _params = None
     _resp = session._do_request(
-        method="GET",
+        method="POST",
         path="/api/v1/resource-pools/workspace-bind",
         params=_params,
         json=None,
@@ -13769,7 +13763,7 @@ def get_BindRPToWorkspace(
     )
     if _resp.status_code == 200:
         return
-    raise APIHttpError("get_BindRPToWorkspace", _resp)
+    raise APIHttpError("post_BindRPToWorkspace", _resp)
 
 def post_CancelExperiment(
     session: "api.Session",
@@ -16347,7 +16341,7 @@ def post_ListRoles(
 def get_ListWorkspacesBoundToRP(
     session: "api.Session",
     *,
-    resourcePool: str,
+    resourcePoolName: str,
     limit: "typing.Optional[int]" = None,
     offset: "typing.Optional[int]" = None,
 ) -> "v1ListWorkspacesBoundToRPResponse":
@@ -16357,7 +16351,7 @@ def get_ListWorkspacesBoundToRP(
     }
     _resp = session._do_request(
         method="GET",
-        path=f"/api/v1/resource-pools/{resourcePool}/workspaces",
+        path=f"/api/v1/resource-pools/{resourcePoolName}/workspaces",
         params=_params,
         json=None,
         data=None,
@@ -16608,18 +16602,12 @@ def post_NotifyContainerRunning(
         return v1NotifyContainerRunningResponse.from_json(_resp.json())
     raise APIHttpError("post_NotifyContainerRunning", _resp)
 
-def get_OverwriteRPWorkspaceBindings(
+def patch_OverwriteRPWorkspaceBindings(
     session: "api.Session",
-    *,
-    resourcePool: "typing.Optional[str]" = None,
-    workspaceIds: "typing.Optional[typing.Sequence[int]]" = None,
 ) -> None:
-    _params = {
-        "resourcePool": resourcePool,
-        "workspaceIds": workspaceIds,
-    }
+    _params = None
     _resp = session._do_request(
-        method="GET",
+        method="PATCH",
         path="/api/v1/resource-pools/overwrite-bindings",
         params=_params,
         json=None,
@@ -16630,7 +16618,7 @@ def get_OverwriteRPWorkspaceBindings(
     )
     if _resp.status_code == 200:
         return
-    raise APIHttpError("get_OverwriteRPWorkspaceBindings", _resp)
+    raise APIHttpError("patch_OverwriteRPWorkspaceBindings", _resp)
 
 def patch_PatchCheckpoints(
     session: "api.Session",
@@ -18040,18 +18028,12 @@ def post_UnarchiveWorkspace(
         return
     raise APIHttpError("post_UnarchiveWorkspace", _resp)
 
-def get_UnbindRPFromWorkspace(
+def post_UnbindRPFromWorkspace(
     session: "api.Session",
-    *,
-    resourcePool: "typing.Optional[str]" = None,
-    workspaceIds: "typing.Optional[typing.Sequence[int]]" = None,
 ) -> None:
-    _params = {
-        "resourcePool": resourcePool,
-        "workspaceIds": workspaceIds,
-    }
+    _params = None
     _resp = session._do_request(
-        method="GET",
+        method="POST",
         path="/api/v1/resource-pools/workspace-unbind",
         params=_params,
         json=None,
@@ -18062,7 +18044,7 @@ def get_UnbindRPFromWorkspace(
     )
     if _resp.status_code == 200:
         return
-    raise APIHttpError("get_UnbindRPFromWorkspace", _resp)
+    raise APIHttpError("post_UnbindRPFromWorkspace", _resp)
 
 def post_UnpinWorkspace(
     session: "api.Session",
