@@ -270,7 +270,9 @@ func (db *PgDB) _addTrialMetricsTx(
 ) (rollbacks int, err error) {
 	isValidation := pType == ValidationMetric
 
+	// DISCUSS: these two don't need to be coupled.
 	metricsJSONPath := model.TrialMetricsJsonPath(isValidation)
+	summaryMetricsJSONPath := model.TrialSummaryMetricsJsonPath(mType)
 	metricsBody := map[string]interface{}{
 		metricsJSONPath: m.Metrics.AvgMetrics,
 		"batch_metrics": m.Metrics.BatchMetrics,
@@ -318,19 +320,12 @@ func (db *PgDB) _addTrialMetricsTx(
 		if err := db.fullTrialSummaryMetricsRecompute(ctx, tx, int(m.TrialId)); err != nil {
 			return rollbacks, errors.Wrap(err, "error on rollback compute of summary metrics")
 		}
-	case pType == GenericMetric:
-		if _, err := tx.ExecContext(ctx, `
-	UPDATE trials SET total_batches = GREATEST(total_batches, $2)
-	WHERE id = $1;
-	`, m.TrialId, m.StepsCompleted); err != nil {
-			return rollbacks, errors.Wrap(err, "updating trial total batches")
-		}
 	default: // no rollbacks happened.
-		if _, ok := summaryMetrics[metricsJSONPath]; !ok {
-			summaryMetrics[metricsJSONPath] = map[string]any{}
+		if _, ok := summaryMetrics[summaryMetricsJSONPath]; !ok {
+			summaryMetrics[summaryMetricsJSONPath] = map[string]any{}
 		}
-		summaryMetrics[metricsJSONPath] = calculateNewSummaryMetrics(
-			summaryMetrics[metricsJSONPath].(map[string]any),
+		summaryMetrics[summaryMetricsJSONPath] = calculateNewSummaryMetrics(
+			summaryMetrics[summaryMetricsJSONPath].(map[string]any),
 			m.Metrics.AvgMetrics,
 		)
 
