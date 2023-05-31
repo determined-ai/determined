@@ -10092,7 +10092,7 @@ func local_request_Determined_ListRPsBoundToWorkspace_0(ctx context.Context, mar
 }
 
 var (
-	filter_Determined_ListWorkspacesBoundToRP_0 = &utilities.DoubleArray{Encoding: map[string]int{"resource_pool": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
+	filter_Determined_ListWorkspacesBoundToRP_0 = &utilities.DoubleArray{Encoding: map[string]int{"resource_pool_name": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
 )
 
 func request_Determined_ListWorkspacesBoundToRP_0(ctx context.Context, marshaler runtime.Marshaler, client DeterminedClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -10106,15 +10106,15 @@ func request_Determined_ListWorkspacesBoundToRP_0(ctx context.Context, marshaler
 		_   = err
 	)
 
-	val, ok = pathParams["resource_pool"]
+	val, ok = pathParams["resource_pool_name"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "resource_pool")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "resource_pool_name")
 	}
 
-	protoReq.ResourcePool, err = runtime.String(val)
+	protoReq.ResourcePoolName, err = runtime.String(val)
 
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "resource_pool", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "resource_pool_name", err)
 	}
 
 	if err := req.ParseForm(); err != nil {
@@ -10140,15 +10140,15 @@ func local_request_Determined_ListWorkspacesBoundToRP_0(ctx context.Context, mar
 		_   = err
 	)
 
-	val, ok = pathParams["resource_pool"]
+	val, ok = pathParams["resource_pool_name"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "resource_pool")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "resource_pool_name")
 	}
 
-	protoReq.ResourcePool, err = runtime.String(val)
+	protoReq.ResourcePoolName, err = runtime.String(val)
 
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "resource_pool", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "resource_pool_name", err)
 	}
 
 	if err := req.ParseForm(); err != nil {
@@ -13975,7 +13975,7 @@ func RegisterDeterminedHandlerServer(ctx context.Context, mux *runtime.ServeMux,
 
 	})
 
-	mux.Handle("GET", pattern_Determined_BindRPToWorkspace_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_Determined_BindRPToWorkspace_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
@@ -13995,7 +13995,7 @@ func RegisterDeterminedHandlerServer(ctx context.Context, mux *runtime.ServeMux,
 
 	})
 
-	mux.Handle("GET", pattern_Determined_UnbindRPFromWorkspace_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_Determined_UnbindRPFromWorkspace_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
@@ -14015,7 +14015,7 @@ func RegisterDeterminedHandlerServer(ctx context.Context, mux *runtime.ServeMux,
 
 	})
 
-	mux.Handle("GET", pattern_Determined_OverwriteRPWorkspaceBindings_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("PATCH", pattern_Determined_OverwriteRPWorkspaceBindings_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
@@ -18076,7 +18076,7 @@ func RegisterDeterminedHandlerClient(ctx context.Context, mux *runtime.ServeMux,
 
 	})
 
-	mux.Handle("GET", pattern_Determined_BindRPToWorkspace_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_Determined_BindRPToWorkspace_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
@@ -18096,7 +18096,7 @@ func RegisterDeterminedHandlerClient(ctx context.Context, mux *runtime.ServeMux,
 
 	})
 
-	mux.Handle("GET", pattern_Determined_UnbindRPFromWorkspace_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_Determined_UnbindRPFromWorkspace_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
@@ -18116,7 +18116,7 @@ func RegisterDeterminedHandlerClient(ctx context.Context, mux *runtime.ServeMux,
 
 	})
 
-	mux.Handle("GET", pattern_Determined_OverwriteRPWorkspaceBindings_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("PATCH", pattern_Determined_OverwriteRPWorkspaceBindings_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
@@ -18602,7 +18602,7 @@ var (
 
 	pattern_Determined_ListRPsBoundToWorkspace_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"api", "v1", "workspaces", "workspace_id", "resource-pools"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Determined_ListWorkspacesBoundToRP_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"api", "v1", "resource-pools", "resource_pool", "workspaces"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Determined_ListWorkspacesBoundToRP_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"api", "v1", "resource-pools", "resource_pool_name", "workspaces"}, "", runtime.AssumeColonVerbOpt(true)))
 
 	pattern_Determined_ListRPWorkspaceBindings_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "v1", "resource-pools", "all-bindings"}, "", runtime.AssumeColonVerbOpt(true)))
 )

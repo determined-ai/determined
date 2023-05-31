@@ -29,11 +29,11 @@ message GetResourcePoolsResponse {
 // Bind a resource pool to workspaces
 message BindRPToWorkspaceRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "resource_pool" ] }
+    json_schema: { required: [ "resource_pool_name" ] }
   };
 
   // The resource pool name.
-  string resource_pool = 1;
+  string resource_pool_name = 1;
   // The workspace IDs to be bound to the resouce pool.
   repeated int32 workspace_ids = 2;
 }
@@ -44,11 +44,11 @@ message BindRPToWorkspaceResponse {}
 // Unbind a resource pool to workspaces.
 message UnbindRPFromWorkspaceRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "resource_pool" ] }
+    json_schema: { required: [ "resource_pool_name" ] }
   };
 
   // The resource pool name.
-  string resource_pool = 1;
+  string resource_pool_name = 1;
   // The workspace IDs to be unbound.
   repeated int32 workspace_ids = 2;
 }
@@ -59,11 +59,11 @@ message UnbindRPFromWorkspaceResponse {}
 // Overwrite and replace the workspaces bound to an RP request.
 message OverwriteRPWorkspaceBindingsRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "resource_pool" ] }
+    json_schema: { required: [ "resource_pool_name" ] }
   };
 
   // The resource pool name.
-  string resource_pool = 1;
+  string resource_pool_name = 1;
   // The new workspace IDs to bind to the resource_pool.
   repeated int32 workspace_ids = 2;
 }
@@ -92,11 +92,11 @@ message ListRPWorkspaceBindingsResponse {
 // List all the workspaces bound to the RP.
 message ListWorkspacesBoundToRPRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "resource_pool", "limit" ] }
+    json_schema: { required: [ "resource_pool_name", "limit" ] }
   };
 
   // Resource pool name.
-  string resource_pool = 1;
+  string resource_pool_name = 1;
   // The offset to use with pagination
   int32 offset = 2;
   // The maximum number of results to return

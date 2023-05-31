@@ -16592,15 +16592,13 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         /**
          * 
          * @summary Bind resource pool to workspace
-         * @param {string} [resourcePool] The resource pool name.
-         * @param {Array<number>} [workspaceIds] The workspace IDs to be bound to the resouce pool.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        bindRPToWorkspace(resourcePool?: string, workspaceIds?: Array<number>, options: any = {}): FetchArgs {
+        bindRPToWorkspace(options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/resource-pools/workspace-bind`;
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
-            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
             
@@ -16610,14 +16608,6 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                     ? configuration.apiKey("Authorization")
                     : configuration.apiKey;
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-            }
-            
-            if (resourcePool !== undefined) {
-                localVarQueryParameter['resourcePool'] = resourcePool
-            }
-            
-            if (workspaceIds) {
-                localVarQueryParameter['workspaceIds'] = workspaceIds
             }
             
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
@@ -17401,19 +17391,19 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         /**
          * 
          * @summary List all workspaces bound to a specific resource pool
-         * @param {string} resourcePool Resource pool name.
+         * @param {string} resourcePoolName Resource pool name.
          * @param {number} [offset] The offset to use with pagination.
          * @param {number} [limit] The maximum number of results to return.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        listWorkspacesBoundToRP(resourcePool: string, offset?: number, limit?: number, options: any = {}): FetchArgs {
-            // verify required parameter 'resourcePool' is not null or undefined
-            if (resourcePool === null || resourcePool === undefined) {
-                throw new RequiredError('resourcePool','Required parameter resourcePool was null or undefined when calling listWorkspacesBoundToRP.');
+        listWorkspacesBoundToRP(resourcePoolName: string, offset?: number, limit?: number, options: any = {}): FetchArgs {
+            // verify required parameter 'resourcePoolName' is not null or undefined
+            if (resourcePoolName === null || resourcePoolName === undefined) {
+                throw new RequiredError('resourcePoolName','Required parameter resourcePoolName was null or undefined when calling listWorkspacesBoundToRP.');
             }
-            const localVarPath = `/api/v1/resource-pools/{resourcePool}/workspaces`
-                .replace(`{${"resourcePool"}}`, encodeURIComponent(String(resourcePool)));
+            const localVarPath = `/api/v1/resource-pools/{resourcePoolName}/workspaces`
+                .replace(`{${"resourcePoolName"}}`, encodeURIComponent(String(resourcePoolName)));
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
@@ -17600,15 +17590,13 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         /**
          * 
          * @summary Overwrite resource pool - workspace bindings
-         * @param {string} [resourcePool] The resource pool name.
-         * @param {Array<number>} [workspaceIds] The new workspace IDs to bind to the resource_pool.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        overwriteRPWorkspaceBindings(resourcePool?: string, workspaceIds?: Array<number>, options: any = {}): FetchArgs {
+        overwriteRPWorkspaceBindings(options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/resource-pools/overwrite-bindings`;
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
-            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarRequestOptions = { method: 'PATCH', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
             
@@ -17618,14 +17606,6 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                     ? configuration.apiKey("Authorization")
                     : configuration.apiKey;
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-            }
-            
-            if (resourcePool !== undefined) {
-                localVarQueryParameter['resourcePool'] = resourcePool
-            }
-            
-            if (workspaceIds) {
-                localVarQueryParameter['workspaceIds'] = workspaceIds
             }
             
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
@@ -18269,15 +18249,13 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         /**
          * 
          * @summary Unbind resource pool to workspace
-         * @param {string} [resourcePool] The resource pool name.
-         * @param {Array<number>} [workspaceIds] The workspace IDs to be unbound.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        unbindRPFromWorkspace(resourcePool?: string, workspaceIds?: Array<number>, options: any = {}): FetchArgs {
+        unbindRPFromWorkspace(options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/resource-pools/workspace-unbind`;
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
-            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
             
@@ -18287,14 +18265,6 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                     ? configuration.apiKey("Authorization")
                     : configuration.apiKey;
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-            }
-            
-            if (resourcePool !== undefined) {
-                localVarQueryParameter['resourcePool'] = resourcePool
-            }
-            
-            if (workspaceIds) {
-                localVarQueryParameter['workspaceIds'] = workspaceIds
             }
             
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
@@ -18540,13 +18510,11 @@ export const InternalApiFp = function (configuration?: Configuration) {
         /**
          * 
          * @summary Bind resource pool to workspace
-         * @param {string} [resourcePool] The resource pool name.
-         * @param {Array<number>} [workspaceIds] The workspace IDs to be bound to the resouce pool.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        bindRPToWorkspace(resourcePool?: string, workspaceIds?: Array<number>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1BindRPToWorkspaceResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).bindRPToWorkspace(resourcePool, workspaceIds, options);
+        bindRPToWorkspace(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1BindRPToWorkspaceResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).bindRPToWorkspace(options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -18938,14 +18906,14 @@ export const InternalApiFp = function (configuration?: Configuration) {
         /**
          * 
          * @summary List all workspaces bound to a specific resource pool
-         * @param {string} resourcePool Resource pool name.
+         * @param {string} resourcePoolName Resource pool name.
          * @param {number} [offset] The offset to use with pagination.
          * @param {number} [limit] The maximum number of results to return.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        listWorkspacesBoundToRP(resourcePool: string, offset?: number, limit?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ListWorkspacesBoundToRPResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).listWorkspacesBoundToRP(resourcePool, offset, limit, options);
+        listWorkspacesBoundToRP(resourcePoolName: string, offset?: number, limit?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ListWorkspacesBoundToRPResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).listWorkspacesBoundToRP(resourcePoolName, offset, limit, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -19022,13 +18990,11 @@ export const InternalApiFp = function (configuration?: Configuration) {
         /**
          * 
          * @summary Overwrite resource pool - workspace bindings
-         * @param {string} [resourcePool] The resource pool name.
-         * @param {Array<number>} [workspaceIds] The new workspace IDs to bind to the resource_pool.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        overwriteRPWorkspaceBindings(resourcePool?: string, workspaceIds?: Array<number>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1OverwriteRPWorkspaceBindingsResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).overwriteRPWorkspaceBindings(resourcePool, workspaceIds, options);
+        overwriteRPWorkspaceBindings(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1OverwriteRPWorkspaceBindingsResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).overwriteRPWorkspaceBindings(options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -19312,13 +19278,11 @@ export const InternalApiFp = function (configuration?: Configuration) {
         /**
          * 
          * @summary Unbind resource pool to workspace
-         * @param {string} [resourcePool] The resource pool name.
-         * @param {Array<number>} [workspaceIds] The workspace IDs to be unbound.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        unbindRPFromWorkspace(resourcePool?: string, workspaceIds?: Array<number>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1UnbindRPFromWorkspaceResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).unbindRPFromWorkspace(resourcePool, workspaceIds, options);
+        unbindRPFromWorkspace(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1UnbindRPFromWorkspaceResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).unbindRPFromWorkspace(options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -19457,13 +19421,11 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         /**
          * 
          * @summary Bind resource pool to workspace
-         * @param {string} [resourcePool] The resource pool name.
-         * @param {Array<number>} [workspaceIds] The workspace IDs to be bound to the resouce pool.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        bindRPToWorkspace(resourcePool?: string, workspaceIds?: Array<number>, options?: any) {
-            return InternalApiFp(configuration).bindRPToWorkspace(resourcePool, workspaceIds, options)(fetch, basePath);
+        bindRPToWorkspace(options?: any) {
+            return InternalApiFp(configuration).bindRPToWorkspace(options)(fetch, basePath);
         },
         /**
          * 
@@ -19675,14 +19637,14 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         /**
          * 
          * @summary List all workspaces bound to a specific resource pool
-         * @param {string} resourcePool Resource pool name.
+         * @param {string} resourcePoolName Resource pool name.
          * @param {number} [offset] The offset to use with pagination.
          * @param {number} [limit] The maximum number of results to return.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        listWorkspacesBoundToRP(resourcePool: string, offset?: number, limit?: number, options?: any) {
-            return InternalApiFp(configuration).listWorkspacesBoundToRP(resourcePool, offset, limit, options)(fetch, basePath);
+        listWorkspacesBoundToRP(resourcePoolName: string, offset?: number, limit?: number, options?: any) {
+            return InternalApiFp(configuration).listWorkspacesBoundToRP(resourcePoolName, offset, limit, options)(fetch, basePath);
         },
         /**
          * 
@@ -19723,13 +19685,11 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         /**
          * 
          * @summary Overwrite resource pool - workspace bindings
-         * @param {string} [resourcePool] The resource pool name.
-         * @param {Array<number>} [workspaceIds] The new workspace IDs to bind to the resource_pool.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        overwriteRPWorkspaceBindings(resourcePool?: string, workspaceIds?: Array<number>, options?: any) {
-            return InternalApiFp(configuration).overwriteRPWorkspaceBindings(resourcePool, workspaceIds, options)(fetch, basePath);
+        overwriteRPWorkspaceBindings(options?: any) {
+            return InternalApiFp(configuration).overwriteRPWorkspaceBindings(options)(fetch, basePath);
         },
         /**
          * 
@@ -19887,13 +19847,11 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         /**
          * 
          * @summary Unbind resource pool to workspace
-         * @param {string} [resourcePool] The resource pool name.
-         * @param {Array<number>} [workspaceIds] The workspace IDs to be unbound.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        unbindRPFromWorkspace(resourcePool?: string, workspaceIds?: Array<number>, options?: any) {
-            return InternalApiFp(configuration).unbindRPFromWorkspace(resourcePool, workspaceIds, options)(fetch, basePath);
+        unbindRPFromWorkspace(options?: any) {
+            return InternalApiFp(configuration).unbindRPFromWorkspace(options)(fetch, basePath);
         },
         /**
          * 
@@ -20020,14 +19978,12 @@ export class InternalApi extends BaseAPI {
     /**
      * 
      * @summary Bind resource pool to workspace
-     * @param {string} [resourcePool] The resource pool name.
-     * @param {Array<number>} [workspaceIds] The workspace IDs to be bound to the resouce pool.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public bindRPToWorkspace(resourcePool?: string, workspaceIds?: Array<number>, options?: any) {
-        return InternalApiFp(this.configuration).bindRPToWorkspace(resourcePool, workspaceIds, options)(this.fetch, this.basePath)
+    public bindRPToWorkspace(options?: any) {
+        return InternalApiFp(this.configuration).bindRPToWorkspace(options)(this.fetch, this.basePath)
     }
     
     /**
@@ -20278,15 +20234,15 @@ export class InternalApi extends BaseAPI {
     /**
      * 
      * @summary List all workspaces bound to a specific resource pool
-     * @param {string} resourcePool Resource pool name.
+     * @param {string} resourcePoolName Resource pool name.
      * @param {number} [offset] The offset to use with pagination.
      * @param {number} [limit] The maximum number of results to return.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public listWorkspacesBoundToRP(resourcePool: string, offset?: number, limit?: number, options?: any) {
-        return InternalApiFp(this.configuration).listWorkspacesBoundToRP(resourcePool, offset, limit, options)(this.fetch, this.basePath)
+    public listWorkspacesBoundToRP(resourcePoolName: string, offset?: number, limit?: number, options?: any) {
+        return InternalApiFp(this.configuration).listWorkspacesBoundToRP(resourcePoolName, offset, limit, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -20334,14 +20290,12 @@ export class InternalApi extends BaseAPI {
     /**
      * 
      * @summary Overwrite resource pool - workspace bindings
-     * @param {string} [resourcePool] The resource pool name.
-     * @param {Array<number>} [workspaceIds] The new workspace IDs to bind to the resource_pool.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public overwriteRPWorkspaceBindings(resourcePool?: string, workspaceIds?: Array<number>, options?: any) {
-        return InternalApiFp(this.configuration).overwriteRPWorkspaceBindings(resourcePool, workspaceIds, options)(this.fetch, this.basePath)
+    public overwriteRPWorkspaceBindings(options?: any) {
+        return InternalApiFp(this.configuration).overwriteRPWorkspaceBindings(options)(this.fetch, this.basePath)
     }
     
     /**
@@ -20526,14 +20480,12 @@ export class InternalApi extends BaseAPI {
     /**
      * 
      * @summary Unbind resource pool to workspace
-     * @param {string} [resourcePool] The resource pool name.
-     * @param {Array<number>} [workspaceIds] The workspace IDs to be unbound.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public unbindRPFromWorkspace(resourcePool?: string, workspaceIds?: Array<number>, options?: any) {
-        return InternalApiFp(this.configuration).unbindRPFromWorkspace(resourcePool, workspaceIds, options)(this.fetch, this.basePath)
+    public unbindRPFromWorkspace(options?: any) {
+        return InternalApiFp(this.configuration).unbindRPFromWorkspace(options)(this.fetch, this.basePath)
     }
     
     /**
