@@ -78,7 +78,9 @@ func (a *ModelAuthZRBAC) CanGetModels(ctx context.Context, curUser model.User, w
 		// user doesn't have permissions to see models in any workspace.
 		return nil, authz.PermissionDeniedError{
 			RequiredPermissions: []rbacv1.PermissionType{
-				rbacv1.PermissionType_PERMISSION_TYPE_VIEW_MODEL_REGISTRY}}
+				rbacv1.PermissionType_PERMISSION_TYPE_VIEW_MODEL_REGISTRY,
+			},
+		}
 	}
 
 	for _, givenWID := range workspaceIDs {
@@ -86,7 +88,9 @@ func (a *ModelAuthZRBAC) CanGetModels(ctx context.Context, curUser model.User, w
 			// user doesn't have permissions to see models in the user given list of workspaces.
 			return nil, authz.PermissionDeniedError{
 				RequiredPermissions: []rbacv1.PermissionType{
-					rbacv1.PermissionType_PERMISSION_TYPE_VIEW_MODEL_REGISTRY}}
+					rbacv1.PermissionType_PERMISSION_TYPE_VIEW_MODEL_REGISTRY,
+				},
+			}
 		}
 	}
 
