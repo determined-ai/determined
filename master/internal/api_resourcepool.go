@@ -3,16 +3,21 @@ package internal
 import (
 	"context"
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 	"github.com/pkg/errors"
 
 =======
 >>>>>>> a5a5431ac (unbind workspace RP handler + db helper)
+=======
+
+	"github.com/pkg/errors"
+
+>>>>>>> cd4b26960 (lint fix)
 	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	workspaceauth "github.com/determined-ai/determined/master/internal/workspace"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
-	"github.com/pkg/errors"
 )
 
 func (a *apiServer) GetResourcePools(
