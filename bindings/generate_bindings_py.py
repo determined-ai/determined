@@ -319,6 +319,7 @@ def gen_class(klass: swagger_parser.Class) -> Code:
         out += [f'        if not omit_unset or "{k}" in vars(self):']
         out += [f'            out["{k}"] = {parsed}']
     out += ["        return out"]
+    out += [""]
 
     return "\n".join(out)
 
@@ -441,11 +442,14 @@ class DetEnum(enum.Enum):
 class Printable:
     # A mixin to provide a __str__ method for classes with attributes.
     def __str__(self) -> str:
-        allowed_types = (int, float, str, bool, list, enum.Enum)
+        allowed_types = (str, int, float, bool)
         attrs = []
         for k, v in self.__dict__.items():
             if v is None: continue
-            if isinstance(v, allowed_types):
+            if isinstance(v, list):
+                vals = [str(x) if isinstance(x, allowed_types) else "..." for x in v]
+                attrs.append(f'{k}=[{", ".join(vals)}]')
+            elif isinstance(v, allowed_types):
                 attrs.append(f'{k}={v}')
             else:
                 attrs.append(f'{k}=...')
