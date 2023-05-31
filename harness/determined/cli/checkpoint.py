@@ -146,10 +146,10 @@ def checkpoints_file_rm(args: Namespace) -> None:
         if len(args.glob) == 0:
             print(
                 "No glob patterns provided, "
-                + f"refreshing resources of checkpoints {args.checkpoints_uuids} is in progress"
+                + f"refreshing resources of checkpoints {args.checkpoints_uuids} is in progress."
             )
         else:
-            print(f"Removal of files from checkpoints {args.checkpoints_uuids} is in progress")
+            print(f"Removal of files from checkpoints {args.checkpoints_uuids} is in progress.")
     else:
         print("Stopping removal of files from checkpoints.")
 
