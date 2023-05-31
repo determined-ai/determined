@@ -681,16 +681,20 @@ def list_experiments(args: Namespace) -> None:
     session = cli.setup_session(args)
 
     def get_with_offset(offset: int) -> bindings.v1GetExperimentsResponse:
-        return bindings.get_GetExperiments(
+        r = bindings.get_GetExperiments(
             session,
             offset=offset,
             archived=None if args.all else False,
             limit=args.limit,
             users=None if args.all else [authentication.must_cli_auth().get_session_user()],
         )
+        print(r)
+        return r
 
     resps = api.read_paginated(get_with_offset, offset=args.offset, pages=args.pages)
     all_experiments = [e for r in resps for e in r.experiments]
+    print(all_experiments[0])
+    exit(1)
 
     def format_experiment(e: bindings.v1Experiment) -> List[Any]:
         result = [
