@@ -439,8 +439,8 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			taskID := model.TaskID(fmt.Sprintf("%d.%s", e.ID, uuid.New()))
 			ckptGCTask := newCheckpointGCTask(
 				e.rm, e.db, e.taskLogger, taskID, e.JobID, e.StartTime, taskSpec, e.Experiment.ID,
-				e.activeConfig.AsLegacy(), checkpoints, false, taskSpec.AgentUserGroup, taskSpec.Owner,
-				e.logCtx,
+				e.activeConfig.AsLegacy(), checkpoints, []string{fullDeleteGlob},
+				false, taskSpec.AgentUserGroup, taskSpec.Owner, e.logCtx,
 			)
 			ctx.Self().System().ActorOf(addr, ckptGCTask)
 		}
@@ -591,6 +591,12 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 				))
 			}
 		}
+
+	case sproto.InvalidResourcesRequestError:
+		e.updateState(ctx, model.StateWithReason{
+			State:               model.StoppingErrorState,
+			InformationalReason: msg.Cause.Error(),
+		})
 
 	default:
 		return status.Errorf(codes.InvalidArgument, "unknown message type %T", msg)

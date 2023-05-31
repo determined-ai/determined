@@ -12,9 +12,6 @@ func (t TensorboardStorageConfigV0) GetUnionMember() interface{} {
 	if t.RawSharedFSConfigV0 != nil {
 		return *t.RawSharedFSConfigV0
 	}
-	if t.RawHDFSConfig != nil {
-		return *t.RawHDFSConfig
-	}
 	if t.RawS3Config != nil {
 		return *t.RawS3Config
 	}

@@ -22,7 +22,6 @@ type (
 	ExperimentConfig          = ExperimentConfigV0
 	GCSConfig                 = GCSConfigV0
 	GridConfig                = GridConfigV0
-	HDFSConfig                = HDFSConfigV0
 	Hyperparameter            = HyperparameterV0
 	Hyperparameters           = HyperparametersV0
 	IntHyperparameter         = IntHyperparameterV0

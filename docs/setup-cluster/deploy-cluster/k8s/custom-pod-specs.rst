@@ -121,6 +121,33 @@ Example of configuring default pod specs in ``values.yaml``:
              hostPath:
                path: /data
 
+The default pod specs can also be configured on a resource pool level. GPU jobs submitted in the
+resource pool will have the task spec applied. If a job is submitted in a resource pool with a
+matching CPU / GPU pod spec then the top level ``taskContainerDefaults.gpuPodSpec`` or
+``taskContainerDefaults.cpuPodSpec`` will not be applied.
+
+Example of configuring resource pool default pod spec in ``values.yaml``.
+
+.. code:: yaml
+
+   resourcePools:
+     - pool_name: prod_pool
+       kubernetes_namespace: default
+       task_container_defaults:
+         gpu_pod_spec:
+           apiVersion: v1
+           kind: Pod
+           spec:
+             affinity:
+               nodeAffinity:
+                 requiredDuringSchedulingIgnoredDuringExecution:
+                   nodeSelectorTerms:
+                     - matchExpressions:
+                         - key: topology.kubernetes.io/zone
+                           operator: In
+                           values:
+                             - antarctica-west1
+
 .. _per-task-pod-specs:
 
 ********************
@@ -128,8 +155,7 @@ Example of configuring default pod specs in ``values.yaml``:
 ********************
 
 In addition to default pod specs, it is also possible to configure custom pod specs for individual
-tasks. When defining a custom pod spec for a task, it will override the default pod spec if one is
-defined. Pod specs for individual tasks can be configured under the ``environment`` field in the
+tasks. Pod specs for individual tasks can be configured under the ``environment`` field in the
 :ref:`experiment config <exp-environment>` (for experiments) or the :ref:`task configuration
 <command-notebook-configuration>` (for other tasks).
 
@@ -156,3 +182,59 @@ Example of configuring a pod spec for an individual task:
              operator: "Equal"
              value: "true"
              effect: "NoSchedule"
+
+When a custom pod spec is provided for a task, it will merge with the default pod spec (either
+``resourcePools.task_container_defaults`` or top level ``task_container_defaults`` if
+``resourcePools.task_container_defaults`` is not specified) according to Kubernetes `strategic merge
+patch
+<https://kubernetes.io/docs/tasks/manage-kubernetes-objects/update-api-object-kubectl-patch/#use-a-strategic-merge-patch-to-update-a-deployment>`__.
+Determined does not support setting the strategic merge patch strategy, so the section titled "Use
+strategic merge patch to update a Deployment using the retainKeys strategy" in the linked Kubernetes
+docs will not work.
+
+Some fields in pod specs are merged by values of items in lists. Volumes for example are merged by
+volume name. If for some reason you would want to remove a volume mount specific in the default task
+container you would need to override it with an empty volume of the same path.
+
+Example ``values.yaml``
+
+.. code:: yaml
+
+   resourcePools:
+     - pool_name: prod_pool
+       kubernetes_namespace: default
+       task_container_defaults:
+         gpu_pod_spec:
+           apiVersion: v1
+           kind: Pod
+           spec:
+             volumes:
+               - name: secret-volume
+                 secret:
+                   secretName: prod-test-secret
+             containers:
+               - name: determined-container
+                 volumeMounts:
+                   - name: secret-volume
+                     mountPath: /etc/secret-volume
+
+Example ``expconf.yaml``
+
+.. code:: yaml
+
+   environment:
+     pod_spec:
+       apiVersion: v1
+       kind: Pod
+       spec:
+         volumes:
+           - name: empty-dir-override
+             emptyDir:
+               sizeLimit: 100Mi
+         containers:
+           - name: determined-container
+             volumeMounts:
+               - name: empty-dir-override
+                 mountPath: /etc/secret-volume
+   resources:
+     resource_pool: prod_pool

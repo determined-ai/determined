@@ -1,7 +1,6 @@
 package internal
 
 import (
-	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -41,10 +40,13 @@ type checkpointGCTask struct {
 	logCtx logger.Context
 }
 
+const fullDeleteGlob = "**/*"
+
 func newCheckpointGCTask(
 	rm rm.ResourceManager, db *db.PgDB, taskLogger *task.Logger, taskID model.TaskID,
 	jobID model.JobID, jobSubmissionTime time.Time, taskSpec tasks.TaskSpec, expID int,
-	legacyConfig expconf.LegacyConfig, toDeleteCheckpoints []uuid.UUID, deleteTensorboards bool,
+	legacyConfig expconf.LegacyConfig, toDeleteCheckpoints []uuid.UUID, checkpointGlobs []string,
+	deleteTensorboards bool,
 	agentUserGroup *model.AgentUserGroup, owner *model.User, logCtx logger.Context,
 ) *checkpointGCTask {
 	taskSpec.AgentUserGroup = agentUserGroup
@@ -62,6 +64,7 @@ func newCheckpointGCTask(
 			ExperimentID:       expID,
 			LegacyConfig:       legacyConfig,
 			ToDelete:           deleteCheckpointsStr,
+			CheckpointGlobs:    checkpointGlobs,
 			DeleteTensorboards: deleteTensorboards,
 		},
 		db: db,
@@ -75,7 +78,7 @@ func newCheckpointGCTask(
 func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
-		if t.ToDelete == "" && !t.DeleteTensorboards {
+		if len(t.ToDelete) == 0 && !t.DeleteTensorboards {
 			// Early return as nothing to do
 			ctx.Self().Stop()
 			return nil
@@ -136,20 +139,6 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 			ctx.Log().WithError(msg.Err).Error("wasn't able to delete checkpoints from checkpoint storage")
 			t.completeTask(ctx)
 			return errors.Wrapf(msg.Err, "checkpoint GC task failed because allocation failed")
-		}
-		conv := &protoconverter.ProtoConverter{}
-		var deleteCheckpointsStrList []string
-		if len(strings.TrimSpace(t.ToDelete)) > 0 {
-			deleteCheckpointsStrList = strings.Split(t.ToDelete, ",")
-		}
-		deleteCheckpoints := conv.ToUUIDList(deleteCheckpointsStrList)
-		if err := conv.Error(); err != nil {
-			ctx.Log().WithError(err).Error("error converting string list to uuid")
-			return err
-		}
-		if err := db.MarkCheckpointsDeleted(context.TODO(), deleteCheckpoints); err != nil {
-			ctx.Log().WithError(err).Error("updating checkpoints to delete state in checkpoint GC Task")
-			return err
 		}
 
 		t.completeTask(ctx)

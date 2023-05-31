@@ -1,7 +1,7 @@
 import json
 import logging
 import os
-import typing
+from typing import Any, Dict, List, Optional, Tuple
 
 from transformers import TrainerCallback, TrainerControl, TrainerState, TrainingArguments
 from transformers.trainer_utils import get_last_checkpoint
@@ -11,13 +11,13 @@ import determined as det
 logging.basicConfig(level=logging.INFO)
 
 
-class DetCallback(TrainerCallback):
+class DetCallback(TrainerCallback):  # type: ignore
     def __init__(
         self,
         core_context: det.core.Context,
         args: TrainingArguments,
-        filter_metrics: typing.List[str] = None,
-        user_data: typing.Dict = None,
+        filter_metrics: Optional[List[str]] = None,
+        user_data: Optional[Dict[str, Any]] = None,
     ) -> None:
         super().__init__()
 
@@ -27,26 +27,39 @@ class DetCallback(TrainerCallback):
         self.user_data = user_data
         self.load_last_checkpoint(args)
 
-        self.last_metrics: typing.Dict[str, float] = {"train_step": -1, "eval_step": -1}
-
-        searcher_config = det.get_cluster_info().trial._config["searcher"]
-        self.searcher_metric = searcher_config["metric"]
-        self.searcher_unit = list(searcher_config["max_length"].keys())[0]
-        self.searcher_max_length = list(searcher_config["max_length"].values())[0]
+        self.last_metrics: Dict[str, float] = {"train_step": -1, "eval_step": -1}
         self.searcher_ops = self.core_context.searcher.operations()
         self.current_op = next(self.searcher_ops)
-        self._check_searcher_compatibility(args)
         self.updating_searcher = False
+
+        cluster_info = det.get_cluster_info()
+        assert (
+            cluster_info
+        ), "Could not find `cluster_info`, the HF Callback must be run on a Determined Cluster"
+        searcher_config = cluster_info.trial._config["searcher"]
+        self.searcher_metric = searcher_config["metric"]
+        # Custom searchers have a different config structure which need to be handled differently
+        if searcher_config["name"] == "custom":
+            self.searcher_unit = "batches"
+            self.searcher_max_length = self.current_op.length
+        else:
+            self.searcher_unit = list(searcher_config["max_length"].keys())[0]
+            self.searcher_max_length = list(searcher_config["max_length"].values())[0]
+            self._check_searcher_compatibility(args)
 
     def on_log(
         self,
         args: TrainingArguments,
         state: TrainerState,
         control: TrainerControl,
-        logs=None,
-        **kwargs,
-    ):
+        logs: Optional[Dict[str, Any]] = None,
+        **kwargs: Any,
+    ) -> None:
+        if logs is None:
+            logging.warning("on_log called with empty logs")
+            return
         metrics, metric_type = self._get_metrics(logs)
+        logging.debug(f"on_log metrics, global_step {state.global_step}", metrics)
         if metric_type == TRAIN:
             # Prevents reporting metrics for the same step twice. This happens after
             # training is completed and average training metrics are reported with
@@ -84,7 +97,7 @@ class DetCallback(TrainerCallback):
         if self.updating_searcher is False and self.core_context.preempt.should_preempt():
             control.should_save = True
 
-    def _get_metrics(self, logs: typing.Dict) -> typing.Tuple[typing.Dict, str]:
+    def _get_metrics(self, logs: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
         metrics = logs
         metric_type = get_metric_type(logs)
         if self.filter_metrics:
@@ -100,8 +113,8 @@ class DetCallback(TrainerCallback):
         args: TrainingArguments,
         state: TrainerState,
         control: TrainerControl,
-        **kwargs,
-    ):
+        **kwargs: Any,
+    ) -> None:
         info = det.get_cluster_info()
         assert info
 
@@ -129,7 +142,8 @@ class DetCallback(TrainerCallback):
     def _on_save_user_data(self, save_path: str) -> None:
         """
         User-defined saving of objects from self.checkpoint_metadata under save_path.
-        After objects are saved, Determined handles uploading and downloading objects to/from selected storage.
+        After objects are saved, Determined handles uploading and downloading objects
+        to/from selected storage.
         """
         with open(os.path.join(save_path, "my_data.json"), "w") as f:
             json.dump(self.user_data, f)
@@ -142,8 +156,8 @@ class DetCallback(TrainerCallback):
         if latest_checkpoint is not None:
             if args.overwrite_output_dir is True:
                 logging.info(
-                    f"Skip downloading last checkpoint from Determined due "
-                    f"to overwrite_output_dir=True."
+                    "Skip downloading last checkpoint from Determined due "
+                    "to overwrite_output_dir=True."
                 )
                 return
 
@@ -161,8 +175,8 @@ class DetCallback(TrainerCallback):
         args: TrainingArguments,
         state: TrainerState,
         control: TrainerControl,
-        **kwargs,
-    ):
+        **kwargs: Any,
+    ) -> None:
         # state.epoch is not None only during training.
         if state.epoch and self.searcher_unit == "batches":
             if state.is_world_process_zero:
@@ -180,8 +194,8 @@ class DetCallback(TrainerCallback):
         args: TrainingArguments,
         state: TrainerState,
         control: TrainerControl,
-        **kwargs,
-    ):
+        **kwargs: Any,
+    ) -> None:
         # state.epoch is not None only during training.
         if state.epoch and self.searcher_unit == "epochs":
             if state.is_world_process_zero:
@@ -202,17 +216,19 @@ class DetCallback(TrainerCallback):
         if state.is_world_process_zero:
             if self.last_metrics is None:
                 logging.warning(
-                    f"No training or evaluation metrics has been recorded. Please check your settings for "
-                    f"training metrics (--logging_strategy and --logging_steps) or "
-                    f"evaluation metrics (--evaluation_strategy and --eval_steps). "
-                    f"Reporting trainer_state.best_metric to the searcher."
+                    "No training or evaluation metrics has been recorded. Please "
+                    "check your settings for training metrics "
+                    "(--logging_strategy and --logging_steps) or "
+                    "evaluation metrics (--evaluation_strategy and --eval_steps). "
+                    "Reporting trainer_state.best_metric to the searcher."
                 )
                 searcher_metric = state.best_metric
             elif self.searcher_metric not in self.last_metrics:
                 logging.warning(
-                    f"Searcher metric {self.searcher_metric} from the yaml config file does not match any "
-                    f"of the recorded metrics in {self.last_metrics}. "
-                    f"Reporting trainer_state.best_metric to the searcher."
+                    f"Searcher metric {self.searcher_metric} from the yaml config file does "
+                    "not match any of the recorded metrics "
+                    f"in {self.last_metrics}. "
+                    "Reporting trainer_state.best_metric to the searcher."
                 )
                 searcher_metric = state.best_metric
             else:
@@ -277,8 +293,8 @@ TRAIN_AVG = "train_"
 TRAIN = "train_progress"
 
 
-def get_metric_type(d):
-    for k, v in d.items():
+def get_metric_type(d: Dict[str, Any]) -> str:
+    for k, _ in d.items():
         if k.startswith(EVAL):
             return EVAL
         elif k.startswith(TEST):
@@ -287,3 +303,13 @@ def get_metric_type(d):
             return TRAIN_AVG
         else:
             return TRAIN
+    return TRAIN
+
+
+def get_ds_config_path_from_args(args: List[str]) -> Optional[str]:
+    for idx in range(len(args)):
+        if args[idx] == "--deepspeed":
+            ds_config_idx = idx + 1
+            ds_config_path = args[ds_config_idx]
+            return ds_config_path
+    return None

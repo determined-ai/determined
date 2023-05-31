@@ -58,9 +58,6 @@ const getStorageLocation = (
     case CheckpointStorageType.AZURE:
       // type from api doesn't have azure-specific props
       break;
-    case CheckpointStorageType.HDFS:
-      // type from api doesn't have hadoop-specific props
-      break;
     case undefined:
       // shouldn't happen?
       break;

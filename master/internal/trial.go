@@ -236,6 +236,9 @@ func (t *trial) Receive(ctx *actor.Context) error {
 			t.taskLogger.Insert(ctx, log)
 		}
 
+	case sproto.InvalidResourcesRequestError:
+		ctx.Tell(ctx.Self().Parent(), msg)
+
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
 	}

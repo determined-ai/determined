@@ -1,4 +1,5 @@
 import contextlib
+import glob
 import logging
 import os
 import pathlib
@@ -169,7 +170,7 @@ class SharedFSStorageManager(storage.StorageManager):
             raise errors.CheckpointNotFound(f"Did not find checkpoint {src} in shared_fs storage")
         yield pathlib.Path(storage_dir)
 
-    def delete(self, tgt: str) -> None:
+    def delete(self, tgt: str, globs: List[str]) -> Dict[str, int]:
         """
         Delete the stored data from persistent storage.
         """
@@ -177,10 +178,39 @@ class SharedFSStorageManager(storage.StorageManager):
 
         if not os.path.exists(storage_dir):
             logging.info(f"Storage directory does not exist: {storage_dir}")
-            return
+            return {}
         if not os.path.isdir(storage_dir):
             raise errors.CheckpointNotFound(f"Storage path is not a directory: {storage_dir}")
-        util.rmtree_nfs_safe(storage_dir, ignore_errors=False)
+
+        # Optimize for the common case here. No need to iterate through files.
+        if "**/*" in globs:
+            util.rmtree_nfs_safe(storage_dir, ignore_errors=False)
+            return {}
+
+        to_delete_dirs = {}
+        to_delete_files = {}
+        for file_glob in globs:
+            for path in glob.glob(f"{storage_dir}/{file_glob}", recursive=True):
+                if os.path.commonpath([storage_dir, os.path.normpath(path)]) != storage_dir:
+                    logging.warning(f"tried to delete path outside checkpoint dir {path}")
+                    continue
+
+                if os.path.isfile(path) or os.path.islink(path):
+                    to_delete_files[path] = True
+                elif os.path.isdir(path):
+                    to_delete_dirs[path] = True
+
+        # Delete files first then delete paths.
+        for path in to_delete_files:
+            os.remove(path)
+        for path in to_delete_dirs:
+            util.rmtree_nfs_safe(path, ignore_errors=False)
+
+        resources = self._list_directory(storage_dir)
+
+        if len(resources) == 0:
+            util.rmtree_nfs_safe(storage_dir, ignore_errors=False)
+        return resources
 
     def upload(
         self, src: Union[str, os.PathLike], dst: str, paths: Optional[storage.Paths] = None

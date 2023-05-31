@@ -233,6 +233,20 @@ func generateSummaryMetricsTestCases(
 		"val_loss": {Min: 1.5, Max: 1.5, Sum: 1.5, Count: 1, Last: "1.5", Type: "number"},
 	}
 
+	onlyTrain := RequireMockTrial(t, db, exp).ID
+	addMetrics(ctx, t, db, onlyTrain, `[{"a": "a"}]`, `[]`, archive)
+	expectedOnlyTrainMetrics := map[string]summaryMetrics{
+		"a": {Last: "a", Type: "string"},
+	}
+	expectedOnlyTrainValMetrics := make(map[string]summaryMetrics)
+
+	onlyVal := RequireMockTrial(t, db, exp).ID
+	addMetrics(ctx, t, db, onlyVal, `[]`, `[{"a": "a"}]`, archive)
+	expectedOnlyValMetrics := make(map[string]summaryMetrics)
+	expectedOnlyValValMetrics := map[string]summaryMetrics{
+		"a": {Last: "a", Type: "string"},
+	}
+
 	nonNumericMetrics := RequireMockTrial(t, db, exp).ID
 	addMetrics(ctx, t, db, nonNumericMetrics,
 		`[{"a":"a", "b":-0.5}, {"a":1.67, "b":0.3, "c":"test"}, {"a":"c", "b":[{"loss":5.0}]}]`,
@@ -332,10 +346,21 @@ func generateSummaryMetricsTestCases(
 		"a": {Last: "1.8", Type: "string"},
 	}
 
-	trialIDs := []int{noMetrics, numericMetrics, nonNumericMetrics, infNaNMetrics, types, mixedTypes}
+	trialIDs := []int{
+		noMetrics,
+		numericMetrics,
+		onlyTrain,
+		onlyVal,
+		nonNumericMetrics,
+		infNaNMetrics,
+		types,
+		mixedTypes,
+	}
 	expectedTrain := []map[string]summaryMetrics{
 		expectedNoMetrics,
 		expectedNumericMetrics,
+		expectedOnlyTrainMetrics,
+		expectedOnlyValMetrics,
 		expectedNonNumericMetrics,
 		expectedInfNaNMetrics,
 		expectedTypesMetrics,
@@ -344,6 +369,8 @@ func generateSummaryMetricsTestCases(
 	expectedVal := []map[string]summaryMetrics{
 		expectedNoValMetrics,
 		expectedNumericValMetrics,
+		expectedOnlyTrainValMetrics,
+		expectedOnlyValValMetrics,
 		expectedNonNumericValMetrics,
 		expectedInfNaNValMetrics,
 		expectedTypesValMetrics,
