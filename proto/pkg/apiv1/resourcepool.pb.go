@@ -332,20 +332,20 @@ func (*UnbindRPFromWorkspaceResponse) Descriptor() ([]byte, []int) {
 	return file_determined_api_v1_resourcepool_proto_rawDescGZIP(), []int{5}
 }
 
-// List all the workspace RP bindings.
-type ListWorkspaceRPBindingsRequest struct {
+// Overwrite and replace the workspaces bound to an RP request.
+type OverwriteRPWorkspaceBindingsRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// The offset to use with pagination
-	Offset int32 `protobuf:"varint,1,opt,name=offset,proto3" json:"offset,omitempty"`
-	// The maximum number of results to return
-	Limit int32 `protobuf:"varint,2,opt,name=limit,proto3" json:"limit,omitempty"`
+	// The resource pool name.
+	ResourcePool string `protobuf:"bytes,1,opt,name=resource_pool,json=resourcePool,proto3" json:"resource_pool,omitempty"`
+	// The new workspace IDs to bind to the resource_pool.
+	WorkspaceIds []int32 `protobuf:"varint,2,rep,packed,name=workspace_ids,json=workspaceIds,proto3" json:"workspace_ids,omitempty"`
 }
 
-func (x *ListWorkspaceRPBindingsRequest) Reset() {
-	*x = ListWorkspaceRPBindingsRequest{}
+func (x *OverwriteRPWorkspaceBindingsRequest) Reset() {
+	*x = OverwriteRPWorkspaceBindingsRequest{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_determined_api_v1_resourcepool_proto_msgTypes[6]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -353,13 +353,13 @@ func (x *ListWorkspaceRPBindingsRequest) Reset() {
 	}
 }
 
-func (x *ListWorkspaceRPBindingsRequest) String() string {
+func (x *OverwriteRPWorkspaceBindingsRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ListWorkspaceRPBindingsRequest) ProtoMessage() {}
+func (*OverwriteRPWorkspaceBindingsRequest) ProtoMessage() {}
 
-func (x *ListWorkspaceRPBindingsRequest) ProtoReflect() protoreflect.Message {
+func (x *OverwriteRPWorkspaceBindingsRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_determined_api_v1_resourcepool_proto_msgTypes[6]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -371,37 +371,34 @@ func (x *ListWorkspaceRPBindingsRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ListWorkspaceRPBindingsRequest.ProtoReflect.Descriptor instead.
-func (*ListWorkspaceRPBindingsRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use OverwriteRPWorkspaceBindingsRequest.ProtoReflect.Descriptor instead.
+func (*OverwriteRPWorkspaceBindingsRequest) Descriptor() ([]byte, []int) {
 	return file_determined_api_v1_resourcepool_proto_rawDescGZIP(), []int{6}
 }
 
-func (x *ListWorkspaceRPBindingsRequest) GetOffset() int32 {
+func (x *OverwriteRPWorkspaceBindingsRequest) GetResourcePool() string {
 	if x != nil {
-		return x.Offset
+		return x.ResourcePool
 	}
-	return 0
+	return ""
 }
 
-func (x *ListWorkspaceRPBindingsRequest) GetLimit() int32 {
+func (x *OverwriteRPWorkspaceBindingsRequest) GetWorkspaceIds() []int32 {
 	if x != nil {
-		return x.Limit
+		return x.WorkspaceIds
 	}
-	return 0
+	return nil
 }
 
-// Reponse to ListWorkspaceRPBindingsRequest.
-type ListWorkspaceRPBindingsResponse struct {
+// Overwrite and replace the workspaces bound to an RP response.
+type OverwriteRPWorkspaceBindingsResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
-
-	// Pool with bindings object.
-	PoolWithBindings []*resourcepoolv1.PoolWithBindings `protobuf:"bytes,1,rep,name=pool_with_bindings,json=poolWithBindings,proto3" json:"pool_with_bindings,omitempty"`
 }
 
-func (x *ListWorkspaceRPBindingsResponse) Reset() {
-	*x = ListWorkspaceRPBindingsResponse{}
+func (x *OverwriteRPWorkspaceBindingsResponse) Reset() {
+	*x = OverwriteRPWorkspaceBindingsResponse{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_determined_api_v1_resourcepool_proto_msgTypes[7]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -409,13 +406,13 @@ func (x *ListWorkspaceRPBindingsResponse) Reset() {
 	}
 }
 
-func (x *ListWorkspaceRPBindingsResponse) String() string {
+func (x *OverwriteRPWorkspaceBindingsResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ListWorkspaceRPBindingsResponse) ProtoMessage() {}
+func (*OverwriteRPWorkspaceBindingsResponse) ProtoMessage() {}
 
-func (x *ListWorkspaceRPBindingsResponse) ProtoReflect() protoreflect.Message {
+func (x *OverwriteRPWorkspaceBindingsResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_determined_api_v1_resourcepool_proto_msgTypes[7]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -427,12 +424,112 @@ func (x *ListWorkspaceRPBindingsResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ListWorkspaceRPBindingsResponse.ProtoReflect.Descriptor instead.
-func (*ListWorkspaceRPBindingsResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use OverwriteRPWorkspaceBindingsResponse.ProtoReflect.Descriptor instead.
+func (*OverwriteRPWorkspaceBindingsResponse) Descriptor() ([]byte, []int) {
 	return file_determined_api_v1_resourcepool_proto_rawDescGZIP(), []int{7}
 }
 
-func (x *ListWorkspaceRPBindingsResponse) GetPoolWithBindings() []*resourcepoolv1.PoolWithBindings {
+// List all the workspace RP bindings.
+type ListRPWorkspaceBindingsRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// The offset to use with pagination
+	Offset int32 `protobuf:"varint,1,opt,name=offset,proto3" json:"offset,omitempty"`
+	// The maximum number of results to return
+	Limit int32 `protobuf:"varint,2,opt,name=limit,proto3" json:"limit,omitempty"`
+}
+
+func (x *ListRPWorkspaceBindingsRequest) Reset() {
+	*x = ListRPWorkspaceBindingsRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_determined_api_v1_resourcepool_proto_msgTypes[8]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ListRPWorkspaceBindingsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListRPWorkspaceBindingsRequest) ProtoMessage() {}
+
+func (x *ListRPWorkspaceBindingsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_determined_api_v1_resourcepool_proto_msgTypes[8]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListRPWorkspaceBindingsRequest.ProtoReflect.Descriptor instead.
+func (*ListRPWorkspaceBindingsRequest) Descriptor() ([]byte, []int) {
+	return file_determined_api_v1_resourcepool_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *ListRPWorkspaceBindingsRequest) GetOffset() int32 {
+	if x != nil {
+		return x.Offset
+	}
+	return 0
+}
+
+func (x *ListRPWorkspaceBindingsRequest) GetLimit() int32 {
+	if x != nil {
+		return x.Limit
+	}
+	return 0
+}
+
+// Reponse to ListWorkspaceRPBindingsRequest.
+type ListRPWorkspaceBindingsResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// Pool with bindings object.
+	PoolWithBindings []*resourcepoolv1.PoolWithBindings `protobuf:"bytes,1,rep,name=pool_with_bindings,json=poolWithBindings,proto3" json:"pool_with_bindings,omitempty"`
+}
+
+func (x *ListRPWorkspaceBindingsResponse) Reset() {
+	*x = ListRPWorkspaceBindingsResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_determined_api_v1_resourcepool_proto_msgTypes[9]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ListRPWorkspaceBindingsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListRPWorkspaceBindingsResponse) ProtoMessage() {}
+
+func (x *ListRPWorkspaceBindingsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_determined_api_v1_resourcepool_proto_msgTypes[9]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListRPWorkspaceBindingsResponse.ProtoReflect.Descriptor instead.
+func (*ListRPWorkspaceBindingsResponse) Descriptor() ([]byte, []int) {
+	return file_determined_api_v1_resourcepool_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *ListRPWorkspaceBindingsResponse) GetPoolWithBindings() []*resourcepoolv1.PoolWithBindings {
 	if x != nil {
 		return x.PoolWithBindings
 	}
@@ -456,7 +553,7 @@ type ListWorkspacesBoundToRPRequest struct {
 func (x *ListWorkspacesBoundToRPRequest) Reset() {
 	*x = ListWorkspacesBoundToRPRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_resourcepool_proto_msgTypes[8]
+		mi := &file_determined_api_v1_resourcepool_proto_msgTypes[10]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -469,7 +566,7 @@ func (x *ListWorkspacesBoundToRPRequest) String() string {
 func (*ListWorkspacesBoundToRPRequest) ProtoMessage() {}
 
 func (x *ListWorkspacesBoundToRPRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_resourcepool_proto_msgTypes[8]
+	mi := &file_determined_api_v1_resourcepool_proto_msgTypes[10]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -482,7 +579,7 @@ func (x *ListWorkspacesBoundToRPRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListWorkspacesBoundToRPRequest.ProtoReflect.Descriptor instead.
 func (*ListWorkspacesBoundToRPRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_resourcepool_proto_rawDescGZIP(), []int{8}
+	return file_determined_api_v1_resourcepool_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *ListWorkspacesBoundToRPRequest) GetResourcePool() string {
@@ -519,7 +616,7 @@ type ListWorkspacesBoundToRPResponse struct {
 func (x *ListWorkspacesBoundToRPResponse) Reset() {
 	*x = ListWorkspacesBoundToRPResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_resourcepool_proto_msgTypes[9]
+		mi := &file_determined_api_v1_resourcepool_proto_msgTypes[11]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -532,7 +629,7 @@ func (x *ListWorkspacesBoundToRPResponse) String() string {
 func (*ListWorkspacesBoundToRPResponse) ProtoMessage() {}
 
 func (x *ListWorkspacesBoundToRPResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_resourcepool_proto_msgTypes[9]
+	mi := &file_determined_api_v1_resourcepool_proto_msgTypes[11]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -545,7 +642,7 @@ func (x *ListWorkspacesBoundToRPResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListWorkspacesBoundToRPResponse.ProtoReflect.Descriptor instead.
 func (*ListWorkspacesBoundToRPResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_resourcepool_proto_rawDescGZIP(), []int{9}
+	return file_determined_api_v1_resourcepool_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *ListWorkspacesBoundToRPResponse) GetWorkspaceIds() []int32 {
@@ -604,39 +701,50 @@ var file_determined_api_v1_resourcepool_proto_rawDesc = []byte{
 	0x65, 0x49, 0x64, 0x73, 0x3a, 0x15, 0x92, 0x41, 0x12, 0x0a, 0x10, 0xd2, 0x01, 0x0d, 0x72, 0x65,
 	0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x5f, 0x70, 0x6f, 0x6f, 0x6c, 0x22, 0x1f, 0x0a, 0x1d, 0x55,
 	0x6e, 0x62, 0x69, 0x6e, 0x64, 0x52, 0x50, 0x46, 0x72, 0x6f, 0x6d, 0x57, 0x6f, 0x72, 0x6b, 0x73,
-	0x70, 0x61, 0x63, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x5d, 0x0a, 0x1e,
-	0x4c, 0x69, 0x73, 0x74, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x52, 0x50, 0x42,
-	0x69, 0x6e, 0x64, 0x69, 0x6e, 0x67, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x16,
-	0x0a, 0x06, 0x6f, 0x66, 0x66, 0x73, 0x65, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x06,
-	0x6f, 0x66, 0x66, 0x73, 0x65, 0x74, 0x12, 0x14, 0x0a, 0x05, 0x6c, 0x69, 0x6d, 0x69, 0x74, 0x18,
-	0x02, 0x20, 0x01, 0x28, 0x05, 0x52, 0x05, 0x6c, 0x69, 0x6d, 0x69, 0x74, 0x3a, 0x0d, 0x92, 0x41,
-	0x0a, 0x0a, 0x08, 0xd2, 0x01, 0x05, 0x6c, 0x69, 0x6d, 0x69, 0x74, 0x22, 0x7d, 0x0a, 0x1f, 0x4c,
-	0x69, 0x73, 0x74, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x52, 0x50, 0x42, 0x69,
-	0x6e, 0x64, 0x69, 0x6e, 0x67, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x5a,
-	0x0a, 0x12, 0x70, 0x6f, 0x6f, 0x6c, 0x5f, 0x77, 0x69, 0x74, 0x68, 0x5f, 0x62, 0x69, 0x6e, 0x64,
-	0x69, 0x6e, 0x67, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x2c, 0x2e, 0x64, 0x65, 0x74,
-	0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65,
-	0x70, 0x6f, 0x6f, 0x6c, 0x2e, 0x76, 0x31, 0x2e, 0x50, 0x6f, 0x6f, 0x6c, 0x57, 0x69, 0x74, 0x68,
-	0x42, 0x69, 0x6e, 0x64, 0x69, 0x6e, 0x67, 0x73, 0x52, 0x10, 0x70, 0x6f, 0x6f, 0x6c, 0x57, 0x69,
-	0x74, 0x68, 0x42, 0x69, 0x6e, 0x64, 0x69, 0x6e, 0x67, 0x73, 0x22, 0x92, 0x01, 0x0a, 0x1e, 0x4c,
-	0x69, 0x73, 0x74, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x73, 0x42, 0x6f, 0x75,
-	0x6e, 0x64, 0x54, 0x6f, 0x52, 0x50, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x23, 0x0a,
-	0x0d, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x5f, 0x70, 0x6f, 0x6f, 0x6c, 0x18, 0x01,
-	0x20, 0x01, 0x28, 0x09, 0x52, 0x0c, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x50, 0x6f,
-	0x6f, 0x6c, 0x12, 0x16, 0x0a, 0x06, 0x6f, 0x66, 0x66, 0x73, 0x65, 0x74, 0x18, 0x02, 0x20, 0x01,
-	0x28, 0x05, 0x52, 0x06, 0x6f, 0x66, 0x66, 0x73, 0x65, 0x74, 0x12, 0x14, 0x0a, 0x05, 0x6c, 0x69,
-	0x6d, 0x69, 0x74, 0x18, 0x03, 0x20, 0x01, 0x28, 0x05, 0x52, 0x05, 0x6c, 0x69, 0x6d, 0x69, 0x74,
-	0x3a, 0x1d, 0x92, 0x41, 0x1a, 0x0a, 0x18, 0xd2, 0x01, 0x0d, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72,
-	0x63, 0x65, 0x5f, 0x70, 0x6f, 0x6f, 0x6c, 0xd2, 0x01, 0x05, 0x6c, 0x69, 0x6d, 0x69, 0x74, 0x22,
-	0x46, 0x0a, 0x1f, 0x4c, 0x69, 0x73, 0x74, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65,
-	0x73, 0x42, 0x6f, 0x75, 0x6e, 0x64, 0x54, 0x6f, 0x52, 0x50, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
-	0x73, 0x65, 0x12, 0x23, 0x0a, 0x0d, 0x77, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x5f,
-	0x69, 0x64, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x05, 0x52, 0x0c, 0x77, 0x6f, 0x72, 0x6b, 0x73,
-	0x70, 0x61, 0x63, 0x65, 0x49, 0x64, 0x73, 0x42, 0x35, 0x5a, 0x33, 0x67, 0x69, 0x74, 0x68, 0x75,
-	0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64,
-	0x2d, 0x61, 0x69, 0x2f, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2f, 0x70,
-	0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x70, 0x6b, 0x67, 0x2f, 0x61, 0x70, 0x69, 0x76, 0x31, 0x62, 0x06,
-	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x70, 0x61, 0x63, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x86, 0x01, 0x0a,
+	0x23, 0x4f, 0x76, 0x65, 0x72, 0x77, 0x72, 0x69, 0x74, 0x65, 0x52, 0x50, 0x57, 0x6f, 0x72, 0x6b,
+	0x73, 0x70, 0x61, 0x63, 0x65, 0x42, 0x69, 0x6e, 0x64, 0x69, 0x6e, 0x67, 0x73, 0x52, 0x65, 0x71,
+	0x75, 0x65, 0x73, 0x74, 0x12, 0x23, 0x0a, 0x0d, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65,
+	0x5f, 0x70, 0x6f, 0x6f, 0x6c, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0c, 0x72, 0x65, 0x73,
+	0x6f, 0x75, 0x72, 0x63, 0x65, 0x50, 0x6f, 0x6f, 0x6c, 0x12, 0x23, 0x0a, 0x0d, 0x77, 0x6f, 0x72,
+	0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x5f, 0x69, 0x64, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28, 0x05,
+	0x52, 0x0c, 0x77, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x49, 0x64, 0x73, 0x3a, 0x15,
+	0x92, 0x41, 0x12, 0x0a, 0x10, 0xd2, 0x01, 0x0d, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65,
+	0x5f, 0x70, 0x6f, 0x6f, 0x6c, 0x22, 0x26, 0x0a, 0x24, 0x4f, 0x76, 0x65, 0x72, 0x77, 0x72, 0x69,
+	0x74, 0x65, 0x52, 0x50, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x42, 0x69, 0x6e,
+	0x64, 0x69, 0x6e, 0x67, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x5d, 0x0a,
+	0x1e, 0x4c, 0x69, 0x73, 0x74, 0x52, 0x50, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65,
+	0x42, 0x69, 0x6e, 0x64, 0x69, 0x6e, 0x67, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12,
+	0x16, 0x0a, 0x06, 0x6f, 0x66, 0x66, 0x73, 0x65, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52,
+	0x06, 0x6f, 0x66, 0x66, 0x73, 0x65, 0x74, 0x12, 0x14, 0x0a, 0x05, 0x6c, 0x69, 0x6d, 0x69, 0x74,
+	0x18, 0x02, 0x20, 0x01, 0x28, 0x05, 0x52, 0x05, 0x6c, 0x69, 0x6d, 0x69, 0x74, 0x3a, 0x0d, 0x92,
+	0x41, 0x0a, 0x0a, 0x08, 0xd2, 0x01, 0x05, 0x6c, 0x69, 0x6d, 0x69, 0x74, 0x22, 0x7d, 0x0a, 0x1f,
+	0x4c, 0x69, 0x73, 0x74, 0x52, 0x50, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x42,
+	0x69, 0x6e, 0x64, 0x69, 0x6e, 0x67, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12,
+	0x5a, 0x0a, 0x12, 0x70, 0x6f, 0x6f, 0x6c, 0x5f, 0x77, 0x69, 0x74, 0x68, 0x5f, 0x62, 0x69, 0x6e,
+	0x64, 0x69, 0x6e, 0x67, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x2c, 0x2e, 0x64, 0x65,
+	0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63,
+	0x65, 0x70, 0x6f, 0x6f, 0x6c, 0x2e, 0x76, 0x31, 0x2e, 0x50, 0x6f, 0x6f, 0x6c, 0x57, 0x69, 0x74,
+	0x68, 0x42, 0x69, 0x6e, 0x64, 0x69, 0x6e, 0x67, 0x73, 0x52, 0x10, 0x70, 0x6f, 0x6f, 0x6c, 0x57,
+	0x69, 0x74, 0x68, 0x42, 0x69, 0x6e, 0x64, 0x69, 0x6e, 0x67, 0x73, 0x22, 0x92, 0x01, 0x0a, 0x1e,
+	0x4c, 0x69, 0x73, 0x74, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x73, 0x42, 0x6f,
+	0x75, 0x6e, 0x64, 0x54, 0x6f, 0x52, 0x50, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x23,
+	0x0a, 0x0d, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x5f, 0x70, 0x6f, 0x6f, 0x6c, 0x18,
+	0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0c, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x50,
+	0x6f, 0x6f, 0x6c, 0x12, 0x16, 0x0a, 0x06, 0x6f, 0x66, 0x66, 0x73, 0x65, 0x74, 0x18, 0x02, 0x20,
+	0x01, 0x28, 0x05, 0x52, 0x06, 0x6f, 0x66, 0x66, 0x73, 0x65, 0x74, 0x12, 0x14, 0x0a, 0x05, 0x6c,
+	0x69, 0x6d, 0x69, 0x74, 0x18, 0x03, 0x20, 0x01, 0x28, 0x05, 0x52, 0x05, 0x6c, 0x69, 0x6d, 0x69,
+	0x74, 0x3a, 0x1d, 0x92, 0x41, 0x1a, 0x0a, 0x18, 0xd2, 0x01, 0x0d, 0x72, 0x65, 0x73, 0x6f, 0x75,
+	0x72, 0x63, 0x65, 0x5f, 0x70, 0x6f, 0x6f, 0x6c, 0xd2, 0x01, 0x05, 0x6c, 0x69, 0x6d, 0x69, 0x74,
+	0x22, 0x46, 0x0a, 0x1f, 0x4c, 0x69, 0x73, 0x74, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63,
+	0x65, 0x73, 0x42, 0x6f, 0x75, 0x6e, 0x64, 0x54, 0x6f, 0x52, 0x50, 0x52, 0x65, 0x73, 0x70, 0x6f,
+	0x6e, 0x73, 0x65, 0x12, 0x23, 0x0a, 0x0d, 0x77, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65,
+	0x5f, 0x69, 0x64, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x05, 0x52, 0x0c, 0x77, 0x6f, 0x72, 0x6b,
+	0x73, 0x70, 0x61, 0x63, 0x65, 0x49, 0x64, 0x73, 0x42, 0x35, 0x5a, 0x33, 0x67, 0x69, 0x74, 0x68,
+	0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65,
+	0x64, 0x2d, 0x61, 0x69, 0x2f, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2f,
+	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x70, 0x6b, 0x67, 0x2f, 0x61, 0x70, 0x69, 0x76, 0x31, 0x62,
+	0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -651,26 +759,28 @@ func file_determined_api_v1_resourcepool_proto_rawDescGZIP() []byte {
 	return file_determined_api_v1_resourcepool_proto_rawDescData
 }
 
-var file_determined_api_v1_resourcepool_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_determined_api_v1_resourcepool_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_determined_api_v1_resourcepool_proto_goTypes = []interface{}{
-	(*GetResourcePoolsRequest)(nil),         // 0: determined.api.v1.GetResourcePoolsRequest
-	(*GetResourcePoolsResponse)(nil),        // 1: determined.api.v1.GetResourcePoolsResponse
-	(*BindRPToWorkspaceRequest)(nil),        // 2: determined.api.v1.BindRPToWorkspaceRequest
-	(*BindRPToWorkspaceResponse)(nil),       // 3: determined.api.v1.BindRPToWorkspaceResponse
-	(*UnbindRPFromWorkspaceRequest)(nil),    // 4: determined.api.v1.UnbindRPFromWorkspaceRequest
-	(*UnbindRPFromWorkspaceResponse)(nil),   // 5: determined.api.v1.UnbindRPFromWorkspaceResponse
-	(*ListWorkspaceRPBindingsRequest)(nil),  // 6: determined.api.v1.ListWorkspaceRPBindingsRequest
-	(*ListWorkspaceRPBindingsResponse)(nil), // 7: determined.api.v1.ListWorkspaceRPBindingsResponse
-	(*ListWorkspacesBoundToRPRequest)(nil),  // 8: determined.api.v1.ListWorkspacesBoundToRPRequest
-	(*ListWorkspacesBoundToRPResponse)(nil), // 9: determined.api.v1.ListWorkspacesBoundToRPResponse
-	(*resourcepoolv1.ResourcePool)(nil),     // 10: determined.resourcepool.v1.ResourcePool
-	(*Pagination)(nil),                      // 11: determined.api.v1.Pagination
-	(*resourcepoolv1.PoolWithBindings)(nil), // 12: determined.resourcepool.v1.PoolWithBindings
+	(*GetResourcePoolsRequest)(nil),              // 0: determined.api.v1.GetResourcePoolsRequest
+	(*GetResourcePoolsResponse)(nil),             // 1: determined.api.v1.GetResourcePoolsResponse
+	(*BindRPToWorkspaceRequest)(nil),             // 2: determined.api.v1.BindRPToWorkspaceRequest
+	(*BindRPToWorkspaceResponse)(nil),            // 3: determined.api.v1.BindRPToWorkspaceResponse
+	(*UnbindRPFromWorkspaceRequest)(nil),         // 4: determined.api.v1.UnbindRPFromWorkspaceRequest
+	(*UnbindRPFromWorkspaceResponse)(nil),        // 5: determined.api.v1.UnbindRPFromWorkspaceResponse
+	(*OverwriteRPWorkspaceBindingsRequest)(nil),  // 6: determined.api.v1.OverwriteRPWorkspaceBindingsRequest
+	(*OverwriteRPWorkspaceBindingsResponse)(nil), // 7: determined.api.v1.OverwriteRPWorkspaceBindingsResponse
+	(*ListRPWorkspaceBindingsRequest)(nil),       // 8: determined.api.v1.ListRPWorkspaceBindingsRequest
+	(*ListRPWorkspaceBindingsResponse)(nil),      // 9: determined.api.v1.ListRPWorkspaceBindingsResponse
+	(*ListWorkspacesBoundToRPRequest)(nil),       // 10: determined.api.v1.ListWorkspacesBoundToRPRequest
+	(*ListWorkspacesBoundToRPResponse)(nil),      // 11: determined.api.v1.ListWorkspacesBoundToRPResponse
+	(*resourcepoolv1.ResourcePool)(nil),          // 12: determined.resourcepool.v1.ResourcePool
+	(*Pagination)(nil),                           // 13: determined.api.v1.Pagination
+	(*resourcepoolv1.PoolWithBindings)(nil),      // 14: determined.resourcepool.v1.PoolWithBindings
 }
 var file_determined_api_v1_resourcepool_proto_depIdxs = []int32{
-	10, // 0: determined.api.v1.GetResourcePoolsResponse.resource_pools:type_name -> determined.resourcepool.v1.ResourcePool
-	11, // 1: determined.api.v1.GetResourcePoolsResponse.pagination:type_name -> determined.api.v1.Pagination
-	12, // 2: determined.api.v1.ListWorkspaceRPBindingsResponse.pool_with_bindings:type_name -> determined.resourcepool.v1.PoolWithBindings
+	12, // 0: determined.api.v1.GetResourcePoolsResponse.resource_pools:type_name -> determined.resourcepool.v1.ResourcePool
+	13, // 1: determined.api.v1.GetResourcePoolsResponse.pagination:type_name -> determined.api.v1.Pagination
+	14, // 2: determined.api.v1.ListRPWorkspaceBindingsResponse.pool_with_bindings:type_name -> determined.resourcepool.v1.PoolWithBindings
 	3,  // [3:3] is the sub-list for method output_type
 	3,  // [3:3] is the sub-list for method input_type
 	3,  // [3:3] is the sub-list for extension type_name
@@ -758,7 +868,7 @@ func file_determined_api_v1_resourcepool_proto_init() {
 			}
 		}
 		file_determined_api_v1_resourcepool_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ListWorkspaceRPBindingsRequest); i {
+			switch v := v.(*OverwriteRPWorkspaceBindingsRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -770,7 +880,7 @@ func file_determined_api_v1_resourcepool_proto_init() {
 			}
 		}
 		file_determined_api_v1_resourcepool_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ListWorkspaceRPBindingsResponse); i {
+			switch v := v.(*OverwriteRPWorkspaceBindingsResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -782,7 +892,7 @@ func file_determined_api_v1_resourcepool_proto_init() {
 			}
 		}
 		file_determined_api_v1_resourcepool_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ListWorkspacesBoundToRPRequest); i {
+			switch v := v.(*ListRPWorkspaceBindingsRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -794,6 +904,30 @@ func file_determined_api_v1_resourcepool_proto_init() {
 			}
 		}
 		file_determined_api_v1_resourcepool_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ListRPWorkspaceBindingsResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_determined_api_v1_resourcepool_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ListWorkspacesBoundToRPRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_determined_api_v1_resourcepool_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ListWorkspacesBoundToRPResponse); i {
 			case 0:
 				return &v.state
@@ -812,7 +946,7 @@ func file_determined_api_v1_resourcepool_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_determined_api_v1_resourcepool_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   10,
+			NumMessages:   12,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

@@ -259,7 +259,7 @@ message UnpinWorkspaceResponse {}
 // List the resource pools bound to a workspace.
 message ListRPsBoundToWorkspaceRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "limit" ] }
+    json_schema: { required: [ "workspace_id", "limit" ] }
   };
 
   // Workspace ID.

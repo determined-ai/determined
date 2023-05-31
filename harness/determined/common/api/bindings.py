@@ -6510,6 +6510,58 @@ class v1LaunchWarning(DetEnum):
     UNSPECIFIED = "LAUNCH_WARNING_UNSPECIFIED"
     CURRENT_SLOTS_EXCEEDED = "LAUNCH_WARNING_CURRENT_SLOTS_EXCEEDED"
 
+class v1ListRPWorkspaceBindingsResponse:
+    poolWithBindings: "typing.Optional[typing.Sequence[v1PoolWithBindings]]" = None
+
+    def __init__(
+        self,
+        *,
+        poolWithBindings: "typing.Union[typing.Sequence[v1PoolWithBindings], None, Unset]" = _unset,
+    ):
+        if not isinstance(poolWithBindings, Unset):
+            self.poolWithBindings = poolWithBindings
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1ListRPWorkspaceBindingsResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "poolWithBindings" in obj:
+            kwargs["poolWithBindings"] = [v1PoolWithBindings.from_json(x) for x in obj["poolWithBindings"]] if obj["poolWithBindings"] is not None else None
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "poolWithBindings" in vars(self):
+            out["poolWithBindings"] = None if self.poolWithBindings is None else [x.to_json(omit_unset) for x in self.poolWithBindings]
+        return out
+
+class v1ListRPsBoundToWorkspaceResponse:
+    resourcePools: "typing.Optional[typing.Sequence[str]]" = None
+
+    def __init__(
+        self,
+        *,
+        resourcePools: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
+    ):
+        if not isinstance(resourcePools, Unset):
+            self.resourcePools = resourcePools
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1ListRPsBoundToWorkspaceResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "resourcePools" in obj:
+            kwargs["resourcePools"] = obj["resourcePools"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "resourcePools" in vars(self):
+            out["resourcePools"] = self.resourcePools
+        return out
+
 class v1ListRolesRequest:
     offset: "typing.Optional[int]" = None
 
@@ -6564,6 +6616,32 @@ class v1ListRolesResponse:
             "pagination": self.pagination.to_json(omit_unset),
             "roles": [x.to_json(omit_unset) for x in self.roles],
         }
+        return out
+
+class v1ListWorkspacesBoundToRPResponse:
+    workspaceIds: "typing.Optional[typing.Sequence[int]]" = None
+
+    def __init__(
+        self,
+        *,
+        workspaceIds: "typing.Union[typing.Sequence[int], None, Unset]" = _unset,
+    ):
+        if not isinstance(workspaceIds, Unset):
+            self.workspaceIds = workspaceIds
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1ListWorkspacesBoundToRPResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "workspaceIds" in obj:
+            kwargs["workspaceIds"] = obj["workspaceIds"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "workspaceIds" in vars(self):
+            out["workspaceIds"] = self.workspaceIds
         return out
 
 class v1LocationType(DetEnum):
@@ -8267,6 +8345,36 @@ class v1PolymorphicFilter:
             out["name"] = self.name
         if not omit_unset or "timeRange" in vars(self):
             out["timeRange"] = None if self.timeRange is None else self.timeRange.to_json(omit_unset)
+        return out
+
+class v1PoolWithBindings:
+    workspaceIds: "typing.Optional[typing.Sequence[int]]" = None
+
+    def __init__(
+        self,
+        *,
+        poolName: str,
+        workspaceIds: "typing.Union[typing.Sequence[int], None, Unset]" = _unset,
+    ):
+        self.poolName = poolName
+        if not isinstance(workspaceIds, Unset):
+            self.workspaceIds = workspaceIds
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PoolWithBindings":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "poolName": obj["poolName"],
+        }
+        if "workspaceIds" in obj:
+            kwargs["workspaceIds"] = obj["workspaceIds"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "poolName": self.poolName,
+        }
+        if not omit_unset or "workspaceIds" in vars(self):
+            out["workspaceIds"] = self.workspaceIds
         return out
 
 class v1PostAllocationProxyAddressRequest:
@@ -13639,6 +13747,30 @@ def post_AssignRoles(
         return
     raise APIHttpError("post_AssignRoles", _resp)
 
+def get_BindRPToWorkspace(
+    session: "api.Session",
+    *,
+    resourcePool: "typing.Optional[str]" = None,
+    workspaceIds: "typing.Optional[typing.Sequence[int]]" = None,
+) -> None:
+    _params = {
+        "resourcePool": resourcePool,
+        "workspaceIds": workspaceIds,
+    }
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/resource-pools/workspace-bind",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("get_BindRPToWorkspace", _resp)
+
 def post_CancelExperiment(
     session: "api.Session",
     *,
@@ -16143,6 +16275,55 @@ def post_LaunchTensorboard(
         return v1LaunchTensorboardResponse.from_json(_resp.json())
     raise APIHttpError("post_LaunchTensorboard", _resp)
 
+def get_ListRPWorkspaceBindings(
+    session: "api.Session",
+    *,
+    limit: "typing.Optional[int]" = None,
+    offset: "typing.Optional[int]" = None,
+) -> "v1ListRPWorkspaceBindingsResponse":
+    _params = {
+        "limit": limit,
+        "offset": offset,
+    }
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/resource-pools/all-bindings",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1ListRPWorkspaceBindingsResponse.from_json(_resp.json())
+    raise APIHttpError("get_ListRPWorkspaceBindings", _resp)
+
+def get_ListRPsBoundToWorkspace(
+    session: "api.Session",
+    *,
+    workspaceId: int,
+    limit: "typing.Optional[int]" = None,
+    offset: "typing.Optional[int]" = None,
+) -> "v1ListRPsBoundToWorkspaceResponse":
+    _params = {
+        "limit": limit,
+        "offset": offset,
+    }
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/workspaces/{workspaceId}/resource-pools",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1ListRPsBoundToWorkspaceResponse.from_json(_resp.json())
+    raise APIHttpError("get_ListRPsBoundToWorkspace", _resp)
+
 def post_ListRoles(
     session: "api.Session",
     *,
@@ -16162,6 +16343,31 @@ def post_ListRoles(
     if _resp.status_code == 200:
         return v1ListRolesResponse.from_json(_resp.json())
     raise APIHttpError("post_ListRoles", _resp)
+
+def get_ListWorkspacesBoundToRP(
+    session: "api.Session",
+    *,
+    resourcePool: str,
+    limit: "typing.Optional[int]" = None,
+    offset: "typing.Optional[int]" = None,
+) -> "v1ListWorkspacesBoundToRPResponse":
+    _params = {
+        "limit": limit,
+        "offset": offset,
+    }
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/resource-pools/{resourcePool}/workspaces",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1ListWorkspacesBoundToRPResponse.from_json(_resp.json())
+    raise APIHttpError("get_ListWorkspacesBoundToRP", _resp)
 
 def post_Login(
     session: "api.Session",
@@ -16401,6 +16607,30 @@ def post_NotifyContainerRunning(
     if _resp.status_code == 200:
         return v1NotifyContainerRunningResponse.from_json(_resp.json())
     raise APIHttpError("post_NotifyContainerRunning", _resp)
+
+def get_OverwriteRPWorkspaceBindings(
+    session: "api.Session",
+    *,
+    resourcePool: "typing.Optional[str]" = None,
+    workspaceIds: "typing.Optional[typing.Sequence[int]]" = None,
+) -> None:
+    _params = {
+        "resourcePool": resourcePool,
+        "workspaceIds": workspaceIds,
+    }
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/resource-pools/overwrite-bindings",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("get_OverwriteRPWorkspaceBindings", _resp)
 
 def patch_PatchCheckpoints(
     session: "api.Session",
@@ -17809,6 +18039,30 @@ def post_UnarchiveWorkspace(
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_UnarchiveWorkspace", _resp)
+
+def get_UnbindRPFromWorkspace(
+    session: "api.Session",
+    *,
+    resourcePool: "typing.Optional[str]" = None,
+    workspaceIds: "typing.Optional[typing.Sequence[int]]" = None,
+) -> None:
+    _params = {
+        "resourcePool": resourcePool,
+        "workspaceIds": workspaceIds,
+    }
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/resource-pools/workspace-unbind",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("get_UnbindRPFromWorkspace", _resp)
 
 def post_UnpinWorkspace(
     session: "api.Session",

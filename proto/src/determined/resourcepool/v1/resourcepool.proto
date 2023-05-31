@@ -366,6 +366,4 @@ message PoolWithBindings {
   string pool_name = 1;
   // The workspace ids bind to the resource pool.
   repeated int32 workspace_ids = 2;
-  // A flag to label if resource pool is globally accessiable.
-  bool is_global = 3;
 }
