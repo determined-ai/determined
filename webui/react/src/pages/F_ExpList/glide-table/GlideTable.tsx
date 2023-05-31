@@ -115,7 +115,7 @@ const isLinkCell = (cell: GridCell): cell is LinkCell => {
 const rowHeightMap: Record<RowHeight, number> = {
   [RowHeight.EXTRA_TALL]: 44,
   [RowHeight.TALL]: 40,
-  [RowHeight.DEFAULT]: 36,
+  [RowHeight.MEDIUM]: 36,
   [RowHeight.SHORT]: 32,
 };
 

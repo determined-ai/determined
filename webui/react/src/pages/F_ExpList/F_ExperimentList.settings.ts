@@ -7,14 +7,14 @@ import { defaultExperimentColumns } from './glide-table/columns';
 
 export type ExpListView = 'scroll' | 'paged';
 export const RowHeight = {
-  DEFAULT: 'DEFAULT',
   EXTRA_TALL: 'EXTRA_TALL',
+  MEDIUM: 'MEDIUM',
   SHORT: 'SHORT',
   TALL: 'TALL',
 } as const;
 const ioRowHeight = keyof({
   [RowHeight.SHORT]: null,
-  [RowHeight.DEFAULT]: null,
+  [RowHeight.MEDIUM]: null,
   [RowHeight.TALL]: null,
   [RowHeight.EXTRA_TALL]: null,
 });
@@ -60,7 +60,7 @@ export const settingsConfigForProject = (id: number): SettingsConfig<F_Experimen
       type: number,
     },
     rowHeight: {
-      defaultValue: RowHeight.DEFAULT,
+      defaultValue: RowHeight.MEDIUM,
       skipUrlEncoding: true,
       storageKey: 'rowHeight',
       type: ioRowHeight,

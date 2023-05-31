@@ -14,7 +14,7 @@ interface RowHeightMenuProps {
 
 const rowHeightCopy: Record<RowHeight, string> = {
   [RowHeight.SHORT]: 'Short',
-  [RowHeight.DEFAULT]: 'Default',
+  [RowHeight.MEDIUM]: 'Medium',
   [RowHeight.TALL]: 'Tall',
   [RowHeight.EXTRA_TALL]: 'Extra Tall',
 };
