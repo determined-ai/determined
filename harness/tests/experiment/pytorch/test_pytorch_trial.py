@@ -5,6 +5,7 @@ import pathlib
 import random
 import sys
 import typing
+import subprocess
 from unittest import mock
 
 import numpy as np
@@ -920,6 +921,50 @@ class TestPyTorchTrial:
 
         assert trial.legacy_counter.__dict__ == {"legacy_on_training_epochs_start_calls": 2}
 
+    @pytest.mark.skipif(torch.cuda.device_count() < 2)
+    @pytest.mark.gpu_parallel
+    def test_cifar10_parallel(self, tmp_path: pathlib.Path):
+
+        from torch.distributed.launcher import elastic_launch, LaunchConfig
+        import uuid
+
+        rdzv_backend = "c10d"
+        rdzv_endpoint = "localhost:29400"
+        rdzv_id = str(uuid.uuid4())
+
+        launch_config = LaunchConfig(min_nodes=2, max_nodes=2, nproc_per_node=1, run_id=rdzv_id, rdzv_endpoint=rdzv_endpoint,
+                              rdzv_backend=rdzv_backend)
+
+        proc = elastic_launch(launch_config, self.run_cifar10(tmp_path))
+
+    def run_cifar10(self, tmp_path: pathlib.Path):
+
+        checkpoint_dir = tmp_path.joinpath("checkpoint")
+
+        config = utils.load_config(utils.cv_examples_path("cifar10_pytorch/const.yaml"))
+        hparams = config["hyperparameters"]
+
+        exp_config = utils.make_default_exp_config(
+            hparams,
+            scheduling_unit=1,
+            searcher_metric="validation_loss",
+            checkpoint_dir=checkpoint_dir,
+        )
+        exp_config.update(config)
+        exp_config['searcher']['smaller_is_better'] = True
+
+        example_path = utils.cv_examples_path("cifar10_pytorch/model_def.py")
+        trial_class = utils.import_class_from_module("CIFARTrial", example_path)
+        trial_class._searcher_metric = "validation_error"
+
+        self.train_and_checkpoint(
+            trial_class=trial_class,
+            hparams=hparams,
+            tmp_path=tmp_path,
+            exp_config=exp_config,
+            steps=(1, 1),
+        )
+
     def checkpoint_and_check_metrics(
         self,
         trial_class: pytorch_onevar_model.OneVarTrial,
@@ -1321,6 +1366,7 @@ def create_trial_and_trial_controller(
         else:
             gpu_uuids = []
 
+        print(gpu_uuids)
         pytorch._PyTorchTrialController.pre_execute_hook(trial_seed, distributed_backend)
         trial_context = pytorch.PyTorchTrialContext(
             core_context=core_context,
@@ -1362,3 +1408,7 @@ def create_trial_and_trial_controller(
 
         trial_controller.training_iterator = iter(trial_controller.training_loader)
         return trial_inst, trial_controller
+
+if __name__ == '__main__':
+
+    pass
