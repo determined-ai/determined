@@ -289,12 +289,6 @@ func setup(t *testing.T) (
 	rm := actorrm.Wrap(system.MustActorOf(actor.Addr("rm"), &rmActor))
 
 	// mock trial
-	loggerImpl := actors.MockActor{Responses: map[string]*actors.MockResponse{}}
-	loggerAddr := "logger"
-	loggerActor := system.MustActorOf(actor.Addr(loggerAddr), &loggerImpl)
-	logger := NewCustomLogger(loggerActor)
-
-	// mock trial
 	trialImpl := actors.MockActor{Responses: map[string]*actors.MockResponse{}}
 	trialAddr := "trial"
 	trial := system.MustActorOf(actor.Addr(trialAddr), &trialImpl)
@@ -316,7 +310,6 @@ func setup(t *testing.T) (
 		},
 		pgDB,
 		rm,
-		logger,
 	)
 	self := system.MustActorOf(actor.Addr(trialAddr, "allocation"), a)
 	// Pre-scheduled stage.

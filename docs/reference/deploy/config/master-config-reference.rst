@@ -52,7 +52,7 @@ host-mode networking <https://docs.docker.com/network/host/>`__ will be used ins
 ``dtrain_network_interface``
 ============================
 
-The network interface to use during :ref:`multi-gpu-training`. If not set, Determined automatically
+The network interface to use during distributed training. If not set, Determined automatically
 determines the network interface to use.
 
 When training a model with multiple machines, the host network interface used by each machine must
@@ -62,6 +62,8 @@ is not routable between machines. Determined already filters out common interfac
 ``docker0``, but agent machines may have others. If interface detection is not finding the
 appropriate interface, the ``dtrain_network_interface`` option can be used to set it explicitly
 (e.g., ``eth11``).
+
+.. include:: ../../../_shared/note-dtrain-learn-more.txt
 
 ``cpu_pod_spec``
 ================

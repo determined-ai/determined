@@ -1,5 +1,3 @@
-import { Row } from 'antd';
-import SkeletonButton from 'antd/es/skeleton/Button';
 import React, { ReactNode } from 'react';
 
 import Button from 'components/kit/Button';
@@ -89,14 +87,4 @@ export const Error: React.FC<{ fetchExperiments?: () => void }> = ({ fetchExperi
   <ExceptionMessage ImageComponent={ImageAlert} title="Failed to Load Data">
     <Button onClick={fetchExperiments}>Retry</Button>
   </ExceptionMessage>
-);
-
-export const Loading: React.FC<{ width: number }> = ({ width }) => (
-  <>
-    {[...Array(21)].map((x, i) => (
-      <Row key={i} style={{ paddingBottom: '4px' }}>
-        <SkeletonButton style={{ width }} />
-      </Row>
-    ))}
-  </>
 );
