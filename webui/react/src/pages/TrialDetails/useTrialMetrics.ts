@@ -9,6 +9,7 @@ import usePolling from 'shared/hooks/usePolling';
 import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
 import { Metric, MetricContainer, MetricType, RunState, Scale, TrialDetails } from 'types';
+import { message } from 'utils/dialogApi';
 import handleError from 'utils/error';
 import { metricToKey } from 'utils/metric';
 
@@ -99,19 +100,23 @@ export const useTrialMetrics = (
 
   const fetchTrialSummary = useCallback(async () => {
     if (trials.length > 0) {
-      const response = await timeSeries({
-        maxDatapoints: screen.width > 1600 ? 1500 : 1000,
-        metricNames: metrics,
-        scale: scale,
-        startBatches: 0,
-        trialIds: trials?.map((t) => t?.id || 0).filter((i) => i > 0),
-      });
-      const newData: Record<number, Record<string, Serie>> = {};
-      response.forEach((r) => {
-        const trialData = summarizedMetricToSeries(r?.metrics, metrics);
-        newData[r.id] = trialData;
-      });
-      setData((prev) => (isEqual(prev, newData) ? prev : newData));
+      try {
+        const response = await timeSeries({
+          maxDatapoints: screen.width > 1600 ? 1500 : 1000,
+          metricNames: metrics,
+          scale: scale,
+          startBatches: 0,
+          trialIds: trials?.map((t) => t?.id || 0).filter((i) => i > 0),
+        });
+        const newData: Record<number, Record<string, Serie>> = {};
+        response.forEach((r) => {
+          const trialData = summarizedMetricToSeries(r?.metrics, metrics);
+          newData[r.id] = trialData;
+        });
+        setData((prev) => (isEqual(prev, newData) ? prev : newData));
+      } catch (e) {
+        message.error('Error fetching metrics');
+      }
     }
   }, [metrics, trials, scale]);
 
