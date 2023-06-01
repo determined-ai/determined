@@ -8,6 +8,10 @@ metadata:
      release: {{ .Release.Name }}
 data:
   master.yaml: |
+    log:
+      level: {{ .Values.logLevel  | quote | default "info" }}
+      color: {{ .Values.logColor | default true }}
+
     checkpoint_storage:
       type: {{ required "A valid Values.checkpointStorage.type entry is required!" .Values.checkpointStorage.type | quote}}
       {{- if eq .Values.checkpointStorage.type "shared_fs" }}
@@ -131,8 +135,6 @@ data:
       {{- toYaml .Values.resourcePools | nindent 6}}
     {{- end }}
 
-    {{$cpuImage := (split "/" "determinedai/environments:py-3.8-pytorch-1.12-tf-2.11-cpu-6eceaca")._1}}
-    {{- $gpuImage := (split "/" "determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-6eceaca")._1 -}}
     {{ if .Values.taskContainerDefaults -}}
     task_container_defaults:
       {{- if .Values.taskContainerDefaults.networkMode }}
@@ -151,10 +153,10 @@ data:
       image:
          cpu: {{ .Values.taskContainerDefaults.cpuImage | quote }}
          gpu: {{ .Values.taskContainerDefaults.gpuImage | quote }}
-      {{- else if .Values.imageRegistry }}
+      {{- else }}
       image:
-         cpu: {{ .Values.imageRegistry }}/{{ $cpuImage }}
-         gpu: {{ .Values.imageRegistry }}/{{ $gpuImage }}
+         cpu: {{ .Values.defaultImages.cpuImage | quote }}
+         gpu: {{ .Values.defaultImages.gpuImage | quote }}
       {{- if or .Values.taskContainerDefaults.cpuImage .Values.taskContainerDefaults.gpuImage }}
         {{ required "A valid .Values.taskContainerDefaults.cpuImage entry is required if setting .Values.taskContainerDefaults.gpuImage!" .Values.taskContainerDefaults.cpuImage }}
         {{ required "A valid .Values.taskContainerDefaults.gpuImage entry is required if setting .Values.taskContainerDefaults.cpuImage!" .Values.taskContainerDefaults.gpuImage }}
@@ -163,11 +165,11 @@ data:
       {{- if .Values.taskContainerDefaults.forcePullImage }}
       force_pull_image: {{ .Values.taskContainerDefaults.forcePullImage }}
       {{- end }}
-    {{ else if .Values.imageRegistry }}
+    {{ else }}
     task_container_defaults:
       image:
-         cpu: {{ .Values.imageRegistry }}/{{ $cpuImage }}
-         gpu: {{ .Values.imageRegistry }}/{{ $gpuImage }}
+         cpu: {{ .Values.defaultImages.cpuImage | quote }}
+         gpu: {{ .Values.defaultImages.gpuImage | quote }}
     {{ end }}
 
     {{- if .Values.telemetry }}
