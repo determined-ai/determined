@@ -235,11 +235,9 @@ def _get_storage_information(checkpoint_config, default_uuid_path, core_context)
     elif storage_type == "gcs":
         bucket = checkpoint_config["bucket"]
         return f"gs://{bucket}/{default_uuid_path}"
-    # TODO test
     elif storage_type == "azure":
         container = checkpoint_config["container"]
         return f"Azure container: {container} Directory:{default_uuid_path}"
-    # TODO test
     elif storage_type == "shared_fs":
         base_path = core_context.checkpoint._storage_manager._base_path
         return f"{base_path}/{default_uuid_path}"
@@ -347,7 +345,7 @@ def torch_batch_process(
         dist_dataset_batch_count = math.ceil(dataset_len / batch_size / total_worker)
         iterate_length = _validate_iterate_length(max_batches, dist_dataset_batch_count)
 
-        last_checkpoint_idx = 0
+        last_checkpoint_idx = -1
         batch_idx = skip
         steps_completed = skip
 
@@ -404,6 +402,9 @@ def torch_batch_process(
                 info.trial._config["checkpoint_storage"], default_output_uuid, core_context
             )
             logging.info(f"Files stored with default paths are at: {default_storage_path}")
+
+        # Perform allgather here to ensure we only report progress to master when all workers finish
+        core_context.distributed.gather(None)
 
         if rank == 0:
             # Report to master the run has completed
