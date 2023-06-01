@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { Serie, TRAINING_SERIES_COLOR, VALIDATION_SERIES_COLOR } from 'components/kit/LineChart';
 import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
@@ -76,6 +76,10 @@ export const useTrialMetrics = (
   const trialTerminated = trials?.every((trial) =>
     terminalRunStates.has(trial?.state ?? RunState.Active),
   );
+  const experimentIds = useMemo(
+    () => trials?.map((t) => t?.experimentId || 0).filter((i) => i > 0),
+    [trials],
+  );
   const handleMetricNamesError = useCallback(
     (e: unknown) => {
       handleError(e, {
@@ -89,10 +93,7 @@ export const useTrialMetrics = (
     [trials],
   );
 
-  const metrics = useMetricNames(
-    trials?.map((t) => t?.experimentId || 0).filter((i) => i > 0),
-    handleMetricNamesError,
-  );
+  const metrics = useMetricNames(experimentIds, handleMetricNamesError);
   const [data, setData] = useState<Record<number, Record<string, Serie>>>();
   const [scale, setScale] = useState<Scale>(Scale.Linear);
 
