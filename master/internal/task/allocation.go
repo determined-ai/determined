@@ -423,7 +423,10 @@ func (a *Allocation) Cleanup(ctx *actor.Context) {
 		a.sendTaskLog(&model.TaskLog{
 			Log: fmt.Sprintf("%s was terminated: %s", a.req.Name, "allocation did not exit correctly"),
 		})
-		a.rm.Release(ctx, sproto.ResourcesReleased{AllocationRef: ctx.Self()})
+		a.rm.Release(ctx, sproto.ResourcesReleased{
+			AllocationID:  a.req.AllocationID,
+			AllocationRef: ctx.Self(),
+		})
 	}
 }
 
@@ -658,6 +661,7 @@ func (a *Allocation) ResourcesStateChanged(
 		a.resources[msg.ResourcesID].Exited = msg.ResourcesStopped
 
 		a.rm.Release(ctx, sproto.ResourcesReleased{
+			AllocationID:  a.req.AllocationID,
 			AllocationRef: ctx.Self(),
 			ResourcesID:   &msg.ResourcesID,
 		})
@@ -959,7 +963,10 @@ func (a *Allocation) terminated(ctx *actor.Context, reason string) {
 	a.exited = true
 	exitReason := fmt.Sprintf("allocation terminated after %s", reason)
 	defer ctx.Tell(ctx.Self().Parent(), exit)
-	defer a.rm.Release(ctx, sproto.ResourcesReleased{AllocationRef: ctx.Self()})
+	defer a.rm.Release(ctx, sproto.ResourcesReleased{
+		AllocationID:  a.req.AllocationID,
+		AllocationRef: ctx.Self(),
+	})
 	defer a.unregisterProxies(ctx)
 	defer ctx.Self().Stop()
 
