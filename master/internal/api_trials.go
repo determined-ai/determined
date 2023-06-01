@@ -66,7 +66,7 @@ func (a *apiServer) canGetTrialsExperimentAndCheckCanDoAction(ctx context.Contex
 		return err
 	}
 
-	trialNotFound := status.Errorf(codes.NotFound, "trial %d not found", trialID)
+	trialNotFound := api.NotFoundErrs("trial", fmt.Sprint(trialID), true)
 	exp, err := db.ExperimentByTrialID(ctx, trialID)
 	if errors.Is(err, db.ErrNotFound) {
 		return trialNotFound
