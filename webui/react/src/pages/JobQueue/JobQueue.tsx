@@ -1,5 +1,4 @@
-import { OMITTED_STR } from 'constants/access-control';
-import { V1SchedulerTypeToLabel } from 'constants/states';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Icon from 'components/kit/Icon';
 import Section from 'components/Section';
@@ -11,9 +10,10 @@ import {
   getFullPaginationConfig,
   userRenderer,
 } from 'components/Table/Table';
+import { OMITTED_STR } from 'constants/access-control';
+import { V1SchedulerTypeToLabel } from 'constants/states';
 import { useSettings } from 'hooks/useSettings';
 import { columns as defaultColumns, SCHEDULING_VAL_KEY } from 'pages/JobQueue/JobQueue.table';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { paths } from 'routes/utils';
 import { cancelExperiment, getJobQ, getJobQStats, killExperiment, killTask } from 'services/api';
 import * as Api from 'services/api-ts-sdk';
