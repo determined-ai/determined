@@ -24,6 +24,24 @@ func (a *apiServer) GetResourcePools(
 func (a *apiServer) BindRPToWorkspace(
 	ctx context.Context, req *apiv1.BindRPToWorkspaceRequest,
 ) (*apiv1.BindRPToWorkspaceResponse, error) {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = workspaceauth.AuthZProvider.Get().CanBindRPWorkspace(ctx, *curUser,
+		req.WorkspaceIds); err != nil {
+		return nil, authz.SubIfUnauthorized(
+			err,
+			errors.Errorf(
+				`current user %q doesn't have permissions to modify resource pool bindings.`,
+				curUser.Username))
+	}
+
+	err = a.m.db.AddRPWorkspaceBindings(ctx, req.WorkspaceIds, req.ResourcePoolName)
+	if err != nil {
+		return nil, err
+	}
 	return &apiv1.BindRPToWorkspaceResponse{}, nil
 }
 
