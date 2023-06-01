@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import CodeEditor from 'components/kit/CodeEditor';
 import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';
 import { hasObjectKeys, isObject, isString } from 'shared/utils/data';
+import handleError from 'utils/error';
 import { Loaded } from 'utils/loadable';
 
 import { Ranker, TrialFilters, TrialSorter } from './filters';
@@ -57,6 +58,7 @@ const useModalViewFilters = (): ModalHooks => {
           files={[{ content: Loaded([sorterText, filtersText].join('\n\n')), key: 'config.yaml' }]}
           height="100%"
           readonly
+          onError={handleError}
         />
       </div>
     );

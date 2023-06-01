@@ -214,6 +214,7 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
         <>
           <ChartGrid
             chartsProps={chartsProps}
+            handleError={handleError}
             scale={scale}
             setScale={setScale}
             xAxis={xAxis}

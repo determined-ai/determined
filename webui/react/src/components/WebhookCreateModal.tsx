@@ -71,6 +71,7 @@ const WebhookCreateModalComponent: React.FC = () => {
       size="small"
       submit={{
         disabled,
+        handleError,
         handler: handleSubmit,
         text: 'Create Webhook',
       }}

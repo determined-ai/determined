@@ -187,6 +187,7 @@ const JupyterLabModalComponent: React.FC<Props> = ({ workspace }: Props) => {
       size={showFullConfig ? 'large' : 'small'}
       submit={{
         disabled: showFullConfig ? fullConfigFormInvalid : !currentWorkspace?.id,
+        handleError,
         handler: handleSubmit,
         text: 'Launch',
       }}
@@ -307,7 +308,11 @@ const JupyterLabFullConfig: React.FC<FullConfigProps> = ({
               },
             },
           ]}>
-          <CodeEditor files={[{ content: Loaded(''), key: 'config.yaml' }]} height="40vh" />
+          <CodeEditor
+            files={[{ content: Loaded(''), key: 'config.yaml' }]}
+            height="40vh"
+            onError={handleError}
+          />
         </Form.Item>
       </React.Suspense>
       {configError && <Alert message={configError} type="error" />}

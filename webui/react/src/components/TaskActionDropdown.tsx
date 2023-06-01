@@ -54,6 +54,7 @@ const TaskActionDropdown: React.FC<Props> = ({ task, onComplete, children }: Pro
               await killTask(task as CommandTask);
               onComplete?.(key);
             },
+            onError: handleError,
             title: 'Confirm Task Kill',
           });
           break;

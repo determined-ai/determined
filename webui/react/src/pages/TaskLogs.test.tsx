@@ -1,14 +1,15 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import * as src from 'components/kit/LogViewer/LogViewer';
 import { flakyIt } from 'quarantineTests';
+import { serverAddress } from 'routes/utils';
 import { FetchArgs } from 'services/api-ts-sdk';
 import { mapV1LogsResponse } from 'services/decoder';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import { generateAlphaNumeric } from 'shared/utils/string';
 import { LogLevelFromApi } from 'types';
-
-import * as src from './LogViewer';
+import handleError from 'utils/error';
 
 interface TestLog {
   id: number | string;
@@ -137,19 +138,24 @@ const findTimeLogIndex = (logs: TestLog[], timeString: string): number => {
   return logs.findIndex((log) => log.message.includes(timestamp));
 };
 
-vi.mock('hooks/useResize', () => ({
+vi.mock('components/kit/internal/useResize', () => ({
   __esModule: true,
   default: () => ({ height: 1824, width: 1280, x: 0, y: 0 }),
 }));
 
-vi.mock('hooks/useGetCharMeasureInContainer', () => ({
+vi.mock('components/kit/internal/useGetCharMeasureInContainer', () => ({
   __esModule: true,
   default: () => ({ height: 18, width: 7 }),
 }));
 
-vi.mock('services/utils', () => ({
+vi.mock('components/kit/internal/services', () => ({
   __esModule: true,
-  readStream: ({ options }: FetchArgs, onEvent: (event: unknown) => void): void => {
+  readLogStream: (
+    serverAddress: (path: string) => string,
+    { options }: FetchArgs,
+    onError: (e: unknown, options?: object) => void,
+    onEvent: (event: unknown) => void,
+  ): void => {
     // Default mocking options.
     const existingLogs = options.existingLogs ?? [];
     const skipStreaming = options.skipStreaming ?? true;
@@ -204,7 +210,7 @@ describe('LogViewer', () => {
       const initialLogs = generateLogs(VISIBLE_LINES + 100);
       const firstLog = initialLogs[0];
       const lastLog = initialLogs[initialLogs.length - 1];
-      setup({ decoder, initialLogs });
+      setup({ decoder, initialLogs, onError: handleError, serverAddress });
 
       /*
        * The react-window should only display the 1st `VISIBILE_LINES` log entrys
@@ -225,7 +231,7 @@ describe('LogViewer', () => {
     });
 
     it('should hide scrolling buttons when log content is empty', async () => {
-      setup({ decoder, initialLogs: [] });
+      setup({ decoder, initialLogs: [], onError: handleError, serverAddress });
 
       await waitFor(() => {
         expect(
@@ -242,7 +248,7 @@ describe('LogViewer', () => {
     });
 
     it('should not show log close button by default', async () => {
-      setup({ decoder });
+      setup({ decoder, onError: handleError, serverAddress });
 
       await waitFor(() => {
         expect(screen.queryByLabelText('Close Logs')).not.toBeInTheDocument();
@@ -253,7 +259,7 @@ describe('LogViewer', () => {
       const handleCloseLogs = () => {
         return;
       };
-      setup({ decoder, handleCloseLogs });
+      setup({ decoder, handleCloseLogs, onError: handleError, serverAddress });
 
       await waitFor(() => {
         expect(screen.queryByLabelText('Close Logs')).toBeInTheDocument();
@@ -285,7 +291,7 @@ describe('LogViewer', () => {
     flakyIt(
       'should render logs with streaming',
       async () => {
-        setup({ decoder, onFetch });
+        setup({ decoder, onError: handleError, onFetch, serverAddress });
 
         await waitFor(
           () => {
@@ -300,7 +306,7 @@ describe('LogViewer', () => {
     );
 
     it('should show oldest logs', async () => {
-      setup({ decoder, onFetch });
+      setup({ decoder, onError: handleError, onFetch, serverAddress });
 
       await waitFor(() => {
         const lastLog = logsReference[logsReference.length - 1];
@@ -324,7 +330,7 @@ describe('LogViewer', () => {
     });
 
     it('should show newest logs when enabling tailing', async () => {
-      setup({ decoder, onFetch });
+      setup({ decoder, onError: handleError, onFetch, serverAddress });
 
       const scrollToOldestButton = screen.getByLabelText(src.ARIA_LABEL_SCROLL_TO_OLDEST, {
         selector: 'button',

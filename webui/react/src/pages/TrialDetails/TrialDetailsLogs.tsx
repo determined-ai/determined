@@ -103,6 +103,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
       ),
       okText: 'Proceed to Download',
       onConfirm: handleDownloadConfirm,
+      onError: handleError,
       size: 'medium',
       title: `Confirm Download for Trial ${trial.id} Logs`,
     });
@@ -185,8 +186,10 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
       <Spinner conditionalRender spinning={!trial}>
         <LogViewer
           decoder={mapV1LogsResponse}
+          serverAddress={serverAddress}
           title={logFilters}
           onDownload={handleDownloadLogs}
+          onError={handleError}
           onFetch={handleFetch}
         />
       </Spinner>
