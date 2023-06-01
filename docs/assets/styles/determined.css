@@ -2,16 +2,19 @@
 
 html {
   --pst-font-family-base-system: "Open Sans", "Metric HPE", Arial, sans-serif;
+  --docsearch-modal-max-width: 1000px;
 }
 
 html[data-theme="light"] {
   --pst-color-primary: #f37a22;
   --pst-color-inline-code: #323232;
+  --docsearch-modal-width: var(--docsearch-modal-max-width);
 }
 
 html[data-theme="dark"] {
   --pst-color-primary: #f37a22;
   --pst-color-inline-code: #cecece;
+  --docsearch-modal-width: var(--docsearch-modal-max-width);
 }
 
 #site-navigation {
@@ -26,6 +29,10 @@ html[data-theme="dark"] {
 .DocSearch-Button {
   background-color: var(--pst-color-surface);
   margin: 0;
+}
+
+.DocSearch-Modal{
+  max-height: 800px;
 }
 
 .version.centered {
