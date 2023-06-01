@@ -22,6 +22,7 @@ import {
   unarchiveExperiments,
 } from 'services/api';
 import { V1BulkExperimentFilters } from 'services/api-ts-sdk';
+import ScrollIcon from 'shared/assets/images/infinite-scroll.svg';
 import { RecordKey } from 'shared/types';
 import { ErrorLevel } from 'shared/utils/error';
 import {
@@ -319,7 +320,7 @@ const TableActionBar: React.FC<Props> = ({
       <div className={css.settingContent}>
         <div className={css.title}>Data</div>
         <div className={css.row}>
-          <Icon name="list" title="scroll" />
+          <img alt="scroll" src={ScrollIcon} />
           <span>Infinite Scroll</span>
           <Switch
             checked={expListView === 'scroll'}
