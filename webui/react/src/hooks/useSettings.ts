@@ -85,14 +85,15 @@ const queryToSettings = <T>(config: SettingsConfig<T>, query: string) => {
        * goes wrong, set it to the default value.
        */
       try {
+        const baseType = setting.type;
+        const isArray = baseType.is([]);
+
         let paramValue: null | string | string[] = params.getAll(setting.storageKey);
         if (paramValue.length === 0) {
           paramValue = null;
-        } else if (paramValue.length === 1) {
+        } else if (paramValue.length === 1 && !isArray) {
           paramValue = paramValue[0];
         }
-        const baseType = setting.type;
-        const isArray = baseType.is([]);
 
         if (paramValue !== null) {
           let queryValue: Primitive | Primitive[] | undefined = undefined;
@@ -104,10 +105,7 @@ const queryToSettings = <T>(config: SettingsConfig<T>, query: string) => {
            */
           if (Array.isArray(paramValue)) {
             queryValue = paramValue.reduce<Primitive[]>((acc, value) => {
-              const parsedValue = queryParamToType<T>(baseType, value);
-
-              if (parsedValue !== undefined) acc.push(parsedValue);
-
+              if (value !== undefined) acc.push(value);
               return acc;
             }, []);
           } else {

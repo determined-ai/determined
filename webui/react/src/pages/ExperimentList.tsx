@@ -137,8 +137,13 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
 
   const settingsConfig = useMemo(() => settingsConfigForProject(id), [id]);
 
-  const { settings, updateSettings, resetSettings, activeSettings } =
-    useSettings<ExperimentListSettings>(settingsConfig);
+  const {
+    settings,
+    isLoading: isLoadingSettings,
+    updateSettings,
+    resetSettings,
+    activeSettings,
+  } = useSettings<ExperimentListSettings>(settingsConfig);
 
   const experimentMap = useMemo(() => {
     return (experiments || []).reduce((acc, experiment) => {
@@ -160,7 +165,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
   const usersString = useMemo(() => settings.user?.join('.'), [settings.user]);
 
   const fetchExperiments = useCallback(async (): Promise<void> => {
-    if (!settings) return;
+    if (!settings || isLoadingSettings) return;
     try {
       const states = statesString
         ?.split('.')
@@ -215,7 +220,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
       setIsLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, settings, labelsString, pinnedString, statesString, usersString]);
+  }, [id, isLoadingSettings, settings, labelsString, pinnedString, statesString, usersString]);
 
   const fetchLabels = useCallback(async () => {
     try {
