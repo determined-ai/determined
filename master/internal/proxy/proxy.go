@@ -156,8 +156,8 @@ func NewProxyHandler(serviceID string) echo.HandlerFunc {
 	}
 }
 
-// GetSummary returns a snapshot of the registered services.
-func GetSummary() map[string]Service {
+// Summary returns a snapshot of the registered services.
+func Summary() map[string]Service {
 	snapshot := make(map[string]Service)
 
 	for id, service := range DefaultProxy.Services {

@@ -25,7 +25,7 @@ func register(t *testing.T, prTCP bool, unauth bool) {
 			t.Logf("failed to find registered service %s", id)
 		}
 	}
-	if len(proxy.GetSummary()) != len(serviceIDs) {
+	if len(proxy.Summary()) != len(serviceIDs) {
 		t.Logf("failed to register all services")
 	}
 }
@@ -40,7 +40,7 @@ func unregister(t *testing.T) {
 			t.Logf("failed to unregister service %s", id)
 		}
 	}
-	if len(proxy.GetSummary()) != 0 {
+	if len(proxy.Summary()) != 0 {
 		t.Logf("failed to unregister all services.")
 	}
 }
@@ -80,9 +80,9 @@ func TestProxyLifecycle(t *testing.T) {
 	for _, testCase := range cases {
 		// First register the services
 		register(t, testCase.proxyTCP, testCase.allowUnauthenticated)
-		require.Equal(t, len(serviceIDs), len(proxy.GetSummary()))
+		require.Equal(t, len(serviceIDs), len(proxy.Summary()))
 		// Check that service fields are set correctly
-		for _, service := range proxy.GetSummary() {
+		for _, service := range proxy.Summary() {
 			require.Equal(t, service.URL, &u)
 			require.Equal(t, service.ProxyTCP, testCase.proxyTCP)
 			require.Equal(t, service.AllowUnauthenticated, testCase.allowUnauthenticated)
@@ -90,16 +90,16 @@ func TestProxyLifecycle(t *testing.T) {
 		// Then unregister
 		unregister(t)
 		require.Equal(t, map[string]proxy.Service{},
-			proxy.GetSummary())
+			proxy.Summary())
 	}
 
 	// Now at the very end, to test clear proxy ...
 	register(t, true, true)
-	require.Equal(t, len(serviceIDs), len(proxy.GetSummary()))
+	require.Equal(t, len(serviceIDs), len(proxy.Summary()))
 	// Clear the services by ClearProxy
 	proxy.ClearProxy()
-	if len(proxy.GetSummary()) != 0 {
+	if len(proxy.Summary()) != 0 {
 		t.Logf("failed to clear all proxy services.")
 	}
-	require.Equal(t, 0, len(proxy.GetSummary()))
+	require.Equal(t, 0, len(proxy.Summary()))
 }
