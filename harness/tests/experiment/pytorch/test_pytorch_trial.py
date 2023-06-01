@@ -939,7 +939,7 @@ class TestPyTorchTrial:
 
     def run_cifar10(self, tmp_path: pathlib.Path):
 
-        checkpoint_dir = tmp_path.joinpath("checkpoint")
+        checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
 
         config = utils.load_config(utils.cv_examples_path("cifar10_pytorch/const.yaml"))
         hparams = config["hyperparameters"]
