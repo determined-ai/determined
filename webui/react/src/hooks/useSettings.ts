@@ -60,8 +60,10 @@ const settingsToQuery = <T>(config: SettingsConfig<T>, settings: Settings) => {
   return retVal.toString();
 };
 
+type queryParamItem<T> = SettingsConfig<T> | SettingsConfig<T> | unknown;
+
 const queryParamToType = <T>(
-  type: t.Type<SettingsConfig<T>, SettingsConfig<T>, unknown>,
+  type: t.Type<queryParamItem<T>>,
   param: string | null,
 ): Primitive | undefined => {
   if (param === null || param === undefined) return undefined;
@@ -72,6 +74,21 @@ const queryParamToType = <T>(
   }
   if (type.is({})) return JSON.parse(param);
   if (type.is('')) return param;
+  if (type.is([])) {
+    if ((type as t.UnionType<queryParamItem<T>>).types) {
+      // UnionType
+      return (type as t.UnionType<queryParamItem<T>>).types.reduce(
+        (acc: Primitive | undefined, tComponent: t.Type<queryParamItem<T>>) =>
+          acc ?? (tComponent === t.undefined ? undefined : queryParamToType(tComponent, param)),
+        undefined,
+      );
+    } else {
+      // ArrayType
+      return queryParamToType((type as t.ArrayType<queryParamItem<T>>).type, param);
+    }
+  }
+  // LiteralType
+  if (type.is(param)) return param;
   return undefined;
 };
 
@@ -105,7 +122,8 @@ const queryToSettings = <T>(config: SettingsConfig<T>, query: string) => {
            */
           if (Array.isArray(paramValue)) {
             queryValue = paramValue.reduce<Primitive[]>((acc, value) => {
-              if (value !== undefined) acc.push(value);
+              const parsedValue = queryParamToType<T>(baseType, value);
+              if (parsedValue !== undefined) acc.push(parsedValue);
               return acc;
             }, []);
           } else {
