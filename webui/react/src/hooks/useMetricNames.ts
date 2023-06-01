@@ -11,7 +11,7 @@ const useMetricNames = (experimentIds: number[], errorHandler?: (e: unknown) => 
   const [metrics, setMetrics] = useState<Metric[]>([]);
 
   useEffect(() => {
-    if (experimentIds.length === 0) return;
+    if (experimentIds.length === 0) setMetrics([]);
     const canceler = new AbortController();
     const trainingMetricsMap: Record<string, boolean> = {};
     const validationMetricsMap: Record<string, boolean> = {};

@@ -40,7 +40,7 @@ const CompareMetrics: React.FC<Props> = ({ selectedExperiments }) => {
       const key = `${metric.type}|${metric.name}`;
       trials.forEach((t) => {
         const m = data[t?.id || 0];
-        m?.[key] && series.push({ ...m[key], color: colorMap[t?.experimentId || 0] });
+        m?.[key] && t && series.push({ ...m[key], color: colorMap[t.experimentId] });
       });
       out.push({
         series,
