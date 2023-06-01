@@ -1,4 +1,4 @@
-import { Space } from 'antd';
+import { Space, Switch } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import BatchActionConfirmModalComponent from 'components/BatchActionConfirmModal';
@@ -10,6 +10,7 @@ import { Column, Columns } from 'components/kit/Columns';
 import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 import Icon, { IconName } from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
+import Tooltip from 'components/kit/Tooltip';
 import usePermissions from 'hooks/usePermissions';
 import {
   activateExperiments,
@@ -22,6 +23,7 @@ import {
   unarchiveExperiments,
 } from 'services/api';
 import { V1BulkExperimentFilters } from 'services/api-ts-sdk';
+import ScrollIcon from 'shared/assets/images/infinite-scroll.svg';
 import { RecordKey } from 'shared/types';
 import { ErrorLevel } from 'shared/utils/error';
 import {
@@ -41,6 +43,8 @@ import {
 } from 'utils/experiment';
 import { Loadable } from 'utils/loadable';
 import { openCommandResponse } from 'utils/wait';
+
+import { ExpListView } from '../F_ExperimentList.settings';
 
 import ColumnPickerMenu from './ColumnPickerMenu';
 import MultiSortMenu, { Sort } from './MultiSortMenu';
@@ -91,6 +95,8 @@ interface Props {
   formStore: FilterFormStore;
   setIsOpenFilter: (value: boolean) => void;
   isOpenFilter: boolean;
+  expListView: ExpListView;
+  setExpListView: (view: ExpListView) => void;
 }
 
 const TableActionBar: React.FC<Props> = ({
@@ -111,6 +117,8 @@ const TableActionBar: React.FC<Props> = ({
   formStore,
   setIsOpenFilter,
   isOpenFilter,
+  expListView,
+  setExpListView,
   toggleComparisonView,
 }) => {
   const permissions = usePermissions();
@@ -308,6 +316,24 @@ const TableActionBar: React.FC<Props> = ({
 
   const handleAction = useCallback((key: string) => handleBatchAction(key), [handleBatchAction]);
 
+  const settingContent = useMemo(
+    () => (
+      <div className={css.settingContent}>
+        <div className={css.title}>Data</div>
+        <div className={css.row}>
+          <img alt="scroll" src={ScrollIcon} />
+          <span>Infinite Scroll</span>
+          <Switch
+            checked={expListView === 'scroll'}
+            size="small"
+            onChange={(c: boolean) => setExpListView(c ? 'scroll' : 'paged')}
+          />
+        </div>
+      </div>
+    ),
+    [expListView, setExpListView],
+  );
+
   return (
     <Columns>
       <Column>
@@ -340,7 +366,16 @@ const TableActionBar: React.FC<Props> = ({
         </Space>
       </Column>
       <Column align="right">
-        {!!toggleComparisonView && <Button onClick={toggleComparisonView}>Compare</Button>}
+        <Space>
+          <Dropdown content={settingContent}>
+            <Tooltip content="Table Settings">
+              <Button>
+                <Icon name="overflow-horizontal" title="menu" />
+              </Button>
+            </Tooltip>
+          </Dropdown>
+          {!!toggleComparisonView && <Button onClick={toggleComparisonView}>Compare</Button>}
+        </Space>
       </Column>
       {batchAction && (
         <BatchActionConfirmModal.Component
