@@ -150,7 +150,7 @@ def test_tensorboard_fetcher_s3(require_secrets: bool, tmp_path: Path) -> None:
 
 def clean_up(storage_id: str, storage_manager: storage.S3StorageManager) -> None:
     """Search s3 directly to ensure that a checkpoint is actually deleted."""
-    storage_manager.delete(storage_id)
+    storage_manager.delete(storage_id, ["**/*"])
     storage_prefix = storage_manager.get_storage_prefix(storage_id)
     found = [obj.key for obj in storage_manager.bucket.objects.filter(Prefix=storage_prefix)]
     if found:

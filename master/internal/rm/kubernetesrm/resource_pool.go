@@ -637,7 +637,7 @@ func (k *kubernetesResourcePool) getOrCreateGroup(
 	k.slotsUsedPerGroup[g] = 0
 
 	if ctx != nil && handler != nil { // ctx is nil only for testing purposes.
-		actors.NotifyOnStop(ctx, handler, tasklist.GroupActorStopped{})
+		actors.NotifyOnStop(ctx, handler, tasklist.GroupActorStopped{Ref: handler})
 	}
 	return g
 }

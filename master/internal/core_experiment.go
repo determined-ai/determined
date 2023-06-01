@@ -235,7 +235,7 @@ func getCreateExperimentsProject(
 ) (*projectv1.Project, error) {
 	// Place experiment in Uncategorized, unless project set in request params or config.
 	var err error
-	projectID := 1
+	projectID := model.DefaultProjectID
 	errProjectNotFound := ErrProjectNotFound(fmt.Sprintf("project (%d) not found", projectID))
 	if req.ProjectId > 1 {
 		projectID = int(req.ProjectId)

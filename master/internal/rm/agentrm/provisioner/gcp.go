@@ -156,8 +156,8 @@ func (c *gcpCluster) stateFromInstance(inst *compute.Instance) model.InstanceSta
 	return model.Unknown
 }
 
-func (c *gcpCluster) generateInstanceName() string {
-	return c.NamePrefix + petname.Generate(2, "-")
+func (c *gcpCluster) generateInstanceNamePattern() string {
+	return c.NamePrefix + petname.Generate(2, "-") + "-#####"
 }
 
 func (c *gcpCluster) prestart(ctx *actor.Context) {
@@ -191,61 +191,55 @@ func (c *gcpCluster) list(ctx *actor.Context) ([]*model.Instance, error) {
 	return res, nil
 }
 
-func (c *gcpCluster) launch(ctx *actor.Context, instanceNum int) {
+func (c *gcpCluster) launch(ctx *actor.Context, instanceNum int) error {
 	if instanceNum <= 0 {
-		return
+		return nil
+	}
+	clientCtx := context.Background()
+	bulk := &compute.BulkInsertInstanceResource{
+		Count:              int64(instanceNum),
+		InstanceProperties: c.clusterInstanceProperties(),
+		MinCount:           1,
+		NamePattern:        c.generateInstanceNamePattern(),
+	}
+	ops, err := c.client.Instances.BulkInsert(c.Project, c.Zone, bulk).Context(clientCtx).Do()
+	if err != nil {
+		ctx.Log().WithError(err).Errorf("error inserting GCE instance")
+		return err
 	}
 
-	var ops []*compute.Operation
-	for i := 0; i < instanceNum; i++ {
-		clientCtx := context.Background()
-
-		rb := c.Merge()
-		rb.Name = c.generateInstanceName()
-		if rb.Labels == nil {
-			rb.Labels = make(map[string]string)
-		}
-		rb.Labels["determined-master-host"] = strings.ReplaceAll(c.masterURL.Hostname(), ".", "-")
-		rb.Labels["determined-master-port"] = c.masterURL.Port()
-		rb.Labels["determined-resource-pool"] = c.resourcePool
-		if rb.Metadata == nil {
-			rb.Metadata = &compute.Metadata{}
-		}
-		rb.Metadata.Items = append(c.metadata, rb.Metadata.Items...)
-
-		rb.MinCpuPlatform = provconfig.GetCPUPlatform(rb.MachineType)
-
-		resp, err := c.client.Instances.Insert(c.Project, c.Zone, rb).Context(clientCtx).Do()
-		if err != nil {
-			ctx.Log().WithError(err).Errorf("cannot insert GCE instance")
-		} else {
-			ops = append(ops, resp)
-		}
-	}
-
-	if len(ops) == 0 {
-		return
-	}
 	if _, ok := ctx.ActorOf(
 		fmt.Sprintf("track-batch-operation-%s", uuid.New()),
 		&gcpBatchOperationTracker{
 			config: c.GCPClusterConfig,
 			client: c.client,
-			ops:    ops,
+			ops:    []*compute.Operation{ops},
 			postProcess: func(doneOps []*compute.Operation) {
-				inserted := c.newInstancesFromOperations(doneOps)
-				ctx.Log().Infof(
-					"inserted %d/%d GCE instances: %s",
-					len(inserted),
-					instanceNum,
-					model.FmtInstances(inserted),
-				)
+				ctx.Log().Info("inserted GCE instances")
 			},
 		},
 	); !ok {
-		ctx.Log().Error("internal error tracking GCP operation batch")
-		return
+		err := errors.New("internal error tracking GCP operation batch")
+		ctx.Log().Error(err)
+		return err
 	}
+	return nil
+}
+
+func (c *gcpCluster) clusterInstanceProperties() *compute.InstanceProperties {
+	rb := c.InstanceProperties()
+	if rb.Labels == nil {
+		rb.Labels = make(map[string]string)
+	}
+	rb.Labels["determined-master-host"] = strings.ReplaceAll(c.masterURL.Hostname(), ".", "-")
+	rb.Labels["determined-master-port"] = c.masterURL.Port()
+	rb.Labels["determined-resource-pool"] = c.resourcePool
+	if rb.Metadata == nil {
+		rb.Metadata = &compute.Metadata{}
+	}
+	rb.Metadata.Items = append(c.metadata, rb.Metadata.Items...)
+	rb.MinCpuPlatform = provconfig.GetCPUPlatform(rb.MachineType)
+	return rb
 }
 
 func (c *gcpCluster) terminate(ctx *actor.Context, instances []string) {

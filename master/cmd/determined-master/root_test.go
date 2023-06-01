@@ -49,7 +49,7 @@ webhooks:
 	expected.Webhooks.SigningKey = "testWebhookSigningKey"
 	providerConf := provconfig.DefaultConfig()
 	providerConf.GCP = provconfig.DefaultGCPClusterConfig()
-	providerConf.GCP.BaseConfig = &compute.Instance{
+	providerConf.GCP.BaseConfig = &compute.InstanceProperties{
 		Disks: []*compute.AttachedDisk{
 			{
 				AutoDelete: true,

@@ -13,6 +13,8 @@ import (
 	pstruct "github.com/golang/protobuf/ptypes/struct"
 	"github.com/pkg/errors"
 
+	k8sV1 "k8s.io/api/core/v1"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -33,6 +35,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
+	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -159,13 +162,15 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 	if req.MustZeroSlot {
 		config.Resources.Slots = 0
 	}
-	if config.Environment.PodSpec == nil {
-		if config.Resources.Slots == 0 {
-			config.Environment.PodSpec = taskSpec.TaskContainerDefaults.CPUPodSpec
-		} else {
-			config.Environment.PodSpec = taskSpec.TaskContainerDefaults.GPUPodSpec
-		}
+
+	taskContainerPodSpec := taskSpec.TaskContainerDefaults.GPUPodSpec
+	if config.Resources.Slots == 0 {
+		taskContainerPodSpec = taskSpec.TaskContainerDefaults.CPUPodSpec
 	}
+	config.Environment.PodSpec = (*k8sV1.Pod)(schemas.Merge(
+		(*expconf.PodSpec)(config.Environment.PodSpec),
+		(*expconf.PodSpec)(taskContainerPodSpec),
+	))
 
 	var userFiles archive.Archive
 	if len(req.Files) > 0 {

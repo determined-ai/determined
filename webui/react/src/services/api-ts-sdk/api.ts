@@ -107,7 +107,7 @@ export class RequiredError extends Error {
 
 
 /**
- * The current state of the checkpoint.   - STATE_UNSPECIFIED: The state of the checkpoint is unknown.  - STATE_ACTIVE: The checkpoint is in an active state.  - STATE_COMPLETED: The checkpoint is persisted to checkpoint storage.  - STATE_ERROR: The checkpoint errored.  - STATE_DELETED: The checkpoint has been deleted.
+ * The current state of the checkpoint.   - STATE_UNSPECIFIED: The state of the checkpoint is unknown.  - STATE_ACTIVE: The checkpoint is in an active state.  - STATE_COMPLETED: The checkpoint is persisted to checkpoint storage.  - STATE_ERROR: The checkpoint errored.  - STATE_DELETED: The checkpoint has been deleted.  - STATE_PARTIALLY_DELETED: The checkpoint has been partially deleted.
  * @export
  * @enum {string}
  */
@@ -117,6 +117,7 @@ export const Checkpointv1State = {
     COMPLETED: 'STATE_COMPLETED',
     ERROR: 'STATE_ERROR',
     DELETED: 'STATE_DELETED',
+    PARTIALLYDELETED: 'STATE_PARTIALLY_DELETED',
 } as const
 export type Checkpointv1State = ValueOf<typeof Checkpointv1State>
 /**
@@ -219,6 +220,19 @@ export const Jobv1Type = {
     CHECKPOINTGC: 'TYPE_CHECKPOINT_GC',
 } as const
 export type Jobv1Type = ValueOf<typeof Jobv1Type>
+/**
+ * Gets around not being able to do "Optional map<string, int64>". Not ideal but this API is marked internal for now.
+ * @export
+ * @interface PatchCheckpointOptionalResources
+ */
+export interface PatchCheckpointOptionalResources {
+    /**
+     * Resources.
+     * @type {{ [key: string]: string; }}
+     * @memberof PatchCheckpointOptionalResources
+     */
+    resources?: { [key: string]: string; };
+}
 /**
  * Nested object for checkpoint_storage field patch.
  * @export
@@ -1686,6 +1700,32 @@ export interface V1Checkpoint {
      * @memberof V1Checkpoint
      */
     training: V1CheckpointTrainingMetadata;
+}
+/**
+ * Request to delete files matching globs in checkpoints.
+ * @export
+ * @interface V1CheckpointsRemoveFilesRequest
+ */
+export interface V1CheckpointsRemoveFilesRequest {
+    /**
+     * The list of checkpoint_uuids for the requested checkpoints.
+     * @type {Array<string>}
+     * @memberof V1CheckpointsRemoveFilesRequest
+     */
+    checkpointUuids: Array<string>;
+    /**
+     * The list of checkpoint_globs for the requested checkpoints. If a value is set to the empty string the checkpoint will only have its metadata refreshed.
+     * @type {Array<string>}
+     * @memberof V1CheckpointsRemoveFilesRequest
+     */
+    checkpointGlobs: Array<string>;
+}
+/**
+ * Response to CheckpointRemoveFilesRequest.
+ * @export
+ * @interface V1CheckpointsRemoveFilesResponse
+ */
+export interface V1CheckpointsRemoveFilesResponse {
 }
 /**
  * CheckpointTrainingMetadata is specifically metadata about training.
@@ -3454,6 +3494,25 @@ export interface V1GetJobsResponse {
     jobs: Array<V1Job>;
 }
 /**
+ * Response to GetJobsV2Request.
+ * @export
+ * @interface V1GetJobsV2Response
+ */
+export interface V1GetJobsV2Response {
+    /**
+     * Pagination information of the full dataset.
+     * @type {V1Pagination}
+     * @memberof V1GetJobsV2Response
+     */
+    pagination: V1Pagination;
+    /**
+     * List of the requested jobs.
+     * @type {Array<V1RBACJob>}
+     * @memberof V1GetJobsV2Response
+     */
+    jobs: Array<V1RBACJob>;
+}
+/**
  * Response to GetMasterRequest.
  * @export
  * @interface V1GetMasterConfigResponse
@@ -4696,6 +4755,12 @@ export interface V1Job {
      * @memberof V1Job
      */
     progress?: number;
+    /**
+     * Job's workspace id.
+     * @type {number}
+     * @memberof V1Job
+     */
+    workspaceId: number;
 }
 /**
  * Job summary.
@@ -5103,6 +5168,79 @@ export const V1LaunchWarning = {
     CURRENTSLOTSEXCEEDED: 'LAUNCH_WARNING_CURRENT_SLOTS_EXCEEDED',
 } as const
 export type V1LaunchWarning = ValueOf<typeof V1LaunchWarning>
+/**
+ * LimitedJob is a Job with omitted fields.
+ * @export
+ * @interface V1LimitedJob
+ */
+export interface V1LimitedJob {
+    /**
+     * Job summary.
+     * @type {V1JobSummary}
+     * @memberof V1LimitedJob
+     */
+    summary?: V1JobSummary;
+    /**
+     * Job type.
+     * @type {Jobv1Type}
+     * @memberof V1LimitedJob
+     */
+    type: Jobv1Type;
+    /**
+     * Associated resource pool.
+     * @type {string}
+     * @memberof V1LimitedJob
+     */
+    resourcePool: string;
+    /**
+     * Whether the job is preemptible.
+     * @type {boolean}
+     * @memberof V1LimitedJob
+     */
+    isPreemptible: boolean;
+    /**
+     * The job priority in priority scheduler.
+     * @type {number}
+     * @memberof V1LimitedJob
+     */
+    priority?: number;
+    /**
+     * The job weight in fairshare scheduler.
+     * @type {number}
+     * @memberof V1LimitedJob
+     */
+    weight?: number;
+    /**
+     * Job type.
+     * @type {string}
+     * @memberof V1LimitedJob
+     */
+    jobId: string;
+    /**
+     * Number of requested slots.
+     * @type {number}
+     * @memberof V1LimitedJob
+     */
+    requestedSlots: number;
+    /**
+     * Number of allocated slots.
+     * @type {number}
+     * @memberof V1LimitedJob
+     */
+    allocatedSlots: number;
+    /**
+     * Job's progress from 0 to 1.
+     * @type {number}
+     * @memberof V1LimitedJob
+     */
+    progress?: number;
+    /**
+     * Job's workspace id.
+     * @type {number}
+     * @memberof V1LimitedJob
+     */
+    workspaceId: number;
+}
 /**
  * ListRolesRequest is the body of the request for the call to search for a role.
  * @export
@@ -5905,6 +6043,45 @@ export interface V1Pagination {
      * @memberof V1Pagination
      */
     total?: number;
+}
+/**
+ * Request to change checkpoint database information.
+ * @export
+ * @interface V1PatchCheckpoint
+ */
+export interface V1PatchCheckpoint {
+    /**
+     * The uuid of the checkpoint.
+     * @type {string}
+     * @memberof V1PatchCheckpoint
+     */
+    uuid: string;
+    /**
+     * Dictionary of file paths to file sizes in bytes of all files in the checkpoint. This won't update actual checkpoint files. If len(resources) == 0 => the checkpoint is considered deleted Otherwise if resources are updated the checkpoint is considered partially deleted.
+     * @type {PatchCheckpointOptionalResources}
+     * @memberof V1PatchCheckpoint
+     */
+    resources?: PatchCheckpointOptionalResources;
+}
+/**
+ * Request to patch database info about a checkpoint.
+ * @export
+ * @interface V1PatchCheckpointsRequest
+ */
+export interface V1PatchCheckpointsRequest {
+    /**
+     * List of checkpoints to patch.
+     * @type {Array<V1PatchCheckpoint>}
+     * @memberof V1PatchCheckpointsRequest
+     */
+    checkpoints: Array<V1PatchCheckpoint>;
+}
+/**
+ * Intentionally don't send the updated response for performance reasons.
+ * @export
+ * @interface V1PatchCheckpointsResponse
+ */
+export interface V1PatchCheckpointsResponse {
 }
 /**
  * PatchExperiment is a partial update to an experiment with only id required.
@@ -7197,6 +7374,25 @@ export interface V1QueueStats {
      * @memberof V1QueueStats
      */
     scheduledCount: number;
+}
+/**
+ * RBACJob is a job that can have either a limited or a full representation of a job.
+ * @export
+ * @interface V1RBACJob
+ */
+export interface V1RBACJob {
+    /**
+     * Full representation.
+     * @type {V1Job}
+     * @memberof V1RBACJob
+     */
+    full?: V1Job;
+    /**
+     * Limited representation for lower access levels.
+     * @type {V1LimitedJob}
+     * @memberof V1RBACJob
+     */
+    limited?: V1LimitedJob;
 }
 /**
  * RemoveAssignmentsRequest is the body of the request for the call to remove a user or group from a role.
@@ -10575,6 +10771,44 @@ export const CheckpointsApiFetchParamCreator = function (configuration?: Configu
     return {
         /**
          * 
+         * @summary Remove files from checkpoints.
+         * @param {V1CheckpointsRemoveFilesRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        checkpointsRemoveFiles(body: V1CheckpointsRemoveFilesRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling checkpointsRemoveFiles.');
+            }
+            const localVarPath = `/api/v1/checkpoints/rm`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Delete Checkpoints.
          * @param {V1DeleteCheckpointsRequest} body
          * @param {*} [options] Override http request option.
@@ -10702,6 +10936,25 @@ export const CheckpointsApiFp = function (configuration?: Configuration) {
     return {
         /**
          * 
+         * @summary Remove files from checkpoints.
+         * @param {V1CheckpointsRemoveFilesRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        checkpointsRemoveFiles(body: V1CheckpointsRemoveFilesRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CheckpointsRemoveFilesResponse> {
+            const localVarFetchArgs = CheckpointsApiFetchParamCreator(configuration).checkpointsRemoveFiles(body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Delete Checkpoints.
          * @param {V1DeleteCheckpointsRequest} body
          * @param {*} [options] Override http request option.
@@ -10769,6 +11022,16 @@ export const CheckpointsApiFactory = function (configuration?: Configuration, fe
     return {
         /**
          * 
+         * @summary Remove files from checkpoints.
+         * @param {V1CheckpointsRemoveFilesRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        checkpointsRemoveFiles(body: V1CheckpointsRemoveFilesRequest, options?: any) {
+            return CheckpointsApiFp(configuration).checkpointsRemoveFiles(body, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Delete Checkpoints.
          * @param {V1DeleteCheckpointsRequest} body
          * @param {*} [options] Override http request option.
@@ -10808,6 +11071,18 @@ export const CheckpointsApiFactory = function (configuration?: Configuration, fe
  * @extends {BaseAPI}
  */
 export class CheckpointsApi extends BaseAPI {
+    /**
+     * 
+     * @summary Remove files from checkpoints.
+     * @param {V1CheckpointsRemoveFilesRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof CheckpointsApi
+     */
+    public checkpointsRemoveFiles(body: V1CheckpointsRemoveFilesRequest, options?: any) {
+        return CheckpointsApiFp(this.configuration).checkpointsRemoveFiles(body, options)(this.fetch, this.basePath)
+    }
+    
     /**
      * 
      * @summary Delete Checkpoints.
@@ -12967,7 +13242,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {V1OrderBy} [orderBy] Order checkpoints in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of checkpoints before returning results. Negative values denote number of checkpoints to skip from the end before returning results.
          * @param {number} [limit] Limit the number of checkpoints. A value of 0 denotes no limit.
-         * @param {Array<Checkpointv1State>} [states] Limit the checkpoints to those that match the states.   - STATE_UNSPECIFIED: The state of the checkpoint is unknown.  - STATE_ACTIVE: The checkpoint is in an active state.  - STATE_COMPLETED: The checkpoint is persisted to checkpoint storage.  - STATE_ERROR: The checkpoint errored.  - STATE_DELETED: The checkpoint has been deleted.
+         * @param {Array<Checkpointv1State>} [states] Limit the checkpoints to those that match the states.   - STATE_UNSPECIFIED: The state of the checkpoint is unknown.  - STATE_ACTIVE: The checkpoint is in an active state.  - STATE_COMPLETED: The checkpoint is persisted to checkpoint storage.  - STATE_ERROR: The checkpoint errored.  - STATE_DELETED: The checkpoint has been deleted.  - STATE_PARTIALLY_DELETED: The checkpoint has been partially deleted.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -13473,7 +13748,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {V1OrderBy} [orderBy] Order checkpoints in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of checkpoints before returning results. Negative values denote number of checkpoints to skip from the end before returning results.
          * @param {number} [limit] Limit the number of checkpoints. A value of 0 denotes no limit.
-         * @param {Array<Checkpointv1State>} [states] Limit the checkpoints to those that match the states.   - STATE_UNSPECIFIED: The state of the checkpoint is unknown.  - STATE_ACTIVE: The checkpoint is in an active state.  - STATE_COMPLETED: The checkpoint is persisted to checkpoint storage.  - STATE_ERROR: The checkpoint errored.  - STATE_DELETED: The checkpoint has been deleted.
+         * @param {Array<Checkpointv1State>} [states] Limit the checkpoints to those that match the states.   - STATE_UNSPECIFIED: The state of the checkpoint is unknown.  - STATE_ACTIVE: The checkpoint is in an active state.  - STATE_COMPLETED: The checkpoint is persisted to checkpoint storage.  - STATE_ERROR: The checkpoint errored.  - STATE_DELETED: The checkpoint has been deleted.  - STATE_PARTIALLY_DELETED: The checkpoint has been partially deleted.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -14479,7 +14754,7 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
          * @param {V1OrderBy} [orderBy] Order checkpoints in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of checkpoints before returning results. Negative values denote number of checkpoints to skip from the end before returning results.
          * @param {number} [limit] Limit the number of checkpoints. A value of 0 denotes no limit.
-         * @param {Array<Checkpointv1State>} [states] Limit the checkpoints to those that match the states.   - STATE_UNSPECIFIED: The state of the checkpoint is unknown.  - STATE_ACTIVE: The checkpoint is in an active state.  - STATE_COMPLETED: The checkpoint is persisted to checkpoint storage.  - STATE_ERROR: The checkpoint errored.  - STATE_DELETED: The checkpoint has been deleted.
+         * @param {Array<Checkpointv1State>} [states] Limit the checkpoints to those that match the states.   - STATE_UNSPECIFIED: The state of the checkpoint is unknown.  - STATE_ACTIVE: The checkpoint is in an active state.  - STATE_COMPLETED: The checkpoint is persisted to checkpoint storage.  - STATE_ERROR: The checkpoint errored.  - STATE_DELETED: The checkpoint has been deleted.  - STATE_PARTIALLY_DELETED: The checkpoint has been partially deleted.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -14698,7 +14973,7 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
          * @param {V1OrderBy} [orderBy] Order checkpoints in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of checkpoints before returning results. Negative values denote number of checkpoints to skip from the end before returning results.
          * @param {number} [limit] Limit the number of checkpoints. A value of 0 denotes no limit.
-         * @param {Array<Checkpointv1State>} [states] Limit the checkpoints to those that match the states.   - STATE_UNSPECIFIED: The state of the checkpoint is unknown.  - STATE_ACTIVE: The checkpoint is in an active state.  - STATE_COMPLETED: The checkpoint is persisted to checkpoint storage.  - STATE_ERROR: The checkpoint errored.  - STATE_DELETED: The checkpoint has been deleted.
+         * @param {Array<Checkpointv1State>} [states] Limit the checkpoints to those that match the states.   - STATE_UNSPECIFIED: The state of the checkpoint is unknown.  - STATE_ACTIVE: The checkpoint is in an active state.  - STATE_COMPLETED: The checkpoint is persisted to checkpoint storage.  - STATE_ERROR: The checkpoint errored.  - STATE_DELETED: The checkpoint has been deleted.  - STATE_PARTIALLY_DELETED: The checkpoint has been partially deleted.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -15183,7 +15458,7 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {V1OrderBy} [orderBy] Order checkpoints in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of checkpoints before returning results. Negative values denote number of checkpoints to skip from the end before returning results.
          * @param {number} [limit] Limit the number of checkpoints. A value of 0 denotes no limit.
-         * @param {Array<Checkpointv1State>} [states] Limit the checkpoints to those that match the states.   - STATE_UNSPECIFIED: The state of the checkpoint is unknown.  - STATE_ACTIVE: The checkpoint is in an active state.  - STATE_COMPLETED: The checkpoint is persisted to checkpoint storage.  - STATE_ERROR: The checkpoint errored.  - STATE_DELETED: The checkpoint has been deleted.
+         * @param {Array<Checkpointv1State>} [states] Limit the checkpoints to those that match the states.   - STATE_UNSPECIFIED: The state of the checkpoint is unknown.  - STATE_ACTIVE: The checkpoint is in an active state.  - STATE_COMPLETED: The checkpoint is persisted to checkpoint storage.  - STATE_ERROR: The checkpoint errored.  - STATE_DELETED: The checkpoint has been deleted.  - STATE_PARTIALLY_DELETED: The checkpoint has been partially deleted.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -15312,7 +15587,7 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {V1OrderBy} [orderBy] Order checkpoints in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of checkpoints before returning results. Negative values denote number of checkpoints to skip from the end before returning results.
          * @param {number} [limit] Limit the number of checkpoints. A value of 0 denotes no limit.
-         * @param {Array<Checkpointv1State>} [states] Limit the checkpoints to those that match the states.   - STATE_UNSPECIFIED: The state of the checkpoint is unknown.  - STATE_ACTIVE: The checkpoint is in an active state.  - STATE_COMPLETED: The checkpoint is persisted to checkpoint storage.  - STATE_ERROR: The checkpoint errored.  - STATE_DELETED: The checkpoint has been deleted.
+         * @param {Array<Checkpointv1State>} [states] Limit the checkpoints to those that match the states.   - STATE_UNSPECIFIED: The state of the checkpoint is unknown.  - STATE_ACTIVE: The checkpoint is in an active state.  - STATE_COMPLETED: The checkpoint is persisted to checkpoint storage.  - STATE_ERROR: The checkpoint errored.  - STATE_DELETED: The checkpoint has been deleted.  - STATE_PARTIALLY_DELETED: The checkpoint has been partially deleted.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -15665,7 +15940,7 @@ export class ExperimentsApi extends BaseAPI {
      * @param {V1OrderBy} [orderBy] Order checkpoints in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
      * @param {number} [offset] Skip the number of checkpoints before returning results. Negative values denote number of checkpoints to skip from the end before returning results.
      * @param {number} [limit] Limit the number of checkpoints. A value of 0 denotes no limit.
-     * @param {Array<Checkpointv1State>} [states] Limit the checkpoints to those that match the states.   - STATE_UNSPECIFIED: The state of the checkpoint is unknown.  - STATE_ACTIVE: The checkpoint is in an active state.  - STATE_COMPLETED: The checkpoint is persisted to checkpoint storage.  - STATE_ERROR: The checkpoint errored.  - STATE_DELETED: The checkpoint has been deleted.
+     * @param {Array<Checkpointv1State>} [states] Limit the checkpoints to those that match the states.   - STATE_UNSPECIFIED: The state of the checkpoint is unknown.  - STATE_ACTIVE: The checkpoint is in an active state.  - STATE_COMPLETED: The checkpoint is persisted to checkpoint storage.  - STATE_ERROR: The checkpoint errored.  - STATE_DELETED: The checkpoint has been deleted.  - STATE_PARTIALLY_DELETED: The checkpoint has been partially deleted.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ExperimentsApi
@@ -15814,7 +16089,7 @@ export class ExperimentsApi extends BaseAPI {
      * @param {V1OrderBy} [orderBy] Order checkpoints in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
      * @param {number} [offset] Skip the number of checkpoints before returning results. Negative values denote number of checkpoints to skip from the end before returning results.
      * @param {number} [limit] Limit the number of checkpoints. A value of 0 denotes no limit.
-     * @param {Array<Checkpointv1State>} [states] Limit the checkpoints to those that match the states.   - STATE_UNSPECIFIED: The state of the checkpoint is unknown.  - STATE_ACTIVE: The checkpoint is in an active state.  - STATE_COMPLETED: The checkpoint is persisted to checkpoint storage.  - STATE_ERROR: The checkpoint errored.  - STATE_DELETED: The checkpoint has been deleted.
+     * @param {Array<Checkpointv1State>} [states] Limit the checkpoints to those that match the states.   - STATE_UNSPECIFIED: The state of the checkpoint is unknown.  - STATE_ACTIVE: The checkpoint is in an active state.  - STATE_COMPLETED: The checkpoint is persisted to checkpoint storage.  - STATE_ERROR: The checkpoint errored.  - STATE_DELETED: The checkpoint has been deleted.  - STATE_PARTIALLY_DELETED: The checkpoint has been partially deleted.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ExperimentsApi
@@ -16824,6 +17099,61 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Get a list of jobs in queue.
+         * @param {number} [offset] Pagination offset.
+         * @param {number} [limit] Pagination limit.
+         * @param {string} [resourcePool] The target resource-pool for agent resource manager.
+         * @param {V1OrderBy} [orderBy] Order results in either ascending or descending order by the number of jobs ahead.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+         * @param {Array<Jobv1State>} [states] Filter to jobs with states among those given.   - STATE_UNSPECIFIED: Unspecified state.  - STATE_QUEUED: Job is queued and waiting to be schedlued.  - STATE_SCHEDULED: Job is scheduled.  - STATE_SCHEDULED_BACKFILLED: Job is scheduled as a backfill.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getJobsV2(offset?: number, limit?: number, resourcePool?: string, orderBy?: V1OrderBy, states?: Array<Jobv1State>, options: any = {}): FetchArgs {
+            const localVarPath = `/api/v1/job-queues-v2`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            if (offset !== undefined) {
+                localVarQueryParameter['offset'] = offset
+            }
+            
+            if (limit !== undefined) {
+                localVarQueryParameter['limit'] = limit
+            }
+            
+            if (resourcePool !== undefined) {
+                localVarQueryParameter['resourcePool'] = resourcePool
+            }
+            
+            if (orderBy !== undefined) {
+                localVarQueryParameter['orderBy'] = orderBy
+            }
+            
+            if (states) {
+                localVarQueryParameter['states'] = states
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get a list of columns for experiment list table.
          * @param {number} id The id of the project.
          * @param {*} [options] Override http request option.
@@ -17165,6 +17495,44 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                 .replace(`{${"allocationId"}}`, encodeURIComponent(String(allocationId)));
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Update checkpoints. Won't modify checkpoint files.
+         * @param {V1PatchCheckpointsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchCheckpoints(body: V1PatchCheckpointsRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling patchCheckpoints.');
+            }
+            const localVarPath = `/api/v1/checkpoints`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'PATCH', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
             
@@ -18246,6 +18614,29 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Get a list of jobs in queue.
+         * @param {number} [offset] Pagination offset.
+         * @param {number} [limit] Pagination limit.
+         * @param {string} [resourcePool] The target resource-pool for agent resource manager.
+         * @param {V1OrderBy} [orderBy] Order results in either ascending or descending order by the number of jobs ahead.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+         * @param {Array<Jobv1State>} [states] Filter to jobs with states among those given.   - STATE_UNSPECIFIED: Unspecified state.  - STATE_QUEUED: Job is queued and waiting to be schedlued.  - STATE_SCHEDULED: Job is scheduled.  - STATE_SCHEDULED_BACKFILLED: Job is scheduled as a backfill.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getJobsV2(offset?: number, limit?: number, resourcePool?: string, orderBy?: V1OrderBy, states?: Array<Jobv1State>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetJobsV2Response> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getJobsV2(offset, limit, resourcePool, orderBy, states, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Get a list of columns for experiment list table.
          * @param {number} id The id of the project.
          * @param {*} [options] Override http request option.
@@ -18400,6 +18791,25 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         notifyContainerRunning(allocationId: string, body: V1NotifyContainerRunningRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1NotifyContainerRunningResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).notifyContainerRunning(allocationId, body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Update checkpoints. Won't modify checkpoint files.
+         * @param {V1PatchCheckpointsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchCheckpoints(body: V1PatchCheckpointsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchCheckpointsResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).patchCheckpoints(body, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -18914,6 +19324,20 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Get a list of jobs in queue.
+         * @param {number} [offset] Pagination offset.
+         * @param {number} [limit] Pagination limit.
+         * @param {string} [resourcePool] The target resource-pool for agent resource manager.
+         * @param {V1OrderBy} [orderBy] Order results in either ascending or descending order by the number of jobs ahead.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+         * @param {Array<Jobv1State>} [states] Filter to jobs with states among those given.   - STATE_UNSPECIFIED: Unspecified state.  - STATE_QUEUED: Job is queued and waiting to be schedlued.  - STATE_SCHEDULED: Job is scheduled.  - STATE_SCHEDULED_BACKFILLED: Job is scheduled as a backfill.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getJobsV2(offset?: number, limit?: number, resourcePool?: string, orderBy?: V1OrderBy, states?: Array<Jobv1State>, options?: any) {
+            return InternalApiFp(configuration).getJobsV2(offset, limit, resourcePool, orderBy, states, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Get a list of columns for experiment list table.
          * @param {number} id The id of the project.
          * @param {*} [options] Override http request option.
@@ -19005,6 +19429,16 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          */
         notifyContainerRunning(allocationId: string, body: V1NotifyContainerRunningRequest, options?: any) {
             return InternalApiFp(configuration).notifyContainerRunning(allocationId, body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Update checkpoints. Won't modify checkpoint files.
+         * @param {V1PatchCheckpointsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchCheckpoints(body: V1PatchCheckpointsRequest, options?: any) {
+            return InternalApiFp(configuration).patchCheckpoints(body, options)(fetch, basePath);
         },
         /**
          * 
@@ -19423,6 +19857,22 @@ export class InternalApi extends BaseAPI {
     
     /**
      * 
+     * @summary Get a list of jobs in queue.
+     * @param {number} [offset] Pagination offset.
+     * @param {number} [limit] Pagination limit.
+     * @param {string} [resourcePool] The target resource-pool for agent resource manager.
+     * @param {V1OrderBy} [orderBy] Order results in either ascending or descending order by the number of jobs ahead.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+     * @param {Array<Jobv1State>} [states] Filter to jobs with states among those given.   - STATE_UNSPECIFIED: Unspecified state.  - STATE_QUEUED: Job is queued and waiting to be schedlued.  - STATE_SCHEDULED: Job is scheduled.  - STATE_SCHEDULED_BACKFILLED: Job is scheduled as a backfill.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public getJobsV2(offset?: number, limit?: number, resourcePool?: string, orderBy?: V1OrderBy, states?: Array<Jobv1State>, options?: any) {
+        return InternalApiFp(this.configuration).getJobsV2(offset, limit, resourcePool, orderBy, states, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
      * @summary Get a list of columns for experiment list table.
      * @param {number} id The id of the project.
      * @param {*} [options] Override http request option.
@@ -19529,6 +19979,18 @@ export class InternalApi extends BaseAPI {
      */
     public notifyContainerRunning(allocationId: string, body: V1NotifyContainerRunningRequest, options?: any) {
         return InternalApiFp(this.configuration).notifyContainerRunning(allocationId, body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Update checkpoints. Won't modify checkpoint files.
+     * @param {V1PatchCheckpointsRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public patchCheckpoints(body: V1PatchCheckpointsRequest, options?: any) {
+        return InternalApiFp(this.configuration).patchCheckpoints(body, options)(this.fetch, this.basePath)
     }
     
     /**

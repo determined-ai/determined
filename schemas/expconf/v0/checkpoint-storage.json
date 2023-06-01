@@ -10,15 +10,11 @@
     },
     "then": {
         "union": {
-            "defaultMessage": "is not an object where object[\"type\"] is one of 'shared_fs', 'hdfs', 's3', 'gcs' or 'azure'",
+            "defaultMessage": "is not an object where object[\"type\"] is one of 'shared_fs', 's3', 'gcs' or 'azure'",
             "items": [
                 {
                     "unionKey": "const:type=shared_fs",
                     "$ref": "http://determined.ai/schemas/expconf/v0/shared-fs.json"
-                },
-                {
-                    "unionKey": "const:type=hdfs",
-                    "$ref": "http://determined.ai/schemas/expconf/v0/hdfs.json"
                 },
                 {
                     "unionKey": "const:type=s3",
@@ -50,8 +46,6 @@
         "credential": true,
         "endpoint_url": true,
         "prefix": true,
-        "hdfs_path": true,
-        "hdfs_url": true,
         "host_path": true,
         "propagation": true,
         "secret_key": true,

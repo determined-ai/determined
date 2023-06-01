@@ -52,7 +52,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/rm/allocationmap"
 	"github.com/determined-ai/determined/master/internal/sproto"
-	"github.com/determined-ai/determined/master/internal/task"
+	"github.com/determined-ai/determined/master/internal/task/tasklogger"
 	"github.com/determined-ai/determined/master/internal/task/taskmodel"
 	"github.com/determined-ai/determined/master/internal/telemetry"
 	"github.com/determined-ai/determined/master/internal/user"
@@ -91,16 +91,15 @@ type Master struct {
 	config   *config.Config
 	taskSpec *tasks.TaskSpec
 
-	logs       *logger.LogBuffer
-	system     *actor.System
-	echo       *echo.Echo
-	db         *db.PgDB
-	rm         rm.ResourceManager
-	proxy      *actor.Ref
-	taskLogger *task.Logger
+	logs   *logger.LogBuffer
+	system *actor.System
+	echo   *echo.Echo
+	db     *db.PgDB
+	rm     rm.ResourceManager
+	proxy  *actor.Ref
 
 	trialLogBackend TrialLogBackend
-	taskLogBackend  task.LogBackend
+	taskLogBackend  TaskLogBackend
 }
 
 // New creates an instance of the Determined master.
@@ -916,7 +915,7 @@ func (m *Master) Run(ctx context.Context) error {
 	default:
 		panic("unsupported logging backend")
 	}
-	m.taskLogger = task.NewLogger(m.system, m.taskLogBackend)
+	tasklogger.SetDefaultLogger(tasklogger.New(m.taskLogBackend))
 
 	user.InitService(m.db, m.system, &m.config.InternalConfig.ExternalSessions)
 	userService := user.GetService()
@@ -1038,7 +1037,6 @@ func (m *Master) Run(ctx context.Context) error {
 		m.echo,
 		m.db,
 		m.rm,
-		m.taskLogger,
 	)
 
 	if err = m.closeOpenAllocations(); err != nil {

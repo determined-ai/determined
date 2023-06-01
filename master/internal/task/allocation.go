@@ -18,6 +18,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/rm/allocationmap"
 	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/determined-ai/determined/master/internal/task/tasklogger"
 	"github.com/determined-ai/determined/master/internal/task/taskmodel"
 	"github.com/determined-ai/determined/master/internal/telemetry"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -33,9 +34,8 @@ type (
 	// Allocation encapsulates all the state of a single allocation.
 	Allocation struct {
 		// System dependencies.
-		db     db.DB
-		rm     rm.ResourceManager
-		logger *Logger
+		db db.DB
+		rm rm.ResourceManager
 
 		// The request to create the allocation, essentially our configuration.
 		req sproto.AllocateRequest
@@ -136,15 +136,13 @@ const (
 // NewAllocation returns a new allocation, which tracks allocation state in a fairly generic way.
 func NewAllocation(
 	logCtx detLogger.Context, req sproto.AllocateRequest, db db.DB, rm rm.ResourceManager,
-	logger *Logger,
 ) actor.Actor {
 	req.LogContext = detLogger.MergeContexts(logCtx, detLogger.Context{
 		"allocation-id": req.AllocationID,
 	})
 	return &Allocation{
-		db:     db,
-		rm:     rm,
-		logger: logger,
+		db: db,
+		rm: rm,
 
 		req: req,
 		model: model.Allocation{
@@ -228,7 +226,7 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 		}
 		allocationmap.UnregisterAllocation(a.model.AllocationID)
 	case sproto.ContainerLog:
-		a.sendTaskLog(ctx, msg.ToTaskLog())
+		a.sendTaskLog(msg.ToTaskLog())
 
 	// These messages allow users (and sometimes an orchestrator, such as HP search)
 	// to interact with the allocation. The usually trace back to API calls.
@@ -241,9 +239,7 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 		if err := a.db.UpdateAllocationState(a.model); err != nil {
 			a.Error(ctx, err)
 		}
-		a.sendTaskLog(ctx, a.enrichLog(model.TaskLog{
-			Log: fmt.Sprintf("Service of %s is available", a.req.Name),
-		}))
+		a.sendTaskLog(&model.TaskLog{Log: fmt.Sprintf("Service of %s is available", a.req.Name)})
 	case AllocationWaiting:
 		a.setMostProgressedModelState(model.AllocationStateWaiting)
 		if err := a.db.UpdateAllocationState(a.model); err != nil {
@@ -307,7 +303,7 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 			a.rendezvous.unwatch(msg)
 		case rendezvousTimeout:
 			if err := a.rendezvous.checkTimeout(msg); err != nil {
-				a.sendTaskLog(ctx, model.TaskLog{Log: err.Error()})
+				a.sendTaskLog(&model.TaskLog{Log: err.Error()})
 			}
 		default:
 			a.Error(ctx, actor.ErrUnexpectedMessage(ctx))
@@ -331,7 +327,7 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 			a.allGather.unwatch(msg)
 		case allGatherTimeout:
 			if err := a.allGather.checkTimeout(msg); err != nil {
-				a.sendTaskLog(ctx, model.TaskLog{Log: err.Error()})
+				a.sendTaskLog(&model.TaskLog{Log: err.Error()})
 				ctx.Log().WithError(err).Error("performing all gather through master")
 			}
 		default:
@@ -350,7 +346,7 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 			return nil
 		}
 		if err := a.preemption.ReceiveMsg(ctx); err != nil {
-			a.sendTaskLog(ctx, model.TaskLog{Log: err.Error()})
+			a.sendTaskLog(&model.TaskLog{Log: err.Error()})
 			a.Error(ctx, err)
 		}
 	case IdleTimeoutWatcherTick, IdleWatcherNoteActivity:
@@ -363,6 +359,9 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 		if err := a.idleTimeoutWatcher.ReceiveMsg(ctx); err != nil {
 			a.Error(ctx, err)
 		}
+	case sproto.InvalidResourcesRequestError:
+		ctx.Tell(a.req.AllocationRef, msg)
+		a.Error(ctx, msg)
 
 	default:
 		a.Error(ctx, actor.ErrUnexpectedMessage(ctx))
@@ -395,9 +394,9 @@ func (a *Allocation) RequestResources(ctx *actor.Context) error {
 	if err := a.rm.Allocate(ctx, a.req); err != nil {
 		return errors.Wrap(err, "failed to request allocation")
 	}
-	a.sendTaskLog(ctx, a.enrichLog(model.TaskLog{
+	a.sendTaskLog(&model.TaskLog{
 		Log: fmt.Sprintf("Scheduling %s (id: %s)", a.req.Name, ctx.Self().Parent().Address().Local()),
-	}))
+	})
 	return nil
 }
 
@@ -421,9 +420,9 @@ func (a *Allocation) Cleanup(ctx *actor.Context) {
 			ctx.Log().WithError(err).Error("failed to purge restorable resources")
 		}
 
-		a.sendTaskLog(ctx, a.enrichLog(model.TaskLog{
+		a.sendTaskLog(&model.TaskLog{
 			Log: fmt.Sprintf("%s was terminated: %s", a.req.Name, "allocation did not exit correctly"),
-		}))
+		})
 		a.rm.Release(ctx, sproto.ResourcesReleased{AllocationRef: ctx.Self()})
 	}
 }
@@ -551,7 +550,7 @@ func (a *Allocation) SetResourcesAsDaemon(
 		ctx.Respond(ErrStaleResources{ID: rID})
 		return nil
 	} else if len(a.resources) <= 1 {
-		a.sendTaskLog(ctx, model.TaskLog{
+		a.sendTaskLog(&model.TaskLog{
 			Log: `Ignoring request to daemonize resources within an allocation for an allocation
 			with only one manageable set of resources, because this would just kill it. This is
 			expected in when using the HPC launcher.`,
@@ -634,10 +633,10 @@ func (a *Allocation) ResourcesStateChanged(
 		}
 
 		containerID := coalesceString(msg.ContainerIDStr(), "")
-		a.sendTaskLog(ctx, a.enrichLog(model.TaskLog{
+		a.sendTaskLog(&model.TaskLog{
 			ContainerID: &containerID,
 			Log:         fmt.Sprintf("Resources for %s have started", a.req.Name),
-		}))
+		})
 
 		prom.AssociateAllocationTask(a.req.AllocationID,
 			a.req.TaskID,
@@ -670,7 +669,7 @@ func (a *Allocation) ResourcesStateChanged(
 
 		switch {
 		case a.killedWhileRunning:
-			a.sendTaskLog(ctx, model.TaskLog{
+			a.sendTaskLog(&model.TaskLog{
 				ContainerID: msg.ContainerIDStr(),
 				Log: fmt.Sprintf(
 					"resources were killed: %s",
@@ -689,7 +688,7 @@ func (a *Allocation) ResourcesStateChanged(
 				a.Error(ctx, *msg.ResourcesStopped.Failure)
 			}
 		default:
-			a.sendTaskLog(ctx, model.TaskLog{
+			a.sendTaskLog(&model.TaskLog{
 				ContainerID: msg.ContainerIDStr(),
 				Log:         msg.ResourcesStopped.String(),
 				Level:       ptrs.Ptr(model.LogLevelInfo),
@@ -818,7 +817,7 @@ func (a *Allocation) exitedWithoutErr() bool {
 
 func (a *Allocation) preempt(ctx *actor.Context, reason string) {
 	ctx.Log().WithField("reason", reason).Info("decided to gracefully terminate allocation")
-	a.sendTaskLog(ctx, model.TaskLog{
+	a.sendTaskLog(&model.TaskLog{
 		Level: ptrs.Ptr(model.LogLevelInfo),
 		Log: fmt.Sprintf(
 			"gracefully terminating allocation's remaining resources (reason: %s)",
@@ -837,7 +836,7 @@ func (a *Allocation) kill(ctx *actor.Context, reason string) {
 	}
 
 	ctx.Log().WithField("reason", reason).Info("decided to kill allocation")
-	a.sendTaskLog(ctx, model.TaskLog{
+	a.sendTaskLog(&model.TaskLog{
 		Level: ptrs.Ptr(model.LogLevelInfo),
 		Log: fmt.Sprintf(
 			"forcibly killing allocation's remaining resources (reason: %s)",
@@ -900,7 +899,7 @@ func (a *Allocation) registerProxies(ctx *actor.Context, addresses []cproto.Addr
 	}
 
 	if len(a.proxies) != len(a.req.ProxyPorts) {
-		a.sendTaskLog(ctx, model.TaskLog{
+		a.sendTaskLog(&model.TaskLog{
 			Log: fmt.Sprintf(
 				"did not proxy as expected %v (found addrs %v, requested %v)",
 				len(a.proxies), addresses, len(a.req.ProxyPorts)),
@@ -969,19 +968,16 @@ func (a *Allocation) terminated(ctx *actor.Context, reason string) {
 		level = ptrs.Ptr(model.LogLevelError)
 	}
 	defer func() {
-		a.sendTaskLog(ctx, a.enrichLog(model.TaskLog{
+		a.sendTaskLog(&model.TaskLog{
 			Level: level,
 			Log:   fmt.Sprintf("%s was terminated: %s", a.req.Name, exitReason),
-		}))
+		})
 	}()
 
 	if err := a.purgeRestorableResources(ctx); err != nil {
 		ctx.Log().WithError(err).Error("failed to purge restorable resources")
 	}
 
-	if len(a.resources) == 0 {
-		return
-	}
 	defer a.markResourcesReleased(ctx)
 
 	if a.req.Preemptible {
@@ -1044,6 +1040,8 @@ func (a *Allocation) terminated(ctx *actor.Context, reason string) {
 			exit.Err = err
 			return
 		}
+	case len(a.resources) == 0:
+		return
 	default:
 		// If we ever exit without a reason and we have no exited resources, something has gone
 		// wrong.
@@ -1055,13 +1053,9 @@ func (a *Allocation) terminated(ctx *actor.Context, reason string) {
 func (a *Allocation) markResourcesStarted(ctx *actor.Context) {
 	a.model.StartTime = ptrs.Ptr(time.Now().UTC().Truncate(time.Millisecond))
 	if a.restored {
-		a.sendTaskLog(ctx, a.enrichLog(model.TaskLog{
-			Log: fmt.Sprintf("%s was recovered on an agent", a.req.Name),
-		}))
+		a.sendTaskLog(&model.TaskLog{Log: fmt.Sprintf("%s was recovered on an agent", a.req.Name)})
 	} else {
-		a.sendTaskLog(ctx, a.enrichLog(model.TaskLog{
-			Log: fmt.Sprintf("%s was assigned to an agent", a.req.Name),
-		}))
+		a.sendTaskLog(&model.TaskLog{Log: fmt.Sprintf("%s was assigned to an agent", a.req.Name)})
 	}
 	if err := a.db.UpdateAllocationStartTime(a.model); err != nil {
 		ctx.Log().
@@ -1072,10 +1066,13 @@ func (a *Allocation) markResourcesStarted(ctx *actor.Context) {
 
 // markResourcesReleased persists completion information.
 func (a *Allocation) markResourcesReleased(ctx *actor.Context) {
-	a.model.EndTime = ptrs.Ptr(time.Now().UTC())
 	if err := a.db.DeleteAllocationSession(a.model.AllocationID); err != nil {
 		ctx.Log().WithError(err).Error("error deleting allocation session")
 	}
+	if a.model.StartTime == nil {
+		return
+	}
+	a.model.EndTime = ptrs.Ptr(time.Now().UTC())
 	if err := a.db.CompleteAllocation(&a.model); err != nil {
 		ctx.Log().WithError(err).Error("failed to mark allocation completed")
 	}
@@ -1094,7 +1091,7 @@ func (a *Allocation) purgeRestorableResources(ctx *actor.Context) error {
 
 const killedLogSubstr = "exit code 137"
 
-func (a *Allocation) enrichLog(log model.TaskLog) model.TaskLog {
+func (a *Allocation) enrichLog(log *model.TaskLog) *model.TaskLog {
 	log.TaskID = string(a.req.TaskID)
 
 	if log.Timestamp == nil || log.Timestamp.IsZero() {
@@ -1119,8 +1116,8 @@ func (a *Allocation) enrichLog(log model.TaskLog) model.TaskLog {
 	return log
 }
 
-func (a *Allocation) sendTaskLog(ctx *actor.Context, log model.TaskLog) {
-	a.logger.Insert(ctx, a.enrichLog(log))
+func (a *Allocation) sendTaskLog(log *model.TaskLog) {
+	tasklogger.Insert(a.enrichLog(log))
 }
 
 // State returns a deepcopy of our state.

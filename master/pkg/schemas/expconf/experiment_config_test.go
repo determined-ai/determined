@@ -5,7 +5,10 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/stretchr/testify/require"
 	"gotest.tools/assert"
+
+	k8sV1 "k8s.io/api/core/v1"
 
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas"
@@ -32,6 +35,60 @@ func TestBindMountsMerge(t *testing.T) {
 	assert.Assert(t, len(out.RawBindMounts) == 2)
 	assert.Assert(t, out.RawBindMounts[0].RawHostPath == "/host/e1")
 	assert.Assert(t, out.RawBindMounts[1].RawHostPath == "/host/e2")
+}
+
+func TestPodSpecMerge(t *testing.T) {
+	e0 := EnvironmentConfig{
+		RawPodSpec: &PodSpec{
+			Spec: k8sV1.PodSpec{
+				Hostname:         "e0HostName",
+				Subdomain:        "e0SubDomain",
+				ImagePullSecrets: []k8sV1.LocalObjectReference{{Name: "e0Secret"}},
+			},
+		},
+	}
+	require.Equal(t, e0, schemas.Merge(e0, EnvironmentConfig{}))
+	require.Equal(t, e0, schemas.Merge(EnvironmentConfig{}, e0))
+
+	e1 := EnvironmentConfig{
+		RawPodSpec: &PodSpec{
+			Spec: k8sV1.PodSpec{
+				Hostname:           "e1HostName",
+				ServiceAccountName: "e1ServiceAccount",
+				ImagePullSecrets:   []k8sV1.LocalObjectReference{{Name: "e1Secret"}},
+			},
+		},
+	}
+
+	e0PriorityExpected := EnvironmentConfig{
+		RawPodSpec: &PodSpec{
+			Spec: k8sV1.PodSpec{
+				Hostname:           "e0HostName",
+				Subdomain:          "e0SubDomain",
+				ServiceAccountName: "e1ServiceAccount",
+				ImagePullSecrets: []k8sV1.LocalObjectReference{
+					{Name: "e0Secret"},
+					{Name: "e1Secret"},
+				},
+			},
+		},
+	}
+	require.Equal(t, e0PriorityExpected, schemas.Merge(e0, e1))
+
+	e1PriorityExpected := EnvironmentConfig{
+		RawPodSpec: &PodSpec{
+			Spec: k8sV1.PodSpec{
+				Hostname:           "e1HostName",
+				Subdomain:          "e0SubDomain",
+				ServiceAccountName: "e1ServiceAccount",
+				ImagePullSecrets: []k8sV1.LocalObjectReference{
+					{Name: "e1Secret"},
+					{Name: "e0Secret"},
+				},
+			},
+		},
+	}
+	require.Equal(t, e1PriorityExpected, schemas.Merge(e1, e0))
 }
 
 func TestName(t *testing.T) {

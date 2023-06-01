@@ -15,12 +15,14 @@ serves as an alternative to the HuggingFace `Trainer Class
 <https://huggingface.co/transformers/main_classes/trainer.html>`_ and provides access to the
 benefits of using Determined, including:
 
--  Easy :ref:`multi-node distributed training <multi-gpu-training>` with no code modifications.
-   Determined automatically sets up the distributed backend for you.
+-  Easy multi-node distributed training with no code modifications. Determined automatically sets up
+   the distributed backend for you.
 -  Experiment monitoring and tracking, artifact tracking, and :ref:`state-of-the-art hyperparameter
    search <hyperparameter-tuning>` without requiring third-party integrations.
 -  :ref:`Automated cluster management, fault tolerance, and job rescheduling <features>` to free you
    from provisioning resources closely monitoring experiments.
+
+.. include:: ../../_shared/note-dtrain-learn-more.txt
 
 Model Hub Transformers is similar to the ``no_trainer`` version of **transformers** examples in that
 you have more control over the training and evaluation routines if you want.
@@ -51,7 +53,7 @@ Tutorial <model-hub-transformers-tutorial>` to learn how to customize or build a
 The following HuggingFace **transformers** features are currently not supported:
 
 -  TensorFlow version of transformers
--  Support for deepspeed and fairscale
+-  Support for fairscale
 -  Running on TPUs
 
 .. toctree::

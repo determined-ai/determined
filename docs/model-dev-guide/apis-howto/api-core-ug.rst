@@ -1,3 +1,5 @@
+.. _core-getting-started:
+
 #####################
  Core API User Guide
 #####################
@@ -518,4 +520,4 @@ In this user guide, you learned how to use the Core API to integrate a model int
 also saw how to modify a training script and use the appropriate configuration file to report
 metrics and checkpointing, perform a hyperparameter search, and run distributed training.
 
-For more information about distributed training, visit :ref:`multi-gpu-training`.
+.. include:: ../../_shared/note-dtrain-learn-more.txt

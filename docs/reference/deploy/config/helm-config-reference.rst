@@ -156,8 +156,8 @@
    -  ``networkMode``: The Docker network to use for the Determined task containers. If this is set
       to "host", Docker host-mode networking will be used instead. Defaults to "bridge".
 
-   -  ``dtrainNetworkInterface``: The network interface to use during :ref:`multi-gpu-training`. If
-      not set, Determined automatically determines the network interface. When training a model with
+   -  ``dtrainNetworkInterface``: The network interface to use during distributed training. If not
+      set, Determined automatically determines the network interface. When training a model with
       multiple machines, the host network interface used by each machine must have the same
       interface name across machines. This is usually determined automatically, but there may be
       issues if there is an interface name common to all machines but it is not routable between
@@ -227,3 +227,5 @@
 -  ``resourcePools``: This section contains the names of the resource pools and their linked
    namespaces. Maps to the ``resource_pools`` section from the :ref:`master configuration
    <master-config-reference>`.
+
+.. include:: ../../../_shared/note-dtrain-learn-more.txt

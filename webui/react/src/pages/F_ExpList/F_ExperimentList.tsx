@@ -36,7 +36,7 @@ import {
   settingsConfigForProject,
   settingsConfigGlobal,
 } from './F_ExperimentList.settings';
-import { Error, Loading, NoExperiments } from './glide-table/exceptions';
+import { Error, NoExperiments } from './glide-table/exceptions';
 import GlideTable, { SCROLL_SET_COUNT_NEEDED } from './glide-table/GlideTable';
 import { EMPTY_SORT, Sort, validSort, ValidSort } from './glide-table/MultiSortMenu';
 import TableActionBar, { BatchAction } from './glide-table/TableActionBar';
@@ -58,7 +58,11 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const settingsConfig = useMemo(() => settingsConfigForProject(project.id), [project.id]);
 
-  const { settings, updateSettings } = useSettings<F_ExperimentListSettings>(settingsConfig);
+  const {
+    isLoading: isLoadingSettings,
+    settings,
+    updateSettings,
+  } = useSettings<F_ExperimentListSettings>(settingsConfig);
   const { settings: globalSettings, updateSettings: updateGlobalSettings } =
     useSettings<F_ExperimentListGlobalSettings>(settingsConfigGlobal);
   const startPage = useMemo(
@@ -143,7 +147,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const [canceler] = useState(new AbortController());
 
   const colorMap = useGlasbey(selectedExperimentIds);
-  const { height, width } = useResize(contentRef);
+  const { height } = useResize(contentRef);
   const [scrollPositionSetCount] = useState(observable(0));
 
   const handleScroll = useCallback(
@@ -407,7 +411,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         filters={experimentFilters}
         formStore={formStore}
         handleUpdateExperimentList={handleUpdateExperimentList}
-        initialVisibleColumns={settings.columns}
+        initialVisibleColumns={isLoadingSettings ? [] : settings.columns}
         isOpenFilter={isOpenFilter}
         project={project}
         projectColumns={projectColumns}
@@ -423,9 +427,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         onSortChange={onSortChange}
       />
       <div className={css.content} ref={contentRef}>
-        {isLoading ? (
-          <Loading width={width} />
-        ) : experiments.length === 0 ? (
+        {!isLoading && experiments.length === 0 ? (
           numFilters === 0 ? (
             <NoExperiments />
           ) : (
@@ -443,7 +445,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
               <GlideTable
                 clearSelectionTrigger={clearSelectionTrigger}
                 colorMap={colorMap}
-                data={experiments}
+                data={isLoading || isLoadingSettings ? [NotLoaded] : experiments}
                 dataTotal={
                   globalSettings.expListView === 'scroll'
                     ? Loadable.getOrElse(0, total)
@@ -468,7 +470,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                 setSelectAll={setSelectAll}
                 setSelectedExperimentIds={setSelectedExperimentIds}
                 setSortableColumnIds={setVisibleColumns}
-                sortableColumnIds={settings.columns}
+                sortableColumnIds={isLoadingSettings ? [] : settings.columns}
                 sorts={sorts}
                 onContextMenuComplete={onContextMenuComplete}
                 onIsOpenFilterChange={onIsOpenFilterChange}

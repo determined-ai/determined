@@ -32,6 +32,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/mocks"
+	modelauth "github.com/determined-ai/determined/master/internal/model"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
@@ -66,7 +67,10 @@ func expNotFoundErr(expID int) error {
 	return status.Errorf(codes.NotFound, "experiment not found: %d", expID)
 }
 
-var authZExp *mocks.ExperimentAuthZ
+var (
+	authZExp   *mocks.ExperimentAuthZ
+	authzModel *mocks.ModelAuthZ
+)
 
 // pgdb can be nil to use the singleton database for testing.
 func setupExpAuthTest(t *testing.T, pgdb *db.PgDB) (
@@ -78,6 +82,15 @@ func setupExpAuthTest(t *testing.T, pgdb *db.PgDB) (
 		expauth.AuthZProvider.Register("mock", authZExp)
 	}
 	return api, authZExp, projectAuthZ, user, ctx
+}
+
+func getMockModelAuth() *mocks.ModelAuthZ {
+	if authzModel == nil {
+		authzModel = &mocks.ModelAuthZ{}
+		modelauth.AuthZProvider.Register("mock", authzModel)
+	}
+
+	return authzModel
 }
 
 func createTestExp(
@@ -349,7 +362,7 @@ func TestGetExperiments(t *testing.T) {
 		State:          experimentv1.State_STATE_PAUSED,
 		StartTime:      timestamppb.New(startTime),
 		EndTime:        timestamppb.New(endTime),
-		Duration:       ptrs.Ptr(int32(60)),
+		Duration:       ptrs.Ptr(int32(300000000)),
 		Archived:       false,
 		NumTrials:      3,
 		DisplayName:    "admin",
@@ -1341,7 +1354,7 @@ func TestExperimentSearchApiFilterParsing(t *testing.T) {
 		{`{"filterGroup":{"children":[{"type":"COLUMN_TYPE_DATE","location":"LOCATION_TYPE_EXPERIMENT", "columnName":"endTime","kind":"field","operator":"<=", "value":"2021-04-14T14:14:18.915483952Z"}],"conjunction":"and","kind":"group"},"showArchived":false}`, `(((e.end_time <= '2021-04-14T14:14:18.915483952Z'))) AND ((e.archived = false))`},
 		{`{"filterGroup":{"children":[{"type":"COLUMN_TYPE_TEXT","location":"LOCATION_TYPE_EXPERIMENT", "columnName":"tags","kind":"field","operator":"contains", "value":"val"}],"conjunction":"and","kind":"group"},"showArchived":true}`, `(((e.config->>'labels' ILIKE '%val%')))`},
 		{`{"filterGroup":{"children":[{"type":"COLUMN_TYPE_TEXT","location":"LOCATION_TYPE_EXPERIMENT", "columnName":"tags","kind":"field","operator":"notContains", "value":"val"}],"conjunction":"and","kind":"group"},"showArchived":true}`, `(((e.config->>'labels' NOT ILIKE '%val%')))`},
-		{`{"filterGroup":{"children":[{"type":"COLUMN_TYPE_NUMBER","location":"LOCATION_TYPE_EXPERIMENT", "columnName":"duration","kind":"field","operator":">", "value":0}],"conjunction":"and","kind":"group"},"showArchived":true}`, `(((extract(seconds FROM coalesce(e.end_time, now()) - e.start_time) > 0)))`},
+		{`{"filterGroup":{"children":[{"type":"COLUMN_TYPE_NUMBER","location":"LOCATION_TYPE_EXPERIMENT", "columnName":"duration","kind":"field","operator":">", "value":0}],"conjunction":"and","kind":"group"},"showArchived":true}`, `(((extract(epoch FROM coalesce(e.end_time, now()) - e.start_time) > 0)))`},
 		{`{"filterGroup":{"children":[{"columnName":"projectId","location":"LOCATION_TYPE_EXPERIMENT", "kind":"field","operator":">=","value":-1}],"conjunction":"and","kind":"group"},"showArchived":true}`, `(((project_id >= -1)))`},
 		{`{"filterGroup":{"children":[{"type":"COLUMN_TYPE_NUMBER","location":"LOCATION_TYPE_VALIDATIONS", "columnName":"validation.validation_accuracy","kind":"field","operator":">=","value":0}],"conjunction":"and","kind":"group"},"showArchived":true}`, `((((e.validation_metrics->>'validation_accuracy')::float8 >= 0)))`},
 		{`{"filterGroup":{"children":[{"type":"COLUMN_TYPE_TEXT","location":"LOCATION_TYPE_VALIDATIONS", "columnName":"validation.validation_string","kind":"field","operator":"=","value":"string"}],"conjunction":"and","kind":"group"},"showArchived":true}`, `(((e.validation_metrics->>'validation_string' = 'string')))`},

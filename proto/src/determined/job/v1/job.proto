@@ -47,6 +47,45 @@ message JobSummary {
   int32 jobs_ahead = 2;
 }
 
+// LimitedJob is a Job with omitted fields.
+message LimitedJob {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: {
+      required: [
+        "type",
+        "resource_pool",
+        "is_preemptible",
+        "requested_slots",
+        "allocated_slots",
+        "workspace_id",
+        "job_id"
+      ]
+    }
+  };
+  // Job summary.
+  JobSummary summary = 1;
+  // Job type.
+  Type type = 2;
+  // Associated resource pool.
+  string resource_pool = 5;
+  // Whether the job is preemptible.
+  bool is_preemptible = 6;
+  // The job priority in priority scheduler.
+  int32 priority = 7;
+  // The job weight in fairshare scheduler.
+  double weight = 8;
+  // Job type.
+  string job_id = 10;
+  // Number of requested slots.
+  int32 requested_slots = 11;
+  // Number of allocated slots.
+  int32 allocated_slots = 12;
+  // Job's progress from 0 to 1.
+  float progress = 14;
+  // Job's workspace id.
+  int32 workspace_id = 16;
+}
+
 // Job represents a user submitted work that is not in a terminal
 // state.
 message Job {
@@ -60,9 +99,9 @@ message Job {
         "is_preemptible",
         "entity_id",
         "name",
+        "workspace_id",
         "requested_slots",
         "allocated_slots",
-        "job_name",
         "job_id"
       ]
     }
@@ -97,6 +136,20 @@ message Job {
   string name = 13;
   // Job's progress from 0 to 1.
   float progress = 14;
+  // Job's workspace id.
+  int32 workspace_id = 16;
+}
+
+// RBACJob is a job that can have either a limited or a full
+// representation of a job.
+message RBACJob {
+  // job represent one of the possible representations of a job.
+  oneof job {
+    // Full representation.
+    Job full = 1;
+    // Limited representation for lower access levels.
+    LimitedJob limited = 2;
+  }
 }
 
 // Describes a message to control jobs in a queue.
