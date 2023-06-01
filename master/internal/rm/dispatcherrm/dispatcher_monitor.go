@@ -844,6 +844,10 @@ func calculateJobExitStatus(
 		case "FAILED":
 			// exit status TBD -- use -1 to skip printing incorrect (exit code 1)
 			return -1, getJobExitMessages(resp), true
+		case "MISSING": // Unexpected job state, assuming job is terminated
+			return -1,
+				append(getJobExitMessages(resp), "HPC launcher job lost. Assuming job terminated."),
+				true
 		case "COMPLETED": // Normal completion
 			return 0, getJobExitMessages(resp), true
 		default:
