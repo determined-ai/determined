@@ -107,4 +107,6 @@ message ListWorkspacesBoundToRPRequest {
 message ListWorkspacesBoundToRPResponse {
   // List of workspace IDs.
   repeated int32 workspace_ids = 1;
+  // Pagination information of the full dataset.
+  Pagination pagination = 2;
 }

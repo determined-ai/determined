@@ -173,7 +173,6 @@ func (_m *WorkspaceAuthZ) CanSetWorkspacesName(ctx context.Context, curUser mode
 	return r0
 }
 
-<<<<<<< HEAD
 // CanUnBindRPWorkspace provides a mock function with given fields: ctx, curUser, workspaceIDs
 func (_m *WorkspaceAuthZ) CanUnBindRPWorkspace(ctx context.Context, curUser model.User, workspaceIDs []int32) error {
 	ret := _m.Called(ctx, curUser, workspaceIDs)
@@ -181,15 +180,6 @@ func (_m *WorkspaceAuthZ) CanUnBindRPWorkspace(ctx context.Context, curUser mode
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, model.User, []int32) error); ok {
 		r0 = rf(ctx, curUser, workspaceIDs)
-=======
-// CanUnBindRPWorkspace provides a mock function with given fields: ctx, curUser, workspaceID
-func (_m *WorkspaceAuthZ) CanUnBindRPWorkspace(ctx context.Context, curUser model.User, workspaceID int32) error {
-	ret := _m.Called(ctx, curUser, workspaceID)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, model.User, int32) error); ok {
-		r0 = rf(ctx, curUser, workspaceID)
->>>>>>> a5a5431ac (unbind workspace RP handler + db helper)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -223,6 +213,32 @@ func (_m *WorkspaceAuthZ) CanUnpinWorkspace(ctx context.Context, curUser model.U
 	}
 
 	return r0
+}
+
+// FilterWorkspaceIDs provides a mock function with given fields: ctx, curUser, workspaces
+func (_m *WorkspaceAuthZ) FilterWorkspaceIDs(ctx context.Context, curUser model.User, workspaces []int32) ([]int32, error) {
+	ret := _m.Called(ctx, curUser, workspaces)
+
+	var r0 []int32
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, model.User, []int32) ([]int32, error)); ok {
+		return rf(ctx, curUser, workspaces)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, model.User, []int32) []int32); ok {
+		r0 = rf(ctx, curUser, workspaces)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]int32)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, model.User, []int32) error); ok {
+		r1 = rf(ctx, curUser, workspaces)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // FilterWorkspaceProjects provides a mock function with given fields: ctx, curUser, projects
