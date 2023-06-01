@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"sync"
 	"time"
 
 	"github.com/labstack/echo/v4"
@@ -27,6 +28,7 @@ type ProxyHTTPAuth func(echo.Context) (done bool, err error)
 
 // Proxy is an actor that proxies requests to registered services.
 type Proxy struct {
+	lock     sync.RWMutex
 	HTTPAuth ProxyHTTPAuth
 	Services map[string]*Service
 	Syslog   *logrus.Entry
@@ -55,6 +57,8 @@ func Register(serviceID string, url *url.URL, proxyTCP bool, unauth bool) {
 	if serviceID == "" {
 		return
 	}
+	DefaultProxy.lock.Lock()
+	defer DefaultProxy.lock.Unlock()
 	// NIT CAROLINA: When to fail?
 	DefaultProxy.Syslog.Infof("registering service: %s (%v)", serviceID, url)
 	DefaultProxy.Services[serviceID] = &Service{
@@ -70,16 +74,22 @@ func Register(serviceID string, url *url.URL, proxyTCP bool, unauth bool) {
 // registered again will be responded with a 404 response. If the service is not registered with
 // the proxy, the message is ignored.
 func Unregister(serviceID string) {
+	DefaultProxy.lock.Lock()
+	defer DefaultProxy.lock.Unlock()
 	delete(DefaultProxy.Services, serviceID)
 }
 
 // ClearProxy erases all services from the proxy in case any handlers are still active.
 func ClearProxy() {
+	DefaultProxy.lock.Lock()
+	defer DefaultProxy.lock.Unlock()
 	DefaultProxy.Services = nil
 }
 
 // GetService returns the Service, if any, given the serviceID key.
 func GetService(serviceID string) *Service {
+	DefaultProxy.lock.Lock()
+	defer DefaultProxy.lock.Unlock()
 	service := DefaultProxy.Services[serviceID]
 	if service == nil {
 		return nil
