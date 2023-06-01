@@ -11,6 +11,8 @@
 
 * `TERMINATING` (value: `"TERMINATING"`)
 
+* `MISSING` (value: `"MISSING"`)
+
 * `TERMINATED` (value: `"TERMINATED"`)
 
 * `COMPLETED` (value: `"COMPLETED"`)

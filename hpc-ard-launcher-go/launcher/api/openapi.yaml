@@ -6,7 +6,7 @@ info:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
   title: Launcher API
-  version: 3.2.9
+  version: 3.3.0
 servers:
 - url: /
 security:
@@ -1970,6 +1970,7 @@ components:
       - PENDING
       - RUNNING
       - TERMINATING
+      - MISSING
       - TERMINATED
       - COMPLETED
       - FAILED

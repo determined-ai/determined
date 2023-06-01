@@ -1,8 +1,8 @@
 # hpe-hpc-launcher Go Client
 
-The code found in this sub-tree is generated automatically using openapi tools from the 
-hpe-hpc-launcher (Capsules) REST API specification. 
-It can be build with the following command line executed in the HPE Github hpc-ard-capsules-core project:
+The code found in this subtree is generated automatically using OpenAPI tools from the
+HPE-HPC-launcher (Capsules) REST API specification.
+It can be built with the following command line, executed in the HPE GitHub hpc-ard-capsules-core project:
 
 ```
 # Checkout and build launcher go client API 
