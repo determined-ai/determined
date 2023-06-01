@@ -327,6 +327,7 @@ func (a *Agent) sender(out chan *aproto.MasterMessage) events.Publisher[containe
 			case in.StatsRecord != nil:
 				msg.ContainerStatsRecord = in.StatsRecord
 			case in.Log != nil:
+				in.Log.AgentID = &a.opts.AgentID // enrich log
 				msg.ContainerLog = in.Log
 			default:
 				panic(fmt.Sprintf("unknown outgoing message: %+v", in))
