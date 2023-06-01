@@ -38,23 +38,16 @@ type Proxy struct {
 var DefaultProxy *Proxy
 
 // InitProxy initializes the global proxy.
-func (p *Proxy) InitProxy(httpAuth ProxyHTTPAuth) {
-	if p != nil {
+func InitProxy(httpAuth ProxyHTTPAuth) {
+	if DefaultProxy != nil {
 		logrus.Warn(
 			"detected re-initialization of Proxy that should never occur outside of tests",
 		)
 	}
-
-	//if p.HTTPAuth == nil {
-	//	p.HTTPAuth = httpAuth
-	//}
-
-	if p.services == nil {
-		p.services = make(map[string]*Service)
-	}
-
-	if p.syslog == nil {
-		p.syslog = logrus.WithTime(time.Now())
+	DefaultProxy = &Proxy{
+		HTTPAuth: httpAuth,
+		services: make(map[string]*Service),
+		syslog:   logrus.WithTime(time.Now()), // NIT: How else to initialize syslog?
 	}
 }
 

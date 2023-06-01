@@ -8,8 +8,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var TestProxy *Proxy
-
 var (
 	proxyAuth = func(c echo.Context) (done bool, err error) {
 		return true, nil
@@ -20,32 +18,32 @@ var (
 
 func register(t *testing.T, prTCP bool, unauth bool) {
 	for _, id := range serviceIDs {
-		TestProxy.Register(id, &u, prTCP, unauth)
-		if TestProxy.GetService(id) == nil {
+		DefaultProxy.Register(id, &u, prTCP, unauth)
+		if DefaultProxy.GetService(id) == nil {
 			t.Logf("failed to find registered service %s", id)
 		}
 	}
-	if len(TestProxy.Summary()) != len(serviceIDs) {
+	if len(DefaultProxy.Summary()) != len(serviceIDs) {
 		t.Logf("failed to register all services")
 	}
 }
 
 func unregister(t *testing.T) {
 	for _, id := range serviceIDs {
-		if TestProxy.GetService(id) == nil {
+		if DefaultProxy.GetService(id) == nil {
 			t.Logf("failed to find registered service %s", id)
 		}
-		TestProxy.Unregister(id)
-		if TestProxy.GetService(id) != nil {
+		DefaultProxy.Unregister(id)
+		if DefaultProxy.GetService(id) != nil {
 			t.Logf("failed to unregister service %s", id)
 		}
 	}
-	if len(TestProxy.Summary()) != 0 {
+	if len(DefaultProxy.Summary()) != 0 {
 		t.Logf("failed to unregister all services.")
 	}
 }
 
-func TestProxyLifecycle(t *testing.T) {
+func DefaultProxyLifecycle(t *testing.T) {
 	cases := []struct {
 		name                 string
 		proxyTCP             bool
@@ -62,14 +60,14 @@ func TestProxyLifecycle(t *testing.T) {
 	}
 
 	// First init the new Proxy
-	TestProxy.InitProxy(proxyAuth)
+	InitProxy(proxyAuth)
 	// And check that the Proxy struct is set up correctly
-	require.NotNil(t, TestProxy.HTTPAuth)
-	require.Equal(t, map[string]*Service{}, TestProxy.services)
-	require.Equal(t, "", TestProxy.syslog.Message)
+	require.NotNil(t, DefaultProxy.HTTPAuth)
+	require.Equal(t, map[string]*Service{}, DefaultProxy.services)
+	require.Equal(t, "", DefaultProxy.syslog.Message)
 
 	// Then create the new proxy handler for the services
-	handler := TestProxy.NewProxyHandler("service")
+	handler := DefaultProxy.NewProxyHandler("service")
 	require.NotNil(t, handler)
 	if handler == nil {
 		t.Logf("handler not created for cluster")
@@ -79,25 +77,25 @@ func TestProxyLifecycle(t *testing.T) {
 	for _, testCase := range cases {
 		// First register the services
 		register(t, testCase.proxyTCP, testCase.allowUnauthenticated)
-		require.Equal(t, len(serviceIDs), len(TestProxy.Summary()))
+		require.Equal(t, len(serviceIDs), len(DefaultProxy.Summary()))
 		// Check that service fields are set correctly
-		for _, service := range TestProxy.Summary() {
+		for _, service := range DefaultProxy.Summary() {
 			require.Equal(t, service.URL, &u)
 			require.Equal(t, service.ProxyTCP, testCase.proxyTCP)
 			require.Equal(t, service.AllowUnauthenticated, testCase.allowUnauthenticated)
 		}
 		// Then unregister
 		unregister(t)
-		require.Equal(t, map[string]Service{}, TestProxy.Summary())
+		require.Equal(t, map[string]Service{}, DefaultProxy.Summary())
 	}
 
 	// Now at the very end, to test clear proxy ...
 	register(t, true, true)
-	require.Equal(t, len(serviceIDs), len(TestProxy.Summary()))
+	require.Equal(t, len(serviceIDs), len(DefaultProxy.Summary()))
 	// Clear the services by ClearProxy
-	TestProxy.ClearProxy()
-	if len(TestProxy.Summary()) != 0 {
+	DefaultProxy.ClearProxy()
+	if len(DefaultProxy.Summary()) != 0 {
 		t.Logf("failed to clear all proxy services.")
 	}
-	require.Equal(t, 0, len(TestProxy.Summary()))
+	require.Equal(t, 0, len(DefaultProxy.Summary()))
 }
