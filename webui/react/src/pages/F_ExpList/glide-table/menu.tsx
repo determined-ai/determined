@@ -60,6 +60,7 @@ export const TableActionMenu: React.FC<TableActionMenuProps> = ({
               }
             : {}
         }
+        onClick={handleClose}
       />
     </Dropdown>
   );
