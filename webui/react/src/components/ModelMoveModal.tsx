@@ -62,7 +62,7 @@ const ModelMoveModal = ({ model }: Props): JSX.Element => {
   return (
     <Modal
       size="small"
-      submit={{ handler: handleOk, text: 'Move' }}
+      submit={{ handleError, handler: handleOk, text: 'Move' }}
       title={`Move a Model (${model.name})`}
       onClose={handleClose}>
       <Form autoComplete="off" form={form} layout="vertical">

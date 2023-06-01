@@ -354,6 +354,7 @@ const ExperimentCreateModalComponent = ({
       size={modalState.isAdvancedMode ? (isFork ? 'medium' : 'large') : 'small'}
       submit={{
         disabled,
+        handleError,
         handler: handleSubmit,
         text: type,
       }}
@@ -370,6 +371,7 @@ const ExperimentCreateModalComponent = ({
               files={[{ content: Loaded(modalState.configString), key: 'config.yaml' }]}
               height="40vh"
               onChange={handleEditorChange}
+              onError={handleError}
             />
           </React.Suspense>
         )}

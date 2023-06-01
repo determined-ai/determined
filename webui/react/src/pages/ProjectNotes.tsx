@@ -62,6 +62,7 @@ const ProjectNotes: React.FC<Props> = ({ project, fetchProject }) => {
         multiple
         notes={project?.notes ?? []}
         onDelete={handleDeleteNote}
+        onError={handleError}
         onNewPage={handleNewNotesPage}
         onSave={handleSaveNotes}
       />
