@@ -1,5 +1,38 @@
-# The image registry to use. Defaults to the determinedai repository in DockerHub.
+# The image registry to be used to pull the Master image.
+# Determined OSS edition uses the determinedai repository in DockerHub.
 imageRegistry: determinedai
+# HPE Machine Learning Development Environment (MLDE), Determined Enterprise Edition, uses the HPE MSC as the image registry
+#imageRegistry: hub.myenterpriselicense.hpe.com/hpe-mlde/<SKU>
+# ATTENTION
+# Please also set: 
+#   - communicated product SKU, 
+#   - enterpriseEdition flag to true, 
+# and configure the imagePullSecretName to the HPE MSC credentials K8s Secret (e.g. mlde-hpe-registry)
+#
+# To get the HPE MSC credentials go to the myenterpriselicense.hpe.com website, and along with the information provided with your order
+# create the HPE MSC credentials K8s Secret (e.g. mlde-hpe-registry) using the following command: 
+# kubectl create secret docker-registry mlde-hpe-registry  \
+# --docker-server=hub.myenterpriselicense.hpe.com/hpe-mlde/<SKU> \
+# --docker-username=<HPE MSC user name>  \
+# --docker-password=<HPE MSC MLDE license key> \
+# --docker-email=<HPE MSC user email> \
+# -n <MLDE deployment K8s namespace, if any>
+
+# Default images used during the deployment 
+defaultImages:
+  # PostgreSQL image
+  postgreSQL: "postgres:10.14" 
+
+  # default Kube Scheduler image
+  kubeScheduler: "k8s.gcr.io/scheduler-plugins/kube-scheduler:v0.18.9"
+
+  # Kube Scheduler used when the K8s default scheduler is set to preemption
+  # when, defaultScheduler: preemption
+  kubeSchedulerPreemption: "determinedai/kube-scheduler:0.17.0"
+
+  # default images for CPU and GPU environments
+  cpuImage: "determinedai/environments:py-3.8-pytorch-1.12-tf-2.8-cpu-9d07809"
+  gpuImage: "determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-6eceaca"
 
 # Install Determined enterprise edition.
 enterpriseEdition: false
@@ -7,6 +40,11 @@ enterpriseEdition: false
 # Should be configured if using the master image in the Determined enterprise edition
 # or private registry.
 imagePullSecretName:
+
+# Logger Level in master.yaml - Four severity levels: debug, info, warn, error
+logLevel: info 
+# Sets in master.yaml the output of Logger in color mode - Values: true (default), false
+logColor: true 
 
 # masterPort configures the port at which the Determined master listens for connections on.
 masterPort: 8080
