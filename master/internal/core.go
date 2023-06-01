@@ -920,7 +920,7 @@ func (m *Master) Run(ctx context.Context) error {
 	userService := user.GetService()
 
 	allocationmap.InitAllocationMap()
-	proxy.InitProxy(processProxyAuthentication)
+	proxy.DefaultProxy.InitProxy(processProxyAuthentication)
 	portregistry.InitPortRegistry()
 	m.system.MustActorOf(actor.Addr("allocation-aggregator"), &allocationAggregator{db: m.db})
 
@@ -1166,7 +1166,7 @@ func (m *Master) Run(ctx context.Context) error {
 			api.Route(m.getPrometheusTargets))
 	}
 
-	handler := proxy.NewProxyHandler("service")
+	handler := proxy.DefaultProxy.NewProxyHandler("service")
 	m.echo.Any("/proxy/:service/*", handler)
 
 	// Catch-all for requests not matched by any above handler

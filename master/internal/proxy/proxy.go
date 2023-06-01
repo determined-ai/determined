@@ -30,38 +30,45 @@ type ProxyHTTPAuth func(echo.Context) (done bool, err error)
 type Proxy struct {
 	lock     sync.RWMutex
 	HTTPAuth ProxyHTTPAuth
-	Services map[string]*Service
-	Syslog   *logrus.Entry
+	services map[string]*Service
+	syslog   *logrus.Entry
 }
 
 // DefaultProxy is the global proxy singleton.
 var DefaultProxy *Proxy
 
 // InitProxy initializes the global proxy.
-func InitProxy(httpAuth ProxyHTTPAuth) {
-	if DefaultProxy != nil {
+func (p *Proxy) InitProxy(httpAuth ProxyHTTPAuth) {
+	if p != nil {
 		logrus.Warn(
 			"detected re-initialization of Proxy that should never occur outside of tests",
 		)
 	}
-	DefaultProxy = &Proxy{
-		HTTPAuth: httpAuth,
-		Services: make(map[string]*Service),
-		Syslog:   logrus.WithTime(time.Now()), // NIT: How else to initialize syslog?
+
+	//if p.HTTPAuth == nil {
+	//	p.HTTPAuth = httpAuth
+	//}
+
+	if p.services == nil {
+		p.services = make(map[string]*Service)
+	}
+
+	if p.syslog == nil {
+		p.syslog = logrus.WithTime(time.Now())
 	}
 }
 
 // Register registers the service name with the associated target URL. All requests with the
 // format ".../:service-name/*" are forwarded to the service via the target URL.
-func Register(serviceID string, url *url.URL, proxyTCP bool, unauth bool) {
+func (p *Proxy) Register(serviceID string, url *url.URL, proxyTCP bool, unauth bool) {
 	if serviceID == "" {
 		return
 	}
-	DefaultProxy.lock.Lock()
-	defer DefaultProxy.lock.Unlock()
-	// NIT CAROLINA: When to fail?
-	DefaultProxy.Syslog.Infof("registering service: %s (%v)", serviceID, url)
-	DefaultProxy.Services[serviceID] = &Service{
+	p.lock.Lock()
+	defer p.lock.Unlock()
+
+	p.syslog.Infof("registering service: %s (%v)", serviceID, url)
+	p.services[serviceID] = &Service{
 		URL:                  url,
 		LastRequested:        time.Now(),
 		ProxyTCP:             proxyTCP,
@@ -73,24 +80,24 @@ func Register(serviceID string, url *url.URL, proxyTCP bool, unauth bool) {
 // Unregister removes the service from the proxy. All future requests until the service name is
 // registered again will be responded with a 404 response. If the service is not registered with
 // the proxy, the message is ignored.
-func Unregister(serviceID string) {
-	DefaultProxy.lock.Lock()
-	defer DefaultProxy.lock.Unlock()
-	delete(DefaultProxy.Services, serviceID)
+func (p *Proxy) Unregister(serviceID string) {
+	p.lock.Lock()
+	defer p.lock.Unlock()
+	delete(p.services, serviceID)
 }
 
 // ClearProxy erases all services from the proxy in case any handlers are still active.
-func ClearProxy() {
-	DefaultProxy.lock.Lock()
-	defer DefaultProxy.lock.Unlock()
-	DefaultProxy.Services = nil
+func (p *Proxy) ClearProxy() {
+	p.lock.Lock()
+	defer p.lock.Unlock()
+	p.services = nil
 }
 
 // GetService returns the Service, if any, given the serviceID key.
-func GetService(serviceID string) *Service {
-	DefaultProxy.lock.Lock()
-	defer DefaultProxy.lock.Unlock()
-	service := DefaultProxy.Services[serviceID]
+func (p *Proxy) GetService(serviceID string) *Service {
+	p.lock.Lock()
+	defer p.lock.Unlock()
+	service := p.services[serviceID]
 	if service == nil {
 		return nil
 	}
@@ -108,11 +115,11 @@ func GetService(serviceID string) *Service {
 
 // NewProxyHandler returns a middleware function for proxying HTTP-like traffic to services
 // running in the cluster. Services an HTTP request through the /proxy/:service/* route.
-func NewProxyHandler(serviceID string) echo.HandlerFunc {
+func (p *Proxy) NewProxyHandler(serviceID string) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		// Look up the service name in the url path.
 		serviceName := c.Param(serviceID)
-		service := GetService(serviceName)
+		service := p.GetService(serviceName)
 
 		if service == nil {
 			return echo.NewHTTPError(http.StatusNotFound,
@@ -157,10 +164,10 @@ func NewProxyHandler(serviceID string) echo.HandlerFunc {
 }
 
 // Summary returns a snapshot of the registered services.
-func Summary() map[string]Service {
+func (p *Proxy) Summary() map[string]Service {
 	snapshot := make(map[string]Service)
 
-	for id, service := range DefaultProxy.Services {
+	for id, service := range DefaultProxy.services {
 		sURL := *service.URL
 		snapshot[id] = Service{
 			URL:                  &sURL,

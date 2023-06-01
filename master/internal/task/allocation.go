@@ -885,7 +885,7 @@ func (a *Allocation) registerProxies(ctx *actor.Context, addresses []cproto.Addr
 		// We are keying on allocation id instead of container id. Revisit this when we need to
 		// proxy multi-container tasks or when containers are created prior to being
 		// assigned to an agent.
-		proxy.Register(pcfg.ServiceID, &url.URL{
+		proxy.DefaultProxy.Register(pcfg.ServiceID, &url.URL{
 			Scheme: "http",
 			Host:   fmt.Sprintf("%s:%d", address.HostIP, address.HostPort),
 		}, pcfg.ProxyTCP, pcfg.Unauthenticated)
@@ -913,7 +913,7 @@ func (a *Allocation) unregisterProxies(ctx *actor.Context) {
 	}
 
 	for _, serviceID := range a.proxies {
-		proxy.Unregister(serviceID)
+		proxy.DefaultProxy.Unregister(serviceID)
 	}
 }
 
