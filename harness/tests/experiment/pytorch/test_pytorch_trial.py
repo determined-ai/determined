@@ -921,7 +921,7 @@ class TestPyTorchTrial:
 
         assert trial.legacy_counter.__dict__ == {"legacy_on_training_epochs_start_calls": 2}
 
-    @pytest.mark.skipif(torch.cuda.device_count() < 2)
+    @pytest.mark.skipif(torch.cuda.device_count() < 2, reason="not enough gpus")
     @pytest.mark.gpu_parallel
     def test_cifar10_parallel(self, tmp_path: pathlib.Path):
 
