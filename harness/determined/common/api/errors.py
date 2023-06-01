@@ -1,3 +1,5 @@
+import json
+
 import requests
 
 
@@ -26,11 +28,22 @@ class APIException(BadRequestException):
     """
     Raised when an API operation has failed. The status code is provided in
     the failure.
+
+    Args:
+        response: A requests.Response with a body that looks like:
+            {
+                error: {
+                    code: <int>,
+                    reason: <error type>,
+                    error: <detailed error message>
+                }
+            }
     """
 
     def __init__(self, response: requests.Response) -> None:
         try:
-            m = response.json()["message"]
+            unwrapped_exception = response.json()["error"]
+            m = json.dumps(unwrapped_exception, indent=2)
         except (ValueError, KeyError):
             m = response.text
         super().__init__(m)
