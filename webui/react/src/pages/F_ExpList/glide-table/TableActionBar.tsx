@@ -10,6 +10,7 @@ import { Column, Columns } from 'components/kit/Columns';
 import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 import Icon, { IconName } from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
+import Tooltip from 'components/kit/Tooltip';
 import usePermissions from 'hooks/usePermissions';
 import {
   activateExperiments,
@@ -367,9 +368,11 @@ const TableActionBar: React.FC<Props> = ({
       <Column align="right">
         <Space>
           <Dropdown content={settingContent}>
-            <Button>
-              <Icon name="overflow-horizontal" title="menu" />
-            </Button>
+            <Tooltip content="Table Settings">
+              <Button>
+                <Icon name="overflow-horizontal" title="menu" />
+              </Button>
+            </Tooltip>
           </Dropdown>
           {!!toggleComparisonView && <Button onClick={toggleComparisonView}>Compare</Button>}
         </Space>
