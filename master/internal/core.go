@@ -322,7 +322,7 @@ func (m *Master) canGetUsageDetails(ctx context.Context, user *model.User) error
 // nolint:lll
 //
 //	@Success	200					{}		string	"A CSV file containing the fields allocation_id, task_type, username, workspace_name, experiment_id, slots, start_time, end_time, checkpointing_time, imagepulling_time"
-//	@Router		/resources/allocations/allocations-csv [get]
+//	@Router		/resources/allocation/allocations-csv [get]
 func (m *Master) getResourceAllocations(c echo.Context) error {
 	// Get start and end times from context
 	args := struct {
