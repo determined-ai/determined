@@ -1,5 +1,5 @@
 import enum
-from typing import Callable, Iterator, Optional, Tuple, TypeVar, Union
+from typing import Callable, Iterator, Optional, Set, Tuple, TypeVar, Union
 
 from determined.common import api, util
 from determined.common.api import Session, bindings
@@ -52,6 +52,14 @@ class NTSC_Kind(enum.Enum):
 
 
 AnyNTSC = Union[bindings.v1Notebook, bindings.v1Tensorboard, bindings.v1Shell, bindings.v1Command]
+
+all_ntsc: Set[NTSC_Kind] = {
+    NTSC_Kind.notebook,
+    NTSC_Kind.shell,
+    NTSC_Kind.command,
+    NTSC_Kind.tensorboard,
+}
+proxied_ntsc: Set[NTSC_Kind] = {NTSC_Kind.notebook, NTSC_Kind.tensorboard}
 
 
 def get_ntsc_details(session: Session, typ: NTSC_Kind, ntsc_id: str) -> AnyNTSC:

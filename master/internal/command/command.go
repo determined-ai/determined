@@ -664,6 +664,7 @@ func (c *command) toV1Job() *jobv1.Job {
 		UserId:         int32(c.Base.Owner.ID),
 		Weight:         c.Config.Resources.Weight,
 		Name:           c.Config.Description,
+		WorkspaceId:    int32(c.GenericCommandSpec.Metadata.WorkspaceID),
 	}
 
 	j.IsPreemptible = false
