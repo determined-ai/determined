@@ -16,10 +16,10 @@ import { ExperimentVisualizationType } from '../ExperimentVisualization';
 import css from './ExperimentVisualizationFilters.module.scss';
 
 export interface VisualizationFilters {
-  batch: number;
-  batchMargin: number;
+  batch?: number;
+  batchMargin?: number;
   hParams: string[];
-  maxTrial: number;
+  maxTrial?: number;
   metric?: Metric;
   scale: Scale;
   view?: ViewType;
@@ -40,7 +40,7 @@ export const ViewType = {
 export type ViewType = ValueOf<typeof ViewType>;
 
 interface Props {
-  batches: number[];
+  batches?: number[];
   filters: VisualizationFilters;
   fullHParams: string[];
   metrics: Metric[];
@@ -148,7 +148,7 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
 
   // Pick the first valid option if the current local batch is invalid.
   useEffect(() => {
-    if (batches.length === 0 || batches.includes(filters.batch)) return;
+    if (!batches || (batches.length === 0 || (filters.batch && batches.includes(filters.batch)))) return;
     onChange?.({ batch: batches.first() });
   }, [batches, filters.batch, onChange]);
 
@@ -177,7 +177,7 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
           ))}
         </Select>
       )}
-      {showBatches && (
+      {showBatches && batches && (
         <>
           <Select
             label="Batches Processed"

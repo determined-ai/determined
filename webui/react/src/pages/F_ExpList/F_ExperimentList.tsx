@@ -387,9 +387,11 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
           <Error />
         ) : (
           <ComparisonView
+            colorMap={colorMap}
             initialWidth={settings.compareWidth}
             open={settings.compare}
-            selectedExperiments={selectedExperiments}
+            experiments={selectedExperiments}
+            project={project}
             onWidthChange={handleCompareWidthChange}>
             <GlideTable
               clearSelectionTrigger={clearSelectionTrigger}

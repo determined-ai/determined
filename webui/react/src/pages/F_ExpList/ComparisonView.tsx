@@ -2,24 +2,28 @@ import React, { useMemo } from 'react';
 
 import Pivot, { TabItem } from 'components/kit/Pivot';
 import SplitPane from 'components/SplitPane';
-import { ExperimentWithTrial } from 'types';
-
+import { ExperimentWithTrial, Project} from 'types';
+import HpParallelCoordinates from './ExpParallelCoordinates';
+import { MapOfIdsToColors } from './useGlasbey';
 interface Props {
+  colorMap: MapOfIdsToColors;
   children: React.ReactElement;
   open: boolean;
   initialWidth: number;
   onWidthChange: (width: number) => void;
-  selectedExperiments: ExperimentWithTrial[];
+  experiments: ExperimentWithTrial[];
+  project: Project
 }
 
-const ComparisonView: React.FC<Props> = ({ children, open, initialWidth, onWidthChange }) => {
+const ComparisonView: React.FC<Props> = ({ children, open, initialWidth, onWidthChange,  experiments, project, colorMap}) => {
+
   const tabs: TabItem[] = useMemo(() => {
     return [
-      { key: 'metrics', label: 'Metrics' },
-      { key: 'hyperparameters', label: 'Hyperparameters' },
+      { key: 'metrics', label: 'Metrics'},
+      { key: 'hyperparameters', label: 'Hyperparameters', children:<HpParallelCoordinates colorMap={colorMap} workspaceId={project.workspaceId} experiments={experiments}/>  },
       { key: 'configurations', label: 'Configurations' },
     ];
-  }, []);
+  }, [experiments, project]);
 
   return (
     <div>
