@@ -393,11 +393,15 @@ func (c *Container) shimDockerEvents() events.Publisher[docker.Event] {
 	return events.FuncPublisher[docker.Event](func(ctx context.Context, e docker.Event) error {
 		switch {
 		case e.Log != nil:
+			source := "agent"
+			agentID := "agent-id" // Place holder -- what should we put here?
 			return c.pub.Publish(ctx, Event{Log: &aproto.ContainerLog{
 				ContainerID: c.containerID,
 				Timestamp:   e.Log.Timestamp,
 				Level:       &e.Log.Level,
 				AuxMessage:  &e.Log.Message,
+				Source:      &source,
+				AgentID:     &agentID,
 			}})
 
 		case e.Stats != nil:
