@@ -2,6 +2,7 @@ import { isLeft } from 'fp-ts/lib/Either';
 import * as io from 'io-ts';
 
 import { V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
+import { ValueOf } from 'shared/types';
 import { DetError, ErrorLevel, ErrorType } from 'shared/utils/error';
 import {
   CheckpointStorageType,
@@ -29,6 +30,39 @@ export const decode = <T>(type: io.Mixed, data: any): T => {
 export const optional = (x: io.Mixed): io.Mixed | io.NullC | io.UndefinedC => {
   return io.union([x, io.null, io.undefined]);
 };
+
+export class ValueofType<D extends { [key: string]: unknown }> extends io.Type<ValueOf<D>> {
+  readonly _tag: 'ValueofType' = 'ValueofType' as const;
+  constructor(
+    name: string,
+    is: ValueofType<D>['is'],
+    validate: ValueofType<D>['validate'],
+    encode: ValueofType<D>['encode'],
+    readonly values: D,
+  ) {
+    super(name, is, validate, encode);
+  }
+}
+
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+export interface ValueofC<D extends { [key: string]: unknown }> extends ValueofType<D> {}
+
+export function valueof<D extends { [key: string]: unknown }>(
+  values: D,
+  name: string = Object.values(values)
+    .map((k) => JSON.stringify(k))
+    .join(' | '),
+): ValueofC<D> {
+  const valueSet = new Set(Object.values(values));
+  const is = (u: unknown): u is ValueOf<D> => valueSet.has(u);
+  return new ValueofType(
+    name,
+    is,
+    (u, c) => (is(u) ? io.success(u) : io.failure(u, c)),
+    io.identity,
+    values,
+  );
+}
 
 /* Slot */
 

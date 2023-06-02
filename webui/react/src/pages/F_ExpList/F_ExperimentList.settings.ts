@@ -1,7 +1,8 @@
-import { array, boolean, keyof, literal, number, string, TypeOf, union } from 'io-ts';
+import { array, boolean, literal, number, string, TypeOf, union } from 'io-ts';
 
 import { INIT_FORMSET } from 'components/FilterForm/components/FilterFormStore';
 import { SettingsConfig } from 'hooks/useSettings';
+import { valueof } from 'ioTypes';
 
 import { defaultExperimentColumns } from './glide-table/columns';
 
@@ -12,12 +13,7 @@ export const RowHeight = {
   SHORT: 'SHORT',
   TALL: 'TALL',
 } as const;
-const ioRowHeight = keyof({
-  [RowHeight.SHORT]: null,
-  [RowHeight.MEDIUM]: null,
-  [RowHeight.TALL]: null,
-  [RowHeight.EXTRA_TALL]: null,
-});
+const ioRowHeight = valueof(RowHeight);
 export type RowHeight = TypeOf<typeof ioRowHeight>;
 
 export interface F_ExperimentListSettings {
