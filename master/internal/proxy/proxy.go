@@ -83,7 +83,7 @@ func (p *Proxy) Unregister(serviceID string) {
 func (p *Proxy) ClearProxy() {
 	p.lock.Lock()
 	defer p.lock.Unlock()
-	p.services = make(map[string]*Service)
+	p.services = make(map[string]*Service)gi
 }
 
 // GetService returns the Service, if any, given the serviceID key.
@@ -158,6 +158,8 @@ func (p *Proxy) NewProxyHandler(serviceID string) echo.HandlerFunc {
 
 // Summary returns a snapshot of the registered services.
 func (p *Proxy) Summary() map[string]Service {
+	p.lock.RLock()
+	defer p.lock.RUnlock()
 	snapshot := make(map[string]Service)
 
 	for id, service := range DefaultProxy.services {
