@@ -5387,11 +5387,17 @@ export interface V1MetricsRange {
      */
     metricsName: string;
     /**
-     * The range of metrics values in the format of [min, max].
-     * @type {Array<number>}
+     * The min of metrics values.
+     * @type {number}
      * @memberof V1MetricsRange
      */
-    range: Array<number>;
+    min?: number;
+    /**
+     * The max of metrics values.
+     * @type {number}
+     * @memberof V1MetricsRange
+     */
+    max?: number;
 }
 /**
  * Metrics report.

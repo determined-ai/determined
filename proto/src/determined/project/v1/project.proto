@@ -141,6 +141,8 @@ message MetricsRange {
   };
   // The name of metrics.
   string metrics_name = 1;
-  // The range of metrics values in the format of [min, max].
-  repeated double range = 2;
+  // The min of metrics values.
+  double min = 2;
+  // The max of metrics values.
+  double max = 3;
 }

@@ -427,6 +427,29 @@ def test_experiment_list_columns() -> None:
 
 
 @pytest.mark.e2e_cpu
+def test_metrics_range_by_project() -> None:
+    exp.run_basic_test(
+        conf.fixtures_path("core_api/arbitrary_workload_order.yaml"),
+        conf.fixtures_path("core_api"),
+        1,
+        expect_workloads=True,
+        expect_checkpoints=True,
+    )
+    ranges = bindings.get_GetProjectMetricsRange(api_utils.determined_test_session(), id=1)
+    expected_ranges = {
+        "validation.validation_error": 0.04,
+        "validation.x": 1,
+        "training.loss": 0.04,
+        "training.x": 2,
+    }
+    for r in ranges.ranges:
+        assert r.metricsName in expected_ranges
+        metrics = expected_ranges[r.metricsName]
+        assert abs(metrics - r.min) < 0.01
+        assert abs(metrics - r.max) < 0.01
+
+
+@pytest.mark.e2e_cpu
 def test_core_api_arbitrary_workload_order() -> None:
     experiment_id = exp.run_basic_test(
         conf.fixtures_path("core_api/arbitrary_workload_order.yaml"),

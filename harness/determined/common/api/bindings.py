@@ -6815,29 +6815,41 @@ class v1Metrics:
         return out
 
 class v1MetricsRange:
+    max: "typing.Optional[float]" = None
+    min: "typing.Optional[float]" = None
 
     def __init__(
         self,
         *,
         metricsName: str,
-        range: "typing.Sequence[float]",
+        max: "typing.Union[float, None, Unset]" = _unset,
+        min: "typing.Union[float, None, Unset]" = _unset,
     ):
         self.metricsName = metricsName
-        self.range = range
+        if not isinstance(max, Unset):
+            self.max = max
+        if not isinstance(min, Unset):
+            self.min = min
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1MetricsRange":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "metricsName": obj["metricsName"],
-            "range": [float(x) for x in obj["range"]],
         }
+        if "max" in obj:
+            kwargs["max"] = float(obj["max"]) if obj["max"] is not None else None
+        if "min" in obj:
+            kwargs["min"] = float(obj["min"]) if obj["min"] is not None else None
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "metricsName": self.metricsName,
-            "range": [dump_float(x) for x in self.range],
         }
+        if not omit_unset or "max" in vars(self):
+            out["max"] = None if self.max is None else dump_float(self.max)
+        if not omit_unset or "min" in vars(self):
+            out["min"] = None if self.min is None else dump_float(self.min)
         return out
 
 class v1MetricsReport:

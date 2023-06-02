@@ -16,6 +16,7 @@ import (
 	exputil "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/project"
+	"github.com/determined-ai/determined/master/pkg/mathx"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -215,7 +216,7 @@ func (a *apiServer) getProjectColumnsByID(
 	}
 
 	// Get metrics columns
-	metricNames, err := a.getProjectmetricsNames(ctx, curUser, p)
+	metricNames, err := a.getProjectMetricsNames(ctx, curUser, p)
 	if err != nil {
 		return nil, err
 	}
@@ -233,7 +234,7 @@ func (a *apiServer) getProjectColumnsByID(
 	}, nil
 }
 
-func (a *apiServer) getProjectmetricsNames(
+func (a *apiServer) getProjectMetricsNames(
 	ctx context.Context, curUser model.User, project *projectv1.Project,
 ) ([]string, error) {
 	metricNames := []struct {
@@ -247,7 +248,7 @@ func (a *apiServer) getProjectmetricsNames(
 		TableExpr("LATERAL json_array_elements_text(vname) AS vnames").
 		ColumnExpr("array_to_json(array_agg(DISTINCT vnames)) AS vname").
 		ColumnExpr("?::int as workspace_id", project.WorkspaceId).
-		Where("project_id = ?", project.Id).Limit(1)
+		Where("project_id = ?", project.Id)
 
 	metricQuery, err := exputil.AuthZProvider.Get().FilterExperimentsQuery(
 		ctx,
@@ -353,41 +354,19 @@ func (a *apiServer) GetProjectMetricsRange(
 	for mn, mr := range valMetricsRange {
 		ranges = append(ranges, &projectv1.MetricsRange{
 			MetricsName: fmt.Sprintf("validation.%s", mn),
-			Range:       mr,
+			Min:         mathx.Min(mr...),
+			Max:         mathx.Max(mr...),
 		})
 	}
 	for mn, mr := range traMetricsRange {
 		ranges = append(ranges, &projectv1.MetricsRange{
 			MetricsName: fmt.Sprintf("training.%s", mn),
-			Range:       mr,
+			Min:         mathx.Min(mr...),
+			Max:         mathx.Max(mr...),
 		})
 	}
 
 	return &apiv1.GetProjectMetricsRangeResponse{Ranges: ranges}, nil
-}
-
-func calculateMetricsRange(
-	metricsValues map[string]([]float64), metricsName string, metricsValue float64) {
-	if values, ok := metricsValues[metricsName]; !ok {
-		metricsValues[metricsName] = []float64{metricsValue}
-	} else {
-		switch {
-		case len(values) == 1:
-			if values[0] <= metricsValue {
-				metricsValues[metricsName] = []float64{values[0], metricsValue}
-			} else {
-				metricsValues[metricsName] = []float64{metricsValue, values[0]}
-			}
-
-		default:
-			if metricsValue < values[0] {
-				metricsValues[metricsName] = []float64{metricsValue, values[1]}
-			}
-			if metricsValue > values[1] {
-				metricsValues[metricsName] = []float64{values[0], metricsValue}
-			}
-		}
-	}
 }
 
 func (a *apiServer) getProjectMetricsRange(
@@ -396,8 +375,7 @@ func (a *apiServer) getProjectMetricsRange(
 	query := db.Bun().NewSelect().Table("trials").Table("experiments").
 		ColumnExpr("summary_metrics -> 'validation_metrics' AS validation_metrics").
 		ColumnExpr("summary_metrics -> 'avg_metrics' AS avg_metrics").
-		ColumnExpr(`CASE WHEN searcher_metric_value_signed = searcher_metric_value 
-		THEN true ELSE false END AS smaller_is_better`).
+		ColumnExpr(`searcher_metric_value_signed = searcher_metric_value AS smaller_is_better`).
 		Where("project_id = ?", project.Id).
 		Where("experiments.best_trial_id = trials.id")
 
@@ -428,7 +406,11 @@ func (a *apiServer) getProjectMetricsRange(
 				if !r.SmallerIsBetter {
 					metricsValue = value.Max
 				}
-				calculateMetricsRange(valMetricsValues, metricsName, metricsValue)
+				if _, ok := valMetricsValues[metricsName]; !ok {
+					valMetricsValues[metricsName] = []float64{metricsValue}
+				} else {
+					valMetricsValues[metricsName] = append(valMetricsValues[metricsName], metricsValue)
+				}
 			}
 		}
 		if r.AvgMetrics != nil {
@@ -440,7 +422,11 @@ func (a *apiServer) getProjectMetricsRange(
 				if !r.SmallerIsBetter {
 					metricsValue = value.Max
 				}
-				calculateMetricsRange(traMetricsValues, metricsName, metricsValue)
+				if _, ok := traMetricsValues[metricsName]; !ok {
+					traMetricsValues[metricsName] = []float64{metricsValue}
+				} else {
+					traMetricsValues[metricsName] = append(traMetricsValues[metricsName], metricsValue)
+				}
 			}
 		}
 	}
