@@ -39,3 +39,17 @@ func (db *PgDB) RemoveRPWorkspaceBindings(ctx context.Context,
 
 	return err
 }
+
+// OverwriteRPWorkspaceBindings overwrites the bindings between workspaceIds and poolName.
+func (db *PgDB) OverwriteRPWorkspaceBindings(ctx context.Context,
+	workspaceIds []int32, poolName string) error {
+	// Remove existing ones with this pool name
+	_, err := Bun().NewDelete().Table("rp_workspace_bindings").
+		Where("pool_name = ?", poolName).Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	err = db.AddRPWorkspaceBindings(ctx, workspaceIds, poolName)
+	return err
+}
