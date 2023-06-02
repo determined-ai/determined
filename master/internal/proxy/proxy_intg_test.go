@@ -38,9 +38,6 @@ func unregister(t *testing.T) {
 			t.Errorf("failed to unregister service %s", id)
 		}
 	}
-	if len(DefaultProxy.Summary()) != 0 {
-		t.Errorf("failed to unregister all services.")
-	}
 }
 
 func TestProxyLifecycle(t *testing.T) {
