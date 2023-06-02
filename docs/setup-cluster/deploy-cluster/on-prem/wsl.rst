@@ -207,8 +207,14 @@ In ``/etc/determined/master.yaml``:
      host: localhost
      port: <PostgreSQL port, e.g., 5432 by default>
      name: <Database name, e.g., determined>
-     user: <PostgreSQL user, e.g., postgres>
+     user: <PostgreSQL user, e.g., determined>
      password: <Database password>
+
+If you followed the guide above, run the following command to configure ``/etc/determined/master.yaml``:
+
+.. code::
+
+   sudo sed -i 's/user: postgres/user: determined/g; s/# password: database_password/password: determined-password/g; s/# host: determined-db/host: localhost/g' /etc/determined/master.yaml
 
 In ``/etc/determined/agent.yaml``:
 
@@ -216,6 +222,12 @@ In ``/etc/determined/agent.yaml``:
 
    master_host: localhost
    master_port: <Master port, e.g., 8080 by default>
+
+If you followed the guide above, run the following command to configure ``/etc/determined/agent.yaml``:
+
+.. code::
+
+   sudo sed -i 's/# master_host: 0.0.0.0/master_host: localhost/g; s/# master_port: 80/master_port: 8080/g' /etc/determined/agent.yaml
 
 Start the master by typing the following command:
 
