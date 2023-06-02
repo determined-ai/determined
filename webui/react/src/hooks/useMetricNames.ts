@@ -4,14 +4,21 @@ import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
 import { V1ExpMetricNamesResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
+import { isEqual } from 'shared/utils/data';
 import { alphaNumericSorter } from 'shared/utils/sort';
 import { Metric, MetricType } from 'types';
 
 const useMetricNames = (experimentIds: number[], errorHandler?: (e: unknown) => void): Metric[] => {
   const [metrics, setMetrics] = useState<Metric[]>([]);
+  const [actualExpIds, setActualExpIds] = useState<number[]>([]);
+
+  useEffect(
+    () => setActualExpIds((prev) => (isEqual(prev, experimentIds) ? prev : experimentIds)),
+    [experimentIds],
+  );
 
   useEffect(() => {
-    if (experimentIds.length === 0) {
+    if (actualExpIds.length === 0) {
       setMetrics([]);
       return;
     }
@@ -23,7 +30,7 @@ const useMetricNames = (experimentIds: number[], errorHandler?: (e: unknown) => 
     const xAxisMetrics = Object.values(XAxisDomain).map((v) => v.toLowerCase());
 
     readStream<V1ExpMetricNamesResponse>(
-      detApi.StreamingInternal.expMetricNames(experimentIds, undefined, {
+      detApi.StreamingInternal.expMetricNames(actualExpIds, undefined, {
         signal: canceler.signal,
       }),
       (event: V1ExpMetricNamesResponse) => {
@@ -52,7 +59,7 @@ const useMetricNames = (experimentIds: number[], errorHandler?: (e: unknown) => 
       errorHandler,
     );
     return () => canceler.abort();
-  }, [experimentIds, errorHandler]);
+  }, [actualExpIds, errorHandler]);
   return metrics;
 };
 
