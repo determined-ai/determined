@@ -1,7 +1,8 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 
 import Pivot, { TabItem } from 'components/kit/Pivot';
 import SplitPane from 'components/SplitPane';
+import { TrialsComparisonTable } from 'pages/ExperimentDetails/TrialsComparisonModal';
 import { ExperimentWithTrial, TrialItem } from 'types';
 import { isEqual } from 'utils/data';
 
@@ -24,20 +25,11 @@ const ComparisonView: React.FC<Props> = ({
   projectId,
   selectedExperiments,
 }) => {
-  const [trials, setTrials] = useState<TrialItem[]>([]);
-
-  useEffect(() => {
-    const ts: TrialItem[] = [];
-    selectedExperiments.forEach((e) => e.bestTrial && ts.push(e.bestTrial));
-    setTrials((prev: TrialItem[]) => {
-      return isEqual(
-        prev?.map((e) => e.id),
-        ts?.map((e) => e?.id),
-      )
-        ? prev
-        : ts;
-    });
-  }, [selectedExperiments]);
+  const trials = useMemo(
+    () =>
+      selectedExperiments.filter((exp) => !!exp.bestTrial).map((exp) => exp.bestTrial as TrialItem),
+    [selectedExperiments],
+  );
 
   const tabs: TabItem[] = useMemo(() => {
     return [
@@ -57,7 +49,11 @@ const ComparisonView: React.FC<Props> = ({
         key: 'hyperparameters',
         label: 'Hyperparameters',
       },
-      { key: 'configurations', label: 'Configurations' },
+      {
+        children: <TrialsComparisonTable trials={trials} />,
+        key: 'configurations',
+        label: 'Configurations',
+      },
     ];
   }, [selectedExperiments, projectId, trials]);
 
