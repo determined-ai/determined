@@ -215,6 +215,10 @@ const CodeEditor: React.FC<Props> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    if (viewMode === 'editor') setActiveFile(files[0]); // if there's only one file, set it as the active file.
+  }, [viewMode, files]);
+
   const handleSelectFile = useCallback(
     (_: React.Key[], info: { node: TreeNode }) => {
       const selectedKey = String(info.node.key);

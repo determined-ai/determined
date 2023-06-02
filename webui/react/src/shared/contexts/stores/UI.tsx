@@ -80,7 +80,6 @@ class UIActions {
 
 /**
  * return a part of the input state that should be updated.
- *
  * @param state ui state
  * @param action
  * @returns
