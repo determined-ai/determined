@@ -5391,13 +5391,13 @@ export interface V1MetricsRange {
      * @type {number}
      * @memberof V1MetricsRange
      */
-    min?: number;
+    min: number;
     /**
      * The max of metrics values.
      * @type {number}
      * @memberof V1MetricsRange
      */
-    max?: number;
+    max: number;
 }
 /**
  * Metrics report.

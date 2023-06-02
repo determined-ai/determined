@@ -438,15 +438,16 @@ def test_metrics_range_by_project() -> None:
     ranges = bindings.get_GetProjectMetricsRange(api_utils.determined_test_session(), id=1)
     expected_ranges = {
         "validation.validation_error": 0.04,
-        "validation.x": 1,
+        "validation.x": 1.00,
         "training.loss": 0.04,
-        "training.x": 2,
+        "training.x": 2.00,
     }
+    assert ranges.ranges is not None
     for r in ranges.ranges:
         assert r.metricsName in expected_ranges
         metrics = expected_ranges[r.metricsName]
-        assert abs(metrics - r.min) < 0.01
-        assert abs(metrics - r.max) < 0.01
+        assert abs(r.min - metrics) < 0.01
+        assert abs(r.max - metrics) < 0.01
 
 
 @pytest.mark.e2e_cpu
