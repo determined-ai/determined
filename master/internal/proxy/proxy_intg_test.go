@@ -43,7 +43,7 @@ func unregister(t *testing.T) {
 	}
 }
 
-func DefaultProxyLifecycle(t *testing.T) {
+func TestProxyLifecycle(t *testing.T) {
 	cases := []struct {
 		name                 string
 		proxyTCP             bool
