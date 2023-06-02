@@ -74,19 +74,22 @@ func DefaultProxyLifecycle(t *testing.T) {
 	}
 
 	// Then follow the lifecycle for each case
-	for _, testCase := range cases {
-		// First register the services
-		register(t, testCase.proxyTCP, testCase.allowUnauthenticated)
-		require.Equal(t, len(serviceIDs), len(DefaultProxy.Summary()))
-		// Check that service fields are set correctly
-		for _, service := range DefaultProxy.Summary() {
-			require.Equal(t, service.URL, &u)
-			require.Equal(t, service.ProxyTCP, testCase.proxyTCP)
-			require.Equal(t, service.AllowUnauthenticated, testCase.allowUnauthenticated)
-		}
-		// Then unregister
-		unregister(t)
-		require.Equal(t, map[string]Service{}, DefaultProxy.Summary())
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			// First register the services
+			register(t, tt.proxyTCP, tt.allowUnauthenticated)
+			require.Equal(t, len(serviceIDs), len(DefaultProxy.Summary()))
+			// Check that service fields are set correctly
+			for _, service := range DefaultProxy.Summary() {
+				require.Equal(t, service.URL, &u)
+				require.Equal(t, service.ProxyTCP, tt.proxyTCP)
+				require.Equal(t, service.AllowUnauthenticated, tt.allowUnauthenticated)
+			}
+			// Then unregister
+			unregister(t)
+			require.Equal(t, map[string]Service{}, DefaultProxy.Summary())
+
+		})
 	}
 
 	// Now at the very end, to test clear proxy ...
