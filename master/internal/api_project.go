@@ -635,9 +635,10 @@ func (a *apiServer) GetProjectsByUserActivity(
 
 	for _, pr := range projects {
 		err := project.AuthZProvider.Get().CanGetProject(ctx, *curUser, pr)
-		if !authz.IsPermissionDenied(err) {
+		if err == nil {
 			viewableProjects = append(viewableProjects, pr)
-		} else if err != nil {
+			// omit projects user doesn't have access to
+		} else if !authz.IsPermissionDenied(err) {
 			return nil, err
 		}
 	}
