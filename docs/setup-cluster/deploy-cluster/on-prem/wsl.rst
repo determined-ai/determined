@@ -137,9 +137,25 @@ To find the latest release of Determined, visit the `Determined repo
 <https://github.com/determined-ai/determined/releases/latest>`_.
 
 Download the appropriate Debian or RPM package file, which will have the name
-``determined-master_VERSION_linux_amd64.[deb|rpm]`` (where ``VERSION`` is the actual version, e.g.,
-|version|). Similarly, the agent package is named
-``determined-agent_VERSION_linux_amd64.[deb|rpm]``.
+``determined-master_VERSION_linux_ARCH.[deb|rpm]`` (where ``VERSION`` is the actual version, e.g.,
+|version| and where ``ARCH`` is the architecture of your device, such amd64 or arm64). Similarly, the agent package is named
+``determined-agent_VERSION_linux_ARCH.[deb|rpm]``.
+
+   **Debian Distributions**
+
+   On Debian distributions, use the following command to download the master and agent files for your architecture:
+
+   .. code::
+
+      curl -s https://api.github.com/repos/determined-ai/determined/releases/latest | grep "browser_download_url.*_linux_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').deb" | cut -d : -f 2,3 | tr -d \" | wget -qi -
+
+   **Red Hat Distributions**
+
+   On Red Hat distributions, use the following command to download the master and agent files for your architecture:
+
+   .. code::
+
+      curl -s https://api.github.com/repos/determined-ai/determined/releases/latest | grep "browser_download_url.*_linux_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').deb" | cut -d : -f 2,3 | tr -d \" | wget -qi -
 
 Install the master and agent package on one machine.
 
@@ -149,7 +165,7 @@ Install the master and agent package on one machine.
 
    .. code::
 
-      sudo apt install <path to downloaded package>
+      sudo dpkg -i determined-*.deb
 
    **Red Hat Distributions**
 
@@ -157,7 +173,7 @@ Install the master and agent package on one machine.
 
    .. code::
 
-      sudo rpm -i <path to downloaded package>
+      sudo rpm -i determined-*.rpm
 
 Before running the Determined agent, :ref:`install Docker <install-docker>` on each agent machine.
 
