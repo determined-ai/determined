@@ -35,7 +35,7 @@ type Proxy struct {
 }
 
 // DefaultProxy is the global proxy singleton.
-var DefaultProxy *Proxy = nil
+var DefaultProxy *Proxy
 
 // InitProxy initializes the global proxy.
 func InitProxy(httpAuth ProxyHTTPAuth) {
