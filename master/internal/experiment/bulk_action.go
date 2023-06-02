@@ -383,6 +383,7 @@ func DeleteExperiments(ctx context.Context, system *actor.System,
 		Column("e.id").
 		ColumnExpr(ProtoStateDBCaseString(experimentv1.State_value, "e.state", "state", "STATE_")).
 		ColumnExpr("COUNT(model_versions.id) AS versions").
+		Join("JOIN projects p ON e.project_id = p.id").
 		Join("LEFT JOIN checkpoints_view c ON c.experiment_id = e.id").
 		Join("LEFT JOIN model_versions ON model_versions.checkpoint_uuid = c.uuid").
 		Group("e.id")
@@ -477,7 +478,8 @@ func ArchiveExperiments(ctx context.Context, system *actor.System,
 		Model(&expChecks).
 		Column("e.archived").
 		Column("e.id").
-		ColumnExpr("e.state IN (?) AS state", bun.In(model.StatesToStrings(model.TerminalStates)))
+		ColumnExpr("e.state IN (?) AS state", bun.In(model.StatesToStrings(model.TerminalStates))).
+		Join("JOIN projects p ON e.project_id = p.id")
 
 	if filters == nil {
 		query = query.Where("e.id IN (?)", bun.In(experimentIds))
@@ -568,7 +570,8 @@ func UnarchiveExperiments(ctx context.Context, system *actor.System,
 		Model(&expChecks).
 		Column("e.archived").
 		Column("e.id").
-		ColumnExpr("e.state IN (?) AS state", bun.In(model.StatesToStrings(model.TerminalStates)))
+		ColumnExpr("e.state IN (?) AS state", bun.In(model.StatesToStrings(model.TerminalStates))).
+		Join("JOIN projects p ON e.project_id = p.id")
 
 	if filters == nil {
 		query = query.Where("e.id IN (?)", bun.In(experimentIds))
