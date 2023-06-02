@@ -21,7 +21,6 @@ const initClusterOverview: ClusterOverview = {
 /**
  * maximum theoretcial capacity of the resource pool in terms of the advertised
  * compute slot type.
- *
  * @param pool resource pool
  */
 export const maxPoolSlotCapacity = (pool: ResourcePool): number => {
