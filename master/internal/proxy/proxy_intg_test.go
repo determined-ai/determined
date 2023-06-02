@@ -88,7 +88,6 @@ func TestProxyLifecycle(t *testing.T) {
 			// Then unregister
 			unregister(t)
 			require.Equal(t, map[string]Service{}, DefaultProxy.Summary())
-
 		})
 	}
 
