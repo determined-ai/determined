@@ -208,7 +208,7 @@ In ``/etc/determined/master.yaml``:
      port: <PostgreSQL port, e.g., 5432 by default>
      name: <Database name, e.g., determined>
      user: <PostgreSQL user, e.g., determined>
-     password: <Database password>
+     password: <Database password, e.g. determined-password>
 
 If you followed the guide above, run the following command to configure ``/etc/determined/master.yaml``:
 
