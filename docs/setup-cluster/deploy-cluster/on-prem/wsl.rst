@@ -94,8 +94,13 @@ installing PostgreSQL. You'll need PostgreSQL 10 or later.
 
       sudo yum install postgresql-server -y
       sudo postgresql-setup initdb
-      sudo systemctl start postgresql.service
-      sudo systemctl enable postgresql.service
+
+Start the PostgreSQL service:
+
+.. code::
+
+   sudo systemctl enable postgresql
+   sudo systemctl start postgresql
 
 The authentication methods enabled by default may vary depending on the provider of your PostgreSQL
 distribution. To enable the ``determined-master`` to connect to the database, ensure that an
