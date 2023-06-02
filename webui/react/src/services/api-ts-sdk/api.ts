@@ -9009,10 +9009,10 @@ export interface V1Task {
     taskId: string;
     /**
      * Type of Task.
-     * @type {string}
+     * @type {V1TaskType}
      * @memberof V1Task
      */
-    taskType: string;
+    taskType: V1TaskType;
     /**
      * List of Allocations.
      * @type {Array<V1Allocation>}
@@ -9154,6 +9154,21 @@ export interface V1TaskLogsResponse {
      */
     stdtype?: string;
 }
+/**
+ * - TASK_TYPE_UNSPECIFIED: The task type is unknown  - TASK_TYPE_TRIAL: "TRIAL" task type for the enum public.task_type in Postgres.  - TASK_TYPE_NOTEBOOK: "NOTEBOOK" task type for the enum public.task_type in Postgres.  - TASK_TYPE_SHELL: "SHELL" task type for the enum public.task_type in Postgres.  - TASK_TYPE_COMMAND: "COMMAND" task type for the enum public.task_type in Postgres.  - TASK_TYPE_TENSORBOARD: "TENSORBOARD" task type for the enum public.task_type in Postgres.  - TASK_TYPE_CHECKPOINT_GC: "CHECKPOINT_GC" task type for the enum public.task_type in Postgres.
+ * @export
+ * @enum {string}
+ */
+export const V1TaskType = {
+    UNSPECIFIED: 'TASK_TYPE_UNSPECIFIED',
+    TRIAL: 'TASK_TYPE_TRIAL',
+    NOTEBOOK: 'TASK_TYPE_NOTEBOOK',
+    SHELL: 'TASK_TYPE_SHELL',
+    COMMAND: 'TASK_TYPE_COMMAND',
+    TENSORBOARD: 'TASK_TYPE_TENSORBOARD',
+    CHECKPOINTGC: 'TASK_TYPE_CHECKPOINT_GC',
+} as const
+export type V1TaskType = ValueOf<typeof V1TaskType>
 /**
  * Templates move settings that are shared by many experiments into a single YAML file.
  * @export

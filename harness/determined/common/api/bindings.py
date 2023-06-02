@@ -11517,7 +11517,7 @@ class v1Task:
         allocations: "typing.Sequence[v1Allocation]",
         startTime: str,
         taskId: str,
-        taskType: str,
+        taskType: "v1TaskType",
         endTime: "typing.Union[str, None, Unset]" = _unset,
     ):
         self.allocations = allocations
@@ -11533,7 +11533,7 @@ class v1Task:
             "allocations": [v1Allocation.from_json(x) for x in obj["allocations"]],
             "startTime": obj["startTime"],
             "taskId": obj["taskId"],
-            "taskType": obj["taskType"],
+            "taskType": v1TaskType(obj["taskType"]),
         }
         if "endTime" in obj:
             kwargs["endTime"] = obj["endTime"]
@@ -11544,7 +11544,7 @@ class v1Task:
             "allocations": [x.to_json(omit_unset) for x in self.allocations],
             "startTime": self.startTime,
             "taskId": self.taskId,
-            "taskType": self.taskType,
+            "taskType": self.taskType.value,
         }
         if not omit_unset or "endTime" in vars(self):
             out["endTime"] = self.endTime
@@ -11705,6 +11705,15 @@ class v1TaskLogsResponse:
         if not omit_unset or "stdtype" in vars(self):
             out["stdtype"] = self.stdtype
         return out
+
+class v1TaskType(DetEnum):
+    UNSPECIFIED = "TASK_TYPE_UNSPECIFIED"
+    TRIAL = "TASK_TYPE_TRIAL"
+    NOTEBOOK = "TASK_TYPE_NOTEBOOK"
+    SHELL = "TASK_TYPE_SHELL"
+    COMMAND = "TASK_TYPE_COMMAND"
+    TENSORBOARD = "TASK_TYPE_TENSORBOARD"
+    CHECKPOINT_GC = "TASK_TYPE_CHECKPOINT_GC"
 
 class v1Template:
 
