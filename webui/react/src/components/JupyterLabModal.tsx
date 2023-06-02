@@ -174,7 +174,7 @@ const JupyterLabModalComponent: React.FC<Props> = ({ workspace }: Props) => {
     if (showFullConfig) {
       fetchConfig();
     }
-  }, [fetchConfig, showFullConfig, currentWorkspace]);
+  }, [fetchConfig, showFullConfig]);
 
   return (
     <Modal
