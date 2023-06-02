@@ -83,7 +83,7 @@ func (p *Proxy) Unregister(serviceID string) {
 func (p *Proxy) ClearProxy() {
 	p.lock.Lock()
 	defer p.lock.Unlock()
-	p.services = nil
+	p.services = make(map[string]*Service)
 }
 
 // GetService returns the Service, if any, given the serviceID key.
