@@ -246,8 +246,16 @@ const ButtonsSection: React.FC = () => {
         </Space>
         <hr />
         <strong>Default Button with icon</strong>
+        With Antd Icon
         <Space>
-          <Button icon={<PoweroffOutlined />}>ButtonWithIcon</Button>
+          <Button icon={<PoweroffOutlined />} />
+          <Button icon={<PoweroffOutlined />}>ButtonText</Button>
+        </Space>
+        With Font Icon
+        <Space>
+          <Button icon={<Icon name="play" size="large" title="Play" />} />
+          <Button icon={<Icon name="play" size="large" title="Play" />}>ButtonWithLargeFontIcon</Button>
+          <Button icon={<Icon name="play" size="tiny" title="Play" />}>ButtonWithTinyFontIcon</Button>
         </Space>
         <hr />
         <strong>Button with icon and text displayed in a column</strong>
