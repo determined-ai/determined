@@ -124,8 +124,9 @@ the database:
 
    sudo -u postgres psql
    postgres=# CREATE DATABASE determined;
-   postgres=# CREATE USER determined WITH ENCRYPTED PASSWORD 'determined-password';
+   postgres=# CREATE USER determined WITH PASSWORD 'determined-password';
    postgres=# GRANT ALL PRIVILEGES ON DATABASE determined TO determined;
+   postgres=# \q
 
 .. _packages_determined:
 
