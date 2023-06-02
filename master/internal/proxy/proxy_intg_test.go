@@ -20,26 +20,26 @@ func register(t *testing.T, prTCP bool, unauth bool) {
 	for _, id := range serviceIDs {
 		DefaultProxy.Register(id, &u, prTCP, unauth)
 		if DefaultProxy.GetService(id) == nil {
-			t.Logf("failed to find registered service %s", id)
+			t.Errorf("failed to find registered service %s", id)
 		}
 	}
 	if len(DefaultProxy.Summary()) != len(serviceIDs) {
-		t.Logf("failed to register all services")
+		t.Errorf("failed to register all services")
 	}
 }
 
 func unregister(t *testing.T) {
 	for _, id := range serviceIDs {
 		if DefaultProxy.GetService(id) == nil {
-			t.Logf("failed to find registered service %s", id)
+			t.Errorf("failed to find registered service %s", id)
 		}
 		DefaultProxy.Unregister(id)
 		if DefaultProxy.GetService(id) != nil {
-			t.Logf("failed to unregister service %s", id)
+			t.Errorf("failed to unregister service %s", id)
 		}
 	}
 	if len(DefaultProxy.Summary()) != 0 {
-		t.Logf("failed to unregister all services.")
+		t.Errorf("failed to unregister all services.")
 	}
 }
 
@@ -70,7 +70,7 @@ func DefaultProxyLifecycle(t *testing.T) {
 	handler := DefaultProxy.NewProxyHandler("service")
 	require.NotNil(t, handler)
 	if handler == nil {
-		t.Logf("handler not created for cluster")
+		t.Errorf("handler not created for cluster")
 	}
 
 	// Then follow the lifecycle for each case
@@ -95,7 +95,7 @@ func DefaultProxyLifecycle(t *testing.T) {
 	// Clear the services by ClearProxy
 	DefaultProxy.ClearProxy()
 	if len(DefaultProxy.Summary()) != 0 {
-		t.Logf("failed to clear all proxy services.")
+		t.Errorf("failed to clear all proxy services.")
 	}
 	require.Equal(t, 0, len(DefaultProxy.Summary()))
 }
