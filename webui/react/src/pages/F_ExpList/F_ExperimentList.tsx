@@ -412,8 +412,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         columnWidths: {
           ...settings.columnWidths,
           [STATIC_COLUMNS.last()]:
-            settings.columnWidths[STATIC_COLUMNS.last()] + width - comparisonViewWidth - 17,
-          // Constant of 17px accounts for scrollbar width
+            settings.columnWidths[STATIC_COLUMNS.last()] + width - comparisonViewWidth,
         },
       });
     },

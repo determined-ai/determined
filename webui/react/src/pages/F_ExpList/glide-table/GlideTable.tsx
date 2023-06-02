@@ -638,8 +638,8 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   }, [columnIds, columnDefs, projectColumnsMap, columnWidths]);
 
   const verticalBorder: DataEditorProps['verticalBorder'] = useCallback(
-    (col: number) => columnIds[col - 1] === staticColumns.last(),
-    [columnIds, staticColumns],
+    (col: number) => (comparisonViewOpen ? false : columnIds[col - 1] === staticColumns.last()),
+    [columnIds, comparisonViewOpen, staticColumns],
   );
 
   return (
