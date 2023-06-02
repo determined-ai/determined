@@ -68,7 +68,9 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
     title: `Best checkpoint for Trial ${trial?.id}`,
   });
 
-  const { metrics, data: allData, scale, setScale } = useTrialMetrics([trial]);
+  const trials: (TrialDetails | undefined)[] = useMemo(() => [trial], [trial]);
+
+  const { metrics, data: allData, scale, setScale } = useTrialMetrics(trials);
   const data = useMemo(() => allData?.[trial?.id || 0], [allData, trial?.id]);
 
   const checkpointsDict = useMemo<CheckpointsDict>(() => {
