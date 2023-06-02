@@ -123,10 +123,10 @@ the database:
 .. code::
 
    sudo -u postgres psql
-   postgres=# CREATE DATABASE determined;
-   postgres=# CREATE USER determined WITH PASSWORD 'determined-password';
-   postgres=# GRANT ALL PRIVILEGES ON DATABASE determined TO determined;
-   postgres=# \q
+   CREATE DATABASE determined;
+   CREATE USER determined WITH PASSWORD 'determined-password';
+   GRANT ALL PRIVILEGES ON DATABASE determined TO determined;
+   \q
 
 .. _packages_determined:
 
