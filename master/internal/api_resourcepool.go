@@ -2,6 +2,7 @@ package internal
 
 import (
 	"context"
+	"github.com/determined-ai/determined/master/internal/db"
 
 	"github.com/pkg/errors"
 
@@ -38,7 +39,7 @@ func (a *apiServer) BindRPToWorkspace(
 				curUser.Username))
 	}
 
-	err = a.m.db.AddRPWorkspaceBindings(ctx, req.WorkspaceIds, req.ResourcePoolName)
+	err = db.AddRPWorkspaceBindings(ctx, req.WorkspaceIds, req.ResourcePoolName)
 	if err != nil {
 		return nil, err
 	}
@@ -86,7 +87,7 @@ func (a *apiServer) UnbindRPFromWorkspace(
 				curUser.Username))
 	}
 
-	err = a.m.db.RemoveRPWorkspaceBindings(ctx, req.WorkspaceIds, req.ResourcePoolName)
+	err = db.RemoveRPWorkspaceBindings(ctx, req.WorkspaceIds, req.ResourcePoolName)
 	if err != nil {
 		return nil, err
 	}
