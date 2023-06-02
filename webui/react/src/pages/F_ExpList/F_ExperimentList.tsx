@@ -238,6 +238,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   }, [
     page,
     experimentFilters,
+    isLoadingSettings,
     canceler.signal,
     filtersString,
     sortString,

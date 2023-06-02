@@ -60,10 +60,8 @@ const settingsToQuery = <T>(config: SettingsConfig<T>, settings: Settings) => {
   return retVal.toString();
 };
 
-type queryParamItem<T> = SettingsConfig<T> | SettingsConfig<T> | unknown;
-
 const queryParamToType = <T>(
-  type: t.Type<queryParamItem<T>>,
+  type: t.Type<SettingsConfig<T>, SettingsConfig<T>, unknown>,
   param: string | null,
 ): Primitive | undefined => {
   if (param === null || param === undefined) return undefined;
@@ -75,16 +73,31 @@ const queryParamToType = <T>(
   if (type.is({})) return JSON.parse(param);
   if (type.is('')) return param;
   if (type.is([])) {
-    if ((type as t.UnionType<queryParamItem<T>>).types) {
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+    if ((type as t.UnionType<any>).types) {
       // UnionType
-      return (type as t.UnionType<queryParamItem<T>>).types.reduce(
-        (acc: Primitive | undefined, tComponent: t.Type<queryParamItem<T>>) =>
-          acc ?? (tComponent === t.undefined ? undefined : queryParamToType(tComponent, param)),
+      /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+      return (type as t.UnionType<any>).types.reduce(
+        (
+          acc: Primitive | undefined,
+          tComponent: t.Type<SettingsConfig<T>, SettingsConfig<T>, unknown>,
+        ) =>
+          acc ??
+          (tComponent === t.unknown
+            ? undefined
+            : queryParamToType(
+                tComponent as t.Type<SettingsConfig<T>, SettingsConfig<T>, unknown>,
+                param,
+              )),
         undefined,
       );
     } else {
       // ArrayType
-      return queryParamToType((type as t.ArrayType<queryParamItem<T>>).type, param);
+      return queryParamToType(
+        /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+        (type as t.ArrayType<any>).type as t.Type<SettingsConfig<T>, SettingsConfig<T>, unknown>,
+        param,
+      );
     }
   }
   // LiteralType
