@@ -60,6 +60,7 @@ func TestProxyLifecycle(t *testing.T) {
 	}
 
 	// First init the new Proxy
+	DefaultProxy = &Proxy{}
 	InitProxy(proxyAuth)
 	// And check that the Proxy struct is set up correctly
 	require.NotNil(t, DefaultProxy.HTTPAuth)
