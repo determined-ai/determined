@@ -47,7 +47,7 @@ func InitProxy(httpAuth ProxyHTTPAuth) {
 	DefaultProxy = &Proxy{
 		HTTPAuth: httpAuth,
 		services: make(map[string]*Service),
-		syslog:   logrus.WithTime(time.Now()), // NIT: How else to initialize syslog?
+		syslog:   logrus.WithField("component", "proxy"),
 	}
 }
 
@@ -120,7 +120,7 @@ func (p *Proxy) NewProxyHandler(serviceID string) echo.HandlerFunc {
 		}
 
 		if !service.AllowUnauthenticated {
-			switch done, err := DefaultProxy.HTTPAuth(c); {
+			switch done, err := p.HTTPAuth(c); {
 			case err != nil:
 				return err
 			case done:
@@ -162,7 +162,7 @@ func (p *Proxy) Summary() map[string]Service {
 	defer p.lock.RUnlock()
 	snapshot := make(map[string]Service)
 
-	for id, service := range DefaultProxy.services {
+	for id, service := range p.services {
 		sURL := *service.URL
 		snapshot[id] = Service{
 			URL:                  &sURL,
