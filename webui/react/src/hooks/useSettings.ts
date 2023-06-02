@@ -72,36 +72,6 @@ const queryParamToType = <T>(
   }
   if (type.is({})) return JSON.parse(param);
   if (type.is('')) return param;
-  if (type.is([])) {
-    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-    if ((type as t.UnionType<any>).types) {
-      // UnionType
-      /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-      return (type as t.UnionType<any>).types.reduce(
-        (
-          acc: Primitive | undefined,
-          tComponent: t.Type<SettingsConfig<T>, SettingsConfig<T>, unknown>,
-        ) =>
-          acc ??
-          (tComponent === t.unknown
-            ? undefined
-            : queryParamToType(
-                tComponent as t.Type<SettingsConfig<T>, SettingsConfig<T>, unknown>,
-                param,
-              )),
-        undefined,
-      );
-    } else {
-      // ArrayType
-      return queryParamToType(
-        /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-        (type as t.ArrayType<any>).type as t.Type<SettingsConfig<T>, SettingsConfig<T>, unknown>,
-        param,
-      );
-    }
-  }
-  // LiteralType
-  if (type.is(param)) return param;
   return undefined;
 };
 
@@ -121,7 +91,7 @@ const queryToSettings = <T>(config: SettingsConfig<T>, query: string) => {
         let paramValue: null | string | string[] = params.getAll(setting.storageKey);
         if (paramValue.length === 0) {
           paramValue = null;
-        } else if (paramValue.length === 1 && !isArray) {
+        } else if (paramValue.length === 1) {
           paramValue = paramValue[0];
         }
 
@@ -139,8 +109,10 @@ const queryToSettings = <T>(config: SettingsConfig<T>, query: string) => {
               if (parsedValue !== undefined) acc.push(parsedValue);
               return acc;
             }, []);
-          } else {
+          } else if (!isArray) {
             queryValue = queryParamToType<T>(baseType, paramValue);
+          } else {
+            queryValue = [paramValue];
           }
 
           if (queryValue !== undefined) {
