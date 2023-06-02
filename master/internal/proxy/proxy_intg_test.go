@@ -13,7 +13,7 @@ var (
 		return true, nil
 	}
 	serviceIDs = []string{"a", "b", "c"}
-	u          = url.URL{} // "localhost:8081" TODO CAROLINA
+	u          = url.URL{}
 )
 
 func register(t *testing.T, prTCP bool, unauth bool) {
