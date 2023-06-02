@@ -315,11 +315,7 @@ const JupyterLabFullConfig: React.FC<FullConfigProps> = ({
               },
             },
           ]}>
-          <CodeEditor
-            files={[{ content: config, key: 'config.yaml' }]}
-            height="40vh"
-            onError={handleError}
-          />
+          <CodeEditor files={[{ content: config, key: 'config.yaml' }]} height="40vh" />
         </Form.Item>
       </React.Suspense>
       {configError && <Alert message={configError} type="error" />}
