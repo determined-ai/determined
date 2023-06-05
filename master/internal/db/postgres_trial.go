@@ -220,7 +220,7 @@ func (db *PgDB) calculateFullTrialSummaryMetrics(
 	jsonPath := model.TrialMetricsJSONPath(partition == ValidationMetric)
 	//nolint: execinquery
 	rows, err := tx.QueryContext(ctx, db.queries.getOrLoad("calculate-full-trial-summary-metrics"),
-		trialID, jsonPath, partition)
+		trialID, jsonPath, partition, metricType)
 	if err != nil {
 		return nil, errors.Wrapf(err, "getting full compute trial %d summary metrics", trialID)
 	}
