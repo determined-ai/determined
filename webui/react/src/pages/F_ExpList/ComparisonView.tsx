@@ -31,6 +31,11 @@ const ComparisonView: React.FC<Props> = ({
     [selectedExperiments],
   );
 
+  const experiments = useMemo(
+    () => selectedExperiments.map((exp) => exp.experiment),
+    [selectedExperiments],
+  );
+
   const tabs: TabItem[] = useMemo(() => {
     return [
       {
@@ -50,12 +55,12 @@ const ComparisonView: React.FC<Props> = ({
         label: 'Hyperparameters',
       },
       {
-        children: <TrialsComparisonTable trials={trials} />,
+        children: <TrialsComparisonTable experiment={experiments} trials={trials} />,
         key: 'configurations',
         label: 'Configurations',
       },
     ];
-  }, [selectedExperiments, projectId, trials]);
+  }, [selectedExperiments, projectId, experiments, trials]);
 
   return (
     <div>

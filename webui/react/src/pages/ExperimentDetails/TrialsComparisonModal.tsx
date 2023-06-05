@@ -14,17 +14,19 @@ import useMetricNames from 'hooks/useMetricNames';
 import useResize from 'hooks/useResize';
 import { paths } from 'routes/utils';
 import { getTrialDetails, getTrialWorkloads } from 'services/api';
-import { ExperimentBase, Metric, MetricsWorkload, TrialDetails, TrialWorkloadFilter } from 'types';
-import { isNumber } from 'utils/data';
-import { ErrorType } from 'utils/error';
+import Spinner from 'shared/components/Spinner/Spinner';
+import { isNumber } from 'shared/utils/data';
+import { ErrorType } from 'shared/utils/error';
+import { humanReadableBytes, pluralizer } from 'shared/utils/string';
+import { ExperimentItem, Metric, MetricsWorkload, TrialDetails, TrialWorkloadFilter } from 'types';
 import handleError from 'utils/error';
 import { humanReadableBytes } from 'utils/string';
 
 import css from './TrialsComparisonModal.module.scss';
 
 interface TablePropsBase {
-  experiment: ExperimentBase;
-  onUnselect: (trialId: number) => void;
+  experiment: ExperimentItem | ExperimentItem[];
+  onUnselect?: (trialId: number) => void;
 }
 
 type TableProps = XOR<
@@ -59,7 +61,11 @@ const TrialsComparisonModal: React.FC<ModalProps> = ({
       footer={null}
       open={visible}
       style={{ height: resize.height * 0.9 }}
-      title={`Experiment ${props.experiment.id} Trial Comparison`}
+      title={
+        !Array.isArray(props.experiment)
+          ? `Experiment ${props.experiment.id} Trial Comparison`
+          : 'Trial Comparison'
+      }
       width={resize.width * 0.9}
       onCancel={onCancel}>
       <TrialsComparisonTable {...props} />
@@ -69,10 +75,11 @@ const TrialsComparisonModal: React.FC<ModalProps> = ({
 
 export const TrialsComparisonTable: React.FC<TableProps> = ({
   trialIds,
+  trials = [],
   experiment,
   onUnselect,
 }: TableProps) => {
-  const [trialsDetails, setTrialsDetails] = useState<Record<number, TrialDetails>>({});
+  const [trialsDetails, setTrialsDetails] = useState(trials);
   const [canceler] = useState(new AbortController());
   const [selectedHyperparameters, setSelectedHyperparameters] = useState<string[]>([]);
   const [selectedMetrics, setSelectedMetrics] = useState<Metric[]>([]);
@@ -81,7 +88,7 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
     async (trialId: number) => {
       try {
         const response = await getTrialDetails({ id: trialId }, { signal: canceler.signal });
-        setTrialsDetails((prev) => ({ ...prev, [trialId]: response }));
+        setTrialsDetails((prev) => [...prev, response]);
       } catch (e) {
         handleError(e);
       }
@@ -102,7 +109,7 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
     });
   }, [fetchTrialDetails, trialIds]);
 
-  const handleTrialUnselect = useCallback((trialId: number) => onUnselect(trialId), [onUnselect]);
+  const handleTrialUnselect = useCallback((trialId: number) => onUnselect?.(trialId), [onUnselect]);
 
   const getCheckpointSize = useCallback((trial: TrialDetails) => {
     const totalBytes = trial.totalCheckpointSize;
@@ -117,18 +124,26 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
     [getCheckpointSize, trialsDetails],
   );
 
+  const experimentIds = useMemo(
+    () => (Array.isArray(experiment) ? experiment.map((exp) => exp.id) : [experiment.id]),
+    [experiment],
+  );
+
   const handleMetricNamesError = useCallback(
     (e: unknown) => {
       handleError(e, {
-        publicMessage: `Failed to load metric names for experiment ${experiment.id}.`,
+        publicMessage: `Failed to load metric names for ${pluralizer(
+          experimentIds.length,
+          'experiment',
+        )} {experimentIds.join(', ')}.`,
         publicSubject: 'Experiment metric name stream failed.',
         type: ErrorType.Api,
       });
     },
-    [experiment.id],
+    [experimentIds],
   );
 
-  const metrics = useMetricNames([experiment.id], handleMetricNamesError);
+  const metrics = useMetricNames(experimentIds, handleMetricNamesError);
 
   useEffect(() => {
     setSelectedMetrics(metrics);
@@ -162,10 +177,10 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
     [],
   );
 
-  const [latestMetrics, setLatestMetrics] = useState<Record<string, { [key: string]: number }>>({});
+  const [latestMetrics, setLatestMetrics] = useState<Record<string, Record<string, number>>>({});
 
   useMemo(async () => {
-    const metricsObj: Record<string, { [key: string]: MetricsWorkload }> = {};
+    const metricsObj: Record<string, Record<string, MetricsWorkload>> = {};
     for (const trial of Object.values(trialsDetails)) {
       metricsObj[trial.id] = {};
       const data = await getTrialWorkloads({
@@ -196,8 +211,8 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
   }, [extractLatestMetrics, trialsDetails]);
 
   const hyperparameterNames = useMemo(
-    () => Object.keys(trialsDetails[trialIds.first()]?.hyperparameters || {}),
-    [trialIds, trialsDetails],
+    () => Object.keys(trialsDetails.first()?.hyperparameters || {}),
+    [trialsDetails],
   );
 
   useEffect(() => {
@@ -209,7 +224,7 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
   }, []);
 
   const isLoaded = useMemo(
-    () => trialIds.every((trialId) => trialsDetails[trialId]),
+    () => (trialIds ? trialsDetails.length === trialIds.length : true),
     [trialIds, trialsDetails],
   );
 
@@ -219,27 +234,30 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
         <>
           <div className={[css.row, css.sticky].join(' ')}>
             <div className={[css.cell, css.blank, css.sticky].join(' ')} />
-            {trialIds.map((trialId) => (
-              <div className={css.cell} key={trialId}>
-                <Tag className={css.trialTag} closable onClose={() => handleTrialUnselect(trialId)}>
-                  <Link path={paths.trialDetails(trialId, experiment.id)}>Trial {trialId}</Link>
+            {trialsDetails.map((trial) => (
+              <div className={css.cell} key={trial.id}>
+                <Tag
+                  className={css.trialTag}
+                  closable={!!onUnselect}
+                  onClose={() => handleTrialUnselect(trial.id)}>
+                  <Link path={paths.trialDetails(trial.id)}>Trial {trial.id}</Link>
                 </Tag>
               </div>
             ))}
           </div>
           <div className={css.row}>
             <div className={[css.cell, css.sticky, css.indent].join(' ')}>State</div>
-            {trialIds.map((trial) => (
-              <div className={css.cell} key={trial}>
-                <Badge state={trialsDetails[trial].state} type={BadgeType.State} />
+            {trialsDetails.map((trial) => (
+              <div className={css.cell} key={trial.id}>
+                <Badge state={trial.state} type={BadgeType.State} />
               </div>
             ))}
           </div>
           <div className={css.row}>
             <div className={[css.cell, css.sticky, css.indent].join(' ')}>Batched Processed</div>
-            {trialIds.map((trialId) => (
-              <div className={css.cell} key={trialId}>
-                {trialsDetails[trialId].totalBatchesProcessed}
+            {trialsDetails.map((trial) => (
+              <div className={css.cell} key={trial.id}>
+                {trial.totalBatchesProcessed}
               </div>
             ))}
           </div>
@@ -247,9 +265,9 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
             <div className={[css.cell, css.sticky, css.indent].join(' ')}>
               Total Checkpoint Size
             </div>
-            {trialIds.map((trialId) => (
-              <div className={css.cell} key={trialId}>
-                {totalCheckpointsSizes[trialId]}
+            {trialsDetails.map((trial) => (
+              <div className={css.cell} key={trial.id}>
+                {totalCheckpointsSizes[trial.id]}
               </div>
             ))}
           </div>
@@ -273,10 +291,10 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
                 <div className={[css.cell, css.sticky, css.indent].join(' ')}>
                   <MetricBadgeTag metric={metric} />
                 </div>
-                {trialIds.map((trialId) => (
-                  <div className={css.cell} key={trialId}>
-                    {latestMetrics[trialId] ? (
-                      <HumanReadableNumber num={latestMetrics[trialId][metric.name] || 0} />
+                {trialsDetails.map((trial) => (
+                  <div className={css.cell} key={trial.id}>
+                    {latestMetrics[trial.id] ? (
+                      <HumanReadableNumber num={latestMetrics[trial.id][metric.name] || 0} />
                     ) : (
                       ''
                     )}
@@ -304,13 +322,13 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
           {selectedHyperparameters.map((hp) => (
             <div className={css.row} key={hp}>
               <div className={[css.cell, css.sticky, css.indent].join(' ')}>{hp}</div>
-              {trialIds.map((trialId) => {
-                const value = trialsDetails[trialId].hyperparameters[hp];
-                const stringValue = JSON.stringify(value);
+              {trialsDetails.map((trial) => {
+                const hpValue = trial.hyperparameters[hp];
+                const stringValue = JSON.stringify(hpValue);
                 return (
-                  <div className={css.cell} key={trialId}>
-                    {isNumber(value) ? (
-                      <HumanReadableNumber num={value} />
+                  <div className={css.cell} key={trial.id}>
+                    {isNumber(hpValue) ? (
+                      <HumanReadableNumber num={hpValue} />
                     ) : (
                       <Tooltip content={stringValue}>{stringValue}</Tooltip>
                     )}
