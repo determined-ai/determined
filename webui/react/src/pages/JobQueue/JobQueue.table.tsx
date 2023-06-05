@@ -5,12 +5,11 @@ import Icon from 'components/kit/Icon';
 import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
 import { ColumnDef } from 'components/Table/InteractiveTable';
-import { relativeTimeRenderer } from 'components/Table/Table';
-import { OMITTED_STR } from 'constants/accessControl';
+import { createOmitableRenderer, relativeTimeRenderer } from 'components/Table/Table';
 import { paths } from 'routes/utils';
 import { getJupyterLabs, getTensorBoards } from 'services/api';
 import { floatToPercent, truncate } from 'shared/utils/string';
-import { CommandTask, Job, JobType } from 'types';
+import { CommandTask, FullJob, Job, JobType } from 'types';
 import { jobTypeIconName, jobTypeLabel } from 'utils/job';
 import { openCommand } from 'utils/wait';
 
@@ -101,8 +100,7 @@ export const columns: ColumnDef<Job>[] = [
     dataIndex: 'name',
     defaultWidth: DEFAULT_COLUMN_WIDTHS['name'],
     key: 'name',
-    render: (_: unknown, record: Job): ReactNode => {
-      if (!('name' in record)) return OMITTED_STR;
+    render: createOmitableRenderer<Job, FullJob>('entityId', (_, record): ReactNode => {
       let label: ReactNode = null;
       switch (record.type) {
         case JobType.EXPERIMENT:
@@ -121,9 +119,8 @@ export const columns: ColumnDef<Job>[] = [
           );
           break;
       }
-
       return linkToEntityPage(record, label);
-    },
+    }),
     title: 'Job Name',
   },
   {
@@ -137,13 +134,11 @@ export const columns: ColumnDef<Job>[] = [
     dataIndex: 'submissionTime',
     defaultWidth: DEFAULT_COLUMN_WIDTHS['submissionTime'],
     key: 'submitted',
-    render: (_: unknown, record: Job): ReactNode => {
-      if ('submissionTime' in record) {
-        return record.submissionTime && relativeTimeRenderer(record.submissionTime);
-      } else {
-        return OMITTED_STR;
-      }
-    },
+    render: createOmitableRenderer<Job, FullJob>(
+      'entityId',
+      (_, record): ReactNode =>
+        record.submissionTime && relativeTimeRenderer(record.submissionTime),
+    ),
     title: 'Submitted',
   },
   {

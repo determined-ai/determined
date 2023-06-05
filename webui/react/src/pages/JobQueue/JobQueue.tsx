@@ -6,11 +6,11 @@ import InteractiveTable, { ColumnDef } from 'components/Table/InteractiveTable';
 import SkeletonTable from 'components/Table/SkeletonTable';
 import {
   checkmarkRenderer,
+  createOmitableRenderer,
   defaultRowClassName,
   getFullPaginationConfig,
   userRenderer,
 } from 'components/Table/Table';
-import { OMITTED_STR } from 'constants/accessControl';
 import { V1SchedulerTypeToLabel } from 'constants/states';
 import { useSettings } from 'hooks/useSettings';
 import { columns as defaultColumns, SCHEDULING_VAL_KEY } from 'pages/JobQueue/JobQueue.table';
@@ -25,7 +25,7 @@ import { numericSorter } from 'shared/utils/sort';
 import { capitalize } from 'shared/utils/string';
 import clusterStore from 'stores/cluster';
 import userStore from 'stores/users';
-import { Job, JobAction, JobState, JobType, ResourcePool, RPStats } from 'types';
+import { FullJob, Job, JobAction, JobState, JobType, ResourcePool, RPStats } from 'types';
 import handleError from 'utils/error';
 import {
   canManageJob,
@@ -311,13 +311,9 @@ const JobQueue: React.FC<Props> = ({ selectedRp, jobState }) => {
           case 'user':
             return {
               ...col,
-              render: (_, r) => {
-                if ('userId' in r) {
-                  return userRenderer(users.find((u) => u.id === r.userId));
-                } else {
-                  return OMITTED_STR;
-                }
-              },
+              render: createOmitableRenderer<Job, FullJob>('entityId', (_, r) =>
+                userRenderer(users.find((u) => u.id === r.userId)),
+              ),
             };
           default:
             return col;
