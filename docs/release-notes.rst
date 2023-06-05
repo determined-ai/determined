@@ -17,33 +17,31 @@ Version 0.23.0
 
 **Breaking Changes**
 
--  Remove HDFS checkpoint storage support, which has been deprecated since 0.21.1 (April, 2023).
+-  Remove HDFS checkpoint storage support, which has been deprecated since 0.21.1 (April 2023).
 
--  Kubernetes: When a pod spec is specified in both ``task_container_defaults`` and in the
+-  Kubernetes: When a pod spec is specified in both ``task_container_defaults`` and the
    experiment/job configuration, the pod spec is merged according to `strategic merge patch
    <https://kubernetes.io/docs/tasks/manage-kubernetes-objects/update-api-object-kubectl-patch/#use-a-strategic-merge-patch-to-update-a-deployment>`__.
    The previous behavior was using only the experiment/job configuration if supplied.
 
--  CLI: `det notebook|tensorboard start` commands no longer block for the whole life cycle of the
-   Notebook or the TensorBoard process. These will also not stream related event logs. Users should
+-  CLI: The ``det notebook|tensorboard start`` commands no longer block for the whole life cycle of the
+   notebook or TensorBoard process. They will also not stream related event logs. Users should
    use the existing `det notebook|tensorboard|task logs` commands to stream logs from the process.
 
--  Python SDK: Remove packages ``determined-cli``, ``determined-common``, and ``determined-deploy``,
-   which were deprecated in 0.15.0 (April 2021). The sub-modules ``determined.cli``,
-   ``determined.common``, and ``determined.deploy`` should be used instead.
+-  Python SDK: Remove the packages ``determined-cli``, ``determined-common``, and ``determined-deploy``,
+   which were deprecated in 0.15.0 (April 2021). The submodules ``determined.cli``,
+   ``determined.common``, and ``determined.deploy`` of the ``determined`` package should be used instead.
 
 **New Features**
 
--  Experiment: Custom Hyper Parameter Searchers (``determined/harness/searcher``) can include extra
+-  Experiment: :ref:`Custom hyperparameter searchers <topic-guides_hp-tuning-det_custom>` can include extra
    directories to pass into the ``client.create_experiment`` context.
 
 -  Checkpoints: Add support for deleting a subset of files from checkpoints.
 
-   The CLI command ``det checkpoint rm uuid1,uuuid2 --glob deleteDir1/** --glob deleteDir2`` has
-   been added to remove all files in checkpoints specified that match at least one glob provided.
-
    The SDK method :meth:`determined.experimental.client.Checkpoint.remove_files` has been added to
-   delete files matching a list of globs provided.
+   delete files matching a list of globs provided. The CLI command ``det checkpoint rm uuid1,uuuid2
+   --glob 'deleteDir1/**' --glob deleteDir2`` provides access to this method.
 
 -  AWS and GCP: Add `launch_error_timeout` and `launch_error_retries` provider configuration
    options.
@@ -53,21 +51,19 @@ Version 0.23.0
       state is reset. Defaults to `0s`.
 
    -  `launch_error_retries`: Number of retries to allow before registering a provider provisioning
-      error with `launch_error_timeout`` duration. Defaults to `0`.
+      error. Defaults to ``0``.
 
--  Support for DeepSpeed Autotune
+-  DeepSpeed experiments can now be wrapped with the ``determined.pytorch.dsat`` module to
+   automatically tune their distributed training hyperparameters.
 
-   -  DeepSpeed experiments can now be wrapped with the `determined.pytorch.dsat` module to
-      automatically tune its distributed training hyperparameters
-
--  API: GetExperiments(archived = False) no longer lists experiments from archived projects or
-   workspaces. That applies to both the Web UI and the CLI. Unarchived projects and workspaces are
+-  API: ``GetExperiments(archived=False)`` no longer lists experiments from archived projects or
+   workspaces. This change affects both the WebUI and the CLI. Unarchived projects and workspaces are
    not affected.
 
 **Improvements**
 
 -  CLI: ``det user list`` will not display the Admin column when RBAC is enabled.
--  Checkpoints: in checkpoint-related views and APIs, the previously hidden file ``metadata.json``
+-  Checkpoints: In checkpoint-related views and APIs, the previously hidden file ``metadata.json``
    is now visible.
 
 **************
