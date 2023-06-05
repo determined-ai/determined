@@ -9,7 +9,7 @@ from determined.common.api._util import all_ntsc
 from tests import api_utils
 from tests import experiment as exp
 from tests.cluster.test_rbac import create_workspaces_with_users, rbac_disabled
-from tests.cluster.test_users import ADMIN_CREDENTIALS, logged_in_user
+from tests.cluster.test_users import ADMIN_CREDENTIALS, det_run, logged_in_user
 
 
 def seed_workspace(ws: bindings.v1Workspace) -> None:
@@ -31,6 +31,19 @@ def seed_workspace(ws: bindings.v1Workspace) -> None:
     for ntsc in all_ntsc:
         print(f"creating {ntsc}")
         api_utils.launch_ntsc(admin_session, workspace_id=ws.id, typ=ntsc, exp_id=experiment_id)
+
+
+@pytest.mark.e2e_cpu_rbac
+@pytest.mark.skipif(rbac_disabled(), reason="ee rbac is required for this test")
+def test_job_global_perm() -> None:
+    with logged_in_user(ADMIN_CREDENTIALS):
+        experiment_id = exp.create_experiment(
+            conf.fixtures_path("no_op/single.yaml"),
+            conf.fixtures_path("no_op"),
+            ["--project_id", str(1)],
+        )
+        output = det_run(["job", "ls"])
+        assert str(experiment_id) in str(output)
 
 
 @pytest.mark.e2e_cpu_rbac

@@ -60,6 +60,13 @@ def logged_in_user(credentials: authentication.Credentials) -> Generator:
     log_out_user()
 
 
+@pytest.mark.e2e_cpu
+def test_logged_in_user() -> None:
+    with logged_in_user(ADMIN_CREDENTIALS):
+        output = det_run(["user", "whoami"])
+        assert f"You are logged in as user '{ADMIN_CREDENTIALS.username}'" in output
+
+
 def get_random_string() -> str:
     return str(uuid.uuid4())
 
