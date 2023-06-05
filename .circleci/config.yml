@@ -1812,7 +1812,7 @@ jobs:
       - run: echo 'export COVERAGE_FILE=/root/project/test-unit-harness-gpu-pycov' >> $BASH_ENV
       - run: make -C harness test-gpu
       - run: coverage xml -i --data-file=./test-unit-harness-gpu-pycov
-      - run: codecov -v -t $CODECOV_TOKEN -F harness
+      - run: /root/.local/bin/codecov -v -t $CODECOV_TOKEN -F harness
       - persist_to_workspace:
           root: .
           paths:
