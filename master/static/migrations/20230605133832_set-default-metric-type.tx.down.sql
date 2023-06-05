@@ -1,3 +1,14 @@
-ALTER TABLE raw_validations ALTER COLUMN custom_type DROP DEFAULT;
-ALTER TABLE raw_steps ALTER COLUMN custom_type DROP DEFAULT;
-ALTER TABLE generic_metrics ALTER COLUMN custom_type DROP DEFAULT;
+ALTER TABLE raw_validations
+ALTER COLUMN custom_type DROP NOT NULL,
+ALTER COLUMN custom_type DROP DEFAULT;
+
+ALTER TABLE raw_steps
+ALTER COLUMN custom_type DROP NOT NULL,
+ALTER COLUMN custom_type DROP DEFAULT;
+
+ALTER TABLE generic_metrics
+ALTER COLUMN custom_type DROP NOT NULL,
+ALTER COLUMN custom_type DROP DEFAULT;
+
+ALTER TABLE metrics
+ALTER COLUMN custom_type DROP NOT NULL;

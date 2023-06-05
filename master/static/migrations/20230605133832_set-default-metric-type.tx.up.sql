@@ -12,6 +12,21 @@
 -- | partition_type | metric_partition_type    |  not null default 'VALIDATION'::metric_partition_type |
 -- | custom_type    | text                     |                                                       |
 -- +----------------+--------------------------+-------------------------------------------------------+
-ALTER TABLE raw_validations ALTER COLUMN custom_type SET DEFAULT 'validation';
-ALTER TABLE raw_steps ALTER COLUMN custom_type SET DEFAULT 'training';
-ALTER TABLE generic_metrics ALTER COLUMN custom_type SET DEFAULT 'generic';
+UPDATE raw_validations SET custom_type = 'validation' WHERE custom_type IS NULL;
+UPDATE raw_steps SET custom_type = 'training' WHERE custom_type IS NULL;
+UPDATE generic_metrics SET custom_type = 'generic' WHERE custom_type IS NULL;
+
+ALTER TABLE raw_validations
+ALTER COLUMN custom_type SET DEFAULT 'validation'
+ALTER COLUMN custom_type SET NOT NULL;
+
+ALTER TABLE raw_steps
+ALTER COLUMN custom_type SET DEFAULT 'training'
+ALTER COLUMN custom_type SET NOT NULL;
+
+ALTER TABLE generic_metrics
+ALTER COLUMN custom_type SET DEFAULT 'generic'
+ALTER COLUMN custom_type SET NOT NULL;
+
+ALTER TABLE metrics
+ALTER COLUMN custom_type SET NOT NULL;
