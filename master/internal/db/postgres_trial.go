@@ -173,6 +173,18 @@ func (db *PgDB) fullTrialSummaryMetricsRecompute(
 	if err != nil {
 		return fmt.Errorf("rollback computing validation summary metrics: %w", err)
 	}
+	generic_metric_types := []string{}
+	if err = tx.SelectContext(ctx, &generic_metric_types, `
+SELECT DISTINCT COALESCE(custom_type, 'generic')
+FROM metrics
+WHERE trial_id = $1`, trialID); err != nil {
+		return err
+	}
+	for _, generic_metric_type := range generic_metric_types {
+		// TODO: calc for a custom type:
+		// TODO add constraint on legacy metric paths for generic custom_type values
+	}
+
 	genericSummary, err := db.calculateFullTrialSummaryMetrics(
 		ctx, tx, trialID, GenericMetric)
 	if err != nil {
