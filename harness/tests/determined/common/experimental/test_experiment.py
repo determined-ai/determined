@@ -6,7 +6,7 @@ import responses
 from determined.common import api
 from determined.common.api import bindings
 from determined.common.experimental import experiment
-from tests.common import api_server
+from tests.fixtures import api_responses
 
 _MASTER = "http://localhost:8080"
 
@@ -30,7 +30,7 @@ def test_wait_retries_transient_504(
 ) -> None:
     expref = make_expref(1)
 
-    exp_resp = api_server.sample_get_experiment(
+    exp_resp = api_responses.sample_get_experiment(
         id=expref.id, state=bindings.experimentv1State.COMPLETED
     )
 
@@ -58,10 +58,10 @@ def test_wait_waits_until_terminal_state(
 ) -> None:
     expref = make_expref(1)
 
-    exp_resp_running = api_server.sample_get_experiment(
+    exp_resp_running = api_responses.sample_get_experiment(
         id=expref.id, state=bindings.experimentv1State.RUNNING
     )
-    exp_resp_terminal = api_server.sample_get_experiment(id=expref.id, state=terminal_state)
+    exp_resp_terminal = api_responses.sample_get_experiment(id=expref.id, state=terminal_state)
 
     responses.get(f"{_MASTER}/api/v1/experiments/{expref.id}", json=exp_resp_running.to_json())
     responses.get(f"{_MASTER}/api/v1/experiments/{expref.id}", json=exp_resp_running.to_json())
@@ -81,7 +81,7 @@ def test_wait_raises_exception_when_experiment_is_paused(
 ) -> None:
     expref = make_expref(1)
 
-    exp_resp = api_server.sample_get_experiment(
+    exp_resp = api_responses.sample_get_experiment(
         id=expref.id, state=bindings.experimentv1State.PAUSED
     )
 
