@@ -49,8 +49,9 @@
   }
 }
 .withIcon {
-  display: flex;
   align-items: center;
+  display: flex;
+
   &.withChildren {
     [class^='icon-']::before,
     [class*=' icon-']::before {
