@@ -2,8 +2,9 @@ package db
 
 import (
 	"context"
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestAddAndRemoveBindings(t *testing.T) {
@@ -13,9 +14,7 @@ func TestAddAndRemoveBindings(t *testing.T) {
 	// Test single insert/delete
 	// Test bulk insert/delete
 	err := AddRPWorkspaceBindings(ctx, []int32{1}, "test pool")
-	if err != nil {
-		t.Errorf("Error when inserting: %t", err)
-	}
+	require.NoError(t, err, "failed to add bindings: %t", err)
 
 	var values []RPWorkspaceBinding
 	count, err := Bun().NewSelect().Model(&values).ScanAndCount(ctx)
@@ -27,8 +26,28 @@ func TestAddAndRemoveBindings(t *testing.T) {
 		"expected pool name to be 'test pool', but got %s", values[0].PoolName)
 
 	err = RemoveRPWorkspaceBindings(ctx, []int32{1}, "test pool")
-	require.NoError(t, err, "error when removing workspace from DB: %t", err)
-	values = []RPWorkspaceBinding{}
+	require.NoError(t, err, "failed to remove bindings: %t", err)
+
+	count, err = Bun().NewSelect().Model(&values).ScanAndCount(ctx)
+	require.NoError(t, err, "error when scanning DB: %t", err)
+	require.Equal(t, 0, count, "expected 0 items in DB, found %d", count)
+
+	err = AddRPWorkspaceBindings(ctx, []int32{1, 2, 3, 4}, "test pool too")
+	require.NoError(t, err, "failed to add bindings: %t", err)
+
+	count, err = Bun().NewSelect().Model(&values).ScanAndCount(ctx)
+	require.NoError(t, err, "error when scanning DB: %t", err)
+	require.Equal(t, 4, count, "expected 3 items in DB, found %d", count)
+	for i := 0; i < 4; i++ {
+		require.Equal(t, i+1, values[i].WorkspaceID,
+			"expected workspaceID to be %d, but it is %d", i+1, values[i].WorkspaceID)
+		require.Equal(t, "test pool too", values[i].PoolName,
+			"expected pool name to be 'test pool too', but got %s", values[i].PoolName)
+	}
+
+	err = RemoveRPWorkspaceBindings(ctx, []int32{1, 2, 3, 4}, "test pool too")
+	require.NoError(t, err, "failed to remove bindings: %t", err)
+
 	count, err = Bun().NewSelect().Model(&values).ScanAndCount(ctx)
 	require.NoError(t, err, "error when scanning DB: %t", err)
 	require.Equal(t, 0, count, "expected 0 items in DB, found %d", count)
