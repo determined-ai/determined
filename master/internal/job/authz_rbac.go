@@ -5,6 +5,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/command"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -23,6 +24,8 @@ func (a *JobAuthZRBAC) FilterJobs(
 	var viewableNtscWorkspaces map[model.AccessScopeID]bool
 	hasNTSC := false
 	hasExperiment := false
+	userHasGlobalExpViewPerm := false
+	userHasGlobalNTSCViewPerm := false
 	for _, job := range jobs {
 		switch job.Type {
 		case jobv1.Type_TYPE_EXPERIMENT:
@@ -36,7 +39,33 @@ func (a *JobAuthZRBAC) FilterJobs(
 		}
 	}
 
+	if hasExperiment {
+		err = db.DoesPermissionMatch(ctx, curUser.ID, nil,
+			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA)
+		switch err.(type) {
+		case nil:
+			userHasGlobalExpViewPerm = true
+		case authz.PermissionDeniedError:
+			break
+		default:
+			return nil, err
+		}
+	}
+
 	if hasNTSC {
+		err = db.DoesPermissionMatch(ctx, curUser.ID, nil,
+			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_NSC)
+		switch err.(type) {
+		case nil:
+			userHasGlobalNTSCViewPerm = true
+		case authz.PermissionDeniedError:
+			break
+		default:
+			return nil, err
+		}
+	}
+
+	if hasNTSC && !userHasGlobalNTSCViewPerm {
 		viewableNtscWorkspaces, err = command.AuthZProvider.Get().
 			AccessibleScopes(ctx, curUser, model.AccessScopeID(0))
 		if err != nil {
@@ -44,7 +73,7 @@ func (a *JobAuthZRBAC) FilterJobs(
 		}
 	}
 
-	if hasExperiment {
+	if hasExperiment && !userHasGlobalExpViewPerm {
 		viewableExpWorkspacesList, err := db.GetNonGlobalWorkspacesWithPermission(
 			ctx, curUser.ID, rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA,
 		)
@@ -60,12 +89,14 @@ func (a *JobAuthZRBAC) FilterJobs(
 	for _, job := range jobs {
 		switch job.Type {
 		case jobv1.Type_TYPE_EXPERIMENT:
-			if _, ok := viewableExpWorkspaces[int(job.WorkspaceId)]; ok {
+			viewable, _ := viewableExpWorkspaces[int(job.WorkspaceId)]
+			if userHasGlobalExpViewPerm || viewable {
 				viewableJobs = append(viewableJobs, job)
 			}
 		case jobv1.Type_TYPE_NOTEBOOK, jobv1.Type_TYPE_TENSORBOARD, jobv1.Type_TYPE_SHELL,
 			jobv1.Type_TYPE_COMMAND:
-			if _, ok := viewableNtscWorkspaces[model.AccessScopeID(job.WorkspaceId)]; ok {
+			viewable, _ := viewableNtscWorkspaces[model.AccessScopeID(job.WorkspaceId)]
+			if userHasGlobalNTSCViewPerm || viewable {
 				viewableJobs = append(viewableJobs, job)
 			}
 			// TODO: special case for tensorboard.

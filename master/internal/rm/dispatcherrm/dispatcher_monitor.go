@@ -108,7 +108,8 @@ func newDispatchWatcher(apiClient *launcherAPIClient) *launcherMonitor {
 // When launchPending is true, a later call to notifyJobLaunched is required once the
 // launcher has initiated the launch and the dispatchID will be valid for status checks.
 func (m *launcherMonitor) monitorJob(
-	user string, dispatchID string, payloadName string, launchPending bool) {
+	user string, dispatchID string, payloadName string, launchPending bool,
+) {
 	m.newLauncherJob <- &launcherJob{
 		user:                   user,
 		dispatcherID:           dispatchID,

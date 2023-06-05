@@ -1044,7 +1044,6 @@ func (m *dispatcherResourceManager) startLauncherJob(
 		m.rmConfig.LauncherContainerRunType, m.wlmType == pbsSchedulerType,
 		m.rmConfig.JobProjectSource, m.dbState.DisabledAgents,
 	)
-
 	if err != nil {
 		sendResourceStateChangedErrorResponse(ctx, err, msg,
 			"unable to launch job")

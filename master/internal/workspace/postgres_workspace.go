@@ -7,6 +7,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/uptrace/bun"
 
+	"github.com/pkg/errors"
+
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/set"
@@ -88,7 +90,7 @@ func WorkspaceByProjectID(ctx context.Context, projectID int) (*model.Workspace,
 		"id = (SELECT workspace_id FROM projects WHERE id = ?)",
 		projectID).Scan(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "failed to get workspace for project %d", projectID)
 	}
 	return &w, nil
 }
