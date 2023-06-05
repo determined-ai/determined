@@ -246,7 +246,7 @@ const ButtonsSection: React.FC = () => {
         </Space>
         <hr />
         <strong>Default Button with icon</strong>
-        With Antd Icon
+        With SVG Icon
         <Space>
           <Button icon={<PoweroffOutlined />} />
           <Button icon={<PoweroffOutlined />}>ButtonText</Button>
