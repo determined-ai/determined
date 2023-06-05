@@ -166,7 +166,7 @@ func (db *PgDB) fullTrialSummaryMetricsRecompute(
 	updatedSummaryMetrics := model.JSONObj{}
 	metricTypes := []model.MetricType{}
 	if err := tx.SelectContext(ctx, &metricTypes,
-		`SELECT DISTINCT FROM metrics WHERE trial_id = $1`, trialID); err != nil {
+		`SELECT DISTINCT custom_type FROM metrics WHERE trial_id = $1`, trialID); err != nil {
 		return err
 	}
 	metricTypes = append(metricTypes, model.TrainingMetricType)
