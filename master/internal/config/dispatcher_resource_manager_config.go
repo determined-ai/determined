@@ -41,6 +41,7 @@ type DispatcherResourceManagerConfig struct {
 	UserName             string `json:"user_name"`
 	GroupName            string `json:"group_name"`
 	SingularityImageRoot string `json:"singularity_image_root"`
+	ApptainerImageRoot   string `json:"apptainer_image_root"`
 	JobStorageRoot       string `json:"job_storage_root"`
 	Path                 string `json:"path"`
 	LdLibraryPath        string `json:"ld_library_path"`
@@ -69,6 +70,9 @@ func (c DispatcherResourceManagerConfig) Validate() []error {
 		c.LauncherContainerRunType == podman ||
 		c.LauncherContainerRunType == enroot) {
 		return []error{fmt.Errorf("invalid launch container run type: '%s'", c.LauncherContainerRunType)}
+	}
+	if c.ApptainerImageRoot != "" && c.SingularityImageRoot != "" {
+		return []error{fmt.Errorf("apptainer_image_root and singularity_image_root cannot be both set")}
 	}
 	return c.validateJobProjectSource()
 }
@@ -99,7 +103,16 @@ var defaultDispatcherResourceManagerConfig = DispatcherResourceManagerConfig{
 func (c *DispatcherResourceManagerConfig) UnmarshalJSON(data []byte) error {
 	*c = defaultDispatcherResourceManagerConfig
 	type DefaultParser *DispatcherResourceManagerConfig
-	return json.Unmarshal(data, DefaultParser(c))
+	if err := json.Unmarshal(data, DefaultParser(c)); err != nil {
+		return err
+	}
+	if c.ApptainerImageRoot != "" {
+		c.SingularityImageRoot = c.ApptainerImageRoot
+	}
+	if c.LauncherContainerRunType == "apptainer" {
+		c.LauncherContainerRunType = "singularity"
+	}
+	return nil
 }
 
 // ResolveSlotType resolves the slot type by first looking for a partition-specific setting,
