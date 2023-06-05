@@ -7,6 +7,7 @@ import DataEditor, {
   GridCell,
   GridCellKind,
   GridColumn,
+  GridMouseEventArgs,
   GridSelection,
   HeaderClickedEventArgs,
   Item,
@@ -136,6 +137,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   onContextMenuComplete,
 }) => {
   const gridRef = useRef<DataEditorRef>(null);
+  const [hoveredRow, setHoveredRow] = useState<number>();
 
   useEffect(() => {
     if (scrollPositionSetCount.get() >= SCROLL_SET_COUNT_NEEDED) return;
@@ -239,14 +241,17 @@ export const GlideTable: React.FC<GlideTableProps> = ({
       if (row === data.length) return;
       // avoid showing 'empty rows' below data
       if (!data[row]) return;
+
+      const hoverStyle = row === hoveredRow ? { bgCell: '#323335' } : {}; // for some weird reason, using the consts from our reusable theme doesn't work...
+
       const rowColorTheme = Loadable.match(data[row], {
         Loaded: (record) =>
           colorMap[record.experiment.id] ? { accentColor: colorMap[record.experiment.id] } : {},
         NotLoaded: () => ({}),
       });
-      return { ...rowColorTheme };
+      return { ...rowColorTheme, ...hoverStyle };
     },
-    [colorMap, data],
+    [colorMap, data, hoveredRow],
   );
 
   const onColumnResize: DataEditorProps['onColumnResize'] = useCallback(
@@ -555,6 +560,15 @@ export const GlideTable: React.FC<GlideTableProps> = ({
     [sortableColumnIds, setSortableColumnIds],
   );
 
+  const onColumnHovered = useCallback(
+    (args: GridMouseEventArgs) => {
+      const [, row] = args.location;
+      setHoveredRow(args.kind !== 'cell' ? undefined : row);
+      onItemHovered?.(args);
+    },
+    [onItemHovered],
+  );
+
   const columns: DataEditorProps['columns'] = useMemo(() => {
     const gridColumns = columnIds
       .map((columnName) => {
@@ -650,7 +664,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
           onColumnMoved={onColumnMoved}
           onColumnResize={onColumnResize}
           onHeaderClicked={onHeaderClicked}
-          onItemHovered={onItemHovered}
+          onItemHovered={onColumnHovered}
           onVisibleRegionChanged={handleScroll}
         />
       </div>
