@@ -5,6 +5,9 @@ import SplitPane from 'components/SplitPane';
 import { ExperimentWithTrial, Project} from 'types';
 import HpParallelCoordinates from './ExpParallelCoordinates';
 import { MapOfIdsToColors } from './useGlasbey';
+
+import CompareMetrics from './CompareMetrics';
+
 interface Props {
   colorMap: MapOfIdsToColors;
   children: React.ReactElement;
@@ -14,16 +17,24 @@ interface Props {
   selectedExperiments: ExperimentWithTrial[];
   project: Project
 }
-
-const ComparisonView: React.FC<Props> = ({ children, open, initialWidth, onWidthChange,  selectedExperiments, project, colorMap}) => {
-
+const ComparisonView: React.FC<Props> = ({
+  children,
+  open,
+  initialWidth,
+  onWidthChange,
+  selectedExperiments,
+}) => {
   const tabs: TabItem[] = useMemo(() => {
     return [
-      { key: 'metrics', label: 'Metrics'},
-      { key: 'hyperparameters', label: 'Hyperparameters', children:<HpParallelCoordinates colorMap={colorMap} workspaceId={project.workspaceId} experiments={selectedExperiments}/>  },
+      {
+        children: <CompareMetrics selectedExperiments={selectedExperiments} />,
+        key: 'metrics',
+        label: 'Metrics',
+      },
+      { key: 'hyperparameters', label: 'Hyperparameters' },
       { key: 'configurations', label: 'Configurations' },
     ];
-  }, [selectedExperiments, project]);
+  }, [selectedExperiments]);
 
   return (
     <div>
