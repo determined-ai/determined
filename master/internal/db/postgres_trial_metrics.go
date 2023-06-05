@@ -27,8 +27,9 @@ const (
 rollbackMetrics ensures old training and validation metrics from a previous run id are archived.
 */
 func rollbackMetrics(ctx context.Context, tx *sqlx.Tx, runID, trialID,
-	lastProcessedBatch int32, pType MetricPartitionType,
+	lastProcessedBatch int32, mType model.MetricType,
 ) (int, error) {
+	pType := customMetricTypeToPartitionType(mType)
 	res, err := tx.ExecContext(ctx, `
 UPDATE metrics SET archived = true
 WHERE trial_id = $1
@@ -57,9 +58,9 @@ WHERE trial_id = $1
 }
 
 func (db *PgDB) addRawMetrics(ctx context.Context, tx *sqlx.Tx, metricsBody *map[string]interface{},
-	runID, trialID, lastProcessedBatch int32,
-	pType MetricPartitionType, mType model.MetricType,
+	runID, trialID, lastProcessedBatch int32, mType model.MetricType,
 ) (int, error) {
+	pType := customMetricTypeToPartitionType(mType)
 	var metricRowID int
 	//nolint:execinquery // we want to get the id.
 	if err := tx.QueryRowContext(ctx, `
@@ -93,7 +94,7 @@ func customMetricTypeToPartitionType(mType model.MetricType) MetricPartitionType
 // metrics. If these training metrics occur before any others, a rollback is assumed and later
 // training and validation metrics are cleaned up.
 func (db *PgDB) AddTrainingMetrics(ctx context.Context, m *trialv1.TrialMetrics) error {
-	_, err := db.addTrialMetrics(ctx, m, TrainingMetric, model.TrainingMetricType)
+	_, err := db.addTrialMetrics(ctx, m, model.TrainingMetricType)
 	return err
 }
 
@@ -103,7 +104,7 @@ func (db *PgDB) AddTrainingMetrics(ctx context.Context, m *trialv1.TrialMetrics)
 func (db *PgDB) AddValidationMetrics(
 	ctx context.Context, m *trialv1.TrialMetrics,
 ) error {
-	_, err := db.addTrialMetrics(ctx, m, ValidationMetric, model.ValidationMetricType)
+	_, err := db.addTrialMetrics(ctx, m, model.ValidationMetricType)
 	return err
 }
 
@@ -111,8 +112,7 @@ func (db *PgDB) AddValidationMetrics(
 func (db *PgDB) AddTrialMetrics(
 	ctx context.Context, m *trialv1.TrialMetrics, mType model.MetricType,
 ) error {
-	pType := customMetricTypeToPartitionType(mType)
-	_, err := db.addTrialMetrics(ctx, m, pType, mType)
+	_, err := db.addTrialMetrics(ctx, m, mType)
 	return err
 }
 

@@ -259,10 +259,9 @@ func (db *PgDB) updateTotalBatches(ctx context.Context, tx *sqlx.Tx, trialID int
 }
 
 func (db *PgDB) _addTrialMetricsTx(
-	ctx context.Context, tx *sqlx.Tx, m *trialv1.TrialMetrics, pType MetricPartitionType,
-	mType model.MetricType,
+	ctx context.Context, tx *sqlx.Tx, m *trialv1.TrialMetrics, mType model.MetricType,
 ) (rollbacks int, err error) {
-	isValidation := pType == ValidationMetric
+	isValidation := mType == model.ValidationMetricType
 
 	// DISCUSS: these two don't need to be coupled.
 	metricsJSONPath := model.TrialMetricsJSONPath(isValidation)
@@ -283,7 +282,7 @@ func (db *PgDB) _addTrialMetricsTx(
 	}
 
 	if rollbacks, err = rollbackMetrics(ctx, tx, m.TrialRunId, m.TrialId, m.StepsCompleted,
-		pType); err != nil {
+		mType); err != nil {
 		return rollbacks, err
 	}
 	var summaryMetrics model.JSONObj
@@ -295,7 +294,7 @@ func (db *PgDB) _addTrialMetricsTx(
 	}
 
 	metricRowID, err := db.addRawMetrics(ctx, tx, &metricsBody, m.TrialRunId,
-		m.TrialId, m.StepsCompleted, pType, mType)
+		m.TrialId, m.StepsCompleted, mType)
 	if err != nil {
 		return rollbacks, err
 	}
@@ -362,18 +361,16 @@ WHERE id = $1;
 
 // addTrialMetrics inserts a set of trial metrics to the database.
 func (db *PgDB) addTrialMetrics(
-	ctx context.Context, m *trialv1.TrialMetrics, pType MetricPartitionType,
-	mType model.MetricType,
+	ctx context.Context, m *trialv1.TrialMetrics, mType model.MetricType,
 ) (rollbacks int, err error) {
-	// TODO no longer needed to take in a partition type.
 	switch v := m.Metrics.AvgMetrics.Fields["epoch"].AsInterface().(type) {
 	case float64, nil:
 	default:
 		return 0, fmt.Errorf("cannot add metric with non numeric 'epoch' value got %v", v)
 	}
-	return rollbacks, db.withTransaction(fmt.Sprintf("add trial metrics %s", pType),
+	return rollbacks, db.withTransaction(fmt.Sprintf("add trial metrics %s", mType),
 		func(tx *sqlx.Tx) error {
-			rollbacks, err = db._addTrialMetricsTx(ctx, tx, m, pType, mType)
+			rollbacks, err = db._addTrialMetricsTx(ctx, tx, m, mType)
 			return err
 		})
 }
