@@ -192,6 +192,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   );
 
   const fetchExperiments = useCallback(async (): Promise<void> => {
+    if (isLoadingSettings) return;
     try {
       // Use -1.5 because paged view starts page at 1.
       const tableOffset = Math.max((page - 1.5) * PAGE_SIZE, 0);
@@ -237,6 +238,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   }, [
     page,
     experimentFilters,
+    isLoadingSettings,
     canceler.signal,
     filtersString,
     sortString,
