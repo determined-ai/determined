@@ -17,17 +17,15 @@ def standard_session() -> api.Session:
 
 
 @pytest.fixture
-def make_expref(standard_session: api.Session) -> Callable[[int], experiment.ExperimentReference]:
-    def _make_expref(exp_id: int) -> experiment.ExperimentReference:
-        """Make an experiment reference with the given ID."""
-        return experiment.ExperimentReference(exp_id, standard_session)
+def make_expref(standard_session: api.Session) -> Callable[[int], experiment.Experiment]:
+    def _make_expref(exp_id: int) -> experiment.Experiment:
+        return experiment.Experiment(exp_id, standard_session)
 
     return _make_expref
 
 
-@responses.activate
 def test_await_waits_for_first_trial_to_start(
-    make_expref: Callable[[int], experiment.ExperimentReference]
+    make_expref: Callable[[int], experiment.Experiment]
 ) -> None:
     expref = make_expref(1)
 
@@ -57,7 +55,7 @@ def test_await_waits_for_first_trial_to_start(
 )
 @responses.activate
 def test_wait_waits_until_terminal_state(
-    make_expref: Callable[[int], experiment.ExperimentReference],
+    make_expref: Callable[[int], experiment.Experiment],
     terminal_state: bindings.experimentv1State,
 ) -> None:
     expref = make_expref(1)
@@ -77,7 +75,7 @@ def test_wait_waits_until_terminal_state(
 
 @responses.activate
 def test_wait_raises_exception_when_experiment_is_paused(
-    make_expref: Callable[[int], experiment.ExperimentReference]
+    make_expref: Callable[[int], experiment.Experiment]
 ) -> None:
     expref = make_expref(1)
 
