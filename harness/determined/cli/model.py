@@ -28,7 +28,7 @@ def render_model(model: Model) -> None:
     render.tabulate_or_csv(headers, [values], False)
 
 
-def render_model_versions(model_versions: List[ModelVersion]) -> None:
+def _render_model_versions(model_versions: List[ModelVersion]) -> None:
     headers = [
         "Version #",
         "Trial ID",
@@ -109,7 +109,7 @@ def list_versions(args: Namespace) -> None:
     else:
         render_model(model)
         print("\n")
-        render_model_versions(model.get_versions())
+        _render_model_versions(model.get_versions())
 
 
 def create(args: Namespace) -> None:
@@ -138,7 +138,7 @@ def describe(args: Namespace) -> None:
         render_model(model)
         if model_version is not None:
             print("\n")
-            render_model_versions([model_version])
+            _render_model_versions([model_version])
 
 
 @authentication.required
@@ -156,7 +156,7 @@ def register_version(args: Namespace) -> None:
         model_version = model.register_version(args.uuid)
         render_model(model)
         print("\n")
-        render_model_versions([model_version])
+        _render_model_versions([model_version])
 
 
 args_description = [
