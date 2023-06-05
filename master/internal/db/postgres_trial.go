@@ -368,6 +368,10 @@ func (db *PgDB) addTrialMetrics(
 	default:
 		return 0, fmt.Errorf("cannot add metric with non numeric 'epoch' value got %v", v)
 	}
+	if val, ok := model.ReservedMetricTypes[mType.ToString()]; ok && val {
+		return 0, errors.Errorf(fmt.Sprintf("cannot add metric with reserved type %s", mType))
+	}
+
 	return rollbacks, db.withTransaction(fmt.Sprintf("add trial metrics %s", mType),
 		func(tx *sqlx.Tx) error {
 			rollbacks, err = db._addTrialMetricsTx(ctx, tx, m, mType)
