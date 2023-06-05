@@ -24,18 +24,19 @@ Version 0.23.0
    <https://kubernetes.io/docs/tasks/manage-kubernetes-objects/update-api-object-kubectl-patch/#use-a-strategic-merge-patch-to-update-a-deployment>`__.
    The previous behavior was using only the experiment/job configuration if supplied.
 
--  CLI: The ``det notebook|tensorboard start`` commands no longer block for the whole life cycle of the
-   notebook or TensorBoard process. They will also not stream related event logs. Users should
+-  CLI: The ``det notebook|tensorboard start`` commands no longer block for the whole life cycle of
+   the notebook or TensorBoard process. They will also not stream related event logs. Users should
    use the existing `det notebook|tensorboard|task logs` commands to stream logs from the process.
 
--  Python SDK: Remove the packages ``determined-cli``, ``determined-common``, and ``determined-deploy``,
-   which were deprecated in 0.15.0 (April 2021). The submodules ``determined.cli``,
-   ``determined.common``, and ``determined.deploy`` of the ``determined`` package should be used instead.
+-  Python SDK: Remove the packages ``determined-cli``, ``determined-common``, and
+   ``determined-deploy``, which were deprecated in 0.15.0 (April 2021). The submodules
+   ``determined.cli``, ``determined.common``, and ``determined.deploy`` of the ``determined``
+   package should be used instead.
 
 **New Features**
 
--  Experiment: :ref:`Custom hyperparameter searchers <topic-guides_hp-tuning-det_custom>` can include extra
-   directories to pass into the ``client.create_experiment`` context.
+-  Experiment: :ref:`Custom hyperparameter searchers <topic-guides_hp-tuning-det_custom>` can
+   include extra directories to pass into the ``client.create_experiment`` context.
 
 -  Checkpoints: Add support for deleting a subset of files from checkpoints.
 
@@ -57,8 +58,8 @@ Version 0.23.0
    automatically tune their distributed training hyperparameters.
 
 -  API: ``GetExperiments(archived=False)`` no longer lists experiments from archived projects or
-   workspaces. This change affects both the WebUI and the CLI. Unarchived projects and workspaces are
-   not affected.
+   workspaces. This change affects both the WebUI and the CLI. Unarchived projects and workspaces
+   are not affected.
 
 **Improvements**
 
