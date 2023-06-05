@@ -365,6 +365,7 @@ func (db *PgDB) addTrialMetrics(
 	ctx context.Context, m *trialv1.TrialMetrics, pType MetricPartitionType,
 	mType model.MetricType,
 ) (rollbacks int, err error) {
+	// TODO no longer needed to take in a partition type.
 	switch v := m.Metrics.AvgMetrics.Fields["epoch"].AsInterface().(type) {
 	case float64, nil:
 	default:

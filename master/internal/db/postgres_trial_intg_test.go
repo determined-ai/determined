@@ -102,7 +102,7 @@ func addMetrics(ctx context.Context,
 }
 
 func addMetricCustomTime(ctx context.Context, t *testing.T, trialID int, endTime time.Time) {
-	metric := struct {
+	type metric struct {
 		bun.BaseModel `bun:"table:metrics"`
 		TrialID       int
 		TrialRunID    int
@@ -110,42 +110,34 @@ func addMetricCustomTime(ctx context.Context, t *testing.T, trialID int, endTime
 		TotalBatches  int
 		EndTime       time.Time
 		PartitionType MetricPartitionType
-	}{
-		TrialID:    trialID,
-		TrialRunID: 1,
-		Metrics: map[string]any{
-			"avg_metrics": map[string]any{
-				"b": -1.0,
-			},
-		},
-		TotalBatches:  999999,
-		EndTime:       endTime,
-		PartitionType: TrainingMetric,
+		CustomType    model.MetricType
 	}
-	_, err := Bun().NewInsert().Model(&metric).Exec(ctx)
+
+	baseMetric := metric{
+		TrialID:      trialID,
+		TrialRunID:   1,
+		TotalBatches: 999999,
+		EndTime:      endTime,
+	}
+
+	baseMetric.PartitionType = TrainingMetric
+	baseMetric.CustomType = model.TrainingMetricType
+	baseMetric.Metrics = map[string]any{
+		"avg_metrics": map[string]any{
+			"b": -1.0,
+		},
+	}
+	_, err := Bun().NewInsert().Model(&baseMetric).Exec(ctx)
 	require.NoError(t, err)
 
-	valMetric := struct {
-		bun.BaseModel `bun:"table:metrics"`
-		TrialID       int
-		TrialRunID    int
-		Metrics       map[string]any
-		TotalBatches  int
-		EndTime       time.Time
-		PartitionType MetricPartitionType
-	}{
-		TrialID:    trialID,
-		TrialRunID: 1,
-		Metrics: map[string]any{
-			"validation_metrics": map[string]any{
-				"val_loss": 3.0,
-			},
+	baseMetric.PartitionType = ValidationMetric
+	baseMetric.CustomType = model.ValidationMetricType
+	baseMetric.Metrics = map[string]any{
+		"validation_metrics": map[string]any{
+			"val_loss": 3.0,
 		},
-		TotalBatches:  999999,
-		EndTime:       endTime,
-		PartitionType: ValidationMetric,
 	}
-	_, err = Bun().NewInsert().Model(&valMetric).Exec(ctx)
+	_, err = Bun().NewInsert().Model(&baseMetric).Exec(ctx)
 	require.NoError(t, err)
 }
 
@@ -1022,10 +1014,11 @@ func TestConcurrentMetricUpdate(t *testing.T) {
 			require.NoError(t, db.updateTotalBatches(ctx, tx, tr.ID))
 		}
 		if coinFlip() {
-			partitionTypes := []MetricPartitionType{ValidationMetric, TrainingMetric}
+			modelTypes := []model.MetricType{model.TrainingMetricType, model.ValidationMetricType}
 			//nolint:gosec // Weak RNG doesn't matter here.
-			partitionType := partitionTypes[rand.Intn(len(partitionTypes))]
-			_, err = db._addTrialMetricsTx(ctx, tx, trialMetrics, partitionType, "intg-test")
+			modelType := modelTypes[rand.Intn(len(modelTypes))]
+			partitionType := customMetricTypeToPartitionType(modelType)
+			_, err = db._addTrialMetricsTx(ctx, tx, trialMetrics, partitionType, modelType)
 			require.NoError(t, err)
 		}
 		if coinFlip() {
