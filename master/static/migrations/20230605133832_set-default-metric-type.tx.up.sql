@@ -17,15 +17,15 @@ UPDATE raw_steps SET custom_type = 'training' WHERE custom_type IS NULL;
 UPDATE generic_metrics SET custom_type = 'generic' WHERE custom_type IS NULL;
 
 ALTER TABLE raw_validations
-ALTER COLUMN custom_type SET DEFAULT 'validation'
+ALTER COLUMN custom_type SET DEFAULT 'validation',
 ALTER COLUMN custom_type SET NOT NULL;
 
 ALTER TABLE raw_steps
-ALTER COLUMN custom_type SET DEFAULT 'training'
+ALTER COLUMN custom_type SET DEFAULT 'training',
 ALTER COLUMN custom_type SET NOT NULL;
 
 ALTER TABLE generic_metrics
-ALTER COLUMN custom_type SET DEFAULT 'generic'
+ALTER COLUMN custom_type SET DEFAULT 'generic',
 ALTER COLUMN custom_type SET NOT NULL;
 
 ALTER TABLE metrics
