@@ -327,7 +327,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
           selection.rows.length > 0
             ? {
                 key: 'select-none',
-                label: 'Clear selection',
+                label: 'Clear selected',
                 onClick: () => {
                   deselectAllRows();
                   setMenuIsOpen(false);
