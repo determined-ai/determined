@@ -175,6 +175,7 @@ const CreateGroupModalComponent: React.FC<Props> = ({ onClose, users, group }: P
       size="small"
       submit={{
         disabled: !groupName,
+        handleError,
         handler: handleSubmit,
         text: group ? MODAL_HEADER_LABEL_EDIT : MODAL_HEADER_LABEL_CREATE,
       }}

@@ -432,6 +432,77 @@ func TestLegacyConfig(t *testing.T) {
 				},
 			},
 		},
+		// Test case with a 0.22.2 hdfs checkpoint storage config.
+		{
+			Name: "0.22.2 hdfs checkpoint storage config",
+			Bytes: []byte(`
+                checkpoint_policy: best
+                checkpoint_storage:
+                  hdfs_url: example.com
+                  hdfs_path: /example
+                  user: test
+                  type: hdfs
+                  save_experiment_best: 10
+                  save_trial_best: 10
+                  save_trial_latest: 10
+                description: hdfs-test
+                entrypoint: model_def:OneVarPyTorchTrial
+                hyperparameters:
+                  global_batch_size:
+                    type: const
+                    val: 32
+                scheduling_unit: 100
+                environment:
+                  image:
+                    cpu: determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-6eceaca
+                    gpu: determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-6eceaca
+                searcher:
+                  max_length:
+                    batches: 3
+                  metric: loss
+                  name: single
+                  smaller_is_better: true
+            `),
+			Expected: LegacyConfig{
+				CheckpointStorage: CheckpointStorageConfig{
+					RawSharedFSConfig: &SharedFSConfig{
+						RawHostPath:    ptrs.Ptr("/legacy-hdfs-checkpoint-path"),
+						RawPropagation: ptrs.Ptr("rprivate"),
+					},
+					RawSaveExperimentBest: ptrs.Ptr(10),
+					RawSaveTrialBest:      ptrs.Ptr(10),
+					RawSaveTrialLatest:    ptrs.Ptr(10),
+				},
+				Hyperparameters: Hyperparameters{
+					"global_batch_size": {
+						RawConstHyperparameter: &ConstHyperparameterV0{RawVal: float64(32)},
+					},
+				},
+				Searcher: LegacySearcher{
+					Name:            "single",
+					Metric:          "loss",
+					SmallerIsBetter: true,
+				},
+				BindMounts: BindMountsConfig{},
+				Environment: EnvironmentConfig{
+					RawEnvironmentVariables: &EnvironmentVariablesMap{
+						RawCPU:  []string{},
+						RawCUDA: []string{},
+						RawROCM: []string{},
+					},
+					RawImage: &EnvironmentImageMap{
+						RawCPU:  ptrs.Ptr("determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-6eceaca"),
+						RawCUDA: ptrs.Ptr("determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-6eceaca"),
+						RawROCM: ptrs.Ptr("determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-6eceaca"),
+					},
+					RawAddCapabilities:  []string{},
+					RawDropCapabilities: []string{},
+					RawForcePullImage:   ptrs.Ptr(false),
+					RawPorts:            map[string]int{},
+					RawProxyPorts:       &ProxyPortsConfigV0{},
+				},
+			},
+		},
 	}
 
 	for _, tc := range testCases {

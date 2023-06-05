@@ -19,6 +19,7 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/determined-ai/determined/master/internal/api"
 	authz2 "github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/context"
@@ -177,17 +178,14 @@ func TestAuthzPatchUser(t *testing.T) {
 			Return(authz2.PermissionDeniedError{}).Once()
 
 		_, err = svc.patchUser(ctx)
-		require.Equal(t,
-			echo.NewHTTPError(http.StatusBadRequest, "failed to get user 'admin'").Error(),
-			err.Error())
+		require.Equal(t, api.NotFoundErrs("user", "admin", false).Error(), err.Error())
 
 		ctx.SetParamNames("username")
 		ctx.SetParamValues(notFoundUsername)
 		ctx.SetRequest(httptest.NewRequest(http.MethodPatch, "/",
 			strings.NewReader(testCase.body)))
 		_, err = svc.patchUser(ctx)
-		require.Equal(t, echo.NewHTTPError(http.StatusBadRequest,
-			fmt.Sprintf("failed to get user '%s'", notFoundUsername)).Error(), err.Error())
+		require.Equal(t, api.NotFoundErrs("user", notFoundUsername, false).Error(), err.Error())
 	}
 }
 

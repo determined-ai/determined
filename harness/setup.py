@@ -28,7 +28,6 @@ setuptools.setup(
         "certifi",
         "filelock",
         "google-cloud-storage",
-        "hdfs>=2.2.2",
         "lomond>=0.3.3",
         "pathspec>=0.6.0",
         "azure-core",

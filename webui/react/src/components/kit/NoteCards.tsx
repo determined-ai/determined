@@ -6,9 +6,9 @@ import Button from 'components/kit/Button';
 import Dropdown from 'components/kit/Dropdown';
 import Empty from 'components/kit/Empty';
 import Icon from 'components/kit/Icon';
+import { ErrorHandler, Note } from 'components/kit/internal/types';
+import usePrevious from 'components/kit/internal/usePrevious';
 import Select, { Option, SelectValue } from 'components/kit/Select';
-import usePrevious from 'shared/hooks/usePrevious';
-import { Note } from 'types';
 
 import NoteCard from './NoteCard';
 import css from './NoteCards.module.scss';
@@ -16,6 +16,7 @@ import css from './NoteCards.module.scss';
 interface Props {
   disabled?: boolean;
   notes: Note[];
+  onError: ErrorHandler;
   onDelete?: (pageNumber: number) => void;
   onNewPage: () => void;
   onSave: (notes: Note[]) => Promise<void>;
@@ -26,6 +27,7 @@ const NoteCards: React.FC<Props> = ({
   onNewPage,
   onSave,
   onDelete,
+  onError,
   disabled = false,
 }: Props) => {
   const [currentPage, setCurrentPage] = useState(0);
@@ -217,6 +219,7 @@ const NoteCards: React.FC<Props> = ({
             note={notes?.[currentPage]}
             noteChangeSignal={noteChangeSignal}
             onChange={handleEditedNotes}
+            onError={onError}
             onSaveNote={handleSave}
           />
         </div>

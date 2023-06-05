@@ -207,9 +207,10 @@ def test_cifar10_byol_pytorch_accuracy(client: _client.Determined) -> None:
 
 @pytest.mark.nightly
 def test_hf_trainer_api_accuracy(client: _client.Determined) -> None:
-    config = conf.load_config(conf.integrations_examples_path("hf_trainer_api/const.yaml"))
+    test_dir = "hf_image_classification"
+    config = conf.load_config(conf.hf_trainer_examples_path(f"{test_dir}/const.yaml"))
     experiment_id = exp.run_basic_test_with_temp_config(
-        config, conf.integrations_examples_path("hf_trainer_api"), 1
+        config, conf.hf_trainer_examples_path(test_dir), 1
     )
 
     trials = exp.experiment_trials(experiment_id)

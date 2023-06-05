@@ -188,6 +188,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
                 await killExperiment({ experimentId: id });
                 await onComplete?.(action);
               },
+              onError: handleError,
               title: 'Confirm Experiment Kill',
             });
             handleUpdateExperimentList?.(Action.Kill, [id]);
@@ -211,6 +212,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
                 await deleteExperiment({ experimentId: id });
                 await onComplete?.(action);
               },
+              onError: handleError,
               title: 'Confirm Experiment Deletion',
             });
             handleUpdateExperimentList?.(Action.Delete, [id]);

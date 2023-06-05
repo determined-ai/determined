@@ -1087,6 +1087,17 @@ service Determined {
     };
   }
 
+  // Get a list of jobs in queue.
+  rpc GetJobsV2(GetJobsV2Request) returns (GetJobsV2Response) {
+    option (google.api.http) = {
+      // candidate for moving to /api/v2 service.
+      get: "/api/v1/job-queues-v2"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+
   // Get job queue stats for a resource pool.
   rpc GetJobQueueStats(GetJobQueueStatsRequest)
       returns (GetJobQueueStatsResponse) {
@@ -1569,6 +1580,30 @@ service Determined {
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Checkpoints"
+    };
+  }
+
+  // Remove files from checkpoints.
+  rpc CheckpointsRemoveFiles(CheckpointsRemoveFilesRequest)
+      returns (CheckpointsRemoveFilesResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/checkpoints/rm"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Checkpoints"
+    };
+  }
+
+  // Update checkpoints. Won't modify checkpoint files.
+  rpc PatchCheckpoints(PatchCheckpointsRequest)
+      returns (PatchCheckpointsResponse) {
+    option (google.api.http) = {
+      patch: "/api/v1/checkpoints"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
     };
   }
 

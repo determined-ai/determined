@@ -54,6 +54,7 @@ const WorkspaceDeleteModalComponent: React.FC<Props> = ({
       size="small"
       submit={{
         disabled: workspaceNameValue !== workspace.name,
+        handleError,
         handler: handleSubmit,
         text: 'Delete Workspace',
       }}

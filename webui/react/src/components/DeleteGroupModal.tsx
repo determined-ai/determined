@@ -37,6 +37,7 @@ const DeleteGroupModalComponent: React.FC<Props> = ({ onClose, group }: Props) =
       danger
       size="small"
       submit={{
+        handleError,
         handler: handleSubmit,
         text: 'Delete',
       }}

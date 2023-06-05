@@ -1,9 +1,11 @@
 import { ModalFuncProps } from 'antd/es/modal/Modal';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import CodeMirrorEditor from 'components/CodeMirrorEditor';
+import CodeEditor from 'components/kit/CodeEditor';
 import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';
 import { hasObjectKeys, isObject, isString } from 'shared/utils/data';
+import handleError from 'utils/error';
+import { Loaded } from 'utils/loadable';
 
 import { Ranker, TrialFilters, TrialSorter } from './filters';
 import css from './useModalCreateCollection.module.scss';
@@ -52,11 +54,11 @@ const useModalViewFilters = (): ModalHooks => {
 
     return (
       <div className={css.base}>
-        <CodeMirrorEditor
+        <CodeEditor
+          files={[{ content: Loaded([sorterText, filtersText].join('\n\n')), key: 'config.yaml' }]}
           height="100%"
-          readOnly
-          syntax="yaml"
-          value={[sorterText, filtersText].join('\n\n')}
+          readonly
+          onError={handleError}
         />
       </div>
     );

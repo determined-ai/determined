@@ -11,6 +11,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/prom"
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/task"
+	"github.com/determined-ai/determined/master/internal/task/tasklogger"
 
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
 	"github.com/determined-ai/determined/master/pkg/logger"
@@ -58,9 +59,8 @@ type trial struct {
 	trialCreationSent bool
 
 	// System dependencies.
-	taskLogger *task.Logger
-	db         db.DB
-	rm         rm.ResourceManager
+	db db.DB
+	rm rm.ResourceManager
 
 	// Fields that are essentially configuration for the trial.
 	config              expconf.ExperimentConfig
@@ -96,7 +96,6 @@ func newTrial(
 	experimentID int,
 	initialState model.State,
 	searcher trialSearcherState,
-	taskLogger *task.Logger,
 	rm rm.ResourceManager,
 	db db.DB,
 	config expconf.ExperimentConfig,
@@ -112,9 +111,8 @@ func newTrial(
 		state:             initialState,
 		searcher:          searcher,
 
-		taskLogger: taskLogger,
-		db:         db,
-		rm:         rm,
+		db: db,
+		rm: rm,
 
 		config:              config,
 		taskSpec:            taskSpec,
@@ -220,21 +218,24 @@ func (t *trial) Receive(ctx *actor.Context) error {
 			return t.allocationExited(ctx, msg)
 		}
 	case sproto.ContainerLog:
-		if log, err := t.enrichTaskLog(model.TaskLog{
+		if log, err := t.enrichTaskLog(&model.TaskLog{
 			ContainerID: ptrs.Ptr(string(msg.ContainerID)),
 			Log:         msg.Message(),
 			Level:       msg.Level,
 		}); err != nil {
 			ctx.Log().WithError(err).Warn("dropping container log")
 		} else {
-			t.taskLogger.Insert(ctx, log)
+			tasklogger.Insert(log)
 		}
 	case model.TaskLog:
-		if log, err := t.enrichTaskLog(msg); err != nil {
+		if log, err := t.enrichTaskLog(&msg); err != nil {
 			ctx.Log().WithError(err).Warn("dropping trial log")
 		} else {
-			t.taskLogger.Insert(ctx, log)
+			tasklogger.Insert(log)
 		}
+
+	case sproto.InvalidResourcesRequestError:
+		ctx.Tell(ctx.Self().Parent(), msg)
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
@@ -322,9 +323,7 @@ func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
 		ctx.Log().
 			WithField("allocation-id", ar.AllocationID).
 			Infof("starting restored trial allocation")
-		t.allocation, _ = ctx.ActorOf(t.runID, taskAllocator(
-			t.logCtx, ar, t.db, t.rm, t.taskLogger,
-		))
+		t.allocation, _ = ctx.ActorOf(t.runID, taskAllocator(t.logCtx, ar, t.db, t.rm))
 		return nil
 	}
 
@@ -357,7 +356,7 @@ func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
 		Debugf("starting new trial allocation")
 
 	prom.AssociateJobExperiment(t.jobID, strconv.Itoa(t.experimentID), t.config.Labels())
-	t.allocation, _ = ctx.ActorOf(t.runID, taskAllocator(t.logCtx, ar, t.db, t.rm, t.taskLogger))
+	t.allocation, _ = ctx.ActorOf(t.runID, taskAllocator(t.logCtx, ar, t.db, t.rm))
 	ctx.Ask(t.allocation, actor.Ping{}).Get()
 
 	return nil
@@ -627,10 +626,9 @@ func (t *trial) transition(ctx *actor.Context, s model.StateWithReason) error {
 	return nil
 }
 
-func (t *trial) enrichTaskLog(log model.TaskLog) (model.TaskLog, error) {
+func (t *trial) enrichTaskLog(log *model.TaskLog) (*model.TaskLog, error) {
 	if !t.idSet {
-		return model.TaskLog{}, fmt.Errorf(
-			"cannot handle trial log before ID is set: %v", log)
+		return nil, fmt.Errorf("cannot handle trial log before ID is set: %v", log)
 	}
 	log.TaskID = string(t.taskID)
 

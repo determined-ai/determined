@@ -34,7 +34,7 @@
    :hidden:
 
    Overview <model-dev-guide/index>
-   Distributed Training <model-dev-guide/dtrain-introduction>
+   Distributed Training <model-dev-guide/dtrain/index>
    Prepare Container Environment <model-dev-guide/prepare-container/overview>
    Prepare Data <model-dev-guide/load-model-data>
    Training API Guides <model-dev-guide/apis-howto/overview>

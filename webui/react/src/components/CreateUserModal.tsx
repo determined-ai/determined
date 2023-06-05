@@ -150,6 +150,7 @@ const CreateUserModalComponent: React.FC<Props> = ({ onClose, user, viewOnly }: 
       size="small"
       submit={{
         disabled: !username,
+        handleError,
         handler: handleSubmit,
         text: viewOnly ? 'Close' : BUTTON_NAME,
       }}

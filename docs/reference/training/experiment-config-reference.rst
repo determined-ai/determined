@@ -486,10 +486,10 @@ Checkpoints of an existing experiment can be garbage collected by changing the G
  Storage Type
 **************
 
-Determined currently supports several kinds of checkpoint storage, ``gcs``, ``hdfs``, ``s3``,
-``azure``, and ``shared_fs``, identified by the ``type`` subfield. Additional fields may also be
-required, depending on the type of checkpoint storage in use. For example, to store checkpoints on
-Google Cloud Storage:
+Determined currently supports several kinds of checkpoint storage, ``gcs``, ``s3``, ``azure``, and
+``shared_fs``, identified by the ``type`` subfield. Additional fields may also be required,
+depending on the type of checkpoint storage in use. For example, to store checkpoints on Google
+Cloud Storage:
 
 .. code:: yaml
 
@@ -522,33 +522,6 @@ Required. The GCS bucket name to use.
 
 Optional. The optional path prefix to use. Must not contain ``..``. Note: Prefix is normalized,
 e.g., ``/pre/.//fix`` -> ``/pre/fix``
-
-HDFS
-====
-
-If ``type: hdfs`` is specified, checkpoints will be stored in HDFS using the `WebHDFS
-<http://hadoop.apache.org/docs/current/hadoop-project-dist/hadoop-hdfs/WebHDFS.html>`__ API for
-reading and writing checkpoint resources.
-
-``hdfs_url``
-------------
-
-Required. Hostname or IP address of HDFS namenode, prefixed with protocol, followed by WebHDFS port
-on namenode. Multiple namenodes are allowed as a semicolon-separated list (e.g.,
-``"http://namenode1:50070;http://namenode2:50070"``).
-
-``hdfs_path``
--------------
-
-Required. The prefix path where all checkpoints will be written to and read from. The resources of
-each checkpoint will be saved in a subdirectory of ``hdfs_path``, where the subdirectory name is the
-checkpoint's UUID.
-
-``user``
---------
-
-Optional. The user name to use for all read and write requests. If not specified, this defaults to
-the user of the trial runner container.
 
 Amazon S3
 =========
@@ -674,6 +647,8 @@ current value of a hyperparameter named ``learning_rate`` by calling
    <exp-config-resources-slots-per-trial>`). To access the updated values, use the trial context
    with :func:`context.get_per_slot_batch_size() <determined.TrialContext.get_per_slot_batch_size>`
    and :func:`context.get_global_batch_size() <determined.TrialContext.get_global_batch_size>`.
+
+.. include:: ../../_shared/note-dtrain-learn-more.txt
 
 The hyperparameter space is defined by a dictionary. Each key in the dictionary is the name of a
 hyperparameter; the associated value defines the range of the hyperparameter. If the value is a
@@ -1350,7 +1325,7 @@ experiment.
 ``aggregation_frequency``
 =========================
 
-Optional. Specifies after how many batches gradients are exchanged during :ref:`multi-gpu-training`.
+Optional. Specifies after how many batches gradients are exchanged during distributed training.
 Defaults to ``1``.
 
 ``average_aggregated_gradients``
@@ -1370,28 +1345,28 @@ currently supported for ``PyTorchTrial`` and ``TFKerasTrial`` instances. Default
 ``gradient_compression``
 ========================
 
-Optional. Whether to compress gradients when they are exchanged during :ref:`multi-gpu-training`.
+Optional. Whether to compress gradients when they are exchanged during distributed training.
 Compression may alter gradient values to achieve better space reduction. Defaults to ``false``.
 
 ``mixed_precision``
 ===================
 
-Optional. Whether to use mixed precision training with PyTorch during :ref:`multi-gpu-training`.
-Setting ``O1`` enables mixed precision and loss scaling. Defaults to ``O0`` which disables mixed
-precision training. This configuration setting is deprecated; users are advised to call
+Optional. Whether to use mixed precision training with PyTorch during distributed training. Setting
+``O1`` enables mixed precision and loss scaling. Defaults to ``O0`` which disables mixed precision
+training. This configuration setting is deprecated; users are advised to call
 :meth:`context.configure_apex_amp <determined.pytorch.PyTorchTrialContext>` in the constructor of
 their trial class instead.
 
 ``tensor_fusion_threshold``
 ===========================
 
-Optional. The threshold in MB for batching together gradients that are exchanged during
-:ref:`multi-gpu-training`. Defaults to ``64``.
+Optional. The threshold in MB for batching together gradients that are exchanged during distributed
+training. Defaults to ``64``.
 
 ``tensor_fusion_cycle_time``
 ============================
 
-Optional. The delay (in milliseconds) between each tensor fusion during :ref:`multi-gpu-training`.
+Optional. The delay (in milliseconds) between each tensor fusion during distributed training.
 Defaults to ``5``.
 
 ``auto_tune_tensor_fusion``

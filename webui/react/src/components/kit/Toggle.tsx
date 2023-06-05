@@ -1,7 +1,7 @@
 import { Space, Switch } from 'antd';
 import React, { useCallback } from 'react';
 
-import Label from 'components/Label';
+import Label from 'components/kit/internal/Label';
 
 interface Props {
   checked?: boolean;

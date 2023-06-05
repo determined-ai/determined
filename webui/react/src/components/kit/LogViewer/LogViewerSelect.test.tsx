@@ -2,8 +2,8 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
 
-import { generateAlphaNumeric, generateUUID } from 'shared/utils/string';
-import { LogLevelFromApi } from 'types';
+import { generateAlphaNumeric, generateUUID } from 'components/kit/internal/functions';
+import { LogLevelFromApi } from 'components/kit/internal/types';
 
 import LogViewerSelect, { ARIA_LABEL_RESET, Filters, LABELS } from './LogViewerSelect';
 

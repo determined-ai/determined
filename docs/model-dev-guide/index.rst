@@ -10,9 +10,9 @@
    <div class="landing">
       <div class="tiles-flex">
          <div class="tile-container">
-            <a class="tile" href="../architecture/index.html">
-                 <h2 class="tile-title">How Determined Works</h2>
-                 <p class="tile-description">Learn about core concepts, key features, and system architecture.</p>
+            <a class="tile" href="../model-dev-guide/dtrain/index.html">
+                 <h2 class="tile-title">Distributed Training</h2>
+                 <p class="tile-description">Learn how to perform optimized distributed training with Determined to speed up the training of a single trial.</p>
              </a>
          </div>
          <div class="tile-container">

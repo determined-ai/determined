@@ -100,10 +100,13 @@ const WorkspaceList: React.FC = () => {
     fetchWorkspaces();
   }, [fetchWorkspaces]);
 
-  const handleViewSelect = useCallback(
+  const handleWhoseSelect = useCallback(
     (value: unknown) => {
       setIsLoading(true);
-      updateSettings({ whose: value as WhoseWorkspaces | undefined });
+      updateSettings({
+        tableOffset: settingsConfig.settings.tableOffset.defaultValue,
+        whose: value as WhoseWorkspaces,
+      });
     },
     [updateSettings],
   );
@@ -344,7 +347,7 @@ const WorkspaceList: React.FC = () => {
       title="Workspaces">
       <Columns page>
         <Column>
-          <Select value={settings.whose} width={180} onSelect={handleViewSelect}>
+          <Select value={settings.whose} width={180} onSelect={handleWhoseSelect}>
             <Option value={WhoseWorkspaces.All}>All Workspaces</Option>
             <Option value={WhoseWorkspaces.Mine}>My Workspaces</Option>
             <Option value={WhoseWorkspaces.Others}>Others&apos; Workspaces</Option>

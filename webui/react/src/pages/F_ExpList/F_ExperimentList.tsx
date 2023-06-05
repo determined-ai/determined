@@ -1,4 +1,5 @@
 import { Rectangle } from '@glideapps/glide-data-grid';
+import { Space } from 'antd';
 import { isLeft } from 'fp-ts/lib/Either';
 import { observable, useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -6,7 +7,9 @@ import { useSearchParams } from 'react-router-dom';
 
 import { FilterFormStore } from 'components/FilterForm/components/FilterFormStore';
 import { IOFilterFormSet } from 'components/FilterForm/components/type';
+import { Column, Columns } from 'components/kit/Columns';
 import Empty from 'components/kit/Empty';
+import Pagination from 'components/kit/Pagination';
 import useResize from 'hooks/useResize';
 import { useSettings } from 'hooks/useSettings';
 import { getProjectColumns, searchExperiments } from 'services/api';
@@ -26,8 +29,14 @@ import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 
 import ComparisonView from './ComparisonView';
 import css from './F_ExperimentList.module.scss';
-import { F_ExperimentListSettings, settingsConfigForProject } from './F_ExperimentList.settings';
-import { Error, Loading, NoExperiments } from './glide-table/exceptions';
+import {
+  ExpListView,
+  F_ExperimentListGlobalSettings,
+  F_ExperimentListSettings,
+  settingsConfigForProject,
+  settingsConfigGlobal,
+} from './F_ExperimentList.settings';
+import { Error, NoExperiments } from './glide-table/exceptions';
 import GlideTable, { SCROLL_SET_COUNT_NEEDED } from './glide-table/GlideTable';
 import { EMPTY_SORT, Sort, validSort, ValidSort } from './glide-table/MultiSortMenu';
 import TableActionBar, { BatchAction } from './glide-table/TableActionBar';
@@ -49,10 +58,21 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const settingsConfig = useMemo(() => settingsConfigForProject(project.id), [project.id]);
 
-  const { settings, updateSettings } = useSettings<F_ExperimentListSettings>(settingsConfig);
-
+  const {
+    isLoading: isLoadingSettings,
+    settings,
+    updateSettings,
+  } = useSettings<F_ExperimentListSettings>(settingsConfig);
+  const { settings: globalSettings, updateSettings: updateGlobalSettings } =
+    useSettings<F_ExperimentListGlobalSettings>(settingsConfigGlobal);
+  const startPage = useMemo(
+    () => (globalSettings.expListView === 'scroll' ? 0 : 1),
+    [globalSettings.expListView],
+  );
   const [page, setPage] = useState(() =>
-    isFinite(Number(searchParams.get('page'))) ? Number(searchParams.get('page')) : 0,
+    isFinite(Number(searchParams.get('page')))
+      ? Math.max(Number(searchParams.get('page')), startPage)
+      : startPage,
   );
   const [sorts, setSorts] = useState<Sort[]>(() => {
     const sortString = searchParams.get('sort') || '';
@@ -127,14 +147,13 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const [canceler] = useState(new AbortController());
 
   const colorMap = useGlasbey(selectedExperimentIds);
-  const { height, width } = useResize(contentRef);
+  const { height } = useResize(contentRef);
   const [scrollPositionSetCount] = useState(observable(0));
 
   const handleScroll = useCallback(
     ({ y, height }: Rectangle) => {
       if (scrollPositionSetCount.get() < SCROLL_SET_COUNT_NEEDED) return;
-      const page = Math.floor((y + height) / PAGE_SIZE);
-      setPage(page);
+      setPage(Math.floor((y + height) / PAGE_SIZE));
     },
     [scrollPositionSetCount],
   );
@@ -156,9 +175,9 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
 
   const resetPagination = useCallback(() => {
     setIsLoading(true);
-    setPage(0);
+    setPage(startPage);
     setExperiments([]);
-  }, []);
+  }, [startPage]);
 
   const onSortChange = useCallback(
     (sorts: Sort[]) => {
@@ -173,21 +192,27 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   );
 
   const fetchExperiments = useCallback(async (): Promise<void> => {
+    if (isLoadingSettings) return;
     try {
-      const tableOffset = Math.max((page - 0.5) * PAGE_SIZE, 0);
+      // Use -1.5 because paged view starts page at 1.
+      const tableOffset = Math.max((page - 1.5) * PAGE_SIZE, 0);
+      const pagedView = globalSettings.expListView === 'paged';
 
       const response = await searchExperiments(
         {
           ...experimentFilters,
           filter: filtersString,
-          limit: 2 * PAGE_SIZE,
-          offset: tableOffset,
+          limit: pagedView ? settings.pageLimit : 2 * PAGE_SIZE,
+          offset: pagedView ? Math.max(page - 1, 0) * settings.pageLimit : tableOffset,
           sort: sortString || undefined,
         },
         { signal: canceler.signal },
       );
 
       setExperiments((prevExperiments) => {
+        if (pagedView) {
+          return response.experiments.map((e) => Loaded(e));
+        }
         const experimentBeforeCurrentPage = [
           ...prevExperiments.slice(0, tableOffset),
           ...Array(Math.max(0, tableOffset - prevExperiments.length)).fill(NotLoaded),
@@ -210,7 +235,16 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [page, experimentFilters, canceler.signal, filtersString, sortString]);
+  }, [
+    page,
+    experimentFilters,
+    isLoadingSettings,
+    canceler.signal,
+    filtersString,
+    sortString,
+    globalSettings,
+    settings.pageLimit,
+  ]);
 
   const { stopPolling } = usePolling(fetchExperiments, { rerunOnNewFn: true });
 
@@ -333,6 +367,24 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     };
   }, []);
 
+  const updateExpListView = useCallback(
+    (view: ExpListView) => {
+      if (view === 'paged') {
+        setPage((p) => Math.max(Math.round((p * PAGE_SIZE) / settings.pageLimit), 1));
+      }
+      updateGlobalSettings({ expListView: view });
+    },
+    [updateGlobalSettings, settings.pageLimit],
+  );
+
+  const onPageChange = useCallback(
+    (cPage: number, cPageSize: number) => {
+      updateSettings({ pageLimit: cPageSize });
+      setPage(cPage);
+    },
+    [updateSettings],
+  );
+
   const handleToggleComparisonView = useCallback(() => {
     updateSettings({ compare: !settings.compare });
   }, [settings.compare, updateSettings]);
@@ -357,15 +409,17 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
       <TableActionBar
         excludedExperimentIds={excludedExperimentIds}
         experiments={experiments}
+        expListView={globalSettings.expListView}
         filters={experimentFilters}
         formStore={formStore}
         handleUpdateExperimentList={handleUpdateExperimentList}
-        initialVisibleColumns={settings.columns}
+        initialVisibleColumns={isLoadingSettings ? [] : settings.columns}
         isOpenFilter={isOpenFilter}
         project={project}
         projectColumns={projectColumns}
         selectAll={selectAll}
         selectedExperimentIds={selectedExperimentIds}
+        setExpListView={updateExpListView}
         setIsOpenFilter={onIsOpenFilterChange}
         setVisibleColumns={setVisibleColumns}
         sorts={sorts}
@@ -375,9 +429,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         onSortChange={onSortChange}
       />
       <div className={css.content} ref={contentRef}>
-        {isLoading ? (
-          <Loading width={width} />
-        ) : experiments.length === 0 ? (
+        {!isLoading && experiments.length === 0 ? (
           numFilters === 0 ? (
             <NoExperiments />
           ) : (
@@ -386,40 +438,64 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         ) : error ? (
           <Error />
         ) : (
-          <ComparisonView
-            colorMap={colorMap}
-            initialWidth={settings.compareWidth}
-            open={settings.compare}
-            experiments={selectedExperiments}
-            project={project}
-            onWidthChange={handleCompareWidthChange}>
-            <GlideTable
-              clearSelectionTrigger={clearSelectionTrigger}
+          <Space direction="vertical" style={{ width: '100%' }}>
+            <ComparisonView
+              initialWidth={settings.compareWidth}
+              open={settings.compare}
+              selectedExperiments={selectedExperiments}
               colorMap={colorMap}
-              data={experiments}
-              dataTotal={Loadable.getOrElse(0, total)}
-              excludedExperimentIds={excludedExperimentIds}
-              formStore={formStore}
-              handleScroll={handleScroll}
-              handleUpdateExperimentList={handleUpdateExperimentList}
-              height={height - 2 * parseInt(getCssVar('--theme-stroke-width'))}
-              page={page}
+              experiments={selectedExperiments}
               project={project}
-              projectColumns={projectColumns}
-              scrollPositionSetCount={scrollPositionSetCount}
-              selectAll={selectAll}
-              selectedExperimentIds={selectedExperimentIds}
-              setExcludedExperimentIds={setExcludedExperimentIds}
-              setSelectAll={setSelectAll}
-              setSelectedExperimentIds={setSelectedExperimentIds}
-              setSortableColumnIds={setVisibleColumns}
-              sortableColumnIds={settings.columns}
-              sorts={sorts}
-              onContextMenuComplete={onContextMenuComplete}
-              onIsOpenFilterChange={onIsOpenFilterChange}
-              onSortChange={onSortChange}
-            />
-          </ComparisonView>
+              onWidthChange={handleCompareWidthChange}>
+              <GlideTable
+                clearSelectionTrigger={clearSelectionTrigger}
+                colorMap={colorMap}
+                data={isLoading || isLoadingSettings ? [NotLoaded] : experiments}
+                dataTotal={
+                  globalSettings.expListView === 'scroll'
+                    ? Loadable.getOrElse(0, total)
+                    : experiments.length
+                }
+                excludedExperimentIds={excludedExperimentIds}
+                formStore={formStore}
+                handleScroll={globalSettings.expListView === 'scroll' ? handleScroll : undefined}
+                handleUpdateExperimentList={handleUpdateExperimentList}
+                height={
+                  height -
+                  2 * parseInt(getCssVar('--theme-stroke-width')) -
+                  (globalSettings.expListView === 'paged' ? 40 : 0)
+                }
+                page={page}
+                project={project}
+                projectColumns={projectColumns}
+                scrollPositionSetCount={scrollPositionSetCount}
+                selectAll={selectAll}
+                selectedExperimentIds={selectedExperimentIds}
+                setExcludedExperimentIds={setExcludedExperimentIds}
+                setSelectAll={setSelectAll}
+                setSelectedExperimentIds={setSelectedExperimentIds}
+                setSortableColumnIds={setVisibleColumns}
+                sortableColumnIds={isLoadingSettings ? [] : settings.columns}
+                sorts={sorts}
+                onContextMenuComplete={onContextMenuComplete}
+                onIsOpenFilterChange={onIsOpenFilterChange}
+                onSortChange={onSortChange}
+              />
+            </ComparisonView>
+            {globalSettings.expListView === 'paged' && (
+              <Columns>
+                <Column align="right">
+                  <Pagination
+                    current={page}
+                    pageSize={settings.pageLimit}
+                    pageSizeOptions={[20, 40, 80]}
+                    total={Loadable.getOrElse(0, total)}
+                    onChange={onPageChange}
+                  />
+                </Column>
+              </Columns>
+            )}
+          </Space>
         )}
       </div>
     </>

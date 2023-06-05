@@ -1,4 +1,4 @@
-import { Router } from '@remix-run/router';
+import { Router as RemixRouter } from '@remix-run/router';
 import React from 'react';
 
 import router from 'router';
@@ -119,8 +119,15 @@ describe('Routes Utilities', () => {
   });
 
   describe('openBlank', () => {
+    let originalWindowOpen: typeof window.open;
+
     beforeEach(() => {
+      originalWindowOpen = window.open;
       window.open = vi.fn();
+    });
+
+    afterEach(() => {
+      window.open = originalWindowOpen;
     });
 
     it('should direct to https://localhost:3000', () => {
@@ -307,10 +314,15 @@ describe('Routes Utilities', () => {
   });
 
   describe('routeToReactUrl', () => {
-    let instance: Router;
+    let instance: RemixRouter;
+
     beforeEach(() => {
       instance = router.getRouter();
-      vi.spyOn(instance, 'navigate');
+      vi.spyOn<RemixRouter, 'navigate'>(instance, 'navigate');
+    });
+
+    afterEach(() => {
+      vi.clearAllMocks();
     });
 
     it('should route to react URL', () => {
