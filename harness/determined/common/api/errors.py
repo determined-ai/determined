@@ -1,5 +1,3 @@
-import json
-
 import requests
 
 
@@ -20,8 +18,7 @@ class BadResponseException(Exception):
 
 
 class MasterNotFoundException(BadRequestException):
-    def __init__(self, message: str) -> None:
-        super().__init__(message)
+    pass
 
 
 class APIException(BadRequestException):
@@ -42,8 +39,8 @@ class APIException(BadRequestException):
 
     def __init__(self, response: requests.Response) -> None:
         try:
-            unwrapped_exception = response.json()["error"]
-            m = json.dumps(unwrapped_exception, indent=2)
+            self.response_error = response.json()["error"]
+            m = self.response_error["error"]
         except (ValueError, KeyError):
             m = response.text
         super().__init__(m)
