@@ -6,7 +6,7 @@ import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
 import { ColumnDef } from 'components/Table/InteractiveTable';
 import { relativeTimeRenderer } from 'components/Table/Table';
-import { OMITTED_STR } from 'constants/access-control';
+import { OMITTED_STR } from 'constants/accessControl';
 import { paths } from 'routes/utils';
 import { getJupyterLabs, getTensorBoards } from 'services/api';
 import { floatToPercent, truncate } from 'shared/utils/string';
@@ -102,8 +102,8 @@ export const columns: ColumnDef<Job>[] = [
     defaultWidth: DEFAULT_COLUMN_WIDTHS['name'],
     key: 'name',
     render: (_: unknown, record: Job): ReactNode => {
-      let label: ReactNode = null;
       if (!('name' in record)) return OMITTED_STR;
+      let label: ReactNode = null;
       switch (record.type) {
         case JobType.EXPERIMENT:
           label = (

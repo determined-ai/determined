@@ -10,7 +10,7 @@ import {
   getFullPaginationConfig,
   userRenderer,
 } from 'components/Table/Table';
-import { OMITTED_STR } from 'constants/access-control';
+import { OMITTED_STR } from 'constants/accessControl';
 import { V1SchedulerTypeToLabel } from 'constants/states';
 import { useSettings } from 'hooks/useSettings';
 import { columns as defaultColumns, SCHEDULING_VAL_KEY } from 'pages/JobQueue/JobQueue.table';

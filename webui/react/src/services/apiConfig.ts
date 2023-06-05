@@ -1785,9 +1785,9 @@ export const getJobQueue: DetApi<
       pagination: response.pagination,
     };
     internalResponse.jobs = response.jobs
-      .map((jobPack) => (jobPack.full || jobPack.limited) as Type.Job)
-      .filter((job) => !!job.summary);
-    // we don't work with jobs without a summary in the ui yet
+      // we don't work with jobs without a summary in the ui yet
+      .filter((job) => !!(job.limited?.summary || job.full?.summary))
+      .map((jobPack) => (jobPack.full || jobPack.limited) as Type.Job);
     return internalResponse;
   },
   request: (params: Service.GetJobQParams) =>
