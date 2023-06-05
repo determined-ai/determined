@@ -173,7 +173,6 @@ func (db *PgDB) fullTrialSummaryMetricsRecompute(
 	metricTypes = append(metricTypes, model.ValidationMetricType)
 
 	for _, metricType := range metricTypes {
-		// TODO add constraint on legacy metric paths for generic custom_type values
 		summary, err := db.calculateFullTrialSummaryMetrics(
 			ctx, tx, trialID, metricType)
 		if err != nil {
