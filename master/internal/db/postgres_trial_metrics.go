@@ -60,12 +60,6 @@ func (db *PgDB) addRawMetrics(ctx context.Context, tx *sqlx.Tx, metricsBody *map
 	runID, trialID, lastProcessedBatch int32,
 	pType MetricPartitionType, mType model.MetricType,
 ) (int, error) {
-	// only persist custom_type if it can be custom.
-	var metricType *model.MetricType
-	if pType == GenericMetric {
-		metricType = &mType
-	}
-
 	var metricRowID int
 	//nolint:execinquery // we want to get the id.
 	if err := tx.QueryRowContext(ctx, `
@@ -74,7 +68,7 @@ INSERT INTO metrics
 VALUES
 	($1, $2, now(), $3, $4, $5, $6)
 RETURNING id`,
-		trialID, runID, *metricsBody, lastProcessedBatch, pType, metricType,
+		trialID, runID, *metricsBody, lastProcessedBatch, pType, mType,
 	).Scan(&metricRowID); err != nil {
 		return metricRowID, errors.Wrap(err, "inserting metrics")
 	}
