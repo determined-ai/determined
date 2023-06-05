@@ -98,15 +98,10 @@ class Determined:
 
         authentication.logout(self._session._master, user, self._session._cert)
 
-    def list_users(self) -> Sequence[user.User]:
+    def list_users(self) -> Iterable[user.User]:
         users_bindings = bindings.get_GetUsers(session=self._session).users
-        users: List[user.User] = []
-        if users_bindings is None:
-            return users
         for user_b in users_bindings:
-            user_obj = user.User._from_bindings(user_b, self._session)
-            users.append(user_obj)
-        return users
+            yield user.User._from_bindings(user_b, self._session)
 
     def create_experiment(
         self,
@@ -264,7 +259,7 @@ class Determined:
         model_id: Optional[int] = None,
         workspace_names: Optional[List[str]] = None,
         workspace_ids: Optional[List[int]] = None,
-    ) -> List[model.Model]:
+    ) -> Iterable[model.Model]:
         """
         Get a list of all models in the model registry.
 
@@ -304,7 +299,9 @@ class Determined:
 
         resps = api.read_paginated(get_with_offset)
 
-        return [model.Model._from_bindings(m, self._session) for r in resps for m in r.models]
+        for r in resps:
+            for m in r.models:
+                yield model.Model._from_bindings(m, self._session)
 
     def get_model_labels(self) -> List[str]:
         """
