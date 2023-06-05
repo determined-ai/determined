@@ -223,9 +223,9 @@ const JobQueue: React.FC<Props> = ({ selectedRp, jobState }) => {
           case 'actions':
             return {
               ...col,
-              render: (_, record) => {
-                if (!('entityId' in record)) return;
-                return (
+              render: createOmitableRenderer<Job, FullJob>(
+                'entityId',
+                (_, record) => (
                   <div>
                     <ActionDropdown<JobAction>
                       actionOrder={[
@@ -246,8 +246,9 @@ const JobQueue: React.FC<Props> = ({ selectedRp, jobState }) => {
                       onTrigger={dropDownOnTrigger(record)}
                     />
                   </div>
-                );
-              },
+                ),
+                null,
+              ),
             };
           case SCHEDULING_VAL_KEY: {
             if (!settingsColumns) return col;
