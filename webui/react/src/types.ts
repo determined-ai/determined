@@ -774,12 +774,20 @@ export interface ResourcePool extends Omit<Api.V1ResourcePool, 'slotType'> {
 
 /* Jobs */
 
-export interface LimitedJob extends Api.V1LimitedJob {
+// export interface LimitedJob extends Api.V1LimitedJob {
+//   summary: Api.V1JobSummary;
+// }
+// export interface FullJob extends Api.V1Job {
+//   summary: Api.V1JobSummary;
+// }
+
+export type LimitedJob = Api.V1LimitedJob & {
   summary: Api.V1JobSummary;
-}
-export interface FullJob extends Api.V1Job {
+};
+export type FullJob = Api.V1Job & {
   summary: Api.V1JobSummary;
-}
+};
+
 export type Job = LimitedJob | FullJob;
 export const JobType = Api.Jobv1Type;
 export type JobType = Api.Jobv1Type;

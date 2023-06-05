@@ -3,7 +3,7 @@ import { updateJobQueue } from 'services/api';
 import * as Api from 'services/api-ts-sdk';
 import { DetError, DetErrorOptions, ErrorType, wrapPublicMessage } from 'shared/utils/error';
 import { capitalize } from 'shared/utils/string';
-import { CommandType, Job, JobType, ResourcePool } from 'types';
+import { CommandType, FullJob, Job, JobType, LimitedJob, ResourcePool } from 'types';
 import handleError from 'utils/error';
 
 // This marks scheduler types that do not support fine-grain control of
@@ -37,6 +37,10 @@ export const jobTypeToCommandType = (jobType: JobType): CommandType | undefined 
     default:
       return undefined;
   }
+};
+
+export const isLimitedJob = (job: FullJob | LimitedJob): job is LimitedJob => {
+  return 'entityId' in job;
 };
 
 export const orderedSchedulers = new Set<Api.V1SchedulerType>([

@@ -11,7 +11,7 @@ import { paths } from 'routes/utils';
 import { getJupyterLabs, getTensorBoards } from 'services/api';
 import { floatToPercent, truncate } from 'shared/utils/string';
 import { CommandTask, Job, JobType } from 'types';
-import { jobTypeIconName, jobTypeLabel } from 'utils/job';
+import { isLimitedJob, jobTypeIconName, jobTypeLabel } from 'utils/job';
 import { openCommand } from 'utils/wait';
 
 import css from './JobQueue.module.scss';
@@ -102,7 +102,7 @@ export const columns: ColumnDef<Job>[] = [
     defaultWidth: DEFAULT_COLUMN_WIDTHS['name'],
     key: 'name',
     render: (_: unknown, record: Job): ReactNode => {
-      if (!('name' in record)) return OMITTED_STR;
+      if (isLimitedJob(record)) return OMITTED_STR;
       let label: ReactNode = null;
       switch (record.type) {
         case JobType.EXPERIMENT:
