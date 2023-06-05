@@ -11,19 +11,19 @@ interface Props {
   open: boolean;
   initialWidth: number;
   onWidthChange: (width: number) => void;
-  experiments: ExperimentWithTrial[];
+  selectedExperiments: ExperimentWithTrial[];
   project: Project
 }
 
-const ComparisonView: React.FC<Props> = ({ children, open, initialWidth, onWidthChange,  experiments, project, colorMap}) => {
+const ComparisonView: React.FC<Props> = ({ children, open, initialWidth, onWidthChange,  selectedExperiments, project, colorMap}) => {
 
   const tabs: TabItem[] = useMemo(() => {
     return [
       { key: 'metrics', label: 'Metrics'},
-      { key: 'hyperparameters', label: 'Hyperparameters', children:<HpParallelCoordinates colorMap={colorMap} workspaceId={project.workspaceId} experiments={experiments}/>  },
+      { key: 'hyperparameters', label: 'Hyperparameters', children:<HpParallelCoordinates colorMap={colorMap} workspaceId={project.workspaceId} experiments={selectedExperiments}/>  },
       { key: 'configurations', label: 'Configurations' },
     ];
-  }, [experiments, project]);
+  }, [selectedExperiments, project]);
 
   return (
     <div>
