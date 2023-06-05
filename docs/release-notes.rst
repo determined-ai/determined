@@ -17,7 +17,7 @@ Version 0.23.0
 
 **Breaking Changes**
 
--  HDFS checkpoint storage support has been removed.
+-  Remove HDFS checkpoint storage support, which has been deprecated since 0.21.1 (April, 2023).
 
 -  Kubernetes: When a pod spec is specified in both ``task_container_defaults`` and in the
    experiment/job configuration, the pod spec is merged according to `strategic merge patch
