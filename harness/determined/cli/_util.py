@@ -4,6 +4,7 @@ import sys
 from typing import Any, Callable, Dict, List, Sequence
 
 import termcolor
+import urllib3
 
 from determined.cli import errors, render
 from determined.common import api, declarative_argparse, util
@@ -100,7 +101,14 @@ def setup_session(args: argparse.Namespace) -> api.Session:
     master_url = args.master or util.get_default_master_address()
     cert = certs.default_load(master_url)
 
-    return api.Session(master_url, args.user, authentication.cli_auth, cert)
+    retry = urllib3.util.retry.Retry(
+        raise_on_status=False,
+        total=5,
+        backoff_factor=0.5,  # {backoff factor} * (2 ** ({number of total retries} - 1))
+        status_forcelist=[502, 503, 504],  # Bad Gateway, Service Unavailable, Gateway Timeout
+    )
+
+    return api.Session(master_url, args.user, authentication.cli_auth, cert, retry)
 
 
 def require_feature_flag(feature_flag: str, error_message: str) -> Callable[..., Any]:

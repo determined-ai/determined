@@ -3,8 +3,6 @@ import sys
 import time
 from typing import Any, Dict, List, Optional
 
-import urllib3
-
 from determined.common import api
 from determined.common.api import bindings
 from determined.common.experimental import checkpoint, trial
@@ -143,18 +141,10 @@ class ExperimentReference:
             interval (int, optional): An interval time in seconds before checking
                 next experiement state.
         """
-        # Construct a temporary session with retries to be resilient to temporary errors.
-        retry = urllib3.util.retry.Retry(
-            raise_on_status=False,
-            total=5,
-            backoff_factor=0.5,  # {backoff factor} * (2 ** ({number of total retries} - 1))
-            status_forcelist=[502, 503, 504],  # Bad Gateway, Service Unavailable, Gateway Timeout
-        )
-        sess = self._session.with_retry(retry)
 
         elapsed_time = 0.0
         while True:
-            exp = bindings.get_GetExperiment(sess, experimentId=self._id).experiment
+            exp = bindings.get_GetExperiment(self._session, experimentId=self._id).experiment
             if exp.state in (
                 bindings.experimentv1State.COMPLETED,
                 bindings.experimentv1State.CANCELED,
