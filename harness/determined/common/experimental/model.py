@@ -10,8 +10,8 @@ from determined.common.experimental import checkpoint
 
 class ModelVersion:
     """
-    A ModelVersion object includes a Checkpoint,
-    and can be fetched using ``model.get_version()``.
+    A ModelVersion object is a child of a Model that consists of a version number and a Checkpoint
+    representing the state of a trained model, and can be fetched using ``model.get_version()``.
 
     Attributes:
         session: HTTP request session.

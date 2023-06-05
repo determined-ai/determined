@@ -120,6 +120,12 @@ class Trial:
 
     Trial reference class used for querying relevant
     :class:`~determined.experimental.Checkpoint` instances.
+
+    Attributes:
+        trial_id: ID of trial.
+        session: HTTP request session.
+        hparams: (Mutable) hyperparameters for the trial.
+
     """
 
     def __init__(self, trial_id: int, session: api.Session):

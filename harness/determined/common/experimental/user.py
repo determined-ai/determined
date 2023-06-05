@@ -5,6 +5,28 @@ from determined.common.api import bindings
 
 
 class User:
+    """
+    A User object represents an individual account on a Determined installation.
+    It can be obtained from ``client.list_users`` or ``client.get_user_by_name()``.
+
+    Attributes:
+        session: HTTP request session.
+        user_id: Unique ID for the user.
+        admin: (Mutable) Admin status of the user.
+        remote: (Mutable) Checkpoint associated with this model version.
+        agent_uid: (Mutable) Unix user ID on the agent the task runs on.
+        agent_gid: (Mutable) Unix group ID on the agent.
+        agent_user: (Mutable) Unix user on the agent the task runs on.
+        agent_group: (Mutable) Unix group on the agent.
+        display_name: (Mutable) Human-friendly name of the user.
+
+    Note:
+        All attributes are cached by default.
+
+        Mutable properties may be changed by methods that update these values either automatically
+        (eg. `rename`, `change_display_name`) or explicitly with `reload()`.
+    """
+
     def __init__(self, user_id: int, session: api.Session):
         self.user_id = user_id
         self._session = session
