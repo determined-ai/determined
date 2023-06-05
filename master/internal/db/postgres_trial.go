@@ -164,46 +164,25 @@ func (db *PgDB) fullTrialSummaryMetricsRecompute(
 	ctx context.Context, tx *sqlx.Tx, trialID int,
 ) error {
 	updatedSummaryMetrics := model.JSONObj{}
-
-	trainSummary, err := db.calculateFullTrialSummaryMetrics(
-		ctx, tx, trialID, model.TrainingMetricType)
-	if err != nil {
-		return fmt.Errorf("rollback computing training summary metrics: %w", err)
-	}
-	valSummary, err := db.calculateFullTrialSummaryMetrics(
-		ctx, tx, trialID, model.ValidationMetricType)
-	if err != nil {
-		return fmt.Errorf("rollback computing validation summary metrics: %w", err)
-	}
-	generic_metric_types := []model.MetricType{}
-	if err = tx.SelectContext(ctx, &generic_metric_types, `
-SELECT DISTINCT COALESCE(custom_type, 'generic')
-FROM metrics
-WHERE trial_id = $1`, trialID); err != nil {
+	metricTypes := []model.MetricType{}
+	if err := tx.SelectContext(ctx, &metricTypes,
+		`SELECT DISTINCT FROM metrics WHERE trial_id = $1`, trialID); err != nil {
 		return err
 	}
-	// TODO: merge with val and training
-	for _, generic_metric_type := range generic_metric_types {
-		// TODO: calc for a custom type:
-		// TODO add constraint on legacy metric paths for generic custom_type values
-		genericSummary, err := db.calculateFullTrialSummaryMetrics(
-			ctx, tx, trialID, generic_metric_type)
-		if err != nil {
-			return fmt.Errorf("rollback computing generic summary metrics: %w", err)
-		}
-		if len(genericSummary) > 0 {
-			key := model.TrialSummaryMetricsJSONPath(generic_metric_type)
-			updatedSummaryMetrics[key] = genericSummary
-		}
-	}
+	metricTypes = append(metricTypes, model.TrainingMetricType)
+	metricTypes = append(metricTypes, model.ValidationMetricType)
 
-	if len(trainSummary) > 0 {
-		key := model.TrialSummaryMetricsJSONPath(model.TrainingMetricType)
-		updatedSummaryMetrics[key] = trainSummary
-	}
-	if len(valSummary) > 0 {
-		key := model.TrialSummaryMetricsJSONPath(model.ValidationMetricType)
-		updatedSummaryMetrics[key] = valSummary
+	for _, metricType := range metricTypes {
+		// TODO add constraint on legacy metric paths for generic custom_type values
+		summary, err := db.calculateFullTrialSummaryMetrics(
+			ctx, tx, trialID, metricType)
+		if err != nil {
+			return fmt.Errorf("rollback computing %s summary metrics: %w", metricType, err)
+		}
+		if len(summary) > 0 {
+			key := model.TrialSummaryMetricsJSONPath(metricType)
+			updatedSummaryMetrics[key] = summary
+		}
 	}
 
 	if _, err := tx.ExecContext(ctx, `UPDATE trials SET summary_metrics = $1,

@@ -518,6 +518,13 @@ func TrialMetricsJSONPath(isValidation bool) string {
 
 // TrialSummaryMetricsJSONPath returns the JSON path to the trials metric summary.
 func TrialSummaryMetricsJSONPath(metricType MetricType) string {
+	// assert key is different from legacyTrainingMetricsPath and legacyValidationMetricsPath
+	// assert metricType is not ""
+	// DISCUSS: what is go best practice for asserting these conditions?
+	// do we want to return an err as well? probably not.
+	// panic? ignore?
+	// TODO: add checks at api level.
+
 	switch metricType {
 	case ValidationMetricType:
 		return legacyValidationMetricsPath
@@ -525,8 +532,7 @@ func TrialSummaryMetricsJSONPath(metricType MetricType) string {
 		// DISCUSS: in og summary metrics we opted to put training summary metrics under avg_metrics.
 		return legacyTrainingMetricsPath
 	default:
-		// TODO dynamic
-		return "generic_metrics"
+		return metricType.ToString()
 	}
 }
 
