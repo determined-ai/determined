@@ -1,8 +1,11 @@
+from typing import Any
+
 import requests
 
 
 class BadRequestException(Exception):
-    def __init__(self, message: str) -> None:
+    def __init__(self, message: str, *args: Any) -> None:
+        super().__init__(message, *args)
         self.message = message
 
     def __str__(self) -> str:
@@ -10,7 +13,8 @@ class BadRequestException(Exception):
 
 
 class BadResponseException(Exception):
-    def __init__(self, message: str) -> None:
+    def __init__(self, message: str, *args: Any) -> None:
+        super().__init__(message, *args)
         self.message = message
 
     def __str__(self) -> str:
@@ -37,13 +41,13 @@ class APIException(BadRequestException):
             }
     """
 
-    def __init__(self, response: requests.Response) -> None:
+    def __init__(self, response: requests.Response, *args: Any) -> None:
         try:
             self.response_error = response.json()["error"]
             m = self.response_error["error"]
         except (ValueError, KeyError):
             m = response.text
-        super().__init__(m)
+        super().__init__(m, response, *args)
         self.status_code = response.status_code
 
 
