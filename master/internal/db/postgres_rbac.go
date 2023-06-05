@@ -108,6 +108,7 @@ func DoesPermissionMatchAll(ctx context.Context, curUserID model.UserID,
 }
 
 // GetNonGlobalWorkspacesWithPermission returns all workspaces the user has permissionID on.
+// This does not check for permissions granted on scopes higher than workspace level eg cluster.
 func GetNonGlobalWorkspacesWithPermission(ctx context.Context, curUserID model.UserID,
 	permissionID rbacv1.PermissionType,
 ) ([]int, error) {
