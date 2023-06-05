@@ -1,0 +1,18 @@
+.base {
+  display: grid;
+}
+.border {
+  grid-gap: 1px;
+
+  & > * {
+    outline: 1px solid var(--theme-colors-monochrome-12);
+    position: relative;
+    z-index: 0;
+  }
+}
+.row {
+  grid-auto-flow: column;
+  -webkit-overflow-scrolling: touch;
+  overflow-x: auto;
+  padding-bottom: 6px;
+}

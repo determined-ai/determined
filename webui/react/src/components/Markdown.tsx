@@ -5,6 +5,7 @@ import React, { useMemo } from 'react';
 import Pivot from 'components/kit/Pivot';
 import useResize from 'hooks/useResize';
 import Spinner from 'shared/components/Spinner/Spinner';
+import handleError from 'utils/error';
 import { Loaded } from 'utils/loadable';
 
 import css from './Markdown.module.scss';
@@ -66,6 +67,7 @@ const Markdown: React.FC<Props> = ({
                 files={[{ content: Loaded(markdown), key: 'input.md' }]}
                 height={`${resize.height - 420}px`}
                 onChange={onChange}
+                onError={handleError}
               />
             </React.Suspense>
           </div>

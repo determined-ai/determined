@@ -15,9 +15,10 @@ Do:
 
 -  For code that needs to download artifacts (e.g., data, configurations, pretrained weights),
    download to a `tempfile.TemporaryDirectory <https://docs.python.org/3/library/tempfile.html>`__
-   unique to the Python process. This will avoid race conditions when using :ref:`distributed
-   training <multi-gpu-training>`, in which Determined executes multiple Python processes in the
-   same task container.
+   unique to the Python process. This will avoid race conditions when using distributed training, in
+   which Determined executes multiple Python processes in the same task container.
+
+.. include:: ../../_shared/note-dtrain-learn-more.txt
 
 Do not use instance attributes on a trial class to save any state over time (e.g., storing metric
 history in a ``self`` attribute). The ``Trial`` instance will only save and restore model weights

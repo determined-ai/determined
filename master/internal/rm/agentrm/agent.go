@@ -498,11 +498,13 @@ func (a *agent) handleIncomingWSMessage(ctx *actor.Context, msg aproto.MasterMes
 		}
 		ctx.Tell(ref, sproto.ContainerLog{
 			ContainerID: msg.ContainerLog.ContainerID,
-			Level:       msg.ContainerLog.Level,
 			Timestamp:   msg.ContainerLog.Timestamp,
 			PullMessage: msg.ContainerLog.PullMessage,
 			RunMessage:  msg.ContainerLog.RunMessage,
 			AuxMessage:  msg.ContainerLog.AuxMessage,
+			Level:       msg.ContainerLog.Level,
+			Source:      msg.ContainerLog.Source,
+			AgentID:     msg.ContainerLog.AgentID,
 		})
 	case msg.ContainerStatsRecord != nil:
 		if a.taskNeedsRecording(msg.ContainerStatsRecord) {

@@ -80,6 +80,7 @@ const PasswordChangeModalComponent: React.FC = () => {
       size="small"
       submit={{
         disabled,
+        handleError,
         handler: handleSubmit,
         text: OK_BUTTON_LABEL,
       }}

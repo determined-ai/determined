@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { TypographySize } from 'utils/fonts';
+import { TypographySize } from 'components/kit/internal/fonts';
 
 import css from './index.module.scss';
 interface Props {

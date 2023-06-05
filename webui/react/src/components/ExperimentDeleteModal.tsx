@@ -36,6 +36,7 @@ const ExperimentDeleteModalComponent: React.FC<Props> = ({ experiment }: Props) 
       danger
       size="small"
       submit={{
+        handleError,
         handler: handleSubmit,
         text: BUTTON_TEXT,
       }}

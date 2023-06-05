@@ -68,7 +68,10 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
     title: `Best checkpoint for Trial ${trial?.id}`,
   });
 
-  const { metrics, data, scale, setScale } = useTrialMetrics(trial);
+  const trials: (TrialDetails | undefined)[] = useMemo(() => [trial], [trial]);
+
+  const { metrics, data: allData, scale, setScale } = useTrialMetrics(trials);
+  const data = useMemo(() => allData?.[trial?.id || 0], [allData, trial?.id]);
 
   const checkpointsDict = useMemo<CheckpointsDict>(() => {
     const checkpointXHelpers: Record<XAxisVal, CheckpointWorkloadExtended> = {};
@@ -188,7 +191,7 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
     [experiment.id],
   );
 
-  const metricNames = useMetricNames(experiment.id, handleMetricNamesError);
+  const metricNames = useMetricNames([experiment.id], handleMetricNamesError);
 
   const { defaultMetrics, workloadMetrics } = useMemo(() => {
     const validationMetric = experiment?.config?.searcher.metric;
@@ -214,6 +217,7 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
         <>
           <ChartGrid
             chartsProps={chartsProps}
+            handleError={handleError}
             scale={scale}
             setScale={setScale}
             xAxis={xAxis}

@@ -89,7 +89,7 @@ func expColumnNameToSQL(columnName string) (string, error) {
 		"searcherType":    "e.config->'searcher'->>'name'",
 		"startTime":       "e.start_time",
 		"endTime":         "e.end_time",
-		"duration":        "extract(seconds FROM coalesce(e.end_time, now()) - e.start_time)",
+		"duration":        "extract(epoch FROM coalesce(e.end_time, now()) - e.start_time)",
 		"state":           "e.state",
 		"numTrials":       "(SELECT COUNT(*) FROM trials t WHERE e.id = t.experiment_id)",
 		"progress":        "COALESCE(progress, 0)",

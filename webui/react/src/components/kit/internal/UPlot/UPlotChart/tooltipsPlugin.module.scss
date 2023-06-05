@@ -1,0 +1,44 @@
+.tooltip {
+  background: var(--theme-float);
+  border: solid var(--theme-stroke-width) var(--theme-float-border-strong);
+  box-shadow: var(--theme-elevation-strong);
+  color: var(--theme-float-on);
+  display: none;
+  font-size: 11px;
+  position: absolute;
+  z-index: 99;
+
+  .checkpointHeader,
+  .valueX,
+  .valueY,
+  .valueYEmpty {
+    margin: 5px 6px 2px;
+    position: relative;
+    white-space: nowrap;
+  }
+  .valueY,
+  .valueYEmpty {
+    padding-left: 13px;
+  }
+  .valueYEmpty {
+    opacity: 0.5;
+  }
+  .color {
+    border-radius: 100%;
+    border-width: 0;
+    display: inline-block;
+    height: 9px;
+    left: 0;
+    position: absolute;
+    top: 3px;
+    vertical-align: top;
+    width: 9px;
+  }
+}
+.bar {
+  background: var(--theme-float-border-strong);
+  bottom: 0;
+  position: absolute;
+  top: 0;
+  width: var(--theme-stroke-width);
+}

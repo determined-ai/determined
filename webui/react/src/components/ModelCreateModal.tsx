@@ -118,6 +118,7 @@ const ModelCreateModal = ({ onClose, workspaceId }: Props): JSX.Element => {
       submit={{
         disabled: isWorkspace && disableWorkspaceModelCreation,
         form: FORM_ID,
+        handleError,
         handler: onCreateModel,
         text: 'Create',
       }}

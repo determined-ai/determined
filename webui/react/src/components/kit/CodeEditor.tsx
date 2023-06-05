@@ -7,16 +7,13 @@ import ReactCodeMirror from '@uiw/react-codemirror';
 import { Tree } from 'antd';
 import React, { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 
+import Message, { MessageType } from 'components/kit/internal/Message';
+import Section from 'components/kit/internal/Section';
+import Spinner from 'components/kit/internal/Spinner';
+import { ErrorHandler } from 'components/kit/internal/types';
+import { DarkLight, ErrorType, TreeNode, ValueOf } from 'components/kit/internal/types';
 import Tooltip from 'components/kit/Tooltip';
-import Section from 'components/Section';
-import Message, { MessageType } from 'shared/components/Message';
-import Spinner from 'shared/components/Spinner';
 import useUI from 'shared/contexts/stores/UI';
-import { DarkLight } from 'shared/themes';
-import { ValueOf } from 'shared/types';
-import { ErrorType } from 'shared/utils/error';
-import { TreeNode } from 'types';
-import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 
 const JupyterRenderer = lazy(() => import('./CodeEditor/IpynbRenderer'));
@@ -35,6 +32,7 @@ const MARKDOWN_CONFIG = {
 
 export type Props = {
   files: TreeNode[];
+  onError: ErrorHandler;
   height?: string;
   onChange?: (arg0: string) => void; // only use in single-file editing
   onSelectFile?: (arg0: string) => void;
@@ -124,6 +122,7 @@ const langs = {
 
 const CodeEditor: React.FC<Props> = ({
   files,
+  onError,
   height = '100%',
   onChange,
   onSelectFile,
@@ -149,49 +148,52 @@ const CodeEditor: React.FC<Props> = ({
     return 'yaml';
   }, [activeFile?.key]);
 
-  const fetchFile = useCallback(async (fileInfo: TreeNode) => {
-    if (!fileInfo) return;
-    setPageError(PageError.None);
+  const fetchFile = useCallback(
+    async (fileInfo: TreeNode) => {
+      if (!fileInfo) return;
+      setPageError(PageError.None);
 
-    if (isConfig(fileInfo.key) || fileInfo.content !== NotLoaded) {
-      setActiveFile(fileInfo);
-      return;
-    }
+      if (isConfig(fileInfo.key) || fileInfo.content !== NotLoaded) {
+        setActiveFile(fileInfo);
+        return;
+      }
 
-    let file,
-      content: Loadable<string> = NotLoaded;
-    try {
-      file = await fileInfo.get?.(String(fileInfo.key));
-    } catch (error) {
-      handleError(error, {
-        publicMessage: 'Failed to load selected file.',
-        publicSubject: 'Unable to fetch the selected file.',
-        silent: false,
-        type: ErrorType.Api,
-      });
-      setPageError(PageError.Fetch);
-    }
-    if (!file) {
-      setActiveFile({
-        ...fileInfo,
-        content: NotLoaded,
-      });
-      return;
-    }
+      let file,
+        content: Loadable<string> = NotLoaded;
+      try {
+        file = await fileInfo.get?.(String(fileInfo.key));
+      } catch (error) {
+        onError(error, {
+          publicMessage: 'Failed to load selected file.',
+          publicSubject: 'Unable to fetch the selected file.',
+          silent: false,
+          type: ErrorType.Api,
+        });
+        setPageError(PageError.Fetch);
+      }
+      if (!file) {
+        setActiveFile({
+          ...fileInfo,
+          content: NotLoaded,
+        });
+        return;
+      }
 
-    try {
-      const text = decodeURIComponent(escape(window.atob(file)));
+      try {
+        const text = decodeURIComponent(escape(window.atob(file)));
 
-      if (!text) setPageError(PageError.Empty); // Emmits a "Empty file" error message
-      content = Loaded(text);
-      setActiveFile({
-        ...fileInfo,
-        content,
-      });
-    } catch {
-      setPageError(PageError.Decode);
-    }
-  }, []);
+        if (!text) setPageError(PageError.Empty); // Emmits a "Empty file" error message
+        content = Loaded(text);
+        setActiveFile({
+          ...fileInfo,
+          content,
+        });
+      } catch {
+        setPageError(PageError.Decode);
+      }
+    },
+    [onError],
+  );
 
   useEffect(() => {
     if (selectedFilePath && activeFile?.key !== selectedFilePath) {
@@ -212,6 +214,10 @@ const CodeEditor: React.FC<Props> = ({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (viewMode === 'editor') setActiveFile(files[0]); // if there's only one file, set it as the active file.
+  }, [viewMode, files]);
 
   const handleSelectFile = useCallback(
     (_: React.Key[], info: { node: TreeNode }) => {
@@ -268,6 +274,8 @@ const CodeEditor: React.FC<Props> = ({
     height !== '100%' ? css.noBorder : '',
   ];
 
+  const treeClasses = [css.fileTree, viewMode === 'editor' ? css.hideElement : ''];
+
   let fileContent = <h5>Please, choose a file to preview.</h5>;
   if (pageError) {
     fileContent = (
@@ -294,23 +302,21 @@ const CodeEditor: React.FC<Props> = ({
         />
       ) : (
         <Suspense fallback={<Spinner tip="Loading ipynb viewer..." />}>
-          <JupyterRenderer file={Loadable.getOrElse('', activeFile.content)} />
+          <JupyterRenderer file={Loadable.getOrElse('', activeFile.content)} onError={onError} />
         </Suspense>
       );
   }
 
   return (
     <div className={classes.join(' ')} style={{ height }}>
-      <div className={viewMode === 'editor' ? css.hideElement : undefined}>
-        <DirectoryTree
-          className={css.fileTree}
-          data-testid="fileTree"
-          defaultExpandAll
-          defaultSelectedKeys={[selectedFilePath || sortedFiles[0]?.key]}
-          treeData={sortedFiles}
-          onSelect={handleSelectFile}
-        />
-      </div>
+      <DirectoryTree
+        className={treeClasses.join(' ')}
+        data-testid="fileTree"
+        defaultExpandAll
+        defaultSelectedKeys={[selectedFilePath || sortedFiles[0]?.key]}
+        treeData={sortedFiles}
+        onSelect={handleSelectFile}
+      />
       {!!activeFile?.title && (
         <div className={css.fileDir}>
           <div className={css.fileInfo}>

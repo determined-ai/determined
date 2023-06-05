@@ -18,6 +18,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/uptrace/bun"
 
+	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/prom"
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -131,7 +132,7 @@ func isActiveExperimentState(state experimentv1.State) bool {
 func (a *apiServer) getExperiment(
 	ctx context.Context, curUser model.User, experimentID int,
 ) (*experimentv1.Experiment, error) {
-	expNotFound := status.Errorf(codes.NotFound, "experiment not found: %d", experimentID)
+	expNotFound := api.NotFoundErrs("experiment", fmt.Sprint(experimentID), true)
 	exp := &experimentv1.Experiment{}
 	if err := a.m.db.QueryProto("get_experiment", exp, experimentID); errors.Is(err, db.ErrNotFound) {
 		return nil, expNotFound
@@ -402,7 +403,7 @@ func (a *apiServer) deleteExperiments(exps []*model.Experiment, userModel *model
 				jobSubmissionTime := exp.StartTime
 				taskID := model.NewTaskID()
 				ckptGCTask := newCheckpointGCTask(
-					a.m.rm, a.m.db, a.m.taskLogger, taskID, exp.JobID, jobSubmissionTime, taskSpec,
+					a.m.rm, a.m.db, taskID, exp.JobID, jobSubmissionTime, taskSpec,
 					exp.ID, exp.Config, checkpoints, []string{fullDeleteGlob},
 					true, agentUserGroup, userModel, nil,
 				)
@@ -462,7 +463,7 @@ func getExperimentColumns(q *bun.SelectQuery) *bun.SelectQuery {
 		ColumnExpr("e.config->>'labels' AS labels").
 		ColumnExpr("proto_time(e.start_time) AS start_time").
 		ColumnExpr("proto_time(e.end_time) AS end_time").
-		ColumnExpr("extract(seconds FROM coalesce(e.end_time, now()) - e.start_time)::int AS duration").
+		ColumnExpr("extract(epoch FROM coalesce(e.end_time, now()) - e.start_time)::int AS duration").
 		ColumnExpr(exputil.ProtoStateDBCaseString(experimentv1.State_value, "e.state", "state",
 			"STATE_")).
 		Column("e.archived").
@@ -765,7 +766,7 @@ func (a *apiServer) GetExperimentValidationHistory(
 	var resp apiv1.GetExperimentValidationHistoryResponse
 	switch err := a.m.db.QueryProto("proto_experiment_validation_history", &resp, req.ExperimentId); {
 	case err == db.ErrNotFound:
-		return nil, status.Errorf(codes.NotFound, "experiment not found: %d", req.ExperimentId)
+		return nil, api.NotFoundErrs("experiment", fmt.Sprint(req.ExperimentId), true)
 	case err != nil:
 		return nil, errors.Wrapf(err,
 			"error fetching validation history for experiment from database: %d", req.ExperimentId)
@@ -1201,7 +1202,7 @@ func (a *apiServer) PatchExperiment(
 
 			taskID := model.NewTaskID()
 			ckptGCTask := newCheckpointGCTask(
-				a.m.rm, a.m.db, a.m.taskLogger, taskID, modelExp.JobID, modelExp.StartTime,
+				a.m.rm, a.m.db, taskID, modelExp.JobID, modelExp.StartTime,
 				taskSpec, modelExp.ID, modelExp.Config,
 				checkpoints, []string{fullDeleteGlob}, true, agentUserGroup, user, nil,
 			)
@@ -1243,8 +1244,7 @@ func (a *apiServer) GetExperimentCheckpoints(
 	resp.Checkpoints = []*checkpointv1.Checkpoint{}
 	switch err = a.m.db.QueryProto("get_checkpoints_for_experiment", &resp.Checkpoints, req.Id); {
 	case err == db.ErrNotFound:
-		return nil, status.Errorf(
-			codes.NotFound, "no checkpoints found for experiment %d", req.Id)
+		return nil, api.NotFoundErrs("checkpoints for experiment", fmt.Sprint(req.Id), true)
 	case err != nil:
 		return nil,
 			errors.Wrapf(err, "error fetching checkpoints for experiment %d from database", req.Id)
@@ -1337,10 +1337,7 @@ func (a *apiServer) CreateExperiment(
 		req, user,
 	)
 	if err != nil {
-		if _, ok := err.(ErrProjectNotFound); ok {
-			return nil, status.Errorf(codes.NotFound, err.Error())
-		}
-		return nil, status.Errorf(codes.InvalidArgument, "invalid experiment: %s", err)
+		return nil, err
 	}
 	if err = exputil.AuthZProvider.Get().CanCreateExperiment(ctx, *user, p); err != nil {
 		return nil, status.Errorf(codes.PermissionDenied, err.Error())

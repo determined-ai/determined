@@ -30,12 +30,14 @@ Learn more:
    features and benefits.
 -  :doc:`System Architecture <system-architecture>`: Learn about the main components of the
    Determined system architecture.
--  :doc:`Distributed Training <../model-dev-guide/dtrain-introduction>`: A conceptual overview of
-   distributed training with Determined.
+-  :doc:`Distributed Training <../model-dev-guide/dtrain/dtrain-introduction>`: A conceptual
+   overview of distributed training with Determined.
 
 .. toctree::
+   :maxdepth: 1
    :caption: How Determined Works
    :hidden:
 
    introduction
    system-architecture
+   Distributed Training <../model-dev-guide/dtrain/index>

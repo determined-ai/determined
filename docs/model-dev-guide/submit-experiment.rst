@@ -248,12 +248,14 @@ After the context and experiment configuration reach the master, the experiment 
 scheduler to assign slots. The master handles allocating necessary resources as defined in the
 cluster configuration.
 
-When a trial is ready to run, the master communicates with the agent, or :ref:`distributed training
-<multi-gpu-training>` agents, which create(s) containers that have the configured environment and
-training code. A set of default container images applicable to many deep learning tasks is provided,
-but you can also specify a :ref:`custom image <custom-docker-images>`. If the specified container
-images do not exist locally, the trial container fetches the images from the registry. See
+When a trial is ready to run, the master communicates with the agent, or distributed training
+agents, which create(s) containers that have the configured environment and training code. A set of
+default container images applicable to many deep learning tasks is provided, but you can also
+specify a :ref:`custom image <custom-docker-images>`. If the specified container images do not exist
+locally, the trial container fetches the images from the registry. See
 :doc:`/model-dev-guide/model-management/model-registry-org`.
+
+.. include:: ../_shared/note-dtrain-learn-more.txt
 
 After starting the containers, each trial runs the ``startup-hook.sh`` script in the context
 directory.

@@ -142,8 +142,9 @@ that we include :func:`self.context.distributed.get_rank()
 <determined._core._distributed.DistributedContext.get_rank>` in the name of this directory: when
 doing distributed training, multiple processes might be downloading data concurrently (one process
 per GPU), so embedding the rank in the directory name ensures that these processes do not conflict
-with one another. For more detail, see the :ref:`Distributed Training How-To Guide
-<multi-gpu-training>`.
+with one another.
+
+.. include:: ../_shared/note-dtrain-learn-more.txt
 
 Once the download directory has been created, ``s3.download_file(s3_bucket, data_file, filepath)``
 fetches the file from S3 and stores it at the specified location. The data can then be accessed in

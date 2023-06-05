@@ -2,6 +2,7 @@ package internal
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -9,6 +10,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 
+	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -69,7 +71,7 @@ func (a *apiServer) PostTemplate(
 	if req.Template.WorkspaceId != 0 {
 		workspaceID = int(req.Template.WorkspaceId)
 	}
-	notFoundErr := status.Errorf(codes.NotFound, "workspace (%d) not found", workspaceID)
+	notFoundErr := api.NotFoundErrs("workspace", fmt.Sprint(workspaceID), true)
 	var exists bool
 	err = db.Bun().NewSelect().ColumnExpr("1").Table("workspaces").
 		Where("id = ?", workspaceID).

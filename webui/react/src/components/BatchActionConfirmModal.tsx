@@ -1,5 +1,7 @@
 import React from 'react';
 
+import handleError from 'utils/error';
+
 import { ExperimentAction } from '../types';
 
 import { Modal } from './kit/Modal';
@@ -27,6 +29,7 @@ const BatchActionConfirmModalComponent: React.FC<Props> = ({
 }: Props) => {
   const danger = DANGEROUS_BATCH_ACTIONS.includes(batchAction);
   const submit = {
+    handleError,
     handler: onConfirm,
     text: batchAction === ExperimentAction.Cancel ? CONFIRM_BUTTON_LABEL : batchAction,
   };

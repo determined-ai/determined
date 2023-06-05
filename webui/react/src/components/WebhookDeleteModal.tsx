@@ -35,6 +35,7 @@ const WebhookDeleteModalComponent: React.FC<Props> = ({ webhook }: Props) => {
       danger
       size="small"
       submit={{
+        handleError,
         handler: handleSubmit,
         text: 'Delete Webhook',
       }}

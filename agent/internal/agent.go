@@ -37,6 +37,7 @@ const (
 	eventChanSize    = 64 // same size as the websocket outbox
 	fluentRetries    = 5
 	fluentBackoff    = 5 * time.Second
+	logSourceAgent   = "agent"
 )
 
 // MasterWebsocket is the type for a websocket which communicates with the master.
@@ -327,7 +328,7 @@ func (a *Agent) sender(out chan *aproto.MasterMessage) events.Publisher[containe
 			case in.StatsRecord != nil:
 				msg.ContainerStatsRecord = in.StatsRecord
 			case in.Log != nil:
-				msg.ContainerLog = in.Log
+				msg.ContainerLog = a.enrichLog(in.Log)
 			default:
 				panic(fmt.Sprintf("unknown outgoing message: %+v", in))
 			}
@@ -340,6 +341,15 @@ func (a *Agent) sender(out chan *aproto.MasterMessage) events.Publisher[containe
 			}
 		},
 	)
+}
+
+func (a *Agent) enrichLog(log *aproto.ContainerLog) *aproto.ContainerLog {
+	log.AgentID = &a.opts.AgentID
+	if log.Source == nil {
+		source := logSourceAgent
+		log.Source = &source
+	}
+	return log
 }
 
 func (a *Agent) reconnectFlow(

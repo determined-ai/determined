@@ -1087,6 +1087,17 @@ service Determined {
     };
   }
 
+  // Get a list of jobs in queue.
+  rpc GetJobsV2(GetJobsV2Request) returns (GetJobsV2Response) {
+    option (google.api.http) = {
+      // candidate for moving to /api/v2 service.
+      get: "/api/v1/job-queues-v2"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+
   // Get job queue stats for a resource pool.
   rpc GetJobQueueStats(GetJobQueueStatsRequest)
       returns (GetJobQueueStatsResponse) {

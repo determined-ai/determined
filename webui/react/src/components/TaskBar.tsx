@@ -56,6 +56,7 @@ export const TaskBar: React.FC<Props> = ({
             });
           }
         },
+        onError: handleError,
         title: 'Confirm Task Kill',
       });
     },

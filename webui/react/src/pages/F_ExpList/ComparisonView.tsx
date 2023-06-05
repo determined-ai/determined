@@ -4,6 +4,8 @@ import Pivot, { TabItem } from 'components/kit/Pivot';
 import SplitPane from 'components/SplitPane';
 import { ExperimentWithTrial } from 'types';
 
+import CompareMetrics from './CompareMetrics';
+
 interface Props {
   children: React.ReactElement;
   open: boolean;
@@ -12,14 +14,24 @@ interface Props {
   selectedExperiments: ExperimentWithTrial[];
 }
 
-const ComparisonView: React.FC<Props> = ({ children, open, initialWidth, onWidthChange }) => {
+const ComparisonView: React.FC<Props> = ({
+  children,
+  open,
+  initialWidth,
+  onWidthChange,
+  selectedExperiments,
+}) => {
   const tabs: TabItem[] = useMemo(() => {
     return [
-      { key: 'metrics', label: 'Metrics' },
+      {
+        children: <CompareMetrics selectedExperiments={selectedExperiments} />,
+        key: 'metrics',
+        label: 'Metrics',
+      },
       { key: 'hyperparameters', label: 'Hyperparameters' },
       { key: 'configurations', label: 'Configurations' },
     ];
-  }, []);
+  }, [selectedExperiments]);
 
   return (
     <div>
