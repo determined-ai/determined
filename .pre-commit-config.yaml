@@ -93,12 +93,6 @@ repos:
       - id: go-fmt-import
       - id: gofumpt # requires github.com/mvdan/gofumpt
       - id: golangci-lint # requires github.com/golangci/golangci-lint
-      # - id: go-vet
-      # - id: go-lint
-      # - id: go-unit-tests
-      # - id: go-err-check # requires github.com/kisielk/errcheck
-      # - id: go-static-check # install https://staticcheck.io/docs/
-      # - id: go-ruleguard # requires https://github.com/quasilyte/go-ruleguard
 
   # - repo: https://github.com/jumanjihouse/pre-commit-hooks
   #   rev: 3.0.0
