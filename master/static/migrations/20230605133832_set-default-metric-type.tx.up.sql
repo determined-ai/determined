@@ -30,6 +30,3 @@ ALTER COLUMN custom_type SET NOT NULL;
 
 ALTER TABLE metrics
 ALTER COLUMN custom_type SET NOT NULL;
-
--- we reserve these metric types.
-DELETE FROM metrics WHERE custom_type IN ('avg_metrics', 'validation_metrics');
