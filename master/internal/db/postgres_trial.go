@@ -163,35 +163,40 @@ WHERE id = $1`, id, restartCount); err != nil {
 func (db *PgDB) fullTrialSummaryMetricsRecompute(
 	ctx context.Context, tx *sqlx.Tx, trialID int,
 ) error {
+	updatedSummaryMetrics := model.JSONObj{}
+
 	trainSummary, err := db.calculateFullTrialSummaryMetrics(
-		ctx, tx, trialID, TrainingMetric)
+		ctx, tx, trialID, model.TrainingMetricType)
 	if err != nil {
 		return fmt.Errorf("rollback computing training summary metrics: %w", err)
 	}
 	valSummary, err := db.calculateFullTrialSummaryMetrics(
-		ctx, tx, trialID, ValidationMetric)
+		ctx, tx, trialID, model.ValidationMetricType)
 	if err != nil {
 		return fmt.Errorf("rollback computing validation summary metrics: %w", err)
 	}
-	generic_metric_types := []string{}
+	generic_metric_types := []model.MetricType{}
 	if err = tx.SelectContext(ctx, &generic_metric_types, `
 SELECT DISTINCT COALESCE(custom_type, 'generic')
 FROM metrics
 WHERE trial_id = $1`, trialID); err != nil {
 		return err
 	}
+	// TODO: merge with val and training
 	for _, generic_metric_type := range generic_metric_types {
 		// TODO: calc for a custom type:
 		// TODO add constraint on legacy metric paths for generic custom_type values
+		genericSummary, err := db.calculateFullTrialSummaryMetrics(
+			ctx, tx, trialID, generic_metric_type)
+		if err != nil {
+			return fmt.Errorf("rollback computing generic summary metrics: %w", err)
+		}
+		if len(genericSummary) > 0 {
+			key := model.TrialSummaryMetricsJSONPath(generic_metric_type)
+			updatedSummaryMetrics[key] = genericSummary
+		}
 	}
 
-	genericSummary, err := db.calculateFullTrialSummaryMetrics(
-		ctx, tx, trialID, GenericMetric)
-	if err != nil {
-		return fmt.Errorf("rollback computing validation summary metrics: %w", err)
-	}
-
-	updatedSummaryMetrics := model.JSONObj{}
 	if len(trainSummary) > 0 {
 		key := model.TrialSummaryMetricsJSONPath(model.TrainingMetricType)
 		updatedSummaryMetrics[key] = trainSummary
@@ -199,9 +204,6 @@ WHERE trial_id = $1`, trialID); err != nil {
 	if len(valSummary) > 0 {
 		key := model.TrialSummaryMetricsJSONPath(model.ValidationMetricType)
 		updatedSummaryMetrics[key] = valSummary
-	}
-	if len(genericSummary) > 0 {
-		updatedSummaryMetrics["generic_metrics"] = genericSummary
 	}
 
 	if _, err := tx.ExecContext(ctx, `UPDATE trials SET summary_metrics = $1,
@@ -212,8 +214,9 @@ WHERE trial_id = $1`, trialID); err != nil {
 }
 
 func (db *PgDB) calculateFullTrialSummaryMetrics(
-	ctx context.Context, tx *sqlx.Tx, trialID int, partition MetricPartitionType,
+	ctx context.Context, tx *sqlx.Tx, trialID int, metricType model.MetricType,
 ) (model.JSONObj, error) {
+	partition := customMetricTypeToPartitionType(metricType)
 	jsonPath := model.TrialMetricsJSONPath(partition == ValidationMetric)
 	//nolint: execinquery
 	rows, err := tx.QueryContext(ctx, db.queries.getOrLoad("calculate-full-trial-summary-metrics"),

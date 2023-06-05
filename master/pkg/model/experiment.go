@@ -525,6 +525,7 @@ func TrialSummaryMetricsJSONPath(metricType MetricType) string {
 		// DISCUSS: in og summary metrics we opted to put training summary metrics under avg_metrics.
 		return legacyTrainingMetricsPath
 	default:
+		// TODO dynamic
 		return "generic_metrics"
 	}
 }
