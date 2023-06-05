@@ -242,7 +242,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
       // avoid showing 'empty rows' below data
       if (!data[row]) return;
 
-      const hoverStyle = row === hoveredRow ? { bgCell: '#323335' } : {}; // for some weird reason, using the consts from our reusable theme doesn't work...
+      const hoverStyle = row === hoveredRow ? { bgCell: '#323335' } : {}; // for some reason, using the consts from our reusable theme doesn't work...
 
       const rowColorTheme = Loadable.match(data[row], {
         Loaded: (record) =>
