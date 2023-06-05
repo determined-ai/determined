@@ -1801,25 +1801,22 @@ jobs:
     resource_class: determined-ai/container-runner-gpu
     steps:
       - checkout
-      - run: echo 'custom runner here'
       # - skip-if-docs-only
       # - skip-if-github-only
       # - skip-if-webui-only
-      # - setup-docker-env:
-      #     image: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.21.2
-      #     image-name: test_container
-      #     extras-requires: "mypy pytest coverage"
       - run: mkdir -p $HOME/.local/bin
       - install-codecov
+      - run: pip install mypy pytest coverage
       - run: echo 'export PATH=${PATH}:/usr/local/nvidia/bin' >> $BASH_ENV
       - run: echo 'export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/nvidia/lib64' >> $BASH_ENV
-      # - run: docker exec -e COVERAGE_FILE=/mnt/project/test-unit-harness-gpu-pycov test_container make -C harness test-gpu
-      # - run: docker exec test_container coverage xml -i --data-file=./test-unit-harness-gpu-pycov
-      # - run: codecov -v -t $CODECOV_TOKEN -F harness
-      # - persist_to_workspace:
-      #     root: .
-      #     paths:
-      #       - test-unit-harness-gpu-pycov
+      - run: echo 'export COVERAGE_FILE=/root/project/test-unit-harness-gpu-pycov' >> $BASH_ENV
+      - run: make -C harness test-gpu
+      - run: coverage xml -i --data-file=./test-unit-harness-gpu-pycov
+      - run: codecov -v -t $CODECOV_TOKEN -F harness
+      - persist_to_workspace:
+          root: .
+          paths:
+            - test-unit-harness-gpu-pycov
       - run: sleep 42000000000000000
 
   test-unit-harness-gpu:
