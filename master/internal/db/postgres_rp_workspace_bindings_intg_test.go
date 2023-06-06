@@ -2,50 +2,59 @@ package db
 
 import (
 	"context"
-	"testing"
-
 	"github.com/stretchr/testify/require"
+	"testing"
 )
 
 func TestAddAndRemoveBindings(t *testing.T) {
 	ctx := context.Background()
 	pgDB := MustResolveTestPostgres(t)
 	MustMigrateTestPostgres(t, pgDB, MigrationsFromDB)
+
+	user := RequireMockUser(t, pgDB)
+	workspaceIDs, err := MockWorkspaces([]string{"test1", "test2", "test3", "test4"}, user.ID)
+	require.NoError(t, err, "failed creating workspaces: %t", err)
+	defer CleanupMockWorkspace(workspaceIDs)
+
+	var int32IDs []int32
+	for _, workspaceID := range workspaceIDs {
+		int32IDs = append(int32IDs, int32(workspaceID))
+	}
 	// Test single insert/delete
 	// Test bulk insert/delete
-	err := AddRPWorkspaceBindings(ctx, []int32{1}, "test pool")
+	err = AddRPWorkspaceBindings(ctx, []int32{int32IDs[0]}, "test pool")
 	require.NoError(t, err, "failed to add bindings: %t", err)
 
 	var values []RPWorkspaceBinding
 	count, err := Bun().NewSelect().Model(&values).ScanAndCount(ctx)
 	require.NoError(t, err, "error when scanning DB: %t", err)
 	require.Equal(t, 1, count, "expected 1 item in DB, found %d", count)
-	require.Equal(t, 1, values[0].WorkspaceID, "expected workspaceID to be 1, but it is %d",
-		values[0].WorkspaceID)
+	require.Equal(t, workspaceIDs[0], values[0].WorkspaceID, "expected workspaceID to be %d, but it is %d",
+		workspaceIDs[0], values[0].WorkspaceID)
 	require.Equal(t, "test pool", values[0].PoolName,
 		"expected pool name to be 'test pool', but got %s", values[0].PoolName)
 
-	err = RemoveRPWorkspaceBindings(ctx, []int32{1}, "test pool")
+	err = RemoveRPWorkspaceBindings(ctx, []int32{int32IDs[0]}, "test pool")
 	require.NoError(t, err, "failed to remove bindings: %t", err)
 
 	count, err = Bun().NewSelect().Model(&values).ScanAndCount(ctx)
 	require.NoError(t, err, "error when scanning DB: %t", err)
 	require.Equal(t, 0, count, "expected 0 items in DB, found %d", count)
 
-	err = AddRPWorkspaceBindings(ctx, []int32{1, 2, 3, 4}, "test pool too")
+	err = AddRPWorkspaceBindings(ctx, int32IDs, "test pool too")
 	require.NoError(t, err, "failed to add bindings: %t", err)
 
-	count, err = Bun().NewSelect().Model(&values).ScanAndCount(ctx)
+	count, err = Bun().NewSelect().Model(&values).Order("workspace_id ASC").ScanAndCount(ctx)
 	require.NoError(t, err, "error when scanning DB: %t", err)
 	require.Equal(t, 4, count, "expected 3 items in DB, found %d", count)
 	for i := 0; i < 4; i++ {
-		require.Equal(t, i+1, values[i].WorkspaceID,
+		require.Equal(t, workspaceIDs[i], values[i].WorkspaceID,
 			"expected workspaceID to be %d, but it is %d", i+1, values[i].WorkspaceID)
 		require.Equal(t, "test pool too", values[i].PoolName,
 			"expected pool name to be 'test pool too', but got %s", values[i].PoolName)
 	}
 
-	err = RemoveRPWorkspaceBindings(ctx, []int32{1, 2, 3, 4}, "test pool too")
+	err = RemoveRPWorkspaceBindings(ctx, int32IDs, "test pool too")
 	require.NoError(t, err, "failed to remove bindings: %t", err)
 
 	count, err = Bun().NewSelect().Model(&values).ScanAndCount(ctx)
@@ -99,3 +108,5 @@ func TestRemoveInvalidBinding(t *testing.T) {
 	// bulk remove bindings that don't exist
 	return
 }
+
+// for marking pools as invalid, write a fn that takes in a list of valid workspaces parsed from the config
