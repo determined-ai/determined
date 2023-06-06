@@ -1,7 +1,8 @@
 import { Popover as AntdPopover, Dropdown as AntDropdown } from 'antd';
 import { MenuProps as AntdMenuProps } from 'antd/es/menu/menu';
-import { PropsWithChildren, useMemo } from 'react';
+import { isValidElement, PropsWithChildren, useMemo } from 'react';
 import * as React from 'react';
+import { isForwardRef } from 'react-is';
 
 import css from './Dropdown.module.scss';
 
@@ -66,12 +67,15 @@ const Dropdown: React.FC<PropsWithChildren<Props>> = ({
   }, [menu, onClick]);
 
   const renderedChildren = useMemo(() => {
-    return (
-      <div>
-        {/* wrap in div to prevent antd from overwriting classes for child button element */}
-        {children}
-      </div>
-    );
+    if ((isValidElement(children) && children?.type === 'button') || isForwardRef(children)) {
+      return (
+        <div>
+          {/* wrap in div to prevent antd from overwriting classes for child button element */}
+          {children}
+        </div>
+      );
+    }
+    return children;
   }, [children]);
 
   /**
