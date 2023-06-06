@@ -1,6 +1,6 @@
 import { Popover as AntdPopover, Dropdown as AntDropdown } from 'antd';
 import { MenuProps as AntdMenuProps } from 'antd/es/menu/menu';
-import { isValidElement, PropsWithChildren, useMemo } from 'react';
+import { PropsWithChildren, useMemo } from 'react';
 import * as React from 'react';
 import { isForwardRef } from 'react-is';
 
@@ -67,7 +67,7 @@ const Dropdown: React.FC<PropsWithChildren<Props>> = ({
   }, [menu, onClick]);
 
   const renderedChildren = useMemo(() => {
-    if ((isValidElement(children) && children?.type === 'button') || isForwardRef(children)) {
+    if (isForwardRef(children)) {
       return (
         <div>
           {/* wrap in div to prevent antd from overwriting classes for child button element */}
