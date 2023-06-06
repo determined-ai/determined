@@ -116,7 +116,12 @@ class ExperimentReference:
         Wait for the first trial to be started for this experiment.
         """
         while True:
-            resp = bindings.get_GetExperimentTrials(self._session, experimentId=self._id)
+            resp = bindings.get_GetExperimentTrials(
+                self._session,
+                experimentId=self._id,
+                orderBy=bindings.v1OrderBy.ASC,
+                sortBy=bindings.v1GetExperimentTrialsRequestSortBy.START_TIME,
+            )
             if len(resp.trials) > 0:
                 return trial.TrialReference(resp.trials[0].id, self._session)
             time.sleep(interval)

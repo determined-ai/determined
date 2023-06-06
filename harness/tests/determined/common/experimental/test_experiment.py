@@ -19,12 +19,34 @@ def standard_session() -> api.Session:
 @pytest.fixture
 def make_expref(standard_session: api.Session) -> Callable[[int], experiment.ExperimentReference]:
     def _make_expref(exp_id: int) -> experiment.ExperimentReference:
+        """Make an experiment reference with the given ID."""
         return experiment.ExperimentReference(exp_id, standard_session)
 
     return _make_expref
 
 
-@responses.activate(registry=responses.registries.OrderedRegistry)
+@responses.activate
+def test_await_waits_for_first_trial_to_start(
+    make_expref: Callable[[int], experiment.ExperimentReference]
+) -> None:
+    expref = make_expref(1)
+
+    tr_resp = api_responses.sample_get_experiment_trials()
+    for trial in tr_resp.trials:
+        trial.experimentId = expref.id
+    empty_tr_resp = bindings.v1GetExperimentTrialsResponse(
+        trials=[], pagination=api_responses.empty_get_pagination()
+    )
+
+    responses.get(f"{_MASTER}/api/v1/experiments/{expref.id}/trials", json=empty_tr_resp.to_json())
+    responses.get(f"{_MASTER}/api/v1/experiments/{expref.id}/trials", json=empty_tr_resp.to_json())
+    responses.get(f"{_MASTER}/api/v1/experiments/{expref.id}/trials", json=tr_resp.to_json())
+
+    expref.await_first_trial(interval=0.01)
+    assert len(responses.calls) > 2
+
+
+@responses.activate
 def test_wait_retries_transient_504(
     make_expref: Callable[[int], experiment.ExperimentReference]
 ) -> None:
@@ -51,7 +73,7 @@ def test_wait_retries_transient_504(
         bindings.experimentv1State.ERROR,
     ],
 )
-@responses.activate(registry=responses.registries.OrderedRegistry)
+@responses.activate
 def test_wait_waits_until_terminal_state(
     make_expref: Callable[[int], experiment.ExperimentReference],
     terminal_state: bindings.experimentv1State,
@@ -68,10 +90,6 @@ def test_wait_waits_until_terminal_state(
     responses.get(f"{_MASTER}/api/v1/experiments/{expref.id}", json=exp_resp_terminal.to_json())
 
     expref.wait(interval=0.01)
-
-    # Register an extra response so the mock can keep serving the experiment
-    #   (necessary for the `expref._get().state` call below)
-    responses.get(f"{_MASTER}/api/v1/experiments/{expref.id}", json=exp_resp_terminal.to_json())
     assert expref._get().state == terminal_state
 
 
