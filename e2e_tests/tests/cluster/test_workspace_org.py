@@ -466,6 +466,7 @@ def setup_workspaces(
     session: Optional[api.Session] = None, count: int = 1
 ) -> Generator[List[bindings.v1Workspace], None, None]:
     session = session or api_utils.determined_test_session(admin=True)
+    assert session
     workspaces: List[bindings.v1Workspace] = []
     try:
         for _ in range(count):
@@ -475,6 +476,14 @@ def setup_workspaces(
         yield workspaces
 
     finally:
+        # kill child jobs before deletion. NTSC is handled by the workspace deletion request.
+        wids = {w.id for w in workspaces}
+        exps = bindings.get_GetExperiments(session).experiments
+        for e in exps:
+            if e.workspaceId not in wids:
+                continue
+            bindings.post_KillExperiment(session, id=e.id)
+
         for w in workspaces:
             # TODO check if it needs deleting.
             bindings.delete_DeleteWorkspace(session, id=w.id)
