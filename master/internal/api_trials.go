@@ -656,7 +656,7 @@ func (a *apiServer) formatMetrics(
 }
 
 func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
-	metricType apiv1.MetricType, maxDatapoints int, startBatches int,
+	metricType string, maxDatapoints int, startBatches int,
 	endBatches int, logScale bool,
 	timeSeriesFilter *commonv1.PolymorphicFilter,
 	metricIds []string,
@@ -855,6 +855,20 @@ func (a *apiServer) CompareTrials(ctx context.Context,
 		trials = append(trials, container)
 	}
 	return &apiv1.CompareTrialsResponse{Trials: trials}, nil
+}
+
+func (a *apiServer) GetMetrics(
+	req *apiv1.GetMetricsRequest, resp apiv1.Determined_GetMetricsServer,
+) error {
+	sendFunc := func(m []*trialv1.MetricsReport) error {
+		return resp.Send(&apiv1.GetMetricsResponse{Metrics: m})
+	}
+	if err := a.streamMetrics(resp.Context(), req.TrialIds, sendFunc,
+		model.MetricType(req.Type)); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (a *apiServer) GetTrainingMetrics(
