@@ -18,7 +18,7 @@ func TestIdleTimeoutWatcherUseRunnerState(t *testing.T) {
 		UseRunnerState:  true,
 	}
 
-	Register(cfg.ServiceID, &cfg, func() {
+	Register(cfg.ServiceID, &cfg, func(error) {
 		actionDone.Store(true)
 	})
 	defer Unregister(cfg.ServiceID)

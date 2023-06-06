@@ -464,15 +464,12 @@ func (a *Allocation) ResourcesAllocated(ctx *actor.Context, msg sproto.Resources
 	}
 
 	if cfg := a.req.IdleTimeout; cfg != nil {
-		idler.Register(cfg.ServiceID, cfg, func() {
-			ctx.Log().Infof("killing %s due to inactivity", a.req.Name)
-			ctx.Tell(ctx.Self(),
-				sproto.AllocationSignalWithReason{
-					AllocationSignal: sproto.TerminateAllocation,
-					InformationalReason: fmt.Sprintf(
-						"inactivity for more than %s",
-						cfg.TimeoutDuration.Round(time.Second)),
-				})
+		idler.Register(cfg.ServiceID, cfg, func(err error) {
+			ctx.Log().WithError(err).Infof("killing %s due to inactivity", a.req.Name)
+			ctx.Tell(ctx.Self(), sproto.AllocationSignalWithReason{
+				AllocationSignal:    sproto.TerminateAllocation,
+				InformationalReason: err.Error(),
+			})
 		})
 	}
 

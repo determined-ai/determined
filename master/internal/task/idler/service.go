@@ -12,7 +12,7 @@ var idlers = mapx.New[string, *Watcher]()
 // Register a idler to default service. The action is called at most once when the idle timeout is
 // exceeded. The action can trigger until Unregister is called.
 // ID must be a globally unique identifier for the idler.
-func Register(id string, cfg *sproto.IdleTimeoutConfig, action func()) {
+func Register(id string, cfg *sproto.IdleTimeoutConfig, action func(error)) {
 	idlers.Store(id, New(cfg, action))
 }
 

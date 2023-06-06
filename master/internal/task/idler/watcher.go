@@ -2,6 +2,7 @@ package idler
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"time"
 
@@ -17,17 +18,20 @@ import (
 
 var syslog = log.WithField("component", "idle-watcher")
 
+// ErrIdle indicates that, according to the Watcher configuration, the service is idle.
+var ErrIdle = fmt.Errorf("service is inactive")
+
 // TickInterval is the interval at which to check the proxy activity.
 var TickInterval = 5 * time.Second
 
 // Watcher watches the proxy activity to handle a task actor idle timeout.
 type Watcher struct {
 	// System dependencies.
-	log *log.Entry
+	syslog *log.Entry
 
 	// Configuration.
 	cfg    *sproto.IdleTimeoutConfig
-	action func()
+	action func(error)
 
 	// Mutable internal state.
 	mu                   sync.Mutex
@@ -36,9 +40,9 @@ type Watcher struct {
 }
 
 // New creates a new idle timeout watcher. The action can be triggered until Close is called.
-func New(cfg *sproto.IdleTimeoutConfig, action func()) *Watcher {
+func New(cfg *sproto.IdleTimeoutConfig, action func(error)) *Watcher {
 	w := &Watcher{
-		log:    syslog.WithField("id", cfg.ServiceID),
+		syslog: syslog.WithField("id", cfg.ServiceID),
 		cfg:    cfg,
 		action: action,
 		wg:     waitgroupx.WithContext(context.Background()),
@@ -88,23 +92,29 @@ func (w *Watcher) tick() (done bool) {
 
 	if w.cfg.UseRunnerState {
 		w.mu.Lock()
-		if lastActivity == nil || w.lastExplicitActivity != nil && w.lastExplicitActivity.After(*lastActivity) {
+		if lastActivity == nil ||
+			w.lastExplicitActivity != nil && w.lastExplicitActivity.After(*lastActivity) {
 			lastActivity = w.lastExplicitActivity
 		}
 		w.mu.Unlock()
 	}
 
-	w.log.WithFields(log.Fields{
-		"lastActivity": lastActivity.Format(time.RFC3339),
-		"timeout":      lastActivity.Add(w.cfg.TimeoutDuration).Format(time.RFC3339),
-	}).Debugf("idle timeout watcher ticked")
+	if lastActivity != nil {
+		w.syslog.WithFields(log.Fields{
+			"lastActivity": lastActivity.Format(time.RFC3339),
+			"timeout":      lastActivity.Add(w.cfg.TimeoutDuration).Format(time.RFC3339),
+		}).Debugf("idle timeout watcher ticked")
+	} else {
+		w.syslog.Debugf("idle timeout watcher ticked without activity")
+	}
 
 	if lastActivity == nil {
 		return false
 	}
 
 	if time.Now().After(lastActivity.Add(w.cfg.TimeoutDuration)) {
-		w.action()
+		err := fmt.Errorf("idle for more than %s: %w", w.cfg.TimeoutDuration.Round(time.Second), ErrIdle)
+		w.action(err)
 		return true
 	}
 	return false
