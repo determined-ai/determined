@@ -102,8 +102,12 @@ func (j *Manager) GetJobs(
 		return nil, err
 	}
 
+	nonDaiJobs, _ := j.rm.GetNonDaiJobs(ctx, sproto.GetNonDaiJobs{
+		ResourcePool: resourcePool,
+	})
+
 	// Merge the results.
-	jobsInRM := make([]*jobv1.Job, 0, len(jobQ))
+	jobsInRM := make([]*jobv1.Job, 0, len(jobQ)+len(nonDaiJobs))
 	for jID, jRMInfo := range jobQ {
 		v1Job, ok := jobs[jID]
 		if ok {
@@ -117,6 +121,8 @@ func (j *Manager) GetJobs(
 			}
 		}
 	}
+
+	jobsInRM = append(jobsInRM, nonDaiJobs...)
 
 	// order by jobsAhead first and JobId second.
 	sort.SliceStable(jobsInRM, func(i, j int) bool {
