@@ -142,13 +142,13 @@ func (a *apiServer) getProjectColumnsByID(
 			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
 		},
 		{
-			Column:			 "searcherMetric",
+			Column:      "searcherMetric",
 			DisplayName: "Searcher Metric",
 			Location:    projectv1.LocationType_LOCATION_TYPE_EXPERIMENT,
 			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
 		},
 		{
-			Column:			 "searcherMetricValue",
+			Column:      "searcherMetricValue",
 			DisplayName: "Searcher Metric Value",
 			Location:    projectv1.LocationType_LOCATION_TYPE_EXPERIMENT,
 			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
