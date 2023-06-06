@@ -1,11 +1,11 @@
 package preemptible_test
 
 import (
+	"context"
 	"sync/atomic"
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
 	"github.com/determined-ai/determined/master/internal/task/preemptible"
@@ -17,12 +17,15 @@ func TestPreemption(t *testing.T) {
 	defer p.Close()
 
 	// watcher connects
-	id := uuid.New()
-	w := p.Watch(id)
+	errs := make(chan error, 1)
+	go func() {
+		errs <- p.Watch(context.Background())
+		close(errs)
+	}()
 
 	// should not immediately receive initial status.
 	select {
-	case <-w.C:
+	case <-errs:
 		t.Fatal("received preemption but should not have")
 	default:
 	}
@@ -31,27 +34,19 @@ func TestPreemption(t *testing.T) {
 	var timedOut atomic.Bool
 	p.Preempt(func(err error) { timedOut.Store(true) })
 	select {
-	case <-w.C:
-	default:
+	case <-errs:
+	case <-time.After(time.Second):
 		t.Fatal("did not receive preemption")
 	}
 
-	// unwatching preemption should do no harm.
-	p.Unwatch(id)
-
 	// new post-preemption watch connects
-	id = uuid.New()
-	w = p.Watch(id)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
 
-	// should immediately receive initial status and initial status should be preemption.
-	select {
-	case <-w.C:
-	default:
-		t.Fatal("PreemptionWatcher.C was empty channel (should come with initial status when preempted)")
+	err := p.Watch(ctx)
+	if err != nil {
+		t.Fatal("watch on preempted object was not instant")
 	}
-
-	// again, unwatching preemption should do no harm.
-	p.Unwatch(id)
 
 	p.Acknowledge()
 	require.True(t, p.Acknowledged())
@@ -62,13 +57,8 @@ func TestTimeout(t *testing.T) {
 	preemptible.DefaultTimeout = time.Microsecond
 	defer func() { preemptible.DefaultTimeout = time.Hour }()
 
-	// "task" is allocated.
 	p := preemptible.New()
 
-	// watcher connects
-	_ = p.Watch(uuid.New())
-
-	// on preemption, it should receive status.
 	var timedOut atomic.Bool
 	p.Preempt(func(err error) { timedOut.Store(true) })
 
@@ -82,12 +72,15 @@ func TestClose(t *testing.T) {
 	p := preemptible.New()
 
 	// watcher connects
-	id := uuid.New()
-	w := p.Watch(id)
+	errs := make(chan error, 1)
+	go func() {
+		errs <- p.Watch(context.Background())
+		close(errs)
+	}()
 
 	// should not immediately receive initial status.
 	select {
-	case <-w.C:
+	case <-errs:
 		t.Fatal("received preemption but should not have")
 	default:
 	}
@@ -95,8 +88,8 @@ func TestClose(t *testing.T) {
 	p.Close()
 
 	select {
-	case <-w.C:
-	default:
+	case <-errs:
+	case <-time.After(time.Second):
 		t.Fatal("did not receive preemption")
 	}
 }

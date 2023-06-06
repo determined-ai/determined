@@ -1,7 +1,7 @@
 package preemptible
 
 import (
-	"github.com/google/uuid"
+	"context"
 
 	"github.com/determined-ai/determined/master/pkg/syncx/mapx"
 )
@@ -24,24 +24,15 @@ func Unregister(id string) {
 	p.Close()
 }
 
-// Watch sets a watcher up to listen for preemption signals and returns it.
+// Watch blocks until preemption or the context is canceled. Exits not indicative
+// preemption return a non-nil error.
 // ID must be a globally unique identifier for the preemptible.
-func Watch(id string, wID uuid.UUID) (Watcher, error) {
+func Watch(ctx context.Context, id string) error {
 	p, ok := preemptibles.Load(id)
 	if !ok {
-		return Watcher{}, ErrPreemptionDisabled
+		return ErrPreemptionDisabled
 	}
-	return p.Watch(wID), nil
-}
-
-// Unwatch removes a preemption watcher.
-// ID must be a globally unique identifier for the preemptible.
-func Unwatch(id string, wID uuid.UUID) {
-	p, ok := preemptibles.Load(id)
-	if !ok {
-		return
-	}
-	p.Unwatch(wID)
+	return p.Watch(ctx)
 }
 
 // Acknowledge the receipt of a preemption signal.

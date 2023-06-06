@@ -6,8 +6,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/google/uuid"
-
 	"github.com/determined-ai/determined/master/pkg/syncx/waitgroupx"
 )
 
@@ -20,55 +18,33 @@ var ErrPreemptionDisabled = fmt.Errorf("allocation is not preemptible")
 // DefaultTimeout is the delay before the deadline exceeded callback passed to preempt is called.
 var DefaultTimeout = time.Hour
 
-// Watcher contains a channel which can be polled for a preemption signal.
-// TODO(DET-9565): Use of this watcher pattern here is unnecessary.
-type Watcher struct{ C <-chan struct{} }
-
 // Preemptible represents the preemption status of an allocation. An allocation is assumed to be
 // preempted exactly one time. The object is "nil safe" - it'll gracefully handle calls on a nil
 // preemption.
 type Preemptible struct {
-	mu sync.Mutex
-	wg waitgroupx.Group
-
-	preempted bool
+	mu        sync.Mutex
+	wg        waitgroupx.Group
+	preempted chan struct{}
 	acked     bool
-	watchers  map[uuid.UUID]chan<- struct{}
 }
 
 // New initializes a Preemption and returns it.
 func New() *Preemptible {
 	return &Preemptible{
-		watchers: map[uuid.UUID]chan<- struct{}{},
-		wg:       waitgroupx.WithContext(context.Background()),
+		preempted: make(chan struct{}),
+		wg:        waitgroupx.WithContext(context.Background()),
 	}
 }
 
-// Watch sets a watcher up to listen for preemption signals and returns it.
-// TODO(DET-9565): Callers maintaining this ID is unnecessary.
-func (p *Preemptible) Watch(id uuid.UUID) Watcher {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-
-	// Size 1; at most a single message can be sent and we don't want to block.
-	w := make(chan struct{}, 1)
-
-	p.watchers[id] = w
-	if p.preempted {
-		w <- struct{}{}
-		close(w)
-		delete(p.watchers, id)
+// Watch blocks until preemption or the context is canceled. Exits not indication
+// preemption return a non-nil error.
+func (p *Preemptible) Watch(ctx context.Context) error {
+	select {
+	case <-p.preempted:
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
 	}
-
-	return Watcher{C: w}
-}
-
-// Unwatch unregisters a preemption watcher.
-func (p *Preemptible) Unwatch(id uuid.UUID) {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-
-	delete(p.watchers, id)
 }
 
 // Preempt preempts all watchers, marks us as preempted and begins the preemption deadline,
@@ -78,7 +54,9 @@ func (p *Preemptible) Preempt(timeoutCallback func(err error)) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	if !p.preempted {
+	select {
+	case <-p.preempted:
+	default:
 		p.wg.Go(func(ctx context.Context) {
 			// don't acquire a lock in here without changing close to not lock while it waits.
 			t := time.NewTimer(DefaultTimeout)
@@ -90,13 +68,7 @@ func (p *Preemptible) Preempt(timeoutCallback func(err error)) {
 			case <-ctx.Done():
 			}
 		})
-	}
-
-	p.preempted = true
-	for id, w := range p.watchers {
-		w <- struct{}{}
-		close(w)
-		delete(p.watchers, id)
+		close(p.preempted)
 	}
 }
 
@@ -104,7 +76,6 @@ func (p *Preemptible) Preempt(timeoutCallback func(err error)) {
 func (p *Preemptible) Acknowledge() {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-
 	p.acked = true
 }
 
@@ -112,7 +83,6 @@ func (p *Preemptible) Acknowledge() {
 func (p *Preemptible) Acknowledged() bool {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-
 	return p.acked
 }
 
@@ -123,10 +93,9 @@ func (p *Preemptible) Close() {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	p.preempted = true
-	for id, w := range p.watchers {
-		w <- struct{}{}
-		close(w)
-		delete(p.watchers, id)
+	select {
+	case <-p.preempted:
+	default:
+		close(p.preempted)
 	}
 }

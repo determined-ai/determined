@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 	"golang.org/x/exp/slices"
@@ -1144,6 +1143,9 @@ func (a *apiServer) AllocationPreemptionSignal(
 	ctx context.Context,
 	req *apiv1.AllocationPreemptionSignalRequest,
 ) (*apiv1.AllocationPreemptionSignalResponse, error) {
+	ctx, cancel := context.WithTimeout(ctx, time.Duration(req.TimeoutSeconds)*time.Second)
+	defer cancel()
+
 	if err := a.canEditAllocation(ctx, req.AllocationId); err != nil {
 		return nil, err
 	}
@@ -1160,20 +1162,13 @@ func (a *apiServer) AllocationPreemptionSignal(
 		return nil, err
 	}
 
-	id := uuid.New()
-	w, err := preemptible.Watch(allocationID.String(), id)
-	if err != nil {
-		return nil, err
-	}
-	defer preemptible.Unwatch(allocationID.String(), id)
-
-	ctx, cancel := context.WithTimeout(ctx, time.Duration(req.TimeoutSeconds)*time.Second)
-	defer cancel()
-	select {
-	case <-w.C:
-		return &apiv1.AllocationPreemptionSignalResponse{Preempt: true}, nil
-	case <-ctx.Done():
+	switch err = preemptible.Watch(ctx, allocationID.String()); {
+	case errors.Is(err, context.DeadlineExceeded):
 		return &apiv1.AllocationPreemptionSignalResponse{Preempt: false}, nil
+	case err != nil:
+		return nil, err
+	default:
+		return &apiv1.AllocationPreemptionSignalResponse{Preempt: true}, nil
 	}
 }
 
