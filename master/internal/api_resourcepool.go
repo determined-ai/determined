@@ -2,6 +2,7 @@ package internal
 
 import (
 	"context"
+
 	"github.com/determined-ai/determined/master/internal/db"
 
 	"github.com/pkg/errors"
