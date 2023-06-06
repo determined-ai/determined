@@ -37,9 +37,11 @@ import { handlePath } from 'routes/utils';
 import { V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
 import useUI from 'shared/contexts/stores/UI';
 import usePrevious from 'shared/hooks/usePrevious';
+import { getCssVar } from 'shared/themes';
 import { AnyMouseEvent } from 'shared/utils/routes';
 import usersStore from 'stores/users';
 import { ExperimentWithTrial, Project, ProjectColumn } from 'types';
+import { Surface } from 'utils/colors';
 import { getProjectExperimentForExperimentItem } from 'utils/experiment';
 import { Loadable } from 'utils/loadable';
 import { observable, useObservable, WritableObservable } from 'utils/observable';
@@ -242,7 +244,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
       // avoid showing 'empty rows' below data
       if (!data[row]) return;
 
-      const hoverStyle = row === hoveredRow ? { bgCell: '#323335' } : {}; // for some reason, using the consts from our reusable theme doesn't work...
+      const hoverStyle = row === hoveredRow ? { bgCell: getCssVar(Surface.Surface) } : {};
 
       const rowColorTheme = Loadable.match(data[row], {
         Loaded: (record) =>
