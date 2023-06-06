@@ -5,9 +5,11 @@ package db
 
 import (
 	"archive/tar"
+	"context"
 	"crypto/rand"
 	"database/sql"
 	"fmt"
+	"github.com/uptrace/bun"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -325,4 +327,51 @@ func (db *PgDB) MustExec(t *testing.T, sql string, args ...any) sql.Result {
 	out, err := db.sql.Exec(sql, args...)
 	require.NoError(t, err, "failed to run query")
 	return out
+}
+
+// AddDummyWorkspaces creates as many new workspaces as in workspaceNames and
+// returns a list of workspaceIDs
+func AddDummyWorkspaces(workspaceNames []string, userID model.UserID) ([]int, error) {
+	ctx := context.Background()
+	var workspaceIDs []int
+	var workspaces []model.Workspace
+	workspaceIDMap := map[string]bool{}
+
+	for _, workspaceName := range workspaceNames {
+		workspaces = append(workspaces, model.Workspace{
+			Name:   workspaceName,
+			UserID: userID,
+		})
+		workspaceIDMap[workspaceName] = true
+	}
+
+	_, err := Bun().NewInsert().Model(&workspaces).Exec(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	workspaces = []model.Workspace{}
+	err = Bun().NewSelect().Model(&workspaces).
+		Where("name IN (?)", bun.In(workspaceNames)).
+		Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, workspace := range workspaces {
+		if _, ok := workspaceIDMap[workspace.Name]; ok {
+			workspaceIDs = append(workspaceIDs, workspace.ID)
+		}
+	}
+
+	return workspaceIDs, nil
+}
+
+func CleanupDummyWorkspace(workspaceIDs []int) error {
+	var workspaces []model.Workspace
+	_, err := Bun().NewDelete().Model(&workspaces).
+		Where("id IN (?)", bun.In(workspaceIDs)).
+		Exec(context.Background())
+
+	return err
 }
