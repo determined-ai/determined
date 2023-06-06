@@ -100,3 +100,11 @@ local: build-bindings get-deps-webui
 .PHONY: devcluster
 devcluster:
 	devcluster -c tools/devcluster.yaml
+
+.PHONY: slurmcluster
+slurmcluster:
+	$(MAKE) -C tools/slurm slurmcluster
+
+.PHONY: unslurmcluster
+unslurmcluster:
+	$(MAKE) -C tools/slurm unslurmcluster
