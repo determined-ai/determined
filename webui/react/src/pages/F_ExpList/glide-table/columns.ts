@@ -282,7 +282,8 @@ export const getColumnDefs = ({
     id: 'searcherMetricValue',
     isNumerical: true,
     renderer: (record: ExperimentWithTrial) => {
-      const sMetricValue = record.bestTrial?.bestValidationMetric?.metrics?.avgMetrics;
+      const sMetric = record.experiment.config.searcher.metric;
+      const sMetricValue = record.bestTrial?.bestValidationMetric?.metrics?.[sMetric];
       return {
         allowOverlay: false,
         data: sMetricValue?.toString() || '',
