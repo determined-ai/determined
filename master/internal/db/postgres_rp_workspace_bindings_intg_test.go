@@ -2,8 +2,10 @@ package db
 
 import (
 	"context"
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	log "github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAddAndRemoveBindings(t *testing.T) {
@@ -14,7 +16,12 @@ func TestAddAndRemoveBindings(t *testing.T) {
 	user := RequireMockUser(t, pgDB)
 	workspaceIDs, err := MockWorkspaces([]string{"test1", "test2", "test3", "test4"}, user.ID)
 	require.NoError(t, err, "failed creating workspaces: %t", err)
-	defer CleanupMockWorkspace(workspaceIDs)
+	defer func() {
+		err = CleanupMockWorkspace(workspaceIDs)
+		if err != nil {
+			log.Errorf("error when cleaning up mock workspaces")
+		}
+	}()
 
 	var int32IDs []int32
 	for _, workspaceID := range workspaceIDs {
@@ -29,8 +36,8 @@ func TestAddAndRemoveBindings(t *testing.T) {
 	count, err := Bun().NewSelect().Model(&values).ScanAndCount(ctx)
 	require.NoError(t, err, "error when scanning DB: %t", err)
 	require.Equal(t, 1, count, "expected 1 item in DB, found %d", count)
-	require.Equal(t, workspaceIDs[0], values[0].WorkspaceID, "expected workspaceID to be %d, but it is %d",
-		workspaceIDs[0], values[0].WorkspaceID)
+	require.Equal(t, workspaceIDs[0], values[0].WorkspaceID,
+		"expected workspaceID to be %d, but it is %d", workspaceIDs[0], values[0].WorkspaceID)
 	require.Equal(t, "test pool", values[0].PoolName,
 		"expected pool name to be 'test pool', but got %s", values[0].PoolName)
 
@@ -108,5 +115,3 @@ func TestRemoveInvalidBinding(t *testing.T) {
 	// bulk remove bindings that don't exist
 	return
 }
-
-// for marking pools as invalid, write a fn that takes in a list of valid workspaces parsed from the config
