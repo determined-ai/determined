@@ -10,7 +10,7 @@ import (
 
 const versionCheckPeriod = 60 * time.Second
 
-var launcherMinimumVersion = semvar.MustParse("3.2.9")
+var launcherMinimumVersion = semvar.MustParse("3.3.1")
 
 // periodicallyCheckLauncherVersion checks the launcher version every 60s, logging warnings while
 // it is out of date and exiting if it finds it is ok.
