@@ -34,5 +34,5 @@ export const settingsConfigForExperimentHyperparameters = (
       type: keyof({ linear: null, log: null }),
     },
   },
-  storagePath: `experiment-hyperparameters-multi`,
+  storagePath: 'experiment-hyperparameters-multi',
 });
