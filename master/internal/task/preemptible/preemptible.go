@@ -2,6 +2,7 @@ package preemptible
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"time"
 
@@ -10,25 +11,30 @@ import (
 	"github.com/determined-ai/determined/master/pkg/syncx/waitgroupx"
 )
 
+// ErrPreemptionTimeoutExceeded indicates that an allocation not halt within the expected deadline.
+var ErrPreemptionTimeoutExceeded = fmt.Errorf("allocation did not preempt in %s", DefaultTimeout)
+
+// ErrPreemptionDisabled indicates that an alloction is either non-preemptible or not running.
+var ErrPreemptionDisabled = fmt.Errorf("allocation is not preemptible")
+
 // DefaultTimeout is the delay before the deadline exceeded callback passed to preempt is called.
 var DefaultTimeout = time.Hour
 
-type (
-	// Preemptible represents the preemption status of an allocation. An allocation is assumed to be
-	// preempted exactly one time. The object is "nil safe" - it'll gracefully handle calls on a nil
-	// preemption.
-	Preemptible struct {
-		mu sync.Mutex
-		wg waitgroupx.Group
+// Watcher contains a channel which can be polled for a preemption signal.
+// TODO(DET-9565): Use of this watcher pattern here is unnecessary.
+type Watcher struct{ C <-chan struct{} }
 
-		preempted bool
-		acked     bool
-		watchers  map[uuid.UUID]chan<- struct{}
-	}
+// Preemptible represents the preemption status of an allocation. An allocation is assumed to be
+// preempted exactly one time. The object is "nil safe" - it'll gracefully handle calls on a nil
+// preemption.
+type Preemptible struct {
+	mu sync.Mutex
+	wg waitgroupx.Group
 
-	// Watcher contains a channel which can be polled for a preemption signal.
-	Watcher struct{ C <-chan struct{} }
-)
+	preempted bool
+	acked     bool
+	watchers  map[uuid.UUID]chan<- struct{}
+}
 
 // New initializes a Preemption and returns it.
 func New() *Preemptible {
@@ -39,6 +45,7 @@ func New() *Preemptible {
 }
 
 // Watch sets a watcher up to listen for preemption signals and returns it.
+// TODO(DET-9565): Callers maintaining this ID is unnecessary.
 func (p *Preemptible) Watch(id uuid.UUID) Watcher {
 	p.mu.Lock()
 	defer p.mu.Unlock()
