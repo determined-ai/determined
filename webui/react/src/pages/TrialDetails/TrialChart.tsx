@@ -13,8 +13,8 @@ import css from 'pages/TrialDetails/TrialChart.module.scss';
 import { timeSeries } from 'services/api';
 import Spinner from 'shared/components/Spinner';
 import usePolling from 'shared/hooks/usePolling';
-import { glasbeyColor } from 'shared/utils/color';
 import { Metric, MetricContainer, Scale } from 'types';
+import { glasbeyColor } from 'utils/color';
 
 interface Props {
   defaultMetricNames: Metric[];

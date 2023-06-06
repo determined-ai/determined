@@ -1,7 +1,7 @@
 import { Skeleton } from 'antd';
 import React, { useMemo } from 'react';
 
-import { isNumber } from 'shared/utils/data';
+import { isNumber } from 'utils/data';
 
 import SkeletonSection, { Props as SkeletonSectionProps } from '../SkeletonSection';
 

@@ -31,7 +31,7 @@ import useResize from 'hooks/useResize';
 import { UpdateSettings } from 'hooks/useSettings';
 import Spinner from 'shared/components/Spinner/Spinner';
 import { Primitive } from 'shared/types';
-import { isEqual } from 'shared/utils/data';
+import { isEqual } from 'utils/data';
 
 import css from './InteractiveTable.module.scss';
 

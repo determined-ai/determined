@@ -4,9 +4,9 @@ import Button from 'components/kit/Button';
 import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 import Icon from 'components/kit/Icon';
 import useConfirm, { ConfirmModalProps } from 'components/kit/useConfirm';
-import { DetError, ErrorLevel, ErrorType, wrapPublicMessage } from 'shared/utils/error';
-import { capitalize } from 'shared/utils/string';
+import { DetError, ErrorLevel, ErrorType, wrapPublicMessage } from 'utils/error';
 import handleError from 'utils/error';
+import { capitalize } from 'utils/string';
 
 import { Eventually } from '../../types';
 

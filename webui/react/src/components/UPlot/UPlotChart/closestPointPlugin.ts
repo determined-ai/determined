@@ -2,9 +2,9 @@ import { throttle } from 'throttle-debounce';
 import uPlot, { Plugin } from 'uplot';
 
 import { CheckpointsDict } from 'pages/TrialDetails/F_TrialDetailsOverview';
-import { findInsertionIndex } from 'shared/utils/array';
-import { isEqual } from 'shared/utils/data';
+import { findInsertionIndex } from 'utils/array';
 import { distance } from 'utils/chart';
+import { isEqual } from 'utils/data';
 
 import css from './closestPointPlugin.module.scss';
 

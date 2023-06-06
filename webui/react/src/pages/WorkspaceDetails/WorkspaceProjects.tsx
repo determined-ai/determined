@@ -33,14 +33,14 @@ import { V1GetWorkspaceProjectsRequestSortBy } from 'services/api-ts-sdk';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner';
 import usePrevious from 'shared/hooks/usePrevious';
-import { isEqual } from 'shared/utils/data';
-import { ErrorLevel, ErrorType } from 'shared/utils/error';
-import { validateDetApiEnum } from 'shared/utils/service';
 import userStore from 'stores/users';
 import { Project, Workspace } from 'types';
+import { isEqual } from 'utils/data';
+import { ErrorLevel, ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
+import { validateDetApiEnum } from 'utils/service';
 
 import css from './WorkspaceProjects.module.scss';
 import {

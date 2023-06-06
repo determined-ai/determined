@@ -14,13 +14,13 @@ import { V1ActivityType, V1EntityType } from 'services/api-ts-sdk';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner';
 import usePolling from 'shared/hooks/usePolling';
-import { isEqual } from 'shared/utils/data';
-import { routeToReactUrl } from 'shared/utils/routes';
-import { isNotFound } from 'shared/utils/service';
 import workspaceStore from 'stores/workspaces';
 import { Project } from 'types';
+import { isEqual } from 'utils/data';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
+import { routeToReactUrl } from 'utils/routes';
+import { isNotFound } from 'utils/service';
 
 import ExperimentList from './ExperimentList';
 import F_ExperimentList from './F_ExpList/F_ExperimentList';

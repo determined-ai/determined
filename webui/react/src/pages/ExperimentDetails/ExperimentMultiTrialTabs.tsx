@@ -13,8 +13,8 @@ import { paths } from 'routes/utils';
 import { patchExperiment } from 'services/api';
 import Spinner from 'shared/components/Spinner/Spinner';
 import { ValueOf } from 'shared/types';
-import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { ExperimentBase, Note } from 'types';
+import { ErrorLevel, ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 
 import { ExperimentVisualizationType } from './ExperimentVisualization';

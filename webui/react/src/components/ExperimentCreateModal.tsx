@@ -11,14 +11,14 @@ import { createExperiment } from 'services/api';
 import { V1LaunchWarning } from 'services/api-ts-sdk';
 import Spinner from 'shared/components/Spinner/Spinner';
 import { RawJson, ValueOf } from 'shared/types';
-import { clone, isEqual } from 'shared/utils/data';
-import { DetError, ErrorLevel, ErrorType, isDetError, isError } from 'shared/utils/error';
-import { routeToReactUrl } from 'shared/utils/routes';
 import { ExperimentBase, TrialHyperparameters, TrialItem } from 'types';
+import { clone, isEqual } from 'utils/data';
+import { DetError, ErrorLevel, ErrorType, isDetError, isError } from 'utils/error';
 import handleError, { handleWarning } from 'utils/error';
 import { trialHParamsToExperimentHParams } from 'utils/experiment';
 import { upgradeConfig } from 'utils/experiment';
 import { Loaded } from 'utils/loadable';
+import { routeToReactUrl } from 'utils/routes';
 
 export const FULL_CONFIG_BUTTON_TEXT = 'Show Full Config';
 export const SIMPLE_CONFIG_BUTTON_TEXT = 'Show Simple Config';

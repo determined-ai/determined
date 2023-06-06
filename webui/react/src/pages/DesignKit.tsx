@@ -51,7 +51,6 @@ import { V1LogLevel } from 'services/api-ts-sdk';
 import { mapV1LogsResponse } from 'services/decoder';
 import useUI from 'shared/contexts/stores/UI';
 import { ValueOf } from 'shared/types';
-import { noOp } from 'shared/utils/service';
 import { BrandingType } from 'stores/determinedInfo';
 import { Note } from 'types';
 import { MetricType, User } from 'types';
@@ -68,6 +67,7 @@ import {
 import handleError from 'utils/error';
 import { Loaded, NotLoaded } from 'utils/loadable';
 import loremIpsum from 'utils/loremIpsum';
+import { noOp } from 'utils/service';
 
 import useConfirm, { voidPromiseFn } from '../components/kit/useConfirm';
 

@@ -6,7 +6,7 @@ import {
   ErrorType,
   isDetError,
   isError,
-} from 'shared/utils/error';
+} from 'utils/error';
 
 const DEFAULT_DET_ERROR_OPTIONS: DetErrorOptions = {
   id: 'badbed',

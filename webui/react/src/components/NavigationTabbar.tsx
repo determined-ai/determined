@@ -10,7 +10,6 @@ import usePermissions from 'hooks/usePermissions';
 import { handlePath, paths } from 'routes/utils';
 import Spinner from 'shared/components/Spinner/Spinner';
 import useUI from 'shared/contexts/stores/UI';
-import { AnyMouseEvent, routeToReactUrl } from 'shared/utils/routes';
 import authStore from 'stores/auth';
 import clusterStore from 'stores/cluster';
 import determinedStore, { BrandingType } from 'stores/determinedInfo';
@@ -18,6 +17,7 @@ import userStore from 'stores/users';
 import workspaceStore from 'stores/workspaces';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
+import { AnyMouseEvent, routeToReactUrl } from 'utils/routes';
 
 import css from './NavigationTabbar.module.scss';
 import UserBadge from './UserBadge';

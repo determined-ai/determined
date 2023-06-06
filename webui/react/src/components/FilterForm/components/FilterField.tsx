@@ -29,10 +29,10 @@ import Input from 'components/kit/Input';
 import InputNumber from 'components/kit/InputNumber';
 import Select, { SelectValue } from 'components/kit/Select';
 import { V1ColumnType, V1ProjectColumn } from 'services/api-ts-sdk';
-import { alphaNumericSorter } from 'shared/utils/sort';
 import clusterStore from 'stores/cluster';
 import userStore from 'stores/users';
 import { Loadable } from 'utils/loadable';
+import { alphaNumericSorter } from 'utils/sort';
 
 import css from './FilterField.module.scss';
 

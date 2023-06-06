@@ -6,9 +6,9 @@ import { useNavigate } from 'react-router-dom';
 import { updateUserSetting } from 'services/api';
 import { UpdateUserSettingParams } from 'services/types';
 import { Primitive } from 'shared/types';
-import { isEqual } from 'shared/utils/data';
-import { ErrorType } from 'shared/utils/error';
 import userStore from 'stores/users';
+import { isEqual } from 'utils/data';
+import { ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 

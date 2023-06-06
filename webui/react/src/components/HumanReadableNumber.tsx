@@ -2,7 +2,7 @@ import React from 'react';
 
 import Tooltip from 'components/kit/Tooltip';
 import { CommonProps } from 'shared/types';
-import { humanReadableNumber } from 'shared/utils/number';
+import { humanReadableNumber } from 'utils/number';
 
 interface Props extends CommonProps {
   num?: number | null;

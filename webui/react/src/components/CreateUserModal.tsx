@@ -17,12 +17,12 @@ import {
   removeRolesFromUser,
 } from 'services/api';
 import Spinner from 'shared/components/Spinner';
-import { ErrorType } from 'shared/utils/error';
 import determinedStore from 'stores/determinedInfo';
 import roleStore from 'stores/roles';
 import userStore from 'stores/users';
 import { DetailedUser, UserRole } from 'types';
 import { message } from 'utils/dialogApi';
+import { ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';

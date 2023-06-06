@@ -3,7 +3,7 @@ import React, { createContext, useCallback, useContext, useEffect, useState } fr
 import { useNavigate, useParams } from 'react-router-dom';
 
 import Pivot, { PivotTabType } from 'components/kit/Pivot';
-import { isEqual } from 'shared/utils/data';
+import { isEqual } from 'utils/data';
 
 interface DynamicTabBarProps extends Omit<TabsProps, 'activeKey' | 'type'> {
   basePath: string;

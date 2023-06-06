@@ -17,10 +17,6 @@ import { readStream } from 'services/utils';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner/Spinner';
 import useUI from 'shared/contexts/stores/UI';
-import { glasbeyColor } from 'shared/utils/color';
-import { flattenObject, isEqual, isPrimitive } from 'shared/utils/data';
-import { ErrorLevel, ErrorType } from 'shared/utils/error';
-import { isNewTabClickEvent, openBlank, routeToReactUrl } from 'shared/utils/routes';
 import {
   ExperimentAction as Action,
   CommandResponse,
@@ -33,7 +29,11 @@ import {
   RunState,
   Scale,
 } from 'types';
+import { glasbeyColor } from 'utils/color';
+import { flattenObject, isEqual, isPrimitive } from 'utils/data';
+import { ErrorLevel, ErrorType } from 'utils/error';
 import handleError from 'utils/error';
+import { isNewTabClickEvent, openBlank, routeToReactUrl } from 'utils/routes';
 import { openCommandResponse } from 'utils/wait';
 
 import TrialsComparisonModal from '../TrialsComparisonModal';

@@ -44,9 +44,6 @@ import { paths } from 'routes/utils';
 import { getCommands, getJupyterLabs, getShells, getTensorBoards, killTask } from 'services/api';
 import usePolling from 'shared/hooks/usePolling';
 import { ValueOf } from 'shared/types';
-import { isEqual } from 'shared/utils/data';
-import { ErrorLevel, ErrorType } from 'shared/utils/error';
-import { alphaNumericSorter, dateTimeStringSorter, numericSorter } from 'shared/utils/sort';
 import userStore from 'stores/users';
 import workspaceStore from 'stores/workspaces';
 import { ShirtSize } from 'themes';
@@ -58,9 +55,12 @@ import {
   CommandType,
   Workspace,
 } from 'types';
+import { isEqual } from 'utils/data';
+import { ErrorLevel, ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
+import { alphaNumericSorter, dateTimeStringSorter, numericSorter } from 'utils/sort';
 import { commandStateSorter, filterTasks, isTaskKillable, taskFromCommandTask } from 'utils/task';
 import { getDisplayName } from 'utils/user';
 

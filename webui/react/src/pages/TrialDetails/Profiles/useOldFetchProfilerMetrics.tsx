@@ -4,8 +4,8 @@ import { terminalRunStates } from 'constants/states';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
 import useUI from 'shared/contexts/stores/UI';
-import { clone } from 'shared/utils/data';
 import { RunState } from 'types';
+import { clone } from 'utils/data';
 
 import { MetricType, OldMetricsAggregateInterface, ProfilerMetricsResponse } from './types';
 

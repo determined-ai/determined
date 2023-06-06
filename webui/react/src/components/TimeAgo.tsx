@@ -3,7 +3,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 
 import Tooltip from 'components/kit/Tooltip';
 import { ValueOf } from 'shared/types';
-import { isNumber, isString } from 'shared/utils/data';
+import { isNumber, isString } from 'utils/data';
 import {
   DURATION_DAY,
   DURATION_HOUR,
@@ -11,8 +11,8 @@ import {
   DURATION_SECOND,
   DURATION_YEAR,
   durationInEnglish,
-} from 'shared/utils/datetime';
-import { capitalize, capitalizeWord } from 'shared/utils/string';
+} from 'utils/datetime';
+import { capitalize, capitalizeWord } from 'utils/string';
 
 import css from './TimeAgo.module.scss';
 

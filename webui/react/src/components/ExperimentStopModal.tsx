@@ -6,7 +6,7 @@ import Checkbox from 'components/kit/Checkbox';
 import { Modal } from 'components/kit/Modal';
 import { cancelExperiment, killExperiment } from 'services/api';
 import { ValueOf } from 'shared/types';
-import { ErrorLevel, ErrorType } from 'shared/utils/error';
+import { ErrorLevel, ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 
 export const ActionType = {

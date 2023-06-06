@@ -15,8 +15,8 @@ import TableBatch from 'components/Table/TableBulkActions';
 import { SettingsConfig, useSettings } from 'hooks/useSettings';
 import css from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
 import usePrevious from 'shared/hooks/usePrevious';
-import { isEqual } from 'shared/utils/data';
-import { noOp } from 'shared/utils/service';
+import { isEqual } from 'utils/data';
+import { noOp } from 'utils/service';
 
 import { encodeIdList } from '../api';
 import { TrialsCollectionSpec, TrialsSelection } from '../Collections/collections';

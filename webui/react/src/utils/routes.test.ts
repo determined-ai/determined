@@ -2,7 +2,7 @@ import { Router as RemixRouter } from '@remix-run/router';
 import React from 'react';
 
 import router from 'router';
-import { reactHostAddress } from 'shared/utils/routes';
+import { reactHostAddress } from 'utils/routes';
 
 import type { AnyMouseEvent } from './routes';
 import * as routes from './routes';

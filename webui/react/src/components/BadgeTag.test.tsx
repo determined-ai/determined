@@ -2,7 +2,7 @@ import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
-import { generateAlphaNumeric } from 'shared/utils/string';
+import { generateAlphaNumeric } from 'utils/string';
 
 import BadgeTag, { Props } from './BadgeTag';
 

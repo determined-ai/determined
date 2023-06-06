@@ -11,7 +11,7 @@ import 'whatwg-fetch';
 
 import Schema from 'async-validator';
 
-import { noOp } from 'shared/utils/service';
+import { noOp } from 'utils/service';
 
 /**
  * To clean up the async-validator console warning that get generated during testing.

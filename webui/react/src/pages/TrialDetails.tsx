@@ -20,14 +20,14 @@ import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner';
 import usePolling from 'shared/hooks/usePolling';
 import { ApiState, ValueOf } from 'shared/types';
-import { ErrorType } from 'shared/utils/error';
-import { isAborted, isNotFound } from 'shared/utils/service';
 import workspaceStore from 'stores/workspaces';
 import { ExperimentBase, TrialDetails, Workspace } from 'types';
+import { ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 import { isSingleTrialExperiment } from 'utils/experiment';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
+import { isAborted, isNotFound } from 'utils/service';
 
 import MultiTrialDetailsHyperparameters from './TrialDetails/MultiTrialDetailsHyperparameters';
 

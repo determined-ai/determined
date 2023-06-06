@@ -29,14 +29,14 @@ import {
 } from 'services/api';
 import Spinner from 'shared/components/Spinner';
 import usePolling from 'shared/hooks/usePolling';
-import { ErrorType } from 'shared/utils/error';
-import { dateTimeStringSorter } from 'shared/utils/sort';
 import userStore from 'stores/users';
 import workspaceStore from 'stores/workspaces';
 import { CommandTask, DetailedUser, ExperimentItem, Project } from 'types';
+import { ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
+import { dateTimeStringSorter } from 'utils/sort';
 
 import css from './Dashboard.module.scss';
 

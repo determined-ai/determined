@@ -2,16 +2,10 @@ import dayjs from 'dayjs';
 
 import * as ioTypes from 'ioTypes';
 import { Pagination, RawJson } from 'shared/types';
-import {
-  flattenObject,
-  isNullOrUndefined,
-  isNumber,
-  isObject,
-  isPrimitive,
-} from 'shared/utils/data';
-import { capitalize } from 'shared/utils/string';
 import { BrandingType, DeterminedInfo } from 'stores/determinedInfo';
 import * as types from 'types';
+import { flattenObject, isNullOrUndefined, isNumber, isObject, isPrimitive } from 'utils/data';
+import { capitalize } from 'utils/string';
 
 import * as Sdk from './api-ts-sdk'; // API Bindings
 

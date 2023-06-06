@@ -10,8 +10,8 @@ import logoHpeOnLightHorizontal from 'shared/assets/images/logo-hpe-on-light-hor
 import useUI from 'shared/contexts/stores/UI';
 import { DarkLight } from 'shared/themes';
 import { ValueOf } from 'shared/types';
-import { reactHostAddress } from 'shared/utils/routes';
 import { BrandingType } from 'stores/determinedInfo';
+import { reactHostAddress } from 'utils/routes';
 
 import css from './Logo.module.scss';
 

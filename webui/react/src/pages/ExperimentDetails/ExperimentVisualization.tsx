@@ -16,7 +16,6 @@ import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner/Spinner';
 import useUI from 'shared/contexts/stores/UI';
 import { ValueOf } from 'shared/types';
-import { alphaNumericSorter } from 'shared/utils/sort';
 import {
   ExperimentBase,
   ExperimentSearcherName,
@@ -26,6 +25,7 @@ import {
   RunState,
   Scale,
 } from 'types';
+import { alphaNumericSorter } from 'utils/sort';
 
 import ExperimentVisualizationFilters, {
   MAX_HPARAM_COUNT,

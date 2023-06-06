@@ -31,8 +31,6 @@ import {
   unarchiveExperiment,
 } from 'services/api';
 import Spinner from 'shared/components/Spinner/Spinner';
-import { getDuration } from 'shared/utils/datetime';
-import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { getStateColorCssVar } from 'themes';
 import {
   ExperimentAction as Action,
@@ -42,6 +40,8 @@ import {
   RunState,
   TrialItem,
 } from 'types';
+import { getDuration } from 'utils/datetime';
+import { ErrorLevel, ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 import { canActionExperiment, getActionsForExperiment } from 'utils/experiment';
 import { openCommandResponse } from 'utils/wait';

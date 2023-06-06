@@ -17,8 +17,6 @@ import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner/Spinner';
 import useUI from 'shared/contexts/stores/UI';
 import { Primitive, Range } from 'shared/types';
-import { rgba2str, str2rgba } from 'shared/utils/color';
-import { clone, flattenObject, isBoolean, isObject, isString } from 'shared/utils/data';
 import {
   ExperimentBase,
   HyperparameterType,
@@ -28,6 +26,8 @@ import {
   Scale,
 } from 'types';
 import { getColorScale } from 'utils/chart';
+import { rgba2str, str2rgba } from 'utils/color';
+import { clone, flattenObject, isBoolean, isObject, isString } from 'utils/data';
 import { metricToStr } from 'utils/metric';
 
 import { ViewType } from './ExperimentVisualizationFilters';

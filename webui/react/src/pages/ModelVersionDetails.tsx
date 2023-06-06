@@ -19,14 +19,14 @@ import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner/Spinner';
 import usePolling from 'shared/hooks/usePolling';
 import { ValueOf } from 'shared/types';
-import { isEqual } from 'shared/utils/data';
-import { ErrorType } from 'shared/utils/error';
-import { isAborted, isNotFound } from 'shared/utils/service';
-import { humanReadableBytes } from 'shared/utils/string';
 import workspaceStore from 'stores/workspaces';
 import { Metadata, ModelVersion, Note } from 'types';
+import { isEqual } from 'utils/data';
+import { ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
+import { isAborted, isNotFound } from 'utils/service';
+import { humanReadableBytes } from 'utils/string';
 import { checkpointSize } from 'utils/workload';
 
 import ModelVersionHeader from './ModelVersionDetails/ModelVersionHeader';

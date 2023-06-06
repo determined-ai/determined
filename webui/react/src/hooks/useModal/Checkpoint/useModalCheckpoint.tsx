@@ -10,14 +10,14 @@ import { paths } from 'routes/utils';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
 import useModal, { ModalCloseReason, ModalHooks } from 'shared/hooks/useModal/useModal';
-import { formatDatetime } from 'shared/utils/datetime';
-import { humanReadableBytes } from 'shared/utils/string';
 import {
   CheckpointStorageType,
   CheckpointWorkloadExtended,
   CoreApiGenericCheckpoint,
   ExperimentConfig,
 } from 'types';
+import { formatDatetime } from 'utils/datetime';
+import { humanReadableBytes } from 'utils/string';
 import { checkpointSize } from 'utils/workload';
 
 import css from './useModalCheckpoint.module.scss';

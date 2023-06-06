@@ -5,9 +5,9 @@ import { stateToLabel } from 'constants/states';
 import useUI from 'shared/contexts/stores/UI';
 import { DarkLight, getCssVar } from 'shared/themes';
 import { ValueOf } from 'shared/types';
-import { hsl2str, str2hsl } from 'shared/utils/color';
 import { getStateColorCssVar, StateOfUnion } from 'themes';
 import { ResourceState, RunState, SlotState } from 'types';
+import { hsl2str, str2hsl } from 'utils/color';
 
 import css from './Badge.module.scss';
 

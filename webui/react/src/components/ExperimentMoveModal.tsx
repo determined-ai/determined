@@ -12,13 +12,13 @@ import { paths } from 'routes/utils';
 import { moveExperiments } from 'services/api';
 import { V1BulkExperimentFilters } from 'services/api-ts-sdk';
 import Spinner from 'shared/components/Spinner';
-import { pluralizer } from 'shared/utils/string';
 import projectStore from 'stores/projects';
 import workspaceStore from 'stores/workspaces';
 import { Project } from 'types';
 import { message, notification } from 'utils/dialogApi';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
+import { pluralizer } from 'utils/string';
 
 type FormInputs = {
   projectId?: number;

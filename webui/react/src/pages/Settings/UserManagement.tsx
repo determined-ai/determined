@@ -25,18 +25,18 @@ import { useSettings } from 'hooks/useSettings';
 import { getGroups, patchUser } from 'services/api';
 import { V1GetUsersRequestSortBy, V1GroupSearchResult } from 'services/api-ts-sdk';
 import dropdownCss from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
-import { isEqual } from 'shared/utils/data';
-import { ErrorType } from 'shared/utils/error';
-import { validateDetApiEnum } from 'shared/utils/service';
-import { alphaNumericSorter, booleanSorter, numericSorter } from 'shared/utils/sort';
 import determinedStore from 'stores/determinedInfo';
 import roleStore from 'stores/roles';
 import userStore from 'stores/users';
 import { DetailedUser } from 'types';
+import { isEqual } from 'utils/data';
 import { message } from 'utils/dialogApi';
+import { ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
+import { validateDetApiEnum } from 'utils/service';
+import { alphaNumericSorter, booleanSorter, numericSorter } from 'utils/sort';
 
 import css from './UserManagement.module.scss';
 import settingsConfig, {

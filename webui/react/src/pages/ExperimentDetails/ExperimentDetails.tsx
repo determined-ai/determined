@@ -12,14 +12,14 @@ import { getExperimentDetails } from 'services/api';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner/Spinner';
 import usePolling from 'shared/hooks/usePolling';
-import { isEqual } from 'shared/utils/data';
-import { isNotFound } from 'shared/utils/service';
-import { isAborted } from 'shared/utils/service';
 import workspaceStore from 'stores/workspaces';
 import { ExperimentBase, TrialItem, Workspace } from 'types';
+import { isEqual } from 'utils/data';
 import { isSingleTrialExperiment } from 'utils/experiment';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
+import { isAborted } from 'utils/service';
+import { isNotFound } from 'utils/service';
 
 type Params = {
   experimentId: string;

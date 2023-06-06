@@ -3,8 +3,8 @@ import React from 'react';
 import Tooltip from 'components/kit/Tooltip';
 import { DarkLight } from 'shared/themes';
 import { ClassNameProp, ValueOf } from 'shared/types';
-import { hex2hsl, hsl2str } from 'shared/utils/color';
-import md5 from 'shared/utils/md5';
+import { hex2hsl, hsl2str } from 'utils/color';
+import md5 from 'utils/md5';
 
 import css from './Avatar.module.scss';
 

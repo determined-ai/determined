@@ -1,7 +1,7 @@
 import React, { Dispatch, useContext, useMemo, useReducer } from 'react';
 
-import rootLogger from 'shared/utils/Logger';
-import { checkDeepEquality } from 'shared/utils/store';
+import rootLogger from 'utils/Logger';
+import { checkDeepEquality } from 'utils/store';
 
 const logger = rootLogger.extend('stores/ui');
 

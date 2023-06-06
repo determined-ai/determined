@@ -3,7 +3,7 @@ import React, { useMemo } from 'react';
 
 import Message, { Props as MessageProps, MessageType } from 'shared/components/Message';
 import { ValueOf } from 'shared/types';
-import { isObject, validateEnum } from 'shared/utils/data';
+import { isObject, validateEnum } from 'utils/data';
 
 import css from './LoadingWrapper.module.scss';
 

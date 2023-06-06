@@ -4,9 +4,9 @@ import React, { createContext, useEffect, useRef, useState } from 'react';
 
 import { getUserSetting } from 'services/api';
 import Spinner from 'shared/components/Spinner';
-import { ErrorType } from 'shared/utils/error';
 import authStore from 'stores/auth';
 import userStore from 'stores/users';
+import { ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 

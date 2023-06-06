@@ -6,10 +6,10 @@ import { globalStorage } from 'globalStorage';
 import { routeAll } from 'routes/utils';
 import { getCurrentUser } from 'services/api';
 import { updateDetApi } from 'services/apiConfig';
-import { isAuthFailure } from 'shared/utils/service';
 import authStore, { AUTH_COOKIE_KEY } from 'stores/auth';
 import determinedStore from 'stores/determinedInfo';
 import { getCookie } from 'utils/browser';
+import { isAuthFailure } from 'utils/service';
 
 const useAuthCheck = (): (() => void) => {
   const info = useObservable(determinedStore.info);

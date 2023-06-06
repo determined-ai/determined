@@ -36,12 +36,12 @@ import { handlePath } from 'routes/utils';
 import { V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
 import useUI from 'shared/contexts/stores/UI';
 import usePrevious from 'shared/hooks/usePrevious';
-import { AnyMouseEvent } from 'shared/utils/routes';
 import usersStore from 'stores/users';
 import { ExperimentWithTrial, Project, ProjectColumn } from 'types';
 import { getProjectExperimentForExperimentItem } from 'utils/experiment';
 import { Loadable } from 'utils/loadable';
 import { observable, useObservable, WritableObservable } from 'utils/observable';
+import { AnyMouseEvent } from 'utils/routes';
 
 import { PAGE_SIZE } from '../F_ExperimentList';
 import { MapOfIdsToColors } from '../useGlasbey';

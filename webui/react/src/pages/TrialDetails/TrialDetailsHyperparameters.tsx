@@ -5,9 +5,9 @@ import SkeletonTable from 'components/Table/SkeletonTable';
 import { defaultRowClassName } from 'components/Table/Table';
 import { useSettings } from 'hooks/useSettings';
 import Spinner from 'shared/components/Spinner';
-import { isObject } from 'shared/utils/data';
-import { alphaNumericSorter } from 'shared/utils/sort';
 import { TrialDetails } from 'types';
+import { isObject } from 'utils/data';
+import { alphaNumericSorter } from 'utils/sort';
 
 import { configForTrial, Settings } from './TrialDetailsHyperparameters.settings';
 

@@ -23,12 +23,12 @@ import {
 } from 'services/api';
 import css from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
 import { ValueOf } from 'shared/types';
-import { ErrorLevel, ErrorType } from 'shared/utils/error';
-import { capitalize } from 'shared/utils/string';
 import { ExperimentAction, ProjectExperiment } from 'types';
 import { notification } from 'utils/dialogApi';
+import { ErrorLevel, ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 import { getActionsForExperiment } from 'utils/experiment';
+import { capitalize } from 'utils/string';
 import { openCommandResponse } from 'utils/wait';
 
 import useConfirm from './kit/useConfirm';

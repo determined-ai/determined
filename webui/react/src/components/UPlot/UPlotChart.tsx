@@ -9,7 +9,7 @@ import Spinner from 'shared/components/Spinner';
 import useUI from 'shared/contexts/stores/UI';
 import usePrevious from 'shared/hooks/usePrevious';
 import { DarkLight } from 'shared/themes';
-import { ErrorLevel, ErrorType } from 'shared/utils/error';
+import { ErrorLevel, ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 
 import { useChartSync } from './SyncProvider';

@@ -9,7 +9,7 @@ import {
 } from 'pages/TrialsComparison/Collections/collections';
 import { updateTrialTags } from 'services/api';
 import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';
-import { ErrorType } from 'shared/utils/error';
+import { ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 
 import { encodeFilters, encodeIdList } from '../api';

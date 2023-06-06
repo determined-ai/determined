@@ -4,8 +4,8 @@ import React, { useState } from 'react';
 
 import { stateToLabel } from 'constants/states';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
-import { generateAlphaNumeric } from 'shared/utils/string';
 import { ResourceState, SlotState } from 'types';
+import { generateAlphaNumeric } from 'utils/string';
 
 import Badge, { BadgeProps, BadgeType } from './Badge';
 

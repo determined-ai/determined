@@ -17,14 +17,11 @@ import { paths } from 'routes/utils';
 import { cancelExperiment, getJobQ, getJobQStats, killExperiment, killTask } from 'services/api';
 import * as Api from 'services/api-ts-sdk';
 import ActionDropdown, { Triggers } from 'shared/components/ActionDropdown/ActionDropdown';
-import { isEqual } from 'shared/utils/data';
-import { ErrorLevel, ErrorType } from 'shared/utils/error';
-import { routeToReactUrl } from 'shared/utils/routes';
-import { numericSorter } from 'shared/utils/sort';
-import { capitalize } from 'shared/utils/string';
 import clusterStore from 'stores/cluster';
 import userStore from 'stores/users';
 import { Job, JobAction, JobState, JobType, ResourcePool, RPStats } from 'types';
+import { isEqual } from 'utils/data';
+import { ErrorLevel, ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 import {
   canManageJob,
@@ -35,6 +32,9 @@ import {
 } from 'utils/job';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
+import { routeToReactUrl } from 'utils/routes';
+import { numericSorter } from 'utils/sort';
+import { capitalize } from 'utils/string';
 
 import css from './JobQueue.module.scss';
 import settingsConfig, { Settings } from './JobQueue.settings';

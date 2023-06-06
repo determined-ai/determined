@@ -6,7 +6,7 @@ import Input from 'components/kit/Input';
 import { getDescriptionText } from 'pages/TrialsComparison/Collections/collections';
 import { createTrialsCollection, updateTrialTags } from 'services/api';
 import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';
-import { DetError, ErrorType } from 'shared/utils/error';
+import { DetError, ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 
 import { encodeFilters, encodeTrialSorter } from '../api';

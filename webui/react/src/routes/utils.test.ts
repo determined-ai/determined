@@ -1,4 +1,4 @@
-import { reactHostAddress } from 'shared/utils/routes';
+import { reactHostAddress } from 'utils/routes';
 
 import { findReactRoute } from './utils';
 

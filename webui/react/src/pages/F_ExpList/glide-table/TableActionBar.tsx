@@ -25,7 +25,6 @@ import {
 import { V1BulkExperimentFilters } from 'services/api-ts-sdk';
 import ScrollIcon from 'shared/assets/images/infinite-scroll.svg';
 import { RecordKey } from 'shared/types';
-import { ErrorLevel } from 'shared/utils/error';
 import {
   BulkActionResult,
   ExperimentAction,
@@ -35,6 +34,7 @@ import {
   ProjectExperiment,
 } from 'types';
 import { notification } from 'utils/dialogApi';
+import { ErrorLevel } from 'utils/error';
 import handleError from 'utils/error';
 import {
   canActionExperiment,

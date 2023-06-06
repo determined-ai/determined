@@ -2,14 +2,14 @@ import { DataEditorProps } from '@glideapps/glide-data-grid';
 import dayjs from 'dayjs';
 
 import { Theme } from 'shared/themes';
+import { ExperimentItem } from 'types';
 import {
   DURATION_MINUTE,
   DURATION_UNIT_MEASURES,
   DURATION_YEAR,
   durationInEnglish,
   getDuration,
-} from 'shared/utils/datetime';
-import { ExperimentItem } from 'types';
+} from 'utils/datetime';
 
 export const getDurationInEnglish = (record: ExperimentItem): string => {
   const duration = getDuration(record);

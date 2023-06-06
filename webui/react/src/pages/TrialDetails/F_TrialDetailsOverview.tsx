@@ -12,7 +12,6 @@ import usePermissions from 'hooks/usePermissions';
 import { useSettings } from 'hooks/useSettings';
 import TrialInfoBox from 'pages/TrialDetails/TrialInfoBox';
 import Spinner from 'shared/components/Spinner';
-import { ErrorType } from 'shared/utils/error';
 import {
   CheckpointWorkloadExtended,
   ExperimentBase,
@@ -20,6 +19,7 @@ import {
   MetricType,
   TrialDetails,
 } from 'types';
+import { ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 import { metricSorter, metricToKey } from 'utils/metric';
 

@@ -1,10 +1,10 @@
 import { IconName } from 'components/kit/Icon';
 import { updateJobQueue } from 'services/api';
 import * as Api from 'services/api-ts-sdk';
-import { DetError, DetErrorOptions, ErrorType, wrapPublicMessage } from 'shared/utils/error';
-import { capitalize } from 'shared/utils/string';
 import { CommandType, Job, JobType, ResourcePool } from 'types';
+import { DetError, DetErrorOptions, ErrorType, wrapPublicMessage } from 'utils/error';
 import handleError from 'utils/error';
+import { capitalize } from 'utils/string';
 
 // This marks scheduler types that do not support fine-grain control of
 // job positions in the queue.

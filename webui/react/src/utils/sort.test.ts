@@ -1,4 +1,4 @@
-import { stringToVersion } from 'shared/utils/string';
+import { stringToVersion } from 'utils/string';
 
 import * as sorters from './sort';
 

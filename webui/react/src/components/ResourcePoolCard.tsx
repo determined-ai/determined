@@ -14,12 +14,12 @@ import staticLogo from 'shared/assets/images/on-prem-logo.svg';
 import Spinner from 'shared/components/Spinner';
 import useUI from 'shared/contexts/stores/UI';
 import { DarkLight } from 'shared/themes';
-import { clone } from 'shared/utils/data';
 import { maxPoolSlotCapacity } from 'stores/cluster';
 import clusterStore from 'stores/cluster';
 import { ShirtSize } from 'themes';
 import { isDeviceType, ResourcePool } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
+import { clone } from 'utils/data';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 

@@ -5,7 +5,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
 import useModal, { ModalHooks as Hooks, ModalCloseReason } from 'shared/hooks/useModal/useModal';
-import { pluralizer } from 'shared/utils/string';
+import { pluralizer } from 'utils/string';
 
 interface OpenProps {
   checkpoints: string | string[];

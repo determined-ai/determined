@@ -5,8 +5,8 @@ import uPlot from 'uplot';
 import { SyncProvider } from 'components/UPlot/SyncProvider';
 import { Options } from 'components/UPlot/UPlotChart';
 import useFeature from 'hooks/useFeature';
-import { glasbeyColor } from 'shared/utils/color';
 import { TrialDetails } from 'types';
+import { glasbeyColor } from 'utils/color';
 
 import OldSystemMetricChart from './Charts/OldSystemMetricChart';
 import OldThroughputMetricChart from './Charts/OldThroughputMetricChart';

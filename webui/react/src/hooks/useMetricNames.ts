@@ -4,8 +4,8 @@ import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
 import { V1ExpMetricNamesResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
-import { alphaNumericSorter } from 'shared/utils/sort';
 import { Metric, MetricType } from 'types';
+import { alphaNumericSorter } from 'utils/sort';
 
 const useMetricNames = (experimentId?: number, errorHandler?: (e: unknown) => void): Metric[] => {
   const [metrics, setMetrics] = useState<Metric[]>([]);

@@ -13,9 +13,9 @@ import { useSettings } from 'hooks/useSettings';
 import TrialTable from 'pages/TrialsComparison/Table/TrialTable';
 import { V1AugmentedTrial } from 'services/api-ts-sdk';
 import Message, { MessageType } from 'shared/components/Message';
-import { intersection } from 'shared/utils/set';
 import { Scale } from 'types';
 import { metricToKey } from 'utils/metric';
+import { intersection } from 'utils/set';
 
 import useHighlight from '../../hooks/useHighlight';
 

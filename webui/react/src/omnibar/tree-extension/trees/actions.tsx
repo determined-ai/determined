@@ -3,8 +3,8 @@ import { Modal as AntdModal } from 'antd';
 import root from 'omnibar/tree-extension/trees';
 import { FinalAction } from 'omnibar/tree-extension/types';
 import { dfsStaticRoutes } from 'omnibar/tree-extension/utils';
-import { routeToReactUrl } from 'shared/utils/routes';
 import { message } from 'utils/dialogApi';
+import { routeToReactUrl } from 'utils/routes';
 /** generates a handler that alerts when called */
 export const alertAction =
   (msg: string): FinalAction =>

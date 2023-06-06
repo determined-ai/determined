@@ -18,11 +18,6 @@ import { createExperiment } from 'services/api';
 import { V1LaunchWarning } from 'services/api-ts-sdk';
 import useModal, { ModalHooks as Hooks, ModalCloseReason } from 'shared/hooks/useModal/useModal';
 import { Primitive } from 'shared/types';
-import { clone, flattenObject, isBoolean, unflattenObject } from 'shared/utils/data';
-import { DetError, ErrorLevel, ErrorType, isDetError } from 'shared/utils/error';
-import { roundToPrecision } from 'shared/utils/number';
-import { routeToReactUrl } from 'shared/utils/routes';
-import { validateLength } from 'shared/utils/string';
 import { maxPoolSlotCapacity } from 'stores/cluster';
 import clusterStore from 'stores/cluster';
 import {
@@ -35,9 +30,14 @@ import {
   TrialHyperparameters,
   TrialItem,
 } from 'types';
+import { clone, flattenObject, isBoolean, unflattenObject } from 'utils/data';
+import { DetError, ErrorLevel, ErrorType, isDetError } from 'utils/error';
 import { handleWarning } from 'utils/error';
 import { Loadable } from 'utils/loadable';
+import { roundToPrecision } from 'utils/number';
 import { useObservable } from 'utils/observable';
+import { routeToReactUrl } from 'utils/routes';
+import { validateLength } from 'utils/string';
 
 import css from './useModalHyperparameterSearch.module.scss';
 

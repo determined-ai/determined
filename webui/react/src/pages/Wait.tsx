@@ -8,10 +8,10 @@ import { serverAddress } from 'routes/utils';
 import { getTask } from 'services/api';
 import Spinner from 'shared/components/Spinner/Spinner';
 import useUI from 'shared/contexts/stores/UI';
-import { ErrorType } from 'shared/utils/error';
-import { capitalize } from 'shared/utils/string';
 import { CommandState } from 'types';
+import { ErrorType } from 'utils/error';
 import handleError from 'utils/error';
+import { capitalize } from 'utils/string';
 import { WaitStatus } from 'utils/wait';
 
 import css from './Wait.module.scss';

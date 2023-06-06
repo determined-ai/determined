@@ -20,8 +20,8 @@ import Spinner from 'shared/components/Spinner/Spinner';
 import usePolling from 'shared/hooks/usePolling';
 import usePrevious from 'shared/hooks/usePrevious';
 import { ValueOf } from 'shared/types';
-import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { ExperimentBase, Note, TrialDetails, TrialItem } from 'types';
+import { ErrorLevel, ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 
 import TrialDetailsHyperparameters from '../TrialDetails/TrialDetailsHyperparameters';

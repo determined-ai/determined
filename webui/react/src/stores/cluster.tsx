@@ -1,10 +1,10 @@
 import { getAgents, getResourcePools } from 'services/api';
 import { V1ResourcePoolType } from 'services/api-ts-sdk';
-import { clone, isEqual } from 'shared/utils/data';
-import { percent } from 'shared/utils/number';
 import { Agent, ClusterOverview, ClusterOverviewResource, ResourcePool, ResourceType } from 'types';
+import { clone, isEqual } from 'utils/data';
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
+import { percent } from 'utils/number';
 import { Observable, observable, WritableObservable } from 'utils/observable';
 
 import PollingStore from './polling';

@@ -24,10 +24,6 @@ import { encodeExperimentState } from 'services/decoder';
 import ActionDropdown from 'shared/components/ActionDropdown/ActionDropdown';
 import usePolling from 'shared/hooks/usePolling';
 import { ValueOf } from 'shared/types';
-import { ErrorLevel, ErrorType } from 'shared/utils/error';
-import { routeToReactUrl } from 'shared/utils/routes';
-import { validateDetApiEnum, validateDetApiEnumList } from 'shared/utils/service';
-import { humanReadableBytes } from 'shared/utils/string';
 import {
   ExperimentAction as Action,
   CheckpointWorkloadExtended,
@@ -37,8 +33,12 @@ import {
   RunState,
   TrialItem,
 } from 'types';
+import { ErrorLevel, ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 import { getMetricValue } from 'utils/metric';
+import { routeToReactUrl } from 'utils/routes';
+import { validateDetApiEnum, validateDetApiEnumList } from 'utils/service';
+import { humanReadableBytes } from 'utils/string';
 import { openCommandResponse } from 'utils/wait';
 
 import css from './ExperimentTrials.module.scss';

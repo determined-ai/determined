@@ -17,7 +17,6 @@ import { commandTypeToLabel } from 'constants/states';
 import { paths } from 'routes/utils';
 import Spinner from 'shared/components/Spinner';
 import { Pagination } from 'shared/types';
-import { getDuration } from 'shared/utils/datetime';
 import { StateOfUnion } from 'themes';
 import {
   CommandTask,
@@ -32,6 +31,7 @@ import {
   TrialItem,
   Workspace,
 } from 'types';
+import { getDuration } from 'utils/datetime';
 import { canBeOpened } from 'utils/task';
 import { openCommand } from 'utils/wait';
 

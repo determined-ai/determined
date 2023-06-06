@@ -1,6 +1,5 @@
 import testConfig from 'shared/tests/fixtures/old-trial-config-response.json';
-
-import { RawJson, UnknownRecord } from '../types';
+import { RawJson, UnknownRecord } from 'shared/types';
 
 import * as utils from './data';
 

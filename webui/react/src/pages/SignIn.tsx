@@ -19,11 +19,11 @@ import LogoOkta from 'shared/assets/images/logo-sso-okta-white.svg';
 import useUI from 'shared/contexts/stores/UI';
 import usePolling from 'shared/hooks/usePolling';
 import { RecordKey } from 'shared/types';
-import { locationToPath, routeToReactUrl } from 'shared/utils/routes';
-import { capitalize } from 'shared/utils/string';
 import authStore from 'stores/auth';
 import determinedStore, { BrandingType } from 'stores/determinedInfo';
 import { notification } from 'utils/dialogApi';
+import { locationToPath, routeToReactUrl } from 'utils/routes';
+import { capitalize } from 'utils/string';
 
 import css from './SignIn.module.scss';
 

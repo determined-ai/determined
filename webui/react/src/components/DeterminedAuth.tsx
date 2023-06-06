@@ -11,14 +11,14 @@ import { login } from 'services/api';
 import { updateDetApi } from 'services/apiConfig';
 import { isLoginFailure } from 'services/utils';
 import useUI from 'shared/contexts/stores/UI';
-import { ErrorType } from 'shared/utils/error';
-import { StorageManager } from 'shared/utils/storage';
 import authStore from 'stores/auth';
 import determinedStore from 'stores/determinedInfo';
 import permissionStore from 'stores/permissions';
 import userStore from 'stores/users';
+import { ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 import { useObservable } from 'utils/observable';
+import { StorageManager } from 'utils/storage';
 
 import css from './DeterminedAuth.module.scss';
 

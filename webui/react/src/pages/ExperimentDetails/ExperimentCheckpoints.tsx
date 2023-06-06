@@ -25,8 +25,6 @@ import ActionDropdown from 'shared/components/ActionDropdown/ActionDropdown';
 import { ModalCloseReason } from 'shared/hooks/useModal/useModal';
 import usePolling from 'shared/hooks/usePolling';
 import { RecordKey } from 'shared/types';
-import { ErrorLevel, ErrorType } from 'shared/utils/error';
-import { validateDetApiEnum, validateDetApiEnumList } from 'shared/utils/service';
 import {
   checkpointAction,
   CheckpointAction,
@@ -35,7 +33,9 @@ import {
   ExperimentBase,
 } from 'types';
 import { canActionCheckpoint, getActionsForCheckpointsUnion } from 'utils/checkpoint';
+import { ErrorLevel, ErrorType } from 'utils/error';
 import handleError from 'utils/error';
+import { validateDetApiEnum, validateDetApiEnumList } from 'utils/service';
 
 import { configForExperiment, Settings } from './ExperimentCheckpoints.settings';
 import { columns as defaultColumns } from './ExperimentCheckpoints.table';

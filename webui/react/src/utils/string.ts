@@ -1,6 +1,6 @@
 import prettyBytes from 'pretty-bytes';
 
-import { SemanticVersion } from '../types';
+import { SemanticVersion } from 'shared/types';
 
 const LETTERS = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
 const CHARACTERS = `0123456789${LETTERS}`;

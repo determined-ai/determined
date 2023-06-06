@@ -15,8 +15,8 @@ import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner/Spinner';
 import useUI from 'shared/contexts/stores/UI';
 import { Primitive } from 'shared/types';
-import { flattenObject, isBoolean, isString } from 'shared/utils/data';
 import { ExperimentBase, HyperparameterType, Metric, metricTypeParamMap, Scale } from 'types';
+import { flattenObject, isBoolean, isString } from 'utils/data';
 import { metricToStr } from 'utils/metric';
 
 import css from './HpScatterPlots.module.scss';
