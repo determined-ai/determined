@@ -18,7 +18,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/rm/allocationmap"
 	"github.com/determined-ai/determined/master/internal/sproto"
-	"github.com/determined-ai/determined/master/internal/task/idler"
+	"github.com/determined-ai/determined/master/internal/task/idle"
 	"github.com/determined-ai/determined/master/internal/task/preemptible"
 	"github.com/determined-ai/determined/master/internal/task/tasklogger"
 	"github.com/determined-ai/determined/master/internal/task/taskmodel"
@@ -225,7 +225,7 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 			preemptible.Unregister(a.req.AllocationID.String())
 		}
 		if cfg := a.req.IdleTimeout; cfg != nil {
-			idler.Unregister(cfg.ServiceID)
+			idle.Unregister(cfg.ServiceID)
 		}
 		allocationmap.UnregisterAllocation(a.model.AllocationID)
 	case sproto.ContainerLog:
@@ -464,15 +464,12 @@ func (a *Allocation) ResourcesAllocated(ctx *actor.Context, msg sproto.Resources
 	}
 
 	if cfg := a.req.IdleTimeout; cfg != nil {
-		idler.Register(cfg.ServiceID, cfg, func() {
-			ctx.Log().Infof("killing %s due to inactivity", a.req.Name)
-			ctx.Tell(ctx.Self(),
-				sproto.AllocationSignalWithReason{
-					AllocationSignal: sproto.TerminateAllocation,
-					InformationalReason: fmt.Sprintf(
-						"inactivity for more than %s",
-						cfg.TimeoutDuration.Round(time.Second)),
-				})
+		idle.Register(*cfg, func(err error) {
+			ctx.Log().WithError(err).Infof("killing %s due to inactivity", a.req.Name)
+			ctx.Tell(ctx.Self(), sproto.AllocationSignalWithReason{
+				AllocationSignal:    sproto.TerminateAllocation,
+				InformationalReason: err.Error(),
+			})
 		})
 	}
 
@@ -981,7 +978,7 @@ func (a *Allocation) terminated(ctx *actor.Context, reason string) {
 		defer a.rendezvous.close()
 	}
 	if cfg := a.req.IdleTimeout; cfg != nil {
-		defer idler.Unregister(cfg.ServiceID)
+		defer idle.Unregister(cfg.ServiceID)
 	}
 	switch {
 	case a.killedWhileRunning:

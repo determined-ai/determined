@@ -21,7 +21,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/rbac/audit"
-	"github.com/determined-ai/determined/master/internal/task/idler"
+	"github.com/determined-ai/determined/master/internal/task/idle"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/check"
@@ -134,7 +134,7 @@ func (a *apiServer) IdleNotebook(
 		return nil, err
 	}
 	if !req.Idle {
-		idler.RecordActivity(req.NotebookId)
+		idle.RecordActivity(req.NotebookId)
 	}
 	return &apiv1.IdleNotebookResponse{}, nil
 }
