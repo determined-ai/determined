@@ -1,10 +1,8 @@
 .base {
   border: 1px solid var(--theme-surface-border);
-  border-radius: var(--theme-border-radius);
   display: flex;
   flex-direction: column;
-  flex-shrink: 0;
-  height: 75vh;
+  height: 100%;
   overflow: auto;
 
   .row {

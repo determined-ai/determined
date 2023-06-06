@@ -3,7 +3,10 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
 import HumanReadableNumber from 'components/HumanReadableNumber';
+import Empty from 'components/kit/Empty';
+import { isEqual } from 'components/kit/internal/functions';
 import { XOR } from 'components/kit/internal/types';
+import usePrevious from 'components/kit/internal/usePrevious';
 import Select, { Option, SelectValue } from 'components/kit/Select';
 import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
@@ -109,6 +112,10 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
     });
   }, [fetchTrialDetails, trialIds]);
 
+  useEffect(() => {
+    setTrialsDetails(trials);
+  }, [trials]);
+
   const handleTrialUnselect = useCallback((trialId: number) => onUnselect?.(trialId), [onUnselect]);
 
   const getCheckpointSize = useCallback((trial: TrialDetails) => {
@@ -135,7 +142,7 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
         publicMessage: `Failed to load metric names for ${pluralizer(
           experimentIds.length,
           'experiment',
-        )} {experimentIds.join(', ')}.`,
+        )} ${experimentIds.join(', ')}.`,
         publicSubject: 'Experiment metric name stream failed.',
         type: ErrorType.Api,
       });
@@ -145,9 +152,13 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
 
   const metrics = useMetricNames(experimentIds, handleMetricNamesError);
 
+  const prevMetrics = usePrevious(metrics, []);
+
   useEffect(() => {
-    setSelectedMetrics(metrics);
-  }, [metrics]);
+    setSelectedMetrics((prevSelectedMetrics) =>
+      isEqual(prevSelectedMetrics, prevMetrics) ? metrics : prevSelectedMetrics,
+    );
+  }, [metrics, prevMetrics]);
 
   const onMetricSelect = useCallback((selectedMetrics: Metric[]) => {
     setSelectedMetrics(selectedMetrics);
@@ -210,14 +221,22 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
     setLatestMetrics(metricValues);
   }, [extractLatestMetrics, trialsDetails]);
 
-  const hyperparameterNames = useMemo(
-    () => Object.keys(trialsDetails.first()?.hyperparameters || {}),
-    [trialsDetails],
-  );
+  const hyperparameterNames = useMemo(() => {
+    return [
+      ...trialsDetails.reduce((hpSet, curTrial) => {
+        Object.keys(curTrial.hyperparameters).forEach((hp) => hpSet.add(hp));
+        return hpSet;
+      }, new Set<string>()),
+    ];
+  }, [trialsDetails]);
+
+  const prevHps = usePrevious(hyperparameterNames, []);
 
   useEffect(() => {
-    setSelectedHyperparameters(hyperparameterNames);
-  }, [hyperparameterNames]);
+    setSelectedHyperparameters((prevSelectedHps) =>
+      isEqual(prevSelectedHps, prevHps) ? hyperparameterNames : prevSelectedHps,
+    );
+  }, [hyperparameterNames, prevHps]);
 
   const onHyperparameterSelect = useCallback((selectedHPs: SelectValue) => {
     setSelectedHyperparameters(selectedHPs as string[]);
@@ -230,8 +249,11 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
 
   return (
     <div className={css.base}>
-      {isLoaded ? (
-        <>
+      {!(
+        (trialIds === undefined || trialIds.length === 0) &&
+        (trials === undefined || trials.length === 0)
+      ) ? (
+        <Spinner center spinning={!isLoaded}>
           <div className={[css.row, css.sticky].join(' ')}>
             <div className={[css.cell, css.blank, css.sticky].join(' ')} />
             {trialsDetails.map((trial) => (
@@ -273,10 +295,8 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
           </div>
           <div className={[css.row, css.spanAll].join(' ')}>
             <div className={[css.cell, css.spanAll].join(' ')}>
-              Metrics
               <MetricSelect
                 defaultMetrics={metrics}
-                label=""
                 metrics={metrics}
                 multiple
                 value={selectedMetrics}
@@ -304,10 +324,10 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
             ))}
           <div className={[css.row, css.spanAll].join(' ')}>
             <div className={[css.cell, css.spanAll].join(' ')}>
-              Hyperparameters
               <Select
+                defaultValue={hyperparameterNames}
                 disableTags
-                label=""
+                label="Hyperparameters"
                 mode="multiple"
                 value={selectedHyperparameters}
                 onChange={onHyperparameterSelect}>
@@ -337,9 +357,9 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
               })}
             </div>
           ))}
-        </>
+        </Spinner>
       ) : (
-        <Spinner center spinning={!isLoaded} />
+        <Empty icon="document" title="No items selected" />
       )}
     </div>
   );
