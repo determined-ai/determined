@@ -1,8 +1,9 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 import Pivot, { TabItem } from 'components/kit/Pivot';
 import SplitPane from 'components/SplitPane';
-import { ExperimentWithTrial } from 'types';
+import { isEqual } from 'shared/utils/data';
+import { ExperimentWithTrial, TrialItem } from 'types';
 
 import CompareMetrics from './CompareMetrics';
 import CompareParallelCoordinates from './CompareParallelCoordinates';
@@ -21,21 +22,38 @@ const ComparisonView: React.FC<Props> = ({
   onWidthChange,
   selectedExperiments,
 }) => {
+  const [trials, setTrials] = useState<TrialItem[]>([]);
+
+  useEffect(() => {
+    const ts: TrialItem[] = [];
+    selectedExperiments.forEach((e) => e.bestTrial && ts.push(e.bestTrial));
+    setTrials((prev: TrialItem[]) => {
+      return isEqual(
+        prev?.map((e) => e.id),
+        ts?.map((e) => e?.id),
+      )
+        ? prev
+        : ts;
+    });
+  }, [selectedExperiments]);
+
   const tabs: TabItem[] = useMemo(() => {
     return [
       {
-        children: <CompareMetrics selectedExperiments={selectedExperiments} />,
+        children: <CompareMetrics selectedExperiments={selectedExperiments} trials={trials} />,
         key: 'metrics',
         label: 'Metrics',
       },
       {
-        children: <CompareParallelCoordinates selectedExperiments={selectedExperiments} />,
+        children: (
+          <CompareParallelCoordinates selectedExperiments={selectedExperiments} trials={trials} />
+        ),
         key: 'hyperparameters',
         label: 'Hyperparameters',
       },
       { key: 'configurations', label: 'Configurations' },
     ];
-  }, [selectedExperiments]);
+  }, [selectedExperiments, trials]);
 
   return (
     <div>

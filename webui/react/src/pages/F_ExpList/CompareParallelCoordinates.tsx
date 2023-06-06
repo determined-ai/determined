@@ -14,7 +14,6 @@ import { useTrialMetrics } from 'pages/TrialDetails/useTrialMetrics';
 import Spinner from 'shared/components/Spinner/Spinner';
 import { Primitive, Range } from 'shared/types';
 import { flattenObject, isPrimitive } from 'shared/utils/data';
-import { isEqual } from 'shared/utils/data';
 import { numericSorter } from 'shared/utils/sort';
 import {
   ExperimentWithTrial,
@@ -36,6 +35,7 @@ import { useGlasbey } from './useGlasbey';
 
 interface Props {
   selectedExperiments: ExperimentWithTrial[];
+  trials: TrialItem[];
 }
 
 interface HpTrialData {
@@ -45,23 +45,9 @@ interface HpTrialData {
   trialIds: number[];
 }
 
-const CompareParallelCoordinates: React.FC<Props> = ({ selectedExperiments }: Props) => {
+const CompareParallelCoordinates: React.FC<Props> = ({ selectedExperiments, trials }: Props) => {
   const [chartData, setChartData] = useState<HpTrialData>();
   const [hermesCreatedFilters, setHermesCreatedFilters] = useState<Hermes.Filters>({});
-  const [trials, setTrials] = useState<TrialItem[]>([]);
-
-  useEffect(() => {
-    const ts: TrialItem[] = [];
-    selectedExperiments.forEach((e) => e.bestTrial && ts.push(e.bestTrial));
-    setTrials((prev: TrialItem[]) => {
-      return isEqual(
-        prev?.map((e) => e.id),
-        ts?.map((e) => e?.id),
-      )
-        ? prev
-        : ts;
-    });
-  }, [selectedExperiments]);
 
   const fullHParams: string[] = useMemo(() => {
     const hpParams = new Set<string>();
