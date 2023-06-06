@@ -26,6 +26,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task"
+	"github.com/determined-ai/determined/master/internal/task/preemptible"
 	"github.com/determined-ai/determined/master/internal/trials"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -1160,13 +1161,11 @@ func (a *apiServer) AllocationPreemptionSignal(
 	}
 
 	id := uuid.New()
-	var w task.PreemptionWatcher
-	if err := a.ask(handler.Address(), task.WatchPreemption{
-		ID: id, AllocationID: allocationID,
-	}, &w); err != nil {
+	w, err := preemptible.Watch(allocationID.String(), id)
+	if err != nil {
 		return nil, err
 	}
-	defer a.m.system.TellAt(handler.Address(), task.UnwatchPreemption{ID: id})
+	defer preemptible.Unwatch(allocationID.String(), id)
 
 	ctx, cancel := context.WithTimeout(ctx, time.Duration(req.TimeoutSeconds)*time.Second)
 	defer cancel()
@@ -1197,11 +1196,7 @@ func (a *apiServer) AckAllocationPreemptionSignal(
 		return nil, err
 	}
 
-	if err := a.ask(handler.Address(), task.AckPreemption{
-		AllocationID: allocationID,
-	}, nil); err != nil {
-		return nil, err
-	}
+	preemptible.Acknowledge(allocationID.String())
 	return &apiv1.AckAllocationPreemptionSignalResponse{}, nil
 }
 
