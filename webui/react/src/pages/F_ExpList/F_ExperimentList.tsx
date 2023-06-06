@@ -404,6 +404,16 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     );
   }, [experiments, selectedExperimentIds]);
 
+  const columnsIfLoaded = useMemo(
+    () => (isLoadingSettings ? [] : settings.columns),
+    [isLoadingSettings, settings.columns],
+  );
+
+  const experimentsIfLoaded = useMemo(
+    () => (isLoading ? [NotLoaded] : experiments),
+    [isLoading, experiments],
+  );
+
   return (
     <>
       <TableActionBar
@@ -413,7 +423,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         filters={experimentFilters}
         formStore={formStore}
         handleUpdateExperimentList={handleUpdateExperimentList}
-        initialVisibleColumns={isLoadingSettings ? [] : settings.columns}
+        initialVisibleColumns={columnsIfLoaded}
         isOpenFilter={isOpenFilter}
         project={project}
         projectColumns={projectColumns}
@@ -447,7 +457,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
               <GlideTable
                 clearSelectionTrigger={clearSelectionTrigger}
                 colorMap={colorMap}
-                data={isLoading || isLoadingSettings ? [NotLoaded] : experiments}
+                data={experimentsIfLoaded}
                 dataTotal={
                   globalSettings.expListView === 'scroll'
                     ? Loadable.getOrElse(0, total)
@@ -472,7 +482,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                 setSelectAll={setSelectAll}
                 setSelectedExperimentIds={setSelectedExperimentIds}
                 setSortableColumnIds={setVisibleColumns}
-                sortableColumnIds={isLoadingSettings ? [] : settings.columns}
+                sortableColumnIds={columnsIfLoaded}
                 sorts={sorts}
                 onContextMenuComplete={onContextMenuComplete}
                 onIsOpenFilterChange={onIsOpenFilterChange}
