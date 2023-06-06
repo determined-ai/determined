@@ -20,43 +20,39 @@ import { getDisplayName } from 'utils/user';
 
 import { getDurationInEnglish, getTimeInEnglish } from './utils';
 
-const experimentColumns = [
+// order used in ColumnPickerMenu
+export const experimentColumns = [
+  'selected',
   'archived',
-  'checkpointCount',
-  'checkpointSize',
-  'description',
-  'duration',
-  'forkedFrom',
-  'id',
   'name',
-  'progress',
+  'id',
+  'forkedFrom',
+  'startTime',
+  'user',
+  'description',
+  'tags',
+  'state',
+  'duration',
   'resourcePool',
   'searcherType',
-  'selected',
-  'startTime',
-  'state',
-  'tags',
+  'progress',
   'numTrials',
-  'user',
+  'checkpointCount',
+  'checkpointSize',
+  'searcherMetric',
+  'searcherMetricValue',
 ] as const;
 
 export type ExperimentColumn = (typeof experimentColumns)[number];
 
 export const defaultExperimentColumns: ExperimentColumn[] = [
-  'id',
+  'startTime',
+  'user',
   'description',
   'tags',
-  'forkedFrom',
-  'progress',
-  'startTime',
   'state',
-  'searcherType',
-  'user',
   'duration',
-  'numTrials',
-  'resourcePool',
-  'checkpointSize',
-  'checkpointCount',
+  'searcherType',
 ];
 
 export type ColumnDef = SizedGridColumn & {
@@ -266,18 +262,38 @@ export const getColumnDefs = ({
     tooltip: () => undefined,
     width: columnWidths.resourcePool,
   },
+  searcherMetric: {
+    id: 'searcherMetric',
+    isNumerical: false,
+    renderer: (record: ExperimentWithTrial) => {
+      const sMetric = record.experiment.config.searcher.metric;
+      return {
+        allowOverlay: false,
+        data: sMetric,
+        displayData: sMetric,
+        kind: GridCellKind.Text,
+      };
+    },
+    title: 'Searcher Metric',
+    tooltip: () => undefined,
+    width: columnWidths.searcherMetric,
+  },
   searcherMetricValue: {
     id: 'searcherMetricValue',
     isNumerical: true,
-    renderer: (record: ExperimentWithTrial) => ({
-      allowOverlay: false,
-      data:
-        record.experiment.searcherMetricValue !== undefined
-          ? humanReadableNumber(record.experiment.searcherMetricValue)
+    renderer: (record: ExperimentWithTrial) => {
+      const sMetricValue = record.bestTrial?.bestValidationMetric?.metrics?.avgMetrics;
+      return {
+        allowOverlay: false,
+        data: sMetricValue?.toString() || '',
+        displayData: sMetricValue
+          ? typeof sMetricValue === 'number'
+            ? humanReadableNumber(sMetricValue)
+            : sMetricValue
           : '',
-      displayData: String(record.experiment.searcherMetricValue ?? ''),
-      kind: GridCellKind.Text,
-    }),
+        kind: GridCellKind.Text,
+      };
+    },
     title: 'Searcher Metric Values',
     tooltip: () => undefined,
     width: columnWidths.searcherMetricValue,
@@ -468,6 +484,8 @@ export const defaultColumnWidths: Record<ExperimentColumn, number> = {
   numTrials: 50,
   progress: 65,
   resourcePool: 140,
+  searcherMetric: 120,
+  searcherMetricValue: 120,
   searcherType: 120,
   selected: 40,
   startTime: 118,

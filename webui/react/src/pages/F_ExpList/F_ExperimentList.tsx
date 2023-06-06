@@ -13,7 +13,7 @@ import Pagination from 'components/kit/Pagination';
 import useResize from 'hooks/useResize';
 import { useSettings } from 'hooks/useSettings';
 import { getProjectColumns, searchExperiments } from 'services/api';
-import { V1BulkExperimentFilters } from 'services/api-ts-sdk';
+import { V1BulkExperimentFilters, V1LocationType } from 'services/api-ts-sdk';
 import usePolling from 'shared/hooks/usePolling';
 import { getCssVar } from 'shared/themes';
 import {
@@ -36,6 +36,7 @@ import {
   settingsConfigForProject,
   settingsConfigGlobal,
 } from './F_ExperimentList.settings';
+import { ExperimentColumn, experimentColumns } from './glide-table/columns';
 import { Error, NoExperiments } from './glide-table/exceptions';
 import GlideTable, { SCROLL_SET_COUNT_NEEDED } from './glide-table/GlideTable';
 import { EMPTY_SORT, Sort, validSort, ValidSort } from './glide-table/MultiSortMenu';
@@ -256,6 +257,12 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     (async () => {
       try {
         const columns = await getProjectColumns({ id: project.id });
+        columns.sort((a, b) =>
+          a.location === V1LocationType.EXPERIMENT && b.location === V1LocationType.EXPERIMENT
+            ? experimentColumns.indexOf(a.column as ExperimentColumn) -
+              experimentColumns.indexOf(b.column as ExperimentColumn)
+            : 0,
+        );
 
         if (mounted) {
           setProjectColumns(Loaded(columns));
