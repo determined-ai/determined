@@ -262,16 +262,6 @@ func (s *SingularityClient) RunContainer(
 	}
 
 	for _, m := range req.HostConfig.Mounts {
-		// TODO(DET-9079): Investigate handling these options.
-		if m.ReadOnly {
-			if err = p.Publish(ctx, docker.NewLogEvent(model.LogLevelWarning, fmt.Sprintf(
-				"mount %s:%s was requested as readonly but singularity does not support this; "+
-					"will bind mount anyway, without it being readonly",
-				m.Source, m.Target,
-			))); err != nil {
-				return nil, err
-			}
-		}
 		if m.BindOptions != nil && m.BindOptions.Propagation != "rprivate" { // rprivate is default.
 			if err = p.Publish(ctx, docker.NewLogEvent(model.LogLevelWarning, fmt.Sprintf(
 				"mount %s:%s had propagation settings but singularity does not support this; "+
@@ -281,7 +271,11 @@ func (s *SingularityClient) RunContainer(
 				return nil, err
 			}
 		}
-		args = append(args, "--bind", fmt.Sprintf("%s:%s", m.Source, m.Target))
+		bindMountTemplate := "%s:%s"
+		if m.ReadOnly {
+			bindMountTemplate += ":ro"
+		}
+		args = append(args, "--bind", fmt.Sprintf(bindMountTemplate, m.Source, m.Target))
 	}
 
 	if shmsize := req.HostConfig.ShmSize; shmsize != 4294967296 { // 4294967296 is the default.
