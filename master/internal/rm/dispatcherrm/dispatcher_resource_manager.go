@@ -1120,7 +1120,7 @@ func (m *dispatcherResourceManager) startLauncherJob(
 
 		if tempDispatchID != dispatchID {
 			incompMsg := "HPC Launcher version is below the minimum required. " +
-				"Update to version 3.2.9 or greater."
+				"Update to version 3.3.1 or greater."
 			ctx.Log().WithField("allocation-id", msg.AllocationID).
 				WithField("description", msg.Spec.Description).
 				Errorf("Launcher did not honor DispatchID assignment of %s.  "+
