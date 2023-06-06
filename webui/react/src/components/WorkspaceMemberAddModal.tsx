@@ -116,6 +116,7 @@ const WorkspaceMemberAddModalComponent: React.FC<Props> = ({
       cancel
       size="small"
       submit={{
+        handleError,
         handler: handleSubmit,
         text: 'Add Member',
       }}

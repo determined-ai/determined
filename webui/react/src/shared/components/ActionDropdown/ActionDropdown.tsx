@@ -6,6 +6,7 @@ import Icon from 'components/kit/Icon';
 import useConfirm, { ConfirmModalProps } from 'components/kit/useConfirm';
 import { DetError, ErrorLevel, ErrorType, wrapPublicMessage } from 'shared/utils/error';
 import { capitalize } from 'shared/utils/string';
+import handleError from 'utils/error';
 
 import { Eventually } from '../../types';
 
@@ -133,6 +134,7 @@ const ActionDropdown = <T extends string>({
         confirm({
           content: `Are you sure you want to ${action.toLocaleLowerCase()} ${kind} "${id}"?`,
           onConfirm: onOk,
+          onError: handleError,
           title: `${capitalize(action)} ${kind}`,
           ...confirmations[action],
         });

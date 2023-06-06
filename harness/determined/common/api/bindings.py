@@ -4120,6 +4120,32 @@ class v1GetJobsResponse:
         }
         return out
 
+class v1GetJobsV2Response:
+
+    def __init__(
+        self,
+        *,
+        jobs: "typing.Sequence[v1RBACJob]",
+        pagination: "v1Pagination",
+    ):
+        self.jobs = jobs
+        self.pagination = pagination
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetJobsV2Response":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "jobs": [v1RBACJob.from_json(x) for x in obj["jobs"]],
+            "pagination": v1Pagination.from_json(obj["pagination"]),
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "jobs": [x.to_json(omit_unset) for x in self.jobs],
+            "pagination": self.pagination.to_json(omit_unset),
+        }
+        return out
+
 class v1GetMasterConfigResponse:
 
     def __init__(
@@ -5828,6 +5854,7 @@ class v1Job:
         submissionTime: str,
         type: "jobv1Type",
         username: str,
+        workspaceId: int,
         priority: "typing.Union[int, None, Unset]" = _unset,
         progress: "typing.Union[float, None, Unset]" = _unset,
         summary: "typing.Union[v1JobSummary, None, Unset]" = _unset,
@@ -5844,6 +5871,7 @@ class v1Job:
         self.submissionTime = submissionTime
         self.type = type
         self.username = username
+        self.workspaceId = workspaceId
         if not isinstance(priority, Unset):
             self.priority = priority
         if not isinstance(progress, Unset):
@@ -5868,6 +5896,7 @@ class v1Job:
             "submissionTime": obj["submissionTime"],
             "type": jobv1Type(obj["type"]),
             "username": obj["username"],
+            "workspaceId": obj["workspaceId"],
         }
         if "priority" in obj:
             kwargs["priority"] = obj["priority"]
@@ -5893,6 +5922,7 @@ class v1Job:
             "submissionTime": self.submissionTime,
             "type": self.type.value,
             "username": self.username,
+            "workspaceId": self.workspaceId,
         }
         if not omit_unset or "priority" in vars(self):
             out["priority"] = self.priority
@@ -6509,6 +6539,84 @@ class v1LaunchTensorboardResponse:
 class v1LaunchWarning(DetEnum):
     UNSPECIFIED = "LAUNCH_WARNING_UNSPECIFIED"
     CURRENT_SLOTS_EXCEEDED = "LAUNCH_WARNING_CURRENT_SLOTS_EXCEEDED"
+
+class v1LimitedJob:
+    priority: "typing.Optional[int]" = None
+    progress: "typing.Optional[float]" = None
+    summary: "typing.Optional[v1JobSummary]" = None
+    weight: "typing.Optional[float]" = None
+
+    def __init__(
+        self,
+        *,
+        allocatedSlots: int,
+        isPreemptible: bool,
+        jobId: str,
+        requestedSlots: int,
+        resourcePool: str,
+        type: "jobv1Type",
+        workspaceId: int,
+        priority: "typing.Union[int, None, Unset]" = _unset,
+        progress: "typing.Union[float, None, Unset]" = _unset,
+        summary: "typing.Union[v1JobSummary, None, Unset]" = _unset,
+        weight: "typing.Union[float, None, Unset]" = _unset,
+    ):
+        self.allocatedSlots = allocatedSlots
+        self.isPreemptible = isPreemptible
+        self.jobId = jobId
+        self.requestedSlots = requestedSlots
+        self.resourcePool = resourcePool
+        self.type = type
+        self.workspaceId = workspaceId
+        if not isinstance(priority, Unset):
+            self.priority = priority
+        if not isinstance(progress, Unset):
+            self.progress = progress
+        if not isinstance(summary, Unset):
+            self.summary = summary
+        if not isinstance(weight, Unset):
+            self.weight = weight
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1LimitedJob":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "allocatedSlots": obj["allocatedSlots"],
+            "isPreemptible": obj["isPreemptible"],
+            "jobId": obj["jobId"],
+            "requestedSlots": obj["requestedSlots"],
+            "resourcePool": obj["resourcePool"],
+            "type": jobv1Type(obj["type"]),
+            "workspaceId": obj["workspaceId"],
+        }
+        if "priority" in obj:
+            kwargs["priority"] = obj["priority"]
+        if "progress" in obj:
+            kwargs["progress"] = float(obj["progress"]) if obj["progress"] is not None else None
+        if "summary" in obj:
+            kwargs["summary"] = v1JobSummary.from_json(obj["summary"]) if obj["summary"] is not None else None
+        if "weight" in obj:
+            kwargs["weight"] = float(obj["weight"]) if obj["weight"] is not None else None
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "allocatedSlots": self.allocatedSlots,
+            "isPreemptible": self.isPreemptible,
+            "jobId": self.jobId,
+            "requestedSlots": self.requestedSlots,
+            "resourcePool": self.resourcePool,
+            "type": self.type.value,
+            "workspaceId": self.workspaceId,
+        }
+        if not omit_unset or "priority" in vars(self):
+            out["priority"] = self.priority
+        if not omit_unset or "progress" in vars(self):
+            out["progress"] = None if self.progress is None else dump_float(self.progress)
+        if not omit_unset or "summary" in vars(self):
+            out["summary"] = None if self.summary is None else self.summary.to_json(omit_unset)
+        if not omit_unset or "weight" in vars(self):
+            out["weight"] = None if self.weight is None else dump_float(self.weight)
+        return out
 
 class v1ListRolesRequest:
     offset: "typing.Optional[int]" = None
@@ -9355,6 +9463,40 @@ class v1QueueStats:
         }
         return out
 
+class v1RBACJob:
+    full: "typing.Optional[v1Job]" = None
+    limited: "typing.Optional[v1LimitedJob]" = None
+
+    def __init__(
+        self,
+        *,
+        full: "typing.Union[v1Job, None, Unset]" = _unset,
+        limited: "typing.Union[v1LimitedJob, None, Unset]" = _unset,
+    ):
+        if not isinstance(full, Unset):
+            self.full = full
+        if not isinstance(limited, Unset):
+            self.limited = limited
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1RBACJob":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "full" in obj:
+            kwargs["full"] = v1Job.from_json(obj["full"]) if obj["full"] is not None else None
+        if "limited" in obj:
+            kwargs["limited"] = v1LimitedJob.from_json(obj["limited"]) if obj["limited"] is not None else None
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "full" in vars(self):
+            out["full"] = None if self.full is None else self.full.to_json(omit_unset)
+        if not omit_unset or "limited" in vars(self):
+            out["limited"] = None if self.limited is None else self.limited.to_json(omit_unset)
+        return out
+
 class v1RPQueueStat:
     aggregates: "typing.Optional[typing.Sequence[v1AggregateQueueStats]]" = None
 
@@ -11375,7 +11517,7 @@ class v1Task:
         allocations: "typing.Sequence[v1Allocation]",
         startTime: str,
         taskId: str,
-        taskType: str,
+        taskType: "v1TaskType",
         endTime: "typing.Union[str, None, Unset]" = _unset,
     ):
         self.allocations = allocations
@@ -11391,7 +11533,7 @@ class v1Task:
             "allocations": [v1Allocation.from_json(x) for x in obj["allocations"]],
             "startTime": obj["startTime"],
             "taskId": obj["taskId"],
-            "taskType": obj["taskType"],
+            "taskType": v1TaskType(obj["taskType"]),
         }
         if "endTime" in obj:
             kwargs["endTime"] = obj["endTime"]
@@ -11402,7 +11544,7 @@ class v1Task:
             "allocations": [x.to_json(omit_unset) for x in self.allocations],
             "startTime": self.startTime,
             "taskId": self.taskId,
-            "taskType": self.taskType,
+            "taskType": self.taskType.value,
         }
         if not omit_unset or "endTime" in vars(self):
             out["endTime"] = self.endTime
@@ -11563,6 +11705,15 @@ class v1TaskLogsResponse:
         if not omit_unset or "stdtype" in vars(self):
             out["stdtype"] = self.stdtype
         return out
+
+class v1TaskType(DetEnum):
+    UNSPECIFIED = "TASK_TYPE_UNSPECIFIED"
+    TRIAL = "TASK_TYPE_TRIAL"
+    NOTEBOOK = "TASK_TYPE_NOTEBOOK"
+    SHELL = "TASK_TYPE_SHELL"
+    COMMAND = "TASK_TYPE_COMMAND"
+    TENSORBOARD = "TASK_TYPE_TENSORBOARD"
+    CHECKPOINT_GC = "TASK_TYPE_CHECKPOINT_GC"
 
 class v1Template:
 
@@ -14704,6 +14855,36 @@ def get_GetJobs(
     if _resp.status_code == 200:
         return v1GetJobsResponse.from_json(_resp.json())
     raise APIHttpError("get_GetJobs", _resp)
+
+def get_GetJobsV2(
+    session: "api.Session",
+    *,
+    limit: "typing.Optional[int]" = None,
+    offset: "typing.Optional[int]" = None,
+    orderBy: "typing.Optional[v1OrderBy]" = None,
+    resourcePool: "typing.Optional[str]" = None,
+    states: "typing.Optional[typing.Sequence[jobv1State]]" = None,
+) -> "v1GetJobsV2Response":
+    _params = {
+        "limit": limit,
+        "offset": offset,
+        "orderBy": orderBy.value if orderBy is not None else None,
+        "resourcePool": resourcePool,
+        "states": [x.value for x in states] if states is not None else None,
+    }
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/job-queues-v2",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1GetJobsV2Response.from_json(_resp.json())
+    raise APIHttpError("get_GetJobsV2", _resp)
 
 def get_GetMaster(
     session: "api.Session",
@@ -17901,6 +18082,7 @@ Paginated = typing.Union[
     v1GetExperimentsResponse,
     v1GetGroupsResponse,
     v1GetJobsResponse,
+    v1GetJobsV2Response,
     v1GetModelVersionsResponse,
     v1GetModelsResponse,
     v1GetNotebooksResponse,

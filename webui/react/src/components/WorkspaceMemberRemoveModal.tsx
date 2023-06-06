@@ -64,6 +64,7 @@ const WorkspaceMemberRemoveComponent: React.FC<Props> = ({
       size="small"
       submit={{
         disabled: isDeleting,
+        handleError,
         handler: handleSubmit,
         text: 'Remove',
       }}

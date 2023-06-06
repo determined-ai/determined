@@ -17,6 +17,7 @@ import (
 	"github.com/uptrace/bun"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
+	apiPkg "github.com/determined-ai/determined/master/internal/api"
 	authz2 "github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
@@ -33,10 +34,6 @@ var pAuthZ *mocks.ProjectAuthZ
 
 func isMockAuthZ() bool {
 	return config.GetMasterConfig().Security.AuthZ.Type == "mock"
-}
-
-func projectNotFoundErr(id int) error {
-	return status.Errorf(codes.NotFound, fmt.Sprintf("project (%d) not found", id))
 }
 
 // pgdb can be nil to use the singleton database for testing.
@@ -89,7 +86,7 @@ func TestAuthZCanCreateProject(t *testing.T) {
 		Name:        uuid.New().String(),
 		WorkspaceId: -9999,
 	})
-	require.Equal(t, workspaceNotFoundErr(-9999).Error(), err.Error())
+	require.Equal(t, apiPkg.NotFoundErrs("workspace", "-9999", true).Error(), err.Error())
 
 	workspaceAuthZ.On("CanGetWorkspace", mock.Anything, mock.Anything, mock.Anything).
 		Return(authz2.PermissionDeniedError{}).Once()
@@ -97,7 +94,8 @@ func TestAuthZCanCreateProject(t *testing.T) {
 		Name:        uuid.New().String(),
 		WorkspaceId: int32(workspaceID),
 	})
-	require.Equal(t, workspaceNotFoundErr(workspaceID).Error(), err.Error())
+	require.Equal(t,
+		apiPkg.NotFoundErrs("workspace", fmt.Sprint(workspaceID), true).Error(), err.Error())
 
 	// Workspace error returns error unmodified.
 	expectedErr := fmt.Errorf("canGetWorkspaceErr")
@@ -127,12 +125,12 @@ func TestAuthZGetProject(t *testing.T) {
 
 	// Deny returns same as 404,
 	_, err := api.GetProject(ctx, &apiv1.GetProjectRequest{Id: -9999})
-	require.Equal(t, projectNotFoundErr(-9999).Error(), err.Error())
+	require.Equal(t, apiPkg.NotFoundErrs("project", "-9999", true).Error(), err.Error())
 
 	projectAuthZ.On("CanGetProject", mock.Anything, mock.Anything, mock.Anything).
 		Return(authz2.PermissionDeniedError{}).Once()
 	_, err = api.GetProject(ctx, &apiv1.GetProjectRequest{Id: 1})
-	require.Equal(t, projectNotFoundErr(1).Error(), err.Error())
+	require.Equal(t, apiPkg.NotFoundErrs("project", "1", true).Error(), err.Error())
 
 	// An error returned by CanGetProject is returned unmodified.
 	expectedErr := fmt.Errorf("canGetProjectErr")
@@ -173,7 +171,8 @@ func TestAuthZCanMoveProject(t *testing.T) {
 	projectAuthZ.On("CanGetProject", mock.Anything, mock.Anything, mock.Anything).
 		Return(authz2.PermissionDeniedError{}).Once()
 	_, err = api.MoveProject(ctx, req)
-	require.Equal(t, projectNotFoundErr(int(projectID)).Error(), err.Error())
+	require.Equal(t,
+		apiPkg.NotFoundErrs("project", fmt.Sprint(projectID), true).Error(), err.Error())
 
 	// Can't view from workspace.
 	projectAuthZ.On("CanGetProject", mock.Anything, mock.Anything, mock.Anything).
@@ -181,7 +180,8 @@ func TestAuthZCanMoveProject(t *testing.T) {
 	workspaceAuthZ.On("CanGetWorkspace", mock.Anything, mock.Anything, mock.Anything).
 		Return(authz2.PermissionDeniedError{}).Once()
 	_, err = api.MoveProject(ctx, req)
-	require.Equal(t, workspaceNotFoundErr(int(fromResp.Workspace.Id)).Error(), err.Error())
+	require.Equal(t, apiPkg.NotFoundErrs("workspace",
+		fmt.Sprint(int(fromResp.Workspace.Id)), true).Error(), err.Error())
 
 	// Can't move project.
 	expectedErr := status.Error(codes.PermissionDenied, "canMoveProjectDeny")
@@ -215,7 +215,8 @@ func TestAuthZCanMoveProjectExperiments(t *testing.T) {
 	projectAuthZ.On("CanGetProject", mock.Anything, mock.Anything, mock.Anything).
 		Return(authz2.PermissionDeniedError{}).Once()
 	_, err := api.MoveExperiment(ctx, req)
-	require.Equal(t, projectNotFoundErr(srcProjectID).Error(), err.Error())
+	require.Equal(t,
+		apiPkg.NotFoundErrs("project", fmt.Sprint(srcProjectID), true).Error(), err.Error())
 
 	// Can't view destination project
 	authZExp.On("CanGetExperiment", mock.Anything, mock.Anything, mock.Anything).
@@ -225,7 +226,8 @@ func TestAuthZCanMoveProjectExperiments(t *testing.T) {
 	projectAuthZ.On("CanGetProject", mock.Anything, mock.Anything, mock.Anything).
 		Return(authz2.PermissionDeniedError{}).Once()
 	_, err = api.MoveExperiment(ctx, req)
-	require.Equal(t, projectNotFoundErr(destProjectID).Error(), err.Error())
+	require.Equal(t,
+		apiPkg.NotFoundErrs("project", fmt.Sprint(destProjectID), true).Error(), err.Error())
 
 	// Can't create experiment in destination project.
 	expectedErr := status.Error(codes.PermissionDenied, "canCreateExperimentDeny")
@@ -319,13 +321,14 @@ func TestAuthZRoutesGetProjectThenAction(t *testing.T) {
 
 		// Project not found.
 		err := curCase.IDToReqCall(-9999)
-		require.Equal(t, projectNotFoundErr(-9999).Error(), err.Error())
+		require.Equal(t, apiPkg.NotFoundErrs("project", "-9999", true).Error(), err.Error())
 
 		// Project can't be viewed.
 		projectAuthZ.On("CanGetProject", mock.Anything, mock.Anything, mock.Anything).
 			Return(authz2.PermissionDeniedError{}).Once()
 		err = curCase.IDToReqCall(projectID)
-		require.Equal(t, projectNotFoundErr(projectID).Error(), err.Error())
+		require.Equal(t, apiPkg.NotFoundErrs("project", fmt.Sprint(projectID), true).Error(),
+			err.Error())
 
 		// Error checking if project errors during view check.
 		expectedErr := fmt.Errorf("canGetProjectError")

@@ -18,6 +18,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/rm/allocationmap"
 	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/determined-ai/determined/master/internal/task/preemptible"
 	"github.com/determined-ai/determined/master/internal/task/tasklogger"
 	"github.com/determined-ai/determined/master/internal/task/taskmodel"
 	"github.com/determined-ai/determined/master/internal/telemetry"
@@ -63,9 +64,6 @@ type (
 		exited bool
 
 		// State for specific sub-behaviors of an allocation.
-		// Encapsulates the preemption state of the currently allocated task.
-		// If there is no current task, or it is unallocated, it is nil.
-		preemption *Preemption
 		// Encapsulates logic of rendezvousing containers of the currently
 		// allocated task. If there is no current task, or it is unallocated, it is nil.
 		rendezvous *rendezvous
@@ -224,6 +222,9 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 				portregistry.ReleasePort(port)
 			}
 		}
+		if a.req.Preemptible {
+			preemptible.Unregister(a.req.AllocationID.String())
+		}
 		allocationmap.UnregisterAllocation(a.model.AllocationID)
 	case sproto.ContainerLog:
 		a.sendTaskLog(msg.ToTaskLog())
@@ -338,17 +339,6 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 			a.allGather = nil
 			a.allGatherFinished = true
 		}
-	case WatchPreemption, UnwatchPreemption, PreemptionTimeout, AckPreemption:
-		if !a.req.Preemptible {
-			if ctx.ExpectingResponse() {
-				ctx.Respond(ErrBehaviorDisabled{preemption})
-			}
-			return nil
-		}
-		if err := a.preemption.ReceiveMsg(ctx); err != nil {
-			a.sendTaskLog(&model.TaskLog{Log: err.Error()})
-			a.Error(ctx, err)
-		}
 	case IdleTimeoutWatcherTick, IdleWatcherNoteActivity:
 		if a.req.IdleTimeout == nil {
 			if ctx.ExpectingResponse() {
@@ -423,7 +413,10 @@ func (a *Allocation) Cleanup(ctx *actor.Context) {
 		a.sendTaskLog(&model.TaskLog{
 			Log: fmt.Sprintf("%s was terminated: %s", a.req.Name, "allocation did not exit correctly"),
 		})
-		a.rm.Release(ctx, sproto.ResourcesReleased{AllocationRef: ctx.Self()})
+		a.rm.Release(ctx, sproto.ResourcesReleased{
+			AllocationID:  a.req.AllocationID,
+			AllocationRef: ctx.Self(),
+		})
 	}
 }
 
@@ -475,7 +468,7 @@ func (a *Allocation) ResourcesAllocated(ctx *actor.Context, msg sproto.Resources
 	}
 
 	if a.req.Preemptible {
-		a.preemption = NewPreemption(a.model.AllocationID)
+		preemptible.Register(a.req.AllocationID.String())
 	}
 
 	if cfg := a.req.IdleTimeout; cfg != nil {
@@ -658,6 +651,7 @@ func (a *Allocation) ResourcesStateChanged(
 		a.resources[msg.ResourcesID].Exited = msg.ResourcesStopped
 
 		a.rm.Release(ctx, sproto.ResourcesReleased{
+			AllocationID:  a.req.AllocationID,
 			AllocationRef: ctx.Self(),
 			ResourcesID:   &msg.ResourcesID,
 		})
@@ -825,8 +819,12 @@ func (a *Allocation) preempt(ctx *actor.Context, reason string) {
 		),
 	})
 
-	a.preemption.Preempt()
-	actors.NotifyAfter(ctx, preemptionTimeoutDuration, PreemptionTimeout{a.model.AllocationID})
+	preemptible.Preempt(a.req.AllocationID.String(), func(err error) {
+		ctx.Tell(ctx.Self(), sproto.AllocationSignalWithReason{
+			AllocationSignal:    sproto.KillAllocation,
+			InformationalReason: err.Error(),
+		})
+	})
 }
 
 func (a *Allocation) kill(ctx *actor.Context, reason string) {
@@ -885,15 +883,10 @@ func (a *Allocation) registerProxies(ctx *actor.Context, addresses []cproto.Addr
 		// We are keying on allocation id instead of container id. Revisit this when we need to
 		// proxy multi-container tasks or when containers are created prior to being
 		// assigned to an agent.
-		ctx.Ask(ctx.Self().System().Get(actor.Addr("proxy")), proxy.Register{
-			ServiceID: pcfg.ServiceID,
-			URL: &url.URL{
-				Scheme: "http",
-				Host:   fmt.Sprintf("%s:%d", address.HostIP, address.HostPort),
-			},
-			ProxyTCP:        pcfg.ProxyTCP,
-			Unauthenticated: pcfg.Unauthenticated,
-		})
+		proxy.DefaultProxy.Register(pcfg.ServiceID, &url.URL{
+			Scheme: "http",
+			Host:   fmt.Sprintf("%s:%d", address.HostIP, address.HostPort),
+		}, pcfg.ProxyTCP, pcfg.Unauthenticated)
 		ctx.Log().Debugf("registered proxy id: %s, tcp: %v\n", pcfg.ServiceID, pcfg.ProxyTCP)
 		a.proxies = append(a.proxies, pcfg.ServiceID)
 	}
@@ -918,9 +911,7 @@ func (a *Allocation) unregisterProxies(ctx *actor.Context) {
 	}
 
 	for _, serviceID := range a.proxies {
-		ctx.Tell(ctx.Self().System().Get(actor.Addr("proxy")), proxy.Unregister{
-			ServiceID: serviceID,
-		})
+		proxy.DefaultProxy.Unregister(serviceID)
 	}
 }
 
@@ -959,7 +950,10 @@ func (a *Allocation) terminated(ctx *actor.Context, reason string) {
 	a.exited = true
 	exitReason := fmt.Sprintf("allocation terminated after %s", reason)
 	defer ctx.Tell(ctx.Self().Parent(), exit)
-	defer a.rm.Release(ctx, sproto.ResourcesReleased{AllocationRef: ctx.Self()})
+	defer a.rm.Release(ctx, sproto.ResourcesReleased{
+		AllocationID:  a.req.AllocationID,
+		AllocationRef: ctx.Self(),
+	})
 	defer a.unregisterProxies(ctx)
 	defer ctx.Self().Stop()
 
@@ -981,7 +975,7 @@ func (a *Allocation) terminated(ctx *actor.Context, reason string) {
 	defer a.markResourcesReleased(ctx)
 
 	if a.req.Preemptible {
-		defer a.preemption.Close()
+		defer preemptible.Unregister(a.req.AllocationID.String())
 	}
 	if a.rendezvous != nil {
 		defer a.rendezvous.close()
@@ -991,7 +985,7 @@ func (a *Allocation) terminated(ctx *actor.Context, reason string) {
 		exitReason = fmt.Sprintf("allocation stopped after %s", reason)
 		ctx.Log().Info(exitReason)
 		return
-	case a.req.Preemptible && a.preemption.Acknowledged():
+	case a.req.Preemptible && preemptible.Acknowledged(a.req.AllocationID.String()):
 		exitReason = fmt.Sprintf("allocation stopped after %s", reason)
 		ctx.Log().Info(exitReason)
 		return

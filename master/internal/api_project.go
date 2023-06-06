@@ -10,6 +10,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/api/apiutils"
 	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/db"
@@ -27,7 +28,7 @@ import (
 func (a *apiServer) GetProjectByID(
 	ctx context.Context, id int32, curUser model.User,
 ) (*projectv1.Project, error) {
-	notFoundErr := status.Errorf(codes.NotFound, "project (%d) not found", id)
+	notFoundErr := api.NotFoundErrs("project", fmt.Sprint(id), true)
 	p := &projectv1.Project{}
 	if err := a.m.db.QueryProto("get_project", p, id); errors.Is(err, db.ErrNotFound) {
 		return nil, notFoundErr
@@ -634,9 +635,10 @@ func (a *apiServer) GetProjectsByUserActivity(
 
 	for _, pr := range projects {
 		err := project.AuthZProvider.Get().CanGetProject(ctx, *curUser, pr)
-		if !authz.IsPermissionDenied(err) {
+		if err == nil {
 			viewableProjects = append(viewableProjects, pr)
-		} else if err != nil {
+			// omit projects user doesn't have access to
+		} else if !authz.IsPermissionDenied(err) {
 			return nil, err
 		}
 	}

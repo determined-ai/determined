@@ -1,0 +1,101 @@
+/* stylelint-disable no-descending-specificity */
+
+.base {
+  display: flex;
+  flex-direction: column;
+
+  &:not(:last-child) {
+    padding-bottom: 16px;
+  }
+  .header {
+    align-items: center;
+    display: flex;
+    flex-shrink: 0;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .title {
+    align-items: center;
+    display: flex;
+    flex-grow: 1;
+    height: 32px;
+    line-height: 32px;
+    margin-bottom: 0;
+    white-space: nowrap;
+  }
+  .title.string {
+    font-size: 16px;
+  }
+  .options {
+    display: flex;
+    margin-left: auto;
+  }
+  .title + .options {
+    margin-left: 8px;
+  }
+  .body {
+    border-color: var(--theme-stage-border);
+    border-style: solid;
+    border-width: 0;
+    flex-grow: 1;
+    height: max-content;
+    min-height: 0;
+    position: relative;
+  }
+  .filterBar {
+    background-color: var(--theme-stage);
+    border: solid var(--theme-stroke-width) var(--theme-stage-border);
+    border-radius: var(--theme-border-radius);
+    display: inline-flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 4px;
+    width: 100%;
+
+    & > * {
+      margin: 4px;
+    }
+  }
+}
+.base.maxHeight {
+  height: 100%;
+}
+.base.divider .body {
+  border-top-width: var(--theme-stroke-width);
+  padding-top: 8px;
+}
+.base.bodyBorder {
+  .body {
+    background-color: var(--theme-stage);
+    border: solid var(--theme-stroke-width) var(--theme-stage-border);
+    border-radius: var(--theme-border-radius);
+    padding: 16px;
+  }
+  .filterBar {
+    border-radius: var(--theme-border-radius) var(--theme-border-radius) 0 0;
+    border-width: var(--theme-stroke-width) var(--theme-stroke-width) 0 var(--theme-stroke-width);
+  }
+  .filterBar + .body {
+    border-radius: 0 0 var(--theme-border-radius) var(--theme-border-radius);
+  }
+}
+.base.bodyDynamic {
+  .body > :global(.ant-spin-nested-loading) {
+    height: 100%;
+    position: absolute;
+    width: 100%;
+  }
+}
+.base.bodyNoPadding {
+  .body {
+    padding: 0;
+  }
+}
+.base.bodyScroll {
+  height: 100%;
+
+  .body {
+    height: 100%;
+    overflow: auto;
+  }
+}

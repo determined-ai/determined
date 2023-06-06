@@ -53,6 +53,7 @@ const ExperimentStopModalComponent: React.FC<Props> = ({ experimentId, onClose }
     <Modal
       size="small"
       submit={{
+        handleError,
         handler: handleSubmit,
         text: BUTTON_TEXT,
       }}

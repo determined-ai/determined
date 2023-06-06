@@ -45,8 +45,8 @@ export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }
   useEffect(() => {
     if (!isAuthChecked) return;
 
-    try {
-      getUserSetting({}, { signal: canceler.signal }).then((response) => {
+    getUserSetting({}, { signal: canceler.signal })
+      .then((response) => {
         isLoading.set(false);
         settingsState.update((currentState) => {
           return currentState.withMutations((state) => {
@@ -65,16 +65,17 @@ export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }
             });
           });
         });
+      })
+      .catch((error) => {
+        handleError(error, {
+          isUserTriggered: false,
+          publicMessage: 'Unable to fetch user settings.',
+          type: ErrorType.Api,
+        });
+      })
+      .finally(() => {
+        isLoading.set(false);
       });
-    } catch (error) {
-      handleError(error, {
-        isUserTriggered: false,
-        publicMessage: 'Unable to fetch user settings.',
-        type: ErrorType.Api,
-      });
-    } finally {
-      isLoading.set(false);
-    }
 
     return () => canceler.abort();
   }, [canceler, isAuthChecked, isLoading, settingsState]);

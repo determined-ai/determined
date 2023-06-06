@@ -8,6 +8,7 @@ import { V1FileNode } from 'services/api-ts-sdk';
 import Spinner from 'shared/components/Spinner/Spinner';
 import { RawJson } from 'shared/types';
 import { ExperimentBase, TreeNode } from 'types';
+import handleError from 'utils/error';
 import { isSingleTrialExperiment } from 'utils/experiment';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 
@@ -105,6 +106,7 @@ const ExperimentCodeViewer: React.FC<Props> = ({
             files={fileOpts}
             readonly={true}
             selectedFilePath={selectedFilePath}
+            onError={handleError}
             onSelectFile={onSelectFile}
           />
         </div>

@@ -601,6 +601,15 @@ func (k *kubernetesResourcePool) resourcesReleased(
 	}
 
 	ctx.Log().Infof("resources are released for %s", msg.AllocationRef.Address())
+
+	if req, ok := k.reqList.TaskByHandler(msg.AllocationRef); ok {
+		group := k.groups[req.Group]
+
+		if group != nil {
+			k.slotsUsedPerGroup[group] -= req.SlotsNeeded
+		}
+	}
+
 	k.reqList.RemoveTaskByHandler(msg.AllocationRef)
 	delete(k.addrToContainerID, msg.AllocationRef)
 	delete(k.allocRefToRunningPods, msg.AllocationRef)
@@ -611,14 +620,6 @@ func (k *kubernetesResourcePool) resourcesReleased(
 			deleteID = id
 			delete(k.containerIDtoAddr, deleteID)
 			break
-		}
-	}
-
-	if req, ok := k.reqList.TaskByHandler(msg.AllocationRef); ok {
-		group := k.groups[msg.AllocationRef]
-
-		if group != nil {
-			k.slotsUsedPerGroup[group] -= req.SlotsNeeded
 		}
 	}
 }
