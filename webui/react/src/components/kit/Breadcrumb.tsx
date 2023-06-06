@@ -29,7 +29,7 @@ type Breadcrumb = React.FC<BreadcrumbProps> & {
 const Breadcrumb: Breadcrumb = (props: BreadcrumbProps) => {
   return (
     <div className={css.base}>
-      <Columns page>
+      <Columns>
         <Column>
           <AntdBreadcrumb separator={props.separator}>{props.children}</AntdBreadcrumb>
         </Column>
