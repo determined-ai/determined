@@ -929,6 +929,9 @@ class TestPyTorchTrial:
         from torch.distributed.launcher import elastic_launch, LaunchConfig
         import uuid
 
+        # set up distributed backend.
+        os.environ[det._DistributedBackend.TORCH] = str(1)
+
         rdzv_backend = "c10d"
         rdzv_endpoint = "localhost:29400"
         rdzv_id = str(uuid.uuid4())
