@@ -98,12 +98,12 @@ install and configure the Determined master:
    |                            | account other than ``root``, then the default value is         |
    |                            | ``$HOME/.launcher``.                                           |
    +----------------------------+----------------------------------------------------------------+
-   | ``container_run_type``     | The container type to be launched on Slurm (``singularity``,   |
-   |                            | ``enroot``, or ``podman``). The default type is                |
+   | ``container_run_type``     | The container type to be launched on Slurm (``apptainer``,     |
+   |                            | ``singularity``, ``enroot``, or ``podman``). The default is    |
    |                            | ``singularity``. Specify ``singularity`` when using Apptainer. |
    +----------------------------+----------------------------------------------------------------+
-   | ``singularity_image_root`` | Shared directory on all compute nodes where                    |
-   |                            | Singularity/Apptainer images are hosted. Unused unless         |
+   | ``apptainer_image_root``   | Shared directory on all compute nodes where                    |
+   | ``singularity_image_root`` | Apptainer/Singularity images are hosted. Unused unless         |
    |                            | ``container_run_type`` is ``singularity``. See                 |
    |                            | :ref:`slurm-image-config` for details on how this option is    |
    |                            | used.                                                          |
