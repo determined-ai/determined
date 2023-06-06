@@ -4,6 +4,7 @@ import { ChartGrid, ChartsProps, Serie } from 'components/kit/LineChart';
 import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
 import { useTrialMetrics } from 'pages/TrialDetails/useTrialMetrics';
 import { ExperimentWithTrial, TrialItem } from 'types';
+import handleError from 'utils/error';
 
 import { useGlasbey } from './useGlasbey';
 
@@ -42,6 +43,7 @@ const CompareMetrics: React.FC<Props> = ({ selectedExperiments, trials }) => {
     <div style={{ height: 'calc(100vh - 250px)', overflow: 'auto' }}>
       <ChartGrid
         chartsProps={chartsProps}
+        handleError={handleError}
         scale={scale}
         setScale={setScale}
         xAxis={xAxis}

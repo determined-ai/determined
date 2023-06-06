@@ -125,6 +125,7 @@ const TableActionBar: React.FC<Props> = ({
   const [batchAction, setBatchAction] = useState<BatchAction>();
   const BatchActionConfirmModal = useModal(BatchActionConfirmModalComponent);
   const ExperimentMoveModal = useModal(ExperimentMoveModalComponent);
+  const totalExperiments = Loadable.getOrElse(0, total);
 
   const experimentMap = useMemo(() => {
     return experiments.filter(Loadable.isLoaded).reduce((acc, experiment) => {
@@ -363,6 +364,9 @@ const TableActionBar: React.FC<Props> = ({
               </Button>
             </Dropdown>
           )}
+          <span className={css.expNum}>
+            {totalExperiments.toLocaleString()} experiment{totalExperiments > 1 && 's'}
+          </span>
         </Space>
       </Column>
       <Column align="right">

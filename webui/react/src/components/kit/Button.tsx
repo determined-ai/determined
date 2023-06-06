@@ -29,6 +29,8 @@ const Button: React.FC<ButtonProps> = forwardRef(
     const classes = [css.base];
     if (props.selected) classes.push(css.selected);
     if (props.column) classes.push(css.column);
+    if (props.icon) classes.push(css.withIcon);
+    if (props.children) classes.push(css.withChildren);
     return (
       <ConditionalWrapper
         condition={tooltip.length > 0}

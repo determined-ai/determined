@@ -26,6 +26,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task"
+	"github.com/determined-ai/determined/master/internal/task/preemptible"
 	"github.com/determined-ai/determined/master/internal/trials"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -863,7 +864,7 @@ func (a *apiServer) GetTrainingMetrics(
 		return resp.Send(&apiv1.GetTrainingMetricsResponse{Metrics: m})
 	}
 	if err := a.streamMetrics(resp.Context(), req.TrialIds, sendFunc,
-		model.TrainingMetricType.ToString()); err != nil {
+		model.TrainingMetricType); err != nil {
 		return err
 	}
 
@@ -877,7 +878,7 @@ func (a *apiServer) GetValidationMetrics(
 		return resp.Send(&apiv1.GetValidationMetricsResponse{Metrics: m})
 	}
 	if err := a.streamMetrics(resp.Context(), req.TrialIds, sendFunc,
-		model.ValidationMetricType.ToString()); err != nil {
+		model.ValidationMetricType); err != nil {
 		return err
 	}
 
@@ -885,7 +886,7 @@ func (a *apiServer) GetValidationMetrics(
 }
 
 func (a *apiServer) streamMetrics(ctx context.Context,
-	trialIDs []int32, sendFunc func(m []*trialv1.MetricsReport) error, metricType string,
+	trialIDs []int32, sendFunc func(m []*trialv1.MetricsReport) error, metricType model.MetricType,
 ) error {
 	if len(trialIDs) == 0 {
 		return status.Error(codes.InvalidArgument, "must specify at least one trialId")
@@ -1160,13 +1161,11 @@ func (a *apiServer) AllocationPreemptionSignal(
 	}
 
 	id := uuid.New()
-	var w task.PreemptionWatcher
-	if err := a.ask(handler.Address(), task.WatchPreemption{
-		ID: id, AllocationID: allocationID,
-	}, &w); err != nil {
+	w, err := preemptible.Watch(allocationID.String(), id)
+	if err != nil {
 		return nil, err
 	}
-	defer a.m.system.TellAt(handler.Address(), task.UnwatchPreemption{ID: id})
+	defer preemptible.Unwatch(allocationID.String(), id)
 
 	ctx, cancel := context.WithTimeout(ctx, time.Duration(req.TimeoutSeconds)*time.Second)
 	defer cancel()
@@ -1197,11 +1196,7 @@ func (a *apiServer) AckAllocationPreemptionSignal(
 		return nil, err
 	}
 
-	if err := a.ask(handler.Address(), task.AckPreemption{
-		AllocationID: allocationID,
-	}, nil); err != nil {
-		return nil, err
-	}
+	preemptible.Acknowledge(allocationID.String())
 	return &apiv1.AckAllocationPreemptionSignalResponse{}, nil
 }
 
@@ -1378,7 +1373,7 @@ func (a *apiServer) ReportTrialMetrics(
 		expauth.AuthZProvider.Get().CanEditExperiment); err != nil {
 		return nil, err
 	}
-	if err := a.m.db.AddTrialMetrics(ctx, req.Metrics, req.Type); err != nil {
+	if err := a.m.db.AddTrialMetrics(ctx, req.Metrics, model.MetricType(req.Type)); err != nil {
 		return nil, err
 	}
 	return &apiv1.ReportTrialMetricsResponse{}, nil
