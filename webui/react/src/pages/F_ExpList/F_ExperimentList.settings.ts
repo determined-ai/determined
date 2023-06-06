@@ -1,17 +1,28 @@
-import { array, boolean, literal, number, string, union } from 'io-ts';
+import { array, boolean, literal, number, string, TypeOf, union } from 'io-ts';
 
 import { INIT_FORMSET } from 'components/FilterForm/components/FilterFormStore';
 import { SettingsConfig } from 'hooks/useSettings';
+import { valueof } from 'ioTypes';
 
 import { defaultExperimentColumns } from './glide-table/columns';
 
 export type ExpListView = 'scroll' | 'paged';
+export const RowHeight = {
+  EXTRA_TALL: 'EXTRA_TALL',
+  MEDIUM: 'MEDIUM',
+  SHORT: 'SHORT',
+  TALL: 'TALL',
+} as const;
+const ioRowHeight = valueof(RowHeight);
+export type RowHeight = TypeOf<typeof ioRowHeight>;
+
 export interface F_ExperimentListSettings {
   columns: string[];
   compare: boolean;
   compareWidth: number;
   filterset: string; // save FilterFormSet as string
   pageLimit: number;
+  rowHeight: RowHeight;
 }
 export const settingsConfigForProject = (id: number): SettingsConfig<F_ExperimentListSettings> => ({
   settings: {
@@ -43,6 +54,12 @@ export const settingsConfigForProject = (id: number): SettingsConfig<F_Experimen
       skipUrlEncoding: true,
       storageKey: 'pageLimit',
       type: number,
+    },
+    rowHeight: {
+      defaultValue: RowHeight.MEDIUM,
+      skipUrlEncoding: true,
+      storageKey: 'rowHeight',
+      type: ioRowHeight,
     },
   },
   storagePath: `f_project-details-${id}`,
