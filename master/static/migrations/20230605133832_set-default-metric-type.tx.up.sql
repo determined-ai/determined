@@ -25,7 +25,6 @@ ALTER COLUMN custom_type SET DEFAULT 'training',
 ALTER COLUMN custom_type SET NOT NULL;
 
 ALTER TABLE generic_metrics
-ALTER COLUMN custom_type SET DEFAULT 'generic',
 ALTER COLUMN custom_type SET NOT NULL;
 
 ALTER TABLE metrics

@@ -7,8 +7,7 @@ ALTER COLUMN custom_type DROP NOT NULL,
 ALTER COLUMN custom_type DROP DEFAULT;
 
 ALTER TABLE generic_metrics
-ALTER COLUMN custom_type DROP NOT NULL,
-ALTER COLUMN custom_type DROP DEFAULT;
+ALTER COLUMN custom_type DROP NOT NULL;
 
 ALTER TABLE metrics
 ALTER COLUMN custom_type DROP NOT NULL;

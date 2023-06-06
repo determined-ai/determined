@@ -932,7 +932,7 @@ summary_metrics->'%[1]s'->name->>'type' AS type
 FROM trials
 CROSS JOIN jsonb_object_keys(summary_metrics->'%[1]s') AS name
 WHERE id = ?
-ORDER BY name ASC`, model.TrialSummaryMetricsJSONPath("inference"))
+ORDER BY name ASC`, "inference")
 
 	summaryRows := []*summaryMetrics{}
 	err = Bun().NewRaw(query, tr.ID).Scan(ctx, &summaryRows)

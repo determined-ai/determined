@@ -263,16 +263,12 @@ func (db *PgDB) _addTrialMetricsTx(
 	ctx context.Context, tx *sqlx.Tx, m *trialv1.TrialMetrics, mType model.MetricType,
 ) (rollbacks int, err error) {
 	isValidation := mType == model.ValidationMetricType
-
-	// DISCUSS: these two don't need to be coupled.
 	metricsJSONPath := model.TrialMetricsJSONPath(isValidation)
-	summaryMetricsJSONPath := model.TrialSummaryMetricsJSONPath(mType)
 	metricsBody := map[string]interface{}{
 		metricsJSONPath: m.Metrics.AvgMetrics,
 		"batch_metrics": m.Metrics.BatchMetrics,
 	}
 	if isValidation {
-		// CHECK: or delete batch_metrics.
 		metricsBody = map[string]interface{}{
 			metricsJSONPath: m.Metrics.AvgMetrics,
 		}
@@ -315,6 +311,7 @@ func (db *PgDB) _addTrialMetricsTx(
 			return rollbacks, errors.Wrap(err, "error on rollback compute of summary metrics")
 		}
 	default: // no rollbacks happened.
+		summaryMetricsJSONPath := model.TrialSummaryMetricsJSONPath(mType)
 		if _, ok := summaryMetrics[summaryMetricsJSONPath]; !ok {
 			summaryMetrics[summaryMetricsJSONPath] = map[string]any{}
 		}
