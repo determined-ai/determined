@@ -45,23 +45,25 @@ export function drawArrow(
   height = 12,
 ): void {
   const headDelta = width / 2;
+
+  ctx.beginPath();
+
   if (direction === 'up') {
     ctx.moveTo(x, y + headDelta);
     ctx.lineTo(x + headDelta, y);
     ctx.lineTo(x + width, y + headDelta);
-    ctx.stroke();
     ctx.moveTo(x + headDelta, y);
     ctx.lineTo(x + headDelta, y + height);
-    ctx.stroke();
   } else {
     ctx.moveTo(x, y + height - headDelta);
     ctx.lineTo(x + headDelta, y + height);
     ctx.lineTo(x + width, y + height - headDelta);
-    ctx.stroke();
     ctx.moveTo(x + headDelta, y);
     ctx.lineTo(x + headDelta, y + height);
-    ctx.stroke();
   }
+
+  ctx.closePath();
+  ctx.stroke();
 }
 
 function textWithEllipsis(
