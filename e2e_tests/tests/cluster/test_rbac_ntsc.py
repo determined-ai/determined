@@ -411,12 +411,12 @@ def test_tsb_launch_on_trials() -> None:
             body=bindings.v1PostProjectRequest(name="test", workspaceId=workspace.id),
             workspaceId=workspace.id,
         ).project.id
-    with logged_in_user(ADMIN_CREDENTIALS):
-        experiment_id = exp.create_experiment(
-            conf.fixtures_path("no_op/single.yaml"),
-            conf.fixtures_path("no_op"),
-            ["--project_id", str(pid)],
-        )
+        with logged_in_user(ADMIN_CREDENTIALS):
+            experiment_id = exp.create_experiment(
+                conf.fixtures_path("no_op/single.yaml"),
+                conf.fixtures_path("no_op"),
+                ["--project_id", str(pid)],
+            )
 
         def get_exp_trials() -> Tuple[bool, List[int]]:
             trial_ids: List[int] = []
