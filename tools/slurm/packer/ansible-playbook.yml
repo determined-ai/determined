@@ -1,0 +1,95 @@
+---
+- hosts: all
+  become: true
+
+  tasks:
+    # Our base image comes preinstalled with slurm, but if you are following this to setup
+    # a cluster from scratch, you will need to install slurm.
+
+    - name: apt-get update, apt-get upgrade.
+      apt:
+        update_cache: yes
+        upgrade: yes
+
+    - name: Install utility packages.
+      apt:
+        name:
+        - curl
+        - default-jre
+        - git
+        - htop
+        - hwloc
+        - iftop
+        - iotop
+        - jq
+        - lsof
+        - net-tools
+        - screen
+        - tmux
+        - tree
+        - unzip
+        - wget
+        - zip
+        - nfs-common
+        - apt-transport-https
+        - ca-certificates
+        - curl
+        - software-properties-common
+        - python3-pip
+        - virtualenv
+        - python3-setuptools
+        state: latest
+
+    - name: Add Docker GPG apt Key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+    - name: Add Docker Repository
+      apt_repository:
+        repo: deb https://download.docker.com/linux/ubuntu focal stable
+        state: present
+    - name: Update apt and install docker-ce
+      apt:
+        name: docker-ce
+        state: latest
+        update_cache: true
+
+    - name: Install Podman
+      apt:
+        name: podman
+        state: latest
+
+    - name: Install Singularity
+      apt:
+        deb: https://github.com/apptainer/apptainer/releases/download/v1.1.6/apptainer_1.1.6_amd64.deb
+
+    - name: Install Launcher
+      apt:
+        deb: "{{ launcher_deb }}"
+    - name: Enable launcher.service
+      systemd:
+        name: launcher.service
+        enabled: yes
+
+    - name: Reinstall Munge (uninstall)
+      apt:
+        name: munge
+        state: absent
+    - name: Reinstall Munge (install)
+      apt:
+        name: munge
+        state: latest
+
+    - name: Enable slurmctld.service
+      systemd:
+        name: slurmctld.service
+        enabled: yes
+    - name: Enable slurmd.service
+      systemd:
+        name: slurmd.service
+        enabled: yes
+
+    - name: Restore motd (Slurm image adds a 'slurm not setup' warning if their scripts haven't run)
+      ansible.builtin.copy:
+        src: /etc/motd.bak
+        dest: /etc/motd
