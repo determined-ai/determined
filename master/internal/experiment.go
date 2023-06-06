@@ -2,6 +2,7 @@ package internal
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"strconv"
@@ -945,6 +946,10 @@ func (e *experiment) setRP(ctx *actor.Context, msg sproto.SetResourcePool) error
 func (e *experiment) toV1Job() (*jobv1.Job, error) {
 	workspace, err := workspace.WorkspaceByProjectID(context.TODO(), e.ProjectID)
 	if err != nil {
+		// FIXME: DET-9563 workspace and/or project is deleted.
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
 		return nil, errors.Wrapf(err, "failed to get workspace id for exp '%d'", e.ID)
 	}
 
