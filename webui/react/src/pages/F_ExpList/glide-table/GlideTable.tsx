@@ -661,17 +661,18 @@ export const GlideTable: React.FC<GlideTableProps> = ({
       const sortDirection = column.id && sortMap[column.id];
       if (sortDirection) {
         const arrowDirection = sortDirection === 'asc' ? 'up' : 'down';
-        drawArrow(ctx, arrowDirection, rect.x + 8, 12);
+        ctx.strokeStyle = theme.textLight;
+        drawArrow(ctx, arrowDirection, rect.x + rect.width - 16, 12);
       }
 
-      const xPad = theme.cellHorizontalPadding + (sortDirection ? 12 : 0);
+      const xPad = theme.cellHorizontalPadding;
       const font = `${theme.baseFontStyle} ${theme.fontFamily}`;
       const middleCenterBias = getMiddleCenterBias(ctx, font);
       const x = rect.x + xPad;
       const y = rect.y + rect.height / 2 + middleCenterBias;
-      const maxWidth = rect.width - xPad - theme.cellHorizontalPadding;
+      const maxWidth = rect.width - (sortDirection ? 12 : 0) - 2 * theme.cellHorizontalPadding;
 
-      ctx.fillStyle = theme.linkColor;
+      ctx.fillStyle = theme.textHeader;
       drawTextWithEllipsis(ctx, column.title, x, y, maxWidth);
 
       return true;
