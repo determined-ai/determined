@@ -335,14 +335,12 @@ func MockWorkspaces(workspaceNames []string, userID model.UserID) ([]int, error)
 	ctx := context.Background()
 	var workspaceIDs []int
 	var workspaces []model.Workspace
-	workspaceIDMap := map[string]bool{}
 
 	for _, workspaceName := range workspaceNames {
 		workspaces = append(workspaces, model.Workspace{
 			Name:   workspaceName,
 			UserID: userID,
 		})
-		workspaceIDMap[workspaceName] = true
 	}
 
 	_, err := Bun().NewInsert().Model(&workspaces).Exec(ctx)
@@ -359,9 +357,7 @@ func MockWorkspaces(workspaceNames []string, userID model.UserID) ([]int, error)
 	}
 
 	for _, workspace := range workspaces {
-		if _, ok := workspaceIDMap[workspace.Name]; ok {
-			workspaceIDs = append(workspaceIDs, workspace.ID)
-		}
+		workspaceIDs = append(workspaceIDs, workspace.ID)
 	}
 
 	return workspaceIDs, nil
