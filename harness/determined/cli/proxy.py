@@ -199,7 +199,9 @@ def _http_tunnel_listener(
 
     class TunnelHandler(socketserver.BaseRequestHandler):
         def handle(self) -> None:
-            ws = lomond.WebSocket(request.maybe_upgrade_ws_scheme(url))
+            proxies = {} if urllib.request.proxy_bypass(parsed_master.hostname) else None  # type: ignore
+
+            ws = lomond.WebSocket(request.maybe_upgrade_ws_scheme(url), proxies=proxies)
             if authorization_token is not None:
                 ws.add_header(b"Authorization", f"Bearer {authorization_token}".encode())
             # We can't send data to the WebSocket before the connection becomes ready,
