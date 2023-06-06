@@ -63,6 +63,7 @@ import {
 import { TableContextMenu, TableContextMenuProps } from './contextMenu';
 import { customRenderers } from './custom-renderers';
 import { LinkCell } from './custom-renderers/cells/linkCell';
+import { drawArrow, drawTextWithEllipsis } from './custom-renderers/utils';
 import css from './GlideTable.module.scss';
 import { TableActionMenu, TableActionMenuProps } from './menu';
 import { Sort, sortMenuItemsForColumn } from './MultiSortMenu';
@@ -156,7 +157,6 @@ export const GlideTable: React.FC<GlideTableProps> = ({
 }) => {
   const gridRef = useRef<DataEditorRef>(null);
   const [hoveredRow, setHoveredRow] = useState<number>();
-  const columnRenderedRef = useRef<Record<string, boolean>>({});
 
   useEffect(() => {
     if (scrollPositionSetCount.get() >= SCROLL_SET_COUNT_NEEDED) return;
@@ -647,32 +647,37 @@ export const GlideTable: React.FC<GlideTableProps> = ({
     [columnIds, comparisonViewOpen, staticColumns],
   );
 
-  // const sortMap = useMemo(() => {
-  //   return sorts.reduce((acc, sort) => {
-  //     if (sort.column && sort.direction) acc[sort.column] = sort.direction;
-  //     return acc;
-  //   }, {} as Record<string, string>);
-  // }, [sorts]);
+  const sortMap = useMemo(() => {
+    return sorts.reduce((acc, sort) => {
+      if (sort.column && sort.direction) acc[sort.column] = sort.direction;
+      return acc;
+    }, {} as Record<string, string>);
+  }, [sorts]);
 
-  const drawHeader: DrawHeaderCallback = useCallback(({ ctx, column, rect, theme }) => {
-    if (!column.id || column.id === 'selected') return false;
-    if (columnRenderedRef.current[column.id]) return true;
+  const drawHeader: DrawHeaderCallback = useCallback(
+    ({ ctx, column, rect, theme }) => {
+      if (!column.id || column.id === 'selected') return false;
 
-    // if (column.id && sortMap[column.id]) {
-    // }
-    const xPad = theme.cellHorizontalPadding;
-    const font = `${theme.baseFontStyle} ${theme.fontFamily}`;
-    const middleCenterBias = getMiddleCenterBias(ctx, font);
-    const drawX = rect.x + xPad;
-    const drawY = rect.y + rect.height / 2 + middleCenterBias;
+      const sortDirection = column.id && sortMap[column.id];
+      if (sortDirection) {
+        const arrowDirection = sortDirection === 'asc' ? 'up' : 'down';
+        drawArrow(ctx, arrowDirection, rect.x + 8, 12);
+      }
 
-    ctx.fillStyle = theme.linkColor;
-    ctx.fillText(column.title, drawX, drawY);
+      const xPad = theme.cellHorizontalPadding + (sortDirection ? 12 : 0);
+      const font = `${theme.baseFontStyle} ${theme.fontFamily}`;
+      const middleCenterBias = getMiddleCenterBias(ctx, font);
+      const x = rect.x + xPad;
+      const y = rect.y + rect.height / 2 + middleCenterBias;
+      const maxWidth = rect.width - xPad - theme.cellHorizontalPadding;
 
-    columnRenderedRef.current[column.id] = true;
+      ctx.fillStyle = theme.linkColor;
+      drawTextWithEllipsis(ctx, column.title, x, y, maxWidth);
 
-    return true;
-  }, []);
+      return true;
+    },
+    [sortMap],
+  );
 
   return (
     <div
