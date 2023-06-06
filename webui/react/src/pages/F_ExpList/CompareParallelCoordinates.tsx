@@ -65,11 +65,9 @@ const CompareParallelCoordinates: React.FC<Props> = ({ selectedExperiments }: Pr
 
   const fullHParams: string[] = useMemo(() => {
     const hpParams = new Set<string>();
-    selectedExperiments.forEach((exp) =>
-      Object.keys(exp.experiment.hyperparameters).forEach((hp) => hpParams.add(hp)),
-    );
+    trials.forEach((trial) => Object.keys(trial.hyperparameters).forEach((hp) => hpParams.add(hp)));
     return Array.from(hpParams);
-  }, [selectedExperiments]);
+  }, [trials]);
 
   const settingsConfig = useMemo(
     () => settingsConfigForExperimentHyperparameters(fullHParams),
@@ -82,7 +80,6 @@ const CompareParallelCoordinates: React.FC<Props> = ({ selectedExperiments }: Pr
   const { metrics, data, setScale } = useTrialMetrics(trials);
 
   const colorMap = useGlasbey(selectedExperiments.map((e) => e.experiment.id));
-
   const selectedScale = settings.scale;
 
   useEffect(() => {
@@ -131,7 +128,7 @@ const CompareParallelCoordinates: React.FC<Props> = ({ selectedExperiments }: Pr
   const selectedMetric = settings.metric;
   const selectedHParams = settings.hParams;
 
-  const hyperparameters = useMemo(() => {
+  const experimentHyperparameters = useMemo(() => {
     const hpMap: Record<string, Hyperparameter> = {};
     selectedExperiments.forEach((exp) => {
       const hps = Object.keys(exp.experiment.hyperparameters);
@@ -167,7 +164,7 @@ const CompareParallelCoordinates: React.FC<Props> = ({ selectedExperiments }: Pr
 
   const dimensions = useMemo(() => {
     const newDimensions: Hermes.Dimension[] = selectedHParams.map((key) => {
-      const hp = hyperparameters[key] || {};
+      const hp = experimentHyperparameters[key] || {};
 
       if (hp.type === HyperparameterType.Categorical || hp.vals) {
         return {
@@ -202,25 +199,33 @@ const CompareParallelCoordinates: React.FC<Props> = ({ selectedExperiments }: Pr
     }
 
     return newDimensions;
-  }, [chartData?.metricRange, hyperparameters, selectedMetric, selectedScale, selectedHParams]);
+  }, [
+    chartData?.metricRange,
+    experimentHyperparameters,
+    selectedMetric,
+    selectedScale,
+    selectedHParams,
+  ]);
 
   useEffect(() => {
     if (!selectedMetric) return;
     const trialMetricsMap: Record<number, number> = {};
     const trialHpMap: Record<string, Record<number, Primitive>> = {};
 
-    const tdata: Record<string, Primitive[]> = {};
+    const trialHpdata: Record<string, Primitive[]> = {};
     let trialMetricRange: Range<number> = defaultNumericRange(true);
+
     trials?.forEach((trial) => {
       const expId = trial.experimentId;
       const key = `${selectedMetric.type}|${selectedMetric.name}`;
 
-      // Need to determine the correct metric value here since the table is no longer based on batch
-      const metricValue = data?.[trial.id]?.[key]?.data?.[XAxisDomain.Batches]?.[0]?.[1];
+      // Choose the final metric value for each trial
+      const metricValue = data?.[trial.id]?.[key]?.data?.[XAxisDomain.Batches]?.at(-1)?.[1];
 
       if (!metricValue) return;
 
       trialMetricsMap[expId] = metricValue;
+
       trialMetricRange = updateRange<number>(trialMetricRange, metricValue);
       const flatHParams = {
         ...trial?.hyperparameters,
@@ -241,17 +246,17 @@ const CompareParallelCoordinates: React.FC<Props> = ({ selectedExperiments }: Pr
       .sort(numericSorter);
 
     Object.keys(trialHpMap).forEach((hpKey) => {
-      tdata[hpKey] = trialIds.map((trialId) => trialHpMap[hpKey][trialId]);
+      trialHpdata[hpKey] = trialIds.map((trialId) => trialHpMap[hpKey][trialId]);
     });
 
     const metricKey = metricToStr(selectedMetric);
     const metricValues = trialIds.map((id) => trialMetricsMap[id]);
-    tdata[metricKey] = metricValues;
+    trialHpdata[metricKey] = metricValues;
 
     const metricRange = getNumericRange(metricValues);
 
     setChartData({
-      data: tdata,
+      data: trialHpdata,
       metricRange,
       metricValues,
       trialIds,
