@@ -9,7 +9,6 @@ import (
 	"crypto/rand"
 	"database/sql"
 	"fmt"
-	"github.com/uptrace/bun"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -19,6 +18,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/pkg/archive"
 
@@ -330,7 +330,7 @@ func (db *PgDB) MustExec(t *testing.T, sql string, args ...any) sql.Result {
 }
 
 // AddDummyWorkspaces creates as many new workspaces as in workspaceNames and
-// returns a list of workspaceIDs
+// returns a list of workspaceIDs.
 func AddDummyWorkspaces(workspaceNames []string, userID model.UserID) ([]int, error) {
 	ctx := context.Background()
 	var workspaceIDs []int
@@ -367,6 +367,7 @@ func AddDummyWorkspaces(workspaceNames []string, userID model.UserID) ([]int, er
 	return workspaceIDs, nil
 }
 
+// CleanupDummyWorkspace removes the specified workspaceIDs from the workspaces table.
 func CleanupDummyWorkspace(workspaceIDs []int) error {
 	var workspaces []model.Workspace
 	_, err := Bun().NewDelete().Model(&workspaces).
