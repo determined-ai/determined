@@ -921,8 +921,9 @@ class TestPyTorchTrial:
 
         assert trial.legacy_counter.__dict__ == {"legacy_on_training_epochs_start_calls": 2}
 
-    @pytest.mark.skipif(torch.cuda.device_count() < 2, reason="not enough gpus")
-    @pytest.mark.gpu_parallel
+    #@pytest.mark.skipif(torch.cuda.device_count() < 2, reason="not enough gpus")
+    #@pytest.mark.gpu_parallel
+    @pytest.mark.dothis
     def test_cifar10_parallel(self, tmp_path: pathlib.Path):
 
         from torch.distributed.launcher import elastic_launch, LaunchConfig
@@ -932,14 +933,18 @@ class TestPyTorchTrial:
         rdzv_endpoint = "localhost:29400"
         rdzv_id = str(uuid.uuid4())
 
-        launch_config = LaunchConfig(min_nodes=2, max_nodes=2, nproc_per_node=1, run_id=rdzv_id, rdzv_endpoint=rdzv_endpoint,
-                              rdzv_backend=rdzv_backend)
+        launch_config = LaunchConfig(min_nodes=1, max_nodes=1, nproc_per_node=1, run_id=rdzv_id,
+                                     max_restarts=0, rdzv_endpoint=rdzv_endpoint, rdzv_backend=rdzv_backend)
 
-        proc = elastic_launch(launch_config, self.run_cifar10(tmp_path))
+        proc = elastic_launch(launch_config, self.run_cifar10)(tmp_path)
+
+        print(proc[0])
 
     def run_cifar10(self, tmp_path: pathlib.Path):
 
         checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
+
+        distributed_context = det.core.DistributedContext.from_torch_distributed()
 
         config = utils.load_config(utils.cv_examples_path("cifar10_pytorch/const.yaml"))
         hparams = config["hyperparameters"]
@@ -963,6 +968,7 @@ class TestPyTorchTrial:
             tmp_path=tmp_path,
             exp_config=exp_config,
             steps=(1, 1),
+            distributed_context = distributed_context
         )
 
     def checkpoint_and_check_metrics(
@@ -1060,6 +1066,7 @@ class TestPyTorchTrial:
         tmp_path: pathlib.Path,
         exp_config: typing.Dict,
         steps: typing.Tuple[int, int] = (1, 1),
+        distributed_context: typing.Optional[det.core.DistributedContext] = None
     ) -> None:
         checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
         tensorboard_path = tmp_path.joinpath("tensorboard")
@@ -1076,6 +1083,7 @@ class TestPyTorchTrial:
             checkpoint_dir=checkpoint_dir,
             tensorboard_path=tensorboard_path,
             expose_gpus=True,
+            distributed_context=distributed_context
         )
 
         trial_controller_A.run()
@@ -1096,6 +1104,7 @@ class TestPyTorchTrial:
             latest_checkpoint=os.listdir(checkpoint_dir)[0],
             steps_completed=trial_controller_A.state.batches_trained,
             expose_gpus=True,
+            distributed_context=distributed_context
         )
         trial_controller_B.run()
 
@@ -1338,6 +1347,7 @@ def create_trial_and_trial_controller(
     min_checkpoint_batches: int = sys.maxsize,
     min_validation_batches: int = sys.maxsize,
     aggregation_frequency: int = 1,
+    distributed_context: typing.Optional[det.core.DistributedContext] = None
 ) -> typing.Tuple[pytorch.PyTorchTrial, pytorch._PyTorchTrialController]:
     assert issubclass(
         trial_class, pytorch.PyTorchTrial
@@ -1357,6 +1367,7 @@ def create_trial_and_trial_controller(
 
     checkpoint_dir = checkpoint_dir or "/tmp"
     with det.core._dummy_init(
+        distributed=distributed_context,
         checkpoint_storage=checkpoint_dir, tensorboard_path=tensorboard_path
     ) as core_context:
         core_context.train._trial_id = "1"
@@ -1408,7 +1419,3 @@ def create_trial_and_trial_controller(
 
         trial_controller.training_iterator = iter(trial_controller.training_loader)
         return trial_inst, trial_controller
-
-if __name__ == '__main__':
-
-    pass
