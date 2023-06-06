@@ -4,6 +4,7 @@ import DataEditor, {
   CompactSelection,
   DataEditorProps,
   DataEditorRef,
+  getMiddleCenterBias,
   GridCell,
   GridCellKind,
   GridColumn,
@@ -14,6 +15,7 @@ import DataEditor, {
   Rectangle,
   Theme,
 } from '@glideapps/glide-data-grid';
+import { DrawHeaderCallback } from '@glideapps/glide-data-grid/dist/ts/data-grid/data-grid-types';
 import { MenuProps } from 'antd';
 import React, {
   Dispatch,
@@ -154,6 +156,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
 }) => {
   const gridRef = useRef<DataEditorRef>(null);
   const [hoveredRow, setHoveredRow] = useState<number>();
+  const columnRenderedRef = useRef<Record<string, boolean>>({});
 
   useEffect(() => {
     if (scrollPositionSetCount.get() >= SCROLL_SET_COUNT_NEEDED) return;
@@ -644,6 +647,33 @@ export const GlideTable: React.FC<GlideTableProps> = ({
     [columnIds, comparisonViewOpen, staticColumns],
   );
 
+  // const sortMap = useMemo(() => {
+  //   return sorts.reduce((acc, sort) => {
+  //     if (sort.column && sort.direction) acc[sort.column] = sort.direction;
+  //     return acc;
+  //   }, {} as Record<string, string>);
+  // }, [sorts]);
+
+  const drawHeader: DrawHeaderCallback = useCallback(({ ctx, column, rect, theme }) => {
+    if (!column.id || column.id === 'selected') return false;
+    if (columnRenderedRef.current[column.id]) return true;
+
+    // if (column.id && sortMap[column.id]) {
+    // }
+    const xPad = theme.cellHorizontalPadding;
+    const font = `${theme.baseFontStyle} ${theme.fontFamily}`;
+    const middleCenterBias = getMiddleCenterBias(ctx, font);
+    const drawX = rect.x + xPad;
+    const drawY = rect.y + rect.height / 2 + middleCenterBias;
+
+    ctx.fillStyle = theme.linkColor;
+    ctx.fillText(column.title, drawX, drawY);
+
+    columnRenderedRef.current[column.id] = true;
+
+    return true;
+  }, []);
+
   return (
     <div
       onWheel={() => {
@@ -655,6 +685,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         <DataEditor
           columns={columns}
           customRenderers={customRenderers}
+          drawHeader={drawHeader}
           freezeColumns={staticColumns.length}
           getCellContent={getCellContent}
           // `getCellsForSelection` is required for double click column resize to content.
