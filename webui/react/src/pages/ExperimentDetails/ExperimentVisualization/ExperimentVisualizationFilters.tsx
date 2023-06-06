@@ -148,7 +148,8 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
 
   // Pick the first valid option if the current local batch is invalid.
   useEffect(() => {
-    if (!batches || (batches.length === 0 || (filters.batch && batches.includes(filters.batch)))) return;
+    if (!batches || batches.length === 0 || (filters.batch && batches.includes(filters.batch)))
+      return;
     onChange?.({ batch: batches.first() });
   }, [batches, filters.batch, onChange]);
 
