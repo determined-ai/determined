@@ -35,8 +35,11 @@ html[data-theme="dark"] {
   max-height: 800px;
 }
 
-.version.centered {
-  text-align: center;
+.version.centered i {
+  display: flex;
+  align-items: center;
+  justify-content: space-evenly;
+  padding: 0 24px;
 }
 
 .bd-header-article {

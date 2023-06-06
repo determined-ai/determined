@@ -83,6 +83,10 @@ html_theme_options = {
         "image_light": "assets/images/logo-determined-ai.svg",
         "image_dark": "assets/images/logo-determined-ai-white.svg",
     },
+    "switcher": {
+        "json_url": "assets/version-switcher/versions.json",
+        "version_match": version,
+    },
     "repository_url": "https://github.com/determined-ai/determined",
     "use_repository_button": True,
     "use_download_button": False,
