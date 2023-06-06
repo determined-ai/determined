@@ -14,7 +14,7 @@ import (
 var DefaultTimeout = time.Hour
 
 type (
-	// Preemptible represents the preemption status of an allocation. An alllocation is assumed to be
+	// Preemptible represents the preemption status of an allocation. An allocation is assumed to be
 	// preempted exactly one time. The object is "nil safe" - it'll gracefully handle calls on a nil
 	// preemption.
 	Preemptible struct {
@@ -30,7 +30,7 @@ type (
 	Watcher struct{ C <-chan struct{} }
 )
 
-// New returns a new preemption struct.
+// New initializes a Preemption and returns it.
 func New() *Preemptible {
 	return &Preemptible{
 		watchers: map[uuid.UUID]chan<- struct{}{},
@@ -64,8 +64,9 @@ func (p *Preemptible) Unwatch(id uuid.UUID) {
 	delete(p.watchers, id)
 }
 
-// Preempt preempts all watchers, marks us as preempted and begins the preemption deadline.
-// The preemption deadline callback can fire until Close is called.
+// Preempt preempts all watchers, marks us as preempted and begins the preemption deadline,
+// after which the timeout callback will be called. The preemption deadline callback can
+// fire until Close is called.
 func (p *Preemptible) Preempt(timeoutCallback func(err error)) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
@@ -108,7 +109,7 @@ func (p *Preemptible) Acknowledged() bool {
 	return p.acked
 }
 
-// Close closes the preemption object.
+// Close cancels the preemption timeout callbacks if they haven't started and signals all watchers.
 func (p *Preemptible) Close() {
 	p.wg.Close()
 
