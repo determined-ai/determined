@@ -1703,7 +1703,7 @@ func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricTyp
 	var zeroTime time.Time
 	var err error
 	var trial apiv1.TrialsSampleResponse_Trial
-	var metricID string
+	var metricID model.MetricType
 	var metricMeasurements []db.MetricMeasurements
 	xAxisLabelMetrics := []string{"epoch"}
 
@@ -1724,9 +1724,9 @@ func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricTyp
 	}
 	switch metricType {
 	case apiv1.MetricType_METRIC_TYPE_TRAINING:
-		metricID = "training" //nolint:goconst
+		metricID = model.TrainingMetricType //nolint:goconst
 	case apiv1.MetricType_METRIC_TYPE_VALIDATION:
-		metricID = "validation" //nolint:goconst
+		metricID = model.ValidationMetricType //nolint:goconst
 	default:
 		panic("Invalid metric type")
 	}
