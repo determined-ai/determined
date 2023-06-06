@@ -330,7 +330,7 @@ func (db *PgDB) MustExec(t *testing.T, sql string, args ...any) sql.Result {
 }
 
 // MockWorkspaces creates as many new workspaces as in workspaceNames and
-// returns a list of workspaceIDs
+// returns a list of workspaceIDs.
 func MockWorkspaces(workspaceNames []string, userID model.UserID) ([]int, error) {
 	ctx := context.Background()
 	var workspaceIDs []int
