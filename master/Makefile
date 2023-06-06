@@ -127,10 +127,10 @@ test-intg: build/mock_gen.stamp
 	gotestsum --junitfile test-intg.junit.xml -- -tags=integration -coverprofile=coverage.out -covermode -run='^(?!TestBenchmark)' count -cover ./...
 
 .PHONY: test-perf
-test-intg: export DET_INTEGRATION_POSTGRES_URL ?= postgres://postgres:postgres@localhost:5432/determined?sslmode=disable
-test-intg: export DET_INTEGRATION_ES_HOST ?= localhost
-test-intg: export DET_INTEGRATION_ES_PORT ?= 9200
-test-perf:
+test-perf: export DET_INTEGRATION_POSTGRES_URL ?= postgres://postgres:postgres@localhost:5432/determined?sslmode=disable
+test-perf: export DET_INTEGRATION_ES_HOST ?= localhost
+test-perf: export DET_INTEGRATION_ES_PORT ?= 9200
+test-perf: build/mock_gen.stamp
 	go test -tags=integration -v -run="TestBenchmark" -count=1 -benchtime=1x ./test/integration/api # TODO 1x
 
 
