@@ -331,9 +331,9 @@ func (db *PgDB) MustExec(t *testing.T, sql string, args ...any) sql.Result {
 
 // MockWorkspaces creates as many new workspaces as in workspaceNames and
 // returns a list of workspaceIDs.
-func MockWorkspaces(workspaceNames []string, userID model.UserID) ([]int, error) {
+func MockWorkspaces(workspaceNames []string, userID model.UserID) ([]int32, error) {
 	ctx := context.Background()
-	var workspaceIDs []int
+	var workspaceIDs []int32
 	var workspaces []model.Workspace
 
 	for _, workspaceName := range workspaceNames {
@@ -364,7 +364,7 @@ func MockWorkspaces(workspaceNames []string, userID model.UserID) ([]int, error)
 }
 
 // CleanupMockWorkspace removes the specified workspaceIDs from the workspaces table.
-func CleanupMockWorkspace(workspaceIDs []int) error {
+func CleanupMockWorkspace(workspaceIDs []int32) error {
 	var workspaces []model.Workspace
 	_, err := Bun().NewDelete().Model(&workspaces).
 		Where("id IN (?)", bun.In(workspaceIDs)).
