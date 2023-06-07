@@ -4,6 +4,7 @@ import DataEditor, {
   CompactSelection,
   DataEditorProps,
   DataEditorRef,
+  getMiddleCenterBias,
   GridCell,
   GridCellKind,
   GridColumn,
@@ -14,6 +15,7 @@ import DataEditor, {
   Rectangle,
   Theme,
 } from '@glideapps/glide-data-grid';
+import { DrawHeaderCallback } from '@glideapps/glide-data-grid/dist/ts/data-grid/data-grid-types';
 import { MenuProps } from 'antd';
 import React, {
   Dispatch,
@@ -61,6 +63,7 @@ import {
 import { TableContextMenu, TableContextMenuProps } from './contextMenu';
 import { customRenderers } from './custom-renderers';
 import { LinkCell } from './custom-renderers/cells/linkCell';
+import { drawArrow, drawTextWithEllipsis } from './custom-renderers/utils';
 import css from './GlideTable.module.scss';
 import { TableActionMenu, TableActionMenuProps } from './menu';
 import { Sort, sortMenuItemsForColumn } from './MultiSortMenu';
@@ -644,6 +647,39 @@ export const GlideTable: React.FC<GlideTableProps> = ({
     [columnIds, comparisonViewOpen, staticColumns],
   );
 
+  const sortMap = useMemo(() => {
+    return sorts.reduce((acc, sort) => {
+      if (sort.column && sort.direction) acc[sort.column] = sort.direction;
+      return acc;
+    }, {} as Record<string, string>);
+  }, [sorts]);
+
+  const drawHeader: DrawHeaderCallback = useCallback(
+    ({ ctx, column, rect, theme }) => {
+      if (!column.id || column.id === 'selected') return false;
+
+      const sortDirection = column.id && sortMap[column.id];
+      if (sortDirection) {
+        const arrowDirection = sortDirection === 'asc' ? 'up' : 'down';
+        ctx.strokeStyle = theme.textLight;
+        drawArrow(ctx, arrowDirection, rect.x + rect.width - 16, 12);
+      }
+
+      const xPad = theme.cellHorizontalPadding;
+      const font = `${theme.baseFontStyle} ${theme.fontFamily}`;
+      const middleCenterBias = getMiddleCenterBias(ctx, font);
+      const x = rect.x + xPad;
+      const y = rect.y + rect.height / 2 + middleCenterBias;
+      const maxWidth = rect.width - (sortDirection ? 12 : 0) - 2 * theme.cellHorizontalPadding;
+
+      ctx.fillStyle = theme.textHeader;
+      drawTextWithEllipsis(ctx, column.title, x, y, maxWidth);
+
+      return true;
+    },
+    [sortMap],
+  );
+
   return (
     <div
       onWheel={() => {
@@ -655,6 +691,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         <DataEditor
           columns={columns}
           customRenderers={customRenderers}
+          drawHeader={drawHeader}
           freezeColumns={staticColumns.length}
           getCellContent={getCellContent}
           // `getCellsForSelection` is required for double click column resize to content.
