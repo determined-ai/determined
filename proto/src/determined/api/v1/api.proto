@@ -1834,9 +1834,20 @@ service Determined {
       get: "/api/v1/projects/{id}/columns"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Internal"
+      tags: [ "Projects", "Internal" ]
     };
   }
+  // Get metrics range for a project.
+  rpc GetProjectNumericMetricsRange(GetProjectNumericMetricsRangeRequest)
+      returns (GetProjectNumericMetricsRangeResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/projects/{id}/experiments/metric-ranges"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: [ "Projects", "Internal" ]
+    };
+  }
+
   // Create a project.
   rpc PostProject(PostProjectRequest) returns (PostProjectResponse) {
     option (google.api.http) = {
