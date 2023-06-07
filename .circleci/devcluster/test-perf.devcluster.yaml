@@ -1,6 +1,7 @@
 stages:
   - db:
       name: db
+      data_dir: ~/.postgres
 
   - elastic:
       name: elastic
