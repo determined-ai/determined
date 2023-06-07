@@ -2124,15 +2124,42 @@ jobs:
       - run: sudo yum install -y xmlsec1
       - run:
           name: Remove previous HPE MLDE Master RPM
+          # FE-35: the slow exit of a container, or NFS caching can cause incorrect response
+          # and failure executing command "rm -rf ${dir}". Wait for 5 seconds and retry the command.
+          # Ignore the failure on retry, cause the failure from "rm -rf" should not stop the test suite to run.
           command: |
             export DET_PKG_NAME=$(rpm -qp --queryformat "%{NAME}" master/dist/hpe-mlde-master_*-ee_linux_amd64.rpm)
             if rpm -q $DET_PKG_NAME; then
               sudo rpm -e $DET_PKG_NAME
             fi
             echo "Cleanup state from prior runs on HOSTNAME=$HOSTNAME"
-            sudo rm -rf /scratch/launcher/.launcher.$HOSTNAME/checkpoints/determined-checkpoint
-            sudo rm -rf /scratch/launcher/.launcher.$HOSTNAME/archiveVolumes/
-            sudo rm -rf /scratch/launcher/.launcher.$HOSTNAME/jobs
+
+            dir="/scratch/launcher/.launcher.$HOSTNAME/checkpoints/determined-checkpoint"
+            if sudo rm -rf ${dir}; then
+              echo "Removed ${dir}"
+            else
+              sleep 5
+              echo "Retry cleanup ${dir}"
+              sudo rm -rf ${dir} || true
+            fi
+
+            dir="/scratch/launcher/.launcher.$HOSTNAME/archiveVolumes/"
+            if sudo rm -rf ${dir}; then
+              echo "Removed ${dir}"
+            else
+              sleep 5
+              echo "Retry cleanup ${dir}"
+              sudo rm -rf ${dir} || true
+            fi
+
+            dir="/scratch/launcher/.launcher.$HOSTNAME/jobs"
+            if sudo rm -rf ${dir}; then
+              echo "Removed ${dir}"
+            else
+              sleep 5
+              echo "Retry cleanup ${dir}"
+              sudo rm -rf ${dir} || true
+            fi
 
       - setup-python-venv:
           determined: True
