@@ -100,9 +100,3 @@ func (a *apiServer) ListWorkspacesBoundToRP(
 ) (*apiv1.ListWorkspacesBoundToRPResponse, error) {
 	return nil, nil
 }
-
-func (a *apiServer) ListRPWorkspaceBindings(
-	ctx context.Context, req *apiv1.ListRPWorkspaceBindingsRequest,
-) (*apiv1.ListRPWorkspaceBindingsResponse, error) {
-	return nil, nil
-}

@@ -1526,6 +1526,36 @@ class v1AwsCustomTag:
         }
         return out
 
+class v1BindRPToWorkspaceRequest:
+    workspaceIds: "typing.Optional[typing.Sequence[int]]" = None
+
+    def __init__(
+        self,
+        *,
+        resourcePoolName: str,
+        workspaceIds: "typing.Union[typing.Sequence[int], None, Unset]" = _unset,
+    ):
+        self.resourcePoolName = resourcePoolName
+        if not isinstance(workspaceIds, Unset):
+            self.workspaceIds = workspaceIds
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1BindRPToWorkspaceRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "resourcePoolName": obj["resourcePoolName"],
+        }
+        if "workspaceIds" in obj:
+            kwargs["workspaceIds"] = obj["workspaceIds"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "resourcePoolName": self.resourcePoolName,
+        }
+        if not omit_unset or "workspaceIds" in vars(self):
+            out["workspaceIds"] = self.workspaceIds
+        return out
+
 class v1BulkExperimentFilters:
     archived: "typing.Optional[bool]" = None
     description: "typing.Optional[str]" = None
@@ -6510,32 +6540,6 @@ class v1LaunchWarning(DetEnum):
     UNSPECIFIED = "LAUNCH_WARNING_UNSPECIFIED"
     CURRENT_SLOTS_EXCEEDED = "LAUNCH_WARNING_CURRENT_SLOTS_EXCEEDED"
 
-class v1ListRPWorkspaceBindingsResponse:
-    poolWithBindings: "typing.Optional[typing.Sequence[v1PoolWithBindings]]" = None
-
-    def __init__(
-        self,
-        *,
-        poolWithBindings: "typing.Union[typing.Sequence[v1PoolWithBindings], None, Unset]" = _unset,
-    ):
-        if not isinstance(poolWithBindings, Unset):
-            self.poolWithBindings = poolWithBindings
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1ListRPWorkspaceBindingsResponse":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-        }
-        if "poolWithBindings" in obj:
-            kwargs["poolWithBindings"] = [v1PoolWithBindings.from_json(x) for x in obj["poolWithBindings"]] if obj["poolWithBindings"] is not None else None
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-        }
-        if not omit_unset or "poolWithBindings" in vars(self):
-            out["poolWithBindings"] = None if self.poolWithBindings is None else [x.to_json(omit_unset) for x in self.poolWithBindings]
-        return out
-
 class v1ListRPsBoundToWorkspaceResponse:
     resourcePools: "typing.Optional[typing.Sequence[str]]" = None
 
@@ -7465,6 +7469,36 @@ class v1OrderBy(DetEnum):
     ASC = "ORDER_BY_ASC"
     DESC = "ORDER_BY_DESC"
 
+class v1OverwriteRPWorkspaceBindingsRequest:
+    workspaceIds: "typing.Optional[typing.Sequence[int]]" = None
+
+    def __init__(
+        self,
+        *,
+        resourcePoolName: str,
+        workspaceIds: "typing.Union[typing.Sequence[int], None, Unset]" = _unset,
+    ):
+        self.resourcePoolName = resourcePoolName
+        if not isinstance(workspaceIds, Unset):
+            self.workspaceIds = workspaceIds
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1OverwriteRPWorkspaceBindingsRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "resourcePoolName": obj["resourcePoolName"],
+        }
+        if "workspaceIds" in obj:
+            kwargs["workspaceIds"] = obj["workspaceIds"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "resourcePoolName": self.resourcePoolName,
+        }
+        if not omit_unset or "workspaceIds" in vars(self):
+            out["workspaceIds"] = self.workspaceIds
+        return out
+
 class v1Pagination:
     endIndex: "typing.Optional[int]" = None
     limit: "typing.Optional[int]" = None
@@ -8345,36 +8379,6 @@ class v1PolymorphicFilter:
             out["name"] = self.name
         if not omit_unset or "timeRange" in vars(self):
             out["timeRange"] = None if self.timeRange is None else self.timeRange.to_json(omit_unset)
-        return out
-
-class v1PoolWithBindings:
-    workspaceIds: "typing.Optional[typing.Sequence[int]]" = None
-
-    def __init__(
-        self,
-        *,
-        poolName: str,
-        workspaceIds: "typing.Union[typing.Sequence[int], None, Unset]" = _unset,
-    ):
-        self.poolName = poolName
-        if not isinstance(workspaceIds, Unset):
-            self.workspaceIds = workspaceIds
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1PoolWithBindings":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-            "poolName": obj["poolName"],
-        }
-        if "workspaceIds" in obj:
-            kwargs["workspaceIds"] = obj["workspaceIds"]
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-            "poolName": self.poolName,
-        }
-        if not omit_unset or "workspaceIds" in vars(self):
-            out["workspaceIds"] = self.workspaceIds
         return out
 
 class v1PostAllocationProxyAddressRequest:
@@ -12854,6 +12858,36 @@ class v1UnarchiveExperimentsResponse:
         }
         return out
 
+class v1UnbindRPFromWorkspaceRequest:
+    workspaceIds: "typing.Optional[typing.Sequence[int]]" = None
+
+    def __init__(
+        self,
+        *,
+        resourcePoolName: str,
+        workspaceIds: "typing.Union[typing.Sequence[int], None, Unset]" = _unset,
+    ):
+        self.resourcePoolName = resourcePoolName
+        if not isinstance(workspaceIds, Unset):
+            self.workspaceIds = workspaceIds
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1UnbindRPFromWorkspaceRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "resourcePoolName": obj["resourcePoolName"],
+        }
+        if "workspaceIds" in obj:
+            kwargs["workspaceIds"] = obj["workspaceIds"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "resourcePoolName": self.resourcePoolName,
+        }
+        if not omit_unset or "workspaceIds" in vars(self):
+            out["workspaceIds"] = self.workspaceIds
+        return out
+
 class v1UpdateGroupRequest:
     addUsers: "typing.Optional[typing.Sequence[int]]" = None
     name: "typing.Optional[str]" = None
@@ -13749,13 +13783,16 @@ def post_AssignRoles(
 
 def post_BindRPToWorkspace(
     session: "api.Session",
+    *,
+    body: "v1BindRPToWorkspaceRequest",
+    resourcePoolName: str,
 ) -> None:
     _params = None
     _resp = session._do_request(
         method="POST",
-        path="/api/v1/resource-pools/workspace-bind",
+        path=f"/api/v1/resource-pools/{resourcePoolName}/workspace-bindings",
         params=_params,
-        json=None,
+        json=body.to_json(True),
         data=None,
         headers=None,
         timeout=None,
@@ -16269,30 +16306,6 @@ def post_LaunchTensorboard(
         return v1LaunchTensorboardResponse.from_json(_resp.json())
     raise APIHttpError("post_LaunchTensorboard", _resp)
 
-def get_ListRPWorkspaceBindings(
-    session: "api.Session",
-    *,
-    limit: "typing.Optional[int]" = None,
-    offset: "typing.Optional[int]" = None,
-) -> "v1ListRPWorkspaceBindingsResponse":
-    _params = {
-        "limit": limit,
-        "offset": offset,
-    }
-    _resp = session._do_request(
-        method="GET",
-        path="/api/v1/resource-pools/all-bindings",
-        params=_params,
-        json=None,
-        data=None,
-        headers=None,
-        timeout=None,
-        stream=False,
-    )
-    if _resp.status_code == 200:
-        return v1ListRPWorkspaceBindingsResponse.from_json(_resp.json())
-    raise APIHttpError("get_ListRPWorkspaceBindings", _resp)
-
 def get_ListRPsBoundToWorkspace(
     session: "api.Session",
     *,
@@ -16306,7 +16319,7 @@ def get_ListRPsBoundToWorkspace(
     }
     _resp = session._do_request(
         method="GET",
-        path=f"/api/v1/workspaces/{workspaceId}/resource-pools",
+        path=f"/api/v1/workspaces/{workspaceId}/available-resource-pools",
         params=_params,
         json=None,
         data=None,
@@ -16351,7 +16364,7 @@ def get_ListWorkspacesBoundToRP(
     }
     _resp = session._do_request(
         method="GET",
-        path=f"/api/v1/resource-pools/{resourcePoolName}/workspaces",
+        path=f"/api/v1/resource-pools/{resourcePoolName}/workspace-bindings",
         params=_params,
         json=None,
         data=None,
@@ -16602,15 +16615,18 @@ def post_NotifyContainerRunning(
         return v1NotifyContainerRunningResponse.from_json(_resp.json())
     raise APIHttpError("post_NotifyContainerRunning", _resp)
 
-def patch_OverwriteRPWorkspaceBindings(
+def put_OverwriteRPWorkspaceBindings(
     session: "api.Session",
+    *,
+    body: "v1OverwriteRPWorkspaceBindingsRequest",
+    resourcePoolName: str,
 ) -> None:
     _params = None
     _resp = session._do_request(
-        method="PATCH",
-        path="/api/v1/resource-pools/overwrite-bindings",
+        method="PUT",
+        path=f"/api/v1/resource-pools/{resourcePoolName}/workspace-bindings",
         params=_params,
-        json=None,
+        json=body.to_json(True),
         data=None,
         headers=None,
         timeout=None,
@@ -16618,7 +16634,7 @@ def patch_OverwriteRPWorkspaceBindings(
     )
     if _resp.status_code == 200:
         return
-    raise APIHttpError("patch_OverwriteRPWorkspaceBindings", _resp)
+    raise APIHttpError("put_OverwriteRPWorkspaceBindings", _resp)
 
 def patch_PatchCheckpoints(
     session: "api.Session",
@@ -18030,13 +18046,16 @@ def post_UnarchiveWorkspace(
 
 def post_UnbindRPFromWorkspace(
     session: "api.Session",
+    *,
+    body: "v1UnbindRPFromWorkspaceRequest",
+    resourcePoolName: str,
 ) -> None:
     _params = None
     _resp = session._do_request(
         method="POST",
-        path="/api/v1/resource-pools/workspace-unbind",
+        path=f"/api/v1/resource-pools/{resourcePoolName}/delete-workspace-bindings",
         params=_params,
-        json=None,
+        json=body.to_json(True),
         data=None,
         headers=None,
         timeout=None,
