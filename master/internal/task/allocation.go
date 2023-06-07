@@ -134,7 +134,7 @@ const (
 // NewAllocation returns a new allocation, which tracks allocation state in a fairly generic way.
 func NewAllocation(
 	logCtx detLogger.Context, req sproto.AllocateRequest, db db.DB, rm rm.ResourceManager,
-) actor.Actor {
+) *Allocation {
 	req.LogContext = detLogger.MergeContexts(logCtx, detLogger.Context{
 		"allocation-id": req.AllocationID,
 	})

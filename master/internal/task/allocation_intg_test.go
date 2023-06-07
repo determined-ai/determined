@@ -315,7 +315,7 @@ func setup(t *testing.T) (
 	self := system.MustActorOf(actor.Addr(trialAddr, "allocation"), a)
 	// Pre-scheduled stage.
 	system.Ask(self, actor.Ping{}).Get()
-	require.Contains(t, rmActor.Messages, a.(*Allocation).req)
+	require.Contains(t, rmActor.Messages, a.req)
 
-	return system, &rmActor, rm, &trialImpl, trial, pgDB, a.(*Allocation), self
+	return system, &rmActor, rm, &trialImpl, trial, pgDB, a, self
 }
