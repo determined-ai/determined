@@ -71,24 +71,6 @@ message OverwriteRPWorkspaceBindingsRequest {
 // Overwrite and replace the workspaces bound to an RP response.
 message OverwriteRPWorkspaceBindingsResponse {}
 
-// List all the workspace RP bindings.
-message ListRPWorkspaceBindingsRequest {
-  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "limit" ] }
-  };
-
-  // The offset to use with pagination
-  int32 offset = 1;
-  // The maximum number of results to return
-  int32 limit = 2;
-}
-
-// Reponse to ListWorkspaceRPBindingsRequest.
-message ListRPWorkspaceBindingsResponse {
-  // Pool with bindings object.
-  repeated determined.resourcepool.v1.PoolWithBindings pool_with_bindings = 1;
-}
-
 // List all the workspaces bound to the RP.
 message ListWorkspacesBoundToRPRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
