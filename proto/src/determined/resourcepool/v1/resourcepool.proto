@@ -356,14 +356,3 @@ message ResourcePoolPrioritySchedulerDetail {
   // List of available priorities for K8 (if applicable).
   repeated K8PriorityClass k8_priorities = 3;
 }
-
-// Details related to the resouce pool workspace bindings.
-message PoolWithBindings {
-  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "pool_name" ] }
-  };
-  // Resource pool name for binding.
-  string pool_name = 1;
-  // The workspace ids bind to the resource pool.
-  repeated int32 workspace_ids = 2;
-}
