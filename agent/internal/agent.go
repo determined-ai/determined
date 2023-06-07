@@ -140,7 +140,7 @@ func (a *Agent) run(ctx context.Context) error {
 		}()
 		cruntime = acl
 	case options.SingularityContainerRuntime:
-		acl, sErr := singularity.New(a.opts)
+		acl, sErr := singularity.New(a.opts.SingularityOptions, a.opts.AgentID)
 		if sErr != nil {
 			return fmt.Errorf("failed to build singularity client: %w", sErr)
 		}

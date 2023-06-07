@@ -30,6 +30,7 @@ import (
 	"github.com/determined-ai/determined/agent/pkg/events"
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/cproto"
+	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/syncx/waitgroupx"
 	"github.com/determined-ai/determined/master/pkg/tasks"
@@ -61,12 +62,11 @@ type SingularityClient struct {
 	wg         waitgroupx.Group
 	containers map[cproto.ID]*SingularityContainer
 	agentTmp   string
-	slotType   string
 }
 
 // New returns a new singularity client, which launches and tracks containers.
-func New(opts options.Options) (*SingularityClient, error) {
-	agentTmp, err := cruntimes.BaseTempDirName(opts.AgentID)
+func New(opts options.SingularityOptions, agentID string) (*SingularityClient, error) {
+	agentTmp, err := cruntimes.BaseTempDirName(agentID)
 	if err != nil {
 		return nil, fmt.Errorf("unable to compose agentTmp directory path: %w", err)
 	}
@@ -81,11 +81,10 @@ func New(opts options.Options) (*SingularityClient, error) {
 
 	return &SingularityClient{
 		log:        logrus.WithField("compotent", "singularity"),
-		opts:       opts.SingularityOptions,
+		opts:       opts,
 		wg:         waitgroupx.WithContext(context.Background()),
 		containers: make(map[cproto.ID]*SingularityContainer),
 		agentTmp:   agentTmp,
-		slotType:   opts.SlotType,
 	}, nil
 }
 
@@ -290,7 +289,8 @@ func (s *SingularityClient) RunContainer(
 	}
 
 	// TODO(DET-9080): Test this on ROCM devices.
-	if s.slotType == "rocm" {
+	s.log.Tracef("Device type is %s", req.DeviceType)
+	if req.DeviceType == device.ROCM {
 		args = append(args, "--rocm")
 	}
 
