@@ -15,7 +15,14 @@ import Spinner from 'shared/components/Spinner/Spinner';
 import { Primitive, Range } from 'shared/types';
 import { flattenObject, isPrimitive } from 'shared/utils/data';
 import { numericSorter } from 'shared/utils/sort';
-import { ExperimentWithTrial, Hyperparameter, HyperparameterType, Scale, TrialItem } from 'types';
+import {
+  ExperimentWithTrial,
+  HpTrialData,
+  Hyperparameter,
+  HyperparameterType,
+  Scale,
+  TrialItem,
+} from 'types';
 import { defaultNumericRange, getNumericRange, updateRange } from 'utils/chart';
 import { metricToStr } from 'utils/metric';
 
@@ -29,13 +36,6 @@ import { useGlasbey } from './useGlasbey';
 interface Props {
   selectedExperiments: ExperimentWithTrial[];
   trials: TrialItem[];
-}
-
-interface HpTrialData {
-  data: Record<string, Primitive[]>;
-  metricRange?: Range<number>;
-  metricValues: number[];
-  trialIds: number[];
 }
 
 const CompareParallelCoordinates: React.FC<Props> = ({ selectedExperiments, trials }: Props) => {
