@@ -91,7 +91,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   });
   const [sortString, setSortString] = useState<string>('');
   const [experiments, setExperiments] = useState<Loadable<ExperimentWithTrial>[]>(
-    Array(page * PAGE_SIZE).fill(NotLoaded),
+    Array(PAGE_SIZE).fill(NotLoaded),
   );
   const [total, setTotal] = useState<Loadable<number>>(NotLoaded);
   const [projectColumns, setProjectColumns] = useState<Loadable<ProjectColumn[]>>(NotLoaded);
@@ -195,9 +195,10 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const fetchExperiments = useCallback(async (): Promise<void> => {
     if (isLoadingSettings) return;
     try {
-      // Use -1.5 because paged view starts page at 1.
-      const tableOffset = Math.max((page - 1.5) * PAGE_SIZE, 0);
+      // Use -1.5 because paged view starts page at 1 for paged view.
       const pagedView = globalSettings.expListView === 'paged';
+      const pageOffset = pagedView ? 1.5 : 0.5;
+      const tableOffset = Math.max((page - pageOffset) * PAGE_SIZE, 0);
 
       const response = await searchExperiments(
         {
@@ -209,24 +210,29 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         },
         { signal: canceler.signal },
       );
+      const total = response.pagination.total ?? 0;
+      const loadedExperiments = response.experiments;
 
-      setExperiments((prevExperiments) => {
+      setExperiments((prev) => {
         if (pagedView) {
-          return response.experiments.map((e) => Loaded(e));
+          return loadedExperiments.map((experiment) => Loaded(experiment));
         }
-        const experimentBeforeCurrentPage = [
-          ...prevExperiments.slice(0, tableOffset),
-          ...Array(Math.max(0, tableOffset - prevExperiments.length)).fill(NotLoaded),
-        ];
 
-        const experimentsAfterCurrentPage = prevExperiments.slice(
-          tableOffset + response.experiments.length,
-        );
-        return [
-          ...experimentBeforeCurrentPage,
-          ...response.experiments.map((e) => Loaded(e)),
-          ...experimentsAfterCurrentPage,
-        ].slice(0, response.pagination.total);
+        let newExperiments = prev;
+
+        // Fill out the loadable experiments array with total count.
+        if (prev.length !== total) {
+          newExperiments = [...prev, ...Array(total - prev.length).fill(NotLoaded)];
+        }
+
+        // Update the list with the fetched results.
+        Array.prototype.splice.apply(newExperiments, [
+          tableOffset,
+          loadedExperiments.length,
+          ...loadedExperiments.map((experiment) => Loaded(experiment)),
+        ]);
+
+        return newExperiments;
       });
       setTotal(
         response.pagination.total !== undefined ? Loaded(response.pagination.total) : NotLoaded,
