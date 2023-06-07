@@ -15,14 +15,7 @@ import Spinner from 'shared/components/Spinner/Spinner';
 import { Primitive, Range } from 'shared/types';
 import { flattenObject, isPrimitive } from 'shared/utils/data';
 import { numericSorter } from 'shared/utils/sort';
-import {
-  ExperimentWithTrial,
-  Hyperparameter,
-  HyperparameterType,
-  MetricType,
-  Scale,
-  TrialItem,
-} from 'types';
+import { ExperimentWithTrial, Hyperparameter, HyperparameterType, Scale, TrialItem } from 'types';
 import { defaultNumericRange, getNumericRange, updateRange } from 'utils/chart';
 import { metricToStr } from 'utils/metric';
 
@@ -93,10 +86,18 @@ const CompareParallelCoordinates: React.FC<Props> = ({ selectedExperiments, tria
   }, [resetSettings]);
 
   useEffect(() => {
-    if (settings.metric !== undefined) return;
-    const activeMetricFound = metrics.find((metric) => metric.type === MetricType.Validation);
+    if (settings.metric === undefined) return;
+    const activeMetricFound = metrics.find(
+      (metric) => metric.name === settings?.metric?.name && metric.type === settings?.metric?.type,
+    );
     updateSettings({ metric: activeMetricFound ?? metrics.first() });
   }, [selectedExperiments, metrics, settings.metric, updateSettings]);
+
+  useEffect(() => {
+    if (settings.hParams === undefined) return;
+    const activeHParams = settings.hParams.filter((hp) => fullHParams.includes(hp));
+    updateSettings({ hParams: activeHParams });
+  }, [selectedExperiments, fullHParams, settings.hParams, updateSettings]);
 
   const visualizationFilters = useMemo(() => {
     return (
