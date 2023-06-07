@@ -264,7 +264,8 @@ func (a *apiServer) getProjectMetricsNames(
 
 	err = metricQuery.Scan(ctx, &metricNames)
 	if err != nil {
-		return nil, errors.Wrapf(err, "error fetching metrics names for project (%d) from database", project.Id)
+		return nil, errors.Wrapf(
+			err, "error fetching metrics names for project (%d) from database", project.Id)
 	}
 	var names []string
 	for _, n := range metricNames {
@@ -393,7 +394,8 @@ func (a *apiServer) getProjectNumericMetricsRange(
 	}
 
 	if err := query.Scan(ctx, &res); err != nil {
-		return nil, nil, errors.Wrapf(err, "error fetching metrics range for project (%d) from database", project.Id)
+		return nil, nil, errors.Wrapf(
+			err, "error fetching metrics range for project (%d) from database", project.Id)
 	}
 	valMetricsValues := make(map[string]([]float64))
 	traMetricsValues := make(map[string]([]float64))
