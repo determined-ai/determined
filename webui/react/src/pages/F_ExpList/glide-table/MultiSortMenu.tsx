@@ -113,6 +113,7 @@ export const sortMenuItemsForColumn = (
     const curSort = sorts.find((s) => s.column === column.column);
     const isSortMatch = curSort && curSort.direction === option.value;
     return {
+      disabled: BANNED_SORT_COLUMNS.has(column.column),
       icon: <SortArrow direction={option.value as DirectionType} />,
       key: option.value,
       label: `Sort ${option.label}`,
