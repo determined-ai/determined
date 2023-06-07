@@ -95,7 +95,6 @@ func TestOverwriteFail(t *testing.T) {
 
 func TestRemoveInvalidBinding(t *testing.T) {
 	ctx := context.TODO()
-	// TODO: call list bindings here to make sure it worked
 	// remove binding that doesn't exist
 	poolName := "poolName" //nolint:goconst
 	workspaceIDs := []int32{1}

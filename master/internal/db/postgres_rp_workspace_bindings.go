@@ -28,7 +28,6 @@ func AddRPWorkspaceBindings(ctx context.Context, workspaceIds []int32, poolName 
 		return errors.Errorf("pool with name %v doesn't exit in config", poolName)
 	}
 
-	// go through the resourcepools to check if pool name is there.
 	var bindings []RPWorkspaceBinding
 	for _, workspaceID := range workspaceIds {
 		bindings = append(bindings, RPWorkspaceBinding{
