@@ -55,7 +55,7 @@ func RemoveRPWorkspaceBindings(ctx context.Context,
 			return err
 		}
 		if len(rpWorkspaceBindings) == 0 {
-			return errors.Errorf("a binding of workspace with id %v and pool with name %v doesn't exist",
+			return errors.Errorf(" workspace with id %v and pool with name  %v binding doesn't exist",
 				workspaceID, poolName)
 		}
 	}

@@ -100,11 +100,11 @@ func TestRemoveInvalidBinding(t *testing.T) {
 	poolName := "poolName" //nolint:goconst
 	workspaceIDs := []int32{1}
 	err := RemoveRPWorkspaceBindings(ctx, workspaceIDs, poolName)
-	require.ErrorContains(t, err, "doesn't exist")
+	require.ErrorContains(t, err, "binding doesn't exist")
 	// bulk remove bindings that don't exist
 	poolName = "poolName"
 	workspaceIDs = []int32{1, 2, 3}
 	err = RemoveRPWorkspaceBindings(ctx, workspaceIDs, poolName)
-	require.ErrorContains(t, err, "doesn't exist")
+	require.ErrorContains(t, err, " binding doesn't exist")
 	return
 }
