@@ -7,6 +7,7 @@ import DataEditor, {
   GridCell,
   GridCellKind,
   GridColumn,
+  GridMouseEventArgs,
   GridSelection,
   HeaderClickedEventArgs,
   Item,
@@ -36,9 +37,11 @@ import { handlePath } from 'routes/utils';
 import { V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
 import useUI from 'shared/contexts/stores/UI';
 import usePrevious from 'shared/hooks/usePrevious';
+import { getCssVar } from 'shared/themes';
 import { AnyMouseEvent } from 'shared/utils/routes';
 import usersStore from 'stores/users';
 import { ExperimentWithTrial, Project, ProjectColumn } from 'types';
+import { Surface } from 'utils/colors';
 import { getProjectExperimentForExperimentItem } from 'utils/experiment';
 import { Loadable } from 'utils/loadable';
 import { observable, useObservable, WritableObservable } from 'utils/observable';
@@ -146,6 +149,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   onContextMenuComplete,
 }) => {
   const gridRef = useRef<DataEditorRef>(null);
+  const [hoveredRow, setHoveredRow] = useState<number>();
 
   useEffect(() => {
     if (scrollPositionSetCount.get() >= SCROLL_SET_COUNT_NEEDED) return;
@@ -249,14 +253,17 @@ export const GlideTable: React.FC<GlideTableProps> = ({
       if (row === data.length) return;
       // avoid showing 'empty rows' below data
       if (!data[row]) return;
+
+      const hoverStyle = row === hoveredRow ? { bgCell: getCssVar(Surface.Surface) } : {};
+
       const rowColorTheme = Loadable.match(data[row], {
         Loaded: (record) =>
           colorMap[record.experiment.id] ? { accentColor: colorMap[record.experiment.id] } : {},
         NotLoaded: () => ({}),
       });
-      return { ...rowColorTheme };
+      return { ...rowColorTheme, ...hoverStyle };
     },
-    [colorMap, data],
+    [colorMap, data, hoveredRow],
   );
 
   const onColumnResize: DataEditorProps['onColumnResize'] = useCallback(
@@ -565,6 +572,15 @@ export const GlideTable: React.FC<GlideTableProps> = ({
     [sortableColumnIds, setSortableColumnIds],
   );
 
+  const onColumnHovered = useCallback(
+    (args: GridMouseEventArgs) => {
+      const [, row] = args.location;
+      setHoveredRow(args.kind !== 'cell' ? undefined : row);
+      onItemHovered?.(args);
+    },
+    [onItemHovered],
+  );
+
   const columns: DataEditorProps['columns'] = useMemo(() => {
     const gridColumns = columnIds
       .map((columnName) => {
@@ -660,7 +676,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
           onColumnMoved={onColumnMoved}
           onColumnResize={onColumnResize}
           onHeaderClicked={onHeaderClicked}
-          onItemHovered={onItemHovered}
+          onItemHovered={onColumnHovered}
           onVisibleRegionChanged={handleScroll}
         />
       </div>
