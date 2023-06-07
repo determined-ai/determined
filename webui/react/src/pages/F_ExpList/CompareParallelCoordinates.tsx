@@ -86,7 +86,6 @@ const CompareParallelCoordinates: React.FC<Props> = ({ selectedExperiments, tria
   }, [resetSettings]);
 
   useEffect(() => {
-    if (settings.metric === undefined) return;
     const activeMetricFound = metrics.find(
       (metric) => metric.name === settings?.metric?.name && metric.type === settings?.metric?.type,
     );
@@ -94,9 +93,16 @@ const CompareParallelCoordinates: React.FC<Props> = ({ selectedExperiments, tria
   }, [selectedExperiments, metrics, settings.metric, updateSettings]);
 
   useEffect(() => {
-    if (settings.hParams === undefined) return;
-    const activeHParams = settings.hParams.filter((hp) => fullHParams.includes(hp));
-    updateSettings({ hParams: activeHParams });
+    if (settings.hParams !== undefined) {
+      if (settings.hParams.length === 0 && fullHParams.length > 0) {
+        updateSettings({ hParams: fullHParams.slice(0, 10) });
+      } else {
+        const activeHParams = settings.hParams.filter((hp) => fullHParams.includes(hp));
+        updateSettings({ hParams: activeHParams });
+      }
+    } else {
+      updateSettings({ hParams: fullHParams });
+    }
   }, [selectedExperiments, fullHParams, settings.hParams, updateSettings]);
 
   const visualizationFilters = useMemo(() => {
@@ -250,11 +256,20 @@ const CompareParallelCoordinates: React.FC<Props> = ({ selectedExperiments, tria
     });
   }, [selectedExperiments, selectedMetric, fullHParams, data, selectedScale, metrics, trials]);
 
-  if (!chartData) {
+  if (selectedExperiments.length === 0) {
+    return (
+      <div className={css.waiting}>
+        <Alert description="No experiments selected." />
+        <Spinner />
+      </div>
+    );
+  }
+
+  if (!chartData || (selectedExperiments.length !== 0 && metrics.length === 0)) {
     return (
       <div className={css.waiting}>
         <Alert
-          description="Please wait until the experiment is further along."
+          description="Please wait until the experiments are further along."
           message="Not enough data points to plot."
         />
         <Spinner />
