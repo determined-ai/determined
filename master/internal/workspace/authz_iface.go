@@ -17,12 +17,8 @@ type WorkspaceAuthZ interface {
 	) error
 
 	// POST /api/v1/resource-pools/workspace-bind
-	CanBindRPWorkspace(
-		ctx context.Context, curUser model.User, workspaceIDs []int32,
-	) error
-
 	// POST /api/v1/resource-pools/workspace-unbind
-	CanUnBindRPWorkspace(
+	CanModifyRPWorkspaceBindings(
 		ctx context.Context, curUser model.User, workspaceIDs []int32,
 	) error
 

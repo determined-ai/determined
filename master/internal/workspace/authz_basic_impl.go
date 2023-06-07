@@ -19,22 +19,12 @@ func (a *WorkspaceAuthZBasic) CanGetWorkspace(
 	return nil
 }
 
-// CanBindRPWorkspace requires user to be an admin.
-func (a *WorkspaceAuthZBasic) CanBindRPWorkspace(
+// CanModifyRPWorkspaceBindings requires user to be an admin.
+func (a *WorkspaceAuthZBasic) CanModifyRPWorkspaceBindings(
 	ctx context.Context, curUser model.User, workspaceIDs []int32,
 ) error {
 	if !curUser.Admin {
 		return fmt.Errorf("only admin privileged users can bind resource pool to a workspace")
-	}
-	return nil
-}
-
-// CanUnBindRPWorkspace requires user to be an admin.
-func (a *WorkspaceAuthZBasic) CanUnBindRPWorkspace(
-	ctx context.Context, curUser model.User, workspaceIDs []int32,
-) error {
-	if !curUser.Admin {
-		return fmt.Errorf("only admin privileged users can unbind resource pool to a workspace")
 	}
 	return nil
 }

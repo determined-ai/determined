@@ -19,7 +19,7 @@ type RPWorkspaceBinding struct {
 }
 
 // AddRPWorkspaceBindings inserts new bindings between workspaceIds and poolName.
-func (db *PgDB) AddRPWorkspaceBindings(ctx context.Context, workspaceIds []int32, poolName string,
+func AddRPWorkspaceBindings(ctx context.Context, workspaceIds []int32, poolName string,
 ) error {
 	var bindings []RPWorkspaceBinding
 	for _, workspaceID := range workspaceIds {
@@ -35,7 +35,7 @@ func (db *PgDB) AddRPWorkspaceBindings(ctx context.Context, workspaceIds []int32
 }
 
 // RemoveRPWorkspaceBindings removes the bindings between workspaceIds and poolName.
-func (db *PgDB) RemoveRPWorkspaceBindings(ctx context.Context,
+func RemoveRPWorkspaceBindings(ctx context.Context,
 	workspaceIds []int32, poolName string,
 ) error {
 	_, err := Bun().NewDelete().Table("rp_workspace_bindings").Where("workspace_id IN (?)",
@@ -116,4 +116,20 @@ func runPagedBunQuery(
 		StartIndex: int32(startIndex),
 		EndIndex:   int32(endIndex),
 	}, nil
+}
+
+// OverwriteRPWorkspaceBindings overwrites the bindings between workspaceIds and poolName.
+func (db *PgDB) OverwriteRPWorkspaceBindings(ctx context.Context,
+	workspaceIds []int32, poolName string,
+) error {
+	// Remove existing ones with this pool name
+	_, err := Bun().NewDelete().Table("rp_workspace_bindings").
+		Where("pool_name = ?", poolName).Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	err = AddRPWorkspaceBindings(ctx, workspaceIds, poolName)
+	return err
+
 }
