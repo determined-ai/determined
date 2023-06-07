@@ -3876,13 +3876,13 @@ export interface V1GetProjectColumnsResponse {
 /**
  * 
  * @export
- * @interface V1GetProjectMetricsRangeResponse
+ * @interface V1GetProjectNumericMetricsRangeResponse
  */
-export interface V1GetProjectMetricsRangeResponse {
+export interface V1GetProjectNumericMetricsRangeResponse {
     /**
      * List of ranges.
      * @type {Array<V1MetricsRange>}
-     * @memberof V1GetProjectMetricsRangeResponse
+     * @memberof V1GetProjectNumericMetricsRangeResponse
      */
     ranges?: Array<V1MetricsRange>;
 }
@@ -17248,10 +17248,10 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getProjectMetricsRange(id: number, options: any = {}): FetchArgs {
+        getProjectNumericMetricsRange(id: number, options: any = {}): FetchArgs {
             // verify required parameter 'id' is not null or undefined
             if (id === null || id === undefined) {
-                throw new RequiredError('id','Required parameter id was null or undefined when calling getProjectMetricsRange.');
+                throw new RequiredError('id','Required parameter id was null or undefined when calling getProjectNumericMetricsRange.');
             }
             const localVarPath = `/api/v1/projects/{id}/experiments/metric-ranges`
                 .replace(`{${"id"}}`, encodeURIComponent(String(id)));
@@ -18750,8 +18750,8 @@ export const InternalApiFp = function (configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getProjectMetricsRange(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetProjectMetricsRangeResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getProjectMetricsRange(id, options);
+        getProjectNumericMetricsRange(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetProjectNumericMetricsRangeResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getProjectNumericMetricsRange(id, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -19461,8 +19461,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getProjectMetricsRange(id: number, options?: any) {
-            return InternalApiFp(configuration).getProjectMetricsRange(id, options)(fetch, basePath);
+        getProjectNumericMetricsRange(id: number, options?: any) {
+            return InternalApiFp(configuration).getProjectNumericMetricsRange(id, options)(fetch, basePath);
         },
         /**
          * 
@@ -20009,8 +20009,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public getProjectMetricsRange(id: number, options?: any) {
-        return InternalApiFp(this.configuration).getProjectMetricsRange(id, options)(this.fetch, this.basePath)
+    public getProjectNumericMetricsRange(id: number, options?: any) {
+        return InternalApiFp(this.configuration).getProjectNumericMetricsRange(id, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -22852,10 +22852,10 @@ export const ProjectsApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getProjectMetricsRange(id: number, options: any = {}): FetchArgs {
+        getProjectNumericMetricsRange(id: number, options: any = {}): FetchArgs {
             // verify required parameter 'id' is not null or undefined
             if (id === null || id === undefined) {
-                throw new RequiredError('id','Required parameter id was null or undefined when calling getProjectMetricsRange.');
+                throw new RequiredError('id','Required parameter id was null or undefined when calling getProjectNumericMetricsRange.');
             }
             const localVarPath = `/api/v1/projects/{id}/experiments/metric-ranges`
                 .replace(`{${"id"}}`, encodeURIComponent(String(id)));
@@ -23240,8 +23240,8 @@ export const ProjectsApiFp = function (configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getProjectMetricsRange(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetProjectMetricsRangeResponse> {
-            const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).getProjectMetricsRange(id, options);
+        getProjectNumericMetricsRange(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetProjectNumericMetricsRangeResponse> {
+            const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).getProjectNumericMetricsRange(id, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -23437,8 +23437,8 @@ export const ProjectsApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getProjectMetricsRange(id: number, options?: any) {
-            return ProjectsApiFp(configuration).getProjectMetricsRange(id, options)(fetch, basePath);
+        getProjectNumericMetricsRange(id: number, options?: any) {
+            return ProjectsApiFp(configuration).getProjectNumericMetricsRange(id, options)(fetch, basePath);
         },
         /**
          * 
@@ -23583,8 +23583,8 @@ export class ProjectsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ProjectsApi
      */
-    public getProjectMetricsRange(id: number, options?: any) {
-        return ProjectsApiFp(this.configuration).getProjectMetricsRange(id, options)(this.fetch, this.basePath)
+    public getProjectNumericMetricsRange(id: number, options?: any) {
+        return ProjectsApiFp(this.configuration).getProjectNumericMetricsRange(id, options)(this.fetch, this.basePath)
     }
     
     /**

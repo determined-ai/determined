@@ -47,7 +47,7 @@ message GetProjectColumnsResponse {
 }
 
 // Request for experiment list metrics ranges
-message GetProjectMetricsRangeRequest {
+message GetProjectNumericMetricsRangeRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "id" ] }
   };
@@ -57,7 +57,7 @@ message GetProjectMetricsRangeRequest {
 }
 
 // Response for experiment list metrics ranges
-message GetProjectMetricsRangeResponse {
+message GetProjectNumericMetricsRangeResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "range" ] }
   };

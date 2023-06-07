@@ -264,7 +264,7 @@ func (a *apiServer) getProjectMetricsNames(
 
 	err = metricQuery.Scan(ctx, &metricNames)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "error fetching metrics names for project (%d) from database", project.Id)
 	}
 	var names []string
 	for _, n := range metricNames {
@@ -334,9 +334,9 @@ func (a *apiServer) GetProjectColumns(
 	return a.getProjectColumnsByID(ctx, req.Id, *curUser)
 }
 
-func (a *apiServer) GetProjectMetricsRange(
-	ctx context.Context, req *apiv1.GetProjectMetricsRangeRequest,
-) (*apiv1.GetProjectMetricsRangeResponse, error) {
+func (a *apiServer) GetProjectNumericMetricsRange(
+	ctx context.Context, req *apiv1.GetProjectNumericMetricsRangeRequest,
+) (*apiv1.GetProjectNumericMetricsRangeResponse, error) {
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
@@ -346,7 +346,7 @@ func (a *apiServer) GetProjectMetricsRange(
 	if err != nil {
 		return nil, err
 	}
-	valMetricsRange, traMetricsRange, err := a.getProjectMetricsRange(ctx, *curUser, p)
+	valMetricsRange, traMetricsRange, err := a.getProjectNumericMetricsRange(ctx, *curUser, p)
 	if err != nil {
 		return nil, err
 	}
@@ -367,10 +367,10 @@ func (a *apiServer) GetProjectMetricsRange(
 		})
 	}
 
-	return &apiv1.GetProjectMetricsRangeResponse{Ranges: ranges}, nil
+	return &apiv1.GetProjectNumericMetricsRangeResponse{Ranges: ranges}, nil
 }
 
-func (a *apiServer) getProjectMetricsRange(
+func (a *apiServer) getProjectNumericMetricsRange(
 	ctx context.Context, curUser model.User, project *projectv1.Project,
 ) (map[string]([]float64), map[string]([]float64), error) {
 	query := db.Bun().NewSelect().Table("trials").Table("experiments").
@@ -393,7 +393,7 @@ func (a *apiServer) getProjectMetricsRange(
 	}
 
 	if err := query.Scan(ctx, &res); err != nil {
-		return nil, nil, err
+		return nil, nil, errors.Wrapf(err, "error fetching metrics range for project (%d) from database", project.Id)
 	}
 	valMetricsValues := make(map[string]([]float64))
 	traMetricsValues := make(map[string]([]float64))

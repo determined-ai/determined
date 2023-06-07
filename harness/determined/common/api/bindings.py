@@ -4651,7 +4651,7 @@ class v1GetProjectColumnsResponse:
         }
         return out
 
-class v1GetProjectMetricsRangeResponse:
+class v1GetProjectNumericMetricsRangeResponse:
     ranges: "typing.Optional[typing.Sequence[v1MetricsRange]]" = None
 
     def __init__(
@@ -4663,7 +4663,7 @@ class v1GetProjectMetricsRangeResponse:
             self.ranges = ranges
 
     @classmethod
-    def from_json(cls, obj: Json) -> "v1GetProjectMetricsRangeResponse":
+    def from_json(cls, obj: Json) -> "v1GetProjectNumericMetricsRangeResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
         }
         if "ranges" in obj:
@@ -15307,11 +15307,11 @@ def get_GetProjectColumns(
         return v1GetProjectColumnsResponse.from_json(_resp.json())
     raise APIHttpError("get_GetProjectColumns", _resp)
 
-def get_GetProjectMetricsRange(
+def get_GetProjectNumericMetricsRange(
     session: "api.Session",
     *,
     id: int,
-) -> "v1GetProjectMetricsRangeResponse":
+) -> "v1GetProjectNumericMetricsRangeResponse":
     _params = None
     _resp = session._do_request(
         method="GET",
@@ -15324,8 +15324,8 @@ def get_GetProjectMetricsRange(
         stream=False,
     )
     if _resp.status_code == 200:
-        return v1GetProjectMetricsRangeResponse.from_json(_resp.json())
-    raise APIHttpError("get_GetProjectMetricsRange", _resp)
+        return v1GetProjectNumericMetricsRangeResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetProjectNumericMetricsRange", _resp)
 
 def get_GetProjectsByUserActivity(
     session: "api.Session",

@@ -1838,8 +1838,8 @@ service Determined {
     };
   }
   // Get metrics range for a project.
-  rpc GetProjectMetricsRange(GetProjectMetricsRangeRequest)
-      returns (GetProjectMetricsRangeResponse) {
+  rpc GetProjectNumericMetricsRange(GetProjectNumericMetricsRangeRequest)
+      returns (GetProjectNumericMetricsRangeResponse) {
     option (google.api.http) = {
       get: "/api/v1/projects/{id}/experiments/metric-ranges"
     };

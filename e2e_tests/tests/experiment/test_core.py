@@ -435,7 +435,7 @@ def test_metrics_range_by_project() -> None:
         expect_workloads=True,
         expect_checkpoints=True,
     )
-    ranges = bindings.get_GetProjectMetricsRange(api_utils.determined_test_session(), id=1)
+    ranges = bindings.get_GetProjectNumericMetricsRange(api_utils.determined_test_session(), id=1)
 
     assert ranges.ranges is not None
     for r in ranges.ranges:
