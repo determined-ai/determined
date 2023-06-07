@@ -655,7 +655,7 @@ func (a *apiServer) formatMetrics(
 	return nil
 }
 
-func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
+func (a *apiServer) multiTrialSample(trialID int32, metricNames []string,
 	metricType string, maxDatapoints int, startBatches int,
 	endBatches int, logScale bool,
 	timeSeriesFilter *commonv1.PolymorphicFilter,
@@ -815,7 +815,7 @@ func (a *apiServer) SummarizeTrial(ctx context.Context,
 		return nil, errors.Wrapf(err, "failed to get trial %d", req.TrialId)
 	}
 
-	tsample, err := a.MultiTrialSample(req.TrialId, req.MetricNames, req.MetricType,
+	tsample, err := a.multiTrialSample(req.TrialId, req.MetricNames, req.MetricType,
 		int(req.MaxDatapoints), int(req.StartBatches), int(req.EndBatches),
 		(req.Scale == apiv1.Scale_SCALE_LOG),
 		nil, metricIds)
@@ -845,7 +845,7 @@ func (a *apiServer) CompareTrials(ctx context.Context,
 			return nil, errors.Wrapf(err, "failed to get trial %d", trialID)
 		}
 
-		tsample, err := a.MultiTrialSample(trialID, req.MetricNames, req.MetricType,
+		tsample, err := a.multiTrialSample(trialID, req.MetricNames, req.MetricType,
 			int(req.MaxDatapoints), int(req.StartBatches), int(req.EndBatches),
 			(req.Scale == apiv1.Scale_SCALE_LOG), req.TimeSeriesFilter, req.MetricIds)
 		if err != nil {
