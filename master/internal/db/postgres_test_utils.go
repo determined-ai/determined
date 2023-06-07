@@ -357,7 +357,7 @@ func MockWorkspaces(workspaceNames []string, userID model.UserID) ([]int32, erro
 	}
 
 	for _, workspace := range workspaces {
-		workspaceIDs = append(workspaceIDs, workspace.ID)
+		workspaceIDs = append(workspaceIDs, int32(workspace.ID))
 	}
 
 	return workspaceIDs, nil
