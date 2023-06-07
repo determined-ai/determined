@@ -9,9 +9,9 @@
     align-items: center;
     border-bottom: 1px solid var(--theme-surface-border);
     display: grid;
-    grid-auto-columns: minmax(160px, 1fr);
+    grid-auto-columns: minmax(180px, 1fr);
     grid-auto-flow: column;
-    grid-template-columns: 170px repeat(auto-fill, minmax(160px, 1fr));
+    grid-template-columns: 170px repeat(auto-fill, minmax(180px, 1fr));
     justify-content: space-between;
     min-width: fit-content;
 

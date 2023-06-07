@@ -16,12 +16,13 @@ import Spinner from 'components/Spinner/Spinner';
 import useMetricNames from 'hooks/useMetricNames';
 import useResize from 'hooks/useResize';
 import { paths } from 'routes/utils';
-import { getTrialDetails, getTrialWorkloads } from 'services/api';
+import { getTrialDetails } from 'services/api';
 import Spinner from 'shared/components/Spinner/Spinner';
+import { Primitive } from 'shared/types';
 import { isNumber } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
 import { humanReadableBytes, pluralizer } from 'shared/utils/string';
-import { ExperimentItem, Metric, MetricsWorkload, TrialDetails, TrialWorkloadFilter } from 'types';
+import { ExperimentItem, Metric, MetricSummary, TrialDetails } from 'types';
 import handleError from 'utils/error';
 import { humanReadableBytes } from 'utils/string';
 
@@ -164,62 +165,22 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
     setSelectedMetrics(selectedMetrics);
   }, []);
 
-  const extractLatestMetrics = useCallback(
-    (
-      metricsObj: Record<number, Record<string, MetricsWorkload>>,
-      workload: MetricsWorkload,
-      trialId: number,
-    ) => {
-      for (const metricName of Object.keys(workload.metrics || {})) {
-        if (metricsObj[trialId][metricName]) {
-          if (
-            new Date(workload.endTime || Date()).getTime() -
-              new Date(metricsObj[trialId][metricName].endTime || Date()).getTime() >
-            0
-          ) {
-            metricsObj[trialId][metricName] = workload;
-          }
-        } else {
-          metricsObj[trialId][metricName] = workload;
-        }
-      }
-      return metricsObj;
-    },
-    [],
+  const latestMetrics = useMemo(
+    () =>
+      trialsDetails.reduce((metricValues, trial) => {
+        metricValues[trial.id] = Object.values(trial.summaryMetrics ?? {}).reduce(
+          (trialMetrics, curMetricType: Record<string, MetricSummary>) => {
+            for (const [metricName, metricSummary] of Object.entries(curMetricType)) {
+              trialMetrics[metricName] = metricSummary.last;
+            }
+            return trialMetrics;
+          },
+          {},
+        );
+        return metricValues;
+      }, {} as Record<number, Record<string, Primitive | undefined>>),
+    [trialsDetails],
   );
-
-  const [latestMetrics, setLatestMetrics] = useState<Record<string, Record<string, number>>>({});
-
-  useMemo(async () => {
-    const metricsObj: Record<string, Record<string, MetricsWorkload>> = {};
-    for (const trial of Object.values(trialsDetails)) {
-      metricsObj[trial.id] = {};
-      const data = await getTrialWorkloads({
-        filter: TrialWorkloadFilter.All,
-        id: trial.id,
-        limit: 50,
-        orderBy: 'ORDER_BY_DESC',
-      });
-      const latestWorkloads = data.workloads;
-      latestWorkloads.forEach((workload) => {
-        if (workload.training) {
-          extractLatestMetrics(metricsObj, workload.training, trial.id);
-        } else if (workload.validation) {
-          extractLatestMetrics(metricsObj, workload.validation, trial.id);
-        }
-      });
-    }
-    const metricValues: Record<number, Record<string, number>> = {};
-    for (const [trialId, metrics] of Object.entries(metricsObj)) {
-      metricValues[Number(trialId)] = {};
-      for (const [metric, workload] of Object.entries(metrics)) {
-        if (workload.metrics) {
-          metricValues[Number(trialId)][metric] = workload?.metrics[metric];
-        }
-      }
-    }
-    setLatestMetrics(metricValues);
-  }, [extractLatestMetrics, trialsDetails]);
 
   const hyperparameterNames = useMemo(() => {
     return [
@@ -262,7 +223,10 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
                   className={css.trialTag}
                   closable={!!onUnselect}
                   onClose={() => handleTrialUnselect(trial.id)}>
-                  <Link path={paths.trialDetails(trial.id)}>Trial {trial.id}</Link>
+                  <Link path={paths.trialDetails(trial.id, trial.experimentId)}>
+                    {Array.isArray(experiment) ? `Experiment ${trial.experimentId} / ` : ''}Trial{' '}
+                    {trial.id}
+                  </Link>
                 </Tag>
               </div>
             ))}
@@ -304,24 +268,29 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
               />
             </div>
           </div>
-          {metrics
-            .filter((metric) => selectedMetrics.map((m) => m.name).includes(metric.name))
-            .map((metric) => (
-              <div className={css.row} key={metric.name}>
-                <div className={[css.cell, css.sticky, css.indent].join(' ')}>
-                  <MetricBadgeTag metric={metric} />
-                </div>
-                {trialsDetails.map((trial) => (
+          {selectedMetrics.map((metric) => (
+            <div className={css.row} key={metric.name}>
+              <div className={[css.cell, css.sticky, css.indent].join(' ')}>
+                <MetricBadgeTag metric={metric} />
+              </div>
+              {trialsDetails.map((trial) => {
+                const metricValue = latestMetrics[trial.id][metric.name];
+                return (
                   <div className={css.cell} key={trial.id}>
-                    {latestMetrics[trial.id] ? (
-                      <HumanReadableNumber num={latestMetrics[trial.id][metric.name] || 0} />
+                    {metricValue !== undefined ? (
+                      typeof metricValue === 'number' ? (
+                        <HumanReadableNumber num={metricValue} />
+                      ) : (
+                        metricValue
+                      )
                     ) : (
                       ''
                     )}
                   </div>
-                ))}
-              </div>
-            ))}
+                );
+              })}
+            </div>
+          ))}
           <div className={[css.row, css.spanAll].join(' ')}>
             <div className={[css.cell, css.spanAll].join(' ')}>
               <Select
@@ -359,7 +328,10 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
           ))}
         </Spinner>
       ) : (
-        <Empty icon="document" title="No items selected" />
+        <Empty
+          icon="document"
+          title={`No ${Array.isArray(experiment) ? 'experiments with ' : ''}trials selected`}
+        />
       )}
     </div>
   );
