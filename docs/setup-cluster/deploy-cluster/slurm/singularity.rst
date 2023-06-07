@@ -85,13 +85,13 @@ Determined.
 
 .. _singularity-image-cache:
 
-*************************************************
- Configuring a Singularity Image Cache Directory
-*************************************************
+***********************************************************
+ Configuring a Apptainer/Singularity Image Cache Directory
+***********************************************************
 
-When using Singularity, you may use :ref:`referencing-local-image-paths` as described above, or you
-may instead configure a directory tree of images to be searched. To utilize this capability,
-configure a shared directory in :ref:`resource_manager.singularity_image_root
+When using Apptainer/Singularity, you may use :ref:`referencing-local-image-paths` as described
+above, or you may instead configure a directory tree of images to be searched. To utilize this
+capability, configure a shared directory in :ref:`resource_manager.singularity_image_root
 <cluster-configuration-slurm>`. The shared directory needs to be accessible to the launcher and on
 all compute nodes. Whenever an image is referenced, it is translated to a local file path as
 described in :ref:`environment.image <exp-environment-image>`. If found, the local path is
