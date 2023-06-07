@@ -222,7 +222,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
 
         // Fill out the loadable experiments array with total count.
         if (prev.length !== total) {
-          newExperiments = [...prev, ...Array(total - prev.length).fill(NotLoaded)];
+          newExperiments = new Array(total).fill(NotLoaded);
         }
 
         // Update the list with the fetched results.
