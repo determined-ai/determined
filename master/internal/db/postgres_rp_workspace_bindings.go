@@ -131,5 +131,4 @@ func (db *PgDB) OverwriteRPWorkspaceBindings(ctx context.Context,
 
 	err = AddRPWorkspaceBindings(ctx, workspaceIds, poolName)
 	return err
-
 }
