@@ -329,6 +329,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         return;
       }
 
+      const BANNED_FILTER_COLUMNS = new Set(['searcherMetricsVal']);
       const filterMenuItemsForColumn = () => {
         const isSpecialColumn = (SpecialColumnNames as ReadonlyArray<string>).includes(
           column.column,
@@ -350,10 +351,10 @@ export const GlideTable: React.FC<GlideTableProps> = ({
       };
 
       const { bounds } = args;
-      const items: MenuProps['items'] = [
-        ...sortMenuItemsForColumn(column, sorts, onSortChange),
-        { type: 'divider' },
-        {
+      const items: MenuProps['items'] = [...sortMenuItemsForColumn(column, sorts, onSortChange)];
+      if (!BANNED_FILTER_COLUMNS.has(column.column)) {
+        items.push({ type: 'divider' });
+        items.push({
           icon: <FilterOutlined />,
           key: 'filter',
           label: 'Filter by this column',
@@ -362,8 +363,8 @@ export const GlideTable: React.FC<GlideTableProps> = ({
               filterMenuItemsForColumn();
             }, 5);
           },
-        },
-      ];
+        });
+      }
       const x = bounds.x;
       const y = bounds.y + bounds.height;
       setMenuProps((prev) => ({ ...prev, items, title: `${columnId} menu`, x, y }));
@@ -405,7 +406,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
       return Loadable.match(data[row], {
         Loaded: (rowData) => {
           const columnId = columnIds[col];
-          return columnDefs[columnId].renderer(rowData, row);
+          return columnDefs[columnId]?.renderer?.(rowData, row) || loadingCell;
         },
         NotLoaded: () => loadingCell,
       });
@@ -586,6 +587,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         if (columnName in columnDefs) return columnDefs[columnName];
         if (!Loadable.isLoaded(projectColumnsMap)) return;
         const currentColumn = projectColumnsMap.data[columnName];
+        if (!currentColumn) return;
         let dataPath: string | undefined = undefined;
         switch (currentColumn.location) {
           case V1LocationType.EXPERIMENT:
