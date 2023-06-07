@@ -44,6 +44,20 @@ const ClusterHistoricalUsageChart: React.FC<ClusterHistoricalUsageChartProps> = 
 
     return data;
   }, [hoursByLabel, hoursTotal, time]);
+
+  const hasData = useMemo(() => {
+    return Object.keys(hoursByLabel).reduce(
+      (agg, label) => agg || hoursByLabel[label].length > 0,
+      false,
+    );
+  }, [hoursByLabel]);
+
+  const singlePoint = useMemo(
+    // one series, and that one series has one point
+    () => Object.keys(hoursByLabel).length === 1 && Object.values(hoursByLabel)[0].length === 1,
+    [hoursByLabel],
+  );
+
   const chartOptions: Options = useMemo(() => {
     let dateFormat = 'MM-DD';
     let timeSeries: Series = { label: 'Day', value: '{YYYY}-{MM}-{DD}' };
@@ -68,10 +82,6 @@ const ClusterHistoricalUsageChart: React.FC<ClusterHistoricalUsageChartProps> = 
         width: 2,
       });
     });
-
-    const singlePoint =
-      Object.keys(hoursByLabel).length + (hoursTotal?.length || 0) <= 1 &&
-      !((hoursByLabel.total?.length || 0) > 1);
 
     return {
       axes: [
@@ -108,13 +118,7 @@ const ClusterHistoricalUsageChart: React.FC<ClusterHistoricalUsageChartProps> = 
       series,
       tzDate: (ts) => uPlot.tzDate(new Date(ts * 1e3), 'Etc/UTC'),
     };
-  }, [groupBy, height, hoursByLabel, hoursTotal, label, chartKey]);
-  const hasData = useMemo(() => {
-    return Object.keys(hoursByLabel).reduce(
-      (agg, label) => agg || hoursByLabel[label].length > 0,
-      false,
-    );
-  }, [hoursByLabel]);
+  }, [groupBy, height, hoursByLabel, hoursTotal, label, chartKey, singlePoint]);
 
   if (!hasData) {
     return <Message title="No data to plot." type={MessageType.Empty} />;
