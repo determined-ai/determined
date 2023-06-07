@@ -68,7 +68,10 @@ const ClusterHistoricalUsageChart: React.FC<ClusterHistoricalUsageChartProps> = 
         width: 2,
       });
     });
-    const singlePoint = Object.keys(hoursByLabel).length + (hoursTotal?.length || 0) <= 1;
+
+    const singlePoint =
+      Object.keys(hoursByLabel).length + (hoursTotal?.length || 0) <= 1 &&
+      !((hoursByLabel.total?.length || 0) > 1);
 
     return {
       axes: [
