@@ -108,6 +108,12 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     NotLoaded: () => [],
   });
 
+  const setPinnedColumnsCount = useCallback(
+    (newCount: number) => {
+      updateSettings({ pinnedColumnsCount: newCount });
+    },
+    [updateSettings],
+  );
   const onIsOpenFilterChange = useCallback((newOpen: boolean) => {
     setIsOpenFilter(newOpen);
     if (!newOpen) {
@@ -526,6 +532,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                 handleUpdateExperimentList={handleUpdateExperimentList}
                 height={height}
                 page={page}
+                pinnedColumnsCount={isLoadingSettings ? 0 : settings.pinnedColumnsCount}
                 project={project}
                 projectColumns={projectColumns}
                 rowHeight={settings.rowHeight}
@@ -534,6 +541,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                 selectedExperimentIds={selectedExperimentIds}
                 setColumnWidths={handleColumnWidthChange}
                 setExcludedExperimentIds={setExcludedExperimentIds}
+                setPinnedColumnsCount={setPinnedColumnsCount}
                 setSelectAll={setSelectAll}
                 setSelectedExperimentIds={setSelectedExperimentIds}
                 setSortableColumnIds={setVisibleColumns}

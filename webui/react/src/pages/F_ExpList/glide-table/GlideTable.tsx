@@ -101,6 +101,8 @@ export interface GlideTableProps {
   formStore: FilterFormStore;
   onIsOpenFilterChange: (value: boolean) => void;
   onContextMenuComplete?: () => void;
+  pinnedColumnsCount: number;
+  setPinnedColumnsCount: (count: number) => void;
 }
 
 /**
@@ -154,6 +156,8 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   columnWidths,
   setColumnWidths,
   staticColumns,
+  pinnedColumnsCount,
+  setPinnedColumnsCount,
 }) => {
   const gridRef = useRef<DataEditorRef>(null);
   const [hoveredRow, setHoveredRow] = useState<number>();
@@ -332,7 +336,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         return;
       }
 
-      const BANNED_FILTER_COLUMNS = new Set(['searcherMetricsVal']);
+      const BANNED_FILTER_COLUMNS = ['searcherMetricsVal'];
       const loadableFormset = formStore.formset.get();
       const filterMenuItemsForColumn = () => {
         const isSpecialColumn = (SpecialColumnNames as ReadonlyArray<string>).includes(
@@ -358,39 +362,48 @@ export const GlideTable: React.FC<GlideTableProps> = ({
       };
 
       const { bounds } = args;
-      const items: MenuProps['items'] = [...sortMenuItemsForColumn(column, sorts, onSortChange)];
-      if (!BANNED_FILTER_COLUMNS.has(column.column)) {
-        items.push({ type: 'divider' });
-        items.push({
-          icon: <FilterOutlined />,
-          key: 'filter',
-          label: 'Filter by this column',
-          onClick: () => {
-            setTimeout(() => {
-              filterMenuItemsForColumn();
-            }, 5);
-          },
-        });
-      }
+      const items: MenuProps['items'] = [
+        ...(BANNED_FILTER_COLUMNS.includes(column.column) ? [] : [
+          ...sortMenuItemsForColumn(column, sorts, onSortChange),
+            { type: 'divider' as const },
+            {
+            icon: <FilterOutlined />,
+            key: 'filter',
+            label: 'Filter by this column',
+            onClick: () => {
+              setTimeout(() => {
+                filterMenuItemsForColumn();
+              }, 5);
+            },
+        }]),
+        // Column is pinned if the index is inside of the frozen columns
+        col > pinnedColumnsCount + staticColumns.length - 1
+          ? {
+              key: 'pin',
+              label: 'Pin column',
+              onClick: () => {
+                const newSortableColumns = sortableColumnIds.filter((c) => c !== column.column);
+                newSortableColumns.splice(pinnedColumnsCount, 0, column.column);
+                setSortableColumnIds(newSortableColumns);
+                setPinnedColumnsCount(Math.min(pinnedColumnsCount + 1, sortableColumnIds.length));
+                setMenuIsOpen(false);
+              },
+            }
+          : {
+              key: 'unpin',
+              label: 'Unpin column',
+              onClick: () => {
+                setPinnedColumnsCount(Math.max(pinnedColumnsCount - 1, 0));
+                setMenuIsOpen(false);
+              },
+            },
+        ];
       const x = bounds.x;
       const y = bounds.y + bounds.height;
       setMenuProps((prev) => ({ ...prev, items, title: `${columnId} menu`, x, y }));
       setMenuIsOpen(true);
     },
-    [
-      columnIds,
-      projectColumns,
-      sorts,
-      onSortChange,
-      selectAll,
-      excludedExperimentIds.size,
-      selectAllRows,
-      deselectAllRows,
-      selection.rows.length,
-      data.length,
-      formStore,
-      onIsOpenFilterChange,
-    ],
+    [columnIds, projectColumns, sorts, onSortChange, pinnedColumnsCount, staticColumns.length, selectAll, excludedExperimentIds.size, selectAllRows, deselectAllRows, selection.rows.length, data.length, formStore, onIsOpenFilterChange, sortableColumnIds, setSortableColumnIds, setPinnedColumnsCount],
   );
 
   const getCellContent: DataEditorProps['getCellContent'] = React.useCallback(
@@ -561,6 +574,15 @@ export const GlideTable: React.FC<GlideTableProps> = ({
 
   const onColumnMoved: DataEditorProps['onColumnMoved'] = useCallback(
     (columnIdsStartIdx: number, columnIdsEndIdx: number): void => {
+      const pinnedColumnEnd = staticColumns.length + pinnedColumnsCount - 1;
+      if (
+        // can't move a column into the pinned area via dragging
+        (columnIdsStartIdx > pinnedColumnEnd && columnIdsEndIdx <= pinnedColumnEnd) ||
+        // can't move a column out of the pinned area via dragging
+        (columnIdsStartIdx <= pinnedColumnEnd && columnIdsEndIdx > pinnedColumnEnd)
+      )
+        return;
+
       const sortableColumnIdsStartIdx = columnIdsStartIdx - staticColumns.length;
       const sortableColumnIdsEndIdx = Math.max(columnIdsEndIdx - staticColumns.length, 0);
       if (sortableColumnIdsStartIdx > -1) {
@@ -641,8 +663,8 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   }, [columnIds, columnDefs, projectColumnsMap, columnWidths]);
 
   const verticalBorder: DataEditorProps['verticalBorder'] = useCallback(
-    (col: number) => (comparisonViewOpen ? false : columnIds[col - 1] === staticColumns.last()),
-    [columnIds, comparisonViewOpen, staticColumns],
+    (col: number) => col === (staticColumns.length + pinnedColumnsCount),
+    [pinnedColumnsCount, staticColumns.length],
   );
 
   const sortMap = useMemo(() => {
@@ -690,7 +712,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
           columns={columns}
           customRenderers={customRenderers}
           drawHeader={drawHeader}
-          freezeColumns={staticColumns.length}
+          freezeColumns={staticColumns.length + pinnedColumnsCount}
           getCellContent={getCellContent}
           // `getCellsForSelection` is required for double click column resize to content.
           getCellsForSelection
