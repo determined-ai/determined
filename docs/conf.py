@@ -25,7 +25,7 @@ language = "en"
 
 source_suffix = {".rst": "restructuredtext"}
 templates_path = ["_templates"]
-html_static_path = ["assets"]
+html_static_path = ["assets", "_static"]
 html_css_files = [
     "https://cdn.jsdelivr.net/npm/@docsearch/css@3",
     "styles/determined.css",
@@ -84,7 +84,7 @@ html_theme_options = {
         "image_dark": "assets/images/logo-determined-ai-white.svg",
     },
     "switcher": {
-        "json_url": "assets/version-switcher/versions.json",
+        "json_url": "_static/version-switcher/versions.json",
         "version_match": version,
     },
     "repository_url": "https://github.com/determined-ai/determined",
