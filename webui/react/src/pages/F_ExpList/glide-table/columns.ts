@@ -40,7 +40,7 @@ export const experimentColumns = [
   'checkpointCount',
   'checkpointSize',
   'searcherMetric',
-  'searcherMetricValue',
+  'searcherMetricsVal',
 ] as const;
 
 export type ExperimentColumn = (typeof experimentColumns)[number];
@@ -278,8 +278,8 @@ export const getColumnDefs = ({
     tooltip: () => undefined,
     width: columnWidths.searcherMetric,
   },
-  searcherMetricValue: {
-    id: 'searcherMetricValue',
+  searcherMetricsVal: {
+    id: 'searcherMetricsVal',
     isNumerical: true,
     renderer: (record: ExperimentWithTrial) => {
       const sMetric = record.experiment.config.searcher.metric;
@@ -297,7 +297,7 @@ export const getColumnDefs = ({
     },
     title: 'Searcher Metric Values',
     tooltip: () => undefined,
-    width: columnWidths.searcherMetricValue,
+    width: columnWidths.searcherMetricsVal,
   },
   searcherType: {
     id: 'searcherType',
@@ -486,7 +486,7 @@ export const defaultColumnWidths: Record<ExperimentColumn, number> = {
   progress: 65,
   resourcePool: 140,
   searcherMetric: 120,
-  searcherMetricValue: 120,
+  searcherMetricsVal: 120,
   searcherType: 120,
   selected: 40,
   startTime: 118,

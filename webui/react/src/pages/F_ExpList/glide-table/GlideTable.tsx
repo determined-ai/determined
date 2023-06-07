@@ -389,7 +389,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
       return Loadable.match(data[row], {
         Loaded: (rowData) => {
           const columnId = columnIds[col];
-          return columnDefs[columnId].renderer(rowData, row);
+          return columnDefs[columnId]?.renderer?.(rowData, row) || loadingCell;
         },
         NotLoaded: () => loadingCell,
       });
@@ -561,6 +561,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         if (columnName in columnDefs) return columnDefs[columnName];
         if (!Loadable.isLoaded(projectColumnsMap)) return;
         const currentColumn = projectColumnsMap.data[columnName];
+        if (!currentColumn) return;
         let dataPath: string | undefined = undefined;
         switch (currentColumn.location) {
           case V1LocationType.EXPERIMENT:
