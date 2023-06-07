@@ -48,32 +48,35 @@ export function drawArrow(
 
   ctx.beginPath();
 
-  if (direction === 'up') {
-    ctx.moveTo(x, y + headDelta);
-    ctx.lineTo(x + headDelta, y);
-    ctx.lineTo(x + width, y + headDelta);
-    ctx.moveTo(x + headDelta, y);
-    ctx.lineTo(x + headDelta, y + height);
-  } else {
-    ctx.moveTo(x, y + height - headDelta);
-    ctx.lineTo(x + headDelta, y + height);
-    ctx.lineTo(x + width, y + height - headDelta);
-    ctx.moveTo(x + headDelta, y);
-    ctx.lineTo(x + headDelta, y + height);
+  switch (direction) {
+    case 'up':
+      ctx.moveTo(x, y + headDelta);
+      ctx.lineTo(x + headDelta, y);
+      ctx.lineTo(x + width, y + headDelta);
+      ctx.moveTo(x + headDelta, y);
+      ctx.lineTo(x + headDelta, y + height);
+      break;
+    case 'down':
+      ctx.moveTo(x, y + height - headDelta);
+      ctx.lineTo(x + headDelta, y + height);
+      ctx.lineTo(x + width, y + height - headDelta);
+      ctx.moveTo(x + headDelta, y);
+      ctx.lineTo(x + headDelta, y + height);
+      break;
   }
 
   ctx.closePath();
   ctx.stroke();
 }
 
-function textWithEllipsis(
+function truncate(
   ctx: CanvasRenderingContext2D,
   text: string,
   x: number,
   maxWidth: number,
-  ellipsisString = '…',
+  suffix = '…',
 ): string {
-  const ellipsisWidth = ctx.measureText(ellipsisString).width;
+  const ellipsisWidth = ctx.measureText(suffix).width;
   let newText = text;
   let textWidth = ctx.measureText(text).width;
 
@@ -84,7 +87,7 @@ function textWithEllipsis(
       newText = newText.substring(0, newText.length - 1);
       textWidth = ctx.measureText(newText).width;
     }
-    return newText + ellipsisString;
+    return newText + suffix;
   }
 }
 export function drawTextWithEllipsis(
@@ -94,6 +97,6 @@ export function drawTextWithEllipsis(
   y: number,
   maxWidth: number,
 ): void {
-  const ellipsisText = textWithEllipsis(ctx, text, x, maxWidth);
+  const ellipsisText = truncate(ctx, text, x, maxWidth);
   ctx.fillText(ellipsisText, x, y);
 }
