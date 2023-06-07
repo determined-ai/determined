@@ -62,7 +62,6 @@ def list_agents(args: argparse.Namespace) -> None:
         "Addresses",
     ]
     values = [a.values() for a in agents]
-
     render.tabulate_or_csv(headers, values, args.csv)
 
 
