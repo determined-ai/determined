@@ -1593,6 +1593,10 @@ jobs:
       - run: make -C master get-deps
       - run: make -C agent get-deps
       # TODO download database dump
+      - run: wget https://determined-performance-testing.s3.us-west-2.amazonaws.com/test.tar.gz
+      - run: sudo mkdir -p ~/.postgres && sudo tar -xzvf test.tar.gz -C ~/.postgres --strip-components=3
+
+      # TODO
       - install-devcluster
       - start-devcluster:
           target-stage: elastic

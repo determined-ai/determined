@@ -124,7 +124,7 @@ test-intg: export DET_INTEGRATION_POSTGRES_URL ?= postgres://postgres:postgres@l
 test-intg: export DET_INTEGRATION_ES_HOST ?= localhost
 test-intg: export DET_INTEGRATION_ES_PORT ?= 9200
 test-intg: build/mock_gen.stamp
-	gotestsum --junitfile test-intg.junit.xml -- -tags=integration -coverprofile=coverage.out -covermode -run='^(?!TestBenchmark)' count -cover ./...
+	gotestsum --junitfile test-intg.junit.xml -- -tags=integration -coverprofile=coverage.out -covermode count -cover ./... -run='^(?!TestBenchmark)'
 
 .PHONY: test-perf
 test-perf: export DET_INTEGRATION_POSTGRES_URL ?= postgres://postgres:postgres@localhost:5432/determined?sslmode=disable
