@@ -2,8 +2,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 
 import Pivot, { TabItem } from 'components/kit/Pivot';
 import SplitPane from 'components/SplitPane';
-import { isEqual } from 'shared/utils/data';
 import { ExperimentWithTrial, TrialItem } from 'types';
+import { isEqual } from 'utils/data';
 
 import CompareMetrics from './CompareMetrics';
 import CompareParallelCoordinates from './CompareParallelCoordinates';

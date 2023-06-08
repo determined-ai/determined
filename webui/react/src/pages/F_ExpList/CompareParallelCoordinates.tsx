@@ -5,16 +5,14 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
 import ParallelCoordinates from 'components/ParallelCoordinates';
 import Section from 'components/Section';
+import Spinner from 'components/Spinner/Spinner';
 import { useSettings } from 'hooks/useSettings';
 import { ExperimentVisualizationType } from 'pages/ExperimentDetails/ExperimentVisualization';
 import ExperimentVisualizationFilters, {
   VisualizationFilters,
 } from 'pages/ExperimentDetails/ExperimentVisualization/ExperimentVisualizationFilters';
 import { useTrialMetrics } from 'pages/TrialDetails/useTrialMetrics';
-import Spinner from 'shared/components/Spinner/Spinner';
-import { Primitive, Range } from 'shared/types';
-import { flattenObject, isPrimitive } from 'shared/utils/data';
-import { numericSorter } from 'shared/utils/sort';
+import { Primitive, Range } from 'types';
 import {
   ExperimentWithTrial,
   HpTrialData,
@@ -24,7 +22,9 @@ import {
   TrialItem,
 } from 'types';
 import { defaultNumericRange, getNumericRange, updateRange } from 'utils/chart';
+import { flattenObject, isPrimitive } from 'utils/data';
 import { metricToStr } from 'utils/metric';
+import { numericSorter } from 'utils/sort';
 
 import {
   ExperimentHyperparametersSettings,
@@ -183,16 +183,16 @@ const CompareParallelCoordinates: React.FC<Props> = ({
       newDimensions.push(
         selectedScale === Scale.Log
           ? {
-              key,
-              label: key,
-              logBase: 10,
-              type: DimensionType.Logarithmic,
-            }
+            key,
+            label: key,
+            logBase: 10,
+            type: DimensionType.Logarithmic,
+          }
           : {
-              key,
-              label: key,
-              type: DimensionType.Linear,
-            },
+            key,
+            label: key,
+            type: DimensionType.Linear,
+          },
       );
     }
 
