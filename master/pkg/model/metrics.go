@@ -17,6 +17,7 @@ func (t MetricType) ToString() string {
 	return string(t)
 }
 
+// ToProto returns the proto representation of the metric type.
 func (t MetricType) ToProto() apiv1.MetricType {
 	switch t {
 	case ValidationMetricType:

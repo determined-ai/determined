@@ -655,16 +655,22 @@ func (a *apiServer) formatMetrics(
 	return nil
 }
 
-func (a *apiServer) validateMetricTypeArgs(
-	legacyType apiv1.MetricType, newType model.MetricType) (model.MetricType, error) {
-	// TODO validate.
-	// probably there is a general solution to this for deprecation scenarios.
+func (a *apiServer) parseMetricTypeArgs(
+	legacyType apiv1.MetricType, newType model.MetricType,
+) (model.MetricType, error) {
+	if legacyType != apiv1.MetricType_METRIC_TYPE_UNSPECIFIED && newType != "" {
+		return "", status.Errorf(codes.InvalidArgument, "cannot specify both legacy and new metric type")
+	}
+	if newType != "" {
+		return newType, nil
+	}
+	// TODO: think of a general solution to this for deprecation scenarios?
 	conv := &protoconverter.ProtoConverter{}
-	_ = conv.ToMetricType(legacyType)
+	convertedLegacyType := conv.ToMetricType(legacyType)
 	if cErr := conv.Error(); cErr != nil {
 		return "", status.Errorf(codes.InvalidArgument, "converting metric type: %s", cErr)
 	}
-	return model.TrainingMetricType, nil // FIXME
+	return convertedLegacyType, nil
 }
 
 func (a *apiServer) multiTrialSample(trialID int32, metricNames []string,
@@ -736,7 +742,8 @@ func (a *apiServer) multiTrialSample(trialID int32, metricNames []string,
 			xAxisLabelMetrics,
 			maxDatapoints, *timeSeriesColumn, timeSeriesFilter, metricType)
 		if err != nil {
-			return nil, errors.Wrapf(err, fmt.Sprintf("error fetching time series of %s metrics", metricType))
+			return nil, errors.Wrapf(err, fmt.Sprintf("error fetching time series of %s metrics",
+				metricType))
 		}
 		metric.Type = metricType.ToProto()
 		metric.CustomType = metricType.ToString()
@@ -776,7 +783,7 @@ func (a *apiServer) SummarizeTrial(ctx context.Context,
 		return nil, errors.Wrapf(err, "failed to get trial %d", req.TrialId)
 	}
 
-	metricType, err := a.validateMetricTypeArgs(req.MetricType, model.MetricType(req.CustomType))
+	metricType, err := a.parseMetricTypeArgs(req.MetricType, model.MetricType(req.CustomType))
 	if err != nil {
 		return nil, err
 	}
@@ -811,7 +818,7 @@ func (a *apiServer) CompareTrials(ctx context.Context,
 			return nil, errors.Wrapf(err, "failed to get trial %d", trialID)
 		}
 
-		metricType, err := a.validateMetricTypeArgs(req.MetricType, model.MetricType(req.CustomType))
+		metricType, err := a.parseMetricTypeArgs(req.MetricType, model.MetricType(req.CustomType))
 		if err != nil {
 			return nil, err
 		}
