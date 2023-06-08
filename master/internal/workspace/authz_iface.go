@@ -32,6 +32,10 @@ type WorkspaceAuthZ interface {
 		ctx context.Context, curUser model.User, workspaces []*workspacev1.Workspace,
 	) ([]*workspacev1.Workspace, error)
 
+	FilterWorkspaceIDs(
+		ctx context.Context, curUser model.User, workspaces []int32,
+	) ([]int32, error)
+
 	// POST /api/v1/workspaces
 	CanCreateWorkspace(ctx context.Context, curUser model.User) error
 	CanCreateWorkspaceWithAgentUserGroup(ctx context.Context, curUser model.User) error
