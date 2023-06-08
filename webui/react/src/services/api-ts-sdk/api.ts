@@ -5232,6 +5232,12 @@ export interface V1ListWorkspacesBoundToRPResponse {
      * @memberof V1ListWorkspacesBoundToRPResponse
      */
     workspaceIds?: Array<number>;
+    /**
+     * Pagination information of the full dataset.
+     * @type {V1Pagination}
+     * @memberof V1ListWorkspacesBoundToRPResponse
+     */
+    pagination?: V1Pagination;
 }
 /**
  * - LOCATION_TYPE_UNSPECIFIED: Location unknown  - LOCATION_TYPE_EXPERIMENT: Column is located on the experiment  - LOCATION_TYPE_HYPERPARAMETERS: Column is located in the hyperparameter config of the experiment  - LOCATION_TYPE_VALIDATIONS: Column is located on the experiment's validation metrics
