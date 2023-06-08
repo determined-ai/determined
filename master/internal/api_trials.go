@@ -674,9 +674,7 @@ func (a *apiServer) multiTrialSample(trialID int32, metricNames []string,
 	metricIds []string,
 ) ([]*apiv1.DownsampledMetrics, error) {
 	var startTime time.Time
-	var err error
 	var metrics []*apiv1.DownsampledMetrics
-	var metricMeasurements []db.MetricMeasurements
 	// For now "epoch" is the only custom xAxis metric label supported so we
 	// build the `MetricSeriesEpoch` array. In the future this logic should
 	// be updated to support any number of xAxis metric options
@@ -694,41 +692,26 @@ func (a *apiServer) multiTrialSample(trialID int32, metricNames []string,
 	if endBatches == 0 {
 		endBatches = math.MaxInt32
 	}
-
-	if len(metricNames) > 0 {
-		var metric apiv1.DownsampledMetrics
-		metricMeasurements, err = trials.MetricsTimeSeries(
-			trialID, startTime, metricNames, startBatches, endBatches,
-			xAxisLabelMetrics,
-			maxDatapoints, batches, timeSeriesFilter, metricType)
-		if err != nil {
-			return nil, errors.Wrapf(err, fmt.Sprintf("error fetching time series of %s metrics", metricType))
-		}
-		metric.Type = metricType.ToProto()
-		metric.CustomType = metricType.ToString()
-		if len(metricMeasurements) > 0 {
-			if err = a.formatMetrics(&metric, metricMeasurements); err != nil {
-				return nil, err
-			}
-			metrics = append(metrics, &metric)
-		}
+	if maxDatapoints == 0 {
+		maxDatapoints = 200
 	}
 
+	var timeSeriesColumn *string
+
+	// If no time series filter column name is supplied then default to batches.
+	defaultTimeSeriesColumn := batches
+	if timeSeriesFilter == nil || timeSeriesFilter.Name == nil {
+		timeSeriesColumn = &defaultTimeSeriesColumn
+	} else {
+		timeSeriesColumn = timeSeriesFilter.Name
+	}
+
+	// TODO: we could throw out duplicates. (breaking change?)
+	metricTypeToNames := make(map[model.MetricType][]string)
+	if len(metricNames) > 0 {
+		metricTypeToNames[metricType] = metricNames
+	}
 	if len(metricIds) > 0 {
-		var timeSeriesColumn *string
-
-		// If no time series filter column name is supplied then default to batches.
-		defaultTimeSeriesColumn := batches
-		if timeSeriesFilter == nil || timeSeriesFilter.Name == nil {
-			timeSeriesColumn = &defaultTimeSeriesColumn
-		} else {
-			timeSeriesColumn = timeSeriesFilter.Name
-		}
-
-		if maxDatapoints == 0 {
-			maxDatapoints = 200
-		}
-		metricTypeToNames := make(map[model.MetricType][]string)
 		for _, metricID := range metricIds {
 			nameAndType := strings.SplitN(metricID, ".", 2)
 			if len(nameAndType) < 2 {
@@ -742,25 +725,37 @@ func (a *apiServer) multiTrialSample(trialID int32, metricNames []string,
 
 			metricTypeToNames[metricIDType] = append(metricTypeToNames[metricIDType], metricIDName)
 		}
+	}
 
-		for metricType, metricNames := range metricTypeToNames {
-			var metric apiv1.DownsampledMetrics
-
-			metricMeasurements, err = trials.MetricsTimeSeries(
-				trialID, startTime, metricNames, startBatches, endBatches,
-				xAxisLabelMetrics, maxDatapoints, *timeSeriesColumn,
-				timeSeriesFilter, metricType,
-			)
-			if err != nil {
-				return nil, errors.Wrapf(err, "error fetching time series of %v metrics", metricType)
+	// TODO: this doesn't need to be a closure anymore.
+	getDownSampledMetric := func(metricName []string, metricType model.MetricType,
+	) (*apiv1.DownsampledMetrics, error) {
+		var metric apiv1.DownsampledMetrics
+		metricMeasurements, err := trials.MetricsTimeSeries(
+			trialID, startTime, metricNames, startBatches, endBatches,
+			xAxisLabelMetrics,
+			maxDatapoints, *timeSeriesColumn, timeSeriesFilter, metricType)
+		if err != nil {
+			return nil, errors.Wrapf(err, fmt.Sprintf("error fetching time series of %s metrics", metricType))
+		}
+		metric.Type = metricType.ToProto()
+		metric.CustomType = metricType.ToString()
+		if len(metricMeasurements) > 0 {
+			if err = a.formatMetrics(&metric, metricMeasurements); err != nil {
+				return nil, err
 			}
+			return &metric, nil
+		}
+		return nil, nil
+	}
 
-			if len(metricMeasurements) > 0 {
-				if err = a.formatMetrics(&metric, metricMeasurements); err != nil {
-					return nil, err
-				}
-				metrics = append(metrics, &metric)
-			}
+	for metricType, metricNames := range metricTypeToNames {
+		metric, err := getDownSampledMetric(metricNames, metricType)
+		if err != nil {
+			return nil, err
+		}
+		if metric != nil {
+			metrics = append(metrics, metric)
 		}
 	}
 
