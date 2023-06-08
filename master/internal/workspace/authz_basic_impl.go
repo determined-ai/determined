@@ -43,6 +43,13 @@ func (a *WorkspaceAuthZBasic) FilterWorkspaces(
 	return workspaces, nil
 }
 
+// FilterWorkspaceIDs always returns provided list and a nil error.
+func (a *WorkspaceAuthZBasic) FilterWorkspaceIDs(
+	ctx context.Context, curUser model.User, workspaceIDs []int32,
+) ([]int32, error) {
+	return workspaceIDs, nil
+}
+
 // CanCreateWorkspace always returns a nil error.
 func (a *WorkspaceAuthZBasic) CanCreateWorkspace(ctx context.Context, curUser model.User) error {
 	return nil
