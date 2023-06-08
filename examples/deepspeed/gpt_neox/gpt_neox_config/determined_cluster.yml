@@ -1,6 +1,7 @@
 # Data paths and options when using EleutherAI cluster
 {
-  "data-path": "/run/determined/workdir/shared_fs/data/enron/enron_text_document",
+  "use_shared_fs": false,
+  "data-path": "/gpt-neox/data/enron/enron_text_document",
   # or for weighted datasets: 
   # "train-data-paths": ["/mnt/ssd-1/data/enron/enron_text_document", "/mnt/ssd-cluster/data/enron/enron_text_document"],
   # "test-data-paths": ["/mnt/ssd-1/data/enron/enron_text_document", "/mnt/ssd-cluster/data/enron/enron_text_document"],
@@ -9,8 +10,8 @@
   # "test-data-weights": [2., 1.],
   # "valid-data-weights": [0.5, 0.4],
 
-  "vocab-file": "/run/determined/workdir/shared_fs/data/gpt2-vocab.json",
-  "merge-file": "/run/determined/workdir/shared_fs/data/gpt2-merges.txt",
+  "vocab-file": "/gpt-neox/data/gpt2-vocab.json",
+  "merge-file": "/gpt-neox/data/gpt2-merges.txt",
   "save": "/tmp/checkpoints",
   "load": "/tmp/checkpoints",
   "log-dir": null,
