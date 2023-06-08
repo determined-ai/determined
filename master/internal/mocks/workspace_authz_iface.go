@@ -201,6 +201,32 @@ func (_m *WorkspaceAuthZ) CanUnpinWorkspace(ctx context.Context, curUser model.U
 	return r0
 }
 
+// FilterWorkspaceIDs provides a mock function with given fields: ctx, curUser, workspaces
+func (_m *WorkspaceAuthZ) FilterWorkspaceIDs(ctx context.Context, curUser model.User, workspaces []int32) ([]int32, error) {
+	ret := _m.Called(ctx, curUser, workspaces)
+
+	var r0 []int32
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, model.User, []int32) ([]int32, error)); ok {
+		return rf(ctx, curUser, workspaces)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, model.User, []int32) []int32); ok {
+		r0 = rf(ctx, curUser, workspaces)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]int32)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, model.User, []int32) error); ok {
+		r1 = rf(ctx, curUser, workspaces)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // FilterWorkspaceProjects provides a mock function with given fields: ctx, curUser, projects
 func (_m *WorkspaceAuthZ) FilterWorkspaceProjects(ctx context.Context, curUser model.User, projects []*projectv1.Project) ([]*projectv1.Project, error) {
 	ret := _m.Called(ctx, curUser, projects)
