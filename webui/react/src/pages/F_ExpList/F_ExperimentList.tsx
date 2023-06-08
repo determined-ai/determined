@@ -71,9 +71,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     useSettings<F_ExperimentListGlobalSettings>(settingsConfigGlobal);
   const isPagedView = globalSettings.expListView === 'paged';
   const [page, setPage] = useState(() =>
-    isFinite(Number(searchParams.get('page')))
-      ? Math.max(Number(searchParams.get('page')) - 1, 0)
-      : 0,
+    isFinite(Number(searchParams.get('page'))) ? Math.max(Number(searchParams.get('page')), 0) : 0,
   );
   const [sorts, setSorts] = useState<Sort[]>(() => {
     const sortString = searchParams.get('sort') || '';
@@ -148,7 +146,9 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const [canceler] = useState(new AbortController());
 
   const colorMap = useGlasbey(selectedExperimentIds);
-  const { height } = useResize(contentRef);
+  const { height: containerHeight } = useResize(contentRef);
+  const height =
+    containerHeight - 2 * parseInt(getCssVar('--theme-stroke-width')) - (isPagedView ? 40 : 0);
   const [scrollPositionSetCount] = useState(observable(0));
 
   const handleScroll = useCallback(
@@ -475,9 +475,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                 formStore={formStore}
                 handleScroll={isPagedView ? undefined : handleScroll}
                 handleUpdateExperimentList={handleUpdateExperimentList}
-                height={
-                  height - 2 * parseInt(getCssVar('--theme-stroke-width')) - (isPagedView ? 40 : 0)
-                }
+                height={height}
                 page={page}
                 project={project}
                 projectColumns={projectColumns}

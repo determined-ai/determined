@@ -104,7 +104,7 @@ export interface GlideTableProps {
  * Otherwise handleScroll would erroneously set the page to 0
  * when the table is first initialized.
  */
-export const SCROLL_SET_COUNT_NEEDED = 2;
+export const SCROLL_SET_COUNT_NEEDED = 3;
 
 const STATIC_COLUMNS: ExperimentColumn[] = ['selected', 'name'];
 
