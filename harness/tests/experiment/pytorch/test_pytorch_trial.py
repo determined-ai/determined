@@ -5,13 +5,14 @@ import pathlib
 import random
 import sys
 import typing
-import subprocess
+import uuid
 from unittest import mock
 
 import numpy as np
 import pytest
 import torch
 from _pytest import monkeypatch
+from torch.distributed import launcher
 
 import determined as det
 from determined import gpu, pytorch
@@ -926,9 +927,6 @@ class TestPyTorchTrial:
     @pytest.mark.dothis
     def test_cifar10_parallel(self, tmp_path: pathlib.Path):
 
-        from torch.distributed.launcher import elastic_launch, LaunchConfig
-        import uuid
-
         # set up distributed backend.
         os.environ[det._DistributedBackend.TORCH] = str(1)
 
@@ -936,15 +934,15 @@ class TestPyTorchTrial:
         rdzv_endpoint = "localhost:29400"
         rdzv_id = str(uuid.uuid4())
 
-        launch_config = LaunchConfig(min_nodes=1, max_nodes=1, nproc_per_node=1, run_id=rdzv_id,
-                                     max_restarts=0, rdzv_endpoint=rdzv_endpoint, rdzv_backend=rdzv_backend)
+        launch_config = launcher.LaunchConfig(min_nodes=1, max_nodes=1, nproc_per_node=1, run_id=rdzv_id,
+                                              max_restarts=0, rdzv_endpoint=rdzv_endpoint, rdzv_backend=rdzv_backend)
 
-        proc = elastic_launch(launch_config, self.run_cifar10)(tmp_path)
+        outputs = launcher.elastic_launch(launch_config, self.run_cifar10)(tmp_path)
+        print(outputs)
+        outputs = launcher.elastic_launch(launch_config, self.run_cifar10)(tmp_path, outputs[0])
+        print(outputs)
 
-        print(proc[0])
-
-    def run_cifar10(self, tmp_path: pathlib.Path):
-
+    def run_cifar10(self, tmp_path: pathlib.Path, batches_trained: typing.Optional[int] = 0):
         checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
 
         config = utils.load_config(utils.cv_examples_path("cifar10_pytorch/const.yaml"))
@@ -963,13 +961,24 @@ class TestPyTorchTrial:
         trial_class = utils.import_class_from_module("CIFARTrial", example_path)
         trial_class._searcher_metric = "validation_error"
 
-        self.train_and_checkpoint(
-            trial_class=trial_class,
-            hparams=hparams,
-            tmp_path=tmp_path,
-            exp_config=exp_config,
-            steps=(1, 1)
-        )
+        if batches_trained == 0:
+            return self.train_for_checkpoint(
+                trial_class=trial_class,
+                hparams=hparams,
+                tmp_path=tmp_path,
+                exp_config=exp_config,
+                steps=1,
+            )
+        else:
+            self.train_from_checkpoint(
+                trial_class=trial_class,
+                hparams=hparams,
+                tmp_path=tmp_path,
+                exp_config=exp_config,
+                steps=(1,1),
+                batches_trained=batches_trained
+            )
+            return True
 
     def checkpoint_and_check_metrics(
         self,
@@ -1415,6 +1424,8 @@ def create_trial_and_trial_controller(
 
     # do what core_context.__enter__ does.
     core_context.preempt.start()
+    if core_context._tensorboard_manager is not None:
+        core_context._tensorboard_manager.start()
 
     core_context.train._trial_id = "1"
     distributed_backend = det._DistributedBackend()
