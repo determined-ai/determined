@@ -7,6 +7,7 @@ import determined as det
 from determined import tensorboard
 from determined.common import api
 from determined.common.api import bindings, errors
+from determined.common.util import LEGACY_TRAINING, LEGACY_VALIDATION, Metrics
 from determined.core import DistributedContext, TensorboardMode
 
 logger = logging.getLogger("determined.core")
@@ -16,11 +17,6 @@ class EarlyExitReason(enum.Enum):
     INVALID_HP = "EXITED_REASON_INVALID_HP"
     # This is generally unnecessary; just exit early.
     USER_REQUESTED_STOP = "EXITED_REASON_USER_REQUESTED_STOP"
-
-
-Metrics = Dict[str, Any]
-LEGACY_TRAINING = "training"
-LEGACY_VALIDATION = "validation"
 
 
 class TrainContext:

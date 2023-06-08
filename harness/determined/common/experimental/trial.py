@@ -53,7 +53,7 @@ class CheckpointOrderBy(enum.Enum):
 @dataclasses.dataclass
 class TrialMetrics:
     """
-    Specifies a trial metric report that the trial reported.
+    Specifies a metric that the trial reported.
 
     Attributes:
         trial_id
@@ -72,49 +72,42 @@ class TrialMetrics:
     batch_metrics: Optional[List[Dict[str, Any]]] = None
 
     @classmethod
-    def _from_bindings(cls, metric_report: bindings.v1MetricsReport) -> "TrialMetrics":
+    def _from_bindings(
+        cls, metric_report: bindings.v1MetricsReport, metric_type: util.MetricType
+    ) -> "TrialMetrics":
+        key = "validation_metrics" if metric_type == util.LEGACY_VALIDATION else "avg_metrics"
         return cls(
             trial_id=metric_report.trialId,
             trial_run_id=metric_report.trialRunId,
             total_batches=metric_report.totalBatches,
             end_time=util.parse_protobuf_timestamp(metric_report.endTime),
-            metrics=metric_report.metrics["avg_metrics"],
+            metrics=metric_report.metrics[key],
             batch_metrics=metric_report.metrics.get("batch_metrics", None),
         )
 
 
 class TrainingMetrics(TrialMetrics):
-    pass
+    """
+    @deprecated
+    Specifies a training metric report that the trial reported.
+    """
+
+    @classmethod
+    def _from_bindings(cls, metric_report: bindings.v1MetricsReport) -> "TrainingMetrics":
+        # CHECK: this is fine right?
+        return super()._from_bindings(metric_report, util.LEGACY_TRAINING)  # type: ignore
 
 
 @dataclasses.dataclass
-class ValidationMetrics:
+class ValidationMetrics(TrialMetrics):
     """
+    @deprecated
     Specifies a validation metric report that the trial reported.
-
-    Attributes:
-        trial_id
-        trial_run_id
-        steps_completed
-        end_time
-        metrics
     """
-
-    trial_id: int
-    trial_run_id: int
-    steps_completed: int
-    end_time: datetime.datetime
-    metrics: Dict[str, Any]
 
     @classmethod
     def _from_bindings(cls, metric_report: bindings.v1MetricsReport) -> "ValidationMetrics":
-        return cls(
-            trial_id=metric_report.trialId,
-            trial_run_id=metric_report.trialRunId,
-            steps_completed=metric_report.totalBatches,
-            end_time=util.parse_protobuf_timestamp(metric_report.endTime),
-            metrics=metric_report.metrics["validation_metrics"],
-        )
+        return super()._from_bindings(metric_report, util.LEGACY_VALIDATION)  # type: ignore
 
 
 class TrialReference:
@@ -357,8 +350,16 @@ class TrialReference:
     def __repr__(self) -> str:
         return "Trial(id={})".format(self.id)
 
+    def stream_metrics(self, metric_type: util.MetricType) -> Iterable[TrialMetrics]:
+        """
+        Streams validation metrics for this trial sorted by
+        trial_id, trial_run_id and steps_completed.
+        """
+        return _stream_trials_metrics(self._session, [self.id], metric_type=metric_type)
+
     def stream_training_metrics(self) -> Iterable[TrainingMetrics]:
         """
+        @deprecated
         Streams training metrics for this trial sorted by
         trial_id, trial_run_id and steps_completed.
         """
@@ -366,6 +367,7 @@ class TrialReference:
 
     def stream_validation_metrics(self) -> Iterable[ValidationMetrics]:
         """
+        @deprecated
         Streams validation metrics for this trial sorted by
         trial_id, trial_run_id and steps_completed.
         """
@@ -412,15 +414,18 @@ class TrialOrderBy(enum.Enum):
         return bindings.v1OrderBy(self.value)
 
 
-def _stream_trial_metrics(session: api.Session, trial_ids: List[int]) -> Iterable[TrialMetrics]:
-    for i in bindings.get_GetMetrics(session, trialIds=trial_ids):
+def _stream_trials_metrics(
+    session: api.Session, trial_ids: List[int], metric_type: str
+) -> Iterable[TrialMetrics]:
+    for i in bindings.get_GetMetrics(session, trialIds=trial_ids, type=metric_type):
         for m in i.metrics:
-            yield TrainingMetrics._from_bindings(m)
+            yield TrialMetrics._from_bindings(m, metric_type=metric_type)
 
 
 def _stream_training_metrics(
     session: api.Session, trial_ids: List[int]
 ) -> Iterable[TrainingMetrics]:
+    """@deprecated"""
     for i in bindings.get_GetTrainingMetrics(session, trialIds=trial_ids):
         for m in i.metrics:
             yield TrainingMetrics._from_bindings(m)
@@ -429,6 +434,7 @@ def _stream_training_metrics(
 def _stream_validation_metrics(
     session: api.Session, trial_ids: List[int]
 ) -> Iterable[ValidationMetrics]:
+    """@deprecated"""
     for i in bindings.get_GetValidationMetrics(session, trialIds=trial_ids):
         for m in i.metrics:
             yield ValidationMetrics._from_bindings(m)

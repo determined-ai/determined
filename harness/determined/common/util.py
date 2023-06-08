@@ -12,6 +12,7 @@ from typing import (
     IO,
     Any,
     Callable,
+    Dict,
     Iterator,
     Optional,
     Sequence,
@@ -27,6 +28,12 @@ import urllib3
 from determined.common import yaml
 
 _yaml = yaml.YAML(typ="safe", pure=True)
+
+MetricType = str
+Metrics = Dict[str, Any]
+LEGACY_TRAINING = "training"
+LEGACY_VALIDATION = "validation"
+
 
 T = TypeVar("T")
 

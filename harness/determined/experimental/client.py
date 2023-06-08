@@ -49,6 +49,7 @@ import pathlib
 import warnings
 from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Union
 
+from determined.common import util
 from determined.common.api import Session  # noqa: F401
 from determined.common.experimental.checkpoint import (  # noqa: F401
     Checkpoint,
@@ -419,7 +420,9 @@ def remove_oauth_client(client_id: str) -> None:
 
 
 @_require_singleton
-def stream_trials_metrics(trial_ids: List[int]) -> Iterable[TrialMetrics]:
+def stream_trials_metrics(
+    trial_ids: List[int], metric_type: util.MetricType
+) -> Iterable[TrialMetrics]:
     """
     Streams trial metrics for one or more trials sorted by
     trial_id, trial_run_id and steps_completed.
@@ -428,7 +431,7 @@ def stream_trials_metrics(trial_ids: List[int]) -> Iterable[TrialMetrics]:
         trial_ids: List of trial IDs to get metrics for.
     """
     assert _determined is not None
-    return _determined.stream_trials_training_metrics(trial_ids)
+    return _determined.stream_trials_metrics(trial_ids, metric_type=metric_type)
 
 
 @_require_singleton
