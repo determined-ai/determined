@@ -51,14 +51,14 @@ class CheckpointOrderBy(enum.Enum):
 
 
 @dataclasses.dataclass
-class TrainingMetrics:
+class TrialMetrics:
     """
-    Specifies a training metric report that the trial reported.
+    Specifies a trial metric report that the trial reported.
 
     Attributes:
         trial_id
         trial_run_id
-        steps_completed
+        total_batches
         end_time
         metrics
         batch_metrics
@@ -66,21 +66,25 @@ class TrainingMetrics:
 
     trial_id: int
     trial_run_id: int
-    steps_completed: int
+    total_batches: int
     end_time: datetime.datetime
     metrics: Dict[str, Any]
     batch_metrics: Optional[List[Dict[str, Any]]] = None
 
     @classmethod
-    def _from_bindings(cls, metric_report: bindings.v1MetricsReport) -> "TrainingMetrics":
+    def _from_bindings(cls, metric_report: bindings.v1MetricsReport) -> "TrialMetrics":
         return cls(
             trial_id=metric_report.trialId,
             trial_run_id=metric_report.trialRunId,
-            steps_completed=metric_report.totalBatches,
+            total_batches=metric_report.totalBatches,
             end_time=util.parse_protobuf_timestamp(metric_report.endTime),
             metrics=metric_report.metrics["avg_metrics"],
             batch_metrics=metric_report.metrics.get("batch_metrics", None),
         )
+
+
+class TrainingMetrics(TrialMetrics):
+    pass
 
 
 @dataclasses.dataclass
@@ -406,6 +410,12 @@ class TrialOrderBy(enum.Enum):
 
     def _to_bindings(self) -> bindings.v1OrderBy:
         return bindings.v1OrderBy(self.value)
+
+
+def _stream_trial_metrics(session: api.Session, trial_ids: List[int]) -> Iterable[TrialMetrics]:
+    for i in bindings.get_GetMetrics(session, trialIds=trial_ids):
+        for m in i.metrics:
+            yield TrainingMetrics._from_bindings(m)
 
 
 def _stream_training_metrics(

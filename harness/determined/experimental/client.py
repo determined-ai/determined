@@ -66,6 +66,7 @@ from determined.common.experimental.trial import (  # noqa: F401
     CheckpointOrderBy,
     CheckpointSortBy,
     TrainingMetrics,
+    TrialMetrics,
     TrialOrderBy,
     TrialReference,
     TrialSortBy,
@@ -415,6 +416,19 @@ def remove_oauth_client(client_id: str) -> None:
     """
     assert _determined is not None
     return _determined.remove_oauth_client(client_id)
+
+
+@_require_singleton
+def stream_trials_metrics(trial_ids: List[int]) -> Iterable[TrialMetrics]:
+    """
+    Streams trial metrics for one or more trials sorted by
+    trial_id, trial_run_id and steps_completed.
+
+    Arguments:
+        trial_ids: List of trial IDs to get metrics for.
+    """
+    assert _determined is not None
+    return _determined.stream_trials_training_metrics(trial_ids)
 
 
 @_require_singleton
