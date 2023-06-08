@@ -34,11 +34,16 @@ import css from './HpParallelCoordinates.module.scss';
 import { useGlasbey } from './useGlasbey';
 
 interface Props {
+  projectId: number;
   selectedExperiments: ExperimentWithTrial[];
   trials: TrialItem[];
 }
 
-const CompareParallelCoordinates: React.FC<Props> = ({ selectedExperiments, trials }: Props) => {
+const CompareParallelCoordinates: React.FC<Props> = ({
+  selectedExperiments,
+  trials,
+  projectId,
+}: Props) => {
   const [chartData, setChartData] = useState<HpTrialData>();
   const [hermesCreatedFilters, setHermesCreatedFilters] = useState<Hermes.Filters>({});
 
@@ -49,8 +54,8 @@ const CompareParallelCoordinates: React.FC<Props> = ({ selectedExperiments, tria
   }, [trials]);
 
   const settingsConfig = useMemo(
-    () => settingsConfigForExperimentHyperparameters(fullHParams),
-    [fullHParams],
+    () => settingsConfigForExperimentHyperparameters(fullHParams, projectId),
+    [fullHParams, projectId],
   );
 
   const { settings, updateSettings, resetSettings } =

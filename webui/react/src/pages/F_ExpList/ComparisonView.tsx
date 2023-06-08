@@ -13,6 +13,7 @@ interface Props {
   open: boolean;
   initialWidth: number;
   onWidthChange: (width: number) => void;
+  projectId: number;
   selectedExperiments: ExperimentWithTrial[];
 }
 const ComparisonView: React.FC<Props> = ({
@@ -20,6 +21,7 @@ const ComparisonView: React.FC<Props> = ({
   open,
   initialWidth,
   onWidthChange,
+  projectId,
   selectedExperiments,
 }) => {
   const [trials, setTrials] = useState<TrialItem[]>([]);
@@ -46,14 +48,18 @@ const ComparisonView: React.FC<Props> = ({
       },
       {
         children: (
-          <CompareParallelCoordinates selectedExperiments={selectedExperiments} trials={trials} />
+          <CompareParallelCoordinates
+            projectId={projectId}
+            selectedExperiments={selectedExperiments}
+            trials={trials}
+          />
         ),
         key: 'hyperparameters',
         label: 'Hyperparameters',
       },
       { key: 'configurations', label: 'Configurations' },
     ];
-  }, [selectedExperiments, trials]);
+  }, [selectedExperiments, projectId, trials]);
 
   return (
     <div>

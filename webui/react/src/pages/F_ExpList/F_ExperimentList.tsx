@@ -484,6 +484,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
             <ComparisonView
               initialWidth={comparisonViewWidth}
               open={settings.compare}
+              projectId={project.id}
               selectedExperiments={selectedExperiments}
               onWidthChange={handleCompareWidthChange}>
               <GlideTable

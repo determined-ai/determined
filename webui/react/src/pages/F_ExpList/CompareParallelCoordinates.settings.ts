@@ -11,6 +11,7 @@ export interface ExperimentHyperparametersSettings {
 
 export const settingsConfigForExperimentHyperparameters = (
   hParams: string[],
+  projectId: number,
 ): SettingsConfig<ExperimentHyperparametersSettings> => ({
   settings: {
     hParams: {
@@ -34,5 +35,5 @@ export const settingsConfigForExperimentHyperparameters = (
       type: keyof({ linear: null, log: null }),
     },
   },
-  storagePath: 'experiment-hyperparameters-multi',
+  storagePath: `experiment-compare-hyperparameters-${projectId}`,
 });
