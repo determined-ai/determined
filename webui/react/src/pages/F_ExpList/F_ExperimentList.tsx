@@ -506,7 +506,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         ) : error ? (
           <Error />
         ) : (
-          <Space direction="vertical" style={{ width: '100%' }}>
+          <Space className={css.space} direction="vertical">
             <ComparisonView
               initialWidth={comparisonViewWidth}
               open={settings.compare}

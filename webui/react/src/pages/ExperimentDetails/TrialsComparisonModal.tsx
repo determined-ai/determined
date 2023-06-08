@@ -1,4 +1,4 @@
-import { Modal, Tag } from 'antd';
+import { Modal, Tag, Typography } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
@@ -8,7 +8,6 @@ import { isEqual } from 'components/kit/internal/functions';
 import { XOR } from 'components/kit/internal/types';
 import usePrevious from 'components/kit/internal/usePrevious';
 import Select, { Option, SelectValue } from 'components/kit/Select';
-import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
 import MetricBadgeTag from 'components/MetricBadgeTag';
 import MetricSelect from 'components/MetricSelect';
@@ -224,8 +223,9 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
                   closable={!!onUnselect}
                   onClose={() => handleTrialUnselect(trial.id)}>
                   <Link path={paths.trialDetails(trial.id, trial.experimentId)}>
-                    {Array.isArray(experiment) ? `Experiment ${trial.experimentId} / ` : ''}Trial{' '}
-                    {trial.id}
+                    {Array.isArray(experiment)
+                      ? `Experiment ${trial.experimentId}`
+                      : `Trial ${trial.id}`}
                   </Link>
                 </Tag>
               </div>
@@ -310,7 +310,9 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
           </div>
           {selectedHyperparameters.map((hp) => (
             <div className={css.row} key={hp}>
-              <div className={[css.cell, css.sticky, css.indent].join(' ')}>{hp}</div>
+              <div className={[css.cell, css.sticky, css.indent].join(' ')}>
+                <Typography.Paragraph ellipsis={{ tooltip: true }}>{hp}</Typography.Paragraph>
+              </div>
               {trialsDetails.map((trial) => {
                 const hpValue = trial.hyperparameters[hp];
                 const stringValue = JSON.stringify(hpValue);
@@ -319,7 +321,9 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
                     {isNumber(hpValue) ? (
                       <HumanReadableNumber num={hpValue} />
                     ) : (
-                      <Tooltip content={stringValue}>{stringValue}</Tooltip>
+                      <Typography.Paragraph ellipsis={{ tooltip: true }}>
+                        {stringValue}
+                      </Typography.Paragraph>
                     )}
                   </div>
                 );

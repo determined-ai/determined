@@ -63,12 +63,10 @@ const ComparisonView: React.FC<Props> = ({
   }, [selectedExperiments, projectId, experiments, trials]);
 
   return (
-    <div>
-      <SplitPane initialWidth={initialWidth} open={open} onChange={onWidthChange}>
-        {children}
-        <Pivot destroyInactiveTabPane items={tabs} />
-      </SplitPane>
-    </div>
+    <SplitPane initialWidth={initialWidth} open={open} onChange={onWidthChange}>
+      {children}
+      <Pivot destroyInactiveTabPane items={tabs} />
+    </SplitPane>
   );
 };
 
