@@ -26,12 +26,12 @@ import {
 } from 'components/Table/Table';
 import WorkspaceCreateModalComponent from 'components/WorkspaceCreateModal';
 import usePermissions from 'hooks/usePermissions';
+import usePolling from 'hooks/usePolling';
+import usePrevious from 'hooks/usePrevious';
 import { useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { getWorkspaces } from 'services/api';
 import { V1GetWorkspacesRequestSortBy } from 'services/api-ts-sdk';
-import usePolling from 'shared/hooks/usePolling';
-import usePrevious from 'shared/hooks/usePrevious';
 import userStore from 'stores/users';
 import { Workspace } from 'types';
 import { isEqual } from 'utils/data';

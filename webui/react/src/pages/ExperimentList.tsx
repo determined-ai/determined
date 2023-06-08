@@ -39,6 +39,7 @@ import TableFilterDropdown from 'components/Table/TableFilterDropdown';
 import TableFilterSearch from 'components/Table/TableFilterSearch';
 import useExperimentTags from 'hooks/useExperimentTags';
 import usePermissions from 'hooks/usePermissions';
+import usePolling from 'hooks/usePolling';
 import { useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import {
@@ -57,7 +58,6 @@ import {
 import { Experimentv1State, V1GetExperimentsRequestSortBy } from 'services/api-ts-sdk';
 import { encodeExperimentState } from 'services/decoder';
 import { GetExperimentsParams } from 'services/types';
-import usePolling from 'shared/hooks/usePolling';
 import { RecordKey } from 'shared/types';
 import userStore from 'stores/users';
 import {

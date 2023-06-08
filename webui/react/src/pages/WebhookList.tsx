@@ -19,7 +19,7 @@ import { useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { getWebhooks, testWebhook } from 'services/api';
 import { V1Trigger, V1TriggerType } from 'services/api-ts-sdk/api';
-import usePolling from 'shared/hooks/usePolling';
+import usePolling from 'hooks/usePolling';
 import { Webhook } from 'types';
 import { isEqual } from 'utils/data';
 import { ErrorType } from 'utils/error';

@@ -39,10 +39,10 @@ import settingsConfig, {
 } from 'components/TaskList.settings';
 import { commandTypeToLabel } from 'constants/states';
 import usePermissions from 'hooks/usePermissions';
+import usePolling from 'hooks/usePolling';
 import { useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { getCommands, getJupyterLabs, getShells, getTensorBoards, killTask } from 'services/api';
-import usePolling from 'shared/hooks/usePolling';
 import { ValueOf } from 'shared/types';
 import userStore from 'stores/users';
 import workspaceStore from 'stores/workspaces';

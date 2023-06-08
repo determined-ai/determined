@@ -10,8 +10,8 @@ import ResponsiveFilters from 'components/ResponsiveFilters';
 import Section from 'components/Section';
 import ResponsiveTable from 'components/Table/ResponsiveTable';
 import { defaultRowClassName, getFullPaginationConfig } from 'components/Table/Table';
+import usePolling from 'hooks/usePolling';
 import { getTrialWorkloads } from 'services/api';
-import usePolling from 'shared/hooks/usePolling';
 import {
   ExperimentBase,
   Metric,

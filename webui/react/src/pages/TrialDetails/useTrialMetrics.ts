@@ -4,8 +4,8 @@ import { Serie, TRAINING_SERIES_COLOR, VALIDATION_SERIES_COLOR } from 'component
 import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
 import { terminalRunStates } from 'constants/states';
 import useMetricNames from 'hooks/useMetricNames';
+import usePolling from 'hooks/usePolling';
 import { timeSeries } from 'services/api';
-import usePolling from 'shared/hooks/usePolling';
 import { Metric, MetricContainer, MetricType, RunState, Scale, TrialDetails } from 'types';
 import { isEqual } from 'utils/data';
 import { ErrorType } from 'utils/error';

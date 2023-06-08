@@ -24,6 +24,7 @@ import {
   userRenderer,
 } from 'components/Table/Table';
 import usePermissions from 'hooks/usePermissions';
+import usePolling from 'hooks/usePolling';
 import { useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import {
@@ -34,7 +35,6 @@ import {
   unarchiveModel,
 } from 'services/api';
 import { V1GetModelVersionsRequestSortBy } from 'services/api-ts-sdk';
-import usePolling from 'shared/hooks/usePolling';
 import userStore from 'stores/users';
 import workspaceStore from 'stores/workspaces';
 import { Metadata, ModelVersion, ModelVersions, Note } from 'types';

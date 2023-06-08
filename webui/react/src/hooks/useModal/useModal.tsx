@@ -7,7 +7,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { RecordUnknown, ValueOf } from 'shared/types';
 import { isAsyncFunction } from 'utils/data';
 
-import usePrevious from '../usePrevious';
+import usePrevious from '../../hooks/usePrevious';
 
 export const ModalCloseReason = {
   Cancel: 'Cancel',

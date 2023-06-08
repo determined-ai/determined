@@ -3,8 +3,8 @@ import userEvent from '@testing-library/user-event';
 import React, { useCallback } from 'react';
 
 import Button from 'components/kit/Button';
+import { ModalCloseReason } from 'hooks/useModal/useModal';
 import { StoreProvider as UIProvider } from 'stores/contexts/UI';
-import { ModalCloseReason } from 'shared/hooks/useModal/useModal';
 import { generateTestExperimentData } from 'utils/tests/generateTestData';
 
 import useModalCheckpoint, { Props } from './useModalCheckpoint';

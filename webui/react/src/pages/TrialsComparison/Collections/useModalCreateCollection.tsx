@@ -3,9 +3,9 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Form from 'components/kit/Form';
 import Input from 'components/kit/Input';
+import useModal, { ModalHooks as Hooks } from 'hooks/useModal/useModal';
 import { getDescriptionText } from 'pages/TrialsComparison/Collections/collections';
 import { createTrialsCollection, updateTrialTags } from 'services/api';
-import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';
 import { DetError, ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 

@@ -6,10 +6,10 @@ import Badge, { BadgeType } from 'components/Badge';
 import HumanReadableNumber from 'components/HumanReadableNumber';
 import Button from 'components/kit/Button';
 import Link from 'components/Link';
+import useModal, { ModalCloseReason, ModalHooks } from 'hooks/useModal/useModal';
 import { paths } from 'routes/utils';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
-import useModal, { ModalCloseReason, ModalHooks } from 'shared/hooks/useModal/useModal';
 import {
   CheckpointStorageType,
   CheckpointWorkloadExtended,

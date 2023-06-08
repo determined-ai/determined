@@ -32,10 +32,10 @@ import {
   Operator,
   SpecialColumnNames,
 } from 'components/FilterForm/components/type';
+import usePrevious from 'hooks/usePrevious';
 import { handlePath } from 'routes/utils';
 import { V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
 import useUI from 'stores/contexts/UI';
-import usePrevious from 'shared/hooks/usePrevious';
 import usersStore from 'stores/users';
 import { ExperimentWithTrial, Project, ProjectColumn } from 'types';
 import { getProjectExperimentForExperimentItem } from 'utils/experiment';

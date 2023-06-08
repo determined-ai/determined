@@ -1,17 +1,17 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
+import Message, { MessageType } from 'components/Message';
 import Page, { BreadCrumbRoute } from 'components/Page';
+import Spinner from 'components/Spinner/Spinner';
 import { terminalRunStates } from 'constants/states';
+import usePolling from 'hooks/usePolling';
 import ExperimentDetailsHeader from 'pages/ExperimentDetails/ExperimentDetailsHeader';
 import ExperimentMultiTrialTabs from 'pages/ExperimentDetails/ExperimentMultiTrialTabs';
 import ExperimentSingleTrialTabs from 'pages/ExperimentDetails/ExperimentSingleTrialTabs';
 import { TrialInfoBoxMultiTrial } from 'pages/TrialDetails/TrialInfoBox';
 import { paths } from 'routes/utils';
 import { getExperimentDetails } from 'services/api';
-import Message, { MessageType } from 'components/Message';
-import Spinner from 'components/Spinner/Spinner';
-import usePolling from 'shared/hooks/usePolling';
 import workspaceStore from 'stores/workspaces';
 import { ExperimentBase, TrialItem, Workspace } from 'types';
 import { isEqual } from 'utils/data';

@@ -19,6 +19,7 @@ import {
   taskTypeRenderer,
 } from 'components/Table/Table';
 import usePermissions from 'hooks/usePermissions';
+import usePolling from 'hooks/usePolling';
 import { paths } from 'routes/utils';
 import {
   getCommands,
@@ -28,7 +29,6 @@ import {
   getShells,
   getTensorBoards,
 } from 'services/api';
-import usePolling from 'shared/hooks/usePolling';
 import userStore from 'stores/users';
 import workspaceStore from 'stores/workspaces';
 import { CommandTask, DetailedUser, ExperimentItem, Project } from 'types';

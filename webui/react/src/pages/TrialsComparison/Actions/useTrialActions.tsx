@@ -8,13 +8,13 @@ import React, {
   useState,
 } from 'react';
 
+import css from 'components/ActionDropdown/ActionDropdown.module.scss';
 import Button from 'components/kit/Button';
 import Dropdown from 'components/kit/Dropdown';
 import Icon from 'components/kit/Icon';
 import TableBatch from 'components/Table/TableBulkActions';
+import usePrevious from 'hooks/usePrevious';
 import { SettingsConfig, useSettings } from 'hooks/useSettings';
-import css from 'components/ActionDropdown/ActionDropdown.module.scss';
-import usePrevious from 'shared/hooks/usePrevious';
 import { isEqual } from 'utils/data';
 import { noOp } from 'utils/service';
 
