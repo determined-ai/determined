@@ -670,10 +670,6 @@ func (a *apiServer) parseMetricTypeArgs(
 	if cErr := conv.Error(); cErr != nil {
 		return "", status.Errorf(codes.InvalidArgument, "converting metric type: %s", cErr)
 	}
-	if convertedLegacyType == "" {
-		// DISCUSS: we used to default fetch all metric types when this was unspecified.
-		return "", status.Errorf(codes.InvalidArgument, "at least one metric type must be specified")
-	}
 	return convertedLegacyType, nil
 }
 
@@ -719,7 +715,13 @@ func (a *apiServer) multiTrialSample(trialID int32, metricNames []string,
 	// TODO: we could throw out duplicates. (breaking change?)
 	metricTypeToNames := make(map[model.MetricType][]string)
 	if len(metricNames) > 0 {
-		metricTypeToNames[metricType] = metricNames
+		// to keep backwards compatibility.
+		if metricType == "" {
+			metricTypeToNames[model.TrainingMetricType] = metricNames
+			metricTypeToNames[model.ValidationMetricType] = metricNames
+		} else {
+			metricTypeToNames[metricType] = metricNames
+		}
 	}
 	if len(metricIds) > 0 {
 		for _, metricID := range metricIds {
