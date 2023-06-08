@@ -1449,7 +1449,8 @@ func (a *apiServer) ExpMetricNames(req *apiv1.ExpMetricNamesRequest,
 			expIDs[i] = int(ID)
 		}
 
-		newTrain, newValid, err := db.MetricNames(resp.Context(), expIDs)
+		// TODO.
+		newTrain, newValid, err := a.m.db.MetricNames(resp.Context(), expIDs)
 		if err != nil {
 			return errors.Wrapf(err,
 				"error fetching metric names for experiment: %d", req.Ids)

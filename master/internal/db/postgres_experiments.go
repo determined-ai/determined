@@ -126,32 +126,46 @@ func GetNonTerminalExperimentCount(ctx context.Context,
 		Count(ctx)
 }
 
-// MetricNames returns the set of training and validation metric names that have been recorded for
-// an experiment.
-func MetricNames(ctx context.Context, experimentIDs []int) (
+func (db *PgDB) MetricNames(ctx context.Context, experimentIDs []int) (
 	training []string, validation []string, err error,
 ) {
-	if err := Bun().NewSelect().Table("trials").
-		ColumnExpr("jsonb_object_keys(summary_metrics->'avg_metrics') AS name").
-		Where("experiment_id IN (?)", bun.In(experimentIDs)).
-		Group("name").
-		Order("name").
-		Scan(ctx, &training); err != nil {
-		return nil, nil, errors.Wrapf(err,
-			"error querying training metric names for experiments")
+	type MetricNamesRow struct {
+		JSONPath    string   `db:"metric_type"`
+		MetricNames []string `db:"metric_names"`
 	}
 
-	if err := Bun().NewSelect().Table("trials").
-		ColumnExpr("jsonb_object_keys(summary_metrics->'validation_metrics') AS name").
-		Where("experiment_id IN (?)", bun.In(experimentIDs)).
-		Group("name").
-		Order("name").
-		Scan(ctx, &validation); err != nil {
-		return nil, nil, errors.Wrapf(err,
-			"error querying validation metric names for experiments")
+	rows := []MetricNamesRow{}
+
+	query := `
+		SELECT metric_type, ARRAY_AGG(metric_name) as metric_names
+		FROM (
+		  SELECT jsonb_object_keys(summary_metrics) as metric_type, jsonb_object_keys(summary_metrics->jsonb_object_keys(summary_metrics)) as metric_name
+		  FROM trials
+		  WHERE experiment_id IN ($1) -- FIXME
+		) subquery
+		GROUP BY metric_type
+		ORDER BY metric_type;
+	`
+	err = db.queryRows(query, &rows, experimentIDs)
+	if err != nil {
+		return nil, nil, err
 	}
 
-	return training, validation, nil
+	metricNamesMap := make(map[model.MetricType][]string)
+	for _, row := range rows {
+		var mType model.MetricType
+		switch row.JSONPath {
+		case model.TrialSummaryMetricsJSONPath(model.TrainingMetricType):
+			mType = model.TrainingMetricType
+		case model.TrialSummaryMetricsJSONPath(model.ValidationMetricType):
+			mType = model.ValidationMetricType
+		default:
+			mType = model.MetricType(row.JSONPath)
+		}
+		metricNamesMap[mType] = row.MetricNames
+	}
+
+	return metricNamesMap[model.TrainingMetricType], metricNamesMap[model.ValidationMetricType], nil
 }
 
 type batchesWrapper struct {
