@@ -8,35 +8,34 @@ import checker from 'vite-plugin-checker';
 import tsconfigPaths from 'vite-tsconfig-paths';
 import { configDefaults, defineConfig } from 'vitest/config';
 
-import { cspHtml } from './src/shared/configs/vite-plugin-csp';
+import { cspHtml } from './vite-plugin-csp';
 
 // want to fallback in case of empty string, hence no ??
 const webpackProxyUrl = process.env.DET_WEBPACK_PROXY_URL || 'http://localhost:8080';
 
-
 const devServerRedirects = (redirects: Record<string, string>): Plugin => {
   let config: UserConfig;
-    return ({
-      config(c) {
-        config = c;
-      },
-        configureServer(server) {
-          Object.entries(redirects).forEach(([from, to]) => {
-            const fromUrl = `${config.base || ''}${from}`;
-            server.middlewares.use(fromUrl, (req, res, next) => {
-              if (req.originalUrl === fromUrl) {
-                res.writeHead(302, {
-                  Location: `${config.base || ''}${to}`,
-                });
-                res.end();
-              } else {
-                next();
-              }
+  return {
+    config(c) {
+      config = c;
+    },
+    configureServer(server) {
+      Object.entries(redirects).forEach(([from, to]) => {
+        const fromUrl = `${config.base || ''}${from}`;
+        server.middlewares.use(fromUrl, (req, res, next) => {
+          if (req.originalUrl === fromUrl) {
+            res.writeHead(302, {
+              Location: `${config.base || ''}${to}`,
             });
-          });
-        },
-        name: 'dev-server-redirects',
-    });
+            res.end();
+          } else {
+            next();
+          }
+        });
+      });
+    },
+    name: 'dev-server-redirects',
+  };
 };
 
 const publicUrlBaseHref = (): Plugin => {
