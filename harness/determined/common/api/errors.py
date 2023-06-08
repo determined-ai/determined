@@ -26,26 +26,36 @@ class MasterNotFoundException(BadRequestException):
 
 
 class APIException(BadRequestException):
-    """
-    Raised when an API operation has failed. The status code is provided in
-    the failure.
+    """Raised when an API operation has failed.
 
-    Args:
-        response: A requests.Response with a body that looks like:
-            {
-                error: {
-                    code: <int>,
-                    reason: <error type>,
-                    error: <detailed error message>
-                }
-            }
+    APIException is a catchall for errors passed on from the REST API server that aren't
+    otherwise classified as other types of exceptions.
+
+    Attributes:
+        response_error: A dict parsed from the Response body containing structured error information
+        status_code: The HTTP status code of the response
+        message: A string containing a human-friendly error message. Inherited from
+                 BadRequestException
     """
 
     def __init__(self, response: requests.Response, *args: Any) -> None:
+        """Initialization from the Response that it was raised from.
+
+        Args:
+            response: A requests.Response with a body that looks like:
+                {
+                    error: {
+                        code: <int>,
+                        reason: <error type>,
+                        error: <detailed error message>
+                    }
+                }
+        """
         try:
             self.response_error = response.json()["error"]
             m = self.response_error["error"]
         except (ValueError, KeyError):
+            self.response_error = None
             m = response.text
         super().__init__(m, response, *args)
         self.status_code = response.status_code
