@@ -1,9 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { ChartGrid, ChartsProps, Serie } from 'components/kit/LineChart';
 import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
 import { useTrialMetrics } from 'pages/TrialDetails/useTrialMetrics';
-import { isEqual } from 'shared/utils/data';
 import { ExperimentWithTrial, TrialItem } from 'types';
 import handleError from 'utils/error';
 
@@ -11,25 +10,12 @@ import { useGlasbey } from './useGlasbey';
 
 interface Props {
   selectedExperiments: ExperimentWithTrial[];
+  trials: TrialItem[];
 }
 
-const CompareMetrics: React.FC<Props> = ({ selectedExperiments }) => {
+const CompareMetrics: React.FC<Props> = ({ selectedExperiments, trials }) => {
   const colorMap = useGlasbey(selectedExperiments.map((e) => e.experiment.id));
   const [xAxis, setXAxis] = useState<XAxisDomain>(XAxisDomain.Batches);
-  const [trials, setTrials] = useState<TrialItem[]>([]);
-
-  useEffect(() => {
-    const ts: TrialItem[] = [];
-    selectedExperiments.forEach((e) => e.bestTrial && ts.push(e.bestTrial));
-    setTrials((prev: TrialItem[]) => {
-      return isEqual(
-        prev?.map((e) => e.id),
-        ts?.map((e) => e?.id),
-      )
-        ? prev
-        : ts;
-    });
-  }, [selectedExperiments]);
 
   const { metrics, data, scale, setScale } = useTrialMetrics(trials);
 

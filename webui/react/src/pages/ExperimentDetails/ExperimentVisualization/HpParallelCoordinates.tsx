@@ -22,6 +22,7 @@ import {
   ExperimentAction as Action,
   CommandResponse,
   ExperimentBase,
+  HpTrialData,
   Hyperparameter,
   HyperparameterType,
   Metric,
@@ -50,13 +51,6 @@ interface Props {
   selectedMetric?: Metric;
   selectedScale: Scale;
   focusedTrial?: TrialDetails;
-}
-
-interface HpTrialData {
-  data: Record<string, Primitive[]>;
-  metricRange?: Range<number>;
-  metricValues: number[];
-  trialIds: number[];
 }
 
 const HpParallelCoordinates: React.FC<Props> = ({
