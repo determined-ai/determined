@@ -102,7 +102,7 @@ export default defineConfig(({ mode }) => ({
     },
     preprocessorOptions: {
       scss: {
-        additionalData: fs.readFileSync('./src/shared/styles/global.scss'),
+        additionalData: fs.readFileSync('./src/styles/global.scss'),
       },
     },
   },
