@@ -9,9 +9,6 @@ from determined.common.api import authentication, bindings
 from determined.common.declarative_argparse import Arg, Cmd
 from determined.experimental import Session
 
-# from determined.common.experimental import session
-
-
 v1UserHeaders = namedtuple(
     "v1UserHeaders",
     ["id", "username", "displayName", "admin", "active", "agentUserGroup", "modifiedAt"],

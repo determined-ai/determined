@@ -18,18 +18,3 @@ with warnings.catch_warnings(record=True):
 from determined.experimental._native import test_one_batch
 
 from determined.experimental import client
-
-# __all__ = [
-#     "Checkpoint",
-#     "Determined",
-#     "ExperimentReference",
-#     "Model",
-#     "ModelOrderBy",
-#     "ModelSortBy",
-#     "ModelVersion",
-#     "Session",
-#     "TrialReference",
-#     "TrialOrderBy",
-#     "TrialSortBy",
-#     "client",
-# ]
