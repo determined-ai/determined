@@ -236,8 +236,9 @@ const HpParallelCoordinates: React.FC<Props> = ({
       detApi.StreamingInternal.trialsSnapshot(
         experiment.id,
         selectedMetric.name,
-        metricTypeParamMap[selectedMetric.type],
         selectedBatch,
+        metricTypeParamMap[selectedMetric.type],
+        undefined, // custom metric type
         selectedBatchMargin,
         undefined,
         { signal: canceler.signal },
