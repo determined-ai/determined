@@ -10,18 +10,20 @@ from determined.common.experimental import checkpoint
 
 class ModelVersion:
     """
-    A ModelVersion object is a child of a Model that consists of a version number and a Checkpoint
-    representing the state of a trained model, and can be fetched using ``model.get_version()``.
+    A class representing a combination of Model and Checkpoint, and can be fetched using
+    ``model.get_version()``. Once a model has been added to the registry, checkpoints can be
+    added to it. These registered checkpoints are ModelVersions.
 
     Attributes:
         session: HTTP request session.
-        model_version: Model version number.
-        model_name: Name of the parent model.
-        checkpoint: (Mutable) Checkpoint associated with this model version.
-        metadata: (Mutable) Metadata of this model version.
-        name: (Mutable) Human-friendly name of this model version.
-        model_id: (Mutable) Database ID of the parent model.
-        model_version_id: (Mutable) Database ID of this model version.
+        model_version: (int) Version number assigned by the registry, starting from 1 and
+        incrementing each time a new model version is registered.
+        model_name: (str) Name of the parent model.
+        checkpoint: (Mutable, checkpoint.Checkpoint) Checkpoint associated with this model version.
+        metadata: (Mutable, Dict) Metadata of this model version.
+        name: (Mutable, str) Human-friendly name of this model version.
+        model_id: (Mutable, int) Database ID of the parent model.
+        model_version_id: (Mutable, int) Database ID of this model version.
 
     Note:
         All attributes are cached by default.
@@ -82,11 +84,6 @@ class ModelVersion:
             self._session, modelName=self.model_name, modelVersionNum=self.model_version
         )
 
-    def _get(self) -> bindings.v1ModelVersion:
-        return bindings.get_GetModelVersion(
-            session=self._session, modelName=self.model_name, modelVersionNum=self.model_version
-        ).modelVersion
-
     def _hydrate(self, model_version: bindings.v1ModelVersion) -> None:
         self.checkpoint = checkpoint.Checkpoint._from_bindings(
             model_version.checkpoint, self._session
@@ -100,7 +97,9 @@ class ModelVersion:
         self.model_version = model_version.version
 
     def reload(self) -> None:
-        resp = self._get()
+        resp = bindings.get_GetModelVersion(
+            session=self._session, modelName=self.model_name, modelVersionNum=self.model_version
+        ).modelVersion
         self._hydrate(resp)
 
     @classmethod

@@ -11,14 +11,15 @@ class User:
 
     Attributes:
         session: HTTP request session.
-        user_id: Unique ID for the user.
-        admin: (Mutable) Admin status of the user.
-        remote: (Mutable) Checkpoint associated with this model version.
-        agent_uid: (Mutable) Unix user ID on the agent the task runs on.
-        agent_gid: (Mutable) Unix group ID on the agent.
-        agent_user: (Mutable) Unix user on the agent the task runs on.
-        agent_group: (Mutable) Unix group on the agent.
-        display_name: (Mutable) Human-friendly name of the user.
+        user_id: (int) Unique ID for the user in the Determined database.
+        admin: (Mutable, bool) Whether the user has admin privileges.
+        remote: (Mutable, bool) When true, prevents password sign-on and requires user to
+        sign-on using external IdP
+        agent_uid: (Mutable, int) UID on the agent to run tasks as.
+        agent_gid: (Mutable, int) GID on the agent to run tasks as.
+        agent_user: (Mutable, str) Unix user on the agent this user is linked to.
+        agent_group: (Mutable, str) Unix group on the agent this user is linked to.
+        display_name: (Mutable, str) Human-friendly name of the user.
 
     Note:
         All attributes are cached by default.
@@ -41,9 +42,6 @@ class User:
         self.agent_group = None  # type: Optional[str]
         self.display_name = None  # type: Optional[str]
 
-    def _get(self) -> bindings.v1User:
-        return bindings.get_GetUser(session=self._session, userId=self.user_id).user
-
     def _hydrate(self, user: bindings.v1User) -> None:
         self.username = user.username
         self.admin = user.admin
@@ -57,7 +55,7 @@ class User:
             self.agent_group = user.agentUserGroup.agentGroup
 
     def reload(self) -> None:
-        resp = self._get()
+        resp = bindings.get_GetUser(session=self._session, userId=self.user_id).user
         self._hydrate(resp)
 
     def rename(self, new_username: str) -> None:
