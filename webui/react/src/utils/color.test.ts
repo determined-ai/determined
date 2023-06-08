@@ -1,4 +1,4 @@
-import { GLASBEY } from 'shared/constants/colors';
+import { GLASBEY } from 'constants/colors';
 
 import * as utils from './color';
 

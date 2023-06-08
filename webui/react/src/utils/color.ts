@@ -1,4 +1,4 @@
-import { GLASBEY } from 'shared/constants/colors';
+import { GLASBEY } from 'constants/colors';
 
 /*
  * h - hue between 0 and 360
