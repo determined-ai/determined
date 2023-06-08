@@ -947,8 +947,6 @@ class TestPyTorchTrial:
 
         checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
 
-        distributed_context = det.core.DistributedContext.from_torch_distributed()
-
         config = utils.load_config(utils.cv_examples_path("cifar10_pytorch/const.yaml"))
         hparams = config["hyperparameters"]
 
@@ -970,8 +968,7 @@ class TestPyTorchTrial:
             hparams=hparams,
             tmp_path=tmp_path,
             exp_config=exp_config,
-            steps=(1, 1),
-            distributed_context = distributed_context
+            steps=(1, 1)
         )
 
     def checkpoint_and_check_metrics(
@@ -1068,29 +1065,26 @@ class TestPyTorchTrial:
         trial_class: pytorch.PyTorchTrial,
         tmp_path: pathlib.Path,
         exp_config: typing.Dict,
-        steps: typing.Tuple[int, int] = (1, 1),
-        distributed_context: typing.Optional[det.core.DistributedContext] = None
+        steps: typing.Tuple[int, int] = (1, 1)
     ) -> None:
 
-        # Trial A: train 100 batches and checkpoint
+        # Trial A: train batches and checkpoint
         steps_completed = self.train_for_checkpoint(
             hparams=hparams,
             trial_class=trial_class,
             tmp_path = tmp_path,
             exp_config = exp_config,
-            steps = steps[0],
-            distributed_context=distributed_context
+            steps = steps[0]
         )
 
-        # Trial B: restore from checkpoint and train for 100 more batches
+        # Trial B: restore from checkpoint and train for more batches
         self.train_from_checkpoint(
             hparams=hparams,
             trial_class=trial_class,
             tmp_path=tmp_path,
             exp_config=exp_config,
             steps=steps,
-            batches_trained=steps_completed,
-            distributed_context=distributed_context
+            batches_trained=steps_completed
         )
 
     def train_for_checkpoint(self,
@@ -1098,8 +1092,7 @@ class TestPyTorchTrial:
         trial_class: pytorch.PyTorchTrial,
         tmp_path: pathlib.Path,
         exp_config: typing.Dict,
-        steps: int = 0,
-        distributed_context: typing.Optional[det.core.DistributedContext] = None
+        steps: int = 0
     ) -> int:
         checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
         tensorboard_path = tmp_path.joinpath("tensorboard")
@@ -1114,8 +1107,7 @@ class TestPyTorchTrial:
             min_checkpoint_batches=steps,
             checkpoint_dir=checkpoint_dir,
             tensorboard_path=tensorboard_path,
-            expose_gpus=True,
-            distributed_context=distributed_context
+            expose_gpus=True
         )
 
         trial_controller.run()
@@ -1131,8 +1123,7 @@ class TestPyTorchTrial:
         tmp_path: pathlib.Path,
         exp_config: typing.Dict,
         steps: typing.Tuple[int, int] = (1, 1),
-        batches_trained: int = 0,
-        distributed_context: typing.Optional[det.core.DistributedContext] = None
+        batches_trained: int = 0
     ) -> None:
         checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
         tensorboard_path = tmp_path.joinpath("tensorboard")
@@ -1149,8 +1140,7 @@ class TestPyTorchTrial:
             tensorboard_path=tensorboard_path,
             latest_checkpoint=os.listdir(checkpoint_dir)[0],
             steps_completed=batches_trained,
-            expose_gpus=True,
-            distributed_context=distributed_context
+            expose_gpus=True
         )
         trial_controller.run()
 
@@ -1392,8 +1382,7 @@ def create_trial_and_trial_controller(
     max_batches: int = 100,
     min_checkpoint_batches: int = sys.maxsize,
     min_validation_batches: int = sys.maxsize,
-    aggregation_frequency: int = 1,
-    distributed_context: typing.Optional[det.core.DistributedContext] = None
+    aggregation_frequency: int = 1
 ) -> typing.Tuple[pytorch.PyTorchTrial, pytorch._PyTorchTrialController]:
     assert issubclass(
         trial_class, pytorch.PyTorchTrial
@@ -1412,6 +1401,12 @@ def create_trial_and_trial_controller(
         trial_seed = random.randint(0, 1 << 31)
 
     checkpoint_dir = checkpoint_dir or "/tmp"
+
+    distributed_backend = det._DistributedBackend()
+    if distributed_backend.use_torch():
+        distributed_context = det.core.DistributedContext.from_torch_distributed()
+    else:
+        distributed_context = None
 
     core_context = det.core._dummy_init(
         distributed=distributed_context,
