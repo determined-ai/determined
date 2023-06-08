@@ -20,7 +20,10 @@ def det_cmd(cmd: List[str], **kwargs: Any) -> subprocess.CompletedProcess:
 
 def det_cmd_json(cmd: List[str]) -> Any:
     res = det_cmd(cmd, check=True)
-    return json.loads(res.stdout)
+    try:
+        return json.loads(res.stdout)
+    except json.JSONDecodeError:
+        pytest.fail(f"Failed to decode JSON: {res.stdout.decode()}")
 
 
 def det_cmd_expect_error(cmd: List[str], expected: str) -> None:
@@ -146,7 +149,7 @@ def test_group_errors() -> None:
         det_cmd_expect_error(["user-group", "remove-user", group_name, fake_user], "not find")
 
         # Removing a user not in a group.
-        det_cmd_expect_error(["user-group", "remove-user", group_name, "admin"], "NotFound")
+        det_cmd_expect_error(["user-group", "remove-user", group_name, "admin"], "not found")
 
         # Describing a non existent group.
         det_cmd_expect_error(["user-group", "describe", get_random_string()], "not find")

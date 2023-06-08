@@ -14,8 +14,16 @@ from .test_groups import det_cmd, det_cmd_expect_error, det_cmd_json
 from .test_users import ADMIN_CREDENTIALS, get_random_string, logged_in_user
 
 
-def roles_not_implemented() -> bool:
-    return "Unimplemented" in det_cmd(["rbac", "my-permissions"]).stderr.decode()
+def rbac_unimplemented() -> bool:
+    try:
+        bindings.get_GetPermissionsSummary(determined_test_session())
+        return False
+    except errors.APIException as e:
+        if e.response_error is None:
+            raise
+        return "Unimplemented" in e.response_error.get("reason", "")
+    except errors.MasterNotFoundException:
+        return True
 
 
 def rbac_disabled() -> bool:
@@ -66,7 +74,7 @@ def create_workspaces_with_users(
 
 
 @pytest.mark.e2e_cpu
-@pytest.mark.skipif(roles_not_implemented(), reason="ee is required for this test")
+@pytest.mark.skipif(rbac_unimplemented(), reason="ee is required for this test")
 def test_user_role_setup() -> None:
     perm_assigments = [
         [
@@ -83,7 +91,7 @@ def test_user_role_setup() -> None:
 
 
 @pytest.mark.e2e_cpu
-@pytest.mark.skipif(roles_not_implemented(), reason="ee is required for this test")
+@pytest.mark.skipif(rbac_unimplemented(), reason="ee is required for this test")
 def test_rbac_permission_assignment() -> None:
     api_utils.configure_token_store(ADMIN_CREDENTIALS)
     test_user_creds = api_utils.create_test_user()
@@ -226,7 +234,7 @@ def test_rbac_permission_assignment() -> None:
 
 
 @pytest.mark.e2e_cpu
-@pytest.mark.skipif(roles_not_implemented(), reason="ee is required for this test")
+@pytest.mark.skipif(rbac_unimplemented(), reason="ee is required for this test")
 def test_rbac_permission_assignment_errors() -> None:
     # Specifying args incorrectly.
     det_cmd_expect_error(["rbac", "assign-role", "Viewer"], "must provide exactly one of")
@@ -366,7 +374,7 @@ def test_rbac_permission_assignment_errors() -> None:
 
 
 @pytest.mark.e2e_cpu
-@pytest.mark.skipif(roles_not_implemented(), reason="ee is required for this test")
+@pytest.mark.skipif(rbac_unimplemented(), reason="ee is required for this test")
 def test_rbac_list_roles() -> None:
     with logged_in_user(ADMIN_CREDENTIALS):
         det_cmd(["rbac", "list-roles"], check=True)
@@ -486,7 +494,7 @@ def test_rbac_list_roles() -> None:
 
 
 @pytest.mark.e2e_cpu
-@pytest.mark.skipif(roles_not_implemented(), reason="ee is required for this test")
+@pytest.mark.skipif(rbac_unimplemented(), reason="ee is required for this test")
 def test_rbac_describe_role() -> None:
     with logged_in_user(ADMIN_CREDENTIALS):
         # Role doesn't exist.
@@ -558,7 +566,7 @@ def test_rbac_describe_role() -> None:
 
 
 @pytest.mark.e2e_cpu
-@pytest.mark.skipif(roles_not_implemented(), reason="ee is required for this test")
+@pytest.mark.skipif(rbac_unimplemented(), reason="ee is required for this test")
 def test_group_access() -> None:
     # create relevant workspace and project, with group having access
     group_name = get_random_string()
