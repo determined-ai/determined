@@ -15,8 +15,8 @@ class User:
         admin: (Mutable, bool) Whether the user has admin privileges.
         remote: (Mutable, bool) When true, prevents password sign-on and requires user to
         sign-on using external IdP
-        agent_uid: (Mutable, int) UID on the agent to run tasks as.
-        agent_gid: (Mutable, int) GID on the agent to run tasks as.
+        agent_uid: (Mutable, int) UID on the agent this user is linked to.
+        agent_gid: (Mutable, int) GID on the agent this user is linked to.
         agent_user: (Mutable, str) Unix user on the agent this user is linked to.
         agent_group: (Mutable, str) Unix group on the agent this user is linked to.
         display_name: (Mutable, str) Human-friendly name of the user.
