@@ -67,7 +67,8 @@ type experimentAllocation struct {
 	Starting bool
 }
 
-var summaryMetricStatistics = []string{"count", "last", "max", "min", "sum"}
+// SummaryMetricStatistics lists values possibly queryable within summary metrics.
+var SummaryMetricStatistics = []string{"count", "last", "max", "min", "sum"}
 
 const maxConcurrentDeletes = 10
 
@@ -2060,7 +2061,6 @@ func sortExperiments(sortString *string, experimentQuery *bun.SelectQuery) error
 	}
 	sortParams := strings.Split(*sortString, ",")
 	hasIDSort := false
-	joinBestTrial := false
 	for _, sortParam := range sortParams {
 		paramDetail := strings.Split(sortParam, "=")
 		if len(paramDetail) != 2 {
@@ -2082,15 +2082,17 @@ func sortExperiments(sortString *string, experimentQuery *bun.SelectQuery) error
 					metricName, sortDirection))
 		case strings.HasPrefix(paramDetail[0], "training."):
 			metricDetails := strings.Split(paramDetail[0], ".")
-			if len(metricDetails) != 3 {
-				return status.Errorf(codes.InvalidArgument, "sort training metrics in format training.NAME.STATISTIC")
+			metricQualifier := metricDetails[len(metricDetails)-1]
+			metricName := strings.TrimSuffix(
+				strings.TrimPrefix(paramDetail[0], "training."),
+				"."+metricQualifier)
+			if !slices.Contains(SummaryMetricStatistics, metricQualifier) {
+				return status.Errorf(codes.InvalidArgument,
+					"sort training metrics by statistic: count, last, max, min, or sum")
 			}
-			if !slices.Contains(summaryMetricStatistics, metricDetails[2]) {
-				return status.Errorf(codes.InvalidArgument, "sort training metrics by statistic: count, max, min, or sum")
-			}
-			joinBestTrial = true
 			experimentQuery.OrderExpr(
-				fmt.Sprintf("t.summary_metrics->'avg_metrics'->'%s'->>'%s' %s", metricDetails[1], metricDetails[2], sortDirection))
+				fmt.Sprintf("trials.summary_metrics->'avg_metrics'->'%s'->>'%s' %s", metricName,
+					metricQualifier, sortDirection))
 		default:
 			if _, ok := orderColMap[paramDetail[0]]; !ok {
 				return status.Errorf(codes.InvalidArgument, "invalid sort col: %s", paramDetail[0])
@@ -2099,9 +2101,6 @@ func sortExperiments(sortString *string, experimentQuery *bun.SelectQuery) error
 			experimentQuery.OrderExpr(
 				fmt.Sprintf("%s %s", orderColMap[paramDetail[0]], sortDirection))
 		}
-	}
-	if joinBestTrial {
-		experimentQuery.Join("LEFT JOIN trials t ON t.id = e.best_trial_id")
 	}
 	if !hasIDSort {
 		experimentQuery.OrderExpr("id ASC")
@@ -2120,6 +2119,7 @@ func (a *apiServer) SearchExperiments(
 		Model(&experiments).
 		ModelTableExpr("experiments as e").
 		Column("e.best_trial_id").
+		Join("LEFT JOIN trials ON trials.id = e.best_trial_id").
 		Apply(getExperimentColumns)
 
 	curUser, _, err := grpcutil.GetUser(ctx)
