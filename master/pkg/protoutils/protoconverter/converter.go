@@ -12,6 +12,7 @@ import (
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
 )
 
@@ -141,7 +142,7 @@ func (c *ProtoConverter) ToStringList(x []uuid.UUID) []string {
 	return strUUIDList
 }
 
-// ToCheckpointState converts a proto chechkpoint state internal state represenations.
+// ToCheckpointState converts a proto chechkpoint state internal state representation.
 func (c *ProtoConverter) ToCheckpointState(x checkpointv1.State) model.State {
 	if c.err != nil {
 		return ""
@@ -160,6 +161,25 @@ func (c *ProtoConverter) ToCheckpointState(x checkpointv1.State) model.State {
 		return model.ErrorState
 	default:
 		c.err = fmt.Errorf("state %s is not a valid state to the backend", x)
+		return ""
+	}
+}
+
+// ToMetricType converts a proto metric type to internal metric type representation.
+func (c *ProtoConverter) ToMetricType(x apiv1.MetricType) model.MetricType {
+	if c.err != nil {
+		return ""
+	}
+
+	switch x {
+	case apiv1.MetricType_METRIC_TYPE_UNSPECIFIED:
+		return ""
+	case apiv1.MetricType_METRIC_TYPE_TRAINING:
+		return model.TrainingMetricType
+	case apiv1.MetricType_METRIC_TYPE_VALIDATION:
+		return model.ValidationMetricType
+	default:
+		c.err = fmt.Errorf("metric type %s is not a valid metric type to the backend", x)
 		return ""
 	}
 }

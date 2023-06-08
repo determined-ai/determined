@@ -835,18 +835,6 @@ func (t TrialProfilerMetricsBatchBatch) ForEach(f func(interface{}) error) error
 	return nil
 }
 
-const (
-	// ValidationMetricType designates metrics from validation runs.
-	ValidationMetricType MetricType = "validation"
-	// TrainingMetricType designates metrics from training runs.
-	TrainingMetricType MetricType = "training"
-)
-
-// ToString returns the string representation of the metric type.
-func (t MetricType) ToString() string {
-	return string(t)
-}
-
 // ExitedReason defines why a workload exited early.
 type ExitedReason string
 
