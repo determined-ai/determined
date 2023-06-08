@@ -5,6 +5,7 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
+	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
@@ -22,6 +23,19 @@ const (
 	// GenericMetric designates metrics from other sources.
 	GenericMetric MetricPartitionType = "GENERIC"
 )
+
+// BunSelectMetricsQuery sets up a bun select query for based on new metrics table
+// simplifying some weirdness we set up for pg10 support.
+func BunSelectMetricsQuery(metricType model.MetricType, inclArchived bool) *bun.SelectQuery {
+	pType := customMetricTypeToPartitionType(metricType)
+	q := Bun().NewSelect().TableExpr("metrics").
+		Where("partition_type = ?", pType).
+		Where("archived = ?", inclArchived)
+	if pType == GenericMetric {
+		q.Where("custom_type = ?", metricType)
+	}
+	return q
+}
 
 /*
 rollbackMetrics ensures old training and validation metrics from a previous run id are archived.
