@@ -12,7 +12,7 @@ import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
 import Spinner from 'components/Spinner/Spinner';
-import useUI from 'shared/contexts/stores/UI';
+import useUI from 'stores/contexts/UI';
 import { Primitive, Range } from 'shared/types';
 import {
   ExperimentAction as Action,

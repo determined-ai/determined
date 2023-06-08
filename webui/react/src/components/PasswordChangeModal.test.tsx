@@ -6,7 +6,7 @@ import Button from 'components/kit/Button';
 import { useModal } from 'components/kit/Modal';
 import { setUserPassword as mockSetUserPassword } from 'services/api';
 import { V1LoginRequest } from 'services/api-ts-sdk';
-import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
+import { StoreProvider as UIProvider } from 'stores/contexts/UI';
 import authStore from 'stores/auth';
 import userStore from 'stores/users';
 import { DetailedUser } from 'types';

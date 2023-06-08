@@ -7,7 +7,7 @@ import Spinner from 'components/Spinner/Spinner';
 import { terminalCommandStates } from 'constants/states';
 import { serverAddress } from 'routes/utils';
 import { getTask } from 'services/api';
-import useUI from 'shared/contexts/stores/UI';
+import useUI from 'stores/contexts/UI';
 import { CommandState } from 'types';
 import { ErrorType } from 'utils/error';
 import handleError from 'utils/error';

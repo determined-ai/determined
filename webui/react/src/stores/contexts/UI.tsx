@@ -5,7 +5,7 @@ import { checkDeepEquality } from 'utils/store';
 
 const logger = rootLogger.extend('stores/ui');
 
-import { DarkLight, Mode, Theme } from '../../themes';
+import { DarkLight, Mode, Theme } from '../../shared/themes';
 
 interface StateUI {
   chromeCollapsed: boolean;
@@ -47,7 +47,7 @@ type ActionUI =
   | { type: typeof StoreActionUI.ShowUISpinner };
 
 class UIActions {
-  constructor(private dispatch: Dispatch<ActionUI>) {}
+  constructor(private dispatch: Dispatch<ActionUI>) { }
 
   public hideChrome = (): void => {
     this.dispatch({ type: StoreActionUI.HideUIChrome });

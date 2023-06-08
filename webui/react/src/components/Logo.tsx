@@ -7,9 +7,9 @@ import logoDeterminedOnLightHorizontal from 'shared/assets/images/logo-determine
 import logoDeterminedOnLightVertical from 'shared/assets/images/logo-determined-on-light-vertical.svg';
 import logoHpeOnDarkHorizontal from 'shared/assets/images/logo-hpe-on-dark-horizontal.svg';
 import logoHpeOnLightHorizontal from 'shared/assets/images/logo-hpe-on-light-horizontal.svg';
-import useUI from 'shared/contexts/stores/UI';
 import { DarkLight } from 'shared/themes';
 import { ValueOf } from 'shared/types';
+import useUI from 'stores/contexts/UI';
 import { BrandingType } from 'stores/determinedInfo';
 import { reactHostAddress } from 'utils/routes';
 

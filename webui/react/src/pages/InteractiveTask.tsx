@@ -4,7 +4,7 @@ import { useParams, useSearchParams } from 'react-router-dom';
 
 import TaskBar from 'components/TaskBar';
 import { getTask } from 'services/api';
-import useUI from 'shared/contexts/stores/UI';
+import useUI from 'stores/contexts/UI';
 import { ValueOf } from 'shared/types';
 import { CommandState, CommandType } from 'types';
 import { ErrorLevel, ErrorType } from 'utils/error';

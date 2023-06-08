@@ -49,7 +49,7 @@ import { CheckpointsDict } from 'pages/TrialDetails/F_TrialDetailsOverview';
 import { serverAddress } from 'routes/utils';
 import { V1LogLevel } from 'services/api-ts-sdk';
 import { mapV1LogsResponse } from 'services/decoder';
-import useUI from 'shared/contexts/stores/UI';
+import useUI from 'stores/contexts/UI';
 import { ValueOf } from 'shared/types';
 import { BrandingType } from 'stores/determinedInfo';
 import { Note } from 'types';

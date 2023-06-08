@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import React, { useCallback } from 'react';
 
 import Button from 'components/kit/Button';
-import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
+import { StoreProvider as UIProvider } from 'stores/contexts/UI';
 import { ModalCloseReason } from 'shared/hooks/useModal/useModal';
 import { generateTestExperimentData } from 'utils/tests/generateTestData';
 

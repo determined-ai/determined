@@ -5,9 +5,9 @@ import React, { ReactNode, useCallback, useEffect, useLayoutEffect, useState } f
 
 import { useSettings } from 'hooks/useSettings';
 import { config, Settings } from 'hooks/useTheme.settings';
-import useUI from 'shared/contexts/stores/UI';
 import { DarkLight, globalCssVars, Mode } from 'shared/themes';
 import { RecordKey } from 'shared/types';
+import useUI from 'stores/contexts/UI';
 import determinedStore from 'stores/determinedInfo';
 import themes from 'themes';
 import { camelCaseToKebab } from 'utils/string';

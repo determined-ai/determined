@@ -4,7 +4,7 @@ import React, { useEffect } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 
 import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
-import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
+import { StoreProvider as UIProvider } from 'stores/contexts/UI';
 import authStore from 'stores/auth';
 import { generateTestExperimentData } from 'utils/tests/generateTestData';
 

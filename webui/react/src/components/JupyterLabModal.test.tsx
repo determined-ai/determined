@@ -7,7 +7,7 @@ import JupyterLabModalComponent from 'components/JupyterLabModal';
 import Button from 'components/kit/Button';
 import { useModal } from 'components/kit/Modal';
 import { SettingsProvider } from 'hooks/useSettingsProvider';
-import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
+import { StoreProvider as UIProvider } from 'stores/contexts/UI';
 import authStore from 'stores/auth';
 import { WorkspaceState } from 'types';
 

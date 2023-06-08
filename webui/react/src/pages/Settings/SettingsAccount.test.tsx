@@ -6,7 +6,7 @@ import React, { useCallback, useEffect } from 'react';
 import { NEW_PASSWORD_LABEL } from 'components/PasswordChangeModal';
 import { patchUser as mockPatchUser } from 'services/api';
 import { PatchUserParams } from 'services/types';
-import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
+import { StoreProvider as UIProvider } from 'stores/contexts/UI';
 import authStore from 'stores/auth';
 import userStore from 'stores/users';
 import { DetailedUser } from 'types';

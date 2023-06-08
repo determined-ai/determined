@@ -16,7 +16,7 @@ import { defaultRoute, rbacDefaultRoute } from 'routes';
 import { routeAll } from 'routes/utils';
 import LogoGoogle from 'shared/assets/images/logo-sso-google-white.svg';
 import LogoOkta from 'shared/assets/images/logo-sso-okta-white.svg';
-import useUI from 'shared/contexts/stores/UI';
+import useUI from 'stores/contexts/UI';
 import usePolling from 'shared/hooks/usePolling';
 import { RecordKey } from 'shared/types';
 import authStore from 'stores/auth';

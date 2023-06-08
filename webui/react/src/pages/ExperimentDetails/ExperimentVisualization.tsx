@@ -5,6 +5,8 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import Pivot from 'components/kit/Pivot';
 import Link from 'components/Link';
+import Message, { MessageType } from 'components/Message';
+import Spinner from 'components/Spinner/Spinner';
 import { terminalRunStates } from 'constants/states';
 import useMetricNames from 'hooks/useMetricNames';
 import useStorage from 'hooks/useStorage';
@@ -12,10 +14,8 @@ import { paths } from 'routes/utils';
 import { V1MetricBatchesResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
-import Message, { MessageType } from 'components/Message';
-import Spinner from 'components/Spinner/Spinner';
-import useUI from 'shared/contexts/stores/UI';
 import { ValueOf } from 'shared/types';
+import useUI from 'stores/contexts/UI';
 import {
   ExperimentBase,
   ExperimentSearcherName,

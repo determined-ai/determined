@@ -6,7 +6,7 @@ import { BrowserRouter } from 'react-router-dom';
 
 import { SettingsProvider } from 'hooks/useSettingsProvider';
 import { paths } from 'routes/utils';
-import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
+import { StoreProvider as UIProvider } from 'stores/contexts/UI';
 import authStore from 'stores/auth';
 import userStore from 'stores/users';
 import { DetailedUser } from 'types';

@@ -13,7 +13,7 @@ import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
 import Message, { MessageType } from 'components/Message';
 import Spinner from 'components/Spinner/Spinner';
-import useUI from 'shared/contexts/stores/UI';
+import useUI from 'stores/contexts/UI';
 import { Primitive } from 'shared/types';
 import { ExperimentBase, HyperparameterType, Metric, metricTypeParamMap, Scale } from 'types';
 import { flattenObject, isBoolean, isString } from 'utils/data';

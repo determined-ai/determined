@@ -4,7 +4,7 @@ import Button from 'components/kit/Button';
 import Link from 'components/Link';
 import { paths } from 'routes/utils';
 import { ImageAlert } from 'components/Image';
-import useUI from 'shared/contexts/stores/UI';
+import useUI from 'stores/contexts/UI';
 import { DarkLight } from 'shared/themes';
 
 import css from './exceptions.module.scss';

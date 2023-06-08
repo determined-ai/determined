@@ -10,7 +10,7 @@ import { paths } from 'routes/utils';
 import { login } from 'services/api';
 import { updateDetApi } from 'services/apiConfig';
 import { isLoginFailure } from 'services/utils';
-import useUI from 'shared/contexts/stores/UI';
+import useUI from 'stores/contexts/UI';
 import authStore from 'stores/auth';
 import determinedStore from 'stores/determinedInfo';
 import permissionStore from 'stores/permissions';
