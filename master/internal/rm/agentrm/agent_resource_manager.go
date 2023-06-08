@@ -86,14 +86,15 @@ func (a ResourceManager) IsReattachEnabledForRP(ctx actor.Messenger, rpName stri
 
 // CheckMaxSlotsExceeded checks if the job exceeded the maximum number of slots.
 func (a ResourceManager) CheckMaxSlotsExceeded(
-	ctx actor.Messenger, name string, slots int,
+	ctx actor.Messenger, name string, slots int, restored bool,
 ) (bool, error) {
 	ref, err := a.GetResourcePoolRef(ctx, name)
 	if err != nil {
 		return false, err
 	}
 	resp := ref.System().Ask(ref, sproto.CapacityCheck{
-		Slots: slots,
+		Slots:    slots,
+		Restored: restored,
 	})
 	if resp.Error() != nil {
 		return false, resp.Error()
@@ -152,7 +153,7 @@ func (a ResourceManager) ValidateResources(
 
 // ValidateResourcePoolAvailability is a default implementation to satisfy the interface.
 func (a ResourceManager) ValidateResourcePoolAvailability(ctx actor.Messenger,
-	name string, slots int) (
+	name string, slots int, restored bool) (
 	[]command.LaunchWarning,
 	error,
 ) {
@@ -160,7 +161,7 @@ func (a ResourceManager) ValidateResourcePoolAvailability(ctx actor.Messenger,
 		return nil, nil
 	}
 
-	switch exceeded, err := a.CheckMaxSlotsExceeded(ctx, name, slots); {
+	switch exceeded, err := a.CheckMaxSlotsExceeded(ctx, name, slots, restored); {
 	case err != nil:
 		return nil, fmt.Errorf("validating request for (%s, %d): %w", name, slots, err)
 	case exceeded:

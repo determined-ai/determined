@@ -67,7 +67,9 @@ type ResourceManager interface {
 	ValidateResourcePoolAvailability(
 		ctx actor.Messenger,
 		name string,
-		slots int) ([]command.LaunchWarning, error)
+		slots int,
+		restored bool,
+	) ([]command.LaunchWarning, error)
 	TaskContainerDefaults(
 		ctx actor.Messenger,
 		resourcePoolName string,

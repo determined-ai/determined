@@ -125,6 +125,7 @@ func newExperiment(
 	expModel *model.Experiment,
 	activeConfig expconf.ExperimentConfig,
 	taskSpec *tasks.TaskSpec,
+	restored bool,
 ) (*experiment, []command.LaunchWarning, error) {
 	resources := activeConfig.Resources()
 	poolName, err := m.rm.ResolveResourcePool(
@@ -140,6 +141,7 @@ func newExperiment(
 		m.system,
 		poolName,
 		resources.SlotsPerTrial(),
+		restored,
 	)
 	if err != nil {
 		return nil, launchWarnings, fmt.Errorf("getting resource availability: %w", err)
@@ -197,6 +199,8 @@ func newExperiment(
 			"job-id":        expModel.JobID,
 			"experiment-id": expModel.ID,
 		},
+
+		restored: restored,
 	}, launchWarnings, nil
 }
 

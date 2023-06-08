@@ -117,7 +117,7 @@ func (m *Master) restoreExperiment(expModel *model.Experiment) error {
 	if err != nil {
 		return errors.Wrapf(err, "failed to restore experiment %d", expModel.ID)
 	}
-	e, _, err := newExperiment(m, expModel, activeConfig, &taskSpec)
+	e, _, err := newExperiment(m, expModel, activeConfig, &taskSpec, true)
 	if err != nil {
 		return errors.Wrapf(err, "failed to create experiment %d from model", expModel.ID)
 	}
@@ -125,7 +125,6 @@ func (m *Master) restoreExperiment(expModel *model.Experiment) error {
 		if err := e.Restore(snapshot); err != nil {
 			return errors.Wrap(err, "failed to restore experiment")
 		}
-		e.restored = true
 	}
 
 	experimentActor, _ := m.system.ActorOf(actor.Addr("experiments", e.ID), e)
