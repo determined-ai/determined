@@ -24,7 +24,7 @@ import usePermissions from 'hooks/usePermissions';
 import { useSettings } from 'hooks/useSettings';
 import { getGroups, patchUser } from 'services/api';
 import { V1GetUsersRequestSortBy, V1GroupSearchResult } from 'services/api-ts-sdk';
-import dropdownCss from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
+import dropdownCss from 'components/ActionDropdown/ActionDropdown.module.scss';
 import determinedStore from 'stores/determinedInfo';
 import roleStore from 'stores/roles';
 import userStore from 'stores/users';

@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 
-import Spinner from 'shared/components/Spinner/Spinner';
+import Spinner from 'components/Spinner/Spinner';
 import useUI from 'shared/contexts/stores/UI';
 import clusterStore from 'stores/cluster';
 import determinedStore, { BrandingType } from 'stores/determinedInfo';

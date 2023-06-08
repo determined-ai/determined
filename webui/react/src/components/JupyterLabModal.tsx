@@ -11,7 +11,7 @@ import { Modal } from 'components/kit/Modal';
 import usePermissions from 'hooks/usePermissions';
 import { SettingsConfig, useSettings } from 'hooks/useSettings';
 import { getTaskTemplates } from 'services/api';
-import Spinner from 'shared/components/Spinner/Spinner';
+import Spinner from 'components/Spinner/Spinner';
 import { RawJson } from 'shared/types';
 import clusterStore from 'stores/cluster';
 import workspaceStore from 'stores/workspaces';

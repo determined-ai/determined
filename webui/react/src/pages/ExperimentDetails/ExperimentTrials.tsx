@@ -21,7 +21,7 @@ import { paths } from 'routes/utils';
 import { getExpTrials, openOrCreateTensorBoard } from 'services/api';
 import { Experimentv1State, V1GetExperimentTrialsRequestSortBy } from 'services/api-ts-sdk';
 import { encodeExperimentState } from 'services/decoder';
-import ActionDropdown from 'shared/components/ActionDropdown/ActionDropdown';
+import ActionDropdown from 'components/ActionDropdown/ActionDropdown';
 import usePolling from 'shared/hooks/usePolling';
 import { ValueOf } from 'shared/types';
 import {

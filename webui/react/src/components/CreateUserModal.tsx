@@ -16,7 +16,7 @@ import {
   postUser,
   removeRolesFromUser,
 } from 'services/api';
-import Spinner from 'shared/components/Spinner';
+import Spinner from 'components/Spinner';
 import determinedStore from 'stores/determinedInfo';
 import roleStore from 'stores/roles';
 import userStore from 'stores/users';

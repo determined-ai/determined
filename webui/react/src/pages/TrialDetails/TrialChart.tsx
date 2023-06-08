@@ -11,7 +11,7 @@ import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin';
 import { trackAxis } from 'components/UPlot/UPlotChart/trackAxis';
 import css from 'pages/TrialDetails/TrialChart.module.scss';
 import { timeSeries } from 'services/api';
-import Spinner from 'shared/components/Spinner';
+import Spinner from 'components/Spinner';
 import usePolling from 'shared/hooks/usePolling';
 import { Metric, MetricContainer, Scale } from 'types';
 import { glasbeyColor } from 'utils/color';

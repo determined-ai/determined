@@ -4,7 +4,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 
 import Button from 'components/kit/Button';
 import Tooltip from 'components/kit/Tooltip';
-import Spinner from 'shared/components/Spinner/Spinner';
+import Spinner from 'components/Spinner/Spinner';
 import { Metadata } from 'types';
 import { ErrorType } from 'utils/error';
 import handleError from 'utils/error';

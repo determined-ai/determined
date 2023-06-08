@@ -30,7 +30,7 @@ import {
   pauseExperiment,
   unarchiveExperiment,
 } from 'services/api';
-import Spinner from 'shared/components/Spinner/Spinner';
+import Spinner from 'components/Spinner/Spinner';
 import { getStateColorCssVar } from 'themes';
 import {
   ExperimentAction as Action,

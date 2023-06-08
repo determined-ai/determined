@@ -13,7 +13,7 @@ import ModelEditModal from 'components/ModelEditModal';
 import ModelMoveModal from 'components/ModelMoveModal';
 import TimeAgo from 'components/TimeAgo';
 import usePermissions from 'hooks/usePermissions';
-import Spinner from 'shared/components/Spinner';
+import Spinner from 'components/Spinner';
 import userStore from 'stores/users';
 import { ModelItem, Workspace } from 'types';
 import { formatDatetime } from 'utils/datetime';

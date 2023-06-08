@@ -10,7 +10,7 @@ import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { patchWorkspace } from 'services/api';
 import { V1AgentUserGroup } from 'services/api-ts-sdk';
-import Spinner from 'shared/components/Spinner';
+import Spinner from 'components/Spinner';
 import workspaceStore from 'stores/workspaces';
 import { Workspace } from 'types';
 import { DetError, ErrorLevel, ErrorType } from 'utils/error';

@@ -3,8 +3,10 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom';
 
 import Pivot from 'components/kit/Pivot';
+import Message, { MessageType } from 'components/Message';
 import Page from 'components/Page';
 import RoutePagination from 'components/RoutePagination';
+import Spinner from 'components/Spinner';
 import TrialLogPreview from 'components/TrialLogPreview';
 import { terminalRunStates } from 'constants/states';
 import useFeature from 'hooks/useFeature';
@@ -16,8 +18,6 @@ import TrialDetailsOverview from 'pages/TrialDetails/TrialDetailsOverview';
 import TrialDetailsProfiles from 'pages/TrialDetails/TrialDetailsProfiles';
 import { paths } from 'routes/utils';
 import { getExperimentDetails, getTrialDetails } from 'services/api';
-import Message, { MessageType } from 'shared/components/Message';
-import Spinner from 'shared/components/Spinner';
 import usePolling from 'shared/hooks/usePolling';
 import { ApiState, ValueOf } from 'shared/types';
 import workspaceStore from 'stores/workspaces';

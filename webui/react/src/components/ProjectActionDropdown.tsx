@@ -6,7 +6,7 @@ import Icon from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
 import usePermissions from 'hooks/usePermissions';
 import { archiveProject, unarchiveProject } from 'services/api';
-import css from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
+import css from 'components/ActionDropdown/ActionDropdown.module.scss';
 import { Project } from 'types';
 import handleError from 'utils/error';
 

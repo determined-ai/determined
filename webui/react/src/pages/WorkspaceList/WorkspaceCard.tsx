@@ -7,7 +7,7 @@ import Card from 'components/kit/Card';
 import { Columns } from 'components/kit/Columns';
 import Avatar from 'components/kit/UserAvatar';
 import { paths } from 'routes/utils';
-import Spinner from 'shared/components/Spinner';
+import Spinner from 'components/Spinner';
 import userStore from 'stores/users';
 import { Workspace } from 'types';
 import { Loadable } from 'utils/loadable';

@@ -4,7 +4,7 @@ import InteractiveTable, { ColumnDef } from 'components/Table/InteractiveTable';
 import SkeletonTable from 'components/Table/SkeletonTable';
 import { defaultRowClassName } from 'components/Table/Table';
 import { useSettings } from 'hooks/useSettings';
-import Spinner from 'shared/components/Spinner';
+import Spinner from 'components/Spinner';
 import { TrialDetails } from 'types';
 import { isObject } from 'utils/data';
 import { alphaNumericSorter } from 'utils/sort';

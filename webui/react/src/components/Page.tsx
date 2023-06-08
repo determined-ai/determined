@@ -6,7 +6,7 @@ import { MenuItem } from 'components/kit/Dropdown';
 import PageHeader from 'components/PageHeader';
 import PageNotFound from 'components/PageNotFound';
 import usePermissions from 'hooks/usePermissions';
-import Spinner from 'shared/components/Spinner';
+import Spinner from 'components/Spinner';
 import determinedStore, { BrandingType } from 'stores/determinedInfo';
 
 import css from './Page.module.scss';

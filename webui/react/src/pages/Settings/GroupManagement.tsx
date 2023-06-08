@@ -16,7 +16,7 @@ import usePermissions from 'hooks/usePermissions';
 import { useSettings } from 'hooks/useSettings';
 import { getGroup, getGroups, getUsers, updateGroup } from 'services/api';
 import { V1GroupDetails, V1GroupSearchResult, V1User } from 'services/api-ts-sdk';
-import dropdownCss from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
+import dropdownCss from 'components/ActionDropdown/ActionDropdown.module.scss';
 import determinedStore from 'stores/determinedInfo';
 import roleStore from 'stores/roles';
 import { DetailedUser } from 'types';

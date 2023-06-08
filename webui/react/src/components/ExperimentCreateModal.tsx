@@ -9,7 +9,7 @@ import { Modal } from 'components/kit/Modal';
 import { paths } from 'routes/utils';
 import { createExperiment } from 'services/api';
 import { V1LaunchWarning } from 'services/api-ts-sdk';
-import Spinner from 'shared/components/Spinner/Spinner';
+import Spinner from 'components/Spinner/Spinner';
 import { RawJson, ValueOf } from 'shared/types';
 import { ExperimentBase, TrialHyperparameters, TrialItem } from 'types';
 import { clone, isEqual } from 'utils/data';

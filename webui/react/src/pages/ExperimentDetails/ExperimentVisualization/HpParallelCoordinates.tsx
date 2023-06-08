@@ -11,7 +11,7 @@ import { openOrCreateTensorBoard } from 'services/api';
 import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
-import Spinner from 'shared/components/Spinner/Spinner';
+import Spinner from 'components/Spinner/Spinner';
 import useUI from 'shared/contexts/stores/UI';
 import { Primitive, Range } from 'shared/types';
 import {

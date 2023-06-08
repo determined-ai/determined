@@ -12,7 +12,7 @@ import { SyncProvider } from 'components/UPlot/SyncProvider';
 import { useSettings } from 'hooks/useSettings';
 import TrialTable from 'pages/TrialsComparison/Table/TrialTable';
 import { V1AugmentedTrial } from 'services/api-ts-sdk';
-import Message, { MessageType } from 'shared/components/Message';
+import Message, { MessageType } from 'components/Message';
 import { Scale } from 'types';
 import { metricToKey } from 'utils/metric';
 import { intersection } from 'utils/set';

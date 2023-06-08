@@ -21,7 +21,7 @@ import {
   pauseExperiment,
   unarchiveExperiment,
 } from 'services/api';
-import css from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
+import css from 'components/ActionDropdown/ActionDropdown.module.scss';
 import { ValueOf } from 'shared/types';
 import { ExperimentAction, ProjectExperiment } from 'types';
 import { notification } from 'utils/dialogApi';

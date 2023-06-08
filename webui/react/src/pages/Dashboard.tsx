@@ -10,6 +10,7 @@ import Link from 'components/Link';
 import Page, { BreadCrumbRoute } from 'components/Page';
 import ProjectCard from 'components/ProjectCard';
 import Section from 'components/Section';
+import Spinner from 'components/Spinner';
 import ResponsiveTable from 'components/Table/ResponsiveTable';
 import {
   experimentNameRenderer,
@@ -27,7 +28,6 @@ import {
   getShells,
   getTensorBoards,
 } from 'services/api';
-import Spinner from 'shared/components/Spinner';
 import usePolling from 'shared/hooks/usePolling';
 import userStore from 'stores/users';
 import workspaceStore from 'stores/workspaces';

@@ -1,6 +1,6 @@
 import React from 'react';
 
-import Spinner from 'shared/components/Spinner/Spinner';
+import Spinner from 'components/Spinner/Spinner';
 import { isString } from 'utils/data';
 import { generateAlphaNumeric, toHtmlId } from 'utils/string';
 

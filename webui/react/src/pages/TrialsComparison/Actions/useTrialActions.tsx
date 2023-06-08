@@ -13,7 +13,7 @@ import Dropdown from 'components/kit/Dropdown';
 import Icon from 'components/kit/Icon';
 import TableBatch from 'components/Table/TableBulkActions';
 import { SettingsConfig, useSettings } from 'hooks/useSettings';
-import css from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
+import css from 'components/ActionDropdown/ActionDropdown.module.scss';
 import usePrevious from 'shared/hooks/usePrevious';
 import { isEqual } from 'utils/data';
 import { noOp } from 'utils/service';

@@ -14,8 +14,8 @@ import { openOrCreateTensorBoard } from 'services/api';
 import { V1TrialsSampleResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
-import Message, { MessageType } from 'shared/components/Message';
-import Spinner from 'shared/components/Spinner/Spinner';
+import Message, { MessageType } from 'components/Message';
+import Spinner from 'components/Spinner/Spinner';
 import useUI from 'shared/contexts/stores/UI';
 import {
   ExperimentAction as Action,

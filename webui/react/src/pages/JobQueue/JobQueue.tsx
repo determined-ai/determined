@@ -16,7 +16,7 @@ import { columns as defaultColumns, SCHEDULING_VAL_KEY } from 'pages/JobQueue/Jo
 import { paths } from 'routes/utils';
 import { cancelExperiment, getJobQ, getJobQStats, killExperiment, killTask } from 'services/api';
 import * as Api from 'services/api-ts-sdk';
-import ActionDropdown, { Triggers } from 'shared/components/ActionDropdown/ActionDropdown';
+import ActionDropdown, { Triggers } from 'components/ActionDropdown/ActionDropdown';
 import clusterStore from 'stores/cluster';
 import userStore from 'stores/users';
 import { Job, JobAction, JobState, JobType, ResourcePool, RPStats } from 'types';

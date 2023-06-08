@@ -6,9 +6,9 @@ import {
   SizedGridColumn,
 } from '@glideapps/glide-data-grid';
 
+import { getColor, getInitials } from 'components/Avatar';
 import { terminalRunStates } from 'constants/states';
 import { paths } from 'routes/utils';
-import { getColor, getInitials } from 'shared/components/Avatar';
 import { DarkLight, Theme } from 'shared/themes';
 import { DetailedUser, ExperimentWithTrial, ProjectColumn } from 'types';
 import { getPath, isString } from 'utils/data';

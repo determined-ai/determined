@@ -11,7 +11,7 @@ import { useCheckpointFlow } from 'hooks/useModal/Checkpoint/useCheckpointFlow';
 import usePermissions from 'hooks/usePermissions';
 import { useSettings } from 'hooks/useSettings';
 import TrialInfoBox from 'pages/TrialDetails/TrialInfoBox';
-import Spinner from 'shared/components/Spinner';
+import Spinner from 'components/Spinner';
 import {
   CheckpointWorkloadExtended,
   ExperimentBase,

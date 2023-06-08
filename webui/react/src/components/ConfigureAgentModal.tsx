@@ -4,9 +4,9 @@ import Form from 'components/kit/Form';
 import Input from 'components/kit/Input';
 import InputNumber from 'components/kit/InputNumber';
 import { Modal } from 'components/kit/Modal';
+import Spinner from 'components/Spinner';
 import { patchUser } from 'services/api';
 import { V1AgentUserGroup } from 'services/api-ts-sdk';
-import Spinner from 'shared/components/Spinner';
 import { DetailedUser } from 'types';
 import { message } from 'utils/dialogApi';
 import { ErrorType } from 'utils/error';
@@ -77,17 +77,17 @@ const ConfigureAgentModalComponent: React.FC<Props> = ({ user, onClose }: Props)
           initialValues={
             user?.agentUserGroup
               ? {
-                  agentGid: user?.agentUserGroup.agentGid,
-                  agentGroup: user?.agentUserGroup.agentGroup,
-                  agentUid: user?.agentUserGroup.agentUid,
-                  agentUser: user?.agentUserGroup.agentUser,
-                }
+                agentGid: user?.agentUserGroup.agentGid,
+                agentGroup: user?.agentUserGroup.agentGroup,
+                agentUid: user?.agentUserGroup.agentUid,
+                agentUser: user?.agentUserGroup.agentUser,
+              }
               : {
-                  agentGid: undefined,
-                  agentGroup: undefined,
-                  agentUid: undefined,
-                  agentUser: undefined,
-                }
+                agentGid: undefined,
+                agentGroup: undefined,
+                agentUid: undefined,
+                agentUser: undefined,
+              }
           }
           onFieldsChange={handleFieldsChange}>
           <Form.Item

@@ -9,8 +9,8 @@ import ExperimentSingleTrialTabs from 'pages/ExperimentDetails/ExperimentSingleT
 import { TrialInfoBoxMultiTrial } from 'pages/TrialDetails/TrialInfoBox';
 import { paths } from 'routes/utils';
 import { getExperimentDetails } from 'services/api';
-import Message, { MessageType } from 'shared/components/Message';
-import Spinner from 'shared/components/Spinner/Spinner';
+import Message, { MessageType } from 'components/Message';
+import Spinner from 'components/Spinner/Spinner';
 import usePolling from 'shared/hooks/usePolling';
 import workspaceStore from 'stores/workspaces';
 import { ExperimentBase, TrialItem, Workspace } from 'types';

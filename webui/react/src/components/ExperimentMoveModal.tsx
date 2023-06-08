@@ -11,7 +11,7 @@ import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { moveExperiments } from 'services/api';
 import { V1BulkExperimentFilters } from 'services/api-ts-sdk';
-import Spinner from 'shared/components/Spinner';
+import Spinner from 'components/Spinner';
 import projectStore from 'stores/projects';
 import workspaceStore from 'stores/workspaces';
 import { Project } from 'types';

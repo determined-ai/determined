@@ -16,7 +16,7 @@ import { SettingsConfig, useSettings } from 'hooks/useSettings';
 import WorkspaceQuickSearch from 'pages/WorkspaceDetails/WorkspaceQuickSearch';
 import WorkspaceActionDropdown from 'pages/WorkspaceList/WorkspaceActionDropdown';
 import { paths } from 'routes/utils';
-import Spinner from 'shared/components/Spinner/Spinner';
+import Spinner from 'components/Spinner/Spinner';
 import useUI from 'shared/contexts/stores/UI';
 import authStore from 'stores/auth';
 import clusterStore from 'stores/cluster';

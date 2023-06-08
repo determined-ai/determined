@@ -5,7 +5,7 @@ import Icon from 'components/kit/Icon';
 import { paths } from 'routes/utils';
 import { getExperimentFileFromTree, getExperimentFileTree } from 'services/api';
 import { V1FileNode } from 'services/api-ts-sdk';
-import Spinner from 'shared/components/Spinner/Spinner';
+import Spinner from 'components/Spinner/Spinner';
 import { RawJson } from 'shared/types';
 import { ExperimentBase, TreeNode } from 'types';
 import handleError from 'utils/error';

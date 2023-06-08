@@ -3,7 +3,7 @@ import React, { ReactNode } from 'react';
 import Button from 'components/kit/Button';
 import Link from 'components/Link';
 import { paths } from 'routes/utils';
-import { ImageAlert } from 'shared/components/Image';
+import { ImageAlert } from 'components/Image';
 import useUI from 'shared/contexts/stores/UI';
 import { DarkLight } from 'shared/themes';
 

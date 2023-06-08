@@ -17,6 +17,7 @@ import { useModal } from 'components/kit/Modal';
 import Tags from 'components/kit/Tags';
 import Toggle from 'components/kit/Toggle';
 import Link from 'components/Link';
+import Spinner from 'components/Spinner';
 import InteractiveTable, {
   ColumnDef,
   onRightClickableCell,
@@ -56,7 +57,6 @@ import {
 import { Experimentv1State, V1GetExperimentsRequestSortBy } from 'services/api-ts-sdk';
 import { encodeExperimentState } from 'services/decoder';
 import { GetExperimentsParams } from 'services/types';
-import Spinner from 'shared/components/Spinner';
 import usePolling from 'shared/hooks/usePolling';
 import { RecordKey } from 'shared/types';
 import userStore from 'stores/users';

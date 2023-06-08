@@ -10,7 +10,9 @@ import { useModal } from 'components/kit/Modal';
 import Select, { Option } from 'components/kit/Select';
 import Toggle from 'components/kit/Toggle';
 import Link from 'components/Link';
+import Message, { MessageType } from 'components/Message';
 import Page from 'components/Page';
+import Spinner from 'components/Spinner';
 import InteractiveTable, {
   ColumnDef,
   onRightClickableCell,
@@ -28,8 +30,6 @@ import { useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { getWorkspaces } from 'services/api';
 import { V1GetWorkspacesRequestSortBy } from 'services/api-ts-sdk';
-import Message, { MessageType } from 'shared/components/Message';
-import Spinner from 'shared/components/Spinner';
 import usePolling from 'shared/hooks/usePolling';
 import usePrevious from 'shared/hooks/usePrevious';
 import userStore from 'stores/users';

@@ -6,7 +6,7 @@ import Icon from 'components/kit/Icon';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { killTask } from 'services/api';
-import css from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
+import css from 'components/ActionDropdown/ActionDropdown.module.scss';
 import { ExperimentAction as Action, AnyTask, CommandTask, DetailedUser } from 'types';
 import { ErrorLevel, ErrorType } from 'utils/error';
 import handleError from 'utils/error';

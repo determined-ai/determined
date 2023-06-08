@@ -8,7 +8,7 @@ import { useModal } from 'components/kit/Modal';
 import Link, { Props as LinkProps } from 'components/Link';
 import usePermissions from 'hooks/usePermissions';
 import { handlePath, paths } from 'routes/utils';
-import Spinner from 'shared/components/Spinner/Spinner';
+import Spinner from 'components/Spinner/Spinner';
 import useUI from 'shared/contexts/stores/UI';
 import authStore from 'stores/auth';
 import clusterStore from 'stores/cluster';

@@ -5,7 +5,7 @@ import { throttle } from 'throttle-debounce';
 import uPlot, { AlignedData } from 'uplot';
 
 import useResize from 'hooks/useResize';
-import Spinner from 'shared/components/Spinner';
+import Spinner from 'components/Spinner';
 import useUI from 'shared/contexts/stores/UI';
 import usePrevious from 'shared/hooks/usePrevious';
 import { DarkLight } from 'shared/themes';

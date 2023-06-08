@@ -11,7 +11,7 @@ import ExperimentCodeViewer from 'pages/ExperimentDetails/ExperimentCodeViewer';
 import ExperimentTrials from 'pages/ExperimentDetails/ExperimentTrials';
 import { paths } from 'routes/utils';
 import { patchExperiment } from 'services/api';
-import Spinner from 'shared/components/Spinner/Spinner';
+import Spinner from 'components/Spinner/Spinner';
 import { ValueOf } from 'shared/types';
 import { ExperimentBase, Note } from 'types';
 import { ErrorLevel, ErrorType } from 'utils/error';

@@ -16,7 +16,7 @@ import { serverAddress } from 'routes/utils';
 import { detApi } from 'services/apiConfig';
 import { mapV1LogsResponse } from 'services/decoder';
 import { readStream } from 'services/utils';
-import Spinner from 'shared/components/Spinner';
+import Spinner from 'components/Spinner';
 import useUI from 'shared/contexts/stores/UI';
 import { ExperimentBase, TrialDetails } from 'types';
 import { downloadTrialLogs } from 'utils/browser';

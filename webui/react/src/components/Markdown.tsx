@@ -4,7 +4,7 @@ import React, { useMemo } from 'react';
 
 import Pivot from 'components/kit/Pivot';
 import useResize from 'hooks/useResize';
-import Spinner from 'shared/components/Spinner/Spinner';
+import Spinner from 'components/Spinner/Spinner';
 import handleError from 'utils/error';
 import { Loaded } from 'utils/loadable';
 

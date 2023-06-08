@@ -15,7 +15,7 @@ import TimeAgo from 'components/TimeAgo';
 import TimeDuration from 'components/TimeDuration';
 import { commandTypeToLabel } from 'constants/states';
 import { paths } from 'routes/utils';
-import Spinner from 'shared/components/Spinner';
+import Spinner from 'components/Spinner';
 import { Pagination } from 'shared/types';
 import { StateOfUnion } from 'themes';
 import {

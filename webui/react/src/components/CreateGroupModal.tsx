@@ -18,7 +18,7 @@ import {
   updateGroup,
 } from 'services/api';
 import { V1GroupDetails, V1GroupSearchResult } from 'services/api-ts-sdk';
-import Spinner from 'shared/components/Spinner';
+import Spinner from 'components/Spinner';
 import determinedStore from 'stores/determinedInfo';
 import roleStore from 'stores/roles';
 import { DetailedUser, UserRole } from 'types';

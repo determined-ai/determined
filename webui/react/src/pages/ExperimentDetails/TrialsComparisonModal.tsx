@@ -12,7 +12,7 @@ import useMetricNames from 'hooks/useMetricNames';
 import useResize from 'hooks/useResize';
 import { paths } from 'routes/utils';
 import { getTrialDetails, getTrialWorkloads } from 'services/api';
-import Spinner from 'shared/components/Spinner/Spinner';
+import Spinner from 'components/Spinner/Spinner';
 import { ExperimentBase, Metric, MetricsWorkload, TrialDetails, TrialWorkloadFilter } from 'types';
 import { isNumber } from 'utils/data';
 import { ErrorType } from 'utils/error';

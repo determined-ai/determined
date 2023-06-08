@@ -8,7 +8,7 @@ import { DetError, ErrorLevel, ErrorType, wrapPublicMessage } from 'utils/error'
 import handleError from 'utils/error';
 import { capitalize } from 'utils/string';
 
-import { Eventually } from '../../types';
+import { Eventually } from '../../shared/types';
 
 import css from './ActionDropdown.module.scss';
 

@@ -14,7 +14,7 @@ import ModelVersionDeleteModal from 'components/ModelVersionDeleteModal';
 import ModelVersionEditModal from 'components/ModelVersionEditModal';
 import TimeAgo from 'components/TimeAgo';
 import usePermissions from 'hooks/usePermissions';
-import Spinner from 'shared/components/Spinner';
+import Spinner from 'components/Spinner';
 import userStore from 'stores/users';
 import { ModelVersion } from 'types';
 import { formatDatetime } from 'utils/datetime';

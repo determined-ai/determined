@@ -11,7 +11,7 @@ import awsLogo from 'shared/assets/images/aws-logo.svg';
 import gcpLogo from 'shared/assets/images/gcp-logo.svg';
 import k8sLogo from 'shared/assets/images/k8s-logo.svg';
 import staticLogo from 'shared/assets/images/on-prem-logo.svg';
-import Spinner from 'shared/components/Spinner';
+import Spinner from 'components/Spinner';
 import useUI from 'shared/contexts/stores/UI';
 import { DarkLight } from 'shared/themes';
 import { maxPoolSlotCapacity } from 'stores/cluster';

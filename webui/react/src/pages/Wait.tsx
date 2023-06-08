@@ -3,10 +3,10 @@ import { useParams, useSearchParams } from 'react-router-dom';
 
 import Badge, { BadgeType } from 'components/Badge';
 import PageMessage from 'components/PageMessage';
+import Spinner from 'components/Spinner/Spinner';
 import { terminalCommandStates } from 'constants/states';
 import { serverAddress } from 'routes/utils';
 import { getTask } from 'services/api';
-import Spinner from 'shared/components/Spinner/Spinner';
 import useUI from 'shared/contexts/stores/UI';
 import { CommandState } from 'types';
 import { ErrorType } from 'utils/error';

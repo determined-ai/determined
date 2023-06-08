@@ -6,7 +6,7 @@ import Section from 'components/Section';
 import { activeRunStates } from 'constants/states';
 import usePermissions from 'hooks/usePermissions';
 import { GetExperimentsParams } from 'services/types';
-import Spinner from 'shared/components/Spinner';
+import Spinner from 'components/Spinner';
 import clusterStore from 'stores/cluster';
 import { maxClusterSlotCapacity } from 'stores/cluster';
 import determinedStore from 'stores/determinedInfo';
