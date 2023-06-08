@@ -934,7 +934,7 @@ class TestPyTorchTrial:
         rdzv_id = str(uuid.uuid4())
 
         launch_config = launcher.LaunchConfig(min_nodes=1, max_nodes=1, nproc_per_node=2, run_id=rdzv_id,
-                                              max_restarts=0, start_method="fork", rdzv_endpoint=rdzv_endpoint, rdzv_backend=rdzv_backend)
+                                              max_restarts=0, rdzv_endpoint=rdzv_endpoint, rdzv_backend=rdzv_backend)
 
         outputs = launcher.elastic_launch(launch_config, self.run_cifar10)(tmp_path)
         print(outputs)
