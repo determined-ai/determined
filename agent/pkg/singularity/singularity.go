@@ -10,7 +10,6 @@ import (
 	"os/user"
 	"path"
 	"path/filepath"
-	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -31,6 +30,7 @@ import (
 	"github.com/determined-ai/determined/agent/pkg/events"
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/cproto"
+	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/syncx/waitgroupx"
 	"github.com/determined-ai/determined/master/pkg/tasks"
@@ -288,15 +288,10 @@ func (s *SingularityClient) RunContainer(
 		}
 	}
 
-	// TODO(DET-9075): Un-dockerize the RunContainer API so we can know to pass `--rocm` without
-	// regexing on devices.
 	// TODO(DET-9080): Test this on ROCM devices.
-	rocmDevice := regexp.MustCompile("/dev/dri/by-path/pci-.*-card")
-	for _, d := range req.HostConfig.Devices {
-		if rocmDevice.MatchString(d.PathOnHost) {
-			args = append(args, "--rocm")
-			break
-		}
+	s.log.Tracef("Device type is %s", req.DeviceType)
+	if req.DeviceType == device.ROCM {
+		args = append(args, "--rocm")
 	}
 
 	// Visible devices are set later by modifying the exec.Command's env.
