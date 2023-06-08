@@ -1369,56 +1369,57 @@ def create_trial_and_trial_controller(
         trial_seed = random.randint(0, 1 << 31)
 
     checkpoint_dir = checkpoint_dir or "/tmp"
-    with det.core._dummy_init(
+
+    core_context = det.core._dummy_init(
         distributed=distributed_context,
         checkpoint_storage=checkpoint_dir, tensorboard_path=tensorboard_path
-    ) as core_context:
-        core_context.train._trial_id = "1"
-        distributed_backend = det._DistributedBackend()
-        if expose_gpus:
-            gpu_uuids = gpu.get_gpu_uuids()
-        else:
-            gpu_uuids = []
+    )
 
-        print(gpu_uuids)
-        pytorch._PyTorchTrialController.pre_execute_hook(trial_seed, distributed_backend)
-        trial_context = pytorch.PyTorchTrialContext(
-            core_context=core_context,
-            trial_seed=trial_seed,
-            hparams=hparams,
-            slots_per_trial=1,
-            num_gpus=len(gpu_uuids),
-            exp_conf=exp_config,
-            aggregation_frequency=aggregation_frequency,
-            steps_completed=steps_completed,
-            managed_training=True,  # this must be True to put model on GPU
-            debug_enabled=False,
-        )
-        trial_context._set_default_gradient_compression(False)
-        trial_context._set_default_average_aggregated_gradients(True)
-        trial_inst = trial_class(trial_context)
+    core_context.train._trial_id = "1"
+    distributed_backend = det._DistributedBackend()
+    if expose_gpus:
+        gpu_uuids = gpu.get_gpu_uuids()
+    else:
+        gpu_uuids = []
 
-        trial_controller = pytorch._PyTorchTrialController(
-            trial_inst=trial_inst,
-            context=trial_context,
-            max_length=pytorch.Batch(max_batches),
-            checkpoint_period=pytorch.Batch(min_checkpoint_batches),
-            validation_period=pytorch.Batch(min_validation_batches),
-            searcher_metric_name=trial_class._searcher_metric,
-            reporting_period=pytorch.Batch(scheduling_unit),
-            local_training=True,
-            latest_checkpoint=latest_checkpoint,
-            steps_completed=steps_completed,
-            smaller_is_better=bool(exp_config["searcher"]["smaller_is_better"]),
-            test_mode=False,
-            checkpoint_policy=exp_config["checkpoint_policy"],
-            step_zero_validation=bool(exp_config["perform_initial_validation"]),
-            det_profiler=None,
-            global_batch_size=None,
-        )
+    pytorch._PyTorchTrialController.pre_execute_hook(trial_seed, distributed_backend)
+    trial_context = pytorch.PyTorchTrialContext(
+        core_context=core_context,
+        trial_seed=trial_seed,
+        hparams=hparams,
+        slots_per_trial=1,
+        num_gpus=len(gpu_uuids),
+        exp_conf=exp_config,
+        aggregation_frequency=aggregation_frequency,
+        steps_completed=steps_completed,
+        managed_training=True,  # this must be True to put model on GPU
+        debug_enabled=False,
+    )
+    trial_context._set_default_gradient_compression(False)
+    trial_context._set_default_average_aggregated_gradients(True)
+    trial_inst = trial_class(trial_context)
 
-        trial_controller._set_data_loaders()
-        trial_controller.state = pytorch._TrialState()
+    trial_controller = pytorch._PyTorchTrialController(
+        trial_inst=trial_inst,
+        context=trial_context,
+        max_length=pytorch.Batch(max_batches),
+        checkpoint_period=pytorch.Batch(min_checkpoint_batches),
+        validation_period=pytorch.Batch(min_validation_batches),
+        searcher_metric_name=trial_class._searcher_metric,
+        reporting_period=pytorch.Batch(scheduling_unit),
+        local_training=True,
+        latest_checkpoint=latest_checkpoint,
+        steps_completed=steps_completed,
+        smaller_is_better=bool(exp_config["searcher"]["smaller_is_better"]),
+        test_mode=False,
+        checkpoint_policy=exp_config["checkpoint_policy"],
+        step_zero_validation=bool(exp_config["perform_initial_validation"]),
+        det_profiler=None,
+        global_batch_size=None,
+    )
 
-        trial_controller.training_iterator = iter(trial_controller.training_loader)
-        return trial_inst, trial_controller
+    trial_controller._set_data_loaders()
+    trial_controller.state = pytorch._TrialState()
+
+    trial_controller.training_iterator = iter(trial_controller.training_loader)
+    return trial_inst, trial_controller
