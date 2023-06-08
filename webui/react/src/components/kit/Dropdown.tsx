@@ -79,15 +79,6 @@ const Dropdown: React.FC<PropsWithChildren<Props>> = ({
     };
   }, [menu, onClick, selectable, selectedKeys]);
 
-  const renderedChildren = useMemo(() => {
-    return (
-      <div>
-        {/* wrap in div to prevent antd from overwriting classes for child button element */}
-        {children}
-      </div>
-    );
-  }, [children]);
-
   /**
    * Using `dropdownRender` for Dropdown causes some issues with triggering the dropdown.
    * Instead, Popover is used when rendering content (as opposed to menu).
@@ -100,7 +91,7 @@ const Dropdown: React.FC<PropsWithChildren<Props>> = ({
       placement={placement}
       showArrow={false}
       trigger="click">
-      {renderedChildren}
+      {children}
     </AntdPopover>
   ) : (
     <AntDropdown
@@ -110,7 +101,7 @@ const Dropdown: React.FC<PropsWithChildren<Props>> = ({
       open={open}
       placement={placement}
       trigger={[isContextMenu ? 'contextMenu' : 'click']}>
-      {renderedChildren}
+      {children}
     </AntDropdown>
   );
 };
