@@ -124,9 +124,7 @@ class Experiment:
 
         resps = api.read_paginated(get_with_offset)
 
-        return [
-            trial.Trial._from_bindings(t, self._session) for r in resps for t in r.trials
-        ]
+        return [trial.Trial._from_bindings(t, self._session) for r in resps for t in r.trials]
 
     def await_first_trial(self, interval: float = 0.1) -> trial.Trial:
         """
@@ -306,7 +304,7 @@ class Experiment:
     @classmethod
     def _from_bindings(
         cls, exp_bindings: bindings.v1Experiment, session: api.Session
-    ) -> "ExperimentReference":
+    ) -> "Experiment":
         exp = cls(session=session, experiment_id=exp_bindings.id)
         exp._hydrate(exp_bindings)
         return exp

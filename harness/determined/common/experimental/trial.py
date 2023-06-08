@@ -390,9 +390,7 @@ class Trial:
         return _stream_validation_metrics(self._session, [self.id])
 
     @classmethod
-    def _from_bindings(
-        cls, trial_bindings: bindings.trialv1Trial, session: api.Session
-    ) -> "TrialReference":
+    def _from_bindings(cls, trial_bindings: bindings.trialv1Trial, session: api.Session) -> "Trial":
         trial = cls(trial_bindings.id, session)
         trial._hydrate(trial_bindings)
         return trial
