@@ -67,6 +67,8 @@ type experimentAllocation struct {
 	Starting bool
 }
 
+var summaryMetricStatistics = []string{"count", "last", "max", "min", "sum"}
+
 const maxConcurrentDeletes = 10
 
 // Enrich one or more experiments by converting Active state to Queued/Pulling/Starting/Running.
@@ -2077,6 +2079,17 @@ func sortExperiments(sortString *string, experimentQuery *bun.SelectQuery) error
 			experimentQuery.OrderExpr(
 				fmt.Sprintf("e.validation_metrics->'%s' %s",
 					metricName, sortDirection))
+		case strings.HasPrefix(paramDetail[0], "training."):
+			experimentQuery.Join("LEFT JOIN trials t ON t.id = e.best_trial_id")
+			metricDetails := strings.Split(paramDetail[0], ".")
+			if len(metricDetails) != 3 {
+				return status.Errorf(codes.InvalidArgument, "sort training metrics in format training.NAME.STATISTIC")
+			}
+			if !slices.Contains(summaryMetricStatistics, metricDetails[2]) {
+				return status.Errorf(codes.InvalidArgument, "sort training metrics by statistic: count, max, min, or sum")
+			}
+			experimentQuery.OrderExpr(
+				fmt.Sprintf("t.summary_metrics->'avg_metrics'->'%s'->>'%s' %s", metricDetails[1], metricDetails[2], sortDirection))
 		default:
 			if _, ok := orderColMap[paramDetail[0]]; !ok {
 				return status.Errorf(codes.InvalidArgument, "invalid sort col: %s", paramDetail[0])
