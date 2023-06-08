@@ -50,8 +50,8 @@ import { serverAddress } from 'routes/utils';
 import { V1LogLevel } from 'services/api-ts-sdk';
 import { mapV1LogsResponse } from 'services/decoder';
 import useUI from 'stores/contexts/UI';
-import { ValueOf } from 'types';
 import { BrandingType } from 'stores/determinedInfo';
+import { ValueOf } from 'types';
 import { Note } from 'types';
 import { MetricType, User } from 'types';
 import {

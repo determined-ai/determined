@@ -1,12 +1,12 @@
 import React from 'react';
 
+import css from 'components/ActionDropdown/ActionDropdown.module.scss';
 import Button from 'components/kit/Button';
 import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 import Icon from 'components/kit/Icon';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { killTask } from 'services/api';
-import css from 'components/ActionDropdown/ActionDropdown.module.scss';
 import { ExperimentAction as Action, AnyTask, CommandTask, DetailedUser } from 'types';
 import { ErrorLevel, ErrorType } from 'utils/error';
 import handleError from 'utils/error';

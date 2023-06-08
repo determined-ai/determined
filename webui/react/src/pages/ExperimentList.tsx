@@ -58,8 +58,8 @@ import {
 import { Experimentv1State, V1GetExperimentsRequestSortBy } from 'services/api-ts-sdk';
 import { encodeExperimentState } from 'services/decoder';
 import { GetExperimentsParams } from 'services/types';
-import { RecordKey } from 'types';
 import userStore from 'stores/users';
+import { RecordKey } from 'types';
 import {
   ExperimentAction as Action,
   CommandResponse,

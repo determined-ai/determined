@@ -15,11 +15,11 @@ import { defaultRowClassName, getFullPaginationConfig } from 'components/Table/T
 import WebhookCreateModalComponent from 'components/WebhookCreateModal';
 import WebhookDeleteModalComponent from 'components/WebhookDeleteModal';
 import usePermissions from 'hooks/usePermissions';
+import usePolling from 'hooks/usePolling';
 import { useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { getWebhooks, testWebhook } from 'services/api';
 import { V1Trigger, V1TriggerType } from 'services/api-ts-sdk/api';
-import usePolling from 'hooks/usePolling';
 import { Webhook } from 'types';
 import { isEqual } from 'utils/data';
 import { ErrorType } from 'utils/error';

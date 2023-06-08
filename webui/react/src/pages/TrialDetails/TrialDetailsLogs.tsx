@@ -11,12 +11,12 @@ import {
   settingsConfigForTrial,
 } from 'components/kit/LogViewer/LogViewerSelect.settings';
 import useConfirm from 'components/kit/useConfirm';
+import Spinner from 'components/Spinner';
 import { useSettings } from 'hooks/useSettings';
 import { serverAddress } from 'routes/utils';
 import { detApi } from 'services/apiConfig';
 import { mapV1LogsResponse } from 'services/decoder';
 import { readStream } from 'services/utils';
-import Spinner from 'components/Spinner';
 import useUI from 'stores/contexts/UI';
 import { ExperimentBase, TrialDetails } from 'types';
 import { downloadTrialLogs } from 'utils/browser';

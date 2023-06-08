@@ -15,7 +15,6 @@ import useResize from 'hooks/useResize';
 import { useSettings } from 'hooks/useSettings';
 import { getProjectColumns, searchExperiments } from 'services/api';
 import { V1BulkExperimentFilters } from 'services/api-ts-sdk';
-import { getCssVar } from 'utils/themes';
 import {
   ExperimentAction,
   ExperimentItem,
@@ -26,6 +25,7 @@ import {
 } from 'types';
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
+import { getCssVar } from 'utils/themes';
 
 import ComparisonView from './ComparisonView';
 import css from './F_ExperimentList.module.scss';

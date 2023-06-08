@@ -11,13 +11,13 @@ import Tooltip from 'components/kit/Tooltip';
 import UserAvatar from 'components/kit/UserAvatar';
 import Link from 'components/Link';
 import ProgressBar from 'components/ProgressBar';
+import Spinner from 'components/Spinner';
 import TimeAgo from 'components/TimeAgo';
 import TimeDuration from 'components/TimeDuration';
 import { commandTypeToLabel } from 'constants/states';
 import { paths } from 'routes/utils';
-import Spinner from 'components/Spinner';
-import { Pagination } from 'types';
 import { StateOfUnion } from 'themes';
+import { Pagination } from 'types';
 import {
   CommandTask,
   CommandType,

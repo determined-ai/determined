@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
 
+import Message, { MessageType } from 'components/Message';
 import Section from 'components/Section';
 import SlotAllocationBar from 'components/SlotAllocationBar';
-import Message, { MessageType } from 'components/Message';
 import Spinner from 'components/Spinner';
 import clusterStore from 'stores/cluster';
 import { ShirtSize } from 'themes';

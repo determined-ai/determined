@@ -5,13 +5,13 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Empty from 'components/kit/Empty';
 import ParallelCoordinates from 'components/ParallelCoordinates';
 import Section from 'components/Section';
+import Spinner from 'components/Spinner/Spinner';
 import TableBatch from 'components/Table/TableBatch';
 import { terminalRunStates } from 'constants/states';
 import { openOrCreateTensorBoard } from 'services/api';
 import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
-import Spinner from 'components/Spinner/Spinner';
 import useUI from 'stores/contexts/UI';
 import { Primitive, Range } from 'types';
 import {

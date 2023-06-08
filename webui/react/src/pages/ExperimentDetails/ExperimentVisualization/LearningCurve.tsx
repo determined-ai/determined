@@ -4,7 +4,9 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { LineChart, Serie } from 'components/kit/LineChart';
 import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
 import LearningCurveChart from 'components/LearningCurveChart';
+import Message, { MessageType } from 'components/Message';
 import Section from 'components/Section';
+import Spinner from 'components/Spinner/Spinner';
 import TableBatch from 'components/Table/TableBatch';
 import { UPlotPoint } from 'components/UPlot/types';
 import { terminalRunStates } from 'constants/states';
@@ -14,8 +16,6 @@ import { openOrCreateTensorBoard } from 'services/api';
 import { V1TrialsSampleResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
-import Message, { MessageType } from 'components/Message';
-import Spinner from 'components/Spinner/Spinner';
 import useUI from 'stores/contexts/UI';
 import {
   ExperimentAction as Action,

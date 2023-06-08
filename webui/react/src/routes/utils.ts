@@ -2,8 +2,8 @@ import { pathToRegexp } from 'path-to-regexp';
 
 import { globalStorage } from 'globalStorage';
 import { ClusterApi, Configuration } from 'services/api-ts-sdk';
-import { RouteConfig } from 'types';
 import { BrandingType } from 'stores/determinedInfo';
+import { RouteConfig } from 'types';
 import { CommandTask } from 'types';
 import {
   AnyMouseEvent,

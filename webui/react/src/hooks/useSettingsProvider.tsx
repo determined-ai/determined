@@ -2,8 +2,8 @@ import { Map } from 'immutable';
 import { observable, useObservable, WritableObservable } from 'micro-observables';
 import React, { createContext, useEffect, useRef, useState } from 'react';
 
-import { getUserSetting } from 'services/api';
 import Spinner from 'components/Spinner';
+import { getUserSetting } from 'services/api';
 import authStore from 'stores/auth';
 import userStore from 'stores/users';
 import { ErrorType } from 'utils/error';

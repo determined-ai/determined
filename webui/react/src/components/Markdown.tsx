@@ -3,8 +3,8 @@ import { default as MarkdownViewer } from 'markdown-to-jsx';
 import React, { useMemo } from 'react';
 
 import Pivot from 'components/kit/Pivot';
-import useResize from 'hooks/useResize';
 import Spinner from 'components/Spinner/Spinner';
+import useResize from 'hooks/useResize';
 import handleError from 'utils/error';
 import { Loaded } from 'utils/loadable';
 

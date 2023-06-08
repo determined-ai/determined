@@ -1,10 +1,9 @@
 import { DataNode } from 'antd/lib/tree';
+import { RouteProps } from 'react-router-dom';
 
 import * as Api from 'services/api-ts-sdk';
 import { V1AgentUserGroup, V1Group, V1LaunchWarning, V1Trigger } from 'services/api-ts-sdk';
 import { Loadable } from 'utils/loadable';
-
-import { RouteProps } from 'react-router-dom';
 
 export type Primitive = boolean | number | string;
 export type RecordKey = string | number | symbol;

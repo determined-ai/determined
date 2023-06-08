@@ -1,9 +1,9 @@
 import React, { ReactNode } from 'react';
 
+import { ImageAlert } from 'components/Image';
 import Button from 'components/kit/Button';
 import Link from 'components/Link';
 import { paths } from 'routes/utils';
-import { ImageAlert } from 'components/Image';
 import useUI from 'stores/contexts/UI';
 import { DarkLight } from 'utils/themes';
 

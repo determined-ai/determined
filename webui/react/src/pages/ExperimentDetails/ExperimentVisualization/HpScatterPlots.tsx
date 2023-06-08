@@ -3,7 +3,9 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import GalleryModal from 'components/GalleryModal';
 import Grid, { GridMode } from 'components/Grid';
+import Message, { MessageType } from 'components/Message';
 import Section from 'components/Section';
+import Spinner from 'components/Spinner/Spinner';
 import { FacetedData, UPlotScatterProps } from 'components/UPlot/types';
 import UPlotScatter from 'components/UPlot/UPlotScatter';
 import { terminalRunStates } from 'constants/states';
@@ -11,8 +13,6 @@ import useResize from 'hooks/useResize';
 import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
-import Message, { MessageType } from 'components/Message';
-import Spinner from 'components/Spinner/Spinner';
 import useUI from 'stores/contexts/UI';
 import { Primitive } from 'types';
 import { ExperimentBase, HyperparameterType, Metric, metricTypeParamMap, Scale } from 'types';

@@ -1,17 +1,9 @@
 module.exports = {
-  extends: [
-    'stylelint-config-standard-scss',
-    'stylelint-config-prettier', // stylelint-config-prettier should be the last
-  ],
+  extends: ['stylelint-config-standard-scss'],
   plugins: ['stylelint-order', 'stylelint-scss'],
   rules: {
     'at-rule-no-unknown': null,
-    'at-rule-semicolon-space-before': 'never',
     'custom-property-empty-line-before': 'never',
-    'declaration-block-semicolon-newline-after': 'always-multi-line',
-    'declaration-block-semicolon-newline-before': 'never-multi-line',
-    'declaration-block-semicolon-space-before': 'never',
-    'declaration-block-trailing-semicolon': null,
     'declaration-empty-line-before': 'never',
     'declaration-property-value-no-unknown': [
       true,
@@ -23,8 +15,6 @@ module.exports = {
     ],
     'function-name-case': 'lower',
     'keyframes-name-pattern': null,
-    'no-eol-whitespace': [true, { ignore: ['empty-lines'] }],
-    'no-extra-semicolons': true,
     'order/order': [
       'custom-properties',
       'dollar-variables',
@@ -46,7 +36,6 @@ module.exports = {
     'selector-class-pattern': null,
     'selector-not-notation': 'simple',
     'selector-pseudo-class-no-unknown': [true, { ignorePseudoClasses: ['global'] }],
-    'string-quotes': 'single',
     'value-keyword-case': null,
   },
 };

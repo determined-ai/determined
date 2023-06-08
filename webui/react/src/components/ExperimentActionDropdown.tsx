@@ -1,5 +1,6 @@
 import React, { MouseEvent, useCallback, useMemo } from 'react';
 
+import css from 'components/ActionDropdown/ActionDropdown.module.scss';
 import ExperimentMoveModalComponent from 'components/ExperimentMoveModal';
 import Button from 'components/kit/Button';
 import Dropdown, { DropdownEvent, MenuItem } from 'components/kit/Dropdown';
@@ -21,7 +22,6 @@ import {
   pauseExperiment,
   unarchiveExperiment,
 } from 'services/api';
-import css from 'components/ActionDropdown/ActionDropdown.module.scss';
 import { ValueOf } from 'types';
 import { ExperimentAction, ProjectExperiment } from 'types';
 import { notification } from 'utils/dialogApi';

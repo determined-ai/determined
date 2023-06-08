@@ -1,11 +1,11 @@
 import React, { useCallback, useMemo } from 'react';
 
+import Spinner from 'components/Spinner';
 import { terminalRunStates } from 'constants/states';
 import useMetricNames from 'hooks/useMetricNames';
 import usePermissions from 'hooks/usePermissions';
 import { useSettings } from 'hooks/useSettings';
 import TrialInfoBox from 'pages/TrialDetails/TrialInfoBox';
-import Spinner from 'components/Spinner';
 import { ExperimentBase, Metric, MetricType, RunState, TrialDetails } from 'types';
 import { ErrorType } from 'utils/error';
 import handleError from 'utils/error';

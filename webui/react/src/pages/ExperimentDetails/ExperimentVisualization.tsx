@@ -14,8 +14,8 @@ import { paths } from 'routes/utils';
 import { V1MetricBatchesResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
-import { ValueOf } from 'types';
 import useUI from 'stores/contexts/UI';
+import { ValueOf } from 'types';
 import {
   ExperimentBase,
   ExperimentSearcherName,

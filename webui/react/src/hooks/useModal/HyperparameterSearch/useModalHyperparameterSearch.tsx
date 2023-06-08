@@ -17,9 +17,9 @@ import useModal, { ModalHooks as Hooks, ModalCloseReason } from 'hooks/useModal/
 import { paths } from 'routes/utils';
 import { createExperiment } from 'services/api';
 import { V1LaunchWarning } from 'services/api-ts-sdk';
-import { Primitive } from 'types';
 import { maxPoolSlotCapacity } from 'stores/cluster';
 import clusterStore from 'stores/cluster';
+import { Primitive } from 'types';
 import {
   ExperimentItem,
   ExperimentSearcherName,
