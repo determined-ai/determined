@@ -671,7 +671,7 @@ func (a *apiServer) parseMetricTypeArgs(
 		return "", status.Errorf(codes.InvalidArgument, "converting metric type: %s", cErr)
 	}
 	if convertedLegacyType == "" {
-		// DISCUSS: we used to default to training metric type when this was unspecified.
+		// DISCUSS: we used to default fetch all metric types when this was unspecified.
 		return "", status.Errorf(codes.InvalidArgument, "at least one metric type must be specified")
 	}
 	return convertedLegacyType, nil

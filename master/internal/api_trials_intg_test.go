@@ -403,8 +403,8 @@ func TestTrialsNonNumericMetrics(t *testing.T) {
 	require.NoError(t, err)
 
 	trial := createTestTrial(t, api, curUser)
-	_, err = api.ReportTrialValidationMetrics(ctx, &apiv1.ReportTrialValidationMetricsRequest{
-		ValidationMetrics: &trialv1.TrialMetrics{
+	_, err = api.ReportTrialMetrics(ctx, &apiv1.ReportTrialMetricsRequest{
+		Metrics: &trialv1.TrialMetrics{
 			TrialId:        int32(trial.ID),
 			TrialRunId:     0,
 			StepsCompleted: 1,
@@ -412,6 +412,7 @@ func TestTrialsNonNumericMetrics(t *testing.T) {
 				AvgMetrics: expectedMetrics,
 			},
 		},
+		Type: model.ValidationMetricType.ToString(),
 	})
 	require.NoError(t, err)
 
