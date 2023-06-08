@@ -7,6 +7,7 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/agentv1"
 	"github.com/determined-ai/determined/proto/pkg/containerv1"
 	"github.com/determined-ai/determined/proto/pkg/devicev1"
+	"github.com/determined-ai/determined/proto/pkg/jobv1"
 )
 
 const (
@@ -83,4 +84,21 @@ func ObfuscateAgent(agent *agentv1.Agent) error {
 	}
 
 	return nil
+}
+
+// ObfuscateJob obfuscates sensitive information in given Job.
+func ObfuscateJob(job *jobv1.Job) jobv1.LimitedJob {
+	return jobv1.LimitedJob{
+		Summary:        job.Summary,
+		Type:           job.Type,
+		ResourcePool:   job.ResourcePool,
+		IsPreemptible:  job.IsPreemptible,
+		Priority:       job.Priority,
+		Weight:         job.Weight,
+		JobId:          job.JobId,
+		RequestedSlots: job.RequestedSlots,
+		AllocatedSlots: job.AllocatedSlots,
+		Progress:       job.Progress,
+		WorkspaceId:    job.WorkspaceId,
+	}
 }
