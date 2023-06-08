@@ -1,5 +1,4 @@
 import { Serie } from 'components/kit/LineChart';
-import { Options } from 'components/UPlot/UPlotChart';
 import {
   V1GetTrialProfilerMetricsResponse,
   V1TrialProfilerMetricsBatch,
@@ -40,11 +39,6 @@ export type OldMetricsAggregateInterface = {
 };
 
 export interface ChartProps {
-  trial: TrialDetails;
-}
-
-export interface OldChartProps {
-  getOptionsForMetrics: (name: string, metricsNames: string[]) => Partial<Options>;
   trial: TrialDetails;
 }
 

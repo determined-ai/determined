@@ -12,7 +12,7 @@ import { Loadable } from 'utils/loadable';
 import css from './MultiSortMenu.module.scss';
 
 // in the list of columns from the api but not supported by the sort functionality
-const BANNED_COLUMNS = new Set(['tags']);
+const BANNED_SORT_COLUMNS = new Set(['tags', 'searcherMetric']);
 
 const directionType = io.keyof({ asc: null, desc: null });
 export type DirectionType = io.TypeOf<typeof directionType>;
@@ -105,8 +105,11 @@ export const sortMenuItemsForColumn = (
   column: ProjectColumn,
   sorts: Sort[],
   onSortChange: (sorts: Sort[]) => void,
-): ItemType[] =>
-  optionsByColumnType[column.type].map((option) => {
+): ItemType[] => {
+  if (BANNED_SORT_COLUMNS.has(column.column)) {
+    return [];
+  }
+  return optionsByColumnType[column.type].map((option) => {
     const curSort = sorts.find((s) => s.column === column.column);
     const isSortMatch = curSort && curSort.direction === option.value;
     return {
@@ -133,6 +136,7 @@ export const sortMenuItemsForColumn = (
       },
     };
   });
+};
 
 const DirectionOptions: React.FC<DirectionOptionsProps> = ({ onChange, type, value }) => (
   <Select
@@ -149,7 +153,7 @@ const ColumnOptions: React.FC<ColumnOptionsProps> = ({ onChange, columns, value 
     autoFocus
     loading={Loadable.isLoading(columns)}
     options={Loadable.getOrElse([], columns)
-      .filter((c) => !BANNED_COLUMNS.has(c.column))
+      .filter((c) => !BANNED_SORT_COLUMNS.has(c.column))
       .map((c) => ({
         label: c.displayName || c.column,
         value: c.column,

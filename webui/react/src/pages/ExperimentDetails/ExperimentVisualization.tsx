@@ -117,7 +117,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
   }, []);
 
   // Stream available metrics.
-  const metrics = useMetricNames(experiment.id, handleMetricNamesError);
+  const metrics = useMetricNames([experiment.id], handleMetricNamesError);
 
   const { hasData, hasLoaded, isExperimentTerminal, isSupported } = useMemo(() => {
     return {
@@ -195,6 +195,8 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
      * In the case of Custom Searchers, all the tabs besides
      * "Learning Curve" aren't helpful or relevant, so we are hiding them
      */
+    if (!(filters.maxTrial && filters.batchMargin && filters.batch)) return [];
+
     const tabs: TabsProps['items'] = [
       {
         children: (

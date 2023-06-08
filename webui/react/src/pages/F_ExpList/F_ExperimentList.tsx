@@ -14,7 +14,7 @@ import usePolling from 'hooks/usePolling';
 import useResize from 'hooks/useResize';
 import { useSettings } from 'hooks/useSettings';
 import { getProjectColumns, searchExperiments } from 'services/api';
-import { V1BulkExperimentFilters } from 'services/api-ts-sdk';
+import { V1BulkExperimentFilters, V1LocationType } from 'services/api-ts-sdk';
 import {
   ExperimentAction,
   ExperimentItem,
@@ -33,9 +33,11 @@ import {
   ExpListView,
   F_ExperimentListGlobalSettings,
   F_ExperimentListSettings,
+  RowHeight,
   settingsConfigForProject,
   settingsConfigGlobal,
 } from './F_ExperimentList.settings';
+import { ExperimentColumn, experimentColumns } from './glide-table/columns';
 import { Error, NoExperiments } from './glide-table/exceptions';
 import GlideTable, { SCROLL_SET_COUNT_NEEDED } from './glide-table/GlideTable';
 import { EMPTY_SORT, Sort, validSort, ValidSort } from './glide-table/MultiSortMenu';
@@ -52,6 +54,8 @@ const makeSortString = (sorts: ValidSort[]): string =>
 const formStore = new FilterFormStore();
 
 export const PAGE_SIZE = 100;
+
+const STATIC_COLUMNS = ['selected', 'name'];
 
 const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const contentRef = useRef<HTMLDivElement>(null);
@@ -192,6 +196,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   );
 
   const fetchExperiments = useCallback(async (): Promise<void> => {
+    if (isLoadingSettings) return;
     try {
       // Use -1.5 because paged view starts page at 1.
       const tableOffset = Math.max((page - 1.5) * PAGE_SIZE, 0);
@@ -237,6 +242,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   }, [
     page,
     experimentFilters,
+    isLoadingSettings,
     canceler.signal,
     filtersString,
     sortString,
@@ -254,6 +260,12 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     (async () => {
       try {
         const columns = await getProjectColumns({ id: project.id });
+        columns.sort((a, b) =>
+          a.location === V1LocationType.EXPERIMENT && b.location === V1LocationType.EXPERIMENT
+            ? experimentColumns.indexOf(a.column as ExperimentColumn) -
+            experimentColumns.indexOf(b.column as ExperimentColumn)
+            : 0,
+        );
 
         if (mounted) {
           setProjectColumns(Loaded(columns));
@@ -351,6 +363,13 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     [updateSettings],
   );
 
+  const onRowHeightChange = useCallback(
+    (newRowHeight: RowHeight) => {
+      updateSettings({ rowHeight: newRowHeight });
+    },
+    [updateSettings],
+  );
+
   useEffect(() => {
     const handleEsc = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
@@ -387,9 +406,29 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     updateSettings({ compare: !settings.compare });
   }, [settings.compare, updateSettings]);
 
+  const comparisonViewWidth = useMemo(() => {
+    return STATIC_COLUMNS.reduce(
+      (totalWidth, curCol) => totalWidth + settings.columnWidths[curCol] ?? 0,
+      17, // Constant of 17px accounts for scrollbar width
+    );
+  }, [settings.columnWidths]);
+
   const handleCompareWidthChange = useCallback(
     (width: number) => {
-      updateSettings({ compareWidth: width });
+      updateSettings({
+        columnWidths: {
+          ...settings.columnWidths,
+          [STATIC_COLUMNS.last()]:
+            settings.columnWidths[STATIC_COLUMNS.last()] + width - comparisonViewWidth,
+        },
+      });
+    },
+    [settings.columnWidths, updateSettings, comparisonViewWidth],
+  );
+
+  const handleColumnWidthChange = useCallback(
+    (newWidths: Record<string, number>) => {
+      updateSettings({ columnWidths: newWidths });
     },
     [updateSettings],
   );
@@ -402,6 +441,16 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     );
   }, [experiments, selectedExperimentIds]);
 
+  const columnsIfLoaded = useMemo(
+    () => (isLoadingSettings ? [] : settings.columns),
+    [isLoadingSettings, settings.columns],
+  );
+
+  const experimentsIfLoaded = useMemo(
+    () => (isLoading ? [NotLoaded] : experiments),
+    [isLoading, experiments],
+  );
+
   return (
     <>
       <TableActionBar
@@ -411,10 +460,11 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         filters={experimentFilters}
         formStore={formStore}
         handleUpdateExperimentList={handleUpdateExperimentList}
-        initialVisibleColumns={isLoadingSettings ? [] : settings.columns}
+        initialVisibleColumns={columnsIfLoaded}
         isOpenFilter={isOpenFilter}
         project={project}
         projectColumns={projectColumns}
+        rowHeight={settings.rowHeight}
         selectAll={selectAll}
         selectedExperimentIds={selectedExperimentIds}
         setExpListView={updateExpListView}
@@ -424,6 +474,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         toggleComparisonView={handleToggleComparisonView}
         total={total}
         onAction={handleOnAction}
+        onRowHeightChange={onRowHeightChange}
         onSortChange={onSortChange}
       />
       <div className={css.content} ref={contentRef}>
@@ -438,14 +489,17 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         ) : (
           <Space direction="vertical" style={{ width: '100%' }}>
             <ComparisonView
-              initialWidth={settings.compareWidth}
+              initialWidth={comparisonViewWidth}
               open={settings.compare}
+              projectId={project.id}
               selectedExperiments={selectedExperiments}
               onWidthChange={handleCompareWidthChange}>
               <GlideTable
                 clearSelectionTrigger={clearSelectionTrigger}
                 colorMap={colorMap}
-                data={isLoading || isLoadingSettings ? [NotLoaded] : experiments}
+                columnWidths={settings.columnWidths}
+                comparisonViewOpen={settings.compare}
+                data={experimentsIfLoaded}
                 dataTotal={
                   globalSettings.expListView === 'scroll'
                     ? Loadable.getOrElse(0, total)
@@ -463,15 +517,18 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                 page={page}
                 project={project}
                 projectColumns={projectColumns}
+                rowHeight={settings.rowHeight}
                 scrollPositionSetCount={scrollPositionSetCount}
                 selectAll={selectAll}
                 selectedExperimentIds={selectedExperimentIds}
+                setColumnWidths={handleColumnWidthChange}
                 setExcludedExperimentIds={setExcludedExperimentIds}
                 setSelectAll={setSelectAll}
                 setSelectedExperimentIds={setSelectedExperimentIds}
                 setSortableColumnIds={setVisibleColumns}
-                sortableColumnIds={isLoadingSettings ? [] : settings.columns}
+                sortableColumnIds={columnsIfLoaded}
                 sorts={sorts}
+                staticColumns={STATIC_COLUMNS}
                 onContextMenuComplete={onContextMenuComplete}
                 onIsOpenFilterChange={onIsOpenFilterChange}
                 onSortChange={onSortChange}

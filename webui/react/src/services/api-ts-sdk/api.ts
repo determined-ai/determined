@@ -3874,6 +3874,19 @@ export interface V1GetProjectColumnsResponse {
     columns: Array<V1ProjectColumn>;
 }
 /**
+ * 
+ * @export
+ * @interface V1GetProjectNumericMetricsRangeResponse
+ */
+export interface V1GetProjectNumericMetricsRangeResponse {
+    /**
+     * List of ranges.
+     * @type {Array<V1MetricsRange>}
+     * @memberof V1GetProjectNumericMetricsRangeResponse
+     */
+    ranges?: Array<V1MetricsRange>;
+}
+/**
  * Response to GetProjectRequest.
  * @export
  * @interface V1GetProjectResponse
@@ -5458,6 +5471,31 @@ export interface V1Metrics {
      * @memberof V1Metrics
      */
     batchMetrics?: Array<any>;
+}
+/**
+ * MetricsRange represents the range of a metrics. Range is a in the format of [min, max].
+ * @export
+ * @interface V1MetricsRange
+ */
+export interface V1MetricsRange {
+    /**
+     * The name of metrics.
+     * @type {string}
+     * @memberof V1MetricsRange
+     */
+    metricsName: string;
+    /**
+     * The min of metrics values.
+     * @type {number}
+     * @memberof V1MetricsRange
+     */
+    min: number;
+    /**
+     * The max of metrics values.
+     * @type {number}
+     * @memberof V1MetricsRange
+     */
+    max: number;
 }
 /**
  * Metrics report.
@@ -9009,10 +9047,10 @@ export interface V1Task {
     taskId: string;
     /**
      * Type of Task.
-     * @type {string}
+     * @type {V1TaskType}
      * @memberof V1Task
      */
-    taskType: string;
+    taskType: V1TaskType;
     /**
      * List of Allocations.
      * @type {Array<V1Allocation>}
@@ -9154,6 +9192,21 @@ export interface V1TaskLogsResponse {
      */
     stdtype?: string;
 }
+/**
+ * - TASK_TYPE_UNSPECIFIED: The task type is unknown  - TASK_TYPE_TRIAL: "TRIAL" task type for the enum public.task_type in Postgres.  - TASK_TYPE_NOTEBOOK: "NOTEBOOK" task type for the enum public.task_type in Postgres.  - TASK_TYPE_SHELL: "SHELL" task type for the enum public.task_type in Postgres.  - TASK_TYPE_COMMAND: "COMMAND" task type for the enum public.task_type in Postgres.  - TASK_TYPE_TENSORBOARD: "TENSORBOARD" task type for the enum public.task_type in Postgres.  - TASK_TYPE_CHECKPOINT_GC: "CHECKPOINT_GC" task type for the enum public.task_type in Postgres.
+ * @export
+ * @enum {string}
+ */
+export const V1TaskType = {
+    UNSPECIFIED: 'TASK_TYPE_UNSPECIFIED',
+    TRIAL: 'TASK_TYPE_TRIAL',
+    NOTEBOOK: 'TASK_TYPE_NOTEBOOK',
+    SHELL: 'TASK_TYPE_SHELL',
+    COMMAND: 'TASK_TYPE_COMMAND',
+    TENSORBOARD: 'TASK_TYPE_TENSORBOARD',
+    CHECKPOINTGC: 'TASK_TYPE_CHECKPOINT_GC',
+} as const
+export type V1TaskType = ValueOf<typeof V1TaskType>
 /**
  * Templates move settings that are shared by many experiments into a single YAML file.
  * @export
@@ -17190,6 +17243,42 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Get metrics range for a project.
+         * @param {number} id The id of the project.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getProjectNumericMetricsRange(id: number, options: any = {}): FetchArgs {
+            // verify required parameter 'id' is not null or undefined
+            if (id === null || id === undefined) {
+                throw new RequiredError('id','Required parameter id was null or undefined when calling getProjectNumericMetricsRange.');
+            }
+            const localVarPath = `/api/v1/projects/{id}/experiments/metric-ranges`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get a list of all resource pools from the cluster.
          * @param {number} [offset] Skip the number of resource pools before returning results. Negative values denote number of resource pools to skip from the end before returning results.
          * @param {number} [limit] Limit the number of resource pools. A value of 0 denotes no limit.
@@ -18656,6 +18745,25 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Get metrics range for a project.
+         * @param {number} id The id of the project.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getProjectNumericMetricsRange(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetProjectNumericMetricsRangeResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getProjectNumericMetricsRange(id, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Get a list of all resource pools from the cluster.
          * @param {number} [offset] Skip the number of resource pools before returning results. Negative values denote number of resource pools to skip from the end before returning results.
          * @param {number} [limit] Limit the number of resource pools. A value of 0 denotes no limit.
@@ -19348,6 +19456,16 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Get metrics range for a project.
+         * @param {number} id The id of the project.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getProjectNumericMetricsRange(id: number, options?: any) {
+            return InternalApiFp(configuration).getProjectNumericMetricsRange(id, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Get a list of all resource pools from the cluster.
          * @param {number} [offset] Skip the number of resource pools before returning results. Negative values denote number of resource pools to skip from the end before returning results.
          * @param {number} [limit] Limit the number of resource pools. A value of 0 denotes no limit.
@@ -19881,6 +19999,18 @@ export class InternalApi extends BaseAPI {
      */
     public getProjectColumns(id: number, options?: any) {
         return InternalApiFp(this.configuration).getProjectColumns(id, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Get metrics range for a project.
+     * @param {number} id The id of the project.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public getProjectNumericMetricsRange(id: number, options?: any) {
+        return InternalApiFp(this.configuration).getProjectNumericMetricsRange(id, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -22681,6 +22811,78 @@ export const ProjectsApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Get a list of columns for experiment list table.
+         * @param {number} id The id of the project.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getProjectColumns(id: number, options: any = {}): FetchArgs {
+            // verify required parameter 'id' is not null or undefined
+            if (id === null || id === undefined) {
+                throw new RequiredError('id','Required parameter id was null or undefined when calling getProjectColumns.');
+            }
+            const localVarPath = `/api/v1/projects/{id}/columns`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Get metrics range for a project.
+         * @param {number} id The id of the project.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getProjectNumericMetricsRange(id: number, options: any = {}): FetchArgs {
+            // verify required parameter 'id' is not null or undefined
+            if (id === null || id === undefined) {
+                throw new RequiredError('id','Required parameter id was null or undefined when calling getProjectNumericMetricsRange.');
+            }
+            const localVarPath = `/api/v1/projects/{id}/experiments/metric-ranges`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get projects by user activity
          * @param {number} [limit] Limit number of project entries.
          * @param {*} [options] Override http request option.
@@ -23014,6 +23216,44 @@ export const ProjectsApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Get a list of columns for experiment list table.
+         * @param {number} id The id of the project.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getProjectColumns(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetProjectColumnsResponse> {
+            const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).getProjectColumns(id, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Get metrics range for a project.
+         * @param {number} id The id of the project.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getProjectNumericMetricsRange(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetProjectNumericMetricsRangeResponse> {
+            const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).getProjectNumericMetricsRange(id, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Get projects by user activity
          * @param {number} [limit] Limit number of project entries.
          * @param {*} [options] Override http request option.
@@ -23182,6 +23422,26 @@ export const ProjectsApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Get a list of columns for experiment list table.
+         * @param {number} id The id of the project.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getProjectColumns(id: number, options?: any) {
+            return ProjectsApiFp(configuration).getProjectColumns(id, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Get metrics range for a project.
+         * @param {number} id The id of the project.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getProjectNumericMetricsRange(id: number, options?: any) {
+            return ProjectsApiFp(configuration).getProjectNumericMetricsRange(id, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Get projects by user activity
          * @param {number} [limit] Limit number of project entries.
          * @param {*} [options] Override http request option.
@@ -23301,6 +23561,30 @@ export class ProjectsApi extends BaseAPI {
      */
     public getProject(id: number, options?: any) {
         return ProjectsApiFp(this.configuration).getProject(id, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Get a list of columns for experiment list table.
+     * @param {number} id The id of the project.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ProjectsApi
+     */
+    public getProjectColumns(id: number, options?: any) {
+        return ProjectsApiFp(this.configuration).getProjectColumns(id, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Get metrics range for a project.
+     * @param {number} id The id of the project.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ProjectsApi
+     */
+    public getProjectNumericMetricsRange(id: number, options?: any) {
+        return ProjectsApiFp(this.configuration).getProjectNumericMetricsRange(id, options)(this.fetch, this.basePath)
     }
     
     /**

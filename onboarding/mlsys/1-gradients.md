@@ -78,16 +78,6 @@ And we can expand `ypred = m*x` to rewrite `loss_point` in terms of `m`:
 \mathrm{loss_point} = \frac{(\mathrm{ytrue} - m x)^2}{N}
 ```
 
-Did you notice that the loss is a function of `m`, even though our model
-defines `ypred` as a function of `x`?  Also, our dataset
-`x` and `ypred` values appear in the loss calculation as constants, even though
-we might normally think of `x` as our variable.  That is because every `m`
-value on our loss curve corresponds to a different model for `ypred = m*x`.
-The value of the loss at each value `m` is defined by how accurately it
-predicts the (constant) values in our dataset.
-
-![multi](./files/1-multi.jpg "Multi Graph")
-
 ### Q2:
 
 Can `loss_point` or `loss_mse` ever be negative?  Why or why not, and does this
@@ -211,9 +201,9 @@ The basic gradient descent loop algorithm is:
 
 1. Pick an initial model weight.
 2. Select one or more `(x, ytrue)` pairs from the dataset.
-3. Calculate a prediction for the selected inputs with a label (Q2).
-4. Calculate the gradient using the prediction vs label (Q3).
-5. Subtract `gradient * lr` from our model weight ("Minimizing the loss").
+3. Calculate a prediction for the selected inputs (Q3).
+4. Calculate the gradient using the prediction and the ground truth (Q5).
+5. Subtract `gradient * lr` from the model weight ("Minimizing the loss").
 6. Repeat steps 2—5 until you decide to stop.
 
 ### Q6

@@ -578,7 +578,7 @@ func (a *agent) summarize(ctx *actor.Context) model.AgentSummary {
 	result := model.AgentSummary{
 		ID:             ctx.Self().Address().Local(),
 		RegisteredTime: ctx.Self().RegisteredTime(),
-		ResourcePool:   a.resourcePoolName,
+		ResourcePool:   []string{a.resourcePoolName},
 		Addresses:      []string{a.address},
 		// Default dummy values if the AgentStarted hasn't been processed yet.
 		// Client code expects `Slots` to always be present.

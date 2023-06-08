@@ -44,10 +44,11 @@ import {
 import { Loadable } from 'utils/loadable';
 import { openCommandResponse } from 'utils/wait';
 
-import { ExpListView } from '../F_ExperimentList.settings';
+import { ExpListView, RowHeight } from '../F_ExperimentList.settings';
 
 import ColumnPickerMenu from './ColumnPickerMenu';
 import MultiSortMenu, { Sort } from './MultiSortMenu';
+import { RowHeightMenu } from './RowHeightMenu';
 import css from './TableActionBar.module.scss';
 
 const batchActions = [
@@ -97,6 +98,8 @@ interface Props {
   isOpenFilter: boolean;
   expListView: ExpListView;
   setExpListView: (view: ExpListView) => void;
+  rowHeight: RowHeight;
+  onRowHeightChange: (r: RowHeight) => void;
 }
 
 const TableActionBar: React.FC<Props> = ({
@@ -120,11 +123,14 @@ const TableActionBar: React.FC<Props> = ({
   expListView,
   setExpListView,
   toggleComparisonView,
+  rowHeight,
+  onRowHeightChange,
 }) => {
   const permissions = usePermissions();
   const [batchAction, setBatchAction] = useState<BatchAction>();
   const BatchActionConfirmModal = useModal(BatchActionConfirmModalComponent);
   const ExperimentMoveModal = useModal(ExperimentMoveModalComponent);
+  const totalExperiments = Loadable.getOrElse(0, total);
 
   const experimentMap = useMemo(() => {
     return experiments.filter(Loadable.isLoaded).reduce((acc, experiment) => {
@@ -363,10 +369,14 @@ const TableActionBar: React.FC<Props> = ({
               </Button>
             </Dropdown>
           )}
+          <span className={css.expNum}>
+            {totalExperiments.toLocaleString()} experiment{totalExperiments > 1 && 's'}
+          </span>
         </Space>
       </Column>
       <Column align="right">
-        <Space>
+        <Columns>
+          <RowHeightMenu rowHeight={rowHeight} onRowHeightChange={onRowHeightChange} />
           <Dropdown content={settingContent}>
             <Tooltip content="Table Settings">
               <Button>
@@ -375,7 +385,7 @@ const TableActionBar: React.FC<Props> = ({
             </Tooltip>
           </Dropdown>
           {!!toggleComparisonView && <Button onClick={toggleComparisonView}>Compare</Button>}
-        </Space>
+        </Columns>
       </Column>
       {batchAction && (
         <BatchActionConfirmModal.Component

@@ -1,0 +1,25 @@
+{
+   "model":{
+      "archived":false,
+      "creationTime":"2022-07-01T17:17:26.655793Z",
+      "id":150,
+      "lastUpdatedTime":"2022-09-01T17:30:47.470616Z",
+      "metadata":{
+         "abc":"123",
+         "def":"456"
+      },
+      "name":"test_model",
+      "numVersions":4,
+      "userId":34,
+      "username":"det_test_user",
+      "workspaceId":1,
+      "description":"",
+      "labels":[
+         "asd",
+         "const",
+         "mnist",
+         "dfsafdsafsafsafsafsafdsa"
+      ],
+      "notes":""
+   }
+}

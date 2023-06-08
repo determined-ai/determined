@@ -48,3 +48,14 @@
     margin-inline-start: 0;
   }
 }
+.withIcon {
+  align-items: center;
+  display: flex;
+
+  &.withChildren {
+    [class^='icon-']::before,
+    [class*=' icon-']::before {
+      margin-inline-end: 0.25em;
+    }
+  }
+}

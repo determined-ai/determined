@@ -320,7 +320,8 @@ export interface GetJobQParams extends PaginationParams, FetchOptions {
   states?: Api.Jobv1State[];
 }
 
-export interface GetJobsResponse extends Api.V1GetJobsResponse {
+export interface GetJobsResponse {
+  pagination: Api.V1Pagination;
   jobs: Job[];
 }
 export interface GetJobQStatsParams extends FetchOptions {

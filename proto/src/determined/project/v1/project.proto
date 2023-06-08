@@ -132,3 +132,17 @@ message PatchProject {
   // The new description for the project.
   google.protobuf.StringValue description = 2;
 }
+
+// MetricsRange represents the range of a metrics. Range is a in the format of
+// [min, max].
+message MetricsRange {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "metrics_name", "min", "max" ] }
+  };
+  // The name of metrics.
+  string metrics_name = 1;
+  // The min of metrics values.
+  double min = 2;
+  // The max of metrics values.
+  double max = 3;
+}

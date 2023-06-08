@@ -10,30 +10,7 @@ import (
 	"time"
 
 	"github.com/labstack/echo/v4"
-
-	"github.com/determined-ai/determined/master/pkg/actor"
-)
-
-// Proxy-specific actor messages.
-type (
-	// Register registers the service name with the associated target URL. All requests with the
-	// format ".../:service-name/*" are forwarded to the service via the target URL.
-	Register struct {
-		ServiceID       string
-		URL             *url.URL
-		ProxyTCP        bool
-		Unauthenticated bool
-	}
-	// Unregister removes the service from the proxy. All future requests until the service name is
-	// registered again will be responded with a 404 response. If the service is not registered with
-	// the proxy, the message is ignored.
-	Unregister struct{ ServiceID string }
-	// NewProxyHandler returns a middleware function for proxying HTTP-like traffic to services
-	// running in the cluster.
-	NewProxyHandler struct{ ServiceID string }
-
-	// GetSummary returns a snapshot of the registered services.
-	GetSummary struct{}
+	"github.com/sirupsen/logrus"
 )
 
 // Service represents a registered service. The LastRequested field is used by
@@ -52,54 +29,68 @@ type ProxyHTTPAuth func(echo.Context) (done bool, err error)
 // Proxy is an actor that proxies requests to registered services.
 type Proxy struct {
 	lock     sync.RWMutex
-	services map[string]*Service
-
 	HTTPAuth ProxyHTTPAuth
+	services map[string]*Service
+	syslog   *logrus.Entry
 }
 
-// Receive implements the actor.Actor interface.
-func (p *Proxy) Receive(ctx *actor.Context) error {
-	switch msg := ctx.Message().(type) {
-	case actor.PreStart:
-		p.services = make(map[string]*Service)
-	case Register:
-		if msg.ServiceID == "" {
-			return nil
-		}
-		p.lock.Lock()
-		defer p.lock.Unlock()
-		ctx.Log().Infof("registering service: %s (%v)", msg.ServiceID, msg.URL)
-		p.services[msg.ServiceID] = &Service{
-			URL:                  msg.URL,
-			LastRequested:        time.Now(),
-			ProxyTCP:             msg.ProxyTCP,
-			AllowUnauthenticated: msg.Unauthenticated,
-		}
+// DefaultProxy is the global proxy singleton.
+var DefaultProxy *Proxy
 
-		if ctx.ExpectingResponse() {
-			ctx.Respond(nil)
-		}
-	case Unregister:
-		p.lock.Lock()
-		defer p.lock.Unlock()
-		delete(p.services, msg.ServiceID)
-	case NewProxyHandler:
-		ctx.Respond(p.newProxyHandler(msg.ServiceID))
-	case GetSummary:
-		ctx.Respond(p.getSummary())
-	case actor.PostStop:
-		p.lock.Lock()
-		defer p.lock.Unlock()
-		// Erase all services from the proxy in case any handlers are still active.
-		p.services = nil
+// InitProxy initializes the global proxy.
+func InitProxy(httpAuth ProxyHTTPAuth) {
+	if DefaultProxy != nil {
+		logrus.Warn(
+			"detected re-initialization of Proxy that should never occur outside of tests",
+		)
 	}
-	return nil
+	DefaultProxy = &Proxy{
+		HTTPAuth: httpAuth,
+		services: make(map[string]*Service),
+		syslog:   logrus.WithField("component", "proxy"),
+	}
 }
 
-func (p *Proxy) getService(serviceName string) *Service {
+// Register registers the service name with the associated target URL. All requests with the
+// format ".../:service-name/*" are forwarded to the service via the target URL.
+func (p *Proxy) Register(serviceID string, url *url.URL, proxyTCP bool, unauth bool) {
+	if serviceID == "" {
+		return
+	}
 	p.lock.Lock()
 	defer p.lock.Unlock()
-	service := p.services[serviceName]
+
+	p.syslog.Infof("registering service: %s (%v)", serviceID, url)
+	p.services[serviceID] = &Service{
+		URL:                  url,
+		LastRequested:        time.Now(),
+		ProxyTCP:             proxyTCP,
+		AllowUnauthenticated: unauth,
+	}
+	return
+}
+
+// Unregister removes the service from the proxy. All future requests until the service name is
+// registered again will be responded with a 404 response. If the service is not registered with
+// the proxy, the message is ignored.
+func (p *Proxy) Unregister(serviceID string) {
+	p.lock.Lock()
+	defer p.lock.Unlock()
+	delete(p.services, serviceID)
+}
+
+// ClearProxy erases all services from the proxy in case any handlers are still active.
+func (p *Proxy) ClearProxy() {
+	p.lock.Lock()
+	defer p.lock.Unlock()
+	p.services = make(map[string]*Service)
+}
+
+// GetService returns the Service, if any, given the serviceID key.
+func (p *Proxy) GetService(serviceID string) *Service {
+	p.lock.Lock()
+	defer p.lock.Unlock()
+	service := p.services[serviceID]
 	if service == nil {
 		return nil
 	}
@@ -115,12 +106,13 @@ func (p *Proxy) getService(serviceName string) *Service {
 	}
 }
 
-// Service an HTTP request through the /proxy/:service/* route.
-func (p *Proxy) newProxyHandler(serviceID string) echo.HandlerFunc {
+// NewProxyHandler returns a middleware function for proxying HTTP-like traffic to services
+// running in the cluster. Services an HTTP request through the /proxy/:service/* route.
+func (p *Proxy) NewProxyHandler(serviceID string) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		// Look up the service name in the url path.
 		serviceName := c.Param(serviceID)
-		service := p.getService(serviceName)
+		service := p.GetService(serviceName)
 
 		if service == nil {
 			return echo.NewHTTPError(http.StatusNotFound,
@@ -164,7 +156,8 @@ func (p *Proxy) newProxyHandler(serviceID string) echo.HandlerFunc {
 	}
 }
 
-func (p *Proxy) getSummary() map[string]Service {
+// Summary returns a snapshot of the registered services.
+func (p *Proxy) Summary() map[string]Service {
 	p.lock.RLock()
 	defer p.lock.RUnlock()
 	snapshot := make(map[string]Service)

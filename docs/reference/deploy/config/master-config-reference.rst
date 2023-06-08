@@ -418,9 +418,9 @@ Security-related configuration settings for communicating with the Launcher.
 ``container_run_type``
 ----------------------
 
-The type of the container runtime to be used when launching tasks. The value may be ``singularity``,
-``enroot``, or ``podman``. The default value is ``singularity``. The value ``singularity`` is also
-used when using Apptainer.
+The type of the container runtime to be used when launching tasks. The value may be ``apptainer``,
+``singularity``, ``enroot``, or ``podman``. The default value is ``singularity``. The value
+``singularity`` is also used when using Apptainer.
 
 ``auth_file``
 -------------
@@ -500,11 +500,12 @@ created by the launcher. The default is ``ALL``. The specification ``!root`` is 
 appended to this list to prevent privilege elevation. See the ``sudoers(5)`` definition of
 ``Runas_List`` for the full syntax of this value. See :ref:`sudo_configuration` for details.
 
-``singularity_image_root``
---------------------------
+``apptainer_image_root`` or ``singularity_image_root``
+------------------------------------------------------
 
-The shared directory where Singularity images should be located. This directory must be visible to
-the launcher and from the compute nodes. See :ref:`slurm-image-config` for more details.
+The shared directory where Apptainer/Singularity images should be located. Only one of these two can
+be specified. This directory must be visible to the launcher and from the compute nodes. See
+:ref:`slurm-image-config` for more details.
 
 ``job_storage_root``
 --------------------

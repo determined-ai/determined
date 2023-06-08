@@ -7,6 +7,7 @@ import InteractiveTable, { ColumnDef } from 'components/Table/InteractiveTable';
 import SkeletonTable from 'components/Table/SkeletonTable';
 import {
   checkmarkRenderer,
+  createOmitableRenderer,
   defaultRowClassName,
   getFullPaginationConfig,
   userRenderer,
@@ -19,7 +20,7 @@ import { cancelExperiment, getJobQ, getJobQStats, killExperiment, killTask } fro
 import * as Api from 'services/api-ts-sdk';
 import clusterStore from 'stores/cluster';
 import userStore from 'stores/users';
-import { Job, JobAction, JobState, JobType, ResourcePool, RPStats } from 'types';
+import { FullJob, Job, JobAction, JobState, JobType, ResourcePool, RPStats } from 'types';
 import { isEqual } from 'utils/data';
 import { ErrorLevel, ErrorType } from 'utils/error';
 import handleError from 'utils/error';
@@ -54,10 +55,10 @@ const JobQueue: React.FC<Props> = ({ selectedRp, jobState }) => {
 
     return resourcePools.data.map(
       (rp) =>
-        ({
-          resourcePool: rp.name,
-          stats: { preemptibleCount: 0, queuedCount: 0, scheduledCount: 0 },
-        } as RPStats),
+      ({
+        resourcePool: rp.name,
+        stats: { preemptibleCount: 0, queuedCount: 0, scheduledCount: 0 },
+      } as RPStats),
     );
   });
   const [jobs, setJobs] = useState<Job[]>([]);
@@ -135,6 +136,7 @@ const JobQueue: React.FC<Props> = ({ selectedRp, jobState }) => {
 
   const dropDownOnTrigger = useCallback(
     (job: Job) => {
+      if (!('entityId' in job)) return {};
       const triggers: Triggers<JobAction> = {};
       const commandType = jobTypeToCommandType(job.type);
 
@@ -221,27 +223,31 @@ const JobQueue: React.FC<Props> = ({ selectedRp, jobState }) => {
           case 'actions':
             return {
               ...col,
-              render: (_, record) => (
-                <div>
-                  <ActionDropdown<JobAction>
-                    actionOrder={[
-                      JobAction.ManageJob,
-                      JobAction.MoveToTop,
-                      JobAction.ViewLog,
-                      JobAction.Cancel,
-                      JobAction.Kill,
-                    ]}
-                    confirmations={{
-                      [JobAction.Cancel]: { cancelText: 'Abort', onError: handleError },
-                      [JobAction.Kill]: { danger: true, onError: handleError },
-                      [JobAction.MoveToTop]: { onError: handleError },
-                    }}
-                    id={record.name}
-                    kind="job"
-                    onError={handleError}
-                    onTrigger={dropDownOnTrigger(record)}
-                  />
-                </div>
+              render: createOmitableRenderer<Job, FullJob>(
+                'entityId',
+                (_, record) => (
+                  <div>
+                    <ActionDropdown<JobAction>
+                      actionOrder={[
+                        JobAction.ManageJob,
+                        JobAction.MoveToTop,
+                        JobAction.ViewLog,
+                        JobAction.Cancel,
+                        JobAction.Kill,
+                      ]}
+                      confirmations={{
+                        [JobAction.Cancel]: { cancelText: 'Abort', onError: handleError },
+                        [JobAction.Kill]: { danger: true, onError: handleError },
+                        [JobAction.MoveToTop]: { onError: handleError },
+                      }}
+                      id={record.name}
+                      kind="job"
+                      onError={handleError}
+                      onTrigger={dropDownOnTrigger(record)}
+                    />
+                  </div>
+                ),
+                null,
               ),
             };
           case SCHEDULING_VAL_KEY: {
@@ -306,7 +312,9 @@ const JobQueue: React.FC<Props> = ({ selectedRp, jobState }) => {
           case 'user':
             return {
               ...col,
-              render: (_, r) => userRenderer(users.find((u) => u.id === r.userId)),
+              render: createOmitableRenderer<Job, FullJob>('entityId', (_, r) =>
+                userRenderer(users.find((u) => u.id === r.userId)),
+              ),
             };
           default:
             return col;

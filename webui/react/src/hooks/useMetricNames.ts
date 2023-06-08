@@ -5,13 +5,23 @@ import { V1ExpMetricNamesResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
 import { Metric, MetricType } from 'types';
+import { isEqual } from 'utils/data';
 import { alphaNumericSorter } from 'utils/sort';
 
-const useMetricNames = (experimentId?: number, errorHandler?: (e: unknown) => void): Metric[] => {
+const useMetricNames = (experimentIds: number[], errorHandler?: (e: unknown) => void): Metric[] => {
   const [metrics, setMetrics] = useState<Metric[]>([]);
+  const [actualExpIds, setActualExpIds] = useState<number[]>([]);
+
+  useEffect(
+    () => setActualExpIds((prev) => (isEqual(prev, experimentIds) ? prev : experimentIds)),
+    [experimentIds],
+  );
 
   useEffect(() => {
-    if (!experimentId) return;
+    if (actualExpIds.length === 0) {
+      setMetrics([]);
+      return;
+    }
     const canceler = new AbortController();
     const trainingMetricsMap: Record<string, boolean> = {};
     const validationMetricsMap: Record<string, boolean> = {};
@@ -20,7 +30,7 @@ const useMetricNames = (experimentId?: number, errorHandler?: (e: unknown) => vo
     const xAxisMetrics = Object.values(XAxisDomain).map((v) => v.toLowerCase());
 
     readStream<V1ExpMetricNamesResponse>(
-      detApi.StreamingInternal.expMetricNames([experimentId], undefined, {
+      detApi.StreamingInternal.expMetricNames(actualExpIds, undefined, {
         signal: canceler.signal,
       }),
       (event: V1ExpMetricNamesResponse) => {
@@ -49,7 +59,7 @@ const useMetricNames = (experimentId?: number, errorHandler?: (e: unknown) => vo
       errorHandler,
     );
     return () => canceler.abort();
-  }, [experimentId, errorHandler]);
+  }, [actualExpIds, errorHandler]);
   return metrics;
 };
 

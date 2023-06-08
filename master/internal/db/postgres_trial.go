@@ -163,23 +163,27 @@ WHERE id = $1`, id, restartCount); err != nil {
 func (db *PgDB) fullTrialSummaryMetricsRecompute(
 	ctx context.Context, tx *sqlx.Tx, trialID int,
 ) error {
-	trainSummary, err := db.calculateFullTrialSummaryMetrics(
-		ctx, tx, trialID, "avg_metrics", TrainingMetric)
-	if err != nil {
-		return fmt.Errorf("rollback computing training summary metrics: %w", err)
-	}
-	valSummary, err := db.calculateFullTrialSummaryMetrics(
-		ctx, tx, trialID, "validation_metrics", ValidationMetric)
-	if err != nil {
-		return fmt.Errorf("rollback computing validation summary metrics: %w", err)
-	}
-
 	updatedSummaryMetrics := model.JSONObj{}
-	if len(trainSummary) > 0 {
-		updatedSummaryMetrics["avg_metrics"] = trainSummary
+	metricTypes := []model.MetricType{}
+	if err := tx.SelectContext(ctx, &metricTypes, `
+SELECT DISTINCT custom_type FROM metrics WHERE partition_type = 'GENERIC' AND trial_id = $1
+	`,
+		trialID); err != nil {
+		return err
 	}
-	if len(valSummary) > 0 {
-		updatedSummaryMetrics["validation_metrics"] = valSummary
+	metricTypes = append(metricTypes, model.TrainingMetricType)
+	metricTypes = append(metricTypes, model.ValidationMetricType)
+
+	for _, metricType := range metricTypes {
+		summary, err := db.calculateFullTrialSummaryMetrics(
+			ctx, tx, trialID, metricType)
+		if err != nil {
+			return fmt.Errorf("rollback computing %s summary metrics: %w", metricType, err)
+		}
+		if len(summary) > 0 {
+			key := model.TrialSummaryMetricsJSONPath(metricType)
+			updatedSummaryMetrics[key] = summary
+		}
 	}
 
 	if _, err := tx.ExecContext(ctx, `UPDATE trials SET summary_metrics = $1,
@@ -190,130 +194,13 @@ func (db *PgDB) fullTrialSummaryMetricsRecompute(
 }
 
 func (db *PgDB) calculateFullTrialSummaryMetrics(
-	ctx context.Context, tx *sqlx.Tx, trialID int, jsonPath string, partition MetricPartitionType,
+	ctx context.Context, tx *sqlx.Tx, trialID int, metricType model.MetricType,
 ) (model.JSONObj, error) {
+	partition := customMetricTypeToPartitionType(metricType)
+	jsonPath := model.TrialMetricsJSONPath(partition == ValidationMetric)
 	//nolint: execinquery
-	rows, err := tx.QueryContext(ctx, `
--- Returns pairs of metric names and trial_ids and if they are numeric or not.
-WITH trial_metrics as (
-SELECT
-	name,
-	trial_id,
-	CASE sum(entries)
-		WHEN sum(entries) FILTER (WHERE metric_type = 'number') THEN 'number'
-		WHEN sum(entries) FILTER (WHERE metric_type = 'string') THEN 'string'
-		WHEN sum(entries) FILTER (WHERE metric_type = 'date') THEN 'date'
-		WHEN sum(entries) FILTER (WHERE metric_type = 'object') THEN 'object'
-		WHEN sum(entries) FILTER (WHERE metric_type = 'boolean') THEN 'boolean'
-		WHEN sum(entries) FILTER (WHERE metric_type = 'array') THEN 'array'
-		WHEN sum(entries) FILTER (WHERE metric_type = 'null') THEN 'null'
-		ELSE 'string'
-	END as metric_type
-FROM (
-	SELECT
-	name,
-	CASE
-		WHEN jsonb_typeof(metrics->$2->name) = 'string' THEN
-			CASE
-				WHEN (metrics->$2->name)::text = '"Infinity"'::text THEN 'number'
-				WHEN (metrics->$2->name)::text = '"-Infinity"'::text THEN 'number'
-				WHEN (metrics->$2->name)::text = '"NaN"'::text THEN 'number'
-				WHEN metrics->$2->>name ~
-					'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})?$' THEN 'date'
-				ELSE 'string'
-			END
-		ELSE jsonb_typeof(metrics->$2->name)
-	END as metric_type,
-	trial_id,
-	count(1) as entries
-	FROM (
-		SELECT DISTINCT
-		jsonb_object_keys(s.metrics->$2) as name
-		FROM metrics s
-		WHERE s.trial_id = $1 AND partition_type = $3 AND not archived
-	) names, metrics
-	JOIN trials ON trial_id = trials.id
-	WHERE trials.id = $1 AND metrics.partition_type = $3 AND not metrics.archived
-	GROUP BY name, metric_type, trial_id
-) typed
-where metric_type IS NOT NULL
-GROUP BY name, trial_id
-ORDER BY trial_id, name
-),
--- Filters to only numeric metrics.
-numeric_trial_metrics as (
-SELECT name, trial_id
-FROM trial_metrics
-WHERE metric_type = 'number'
-),
--- Calculates count, sum, min, max on each numeric metric name and trial ID pair.
--- Also adds just the name for non numeric metrics to ensure we record every metric.
-trial_metric_aggs as (
-SELECT
-	name,
-	ntm.trial_id,
-	count(1) as count_agg,
-	sum((metrics.metrics->$2->>name)::double precision) as sum_agg,
-	min((metrics.metrics->$2->>name)::double precision) as min_agg,
-	max((metrics.metrics->$2->>name)::double precision) as max_agg,
-	'number' as metric_type
-FROM numeric_trial_metrics ntm INNER JOIN metrics
-ON metrics.trial_id=ntm.trial_id
-WHERE metrics.metrics->$2->name IS NOT NULL AND metrics.partition_type = $3 AND not metrics.archived
-GROUP BY 1, 2
-UNION
-SELECT
-	name,
-	trial_id,
-	NULL as count_agg,
-	NULL as sum,
-	NULL as min,
-	NULL as max,
-	metric_type as metric_type
-FROM trial_metrics
-WHERE metric_type != 'number'
-),
--- Gets the last reported metric for each trial. Note if we report
--- {"a": 1} and {"b": 1} we consider {"b": 1} to be the last reported
--- metric and "a"'s last will be NULL.
-latest_metrics as (
-  SELECT s.trial_id,
-	unpacked.key as name,
-	unpacked.value as latest_value
-  FROM (
-	  SELECT s.*,
-		ROW_NUMBER() OVER(
-		  PARTITION BY s.trial_id
-		  ORDER BY s.end_time DESC
-		) as rank
-	  FROM metrics s
-	  JOIN trials ON s.trial_id = trials.id
-	  WHERE s.trial_id = $1 AND partition_type = $3 AND not archived
-	) s, jsonb_each(s.metrics->$2) unpacked
-  WHERE s.rank = 1
-),
--- Adds the last reported metric to the aggregation.
-combined_latest_agg as (SELECT
-	coalesce(lt.trial_id, tma.trial_id) as trial_id,
-	coalesce(lt.name, tma.name) as name,
-	tma.count_agg,
-	tma.sum_agg,
-	tma.min_agg,
-	tma.max_agg,
-	lt.latest_value,
-	tma.metric_type
-FROM latest_metrics lt FULL OUTER JOIN trial_metric_aggs tma ON
-	lt.trial_id = tma.trial_id AND lt.name = tma.name
-) SELECT name, jsonb_build_object(
-    'count', count_agg,
-    'sum', sum_agg,
-    'min', CASE WHEN max_agg = 'NaN'::double precision
-        THEN 'NaN'::double precision ELSE min_agg END,
-    'max', max_agg,
-    'last', latest_value,
-    'type', metric_type
-) FROM combined_latest_agg;
-`, trialID, jsonPath, partition)
+	rows, err := tx.QueryContext(ctx, db.queries.getOrLoad("calculate-full-trial-summary-metrics"),
+		trialID, jsonPath, partition, metricType)
 	if err != nil {
 		return nil, errors.Wrapf(err, "getting full compute trial %d summary metrics", trialID)
 	}
@@ -373,18 +260,15 @@ func (db *PgDB) updateTotalBatches(ctx context.Context, tx *sqlx.Tx, trialID int
 }
 
 func (db *PgDB) _addTrialMetricsTx(
-	ctx context.Context, tx *sqlx.Tx, m *trialv1.TrialMetrics, pType MetricPartitionType,
-	mType *string,
+	ctx context.Context, tx *sqlx.Tx, m *trialv1.TrialMetrics, mType model.MetricType,
 ) (rollbacks int, err error) {
-	isValidation := pType == ValidationMetric
-
-	metricsJSONPath := "avg_metrics"
+	isValidation := mType == model.ValidationMetricType
+	metricsJSONPath := model.TrialMetricsJSONPath(isValidation)
 	metricsBody := map[string]interface{}{
 		metricsJSONPath: m.Metrics.AvgMetrics,
 		"batch_metrics": m.Metrics.BatchMetrics,
 	}
 	if isValidation {
-		metricsJSONPath = "validation_metrics"
 		metricsBody = map[string]interface{}{
 			metricsJSONPath: m.Metrics.AvgMetrics,
 		}
@@ -395,7 +279,7 @@ func (db *PgDB) _addTrialMetricsTx(
 	}
 
 	if rollbacks, err = rollbackMetrics(ctx, tx, m.TrialRunId, m.TrialId, m.StepsCompleted,
-		pType); err != nil {
+		mType); err != nil {
 		return rollbacks, err
 	}
 	var summaryMetrics model.JSONObj
@@ -407,7 +291,7 @@ func (db *PgDB) _addTrialMetricsTx(
 	}
 
 	metricRowID, err := db.addRawMetrics(ctx, tx, &metricsBody, m.TrialRunId,
-		m.TrialId, m.StepsCompleted, pType, mType)
+		m.TrialId, m.StepsCompleted, mType)
 	if err != nil {
 		return rollbacks, err
 	}
@@ -426,19 +310,13 @@ func (db *PgDB) _addTrialMetricsTx(
 		if err := db.fullTrialSummaryMetricsRecompute(ctx, tx, int(m.TrialId)); err != nil {
 			return rollbacks, errors.Wrap(err, "error on rollback compute of summary metrics")
 		}
-	case pType == GenericMetric:
-		if _, err := tx.ExecContext(ctx, `
-	UPDATE trials SET total_batches = GREATEST(total_batches, $2)
-	WHERE id = $1;
-	`, m.TrialId, m.StepsCompleted); err != nil {
-			return rollbacks, errors.Wrap(err, "updating trial total batches")
-		}
 	default: // no rollbacks happened.
-		if _, ok := summaryMetrics[metricsJSONPath]; !ok {
-			summaryMetrics[metricsJSONPath] = map[string]any{}
+		summaryMetricsJSONPath := model.TrialSummaryMetricsJSONPath(mType)
+		if _, ok := summaryMetrics[summaryMetricsJSONPath]; !ok {
+			summaryMetrics[summaryMetricsJSONPath] = map[string]any{}
 		}
-		summaryMetrics[metricsJSONPath] = calculateNewSummaryMetrics(
-			summaryMetrics[metricsJSONPath].(map[string]any),
+		summaryMetrics[summaryMetricsJSONPath] = calculateNewSummaryMetrics(
+			summaryMetrics[summaryMetricsJSONPath].(map[string]any),
 			m.Metrics.AvgMetrics,
 		)
 
@@ -481,17 +359,16 @@ WHERE id = $1;
 
 // addTrialMetrics inserts a set of trial metrics to the database.
 func (db *PgDB) addTrialMetrics(
-	ctx context.Context, m *trialv1.TrialMetrics, pType MetricPartitionType,
-	mType *string,
+	ctx context.Context, m *trialv1.TrialMetrics, mType model.MetricType,
 ) (rollbacks int, err error) {
 	switch v := m.Metrics.AvgMetrics.Fields["epoch"].AsInterface().(type) {
 	case float64, nil:
 	default:
 		return 0, fmt.Errorf("cannot add metric with non numeric 'epoch' value got %v", v)
 	}
-	return rollbacks, db.withTransaction(fmt.Sprintf("add trial metrics %s", pType),
+	return rollbacks, db.withTransaction(fmt.Sprintf("add trial metrics %s", mType),
 		func(tx *sqlx.Tx) error {
-			rollbacks, err = db._addTrialMetricsTx(ctx, tx, m, pType, mType)
+			rollbacks, err = db._addTrialMetricsTx(ctx, tx, m, mType)
 			return err
 		})
 }

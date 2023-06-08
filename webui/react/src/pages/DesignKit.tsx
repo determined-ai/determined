@@ -130,6 +130,10 @@ const ComponentSection: React.FC<Props> = ({ children, id, title }: Props): JSX.
 };
 
 const ButtonsSection: React.FC = () => {
+  const menu: MenuItem[] = [
+    { key: 'start', label: 'Start' },
+    { key: 'stop', label: 'Stop' },
+  ];
   return (
     <ComponentSection id="Buttons" title="Buttons">
       <AntDCard>
@@ -249,8 +253,29 @@ const ButtonsSection: React.FC = () => {
         </Space>
         <hr />
         <strong>Default Button with icon</strong>
+        With SVG Icon
         <Space>
-          <Button icon={<PoweroffOutlined />}>ButtonWithIcon</Button>
+          <Button icon={<PoweroffOutlined />} />
+          <Button icon={<PoweroffOutlined />}>ButtonText</Button>
+        </Space>
+        With Font Icon
+        <Space>
+          <Button icon={<Icon name="play" size="large" title="Play" />} />
+          <Button icon={<Icon name="play" size="large" title="Play" />}>
+            ButtonWithLargeFontIcon
+          </Button>
+          <Button icon={<Icon name="play" size="tiny" title="Play" />}>
+            ButtonWithTinyFontIcon
+          </Button>
+        </Space>
+        As Dropdown trigger
+        <Space>
+          <Dropdown menu={menu}>
+            <Button icon={<Icon name="play" size="large" title="Play" />}>Font icon Button</Button>
+          </Dropdown>
+          <Dropdown menu={menu}>
+            <Button icon={<PoweroffOutlined />}>SVG icon Button</Button>
+          </Dropdown>
         </Space>
         <hr />
         <strong>Button with icon and text displayed in a column</strong>

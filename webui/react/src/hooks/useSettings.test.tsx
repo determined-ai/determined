@@ -179,6 +179,10 @@ describe('useSettings', () => {
 
   it('should update settings', async () => {
     const { result } = setup();
+
+    // assure isLoading becomes true, which will allow useLayoutEffect, which will start watching for updates
+    await waitFor(() => expect(result.container.current.isLoading).toStrictEqual(true));
+
     act(() => result.container.current.updateSettings(newSettings));
 
     for (const configProp of Object.values(config.settings)) {

@@ -275,13 +275,13 @@ interacts with PBS, we recommend the following steps:
 .. _singularity-config-requirements:
 
 ************************************
- Singularity/Apptainer Requirements
+ Apptainer/Singularity Requirements
 ************************************
 
-Singularity/Apptainer is the recommended container runtime for Determined on HPC clusters. Apptainer
+Apptainer/Singularity is the recommended container runtime for Determined on HPC clusters. Apptainer
 is a fork of Singularity 3.8 and provides both the ``apptainer`` and ``singularity`` commands. For
 purposes of this documentation, you can consider all references to Singularity to also apply to
-Apptainer. The Determined launcher interacts with Singularity/Apptainer using the ``singularity``
+Apptainer. The Determined launcher interacts with Apptainer/Singularity using the ``singularity``
 command.
 
 Singularity has numerous options that may be customized in the ``singularity.conf`` file. Determined
@@ -394,3 +394,6 @@ platform. There may be additional per-user configuration that is required.
 
 #. The Enroot container storage directory for the user ``${ENROOT_CACHE_PATH}`` (which defaults to
    ``$HOME/.local/share/enroot``) must be accessible on all compute nodes.
+
+#. A convenience script, ``/usr/bin/manage-enroot-cache``, is provided by the HPC launcher
+   installation to simplify the :ref:`management of enroot images <manage-enroot-cache>`.

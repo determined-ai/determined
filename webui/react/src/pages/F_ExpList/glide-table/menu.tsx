@@ -53,7 +53,7 @@ export const TableActionMenu: React.FC<TableActionMenuProps> = ({
         top: y,
         width: menuWidth,
       }}>
-      <Menu items={items} />
+      <Menu items={items} selectable={false} />
     </div>
   );
 };
