@@ -419,7 +419,6 @@ func TestTrialsNonNumericMetrics(t *testing.T) {
 	t.Run("CompareTrialsNonNumeric", func(t *testing.T) {
 		resp, err := api.CompareTrials(ctx, &apiv1.CompareTrialsRequest{
 			TrialIds:    []int32{int32(trial.ID)},
-			CustomType:  string(model.ValidationMetricType),
 			MetricNames: maps.Keys(expectedMetricsMap),
 		})
 		require.NoError(t, err)
@@ -433,7 +432,6 @@ func TestTrialsNonNumericMetrics(t *testing.T) {
 	t.Run("SummarizeTrialsNonNumeric", func(t *testing.T) {
 		resp, err := api.SummarizeTrial(ctx, &apiv1.SummarizeTrialRequest{
 			TrialId:     int32(trial.ID),
-			CustomType:  string(model.ValidationMetricType),
 			MetricNames: maps.Keys(expectedMetricsMap),
 		})
 		require.NoError(t, err)
@@ -527,8 +525,7 @@ func TestTrialAuthZ(t *testing.T) {
 		}, false},
 		{"CanGetExperimentArtifacts", func(id int) error {
 			_, err := api.CompareTrials(ctx, &apiv1.CompareTrialsRequest{
-				CustomType: string(model.ValidationMetricType),
-				TrialIds:   []int32{int32(id)},
+				TrialIds: []int32{int32(id)},
 			})
 			return err
 		}, false},

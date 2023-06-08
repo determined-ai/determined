@@ -763,7 +763,6 @@ func (a *apiServer) multiTrialSample(trialID int32, metricNames []string,
 	}
 
 	for metricType, metricNames := range metricTypeToNames {
-		fmt.Println("mtype mname", metricType, metricNames)
 		metric, err := getDownSampledMetric(metricNames, metricType)
 		if err != nil {
 			return nil, err
