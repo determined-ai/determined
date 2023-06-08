@@ -9,6 +9,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/pkg/etc"
 )
 
@@ -51,10 +52,11 @@ func TestOverwriteBindings(t *testing.T) {
 	require.NoError(t, etc.SetRootPath(RootFromDB))
 	db := MustResolveTestPostgres(t)
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
-	ctx := context.TODO()
+	ctx := context.Background()
 	user := RequireMockUser(t, db)
-	existingPools := make(map[string]bool)
-	existingPools["poolName1"] = true
+	var existingPools []config.ResourcePoolConfig
+	pool := config.ResourcePoolConfig{PoolName: "poolName1"}
+	existingPools = append(existingPools, pool)
 	// Test overwrite bindings
 	poolName := "poolName1" //nolint:goconst
 	workspaceNames := []string{"test1", "test2", "test3"}
@@ -66,7 +68,8 @@ func TestOverwriteBindings(t *testing.T) {
 	require.NoError(t, err)
 	// TODO: call list bindings here to make sure it worked
 	// Test overwrite pool that's not bound to anything currently
-	existingPools["poolName2"] = true
+	pool = config.ResourcePoolConfig{PoolName: "poolName2"}
+	existingPools = append(existingPools, pool)
 	poolName = "poolName2"
 	err = OverwriteRPWorkspaceBindings(ctx, workspaceIDs, poolName, existingPools)
 	require.NoError(t, err)
@@ -77,9 +80,10 @@ func TestOverwriteBindings(t *testing.T) {
 }
 
 func TestOverwriteFail(t *testing.T) {
-	ctx := context.TODO()
-	existingPools := make(map[string]bool)
-	existingPools["poolName1"] = true
+	ctx := context.Background()
+	var existingPools []config.ResourcePoolConfig
+	pool := config.ResourcePoolConfig{PoolName: "poolName1"}
+	existingPools = append(existingPools, pool)
 	// Test overwrite adding workspace that doesn't exist
 	workspaceIDs := []int32{100, 102, 103}
 	poolName := "poolName1"
@@ -94,7 +98,7 @@ func TestOverwriteFail(t *testing.T) {
 }
 
 func TestRemoveInvalidBinding(t *testing.T) {
-	ctx := context.TODO()
+	ctx := context.Background()
 	// remove binding that doesn't exist
 	poolName := "poolName" //nolint:goconst
 	workspaceIDs := []int32{1}

@@ -5,9 +5,8 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/determined-ai/determined/master/internal/config"
-
 	"github.com/determined-ai/determined/master/internal/authz"
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	workspaceauth "github.com/determined-ai/determined/master/internal/workspace"
@@ -41,14 +40,10 @@ func (a *apiServer) BindRPToWorkspace(
 				curUser.Username))
 	}
 
-	existingPools := make(map[string]bool)
 	masterConfig := config.GetMasterConfig()
-	resourcePools := masterConfig.ResourceConfig.ResourcePools
-	for _, pool := range resourcePools {
-		existingPools[pool.PoolName] = true
-	}
 
-	err = db.AddRPWorkspaceBindings(ctx, req.WorkspaceIds, req.ResourcePoolName, existingPools)
+	err = db.AddRPWorkspaceBindings(ctx, req.WorkspaceIds, req.ResourcePoolName,
+		masterConfig.ResourceConfig.ResourcePools)
 	if err != nil {
 		return nil, err
 	}
@@ -71,14 +66,9 @@ func (a *apiServer) OverwriteRPWorkspaceBindings(
 				curUser.Username))
 	}
 
-	existingPools := make(map[string]bool)
 	masterConfig := config.GetMasterConfig()
-	resourcePools := masterConfig.ResourceConfig.ResourcePools
-	for _, pool := range resourcePools {
-		existingPools[pool.PoolName] = true
-	}
-
-	err = db.OverwriteRPWorkspaceBindings(ctx, req.WorkspaceIds, req.ResourcePoolName, existingPools)
+	err = db.OverwriteRPWorkspaceBindings(ctx, req.WorkspaceIds, req.ResourcePoolName,
+		masterConfig.ResourceConfig.ResourcePools)
 	if err != nil {
 		return nil, err
 	}

@@ -7,6 +7,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/uptrace/bun"
 
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
@@ -20,12 +21,18 @@ type RPWorkspaceBinding struct {
 
 // AddRPWorkspaceBindings inserts new bindings between workspaceIds and poolName.
 func AddRPWorkspaceBindings(ctx context.Context, workspaceIds []int32, poolName string,
-	existingPools map[string]bool,
+	resourcePools []config.ResourcePoolConfig,
 ) error {
 	// Check if pool exists
-	poolExists := existingPools[poolName]
+	poolExists := false
+	for _, pool := range resourcePools {
+		if poolName == pool.PoolName {
+			poolExists = true
+		}
+	}
+
 	if !poolExists {
-		return errors.Errorf("pool with name %v doesn't exit in config", poolName)
+		return errors.Errorf("pool with name %v doesn't exist in config", poolName)
 	}
 
 	var bindings []RPWorkspaceBinding
@@ -48,12 +55,12 @@ func RemoveRPWorkspaceBindings(ctx context.Context,
 	// throw error if any of bindings don't exist
 	for _, workspaceID := range workspaceIds {
 		var rpWorkspaceBindings []*RPWorkspaceBinding
-		err := Bun().NewSelect().Model(&rpWorkspaceBindings).Where("pool_name = ?",
-			poolName).Where("workspace_id = ?", workspaceID).Scan(ctx)
+		exists, err := Bun().NewSelect().Model(&rpWorkspaceBindings).Where("pool_name = ?",
+			poolName).Where("workspace_id = ?", workspaceID).Exists(ctx)
 		if err != nil {
 			return err
 		}
-		if len(rpWorkspaceBindings) == 0 {
+		if !exists {
 			return errors.Errorf(" workspace with id %v and pool with name  %v binding doesn't exist",
 				workspaceID, poolName)
 		}
@@ -140,14 +147,19 @@ func runPagedBunQuery(
 
 // OverwriteRPWorkspaceBindings overwrites the bindings between workspaceIds and poolName.
 func OverwriteRPWorkspaceBindings(ctx context.Context,
-	workspaceIds []int32, poolName string, existingPools map[string]bool,
+	workspaceIds []int32, poolName string, resourcePools []config.ResourcePoolConfig,
 ) error {
 	// Check if pool exists
-	poolExists := existingPools[poolName]
+	poolExists := false
+	for _, pool := range resourcePools {
+		if poolName == pool.PoolName {
+			poolExists = true
+		}
+	}
+
 	if !poolExists {
 		return errors.Errorf("pool with name %v doesn't exist in config", poolName)
 	}
-
 	// Remove existing ones with this pool name
 	_, err := Bun().NewDelete().Table("rp_workspace_bindings").
 		Where("pool_name = ?", poolName).Exec(ctx)
@@ -155,6 +167,6 @@ func OverwriteRPWorkspaceBindings(ctx context.Context,
 		return err
 	}
 
-	err = AddRPWorkspaceBindings(ctx, workspaceIds, poolName, existingPools)
+	err = AddRPWorkspaceBindings(ctx, workspaceIds, poolName, resourcePools)
 	return err
 }
