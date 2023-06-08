@@ -6,6 +6,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/authz"
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	workspaceauth "github.com/determined-ai/determined/master/internal/workspace"
@@ -39,7 +40,10 @@ func (a *apiServer) BindRPToWorkspace(
 				curUser.Username))
 	}
 
-	err = db.AddRPWorkspaceBindings(ctx, req.WorkspaceIds, req.ResourcePoolName)
+	masterConfig := config.GetMasterConfig()
+
+	err = db.AddRPWorkspaceBindings(ctx, req.WorkspaceIds, req.ResourcePoolName,
+		masterConfig.ResourceConfig.ResourcePools)
 	if err != nil {
 		return nil, err
 	}
@@ -62,7 +66,9 @@ func (a *apiServer) OverwriteRPWorkspaceBindings(
 				curUser.Username))
 	}
 
-	err = a.m.db.OverwriteRPWorkspaceBindings(ctx, req.WorkspaceIds, req.ResourcePoolName)
+	masterConfig := config.GetMasterConfig()
+	err = db.OverwriteRPWorkspaceBindings(ctx, req.WorkspaceIds, req.ResourcePoolName,
+		masterConfig.ResourceConfig.ResourcePools)
 	if err != nil {
 		return nil, err
 	}
