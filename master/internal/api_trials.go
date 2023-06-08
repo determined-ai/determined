@@ -670,6 +670,10 @@ func (a *apiServer) parseMetricTypeArgs(
 	if cErr := conv.Error(); cErr != nil {
 		return "", status.Errorf(codes.InvalidArgument, "converting metric type: %s", cErr)
 	}
+	if convertedLegacyType == "" {
+		// DISCUSS: we used to default to training metric type when this was unspecified.
+		return "", status.Errorf(codes.InvalidArgument, "at least one metric type must be specified")
+	}
 	return convertedLegacyType, nil
 }
 
@@ -757,6 +761,7 @@ func (a *apiServer) multiTrialSample(trialID int32, metricNames []string,
 	}
 
 	for metricType, metricNames := range metricTypeToNames {
+		fmt.Println("mtype mname", metricType, metricNames)
 		metric, err := getDownSampledMetric(metricNames, metricType)
 		if err != nil {
 			return nil, err
