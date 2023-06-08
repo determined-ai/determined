@@ -1071,45 +1071,88 @@ class TestPyTorchTrial:
         steps: typing.Tuple[int, int] = (1, 1),
         distributed_context: typing.Optional[det.core.DistributedContext] = None
     ) -> None:
+
+        # Trial A: train 100 batches and checkpoint
+        steps_completed = self.train_for_checkpoint(
+            hparams=hparams,
+            trial_class=trial_class,
+            tmp_path = tmp_path,
+            exp_config = exp_config,
+            steps = steps[0],
+            distributed_context=distributed_context
+        )
+
+        # Trial B: restore from checkpoint and train for 100 more batches
+        self.train_from_checkpoint(
+            hparams=hparams,
+            trial_class=trial_class,
+            tmp_path=tmp_path,
+            exp_config=exp_config,
+            steps=steps,
+            batches_trained=steps_completed,
+            distributed_context=distributed_context
+        )
+
+    def train_for_checkpoint(self,
+        hparams: typing.Dict,
+        trial_class: pytorch.PyTorchTrial,
+        tmp_path: pathlib.Path,
+        exp_config: typing.Dict,
+        steps: int = 0,
+        distributed_context: typing.Optional[det.core.DistributedContext] = None
+    ) -> int:
         checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
         tensorboard_path = tmp_path.joinpath("tensorboard")
 
-        # Trial A: train 100 batches and checkpoint
-        trial_A, trial_controller_A = create_trial_and_trial_controller(
+        trial, trial_controller = create_trial_and_trial_controller(
             trial_class=trial_class,
             hparams=hparams,
             trial_seed=self.trial_seed,
             exp_config=exp_config,
-            max_batches=steps[0],
-            min_validation_batches=steps[0],
-            min_checkpoint_batches=steps[0],
+            max_batches=steps,
+            min_validation_batches=steps,
+            min_checkpoint_batches=steps,
             checkpoint_dir=checkpoint_dir,
             tensorboard_path=tensorboard_path,
             expose_gpus=True,
             distributed_context=distributed_context
         )
 
-        trial_controller_A.run()
+        trial_controller.run()
 
         assert len(os.listdir(checkpoint_dir)) == 1, "trial did not create a checkpoint"
 
-        # Trial B: restore from checkpoint and train for 100 more batches
-        trial_B, trial_controller_B = create_trial_and_trial_controller(
+        return trial_controller.state.batches_trained
+
+    def train_from_checkpoint(
+        self,
+        hparams: typing.Dict,
+        trial_class: pytorch.PyTorchTrial,
+        tmp_path: pathlib.Path,
+        exp_config: typing.Dict,
+        steps: typing.Tuple[int, int] = (1, 1),
+        batches_trained: int = 0,
+        distributed_context: typing.Optional[det.core.DistributedContext] = None
+    ) -> None:
+        checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
+        tensorboard_path = tmp_path.joinpath("tensorboard")
+
+        trial, trial_controller = create_trial_and_trial_controller(
             trial_class=trial_class,
             hparams=hparams,
             trial_seed=self.trial_seed,
             exp_config=exp_config,
             max_batches=steps[0] + steps[1],
-            min_validation_batches=steps[1],
+            min_validation_batches=steps[0],
             min_checkpoint_batches=sys.maxsize,
             checkpoint_dir=checkpoint_dir,
             tensorboard_path=tensorboard_path,
             latest_checkpoint=os.listdir(checkpoint_dir)[0],
-            steps_completed=trial_controller_A.state.batches_trained,
+            steps_completed=batches_trained,
             expose_gpus=True,
             distributed_context=distributed_context
         )
-        trial_controller_B.run()
+        trial_controller.run()
 
         assert len(os.listdir(checkpoint_dir)) == 2, "trial did not create a checkpoint"
 
@@ -1374,6 +1417,9 @@ def create_trial_and_trial_controller(
         distributed=distributed_context,
         checkpoint_storage=checkpoint_dir, tensorboard_path=tensorboard_path
     )
+
+    # do what core_context.__enter__ does.
+    core_context.preempt.start()
 
     core_context.train._trial_id = "1"
     distributed_backend = det._DistributedBackend()
