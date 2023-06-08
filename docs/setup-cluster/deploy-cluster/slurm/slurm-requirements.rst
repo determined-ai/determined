@@ -394,3 +394,6 @@ platform. There may be additional per-user configuration that is required.
 
 #. The Enroot container storage directory for the user ``${ENROOT_CACHE_PATH}`` (which defaults to
    ``$HOME/.local/share/enroot``) must be accessible on all compute nodes.
+
+#. A convenience script, ``/usr/bin/manage-enroot-cache``, is provided by the HPC launcher
+   installation to simplify the :ref:`management of enroot images <manage-enroot-cache>`.
