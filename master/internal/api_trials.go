@@ -725,8 +725,10 @@ func (a *apiServer) multiTrialSample(trialID int32, metricNames []string,
 			timeSeriesColumn = timeSeriesFilter.Name
 		}
 
-		var metricNamesTraining []string
-		var metricNamesValidation []string
+		if maxDatapoints == 0 {
+			maxDatapoints = 200
+		}
+		metricTypeToNames := make(map[model.MetricType][]string)
 		for _, metricID := range metricIds {
 			nameAndType := strings.SplitN(metricID, ".", 2)
 			if len(nameAndType) < 2 {
@@ -736,48 +738,21 @@ func (a *apiServer) multiTrialSample(trialID int32, metricNames []string,
 				)
 			}
 			metricIDName := nameAndType[1]
-			metricIDType := nameAndType[0]
+			metricIDType := model.MetricType(nameAndType[0])
 
-			if metricIDType == string(model.TrainingMetricType) {
-				metricNamesTraining = append(metricNamesTraining, metricIDName)
-			}
-			if metricIDType == string(model.ValidationMetricType) {
-				metricNamesValidation = append(metricNamesValidation, metricIDName)
-			}
-		}
-		if maxDatapoints == 0 {
-			maxDatapoints = 200
+			metricTypeToNames[metricIDType] = append(metricTypeToNames[metricIDType], metricIDName)
 		}
 
-		if len(metricNamesTraining) > 0 {
+		for metricType, metricNames := range metricTypeToNames {
 			var metric apiv1.DownsampledMetrics
 
 			metricMeasurements, err = trials.MetricsTimeSeries(
-				trialID, startTime, metricNamesTraining, startBatches, endBatches,
+				trialID, startTime, metricNames, startBatches, endBatches,
 				xAxisLabelMetrics, maxDatapoints, *timeSeriesColumn,
-				timeSeriesFilter, "training",
+				timeSeriesFilter, metricType,
 			)
 			if err != nil {
-				return nil, errors.Wrapf(err, "error fetching time series of %v metrics", "training")
-			}
-
-			if len(metricMeasurements) > 0 {
-				if err = a.formatMetrics(&metric, metricMeasurements); err != nil {
-					return nil, err
-				}
-				metrics = append(metrics, &metric)
-			}
-		}
-
-		if len(metricNamesValidation) > 0 {
-			var metric apiv1.DownsampledMetrics
-			metricMeasurements, err = trials.MetricsTimeSeries(
-				trialID, startTime, metricNamesValidation, startBatches, endBatches,
-				xAxisLabelMetrics, maxDatapoints, *timeSeriesColumn,
-				timeSeriesFilter, "validation",
-			)
-			if err != nil {
-				return nil, errors.Wrapf(err, "error fetching time series of %v metrics", "validation")
+				return nil, errors.Wrapf(err, "error fetching time series of %v metrics", metricType)
 			}
 
 			if len(metricMeasurements) > 0 {
