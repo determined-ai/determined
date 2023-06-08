@@ -17,7 +17,7 @@ import useAuthCheck from 'hooks/useAuthCheck';
 import usePolling from 'hooks/usePolling';
 import { defaultRoute, rbacDefaultRoute } from 'routes';
 import { routeAll } from 'routes/utils';
-import { RecordKey } from 'shared/types';
+import { RecordKey } from 'types';
 import authStore from 'stores/auth';
 import useUI from 'stores/contexts/UI';
 import determinedStore, { BrandingType } from 'stores/determinedInfo';

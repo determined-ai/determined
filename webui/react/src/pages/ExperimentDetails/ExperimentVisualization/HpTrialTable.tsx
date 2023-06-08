@@ -12,7 +12,7 @@ import {
   MINIMUM_PAGE_SIZE,
 } from 'components/Table/Table';
 import { paths } from 'routes/utils';
-import { Primitive, UnknownRecord } from 'shared/types';
+import { Primitive, UnknownRecord } from 'types';
 import { HyperparametersFlattened, HyperparameterType, Metric } from 'types';
 import { ColorScale, glasbeyColor, rgba2str, rgbaFromGradient, str2rgba } from 'utils/color';
 import { isNumber } from 'utils/data';

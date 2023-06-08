@@ -13,7 +13,7 @@ import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
 import Spinner from 'components/Spinner/Spinner';
 import useUI from 'stores/contexts/UI';
-import { Primitive, Range } from 'shared/types';
+import { Primitive, Range } from 'types';
 import {
   ExperimentAction as Action,
   CommandResponse,

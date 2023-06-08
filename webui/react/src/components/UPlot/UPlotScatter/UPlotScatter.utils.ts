@@ -1,6 +1,6 @@
 import uPlot from 'uplot';
 
-import { Range } from 'shared/types';
+import { Range } from 'types';
 import { rgba2str, rgbaFromGradient, str2rgba } from 'utils/color';
 
 import { Scale } from '../../../types';

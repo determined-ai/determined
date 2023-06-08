@@ -8,7 +8,7 @@ import usePermissions from 'hooks/usePermissions';
 import GroupManagement from 'pages/Settings/GroupManagement';
 import UserManagement from 'pages/Settings/UserManagement';
 import { paths } from 'routes/utils';
-import { ValueOf } from 'shared/types';
+import { ValueOf } from 'types';
 import determinedStore from 'stores/determinedInfo';
 import { useObservable } from 'utils/observable';
 

@@ -1,5 +1,5 @@
 import { V1AugmentedTrial, V1QueryTrialsResponse } from 'services/api-ts-sdk';
-import { Primitive, RawJson } from 'shared/types';
+import { Primitive, RawJson } from 'types';
 import { Metric, MetricType } from 'types';
 import { flattenObject } from 'utils/data';
 import { metricKeyToMetric, metricToKey } from 'utils/metric';

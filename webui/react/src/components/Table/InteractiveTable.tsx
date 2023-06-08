@@ -30,7 +30,7 @@ import Spinner from 'components/Spinner/Spinner';
 import SkeletonTable from 'components/Table/SkeletonTable';
 import useResize from 'hooks/useResize';
 import { UpdateSettings } from 'hooks/useSettings';
-import { Primitive } from 'shared/types';
+import { Primitive } from 'types';
 import { isEqual } from 'utils/data';
 
 import css from './InteractiveTable.module.scss';

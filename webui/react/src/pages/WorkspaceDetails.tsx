@@ -13,7 +13,7 @@ import usePolling from 'hooks/usePolling';
 import { paths } from 'routes/utils';
 import { getGroups, getWorkspaceMembers, searchRolesAssignableToScope } from 'services/api';
 import { V1Group, V1GroupSearchResult, V1Role, V1RoleWithAssignments } from 'services/api-ts-sdk';
-import { ValueOf } from 'shared/types';
+import { ValueOf } from 'types';
 import determinedStore from 'stores/determinedInfo';
 import userStore from 'stores/users';
 import workspaceStore from 'stores/workspaces';

@@ -43,7 +43,7 @@ import usePolling from 'hooks/usePolling';
 import { useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { getCommands, getJupyterLabs, getShells, getTensorBoards, killTask } from 'services/api';
-import { ValueOf } from 'shared/types';
+import { ValueOf } from 'types';
 import userStore from 'stores/users';
 import workspaceStore from 'stores/workspaces';
 import { ShirtSize } from 'themes';

@@ -5,7 +5,7 @@ import { useParams, useSearchParams } from 'react-router-dom';
 import TaskBar from 'components/TaskBar';
 import { getTask } from 'services/api';
 import useUI from 'stores/contexts/UI';
-import { ValueOf } from 'shared/types';
+import { ValueOf } from 'types';
 import { CommandState, CommandType } from 'types';
 import { ErrorLevel, ErrorType } from 'utils/error';
 import handleError, { handleWarning } from 'utils/error';

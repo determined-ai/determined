@@ -1,4 +1,4 @@
-import { RecordKey } from 'shared/types';
+import { RecordKey } from 'types';
 import { Metric, MetricType, WorkloadGroup } from 'types';
 
 import { alphaNumericSorter } from '../utils/sort';

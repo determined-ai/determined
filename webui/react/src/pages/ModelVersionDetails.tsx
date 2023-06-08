@@ -18,7 +18,7 @@ import usePermissions from 'hooks/usePermissions';
 import usePolling from 'hooks/usePolling';
 import { paths } from 'routes/utils';
 import { getModelVersion, patchModelVersion } from 'services/api';
-import { ValueOf } from 'shared/types';
+import { ValueOf } from 'types';
 import workspaceStore from 'stores/workspaces';
 import { Metadata, ModelVersion, Note } from 'types';
 import { isEqual } from 'utils/data';

@@ -2,7 +2,7 @@ import dayjs, { Dayjs } from 'dayjs';
 import React, { useEffect, useMemo, useState } from 'react';
 
 import Tooltip from 'components/kit/Tooltip';
-import { ValueOf } from 'shared/types';
+import { ValueOf } from 'types';
 import { isNumber, isString } from 'utils/data';
 import {
   DURATION_DAY,

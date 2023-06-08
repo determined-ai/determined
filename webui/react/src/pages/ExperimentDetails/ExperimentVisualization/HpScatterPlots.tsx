@@ -14,7 +14,7 @@ import { readStream } from 'services/utils';
 import Message, { MessageType } from 'components/Message';
 import Spinner from 'components/Spinner/Spinner';
 import useUI from 'stores/contexts/UI';
-import { Primitive } from 'shared/types';
+import { Primitive } from 'types';
 import { ExperimentBase, HyperparameterType, Metric, metricTypeParamMap, Scale } from 'types';
 import { flattenObject, isBoolean, isString } from 'utils/data';
 import { metricToStr } from 'utils/metric';

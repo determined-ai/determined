@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Primitive, RawJson, RecordKey, UnknownRecord } from 'shared/types';
+import { Primitive, RawJson, RecordKey, UnknownRecord } from 'types';
 
 // `bigint` is not support yet for
 

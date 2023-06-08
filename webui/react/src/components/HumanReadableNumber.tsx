@@ -1,7 +1,7 @@
 import React from 'react';
 
 import Tooltip from 'components/kit/Tooltip';
-import { CommonProps } from 'shared/types';
+import { CommonProps } from 'types';
 import { humanReadableNumber } from 'utils/number';
 
 interface Props extends CommonProps {

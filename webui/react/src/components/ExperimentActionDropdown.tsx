@@ -22,7 +22,7 @@ import {
   unarchiveExperiment,
 } from 'services/api';
 import css from 'components/ActionDropdown/ActionDropdown.module.scss';
-import { ValueOf } from 'shared/types';
+import { ValueOf } from 'types';
 import { ExperimentAction, ProjectExperiment } from 'types';
 import { notification } from 'utils/dialogApi';
 import { ErrorLevel, ErrorType } from 'utils/error';

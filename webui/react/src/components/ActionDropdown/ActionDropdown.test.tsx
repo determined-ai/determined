@@ -3,7 +3,7 @@ import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event'
 
 import { ConfirmationProvider } from 'components/kit/useConfirm';
 import ActionDropdown from 'components/ActionDropdown/ActionDropdown';
-import { ValueOf } from 'shared/types';
+import { ValueOf } from 'types';
 
 const user = userEvent.setup({ pointerEventsCheck: PointerEventsCheckLevel.Never });
 

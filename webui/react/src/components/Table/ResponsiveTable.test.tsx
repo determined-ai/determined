@@ -5,7 +5,7 @@ import { FilterDropdownProps } from 'antd/es/table/interface';
 import React from 'react';
 
 import { getFullPaginationConfig, MINIMUM_PAGE_SIZE } from 'components/Table/Table';
-import { Pagination, RecordKey, UnknownRecord, ValueOf } from 'shared/types';
+import { Pagination, RecordKey, UnknownRecord, ValueOf } from 'types';
 import { alphaNumericSorter, numericSorter } from 'utils/sort';
 import { generateAlphaNumeric } from 'utils/string';
 

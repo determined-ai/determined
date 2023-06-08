@@ -16,7 +16,7 @@ import TimeDuration from 'components/TimeDuration';
 import { commandTypeToLabel } from 'constants/states';
 import { paths } from 'routes/utils';
 import Spinner from 'components/Spinner';
-import { Pagination } from 'shared/types';
+import { Pagination } from 'types';
 import { StateOfUnion } from 'themes';
 import {
   CommandTask,

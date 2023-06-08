@@ -1,4 +1,4 @@
-import { NullOrUndefined, Primitive, SemanticVersion } from 'shared/types';
+import { NullOrUndefined, Primitive, SemanticVersion } from 'types';
 
 /*
  * Sort numbers and strings with the following properties.

@@ -1,6 +1,6 @@
 import { Action } from 'components/Table/TableBulkActions';
 import { openOrCreateTensorBoard } from 'services/api';
-import { ValueOf } from 'shared/types';
+import { ValueOf } from 'types';
 import { ErrorLevel, ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 import { openCommandResponse } from 'utils/wait';

@@ -24,7 +24,7 @@ import { useSettings } from 'hooks/useSettings';
 import { getExperimentCheckpoints } from 'services/api';
 import { Checkpointv1State, V1GetExperimentCheckpointsRequestSortBy } from 'services/api-ts-sdk';
 import { encodeCheckpointState } from 'services/decoder';
-import { RecordKey } from 'shared/types';
+import { RecordKey } from 'types';
 import {
   checkpointAction,
   CheckpointAction,

@@ -4,7 +4,7 @@ import React, { useMemo } from 'react';
 
 import iconChart from 'assets/images/icon-chart.svg';
 import iconLogs from 'assets/images/icon-logs.svg';
-import { ValueOf } from 'shared/types';
+import { ValueOf } from 'types';
 import { isNumber } from 'utils/data';
 
 import css from './SkeletonSection.module.scss';

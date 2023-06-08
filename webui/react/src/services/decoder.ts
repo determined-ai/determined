@@ -1,7 +1,7 @@
 import dayjs from 'dayjs';
 
 import * as ioTypes from 'ioTypes';
-import { Pagination, RawJson } from 'shared/types';
+import { Pagination, RawJson } from 'types';
 import { BrandingType, DeterminedInfo } from 'stores/determinedInfo';
 import * as types from 'types';
 import { flattenObject, isNullOrUndefined, isNumber, isObject, isPrimitive } from 'utils/data';

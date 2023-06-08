@@ -1,5 +1,5 @@
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-import { DetApi, FetchOptions } from 'shared/types';
+import { DetApi, FetchOptions } from 'types';
 
 import { isObject } from './data';
 import { DetError, DetErrorOptions, ErrorLevel, ErrorType, isDetError } from './error';

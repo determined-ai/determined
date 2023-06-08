@@ -1,4 +1,4 @@
-import { RecordKey } from 'shared/types';
+import { RecordKey } from 'types';
 import * as Type from 'types';
 
 // Checkpoint size in bytes.

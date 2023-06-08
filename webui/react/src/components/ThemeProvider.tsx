@@ -5,7 +5,7 @@ import React, { ReactNode, useCallback, useEffect, useLayoutEffect, useState } f
 
 import { useSettings } from 'hooks/useSettings';
 import { config, Settings } from 'hooks/useTheme.settings';
-import { RecordKey } from 'shared/types';
+import { RecordKey } from 'types';
 import useUI from 'stores/contexts/UI';
 import determinedStore from 'stores/determinedInfo';
 import themes from 'themes';

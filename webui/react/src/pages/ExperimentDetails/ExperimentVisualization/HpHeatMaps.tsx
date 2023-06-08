@@ -16,7 +16,7 @@ import { readStream } from 'services/utils';
 import Message, { MessageType } from 'components/Message';
 import Spinner from 'components/Spinner/Spinner';
 import useUI from 'stores/contexts/UI';
-import { Primitive, Range } from 'shared/types';
+import { Primitive, Range } from 'types';
 import {
   ExperimentBase,
   HyperparameterType,

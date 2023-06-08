@@ -19,7 +19,7 @@ import TrialDetailsProfiles from 'pages/TrialDetails/TrialDetailsProfiles';
 import { paths } from 'routes/utils';
 import { getExperimentDetails, getTrialDetails } from 'services/api';
 import usePolling from 'hooks/usePolling';
-import { ApiState, ValueOf } from 'shared/types';
+import { ApiState, ValueOf } from 'types';
 import workspaceStore from 'stores/workspaces';
 import { ExperimentBase, TrialDetails, Workspace } from 'types';
 import { ErrorType } from 'utils/error';

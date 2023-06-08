@@ -19,7 +19,7 @@ import { SettingsConfig, useSettings } from 'hooks/useSettings';
 import F_TrialDetailsOverview from 'pages/TrialDetails/F_TrialDetailsOverview';
 import { paths } from 'routes/utils';
 import { getExpTrials, getTrialDetails, patchExperiment } from 'services/api';
-import { ValueOf } from 'shared/types';
+import { ValueOf } from 'types';
 import { ExperimentBase, Note, TrialDetails, TrialItem } from 'types';
 import { ErrorLevel, ErrorType } from 'utils/error';
 import handleError from 'utils/error';

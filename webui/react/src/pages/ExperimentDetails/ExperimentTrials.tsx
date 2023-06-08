@@ -23,7 +23,7 @@ import { paths } from 'routes/utils';
 import { getExpTrials, openOrCreateTensorBoard } from 'services/api';
 import { Experimentv1State, V1GetExperimentTrialsRequestSortBy } from 'services/api-ts-sdk';
 import { encodeExperimentState } from 'services/decoder';
-import { ValueOf } from 'shared/types';
+import { ValueOf } from 'types';
 import {
   ExperimentAction as Action,
   CheckpointWorkloadExtended,

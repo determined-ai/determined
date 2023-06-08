@@ -8,7 +8,7 @@ import {
   themeLightDetermined,
   themeLightHpe,
 } from 'utils/themes';
-import { ValueOf } from 'shared/types';
+import { ValueOf } from 'types';
 import { BrandingType } from 'stores/determinedInfo';
 import {
   CheckpointState,

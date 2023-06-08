@@ -14,7 +14,7 @@ import { V1SchedulerTypeToLabel } from 'constants/states';
 import { paths } from 'routes/utils';
 import { getJobQStats } from 'services/api';
 import { V1GetJobQueueStatsResponse, V1RPQueueStat, V1SchedulerType } from 'services/api-ts-sdk';
-import { ValueOf } from 'shared/types';
+import { ValueOf } from 'types';
 import clusterStore from 'stores/cluster';
 import { maxPoolSlotCapacity } from 'stores/cluster';
 import { ShirtSize } from 'themes';

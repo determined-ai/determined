@@ -2,7 +2,7 @@ import { ArgsProps, NotificationInstance } from 'antd/lib/notification/interface
 
 import { telemetryInstance } from 'hooks/useTelemetry';
 import { paths } from 'routes/utils';
-import { ValueOf } from 'shared/types';
+import { ValueOf } from 'types';
 import { notification as antdNotification } from 'utils/dialogApi';
 import { LoggerInterface } from 'utils/Logger';
 import rootLogger from 'utils/Logger';

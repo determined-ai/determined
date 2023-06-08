@@ -1,6 +1,6 @@
 import { debug } from 'debug';
 
-import { ValueOf } from 'shared/types';
+import { ValueOf } from 'types';
 
 const LIB_NAME = 'det';
 export const NAMEPACE_SEPARATOR = '/';

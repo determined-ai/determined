@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
 
-import { ValueOf } from 'shared/types';
+import { ValueOf } from 'types';
 
 import RadioGroup from './RadioGroup';
 

@@ -1,7 +1,7 @@
 import React from 'react';
 
 import * as Images from 'components/Image';
-import { ValueOf } from 'shared/types';
+import { ValueOf } from 'types';
 import useUI from 'stores/contexts/UI';
 
 import css from './Message.module.scss';

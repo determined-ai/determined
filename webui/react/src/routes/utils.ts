@@ -2,7 +2,7 @@ import { pathToRegexp } from 'path-to-regexp';
 
 import { globalStorage } from 'globalStorage';
 import { ClusterApi, Configuration } from 'services/api-ts-sdk';
-import { RouteConfig } from 'shared/types';
+import { RouteConfig } from 'types';
 import { BrandingType } from 'stores/determinedInfo';
 import { CommandTask } from 'types';
 import {

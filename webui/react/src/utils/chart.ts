@@ -1,7 +1,7 @@
 import dayjs from 'dayjs';
 import uPlot from 'uplot';
 
-import { Primitive, Range } from 'shared/types';
+import { Primitive, Range } from 'types';
 import { ColorScale } from 'utils/color';
 import { clone } from 'utils/data';
 import { primitiveSorter } from 'utils/sort';

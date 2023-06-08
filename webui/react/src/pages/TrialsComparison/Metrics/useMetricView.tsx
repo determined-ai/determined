@@ -2,7 +2,7 @@ import React, { ReactNode, useCallback, useEffect, useReducer, useState } from '
 
 import MetricSelect from 'components/MetricSelect';
 import ScaleSelect from 'components/ScaleSelect';
-import { ValueOf } from 'shared/types';
+import { ValueOf } from 'types';
 import { Metric, MetricType, Scale } from 'types';
 
 export const Layout = {

@@ -2,7 +2,7 @@ import React, { CSSProperties, useMemo } from 'react';
 
 import Tooltip from 'components/kit/Tooltip';
 import { stateToLabel } from 'constants/states';
-import { ValueOf } from 'shared/types';
+import { ValueOf } from 'types';
 import useUI from 'stores/contexts/UI';
 import { getStateColorCssVar, StateOfUnion } from 'themes';
 import { ResourceState, RunState, SlotState } from 'types';

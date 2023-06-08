@@ -2,7 +2,7 @@ import { Skeleton, SkeletonProps } from 'antd';
 import React, { useMemo } from 'react';
 
 import Message, { Props as MessageProps, MessageType } from 'components/Message';
-import { ValueOf } from 'shared/types';
+import { ValueOf } from 'types';
 import { isObject, validateEnum } from 'utils/data';
 
 import css from './LoadingWrapper.module.scss';

@@ -7,7 +7,7 @@ import { serverAddress } from 'routes/utils';
 import * as Api from 'services/api-ts-sdk';
 import * as decoder from 'services/decoder';
 import * as Service from 'services/types';
-import { DetApi, EmptyParams, RawJson, SingleEntityParams } from 'shared/types';
+import { DetApi, EmptyParams, RawJson, SingleEntityParams } from 'types';
 import { DeterminedInfo, Telemetry } from 'stores/determinedInfo';
 import * as Type from 'types';
 import { identity, noOp } from 'utils/service';

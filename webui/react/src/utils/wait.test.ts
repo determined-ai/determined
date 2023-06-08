@@ -1,6 +1,6 @@
 import { MaybeMocked } from '@vitest/spy';
 
-import { RecordKey } from 'shared/types';
+import { RecordKey } from 'types';
 import { CommandState, CommandTask, CommandType } from 'types';
 import { generateUUID } from 'utils/string';
 

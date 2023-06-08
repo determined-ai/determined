@@ -24,7 +24,7 @@ import {
 } from 'services/api';
 import { V1BulkExperimentFilters } from 'services/api-ts-sdk';
 import ScrollIcon from 'assets/images/infinite-scroll.svg';
-import { RecordKey } from 'shared/types';
+import { RecordKey } from 'types';
 import {
   BulkActionResult,
   ExperimentAction,

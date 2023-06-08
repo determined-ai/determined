@@ -5,7 +5,7 @@ import {
   pausableRunStates,
   terminalRunStates,
 } from 'constants/states';
-import { RawJson } from 'shared/types';
+import { RawJson } from 'types';
 import {
   AnyTask,
   ExperimentAction,
