@@ -23,7 +23,7 @@ import {
   unarchiveExperiments,
 } from 'services/api';
 import { V1BulkExperimentFilters } from 'services/api-ts-sdk';
-import ScrollIcon from 'shared/assets/images/infinite-scroll.svg';
+import ScrollIcon from 'assets/images/infinite-scroll.svg';
 import { RecordKey } from 'shared/types';
 import {
   BulkActionResult,
