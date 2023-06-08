@@ -44,7 +44,7 @@ source "googlecompute" "determined-hpc-image" {
   image_description = "det environments with hpc tools to test hpc deployments"
 
   machine_type = "n1-standard-1"
-  disk_size    = "48"
+  disk_size    = "64"
   // us-central1-c seems to be much faster/more reliable. had intermittent failures in us-west1-b
   // with IAP Tunnels being slow to come up.
   zone             = "us-central1-c"
