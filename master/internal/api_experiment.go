@@ -594,6 +594,7 @@ func (a *apiServer) GetExperiments(
 		}
 	}
 	if len(req.States) > 0 {
+		// FIXME(DET-9567): the api state parameter and the database state column do not match.
 		var allStates []string
 		for _, state := range req.States {
 			allStates = append(allStates, strings.TrimPrefix(state.String(), "STATE_"))
