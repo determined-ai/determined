@@ -1,7 +1,6 @@
 /* eslint-disable sort-keys-fix/sort-keys-fix */
+import { ValueOf } from 'shared/types';
 import { isColor, rgba2str, rgbaMix, str2rgba } from 'utils/color';
-
-import { ValueOf } from './types';
 
 const STRONG_WEAK_DELTA = 45;
 

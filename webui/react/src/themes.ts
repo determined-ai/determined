@@ -7,7 +7,7 @@ import {
   themeDarkHpe,
   themeLightDetermined,
   themeLightHpe,
-} from 'shared/themes';
+} from 'utils/themes';
 import { ValueOf } from 'shared/types';
 import { BrandingType } from 'stores/determinedInfo';
 import {

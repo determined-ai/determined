@@ -5,7 +5,7 @@ import Link from 'components/Link';
 import { paths } from 'routes/utils';
 import { ImageAlert } from 'components/Image';
 import useUI from 'stores/contexts/UI';
-import { DarkLight } from 'shared/themes';
+import { DarkLight } from 'utils/themes';
 
 import css from './exceptions.module.scss';
 

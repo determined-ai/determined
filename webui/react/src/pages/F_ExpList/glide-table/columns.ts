@@ -9,13 +9,13 @@ import {
 import { getColor, getInitials } from 'components/Avatar';
 import { terminalRunStates } from 'constants/states';
 import { paths } from 'routes/utils';
-import { DarkLight, Theme } from 'shared/themes';
 import { DetailedUser, ExperimentWithTrial, ProjectColumn } from 'types';
 import { getPath, isString } from 'utils/data';
 import { formatDatetime } from 'utils/datetime';
 import { Loadable } from 'utils/loadable';
 import { humanReadableNumber } from 'utils/number';
 import { humanReadableBytes } from 'utils/string';
+import { DarkLight, Theme } from 'utils/themes';
 import { getDisplayName } from 'utils/user';
 
 import { getDurationInEnglish, getTimeInEnglish } from './utils';

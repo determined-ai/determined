@@ -7,10 +7,10 @@ import uPlot, { AlignedData } from 'uplot';
 import Spinner from 'components/Spinner';
 import usePrevious from 'hooks/usePrevious';
 import useResize from 'hooks/useResize';
-import { DarkLight } from 'shared/themes';
 import useUI from 'stores/contexts/UI';
 import { ErrorLevel, ErrorType } from 'utils/error';
 import handleError from 'utils/error';
+import { DarkLight } from 'utils/themes';
 
 import { useChartSync } from './SyncProvider';
 import { FacetedData } from './types';

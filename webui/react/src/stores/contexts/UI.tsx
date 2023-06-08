@@ -5,7 +5,7 @@ import { checkDeepEquality } from 'utils/store';
 
 const logger = rootLogger.extend('stores/ui');
 
-import { DarkLight, Mode, Theme } from '../../shared/themes';
+import { DarkLight, Mode, Theme } from '../../utils/themes';
 
 interface StateUI {
   chromeCollapsed: boolean;

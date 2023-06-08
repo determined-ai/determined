@@ -4,7 +4,7 @@ import React from 'react';
 import { BrowserRouter } from 'react-router-dom';
 
 import { StoreProvider as UIProvider } from 'stores/contexts/UI';
-import { Mode } from 'shared/themes';
+import { Mode } from 'utils/themes';
 
 import ThemeToggle, { ThemeOptions } from './ThemeToggle';
 

@@ -15,7 +15,7 @@ import useResize from 'hooks/useResize';
 import { useSettings } from 'hooks/useSettings';
 import { getProjectColumns, searchExperiments } from 'services/api';
 import { V1BulkExperimentFilters } from 'services/api-ts-sdk';
-import { getCssVar } from 'shared/themes';
+import { getCssVar } from 'utils/themes';
 import {
   ExperimentAction,
   ExperimentItem,

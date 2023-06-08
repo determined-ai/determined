@@ -2,12 +2,12 @@ import React, { CSSProperties, useMemo } from 'react';
 
 import Tooltip from 'components/kit/Tooltip';
 import { stateToLabel } from 'constants/states';
-import { DarkLight, getCssVar } from 'shared/themes';
 import { ValueOf } from 'shared/types';
 import useUI from 'stores/contexts/UI';
 import { getStateColorCssVar, StateOfUnion } from 'themes';
 import { ResourceState, RunState, SlotState } from 'types';
 import { hsl2str, str2hsl } from 'utils/color';
+import { DarkLight, getCssVar } from 'utils/themes';
 
 import css from './Badge.module.scss';
 

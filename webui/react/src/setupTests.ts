@@ -6,7 +6,7 @@
  */
 import '@testing-library/jest-dom/extend-expect';
 import 'micro-observables/batchingForReactDom';
-import 'shared/prototypes';
+import 'utils/prototypes';
 import 'whatwg-fetch';
 
 import Schema from 'async-validator';
