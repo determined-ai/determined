@@ -734,19 +734,19 @@ func (a *apiServer) multiTrialSample(trialID int32, metricNames []string,
 	}
 
 	// TODO: this doesn't need to be a closure anymore.
-	getDownSampledMetric := func(metricName []string, metricType model.MetricType,
+	getDownSampledMetric := func(aMetricNames []string, aMetricType model.MetricType,
 	) (*apiv1.DownsampledMetrics, error) {
 		var metric apiv1.DownsampledMetrics
 		metricMeasurements, err := trials.MetricsTimeSeries(
-			trialID, startTime, metricNames, startBatches, endBatches,
+			trialID, startTime, aMetricNames, startBatches, endBatches,
 			xAxisLabelMetrics,
-			maxDatapoints, *timeSeriesColumn, timeSeriesFilter, metricType)
+			maxDatapoints, *timeSeriesColumn, timeSeriesFilter, aMetricType)
 		if err != nil {
 			return nil, errors.Wrapf(err, fmt.Sprintf("error fetching time series of %s metrics",
-				metricType))
+				aMetricType))
 		}
-		metric.Type = metricType.ToProto()
-		metric.CustomType = metricType.ToString()
+		metric.Type = aMetricType.ToProto()
+		metric.CustomType = aMetricType.ToString()
 		if len(metricMeasurements) > 0 {
 			if err = a.formatMetrics(&metric, metricMeasurements); err != nil {
 				return nil, err
