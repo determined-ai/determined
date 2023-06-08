@@ -922,9 +922,8 @@ class TestPyTorchTrial:
 
         assert trial.legacy_counter.__dict__ == {"legacy_on_training_epochs_start_calls": 2}
 
-    #@pytest.mark.skipif(torch.cuda.device_count() < 2, reason="not enough gpus")
-    #@pytest.mark.gpu_parallel
-    @pytest.mark.dothis
+    @pytest.mark.skipif(torch.cuda.device_count() < 2, reason="not enough gpus")
+    @pytest.mark.gpu_parallel
     def test_cifar10_parallel(self, tmp_path: pathlib.Path):
 
         # set up distributed backend.
@@ -934,8 +933,8 @@ class TestPyTorchTrial:
         rdzv_endpoint = "localhost:29400"
         rdzv_id = str(uuid.uuid4())
 
-        launch_config = launcher.LaunchConfig(min_nodes=1, max_nodes=1, nproc_per_node=1, run_id=rdzv_id,
-                                              max_restarts=0, rdzv_endpoint=rdzv_endpoint, rdzv_backend=rdzv_backend)
+        launch_config = launcher.LaunchConfig(min_nodes=1, max_nodes=1, nproc_per_node=2, run_id=rdzv_id,
+                                              max_restarts=0, start_method="fork", rdzv_endpoint=rdzv_endpoint, rdzv_backend=rdzv_backend)
 
         outputs = launcher.elastic_launch(launch_config, self.run_cifar10)(tmp_path)
         print(outputs)
