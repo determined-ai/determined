@@ -2,7 +2,6 @@ import { Popover as AntdPopover, Dropdown as AntDropdown } from 'antd';
 import { MenuProps as AntdMenuProps } from 'antd/es/menu/menu';
 import { PropsWithChildren, useMemo } from 'react';
 import * as React from 'react';
-import { isForwardRef } from 'react-is';
 
 import css from './Dropdown.module.scss';
 
@@ -66,18 +65,6 @@ const Dropdown: React.FC<PropsWithChildren<Props>> = ({
     };
   }, [menu, onClick]);
 
-  const renderedChildren = useMemo(() => {
-    if (isForwardRef(children)) {
-      return (
-        <div>
-          {/* wrap in div to prevent antd from overwriting classes for child button element */}
-          {children}
-        </div>
-      );
-    }
-    return children;
-  }, [children]);
-
   /**
    * Using `dropdownRender` for Dropdown causes some issues with triggering the dropdown.
    * Instead, Popover is used when rendering content (as opposed to menu).
@@ -90,7 +77,7 @@ const Dropdown: React.FC<PropsWithChildren<Props>> = ({
       placement={placement}
       showArrow={false}
       trigger="click">
-      {renderedChildren}
+      {children}
     </AntdPopover>
   ) : (
     <AntDropdown
@@ -100,7 +87,7 @@ const Dropdown: React.FC<PropsWithChildren<Props>> = ({
       open={open}
       placement={placement}
       trigger={[isContextMenu ? 'contextMenu' : 'click']}>
-      {renderedChildren}
+      {children}
     </AntDropdown>
   );
 };
