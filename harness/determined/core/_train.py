@@ -100,6 +100,17 @@ class TrainContext:
         body = bindings.v1ReportTrialMetricsRequest(metrics=v1TrialMetrics, type=metric_type)
         bindings.post_ReportTrialMetrics(self._session, body=body, metrics_trialId=self._trial_id)
 
+        # Also sync tensorboard (all metrics, not just json-serializable ones).
+        if self._tensorboard_mode == TensorboardMode.AUTO:
+            if self._tbd_writer:
+                if metric_type == LEGACY_VALIDATION:
+                    self._tbd_writer.on_validation_step_end(total_batches, metrics)
+                elif metric_type == LEGACY_TRAINING:
+                    self._tbd_writer.on_train_step_end(total_batches, metrics, batch_metrics)
+                else:
+                    pass  # FIXME
+            self._tensorboard_manager.sync()
+
     def report_training_metrics(
         self,
         steps_completed: int,
@@ -114,11 +125,6 @@ class TrainContext:
         """
 
         self.report_trial_metrics(LEGACY_TRAINING, steps_completed, metrics, batch_metrics)
-
-        if self._tensorboard_mode == TensorboardMode.AUTO:
-            if self._tbd_writer:
-                self._tbd_writer.on_train_step_end(steps_completed, metrics, batch_metrics)
-            self._tensorboard_manager.sync()
 
     def get_tensorboard_path(self) -> pathlib.Path:
         """
@@ -183,12 +189,6 @@ class TrainContext:
 
         self.report_trial_metrics(LEGACY_VALIDATION, steps_completed, metrics)
 
-        # Also sync tensorboard (all metrics, not just json-serializable ones).
-        if self._tensorboard_mode == TensorboardMode.AUTO:
-            if self._tbd_writer:
-                self._tbd_writer.on_validation_step_end(steps_completed, metrics)
-            self._tensorboard_manager.sync()
-
     def report_early_exit(self, reason: EarlyExitReason) -> None:
         """
         Report an early exit reason to the Determined master.
@@ -236,6 +236,28 @@ class DummyTrainContext(TrainContext):
 
     def _get_last_validation(self) -> Optional[int]:
         return None
+
+    def report_trial_metrics(
+        self,
+        metric_type: str,
+        total_batches: int,
+        metrics: Metrics,
+        batch_metrics: Optional[List[Metrics]] = None,
+    ) -> None:
+        """
+        Report trial metrics to the master.
+
+        You can include a list of ``batch_metrics``.  Batch metrics are not be shown in the WebUI
+        but may be accessed from the master using the CLI for post-processing.
+        """
+        logger.info(
+            f"report_trial_metrics(metric_type={metric_type}, total_batches={total_batches},"
+            f"metrics={metrics})"
+        )
+        logger.debug(
+            f"report_trial_metrics(metric_type={metric_type}, total_batches={total_batches},"
+            f" batch_metrics={batch_metrics})"
+        )
 
     def report_training_metrics(
         self,
