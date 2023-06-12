@@ -177,22 +177,23 @@ type batchesWrapper struct {
 	EndTime time.Time `db:"end_time"`
 }
 
-// TrainingMetricBatches returns the milestones (in batches processed) at which a specific training
-// metric was recorded.
-func (db *PgDB) TrainingMetricBatches(experimentID int, metricName string, startTime time.Time) (
+func (db *PgDB) metricBatches(
+	experimentID int, metricName string, startTime time.Time, table string, metricField string,
+) (
 	batches []int32, endTime time.Time, err error,
 ) {
 	var rows []*batchesWrapper
-	err = db.queryRows(`
-SELECT s.total_batches AS batches_processed,
-  max(s.end_time) as end_time
-FROM trials t INNER JOIN steps s ON t.id=s.trial_id
+	query := fmt.Sprintf(`
+SELECT t.total_batches AS batches_processed,
+  max(t.end_time) as end_time
+FROM trials t INNER JOIN %s s ON t.id=s.trial_id
 WHERE t.experiment_id=$1
-  AND s.metrics->'avg_metrics' ? $2
+  AND s.metrics->'%s' ? $2
   AND s.end_time > $3
-GROUP BY batches_processed;`, &rows, experimentID, metricName, startTime)
+GROUP BY batches_processed;`, table, metricField)
+	err = db.queryRows(query, &rows, experimentID, metricName, startTime)
 	if err != nil {
-		return nil, endTime, errors.Wrapf(err, "error querying DB for training metric batches")
+		return nil, endTime, errors.Wrapf(err, "error querying DB for metric batches")
 	}
 	for _, row := range rows {
 		batches = append(batches, row.Batches)
@@ -204,33 +205,20 @@ GROUP BY batches_processed;`, &rows, experimentID, metricName, startTime)
 	return batches, endTime, nil
 }
 
+// TrainingMetricBatches returns the milestones (in batches processed) at which a specific training
+// metric was recorded.
+func (db *PgDB) TrainingMetricBatches(experimentID int, metricName string, startTime time.Time) (
+	batches []int32, endTime time.Time, err error,
+) {
+	return db.metricBatches(experimentID, metricName, startTime, "steps", "avg_metrics")
+}
+
 // ValidationMetricBatches returns the milestones (in batches processed) at which a specific
 // validation metric was recorded.
 func (db *PgDB) ValidationMetricBatches(experimentID int, metricName string, startTime time.Time) (
 	batches []int32, endTime time.Time, err error,
 ) {
-	var rows []*batchesWrapper
-	err = db.queryRows(`
-SELECT
-  v.total_batches AS batches_processed,
-  max(v.end_time) as end_time
-FROM trials t
-JOIN validations v ON t.id = v.trial_id
-WHERE t.experiment_id=$1
-  AND v.metrics->'validation_metrics' ? $2
-  AND v.end_time > $3
-GROUP BY batches_processed`, &rows, experimentID, metricName, startTime)
-	if err != nil {
-		return nil, endTime, errors.Wrapf(err, "error querying DB for validation metric batches")
-	}
-	for _, row := range rows {
-		batches = append(batches, row.Batches)
-		if row.EndTime.After(endTime) {
-			endTime = row.EndTime
-		}
-	}
-
-	return batches, endTime, nil
+	return db.metricBatches(experimentID, metricName, startTime, "validations", "validation_metrics")
 }
 
 type snapshotWrapper struct {

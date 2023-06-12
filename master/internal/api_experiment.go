@@ -1511,6 +1511,7 @@ func (a *apiServer) ExpMetricNames(req *apiv1.ExpMetricNamesRequest,
 func (a *apiServer) MetricBatches(req *apiv1.MetricBatchesRequest,
 	resp apiv1.Determined_MetricBatchesServer,
 ) error {
+	// TODO
 	experimentID := int(req.ExperimentId)
 	metricName := req.MetricName
 	if metricName == "" {

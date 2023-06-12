@@ -359,6 +359,7 @@ func (a *apiServer) GetProjectNumericMetricsRange(
 	if err != nil {
 		return nil, err
 	}
+	// TODO
 	valMetricsRange, traMetricsRange, err := a.getProjectNumericMetricsRange(ctx, *curUser, p)
 	if err != nil {
 		return nil, err
