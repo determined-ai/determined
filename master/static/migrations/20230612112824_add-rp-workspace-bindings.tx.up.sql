@@ -6,4 +6,4 @@ CREATE TABLE rp_workspace_bindings (
 );
 
 ALTER TABLE workspaces 
-    ADD COLUMN default_pool TEXT DEFAULT NULL;  
+    ADD COLUMN default_pool TEXT DEFAULT NULL;
