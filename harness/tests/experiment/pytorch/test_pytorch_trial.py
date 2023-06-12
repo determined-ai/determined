@@ -937,9 +937,24 @@ class TestPyTorchTrial:
                                               max_restarts=0, rdzv_endpoint=rdzv_endpoint, rdzv_backend=rdzv_backend)
 
         outputs = launcher.elastic_launch(launch_config, self.run_cifar10)(tmp_path)
-        print(outputs)
         outputs = launcher.elastic_launch(launch_config, self.run_cifar10)(tmp_path, outputs[0])
-        print(outputs)
+
+    @pytest.mark.skipif(torch.cuda.device_count() < 2, reason="not enough gpus")
+    @pytest.mark.gpu_parallel
+    def test_gan_parallel(self, tmp_path: pathlib.Path):
+
+        # set up distributed backend.
+        os.environ[det._DistributedBackend.TORCH] = str(1)
+
+        rdzv_backend = "c10d"
+        rdzv_endpoint = "localhost:29400"
+        rdzv_id = str(uuid.uuid4())
+
+        launch_config = launcher.LaunchConfig(min_nodes=1, max_nodes=1, nproc_per_node=2, run_id=rdzv_id,
+                                              max_restarts=0, rdzv_endpoint=rdzv_endpoint, rdzv_backend=rdzv_backend)
+
+        outputs = launcher.elastic_launch(launch_config, self.run_gan)(tmp_path)
+        outputs = launcher.elastic_launch(launch_config, self.run_gan)(tmp_path, outputs[0])
 
     def run_cifar10(self, tmp_path: pathlib.Path, batches_trained: typing.Optional[int] = 0):
         checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
@@ -956,6 +971,7 @@ class TestPyTorchTrial:
         exp_config.update(config)
         exp_config['searcher']['smaller_is_better'] = True
 
+        # each subprocess must import separately as trial_class cannot be pickled.
         example_path = utils.cv_examples_path("cifar10_pytorch/model_def.py")
         trial_class = utils.import_class_from_module("CIFARTrial", example_path)
         trial_class._searcher_metric = "validation_error"
@@ -975,6 +991,45 @@ class TestPyTorchTrial:
                 tmp_path=tmp_path,
                 exp_config=exp_config,
                 steps=(1,1),
+                batches_trained=batches_trained
+            )
+            return True
+
+    def run_gan(self, tmp_path: pathlib.Path, batches_trained: typing.Optional[int] = 0):
+        checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
+
+        config = utils.load_config(utils.gan_examples_path("gan_mnist_pytorch/const.yaml"))
+        hparams = config["hyperparameters"]
+
+        exp_config = utils.make_default_exp_config(
+            hparams,
+            scheduling_unit=1,
+            searcher_metric="validation_loss",
+            checkpoint_dir=checkpoint_dir,
+        )
+        exp_config.update(config)
+        exp_config['searcher']['smaller_is_better'] = True
+
+        # each subprocess must import separately as trial_class cannot be pickled.
+        example_path = utils.gan_examples_path("gan_mnist_pytorch/model_def.py")
+        trial_class = utils.import_class_from_module("GANTrial", example_path)
+        trial_class._searcher_metric = "loss"
+
+        if batches_trained == 0:
+            return self.train_for_checkpoint(
+                trial_class=trial_class,
+                hparams=hparams,
+                tmp_path=tmp_path,
+                exp_config=exp_config,
+                steps=1,
+            )
+        else:
+            self.train_from_checkpoint(
+                trial_class=trial_class,
+                hparams=hparams,
+                tmp_path=tmp_path,
+                exp_config=exp_config,
+                steps=(1, 1),
                 batches_trained=batches_trained
             )
             return True
