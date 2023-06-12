@@ -6,9 +6,9 @@ import (
 
 // Queue is a thread-safe queue.
 type Queue[T any] struct {
-	mu      sync.Mutex
-	cond    *sync.Cond // used to wait for elements in the queue
-	elems   []T
+	mu    sync.Mutex
+	cond  *sync.Cond // used to wait for elements in the queue
+	elems []T
 }
 
 // New creates a new queue.
@@ -18,8 +18,7 @@ func New[T any]() *Queue[T] {
 	return q
 }
 
-// Put adds an element to the queue. If the queue was configured with a maximum size, then Put will
-// block until space is available.
+// Put adds an element to the queue.
 func (q *Queue[T]) Put(t T) {
 	q.mu.Lock()
 	defer q.mu.Unlock()
