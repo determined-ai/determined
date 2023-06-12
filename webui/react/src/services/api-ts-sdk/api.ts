@@ -5330,6 +5330,12 @@ export interface V1ListRPsBoundToWorkspaceResponse {
      * @memberof V1ListRPsBoundToWorkspaceResponse
      */
     resourcePools?: Array<string>;
+    /**
+     * Pagination information of the full dataset.
+     * @type {V1Pagination}
+     * @memberof V1ListRPsBoundToWorkspaceResponse
+     */
+    pagination?: V1Pagination;
 }
 /**
  * Response to ListWorkspacesBoundToRPRequest.

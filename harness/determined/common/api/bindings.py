@@ -6675,13 +6675,17 @@ class v1LimitedJob:
         return out
 
 class v1ListRPsBoundToWorkspaceResponse:
+    pagination: "typing.Optional[v1Pagination]" = None
     resourcePools: "typing.Optional[typing.Sequence[str]]" = None
 
     def __init__(
         self,
         *,
+        pagination: "typing.Union[v1Pagination, None, Unset]" = _unset,
         resourcePools: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
     ):
+        if not isinstance(pagination, Unset):
+            self.pagination = pagination
         if not isinstance(resourcePools, Unset):
             self.resourcePools = resourcePools
 
@@ -6689,6 +6693,8 @@ class v1ListRPsBoundToWorkspaceResponse:
     def from_json(cls, obj: Json) -> "v1ListRPsBoundToWorkspaceResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
         }
+        if "pagination" in obj:
+            kwargs["pagination"] = v1Pagination.from_json(obj["pagination"]) if obj["pagination"] is not None else None
         if "resourcePools" in obj:
             kwargs["resourcePools"] = obj["resourcePools"]
         return cls(**kwargs)
@@ -6696,6 +6702,8 @@ class v1ListRPsBoundToWorkspaceResponse:
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
         }
+        if not omit_unset or "pagination" in vars(self):
+            out["pagination"] = None if self.pagination is None else self.pagination.to_json(omit_unset)
         if not omit_unset or "resourcePools" in vars(self):
             out["resourcePools"] = self.resourcePools
         return out
@@ -18434,6 +18442,7 @@ Paginated = typing.Union[
     v1GetUsersResponse,
     v1GetWorkspaceProjectsResponse,
     v1GetWorkspacesResponse,
+    v1ListRPsBoundToWorkspaceResponse,
     v1ListRolesResponse,
     v1ListWorkspacesBoundToRPResponse,
     v1SearchExperimentsResponse,

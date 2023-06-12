@@ -274,4 +274,6 @@ message ListRPsBoundToWorkspaceRequest {
 message ListRPsBoundToWorkspaceResponse {
   // List of resource pools bound to the workspace.
   repeated string resource_pools = 1;
+  // Pagination information of the full dataset.
+  Pagination pagination = 2;
 }
