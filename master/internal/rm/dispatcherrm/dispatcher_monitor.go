@@ -50,6 +50,17 @@ var messagePatternsOfInterest = []*regexp.Regexp{
 	regexp.MustCompile("(?:Slurm|Pbs|PBS) job process terminated with exit code \\d+:\n*(?s)(.+)"),
 }
 
+// writeExperimentLog writes a message to the experiment log.
+func writeExperimentLog(
+	ctx *actor.Context,
+	dispatchID string,
+	message string) {
+	ctx.Tell(ctx.Self(), dispatchExpLogMessage{
+		DispatchID: dispatchID,
+		Message:    message,
+	})
+}
+
 // containerInfo stores the data sent by the container in the
 // "NotifyContainerRunning" message, so that we can keep track of which
 // containers are running.
@@ -63,6 +74,7 @@ type launcherJob struct {
 	dispatcherID           string
 	hpcJobID               string
 	payloadName            string
+	jobPendingReasonCode   string
 	lastJobStatusCheckTime time.Time
 	totalContainers        int
 	runningContainers      mapx.Map[int, containerInfo]
@@ -72,15 +84,16 @@ type launcherJob struct {
 
 // launcherMonitor describes the monitoring of jobs created by the launcher.
 type launcherMonitor struct {
-	monitoredJobs         mapx.Map[string, *launcherJob]
-	jobsToRemove          mapx.Map[string, struct{}]
-	apiClient             *launcherAPIClient
-	newLauncherJob        chan *launcherJob
-	removeLauncherJob     chan *launcherJob
-	checkLauncherJob      chan *launcherJob
-	schedulerTick         *time.Ticker
-	processingWatchedJobs atomic.Bool
-	rm                    *dispatcherResourceManager
+	monitoredJobs          mapx.Map[string, *launcherJob]
+	jobsToRemove           mapx.Map[string, struct{}]
+	apiClient              *launcherAPIClient
+	newLauncherJob         chan *launcherJob
+	removeLauncherJob      chan *launcherJob
+	checkLauncherJob       chan *launcherJob
+	schedulerTick          *time.Ticker
+	processingWatchedJobs  atomic.Bool
+	rm                     *dispatcherResourceManager
+	writeExperimentLogFunc func(*actor.Context, string, string)
 }
 
 // dispatchLastJobStatusCheckTime is used to sort the dispatches by the time
@@ -99,7 +112,8 @@ func newDispatchWatcher(apiClient *launcherAPIClient) *launcherMonitor {
 		removeLauncherJob: make(chan *launcherJob),
 		checkLauncherJob:  make(chan *launcherJob),
 		// Poll job status this often
-		schedulerTick: time.NewTicker(pollLoopInterval),
+		schedulerTick:          time.NewTicker(pollLoopInterval),
+		writeExperimentLogFunc: writeExperimentLog,
 	}
 }
 
@@ -114,6 +128,7 @@ func (m *launcherMonitor) monitorJob(
 		user:                   user,
 		dispatcherID:           dispatchID,
 		payloadName:            payloadName,
+		jobPendingReasonCode:   "",
 		lastJobStatusCheckTime: time.Now(),
 		totalContainers:        0,
 		runningContainers:      mapx.New[int, containerInfo](),
@@ -307,10 +322,7 @@ func (m *launcherMonitor) notifyContainerRunning(
 
 		// Show message in the experiment log.
 		if job.totalContainers > 1 {
-			ctx.Tell(ctx.Self(), dispatchExpLogMessage{
-				DispatchID: dispatchID,
-				Message:    startedMsg,
-			})
+			m.writeExperimentLogFunc(ctx, dispatchID, startedMsg)
 		}
 
 		// Show message in the master log. Comes in very handy during triaging
@@ -450,6 +462,7 @@ func (m *launcherMonitor) obtainJobStateFromWlmQueueDetails(
 ) bool {
 	hpcJobID, _ := m.rm.dispatchIDToHPCJobID.Load(dispatchID)
 	nativeState := qStats[hpcJobID]["state"]
+
 	ctx.Log().WithField("dispatch-id", dispatchID).
 		WithField("hpc-job-id", hpcJobID).
 		WithField("native-state", nativeState).
@@ -457,11 +470,37 @@ func (m *launcherMonitor) obtainJobStateFromWlmQueueDetails(
 	switch {
 	case nativeState == "PD" || strings.ToLower(nativeState) == "pending":
 		m.publishJobState(launcher.PENDING, job, ctx, dispatchID, hpcJobID)
+
+		reasonCode := qStats[hpcJobID]["reasonCode"]
+		reasonDesc := qStats[hpcJobID]["reasonDesc"]
+
+		// Only log a message for this reason code if we did not already log
+		// it. This avoids logging the same message over and over again.
+		if reasonCode != job.jobPendingReasonCode {
+			m.writeExperimentLogFunc(ctx, dispatchID, "HPC job waiting to be scheduled: "+reasonDesc)
+
+			// Avoid repeated logging to the experiment log by storing the
+			// last reason code for which we logged a message. If the
+			// reason code changes, then that will cause a new message to
+			// be logged.
+			job.jobPendingReasonCode = reasonCode
+		}
+
 		return true
 	case nativeState == "R" || strings.ToLower(nativeState) == "running":
 		m.publishJobState(launcher.RUNNING, job, ctx, dispatchID, hpcJobID)
+
+		// Clear the reason code in case the job winds up moving back to the
+		// pending state, for whatever reason. This will allow the pending
+		// reason to be displayed in the experiment log again, since the
+		// message is only displayed when there's a change in the reason code.
+		job.jobPendingReasonCode = ""
+
 		return true
 	}
+
+	job.jobPendingReasonCode = ""
+
 	return false
 }
 

@@ -13,6 +13,8 @@ import (
 	"github.com/determined-ai/determined/master/pkg/syncx/mapx"
 )
 
+var numTimesWriteExperimentLogCalled = 0
+
 func String(v string) *string { return &v }
 
 func Test_getJobExitMessagesAndFiltering(t *testing.T) {
@@ -147,9 +149,15 @@ func Test_allContainersRunning(t *testing.T) {
 	// so use a similar variable name here for consistency.
 	var numPeers int32 = 3
 
+	// Initialize to 0 for this test.
+	numTimesWriteExperimentLogCalled = 0
+
 	ctx := getMockActorCtx()
 	jobWatcher := getJobWatcher()
 	job := getJob("11ae54526b544bcd-8607d5744a7b1439", time.Now())
+
+	// Set up our mocked function.
+	jobWatcher.writeExperimentLogFunc = writeExperimentLogMock
 
 	// Add the job to the monitored jobs.
 	jobWatcher.monitoredJobs.Store(job.dispatcherID, job)
@@ -164,11 +172,19 @@ func Test_allContainersRunning(t *testing.T) {
 
 	assert.Equal(t, jobWatcher.allContainersRunning(job), false)
 
+	// Verify that we wrote a message to the experiment log indicating that
+	// 1 out of 3 containers are running.
+	assert.Equal(t, numTimesWriteExperimentLogCalled, 1)
+
 	// The job watcher receives a "NotifyContainerRunning" message from the
 	// second container.
 	jobWatcher.notifyContainerRunning(ctx, job.dispatcherID, 1, numPeers, "node002")
 
 	assert.Equal(t, jobWatcher.allContainersRunning(job), false)
+
+	// Verify that we wrote a message to the experiment log indicating that
+	// 2 out of 3 containers are running.
+	assert.Equal(t, numTimesWriteExperimentLogCalled, 2)
 
 	// The job watcher receives a "NotifyContainerRunning" message from the
 	// third container.
@@ -177,6 +193,10 @@ func Test_allContainersRunning(t *testing.T) {
 	// The job watcher has received "NotifyContainerRunning" messages from all
 	// 3 containers, so "allContainersRunning()" should now return true.
 	assert.Equal(t, jobWatcher.allContainersRunning(job), true)
+
+	// Verify that we wrote a message to the experiment log indicating that
+	// 3 out of 3 containers are running.
+	assert.Equal(t, numTimesWriteExperimentLogCalled, 3)
 }
 
 // Verifies that "isJobBeingMonitored()" returns true when the job is being
@@ -217,7 +237,8 @@ func getJobWatcher() *launcherMonitor {
 	})
 
 	jobWatcher.rm = &dispatcherResourceManager{
-		wlmType: pbsSchedulerType,
+		wlmType:              pbsSchedulerType,
+		dispatchIDToHPCJobID: mapx.New[string, string](),
 	}
 
 	return jobWatcher
@@ -320,4 +341,139 @@ func Test_getDispatchIDsSortedByLastJobStatusCheckTime(t *testing.T) {
 	assert.Equal(t, sortedDispatchIDs[2], dispatchID3)
 	assert.Equal(t, sortedDispatchIDs[3], dispatchID4)
 	assert.Equal(t, sortedDispatchIDs[4], dispatchID5)
+}
+
+// Verifies the following behavior for "obtainJobStateFromWlmQueueDetails()":
+//
+//  1. Returns true if the job state is "PD" (pending) or "R" (running); false
+//     otherwise.
+//  2. If the job state is "PD" (pending), the "jobPendingReasonCode" is set
+//     to the "reasonCode". For any other job state the "jobPendingReasonCode"
+//     is cleared.
+//  3. Whenever the job is pending and the reason code changes, write the
+//     reason description to the experiment log.
+func Test_obtainJobStateFromWlmQueueDetails(t *testing.T) {
+	// Initialize the map with some values.
+	qStats := map[string]map[string]string{
+		"hpcJobID1": {
+			"state":      "PD",
+			"reasonCode": "Resources",
+			"reasonDesc": "The QOS resource limit has been reached.",
+		},
+		"hpcJobID2": {
+			"state": "PD",
+		},
+	}
+
+	ctx := getMockActorCtx()
+
+	jobWatcher := getJobWatcher()
+
+	dispatchID1 := "dispatchID1"
+	dispatchID2 := "dispatchID2"
+
+	hpcJobID1 := "hpcJobID1"
+	hpcJobID2 := "hpcJobID2"
+
+	// Initialize to 0 for this test.
+	numTimesWriteExperimentLogCalled = 0
+
+	// Create a job.
+	job := getJob(dispatchID1, time.Now())
+
+	// Verify that a newly created job has an empty job pending reason code.
+	assert.Equal(t, job.jobPendingReasonCode, "")
+
+	// Map the dispatch ID to the HPC job ID, since the HPC job ID is used as
+	// the key to the "qStats" map.
+	jobWatcher.rm.dispatchIDToHPCJobID.Store(dispatchID1, hpcJobID1)
+	jobWatcher.rm.dispatchIDToHPCJobID.Store(dispatchID2, hpcJobID2)
+
+	// Set up our mocked function.
+	jobWatcher.writeExperimentLogFunc = writeExperimentLogMock
+
+	retValue := jobWatcher.obtainJobStateFromWlmQueueDetails(
+		dispatchID1, qStats, ctx, job)
+
+	assert.Equal(t, numTimesWriteExperimentLogCalled, 1)
+
+	// Expect a return value of "true", since the job state was "PD" (pending).
+	assert.Equal(t, retValue, true)
+
+	// The job pending reason code should be "Resources", because that's what's
+	// contained in the "qStats" for the HPC job ID.
+	assert.Equal(t, job.jobPendingReasonCode, "Resources")
+
+	// Call the function again with the same reason code as before.
+	retValue = jobWatcher.obtainJobStateFromWlmQueueDetails(
+		dispatchID1, qStats, ctx, job)
+
+	// We only write to the experiment log when the reason code changes, and
+	// since the reason code has not changed, the count should still be 1.
+	assert.Equal(t, numTimesWriteExperimentLogCalled, 1)
+
+	// Expect a return value of "true", since the job state was "PD" (pending).
+	assert.Equal(t, retValue, true)
+
+	// The job pending reason code should be "Resources", because that's what's
+	// contained in the "qStats" for the HPC job ID.
+	assert.Equal(t, job.jobPendingReasonCode, "Resources")
+
+	// Change the reason code.
+	qStats[hpcJobID1]["reasonCode"] = "NodeDown"
+	qStats[hpcJobID1]["reasonDesc"] = "A node required by the job is down."
+
+	// Call the function again with a different reason code than before.
+	retValue = jobWatcher.obtainJobStateFromWlmQueueDetails(
+		dispatchID1, qStats, ctx, job)
+
+	// We only write to the experiment log when the reason code changes, and
+	// since the reason code changed, the count should now be 2.
+	assert.Equal(t, numTimesWriteExperimentLogCalled, 2)
+
+	// Expect a return value of "true", since the job state was "PD" (pending).
+	assert.Equal(t, retValue, true)
+
+	// The job pending reason code should be "NodeDown", because that's what
+	// we changed the "reasonCode" to.
+	assert.Equal(t, job.jobPendingReasonCode, "NodeDown")
+
+	// Change the job's state to "R" (running).
+	qStats[hpcJobID1]["state"] = "R"
+
+	retValue = jobWatcher.obtainJobStateFromWlmQueueDetails(dispatchID1, qStats, ctx, job)
+
+	// Expect a return value of "true", since the job state was "R" (running).
+	assert.Equal(t, retValue, true)
+
+	// The job pending reason code should be cleared when the state is not "PD"
+	// (pending).
+	assert.Equal(t, job.jobPendingReasonCode, "")
+
+	// Change the job's state to "CG" (completing).
+	qStats[hpcJobID1]["state"] = "CG"
+
+	retValue = jobWatcher.obtainJobStateFromWlmQueueDetails(dispatchID1, qStats, ctx, job)
+
+	// Expect a return value of "false", since the job state was neither "PD"
+	// (pending) nor "R" (running).
+	assert.Equal(t, retValue, false)
+
+	// The job pending reason code should be cleared when the state is not "PD"
+	// (pending).
+	assert.Equal(t, job.jobPendingReasonCode, "")
+
+	// Here we verify that if the "qStat" map does not contain the "reasonCode"
+	// key for the HPC job ID, that we don't blow up.
+	retValue = jobWatcher.obtainJobStateFromWlmQueueDetails(dispatchID2, qStats, ctx, job)
+
+	// Expect a return value of "true", since the job state was "PD" (pending).
+	assert.Equal(t, retValue, true)
+}
+
+func writeExperimentLogMock(
+	ctx *actor.Context,
+	dispatchID string,
+	message string) {
+	numTimesWriteExperimentLogCalled++
 }
