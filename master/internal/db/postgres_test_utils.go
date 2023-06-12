@@ -14,7 +14,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -25,11 +24,11 @@ import (
 	"github.com/google/uuid"
 	"gopkg.in/guregu/null.v3"
 
+	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
-	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
-
 	"github.com/determined-ai/determined/master/pkg/schemas"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
 const (
