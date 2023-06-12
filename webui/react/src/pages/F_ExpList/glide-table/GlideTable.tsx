@@ -262,7 +262,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
       // avoid showing 'empty rows' below data
       if (!data[row]) return;
 
-      const hoverStyle = row === hoveredRow ? { bgCell: getCssVar(Surface.Surface) } : {};
+      const hoverStyle = row === hoveredRow ? { bgCell: getCssVar(Surface.SurfaceWeak) } : {};
 
       const rowColorTheme = Loadable.match(data[row], {
         Loaded: (record) =>
