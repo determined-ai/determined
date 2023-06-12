@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -127,28 +128,23 @@ func GetNonTerminalExperimentCount(ctx context.Context,
 }
 
 func (db *PgDB) MetricNames(ctx context.Context, experimentIDs []int) (
-	training []string, validation []string, err error,
+	map[model.MetricType][]string, error,
 ) {
 	type MetricNamesRow struct {
-		JSONPath    string   `db:"metric_type"`
-		MetricNames []string `db:"metric_names"`
+		MetricName string `db:"metric_name"`
+		JSONPath   string `db:"metric_type"`
 	}
-
 	rows := []MetricNamesRow{}
+	query := fmt.Sprintf(`
+	SELECT jsonb_object_keys(summary_metrics) as metric_type, jsonb_object_keys(summary_metrics->jsonb_object_keys(summary_metrics)) as metric_name
+	FROM trials
+	WHERE experiment_id IN (%s)
+	ORDER BY metric_type;
+	`, strings.Trim(strings.Join(strings.Fields(fmt.Sprint(experimentIDs)), ","), "[]"))
+	err := db.queryRows(query, &rows)
 
-	query := `
-		SELECT metric_type, ARRAY_AGG(metric_name) as metric_names
-		FROM (
-		  SELECT jsonb_object_keys(summary_metrics) as metric_type, jsonb_object_keys(summary_metrics->jsonb_object_keys(summary_metrics)) as metric_name
-		  FROM trials
-		  WHERE experiment_id IN ($1) -- FIXME
-		) subquery
-		GROUP BY metric_type
-		ORDER BY metric_type;
-	`
-	err = db.queryRows(query, &rows, experimentIDs)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	metricNamesMap := make(map[model.MetricType][]string)
@@ -162,10 +158,14 @@ func (db *PgDB) MetricNames(ctx context.Context, experimentIDs []int) (
 		default:
 			mType = model.MetricType(row.JSONPath)
 		}
-		metricNamesMap[mType] = row.MetricNames
+		// initialize if needed
+		if _, ok := metricNamesMap[mType]; !ok {
+			metricNamesMap[mType] = make([]string, 0)
+		}
+		metricNamesMap[mType] = append(metricNamesMap[mType], row.MetricName)
 	}
 
-	return metricNamesMap[model.TrainingMetricType], metricNamesMap[model.ValidationMetricType], nil
+	return metricNamesMap, nil
 }
 
 type batchesWrapper struct {

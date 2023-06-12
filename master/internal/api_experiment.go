@@ -51,6 +51,7 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
+	"github.com/determined-ai/determined/proto/pkg/metricv1"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
 	"github.com/determined-ai/determined/proto/pkg/rbacv1"
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
@@ -1421,6 +1422,7 @@ func (a *apiServer) ExpMetricNames(req *apiv1.ExpMetricNamesRequest,
 	seenSearcher := make(map[string]bool)
 	seenTrain := make(map[string]bool)
 	seenValid := make(map[string]bool)
+	seenMetrics := make(map[model.MetricType]map[string]bool)
 
 	var timeSinceLastAuth time.Time
 	for {
@@ -1449,24 +1451,39 @@ func (a *apiServer) ExpMetricNames(req *apiv1.ExpMetricNamesRequest,
 			expIDs[i] = int(ID)
 		}
 
-		// TODO.
-		newTrain, newValid, err := a.m.db.MetricNames(resp.Context(), expIDs)
+		metricNames, err := a.m.db.MetricNames(resp.Context(), expIDs)
 		if err != nil {
 			return errors.Wrapf(err,
 				"error fetching metric names for experiment: %d", req.Ids)
 		}
 
-		for _, name := range newTrain {
+		for _, name := range metricNames[model.TrainingMetricType] {
 			if seen := seenTrain[name]; !seen {
 				response.TrainingMetrics = append(response.TrainingMetrics, name)
 				seenTrain[name] = true
 			}
 		}
-		for _, name := range newValid {
+		for _, name := range metricNames[model.ValidationMetricType] {
 			if seen := seenValid[name]; !seen {
 				response.ValidationMetrics = append(response.ValidationMetrics, name)
 				seenValid[name] = true
 			}
+		}
+		for metricType, names := range metricNames {
+			for _, name := range names {
+				if seen := seenMetrics[metricType][name]; !seen {
+					typedMetric := metricv1.MetricName{
+						Type: metricType.ToString(),
+						Name: name,
+					}
+					response.MetricNames = append(response.MetricNames, &typedMetric)
+					if seenMetrics[metricType] == nil {
+						seenMetrics[metricType] = make(map[string]bool)
+					}
+					seenMetrics[metricType][name] = true
+				}
+			}
+
 		}
 
 		if grpcutil.ConnectionIsClosed(resp) {
