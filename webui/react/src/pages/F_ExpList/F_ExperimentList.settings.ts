@@ -5,6 +5,7 @@ import { SettingsConfig } from 'hooks/useSettings';
 import { valueof } from 'ioTypes';
 
 import { defaultColumnWidths, defaultExperimentColumns } from './glide-table/columns';
+import { EMPTY_SORT } from './glide-table/MultiSortMenu';
 
 export type ExpListView = 'scroll' | 'paged';
 export const RowHeight = {
@@ -21,6 +22,7 @@ export interface F_ExperimentListSettings {
   columnWidths: Record<string, number>;
   compare: boolean;
   filterset: string; // save FilterFormSet as string
+  sorts: string;
   pageLimit: number;
   rowHeight: RowHeight;
 }
@@ -60,6 +62,12 @@ export const settingsConfigForProject = (id: number): SettingsConfig<F_Experimen
       skipUrlEncoding: true,
       storageKey: 'rowHeight',
       type: ioRowHeight,
+    },
+    sorts: {
+      defaultValue: JSON.stringify([EMPTY_SORT]),
+      skipUrlEncoding: true,
+      storageKey: 'sorts',
+      type: string,
     },
   },
   storagePath: `f_project-details-${id}`,

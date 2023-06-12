@@ -186,14 +186,25 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const onSortChange = useCallback(
     (sorts: Sort[]) => {
       setSorts(sorts);
+      updateSettings({
+        // save sorts to settings:
+        sorts: JSON.stringify(sorts),
+      });
       const newSortString = makeSortString(sorts.filter(validSort.is));
       if (newSortString !== sortString) {
         resetPagination();
       }
       setSortString(newSortString);
     },
-    [resetPagination, sortString],
+    [resetPagination, sortString, updateSettings],
   );
+
+  useEffect(() => {
+    if (settings.sorts) {
+      // apply saved sorts on load:
+      onSortChange(JSON.parse(settings.sorts));
+    }
+  }, [settings, onSortChange]);
 
   const fetchExperiments = useCallback(async (): Promise<void> => {
     if (isLoadingSettings) return;
@@ -265,7 +276,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         columns.sort((a, b) =>
           a.location === V1LocationType.EXPERIMENT && b.location === V1LocationType.EXPERIMENT
             ? experimentColumns.indexOf(a.column as ExperimentColumn) -
-              experimentColumns.indexOf(b.column as ExperimentColumn)
+            experimentColumns.indexOf(b.column as ExperimentColumn)
             : 0,
         );
 
