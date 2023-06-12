@@ -147,7 +147,6 @@ func (db *PgDB) MetricNames(ctx context.Context, experimentIDs []int) (
 	ORDER BY metric_type, metric_name;
 	`, strings.Trim(strings.Join(strings.Fields(fmt.Sprint(experimentIDs)), ","), "[]"))
 	err := db.queryRows(query, &rows)
-
 	if err != nil {
 		return nil, err
 	}

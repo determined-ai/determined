@@ -1483,7 +1483,6 @@ func (a *apiServer) ExpMetricNames(req *apiv1.ExpMetricNamesRequest,
 					seenMetrics[metricType][name] = true
 				}
 			}
-
 		}
 
 		if grpcutil.ConnectionIsClosed(resp) {

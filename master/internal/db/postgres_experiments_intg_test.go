@@ -262,7 +262,6 @@ func TestMetricNames(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, []string{"a", "b", "d"}, actualNames[model.MetricType("inference")])
 	require.Equal(t, []string{"b", "c", "f"}, actualNames[model.MetricType("golabi")])
-
 }
 
 func TestTopTrialsByMetric(t *testing.T) {

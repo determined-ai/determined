@@ -123,7 +123,6 @@ func addTestTrialMetrics(ctx context.Context,
 			require.NoError(t, err)
 		}
 	}
-
 }
 
 func addMetricCustomTime(ctx context.Context, t *testing.T, trialID int, endTime time.Time) {
