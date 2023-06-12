@@ -73,7 +73,7 @@ func TestAddUserExec(t *testing.T) {
 		Name          string `bun:"group_name,notnull"  json:"name"`
 	}{}
 	require.NoError(t, db.Bun().NewSelect().Model(actualGroup).Where("user_id = ?", u.ID).Scan(ctx))
-	require.Equal(t, fmt.Sprintf("%d%s", u.Id, db.PersonalGroupPostfix), actualGroup.Name)
+	require.Equal(t, fmt.Sprintf("%d%s", u.ID, db.PersonalGroupPostfix), actualGroup.Name)
 
 	groupMember := &struct {
 		bun.BaseModel `bun:"table:user_group_membership"`
