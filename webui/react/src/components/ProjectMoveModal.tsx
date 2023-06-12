@@ -81,6 +81,7 @@ const ProjectMoveModalComponent: React.FC<Props> = ({ onClose, project }: Props)
       size="small"
       submit={{
         disabled: !destinationWorkspaceId,
+        handleError,
         handler: handleSubmit,
         text: 'Move Project',
       }}

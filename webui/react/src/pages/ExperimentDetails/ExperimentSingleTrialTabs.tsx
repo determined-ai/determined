@@ -283,6 +283,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
           disabled={!editableNotes}
           disableTitle
           notes={{ contents: experiment.notes ?? '', name: 'Notes' }}
+          onError={handleError}
           onSave={handleNotesUpdate}
         />
       ),

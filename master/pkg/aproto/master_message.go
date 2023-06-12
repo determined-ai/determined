@@ -178,6 +178,8 @@ type ContainerLog struct {
 	PullMessage *string
 	RunMessage  *RunMessage
 	AuxMessage  *string
+	Source      *string
+	AgentID     *string
 }
 
 // RunMessage holds the message sent by the container in the run phase.

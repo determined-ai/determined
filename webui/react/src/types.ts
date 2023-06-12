@@ -2,7 +2,7 @@ import { DataNode } from 'antd/lib/tree';
 
 import * as Api from 'services/api-ts-sdk';
 import { V1AgentUserGroup, V1Group, V1LaunchWarning, V1Trigger } from 'services/api-ts-sdk';
-import { Primitive, RawJson, RecordKey, ValueOf } from 'shared/types';
+import { Primitive, Range, RawJson, RecordKey, ValueOf } from 'shared/types';
 import { Loadable } from 'utils/loadable';
 
 interface WithPagination {
@@ -774,9 +774,13 @@ export interface ResourcePool extends Omit<Api.V1ResourcePool, 'slotType'> {
 
 /* Jobs */
 
-export interface Job extends Api.V1Job {
+export interface LimitedJob extends Api.V1LimitedJob {
   summary: Api.V1JobSummary;
 }
+export interface FullJob extends Api.V1Job {
+  summary: Api.V1JobSummary;
+}
+export type Job = LimitedJob | FullJob;
 export const JobType = Api.Jobv1Type;
 export type JobType = Api.Jobv1Type;
 export const JobState = Api.Jobv1State;
@@ -942,4 +946,11 @@ export interface TreeNode extends DataNode {
   get?: (path: string) => Promise<string>;
   isConfig?: boolean;
   isLeaf?: boolean;
+}
+
+export interface HpTrialData {
+  data: Record<string, Primitive[]>;
+  metricRange?: Range<number>;
+  metricValues: number[];
+  trialIds: number[];
 }

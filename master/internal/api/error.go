@@ -5,6 +5,9 @@ import (
 	"net/http"
 
 	"github.com/pkg/errors"
+
+	"github.com/determined-ai/determined/master/internal/config"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -52,6 +55,31 @@ var (
 	ErrAPIRemoved = errors.New(`the API being called was removed,
 please ensure the client consuming the API is up to date and report a bug if the problem persists`)
 )
+
+// NotFoundErrs is a wrapper function to create status.Errors with an informative message as to
+// what category of error (NotFound), the name (trial/task/workspace etc) & the specific ID is.
+// The statusErr bool returns a status.Error if true, or a NewHTTPError if false..
+func NotFoundErrs(name string, id string, statusErr bool) error {
+	msg := fmt.Sprintf("%s %s not found%s", name, id, AddRBACSuffix())
+	if id == "" {
+		msg = fmt.Sprintf("%s not found%s", name, AddRBACSuffix())
+	}
+
+	if statusErr {
+		return status.Error(codes.NotFound, msg)
+	}
+	return echo.NewHTTPError(http.StatusNotFound, msg)
+}
+
+// AddRBACSuffix adds a "check your permission" string to errors if RBAC is enabled.
+// This suffix is applied to any endpoint that can be limited by RBAC, specifically 404 errors
+// and should not expose that the entity exists.
+func AddRBACSuffix() string {
+	if config.GetAuthZConfig().IsRBACUIEnabled() {
+		return ", please check your permissions."
+	}
+	return ""
+}
 
 // AsValidationError returns an error that wraps ErrInvalid, so that errors.Is can identify it.
 func AsValidationError(msg string, args ...interface{}) error {

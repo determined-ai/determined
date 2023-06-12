@@ -21,7 +21,6 @@ const initClusterOverview: ClusterOverview = {
 /**
  * maximum theoretcial capacity of the resource pool in terms of the advertised
  * compute slot type.
- *
  * @param pool resource pool
  */
 export const maxPoolSlotCapacity = (pool: ResourcePool): number => {
@@ -42,7 +41,7 @@ export const maxClusterSlotCapacity = (
   agents: Agent[],
 ): { [key in ResourceType]: number } => {
   const allPoolsStatic = pools.reduce((acc, pool) => {
-    return acc && pool.type === V1ResourcePoolType.STATIC;
+    return acc && (pool.type === V1ResourcePoolType.STATIC || pool.type === V1ResourcePoolType.K8S);
   }, true);
 
   if (allPoolsStatic) {

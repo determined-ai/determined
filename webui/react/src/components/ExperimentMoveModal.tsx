@@ -17,6 +17,7 @@ import projectStore from 'stores/projects';
 import workspaceStore from 'stores/workspaces';
 import { Project } from 'types';
 import { message, notification } from 'utils/dialogApi';
+import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 
 type FormInputs = {
@@ -145,6 +146,7 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
       size="small"
       submit={{
         disabled,
+        handleError,
         handler: handleSubmit,
         text:
           filters !== undefined

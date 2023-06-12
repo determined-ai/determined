@@ -142,7 +142,14 @@ def checkpoints_file_rm(args: Namespace) -> None:
             checkpointUuids=c_uuids,
         )
         bindings.post_CheckpointsRemoveFiles(cli.setup_session(args), body=remove_body)
-        print(f"Removal of files from checkpoints {args.checkpoints_uuids} is in progress")
+
+        if len(args.glob) == 0:
+            print(
+                "No glob patterns provided, "
+                + f"refreshing resources of checkpoints {args.checkpoints_uuids} is in progress."
+            )
+        else:
+            print(f"Removal of files from checkpoints {args.checkpoints_uuids} is in progress.")
     else:
         print("Stopping removal of files from checkpoints.")
 

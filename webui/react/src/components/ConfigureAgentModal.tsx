@@ -65,6 +65,7 @@ const ConfigureAgentModalComponent: React.FC<Props> = ({ user, onClose }: Props)
       size="small"
       submit={{
         disabled,
+        handleError,
         handler: handleSubmit,
         text: 'Save',
       }}

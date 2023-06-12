@@ -70,6 +70,7 @@ type (
 
 	// ResourcesReleased notifies resource providers to return resources from a task.
 	ResourcesReleased struct {
+		AllocationID  model.AllocationID
 		AllocationRef *actor.Ref
 		ResourcesID   *ResourcesID
 	}

@@ -22,6 +22,12 @@ type MiscAuthZ interface {
 		ctx context.Context, curUser *model.User,
 	) (permErr error, err error)
 
+	// CanGetSensitiveAgentInfo returns an error if the user is not authorized to view
+	// sensitive subset of agent info.
+	CanGetSensitiveAgentInfo(
+		ctx context.Context, curUrser *model.User,
+	) (permErr error, err error)
+
 	// CanGetMasterLogs returns an error if the user is not authorized to get master logs.
 	CanGetMasterLogs(
 		ctx context.Context, curUser *model.User,
