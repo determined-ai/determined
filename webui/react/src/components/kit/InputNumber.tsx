@@ -12,6 +12,7 @@ interface InputNumberProps {
   precision?: number;
   step?: number;
   value?: number;
+  onPressEnter?: () => void;
 }
 
 const InputNumber: React.FC<InputNumberProps> = (props: InputNumberProps) => {
