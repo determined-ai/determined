@@ -692,8 +692,8 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   }, [columnIds, columnDefs, projectColumnsMap, columnWidths]);
 
   const verticalBorder: DataEditorProps['verticalBorder'] = useCallback(
-    (col: number) => col === staticColumns.length + pinnedColumnsCount,
-    [pinnedColumnsCount, staticColumns.length],
+    (col: number) => comparisonViewOpen && col === staticColumns.length + pinnedColumnsCount,
+    [comparisonViewOpen, pinnedColumnsCount, staticColumns.length],
   );
 
   const sortMap = useMemo(() => {
