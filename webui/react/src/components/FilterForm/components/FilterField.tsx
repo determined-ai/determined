@@ -161,7 +161,7 @@ const FilterField = ({
     (e: React.KeyboardEvent) => {
       if (e.key === 'Enter') {
         e.stopPropagation();
-        formStore.addChild(parentId, FormKind.Field, { index, item: getInitField() });
+        formStore.addChild(parentId, FormKind.Field, { index: index + 1, item: getInitField() });
       }
     },
     [formStore, index, parentId],
@@ -232,7 +232,10 @@ const FilterField = ({
                   updateFieldValue(field.id, val, true);
                 }}
                 onPressEnter={() =>
-                  formStore.addChild(parentId, FormKind.Field, { index, item: getInitField() })
+                  formStore.addChild(parentId, FormKind.Field, {
+                    index: index + 1,
+                    item: getInitField(),
+                  })
                 }
               />
             )}
@@ -245,7 +248,10 @@ const FilterField = ({
                   updateFieldValue(field.id, value, true);
                 }}
                 onPressEnter={() =>
-                  formStore.addChild(parentId, FormKind.Field, { index, item: getInitField() })
+                  formStore.addChild(parentId, FormKind.Field, {
+                    index: index + 1,
+                    item: getInitField(),
+                  })
                 }
               />
             )}
