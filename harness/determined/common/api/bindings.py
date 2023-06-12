@@ -69,7 +69,7 @@ class DetEnum(enum.Enum):
 class Printable:
     # A mixin to provide a __str__ method for classes with attributes.
     def __str__(self) -> str:
-        allowed_types = (str, int, float, bool)
+        allowed_types = (str, int, float, bool, DetEnum)
         attrs = []
         for k, v in self.__dict__.items():
             if v is None: continue
@@ -121,7 +121,6 @@ class PatchCheckpointOptionalResources(Printable):
             out["resources"] = self.resources
         return out
 
-
 class PatchExperimentPatchCheckpointStorage(Printable):
     saveExperimentBest: "typing.Optional[int]" = None
     saveTrialBest: "typing.Optional[int]" = None
@@ -163,7 +162,6 @@ class PatchExperimentPatchCheckpointStorage(Printable):
         if not omit_unset or "saveTrialLatest" in vars(self):
             out["saveTrialLatest"] = self.saveTrialLatest
         return out
-
 
 class PatchExperimentPatchResources(Printable):
     maxSlots: "typing.Optional[int]" = None
@@ -207,7 +205,6 @@ class PatchExperimentPatchResources(Printable):
             out["weight"] = None if self.weight is None else dump_float(self.weight)
         return out
 
-
 class ResourcesSummaryDevices(Printable):
     devices: "typing.Optional[typing.Sequence[v1Device]]" = None
 
@@ -233,7 +230,6 @@ class ResourcesSummaryDevices(Printable):
         if not omit_unset or "devices" in vars(self):
             out["devices"] = None if self.devices is None else [x.to_json(omit_unset) for x in self.devices]
         return out
-
 
 class TrialFiltersRankWithinExp(Printable):
     rank: "typing.Optional[int]" = None
@@ -268,7 +264,6 @@ class TrialFiltersRankWithinExp(Printable):
         if not omit_unset or "sorter" in vars(self):
             out["sorter"] = None if self.sorter is None else self.sorter.to_json(omit_unset)
         return out
-
 
 class TrialProfilerMetricLabelsProfilerMetricType(DetEnum):
     UNSPECIFIED = "PROFILER_METRIC_TYPE_UNSPECIFIED"
@@ -307,7 +302,6 @@ class UpdateTrialTagsRequestIds(Printable):
         if not omit_unset or "ids" in vars(self):
             out["ids"] = self.ids
         return out
-
 
 class checkpointv1State(DetEnum):
     UNSPECIFIED = "STATE_UNSPECIFIED"
@@ -399,7 +393,6 @@ class protobufAny(Printable):
             out["value"] = self.value
         return out
 
-
 class protobufNullValue(DetEnum):
     NULL_VALUE = "NULL_VALUE"
 
@@ -452,7 +445,6 @@ class runtimeError(Printable):
         if not omit_unset or "message" in vars(self):
             out["message"] = self.message
         return out
-
 
 class runtimeStreamError(Printable):
     details: "typing.Optional[typing.Sequence[protobufAny]]" = None
@@ -511,7 +503,6 @@ class runtimeStreamError(Printable):
         if not omit_unset or "message" in vars(self):
             out["message"] = self.message
         return out
-
 
 class taskv1State(DetEnum):
     UNSPECIFIED = "STATE_UNSPECIFIED"
@@ -669,7 +660,6 @@ class trialv1Trial(Printable):
             out["warmStartCheckpointUuid"] = self.warmStartCheckpointUuid
         return out
 
-
 class v1AckAllocationPreemptionSignalRequest(Printable):
 
     def __init__(
@@ -691,7 +681,6 @@ class v1AckAllocationPreemptionSignalRequest(Printable):
             "allocationId": self.allocationId,
         }
         return out
-
 
 class v1ActivateExperimentsRequest(Printable):
     filters: "typing.Optional[v1BulkExperimentFilters]" = None
@@ -723,7 +712,6 @@ class v1ActivateExperimentsRequest(Printable):
             out["filters"] = None if self.filters is None else self.filters.to_json(omit_unset)
         return out
 
-
 class v1ActivateExperimentsResponse(Printable):
 
     def __init__(
@@ -745,7 +733,6 @@ class v1ActivateExperimentsResponse(Printable):
             "results": [x.to_json(omit_unset) for x in self.results],
         }
         return out
-
 
 class v1ActivityType(DetEnum):
     UNSPECIFIED = "ACTIVITY_TYPE_UNSPECIFIED"
@@ -772,7 +759,6 @@ class v1AddProjectNoteResponse(Printable):
             "notes": [x.to_json(omit_unset) for x in self.notes],
         }
         return out
-
 
 class v1Address(Printable):
     containerIp: "typing.Optional[str]" = None
@@ -823,7 +809,6 @@ class v1Address(Printable):
         if not omit_unset or "hostPort" in vars(self):
             out["hostPort"] = self.hostPort
         return out
-
 
 class v1Agent(Printable):
     addresses: "typing.Optional[typing.Sequence[str]]" = None
@@ -919,7 +904,6 @@ class v1Agent(Printable):
             out["version"] = self.version
         return out
 
-
 class v1AgentUserGroup(Printable):
     agentGid: "typing.Optional[int]" = None
     agentGroup: "typing.Optional[str]" = None
@@ -970,7 +954,6 @@ class v1AgentUserGroup(Printable):
             out["agentUser"] = self.agentUser
         return out
 
-
 class v1AggregateQueueStats(Printable):
 
     def __init__(
@@ -996,7 +979,6 @@ class v1AggregateQueueStats(Printable):
             "seconds": dump_float(self.seconds),
         }
         return out
-
 
 class v1Allocation(Printable):
     endTime: "typing.Optional[str]" = None
@@ -1048,7 +1030,6 @@ class v1Allocation(Printable):
             out["startTime"] = self.startTime
         return out
 
-
 class v1AllocationAllGatherRequest(Printable):
     numPeers: "typing.Optional[int]" = None
     requestUuid: "typing.Optional[str]" = None
@@ -1091,7 +1072,6 @@ class v1AllocationAllGatherRequest(Printable):
             out["requestUuid"] = self.requestUuid
         return out
 
-
 class v1AllocationAllGatherResponse(Printable):
 
     def __init__(
@@ -1114,7 +1094,6 @@ class v1AllocationAllGatherResponse(Printable):
         }
         return out
 
-
 class v1AllocationPendingPreemptionSignalRequest(Printable):
 
     def __init__(
@@ -1136,7 +1115,6 @@ class v1AllocationPendingPreemptionSignalRequest(Printable):
             "allocationId": self.allocationId,
         }
         return out
-
 
 class v1AllocationPreemptionSignalResponse(Printable):
     preempt: "typing.Optional[bool]" = None
@@ -1164,7 +1142,6 @@ class v1AllocationPreemptionSignalResponse(Printable):
             out["preempt"] = self.preempt
         return out
 
-
 class v1AllocationReadyRequest(Printable):
     allocationId: "typing.Optional[str]" = None
 
@@ -1191,7 +1168,6 @@ class v1AllocationReadyRequest(Printable):
             out["allocationId"] = self.allocationId
         return out
 
-
 class v1AllocationRendezvousInfoResponse(Printable):
 
     def __init__(
@@ -1213,7 +1189,6 @@ class v1AllocationRendezvousInfoResponse(Printable):
             "rendezvousInfo": self.rendezvousInfo.to_json(omit_unset),
         }
         return out
-
 
 class v1AllocationSummary(Printable):
     allocationId: "typing.Optional[str]" = None
@@ -1313,7 +1288,6 @@ class v1AllocationSummary(Printable):
             out["taskId"] = self.taskId
         return out
 
-
 class v1AllocationWaitingRequest(Printable):
     allocationId: "typing.Optional[str]" = None
 
@@ -1339,7 +1313,6 @@ class v1AllocationWaitingRequest(Printable):
         if not omit_unset or "allocationId" in vars(self):
             out["allocationId"] = self.allocationId
         return out
-
 
 class v1ArchiveExperimentsRequest(Printable):
     filters: "typing.Optional[v1BulkExperimentFilters]" = None
@@ -1371,7 +1344,6 @@ class v1ArchiveExperimentsRequest(Printable):
             out["filters"] = None if self.filters is None else self.filters.to_json(omit_unset)
         return out
 
-
 class v1ArchiveExperimentsResponse(Printable):
 
     def __init__(
@@ -1393,7 +1365,6 @@ class v1ArchiveExperimentsResponse(Printable):
             "results": [x.to_json(omit_unset) for x in self.results],
         }
         return out
-
 
 class v1AssignRolesRequest(Printable):
     groupRoleAssignments: "typing.Optional[typing.Sequence[v1GroupRoleAssignment]]" = None
@@ -1428,7 +1399,6 @@ class v1AssignRolesRequest(Printable):
         if not omit_unset or "userRoleAssignments" in vars(self):
             out["userRoleAssignments"] = None if self.userRoleAssignments is None else [x.to_json(omit_unset) for x in self.userRoleAssignments]
         return out
-
 
 class v1AugmentedTrial(Printable):
     rankWithinExp: "typing.Optional[int]" = None
@@ -1548,7 +1518,6 @@ class v1AugmentedTrial(Printable):
             out["searcherMetricValue"] = None if self.searcherMetricValue is None else dump_float(self.searcherMetricValue)
         return out
 
-
 class v1AwsCustomTag(Printable):
 
     def __init__(
@@ -1574,7 +1543,6 @@ class v1AwsCustomTag(Printable):
             "value": self.value,
         }
         return out
-
 
 class v1BulkExperimentFilters(Printable):
     archived: "typing.Optional[bool]" = None
@@ -1658,7 +1626,6 @@ class v1BulkExperimentFilters(Printable):
             out["userIds"] = self.userIds
         return out
 
-
 class v1CancelExperimentsRequest(Printable):
     filters: "typing.Optional[v1BulkExperimentFilters]" = None
 
@@ -1689,7 +1656,6 @@ class v1CancelExperimentsRequest(Printable):
             out["filters"] = None if self.filters is None else self.filters.to_json(omit_unset)
         return out
 
-
 class v1CancelExperimentsResponse(Printable):
 
     def __init__(
@@ -1711,7 +1677,6 @@ class v1CancelExperimentsResponse(Printable):
             "results": [x.to_json(omit_unset) for x in self.results],
         }
         return out
-
 
 class v1Checkpoint(Printable):
     allocationId: "typing.Optional[str]" = None
@@ -1774,7 +1739,6 @@ class v1Checkpoint(Printable):
         if not omit_unset or "taskId" in vars(self):
             out["taskId"] = self.taskId
         return out
-
 
 class v1CheckpointTrainingMetadata(Printable):
     experimentConfig: "typing.Optional[typing.Dict[str, typing.Any]]" = None
@@ -1850,7 +1814,6 @@ class v1CheckpointTrainingMetadata(Printable):
             out["validationMetrics"] = None if self.validationMetrics is None else self.validationMetrics.to_json(omit_unset)
         return out
 
-
 class v1CheckpointWorkload(Printable):
     endTime: "typing.Optional[str]" = None
     metadata: "typing.Optional[typing.Dict[str, typing.Any]]" = None
@@ -1909,7 +1872,6 @@ class v1CheckpointWorkload(Printable):
             out["uuid"] = self.uuid
         return out
 
-
 class v1CheckpointsRemoveFilesRequest(Printable):
 
     def __init__(
@@ -1936,7 +1898,6 @@ class v1CheckpointsRemoveFilesRequest(Printable):
         }
         return out
 
-
 class v1CloseTrialOperation(Printable):
     requestId: "typing.Optional[str]" = None
 
@@ -1962,7 +1923,6 @@ class v1CloseTrialOperation(Printable):
         if not omit_unset or "requestId" in vars(self):
             out["requestId"] = self.requestId
         return out
-
 
 class v1ColumnFilter(Printable):
     filter: "typing.Optional[v1DoubleFieldFilter]" = None
@@ -1997,7 +1957,6 @@ class v1ColumnFilter(Printable):
         if not omit_unset or "name" in vars(self):
             out["name"] = self.name
         return out
-
 
 class v1ColumnType(DetEnum):
     UNSPECIFIED = "COLUMN_TYPE_UNSPECIFIED"
@@ -2087,7 +2046,6 @@ class v1Command(Printable):
             out["userId"] = self.userId
         return out
 
-
 class v1ComparableTrial(Printable):
 
     def __init__(
@@ -2114,7 +2072,6 @@ class v1ComparableTrial(Printable):
         }
         return out
 
-
 class v1CompareTrialsResponse(Printable):
 
     def __init__(
@@ -2136,7 +2093,6 @@ class v1CompareTrialsResponse(Printable):
             "trials": [x.to_json(omit_unset) for x in self.trials],
         }
         return out
-
 
 class v1CompleteValidateAfterOperation(Printable):
     op: "typing.Optional[v1ValidateAfterOperation]" = None
@@ -2171,7 +2127,6 @@ class v1CompleteValidateAfterOperation(Printable):
         if not omit_unset or "searcherMetric" in vars(self):
             out["searcherMetric"] = self.searcherMetric
         return out
-
 
 class v1Container(Printable):
     devices: "typing.Optional[typing.Sequence[v1Device]]" = None
@@ -2214,7 +2169,6 @@ class v1Container(Printable):
         if not omit_unset or "parent" in vars(self):
             out["parent"] = self.parent
         return out
-
 
 class v1CreateExperimentRequest(Printable):
     activate: "typing.Optional[bool]" = None
@@ -2330,7 +2284,6 @@ class v1CreateExperimentRequest(Printable):
             out["validateOnly"] = self.validateOnly
         return out
 
-
 class v1CreateExperimentResponse(Printable):
     warnings: "typing.Optional[typing.Sequence[v1LaunchWarning]]" = None
 
@@ -2365,7 +2318,6 @@ class v1CreateExperimentResponse(Printable):
             out["warnings"] = None if self.warnings is None else [x.value for x in self.warnings]
         return out
 
-
 class v1CreateGroupRequest(Printable):
     addUsers: "typing.Optional[typing.Sequence[int]]" = None
 
@@ -2396,7 +2348,6 @@ class v1CreateGroupRequest(Printable):
             out["addUsers"] = self.addUsers
         return out
 
-
 class v1CreateGroupResponse(Printable):
 
     def __init__(
@@ -2418,7 +2369,6 @@ class v1CreateGroupResponse(Printable):
             "group": self.group.to_json(omit_unset),
         }
         return out
-
 
 class v1CreateTrialOperation(Printable):
     hyperparams: "typing.Optional[str]" = None
@@ -2453,7 +2403,6 @@ class v1CreateTrialOperation(Printable):
         if not omit_unset or "requestId" in vars(self):
             out["requestId"] = self.requestId
         return out
-
 
 class v1CreateTrialRequest(Printable):
     experimentId: "typing.Optional[int]" = None
@@ -2497,7 +2446,6 @@ class v1CreateTrialRequest(Printable):
             out["unmanaged"] = self.unmanaged
         return out
 
-
 class v1CreateTrialResponse(Printable):
 
     def __init__(
@@ -2519,7 +2467,6 @@ class v1CreateTrialResponse(Printable):
             "trial": self.trial.to_json(omit_unset),
         }
         return out
-
 
 class v1CreateTrialsCollectionRequest(Printable):
 
@@ -2555,7 +2502,6 @@ class v1CreateTrialsCollectionRequest(Printable):
         }
         return out
 
-
 class v1CreateTrialsCollectionResponse(Printable):
     collection: "typing.Optional[v1TrialsCollection]" = None
 
@@ -2582,7 +2528,6 @@ class v1CreateTrialsCollectionResponse(Printable):
             out["collection"] = None if self.collection is None else self.collection.to_json(omit_unset)
         return out
 
-
 class v1CurrentUserResponse(Printable):
 
     def __init__(
@@ -2604,7 +2549,6 @@ class v1CurrentUserResponse(Printable):
             "user": self.user.to_json(omit_unset),
         }
         return out
-
 
 class v1DataPoint(Printable):
     epoch: "typing.Optional[int]" = None
@@ -2648,7 +2592,6 @@ class v1DataPoint(Printable):
             out["values"] = self.values
         return out
 
-
 class v1DeleteCheckpointsRequest(Printable):
 
     def __init__(
@@ -2670,7 +2613,6 @@ class v1DeleteCheckpointsRequest(Printable):
             "checkpointUuids": self.checkpointUuids,
         }
         return out
-
 
 class v1DeleteExperimentsRequest(Printable):
     filters: "typing.Optional[v1BulkExperimentFilters]" = None
@@ -2702,7 +2644,6 @@ class v1DeleteExperimentsRequest(Printable):
             out["filters"] = None if self.filters is None else self.filters.to_json(omit_unset)
         return out
 
-
 class v1DeleteExperimentsResponse(Printable):
 
     def __init__(
@@ -2724,7 +2665,6 @@ class v1DeleteExperimentsResponse(Printable):
             "results": [x.to_json(omit_unset) for x in self.results],
         }
         return out
-
 
 class v1DeleteProjectResponse(Printable):
 
@@ -2748,7 +2688,6 @@ class v1DeleteProjectResponse(Printable):
         }
         return out
 
-
 class v1DeleteWorkspaceResponse(Printable):
 
     def __init__(
@@ -2770,7 +2709,6 @@ class v1DeleteWorkspaceResponse(Printable):
             "completed": self.completed,
         }
         return out
-
 
 class v1Device(Printable):
     brand: "typing.Optional[str]" = None
@@ -2822,7 +2760,6 @@ class v1Device(Printable):
             out["uuid"] = self.uuid
         return out
 
-
 class v1DisableAgentRequest(Printable):
     agentId: "typing.Optional[str]" = None
     drain: "typing.Optional[bool]" = None
@@ -2857,7 +2794,6 @@ class v1DisableAgentRequest(Printable):
             out["drain"] = self.drain
         return out
 
-
 class v1DisableAgentResponse(Printable):
     agent: "typing.Optional[v1Agent]" = None
 
@@ -2883,7 +2819,6 @@ class v1DisableAgentResponse(Printable):
         if not omit_unset or "agent" in vars(self):
             out["agent"] = None if self.agent is None else self.agent.to_json(omit_unset)
         return out
-
 
 class v1DisableSlotRequest(Printable):
     agentId: "typing.Optional[str]" = None
@@ -2927,7 +2862,6 @@ class v1DisableSlotRequest(Printable):
             out["slotId"] = self.slotId
         return out
 
-
 class v1DisableSlotResponse(Printable):
     slot: "typing.Optional[v1Slot]" = None
 
@@ -2953,7 +2887,6 @@ class v1DisableSlotResponse(Printable):
         if not omit_unset or "slot" in vars(self):
             out["slot"] = None if self.slot is None else self.slot.to_json(omit_unset)
         return out
-
 
 class v1DoubleFieldFilter(Printable):
     gt: "typing.Optional[float]" = None
@@ -3005,7 +2938,6 @@ class v1DoubleFieldFilter(Printable):
             out["lte"] = None if self.lte is None else dump_float(self.lte)
         return out
 
-
 class v1DownsampledMetrics(Printable):
 
     def __init__(
@@ -3031,7 +2963,6 @@ class v1DownsampledMetrics(Printable):
             "type": self.type.value,
         }
         return out
-
 
 class v1EnableAgentResponse(Printable):
     agent: "typing.Optional[v1Agent]" = None
@@ -3059,7 +2990,6 @@ class v1EnableAgentResponse(Printable):
             out["agent"] = None if self.agent is None else self.agent.to_json(omit_unset)
         return out
 
-
 class v1EnableSlotResponse(Printable):
     slot: "typing.Optional[v1Slot]" = None
 
@@ -3085,7 +3015,6 @@ class v1EnableSlotResponse(Printable):
         if not omit_unset or "slot" in vars(self):
             out["slot"] = None if self.slot is None else self.slot.to_json(omit_unset)
         return out
-
 
 class v1EntityType(DetEnum):
     UNSPECIFIED = "ENTITY_TYPE_UNSPECIFIED"
@@ -3132,7 +3061,6 @@ class v1ExpMetricNamesResponse(Printable):
         if not omit_unset or "validationMetrics" in vars(self):
             out["validationMetrics"] = self.validationMetrics
         return out
-
 
 class v1Experiment(Printable):
     bestTrialId: "typing.Optional[int]" = None
@@ -3364,7 +3292,6 @@ class v1Experiment(Printable):
             out["workspaceName"] = self.workspaceName
         return out
 
-
 class v1ExperimentActionResult(Printable):
 
     def __init__(
@@ -3391,7 +3318,6 @@ class v1ExperimentActionResult(Printable):
         }
         return out
 
-
 class v1ExperimentInactive(Printable):
 
     def __init__(
@@ -3413,7 +3339,6 @@ class v1ExperimentInactive(Printable):
             "experimentState": self.experimentState.value,
         }
         return out
-
 
 class v1ExperimentSimulation(Printable):
     config: "typing.Optional[typing.Dict[str, typing.Any]]" = None
@@ -3456,7 +3381,6 @@ class v1ExperimentSimulation(Printable):
         if not omit_unset or "trials" in vars(self):
             out["trials"] = None if self.trials is None else [x.to_json(omit_unset) for x in self.trials]
         return out
-
 
 class v1FailureType(DetEnum):
     UNSPECIFIED = "FAILURE_TYPE_UNSPECIFIED"
@@ -3515,7 +3439,6 @@ class v1File(Printable):
             "uid": self.uid,
         }
         return out
-
 
 class v1FileNode(Printable):
     contentLength: "typing.Optional[int]" = None
@@ -3591,7 +3514,6 @@ class v1FileNode(Printable):
             out["path"] = self.path
         return out
 
-
 class v1FittingPolicy(DetEnum):
     UNSPECIFIED = "FITTING_POLICY_UNSPECIFIED"
     BEST = "FITTING_POLICY_BEST"
@@ -3634,7 +3556,6 @@ class v1GetActiveTasksCountResponse(Printable):
         }
         return out
 
-
 class v1GetAgentResponse(Printable):
 
     def __init__(
@@ -3656,7 +3577,6 @@ class v1GetAgentResponse(Printable):
             "agent": self.agent.to_json(omit_unset),
         }
         return out
-
 
 class v1GetAgentsRequestSortBy(DetEnum):
     UNSPECIFIED = "SORT_BY_UNSPECIFIED"
@@ -3693,7 +3613,6 @@ class v1GetAgentsResponse(Printable):
             out["pagination"] = None if self.pagination is None else self.pagination.to_json(omit_unset)
         return out
 
-
 class v1GetBestSearcherValidationMetricResponse(Printable):
     metric: "typing.Optional[float]" = None
 
@@ -3720,7 +3639,6 @@ class v1GetBestSearcherValidationMetricResponse(Printable):
             out["metric"] = None if self.metric is None else dump_float(self.metric)
         return out
 
-
 class v1GetCheckpointResponse(Printable):
 
     def __init__(
@@ -3742,7 +3660,6 @@ class v1GetCheckpointResponse(Printable):
             "checkpoint": self.checkpoint.to_json(omit_unset),
         }
         return out
-
 
 class v1GetCommandResponse(Printable):
 
@@ -3769,7 +3686,6 @@ class v1GetCommandResponse(Printable):
             "config": self.config,
         }
         return out
-
 
 class v1GetCommandsRequestSortBy(DetEnum):
     UNSPECIFIED = "SORT_BY_UNSPECIFIED"
@@ -3808,7 +3724,6 @@ class v1GetCommandsResponse(Printable):
             out["pagination"] = None if self.pagination is None else self.pagination.to_json(omit_unset)
         return out
 
-
 class v1GetCurrentTrialSearcherOperationResponse(Printable):
     completed: "typing.Optional[bool]" = None
     op: "typing.Optional[v1TrialOperation]" = None
@@ -3842,7 +3757,6 @@ class v1GetCurrentTrialSearcherOperationResponse(Printable):
         if not omit_unset or "op" in vars(self):
             out["op"] = None if self.op is None else self.op.to_json(omit_unset)
         return out
-
 
 class v1GetExperimentCheckpointsRequestSortBy(DetEnum):
     UNSPECIFIED = "SORT_BY_UNSPECIFIED"
@@ -3879,7 +3793,6 @@ class v1GetExperimentCheckpointsResponse(Printable):
         }
         return out
 
-
 class v1GetExperimentLabelsResponse(Printable):
     labels: "typing.Optional[typing.Sequence[str]]" = None
 
@@ -3905,7 +3818,6 @@ class v1GetExperimentLabelsResponse(Printable):
         if not omit_unset or "labels" in vars(self):
             out["labels"] = self.labels
         return out
-
 
 class v1GetExperimentResponse(Printable):
     jobSummary: "typing.Optional[v1JobSummary]" = None
@@ -3936,7 +3848,6 @@ class v1GetExperimentResponse(Printable):
         if not omit_unset or "jobSummary" in vars(self):
             out["jobSummary"] = None if self.jobSummary is None else self.jobSummary.to_json(omit_unset)
         return out
-
 
 class v1GetExperimentTrialsRequestSortBy(DetEnum):
     UNSPECIFIED = "SORT_BY_UNSPECIFIED"
@@ -3977,7 +3888,6 @@ class v1GetExperimentTrialsResponse(Printable):
         }
         return out
 
-
 class v1GetExperimentValidationHistoryResponse(Printable):
     validationHistory: "typing.Optional[typing.Sequence[v1ValidationHistoryEntry]]" = None
 
@@ -4003,7 +3913,6 @@ class v1GetExperimentValidationHistoryResponse(Printable):
         if not omit_unset or "validationHistory" in vars(self):
             out["validationHistory"] = None if self.validationHistory is None else [x.to_json(omit_unset) for x in self.validationHistory]
         return out
-
 
 class v1GetExperimentsRequestSortBy(DetEnum):
     UNSPECIFIED = "SORT_BY_UNSPECIFIED"
@@ -4049,7 +3958,6 @@ class v1GetExperimentsResponse(Printable):
         }
         return out
 
-
 class v1GetGroupResponse(Printable):
 
     def __init__(
@@ -4071,7 +3979,6 @@ class v1GetGroupResponse(Printable):
             "group": self.group.to_json(omit_unset),
         }
         return out
-
 
 class v1GetGroupsAndUsersAssignedToWorkspaceResponse(Printable):
 
@@ -4102,7 +4009,6 @@ class v1GetGroupsAndUsersAssignedToWorkspaceResponse(Printable):
             "usersAssignedDirectly": [x.to_json(omit_unset) for x in self.usersAssignedDirectly],
         }
         return out
-
 
 class v1GetGroupsRequest(Printable):
     name: "typing.Optional[str]" = None
@@ -4150,7 +4056,6 @@ class v1GetGroupsRequest(Printable):
             out["userId"] = self.userId
         return out
 
-
 class v1GetGroupsResponse(Printable):
     groups: "typing.Optional[typing.Sequence[v1GroupSearchResult]]" = None
     pagination: "typing.Optional[v1Pagination]" = None
@@ -4185,7 +4090,6 @@ class v1GetGroupsResponse(Printable):
             out["pagination"] = None if self.pagination is None else self.pagination.to_json(omit_unset)
         return out
 
-
 class v1GetJobQueueStatsResponse(Printable):
 
     def __init__(
@@ -4207,7 +4111,6 @@ class v1GetJobQueueStatsResponse(Printable):
             "results": [x.to_json(omit_unset) for x in self.results],
         }
         return out
-
 
 class v1GetJobsResponse(Printable):
 
@@ -4235,7 +4138,6 @@ class v1GetJobsResponse(Printable):
         }
         return out
 
-
 class v1GetJobsV2Response(Printable):
 
     def __init__(
@@ -4262,7 +4164,6 @@ class v1GetJobsV2Response(Printable):
         }
         return out
 
-
 class v1GetMasterConfigResponse(Printable):
 
     def __init__(
@@ -4284,7 +4185,6 @@ class v1GetMasterConfigResponse(Printable):
             "config": self.config,
         }
         return out
-
 
 class v1GetMasterResponse(Printable):
     branding: "typing.Optional[str]" = None
@@ -4392,7 +4292,6 @@ class v1GetMasterResponse(Printable):
             out["userManagementEnabled"] = self.userManagementEnabled
         return out
 
-
 class v1GetMeResponse(Printable):
 
     def __init__(
@@ -4414,7 +4313,6 @@ class v1GetMeResponse(Printable):
             "user": self.user.to_json(omit_unset),
         }
         return out
-
 
 class v1GetModelDefFileRequest(Printable):
     experimentId: "typing.Optional[int]" = None
@@ -4450,7 +4348,6 @@ class v1GetModelDefFileRequest(Printable):
             out["path"] = self.path
         return out
 
-
 class v1GetModelDefFileResponse(Printable):
     file: "typing.Optional[str]" = None
 
@@ -4477,7 +4374,6 @@ class v1GetModelDefFileResponse(Printable):
             out["file"] = self.file
         return out
 
-
 class v1GetModelDefResponse(Printable):
 
     def __init__(
@@ -4499,7 +4395,6 @@ class v1GetModelDefResponse(Printable):
             "b64Tgz": self.b64Tgz,
         }
         return out
-
 
 class v1GetModelDefTreeResponse(Printable):
     files: "typing.Optional[typing.Sequence[v1FileNode]]" = None
@@ -4527,7 +4422,6 @@ class v1GetModelDefTreeResponse(Printable):
             out["files"] = None if self.files is None else [x.to_json(omit_unset) for x in self.files]
         return out
 
-
 class v1GetModelLabelsResponse(Printable):
 
     def __init__(
@@ -4549,7 +4443,6 @@ class v1GetModelLabelsResponse(Printable):
             "labels": self.labels,
         }
         return out
-
 
 class v1GetModelResponse(Printable):
 
@@ -4573,7 +4466,6 @@ class v1GetModelResponse(Printable):
         }
         return out
 
-
 class v1GetModelVersionResponse(Printable):
 
     def __init__(
@@ -4595,7 +4487,6 @@ class v1GetModelVersionResponse(Printable):
             "modelVersion": self.modelVersion.to_json(omit_unset),
         }
         return out
-
 
 class v1GetModelVersionsRequestSortBy(DetEnum):
     UNSPECIFIED = "SORT_BY_UNSPECIFIED"
@@ -4632,7 +4523,6 @@ class v1GetModelVersionsResponse(Printable):
         }
         return out
 
-
 class v1GetModelsRequestSortBy(DetEnum):
     UNSPECIFIED = "SORT_BY_UNSPECIFIED"
     NAME = "SORT_BY_NAME"
@@ -4668,7 +4558,6 @@ class v1GetModelsResponse(Printable):
         }
         return out
 
-
 class v1GetNotebookResponse(Printable):
 
     def __init__(
@@ -4694,7 +4583,6 @@ class v1GetNotebookResponse(Printable):
             "notebook": self.notebook.to_json(omit_unset),
         }
         return out
-
 
 class v1GetNotebooksRequestSortBy(DetEnum):
     UNSPECIFIED = "SORT_BY_UNSPECIFIED"
@@ -4733,7 +4621,6 @@ class v1GetNotebooksResponse(Printable):
             out["pagination"] = None if self.pagination is None else self.pagination.to_json(omit_unset)
         return out
 
-
 class v1GetPermissionsSummaryResponse(Printable):
 
     def __init__(
@@ -4760,7 +4647,6 @@ class v1GetPermissionsSummaryResponse(Printable):
         }
         return out
 
-
 class v1GetProjectColumnsResponse(Printable):
 
     def __init__(
@@ -4782,7 +4668,6 @@ class v1GetProjectColumnsResponse(Printable):
             "columns": [x.to_json(omit_unset) for x in self.columns],
         }
         return out
-
 
 class v1GetProjectNumericMetricsRangeResponse(Printable):
     ranges: "typing.Optional[typing.Sequence[v1MetricsRange]]" = None
@@ -4810,7 +4695,6 @@ class v1GetProjectNumericMetricsRangeResponse(Printable):
             out["ranges"] = None if self.ranges is None else [x.to_json(omit_unset) for x in self.ranges]
         return out
 
-
 class v1GetProjectResponse(Printable):
 
     def __init__(
@@ -4832,7 +4716,6 @@ class v1GetProjectResponse(Printable):
             "project": self.project.to_json(omit_unset),
         }
         return out
-
 
 class v1GetProjectsByUserActivityResponse(Printable):
     projects: "typing.Optional[typing.Sequence[v1Project]]" = None
@@ -4859,7 +4742,6 @@ class v1GetProjectsByUserActivityResponse(Printable):
         if not omit_unset or "projects" in vars(self):
             out["projects"] = None if self.projects is None else [x.to_json(omit_unset) for x in self.projects]
         return out
-
 
 class v1GetResourcePoolsResponse(Printable):
     pagination: "typing.Optional[v1Pagination]" = None
@@ -4895,7 +4777,6 @@ class v1GetResourcePoolsResponse(Printable):
             out["resourcePools"] = None if self.resourcePools is None else [x.to_json(omit_unset) for x in self.resourcePools]
         return out
 
-
 class v1GetRolesAssignedToGroupResponse(Printable):
 
     def __init__(
@@ -4922,7 +4803,6 @@ class v1GetRolesAssignedToGroupResponse(Printable):
         }
         return out
 
-
 class v1GetRolesAssignedToUserResponse(Printable):
 
     def __init__(
@@ -4944,7 +4824,6 @@ class v1GetRolesAssignedToUserResponse(Printable):
             "roles": [x.to_json(omit_unset) for x in self.roles],
         }
         return out
-
 
 class v1GetRolesByIDRequest(Printable):
     roleIds: "typing.Optional[typing.Sequence[int]]" = None
@@ -4972,7 +4851,6 @@ class v1GetRolesByIDRequest(Printable):
             out["roleIds"] = self.roleIds
         return out
 
-
 class v1GetRolesByIDResponse(Printable):
     roles: "typing.Optional[typing.Sequence[v1RoleWithAssignments]]" = None
 
@@ -4998,7 +4876,6 @@ class v1GetRolesByIDResponse(Printable):
         if not omit_unset or "roles" in vars(self):
             out["roles"] = None if self.roles is None else [x.to_json(omit_unset) for x in self.roles]
         return out
-
 
 class v1GetSearcherEventsResponse(Printable):
     searcherEvents: "typing.Optional[typing.Sequence[v1SearcherEvent]]" = None
@@ -5026,7 +4903,6 @@ class v1GetSearcherEventsResponse(Printable):
             out["searcherEvents"] = None if self.searcherEvents is None else [x.to_json(omit_unset) for x in self.searcherEvents]
         return out
 
-
 class v1GetShellResponse(Printable):
 
     def __init__(
@@ -5052,7 +4928,6 @@ class v1GetShellResponse(Printable):
             "shell": self.shell.to_json(omit_unset),
         }
         return out
-
 
 class v1GetShellsRequestSortBy(DetEnum):
     UNSPECIFIED = "SORT_BY_UNSPECIFIED"
@@ -5091,7 +4966,6 @@ class v1GetShellsResponse(Printable):
             out["pagination"] = None if self.pagination is None else self.pagination.to_json(omit_unset)
         return out
 
-
 class v1GetSlotResponse(Printable):
     slot: "typing.Optional[v1Slot]" = None
 
@@ -5117,7 +4991,6 @@ class v1GetSlotResponse(Printable):
         if not omit_unset or "slot" in vars(self):
             out["slot"] = None if self.slot is None else self.slot.to_json(omit_unset)
         return out
-
 
 class v1GetSlotsResponse(Printable):
     slots: "typing.Optional[typing.Sequence[v1Slot]]" = None
@@ -5145,7 +5018,6 @@ class v1GetSlotsResponse(Printable):
             out["slots"] = None if self.slots is None else [x.to_json(omit_unset) for x in self.slots]
         return out
 
-
 class v1GetTaskResponse(Printable):
 
     def __init__(
@@ -5167,7 +5039,6 @@ class v1GetTaskResponse(Printable):
             "task": self.task.to_json(omit_unset),
         }
         return out
-
 
 class v1GetTasksResponse(Printable):
     allocationIdToSummary: "typing.Optional[typing.Dict[str, v1AllocationSummary]]" = None
@@ -5194,7 +5065,6 @@ class v1GetTasksResponse(Printable):
         if not omit_unset or "allocationIdToSummary" in vars(self):
             out["allocationIdToSummary"] = None if self.allocationIdToSummary is None else {k: v.to_json(omit_unset) for k, v in self.allocationIdToSummary.items()}
         return out
-
 
 class v1GetTelemetryResponse(Printable):
     segmentKey: "typing.Optional[str]" = None
@@ -5226,7 +5096,6 @@ class v1GetTelemetryResponse(Printable):
             out["segmentKey"] = self.segmentKey
         return out
 
-
 class v1GetTemplateResponse(Printable):
 
     def __init__(
@@ -5248,7 +5117,6 @@ class v1GetTemplateResponse(Printable):
             "template": self.template.to_json(omit_unset),
         }
         return out
-
 
 class v1GetTemplatesRequestSortBy(DetEnum):
     UNSPECIFIED = "SORT_BY_UNSPECIFIED"
@@ -5280,7 +5148,6 @@ class v1GetTemplatesResponse(Printable):
         }
         return out
 
-
 class v1GetTensorboardResponse(Printable):
 
     def __init__(
@@ -5306,7 +5173,6 @@ class v1GetTensorboardResponse(Printable):
             "tensorboard": self.tensorboard.to_json(omit_unset),
         }
         return out
-
 
 class v1GetTensorboardsRequestSortBy(DetEnum):
     UNSPECIFIED = "SORT_BY_UNSPECIFIED"
@@ -5345,7 +5211,6 @@ class v1GetTensorboardsResponse(Printable):
             out["pagination"] = None if self.pagination is None else self.pagination.to_json(omit_unset)
         return out
 
-
 class v1GetTrainingMetricsResponse(Printable):
 
     def __init__(
@@ -5367,7 +5232,6 @@ class v1GetTrainingMetricsResponse(Printable):
             "metrics": [x.to_json(omit_unset) for x in self.metrics],
         }
         return out
-
 
 class v1GetTrialCheckpointsRequestSortBy(DetEnum):
     UNSPECIFIED = "SORT_BY_UNSPECIFIED"
@@ -5402,7 +5266,6 @@ class v1GetTrialCheckpointsResponse(Printable):
         }
         return out
 
-
 class v1GetTrialProfilerAvailableSeriesResponse(Printable):
 
     def __init__(
@@ -5424,7 +5287,6 @@ class v1GetTrialProfilerAvailableSeriesResponse(Printable):
             "labels": [x.to_json(omit_unset) for x in self.labels],
         }
         return out
-
 
 class v1GetTrialProfilerMetricsResponse(Printable):
 
@@ -5448,7 +5310,6 @@ class v1GetTrialProfilerMetricsResponse(Printable):
         }
         return out
 
-
 class v1GetTrialResponse(Printable):
 
     def __init__(
@@ -5470,7 +5331,6 @@ class v1GetTrialResponse(Printable):
             "trial": self.trial.to_json(omit_unset),
         }
         return out
-
 
 class v1GetTrialWorkloadsResponse(Printable):
 
@@ -5498,7 +5358,6 @@ class v1GetTrialWorkloadsResponse(Printable):
         }
         return out
 
-
 class v1GetTrialsCollectionsResponse(Printable):
     collections: "typing.Optional[typing.Sequence[v1TrialsCollection]]" = None
 
@@ -5525,7 +5384,6 @@ class v1GetTrialsCollectionsResponse(Printable):
             out["collections"] = None if self.collections is None else [x.to_json(omit_unset) for x in self.collections]
         return out
 
-
 class v1GetUserByUsernameResponse(Printable):
 
     def __init__(
@@ -5547,7 +5405,6 @@ class v1GetUserByUsernameResponse(Printable):
             "user": self.user.to_json(omit_unset),
         }
         return out
-
 
 class v1GetUserResponse(Printable):
 
@@ -5571,7 +5428,6 @@ class v1GetUserResponse(Printable):
         }
         return out
 
-
 class v1GetUserSettingResponse(Printable):
 
     def __init__(
@@ -5593,7 +5449,6 @@ class v1GetUserSettingResponse(Printable):
             "settings": [x.to_json(omit_unset) for x in self.settings],
         }
         return out
-
 
 class v1GetUsersRequestSortBy(DetEnum):
     UNSPECIFIED = "SORT_BY_UNSPECIFIED"
@@ -5638,7 +5493,6 @@ class v1GetUsersResponse(Printable):
             out["users"] = None if self.users is None else [x.to_json(omit_unset) for x in self.users]
         return out
 
-
 class v1GetValidationMetricsResponse(Printable):
 
     def __init__(
@@ -5661,7 +5515,6 @@ class v1GetValidationMetricsResponse(Printable):
         }
         return out
 
-
 class v1GetWebhooksResponse(Printable):
 
     def __init__(
@@ -5683,7 +5536,6 @@ class v1GetWebhooksResponse(Printable):
             "webhooks": [x.to_json(omit_unset) for x in self.webhooks],
         }
         return out
-
 
 class v1GetWorkspaceProjectsRequestSortBy(DetEnum):
     UNSPECIFIED = "SORT_BY_UNSPECIFIED"
@@ -5719,7 +5571,6 @@ class v1GetWorkspaceProjectsResponse(Printable):
         }
         return out
 
-
 class v1GetWorkspaceResponse(Printable):
 
     def __init__(
@@ -5741,7 +5592,6 @@ class v1GetWorkspaceResponse(Printable):
             "workspace": self.workspace.to_json(omit_unset),
         }
         return out
-
 
 class v1GetWorkspacesRequestSortBy(DetEnum):
     UNSPECIFIED = "SORT_BY_UNSPECIFIED"
@@ -5773,7 +5623,6 @@ class v1GetWorkspacesResponse(Printable):
             "workspaces": [x.to_json(omit_unset) for x in self.workspaces],
         }
         return out
-
 
 class v1Group(Printable):
     groupId: "typing.Optional[int]" = None
@@ -5808,7 +5657,6 @@ class v1Group(Printable):
         if not omit_unset or "name" in vars(self):
             out["name"] = self.name
         return out
-
 
 class v1GroupDetails(Printable):
     groupId: "typing.Optional[int]" = None
@@ -5852,7 +5700,6 @@ class v1GroupDetails(Printable):
             out["users"] = None if self.users is None else [x.to_json(omit_unset) for x in self.users]
         return out
 
-
 class v1GroupRoleAssignment(Printable):
 
     def __init__(
@@ -5879,7 +5726,6 @@ class v1GroupRoleAssignment(Printable):
         }
         return out
 
-
 class v1GroupSearchResult(Printable):
 
     def __init__(
@@ -5905,7 +5751,6 @@ class v1GroupSearchResult(Printable):
             "numMembers": self.numMembers,
         }
         return out
-
 
 class v1IdleNotebookRequest(Printable):
     idle: "typing.Optional[bool]" = None
@@ -5941,7 +5786,6 @@ class v1IdleNotebookRequest(Printable):
             out["notebookId"] = self.notebookId
         return out
 
-
 class v1InitialOperations(Printable):
     placeholder: "typing.Optional[int]" = None
 
@@ -5967,7 +5811,6 @@ class v1InitialOperations(Printable):
         if not omit_unset or "placeholder" in vars(self):
             out["placeholder"] = self.placeholder
         return out
-
 
 class v1Int32FieldFilter(Printable):
     gt: "typing.Optional[int]" = None
@@ -6034,7 +5877,6 @@ class v1Int32FieldFilter(Printable):
         if not omit_unset or "notIn" in vars(self):
             out["notIn"] = self.notIn
         return out
-
 
 class v1Job(Printable):
     priority: "typing.Optional[int]" = None
@@ -6138,7 +5980,6 @@ class v1Job(Printable):
             out["weight"] = None if self.weight is None else dump_float(self.weight)
         return out
 
-
 class v1JobSummary(Printable):
 
     def __init__(
@@ -6164,7 +6005,6 @@ class v1JobSummary(Printable):
             "state": self.state.value,
         }
         return out
-
 
 class v1K8PriorityClass(Printable):
     priorityClass: "typing.Optional[str]" = None
@@ -6200,7 +6040,6 @@ class v1K8PriorityClass(Printable):
             out["priorityValue"] = self.priorityValue
         return out
 
-
 class v1KillCommandResponse(Printable):
     command: "typing.Optional[v1Command]" = None
 
@@ -6226,7 +6065,6 @@ class v1KillCommandResponse(Printable):
         if not omit_unset or "command" in vars(self):
             out["command"] = None if self.command is None else self.command.to_json(omit_unset)
         return out
-
 
 class v1KillExperimentsRequest(Printable):
     filters: "typing.Optional[v1BulkExperimentFilters]" = None
@@ -6258,7 +6096,6 @@ class v1KillExperimentsRequest(Printable):
             out["filters"] = None if self.filters is None else self.filters.to_json(omit_unset)
         return out
 
-
 class v1KillExperimentsResponse(Printable):
 
     def __init__(
@@ -6280,7 +6117,6 @@ class v1KillExperimentsResponse(Printable):
             "results": [x.to_json(omit_unset) for x in self.results],
         }
         return out
-
 
 class v1KillNotebookResponse(Printable):
     notebook: "typing.Optional[v1Notebook]" = None
@@ -6308,7 +6144,6 @@ class v1KillNotebookResponse(Printable):
             out["notebook"] = None if self.notebook is None else self.notebook.to_json(omit_unset)
         return out
 
-
 class v1KillShellResponse(Printable):
     shell: "typing.Optional[v1Shell]" = None
 
@@ -6335,7 +6170,6 @@ class v1KillShellResponse(Printable):
             out["shell"] = None if self.shell is None else self.shell.to_json(omit_unset)
         return out
 
-
 class v1KillTensorboardResponse(Printable):
     tensorboard: "typing.Optional[v1Tensorboard]" = None
 
@@ -6361,7 +6195,6 @@ class v1KillTensorboardResponse(Printable):
         if not omit_unset or "tensorboard" in vars(self):
             out["tensorboard"] = None if self.tensorboard is None else self.tensorboard.to_json(omit_unset)
         return out
-
 
 class v1LaunchCommandRequest(Printable):
     config: "typing.Optional[typing.Dict[str, typing.Any]]" = None
@@ -6421,7 +6254,6 @@ class v1LaunchCommandRequest(Printable):
             out["workspaceId"] = self.workspaceId
         return out
 
-
 class v1LaunchCommandResponse(Printable):
     warnings: "typing.Optional[typing.Sequence[v1LaunchWarning]]" = None
 
@@ -6455,7 +6287,6 @@ class v1LaunchCommandResponse(Printable):
         if not omit_unset or "warnings" in vars(self):
             out["warnings"] = None if self.warnings is None else [x.value for x in self.warnings]
         return out
-
 
 class v1LaunchNotebookRequest(Printable):
     config: "typing.Optional[typing.Dict[str, typing.Any]]" = None
@@ -6515,7 +6346,6 @@ class v1LaunchNotebookRequest(Printable):
             out["workspaceId"] = self.workspaceId
         return out
 
-
 class v1LaunchNotebookResponse(Printable):
     warnings: "typing.Optional[typing.Sequence[v1LaunchWarning]]" = None
 
@@ -6549,7 +6379,6 @@ class v1LaunchNotebookResponse(Printable):
         if not omit_unset or "warnings" in vars(self):
             out["warnings"] = None if self.warnings is None else [x.value for x in self.warnings]
         return out
-
 
 class v1LaunchShellRequest(Printable):
     config: "typing.Optional[typing.Dict[str, typing.Any]]" = None
@@ -6609,7 +6438,6 @@ class v1LaunchShellRequest(Printable):
             out["workspaceId"] = self.workspaceId
         return out
 
-
 class v1LaunchShellResponse(Printable):
     warnings: "typing.Optional[typing.Sequence[v1LaunchWarning]]" = None
 
@@ -6643,7 +6471,6 @@ class v1LaunchShellResponse(Printable):
         if not omit_unset or "warnings" in vars(self):
             out["warnings"] = None if self.warnings is None else [x.value for x in self.warnings]
         return out
-
 
 class v1LaunchTensorboardRequest(Printable):
     config: "typing.Optional[typing.Dict[str, typing.Any]]" = None
@@ -6719,7 +6546,6 @@ class v1LaunchTensorboardRequest(Printable):
             out["workspaceId"] = self.workspaceId
         return out
 
-
 class v1LaunchTensorboardResponse(Printable):
     warnings: "typing.Optional[typing.Sequence[v1LaunchWarning]]" = None
 
@@ -6753,7 +6579,6 @@ class v1LaunchTensorboardResponse(Printable):
         if not omit_unset or "warnings" in vars(self):
             out["warnings"] = None if self.warnings is None else [x.value for x in self.warnings]
         return out
-
 
 class v1LaunchWarning(DetEnum):
     UNSPECIFIED = "LAUNCH_WARNING_UNSPECIFIED"
@@ -6837,7 +6662,6 @@ class v1LimitedJob(Printable):
             out["weight"] = None if self.weight is None else dump_float(self.weight)
         return out
 
-
 class v1ListRolesRequest(Printable):
     offset: "typing.Optional[int]" = None
 
@@ -6868,7 +6692,6 @@ class v1ListRolesRequest(Printable):
             out["offset"] = self.offset
         return out
 
-
 class v1ListRolesResponse(Printable):
 
     def __init__(
@@ -6894,7 +6717,6 @@ class v1ListRolesResponse(Printable):
             "roles": [x.to_json(omit_unset) for x in self.roles],
         }
         return out
-
 
 class v1LocationType(DetEnum):
     UNSPECIFIED = "LOCATION_TYPE_UNSPECIFIED"
@@ -6935,7 +6757,6 @@ class v1LogEntry(Printable):
             "timestamp": self.timestamp,
         }
         return out
-
 
 class v1LogLevel(DetEnum):
     UNSPECIFIED = "LOG_LEVEL_UNSPECIFIED"
@@ -6980,7 +6801,6 @@ class v1LoginRequest(Printable):
             out["isHashed"] = self.isHashed
         return out
 
-
 class v1LoginResponse(Printable):
 
     def __init__(
@@ -7006,7 +6826,6 @@ class v1LoginResponse(Printable):
             "user": self.user.to_json(omit_unset),
         }
         return out
-
 
 class v1MarkAllocationResourcesDaemonRequest(Printable):
     resourcesId: "typing.Optional[str]" = None
@@ -7038,7 +6857,6 @@ class v1MarkAllocationResourcesDaemonRequest(Printable):
             out["resourcesId"] = self.resourcesId
         return out
 
-
 class v1MasterLogsResponse(Printable):
 
     def __init__(
@@ -7060,7 +6878,6 @@ class v1MasterLogsResponse(Printable):
             "logEntry": self.logEntry.to_json(omit_unset),
         }
         return out
-
 
 class v1MetricBatchesResponse(Printable):
     batches: "typing.Optional[typing.Sequence[int]]" = None
@@ -7087,7 +6904,6 @@ class v1MetricBatchesResponse(Printable):
         if not omit_unset or "batches" in vars(self):
             out["batches"] = self.batches
         return out
-
 
 class v1MetricType(DetEnum):
     UNSPECIFIED = "METRIC_TYPE_UNSPECIFIED"
@@ -7124,7 +6940,6 @@ class v1Metrics(Printable):
             out["batchMetrics"] = self.batchMetrics
         return out
 
-
 class v1MetricsRange(Printable):
 
     def __init__(
@@ -7154,7 +6969,6 @@ class v1MetricsRange(Printable):
             "min": dump_float(self.min),
         }
         return out
-
 
 class v1MetricsReport(Printable):
 
@@ -7202,7 +7016,6 @@ class v1MetricsReport(Printable):
         }
         return out
 
-
 class v1MetricsWorkload(Printable):
     endTime: "typing.Optional[str]" = None
 
@@ -7240,7 +7053,6 @@ class v1MetricsWorkload(Printable):
         if not omit_unset or "endTime" in vars(self):
             out["endTime"] = self.endTime
         return out
-
 
 class v1Model(Printable):
     description: "typing.Optional[str]" = None
@@ -7323,7 +7135,6 @@ class v1Model(Printable):
         if not omit_unset or "notes" in vars(self):
             out["notes"] = self.notes
         return out
-
 
 class v1ModelVersion(Printable):
     comment: "typing.Optional[str]" = None
@@ -7423,7 +7234,6 @@ class v1ModelVersion(Printable):
             out["username"] = self.username
         return out
 
-
 class v1MoveExperimentRequest(Printable):
 
     def __init__(
@@ -7449,7 +7259,6 @@ class v1MoveExperimentRequest(Printable):
             "experimentId": self.experimentId,
         }
         return out
-
 
 class v1MoveExperimentsRequest(Printable):
     filters: "typing.Optional[v1BulkExperimentFilters]" = None
@@ -7485,7 +7294,6 @@ class v1MoveExperimentsRequest(Printable):
             out["filters"] = None if self.filters is None else self.filters.to_json(omit_unset)
         return out
 
-
 class v1MoveExperimentsResponse(Printable):
 
     def __init__(
@@ -7507,7 +7315,6 @@ class v1MoveExperimentsResponse(Printable):
             "results": [x.to_json(omit_unset) for x in self.results],
         }
         return out
-
 
 class v1MoveModelRequest(Printable):
 
@@ -7535,7 +7342,6 @@ class v1MoveModelRequest(Printable):
         }
         return out
 
-
 class v1MoveProjectRequest(Printable):
 
     def __init__(
@@ -7562,7 +7368,6 @@ class v1MoveProjectRequest(Printable):
         }
         return out
 
-
 class v1Note(Printable):
 
     def __init__(
@@ -7588,7 +7393,6 @@ class v1Note(Printable):
             "name": self.name,
         }
         return out
-
 
 class v1Notebook(Printable):
     container: "typing.Optional[v1Container]" = None
@@ -7680,7 +7484,6 @@ class v1Notebook(Printable):
             out["userId"] = self.userId
         return out
 
-
 class v1NotifyContainerRunningRequest(Printable):
     nodeName: "typing.Optional[str]" = None
     numPeers: "typing.Optional[int]" = None
@@ -7739,7 +7542,6 @@ class v1NotifyContainerRunningRequest(Printable):
             out["requestUuid"] = self.requestUuid
         return out
 
-
 class v1NotifyContainerRunningResponse(Printable):
 
     def __init__(
@@ -7761,7 +7563,6 @@ class v1NotifyContainerRunningResponse(Printable):
             "data": self.data,
         }
         return out
-
 
 class v1OrderBy(DetEnum):
     UNSPECIFIED = "ORDER_BY_UNSPECIFIED"
@@ -7826,7 +7627,6 @@ class v1Pagination(Printable):
             out["total"] = self.total
         return out
 
-
 class v1PatchCheckpoint(Printable):
     resources: "typing.Optional[PatchCheckpointOptionalResources]" = None
 
@@ -7857,7 +7657,6 @@ class v1PatchCheckpoint(Printable):
             out["resources"] = None if self.resources is None else self.resources.to_json(omit_unset)
         return out
 
-
 class v1PatchCheckpointsRequest(Printable):
 
     def __init__(
@@ -7879,7 +7678,6 @@ class v1PatchCheckpointsRequest(Printable):
             "checkpoints": [x.to_json(omit_unset) for x in self.checkpoints],
         }
         return out
-
 
 class v1PatchExperiment(Printable):
     checkpointStorage: "typing.Optional[PatchExperimentPatchCheckpointStorage]" = None
@@ -7951,7 +7749,6 @@ class v1PatchExperiment(Printable):
             out["resources"] = None if self.resources is None else self.resources.to_json(omit_unset)
         return out
 
-
 class v1PatchExperimentResponse(Printable):
     experiment: "typing.Optional[v1Experiment]" = None
 
@@ -7977,7 +7774,6 @@ class v1PatchExperimentResponse(Printable):
         if not omit_unset or "experiment" in vars(self):
             out["experiment"] = None if self.experiment is None else self.experiment.to_json(omit_unset)
         return out
-
 
 class v1PatchModel(Printable):
     description: "typing.Optional[str]" = None
@@ -8053,7 +7849,6 @@ class v1PatchModel(Printable):
             out["workspaceName"] = self.workspaceName
         return out
 
-
 class v1PatchModelResponse(Printable):
 
     def __init__(
@@ -8075,7 +7870,6 @@ class v1PatchModelResponse(Printable):
             "model": self.model.to_json(omit_unset),
         }
         return out
-
 
 class v1PatchModelVersion(Printable):
     checkpoint: "typing.Optional[v1Checkpoint]" = None
@@ -8143,7 +7937,6 @@ class v1PatchModelVersion(Printable):
             out["notes"] = self.notes
         return out
 
-
 class v1PatchModelVersionResponse(Printable):
 
     def __init__(
@@ -8165,7 +7958,6 @@ class v1PatchModelVersionResponse(Printable):
             "modelVersion": self.modelVersion.to_json(omit_unset),
         }
         return out
-
 
 class v1PatchProject(Printable):
     description: "typing.Optional[str]" = None
@@ -8201,7 +7993,6 @@ class v1PatchProject(Printable):
             out["name"] = self.name
         return out
 
-
 class v1PatchProjectResponse(Printable):
 
     def __init__(
@@ -8224,7 +8015,6 @@ class v1PatchProjectResponse(Printable):
         }
         return out
 
-
 class v1PatchTemplateConfigResponse(Printable):
 
     def __init__(
@@ -8246,7 +8036,6 @@ class v1PatchTemplateConfigResponse(Printable):
             "template": self.template.to_json(omit_unset),
         }
         return out
-
 
 class v1PatchTrialsCollectionRequest(Printable):
     filters: "typing.Optional[v1TrialFilters]" = None
@@ -8294,7 +8083,6 @@ class v1PatchTrialsCollectionRequest(Printable):
             out["sorter"] = None if self.sorter is None else self.sorter.to_json(omit_unset)
         return out
 
-
 class v1PatchTrialsCollectionResponse(Printable):
     collection: "typing.Optional[v1TrialsCollection]" = None
 
@@ -8320,7 +8108,6 @@ class v1PatchTrialsCollectionResponse(Printable):
         if not omit_unset or "collection" in vars(self):
             out["collection"] = None if self.collection is None else self.collection.to_json(omit_unset)
         return out
-
 
 class v1PatchUser(Printable):
     active: "typing.Optional[bool]" = None
@@ -8404,7 +8191,6 @@ class v1PatchUser(Printable):
             out["username"] = self.username
         return out
 
-
 class v1PatchUserResponse(Printable):
 
     def __init__(
@@ -8426,7 +8212,6 @@ class v1PatchUserResponse(Printable):
             "user": self.user.to_json(omit_unset),
         }
         return out
-
 
 class v1PatchWorkspace(Printable):
     agentUserGroup: "typing.Optional[v1AgentUserGroup]" = None
@@ -8470,7 +8255,6 @@ class v1PatchWorkspace(Printable):
             out["name"] = self.name
         return out
 
-
 class v1PatchWorkspaceResponse(Printable):
 
     def __init__(
@@ -8492,7 +8276,6 @@ class v1PatchWorkspaceResponse(Printable):
             "workspace": self.workspace.to_json(omit_unset),
         }
         return out
-
 
 class v1PauseExperimentsRequest(Printable):
     filters: "typing.Optional[v1BulkExperimentFilters]" = None
@@ -8524,7 +8307,6 @@ class v1PauseExperimentsRequest(Printable):
             out["filters"] = None if self.filters is None else self.filters.to_json(omit_unset)
         return out
 
-
 class v1PauseExperimentsResponse(Printable):
 
     def __init__(
@@ -8546,7 +8328,6 @@ class v1PauseExperimentsResponse(Printable):
             "results": [x.to_json(omit_unset) for x in self.results],
         }
         return out
-
 
 class v1Permission(Printable):
     name: "typing.Optional[str]" = None
@@ -8585,7 +8366,6 @@ class v1Permission(Printable):
         if not omit_unset or "scopeTypeMask" in vars(self):
             out["scopeTypeMask"] = None if self.scopeTypeMask is None else self.scopeTypeMask.to_json(omit_unset)
         return out
-
 
 class v1PermissionType(DetEnum):
     UNSPECIFIED = "PERMISSION_TYPE_UNSPECIFIED"
@@ -8671,7 +8451,6 @@ class v1PolymorphicFilter(Printable):
             out["timeRange"] = None if self.timeRange is None else self.timeRange.to_json(omit_unset)
         return out
 
-
 class v1PostAllocationProxyAddressRequest(Printable):
     allocationId: "typing.Optional[str]" = None
     proxyAddress: "typing.Optional[str]" = None
@@ -8706,7 +8485,6 @@ class v1PostAllocationProxyAddressRequest(Printable):
             out["proxyAddress"] = self.proxyAddress
         return out
 
-
 class v1PostCheckpointMetadataRequest(Printable):
     checkpoint: "typing.Optional[v1Checkpoint]" = None
 
@@ -8733,7 +8511,6 @@ class v1PostCheckpointMetadataRequest(Printable):
             out["checkpoint"] = None if self.checkpoint is None else self.checkpoint.to_json(omit_unset)
         return out
 
-
 class v1PostCheckpointMetadataResponse(Printable):
     checkpoint: "typing.Optional[v1Checkpoint]" = None
 
@@ -8759,7 +8536,6 @@ class v1PostCheckpointMetadataResponse(Printable):
         if not omit_unset or "checkpoint" in vars(self):
             out["checkpoint"] = None if self.checkpoint is None else self.checkpoint.to_json(omit_unset)
         return out
-
 
 class v1PostModelRequest(Printable):
     description: "typing.Optional[str]" = None
@@ -8831,7 +8607,6 @@ class v1PostModelRequest(Printable):
             out["workspaceName"] = self.workspaceName
         return out
 
-
 class v1PostModelResponse(Printable):
 
     def __init__(
@@ -8853,7 +8628,6 @@ class v1PostModelResponse(Printable):
             "model": self.model.to_json(omit_unset),
         }
         return out
-
 
 class v1PostModelVersionRequest(Printable):
     comment: "typing.Optional[str]" = None
@@ -8921,7 +8695,6 @@ class v1PostModelVersionRequest(Printable):
             out["notes"] = self.notes
         return out
 
-
 class v1PostModelVersionResponse(Printable):
 
     def __init__(
@@ -8943,7 +8716,6 @@ class v1PostModelVersionResponse(Printable):
             "modelVersion": self.modelVersion.to_json(omit_unset),
         }
         return out
-
 
 class v1PostProjectRequest(Printable):
     description: "typing.Optional[str]" = None
@@ -8979,7 +8751,6 @@ class v1PostProjectRequest(Printable):
             out["description"] = self.description
         return out
 
-
 class v1PostProjectResponse(Printable):
 
     def __init__(
@@ -9001,7 +8772,6 @@ class v1PostProjectResponse(Printable):
             "project": self.project.to_json(omit_unset),
         }
         return out
-
 
 class v1PostSearcherOperationsRequest(Printable):
     experimentId: "typing.Optional[int]" = None
@@ -9045,7 +8815,6 @@ class v1PostSearcherOperationsRequest(Printable):
             out["triggeredByEvent"] = None if self.triggeredByEvent is None else self.triggeredByEvent.to_json(omit_unset)
         return out
 
-
 class v1PostTemplateResponse(Printable):
 
     def __init__(
@@ -9067,7 +8836,6 @@ class v1PostTemplateResponse(Printable):
             "template": self.template.to_json(omit_unset),
         }
         return out
-
 
 class v1PostTrialProfilerMetricsBatchRequest(Printable):
     batches: "typing.Optional[typing.Sequence[v1TrialProfilerMetricsBatch]]" = None
@@ -9094,7 +8862,6 @@ class v1PostTrialProfilerMetricsBatchRequest(Printable):
         if not omit_unset or "batches" in vars(self):
             out["batches"] = None if self.batches is None else [x.to_json(omit_unset) for x in self.batches]
         return out
-
 
 class v1PostUserActivityRequest(Printable):
 
@@ -9125,7 +8892,6 @@ class v1PostUserActivityRequest(Printable):
             "entityType": self.entityType.value,
         }
         return out
-
 
 class v1PostUserRequest(Printable):
     isHashed: "typing.Optional[bool]" = None
@@ -9169,7 +8935,6 @@ class v1PostUserRequest(Printable):
             out["user"] = None if self.user is None else self.user.to_json(omit_unset)
         return out
 
-
 class v1PostUserResponse(Printable):
     user: "typing.Optional[v1User]" = None
 
@@ -9195,7 +8960,6 @@ class v1PostUserResponse(Printable):
         if not omit_unset or "user" in vars(self):
             out["user"] = None if self.user is None else self.user.to_json(omit_unset)
         return out
-
 
 class v1PostUserSettingRequest(Printable):
 
@@ -9223,7 +8987,6 @@ class v1PostUserSettingRequest(Printable):
         }
         return out
 
-
 class v1PostWebhookResponse(Printable):
 
     def __init__(
@@ -9245,7 +9008,6 @@ class v1PostWebhookResponse(Printable):
             "webhook": self.webhook.to_json(omit_unset),
         }
         return out
-
 
 class v1PostWorkspaceRequest(Printable):
     agentUserGroup: "typing.Optional[v1AgentUserGroup]" = None
@@ -9285,7 +9047,6 @@ class v1PostWorkspaceRequest(Printable):
             out["checkpointStorageConfig"] = self.checkpointStorageConfig
         return out
 
-
 class v1PostWorkspaceResponse(Printable):
 
     def __init__(
@@ -9307,7 +9068,6 @@ class v1PostWorkspaceResponse(Printable):
             "workspace": self.workspace.to_json(omit_unset),
         }
         return out
-
 
 class v1PreviewHPSearchRequest(Printable):
     config: "typing.Optional[typing.Dict[str, typing.Any]]" = None
@@ -9343,7 +9103,6 @@ class v1PreviewHPSearchRequest(Printable):
             out["seed"] = self.seed
         return out
 
-
 class v1PreviewHPSearchResponse(Printable):
     simulation: "typing.Optional[v1ExperimentSimulation]" = None
 
@@ -9369,7 +9128,6 @@ class v1PreviewHPSearchResponse(Printable):
         if not omit_unset or "simulation" in vars(self):
             out["simulation"] = None if self.simulation is None else self.simulation.to_json(omit_unset)
         return out
-
 
 class v1Project(Printable):
     description: "typing.Optional[str]" = None
@@ -9461,7 +9219,6 @@ class v1Project(Printable):
             out["workspaceName"] = self.workspaceName
         return out
 
-
 class v1ProjectColumn(Printable):
     displayName: "typing.Optional[str]" = None
 
@@ -9499,7 +9256,6 @@ class v1ProjectColumn(Printable):
         if not omit_unset or "displayName" in vars(self):
             out["displayName"] = self.displayName
         return out
-
 
 class v1ProxyPortConfig(Printable):
     port: "typing.Optional[int]" = None
@@ -9551,7 +9307,6 @@ class v1ProxyPortConfig(Printable):
             out["unauthenticated"] = self.unauthenticated
         return out
 
-
 class v1PutProjectNotesRequest(Printable):
 
     def __init__(
@@ -9578,7 +9333,6 @@ class v1PutProjectNotesRequest(Printable):
         }
         return out
 
-
 class v1PutProjectNotesResponse(Printable):
 
     def __init__(
@@ -9600,7 +9354,6 @@ class v1PutProjectNotesResponse(Printable):
             "notes": [x.to_json(omit_unset) for x in self.notes],
         }
         return out
-
 
 class v1PutTemplateResponse(Printable):
     template: "typing.Optional[v1Template]" = None
@@ -9627,7 +9380,6 @@ class v1PutTemplateResponse(Printable):
         if not omit_unset or "template" in vars(self):
             out["template"] = None if self.template is None else self.template.to_json(omit_unset)
         return out
-
 
 class v1QueryTrialsRequest(Printable):
     limit: "typing.Optional[int]" = None
@@ -9675,7 +9427,6 @@ class v1QueryTrialsRequest(Printable):
             out["sorter"] = None if self.sorter is None else self.sorter.to_json(omit_unset)
         return out
 
-
 class v1QueryTrialsResponse(Printable):
 
     def __init__(
@@ -9697,7 +9448,6 @@ class v1QueryTrialsResponse(Printable):
             "trials": [x.to_json(omit_unset) for x in self.trials],
         }
         return out
-
 
 class v1QueueControl(Printable):
     aheadOf: "typing.Optional[str]" = None
@@ -9761,7 +9511,6 @@ class v1QueueControl(Printable):
             out["weight"] = None if self.weight is None else dump_float(self.weight)
         return out
 
-
 class v1QueueStats(Printable):
 
     def __init__(
@@ -9787,7 +9536,6 @@ class v1QueueStats(Printable):
             "scheduledCount": self.scheduledCount,
         }
         return out
-
 
 class v1RBACJob(Printable):
     full: "typing.Optional[v1Job]" = None
@@ -9823,7 +9571,6 @@ class v1RBACJob(Printable):
             out["limited"] = None if self.limited is None else self.limited.to_json(omit_unset)
         return out
 
-
 class v1RPQueueStat(Printable):
     aggregates: "typing.Optional[typing.Sequence[v1AggregateQueueStats]]" = None
 
@@ -9857,7 +9604,6 @@ class v1RPQueueStat(Printable):
         if not omit_unset or "aggregates" in vars(self):
             out["aggregates"] = None if self.aggregates is None else [x.to_json(omit_unset) for x in self.aggregates]
         return out
-
 
 class v1RemoveAssignmentsRequest(Printable):
     groupRoleAssignments: "typing.Optional[typing.Sequence[v1GroupRoleAssignment]]" = None
@@ -9893,7 +9639,6 @@ class v1RemoveAssignmentsRequest(Printable):
             out["userRoleAssignments"] = None if self.userRoleAssignments is None else [x.to_json(omit_unset) for x in self.userRoleAssignments]
         return out
 
-
 class v1RendezvousInfo(Printable):
 
     def __init__(
@@ -9924,7 +9669,6 @@ class v1RendezvousInfo(Printable):
         }
         return out
 
-
 class v1ReportTrialMetricsRequest(Printable):
 
     def __init__(
@@ -9950,7 +9694,6 @@ class v1ReportTrialMetricsRequest(Printable):
             "type": self.type,
         }
         return out
-
 
 class v1ResourceAllocationAggregatedEntry(Printable):
 
@@ -9998,7 +9741,6 @@ class v1ResourceAllocationAggregatedEntry(Printable):
         }
         return out
 
-
 class v1ResourceAllocationAggregatedResponse(Printable):
 
     def __init__(
@@ -10020,7 +9762,6 @@ class v1ResourceAllocationAggregatedResponse(Printable):
             "resourceEntries": [x.to_json(omit_unset) for x in self.resourceEntries],
         }
         return out
-
 
 class v1ResourceAllocationAggregationPeriod(DetEnum):
     UNSPECIFIED = "RESOURCE_ALLOCATION_AGGREGATION_PERIOD_UNSPECIFIED"
@@ -10117,7 +9858,6 @@ class v1ResourceAllocationRawEntry(Printable):
             out["username"] = self.username
         return out
 
-
 class v1ResourceAllocationRawResponse(Printable):
     resourceEntries: "typing.Optional[typing.Sequence[v1ResourceAllocationRawEntry]]" = None
 
@@ -10143,7 +9883,6 @@ class v1ResourceAllocationRawResponse(Printable):
         if not omit_unset or "resourceEntries" in vars(self):
             out["resourceEntries"] = None if self.resourceEntries is None else [x.to_json(omit_unset) for x in self.resourceEntries]
         return out
-
 
 class v1ResourcePool(Printable):
     accelerator: "typing.Optional[str]" = None
@@ -10311,7 +10050,6 @@ class v1ResourcePool(Printable):
             out["stats"] = None if self.stats is None else self.stats.to_json(omit_unset)
         return out
 
-
 class v1ResourcePoolAwsDetail(Printable):
     customTags: "typing.Optional[typing.Sequence[v1AwsCustomTag]]" = None
     instanceType: "typing.Optional[str]" = None
@@ -10422,7 +10160,6 @@ class v1ResourcePoolAwsDetail(Printable):
             out["subnetId"] = self.subnetId
         return out
 
-
 class v1ResourcePoolDetail(Printable):
     aws: "typing.Optional[v1ResourcePoolAwsDetail]" = None
     gcp: "typing.Optional[v1ResourcePoolGcpDetail]" = None
@@ -10464,7 +10201,6 @@ class v1ResourcePoolDetail(Printable):
         if not omit_unset or "priorityScheduler" in vars(self):
             out["priorityScheduler"] = None if self.priorityScheduler is None else self.priorityScheduler.to_json(omit_unset)
         return out
-
 
 class v1ResourcePoolGcpDetail(Printable):
     networkTags: "typing.Optional[typing.Sequence[str]]" = None
@@ -10564,7 +10300,6 @@ class v1ResourcePoolGcpDetail(Printable):
             out["subnetwork"] = self.subnetwork
         return out
 
-
 class v1ResourcePoolPrioritySchedulerDetail(Printable):
     k8Priorities: "typing.Optional[typing.Sequence[v1K8PriorityClass]]" = None
 
@@ -10598,7 +10333,6 @@ class v1ResourcePoolPrioritySchedulerDetail(Printable):
         if not omit_unset or "k8Priorities" in vars(self):
             out["k8Priorities"] = None if self.k8Priorities is None else [x.to_json(omit_unset) for x in self.k8Priorities]
         return out
-
 
 class v1ResourcePoolType(DetEnum):
     UNSPECIFIED = "RESOURCE_POOL_TYPE_UNSPECIFIED"
@@ -10649,7 +10383,6 @@ class v1ResourcesFailure(Printable):
             out["failureType"] = None if self.failureType is None else self.failureType.value
         return out
 
-
 class v1ResourcesStarted(Printable):
     addresses: "typing.Optional[typing.Sequence[v1Address]]" = None
     nativeResourcesId: "typing.Optional[str]" = None
@@ -10684,7 +10417,6 @@ class v1ResourcesStarted(Printable):
             out["nativeResourcesId"] = self.nativeResourcesId
         return out
 
-
 class v1ResourcesStopped(Printable):
     failure: "typing.Optional[v1ResourcesFailure]" = None
 
@@ -10710,7 +10442,6 @@ class v1ResourcesStopped(Printable):
         if not omit_unset or "failure" in vars(self):
             out["failure"] = None if self.failure is None else self.failure.to_json(omit_unset)
         return out
-
 
 class v1ResourcesSummary(Printable):
     agentDevices: "typing.Optional[typing.Dict[str, ResourcesSummaryDevices]]" = None
@@ -10786,7 +10517,6 @@ class v1ResourcesSummary(Printable):
             out["started"] = None if self.started is None else self.started.to_json(omit_unset)
         return out
 
-
 class v1Role(Printable):
     name: "typing.Optional[str]" = None
     permissions: "typing.Optional[typing.Sequence[v1Permission]]" = None
@@ -10833,7 +10563,6 @@ class v1Role(Printable):
             out["scopeTypeMask"] = None if self.scopeTypeMask is None else self.scopeTypeMask.to_json(omit_unset)
         return out
 
-
 class v1RoleAssignment(Printable):
     scopeCluster: "typing.Optional[bool]" = None
     scopeWorkspaceId: "typing.Optional[int]" = None
@@ -10872,7 +10601,6 @@ class v1RoleAssignment(Printable):
             out["scopeWorkspaceId"] = self.scopeWorkspaceId
         return out
 
-
 class v1RoleAssignmentSummary(Printable):
     scopeCluster: "typing.Optional[bool]" = None
     scopeWorkspaceIds: "typing.Optional[typing.Sequence[int]]" = None
@@ -10910,7 +10638,6 @@ class v1RoleAssignmentSummary(Printable):
         if not omit_unset or "scopeWorkspaceIds" in vars(self):
             out["scopeWorkspaceIds"] = self.scopeWorkspaceIds
         return out
-
 
 class v1RoleWithAssignments(Printable):
     groupRoleAssignments: "typing.Optional[typing.Sequence[v1GroupRoleAssignment]]" = None
@@ -10954,7 +10681,6 @@ class v1RoleWithAssignments(Printable):
             out["userRoleAssignments"] = None if self.userRoleAssignments is None else [x.to_json(omit_unset) for x in self.userRoleAssignments]
         return out
 
-
 class v1RunnableOperation(Printable):
     length: "typing.Optional[str]" = None
     type: "typing.Optional[v1RunnableType]" = None
@@ -10989,7 +10715,6 @@ class v1RunnableOperation(Printable):
             out["type"] = None if self.type is None else self.type.value
         return out
 
-
 class v1RunnableType(DetEnum):
     UNSPECIFIED = "RUNNABLE_TYPE_UNSPECIFIED"
     TRAIN = "RUNNABLE_TYPE_TRAIN"
@@ -11020,7 +10745,6 @@ class v1SSOProvider(Printable):
             "ssoUrl": self.ssoUrl,
         }
         return out
-
 
 class v1Scale(DetEnum):
     UNSPECIFIED = "SCALE_UNSPECIFIED"
@@ -11070,7 +10794,6 @@ class v1ScopeTypeMask(Printable):
             out["workspace"] = self.workspace
         return out
 
-
 class v1SearchExperimentExperiment(Printable):
     bestTrial: "typing.Optional[trialv1Trial]" = None
 
@@ -11101,7 +10824,6 @@ class v1SearchExperimentExperiment(Printable):
             out["bestTrial"] = None if self.bestTrial is None else self.bestTrial.to_json(omit_unset)
         return out
 
-
 class v1SearchExperimentsResponse(Printable):
 
     def __init__(
@@ -11127,7 +10849,6 @@ class v1SearchExperimentsResponse(Printable):
             "pagination": self.pagination.to_json(omit_unset),
         }
         return out
-
 
 class v1SearchRolesAssignableToScopeRequest(Printable):
     offset: "typing.Optional[int]" = None
@@ -11167,7 +10888,6 @@ class v1SearchRolesAssignableToScopeRequest(Printable):
             out["workspaceId"] = self.workspaceId
         return out
 
-
 class v1SearchRolesAssignableToScopeResponse(Printable):
     pagination: "typing.Optional[v1Pagination]" = None
     roles: "typing.Optional[typing.Sequence[v1Role]]" = None
@@ -11201,7 +10921,6 @@ class v1SearchRolesAssignableToScopeResponse(Printable):
         if not omit_unset or "roles" in vars(self):
             out["roles"] = None if self.roles is None else [x.to_json(omit_unset) for x in self.roles]
         return out
-
 
 class v1SearcherEvent(Printable):
     experimentInactive: "typing.Optional[v1ExperimentInactive]" = None
@@ -11281,7 +11000,6 @@ class v1SearcherEvent(Printable):
             out["validationCompleted"] = None if self.validationCompleted is None else self.validationCompleted.to_json(omit_unset)
         return out
 
-
 class v1SearcherOperation(Printable):
     closeTrial: "typing.Optional[v1CloseTrialOperation]" = None
     createTrial: "typing.Optional[v1CreateTrialOperation]" = None
@@ -11340,7 +11058,6 @@ class v1SearcherOperation(Printable):
             out["trialOperation"] = None if self.trialOperation is None else self.trialOperation.to_json(omit_unset)
         return out
 
-
 class v1SetCommandPriorityRequest(Printable):
     commandId: "typing.Optional[str]" = None
     priority: "typing.Optional[int]" = None
@@ -11375,7 +11092,6 @@ class v1SetCommandPriorityRequest(Printable):
             out["priority"] = self.priority
         return out
 
-
 class v1SetCommandPriorityResponse(Printable):
     command: "typing.Optional[v1Command]" = None
 
@@ -11401,7 +11117,6 @@ class v1SetCommandPriorityResponse(Printable):
         if not omit_unset or "command" in vars(self):
             out["command"] = None if self.command is None else self.command.to_json(omit_unset)
         return out
-
 
 class v1SetNotebookPriorityRequest(Printable):
     notebookId: "typing.Optional[str]" = None
@@ -11437,7 +11152,6 @@ class v1SetNotebookPriorityRequest(Printable):
             out["priority"] = self.priority
         return out
 
-
 class v1SetNotebookPriorityResponse(Printable):
     notebook: "typing.Optional[v1Notebook]" = None
 
@@ -11464,7 +11178,6 @@ class v1SetNotebookPriorityResponse(Printable):
             out["notebook"] = None if self.notebook is None else self.notebook.to_json(omit_unset)
         return out
 
-
 class v1SetSearcherProgressOperation(Printable):
     progress: "typing.Optional[float]" = None
 
@@ -11490,7 +11203,6 @@ class v1SetSearcherProgressOperation(Printable):
         if not omit_unset or "progress" in vars(self):
             out["progress"] = None if self.progress is None else dump_float(self.progress)
         return out
-
 
 class v1SetShellPriorityRequest(Printable):
     priority: "typing.Optional[int]" = None
@@ -11526,7 +11238,6 @@ class v1SetShellPriorityRequest(Printable):
             out["shellId"] = self.shellId
         return out
 
-
 class v1SetShellPriorityResponse(Printable):
     shell: "typing.Optional[v1Shell]" = None
 
@@ -11552,7 +11263,6 @@ class v1SetShellPriorityResponse(Printable):
         if not omit_unset or "shell" in vars(self):
             out["shell"] = None if self.shell is None else self.shell.to_json(omit_unset)
         return out
-
 
 class v1SetTensorboardPriorityRequest(Printable):
     priority: "typing.Optional[int]" = None
@@ -11588,7 +11298,6 @@ class v1SetTensorboardPriorityRequest(Printable):
             out["tensorboardId"] = self.tensorboardId
         return out
 
-
 class v1SetTensorboardPriorityResponse(Printable):
     tensorboard: "typing.Optional[v1Tensorboard]" = None
 
@@ -11615,7 +11324,6 @@ class v1SetTensorboardPriorityResponse(Printable):
             out["tensorboard"] = None if self.tensorboard is None else self.tensorboard.to_json(omit_unset)
         return out
 
-
 class v1SetUserPasswordResponse(Printable):
     user: "typing.Optional[v1User]" = None
 
@@ -11641,7 +11349,6 @@ class v1SetUserPasswordResponse(Printable):
         if not omit_unset or "user" in vars(self):
             out["user"] = None if self.user is None else self.user.to_json(omit_unset)
         return out
-
 
 class v1Shell(Printable):
     addresses: "typing.Optional[typing.Sequence[typing.Dict[str, typing.Any]]]" = None
@@ -11757,7 +11464,6 @@ class v1Shell(Printable):
             out["userId"] = self.userId
         return out
 
-
 class v1ShutDownOperation(Printable):
     cancel: "typing.Optional[bool]" = None
     failure: "typing.Optional[bool]" = None
@@ -11791,7 +11497,6 @@ class v1ShutDownOperation(Printable):
         if not omit_unset or "failure" in vars(self):
             out["failure"] = self.failure
         return out
-
 
 class v1Slot(Printable):
     container: "typing.Optional[v1Container]" = None
@@ -11851,7 +11556,6 @@ class v1Slot(Printable):
             out["id"] = self.id
         return out
 
-
 class v1SummarizeTrialResponse(Printable):
 
     def __init__(
@@ -11877,7 +11581,6 @@ class v1SummarizeTrialResponse(Printable):
             "trial": self.trial.to_json(omit_unset),
         }
         return out
-
 
 class v1Task(Printable):
     endTime: "typing.Optional[str]" = None
@@ -11920,7 +11623,6 @@ class v1Task(Printable):
         if not omit_unset or "endTime" in vars(self):
             out["endTime"] = self.endTime
         return out
-
 
 class v1TaskLogsFieldsResponse(Printable):
     agentIds: "typing.Optional[typing.Sequence[str]]" = None
@@ -11987,7 +11689,6 @@ class v1TaskLogsFieldsResponse(Printable):
         if not omit_unset or "stdtypes" in vars(self):
             out["stdtypes"] = self.stdtypes
         return out
-
 
 class v1TaskLogsResponse(Printable):
     agentId: "typing.Optional[str]" = None
@@ -12079,7 +11780,6 @@ class v1TaskLogsResponse(Printable):
             out["stdtype"] = self.stdtype
         return out
 
-
 class v1TaskType(DetEnum):
     UNSPECIFIED = "TASK_TYPE_UNSPECIFIED"
     TRIAL = "TASK_TYPE_TRIAL"
@@ -12118,7 +11818,6 @@ class v1Template(Printable):
             "workspaceId": self.workspaceId,
         }
         return out
-
 
 class v1Tensorboard(Printable):
     container: "typing.Optional[v1Container]" = None
@@ -12226,7 +11925,6 @@ class v1Tensorboard(Printable):
             out["userId"] = self.userId
         return out
 
-
 class v1TestWebhookResponse(Printable):
 
     def __init__(
@@ -12248,7 +11946,6 @@ class v1TestWebhookResponse(Printable):
             "completed": self.completed,
         }
         return out
-
 
 class v1TimestampFieldFilter(Printable):
     gt: "typing.Optional[str]" = None
@@ -12300,7 +11997,6 @@ class v1TimestampFieldFilter(Printable):
             out["lte"] = self.lte
         return out
 
-
 class v1TrialClosed(Printable):
 
     def __init__(
@@ -12322,7 +12018,6 @@ class v1TrialClosed(Printable):
             "requestId": self.requestId,
         }
         return out
-
 
 class v1TrialCreated(Printable):
 
@@ -12346,7 +12041,6 @@ class v1TrialCreated(Printable):
         }
         return out
 
-
 class v1TrialEarlyExit(Printable):
 
     def __init__(
@@ -12368,7 +12062,6 @@ class v1TrialEarlyExit(Printable):
             "reason": self.reason.value,
         }
         return out
-
 
 class v1TrialEarlyExitExitedReason(DetEnum):
     UNSPECIFIED = "EXITED_REASON_UNSPECIFIED"
@@ -12400,7 +12093,6 @@ class v1TrialExitedEarly(Printable):
             "requestId": self.requestId,
         }
         return out
-
 
 class v1TrialExitedEarlyExitedReason(DetEnum):
     UNSPECIFIED = "EXITED_REASON_UNSPECIFIED"
@@ -12554,7 +12246,6 @@ class v1TrialFilters(Printable):
             out["workspaceIds"] = self.workspaceIds
         return out
 
-
 class v1TrialLogsFieldsResponse(Printable):
     agentIds: "typing.Optional[typing.Sequence[str]]" = None
     containerIds: "typing.Optional[typing.Sequence[str]]" = None
@@ -12612,7 +12303,6 @@ class v1TrialLogsFieldsResponse(Printable):
         if not omit_unset or "stdtypes" in vars(self):
             out["stdtypes"] = self.stdtypes
         return out
-
 
 class v1TrialLogsResponse(Printable):
     agentId: "typing.Optional[str]" = None
@@ -12700,7 +12390,6 @@ class v1TrialLogsResponse(Printable):
             out["stdtype"] = self.stdtype
         return out
 
-
 class v1TrialMetrics(Printable):
 
     def __init__(
@@ -12735,7 +12424,6 @@ class v1TrialMetrics(Printable):
         }
         return out
 
-
 class v1TrialOperation(Printable):
     validateAfter: "typing.Optional[v1ValidateAfterOperation]" = None
 
@@ -12761,7 +12449,6 @@ class v1TrialOperation(Printable):
         if not omit_unset or "validateAfter" in vars(self):
             out["validateAfter"] = None if self.validateAfter is None else self.validateAfter.to_json(omit_unset)
         return out
-
 
 class v1TrialPatch(Printable):
     addTag: "typing.Optional[typing.Sequence[v1TrialTag]]" = None
@@ -12796,7 +12483,6 @@ class v1TrialPatch(Printable):
         if not omit_unset or "removeTag" in vars(self):
             out["removeTag"] = None if self.removeTag is None else [x.to_json(omit_unset) for x in self.removeTag]
         return out
-
 
 class v1TrialProfilerMetricLabels(Printable):
     agentId: "typing.Optional[str]" = None
@@ -12848,7 +12534,6 @@ class v1TrialProfilerMetricLabels(Printable):
             out["metricType"] = None if self.metricType is None else self.metricType.value
         return out
 
-
 class v1TrialProfilerMetricsBatch(Printable):
 
     def __init__(
@@ -12883,7 +12568,6 @@ class v1TrialProfilerMetricsBatch(Printable):
         }
         return out
 
-
 class v1TrialProgress(Printable):
 
     def __init__(
@@ -12910,7 +12594,6 @@ class v1TrialProgress(Printable):
         }
         return out
 
-
 class v1TrialRunnerMetadata(Printable):
 
     def __init__(
@@ -12932,7 +12615,6 @@ class v1TrialRunnerMetadata(Printable):
             "state": self.state,
         }
         return out
-
 
 class v1TrialSimulation(Printable):
     occurrences: "typing.Optional[int]" = None
@@ -12968,7 +12650,6 @@ class v1TrialSimulation(Printable):
             out["operations"] = None if self.operations is None else [x.to_json(omit_unset) for x in self.operations]
         return out
 
-
 class v1TrialSorter(Printable):
     orderBy: "typing.Optional[v1OrderBy]" = None
 
@@ -13003,7 +12684,6 @@ class v1TrialSorter(Printable):
             out["orderBy"] = None if self.orderBy is None else self.orderBy.value
         return out
 
-
 class v1TrialTag(Printable):
 
     def __init__(
@@ -13025,7 +12705,6 @@ class v1TrialTag(Printable):
             "key": self.key,
         }
         return out
-
 
 class v1TrialsCollection(Printable):
 
@@ -13069,7 +12748,6 @@ class v1TrialsCollection(Printable):
         }
         return out
 
-
 class v1TrialsSampleResponse(Printable):
 
     def __init__(
@@ -13099,7 +12777,6 @@ class v1TrialsSampleResponse(Printable):
             "trials": [x.to_json(omit_unset) for x in self.trials],
         }
         return out
-
 
 class v1TrialsSampleResponseTrial(Printable):
 
@@ -13131,7 +12808,6 @@ class v1TrialsSampleResponseTrial(Printable):
         }
         return out
 
-
 class v1TrialsSnapshotResponse(Printable):
 
     def __init__(
@@ -13153,7 +12829,6 @@ class v1TrialsSnapshotResponse(Printable):
             "trials": [x.to_json(omit_unset) for x in self.trials],
         }
         return out
-
 
 class v1TrialsSnapshotResponseTrial(Printable):
 
@@ -13188,7 +12863,6 @@ class v1TrialsSnapshotResponseTrial(Printable):
             "trialId": self.trialId,
         }
         return out
-
 
 class v1Trigger(Printable):
     condition: "typing.Optional[typing.Dict[str, typing.Any]]" = None
@@ -13240,7 +12914,6 @@ class v1Trigger(Printable):
             out["webhookId"] = self.webhookId
         return out
 
-
 class v1TriggerType(DetEnum):
     UNSPECIFIED = "TRIGGER_TYPE_UNSPECIFIED"
     EXPERIMENT_STATE_CHANGE = "TRIGGER_TYPE_EXPERIMENT_STATE_CHANGE"
@@ -13276,7 +12949,6 @@ class v1UnarchiveExperimentsRequest(Printable):
             out["filters"] = None if self.filters is None else self.filters.to_json(omit_unset)
         return out
 
-
 class v1UnarchiveExperimentsResponse(Printable):
 
     def __init__(
@@ -13298,7 +12970,6 @@ class v1UnarchiveExperimentsResponse(Printable):
             "results": [x.to_json(omit_unset) for x in self.results],
         }
         return out
-
 
 class v1UpdateGroupRequest(Printable):
     addUsers: "typing.Optional[typing.Sequence[int]]" = None
@@ -13346,7 +13017,6 @@ class v1UpdateGroupRequest(Printable):
             out["removeUsers"] = self.removeUsers
         return out
 
-
 class v1UpdateGroupResponse(Printable):
 
     def __init__(
@@ -13369,7 +13039,6 @@ class v1UpdateGroupResponse(Printable):
         }
         return out
 
-
 class v1UpdateJobQueueRequest(Printable):
 
     def __init__(
@@ -13391,7 +13060,6 @@ class v1UpdateJobQueueRequest(Printable):
             "updates": [x.to_json(omit_unset) for x in self.updates],
         }
         return out
-
 
 class v1UpdateTrialTagsRequest(Printable):
     filters: "typing.Optional[v1TrialFilters]" = None
@@ -13431,7 +13099,6 @@ class v1UpdateTrialTagsRequest(Printable):
             out["trial"] = None if self.trial is None else self.trial.to_json(omit_unset)
         return out
 
-
 class v1UpdateTrialTagsResponse(Printable):
     rowsAffected: "typing.Optional[int]" = None
 
@@ -13457,7 +13124,6 @@ class v1UpdateTrialTagsResponse(Printable):
         if not omit_unset or "rowsAffected" in vars(self):
             out["rowsAffected"] = self.rowsAffected
         return out
-
 
 class v1User(Printable):
     agentUserGroup: "typing.Optional[v1AgentUserGroup]" = None
@@ -13529,7 +13195,6 @@ class v1User(Printable):
             out["remote"] = self.remote
         return out
 
-
 class v1UserRoleAssignment(Printable):
 
     def __init__(
@@ -13555,7 +13220,6 @@ class v1UserRoleAssignment(Printable):
             "userId": self.userId,
         }
         return out
-
 
 class v1UserWebSetting(Printable):
     storagePath: "typing.Optional[str]" = None
@@ -13595,7 +13259,6 @@ class v1UserWebSetting(Printable):
             out["value"] = self.value
         return out
 
-
 class v1ValidateAfterOperation(Printable):
     length: "typing.Optional[str]" = None
     requestId: "typing.Optional[str]" = None
@@ -13630,7 +13293,6 @@ class v1ValidateAfterOperation(Printable):
             out["requestId"] = self.requestId
         return out
 
-
 class v1ValidationCompleted(Printable):
 
     def __init__(
@@ -13661,7 +13323,6 @@ class v1ValidationCompleted(Printable):
         }
         return out
 
-
 class v1ValidationHistoryEntry(Printable):
 
     def __init__(
@@ -13691,7 +13352,6 @@ class v1ValidationHistoryEntry(Printable):
             "trialId": self.trialId,
         }
         return out
-
 
 class v1Webhook(Printable):
     id: "typing.Optional[int]" = None
@@ -13734,7 +13394,6 @@ class v1Webhook(Printable):
         if not omit_unset or "triggers" in vars(self):
             out["triggers"] = None if self.triggers is None else [x.to_json(omit_unset) for x in self.triggers]
         return out
-
 
 class v1WebhookType(DetEnum):
     UNSPECIFIED = "WEBHOOK_TYPE_UNSPECIFIED"
@@ -13782,7 +13441,6 @@ class v1WorkloadContainer(Printable):
         if not omit_unset or "validation" in vars(self):
             out["validation"] = None if self.validation is None else self.validation.to_json(omit_unset)
         return out
-
 
 class v1Workspace(Printable):
     agentUserGroup: "typing.Optional[v1AgentUserGroup]" = None
@@ -13869,7 +13527,6 @@ class v1Workspace(Printable):
         if not omit_unset or "pinnedAt" in vars(self):
             out["pinnedAt"] = self.pinnedAt
         return out
-
 
 class v1WorkspaceState(DetEnum):
     UNSPECIFIED = "WORKSPACE_STATE_UNSPECIFIED"

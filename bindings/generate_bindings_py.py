@@ -441,7 +441,7 @@ class DetEnum(enum.Enum):
 class Printable:
     # A mixin to provide a __str__ method for classes with attributes.
     def __str__(self) -> str:
-        allowed_types = (str, int, float, bool)
+        allowed_types = (str, int, float, bool, DetEnum)
         attrs = []
         for k, v in self.__dict__.items():
             if v is None: continue
