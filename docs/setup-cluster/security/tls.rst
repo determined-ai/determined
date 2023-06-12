@@ -80,31 +80,22 @@ be made without confirmation.
  Let's Encrypt TLS Certificate Setup
 *************************************
 
-This section describes how to set up the Let's Encrypt TLS certificate.
-
-Installing a Let's Encrypt TLS certificate requires an ACME protocol client ``certbot`` and one of
-the following domain token verification methods:
-
--  HTTP-01, or
--  DNS-01
+This section describes how to set up a TLS certificate from `Let's Encrypt
+<https://letsencrypt.org>`__ using `Certbot <https://certbot.eff.org/>`__ and either the HTTP-01 or
+the DNS-01 challenge type.
 
 .. note::
 
-   For more information about the domain token verification methods, visit `Let's Encrypt
-   documentation <https://letsencrypt.org/docs/challenge-types/>`_.
+   For more information about the challenge types, visit the `Let's Encrypt documentation
+   <https://letsencrypt.org/docs/challenge-types/>`_.
 
-Prerequisites
-=============
-
-You must have ``snapd`` installed to use ``certbot``.
-
-Installing Snapd and Certbot
+Installing snapd and Certbot
 ============================
 
-This section provides information about installing ``snapd`` and ``certbot`` and adding EPEL to RHEL
-8 or CentOS 8.
+This section provides information about installing snapd and Certbot and adding EPEL to RHEL 8 or
+CentOS 8.
 
-The following websites provide more information about installing ``snapd`` and ``certbot``:
+The following websites provide more information about installing snapd and Certbot:
 
 -  `Installing snap on Red Hat Enterprise Linux (RHEL)
    <https://snapcraft.io/docs/installing-snap-on-red-hat>`_
@@ -124,17 +115,17 @@ To add the EPEL repository to a RHEL 8 system, run the following commands:
 Adding EPEL to CentOS 8
 -----------------------
 
-To add the EPEL repository to a CentOS 8/9 Stream system, run the following commands:
+To add the EPEL repository to a CentOS Stream 8/9 system, run the following commands:
 
 .. code:: bash
 
    sudo dnf install epel-release
    sudo dnf upgrade
 
-Installing Snapd Software
--------------------------
+Installing snapd
+----------------
 
-To install ``snapd``, run the following commands:
+To install snapd, run the following commands:
 
 .. code:: bash
 
@@ -142,20 +133,16 @@ To install ``snapd``, run the following commands:
    sudo systemctl enable --now snapd.socket
    sudo ln -s /var/lib/snapd/snap /snap
 
-.. note::
+Installing Certbot
+------------------
 
-   On Debian/Ubuntu, ``snapd`` is usually already installed.
-
-Installing Certbot Software
----------------------------
-
-To install ``certbot``, run the following command:
+To install Certbot on RHEL or CentOS, run the following command:
 
 .. code:: bash
 
    sudo snap install --classic certbot
 
-To install ``certbot`` on Debian/Ubuntu, run the following command:
+To install Certbot on Debian/Ubuntu, run the following command:
 
 .. code:: bash
 
@@ -164,22 +151,22 @@ To install ``certbot`` on Debian/Ubuntu, run the following command:
 Certbot Certificate Request
 ===========================
 
-To complete the ``certbot`` certificate request, execute the following steps as root user:
+To complete the Certbot certificate request, execute the following steps as the root user:
 
--  Account registration
--  Manual certificate request
--  MLDE Master configuration to point to the certificate
+-  Register a Let's Encrypt account
+-  Perform a certificate request
+-  Update the Determined master configuration to use the certificate
 
 The steps are described in detail in the following sections.
 
-Account Registration
---------------------
+Register a Let's Encrypt Account
+--------------------------------
 
-To register the account on Let's Encrypt, run the following command:
+To register an account on Let's Encrypt, run the following command:
 
 .. code:: bash
 
-   # certbot register
+   certbot register
 
 Certbot responds letting you know the account is registered.
 
@@ -187,29 +174,37 @@ To check the account status, run the following command:
 
 .. code:: bash
 
-   # certbot show_account
+   certbot show_account
 
 Certbot responds with the account details including the account URL, thumbprint, and email contact.
 
+Perform a Certificate Request
+-----------------------------
+
+Certificate Creation
+^^^^^^^^^^^^^^^^^^^^
+
+If port 80 of the Determined Master is accessible, you can use a simple `HTTP-01 challenge
+<https://letsencrypt.org/docs/challenge-types/#http-01-challenge>`_ type.
+
 Certificate Creation When the Determined Master is Behind a VPN
----------------------------------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 This section provides information about requesting the Let's Encrypt certificate in environments
-that do not provide inbound access from Let’s Encrypt to port Determined Master server port 80
-(e.g., when Determined Master is behind a VPN).
+that do not provide inbound access from Let's Encrypt to port 80 of the Determined master (e.g.,
+when the Determined master is behind a VPN).
 
-Request the Let's Encrypt Certificate using the DNS-01 Challenge
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Request a Certificate Using the DNS-01 Challenge
+""""""""""""""""""""""""""""""""""""""""""""""""
 
-Run the following command to request the Let's Encrypt certificate using the DNS-01 challenge domain
-verification:
+Run the following command to request a Let's Encrypt certificate using the DNS-01 challenge type:
 
 .. code:: bash
 
-   # certbot certonly --manual --preferred-challenges dns -d <domain>
+   certbot certonly --manual --preferred-challenges dns -d <domain>
 
-Certbot responds and lets you know that before continuing you should verify the TXT record has been
-deployed:
+Certbot responds with a domain token and lets you know that before continuing you should verify that
+the TXT record has been deployed:
 
 .. code::
 
@@ -235,12 +230,13 @@ deployed:
 
 .. caution::
 
-   DO NOT PRESS ENTER BEFORE SETTING UP THE DNS RECORD
+   Do not press **Enter** before setting up the DNS record.
 
-Set Up the DNS Record Before Pressing ``ENTER``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Set Up the DNS Record
+"""""""""""""""""""""
 
-DNS TXT Record example
+In the DNS configuration for the domain the Determined master is using, create a record with the
+following values:
 
 +---------------------------------+-------------+-----+-------------------------------------------------+
 | FQDN                            | RECORD TYPE | TTL | Value                                           |
@@ -256,66 +252,82 @@ Ensure the ``_acme-challenge.<domain>.`` DNS record has been propagated using on
 
 .. note::
 
-   You may need to install bind-utils to run ``nslookup`` using the following command:
+   You may need to install the ``nslookup`` utility.
+
+   On CentOS:
 
    .. code:: bash
 
       yum install bind-utils
 
-Press ``ENTER``
-^^^^^^^^^^^^^^^
+   On Debian/Ubuntu:
+
+   .. code:: bash
+
+      apt install dnsutils
+
+Complete the Certificate Request
+""""""""""""""""""""""""""""""""
 
 Once you have set up the DNS record, press **Enter**.
 
-Certbot responds, letting you know it has received the certificate. Certbot provides the certificate
-location, key and the certificate expiration date.
+Certbot lets you know it has received the certificate and provides the certificate location, key
+location, and certificate expiration date.
 
-.. Important::
+Update the Determined Master TLS Configuration
+----------------------------------------------
 
-   To renew the certificate repeat the certificate creation steps.
+This section describes how to update the Determined master configuration to use the TLS certificate
+provided by the Let's Encrypt service.
 
-Determined Master TLS Configuration
-===================================
-
-This section describes how to use the TLS certs provided by the Let’s Encrypt service.
-
-First, stop the Determined Master with the following command:
+First, stop the Determined master using the appropriate command. For example, if you installed
+Determined using Linux packages, run the following command:
 
 .. code:: bash
 
    systemctl stop determined-master
 
-Then, change the security branch of the ``master.yaml`` by adding the following configuration:
+Then, change the security section of the master configuration file by adding the following lines:
 
-.. code:: bash
+.. code:: yaml
 
    security:
+      tls:
+         cert: /etc/letsencrypt/live/<domain>/fullchain.pem
+         key: /etc/letsencrypt/live/<domain>/privkey.pem
 
-   tls:
+If appropriate, change the master port:
 
-      cert: /etc/letsencrypt/live/<domain>/fullchain.pem
+.. code:: yaml
 
-      key: /etc/letsencrypt/live/<domain>/privkey.pem
-
-Eventually, change the master port:
-
-.. code:: bash
-
-   # master port
    port: 443
 
-.. Important::
+.. important::
 
    You'll need to configure the agents to reach this port.
 
-Finally, start the Determined Master with the following command:
+Finally, start the Determined master using the appropriate command. For example, if you installed
+Determined using Linux packages, run the following command:
 
 .. code:: bash
 
    systemctl start determined-master
 
-After a certificate renewal, you must restart the Determined Master using the following command:
+Certbot Certificate Renewal
+===========================
+
+To renew the certificate, repeat the certificate creation steps, and restart the Determined master
+using the appropriate command. For example, if you installed Determined using Linux packages, run
+the following command:
 
 .. code:: bash
 
    systemctl restart determined-master
+
+.. note::
+
+   Most Certbot installations come with automatic renewal. Visit `Setting up automated renewals
+   <https://eff-certbot.readthedocs.io/en/stable/using.html#automated-renewals>`__ to find out more.
+   To learn how to test automatic renewal, visit the Certbot instructions (`CentOS
+   <https://certbot.eff.org/instructions?ws=other&os=centosrhel8>`__ or `Debian/Ubuntu
+   <https://certbot.eff.org/instructions?ws=apache&os=ubuntufocal>`__).
