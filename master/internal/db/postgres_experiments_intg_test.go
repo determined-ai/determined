@@ -251,6 +251,18 @@ func TestMetricNames(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, []string{"a", "b", "d"}, actualNames[model.TrainingMetricType])
 	require.Equal(t, []string{"b", "c", "f", "val_loss"}, actualNames[model.ValidationMetricType])
+
+	exp = RequireMockExperiment(t, db, user)
+	trial1 = RequireMockTrial(t, db, exp).ID
+	addTestTrialMetrics(ctx, t, db, trial1, `{"inference": [{"a":1}, {"b":2}], "golabi": [{"b":2, "c":3}]}`)
+	trial2 = RequireMockTrial(t, db, exp).ID
+	addTestTrialMetrics(ctx, t, db, trial2, `{"inference": [{"b":1}, {"d":2}], "golabi": [{"f":"test"}]}`)
+
+	actualNames, err = db.MetricNames(ctx, []int{exp.ID})
+	require.NoError(t, err)
+	require.Equal(t, []string{"a", "b", "d"}, actualNames[model.MetricType("inference")])
+	require.Equal(t, []string{"b", "c", "f"}, actualNames[model.MetricType("golabi")])
+
 }
 
 func TestTopTrialsByMetric(t *testing.T) {
