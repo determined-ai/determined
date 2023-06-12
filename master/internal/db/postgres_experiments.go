@@ -178,19 +178,24 @@ type batchesWrapper struct {
 }
 
 func (db *PgDB) metricBatches(
-	experimentID int, metricName string, startTime time.Time, table string, metricField string,
+	experimentID int, metricName string, startTime time.Time, metricType model.MetricType,
 ) (
 	batches []int32, endTime time.Time, err error,
 ) {
 	var rows []*batchesWrapper
+	pType := customMetricTypeToPartitionType(metricType)
+	JSONKey := model.TrialMetricsJSONPath(metricType == model.ValidationMetricType)
+
 	query := fmt.Sprintf(`
 SELECT t.total_batches AS batches_processed,
   max(t.end_time) as end_time
-FROM trials t INNER JOIN %s s ON t.id=s.trial_id
+FROM trials t INNER JOIN metrics s ON t.id=s.trial_id
 WHERE t.experiment_id=$1
+  AND archived = false
+  AND partition_type = '%s'
   AND s.metrics->'%s' ? $2
   AND s.end_time > $3
-GROUP BY batches_processed;`, table, metricField)
+GROUP BY batches_processed;`, pType, JSONKey)
 	err = db.queryRows(query, &rows, experimentID, metricName, startTime)
 	if err != nil {
 		return nil, endTime, errors.Wrapf(err, "error querying DB for metric batches")
@@ -210,7 +215,7 @@ GROUP BY batches_processed;`, table, metricField)
 func (db *PgDB) TrainingMetricBatches(experimentID int, metricName string, startTime time.Time) (
 	batches []int32, endTime time.Time, err error,
 ) {
-	return db.metricBatches(experimentID, metricName, startTime, "steps", "avg_metrics")
+	return db.metricBatches(experimentID, metricName, startTime, model.TrainingMetricType)
 }
 
 // ValidationMetricBatches returns the milestones (in batches processed) at which a specific
@@ -218,7 +223,7 @@ func (db *PgDB) TrainingMetricBatches(experimentID int, metricName string, start
 func (db *PgDB) ValidationMetricBatches(experimentID int, metricName string, startTime time.Time) (
 	batches []int32, endTime time.Time, err error,
 ) {
-	return db.metricBatches(experimentID, metricName, startTime, "validations", "validation_metrics")
+	return db.metricBatches(experimentID, metricName, startTime, model.ValidationMetricType)
 }
 
 type snapshotWrapper struct {
