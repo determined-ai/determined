@@ -10676,6 +10676,18 @@ export interface V1Workspace {
      * @memberof V1Workspace
      */
     pinnedAt?: Date;
+    /**
+     * Optional default compute pool.
+     * @type {string}
+     * @memberof V1Workspace
+     */
+    defaultComputePool?: string;
+    /**
+     * Optional aux compute pool.
+     * @type {string}
+     * @memberof V1Workspace
+     */
+    defaultAuxPool?: string;
 }
 /**
  * WorkspaceState is used to track progress during a deletion.   - WORKSPACE_STATE_UNSPECIFIED: Object deletion is not in progress.  - WORKSPACE_STATE_DELETING: The object is being deleted.  - WORKSPACE_STATE_DELETE_FAILED: The object failed to delete.  - WORKSPACE_STATE_DELETED: The object finished deleting.

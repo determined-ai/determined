@@ -13585,6 +13585,8 @@ class v1WorkloadContainer:
 class v1Workspace:
     agentUserGroup: "typing.Optional[v1AgentUserGroup]" = None
     checkpointStorageConfig: "typing.Optional[typing.Dict[str, typing.Any]]" = None
+    defaultAuxPool: "typing.Optional[str]" = None
+    defaultComputePool: "typing.Optional[str]" = None
     pinnedAt: "typing.Optional[str]" = None
 
     def __init__(
@@ -13603,6 +13605,8 @@ class v1Workspace:
         username: str,
         agentUserGroup: "typing.Union[v1AgentUserGroup, None, Unset]" = _unset,
         checkpointStorageConfig: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
+        defaultAuxPool: "typing.Union[str, None, Unset]" = _unset,
+        defaultComputePool: "typing.Union[str, None, Unset]" = _unset,
         pinnedAt: "typing.Union[str, None, Unset]" = _unset,
     ):
         self.archived = archived
@@ -13620,6 +13624,10 @@ class v1Workspace:
             self.agentUserGroup = agentUserGroup
         if not isinstance(checkpointStorageConfig, Unset):
             self.checkpointStorageConfig = checkpointStorageConfig
+        if not isinstance(defaultAuxPool, Unset):
+            self.defaultAuxPool = defaultAuxPool
+        if not isinstance(defaultComputePool, Unset):
+            self.defaultComputePool = defaultComputePool
         if not isinstance(pinnedAt, Unset):
             self.pinnedAt = pinnedAt
 
@@ -13642,6 +13650,10 @@ class v1Workspace:
             kwargs["agentUserGroup"] = v1AgentUserGroup.from_json(obj["agentUserGroup"]) if obj["agentUserGroup"] is not None else None
         if "checkpointStorageConfig" in obj:
             kwargs["checkpointStorageConfig"] = obj["checkpointStorageConfig"]
+        if "defaultAuxPool" in obj:
+            kwargs["defaultAuxPool"] = obj["defaultAuxPool"]
+        if "defaultComputePool" in obj:
+            kwargs["defaultComputePool"] = obj["defaultComputePool"]
         if "pinnedAt" in obj:
             kwargs["pinnedAt"] = obj["pinnedAt"]
         return cls(**kwargs)
@@ -13664,6 +13676,10 @@ class v1Workspace:
             out["agentUserGroup"] = None if self.agentUserGroup is None else self.agentUserGroup.to_json(omit_unset)
         if not omit_unset or "checkpointStorageConfig" in vars(self):
             out["checkpointStorageConfig"] = self.checkpointStorageConfig
+        if not omit_unset or "defaultAuxPool" in vars(self):
+            out["defaultAuxPool"] = self.defaultAuxPool
+        if not omit_unset or "defaultComputePool" in vars(self):
+            out["defaultComputePool"] = self.defaultComputePool
         if not omit_unset or "pinnedAt" in vars(self):
             out["pinnedAt"] = self.pinnedAt
         return out
