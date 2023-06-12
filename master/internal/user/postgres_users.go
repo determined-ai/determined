@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"time"
 
 	"github.com/o1egl/paseto"
@@ -83,7 +84,7 @@ func AddUserExec(user *model.User) error {
 		Name    string       `bun:"group_name,notnull"  json:"name"`
 		OwnerID model.UserID `bun:"user_id,nullzero"    json:"userId,omitempty"`
 	}{
-		Name:    user.Username + db.PersonalGroupPostfix,
+		Name:    fmt.Sprintf("%d%s", user.ID, db.PersonalGroupPostfix),
 		OwnerID: user.ID,
 	}
 	if _, err = tx.NewInsert().Model(&personalGroup).Exec(ctx); err != nil {
