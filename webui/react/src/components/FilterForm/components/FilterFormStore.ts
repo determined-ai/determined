@@ -42,9 +42,11 @@ const getInitField = (): FormField => ({
 
 export class FilterFormStore {
   #formset: WritableObservable<FilterFormSet> = observable(structuredClone(INIT_FORMSET));
+  #loaded: WritableObservable<boolean> = observable(false);
 
   public init(data?: Readonly<FilterFormSet>): void {
     this.#formset.update(() => structuredClone(data ? data : INIT_FORMSET));
+    this.#loaded.update(() => true);
   }
 
   public get formset(): Observable<Readonly<FilterFormSet>> {
@@ -73,6 +75,10 @@ export class FilterFormStore {
       return count;
     };
     return this.#formset.select((formset) => countFields(formset.filterGroup));
+  }
+
+  public get isLoaded(): Observable<Readonly<boolean>> {
+    return this.#loaded.readOnly();
   }
 
   #isValid(form: Readonly<FormGroup | FormField>): boolean {

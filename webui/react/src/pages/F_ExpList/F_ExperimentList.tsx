@@ -99,6 +99,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const [isOpenFilter, setIsOpenFilter] = useState<boolean>(false);
   const filtersString = useObservable(formStore.asJsonString);
   const rootFilterChildren = useObservable(formStore.formset).filterGroup.children;
+  const filtersLoaded = useObservable(formStore.isLoaded);
 
   const onIsOpenFilterChange = useCallback((newOpen: boolean) => {
     setIsOpenFilter(newOpen);
@@ -127,6 +128,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   useEffect(() => {
     // useSettings load the default value first, and then load the data from DB
     // use this useEffect to re-init the correct useSettings value when settings.filterset is changed
+    if (isLoadingSettings) return;
     const formSetValidation = IOFilterFormSet.decode(JSON.parse(settings.filterset));
     if (isLeft(formSetValidation)) {
       handleError(formSetValidation.left, {
@@ -136,7 +138,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
       const formset = formSetValidation.right;
       formStore.init(formset);
     }
-  }, [settings.filterset]);
+  }, [settings.filterset, isLoadingSettings]);
 
   const [selectedExperimentIds, setSelectedExperimentIds] = useState<number[]>([]);
   const [excludedExperimentIds, setExcludedExperimentIds] = useState<Set<number>>(
@@ -196,7 +198,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   );
 
   const fetchExperiments = useCallback(async (): Promise<void> => {
-    if (isLoadingSettings) return;
+    if (!filtersLoaded) return;
     try {
       const tableOffset = Math.max((page - 0.5) * PAGE_SIZE, 0);
       const response = await searchExperiments(
@@ -244,7 +246,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   }, [
     page,
     experimentFilters,
-    isLoadingSettings,
+    filtersLoaded,
     isPagedView,
     canceler.signal,
     filtersString,
