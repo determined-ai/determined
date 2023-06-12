@@ -38,8 +38,12 @@ html[data-theme="dark"] {
 .version.centered i {
   display: flex;
   align-items: center;
-  justify-content: space-evenly;
+  justify-content: center;
   padding: 0 24px;
+}
+
+.version.centered .version-switcher__container {
+  margin-left: 8px;
 }
 
 .bd-header-article {

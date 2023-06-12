@@ -1,2 +1,4 @@
-<div class="version centered"><i>version {%- include 'version-switcher.html' -%}</i></div>
-
+<div class="version centered"><i id="versions">version {%- include 'version-switcher.html' -%}</i></div>
+<script>
+window.location.host.includes("localhost") && (document.getElementById("versions").innerHTML = "version  {{ version }}");
+</script>
