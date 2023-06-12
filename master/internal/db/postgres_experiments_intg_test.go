@@ -226,10 +226,10 @@ func TestMetricNames(t *testing.T) {
 	db := MustResolveTestPostgres(t)
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 
-	actualTrain, actualVal, err := MetricNames(ctx, []int{-1})
+	actualNames, err := db.MetricNames(ctx, []int{-1})
 	require.NoError(t, err)
-	require.Len(t, actualTrain, 0)
-	require.Len(t, actualVal, 0)
+	require.Len(t, actualNames[model.TrainingMetricType], 0)
+	require.Len(t, actualNames[model.ValidationMetricType], 0)
 
 	user := RequireMockUser(t, db)
 
@@ -239,18 +239,18 @@ func TestMetricNames(t *testing.T) {
 	trial2 := RequireMockTrial(t, db, exp).ID
 	addMetrics(ctx, t, db, trial2, `[{"b":1}, {"d":2}]`, `[{"f":"test"}]`, false)
 
-	actualTrain, actualVal, err = MetricNames(ctx, []int{exp.ID})
+	actualNames, err = db.MetricNames(ctx, []int{exp.ID})
 	require.NoError(t, err)
-	require.Equal(t, []string{"a", "b", "d"}, actualTrain)
-	require.Equal(t, []string{"b", "c", "f"}, actualVal)
+	require.Equal(t, []string{"a", "b", "d"}, actualNames[model.TrainingMetricType])
+	require.Equal(t, []string{"b", "c", "f"}, actualNames[model.ValidationMetricType])
 
 	addMetricCustomTime(ctx, t, trial2, time.Now())
 	runSummaryMigration(t)
 
-	actualTrain, actualVal, err = MetricNames(ctx, []int{exp.ID})
+	actualNames, err = db.MetricNames(ctx, []int{exp.ID})
 	require.NoError(t, err)
-	require.Equal(t, []string{"a", "b", "d"}, actualTrain)
-	require.Equal(t, []string{"b", "c", "f", "val_loss"}, actualVal)
+	require.Equal(t, []string{"a", "b", "d"}, actualNames[model.TrainingMetricType])
+	require.Equal(t, []string{"b", "c", "f", "val_loss"}, actualNames[model.ValidationMetricType])
 }
 
 func TestTopTrialsByMetric(t *testing.T) {
