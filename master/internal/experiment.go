@@ -125,7 +125,6 @@ func newExperiment(
 	expModel *model.Experiment,
 	activeConfig expconf.ExperimentConfig,
 	taskSpec *tasks.TaskSpec,
-	restored bool,
 ) (*experiment, []command.LaunchWarning, error) {
 	resources := activeConfig.Resources()
 	poolName, err := m.rm.ResolveResourcePool(
@@ -137,6 +136,8 @@ func newExperiment(
 	if err = m.rm.ValidateResources(m.system, poolName, resources.SlotsPerTrial(), false); err != nil {
 		return nil, nil, fmt.Errorf("validating resources: %v", err)
 	}
+	restored := expModel.ID != 0
+
 	launchWarnings, err := m.rm.ValidateResourcePoolAvailability(
 		m.system,
 		poolName,
