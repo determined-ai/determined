@@ -127,6 +127,7 @@ func GetNonTerminalExperimentCount(ctx context.Context,
 		Count(ctx)
 }
 
+// MetricNames returns a list of metric names for the given experiment IDs.
 func (db *PgDB) MetricNames(ctx context.Context, experimentIDs []int) (
 	map[model.MetricType][]string, error,
 ) {
@@ -136,10 +137,14 @@ func (db *PgDB) MetricNames(ctx context.Context, experimentIDs []int) (
 	}
 	rows := []MetricNamesRow{}
 	query := fmt.Sprintf(`
-	SELECT jsonb_object_keys(summary_metrics) as metric_type, jsonb_object_keys(summary_metrics->jsonb_object_keys(summary_metrics)) as metric_name
-	FROM trials
-	WHERE experiment_id IN (%s)
-	ORDER BY metric_type;
+	WITH all_metrics AS (
+		SELECT jsonb_object_keys(summary_metrics) as metric_type, jsonb_object_keys(summary_metrics->jsonb_object_keys(summary_metrics)) as metric_name
+		FROM trials
+		WHERE experiment_id IN (%s)
+	)
+	SELECT DISTINCT metric_type, metric_name
+	FROM all_metrics
+	ORDER BY metric_type, metric_name;
 	`, strings.Trim(strings.Join(strings.Fields(fmt.Sprint(experimentIDs)), ","), "[]"))
 	err := db.queryRows(query, &rows)
 
