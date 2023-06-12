@@ -1849,23 +1849,21 @@ jobs:
             - test-unit-harness-gpu-pycov
 
   test-unit-harness-gpu-lightning:
-    machine:
-      image: <<pipeline.parameters.gpu-machine-image>>
-    resource_class: gpu.nvidia.small
+    docker:
+      - image: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.21.2
+    resource_class: determined-ai/container-runner-gpu
     steps:
       - checkout
       - skip-if-docs-only
       - skip-if-github-only
       - skip-if-webui-only
-      - setup-docker-env:
-          image: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.21.2
-          image-name: test_container
-          extras-requires: "pytorch_lightning==1.5.10 torchmetrics==0.5.1 torchvision==0.10.0 mypy pytest coverage"
-      - run: mkdir -p $HOME/.local/bin
+      - run: pip install pytorch_lightning==1.5.10 torchmetrics==0.5.1 torchvision==0.10.0 mypy pytest coverage
       - install-codecov
       - run: echo 'export PATH=$PATH:$HOME/.local/bin' >> $BASH_ENV
-      - run: docker exec -e COVERAGE_FILE=/mnt/project/test-unit-harness-gpu-lightning-pycov test_container make -C harness test-gpu-lightning
-      - run: docker exec test_container coverage xml -i --data-file=./test-unit-harness-gpu-lightning-pycov
+      - run: echo 'export PATH=$PATH:/usr/local/nvidia/bin' >> $BASH_ENV
+      - run: echo 'export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/nvidia/lib64' >> $BASH_ENV
+      - run: COVERAGE_FILE=/root/project/test-unit-harness-gpu-lightning-pycov test_container make -C harness test-gpu-lightning
+      - run: coverage xml -i --data-file=./test-unit-harness-gpu-lightning-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
       - persist_to_workspace:
           root: .
