@@ -177,7 +177,9 @@ type batchesWrapper struct {
 	EndTime time.Time `db:"end_time"`
 }
 
-func (db *PgDB) metricBatches(
+// MetricBatches returns the milestones (in batches processed) at which a specific training
+// metric was recorded.
+func (db *PgDB) MetricBatches(
 	experimentID int, metricName string, startTime time.Time, metricType model.MetricType,
 ) (
 	batches []int32, endTime time.Time, err error,
@@ -215,7 +217,7 @@ GROUP BY batches_processed;`, pType, JSONKey)
 func (db *PgDB) TrainingMetricBatches(experimentID int, metricName string, startTime time.Time) (
 	batches []int32, endTime time.Time, err error,
 ) {
-	return db.metricBatches(experimentID, metricName, startTime, model.TrainingMetricType)
+	return db.MetricBatches(experimentID, metricName, startTime, model.TrainingMetricType)
 }
 
 // ValidationMetricBatches returns the milestones (in batches processed) at which a specific
@@ -223,7 +225,7 @@ func (db *PgDB) TrainingMetricBatches(experimentID int, metricName string, start
 func (db *PgDB) ValidationMetricBatches(experimentID int, metricName string, startTime time.Time) (
 	batches []int32, endTime time.Time, err error,
 ) {
-	return db.metricBatches(experimentID, metricName, startTime, model.ValidationMetricType)
+	return db.MetricBatches(experimentID, metricName, startTime, model.ValidationMetricType)
 }
 
 type snapshotWrapper struct {

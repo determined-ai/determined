@@ -1511,16 +1511,12 @@ func (a *apiServer) ExpMetricNames(req *apiv1.ExpMetricNamesRequest,
 func (a *apiServer) MetricBatches(req *apiv1.MetricBatchesRequest,
 	resp apiv1.Determined_MetricBatchesServer,
 ) error {
-	// TODO
 	experimentID := int(req.ExperimentId)
 	metricName := req.MetricName
 	if metricName == "" {
 		return status.Error(codes.InvalidArgument, "must specify a metric name")
 	}
-	metricType := req.MetricType
-	if metricType == apiv1.MetricType_METRIC_TYPE_UNSPECIFIED {
-		return status.Error(codes.InvalidArgument, "must specify a metric type")
-	}
+	// metricType := req.MetricType
 	period := time.Duration(req.PeriodSeconds) * time.Second
 	if period == 0 {
 		period = defaultMetricsStreamPeriod
@@ -1543,16 +1539,14 @@ func (a *apiServer) MetricBatches(req *apiv1.MetricBatchesRequest,
 		var newBatches []int32
 		var endTime time.Time
 		var err error
-		switch metricType {
-		case apiv1.MetricType_METRIC_TYPE_TRAINING:
-			newBatches, endTime, err = a.m.db.TrainingMetricBatches(experimentID, metricName,
-				startTime)
-		case apiv1.MetricType_METRIC_TYPE_VALIDATION:
-			newBatches, endTime, err = a.m.db.ValidationMetricBatches(experimentID, metricName,
-				startTime)
-		default:
-			panic("Invalid metric type")
+		metricType, err := a.parseMetricTypeArgs(req.MetricType, model.MetricType(req.CustomType))
+		if err != nil {
+			return err
 		}
+		if metricType == "" {
+			return status.Error(codes.InvalidArgument, "must specify a metric type")
+		}
+		newBatches, endTime, err = a.m.db.MetricBatches(experimentID, metricName, startTime, metricType)
 		if err != nil {
 			return errors.Wrapf(err, "error fetching batches recorded for metric")
 		}
