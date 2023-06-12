@@ -121,6 +121,9 @@ func (a *WorkspaceAuthZBasic) CanUnpinWorkspace(
 func (a *WorkspaceAuthZBasic) CanSetWorkspacesCheckpointStorageConfig(
 	ctx context.Context, curUser model.User, workspace *workspacev1.Workspace,
 ) error {
+	if !curUser.Admin && curUser.ID != model.UserID(workspace.UserId) {
+		return fmt.Errorf("only admins may set checkpoint storage config on other user's workspaces")
+	}
 	return nil
 }
 
