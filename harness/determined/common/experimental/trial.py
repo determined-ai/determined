@@ -132,7 +132,7 @@ class Trial:
         self.id = trial_id
         self._session = session
 
-        self.hparams = None  # type: Optional[Dict[str, Any]]
+        self.hparams: Optional[Dict[str, Any]] = None
 
     def logs(
         self,

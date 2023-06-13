@@ -42,11 +42,11 @@ class ModelVersion:
         self.model_name = model_name
         self.model_version = model_version
 
-        self.checkpoint = None  # type: Optional[checkpoint.Checkpoint]
-        self.metadata = None  # type: Optional[Dict[str, Any]]
-        self.name = None  # type: Optional[str]
-        self.comment = None  # type: Optional[str]
-        self.notes = None  # type: Optional[str]
+        self.checkpoint: Optional[checkpoint.Checkpoint] = None
+        self.metadata: Optional[Dict[str, Any]] = None
+        self.name: Optional[str] = None
+        self.comment: Optional[str] = None
+        self.notes: Optional[str] = None
 
     def set_name(self, name: str) -> None:
         """
@@ -175,14 +175,14 @@ class Model:
         self.model_id = model_id
         self.name = name
 
-        self.description = None  # type: Optional[str]
-        self.creation_time = None  # type: Optional[datetime.datetime]
-        self.last_updated_time = None  # type: Optional[datetime.datetime]
-        self.metadata = None  # type: Optional[Dict[str, Any]]
-        self.labels = None  # type: Optional[List[str]]
-        self.username = None  # type: Optional[str]
-        self.workspace_id = None  # type: Optional[int]
-        self.archived = None  # type: Optional[bool]
+        self.description: Optional[str] = None
+        self.creation_time: Optional[datetime.datetime] = None
+        self.last_updated_time: Optional[datetime.datetime] = None
+        self.metadata: Optional[Dict[str, Any]] = None
+        self.labels: Optional[List[str]] = None
+        self.username: Optional[str] = None
+        self.workspace_id: Optional[int] = None
+        self.archived: Optional[bool] = None
 
     def get_version(self, version: int = -1) -> Optional[ModelVersion]:
         """

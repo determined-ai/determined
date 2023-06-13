@@ -34,15 +34,15 @@ class User:
         self.user_id = user_id
         self._session = session
 
-        self.username = None  # type: Optional[str]
-        self.admin = None  # type: Optional[bool]
-        self.active = None  # type: Optional[bool]
-        self.remote = None  # type: Optional[bool]
-        self.agent_uid = None  # type: Optional[int]
-        self.agent_gid = None  # type: Optional[int]
-        self.agent_user = None  # type: Optional[str]
-        self.agent_group = None  # type: Optional[str]
-        self.display_name = None  # type: Optional[str]
+        self.username: Optional[str] = None
+        self.admin: Optional[bool] = None
+        self.active: Optional[bool] = None
+        self.remote: Optional[bool] = None
+        self.agent_uid: Optional[int] = None
+        self.agent_gid: Optional[int] = None
+        self.agent_user: Optional[str] = None
+        self.agent_group: Optional[str] = None
+        self.display_name: Optional[str] = None
 
     def _hydrate(self, user: bindings.v1User) -> None:
         self.username = user.username

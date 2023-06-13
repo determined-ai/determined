@@ -113,13 +113,13 @@ class Checkpoint:
         self._session = session
         self.uuid = uuid
 
-        self.task_id = None  # type: Optional[str]
-        self.allocation_id = None  # type: Optional[str]
-        self.report_time = None  # type: Optional[str]
-        self.resources = None  # type: Optional[Dict[str, Any]]
-        self.metadata = None  # type: Optional[Dict[str, Any]]
-        self.state = None  # type: Optional[CheckpointState]
-        self.training = None  # type: Optional[CheckpointTrainingMetadata]
+        self.task_id: Optional[str] = None
+        self.allocation_id: Optional[str] = None
+        self.report_time: Optional[str] = None
+        self.resources: Optional[Dict[str, Any]] = None
+        self.metadata: Optional[Dict[str, Any]] = None
+        self.state: Optional[CheckpointState] = None
+        self.training: Optional[CheckpointTrainingMetadata] = None
 
     def _find_shared_fs_path(self, checkpoint_storage: Dict[str, Any]) -> pathlib.Path:
         """Attempt to find the path of the checkpoint if being configured to shared fs.
