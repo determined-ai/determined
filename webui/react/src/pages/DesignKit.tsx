@@ -32,6 +32,11 @@ import Notes, { Props as NotesProps } from 'components/kit/Notes';
 import Pagination from 'components/kit/Pagination';
 import Pivot from 'components/kit/Pivot';
 import Select, { Option } from 'components/kit/Select';
+import ColumnsIcon from 'components/kit/svgIcons/ColumnsIcon';
+import FilterIcon from 'components/kit/svgIcons/FilterIcon';
+import OptionsIcon from 'components/kit/svgIcons/OptionsIcon';
+import PanelIcon from 'components/kit/svgIcons/PanelIcon';
+import RowIcon from 'components/kit/svgIcons/RowIcon';
 import Toggle from 'components/kit/Toggle';
 import Tooltip from 'components/kit/Tooltip';
 import Header from 'components/kit/Typography/Header';
@@ -2284,8 +2289,21 @@ const IconsSection: React.FC = () => {
           An <code>{'<Icon>'}</code> component displays an icon from a custom font along with an
           optional tooltip.
         </p>
+        <p>
+          We also have a few SVG icon components: <code>{'<FilterIcon>'}</code>,{' '}
+          <code>{'<PanelIcon>'}</code>, <code>{'<OptionsIcon>'}</code>, <code>{'<RowIcon>'}</code>{' '}
+          and <code>{'<ColumnsIcon>'}</code>.
+        </p>
+        <p>
+          The <code>{'<RowIcon>'}</code> has an optional <code>{'size'}</code> prop wich determines
+          which row icon should be used, it defaults do <code>{'medium'}</code>.
+        </p>
       </AntDCard>
       <AntDCard title="Usage">
+        <p>
+          <code>{'<Icon>'}</code> usage.
+        </p>
+        <br />
         <strong>Icon default</strong>
         <Icon name="star" title="star" />
         <strong>Icon variations</strong>
@@ -2302,6 +2320,18 @@ const IconsSection: React.FC = () => {
           {IconNameArray.map((name) => (
             <Icon key={name} name={name} showTooltip title={name} />
           ))}
+        </Space>
+        <br />
+        <p>SVG Icons usage.</p>
+        <Space wrap>
+          <FilterIcon />
+          <PanelIcon />
+          <OptionsIcon />
+          <RowIcon size="small" />
+          <RowIcon />
+          <RowIcon size="large" />
+          <RowIcon size="xl" />
+          <ColumnsIcon />
         </Space>
       </AntDCard>
     </ComponentSection>

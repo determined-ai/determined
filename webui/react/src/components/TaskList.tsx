@@ -13,6 +13,7 @@ import Grid from 'components/Grid';
 import JupyterLabButton from 'components/JupyterLabButton';
 import Button from 'components/kit/Button';
 import Icon from 'components/kit/Icon';
+import FilterIcon from 'components/kit/svgIcons/FilterIcon';
 import Link from 'components/Link';
 import InteractiveTable, { ColumnDef } from 'components/Table/InteractiveTable';
 import {
@@ -65,7 +66,6 @@ import { commandStateSorter, filterTasks, isTaskKillable, taskFromCommandTask } 
 import { getDisplayName } from 'utils/user';
 
 import BatchActionConfirmModalComponent from './BatchActionConfirmModal';
-import FilterIcon from './kit/icons/FilterIcon';
 import { useModal } from './kit/Modal';
 import css from './TaskList.module.scss';
 import WorkspaceFilter from './WorkspaceFilter';

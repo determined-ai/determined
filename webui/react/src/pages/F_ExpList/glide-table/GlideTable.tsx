@@ -34,7 +34,7 @@ import {
   Operator,
   SpecialColumnNames,
 } from 'components/FilterForm/components/type';
-import FilterIcon from 'components/kit/icons/FilterIcon';
+import FilterIcon from 'components/kit/svgIcons/FilterIcon';
 import { handlePath } from 'routes/utils';
 import { V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
 import useUI from 'shared/contexts/stores/UI';
