@@ -265,7 +265,7 @@ def gen_class(klass: swagger_parser.Class) -> Code:
     required = sorted((k, v) for k, v in klass.params.items() if v.required)
     optional = sorted((k, v) for k, v in klass.params.items() if not v.required)
 
-    out = [f"class {klass.name}:"]
+    out = [f"class {klass.name}(Printable):"]
     for k, v in optional:
         out += [f'    {k}: "typing.Optional[{annotation(v.type, prequoted=True)}]" = None']
     out += [""]
@@ -436,6 +436,24 @@ class DetEnum(enum.Enum):
     def prefix(cls) -> str:
         prefix: str = os.path.commonprefix([e.value for e in cls])
         return prefix if prefix.endswith("_") else ""
+
+
+class Printable:
+    # A mixin to provide a __str__ method for classes with attributes.
+    def __str__(self) -> str:
+        allowed_types = (str, int, float, bool, DetEnum)
+        attrs = []
+        for k, v in self.__dict__.items():
+            if v is None: continue
+            if isinstance(v, list):
+                vals = [str(x) if isinstance(x, allowed_types) else "..." for x in v]
+                attrs.append(f'{k}=[{", ".join(vals)}]')
+            elif isinstance(v, allowed_types):
+                attrs.append(f'{k}={v}')
+            else:
+                attrs.append(f'{k}=...')
+        attrs_str = ', '.join(attrs)
+        return f'{self.__class__.__name__}({attrs_str})'
 
 
 """.lstrip()
