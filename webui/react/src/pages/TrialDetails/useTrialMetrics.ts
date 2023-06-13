@@ -49,11 +49,11 @@ const summarizedMetricToSeries = (
   });
   const trialData: Record<string, Serie> = {};
   selectedMetrics.forEach((metric) => {
-    const data: Partial<Record<XAxisDomain, [number, number][]>> = {
-      [XAxisDomain.Batches]: rawBatchValuesMap[metric.name],
-      [XAxisDomain.Time]: rawBatchTimesMap[metric.name],
-      [XAxisDomain.Epochs]: rawBatchEpochMap[metric.name],
-    };
+    const data: Partial<Record<XAxisDomain, [number, number][]>> = {};
+    if (rawBatchValuesMap[metric.name]) data[XAxisDomain.Batches] = rawBatchValuesMap[metric.name];
+    if (rawBatchTimesMap[metric.name]) data[XAxisDomain.Time] = rawBatchTimesMap[metric.name];
+    if (rawBatchEpochMap[metric.name]) data[XAxisDomain.Epochs] = rawBatchEpochMap[metric.name];
+
     const series: Serie = {
       color:
         metric.type === MetricType.Validation ? VALIDATION_SERIES_COLOR : TRAINING_SERIES_COLOR,
