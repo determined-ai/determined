@@ -118,12 +118,9 @@ export class FilterFormStore {
   // remove invalid groups and conditions and then store sweeped data in #formset
   public sweep(): void {
     this.#formset.update((loadablePrev) =>
-      Loadable.match(loadablePrev, {
-        Loaded: (prev) => {
-          const filterGroup = this.#sweepInvalid(prev.filterGroup);
-          return Loaded({ ...prev, filterGroup });
-        },
-        NotLoaded: () => NotLoaded,
+      Loadable.map(loadablePrev, (prev) => {
+        const filterGroup = this.#sweepInvalid(prev.filterGroup);
+        return { ...prev, filterGroup };
       }),
     );
   }
@@ -260,10 +257,7 @@ export class FilterFormStore {
       };
       traverse(filterGroup);
       this.#formset.update((loadablePrev) =>
-        Loadable.match(loadablePrev, {
-          Loaded: (prev) => Loaded({ ...prev, filterGroup }),
-          NotLoaded: () => NotLoaded,
-        }),
+        Loadable.map(loadablePrev, (prev) => ({ ...prev, filterGroup })),
       );
     });
   }
