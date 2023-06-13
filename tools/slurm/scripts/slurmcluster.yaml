@@ -35,9 +35,9 @@ stages:
         - sh: >
             curl localhost:8080/api/v1/auth/login -X POST -d '{"username": "admin", "password": ""}' 2>/dev/null | jq -r .token > /tmp/slurmcluster-token
         - sh: >
-            curl -H "Authorization: Bearer $(</tmp/slurmcluster-token)" -X PATCH -d '{"agent_user_group": {"agent_uid": $OPT_REMOTE_UID, "agent_gid": $OPT_REMOTE_GID, "agent_user": "$OPT_REMOTE_USER", "agent_group": "$OPT_REMOTE_GROUP"}}' localhost:8080/api/v1/users/1
+            curl -H "Authorization: Bearer $(cat /tmp/slurmcluster-token)" -X PATCH -d '{"agent_user_group": {"agent_uid": $OPT_REMOTE_UID, "agent_gid": $OPT_REMOTE_GID, "agent_user": "$OPT_REMOTE_USER", "agent_group": "$OPT_REMOTE_GROUP"}}' localhost:8080/api/v1/users/1
         - sh: >
-            curl -H "Authorization: Bearer $(</tmp/slurmcluster-token)" -X PATCH -d '{"agent_user_group": {"agent_uid": $OPT_REMOTE_UID, "agent_gid": $OPT_REMOTE_GID, "agent_user": "$OPT_REMOTE_USER", "agent_group": "$OPT_REMOTE_GROUP"}}' localhost:8080/api/v1/users/2
+            curl -H "Authorization: Bearer $(cat /tmp/slurmcluster-token)" -X PATCH -d '{"agent_user_group": {"agent_uid": $OPT_REMOTE_UID, "agent_gid": $OPT_REMOTE_GID, "agent_user": "$OPT_REMOTE_USER", "agent_group": "$OPT_REMOTE_GROUP"}}' localhost:8080/api/v1/users/2
       cmdline:
         - $OPT_PROJECT_ROOT/master/build/determined-master
         - --config-file
