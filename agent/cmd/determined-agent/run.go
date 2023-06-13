@@ -123,6 +123,7 @@ func newRunCmd() *cobra.Command {
 	)
 
 	// Debug flags.
+	cmd.Flags().BoolVar(&opts.Debug, "debug", false, "Enable verbose script output")
 	cmd.Flags().IntVar(&opts.ArtificialSlots, "artificial-slots", 0, "")
 	cmd.Flags().Lookup("artificial-slots").Hidden = true
 
