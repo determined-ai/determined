@@ -276,6 +276,9 @@ message ListRPsBoundToWorkspaceRequest {
 
 // Response to ListWorkspaceRPsRequest.
 message ListRPsBoundToWorkspaceResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "workspace_id", "limit" ] }
+  };
   // List of resource pools bound to the workspace.
   repeated string resource_pools = 1;
   // Pagination information of the full dataset.
