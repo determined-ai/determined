@@ -63,6 +63,10 @@
       apt:
         deb: https://github.com/apptainer/apptainer/releases/download/v1.1.6/apptainer_1.1.6_amd64.deb
 
+    - name: Install Singularity Setuid
+      apt:
+        deb: https://github.com/apptainer/apptainer/releases/download/v1.1.6/apptainer-suid_1.1.6_amd64.deb
+
     - name: Install Launcher
       apt:
         deb: "{{ launcher_deb }}"
