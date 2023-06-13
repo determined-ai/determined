@@ -25,7 +25,7 @@ message DownsampledMetrics {
   // the trial.
   repeated DataPoint data = 1;
   // Type of metrics (training, validation, or unset).
-  string type = 3;
+  MetricType type = 3;
 }
 
 // WorkloadContainer is a wrapper for Determined workloads to allow repeated
@@ -600,7 +600,7 @@ message GetTrialWorkloadsRequest {
   bool include_batch_metrics = 7;
   // When sorting workloads by sort_key, specify training or validation form of
   // a metric.
-  string metric_type = 8;
+  MetricType metric_type = 8;
 }
 // Response to GetTrialWorkloadsRequest.
 message GetTrialWorkloadsResponse {
@@ -688,7 +688,7 @@ message SummarizeTrialRequest {
   // Sample from metrics before this batch number.
   int32 end_batches = 5;
   // Type of metrics.
-  string metric_type = 6;
+  MetricType metric_type = 6;
   // Scale of metric visualization (linear or log scale).
   Scale scale = 7;
 }
@@ -731,7 +731,7 @@ message CompareTrialsRequest {
   // Sample from metrics before this batch number.
   int32 end_batches = 5;
   // Type of metrics.
-  string metric_type = 6;
+  MetricType metric_type = 6;
   // Scale of metric visualization (linear or log scale).
   Scale scale = 7;
   // metric ids for the query
