@@ -333,12 +333,16 @@ export const GlideTable: React.FC<GlideTableProps> = ({
       }
 
       const BANNED_FILTER_COLUMNS = new Set(['searcherMetricsVal']);
+      const loadableFormset = formStore.formset.get();
       const filterMenuItemsForColumn = () => {
         const isSpecialColumn = (SpecialColumnNames as ReadonlyArray<string>).includes(
           column.column,
         );
         formStore.addChild(ROOT_ID, FormKind.Field, {
-          index: formStore.formset.get().filterGroup.children.length,
+          index: Loadable.match(loadableFormset, {
+            Loaded: (formset) => formset.filterGroup.children.length,
+            NotLoaded: () => 0,
+          }),
           item: {
             columnName: column.column,
             id: uuidv4(),
@@ -442,82 +446,79 @@ export const GlideTable: React.FC<GlideTableProps> = ({
       setStandAloneSelect(undefined);
 
       const [col, row] = cell;
-      Loadable.match(data[row], {
-        Loaded: (rowData) => {
-          const columnId = columnIds[col];
-          const cell = columnDefs[columnId].renderer(rowData, row);
+      Loadable.forEach(data[row], (rowData) => {
+        const columnId = columnIds[col];
+        const cell = columnDefs[columnId].renderer(rowData, row);
 
-          if (isLinkCell(cell)) {
-            handlePath(event as unknown as AnyMouseEvent, { path: cell.data.link.href });
-            // cell.data.link.onClick(event);
-          } else {
-            if (event.shiftKey) {
-              setSelection(({ rows }: GridSelection) => {
-                if (standAloneSelect && standAloneSelect > row) {
-                  return {
-                    columns: CompactSelection.empty(),
-                    rows: event.metaKey
-                      ? rows.add([row, standAloneSelect + 1])
-                      : CompactSelection.fromSingleSelection([row, standAloneSelect + 1]),
-                  };
-                }
-                const rowsArray = rows.toArray();
-                const smallestClosest = rowsArray.filter((r) => r < row).last();
-                const largestClosest = rowsArray.filter((r) => r > row).first();
-                const smallestLinked = findConsecutiveBefore(rowsArray, smallestClosest);
-                const greatestLinked = findConsecutiveAfter(rowsArray, largestClosest);
+        if (isLinkCell(cell)) {
+          handlePath(event as unknown as AnyMouseEvent, { path: cell.data.link.href });
+          // cell.data.link.onClick(event);
+        } else {
+          if (event.shiftKey) {
+            setSelection(({ rows }: GridSelection) => {
+              if (standAloneSelect && standAloneSelect > row) {
                 return {
                   columns: CompactSelection.empty(),
-                  rows:
-                    smallestClosest >= 0
-                      ? event.metaKey
-                        ? rows.add([smallestClosest, row + 1])
-                        : CompactSelection.fromSingleSelection([smallestLinked, row + 1])
-                      : largestClosest
-                      ? event.metaKey
-                        ? rows.add([row, largestClosest + 1])
-                        : CompactSelection.fromSingleSelection([row, greatestLinked + 1])
-                      : CompactSelection.fromSingleSelection(row),
+                  rows: event.metaKey
+                    ? rows.add([row, standAloneSelect + 1])
+                    : CompactSelection.fromSingleSelection([row, standAloneSelect + 1]),
                 };
-              });
-            } else {
-              isStandAlone(selection.rows, row) &&
-                !selection.rows.hasIndex(row) &&
-                setStandAloneSelect(row);
+              }
+              const rowsArray = rows.toArray();
+              const smallestClosest = rowsArray.filter((r) => r < row).last();
+              const largestClosest = rowsArray.filter((r) => r > row).first();
+              const smallestLinked = findConsecutiveBefore(rowsArray, smallestClosest);
+              const greatestLinked = findConsecutiveAfter(rowsArray, largestClosest);
+              return {
+                columns: CompactSelection.empty(),
+                rows:
+                  smallestClosest >= 0
+                    ? event.metaKey
+                      ? rows.add([smallestClosest, row + 1])
+                      : CompactSelection.fromSingleSelection([smallestLinked, row + 1])
+                    : largestClosest
+                    ? event.metaKey
+                      ? rows.add([row, largestClosest + 1])
+                      : CompactSelection.fromSingleSelection([row, greatestLinked + 1])
+                    : CompactSelection.fromSingleSelection(row),
+              };
+            });
+          } else {
+            isStandAlone(selection.rows, row) &&
+              !selection.rows.hasIndex(row) &&
+              setStandAloneSelect(row);
 
-              if (selection.rows.hasIndex(row)) {
-                setSelection(({ columns, rows }: GridSelection) => ({
-                  columns,
-                  rows: rows.remove(row),
-                }));
-                if (selectAll) {
-                  const experiment = data[row];
-                  if (Loadable.isLoaded(experiment)) {
-                    setExcludedExperimentIds((prev) => {
-                      if (experiment.data.experiment) {
-                        return new Set([...prev, experiment.data.experiment?.id]);
-                      } else {
-                        return prev;
-                      }
-                    });
-                  }
-                }
-              } else {
-                setSelection(({ columns, rows }: GridSelection) => ({
-                  columns,
-                  rows: rows.add(row),
-                }));
+            if (selection.rows.hasIndex(row)) {
+              setSelection(({ columns, rows }: GridSelection) => ({
+                columns,
+                rows: rows.remove(row),
+              }));
+              if (selectAll) {
                 const experiment = data[row];
                 if (Loadable.isLoaded(experiment)) {
                   setExcludedExperimentIds((prev) => {
-                    return new Set([...prev].filter((id) => id !== experiment.data.experiment?.id));
+                    if (experiment.data.experiment) {
+                      return new Set([...prev, experiment.data.experiment?.id]);
+                    } else {
+                      return prev;
+                    }
                   });
                 }
               }
+            } else {
+              setSelection(({ columns, rows }: GridSelection) => ({
+                columns,
+                rows: rows.add(row),
+              }));
+              const experiment = data[row];
+              if (Loadable.isLoaded(experiment)) {
+                setExcludedExperimentIds((prev) => {
+                  return new Set([...prev].filter((id) => id !== experiment.data.experiment?.id));
+                });
+              }
             }
           }
-        },
-        NotLoaded: () => null,
+        }
       });
     },
     [data, columnIds, columnDefs, selection, selectAll, setExcludedExperimentIds, standAloneSelect],
@@ -529,33 +530,30 @@ export const GlideTable: React.FC<GlideTableProps> = ({
       contextMenuOpen.set(false);
 
       const [col, row] = cell;
-      Loadable.match(data[row], {
-        Loaded: (rowData) => {
-          // Prevent the browser native context menu from showing up.
-          event.preventDefault();
+      Loadable.forEach(data[row], (rowData) => {
+        // Prevent the browser native context menu from showing up.
+        event.preventDefault();
 
-          // Delay needed due to the call to close previously existing context menu.
-          setTimeout(() => {
-            const columnId = columnIds[col];
-            const cell = columnDefs[columnId].renderer(rowData, row);
+        // Delay needed due to the call to close previously existing context menu.
+        setTimeout(() => {
+          const columnId = columnIds[col];
+          const cell = columnDefs[columnId].renderer(rowData, row);
 
-            // Update the context menu based on the cell context.
-            setContextMenuProps({
-              experiment: getProjectExperimentForExperimentItem(rowData.experiment, project),
-              handleClose: (e?: Event) => {
-                // Prevent the context menu closing click from triggering something else.
-                if (contextMenuOpen.get()) e?.stopPropagation();
-                contextMenuOpen.set(false);
-              },
-              link: isLinkCell(cell) ? cell.data.link.href : undefined,
-              x: Math.max(0, event.bounds.x + event.localEventX - 4),
-              y: Math.max(0, event.bounds.y + event.localEventY - 4),
-            });
+          // Update the context menu based on the cell context.
+          setContextMenuProps({
+            experiment: getProjectExperimentForExperimentItem(rowData.experiment, project),
+            handleClose: (e?: Event) => {
+              // Prevent the context menu closing click from triggering something else.
+              if (contextMenuOpen.get()) e?.stopPropagation();
+              contextMenuOpen.set(false);
+            },
+            link: isLinkCell(cell) ? cell.data.link.href : undefined,
+            x: Math.max(0, event.bounds.x + event.localEventX - 4),
+            y: Math.max(0, event.bounds.y + event.localEventY - 4),
+          });
 
-            contextMenuOpen.set(true);
-          }, 50);
-        },
-        NotLoaded: () => null,
+          contextMenuOpen.set(true);
+        }, 50);
       });
     },
     [columnDefs, columnIds, data, project, setContextMenuProps, contextMenuOpen],
