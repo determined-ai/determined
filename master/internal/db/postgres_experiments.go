@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
-	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -132,37 +131,25 @@ func (db *PgDB) MetricNames(ctx context.Context, experimentIDs []int) (
 	map[model.MetricType][]string, error,
 ) {
 	type MetricNamesRow struct {
-		MetricName string `db:"metric_name"`
-		JSONPath   string `db:"metric_type"`
+		MetricName string
+		JSONPath   string
 	}
 	rows := []MetricNamesRow{}
-	query := fmt.Sprintf(`
-	WITH all_metrics AS (
-		SELECT jsonb_object_keys(summary_metrics) as metric_type, jsonb_object_keys(summary_metrics->jsonb_object_keys(summary_metrics)) as metric_name
-		FROM trials
-		WHERE experiment_id IN (%s)
-	)
-	SELECT DISTINCT metric_type, metric_name
-	FROM all_metrics
-	ORDER BY metric_type, metric_name;
-	`, strings.Trim(strings.Join(strings.Fields(fmt.Sprint(experimentIDs)), ","), "[]"))
-	err := db.queryRows(query, &rows)
+
+	metricNames := BunSelectMetricTypeNames().
+		Where("experiment_id IN (?)", bun.In(experimentIDs))
+
+	err := Bun().NewSelect().TableExpr("(?) as metric_names", metricNames).
+		Column("json_path").
+		Column("metric_name").
+		Scan(ctx, &rows)
 	if err != nil {
 		return nil, err
 	}
 
 	metricNamesMap := make(map[model.MetricType][]string)
 	for _, row := range rows {
-		var mType model.MetricType
-		switch row.JSONPath {
-		case model.TrialSummaryMetricsJSONPath(model.TrainingMetricType):
-			mType = model.TrainingMetricType
-		case model.TrialSummaryMetricsJSONPath(model.ValidationMetricType):
-			mType = model.ValidationMetricType
-		default:
-			mType = model.MetricType(row.JSONPath)
-		}
-		// initialize if needed
+		mType := model.TrialSummaryMetricType(row.JSONPath)
 		if _, ok := metricNamesMap[mType]; !ok {
 			metricNamesMap[mType] = make([]string, 0)
 		}

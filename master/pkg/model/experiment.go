@@ -526,6 +526,20 @@ func TrialSummaryMetricsJSONPath(metricType MetricType) string {
 	}
 }
 
+// TrialSummaryMetricType returns the metric type for the given summary JSON path.
+func TrialSummaryMetricType(JSONPath string) MetricType {
+	var mType MetricType
+	switch JSONPath {
+	case TrialSummaryMetricsJSONPath(TrainingMetricType):
+		mType = TrainingMetricType
+	case TrialSummaryMetricsJSONPath(ValidationMetricType):
+		mType = ValidationMetricType
+	default:
+		mType = MetricType(JSONPath)
+	}
+	return mType
+}
+
 // Represent order of active states (Queued -> Pulling -> Starting -> Running).
 var experimentStateIndex = map[experimentv1.State]int{
 	experimentv1.State_STATE_UNSPECIFIED:        0,

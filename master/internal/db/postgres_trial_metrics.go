@@ -37,6 +37,15 @@ func BunSelectMetricsQuery(metricType model.MetricType, inclArchived bool) *bun.
 	return q
 }
 
+// BunSelectMetricTypeNames sets up a bun select query for getting all the metric type and names.
+func BunSelectMetricTypeNames() *bun.SelectQuery {
+	return Bun().NewSelect().Table("trials").
+		ColumnExpr("DISTINCT jsonb_object_keys(summary_metrics) as json_path").
+		ColumnExpr("jsonb_object_keys(summary_metrics->jsonb_object_keys(summary_metrics)) as metric_name").
+		Where("summary_metrics IS NOT NULL").
+		Order("json_path").Order("metric_name")
+}
+
 /*
 rollbackMetrics ensures old training and validation metrics from a previous run id are archived.
 */
