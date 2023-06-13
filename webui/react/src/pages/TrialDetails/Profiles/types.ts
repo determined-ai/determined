@@ -3,7 +3,7 @@ import {
   V1GetTrialProfilerMetricsResponse,
   V1TrialProfilerMetricsBatch,
 } from 'services/api-ts-sdk';
-import { ValueOf } from 'shared/types';
+import { ValueOf } from 'types';
 import { TrialDetails } from 'types';
 
 export const MetricType = {

@@ -35,18 +35,18 @@ import {
   Operator,
   SpecialColumnNames,
 } from 'components/FilterForm/components/type';
+import usePrevious from 'hooks/usePrevious';
 import { handlePath } from 'routes/utils';
 import { V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
-import useUI from 'shared/contexts/stores/UI';
-import usePrevious from 'shared/hooks/usePrevious';
-import { getCssVar } from 'shared/themes';
-import { AnyMouseEvent } from 'shared/utils/routes';
+import useUI from 'stores/contexts/UI';
 import usersStore from 'stores/users';
 import { ExperimentWithTrial, Project, ProjectColumn } from 'types';
 import { Surface } from 'utils/colors';
 import { getProjectExperimentForExperimentItem } from 'utils/experiment';
 import { Loadable } from 'utils/loadable';
 import { observable, useObservable, WritableObservable } from 'utils/observable';
+import { AnyMouseEvent } from 'utils/routes';
+import { getCssVar } from 'utils/themes';
 
 import { PAGE_SIZE } from '../F_ExperimentList';
 import { RowHeight } from '../F_ExperimentList.settings';

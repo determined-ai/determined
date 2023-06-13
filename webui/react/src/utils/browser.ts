@@ -2,8 +2,8 @@ import { getTrialDetails } from 'services/api';
 import { V1TrialLogsResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
-import { parseUrl, routeToExternalUrl } from 'shared/utils/routes';
 import { BrandingType } from 'stores/determinedInfo';
+import { parseUrl, routeToExternalUrl } from 'utils/routes';
 
 /*
  * In mobile view the definition of viewport height varies between

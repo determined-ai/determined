@@ -2,9 +2,9 @@ import { Divider, Modal } from 'antd';
 import React, { Fragment } from 'react';
 
 import Json from 'components/Json';
-import { clone } from 'shared/utils/data';
-import { camelCaseToSentence } from 'shared/utils/string';
 import { ResourcePool } from 'types';
+import { clone } from 'utils/data';
+import { camelCaseToSentence } from 'utils/string';
 
 import { PoolLogo } from './ResourcePoolCard';
 import css from './ResourcePoolDetails.module.scss';

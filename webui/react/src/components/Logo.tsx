@@ -1,17 +1,17 @@
 import React, { useMemo } from 'react';
 
+import logoDeterminedOnDarkHorizontal from 'assets/images/logo-determined-on-dark-horizontal.svg';
+import logoDeterminedOnDarkVertical from 'assets/images/logo-determined-on-dark-vertical.svg';
+import logoDeterminedOnLightHorizontal from 'assets/images/logo-determined-on-light-horizontal.svg';
+import logoDeterminedOnLightVertical from 'assets/images/logo-determined-on-light-vertical.svg';
+import logoHpeOnDarkHorizontal from 'assets/images/logo-hpe-on-dark-horizontal.svg';
+import logoHpeOnLightHorizontal from 'assets/images/logo-hpe-on-light-horizontal.svg';
 import { serverAddress } from 'routes/utils';
-import logoDeterminedOnDarkHorizontal from 'shared/assets/images/logo-determined-on-dark-horizontal.svg';
-import logoDeterminedOnDarkVertical from 'shared/assets/images/logo-determined-on-dark-vertical.svg';
-import logoDeterminedOnLightHorizontal from 'shared/assets/images/logo-determined-on-light-horizontal.svg';
-import logoDeterminedOnLightVertical from 'shared/assets/images/logo-determined-on-light-vertical.svg';
-import logoHpeOnDarkHorizontal from 'shared/assets/images/logo-hpe-on-dark-horizontal.svg';
-import logoHpeOnLightHorizontal from 'shared/assets/images/logo-hpe-on-light-horizontal.svg';
-import useUI from 'shared/contexts/stores/UI';
-import { DarkLight } from 'shared/themes';
-import { ValueOf } from 'shared/types';
-import { reactHostAddress } from 'shared/utils/routes';
+import useUI from 'stores/contexts/UI';
 import { BrandingType } from 'stores/determinedInfo';
+import { ValueOf } from 'types';
+import { reactHostAddress } from 'utils/routes';
+import { DarkLight } from 'utils/themes';
 
 import css from './Logo.module.scss';
 

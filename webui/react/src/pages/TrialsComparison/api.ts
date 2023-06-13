@@ -14,8 +14,8 @@ import {
   V1TrialSorter,
   V1TrialTag,
 } from 'services/api-ts-sdk';
-import { finiteElseUndefined, isFiniteNumber } from 'shared/utils/data';
-import { camelCaseToSnake, snakeCaseToCamelCase } from 'shared/utils/string';
+import { finiteElseUndefined, isFiniteNumber } from 'utils/data';
+import { camelCaseToSnake, snakeCaseToCamelCase } from 'utils/string';
 
 import { TrialsCollection } from './Collections/collections';
 

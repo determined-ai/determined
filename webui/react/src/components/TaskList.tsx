@@ -39,17 +39,14 @@ import settingsConfig, {
 } from 'components/TaskList.settings';
 import { commandTypeToLabel } from 'constants/states';
 import usePermissions from 'hooks/usePermissions';
+import usePolling from 'hooks/usePolling';
 import { useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { getCommands, getJupyterLabs, getShells, getTensorBoards, killTask } from 'services/api';
-import usePolling from 'shared/hooks/usePolling';
-import { ValueOf } from 'shared/types';
-import { isEqual } from 'shared/utils/data';
-import { ErrorLevel, ErrorType } from 'shared/utils/error';
-import { alphaNumericSorter, dateTimeStringSorter, numericSorter } from 'shared/utils/sort';
 import userStore from 'stores/users';
 import workspaceStore from 'stores/workspaces';
 import { ShirtSize } from 'themes';
+import { ValueOf } from 'types';
 import {
   ExperimentAction as Action,
   AnyTask,
@@ -58,9 +55,12 @@ import {
   CommandType,
   Workspace,
 } from 'types';
+import { isEqual } from 'utils/data';
+import { ErrorLevel, ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
+import { alphaNumericSorter, dateTimeStringSorter, numericSorter } from 'utils/sort';
 import { commandStateSorter, filterTasks, isTaskKillable, taskFromCommandTask } from 'utils/task';
 import { getDisplayName } from 'utils/user';
 

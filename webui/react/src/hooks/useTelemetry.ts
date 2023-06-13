@@ -2,9 +2,9 @@
 import { useRef } from 'react';
 
 import { getTelemetry } from 'services/api';
-import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { DeterminedInfo } from 'stores/determinedInfo';
 import { Auth, DetailedUser } from 'types';
+import { ErrorLevel, ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 
 /*

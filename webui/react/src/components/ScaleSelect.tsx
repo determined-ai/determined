@@ -1,7 +1,7 @@
 import React from 'react';
 
 import Select, { Option, SelectValue } from 'components/kit/Select';
-import { capitalize } from 'shared/utils/string';
+import { capitalize } from 'utils/string';
 
 import { Scale } from '../types';
 

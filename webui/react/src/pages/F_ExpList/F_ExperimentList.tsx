@@ -10,12 +10,11 @@ import { IOFilterFormSet } from 'components/FilterForm/components/type';
 import { Column, Columns } from 'components/kit/Columns';
 import Empty from 'components/kit/Empty';
 import Pagination from 'components/kit/Pagination';
+import usePolling from 'hooks/usePolling';
 import useResize from 'hooks/useResize';
 import { useSettings } from 'hooks/useSettings';
 import { getProjectColumns, searchExperiments } from 'services/api';
 import { V1BulkExperimentFilters, V1LocationType } from 'services/api-ts-sdk';
-import usePolling from 'shared/hooks/usePolling';
-import { getCssVar } from 'shared/themes';
 import {
   ExperimentAction,
   ExperimentItem,
@@ -26,6 +25,7 @@ import {
 } from 'types';
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
+import { getCssVar } from 'utils/themes';
 
 import ComparisonView from './ComparisonView';
 import css from './F_ExperimentList.module.scss';

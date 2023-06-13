@@ -3,6 +3,8 @@ import { useObservable } from 'micro-observables';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
+import LogoGoogle from 'assets/images/logo-sso-google-white.svg';
+import LogoOkta from 'assets/images/logo-sso-okta-white.svg';
 import AuthToken from 'components/AuthToken';
 import DeterminedAuth from 'components/DeterminedAuth';
 import Button from 'components/kit/Button';
@@ -12,18 +14,16 @@ import Page from 'components/Page';
 import PageMessage from 'components/PageMessage';
 import { handleRelayState, samlUrl } from 'ee/SamlAuth';
 import useAuthCheck from 'hooks/useAuthCheck';
+import usePolling from 'hooks/usePolling';
 import { defaultRoute, rbacDefaultRoute } from 'routes';
 import { routeAll } from 'routes/utils';
-import LogoGoogle from 'shared/assets/images/logo-sso-google-white.svg';
-import LogoOkta from 'shared/assets/images/logo-sso-okta-white.svg';
-import useUI from 'shared/contexts/stores/UI';
-import usePolling from 'shared/hooks/usePolling';
-import { RecordKey } from 'shared/types';
-import { locationToPath, routeToReactUrl } from 'shared/utils/routes';
-import { capitalize } from 'shared/utils/string';
 import authStore from 'stores/auth';
+import useUI from 'stores/contexts/UI';
 import determinedStore, { BrandingType } from 'stores/determinedInfo';
+import { RecordKey } from 'types';
 import { notification } from 'utils/dialogApi';
+import { locationToPath, routeToReactUrl } from 'utils/routes';
+import { capitalize } from 'utils/string';
 
 import css from './SignIn.module.scss';
 

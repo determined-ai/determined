@@ -4,12 +4,12 @@ import { Serie, TRAINING_SERIES_COLOR, VALIDATION_SERIES_COLOR } from 'component
 import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
 import { terminalRunStates } from 'constants/states';
 import useMetricNames from 'hooks/useMetricNames';
+import usePolling from 'hooks/usePolling';
 import { timeSeries } from 'services/api';
-import usePolling from 'shared/hooks/usePolling';
-import { isEqual } from 'shared/utils/data';
-import { ErrorType } from 'shared/utils/error';
 import { Metric, MetricContainer, MetricType, RunState, Scale, TrialDetails } from 'types';
+import { isEqual } from 'utils/data';
 import { message } from 'utils/dialogApi';
+import { ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 import { metricToKey } from 'utils/metric';
 
