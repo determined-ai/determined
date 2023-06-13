@@ -1,4 +1,3 @@
-import { FilterOutlined } from '@ant-design/icons';
 import DataEditor, {
   CellClickedEventArgs,
   CompactSelection,
@@ -35,6 +34,7 @@ import {
   Operator,
   SpecialColumnNames,
 } from 'components/FilterForm/components/type';
+import FilterIcon from 'components/kit/icons/FilterIcon';
 import { handlePath } from 'routes/utils';
 import { V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
 import useUI from 'shared/contexts/stores/UI';
@@ -358,7 +358,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
       if (!BANNED_FILTER_COLUMNS.has(column.column)) {
         items.push({ type: 'divider' });
         items.push({
-          icon: <FilterOutlined />,
+          icon: <FilterIcon />,
           key: 'filter',
           label: 'Filter by this column',
           onClick: () => {

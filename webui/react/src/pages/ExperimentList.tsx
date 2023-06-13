@@ -12,6 +12,7 @@ import HumanReadableNumber from 'components/HumanReadableNumber';
 import Button from 'components/kit/Button';
 import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 import Icon from 'components/kit/Icon';
+import FilterIcon from 'components/kit/icons/FilterIcon';
 import Input from 'components/kit/Input';
 import { useModal } from 'components/kit/Modal';
 import Tags from 'components/kit/Tags';
@@ -482,6 +483,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         dataIndex: 'tags',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['tags'],
         filterDropdown: labelFilterDropdown,
+        filterIcon: <FilterIcon />,
         filters: labels.map((label) => ({ text: label, value: label })),
         isFiltered: (settings: ExperimentListSettings) => !!settings.label,
         key: 'labels',
@@ -531,6 +533,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         dataIndex: 'state',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['state'],
         filterDropdown: stateFilterDropdown,
+        filterIcon: <FilterIcon />,
         filters: [
           RunState.Active,
           RunState.Paused,
@@ -600,6 +603,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         dataIndex: 'user',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['user'],
         filterDropdown: userFilterDropdown,
+        filterIcon: <FilterIcon />,
         filters: users.map((user) => ({ text: getDisplayName(user), value: user.id })),
         isFiltered: (settings: ExperimentListSettings) => !!settings.user,
         key: V1GetExperimentsRequestSortBy.USER,
