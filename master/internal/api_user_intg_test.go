@@ -192,6 +192,41 @@ func TestPatchUser(t *testing.T) {
 	require.Error(t, err)
 }
 
+func TestRenameUserThenReuseName(t *testing.T) {
+	username := uuid.New().String()
+	api, _, ctx := setupAPITest(t, nil)
+	resp, err := api.PostUser(ctx, &apiv1.PostUserRequest{
+		User: &userv1.User{
+			Username: username,
+		},
+	})
+	require.NoError(t, err)
+
+	// Can't create user with same username.
+	_, err = api.PostUser(ctx, &apiv1.PostUserRequest{
+		User: &userv1.User{
+			Username: username,
+		},
+	})
+	require.Error(t, err)
+
+	_, err = api.PatchUser(ctx, &apiv1.PatchUserRequest{
+		UserId: resp.User.Id,
+		User: &userv1.PatchUser{
+			Username: ptrs.Ptr(uuid.New().String()),
+		},
+	})
+	require.NoError(t, err)
+
+	// Should be able to make a new user with original username.
+	_, err = api.PostUser(ctx, &apiv1.PostUserRequest{
+		User: &userv1.User{
+			Username: username,
+		},
+	})
+	require.NoError(t, err)
+}
+
 // pgdb can be nil to use the singleton database for testing.
 func setupUserAuthzTest(
 	t *testing.T, pgdb *db.PgDB,
