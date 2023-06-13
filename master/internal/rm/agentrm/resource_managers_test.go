@@ -18,7 +18,7 @@ import (
 const defaultResourcePoolName = "default"
 
 func TestResourceManagerForwardMessage(t *testing.T) {
-	user.InitService(nil, nil, nil)
+	user.InitService(nil, nil, nil, nil)
 	system := actor.NewSystem(t.Name())
 	conf := &config.ResourceConfig{
 		ResourceManager: &config.ResourceManagerConfig{
@@ -46,7 +46,7 @@ func TestResourceManagerForwardMessage(t *testing.T) {
 }
 
 func TestResourceManagerValidateRPResourcesUnknown(t *testing.T) {
-	user.InitService(nil, nil, nil)
+	user.InitService(nil, nil, nil, nil)
 	// We can reliably run this check only for AWS, GCP, or Kube resource pools,
 	// but initializing either of these in the test is not viable. So let's at least
 	// check if we properly return "unknown" for on-prem-like setups.

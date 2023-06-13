@@ -24,7 +24,7 @@ func TestAgentRMRoutingTaskRelatedMessages(t *testing.T) {
 	// to authenticate users when sending echo API requests.
 	// No echo http requests are sent so it won't cause issues
 	// initializing with nil values for this test.
-	user.InitService(nil, nil, nil)
+	user.InitService(nil, nil, nil, nil)
 
 	// Set up one CPU resource pool and one GPU resource pool.
 	cfg := &config.ResourceConfig{

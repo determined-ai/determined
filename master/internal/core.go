@@ -916,7 +916,7 @@ func (m *Master) Run(ctx context.Context) error {
 	}
 	tasklogger.SetDefaultLogger(tasklogger.New(m.taskLogBackend))
 
-	user.InitService(m.db, m.system, &m.config.InternalConfig.ExternalSessions)
+	user.InitService(m.db, m.system, &m.config.Security.TLS, &m.config.InternalConfig.ExternalSessions)
 	userService := user.GetService()
 
 	allocationmap.InitAllocationMap()
