@@ -17,6 +17,14 @@ func (a *MiscAuthZPermissive) CanUpdateAgents(
 	return (&MiscAuthZBasic{}).CanUpdateAgents(ctx, curUser)
 }
 
+// CanGetSensitiveAgentInfo calls the RBAC implementation but always allows access.
+func (a *MiscAuthZPermissive) CanGetSensitiveAgentInfo(
+	ctx context.Context, curUser *model.User,
+) (permErr error, err error) {
+	_, _ = (&MiscAuthZRBAC{}).CanGetSensitiveAgentInfo(ctx, curUser)
+	return (&MiscAuthZBasic{}).CanGetSensitiveAgentInfo(ctx, curUser)
+}
+
 // CanGetMasterLogs returns calls the RBAC implementation but always allows access.
 func (a *MiscAuthZPermissive) CanGetMasterLogs(
 	ctx context.Context, curUser *model.User,
