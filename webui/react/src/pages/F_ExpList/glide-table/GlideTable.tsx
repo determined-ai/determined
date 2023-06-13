@@ -16,7 +16,6 @@ import DataEditor, {
   Theme,
 } from '@glideapps/glide-data-grid';
 import { DrawHeaderCallback } from '@glideapps/glide-data-grid/dist/ts/data-grid/data-grid-types';
-import { ItemType } from 'antd/es/menu/hooks/useItems';
 import React, {
   Dispatch,
   SetStateAction,
@@ -393,7 +392,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         setMenuIsOpen(false);
       };
 
-      const items: ItemType[] = [
+      const items: MenuItem[] = [
         ...(BANNED_FILTER_COLUMNS.includes(column.column)
           ? []
           : [

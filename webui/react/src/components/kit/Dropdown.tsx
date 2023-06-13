@@ -1,5 +1,6 @@
 import { Popover as AntdPopover, Dropdown as AntDropdown } from 'antd';
 import { MenuProps as AntdMenuProps } from 'antd/es/menu/menu';
+import { MenuClickEventHandler } from 'rc-menu/lib/interface';
 import { PropsWithChildren, useMemo } from 'react';
 import * as React from 'react';
 
@@ -15,7 +16,7 @@ export interface MenuOption {
   key: number | string;
   label?: React.ReactNode;
   icon?: React.ReactNode;
-  onClick?: React.MouseEventHandler;
+  onClick?: MenuClickEventHandler;
 }
 
 export interface MenuOptionGroup {

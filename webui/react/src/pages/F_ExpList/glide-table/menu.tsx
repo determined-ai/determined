@@ -27,7 +27,7 @@ export interface TableActionMenuProps {
   bounds: Rectangle;
   open: boolean;
   handleClose: () => void;
-  items: MenuItem[];
+  items?: MenuItem[];
 }
 
 export const TableActionMenu: React.FC<TableActionMenuProps> = ({
