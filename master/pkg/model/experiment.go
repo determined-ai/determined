@@ -527,15 +527,15 @@ func TrialSummaryMetricsJSONPath(metricType MetricType) string {
 }
 
 // TrialSummaryMetricType returns the metric type for the given summary JSON path.
-func TrialSummaryMetricType(JSONPath string) MetricType {
+func TrialSummaryMetricType(jsonPath string) MetricType {
 	var mType MetricType
-	switch JSONPath {
+	switch jsonPath {
 	case TrialSummaryMetricsJSONPath(TrainingMetricType):
 		mType = TrainingMetricType
 	case TrialSummaryMetricsJSONPath(ValidationMetricType):
 		mType = ValidationMetricType
 	default:
-		mType = MetricType(JSONPath)
+		mType = MetricType(jsonPath)
 	}
 	return mType
 }

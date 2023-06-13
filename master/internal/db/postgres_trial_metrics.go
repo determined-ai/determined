@@ -41,7 +41,8 @@ func BunSelectMetricsQuery(metricType model.MetricType, inclArchived bool) *bun.
 func BunSelectMetricTypeNames() *bun.SelectQuery {
 	return Bun().NewSelect().Table("trials").
 		ColumnExpr("DISTINCT jsonb_object_keys(summary_metrics) as json_path").
-		ColumnExpr("jsonb_object_keys(summary_metrics->jsonb_object_keys(summary_metrics)) as metric_name").
+		ColumnExpr("jsonb_object_keys(summary_metrics->jsonb_object_keys(summary_metrics))" +
+			" as metric_name").
 		Where("summary_metrics IS NOT NULL").
 		Order("json_path").Order("metric_name")
 }

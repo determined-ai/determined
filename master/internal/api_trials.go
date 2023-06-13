@@ -664,7 +664,6 @@ func (a *apiServer) parseMetricTypeArgs(
 	if newType != "" {
 		return newType, nil
 	}
-	// TODO: think of a general solution to this for deprecation scenarios?
 	conv := &protoconverter.ProtoConverter{}
 	convertedLegacyType := conv.ToMetricType(legacyType)
 	if cErr := conv.Error(); cErr != nil {
@@ -712,11 +711,10 @@ func (a *apiServer) multiTrialSample(trialID int32, metricNames []string,
 		timeSeriesColumn = timeSeriesFilter.Name
 	}
 
-	// TODO: we could throw out duplicates. (breaking change?)
 	metricTypeToNames := make(map[model.MetricType][]string)
 	if len(metricNames) > 0 {
-		// to keep backwards compatibility.
 		if metricType == "" {
+			// to keep backwards compatibility.
 			metricTypeToNames[model.TrainingMetricType] = metricNames
 			metricTypeToNames[model.ValidationMetricType] = metricNames
 		} else {
@@ -739,7 +737,6 @@ func (a *apiServer) multiTrialSample(trialID int32, metricNames []string,
 		}
 	}
 
-	// TODO: this doesn't need to be a closure anymore.
 	getDownSampledMetric := func(aMetricNames []string, aMetricType model.MetricType,
 	) (*apiv1.DownsampledMetrics, error) {
 		var metric apiv1.DownsampledMetrics
@@ -751,6 +748,7 @@ func (a *apiServer) multiTrialSample(trialID int32, metricNames []string,
 			return nil, errors.Wrapf(err, fmt.Sprintf("error fetching time series of %s metrics",
 				aMetricType))
 		}
+		//nolint:staticcheck // SA1019: backward compatibility
 		metric.Type = aMetricType.ToProto()
 		metric.CustomType = aMetricType.ToString()
 		if len(metricMeasurements) > 0 {
@@ -789,6 +787,7 @@ func (a *apiServer) SummarizeTrial(ctx context.Context,
 		return nil, errors.Wrapf(err, "failed to get trial %d", req.TrialId)
 	}
 
+	//nolint:staticcheck // SA1019: backward compatibility
 	metricType, err := a.parseMetricTypeArgs(req.MetricType, model.MetricType(req.CustomType))
 	if err != nil {
 		return nil, err
@@ -824,6 +823,7 @@ func (a *apiServer) CompareTrials(ctx context.Context,
 			return nil, errors.Wrapf(err, "failed to get trial %d", trialID)
 		}
 
+		//nolint:staticcheck // SA1019: backward compatibility
 		metricType, err := a.parseMetricTypeArgs(req.MetricType, model.MetricType(req.CustomType))
 		if err != nil {
 			return nil, err
@@ -975,6 +975,7 @@ func (a *apiServer) GetTrialWorkloads(ctx context.Context, req *apiv1.GetTrialWo
 		limit,
 		req.Filter.String(),
 		req.IncludeBatchMetrics,
+		//nolint:staticcheck // SA1019: backward compatibility
 		req.MetricType.String(),
 	); {
 	case err == db.ErrNotFound:

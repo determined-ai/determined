@@ -1459,12 +1459,14 @@ func (a *apiServer) ExpMetricNames(req *apiv1.ExpMetricNamesRequest,
 
 		for _, name := range metricNames[model.TrainingMetricType] {
 			if seen := seenTrain[name]; !seen {
+				//nolint:staticcheck // SA1019: backward compatibility
 				response.TrainingMetrics = append(response.TrainingMetrics, name)
 				seenTrain[name] = true
 			}
 		}
 		for _, name := range metricNames[model.ValidationMetricType] {
 			if seen := seenValid[name]; !seen {
+				//nolint:staticcheck // SA1019: backward compatibility
 				response.ValidationMetrics = append(response.ValidationMetrics, name)
 				seenValid[name] = true
 			}
@@ -1516,7 +1518,6 @@ func (a *apiServer) MetricBatches(req *apiv1.MetricBatchesRequest,
 	if metricName == "" {
 		return status.Error(codes.InvalidArgument, "must specify a metric name")
 	}
-	// metricType := req.MetricType
 	period := time.Duration(req.PeriodSeconds) * time.Second
 	if period == 0 {
 		period = defaultMetricsStreamPeriod
@@ -1539,6 +1540,7 @@ func (a *apiServer) MetricBatches(req *apiv1.MetricBatchesRequest,
 		var newBatches []int32
 		var endTime time.Time
 		var err error
+		//nolint:staticcheck // SA1019: backward compatibility
 		metricType, err := a.parseMetricTypeArgs(req.MetricType, model.MetricType(req.CustomType))
 		if err != nil {
 			return err
@@ -1546,7 +1548,7 @@ func (a *apiServer) MetricBatches(req *apiv1.MetricBatchesRequest,
 		if metricType == "" {
 			return status.Error(codes.InvalidArgument, "must specify a metric type")
 		}
-		newBatches, endTime, err = a.m.db.MetricBatches(experimentID, metricName, startTime, metricType)
+		newBatches, endTime, err = db.MetricBatches(experimentID, metricName, startTime, metricType)
 		if err != nil {
 			return errors.Wrapf(err, "error fetching batches recorded for metric")
 		}
@@ -1589,6 +1591,7 @@ func (a *apiServer) TrialsSnapshot(req *apiv1.TrialsSnapshotRequest,
 	if metricName == "" {
 		return status.Error(codes.InvalidArgument, "must specify a metric name")
 	}
+	//nolint:staticcheck // SA1019: backward compatibility
 	metricType := req.MetricType
 	if metricType == apiv1.MetricType_METRIC_TYPE_UNSPECIFIED {
 		return status.Error(codes.InvalidArgument, "must specify a metric type")
@@ -1800,6 +1803,7 @@ func (a *apiServer) TrialsSample(req *apiv1.TrialsSampleRequest,
 	}
 
 	metricName := req.MetricName
+	//nolint:staticcheck // SA1019: backward compatibility
 	metricType := req.MetricType
 	if metricType == apiv1.MetricType_METRIC_TYPE_UNSPECIFIED {
 		return status.Error(codes.InvalidArgument, "must specify a metric type")

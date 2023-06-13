@@ -254,9 +254,11 @@ func TestMetricNames(t *testing.T) {
 
 	exp = RequireMockExperiment(t, db, user)
 	trial1 = RequireMockTrial(t, db, exp).ID
-	addTestTrialMetrics(ctx, t, db, trial1, `{"inference": [{"a":1}, {"b":2}], "golabi": [{"b":2, "c":3}]}`)
+	addTestTrialMetrics(ctx, t, db, trial1,
+		`{"inference": [{"a":1}, {"b":2}], "golabi": [{"b":2, "c":3}]}`)
 	trial2 = RequireMockTrial(t, db, exp).ID
-	addTestTrialMetrics(ctx, t, db, trial2, `{"inference": [{"b":1}, {"d":2}], "golabi": [{"f":"test"}]}`)
+	addTestTrialMetrics(ctx, t, db, trial2,
+		`{"inference": [{"b":1}, {"d":2}], "golabi": [{"f":"test"}]}`)
 
 	actualNames, err = db.MetricNames(ctx, []int{exp.ID})
 	require.NoError(t, err)
@@ -275,16 +277,18 @@ func TestMetricBatchesMilestones(t *testing.T) {
 	startTime := time.Time{}
 
 	trial1 := RequireMockTrial(t, db, exp).ID
-	addTestTrialMetrics(ctx, t, db, trial1, `{"inference": [{"a":1}, {"b":2}], "golabi": [{"b":2, "c":3}]}`)
+	addTestTrialMetrics(ctx, t, db, trial1,
+		`{"inference": [{"a":1}, {"b":2}], "golabi": [{"b":2, "c":3}]}`)
 	trial2 := RequireMockTrial(t, db, exp).ID
-	addTestTrialMetrics(ctx, t, db, trial2, `{"inference": [{"b":1}, {"d":2}], "golabi": [{"f":"test"}]}`)
+	addTestTrialMetrics(ctx, t, db, trial2,
+		`{"inference": [{"b":1}, {"d":2}], "golabi": [{"f":"test"}]}`)
 
-	batches, _, err := db.MetricBatches(exp.ID, "a", startTime, model.MetricType("inference"))
+	batches, _, err := MetricBatches(exp.ID, "a", startTime, model.MetricType("inference"))
 	require.NoError(t, err)
 	require.Len(t, batches, 1)
 	require.Equal(t, batches[0], int32(1))
 
-	batches, _, err = db.MetricBatches(exp.ID, "b", startTime, model.MetricType("inference"))
+	batches, _, err = MetricBatches(exp.ID, "b", startTime, model.MetricType("inference"))
 	require.NoError(t, err)
 	require.Len(t, batches, 2, "should have 2 batches", batches, trial1, trial2)
 	require.Equal(t, batches[0], int32(1))
