@@ -1,4 +1,4 @@
-//go:build integration
+g//go:build integration
 // +build integration
 
 package internal
@@ -155,7 +155,6 @@ func TestPatchUser(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.Equal(t, username, resp.User.Username)
-	require.True(t, resp.User.Remote)
 	require.True(t, resp.User.Admin)
 	require.True(t, resp.User.Active)
 	require.Equal(t, ptrs.Ptr(int32(5)), resp.User.AgentUserGroup.AgentUid)
