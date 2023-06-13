@@ -34,18 +34,18 @@ class ExperimentState(enum.Enum):
 
 class Experiment:
     """
+    A class representing an Experiment object.
+
     An Experiment object is usually obtained from
     ``determined.experimental.client.create_experiment()``
-    or ``determined.experimental.client.get_experiment()``.
-
-    Helper class that supports querying the set of checkpoints associated with an
-    experiment.
+    or ``determined.experimental.client.get_experiment()`` and contains helper methods that support
+    querying the set of checkpoints associated with an experiment.
 
     Attributes:
         id: ID of experiment object in database.
         session: HTTP request session.
-        config: (Mutable) Experiment config for the experiment.
-        state: (Mutable) State of the experiment.
+        config: (Mutable, Optional[Dict]) Experiment config for the experiment.
+        state: (Mutable, Optional[experimentv1State) State of the experiment.
 
     Note:
         All attributes are cached by default.

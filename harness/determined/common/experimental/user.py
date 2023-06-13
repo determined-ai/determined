@@ -7,19 +7,21 @@ from determined.common.api import bindings
 class User:
     """
     A User object represents an individual account on a Determined installation.
+
     It can be obtained from ``client.list_users`` or ``client.get_user_by_name()``.
 
     Attributes:
         session: HTTP request session.
         user_id: (int) Unique ID for the user in the Determined database.
-        admin: (Mutable, bool) Whether the user has admin privileges.
-        remote: (Mutable, bool) When true, prevents password sign-on and requires user to
-        sign-on using external IdP
-        agent_uid: (Mutable, int) UID on the agent this user is linked to.
-        agent_gid: (Mutable, int) GID on the agent this user is linked to.
-        agent_user: (Mutable, str) Unix user on the agent this user is linked to.
-        agent_group: (Mutable, str) Unix group on the agent this user is linked to.
-        display_name: (Mutable, str) Human-friendly name of the user.
+        username: (Mutable, Optional[str]) Username of the user in the Determined cluster.
+        admin: (Mutable, Optional[bool]) Whether the user has admin privileges.
+        remote: (Mutable, Optional[bool]) When true, prevents password sign-on and requires user to
+            sign-on using external IdP
+        agent_uid: (Mutable, Optional[int]) UID on the agent this user is linked to.
+        agent_gid: (Mutable, Optional[int]) GID on the agent this user is linked to.
+        agent_user: (Mutable, Optional[str]) Unix user on the agent this user is linked to.
+        agent_group: (Mutable, Optional[str]) Unix group on the agent this user is linked to.
+        display_name: (Mutable, Optional[str]) Human-friendly name of the user.
 
     Note:
         All attributes are cached by default.

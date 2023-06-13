@@ -115,16 +115,16 @@ class ValidationMetrics:
 
 class Trial:
     """
-    A Trial object is usually obtained from
-    ``determined.experimental.client.get_trial()``.
+    A class representing a Trial object.
 
-    Trial reference class used for querying relevant
-    :class:`~determined.experimental.Checkpoint` instances.
+    A Trial object is usually obtained from ``determined.experimental.client.get_trial()``.
+    Trial reference class used for querying relevant :class:`~determined.experimental.Checkpoint`
+    instances.
 
     Attributes:
         trial_id: ID of trial.
         session: HTTP request session.
-        hparams: (Mutable) hyperparameters for the trial.
+        hparams: (Mutable, Optional[Dict]) Hyperparameters for the trial.
 
     """
 

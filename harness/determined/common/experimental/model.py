@@ -10,20 +10,22 @@ from determined.common.experimental import checkpoint
 
 class ModelVersion:
     """
-    A class representing a combination of Model and Checkpoint, and can be fetched using
-    ``model.get_version()``. Once a model has been added to the registry, checkpoints can be
-    added to it. These registered checkpoints are ModelVersions.
+    A class representing a combination of Model and Checkpoint.
+
+    It can be fetched using ``model.get_version()``. Once a model has been added to the registry,
+    checkpoints can be added to it. These registered checkpoints are ModelVersions.
 
     Attributes:
         session: HTTP request session.
-        model_version: (int) Version number assigned by the registry, starting from 1 and
+            model_version: (int) Version number assigned by the registry, starting from 1 and
         incrementing each time a new model version is registered.
         model_name: (str) Name of the parent model.
-        checkpoint: (Mutable, checkpoint.Checkpoint) Checkpoint associated with this model version.
-        metadata: (Mutable, Dict) Metadata of this model version.
-        name: (Mutable, str) Human-friendly name of this model version.
-        model_id: (Mutable, int) Database ID of the parent model.
-        model_version_id: (Mutable, int) Database ID of this model version.
+        checkpoint: (Mutable, Optional[checkpoint.Checkpoint]) Checkpoint associated with this
+            model version.
+        metadata: (Mutable, Optional[Dict]) Metadata of this model version.
+        name: (Mutable, Optional[str]) Human-friendly name of this model version.
+        model_id: (Mutable, Optional[int]) Database ID of the parent model.
+        model_version_id: (Mutable, Optional[int]) Database ID of this model version.
 
     Note:
         All attributes are cached by default.
@@ -157,11 +159,11 @@ class ModelOrderBy(enum.Enum):
 
 class Model:
     """
-    A Model object is usually obtained from
-    ``determined.experimental.client.create_model()``
-    or ``determined.experimental.client.get_model()``.
 
-    Class representing a model in the model registry. It contains methods for model
+    Class representing a model in the model registry.
+
+    A Model object is usually obtained from ``determined.experimental.client.create_model()``
+    or ``determined.experimental.client.get_model()``. It contains methods for model
     versions and metadata.
 
     Arguments:

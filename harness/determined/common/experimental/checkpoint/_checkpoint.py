@@ -76,16 +76,33 @@ class CheckpointTrainingMetadata:
 
 class Checkpoint:
     """
+    A class representing a Checkpoint instance of a trained model.
+
     A Checkpoint object is usually obtained from
-    ``determined.experimental.client.get_checkpoint()``.
-
-    A ``Checkpoint`` represents a trained model.
-
-    This class provides helper functionality for downloading checkpoints to
-    local storage and loading checkpoints into memory.
+    ``determined.experimental.client.get_checkpoint()``. This class provides helper functionality
+    for downloading checkpoints to local storage and loading checkpoints into memory.
 
     The :class:`~determined.experimental.Trial` class contains methods
     that return instances of this class.
+
+    Attributes:
+        session: HTTP request session.
+        uuid: UUID of checkpoint in storage.
+        task_id: (Mutable, Optional[str]) ID of associated task.
+        allocation_id: (Mutable, Optional[str]) ID of associated allocation.
+        report_time: (Mutable, Optional[str]) Timestamp checkpoint reported.
+        resources: (Mutable, Optional[Dict]) Dictionary of file paths to file sizes in bytes of
+            all files in the checkpoint.
+        metadata: (Mutable, Optional[Dict]) User-defined metadata associated with the checkpoint.
+        state: (Mutable, Optional[CheckpointState]) State of the checkpoint.
+        training: (Mutable, Optional[CheckpointTrainingMetadata]) Training-related metadata for
+            the checkpoint.
+
+        Note:
+            All attributes are cached by default.
+
+            Some attributes are mutable and may be changed by methods that update these values,
+            either automatically (eg. `add_metadata()`) or explicitly with `reload()`.
     """
 
     def __init__(
