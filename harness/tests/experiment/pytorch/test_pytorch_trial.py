@@ -974,10 +974,14 @@ class TestPyTorchTrial:
         val_metrics = launcher.elastic_launch(launch_config, self.run_identity)(tmp_path)
 
         actual_weights = []
+        raw_weights = []
         for i in range(len(val_metrics[0])):
+            raw_weights += [val_metrics[0][i]['weight'], val_metrics[1][i]['weight']]
             actual_weights.append(sum(val_metrics[j][i]['weight'] for j in range(2)))
 
+        print(raw_weights)
         expected_weights = calculate_gradients()
+        print(expected_weights)
 
         assert actual_weights == pytest.approx(
             expected_weights
