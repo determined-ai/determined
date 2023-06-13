@@ -1089,9 +1089,9 @@ class TestPyTorchTrial:
             trial_class=trial_class,
             hparams=hparams,
             trial_seed=self.trial_seed,
-            max_batches=24,
+            max_batches=48,
             min_validation_batches=1,
-            min_checkpoint_batches=24,
+            min_checkpoint_batches=48,
             checkpoint_dir=checkpoint_dir,
             tensorboard_path=tensorboard_path,
             aggregation_frequency=2
