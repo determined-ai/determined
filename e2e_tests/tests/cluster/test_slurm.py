@@ -146,6 +146,7 @@ def test_master_host() -> None:
 
 
 @pytest.mark.e2e_slurm
+@pytest.mark.parallel
 def test_cifar10_pytorch_distributed() -> None:
     config = conf.load_config(conf.cv_examples_path("cifar10_pytorch/distributed.yaml"))
     config["searcher"]["max_length"] = {"epochs": 1}
