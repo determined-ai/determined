@@ -975,7 +975,7 @@ class TestPyTorchTrial:
 
         actual_weights = []
         for i in range(len(val_metrics[0])):
-            actual_weights += [val_metrics[0][i]['weight'], val_metrics[1][i]['weight']]
+            actual_weights.append(sum(val_metrics[j][i]['weight'] for j in range(2)) / 2)
 
         print(actual_weights)
 
@@ -1097,6 +1097,7 @@ class TestPyTorchTrial:
             min_checkpoint_batches=24,
             checkpoint_dir=checkpoint_dir,
             tensorboard_path=tensorboard_path,
+            aggregation_frequency=2
         )
 
         trial_controller.run()
