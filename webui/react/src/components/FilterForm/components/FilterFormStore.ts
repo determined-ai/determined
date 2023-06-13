@@ -156,67 +156,51 @@ export class FilterFormStore {
     col: Pick<V1ProjectColumn, 'location' | 'type' | 'column'>,
   ): void {
     const loadableFilterSet: Loadable<FilterFormSet> = this.#formset.get();
-    Loadable.match(loadableFilterSet, {
-      Loaded: (filterSet) => {
-        const filterGroup = filterSet.filterGroup;
-        const ans = this.#getFormById(filterGroup, id);
-        if (ans && ans.kind === FormKind.Field) {
-          ans.columnName = col.column;
-          ans.location = col.location;
-          ans.type = col.type;
-          this.#formset.update((prev) => ({ ...prev, filterGroup }));
-        }
-      },
-      NotLoaded: () => null,
+    Loadable.forEach(loadableFilterSet, (filterSet) => {
+      const filterGroup = filterSet.filterGroup;
+      const ans = this.#getFormById(filterGroup, id);
+      if (ans && ans.kind === FormKind.Field) {
+        ans.columnName = col.column;
+        ans.location = col.location;
+        ans.type = col.type;
+        this.#formset.update((prev) => ({ ...prev, filterGroup }));
+      }
     });
   }
 
   public setFieldOperator(id: string, operator: Operator): void {
     const loadableFilterSet: Loadable<FilterFormSet> = this.#formset.get();
-    Loadable.match(loadableFilterSet, {
-      Loaded: (filterSet) => {
-        const filterGroup = filterSet.filterGroup;
-        const ans = this.#getFormById(filterGroup, id);
-        if (ans && ans.kind === FormKind.Field && Object.values(Operator).includes(operator)) {
-          ans.operator = operator;
-          this.#formset.update((prev) => ({ ...prev, filterGroup }));
-        }
-      },
-      NotLoaded: () => null,
+    Loadable.forEach(loadableFilterSet, (filterSet) => {
+      const filterGroup = filterSet.filterGroup;
+      const ans = this.#getFormById(filterGroup, id);
+      if (ans && ans.kind === FormKind.Field && Object.values(Operator).includes(operator)) {
+        ans.operator = operator;
+        this.#formset.update((prev) => ({ ...prev, filterGroup }));
+      }
     });
   }
 
   public setFieldConjunction(id: string, conjunction: Conjunction): void {
     const loadableFilterSet: Loadable<FilterFormSet> = this.#formset.get();
-    Loadable.match(loadableFilterSet, {
-      Loaded: (filterSet) => {
-        const filterGroup = filterSet.filterGroup;
-        const ans = this.#getFormById(filterGroup, id);
-        if (
-          ans &&
-          ans.kind === FormKind.Group &&
-          Object.values(Conjunction).includes(conjunction)
-        ) {
-          ans.conjunction = conjunction;
-          this.#formset.update((prev) => ({ ...prev, filterGroup }));
-        }
-      },
-      NotLoaded: () => null,
+    Loadable.forEach(loadableFilterSet, (filterSet) => {
+      const filterGroup = filterSet.filterGroup;
+      const ans = this.#getFormById(filterGroup, id);
+      if (ans && ans.kind === FormKind.Group && Object.values(Conjunction).includes(conjunction)) {
+        ans.conjunction = conjunction;
+        this.#formset.update((prev) => ({ ...prev, filterGroup }));
+      }
     });
   }
 
   public setFieldValue(id: string, value: FormFieldValue): void {
     const loadableFilterSet: Loadable<FilterFormSet> = this.#formset.get();
-    Loadable.match(loadableFilterSet, {
-      Loaded: (filterSet) => {
-        const filterGroup = filterSet.filterGroup;
-        const ans = this.#getFormById(filterGroup, id);
-        if (ans && ans.kind === FormKind.Field) {
-          ans.value = value;
-          this.#formset.update((prev) => ({ ...prev, filterGroup }));
-        }
-      },
-      NotLoaded: () => null,
+    Loadable.forEach(loadableFilterSet, (filterSet) => {
+      const filterGroup = filterSet.filterGroup;
+      const ans = this.#getFormById(filterGroup, id);
+      if (ans && ans.kind === FormKind.Field) {
+        ans.value = value;
+        this.#formset.update((prev) => ({ ...prev, filterGroup }));
+      }
     });
   }
 
@@ -226,75 +210,68 @@ export class FilterFormStore {
     obj?: { index: number; item: Readonly<FormGroup | FormField> },
   ): void {
     const loadableFilterSet: Loadable<FilterFormSet> = this.#formset.get();
-    Loadable.match(loadableFilterSet, {
-      Loaded: (filterSet) => {
-        const filterGroup = filterSet.filterGroup;
-        const traverse = (form: FormGroup | FormField): void => {
-          if (form.id === id && form.kind === FormKind.Group) {
-            if (obj) {
-              form.children.splice(obj.index, 0, structuredClone(obj.item));
-            } else {
-              form.children.push(addType === FormKind.Group ? getInitGroup() : getInitField());
-            }
-            return;
+    Loadable.forEach(loadableFilterSet, (filterSet) => {
+      const filterGroup = filterSet.filterGroup;
+      const traverse = (form: FormGroup | FormField): void => {
+        if (form.id === id && form.kind === FormKind.Group) {
+          if (obj) {
+            form.children.splice(obj.index, 0, structuredClone(obj.item));
+          } else {
+            form.children.push(addType === FormKind.Group ? getInitGroup() : getInitField());
           }
+          return;
+        }
 
-          if (form.kind === FormKind.Group) {
-            for (const child of form.children) {
-              traverse(child);
-            }
+        if (form.kind === FormKind.Group) {
+          for (const child of form.children) {
+            traverse(child);
           }
-        };
+        }
+      };
 
-        traverse(filterGroup);
-        this.#formset.update((prev) => ({ ...prev, filterGroup }));
-      },
-      NotLoaded: () => null,
+      traverse(filterGroup);
+      this.#formset.update((prev) => ({ ...prev, filterGroup }));
     });
   }
 
   public removeChild(id: string): void {
     const loadableFilterSet: Loadable<FilterFormSet> = this.#formset.get();
-    Loadable.match(loadableFilterSet, {
-      Loaded: (filterSet) => {
-        const filterGroup = filterSet.filterGroup;
+    Loadable.forEach(loadableFilterSet, (filterSet) => {
+      const filterGroup = filterSet.filterGroup;
 
-        if (filterGroup.id === id) {
-          // if remove top group
-          this.#formset.set(
-            Loaded({ ...structuredClone(INIT_FORMSET), showArchived: filterSet.showArchived }),
-          );
-          return;
-        }
+      if (filterGroup.id === id) {
+        // if remove top group
+        this.#formset.set(
+          Loaded({ ...structuredClone(INIT_FORMSET), showArchived: filterSet.showArchived }),
+        );
+        return;
+      }
 
-        const traverse = (form: FormGroup | FormField): void => {
-          if (form.kind === FormKind.Group) {
-            const prevLength = form.children.length;
-            form.children = form.children.filter((c) => c.id !== id);
-            if (prevLength === form.children.length) {
-              for (const child of form.children) {
-                traverse(child);
-              }
+      const traverse = (form: FormGroup | FormField): void => {
+        if (form.kind === FormKind.Group) {
+          const prevLength = form.children.length;
+          form.children = form.children.filter((c) => c.id !== id);
+          if (prevLength === form.children.length) {
+            for (const child of form.children) {
+              traverse(child);
             }
           }
-        };
-        traverse(filterGroup);
-        this.#formset.update((loadablePrev) =>
-          Loadable.match(loadablePrev, {
-            Loaded: (prev) => Loaded({ ...prev, filterGroup }),
-            NotLoaded: () => NotLoaded,
-          }),
-        );
-      },
-      NotLoaded: () => null,
+        }
+      };
+      traverse(filterGroup);
+      this.#formset.update((loadablePrev) =>
+        Loadable.match(loadablePrev, {
+          Loaded: (prev) => Loaded({ ...prev, filterGroup }),
+          NotLoaded: () => NotLoaded,
+        }),
+      );
     });
   }
 
   public setArchivedValue(val: boolean): void {
     const loadableFilterSet: Loadable<FilterFormSet> = this.#formset.get();
-    Loadable.match(loadableFilterSet, {
-      Loaded: (fs) => this.#formset.set(Loaded({ ...fs, showArchived: val })),
-      NotLoaded: () => null,
-    });
+    Loadable.forEach(loadableFilterSet, (fs) =>
+      this.#formset.set(Loaded({ ...fs, showArchived: val })),
+    );
   }
 }

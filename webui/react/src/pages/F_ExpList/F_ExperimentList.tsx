@@ -302,10 +302,9 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     return formStore.asJsonString.subscribe(() => {
       resetPagination();
       const loadableFormset = formStore.formset.get();
-      Loadable.match(loadableFormset, {
-        Loaded: (formSet) => updateSettings({ filterset: JSON.stringify(formSet) }),
-        NotLoaded: () => null,
-      });
+      Loadable.forEach(loadableFormset, (formSet) =>
+        updateSettings({ filterset: JSON.stringify(formSet) }),
+      );
     });
   }, [resetPagination, updateSettings]);
 
