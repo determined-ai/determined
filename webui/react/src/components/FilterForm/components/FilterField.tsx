@@ -159,8 +159,7 @@ const FilterField = ({
 
   const captureEnterKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
-      if (e.key === 'Enter') {
-        e.stopPropagation();
+      if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
         formStore.addChild(parentId, FormKind.Field, { index: index + 1, item: getInitField() });
       }
     },
@@ -231,12 +230,7 @@ const FilterField = ({
                   const val = e.target.value || null; // when empty string, val is null
                   updateFieldValue(field.id, val, true);
                 }}
-                onPressEnter={() =>
-                  formStore.addChild(parentId, FormKind.Field, {
-                    index: index + 1,
-                    item: getInitField(),
-                  })
-                }
+                onPressEnter={captureEnterKeyDown}
               />
             )}
             {currentColumn?.type === V1ColumnType.NUMBER && (
@@ -247,12 +241,7 @@ const FilterField = ({
                   const value = val != null ? Number(val) : null;
                   updateFieldValue(field.id, value, true);
                 }}
-                onPressEnter={() =>
-                  formStore.addChild(parentId, FormKind.Field, {
-                    index: index + 1,
-                    item: getInitField(),
-                  })
-                }
+                onPressEnter={captureEnterKeyDown}
               />
             )}
             {currentColumn?.type === V1ColumnType.DATE && (
