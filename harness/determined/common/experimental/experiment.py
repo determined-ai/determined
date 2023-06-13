@@ -1,7 +1,8 @@
 import enum
 import sys
 import time
-from typing import Any, Dict, List, Optional
+import warnings
+from typing import Any, Dict, Iterable, List, Optional
 
 from determined.common import api
 from determined.common.api import bindings
@@ -86,8 +87,21 @@ class Experiment:
         sort_by: trial.TrialSortBy = trial.TrialSortBy.ID,
         order_by: trial.TrialOrderBy = trial.TrialOrderBy.ASCENDING,
     ) -> List[trial.Trial]:
+        warnings.warn(
+            "Experiment.get_trials() has been deprecated and will be removed in a future version."
+            "Please call Experiment.list_trials() instead.",
+            FutureWarning,
+            stacklevel=2,
+        )
+        return list(self.list_trials(sort_by, order_by))
+
+    def list_trials(
+        self,
+        sort_by: trial.TrialSortBy = trial.TrialSortBy.ID,
+        order_by: trial.TrialOrderBy = trial.TrialOrderBy.ASCENDING,
+    ) -> Iterable[trial.Trial]:
         """
-        Get the list of :class:`~determined.experimental.Trial` instances
+        Get a generator of :class:`~determined.experimental.Trial` instances
         representing trials for an experiment.
 
         Arguments:
@@ -107,7 +121,9 @@ class Experiment:
 
         resps = api.read_paginated(get_with_offset)
 
-        return [trial.Trial(t.id, self._session) for r in resps for t in r.trials]
+        for r in resps:
+            for t in r.trials:
+                yield trial.Trial(t.id, self._session)
 
     def await_first_trial(self, interval: float = 0.1) -> trial.Trial:
         """
