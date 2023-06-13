@@ -968,21 +968,23 @@ class TestPyTorchTrial:
         rdzv_endpoint = "localhost:29400"
         rdzv_id = str(uuid.uuid4())
 
-        num_procs = 1
-
-        launch_config = launcher.LaunchConfig(min_nodes=1, max_nodes=1, nproc_per_node=num_procs, run_id=rdzv_id,
+        launch_config = launcher.LaunchConfig(min_nodes=1, max_nodes=1, nproc_per_node=2, run_id=rdzv_id,
                                               max_restarts=0, rdzv_endpoint=rdzv_endpoint, rdzv_backend=rdzv_backend)
 
         val_metrics = launcher.elastic_launch(launch_config, self.run_identity)(tmp_path)
 
-        avg_weights = []
+        actual_weights = []
         for i in range(len(val_metrics[0])):
-            avg_weights.append(sum(val_metrics[j][i]['weight'] for j in range(num_procs)))
+            actual_weights += [val_metrics[0][i]['weight'], val_metrics[1][i]['weight']]
 
-        print(avg_weights)
+        print(actual_weights)
 
         expected_weights = calculate_gradients()
         print(expected_weights)
+
+        assert actual_weights == pytest.approx(
+            expected_weights
+        ), f"{actual_weights} != {expected_weights}"
 
 
     def run_cifar10(self, tmp_path: pathlib.Path, batches_trained: typing.Optional[int] = 0):
@@ -1090,9 +1092,9 @@ class TestPyTorchTrial:
             trial_class=trial_class,
             hparams=hparams,
             trial_seed=self.trial_seed,
-            max_batches=4,
+            max_batches=24,
             min_validation_batches=1,
-            min_checkpoint_batches=4,
+            min_checkpoint_batches=24,
             checkpoint_dir=checkpoint_dir,
             tensorboard_path=tensorboard_path,
         )
