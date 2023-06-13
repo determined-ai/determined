@@ -34,6 +34,12 @@ def sample_get_experiment(**kwargs: Any) -> bindings.v1GetExperimentResponse:
         return resp
 
 
+def sample_get_experiment_trials() -> bindings.v1GetExperimentTrialsResponse:
+    with open(FIXTURES_DIR / "experiment_trials.json") as f:
+        resp = bindings.v1GetExperimentTrialsResponse.from_json(json.load(f))
+        return resp
+
+
 def sample_get_model() -> bindings.v1GetModelResponse:
     """Get a sample model from a fixture."""
     with open(FIXTURES_DIR / "model.json") as f:
@@ -51,6 +57,11 @@ def sample_get_pagination() -> bindings.v1Pagination:
     with open(FIXTURES_DIR / "pagination.json") as f:
         resp = bindings.v1Pagination.from_json(json.load(f))
         return resp
+
+
+def empty_get_pagination() -> bindings.v1Pagination:
+    """A pagination response for an object with no entries."""
+    return bindings.v1Pagination(endIndex=5, limit=0, offset=0, startIndex=0, total=5)
 
 
 def page_of(
