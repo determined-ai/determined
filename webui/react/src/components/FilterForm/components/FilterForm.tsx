@@ -7,6 +7,7 @@ import { FormKind } from 'components/FilterForm/components/type';
 import Button from 'components/kit/Button';
 import Toggle from 'components/kit/Toggle';
 import { V1ProjectColumn } from 'services/api-ts-sdk';
+import Spinner from 'shared/components/Spinner';
 import { Loadable } from 'utils/loadable';
 
 import css from './FilterForm.module.scss';
@@ -20,10 +21,13 @@ interface Props {
 const FilterForm = ({ formStore, columns, onHidePopOver }: Props): JSX.Element => {
   const scrollBottomRef = useRef<HTMLDivElement>(null);
   const loadableData = useObservable(formStore.formset);
-  const data = Loadable.getOrElse(null, loadableData);
-  const isButtonDisabled = (data?.filterGroup?.children?.length ?? -1) > ITEM_LIMIT;
+  const isButtonDisabled = Loadable.match(loadableData, {
+    Loaded: (data) => data.filterGroup.children.length > ITEM_LIMIT,
+    NotLoaded: () => true,
+  });
 
   const onAddItem = (formKind: FormKind) => {
+    const data = Loadable.getOrElse(null, loadableData);
     if (!data) return;
     formStore.addChild(data.filterGroup.id, formKind);
     setTimeout(() => {
@@ -31,48 +35,59 @@ const FilterForm = ({ formStore, columns, onHidePopOver }: Props): JSX.Element =
     }, 100);
   };
 
-  if (!data) return <div className={css.base} />;
-
   return (
     <div className={css.base}>
-      <div className={css.header}>
-        <div>Show experiments…</div>
-        <Toggle
-          checked={data.showArchived}
-          label="Show Archived"
-          onChange={() => formStore.setArchivedValue(!data.showArchived)}
-        />
-      </div>
-      <div className={css.filter}>
-        <FilterGroup
-          columns={columns}
-          conjunction={data.filterGroup.conjunction}
-          formStore={formStore}
-          group={data.filterGroup}
-          index={0}
-          level={0}
-          parentId={data.filterGroup.id}
-        />
-        <div ref={scrollBottomRef} />
-      </div>
-      <div className={css.buttonContainer}>
-        <div className={css.addButtonContainer}>
-          <Button disabled={isButtonDisabled} type="text" onClick={() => onAddItem(FormKind.Field)}>
-            + Add condition
-          </Button>
-          <Button disabled={isButtonDisabled} type="text" onClick={() => onAddItem(FormKind.Group)}>
-            + Add condition group
-          </Button>
-        </div>
-        <Button
-          type="text"
-          onClick={() => {
-            formStore.removeChild(data.filterGroup.id);
-            onHidePopOver();
-          }}>
-          Reset
-        </Button>
-      </div>
+      {Loadable.match(loadableData, {
+        Loaded: (data) => (
+          <>
+            <div className={css.header}>
+              <div>Show experiments…</div>
+              <Toggle
+                checked={data.showArchived}
+                label="Show Archived"
+                onChange={() => formStore.setArchivedValue(!data.showArchived)}
+              />
+            </div>
+            <div className={css.filter}>
+              <FilterGroup
+                columns={columns}
+                conjunction={data.filterGroup.conjunction}
+                formStore={formStore}
+                group={data.filterGroup}
+                index={0}
+                level={0}
+                parentId={data.filterGroup.id}
+              />
+              <div ref={scrollBottomRef} />
+            </div>
+            <div className={css.buttonContainer}>
+              <div className={css.addButtonContainer}>
+                <Button
+                  disabled={isButtonDisabled}
+                  type="text"
+                  onClick={() => onAddItem(FormKind.Field)}>
+                  + Add condition
+                </Button>
+                <Button
+                  disabled={isButtonDisabled}
+                  type="text"
+                  onClick={() => onAddItem(FormKind.Group)}>
+                  + Add condition group
+                </Button>
+              </div>
+              <Button
+                type="text"
+                onClick={() => {
+                  formStore.removeChild(data.filterGroup.id);
+                  onHidePopOver();
+                }}>
+                Reset
+              </Button>
+            </div>
+          </>
+        ),
+        NotLoaded: () => <Spinner />,
+      })}
     </div>
   );
 };
