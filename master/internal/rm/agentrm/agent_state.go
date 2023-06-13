@@ -365,7 +365,7 @@ func (a *agentState) getSlotsSummary(ctx *actor.Context) model.SlotsSummary {
 	return summary
 }
 
-func (a *agentState) getSlotSummary(deviceID device.ID) model.SlotSummary {
+func (a *agentState) getSlotSummary(deviceID device.ID) cproto.SlotSummary {
 	s := a.slotStates[deviceID]
 	cid := s.containerID
 	var container *cproto.Container
@@ -373,7 +373,7 @@ func (a *agentState) getSlotSummary(deviceID device.ID) model.SlotSummary {
 		container = a.containerState[*cid]
 	}
 
-	return model.SlotSummary{
+	return cproto.SlotSummary{
 		ID:        strconv.Itoa(int(s.device.ID)),
 		Device:    s.device,
 		Enabled:   s.enabled.enabled(),
@@ -414,7 +414,7 @@ func (a *agentState) updateSlotDeviceView(ctx *actor.Context, deviceID device.ID
 
 func (a *agentState) patchSlotStateInner(
 	ctx *actor.Context, msg patchSlotState, slotState *slot,
-) model.SlotSummary {
+) cproto.SlotSummary {
 	if msg.enabled != nil {
 		slotState.enabled.userEnabled = *msg.enabled
 	}
@@ -445,10 +445,10 @@ func (a *agentState) patchAllSlotsState(
 
 func (a *agentState) patchSlotState(
 	ctx *actor.Context, msg patchSlotState,
-) (model.SlotSummary, error) {
+) (cproto.SlotSummary, error) {
 	s, ok := a.slotStates[msg.id]
 	if !ok {
-		return model.SlotSummary{}, errors.New(
+		return cproto.SlotSummary{}, errors.New(
 			fmt.Sprintf(
 				"bad updateSlotDeviceView on device: %d (%s): not found",
 				msg.id,

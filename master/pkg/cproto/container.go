@@ -5,6 +5,7 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/device"
+	"github.com/determined-ai/determined/proto/pkg/agentv1"
 	"github.com/determined-ai/determined/proto/pkg/containerv1"
 	"github.com/determined-ai/determined/proto/pkg/devicev1"
 )
@@ -15,6 +16,24 @@ type Container struct {
 	State       State           `json:"state"`
 	Devices     []device.Device `json:"devices"`
 	Description string          `json:"description"` // This gets mapped to Docker labels, 63 chars.
+}
+
+// SlotSummary summarizes the state of a slot.
+type SlotSummary struct {
+	ID        string            `json:"id"`
+	Device    device.Device     `json:"device"`
+	Enabled   bool              `json:"enabled"`
+	Container *Container `json:"container"`
+	Draining  bool              `json:"draining"`
+}
+func (s SlotSummary) ToProto() *agentv1.Slot {
+	return &agentv1.Slot{
+		Id:        s.ID,
+		Device:    s.Device.Proto(),
+		Enabled:   s.Enabled,
+		Container: s.Container.ToProto(),
+		Draining:  s.Draining,
+	}
 }
 
 // Transition transitions the container state to the new state. An illegal transition will panic.

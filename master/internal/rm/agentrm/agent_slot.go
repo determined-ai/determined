@@ -5,9 +5,8 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	"github.com/determined-ai/determined/master/pkg/model"
-
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/device"
 	proto "github.com/determined-ai/determined/proto/pkg/apiv1"
 )
@@ -48,7 +47,7 @@ func (s *slotProxy) Receive(ctx *actor.Context) error {
 
 func (s *slotProxy) handlePatchSlotState(
 	ctx *actor.Context, msg patchSlotState,
-) *model.SlotSummary {
+) *cproto.SlotSummary {
 	agentRef := ctx.Self().Parent().Parent()
 	resp := ctx.Ask(agentRef, msg)
 	if err := resp.Error(); err != nil {
@@ -56,7 +55,7 @@ func (s *slotProxy) handlePatchSlotState(
 		return nil
 	}
 
-	result := resp.Get().(model.SlotSummary)
+	result := resp.Get().(cproto.SlotSummary)
 	return &result
 }
 

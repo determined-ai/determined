@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/determined-ai/determined/master/pkg/cproto"
-	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
 	"github.com/determined-ai/determined/proto/pkg/agentv1"
 	"github.com/determined-ai/determined/proto/pkg/containerv1"
@@ -52,27 +51,27 @@ func (a AgentSummary) ToProto() *agentv1.Agent {
 type AgentsSummary map[string]AgentSummary
 
 // SlotsSummary contains a summary for a number of slots.
-type SlotsSummary map[string]SlotSummary
+type SlotsSummary map[string]cproto.SlotSummary
 
 // SlotSummary summarizes the state of a slot.
-type SlotSummary struct {
-	ID        string            `json:"id"`
-	Device    device.Device     `json:"device"`
-	Enabled   bool              `json:"enabled"`
-	Container *cproto.Container `json:"container"`
-	Draining  bool              `json:"draining"`
-}
+// type SlotSummary struct {
+// 	ID        string            `json:"id"`
+// 	Device    device.Device     `json:"device"`
+// 	Enabled   bool              `json:"enabled"`
+// 	Container *cproto.Container `json:"container"`
+// 	Draining  bool              `json:"draining"`
+// }
 
 // ToProto converts a SlotSummary to its protobuf representation.
-func (s SlotSummary) ToProto() *agentv1.Slot {
-	return &agentv1.Slot{
-		Id:        s.ID,
-		Device:    s.Device.Proto(),
-		Enabled:   s.Enabled,
-		Container: s.Container.ToProto(),
-		Draining:  s.Draining,
-	}
-}
+// func (s SlotSummary) ToProto() *agentv1.Slot {
+// 	return &agentv1.Slot{
+// 		Id:        s.ID,
+// 		Device:    s.Device.Proto(),
+// 		Enabled:   s.Enabled,
+// 		Container: s.Container.ToProto(),
+// 		Draining:  s.Draining,
+// 	}
+// }
 
 // AgentStats stores the start/end status of instance.
 type AgentStats struct {

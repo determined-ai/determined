@@ -1046,7 +1046,7 @@ func (p *pods) computeSummary(ctx *actor.Context) (map[string]model.AgentSummary
 					pseudoContainersAdded++
 				}
 
-				slots[id] = model.SlotSummary{
+				slots[id] = cproto.SlotSummary{
 					ID:        id,
 					Device:    device.Device{Type: slotType},
 					Enabled:   true,
@@ -1120,7 +1120,7 @@ func (p *pods) summarizeClusterByNodes(ctx *actor.Context) map[string]model.Agen
 					continue
 				}
 
-				slotsSummary[strconv.Itoa(curSlot)] = model.SlotSummary{
+				slotsSummary[strconv.Itoa(curSlot)] = cproto.SlotSummary{
 					ID:        strconv.Itoa(i),
 					Device:    device.Device{Type: deviceType},
 					Enabled:   true,
@@ -1137,7 +1137,7 @@ func (p *pods) summarizeClusterByNodes(ctx *actor.Context) map[string]model.Agen
 					continue
 				}
 
-				slotsSummary[strconv.Itoa(curSlot)] = model.SlotSummary{
+				slotsSummary[strconv.Itoa(curSlot)] = cproto.SlotSummary{
 					ID:      strconv.FormatInt(i, 10),
 					Device:  device.Device{Type: deviceType},
 					Enabled: true,
@@ -1153,7 +1153,7 @@ func (p *pods) summarizeClusterByNodes(ctx *actor.Context) map[string]model.Agen
 		}
 
 		for i := curSlot; i < int(numSlots); i++ {
-			slotsSummary[strconv.Itoa(i)] = model.SlotSummary{
+			slotsSummary[strconv.Itoa(i)] = cproto.SlotSummary{
 				ID:      strconv.Itoa(i),
 				Device:  device.Device{Type: deviceType},
 				Enabled: true,
