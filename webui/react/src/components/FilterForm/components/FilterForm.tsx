@@ -27,12 +27,12 @@ const FilterForm = ({ formStore, columns, onHidePopOver }: Props): JSX.Element =
   });
 
   const onAddItem = (formKind: FormKind) => {
-    const data = Loadable.getOrElse(null, loadableData);
-    if (!data) return;
-    formStore.addChild(data.filterGroup.id, formKind);
-    setTimeout(() => {
-      scrollBottomRef?.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-    }, 100);
+    Loadable.forEach(loadableData, (data) => {
+      formStore.addChild(data.filterGroup.id, formKind);
+      setTimeout(() => {
+        scrollBottomRef?.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      }, 100);
+    });
   };
 
   return (
