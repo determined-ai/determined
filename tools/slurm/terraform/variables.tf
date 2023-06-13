@@ -36,5 +36,5 @@ variable "machine_type" {
 
 variable "boot_disk" {
   type    = string
-  default = "projects/determined-ai/global/images/det-environments-slurm-ci-1686220344"
+  default = "projects/determined-ai/global/images/det-environments-slurm-ci-1686597689"
 }
