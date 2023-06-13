@@ -956,6 +956,35 @@ class TestPyTorchTrial:
         outputs = launcher.elastic_launch(launch_config, self.run_gan)(tmp_path)
         outputs = launcher.elastic_launch(launch_config, self.run_gan)(tmp_path, outputs[0])
 
+    #@pytest.mark.skipif(torch.cuda.device_count() < 2, reason="not enough gpus")
+    @pytest.mark.gpu_parallel
+    @pytest.mark.dothis
+    def test_gradient_aggregation_parallel(self, tmp_path: pathlib.Path):
+
+        # set up distributed backend.
+        os.environ[det._DistributedBackend.TORCH] = str(1)
+
+        rdzv_backend = "c10d"
+        rdzv_endpoint = "localhost:29400"
+        rdzv_id = str(uuid.uuid4())
+
+        num_procs = 1
+
+        launch_config = launcher.LaunchConfig(min_nodes=1, max_nodes=1, nproc_per_node=num_procs, run_id=rdzv_id,
+                                              max_restarts=0, rdzv_endpoint=rdzv_endpoint, rdzv_backend=rdzv_backend)
+
+        val_metrics = launcher.elastic_launch(launch_config, self.run_identity)(tmp_path)
+
+        avg_weights = []
+        for i in range(len(val_metrics[0])):
+            avg_weights.append(sum(val_metrics[j][i]['weight'] for j in range(num_procs)))
+
+        print(avg_weights)
+
+        expected_weights = calculate_gradients()
+        print(expected_weights)
+
+
     def run_cifar10(self, tmp_path: pathlib.Path, batches_trained: typing.Optional[int] = 0):
         checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
 
@@ -1033,6 +1062,49 @@ class TestPyTorchTrial:
                 batches_trained=batches_trained
             )
             return True
+
+    def run_identity(self, tmp_path: pathlib.Path):
+        checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
+
+        config = utils.load_config(utils.fixtures_path("pytorch_identity/distributed.yaml"))
+        hparams = config["hyperparameters"]
+
+        exp_config = utils.make_default_exp_config(
+            hparams,
+            scheduling_unit=1,
+            searcher_metric="validation_loss",
+            checkpoint_dir=checkpoint_dir,
+        )
+        exp_config.update(config)
+        exp_config['searcher']['smaller_is_better'] = True
+
+        # each subprocess must import separately as trial_class cannot be pickled.
+        example_path = utils.fixtures_path("pytorch_identity/model_def.py")
+        trial_class = utils.import_class_from_module("IdentityPyTorchTrial", example_path)
+        trial_class._searcher_metric = "weight"
+
+        tensorboard_path = tmp_path.joinpath("tensorboard")
+
+        # Trial A: train some batches and checkpoint
+        trial, trial_controller = create_trial_and_trial_controller(
+            trial_class=trial_class,
+            hparams=hparams,
+            trial_seed=self.trial_seed,
+            max_batches=4,
+            min_validation_batches=1,
+            min_checkpoint_batches=4,
+            checkpoint_dir=checkpoint_dir,
+            tensorboard_path=tensorboard_path,
+        )
+
+        trial_controller.run()
+
+        metrics_callback = trial.metrics_callback
+
+        validation_metrics = metrics_callback.validation_metrics
+
+        return validation_metrics
+
 
     def checkpoint_and_check_metrics(
         self,
@@ -1529,3 +1601,39 @@ def create_trial_and_trial_controller(
 
     trial_controller.training_iterator = iter(trial_controller.training_loader)
     return trial_inst, trial_controller
+
+def calculate_gradients(batch_size: int=4, epoch_size: int=64, num_epochs: int=3) -> typing.List[float]:
+
+    # independently compute expected metrics
+    batches = [
+        (v[:], v[:])
+        for v in (
+            [x * 0.1 + 1.0 for x in range(y, y + batch_size)]
+            for y in (z % epoch_size for z in range(0, epoch_size * num_epochs, batch_size))
+        )
+    ]
+
+    lr = 0.001
+
+    def compute_expected_weight(data: typing.List[float], label: typing.List[float], w: float) -> float:
+        n = len(data)
+        expected_step = 2.0 * lr * sum((d * (l - d * w) for d, l in zip(data, label))) / n
+        return w + expected_step
+
+    expected_weights = []
+    weight = 0.0
+    data: typing.List[float] = []
+    label: typing.List[float] = []
+    for i, batch in enumerate(batches):
+        if i % 2 == 0:
+            # for even-numbered batches the optimizer step is a no-op:
+            # the weights don't change
+            data, label = batch
+        else:
+            additional_data, additional_label = batch
+            data += additional_data
+            label += additional_label
+            weight = compute_expected_weight(data, label, weight)
+        expected_weights.append(weight)
+
+    return expected_weights

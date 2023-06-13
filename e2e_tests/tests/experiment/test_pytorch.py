@@ -8,54 +8,6 @@ from tests import experiment as exp
 
 
 @pytest.mark.parallel
-@pytest.mark.parametrize("image_type", ["PT", "TF2"])
-def test_pytorch_cifar10_parallel(
-    image_type: str, collect_trial_profiles: Callable[[int], None]
-) -> None:
-    config = conf.load_config(conf.cv_examples_path("cifar10_pytorch/const.yaml"))
-    config = conf.set_max_length(config, {"batches": 200})
-    config = conf.set_slots_per_trial(config, 8)
-    config = conf.set_profiling_enabled(config)
-
-    if image_type == "PT":
-        config = conf.set_pt_image(config)
-    elif image_type == "TF2":
-        config = conf.set_tf2_image(config)
-    else:
-        warnings.warn("Using default images", stacklevel=2)
-
-    experiment_id = exp.run_basic_test_with_temp_config(
-        config, conf.cv_examples_path("cifar10_pytorch"), 1
-    )
-    trial_id = exp.experiment_trials(experiment_id)[0].trial.id
-    collect_trial_profiles(trial_id)
-
-
-@pytest.mark.parallel
-@pytest.mark.parametrize("image_type", ["PT", "TF2"])
-def test_pytorch_gan_parallel(
-    image_type: str, collect_trial_profiles: Callable[[int], None]
-) -> None:
-    config = conf.load_config(conf.gan_examples_path("gan_mnist_pytorch/const.yaml"))
-    config = conf.set_max_length(config, {"batches": 200})
-    config = conf.set_slots_per_trial(config, 8)
-    config = conf.set_profiling_enabled(config)
-
-    if image_type == "PT":
-        config = conf.set_pt_image(config)
-    elif image_type == "TF2":
-        config = conf.set_tf2_image(config)
-    else:
-        warnings.warn("Using default images", stacklevel=2)
-
-    experiment_id = exp.run_basic_test_with_temp_config(
-        config, conf.gan_examples_path("gan_mnist_pytorch"), 1
-    )
-    trial_id = exp.experiment_trials(experiment_id)[0].trial.id
-    collect_trial_profiles(trial_id)
-
-
-@pytest.mark.parallel
 def test_pytorch_gradient_aggregation() -> None:
     config = conf.load_config(conf.fixtures_path("pytorch_identity/distributed.yaml"))
 
