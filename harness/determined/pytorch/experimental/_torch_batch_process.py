@@ -27,7 +27,8 @@ class TorchBatchProcessorContext(pytorch._PyTorchReducerContext):
     def __init__(self, core_context: core.Context, storage_path: str):
         super().__init__()
         self._core_context = core_context
-        self._device = get_default_device(core_context)
+        self.distributed = self._core_context.distributed
+        self.device = get_default_device(core_context)
         self._tensorboard_path = core_context.train.get_tensorboard_path()
         self._storage_path = storage_path
         self._use_default_storage = False
@@ -39,7 +40,7 @@ class TorchBatchProcessorContext(pytorch._PyTorchReducerContext):
         allocated device. This method aims at providing a function for the data generated
         on the fly.
         """
-        return pytorch.to_device(data, self._device, warned_types)
+        return pytorch.to_device(data, self.device, warned_types)
 
     def get_tensorboard_path(self) -> pathlib.Path:
         """
@@ -54,23 +55,14 @@ class TorchBatchProcessorContext(pytorch._PyTorchReducerContext):
         """
         return self._tensorboard_path
 
-    def get_device(self):
-        """
-        Get default device associated with this worker
-        """
-        return self._device
-
-    def get_distributed_context(self):
-        return self._core_context.distributed
-
     def prepare_model_for_inference(self, model: nn.Module) -> nn.Module:
         model.eval()
         model.to(self._device)
         return model
 
-    def get_default_storage_path(self) -> Iterator[pathlib.Path]:
+    def get_default_storage_path_context(self) -> Iterator[pathlib.Path]:
         """
-        Should use with "with" syntax
+        Returns a context that uploads files to default storage path on exit.
         """
         self._use_default_storage = True
         return self._core_context.checkpoint._storage_manager.store_path(self._storage_path)
@@ -79,15 +71,14 @@ class TorchBatchProcessorContext(pytorch._PyTorchReducerContext):
 def get_default_device(core_context: core.Context) -> torch.device:
     local_rank = core_context.distributed.local_rank
     local_num_gpu = torch.cuda.device_count()
-    if local_rank >= local_num_gpu:
+    if local_num_gpu == 0:
         return torch.device("cpu")
     else:
+        # Assuming there would not be more process than CUDA devices
         return torch.device("cuda", local_rank)
 
 
 def initialize_distributed_backend() -> Optional[core.DistributedContext]:
-    info = det.get_cluster_info()
-
     distributed_backend = det._DistributedBackend()
     if distributed_backend.use_torch():
         if torch.cuda.is_available():
@@ -95,7 +86,9 @@ def initialize_distributed_backend() -> Optional[core.DistributedContext]:
         else:
             dist.init_process_group(backend="gloo")  # type: ignore
         return core.DistributedContext.from_torch_distributed()
-    elif info and (len(info.container_addrs) > 1 or len(info.slot_ids) > 1):
+
+    info = det.get_cluster_info()
+    if info and (len(info.container_addrs) > 1 or len(info.slot_ids) > 1):
         raise ValueError(
             "In multi-slot managed cluster training, you must wrap your training script with a "
             "distributed launch layer such as determined.launch.torch_distributed"
