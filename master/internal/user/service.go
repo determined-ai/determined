@@ -4,13 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/determined-ai/determined/master/internal/config"
 	"io"
 	"net/http"
 	"regexp"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/determined-ai/determined/master/internal/config"
 
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
@@ -109,7 +110,8 @@ type Service struct {
 }
 
 // InitService creates the user service singleton.
-func InitService(db *db.PgDB, system *actor.System, tlsConfig *config.TLSConfig, extConfig *model.ExternalSessions) {
+func InitService(db *db.PgDB, system *actor.System,
+	tlsConfig *config.TLSConfig, extConfig *model.ExternalSessions) {
 	once.Do(func() {
 		userService = &Service{db, system, extConfig}
 	})
