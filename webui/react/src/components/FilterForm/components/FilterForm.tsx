@@ -5,8 +5,8 @@ import { FilterFormStore, ITEM_LIMIT } from 'components/FilterForm/components/Fi
 import FilterGroup from 'components/FilterForm/components/FilterGroup';
 import { FormKind } from 'components/FilterForm/components/type';
 import Button from 'components/kit/Button';
-import Spinner from 'components/kit/internal/Spinner/Spinner';
 import Toggle from 'components/kit/Toggle';
+import Spinner from 'components/Spinner/Spinner';
 import { V1ProjectColumn } from 'services/api-ts-sdk';
 import { Loadable } from 'utils/loadable';
 
