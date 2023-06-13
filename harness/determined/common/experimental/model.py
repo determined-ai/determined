@@ -24,8 +24,6 @@ class ModelVersion:
             model version.
         metadata: (Mutable, Optional[Dict]) Metadata of this model version.
         name: (Mutable, Optional[str]) Human-friendly name of this model version.
-        model_id: (Mutable, Optional[int]) Database ID of the parent model.
-        model_version_id: (Mutable, Optional[int]) Database ID of this model version.
 
     Note:
         All attributes are cached by default.
@@ -49,8 +47,6 @@ class ModelVersion:
         self.name = None  # type: Optional[str]
         self.comment = None  # type: Optional[str]
         self.notes = None  # type: Optional[str]
-        self.model_id = None  # type: Optional[int]
-        self.model_version_id = None  # type: Optional[int]
 
     def set_name(self, name: str) -> None:
         """
@@ -94,8 +90,6 @@ class ModelVersion:
         self.name = model_version.name or ""
         self.comment = model_version.comment or ""
         self.notes = model_version.notes or ""
-        self.model_id = model_version.model.id
-        self.model_version_id = model_version.id
         self.model_version = model_version.version
 
     def reload(self) -> None:
