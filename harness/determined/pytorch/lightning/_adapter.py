@@ -1,4 +1,5 @@
 import inspect
+import warnings
 from abc import abstractmethod
 from typing import Any, Dict, List, Sequence, Tuple, Union, cast
 
@@ -167,6 +168,12 @@ class LightningAdapter(PyTorchTrial):
                 https://nvidia.github.io/apex/amp.html#opt-levels-and-properties
 
         """
+        warnings.warn(
+            "LightningAdapter has been deprecated and will be removed in a future version. "
+            "We recommend PyTorch Lightning users to migrate to Core API.",
+            FutureWarning,
+            stacklevel=2,
+        )
 
         if precision not in {16, 32}:
             raise ValueError(f"Only precisions 16 & 32 are supported; got {precision}.")

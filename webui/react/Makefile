@@ -142,18 +142,3 @@ screenshot-summary.html: screenshots/HEAD screenshots/MAIN
 
 .PHONY: visual-test
 visual-test: screenshot-summary.html
-
-# shared-web helpers
-
-.PHONY: test-shared
-test-shared:
-	cd src/shared; ./bin/test.py --repos saas --test-local
-
-.PHONY: push
-push-shared: test-shared
-	# fail if the branch name is not main
-	git rev-parse --abbrev-ref HEAD | grep -qE "^main$\" || (echo "must be on main branch" ; false)
-
-	# fail if there are uncommitted changes.
-	git diff --exit-code || (echo "uncommitted changes, please commit or stash" ; false)
-	cd $(shell git rev-parse --show-toplevel) && git subtree push --prefix=webui/react/src/shared https://github.com/determined-ai/shared-web main

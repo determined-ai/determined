@@ -5,16 +5,16 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import Notes from 'components/kit/Notes';
 import Pivot from 'components/kit/Pivot';
+import Spinner from 'components/Spinner/Spinner';
 import usePermissions from 'hooks/usePermissions';
 import { SettingsConfig, useSettings } from 'hooks/useSettings';
 import ExperimentCodeViewer from 'pages/ExperimentDetails/ExperimentCodeViewer';
 import ExperimentTrials from 'pages/ExperimentDetails/ExperimentTrials';
 import { paths } from 'routes/utils';
 import { patchExperiment } from 'services/api';
-import Spinner from 'shared/components/Spinner/Spinner';
-import { ValueOf } from 'shared/types';
-import { ErrorLevel, ErrorType } from 'shared/utils/error';
+import { ValueOf } from 'types';
 import { ExperimentBase, Note } from 'types';
+import { ErrorLevel, ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 
 import { ExperimentVisualizationType } from './ExperimentVisualization';

@@ -7,8 +7,9 @@ trap 'echo >&2 "FATAL: Unexpected error terminated dispatcher-wrapper container 
 # Controls debug logging for this method
 DEBUG=0
 
-# TODO(DET-9074): Turn this only iff DET_DEBUG == true.
-set -x
+if [ $DET_DEBUG = "1" ]; then
+    set -x
+fi
 
 # Clear all exported functions.  They are inherited into singularity containers
 # since they are passed by environment variables.  One specific breaking example

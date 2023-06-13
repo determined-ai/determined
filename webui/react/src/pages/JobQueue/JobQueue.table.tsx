@@ -8,9 +8,9 @@ import { ColumnDef } from 'components/Table/InteractiveTable';
 import { createOmitableRenderer, relativeTimeRenderer } from 'components/Table/Table';
 import { paths } from 'routes/utils';
 import { getJupyterLabs, getTensorBoards } from 'services/api';
-import { floatToPercent, truncate } from 'shared/utils/string';
 import { CommandTask, FullJob, Job, JobType } from 'types';
 import { jobTypeIconName, jobTypeLabel } from 'utils/job';
+import { floatToPercent, truncate } from 'utils/string';
 import { openCommand } from 'utils/wait';
 
 import css from './JobQueue.module.scss';

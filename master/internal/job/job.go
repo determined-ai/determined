@@ -34,16 +34,17 @@ func NewJobs(rm rm.ResourceManager) *Jobs {
 func (j *Jobs) parseV1JobMsgs(
 	msgs map[*actor.Ref]actor.Message,
 ) (map[model.JobID]*jobv1.Job, error) {
-	jobs := make(map[model.JobID]*jobv1.Job, len(msgs))
+	jobs := make(map[model.JobID]*jobv1.Job)
 	for _, val := range msgs {
-		if val == nil {
-			continue
-		}
 		switch typed := val.(type) {
+		case nil:
+			continue
 		case error:
 			return nil, typed
 		case *jobv1.Job:
-			jobs[model.JobID(typed.JobId)] = typed
+			if typed != nil {
+				jobs[model.JobID(typed.JobId)] = typed
+			}
 		default:
 			return nil, fmt.Errorf("unexpected response type: %T", val)
 		}

@@ -1,6 +1,7 @@
 import { Space, Switch } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 
+import ScrollIcon from 'assets/images/infinite-scroll.svg';
 import BatchActionConfirmModalComponent from 'components/BatchActionConfirmModal';
 import ExperimentMoveModalComponent from 'components/ExperimentMoveModal';
 import { FilterFormStore } from 'components/FilterForm/components/FilterFormStore';
@@ -23,9 +24,7 @@ import {
   unarchiveExperiments,
 } from 'services/api';
 import { V1BulkExperimentFilters } from 'services/api-ts-sdk';
-import ScrollIcon from 'shared/assets/images/infinite-scroll.svg';
-import { RecordKey } from 'shared/types';
-import { ErrorLevel } from 'shared/utils/error';
+import { RecordKey } from 'types';
 import {
   BulkActionResult,
   ExperimentAction,
@@ -35,6 +34,7 @@ import {
   ProjectExperiment,
 } from 'types';
 import { notification } from 'utils/dialogApi';
+import { ErrorLevel } from 'utils/error';
 import handleError from 'utils/error';
 import {
   canActionExperiment,

@@ -4,8 +4,8 @@ import { AlignedData } from 'uplot';
 import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
 import { closestPointPlugin } from 'components/UPlot/UPlotChart/closestPointPlugin';
 import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin';
-import { glasbeyColor } from 'shared/utils/color';
 import { Metric, Scale } from 'types';
+import { glasbeyColor } from 'utils/color';
 import { metricToStr } from 'utils/metric';
 
 interface Props {

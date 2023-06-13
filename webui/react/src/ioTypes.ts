@@ -2,15 +2,15 @@ import { isLeft } from 'fp-ts/lib/Either';
 import * as io from 'io-ts';
 
 import { V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
-import { ValueOf } from 'shared/types';
-import { DetError, ErrorLevel, ErrorType } from 'shared/utils/error';
 import {
   CheckpointStorageType,
   ExperimentSearcherName,
   HyperparameterType,
   LogLevel,
   RunState,
+  ValueOf,
 } from 'types';
+import { DetError, ErrorLevel, ErrorType } from 'utils/error';
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export const decode = <T>(type: io.Mixed, data: any): T => {

@@ -10,11 +10,8 @@ import ResponsiveFilters from 'components/ResponsiveFilters';
 import Section from 'components/Section';
 import ResponsiveTable from 'components/Table/ResponsiveTable';
 import { defaultRowClassName, getFullPaginationConfig } from 'components/Table/Table';
+import usePolling from 'hooks/usePolling';
 import { getTrialWorkloads } from 'services/api';
-import usePolling from 'shared/hooks/usePolling';
-import { isEqual } from 'shared/utils/data';
-import { ErrorType } from 'shared/utils/error';
-import { numericSorter } from 'shared/utils/sort';
 import {
   ExperimentBase,
   Metric,
@@ -23,6 +20,8 @@ import {
   TrialWorkloadFilter,
   WorkloadGroup,
 } from 'types';
+import { isEqual } from 'utils/data';
+import { ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 import {
   extractMetricSortValue,
@@ -30,6 +29,7 @@ import {
   metricKeyToMetric,
   metricToKey,
 } from 'utils/metric';
+import { numericSorter } from 'utils/sort';
 import { hasCheckpoint, hasCheckpointStep, workloadsToSteps } from 'utils/workload';
 
 import { Settings } from './TrialDetailsOverview.settings';

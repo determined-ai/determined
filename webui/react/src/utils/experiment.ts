@@ -5,15 +5,7 @@ import {
   pausableRunStates,
   terminalRunStates,
 } from 'constants/states';
-import { RawJson } from 'shared/types';
-import {
-  clone,
-  deletePathList,
-  getPathList,
-  isNumber,
-  setPathList,
-  unflattenObject,
-} from 'shared/utils/data';
+import { RawJson } from 'types';
 import {
   AnyTask,
   ExperimentAction,
@@ -30,6 +22,14 @@ import {
   TrialHyperparameters,
   WorkspacePermissionsArgs,
 } from 'types';
+import {
+  clone,
+  deletePathList,
+  getPathList,
+  isNumber,
+  setPathList,
+  unflattenObject,
+} from 'utils/data';
 
 type ExperimentChecker = (experiment: ProjectExperiment, trial?: TrialDetails) => boolean;
 

@@ -9,7 +9,7 @@ import {
   DURATION_SECOND,
   DURATION_WEEK,
   DURATION_YEAR,
-} from 'shared/utils/datetime';
+} from 'utils/datetime';
 
 import TimeDuration from './TimeDuration';
 

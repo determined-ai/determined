@@ -7,9 +7,9 @@ import Select, { Option, SelectValue } from 'components/kit/Select';
 import MetricSelect from 'components/MetricSelect';
 import RadioGroup from 'components/RadioGroup';
 import ScaleSelect from 'components/ScaleSelect';
-import { ValueOf } from 'shared/types';
-import { isEqual } from 'shared/utils/data';
+import { ValueOf } from 'types';
 import { Metric, Scale } from 'types';
+import { isEqual } from 'utils/data';
 
 import { ExperimentVisualizationType } from '../ExperimentVisualization';
 

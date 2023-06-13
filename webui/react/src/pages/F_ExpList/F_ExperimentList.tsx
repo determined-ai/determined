@@ -6,16 +6,20 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom';
 
 import { FilterFormStore } from 'components/FilterForm/components/FilterFormStore';
-import { IOFilterFormSet } from 'components/FilterForm/components/type';
+import {
+  FilterFormSet,
+  FormField,
+  FormGroup,
+  IOFilterFormSet,
+} from 'components/FilterForm/components/type';
 import { Column, Columns } from 'components/kit/Columns';
 import Empty from 'components/kit/Empty';
 import Pagination from 'components/kit/Pagination';
+import usePolling from 'hooks/usePolling';
 import useResize from 'hooks/useResize';
 import { useSettings } from 'hooks/useSettings';
 import { getProjectColumns, searchExperiments } from 'services/api';
 import { V1BulkExperimentFilters, V1LocationType } from 'services/api-ts-sdk';
-import usePolling from 'shared/hooks/usePolling';
-import { getCssVar } from 'shared/themes';
 import {
   ExperimentAction,
   ExperimentItem,
@@ -26,6 +30,7 @@ import {
 } from 'types';
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
+import { getCssVar } from 'utils/themes';
 
 import ComparisonView from './ComparisonView';
 import css from './F_ExperimentList.module.scss';
@@ -50,6 +55,18 @@ interface Props {
 
 const makeSortString = (sorts: ValidSort[]): string =>
   sorts.map((s) => `${s.column}=${s.direction}`).join(',');
+
+const parseSortString = (sortString: string): Sort[] => {
+  if (!sortString) return [EMPTY_SORT];
+  const components = sortString.split(',');
+  return components.map((c) => {
+    const [column, direction] = c.split('=', 2);
+    return {
+      column,
+      direction: direction === 'asc' || direction === 'desc' ? direction : undefined,
+    };
+  });
+};
 
 const formStore = new FilterFormStore();
 
@@ -76,20 +93,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const [page, setPage] = useState(() =>
     isFinite(Number(searchParams.get('page'))) ? Math.max(Number(searchParams.get('page')), 0) : 0,
   );
-  const [sorts, setSorts] = useState<Sort[]>(() => {
-    const sortString = searchParams.get('sort') || '';
-    if (!sortString) {
-      return [EMPTY_SORT];
-    }
-    const components = sortString.split(',');
-    return components.map((c) => {
-      const [column, direction] = c.split('=', 2);
-      return {
-        column,
-        direction: direction === 'asc' || direction === 'desc' ? direction : undefined,
-      };
-    });
-  });
+  const [sorts, setSorts] = useState<Sort[]>([EMPTY_SORT]);
   const [sortString, setSortString] = useState<string>('');
   const [experiments, setExperiments] = useState<Loadable<ExperimentWithTrial>[]>(
     INITIAL_LOADING_EXPERIMENTS,
@@ -98,7 +102,11 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const [projectColumns, setProjectColumns] = useState<Loadable<ProjectColumn[]>>(NotLoaded);
   const [isOpenFilter, setIsOpenFilter] = useState<boolean>(false);
   const filtersString = useObservable(formStore.asJsonString);
-  const rootFilterChildren = useObservable(formStore.formset).filterGroup.children;
+  const loadableFormset = useObservable(formStore.formset);
+  const rootFilterChildren: Array<FormGroup | FormField> = Loadable.match(loadableFormset, {
+    Loaded: (formset: FilterFormSet) => formset.filterGroup.children,
+    NotLoaded: () => [],
+  });
 
   const onIsOpenFilterChange = useCallback((newOpen: boolean) => {
     setIsOpenFilter(newOpen);
@@ -114,11 +122,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
       } else {
         params.delete('page');
       }
-      if (sortString) {
-        params.set('sort', sortString);
-      } else {
-        params.delete('sort');
-      }
       return params;
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -127,6 +130,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   useEffect(() => {
     // useSettings load the default value first, and then load the data from DB
     // use this useEffect to re-init the correct useSettings value when settings.filterset is changed
+    if (isLoadingSettings) return;
     const formSetValidation = IOFilterFormSet.decode(JSON.parse(settings.filterset));
     if (isLeft(formSetValidation)) {
       handleError(formSetValidation.left, {
@@ -136,7 +140,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
       const formset = formSetValidation.right;
       formStore.init(formset);
     }
-  }, [settings.filterset]);
+  }, [settings.filterset, isLoadingSettings]);
 
   const [selectedExperimentIds, setSelectedExperimentIds] = useState<number[]>([]);
   const [excludedExperimentIds, setExcludedExperimentIds] = useState<Set<number>>(
@@ -169,13 +173,13 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     return filters;
   }, [project.id]);
 
-  const numFilters = useMemo(
-    () =>
+  const numFilters = useMemo(() => {
+    return (
       Object.values(experimentFilters).filter((x) => x !== undefined).length -
       1 +
-      rootFilterChildren.length,
-    [experimentFilters, rootFilterChildren.length],
-  );
+      rootFilterChildren.length
+    );
+  }, [experimentFilters, rootFilterChildren.length]);
 
   const resetPagination = useCallback(() => {
     setIsLoading(true);
@@ -191,12 +195,22 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         resetPagination();
       }
       setSortString(newSortString);
+      updateSettings({
+        sortString: newSortString,
+      });
     },
-    [resetPagination, sortString],
+    [resetPagination, sortString, updateSettings],
   );
 
+  useEffect(() => {
+    if (settings.sortString) {
+      setSortString(settings.sortString);
+      setSorts(parseSortString(settings.sortString));
+    }
+  }, [settings, onSortChange]);
+
   const fetchExperiments = useCallback(async (): Promise<void> => {
-    if (isLoadingSettings) return;
+    if (loadableFormset === NotLoaded) return;
     try {
       const tableOffset = Math.max((page - 0.5) * PAGE_SIZE, 0);
       const response = await searchExperiments(
@@ -244,12 +258,12 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   }, [
     page,
     experimentFilters,
-    isLoadingSettings,
     isPagedView,
     canceler.signal,
     filtersString,
     sortString,
     settings.pageLimit,
+    loadableFormset,
   ]);
 
   const { stopPolling } = usePolling(fetchExperiments, { rerunOnNewFn: true });
@@ -291,7 +305,10 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   useEffect(() => {
     return formStore.asJsonString.subscribe(() => {
       resetPagination();
-      updateSettings({ filterset: JSON.stringify(formStore.formset.get()) });
+      const loadableFormset = formStore.formset.get();
+      Loadable.forEach(loadableFormset, (formSet) =>
+        updateSettings({ filterset: JSON.stringify(formSet) }),
+      );
     });
   }, [resetPagination, updateSettings]);
 
