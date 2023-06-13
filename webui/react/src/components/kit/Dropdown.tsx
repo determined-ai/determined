@@ -15,6 +15,7 @@ export interface MenuOption {
   key: number | string;
   label?: React.ReactNode;
   icon?: React.ReactNode;
+  onClick?: React.MouseEventHandler;
 }
 
 export interface MenuOptionGroup {

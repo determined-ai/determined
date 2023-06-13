@@ -35,6 +35,7 @@ import {
   Operator,
   SpecialColumnNames,
 } from 'components/FilterForm/components/type';
+import { MenuItem } from 'components/kit/Dropdown';
 import usePrevious from 'hooks/usePrevious';
 import { handlePath } from 'routes/utils';
 import { V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
@@ -323,7 +324,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
       const columnId = columnIds[col];
 
       if (columnId === 'selected') {
-        const items: ItemType[] = [
+        const items: MenuItem[] = [
           selection.rows.length > 0
             ? {
                 key: 'select-none',
