@@ -53,6 +53,16 @@ func (a *MiscAuthZRBAC) CanUpdateAgents(
 	return a.checkForPermission(ctx, curUser, rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_AGENTS)
 }
 
+// CanGetSensitiveAgentInfo checks if the user can view sensitive subset of agent info.
+func (a *MiscAuthZRBAC) CanGetSensitiveAgentInfo(
+	ctx context.Context, curUser *model.User,
+) (permErr error, err error) {
+	return a.checkForPermission(ctx,
+		curUser,
+		rbacv1.PermissionType_PERMISSION_TYPE_VIEW_SENSITIVE_AGENT_INFO,
+	)
+}
+
 // CanGetMasterLogs checks if the user has permission to view master logs.
 func (a *MiscAuthZRBAC) CanGetMasterLogs(
 	ctx context.Context, curUser *model.User,
