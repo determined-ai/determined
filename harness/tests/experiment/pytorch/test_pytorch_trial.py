@@ -975,12 +975,9 @@ class TestPyTorchTrial:
 
         actual_weights = []
         for i in range(len(val_metrics[0])):
-            actual_weights.append(sum(val_metrics[j][i]['weight'] for j in range(2)) / 2)
-
-        print(actual_weights)
+            actual_weights.append(sum(val_metrics[j][i]['weight'] for j in range(2)))
 
         expected_weights = calculate_gradients()
-        print(expected_weights)
 
         assert actual_weights == pytest.approx(
             expected_weights
