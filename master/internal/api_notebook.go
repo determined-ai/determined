@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/determined-ai/determined/master/internal/proxy"
 	"strconv"
 	"time"
 
@@ -44,6 +45,8 @@ const (
 	jupyterRuntimeDir = "/run/determined/jupyter/runtime"
 	jupyterEntrypoint = "/run/determined/jupyter/notebook-entrypoint.sh"
 	jupyterIdleCheck  = "/run/determined/jupyter/check_idle.py"
+	jupyterCertPath   = "/run/determined/jupyter/jupyterCert.pem"
+	jupyterKeyPath    = "/run/determined/jupyter/jupyterKey.key"
 	// Agent ports 2600 - 3500 are split between TensorBoards, Notebooks, and Shells.
 	minNotebookPort     = 2900
 	maxNotebookPort     = minNotebookPort + 299
@@ -238,6 +241,11 @@ func (a *apiServer) LaunchNotebook(
 		return nil, err
 	}
 
+	notebookKey, notebookCert, err := proxy.GenSignedCert()
+	if err != nil {
+		return nil, err
+	}
+
 	spec.WatchProxyIdleTimeout = true
 	spec.WatchRunnerIdleTimeout = true
 
@@ -309,6 +317,18 @@ func (a *apiServer) LaunchNotebook(
 			notebookDefaultPage,
 			etc.MustStaticFile(etc.NotebookTemplateResource),
 			0o644,
+			tar.TypeReg,
+		),
+		spec.Base.AgentUserGroup.OwnedArchiveItem(
+			jupyterKeyPath,
+			notebookKey,
+			0o600,
+			tar.TypeReg,
+		),
+		spec.Base.AgentUserGroup.OwnedArchiveItem(
+			jupyterCertPath,
+			notebookCert,
+			0o600,
 			tar.TypeReg,
 		),
 	}
