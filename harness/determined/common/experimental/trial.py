@@ -361,10 +361,6 @@ class Trial:
     def __repr__(self) -> str:
         return "Trial(id={})".format(self.id)
 
-    def _get(self) -> bindings.trialv1Trial:
-        resp = bindings.get_GetTrial(session=self._session, trialId=self.id)
-        return resp.trial
-
     def _hydrate(self, trial: bindings.trialv1Trial) -> None:
         self.hparams = trial.hparams
 
@@ -372,7 +368,7 @@ class Trial:
         """
         Explicit refresh of cached properties.
         """
-        resp = self._get()
+        resp = bindings.get_GetTrial(session=self._session, trialId=self.id).trial
         self._hydrate(resp)
 
     def stream_training_metrics(self) -> Iterable[TrainingMetrics]:

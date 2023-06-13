@@ -361,10 +361,6 @@ class Model:
             self.model_id, self.name, json.dumps(self.metadata)
         )
 
-    def _get(self) -> bindings.v1Model:
-        resp = bindings.get_GetModel(session=self._session, modelName=self.name)
-        return resp.model
-
     def _hydrate(self, model: bindings.v1Model) -> None:
         self.description = model.description or ""
         self.creation_time = util.parse_protobuf_timestamp(model.creationTime)
@@ -379,7 +375,7 @@ class Model:
         """
         Explicit refresh of cached properties.
         """
-        resp = self._get()
+        resp = bindings.get_GetModel(session=self._session, modelName=self.name).model
         self._hydrate(resp)
 
     @classmethod

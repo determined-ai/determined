@@ -370,10 +370,6 @@ class Checkpoint:
         else:
             return f"Checkpoint(uuid={self.uuid}, task_id={self.task_id})"
 
-    def _get(self) -> bindings.v1Checkpoint:
-        resp = bindings.get_GetCheckpoint(session=self._session, checkpointUuid=self.uuid)
-        return resp.checkpoint
-
     def _hydrate(self, ckpt: bindings.v1Checkpoint) -> None:
         self.task_id = ckpt.taskId
         self.allocation_id = ckpt.allocationId
@@ -387,7 +383,9 @@ class Checkpoint:
         """
         Explicit refresh of cached properties.
         """
-        resp = self._get()
+        resp = bindings.get_GetCheckpoint(
+            session=self._session, checkpointUuid=self.uuid
+        ).checkpoint
         self._hydrate(resp)
 
     @classmethod
