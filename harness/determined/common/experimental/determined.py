@@ -260,6 +260,32 @@ class Determined:
         workspace_names: Optional[List[str]] = None,
         workspace_ids: Optional[List[int]] = None,
     ) -> Iterable[model.Model]:
+        warnings.warn(
+            "Determined.get_models() has been deprecated and will be removed in a future version."
+            "Please call Determined.list_models() instead.",
+            FutureWarning,
+            stacklevel=2,
+        )
+        return self.list_models(
+            sort_by=sort_by,
+            order_by=order_by,
+            name=name,
+            description=description,
+            model_id=model_id,
+            workspace_names=workspace_names,
+            workspace_ids=workspace_ids,
+        )
+
+    def list_models(
+        self,
+        sort_by: model.ModelSortBy = model.ModelSortBy.NAME,
+        order_by: model.ModelOrderBy = model.ModelOrderBy.ASCENDING,
+        name: Optional[str] = None,
+        description: Optional[str] = None,
+        model_id: Optional[int] = None,
+        workspace_names: Optional[List[str]] = None,
+        workspace_ids: Optional[List[int]] = None,
+    ) -> Iterable[model.Model]:
         """
         Get a list of all models in the model registry.
 
@@ -271,8 +297,10 @@ class Determined:
                 include models with names matching this parameter.
             description: If this parameter is set, models will be filtered to
                 only include models with descriptions matching this parameter.
-            model_id: If this paramter is set, models will be filtered to
+            model_id: If this parameter is set, models will be filtered to
                 only include the model with this unique numeric id.
+            workspace_names: Workspace names to filter models by.
+            workspace_ids: Workspace IDs to filter models by.
         """
 
         # TODO: more parameters?
