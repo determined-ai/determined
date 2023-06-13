@@ -318,7 +318,7 @@ class Determined:
         workspace_ids: Optional[List[int]] = None,
     ) -> Iterable[model.Model]:
         """
-        Get a list of all models in the model registry.
+        Get an iterable of all models in the model registry.
 
         Arguments:
             sort_by: Which field to sort by. See :class:`~determined.experimental.ModelSortBy`.
@@ -332,6 +332,10 @@ class Determined:
                 only include the model with this unique numeric id.
             workspace_names: Workspace names to filter models by.
             workspace_ids: Workspace IDs to filter models by.
+
+        Note:
+            This method returns an Iterable type that lazily instantiates response objects. To
+            fetch all models at once, call list(list_models()).
         """
 
         # TODO: more parameters?

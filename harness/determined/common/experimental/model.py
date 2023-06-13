@@ -220,12 +220,17 @@ class Model:
 
     def list_versions(self, order_by: ModelOrderBy = ModelOrderBy.DESC) -> Iterable[ModelVersion]:
         """
-        Get a list of ModelVersions with checkpoints of this model. The
-        model versions are sorted by model version ID and are returned in descending
+        Get an iterable of ModelVersions with checkpoints of this model.
+
+        The model versions are sorted by model version ID and are returned in descending
         order by default.
 
         Arguments:
             order_by (enum): A member of the :class:`ModelOrderBy` enum.
+
+        Note:
+            This method returns an Iterable type that lazily instantiates response objects. To
+            fetch all versions at once, call list(list_versions()).
         """
 
         def get_with_offset(offset: int) -> bindings.v1GetModelVersionsResponse:
