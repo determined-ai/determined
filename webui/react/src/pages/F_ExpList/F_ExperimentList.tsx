@@ -76,20 +76,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const [page, setPage] = useState(() =>
     isFinite(Number(searchParams.get('page'))) ? Math.max(Number(searchParams.get('page')), 0) : 0,
   );
-  const [sorts, setSorts] = useState<Sort[]>(() => {
-    const sortString = searchParams.get('sort') || '';
-    if (!sortString) {
-      return [EMPTY_SORT];
-    }
-    const components = sortString.split(',');
-    return components.map((c) => {
-      const [column, direction] = c.split('=', 2);
-      return {
-        column,
-        direction: direction === 'asc' || direction === 'desc' ? direction : undefined,
-      };
-    });
-  });
+  const [sorts, setSorts] = useState<Sort[]>([EMPTY_SORT]);
   const [sortString, setSortString] = useState<string>('');
   const [experiments, setExperiments] = useState<Loadable<ExperimentWithTrial>[]>(
     INITIAL_LOADING_EXPERIMENTS,
@@ -113,11 +100,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         params.set('page', page.toString());
       } else {
         params.delete('page');
-      }
-      if (sortString) {
-        params.set('sort', sortString);
-      } else {
-        params.delete('sort');
       }
       return params;
     });
@@ -276,7 +258,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         columns.sort((a, b) =>
           a.location === V1LocationType.EXPERIMENT && b.location === V1LocationType.EXPERIMENT
             ? experimentColumns.indexOf(a.column as ExperimentColumn) -
-            experimentColumns.indexOf(b.column as ExperimentColumn)
+              experimentColumns.indexOf(b.column as ExperimentColumn)
             : 0,
         );
 
