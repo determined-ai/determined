@@ -51,6 +51,18 @@ interface Props {
 const makeSortString = (sorts: ValidSort[]): string =>
   sorts.map((s) => `${s.column}=${s.direction}`).join(',');
 
+const parseSortString = (sortString: string): Sort[] => {
+  if (!sortString) return [EMPTY_SORT];
+  const components = sortString.split(',');
+  return components.map((c) => {
+    const [column, direction] = c.split('=', 2);
+    return {
+      column,
+      direction: direction === 'asc' || direction === 'desc' ? direction : undefined,
+    };
+  });
+};
+
 const formStore = new FilterFormStore();
 
 export const PAGE_SIZE = 100;
@@ -168,23 +180,22 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const onSortChange = useCallback(
     (sorts: Sort[]) => {
       setSorts(sorts);
-      updateSettings({
-        // save sorts to settings:
-        sorts: JSON.stringify(sorts),
-      });
       const newSortString = makeSortString(sorts.filter(validSort.is));
       if (newSortString !== sortString) {
         resetPagination();
       }
       setSortString(newSortString);
+      updateSettings({
+        sortString: newSortString,
+      });
     },
     [resetPagination, sortString, updateSettings],
   );
 
   useEffect(() => {
-    if (settings.sorts) {
-      // apply saved sorts on load:
-      onSortChange(JSON.parse(settings.sorts));
+    if (settings.sortString) {
+      setSortString(settings.sortString);
+      setSorts(parseSortString(settings.sortString));
     }
   }, [settings, onSortChange]);
 
@@ -258,7 +269,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         columns.sort((a, b) =>
           a.location === V1LocationType.EXPERIMENT && b.location === V1LocationType.EXPERIMENT
             ? experimentColumns.indexOf(a.column as ExperimentColumn) -
-              experimentColumns.indexOf(b.column as ExperimentColumn)
+            experimentColumns.indexOf(b.column as ExperimentColumn)
             : 0,
         );
 
