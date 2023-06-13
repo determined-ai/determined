@@ -766,9 +766,9 @@ func TestKillTaskPod(t *testing.T) {
 	time.Sleep(time.Second)
 	assert.Equal(t, k8sPods[newPod.podName] == nil, true)
 	assert.Equal(t, deleteFailed, false)
-	assert.Equal(t, newPod.resourcesDeleted, true)
+	assert.Equal(t, newPod.resourcesDeleted.Load(), true)
 
-	newPod.resourcesDeleted = false
+	newPod.resourcesDeleted.Store(false)
 	system.Ask(ref, KillTaskPod{})
 	time.Sleep(time.Second)
 	assert.Equal(t, deleteFailed, true)

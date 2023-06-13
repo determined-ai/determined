@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"regexp"
 	"strconv"
+	"sync/atomic"
 	"time"
 
 	"github.com/docker/docker/pkg/stdcopy"
@@ -74,7 +75,7 @@ type pod struct {
 	// TODO: Drop this manufactured container obj all together.
 	container        cproto.Container
 	ports            []int
-	resourcesDeleted bool
+	resourcesDeleted atomic.Bool
 	containerNames   set.Set[string]
 
 	restore bool
@@ -213,7 +214,7 @@ func (p *pod) Receive(ctx *actor.Context) error {
 		}
 
 	case actor.ChildStopped:
-		if !p.resourcesDeleted {
+		if !p.resourcesDeleted.Load() {
 			ctx.Log().Errorf("pod logger exited unexpectedly")
 		}
 
@@ -337,7 +338,7 @@ func (p *pod) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) er
 }
 
 func (p *pod) deleteKubernetesResources(ctx *actor.Context) {
-	if p.resourcesDeleted {
+	if !p.resourcesDeleted.CompareAndSwap(false, true) {
 		return
 	}
 
@@ -348,8 +349,6 @@ func (p *pod) deleteKubernetesResources(ctx *actor.Context) {
 		p.podName,
 		p.configMapName,
 	)
-
-	p.resourcesDeleted = true
 }
 
 func (p *pod) receiveResourceCreationFailed(ctx *actor.Context, err resourceCreationFailed) {
@@ -359,7 +358,7 @@ func (p *pod) receiveResourceCreationFailed(ctx *actor.Context, err resourceCrea
 
 func (p *pod) receiveResourceCreationCancelled() {
 	p.syslog.Info("pod creation canceled")
-	p.resourcesDeleted = true
+	p.resourcesDeleted.Store(true)
 }
 
 func (p *pod) receiveResourceDeletionFailed(err resourceDeletionFailed) {
