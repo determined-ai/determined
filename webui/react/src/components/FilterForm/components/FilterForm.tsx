@@ -7,6 +7,7 @@ import { FormKind } from 'components/FilterForm/components/type';
 import Button from 'components/kit/Button';
 import Toggle from 'components/kit/Toggle';
 import { V1ProjectColumn } from 'services/api-ts-sdk';
+import { Loadable } from 'utils/loadable';
 
 import css from './FilterForm.module.scss';
 
@@ -18,15 +19,19 @@ interface Props {
 
 const FilterForm = ({ formStore, columns, onHidePopOver }: Props): JSX.Element => {
   const scrollBottomRef = useRef<HTMLDivElement>(null);
-  const data = useObservable(formStore.formset);
-  const isButtonDisabled = data.filterGroup.children.length > ITEM_LIMIT;
+  const loadableData = useObservable(formStore.formset);
+  const data = Loadable.getOrElse(null, loadableData);
+  const isButtonDisabled = (data?.filterGroup?.children?.length ?? -1) > ITEM_LIMIT;
 
   const onAddItem = (formKind: FormKind) => {
+    if (!data) return;
     formStore.addChild(data.filterGroup.id, formKind);
     setTimeout(() => {
       scrollBottomRef?.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
     }, 100);
   };
+
+  if (!data) return <div className={css.base} />;
 
   return (
     <div className={css.base}>

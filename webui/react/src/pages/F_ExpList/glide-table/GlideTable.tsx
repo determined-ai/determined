@@ -333,12 +333,16 @@ export const GlideTable: React.FC<GlideTableProps> = ({
       }
 
       const BANNED_FILTER_COLUMNS = new Set(['searcherMetricsVal']);
+      const loadableFormset = formStore.formset.get();
       const filterMenuItemsForColumn = () => {
         const isSpecialColumn = (SpecialColumnNames as ReadonlyArray<string>).includes(
           column.column,
         );
         formStore.addChild(ROOT_ID, FormKind.Field, {
-          index: formStore.formset.get().filterGroup.children.length,
+          index: Loadable.match(loadableFormset, {
+            Loaded: (formset) => formset.filterGroup.children.length,
+            NotLoaded: () => 0,
+          }),
           item: {
             columnName: column.column,
             id: uuidv4(),
