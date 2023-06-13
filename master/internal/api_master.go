@@ -13,7 +13,6 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/cluster"
-	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/plugin/sso"
 	"github.com/determined-ai/determined/master/pkg/logger"
@@ -40,7 +39,7 @@ func (a *apiServer) GetMaster(
 		ExternalLoginUri:      a.m.config.InternalConfig.ExternalSessions.LoginURI,
 		ExternalLogoutUri:     a.m.config.InternalConfig.ExternalSessions.LogoutURI,
 		Branding:              "determined",
-		RbacEnabled:           config.GetAuthZConfig().IsRBACUIEnabled(),
+		RbacEnabled:           false,  // RBAC is never enabled in OSS.
 		Product:               product,
 		UserManagementEnabled: !a.m.config.InternalConfig.ExternalSessions.Enabled(),
 		FeatureSwitches:       a.m.config.FeatureSwitches,
