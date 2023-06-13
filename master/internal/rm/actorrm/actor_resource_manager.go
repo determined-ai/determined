@@ -55,8 +55,7 @@ func (r *ResourceManager) ValidateResources(
 func (r *ResourceManager) ValidateResourcePoolAvailability(
 	ctx actor.Messenger,
 	name string,
-	slots int,
-	restored bool) (
+	slots int) (
 	[]command.LaunchWarning,
 	error,
 ) {

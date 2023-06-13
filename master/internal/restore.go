@@ -125,6 +125,7 @@ func (m *Master) restoreExperiment(expModel *model.Experiment) error {
 		if err := e.Restore(snapshot); err != nil {
 			return errors.Wrap(err, "failed to restore experiment")
 		}
+		e.restored = true
 	}
 
 	experimentActor, _ := m.system.ActorOf(actor.Addr("experiments", e.ID), e)

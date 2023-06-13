@@ -493,16 +493,12 @@ func (rp *resourcePool) Receive(ctx *actor.Context) error {
 		var totalSlots int
 		switch {
 		case rp.config.Provider == nil:
-			if msg.Restored {
-				totalSlots = msg.Slots
-			} else {
-				rp.agentStatesCache = rp.fetchAgentStates(ctx)
-				defer func() {
-					rp.agentStatesCache = nil
-				}()
-				for _, a := range rp.agentStatesCache {
-					totalSlots += len(a.slotStates)
-				}
+			rp.agentStatesCache = rp.fetchAgentStates(ctx)
+			defer func() {
+				rp.agentStatesCache = nil
+			}()
+			for _, a := range rp.agentStatesCache {
+				totalSlots += len(a.slotStates)
 			}
 		case rp.config.Provider.AWS != nil:
 			totalSlots = rp.config.Provider.MaxInstances * rp.config.Provider.AWS.SlotsPerInstance()

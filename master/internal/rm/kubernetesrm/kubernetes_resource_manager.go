@@ -135,7 +135,6 @@ func (k ResourceManager) ValidateResourcePoolAvailability(
 	ctx actor.Messenger,
 	name string,
 	slots int,
-	restored bool,
 ) ([]command.LaunchWarning, error) {
 	if _, err := k.GetResourcePoolRef(ctx, name); err != nil {
 		return nil, fmt.Errorf("%s is an invalid resource pool", name)
