@@ -87,6 +87,9 @@ message ListWorkspacesBoundToRPRequest {
 
 // Response to ListWorkspacesBoundToRPRequest.
 message ListWorkspacesBoundToRPResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "workspace_id", "limit" ] }
+  };
   // List of workspace IDs.
   repeated int32 workspace_ids = 1;
   // Pagination information of the full dataset.
