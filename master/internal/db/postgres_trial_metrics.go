@@ -28,7 +28,7 @@ const (
 // simplifying some weirdness we set up for pg10 support.
 func BunSelectMetricsQuery(metricType model.MetricType, inclArchived bool) *bun.SelectQuery {
 	pType := customMetricTypeToPartitionType(metricType)
-	q := Bun().NewSelect().TableExpr("metrics").
+	q := Bun().NewSelect().
 		Where("partition_type = ?", pType).
 		Where("archived = ?", inclArchived)
 	if pType == GenericMetric {

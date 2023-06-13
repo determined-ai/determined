@@ -160,32 +160,29 @@ func (db *PgDB) MetricNames(ctx context.Context, experimentIDs []int) (
 }
 
 type batchesWrapper struct {
-	Batches int32     `db:"batches_processed"`
+	Batches int32     `db:"batches_processed" bun:"batches_processed"`
 	EndTime time.Time `db:"end_time"`
 }
 
-// MetricBatches returns the milestones (in batches processed) at which a specific training
-// metric was recorded.
+// MetricBatches returns the milestones (in batches processed) at which a specific metric
+// was recorded.
 func (db *PgDB) MetricBatches(
 	experimentID int, metricName string, startTime time.Time, metricType model.MetricType,
 ) (
 	batches []int32, endTime time.Time, err error,
 ) {
 	var rows []*batchesWrapper
-	pType := customMetricTypeToPartitionType(metricType)
 	JSONKey := model.TrialMetricsJSONPath(metricType == model.ValidationMetricType)
 
-	query := fmt.Sprintf(`
-SELECT t.total_batches AS batches_processed,
-  max(t.end_time) as end_time
-FROM trials t INNER JOIN metrics s ON t.id=s.trial_id
-WHERE t.experiment_id=$1
-  AND archived = false
-  AND partition_type = '%s'
-  AND s.metrics->'%s' ? $2
-  AND s.end_time > $3
-GROUP BY batches_processed;`, pType, JSONKey)
-	err = db.queryRows(query, &rows, experimentID, metricName, startTime)
+	err = BunSelectMetricsQuery(metricType, false).
+		TableExpr("trials t").
+		Join("INNER JOIN metrics m ON t.id=m.trial_id").
+		ColumnExpr("m.total_batches AS batches_processed, max(t.end_time) as end_time").
+		Where("t.experiment_id = ?", experimentID).
+		Where(fmt.Sprintf("m.metrics->'%s' ? '%s'", JSONKey, metricName)).
+		Where("m.end_time > ?", startTime).
+		Group("batches_processed").Scan(context.Background(), &rows)
+
 	if err != nil {
 		return nil, endTime, errors.Wrapf(err, "error querying DB for metric batches")
 	}
