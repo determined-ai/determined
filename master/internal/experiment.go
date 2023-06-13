@@ -136,7 +136,8 @@ func newExperiment(
 
 	var launchWarnings []command.LaunchWarning
 	if expModel.ID == 0 {
-		if err = m.rm.ValidateResources(m.system, poolName, resources.SlotsPerTrial(), false); err != nil {
+		err := m.rm.ValidateResources(m.system, poolName, resources.SlotsPerTrial(), false)
+		if err != nil {
 			return nil, nil, fmt.Errorf("validating resources: %v", err)
 		}
 		launchWarnings, err = m.rm.ValidateResourcePoolAvailability(
