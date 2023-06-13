@@ -3,10 +3,10 @@ import Fuse from 'fuse.js';
 import root from 'omnibar/tree-extension/trees/index';
 import { Children, LeafNode, NonLeafNode, TreeNode, TreePath } from 'omnibar/tree-extension/types';
 import { getNodeChildren, isLeafNode, isNLNode, traverseTree } from 'omnibar/tree-extension/utils';
-import { ErrorType } from 'shared/utils/error';
-import { noOp } from 'shared/utils/service';
 import { message } from 'utils/dialogApi';
+import { ErrorType } from 'utils/error';
 import handleError from 'utils/error';
+import { noOp } from 'utils/service';
 
 const SEPARATOR = ' ';
 

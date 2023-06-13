@@ -1,7 +1,7 @@
 import uPlot, { Plugin } from 'uplot';
 
 import { CheckpointsDict } from 'pages/TrialDetails/F_TrialDetailsOverview';
-import { isNumber } from 'shared/utils/data';
+import { isNumber } from 'utils/data';
 
 const NUM_POINTS = 4;
 const OUTER_RADIUS = 5;

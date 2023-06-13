@@ -594,6 +594,7 @@ func (a *apiServer) GetExperiments(
 		}
 	}
 	if len(req.States) > 0 {
+		// FIXME(DET-9567): the api state parameter and the database state column do not match.
 		var allStates []string
 		for _, state := range req.States {
 			allStates = append(allStates, strings.TrimPrefix(state.String(), "STATE_"))
@@ -1703,7 +1704,7 @@ func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricTyp
 	var zeroTime time.Time
 	var err error
 	var trial apiv1.TrialsSampleResponse_Trial
-	var metricID string
+	var metricID model.MetricType
 	var metricMeasurements []db.MetricMeasurements
 	xAxisLabelMetrics := []string{"epoch"}
 
@@ -1724,9 +1725,9 @@ func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricTyp
 	}
 	switch metricType {
 	case apiv1.MetricType_METRIC_TYPE_TRAINING:
-		metricID = "training" //nolint:goconst
+		metricID = model.TrainingMetricType //nolint:goconst
 	case apiv1.MetricType_METRIC_TYPE_VALIDATION:
-		metricID = "validation" //nolint:goconst
+		metricID = model.ValidationMetricType //nolint:goconst
 	default:
 		panic("Invalid metric type")
 	}
@@ -2193,7 +2194,7 @@ func (a *apiServer) SearchExperiments(
 		Column("trials.restarts").
 		ColumnExpr("coalesce(new_ckpt.uuid, old_ckpt.uuid) AS warm_start_checkpoint_uuid").
 		ColumnExpr("trials.checkpoint_size AS total_checkpoint_size").
-		ColumnExpr(exputil.ProtoStateDBCaseString(trialv1.State_value, "trials.state", "state",
+		ColumnExpr(exputil.ProtoStateDBCaseString(experimentv1.State_value, "trials.state", "state",
 			"STATE_")).
 		ColumnExpr(`(CASE WHEN trials.hparams = 'null'::jsonb
 				THEN null ELSE trials.hparams END) AS hparams`).

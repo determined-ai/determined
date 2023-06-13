@@ -44,6 +44,10 @@ html[data-theme="dark"] {
   z-index: 200; /* sphinx-book-theme default is 1020, lower this enough to stay below algolia modal */
 }
 
+.bd-sidebar-primary {
+  overscroll-behavior: none;
+}
+
 .header-links-left a {
   white-space: nowrap;
 }

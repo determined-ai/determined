@@ -3,8 +3,8 @@ import React from 'react';
 import uPlot from 'uplot';
 
 import { SyncProvider } from 'components/UPlot/SyncProvider';
-import { glasbeyColor } from 'shared/utils/color';
 import { TrialDetails } from 'types';
+import { glasbeyColor } from 'utils/color';
 
 import SystemMetricChart from './Charts/SystemMetricChart';
 import ThroughputMetricChart from './Charts/ThroughputMetricChart';

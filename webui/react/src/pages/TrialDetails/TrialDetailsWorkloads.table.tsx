@@ -1,8 +1,8 @@
 import { ColumnType } from 'antd/es/table';
 
 import { Renderer } from 'components/Table/Table';
-import { numericSorter } from 'shared/utils/sort';
 import { Step } from 'types';
+import { numericSorter } from 'utils/sort';
 
 const batchRender: Renderer<Step> = (_, record) => {
   return <>{record.batchNum}</>;

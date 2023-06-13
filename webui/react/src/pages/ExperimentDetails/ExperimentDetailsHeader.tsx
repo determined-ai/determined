@@ -15,6 +15,7 @@ import { useModal } from 'components/kit/Modal';
 import Tags from 'components/kit/Tags';
 import Link from 'components/Link';
 import PageHeaderFoldable, { Option } from 'components/PageHeaderFoldable';
+import Spinner from 'components/Spinner/Spinner';
 import TimeAgo from 'components/TimeAgo';
 import TimeDuration from 'components/TimeDuration';
 import { pausableRunStates, stateToLabel, terminalRunStates } from 'constants/states';
@@ -30,9 +31,6 @@ import {
   pauseExperiment,
   unarchiveExperiment,
 } from 'services/api';
-import Spinner from 'shared/components/Spinner/Spinner';
-import { getDuration } from 'shared/utils/datetime';
-import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { getStateColorCssVar } from 'themes';
 import {
   ExperimentAction as Action,
@@ -42,6 +40,8 @@ import {
   RunState,
   TrialItem,
 } from 'types';
+import { getDuration } from 'utils/datetime';
+import { ErrorLevel, ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 import { canActionExperiment, getActionsForExperiment } from 'utils/experiment';
 import { openCommandResponse } from 'utils/wait';

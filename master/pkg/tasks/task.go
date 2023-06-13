@@ -283,6 +283,7 @@ func (t *TaskSpec) ToDockerSpec() cproto.Spec {
 			},
 			Archives:         append(runArchives, rootArchives...),
 			UseFluentLogging: true,
+			DeviceType:       deviceType,
 		},
 	}
 
