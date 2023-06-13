@@ -159,7 +159,8 @@ const FilterField = ({
 
   const captureEnterKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
-      if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
+      // would use isComposing alone but safari has a bug: https://bugs.webkit.org/show_bug.cgi?id=165004
+      if (e.key === 'Enter' && (!e.nativeEvent.isComposing || e.keyCode === 229)) {
         formStore.addChild(parentId, FormKind.Field, { index: index + 1, item: getInitField() });
       }
     },
