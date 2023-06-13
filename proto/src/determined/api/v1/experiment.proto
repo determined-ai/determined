@@ -545,16 +545,6 @@ message ExpMetricNamesResponse {
   repeated string validation_metrics = 3;
 }
 
-// To distinguish the different categories of metrics.
-enum MetricType {
-  // Zero-value (not allowed).
-  METRIC_TYPE_UNSPECIFIED = 0;
-  // For metrics emitted during training.
-  METRIC_TYPE_TRAINING = 1;
-  // For metrics emitted during validation.
-  METRIC_TYPE_VALIDATION = 2;
-}
-
 // Request the milestones (in batches processed) at which a metric is recorded
 // by an experiment.
 message MetricBatchesRequest {
@@ -571,7 +561,7 @@ message MetricBatchesRequest {
           ["metric_name"];
       }];
   // The type of metric.
-  MetricType metric_type = 3
+  string metric_type = 3
       [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
         required:
           ["metric_type"];
@@ -602,7 +592,7 @@ message TrialsSnapshotRequest {
           ["metric_name"];
       }];
   // The type of metric.
-  MetricType metric_type = 3
+  string metric_type = 3
       [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
         required:
           ["metric_type"];
@@ -659,7 +649,7 @@ message TrialsSampleRequest {
           ["metric_name"];
       }];
   // The type of metric.
-  MetricType metric_type = 3
+  string metric_type = 3
       [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
         required:
           ["metric_type"];

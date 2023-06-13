@@ -2974,7 +2974,7 @@ class v1DownsampledMetrics(Printable):
         self,
         *,
         data: "typing.Sequence[v1DataPoint]",
-        type: "v1MetricType",
+        type: str,
     ):
         self.data = data
         self.type = type
@@ -2983,14 +2983,14 @@ class v1DownsampledMetrics(Printable):
     def from_json(cls, obj: Json) -> "v1DownsampledMetrics":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "data": [v1DataPoint.from_json(x) for x in obj["data"]],
-            "type": v1MetricType(obj["type"]),
+            "type": obj["type"],
         }
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "data": [x.to_json(omit_unset) for x in self.data],
-            "type": self.type.value,
+            "type": self.type,
         }
         return out
 
@@ -7025,11 +7025,6 @@ class v1MetricBatchesResponse(Printable):
         if not omit_unset or "batches" in vars(self):
             out["batches"] = self.batches
         return out
-
-class v1MetricType(DetEnum):
-    UNSPECIFIED = "METRIC_TYPE_UNSPECIFIED"
-    TRAINING = "METRIC_TYPE_TRAINING"
-    VALIDATION = "METRIC_TYPE_VALIDATION"
 
 class v1Metrics(Printable):
     batchMetrics: "typing.Optional[typing.Sequence[typing.Dict[str, typing.Any]]]" = None
@@ -14181,7 +14176,7 @@ def get_CompareTrials(
     maxDatapoints: "typing.Optional[int]" = None,
     metricIds: "typing.Optional[typing.Sequence[str]]" = None,
     metricNames: "typing.Optional[typing.Sequence[str]]" = None,
-    metricType: "typing.Optional[v1MetricType]" = None,
+    metricType: "typing.Optional[str]" = None,
     scale: "typing.Optional[v1Scale]" = None,
     startBatches: "typing.Optional[int]" = None,
     timeSeriesFilter_doubleRange_gt: "typing.Optional[float]" = None,
@@ -14206,7 +14201,7 @@ def get_CompareTrials(
         "maxDatapoints": maxDatapoints,
         "metricIds": metricIds,
         "metricNames": metricNames,
-        "metricType": metricType.value if metricType is not None else None,
+        "metricType": metricType,
         "scale": scale.value if scale is not None else None,
         "startBatches": startBatches,
         "timeSeriesFilter.doubleRange.gt": dump_float(timeSeriesFilter_doubleRange_gt) if timeSeriesFilter_doubleRange_gt is not None else None,
@@ -16178,7 +16173,7 @@ def get_GetTrialWorkloads(
     filter: "typing.Optional[GetTrialWorkloadsRequestFilterOption]" = None,
     includeBatchMetrics: "typing.Optional[bool]" = None,
     limit: "typing.Optional[int]" = None,
-    metricType: "typing.Optional[v1MetricType]" = None,
+    metricType: "typing.Optional[str]" = None,
     offset: "typing.Optional[int]" = None,
     orderBy: "typing.Optional[v1OrderBy]" = None,
     sortKey: "typing.Optional[str]" = None,
@@ -16187,7 +16182,7 @@ def get_GetTrialWorkloads(
         "filter": filter.value if filter is not None else None,
         "includeBatchMetrics": str(includeBatchMetrics).lower() if includeBatchMetrics is not None else None,
         "limit": limit,
-        "metricType": metricType.value if metricType is not None else None,
+        "metricType": metricType,
         "offset": offset,
         "orderBy": orderBy.value if orderBy is not None else None,
         "sortKey": sortKey,
@@ -16875,12 +16870,12 @@ def get_MetricBatches(
     *,
     experimentId: int,
     metricName: str,
-    metricType: "v1MetricType",
+    metricType: str,
     periodSeconds: "typing.Optional[int]" = None,
 ) -> "typing.Iterable[v1MetricBatchesResponse]":
     _params = {
         "metricName": metricName,
-        "metricType": metricType.value,
+        "metricType": metricType,
         "periodSeconds": periodSeconds,
     }
     _resp = session._do_request(
@@ -18025,7 +18020,7 @@ def get_SummarizeTrial(
     endBatches: "typing.Optional[int]" = None,
     maxDatapoints: "typing.Optional[int]" = None,
     metricNames: "typing.Optional[typing.Sequence[str]]" = None,
-    metricType: "typing.Optional[v1MetricType]" = None,
+    metricType: "typing.Optional[str]" = None,
     scale: "typing.Optional[v1Scale]" = None,
     startBatches: "typing.Optional[int]" = None,
 ) -> "v1SummarizeTrialResponse":
@@ -18033,7 +18028,7 @@ def get_SummarizeTrial(
         "endBatches": endBatches,
         "maxDatapoints": maxDatapoints,
         "metricNames": metricNames,
-        "metricType": metricType.value if metricType is not None else None,
+        "metricType": metricType,
         "scale": scale.value if scale is not None else None,
         "startBatches": startBatches,
     }
@@ -18258,7 +18253,7 @@ def get_TrialsSample(
     *,
     experimentId: int,
     metricName: str,
-    metricType: "v1MetricType",
+    metricType: str,
     endBatches: "typing.Optional[int]" = None,
     maxDatapoints: "typing.Optional[int]" = None,
     maxTrials: "typing.Optional[int]" = None,
@@ -18270,7 +18265,7 @@ def get_TrialsSample(
         "maxDatapoints": maxDatapoints,
         "maxTrials": maxTrials,
         "metricName": metricName,
-        "metricType": metricType.value,
+        "metricType": metricType,
         "periodSeconds": periodSeconds,
         "startBatches": startBatches,
     }
@@ -18305,7 +18300,7 @@ def get_TrialsSnapshot(
     batchesProcessed: int,
     experimentId: int,
     metricName: str,
-    metricType: "v1MetricType",
+    metricType: str,
     batchesMargin: "typing.Optional[int]" = None,
     periodSeconds: "typing.Optional[int]" = None,
 ) -> "typing.Iterable[v1TrialsSnapshotResponse]":
@@ -18313,7 +18308,7 @@ def get_TrialsSnapshot(
         "batchesMargin": batchesMargin,
         "batchesProcessed": batchesProcessed,
         "metricName": metricName,
-        "metricType": metricType.value,
+        "metricType": metricType,
         "periodSeconds": periodSeconds,
     }
     _resp = session._do_request(
