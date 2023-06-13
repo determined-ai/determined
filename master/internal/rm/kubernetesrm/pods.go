@@ -515,7 +515,6 @@ func (p *pods) reattachPod(
 
 	newPodHandler := newPod(
 		startMsg,
-		p.cluster,
 		startMsg.Spec.ClusterID,
 		p.clientSet,
 		pod.Namespace,
@@ -716,7 +715,6 @@ func (p *pods) startResourceRequestQueue(ctx *actor.Context) {
 func (p *pods) receiveStartTaskPod(ctx *actor.Context, msg StartTaskPod) error {
 	newPodHandler := newPod(
 		msg,
-		p.cluster,
 		msg.Spec.ClusterID,
 		p.clientSet,
 		msg.Namespace,

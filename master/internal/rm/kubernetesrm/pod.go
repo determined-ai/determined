@@ -45,7 +45,6 @@ type podSubmissionInfo struct {
 // Determined task. The lifecycle of the pod is managed based on
 // the status of the specified set of containers.
 type pod struct {
-	cluster    *actor.Ref
 	clusterID  string
 	taskActor  *actor.Ref
 	clientSet  *k8sClient.Clientset
@@ -95,7 +94,6 @@ type podNodeInfo struct {
 
 func newPod(
 	msg StartTaskPod,
-	cluster *actor.Ref,
 	clusterID string,
 	clientSet *k8sClient.Clientset,
 	namespace string,
@@ -128,7 +126,6 @@ func newPod(
 		submissionInfo: &podSubmissionInfo{
 			taskSpec: msg.Spec,
 		},
-		cluster:                  cluster,
 		clusterID:                clusterID,
 		taskActor:                msg.TaskActor,
 		clientSet:                clientSet,

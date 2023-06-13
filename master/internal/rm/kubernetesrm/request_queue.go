@@ -1,7 +1,6 @@
 package kubernetesrm
 
 import (
-	"reflect"
 	"strconv"
 	"sync"
 
@@ -20,7 +19,6 @@ const (
 // callback types used by requestQueue.
 type (
 	errorCallbackFunc func(error)
-	callbackPtr       reflect.Value
 )
 
 // message types that are sent to the requestProcessingWorkers channel.
@@ -97,17 +95,11 @@ type requestQueue struct {
 
 	queue []*queuedResourceRequest
 
-	creationInProgress       set.Set[callbackPtr]
-	pendingResourceCreations map[callbackPtr]*queuedResourceRequest
-	blockedResourceDeletions map[callbackPtr]*queuedResourceRequest
-
-	availableWorkers int
+	creationInProgress       set.Set[string]
+	pendingResourceCreations map[string]*queuedResourceRequest
+	blockedResourceDeletions map[string]*queuedResourceRequest
 
 	syslog *logrus.Entry
-}
-
-func getCallbackPtr(handler errorCallbackFunc) callbackPtr {
-	return (callbackPtr)(reflect.ValueOf(handler))
 }
 
 func startRequestQueue(
@@ -122,9 +114,9 @@ func startRequestQueue(
 
 		queue: make([]*queuedResourceRequest, 0),
 
-		creationInProgress:       make(set.Set[callbackPtr]),
-		pendingResourceCreations: make(map[callbackPtr]*queuedResourceRequest),
-		blockedResourceDeletions: make(map[callbackPtr]*queuedResourceRequest),
+		creationInProgress:       make(set.Set[string]),
+		pendingResourceCreations: make(map[string]*queuedResourceRequest),
+		blockedResourceDeletions: make(map[string]*queuedResourceRequest),
 
 		syslog: logrus.New().WithField("component", "kubernetesrm-queue"),
 	}
@@ -139,9 +131,29 @@ func (r *requestQueue) startWorkers() {
 			r.configMapInterfaces,
 			strconv.Itoa(i),
 			r.workerChan,
-			r.workerAvailableCallback,
+			r.workerReady,
 		)
 	}
+}
+
+func getKeyForCreate(msg createKubernetesResources) string {
+	if msg.podSpec != nil {
+		return msg.podSpec.Namespace + "/" + msg.podSpec.Name
+	}
+	if msg.configMapSpec != nil {
+		return msg.configMapSpec.Namespace + "/" + msg.configMapSpec.Name
+	}
+	panic("invalid createKubernetesResources message")
+}
+
+func getKeyForDelete(msg deleteKubernetesResources) string {
+	if msg.podName != "" {
+		return msg.namespace + "/" + msg.podName
+	}
+	if msg.configMapName != "" {
+		return msg.namespace + "/" + msg.configMapName
+	}
+	panic("invalid deleteKubernetesResources message")
 }
 
 func (r *requestQueue) createKubernetesResources(
@@ -151,18 +163,18 @@ func (r *requestQueue) createKubernetesResources(
 ) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	ref := getCallbackPtr(errorHandler)
+
+	msg := createKubernetesResources{errorHandler, podSpec, configMapSpec}
+	ref := getKeyForCreate(msg)
 
 	if _, requestAlreadyExists := r.pendingResourceCreations[ref]; requestAlreadyExists {
 		r.syslog.Errorf("handler %v issued multiple create resource requests", errorHandler)
 		return
 	}
 
-	msg := createKubernetesResources{errorHandler, podSpec, configMapSpec}
 	select {
 	case r.workerChan <- msg:
 		r.creationInProgress.Insert(ref)
-		r.availableWorkers--
 	default:
 		queuedRequest := &queuedResourceRequest{createResources: &msg}
 		r.queue = append(r.queue, queuedRequest)
@@ -178,7 +190,8 @@ func (r *requestQueue) deleteKubernetesResources(
 ) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	ref := getCallbackPtr(errorHandler)
+	msg := deleteKubernetesResources{errorHandler, namespace, podName, configMapName}
+	ref := getKeyForDelete(msg)
 
 	// If the request has not been processed yet, cancel it and inform the handler.
 	if _, creationPending := r.pendingResourceCreations[ref]; creationPending {
@@ -189,7 +202,6 @@ func (r *requestQueue) deleteKubernetesResources(
 		return
 	}
 
-	msg := deleteKubernetesResources{errorHandler, namespace, podName, configMapName}
 	// We do not want to trigger resource deletion concurrently with resource creation.
 	// If the creation request is currently being processed, we delay processing the
 	// deletion request.
@@ -200,25 +212,22 @@ func (r *requestQueue) deleteKubernetesResources(
 
 	select {
 	case r.workerChan <- msg:
-		r.availableWorkers--
 	default:
 		r.queue = append(r.queue, &queuedResourceRequest{deleteResources: &msg})
 	}
 }
 
-func (r *requestQueue) workerAvailableCallback(errorHandler errorCallbackFunc) {
+func (r *requestQueue) workerReady(createRef string) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	ref := getCallbackPtr(errorHandler)
 
-	if errorHandler != nil {
-		r.creationInProgress.Remove(ref)
+	if createRef != "" {
+		r.creationInProgress.Remove(createRef)
 
 		// Check if any deletions were blocked by this creation.
-		queuedMsg, resourceDeletionWasBlocked := r.blockedResourceDeletions[ref]
-		if resourceDeletionWasBlocked {
+		if queuedMsg, ok := r.blockedResourceDeletions[createRef]; ok {
 			r.queue = append(r.queue, queuedMsg)
-			delete(r.blockedResourceDeletions, ref)
+			delete(r.blockedResourceDeletions, createRef)
 		}
 	}
 
@@ -229,7 +238,7 @@ func (r *requestQueue) workerAvailableCallback(errorHandler errorCallbackFunc) {
 		// If both creation and deletion are nil it means that the creation
 		// request was canceled.
 		if nextRequest.createResources != nil {
-			next := getCallbackPtr(nextRequest.createResources.errorHandler)
+			next := getKeyForCreate(*nextRequest.createResources)
 			delete(r.pendingResourceCreations, next)
 			r.creationInProgress.Insert(next)
 			r.workerChan <- *nextRequest.createResources
@@ -239,5 +248,4 @@ func (r *requestQueue) workerAvailableCallback(errorHandler errorCallbackFunc) {
 			return
 		}
 	}
-	r.availableWorkers++
 }

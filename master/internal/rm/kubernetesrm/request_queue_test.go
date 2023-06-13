@@ -3,6 +3,7 @@ package kubernetesrm
 import (
 	"context"
 	"fmt"
+	"sync"
 	"testing"
 	"time"
 
@@ -75,22 +76,22 @@ func getNumberOfActivePods(podInterface typedV1.PodInterface) int {
 	return len(podList.Items)
 }
 
-func requestQueueIsProcessing(r *requestQueue) bool {
+func requestQueueIsDone(r *requestQueue) bool {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	return len(r.queue) > 0 &&
+	return len(r.queue) == 0 &&
 		len(r.blockedResourceDeletions) == 0 &&
-		r.availableWorkers < numKubernetesWorkers
+		len(r.pendingResourceCreations) == 0 &&
+		len(r.creationInProgress) == 0
 }
 
 func waitForPendingRequestToFinish(k8RequestQueue *requestQueue) {
-	time.Sleep(time.Second)
-
 	// Wait for queue to finish all in flight requests.
-	for requestQueueIsProcessing(k8RequestQueue) {
+	for !requestQueueIsDone(k8RequestQueue) {
 		time.Sleep(time.Millisecond * 100)
 	}
+	time.Sleep(time.Second)
 }
 
 func deleteAll(pods []*mockPod) {
@@ -200,8 +201,11 @@ func TestRequestQueueCreationCancelled(t *testing.T) {
 		startMockPod(k8sRequestQueue, nil)
 	}
 
+	var wg sync.WaitGroup
+	wg.Add(1)
 	createCancelled := false
 	errorHandler := (errorCallbackFunc)(func(e error) {
+		defer wg.Done()
 		switch e := e.(type) {
 		case resourceCreationCancelled:
 			createCancelled = true
@@ -212,7 +216,7 @@ func TestRequestQueueCreationCancelled(t *testing.T) {
 	pod := startMockPod(k8sRequestQueue, &errorHandler)
 	assert.Equal(t, createCancelled, false)
 	pod.delete()
-	time.Sleep(time.Second / 10)
+	wg.Wait()
 	assert.Equal(t, createCancelled, true)
 }
 
@@ -225,8 +229,11 @@ func TestRequestQueueCreationFailed(t *testing.T) {
 		map[string]typedV1.ConfigMapInterface{"default": configMapInterface},
 	)
 
+	var wg sync.WaitGroup
+	wg.Add(1)
 	createFailed := false
 	errorHandler := (errorCallbackFunc)(func(e error) {
+		defer wg.Done()
 		switch e := e.(type) {
 		case resourceCreationFailed:
 			createFailed = true
@@ -239,7 +246,7 @@ func TestRequestQueueCreationFailed(t *testing.T) {
 	assert.Equal(t, createFailed, false)
 
 	pod.create()
-	waitForPendingRequestToFinish(k8sRequestQueue)
+	wg.Wait()
 	assert.Equal(t, createFailed, true)
 }
 
@@ -252,8 +259,11 @@ func TestRequestQueueDeletionFailed(t *testing.T) {
 		map[string]typedV1.ConfigMapInterface{"default": configMapInterface},
 	)
 
+	var wg sync.WaitGroup
+	wg.Add(1)
 	deleteFailed := false
 	errorHandler := (errorCallbackFunc)(func(e error) {
+		defer wg.Done()
 		switch e := e.(type) {
 		case resourceDeletionFailed:
 			deleteFailed = true
@@ -270,6 +280,6 @@ func TestRequestQueueDeletionFailed(t *testing.T) {
 	assert.Equal(t, deleteFailed, false)
 
 	pod.delete()
-	waitForPendingRequestToFinish(k8sRequestQueue)
+	wg.Wait()
 	assert.Equal(t, deleteFailed, true)
 }

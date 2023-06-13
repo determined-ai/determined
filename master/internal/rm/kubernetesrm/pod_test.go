@@ -68,7 +68,6 @@ func createPod(
 		Spec:      task,
 		Slots:     1,
 	}
-	cluster := clusterHandler
 	clusterID := "test"
 	clientSet := k8sClient.Clientset{}
 	namespace := "default"
@@ -82,7 +81,7 @@ func createPod(
 	slotResourceRequests := config.PodSlotResourceRequests{}
 
 	newPodHandler := newPod(
-		msg, cluster, clusterID, &clientSet, namespace, masterIP, masterPort,
+		msg, clusterID, &clientSet, namespace, masterIP, masterPort,
 		model.TLSClientConfig{}, model.TLSClientConfig{},
 		model.LoggingConfig{DefaultLoggingConfig: &model.DefaultLoggingConfig{}},
 		podInterface, configMapInterface, resourceRequestQueue, leaveKubernetesResources,

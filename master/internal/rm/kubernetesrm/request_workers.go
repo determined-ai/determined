@@ -16,7 +16,7 @@ type requestProcessingWorker struct {
 	syslog              *logrus.Entry
 }
 
-type readyCallbackFunc func(h errorCallbackFunc)
+type readyCallbackFunc func(string)
 
 func startRequestProcessingWorker(
 	podInterfaces map[string]typedV1.PodInterface,
@@ -36,15 +36,15 @@ func startRequestProcessingWorker(
 }
 
 func (r *requestProcessingWorker) receive(in <-chan interface{}, ready readyCallbackFunc) {
-	go ready(nil)
+	go ready("")
 	for msg := range in {
 		switch msg := msg.(type) {
 		case createKubernetesResources:
 			r.receiveCreateKubernetesResources(msg)
-			go ready(msg.errorHandler)
+			go ready(getKeyForCreate(msg))
 		case deleteKubernetesResources:
 			r.receiveDeleteKubernetesResources(msg)
-			go ready(nil)
+			go ready("")
 		default:
 			errStr := fmt.Sprintf("unexpected message %T", msg)
 			r.syslog.Error(errStr)
