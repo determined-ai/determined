@@ -8326,6 +8326,8 @@ class v1PatchUserResponse:
 class v1PatchWorkspace:
     agentUserGroup: "typing.Optional[v1AgentUserGroup]" = None
     checkpointStorageConfig: "typing.Optional[typing.Dict[str, typing.Any]]" = None
+    defaultAuxPool: "typing.Optional[str]" = None
+    defaultComputePool: "typing.Optional[str]" = None
     name: "typing.Optional[str]" = None
 
     def __init__(
@@ -8333,12 +8335,18 @@ class v1PatchWorkspace:
         *,
         agentUserGroup: "typing.Union[v1AgentUserGroup, None, Unset]" = _unset,
         checkpointStorageConfig: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
+        defaultAuxPool: "typing.Union[str, None, Unset]" = _unset,
+        defaultComputePool: "typing.Union[str, None, Unset]" = _unset,
         name: "typing.Union[str, None, Unset]" = _unset,
     ):
         if not isinstance(agentUserGroup, Unset):
             self.agentUserGroup = agentUserGroup
         if not isinstance(checkpointStorageConfig, Unset):
             self.checkpointStorageConfig = checkpointStorageConfig
+        if not isinstance(defaultAuxPool, Unset):
+            self.defaultAuxPool = defaultAuxPool
+        if not isinstance(defaultComputePool, Unset):
+            self.defaultComputePool = defaultComputePool
         if not isinstance(name, Unset):
             self.name = name
 
@@ -8350,6 +8358,10 @@ class v1PatchWorkspace:
             kwargs["agentUserGroup"] = v1AgentUserGroup.from_json(obj["agentUserGroup"]) if obj["agentUserGroup"] is not None else None
         if "checkpointStorageConfig" in obj:
             kwargs["checkpointStorageConfig"] = obj["checkpointStorageConfig"]
+        if "defaultAuxPool" in obj:
+            kwargs["defaultAuxPool"] = obj["defaultAuxPool"]
+        if "defaultComputePool" in obj:
+            kwargs["defaultComputePool"] = obj["defaultComputePool"]
         if "name" in obj:
             kwargs["name"] = obj["name"]
         return cls(**kwargs)
@@ -8361,6 +8373,10 @@ class v1PatchWorkspace:
             out["agentUserGroup"] = None if self.agentUserGroup is None else self.agentUserGroup.to_json(omit_unset)
         if not omit_unset or "checkpointStorageConfig" in vars(self):
             out["checkpointStorageConfig"] = self.checkpointStorageConfig
+        if not omit_unset or "defaultAuxPool" in vars(self):
+            out["defaultAuxPool"] = self.defaultAuxPool
+        if not omit_unset or "defaultComputePool" in vars(self):
+            out["defaultComputePool"] = self.defaultComputePool
         if not omit_unset or "name" in vars(self):
             out["name"] = self.name
         return out
@@ -9122,6 +9138,8 @@ class v1PostWebhookResponse:
 class v1PostWorkspaceRequest:
     agentUserGroup: "typing.Optional[v1AgentUserGroup]" = None
     checkpointStorageConfig: "typing.Optional[typing.Dict[str, typing.Any]]" = None
+    defaultAuxPool: "typing.Optional[str]" = None
+    defaultComputePool: "typing.Optional[str]" = None
 
     def __init__(
         self,
@@ -9129,12 +9147,18 @@ class v1PostWorkspaceRequest:
         name: str,
         agentUserGroup: "typing.Union[v1AgentUserGroup, None, Unset]" = _unset,
         checkpointStorageConfig: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
+        defaultAuxPool: "typing.Union[str, None, Unset]" = _unset,
+        defaultComputePool: "typing.Union[str, None, Unset]" = _unset,
     ):
         self.name = name
         if not isinstance(agentUserGroup, Unset):
             self.agentUserGroup = agentUserGroup
         if not isinstance(checkpointStorageConfig, Unset):
             self.checkpointStorageConfig = checkpointStorageConfig
+        if not isinstance(defaultAuxPool, Unset):
+            self.defaultAuxPool = defaultAuxPool
+        if not isinstance(defaultComputePool, Unset):
+            self.defaultComputePool = defaultComputePool
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1PostWorkspaceRequest":
@@ -9145,6 +9169,10 @@ class v1PostWorkspaceRequest:
             kwargs["agentUserGroup"] = v1AgentUserGroup.from_json(obj["agentUserGroup"]) if obj["agentUserGroup"] is not None else None
         if "checkpointStorageConfig" in obj:
             kwargs["checkpointStorageConfig"] = obj["checkpointStorageConfig"]
+        if "defaultAuxPool" in obj:
+            kwargs["defaultAuxPool"] = obj["defaultAuxPool"]
+        if "defaultComputePool" in obj:
+            kwargs["defaultComputePool"] = obj["defaultComputePool"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -9155,6 +9183,10 @@ class v1PostWorkspaceRequest:
             out["agentUserGroup"] = None if self.agentUserGroup is None else self.agentUserGroup.to_json(omit_unset)
         if not omit_unset or "checkpointStorageConfig" in vars(self):
             out["checkpointStorageConfig"] = self.checkpointStorageConfig
+        if not omit_unset or "defaultAuxPool" in vars(self):
+            out["defaultAuxPool"] = self.defaultAuxPool
+        if not omit_unset or "defaultComputePool" in vars(self):
+            out["defaultComputePool"] = self.defaultComputePool
         return out
 
 class v1PostWorkspaceResponse:
@@ -18333,7 +18365,7 @@ def post_UnarchiveWorkspace(
         return
     raise APIHttpError("post_UnarchiveWorkspace", _resp)
 
-def post_UnbindRPFromWorkspace(
+def delete_UnbindRPFromWorkspace(
     session: "api.Session",
     *,
     body: "v1UnbindRPFromWorkspaceRequest",
@@ -18341,8 +18373,8 @@ def post_UnbindRPFromWorkspace(
 ) -> None:
     _params = None
     _resp = session._do_request(
-        method="POST",
-        path=f"/api/v1/resource-pools/{resourcePoolName}/delete-workspace-bindings",
+        method="DELETE",
+        path=f"/api/v1/resource-pools/{resourcePoolName}/workspace-bindings",
         params=_params,
         json=body.to_json(True),
         data=None,
@@ -18352,7 +18384,7 @@ def post_UnbindRPFromWorkspace(
     )
     if _resp.status_code == 200:
         return
-    raise APIHttpError("post_UnbindRPFromWorkspace", _resp)
+    raise APIHttpError("delete_UnbindRPFromWorkspace", _resp)
 
 def post_UnpinWorkspace(
     session: "api.Session",

@@ -2200,7 +2200,7 @@ service Determined {
   rpc UnbindRPFromWorkspace(UnbindRPFromWorkspaceRequest)
       returns (UnbindRPFromWorkspaceResponse) {
     option (google.api.http) = {
-      post: "/api/v1/resource-pools/{resource_pool_name}/delete-workspace-bindings",
+      delete: "/api/v1/resource-pools/{resource_pool_name}/workspace-bindings",
       body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {

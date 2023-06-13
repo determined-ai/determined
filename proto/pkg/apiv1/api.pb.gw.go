@@ -14191,7 +14191,7 @@ func RegisterDeterminedHandlerServer(ctx context.Context, mux *runtime.ServeMux,
 
 	})
 
-	mux.Handle("POST", pattern_Determined_UnbindRPFromWorkspace_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("DELETE", pattern_Determined_UnbindRPFromWorkspace_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
@@ -18312,7 +18312,7 @@ func RegisterDeterminedHandlerClient(ctx context.Context, mux *runtime.ServeMux,
 
 	})
 
-	mux.Handle("POST", pattern_Determined_UnbindRPFromWorkspace_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("DELETE", pattern_Determined_UnbindRPFromWorkspace_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
@@ -18796,7 +18796,7 @@ var (
 
 	pattern_Determined_BindRPToWorkspace_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"api", "v1", "resource-pools", "resource_pool_name", "workspace-bindings"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Determined_UnbindRPFromWorkspace_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"api", "v1", "resource-pools", "resource_pool_name", "delete-workspace-bindings"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Determined_UnbindRPFromWorkspace_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"api", "v1", "resource-pools", "resource_pool_name", "workspace-bindings"}, "", runtime.AssumeColonVerbOpt(true)))
 
 	pattern_Determined_OverwriteRPWorkspaceBindings_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"api", "v1", "resource-pools", "resource_pool_name", "workspace-bindings"}, "", runtime.AssumeColonVerbOpt(true)))
 

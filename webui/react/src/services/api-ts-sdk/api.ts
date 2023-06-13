@@ -6572,6 +6572,18 @@ export interface V1PatchWorkspace {
      * @memberof V1PatchWorkspace
      */
     checkpointStorageConfig?: any;
+    /**
+     * Name of the default compute pool.
+     * @type {string}
+     * @memberof V1PatchWorkspace
+     */
+    defaultComputePool?: string;
+    /**
+     * Name of the default aux pool.
+     * @type {string}
+     * @memberof V1PatchWorkspace
+     */
+    defaultAuxPool?: string;
 }
 /**
  * Response to PatchWorkspaceRequest.
@@ -7147,6 +7159,18 @@ export interface V1PostWorkspaceRequest {
      * @memberof V1PostWorkspaceRequest
      */
     checkpointStorageConfig?: any;
+    /**
+     * The name of the default compute pool.
+     * @type {string}
+     * @memberof V1PostWorkspaceRequest
+     */
+    defaultComputePool?: string;
+    /**
+     * The name of the default aux pool.
+     * @type {string}
+     * @memberof V1PostWorkspaceRequest
+     */
+    defaultAuxPool?: string;
 }
 /**
  * Response to PostWorkspaceRequest.
@@ -10677,13 +10701,13 @@ export interface V1Workspace {
      */
     pinnedAt?: Date;
     /**
-     * Optional default compute pool.
+     * Name of the default compute pool.
      * @type {string}
      * @memberof V1Workspace
      */
     defaultComputePool?: string;
     /**
-     * Optional aux compute pool.
+     * Name of the default aux pool.
      * @type {string}
      * @memberof V1Workspace
      */
@@ -18561,10 +18585,10 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling unbindRPFromWorkspace.');
             }
-            const localVarPath = `/api/v1/resource-pools/{resourcePoolName}/delete-workspace-bindings`
+            const localVarPath = `/api/v1/resource-pools/{resourcePoolName}/workspace-bindings`
                 .replace(`{${"resourcePoolName"}}`, encodeURIComponent(String(resourcePoolName)));
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
-            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarRequestOptions = { method: 'DELETE', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
             
