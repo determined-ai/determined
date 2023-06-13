@@ -118,13 +118,17 @@ class Experiment:
         order_by: trial.TrialOrderBy = trial.TrialOrderBy.ASCENDING,
     ) -> Iterable[trial.Trial]:
         """
-        Get a generator of :class:`~determined.experimental.Trial` instances
+        Get an iterator of :class:`~determined.experimental.Trial` instances
         representing trials for an experiment.
 
         Arguments:
             sort_by: Which field to sort by. See :class:`~determined.experimental.TrialSortBy`.
             order_by: Whether to sort in ascending or descending order. See
                 :class:`~determined.experimental.TrialOrderBy`.
+
+        Note:
+            This method returns an Iterable type that lazily instantiates response objects. To
+            fetch all models at once, call list(list_trials()).
         """
 
         def get_with_offset(offset: int) -> bindings.v1GetExperimentTrialsResponse:
