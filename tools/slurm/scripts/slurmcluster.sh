@@ -51,4 +51,4 @@ echo "Generated devcluster file: $TEMPYAML"
 
 # Run devcluster.
 echo "Running cluster..."
-devcluster -c $TEMPYAML
+devcluster -c $TEMPYAML --oneshot
