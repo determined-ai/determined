@@ -80,7 +80,10 @@ export class FilterFormStore {
     };
     return this.#formset.select((loadableFormset) =>
       Loadable.match(loadableFormset, {
-        Loaded: (formset) => countFields(formset.filterGroup),
+        Loaded: (formset) => {
+          const validFilterGroup = this.#sweepInvalid(formset.filterGroup);
+          return countFields(validFilterGroup);
+        },
         NotLoaded: () => 0,
       }),
     );
