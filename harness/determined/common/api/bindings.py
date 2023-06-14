@@ -7106,12 +7106,10 @@ class v1MetricsRange(Printable):
         *,
         max: float,
         metricsName: str,
-        metricsType: str,
         min: float,
     ):
         self.max = max
         self.metricsName = metricsName
-        self.metricsType = metricsType
         self.min = min
 
     @classmethod
@@ -7119,7 +7117,6 @@ class v1MetricsRange(Printable):
         kwargs: "typing.Dict[str, typing.Any]" = {
             "max": float(obj["max"]),
             "metricsName": obj["metricsName"],
-            "metricsType": obj["metricsType"],
             "min": float(obj["min"]),
         }
         return cls(**kwargs)
@@ -7128,7 +7125,6 @@ class v1MetricsRange(Printable):
         out: "typing.Dict[str, typing.Any]" = {
             "max": dump_float(self.max),
             "metricsName": self.metricsName,
-            "metricsType": self.metricsType,
             "min": dump_float(self.min),
         }
         return out
