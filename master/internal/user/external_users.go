@@ -36,7 +36,12 @@ func ByExternalToken(ctx context.Context, tokenText string,
 	if err != nil {
 		return nil, nil, err
 	}
+
 	claims := token.Claims.(*model.JWT)
+
+	if ext.Validate(claims) != nil {
+		return nil, nil, errors.New("token has been invalidated")
+	}
 
 	var isAdmin bool
 	orgRoles, ok := claims.OrgRoles[ext.OrgID]
