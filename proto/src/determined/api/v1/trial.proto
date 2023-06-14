@@ -1000,9 +1000,16 @@ message GetMetricsRequest {
     json_schema: { required: [ "trial_ids", "type" ] }
   };
   // Trial IDs to get metrics for.
-  repeated int32 trial_ids = 1;
+  repeated int32 trial_ids = 1
+      [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
+        required:
+          ["trial_ids"];
+      }];
   // The type of metrics to get eg 'training', 'validation', etc.
-  string type = 2;
+  string type = 2 [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
+    required:
+      ["type"];
+  }];
 }
 // Response to GetMetricsRequest.
 message GetMetricsResponse {

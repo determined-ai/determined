@@ -15273,8 +15273,8 @@ def get_GetMe(
 def get_GetMetrics(
     session: "api.Session",
     *,
-    trialIds: "typing.Optional[typing.Sequence[int]]" = None,
-    type: "typing.Optional[str]" = None,
+    trialIds: "typing.Sequence[int]",
+    type: str,
 ) -> "typing.Iterable[v1GetMetricsResponse]":
     _params = {
         "trialIds": trialIds,
