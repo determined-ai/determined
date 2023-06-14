@@ -686,9 +686,6 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
             return True
         if self._current_batch_idx is None:
             raise det.errors.InternalException("Training hasn't started.")
-        print("RANK: ", self.distributed.get_rank())
-        print("batch_index: ", self._current_batch_idx)
-        print("agg_freq: ",self._aggregation_frequency)
         return (self._current_batch_idx + 1) % self._aggregation_frequency == 0
 
     def backward(

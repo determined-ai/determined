@@ -974,12 +974,10 @@ class TestPyTorchTrial:
         val_metrics = launcher.elastic_launch(launch_config, self.run_identity)(tmp_path)
 
         actual_weights = []
-        raw_weights = []
         for i in range(len(val_metrics[0])):
-            raw_weights += [val_metrics[0][i]['weight'], val_metrics[1][i]['weight']]
-            actual_weights.append(sum(val_metrics[j][i]['weight'] for j in range(2)))
+            actual_weights += [val_metrics[0][i]['weight'], val_metrics[1][i]['weight']]
 
-        print(raw_weights)
+        print(actual_weights)
         expected_weights = calculate_gradients()
         print(expected_weights)
 
@@ -1072,6 +1070,13 @@ class TestPyTorchTrial:
         config = utils.load_config(utils.fixtures_path("pytorch_identity/distributed.yaml"))
         hparams = config["hyperparameters"]
 
+        print(int(os.environ["RANK"]),
+        int(os.environ["WORLD_SIZE"]),
+        int(os.environ["LOCAL_RANK"]),
+        int(os.environ["LOCAL_WORLD_SIZE"]),
+        int(os.environ["GROUP_RANK"]),
+        int(os.environ["GROUP_WORLD_SIZE"]))
+
         exp_config = utils.make_default_exp_config(
             hparams,
             scheduling_unit=1,
@@ -1098,6 +1103,7 @@ class TestPyTorchTrial:
             min_checkpoint_batches=48,
             checkpoint_dir=checkpoint_dir,
             tensorboard_path=tensorboard_path,
+            steps_completed=os.environ('LOCAL_RANK'),
             aggregation_frequency=2
         )
 
