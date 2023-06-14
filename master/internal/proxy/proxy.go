@@ -66,6 +66,10 @@ func InitProxy(httpAuth ProxyHTTPAuth) {
 	if err != nil {
 		logrus.Errorf("error generating key and cert: %t", err)
 	}
+	err = LoadOrGenSignedMasterCert()
+	if err != nil {
+		logrus.Errorf("error generating key and cert: %t", err)
+	}
 }
 
 // Register registers the service name with the associated target URL. All requests with the
