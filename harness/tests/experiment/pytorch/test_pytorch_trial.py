@@ -973,13 +973,20 @@ class TestPyTorchTrial:
         val_metrics = launcher.elastic_launch(launch_config, self.run_identity)(tmp_path)
 
         # weights returned by both models are the same.
-        actual_weights = val_metrics[0]
+        model_1_metrics = val_metrics[0]
+        model_1_weights = [model_1_metrics[i]['weights'] for i in range(len(model_1_metrics))]
+        model_2_metrics = val_metrics[1]
+        model_2_weights = [model_2_metrics[i]['weights'] for i in range(len(model_2_metrics))]
 
         expected_weights = calculate_gradients(num_epochs=1)
 
-        assert actual_weights == pytest.approx(
+        assert model_1_weights == pytest.approx(
             expected_weights
-        ), f"{actual_weights} != {expected_weights}"
+        ), f"{model_1_weights} != {expected_weights}"
+
+        assert model_2_weights == pytest.approx(
+            expected_weights
+        ), f"{model_2_weights} != {expected_weights}"
 
 
     def run_cifar10(self, tmp_path: pathlib.Path, batches_trained: typing.Optional[int] = 0):
