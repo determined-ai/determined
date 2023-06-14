@@ -1,39 +1,53 @@
 .base {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
   user-select: none;
   width: fit-content;
 }
 .tiny {
   font-size: var(--icon-tiny);
+  max-width: var(--icon-tiny);
 }
 .small {
   font-size: var(--icon-small);
+  max-width: var(--icon-small);
 }
 .medium {
   font-size: var(--icon-medium);
+  max-width: var(--icon-medium);
 }
 .large {
   font-size: var(--icon-large);
+  max-width: var(--icon-large);
 }
 .big {
   font-size: var(--icon-big);
+  max-width: var(--icon-big);
 }
 .great {
   font-size: var(--icon-great);
+  max-width: var(--icon-great);
 }
 .huge {
   font-size: var(--icon-huge);
+  max-width: var(--icon-huge);
 }
 .enormous {
   font-size: var(--icon-enormous);
+  max-width: var(--icon-enormous);
 }
 .giant {
   font-size: var(--icon-giant);
+  max-width: var(--icon-giant);
 }
 .jumbo {
   font-size: var(--icon-jumbo);
+  max-width: var(--icon-jumbo);
 }
 .mega {
   font-size: var(--icon-mega);
+  max-width: var(--icon-mega);
 }
 .cancel {
   color: var(--theme-ix-cancel);
@@ -43,4 +57,7 @@
 }
 .success {
   color: var(--theme-status-success);
+}
+.filter {
+  margin-top: 1px;
 }
