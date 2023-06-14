@@ -8,7 +8,7 @@ export type ValidFeature = 'trials_comparison' | 'dashboard' | 'explist_v2' | 'c
 const queryParams = new URLSearchParams(window.location.search);
 
 interface FeatureHook {
-  isOn: (feature: ValidFeature) => boolean;
+  isOn: (feature: ValidFeature) => boolean | undefined;
 }
 
 const useFeature = (): FeatureHook => {
@@ -16,9 +16,21 @@ const useFeature = (): FeatureHook => {
   return { isOn: (ValidFeature) => IsOn(ValidFeature, info) };
 };
 
-const IsOn = (feature: string, info: DeterminedInfo): boolean => {
+// Priority: Default state < config settings < user settings < url
+const IsOn = (feature: string, info: DeterminedInfo): boolean | undefined => {
   const { featureSwitches } = info;
-  return queryParams.get(`f_${feature}`) === 'on' || featureSwitches.includes(feature);
+  // Default state undefined
+  let isOn: boolean | undefined = undefined;
+
+  // Read from config settings
+  featureSwitches.includes(feature) && (isOn = true);
+  featureSwitches.includes(`-${feature}`) && (isOn = false);
+
+  // Read from url
+  queryParams.get(`f_${feature}`) === 'on' && (isOn = true);
+  queryParams.get(`f_${feature}`) === 'off' && (isOn = false);
+
+  return isOn;
 };
 
 export default useFeature;
