@@ -991,7 +991,7 @@ class TestPyTorchTrial:
     @pytest.mark.skipif(torch.cuda.device_count() < 2, reason="not enough gpus")
     @pytest.mark.gpu_parallel
     @pytest.mark.parametrize("api_style", ["apex", "auto", "manual"])
-    def test_pytorch_distributed_with_amp(self, tmp_path: pathlib.Path, api_style: str):
+    def test_pytorch_distributed_with_amp(self, tmp_path: pathlib.Path, api_style):
         # set up distributed backend.
         os.environ[det._DistributedBackend.TORCH] = str(1)
 
@@ -1002,8 +1002,8 @@ class TestPyTorchTrial:
         launch_config = launcher.LaunchConfig(min_nodes=1, max_nodes=1, nproc_per_node=2, run_id=rdzv_id,
                                               max_restarts=0, rdzv_endpoint=rdzv_endpoint, rdzv_backend=rdzv_backend)
 
-        outputs = launcher.elastic_launch(launch_config, self.run_gan)(api_style, tmp_path)
-        outputs = launcher.elastic_launch(launch_config, self.run_gan)(api_style, tmp_path, outputs[0])
+        outputs = launcher.elastic_launch(launch_config, self.run_amp)(tmp_path, api_style)
+        outputs = launcher.elastic_launch(launch_config, self.run_amp)(tmp_path, api_style, outputs[0])
 
     def run_cifar10(self, tmp_path: pathlib.Path, batches_trained: typing.Optional[int] = 0):
         checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
@@ -1131,7 +1131,7 @@ class TestPyTorchTrial:
 
         return validation_metrics
 
-    def run_amp(self, api_style: str, tmp_path: pathlib.Path, batches_trained: typing.Optional[int] = 0):
+    def run_amp(self, tmp_path: pathlib.Path, api_style: str, batches_trained: typing.Optional[int] = 0):
         checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
         class_selector = {
             "apex": "MNistApexAMPTrial",
