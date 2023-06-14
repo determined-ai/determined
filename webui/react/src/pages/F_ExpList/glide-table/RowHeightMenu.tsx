@@ -2,10 +2,10 @@ import { useMemo } from 'react';
 
 import Button from 'components/kit/Button';
 import Dropdown, { MenuItem } from 'components/kit/Dropdown';
+import OptionsIcon from 'components/kit/svgIcons/OptionsIcon';
+import RowIcon from 'components/kit/svgIcons/RowIcon';
 
 import { RowHeight } from '../F_ExperimentList.settings';
-
-import { RowHeight as RowHeightIcon } from './icons';
 
 interface RowHeightMenuProps {
   rowHeight: RowHeight;
@@ -20,10 +20,21 @@ const rowHeightCopy: Record<RowHeight, string> = {
 };
 
 export const RowHeightMenu: React.FC<RowHeightMenuProps> = ({ rowHeight, onRowHeightChange }) => {
+  const getIcon = (index: number) => {
+    const icons = [
+      <RowIcon key={'icon_0'} size="small" />,
+      <RowIcon key={'icon_1'} />,
+      <RowIcon key={'icon_2'} size="large" />,
+      <RowIcon key={'icon_3'} size="xl" />,
+    ];
+
+    return icons[index];
+  };
   const dropdownItems: MenuItem[] = useMemo(
     () => [
       {
-        children: Object.entries(rowHeightCopy).map(([rowHeight, label]) => ({
+        children: Object.entries(rowHeightCopy).map(([rowHeight, label], idx) => ({
+          icon: getIcon(idx),
           key: `rowHeight-${rowHeight}`,
           label,
           onClick: () => onRowHeightChange(rowHeight as RowHeight),
@@ -36,7 +47,7 @@ export const RowHeightMenu: React.FC<RowHeightMenuProps> = ({ rowHeight, onRowHe
   );
   const icon = (
     <span className="anticon">
-      <RowHeightIcon />
+      <OptionsIcon />
     </span>
   );
   return (
