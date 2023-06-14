@@ -974,9 +974,9 @@ class TestPyTorchTrial:
 
         # weights returned by both models are the same.
         model_1_metrics = val_metrics[0]
-        model_1_weights = [model_1_metrics[i]['weights'] for i in range(len(model_1_metrics))]
+        model_1_weights = [model_1_metrics[i]['weight'] for i in range(len(model_1_metrics))]
         model_2_metrics = val_metrics[1]
-        model_2_weights = [model_2_metrics[i]['weights'] for i in range(len(model_2_metrics))]
+        model_2_weights = [model_2_metrics[i]['weight'] for i in range(len(model_2_metrics))]
 
         expected_weights = calculate_gradients(num_epochs=1)
 
