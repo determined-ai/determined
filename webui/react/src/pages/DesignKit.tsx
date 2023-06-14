@@ -2313,20 +2313,17 @@ const IconsSection: React.FC = () => {
         <p>All icons</p>
         <Space wrap>
           {IconNameArray.map((name) => (
-            <Icon key={name} name={name} showTooltip title={name} />
+            <Icon
+              key={name}
+              name={name}
+              showTooltip
+              size={name === 'row' ? 'small' : 'medium'}
+              title={name}
+            />
           ))}
-        </Space>
-        <br />
-        <p>SVG Icons usage.</p>
-        <Space wrap>
-          <Icon name="filter" title="filter" />
-          <Icon name="panel" title="panel" />
-          <Icon name="options" title="options" />
-          <Icon name="row" size="small" title="row" />
           <Icon name="row" title="row" />
           <Icon name="row" size="large" title="row" />
           <Icon name="row" size="big" title="row" />
-          <Icon name="columns" title="columns" />
         </Space>
       </AntDCard>
     </ComponentSection>

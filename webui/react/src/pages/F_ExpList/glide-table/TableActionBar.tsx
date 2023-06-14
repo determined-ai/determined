@@ -385,7 +385,7 @@ const TableActionBar: React.FC<Props> = ({
             </Tooltip>
           </Dropdown>
           {!!toggleComparisonView && (
-            <Button icon={<Icon name="panel" title="" />} onClick={toggleComparisonView}>
+            <Button icon={<Icon name="panel" title="panel" />} onClick={toggleComparisonView}>
               Compare
             </Button>
           )}

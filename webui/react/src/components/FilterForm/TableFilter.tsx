@@ -50,7 +50,7 @@ const TableFilter = ({
         trigger="click"
         onOpenChange={onIsOpenFilterChange}>
         <Button
-          icon={<Icon name="filter" title="" />}
+          icon={<Icon name="filter" title="filter" />}
           style={{ alignItems: 'center', display: 'flex', justifyContent: 'space-between' }}>
           Filter{fieldCount > 0 && !isOpenFilter && <span>({fieldCount})</span>}
         </Button>

@@ -21,10 +21,10 @@ const rowHeightCopy: Record<RowHeight, string> = {
 export const RowHeightMenu: React.FC<RowHeightMenuProps> = ({ rowHeight, onRowHeightChange }) => {
   const getIcon = (index: number) => {
     const icons = [
-      <Icon key={'icon_0'} name="row" size="small" title="" />,
-      <Icon key={'icon_1'} name="row" title="" />,
-      <Icon key={'icon_2'} name="row" size="large" title="" />,
-      <Icon key={'icon_3'} name="row" size="big" title="" />,
+      <Icon key={'icon_0'} name="row" size="small" title="row" />,
+      <Icon key={'icon_1'} name="row" title="row" />,
+      <Icon key={'icon_2'} name="row" size="large" title="row" />,
+      <Icon key={'icon_3'} name="row" size="big" title="row" />,
     ];
 
     return icons[index];
@@ -46,7 +46,7 @@ export const RowHeightMenu: React.FC<RowHeightMenuProps> = ({ rowHeight, onRowHe
   );
   const icon = (
     <span className="anticon">
-      <Icon name="options" title="" />
+      <Icon name="options" title="options" />
     </span>
   );
   return (
