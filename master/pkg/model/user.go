@@ -1,9 +1,14 @@
 package model
 
 import (
+	"crypto/tls"
+	"encoding/json"
+	"net/http"
+	"sync"
 	"time"
 
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gopkg.in/guregu/null.v3"
@@ -157,16 +162,110 @@ func (users Users) Proto() []*userv1.User {
 // ExternalSessions provides an integration point for an external service to issue JWTs to control
 // access to the cluster.
 type ExternalSessions struct {
-	LoginURI  string    `json:"login_uri"`
-	LogoutURI string    `json:"logout_uri"`
-	JwtKey    string    `json:"jwt_key"`
-	OrgID     OrgID     `json:"org_id"`
-	ClusterID ClusterID `json:"cluster_id"`
+	LoginURI        string    `json:"login_uri"`
+	LogoutURI       string    `json:"logout_uri"`
+	InvalidationURI string    `json:"invalidation_uri"`
+	JwtKey          string    `json:"jwt_key"`
+	OrgID           OrgID     `json:"org_id"`
+	ClusterID       ClusterID `json:"cluster_id"`
+	Invalidations   *InvalidationMap
 }
 
+// invalsLock synchronizes reading and updating ExternalSessions.Invalidations.
+// OK to use a single lock since StartInvalidationPoll() is guarded by sync.Once.
+var invalsLock sync.RWMutex
+
 // Enabled returns whether or not external sessions are enabled.
-func (e ExternalSessions) Enabled() bool {
+func (e *ExternalSessions) Enabled() bool {
 	return len(e.LoginURI) > 1
+}
+
+// Validate throws an error if the provided JWT is invalidated.
+func (e *ExternalSessions) Validate(claims *JWT) error {
+	invalsLock.RLock()
+	defer invalsLock.RUnlock()
+	if e.Invalidations == nil {
+		return nil
+	}
+	d := time.Unix(claims.IssuedAt, 0)
+	v := e.Invalidations.ValidFrom(claims.UserID)
+	if d.Before(v) {
+		return errors.New("token has been invalidated")
+	}
+	return nil
+}
+
+func (e *ExternalSessions) fetchInvalidations(cert *tls.Certificate) {
+	client := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				Certificates: []tls.Certificate{*cert},
+				MinVersion:   tls.VersionTLS12,
+			},
+		},
+	}
+
+	req, err := http.NewRequest("GET", e.InvalidationURI, nil)
+	if err != nil {
+		log.WithError(err).Errorf("error fetching token invalidations")
+		return
+	}
+	if e.Invalidations != nil {
+		func() {
+			invalsLock.RLock()
+			defer invalsLock.RUnlock()
+			req.Header.Set("If-Modified-Since", e.Invalidations.LastUpdated.Format(time.RFC1123))
+		}()
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		log.WithError(err).Errorf("error fetching token invalidations")
+		return
+	}
+	defer func() { _ = resp.Body.Close() }()
+	if resp.StatusCode >= 300 {
+		return
+	}
+
+	var im InvalidationMap
+	err = json.NewDecoder(resp.Body).Decode(&im)
+	if err != nil {
+		log.WithError(err).Errorf("error parsing received token invalidations")
+		return
+	}
+
+	func() {
+		invalsLock.Lock()
+		defer invalsLock.Unlock()
+		e.Invalidations = &im
+	}()
+}
+
+// StartInvalidationPoll polls for new invalidations every minute.
+func (e *ExternalSessions) StartInvalidationPoll(cert *tls.Certificate) {
+	t := time.NewTicker(1 * time.Minute)
+	go func() {
+		for range t.C {
+			e.fetchInvalidations(cert)
+		}
+	}()
+}
+
+// InvalidationMap tracks times before which users should be considered invalid.
+type InvalidationMap struct {
+	DefaultTime time.Time            `json:"defaultTime"`
+	LastUpdated time.Time            `json:"lastUpdated"`
+	Overrides   map[string]time.Time `json:"overrides"`
+}
+
+// ValidFrom returns the time from which tokens for the specified user are valid.
+func (im *InvalidationMap) ValidFrom(id string) time.Time {
+	ts, ok := im.Overrides[id]
+	if ok {
+		return ts
+	}
+	return im.DefaultTime
 }
 
 // UserWebSetting is a record of user web setting.
