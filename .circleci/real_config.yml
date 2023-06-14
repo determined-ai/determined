@@ -3101,13 +3101,6 @@ workflows:
               path: /opt/singularity/bin:/usr/local/bin:${PATH}
               ld_library_path:
 
-
-      - test-e2e-slurm:
-          name: test-e2e-slurm
-          slack-mentions: "${SLACK_USER_ID}"
-          requires:
-            - package-and-push-system-local
-
       - test-e2e-slurm-disabled:
           name: test-e2e-slurm-podman
           #slack-mentions: "${SLACK_USER_ID}"
@@ -3909,6 +3902,13 @@ workflows:
           requires:
             - package-and-push-system-local
           extra-pytest-flags: "--no-compare-stats"
+      - test-e2e-slurm:
+          name: test-e2e-slurm-znode
+          slack-mentions: "${SLACK_USER_ID}"
+          requires:
+            - package-and-push-system-local
+          extra-pytest-flags: "--no-compare-stats"
+
 
   nightly-quarantine:
     when: << pipeline.parameters.do_nightly_tests >>
