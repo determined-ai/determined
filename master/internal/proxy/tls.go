@@ -7,6 +7,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"database/sql"
 	"encoding/pem"
 	"fmt"
 	"math"
@@ -49,31 +50,36 @@ func isCertExpired(certificate *x509.Certificate) bool {
 	return false
 }
 
-func saveCACertAndKey() error {
-	logrus.Info("Saving newly generated CA certificate and key")
+func saveCertAndKey(cert *x509.Certificate, key []byte, isMaster, isCA bool) error {
 	value := &certAndKeyInfo{
-		Serial:   masterCACert.SerialNumber.Int64(),
-		Cert:     masterCACert.Raw,
-		Key:      masterCAKeyBytes,
-		IsMaster: false,
-		IsCA:     true,
+		Serial:   cert.SerialNumber.Int64(),
+		Cert:     cert.Raw,
+		Key:      key,
+		IsMaster: isMaster,
+		IsCA:     isCA,
 	}
 
-	_, err := db.Bun().NewInsert().Model(value).Exec(context.TODO())
+	_, err := db.Bun().NewInsert().Model(value).Exec(context.Background())
 	if err != nil {
 		return errors.Wrap(err, "error inserting certificate and key")
 	}
+	logrus.Infof("Saved certificate and key to DB")
 	return nil
 }
 
 func loadCACertAndKey() error {
-	if masterCACert != nil && !isCertExpired(masterCACert) {
+	if !isCertExpired(masterCACert) {
 		return nil
 	}
 
 	var value certAndKeyInfo
-	err := db.Bun().NewSelect().Model(&value).Where("is_ca = true").Scan(context.TODO())
+	err := db.Bun().NewSelect().Model(&value).
+		Where("is_ca = true").
+		Scan(context.Background())
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil
+		}
 		return err
 	}
 
@@ -87,7 +93,9 @@ func loadCACertAndKey() error {
 
 	if isCertExpired(cert) {
 		logrus.Info("Certificate expired!")
-		_, err = db.Bun().NewDelete().Model(&value).Where("is_ca = true").Exec(context.TODO())
+		_, err = db.Bun().NewDelete().Model(&value).
+			Where("is_ca = true OR is_master = true").
+			Exec(context.Background())
 		if err != nil {
 			return errors.Wrap(err, "error deleting expired CA certificate")
 		}
@@ -108,33 +116,19 @@ func loadCACertAndKey() error {
 	return nil
 }
 
-func saveMasterCertAndKey() error {
-	logrus.Info("Saving master certificate and key")
-	value := &certAndKeyInfo{
-		Serial:   masterCert.SerialNumber.Int64(),
-		Cert:     masterCert.Raw,
-		Key:      x509.MarshalPKCS1PrivateKey(masterKey),
-		IsMaster: true,
-		IsCA:     false,
-	}
-
-	_, err := db.Bun().NewInsert().Model(value).Exec(context.TODO())
-	if err != nil {
-		return errors.Wrap(err, "error writing master cert and key to db")
-	}
-	return nil
-}
-
 func loadMasterCertAndKey() error {
-	if masterCert != nil && !isCertExpired(masterCert) {
+	if !isCertExpired(masterCert) {
 		return nil
 	}
 
 	var value certAndKeyInfo
 	err := db.Bun().NewSelect().Model(&value).
 		Where("is_master = true").
-		Scan(context.TODO())
+		Scan(context.Background())
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil
+		}
 		return err
 	}
 
@@ -148,7 +142,7 @@ func loadMasterCertAndKey() error {
 
 	if isCertExpired(cert) {
 		logrus.Info("Master certificate expired!")
-		_, err = db.Bun().NewDelete().Model(&value).Where("is_master = true").Exec(context.TODO())
+		_, err = db.Bun().NewDelete().Model(&value).Where("is_master = true").Exec(context.Background())
 		if err != nil {
 			return errors.Wrap(err, "error deleting expired master certificate")
 		}
@@ -168,29 +162,30 @@ func loadMasterCertAndKey() error {
 	return nil
 }
 
-func genKeyAndSignCert(unsignedCert, caCert *x509.Certificate, caKey *rsa.PrivateKey,
-) (*rsa.PrivateKey, *x509.Certificate, error) {
-	key, err := rsa.GenerateKey(rand.Reader, 4096)
-	if err != nil {
-		return nil, nil, err
-	}
+func genKeyAndSignCert(unsignedCert, caCert *x509.Certificate, certKey, caKey *rsa.PrivateKey,
+) (*x509.Certificate, error) {
 	certBytes, err := x509.CreateCertificate(
-		rand.Reader, unsignedCert, caCert, &caKey.PublicKey, caKey)
+		rand.Reader, unsignedCert, caCert, &certKey.PublicKey, caKey)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	parsedCert, err := x509.ParseCertificate(certBytes)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	return key, parsedCert, nil
+	return parsedCert, nil
 }
 
-func loadOrGenSignedMasterCert() error {
+func LoadOrGenSignedMasterCert() error {
 	masterInfoMutex.Lock()
 	defer masterInfoMutex.Unlock()
+	return maybeLoadOrGenSignedMasterCert()
+}
+
+func maybeLoadOrGenSignedMasterCert() error {
+	// make sure calling function has locked MasterInfoMutex
 	err := loadMasterCertAndKey()
 	if err != nil {
 		return err
@@ -201,7 +196,7 @@ func loadOrGenSignedMasterCert() error {
 
 	logrus.Info("Generating a new certificate and key for master")
 	if masterCAKey == nil || masterCACert == nil {
-		return errors.New("unable to generate signed cert; generate master key and cert first")
+		return errors.New("unable to generate signed cert; generate CA cert and keys first")
 	}
 
 	random, err := rand.Int(rand.Reader, big.NewInt(math.MaxInt))
@@ -225,18 +220,29 @@ func loadOrGenSignedMasterCert() error {
 		KeyUsage:    x509.KeyUsageDigitalSignature,
 	}
 
-	key, signedCert, err := genKeyAndSignCert(unsignedCert, masterCACert, masterCAKey)
+	key, err := rsa.GenerateKey(rand.Reader, 4096)
+	if err != nil {
+		return err
+	}
+	signedCert, err := genKeyAndSignCert(unsignedCert, masterCACert, key, masterCAKey)
 	if err != nil {
 		return err
 	}
 
 	masterKey = key
 	masterCert = signedCert
-	return saveMasterCertAndKey()
+	return saveCertAndKey(masterCert, x509.MarshalPKCS1PrivateKey(key), true, false)
 }
 
 // LoadOrGenCA generates a new CA cert and keypair if it does not exist in DB.
 func LoadOrGenCA() error {
+	masterInfoMutex.Lock()
+	defer masterInfoMutex.Unlock()
+	return maybeLoadOrGenCA()
+}
+
+func maybeLoadOrGenCA() error {
+	// make sure the calling function has locked masterInfoMutex
 	err := loadCACertAndKey()
 	if err != nil {
 		return err
@@ -273,7 +279,7 @@ func LoadOrGenCA() error {
 		return err
 	}
 
-	_, signedCert, err := genKeyAndSignCert(caCert, caCert, key)
+	signedCert, err := genKeyAndSignCert(caCert, caCert, key, key)
 	if err != nil {
 		return err
 	}
@@ -282,17 +288,18 @@ func LoadOrGenCA() error {
 	masterCAKey = key
 	masterCAKeyBytes = x509.MarshalPKCS1PrivateKey(key)
 
-	err = saveCACertAndKey()
+	err = saveCertAndKey(masterCert, masterCAKeyBytes, false, true)
 	if err != nil {
 		return err
 	}
-
 	return nil
 }
 
 // MasterCACert returns the CA cert.
 func MasterCACert() ([]byte, error) {
-	err := LoadOrGenCA()
+	masterInfoMutex.Lock()
+	defer masterInfoMutex.Unlock()
+	err := maybeLoadOrGenCA()
 	if err != nil {
 		return nil, err
 	}
@@ -306,7 +313,9 @@ func MasterCACert() ([]byte, error) {
 
 // MasterKeyAndCert returns the key and cert, signed by CA, that Master uses.
 func MasterKeyAndCert() (keyPem []byte, certPem []byte, err error) {
-	err = loadOrGenSignedMasterCert()
+	masterInfoMutex.Lock()
+	defer masterInfoMutex.Unlock()
+	err = maybeLoadOrGenSignedMasterCert()
 	if err != nil {
 		return nil, nil, err
 	}
@@ -325,8 +334,11 @@ func MasterKeyAndCert() (keyPem []byte, certPem []byte, err error) {
 
 // GenSignedCert generates a key and cert pair, signed by the master CA cert.
 func GenSignedCert() (keyPem []byte, certPem []byte, err error) {
-	if masterCAKey == nil || masterCACert == nil {
-		return nil, nil, errors.New("unable to generate signed cert; generate master key and cert first")
+	masterInfoMutex.Lock()
+	defer masterInfoMutex.Unlock()
+	err = maybeLoadOrGenCA()
+	if err != nil {
+		return nil, nil, fmt.Errorf("unable to generate signed cert; error generating CA key and cert: %t", err)
 	}
 
 	random, err := rand.Int(rand.Reader, big.NewInt(math.MaxInt))
@@ -350,11 +362,15 @@ func GenSignedCert() (keyPem []byte, certPem []byte, err error) {
 		KeyUsage:    x509.KeyUsageDigitalSignature,
 	}
 
-	certPrivKey, signedCert, err := genKeyAndSignCert(cert, masterCACert, masterCAKey)
+	key, err := rsa.GenerateKey(rand.Reader, 4096)
+	if err != nil {
+		return nil, nil, err
+	}
+	signedCert, err := genKeyAndSignCert(cert, masterCACert, key, masterCAKey)
 
 	keyBlock := &pem.Block{
 		Type:  "RSA PRIVATE KEY",
-		Bytes: x509.MarshalPKCS1PrivateKey(certPrivKey),
+		Bytes: x509.MarshalPKCS1PrivateKey(key),
 	}
 	certBlock := &pem.Block{
 		Type:  "CERTIFICATE",
