@@ -67,9 +67,8 @@ results of each subsequent trial, all of whose results are fed back to the searc
 
 .. warning::
 
-   Determined's DeepSpeed Autotune is not currently compatible with pipeline or model parallelism.
-   The to-be-trained model must be a ``DeepSpeedEngine`` instance (not a ``PipelineEngine``
-   instance).
+   Determined's DeepSpeed Autotune is not compatible with pipeline or model parallelism. The
+   to-be-trained model must be a ``DeepSpeedEngine`` instance (not a ``PipelineEngine`` instance).
 
 *******************
  User Code Changes
@@ -84,7 +83,8 @@ will describe specific use cases and the changes needed for each.
 DeepSpeedTrial
 ==============
 
-In order to use Determined's DeepSpeed Autotune with ``DeepSpeedTrial`` there are two requirements.
+To use Determined's DeepSpeed Autotune with ``DeepSpeedTrial``, you must meet the following
+requirements.
 
 First, it is assumed that a base DeepSpeed configuration exists in a file (written following the
 `DeepSpeed documentation here <https://www.deepspeed.ai/docs/config-json/>`_). We then require that
@@ -129,10 +129,9 @@ For a complete example of how to use DeepSpeed Autotune with ``DeepSpeedTrial``,
 <https://github.com/determined-ai/determined/tree/master/examples/deepspeed_autotune/torchvision/deepspeed_trial>`__
 and navigate to ``examples/deepspeed_autotune/torchvision/deepspeed_trial`` .
 
-..
-   note:
+.. note::
 
-   For more information about ``DeepSpeedTrial``, see :ref:`deepspeed-api`.
+   To find out more about ``DeepSpeedTrial``, visit :ref:`deepspeed-api`.
 
 Core API
 ========
