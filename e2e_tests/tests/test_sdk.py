@@ -203,6 +203,7 @@ def test_checkpoint_apis(client: _client.Determined) -> None:
         time.sleep(0.1)
     assert len(partially_deleted_checkpoints) == 1
     assert partially_deleted_checkpoints[0].uuid == partially_deleted_checkpoint.uuid
+    assert partially_deleted_checkpoints[0].resources
     assert "workload_sequencer.pkl" not in partially_deleted_checkpoints[0].resources
 
     # Ensure we can download the partially deleted checkpoint.
