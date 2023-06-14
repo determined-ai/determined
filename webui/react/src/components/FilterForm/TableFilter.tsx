@@ -1,8 +1,9 @@
-import { Button, Popover } from 'antd';
+import { Popover } from 'antd';
 import { useObservable } from 'micro-observables';
 
 import FilterForm from 'components/FilterForm/components/FilterForm';
 import { FilterFormStore } from 'components/FilterForm/components/FilterFormStore';
+import Button from 'components/kit/Button';
 import Icon from 'components/kit/Icon';
 import { V1ProjectColumn } from 'services/api-ts-sdk';
 import { Loadable } from 'utils/loadable';
@@ -49,9 +50,7 @@ const TableFilter = ({
         placement="bottomLeft"
         trigger="click"
         onOpenChange={onIsOpenFilterChange}>
-        <Button
-          icon={<Icon name="filter" title="filter button" />}
-          style={{ alignItems: 'center', display: 'flex', justifyContent: 'space-between' }}>
+        <Button icon={<Icon name="filter" title="filter button" />}>
           Filter{fieldCount > 0 && !isOpenFilter && <span>({fieldCount})</span>}
         </Button>
       </Popover>

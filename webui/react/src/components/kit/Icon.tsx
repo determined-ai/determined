@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 
 import Tooltip from 'components/kit/Tooltip';
 
@@ -254,14 +254,14 @@ const Icon: React.FC<Props> = ({
 }: Props) => {
   const classes = [css.base];
 
-  const rowIcon = React.useMemo(() => {
+  const rowIcon = useMemo(() => {
     if (name.includes('small')) return <RowIconSmall size={size} title={title} />;
     if (name.includes('large')) return <RowIconLarge size={size} title={title} />;
     if (name.includes('xl')) return <RowIconExtraLarge size={size} title={title} />;
 
     return <RowIconMedium size={size} title={title} />; // returns medium by default
   }, [name, size, title]);
-  const svgIcon = React.useMemo(() => {
+  const svgIcon = useMemo(() => {
     if (name === 'columns') return <ColumnsIcon size={size} title={title} />;
     if (name === 'filter') return <FilterIcon size={size} title={title} />;
     if (name === 'options') return <OptionsIcon size={size} title={title} />;
