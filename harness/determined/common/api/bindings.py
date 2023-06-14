@@ -4344,6 +4344,28 @@ class v1GetMeResponse(Printable):
         }
         return out
 
+class v1GetMetricsResponse(Printable):
+
+    def __init__(
+        self,
+        *,
+        metrics: "typing.Sequence[v1MetricsReport]",
+    ):
+        self.metrics = metrics
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetMetricsResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "metrics": [v1MetricsReport.from_json(x) for x in obj["metrics"]],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "metrics": [x.to_json(omit_unset) for x in self.metrics],
+        }
+        return out
+
 class v1GetModelDefFileRequest(Printable):
     experimentId: "typing.Optional[int]" = None
     path: "typing.Optional[str]" = None
@@ -15241,6 +15263,41 @@ def get_GetMe(
     if _resp.status_code == 200:
         return v1GetMeResponse.from_json(_resp.json())
     raise APIHttpError("get_GetMe", _resp)
+
+def get_GetMetrics(
+    session: "api.Session",
+    *,
+    trialIds: "typing.Optional[typing.Sequence[int]]" = None,
+    type: "typing.Optional[str]" = None,
+) -> "typing.Iterable[v1GetMetricsResponse]":
+    _params = {
+        "trialIds": trialIds,
+        "type": type,
+    }
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/trials/metrics/trial_metrics",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=True,
+    )
+    if _resp.status_code == 200:
+        try:
+            for _line in _resp.iter_lines(chunk_size=1024 * 1024):
+                _j = json.loads(_line)
+                if "error" in _j:
+                    raise APIHttpStreamError(
+                        "get_GetMetrics",
+                        runtimeStreamError.from_json(_j["error"])
+                )
+                yield v1GetMetricsResponse.from_json(_j["result"])
+        except requests.exceptions.ChunkedEncodingError:
+            raise APIHttpStreamError("get_GetMetrics", runtimeStreamError(message="ChunkedEncodingError"))
+        return
+    raise APIHttpError("get_GetMetrics", _resp)
 
 def get_GetModel(
     session: "api.Session",

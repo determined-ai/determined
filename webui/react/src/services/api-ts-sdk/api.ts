@@ -414,6 +414,25 @@ export interface StreamResultOfV1ExpMetricNamesResponse {
 /**
  * 
  * @export
+ * @interface StreamResultOfV1GetMetricsResponse
+ */
+export interface StreamResultOfV1GetMetricsResponse {
+    /**
+     * 
+     * @type {V1GetMetricsResponse}
+     * @memberof StreamResultOfV1GetMetricsResponse
+     */
+    result?: V1GetMetricsResponse;
+    /**
+     * 
+     * @type {RuntimeStreamError}
+     * @memberof StreamResultOfV1GetMetricsResponse
+     */
+    error?: RuntimeStreamError;
+}
+/**
+ * 
+ * @export
  * @interface StreamResultOfV1GetTrainingMetricsResponse
  */
 export interface StreamResultOfV1GetTrainingMetricsResponse {
@@ -3648,6 +3667,19 @@ export interface V1GetMeResponse {
      * @memberof V1GetMeResponse
      */
     user: V1User;
+}
+/**
+ * Response to GetMetricsRequest.
+ * @export
+ * @interface V1GetMetricsResponse
+ */
+export interface V1GetMetricsResponse {
+    /**
+     * Metric response.
+     * @type {Array<V1MetricsReport>}
+     * @memberof V1GetMetricsResponse
+     */
+    metrics: Array<V1MetricsReport>;
 }
 /**
  * Request to get a file of model definition.
@@ -27618,6 +27650,46 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
         },
         /**
          * 
+         * @summary Stream one or more trial's metrics.
+         * @param {Array<number>} [trialIds] Trial IDs to get metrics for.
+         * @param {string} [type] The type of metrics to get eg 'training', 'validation', etc.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getMetrics(trialIds?: Array<number>, type?: string, options: any = {}): FetchArgs {
+            const localVarPath = `/api/v1/trials/metrics/trial_metrics`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            if (trialIds) {
+                localVarQueryParameter['trialIds'] = trialIds
+            }
+            
+            if (type !== undefined) {
+                localVarQueryParameter['type'] = type
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Stream one or more trial's training metrics.
          * @param {Array<number>} [trialIds] Trial IDs to get metrics for.
          * @param {*} [options] Override http request option.
@@ -28067,6 +28139,26 @@ export const TrialsApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Stream one or more trial's metrics.
+         * @param {Array<number>} [trialIds] Trial IDs to get metrics for.
+         * @param {string} [type] The type of metrics to get eg 'training', 'validation', etc.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getMetrics(trialIds?: Array<number>, type?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1GetMetricsResponse> {
+            const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).getMetrics(trialIds, type, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Stream one or more trial's training metrics.
          * @param {Array<number>} [trialIds] Trial IDs to get metrics for.
          * @param {*} [options] Override http request option.
@@ -28269,6 +28361,17 @@ export const TrialsApiFactory = function (configuration?: Configuration, fetch?:
         },
         /**
          * 
+         * @summary Stream one or more trial's metrics.
+         * @param {Array<number>} [trialIds] Trial IDs to get metrics for.
+         * @param {string} [type] The type of metrics to get eg 'training', 'validation', etc.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getMetrics(trialIds?: Array<number>, type?: string, options?: any) {
+            return TrialsApiFp(configuration).getMetrics(trialIds, type, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Stream one or more trial's training metrics.
          * @param {Array<number>} [trialIds] Trial IDs to get metrics for.
          * @param {*} [options] Override http request option.
@@ -28398,6 +28501,19 @@ export class TrialsApi extends BaseAPI {
      */
     public getExperimentTrials(experimentId: number, sortBy?: V1GetExperimentTrialsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, states?: Array<Experimentv1State>, options?: any) {
         return TrialsApiFp(this.configuration).getExperimentTrials(experimentId, sortBy, orderBy, offset, limit, states, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Stream one or more trial's metrics.
+     * @param {Array<number>} [trialIds] Trial IDs to get metrics for.
+     * @param {string} [type] The type of metrics to get eg 'training', 'validation', etc.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TrialsApi
+     */
+    public getMetrics(trialIds?: Array<number>, type?: string, options?: any) {
+        return TrialsApiFp(this.configuration).getMetrics(trialIds, type, options)(this.fetch, this.basePath)
     }
     
     /**
