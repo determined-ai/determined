@@ -12,6 +12,7 @@ import { useModal } from 'components/kit/Modal';
 import Tooltip from 'components/kit/Tooltip';
 import Link, { Props as LinkProps } from 'components/Link';
 import Spinner from 'components/Spinner/Spinner';
+import { keyEmitter, KeyEvent } from 'hooks/useKeyTracker';
 import usePermissions from 'hooks/usePermissions';
 import { SettingsConfig, useSettings } from 'hooks/useSettings';
 import WorkspaceQuickSearch from 'pages/WorkspaceDetails/WorkspaceQuickSearch';
@@ -39,7 +40,7 @@ interface ItemProps extends LinkProps {
   label: string;
   labelRender?: React.ReactNode;
   status?: string;
-  tooltip?: boolean;
+  tooltip?: string | boolean;
 }
 
 interface Settings {
@@ -103,7 +104,9 @@ export const NavigationItem: React.FC<ItemProps> = ({
   );
 
   return props.tooltip ? (
-    <Tooltip content={props.label} placement="right">
+    <Tooltip
+      content={typeof props.tooltip === 'string' ? props.tooltip : props.label}
+      placement="right">
       <div>{link}</div>
     </Tooltip>
   ) : (
@@ -191,6 +194,20 @@ const NavigationSideBar: React.FC = () => {
   const handleCollapse = useCallback(() => {
     updateSettings({ navbarCollapsed: !settings.navbarCollapsed });
   }, [settings.navbarCollapsed, updateSettings]);
+
+  useEffect(() => {
+    const keyDownListener = (e: KeyboardEvent) => {
+      if (e.code === 'KeyU' && (e.ctrlKey || e.metaKey)) {
+        handleCollapse();
+      }
+    };
+
+    keyEmitter.on(KeyEvent.KeyDown, keyDownListener);
+
+    return () => {
+      keyEmitter.off(KeyEvent.KeyDown, keyDownListener);
+    };
+  }, [handleCollapse]);
 
   const { canAdministrateUsers } = usePermissions();
 
@@ -330,7 +347,9 @@ const NavigationSideBar: React.FC = () => {
             <NavigationItem
               icon={settings.navbarCollapsed ? 'expand' : 'collapse'}
               label={settings.navbarCollapsed ? 'Expand' : 'Collapse'}
-              tooltip={settings.navbarCollapsed}
+              tooltip={
+                settings.navbarCollapsed ? 'Expand (Ctrl/Cmd + U)' : 'Collapse (Ctrl/Cmd + U)'
+              }
               onClick={handleCollapse}
             />
           </section>
