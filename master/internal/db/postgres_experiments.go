@@ -126,37 +126,74 @@ func GetNonTerminalExperimentCount(ctx context.Context,
 		Count(ctx)
 }
 
-// MetricNames returns the set of training and validation metric names that have been recorded for
-// an experiment.
-func MetricNames(ctx context.Context, experimentIDs []int) (
-	training []string, validation []string, err error,
+// MetricNames returns a list of metric names for the given experiment IDs.
+func (db *PgDB) MetricNames(ctx context.Context, experimentIDs []int) (
+	map[model.MetricType][]string, error,
 ) {
-	if err := Bun().NewSelect().Table("trials").
-		ColumnExpr("jsonb_object_keys(summary_metrics->'avg_metrics') AS name").
-		Where("experiment_id IN (?)", bun.In(experimentIDs)).
-		Group("name").
-		Order("name").
-		Scan(ctx, &training); err != nil {
-		return nil, nil, errors.Wrapf(err,
-			"error querying training metric names for experiments")
+	type MetricNamesRow struct {
+		MetricName string
+		JSONPath   string
+	}
+	rows := []MetricNamesRow{}
+
+	metricNames := BunSelectMetricTypeNames().
+		Where("experiment_id IN (?)", bun.In(experimentIDs))
+
+	err := Bun().NewSelect().TableExpr("(?) as metric_names", metricNames).
+		Column("json_path").
+		Column("metric_name").
+		Scan(ctx, &rows)
+	if err != nil {
+		return nil, err
 	}
 
-	if err := Bun().NewSelect().Table("trials").
-		ColumnExpr("jsonb_object_keys(summary_metrics->'validation_metrics') AS name").
-		Where("experiment_id IN (?)", bun.In(experimentIDs)).
-		Group("name").
-		Order("name").
-		Scan(ctx, &validation); err != nil {
-		return nil, nil, errors.Wrapf(err,
-			"error querying validation metric names for experiments")
+	metricNamesMap := make(map[model.MetricType][]string)
+	for _, row := range rows {
+		mType := model.TrialSummaryMetricType(row.JSONPath)
+		if _, ok := metricNamesMap[mType]; !ok {
+			metricNamesMap[mType] = make([]string, 0)
+		}
+		metricNamesMap[mType] = append(metricNamesMap[mType], row.MetricName)
 	}
 
-	return training, validation, nil
+	return metricNamesMap, nil
 }
 
 type batchesWrapper struct {
-	Batches int32     `db:"batches_processed"`
+	Batches int32     `db:"batches_processed" bun:"batches_processed"`
 	EndTime time.Time `db:"end_time"`
+}
+
+// MetricBatches returns the milestones (in batches processed) at which a specific metric
+// was recorded.
+func MetricBatches(
+	experimentID int, metricName string, startTime time.Time, metricType model.MetricType,
+) (
+	batches []int32, endTime time.Time, err error,
+) {
+	var rows []*batchesWrapper
+	JSONKey := model.TrialMetricsJSONPath(metricType == model.ValidationMetricType)
+
+	err = BunSelectMetricsQuery(metricType, false).
+		TableExpr("trials t").
+		Join("INNER JOIN metrics m ON t.id=m.trial_id").
+		ColumnExpr("m.total_batches AS batches_processed, max(t.end_time) as end_time").
+		Where("t.experiment_id = ?", experimentID).
+		Where(fmt.Sprintf("m.metrics->'%s' ? '%s'", JSONKey, metricName)).
+		Where("m.end_time > ?", startTime).
+		Group("batches_processed").Scan(context.Background(), &rows)
+
+	if err != nil {
+		return nil, endTime, errors.Wrapf(err, "error querying DB for metric batches")
+	}
+	for _, row := range rows {
+		batches = append(batches, row.Batches)
+		if row.EndTime.After(endTime) {
+			endTime = row.EndTime
+		}
+	}
+
+	return batches, endTime, nil
 }
 
 // TrainingMetricBatches returns the milestones (in batches processed) at which a specific training
@@ -164,26 +201,7 @@ type batchesWrapper struct {
 func (db *PgDB) TrainingMetricBatches(experimentID int, metricName string, startTime time.Time) (
 	batches []int32, endTime time.Time, err error,
 ) {
-	var rows []*batchesWrapper
-	err = db.queryRows(`
-SELECT s.total_batches AS batches_processed,
-  max(s.end_time) as end_time
-FROM trials t INNER JOIN steps s ON t.id=s.trial_id
-WHERE t.experiment_id=$1
-  AND s.metrics->'avg_metrics' ? $2
-  AND s.end_time > $3
-GROUP BY batches_processed;`, &rows, experimentID, metricName, startTime)
-	if err != nil {
-		return nil, endTime, errors.Wrapf(err, "error querying DB for training metric batches")
-	}
-	for _, row := range rows {
-		batches = append(batches, row.Batches)
-		if row.EndTime.After(endTime) {
-			endTime = row.EndTime
-		}
-	}
-
-	return batches, endTime, nil
+	return MetricBatches(experimentID, metricName, startTime, model.TrainingMetricType)
 }
 
 // ValidationMetricBatches returns the milestones (in batches processed) at which a specific
@@ -191,28 +209,7 @@ GROUP BY batches_processed;`, &rows, experimentID, metricName, startTime)
 func (db *PgDB) ValidationMetricBatches(experimentID int, metricName string, startTime time.Time) (
 	batches []int32, endTime time.Time, err error,
 ) {
-	var rows []*batchesWrapper
-	err = db.queryRows(`
-SELECT
-  v.total_batches AS batches_processed,
-  max(v.end_time) as end_time
-FROM trials t
-JOIN validations v ON t.id = v.trial_id
-WHERE t.experiment_id=$1
-  AND v.metrics->'validation_metrics' ? $2
-  AND v.end_time > $3
-GROUP BY batches_processed`, &rows, experimentID, metricName, startTime)
-	if err != nil {
-		return nil, endTime, errors.Wrapf(err, "error querying DB for validation metric batches")
-	}
-	for _, row := range rows {
-		batches = append(batches, row.Batches)
-		if row.EndTime.After(endTime) {
-			endTime = row.EndTime
-		}
-	}
-
-	return batches, endTime, nil
+	return MetricBatches(experimentID, metricName, startTime, model.ValidationMetricType)
 }
 
 type snapshotWrapper struct {

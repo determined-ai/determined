@@ -574,7 +574,7 @@ type MetricsRange struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// The name of metrics.
+	// The name of metrics formatted as <type>.<name>.
 	MetricsName string `protobuf:"bytes,1,opt,name=metrics_name,json=metricsName,proto3" json:"metrics_name,omitempty"`
 	// The min of metrics values.
 	Min float64 `protobuf:"fixed64,2,opt,name=min,proto3" json:"min,omitempty"`

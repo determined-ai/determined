@@ -305,6 +305,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
         filters.metric.name,
         metricTypeParam,
         undefined,
+        undefined,
         { signal: canceler.signal },
       ),
       (event) => {
