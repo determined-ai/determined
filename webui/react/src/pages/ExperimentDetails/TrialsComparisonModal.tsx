@@ -16,14 +16,10 @@ import useMetricNames from 'hooks/useMetricNames';
 import useResize from 'hooks/useResize';
 import { paths } from 'routes/utils';
 import { getTrialDetails } from 'services/api';
-import Spinner from 'shared/components/Spinner/Spinner';
-import { Primitive } from 'shared/types';
-import { isNumber } from 'shared/utils/data';
-import { ErrorType } from 'shared/utils/error';
-import { humanReadableBytes, pluralizer } from 'shared/utils/string';
-import { ExperimentItem, Metric, MetricSummary, TrialDetails } from 'types';
-import handleError from 'utils/error';
-import { humanReadableBytes } from 'utils/string';
+import { ExperimentItem, Metric, MetricSummary, Primitive, TrialDetails } from 'types';
+import { isNumber } from 'utils/data';
+import handleError, { ErrorType } from 'utils/error';
+import { humanReadableBytes, pluralizer } from 'utils/string';
 
 import css from './TrialsComparisonModal.module.scss';
 

@@ -4,7 +4,6 @@ import Pivot, { TabItem } from 'components/kit/Pivot';
 import SplitPane from 'components/SplitPane';
 import { TrialsComparisonTable } from 'pages/ExperimentDetails/TrialsComparisonModal';
 import { ExperimentWithTrial, TrialItem } from 'types';
-import { isEqual } from 'utils/data';
 
 import CompareMetrics from './CompareMetrics';
 import CompareParallelCoordinates from './CompareParallelCoordinates';
