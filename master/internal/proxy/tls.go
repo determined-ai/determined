@@ -178,6 +178,8 @@ func genKeyAndSignCert(unsignedCert, caCert *x509.Certificate, certKey, caKey *r
 	return parsedCert, nil
 }
 
+// LoadOrGenSignedMasterCert generates a new master cert and key if they do not exist in DB or are
+// expired.
 func LoadOrGenSignedMasterCert() error {
 	masterInfoMutex.Lock()
 	defer masterInfoMutex.Unlock()
@@ -234,7 +236,7 @@ func maybeLoadOrGenSignedMasterCert() error {
 	return saveCertAndKey(masterCert, x509.MarshalPKCS1PrivateKey(key), true, false)
 }
 
-// LoadOrGenCA generates a new CA cert and keypair if it does not exist in DB.
+// LoadOrGenCA generates a new CA cert and key if they do not exist in DB or are expired.
 func LoadOrGenCA() error {
 	masterInfoMutex.Lock()
 	defer masterInfoMutex.Unlock()
@@ -338,7 +340,8 @@ func GenSignedCert() (keyPem []byte, certPem []byte, err error) {
 	defer masterInfoMutex.Unlock()
 	err = maybeLoadOrGenCA()
 	if err != nil {
-		return nil, nil, fmt.Errorf("unable to generate signed cert; error generating CA key and cert: %t", err)
+		return nil, nil, fmt.Errorf(
+			"unable to generate signed cert; error generating CA key and cert: %t", err)
 	}
 
 	random, err := rand.Int(rand.Reader, big.NewInt(math.MaxInt))

@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/determined-ai/determined/master/internal/proxy"
 	"strconv"
 	"time"
 
@@ -21,6 +20,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/command"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
+	"github.com/determined-ai/determined/master/internal/proxy"
 	"github.com/determined-ai/determined/master/internal/rbac/audit"
 	"github.com/determined-ai/determined/master/internal/task/idle"
 	"github.com/determined-ai/determined/master/pkg/actor"
