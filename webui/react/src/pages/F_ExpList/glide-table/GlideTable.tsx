@@ -362,7 +362,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
       if (!BANNED_FILTER_COLUMNS.has(column.column)) {
         items.push({ type: 'divider' });
         items.push({
-          icon: <Icon name="filter" title="filter" />,
+          icon: <Icon name="filter" title="filter button" />,
           key: 'filter',
           label: 'Filter by this column',
           onClick: () => {

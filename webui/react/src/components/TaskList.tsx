@@ -378,7 +378,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
         dataIndex: 'type',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['type'],
         filterDropdown: typeFilterDropdown,
-        filterIcon: <Icon name="filter" title="filter" />,
+        filterIcon: <Icon name="filter" title="filter button" />,
         filters: Object.values(CommandType).map((value) => ({
           text: (
             <div className={css.typeFilter}>
@@ -421,7 +421,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
         dataIndex: 'state',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['state'],
         filterDropdown: stateFilterDropdown,
-        filterIcon: <Icon name="filter" title="filter" />,
+        filterIcon: <Icon name="filter" title="filter button" />,
         filters: Object.values(CommandState).map((value) => ({
           text: <Badge state={value} type={BadgeType.State} />,
           value,
@@ -444,7 +444,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
         dataIndex: 'user',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['user'],
         filterDropdown: userFilterDropdown,
-        filterIcon: <Icon name="filter" title="filter" />,
+        filterIcon: <Icon name="filter" title="filter button" />,
         filters: users.map((user) => ({ text: getDisplayName(user), value: user.id })),
         isFiltered: (settings: Settings) => !!settings.user,
         key: 'user',
@@ -462,7 +462,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
         dataIndex: 'workspace',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['workspace'],
         filterDropdown: workspaceFilterDropdown,
-        filterIcon: <Icon name="filter" title="filter" />,
+        filterIcon: <Icon name="filter" title="filter button" />,
         filters: workspaces.map((ws) => ({
           text: <WorkspaceFilter workspace={ws} />,
           value: ws.id,

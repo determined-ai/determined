@@ -21,10 +21,10 @@ const rowHeightCopy: Record<RowHeight, string> = {
 export const RowHeightMenu: React.FC<RowHeightMenuProps> = ({ rowHeight, onRowHeightChange }) => {
   const getIcon = (index: number) => {
     const icons = [
-      <Icon key={'icon_0'} name="row-small" title="row" />,
-      <Icon key={'icon_1'} name="row-medium" title="row" />,
-      <Icon key={'icon_2'} name="row-large" title="row" />,
-      <Icon key={'icon_3'} name="row-xl" title="row" />,
+      <Icon key={'icon_0'} name="row-small" title="small row button" />,
+      <Icon key={'icon_1'} name="row-medium" title="medium row button" />,
+      <Icon key={'icon_2'} name="row-large" title="large row button" />,
+      <Icon key={'icon_3'} name="row-xl" title="xl row button" />,
     ];
 
     return icons[index];
