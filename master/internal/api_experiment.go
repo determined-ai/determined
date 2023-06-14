@@ -67,6 +67,9 @@ type experimentAllocation struct {
 	Starting bool
 }
 
+// SummaryMetricStatistics lists values possibly queryable within summary metrics.
+var SummaryMetricStatistics = []string{"count", "last", "max", "min", "sum"}
+
 const maxConcurrentDeletes = 10
 
 // Enrich one or more experiments by converting Active state to Queued/Pulling/Starting/Running.
@@ -2077,6 +2080,19 @@ func sortExperiments(sortString *string, experimentQuery *bun.SelectQuery) error
 			experimentQuery.OrderExpr(
 				fmt.Sprintf("e.validation_metrics->'%s' %s",
 					metricName, sortDirection))
+		case strings.HasPrefix(paramDetail[0], "training."):
+			metricDetails := strings.Split(paramDetail[0], ".")
+			metricQualifier := metricDetails[len(metricDetails)-1]
+			metricName := strings.TrimSuffix(
+				strings.TrimPrefix(paramDetail[0], "training."),
+				"."+metricQualifier)
+			if !slices.Contains(SummaryMetricStatistics, metricQualifier) {
+				return status.Errorf(codes.InvalidArgument,
+					"sort training metrics by statistic: count, last, max, min, or sum")
+			}
+			experimentQuery.OrderExpr(
+				fmt.Sprintf("trials.summary_metrics->'avg_metrics'->'%s'->>'%s' %s", metricName,
+					metricQualifier, sortDirection))
 		default:
 			if _, ok := orderColMap[paramDetail[0]]; !ok {
 				return status.Errorf(codes.InvalidArgument, "invalid sort col: %s", paramDetail[0])
@@ -2103,6 +2119,7 @@ func (a *apiServer) SearchExperiments(
 		Model(&experiments).
 		ModelTableExpr("experiments as e").
 		Column("e.best_trial_id").
+		Join("LEFT JOIN trials ON trials.id = e.best_trial_id").
 		Apply(getExperimentColumns)
 
 	curUser, _, err := grpcutil.GetUser(ctx)
