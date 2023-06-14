@@ -988,6 +988,22 @@ class TestPyTorchTrial:
             expected_weights
         ), f"{model_2_weights} != {expected_weights}"
 
+    @pytest.mark.skipif(torch.cuda.device_count() < 2, reason="not enough gpus")
+    @pytest.mark.gpu_parallel
+    @pytest.mark.parametrize("api_style", ["apex", "auto", "manual"])
+    def test_pytorch_distributed_with_amp(self, tmp_path: pathlib.Path, api_style: str):
+        # set up distributed backend.
+        os.environ[det._DistributedBackend.TORCH] = str(1)
+
+        rdzv_backend = "c10d"
+        rdzv_endpoint = "localhost:29400"
+        rdzv_id = str(uuid.uuid4())
+
+        launch_config = launcher.LaunchConfig(min_nodes=1, max_nodes=1, nproc_per_node=2, run_id=rdzv_id,
+                                              max_restarts=0, rdzv_endpoint=rdzv_endpoint, rdzv_backend=rdzv_backend)
+
+        outputs = launcher.elastic_launch(launch_config, self.run_gan)(api_style, tmp_path)
+        outputs = launcher.elastic_launch(launch_config, self.run_gan)(api_style, tmp_path, outputs[0])
 
     def run_cifar10(self, tmp_path: pathlib.Path, batches_trained: typing.Optional[int] = 0):
         checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
@@ -1114,6 +1130,57 @@ class TestPyTorchTrial:
         validation_metrics = metrics_callback.validation_metrics
 
         return validation_metrics
+
+    def run_amp(self, api_style: str, tmp_path: pathlib.Path, batches_trained: typing.Optional[int] = 0):
+        checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
+        class_selector = {
+            "apex": "MNistApexAMPTrial",
+            "auto": "MNistAutoAMPTrial",
+            "manual": "MNistManualAMPTrial"
+        }
+
+        config = utils.load_config(utils.fixtures_path(f"pytorch_amp/{api_style}_amp_distributed.yaml"))
+        config = config.copy()
+        config.setdefault("profiling", {})
+        config["profiling"]["enabled"] = True
+
+        hparams = config["hyperparameters"]
+
+        exp_config = utils.make_default_exp_config(
+            hparams,
+            scheduling_unit=1,
+            searcher_metric="validation_loss",
+            checkpoint_dir=checkpoint_dir,
+        )
+        exp_config.update(config)
+        exp_config['searcher']['smaller_is_better'] = True
+
+
+        # each subprocess must import separately as trial_class cannot be pickled.
+        example_path = utils.fixtures_path(f"pytorch_amp/{api_style}_amp_model_def.py")
+        trial_class = utils.import_class_from_module(class_selector[api_style], example_path)
+        trial_class._searcher_metric = "validation_loss"
+
+        if batches_trained == 0:
+            return self.train_for_checkpoint(
+                trial_class=trial_class,
+                hparams=hparams,
+                slots_per_trial=2,
+                tmp_path=tmp_path,
+                exp_config=exp_config,
+                steps=1,
+            )
+        else:
+            self.train_from_checkpoint(
+                trial_class=trial_class,
+                hparams=hparams,
+                slots_per_trial=2,
+                tmp_path=tmp_path,
+                exp_config=exp_config,
+                steps=(1, 1),
+                batches_trained=batches_trained
+            )
+            return True
 
 
     def checkpoint_and_check_metrics(
