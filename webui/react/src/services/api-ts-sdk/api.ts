@@ -13234,7 +13234,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {V1MetricType} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
          * @param {string} [customType] Type of metrics (training, validation, etc).
          * @param {V1Scale} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
-         * @param {Array<string>} [metricIds] metric ids for the query.
+         * @param {Array<string>} [metricIds] metric ids for the query. must be in the form metric_type.metric_name.
          * @param {string} [timeSeriesFilterName] metric or column name for the filter.
          * @param {number} [timeSeriesFilterDoubleRangeLt] Less than.
          * @param {number} [timeSeriesFilterDoubleRangeLte] Less than or equal.
@@ -14913,7 +14913,7 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
          * @param {V1MetricType} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
          * @param {string} [customType] Type of metrics (training, validation, etc).
          * @param {V1Scale} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
-         * @param {Array<string>} [metricIds] metric ids for the query.
+         * @param {Array<string>} [metricIds] metric ids for the query. must be in the form metric_type.metric_name.
          * @param {string} [timeSeriesFilterName] metric or column name for the filter.
          * @param {number} [timeSeriesFilterDoubleRangeLt] Less than.
          * @param {number} [timeSeriesFilterDoubleRangeLte] Less than or equal.
@@ -15655,7 +15655,7 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {V1MetricType} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
          * @param {string} [customType] Type of metrics (training, validation, etc).
          * @param {V1Scale} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
-         * @param {Array<string>} [metricIds] metric ids for the query.
+         * @param {Array<string>} [metricIds] metric ids for the query. must be in the form metric_type.metric_name.
          * @param {string} [timeSeriesFilterName] metric or column name for the filter.
          * @param {number} [timeSeriesFilterDoubleRangeLt] Less than.
          * @param {number} [timeSeriesFilterDoubleRangeLte] Less than or equal.
@@ -16131,7 +16131,7 @@ export class ExperimentsApi extends BaseAPI {
      * @param {V1MetricType} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
      * @param {string} [customType] Type of metrics (training, validation, etc).
      * @param {V1Scale} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
-     * @param {Array<string>} [metricIds] metric ids for the query.
+     * @param {Array<string>} [metricIds] metric ids for the query. must be in the form metric_type.metric_name.
      * @param {string} [timeSeriesFilterName] metric or column name for the filter.
      * @param {number} [timeSeriesFilterDoubleRangeLt] Less than.
      * @param {number} [timeSeriesFilterDoubleRangeLte] Less than or equal.
@@ -17857,13 +17857,13 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @summary Get the milestones (in batches processed) at which a metric is recorded by an experiment.
          * @param {number} experimentId The id of the experiment.
          * @param {string} metricName A metric name.
-         * @param {V1MetricType} metricType The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
-         * @param {string} customType Type of metrics (training, validation, etc).
+         * @param {V1MetricType} [metricType] The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+         * @param {string} [customType] Type of metrics (training, validation, etc).
          * @param {number} [periodSeconds] Seconds to wait when polling for updates.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        metricBatches(experimentId: number, metricName: string, metricType: V1MetricType, customType: string, periodSeconds?: number, options: any = {}): FetchArgs {
+        metricBatches(experimentId: number, metricName: string, metricType?: V1MetricType, customType?: string, periodSeconds?: number, options: any = {}): FetchArgs {
             // verify required parameter 'experimentId' is not null or undefined
             if (experimentId === null || experimentId === undefined) {
                 throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling metricBatches.');
@@ -17871,14 +17871,6 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             // verify required parameter 'metricName' is not null or undefined
             if (metricName === null || metricName === undefined) {
                 throw new RequiredError('metricName','Required parameter metricName was null or undefined when calling metricBatches.');
-            }
-            // verify required parameter 'metricType' is not null or undefined
-            if (metricType === null || metricType === undefined) {
-                throw new RequiredError('metricType','Required parameter metricType was null or undefined when calling metricBatches.');
-            }
-            // verify required parameter 'customType' is not null or undefined
-            if (customType === null || customType === undefined) {
-                throw new RequiredError('customType','Required parameter customType was null or undefined when calling metricBatches.');
             }
             const localVarPath = `/api/v1/experiments/{experimentId}/metrics-stream/batches`
                 .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
@@ -18490,8 +18482,8 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @summary Get a sample of the metrics over time for a sample of the trials.
          * @param {number} experimentId The id of the experiment.
          * @param {string} metricName A metric name.
-         * @param {V1MetricType} metricType The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
-         * @param {string} customType Type of metrics (training, validation, etc).
+         * @param {V1MetricType} [metricType] The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+         * @param {string} [customType] Type of metrics (training, validation, etc).
          * @param {number} [maxTrials] Maximum number of trials to fetch data for.
          * @param {number} [maxDatapoints] Maximum number of initial / historical data points.
          * @param {number} [startBatches] Beginning of window (inclusive) to fetch data for.
@@ -18500,7 +18492,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        trialsSample(experimentId: number, metricName: string, metricType: V1MetricType, customType: string, maxTrials?: number, maxDatapoints?: number, startBatches?: number, endBatches?: number, periodSeconds?: number, options: any = {}): FetchArgs {
+        trialsSample(experimentId: number, metricName: string, metricType?: V1MetricType, customType?: string, maxTrials?: number, maxDatapoints?: number, startBatches?: number, endBatches?: number, periodSeconds?: number, options: any = {}): FetchArgs {
             // verify required parameter 'experimentId' is not null or undefined
             if (experimentId === null || experimentId === undefined) {
                 throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling trialsSample.');
@@ -18508,14 +18500,6 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             // verify required parameter 'metricName' is not null or undefined
             if (metricName === null || metricName === undefined) {
                 throw new RequiredError('metricName','Required parameter metricName was null or undefined when calling trialsSample.');
-            }
-            // verify required parameter 'metricType' is not null or undefined
-            if (metricType === null || metricType === undefined) {
-                throw new RequiredError('metricType','Required parameter metricType was null or undefined when calling trialsSample.');
-            }
-            // verify required parameter 'customType' is not null or undefined
-            if (customType === null || customType === undefined) {
-                throw new RequiredError('customType','Required parameter customType was null or undefined when calling trialsSample.');
             }
             const localVarPath = `/api/v1/experiments/{experimentId}/metrics-stream/trials-sample`
                 .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
@@ -18578,15 +18562,15 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @summary Get a snapshot of a metric across all trials at a certain point of progress.
          * @param {number} experimentId The id of the experiment.
          * @param {string} metricName A metric name.
-         * @param {V1MetricType} metricType The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
-         * @param {string} customType Type of metrics (training, validation, etc).
          * @param {number} batchesProcessed The point of progress at which to query metrics.
+         * @param {V1MetricType} [metricType] The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+         * @param {string} [customType] Type of metrics (training, validation, etc).
          * @param {number} [batchesMargin] A range either side of batches_processed to include near-misses.
          * @param {number} [periodSeconds] Seconds to wait when polling for updates.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        trialsSnapshot(experimentId: number, metricName: string, metricType: V1MetricType, customType: string, batchesProcessed: number, batchesMargin?: number, periodSeconds?: number, options: any = {}): FetchArgs {
+        trialsSnapshot(experimentId: number, metricName: string, batchesProcessed: number, metricType?: V1MetricType, customType?: string, batchesMargin?: number, periodSeconds?: number, options: any = {}): FetchArgs {
             // verify required parameter 'experimentId' is not null or undefined
             if (experimentId === null || experimentId === undefined) {
                 throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling trialsSnapshot.');
@@ -18594,14 +18578,6 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             // verify required parameter 'metricName' is not null or undefined
             if (metricName === null || metricName === undefined) {
                 throw new RequiredError('metricName','Required parameter metricName was null or undefined when calling trialsSnapshot.');
-            }
-            // verify required parameter 'metricType' is not null or undefined
-            if (metricType === null || metricType === undefined) {
-                throw new RequiredError('metricType','Required parameter metricType was null or undefined when calling trialsSnapshot.');
-            }
-            // verify required parameter 'customType' is not null or undefined
-            if (customType === null || customType === undefined) {
-                throw new RequiredError('customType','Required parameter customType was null or undefined when calling trialsSnapshot.');
             }
             // verify required parameter 'batchesProcessed' is not null or undefined
             if (batchesProcessed === null || batchesProcessed === undefined) {
@@ -19398,13 +19374,13 @@ export const InternalApiFp = function (configuration?: Configuration) {
          * @summary Get the milestones (in batches processed) at which a metric is recorded by an experiment.
          * @param {number} experimentId The id of the experiment.
          * @param {string} metricName A metric name.
-         * @param {V1MetricType} metricType The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
-         * @param {string} customType Type of metrics (training, validation, etc).
+         * @param {V1MetricType} [metricType] The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+         * @param {string} [customType] Type of metrics (training, validation, etc).
          * @param {number} [periodSeconds] Seconds to wait when polling for updates.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        metricBatches(experimentId: number, metricName: string, metricType: V1MetricType, customType: string, periodSeconds?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1MetricBatchesResponse> {
+        metricBatches(experimentId: number, metricName: string, metricType?: V1MetricType, customType?: string, periodSeconds?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1MetricBatchesResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).metricBatches(experimentId, metricName, metricType, customType, periodSeconds, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
@@ -19681,8 +19657,8 @@ export const InternalApiFp = function (configuration?: Configuration) {
          * @summary Get a sample of the metrics over time for a sample of the trials.
          * @param {number} experimentId The id of the experiment.
          * @param {string} metricName A metric name.
-         * @param {V1MetricType} metricType The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
-         * @param {string} customType Type of metrics (training, validation, etc).
+         * @param {V1MetricType} [metricType] The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+         * @param {string} [customType] Type of metrics (training, validation, etc).
          * @param {number} [maxTrials] Maximum number of trials to fetch data for.
          * @param {number} [maxDatapoints] Maximum number of initial / historical data points.
          * @param {number} [startBatches] Beginning of window (inclusive) to fetch data for.
@@ -19691,7 +19667,7 @@ export const InternalApiFp = function (configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        trialsSample(experimentId: number, metricName: string, metricType: V1MetricType, customType: string, maxTrials?: number, maxDatapoints?: number, startBatches?: number, endBatches?: number, periodSeconds?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TrialsSampleResponse> {
+        trialsSample(experimentId: number, metricName: string, metricType?: V1MetricType, customType?: string, maxTrials?: number, maxDatapoints?: number, startBatches?: number, endBatches?: number, periodSeconds?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TrialsSampleResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).trialsSample(experimentId, metricName, metricType, customType, maxTrials, maxDatapoints, startBatches, endBatches, periodSeconds, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
@@ -19708,16 +19684,16 @@ export const InternalApiFp = function (configuration?: Configuration) {
          * @summary Get a snapshot of a metric across all trials at a certain point of progress.
          * @param {number} experimentId The id of the experiment.
          * @param {string} metricName A metric name.
-         * @param {V1MetricType} metricType The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
-         * @param {string} customType Type of metrics (training, validation, etc).
          * @param {number} batchesProcessed The point of progress at which to query metrics.
+         * @param {V1MetricType} [metricType] The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+         * @param {string} [customType] Type of metrics (training, validation, etc).
          * @param {number} [batchesMargin] A range either side of batches_processed to include near-misses.
          * @param {number} [periodSeconds] Seconds to wait when polling for updates.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        trialsSnapshot(experimentId: number, metricName: string, metricType: V1MetricType, customType: string, batchesProcessed: number, batchesMargin?: number, periodSeconds?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TrialsSnapshotResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).trialsSnapshot(experimentId, metricName, metricType, customType, batchesProcessed, batchesMargin, periodSeconds, options);
+        trialsSnapshot(experimentId: number, metricName: string, batchesProcessed: number, metricType?: V1MetricType, customType?: string, batchesMargin?: number, periodSeconds?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TrialsSnapshotResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).trialsSnapshot(experimentId, metricName, batchesProcessed, metricType, customType, batchesMargin, periodSeconds, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -20134,13 +20110,13 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @summary Get the milestones (in batches processed) at which a metric is recorded by an experiment.
          * @param {number} experimentId The id of the experiment.
          * @param {string} metricName A metric name.
-         * @param {V1MetricType} metricType The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
-         * @param {string} customType Type of metrics (training, validation, etc).
+         * @param {V1MetricType} [metricType] The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+         * @param {string} [customType] Type of metrics (training, validation, etc).
          * @param {number} [periodSeconds] Seconds to wait when polling for updates.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        metricBatches(experimentId: number, metricName: string, metricType: V1MetricType, customType: string, periodSeconds?: number, options?: any) {
+        metricBatches(experimentId: number, metricName: string, metricType?: V1MetricType, customType?: string, periodSeconds?: number, options?: any) {
             return InternalApiFp(configuration).metricBatches(experimentId, metricName, metricType, customType, periodSeconds, options)(fetch, basePath);
         },
         /**
@@ -20291,8 +20267,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @summary Get a sample of the metrics over time for a sample of the trials.
          * @param {number} experimentId The id of the experiment.
          * @param {string} metricName A metric name.
-         * @param {V1MetricType} metricType The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
-         * @param {string} customType Type of metrics (training, validation, etc).
+         * @param {V1MetricType} [metricType] The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+         * @param {string} [customType] Type of metrics (training, validation, etc).
          * @param {number} [maxTrials] Maximum number of trials to fetch data for.
          * @param {number} [maxDatapoints] Maximum number of initial / historical data points.
          * @param {number} [startBatches] Beginning of window (inclusive) to fetch data for.
@@ -20301,7 +20277,7 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        trialsSample(experimentId: number, metricName: string, metricType: V1MetricType, customType: string, maxTrials?: number, maxDatapoints?: number, startBatches?: number, endBatches?: number, periodSeconds?: number, options?: any) {
+        trialsSample(experimentId: number, metricName: string, metricType?: V1MetricType, customType?: string, maxTrials?: number, maxDatapoints?: number, startBatches?: number, endBatches?: number, periodSeconds?: number, options?: any) {
             return InternalApiFp(configuration).trialsSample(experimentId, metricName, metricType, customType, maxTrials, maxDatapoints, startBatches, endBatches, periodSeconds, options)(fetch, basePath);
         },
         /**
@@ -20309,16 +20285,16 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @summary Get a snapshot of a metric across all trials at a certain point of progress.
          * @param {number} experimentId The id of the experiment.
          * @param {string} metricName A metric name.
-         * @param {V1MetricType} metricType The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
-         * @param {string} customType Type of metrics (training, validation, etc).
          * @param {number} batchesProcessed The point of progress at which to query metrics.
+         * @param {V1MetricType} [metricType] The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+         * @param {string} [customType] Type of metrics (training, validation, etc).
          * @param {number} [batchesMargin] A range either side of batches_processed to include near-misses.
          * @param {number} [periodSeconds] Seconds to wait when polling for updates.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        trialsSnapshot(experimentId: number, metricName: string, metricType: V1MetricType, customType: string, batchesProcessed: number, batchesMargin?: number, periodSeconds?: number, options?: any) {
-            return InternalApiFp(configuration).trialsSnapshot(experimentId, metricName, metricType, customType, batchesProcessed, batchesMargin, periodSeconds, options)(fetch, basePath);
+        trialsSnapshot(experimentId: number, metricName: string, batchesProcessed: number, metricType?: V1MetricType, customType?: string, batchesMargin?: number, periodSeconds?: number, options?: any) {
+            return InternalApiFp(configuration).trialsSnapshot(experimentId, metricName, batchesProcessed, metricType, customType, batchesMargin, periodSeconds, options)(fetch, basePath);
         },
         /**
          * 
@@ -20760,14 +20736,14 @@ export class InternalApi extends BaseAPI {
      * @summary Get the milestones (in batches processed) at which a metric is recorded by an experiment.
      * @param {number} experimentId The id of the experiment.
      * @param {string} metricName A metric name.
-     * @param {V1MetricType} metricType The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
-     * @param {string} customType Type of metrics (training, validation, etc).
+     * @param {V1MetricType} [metricType] The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+     * @param {string} [customType] Type of metrics (training, validation, etc).
      * @param {number} [periodSeconds] Seconds to wait when polling for updates.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public metricBatches(experimentId: number, metricName: string, metricType: V1MetricType, customType: string, periodSeconds?: number, options?: any) {
+    public metricBatches(experimentId: number, metricName: string, metricType?: V1MetricType, customType?: string, periodSeconds?: number, options?: any) {
         return InternalApiFp(this.configuration).metricBatches(experimentId, metricName, metricType, customType, periodSeconds, options)(this.fetch, this.basePath)
     }
     
@@ -20945,8 +20921,8 @@ export class InternalApi extends BaseAPI {
      * @summary Get a sample of the metrics over time for a sample of the trials.
      * @param {number} experimentId The id of the experiment.
      * @param {string} metricName A metric name.
-     * @param {V1MetricType} metricType The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
-     * @param {string} customType Type of metrics (training, validation, etc).
+     * @param {V1MetricType} [metricType] The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+     * @param {string} [customType] Type of metrics (training, validation, etc).
      * @param {number} [maxTrials] Maximum number of trials to fetch data for.
      * @param {number} [maxDatapoints] Maximum number of initial / historical data points.
      * @param {number} [startBatches] Beginning of window (inclusive) to fetch data for.
@@ -20956,7 +20932,7 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public trialsSample(experimentId: number, metricName: string, metricType: V1MetricType, customType: string, maxTrials?: number, maxDatapoints?: number, startBatches?: number, endBatches?: number, periodSeconds?: number, options?: any) {
+    public trialsSample(experimentId: number, metricName: string, metricType?: V1MetricType, customType?: string, maxTrials?: number, maxDatapoints?: number, startBatches?: number, endBatches?: number, periodSeconds?: number, options?: any) {
         return InternalApiFp(this.configuration).trialsSample(experimentId, metricName, metricType, customType, maxTrials, maxDatapoints, startBatches, endBatches, periodSeconds, options)(this.fetch, this.basePath)
     }
     
@@ -20965,17 +20941,17 @@ export class InternalApi extends BaseAPI {
      * @summary Get a snapshot of a metric across all trials at a certain point of progress.
      * @param {number} experimentId The id of the experiment.
      * @param {string} metricName A metric name.
-     * @param {V1MetricType} metricType The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
-     * @param {string} customType Type of metrics (training, validation, etc).
      * @param {number} batchesProcessed The point of progress at which to query metrics.
+     * @param {V1MetricType} [metricType] The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+     * @param {string} [customType] Type of metrics (training, validation, etc).
      * @param {number} [batchesMargin] A range either side of batches_processed to include near-misses.
      * @param {number} [periodSeconds] Seconds to wait when polling for updates.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public trialsSnapshot(experimentId: number, metricName: string, metricType: V1MetricType, customType: string, batchesProcessed: number, batchesMargin?: number, periodSeconds?: number, options?: any) {
-        return InternalApiFp(this.configuration).trialsSnapshot(experimentId, metricName, metricType, customType, batchesProcessed, batchesMargin, periodSeconds, options)(this.fetch, this.basePath)
+    public trialsSnapshot(experimentId: number, metricName: string, batchesProcessed: number, metricType?: V1MetricType, customType?: string, batchesMargin?: number, periodSeconds?: number, options?: any) {
+        return InternalApiFp(this.configuration).trialsSnapshot(experimentId, metricName, batchesProcessed, metricType, customType, batchesMargin, periodSeconds, options)(this.fetch, this.basePath)
     }
     
     /**

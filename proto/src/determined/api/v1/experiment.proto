@@ -571,17 +571,9 @@ message MetricBatchesRequest {
           ["metric_name"];
       }];
   // The type of metric.
-  MetricType metric_type = 3
-      [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
-        required:
-          ["metric_type"];
-      }, deprecated = true];
+  MetricType metric_type = 3 [deprecated = true];
   // Type of metrics (training, validation, etc).
-  string custom_type = 5
-      [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
-        required:
-          ["custom_type"];
-      }];
+  string custom_type = 5;
   // Seconds to wait when polling for updates.
   int32 period_seconds = 4;
 }
@@ -608,17 +600,9 @@ message TrialsSnapshotRequest {
           ["metric_name"];
       }];
   // The type of metric.
-  MetricType metric_type = 3
-      [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
-        required:
-          ["metric_type"];
-      }, deprecated = true];
+  MetricType metric_type = 3 [deprecated = true];
   // Type of metrics (training, validation, etc).
-  string custom_type = 7
-      [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
-        required:
-          ["custom_type"];
-      }];
+  string custom_type = 7;
   // The point of progress at which to query metrics.
   int32 batches_processed = 4
       [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
@@ -671,17 +655,9 @@ message TrialsSampleRequest {
           ["metric_name"];
       }];
   // The type of metric.
-  MetricType metric_type = 3
-      [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
-        required:
-          ["metric_type"];
-      }, deprecated = true];
+  MetricType metric_type = 3 [deprecated = true];
   // Type of metrics (training, validation, etc).
-  string custom_type = 9
-      [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
-        required:
-          ["custom_type"];
-      }];
+  string custom_type = 9;
   // Maximum number of trials to fetch data for.
   int32 max_trials = 4;
   // Maximum number of initial / historical data points.

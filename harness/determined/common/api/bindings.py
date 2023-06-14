@@ -16881,16 +16881,16 @@ def get_MasterLogs(
 def get_MetricBatches(
     session: "api.Session",
     *,
-    customType: str,
     experimentId: int,
     metricName: str,
-    metricType: "v1MetricType",
+    customType: "typing.Optional[str]" = None,
+    metricType: "typing.Optional[v1MetricType]" = None,
     periodSeconds: "typing.Optional[int]" = None,
 ) -> "typing.Iterable[v1MetricBatchesResponse]":
     _params = {
         "customType": customType,
         "metricName": metricName,
-        "metricType": metricType.value,
+        "metricType": metricType.value if metricType is not None else None,
         "periodSeconds": periodSeconds,
     }
     _resp = session._do_request(
@@ -18268,13 +18268,13 @@ def get_TrialLogsFields(
 def get_TrialsSample(
     session: "api.Session",
     *,
-    customType: str,
     experimentId: int,
     metricName: str,
-    metricType: "v1MetricType",
+    customType: "typing.Optional[str]" = None,
     endBatches: "typing.Optional[int]" = None,
     maxDatapoints: "typing.Optional[int]" = None,
     maxTrials: "typing.Optional[int]" = None,
+    metricType: "typing.Optional[v1MetricType]" = None,
     periodSeconds: "typing.Optional[int]" = None,
     startBatches: "typing.Optional[int]" = None,
 ) -> "typing.Iterable[v1TrialsSampleResponse]":
@@ -18284,7 +18284,7 @@ def get_TrialsSample(
         "maxDatapoints": maxDatapoints,
         "maxTrials": maxTrials,
         "metricName": metricName,
-        "metricType": metricType.value,
+        "metricType": metricType.value if metricType is not None else None,
         "periodSeconds": periodSeconds,
         "startBatches": startBatches,
     }
@@ -18317,11 +18317,11 @@ def get_TrialsSnapshot(
     session: "api.Session",
     *,
     batchesProcessed: int,
-    customType: str,
     experimentId: int,
     metricName: str,
-    metricType: "v1MetricType",
     batchesMargin: "typing.Optional[int]" = None,
+    customType: "typing.Optional[str]" = None,
+    metricType: "typing.Optional[v1MetricType]" = None,
     periodSeconds: "typing.Optional[int]" = None,
 ) -> "typing.Iterable[v1TrialsSnapshotResponse]":
     _params = {
@@ -18329,7 +18329,7 @@ def get_TrialsSnapshot(
         "batchesProcessed": batchesProcessed,
         "customType": customType,
         "metricName": metricName,
-        "metricType": metricType.value,
+        "metricType": metricType.value if metricType is not None else None,
         "periodSeconds": periodSeconds,
     }
     _resp = session._do_request(

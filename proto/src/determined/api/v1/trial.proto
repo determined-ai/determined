@@ -742,7 +742,7 @@ message CompareTrialsRequest {
   string custom_type = 11;
   // Scale of metric visualization (linear or log scale).
   Scale scale = 7;
-  // metric ids for the query
+  // metric ids for the query. must be in the form metric_type.metric_name.
   repeated string metric_ids = 9;
   // The metric and range filter for a time series
   determined.common.v1.PolymorphicFilter time_series_filter = 10;

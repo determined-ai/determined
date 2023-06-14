@@ -3648,7 +3648,7 @@ type CompareTrialsRequest struct {
 	CustomType string `protobuf:"bytes,11,opt,name=custom_type,json=customType,proto3" json:"custom_type,omitempty"`
 	// Scale of metric visualization (linear or log scale).
 	Scale Scale `protobuf:"varint,7,opt,name=scale,proto3,enum=determined.api.v1.Scale" json:"scale,omitempty"`
-	// metric ids for the query
+	// metric ids for the query. must be in the form metric_type.metric_name.
 	MetricIds []string `protobuf:"bytes,9,rep,name=metric_ids,json=metricIds,proto3" json:"metric_ids,omitempty"`
 	// The metric and range filter for a time series
 	TimeSeriesFilter *commonv1.PolymorphicFilter `protobuf:"bytes,10,opt,name=time_series_filter,json=timeSeriesFilter,proto3" json:"time_series_filter,omitempty"`
