@@ -7,7 +7,7 @@ from abc import abstractmethod
 from enum import Enum
 from typing import Any, Dict, List, Optional, Set, Tuple
 
-from determined.common import experimental
+from determined import experimental
 from determined.common.api import bindings
 
 STATE_FILE = "state"
