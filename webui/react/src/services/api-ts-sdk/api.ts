@@ -2963,6 +2963,12 @@ export interface V1ExpMetricNamesResponse {
      * @memberof V1ExpMetricNamesResponse
      */
     validationMetrics?: Array<string>;
+    /**
+     * List of generic metric names.
+     * @type {Array<V1MetricName>}
+     * @memberof V1ExpMetricNamesResponse
+     */
+    metricNames?: Array<V1MetricName>;
 }
 /**
  * The failure type of a resource.   - FAILURE_TYPE_UNSPECIFIED: UNSPECIFIED denotes an error that is not defined below.  - FAILURE_TYPE_RESOURCES_FAILED: ResourcesFailed denotes that the container ran but failed with a non-zero exit code.  - FAILURE_TYPE_RESOURCES_ABORTED: ResourcesAborted denotes the container was canceled before it was started.  - FAILURE_TYPE_RESOURCES_MISSING: ResourcesMissing denotes the resources were missing when the master asked about it.  - FAILURE_TYPE_TASK_ABORTED: TaskAborted denotes that the task was canceled before it was started.  - FAILURE_TYPE_TASK_ERROR: TaskError denotes that the task failed without an associated exit code.  - FAILURE_TYPE_AGENT_FAILED: AgentFailed denotes that the agent failed while the container was running.  - FAILURE_TYPE_AGENT_ERROR: AgentError denotes that the agent failed to launch the container.  - FAILURE_TYPE_RESTORE_ERROR: RestoreError denotes a failure to restore a running allocation on master blip.  - FAILURE_TYPE_UNKNOWN_ERROR: UnknownError denotes an internal error that did not map to a know failure type.
@@ -5555,6 +5561,25 @@ export interface V1MetricBatchesResponse {
      * @memberof V1MetricBatchesResponse
      */
     batches?: Array<number>;
+}
+/**
+ * MetricName packages metric name and type.
+ * @export
+ * @interface V1MetricName
+ */
+export interface V1MetricName {
+    /**
+     * The type of the metric.
+     * @type {string}
+     * @memberof V1MetricName
+     */
+    type: string;
+    /**
+     * The name of the metric.
+     * @type {string}
+     * @memberof V1MetricName
+     */
+    name: string;
 }
 /**
  * 

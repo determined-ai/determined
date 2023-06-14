@@ -3055,6 +3055,7 @@ class v1EntityType(DetEnum):
     PROJECT = "ENTITY_TYPE_PROJECT"
 
 class v1ExpMetricNamesResponse(Printable):
+    metricNames: "typing.Optional[typing.Sequence[v1MetricName]]" = None
     searcherMetrics: "typing.Optional[typing.Sequence[str]]" = None
     trainingMetrics: "typing.Optional[typing.Sequence[str]]" = None
     validationMetrics: "typing.Optional[typing.Sequence[str]]" = None
@@ -3062,10 +3063,13 @@ class v1ExpMetricNamesResponse(Printable):
     def __init__(
         self,
         *,
+        metricNames: "typing.Union[typing.Sequence[v1MetricName], None, Unset]" = _unset,
         searcherMetrics: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
         trainingMetrics: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
         validationMetrics: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
     ):
+        if not isinstance(metricNames, Unset):
+            self.metricNames = metricNames
         if not isinstance(searcherMetrics, Unset):
             self.searcherMetrics = searcherMetrics
         if not isinstance(trainingMetrics, Unset):
@@ -3077,6 +3081,8 @@ class v1ExpMetricNamesResponse(Printable):
     def from_json(cls, obj: Json) -> "v1ExpMetricNamesResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
         }
+        if "metricNames" in obj:
+            kwargs["metricNames"] = [v1MetricName.from_json(x) for x in obj["metricNames"]] if obj["metricNames"] is not None else None
         if "searcherMetrics" in obj:
             kwargs["searcherMetrics"] = obj["searcherMetrics"]
         if "trainingMetrics" in obj:
@@ -3088,6 +3094,8 @@ class v1ExpMetricNamesResponse(Printable):
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
         }
+        if not omit_unset or "metricNames" in vars(self):
+            out["metricNames"] = None if self.metricNames is None else [x.to_json(omit_unset) for x in self.metricNames]
         if not omit_unset or "searcherMetrics" in vars(self):
             out["searcherMetrics"] = self.searcherMetrics
         if not omit_unset or "trainingMetrics" in vars(self):
@@ -7028,6 +7036,32 @@ class v1MetricBatchesResponse(Printable):
         }
         if not omit_unset or "batches" in vars(self):
             out["batches"] = self.batches
+        return out
+
+class v1MetricName(Printable):
+
+    def __init__(
+        self,
+        *,
+        name: str,
+        type: str,
+    ):
+        self.name = name
+        self.type = type
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1MetricName":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "name": obj["name"],
+            "type": obj["type"],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "name": self.name,
+            "type": self.type,
+        }
         return out
 
 class v1MetricType(DetEnum):
