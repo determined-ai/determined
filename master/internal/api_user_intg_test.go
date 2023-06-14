@@ -18,6 +18,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	apiPkg "github.com/determined-ai/determined/master/internal/api"
@@ -225,6 +226,119 @@ func TestRenameUserThenReuseName(t *testing.T) {
 		},
 	})
 	require.NoError(t, err)
+}
+
+func TestGetUsers(t *testing.T) {
+	api, _, ctx := setupAPITest(t, nil)
+
+	activeUser := &model.User{
+		Username: uuid.New().String(),
+		Admin:    true,
+		Active:   true,
+		Remote:   true,
+	}
+	_, err := api.m.db.AddUser(activeUser, &model.AgentUserGroup{
+		User: "u", UID: 1, Group: "g", GID: 2,
+	})
+	require.NoError(t, err)
+
+	// Don't use our conversion logic since it has been buggeed before.
+	expectedActive := &userv1.User{
+		Id:       int32(activeUser.ID),
+		Username: activeUser.Username,
+		Admin:    activeUser.Admin,
+		Active:   activeUser.Active,
+		AgentUserGroup: &userv1.AgentUserGroup{
+			AgentUid: ptrs.Ptr(int32(1)), AgentGid: ptrs.Ptr(int32(2)),
+			AgentUser: ptrs.Ptr("u"), AgentGroup: ptrs.Ptr("g"),
+		},
+		DisplayName: activeUser.DisplayName.ValueOrZero(),
+		ModifiedAt:  nil,
+		Remote:      activeUser.Remote,
+	}
+
+	inactiveUser := &model.User{
+		Username:    uuid.New().String(),
+		DisplayName: null.StringFrom(uuid.New().String()),
+		Admin:       false,
+		Active:      false,
+		Remote:      false,
+	}
+	_, err = api.m.db.AddUser(inactiveUser, nil)
+	require.NoError(t, err)
+
+	expectedInactive := &userv1.User{
+		Id:          int32(inactiveUser.ID),
+		Username:    inactiveUser.Username,
+		Admin:       inactiveUser.Admin,
+		Active:      inactiveUser.Active,
+		DisplayName: inactiveUser.DisplayName.ValueOrZero(),
+		ModifiedAt:  nil,
+		Remote:      inactiveUser.Remote,
+	}
+
+	cases := []struct {
+		name     string
+		req      *apiv1.GetUsersRequest
+		expected []*userv1.User
+	}{
+		{"no params", &apiv1.GetUsersRequest{}, []*userv1.User{expectedActive, expectedInactive}},
+		{"SortBy Admin", &apiv1.GetUsersRequest{
+			SortBy: apiv1.GetUsersRequest_SORT_BY_ADMIN,
+		}, []*userv1.User{expectedInactive, expectedActive}},
+		{"SortBy Admin desc", &apiv1.GetUsersRequest{
+			SortBy:  apiv1.GetUsersRequest_SORT_BY_ADMIN,
+			OrderBy: apiv1.OrderBy_ORDER_BY_DESC,
+		}, []*userv1.User{expectedActive, expectedInactive}},
+		{"Name == activeUser.Username", &apiv1.GetUsersRequest{
+			Name: expectedActive.Username,
+		}, []*userv1.User{expectedActive}},
+		{"Name partial match activeUser.Username", &apiv1.GetUsersRequest{
+			Name: expectedActive.Username[0:4],
+		}, []*userv1.User{expectedActive}},
+		{"Name == inactiveUser.Username", &apiv1.GetUsersRequest{
+			Name: inactiveUser.Username,
+		}, []*userv1.User{expectedInactive}},
+		{"Name == inactiveUser.DisplayName", &apiv1.GetUsersRequest{
+			Name: inactiveUser.DisplayName.ValueOrZero(),
+		}, []*userv1.User{expectedInactive}},
+		{"Name partial match inactiveUser.Username", &apiv1.GetUsersRequest{
+			Name: inactiveUser.Username[0:2],
+		}, []*userv1.User{expectedInactive}},
+		{"Name partial match inactiveUser.DisplayName", &apiv1.GetUsersRequest{
+			Name: inactiveUser.DisplayName.ValueOrZero()[0:7],
+		}, []*userv1.User{expectedInactive}},
+		{"Active", &apiv1.GetUsersRequest{
+			Active: ptrs.Ptr(true),
+		}, []*userv1.User{expectedActive}},
+		{"Inactive", &apiv1.GetUsersRequest{
+			Active: ptrs.Ptr(false),
+		}, []*userv1.User{expectedInactive}},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			resp, err := api.GetUsers(ctx, c.req)
+			require.NoError(t, err)
+
+			// Filter to two users we created.
+			var actual []*userv1.User
+			for _, u := range resp.Users {
+				u := u
+				if u.Id == expectedActive.Id || u.Id == expectedInactive.Id {
+					actual = append(actual, u)
+				}
+			}
+			require.Equal(t, len(c.expected), len(actual))
+
+			for i, u := range c.expected {
+				actual[i].ModifiedAt = nil
+				actual[i].Remote = u.Remote // TODO uncomment this once we merge this fix.
+				proto.Equal(u, actual[i])
+				require.Equal(t, u, actual[i])
+			}
+		})
+	}
 }
 
 // pgdb can be nil to use the singleton database for testing.

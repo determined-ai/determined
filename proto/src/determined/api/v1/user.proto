@@ -39,6 +39,8 @@ message GetUsersRequest {
 
   // Filter by username or display name.
   string name = 5;
+  // Optional filter for active or inactive users.
+  optional bool active = 6;
 }
 // Response to GetUsersRequest.
 message GetUsersResponse {

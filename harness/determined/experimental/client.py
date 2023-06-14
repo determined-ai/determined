@@ -260,12 +260,17 @@ def logout() -> None:
 
 
 @_require_singleton
-def list_users() -> Sequence[User]:
+def list_users(include_inactive: bool = False) -> Sequence[User]:
     """
     Get the list :class:`~determined.experimental.client.User` of all Users.
+
+
+    Arguments:
+        include_inactive (bool): Defaults to false. When true all users are returned when false
+            only active users are returned.
     """
     assert _determined is not None
-    return _determined.list_users()
+    return _determined.list_users(include_inactive)
 
 
 @_require_singleton

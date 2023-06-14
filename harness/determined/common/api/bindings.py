@@ -16332,6 +16332,7 @@ def get_GetUserSetting(
 def get_GetUsers(
     session: "api.Session",
     *,
+    active: "typing.Optional[bool]" = None,
     limit: "typing.Optional[int]" = None,
     name: "typing.Optional[str]" = None,
     offset: "typing.Optional[int]" = None,
@@ -16339,6 +16340,7 @@ def get_GetUsers(
     sortBy: "typing.Optional[v1GetUsersRequestSortBy]" = None,
 ) -> "v1GetUsersResponse":
     _params = {
+        "active": str(active).lower() if active is not None else None,
         "limit": limit,
         "name": name,
         "offset": offset,

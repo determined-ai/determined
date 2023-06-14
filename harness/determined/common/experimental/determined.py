@@ -124,8 +124,9 @@ class Determined:
 
         authentication.logout(self._session._master, user, self._session._cert)
 
-    def list_users(self) -> Sequence[user.User]:
-        users_bindings = bindings.get_GetUsers(session=self._session).users
+    def list_users(self, include_inactive: bool = False) -> Sequence[user.User]:
+        active_filter = None if include_inactive else True
+        users_bindings = bindings.get_GetUsers(session=self._session, active=active_filter).users
         users: List[user.User] = []
         if users_bindings is None:
             return users
