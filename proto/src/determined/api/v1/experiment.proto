@@ -576,6 +576,12 @@ message MetricBatchesRequest {
         required:
           ["metric_type"];
       }, deprecated = true];
+  // Type of metrics (training, validation, etc).
+  string custom_type = 5
+      [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
+        required:
+          ["custom_type"];
+      }];
   // Seconds to wait when polling for updates.
   int32 period_seconds = 4;
 }
@@ -607,6 +613,12 @@ message TrialsSnapshotRequest {
         required:
           ["metric_type"];
       }, deprecated = true];
+  // Type of metrics (training, validation, etc).
+  string custom_type = 7
+      [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
+        required:
+          ["custom_type"];
+      }];
   // The point of progress at which to query metrics.
   int32 batches_processed = 4
       [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
@@ -664,6 +676,12 @@ message TrialsSampleRequest {
         required:
           ["metric_type"];
       }, deprecated = true];
+  // Type of metrics (training, validation, etc).
+  string custom_type = 9
+      [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
+        required:
+          ["custom_type"];
+      }];
   // Maximum number of trials to fetch data for.
   int32 max_trials = 4;
   // Maximum number of initial / historical data points.

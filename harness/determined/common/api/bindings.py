@@ -2973,15 +2973,18 @@ class v1DownsampledMetrics(Printable):
     def __init__(
         self,
         *,
+        customType: str,
         data: "typing.Sequence[v1DataPoint]",
         type: "v1MetricType",
     ):
+        self.customType = customType
         self.data = data
         self.type = type
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1DownsampledMetrics":
         kwargs: "typing.Dict[str, typing.Any]" = {
+            "customType": obj["customType"],
             "data": [v1DataPoint.from_json(x) for x in obj["data"]],
             "type": v1MetricType(obj["type"]),
         }
@@ -2989,6 +2992,7 @@ class v1DownsampledMetrics(Printable):
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
+            "customType": self.customType,
             "data": [x.to_json(omit_unset) for x in self.data],
             "type": self.type.value,
         }
@@ -14177,6 +14181,7 @@ def post_CheckpointsRemoveFiles(
 def get_CompareTrials(
     session: "api.Session",
     *,
+    customType: "typing.Optional[str]" = None,
     endBatches: "typing.Optional[int]" = None,
     maxDatapoints: "typing.Optional[int]" = None,
     metricIds: "typing.Optional[typing.Sequence[str]]" = None,
@@ -14202,6 +14207,7 @@ def get_CompareTrials(
     trialIds: "typing.Optional[typing.Sequence[int]]" = None,
 ) -> "v1CompareTrialsResponse":
     _params = {
+        "customType": customType,
         "endBatches": endBatches,
         "maxDatapoints": maxDatapoints,
         "metricIds": metricIds,
@@ -16175,6 +16181,7 @@ def get_GetTrialWorkloads(
     session: "api.Session",
     *,
     trialId: int,
+    customType: "typing.Optional[str]" = None,
     filter: "typing.Optional[GetTrialWorkloadsRequestFilterOption]" = None,
     includeBatchMetrics: "typing.Optional[bool]" = None,
     limit: "typing.Optional[int]" = None,
@@ -16184,6 +16191,7 @@ def get_GetTrialWorkloads(
     sortKey: "typing.Optional[str]" = None,
 ) -> "v1GetTrialWorkloadsResponse":
     _params = {
+        "customType": customType,
         "filter": filter.value if filter is not None else None,
         "includeBatchMetrics": str(includeBatchMetrics).lower() if includeBatchMetrics is not None else None,
         "limit": limit,
@@ -16873,12 +16881,14 @@ def get_MasterLogs(
 def get_MetricBatches(
     session: "api.Session",
     *,
+    customType: str,
     experimentId: int,
     metricName: str,
     metricType: "v1MetricType",
     periodSeconds: "typing.Optional[int]" = None,
 ) -> "typing.Iterable[v1MetricBatchesResponse]":
     _params = {
+        "customType": customType,
         "metricName": metricName,
         "metricType": metricType.value,
         "periodSeconds": periodSeconds,
@@ -18022,6 +18032,7 @@ def get_SummarizeTrial(
     session: "api.Session",
     *,
     trialId: int,
+    customType: "typing.Optional[str]" = None,
     endBatches: "typing.Optional[int]" = None,
     maxDatapoints: "typing.Optional[int]" = None,
     metricNames: "typing.Optional[typing.Sequence[str]]" = None,
@@ -18030,6 +18041,7 @@ def get_SummarizeTrial(
     startBatches: "typing.Optional[int]" = None,
 ) -> "v1SummarizeTrialResponse":
     _params = {
+        "customType": customType,
         "endBatches": endBatches,
         "maxDatapoints": maxDatapoints,
         "metricNames": metricNames,
@@ -18256,6 +18268,7 @@ def get_TrialLogsFields(
 def get_TrialsSample(
     session: "api.Session",
     *,
+    customType: str,
     experimentId: int,
     metricName: str,
     metricType: "v1MetricType",
@@ -18266,6 +18279,7 @@ def get_TrialsSample(
     startBatches: "typing.Optional[int]" = None,
 ) -> "typing.Iterable[v1TrialsSampleResponse]":
     _params = {
+        "customType": customType,
         "endBatches": endBatches,
         "maxDatapoints": maxDatapoints,
         "maxTrials": maxTrials,
@@ -18303,6 +18317,7 @@ def get_TrialsSnapshot(
     session: "api.Session",
     *,
     batchesProcessed: int,
+    customType: str,
     experimentId: int,
     metricName: str,
     metricType: "v1MetricType",
@@ -18312,6 +18327,7 @@ def get_TrialsSnapshot(
     _params = {
         "batchesMargin": batchesMargin,
         "batchesProcessed": batchesProcessed,
+        "customType": customType,
         "metricName": metricName,
         "metricType": metricType.value,
         "periodSeconds": periodSeconds,
