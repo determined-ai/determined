@@ -306,7 +306,3 @@ semi-random search over the batch size.
 -  ``--early-stopping``: If provided, the experiment will terminate if a new best-configuration has
    not been found in the last ``early-stopping`` trials. Default: ``None``, corresponding to no such
    early stopping.
-
-.. warning::
-
-   This is a warning
