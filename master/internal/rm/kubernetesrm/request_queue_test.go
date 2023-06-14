@@ -200,6 +200,7 @@ func TestRequestQueueCreationCancelled(t *testing.T) {
 	for i := 0; i < numKubernetesWorkers; i++ {
 		startMockPod(k8sRequestQueue, nil)
 	}
+	time.Sleep(time.Millisecond * 100)
 
 	var wg sync.WaitGroup
 	wg.Add(1)
