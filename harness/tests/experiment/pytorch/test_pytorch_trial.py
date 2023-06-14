@@ -1097,6 +1097,7 @@ class TestPyTorchTrial:
         trial, trial_controller = create_trial_and_trial_controller(
             trial_class=trial_class,
             hparams=hparams,
+            slots_per_trial=2,
             trial_seed=self.trial_seed,
             max_batches=24,
             min_validation_batches=1,
@@ -1515,6 +1516,7 @@ def amp_metrics_test(trial_class, training_metrics, agg_freq=1):
 def create_trial_and_trial_controller(
     trial_class: pytorch.PyTorchTrial,
     hparams: typing.Dict,
+    slots_per_trial: int = 1,
     scheduling_unit: int = 1,
     trial_seed: int = None,
     exp_config: typing.Optional[typing.Dict] = None,
@@ -1574,7 +1576,7 @@ def create_trial_and_trial_controller(
         core_context=core_context,
         trial_seed=trial_seed,
         hparams=hparams,
-        slots_per_trial=1,
+        slots_per_trial=slots_per_trial,
         num_gpus=len(gpu_uuids),
         exp_conf=exp_config,
         aggregation_frequency=aggregation_frequency,
