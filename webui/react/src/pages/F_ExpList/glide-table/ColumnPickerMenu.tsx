@@ -8,8 +8,8 @@ import Empty from 'components/kit/Empty';
 import Input from 'components/kit/Input';
 import Pivot from 'components/kit/Pivot';
 import ColumnsIcon from 'components/kit/svgIcons/ColumnsIcon';
+import Spinner from 'components/Spinner';
 import { V1LocationType } from 'services/api-ts-sdk';
-import Spinner from 'shared/components/Spinner';
 import { ProjectColumn } from 'types';
 import { Loadable } from 'utils/loadable';
 

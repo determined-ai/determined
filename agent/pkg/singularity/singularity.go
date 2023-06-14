@@ -62,11 +62,12 @@ type SingularityClient struct {
 	wg         waitgroupx.Group
 	containers map[cproto.ID]*SingularityContainer
 	agentTmp   string
+	debug      bool
 }
 
 // New returns a new singularity client, which launches and tracks containers.
-func New(opts options.SingularityOptions, agentID string) (*SingularityClient, error) {
-	agentTmp, err := cruntimes.BaseTempDirName(agentID)
+func New(opts options.Options) (*SingularityClient, error) {
+	agentTmp, err := cruntimes.BaseTempDirName(opts.AgentID)
 	if err != nil {
 		return nil, fmt.Errorf("unable to compose agentTmp directory path: %w", err)
 	}
@@ -81,10 +82,11 @@ func New(opts options.SingularityOptions, agentID string) (*SingularityClient, e
 
 	return &SingularityClient{
 		log:        logrus.WithField("compotent", "singularity"),
-		opts:       opts,
+		opts:       opts.SingularityOptions,
 		wg:         waitgroupx.WithContext(context.Background()),
 		containers: make(map[cproto.ID]*SingularityContainer),
 		agentTmp:   agentTmp,
+		debug:      opts.Debug,
 	}, nil
 }
 
@@ -336,6 +338,9 @@ func (s *SingularityClient) RunContainer(
 		fmt.Sprintf("SINGULARITYENV_CUDA_VISIBLE_DEVICES=%s", cudaVisibleDevicesVar),
 		fmt.Sprintf("APPTAINERENV_CUDA_VISIBLE_DEVICES=%s", cudaVisibleDevicesVar),
 	)
+	if s.debug {
+		cmd.Env = append(cmd.Env, "DET_DEBUG=1")
+	}
 	addEnvironmentValueIfSet([]string{"http_proxy", "https_proxy", "no_proxy"}, cmd)
 
 	// HACK(singularity): without this, --nv doesn't work right. If the singularity run command

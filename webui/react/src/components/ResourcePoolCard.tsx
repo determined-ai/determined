@@ -1,27 +1,27 @@
 import React, { Suspense, useMemo } from 'react';
 
+import awsLogoOnDark from 'assets/images/aws-logo-on-dark.svg';
+import awsLogo from 'assets/images/aws-logo.svg';
+import gcpLogo from 'assets/images/gcp-logo.svg';
+import k8sLogo from 'assets/images/k8s-logo.svg';
+import staticLogo from 'assets/images/on-prem-logo.svg';
 import Card from 'components/kit/Card';
 import Icon from 'components/kit/Icon';
 import SlotAllocationBar from 'components/SlotAllocationBar';
+import Spinner from 'components/Spinner';
 import { V1ResourcePoolTypeToLabel, V1SchedulerTypeToLabel } from 'constants/states';
 import { paths } from 'routes/utils';
 import { V1ResourcePoolType, V1RPQueueStat, V1SchedulerType } from 'services/api-ts-sdk';
-import awsLogoOnDark from 'shared/assets/images/aws-logo-on-dark.svg';
-import awsLogo from 'shared/assets/images/aws-logo.svg';
-import gcpLogo from 'shared/assets/images/gcp-logo.svg';
-import k8sLogo from 'shared/assets/images/k8s-logo.svg';
-import staticLogo from 'shared/assets/images/on-prem-logo.svg';
-import Spinner from 'shared/components/Spinner';
-import useUI from 'shared/contexts/stores/UI';
-import { DarkLight } from 'shared/themes';
-import { clone } from 'shared/utils/data';
 import { maxPoolSlotCapacity } from 'stores/cluster';
 import clusterStore from 'stores/cluster';
+import useUI from 'stores/contexts/UI';
 import { ShirtSize } from 'themes';
 import { isDeviceType, ResourcePool } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
+import { clone } from 'utils/data';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
+import { DarkLight } from 'utils/themes';
 
 import Json from './Json';
 import css from './ResourcePoolCard.module.scss';

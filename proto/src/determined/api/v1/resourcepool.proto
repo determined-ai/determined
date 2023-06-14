@@ -6,6 +6,7 @@ option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 import "determined/api/v1/pagination.proto";
 
 import "determined/resourcepool/v1/resourcepool.proto";
+import "protoc-gen-swagger/options/annotations.proto";
 
 // Get the list of resource pools from the cluster.
 message GetResourcePoolsRequest {
@@ -21,6 +22,76 @@ message GetResourcePoolsRequest {
 message GetResourcePoolsResponse {
   // The list of returned resource pools.
   repeated determined.resourcepool.v1.ResourcePool resource_pools = 1;
+  // Pagination information of the full dataset.
+  Pagination pagination = 2;
+}
+
+// Bind a resource pool to workspaces
+message BindRPToWorkspaceRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "resource_pool_name" ] }
+  };
+
+  // The resource pool name.
+  string resource_pool_name = 1;
+  // The workspace IDs to be bound to the resouce pool.
+  repeated int32 workspace_ids = 2;
+}
+
+// Bind a resource pool to workspaces response.
+message BindRPToWorkspaceResponse {}
+
+// Unbind a resource pool to workspaces.
+message UnbindRPFromWorkspaceRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "resource_pool_name" ] }
+  };
+
+  // The resource pool name.
+  string resource_pool_name = 1;
+  // The workspace IDs to be unbound.
+  repeated int32 workspace_ids = 2;
+}
+
+// Unbind a resource pool to workspaces response.
+message UnbindRPFromWorkspaceResponse {}
+
+// Overwrite and replace the workspaces bound to an RP request.
+message OverwriteRPWorkspaceBindingsRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "resource_pool_name" ] }
+  };
+
+  // The resource pool name.
+  string resource_pool_name = 1;
+  // The new workspace IDs to bind to the resource_pool.
+  repeated int32 workspace_ids = 2;
+}
+
+// Overwrite and replace the workspaces bound to an RP response.
+message OverwriteRPWorkspaceBindingsResponse {}
+
+// List all the workspaces bound to the RP.
+message ListWorkspacesBoundToRPRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "resource_pool_name", "limit" ] }
+  };
+
+  // Resource pool name.
+  string resource_pool_name = 1;
+  // The offset to use with pagination
+  int32 offset = 2;
+  // The maximum number of results to return
+  int32 limit = 3;
+}
+
+// Response to ListWorkspacesBoundToRPRequest.
+message ListWorkspacesBoundToRPResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "workspace_id", "limit" ] }
+  };
+  // List of workspace IDs.
+  repeated int32 workspace_ids = 1;
   // Pagination information of the full dataset.
   Pagination pagination = 2;
 }

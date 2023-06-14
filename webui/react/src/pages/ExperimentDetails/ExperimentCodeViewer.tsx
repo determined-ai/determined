@@ -2,11 +2,11 @@ import yaml from 'js-yaml';
 import React, { useEffect, useMemo, useState } from 'react';
 
 import Icon from 'components/kit/Icon';
+import Spinner from 'components/Spinner/Spinner';
 import { paths } from 'routes/utils';
 import { getExperimentFileFromTree, getExperimentFileTree } from 'services/api';
 import { V1FileNode } from 'services/api-ts-sdk';
-import Spinner from 'shared/components/Spinner/Spinner';
-import { RawJson } from 'shared/types';
+import { RawJson } from 'types';
 import { ExperimentBase, TreeNode } from 'types';
 import handleError from 'utils/error';
 import { isSingleTrialExperiment } from 'utils/experiment';

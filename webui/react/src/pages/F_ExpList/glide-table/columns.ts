@@ -6,16 +6,16 @@ import {
   SizedGridColumn,
 } from '@glideapps/glide-data-grid';
 
+import { getColor, getInitials } from 'components/Avatar';
 import { terminalRunStates } from 'constants/states';
 import { paths } from 'routes/utils';
-import { getColor, getInitials } from 'shared/components/Avatar';
-import { DarkLight, Theme } from 'shared/themes';
-import { getPath, isString } from 'shared/utils/data';
-import { formatDatetime } from 'shared/utils/datetime';
-import { humanReadableNumber } from 'shared/utils/number';
-import { humanReadableBytes } from 'shared/utils/string';
 import { DetailedUser, ExperimentWithTrial, ProjectColumn } from 'types';
+import { getPath, isString } from 'utils/data';
+import { formatDatetime } from 'utils/datetime';
 import { Loadable } from 'utils/loadable';
+import { humanReadableNumber } from 'utils/number';
+import { humanReadableBytes } from 'utils/string';
+import { DarkLight, Theme } from 'utils/themes';
 import { getDisplayName } from 'utils/user';
 
 import { getDurationInEnglish, getTimeInEnglish } from './utils';

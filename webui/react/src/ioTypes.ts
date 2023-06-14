@@ -2,15 +2,15 @@ import { isLeft } from 'fp-ts/lib/Either';
 import * as io from 'io-ts';
 
 import { V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
-import { ValueOf } from 'shared/types';
-import { DetError, ErrorLevel, ErrorType } from 'shared/utils/error';
 import {
   CheckpointStorageType,
   ExperimentSearcherName,
   HyperparameterType,
   LogLevel,
   RunState,
+  ValueOf,
 } from 'types';
+import { DetError, ErrorLevel, ErrorType } from 'utils/error';
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export const decode = <T>(type: io.Mixed, data: any): T => {
@@ -244,6 +244,7 @@ export type ioTypeTaskLogs = io.TypeOf<typeof ioTaskLogs>;
 export const ioLocationType: io.Type<V1LocationType> = io.keyof({
   [V1LocationType.EXPERIMENT]: null,
   [V1LocationType.HYPERPARAMETERS]: null,
+  [V1LocationType.TRAINING]: null,
   [V1LocationType.VALIDATIONS]: null,
   [V1LocationType.UNSPECIFIED]: null,
 });

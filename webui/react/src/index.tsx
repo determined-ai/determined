@@ -10,7 +10,7 @@ import router from 'router';
 
 import * as serviceWorker from './serviceWorker';
 
-import 'shared/prototypes';
+import 'utils/prototypes';
 import 'dev';
 
 // redirect to basename if needed

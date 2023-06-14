@@ -2,8 +2,8 @@ import { ModalFuncProps } from 'antd/es/modal/Modal';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import CodeEditor from 'components/kit/CodeEditor';
-import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';
-import { hasObjectKeys, isObject, isString } from 'shared/utils/data';
+import useModal, { ModalHooks as Hooks } from 'hooks/useModal/useModal';
+import { hasObjectKeys, isObject, isString } from 'utils/data';
 import handleError from 'utils/error';
 import { Loaded } from 'utils/loadable';
 

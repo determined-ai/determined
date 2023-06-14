@@ -1,8 +1,8 @@
 import React from 'react';
 
-import useUI from 'shared/contexts/stores/UI';
-import { DarkLight, getCssVar } from 'shared/themes';
+import useUI from 'stores/contexts/UI';
 import { Status } from 'utils/colors';
+import { DarkLight, getCssVar } from 'utils/themes';
 
 type Size = 'small' | 'medium' | 'large' | 'xl';
 

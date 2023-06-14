@@ -1,10 +1,10 @@
 import { Modal } from 'components/kit/Modal';
 import { paths } from 'routes/utils';
 import { deleteModelVersion } from 'services/api';
-import { ErrorLevel, ErrorType } from 'shared/utils/error';
-import { routeToReactUrl } from 'shared/utils/routes';
 import { ModelVersion } from 'types';
+import { ErrorLevel, ErrorType } from 'utils/error';
 import handleError from 'utils/error';
+import { routeToReactUrl } from 'utils/routes';
 
 interface Props {
   modelVersion: ModelVersion;

@@ -6,18 +6,18 @@ import Form from 'components/kit/Form';
 import Input from 'components/kit/Input';
 import InputNumber from 'components/kit/InputNumber';
 import { Modal } from 'components/kit/Modal';
+import Spinner from 'components/Spinner';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { patchWorkspace } from 'services/api';
 import { V1AgentUserGroup } from 'services/api-ts-sdk';
-import Spinner from 'shared/components/Spinner';
-import { DetError, ErrorLevel, ErrorType } from 'shared/utils/error';
-import { routeToReactUrl } from 'shared/utils/routes';
 import workspaceStore from 'stores/workspaces';
 import { Workspace } from 'types';
+import { DetError, ErrorLevel, ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
+import { routeToReactUrl } from 'utils/routes';
 
 const FORM_ID = 'new-workspace-form';
 

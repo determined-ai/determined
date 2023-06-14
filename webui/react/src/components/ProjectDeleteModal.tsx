@@ -4,8 +4,8 @@ import Form from 'components/kit/Form';
 import Input from 'components/kit/Input';
 import { Modal } from 'components/kit/Modal';
 import { deleteProject } from 'services/api';
-import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { Project } from 'types';
+import { ErrorLevel, ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 
 interface FormInputs {

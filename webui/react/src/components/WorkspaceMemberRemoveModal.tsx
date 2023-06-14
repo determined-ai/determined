@@ -2,9 +2,9 @@ import React, { useCallback, useState } from 'react';
 
 import { Modal } from 'components/kit/Modal';
 import { removeRolesFromGroup, removeRolesFromUser } from 'services/api';
-import { DetError, ErrorLevel, ErrorType } from 'shared/utils/error';
 import { UserOrGroupWithRoleInfo } from 'types';
 import { message } from 'utils/dialogApi';
+import { DetError, ErrorLevel, ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 import { isUserWithRoleInfo } from 'utils/user';
 

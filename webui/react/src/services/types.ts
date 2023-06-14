@@ -1,6 +1,6 @@
 import { Dayjs } from 'dayjs';
 
-import { FetchOptions, RecordKey, SingleEntityParams } from 'shared/types';
+import { FetchOptions, RecordKey, SingleEntityParams } from 'types';
 import {
   DetailedUser,
   Job,

@@ -3,13 +3,13 @@ import React, { useEffect } from 'react';
 
 import Form from 'components/kit/Form';
 import { Modal } from 'components/kit/Modal';
+import Spinner from 'components/Spinner';
 import { updateGroup } from 'services/api';
 import { V1GroupSearchResult } from 'services/api-ts-sdk';
-import Spinner from 'shared/components/Spinner';
-import { ErrorType } from 'shared/utils/error';
 import determinedStore from 'stores/determinedInfo';
 import { DetailedUser } from 'types';
 import { message } from 'utils/dialogApi';
+import { ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 import { useObservable } from 'utils/observable';
 

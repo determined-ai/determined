@@ -1,8 +1,8 @@
 import React from 'react';
 
-import useUI from 'shared/contexts/stores/UI';
-import { DarkLight, getCssVar } from 'shared/themes';
+import useUI from 'stores/contexts/UI';
 import { Status } from 'utils/colors';
+import { DarkLight, getCssVar } from 'utils/themes';
 
 const SVG: React.FC<{ color: string }> = ({ color }) => (
   <svg fill="none" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">

@@ -1553,6 +1553,32 @@ export interface V1AwsCustomTag {
     value: string;
 }
 /**
+ * 
+ * @export
+ * @interface V1BindRPToWorkspaceRequest
+ */
+export interface V1BindRPToWorkspaceRequest {
+    /**
+     * The resource pool name.
+     * @type {string}
+     * @memberof V1BindRPToWorkspaceRequest
+     */
+    resourcePoolName: string;
+    /**
+     * The workspace IDs to be bound to the resouce pool.
+     * @type {Array<number>}
+     * @memberof V1BindRPToWorkspaceRequest
+     */
+    workspaceIds?: Array<number>;
+}
+/**
+ * Bind a resource pool to workspaces response.
+ * @export
+ * @interface V1BindRPToWorkspaceResponse
+ */
+export interface V1BindRPToWorkspaceResponse {
+}
+/**
  * Filters to apply actions to multiple experiments.
  * @export
  * @interface V1BulkExperimentFilters
@@ -5293,7 +5319,45 @@ export interface V1ListRolesResponse {
     pagination: V1Pagination;
 }
 /**
- * - LOCATION_TYPE_UNSPECIFIED: Location unknown  - LOCATION_TYPE_EXPERIMENT: Column is located on the experiment  - LOCATION_TYPE_HYPERPARAMETERS: Column is located in the hyperparameter config of the experiment  - LOCATION_TYPE_VALIDATIONS: Column is located on the experiment's validation metrics
+ * Response to ListWorkspaceRPsRequest.
+ * @export
+ * @interface V1ListRPsBoundToWorkspaceResponse
+ */
+export interface V1ListRPsBoundToWorkspaceResponse {
+    /**
+     * List of resource pools bound to the workspace.
+     * @type {Array<string>}
+     * @memberof V1ListRPsBoundToWorkspaceResponse
+     */
+    resourcePools?: Array<string>;
+    /**
+     * Pagination information of the full dataset.
+     * @type {V1Pagination}
+     * @memberof V1ListRPsBoundToWorkspaceResponse
+     */
+    pagination?: V1Pagination;
+}
+/**
+ * Response to ListWorkspacesBoundToRPRequest.
+ * @export
+ * @interface V1ListWorkspacesBoundToRPResponse
+ */
+export interface V1ListWorkspacesBoundToRPResponse {
+    /**
+     * List of workspace IDs.
+     * @type {Array<number>}
+     * @memberof V1ListWorkspacesBoundToRPResponse
+     */
+    workspaceIds?: Array<number>;
+    /**
+     * Pagination information of the full dataset.
+     * @type {V1Pagination}
+     * @memberof V1ListWorkspacesBoundToRPResponse
+     */
+    pagination?: V1Pagination;
+}
+/**
+ * - LOCATION_TYPE_UNSPECIFIED: Location unknown  - LOCATION_TYPE_EXPERIMENT: Column is located on the experiment  - LOCATION_TYPE_HYPERPARAMETERS: Column is located in the hyperparameter config of the experiment  - LOCATION_TYPE_VALIDATIONS: Column is located on the experiment's validation metrics  - LOCATION_TYPE_TRAINING: Column is located on the experiment's training steps
  * @export
  * @enum {string}
  */
@@ -5302,6 +5366,7 @@ export const V1LocationType = {
     EXPERIMENT: 'LOCATION_TYPE_EXPERIMENT',
     HYPERPARAMETERS: 'LOCATION_TYPE_HYPERPARAMETERS',
     VALIDATIONS: 'LOCATION_TYPE_VALIDATIONS',
+    TRAINING: 'LOCATION_TYPE_TRAINING',
 } as const
 export type V1LocationType = ValueOf<typeof V1LocationType>
 /**
@@ -6046,6 +6111,32 @@ export const V1OrderBy = {
 } as const
 export type V1OrderBy = ValueOf<typeof V1OrderBy>
 /**
+ * Overwrite and replace the workspaces bound to an RP request.
+ * @export
+ * @interface V1OverwriteRPWorkspaceBindingsRequest
+ */
+export interface V1OverwriteRPWorkspaceBindingsRequest {
+    /**
+     * The resource pool name.
+     * @type {string}
+     * @memberof V1OverwriteRPWorkspaceBindingsRequest
+     */
+    resourcePoolName: string;
+    /**
+     * The new workspace IDs to bind to the resource_pool.
+     * @type {Array<number>}
+     * @memberof V1OverwriteRPWorkspaceBindingsRequest
+     */
+    workspaceIds?: Array<number>;
+}
+/**
+ * Overwrite and replace the workspaces bound to an RP response.
+ * @export
+ * @interface V1OverwriteRPWorkspaceBindingsResponse
+ */
+export interface V1OverwriteRPWorkspaceBindingsResponse {
+}
+/**
  * Pagination provides information about the offset, limit, and total number of records returned in the results.
  * @export
  * @interface V1Pagination
@@ -6482,6 +6573,18 @@ export interface V1PatchWorkspace {
      * @memberof V1PatchWorkspace
      */
     checkpointStorageConfig?: any;
+    /**
+     * Name of the default compute pool.
+     * @type {string}
+     * @memberof V1PatchWorkspace
+     */
+    defaultComputePool?: string;
+    /**
+     * Name of the default aux pool.
+     * @type {string}
+     * @memberof V1PatchWorkspace
+     */
+    defaultAuxPool?: string;
 }
 /**
  * Response to PatchWorkspaceRequest.
@@ -7057,6 +7160,18 @@ export interface V1PostWorkspaceRequest {
      * @memberof V1PostWorkspaceRequest
      */
     checkpointStorageConfig?: any;
+    /**
+     * The name of the default compute pool.
+     * @type {string}
+     * @memberof V1PostWorkspaceRequest
+     */
+    defaultComputePool?: string;
+    /**
+     * The name of the default aux pool.
+     * @type {string}
+     * @memberof V1PostWorkspaceRequest
+     */
+    defaultAuxPool?: string;
 }
 /**
  * Response to PostWorkspaceRequest.
@@ -10127,6 +10242,32 @@ export interface V1UnarchiveProjectResponse {
 export interface V1UnarchiveWorkspaceResponse {
 }
 /**
+ * Unbind a resource pool to workspaces.
+ * @export
+ * @interface V1UnbindRPFromWorkspaceRequest
+ */
+export interface V1UnbindRPFromWorkspaceRequest {
+    /**
+     * The resource pool name.
+     * @type {string}
+     * @memberof V1UnbindRPFromWorkspaceRequest
+     */
+    resourcePoolName: string;
+    /**
+     * The workspace IDs to be unbound.
+     * @type {Array<number>}
+     * @memberof V1UnbindRPFromWorkspaceRequest
+     */
+    workspaceIds?: Array<number>;
+}
+/**
+ * Unbind a resource pool to workspaces response.
+ * @export
+ * @interface V1UnbindRPFromWorkspaceResponse
+ */
+export interface V1UnbindRPFromWorkspaceResponse {
+}
+/**
  * Response to UnpinWorkspaceRequest.
  * @export
  * @interface V1UnpinWorkspaceResponse
@@ -10560,6 +10701,18 @@ export interface V1Workspace {
      * @memberof V1Workspace
      */
     pinnedAt?: Date;
+    /**
+     * Name of the default compute pool.
+     * @type {string}
+     * @memberof V1Workspace
+     */
+    defaultComputePool?: string;
+    /**
+     * Name of the default aux pool.
+     * @type {string}
+     * @memberof V1Workspace
+     */
+    defaultAuxPool?: string;
 }
 /**
  * WorkspaceState is used to track progress during a deletion.   - WORKSPACE_STATE_UNSPECIFIED: Object deletion is not in progress.  - WORKSPACE_STATE_DELETING: The object is being deleted.  - WORKSPACE_STATE_DELETE_FAILED: The object failed to delete.  - WORKSPACE_STATE_DELETED: The object finished deleting.
@@ -16682,6 +16835,50 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Bind resource pool to workspace
+         * @param {string} resourcePoolName The resource pool name.
+         * @param {V1BindRPToWorkspaceRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        bindRPToWorkspace(resourcePoolName: string, body: V1BindRPToWorkspaceRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'resourcePoolName' is not null or undefined
+            if (resourcePoolName === null || resourcePoolName === undefined) {
+                throw new RequiredError('resourcePoolName','Required parameter resourcePoolName was null or undefined when calling bindRPToWorkspace.');
+            }
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling bindRPToWorkspace.');
+            }
+            const localVarPath = `/api/v1/resource-pools/{resourcePoolName}/workspace-bindings`
+                .replace(`{${"resourcePoolName"}}`, encodeURIComponent(String(resourcePoolName)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Reports to the searcher that the trial has completed the given searcher operation.
          * @param {number} trialId The id of the trial.
          * @param {V1CompleteValidateAfterOperation} body The completed operation.
@@ -17456,6 +17653,98 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary List all resource pools bound to a specific workspace
+         * @param {number} workspaceId Workspace ID.
+         * @param {number} [offset] The offset to use with pagination.
+         * @param {number} [limit] The maximum number of results to return.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        listRPsBoundToWorkspace(workspaceId: number, offset?: number, limit?: number, options: any = {}): FetchArgs {
+            // verify required parameter 'workspaceId' is not null or undefined
+            if (workspaceId === null || workspaceId === undefined) {
+                throw new RequiredError('workspaceId','Required parameter workspaceId was null or undefined when calling listRPsBoundToWorkspace.');
+            }
+            const localVarPath = `/api/v1/workspaces/{workspaceId}/available-resource-pools`
+                .replace(`{${"workspaceId"}}`, encodeURIComponent(String(workspaceId)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            if (offset !== undefined) {
+                localVarQueryParameter['offset'] = offset
+            }
+            
+            if (limit !== undefined) {
+                localVarQueryParameter['limit'] = limit
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary List all workspaces bound to a specific resource pool
+         * @param {string} resourcePoolName Resource pool name.
+         * @param {number} [offset] The offset to use with pagination.
+         * @param {number} [limit] The maximum number of results to return.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        listWorkspacesBoundToRP(resourcePoolName: string, offset?: number, limit?: number, options: any = {}): FetchArgs {
+            // verify required parameter 'resourcePoolName' is not null or undefined
+            if (resourcePoolName === null || resourcePoolName === undefined) {
+                throw new RequiredError('resourcePoolName','Required parameter resourcePoolName was null or undefined when calling listWorkspacesBoundToRP.');
+            }
+            const localVarPath = `/api/v1/resource-pools/{resourcePoolName}/workspace-bindings`
+                .replace(`{${"resourcePoolName"}}`, encodeURIComponent(String(resourcePoolName)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            if (offset !== undefined) {
+                localVarQueryParameter['offset'] = offset
+            }
+            
+            if (limit !== undefined) {
+                localVarQueryParameter['limit'] = limit
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Mark the given reservation (container, pod, etc) within an allocation as a daemon reservation. In the exit of a successful exit, Determined will wait for all resources to exit - unless they are marked as daemon resources, in which case Determined will clean them up regardless of exit status after all non-daemon resources have exited.
          * @param {string} allocationId The id of the allocation.
          * @param {string} resourcesId The id of the clump of resources to mark as daemon.
@@ -17584,6 +17873,50 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                 .replace(`{${"allocationId"}}`, encodeURIComponent(String(allocationId)));
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Overwrite resource pool - workspace bindings
+         * @param {string} resourcePoolName The resource pool name.
+         * @param {V1OverwriteRPWorkspaceBindingsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        overwriteRPWorkspaceBindings(resourcePoolName: string, body: V1OverwriteRPWorkspaceBindingsRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'resourcePoolName' is not null or undefined
+            if (resourcePoolName === null || resourcePoolName === undefined) {
+                throw new RequiredError('resourcePoolName','Required parameter resourcePoolName was null or undefined when calling overwriteRPWorkspaceBindings.');
+            }
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling overwriteRPWorkspaceBindings.');
+            }
+            const localVarPath = `/api/v1/resource-pools/{resourcePoolName}/workspace-bindings`
+                .replace(`{${"resourcePoolName"}}`, encodeURIComponent(String(resourcePoolName)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'PUT', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
             
@@ -18238,6 +18571,50 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Unbind resource pool to workspace
+         * @param {string} resourcePoolName The resource pool name.
+         * @param {V1UnbindRPFromWorkspaceRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        unbindRPFromWorkspace(resourcePoolName: string, body: V1UnbindRPFromWorkspaceRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'resourcePoolName' is not null or undefined
+            if (resourcePoolName === null || resourcePoolName === undefined) {
+                throw new RequiredError('resourcePoolName','Required parameter resourcePoolName was null or undefined when calling unbindRPFromWorkspace.');
+            }
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling unbindRPFromWorkspace.');
+            }
+            const localVarPath = `/api/v1/resource-pools/{resourcePoolName}/workspace-bindings`
+                .replace(`{${"resourcePoolName"}}`, encodeURIComponent(String(resourcePoolName)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'DELETE', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Update group info.
          * @param {number} groupId The id of the group
          * @param {V1UpdateGroupRequest} body
@@ -18457,6 +18834,26 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         allocationWaiting(allocationId: string, body: V1AllocationWaitingRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1AllocationWaitingResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).allocationWaiting(allocationId, body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Bind resource pool to workspace
+         * @param {string} resourcePoolName The resource pool name.
+         * @param {V1BindRPToWorkspaceRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        bindRPToWorkspace(resourcePoolName: string, body: V1BindRPToWorkspaceRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1BindRPToWorkspaceResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).bindRPToWorkspace(resourcePoolName, body, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -18848,6 +19245,48 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary List all resource pools bound to a specific workspace
+         * @param {number} workspaceId Workspace ID.
+         * @param {number} [offset] The offset to use with pagination.
+         * @param {number} [limit] The maximum number of results to return.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        listRPsBoundToWorkspace(workspaceId: number, offset?: number, limit?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ListRPsBoundToWorkspaceResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).listRPsBoundToWorkspace(workspaceId, offset, limit, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary List all workspaces bound to a specific resource pool
+         * @param {string} resourcePoolName Resource pool name.
+         * @param {number} [offset] The offset to use with pagination.
+         * @param {number} [limit] The maximum number of results to return.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        listWorkspacesBoundToRP(resourcePoolName: string, offset?: number, limit?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ListWorkspacesBoundToRPResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).listWorkspacesBoundToRP(resourcePoolName, offset, limit, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Mark the given reservation (container, pod, etc) within an allocation as a daemon reservation. In the exit of a successful exit, Determined will wait for all resources to exit - unless they are marked as daemon resources, in which case Determined will clean them up regardless of exit status after all non-daemon resources have exited.
          * @param {string} allocationId The id of the allocation.
          * @param {string} resourcesId The id of the clump of resources to mark as daemon.
@@ -18899,6 +19338,26 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         notifyContainerRunning(allocationId: string, body: V1NotifyContainerRunningRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1NotifyContainerRunningResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).notifyContainerRunning(allocationId, body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Overwrite resource pool - workspace bindings
+         * @param {string} resourcePoolName The resource pool name.
+         * @param {V1OverwriteRPWorkspaceBindingsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        overwriteRPWorkspaceBindings(resourcePoolName: string, body: V1OverwriteRPWorkspaceBindingsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1OverwriteRPWorkspaceBindingsResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).overwriteRPWorkspaceBindings(resourcePoolName, body, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -19181,6 +19640,26 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Unbind resource pool to workspace
+         * @param {string} resourcePoolName The resource pool name.
+         * @param {V1UnbindRPFromWorkspaceRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        unbindRPFromWorkspace(resourcePoolName: string, body: V1UnbindRPFromWorkspaceRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1UnbindRPFromWorkspaceResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).unbindRPFromWorkspace(resourcePoolName, body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Update group info.
          * @param {number} groupId The id of the group
          * @param {V1UpdateGroupRequest} body
@@ -19303,6 +19782,17 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          */
         allocationWaiting(allocationId: string, body: V1AllocationWaitingRequest, options?: any) {
             return InternalApiFp(configuration).allocationWaiting(allocationId, body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Bind resource pool to workspace
+         * @param {string} resourcePoolName The resource pool name.
+         * @param {V1BindRPToWorkspaceRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        bindRPToWorkspace(resourcePoolName: string, body: V1BindRPToWorkspaceRequest, options?: any) {
+            return InternalApiFp(configuration).bindRPToWorkspace(resourcePoolName, body, options)(fetch, basePath);
         },
         /**
          * 
@@ -19514,6 +20004,30 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary List all resource pools bound to a specific workspace
+         * @param {number} workspaceId Workspace ID.
+         * @param {number} [offset] The offset to use with pagination.
+         * @param {number} [limit] The maximum number of results to return.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        listRPsBoundToWorkspace(workspaceId: number, offset?: number, limit?: number, options?: any) {
+            return InternalApiFp(configuration).listRPsBoundToWorkspace(workspaceId, offset, limit, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary List all workspaces bound to a specific resource pool
+         * @param {string} resourcePoolName Resource pool name.
+         * @param {number} [offset] The offset to use with pagination.
+         * @param {number} [limit] The maximum number of results to return.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        listWorkspacesBoundToRP(resourcePoolName: string, offset?: number, limit?: number, options?: any) {
+            return InternalApiFp(configuration).listWorkspacesBoundToRP(resourcePoolName, offset, limit, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Mark the given reservation (container, pod, etc) within an allocation as a daemon reservation. In the exit of a successful exit, Determined will wait for all resources to exit - unless they are marked as daemon resources, in which case Determined will clean them up regardless of exit status after all non-daemon resources have exited.
          * @param {string} allocationId The id of the allocation.
          * @param {string} resourcesId The id of the clump of resources to mark as daemon.
@@ -19547,6 +20061,17 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          */
         notifyContainerRunning(allocationId: string, body: V1NotifyContainerRunningRequest, options?: any) {
             return InternalApiFp(configuration).notifyContainerRunning(allocationId, body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Overwrite resource pool - workspace bindings
+         * @param {string} resourcePoolName The resource pool name.
+         * @param {V1OverwriteRPWorkspaceBindingsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        overwriteRPWorkspaceBindings(resourcePoolName: string, body: V1OverwriteRPWorkspaceBindingsRequest, options?: any) {
+            return InternalApiFp(configuration).overwriteRPWorkspaceBindings(resourcePoolName, body, options)(fetch, basePath);
         },
         /**
          * 
@@ -19703,6 +20228,17 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Unbind resource pool to workspace
+         * @param {string} resourcePoolName The resource pool name.
+         * @param {V1UnbindRPFromWorkspaceRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        unbindRPFromWorkspace(resourcePoolName: string, body: V1UnbindRPFromWorkspaceRequest, options?: any) {
+            return InternalApiFp(configuration).unbindRPFromWorkspace(resourcePoolName, body, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Update group info.
          * @param {number} groupId The id of the group
          * @param {V1UpdateGroupRequest} body
@@ -19821,6 +20357,19 @@ export class InternalApi extends BaseAPI {
      */
     public allocationWaiting(allocationId: string, body: V1AllocationWaitingRequest, options?: any) {
         return InternalApiFp(this.configuration).allocationWaiting(allocationId, body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Bind resource pool to workspace
+     * @param {string} resourcePoolName The resource pool name.
+     * @param {V1BindRPToWorkspaceRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public bindRPToWorkspace(resourcePoolName: string, body: V1BindRPToWorkspaceRequest, options?: any) {
+        return InternalApiFp(this.configuration).bindRPToWorkspace(resourcePoolName, body, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -20071,6 +20620,34 @@ export class InternalApi extends BaseAPI {
     
     /**
      * 
+     * @summary List all resource pools bound to a specific workspace
+     * @param {number} workspaceId Workspace ID.
+     * @param {number} [offset] The offset to use with pagination.
+     * @param {number} [limit] The maximum number of results to return.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public listRPsBoundToWorkspace(workspaceId: number, offset?: number, limit?: number, options?: any) {
+        return InternalApiFp(this.configuration).listRPsBoundToWorkspace(workspaceId, offset, limit, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary List all workspaces bound to a specific resource pool
+     * @param {string} resourcePoolName Resource pool name.
+     * @param {number} [offset] The offset to use with pagination.
+     * @param {number} [limit] The maximum number of results to return.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public listWorkspacesBoundToRP(resourcePoolName: string, offset?: number, limit?: number, options?: any) {
+        return InternalApiFp(this.configuration).listWorkspacesBoundToRP(resourcePoolName, offset, limit, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
      * @summary Mark the given reservation (container, pod, etc) within an allocation as a daemon reservation. In the exit of a successful exit, Determined will wait for all resources to exit - unless they are marked as daemon resources, in which case Determined will clean them up regardless of exit status after all non-daemon resources have exited.
      * @param {string} allocationId The id of the allocation.
      * @param {string} resourcesId The id of the clump of resources to mark as daemon.
@@ -20109,6 +20686,19 @@ export class InternalApi extends BaseAPI {
      */
     public notifyContainerRunning(allocationId: string, body: V1NotifyContainerRunningRequest, options?: any) {
         return InternalApiFp(this.configuration).notifyContainerRunning(allocationId, body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Overwrite resource pool - workspace bindings
+     * @param {string} resourcePoolName The resource pool name.
+     * @param {V1OverwriteRPWorkspaceBindingsRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public overwriteRPWorkspaceBindings(resourcePoolName: string, body: V1OverwriteRPWorkspaceBindingsRequest, options?: any) {
+        return InternalApiFp(this.configuration).overwriteRPWorkspaceBindings(resourcePoolName, body, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -20288,6 +20878,19 @@ export class InternalApi extends BaseAPI {
      */
     public trialsSnapshot(experimentId: number, metricName: string, metricType: V1MetricType, batchesProcessed: number, batchesMargin?: number, periodSeconds?: number, options?: any) {
         return InternalApiFp(this.configuration).trialsSnapshot(experimentId, metricName, metricType, batchesProcessed, batchesMargin, periodSeconds, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Unbind resource pool to workspace
+     * @param {string} resourcePoolName The resource pool name.
+     * @param {V1UnbindRPFromWorkspaceRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public unbindRPFromWorkspace(resourcePoolName: string, body: V1UnbindRPFromWorkspaceRequest, options?: any) {
+        return InternalApiFp(this.configuration).unbindRPFromWorkspace(resourcePoolName, body, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -29441,6 +30044,52 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
         },
         /**
          * 
+         * @summary List all resource pools bound to a specific workspace
+         * @param {number} workspaceId Workspace ID.
+         * @param {number} [offset] The offset to use with pagination.
+         * @param {number} [limit] The maximum number of results to return.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        listRPsBoundToWorkspace(workspaceId: number, offset?: number, limit?: number, options: any = {}): FetchArgs {
+            // verify required parameter 'workspaceId' is not null or undefined
+            if (workspaceId === null || workspaceId === undefined) {
+                throw new RequiredError('workspaceId','Required parameter workspaceId was null or undefined when calling listRPsBoundToWorkspace.');
+            }
+            const localVarPath = `/api/v1/workspaces/{workspaceId}/available-resource-pools`
+                .replace(`{${"workspaceId"}}`, encodeURIComponent(String(workspaceId)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            if (offset !== undefined) {
+                localVarQueryParameter['offset'] = offset
+            }
+            
+            if (limit !== undefined) {
+                localVarQueryParameter['limit'] = limit
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Update a workspace.
          * @param {number} id The id of the workspace.
          * @param {V1PatchWorkspace} body The desired workspace fields and values to update.
@@ -29751,6 +30400,27 @@ export const WorkspacesApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary List all resource pools bound to a specific workspace
+         * @param {number} workspaceId Workspace ID.
+         * @param {number} [offset] The offset to use with pagination.
+         * @param {number} [limit] The maximum number of results to return.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        listRPsBoundToWorkspace(workspaceId: number, offset?: number, limit?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ListRPsBoundToWorkspaceResponse> {
+            const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).listRPsBoundToWorkspace(workspaceId, offset, limit, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Update a workspace.
          * @param {number} id The id of the workspace.
          * @param {V1PatchWorkspace} body The desired workspace fields and values to update.
@@ -29922,6 +30592,18 @@ export const WorkspacesApiFactory = function (configuration?: Configuration, fet
         },
         /**
          * 
+         * @summary List all resource pools bound to a specific workspace
+         * @param {number} workspaceId Workspace ID.
+         * @param {number} [offset] The offset to use with pagination.
+         * @param {number} [limit] The maximum number of results to return.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        listRPsBoundToWorkspace(workspaceId: number, offset?: number, limit?: number, options?: any) {
+            return WorkspacesApiFp(configuration).listRPsBoundToWorkspace(workspaceId, offset, limit, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Update a workspace.
          * @param {number} id The id of the workspace.
          * @param {V1PatchWorkspace} body The desired workspace fields and values to update.
@@ -30055,6 +30737,20 @@ export class WorkspacesApi extends BaseAPI {
      */
     public getWorkspaces(sortBy?: V1GetWorkspacesRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, userIds?: Array<number>, pinned?: boolean, options?: any) {
         return WorkspacesApiFp(this.configuration).getWorkspaces(sortBy, orderBy, offset, limit, name, archived, users, userIds, pinned, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary List all resource pools bound to a specific workspace
+     * @param {number} workspaceId Workspace ID.
+     * @param {number} [offset] The offset to use with pagination.
+     * @param {number} [limit] The maximum number of results to return.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof WorkspacesApi
+     */
+    public listRPsBoundToWorkspace(workspaceId: number, offset?: number, limit?: number, options?: any) {
+        return WorkspacesApiFp(this.configuration).listRPsBoundToWorkspace(workspaceId, offset, limit, options)(this.fetch, this.basePath)
     }
     
     /**

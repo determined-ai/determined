@@ -4,12 +4,12 @@ import { Serie, TRAINING_SERIES_COLOR, VALIDATION_SERIES_COLOR } from 'component
 import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
 import { terminalRunStates } from 'constants/states';
 import useMetricNames from 'hooks/useMetricNames';
+import usePolling from 'hooks/usePolling';
 import { timeSeries } from 'services/api';
-import usePolling from 'shared/hooks/usePolling';
-import { isEqual } from 'shared/utils/data';
-import { ErrorType } from 'shared/utils/error';
 import { Metric, MetricContainer, MetricType, RunState, Scale, TrialDetails } from 'types';
+import { isEqual } from 'utils/data';
 import { message } from 'utils/dialogApi';
+import { ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 import { metricToKey } from 'utils/metric';
 
@@ -49,11 +49,11 @@ const summarizedMetricToSeries = (
   });
   const trialData: Record<string, Serie> = {};
   selectedMetrics.forEach((metric) => {
-    const data: Partial<Record<XAxisDomain, [number, number][]>> = {
-      [XAxisDomain.Batches]: rawBatchValuesMap[metric.name],
-      [XAxisDomain.Time]: rawBatchTimesMap[metric.name],
-      [XAxisDomain.Epochs]: rawBatchEpochMap[metric.name],
-    };
+    const data: Partial<Record<XAxisDomain, [number, number][]>> = {};
+    if (rawBatchValuesMap[metric.name]) data[XAxisDomain.Batches] = rawBatchValuesMap[metric.name];
+    if (rawBatchTimesMap[metric.name]) data[XAxisDomain.Time] = rawBatchTimesMap[metric.name];
+    if (rawBatchEpochMap[metric.name]) data[XAxisDomain.Epochs] = rawBatchEpochMap[metric.name];
+
     const series: Serie = {
       color:
         metric.type === MetricType.Validation ? VALIDATION_SERIES_COLOR : TRAINING_SERIES_COLOR,
