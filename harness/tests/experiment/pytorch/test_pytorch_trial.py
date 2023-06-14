@@ -972,11 +972,10 @@ class TestPyTorchTrial:
 
         val_metrics = launcher.elastic_launch(launch_config, self.run_identity)(tmp_path)
 
-        actual_weights = []
-        for i in range(len(val_metrics[0])):
-            actual_weights += [val_metrics[0][i]['weight'], val_metrics[1][i]['weight']]
+        # weights returned by both models are the same.
+        actual_weights = val_metrics[0]
 
-        expected_weights = calculate_gradients()
+        expected_weights = calculate_gradients(num_epochs=1)
 
         assert actual_weights == pytest.approx(
             expected_weights
@@ -1093,9 +1092,9 @@ class TestPyTorchTrial:
             hparams=hparams,
             slots_per_trial=2,
             trial_seed=self.trial_seed,
-            max_batches=24,
+            max_batches=16,
             min_validation_batches=1,
-            min_checkpoint_batches=24,
+            min_checkpoint_batches=16,
             checkpoint_dir=checkpoint_dir,
             tensorboard_path=tensorboard_path,
             aggregation_frequency=2

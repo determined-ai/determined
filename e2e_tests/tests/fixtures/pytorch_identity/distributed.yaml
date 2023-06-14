@@ -1,7 +1,7 @@
 name: pytorch-identity
 data:
   model_type: single_output
-entrypoint: python3 -m determined.launch.torch_distributed --trial model_def:IdentityPyTorchTrial
+entrypoint: model_def:IdentityPyTorchTrial
 hyperparameters:
   global_batch_size: 4
 records_per_epoch: 64
