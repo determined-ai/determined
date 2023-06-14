@@ -5607,7 +5607,7 @@ export interface V1Metrics {
  */
 export interface V1MetricsRange {
     /**
-     * The name of metrics.
+     * The name of metrics formatted as <type>.<name>.
      * @type {string}
      * @memberof V1MetricsRange
      */
@@ -5624,6 +5624,12 @@ export interface V1MetricsRange {
      * @memberof V1MetricsRange
      */
     max: number;
+    /**
+     * The type of metrics.
+     * @type {string}
+     * @memberof V1MetricsRange
+     */
+    metricsType: string;
 }
 /**
  * Metrics report.
