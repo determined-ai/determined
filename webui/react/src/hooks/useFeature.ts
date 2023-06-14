@@ -5,10 +5,17 @@ import determinedStore, { DeterminedInfo } from 'stores/determinedInfo';
 // Add new feature switches below using `|`
 export type ValidFeature = 'trials_comparison' | 'dashboard' | 'explist_v2' | 'chart';
 
+const FeatureDefault: { [K in ValidFeature]: boolean } = {
+  chart: false,
+  dashboard: false,
+  explist_v2: true,
+  trials_comparison: false,
+};
+
 const queryParams = new URLSearchParams(window.location.search);
 
 interface FeatureHook {
-  isOn: (feature: ValidFeature) => boolean | undefined;
+  isOn: (feature: ValidFeature) => boolean;
 }
 
 const useFeature = (): FeatureHook => {
@@ -17,10 +24,10 @@ const useFeature = (): FeatureHook => {
 };
 
 // Priority: Default state < config settings < user settings < url
-const IsOn = (feature: string, info: DeterminedInfo): boolean | undefined => {
+const IsOn = (feature: ValidFeature, info: DeterminedInfo): boolean => {
   const { featureSwitches } = info;
-  // Default state undefined
-  let isOn: boolean | undefined = undefined;
+  // Read from default state
+  let isOn = FeatureDefault[feature];
 
   // Read from config settings
   featureSwitches.includes(feature) && (isOn = true);
