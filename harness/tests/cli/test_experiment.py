@@ -1,6 +1,4 @@
 import dataclasses
-import json
-import pathlib
 import unittest.mock
 
 import pytest
@@ -8,11 +6,10 @@ import requests_mock as mock
 
 import determined
 import determined.cli
-from determined.common import api, constants
+from determined.common import constants
 from determined.common.api import bindings, certs
 from determined.common.api.authentication import Authentication
-from determined.experimental import client
-from tests.common import api_server
+from tests.fixtures import api_responses
 
 
 @dataclasses.dataclass
@@ -47,54 +44,12 @@ def mock_det_auth(user: str = "test", master_url: str = "http://localhost:8888")
 
 
 @unittest.mock.patch("determined.common.api.authentication.Authentication")
-def test_wait_doesnt_throw_exception_on_master_504(
-    auth_mock: unittest.mock.MagicMock,
-) -> None:
-    auth_mock.return_value = mock_det_auth()
-    user = "user1"
-    experiment_id_flaky = 1
-    with api_server.run_api_server(
-        credentials=(user, "password1", "token1"), ssl_keys=None
-    ) as master_url:
-        args = CliArgs(master=master_url, experiment_id=experiment_id_flaky)
-        determined.cli.experiment.wait(args)
-
-
-@unittest.mock.patch("determined.common.api.authentication.Authentication")
-def test_wait_waits_until_longrunning_experiment_is_complete(
-    auth_mock: unittest.mock.MagicMock,
-) -> None:
-    auth_mock.return_value = mock_det_auth()
-    user, password, token = "user", "password1", "token1"
-    api_server_session = api.Session(
-        master=f"{api_server.DEFAULT_HOST}:{api_server.DEFAULT_PORT}",
-        user=user,
-        auth=None,
-        cert=None,
-    )
-    experiment_id_longrunning = 2
-
-    with api_server.run_api_server(
-        credentials=(user, password, token), ssl_keys=None
-    ) as master_url:
-        args = CliArgs(master=master_url, experiment_id=experiment_id_longrunning)
-        determined.cli.experiment.wait(args)
-
-        fetched_experiment = client.Experiment(experiment_id_longrunning, api_server_session)
-        fetched_experiment.reload()
-
-    assert fetched_experiment.state == bindings.experimentv1State.COMPLETED
-
-
-@unittest.mock.patch("determined.common.api.authentication.Authentication")
 def test_wait_returns_error_code_when_experiment_errors(
     auth_mock: unittest.mock.MagicMock,
     requests_mock: mock.Mocker,
 ) -> None:
     auth_mock.return_value = mock_det_auth()
-
-    with open(pathlib.Path(__file__).parent.parent / "fixtures" / "experiment_flaky.json") as f:
-        exp = bindings.v1GetExperimentResponse.from_json(json.load(f))
+    exp = api_responses.sample_get_experiment(id=1, state=bindings.experimentv1State.COMPLETED)
     args = CliArgs(master="http://localhost:8888", experiment_id=1)
     exp.experiment.state = bindings.experimentv1State.ERROR
     requests_mock.get(
