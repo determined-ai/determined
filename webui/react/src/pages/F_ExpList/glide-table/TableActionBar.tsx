@@ -11,7 +11,6 @@ import { Column, Columns } from 'components/kit/Columns';
 import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 import Icon, { IconName } from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
-import PanelIcon from 'components/kit/svgIcons/PanelIcon';
 import Tooltip from 'components/kit/Tooltip';
 import usePermissions from 'hooks/usePermissions';
 import {
@@ -386,7 +385,7 @@ const TableActionBar: React.FC<Props> = ({
             </Tooltip>
           </Dropdown>
           {!!toggleComparisonView && (
-            <Button icon={<PanelIcon />} onClick={toggleComparisonView}>
+            <Button icon={<Icon name="panel" title="" />} onClick={toggleComparisonView}>
               Compare
             </Button>
           )}

@@ -34,7 +34,7 @@ import {
   Operator,
   SpecialColumnNames,
 } from 'components/FilterForm/components/type';
-import FilterIcon from 'components/kit/svgIcons/FilterIcon';
+import Icon from 'components/kit/Icon';
 import usePrevious from 'hooks/usePrevious';
 import { handlePath } from 'routes/utils';
 import { V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
@@ -362,7 +362,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
       if (!BANNED_FILTER_COLUMNS.has(column.column)) {
         items.push({ type: 'divider' });
         items.push({
-          icon: <FilterIcon />,
+          icon: <Icon name="filter" title="" />,
           key: 'filter',
           label: 'Filter by this column',
           onClick: () => {

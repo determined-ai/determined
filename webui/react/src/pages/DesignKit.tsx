@@ -32,11 +32,6 @@ import Notes, { Props as NotesProps } from 'components/kit/Notes';
 import Pagination from 'components/kit/Pagination';
 import Pivot from 'components/kit/Pivot';
 import Select, { Option } from 'components/kit/Select';
-import ColumnsIcon from 'components/kit/svgIcons/ColumnsIcon';
-import FilterIcon from 'components/kit/svgIcons/FilterIcon';
-import OptionsIcon from 'components/kit/svgIcons/OptionsIcon';
-import PanelIcon from 'components/kit/svgIcons/PanelIcon';
-import RowIcon from 'components/kit/svgIcons/RowIcon';
 import Toggle from 'components/kit/Toggle';
 import Tooltip from 'components/kit/Tooltip';
 import Header from 'components/kit/Typography/Header';
@@ -2324,14 +2319,14 @@ const IconsSection: React.FC = () => {
         <br />
         <p>SVG Icons usage.</p>
         <Space wrap>
-          <FilterIcon />
-          <PanelIcon />
-          <OptionsIcon />
-          <RowIcon size="small" />
-          <RowIcon />
-          <RowIcon size="large" />
-          <RowIcon size="xl" />
-          <ColumnsIcon />
+          <Icon name="filter" title="filter" />
+          <Icon name="panel" title="panel" />
+          <Icon name="options" title="options" />
+          <Icon name="row" size="small" title="row" />
+          <Icon name="row" title="row" />
+          <Icon name="row" size="large" title="row" />
+          <Icon name="row" size="big" title="row" />
+          <Icon name="columns" title="columns" />
         </Space>
       </AntDCard>
     </ComponentSection>

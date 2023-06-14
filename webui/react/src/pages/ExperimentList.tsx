@@ -14,7 +14,6 @@ import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 import Icon from 'components/kit/Icon';
 import Input from 'components/kit/Input';
 import { useModal } from 'components/kit/Modal';
-import FilterIcon from 'components/kit/svgIcons/FilterIcon';
 import Tags from 'components/kit/Tags';
 import Toggle from 'components/kit/Toggle';
 import Link from 'components/Link';
@@ -483,7 +482,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         dataIndex: 'tags',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['tags'],
         filterDropdown: labelFilterDropdown,
-        filterIcon: <FilterIcon />,
+        filterIcon: <Icon name="filter" title="" />,
         filters: labels.map((label) => ({ text: label, value: label })),
         isFiltered: (settings: ExperimentListSettings) => !!settings.label,
         key: 'labels',
@@ -533,7 +532,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         dataIndex: 'state',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['state'],
         filterDropdown: stateFilterDropdown,
-        filterIcon: <FilterIcon />,
+        filterIcon: <Icon name="filter" title="" />,
         filters: [
           RunState.Active,
           RunState.Paused,
@@ -603,7 +602,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         dataIndex: 'user',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['user'],
         filterDropdown: userFilterDropdown,
-        filterIcon: <FilterIcon />,
+        filterIcon: <Icon name="filter" title="" />,
         filters: users.map((user) => ({ text: getDisplayName(user), value: user.id })),
         isFiltered: (settings: ExperimentListSettings) => !!settings.user,
         key: V1GetExperimentsRequestSortBy.USER,

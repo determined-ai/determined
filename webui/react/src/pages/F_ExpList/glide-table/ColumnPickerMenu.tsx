@@ -5,9 +5,9 @@ import React, { ChangeEvent, useCallback, useMemo, useState } from 'react';
 import Button from 'components/kit/Button';
 import Checkbox from 'components/kit/Checkbox';
 import Empty from 'components/kit/Empty';
+import Icon from 'components/kit/Icon';
 import Input from 'components/kit/Input';
 import Pivot from 'components/kit/Pivot';
-import ColumnsIcon from 'components/kit/svgIcons/ColumnsIcon';
 import Spinner from 'components/Spinner';
 import { V1LocationType } from 'services/api-ts-sdk';
 import { ProjectColumn } from 'types';
@@ -194,7 +194,7 @@ const ColumnPickerMenu: React.FC<ColumnMenuProps> = ({
       placement="bottom"
       trigger="click"
       onOpenChange={handleOpenChange}>
-      <Button icon={<ColumnsIcon />}>Columns</Button>
+      <Button icon={<Icon name="columns" title="" />}>Columns</Button>
     </Popover>
   );
 };
