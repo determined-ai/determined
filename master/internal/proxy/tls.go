@@ -92,7 +92,7 @@ func loadCACertAndKey() error {
 	}
 
 	if isCertExpired(cert) {
-		logrus.Info("Certificate expired!")
+		logrus.Info("CA certificate expired! Deleting CA and Master certificate and keys")
 		_, err = db.Bun().NewDelete().Model(&value).
 			Where("is_ca = true OR is_master = true").
 			Exec(context.Background())
@@ -141,7 +141,7 @@ func loadMasterCertAndKey() error {
 	}
 
 	if isCertExpired(cert) {
-		logrus.Info("Master certificate expired!")
+		logrus.Info("Master certificate expired! Deleting master certificate")
 		_, err = db.Bun().NewDelete().Model(&value).Where("is_master = true").Exec(context.Background())
 		if err != nil {
 			return errors.Wrap(err, "error deleting expired master certificate")
@@ -290,7 +290,7 @@ func maybeLoadOrGenCA() error {
 	masterCAKey = key
 	masterCAKeyBytes = x509.MarshalPKCS1PrivateKey(key)
 
-	err = saveCertAndKey(masterCert, masterCAKeyBytes, false, true)
+	err = saveCertAndKey(signedCert, masterCAKeyBytes, false, true)
 	if err != nil {
 		return err
 	}
