@@ -292,14 +292,12 @@ def calculate_batch_sizes(
     trialname: str,
 ) -> Tuple[int, int]:
     slots_per_trial = max(slots_per_trial, 1)
-    print(slots_per_trial)
     if "global_batch_size" not in hparams:
         raise det.errors.InvalidExperimentException(
             "Please specify an integer `global_batch_size` hyperparameter in your experiment "
             f"config.  It is a required hyperparameter for {trialname}-based training."
         )
     global_batch_size = hparams["global_batch_size"]
-    print(global_batch_size)
     if not isinstance(global_batch_size, int):
         raise det.errors.InvalidExperimentException(
             "The `global_batch_size` hyperparameter must be an integer value, not "

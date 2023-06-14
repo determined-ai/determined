@@ -956,9 +956,8 @@ class TestPyTorchTrial:
         outputs = launcher.elastic_launch(launch_config, self.run_gan)(tmp_path)
         outputs = launcher.elastic_launch(launch_config, self.run_gan)(tmp_path, outputs[0])
 
-    #@pytest.mark.skipif(torch.cuda.device_count() < 2, reason="not enough gpus")
+    @pytest.mark.skipif(torch.cuda.device_count() < 2, reason="not enough gpus")
     @pytest.mark.gpu_parallel
-    @pytest.mark.dothis
     def test_gradient_aggregation_parallel(self, tmp_path: pathlib.Path):
 
         # set up distributed backend.
@@ -1010,6 +1009,7 @@ class TestPyTorchTrial:
             return self.train_for_checkpoint(
                 trial_class=trial_class,
                 hparams=hparams,
+                slots_per_trial=2,
                 tmp_path=tmp_path,
                 exp_config=exp_config,
                 steps=1,
@@ -1018,6 +1018,7 @@ class TestPyTorchTrial:
             self.train_from_checkpoint(
                 trial_class=trial_class,
                 hparams=hparams,
+                slots_per_trial=2,
                 tmp_path=tmp_path,
                 exp_config=exp_config,
                 steps=(1,1),
@@ -1049,6 +1050,7 @@ class TestPyTorchTrial:
             return self.train_for_checkpoint(
                 trial_class=trial_class,
                 hparams=hparams,
+                slots_per_trial=2,
                 tmp_path=tmp_path,
                 exp_config=exp_config,
                 steps=1,
@@ -1057,6 +1059,7 @@ class TestPyTorchTrial:
             self.train_from_checkpoint(
                 trial_class=trial_class,
                 hparams=hparams,
+                slots_per_trial=2,
                 tmp_path=tmp_path,
                 exp_config=exp_config,
                 steps=(1, 1),
@@ -1069,13 +1072,6 @@ class TestPyTorchTrial:
 
         config = utils.load_config(utils.fixtures_path("pytorch_identity/distributed.yaml"))
         hparams = config["hyperparameters"]
-
-        print(int(os.environ["RANK"]),
-        int(os.environ["WORLD_SIZE"]),
-        int(os.environ["LOCAL_RANK"]),
-        int(os.environ["LOCAL_WORLD_SIZE"]),
-        int(os.environ["GROUP_RANK"]),
-        int(os.environ["GROUP_WORLD_SIZE"]))
 
         exp_config = utils.make_default_exp_config(
             hparams,
@@ -1237,6 +1233,7 @@ class TestPyTorchTrial:
         trial_class: pytorch.PyTorchTrial,
         tmp_path: pathlib.Path,
         exp_config: typing.Dict,
+        slots_per_trial: int = 1,
         steps: int = 0
     ) -> int:
         checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
@@ -1245,6 +1242,7 @@ class TestPyTorchTrial:
         trial, trial_controller = create_trial_and_trial_controller(
             trial_class=trial_class,
             hparams=hparams,
+            slots_per_trial=slots_per_trial,
             trial_seed=self.trial_seed,
             exp_config=exp_config,
             max_batches=steps,
@@ -1267,6 +1265,7 @@ class TestPyTorchTrial:
         trial_class: pytorch.PyTorchTrial,
         tmp_path: pathlib.Path,
         exp_config: typing.Dict,
+        slots_per_trial: int = 1,
         steps: typing.Tuple[int, int] = (1, 1),
         batches_trained: int = 0
     ) -> None:
@@ -1276,6 +1275,7 @@ class TestPyTorchTrial:
         trial, trial_controller = create_trial_and_trial_controller(
             trial_class=trial_class,
             hparams=hparams,
+            slots_per_trial=slots_per_trial,
             trial_seed=self.trial_seed,
             exp_config=exp_config,
             max_batches=steps[0] + steps[1],
