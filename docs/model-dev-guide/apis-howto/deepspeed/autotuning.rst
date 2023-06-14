@@ -65,6 +65,12 @@ series of trials to search for the DS settings which optimize ``FLOPS_per_gpu``,
 ``custom`` experiment above. The search is informed both by the initial profiling trial and the
 results of each subsequent trial, all of whose results are fed back to the search runner.
 
+.. warning::
+
+   Determined's DeepSpeed Autotune is not currently compatible with pipeline or model parallelism.
+   The to-be-trained model must be a ``DeepSpeedEngine`` instance (not a ``PipelineEngine``
+   instance).
+
 *******************
  User Code Changes
 *******************
