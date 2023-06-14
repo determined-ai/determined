@@ -37,7 +37,7 @@ interface BaseProps {
   isContextMenu?: boolean;
   menu?: MenuItem[];
   open?: boolean;
-  overlayStyle?: React.CSSProperties;
+  autoWidthOverlay?: boolean;
   placement?: Placement;
   onClick?: (key: string, e: DropdownEvent) => void | Promise<void>;
 }
@@ -65,7 +65,7 @@ const Dropdown: React.FC<PropsWithChildren<Props>> = ({
   isContextMenu,
   menu = [],
   open,
-  overlayStyle,
+  autoWidthOverlay,
   placement = 'bottomLeft',
   onClick,
   selectable,
@@ -82,6 +82,7 @@ const Dropdown: React.FC<PropsWithChildren<Props>> = ({
       selectedKeys,
     };
   }, [menu, onClick, selectable, selectedKeys]);
+  const overlayStyle = autoWidthOverlay ? { minWidth: 'auto' } : undefined;
 
   /**
    * Using `dropdownRender` for Dropdown causes some issues with triggering the dropdown.

@@ -39,7 +39,7 @@ export const TableActionMenu: React.FC<TableActionMenuProps> = ({
   const divRef = useRef<HTMLDivElement | null>(null);
   useOutsideClickHandler(divRef, handleClose);
   return (
-    <Dropdown menu={items} open={open} overlayStyle={{ minWidth: 'auto' }} placement="bottomLeft">
+    <Dropdown autoWidthOverlay menu={items} open={open} placement="bottomLeft">
       <div
         ref={divRef}
         style={
