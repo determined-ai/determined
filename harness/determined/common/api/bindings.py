@@ -1544,6 +1544,36 @@ class v1AwsCustomTag(Printable):
         }
         return out
 
+class v1BindRPToWorkspaceRequest(Printable):
+    workspaceIds: "typing.Optional[typing.Sequence[int]]" = None
+
+    def __init__(
+        self,
+        *,
+        resourcePoolName: str,
+        workspaceIds: "typing.Union[typing.Sequence[int], None, Unset]" = _unset,
+    ):
+        self.resourcePoolName = resourcePoolName
+        if not isinstance(workspaceIds, Unset):
+            self.workspaceIds = workspaceIds
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1BindRPToWorkspaceRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "resourcePoolName": obj["resourcePoolName"],
+        }
+        if "workspaceIds" in obj:
+            kwargs["workspaceIds"] = obj["workspaceIds"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "resourcePoolName": self.resourcePoolName,
+        }
+        if not omit_unset or "workspaceIds" in vars(self):
+            out["workspaceIds"] = self.workspaceIds
+        return out
+
 class v1BulkExperimentFilters(Printable):
     archived: "typing.Optional[bool]" = None
     description: "typing.Optional[str]" = None
@@ -6662,6 +6692,40 @@ class v1LimitedJob(Printable):
             out["weight"] = None if self.weight is None else dump_float(self.weight)
         return out
 
+class v1ListRPsBoundToWorkspaceResponse(Printable):
+    pagination: "typing.Optional[v1Pagination]" = None
+    resourcePools: "typing.Optional[typing.Sequence[str]]" = None
+
+    def __init__(
+        self,
+        *,
+        pagination: "typing.Union[v1Pagination, None, Unset]" = _unset,
+        resourcePools: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
+    ):
+        if not isinstance(pagination, Unset):
+            self.pagination = pagination
+        if not isinstance(resourcePools, Unset):
+            self.resourcePools = resourcePools
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1ListRPsBoundToWorkspaceResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "pagination" in obj:
+            kwargs["pagination"] = v1Pagination.from_json(obj["pagination"]) if obj["pagination"] is not None else None
+        if "resourcePools" in obj:
+            kwargs["resourcePools"] = obj["resourcePools"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "pagination" in vars(self):
+            out["pagination"] = None if self.pagination is None else self.pagination.to_json(omit_unset)
+        if not omit_unset or "resourcePools" in vars(self):
+            out["resourcePools"] = self.resourcePools
+        return out
+
 class v1ListRolesRequest(Printable):
     offset: "typing.Optional[int]" = None
 
@@ -6716,6 +6780,40 @@ class v1ListRolesResponse(Printable):
             "pagination": self.pagination.to_json(omit_unset),
             "roles": [x.to_json(omit_unset) for x in self.roles],
         }
+        return out
+
+class v1ListWorkspacesBoundToRPResponse(Printable):
+    pagination: "typing.Optional[v1Pagination]" = None
+    workspaceIds: "typing.Optional[typing.Sequence[int]]" = None
+
+    def __init__(
+        self,
+        *,
+        pagination: "typing.Union[v1Pagination, None, Unset]" = _unset,
+        workspaceIds: "typing.Union[typing.Sequence[int], None, Unset]" = _unset,
+    ):
+        if not isinstance(pagination, Unset):
+            self.pagination = pagination
+        if not isinstance(workspaceIds, Unset):
+            self.workspaceIds = workspaceIds
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1ListWorkspacesBoundToRPResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "pagination" in obj:
+            kwargs["pagination"] = v1Pagination.from_json(obj["pagination"]) if obj["pagination"] is not None else None
+        if "workspaceIds" in obj:
+            kwargs["workspaceIds"] = obj["workspaceIds"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "pagination" in vars(self):
+            out["pagination"] = None if self.pagination is None else self.pagination.to_json(omit_unset)
+        if not omit_unset or "workspaceIds" in vars(self):
+            out["workspaceIds"] = self.workspaceIds
         return out
 
 class v1LocationType(DetEnum):
@@ -7569,6 +7667,36 @@ class v1OrderBy(DetEnum):
     ASC = "ORDER_BY_ASC"
     DESC = "ORDER_BY_DESC"
 
+class v1OverwriteRPWorkspaceBindingsRequest(Printable):
+    workspaceIds: "typing.Optional[typing.Sequence[int]]" = None
+
+    def __init__(
+        self,
+        *,
+        resourcePoolName: str,
+        workspaceIds: "typing.Union[typing.Sequence[int], None, Unset]" = _unset,
+    ):
+        self.resourcePoolName = resourcePoolName
+        if not isinstance(workspaceIds, Unset):
+            self.workspaceIds = workspaceIds
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1OverwriteRPWorkspaceBindingsRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "resourcePoolName": obj["resourcePoolName"],
+        }
+        if "workspaceIds" in obj:
+            kwargs["workspaceIds"] = obj["workspaceIds"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "resourcePoolName": self.resourcePoolName,
+        }
+        if not omit_unset or "workspaceIds" in vars(self):
+            out["workspaceIds"] = self.workspaceIds
+        return out
+
 class v1Pagination(Printable):
     endIndex: "typing.Optional[int]" = None
     limit: "typing.Optional[int]" = None
@@ -8216,6 +8344,8 @@ class v1PatchUserResponse(Printable):
 class v1PatchWorkspace(Printable):
     agentUserGroup: "typing.Optional[v1AgentUserGroup]" = None
     checkpointStorageConfig: "typing.Optional[typing.Dict[str, typing.Any]]" = None
+    defaultAuxPool: "typing.Optional[str]" = None
+    defaultComputePool: "typing.Optional[str]" = None
     name: "typing.Optional[str]" = None
 
     def __init__(
@@ -8223,12 +8353,18 @@ class v1PatchWorkspace(Printable):
         *,
         agentUserGroup: "typing.Union[v1AgentUserGroup, None, Unset]" = _unset,
         checkpointStorageConfig: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
+        defaultAuxPool: "typing.Union[str, None, Unset]" = _unset,
+        defaultComputePool: "typing.Union[str, None, Unset]" = _unset,
         name: "typing.Union[str, None, Unset]" = _unset,
     ):
         if not isinstance(agentUserGroup, Unset):
             self.agentUserGroup = agentUserGroup
         if not isinstance(checkpointStorageConfig, Unset):
             self.checkpointStorageConfig = checkpointStorageConfig
+        if not isinstance(defaultAuxPool, Unset):
+            self.defaultAuxPool = defaultAuxPool
+        if not isinstance(defaultComputePool, Unset):
+            self.defaultComputePool = defaultComputePool
         if not isinstance(name, Unset):
             self.name = name
 
@@ -8240,6 +8376,10 @@ class v1PatchWorkspace(Printable):
             kwargs["agentUserGroup"] = v1AgentUserGroup.from_json(obj["agentUserGroup"]) if obj["agentUserGroup"] is not None else None
         if "checkpointStorageConfig" in obj:
             kwargs["checkpointStorageConfig"] = obj["checkpointStorageConfig"]
+        if "defaultAuxPool" in obj:
+            kwargs["defaultAuxPool"] = obj["defaultAuxPool"]
+        if "defaultComputePool" in obj:
+            kwargs["defaultComputePool"] = obj["defaultComputePool"]
         if "name" in obj:
             kwargs["name"] = obj["name"]
         return cls(**kwargs)
@@ -8251,6 +8391,10 @@ class v1PatchWorkspace(Printable):
             out["agentUserGroup"] = None if self.agentUserGroup is None else self.agentUserGroup.to_json(omit_unset)
         if not omit_unset or "checkpointStorageConfig" in vars(self):
             out["checkpointStorageConfig"] = self.checkpointStorageConfig
+        if not omit_unset or "defaultAuxPool" in vars(self):
+            out["defaultAuxPool"] = self.defaultAuxPool
+        if not omit_unset or "defaultComputePool" in vars(self):
+            out["defaultComputePool"] = self.defaultComputePool
         if not omit_unset or "name" in vars(self):
             out["name"] = self.name
         return out
@@ -9012,6 +9156,8 @@ class v1PostWebhookResponse(Printable):
 class v1PostWorkspaceRequest(Printable):
     agentUserGroup: "typing.Optional[v1AgentUserGroup]" = None
     checkpointStorageConfig: "typing.Optional[typing.Dict[str, typing.Any]]" = None
+    defaultAuxPool: "typing.Optional[str]" = None
+    defaultComputePool: "typing.Optional[str]" = None
 
     def __init__(
         self,
@@ -9019,12 +9165,18 @@ class v1PostWorkspaceRequest(Printable):
         name: str,
         agentUserGroup: "typing.Union[v1AgentUserGroup, None, Unset]" = _unset,
         checkpointStorageConfig: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
+        defaultAuxPool: "typing.Union[str, None, Unset]" = _unset,
+        defaultComputePool: "typing.Union[str, None, Unset]" = _unset,
     ):
         self.name = name
         if not isinstance(agentUserGroup, Unset):
             self.agentUserGroup = agentUserGroup
         if not isinstance(checkpointStorageConfig, Unset):
             self.checkpointStorageConfig = checkpointStorageConfig
+        if not isinstance(defaultAuxPool, Unset):
+            self.defaultAuxPool = defaultAuxPool
+        if not isinstance(defaultComputePool, Unset):
+            self.defaultComputePool = defaultComputePool
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1PostWorkspaceRequest":
@@ -9035,6 +9187,10 @@ class v1PostWorkspaceRequest(Printable):
             kwargs["agentUserGroup"] = v1AgentUserGroup.from_json(obj["agentUserGroup"]) if obj["agentUserGroup"] is not None else None
         if "checkpointStorageConfig" in obj:
             kwargs["checkpointStorageConfig"] = obj["checkpointStorageConfig"]
+        if "defaultAuxPool" in obj:
+            kwargs["defaultAuxPool"] = obj["defaultAuxPool"]
+        if "defaultComputePool" in obj:
+            kwargs["defaultComputePool"] = obj["defaultComputePool"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -9045,6 +9201,10 @@ class v1PostWorkspaceRequest(Printable):
             out["agentUserGroup"] = None if self.agentUserGroup is None else self.agentUserGroup.to_json(omit_unset)
         if not omit_unset or "checkpointStorageConfig" in vars(self):
             out["checkpointStorageConfig"] = self.checkpointStorageConfig
+        if not omit_unset or "defaultAuxPool" in vars(self):
+            out["defaultAuxPool"] = self.defaultAuxPool
+        if not omit_unset or "defaultComputePool" in vars(self):
+            out["defaultComputePool"] = self.defaultComputePool
         return out
 
 class v1PostWorkspaceResponse(Printable):
@@ -12971,6 +13131,36 @@ class v1UnarchiveExperimentsResponse(Printable):
         }
         return out
 
+class v1UnbindRPFromWorkspaceRequest(Printable):
+    workspaceIds: "typing.Optional[typing.Sequence[int]]" = None
+
+    def __init__(
+        self,
+        *,
+        resourcePoolName: str,
+        workspaceIds: "typing.Union[typing.Sequence[int], None, Unset]" = _unset,
+    ):
+        self.resourcePoolName = resourcePoolName
+        if not isinstance(workspaceIds, Unset):
+            self.workspaceIds = workspaceIds
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1UnbindRPFromWorkspaceRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "resourcePoolName": obj["resourcePoolName"],
+        }
+        if "workspaceIds" in obj:
+            kwargs["workspaceIds"] = obj["workspaceIds"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "resourcePoolName": self.resourcePoolName,
+        }
+        if not omit_unset or "workspaceIds" in vars(self):
+            out["workspaceIds"] = self.workspaceIds
+        return out
+
 class v1UpdateGroupRequest(Printable):
     addUsers: "typing.Optional[typing.Sequence[int]]" = None
     name: "typing.Optional[str]" = None
@@ -13445,6 +13635,8 @@ class v1WorkloadContainer(Printable):
 class v1Workspace(Printable):
     agentUserGroup: "typing.Optional[v1AgentUserGroup]" = None
     checkpointStorageConfig: "typing.Optional[typing.Dict[str, typing.Any]]" = None
+    defaultAuxPool: "typing.Optional[str]" = None
+    defaultComputePool: "typing.Optional[str]" = None
     pinnedAt: "typing.Optional[str]" = None
 
     def __init__(
@@ -13463,6 +13655,8 @@ class v1Workspace(Printable):
         username: str,
         agentUserGroup: "typing.Union[v1AgentUserGroup, None, Unset]" = _unset,
         checkpointStorageConfig: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
+        defaultAuxPool: "typing.Union[str, None, Unset]" = _unset,
+        defaultComputePool: "typing.Union[str, None, Unset]" = _unset,
         pinnedAt: "typing.Union[str, None, Unset]" = _unset,
     ):
         self.archived = archived
@@ -13480,6 +13674,10 @@ class v1Workspace(Printable):
             self.agentUserGroup = agentUserGroup
         if not isinstance(checkpointStorageConfig, Unset):
             self.checkpointStorageConfig = checkpointStorageConfig
+        if not isinstance(defaultAuxPool, Unset):
+            self.defaultAuxPool = defaultAuxPool
+        if not isinstance(defaultComputePool, Unset):
+            self.defaultComputePool = defaultComputePool
         if not isinstance(pinnedAt, Unset):
             self.pinnedAt = pinnedAt
 
@@ -13502,6 +13700,10 @@ class v1Workspace(Printable):
             kwargs["agentUserGroup"] = v1AgentUserGroup.from_json(obj["agentUserGroup"]) if obj["agentUserGroup"] is not None else None
         if "checkpointStorageConfig" in obj:
             kwargs["checkpointStorageConfig"] = obj["checkpointStorageConfig"]
+        if "defaultAuxPool" in obj:
+            kwargs["defaultAuxPool"] = obj["defaultAuxPool"]
+        if "defaultComputePool" in obj:
+            kwargs["defaultComputePool"] = obj["defaultComputePool"]
         if "pinnedAt" in obj:
             kwargs["pinnedAt"] = obj["pinnedAt"]
         return cls(**kwargs)
@@ -13524,6 +13726,10 @@ class v1Workspace(Printable):
             out["agentUserGroup"] = None if self.agentUserGroup is None else self.agentUserGroup.to_json(omit_unset)
         if not omit_unset or "checkpointStorageConfig" in vars(self):
             out["checkpointStorageConfig"] = self.checkpointStorageConfig
+        if not omit_unset or "defaultAuxPool" in vars(self):
+            out["defaultAuxPool"] = self.defaultAuxPool
+        if not omit_unset or "defaultComputePool" in vars(self):
+            out["defaultComputePool"] = self.defaultComputePool
         if not omit_unset or "pinnedAt" in vars(self):
             out["pinnedAt"] = self.pinnedAt
         return out
@@ -13863,6 +14069,27 @@ def post_AssignRoles(
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_AssignRoles", _resp)
+
+def post_BindRPToWorkspace(
+    session: "api.Session",
+    *,
+    body: "v1BindRPToWorkspaceRequest",
+    resourcePoolName: str,
+) -> None:
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/resource-pools/{resourcePoolName}/workspace-bindings",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("post_BindRPToWorkspace", _resp)
 
 def post_CancelExperiment(
     session: "api.Session",
@@ -16418,6 +16645,31 @@ def post_LaunchTensorboard(
         return v1LaunchTensorboardResponse.from_json(_resp.json())
     raise APIHttpError("post_LaunchTensorboard", _resp)
 
+def get_ListRPsBoundToWorkspace(
+    session: "api.Session",
+    *,
+    workspaceId: int,
+    limit: "typing.Optional[int]" = None,
+    offset: "typing.Optional[int]" = None,
+) -> "v1ListRPsBoundToWorkspaceResponse":
+    _params = {
+        "limit": limit,
+        "offset": offset,
+    }
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/workspaces/{workspaceId}/available-resource-pools",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1ListRPsBoundToWorkspaceResponse.from_json(_resp.json())
+    raise APIHttpError("get_ListRPsBoundToWorkspace", _resp)
+
 def post_ListRoles(
     session: "api.Session",
     *,
@@ -16437,6 +16689,31 @@ def post_ListRoles(
     if _resp.status_code == 200:
         return v1ListRolesResponse.from_json(_resp.json())
     raise APIHttpError("post_ListRoles", _resp)
+
+def get_ListWorkspacesBoundToRP(
+    session: "api.Session",
+    *,
+    resourcePoolName: str,
+    limit: "typing.Optional[int]" = None,
+    offset: "typing.Optional[int]" = None,
+) -> "v1ListWorkspacesBoundToRPResponse":
+    _params = {
+        "limit": limit,
+        "offset": offset,
+    }
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/resource-pools/{resourcePoolName}/workspace-bindings",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1ListWorkspacesBoundToRPResponse.from_json(_resp.json())
+    raise APIHttpError("get_ListWorkspacesBoundToRP", _resp)
 
 def post_Login(
     session: "api.Session",
@@ -16676,6 +16953,27 @@ def post_NotifyContainerRunning(
     if _resp.status_code == 200:
         return v1NotifyContainerRunningResponse.from_json(_resp.json())
     raise APIHttpError("post_NotifyContainerRunning", _resp)
+
+def put_OverwriteRPWorkspaceBindings(
+    session: "api.Session",
+    *,
+    body: "v1OverwriteRPWorkspaceBindingsRequest",
+    resourcePoolName: str,
+) -> None:
+    _params = None
+    _resp = session._do_request(
+        method="PUT",
+        path=f"/api/v1/resource-pools/{resourcePoolName}/workspace-bindings",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("put_OverwriteRPWorkspaceBindings", _resp)
 
 def patch_PatchCheckpoints(
     session: "api.Session",
@@ -18085,6 +18383,27 @@ def post_UnarchiveWorkspace(
         return
     raise APIHttpError("post_UnarchiveWorkspace", _resp)
 
+def delete_UnbindRPFromWorkspace(
+    session: "api.Session",
+    *,
+    body: "v1UnbindRPFromWorkspaceRequest",
+    resourcePoolName: str,
+) -> None:
+    _params = None
+    _resp = session._do_request(
+        method="DELETE",
+        path=f"/api/v1/resource-pools/{resourcePoolName}/workspace-bindings",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("delete_UnbindRPFromWorkspace", _resp)
+
 def post_UnpinWorkspace(
     session: "api.Session",
     *,
@@ -18189,7 +18508,9 @@ Paginated = typing.Union[
     v1GetUsersResponse,
     v1GetWorkspaceProjectsResponse,
     v1GetWorkspacesResponse,
+    v1ListRPsBoundToWorkspaceResponse,
     v1ListRolesResponse,
+    v1ListWorkspacesBoundToRPResponse,
     v1SearchExperimentsResponse,
     v1SearchRolesAssignableToScopeResponse,
 ]
