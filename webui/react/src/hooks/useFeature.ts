@@ -8,7 +8,7 @@ export type ValidFeature = 'trials_comparison' | 'dashboard' | 'explist_v2' | 'c
 const FeatureDefault: { [K in ValidFeature]: boolean } = {
   chart: false,
   dashboard: false,
-  explist_v2: true,
+  explist_v2: false,
   trials_comparison: false,
 };
 
