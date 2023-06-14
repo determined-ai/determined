@@ -199,6 +199,7 @@ func (a *apiServer) TrialLogs(
 			Limit:           req.Limit,
 			Follow:          req.Follow,
 			AllocationIds:   nil,
+			AgentIds:        req.AgentIds,
 			ContainerIds:    req.ContainerIds,
 			RankIds:         req.RankIds,
 			Levels:          req.Levels,
