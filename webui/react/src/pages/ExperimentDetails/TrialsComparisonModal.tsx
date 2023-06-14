@@ -131,6 +131,15 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
     [getCheckpointSize, trialsDetails],
   );
 
+  const experimentMap = useMemo(() => {
+    return Array.isArray(experiment)
+      ? experiment.reduce(
+          (acc, cur) => ({ ...acc, [cur.id]: cur }),
+          {} as Record<number, ExperimentItem>,
+        )
+      : { [experiment.id]: experiment };
+  }, [experiment]);
+
   const experimentIds = useMemo(
     () => (Array.isArray(experiment) ? experiment.map((exp) => exp.id) : [experiment.id]),
     [experiment],
@@ -168,8 +177,8 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
     () =>
       trialsDetails.reduce((metricValues, trial) => {
         metricValues[trial.id] = Object.values(trial.summaryMetrics ?? {}).reduce(
-          (trialMetrics, curMetricType: Record<string, MetricSummary>) => {
-            for (const [metricName, metricSummary] of Object.entries(curMetricType)) {
+          (trialMetrics, curMetricType: Record<string, MetricSummary> | undefined) => {
+            for (const [metricName, metricSummary] of Object.entries(curMetricType ?? {})) {
               trialMetrics[metricName] = metricSummary.last;
             }
             return trialMetrics;
@@ -223,9 +232,13 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
                   closable={!!onUnselect}
                   onClose={() => handleTrialUnselect(trial.id)}>
                   <Link path={paths.trialDetails(trial.id, trial.experimentId)}>
-                    {Array.isArray(experiment)
-                      ? `Experiment ${trial.experimentId}`
-                      : `Trial ${trial.id}`}
+                    {Array.isArray(experiment) ? (
+                      <Typography.Paragraph ellipsis={{ tooltip: true }}>
+                        {experimentMap[trial.experimentId].name}
+                      </Typography.Paragraph>
+                    ) : (
+                      `Trial ${trial.id}`
+                    )}
                   </Link>
                 </Tag>
               </div>
@@ -239,6 +252,26 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
               </div>
             ))}
           </div>
+          {Array.isArray(experiment) && (
+            <>
+              <div className={css.row}>
+                <div className={[css.cell, css.sticky, css.indent].join(' ')}>Experiment ID</div>
+                {trialsDetails.map((trial) => (
+                  <div className={css.cell} key={trial.id}>
+                    {trial.experimentId}
+                  </div>
+                ))}
+              </div>
+              <div className={css.row}>
+                <div className={[css.cell, css.sticky, css.indent].join(' ')}>Trial ID</div>
+                {trialsDetails.map((trial) => (
+                  <div className={css.cell} key={trial.id}>
+                    {trial.id}
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
           <div className={css.row}>
             <div className={[css.cell, css.sticky, css.indent].join(' ')}>Batched Processed</div>
             {trialsDetails.map((trial) => (

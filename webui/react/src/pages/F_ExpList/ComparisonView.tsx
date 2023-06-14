@@ -56,8 +56,8 @@ const ComparisonView: React.FC<Props> = ({
       },
       {
         children: <TrialsComparisonTable experiment={experiments} trials={trials} />,
-        key: 'configurations',
-        label: 'Configurations',
+        key: 'details',
+        label: 'Details',
       },
     ];
   }, [selectedExperiments, projectId, experiments, trials]);

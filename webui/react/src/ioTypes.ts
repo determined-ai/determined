@@ -118,15 +118,15 @@ export type ioTypeMetric = io.TypeOf<typeof ioMetric>;
 const ioMetricSummary = io.type({
   count: io.number,
   last: io.union([io.number, io.string, io.boolean]),
-  max: optional(io.number),
-  min: optional(io.number),
-  sum: optional(io.number),
+  max: io.union([io.number, io.undefined]),
+  min: io.union([io.number, io.undefined]),
+  sum: io.union([io.number, io.undefined]),
   type: io.union([io.literal('string'), io.literal('number'), io.literal('boolean')]),
 });
 
 export const ioSummaryMetrics = io.type({
-  avg_metrics: io.record(io.string, ioMetricSummary),
-  validation_metrics: io.record(io.string, ioMetricSummary),
+  avg_metrics: io.union([io.record(io.string, ioMetricSummary), io.undefined]),
+  validation_metrics: io.union([io.record(io.string, ioMetricSummary), io.undefined]),
 });
 export type ioSummaryMetrics = io.TypeOf<typeof ioSummaryMetrics>;
 
