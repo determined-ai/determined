@@ -15,6 +15,11 @@ import Spinner from 'components/Spinner/Spinner';
 import { keyEmitter, KeyEvent } from 'hooks/useKeyTracker';
 import usePermissions from 'hooks/usePermissions';
 import { SettingsConfig, useSettings } from 'hooks/useSettings';
+import shortCutSettingsConfig, {
+  shortcutMet,
+  Settings as ShortcutSettings,
+  shortcutToString,
+} from 'pages/Settings/UserSettings.settings';
 import WorkspaceQuickSearch from 'pages/WorkspaceDetails/WorkspaceQuickSearch';
 import WorkspaceActionDropdown from 'pages/WorkspaceList/WorkspaceActionDropdown';
 import { paths } from 'routes/utils';
@@ -127,6 +132,9 @@ const NavigationSideBar: React.FC = () => {
   const { ui } = useUI();
 
   const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
+  const {
+    settings: { navbarCollapsed },
+  } = useSettings<ShortcutSettings>(shortCutSettingsConfig);
 
   const WorkspaceCreateModal = useModal(WorkspaceCreateModalComponent);
 
@@ -197,7 +205,7 @@ const NavigationSideBar: React.FC = () => {
 
   useEffect(() => {
     const keyDownListener = (e: KeyboardEvent) => {
-      if (e.code === 'KeyU' && (e.ctrlKey || e.metaKey)) {
+      if (shortcutMet(e, navbarCollapsed)) {
         handleCollapse();
       }
     };
@@ -207,7 +215,7 @@ const NavigationSideBar: React.FC = () => {
     return () => {
       keyEmitter.off(KeyEvent.KeyDown, keyDownListener);
     };
-  }, [handleCollapse]);
+  }, [handleCollapse, navbarCollapsed]);
 
   const { canAdministrateUsers } = usePermissions();
 
@@ -348,7 +356,9 @@ const NavigationSideBar: React.FC = () => {
               icon={settings.navbarCollapsed ? 'expand' : 'collapse'}
               label={settings.navbarCollapsed ? 'Expand' : 'Collapse'}
               tooltip={
-                settings.navbarCollapsed ? 'Expand (Ctrl/Cmd + U)' : 'Collapse (Ctrl/Cmd + U)'
+                settings.navbarCollapsed
+                  ? `Expand (${shortcutToString(navbarCollapsed)})`
+                  : `Collapse (${shortcutToString(navbarCollapsed)})`
               }
               onClick={handleCollapse}
             />
