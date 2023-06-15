@@ -2,5 +2,5 @@
 
 **Bug Fixes**
 
--  Users: Fix a bug where if a user is renamed an error was returned trying to create a user with
-   the original username of the renamed user.
+-  Users: Resolved an issue that was causing an error when attempting to create a new user with a
+   username that was previously used by a renamed user.
