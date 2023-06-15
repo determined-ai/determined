@@ -400,8 +400,8 @@ def test_torch_batch_process_reduce_metrics(
     # - worker 0 works on [0, 1, 2, 3, 4], sum = 10
     # - worker 1 works on [5, 6, 7, 8, 9], sum = 35
     # The metric reducer simpler sum up all the values.
-    # Therefore, by the end of the iteration, metric_reducer 0 would have self.sum == 15
-    # metric_reducer 1 would have self.sum == 40
+    # Therefore, by the end of the iteration, metric_reducer 0 would have self.sum == 10
+    # metric_reducer 1 would have self.sum == 35
     mock_get_cluster_info.return_value = _get_det_info(slot_ids=[0, 1])
     index_dataset = _get_index_dataset(10)
     mock_core_context = _get_core_context(rank=0)
