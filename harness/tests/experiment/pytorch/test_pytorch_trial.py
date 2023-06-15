@@ -937,15 +937,22 @@ class TestPyTorchTrial:
         rdzv_endpoint = "localhost:29400"
         rdzv_id = str(uuid.uuid4())
 
-        launch_config = launcher.LaunchConfig(min_nodes=1, max_nodes=1, nproc_per_node=2, run_id=rdzv_id,
-                                              max_restarts=0, rdzv_endpoint=rdzv_endpoint, rdzv_backend=rdzv_backend)
+        launch_config = launcher.LaunchConfig(
+            min_nodes=1,
+            max_nodes=1,
+            nproc_per_node=2,
+            run_id=rdzv_id,
+            max_restarts=0,
+            rdzv_endpoint=rdzv_endpoint,
+            rdzv_backend=rdzv_backend,
+        )
 
         root_logfile = tmp_path.joinpath("root_test.log")
 
         outputs = launcher.elastic_launch(launch_config, self.run_mnist)(tmp_path)
         outputs = launcher.elastic_launch(launch_config, self.run_mnist)(tmp_path, outputs[0])
 
-        with open(root_logfile, 'r') as f:
+        with open(root_logfile, "r") as f:
             root_log_output = f.readlines()
 
         validation_size = 10000
@@ -967,7 +974,6 @@ class TestPyTorchTrial:
     @pytest.mark.skipif(torch.cuda.device_count() < 2, reason="not enough gpus")
     @pytest.mark.gpu_parallel
     def test_cifar10_parallel(self, tmp_path: pathlib.Path):
-
         # set up distributed backend.
         os.environ[det._DistributedBackend.TORCH] = str(1)
 
@@ -975,8 +981,15 @@ class TestPyTorchTrial:
         rdzv_endpoint = "localhost:29400"
         rdzv_id = str(uuid.uuid4())
 
-        launch_config = launcher.LaunchConfig(min_nodes=1, max_nodes=1, nproc_per_node=2, run_id=rdzv_id,
-                                              max_restarts=0, rdzv_endpoint=rdzv_endpoint, rdzv_backend=rdzv_backend)
+        launch_config = launcher.LaunchConfig(
+            min_nodes=1,
+            max_nodes=1,
+            nproc_per_node=2,
+            run_id=rdzv_id,
+            max_restarts=0,
+            rdzv_endpoint=rdzv_endpoint,
+            rdzv_backend=rdzv_backend,
+        )
 
         outputs = launcher.elastic_launch(launch_config, self.run_cifar10)(tmp_path)
         outputs = launcher.elastic_launch(launch_config, self.run_cifar10)(tmp_path, outputs[0])
@@ -984,7 +997,6 @@ class TestPyTorchTrial:
     @pytest.mark.skipif(torch.cuda.device_count() < 2, reason="not enough gpus")
     @pytest.mark.gpu_parallel
     def test_gan_parallel(self, tmp_path: pathlib.Path):
-
         # set up distributed backend.
         os.environ[det._DistributedBackend.TORCH] = str(1)
 
@@ -992,8 +1004,15 @@ class TestPyTorchTrial:
         rdzv_endpoint = "localhost:29400"
         rdzv_id = str(uuid.uuid4())
 
-        launch_config = launcher.LaunchConfig(min_nodes=1, max_nodes=1, nproc_per_node=2, run_id=rdzv_id,
-                                              max_restarts=0, rdzv_endpoint=rdzv_endpoint, rdzv_backend=rdzv_backend)
+        launch_config = launcher.LaunchConfig(
+            min_nodes=1,
+            max_nodes=1,
+            nproc_per_node=2,
+            run_id=rdzv_id,
+            max_restarts=0,
+            rdzv_endpoint=rdzv_endpoint,
+            rdzv_backend=rdzv_backend,
+        )
 
         outputs = launcher.elastic_launch(launch_config, self.run_gan)(tmp_path)
         outputs = launcher.elastic_launch(launch_config, self.run_gan)(tmp_path, outputs[0])
@@ -1001,7 +1020,6 @@ class TestPyTorchTrial:
     @pytest.mark.skipif(torch.cuda.device_count() < 2, reason="not enough gpus")
     @pytest.mark.gpu_parallel
     def test_gradient_aggregation_parallel(self, tmp_path: pathlib.Path):
-
         # set up distributed backend.
         os.environ[det._DistributedBackend.TORCH] = str(1)
 
@@ -1009,16 +1027,23 @@ class TestPyTorchTrial:
         rdzv_endpoint = "localhost:29400"
         rdzv_id = str(uuid.uuid4())
 
-        launch_config = launcher.LaunchConfig(min_nodes=1, max_nodes=1, nproc_per_node=2, run_id=rdzv_id,
-                                              max_restarts=0, rdzv_endpoint=rdzv_endpoint, rdzv_backend=rdzv_backend)
+        launch_config = launcher.LaunchConfig(
+            min_nodes=1,
+            max_nodes=1,
+            nproc_per_node=2,
+            run_id=rdzv_id,
+            max_restarts=0,
+            rdzv_endpoint=rdzv_endpoint,
+            rdzv_backend=rdzv_backend,
+        )
 
         val_metrics = launcher.elastic_launch(launch_config, self.run_identity)(tmp_path)
 
         # weights returned by both models are the same.
         model_1_metrics = val_metrics[0]
-        model_1_weights = [model_1_metrics[i]['weight'] for i in range(len(model_1_metrics))]
+        model_1_weights = [model_1_metrics[i]["weight"] for i in range(len(model_1_metrics))]
         model_2_metrics = val_metrics[1]
-        model_2_weights = [model_2_metrics[i]['weight'] for i in range(len(model_2_metrics))]
+        model_2_weights = [model_2_metrics[i]["weight"] for i in range(len(model_2_metrics))]
 
         expected_weights = calculate_gradients(num_epochs=1)
 
@@ -1041,11 +1066,20 @@ class TestPyTorchTrial:
         rdzv_endpoint = "localhost:29400"
         rdzv_id = str(uuid.uuid4())
 
-        launch_config = launcher.LaunchConfig(min_nodes=1, max_nodes=1, nproc_per_node=2, run_id=rdzv_id,
-                                              max_restarts=0, rdzv_endpoint=rdzv_endpoint, rdzv_backend=rdzv_backend)
+        launch_config = launcher.LaunchConfig(
+            min_nodes=1,
+            max_nodes=1,
+            nproc_per_node=2,
+            run_id=rdzv_id,
+            max_restarts=0,
+            rdzv_endpoint=rdzv_endpoint,
+            rdzv_backend=rdzv_backend,
+        )
 
         outputs = launcher.elastic_launch(launch_config, self.run_amp)(tmp_path, api_style)
-        outputs = launcher.elastic_launch(launch_config, self.run_amp)(tmp_path, api_style, outputs[0])
+        outputs = launcher.elastic_launch(launch_config, self.run_amp)(
+            tmp_path, api_style, outputs[0]
+        )
 
     @pytest.mark.skipif(torch.cuda.device_count() < 2, reason="not enough gpus")
     @pytest.mark.gpu_parallel
@@ -1059,16 +1093,21 @@ class TestPyTorchTrial:
 
         num_procs = 2
 
-        launch_config = launcher.LaunchConfig(min_nodes=1, max_nodes=1, nproc_per_node=num_procs, run_id=rdzv_id,
-                                              max_restarts=0, rdzv_endpoint=rdzv_endpoint, rdzv_backend=rdzv_backend)
+        launch_config = launcher.LaunchConfig(
+            min_nodes=1,
+            max_nodes=1,
+            nproc_per_node=num_procs,
+            run_id=rdzv_id,
+            max_restarts=0,
+            rdzv_endpoint=rdzv_endpoint,
+            rdzv_backend=rdzv_backend,
+        )
 
         outputs = launcher.elastic_launch(launch_config, self.run_no_op)(tmp_path)
 
         log_output = sum([outputs[i] for i in range(num_procs)], [])
 
-        patterns = [
-            f"finished train_batch for rank {i}" for i in range(num_procs)
-        ]
+        patterns = [f"finished train_batch for rank {i}" for i in range(num_procs)]
 
         utils.assert_patterns_in_logs(log_output, patterns)
 
@@ -1085,13 +1124,21 @@ class TestPyTorchTrial:
 
         num_procs = 2
 
-        launch_config = launcher.LaunchConfig(min_nodes=1, max_nodes=1, nproc_per_node=num_procs, run_id=rdzv_id,
-                                              max_restarts=0, rdzv_endpoint=rdzv_endpoint, rdzv_backend=rdzv_backend)
+        launch_config = launcher.LaunchConfig(
+            min_nodes=1,
+            max_nodes=1,
+            nproc_per_node=num_procs,
+            run_id=rdzv_id,
+            max_restarts=0,
+            rdzv_endpoint=rdzv_endpoint,
+            rdzv_backend=rdzv_backend,
+        )
 
         num_steps = 10
         global_batch_size = 2
-        outputs = launcher.elastic_launch(launch_config, self.run_no_op)(tmp_path, num_steps,
-                                                                         global_batch_size, dataset_len)
+        outputs = launcher.elastic_launch(launch_config, self.run_no_op)(
+            tmp_path, num_steps, global_batch_size, dataset_len
+        )
 
         log_output = sum([outputs[i] for i in range(num_procs)], [])
 
@@ -1111,7 +1158,7 @@ class TestPyTorchTrial:
         root_logfile = tmp_path.joinpath("root_test.log")
 
         root_file_handler = logging.FileHandler(root_logfile, mode="a+")
-        root_logger = logging.getLogger() # root logger
+        root_logger = logging.getLogger()  # root logger
         root_logger.setLevel(logging.INFO)
         root_logger.addHandler(root_file_handler)
 
@@ -1125,7 +1172,7 @@ class TestPyTorchTrial:
             checkpoint_dir=checkpoint_dir,
         )
         exp_config.update(config)
-        exp_config['searcher']['smaller_is_better'] = True
+        exp_config["searcher"]["smaller_is_better"] = True
 
         # each subprocess must import separately as trial_class cannot be pickled.
         example_path = utils.tutorials_path("mnist_pytorch/model_def.py")
@@ -1149,7 +1196,7 @@ class TestPyTorchTrial:
                 tmp_path=tmp_path,
                 exp_config=exp_config,
                 steps=(1, 1),
-                batches_trained=batches_trained
+                batches_trained=batches_trained,
             )
             return True
 
@@ -1166,7 +1213,7 @@ class TestPyTorchTrial:
             checkpoint_dir=checkpoint_dir,
         )
         exp_config.update(config)
-        exp_config['searcher']['smaller_is_better'] = True
+        exp_config["searcher"]["smaller_is_better"] = True
 
         # each subprocess must import separately as trial_class cannot be pickled.
         example_path = utils.cv_examples_path("cifar10_pytorch/model_def.py")
@@ -1189,8 +1236,8 @@ class TestPyTorchTrial:
                 slots_per_trial=2,
                 tmp_path=tmp_path,
                 exp_config=exp_config,
-                steps=(1,1),
-                batches_trained=batches_trained
+                steps=(1, 1),
+                batches_trained=batches_trained,
             )
             return True
 
@@ -1207,7 +1254,7 @@ class TestPyTorchTrial:
             checkpoint_dir=checkpoint_dir,
         )
         exp_config.update(config)
-        exp_config['searcher']['smaller_is_better'] = True
+        exp_config["searcher"]["smaller_is_better"] = True
 
         # each subprocess must import separately as trial_class cannot be pickled.
         example_path = utils.gan_examples_path("gan_mnist_pytorch/model_def.py")
@@ -1231,7 +1278,7 @@ class TestPyTorchTrial:
                 tmp_path=tmp_path,
                 exp_config=exp_config,
                 steps=(1, 1),
-                batches_trained=batches_trained
+                batches_trained=batches_trained,
             )
             return True
 
@@ -1248,7 +1295,7 @@ class TestPyTorchTrial:
             checkpoint_dir=checkpoint_dir,
         )
         exp_config.update(config)
-        exp_config['searcher']['smaller_is_better'] = True
+        exp_config["searcher"]["smaller_is_better"] = True
 
         # each subprocess must import separately as trial_class cannot be pickled.
         example_path = utils.fixtures_path("pytorch_identity/model_def.py")
@@ -1268,7 +1315,7 @@ class TestPyTorchTrial:
             min_checkpoint_batches=16,
             checkpoint_dir=checkpoint_dir,
             tensorboard_path=tensorboard_path,
-            aggregation_frequency=2
+            aggregation_frequency=2,
         )
 
         trial_controller.run()
@@ -1279,15 +1326,19 @@ class TestPyTorchTrial:
 
         return validation_metrics
 
-    def run_amp(self, tmp_path: pathlib.Path, api_style: str, batches_trained: typing.Optional[int] = 0):
+    def run_amp(
+        self, tmp_path: pathlib.Path, api_style: str, batches_trained: typing.Optional[int] = 0
+    ):
         checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
         class_selector = {
             "apex": "MNistApexAMPTrial",
             "auto": "MNistAutoAMPTrial",
-            "manual": "MNistManualAMPTrial"
+            "manual": "MNistManualAMPTrial",
         }
 
-        config = utils.load_config(utils.fixtures_path(f"pytorch_amp/{api_style}_amp_distributed.yaml"))
+        config = utils.load_config(
+            utils.fixtures_path(f"pytorch_amp/{api_style}_amp_distributed.yaml")
+        )
         config = config.copy()
         config.setdefault("profiling", {})
         config["profiling"]["enabled"] = True
@@ -1301,8 +1352,7 @@ class TestPyTorchTrial:
             checkpoint_dir=checkpoint_dir,
         )
         exp_config.update(config)
-        exp_config['searcher']['smaller_is_better'] = True
-
+        exp_config["searcher"]["smaller_is_better"] = True
 
         # each subprocess must import separately as trial_class cannot be pickled.
         example_path = utils.fixtures_path(f"pytorch_amp/{api_style}_amp_model_def.py")
@@ -1326,17 +1376,23 @@ class TestPyTorchTrial:
                 tmp_path=tmp_path,
                 exp_config=exp_config,
                 steps=(1, 1),
-                batches_trained=batches_trained
+                batches_trained=batches_trained,
             )
             return True
 
-    def run_no_op(self, tmp_path: pathlib.Path, num_steps: int=1, global_batch_size: int=32,  dataset_len: int=64):
+    def run_no_op(
+        self,
+        tmp_path: pathlib.Path,
+        num_steps: int = 1,
+        global_batch_size: int = 32,
+        dataset_len: int = 64,
+    ):
         checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
 
         config = utils.load_config(utils.fixtures_path("pytorch_no_op/const.yaml"))
         hparams = config["hyperparameters"]
-        hparams['dataset_len'] = dataset_len
-        hparams['global_batch_size'] = global_batch_size
+        hparams["dataset_len"] = dataset_len
+        hparams["global_batch_size"] = global_batch_size
 
         exp_config = utils.make_default_exp_config(
             hparams,
@@ -1345,7 +1401,7 @@ class TestPyTorchTrial:
             checkpoint_dir=checkpoint_dir,
         )
         exp_config.update(config)
-        exp_config['searcher']['smaller_is_better'] = True
+        exp_config["searcher"]["smaller_is_better"] = True
 
         # each subprocess must import separately as trial_class cannot be pickled.
         example_path = utils.fixtures_path("pytorch_no_op/model_def.py")
@@ -1361,10 +1417,10 @@ class TestPyTorchTrial:
                 tmp_path=tmp_path,
                 exp_config=exp_config,
                 slots_per_trial=2,
-                steps=num_steps
+                steps=num_steps,
             )
 
-        return f.getvalue().split('\n')
+        return f.getvalue().split("\n")
 
     def checkpoint_and_check_metrics(
         self,
@@ -1460,16 +1516,15 @@ class TestPyTorchTrial:
         trial_class: pytorch.PyTorchTrial,
         tmp_path: pathlib.Path,
         exp_config: typing.Dict,
-        steps: typing.Tuple[int, int] = (1, 1)
+        steps: typing.Tuple[int, int] = (1, 1),
     ) -> None:
-
         # Trial A: train batches and checkpoint
         steps_completed = self.train_for_checkpoint(
             hparams=hparams,
             trial_class=trial_class,
-            tmp_path = tmp_path,
-            exp_config = exp_config,
-            steps = steps[0]
+            tmp_path=tmp_path,
+            exp_config=exp_config,
+            steps=steps[0],
         )
 
         # Trial B: restore from checkpoint and train for more batches
@@ -1479,16 +1534,17 @@ class TestPyTorchTrial:
             tmp_path=tmp_path,
             exp_config=exp_config,
             steps=steps,
-            batches_trained=steps_completed
+            batches_trained=steps_completed,
         )
 
-    def train_for_checkpoint(self,
+    def train_for_checkpoint(
+        self,
         hparams: typing.Dict,
         trial_class: pytorch.PyTorchTrial,
         tmp_path: pathlib.Path,
         exp_config: typing.Dict,
         slots_per_trial: int = 1,
-        steps: int = 1
+        steps: int = 1,
     ) -> int:
         checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
         tensorboard_path = tmp_path.joinpath("tensorboard")
@@ -1504,7 +1560,7 @@ class TestPyTorchTrial:
             min_checkpoint_batches=steps,
             checkpoint_dir=checkpoint_dir,
             tensorboard_path=tensorboard_path,
-            expose_gpus=True
+            expose_gpus=True,
         )
 
         trial_controller.run()
@@ -1521,7 +1577,7 @@ class TestPyTorchTrial:
         exp_config: typing.Dict,
         slots_per_trial: int = 1,
         steps: typing.Tuple[int, int] = (1, 1),
-        batches_trained: int = 0
+        batches_trained: int = 0,
     ) -> None:
         checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
         tensorboard_path = tmp_path.joinpath("tensorboard")
@@ -1539,7 +1595,7 @@ class TestPyTorchTrial:
             tensorboard_path=tensorboard_path,
             latest_checkpoint=os.listdir(checkpoint_dir)[0],
             steps_completed=batches_trained,
-            expose_gpus=True
+            expose_gpus=True,
         )
         trial_controller.run()
 
@@ -1847,7 +1903,7 @@ def create_trial_and_trial_controller(
     max_batches: int = 100,
     min_checkpoint_batches: int = sys.maxsize,
     min_validation_batches: int = sys.maxsize,
-    aggregation_frequency: int = 1
+    aggregation_frequency: int = 1,
 ) -> typing.Tuple[pytorch.PyTorchTrial, pytorch._PyTorchTrialController]:
     assert issubclass(
         trial_class, pytorch.PyTorchTrial
@@ -1875,7 +1931,8 @@ def create_trial_and_trial_controller(
 
     core_context = det.core._dummy_init(
         distributed=distributed_context,
-        checkpoint_storage=checkpoint_dir, tensorboard_path=tensorboard_path
+        checkpoint_storage=checkpoint_dir,
+        tensorboard_path=tensorboard_path,
     )
 
     # do what core_context.__enter__ does.
@@ -1932,8 +1989,10 @@ def create_trial_and_trial_controller(
     trial_controller.training_iterator = iter(trial_controller.training_loader)
     return trial_inst, trial_controller
 
-def calculate_gradients(batch_size: int=4, epoch_size: int=64, num_epochs: int=3) -> typing.List[float]:
 
+def calculate_gradients(
+    batch_size: int = 4, epoch_size: int = 64, num_epochs: int = 3
+) -> typing.List[float]:
     # independently compute expected metrics
     batches = [
         (v[:], v[:])
@@ -1945,7 +2004,9 @@ def calculate_gradients(batch_size: int=4, epoch_size: int=64, num_epochs: int=3
 
     lr = 0.001
 
-    def compute_expected_weight(data: typing.List[float], label: typing.List[float], w: float) -> float:
+    def compute_expected_weight(
+        data: typing.List[float], label: typing.List[float], w: float
+    ) -> float:
         n = len(data)
         expected_step = 2.0 * lr * sum((d * (l - d * w) for d, l in zip(data, label))) / n
         return w + expected_step

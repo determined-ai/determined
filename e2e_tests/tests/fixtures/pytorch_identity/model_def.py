@@ -12,6 +12,7 @@ class MetricsCallback(pytorch.PyTorchCallback):
     def on_validation_end(self, metrics: Dict[str, Any]) -> None:
         self.validation_metrics.append(metrics)
 
+
 class IdentityDataset(torch.utils.data.Dataset):
     def __init__(self, initial_value: int = 1):
         self.initial_value = initial_value

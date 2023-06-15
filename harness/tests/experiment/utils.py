@@ -438,6 +438,7 @@ def ensure_requires_global_batch_size(
             trial_class, workloads=make_workloads(), hparams=bad_hparams
         )
 
+
 def assert_patterns_in_logs(input_list: List[str], patterns: List[str]) -> None:
     """
     Match each regex pattern in the list to the logs, one-at-a-time, in order.
@@ -459,5 +460,6 @@ def assert_patterns_in_logs(input_list: List[str], patterns: List[str]) -> None:
     # Some patterns were not found.
     text = '"\n  "'.join([p.pattern, *patterns_iter])
     raise ValueError(
-        f'the following patterns:\n  "{text}"\nwere not found in the trial logs:\n\n{"".join(input_list)}'
+        f'the following patterns:\n  "{text}"\nwere not found in \
+        the trial logs:\n\n{"".join(input_list)}'  # noqa
     )
