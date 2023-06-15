@@ -1,6 +1,6 @@
 CREATE TABLE groups (
-    id integer UNIQUE NOT NULL,
-    group_name text UNIQUE NOT NULL,
+    id integer unique NOT NULL,
+    group_name text unique NOT NULL,
     user_id integer REFERENCES users (id) ON DELETE CASCADE NULL
 );
 
