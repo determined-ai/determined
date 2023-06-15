@@ -60,7 +60,7 @@ interface ChartProps {
   scale?: Scale;
   series: Serie[];
   showLegend?: boolean;
-  title?: string | ReactNode;
+  title?: ReactNode;
   xAxis?: XAxisDomain;
   xLabel?: string;
   yLabel?: string;
