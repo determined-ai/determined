@@ -3,11 +3,11 @@ package internal
 import (
 	"context"
 
-	"github.com/determined-ai/determined/master/internal/db"
-
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/authz"
+	"github.com/determined-ai/determined/master/internal/config"
+	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	workspaceauth "github.com/determined-ai/determined/master/internal/workspace"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -40,7 +40,10 @@ func (a *apiServer) BindRPToWorkspace(
 				curUser.Username))
 	}
 
-	err = db.AddRPWorkspaceBindings(ctx, req.WorkspaceIds, req.ResourcePoolName)
+	masterConfig := config.GetMasterConfig()
+
+	err = db.AddRPWorkspaceBindings(ctx, req.WorkspaceIds, req.ResourcePoolName,
+		masterConfig.ResourceConfig.ResourcePools)
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +66,9 @@ func (a *apiServer) OverwriteRPWorkspaceBindings(
 				curUser.Username))
 	}
 
-	err = a.m.db.OverwriteRPWorkspaceBindings(ctx, req.WorkspaceIds, req.ResourcePoolName)
+	masterConfig := config.GetMasterConfig()
+	err = db.OverwriteRPWorkspaceBindings(ctx, req.WorkspaceIds, req.ResourcePoolName,
+		masterConfig.ResourceConfig.ResourcePools)
 	if err != nil {
 		return nil, err
 	}
@@ -98,5 +103,31 @@ func (a *apiServer) UnbindRPFromWorkspace(
 func (a *apiServer) ListWorkspacesBoundToRP(
 	ctx context.Context, req *apiv1.ListWorkspacesBoundToRPRequest,
 ) (*apiv1.ListWorkspacesBoundToRPResponse, error) {
-	return &apiv1.ListWorkspacesBoundToRPResponse{}, nil
+	rpWorkspaceBindings, pagination, err := db.ReadWorkspacesBoundToRP(
+		ctx, req.ResourcePoolName, req.Offset, req.Limit,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	workspaceIDs := []int32{}
+	for _, rpWorkspaceBinding := range rpWorkspaceBindings {
+		workspaceIDs = append(workspaceIDs, int32(rpWorkspaceBinding.WorkspaceID))
+	}
+
+	// Show the workspaces the user has access to.
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	workspaceIDs, err = workspaceauth.AuthZProvider.Get().FilterWorkspaceIDs(
+		ctx, *curUser, workspaceIDs,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &apiv1.ListWorkspacesBoundToRPResponse{
+		WorkspaceIds: workspaceIDs, Pagination: pagination,
+	}, nil
 }
