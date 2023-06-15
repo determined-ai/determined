@@ -195,8 +195,13 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
      * In the case of Custom Searchers, all the tabs besides
      * "Learning Curve" aren't helpful or relevant, so we are hiding them
      */
-    if (!(filters.maxTrial && filters.batchMargin && (filters.batch || filters.batch === 0)))
+    if (
+      filters.maxTrial === undefined ||
+      filters.batchMargin === undefined ||
+      filters.batch === undefined
+    ) {
       return [];
+    }
 
     const tabs: TabsProps['items'] = [
       {
