@@ -1,5 +1,5 @@
 .body {
-  max-height: calc(100vh - 56px);
+  height: calc(100vh - 56px);
   overflow-y: scroll;
   padding: 16px;
 }
@@ -18,5 +18,8 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+  button > span::before {
+    font-weight: bold;
   }
 }

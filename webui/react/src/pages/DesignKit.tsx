@@ -2699,7 +2699,7 @@ const DrawerSection: React.FC = () => {
       <AntDCard title="Left side">
         <p>
           Drawer appears from the left side in an animation. Similar to a Modal, it can be closed
-          with a Close button (at top right) or by clicking outside of the Drawer.
+          only by clicking a Close button (at top right) or Escape key.
         </p>
         <p>If the drawer body has extra content, it is scrollable without hiding the header.</p>
         <Space>
@@ -2717,6 +2717,9 @@ const DrawerSection: React.FC = () => {
       </AntDCard>
       <AntDCard title="Right side">
         <p>Drawer appears from the right side.</p>
+        <p>
+          When a drawer has stateful content, that state is persisted when closed and re-opened.
+        </p>
         <Space>
           <Button onClick={() => setOpenRight(true)}>Open Drawer</Button>
         </Space>
@@ -2726,6 +2729,13 @@ const DrawerSection: React.FC = () => {
           title="Right Drawer"
           onClose={() => setOpenRight(!openRight)}>
           <p>Sample content</p>
+          <Checkbox>A</Checkbox>
+          <Checkbox>B</Checkbox>
+          <Checkbox>C</Checkbox>
+          <Checkbox>D</Checkbox>
+          <Form.Item label="Sample Persistent Input" name="sample_drawer">
+            <Input.TextArea />
+          </Form.Item>
         </Drawer>
       </AntDCard>
     </ComponentSection>
