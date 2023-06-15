@@ -106,6 +106,7 @@ def setup_session(args: argparse.Namespace) -> api.Session:
         total=5,
         backoff_factor=0.5,  # {backoff factor} * (2 ** ({number of total retries} - 1))
         status_forcelist=[502, 503, 504],  # Bad Gateway, Service Unavailable, Gateway Timeout
+        allowed_methods=[frozenset({"GET", "HEAD", "OPTIONS"})],
     )
 
     return api.Session(master_url, args.user, authentication.cli_auth, cert, retry)
