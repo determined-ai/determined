@@ -20,6 +20,7 @@ from typing import (
     Tuple,
     TypeVar,
     Union,
+    cast,
     no_type_check,
     overload,
 )
@@ -230,16 +231,21 @@ def wait_for(
     return rv
 
 
-def deprecated(message=None):
-    def decorator(func):
+U = TypeVar("U", bound=Callable[..., Any])
+
+
+def deprecated(message: Optional[str] = None) -> Callable[[U], U]:
+    def decorator(func: U) -> U:
         @functools.wraps(func)
-        def wrapper_deprecated(*args, **kwargs):
-            message = f"{func.__name__} is deprecated and will be removed in a future version."
+        def wrapper_deprecated(*args: Any, **kwargs: Any) -> Any:
+            warning_message = (
+                f"{func.__name__} is deprecated and will be removed in a future version."
+            )
             if message:
-                message += f" {message}."
-            warnings.warn(message, category=DeprecationWarning, stacklevel=2)
+                warning_message += f" {message}."
+            warnings.warn(warning_message, category=DeprecationWarning, stacklevel=2)
             return func(*args, **kwargs)
 
-        return wrapper_deprecated
+        return cast(U, wrapper_deprecated)
 
     return decorator

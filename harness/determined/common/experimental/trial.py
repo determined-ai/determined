@@ -1,7 +1,7 @@
 import dataclasses
 import datetime
 import enum
-from typing import Any, Dict, Iterable, List, Optional, Union
+from typing import Any, Dict, Iterable, List, Optional, Union, cast
 
 from determined.common import api, util
 from determined.common.api import bindings, logs
@@ -71,6 +71,14 @@ class TrialMetrics:
     metrics: Dict[str, Any]
     batch_metrics: Optional[List[Dict[str, Any]]] = None
 
+    @property
+    def steps_completed(self) -> int:
+        return self.total_batches
+
+    @steps_completed.setter
+    def steps_completed(self, value: int) -> None:
+        self.total_batches = value
+
     @classmethod
     def _from_bindings(
         cls, metric_report: bindings.v1MetricsReport, metric_type: util.MetricType
@@ -92,22 +100,35 @@ class TrainingMetrics(TrialMetrics):
     Specifies a training metric report that the trial reported.
     """
 
+    def __init__(self, steps_completed: Optional[int] = None, **kwargs: Any):
+        if steps_completed is not None:
+            kwargs["total_batches"] = steps_completed
+        super().__init__(**kwargs)
+
     @classmethod
-    def _from_bindings(cls, metric_report: bindings.v1MetricsReport) -> "TrainingMetrics":
-        # CHECK: this is fine right?
-        return super()._from_bindings(metric_report, util.LEGACY_TRAINING)  # type: ignore
+    def _from_bindings(  # type: ignore
+        cls,
+        metric_report: bindings.v1MetricsReport,
+    ) -> "TrialMetrics":
+        return super()._from_bindings(metric_report, util.LEGACY_TRAINING)
 
 
-@dataclasses.dataclass
 class ValidationMetrics(TrialMetrics):
     """
     @deprecated
     Specifies a validation metric report that the trial reported.
     """
 
+    def __init__(self, steps_completed: Optional[int] = None, **kwargs: Any):
+        if steps_completed is not None:
+            kwargs["total_batches"] = steps_completed
+        super().__init__(**kwargs)
+
     @classmethod
-    def _from_bindings(cls, metric_report: bindings.v1MetricsReport) -> "ValidationMetrics":
-        return super()._from_bindings(metric_report, util.LEGACY_VALIDATION)  # type: ignore
+    def _from_bindings(  # type: ignore
+        cls, metric_report: bindings.v1MetricsReport
+    ) -> "TrialMetrics":
+        return super()._from_bindings(metric_report, util.LEGACY_VALIDATION)
 
 
 class TrialReference:
@@ -429,7 +450,7 @@ def _stream_training_metrics(
     """@deprecated"""
     for i in bindings.get_GetTrainingMetrics(session, trialIds=trial_ids):
         for m in i.metrics:
-            yield TrainingMetrics._from_bindings(m)
+            yield cast(TrainingMetrics, TrainingMetrics._from_bindings(m))
 
 
 @util.deprecated()
@@ -439,4 +460,4 @@ def _stream_validation_metrics(
     """@deprecated"""
     for i in bindings.get_GetValidationMetrics(session, trialIds=trial_ids):
         for m in i.metrics:
-            yield ValidationMetrics._from_bindings(m)
+            yield cast(ValidationMetrics, ValidationMetrics._from_bindings(m))
