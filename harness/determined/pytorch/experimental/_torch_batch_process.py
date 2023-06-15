@@ -261,11 +261,12 @@ def _reduce_metrics(
         gatherables = [wrapped.per_slot_reduce() for wrapped in reducables]
         if rank == 0:
             gathered = core_context.distributed.gather(gatherables)
-            metrics = batch_processor_context.run_cross_slot_reduction(reducables, gathered)
-            core_context.train.report_validation_metrics(
-                steps_completed=steps_completed,
-                metrics=metrics,
-            )
+            if gathered is not None:
+                metrics = batch_processor_context.run_cross_slot_reduction(reducables, gathered)
+                core_context.train.report_validation_metrics(
+                    steps_completed=steps_completed,
+                    metrics=metrics,
+                )
         else:
             # Other ranks sent metrics to chief
             core_context.distributed.gather(gatherables)
