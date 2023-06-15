@@ -1,0 +1,37 @@
+import { Drawer } from 'antd';
+import React from 'react';
+
+import Button from 'components/kit/Button';
+import Icon from 'components/kit/Icon';
+
+import css from './Drawer.module.scss';
+
+type DrawerPlacement = 'left' | 'right';
+
+interface DrawerProps {
+  children: React.ReactNode;
+  open: boolean;
+  placement: DrawerPlacement;
+  title: string;
+  onClose: () => void;
+}
+
+const DrawerComponent: React.FC<DrawerProps> = ({ children, open, placement, title, onClose }) => {
+  return (
+    <Drawer
+      bodyStyle={{ padding: 0 }}
+      closable={false}
+      open={open}
+      placement={placement}
+      width="40%"
+      onClose={onClose}>
+      <div className={css.header}>
+        <div className={css.headerTitle}>{title}</div>
+        <Button icon={<Icon name="close" size="small" title="Close drawer" />} onClick={onClose} />
+      </div>
+      <div className={css.body}>{children}</div>
+    </Drawer>
+  );
+};
+
+export default DrawerComponent;
