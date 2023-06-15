@@ -11,6 +11,9 @@ from determined.pytorch.experimental._torch_batch_process import (
     torch_batch_process,
 )
 
+DEFAULT_SLOT_IDS = [0]
+DEFAULT_ADDRS = ["0.0.0.12"]
+
 
 @pytest.fixture
 def batch_processor_with_avg_metric_reducer() -> Type[TorchBatchProcessor]:
@@ -68,7 +71,7 @@ def _get_core_context(rank=0, should_preempt_results=None) -> MagicMock:
     return mock_core_context
 
 
-def _get_det_info(slot_ids=[0], container_addrs=["0.0.0.12"], latest_checkpoint=None) -> MagicMock:
+def _get_det_info(slot_ids, container_addrs, latest_checkpoint=None) -> MagicMock:
     mock_cluster_info = MagicMock()
     mock_cluster_info.slot_ids = slot_ids
     mock_cluster_info.container_addrs = container_addrs
@@ -99,7 +102,9 @@ def test_torch_batch_process_dataloader_kwargs_validation(
     dataloader_kwargs,
     batch_size,
 ):
-    mock_get_cluster_info.return_value = _get_det_info()
+    mock_get_cluster_info.return_value = _get_det_info(
+        slot_ids=DEFAULT_SLOT_IDS, container_addrs=DEFAULT_ADDRS
+    )
     mock_initialize_default_inference_context.return_value = _get_core_context()
     index_dataset = _get_index_dataset()
 
@@ -108,7 +113,7 @@ def test_torch_batch_process_dataloader_kwargs_validation(
     MyProcessorCLS.return_value = my_processor_instance
 
     # Test calling torch_batch_process with invalid arguments
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError):
         torch_batch_process(
             dataset=index_dataset,
             batch_processor_cls=MyProcessorCLS,
@@ -144,7 +149,9 @@ def test_torch_batch_process_times_synchronize(
     rank,
     slot_ids,
 ):
-    mock_get_cluster_info.return_value = _get_det_info(slot_ids=slot_ids)
+    mock_get_cluster_info.return_value = _get_det_info(
+        slot_ids=slot_ids, container_addrs=DEFAULT_ADDRS
+    )
     mock_initialize_default_inference_context.return_value = _get_core_context(rank=rank)
     index_dataset = _get_index_dataset(data_length)
 
@@ -212,7 +219,9 @@ def test_torch_batch_process_times_process_batch(
     slot_ids,
     expected_process_batch_call_count,
 ):
-    mock_get_cluster_info.return_value = _get_det_info(slot_ids=slot_ids)
+    mock_get_cluster_info.return_value = _get_det_info(
+        slot_ids=slot_ids, container_addrs=DEFAULT_ADDRS
+    )
     mock_initialize_default_inference_context.return_value = _get_core_context(rank=rank)
     index_dataset = _get_index_dataset(data_length)
 
@@ -265,7 +274,7 @@ def test_torch_batch_process_times_process_batch_with_skip(
     expected_process_batch_call_count,
 ):
     mock_get_cluster_info.return_value = _get_det_info(
-        slot_ids=slot_ids, latest_checkpoint="fake_latest_checkpoint"
+        slot_ids=slot_ids, latest_checkpoint="fake_latest_checkpoint", container_addrs=DEFAULT_ADDRS
     )
     mock_initialize_default_inference_context.return_value = _get_core_context(rank=rank)
     index_dataset = _get_index_dataset(data_length)
@@ -321,7 +330,9 @@ def test_torch_batch_process_max_batches(
     max_batches,
     expected_process_batch_call_count,
 ):
-    mock_get_cluster_info.return_value = _get_det_info(slot_ids=slot_ids)
+    mock_get_cluster_info.return_value = _get_det_info(
+        slot_ids=slot_ids, container_addrs=DEFAULT_ADDRS
+    )
     mock_initialize_default_inference_context.return_value = _get_core_context(rank=rank)
     index_dataset = _get_index_dataset(data_length)
 
@@ -365,7 +376,9 @@ def test_torch_batch_process_preemption(
     mock_get_cluster_info,
     mock_initialize_default_inference_context,
 ):
-    mock_get_cluster_info.return_value = _get_det_info()
+    mock_get_cluster_info.return_value = _get_det_info(
+        slot_ids=DEFAULT_SLOT_IDS, container_addrs=DEFAULT_ADDRS
+    )
     mock_initialize_default_inference_context.return_value = _get_core_context(
         should_preempt_results=[False, True]
     )
@@ -413,7 +426,9 @@ def test_torch_batch_process_reduce_metrics(
     # The metric reducer simpler sum up all the values.
     # Therefore, by the end of the iteration, metric_reducer 0 would have self.sum == 10
     # metric_reducer 1 would have self.sum == 35
-    mock_get_cluster_info.return_value = _get_det_info(slot_ids=[0, 1])
+    mock_get_cluster_info.return_value = _get_det_info(
+        slot_ids=[0, 1], container_addrs=DEFAULT_ADDRS
+    )
     index_dataset = _get_index_dataset(10)
     mock_core_context = _get_core_context(rank=0)
     mock_initialize_default_inference_context.return_value = mock_core_context
@@ -450,7 +465,9 @@ def test_torch_batch_process_invalid_checkpoint_interval(
     mock_initialize_default_inference_context,
     checkpoint_interval,
 ):
-    mock_get_cluster_info.return_value = _get_det_info()
+    mock_get_cluster_info.return_value = _get_det_info(
+        slot_ids=DEFAULT_SLOT_IDS, container_addrs=DEFAULT_ADDRS
+    )
     mock_initialize_default_inference_context.return_value = _get_core_context()
     index_dataset = _get_index_dataset()
 
@@ -458,7 +475,7 @@ def test_torch_batch_process_invalid_checkpoint_interval(
     my_processor_instance = Mock()
     MyProcessorCLS.return_value = my_processor_instance
 
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError):
         torch_batch_process(
             dataset=index_dataset,
             batch_processor_cls=MyProcessorCLS,

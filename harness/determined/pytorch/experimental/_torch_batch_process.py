@@ -121,6 +121,7 @@ class TorchBatchProcessor(metaclass=abc.ABCMeta):
     def process_batch(self, batch, batch_idx) -> None:
         pass
 
+    # pylint: disable=B027
     def on_checkpoint_start(self) -> None:
         """
         Overwrite this function to run certain logic before checkpointing
@@ -128,6 +129,7 @@ class TorchBatchProcessor(metaclass=abc.ABCMeta):
         """
         pass
 
+    # pylint: disable=B027
     def on_finish(self) -> None:
         """
         This function will be called right before exiting after completing iteration
@@ -181,19 +183,19 @@ def _validate_dataloader_kwargs(
 ) -> None:
     if "shuffle" in dataloader_kwargs:
         if dataloader_kwargs["shuffle"]:
-            raise Exception("'shuffle' must be false for accurate sharding and checkpointing")
+            raise ValueError("'shuffle' must be false for accurate sharding and checkpointing")
     if "sampler" in dataloader_kwargs:
-        raise Exception(
+        raise ValueError(
             "Please remove 'sampler' arg as we will initialize a sampler automatically."
         )
     if "batch_sampler" in dataloader_kwargs:
-        raise Exception(
+        raise ValueError(
             "Please remove 'batch_sampler' arg as we will initialize "
             "a batch_sampler automatically."
         )
     if batch_size is not None:
         if "batch_size" in dataloader_kwargs:
-            raise Exception(
+            raise ValueError(
                 "batch_size is passed into torch_batch_process " "and dataloader_kwargs"
             )
 
@@ -205,14 +207,16 @@ def _validate_iterate_length(iterate_length: Optional[int], times_iterate: int):
     if iterate_length <= 0:
         warnings.warn(
             f"iterate_length {iterate_length} is not valid. "
-            f"Ignoring this argument and iterate over entire dataset once"
+            f"Ignoring this argument and iterate over entire dataset once",
+            stacklevel=2,
         )
         return times_iterate
 
     if iterate_length > times_iterate:
         warnings.warn(
             f"iterate_length {iterate_length} exceeds sharded dataset length. "
-            f"Ignoring this argument and iterate over entire dataset once"
+            f"Ignoring this argument and iterate over entire dataset once",
+            stacklevel=2,
         )
         return times_iterate
     return iterate_length
