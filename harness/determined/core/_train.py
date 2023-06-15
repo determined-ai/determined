@@ -173,7 +173,7 @@ class TrainContext:
 
         return serializable_metrics
 
-    @util.deprecated("use report_validation_metrics() instead")
+    @util.deprecated("use report_trial_metrics() instead")
     def report_validation_metrics(
         self,
         steps_completed: int,
@@ -259,7 +259,7 @@ class DummyTrainContext(TrainContext):
             f" batch_metrics={batch_metrics})"
         )
 
-    @util.deprecated("use report_validation_metrics() instead")
+    @util.deprecated("use report_trial_metrics() instead")
     def report_training_metrics(
         self,
         steps_completed: int,
@@ -269,7 +269,7 @@ class DummyTrainContext(TrainContext):
         """@deprecated"""
         self.report_trial_metrics(LEGACY_TRAINING, steps_completed, metrics, batch_metrics)
 
-    @util.deprecated("use report_validation_metrics() instead")
+    @util.deprecated("use report_trial_metrics() instead")
     def report_validation_metrics(self, steps_completed: int, metrics: Dict[str, Any]) -> None:
         """@deprecated"""
         self.report_trial_metrics(LEGACY_VALIDATION, steps_completed, metrics)

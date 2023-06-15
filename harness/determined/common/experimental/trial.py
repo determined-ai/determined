@@ -422,6 +422,7 @@ def _stream_trials_metrics(
             yield TrialMetrics._from_bindings(m, metric_type=metric_type)
 
 
+@util.deprecated()
 def _stream_training_metrics(
     session: api.Session, trial_ids: List[int]
 ) -> Iterable[TrainingMetrics]:
@@ -431,6 +432,7 @@ def _stream_training_metrics(
             yield TrainingMetrics._from_bindings(m)
 
 
+@util.deprecated()
 def _stream_validation_metrics(
     session: api.Session, trial_ids: List[int]
 ) -> Iterable[ValidationMetrics]:
