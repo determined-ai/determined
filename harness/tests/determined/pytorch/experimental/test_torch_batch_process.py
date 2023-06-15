@@ -1,5 +1,5 @@
 import math
-from typing import Type
+from typing import Any, Dict, List, Type
 from unittest.mock import MagicMock, Mock, call, patch
 
 import pytest
@@ -71,7 +71,9 @@ def _get_core_context(rank=0, should_preempt_results=None) -> MagicMock:
     return mock_core_context
 
 
-def _get_det_info(slot_ids, container_addrs, latest_checkpoint=None) -> MagicMock:
+def _get_det_info(
+    slot_ids: List[int], container_addrs: List[str], latest_checkpoint=None
+) -> MagicMock:
     mock_cluster_info = MagicMock()
     mock_cluster_info.slot_ids = slot_ids
     mock_cluster_info.container_addrs = container_addrs
@@ -94,13 +96,13 @@ def _get_det_info(slot_ids, container_addrs, latest_checkpoint=None) -> MagicMoc
     ],
 )
 def test_torch_batch_process_dataloader_kwargs_validation(
-    mock_reduce_metrics,
-    mock_report_progress_to_master,
-    mock_synchronize_and_checkpoint,
-    mock_get_cluster_info,
-    mock_initialize_default_inference_context,
-    dataloader_kwargs,
-    batch_size,
+    mock_reduce_metrics: MagicMock,
+    mock_report_progress_to_master: MagicMock,
+    mock_synchronize_and_checkpoint: MagicMock,
+    mock_get_cluster_info: MagicMock,
+    mock_initialize_default_inference_context: MagicMock,
+    dataloader_kwargs: Dict[str, Any],
+    batch_size: int,
 ):
     mock_get_cluster_info.return_value = _get_det_info(
         slot_ids=DEFAULT_SLOT_IDS, container_addrs=DEFAULT_ADDRS
@@ -138,16 +140,16 @@ def test_torch_batch_process_dataloader_kwargs_validation(
     ],
 )
 def test_torch_batch_process_times_synchronize(
-    mock_reduce_metrics,
-    mock_report_progress_to_master,
-    mock_synchronize_and_checkpoint,
-    mock_get_cluster_info,
-    mock_initialize_default_inference_context,
-    data_length,
-    batch_size,
-    checkpoint_interval,
-    rank,
-    slot_ids,
+    mock_reduce_metrics: MagicMock,
+    mock_report_progress_to_master: MagicMock,
+    mock_synchronize_and_checkpoint: MagicMock,
+    mock_get_cluster_info: MagicMock,
+    mock_initialize_default_inference_context: MagicMock,
+    data_length: int,
+    batch_size: int,
+    checkpoint_interval: int,
+    rank: int,
+    slot_ids: List[int],
 ):
     mock_get_cluster_info.return_value = _get_det_info(
         slot_ids=slot_ids, container_addrs=DEFAULT_ADDRS
@@ -207,17 +209,17 @@ def test_torch_batch_process_times_synchronize(
     ],
 )
 def test_torch_batch_process_times_process_batch(
-    mock_reduce_metrics,
-    mock_report_progress_to_master,
-    mock_synchronize_and_checkpoint,
-    mock_get_cluster_info,
-    mock_initialize_default_inference_context,
-    data_length,
-    batch_size,
-    checkpoint_interval,
-    rank,
-    slot_ids,
-    expected_process_batch_call_count,
+    mock_reduce_metrics: MagicMock,
+    mock_report_progress_to_master: MagicMock,
+    mock_synchronize_and_checkpoint: MagicMock,
+    mock_get_cluster_info: MagicMock,
+    mock_initialize_default_inference_context: MagicMock,
+    data_length: int,
+    batch_size: int,
+    checkpoint_interval: int,
+    rank: int,
+    slot_ids: List[int],
+    expected_process_batch_call_count: int,
 ):
     mock_get_cluster_info.return_value = _get_det_info(
         slot_ids=slot_ids, container_addrs=DEFAULT_ADDRS
@@ -259,19 +261,19 @@ def test_torch_batch_process_times_process_batch(
     ],
 )
 def test_torch_batch_process_times_process_batch_with_skip(
-    mock_reduce_metrics,
-    mock_report_progress_to_master,
-    mock_synchronize_and_checkpoint,
-    mock_get_cluster_info,
-    mock_initialize_default_inference_context,
-    mock_load_state,
-    data_length,
-    batch_size,
-    checkpoint_interval,
-    rank,
-    slot_ids,
-    steps_completed,
-    expected_process_batch_call_count,
+    mock_reduce_metrics: MagicMock,
+    mock_report_progress_to_master: MagicMock,
+    mock_synchronize_and_checkpoint: MagicMock,
+    mock_get_cluster_info: MagicMock,
+    mock_initialize_default_inference_context: MagicMock,
+    mock_load_state: MagicMock,
+    data_length: int,
+    batch_size: int,
+    checkpoint_interval: int,
+    rank: int,
+    slot_ids: List[int],
+    steps_completed: int,
+    expected_process_batch_call_count: int,
 ):
     mock_get_cluster_info.return_value = _get_det_info(
         slot_ids=slot_ids, latest_checkpoint="fake_latest_checkpoint", container_addrs=DEFAULT_ADDRS
@@ -316,19 +318,19 @@ def test_torch_batch_process_times_process_batch_with_skip(
     ],
 )
 def test_torch_batch_process_max_batches(
-    mock_reduce_metrics,
-    mock_report_progress_to_master,
-    mock_synchronize_and_checkpoint,
-    mock_get_cluster_info,
-    mock_initialize_default_inference_context,
-    mock_load_state,
-    data_length,
-    batch_size,
-    checkpoint_interval,
-    rank,
-    slot_ids,
-    max_batches,
-    expected_process_batch_call_count,
+    mock_reduce_metrics: MagicMock,
+    mock_report_progress_to_master: MagicMock,
+    mock_synchronize_and_checkpoint: MagicMock,
+    mock_get_cluster_info: MagicMock,
+    mock_initialize_default_inference_context: MagicMock,
+    mock_load_state: MagicMock,
+    data_length: int,
+    batch_size: int,
+    checkpoint_interval: int,
+    rank: int,
+    slot_ids: List[int],
+    max_batches: int,
+    expected_process_batch_call_count: int,
 ):
     mock_get_cluster_info.return_value = _get_det_info(
         slot_ids=slot_ids, container_addrs=DEFAULT_ADDRS
@@ -370,11 +372,11 @@ def test_torch_batch_process_max_batches(
 @patch("determined.pytorch.experimental._torch_batch_process._report_progress_to_master")
 @patch("determined.pytorch.experimental._torch_batch_process._reduce_metrics")
 def test_torch_batch_process_preemption(
-    mock_reduce_metrics,
-    mock_report_progress_to_master,
-    mock_synchronize_and_checkpoint,
-    mock_get_cluster_info,
-    mock_initialize_default_inference_context,
+    mock_reduce_metrics: MagicMock,
+    mock_report_progress_to_master: MagicMock,
+    mock_synchronize_and_checkpoint: MagicMock,
+    mock_get_cluster_info: MagicMock,
+    mock_initialize_default_inference_context: MagicMock,
 ):
     mock_get_cluster_info.return_value = _get_det_info(
         slot_ids=DEFAULT_SLOT_IDS, container_addrs=DEFAULT_ADDRS
@@ -412,11 +414,11 @@ def test_torch_batch_process_preemption(
 @patch("determined.pytorch.experimental._torch_batch_process._synchronize_and_checkpoint")
 @patch("determined.pytorch.experimental._torch_batch_process._report_progress_to_master")
 def test_torch_batch_process_reduce_metrics(
-    mock_report_progress_to_master,
-    mock_synchronize_and_checkpoint,
-    mock_get_cluster_info,
-    mock_initialize_default_inference_context,
-    batch_processor_with_avg_metric_reducer,
+    mock_report_progress_to_master: MagicMock,
+    mock_synchronize_and_checkpoint: MagicMock,
+    mock_get_cluster_info: MagicMock,
+    mock_initialize_default_inference_context: MagicMock,
+    batch_processor_with_avg_metric_reducer: Type[TorchBatchProcessor],
 ):
     # Simulate a two worker run, and we are worker 0 (chief)
     # The entire dataset is [0, 1, 2, 3 , 4, 5, 6, 7, 8, 9]
@@ -458,12 +460,12 @@ def test_torch_batch_process_reduce_metrics(
 @patch("determined.pytorch.experimental._torch_batch_process._reduce_metrics")
 @pytest.mark.parametrize("checkpoint_interval", [-1, 0])
 def test_torch_batch_process_invalid_checkpoint_interval(
-    mock_reduce_metrics,
-    mock_report_progress_to_master,
-    mock_synchronize_and_checkpoint,
-    mock_get_cluster_info,
-    mock_initialize_default_inference_context,
-    checkpoint_interval,
+    mock_reduce_metrics: MagicMock,
+    mock_report_progress_to_master: MagicMock,
+    mock_synchronize_and_checkpoint: MagicMock,
+    mock_get_cluster_info: MagicMock,
+    mock_initialize_default_inference_context: MagicMock,
+    checkpoint_interval: int,
 ):
     mock_get_cluster_info.return_value = _get_det_info(
         slot_ids=DEFAULT_SLOT_IDS, container_addrs=DEFAULT_ADDRS
