@@ -452,15 +452,13 @@ def test_core_api_arbitrary_workload_order() -> None:
         expect_checkpoints=True,
     )
 
-    A_NUMBER = 11
-
     trials = exp.experiment_trials(experiment_id)
     assert len(trials) == 1
     trial = trials[0]
 
     steps = exp.workloads_with_training(trial.workloads)
-    assert len(steps) == A_NUMBER
+    assert len(steps) == 11
     validations = exp.workloads_with_validation(trial.workloads)
-    assert len(validations) == A_NUMBER
+    assert len(validations) == 11
     checkpoints = exp.workloads_with_checkpoint(trial.workloads)
-    assert len(checkpoints) == A_NUMBER
+    assert len(checkpoints) == 11

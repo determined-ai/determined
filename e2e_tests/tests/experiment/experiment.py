@@ -504,7 +504,6 @@ def trial_logs(trial_id: int, follow: bool = False) -> List[str]:
     ]
 
 
-# TODO with generic metrics
 def workloads_with_training(
     workloads: Sequence[bindings.v1WorkloadContainer],
 ) -> List[bindings.v1MetricsWorkload]:
