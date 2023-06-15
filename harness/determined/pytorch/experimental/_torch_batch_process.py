@@ -121,8 +121,7 @@ class TorchBatchProcessor(metaclass=abc.ABCMeta):
     def process_batch(self, batch, batch_idx) -> None:
         pass
 
-    # pylint: disable=B027
-    def on_checkpoint_start(self) -> None:
+    def on_checkpoint_start(self) -> None:  # noqa: B027
         """
         Overwrite this function to run certain logic before checkpointing
         This function will be called right before each checkpoint.
@@ -130,7 +129,7 @@ class TorchBatchProcessor(metaclass=abc.ABCMeta):
         pass
 
     # pylint: disable=B027
-    def on_finish(self) -> None:
+    def on_finish(self) -> None:  # noqa: B027
         """
         This function will be called right before exiting after completing iteration
         over dataset
