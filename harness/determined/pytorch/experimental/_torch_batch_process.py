@@ -6,8 +6,7 @@ import os
 import pathlib
 import uuid
 import warnings
-from contextlib import AbstractContextManager
-from typing import Any, Dict, Optional, Set, Sized, Type
+from typing import Any, ContextManager, Dict, Optional, Set, Sized, Type
 
 import torch
 import torch.distributed as dist
@@ -63,7 +62,7 @@ class TorchBatchProcessorContext(pytorch._PyTorchReducerContext):
         model.to(self.device)
         return model
 
-    def get_default_storage_path_context(self) -> AbstractContextManager[pathlib.Path]:
+    def get_default_storage_path_context(self) -> ContextManager[pathlib.Path]:
         """
         Returns a context that uploads files to default storage path on exit.
         """
