@@ -329,13 +329,24 @@ def test_torch_batch_process_max_batches(
     my_processor_instance = Mock()
     MyProcessorCLS.return_value = my_processor_instance
 
-    torch_batch_process(
-        dataset=index_dataset,
-        batch_processor_cls=MyProcessorCLS,
-        batch_size=batch_size,
-        checkpoint_interval=checkpoint_interval,
-        max_batches=max_batches,
-    )
+    if max_batches > expected_process_batch_call_count:
+        # Warning is raised when max_batches > total number of batches
+        with pytest.warns(Warning):
+            torch_batch_process(
+                dataset=index_dataset,
+                batch_processor_cls=MyProcessorCLS,
+                batch_size=batch_size,
+                checkpoint_interval=checkpoint_interval,
+                max_batches=max_batches,
+            )
+    else:
+        torch_batch_process(
+            dataset=index_dataset,
+            batch_processor_cls=MyProcessorCLS,
+            batch_size=batch_size,
+            checkpoint_interval=checkpoint_interval,
+            max_batches=max_batches,
+        )
 
     assert my_processor_instance.process_batch.call_count == expected_process_batch_call_count
     # on_finish should only be called once
