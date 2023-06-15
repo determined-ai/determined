@@ -52,6 +52,7 @@ export const TableActionMenu: React.FC<TableActionMenuProps> = ({
         position: 'fixed',
         top: y,
         width: menuWidth,
+        zIndex: 100,
       }}>
       <Menu items={items} selectable={false} />
     </div>
