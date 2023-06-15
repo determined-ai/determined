@@ -189,6 +189,7 @@ const LearningCurve: React.FC<Props> = ({
         experiment.id,
         selectedMetric.name,
         metricTypeParamMap[selectedMetric.type],
+        undefined,
         selectedMaxTrial,
         MAX_DATAPOINTS,
         undefined,

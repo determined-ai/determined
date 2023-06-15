@@ -141,7 +141,7 @@ message MetricsRange {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "metrics_name", "min", "max" ] }
   };
-  // The name of metrics.
+  // The name of metrics formatted as <type>.<name>.
   string metrics_name = 1;
   // The min of metrics values.
   double min = 2;

@@ -328,18 +328,9 @@ func MetricsTimeSeries(trialID int32, startTime time.Time,
 	timeSeriesFilter *commonv1.PolymorphicFilter, metricType model.MetricType) (
 	metricMeasurements []db.MetricMeasurements, err error,
 ) {
-	var tableName, queryColumn, orderColumn string
+	var queryColumn, orderColumn string
 	metricsObjectName := model.TrialMetricsJSONPath(
 		metricType == model.ValidationMetricType)
-	switch metricType {
-	case model.TrainingMetricType:
-		tableName = "steps"
-	case model.ValidationMetricType:
-		tableName = "validations"
-	default:
-		panic(fmt.Sprintf("Unsupported metric type %s", metricType))
-	}
-
 	// The data for batches and column are stored under different column names
 	switch timeSeriesColumn {
 	case "batches":
@@ -349,7 +340,7 @@ func MetricsTimeSeries(trialID int32, startTime time.Time,
 	default:
 		queryColumn = timeSeriesColumn
 	}
-	subq := db.Bun().NewSelect().TableExpr(tableName).
+	subq := db.BunSelectMetricsQuery(metricType, false).Table("metrics").
 		ColumnExpr("(select setseed(1)) as _seed").
 		ColumnExpr("total_batches as batches").
 		ColumnExpr("trial_id").ColumnExpr("end_time as time")

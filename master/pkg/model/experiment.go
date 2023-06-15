@@ -526,6 +526,20 @@ func TrialSummaryMetricsJSONPath(metricType MetricType) string {
 	}
 }
 
+// TrialSummaryMetricType returns the metric type for the given summary JSON path.
+func TrialSummaryMetricType(jsonPath string) MetricType {
+	var mType MetricType
+	switch jsonPath {
+	case TrialSummaryMetricsJSONPath(TrainingMetricType):
+		mType = TrainingMetricType
+	case TrialSummaryMetricsJSONPath(ValidationMetricType):
+		mType = ValidationMetricType
+	default:
+		mType = MetricType(jsonPath)
+	}
+	return mType
+}
+
 // Represent order of active states (Queued -> Pulling -> Starting -> Running).
 var experimentStateIndex = map[experimentv1.State]int{
 	experimentv1.State_STATE_UNSPECIFIED:        0,
@@ -833,18 +847,6 @@ func (t TrialProfilerMetricsBatchBatch) ForEach(f func(interface{}) error) error
 		}
 	}
 	return nil
-}
-
-const (
-	// ValidationMetricType designates metrics from validation runs.
-	ValidationMetricType MetricType = "validation"
-	// TrainingMetricType designates metrics from training runs.
-	TrainingMetricType MetricType = "training"
-)
-
-// ToString returns the string representation of the metric type.
-func (t MetricType) ToString() string {
-	return string(t)
 }
 
 // ExitedReason defines why a workload exited early.

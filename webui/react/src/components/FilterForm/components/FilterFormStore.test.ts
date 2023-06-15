@@ -144,7 +144,7 @@ describe('FilterFormStore', () => {
       const loadableFormset = filterFormStore.formset.get();
       const formset = Loadable.getOrElse(null, loadableFormset);
       expect(formset).toStrictEqual(initData);
-      expect(filterFormStore.fieldCount.get()).toBe(6);
+      expect(filterFormStore.fieldCount.get()).toBe(5);
     });
 
     it('should deep clone init data to avoid unexpected data overwrite', () => {

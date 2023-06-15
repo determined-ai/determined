@@ -101,6 +101,7 @@ const MultiTrialDetailsHyperparameters: React.FC<Props> = ({
         settings.metric.name,
         metricTypeParam,
         undefined,
+        undefined,
         { signal: canceler.signal },
       ),
       (event) => {

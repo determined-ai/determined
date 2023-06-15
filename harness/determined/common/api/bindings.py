@@ -2973,15 +2973,18 @@ class v1DownsampledMetrics(Printable):
     def __init__(
         self,
         *,
+        customType: str,
         data: "typing.Sequence[v1DataPoint]",
         type: "v1MetricType",
     ):
+        self.customType = customType
         self.data = data
         self.type = type
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1DownsampledMetrics":
         kwargs: "typing.Dict[str, typing.Any]" = {
+            "customType": obj["customType"],
             "data": [v1DataPoint.from_json(x) for x in obj["data"]],
             "type": v1MetricType(obj["type"]),
         }
@@ -2989,6 +2992,7 @@ class v1DownsampledMetrics(Printable):
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
+            "customType": self.customType,
             "data": [x.to_json(omit_unset) for x in self.data],
             "type": self.type.value,
         }
@@ -3051,6 +3055,7 @@ class v1EntityType(DetEnum):
     PROJECT = "ENTITY_TYPE_PROJECT"
 
 class v1ExpMetricNamesResponse(Printable):
+    metricNames: "typing.Optional[typing.Sequence[v1MetricName]]" = None
     searcherMetrics: "typing.Optional[typing.Sequence[str]]" = None
     trainingMetrics: "typing.Optional[typing.Sequence[str]]" = None
     validationMetrics: "typing.Optional[typing.Sequence[str]]" = None
@@ -3058,10 +3063,13 @@ class v1ExpMetricNamesResponse(Printable):
     def __init__(
         self,
         *,
+        metricNames: "typing.Union[typing.Sequence[v1MetricName], None, Unset]" = _unset,
         searcherMetrics: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
         trainingMetrics: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
         validationMetrics: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
     ):
+        if not isinstance(metricNames, Unset):
+            self.metricNames = metricNames
         if not isinstance(searcherMetrics, Unset):
             self.searcherMetrics = searcherMetrics
         if not isinstance(trainingMetrics, Unset):
@@ -3073,6 +3081,8 @@ class v1ExpMetricNamesResponse(Printable):
     def from_json(cls, obj: Json) -> "v1ExpMetricNamesResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
         }
+        if "metricNames" in obj:
+            kwargs["metricNames"] = [v1MetricName.from_json(x) for x in obj["metricNames"]] if obj["metricNames"] is not None else None
         if "searcherMetrics" in obj:
             kwargs["searcherMetrics"] = obj["searcherMetrics"]
         if "trainingMetrics" in obj:
@@ -3084,6 +3094,8 @@ class v1ExpMetricNamesResponse(Printable):
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
         }
+        if not omit_unset or "metricNames" in vars(self):
+            out["metricNames"] = None if self.metricNames is None else [x.to_json(omit_unset) for x in self.metricNames]
         if not omit_unset or "searcherMetrics" in vars(self):
             out["searcherMetrics"] = self.searcherMetrics
         if not omit_unset or "trainingMetrics" in vars(self):
@@ -4341,6 +4353,28 @@ class v1GetMeResponse(Printable):
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "user": self.user.to_json(omit_unset),
+        }
+        return out
+
+class v1GetMetricsResponse(Printable):
+
+    def __init__(
+        self,
+        *,
+        metrics: "typing.Sequence[v1MetricsReport]",
+    ):
+        self.metrics = metrics
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetMetricsResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "metrics": [v1MetricsReport.from_json(x) for x in obj["metrics"]],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "metrics": [x.to_json(omit_unset) for x in self.metrics],
         }
         return out
 
@@ -7002,6 +7036,32 @@ class v1MetricBatchesResponse(Printable):
         }
         if not omit_unset or "batches" in vars(self):
             out["batches"] = self.batches
+        return out
+
+class v1MetricName(Printable):
+
+    def __init__(
+        self,
+        *,
+        name: str,
+        type: str,
+    ):
+        self.name = name
+        self.type = type
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1MetricName":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "name": obj["name"],
+            "type": obj["type"],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "name": self.name,
+            "type": self.type,
+        }
         return out
 
 class v1MetricType(DetEnum):
@@ -14155,6 +14215,7 @@ def post_CheckpointsRemoveFiles(
 def get_CompareTrials(
     session: "api.Session",
     *,
+    customType: "typing.Optional[str]" = None,
     endBatches: "typing.Optional[int]" = None,
     maxDatapoints: "typing.Optional[int]" = None,
     metricIds: "typing.Optional[typing.Sequence[str]]" = None,
@@ -14180,6 +14241,7 @@ def get_CompareTrials(
     trialIds: "typing.Optional[typing.Sequence[int]]" = None,
 ) -> "v1CompareTrialsResponse":
     _params = {
+        "customType": customType,
         "endBatches": endBatches,
         "maxDatapoints": maxDatapoints,
         "metricIds": metricIds,
@@ -15242,6 +15304,41 @@ def get_GetMe(
         return v1GetMeResponse.from_json(_resp.json())
     raise APIHttpError("get_GetMe", _resp)
 
+def get_GetMetrics(
+    session: "api.Session",
+    *,
+    trialIds: "typing.Sequence[int]",
+    type: str,
+) -> "typing.Iterable[v1GetMetricsResponse]":
+    _params = {
+        "trialIds": trialIds,
+        "type": type,
+    }
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/trials/metrics/trial_metrics",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=True,
+    )
+    if _resp.status_code == 200:
+        try:
+            for _line in _resp.iter_lines(chunk_size=1024 * 1024):
+                _j = json.loads(_line)
+                if "error" in _j:
+                    raise APIHttpStreamError(
+                        "get_GetMetrics",
+                        runtimeStreamError.from_json(_j["error"])
+                )
+                yield v1GetMetricsResponse.from_json(_j["result"])
+        except requests.exceptions.ChunkedEncodingError:
+            raise APIHttpStreamError("get_GetMetrics", runtimeStreamError(message="ChunkedEncodingError"))
+        return
+    raise APIHttpError("get_GetMetrics", _resp)
+
 def get_GetModel(
     session: "api.Session",
     *,
@@ -16118,6 +16215,7 @@ def get_GetTrialWorkloads(
     session: "api.Session",
     *,
     trialId: int,
+    customType: "typing.Optional[str]" = None,
     filter: "typing.Optional[GetTrialWorkloadsRequestFilterOption]" = None,
     includeBatchMetrics: "typing.Optional[bool]" = None,
     limit: "typing.Optional[int]" = None,
@@ -16127,6 +16225,7 @@ def get_GetTrialWorkloads(
     sortKey: "typing.Optional[str]" = None,
 ) -> "v1GetTrialWorkloadsResponse":
     _params = {
+        "customType": customType,
         "filter": filter.value if filter is not None else None,
         "includeBatchMetrics": str(includeBatchMetrics).lower() if includeBatchMetrics is not None else None,
         "limit": limit,
@@ -16818,12 +16917,14 @@ def get_MetricBatches(
     *,
     experimentId: int,
     metricName: str,
-    metricType: "v1MetricType",
+    customType: "typing.Optional[str]" = None,
+    metricType: "typing.Optional[v1MetricType]" = None,
     periodSeconds: "typing.Optional[int]" = None,
 ) -> "typing.Iterable[v1MetricBatchesResponse]":
     _params = {
+        "customType": customType,
         "metricName": metricName,
-        "metricType": metricType.value,
+        "metricType": metricType.value if metricType is not None else None,
         "periodSeconds": periodSeconds,
     }
     _resp = session._do_request(
@@ -17965,6 +18066,7 @@ def get_SummarizeTrial(
     session: "api.Session",
     *,
     trialId: int,
+    customType: "typing.Optional[str]" = None,
     endBatches: "typing.Optional[int]" = None,
     maxDatapoints: "typing.Optional[int]" = None,
     metricNames: "typing.Optional[typing.Sequence[str]]" = None,
@@ -17973,6 +18075,7 @@ def get_SummarizeTrial(
     startBatches: "typing.Optional[int]" = None,
 ) -> "v1SummarizeTrialResponse":
     _params = {
+        "customType": customType,
         "endBatches": endBatches,
         "maxDatapoints": maxDatapoints,
         "metricNames": metricNames,
@@ -18201,19 +18304,21 @@ def get_TrialsSample(
     *,
     experimentId: int,
     metricName: str,
-    metricType: "v1MetricType",
+    customType: "typing.Optional[str]" = None,
     endBatches: "typing.Optional[int]" = None,
     maxDatapoints: "typing.Optional[int]" = None,
     maxTrials: "typing.Optional[int]" = None,
+    metricType: "typing.Optional[v1MetricType]" = None,
     periodSeconds: "typing.Optional[int]" = None,
     startBatches: "typing.Optional[int]" = None,
 ) -> "typing.Iterable[v1TrialsSampleResponse]":
     _params = {
+        "customType": customType,
         "endBatches": endBatches,
         "maxDatapoints": maxDatapoints,
         "maxTrials": maxTrials,
         "metricName": metricName,
-        "metricType": metricType.value,
+        "metricType": metricType.value if metricType is not None else None,
         "periodSeconds": periodSeconds,
         "startBatches": startBatches,
     }
@@ -18248,15 +18353,17 @@ def get_TrialsSnapshot(
     batchesProcessed: int,
     experimentId: int,
     metricName: str,
-    metricType: "v1MetricType",
     batchesMargin: "typing.Optional[int]" = None,
+    customType: "typing.Optional[str]" = None,
+    metricType: "typing.Optional[v1MetricType]" = None,
     periodSeconds: "typing.Optional[int]" = None,
 ) -> "typing.Iterable[v1TrialsSnapshotResponse]":
     _params = {
         "batchesMargin": batchesMargin,
         "batchesProcessed": batchesProcessed,
+        "customType": customType,
         "metricName": metricName,
-        "metricType": metricType.value,
+        "metricType": metricType.value if metricType is not None else None,
         "periodSeconds": periodSeconds,
     }
     _resp = session._do_request(
