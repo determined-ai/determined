@@ -100,8 +100,8 @@ of CLI commands.
 Model Registry
 ==============
 
-The Model Registry is a way to group conceptually-related checkpoints (including ones across
-different experiments), store metadata and long form notes about a model, and retrieve the latest
+The Model Registry is a way to group conceptually related checkpoints (including ones across
+different experiments), store metadata and long-form notes about a model, and retrieve the latest
 version of a model for use or further development. The Model Registry can be accessed through the
 WebUI, Python SDK, REST API, or CLI, though the WebUI has some features that the others are missing.
 
@@ -357,17 +357,18 @@ PENDING permanently.
 Set up Resource Pools
 ---------------------
 
-Resource pools are configured using the :ref:`master-config-reference`. For each resource pool, you
-can configure scheduler and provider information.
+Resource pools are configured using the :ref:`master configuration <master-config-reference>`. For
+each resource pool, you can configure scheduler and provider information.
 
 If you are using static resource pools and launching agents by hand, you will need to update the
-:ref:`agent-config-reference` to specify which resource pool the agent should join.
+:ref:`agent configuration <agent-config-reference>` to specify which resource pool the agent should
+join.
 
 Migrate to Resource Pools
 -------------------------
 
-Resource pools were introduced with Determined 0.14.0 resulting in changes to the
-:ref:`master-config-reference` format.
+Resource pools were introduced with Determined 0.14.0, resulting in changes to the :ref:`master
+configuration <master-config-reference>` format.
 
 Since the change is backwards-compatible, cluster configurations that use earlier formats (prior to
 Determined 0.14.0) will still work. A configuration in the earlier format is interpreted as a
@@ -375,8 +376,8 @@ cluster with a single resource pool that is the default for both CPU and GPU tas
 advantage of resource pools, convert to the latest format. Converting is a simple process of moving
 around and renaming a small number of top-level fields.
 
-The earlier format had the top level fields of ``scheduler`` and ``provisioner`` which set the
-scheduler and provisioner settings for the cluster. By contrast, the latest format has the top level
+The earlier format had the top-level fields of ``scheduler`` and ``provisioner`` which set the
+scheduler and provisioner settings for the cluster. By contrast, the latest format has the top-level
 fields of ``resource_manager`` and ``resource_pools``. The ``resource_manager`` section is for
 cluster level setting such as which pools should be used by default and the default scheduler
 settings. The ``scheduler`` information is identical to the ``scheduler`` field in the legacy
@@ -447,11 +448,12 @@ When creating a task, the job configuration file has a section called "resources
        resource_pool: pool1
 
 If this field is not set, the task will be launched into one of the two default pools defined in the
-:ref:`master-config-reference`. Experiments will be launched into the default compute pool.
-TensorBoards will be launched into the default auxiliary pool. Commands, shells, and notebooks that
-request a slot (which is the default behavior if the ``resources.slots`` field is not set) will be
-launched into the default compute pool. Commands, shells, and notebooks that explicitly request 0
-slots (for example the "Launch CPU-only Notebook" button in the Web UI) will use the auxiliary pool.
+:ref:`master configuration <master-config-reference>`. Experiments will be launched into the default
+compute pool. TensorBoards will be launched into the default auxiliary pool. Commands, shells, and
+notebooks that request a slot (which is the default behavior if the ``resources.slots`` field is not
+set) will be launched into the default compute pool. Commands, shells, and notebooks that explicitly
+request 0 slots (for example the "Launch CPU-only Notebook" button in the Web UI) will use the
+auxiliary pool.
 
 .. _scheduling:
 
