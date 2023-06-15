@@ -14,14 +14,16 @@ _MASTER = "http://localhost:8080"
 @pytest.fixture
 @mock.patch("determined.common.api.authentication.Authentication")
 def mock_default_auth(auth_mock: mock.MagicMock) -> None:
-    responses.get(f"{_MASTER}/api/v1/me", status=200, json={"username": "determined"})
+    responses.get(f"{_MASTER}/api/v1/me", status=200, json={"username": api_responses.USERNAME})
     responses.post(
-        f"{_MASTER}/api/v1/auth/login", status=200, json=api_responses.sample_login().to_json()
+        f"{_MASTER}/api/v1/auth/login",
+        status=200,
+        json=api_responses.sample_login(username=api_responses.USERNAME).to_json(),
     )
     auth_mock.return_value = authentication.Authentication(
         master_address=_MASTER,
-        requested_user="determined",
-        password="password",
+        requested_user=api_responses.USERNAME,
+        password=api_responses.PASSWORD,
     )
 
 
