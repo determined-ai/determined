@@ -24,7 +24,7 @@ DEFAULT_BATCH_SIZE = 1
 
 
 class TorchBatchProcessorContext(pytorch._PyTorchReducerContext):
-    def __init__(self, core_context: core.Context, storage_path: str):
+    def __init__(self, core_context: core.Context, storage_path: str) -> None:
         super().__init__()
         self._core_context = core_context
         self.distributed = self._core_context.distributed
@@ -137,7 +137,7 @@ class TorchBatchProcessor(metaclass=abc.ABCMeta):
         pass
 
 
-def _load_state(checkpoint_directory):
+def _load_state(checkpoint_directory) -> Dict[str, Any]:
     checkpoint_directory = pathlib.Path(checkpoint_directory)
     with checkpoint_directory.joinpath("metadata.json").open("r") as f:
         metadata = json.load(f)
@@ -146,7 +146,7 @@ def _load_state(checkpoint_directory):
 
 def _synchronize_and_checkpoint(
     core_context: core.Context, steps_completed: int, rank: int, default_output_uuid: str
-):
+) -> None:
     """
     Synchronize the workers and create checkpoint to record steps completed
     """
@@ -199,7 +199,7 @@ def _validate_dataloader_kwargs(
             )
 
 
-def _validate_iterate_length(iterate_length: Optional[int], times_iterate: int):
+def _validate_iterate_length(iterate_length: Optional[int], times_iterate: int) -> int:
     if iterate_length is None:
         return times_iterate
 
@@ -241,7 +241,7 @@ def _get_storage_information(checkpoint_config, default_uuid_path, core_context)
         raise NotImplementedError(f"Storage type {storage_type} support is not implemented")
 
 
-def _reduce_metrics(batch_processor_context, core_context, rank, steps_completed):
+def _reduce_metrics(batch_processor_context, core_context, rank, steps_completed) -> None:
     reducables = list(batch_processor_context._wrapped_reducers)
     # If the user has set metric reducers
     if len(reducables) > 0:
@@ -267,7 +267,7 @@ def torch_batch_process(
     max_batches: Optional[int] = None,
     checkpoint_interval: int = 5,
     dataloader_kwargs: Dict[str, Any] = None,
-):
+) -> None:
     with initialize_default_inference_context() as core_context:
         """
         (1) Set up necessary variables to run batch processing
