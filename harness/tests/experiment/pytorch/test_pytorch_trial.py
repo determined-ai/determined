@@ -1096,9 +1096,9 @@ class TestPyTorchTrial:
         batches_per_epoch = (dataset_len + global_batch_size - 1) // global_batch_size  # ceil
 
         patterns = []
-        for batch_idx in range(num_steps):
-            epoch_idx = batch_idx // batches_per_epoch
-            for rank in range(num_procs):
+        for rank in range(num_procs):
+            for batch_idx in range(num_steps):
+                epoch_idx = batch_idx // batches_per_epoch
                 patterns.append(f"rank {rank} finished batch {batch_idx} in epoch {epoch_idx}")
 
         utils.assert_patterns_in_logs(log_output, patterns)
