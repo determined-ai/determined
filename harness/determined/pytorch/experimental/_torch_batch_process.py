@@ -33,7 +33,9 @@ class TorchBatchProcessorContext(pytorch._PyTorchReducerContext):
         self._storage_path = storage_path
         self._use_default_storage = False
 
-    def to_device(self, data, warned_types: Optional[Set[Type]] = None) -> pytorch.TorchData:
+    def to_device(
+        self, data: pytorch._Data, warned_types: Optional[Set[Type]] = None
+    ) -> pytorch.TorchData:
         """Map generated data to the device allocated by the Determined cluster.
 
         All the data in the data loader and the models are automatically moved to the
@@ -118,7 +120,7 @@ class TorchBatchProcessor(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def process_batch(self, batch, batch_idx) -> None:
+    def process_batch(self, batch: Any, batch_idx: int) -> None:
         pass
 
     def on_checkpoint_start(self) -> None:  # noqa: B027
@@ -137,7 +139,7 @@ class TorchBatchProcessor(metaclass=abc.ABCMeta):
         pass
 
 
-def _load_state(checkpoint_directory) -> Dict[str, Any]:
+def _load_state(checkpoint_directory: pathlib.Path) -> Dict[str, Any]:
     checkpoint_directory = pathlib.Path(checkpoint_directory)
     with checkpoint_directory.joinpath("metadata.json").open("r") as f:
         metadata = json.load(f)
@@ -221,7 +223,9 @@ def _validate_iterate_length(iterate_length: Optional[int], times_iterate: int) 
     return iterate_length
 
 
-def _get_storage_information(checkpoint_config, default_uuid_path, core_context) -> str:
+def _get_storage_information(
+    checkpoint_config: Dict[str, Any], default_uuid_path: str, core_context: core.Context
+) -> str:
     storage_type = checkpoint_config["type"]
 
     if storage_type == "s3":
@@ -241,7 +245,12 @@ def _get_storage_information(checkpoint_config, default_uuid_path, core_context)
         raise NotImplementedError(f"Storage type {storage_type} support is not implemented")
 
 
-def _reduce_metrics(batch_processor_context, core_context, rank, steps_completed) -> None:
+def _reduce_metrics(
+    batch_processor_context: TorchBatchProcessorContext,
+    core_context: core.Context,
+    rank: int,
+    steps_completed: int,
+) -> None:
     reducables = list(batch_processor_context._wrapped_reducers)
     # If the user has set metric reducers
     if len(reducables) > 0:
