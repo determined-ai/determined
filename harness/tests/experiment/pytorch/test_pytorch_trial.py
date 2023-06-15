@@ -1,5 +1,7 @@
 # type: ignore
+import contextlib
 import importlib
+import io
 import logging
 import os
 import pathlib
@@ -1043,6 +1045,31 @@ class TestPyTorchTrial:
         outputs = launcher.elastic_launch(launch_config, self.run_amp)(tmp_path, api_style)
         outputs = launcher.elastic_launch(launch_config, self.run_amp)(tmp_path, api_style, outputs[0])
 
+    @pytest.mark.skipif(torch.cuda.device_count() < 2, reason="not enough gpus")
+    @pytest.mark.gpu_parallel
+    def test_distributed_logging(self, tmp_path: pathlib.Path):
+        # set up distributed backend.
+        os.environ[det._DistributedBackend.TORCH] = str(1)
+
+        rdzv_backend = "c10d"
+        rdzv_endpoint = "localhost:29400"
+        rdzv_id = str(uuid.uuid4())
+
+        num_procs = 2
+
+        launch_config = launcher.LaunchConfig(min_nodes=1, max_nodes=1, nproc_per_node=num_procs, run_id=rdzv_id,
+                                              max_restarts=0, rdzv_endpoint=rdzv_endpoint, rdzv_backend=rdzv_backend)
+
+        outputs = launcher.elastic_launch(launch_config, self.run_no_op)(tmp_path)
+
+        log_output = sum([outputs[i] for i in range(num_procs)], [])
+
+        patterns = [
+            f"finished train_batch for rank {i}" for i in range(num_procs)
+        ]
+
+        utils.assert_patterns_in_logs(log_output, patterns)
+
     def run_mnist(self, tmp_path: pathlib.Path, batches_trained: typing.Optional[int] = 0):
         checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
 
@@ -1268,6 +1295,39 @@ class TestPyTorchTrial:
             )
             return True
 
+    def run_no_op(self, tmp_path: pathlib.Path):
+        checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
+
+        config = utils.load_config(utils.fixtures_path("pytorch_no_op/const.yaml"))
+        hparams = config["hyperparameters"]
+
+        exp_config = utils.make_default_exp_config(
+            hparams,
+            scheduling_unit=1,
+            searcher_metric="validation_loss",
+            checkpoint_dir=checkpoint_dir,
+        )
+        exp_config.update(config)
+        exp_config['searcher']['smaller_is_better'] = True
+
+        # each subprocess must import separately as trial_class cannot be pickled.
+        example_path = utils.fixtures_path("pytorch_no_op/model_def.py")
+        trial_class = utils.import_class_from_module("NoopPyTorchTrial", example_path)
+        trial_class._searcher_metric = "validation_error"
+
+        f = io.StringIO()
+
+        with contextlib.redirect_stdout(f):
+            self.train_for_checkpoint(
+                hparams=hparams,
+                trial_class=trial_class,
+                tmp_path=tmp_path,
+                exp_config=exp_config,
+                slots_per_trial=2,
+                steps=1
+            )
+
+        return f.getvalue().split('/n')
 
     def checkpoint_and_check_metrics(
         self,
@@ -1391,7 +1451,7 @@ class TestPyTorchTrial:
         tmp_path: pathlib.Path,
         exp_config: typing.Dict,
         slots_per_trial: int = 1,
-        steps: int = 0
+        steps: int = 1
     ) -> int:
         checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
         tensorboard_path = tmp_path.joinpath("tensorboard")
