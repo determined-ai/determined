@@ -57,4 +57,3 @@ def test_pytorch_gradient_aggregation() -> None:
     assert actual_weights == pytest.approx(
         expected_weights
     ), f"{actual_weights} != {expected_weights}"
-    
