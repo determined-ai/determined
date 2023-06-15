@@ -8,6 +8,7 @@ import platform
 import random
 import sys
 import time
+import warnings
 from typing import (
     IO,
     Any,
@@ -227,3 +228,18 @@ def wait_for(
         done, rv = predicate()
         time.sleep(interval)
     return rv
+
+
+def deprecated(message=None):
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper_deprecated(*args, **kwargs):
+            message = f"{func.__name__} is deprecated and will be removed in a future version."
+            if message:
+                message += f" {message}."
+            warnings.warn(message, category=DeprecationWarning, stacklevel=2)
+            return func(*args, **kwargs)
+
+        return wrapper_deprecated
+
+    return decorator

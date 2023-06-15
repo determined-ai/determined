@@ -392,10 +392,13 @@ class Determined:
         """
         return trial._stream_trials_metrics(self._session, trial_ids, metric_type=metric_type)
 
+    util.deprecated("use stream_trials_metrics instead")
+
     def stream_trials_training_metrics(
         self, trial_ids: List[int]
     ) -> Iterable[trial.TrainingMetrics]:
         """
+        @deprecated
         Streams training metrics for one or more trials sorted by
         trial_id, trial_run_id and steps_completed.
 
@@ -404,10 +407,13 @@ class Determined:
         """
         return trial._stream_training_metrics(self._session, trial_ids)
 
+    util.deprecated("use stream_trials_metrics instead")
+
     def stream_trials_validation_metrics(
         self, trial_ids: List[int]
     ) -> Iterable[trial.ValidationMetrics]:
         """
+        @deprecated
         Streams validation metrics for one or more trials sorted by
         trial_id, trial_run_id and steps_completed.
 
