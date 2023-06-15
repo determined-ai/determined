@@ -11,10 +11,10 @@ import React, {
 
 import Button from 'components/kit/Button';
 import Icon, { IconName } from 'components/kit/Icon';
-import Link from 'components/Link';
-import Spinner from 'shared/components/Spinner';
-import { ErrorLevel, ErrorType } from 'shared/utils/error';
-import handleError from 'utils/error';
+import Link from 'components/kit/internal/Link';
+import Spinner from 'components/kit/internal/Spinner';
+import { ErrorHandler } from 'components/kit/internal/types';
+import { ErrorLevel, ErrorType } from 'components/kit/internal/types';
 
 import css from './Modal.module.scss';
 
@@ -42,6 +42,7 @@ export interface ModalSubmitParams {
   text: string;
   handler: () => Promise<void>;
   onComplete?: () => Promise<void>;
+  handleError: ErrorHandler;
   form?: string;
 }
 
@@ -100,7 +101,7 @@ export const Modal: React.FC<ModalProps> = ({
       setIsOpen(false);
       await submit?.onComplete?.();
     } catch (err) {
-      handleError(err, {
+      submit?.handleError(err, {
         level: ErrorLevel.Error,
         publicMessage: err instanceof Error ? err.message : '',
         publicSubject: 'Could not submit form',

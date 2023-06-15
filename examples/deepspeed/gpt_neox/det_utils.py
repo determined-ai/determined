@@ -27,7 +27,7 @@ def get_neox_args(context):
     overwrite_values.update(
         {
             "train_iters": exp_config["searcher"]["max_length"]["batches"],
-            "save_interval": exp_config["min_validation_period"]["batches"],
+            "checkpoint_factor": exp_config["min_validation_period"]["batches"],
             "eval_interval": exp_config["min_validation_period"]["batches"],
             "hostfile": os.environ.get("DET_DEEPSPEED_HOSTFILE_PATH"),
             "seed": context.env.trial_seed,

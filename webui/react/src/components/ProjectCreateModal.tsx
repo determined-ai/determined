@@ -5,9 +5,9 @@ import Input from 'components/kit/Input';
 import { Modal } from 'components/kit/Modal';
 import { paths } from 'routes/utils';
 import { createProject } from 'services/api';
-import { DetError, ErrorLevel, ErrorType } from 'shared/utils/error';
-import { routeToReactUrl } from 'shared/utils/routes';
+import { DetError, ErrorLevel, ErrorType } from 'utils/error';
 import handleError from 'utils/error';
+import { routeToReactUrl } from 'utils/routes';
 
 const FORM_ID = 'new-project-form';
 
@@ -65,6 +65,7 @@ const ProjectCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }: 
       size="small"
       submit={{
         disabled: !projectName,
+        handleError,
         handler: handleSubmit,
         text: 'Create Project',
       }}

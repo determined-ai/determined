@@ -52,7 +52,7 @@ host-mode networking <https://docs.docker.com/network/host/>`__ will be used ins
 ``dtrain_network_interface``
 ============================
 
-The network interface to use during :ref:`multi-gpu-training`. If not set, Determined automatically
+The network interface to use during distributed training. If not set, Determined automatically
 determines the network interface to use.
 
 When training a model with multiple machines, the host network interface used by each machine must
@@ -62,6 +62,8 @@ is not routable between machines. Determined already filters out common interfac
 ``docker0``, but agent machines may have others. If interface detection is not finding the
 appropriate interface, the ``dtrain_network_interface`` option can be used to set it explicitly
 (e.g., ``eth11``).
+
+.. include:: ../../../_shared/note-dtrain-learn-more.txt
 
 ``cpu_pod_spec``
 ================
@@ -416,9 +418,9 @@ Security-related configuration settings for communicating with the Launcher.
 ``container_run_type``
 ----------------------
 
-The type of the container runtime to be used when launching tasks. The value may be ``singularity``,
-``enroot``, or ``podman``. The default value is ``singularity``. The value ``singularity`` is also
-used when using Apptainer.
+The type of the container runtime to be used when launching tasks. The value may be ``apptainer``,
+``singularity``, ``enroot``, or ``podman``. The default value is ``singularity``. The value
+``singularity`` is also used when using Apptainer.
 
 ``auth_file``
 -------------
@@ -498,11 +500,12 @@ created by the launcher. The default is ``ALL``. The specification ``!root`` is 
 appended to this list to prevent privilege elevation. See the ``sudoers(5)`` definition of
 ``Runas_List`` for the full syntax of this value. See :ref:`sudo_configuration` for details.
 
-``singularity_image_root``
---------------------------
+``apptainer_image_root`` or ``singularity_image_root``
+------------------------------------------------------
 
-The shared directory where Singularity images should be located. This directory must be visible to
-the launcher and from the compute nodes. See :ref:`slurm-image-config` for more details.
+The shared directory where Apptainer/Singularity images should be located. Only one of these two can
+be specified. This directory must be visible to the launcher and from the compute nodes. See
+:ref:`slurm-image-config` for more details.
 
 ``job_storage_root``
 --------------------

@@ -17,10 +17,10 @@ import WorkspaceMemberRemoveComponent from 'components/WorkspaceMemberRemoveModa
 import usePermissions from 'hooks/usePermissions';
 import { useSettings } from 'hooks/useSettings';
 import { V1Group, V1Role, V1RoleWithAssignments } from 'services/api-ts-sdk';
-import { alphaNumericSorter } from 'shared/utils/sort';
 import determinedStore from 'stores/determinedInfo';
 import { User, UserOrGroup, UserOrGroupWithRoleInfo, Workspace } from 'types';
 import { useObservable } from 'utils/observable';
+import { alphaNumericSorter } from 'utils/sort';
 import { getUserOrGroupWithRoleInfo, isUserWithRoleInfo } from 'utils/user';
 
 import RoleRenderer from './RoleRenderer';

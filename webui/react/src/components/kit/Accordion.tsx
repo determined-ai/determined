@@ -1,7 +1,7 @@
 import { Collapse } from 'antd';
 import React from 'react';
 
-import { ConditionalWrapper } from 'components/ConditionalWrapper';
+import { ConditionalWrapper } from 'components/kit/internal/ConditionalWrapper';
 
 interface AccordionProps {
   title: React.ReactNode;

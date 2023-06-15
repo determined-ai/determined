@@ -73,7 +73,7 @@ func createPod(
 	namespace := "test_namespace"
 	masterIP := "0.0.0.0"
 	var masterPort int32 = 32
-	podInterface := clientSet.CoreV1().Pods(namespace)
+	podInterface := &mockPodInterface{}
 	configMapInterface := clientSet.CoreV1().ConfigMaps(namespace)
 	resourceRequestQueue := resourceHandler
 	leaveKubernetesResources := false
@@ -523,7 +523,6 @@ func TestMultipleContainersRunning(t *testing.T) {
 	t.Logf("Testing two pods and one doesn't have running state")
 	system, newPod, ref, podMap, _ := createPodWithMockQueue()
 	newPod.container.State = cproto.Starting
-	newPod.testLogStreamer = true
 
 	podMap["task"].Purge()
 	assert.Equal(t, podMap["task"].GetLength(), 0)
@@ -569,7 +568,6 @@ func TestMultipleContainersRunning(t *testing.T) {
 	// Multiple containers, all in running state, results in a running state.
 	t.Logf("Testing two pods with running states")
 	system, newPod, ref, podMap, _ = createPodWithMockQueue()
-	newPod.testLogStreamer = true
 
 	podMap["task"].Purge()
 	assert.Equal(t, podMap["task"].GetLength(), 0)
@@ -600,7 +598,7 @@ func TestMultipleContainersRunning(t *testing.T) {
 
 	containerMsg, ok := message.(sproto.ResourcesStateChanged)
 	if !ok {
-		t.Errorf("expected sproto.ContainerLog but received %s", reflect.TypeOf(message))
+		t.Errorf("expected sproto.ResourcesStateChanged but received %s", reflect.TypeOf(message))
 	}
 	if containerMsg.ResourcesStarted == nil {
 		t.Errorf("container started message not present")
@@ -658,19 +656,14 @@ func TestReceiveContainerLog(t *testing.T) {
 	setupEntrypoint(t)
 	defer cleanup(t)
 
-	system, _, ref, podMap, _ := createPodWithMockQueue()
+	mockLogMessage := "mock log message"
+	system, newPod, ref, podMap, _ := createPodWithMockQueue()
+	newPod.restore = true
+	newPod.container.State = cproto.Running
+	newPod.podInterface = &mockPodInterface{logMessage: &mockLogMessage}
 	podMap["task"].Purge()
 	assert.Equal(t, podMap["task"].GetLength(), 0)
-
-	rightNow := time.Now()
-	correctMsg := "This is a mock message."
-
-	newEvent := sproto.ContainerLog{
-		Timestamp:  rightNow,
-		AuxMessage: &correctMsg,
-	}
-
-	system.Ask(ref, newEvent)
+	system.Ask(ref, actor.PreStart{})
 	time.Sleep(time.Second)
 
 	assert.Equal(t, podMap["task"].GetLength(), 1)
@@ -683,7 +676,60 @@ func TestReceiveContainerLog(t *testing.T) {
 	if !ok {
 		t.Errorf("expected sproto.ContainerLog but received %s", reflect.TypeOf(message))
 	}
-	assert.Equal(t, *containerMsg.AuxMessage, correctMsg)
+	assert.Equal(t, containerMsg.RunMessage.Value, mockLogMessage)
+
+	// reset state to starting
+	newPod.container.State = cproto.Starting
+	mockLogMessage = "new mock log message"
+
+	typeMeta := metaV1.TypeMeta{Kind: "running log test"}
+	objectMeta := metaV1.ObjectMeta{
+		Name: "test meta",
+	}
+	containerStatuses := []k8sV1.ContainerStatus{
+		{
+			Name:  "sample-container",
+			State: k8sV1.ContainerState{Running: &k8sV1.ContainerStateRunning{}},
+		},
+	}
+	status := k8sV1.PodStatus{
+		Phase:             k8sV1.PodRunning,
+		ContainerStatuses: containerStatuses,
+	}
+	pod := k8sV1.Pod{
+		TypeMeta:   typeMeta,
+		ObjectMeta: objectMeta,
+		Status:     status,
+	}
+	newPod.containerNames = set.FromSlice([]string{
+		"sample-container",
+	})
+	statusUpdate := podStatusUpdate{updatedPod: &pod}
+
+	system.Ask(ref, statusUpdate)
+	time.Sleep(time.Second)
+	assert.Equal(t, podMap["task"].GetLength(), 2)
+	assert.Equal(t, newPod.container.State, cproto.Running)
+
+	message, err = podMap["task"].Pop()
+	if err != nil {
+		t.Errorf("Unable to pop message from task receiver queue")
+	}
+	resourceMsg, ok := message.(sproto.ResourcesStateChanged)
+	if !ok {
+		t.Errorf("expected sproto.ResourcesStateChanged but received %s", reflect.TypeOf(message))
+	}
+	assert.Equal(t, resourceMsg.Container.State, cproto.Running)
+
+	message, err = podMap["task"].Pop()
+	if err != nil {
+		t.Errorf("Unable to pop message from task receiver queue")
+	}
+	containerMsg, ok = message.(sproto.ContainerLog)
+	if !ok {
+		t.Errorf("expected sproto.ContainerLog but received %s", reflect.TypeOf(message))
+	}
+	assert.Equal(t, containerMsg.RunMessage.Value, mockLogMessage)
 }
 
 func TestKillTaskPod(t *testing.T) {

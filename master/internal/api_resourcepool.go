@@ -98,11 +98,5 @@ func (a *apiServer) UnbindRPFromWorkspace(
 func (a *apiServer) ListWorkspacesBoundToRP(
 	ctx context.Context, req *apiv1.ListWorkspacesBoundToRPRequest,
 ) (*apiv1.ListWorkspacesBoundToRPResponse, error) {
-	return nil, nil
-}
-
-func (a *apiServer) ListRPWorkspaceBindings(
-	ctx context.Context, req *apiv1.ListRPWorkspaceBindingsRequest,
-) (*apiv1.ListRPWorkspaceBindingsResponse, error) {
-	return nil, nil
+	return &apiv1.ListWorkspacesBoundToRPResponse{}, nil
 }

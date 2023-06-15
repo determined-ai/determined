@@ -20,6 +20,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
+	apiPkg "github.com/determined-ai/determined/master/internal/api"
 	authz2 "github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
@@ -191,6 +192,41 @@ func TestPatchUser(t *testing.T) {
 	require.Error(t, err)
 }
 
+func TestRenameUserThenReuseName(t *testing.T) {
+	username := uuid.New().String()
+	api, _, ctx := setupAPITest(t, nil)
+	resp, err := api.PostUser(ctx, &apiv1.PostUserRequest{
+		User: &userv1.User{
+			Username: username,
+		},
+	})
+	require.NoError(t, err)
+
+	// Can't create user with same username.
+	_, err = api.PostUser(ctx, &apiv1.PostUserRequest{
+		User: &userv1.User{
+			Username: username,
+		},
+	})
+	require.Error(t, err)
+
+	_, err = api.PatchUser(ctx, &apiv1.PatchUserRequest{
+		UserId: resp.User.Id,
+		User: &userv1.PatchUser{
+			Username: ptrs.Ptr(uuid.New().String()),
+		},
+	})
+	require.NoError(t, err)
+
+	// Should be able to make a new user with original username.
+	_, err = api.PostUser(ctx, &apiv1.PostUserRequest{
+		User: &userv1.User{
+			Username: username,
+		},
+	})
+	require.NoError(t, err)
+}
+
 // pgdb can be nil to use the singleton database for testing.
 func setupUserAuthzTest(
 	t *testing.T, pgdb *db.PgDB,
@@ -245,12 +281,12 @@ func TestAuthzGetUser(t *testing.T) {
 
 	// Ensure when CanGetUser returns false we get the same error as the user not being found.
 	_, notFoundError := api.GetUser(ctx, &apiv1.GetUserRequest{UserId: -999})
-	require.Equal(t, errUserNotFound.Error(), notFoundError.Error())
+	require.Equal(t, apiPkg.NotFoundErrs("user", "", true).Error(), notFoundError.Error())
 
 	authzUsers.On("CanGetUser", mock.Anything, curUser,
 		mock.Anything).Return(authz2.PermissionDeniedError{}).Once()
 	_, err = api.GetUser(ctx, &apiv1.GetUserRequest{UserId: 1})
-	require.Equal(t, notFoundError.Error(), err.Error())
+	require.Equal(t, apiPkg.NotFoundErrs("user", "", true).Error(), err.Error())
 
 	// As a spot check just make sure we can still get users with no error.
 	authzUsers.On("CanGetUser", mock.Anything, curUser, mock.Anything).Return(nil).Once()
@@ -303,14 +339,14 @@ func TestAuthzSetUserPassword(t *testing.T) {
 
 	// If we can't view the user we just get the same as passing in a not found user.
 	_, notFoundError := api.SetUserPassword(ctx, &apiv1.SetUserPasswordRequest{UserId: -9999})
-	require.Equal(t, errUserNotFound.Error(), notFoundError.Error())
+	require.Equal(t, apiPkg.NotFoundErrs("user", "", true).Error(), notFoundError.Error())
 
 	authzUsers.On("CanSetUsersPassword", mock.Anything, curUser, mock.Anything).
 		Return(fmt.Errorf("canSetUsersPassword")).Once()
 	authzUsers.On("CanGetUser", mock.Anything, curUser,
 		mock.Anything).Return(authz2.PermissionDeniedError{}).Once()
 	_, err = api.SetUserPassword(ctx, &apiv1.SetUserPasswordRequest{UserId: int32(curUser.ID)})
-	require.Equal(t, errUserNotFound.Error(), err.Error())
+	require.Equal(t, apiPkg.NotFoundErrs("user", "", true).Error(), err.Error())
 
 	// If CanGetUser returns an error we also return that error.
 	cantViewUserError := fmt.Errorf("cantViewUserError")
@@ -355,11 +391,11 @@ func TestAuthzPatchUser(t *testing.T) {
 	authzUsers.On("CanGetUser", mock.Anything, curUser,
 		mock.Anything).Return(authz2.PermissionDeniedError{}).Once()
 	_, err = api.PatchUser(ctx, req)
-	require.Equal(t, errUserNotFound.Error(), err.Error())
+	require.Equal(t, apiPkg.NotFoundErrs("user", "", true).Error(), err.Error())
 
 	req.UserId = -9999
 	_, err = api.PatchUser(ctx, req)
-	require.Equal(t, errUserNotFound.Error(), err.Error())
+	require.Equal(t, apiPkg.NotFoundErrs("user", "", true).Error(), err.Error())
 }
 
 func TestAuthzGetUserSetting(t *testing.T) {

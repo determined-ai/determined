@@ -1,20 +1,18 @@
-import React, { useMemo, useRef } from 'react';
+import React, { ReactNode, useMemo, useRef } from 'react';
 import { FixedSizeGrid, GridChildComponentProps } from 'react-window';
 import uPlot, { AlignedData, Plugin } from 'uplot';
 
+import { getCssVar, getTimeTickValues, glasbeyColor } from 'components/kit/internal/functions';
+import ScaleSelect from 'components/kit/internal/ScaleSelect';
+import Spinner from 'components/kit/internal/Spinner/Spinner';
+import { ErrorHandler, MetricType, Scale } from 'components/kit/internal/types';
+import { SyncProvider } from 'components/kit/internal/UPlot/SyncProvider';
+import { UPlotPoint } from 'components/kit/internal/UPlot/types';
+import UPlotChart, { Options } from 'components/kit/internal/UPlot/UPlotChart';
+import { closestPointPlugin } from 'components/kit/internal/UPlot/UPlotChart/closestPointPlugin';
+import { tooltipsPlugin } from 'components/kit/internal/UPlot/UPlotChart/tooltipsPlugin';
+import useResize from 'components/kit/internal/useResize';
 import { XAxisDomain, XAxisFilter } from 'components/kit/LineChart/XAxisFilter';
-import ScaleSelect from 'components/ScaleSelect';
-import { SyncProvider } from 'components/UPlot/SyncProvider';
-import { UPlotPoint } from 'components/UPlot/types';
-import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
-import { closestPointPlugin } from 'components/UPlot/UPlotChart/closestPointPlugin';
-import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin';
-import useResize from 'hooks/useResize';
-import Spinner from 'shared/components/Spinner/Spinner';
-import { getCssVar } from 'shared/themes';
-import { glasbeyColor } from 'shared/utils/color';
-import { MetricType, Scale } from 'types';
-import { getTimeTickValues } from 'utils/chart';
 import { Loadable } from 'utils/loadable';
 
 import css from './LineChart.module.scss';
@@ -62,7 +60,7 @@ interface ChartProps {
   scale?: Scale;
   series: Serie[];
   showLegend?: boolean;
-  title?: string;
+  title?: ReactNode;
   xAxis?: XAxisDomain;
   xLabel?: string;
   yLabel?: string;
@@ -71,11 +69,13 @@ interface ChartProps {
 
 interface LineChartProps extends Omit<ChartProps, 'series'> {
   series: Serie[] | Loadable<Serie[]>;
+  handleError: ErrorHandler;
 }
 
 export const LineChart: React.FC<LineChartProps> = ({
   experimentId,
   focusedSeries,
+  handleError,
   height = 350,
   onPointClick,
   onPointFocus,
@@ -238,6 +238,7 @@ export const LineChart: React.FC<LineChartProps> = ({
         allowDownload={hasPopulatedSeries}
         data={chartData}
         experimentId={experimentId}
+        handleError={handleError}
         isLoading={isLoading}
         options={chartOptions}
       />
@@ -269,6 +270,7 @@ export type ChartsProps = ChartProps[];
  * @param {ChartsProps} chartsProps - Provide series to plot on each chart, and any chart-specific config.
  * @param {XAxisDomain[]} [xAxisOptions] - A list of possible x-axes to select in a dropdown; examples: Batches, Time, Epoch.
  * @param {Scale} scale - Scale of chart, can be linear or log
+ * @param {handleError} handleError - Error handler
  */
 export interface GroupProps {
   chartsProps: ChartsProps | Loadable<ChartsProps>;
@@ -276,6 +278,7 @@ export interface GroupProps {
   scale: Scale;
   setScale: React.Dispatch<React.SetStateAction<Scale>>;
   xAxis: XAxisDomain;
+  handleError: ErrorHandler;
 }
 
 /**
@@ -288,9 +291,10 @@ const VirtualChartRenderer: React.FC<
     columnCount: number;
     scale: Scale;
     xAxis: XAxisDomain;
+    handleError: ErrorHandler;
   }>
 > = ({ columnIndex, rowIndex, style, data }) => {
-  const { chartsProps, columnCount, scale, xAxis } = data;
+  const { chartsProps, columnCount, scale, xAxis, handleError } = data;
 
   const cellIndex = rowIndex * columnCount + columnIndex;
 
@@ -300,14 +304,21 @@ const VirtualChartRenderer: React.FC<
   return (
     <div className={css.chartgridCell} key={`${rowIndex}, ${columnIndex}`} style={style}>
       <div className={css.chartgridCellCard}>
-        <LineChart {...chartProps} scale={scale} xAxis={xAxis} />
+        <LineChart {...chartProps} handleError={handleError} scale={scale} xAxis={xAxis} />
       </div>
     </div>
   );
 };
 
 export const ChartGrid: React.FC<GroupProps> = React.memo(
-  ({ chartsProps: propChartsProps, xAxis, onXAxisChange, scale, setScale }: GroupProps) => {
+  ({
+    chartsProps: propChartsProps,
+    xAxis,
+    onXAxisChange,
+    scale,
+    setScale,
+    handleError,
+  }: GroupProps) => {
     const chartGridRef = useRef<HTMLDivElement | null>(null);
     const { width, height } = useResize(chartGridRef);
     const columnCount = Math.max(1, Math.floor(width / 540));
@@ -354,7 +365,7 @@ export const ChartGrid: React.FC<GroupProps> = React.memo(
                     height - 40,
                     (chartsProps.length > columnCount ? 2.1 : 1.05) * 480,
                   )}
-                  itemData={{ chartsProps: chartsProps, columnCount, scale, xAxis }}
+                  itemData={{ chartsProps: chartsProps, columnCount, handleError, scale, xAxis }}
                   rowCount={Math.ceil(chartsProps.length / columnCount)}
                   rowHeight={480}
                   style={{ height: '100%' }}

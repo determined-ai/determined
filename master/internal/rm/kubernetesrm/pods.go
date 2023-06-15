@@ -917,26 +917,25 @@ func (p *pods) cleanUpPodHandler(ctx *actor.Context, podHandler *actor.Ref) erro
 func (p *pods) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
 	switch apiCtx.Request().Method {
 	case echo.GET:
-		summary, err := p.summarize(ctx)
-		if err != nil {
-			ctx.Respond(apiCtx.JSON(http.StatusInternalServerError, err))
+		summaries := p.summarizeClusterByNodes(ctx)
+		_, nodesToPools := p.getNodeResourcePoolMapping(summaries)
+		for nodeName, summary := range summaries {
+			summary.ResourcePool = nodesToPools[summary.ID]
+			summaries[nodeName] = summary
 		}
-		ctx.Respond(apiCtx.JSON(http.StatusOK, summary))
+		ctx.Respond(apiCtx.JSON(http.StatusOK, summaries))
 	default:
 		ctx.Respond(echo.ErrMethodNotAllowed)
 	}
 }
 
 func (p *pods) handleGetAgentsRequest(ctx *actor.Context) {
-	summaries, err := p.summarize(ctx)
-	if err != nil {
-		ctx.Respond(err)
-		return
-	}
+	nodeSummaries := p.summarizeClusterByNodes(ctx)
+	_, nodesToPools := p.getNodeResourcePoolMapping(nodeSummaries)
 
 	response := &apiv1.GetAgentsResponse{}
-
-	for _, summary := range summaries {
+	for _, summary := range nodeSummaries {
+		summary.ResourcePool = nodesToPools[summary.ID]
 		response.Agents = append(response.Agents, summary.ToProto())
 	}
 	ctx.Respond(response)
@@ -962,9 +961,10 @@ func (p *pods) summarize(ctx *actor.Context) (map[string]model.AgentSummary, err
 	return p.summarizeCache.summary, p.summarizeCache.err
 }
 
-func (p *pods) computeSummary(ctx *actor.Context) (map[string]model.AgentSummary, error) {
-	nodeSummaries := p.summarizeClusterByNodes(ctx)
-
+// Get the mapping of many-to-many relationship between nodes and resource pools.
+func (p *pods) getNodeResourcePoolMapping(nodeSummaries map[string]model.AgentSummary) (
+	map[string][]*k8sV1.Node, map[string][]string,
+) {
 	poolTaskContainerDefaults := extractTCDs(p.resourcePoolConfigs)
 
 	// Nvidia automatically taints nodes, so we should tolerate that when users don't customize
@@ -975,9 +975,9 @@ func (p *pods) computeSummary(ctx *actor.Context) (map[string]model.AgentSummary
 		Operator: k8sV1.TolerationOpEqual,
 	}}
 	cpuTolerations, gpuTolerations := extractTolerations(p.baseContainerDefaults)
-
-	// Build the many-to-many relationship between nodes and resource pools
 	poolsToNodes := make(map[string][]*k8sV1.Node, len(p.namespaceToPoolName))
+	nodesToPools := make(map[string][]string, len(p.namespaceToPoolName))
+
 	for _, node := range p.currentNodes {
 		_, slotType := extractSlotInfo(nodeSummaries[node.Name])
 
@@ -1008,9 +1008,19 @@ func (p *pods) computeSummary(ctx *actor.Context) (map[string]model.AgentSummary
 			// If all of a node's taints are tolerated by a pool, that node belongs to the pool.
 			if allTaintsTolerated(node.Spec.Taints, poolTolerations) {
 				poolsToNodes[poolName] = append(poolsToNodes[poolName], node)
+				nodesToPools[node.Name] = append(nodesToPools[node.Name], poolName)
 			}
 		}
 	}
+
+	return poolsToNodes, nodesToPools
+}
+
+func (p *pods) computeSummary(ctx *actor.Context) (map[string]model.AgentSummary, error) {
+	nodeSummaries := p.summarizeClusterByNodes(ctx)
+
+	// Build the many-to-many relationship between nodes and resource pools
+	poolsToNodes, _ := p.getNodeResourcePoolMapping(nodeSummaries)
 
 	// Build the set of summaries for each resource pool
 	containers := p.containersPerResourcePool()
@@ -1051,7 +1061,7 @@ func (p *pods) computeSummary(ctx *actor.Context) (map[string]model.AgentSummary
 			ID:             poolName,
 			RegisteredTime: p.cluster.RegisteredTime(),
 			NumContainers:  numContainersInPool,
-			ResourcePool:   poolName,
+			ResourcePool:   []string{poolName},
 			Slots:          slots,
 		}
 	}
@@ -1079,7 +1089,6 @@ func (p *pods) summarizeClusterByNodes(ctx *actor.Context) map[string]model.Agen
 	}
 
 	nodeToTasks, taskSlots := p.getNonDetSlots(p.slotType)
-
 	summary := make(map[string]model.AgentSummary, len(p.currentNodes))
 	for _, node := range p.currentNodes {
 		var numSlots int64
@@ -1163,7 +1172,7 @@ func (p *pods) summarizeClusterByNodes(ctx *actor.Context) map[string]model.Agen
 			RegisteredTime: node.ObjectMeta.CreationTimestamp.Time,
 			Slots:          slotsSummary,
 			NumContainers:  len(podByNode[node.Name]) + len(nodeToTasks[node.Name]),
-			ResourcePool:   "",
+			ResourcePool:   []string{""},
 			Addresses:      addrs,
 		}
 	}

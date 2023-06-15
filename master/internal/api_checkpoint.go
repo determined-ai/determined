@@ -16,6 +16,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 
+	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/db"
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
@@ -30,17 +31,13 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/modelv1"
 )
 
-func errCheckpointNotFound(id string) error {
-	return status.Errorf(codes.NotFound, "checkpoint not found: %s", id)
-}
-
 func errCheckpointsNotFound(ids []string) error {
 	tmp := make([]string, len(ids))
 	for i, id := range ids {
 		tmp[i] = id
 	}
 	sort.Strings(tmp)
-	return status.Errorf(codes.NotFound, "checkpoints not found: %s", strings.Join(tmp, ", "))
+	return api.NotFoundErrs("checkpoints", strings.Join(tmp, ", "), true)
 }
 
 func (m *Master) canDoActionOnCheckpoint(
@@ -58,7 +55,7 @@ func (m *Master) canDoActionOnCheckpoint(
 	if err != nil {
 		return err
 	} else if checkpoint == nil {
-		return errCheckpointNotFound(id)
+		return api.NotFoundErrs("checkpoint", id, true)
 	}
 	if checkpoint.CheckpointTrainingMetadata.ExperimentID == 0 {
 		return nil // TODO(nick) add authz for other task types.
@@ -69,7 +66,7 @@ func (m *Master) canDoActionOnCheckpoint(
 	}
 
 	if err := expauth.AuthZProvider.Get().CanGetExperiment(ctx, curUser, exp); err != nil {
-		return authz.SubIfUnauthorized(err, errCheckpointNotFound(id))
+		return authz.SubIfUnauthorized(err, api.NotFoundErrs("checkpoint", id, true))
 	}
 	if err := action(ctx, curUser, exp); err != nil {
 		return status.Error(codes.PermissionDenied, err.Error())
@@ -78,25 +75,38 @@ func (m *Master) canDoActionOnCheckpoint(
 }
 
 func (m *Master) canDoActionOnCheckpointThroughModel(
-	ctx context.Context, curUser model.User, id uuid.UUID,
+	ctx context.Context, curUser model.User, ckptID string,
 ) error {
-	modelIDs, err := db.GetModelIDsAssociatedWithCheckpoint(ctx, id)
+	ckptUUID, err := uuid.Parse(ckptID)
 	if err != nil {
 		return err
 	}
-	for _, id := range modelIDs {
+
+	modelIDs, err := db.GetModelIDsAssociatedWithCheckpoint(ctx, ckptUUID)
+	if err != nil {
+		return err
+	}
+	if len(modelIDs) == 0 {
+		// if length of model ids is zero then permission denied
+		// so return checkpoitn not found.
+		return api.NotFoundErrs("checkpoint", ckptID, true)
+	}
+
+	var errCanGetModel error
+	for _, modelID := range modelIDs {
 		model := &modelv1.Model{}
-		err = m.db.QueryProto("get_model_by_id", model, id)
-		if !errors.Is(err, db.ErrNotFound) {
+		err = m.db.QueryProto("get_model_by_id", model, modelID)
+		if err != nil {
 			return err
 		}
-		if err := modelauth.AuthZProvider.Get().CanGetModel(
-			ctx, curUser, model, model.WorkspaceId); err != nil {
-			return authz.SubIfUnauthorized(err, nil)
+		if errCanGetModel = modelauth.AuthZProvider.Get().CanGetModel(
+			ctx, curUser, model, model.WorkspaceId); errCanGetModel == nil {
+			return nil
 		}
 	}
-	return status.Error(codes.PermissionDenied,
-		fmt.Sprintf("cannot access checkpoint: %s", id.String()))
+	// we get to this return when there are no models belonging
+	// to a workspace where user has permissions.
+	return authz.SubIfUnauthorized(errCanGetModel, api.NotFoundErrs("checkpoint", ckptID, true))
 }
 
 func (a *apiServer) GetCheckpoint(
@@ -110,11 +120,7 @@ func (a *apiServer) GetCheckpoint(
 		expauth.AuthZProvider.Get().CanGetExperimentArtifacts)
 
 	if errE != nil {
-		ckptUUID, err := uuid.Parse(req.CheckpointUuid)
-		if err != nil {
-			return nil, err
-		}
-		errM := a.m.canDoActionOnCheckpointThroughModel(ctx, *curUser, ckptUUID)
+		errM := a.m.canDoActionOnCheckpointThroughModel(ctx, *curUser, req.CheckpointUuid)
 		if errM != nil {
 			return nil, errE
 		}
@@ -363,7 +369,7 @@ func (a *apiServer) CheckpointsRemoveFiles(
 		checkpointUUIDs := conv.ToUUIDList(strings.Split(expIDcUUIDs.CheckpointUUIDSStr, ","))
 
 		ckptGCTask := newCheckpointGCTask(
-			a.m.rm, a.m.db, a.m.taskLogger, taskID, jobID, jobSubmissionTime, taskSpec, exps[i].ID,
+			a.m.rm, a.m.db, taskID, jobID, jobSubmissionTime, taskSpec, exps[i].ID,
 			exps[i].Config, checkpointUUIDs, req.CheckpointGlobs, false, agentUserGroup, curUser, nil,
 		)
 		a.m.system.MustActorOf(addr, ckptGCTask)

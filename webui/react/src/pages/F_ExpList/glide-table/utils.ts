@@ -1,15 +1,15 @@
 import { DataEditorProps } from '@glideapps/glide-data-grid';
 import dayjs from 'dayjs';
 
-import { Theme } from 'shared/themes';
+import { ExperimentItem } from 'types';
 import {
   DURATION_MINUTE,
   DURATION_UNIT_MEASURES,
   DURATION_YEAR,
   durationInEnglish,
   getDuration,
-} from 'shared/utils/datetime';
-import { ExperimentItem } from 'types';
+} from 'utils/datetime';
+import { Theme } from 'utils/themes';
 
 export const getDurationInEnglish = (record: ExperimentItem): string => {
   const duration = getDuration(record);
@@ -30,23 +30,21 @@ export const getTimeInEnglish = (d: Date): string => {
   const options = {
     conjunction: ' ',
     delimiter: ' ',
-    language: 'en',
     largest: 1,
     serialComma: false,
-    spacer: ' ',
   };
 
   const now = Date.now();
-
   const milliseconds = d.valueOf();
-
   const delta = milliseconds === undefined ? 0 : now - milliseconds;
 
-  return delta < DURATION_MINUTE
-    ? JUST_NOW
-    : delta >= DURATION_YEAR
-    ? dayjs(milliseconds).format(DATE_FORMAT)
-    : `${durationInEnglish(delta, options)} ago`;
+  if (delta < DURATION_MINUTE) {
+    return JUST_NOW;
+  } else if (delta >= DURATION_YEAR) {
+    return dayjs(milliseconds).format(DATE_FORMAT);
+  } else {
+    return `${durationInEnglish(delta, options)} ago`;
+  }
 };
 
 /**
@@ -55,9 +53,9 @@ export const getTimeInEnglish = (d: Date): string => {
  */
 export const getTheme = (appTheme: Theme): DataEditorProps['theme'] => {
   return {
-    accentLight: appTheme.stageStrong,
+    accentLight: appTheme.surfaceStrong,
     bgBubble: appTheme.ixStrong,
-    bgCell: appTheme.stage,
+    bgCell: appTheme.surface,
     bgHeader: appTheme.surface,
     bgHeaderHovered: appTheme.surfaceStrong,
     borderColor: appTheme.ixBorder,

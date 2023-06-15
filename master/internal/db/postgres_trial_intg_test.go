@@ -101,8 +101,32 @@ func addMetrics(ctx context.Context,
 	}
 }
 
+func addTestTrialMetrics(ctx context.Context,
+	t *testing.T, db *PgDB, trialID int, trialMetricsJSON string,
+) {
+	var trialMetrics map[model.MetricType][]map[string]any
+	require.NoError(t, json.Unmarshal([]byte(trialMetricsJSON), &trialMetrics))
+	trialRunID := 0
+
+	for mType, metrics := range trialMetrics {
+		for i, m := range metrics {
+			metrics, err := structpb.NewStruct(m)
+			require.NoError(t, err)
+			_, err = db.addTrialMetrics(ctx, &trialv1.TrialMetrics{
+				TrialId:        int32(trialID),
+				TrialRunId:     int32(trialRunID),
+				StepsCompleted: int32(i + 1),
+				Metrics: &commonv1.Metrics{
+					AvgMetrics: metrics,
+				},
+			}, mType)
+			require.NoError(t, err)
+		}
+	}
+}
+
 func addMetricCustomTime(ctx context.Context, t *testing.T, trialID int, endTime time.Time) {
-	metric := struct {
+	type metric struct {
 		bun.BaseModel `bun:"table:metrics"`
 		TrialID       int
 		TrialRunID    int
@@ -110,42 +134,34 @@ func addMetricCustomTime(ctx context.Context, t *testing.T, trialID int, endTime
 		TotalBatches  int
 		EndTime       time.Time
 		PartitionType MetricPartitionType
-	}{
-		TrialID:    trialID,
-		TrialRunID: 1,
-		Metrics: map[string]any{
-			"avg_metrics": map[string]any{
-				"b": -1.0,
-			},
-		},
-		TotalBatches:  999999,
-		EndTime:       endTime,
-		PartitionType: TrainingMetric,
+		CustomType    model.MetricType
 	}
-	_, err := Bun().NewInsert().Model(&metric).Exec(ctx)
+
+	baseMetric := metric{
+		TrialID:      trialID,
+		TrialRunID:   1,
+		TotalBatches: 999999,
+		EndTime:      endTime,
+	}
+
+	baseMetric.PartitionType = TrainingMetric
+	baseMetric.CustomType = model.TrainingMetricType
+	baseMetric.Metrics = map[string]any{
+		"avg_metrics": map[string]any{
+			"b": -1.0,
+		},
+	}
+	_, err := Bun().NewInsert().Model(&baseMetric).Exec(ctx)
 	require.NoError(t, err)
 
-	valMetric := struct {
-		bun.BaseModel `bun:"table:metrics"`
-		TrialID       int
-		TrialRunID    int
-		Metrics       map[string]any
-		TotalBatches  int
-		EndTime       time.Time
-		PartitionType MetricPartitionType
-	}{
-		TrialID:    trialID,
-		TrialRunID: 1,
-		Metrics: map[string]any{
-			"validation_metrics": map[string]any{
-				"val_loss": 3.0,
-			},
+	baseMetric.PartitionType = ValidationMetric
+	baseMetric.CustomType = model.ValidationMetricType
+	baseMetric.Metrics = map[string]any{
+		"validation_metrics": map[string]any{
+			"val_loss": 3.0,
 		},
-		TotalBatches:  999999,
-		EndTime:       endTime,
-		PartitionType: ValidationMetric,
 	}
-	_, err = Bun().NewInsert().Model(&valMetric).Exec(ctx)
+	_, err = Bun().NewInsert().Model(&baseMetric).Exec(ctx)
 	require.NoError(t, err)
 }
 
@@ -791,11 +807,11 @@ func TestBatchesProcessedNRollbacks(t *testing.T) {
 		t.Logf("Adding %s metrics: %v", typ, trialMetrics)
 		switch typ {
 		case model.TrainingMetricType.ToString():
-			rollbacksCnts, err := db.addTrialMetrics(ctx, trialMetrics, TrainingMetric, nil)
+			rollbacksCnts, err := db.addTrialMetrics(ctx, trialMetrics, model.TrainingMetricType)
 			require.NoError(t, err)
 			require.Equal(t, int(expectedRollbacks), rollbacksCnts)
 		case model.ValidationMetricType.ToString():
-			rollbacksCnts, err := db.addTrialMetrics(ctx, trialMetrics, ValidationMetric, nil)
+			rollbacksCnts, err := db.addTrialMetrics(ctx, trialMetrics, model.ValidationMetricType)
 			require.NoError(t, err)
 			require.Equal(t, int(expectedRollbacks), rollbacksCnts)
 		case "checkpoint":
@@ -808,7 +824,9 @@ func TestBatchesProcessedNRollbacks(t *testing.T) {
 				Metadata:     map[string]any{"steps_completed": batches},
 			}))
 		default:
-			rollbacksCnts, err := db.addTrialMetrics(ctx, trialMetrics, GenericMetric, &typ)
+			rollbacksCnts, err := db.addTrialMetrics(
+				ctx, trialMetrics, model.MetricType(typ),
+			)
 			require.NoError(t, err)
 			require.Equal(t, int(expectedRollbacks), rollbacksCnts)
 		}
@@ -895,7 +913,7 @@ func TestGenericMetricsIO(t *testing.T) {
 	err = db.AddAllocation(a)
 	require.NoError(t, err, "failed to add allocation")
 
-	metrics, err := structpb.NewStruct(map[string]any{"loss": 10})
+	metrics, err := structpb.NewStruct(map[string]any{"aloss": 10})
 	require.NoError(t, err)
 
 	trialRunID := 1
@@ -907,7 +925,6 @@ func TestGenericMetricsIO(t *testing.T) {
 		StepsCompleted: int32(batches),
 		Metrics:        &commonv1.Metrics{AvgMetrics: metrics},
 	}
-
 	err = db.AddTrialMetrics(ctx, trialMetrics, "inference")
 	require.NoError(t, err)
 
@@ -917,7 +934,52 @@ func TestGenericMetricsIO(t *testing.T) {
 	require.EqualValues(t, trialRunID, metricReports[0].TrialRunId)
 	require.EqualValues(t, batches, metricReports[0].TotalBatches)
 	require.EqualValues(t, tr.ID, metricReports[0].TrialId)
-	require.Equal(t, metrics, metricReports[0].Metrics.Fields["avg_metrics"].GetStructValue())
+	require.Equal(t, metrics, metricReports[0].Metrics.
+		Fields[model.TrialMetricsJSONPath(false)].GetStructValue())
+
+	// test generic metrics summary metric write and read.
+	metrics2, err := structpb.NewStruct(map[string]any{"aloss": 20, "bloss": 30})
+	require.NoError(t, err)
+	trialMetrics2 := trialMetrics
+	trialMetrics2.StepsCompleted = int32(batches * 2)
+	trialMetrics2.Metrics = &commonv1.Metrics{AvgMetrics: metrics2}
+	err = db.AddTrialMetrics(ctx, trialMetrics, "inference")
+	require.NoError(t, err)
+
+	query := fmt.Sprintf(`SELECT name,
+summary_metrics->'%[1]s'->name->>'max' AS max,
+summary_metrics->'%[1]s'->name->>'min' AS min,
+summary_metrics->'%[1]s'->name->>'sum' AS sum,
+summary_metrics->'%[1]s'->name->>'last' AS last,
+summary_metrics->'%[1]s'->name->>'count' AS count,
+summary_metrics->'%[1]s'->name->>'type' AS type
+FROM trials
+CROSS JOIN jsonb_object_keys(summary_metrics->'%[1]s') AS name
+WHERE id = ?
+ORDER BY name ASC`, "inference")
+
+	summaryRows := []*summaryMetrics{}
+	err = Bun().NewRaw(query, tr.ID).Scan(ctx, &summaryRows)
+	require.NoError(t, err)
+	require.Equal(t, 2, len(summaryRows), summaryRows)
+	require.Equal(t, *summaryRows[0], summaryMetrics{
+		Name:  "aloss",
+		Max:   20,
+		Min:   10,
+		Sum:   30,
+		Last:  "20",
+		Count: 2,
+		Type:  "number",
+	})
+	require.Equal(t, *summaryRows[1], summaryMetrics{
+		Name:  "bloss",
+		Max:   30,
+		Min:   30,
+		Sum:   30,
+		Last:  "30",
+		Count: 1,
+		Type:  "number",
+	})
 }
 
 func TestConcurrentMetricUpdate(t *testing.T) {
@@ -974,10 +1036,10 @@ func TestConcurrentMetricUpdate(t *testing.T) {
 			require.NoError(t, db.updateTotalBatches(ctx, tx, tr.ID))
 		}
 		if coinFlip() {
-			partitionTypes := []MetricPartitionType{ValidationMetric, TrainingMetric}
+			modelTypes := []model.MetricType{model.TrainingMetricType, model.ValidationMetricType}
 			//nolint:gosec // Weak RNG doesn't matter here.
-			partitionType := partitionTypes[rand.Intn(len(partitionTypes))]
-			_, err = db._addTrialMetricsTx(ctx, tx, trialMetrics, partitionType, nil)
+			modelType := modelTypes[rand.Intn(len(modelTypes))]
+			_, err = db._addTrialMetricsTx(ctx, tx, trialMetrics, modelType)
 			require.NoError(t, err)
 		}
 		if coinFlip() {

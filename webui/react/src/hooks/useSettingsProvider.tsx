@@ -2,11 +2,11 @@ import { Map } from 'immutable';
 import { observable, useObservable, WritableObservable } from 'micro-observables';
 import React, { createContext, useEffect, useRef, useState } from 'react';
 
+import Spinner from 'components/Spinner';
 import { getUserSetting } from 'services/api';
-import Spinner from 'shared/components/Spinner';
-import { ErrorType } from 'shared/utils/error';
 import authStore from 'stores/auth';
 import userStore from 'stores/users';
+import { ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 
@@ -45,8 +45,8 @@ export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }
   useEffect(() => {
     if (!isAuthChecked) return;
 
-    try {
-      getUserSetting({}, { signal: canceler.signal }).then((response) => {
+    getUserSetting({}, { signal: canceler.signal })
+      .then((response) => {
         isLoading.set(false);
         settingsState.update((currentState) => {
           return currentState.withMutations((state) => {
@@ -65,16 +65,17 @@ export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }
             });
           });
         });
+      })
+      .catch((error) => {
+        handleError(error, {
+          isUserTriggered: false,
+          publicMessage: 'Unable to fetch user settings.',
+          type: ErrorType.Api,
+        });
+      })
+      .finally(() => {
+        isLoading.set(false);
       });
-    } catch (error) {
-      handleError(error, {
-        isUserTriggered: false,
-        publicMessage: 'Unable to fetch user settings.',
-        type: ErrorType.Api,
-      });
-    } finally {
-      isLoading.set(false);
-    }
 
     return () => canceler.abort();
   }, [canceler, isAuthChecked, isLoading, settingsState]);

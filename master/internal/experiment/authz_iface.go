@@ -53,6 +53,7 @@ type ExperimentAuthZ interface {
 
 	// GET /api/v1/experiments
 	// "proj" being nil indicates getting experiments from all projects.
+	// WARN: query is expected to expose the "workspace_id" column.
 	FilterExperimentsQuery(
 		ctx context.Context, curUser model.User, proj *projectv1.Project, query *bun.SelectQuery,
 		permissions []rbacv1.PermissionType,

@@ -4,12 +4,12 @@ import Form from 'components/kit/Form';
 import Input from 'components/kit/Input';
 import InputNumber from 'components/kit/InputNumber';
 import { Modal } from 'components/kit/Modal';
+import Spinner from 'components/Spinner';
 import { patchUser } from 'services/api';
 import { V1AgentUserGroup } from 'services/api-ts-sdk';
-import Spinner from 'shared/components/Spinner';
-import { ErrorType } from 'shared/utils/error';
 import { DetailedUser } from 'types';
 import { message } from 'utils/dialogApi';
+import { ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 
 interface Props {
@@ -65,6 +65,7 @@ const ConfigureAgentModalComponent: React.FC<Props> = ({ user, onClose }: Props)
       size="small"
       submit={{
         disabled,
+        handleError,
         handler: handleSubmit,
         text: 'Save',
       }}

@@ -34,16 +34,20 @@ func NewJobs(rm rm.ResourceManager) *Jobs {
 func (j *Jobs) parseV1JobMsgs(
 	msgs map[*actor.Ref]actor.Message,
 ) (map[model.JobID]*jobv1.Job, error) {
-	jobs := make(map[model.JobID]*jobv1.Job, len(msgs))
+	jobs := make(map[model.JobID]*jobv1.Job)
 	for _, val := range msgs {
-		if val == nil {
+		switch typed := val.(type) {
+		case nil:
 			continue
-		}
-		typed, ok := val.(*jobv1.Job)
-		if !ok {
+		case error:
+			return nil, typed
+		case *jobv1.Job:
+			if typed != nil {
+				jobs[model.JobID(typed.JobId)] = typed
+			}
+		default:
 			return nil, fmt.Errorf("unexpected response type: %T", val)
 		}
-		jobs[model.JobID(typed.JobId)] = typed
 	}
 	return jobs, nil
 }
@@ -143,6 +147,17 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 		delete(j.actorByID, msg.JobID)
 
 	case *apiv1.GetJobsRequest:
+		jobs, err := j.getJobs(
+			ctx,
+			msg.ResourcePool,
+			msg.OrderBy == apiv1.OrderBy_ORDER_BY_DESC,
+			msg.States)
+		if err != nil {
+			ctx.Respond(err)
+			return nil
+		}
+		ctx.Respond(jobs)
+	case *apiv1.GetJobsV2Request:
 		jobs, err := j.getJobs(
 			ctx,
 			msg.ResourcePool,

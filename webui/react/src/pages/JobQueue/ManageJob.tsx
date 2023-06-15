@@ -7,14 +7,14 @@ import Input from 'components/kit/Input';
 import { columns } from 'pages/JobQueue/JobQueue.table';
 import { getJobQ, updateJobQueue } from 'services/api';
 import * as api from 'services/api-ts-sdk';
-import { ErrorType } from 'shared/utils/error';
-import { floatToPercent, truncate } from 'shared/utils/string';
 import clusterStore from 'stores/cluster';
 import { Job, JobType, RPStats } from 'types';
+import { ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 import { moveJobToPositionUpdate, orderedSchedulers, unsupportedQPosSchedulers } from 'utils/job';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
+import { floatToPercent, truncate } from 'utils/string';
 
 import css from './ManageJob.module.scss';
 const { Option } = Select;

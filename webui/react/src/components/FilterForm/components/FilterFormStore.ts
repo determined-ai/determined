@@ -13,6 +13,7 @@ import {
   Operator,
 } from 'components/FilterForm/components/type';
 import { V1ColumnType, V1LocationType, V1ProjectColumn } from 'services/api-ts-sdk';
+import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 
 export const ITEM_LIMIT = 50;
 
@@ -41,13 +42,13 @@ const getInitField = (): FormField => ({
 });
 
 export class FilterFormStore {
-  #formset: WritableObservable<FilterFormSet> = observable(structuredClone(INIT_FORMSET));
+  #formset: WritableObservable<Loadable<FilterFormSet>> = observable(NotLoaded);
 
   public init(data?: Readonly<FilterFormSet>): void {
-    this.#formset.update(() => structuredClone(data ? data : INIT_FORMSET));
+    this.#formset.update(() => structuredClone(Loaded(data ? data : INIT_FORMSET)));
   }
 
-  public get formset(): Observable<Readonly<FilterFormSet>> {
+  public get formset(): Observable<Loadable<FilterFormSet>> {
     return this.#formset.readOnly();
   }
 
@@ -55,13 +56,18 @@ export class FilterFormStore {
     const replacer = (key: string, value: unknown): unknown => {
       return key === 'id' ? undefined : value;
     };
-    return this.#formset.select((formset) => {
-      const sweepedForm = this.#sweepInvalid(structuredClone(formset.filterGroup));
-      const newFormSet: FilterFormSetWithoutId = JSON.parse(
-        JSON.stringify({ ...formset, filterGroup: sweepedForm }, replacer),
-      );
-      return JSON.stringify(newFormSet);
-    });
+    return this.#formset.select((loadableFormset) =>
+      Loadable.match(loadableFormset, {
+        Loaded: (formset) => {
+          const sweepedForm = this.#sweepInvalid(structuredClone(formset.filterGroup));
+          const newFormSet: FilterFormSetWithoutId = JSON.parse(
+            JSON.stringify({ ...formset, filterGroup: sweepedForm }, replacer),
+          );
+          return JSON.stringify(newFormSet);
+        },
+        NotLoaded: () => '',
+      }),
+    );
   }
 
   public get fieldCount(): Observable<number> {
@@ -72,7 +78,15 @@ export class FilterFormStore {
       }
       return count;
     };
-    return this.#formset.select((formset) => countFields(formset.filterGroup));
+    return this.#formset.select((loadableFormset) =>
+      Loadable.match(loadableFormset, {
+        Loaded: (formset) => {
+          const validFilterGroup = this.#sweepInvalid(formset.filterGroup);
+          return countFields(validFilterGroup);
+        },
+        NotLoaded: () => 0,
+      }),
+    );
   }
 
   #isValid(form: Readonly<FormGroup | FormField>): boolean {
@@ -106,10 +120,12 @@ export class FilterFormStore {
 
   // remove invalid groups and conditions and then store sweeped data in #formset
   public sweep(): void {
-    this.#formset.update((prev) => {
-      const filterGroup = this.#sweepInvalid(prev.filterGroup);
-      return { ...prev, filterGroup };
-    });
+    this.#formset.update((loadablePrev) =>
+      Loadable.map(loadablePrev, (prev) => {
+        const filterGroup = this.#sweepInvalid(prev.filterGroup);
+        return { ...prev, filterGroup };
+      }),
+    );
   }
 
   #getFormById(filterGroup: FormGroup, id: string): FormField | FormGroup | undefined {
@@ -139,45 +155,53 @@ export class FilterFormStore {
     id: string,
     col: Pick<V1ProjectColumn, 'location' | 'type' | 'column'>,
   ): void {
-    const filterSet: Readonly<FilterFormSet> = this.#formset.get();
-    const filterGroup = filterSet.filterGroup;
-    const ans = this.#getFormById(filterGroup, id);
-    if (ans && ans.kind === FormKind.Field) {
-      ans.columnName = col.column;
-      ans.location = col.location;
-      ans.type = col.type;
-      this.#formset.update((prev) => ({ ...prev, filterGroup }));
-    }
+    const loadableFilterSet: Loadable<FilterFormSet> = this.#formset.get();
+    Loadable.forEach(loadableFilterSet, (filterSet) => {
+      const filterGroup = filterSet.filterGroup;
+      const ans = this.#getFormById(filterGroup, id);
+      if (ans && ans.kind === FormKind.Field) {
+        ans.columnName = col.column;
+        ans.location = col.location;
+        ans.type = col.type;
+        this.#formset.update((prev) => ({ ...prev, filterGroup }));
+      }
+    });
   }
 
   public setFieldOperator(id: string, operator: Operator): void {
-    const filterSet: Readonly<FilterFormSet> = this.#formset.get();
-    const filterGroup = filterSet.filterGroup;
-    const ans = this.#getFormById(filterGroup, id);
-    if (ans && ans.kind === FormKind.Field && Object.values(Operator).includes(operator)) {
-      ans.operator = operator;
-      this.#formset.update((prev) => ({ ...prev, filterGroup }));
-    }
+    const loadableFilterSet: Loadable<FilterFormSet> = this.#formset.get();
+    Loadable.forEach(loadableFilterSet, (filterSet) => {
+      const filterGroup = filterSet.filterGroup;
+      const ans = this.#getFormById(filterGroup, id);
+      if (ans && ans.kind === FormKind.Field && Object.values(Operator).includes(operator)) {
+        ans.operator = operator;
+        this.#formset.update((prev) => ({ ...prev, filterGroup }));
+      }
+    });
   }
 
   public setFieldConjunction(id: string, conjunction: Conjunction): void {
-    const filterSet: Readonly<FilterFormSet> = this.#formset.get();
-    const filterGroup = filterSet.filterGroup;
-    const ans = this.#getFormById(filterGroup, id);
-    if (ans && ans.kind === FormKind.Group && Object.values(Conjunction).includes(conjunction)) {
-      ans.conjunction = conjunction;
-      this.#formset.update((prev) => ({ ...prev, filterGroup }));
-    }
+    const loadableFilterSet: Loadable<FilterFormSet> = this.#formset.get();
+    Loadable.forEach(loadableFilterSet, (filterSet) => {
+      const filterGroup = filterSet.filterGroup;
+      const ans = this.#getFormById(filterGroup, id);
+      if (ans && ans.kind === FormKind.Group && Object.values(Conjunction).includes(conjunction)) {
+        ans.conjunction = conjunction;
+        this.#formset.update((prev) => ({ ...prev, filterGroup }));
+      }
+    });
   }
 
   public setFieldValue(id: string, value: FormFieldValue): void {
-    const filterSet: Readonly<FilterFormSet> = this.#formset.get();
-    const filterGroup = filterSet.filterGroup;
-    const ans = this.#getFormById(filterGroup, id);
-    if (ans && ans.kind === FormKind.Field) {
-      ans.value = value;
-      this.#formset.update((prev) => ({ ...prev, filterGroup }));
-    }
+    const loadableFilterSet: Loadable<FilterFormSet> = this.#formset.get();
+    Loadable.forEach(loadableFilterSet, (filterSet) => {
+      const filterGroup = filterSet.filterGroup;
+      const ans = this.#getFormById(filterGroup, id);
+      if (ans && ans.kind === FormKind.Field) {
+        ans.value = value;
+        this.#formset.update((prev) => ({ ...prev, filterGroup }));
+      }
+    });
   }
 
   public addChild(
@@ -185,56 +209,66 @@ export class FilterFormStore {
     addType: FormKind,
     obj?: { index: number; item: Readonly<FormGroup | FormField> },
   ): void {
-    const filterSet: Readonly<FilterFormSet> = this.#formset.get();
-    const filterGroup = filterSet.filterGroup;
-    const traverse = (form: FormGroup | FormField): void => {
-      if (form.id === id && form.kind === FormKind.Group) {
-        if (obj) {
-          form.children.splice(obj.index, 0, structuredClone(obj.item));
-        } else {
-          form.children.push(addType === FormKind.Group ? getInitGroup() : getInitField());
+    const loadableFilterSet: Loadable<FilterFormSet> = this.#formset.get();
+    Loadable.forEach(loadableFilterSet, (filterSet) => {
+      const filterGroup = filterSet.filterGroup;
+      const traverse = (form: FormGroup | FormField): void => {
+        if (form.id === id && form.kind === FormKind.Group) {
+          if (obj) {
+            form.children.splice(obj.index, 0, structuredClone(obj.item));
+          } else {
+            form.children.push(addType === FormKind.Group ? getInitGroup() : getInitField());
+          }
+          return;
         }
-        return;
-      }
 
-      if (form.kind === FormKind.Group) {
-        for (const child of form.children) {
-          traverse(child);
-        }
-      }
-    };
-
-    traverse(filterGroup);
-    this.#formset.update((prev) => ({ ...prev, filterGroup }));
-  }
-
-  public removeChild(id: string): void {
-    const filterSet: Readonly<FilterFormSet> = this.#formset.get();
-    const filterGroup = filterSet.filterGroup;
-
-    if (filterGroup.id === id) {
-      // if remove top group
-      this.#formset.set({ ...structuredClone(INIT_FORMSET), showArchived: filterSet.showArchived });
-      return;
-    }
-
-    const traverse = (form: FormGroup | FormField): void => {
-      if (form.kind === FormKind.Group) {
-        const prevLength = form.children.length;
-        form.children = form.children.filter((c) => c.id !== id);
-        if (prevLength === form.children.length) {
+        if (form.kind === FormKind.Group) {
           for (const child of form.children) {
             traverse(child);
           }
         }
+      };
+
+      traverse(filterGroup);
+      this.#formset.update((prev) => ({ ...prev, filterGroup }));
+    });
+  }
+
+  public removeChild(id: string): void {
+    const loadableFilterSet: Loadable<FilterFormSet> = this.#formset.get();
+    Loadable.forEach(loadableFilterSet, (filterSet) => {
+      const filterGroup = filterSet.filterGroup;
+
+      if (filterGroup.id === id) {
+        // if remove top group
+        this.#formset.set(
+          Loaded({ ...structuredClone(INIT_FORMSET), showArchived: filterSet.showArchived }),
+        );
+        return;
       }
-    };
-    traverse(filterGroup);
-    this.#formset.update((prev) => ({ ...prev, filterGroup }));
+
+      const traverse = (form: FormGroup | FormField): void => {
+        if (form.kind === FormKind.Group) {
+          const prevLength = form.children.length;
+          form.children = form.children.filter((c) => c.id !== id);
+          if (prevLength === form.children.length) {
+            for (const child of form.children) {
+              traverse(child);
+            }
+          }
+        }
+      };
+      traverse(filterGroup);
+      this.#formset.update((loadablePrev) =>
+        Loadable.map(loadablePrev, (prev) => ({ ...prev, filterGroup })),
+      );
+    });
   }
 
   public setArchivedValue(val: boolean): void {
-    const filterSet: Readonly<FilterFormSet> = this.#formset.get();
-    this.#formset.set({ ...filterSet, showArchived: val });
+    const loadableFilterSet: Loadable<FilterFormSet> = this.#formset.get();
+    Loadable.forEach(loadableFilterSet, (fs) =>
+      this.#formset.set(Loaded({ ...fs, showArchived: val })),
+    );
   }
 }

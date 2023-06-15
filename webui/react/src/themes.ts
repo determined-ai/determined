@@ -1,15 +1,7 @@
 /* eslint-disable sort-keys-fix/sort-keys-fix */
 import { Trialv1State } from 'services/api-ts-sdk';
-import {
-  DarkLight,
-  getCssVar,
-  themeDarkDetermined,
-  themeDarkHpe,
-  themeLightDetermined,
-  themeLightHpe,
-} from 'shared/themes';
-import { ValueOf } from 'shared/types';
 import { BrandingType } from 'stores/determinedInfo';
+import { ValueOf } from 'types';
 import {
   CheckpointState,
   CommandState,
@@ -19,6 +11,14 @@ import {
   SlotState,
   WorkspaceState,
 } from 'types';
+import {
+  DarkLight,
+  getCssVar,
+  themeDarkDetermined,
+  themeDarkHpe,
+  themeLightDetermined,
+  themeLightHpe,
+} from 'utils/themes';
 
 /*
  * Where did we get our sizes from?

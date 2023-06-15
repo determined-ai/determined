@@ -4,7 +4,7 @@ import React from 'react';
 
 import Icon from 'components/kit/Icon';
 import { handlePath, serverAddress } from 'routes/utils';
-import { ValueOf } from 'shared/types';
+import { ValueOf } from 'types';
 
 const { Option } = Select;
 

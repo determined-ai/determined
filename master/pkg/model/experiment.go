@@ -75,6 +75,11 @@ const (
 
 	// TrialWorkloadSequencerType constant.
 	TrialWorkloadSequencerType WorkloadSequencerType = "TRIAL_WORKLOAD_SEQUENCER"
+
+	// Legacy json path for validation metrics.
+	legacyValidationMetricsPath = "validation_metrics"
+	// Legacy json path for training metrics.
+	legacyTrainingMetricsPath = "avg_metrics"
 )
 
 // StateFromProto maps experimentv1.State to State.
@@ -501,6 +506,40 @@ type TrialMetrics struct {
 	Metrics      JSONObj    `db:"metrics" json:"metrics"`
 }
 
+// TrialMetricsJSONPath returns the legacy JSON path to the metrics field in the metrics table.
+func TrialMetricsJSONPath(isValidation bool) string {
+	if isValidation {
+		return legacyValidationMetricsPath
+	}
+	return legacyTrainingMetricsPath
+}
+
+// TrialSummaryMetricsJSONPath returns the JSON path to the trials metric summary.
+func TrialSummaryMetricsJSONPath(metricType MetricType) string {
+	switch metricType {
+	case ValidationMetricType:
+		return legacyValidationMetricsPath
+	case TrainingMetricType:
+		return legacyTrainingMetricsPath
+	default:
+		return metricType.ToString()
+	}
+}
+
+// TrialSummaryMetricType returns the metric type for the given summary JSON path.
+func TrialSummaryMetricType(jsonPath string) MetricType {
+	var mType MetricType
+	switch jsonPath {
+	case TrialSummaryMetricsJSONPath(TrainingMetricType):
+		mType = TrainingMetricType
+	case TrialSummaryMetricsJSONPath(ValidationMetricType):
+		mType = ValidationMetricType
+	default:
+		mType = MetricType(jsonPath)
+	}
+	return mType
+}
+
 // Represent order of active states (Queued -> Pulling -> Starting -> Running).
 var experimentStateIndex = map[experimentv1.State]int{
 	experimentv1.State_STATE_UNSPECIFIED:        0,
@@ -808,21 +847,6 @@ func (t TrialProfilerMetricsBatchBatch) ForEach(f func(interface{}) error) error
 		}
 	}
 	return nil
-}
-
-// LegacyMetricType denotes what custom type the metric is.
-type LegacyMetricType string
-
-const (
-	// ValidationMetricType designates metrics from validation runs.
-	ValidationMetricType LegacyMetricType = "validation"
-	// TrainingMetricType designates metrics from training runs.
-	TrainingMetricType LegacyMetricType = "training"
-)
-
-// ToString returns the string representation of the metric type.
-func (t LegacyMetricType) ToString() string {
-	return string(t)
 }
 
 // ExitedReason defines why a workload exited early.

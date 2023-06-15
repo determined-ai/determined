@@ -52,7 +52,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/rm/allocationmap"
 	"github.com/determined-ai/determined/master/internal/sproto"
-	"github.com/determined-ai/determined/master/internal/task"
+	"github.com/determined-ai/determined/master/internal/task/tasklogger"
 	"github.com/determined-ai/determined/master/internal/task/taskmodel"
 	"github.com/determined-ai/determined/master/internal/telemetry"
 	"github.com/determined-ai/determined/master/internal/user"
@@ -91,16 +91,14 @@ type Master struct {
 	config   *config.Config
 	taskSpec *tasks.TaskSpec
 
-	logs       *logger.LogBuffer
-	system     *actor.System
-	echo       *echo.Echo
-	db         *db.PgDB
-	rm         rm.ResourceManager
-	proxy      *actor.Ref
-	taskLogger *task.Logger
+	logs   *logger.LogBuffer
+	system *actor.System
+	echo   *echo.Echo
+	db     *db.PgDB
+	rm     rm.ResourceManager
 
 	trialLogBackend TrialLogBackend
-	taskLogBackend  task.LogBackend
+	taskLogBackend  TaskLogBackend
 }
 
 // New creates an instance of the Determined master.
@@ -158,7 +156,7 @@ func (m *Master) getInfo(echo.Context) (interface{}, error) {
 //	@Param		timestamp_after		query	string	true	"Start time to get allocations for (YYYY-MM-DDTHH:MM:SSZ format)"
 //	@Param		timestamp_before	query	string	true	"End time to get allocations for (YYYY-MM-DDTHH:MM:SSZ format)"
 //	@Success	200					{}		string	"A CSV file containing the fields experiment_id,kind,username,labels,slots,start_time,end_time,seconds"
-//	@Router		/allocation/raw [get]
+//	@Router		/resources/allocation/raw [get]
 //	@Deprecated
 //
 // nolint:lll
@@ -323,7 +321,7 @@ func (m *Master) canGetUsageDetails(ctx context.Context, user *model.User) error
 // nolint:lll
 //
 //	@Success	200					{}		string	"A CSV file containing the fields allocation_id, task_type, username, workspace_name, experiment_id, slots, start_time, end_time, checkpointing_time, imagepulling_time"
-//	@Router		/allocations/allocations-csv [get]
+//	@Router		/resources/allocation/allocations-csv [get]
 func (m *Master) getResourceAllocations(c echo.Context) error {
 	// Get start and end times from context
 	args := struct {
@@ -494,7 +492,7 @@ func (m *Master) getResourceAllocations(c echo.Context) error {
 //
 //	@Param		period		query	string	true	"Period to aggregate over (RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY or RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY)"
 //	@Success	200			{}		string	"aggregation_type,aggregation_key,date,seconds"
-//	@Router		/allocation/aggregated [get]
+//	@Router		/resources/allocation/aggregated [get]
 //
 // nolint:lll
 // To make both gofmt and swag fmt happy we need an unindented comment matched with the swagger
@@ -916,16 +914,13 @@ func (m *Master) Run(ctx context.Context) error {
 	default:
 		panic("unsupported logging backend")
 	}
-	m.taskLogger = task.NewLogger(m.system, m.taskLogBackend)
+	tasklogger.SetDefaultLogger(tasklogger.New(m.taskLogBackend))
 
 	user.InitService(m.db, m.system, &m.config.InternalConfig.ExternalSessions)
 	userService := user.GetService()
 
-	m.proxy, _ = m.system.ActorOf(actor.Addr("proxy"), &proxy.Proxy{
-		HTTPAuth: processProxyAuthentication,
-	})
-
 	allocationmap.InitAllocationMap()
+	proxy.InitProxy(processProxyAuthentication)
 	portregistry.InitPortRegistry()
 	m.system.MustActorOf(actor.Addr("allocation-aggregator"), &allocationAggregator{db: m.db})
 
@@ -1038,7 +1033,6 @@ func (m *Master) Run(ctx context.Context) error {
 		m.echo,
 		m.db,
 		m.rm,
-		m.taskLogger,
 	)
 
 	if err = m.closeOpenAllocations(); err != nil {
@@ -1172,8 +1166,8 @@ func (m *Master) Run(ctx context.Context) error {
 			api.Route(m.getPrometheusTargets))
 	}
 
-	handler := m.system.AskAt(actor.Addr("proxy"), proxy.NewProxyHandler{ServiceID: "service"})
-	m.echo.Any("/proxy/:service/*", handler.Get().(echo.HandlerFunc))
+	handler := proxy.DefaultProxy.NewProxyHandler("service")
+	m.echo.Any("/proxy/:service/*", handler)
 
 	// Catch-all for requests not matched by any above handler
 	// echo does not set the response error on the context if no handler is matched

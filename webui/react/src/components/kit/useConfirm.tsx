@@ -1,5 +1,7 @@
 import React, { PropsWithChildren, ReactNode, useState } from 'react';
 
+import { ErrorHandler } from 'components/kit/internal/types';
+
 import { Modal, ModalSize, useModal } from './Modal';
 
 export interface ConfirmModalProps {
@@ -11,6 +13,7 @@ export interface ConfirmModalProps {
   okText?: string;
   onClose?: () => void;
   onConfirm: () => Promise<void>;
+  onError: ErrorHandler;
 }
 
 export const DEFAULT_CONFIRM_TITLE = 'Confirm Action';
@@ -26,6 +29,7 @@ const ConfirmModal = ({
   okText,
   onClose,
   onConfirm,
+  onError,
 }: ConfirmModalProps) => {
   return (
     <Modal
@@ -35,6 +39,7 @@ const ConfirmModal = ({
       icon="warning-large"
       size={size}
       submit={{
+        handleError: onError,
         handler: onConfirm,
         text: okText ?? DEFAULT_CONFIRM_LABEL,
       }}
@@ -65,8 +70,19 @@ export const ConfirmationProvider: React.FC<PropsWithChildren> = ({ children }) 
     title,
     onClose = voidFn,
     onConfirm = voidPromiseFn,
+    onError = voidFn,
   }: ConfirmModalProps) => {
-    setModalProps({ cancelText, content, danger, okText, onClose, onConfirm, size, title });
+    setModalProps({
+      cancelText,
+      content,
+      danger,
+      okText,
+      onClose,
+      onConfirm,
+      onError,
+      size,
+      title,
+    });
     Modal.open();
   };
 
@@ -81,7 +97,11 @@ export const ConfirmationProvider: React.FC<PropsWithChildren> = ({ children }) 
         /* eslint-disable-next-line react-hooks/exhaustive-deps */
         [children],
       )}
-      <Modal.Component {...modalProps} onConfirm={modalProps?.onConfirm ?? voidPromiseFn} />
+      <Modal.Component
+        {...modalProps}
+        onConfirm={modalProps?.onConfirm ?? voidPromiseFn}
+        onError={modalProps?.onError ?? voidFn}
+      />
     </>
   );
 };

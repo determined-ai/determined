@@ -5,6 +5,8 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import Pivot from 'components/kit/Pivot';
 import Link from 'components/Link';
+import Message, { MessageType } from 'components/Message';
+import Spinner from 'components/Spinner/Spinner';
 import { terminalRunStates } from 'constants/states';
 import useMetricNames from 'hooks/useMetricNames';
 import useStorage from 'hooks/useStorage';
@@ -12,11 +14,8 @@ import { paths } from 'routes/utils';
 import { V1MetricBatchesResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
-import Message, { MessageType } from 'shared/components/Message';
-import Spinner from 'shared/components/Spinner/Spinner';
-import useUI from 'shared/contexts/stores/UI';
-import { ValueOf } from 'shared/types';
-import { alphaNumericSorter } from 'shared/utils/sort';
+import useUI from 'stores/contexts/UI';
+import { ValueOf } from 'types';
 import {
   ExperimentBase,
   ExperimentSearcherName,
@@ -26,6 +25,7 @@ import {
   RunState,
   Scale,
 } from 'types';
+import { alphaNumericSorter } from 'utils/sort';
 
 import ExperimentVisualizationFilters, {
   MAX_HPARAM_COUNT,
@@ -117,7 +117,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
   }, []);
 
   // Stream available metrics.
-  const metrics = useMetricNames(experiment.id, handleMetricNamesError);
+  const metrics = useMetricNames([experiment.id], handleMetricNamesError);
 
   const { hasData, hasLoaded, isExperimentTerminal, isSupported } = useMemo(() => {
     return {
@@ -195,6 +195,14 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
      * In the case of Custom Searchers, all the tabs besides
      * "Learning Curve" aren't helpful or relevant, so we are hiding them
      */
+    if (
+      filters.maxTrial === undefined ||
+      filters.batchMargin === undefined ||
+      filters.batch === undefined
+    ) {
+      return [];
+    }
+
     const tabs: TabsProps['items'] = [
       {
         children: (
@@ -302,6 +310,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
         experiment.id,
         filters.metric.name,
         metricTypeParam,
+        undefined,
         undefined,
         { signal: canceler.signal },
       ),

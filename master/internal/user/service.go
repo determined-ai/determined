@@ -15,6 +15,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/api"
+
 	"github.com/determined-ai/determined/master/internal/authz"
 	detContext "github.com/determined-ai/determined/master/internal/context"
 	"github.com/determined-ai/determined/master/internal/db"
@@ -367,8 +368,8 @@ func (s *Service) patchUser(c echo.Context) (interface{}, error) {
 		return nil, malformedRequestError
 	}
 
-	userNotFoundErr := echo.NewHTTPError(http.StatusBadRequest,
-		fmt.Sprintf("failed to get user '%s'", args.Username))
+	userNotFoundErr := api.NotFoundErrs("user", args.Username, false)
+
 	currUser := c.(*detContext.DetContext).MustGetUser()
 	user, err := UserByUsername(args.Username)
 	switch err {

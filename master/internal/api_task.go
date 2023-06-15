@@ -3,11 +3,9 @@ package internal
 import (
 	"context"
 
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-
 	"github.com/pkg/errors"
 
+	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/db"
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -26,8 +24,7 @@ func (a *apiServer) GetTask(
 	t := &taskv1.Task{}
 	switch err := a.m.db.QueryProto("get_task", t, req.TaskId); {
 	case errors.Is(err, db.ErrNotFound):
-		return nil, status.Errorf(
-			codes.NotFound, "task %s not found", req.TaskId)
+		return nil, api.NotFoundErrs("task", req.TaskId, true)
 	default:
 		return &apiv1.GetTaskResponse{Task: t},
 			errors.Wrapf(err, "error fetching task %s from database", req.TaskId)
