@@ -6,7 +6,7 @@ import itertools
 import determined as det
 
 with det.core.init() as core_context:
-    actions = ["train", "val", "ckpt"]
+    actions = ["train", "val", "ckpt", "generic"]
     permutations_of_combinations_actions = []
     for size in range(len(actions) + 1):
         for c in itertools.combinations(actions, size):
@@ -23,6 +23,10 @@ with det.core.init() as core_context:
             elif action == "val":
                 core_context.train.report_training_metrics(
                     steps_completed=step, metrics={"x": step}
+                )
+            elif action == "generic":
+                core_context.train.report_trial_metrics(
+                    total_batches=step, metrics={"x": step}, metric_type="generic"
                 )
             elif action == "ckpt":
                 checkpoint_metadata = {"steps_completed": step}
