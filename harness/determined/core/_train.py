@@ -239,7 +239,7 @@ class DummyTrainContext(TrainContext):
 
     def report_trial_metrics(
         self,
-        metric_type: str,
+        metric_type: MetricType,
         total_batches: int,
         metrics: Metrics,
         batch_metrics: Optional[List[Metrics]] = None,
@@ -267,22 +267,12 @@ class DummyTrainContext(TrainContext):
         batch_metrics: Optional[List[Dict[str, Any]]] = None,
     ) -> None:
         """@deprecated"""
-        logger.info(
-            f"report_training_metrics(steps_completed={steps_completed}, metrics={metrics})"
-        )
-        logger.debug(
-            f"report_training_metrics(steps_completed={steps_completed},"
-            f" batch_metrics={batch_metrics})"
-        )
+        self.report_trial_metrics(LEGACY_TRAINING, steps_completed, metrics, batch_metrics)
 
     @util.deprecated("use report_validation_metrics() instead")
     def report_validation_metrics(self, steps_completed: int, metrics: Dict[str, Any]) -> None:
         """@deprecated"""
-        serializable_metrics = self._get_serializable_metrics(metrics)
-        metrics = {k: metrics[k] for k in serializable_metrics}
-        logger.info(
-            f"report_validation_metrics(steps_completed={steps_completed} metrics={metrics})"
-        )
+        self.report_trial_metrics(LEGACY_VALIDATION, steps_completed, metrics)
 
     def upload_tensorboard_files(
         self,

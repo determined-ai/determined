@@ -3,6 +3,7 @@ from typing import Callable, List
 
 import pytest
 
+from determined.common import util
 from tests import config as conf
 from tests import experiment as exp
 
@@ -128,8 +129,10 @@ def test_pytorch_parallel() -> None:
     exp_val_batches = (validation_size + (per_slot_batch_size - 1)) // per_slot_batch_size
     patterns = [
         # Expect two training reports.
-        f"report_training_metrics.*steps_completed={scheduling_unit * 1}",
-        f"report_training_metrics.*steps_completed={scheduling_unit * 2}",
+        f"report_trial_metrics.*metric_type={util.LEGACY_TRAINING}"
+        + f".*total_batches={scheduling_unit * 1}",
+        f"report_trial_metrics.*metric_type={util.LEGACY_TRAINING}"
+        + f".*total_batches={scheduling_unit * 2}",
         f"validated: {validation_size} records.*in {exp_val_batches} batches",
     ]
     trial_id = exp.experiment_trials(exp_id)[0].trial.id
