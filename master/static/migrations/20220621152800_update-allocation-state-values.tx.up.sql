@@ -1,4 +1,4 @@
-CREATE TYPE public.allocation_state AS ENUM (
+CREATE TYPE public.allocation_state as ENUM (
     'PENDING',
     'ASSIGNED',
     'PULLING',

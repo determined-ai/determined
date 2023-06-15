@@ -11,4 +11,4 @@ USING (CASE state
     WHEN 'TERMINATED'  THEN 6
 END);
 
-DROP TYPE public.ALLOCATION_STATE;
+DROP TYPE public.allocation_state;
