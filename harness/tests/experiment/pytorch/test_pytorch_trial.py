@@ -739,6 +739,7 @@ class TestPyTorchTrial:
         for older, newer in zip(training_metrics, training_metrics[1:]):
             assert newer["loss"] <= older["loss"]
 
+    @pytest.mark.skipif(not torch.cuda.is_available(), reason="no gpu available")
     @pytest.mark.gpu
     @pytest.mark.parametrize(
         "trial_class",
@@ -791,6 +792,7 @@ class TestPyTorchTrial:
 
         amp_metrics_test(trial_class, training_metrics)
 
+    @pytest.mark.skipif(not torch.cuda.is_available(), reason="no gpu available")
     @pytest.mark.gpu
     @pytest.mark.parametrize(
         "trial_class",
