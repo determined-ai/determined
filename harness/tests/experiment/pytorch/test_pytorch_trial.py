@@ -923,9 +923,8 @@ class TestPyTorchTrial:
 
         assert trial.legacy_counter.__dict__ == {"legacy_on_training_epochs_start_calls": 2}
 
-    #@pytest.mark.skipif(torch.cuda.device_count() < 2, reason="not enough gpus")
+    @pytest.mark.skipif(torch.cuda.device_count() < 2, reason="not enough gpus")
     @pytest.mark.gpu_parallel
-    @pytest.mark.dothis
     def test_pytorch_parallel(self, tmp_path: pathlib.Path):
         # set up distributed backend.
         os.environ[det._DistributedBackend.TORCH] = str(1)
