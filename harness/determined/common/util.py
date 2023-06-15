@@ -32,7 +32,7 @@ _yaml = yaml.YAML(typ="safe", pure=True)
 
 MetricType = str
 Metrics = Dict[str, Any]
-LEGACY_TRAINING = "training"
+LEGACY_TRAINING = "training"  # no need to call these legacy_..
 LEGACY_VALIDATION = "validation"
 
 
