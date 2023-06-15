@@ -8,6 +8,7 @@ from torch.utils.data import Dataset
 from determined import pytorch
 from determined.pytorch.experimental._torch_batch_process import (
     TorchBatchProcessor,
+    TorchBatchProcessorContext,
     torch_batch_process,
 )
 
@@ -18,27 +19,27 @@ DEFAULT_ADDRS = ["0.0.0.12"]
 @pytest.fixture
 def batch_processor_with_avg_metric_reducer() -> Type[TorchBatchProcessor]:
     class MySumMetricReducer(pytorch.MetricReducer):
-        def __init__(self):
+        def __init__(self) -> None:
             self.reset()
 
-        def reset(self):
+        def reset(self) -> None:
             self.sum = 0
 
-        def update(self, value):
+        def update(self, value: List[int]) -> None:
             self.sum += sum(value)
 
-        def per_slot_reduce(self):
+        def per_slot_reduce(self) -> int:
             return self.sum
 
-        def cross_slot_reduce(self, per_slot_metrics):
+        def cross_slot_reduce(self, per_slot_metrics: List[int]) -> int:
             return sum(per_slot_metrics)
 
     class MyProcessor(TorchBatchProcessor):
-        def __init__(self, context):
+        def __init__(self, context: TorchBatchProcessorContext) -> None:
             self.context = context
             self.reducer_sum = context.wrap_reducer(reducer=MySumMetricReducer(), name="sum_metric")
 
-        def process_batch(self, batch, batch_idx) -> None:
+        def process_batch(self, batch: Any, batch_idx: int) -> None:
             self.reducer_sum.update(batch)
 
     return MyProcessor
@@ -46,13 +47,13 @@ def batch_processor_with_avg_metric_reducer() -> Type[TorchBatchProcessor]:
 
 def _get_index_dataset(data_length=50) -> Dataset:
     class IndexData(Dataset):
-        def __init__(self, data_length):
+        def __init__(self, data_length) -> None:
             self.data = data_length
 
-        def __len__(self):
+        def __len__(self) -> int:
             return self.data
 
-        def __getitem__(self, idx):
+        def __getitem__(self, idx) -> int:
             return idx
 
     return IndexData(data_length)
