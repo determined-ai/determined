@@ -59,7 +59,7 @@ class TorchBatchProcessorContext(pytorch._PyTorchReducerContext):
 
     def prepare_model_for_inference(self, model: nn.Module) -> nn.Module:
         model.eval()
-        model.to(self._device)
+        model.to(self.device)
         return model
 
     def get_default_storage_path_context(self) -> Iterator[pathlib.Path]:

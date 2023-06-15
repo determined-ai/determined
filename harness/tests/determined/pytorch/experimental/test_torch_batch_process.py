@@ -1,5 +1,5 @@
 import math
-from typing import Any, Dict, List, Type
+from typing import Any, Dict, List, Optional, Type
 from unittest.mock import MagicMock, Mock, call, patch
 
 import pytest
@@ -59,7 +59,9 @@ def _get_index_dataset(data_length: int = 50) -> Dataset:
     return IndexData(data_length)
 
 
-def _get_core_context(rank: int = 0, should_preempt_results: bool = None) -> MagicMock:
+def _get_core_context(
+    rank: int = 0, should_preempt_results: Optional[List[bool]] = None
+) -> MagicMock:
     mock_core_context = MagicMock()
     mock_distributed_context = MagicMock()
     mock_distributed_context.get_rank.return_value = rank
@@ -73,7 +75,7 @@ def _get_core_context(rank: int = 0, should_preempt_results: bool = None) -> Mag
 
 
 def _get_det_info(
-    slot_ids: List[int], container_addrs: List[str], latest_checkpoint=None
+    slot_ids: List[int], container_addrs: List[str], latest_checkpoint: Optional[str] = None
 ) -> MagicMock:
     mock_cluster_info = MagicMock()
     mock_cluster_info.slot_ids = slot_ids
