@@ -3,8 +3,6 @@ import pathlib
 import warnings
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Union
 
-import urllib3
-
 import determined as det
 from determined.common import api, context, util, yaml
 from determined.common.api import authentication, bindings, certs
@@ -49,14 +47,7 @@ class Determined:
         )
 
         auth = authentication.Authentication(self._master, user, password, cert=cert)
-        retry = urllib3.util.retry.Retry(
-            raise_on_status=False,
-            total=5,
-            backoff_factor=0.5,  # {backoff factor} * (2 ** ({number of total retries} - 1))
-            status_forcelist=[502, 503, 504],  # Bad Gateway, Service Unavailable, Gateway Timeout
-            allowed_methods=[frozenset({"GET", "HEAD", "OPTIONS"})],
-        )
-
+        retry = api.get_default_retry()
         self._session = api.Session(self._master, user, auth, cert, retry)
         token_user = auth.token_store.get_active_user()
         if token_user is not None:

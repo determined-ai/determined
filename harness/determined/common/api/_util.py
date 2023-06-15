@@ -1,6 +1,8 @@
 import enum
 from typing import Callable, Iterator, Optional, Set, Tuple, TypeVar, Union
 
+import urllib3
+
 from determined.common import api, util
 from determined.common.api import Session, bindings
 
@@ -41,6 +43,15 @@ def read_paginated(
             break
         assert pagination.endIndex is not None
         offset = pagination.endIndex
+
+
+def get_default_retry(max_retries: int = 5):
+    retry = urllib3.util.retry.Retry(
+        total=max_retries,
+        backoff_factor=0.5,  # {backoff factor} * (2 ** ({number of total retries} - 1))
+        status_forcelist=[502, 503, 504],  # Bad Gateway, Service Unavailable, Gateway Timeout
+    )
+    return retry
 
 
 # Literal["notebook", "tensorboard", "shell", "command"]

@@ -4,7 +4,6 @@ import sys
 from typing import Any, Callable, Dict, List, Sequence
 
 import termcolor
-import urllib3
 
 from determined.cli import errors, render
 from determined.common import api, declarative_argparse, util
@@ -100,14 +99,7 @@ def login_sdk_client(func: Callable[[argparse.Namespace], Any]) -> Callable[...,
 def setup_session(args: argparse.Namespace) -> api.Session:
     master_url = args.master or util.get_default_master_address()
     cert = certs.default_load(master_url)
-
-    retry = urllib3.util.retry.Retry(
-        raise_on_status=False,
-        total=5,
-        backoff_factor=0.5,  # {backoff factor} * (2 ** ({number of total retries} - 1))
-        status_forcelist=[502, 503, 504],  # Bad Gateway, Service Unavailable, Gateway Timeout
-        allowed_methods=[frozenset({"GET", "HEAD", "OPTIONS"})],
-    )
+    retry = api.get_default_retry()
 
     return api.Session(master_url, args.user, authentication.cli_auth, cert, retry)
 
