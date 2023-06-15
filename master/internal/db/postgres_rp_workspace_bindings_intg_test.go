@@ -59,7 +59,7 @@ func TestAddAndRemoveBindings(t *testing.T) {
 
 	count, err = Bun().NewSelect().Model(&values).Order("workspace_id ASC").ScanAndCount(ctx)
 	require.NoError(t, err, "error when scanning DB: %t", err)
-	require.Equal(t, 4, count, "expected 3 items in DB, found %d", count)
+	require.Equal(t, 4, count, "expected 4 items in DB, found %d", count)
 	for i := 0; i < 4; i++ {
 		require.Equal(t, workspaceIDs[i], values[i].WorkspaceID,
 			"expected workspaceID to be %d, but it is %d", i+1, values[i].WorkspaceID)
