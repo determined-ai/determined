@@ -1070,6 +1070,39 @@ class TestPyTorchTrial:
 
         utils.assert_patterns_in_logs(log_output, patterns)
 
+    @pytest.mark.skipif(torch.cuda.device_count() < 2, reason="not enough gpus")
+    @pytest.mark.gpu_parallel
+    @pytest.mark.parametrize("dataset_len", [2, 3])
+    def test_epoch_sync(self, tmp_path: pathlib.Path, dataset_len: int):
+        # set up distributed backend.
+        os.environ[det._DistributedBackend.TORCH] = str(1)
+
+        rdzv_backend = "c10d"
+        rdzv_endpoint = "localhost:29400"
+        rdzv_id = str(uuid.uuid4())
+
+        num_procs = 2
+
+        launch_config = launcher.LaunchConfig(min_nodes=1, max_nodes=1, nproc_per_node=num_procs, run_id=rdzv_id,
+                                              max_restarts=0, rdzv_endpoint=rdzv_endpoint, rdzv_backend=rdzv_backend)
+
+        num_steps = 10
+        global_batch_size = 2
+        outputs = launcher.elastic_launch(launch_config, self.run_no_op)(tmp_path, num_steps,
+                                                                         global_batch_size, dataset_len)
+
+        log_output = sum([outputs[i] for i in range(num_procs)], [])
+
+        batches_per_epoch = (dataset_len + global_batch_size - 1) // global_batch_size  # ceil
+
+        patterns = []
+        for batch_idx in range(num_steps):
+            epoch_idx = batch_idx // batches_per_epoch
+            for rank in range(num_procs):
+                patterns.append(f"rank {rank} finished batch {batch_idx} in epoch {epoch_idx}")
+
+        utils.assert_patterns_in_logs(log_output, patterns)
+
     def run_mnist(self, tmp_path: pathlib.Path, batches_trained: typing.Optional[int] = 0):
         checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
 
@@ -1295,11 +1328,13 @@ class TestPyTorchTrial:
             )
             return True
 
-    def run_no_op(self, tmp_path: pathlib.Path):
+    def run_no_op(self, tmp_path: pathlib.Path, num_steps: int=1, global_batch_size: int=32,  dataset_len: int=64):
         checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
 
         config = utils.load_config(utils.fixtures_path("pytorch_no_op/const.yaml"))
         hparams = config["hyperparameters"]
+        hparams['dataset_len'] = dataset_len
+        hparams['global_batch_size'] = global_batch_size
 
         exp_config = utils.make_default_exp_config(
             hparams,
@@ -1324,10 +1359,10 @@ class TestPyTorchTrial:
                 tmp_path=tmp_path,
                 exp_config=exp_config,
                 slots_per_trial=2,
-                steps=1
+                steps=num_steps
             )
 
-        return f.getvalue().split('/n')
+        return f.getvalue().split('\n')
 
     def checkpoint_and_check_metrics(
         self,
