@@ -179,21 +179,21 @@ def cherry_pick_pr(pr_id: str) -> None:
 class Actions:
     @staticmethod
     def pr_merged(pr_id: str):
-        title = gql.get_pr_title(id=pr_id)["node"]["title"]
-        if re.match("(feat|fix):", title) is not None:
-            print("Adding feat/fix PR")
-        elif re.match("[a-z]+:", title) is not None:
-            print("Skipping non-feat/fix PR")
-            return
-        else:
-            print("Adding PR of unknown type")
-
         pr_labels = gql.get_pr_labels(id=pr_id)["node"]["labels"]["nodes"]
         print("Labels of merged PR:", [label["name"] for label in pr_labels])
         if any(label["name"] == CHERRY_PICK_LABEL for label in pr_labels):
             print("Cherry-picking labeled merged PR")
             cherry_pick_pr(pr_id)
         else:
+            title = gql.get_pr_title(id=pr_id)["node"]["title"]
+            if re.match("(feat|fix):", title) is not None:
+                print("Adding feat/fix PR")
+            elif re.match("[a-z]+:", title) is not None:
+                print("Skipping non-feat/fix PR")
+                return
+            else:
+                print("Adding PR of unknown type")
+
             print("Adding merged PR to next release project")
             add_tracking_issue_to_project(next_project_id(), pr_id, NEEDS_TESTING_STATUS)
 
