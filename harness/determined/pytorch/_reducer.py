@@ -440,7 +440,9 @@ class _PyTorchReducerContext:
         self._wrapped_reducers.append(wrapped)
         return reducer
 
-    def run_cross_slot_reduction(self, reducables, gathered) -> Dict[str, Any]:
+    def run_cross_slot_reduction(
+        self, reducables: List[_WrappedReducer], gathered: List[Any]
+    ) -> Dict[str, Any]:
         # Reshape list from per-slot-list-of-all-metrics to a per-metric-list-of-all-slots.
         all_per_slot_metrics = zip(*gathered)
 

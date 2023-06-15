@@ -6,7 +6,8 @@ import os
 import pathlib
 import uuid
 import warnings
-from typing import Any, Dict, Iterator, Optional, Set, Type
+from contextlib import AbstractContextManager
+from typing import Any, Dict, Optional, Set, Sized, Type
 
 import torch
 import torch.distributed as dist
@@ -62,7 +63,7 @@ class TorchBatchProcessorContext(pytorch._PyTorchReducerContext):
         model.to(self.device)
         return model
 
-    def get_default_storage_path_context(self) -> Iterator[pathlib.Path]:
+    def get_default_storage_path_context(self) -> AbstractContextManager[pathlib.Path]:
         """
         Returns a context that uploads files to default storage path on exit.
         """
@@ -130,7 +131,6 @@ class TorchBatchProcessor(metaclass=abc.ABCMeta):
         """
         pass
 
-    # pylint: disable=B027
     def on_finish(self) -> None:  # noqa: B027
         """
         This function will be called right before exiting after completing iteration
@@ -139,7 +139,7 @@ class TorchBatchProcessor(metaclass=abc.ABCMeta):
         pass
 
 
-def _load_state(checkpoint_directory: pathlib.Path) -> Dict[str, Any]:
+def _load_state(checkpoint_directory: pathlib.Path) -> Any:
     checkpoint_directory = pathlib.Path(checkpoint_directory)
     with checkpoint_directory.joinpath("metadata.json").open("r") as f:
         metadata = json.load(f)
@@ -154,6 +154,8 @@ def _synchronize_and_checkpoint(
     """
     if rank == 0:
         steps_completed_list = core_context.distributed.gather(steps_completed)
+        if steps_completed_list is None:
+            return
         min_steps_completed = min(steps_completed_list)
 
         checkpoint_metadata = {
@@ -275,7 +277,7 @@ def torch_batch_process(
     batch_size: Optional[int] = None,
     max_batches: Optional[int] = None,
     checkpoint_interval: int = 5,
-    dataloader_kwargs: Dict[str, Any] = None,
+    dataloader_kwargs: Optional[Dict[str, Any]] = None,
 ) -> None:
     with initialize_default_inference_context() as core_context:
         """
@@ -297,9 +299,15 @@ def torch_batch_process(
                 batch_size = dataloader_kwargs.pop("batch_size")
             else:
                 batch_size = DEFAULT_BATCH_SIZE
+        if not isinstance(dataset, Sized):
+            raise Exception("Dataset must implement __len__()")
+
         dataset_len = len(dataset)
 
         info = det.get_cluster_info()
+
+        if info is None:
+            raise Exception("torch_batch_process only runs on-cluster.")
 
         slots_per_node = len(info.slot_ids)
         num_nodes = len(info.container_addrs)
@@ -371,14 +379,17 @@ def torch_batch_process(
                 logging.info(f"Completed steps:  {steps_completed} and checkpointing")
 
                 per_batch_processor.on_checkpoint_start()
-                core_context._tensorboard_manager.sync()
+                if core_context._tensorboard_manager is not None:
+                    core_context._tensorboard_manager.sync()
                 _synchronize_and_checkpoint(
                     core_context, steps_completed, rank, default_output_uuid
                 )
                 last_checkpoint_idx = batch_idx
 
                 # Report progress can only be done accurately with synchronization
-                if rank == 0:
+                # when rank == 0, dummy_searcher_op will be initialized, but lint is complaining
+                # therefore, adding additional check here
+                if rank == 0 and dummy_searcher_op is not None:
                     _report_progress_to_master(
                         dummy_searcher_op, batch_idx, total_worker, batch_size, dataset_len
                     )
@@ -399,7 +410,8 @@ def torch_batch_process(
 
         _reduce_metrics(batch_processor_context, core_context, rank, steps_completed)
         # Finish any tensorboard uploads remaining
-        core_context._tensorboard_manager.sync()
+        if core_context._tensorboard_manager is not None:
+            core_context._tensorboard_manager.sync()
 
         per_batch_processor.on_finish()
 
@@ -413,7 +425,9 @@ def torch_batch_process(
         # Perform allgather here to ensure we only report progress to master when all workers finish
         core_context.distributed.gather(None)
 
-        if rank == 0:
+        # when rank == 0, dummy_searcher_op will be initialized, but lint is complaining
+        # therefore, adding additional check here
+        if rank == 0 and dummy_searcher_op is not None:
             # Report to master the run has completed
             # Metrics reported does not matter
             dummy_searcher_op.report_completed(1)
