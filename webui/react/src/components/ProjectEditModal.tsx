@@ -4,8 +4,8 @@ import Form from 'components/kit/Form';
 import Input from 'components/kit/Input';
 import { Modal } from 'components/kit/Modal';
 import { patchProject } from 'services/api';
-import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { Project } from 'types';
+import { ErrorLevel, ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 
 const FORM_ID = 'edit-project-form';
@@ -48,6 +48,7 @@ const ProjectEditModalComponent: React.FC<Props> = ({ onClose, project }: Props)
       size="small"
       submit={{
         disabled: !projectName,
+        handleError,
         handler: handleSubmit,
         text: 'Save Changes',
       }}

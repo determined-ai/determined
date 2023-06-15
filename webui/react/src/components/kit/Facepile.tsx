@@ -2,7 +2,7 @@ import { MinusOutlined, PlusOutlined } from '@ant-design/icons';
 import { Select as AntdSelect } from 'antd';
 import React, { useMemo, useState } from 'react';
 
-import { DetailedUser } from 'types';
+import { User } from 'components/kit/internal/types';
 
 import Button from './Button';
 import css from './Facepile.module.scss';
@@ -10,9 +10,9 @@ import UserAvatar from './UserAvatar';
 
 export interface Props {
   editable?: boolean;
-  onAddUser?: (user: DetailedUser) => void;
-  selectableUsers?: DetailedUser[]; // This prop should be used to pass as options to the dropdown.
-  users?: DetailedUser[];
+  onAddUser?: (user: User) => void;
+  selectableUsers?: User[]; // This prop should be used to pass as options to the dropdown.
+  users?: User[];
 }
 
 const Facepile: React.FC<Props> = ({

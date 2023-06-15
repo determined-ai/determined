@@ -27,3 +27,15 @@ func ProjectIDByName(ctx context.Context, workspaceID int, projectName string) (
 	}
 	return &pID, nil
 }
+
+// WorkspaceByProjectID returns a workspace given a project ID.
+func WorkspaceByProjectID(ctx context.Context, projectID int) (*model.Workspace, error) {
+	var w model.Workspace
+	err := db.Bun().NewSelect().Model(&w).Where(
+		"id = (SELECT workspace_id FROM projects WHERE id = ?)",
+		projectID).Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &w, nil
+}

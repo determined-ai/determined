@@ -1,0 +1,44 @@
+$tooltip-offset: 5px;
+
+.base {
+  height: 100%;
+
+  .container {
+    min-height: 200px;
+    position: relative;
+  }
+  .chart {
+    height: 500px;
+  }
+  .tooltip {
+    display: none;
+    margin-left: $tooltip-offset;
+    margin-top: $tooltip-offset;
+    pointer-events: none;
+    position: absolute;
+    z-index: 100;
+
+    .box {
+      background-color: var(--theme-colors-monochrome-17);
+      border: solid var(--theme-stroke-width) var(--theme-colors-monochrome-13);
+      border-radius: var(--theme-border-radius);
+      box-shadow: var(--theme-shadow);
+      left: $tooltip-offset;
+      padding: 8px;
+      position: absolute;
+      top: $tooltip-offset;
+    }
+    .row {
+      display: table-row;
+    }
+    .row > * {
+      display: table-cell;
+    }
+    .row > *:last-child {
+      padding-left: 8px;
+    }
+  }
+}
+.waiting {
+  height: 300px;
+}

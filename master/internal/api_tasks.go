@@ -74,7 +74,7 @@ func (a *apiServer) canDoActionsOnTask(
 	ctx context.Context, taskID model.TaskID,
 	actions ...func(context.Context, model.User, *model.Experiment) error,
 ) error {
-	errTaskNotFound := status.Errorf(codes.NotFound, "task not found: %s", taskID)
+	errTaskNotFound := api.NotFoundErrs("task", fmt.Sprint(taskID), true)
 	t, err := a.m.db.TaskByID(taskID)
 	if errors.Is(err, db.ErrNotFound) {
 		return errTaskNotFound
@@ -129,7 +129,7 @@ func (a *apiServer) canEditAllocation(ctx context.Context, allocationID string) 
 	}
 
 	taskID := model.AllocationID(allocationID).ToTaskID()
-	errAllocationNotFound := status.Errorf(codes.NotFound, "allocation not found: %s", allocationID)
+	errAllocationNotFound := api.NotFoundErrs("allocation", allocationID, true)
 	isExp, exp, err := expFromTaskID(ctx, taskID)
 	if err != nil {
 		return err
@@ -276,6 +276,22 @@ func (a *apiServer) PostAllocationProxyAddress(
 		return nil, err
 	}
 	return &apiv1.PostAllocationProxyAddressResponse{}, nil
+}
+
+// TaskLogBackend is an interface task log backends, such as elastic or postgres,
+// must support to provide the features surfaced in our API.
+type TaskLogBackend interface {
+	TaskLogs(
+		taskID model.TaskID, limit int, filters []api.Filter, order apiv1.OrderBy, state interface{},
+	) ([]*model.TaskLog, interface{}, error)
+	AddTaskLogs([]*model.TaskLog) error
+	TaskLogsCount(taskID model.TaskID, filters []api.Filter) (int, error)
+	TaskLogsFields(taskID model.TaskID) (*apiv1.TaskLogsFieldsResponse, error)
+	DeleteTaskLogs(taskIDs []model.TaskID) error
+	// MaxTerminationDelay is the max delay before a consumer can be sure all logs have been
+	// recevied. A better interface may be an interface for streaming, rather than helper
+	// interfaces to aid streaming, but it's not bad enough to motivate changing it.
+	MaxTerminationDelay() time.Duration
 }
 
 func (a *apiServer) TaskLogs(

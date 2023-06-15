@@ -6,18 +6,18 @@ import Badge, { BadgeType } from 'components/Badge';
 import HumanReadableNumber from 'components/HumanReadableNumber';
 import Button from 'components/kit/Button';
 import Link from 'components/Link';
+import useModal, { ModalCloseReason, ModalHooks } from 'hooks/useModal/useModal';
 import { paths } from 'routes/utils';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
-import useModal, { ModalCloseReason, ModalHooks } from 'shared/hooks/useModal/useModal';
-import { formatDatetime } from 'shared/utils/datetime';
-import { humanReadableBytes } from 'shared/utils/string';
 import {
   CheckpointStorageType,
   CheckpointWorkloadExtended,
   CoreApiGenericCheckpoint,
   ExperimentConfig,
 } from 'types';
+import { formatDatetime } from 'utils/datetime';
+import { humanReadableBytes } from 'utils/string';
 import { checkpointSize } from 'utils/workload';
 
 import css from './useModalCheckpoint.module.scss';
@@ -57,9 +57,6 @@ const getStorageLocation = (
       break;
     case CheckpointStorageType.AZURE:
       // type from api doesn't have azure-specific props
-      break;
-    case CheckpointStorageType.HDFS:
-      // type from api doesn't have hadoop-specific props
       break;
     case undefined:
       // shouldn't happen?

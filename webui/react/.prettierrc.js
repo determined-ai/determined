@@ -1,2 +1,7 @@
-const config = require('./src/shared/configs/.prettierrc.js');
-module.exports = config;
+module.exports = {
+  printWidth: 100,
+  singleQuote: true,
+  quoteProps: 'consistent',
+  bracketSameLine: true,
+  trailingComma: 'all',
+};

@@ -5,8 +5,6 @@
 .base {
   display: flex;
   gap: 8px;
-  height: 100%;
-  overflow: auto;
 
   & nav:not(:global(.ant-breadcrumb)) {
     // this was breaking the CSS for the Actionbar
@@ -15,17 +13,21 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
-    height: 100%;
+    height: 100vh;
+    left: 0;
+    max-height: 100vh;
     min-width: var(--nav-side-bar-width-max);
-    overflow-y: auto;
-    padding: 16px;
+    padding: 16px 0 0 16px;
     position: sticky;
     top: 0;
 
     ul {
       list-style-type: none;
       margin: 0;
-      padding: 0;
+      overflow-x: hidden;
+      overflow-y: auto;
+      overscroll-behavior: none;
+      padding: 0 0 16px;
 
       li {
         margin-inline: -16px;

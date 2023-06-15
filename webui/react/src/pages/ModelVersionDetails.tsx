@@ -9,24 +9,24 @@ import Breadcrumb from 'components/kit/Breadcrumb';
 import Notes from 'components/kit/Notes';
 import Pivot from 'components/kit/Pivot';
 import Link from 'components/Link';
+import Message, { MessageType } from 'components/Message';
 import MetadataCard from 'components/Metadata/MetadataCard';
 import Page, { BreadCrumbRoute } from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
+import Spinner from 'components/Spinner/Spinner';
 import usePermissions from 'hooks/usePermissions';
+import usePolling from 'hooks/usePolling';
 import { paths } from 'routes/utils';
 import { getModelVersion, patchModelVersion } from 'services/api';
-import Message, { MessageType } from 'shared/components/Message';
-import Spinner from 'shared/components/Spinner/Spinner';
-import usePolling from 'shared/hooks/usePolling';
-import { ValueOf } from 'shared/types';
-import { isEqual } from 'shared/utils/data';
-import { ErrorType } from 'shared/utils/error';
-import { isAborted, isNotFound } from 'shared/utils/service';
-import { humanReadableBytes } from 'shared/utils/string';
 import workspaceStore from 'stores/workspaces';
+import { ValueOf } from 'types';
 import { Metadata, ModelVersion, Note } from 'types';
+import { isEqual } from 'utils/data';
+import { ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
+import { isAborted, isNotFound } from 'utils/service';
+import { humanReadableBytes } from 'utils/string';
 import { checkpointSize } from 'utils/workload';
 
 import ModelVersionHeader from './ModelVersionDetails/ModelVersionHeader';
@@ -272,6 +272,7 @@ const ModelVersionDetails: React.FC = () => {
               disabled={modelVersion.model.archived || !canModifyModelVersion({ modelVersion })}
               disableTitle
               notes={{ contents: modelVersion.notes ?? '', name: 'Notes' }}
+              onError={handleError}
               onSave={saveNotes}
             />
           </div>
@@ -298,25 +299,36 @@ const ModelVersionDetails: React.FC = () => {
     return <Message title={message} type={MessageType.Warning} />;
   } else if (pageError && isNotFound(pageError)) {
     return <PageNotFound />;
-  } else if (!modelVersion || !workspace || rbacLoading) {
+  } else if (!modelVersion || rbacLoading) {
     return <Spinner spinning tip={`Loading model ${modelId} version ${versionNum} details...`} />;
   }
+  const isUncategorized = !workspace?.id || workspace.id === 1;
   const pageBreadcrumb: BreadCrumbRoute[] = [
-    {
-      breadcrumbName: workspace.name,
-      path: workspace.id === 1 ? paths.projectDetails(1) : paths.workspaceDetails(workspace.id),
-    },
+    isUncategorized
+      ? {
+          breadcrumbName: 'Uncategorized Experiments',
+          path: paths.projectDetails(1),
+        }
+      : {
+          breadcrumbName: workspace.name,
+          path: paths.workspaceDetails(workspace.id),
+        },
     {
       breadcrumbName: 'Model Registry',
-      path: paths.workspaceDetails(workspace.id, WorkspaceDetailsTab.ModelRegistry),
+      path: isUncategorized
+        ? paths.modelList()
+        : paths.workspaceDetails(workspace.id, WorkspaceDetailsTab.ModelRegistry),
     },
     {
       breadcrumbName: `${modelVersion.model.name} (${modelId})`,
-      path: paths.modelDetails(String(modelVersion.model.id)),
+      path: paths.modelDetails(modelVersion.model.id.toString()),
     },
     {
       breadcrumbName: `Version ${modelVersion.version}`,
-      path: paths.modelDetails(String(modelVersion.model.id)),
+      path: paths.modelVersionDetails(
+        modelVersion.model.id.toString(),
+        modelVersion.version.toString(),
+      ),
     },
   ];
 

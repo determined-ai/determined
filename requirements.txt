@@ -1,7 +1,4 @@
 -e harness
--e common
--e cli
--e deploy
 -e model_hub
 -r docs/requirements.txt
 -r harness/tests/requirements/requirements-harness.txt

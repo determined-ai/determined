@@ -1,4 +1,3 @@
-import copy
 import json
 import logging
 import os
@@ -6,7 +5,6 @@ import signal
 import subprocess
 import sys
 import types
-from typing import Dict
 
 import determined as det
 import determined.common
@@ -63,28 +61,6 @@ def launch(experiment_config: det.ExperimentConfig) -> int:
         return p.wait()
 
 
-def mask_config_dict(d: Dict) -> Dict:
-    mask = "********"
-    new_dict = copy.deepcopy(d)
-
-    # checkpoint_storage
-    hidden_checkpoint_storage_keys = ("access_key", "secret_key")
-    try:
-        for key in new_dict["checkpoint_storage"].keys():
-            if key in hidden_checkpoint_storage_keys:
-                new_dict["checkpoint_storage"][key] = mask
-    except (KeyError, AttributeError):
-        pass
-
-    try:
-        if new_dict["environment"]["registry_auth"].get("password") is not None:
-            new_dict["environment"]["registry_auth"]["password"] = mask
-    except (KeyError, AttributeError):
-        pass
-
-    return new_dict
-
-
 if __name__ == "__main__":
     info = det.get_cluster_info()
     assert info is not None, "must be run on-cluster"
@@ -101,7 +77,7 @@ if __name__ == "__main__":
 
     logging.info(
         f"New trial runner in (container {resources_id}) on agent {info.agent_id}: "
-        + json.dumps(mask_config_dict(info.trial._config))
+        + json.dumps(det.util.mask_config_dict(info.trial._config))
     )
 
     # Perform validations

@@ -10,6 +10,7 @@ interface PaginationProps {
   ) => ReactNode;
   onChange?: (page: number, pageSize: number) => void;
   pageSize?: number;
+  pageSizeOptions?: number[];
   showSizeChanger?: boolean;
   total: number;
 }

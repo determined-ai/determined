@@ -1,7 +1,7 @@
 import { launchJupyterLab as apiLaunchJupyterLab } from 'services/api';
 import { previewJupyterLab as apiPreviewJupyterLab } from 'services/api';
-import { RawJson } from 'shared/types';
-import { ErrorLevel, ErrorType } from 'shared/utils/error';
+import { RawJson } from 'types';
+import { ErrorLevel, ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 import { openCommandResponse } from 'utils/wait';
 

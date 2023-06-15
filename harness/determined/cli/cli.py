@@ -185,6 +185,16 @@ def make_parser() -> ArgumentParser:
     )
 
 
+def die(message: str, always_print_traceback: bool = False, exit_code: int = 1) -> None:
+    if always_print_traceback or debug_mode():
+        import traceback
+
+        traceback.print_exc(file=sys.stderr)
+
+    print(colored(message + "\n", "red"), file=sys.stderr)
+    exit(exit_code)
+
+
 def main(
     args: List[str] = sys.argv[1:],
 ) -> None:
@@ -208,14 +218,6 @@ def main(
         argcomplete.autocomplete(parser)
 
         parsed_args = parser.parse_args(args)
-
-        def die(message: str, always_print_traceback: bool = False, exit_code: int = 1) -> None:
-            if always_print_traceback or debug_mode():
-                import traceback
-
-                traceback.print_exc(file=sys.stderr)
-
-            parser.exit(exit_code, colored(message + "\n", "red"))
 
         v = vars(parsed_args)
         if not v.get("func"):
@@ -287,7 +289,7 @@ def main(
         except KeyboardInterrupt as e:
             raise e
         except (api.errors.BadRequestException, api.errors.BadResponseException) as e:
-            die("Failed to {}: {}".format(parsed_args.func.__name__, e))
+            die(f"Failed to {parsed_args.func.__name__}: {e}")
         except api.errors.CorruptTokenCacheException:
             die(
                 "Failed to login: Attempted to read a corrupted token cache. "
@@ -302,15 +304,8 @@ def main(
         except ArgumentError as e:
             die(e.message, exit_code=2)
         except bindings.APIHttpError as e:
-            die("Failed on operation {}: {}".format(e.operation_name, e.message))
+            die(f"Failed on operation {e.operation_name}: {e.message}")
         except Exception:
-            die("Failed to {}".format(parsed_args.func.__name__), always_print_traceback=True)
+            die(f"Failed to {parsed_args.func.__name__}", always_print_traceback=True)
     except KeyboardInterrupt:
-        # die() may not be defined yet.
-        if debug_mode():
-            import traceback
-
-            traceback.print_exc(file=sys.stderr)
-
-        print(colored("\nInterrupting...\n", "red"), file=sys.stderr)
-        exit(3)
+        die("Interrupting...", exit_code=3)

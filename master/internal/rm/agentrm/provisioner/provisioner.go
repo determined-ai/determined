@@ -14,6 +14,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/telemetry"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
+	errInfo "github.com/determined-ai/determined/master/pkg/errors"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
@@ -42,6 +43,7 @@ type Provisioner struct {
 	provider         provider
 	scaleDecider     *scaleDecider
 	telemetryLimiter *rate.Limiter
+	launchErr        *errInfo.StickyError
 }
 
 type provider interface {
@@ -49,7 +51,7 @@ type provider interface {
 	slotsPerInstance() int
 	prestart(ctx *actor.Context)
 	list(ctx *actor.Context) ([]*model.Instance, error)
-	launch(ctx *actor.Context, instanceNum int)
+	launch(ctx *actor.Context, instanceNum int) error
 	terminate(ctx *actor.Context, instanceIDs []string)
 }
 
@@ -74,6 +76,11 @@ func New(
 		}
 	}
 
+	var launchErrorTimeout time.Duration
+	if config != nil && config.LaunchErrorTimeout != nil {
+		launchErrorTimeout = time.Duration(*config.LaunchErrorTimeout)
+	}
+
 	return &Provisioner{
 		provider: cluster,
 		scaleDecider: newScaleDecider(
@@ -86,6 +93,7 @@ func New(
 			db,
 		),
 		telemetryLimiter: rate.NewLimiter(rate.Every(telemetryCooldown), 1),
+		launchErr:        errInfo.NewStickyError(launchErrorTimeout, config.LaunchErrorRetries),
 	}, nil
 }
 
@@ -116,6 +124,16 @@ func (p *Provisioner) SlotsPerInstance() int {
 	return p.provider.slotsPerInstance()
 }
 
+// CurrentSlotCount returns the number of Slots available in the cluster.
+func (p *Provisioner) CurrentSlotCount(ctx *actor.Context) (int, error) {
+	nodes, err := p.provider.list(ctx)
+	if err != nil {
+		ctx.Log().WithError(err).Error("cannot list instances for current slot count")
+		return 0, err
+	}
+	return p.SlotsPerInstance() * len(nodes), nil
+}
+
 // InstanceType returns the instance type of the provider for the provisioner.
 func (p *Provisioner) InstanceType() string {
 	return p.provider.instanceType().Name()
@@ -124,7 +142,7 @@ func (p *Provisioner) InstanceType() string {
 func (p *Provisioner) provision(ctx *actor.Context) {
 	instances, err := p.provider.list(ctx)
 	if err != nil {
-		ctx.Log().WithError(err).Error("cannot list instances")
+		ctx.Log().WithError(err).Error("cannot list instances for provisioning")
 		return
 	}
 	updated := p.scaleDecider.updateInstanceSnapshot(instances)
@@ -155,7 +173,9 @@ func (p *Provisioner) provision(ctx *actor.Context) {
 	if numToLaunch := p.scaleDecider.calculateNumInstancesToLaunch(); numToLaunch > 0 {
 		ctx.Log().Infof("decided to launch %d instances (type %s)",
 			numToLaunch, p.provider.instanceType().Name())
-		p.provider.launch(ctx, numToLaunch)
+		if err := p.launch(ctx, numToLaunch); err != nil {
+			ctx.Log().WithError(err).Error("failure launching instances")
+		}
 	}
 
 	if p.telemetryLimiter.Allow() {
@@ -163,4 +183,16 @@ func (p *Provisioner) provision(ctx *actor.Context) {
 			instances,
 			p.InstanceType())
 	}
+}
+
+func (p *Provisioner) launch(ctx *actor.Context, numToLaunch int) error {
+	if err := p.launchErr.Error(); err != nil {
+		return err
+	}
+	return p.launchErr.SetError(p.provider.launch(ctx, numToLaunch))
+}
+
+// LaunchError returns the current launch error sent from the provider.
+func (p *Provisioner) LaunchError() error {
+	return p.launchErr.Error()
 }

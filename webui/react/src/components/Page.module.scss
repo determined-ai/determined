@@ -33,6 +33,7 @@
   }
   &.noScroll {
     max-height: 100vh;
+    overflow: hidden;
 
     .body {
       flex: 1 1 auto;

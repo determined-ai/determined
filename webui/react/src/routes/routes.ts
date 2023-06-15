@@ -1,4 +1,4 @@
-import { RouteConfig } from 'shared/types';
+import { RouteConfig } from 'types';
 
 const routes: RouteConfig[] = [
   { id: 'default', needAuth: true, path: '/' },

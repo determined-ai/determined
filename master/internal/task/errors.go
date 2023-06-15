@@ -72,7 +72,6 @@ func (e ErrStaleResources) Error() string {
 
 // All behaviors for allocations.
 const (
-	preemption  = "preemption"
 	idleWatcher = "idle_watcher"
 )
 

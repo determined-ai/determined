@@ -1,7 +1,7 @@
 import { paths } from 'routes/utils';
 import { V1LaunchWarning } from 'services/api-ts-sdk';
-import { openBlank } from 'shared/utils/routes';
 import { Command, CommandResponse, CommandState, CommandTask, CommandType } from 'types';
+import { openBlank } from 'utils/routes';
 import { isCommandTask } from 'utils/task';
 
 export interface WaitStatus {

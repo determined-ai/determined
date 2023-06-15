@@ -1,14 +1,17 @@
-import { Space } from 'antd';
+import { Space, Switch } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 
+import ScrollIcon from 'assets/images/infinite-scroll.svg';
 import BatchActionConfirmModalComponent from 'components/BatchActionConfirmModal';
 import ExperimentMoveModalComponent from 'components/ExperimentMoveModal';
 import { FilterFormStore } from 'components/FilterForm/components/FilterFormStore';
 import TableFilter from 'components/FilterForm/TableFilter';
 import Button from 'components/kit/Button';
+import { Column, Columns } from 'components/kit/Columns';
 import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 import Icon, { IconName } from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
+import Tooltip from 'components/kit/Tooltip';
 import usePermissions from 'hooks/usePermissions';
 import {
   activateExperiments,
@@ -21,8 +24,7 @@ import {
   unarchiveExperiments,
 } from 'services/api';
 import { V1BulkExperimentFilters } from 'services/api-ts-sdk';
-import { RecordKey } from 'shared/types';
-import { ErrorLevel } from 'shared/utils/error';
+import { RecordKey } from 'types';
 import {
   BulkActionResult,
   ExperimentAction,
@@ -32,6 +34,7 @@ import {
   ProjectExperiment,
 } from 'types';
 import { notification } from 'utils/dialogApi';
+import { ErrorLevel } from 'utils/error';
 import handleError from 'utils/error';
 import {
   canActionExperiment,
@@ -41,8 +44,11 @@ import {
 import { Loadable } from 'utils/loadable';
 import { openCommandResponse } from 'utils/wait';
 
+import { ExpListView, RowHeight } from '../F_ExperimentList.settings';
+
 import ColumnPickerMenu from './ColumnPickerMenu';
 import MultiSortMenu, { Sort } from './MultiSortMenu';
+import { RowHeightMenu } from './RowHeightMenu';
 import css from './TableActionBar.module.scss';
 
 const batchActions = [
@@ -85,10 +91,15 @@ interface Props {
   selectedExperimentIds: number[];
   handleUpdateExperimentList: (action: BatchAction, successfulIds: number[]) => void;
   setVisibleColumns: (newColumns: string[]) => void;
+  toggleComparisonView?: () => void;
   total: Loadable<number>;
   formStore: FilterFormStore;
   setIsOpenFilter: (value: boolean) => void;
   isOpenFilter: boolean;
+  expListView: ExpListView;
+  setExpListView: (view: ExpListView) => void;
+  rowHeight: RowHeight;
+  onRowHeightChange: (r: RowHeight) => void;
 }
 
 const TableActionBar: React.FC<Props> = ({
@@ -109,11 +120,17 @@ const TableActionBar: React.FC<Props> = ({
   formStore,
   setIsOpenFilter,
   isOpenFilter,
+  expListView,
+  setExpListView,
+  toggleComparisonView,
+  rowHeight,
+  onRowHeightChange,
 }) => {
   const permissions = usePermissions();
   const [batchAction, setBatchAction] = useState<BatchAction>();
   const BatchActionConfirmModal = useModal(BatchActionConfirmModalComponent);
   const ExperimentMoveModal = useModal(ExperimentMoveModalComponent);
+  const totalExperiments = Loadable.getOrElse(0, total);
 
   const experimentMap = useMemo(() => {
     return experiments.filter(Loadable.isLoaded).reduce((acc, experiment) => {
@@ -305,35 +322,71 @@ const TableActionBar: React.FC<Props> = ({
 
   const handleAction = useCallback((key: string) => handleBatchAction(key), [handleBatchAction]);
 
+  const settingContent = useMemo(
+    () => (
+      <div className={css.settingContent}>
+        <div className={css.title}>Data</div>
+        <div className={css.row}>
+          <img alt="scroll" src={ScrollIcon} />
+          <span>Infinite Scroll</span>
+          <Switch
+            checked={expListView === 'scroll'}
+            size="small"
+            onChange={(c: boolean) => setExpListView(c ? 'scroll' : 'paged')}
+          />
+        </div>
+      </div>
+    ),
+    [expListView, setExpListView],
+  );
+
   return (
-    <>
-      <Space className={css.base}>
-        <TableFilter
-          formStore={formStore}
-          isOpenFilter={isOpenFilter}
-          loadableColumns={projectColumns}
-          setIsOpenFilter={setIsOpenFilter}
-        />
-        <MultiSortMenu columns={projectColumns} sorts={sorts} onChange={onSortChange} />
-        <ColumnPickerMenu
-          initialVisibleColumns={initialVisibleColumns}
-          projectColumns={projectColumns}
-          setVisibleColumns={setVisibleColumns}
-        />
-        {(selectAll || selectedExperimentIds.length > 0) && (
-          <Dropdown menu={editMenuItems} onClick={handleAction}>
-            <Button icon={<Icon name="pencil" title="Edit" />}>
-              Edit (
-              {selectAll
-                ? Loadable.isLoaded(total)
-                  ? (total.data - (excludedExperimentIds?.size ?? 0)).toLocaleString()
-                  : 'All'
-                : selectedExperimentIds.length}
-              )
-            </Button>
+    <Columns>
+      <Column>
+        <Space className={css.base}>
+          <TableFilter
+            formStore={formStore}
+            isOpenFilter={isOpenFilter}
+            loadableColumns={projectColumns}
+            setIsOpenFilter={setIsOpenFilter}
+          />
+          <MultiSortMenu columns={projectColumns} sorts={sorts} onChange={onSortChange} />
+          <ColumnPickerMenu
+            initialVisibleColumns={initialVisibleColumns}
+            projectColumns={projectColumns}
+            setVisibleColumns={setVisibleColumns}
+          />
+          {(selectAll || selectedExperimentIds.length > 0) && (
+            <Dropdown menu={editMenuItems} onClick={handleAction}>
+              <Button icon={<Icon name="pencil" title="Edit" />}>
+                Edit (
+                {selectAll
+                  ? Loadable.isLoaded(total)
+                    ? (total.data - (excludedExperimentIds?.size ?? 0)).toLocaleString()
+                    : 'All'
+                  : selectedExperimentIds.length}
+                )
+              </Button>
+            </Dropdown>
+          )}
+          <span className={css.expNum}>
+            {totalExperiments.toLocaleString()} experiment{totalExperiments > 1 && 's'}
+          </span>
+        </Space>
+      </Column>
+      <Column align="right">
+        <Columns>
+          <RowHeightMenu rowHeight={rowHeight} onRowHeightChange={onRowHeightChange} />
+          <Dropdown content={settingContent}>
+            <Tooltip content="Table Settings">
+              <Button>
+                <Icon name="overflow-horizontal" title="menu" />
+              </Button>
+            </Tooltip>
           </Dropdown>
-        )}
-      </Space>
+          {!!toggleComparisonView && <Button onClick={toggleComparisonView}>Compare</Button>}
+        </Columns>
+      </Column>
       {batchAction && (
         <BatchActionConfirmModal.Component
           batchAction={batchAction}
@@ -352,7 +405,7 @@ const TableActionBar: React.FC<Props> = ({
         sourceWorkspaceId={project.workspaceId}
         onSubmit={handleSubmitMove}
       />
-    </>
+    </Columns>
   );
 };
 

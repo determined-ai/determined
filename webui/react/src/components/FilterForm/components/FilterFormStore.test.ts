@@ -4,11 +4,11 @@ import {
   FilterFormSet,
   FilterFormSetWithoutId,
   FormField,
-  FormGroup,
   FormKind,
   Operator,
 } from 'components/FilterForm/components/type';
 import { V1ColumnType, V1LocationType, V1ProjectColumn } from 'services/api-ts-sdk';
+import { Loadable, NotLoaded } from 'utils/loadable';
 
 // Remove `id` property from object
 const jsonReplacer = (key: string, value: unknown): unknown => {
@@ -110,11 +110,17 @@ const initData: Readonly<FilterFormSet> = {
 
 describe('FilterFormStore', () => {
   describe('Init', () => {
-    it('should initialize store without init data', () => {
+    it('should initialize store as NotLoaded', () => {
       const filterFormStore = new FilterFormStore();
-      const jsonWithId = filterFormStore.formset.get();
-      const asJsonString = filterFormStore.asJsonString.get();
+      expect(filterFormStore.formset.get()).toEqual(NotLoaded);
+    });
 
+    it('should have an empty init() fill with default values', () => {
+      const filterFormStore = new FilterFormStore();
+      filterFormStore.init();
+      const loadableFormset = filterFormStore.formset.get();
+
+      const jsonWithId = Loadable.getOrElse(null, loadableFormset);
       expect(jsonWithId).toStrictEqual({
         filterGroup: {
           children: [],
@@ -124,6 +130,8 @@ describe('FilterFormStore', () => {
         },
         showArchived: false,
       });
+
+      const asJsonString = filterFormStore.asJsonString.get();
       expect(asJsonString).toStrictEqual(JSON.stringify(EMPTY_DATA));
 
       expect(filterFormStore.fieldCount.get()).toBe(0);
@@ -133,8 +141,10 @@ describe('FilterFormStore', () => {
       const filterFormStore = new FilterFormStore();
       filterFormStore.init(initData);
 
-      expect(filterFormStore.formset.get()).toStrictEqual(initData);
-      expect(filterFormStore.fieldCount.get()).toBe(6);
+      const loadableFormset = filterFormStore.formset.get();
+      const formset = Loadable.getOrElse(null, loadableFormset);
+      expect(formset).toStrictEqual(initData);
+      expect(filterFormStore.fieldCount.get()).toBe(5);
     });
 
     it('should deep clone init data to avoid unexpected data overwrite', () => {
@@ -158,11 +168,13 @@ describe('FilterFormStore', () => {
 
       it('should add new fields', () => {
         const filterFormStore = new FilterFormStore();
+        filterFormStore.init();
         filterFormStore.addChild(ROOT_ID, FormKind.Field);
 
-        expect(
-          JSON.parse(JSON.stringify(filterFormStore.formset.get(), jsonReplacer)),
-        ).toStrictEqual({
+        const loadableFormset = filterFormStore.formset.get();
+        let formset = Loadable.getOrElse(null, loadableFormset);
+
+        expect(JSON.parse(JSON.stringify(formset, jsonReplacer))).toStrictEqual({
           filterGroup: {
             children: [
               {
@@ -182,9 +194,8 @@ describe('FilterFormStore', () => {
 
         filterFormStore.addChild(ROOT_ID, FormKind.Field);
 
-        expect(
-          JSON.parse(JSON.stringify(filterFormStore.formset.get(), jsonReplacer)),
-        ).toStrictEqual({
+        formset = Loadable.getOrElse(null, loadableFormset);
+        expect(JSON.parse(JSON.stringify(formset, jsonReplacer))).toStrictEqual({
           filterGroup: {
             children: [
               {
@@ -215,11 +226,12 @@ describe('FilterFormStore', () => {
 
       it('should add new groups', () => {
         const filterFormStore = new FilterFormStore();
+        filterFormStore.init();
         filterFormStore.addChild(ROOT_ID, FormKind.Group);
 
-        expect(
-          JSON.parse(JSON.stringify(filterFormStore.formset.get(), jsonReplacer)),
-        ).toStrictEqual({
+        const loadableFormset = filterFormStore.formset.get();
+        let formset = Loadable.getOrElse(null, loadableFormset);
+        expect(JSON.parse(JSON.stringify(formset, jsonReplacer))).toStrictEqual({
           filterGroup: {
             children: [{ children: [], conjunction: Conjunction.And, kind: FormKind.Group }],
             conjunction: Conjunction.And,
@@ -230,9 +242,8 @@ describe('FilterFormStore', () => {
 
         filterFormStore.addChild(ROOT_ID, FormKind.Group);
 
-        expect(
-          JSON.parse(JSON.stringify(filterFormStore.formset.get(), jsonReplacer)),
-        ).toStrictEqual({
+        formset = Loadable.getOrElse(null, loadableFormset);
+        expect(JSON.parse(JSON.stringify(formset, jsonReplacer))).toStrictEqual({
           filterGroup: {
             children: [
               { children: [], conjunction: Conjunction.And, kind: FormKind.Group },
@@ -244,14 +255,14 @@ describe('FilterFormStore', () => {
           showArchived: false,
         });
 
-        const jsonWithId = filterFormStore.formset.get();
-        const group = jsonWithId.filterGroup.children[1];
-        if (group.kind === FormKind.Group) {
+        const loadableJsonWithId = filterFormStore.formset.get();
+        const jsonWithId = Loadable.getOrElse(null, loadableJsonWithId);
+        const group = jsonWithId?.filterGroup?.children?.[1];
+        if (group?.kind === FormKind.Group) {
           filterFormStore.addChild(group.id, FormKind.Group);
 
-          expect(
-            JSON.parse(JSON.stringify(filterFormStore.formset.get(), jsonReplacer)),
-          ).toStrictEqual({
+          formset = Loadable.getOrElse(null, loadableFormset);
+          expect(JSON.parse(JSON.stringify(formset, jsonReplacer))).toStrictEqual({
             filterGroup: {
               children: [
                 { children: [], conjunction: Conjunction.And, kind: FormKind.Group },
@@ -271,12 +282,13 @@ describe('FilterFormStore', () => {
 
       it('should add new fields/group comprehensively', () => {
         const filterFormStore = new FilterFormStore();
+        filterFormStore.init();
         filterFormStore.addChild(ROOT_ID, FormKind.Group);
         filterFormStore.addChild(ROOT_ID, FormKind.Field);
 
-        expect(
-          JSON.parse(JSON.stringify(filterFormStore.formset.get(), jsonReplacer)),
-        ).toStrictEqual({
+        const loadableFormset = filterFormStore.formset.get();
+        let formset = Loadable.getOrElse(null, loadableFormset);
+        expect(JSON.parse(JSON.stringify(formset, jsonReplacer))).toStrictEqual({
           filterGroup: {
             children: [
               { children: [], conjunction: Conjunction.And, kind: FormKind.Group },
@@ -297,15 +309,15 @@ describe('FilterFormStore', () => {
 
         expect(filterFormStore.asJsonString.get()).toStrictEqual(JSON.stringify(EMPTY_DATA));
 
-        const jsonWithId = filterFormStore.formset.get();
-        const group = jsonWithId.filterGroup.children[1];
-        if (group.kind === FormKind.Group) {
+        const loadableJsonWithId = filterFormStore.formset.get();
+        const jsonWithId = Loadable.getOrElse(null, loadableJsonWithId);
+        const group = jsonWithId?.filterGroup?.children?.[1];
+        if (group?.kind === FormKind.Group) {
           filterFormStore.addChild(group.id, FormKind.Field);
           filterFormStore.addChild(group.id, FormKind.Group);
 
-          expect(
-            JSON.parse(JSON.stringify(filterFormStore.formset.get(), jsonReplacer)),
-          ).toStrictEqual({
+          formset = Loadable.getOrElse(null, loadableFormset);
+          expect(JSON.parse(JSON.stringify(formset, jsonReplacer))).toStrictEqual({
             filterGroup: {
               children: [
                 {
@@ -344,33 +356,47 @@ describe('FilterFormStore', () => {
 
       it('should remove field', () => {
         const filterFormStore = new FilterFormStore();
+        filterFormStore.init();
         filterFormStore.addChild(ROOT_ID, FormKind.Field);
         filterFormStore.addChild(ROOT_ID, FormKind.Field);
         filterFormStore.addChild(ROOT_ID, FormKind.Field);
         filterFormStore.addChild(ROOT_ID, FormKind.Field);
-        const json = filterFormStore.formset.get();
-        expect(json.filterGroup.children.length).toBe(4);
-        const thirdFieldId = json.filterGroup.children[2].id;
-        filterFormStore.removeChild(thirdFieldId);
-        expect(filterFormStore.formset.get().filterGroup.children).not.toContain(thirdFieldId);
+        const loadableJson = filterFormStore.formset.get();
+        const json = Loadable.getOrElse(null, loadableJson);
+        expect(json?.filterGroup?.children?.length).toBe(4);
+        const thirdFieldId = json?.filterGroup?.children?.[2]?.id;
+        if (thirdFieldId) {
+          filterFormStore.removeChild(thirdFieldId);
+        }
+        const loadableFormset = filterFormStore.formset.get();
+        const formSet = Loadable.getOrElse(null, loadableFormset);
+        expect(formSet?.filterGroup?.children).not.toContain(thirdFieldId);
       });
 
       it('should remove empty group', () => {
         const filterFormStore = new FilterFormStore();
+        filterFormStore.init();
         filterFormStore.addChild(ROOT_ID, FormKind.Group);
-        const groupId = filterFormStore.formset.get().filterGroup.children[0].id;
-        filterFormStore.removeChild(groupId);
-        expect(
-          JSON.parse(JSON.stringify(filterFormStore.formset.get(), jsonReplacer)),
-        ).toStrictEqual(EMPTY_DATA);
+        const loadableFormset = filterFormStore.formset.get();
+        let formset = Loadable.getOrElse(null, loadableFormset);
+        const groupId = formset?.filterGroup?.children?.[0]?.id;
+        if (groupId) {
+          filterFormStore.removeChild(groupId);
+        }
+
+        formset = Loadable.getOrElse(null, loadableFormset);
+        expect(JSON.parse(JSON.stringify(formset, jsonReplacer))).toStrictEqual(EMPTY_DATA);
         expect(filterFormStore.asJsonString.get()).toStrictEqual(JSON.stringify(EMPTY_DATA));
       });
 
       it('should remove non-empty group', () => {
         const filterFormStore = new FilterFormStore();
+        filterFormStore.init();
         filterFormStore.addChild(ROOT_ID, FormKind.Group);
-        const group = filterFormStore.formset.get().filterGroup.children[0];
-        if (group.kind === FormKind.Group) {
+        const loadableFormset = filterFormStore.formset.get();
+        const formSet = Loadable.getOrElse(null, loadableFormset);
+        const group = formSet?.filterGroup?.children?.[0];
+        if (group?.kind === FormKind.Group) {
           filterFormStore.addChild(group.id, FormKind.Field);
           filterFormStore.removeChild(group.id);
           expect(filterFormStore.asJsonString.get()).toStrictEqual(JSON.stringify(EMPTY_DATA));
@@ -379,6 +405,7 @@ describe('FilterFormStore', () => {
 
       it('should clear all (remove ROOT_ID)', () => {
         const filterFormStore = new FilterFormStore();
+        filterFormStore.init();
         filterFormStore.removeChild(ROOT_ID);
         expect(filterFormStore.asJsonString.get()).toStrictEqual(JSON.stringify(EMPTY_DATA));
         filterFormStore.addChild(ROOT_ID, FormKind.Field);
@@ -396,22 +423,35 @@ describe('FilterFormStore', () => {
 
       it('should change `show archived` value', () => {
         const filterFormStore = new FilterFormStore();
+        filterFormStore.init();
         filterFormStore.setArchivedValue(true);
-        expect(filterFormStore.formset.get().showArchived).toBeTruthy();
+        let loadableFormset = filterFormStore.formset.get();
+        let formset = Loadable.getOrElse(null, loadableFormset);
+        expect(formset?.showArchived).toBeTruthy();
         filterFormStore.setArchivedValue(false);
-        expect(filterFormStore.formset.get().showArchived).toBeFalsy();
+        loadableFormset = filterFormStore.formset.get();
+        formset = Loadable.getOrElse(null, loadableFormset);
+        expect(formset?.showArchived).toBeFalsy();
         filterFormStore.setArchivedValue(false);
-        expect(filterFormStore.formset.get().showArchived).toBeFalsy();
+        loadableFormset = filterFormStore.formset.get();
+        formset = Loadable.getOrElse(null, loadableFormset);
+        expect(formset?.showArchived).toBeFalsy();
       });
 
       it('should `show archived` value remain the same after clear all', () => {
         const filterFormStoreWithInit = new FilterFormStore();
         filterFormStoreWithInit.init(initData);
-        expect(filterFormStoreWithInit.formset.get().showArchived).toBeFalsy();
+        let loadableFormset = filterFormStoreWithInit.formset.get();
+        let formset = Loadable.getOrElse(null, loadableFormset);
+        expect(formset?.showArchived).toBeFalsy();
         filterFormStoreWithInit.setArchivedValue(true);
-        expect(filterFormStoreWithInit.formset.get().showArchived).toBeTruthy();
+        loadableFormset = filterFormStoreWithInit.formset.get();
+        formset = Loadable.getOrElse(null, loadableFormset);
+        expect(formset?.showArchived).toBeTruthy();
         filterFormStoreWithInit.removeChild(ROOT_ID);
-        expect(filterFormStoreWithInit.formset.get().showArchived).toBeTruthy();
+        loadableFormset = filterFormStoreWithInit.formset.get();
+        formset = Loadable.getOrElse(null, loadableFormset);
+        expect(formset?.showArchived).toBeTruthy();
       });
     });
 
@@ -429,19 +469,24 @@ describe('FilterFormStore', () => {
 
       it('should change the field order', () => {
         const filterFormStore = new FilterFormStore();
+        filterFormStore.init();
 
         filterFormStore.addChild(ROOT_ID, FormKind.Field);
         filterFormStore.addChild(ROOT_ID, FormKind.Field);
         filterFormStore.addChild(ROOT_ID, FormKind.Field, { index: 2, item: item });
-        const fields = filterFormStore.formset.get().filterGroup.children;
+        const loadableFormset = filterFormStore.formset.get();
+        let formset = Loadable.getOrElse(null, loadableFormset);
+        const fields = formset?.filterGroup?.children ?? [];
         expect(fields).toHaveLength(3);
         expect(fields[2].id).toBe(ID);
         // move index2 to index0
         filterFormStore.removeChild(fields[2].id);
-        expect(filterFormStore.formset.get().filterGroup.children).toHaveLength(2);
+        formset = Loadable.getOrElse(null, loadableFormset);
+        expect(formset?.filterGroup?.children).toHaveLength(2);
         filterFormStore.addChild(ROOT_ID, FormKind.Field, { index: 0, item: item });
-        expect(filterFormStore.formset.get().filterGroup.children).toHaveLength(3);
-        expect(filterFormStore.formset.get().filterGroup.children[0].id).toBe(ID);
+        formset = Loadable.getOrElse(null, loadableFormset);
+        expect(formset?.filterGroup?.children).toHaveLength(3);
+        expect(formset?.filterGroup?.children?.[0]?.id).toBe(ID);
 
         // to make sure the original object is not referenced (should not be shallow copy)
         filterFormStore.setFieldValue(ID, 'value');
@@ -450,19 +495,27 @@ describe('FilterFormStore', () => {
 
       it('should move field into different group', () => {
         const filterFormStore = new FilterFormStore();
+        filterFormStore.init();
 
         filterFormStore.addChild(ROOT_ID, FormKind.Group);
         filterFormStore.addChild(ROOT_ID, FormKind.Field, { index: 2, item: item });
-        const fields = filterFormStore.formset.get().filterGroup.children;
+        const loadableFormset = filterFormStore.formset.get();
+        let formset = Loadable.getOrElse(null, loadableFormset);
+        const fields = formset?.filterGroup?.children;
         expect(fields).toHaveLength(2);
-        expect(fields[1].id).toBe(ID);
+        expect(fields?.[1]?.id).toBe(ID);
+
         // move index2 to index0
         filterFormStore.removeChild(ID);
-        expect(filterFormStore.formset.get().filterGroup.children).toHaveLength(1);
-        filterFormStore.addChild(fields[0].id, FormKind.Field, { index: 0, item: item });
-        const group = filterFormStore.formset.get().filterGroup.children[0];
-        if (group.kind === FormKind.Group) {
-          expect(filterFormStore.formset.get().filterGroup.children).toHaveLength(1);
+        formset = Loadable.getOrElse(null, loadableFormset);
+        expect(formset?.filterGroup?.children).toHaveLength(1);
+
+        filterFormStore.addChild(fields?.[0]?.id ?? '', FormKind.Field, { index: 0, item: item });
+        formset = Loadable.getOrElse(null, loadableFormset);
+        const group = formset?.filterGroup?.children?.[0];
+        if (group && group.kind === FormKind.Group) {
+          formset = Loadable.getOrElse(null, loadableFormset);
+          expect(formset?.filterGroup?.children).toHaveLength(1);
           expect(group.children).toHaveLength(1);
           expect(group.children[0].id).toBe(ID);
 
@@ -476,11 +529,14 @@ describe('FilterFormStore', () => {
     describe('Field Value Interaction', () => {
       it('should change column name', () => {
         const filterFormStore = new FilterFormStore();
+        filterFormStore.init();
         filterFormStore.addChild(ROOT_ID, FormKind.Field);
 
-        const field: Readonly<FormGroup | FormField> =
-          filterFormStore.formset.get().filterGroup.children[0];
-        if (field.kind === FormKind.Field) {
+        const loadableFormset = filterFormStore.formset.get();
+        const formset = Loadable.getOrElse(null, loadableFormset);
+
+        const field = formset?.filterGroup?.children?.[0];
+        if (field && field.kind === FormKind.Field) {
           expect(field.columnName).toBe('name');
         }
         const col: V1ProjectColumn = {
@@ -489,19 +545,22 @@ describe('FilterFormStore', () => {
           location: V1LocationType.EXPERIMENT,
           type: 'COLUMN_TYPE_NUMBER',
         };
-        filterFormStore.setFieldColumnName(field.id, col);
-        if (field.kind === FormKind.Field) {
+        filterFormStore.setFieldColumnName(field?.id ?? '', col);
+        if (field && field.kind === FormKind.Field) {
           expect(field.columnName).toBe('id');
         }
       });
 
       it('should change operator', () => {
         const filterFormStore = new FilterFormStore();
+        filterFormStore.init();
         filterFormStore.addChild(ROOT_ID, FormKind.Field);
 
-        const field: Readonly<FormGroup | FormField> =
-          filterFormStore.formset.get().filterGroup.children[0];
-        if (field.kind === FormKind.Field) {
+        const loadableFormset = filterFormStore.formset.get();
+        const formset = Loadable.getOrElse(null, loadableFormset);
+
+        const field = formset?.filterGroup?.children?.[0];
+        if (field && field.kind === FormKind.Field) {
           expect(field.operator).toBe(Operator.Contains);
           filterFormStore.setFieldOperator(field.id, Operator.GreaterEq);
           expect(field.operator).toBe(Operator.GreaterEq);
@@ -510,11 +569,14 @@ describe('FilterFormStore', () => {
 
       it('should change value', () => {
         const filterFormStore = new FilterFormStore();
+        filterFormStore.init();
         filterFormStore.addChild(ROOT_ID, FormKind.Field);
 
-        const field: Readonly<FormGroup | FormField> =
-          filterFormStore.formset.get().filterGroup.children[0];
-        if (field.kind === FormKind.Field) {
+        const loadableFormset = filterFormStore.formset.get();
+        const formset = Loadable.getOrElse(null, loadableFormset);
+
+        const field = formset?.filterGroup?.children?.[0];
+        if (field && field.kind === FormKind.Field) {
           const value = 'test';
           expect(field.value).toBeNull();
           filterFormStore.setFieldValue(field.id, value);
@@ -526,11 +588,14 @@ describe('FilterFormStore', () => {
     describe('Group Value Interaction', () => {
       it('should change conjugation', () => {
         const filterFormStore = new FilterFormStore();
+        filterFormStore.init();
         filterFormStore.addChild(ROOT_ID, FormKind.Group);
 
-        const field: Readonly<FormGroup | FormField> =
-          filterFormStore.formset.get().filterGroup.children[0];
-        if (field.kind === FormKind.Group) {
+        const loadableFormset = filterFormStore.formset.get();
+        const formset = Loadable.getOrElse(null, loadableFormset);
+
+        const field = formset?.filterGroup?.children[0];
+        if (field?.kind === FormKind.Group) {
           expect(field.conjunction).toBe(Conjunction.And);
           filterFormStore.setFieldConjunction(field.id, Conjunction.Or);
           expect(field.conjunction).toBe(Conjunction.Or);

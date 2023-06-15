@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	k8sV1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/util/strategicpatch"
 
 	"github.com/docker/docker/api/types"
 	"github.com/pkg/errors"
@@ -21,17 +22,31 @@ func (p PodSpec) Copy() PodSpec {
 	return PodSpec(*k8sP.DeepCopy())
 }
 
-// Merge implements the schemas.Mergable psuedointerface.
+// Merge implements the schemas.Mergable psuedointerface using Kubernetes strategic merging.
+// https://github.com/kubernetes/community/blob/master/contributors/devel/sig-api-machinery/strategic-merge-patch.md
+//
+//nolint:lll
 func (p PodSpec) Merge(other PodSpec) PodSpec {
-	out := k8sV1.Pod{}
-	k8sP := k8sV1.Pod(p)
-	k8sOther := k8sV1.Pod(other)
-	// Copy the low-priority values first.
-	k8sOther.DeepCopyInto(&out)
-	// Overwrite the object with high-priority values.
-	// DeepCopyInto will only copy non-nil values, so this will effectively merge the objects.
-	k8sP.DeepCopyInto(&out)
-	return PodSpec(out)
+	pBytes, err := json.Marshal(p)
+	if err != nil {
+		panic(err) // These errors shouldn't happen.
+	}
+	otherBytes, err := json.Marshal(other)
+	if err != nil {
+		panic(err)
+	}
+
+	// Receiver should overwrite the value.
+	mergedBytes, err := strategicpatch.StrategicMergePatch(otherBytes, pBytes, p)
+	if err != nil {
+		panic(err)
+	}
+
+	var mergedSpec PodSpec
+	if err := json.Unmarshal(mergedBytes, &mergedSpec); err != nil {
+		panic(err)
+	}
+	return mergedSpec
 }
 
 // WithDefaults implements the schemas.Defaultable psuedointerface.

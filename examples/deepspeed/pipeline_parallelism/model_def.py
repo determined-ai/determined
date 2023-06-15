@@ -1,6 +1,7 @@
 import os
 from typing import Any, Dict
 
+import deepspeed
 import filelock
 import torch
 import torchvision
@@ -9,7 +10,6 @@ from alexnet import AlexNet
 from attrdict import AttrDict
 from deepspeed.pipe import PipelineModule
 
-import deepspeed
 from determined.pytorch import DataLoader
 from determined.pytorch.deepspeed import (
     DeepSpeedTrial,

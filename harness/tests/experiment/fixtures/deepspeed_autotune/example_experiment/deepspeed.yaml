@@ -1,0 +1,12 @@
+name: example_ds_at_experiment1
+max_restarts: 0
+resources:
+  slots_per_trial: 2
+searcher:
+  name: custom
+  metric: throughput
+  smaller_is_better: False
+hyperparameters:
+  model_name: resnet152
+  deepspeed_config: ds_config.json
+entrypoint: python3 -m determined.launch.deepspeed python3 script.py

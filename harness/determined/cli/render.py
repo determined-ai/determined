@@ -17,6 +17,7 @@ from determined.common import util, yaml
 # a filter like `head`.
 _FORMAT = "presto"
 _DEFAULT_VALUE = "N/A"
+OMITTED_VALUE = "***"
 
 
 def select_values(values: List[Dict[str, Any]], headers: Dict[str, str]) -> List[Dict[str, Any]]:
@@ -46,11 +47,12 @@ def unmarshal(
 
 
 class Animator:
-    MAX_LINE_LENGTH = 80
     """
     Animator is a simple class for rendering a loading animation in the terminal.
     Use to communicate progress to the user when a call may take a while.
     """
+
+    MAX_LINE_LENGTH = 80
 
     def __init__(self, message: str = "Loading") -> None:
         self.message = message

@@ -2,17 +2,15 @@ import { waitFor } from '@testing-library/dom';
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
-import { DetailedUser } from 'types';
+import { User } from 'components/kit/internal/types';
+import { StoreProvider as UIProvider } from 'stores/contexts/UI';
 
 import UserAvatar, { Props } from './UserAvatar';
 
-const testUsers: DetailedUser[] = [
+const testUsers: User[] = [
   {
     displayName: 'Bugs Bunny',
     id: 44,
-    isActive: true,
-    isAdmin: true,
     username: 'elmerFudd01',
   },
 ];
@@ -23,7 +21,7 @@ const Component = ({ user }: Partial<Props> = {}) => {
   return <UserAvatar hideTooltip={false} user={user} />;
 };
 
-const setup = (testUser: DetailedUser) => {
+const setup = (testUser: User) => {
   const user = userEvent.setup();
 
   const view = render(

@@ -1,9 +1,11 @@
 import { ModalFuncProps } from 'antd/es/modal/Modal';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import MonacoEditor from 'components/MonacoEditor';
-import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';
-import { hasObjectKeys, isObject, isString } from 'shared/utils/data';
+import CodeEditor from 'components/kit/CodeEditor';
+import useModal, { ModalHooks as Hooks } from 'hooks/useModal/useModal';
+import { hasObjectKeys, isObject, isString } from 'utils/data';
+import handleError from 'utils/error';
+import { Loaded } from 'utils/loadable';
 
 import { Ranker, TrialFilters, TrialSorter } from './filters';
 import css from './useModalCreateCollection.module.scss';
@@ -52,16 +54,11 @@ const useModalViewFilters = (): ModalHooks => {
 
     return (
       <div className={css.base}>
-        <MonacoEditor
-          height="40vh"
-          language="yaml"
-          options={{
-            cursorStyle: undefined,
-            minimap: { enabled: false },
-            occurrencesHighlight: false,
-            readOnly: true,
-          }}
-          value={[sorterText, filtersText].join('\n\n')}
+        <CodeEditor
+          files={[{ content: Loaded([sorterText, filtersText].join('\n\n')), key: 'config.yaml' }]}
+          height="100%"
+          readonly
+          onError={handleError}
         />
       </div>
     );

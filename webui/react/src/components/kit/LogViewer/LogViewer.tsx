@@ -13,19 +13,22 @@ import { throttle } from 'throttle-debounce';
 
 import Button from 'components/kit/Button';
 import Icon from 'components/kit/Icon';
-import Link from 'components/Link';
-import Section from 'components/Section';
-import useGetCharMeasureInContainer from 'hooks/useGetCharMeasureInContainer';
-import useResize from 'hooks/useResize';
-import { FetchArgs } from 'services/api-ts-sdk';
-import { readStream } from 'services/utils';
-import Message, { MessageType } from 'shared/components/Message';
-import Spinner from 'shared/components/Spinner';
-import { RecordKey, ValueOf } from 'shared/types';
-import { clone } from 'shared/utils/data';
-import { formatDatetime } from 'shared/utils/datetime';
-import { dateTimeStringSorter, numericSorter } from 'shared/utils/sort';
-import { Log, LogLevel } from 'types';
+import {
+  clone,
+  dateTimeStringSorter,
+  formatDatetime,
+  numericSorter,
+} from 'components/kit/internal/functions';
+import Link from 'components/kit/internal/Link';
+import Message, { MessageType } from 'components/kit/internal/Message';
+import Section from 'components/kit/internal/Section';
+import { readLogStream } from 'components/kit/internal/services';
+import Spinner from 'components/kit/internal/Spinner';
+import { FetchArgs, RecordKey, ValueOf } from 'components/kit/internal/types';
+import { ErrorHandler } from 'components/kit/internal/types';
+import { Log, LogLevel } from 'components/kit/internal/types';
+import useGetCharMeasureInContainer from 'components/kit/internal/useGetCharMeasureInContainer';
+import useResize from 'components/kit/internal/useResize';
 
 import ClipboardButton from '../ClipboardButton';
 
@@ -38,6 +41,8 @@ export interface Props {
   initialLogs?: unknown[];
   onDownload?: () => void;
   onFetch?: (config: FetchConfig, type: FetchType) => FetchArgs;
+  onError: ErrorHandler;
+  serverAddress: (path: string) => string;
   sortKey?: keyof Log;
   title?: React.ReactNode;
 }
@@ -119,6 +124,8 @@ const LogViewer: React.FC<Props> = ({
   initialLogs,
   onDownload,
   onFetch,
+  onError,
+  serverAddress,
   sortKey = 'time',
   handleCloseLogs,
   ...props
@@ -199,17 +206,24 @@ const LogViewer: React.FC<Props> = ({
       setIsFetching(true);
       local.current.isFetching = true;
 
-      await readStream(onFetch({ limit: PAGE_LIMIT, ...config } as FetchConfig, type), (event) => {
-        const logEntry = decoder(event);
-        fetchDirection === FetchDirection.Older ? buffer.unshift(logEntry) : buffer.push(logEntry);
-      });
+      await readLogStream(
+        serverAddress,
+        onFetch({ limit: PAGE_LIMIT, ...config } as FetchConfig, type),
+        onError,
+        (event) => {
+          const logEntry = decoder(event);
+          fetchDirection === FetchDirection.Older
+            ? buffer.unshift(logEntry)
+            : buffer.push(logEntry);
+        },
+      );
 
       setIsFetching(false);
       local.current.isFetching = false;
 
       return processLogs(buffer);
     },
-    [decoder, fetchDirection, onFetch, processLogs],
+    [decoder, fetchDirection, onFetch, onError, processLogs, serverAddress],
   );
 
   const handleItemsRendered = useCallback(
@@ -394,8 +408,10 @@ const LogViewer: React.FC<Props> = ({
     const throttledProcessBuffer = throttle(THROTTLE_TIME, processBuffer);
 
     if (fetchDirection === FetchDirection.Older && onFetch) {
-      readStream(
+      readLogStream(
+        serverAddress,
         onFetch({ canceler, fetchDirection, limit: PAGE_LIMIT }, FetchType.Stream),
+        onError,
         (event) => {
           buffer.push(decoder(event));
           throttledProcessBuffer();
@@ -407,7 +423,7 @@ const LogViewer: React.FC<Props> = ({
       canceler.abort();
       throttledProcessBuffer.cancel();
     };
-  }, [addLogs, decoder, fetchDirection, onFetch, processLogs]);
+  }, [addLogs, decoder, fetchDirection, onError, serverAddress, onFetch, processLogs]);
 
   // Re-fetch logs when fetch callback changes.
   useEffect(() => {

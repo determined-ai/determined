@@ -1,11 +1,16 @@
 from typing import Any, List, cast
 
 import tensorflow as tf
+from packaging import version
 from tensorflow.keras.layers import Dense
 from tensorflow.keras.losses import binary_crossentropy
 from tensorflow.keras.metrics import categorical_accuracy
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.optimizers.legacy import SGD, Adam  # TODO MLG-443
+
+if version.parse(tf.__version__) < version.parse("2.11.0"):
+    from tensorflow.keras.optimizers import SGD, Adam
+else:
+    from tensorflow.keras.optimizers.legacy import SGD, Adam  # TODO MLG-443
 
 from determined import keras
 from tests.experiment.tf_utils import make_xor_data_sequences  # noqa: I202, I100

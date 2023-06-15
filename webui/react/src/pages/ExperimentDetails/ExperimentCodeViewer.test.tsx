@@ -6,8 +6,8 @@ import { BrowserRouter } from 'react-router-dom';
 
 import { SettingsProvider } from 'hooks/useSettingsProvider';
 import { paths } from 'routes/utils';
-import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import authStore from 'stores/auth';
+import { StoreProvider as UIProvider } from 'stores/contexts/UI';
 import userStore from 'stores/users';
 import { DetailedUser } from 'types';
 import { generateExperiment } from 'utils/task';
@@ -71,7 +71,7 @@ vi.mock('services/api', () => ({
   getUserSetting: () => Promise.resolve({ settings: [] }),
 }));
 
-vi.mock('components/MonacoEditor', () => ({
+vi.mock('@uiw/react-codemirror', () => ({
   __esModule: true,
   default: () => <></>,
 }));

@@ -8,9 +8,9 @@ import Nameplate from 'components/kit/Nameplate';
 import UserBadge from 'components/UserBadge';
 import { assignRolesToGroup, assignRolesToUser } from 'services/api';
 import { V1Role } from 'services/api-ts-sdk';
-import { DetError, ErrorLevel, ErrorType } from 'shared/utils/error';
 import { User, UserOrGroup } from 'types';
 import { message } from 'utils/dialogApi';
+import { DetError, ErrorLevel, ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 import { getIdFromUserOrGroup, getName, isUser } from 'utils/user';
 
@@ -116,6 +116,7 @@ const WorkspaceMemberAddModalComponent: React.FC<Props> = ({
       cancel
       size="small"
       submit={{
+        handleError,
         handler: handleSubmit,
         text: 'Add Member',
       }}

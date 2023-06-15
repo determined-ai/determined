@@ -7,10 +7,10 @@ import { Modal } from 'components/kit/Modal';
 import { paths } from 'routes/utils';
 import { createWebhook } from 'services/api';
 import { V1TriggerType, V1WebhookType } from 'services/api-ts-sdk/api';
-import { DetError, ErrorLevel, ErrorType } from 'shared/utils/error';
-import { routeToReactUrl } from 'shared/utils/routes';
 import { RunState } from 'types';
+import { DetError, ErrorLevel, ErrorType } from 'utils/error';
 import handleError from 'utils/error';
+import { routeToReactUrl } from 'utils/routes';
 
 interface FormInputs {
   triggerEvents: RunState[];
@@ -71,6 +71,7 @@ const WebhookCreateModalComponent: React.FC = () => {
       size="small"
       submit={{
         disabled,
+        handleError,
         handler: handleSubmit,
         text: 'Create Webhook',
       }}

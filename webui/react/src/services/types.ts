@@ -1,6 +1,6 @@
 import { Dayjs } from 'dayjs';
 
-import { FetchOptions, RecordKey, SingleEntityParams } from 'shared/types';
+import { FetchOptions, RecordKey, SingleEntityParams } from 'types';
 import {
   DetailedUser,
   Job,
@@ -320,7 +320,8 @@ export interface GetJobQParams extends PaginationParams, FetchOptions {
   states?: Api.Jobv1State[];
 }
 
-export interface GetJobsResponse extends Api.V1GetJobsResponse {
+export interface GetJobsResponse {
+  pagination: Api.V1Pagination;
   jobs: Job[];
 }
 export interface GetJobQStatsParams extends FetchOptions {

@@ -11,11 +11,13 @@ import { Settings, settingsConfigForTask } from 'components/kit/LogViewer/LogVie
 import Page from 'components/Page';
 import { commandTypeToLabel } from 'constants/states';
 import { useSettings } from 'hooks/useSettings';
+import { serverAddress } from 'routes/utils';
 import { paths } from 'routes/utils';
 import { detApi } from 'services/apiConfig';
 import { mapV1LogsResponse } from 'services/decoder';
 import { readStream } from 'services/utils';
-import { CommandType } from 'types';
+import { CommandTask, CommandType } from 'types';
+import handleError from 'utils/error';
 
 import css from './TaskLogs.module.scss';
 
@@ -148,7 +150,13 @@ const TaskLogs: React.FC<Props> = ({ taskId, taskType, onCloseLogs, headerCompon
       bodyNoPadding
       breadcrumb={[
         { breadcrumbName: 'Tasks', path: paths.taskList() },
-        { breadcrumbName: `${taskTypeLabel} ${taskId.substring(0, 8)}`, path: '#' },
+        {
+          breadcrumbName: `${taskTypeLabel} ${taskId.substring(0, 8)}`,
+          path: paths.taskLogs({
+            id: taskId,
+            type: taskType,
+          } as CommandTask),
+        },
       ]}
       headerComponent={headerComponent}
       id="task-logs"
@@ -156,7 +164,9 @@ const TaskLogs: React.FC<Props> = ({ taskId, taskType, onCloseLogs, headerCompon
       <LogViewer
         decoder={mapV1LogsResponse}
         handleCloseLogs={onCloseLogs}
+        serverAddress={serverAddress}
         title={logFilters}
+        onError={handleError}
         onFetch={handleFetch}
       />
     </Page>

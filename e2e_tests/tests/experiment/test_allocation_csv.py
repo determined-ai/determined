@@ -1,6 +1,6 @@
 import csv
 import re
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from io import StringIO
 
 import pytest
@@ -84,7 +84,8 @@ def test_tensorboard_experiment_capture() -> None:
     assert task_id is not None
     clu.utils.wait_for_task_state("tensorboard", task_id, "TERMINATED")
 
-    end_time = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    # Ensure that end_time captures tensorboard
+    end_time = (datetime.now(timezone.utc) + timedelta(minutes=1)).strftime("%Y-%m-%dT%H:%M:%SZ")
     r = api.get(
         conf.make_master_url(),
         f"{API_URL}timestamp_after={start_time}&timestamp_before={end_time}",

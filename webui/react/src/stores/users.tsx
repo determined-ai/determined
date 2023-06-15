@@ -2,8 +2,8 @@ import { Map } from 'immutable';
 
 import { getCurrentUser, getUsers } from 'services/api';
 import type { GetUsersParams } from 'services/types';
-import { isEqual } from 'shared/utils/data';
 import { DetailedUser, DetailedUserList } from 'types';
+import { isEqual } from 'utils/data';
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { observable, WritableObservable } from 'utils/observable';

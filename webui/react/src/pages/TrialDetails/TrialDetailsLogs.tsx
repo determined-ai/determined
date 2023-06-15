@@ -11,16 +11,16 @@ import {
   settingsConfigForTrial,
 } from 'components/kit/LogViewer/LogViewerSelect.settings';
 import useConfirm from 'components/kit/useConfirm';
+import Spinner from 'components/Spinner';
 import { useSettings } from 'hooks/useSettings';
 import { serverAddress } from 'routes/utils';
 import { detApi } from 'services/apiConfig';
 import { mapV1LogsResponse } from 'services/decoder';
 import { readStream } from 'services/utils';
-import Spinner from 'shared/components/Spinner';
-import useUI from 'shared/contexts/stores/UI';
-import { ErrorType } from 'shared/utils/error';
+import useUI from 'stores/contexts/UI';
 import { ExperimentBase, TrialDetails } from 'types';
 import { downloadTrialLogs } from 'utils/browser';
+import { ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 
 import ClipboardButton from '../../components/kit/ClipboardButton';
@@ -103,6 +103,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
       ),
       okText: 'Proceed to Download',
       onConfirm: handleDownloadConfirm,
+      onError: handleError,
       size: 'medium',
       title: `Confirm Download for Trial ${trial.id} Logs`,
     });
@@ -185,8 +186,10 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
       <Spinner conditionalRender spinning={!trial}>
         <LogViewer
           decoder={mapV1LogsResponse}
+          serverAddress={serverAddress}
           title={logFilters}
           onDownload={handleDownloadLogs}
+          onError={handleError}
           onFetch={handleFetch}
         />
       </Spinner>

@@ -6,7 +6,7 @@ import { useModal } from 'components/kit/Modal';
 import ModelCreateModal from 'components/ModelCreateModal';
 import useModalCheckpoint from 'hooks/useModal/Checkpoint/useModalCheckpoint';
 import useModalCheckpointRegister from 'hooks/useModal/Checkpoint/useModalCheckpointRegister';
-import { ModalCloseReason } from 'shared/hooks/useModal/useModal';
+import { ModalCloseReason } from 'hooks/useModal/useModal';
 import { CheckpointWorkloadExtended, CoreApiGenericCheckpoint, ExperimentBase } from 'types';
 
 interface Props {

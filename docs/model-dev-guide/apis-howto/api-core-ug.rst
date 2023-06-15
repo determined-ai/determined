@@ -1,214 +1,301 @@
-##########
- Core API
-##########
+.. _core-getting-started:
+
+#####################
+ Core API User Guide
+#####################
 
 .. meta::
-   :description: Learn how to train almost any machine learning model using Determined AI's Core API. This guide covers metrics tracking, checkpoint tracking and preemption support, hyperparameter search, and distributing work across multiple GPUs or nodes.
+   :description: Learn how to use the flexible Core API to train any deep learning model. This user guide walks you through plugging in your existing training code to get up and running.
 
-In this guide, you'll learn how to use the Core API.
+This guide will help you get up and running with the Core API.
 
 +------------------------------------------------------------------+
 | Visit the API reference                                          |
 +==================================================================+
-| :doc:`/reference/training/api-core-reference`                    |
+| :ref:`core-reference`                                            |
 +------------------------------------------------------------------+
 
-With the Core API you can train arbitrary models on the Determined platform with seamless access to
-the following capabilities:
+In this user guide, we'll show you how to adapt model training code to use the Core API. As an
+example, we'll be working with the PyTorch MNIST model.
 
--  metrics tracking
--  checkpoint tracking and preemption support
--  hyperparameter search
--  distributing work across multiple GPUs and/or nodes
+************
+ Objectives
+************
 
-These are the same features provided by the higher-level PyTorchTrial, DeepSpeedTrial, and
-TFKerasTrial APIs (the higher-level APIs are implemented using the Core API).
+These step-by-step instructions walk you through modifying a script for the purpose of performing
+the following functions:
 
-This user guide shows you how to get started using the Core API.
+-  Report metrics
+-  Report checkpoints
+-  Perform a hyperparameter search
+-  Perform distributed training
 
-.. _core-getting-started:
+After completing the steps in this user guide, you will be able to:
 
-*****************
- Getting Started
-*****************
+-  Understand the minimum requirements for running an experiment
+-  Modify a script and an experiment configuration file
+-  Understand how to convert model code
+-  Use the Core API to train a model
 
-As a simple introduction, this example training script increments a single integer in a loop,
-instead of training a model with machine learning. The changes shown for the example model should be
-similar to the changes you make in your actual model.
+***************
+ Prerequisites
+***************
 
-The ``0_start.py`` training script used in this example contains your simple "model":
+**Required**
 
-.. literalinclude:: ../../../examples/tutorials/core_api/0_start.py
-   :language: python
-   :start-at: import
+-  A Determined cluster
 
-To run this script, create a configuration file with at least the following values:
+**Recommended**
 
-.. literalinclude:: ../../../examples/tutorials/core_api/0_start.yaml
-   :language: yaml
+-  :ref:`qs-mdldev`
 
-The actual configuration file can have any name, but this example uses ``0_start.yaml``.
+*****************************************************
+ Step 1: Get the Tutorial Files & Run the Experiment
+*****************************************************
 
-Run the code using the command:
+To run an experiment, you need, at minimum, a script and an experiment configuration (YAML) file.
+
+Create a new directory.
+
+Access the tutorial files via the :download:`core_api_pytorch_mnist.tgz
+</examples/core_api_pytorch_mnist.tgz>` download link or directly from the `Github repository
+<https://github.com/determined-ai/determined/tree/master/examples/tutorials/core_api_pytorch_mnist>`_.
+These scripts have already been modified to fit the steps outlined in this tutorial.
+
+In this initial step, we’ll run our experiment using the ``model_def.py`` script and its
+accompanying ``const.yaml`` experiment configuration file.
+
+CD into the directory and run this command:
 
 .. code:: bash
 
-   det e create 0_start.yaml . -f
+   det e create const.yaml . -f
 
-If you navigate to this experiment in the WebUI no metrics are displayed because you have not yet
-reported them to the master using the Core API.
+.. note::
 
-.. _core-metrics:
+   ``det e create const.yaml . -f`` instructs Determined to follow the logs of the first trial that
+   is created as part of the experiment. The command will stay active and display the live output
+   from the logs of the first trial as it progresses.
 
-****************
- Report Metrics
-****************
+Open the Determined WebUI by navigating to the master URL. One way to do this is to navigate to
+``http://localhost:8080/``, accept the default Determined username, leave the password empty, and
+click **Sign In**.
 
-The Core API makes it easy to report training and validation metrics to the master during training
-with only a few new lines of code.
+.. note::
 
-#. For this example, create a new training script called ``1_metrics.py`` by copying the
-   ``0_start.py`` script from :ref:`core-getting-started`.
+   This tutorial provides instructions for running a local distributed training job. Your setup may
+   be different. For example, for instructions on how to run a remote distributed training job,
+   visit the :ref:`qs-mdldev`.
 
-#. Begin by importing import the ``determined`` module:
+In the WebUI, select your experiment. You'll notice the tabs do not yet contain any information. In
+the next section, we'll report training and validation metrics.
 
-   .. literalinclude:: ../../../examples/tutorials/core_api/1_metrics.py
-      :language: python
-      :start-after: NEW: import determined
-      :end-before: def main
+************************
+ Step 2: Report Metrics
+************************
 
-#. Enable ``logging``, using the ``det.LOG_FORMAT`` for logs. This enables useful log messages from
-   the ``determined`` library, and ``det.LOG_FORMAT`` enables filter-by-level in the WebUI.
+To report training and validation metrics to the Determined master, we’ll add a few lines of code to
+our script. More specifically, we'll create a :class:`~determined.core.Context` object to allow
+interaction with the master. Then, we'll pass the ``core_context`` as an argument into ``main()``,
+``train()``, and ``test()`` and modify the function headers accordingly.
 
-   .. literalinclude:: ../../../examples/tutorials/core_api/1_metrics.py
-      :language: python
-      :start-at: logging.basicConfig
-      :end-at: logging.error
+To run our experiment, we'll use the ``model_def_metrics.py`` script and its accompanying
+``metrics.yaml`` experiment configuration file.
 
-#. In your ``if __name__ == "__main__"`` block, wrap the entire execution of ``main()`` within the
-   scope of :meth:`determined.core.init`, which prepares resources for training and cleans them up
-   afterward. Add the ``core_context`` as a new argument to ``main()`` because the Core API is
-   accessed through the ``core_context`` object.
+.. include:: ../../_shared/note-premade-tutorial-script.txt
 
-   .. literalinclude:: ../../../examples/tutorials/core_api/1_metrics.py
-      :language: python
-      :start-at: with det.core.init
+Begin by importing Determined:
 
-#. Within ``main()``, add two calls: (1) report training metrics periodically during training and
-   (2) report validation metrics every time a validation runs.
+.. code:: python
 
-   .. literalinclude:: ../../../examples/tutorials/core_api/1_metrics.py
-      :language: python
-      :pyobject: main
+   import determined as det
 
-   The ``report_validation_metrics()`` call typically happens after the validation step, however,
-   actual validation is not demonstrated by this example.
+Step 2.1: Modify the Main Loop
+==============================
 
-#. Create a ``1_metrics.yaml`` file with an ``entrypoint`` invoking the new ``1_metrics.py`` file.
-   You can copy the ``0_start.yaml`` configuration file and change the first couple of lines:
+We'll need a :class:`~determined.core.Context` object for interacting with the master. To accomplish
+this, we'll modify the ``__main__`` loop to include ``core_context``:
 
-   .. literalinclude:: ../../../examples/tutorials/core_api/1_metrics.yaml
-      :language: yaml
-      :lines: 1-2
+.. note::
 
-#. Run the code using the command:
+   Refer to the ``if __name__ == "__main__":`` block in ``model_def_metrics.py``
 
-   .. code:: bash
+.. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_metrics.py
+   :language: python
+   :start-after: # Docs snippet start: modify main loop core context
+   :end-before: # Docs snippet end: modify main loop core content
+   :dedent:
 
-      det e create 1_metrics.yaml . -f
+Step 2.2: Modify the Train Method
+=================================
 
-#. You can now navigate to the new experiment in the WebUI and view the plot populated with the
-   training and validation metrics.
+Use ``core_context.train`` to report training and validation metrics.
 
-The complete ``1_metrics.py`` and ``1_metrics.yaml`` listings used in this example can be found in
-the :download:`core_api.tgz </examples/core_api.tgz>` download or in the `GitHub repository
-<https://github.com/determined-ai/determined/tree/master/examples/tutorials/core_api>`_.
+#. Begin by importing the ``determined`` module:
 
-.. _core-checkpoints:
+.. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_metrics.py
+   :language: python
+   :start-after: # Docs snippet start: report training metrics
+   :end-before: # Docs snippet end: report training metrics
+   :dedent:
 
-********************
- Report Checkpoints
-********************
+and ``core_context.train.report_validation_metrics()``:
 
-By checkpointing periodically during training and reporting those checkpoints to the master, you can
-stop and restart training in two different ways: either by pausing and reactivating training using
-the WebUI, or by clicking the Continue Trial button after the experiment completes.
+.. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_metrics.py
+   :language: python
+   :start-after: # Docs snippet start: report validation metrics
+   :end-before: # Docs snippet end: report validation metrics
+   :dedent:
+
+Step 2.3: Modify the Test Method
+================================
+
+Modify the ``test()`` function header to include ``args`` and other elements you’ll need during the
+evaluation loop. The ``args`` variable lets you pass configuration settings such as batch size and
+learning rate. In addition, pass the newly created ``core_context`` into both ``train()`` and
+``test()``. Passing ``core_context`` enables reporting of metrics to the Determined master.
+
+.. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_metrics.py
+   :language: python
+   :start-after: # Docs snippet start: pass core context
+   :end-before: # Docs snippet end: pass core context
+   :dedent:
+
+Create a ``steps_completed`` variable to plot metrics on a graph in the WebUI:
+
+.. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_metrics.py
+   :language: python
+   :start-after: # Docs snippet start: calculate steps completed
+   :end-before: # Docs snippet end: calculate steps completed
+   :dedent:
+
+Step 2.4: Run the Experiment
+============================
+
+Run the following command to run the experiment:
+
+.. code::
+
+   det e create metrics.yaml .
+
+Open the Determined WebUI again and navigate to the **Overview** tab.
+
+The WebUI now displays metrics. In this step, you learned how to add a few new lines of code in
+order to report training and validation metrics to the Determined master. Next, we’ll modify our
+script to report checkpoints.
+
+***********************
+ Step 3: Checkpointing
+***********************
+
+Checkpointing periodically during training and reporting the checkpoints to the master gives us the
+ability to stop and restart training. In this section, we’ll modify our script for the purpose of
+checkpointing.
+
+In this step, we’ll run our experiment using the ``model_def_checkpoints.py`` script and its
+accompanying ``checkpoints.yaml`` experiment configuration file.
+
+.. include:: ../../_shared/note-premade-tutorial-script.txt
+
+Step 3.1: Save Checkpoints
+==========================
+
+To save checkpoints, add the ``store_path`` function to your script:
+
+.. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_checkpoints.py
+   :language: python
+   :start-after: # Docs snippet start: save checkpoint
+   :end-before: # Docs snippet end: save checkpoint
+   :dedent:
+
+Step 3.2: Continuations
+=======================
+
+There are two types of continuations: pausing and reactivating training using the WebUI or clicking
+**Continue Trial** after the experiment completes.
 
 These two types of continuations have different behaviors. While you always want to preserve the
-value you are incrementing (the "model weight"), you do not always want to preserve the batch index.
-When you pause and reactivate you want training to continue from the same batch index, but when
-starting a fresh experiment you want training to start with a fresh batch index. You can save the
-trial ID in the checkpoint and use it to distinguish the two types of continues.
+model's state, you do not always want to preserve the batch index. When you pause and reactivate you
+want training to continue from the same batch index, but when starting a fresh experiment you want
+training to start with a fresh batch index. You can save the trial ID in the checkpoint and use it
+to distinguish the two types of continuations.
 
-#. Create a new ``2_checkpoints.py`` training script called by copying the ``1_metrics.py`` script
-   from :ref:`core-metrics`.
+To distinguish between the two types of continuations, you can save the trial ID in the checkpoint.
 
-#. Write save and load methods for your model:
+**Enable Pausing and Resuming an Experiment**
 
-   .. literalinclude:: ../../../examples/tutorials/core_api/2_checkpoints.py
-      :language: python
-      :pyobject: save_state
+To enable pausing an experiment, enable preemption:
 
-   .. literalinclude:: ../../../examples/tutorials/core_api/2_checkpoints.py
-      :language: python
-      :pyobject: load_state
+.. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_checkpoints.py
+   :language: python
+   :start-after: # Docs snippet start: enable preemption
+   :end-before: # Docs snippet end: enable preemption
+   :dedent:
 
-#. In your ``if __name__ == "__main__"`` block, use the ClusterInfo API to gather additional
-   information about the task running on the cluster, specifically a checkpoint to load from and the
-   trial ID, which you also pass to ``main()``.
+Define a load_state function for restarting model training from existing checkpoint:
 
-   .. literalinclude:: ../../../examples/tutorials/core_api/2_checkpoints.py
-      :language: python
-      :start-at: info = det.get_cluster_info()
+.. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_checkpoints.py
+   :language: python
+   :start-after: # Docs snippet start: define load state to restart
+   :end-before: # Docs snippet end: define load state to restart
+   :dedent:
 
-   It is recommended that you always follow this pattern of extracting values from the ClusterInfo
-   API and passing the values to lower layers of your code, instead of accessing the ClusterInfo API
-   directly in the lower layers. In this way the lower layer can be written to run on or off of the
-   Determined cluster.
+If checkpoint exists, load it and assign it to model state prior to resuming training:
 
-#. Within ``main()``, add logic to continue from a checkpoint, when a checkpoint is provided:
+.. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_checkpoints.py
+   :language: python
+   :start-after: # Docs snippet start: if checkpoint assign to model state
+   :end-before: # Docs snippet end: if checkpoint assign to model state
+   :dedent:
 
-   .. literalinclude:: ../../../examples/tutorials/core_api/2_checkpoints.py
-      :language: python
-      :start-at: def main
-      :end-at: for batch in range(starting_batch, 100)
+**Enable Continuing the Trial**
 
-#. You can checkpoint your model as frequently as you like. For this exercise, save a checkpoint
-   after each training report, and check for a preemption signal after each checkpoint:
+To enable continuing the trial after the experiment completes, save the trial ID. One way to do this
+is to load the checkpoint and save the checkpoint in a file in the checkpoint directory.
 
-   .. literalinclude:: ../../../examples/tutorials/core_api/2_checkpoints.py
-      :language: yaml
-      :dedent:
-      :start-at: if steps_completed % 10 == 0
-      :end-before: core_context.train.report_validation_metrics
+Open the ``checkpoint.pt`` file in binary mode and compare ``ckpt_trial_id`` with the current
+``trial_id``:
 
-#. Create a ``2_checkpoints.yaml`` file by copying the ``0_start.yaml`` file and changing the first
-   couple of lines:
+.. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_checkpoints.py
+   :language: python
+   :start-after: # Docs snippet start: compare checkpoint and current trial IDs
+   :end-before: # Docs snippet end: compare checkpoint and current trial IDs
+   :dedent:
 
-   .. literalinclude:: ../../../examples/tutorials/core_api/2_checkpoints.yaml
-      :language: yaml
-      :lines: 1-2
+Save the checkpoint in the ``checkpoint.pt`` file:
 
-#. Run the code using the command:
+.. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_checkpoints.py
+   :language: python
+   :start-after: # Docs snippet start: save checkpoint
+   :end-before: # Docs snippet end: save checkpoint
+   :dedent:
 
-   .. code:: bash
+Detect when the experiment is paused by the WebUI:
 
-      det e create 2_checkpoints.yaml . -f
+.. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_checkpoints.py
+   :language: python
+   :start-after: # Docs snippet start: enable preemption
+   :end-before: # Docs snippet end: enable preemption
+   :dedent:
 
-#. You can navigate to the experiment in the WebUI and pause it mid-training. The trial shuts down
-   and stops producing logs. If you reactivate training it resumes where it stopped. After training
-   is completed, click Continue Trial to see that fresh training is started but that the model
-   weight continues from where previous training finished.
+Step 3.3: Run the Experiment
+============================
 
-The complete ``2_checkpoints.py`` and ``2_checkpoints.yaml`` listings used in this example can be
-found in the :download:`core_api.tgz </examples/core_api.tgz>` download or in the `GitHub repository
-<https://github.com/determined-ai/determined/tree/master/examples/tutorials/core_api>`_.
+Run the following command to run the experiment:
 
-.. _core-hpsearch:
+.. code:: bash
 
-***********************
- Hyperparameter Search
-***********************
+   det e create checkpoints.yaml . -f
+
+In the Determined WebUI, nagivate to the **Checkpoints** tab.
+
+Checkpoints are saved and deleted according to the default
+:ref:`experiment-config-checkpoint-policy`. You can modify the checkpoint policy in the experiment
+configuration file.
+
+*******************************
+ Step 4: Hyperparameter Search
+*******************************
 
 With the Core API you can run advanced hyperparameter searches with arbitrary training code. The
 hyperparameter search logic is in the master, which coordinates many different Trials. Each trial
@@ -228,70 +315,82 @@ runs a train-validate-report loop:
    | Report   | Use the Core API to report results to the master.                        |
    +----------+--------------------------------------------------------------------------+
 
-#. Create a ``3_hpsearch.py`` training script by copying the ``2_checkpoints.py`` script you created
-   in :ref:`core-checkpoints`.
+To perform a hyperparameter search, we'll update our script to define the hyperparameter search
+settings we want to use for our experiment. More specifically, we'll need to define the following
+settings in our experiment configuration file:
 
-#. In your ``if __name__ == "__main__"`` block, access the hyperparameter values chosen for this
-   trial using the ClusterInfo API and configure the training loop accordingly:
+-  ``name:`` ``adaptive_asha`` (name of our searcher. For all options, visit :doc:`Search Methods
+   </model-dev-guide/hyperparameter/search-methods/overview>`.
 
-   .. literalinclude:: ../../../examples/tutorials/core_api/3_hpsearch.py
-      :language: python
-      :dedent:
-      :start-at: hparams = info.trial.hparams
+-  ``metric``: ``test_loss``
 
-#. Modify ``main()`` to run the train-validate-report loop mentioned above by iterating through
-   ``core_context.searcher.operations()``. Each :class:`~determined.core.SearcherOperation` from
-   :meth:`~determined.core.SearcherContext.operations` has a ``length`` attribute that specifies the
-   absolute length of training to complete. After validating, report the searcher metric value using
-   ``op.report_completed()``.
+-  ``smaller_is_better``: ``True`` (This is equivalent to minimization vs. maximization of
+   objective.)
 
-   .. literalinclude:: ../../../examples/tutorials/core_api/3_hpsearch.py
-      :language: python
-      :dedent:
-      :start-at: batch = starting_batch
-      :end-at: op.report_completed
+-  ``max_trials``: 500 (This is the maximum number of trials the searcher should run.)
 
-#. Because the training length can vary, you might exit the train-validate-report loop before saving
-   the last of your progress. To handle this, add a conditional save after the loop ends:
+-  ``max_length``: 20 epochs (The max length of a trial. For more information, visit Adaptive ASHA
+   in the :doc:`Experiment Configuration Reference
+   </reference/training/experiment-config-reference>`.
 
-   .. literalinclude:: ../../../examples/tutorials/core_api/3_hpsearch.py
-      :language: python
-      :dedent:
-      :start-at: if last_checkpoint_batch != steps_completed
-      :end-at: save_state
+In addition, we also need to define the hyperparameters themselves. Adaptive ASHA will pick values
+between the ``minval`` and ``maxval`` for each hyperparameter for each trial.
 
-#. Create a new ``3_hpsearch.yaml`` file and add an ``entrypoint`` that invokes ``3_hpsearch.py``:
+.. note::
 
-   .. literalinclude:: ../../../examples/tutorials/core_api/3_hpsearch.yaml
-      :language: yaml
-      :lines: 1-2
+   To see early stopping in action, try setting ``max_trials`` to over 500 and playing around with
+   the hyperparameter search values.
 
-   Add a ``hyperparameters`` section with the integer-type ``increment_by`` hyperparameter value
-   that referenced in the training script:
+In this step, we’ll run our experiment using the ``model_def_adaptive.py`` script and its
+accompanying ``adaptive.yaml`` experiment configuration file.
 
-   .. literalinclude:: ../../../examples/tutorials/core_api/3_hpsearch.yaml
-      :language: yaml
-      :start-at: hyperparameters:
-      :end-at: maxval
+.. include:: ../../_shared/note-premade-tutorial-script.txt
 
-#. Run the code using the command:
+Begin by accessing the hyperparameters in your code:
 
-   .. code:: bash
+.. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_adaptive.py
+   :language: python
+   :start-after: # Docs snippet start: get hparams
+   :end-before: # Docs snippet end: get hparams
+   :dedent:
 
-      det e create 3_hpsearch.yaml . -f
+Then, pass the hyperparameters into your model and optimizer:
 
-The complete ``3_hpsearch.py`` and ``3_hpsearch.yaml`` listings used in this example can be found in
-the :download:`core_api.tgz </examples/core_api.tgz>` download or in the `GitHub repository
-<https://github.com/determined-ai/determined/tree/master/examples/tutorials/core_api>`_.
+.. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_adaptive.py
+   :language: python
+   :start-after: # Docs snippet start: pass hyperparameters
+   :end-before: # Docs snippet end: pass hyperparameters
+   :dedent:
 
-.. _core-distributed:
+Ensure your model is set to use the selected values on a per-trial basis rather than your previously
+hardcoded values:
 
-**********************
- Distributed Training
-**********************
+.. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_adaptive.py
+   :language: python
+   :start-after: # Docs snippet start: per trial basis
+   :end-before: # Docs snippet end: per trial basis
+   :dedent:
 
-The Core API has special considerations for running distributed training. Some of the more important
-considerations are:
+Step 4.1: Run the Experiment
+============================
+
+Run the following command to run the experiment:
+
+.. code:: bash
+
+   det e create adaptive.yaml .
+
+In the Determined WebUI, navigate to the **Hyperparameters** tab.
+
+You should see a graph in the WebUI that displays the various trials initiated by the Adaptive ASHA
+hyperparameter search algorithm.
+
+******************************
+ Step 5: Distributed Training
+******************************
+
+The Core API has special features for running distributed training. Some of the more important
+features are:
 
 -  Access to all IP addresses of every node in the Trial (through the ClusterInfo API).
 
@@ -304,110 +403,121 @@ considerations are:
    :meth:`~determined.core.PreemptContext.should_preempt` call is automatically synchronized across
    workers so that all workers decide to preempt or continue as a unit.
 
-#. Create a ``4_distributed.py`` training script by copying the ``3_hpsearch.py`` from
-   :ref:`core-hpsearch`.
+.. tip::
 
-#. Add launcher logic to execute one worker subprocess per slot.
-
-   Start with a ``launcher_main()`` function that executes one worker subprocess per slot.
-
-   .. literalinclude:: ../../../examples/tutorials/core_api/4_distributed.py
-      :language: python
-      :dedent:
-      :pyobject: launcher_main
+   Launchers
 
    Typically, you do not have to write your own launcher. Determined provides launchers for Horovod,
-   ``torch.distributed``, and DeepSpeed. Additionally, there are third-party launchers available,
-   such as ``mpirun``. When using a custom or third-party launcher, wrap your worker script in the
-   ``python -m determined.launcher.wrap_rank`` wrapper script so the WebUI log viewer can filter
-   logs by rank.
+   torch.distributed, and DeepSpeed. For more information about launcher options, visit
+   :ref:`experiments`.
 
-   Also add a ``worker_main()`` that will run training on each slot:
+In this example, we’ll be using PyTorch’s DistributedDataParallel. We’ll also need to make specific
+changes to our configuration experiment file.
 
-   .. literalinclude:: ../../../examples/tutorials/core_api/4_distributed.py
-      :language: python
-      :dedent:
-      :pyobject: worker_main
+In this step, we’ll run our experiment using the ``model_def_distributed.py`` script and its
+accompanying ``distributed.yaml`` experiment configuration file.
 
-   Then modify your ``if __name__ == "__main__"`` block to invoke the correct ``*_main()`` based on
-   command-line arguments:
+.. include:: ../../_shared/note-premade-tutorial-script.txt
 
-   .. literalinclude:: ../../../examples/tutorials/core_api/4_distributed.py
-      :language: python
-      :dedent:
-      :start-at: slots_per_node = len(info.slot_ids)
+Step 5.1: Edit Your Experiment Configuration File
+=================================================
 
-#. In the training code, use the ``allgather`` primitive to do a "distributed" increment, to gain
-   experience using the communication primitives:
+Edit your experiment configuration file to point to a launch script:
 
-   .. literalinclude:: ../../../examples/tutorials/core_api/4_distributed.py
-      :language: python
-      :dedent:
-      :start-at: all_increment_bys =
-      :end-at: x += sum(all_increment_bys)
+.. code:: yaml
 
-#. Usually, trial logs are easier to read when status is only printed on the chief worker:
+   entrypoint: >-
+      python3 -m determined.launch.torch_distributed
+      python3 model_def_distributed.py
 
-   .. literalinclude:: ../../../examples/tutorials/core_api/4_distributed.py
-      :language: python
-      :dedent:
-      :start-after: some logs are easier to read
-      :end-at: logging.info
+and, set ``slots_per_trial`` (under ``resources``) to the number of GPUs you want to distribute the
+training across:
 
-#. Only the chief worker is permitted to report training metrics, report validation metrics, upload
-   checkpoints, or report searcher operations completed. This rule applies to the steps you take
-   periodically during training:
+.. code:: yaml
 
-   .. literalinclude:: ../../../examples/tutorials/core_api/4_distributed.py
-      :language: python
-      :dedent:
-      :start-at: if steps_completed % 10 == 0
-      :end-at: return
+   resources:
+     slots_per_trial: 4
 
-   The rule also applies to the steps you take after validating:
+Step 5.2: Modify Your Training Script
+=====================================
 
-   .. literalinclude:: ../../../examples/tutorials/core_api/4_distributed.py
-      :language: python
-      :dedent:
-      :start-after: only the chief may report validation metrics
-      :end-at: op.report_completed
+Add a few more imports to your training script:
 
-   The rule also applies to the conditional save after the main loop completes:
+.. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_distributed.py
+   :language: python
+   :start-after: # Docs snippet start: import torch distrib
+   :end-before: # Docs snippet end: import torch distrib
+   :dedent:
 
-   .. literalinclude:: ../../../examples/tutorials/core_api/4_distributed.py
-      :language: python
-      :dedent:
-      :start-at: again, only the chief may upload checkpoints
-      :end-at: save_state
+Initialize a process group using ``torch``. After initializing a process group, initialize a
+Determined distributed context using ``from_torch_distributed``:
 
-#. Create a ``4_distributed.yaml`` file by copying the ``3_distributed.yaml`` file and changing the
-   first couple of lines:
+.. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_distributed.py
+   :language: python
+   :start-after: # Docs snippet start: initialize process group
+   :end-before: # Docs snippet end: initialize process group
+   :dedent:
 
-   .. literalinclude:: ../../../examples/tutorials/core_api/4_distributed.yaml
-      :language: yaml
-      :lines: 1-2
+In ``main``, set your selected device to the device with index of ``local_rank``. This is a best
+practice even if you only have a single GPU-per-node setup:
 
-   Set the ``resources.slots_per_trial`` field to the number of GPUs you want:
+.. note::
 
-   .. literalinclude:: ../../../examples/tutorials/core_api/4_distributed.yaml
-      :language: yaml
-      :start-at: resources:
-      :end-at: slots_per_trial:
+   Refer to the ``if use_cuda:`` block in ``model_def_distributed.py``
 
-   You can return to using the ``single`` searcher instead of an ``adaptive_asha`` hyperparameter
-   search:
+.. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_distributed.py
+   :language: python
+   :start-after: # Docs snippet start: set device
+   :end-before: # Docs snippet end: set device
+   :dedent:
 
-   .. literalinclude:: ../../../examples/tutorials/core_api/4_distributed.yaml
-      :language: yaml
-      :start-at: searcher:
-      :end-at: max_length:
+Shard the data into ``num_replicas`` non-overlapping parts. ``num_replicas`` is equal to
+``core_context.distributed.size``, or the number of slots:
 
-#. Run the code using the Determined CLI with the following command:
+.. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_distributed.py
+   :language: python
+   :start-after: # Docs snippet start: shard data
+   :end-before: # Docs snippet end: shard data
+   :dedent:
 
-   .. code:: bash
+Wrap your model with torch’s DistributedDataParallel:
 
-      det e create 4_distributed.yaml . -f
+.. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_distributed.py
+   :language: python
+   :start-after: # Docs snippet start: DDP
+   :end-before: # Docs snippet end: DDP
+   :dedent:
 
-The complete ``4_distributed.py`` and ``3_hpsearch.yaml`` listings used in this example can be found
-in the :download:`core_api.tgz </examples/core_api.tgz>` download or in the `GitHub repository
-<https://github.com/determined-ai/determined/tree/master/examples/tutorials/core_api>`_.
+Finally, at each place in the code where you upload checkpoints, report training metrics, or report
+progress to the master, make sure this is done only on rank 0, e.g.,:
+
+.. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_distributed.py
+   :language: python
+   :start-after: # Docs snippet start: report metrics rank 0
+   :end-before: # Docs snippet end: report metrics rank 0
+   :dedent:
+
+Step 5.3: Run the Experiment
+============================
+
+Run the following command to run the experiment:
+
+.. code:: bash
+
+   det e create distributed.yaml .
+
+In the Determined WebUI, visit the **Cluster** tab.
+
+You should be able to see multiple slots active in the Cluster tab corresponding to the value you
+set for ``slots_per_trial`` you set in ``distributed.yaml``, as well as logs appearing from multiple
+ranks.
+
+************
+ Next Steps
+************
+
+In this user guide, you learned how to use the Core API to integrate a model into Determined. You
+also saw how to modify a training script and use the appropriate configuration file to report
+metrics and checkpointing, perform a hyperparameter search, and run distributed training.
+
+.. include:: ../../_shared/note-dtrain-learn-more.txt

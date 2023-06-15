@@ -140,6 +140,17 @@ function all(ls: Array<Loadable<unknown>>): Loadable<Array<unknown>> {
   return Loaded(res);
 }
 
+/**
+ * Filters an array of Loadables to remove NotLoaded values. Can also optionally
+ * accept a conditional function
+ */
+const filterNotLoaded = <T>(
+  a: Array<Loadable<T>>,
+  conditionFn: (d: T, i?: number) => boolean = () => true,
+): Array<T> => {
+  return a.flatMap((l) => (isLoaded(l) ? (conditionFn(l.data) ? [l.data] : []) : []));
+};
+
 /** Allows you to use Loadables with React's Suspense component */
 const waitFor = <T>(l: Loadable<T>): T => {
   switch (l._tag) {
@@ -153,6 +164,7 @@ const waitFor = <T>(l: Loadable<T>): T => {
 // exported immediately because of name collision
 export const Loadable = {
   all,
+  filterNotLoaded,
   flatMap,
   forEach,
   getOrElse,

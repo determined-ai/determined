@@ -1,17 +1,11 @@
 import dayjs from 'dayjs';
 
 import * as ioTypes from 'ioTypes';
-import { Pagination, RawJson } from 'shared/types';
-import {
-  flattenObject,
-  isNullOrUndefined,
-  isNumber,
-  isObject,
-  isPrimitive,
-} from 'shared/utils/data';
-import { capitalize } from 'shared/utils/string';
 import { BrandingType, DeterminedInfo } from 'stores/determinedInfo';
+import { Pagination, RawJson } from 'types';
 import * as types from 'types';
+import { flattenObject, isNullOrUndefined, isNumber, isObject, isPrimitive } from 'utils/data';
+import { capitalize } from 'utils/string';
 
 import * as Sdk from './api-ts-sdk'; // API Bindings
 
@@ -383,6 +377,7 @@ const checkpointStateMap = {
   [Sdk.Checkpointv1State.COMPLETED]: types.CheckpointState.Completed,
   [Sdk.Checkpointv1State.ERROR]: types.CheckpointState.Error,
   [Sdk.Checkpointv1State.DELETED]: types.CheckpointState.Deleted,
+  [Sdk.Checkpointv1State.PARTIALLYDELETED]: types.CheckpointState.PartiallyDeleted,
 };
 
 const experimentStateMap = {
@@ -484,6 +479,7 @@ export const mapV1Experiment = (
     config: ioToExperimentConfig(ioConfig),
     configRaw: data.config,
     description: data.description,
+    duration: data.duration,
     endTime: data.endTime as unknown as string,
     forkedFrom: data.forkedFrom,
     hyperparameters,

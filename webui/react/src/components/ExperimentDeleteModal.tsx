@@ -3,10 +3,10 @@ import React from 'react';
 import { Modal } from 'components/kit/Modal';
 import { paths } from 'routes/utils';
 import { deleteExperiment } from 'services/api';
-import { ErrorLevel, ErrorType } from 'shared/utils/error';
-import { routeToReactUrl } from 'shared/utils/routes';
 import { ExperimentBase } from 'types';
+import { ErrorLevel, ErrorType } from 'utils/error';
 import handleError from 'utils/error';
+import { routeToReactUrl } from 'utils/routes';
 
 export const BUTTON_TEXT = 'Delete';
 
@@ -36,6 +36,7 @@ const ExperimentDeleteModalComponent: React.FC<Props> = ({ experiment }: Props) 
       danger
       size="small"
       submit={{
+        handleError,
         handler: handleSubmit,
         text: BUTTON_TEXT,
       }}

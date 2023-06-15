@@ -48,6 +48,13 @@
 .. autoclass:: determined.searcher.Close
    :members:
 
+**********************************
+ ``determined.searcher.Progress``
+**********************************
+
+.. autoclass:: determined.searcher.Progress
+   :members:
+
 ********************************
  ``determined.searcher.Create``
 ********************************

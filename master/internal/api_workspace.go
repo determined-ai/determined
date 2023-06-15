@@ -13,6 +13,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/command"
 	"github.com/determined-ai/determined/master/internal/db"
@@ -69,7 +70,7 @@ func validateWorkspaceName(name string) error {
 func (a *apiServer) GetWorkspaceByID(
 	ctx context.Context, id int32, curUser model.User, rejectImmutable bool,
 ) (*workspacev1.Workspace, error) {
-	notFoundErr := status.Errorf(codes.NotFound, "workspace (%d) not found", id)
+	notFoundErr := api.NotFoundErrs("workspace", fmt.Sprint(id), true)
 	w := &workspacev1.Workspace{}
 
 	if err := a.m.db.QueryProto("get_workspace", w, id, curUser.ID); errors.Is(err, db.ErrNotFound) {
@@ -611,4 +612,10 @@ func (a *apiServer) UnpinWorkspace(
 
 	return &apiv1.UnpinWorkspaceResponse{},
 		errors.Wrapf(err, "error un-pinning workspace (%d)", req.Id)
+}
+
+func (a *apiServer) ListRPsBoundToWorkspace(
+	ctx context.Context, request *apiv1.ListRPsBoundToWorkspaceRequest,
+) (*apiv1.ListRPsBoundToWorkspaceResponse, error) {
+	return &apiv1.ListRPsBoundToWorkspaceResponse{}, nil
 }

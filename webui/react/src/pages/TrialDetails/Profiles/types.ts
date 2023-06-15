@@ -1,10 +1,9 @@
 import { Serie } from 'components/kit/LineChart';
-import { Options } from 'components/UPlot/UPlotChart';
 import {
   V1GetTrialProfilerMetricsResponse,
   V1TrialProfilerMetricsBatch,
 } from 'services/api-ts-sdk';
-import { ValueOf } from 'shared/types';
+import { ValueOf } from 'types';
 import { TrialDetails } from 'types';
 
 export const MetricType = {
@@ -40,11 +39,6 @@ export type OldMetricsAggregateInterface = {
 };
 
 export interface ChartProps {
-  trial: TrialDetails;
-}
-
-export interface OldChartProps {
-  getOptionsForMetrics: (name: string, metricsNames: string[]) => Partial<Options>;
   trial: TrialDetails;
 }
 

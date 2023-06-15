@@ -56,6 +56,8 @@ type Options struct {
 	ContainerRuntime   string             `json:"container_runtime"`
 	SingularityOptions SingularityOptions `json:"singularity_options"`
 	PodmanOptions      PodmanOptions      `json:"podman_options"`
+
+	Debug bool `json:"debug"`
 }
 
 // Validate validates the state of the Options struct.

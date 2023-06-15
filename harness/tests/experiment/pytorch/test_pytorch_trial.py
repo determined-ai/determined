@@ -1572,6 +1572,71 @@ class TestPyTorchTrial:
             steps=(1, 1),
         )
 
+    @pytest.mark.gpu
+    @pytest.mark.cpu
+    def test_rng_restore(self, tmp_path: pathlib.Path):
+        checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
+        tensorboard_path = tmp_path.joinpath("tensorboard")
+
+        config_base = utils.load_config(utils.fixtures_path("pytorch_no_op/const.yaml"))
+        hparams = config_base["hyperparameters"]
+
+        exp_config = utils.make_default_exp_config(
+            hparams,
+            scheduling_unit=1,
+            searcher_metric="validation_loss",
+            checkpoint_dir=checkpoint_dir,
+        )
+        exp_config.update(config_base)
+
+        example_path = utils.fixtures_path("pytorch_no_op/model_def.py")
+        trial_class = utils.import_class_from_module("NoopPyTorchTrial", example_path)
+        trial_class._searcher_metric = "validation_error"
+
+        trial_A, trial_controller_A = create_trial_and_trial_controller(
+            trial_class=trial_class,
+            hparams=hparams,
+            trial_seed=self.trial_seed,
+            exp_config=exp_config,
+            max_batches=5,
+            min_validation_batches=1,
+            min_checkpoint_batches=1,
+            checkpoint_dir=checkpoint_dir,
+            tensorboard_path=tensorboard_path,
+            expose_gpus=True,
+        )
+
+        trial_controller_A.run()
+
+        # reset random seed before rerun
+        trial_controller_A._set_random_seeds(0)
+
+        checkpoints = trial_A.checkpoint_callback.uuids
+
+        assert len(checkpoints) == 5, "trial did not create all checkpoints"
+
+        # Trial B: restore from checkpoint and train for 4 more batches, not passing trial seed
+        trial_B, trial_controller_B = create_trial_and_trial_controller(
+            trial_class=trial_class,
+            hparams=hparams,
+            exp_config=exp_config,
+            max_batches=5,
+            min_validation_batches=1,
+            min_checkpoint_batches=1,
+            checkpoint_dir=checkpoint_dir,
+            tensorboard_path=tensorboard_path,
+            latest_checkpoint=checkpoints[0],
+            steps_completed=1,
+            expose_gpus=True,
+        )
+        trial_controller_B.run()
+
+        # compare every aligning batch
+        metrics_before = trial_A.metrics_callback.validation_metrics[1:]
+        metrics_after = trial_B.metrics_callback.validation_metrics
+
+        assert metrics_before == metrics_after, "mismatched metrics in RNG restore"
+
 
 @pytest.mark.pytorch
 @pytest.mark.parametrize(

@@ -27,12 +27,13 @@
 }
 .chartTitle {
   background-color: var(--theme-stage);
+  display: flex;
   font-family: var(--theme-font-family);
   font-size: 14px;
+  justify-content: center;
   margin-bottom: -18px !important;
   padding-bottom: 15px;
   padding-top: 5px;
-  text-align: center;
 
   @supports (font-variation-settings: normal) {
     font-family: var(--theme-font-family-var);

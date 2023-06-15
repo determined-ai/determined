@@ -52,7 +52,7 @@ host-mode networking <https://docs.docker.com/network/host/>`__ will be used ins
 ``dtrain_network_interface``
 ============================
 
-The network interface to use during :ref:`multi-gpu-training`. If not set, Determined automatically
+The network interface to use during distributed training. If not set, Determined automatically
 determines the network interface to use.
 
 When training a model with multiple machines, the host network interface used by each machine must
@@ -62,6 +62,8 @@ is not routable between machines. Determined already filters out common interfac
 ``docker0``, but agent machines may have others. If interface detection is not finding the
 appropriate interface, the ``dtrain_network_interface`` option can be used to set it explicitly
 (e.g., ``eth11``).
+
+.. include:: ../../../_shared/note-dtrain-learn-more.txt
 
 ``cpu_pod_spec``
 ================
@@ -416,9 +418,9 @@ Security-related configuration settings for communicating with the Launcher.
 ``container_run_type``
 ----------------------
 
-The type of the container runtime to be used when launching tasks. The value may be ``singularity``,
-``enroot``, or ``podman``. The default value is ``singularity``. The value ``singularity`` is also
-used when using Apptainer.
+The type of the container runtime to be used when launching tasks. The value may be ``apptainer``,
+``singularity``, ``enroot``, or ``podman``. The default value is ``singularity``. The value
+``singularity`` is also used when using Apptainer.
 
 ``auth_file``
 -------------
@@ -498,11 +500,12 @@ created by the launcher. The default is ``ALL``. The specification ``!root`` is 
 appended to this list to prevent privilege elevation. See the ``sudoers(5)`` definition of
 ``Runas_List`` for the full syntax of this value. See :ref:`sudo_configuration` for details.
 
-``singularity_image_root``
---------------------------
+``apptainer_image_root`` or ``singularity_image_root``
+------------------------------------------------------
 
-The shared directory where Singularity images should be located. This directory must be visible to
-the launcher and from the compute nodes. See :ref:`slurm-image-config` for more details.
+The shared directory where Apptainer/Singularity images should be located. Only one of these two can
+be specified. This directory must be visible to the launcher and from the compute nodes. See
+:ref:`slurm-image-config` for more details.
 
 ``job_storage_root``
 --------------------
@@ -866,6 +869,18 @@ Min number of Determined agent instances. Defaults to ``0``.
 
 Max number of Determined agent instances. Defaults to ``5``.
 
+``launch_error_timeout``
+------------------------
+
+Duration for which a provisioning error is valid. Tasks that are unschedulable in the existing
+cluster may be canceled. After the timeout period, the error state is reset. Defaults to ``0s``.
+
+``launch_error_retries``
+------------------------
+
+Number of retries to allow before registering a provider provisioning error with
+``launch_error_timeout`` duration. Defaults to ``0``.
+
 ``type: aws``
 -------------
 
@@ -1151,7 +1166,7 @@ those partitions/queues.
 Specifies where model checkpoints will be stored. This can be overridden on a per-experiment basis
 in the :ref:`experiment-configuration`. A checkpoint contains the architecture and weights of the
 model being trained. Determined currently supports several kinds of checkpoint storage, ``gcs``,
-``hdfs``, ``s3``, ``azure``, and ``shared_fs``, identified by the ``type`` subfield.
+``s3``, ``azure``, and ``shared_fs``, identified by the ``type`` subfield.
 
 ``type: gcs``
 =============
@@ -1179,33 +1194,6 @@ The GCS bucket name to use.
 
 The optional path prefix to use. Must not contain ``..``. Note: Prefix is normalized, e.g.,
 ``/pre/.//fix`` -> ``/pre/fix``
-
-``type: hdfs``
-==============
-
-Checkpoints are stored in HDFS using the `WebHDFS
-<http://hadoop.apache.org/docs/current/hadoop-project-dist/hadoop-hdfs/WebHDFS.html>`__ API for
-reading and writing checkpoint resources.
-
-``hdfs_url``
-------------
-
-Hostname or IP address of HDFS namenode, prefixed with protocol, followed by WebHDFS port on
-namenode. Multiple namenodes are allowed as a semicolon-separated list (e.g.,
-``"http://namenode1:50070;http://namenode2:50070"``).
-
-``hdfs_path``
--------------
-
-The prefix path where all checkpoints will be written to and read from. The resources of each
-checkpoint will be saved in a subdirectory of ``hdfs_path``, where the subdirectory name is the
-checkpoint's UUID.
-
-``user``
---------
-
-An optional string value that indicates the user to use for all read and write requests. If left
-unspecified, the default user of the trial runner container will be used.
 
 ``type: s3``
 ============

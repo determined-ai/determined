@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 
-import { DURATION_UNIT_MEASURES, durationInEnglish } from 'shared/utils/datetime';
+import { DURATION_UNIT_MEASURES, durationInEnglish } from 'utils/datetime';
 
 interface Props {
   duration: number;

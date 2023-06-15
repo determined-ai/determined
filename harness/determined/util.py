@@ -1,5 +1,6 @@
 import collections
 import contextlib
+import copy
 import datetime
 import enum
 import errno
@@ -134,6 +135,20 @@ def _dict_to_list(dict_of_lists: Dict[str, List]) -> List[Dict[str, Any]]:
             output_list[i][k] = dict_of_lists[k][i]
 
     return output_list
+
+
+def merge_dicts(base_dict: Dict[Any, Any], source_dict: Dict[Any, Any]) -> Dict[Any, Any]:
+    """
+    Recursively replace and merge values from source_dict into base_dict. Returns a new
+    dictionary, leaving both inputs unmodified.
+    """
+    merged_dict = copy.deepcopy(base_dict)
+    for key, value in source_dict.items():
+        if key in base_dict and isinstance(value, dict):
+            merged_dict[key] = merge_dicts(base_dict[key], value)
+        else:
+            merged_dict[key] = value
+    return merged_dict
 
 
 def validate_batch_metrics(batch_metrics: List[Dict[str, Any]]) -> None:
@@ -439,3 +454,33 @@ def is_numerical_scalar(n: Any) -> bool:
         return True
 
     return False
+
+
+def mask_checkpoint_storage(d: Dict) -> Dict:
+    mask = "********"
+    new_dict = copy.deepcopy(d)
+
+    # checkpoint_storage
+    for key in ("access_key", "secret_key"):
+        if key in new_dict:
+            new_dict[key] = mask
+
+    return new_dict
+
+
+def mask_config_dict(d: Dict) -> Dict:
+    mask = "********"
+    new_dict = copy.deepcopy(d)
+
+    try:
+        new_dict["checkpoint_storage"] = mask_checkpoint_storage(new_dict["checkpoint_storage"])
+    except (KeyError, AttributeError):
+        pass
+
+    try:
+        if new_dict["environment"]["registry_auth"].get("password") is not None:
+            new_dict["environment"]["registry_auth"]["password"] = mask
+    except (KeyError, AttributeError):
+        pass
+
+    return new_dict
