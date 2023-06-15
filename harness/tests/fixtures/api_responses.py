@@ -53,6 +53,21 @@ def sample_get_model_versions() -> bindings.v1GetModelVersionsResponse:
         return resp
 
 
+def sample_login() -> bindings.v1LoginResponse:
+    resp = bindings.v1LoginResponse(token="fake-login-token", user=sample_get_user().user)
+    return resp
+
+
+def sample_get_user() -> bindings.v1GetUserResponse:
+    user = bindings.v1User(
+        active=True,
+        admin=False,
+        username="determined",
+    )
+
+    return bindings.v1GetUserResponse(user=user)
+
+
 def sample_get_pagination() -> bindings.v1Pagination:
     with open(FIXTURES_DIR / "pagination.json") as f:
         resp = bindings.v1Pagination.from_json(json.load(f))
