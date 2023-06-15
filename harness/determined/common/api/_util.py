@@ -14,6 +14,12 @@ class PageOpts(str, enum.Enum):
     all = "all"
 
 
+# HTTP status codes that will force request retries.
+RETRY_STATUSES = [502, 503, 504]  # Bad Gateway, Service Unavailable, Gateway Timeout
+
+# Default max number of times to retry a request.
+MAX_RETRIES = 5
+
 # Not that read_paginated requires the output of get_with_offset to be a Paginated type to work.
 # The Paginated union type is generated based on response objects with a .pagination attribute.
 T = TypeVar("T", bound=bindings.Paginated)
@@ -45,11 +51,11 @@ def read_paginated(
         offset = pagination.endIndex
 
 
-def get_default_retry(max_retries: int = 5):
+def get_default_retry(max_retries: int = MAX_RETRIES):
     retry = urllib3.util.retry.Retry(
         total=max_retries,
         backoff_factor=0.5,  # {backoff factor} * (2 ** ({number of total retries} - 1))
-        status_forcelist=[502, 503, 504],  # Bad Gateway, Service Unavailable, Gateway Timeout
+        status_forcelist=RETRY_STATUSES,
     )
     return retry
 
