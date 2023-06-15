@@ -103,7 +103,7 @@ def run_api_server(
             """
             key = "get_experiment_longrunning_n_calls"
             n_calls = 2
-            with open(FIXTURES_DIR / "experiment_longrunning.json") as f:
+            with open(FIXTURES_DIR / "experiment.json") as f:
                 sample_experiment = bindings.v1GetExperimentResponse.from_json(json.load(f))
 
             with lock:
@@ -131,7 +131,7 @@ def run_api_server(
                 if state[key] <= fail_for:
                     self.send_error(504)
                     return {}
-            with open(FIXTURES_DIR / "experiment_flaky.json") as f:
+            with open(FIXTURES_DIR / "experiment.json") as f:
                 sample_experiment = bindings.v1GetExperimentResponse.from_json(json.load(f))
             return sample_experiment.to_json()
 
