@@ -243,7 +243,7 @@ def _get_storage_information(checkpoint_config, default_uuid_path, core_context)
 
 
 def _reduce_metrics(batch_processor_context, core_context, rank, steps_completed):
-    reducables = [wrapped for wrapped in batch_processor_context._wrapped_reducers]
+    reducables = list(batch_processor_context._wrapped_reducers)
     # If the user has set metric reducers
     if len(reducables) > 0:
         # Reduce metrics (blocking as reduce across slots is needed)
@@ -267,7 +267,7 @@ def torch_batch_process(
     batch_size: Optional[int] = None,
     max_batches: Optional[int] = None,
     checkpoint_interval: int = 5,
-    dataloader_kwargs: Dict[str, Any] = {},
+    dataloader_kwargs: Dict[str, Any] = None,
 ):
     with initialize_default_inference_context() as core_context:
         """
@@ -277,6 +277,9 @@ def torch_batch_process(
         # Validate argument inputs
         if checkpoint_interval <= 0:
             raise ValueError("checkpoint_interval should be a positive integer")
+
+        if dataloader_kwargs is None:
+            dataloader_kwargs = {}
         _validate_dataloader_kwargs(dataloader_kwargs, batch_size)
 
         if batch_size is None:
