@@ -345,7 +345,6 @@ def torch_batch_process(
         """
         (2) Run batch processing
         """
-
         for batch_idx in range(skip, iterate_length):
             X = next(dataloader_iterator, None)
             if X is not None:
