@@ -131,9 +131,29 @@ func (s *Service) callback(c echo.Context) error {
 		WithField("scim-attribute", s.config.SCIMAuthenticationAttribute).
 		Debug("attempting to authenticate user via OIDC")
 
+	// First try finding user in our users.scim table.
+	// If we don't find them there and the scim attribute is userName
+	// then look in the regular user table. Scim attribute defaults to userName.
+	errNotProvisioned := echo.NewHTTPError(http.StatusNotFound, "user has not been provisioned")
 	u, err := s.db.UserBySCIMAttribute(s.config.SCIMAuthenticationAttribute, claimValue)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusNotFound, "user has not been provisioned")
+	if errors.Is(err, db.ErrNotFound) {
+		if s.config.SCIMAuthenticationAttribute != "userName" {
+			return errNotProvisioned
+		}
+
+		u, err = user.UserByUsername(claimValue)
+		if errors.Is(err, db.ErrNotFound) {
+			return errNotProvisioned
+		} else if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		}
+
+		if !u.Remote {
+			return echo.NewHTTPError(http.StatusBadRequest,
+				"user exists but was not created with the --remote option")
+		}
+	} else if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	if !u.Active {
