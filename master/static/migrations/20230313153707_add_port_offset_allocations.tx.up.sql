@@ -1,2 +1,2 @@
 ALTER TABLE allocations
-ADD ports jsonb DEFAULT '{}' not null;
+ADD ports jsonb DEFAULT '{}' NOT NULL;

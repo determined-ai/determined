@@ -1,5 +1,5 @@
 ALTER TABLE public.experiments
-    DROP COLUMN job_id;
+DROP COLUMN job_id;
 
 DROP TABLE public.jobs;
 

@@ -1,6 +1,8 @@
-CREATE OR REPLACE FUNCTION public.page_info(total bigint, "offset" int, "limit" int)
-    RETURNS json
-    LANGUAGE sql IMMUTABLE
+CREATE OR REPLACE FUNCTION public.page_info(
+    total bigint, "offset" int, "limit" int
+)
+RETURNS json
+LANGUAGE sql IMMUTABLE
 AS $$
 WITH start_index AS (
     SELECT (CASE WHEN "offset" < -total OR "offset" > total THEN total
