@@ -109,6 +109,9 @@ check: check-gen
 	git diff --quiet go.mod go.sum
 	golangci-lint --build-tags integration run -v --timeout 10m
 
+.PHONY: check-all
+check-all: check check-sql
+
 .PHONY: fmt-sql
 fmt-sql:
 	# there are complaints from this tool that cannot be auto-fixed
