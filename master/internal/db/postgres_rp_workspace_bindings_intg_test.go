@@ -5,9 +5,10 @@ package db
 
 import (
 	"context"
+	"testing"
+
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/pkg/etc"
-	"testing"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
