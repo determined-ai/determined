@@ -93,8 +93,13 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const [page, setPage] = useState(() =>
     isFinite(Number(searchParams.get('page'))) ? Math.max(Number(searchParams.get('page')), 0) : 0,
   );
-  const [sorts, setSorts] = useState<Sort[]>([EMPTY_SORT]);
-  const [sortString, setSortString] = useState<string>('');
+  const [sorts, setSorts] = useState<Sort[]>(() => {
+    if (!isLoadingSettings) {
+      return parseSortString(settings.sortString);
+    }
+    return [EMPTY_SORT];
+  });
+  const sortString = useMemo(() => makeSortString(sorts.filter(validSort.is)), [sorts]);
   const [experiments, setExperiments] = useState<Loadable<ExperimentWithTrial>[]>(
     INITIAL_LOADING_EXPERIMENTS,
   );
@@ -194,7 +199,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
       if (newSortString !== sortString) {
         resetPagination();
       }
-      setSortString(newSortString);
       updateSettings({
         sortString: newSortString,
       });
@@ -203,14 +207,14 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   );
 
   useEffect(() => {
-    if (settings.sortString) {
-      setSortString(settings.sortString);
+    if (!isLoadingSettings && settings.sortString) {
       setSorts(parseSortString(settings.sortString));
     }
-  }, [settings, onSortChange]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoadingSettings]);
 
   const fetchExperiments = useCallback(async (): Promise<void> => {
-    if (loadableFormset === NotLoaded) return;
+    if (isLoadingSettings || Loadable.isLoading(loadableFormset)) return;
     try {
       const tableOffset = Math.max((page - 0.5) * PAGE_SIZE, 0);
       const response = await searchExperiments(
@@ -263,6 +267,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     filtersString,
     sortString,
     settings.pageLimit,
+    isLoadingSettings,
     loadableFormset,
   ]);
 
