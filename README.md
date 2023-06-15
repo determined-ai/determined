@@ -1,4 +1,5 @@
 # Determined: Deep Learning Training Platform
+Now!  With more Jira!
 
 <p align="center"><img src="determined-logo.png" alt="Determined AI Logo"></p>
 
