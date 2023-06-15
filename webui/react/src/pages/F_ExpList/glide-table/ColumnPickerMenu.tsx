@@ -194,7 +194,7 @@ const ColumnPickerMenu: React.FC<ColumnMenuProps> = ({
       placement="bottom"
       trigger="click"
       onOpenChange={handleOpenChange}>
-      <Button icon={<Icon name="columns" title="columns button" />}>Columns</Button>
+      <Button icon={<Icon name="columns" title="column size picker" />}>Columns</Button>
     </Popover>
   );
 };
