@@ -286,7 +286,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 			ProxyPorts:  sproto.NewProxyPortConfig(c.GenericCommandSpec.ProxyPorts(), c.taskID),
 			IdleTimeout: idleWatcherConfig,
 			Restore:     c.restored,
-		}, c.db, c.rm)
+		}, c.db, c.rm, c.GenericCommandSpec)
 		c.allocation, _ = ctx.ActorOf(c.allocationID, allocation)
 
 		ctx.Self().System().TellAt(sproto.JobsActorAddr, sproto.RegisterJob{
@@ -324,15 +324,6 @@ func (c *command) Receive(ctx *actor.Context) error {
 			if err := c.db.CompleteTask(c.taskID, time.Now().UTC()); err != nil {
 				ctx.Log().WithError(err).Error("marking task complete")
 			}
-		}
-	case task.BuildTaskSpec:
-		if ctx.ExpectingResponse() {
-			ctx.Respond(c.ToTaskSpec(c.GenericCommandSpec.Keys))
-			// Evict the context from memory after starting the command as it is no longer needed. We
-			// evict as soon as possible to prevent the master from hitting an OOM.
-			// TODO: Consider not storing the userFiles in memory at all.
-			c.UserFiles = nil
-			c.AdditionalFiles = nil
 		}
 	case *task.AllocationExited:
 		c.exitStatus = msg

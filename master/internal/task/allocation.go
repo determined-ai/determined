@@ -42,6 +42,8 @@ type (
 		req sproto.AllocateRequest
 		// The persisted representation.
 		model model.Allocation
+		// The task spec to run.
+		specifier tasks.TaskSpecifier
 
 		// State of all our resources.
 		resources resourcesList
@@ -95,11 +97,6 @@ type (
 		Err               error
 		FinalState        AllocationState
 	}
-	// BuildTaskSpec is a message to request the task spec from the parent task. This
-	// is just a hack since building a task spec cant be semi-costly and we want to defer it
-	// until it is needed (we save stuff to the DB and make SSH keys, doing this for 10k trials
-	// at once is real bad.
-	BuildTaskSpec struct{}
 	// AllocationState requests allocation state. A copy is filled and returned.
 	AllocationState struct {
 		State     model.AllocationState
@@ -134,6 +131,7 @@ const (
 // NewAllocation returns a new allocation, which tracks allocation state in a fairly generic way.
 func NewAllocation(
 	logCtx detLogger.Context, req sproto.AllocateRequest, db db.DB, rm rm.ResourceManager,
+	specifier tasks.TaskSpecifier,
 ) actor.Actor {
 	req.LogContext = detLogger.MergeContexts(logCtx, detLogger.Context{
 		"allocation-id": req.AllocationID,
@@ -150,6 +148,7 @@ func NewAllocation(
 			ResourcePool: req.ResourcePool,
 			Ports:        map[string]int{},
 		},
+		specifier: specifier,
 
 		resources: resourcesList{},
 
@@ -442,16 +441,6 @@ func (a *Allocation) ResourcesAllocated(ctx *actor.Context, msg sproto.Resources
 		return errors.Wrapf(err, "appending resources")
 	}
 
-	// Get the task spec first, so the trial/task table is populated before allocations.
-	resp := ctx.Ask(ctx.Self().Parent(), BuildTaskSpec{})
-	switch ok, err := resp.ErrorOrTimeout(time.Hour); {
-	case err != nil:
-		return errors.Wrapf(err, "could not get task spec")
-	case !ok:
-		return errors.Wrapf(err, "timeout getting task spec, likely a deadlock")
-	}
-	spec := resp.Get().(tasks.TaskSpec)
-
 	if err := a.db.UpdateAllocationState(a.model); err != nil {
 		return errors.Wrap(err, "updating allocation state")
 	}
@@ -495,6 +484,8 @@ func (a *Allocation) ResourcesAllocated(ctx *actor.Context, msg sproto.Resources
 			}
 		}
 	} else {
+		spec := a.specifier.ToTaskSpec()
+
 		token, err := a.db.StartAllocationSession(a.model.AllocationID, spec.Owner)
 		if err != nil {
 			return errors.Wrap(err, "starting a new allocation session")

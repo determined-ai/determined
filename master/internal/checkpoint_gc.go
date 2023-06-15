@@ -114,7 +114,7 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 			},
 			AllocationRef: ctx.Self(),
 			ResourcePool:  rp,
-		}, t.db, t.rm)
+		}, t.db, t.rm, t.GCCkptSpec)
 
 		t.allocation, _ = ctx.ActorOf(t.allocationID, allocation)
 
@@ -126,10 +126,6 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 			config.GetMasterConfig().TaskContainerDefaults)
 		if err != nil {
 			return fmt.Errorf("creating task container defaults: %v", err)
-		}
-	case task.BuildTaskSpec:
-		if ctx.ExpectingResponse() {
-			ctx.Respond(t.ToTaskSpec())
 		}
 	case *task.AllocationExited:
 		if msg.Err != nil {
