@@ -434,3 +434,33 @@ def test_torch_batch_process_reduce_metrics(
         steps_completed=1,
         metrics={"sum_metric": 45},
     )
+
+
+@patch("determined.pytorch.experimental._torch_batch_process.initialize_default_inference_context")
+@patch("determined.get_cluster_info")
+@patch("determined.pytorch.experimental._torch_batch_process._synchronize_and_checkpoint")
+@patch("determined.pytorch.experimental._torch_batch_process._report_progress_to_master")
+@patch("determined.pytorch.experimental._torch_batch_process._reduce_metrics")
+@pytest.mark.parametrize("checkpoint_interval", [-1, 0])
+def test_torch_batch_process_invalid_checkpoint_interval(
+    mock_reduce_metrics,
+    mock_report_progress_to_master,
+    mock_synchronize_and_checkpoint,
+    mock_get_cluster_info,
+    mock_initialize_default_inference_context,
+    checkpoint_interval,
+):
+    mock_get_cluster_info.return_value = _get_det_info()
+    mock_initialize_default_inference_context.return_value = _get_core_context()
+    index_dataset = _get_index_dataset()
+
+    MyProcessorCLS = Mock()
+    my_processor_instance = Mock()
+    MyProcessorCLS.return_value = my_processor_instance
+
+    with pytest.raises(Exception):
+        torch_batch_process(
+            dataset=index_dataset,
+            batch_processor_cls=MyProcessorCLS,
+            checkpoint_interval=checkpoint_interval,
+        )
