@@ -181,18 +181,16 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
   useEffect(() => {
     if (!querySettings) return;
 
-    const settings = queryToSettings<T>(config, querySettings);
-    const stateSettings = state ?? {};
-
-    if (isEqual(settings, stateSettings)) return;
-
-    Object.keys(settings).forEach((setting) => {
-      stateSettings[setting] = settings[setting];
+    const parsedSettings = queryToSettings<T>(config, querySettings);
+    stateOb.update((s) => {
+      const oldSettings = s.get(config.storagePath) ?? {};
+      const newSettings = { ...s.get(config.storagePath), ...parsedSettings };
+      return s.set(
+        config.storagePath,
+        isEqual(oldSettings, newSettings) ? oldSettings : newSettings,
+      );
     });
-    stateOb.update((s) => s.set(config.storagePath, stateSettings));
-
-    clearQuerySettings();
-  }, [config, querySettings, state, clearQuerySettings, stateOb]);
+  }, [config, querySettings, stateOb]);
 
   const settings: SettingsRecord<T> = useMemo(
     () =>
@@ -322,6 +320,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
 
   useLayoutEffect(() => {
     if (initialLoading) return;
+    clearQuerySettings();
     return derivedOb.subscribe(async (cur, prev) => {
       if (!cur || !currentUser || isEqual(cur, prev)) return;
 
@@ -338,7 +337,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
       const url = mappedSettings ? `?${mappedSettings}` : '';
       navigate(url, { replace: true });
     });
-  }, [currentUser, derivedOb, navigate, config, updateDB, initialLoading]);
+  }, [currentUser, clearQuerySettings, derivedOb, navigate, config, updateDB, initialLoading]);
 
   return {
     activeSettings,
