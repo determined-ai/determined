@@ -68,6 +68,8 @@ const summarizedMetricToSeries = (
     };
     trialData[metricToKey(metric)] = series;
   });
+  // Check to see if any metric contains at least one value for any
+  // xAxis option.
   const hasData = Object.keys(trialData).some(
     (key) =>
       (trialData?.[key]?.data?.Batches?.length ?? 0) > 0 ||

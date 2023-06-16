@@ -22,7 +22,6 @@ const CompareMetrics: React.FC<Props> = ({ selectedExperiments, trials }) => {
 
   const chartsProps = useMemo(() => {
     const out: ChartsProps = [];
-    const nout: ChartsProps = [];
     metrics.forEach((metric) => {
       const series: Serie[] = [];
       const key = `${metric.type}|${metric.name}`;
@@ -36,13 +35,12 @@ const CompareMetrics: React.FC<Props> = ({ selectedExperiments, trials }) => {
         xAxis,
         xLabel: String(xAxis),
       });
-      nout.push({
-        series: NotLoaded,
-        title: <MetricBadgeTag metric={metric} />,
-        xAxis,
-        xLabel: String(xAxis),
-      });
     });
+    // In order to show the spinner for each chart in the ChartGrid until
+    // metrics are visible, we must determine whether the metrics have been
+    // loaded and whether the chart props have been updated.
+    // If hasData is true but no chartProps contain data, then the charts
+    // have not been updated and we need to continue to show the spinner.
     if (
       isLoaded &&
       (!hasData ||
@@ -54,7 +52,9 @@ const CompareMetrics: React.FC<Props> = ({ selectedExperiments, trials }) => {
     ) {
       return Loaded(out);
     } else {
-      return Loaded(nout);
+      // returns the chartProps with a NotLoaded series which enables
+      // the ChartGrid to show a spinner for the loading charts.
+      return Loaded(out.map((chartProps) => ({ ...chartProps, series: NotLoaded })));
     }
   }, [metrics, data, colorMap, trials, xAxis, isLoaded, hasData]);
 
