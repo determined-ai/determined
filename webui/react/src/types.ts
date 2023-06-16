@@ -558,12 +558,12 @@ type HpValue = Primitive | RawJson;
 export type TrialHyperparameters = Record<string, HpValue>;
 
 export interface MetricSummary {
-  count: number;
-  last: Primitive;
+  count?: number;
+  last?: Primitive;
   max?: number;
   min?: number;
   sum?: number;
-  type: 'string' | 'number' | 'boolean';
+  type: 'string' | 'number' | 'boolean' | 'date' | 'object' | 'array' | 'null';
 }
 
 export interface SummaryMetrics {

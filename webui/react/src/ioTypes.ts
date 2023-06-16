@@ -116,12 +116,20 @@ const ioMetric = io.record(io.string, ioMetricValue);
 export type ioTypeMetric = io.TypeOf<typeof ioMetric>;
 
 const ioMetricSummary = io.type({
-  count: io.number,
-  last: io.union([io.number, io.string, io.boolean]),
-  max: io.union([io.number, io.undefined]),
-  min: io.union([io.number, io.undefined]),
-  sum: io.union([io.number, io.undefined]),
-  type: io.union([io.literal('string'), io.literal('number'), io.literal('boolean')]),
+  count: optional(io.union([io.number, io.undefined])),
+  last: optional(io.union([io.number, io.string, io.boolean])),
+  max: optional(io.number),
+  min: optional(io.number),
+  sum: optional(io.number),
+  type: io.union([
+    io.literal('string'),
+    io.literal('number'),
+    io.literal('boolean'),
+    io.literal('date'),
+    io.literal('object'),
+    io.literal('array'),
+    io.literal('null'),
+  ]),
 });
 
 export const ioSummaryMetrics = io.type({

@@ -326,6 +326,7 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
                 label="Hyperparameters"
                 mode="multiple"
                 value={selectedHyperparameters}
+                width={200}
                 onChange={onHyperparameterSelect}>
                 {hyperparameterNames.map((hp) => (
                   <Option key={hp} value={hp}>
