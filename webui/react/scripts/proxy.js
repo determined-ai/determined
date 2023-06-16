@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /* eslint-disable no-console */
 
-const axios = require('axios');
 const express = require('express');
 const morgan = require('morgan');
+const request = require('request');
 
 if (process.argv.length < 3) {
   console.error('./proxy.js <target> <port>');
@@ -28,28 +28,19 @@ const proxyTo = (targetServer) => {
       'authorization, Access-Control-Allow-Headers, Origin,Accept, X-Requested-With, Content-Type,' +
         ' Access-Control-Request-Method, Access-Control-Request-Headers',
     );
-    // proxy head requests
 
     if ('OPTIONS' === req.method) {
       res.send(200);
     } else {
-      axios({
-        data: req.body,
-        headers: req.headers,
-        method: req.method,
-        // query: req.query,
-        responseType: 'stream',
-        url,
-      })
-        .then((response) => {
-          res.set(response.headers);
-          response.data.pipe(res);
-        })
-        .catch((error) => {
-          console.error(error);
-          console.error(`Error proxying request: ${error.message}`);
-          res.sendStatus(error.response?.status || 500);
-        });
+      req
+        .pipe(
+          request({ uri: url }).on('error', (err) => {
+            console.error(err);
+            console.error(`Error proxying request: ${err.message}`);
+            res.status(err.response?.status || 500).send('proxy: error piping the request');
+          }),
+        )
+        .pipe(res);
     }
   };
 };
