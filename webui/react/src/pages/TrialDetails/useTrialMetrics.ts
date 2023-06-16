@@ -70,11 +70,9 @@ const summarizedMetricToSeries = (
   });
   // Check to see if any metric contains at least one value for any
   // xAxis option.
-  const hasData = Object.keys(trialData).some(
-    (key) =>
-      (trialData?.[key]?.data?.Batches?.length ?? 0) > 0 ||
-      (trialData[key].data.Time?.length ?? 0) > 0 ||
-      (trialData?.[key]?.data?.Epoch?.length ?? 0) > 0,
+  const xAxisOptions = Object.values(XAxisDomain);
+  const hasData = Object.keys(trialData).some((key) =>
+    xAxisOptions.some((xAxis) => (trialData?.[key]?.data?.[xAxis]?.length ?? 0) > 0),
   );
   return { data: trialData, hasData };
 };
