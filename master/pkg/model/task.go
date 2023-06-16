@@ -48,6 +48,8 @@ const (
 	TaskTypeTensorboard TaskType = "TENSORBOARD"
 	// TaskTypeCheckpointGC is the "CHECKPOINT_GC" job type for the enum public.job_type in Postgres.
 	TaskTypeCheckpointGC TaskType = "CHECKPOINT_GC"
+	// GlobalAccessScopeID represents global permission access.
+	GlobalAccessScopeID AccessScopeID = 0
 )
 
 // TaskLogVersion is the version for our log-storing scheme. Useful because changing designs
