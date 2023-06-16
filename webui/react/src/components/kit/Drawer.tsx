@@ -24,6 +24,7 @@ const DrawerComponent: React.FC<DrawerProps> = ({ children, open, placement, tit
       maskClosable={false}
       open={open}
       placement={placement}
+      rootClassName={css.mobileWidth}
       width="700px"
       onClose={onClose}>
       <div className={css.header}>
