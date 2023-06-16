@@ -66,7 +66,7 @@ type queuedResourceRequest struct {
 //     requests.
 //
 //     When requests come in they are buffered by the requestQueue until a worker becomes available
-//     at which point the longest queue request is forwarded to the available. Requests are buffered
+//     at which point the oldest queued request is forwarded to the worker. Requests are buffered
 //     rather than forward right away because buffering makes it possible to cancel creation
 //     requests after they are created, but before they are executed. Since the queue locking
 //     processes messages in a FIFO order, if all request were forwarded right away any cancellation
@@ -134,7 +134,7 @@ func (r *requestQueue) startWorkers() {
 	}
 }
 
-func getKeyForCreate(msg createKubernetesResources) string {
+func keyForCreate(msg createKubernetesResources) string {
 	if msg.podSpec != nil {
 		return msg.podSpec.Namespace + "/" + msg.podSpec.Name
 	}
@@ -144,7 +144,7 @@ func getKeyForCreate(msg createKubernetesResources) string {
 	panic("invalid createKubernetesResources message")
 }
 
-func getKeyForDelete(msg deleteKubernetesResources) string {
+func keyForDelete(msg deleteKubernetesResources) string {
 	if msg.podName != "" {
 		return msg.namespace + "/" + msg.podName
 	}
@@ -163,7 +163,7 @@ func (r *requestQueue) createKubernetesResources(
 	defer r.mu.Unlock()
 
 	msg := createKubernetesResources{errorHandler, podSpec, configMapSpec}
-	ref := getKeyForCreate(msg)
+	ref := keyForCreate(msg)
 
 	if _, requestAlreadyExists := r.pendingResourceCreations[ref]; requestAlreadyExists {
 		r.syslog.Errorf("multiple create resource requests issued for %s", ref)
@@ -188,8 +188,9 @@ func (r *requestQueue) deleteKubernetesResources(
 ) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+
 	msg := deleteKubernetesResources{errorHandler, namespace, podName, configMapName}
-	ref := getKeyForDelete(msg)
+	ref := keyForDelete(msg)
 
 	// If the request has not been processed yet, cancel it and inform the handler.
 	if _, creationPending := r.pendingResourceCreations[ref]; creationPending {
@@ -236,7 +237,7 @@ func (r *requestQueue) workerReady(createRef string) {
 		// If both creation and deletion are nil it means that the creation
 		// request was canceled.
 		if nextRequest.createResources != nil {
-			next := getKeyForCreate(*nextRequest.createResources)
+			next := keyForCreate(*nextRequest.createResources)
 			delete(r.pendingResourceCreations, next)
 			r.creationInProgress.Insert(next)
 			r.workerChan <- *nextRequest.createResources

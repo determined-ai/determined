@@ -41,7 +41,7 @@ func (r *requestProcessingWorker) receive(in <-chan interface{}, ready readyCall
 		switch msg := msg.(type) {
 		case createKubernetesResources:
 			r.receiveCreateKubernetesResources(msg)
-			go ready(getKeyForCreate(msg))
+			go ready(keyForCreate(msg))
 		case deleteKubernetesResources:
 			r.receiveDeleteKubernetesResources(msg)
 			go ready("")
