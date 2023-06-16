@@ -53,7 +53,7 @@ type queuedResourceRequest struct {
 
 // The requestQueue is responsible for fulfilling all requests for creating and deleting
 // kubernetes resources that require interaction with the kubernetes API. It accomplishes
-// this by forwarding requests to requestProcessingWorker go routines which process the request.
+// this by forwarding requests to requestProcessingWorker goroutines which process the request.
 // There are two reasons a queue system is required as opposed to allowing the pod routines
 // to create and delete Kubernetes resources asynchronously themselves:
 //
