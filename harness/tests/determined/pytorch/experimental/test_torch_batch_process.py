@@ -3,17 +3,21 @@ from typing import Any, Dict, List, Optional, Type
 from unittest.mock import MagicMock, Mock, call, patch
 
 import pytest
+import torch
 from torch.utils.data import Dataset
 
 from determined import pytorch
 from determined.pytorch.experimental._torch_batch_process import (
     TorchBatchProcessor,
     TorchBatchProcessorContext,
+    get_default_device,
     torch_batch_process,
 )
 
 DEFAULT_SLOT_IDS = [0]
 DEFAULT_ADDRS = ["0.0.0.12"]
+DEFAULT_DEVICE = torch.device("cuda", 1)
+DEFAULT_STORAGE_PATH = "default_storage_path"
 
 
 @pytest.fixture
@@ -84,7 +88,7 @@ def _get_det_info(
     return mock_cluster_info
 
 
-@patch("determined.pytorch.experimental._torch_batch_process.initialize_default_inference_context")
+@patch("determined.pytorch.experimental._torch_batch_process._initialize_default_inference_context")
 @patch("determined.get_cluster_info")
 @patch("determined.pytorch.experimental._torch_batch_process._synchronize_and_checkpoint")
 @patch("determined.pytorch.experimental._torch_batch_process._report_progress_to_master")
@@ -127,7 +131,7 @@ def test_torch_batch_process_dataloader_kwargs_validation(
         )
 
 
-@patch("determined.pytorch.experimental._torch_batch_process.initialize_default_inference_context")
+@patch("determined.pytorch.experimental._torch_batch_process._initialize_default_inference_context")
 @patch("determined.get_cluster_info")
 @patch("determined.pytorch.experimental._torch_batch_process._synchronize_and_checkpoint")
 @patch("determined.pytorch.experimental._torch_batch_process._report_progress_to_master")
@@ -187,7 +191,7 @@ def test_torch_batch_process_times_synchronize(
     assert mock_report_progress_to_master.call_count == (times_iterate if rank == 0 else 0)
 
 
-@patch("determined.pytorch.experimental._torch_batch_process.initialize_default_inference_context")
+@patch("determined.pytorch.experimental._torch_batch_process._initialize_default_inference_context")
 @patch("determined.get_cluster_info")
 @patch("determined.pytorch.experimental._torch_batch_process._synchronize_and_checkpoint")
 @patch("determined.pytorch.experimental._torch_batch_process._report_progress_to_master")
@@ -247,7 +251,7 @@ def test_torch_batch_process_times_process_batch(
 
 
 @patch("determined.pytorch.experimental._torch_batch_process._load_state")
-@patch("determined.pytorch.experimental._torch_batch_process.initialize_default_inference_context")
+@patch("determined.pytorch.experimental._torch_batch_process._initialize_default_inference_context")
 @patch("determined.get_cluster_info")
 @patch("determined.pytorch.experimental._torch_batch_process._synchronize_and_checkpoint")
 @patch("determined.pytorch.experimental._torch_batch_process._report_progress_to_master")
@@ -306,7 +310,7 @@ def test_torch_batch_process_times_process_batch_with_skip(
 
 
 @patch("determined.pytorch.experimental._torch_batch_process._load_state")
-@patch("determined.pytorch.experimental._torch_batch_process.initialize_default_inference_context")
+@patch("determined.pytorch.experimental._torch_batch_process._initialize_default_inference_context")
 @patch("determined.get_cluster_info")
 @patch("determined.pytorch.experimental._torch_batch_process._synchronize_and_checkpoint")
 @patch("determined.pytorch.experimental._torch_batch_process._report_progress_to_master")
@@ -369,7 +373,7 @@ def test_torch_batch_process_max_batches(
     assert my_processor_instance.on_finish.call_count == 1
 
 
-@patch("determined.pytorch.experimental._torch_batch_process.initialize_default_inference_context")
+@patch("determined.pytorch.experimental._torch_batch_process._initialize_default_inference_context")
 @patch("determined.get_cluster_info")
 @patch("determined.pytorch.experimental._torch_batch_process._synchronize_and_checkpoint")
 @patch("determined.pytorch.experimental._torch_batch_process._report_progress_to_master")
@@ -412,7 +416,7 @@ def test_torch_batch_process_preemption(
     assert mock_reduce_metrics.call_count == 1
 
 
-@patch("determined.pytorch.experimental._torch_batch_process.initialize_default_inference_context")
+@patch("determined.pytorch.experimental._torch_batch_process._initialize_default_inference_context")
 @patch("determined.get_cluster_info")
 @patch("determined.pytorch.experimental._torch_batch_process._synchronize_and_checkpoint")
 @patch("determined.pytorch.experimental._torch_batch_process._report_progress_to_master")
@@ -456,7 +460,7 @@ def test_torch_batch_process_reduce_metrics(
     )
 
 
-@patch("determined.pytorch.experimental._torch_batch_process.initialize_default_inference_context")
+@patch("determined.pytorch.experimental._torch_batch_process._initialize_default_inference_context")
 @patch("determined.get_cluster_info")
 @patch("determined.pytorch.experimental._torch_batch_process._synchronize_and_checkpoint")
 @patch("determined.pytorch.experimental._torch_batch_process._report_progress_to_master")
@@ -486,3 +490,81 @@ def test_torch_batch_process_invalid_checkpoint_interval(
             batch_processor_cls=MyProcessorCLS,
             checkpoint_interval=checkpoint_interval,
         )
+
+
+@patch("determined.pytorch.to_device")
+@patch("determined.pytorch.experimental._torch_batch_process.get_default_device")
+def test_torch_batch_processor_context_to_device(
+    mock_get_default_device: MagicMock, mock_pytorch_to_device: MagicMock
+) -> None:
+    mock_get_default_device.return_value = DEFAULT_DEVICE
+
+    core_context = _get_core_context()
+    torch_batch_processor_context = TorchBatchProcessorContext(core_context, DEFAULT_STORAGE_PATH)
+
+    tensor_1 = torch.zeros(4)
+    torch_batch_processor_context.to_device(tensor_1)
+
+    to_device_call_args = mock_pytorch_to_device.call_args[0]
+    assert to_device_call_args[1] == DEFAULT_DEVICE
+    assert torch.all(tensor_1.eq(to_device_call_args[0]))
+
+
+@patch("determined.pytorch.experimental._torch_batch_process.get_default_device")
+def test_torch_batch_processor_context_prepare_model_for_inference(
+    mock_get_default_device: MagicMock,
+) -> None:
+    mock_get_default_device.return_value = DEFAULT_DEVICE
+
+    core_context = _get_core_context()
+    torch_batch_processor_context = TorchBatchProcessorContext(core_context, DEFAULT_STORAGE_PATH)
+
+    model = MagicMock()
+    torch_batch_processor_context.prepare_model_for_inference(model)
+
+    # Test model.eval() called
+    model.eval.assert_called_once()
+
+    # Tested model.to(device) called
+    model.to.assert_called_once_with(DEFAULT_DEVICE)
+
+
+@patch("determined.pytorch.experimental._torch_batch_process.get_default_device")
+def test_torch_batch_processor_context_get_default_storage_path_context(
+    mock_get_default_device: MagicMock,
+) -> None:
+    mock_get_default_device.return_value = DEFAULT_DEVICE
+
+    core_context = _get_core_context()
+    torch_batch_processor_context = TorchBatchProcessorContext(core_context, DEFAULT_STORAGE_PATH)
+
+    assert torch_batch_processor_context._use_default_storage is False
+    torch_batch_processor_context.get_default_storage_path_context()
+
+    core_context.checkpoint._storage_manager.store_path.assert_called_once_with(
+        DEFAULT_STORAGE_PATH
+    )
+    assert torch_batch_processor_context._use_default_storage is True
+
+
+@patch("determined.pytorch.experimental._torch_batch_process.torch.cuda.device_count")
+@pytest.mark.parametrize(
+    "local_rank, device_count, expected_device",
+    [
+        [0, 0, torch.device("cpu")],
+        [0, 1, torch.device("cuda", 0)],
+        [1, 2, torch.device("cuda", 1)],
+    ],
+)
+def test_get_default_device(
+    mock_torch_device_count: MagicMock,
+    local_rank: int,
+    device_count: int,
+    expected_device: torch.device,
+) -> None:
+    core_context = _get_core_context()
+    core_context.distributed.local_rank = local_rank
+    mock_torch_device_count.return_value = device_count
+
+    default_device = get_default_device(core_context)
+    assert expected_device == default_device

@@ -80,7 +80,7 @@ def get_default_device(core_context: core.Context) -> torch.device:
         return torch.device("cuda", local_rank)
 
 
-def initialize_distributed_backend() -> Optional[core.DistributedContext]:
+def _initialize_distributed_backend() -> Optional[core.DistributedContext]:
     distributed_backend = det._DistributedBackend()
     if distributed_backend.use_torch():
         if torch.cuda.is_available():
@@ -98,8 +98,8 @@ def initialize_distributed_backend() -> Optional[core.DistributedContext]:
     return None
 
 
-def initialize_default_inference_context() -> core.Context:
-    distributed_context = initialize_distributed_backend()
+def _initialize_default_inference_context() -> core.Context:
+    distributed_context = _initialize_distributed_backend()
     # Use WorkerAskChief mode to ensure synchronize correctly across worker
     # Using WorkerAskMaster mode could lead to some workers exiting when others
     # are waiting for synchronization.
@@ -279,7 +279,7 @@ def torch_batch_process(
     checkpoint_interval: int = 5,
     dataloader_kwargs: Optional[Dict[str, Any]] = None,
 ) -> None:
-    with initialize_default_inference_context() as core_context:
+    with _initialize_default_inference_context() as core_context:
         """
         (1) Set up necessary variables to run batch processing
         """
