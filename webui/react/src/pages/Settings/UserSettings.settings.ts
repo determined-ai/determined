@@ -47,9 +47,9 @@ const shortCutSettingsConfig: SettingsConfig<Settings> = {
     navbarCollapsed: {
       defaultValue: {
         alt: false,
-        ctrl: true,
+        ctrl: false,
         letter: 'U',
-        meta: false,
+        meta: true,
         shift: false,
       },
       skipUrlEncoding: true,
@@ -70,9 +70,10 @@ export const shortcutMet = (e: KeyboardEvent, shortcut: KeyboardShortcut): boole
   e.code === `Key${shortcut.letter}`;
 
 export const shortcutToString = (shortcut: KeyboardShortcut): string => {
+  const os = window.navigator.userAgent;
   const s: string[] = [];
   shortcut.ctrl && s.push('Ctrl');
-  shortcut.meta && s.push('Cmd');
+  shortcut.meta && s.push(os.includes('Mac') ? 'Cmd' : os.includes('Win') ? 'Win' : 'Super');
   shortcut.shift && s.push('Shift');
   shortcut.alt && s.push('Alt');
   shortcut.letter && s.push(shortcut.letter);
