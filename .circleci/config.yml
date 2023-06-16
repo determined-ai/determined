@@ -1809,6 +1809,7 @@ jobs:
       - run: pip install mypy pytest coverage
       - run: echo 'export PATH=${PATH}:/usr/local/nvidia/bin' >> $BASH_ENV
       - run: echo 'export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/nvidia/lib64' >> $BASH_ENV
+      - run: nvidia-smi || echo 'no nvidia-smi????'
       - run: echo 'export COVERAGE_FILE=/root/project/test-unit-harness-gpu-pycov' >> $BASH_ENV
       - run: make -C harness test-gpu
       - run: coverage xml -i --data-file=./test-unit-harness-gpu-pycov
