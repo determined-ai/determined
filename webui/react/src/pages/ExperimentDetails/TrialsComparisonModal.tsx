@@ -74,11 +74,11 @@ const TrialsComparisonModal: React.FC<ModalProps> = ({
 
 export const TrialsComparisonTable: React.FC<TableProps> = ({
   trialIds,
-  trials = [],
+  trials,
   experiment,
   onUnselect,
 }: TableProps) => {
-  const [trialsDetails, setTrialsDetails] = useState(trials);
+  const [trialsDetails, setTrialsDetails] = useState(trials ?? []);
   const [canceler] = useState(new AbortController());
   const [selectedHyperparameters, setSelectedHyperparameters] = useState<string[]>([]);
   const [selectedMetrics, setSelectedMetrics] = useState<Metric[]>([]);
@@ -102,13 +102,14 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
   }, [canceler]);
 
   useEffect(() => {
-    if (!trialIds) return;
-    trialIds.forEach((trial) => {
-      fetchTrialDetails(trial);
+    if (trialIds === undefined) return;
+    trialIds.forEach((trialId) => {
+      fetchTrialDetails(trialId);
     });
   }, [fetchTrialDetails, trialIds]);
 
   useEffect(() => {
+    if (trials === undefined) return;
     setTrialsDetails(trials);
   }, [trials]);
 
