@@ -1,9 +1,11 @@
 from typing import NamedTuple
 
+import pytest
+
 from determined.common.api import request
 
 
-def test_make_url():
+def gen_make_url_cases():
     Case = NamedTuple("Case", [("base", str), ("path", str), ("expected", str)])
     host = "http://localhost:8080"
     path = "api/v1/experiments"
@@ -21,7 +23,9 @@ def test_make_url():
         Case("http://localhost:8080/proxied/", "/api/v1/experiments", f"{host}/proxied/{path}"),
         Case("http://localhost:8080/proxied/", "api/v1/experiments/", f"{host}/proxied/{path}/"),
     ]
+    return cases
 
-    for idx, case in enumerate(cases):
-        base, path, expected = case
-        assert request.make_url(base, path) == expected, f"{idx}  {case}"
+
+@pytest.mark.parametrize("base, path, expected", gen_make_url_cases())
+def test_make_url(base: str, path: str, expected: str):
+    assert request.make_url(base, path) == expected, f"base: {base}, path: {path}"
