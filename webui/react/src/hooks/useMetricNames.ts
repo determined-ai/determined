@@ -23,8 +23,6 @@ const useMetricNames = (experimentIds: number[], errorHandler?: (e: unknown) => 
       return;
     }
     const canceler = new AbortController();
-    const trainingMetricsMap: Record<string, boolean> = {};
-    const validationMetricsMap: Record<string, boolean> = {};
 
     // We do not want to plot any x-axis metric values as y-axis data
     const xAxisMetrics = Object.values(XAxisDomain).map((v) => v.toLowerCase());
@@ -40,14 +38,14 @@ const useMetricNames = (experimentIds: number[], errorHandler?: (e: unknown) => 
          * so we keep track of what we have seen on our end and
          * only add new metrics we have not seen to the list.
          */
-        (event.trainingMetrics || [])
+        const trainingMetrics = (event.trainingMetrics ?? [])
           .filter((metric) => !xAxisMetrics.includes(metric))
-          .forEach((metric) => (trainingMetricsMap[metric] = true));
-        (event.validationMetrics || [])
+          .reduce((acc, cur) => acc.add(cur), new Set<string>());
+        const validationMetrics = (event.validationMetrics ?? [])
           .filter((metric) => !xAxisMetrics.includes(metric))
-          .forEach((metric) => (validationMetricsMap[metric] = true));
-        const newTrainingMetrics = Object.keys(trainingMetricsMap).sort(alphaNumericSorter);
-        const newValidationMetrics = Object.keys(validationMetricsMap).sort(alphaNumericSorter);
+          .reduce((acc, cur) => acc.add(cur), new Set<string>());
+        const newTrainingMetrics = [...trainingMetrics].sort(alphaNumericSorter);
+        const newValidationMetrics = [...validationMetrics].sort(alphaNumericSorter);
         const newMetrics = [
           ...newValidationMetrics.map((name) => ({ name, type: MetricType.Validation })),
           ...newTrainingMetrics.map((name) => ({ name, type: MetricType.Training })),

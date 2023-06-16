@@ -557,6 +557,21 @@ export interface TrialPagination extends WithPagination {
 type HpValue = Primitive | RawJson;
 export type TrialHyperparameters = Record<string, HpValue>;
 
+export interface MetricSummary {
+  count?: number;
+  last?: Primitive;
+  max?: number;
+  min?: number;
+  sum?: number;
+  type: 'string' | 'number' | 'boolean' | 'date' | 'object' | 'array' | 'null';
+}
+
+export interface SummaryMetrics {
+  avgMetrics?: Record<string, MetricSummary>;
+  validationMetrics?: Record<string, MetricSummary>;
+  //[customMetricType: string]?: Record<string, MetricSummary> Uncomment once generic metrics lands
+}
+
 export interface TrialItem extends StartEndTimes {
   autoRestarts: number;
   bestAvailableCheckpoint?: CheckpointWorkload;
@@ -567,6 +582,7 @@ export interface TrialItem extends StartEndTimes {
   id: number;
   latestValidationMetric?: MetricsWorkload;
   state: RunState;
+  summaryMetrics?: SummaryMetrics;
   totalBatchesProcessed: number;
   totalCheckpointSize: number;
 }
