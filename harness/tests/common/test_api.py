@@ -14,11 +14,12 @@ def test_make_url():
         Case("http://localhost:8080", "api/v1/experiments/", f"{host}/{path}/"),
         Case("http://localhost:8080/", "/api/v1/experiments", f"{host}/{path}"),
         Case("http://localhost:8080/", "api/v1/experiments/", f"{host}/{path}/"),
-        # Case("http://localhost:8080/proxied", "/api/v1/experiments", f"{host}/proxied/{path}"),
-        # Case("http://localhost:8080/proxied/", "/api/v1/experiments", f"{host}/proxied/{path}"),
-        # Case("http://localhost:8080/proxied/", "/api/v1/experiments/", f"{host}/proxied/{path}/"),
-        # Case("http://localhost:8080/proxied", "", f"{host}/proxied"),
-        # Case("http://localhost:8080/proxied/", "", f"{host}/proxied"),
+        Case("http://localhost:8080/proxied/", "", f"{host}/proxied/"),
+        Case("http://localhost:8080/proxied", "", f"{host}/proxied"),
+        Case("http://localhost:8080/proxied", "/api/v1/experiments", f"{host}/proxied/{path}"),
+        Case("http://localhost:8080/proxied", "api/v1/experiments/", f"{host}/proxied/{path}/"),
+        Case("http://localhost:8080/proxied/", "/api/v1/experiments", f"{host}/proxied/{path}"),
+        Case("http://localhost:8080/proxied/", "api/v1/experiments/", f"{host}/proxied/{path}/"),
     ]
 
     for idx, case in enumerate(cases):
