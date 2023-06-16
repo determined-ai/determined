@@ -36,8 +36,14 @@ const proxyTo = (targetServer) => {
         .pipe(
           request({ uri: url }).on('error', (err) => {
             console.error(err);
-            console.error(`Error proxying request: ${err.message}`);
-            res.status(err.response?.status || 500).send('proxy: error piping the request');
+            const statusText = err.response?.statusText || 'Error proxying request';
+            const statusCode = err.response?.status || 500;
+            console.error(statusText);
+            res.status(statusCode).send({
+              code: statusCode,
+              error: err.message,
+              message: statusText,
+            });
           }),
         )
         .pipe(res);
