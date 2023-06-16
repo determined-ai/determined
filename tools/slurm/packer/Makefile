@@ -14,6 +14,11 @@ check:
 build-debug: main.pkr.hcl
 	PACKER_LOG=10 packer build -debug main.pkr.hcl
 
+.PHONY: clean
+clean: rm -rf build/
+
 .PHONY: build
 build: main.pkr.hcl
-	packer build main.pkr.hcl
+	mkdir -p build/
+	packer build -var='launcher_deb_name=$(shell ./scripts/get-launcher-image.sh)' main.pkr.hcl 
+	./scripts/update-variables.sh

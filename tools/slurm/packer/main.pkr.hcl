@@ -11,6 +11,11 @@ variables {
   ssh_username = "packer2"
 }
 
+variable "launcher_deb_name" {
+  type        = string
+  description = "The name of the hpe-hpc-launcher*.deb file in the build directory."
+}
+
 locals {
   static_source_path = "static"
   static_dest_path   = "/tmp/static"
@@ -18,9 +23,10 @@ locals {
   det_conf_dir       = "/etc/determined"
   slurm_sysconfdir   = "/usr/local/etc/slurm"
   launcher_job_root  = "/var/tmp/launcher"
+  build_source_path  = "build"
+  build_dest_path    = "/tmp/build"
 
-  launcher_deb_name      = "hpe-hpc-launcher_3.3.0-0_amd64.deb"
-  launcher_deb_dest_path = "${local.static_dest_path}/${local.launcher_deb_name}"
+  launcher_deb_dest_path = "${local.build_dest_path}/${var.launcher_deb_name}"
 
   slurm_conf_name      = "slurm.conf"
   slurm_conf_tmp_path  = "${local.static_dest_path}/${local.slurm_conf_name}"
@@ -75,6 +81,12 @@ build {
     destination = local.static_dest_path
   }
 
+  provisioner "file" {
+    // for the launcher debian file
+    source      = local.build_source_path
+    destination = local.build_dest_path
+  }
+
   provisioner "shell" {
     inline = [
       "sudo mv ${local.slurm_conf_tmp_path} ${local.slurm_conf_dest_path}",
@@ -89,6 +101,11 @@ build {
 
   provisioner "shell" {
     script = "scripts/install-ansible.sh"
+  }
+
+  post-processor "manifest" {
+    // used to get the image name
+    output = "build/manifest.json"
   }
 
   provisioner "ansible-local" {
