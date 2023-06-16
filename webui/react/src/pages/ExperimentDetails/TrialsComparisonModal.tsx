@@ -79,34 +79,31 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
   onUnselect,
 }: TableProps) => {
   const [trialsDetails, setTrialsDetails] = useState(trials ?? []);
-  const [canceler] = useState(new AbortController());
   const [selectedHyperparameters, setSelectedHyperparameters] = useState<string[]>([]);
   const [selectedMetrics, setSelectedMetrics] = useState<Metric[]>([]);
 
-  const fetchTrialDetails = useCallback(
-    async (trialId: number) => {
+  useEffect(() => {
+    if (trialIds === undefined) return;
+    const canceler = new AbortController();
+
+    const fetchTrialDetails = async (trialId: number) => {
       try {
         const response = await getTrialDetails({ id: trialId }, { signal: canceler.signal });
         setTrialsDetails((prev) => [...prev, response]);
       } catch (e) {
         handleError(e);
       }
-    },
-    [canceler.signal],
-  );
-
-  useEffect(() => {
-    return () => {
-      canceler.abort();
     };
-  }, [canceler]);
 
-  useEffect(() => {
-    if (trialIds === undefined) return;
+    setTrialsDetails([]);
     trialIds.forEach((trialId) => {
       fetchTrialDetails(trialId);
     });
-  }, [fetchTrialDetails, trialIds]);
+
+    return () => {
+      canceler.abort();
+    };
+  }, [trialIds]);
 
   useEffect(() => {
     if (trials === undefined) return;
