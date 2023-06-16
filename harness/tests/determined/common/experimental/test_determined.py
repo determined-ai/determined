@@ -4,7 +4,7 @@ from unittest import mock
 import pytest
 import responses
 
-from determined.common.api import _util, authentication, errors
+from determined.common.api import authentication, errors
 from determined.common.experimental import Determined
 from tests.fixtures import api_responses
 
@@ -36,7 +36,7 @@ def make_client(mock_default_auth: Callable) -> Callable[[], Determined]:
 
 
 @responses.activate
-def test_default_retry_max_retries(make_client: Callable[[], Determined]) -> None:
+def test_default_retry_retries_until_max(make_client: Callable[[], Determined]) -> None:
     client = make_client()
 
     model_resp = api_responses.sample_get_model()
@@ -49,35 +49,37 @@ def test_default_retry_max_retries(make_client: Callable[[], Determined]) -> Non
 
     client.get_model(model_resp.model.name)
     responses.assert_call_count(get_model_url, 3)
-    responses.calls.reset()
 
-    # Always return a 504 error.
+
+@responses.activate
+def test_default_retry_fails_after_max_retries(make_client: Callable[[], Determined]) -> None:
+    client = make_client()
+    model_resp = api_responses.sample_get_model()
+    get_model_url = f"{_MASTER}/api/v1/models/{model_resp.model.name}"
+
     responses.get(get_model_url, status=504)
-
     with pytest.raises(errors.BadRequestException):
         client.get_model(model_resp.model.name)
-
     responses.assert_call_count(get_model_url, 6)
 
 
 @responses.activate
-def test_default_retry_allowed_methods(make_client: Callable[[], Determined]) -> None:
+def test_default_retry_doesnt_retry_post(make_client: Callable[[], Determined]) -> None:
     client = make_client()
-    # GET requests should retry.
     model_resp = api_responses.sample_get_model()
-    get_model_url = f"{_MASTER}/api/v1/models/{model_resp.model.name}"
-    responses.get(get_model_url, status=504)
+    create_model_url = f"{_MASTER}/api/v1/models"
+    responses.post(create_model_url, status=504)
     with pytest.raises(errors.BadRequestException):
-        client.get_model(model_resp.model.name)
-    responses.assert_call_count(get_model_url, 6)
+        client.create_model(model_resp.model.name)
+    responses.assert_call_count(create_model_url, 1)
 
 
 @pytest.mark.parametrize(
     "status",
-    _util.RETRY_STATUSES,
+    [502, 503, 504],
 )
 @responses.activate
-def test_default_retry_status_forcelist(
+def test_default_retry_retries_status_forcelist(
     make_client: Callable[[], Determined],
     status: List[int],
 ) -> None:
@@ -96,7 +98,7 @@ def test_default_retry_status_forcelist(
     [400, 404, 500],
 )
 @responses.activate
-def test_default_retry_no_retry_statuses(
+def test_default_retry_doesnt_retry_allowed_status(
     make_client: Callable[[], Determined],
     status: List[int],
 ) -> None:
