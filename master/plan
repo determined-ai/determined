@@ -1,0 +1,87 @@
+KINDS:
+- Trials
+  - include ids
+  - include expids
+- allocations
+  - include taskids
+  - include expids
+- Metrics
+- Checkpoints
+
+REQUIREMENTS:
+- deliver NOTIFY to go code
+- streaming with continuation
+- deletions
+- rbac
+    - rbac changes can make entities appear or disappear, without a seq change
+        - e.g. a user is given a new role that lets them see many new trials,
+          but those trials wouldn't normally change their seq number
+    - maybe force a seq change on affected entities a way to make life easier?
+        - that makes the appearance problem easier, but not disappearance
+    - oh fuck, but doing newly-appeared checks on new connections would require
+      appearance checks to be filter-specific.  That's super gross, not
+      interested.
+    - so yeah, rbac changes would have to propagate seq changes to every row
+        - sounds really dangerous
+    - or, just force client to totally refresh its state if its cached rbac
+      key is dirty?
+        - is that really better?  I mean, it's definitely simpler at least.
+
+- basic server-side filtering
+- subscription add
+- subscription del
+- generated client code
+
+PROMISES:
+- at least one delivery
+
+UNPROMISES:
+- in-order delivery
+- only-one delivery
+
+BUILD ORDER:
+- prototype just Trials
+x set up trigger that updates seq and NOTIFYs a LISTENer
+x LISTEN from go code
+x set up a no-deletion streamer
+x set up stream consumer
+x support subscription modifying
+- add deletion tracking
+- make sure rbac is working
+- generated client code
+- client-side diff engine for persistent hooks
+
+# Deletions problem
+
+               _______________
+              |               |
+          +-->|   postgres    |<-------------------+
+          |   |_______________|       _ _ _ _ _ _ _|_ _ _ _ _ _ _
+          |          |               |             |             |
+          |    ______v________               ______|__________
+          |   |               |      |      |                 |  |
+          |   |   publisher   |------------>| existence cache |
+          |   |_______________|      |      |_________________|  |
+          |            |                           ^
+          |       +----+-----+       |             |             |
+          |       |          |                     |
+          |    ___v___    ___v____   |             |             |
+          |   |       |  |        |                |
+          |   | users |  | groups |  |             |             |
+          |   |_______|  |________|                |
+          |       |          |       |             |             |
+          |       +----+-----+                     |
+          |            |             |             |             |
+ new subs |    ________v______                     | existence
+          |   |               |      |             |  queries    |
+          +---|   streamer    |--------------------+
+              |_______________|      |_ _ _ _ _ _ _ _ _ _ _ _ _ _|
+                  ^     |
+                  |     v
+                  |     streaming updates
+                  |
+                subscription changes
+
+If needed, an existence cache could efficiently calculate deletions,
+disappearances, and the ids of appearances.  A subsequent query would have to be
+sent to the database to populate the appearances.

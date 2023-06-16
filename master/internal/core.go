@@ -54,6 +54,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/prom"
 	"github.com/determined-ai/determined/master/internal/proxy"
 	"github.com/determined-ai/determined/master/internal/rm"
+	"github.com/determined-ai/determined/master/internal/stream"
 	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/internal/task/tasklogger"
 	"github.com/determined-ai/determined/master/internal/task/taskmodel"
@@ -1239,5 +1240,9 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 	webhooks.Init()
 	defer webhooks.Deinit()
 
-	return m.startServers(ctx, cert, gRPCLogInitDone)
+	pss := stream.NewPubSubSystem()
+	pss.Start(context.Background())
+	m.echo.GET("/stream", api.WebSocketRoute(pss.Websocket))
+
+	return m.startServers(ctx, cert)
 }
