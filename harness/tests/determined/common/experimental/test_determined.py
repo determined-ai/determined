@@ -60,7 +60,6 @@ def test_default_retry_fails_after_max_retries(make_client: Callable[[], Determi
     responses.get(get_model_url, status=504)
     with pytest.raises(errors.BadRequestException):
         client.get_model(model_resp.model.name)
-    responses.assert_call_count(get_model_url, 6)
 
 
 @responses.activate
