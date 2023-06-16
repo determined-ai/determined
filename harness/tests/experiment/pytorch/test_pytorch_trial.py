@@ -950,7 +950,7 @@ class TestPyTorchTrial:
         root_logfile = tmp_path.joinpath("root_test.log")
 
         outputs = launcher.elastic_launch(launch_config, self.run_mnist)(tmp_path)
-        outputs = launcher.elastic_launch(launch_config, self.run_mnist)(tmp_path, outputs[0])
+        launcher.elastic_launch(launch_config, self.run_mnist)(tmp_path, outputs[0])
 
         with open(root_logfile, "r") as f:
             root_log_output = f.readlines()
@@ -992,7 +992,7 @@ class TestPyTorchTrial:
         )
 
         outputs = launcher.elastic_launch(launch_config, self.run_cifar10)(tmp_path)
-        outputs = launcher.elastic_launch(launch_config, self.run_cifar10)(tmp_path, outputs[0])
+        launcher.elastic_launch(launch_config, self.run_cifar10)(tmp_path, outputs[0])
 
     @pytest.mark.skipif(torch.cuda.device_count() < 2, reason="not enough gpus")
     @pytest.mark.gpu_parallel
@@ -1015,7 +1015,7 @@ class TestPyTorchTrial:
         )
 
         outputs = launcher.elastic_launch(launch_config, self.run_gan)(tmp_path)
-        outputs = launcher.elastic_launch(launch_config, self.run_gan)(tmp_path, outputs[0])
+        launcher.elastic_launch(launch_config, self.run_gan)(tmp_path, outputs[0])
 
     @pytest.mark.skipif(torch.cuda.device_count() < 2, reason="not enough gpus")
     @pytest.mark.gpu_parallel
@@ -1077,7 +1077,7 @@ class TestPyTorchTrial:
         )
 
         outputs = launcher.elastic_launch(launch_config, self.run_amp)(tmp_path, api_style)
-        outputs = launcher.elastic_launch(launch_config, self.run_amp)(
+        launcher.elastic_launch(launch_config, self.run_amp)(
             tmp_path, api_style, outputs[0]
         )
 
@@ -1174,7 +1174,6 @@ class TestPyTorchTrial:
         exp_config.update(config)
         exp_config["searcher"]["smaller_is_better"] = True
 
-        # each subprocess must import separately as trial_class cannot be pickled.
         example_path = utils.tutorials_path("mnist_pytorch/model_def.py")
         trial_class = utils.import_class_from_module("MNistTrial", example_path)
         trial_class._searcher_metric = "validation_loss"
@@ -1215,7 +1214,6 @@ class TestPyTorchTrial:
         exp_config.update(config)
         exp_config["searcher"]["smaller_is_better"] = True
 
-        # each subprocess must import separately as trial_class cannot be pickled.
         example_path = utils.cv_examples_path("cifar10_pytorch/model_def.py")
         trial_class = utils.import_class_from_module("CIFARTrial", example_path)
         trial_class._searcher_metric = "validation_error"
@@ -1256,7 +1254,6 @@ class TestPyTorchTrial:
         exp_config.update(config)
         exp_config["searcher"]["smaller_is_better"] = True
 
-        # each subprocess must import separately as trial_class cannot be pickled.
         example_path = utils.gan_examples_path("gan_mnist_pytorch/model_def.py")
         trial_class = utils.import_class_from_module("GANTrial", example_path)
         trial_class._searcher_metric = "loss"
@@ -1304,7 +1301,6 @@ class TestPyTorchTrial:
 
         tensorboard_path = tmp_path.joinpath("tensorboard")
 
-        # Trial A: train some batches and checkpoint
         trial, trial_controller = create_trial_and_trial_controller(
             trial_class=trial_class,
             hparams=hparams,
@@ -1354,7 +1350,6 @@ class TestPyTorchTrial:
         exp_config.update(config)
         exp_config["searcher"]["smaller_is_better"] = True
 
-        # each subprocess must import separately as trial_class cannot be pickled.
         example_path = utils.fixtures_path(f"pytorch_amp/{api_style}_amp_model_def.py")
         trial_class = utils.import_class_from_module(class_selector[api_style], example_path)
         trial_class._searcher_metric = "validation_loss"
@@ -1403,7 +1398,6 @@ class TestPyTorchTrial:
         exp_config.update(config)
         exp_config["searcher"]["smaller_is_better"] = True
 
-        # each subprocess must import separately as trial_class cannot be pickled.
         example_path = utils.fixtures_path("pytorch_no_op/model_def.py")
         trial_class = utils.import_class_from_module("NoopPyTorchTrial", example_path)
         trial_class._searcher_metric = "validation_error"

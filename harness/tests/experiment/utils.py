@@ -442,8 +442,6 @@ def ensure_requires_global_batch_size(
 def assert_patterns_in_logs(input_list: List[str], patterns: List[str]) -> None:
     """
     Match each regex pattern in the list to the logs, one-at-a-time, in order.
-    This is adapted from e2e_tests/tests/experiment/experiment.py, which
-    will be moved along with keras e2e_tests.
     """
     assert patterns, "must provide at least one pattern"
     patterns_iter = iter(patterns)
