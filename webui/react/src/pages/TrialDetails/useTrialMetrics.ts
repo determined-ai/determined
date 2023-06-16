@@ -20,15 +20,13 @@ export interface TrialMetrics {
   metrics: Metric[];
 }
 
-export interface TrialMetricsd {
-  data: Record<MetricName, Serie>;
-  hasData: boolean;
-}
-
 const summarizedMetricToSeries = (
   allDownsampledMetrics: MetricContainer[],
   selectedMetrics: Metric[],
-): TrialMetricsd => {
+): {
+  data: Record<MetricName, Serie>;
+  hasData: boolean;
+} => {
   const rawBatchValuesMap: Record<string, [number, number][]> = {};
   const rawBatchTimesMap: Record<string, [number, number][]> = {};
   const rawBatchEpochMap: Record<string, [number, number][]> = {};
@@ -116,7 +114,7 @@ export const useTrialMetrics = (
   const [loadableData, setLoadableData] =
     useState<Loadable<Record<number, Record<string, Serie>>>>(NotLoaded);
   const [scale, setScale] = useState<Scale>(Scale.Linear);
-  const [hasData, setHasData] = useState<Loadable<boolean>>(NotLoaded);
+  const [hasData, setHasData] = useState<boolean>(true);
 
   const fetchTrialSummary = useCallback(async () => {
     setLoadableData(NotLoaded);
@@ -141,7 +139,7 @@ export const useTrialMetrics = (
         setLoadableData((prev) =>
           isEqual(Loadable.getOrElse([], prev), newData) ? prev : Loaded(newData),
         );
-        setHasData(Loaded(anyTrialHasData));
+        setHasData(anyTrialHasData);
       } catch (e) {
         message.error('Error fetching metrics');
       }
@@ -163,7 +161,13 @@ export const useTrialMetrics = (
   if (trialTerminated) {
     stopPolling();
   }
-  const data = Loadable.getOrElse({}, loadableData);
-  const isLoaded = metricNamesLoaded && Loadable.isLoaded(loadableData);
-  return { data, hasData: Loadable.getOrElse(true, hasData), isLoaded, metrics, scale, setScale };
+
+  return {
+    data: Loadable.getOrElse({}, loadableData),
+    hasData,
+    isLoaded: metricNamesLoaded && Loadable.isLoaded(loadableData),
+    metrics,
+    scale,
+    setScale,
+  };
 };

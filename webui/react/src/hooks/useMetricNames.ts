@@ -9,18 +9,15 @@ import { isEqual } from 'utils/data';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { alphaNumericSorter } from 'utils/sort';
 
-interface MetricNames {
-  isLoaded: boolean;
-  metrics: Metric[];
-}
 const useMetricNames = (
   experimentIds: number[],
   errorHandler?: (e: unknown) => void,
-): MetricNames => {
+): {
+  isLoaded: boolean;
+  metrics: Metric[];
+} => {
   const [metrics, setMetrics] = useState<Loadable<Metric[]>>(NotLoaded);
   const [actualExpIds, setActualExpIds] = useState<number[]>([]);
-
-  const isLoaded = Loadable.isLoaded(metrics);
 
   useEffect(
     () => setActualExpIds((prev) => (isEqual(prev, experimentIds) ? prev : experimentIds)),
@@ -72,7 +69,7 @@ const useMetricNames = (
     );
     return () => canceler.abort();
   }, [actualExpIds, errorHandler]);
-  return { isLoaded, metrics: Loadable.getOrElse([], metrics) };
+  return { isLoaded: Loadable.isLoaded(metrics), metrics: Loadable.getOrElse([], metrics) };
 };
 
 export default useMetricNames;

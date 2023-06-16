@@ -327,6 +327,7 @@ export const ChartGrid: React.FC<GroupProps> = React.memo(
       : propChartsProps;
     const isLoading = Loadable.isLoadable(propChartsProps) && Loadable.isLoading(propChartsProps);
     // X-Axis control
+
     const xAxisOptions = useMemo(() => {
       const xOpts = new Set<string>();
       chartsProps.forEach((chart) => {
