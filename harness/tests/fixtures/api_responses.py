@@ -58,16 +58,18 @@ def sample_get_model_versions() -> bindings.v1GetModelVersionsResponse:
         return resp
 
 
-def sample_login(**kwargs: Any) -> bindings.v1LoginResponse:
-    resp = bindings.v1LoginResponse(token="fake-login-token", user=sample_get_user(**kwargs).user)
+def sample_login(username: str = USERNAME) -> bindings.v1LoginResponse:
+    resp = bindings.v1LoginResponse(
+        token="fake-login-token", user=sample_get_user(username=username).user
+    )
     return resp
 
 
-def sample_get_user(**kwargs: Any) -> bindings.v1GetUserResponse:
+def sample_get_user(username: str = USERNAME) -> bindings.v1GetUserResponse:
     user = bindings.v1User(
-        active=kwargs.get("active", True),
-        admin=kwargs.get("admin", False),
-        username=kwargs.get("username", USERNAME),
+        active=True,
+        admin=False,
+        username=username,
     )
 
     return bindings.v1GetUserResponse(user=user)
