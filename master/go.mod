@@ -179,6 +179,8 @@ require (
 	golang.org/x/exp v0.0.0-20220328175248-053ad81199eb
 )
 
+require github.com/goccy/go-json v0.10.2 // indirect
+
 require (
 	github.com/fatih/color v1.15.0 // indirect
 	github.com/kr/pretty v0.3.0 // indirect

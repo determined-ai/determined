@@ -14,7 +14,7 @@ import (
 // ExperimentAuthZBasic is basic OSS controls.
 type ExperimentAuthZBasic struct{}
 
-// CanGetExperiment always returns true and a nill error.
+// CanGetExperiment always returns true and a nil error.
 func (a *ExperimentAuthZBasic) CanGetExperiment(
 	ctx context.Context, curUser model.User, e *model.Experiment,
 ) error {

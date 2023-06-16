@@ -97,6 +97,15 @@ build: gen
 		-o build/determined-master \
 		./cmd/determined-master
 
+.PHONY: build-benchmark
+build-benchmark:
+	go build \
+		-ldflags "-X github.com/determined-ai/determined/master/version.Version=$(VERSION) \
+		          -X github.com/determined-ai/determined/master/internal/config.DefaultSegmentMasterKey=$(DET_SEGMENT_MASTER_KEY) \
+		          -X github.com/determined-ai/determined/master/internal/config.DefaultSegmentWebUIKey=$(DET_SEGMENT_WEBUI_KEY)" \
+		-o build/benchmark \
+		./cmd/benchmark
+
 .PHONY: build-race
 build-race: export DET_SEGMENT_MASTER_KEY ?=
 build-race: export DET_SEGMENT_WEBUI_KEY ?=
