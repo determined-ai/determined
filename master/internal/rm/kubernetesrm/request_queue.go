@@ -16,10 +16,8 @@ const (
 	deletionGracePeriod  = 15
 )
 
-// callback types used by requestQueue.
-type (
-	errorCallbackFunc func(error)
-)
+// callback type used by requestQueue.
+type errorCallbackFunc func(error)
 
 // message types that are sent to the requestProcessingWorkers channel.
 type (
@@ -168,7 +166,7 @@ func (r *requestQueue) createKubernetesResources(
 	ref := getKeyForCreate(msg)
 
 	if _, requestAlreadyExists := r.pendingResourceCreations[ref]; requestAlreadyExists {
-		r.syslog.Errorf("handler %v issued multiple create resource requests", errorHandler)
+		r.syslog.Errorf("multiple create resource requests issued for %s", ref)
 		return
 	}
 
@@ -198,7 +196,7 @@ func (r *requestQueue) deleteKubernetesResources(
 		r.pendingResourceCreations[ref].createResources = nil
 		delete(r.pendingResourceCreations, ref)
 		go errorHandler(resourceCreationCancelled{})
-		r.syslog.Warnf("handler %v issued delete with pending create request", errorHandler)
+		r.syslog.Warnf("delete issued with pending create request for %s", ref)
 		return
 	}
 
