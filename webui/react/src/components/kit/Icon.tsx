@@ -261,13 +261,10 @@ const Icon: React.FC<Props> = ({
     if (name === 'filter') return <FilterIcon color={color} size={size} title={title} />;
     if (name === 'options') return <OptionsIcon color={color} size={size} title={title} />;
     if (name === 'panel') return <PanelIcon color={color} size={size} title={title} />;
-    if (name.includes('row')) {
-      if (name.includes('small')) return <RowIconSmall color={color} size={size} title={title} />;
-      if (name.includes('large')) return <RowIconLarge color={color} size={size} title={title} />;
-      if (name.includes('xl')) return <RowIconExtraLarge color={color} size={size} title={title} />;
-
-      return <RowIconMedium color={color} size={size} title={title} />; // returns medium by default
-    }
+    if (name === 'row-small') return <RowIconSmall color={color} size={size} title={title} />;
+    if (name === 'row-medium') return <RowIconMedium color={color} size={size} title={title} />;
+    if (name === 'row-large') return <RowIconLarge color={color} size={size} title={title} />;
+    if (name === 'row-xl') return <RowIconExtraLarge color={color} size={size} title={title} />;
 
     return null;
   }, [color, name, size, title]);
