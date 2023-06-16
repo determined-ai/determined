@@ -256,22 +256,21 @@ const Icon: React.FC<Props> = ({
 }: Props) => {
   const classes = [css.base];
 
-  const rowIcon = useMemo(() => {
-    if (name.includes('small')) return <RowIconSmall color={color} size={size} title={title} />;
-    if (name.includes('large')) return <RowIconLarge color={color} size={size} title={title} />;
-    if (name.includes('xl')) return <RowIconExtraLarge color={color} size={size} title={title} />;
-
-    return <RowIconMedium color={color} size={size} title={title} />; // returns medium by default
-  }, [color, name, size, title]);
   const svgIcon = useMemo(() => {
     if (name === 'columns') return <ColumnsIcon color={color} size={size} title={title} />;
     if (name === 'filter') return <FilterIcon color={color} size={size} title={title} />;
     if (name === 'options') return <OptionsIcon color={color} size={size} title={title} />;
     if (name === 'panel') return <PanelIcon color={color} size={size} title={title} />;
-    if (name.includes('row')) return rowIcon;
+    if (name.includes('row')) {
+      if (name.includes('small')) return <RowIconSmall color={color} size={size} title={title} />;
+      if (name.includes('large')) return <RowIconLarge color={color} size={size} title={title} />;
+      if (name.includes('xl')) return <RowIconExtraLarge color={color} size={size} title={title} />;
+
+      return <RowIconMedium color={color} size={size} title={title} />; // returns medium by default
+    }
 
     return null;
-  }, [color, rowIcon, name, size, title]);
+  }, [color, name, size, title]);
 
   if (name) classes.push(`icon-${name}`);
   if (size) classes.push(css[size]);
