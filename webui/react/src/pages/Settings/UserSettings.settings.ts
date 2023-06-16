@@ -50,7 +50,7 @@ const shortCutSettingsConfig: SettingsConfig<Settings> = {
         ctrl: false,
         letter: 'U',
         meta: true,
-        shift: false,
+        shift: true,
       },
       skipUrlEncoding: true,
       storageKey: 'navbarCollapsed',
