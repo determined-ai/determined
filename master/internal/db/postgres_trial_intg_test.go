@@ -101,6 +101,30 @@ func addMetrics(ctx context.Context,
 	}
 }
 
+func addTestTrialMetrics(ctx context.Context,
+	t *testing.T, db *PgDB, trialID int, trialMetricsJSON string,
+) {
+	var trialMetrics map[model.MetricType][]map[string]any
+	require.NoError(t, json.Unmarshal([]byte(trialMetricsJSON), &trialMetrics))
+	trialRunID := 0
+
+	for mType, metrics := range trialMetrics {
+		for i, m := range metrics {
+			metrics, err := structpb.NewStruct(m)
+			require.NoError(t, err)
+			_, err = db.addTrialMetrics(ctx, &trialv1.TrialMetrics{
+				TrialId:        int32(trialID),
+				TrialRunId:     int32(trialRunID),
+				StepsCompleted: int32(i + 1),
+				Metrics: &commonv1.Metrics{
+					AvgMetrics: metrics,
+				},
+			}, mType)
+			require.NoError(t, err)
+		}
+	}
+}
+
 func addMetricCustomTime(ctx context.Context, t *testing.T, trialID int, endTime time.Time) {
 	type metric struct {
 		bun.BaseModel `bun:"table:metrics"`

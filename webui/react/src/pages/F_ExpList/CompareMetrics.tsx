@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 
 import { ChartGrid, ChartsProps, Serie } from 'components/kit/LineChart';
 import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
+import MetricBadgeTag from 'components/MetricBadgeTag';
 import { useTrialMetrics } from 'pages/TrialDetails/useTrialMetrics';
 import { ExperimentWithTrial, TrialItem } from 'types';
 import handleError from 'utils/error';
@@ -31,13 +32,13 @@ const CompareMetrics: React.FC<Props> = ({ selectedExperiments, trials }) => {
       });
       out.push({
         series: Loaded(series),
-        title: `${metric.type}.${metric.name}`,
+        title: <MetricBadgeTag metric={metric} />,
         xAxis,
         xLabel: String(xAxis),
       });
       nout.push({
         series: NotLoaded,
-        title: `${metric.type}.${metric.name}`,
+        title: <MetricBadgeTag metric={metric} />,
         xAxis,
         xLabel: String(xAxis),
       });

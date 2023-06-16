@@ -816,6 +816,15 @@ service Determined {
       tags: [ "Internal" ]
     };
   }
+  // Stream one or more trial's metrics.
+  rpc GetMetrics(GetMetricsRequest) returns (stream GetMetricsResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/trials/metrics/trial_metrics"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: [ "Trials" ]
+    };
+  }
   // Stream one or more trial's training metrics.
   rpc GetTrainingMetrics(GetTrainingMetricsRequest)
       returns (stream GetTrainingMetricsResponse) {

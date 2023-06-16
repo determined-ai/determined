@@ -133,21 +133,25 @@ func newExperiment(
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot create an experiment: %w", err)
 	}
-	if err = m.rm.ValidateResources(m.system, poolName, resources.SlotsPerTrial(), false); err != nil {
-		return nil, nil, fmt.Errorf("validating resources: %v", err)
-	}
-	launchWarnings, err := m.rm.ValidateResourcePoolAvailability(
-		m.system,
-		poolName,
-		resources.SlotsPerTrial(),
-	)
-	if err != nil {
-		return nil, launchWarnings, fmt.Errorf("getting resource availability: %w", err)
-	}
-	if m.config.ResourceManager.AgentRM != nil && m.config.LaunchError && len(launchWarnings) > 0 {
-		return nil, nil, errors.New("slots requested exceeds cluster capacity")
-	}
 
+	var launchWarnings []command.LaunchWarning
+	if expModel.ID == 0 {
+		err := m.rm.ValidateResources(m.system, poolName, resources.SlotsPerTrial(), false)
+		if err != nil {
+			return nil, nil, fmt.Errorf("validating resources: %v", err)
+		}
+		launchWarnings, err = m.rm.ValidateResourcePoolAvailability(
+			m.system,
+			poolName,
+			resources.SlotsPerTrial(),
+		)
+		if err != nil {
+			return nil, launchWarnings, fmt.Errorf("getting resource availability: %w", err)
+		}
+		if m.config.ResourceManager.AgentRM != nil && m.config.LaunchError && len(launchWarnings) > 0 {
+			return nil, nil, errors.New("slots requested exceeds cluster capacity")
+		}
+	}
 	resources.SetResourcePool(poolName)
 	activeConfig.SetResources(resources)
 

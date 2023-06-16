@@ -12,6 +12,7 @@ import "determined/api/v1/command.proto";
 import "determined/api/v1/pagination.proto";
 import "determined/common/v1/common.proto";
 import "determined/checkpoint/v1/checkpoint.proto";
+import "determined/metric/v1/metric.proto";
 import "determined/experiment/v1/experiment.proto";
 import "determined/job/v1/job.proto";
 import "determined/util/v1/util.proto";
@@ -540,9 +541,11 @@ message ExpMetricNamesResponse {
   // The names of the searcher metrics.
   repeated string searcher_metrics = 1;
   // List of training metric names.
-  repeated string training_metrics = 2;
+  repeated string training_metrics = 2 [deprecated = true];
   // List of validation metric names.
-  repeated string validation_metrics = 3;
+  repeated string validation_metrics = 3 [deprecated = true];
+  // List of metric type-name pairs.
+  repeated determined.metric.v1.MetricName metric_names = 4;
 }
 
 // To distinguish the different categories of metrics.
@@ -571,11 +574,9 @@ message MetricBatchesRequest {
           ["metric_name"];
       }];
   // The type of metric.
-  MetricType metric_type = 3
-      [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
-        required:
-          ["metric_type"];
-      }];
+  MetricType metric_type = 3 [deprecated = true];
+  // Type of metrics (training, validation, etc).
+  string custom_type = 5;
   // Seconds to wait when polling for updates.
   int32 period_seconds = 4;
 }
@@ -602,11 +603,9 @@ message TrialsSnapshotRequest {
           ["metric_name"];
       }];
   // The type of metric.
-  MetricType metric_type = 3
-      [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
-        required:
-          ["metric_type"];
-      }];
+  MetricType metric_type = 3 [deprecated = true];
+  // Type of metrics (training, validation, etc).
+  string custom_type = 7;
   // The point of progress at which to query metrics.
   int32 batches_processed = 4
       [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
@@ -659,11 +658,9 @@ message TrialsSampleRequest {
           ["metric_name"];
       }];
   // The type of metric.
-  MetricType metric_type = 3
-      [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
-        required:
-          ["metric_type"];
-      }];
+  MetricType metric_type = 3 [deprecated = true];
+  // Type of metrics (training, validation, etc).
+  string custom_type = 9;
   // Maximum number of trials to fetch data for.
   int32 max_trials = 4;
   // Maximum number of initial / historical data points.
