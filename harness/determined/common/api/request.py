@@ -29,10 +29,7 @@ def parse_master_address(master_address: str) -> parse.ParseResult:
 
 def make_url(master_address: str, suffix: str) -> str:
     parsed = parse_master_address(master_address)
-    if parsed.path:
-        suffix = parsed.path + "/" + suffix
-    url = parse.urljoin(parsed.geturl(), suffix)
-    return url
+    return parse.urljoin(parsed.geturl(), suffix)
 
 
 def maybe_upgrade_ws_scheme(master_address: str) -> str:
