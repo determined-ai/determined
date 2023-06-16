@@ -4,7 +4,16 @@ import userEvent from '@testing-library/user-event';
 import Icon, { IconNameArray, IconSizeArray } from './Icon';
 import type { Props } from './Icon';
 
-const svgIcons = ['columns', 'filter', 'options', 'panel', 'row'];
+const svgIcons = [
+  'columns',
+  'filter',
+  'options',
+  'panel',
+  'row-small',
+  'row-medium',
+  'row-large',
+  'row-xl',
+];
 
 const setup = (props?: Props) => {
   const user = userEvent.setup();
