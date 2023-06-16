@@ -41,15 +41,12 @@ const CompareMetrics: React.FC<Props> = ({ selectedExperiments, trials }) => {
     // loaded and whether the chart props have been updated.
     // If hasData is true but no chartProps contain data, then the charts
     // have not been updated and we need to continue to show the spinner.
-    if (
-      isLoaded &&
-      (!hasData ||
-        out.some((serie) =>
-          Loadable.isLoadable(serie.series)
-            ? Loadable.getOrElse([], serie.series).length > 0
-            : serie.series.length > 0,
-        ))
-    ) {
+    const chartDataIsLoaded = out.some((serie) =>
+      Loadable.isLoadable(serie.series)
+        ? Loadable.getOrElse([], serie.series).length > 0
+        : serie.series.length > 0,
+    );
+    if (isLoaded && (!hasData || chartDataIsLoaded)) {
       return Loaded(out);
     } else {
       // returns the chartProps with a NotLoaded series which enables

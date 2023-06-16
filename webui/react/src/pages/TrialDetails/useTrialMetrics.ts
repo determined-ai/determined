@@ -120,8 +120,14 @@ export const useTrialMetrics = (
 
   const fetchTrialSummary = useCallback(async () => {
     setLoadableData(NotLoaded);
+    if (trials.length === 0) {
+      // If there are no trials selected then
+      // no data is available.
+      setHasData(false);
+      return;
+    }
+    let anyTrialHasData = false;
     if (trials.length > 0) {
-      let anyTrialHasData = false;
       try {
         const response = await timeSeries({
           maxDatapoints: screen.width > 1600 ? 1500 : 1000,
@@ -141,12 +147,14 @@ export const useTrialMetrics = (
         setLoadableData((prev) =>
           isEqual(Loadable.getOrElse([], prev), newData) ? prev : Loaded(newData),
         );
-        setHasData(anyTrialHasData);
+        // Wait until the metric names are loaded
+        // to determine if trials have data for any metric
+        setHasData(metricNamesLoaded ? anyTrialHasData : true);
       } catch (e) {
         message.error('Error fetching metrics');
       }
     }
-  }, [metrics, trials, scale]);
+  }, [metrics, trials, scale, metricNamesLoaded]);
 
   const fetchAll = useCallback(async () => {
     await Promise.allSettled([fetchTrialSummary()]);
