@@ -3,9 +3,10 @@ package model
 import (
 	"strings"
 
-	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
 const (
@@ -35,6 +36,7 @@ func (t MetricType) ToProto() apiv1.MetricType {
 	}
 }
 
+// Validate validates the metric type.
 func (t MetricType) Validate() error {
 	if len(t) == 0 {
 		return status.Errorf(codes.InvalidArgument, "metric type cannot be empty")
