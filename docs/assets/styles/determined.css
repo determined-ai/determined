@@ -48,8 +48,9 @@ html[data-theme="dark"] {
   overscroll-behavior: none;
 }
 
-.bd-container__inner {
-  justify-content: center;
+.bd-main {
+  /* Book theme overrides flex-grow: 0 but we want to align content center.  */
+  flex-grow: 1;
 }
 
 .header-links-left a {
@@ -75,23 +76,17 @@ html[data-theme="dark"] {
 }
 
 .tiles-flex {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px
 }
 
-.tile-container {
-  width: calc(33% - 20px);
-}
 
 .tile {
   /* looks */
-  border: 1px solid var(--pst-color-text-muted);
   border-radius: 5px;
   /* sizing/boxing */
-  height: 200px;
-  margin: 10px;
+  height: 220px;
   padding: 10px;
   /* animation */
   -webkit-transition: 250ms;
@@ -101,35 +96,38 @@ html[data-theme="dark"] {
   will-change: transform;
   /* layout */
   box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-rows: 24px 40px auto; /* 24px is icons size */
+  gap: 4px;
 }
 
-.tile > img {
+.tile-icon {
   background-color: transparent !important;
+  height: 24px;
+  width: 24px;
 }
 
-.tile-container:nth-child(1) > .tile {
+.tile-container:nth-child(6n - 5) > .tile {
   background-color: #FEC901;
 }
 
-.tile-container:nth-child(2) > .tile {
+.tile-container:nth-child(6n - 4) > .tile {
   background-color: #32DAC8;
 }
 
-.tile-container:nth-child(3) > .tile {
+.tile-container:nth-child(6n - 3) > .tile {
   background-color: #fdc6a7;
 }
 
-.tile-container:nth-child(4) > .tile {
+.tile-container:nth-child(6n - 2) > .tile {
   background-color: #b98cf4;
 }
 
-.tile-container:nth-child(5) > .tile {
+.tile-container:nth-child(6n - 1) > .tile {
   background-color: #ededed;
 }
 
-.tile-container:nth-child(6) > .tile {
+.tile-container:nth-child(6n) > .tile {
   background-color: #a0da70;
 }
 
@@ -144,7 +142,6 @@ html[data-theme="dark"] {
   font-size: 18px;
   text-align: center;
   /* sizing/boxing */
-  height: 30%;
   margin: 0px;
   /* layout */
   display: flex;
@@ -528,22 +525,14 @@ h6 {
     width: 420px;
   }
 
-  .tile-container {
-    width: 50%;
-  }
-
   .tile {
-    height: auto;
+    height: 100%;
   }
 }
 
 @media screen and (max-width: 508px) {
   .landing .landing-search {
     display: none;
-  }
-
-  .tile-container {
-    width: calc(100% - 20px);
   }
 
   .tile {

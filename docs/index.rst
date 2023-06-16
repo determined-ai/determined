@@ -95,42 +95,42 @@ You can quickly train almost any deep learning model using Determined.
       <div class="tiles-flex">
          <div class="tile-container">
             <a class="tile" href="architecture/index.html">
-               <img src="_static/images/tools.png" width="24" height="24" alt="tools icon">
+               <img class="tile-icon" src="_static/images/tools.png" alt="tools icon">
                <h2 class="tile-title">How It Works</h2>
                <p class="tile-description">Learn about core concepts, key features, and system architecture.</p>
             </a>
          </div>
          <div class="tile-container">
             <a class="tile" href="tutorials/index.html">
-               <img src="_static/images/getting-started.png" width="24" height="24" alt="getting started icon">
+               <img class="tile-icon" src="_static/images/getting-started.png" alt="getting started icon">
                <h2 class="tile-title">Tutorials</h2>
                <p class="tile-description">Try Determined and learn the basics including how to port your existing code to the Determined environment.</p>
             </a>
          </div>
          <div class="tile-container">
             <a class="tile" href="setup-cluster/deploy-cluster/index.html">
-               <img src="_static/images/integrations.png" width="24" height="24" alt="integrations icon">
+               <img class="tile-icon" src="_static/images/integrations.png" alt="integrations icon">
                <h2 class="tile-title">Set Up Determined</h2>
                <p class="tile-description">Set up an on-premise or cloud-based cluster, including AWS, GCP, and Azure.</p>
             </a>
          </div>
          <div class="tile-container">
             <a class="tile" href="tutorials/quickstart-mdldev.html">
-               <img src="_static/images/setup.png" width="24" height="24" alt="setup icon">
+               <img class="tile-icon" src="_static/images/setup.png"  alt="setup icon">
                <h2 class="tile-title">Model Developer Quickstart</h2>
                <p class="tile-description">Learn the basic steps needed to set up a Determined environment and train models.</p>
             </a>
          </div>
          <div class="tile-container">
             <a class="tile" href="training/index.html">
-               <img src="_static/images/developer-guide.png" width="24" height="24" alt="developer guide icon">
+               <img class="tile-icon" src="_static/images/developer-guide.png" alt="developer guide icon">
                <h2 class="tile-title">Model Developer Guide</h2>
                <p class="tile-description">Find user guides. Learn how to work with Training APIs and configure your distributed training experiments.</p>
             </a>
          </div>
          <div class="tile-container">
             <a class="tile" href="reference/overview.html">
-               <img src="_static/images/reference.png" width="24" height="24" alt="reference icon">
+               <img class="tile-icon" src="_static/images/reference.png" alt="reference icon">
                <h2 class="tile-title">Reference</h2>
                <p class="tile-description">Explore API libraries and configuration settings.</p>
             </a>
