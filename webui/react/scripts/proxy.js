@@ -18,7 +18,7 @@ app.use(morgan('dev'));
 
 const proxyTo = (targetServer) => {
   return (req, res) => {
-    const url = targetServer + req.url;
+    const url = targetServer + req.url; // include query parameters
     res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
     res.setHeader('Allow-Credentials', true);
     res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -28,6 +28,7 @@ const proxyTo = (targetServer) => {
       'authorization, Access-Control-Allow-Headers, Origin,Accept, X-Requested-With, Content-Type,' +
         ' Access-Control-Request-Method, Access-Control-Request-Headers',
     );
+    // proxy head requests
 
     if ('OPTIONS' === req.method) {
       res.send(200);
@@ -36,7 +37,7 @@ const proxyTo = (targetServer) => {
         data: req.body,
         headers: req.headers,
         method: req.method,
-        params: req.query,
+        // query: req.query,
         responseType: 'stream',
         url,
       })
@@ -45,8 +46,9 @@ const proxyTo = (targetServer) => {
           response.data.pipe(res);
         })
         .catch((error) => {
+          console.error(error);
           console.error(`Error proxying request: ${error.message}`);
-          res.sendStatus(500);
+          res.sendStatus(error.response?.status || 500);
         });
     }
   };

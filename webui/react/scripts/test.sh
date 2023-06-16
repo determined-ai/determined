@@ -21,7 +21,8 @@ done
 for server_path in "${server_paths[@]}"; do
     echo "Testing $server_path"
     # token=$(det -m $server_path dev auth-token)
-    curl -I -H "Authorization: Bearer $token" "$server_path$api_path"
+    # curl -I -H "Authorization: Bearer $token" "$server_path$api_path"
     curl --silent -H "Authorization: Bearer $token" "$server_path$api_path"
     echo
+    sleep 1
 done
