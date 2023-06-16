@@ -71,7 +71,7 @@ stages:
           host: localhost
           port: 8081
           protocol: http
-          container_run_type: singularity
+          container_run_type: $OPT_CONTAINER_RUN_TYPE
           security:
              tls:
                 skip_verify: true

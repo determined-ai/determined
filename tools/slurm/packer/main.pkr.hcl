@@ -14,6 +14,7 @@ variables {
 locals {
   static_source_path = "static"
   static_dest_path   = "/tmp/static"
+  reg_conf_dir      = "/etc/containers" 
   det_conf_dir       = "/etc/determined"
   slurm_sysconfdir   = "/usr/local/etc/slurm"
   launcher_job_root  = "/var/tmp/launcher"
@@ -32,6 +33,10 @@ locals {
   det_master_conf_name      = "master.yaml"
   det_master_conf_tmp_path  = "${local.static_dest_path}/${local.det_master_conf_name}"
   det_master_conf_dest_path = "${local.det_conf_dir}/${local.det_master_conf_name}"
+  
+  container_registries_name      = "registries.conf"
+  container_registries_tmp_path  = "${local.static_dest_path}/${local.container_registries_name}"
+  container_registries_dest_path = "${local.reg_conf_dir}/${local.container_registries_name}"
 }
 
 source "googlecompute" "determined-hpc-image" {
@@ -76,7 +81,9 @@ build {
       "sudo mv ${local.slurm_cgroup_conf_tmp_path} ${local.slurm_cgroup_conf_dest_path}",
       "sudo mkdir -p ${local.det_conf_dir}",
       "sudo mv ${local.det_master_conf_tmp_path} ${local.det_master_conf_dest_path}",
-      "sudo mkdir -p ${local.launcher_job_root}"
+      "sudo mkdir -p ${local.launcher_job_root}",
+      "sudo mkdir -p ${local.reg_conf_dir}",
+      "sudo mv -f ${local.container_registries_tmp_path} ${local.container_registries_dest_path}"  
     ]
   }
 
