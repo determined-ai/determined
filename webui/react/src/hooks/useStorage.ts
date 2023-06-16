@@ -1,10 +1,10 @@
 import { useState } from 'react';
 
 import { resetUserSetting } from 'services/api';
-import { StorageManager } from 'shared/utils/storage';
 import userStore from 'stores/users';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
+import { StorageManager } from 'utils/storage';
 
 export const userPreferencesStorage = (): (() => void) => {
   const storage = new StorageManager({ basePath: 'u', delimiter: ':', store: window.localStorage });

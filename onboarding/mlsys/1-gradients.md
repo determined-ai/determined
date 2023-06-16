@@ -78,16 +78,6 @@ And we can expand `ypred = m*x` to rewrite `loss_point` in terms of `m`:
 \mathrm{loss_point} = \frac{(\mathrm{ytrue} - m x)^2}{N}
 ```
 
-Did you notice that the loss is a function of `m`, even though our model
-defines `ypred` as a function of `x`?  Also, our dataset
-`x` and `ypred` values appear in the loss calculation as constants, even though
-we might normally think of `x` as our variable.  That is because every `m`
-value on our loss curve corresponds to a different model for `ypred = m*x`.
-The value of the loss at each value `m` is defined by how accurately it
-predicts the (constant) values in our dataset.
-
-![multi](./files/1-multi.jpg "Multi Graph")
-
 ### Q2:
 
 Can `loss_point` or `loss_mse` ever be negative?  Why or why not, and does this
@@ -211,9 +201,9 @@ The basic gradient descent loop algorithm is:
 
 1. Pick an initial model weight.
 2. Select one or more `(x, ytrue)` pairs from the dataset.
-3. Calculate a prediction for the selected inputs with a label (Q2).
-4. Calculate the gradient using the prediction vs label (Q3).
-5. Subtract `gradient * lr` from our model weight ("Minimizing the loss").
+3. Calculate a prediction for the selected inputs (Q3).
+4. Calculate the gradient using the prediction and the ground truth (Q5).
+5. Subtract `gradient * lr` from the model weight ("Minimizing the loss").
 6. Repeat steps 2—5 until you decide to stop.
 
 ### Q6
@@ -305,7 +295,7 @@ print(train_loop(m=0, lr=0.0001, dataset=dataset, iterations=10000))
 ```
 
 Now that we have noise in our dataset, we find that some values are "noisier"
-than others.  Notice that at `m=1` our model is off by `1`, but at `x=4` our
+than others.  Notice that at `x=1` our model is off by `1`, but at `x=4` our
 model is off by `2.25`.  These noisier points can cause training to become
 unstable at higher learning rates.
 
@@ -336,16 +326,16 @@ the gradients from each point.
 This is called "batching" your inputs.  The number of inputs that you include
 in each training iteration is called your "batch size".
 
-### Q11
+### Q10
 
 Let `m=2` and fill the following table of per-data-point gradients:
 
-| `(x, ytrue)`  | `grad_point` |
-| ------------- | ------------ |
-|     (1, 0)    |              |
-|     (2, 1)    |              |
-|     (3, 1)    |              |
-|    (4, 6.25)  |              |
+| `(x, ytrue)`  | `grad_point(N=1)` |
+| ------------- | ----------------- |
+|     (1, 0)    |                   |
+|     (2, 1)    |                   |
+|     (3, 1)    |                   |
+|    (4, 6.25)  |                   |
 
 Then, with `m=2`, fill the following table of `batch_size=2` batch gradients:
 
@@ -354,10 +344,11 @@ Then, with `m=2`, fill the following table of `batch_size=2` batch gradients:
 |     (1, 0)     |     (2, 1)     |              |
 |     (3, 1)     |    (4, 6.25)   |              |
 
-Do you see that by averaging gradients from multiple points, we end up with
-smoother overall gradients?
+What is the scale between the largest and smallest gradient values in the first
+table?  What about the second table?  Do you see that by averaging gradients
+from multiple points, we end up with smoother overall gradients?
 
-### Q12
+### Q11
 
 Write a new training loop that takes batches instead of individual points.
 
@@ -419,7 +410,7 @@ worker calculates gradients for its batch.  Then all workers communicate their
 gradients to all other workers, after which each worker has the average of all
 worker gradients.
 
-### Q13
+### Q12
 
 Write a training loop that simulates data-parallel distributed training.  No
 need for actual distributed mechanics; just do it inside a single process.

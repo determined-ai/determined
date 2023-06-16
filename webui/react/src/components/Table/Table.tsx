@@ -11,15 +11,14 @@ import Tooltip from 'components/kit/Tooltip';
 import UserAvatar from 'components/kit/UserAvatar';
 import Link from 'components/Link';
 import ProgressBar from 'components/ProgressBar';
+import Spinner from 'components/Spinner';
 import TimeAgo from 'components/TimeAgo';
 import TimeDuration from 'components/TimeDuration';
 import { OMITTED_STR } from 'constants/accessControl';
 import { commandTypeToLabel } from 'constants/states';
 import { paths } from 'routes/utils';
-import Spinner from 'shared/components/Spinner';
-import { Pagination } from 'shared/types';
-import { getDuration } from 'shared/utils/datetime';
 import { StateOfUnion } from 'themes';
+import { Pagination } from 'types';
 import {
   CommandTask,
   CommandType,
@@ -33,6 +32,7 @@ import {
   TrialItem,
   Workspace,
 } from 'types';
+import { getDuration } from 'utils/datetime';
 import { canBeOpened } from 'utils/task';
 import { openCommand } from 'utils/wait';
 

@@ -57,7 +57,6 @@ func DefaultGCPClusterConfig() *GCPClusterConfig {
 	return &GCPClusterConfig{
 		BootDiskSize:        200,
 		BootDiskSourceImage: "projects/determined-ai/global/images/det-environments-6eceaca",
-		BootDiskType:        "pd-standard",
 		LabelKey:            "managed-by",
 		InstanceType: gceInstanceType{
 			MachineType: "n1-standard-32",
@@ -96,6 +95,12 @@ func (c *GCPClusterConfig) InitDefaultValues() error {
 		if c.Zone, err = metadata.Zone(); err != nil {
 			return err
 		}
+	}
+	if len(c.BootDiskType) == 0 {
+		c.BootDiskType = fmt.Sprintf(
+			"projects/determined-ai/zones/%s/diskTypes/pd-standard",
+			c.Zone,
+		)
 	}
 
 	// One common reason that metadata.InstanceName() fails is that the master is not

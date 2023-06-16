@@ -3,10 +3,10 @@ import React, { useEffect } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 
 import { paths } from 'routes/utils';
-import useUI from 'shared/contexts/stores/UI';
-import { RouteConfig } from 'shared/types';
-import { filterOutLoginLocation } from 'shared/utils/routes';
 import authStore from 'stores/auth';
+import useUI from 'stores/contexts/UI';
+import { RouteConfig } from 'types';
+import { filterOutLoginLocation } from 'utils/routes';
 
 interface Props {
   routes: RouteConfig[];

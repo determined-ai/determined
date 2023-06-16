@@ -23,6 +23,7 @@
 # - if fail, notify and add PR to current release as "Fix (conflict)"
 
 import argparse
+import base64
 import os
 import re
 import subprocess
@@ -35,6 +36,7 @@ TEST = os.environ.get("RELEASE_TEST") == "1"
 
 
 ORG = "determined-ai"
+CLONED_REMOTE = "origin"
 ISSUES_REPO = "release-party-issues-test" if TEST else "release-party-issues"
 
 CHERRY_PICK_LABEL = "to-cherry-pick"
@@ -42,6 +44,19 @@ CHERRY_PICK_LABEL = "to-cherry-pick"
 NEEDS_TESTING_STATUS = "Needs testing"
 FIX_OPEN_STATUS = "Fix (open)"
 FIX_CONFLICT_STATUS = "Fix (conflict)"
+
+GITHUB_TOKEN = os.environ["GITHUB_TOKEN"]
+
+
+def run(*args, check=True, quiet=False, **kwargs):
+    kwargs = dict(kwargs)
+    if not quiet:
+        print(f"\n================ running: \x1b[36m{args}\x1b[m")
+    return subprocess.run(args, check=check, **kwargs)
+
+
+def run_capture(*args, **kwargs):
+    return run(*args, stdout=subprocess.PIPE, universal_newlines=True, **kwargs).stdout
 
 
 def make_issue_for_pr(issue_repo_id: str, pr_id: str) -> str:
@@ -95,37 +110,90 @@ def current_project_id() -> str:
 
 
 def cherry_pick_pr(pr_id: str) -> None:
-    commit = gql.get_pr_merge_commit(id=pr_id)["node"]["mergeCommit"]["oid"]
-    print(f"Cherry-picking {commit}")
+    if "determined-ee" in run_capture("git", "remote", "get-url", CLONED_REMOTE):
+        # TODO Add the separate logic for running EE-only cherry-picks.
+        print("Skipping EE PR, marking as conflicted for human attention")
+        add_item_to_project(current_project_id(), pr_id, FIX_CONFLICT_STATUS)
+        return
+
+    pr_commit = gql.get_pr_merge_commit(id=pr_id)["node"]["mergeCommit"]["oid"]
+    print(f"Cherry-picking {pr_commit}")
 
     try:
-        # TODO Actually run Git to do the cherry-pick.
-        status = NEEDS_TESTING_STATUS
-    except subprocess.CalledProcessError:
-        # TODO Notify a human.
-        status = FIX_CONFLICT_STATUS
+        # Find and fetch the PR commit and both release branches.
+        release_branch = max(
+            line.split()[1]
+            for line in run_capture(
+                "git", "ls-remote", CLONED_REMOTE, "refs/heads/release-*"
+            ).splitlines()
+        )[len("refs/heads/") :]
+        ee_release_branch = f"{release_branch}-ee"
+        print(f"Found release branch {release_branch}")
 
-    add_tracking_issue_to_project(current_project_id(), pr_id, status)
+        run(
+            "git",
+            "fetch",
+            "--depth=2",
+            CLONED_REMOTE,
+            pr_commit,
+            f"{release_branch}:{release_branch}",
+        )
+
+        ee_remote = "ee"
+        run("git", "remote", "add", ee_remote, "https://github.com/determined-ai/determined-ee.git")
+        run("cat", ".git/config")
+        auth = base64.b64encode(f"x-access-token:{GITHUB_TOKEN}".encode()).decode()
+        run(
+            "git",
+            "config",
+            "--local",
+            "http.https://github.com/.extraHeader",
+            f"Authorization: Basic {auth}",
+        )
+        run("git", "fetch", "--depth=2", ee_remote, f"{ee_release_branch}:{ee_release_branch}")
+
+        # Perform both cherry-picks.
+        run("git", "config", "user.email", "automation@determined.ai")
+        run("git", "config", "user.name", "Determined CI")
+        run("git", "checkout", release_branch)
+        run("git", "cherry-pick", "-x", pr_commit)
+        run("git", "checkout", ee_release_branch)
+        run("git", "cherry-pick", "-x", pr_commit)
+
+        # Perform both pushes only if both cherry-picks succeeded, so we don't
+        # end up with the two branches in different states.
+        run("git", "push", CLONED_REMOTE, f"{release_branch}:{release_branch}")
+        run("git", "push", ee_remote, f"{ee_release_branch}:{ee_release_branch}")
+
+        print("Cherry-pick succeeded, adding tracking item for testing")
+        add_tracking_issue_to_project(current_project_id(), pr_id, NEEDS_TESTING_STATUS)
+    except subprocess.CalledProcessError:
+        import traceback
+
+        traceback.print_exc()
+        print("Cherry-pick failed, adding PR as conflicted")
+        # TODO Notify a human.
+        add_item_to_project(current_project_id(), pr_id, FIX_CONFLICT_STATUS)
 
 
 class Actions:
     @staticmethod
     def pr_merged(pr_id: str):
-        title = gql.get_pr_title(id=pr_id)["node"]["title"]
-        if re.match("(feat|fix):", title) is not None:
-            print("Adding feat/fix PR")
-        elif re.match("[a-z]+:", title) is not None:
-            print("Skipping non-feat/fix PR")
-            return
-        else:
-            print("Adding PR of unknown type")
-
         pr_labels = gql.get_pr_labels(id=pr_id)["node"]["labels"]["nodes"]
         print("Labels of merged PR:", [label["name"] for label in pr_labels])
         if any(label["name"] == CHERRY_PICK_LABEL for label in pr_labels):
             print("Cherry-picking labeled merged PR")
             cherry_pick_pr(pr_id)
         else:
+            title = gql.get_pr_title(id=pr_id)["node"]["title"]
+            if re.match("(feat|fix):", title) is not None:
+                print("Adding feat/fix PR")
+            elif re.match("[a-z]+:", title) is not None:
+                print("Skipping non-feat/fix PR")
+                return
+            else:
+                print("Adding PR of unknown type")
+
             print("Adding merged PR to next release project")
             add_tracking_issue_to_project(next_project_id(), pr_id, NEEDS_TESTING_STATUS)
 

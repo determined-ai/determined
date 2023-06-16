@@ -2,7 +2,7 @@ import { FilterDropdownProps } from 'antd/lib/table/interface';
 import React from 'react';
 
 import TableFilterRange from 'components/Table/TableFilterRange';
-import { isNullOrUndefined } from 'shared/utils/data';
+import { isNullOrUndefined } from 'utils/data';
 
 import { NumberRangeDict, SetFilters, TrialFilters } from '../Collections/filters';
 

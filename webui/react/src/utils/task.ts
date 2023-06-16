@@ -1,8 +1,8 @@
 import { killableCommandStates, killableRunStates, terminalCommandStates } from 'constants/states';
 import { LaunchTensorBoardParams } from 'services/types';
-import { isEqual } from 'shared/utils/data';
 import * as Type from 'types';
 import { CommandState, RunState, State } from 'types';
+import { isEqual } from 'utils/data';
 
 import { runStateSortValues } from './experiment';
 

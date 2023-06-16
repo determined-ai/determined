@@ -2,6 +2,7 @@ package internal
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"strconv"
@@ -132,21 +133,25 @@ func newExperiment(
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot create an experiment: %w", err)
 	}
-	if err = m.rm.ValidateResources(m.system, poolName, resources.SlotsPerTrial(), false); err != nil {
-		return nil, nil, fmt.Errorf("validating resources: %v", err)
-	}
-	launchWarnings, err := m.rm.ValidateResourcePoolAvailability(
-		m.system,
-		poolName,
-		resources.SlotsPerTrial(),
-	)
-	if err != nil {
-		return nil, launchWarnings, fmt.Errorf("getting resource availability: %w", err)
-	}
-	if m.config.ResourceManager.AgentRM != nil && m.config.LaunchError && len(launchWarnings) > 0 {
-		return nil, nil, errors.New("slots requested exceeds cluster capacity")
-	}
 
+	var launchWarnings []command.LaunchWarning
+	if expModel.ID == 0 {
+		err := m.rm.ValidateResources(m.system, poolName, resources.SlotsPerTrial(), false)
+		if err != nil {
+			return nil, nil, fmt.Errorf("validating resources: %v", err)
+		}
+		launchWarnings, err = m.rm.ValidateResourcePoolAvailability(
+			m.system,
+			poolName,
+			resources.SlotsPerTrial(),
+		)
+		if err != nil {
+			return nil, launchWarnings, fmt.Errorf("getting resource availability: %w", err)
+		}
+		if m.config.ResourceManager.AgentRM != nil && m.config.LaunchError && len(launchWarnings) > 0 {
+			return nil, nil, errors.New("slots requested exceeds cluster capacity")
+		}
+	}
 	resources.SetResourcePool(poolName)
 	activeConfig.SetResources(resources)
 
@@ -377,7 +382,8 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		}
 	case sproto.GetJob:
 		j, err := e.toV1Job()
-		if err != nil {
+		if err != nil && err != sql.ErrNoRows {
+			// FIXME: DET-9563 workspace and/or project is deleted.
 			ctx.Respond(err)
 		} else {
 			ctx.Respond(j)
@@ -945,7 +951,7 @@ func (e *experiment) setRP(ctx *actor.Context, msg sproto.SetResourcePool) error
 func (e *experiment) toV1Job() (*jobv1.Job, error) {
 	workspace, err := workspace.WorkspaceByProjectID(context.TODO(), e.ProjectID)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to get workspace id for exp '%d'", e.ID)
+		return nil, err
 	}
 
 	j := jobv1.Job{

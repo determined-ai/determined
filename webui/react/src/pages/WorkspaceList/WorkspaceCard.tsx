@@ -6,13 +6,13 @@ import DynamicIcon from 'components/DynamicIcon';
 import Card from 'components/kit/Card';
 import { Columns } from 'components/kit/Columns';
 import Avatar from 'components/kit/UserAvatar';
+import Spinner from 'components/Spinner';
 import { paths } from 'routes/utils';
-import Spinner from 'shared/components/Spinner';
-import { pluralizer } from 'shared/utils/string';
 import userStore from 'stores/users';
 import { Workspace } from 'types';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
+import { pluralizer } from 'utils/string';
 
 import { useWorkspaceActionMenu } from './WorkspaceActionDropdown';
 import css from './WorkspaceCard.module.scss';

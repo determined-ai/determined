@@ -1,7 +1,7 @@
-import { RecordKey } from 'shared/types';
+import { RecordKey } from 'types';
 import { Metric, MetricType, WorkloadGroup } from 'types';
 
-import { alphaNumericSorter } from '../shared/utils/sort';
+import { alphaNumericSorter } from '../utils/sort';
 
 /*
  * Sort the metric names by having the validation metrics come first followed by training metrics.

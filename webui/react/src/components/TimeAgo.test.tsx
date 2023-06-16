@@ -7,7 +7,7 @@ import {
   DURATION_MINUTE,
   DURATION_SECOND,
   DURATION_YEAR,
-} from 'shared/utils/datetime';
+} from 'utils/datetime';
 
 import TimeAgo, { TimeAgoCase } from './TimeAgo';
 

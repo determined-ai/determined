@@ -2,7 +2,7 @@ import { EventEmitter } from 'events';
 
 import { useCallback, useEffect } from 'react';
 
-import { ValueOf } from 'shared/types';
+import { ValueOf } from 'types';
 
 export const KeyEvent = {
   KeyDown: 'KeyDown',

@@ -1,7 +1,7 @@
 import { V1ResourceAllocationAggregatedEntry } from 'services/api-ts-sdk';
-import { sumArrays } from 'shared/utils/array';
-import { secondToHour } from 'shared/utils/datetime';
 import { DetailedUser } from 'types';
+import { sumArrays } from 'utils/array';
+import { secondToHour } from 'utils/datetime';
 import { getDisplayName } from 'utils/user';
 
 import { GroupBy } from './ClusterHistoricalUsage.settings';

@@ -2,6 +2,7 @@ import { TablePaginationConfig } from 'antd';
 import { FilterDropdownProps, FilterValue, SorterResult } from 'antd/es/table/interface';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
+import ActionDropdown from 'components/ActionDropdown/ActionDropdown';
 import Badge, { BadgeType } from 'components/Badge';
 import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
 import HumanReadableNumber from 'components/HumanReadableNumber';
@@ -16,18 +17,13 @@ import TableFilterDropdown from 'components/Table/TableFilterDropdown';
 import { terminalRunStates } from 'constants/states';
 import useModalHyperparameterSearch from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
 import usePermissions from 'hooks/usePermissions';
+import usePolling from 'hooks/usePolling';
 import { useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { getExpTrials, openOrCreateTensorBoard } from 'services/api';
 import { Experimentv1State, V1GetExperimentTrialsRequestSortBy } from 'services/api-ts-sdk';
 import { encodeExperimentState } from 'services/decoder';
-import ActionDropdown from 'shared/components/ActionDropdown/ActionDropdown';
-import usePolling from 'shared/hooks/usePolling';
-import { ValueOf } from 'shared/types';
-import { ErrorLevel, ErrorType } from 'shared/utils/error';
-import { routeToReactUrl } from 'shared/utils/routes';
-import { validateDetApiEnum, validateDetApiEnumList } from 'shared/utils/service';
-import { humanReadableBytes } from 'shared/utils/string';
+import { ValueOf } from 'types';
 import {
   ExperimentAction as Action,
   CheckpointWorkloadExtended,
@@ -37,8 +33,12 @@ import {
   RunState,
   TrialItem,
 } from 'types';
+import { ErrorLevel, ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 import { getMetricValue } from 'utils/metric';
+import { routeToReactUrl } from 'utils/routes';
+import { validateDetApiEnum, validateDetApiEnumList } from 'utils/service';
+import { humanReadableBytes } from 'utils/string';
 import { openCommandResponse } from 'utils/wait';
 
 import css from './ExperimentTrials.module.scss';
@@ -463,7 +463,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
       {settings.compare && (
         <TrialsComparisonModal
           experiment={experiment}
-          trials={settings.row ?? []}
+          trialIds={settings.row ?? []}
           visible={settings.compare}
           onCancel={handleTrialCompareCancel}
           onUnselect={handleTrialUnselect}

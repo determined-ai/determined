@@ -226,10 +226,10 @@ func TestMetricNames(t *testing.T) {
 	db := MustResolveTestPostgres(t)
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 
-	actualTrain, actualVal, err := MetricNames(ctx, []int{-1})
+	actualNames, err := db.MetricNames(ctx, []int{-1})
 	require.NoError(t, err)
-	require.Len(t, actualTrain, 0)
-	require.Len(t, actualVal, 0)
+	require.Len(t, actualNames[model.TrainingMetricType], 0)
+	require.Len(t, actualNames[model.ValidationMetricType], 0)
 
 	user := RequireMockUser(t, db)
 
@@ -239,18 +239,60 @@ func TestMetricNames(t *testing.T) {
 	trial2 := RequireMockTrial(t, db, exp).ID
 	addMetrics(ctx, t, db, trial2, `[{"b":1}, {"d":2}]`, `[{"f":"test"}]`, false)
 
-	actualTrain, actualVal, err = MetricNames(ctx, []int{exp.ID})
+	actualNames, err = db.MetricNames(ctx, []int{exp.ID})
 	require.NoError(t, err)
-	require.Equal(t, []string{"a", "b", "d"}, actualTrain)
-	require.Equal(t, []string{"b", "c", "f"}, actualVal)
+	require.Equal(t, []string{"a", "b", "d"}, actualNames[model.TrainingMetricType])
+	require.Equal(t, []string{"b", "c", "f"}, actualNames[model.ValidationMetricType])
 
 	addMetricCustomTime(ctx, t, trial2, time.Now())
 	runSummaryMigration(t)
 
-	actualTrain, actualVal, err = MetricNames(ctx, []int{exp.ID})
+	actualNames, err = db.MetricNames(ctx, []int{exp.ID})
 	require.NoError(t, err)
-	require.Equal(t, []string{"a", "b", "d"}, actualTrain)
-	require.Equal(t, []string{"b", "c", "f", "val_loss"}, actualVal)
+	require.Equal(t, []string{"a", "b", "d"}, actualNames[model.TrainingMetricType])
+	require.Equal(t, []string{"b", "c", "f", "val_loss"}, actualNames[model.ValidationMetricType])
+
+	exp = RequireMockExperiment(t, db, user)
+	trial1 = RequireMockTrial(t, db, exp).ID
+	addTestTrialMetrics(ctx, t, db, trial1,
+		`{"inference": [{"a":1}, {"b":2}], "golabi": [{"b":2, "c":3}]}`)
+	trial2 = RequireMockTrial(t, db, exp).ID
+	addTestTrialMetrics(ctx, t, db, trial2,
+		`{"inference": [{"b":1}, {"d":2}], "golabi": [{"f":"test"}]}`)
+
+	actualNames, err = db.MetricNames(ctx, []int{exp.ID})
+	require.NoError(t, err)
+	require.Equal(t, []string{"a", "b", "d"}, actualNames[model.MetricType("inference")])
+	require.Equal(t, []string{"b", "c", "f"}, actualNames[model.MetricType("golabi")])
+}
+
+func TestMetricBatchesMilestones(t *testing.T) {
+	ctx := context.Background()
+	require.NoError(t, etc.SetRootPath(RootFromDB))
+	db := MustResolveTestPostgres(t)
+	MustMigrateTestPostgres(t, db, MigrationsFromDB)
+	user := RequireMockUser(t, db)
+	exp := RequireMockExperiment(t, db, user)
+
+	startTime := time.Time{}
+
+	trial1 := RequireMockTrial(t, db, exp).ID
+	addTestTrialMetrics(ctx, t, db, trial1,
+		`{"inference": [{"a":1}, {"b":2}], "golabi": [{"b":2, "c":3}]}`)
+	trial2 := RequireMockTrial(t, db, exp).ID
+	addTestTrialMetrics(ctx, t, db, trial2,
+		`{"inference": [{"b":1}, {"d":2}], "golabi": [{"f":"test"}]}`)
+
+	batches, _, err := MetricBatches(exp.ID, "a", startTime, model.MetricType("inference"))
+	require.NoError(t, err)
+	require.Len(t, batches, 1)
+	require.Equal(t, batches[0], int32(1))
+
+	batches, _, err = MetricBatches(exp.ID, "b", startTime, model.MetricType("inference"))
+	require.NoError(t, err)
+	require.Len(t, batches, 2, "should have 2 batches", batches, trial1, trial2)
+	require.Equal(t, batches[0], int32(1))
+	require.Equal(t, batches[1], int32(2))
 }
 
 func TestTopTrialsByMetric(t *testing.T) {

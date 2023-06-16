@@ -6,15 +6,15 @@ import MetricSelect from 'components/MetricSelect';
 import ResponsiveFilters from 'components/ResponsiveFilters';
 import ScaleSelect from 'components/ScaleSelect';
 import Section from 'components/Section';
+import Spinner from 'components/Spinner';
 import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
 import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin';
 import { trackAxis } from 'components/UPlot/UPlotChart/trackAxis';
+import usePolling from 'hooks/usePolling';
 import css from 'pages/TrialDetails/TrialChart.module.scss';
 import { timeSeries } from 'services/api';
-import Spinner from 'shared/components/Spinner';
-import usePolling from 'shared/hooks/usePolling';
-import { glasbeyColor } from 'shared/utils/color';
 import { Metric, MetricContainer, Scale } from 'types';
+import { glasbeyColor } from 'utils/color';
 
 interface Props {
   defaultMetricNames: Metric[];

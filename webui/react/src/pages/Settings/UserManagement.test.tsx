@@ -6,8 +6,8 @@ import { HelmetProvider } from 'react-helmet-async';
 import { BrowserRouter } from 'react-router-dom';
 
 import { SettingsProvider } from 'hooks/useSettingsProvider';
-import { StoreProvider } from 'shared/contexts/stores/UI';
 import authStore from 'stores/auth';
+import { StoreProvider } from 'stores/contexts/UI';
 import userStore from 'stores/users';
 import { DetailedUser } from 'types';
 

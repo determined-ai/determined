@@ -51,6 +51,7 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
+	"github.com/determined-ai/determined/proto/pkg/metricv1"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
 	"github.com/determined-ai/determined/proto/pkg/rbacv1"
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
@@ -66,6 +67,9 @@ type experimentAllocation struct {
 	Running  bool
 	Starting bool
 }
+
+// SummaryMetricStatistics lists values possibly queryable within summary metrics.
+var SummaryMetricStatistics = []string{"count", "last", "max", "min", "sum"}
 
 const maxConcurrentDeletes = 10
 
@@ -594,6 +598,7 @@ func (a *apiServer) GetExperiments(
 		}
 	}
 	if len(req.States) > 0 {
+		// FIXME(DET-9567): the api state parameter and the database state column do not match.
 		var allStates []string
 		for _, state := range req.States {
 			allStates = append(allStates, strings.TrimPrefix(state.String(), "STATE_"))
@@ -1417,6 +1422,7 @@ func (a *apiServer) ExpMetricNames(req *apiv1.ExpMetricNamesRequest,
 	seenSearcher := make(map[string]bool)
 	seenTrain := make(map[string]bool)
 	seenValid := make(map[string]bool)
+	seenMetrics := make(map[model.MetricType]map[string]bool)
 
 	var timeSinceLastAuth time.Time
 	for {
@@ -1445,22 +1451,39 @@ func (a *apiServer) ExpMetricNames(req *apiv1.ExpMetricNamesRequest,
 			expIDs[i] = int(ID)
 		}
 
-		newTrain, newValid, err := db.MetricNames(resp.Context(), expIDs)
+		metricNames, err := a.m.db.MetricNames(resp.Context(), expIDs)
 		if err != nil {
 			return errors.Wrapf(err,
 				"error fetching metric names for experiment: %d", req.Ids)
 		}
 
-		for _, name := range newTrain {
+		for _, name := range metricNames[model.TrainingMetricType] {
 			if seen := seenTrain[name]; !seen {
+				//nolint:staticcheck // SA1019: backward compatibility
 				response.TrainingMetrics = append(response.TrainingMetrics, name)
 				seenTrain[name] = true
 			}
 		}
-		for _, name := range newValid {
+		for _, name := range metricNames[model.ValidationMetricType] {
 			if seen := seenValid[name]; !seen {
+				//nolint:staticcheck // SA1019: backward compatibility
 				response.ValidationMetrics = append(response.ValidationMetrics, name)
 				seenValid[name] = true
+			}
+		}
+		for metricType, names := range metricNames {
+			for _, name := range names {
+				if seen := seenMetrics[metricType][name]; !seen {
+					typedMetric := metricv1.MetricName{
+						Type: metricType.ToString(),
+						Name: name,
+					}
+					response.MetricNames = append(response.MetricNames, &typedMetric)
+					if seenMetrics[metricType] == nil {
+						seenMetrics[metricType] = make(map[string]bool)
+					}
+					seenMetrics[metricType][name] = true
+				}
 			}
 		}
 
@@ -1495,10 +1518,6 @@ func (a *apiServer) MetricBatches(req *apiv1.MetricBatchesRequest,
 	if metricName == "" {
 		return status.Error(codes.InvalidArgument, "must specify a metric name")
 	}
-	metricType := req.MetricType
-	if metricType == apiv1.MetricType_METRIC_TYPE_UNSPECIFIED {
-		return status.Error(codes.InvalidArgument, "must specify a metric type")
-	}
 	period := time.Duration(req.PeriodSeconds) * time.Second
 	if period == 0 {
 		period = defaultMetricsStreamPeriod
@@ -1521,16 +1540,15 @@ func (a *apiServer) MetricBatches(req *apiv1.MetricBatchesRequest,
 		var newBatches []int32
 		var endTime time.Time
 		var err error
-		switch metricType {
-		case apiv1.MetricType_METRIC_TYPE_TRAINING:
-			newBatches, endTime, err = a.m.db.TrainingMetricBatches(experimentID, metricName,
-				startTime)
-		case apiv1.MetricType_METRIC_TYPE_VALIDATION:
-			newBatches, endTime, err = a.m.db.ValidationMetricBatches(experimentID, metricName,
-				startTime)
-		default:
-			panic("Invalid metric type")
+		//nolint:staticcheck // SA1019: backward compatibility
+		metricType, err := a.parseMetricTypeArgs(req.MetricType, model.MetricType(req.CustomType))
+		if err != nil {
+			return err
 		}
+		if metricType == "" {
+			return status.Error(codes.InvalidArgument, "must specify a metric type")
+		}
+		newBatches, endTime, err = db.MetricBatches(experimentID, metricName, startTime, metricType)
 		if err != nil {
 			return errors.Wrapf(err, "error fetching batches recorded for metric")
 		}
@@ -1573,6 +1591,7 @@ func (a *apiServer) TrialsSnapshot(req *apiv1.TrialsSnapshotRequest,
 	if metricName == "" {
 		return status.Error(codes.InvalidArgument, "must specify a metric name")
 	}
+	//nolint:staticcheck // SA1019: backward compatibility
 	metricType := req.MetricType
 	if metricType == apiv1.MetricType_METRIC_TYPE_UNSPECIFIED {
 		return status.Error(codes.InvalidArgument, "must specify a metric type")
@@ -1784,6 +1803,7 @@ func (a *apiServer) TrialsSample(req *apiv1.TrialsSampleRequest,
 	}
 
 	metricName := req.MetricName
+	//nolint:staticcheck // SA1019: backward compatibility
 	metricType := req.MetricType
 	if metricType == apiv1.MetricType_METRIC_TYPE_UNSPECIFIED {
 		return status.Error(codes.InvalidArgument, "must specify a metric type")
@@ -2076,6 +2096,19 @@ func sortExperiments(sortString *string, experimentQuery *bun.SelectQuery) error
 			experimentQuery.OrderExpr(
 				fmt.Sprintf("e.validation_metrics->'%s' %s",
 					metricName, sortDirection))
+		case strings.HasPrefix(paramDetail[0], "training."):
+			metricDetails := strings.Split(paramDetail[0], ".")
+			metricQualifier := metricDetails[len(metricDetails)-1]
+			metricName := strings.TrimSuffix(
+				strings.TrimPrefix(paramDetail[0], "training."),
+				"."+metricQualifier)
+			if !slices.Contains(SummaryMetricStatistics, metricQualifier) {
+				return status.Errorf(codes.InvalidArgument,
+					"sort training metrics by statistic: count, last, max, min, or sum")
+			}
+			experimentQuery.OrderExpr(
+				fmt.Sprintf("trials.summary_metrics->'avg_metrics'->'%s'->>'%s' %s", metricName,
+					metricQualifier, sortDirection))
 		default:
 			if _, ok := orderColMap[paramDetail[0]]; !ok {
 				return status.Errorf(codes.InvalidArgument, "invalid sort col: %s", paramDetail[0])
@@ -2102,6 +2135,7 @@ func (a *apiServer) SearchExperiments(
 		Model(&experiments).
 		ModelTableExpr("experiments as e").
 		Column("e.best_trial_id").
+		Join("LEFT JOIN trials ON trials.id = e.best_trial_id").
 		Apply(getExperimentColumns)
 
 	curUser, _, err := grpcutil.GetUser(ctx)
@@ -2193,7 +2227,7 @@ func (a *apiServer) SearchExperiments(
 		Column("trials.restarts").
 		ColumnExpr("coalesce(new_ckpt.uuid, old_ckpt.uuid) AS warm_start_checkpoint_uuid").
 		ColumnExpr("trials.checkpoint_size AS total_checkpoint_size").
-		ColumnExpr(exputil.ProtoStateDBCaseString(trialv1.State_value, "trials.state", "state",
+		ColumnExpr(exputil.ProtoStateDBCaseString(experimentv1.State_value, "trials.state", "state",
 			"STATE_")).
 		ColumnExpr(`(CASE WHEN trials.hparams = 'null'::jsonb
 				THEN null ELSE trials.hparams END) AS hparams`).

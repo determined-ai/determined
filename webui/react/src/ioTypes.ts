@@ -2,15 +2,15 @@ import { isLeft } from 'fp-ts/lib/Either';
 import * as io from 'io-ts';
 
 import { V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
-import { ValueOf } from 'shared/types';
-import { DetError, ErrorLevel, ErrorType } from 'shared/utils/error';
 import {
   CheckpointStorageType,
   ExperimentSearcherName,
   HyperparameterType,
   LogLevel,
   RunState,
+  ValueOf,
 } from 'types';
+import { DetError, ErrorLevel, ErrorType } from 'utils/error';
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export const decode = <T>(type: io.Mixed, data: any): T => {
@@ -114,6 +114,29 @@ const runStatesIoType = io.keyof(runStates);
 const ioMetricValue = io.unknown;
 const ioMetric = io.record(io.string, ioMetricValue);
 export type ioTypeMetric = io.TypeOf<typeof ioMetric>;
+
+const ioMetricSummary = io.type({
+  count: optional(io.union([io.number, io.undefined])),
+  last: optional(io.union([io.number, io.string, io.boolean])),
+  max: optional(io.number),
+  min: optional(io.number),
+  sum: optional(io.number),
+  type: io.union([
+    io.literal('string'),
+    io.literal('number'),
+    io.literal('boolean'),
+    io.literal('date'),
+    io.literal('object'),
+    io.literal('array'),
+    io.literal('null'),
+  ]),
+});
+
+export const ioSummaryMetrics = io.type({
+  avg_metrics: io.union([io.record(io.string, ioMetricSummary), io.undefined]),
+  validation_metrics: io.union([io.record(io.string, ioMetricSummary), io.undefined]),
+});
+export type ioSummaryMetrics = io.TypeOf<typeof ioSummaryMetrics>;
 
 /* Experiments */
 
@@ -244,6 +267,7 @@ export type ioTypeTaskLogs = io.TypeOf<typeof ioTaskLogs>;
 export const ioLocationType: io.Type<V1LocationType> = io.keyof({
   [V1LocationType.EXPERIMENT]: null,
   [V1LocationType.HYPERPARAMETERS]: null,
+  [V1LocationType.TRAINING]: null,
   [V1LocationType.VALIDATIONS]: null,
   [V1LocationType.UNSPECIFIED]: null,
 });

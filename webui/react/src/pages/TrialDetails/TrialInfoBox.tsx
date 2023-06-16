@@ -8,9 +8,9 @@ import Section from 'components/Section';
 import TimeAgo from 'components/TimeAgo';
 import useModalCheckpoint from 'hooks/useModal/Checkpoint/useModalCheckpoint';
 import useModalCheckpointRegister from 'hooks/useModal/Checkpoint/useModalCheckpointRegister';
-import { ModalCloseReason } from 'shared/hooks/useModal/useModal';
-import { humanReadableBytes } from 'shared/utils/string';
+import { ModalCloseReason } from 'hooks/useModal/useModal';
 import { CheckpointWorkloadExtended, ExperimentBase, TrialDetails } from 'types';
+import { humanReadableBytes } from 'utils/string';
 
 interface Props {
   experiment: ExperimentBase;

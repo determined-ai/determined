@@ -259,8 +259,8 @@ func TestMultiTrialSampleMetrics(t *testing.T) {
 	}
 
 	maxDataPoints := 7
-	actualTrainingMetrics, err := api.MultiTrialSample(int32(trial.ID), trainMetricNames,
-		apiv1.MetricType_METRIC_TYPE_TRAINING, maxDataPoints, 0, 10, false, nil, []string{})
+	actualTrainingMetrics, err := api.multiTrialSample(int32(trial.ID), trainMetricNames,
+		model.TrainingMetricType, maxDataPoints, 0, 10, false, nil, []string{})
 	require.NoError(t, err)
 	require.Equal(t, 1, len(actualTrainingMetrics))
 	var validationMetricNames []string
@@ -269,16 +269,16 @@ func TestMultiTrialSampleMetrics(t *testing.T) {
 		metricIds = append(metricIds, "validation."+metricName)
 	}
 
-	actualValidationTrainingMetrics, err := api.MultiTrialSample(int32(trial.ID),
-		validationMetricNames, apiv1.MetricType_METRIC_TYPE_VALIDATION, maxDataPoints,
+	actualValidationTrainingMetrics, err := api.multiTrialSample(int32(trial.ID),
+		validationMetricNames, model.ValidationMetricType, maxDataPoints,
 		0, 10, false, nil, []string{})
 	require.Equal(t, 1, len(actualValidationTrainingMetrics))
 	require.NoError(t, err)
 	require.True(t, isMultiTrialSampleCorrect(expectedTrainMetrics, actualTrainingMetrics[0]))
 	require.True(t, isMultiTrialSampleCorrect(expectedValMetrics, actualValidationTrainingMetrics[0]))
 
-	actualAllMetrics, err := api.MultiTrialSample(int32(trial.ID), []string{},
-		apiv1.MetricType_METRIC_TYPE_UNSPECIFIED, maxDataPoints, 0, 10, false, nil, metricIds)
+	actualAllMetrics, err := api.multiTrialSample(int32(trial.ID), []string{},
+		"", maxDataPoints, 0, 10, false, nil, metricIds)
 	require.Equal(t, 2, len(actualAllMetrics))
 	require.NoError(t, err)
 	require.Equal(t, maxDataPoints, len(actualAllMetrics[0].Data)) // max datapoints check
@@ -403,8 +403,8 @@ func TestTrialsNonNumericMetrics(t *testing.T) {
 	require.NoError(t, err)
 
 	trial := createTestTrial(t, api, curUser)
-	_, err = api.ReportTrialValidationMetrics(ctx, &apiv1.ReportTrialValidationMetricsRequest{
-		ValidationMetrics: &trialv1.TrialMetrics{
+	_, err = api.ReportTrialMetrics(ctx, &apiv1.ReportTrialMetricsRequest{
+		Metrics: &trialv1.TrialMetrics{
 			TrialId:        int32(trial.ID),
 			TrialRunId:     0,
 			StepsCompleted: 1,
@@ -412,6 +412,7 @@ func TestTrialsNonNumericMetrics(t *testing.T) {
 				AvgMetrics: expectedMetrics,
 			},
 		},
+		Type: model.ValidationMetricType.ToString(),
 	})
 	require.NoError(t, err)
 

@@ -2,14 +2,14 @@ import { ModalFuncProps } from 'antd/es/modal/Modal';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Tags, { TagAction } from 'components/kit/Tags';
+import useModal, { ModalHooks as Hooks } from 'hooks/useModal/useModal';
 import {
   getDescriptionText,
   isTrialsCollection,
   TrialsSelectionOrCollection,
 } from 'pages/TrialsComparison/Collections/collections';
 import { updateTrialTags } from 'services/api';
-import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';
-import { ErrorType } from 'shared/utils/error';
+import { ErrorType } from 'utils/error';
 import handleError from 'utils/error';
 
 import { encodeFilters, encodeIdList } from '../api';

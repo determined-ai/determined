@@ -1,7 +1,7 @@
 import React from 'react';
 
-import useUI from 'shared/contexts/stores/UI';
-import { Mode } from 'shared/themes';
+import useUI from 'stores/contexts/UI';
+import { Mode } from 'utils/themes';
 
 import css from './ThemeToggle.module.scss';
 

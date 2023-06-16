@@ -1,4 +1,4 @@
-import React, { useMemo, useRef } from 'react';
+import React, { ReactNode, useMemo, useRef } from 'react';
 import { FixedSizeGrid, GridChildComponentProps } from 'react-window';
 import uPlot, { AlignedData, Plugin } from 'uplot';
 
@@ -60,7 +60,7 @@ interface ChartProps {
   scale?: Scale;
   series: Serie[];
   showLegend?: boolean;
-  title?: string;
+  title?: ReactNode;
   xAxis?: XAxisDomain;
   xLabel?: string;
   yLabel?: string;

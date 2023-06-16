@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package determined.metric.v1;
+option go_package = "github.com/determined-ai/determined/proto/pkg/metricv1";
+
+import "protoc-gen-swagger/options/annotations.proto";
+
+// MetricName packages metric name and type.
+message MetricName {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "type", "name" ] }
+  };
+  // The type of the metric.
+  string type = 1;
+  // The name of the metric.
+  string name = 2;
+}

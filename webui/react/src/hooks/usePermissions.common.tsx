@@ -3,7 +3,7 @@ import React from 'react';
 
 import usePermissions from 'hooks/usePermissions';
 import { GetWorkspaceParams } from 'services/types';
-import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
+import { StoreProvider as UIProvider } from 'stores/contexts/UI';
 
 export const workspace = {
   id: 10,

@@ -129,7 +129,7 @@ func (a *Agent) run(ctx context.Context) error {
 	var logShipperDone chan struct{}
 	switch a.opts.ContainerRuntime {
 	case options.PodmanContainerRuntime:
-		acl, sErr := podman.New(a.opts.PodmanOptions, a.opts.AgentID)
+		acl, sErr := podman.New(a.opts)
 		if sErr != nil {
 			return fmt.Errorf("failed to build podman client: %w", sErr)
 		}
@@ -140,7 +140,7 @@ func (a *Agent) run(ctx context.Context) error {
 		}()
 		cruntime = acl
 	case options.SingularityContainerRuntime:
-		acl, sErr := singularity.New(a.opts.SingularityOptions, a.opts.AgentID)
+		acl, sErr := singularity.New(a.opts)
 		if sErr != nil {
 			return fmt.Errorf("failed to build singularity client: %w", sErr)
 		}

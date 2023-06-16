@@ -5,6 +5,7 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
+	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
@@ -22,6 +23,29 @@ const (
 	// GenericMetric designates metrics from other sources.
 	GenericMetric MetricPartitionType = "GENERIC"
 )
+
+// BunSelectMetricsQuery sets up a bun select query for based on new metrics table
+// simplifying some weirdness we set up for pg10 support.
+func BunSelectMetricsQuery(metricType model.MetricType, inclArchived bool) *bun.SelectQuery {
+	pType := customMetricTypeToPartitionType(metricType)
+	q := Bun().NewSelect().
+		Where("partition_type = ?", pType).
+		Where("archived = ?", inclArchived)
+	if pType == GenericMetric {
+		q.Where("custom_type = ?", metricType)
+	}
+	return q
+}
+
+// BunSelectMetricTypeNames sets up a bun select query for getting all the metric type and names.
+func BunSelectMetricTypeNames() *bun.SelectQuery {
+	return Bun().NewSelect().Table("trials").
+		ColumnExpr("DISTINCT jsonb_object_keys(summary_metrics) as json_path").
+		ColumnExpr("jsonb_object_keys(summary_metrics->jsonb_object_keys(summary_metrics))" +
+			" as metric_name").
+		Where("summary_metrics IS NOT NULL").
+		Order("json_path").Order("metric_name")
+}
 
 /*
 rollbackMetrics ensures old training and validation metrics from a previous run id are archived.
@@ -61,6 +85,11 @@ func (db *PgDB) addRawMetrics(ctx context.Context, tx *sqlx.Tx, metricsBody *map
 	runID, trialID, lastProcessedBatch int32, mType model.MetricType,
 ) (int, error) {
 	pType := customMetricTypeToPartitionType(mType)
+
+	if err := mType.Validate(); err != nil {
+		return 0, err
+	}
+
 	var metricRowID int
 	//nolint:execinquery // we want to get the id.
 	if err := tx.QueryRowContext(ctx, `

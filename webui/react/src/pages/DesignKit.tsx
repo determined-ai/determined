@@ -49,10 +49,9 @@ import { CheckpointsDict } from 'pages/TrialDetails/F_TrialDetailsOverview';
 import { serverAddress } from 'routes/utils';
 import { V1LogLevel } from 'services/api-ts-sdk';
 import { mapV1LogsResponse } from 'services/decoder';
-import useUI from 'shared/contexts/stores/UI';
-import { ValueOf } from 'shared/types';
-import { noOp } from 'shared/utils/service';
+import useUI from 'stores/contexts/UI';
 import { BrandingType } from 'stores/determinedInfo';
+import { ValueOf } from 'types';
 import { Note } from 'types';
 import { MetricType, User } from 'types';
 import {
@@ -68,6 +67,7 @@ import {
 import handleError from 'utils/error';
 import { Loaded, NotLoaded } from 'utils/loadable';
 import loremIpsum from 'utils/loremIpsum';
+import { noOp } from 'utils/service';
 
 import useConfirm, { voidPromiseFn } from '../components/kit/useConfirm';
 
@@ -130,6 +130,10 @@ const ComponentSection: React.FC<Props> = ({ children, id, title }: Props): JSX.
 };
 
 const ButtonsSection: React.FC = () => {
+  const menu: MenuItem[] = [
+    { key: 'start', label: 'Start' },
+    { key: 'stop', label: 'Stop' },
+  ];
   return (
     <ComponentSection id="Buttons" title="Buttons">
       <AntDCard>
@@ -263,6 +267,15 @@ const ButtonsSection: React.FC = () => {
           <Button icon={<Icon name="play" size="tiny" title="Play" />}>
             ButtonWithTinyFontIcon
           </Button>
+        </Space>
+        As Dropdown trigger
+        <Space>
+          <Dropdown menu={menu}>
+            <Button icon={<Icon name="play" size="large" title="Play" />}>Font icon Button</Button>
+          </Dropdown>
+          <Dropdown menu={menu}>
+            <Button icon={<PoweroffOutlined />}>SVG icon Button</Button>
+          </Dropdown>
         </Space>
         <hr />
         <strong>Button with icon and text displayed in a column</strong>

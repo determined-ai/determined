@@ -71,6 +71,10 @@ message Workspace {
   optional google.protobuf.Struct checkpoint_storage_config = 13;
   // Optional date when workspace was pinned.
   optional google.protobuf.Timestamp pinned_at = 14;
+  // Name of the default compute pool.
+  string default_compute_pool = 15;
+  // Name of the default aux pool.
+  string default_aux_pool = 16;
 }
 
 // PatchWorkspace is a partial update to a workspace with all optional fields.
@@ -83,4 +87,8 @@ message PatchWorkspace {
   // Optional checkpoint storage config.
   // Expects same format as experiment config's checkpoint storage.
   optional google.protobuf.Struct checkpoint_storage_config = 13;
+  // Name of the default compute pool.
+  string default_compute_pool = 14;
+  // Name of the default aux pool.
+  string default_aux_pool = 15;
 }
