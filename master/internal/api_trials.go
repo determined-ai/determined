@@ -1369,11 +1369,15 @@ func (a *apiServer) ReportTrialProgress(
 func (a *apiServer) ReportTrialMetrics(
 	ctx context.Context, req *apiv1.ReportTrialMetricsRequest,
 ) (*apiv1.ReportTrialMetricsResponse, error) {
+	metricType := model.MetricType(req.Type)
+	if err := metricType.Validate(); err != nil {
+		return nil, err
+	}
 	if err := a.canGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.Metrics.TrialId),
 		expauth.AuthZProvider.Get().CanEditExperiment); err != nil {
 		return nil, err
 	}
-	if err := a.m.db.AddTrialMetrics(ctx, req.Metrics, model.MetricType(req.Type)); err != nil {
+	if err := a.m.db.AddTrialMetrics(ctx, req.Metrics, metricType); err != nil {
 		return nil, err
 	}
 	return &apiv1.ReportTrialMetricsResponse{}, nil
