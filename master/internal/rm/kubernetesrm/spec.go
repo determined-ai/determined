@@ -94,8 +94,12 @@ func (p *pod) configureEnvVars(
 		slotIds = append(slotIds, strconv.Itoa(i))
 	}
 
+	masterScheme := "http"
+	if p.masterTLSConfig.Enabled {
+		masterScheme = "https"
+	}
 	envVarsMap["DET_CLUSTER_ID"] = p.clusterID
-	envVarsMap["DET_MASTER"] = fmt.Sprintf("%s:%d", p.masterIP, p.masterPort)
+	envVarsMap["DET_MASTER"] = fmt.Sprintf("%s://%s:%d", masterScheme, p.masterIP, p.masterPort)
 	envVarsMap["DET_MASTER_HOST"] = p.masterIP
 	envVarsMap["DET_MASTER_ADDR"] = p.masterIP
 	envVarsMap["DET_MASTER_PORT"] = fmt.Sprintf("%d", p.masterPort)
