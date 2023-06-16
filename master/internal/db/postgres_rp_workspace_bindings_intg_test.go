@@ -31,11 +31,15 @@ func TestAddAndRemoveBindings(t *testing.T) {
 
 	var int32IDs []int32
 	for _, workspaceID := range workspaceIDs {
-		int32IDs = append(int32IDs, int32(workspaceID))
+		int32IDs = append(int32IDs, workspaceID)
 	}
 	// Test single insert/delete
 	// Test bulk insert/delete
-	err = AddRPWorkspaceBindings(ctx, []int32{int32IDs[0]}, "test pool")
+	testPoolName := "test pool"
+	testPool2Name := "test pool too"
+	err = AddRPWorkspaceBindings(ctx, []int32{int32IDs[0]}, testPoolName, []config.ResourcePoolConfig{
+		{PoolName: testPoolName}, {PoolName: testPool2Name},
+	})
 	require.NoError(t, err, "failed to add bindings: %t", err)
 
 	var values []RPWorkspaceBinding
@@ -44,17 +48,19 @@ func TestAddAndRemoveBindings(t *testing.T) {
 	require.Equal(t, 1, count, "expected 1 item in DB, found %d", count)
 	require.Equal(t, workspaceIDs[0], values[0].WorkspaceID,
 		"expected workspaceID to be %d, but it is %d", workspaceIDs[0], values[0].WorkspaceID)
-	require.Equal(t, "test pool", values[0].PoolName,
-		"expected pool name to be 'test pool', but got %s", values[0].PoolName)
+	require.Equal(t, testPoolName, values[0].PoolName,
+		"expected pool name to be '%s', but got %s", testPoolName, values[0].PoolName)
 
-	err = RemoveRPWorkspaceBindings(ctx, []int32{int32IDs[0]}, "test pool")
+	err = RemoveRPWorkspaceBindings(ctx, []int32{int32IDs[0]}, testPoolName)
 	require.NoError(t, err, "failed to remove bindings: %t", err)
 
 	count, err = Bun().NewSelect().Model(&values).ScanAndCount(ctx)
 	require.NoError(t, err, "error when scanning DB: %t", err)
 	require.Equal(t, 0, count, "expected 0 items in DB, found %d", count)
 
-	err = AddRPWorkspaceBindings(ctx, int32IDs, "test pool too")
+	err = AddRPWorkspaceBindings(ctx, int32IDs, testPool2Name, []config.ResourcePoolConfig{
+		{PoolName: testPoolName}, {PoolName: testPool2Name},
+	})
 	require.NoError(t, err, "failed to add bindings: %t", err)
 
 	count, err = Bun().NewSelect().Model(&values).Order("workspace_id ASC").ScanAndCount(ctx)
@@ -63,11 +69,11 @@ func TestAddAndRemoveBindings(t *testing.T) {
 	for i := 0; i < 4; i++ {
 		require.Equal(t, workspaceIDs[i], values[i].WorkspaceID,
 			"expected workspaceID to be %d, but it is %d", i+1, values[i].WorkspaceID)
-		require.Equal(t, "test pool too", values[i].PoolName,
-			"expected pool name to be 'test pool too', but got %s", values[i].PoolName)
+		require.Equal(t, testPool2Name, values[i].PoolName,
+			"expected pool name to be '%s', but got %s", testPool2Name, values[i].PoolName)
 	}
 
-	err = RemoveRPWorkspaceBindings(ctx, int32IDs, "test pool too")
+	err = RemoveRPWorkspaceBindings(ctx, int32IDs, testPool2Name)
 	require.NoError(t, err, "failed to remove bindings: %t", err)
 
 	count, err = Bun().NewSelect().Model(&values).ScanAndCount(ctx)
