@@ -1,5 +1,47 @@
 #!/usr/bin/env bash
-set -ex
+set -e
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -c)
+            OPT_CONTAINER_RUN_TYPE=$2
+            if [[ -z $OPT_CONTAINER_RUN_TYPE ]]; then
+                echo >&2 "usage $0:  Missing -c {container_type}"
+                exit 1
+            fi
+            shift 2
+            ;;
+        -h | --help)
+            set +ex
+            echo "Usage: $0 [-c {container_run_type}]"
+            echo ""
+            echo "Description:"
+            echo "  This script launches a compute instance with Slurm, Singularity (Apptainer),"
+            echo "  the Cray Launcher component and many other dependencies pre-installed."
+            echo "  Then, SSH tunnels are opened so that localhost:8081 on your machine points"
+            echo "  at port 8081 on the compute instance and 8080 on the compute"
+            echo "  instance points at localhost:8080 on your machine. Lastly, devcluster is"
+            echo "  started with the Slurm RM pointed at the remote instance, and local"
+            echo "  development with devcluster works from here as always."
+            echo ""
+            echo "Options:"
+            echo "  -h      Display this help message."
+            echo "  -c {container_run_type}     The container type to use: podman, apptainer, singularity, or enroot"
+            echo ""
+            set -ex
+            exit 1
+            ;;
+        -* | --*)
+            set +ex
+            echo >&2 "$0: Illegal option $1"
+            echo >&2 "Usage: $0 [-c {container_type}]"
+            set -ex
+            exit 1
+            ;;
+    esac
+done
+
+echo "Using ${OPT_CONTAINER_RUN_TYPE} as a container host"
 
 ZONE=$(terraform -chdir=terraform output --raw zone)
 INSTANCE_NAME=$(terraform -chdir=terraform output --raw instance_name)
