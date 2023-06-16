@@ -990,6 +990,7 @@ export const timeSeries: DetApi<
       params.startBatches,
       params.endBatches,
       params.metricType ? Type.metricTypeParamMap[params.metricType] : 'METRIC_TYPE_UNSPECIFIED',
+      undefined,
       params.scale === Type.Scale.Log ? 'SCALE_LOG' : 'SCALE_LINEAR',
     ),
 };
