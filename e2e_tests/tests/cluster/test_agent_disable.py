@@ -11,13 +11,13 @@ from tests import api_utils
 from tests import config as conf
 from tests import experiment as exp
 
-from .test_users import ADMIN_CREDENTIALS, logged_in_user
+from .test_users import logged_in_user
 from .utils import get_command_info, run_zero_slot_command, wait_for_command_state
 
 
 @pytest.mark.e2e_cpu
 def test_disable_and_enable_slots() -> None:
-    with logged_in_user(ADMIN_CREDENTIALS):
+    with logged_in_user(api_utils.ADMIN_CREDENTIALS):
         command = [
             "det",
             "-m",
@@ -92,11 +92,11 @@ def _disable_agent(agent_id: str, drain: bool = False, json: bool = False) -> It
         + [agent_id]
     )
     try:
-        with logged_in_user(ADMIN_CREDENTIALS):
+        with logged_in_user(api_utils.ADMIN_CREDENTIALS):
             out = subprocess.check_output(command).decode()
         yield out
     finally:
-        with logged_in_user(ADMIN_CREDENTIALS):
+        with logged_in_user(api_utils.ADMIN_CREDENTIALS):
             command = ["det", "-m", conf.make_master_url(), "agent", "enable", agent_id]
             subprocess.check_call(command)
 

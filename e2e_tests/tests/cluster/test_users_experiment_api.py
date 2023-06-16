@@ -10,7 +10,7 @@ from tests.cluster import test_users
 
 @pytest.mark.e2e_cpu
 def test_experiment_api_determined_disabled() -> None:
-    api_utils.configure_token_store(test_users.ADMIN_CREDENTIALS)
+    api_utils.configure_token_store(api_utils.ADMIN_CREDENTIALS)
 
     determined_master = conf.make_master_url()
     user_creds = api_utils.create_test_user(add_password=True)
