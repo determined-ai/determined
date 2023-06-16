@@ -333,6 +333,7 @@ def calculate_batch_sizes(
             f"`global_batch_size` changed from {global_batch_size} to {effective_batch_size} "
             f"to divide equally across {slots_per_trial} slots."
         )
+
     return per_gpu_batch_size, effective_batch_size
 
 
