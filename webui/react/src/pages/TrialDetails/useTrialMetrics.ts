@@ -11,6 +11,7 @@ import { isEqual } from 'utils/data';
 import { message } from 'utils/dialogApi';
 import { ErrorType } from 'utils/error';
 import handleError from 'utils/error';
+import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { metricToKey } from 'utils/metric';
 
 type MetricName = string;
@@ -18,10 +19,16 @@ export interface TrialMetrics {
   data: Record<MetricName, Serie>;
   metrics: Metric[];
 }
+
+export interface TrialMetricsd {
+  data: Record<MetricName, Serie>;
+  hasData: boolean;
+}
+
 const summarizedMetricToSeries = (
   allDownsampledMetrics: MetricContainer[],
   selectedMetrics: Metric[],
-): Record<string, Serie> => {
+): TrialMetricsd => {
   const rawBatchValuesMap: Record<string, [number, number][]> = {};
   const rawBatchTimesMap: Record<string, [number, number][]> = {};
   const rawBatchEpochMap: Record<string, [number, number][]> = {};
@@ -63,16 +70,24 @@ const summarizedMetricToSeries = (
     };
     trialData[metricToKey(metric)] = series;
   });
-
-  return trialData;
+  const hasData = Object.keys(trialData).some(
+    (key) =>
+      (trialData?.[key]?.data?.Batches?.length ?? 0) > 0 ||
+      (trialData[key].data.Time?.length ?? 0) > 0 ||
+      (trialData?.[key]?.data?.Epoch?.length ?? 0) > 0,
+  );
+  return { data: trialData, hasData };
 };
+
 export const useTrialMetrics = (
   trials: (TrialDetails | undefined)[],
 ): {
-  data: Record<number, Record<string, Serie>> | undefined;
+  data: Record<number, Record<string, Serie>>;
+  isLoaded: boolean;
   metrics: Metric[];
   scale: Scale;
   setScale: React.Dispatch<React.SetStateAction<Scale>>;
+  hasData: boolean;
 } => {
   const trialTerminated = trials?.every((trial) =>
     terminalRunStates.has(trial?.state ?? RunState.Active),
@@ -94,12 +109,19 @@ export const useTrialMetrics = (
     [trials],
   );
 
-  const metrics = useMetricNames(experimentIds, handleMetricNamesError);
-  const [data, setData] = useState<Record<number, Record<string, Serie>>>();
+  const { metrics, isLoaded: metricNamesLoaded } = useMetricNames(
+    experimentIds,
+    handleMetricNamesError,
+  );
+  const [loadableData, setLoadableData] =
+    useState<Loadable<Record<number, Record<string, Serie>>>>(NotLoaded);
   const [scale, setScale] = useState<Scale>(Scale.Linear);
+  const [hasData, setHasData] = useState<Loadable<boolean>>(NotLoaded);
 
   const fetchTrialSummary = useCallback(async () => {
+    setLoadableData(NotLoaded);
     if (trials.length > 0) {
+      let anyTrialHasData = false;
       try {
         const response = await timeSeries({
           maxDatapoints: screen.width > 1600 ? 1500 : 1000,
@@ -110,10 +132,16 @@ export const useTrialMetrics = (
         });
         const newData: Record<number, Record<string, Serie>> = {};
         response.forEach((r) => {
-          const trialData = summarizedMetricToSeries(r?.metrics, metrics);
+          const { data: trialData, hasData } = summarizedMetricToSeries(r?.metrics, metrics);
+          if (hasData) {
+            anyTrialHasData = true;
+          }
           newData[r.id] = trialData;
         });
-        setData((prev) => (isEqual(prev, newData) ? prev : newData));
+        setLoadableData((prev) =>
+          isEqual(Loadable.getOrElse([], prev), newData) ? prev : Loaded(newData),
+        );
+        setHasData(Loaded(anyTrialHasData));
       } catch (e) {
         message.error('Error fetching metrics');
       }
@@ -135,6 +163,7 @@ export const useTrialMetrics = (
   if (trialTerminated) {
     stopPolling();
   }
-
-  return { data, metrics, scale, setScale };
+  const data = Loadable.getOrElse({}, loadableData);
+  const isLoaded = metricNamesLoaded && Loadable.isLoaded(loadableData);
+  return { data, hasData: Loadable.getOrElse(true, hasData), isLoaded, metrics, scale, setScale };
 };

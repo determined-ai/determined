@@ -75,7 +75,7 @@ const MultiTrialDetailsHyperparameters: React.FC<Props> = ({
   );
 
   // Stream available metrics.
-  const metrics = useMetricNames([experiment.id], handleError);
+  const { metrics } = useMetricNames([experiment.id], handleError);
 
   const isSupported = useMemo(() => {
     return !(

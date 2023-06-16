@@ -122,7 +122,7 @@ const TrialsComparisonTable: React.FC<TableProps> = ({
     [experiment.id],
   );
 
-  const metrics = useMetricNames([experiment.id], handleMetricNamesError);
+  const { metrics } = useMetricNames([experiment.id], handleMetricNamesError);
 
   useEffect(() => {
     setSelectedMetrics(metrics);
