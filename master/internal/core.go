@@ -8,6 +8,7 @@ import (
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
+	"github.com/determined-ai/determined/master/internal/actorsystem"
 	"io"
 	"net"
 	"net/http"
@@ -892,6 +893,7 @@ func (m *Master) Run(ctx context.Context) error {
 	//         +- Trial (internal.trial: <trial-request-id>)
 	//             +- Websocket (actors.WebSocket: <remote-address>)
 	m.system = actor.NewSystemWithRoot("master", actor.ActorFunc(root))
+	actorsystem.SetSystem(m.system)
 
 	ctx, cancel := context.WithCancel(ctx)
 	go func() {
