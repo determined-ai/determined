@@ -46,7 +46,7 @@ func TestAddAndRemoveBindings(t *testing.T) {
 	count, err := Bun().NewSelect().Model(&values).ScanAndCount(ctx)
 	require.NoError(t, err, "error when scanning DB: %t", err)
 	require.Equal(t, 1, count, "expected 1 item in DB, found %d", count)
-	require.Equal(t, workspaceIDs[0], values[0].WorkspaceID,
+	require.Equal(t, int(workspaceIDs[0]), values[0].WorkspaceID,
 		"expected workspaceID to be %d, but it is %d", workspaceIDs[0], values[0].WorkspaceID)
 	require.Equal(t, testPoolName, values[0].PoolName,
 		"expected pool name to be '%s', but got %s", testPoolName, values[0].PoolName)
@@ -67,7 +67,7 @@ func TestAddAndRemoveBindings(t *testing.T) {
 	require.NoError(t, err, "error when scanning DB: %t", err)
 	require.Equal(t, 4, count, "expected 4 items in DB, found %d", count)
 	for i := 0; i < 4; i++ {
-		require.Equal(t, workspaceIDs[i], values[i].WorkspaceID,
+		require.Equal(t, int(workspaceIDs[i]), values[i].WorkspaceID,
 			"expected workspaceID to be %d, but it is %d", i+1, values[i].WorkspaceID)
 		require.Equal(t, testPool2Name, values[i].PoolName,
 			"expected pool name to be '%s', but got %s", testPool2Name, values[i].PoolName)
