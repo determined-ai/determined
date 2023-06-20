@@ -19,10 +19,26 @@ def roles_not_implemented() -> bool:
 
 
 def rbac_disabled() -> bool:
+    if roles_not_implemented():
+        return True
     try:
         return not bindings.get_GetMaster(determined_test_session()).rbacEnabled
     except (errors.APIException, errors.MasterNotFoundException):
         return True
+
+
+@pytest.fixture(scope="session")
+def cluster_admin_creds() -> authentication.Credentials:
+    user = bindings.v1User(username=api_utils.get_random_string(), admin=True, active=True)
+    creds = api_utils.create_test_user(True, user=user)
+    cli.rbac.assign_role(
+        utils.CliArgsMock(
+            username_to_assign=creds.username,
+            workspace_name="Uncategorized",
+            role_name="ClusterAdmin",
+        )
+    )
+    return creds
 
 
 @contextlib.contextmanager
