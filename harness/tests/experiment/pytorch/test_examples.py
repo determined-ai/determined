@@ -9,6 +9,32 @@ from torch.distributed import launcher
 from tests.experiment import utils, pytorch_utils  # noqa: I100
 
 
+def test_pytorch_mnist(tmp_path: pathlib.Path):
+    checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
+
+    config = utils.load_config(utils.tutorials_path("mnist_pytorch/const.yaml"))
+    hparams = config["hyperparameters"]
+
+    exp_config = utils.make_default_exp_config(
+        hparams,
+        scheduling_unit=1,
+        searcher_metric="validation_loss",
+        checkpoint_dir=checkpoint_dir,
+    )
+    exp_config.update(config)
+
+    example_path = utils.tutorials_path("mnist_pytorch/model_def.py")
+    trial_class = utils.import_class_from_module("MNistTrial", example_path)
+    trial_class._searcher_metric = "validation_loss"
+
+    pytorch_utils.train_and_checkpoint(
+        trial_class=trial_class,
+        hparams=hparams,
+        tmp_path=tmp_path,
+        exp_config=exp_config,
+        steps=(1, 1),
+    )
+
 @pytest.mark.skipif(torch.cuda.device_count() < 2, reason="not enough gpus")
 @pytest.mark.gpu_parallel
 def test_pytorch_parallel(tmp_path: pathlib.Path) -> None:
