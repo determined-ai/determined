@@ -6,7 +6,6 @@ import os
 import pathlib
 import sys
 import typing
-import uuid
 from unittest import mock
 
 import numpy as np
@@ -928,7 +927,6 @@ class TestPyTorchTrial:
     @pytest.mark.skipif(torch.cuda.device_count() < 2, reason="not enough gpus")
     @pytest.mark.gpu_parallel
     def test_gradient_aggregation_parallel(self, tmp_path: pathlib.Path):
-
         launch_config = pytorch_utils.setup_torch_distributed()
 
         val_metrics = launcher.elastic_launch(launch_config, run_identity)(tmp_path)
@@ -953,7 +951,6 @@ class TestPyTorchTrial:
     @pytest.mark.gpu_parallel
     @pytest.mark.parametrize("api_style", ["apex", "auto", "manual"])
     def test_pytorch_distributed_with_amp(self, tmp_path: pathlib.Path, api_style):
-
         launch_config = pytorch_utils.setup_torch_distributed()
 
         outputs = launcher.elastic_launch(launch_config, run_amp)(tmp_path, api_style)
@@ -962,7 +959,6 @@ class TestPyTorchTrial:
     @pytest.mark.skipif(torch.cuda.device_count() < 2, reason="not enough gpus")
     @pytest.mark.gpu_parallel
     def test_distributed_logging(self, tmp_path: pathlib.Path):
-
         num_procs = 2
 
         launch_config = pytorch_utils.setup_torch_distributed(local_procs=num_procs)
@@ -979,7 +975,6 @@ class TestPyTorchTrial:
     @pytest.mark.gpu_parallel
     @pytest.mark.parametrize("dataset_len", [2, 3])
     def test_epoch_sync(self, tmp_path: pathlib.Path, dataset_len: int):
-
         num_procs = 2
 
         launch_config = pytorch_utils.setup_torch_distributed(local_procs=num_procs)
