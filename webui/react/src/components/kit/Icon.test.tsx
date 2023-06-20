@@ -38,7 +38,7 @@ describe('Icon', () => {
       if (!svgIcons.includes(name)) {
         expect(firstChild).toHaveClass(...['base', `icon-${name}`, 'medium']);
       } else {
-        expect(firstChild?.nodeName).toBe('svg');
+        expect(firstChild?.firstChild?.nodeName).toBe('svg');
       }
     });
   });
