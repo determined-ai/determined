@@ -1,0 +1,31 @@
+.body {
+  height: calc(100vh - 56px);
+  overflow-y: scroll;
+  padding: 16px;
+}
+.header {
+  align-items: center;
+  background-color: var(--theme-background);
+  border-bottom: 1px solid var(--color-background-border);
+  display: flex;
+  height: 56px;
+  justify-content: space-between;
+  padding: 0 17px;
+
+  .headerTitle {
+    font-size: 16px;
+    font-weight: 400;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  button > span::before {
+    font-weight: bold;
+  }
+}
+
+@media only screen and (max-width: 700px) {
+  .mobileWidth > div {
+    width: 100% !important;
+  }
+}
