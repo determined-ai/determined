@@ -5,6 +5,7 @@ package db
 
 import (
 	"context"
+	"sort"
 	"testing"
 
 	"github.com/determined-ai/determined/master/internal/config"
@@ -96,10 +97,53 @@ func TestListWorkspacesBindingRP(t *testing.T) {
 	return
 }
 
-func TestListRPsBoundToWorkspace(t *testing.T) {
+func TestListRPsAvailableToWorkspace(t *testing.T) {
 	// pretty straightforward
 	// don't list binding that are invalid
 	// return unbound pools too (we pull from config)
+	require.NoError(t, etc.SetRootPath(RootFromDB))
+	db := MustResolveTestPostgres(t)
+	MustMigrateTestPostgres(t, db, MigrationsFromDB)
+	ctx := context.Background()
+	user := RequireMockUser(t, db)
+
+	// A workspace has no bounded RP
+	// TODO: Write RP config to master config?
+	existingPools := []config.ResourcePoolConfig{
+		{PoolName: "poolName1"},
+		{PoolName: "poolName2"},
+		{PoolName: "poolName3"},
+	}
+
+	workspaceNames := []string{"workspace1"}
+	workspaceIDs, err := MockWorkspaces(workspaceNames, user.ID)
+	require.NoError(t, err)
+
+	rpWorkspaceBindings, _, err := ReadRPsBoundToWorkspace(ctx, workspaceIDs[0], 0, 500)
+	require.NoError(t, err)
+	boundRPs := []string{}
+	for _, rpWorkspaceBinding := range rpWorkspaceBindings {
+		boundRPs = append(boundRPs, rpWorkspaceBinding.PoolName)
+	}
+	expectedBoundRPs := []string{"poolName1", "poolName2", "poolName3"}
+	sort.Strings(expectedBoundRPs)
+	sort.Strings(boundRPs)
+	require.Equal(t, boundRPs, expectedBoundRPs)
+
+	// Workspace 1 has no bounded RP and a RP is bound to workspace 2
+	workspaceNames = []string{"workspace2"}
+	workspaceIDs, err = MockWorkspaces(workspaceNames, user.ID)
+	require.NoError(t, err)
+
+	err = AddRPWorkspaceBindings(ctx, workspaceIDs, "poolName2", existingPools)
+	require.NoError(t, err)
+
+	// A workspace has some bounded RP and some unbound RP
+
+	// A workspace only has bounded RP.
+
+	err = CleanupMockWorkspace(workspaceIDs)
+	require.NoError(t, err)
 	return
 }
 

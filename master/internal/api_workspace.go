@@ -16,6 +16,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/command"
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/workspace"
@@ -615,7 +616,49 @@ func (a *apiServer) UnpinWorkspace(
 }
 
 func (a *apiServer) ListRPsBoundToWorkspace(
-	ctx context.Context, request *apiv1.ListRPsBoundToWorkspaceRequest,
+	ctx context.Context, req *apiv1.ListRPsBoundToWorkspaceRequest,
 ) (*apiv1.ListRPsBoundToWorkspaceResponse, error) {
-	return &apiv1.ListRPsBoundToWorkspaceResponse{}, nil
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	err = workspace.AuthZProvider.Get().CanGetWorkspaceID(
+		ctx, *curUser, req.WorkspaceId,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	rpWorkspaceBindings, pagination, err := db.ReadRPsBoundToWorkspace(
+		ctx, req.WorkspaceId, req.Offset, req.Limit,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	boundRPs := []string{}
+	for _, rpWorkspaceBinding := range rpWorkspaceBindings {
+		boundRPs = append(boundRPs, rpWorkspaceBinding.PoolName)
+	}
+
+	// Add unbound RPs.
+	if pagination.EndIndex == pagination.Total {
+		masterConfig := config.GetMasterConfig()
+
+		unboundRPs, err := db.GetUnboundRPs(ctx, masterConfig.ResourceConfig.ResourcePools)
+		if err != nil {
+			return nil, err
+		}
+		// TODO: pagination is tricky because of the unboundRPs
+		return &apiv1.ListRPsBoundToWorkspaceResponse{
+			ResourcePools: append(boundRPs, unboundRPs...),
+			Pagination:    pagination,
+		}, nil
+	}
+
+	// TODO: pagination is tricky because of the unboundRPs
+	return &apiv1.ListRPsBoundToWorkspaceResponse{
+		ResourcePools: boundRPs,
+		Pagination:    pagination,
+	}, nil
 }

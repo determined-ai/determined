@@ -170,3 +170,50 @@ func OverwriteRPWorkspaceBindings(ctx context.Context,
 	err = AddRPWorkspaceBindings(ctx, workspaceIds, poolName, resourcePools)
 	return err
 }
+
+// GetUnboundRPs get unbound resource pools.
+func GetUnboundRPs(
+	ctx context.Context, resourcePools []config.ResourcePoolConfig,
+) ([]string, error) {
+	var boundResourcePools []string
+	_, err := Bun().NewSelect().Model(&boundResourcePools).Column("name").Distinct().Exec(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// Store boundRPs into a map for efficiency.
+	boundRPsMap := map[string]bool{}
+	for _, boundRP := range boundResourcePools {
+		boundRPsMap[boundRP] = true
+	}
+
+	unboundRPs := []string{}
+	for _, resourcePool := range resourcePools {
+		if !boundRPsMap[resourcePool.PoolName] {
+			unboundRPs = append(unboundRPs, resourcePool.PoolName)
+		}
+	}
+
+	return unboundRPs, nil
+}
+
+// ReadRPsBoundToWorkspace returns the names of resource pool bound to a
+// workspace.
+func ReadRPsBoundToWorkspace(
+	ctx context.Context, workspaceID int32, limit int32, offset int32,
+) ([]*RPWorkspaceBinding, *apiv1.Pagination, error) {
+	var rpWorkspaceBindings []*RPWorkspaceBinding
+	query := Bun().NewSelect().Model(&rpWorkspaceBindings).Where("workspace_id = ?",
+		workspaceID)
+
+	pagination, err := runPagedBunQuery(ctx, query, int(offset), int(limit))
+	if err != nil {
+		if errors.Cause(err) == sql.ErrNoRows {
+			return rpWorkspaceBindings, pagination, nil
+		}
+
+		return nil, nil, err
+	}
+
+	return rpWorkspaceBindings, pagination, nil
+}
