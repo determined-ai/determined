@@ -99,8 +99,9 @@ def login_sdk_client(func: Callable[[argparse.Namespace], Any]) -> Callable[...,
 def setup_session(args: argparse.Namespace) -> api.Session:
     master_url = args.master or util.get_default_master_address()
     cert = certs.default_load(master_url)
+    retry = api.default_retry()
 
-    return api.Session(master_url, args.user, authentication.cli_auth, cert)
+    return api.Session(master_url, args.user, authentication.cli_auth, cert, retry)
 
 
 def require_feature_flag(feature_flag: str, error_message: str) -> Callable[..., Any]:
