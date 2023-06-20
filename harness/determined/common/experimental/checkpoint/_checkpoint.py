@@ -300,6 +300,7 @@ class Checkpoint:
         where you are accessing the checkpoint files directly (not via Checkpoint.download) you may
         use this method directly to obtain the latest metadata.
         """
+        self.reload()
         with open(path, "w") as f:
             json.dump(self.metadata, f, indent=2)
 
@@ -335,6 +336,8 @@ class Checkpoint:
         bindings.post_PostCheckpointMetadata(self._session, body=req, checkpoint_uuid=self.uuid)
 
         self.metadata = updated_metadata
+        self.reload()
+        assert self.metadata
 
     def remove_metadata(self, keys: List[str]) -> None:
         """
@@ -356,6 +359,8 @@ class Checkpoint:
         bindings.post_PostCheckpointMetadata(self._session, body=req, checkpoint_uuid=self.uuid)
 
         self.metadata = updated_metadata
+        self.reload()
+        assert self.metadata
 
     def delete(self) -> None:
         """
