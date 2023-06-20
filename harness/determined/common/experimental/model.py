@@ -10,33 +10,43 @@ from determined.common.experimental import checkpoint
 
 class ModelVersion:
     """
-    A ModelVersion object includes a Checkpoint,
-    and can be fetched using ``model.get_version()``.
+    A class representing a combination of Model and Checkpoint.
+
+    It can be fetched using ``model.get_version()``. Once a model has been added to the registry,
+    checkpoints can be added to it. These registered checkpoints are ModelVersions.
+
+    Attributes:
+        session: HTTP request session.
+            model_version: (int) Version number assigned by the registry, starting from 1 and
+        incrementing each time a new model version is registered.
+        model_name: (str) Name of the parent model.
+        checkpoint: (Mutable, Optional[checkpoint.Checkpoint]) Checkpoint associated with this
+            model version.
+        metadata: (Mutable, Optional[Dict]) Metadata of this model version.
+        name: (Mutable, Optional[str]) Human-friendly name of this model version.
+
+    Note:
+        All attributes are cached by default.
+
+        Mutable properties may be changed by methods that update these values either automatically
+        (eg. `set_name`, `set_notes`) or explicitly with `reload()`.
     """
 
     def __init__(
         self,
         session: api.Session,
-        model_version_id: int,  # unique DB id
-        checkpoint: checkpoint.Checkpoint,
-        metadata: Dict[str, Any],
-        name: str,
-        comment: str,
-        notes: str,
-        model_id: int,
+        model_version: int,
         model_name: str,
-        model_version: int,  # sequential
     ):
         self._session = session
-        self.checkpoint = checkpoint
-        self.metadata = metadata
-        self.name = name
-        self.comment = comment
-        self.notes = notes
-        self.model_id = model_id
         self.model_name = model_name
-        self.model_version_id = model_version_id
         self.model_version = model_version
+
+        self.checkpoint: Optional[checkpoint.Checkpoint] = None
+        self.metadata: Optional[Dict[str, Any]] = None
+        self.name: Optional[str] = None
+        self.comment: Optional[str] = None
+        self.notes: Optional[str] = None
 
     def set_name(self, name: str) -> None:
         """
@@ -45,12 +55,12 @@ class ModelVersion:
         Arguments:
             name (string): New name for model version
         """
-
         req = bindings.v1PatchModelVersion(name=name)
         bindings.patch_PatchModelVersion(
             self._session, body=req, modelName=self.model_name, modelVersionNum=self.model_version
         )
         self.name = name
+        self.reload()
 
     def set_notes(self, notes: str) -> None:
         """
@@ -59,12 +69,12 @@ class ModelVersion:
         Arguments:
             notes (string): Replaces notes for model version in registry
         """
-
         req = bindings.v1PatchModelVersion(notes=notes)
         bindings.patch_PatchModelVersion(
             self._session, body=req, modelName=self.model_name, modelVersionNum=self.model_version
         )
         self.notes = notes
+        self.reload()
 
     def delete(self) -> None:
         """
@@ -74,20 +84,33 @@ class ModelVersion:
             self._session, modelName=self.model_name, modelVersionNum=self.model_version
         )
 
-    @classmethod
-    def _from_bindings(cls, m: bindings.v1ModelVersion, session: api.Session) -> "ModelVersion":
-        return cls(
-            session,
-            model_version_id=m.id,
-            checkpoint=checkpoint.Checkpoint._from_bindings(m.checkpoint, session),
-            metadata=m.metadata or {},
-            name=m.name or "",
-            comment=m.comment or "",
-            notes=m.notes or "",
-            model_id=m.model.id,
-            model_name=m.model.name,
-            model_version=m.version,
+    def _hydrate(self, model_version: bindings.v1ModelVersion) -> None:
+        self.checkpoint = checkpoint.Checkpoint._from_bindings(
+            model_version.checkpoint, self._session
         )
+        self.metadata = model_version.metadata or {}
+        self.name = model_version.name or ""
+        self.comment = model_version.comment or ""
+        self.notes = model_version.notes or ""
+        self.model_version = model_version.version
+
+    def reload(self) -> None:
+        resp = bindings.get_GetModelVersion(
+            session=self._session, modelName=self.model_name, modelVersionNum=self.model_version
+        ).modelVersion
+        self._hydrate(resp)
+
+    @classmethod
+    def _from_bindings(
+        cls, version_bindings: bindings.v1ModelVersion, session: api.Session
+    ) -> "ModelVersion":
+        version = cls(
+            session,
+            model_version=version_bindings.version,
+            model_name=version_bindings.model.name,
+        )
+        version._hydrate(version_bindings)
+        return version
 
 
 class ModelSortBy(enum.Enum):
@@ -132,23 +155,16 @@ class ModelOrderBy(enum.Enum):
 
 class Model:
     """
-    A Model object is usually obtained from
-    ``determined.experimental.client.create_model()``
-    or ``determined.experimental.client.get_model()``.
 
-    Class representing a model in the model registry. It contains methods for model
+    Class representing a model in the model registry.
+
+    A Model object is usually obtained from ``determined.experimental.client.create_model()``
+    or ``determined.experimental.client.get_model()``. It contains methods for model
     versions and metadata.
 
     Arguments:
         model_id (int): The unique id of this model.
         name (string): The name of the model.
-        description (string, optional): The description of the model.
-        creation_time (datetime): The time the model was created.
-        last_updated_time (datetime): The time the model was most recently updated.
-        metadata (dict, optional): User-defined metadata associated with the checkpoint.
-        labels ([string]): User-defined text labels associated with the checkpoint.
-        username (string): The user who initially created this model.
-        archived (boolean): The status (archived or not) for this model.
     """
 
     def __init__(
@@ -156,26 +172,19 @@ class Model:
         session: api.Session,
         model_id: int,
         name: str,
-        description: str,
-        creation_time: datetime.datetime,
-        last_updated_time: datetime.datetime,
-        metadata: Dict[str, Any],
-        labels: List[str],
-        username: str,
-        archived: bool,
-        workspace_id: Optional[int] = None,
     ):
         self._session = session
         self.model_id = model_id
         self.name = name
-        self.description = description
-        self.creation_time = creation_time
-        self.last_updated_time = last_updated_time
-        self.metadata = metadata or {}
-        self.labels = labels
-        self.username = username
-        self.workspace_id = workspace_id
-        self.archived = archived
+
+        self.description: Optional[str] = None
+        self.creation_time: Optional[datetime.datetime] = None
+        self.last_updated_time: Optional[datetime.datetime] = None
+        self.metadata: Optional[Dict[str, Any]] = None
+        self.labels: Optional[List[str]] = None
+        self.username: Optional[str] = None
+        self.workspace_id: Optional[int] = None
+        self.archived: Optional[bool] = None
 
     def get_version(self, version: int = -1) -> Optional[ModelVersion]:
         """
@@ -260,12 +269,14 @@ class Model:
         Arguments:
             metadata (dict): Dictionary of metadata to add to the model.
         """
-        updated_metadata = dict(self.metadata, **metadata)
+        updated_metadata = dict(self.metadata, **metadata) if self.metadata else metadata
 
         req = bindings.v1PatchModel(metadata=updated_metadata)
         bindings.patch_PatchModel(self._session, body=req, modelName=self.name)
 
         self.metadata = updated_metadata
+        self.reload()
+        assert self.metadata is not None
 
     def remove_metadata(self, keys: List[str]) -> None:
         """
@@ -280,7 +291,7 @@ class Model:
                 f"remove_metadata() requires a list of strings as input but got: {keys}"
             )
 
-        updated_metadata = dict(self.metadata)
+        updated_metadata = dict(self.metadata) if self.metadata else {}
         for key in keys:
             if key in updated_metadata:
                 del updated_metadata[key]
@@ -289,6 +300,8 @@ class Model:
         bindings.patch_PatchModel(self._session, body=req, modelName=self.name)
 
         self.metadata = updated_metadata
+        self.reload()
+        assert self.metadata is not None
 
     def move_to_workspace(self, workspace_name: str) -> None:
         req = bindings.v1PatchModel(workspaceName=workspace_name)
@@ -311,10 +324,12 @@ class Model:
         bindings.patch_PatchModel(self._session, body=req, modelName=self.name)
 
         self.labels = labels
+        self.reload()
 
     def set_description(self, description: str) -> None:
         req = bindings.v1PatchModel(description=description)
         bindings.patch_PatchModel(self._session, body=req, modelName=self.name)
+        self.reload()
 
         self.description = description
 
@@ -324,6 +339,7 @@ class Model:
         """
         bindings.post_ArchiveModel(self._session, modelName=self.name)
         self.archived = True
+        self.reload()
 
     def unarchive(self) -> None:
         """
@@ -331,6 +347,7 @@ class Model:
         """
         bindings.post_UnarchiveModel(self._session, modelName=self.name)
         self.archived = False
+        self.reload()
 
     def delete(self) -> None:
         """
@@ -354,18 +371,29 @@ class Model:
             self.model_id, self.name, json.dumps(self.metadata)
         )
 
+    def _hydrate(self, model: bindings.v1Model) -> None:
+        self.description = model.description or ""
+        self.creation_time = util.parse_protobuf_timestamp(model.creationTime)
+        self.last_updated_time = util.parse_protobuf_timestamp(model.lastUpdatedTime)
+        self.metadata = model.metadata or {}
+        self.labels = list(model.labels or [])
+        self.username = model.username or ""
+        self.workspace_id = model.workspaceId
+        self.archived = model.archived or False
+
+    def reload(self) -> None:
+        """
+        Explicit refresh of cached properties.
+        """
+        resp = bindings.get_GetModel(session=self._session, modelName=self.name).model
+        self._hydrate(resp)
+
     @classmethod
-    def _from_bindings(cls, m: bindings.v1Model, session: api.Session) -> "Model":
-        return cls(
+    def _from_bindings(cls, model_bindings: bindings.v1Model, session: api.Session) -> "Model":
+        model = cls(
             session,
-            model_id=m.id,
-            name=m.name,
-            description=m.description or "",
-            creation_time=util.parse_protobuf_timestamp(m.creationTime),
-            last_updated_time=util.parse_protobuf_timestamp(m.lastUpdatedTime),
-            metadata=m.metadata,
-            labels=list(m.labels or []),
-            username=m.username or "",
-            archived=m.archived or False,
-            workspace_id=m.workspaceId,
+            model_id=model_bindings.id,
+            name=model_bindings.name,
         )
+        model._hydrate(model_bindings)
+        return model
