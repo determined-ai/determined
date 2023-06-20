@@ -97,12 +97,17 @@ html[data-theme="dark"] {
   /* layout */
   box-sizing: border-box;
   display: grid;
-  grid-template-rows: 24px 40px auto; /* 24px is icons size */
+  grid-template-rows: 24px 40px auto;
+  grid-template-areas:
+    'icon'
+    'title'
+    'description';
   gap: 4px;
 }
 
 .tile-icon {
   background-color: transparent !important;
+  grid-area: icon;
   height: 24px;
   width: 24px;
 }
@@ -147,6 +152,7 @@ html[data-theme="dark"] {
   display: flex;
   flex-direction: column;
   justify-content: space-around;
+  grid-area: title;
 }
 
 .tile .tile-divider {
@@ -164,6 +170,7 @@ html[data-theme="dark"] {
   color: black;
   font-size: 14px;
   margin: 0.5rem 0;
+  grid-area: description;
 }
 
 /* Legacy styles from furo theme layout: */
