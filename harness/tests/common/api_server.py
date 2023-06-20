@@ -103,7 +103,8 @@ def run_api_server(
             """
             key = "get_experiment_longrunning_n_calls"
             n_calls = 2
-            sample_experiment = sample_get_experiment()
+            with open(FIXTURES_DIR / "experiment.json") as f:
+                sample_experiment = bindings.v1GetExperimentResponse.from_json(json.load(f))
 
             with lock:
                 state[key] = state.get(key, 0) + 1
@@ -130,7 +131,9 @@ def run_api_server(
                 if state[key] <= fail_for:
                     self.send_error(504)
                     return {}
-            return sample_get_experiment().to_json()
+            with open(FIXTURES_DIR / "experiment.json") as f:
+                sample_experiment = bindings.v1GetExperimentResponse.from_json(json.load(f))
+            return sample_experiment.to_json()
 
         def do_core(self, fn: Optional[Callable[..., Dict[str, Any]]]) -> None:
             if fn is None:
