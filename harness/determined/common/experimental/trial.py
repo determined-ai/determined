@@ -1,6 +1,6 @@
 import enum
 import warnings
-from typing import Any, Iterable, List, Optional, Union
+from typing import Any, Dict, Iterable, List, Optional, Union
 
 from determined.common import api
 from determined.common.api import bindings, logs
@@ -51,16 +51,24 @@ class CheckpointOrderBy(enum.Enum):
 
 class Trial:
     """
-    A Trial object is usually obtained from
-    ``determined.experimental.client.get_trial()``.
+    A class representing a Trial object.
 
-    Trial reference class used for querying relevant
-    :class:`~determined.experimental.Checkpoint` instances.
+    A Trial object is usually obtained from ``determined.experimental.client.get_trial()``.
+    Trial reference class used for querying relevant :class:`~determined.experimental.Checkpoint`
+    instances.
+
+    Attributes:
+        trial_id: ID of trial.
+        session: HTTP request session.
+        hparams: (Mutable, Optional[Dict]) Hyperparameters for the trial.
+
     """
 
     def __init__(self, trial_id: int, session: api.Session):
         self.id = trial_id
         self._session = session
+
+        self.hparams: Optional[Dict[str, Any]] = None
 
     def logs(
         self,
@@ -302,6 +310,16 @@ class Trial:
         """
         return _stream_trials_metrics(self._session, [self.id], group=group)
 
+    def _hydrate(self, trial: bindings.trialv1Trial) -> None:
+        self.hparams = trial.hparams
+
+    def reload(self) -> None:
+        """
+        Explicit refresh of cached properties.
+        """
+        resp = bindings.get_GetTrial(session=self._session, trialId=self.id).trial
+        self._hydrate(resp)
+
     def stream_training_metrics(self) -> Iterable[metrics.TrainingMetrics]:
         """Streams training metrics for this trial.
 
@@ -328,6 +346,12 @@ class Trial:
             stacklevel=2,
         )
         return _stream_validation_metrics(self._session, [self.id])
+
+    @classmethod
+    def _from_bindings(cls, trial_bindings: bindings.trialv1Trial, session: api.Session) -> "Trial":
+        trial = cls(trial_bindings.id, session)
+        trial._hydrate(trial_bindings)
+        return trial
 
 
 # This is to shorten line lengths of the TrialSortBy definition.
