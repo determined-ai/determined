@@ -212,6 +212,7 @@ def test_end_to_end_adaptive() -> None:
     db_check = d.get_checkpoint(checkpoint.uuid)
     # Make sure the checkpoint metadata is correct and correctly saved to the db.
     # Beginning with 0.18 the TrialController contributes a few items to the dict.
+    assert checkpoint.metadata
     assert checkpoint.metadata.get("testing") == "metadata"
     assert checkpoint.metadata.keys() == {
         "determined_version",
