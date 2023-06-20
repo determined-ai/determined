@@ -15,6 +15,7 @@ def render_checkpoint(checkpoint: experimental.Checkpoint, path: Optional[str] =
         print("Local checkpoint path:")
         print(path, "\n")
 
+    assert checkpoint.metadata
     # Print information about the downloaded step/checkpoint.
     table = [
         ["Experiment ID", checkpoint.training.experiment_id if checkpoint.training else None],
