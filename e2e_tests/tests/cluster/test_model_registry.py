@@ -106,6 +106,7 @@ def test_model_registry() -> None:
 
         latest_version = mnist.get_version()
         assert latest_version is not None
+        assert latest_version.checkpoint
         assert latest_version.checkpoint.uuid == checkpoint.uuid
 
         latest_version.set_name("Test 2021")
@@ -131,6 +132,7 @@ def test_model_registry() -> None:
 
         latest_version = mnist.get_version()
         assert latest_version is not None
+        assert latest_version.checkpoint
         assert latest_version.checkpoint.uuid == checkpoint.uuid
 
         # Ensure the correct number of versions are present.
