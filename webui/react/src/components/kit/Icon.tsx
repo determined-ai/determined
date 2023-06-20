@@ -269,11 +269,15 @@ const Icon: React.FC<Props> = ({
     return null;
   }, [color, name, size, title]);
 
-  if (name) classes.push(`icon-${name}`);
+  if (name && name !== 'filter') classes.push(`icon-${name}`);
   if (size) classes.push(css[size]);
   if (color) classes.push(css[color]);
 
-  const icon = svgIcon ?? <span aria-label={title} className={classes.join(' ')} />;
+  const icon = (
+    <span aria-label={title} className={classes.join(' ')}>
+      {svgIcon}
+    </span>
+  );
   return showTooltip ? <Tooltip content={title}>{icon}</Tooltip> : icon;
 };
 

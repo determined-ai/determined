@@ -2284,15 +2284,6 @@ const IconsSection: React.FC = () => {
           An <code>{'<Icon>'}</code> component displays an icon from a custom font along with an
           optional tooltip.
         </p>
-        <p>
-          We also have a few SVG icon components: <code>{'<FilterIcon>'}</code>,{' '}
-          <code>{'<PanelIcon>'}</code>, <code>{'<OptionsIcon>'}</code>, <code>{'<RowIcon>'}</code>{' '}
-          and <code>{'<ColumnsIcon>'}</code>.
-        </p>
-        <p>
-          The <code>{'<RowIcon>'}</code> has an optional <code>{'size'}</code> prop wich determines
-          which row icon should be used, it defaults do <code>{'medium'}</code>.
-        </p>
       </AntDCard>
       <AntDCard title="Usage">
         <p>

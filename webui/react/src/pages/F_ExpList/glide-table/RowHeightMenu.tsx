@@ -24,7 +24,7 @@ export const RowHeightMenu: React.FC<RowHeightMenuProps> = ({ rowHeight, onRowHe
       <Icon key={'icon_0'} name="row-small" title="small row" />,
       <Icon key={'icon_1'} name="row-medium" title="medium row" />,
       <Icon key={'icon_2'} name="row-large" title="large row" />,
-      <Icon key={'icon_3'} name="row-xl" title="xl row" />,
+      <Icon key={'icon_3'} name="row-xl" title="extra large row" />,
     ];
 
     return icons[index];
@@ -46,7 +46,7 @@ export const RowHeightMenu: React.FC<RowHeightMenuProps> = ({ rowHeight, onRowHe
   );
   const icon = (
     <span className="anticon">
-      <Icon name="options" title="options" />
+      <Icon name="options" title="row height" />
     </span>
   );
   return (
