@@ -1854,7 +1854,7 @@ jobs:
 
   test-unit-harness-gpu-parallel:
     docker:
-      image: <<pipeline.parameters.gpu-machine-image>>
+      - image: <<pipeline.parameters.gpu-machine-image>>
     resource_class: determined-ai/container-runner-multi-gpu
     steps:
       - checkout
