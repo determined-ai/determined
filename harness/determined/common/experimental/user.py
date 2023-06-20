@@ -47,8 +47,8 @@ class User:
     def _hydrate(self, user: bindings.v1User) -> None:
         self.username = user.username
         self.admin = user.admin
-        self.remote = user.remote or False
-        self.active = user.active or True
+        self.remote = user.remote if user.remote is not None else False
+        self.active = user.active if user.active is not None else True
         self.display_name = user.displayName
         if user.agentUserGroup is not None:
             self.agent_uid = user.agentUserGroup.agentUid
