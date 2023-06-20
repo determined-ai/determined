@@ -73,33 +73,6 @@ class Determined:
         new_det._token = None
         return new_det
 
-    def _from_bindings(self, raw: bindings.v1User) -> user.User:
-        assert raw.id is not None
-        if raw.agentUserGroup is not None:
-            return user.User(
-                user_id=raw.id,
-                username=raw.username,
-                admin=raw.admin,
-                remote=raw.remote,
-                session=self._session,
-                active=raw.active,
-                display_name=raw.displayName,
-                agent_uid=raw.agentUserGroup.agentUid,
-                agent_gid=raw.agentUserGroup.agentGid,
-                agent_user=raw.agentUserGroup.agentUser,
-                agent_group=raw.agentUserGroup.agentGroup,
-            )
-        else:
-            return user.User(
-                user_id=raw.id,
-                username=raw.username,
-                admin=raw.admin,
-                remote=raw.remote,
-                session=self._session,
-                active=raw.active,
-                display_name=raw.displayName,
-            )
-
     def create_user(
         self, username: str, admin: bool, password: Optional[str], remote: bool = False
     ) -> user.User:
@@ -110,20 +83,20 @@ class Determined:
         req = bindings.v1PostUserRequest(password=hashedPassword, user=create_user, isHashed=True)
         resp = bindings.post_PostUser(self._session, body=req)
         assert resp.user is not None
-        return self._from_bindings(resp.user)
+        return user.User._from_bindings(resp.user, self._session)
 
     def get_user_by_id(self, user_id: int) -> user.User:
         resp = bindings.get_GetUser(session=self._session, userId=user_id)
         assert user_id is not None
-        return self._from_bindings(resp.user)
+        return user.User._from_bindings(resp.user, self._session)
 
     def get_user_by_name(self, user_name: str) -> user.User:
         resp = bindings.get_GetUserByUsername(session=self._session, username=user_name)
-        return self._from_bindings(resp.user)
+        return user.User._from_bindings(resp.user, self._session)
 
     def whoami(self) -> user.User:
         resp = bindings.get_GetMe(self._session)
-        return self._from_bindings(resp.user)
+        return user.User._from_bindings(resp.user, self._session)
 
     def get_session_username(self) -> str:
         auth = self._session._auth
@@ -149,7 +122,7 @@ class Determined:
         if users_bindings is None:
             return users
         for user_b in users_bindings:
-            user_obj = self._from_bindings(user_b)
+            user_obj = user.User._from_bindings(user_b, self._session)
             users.append(user_obj)
         return users
 
@@ -207,27 +180,23 @@ class Determined:
             for w in resp.warnings:
                 logging.warning(api.WARNING_MESSAGE_MAP[w])
 
-        exp_id = resp.experiment.id
-        exp = experiment.Experiment(exp_id, self._session)
-
-        return exp
+        return experiment.Experiment._from_bindings(resp.experiment, self._session)
 
     def get_experiment(self, experiment_id: int) -> experiment.Experiment:
         """
         Get the :class:`~determined.experimental.Experiment` representing the
         experiment with the provided experiment ID.
         """
-        return experiment.Experiment(
-            experiment_id,
-            self._session,
-        )
+        resp = bindings.get_GetExperiment(session=self._session, experimentId=experiment_id)
+        return experiment.Experiment._from_bindings(resp.experiment, self._session)
 
     def get_trial(self, trial_id: int) -> trial.Trial:
         """
         Get the :class:`~determined.experimental.Trial` representing the
         trial with the provided trial ID.
         """
-        return trial.Trial(trial_id, self._session)
+        resp = bindings.get_GetTrial(session=self._session, trialId=trial_id)
+        return trial.Trial._from_bindings(resp.trial, self._session)
 
     def get_checkpoint(self, uuid: str) -> checkpoint.Checkpoint:
         """
