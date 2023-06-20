@@ -19,6 +19,7 @@ import {
   TrialDetails,
 } from 'types';
 import handleError from 'utils/error';
+import { Loadable } from 'utils/loadable';
 import { alphaNumericSorter } from 'utils/sort';
 
 import {
@@ -75,7 +76,8 @@ const MultiTrialDetailsHyperparameters: React.FC<Props> = ({
   );
 
   // Stream available metrics.
-  const { metrics } = useMetricNames([experiment.id], handleError);
+  const loadableMetrics = useMetricNames([experiment.id], handleError);
+  const metrics = Loadable.getOrElse([], loadableMetrics);
 
   const isSupported = useMemo(() => {
     return !(

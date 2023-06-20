@@ -21,6 +21,7 @@ import {
 } from 'types';
 import { ErrorType } from 'utils/error';
 import handleError from 'utils/error';
+import { Loadable } from 'utils/loadable';
 import { metricSorter, metricToKey } from 'utils/metric';
 
 import { Settings, settingsConfigForExperiment } from './TrialDetailsOverview.settings';
@@ -191,7 +192,8 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
     [experiment.id],
   );
 
-  const { metrics: metricNames } = useMetricNames([experiment.id], handleMetricNamesError);
+  const loadableMetricNames = useMetricNames([experiment.id], handleMetricNamesError);
+  const metricNames = Loadable.getOrElse([], loadableMetricNames);
 
   const { defaultMetrics, workloadMetrics } = useMemo(() => {
     const validationMetric = experiment?.config?.searcher.metric;

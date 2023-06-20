@@ -12,10 +12,7 @@ import { alphaNumericSorter } from 'utils/sort';
 const useMetricNames = (
   experimentIds: number[],
   errorHandler?: (e: unknown) => void,
-): {
-  isLoaded: boolean;
-  metrics: Metric[];
-} => {
+): Loadable<Metric[]> => {
   const [metrics, setMetrics] = useState<Loadable<Metric[]>>(NotLoaded);
   const [actualExpIds, setActualExpIds] = useState<number[]>([]);
 
@@ -67,7 +64,7 @@ const useMetricNames = (
     );
     return () => canceler.abort();
   }, [actualExpIds, errorHandler]);
-  return { isLoaded: Loadable.isLoaded(metrics), metrics: Loadable.getOrElse([], metrics) };
+  return metrics;
 };
 
 export default useMetricNames;
