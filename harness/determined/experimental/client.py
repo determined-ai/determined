@@ -264,7 +264,6 @@ def list_users(include_inactive: bool = False) -> Sequence[User]:
     """
     Get the list :class:`~determined.experimental.client.User` of all Users.
 
-
     Arguments:
         include_inactive (bool): Defaults to false. When true all users are returned when false
             only active users are returned.
